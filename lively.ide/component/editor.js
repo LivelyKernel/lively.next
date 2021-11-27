@@ -19,8 +19,10 @@ import { serializeNestedProp } from 'lively.serializer2/plugins/expression-seria
 const astq = new ASTQ();
 astq.adapter('mozast');
 
-const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel'];
+const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
+
+// convertToSpec(this.get('scene graph'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
 
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
@@ -29,6 +31,7 @@ function convertToSpec (aMorph, opts = {}) {
     exposeMasterRefs: true,
     dropMorphsWithNameOnly: true,
     skipUnchangedFromDefault: true,
+    skipUnchangedFromMaster: true,
     skipAttributes: DEFAULT_SKIPPED_ATTRIBUTES,
     valueTransform: (key, val) => {
       if (val && val.isPoint) return val.roundTo(0.1);
@@ -60,7 +63,9 @@ function convertToSpec (aMorph, opts = {}) {
 // expr = await convertToSpec(that)
 
 export function createInitialComponentDefinition (aComponent) {
-  return 'component(' + convertToSpec(aComponent) + ')';
+  return 'component(' + convertToSpec(aComponent, {
+    skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'treeData']
+  }).__expr__ + ')';
 }
 
 // the cheap way is just to generate a new spec
@@ -297,11 +302,18 @@ export class ComponentChangeTracker {
            otherTracker.trackedComponent.name == componentName;
   }
 
+  highlightMorphInSource (aSubmorph) {
+    // based on the master scope of the morph,
+    // we determine if an open system browser
+    // exists that allows us to highlight the
+    // definition of this morph inside the source
+  }
+
   get sourceEditor () {
     // find the first system browser that has no unsaved changes
     // and displays the current module
     const openBrowsers = $world.getSubmorphsByStyleClassName('Browser').filter(browser =>
-      browser.selectedModule.url.replace(System.baseURL, '') == this.componentModuleId);
+      browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') == this.componentModuleId);
     const qualifiedBrowser = openBrowsers.find(openBrowser => {
       if (openBrowser.hasUnsavedChanges() &&
           this.currentModuleSource &&
@@ -321,8 +333,14 @@ export class ComponentChangeTracker {
     return string.camelCaseString(this.trackedComponent.name); // we actually need the variable name
   }
 
-  withinDerivedComponent (m) {
-    return [m, ...m.ownerChain()].find(m => m.isComponent && m.master);
+  withinDerivedComponent (aMorph) {
+    // that is not enough. If we are wrapped by an add call that does not
+    // contain part() we are not within a derived component
+    for (const each of [aMorph, ...aMorph.ownerChain()]) {
+      if (each.isComponent && each.master) return true;
+      if (each.__wasAddedToDerived__) return false;
+    }
+    return false;
   }
 
   replaceAbandonedComponent (componentName) {
@@ -334,8 +352,9 @@ export class ComponentChangeTracker {
     if (abandonedComponent) {
       const pos = abandonedComponent.position;
       const owner = abandonedComponent.owner;
+      const idx = owner.submorphs.indexOf(abandonedComponent);
       abandonedComponent.remove();
-      owner.addMorph(this.trackedComponent);
+      owner.addMorphAt(this.trackedComponent, idx);
       this.trackedComponent.position = pos;
     }
   }
@@ -352,18 +371,11 @@ export class ComponentChangeTracker {
       ownerChain.push(nextVisibleParent);
       propertiesNode = getPropertiesNode(parsedComponent, nextVisibleParent.name);
     } while (!propertiesNode);
-
-    // just flat out generate a new spec from the component
-    // this should handle all the uncollapsing that is needed
-    // Problem: this returns way too much. In particular we do not want to repeat part references.
-    // also we do not want to mention nodes that have not received any changes at all. Basically
-    // we just want the ownerChain up until the morph in question. Also we want to identify the next closest
-    // parent node that is still found inside the source code and expand that instead of the entire component
-    // ideally we do not want to rewrite that parent node but just insert the missing subtree
-    // inside the submorphs array. This allows us to preserve comments as much as possible.
+    const masterInScope = arr.findAndGet(hiddenMorph.ownerChain(), m => m.master);
     const uncollapsedHierarchyExpr = convertToSpec(hiddenMorph, {
       onlyInclude: ownerChain,
       exposeMasterRefs: false,
+      masterInScope,
       skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type']
     });
     // insert at the right position
@@ -434,6 +446,33 @@ export class ComponentChangeTracker {
     }
   }
 
+  deleteProp (sourceCode, morphDef, propName, sourceEditor = false) {
+    const propNode = getProp(morphDef, propName);
+    if (!propNode) {
+      // no prop node nothing needs to be done
+      return sourceCode;
+    }
+
+    const patchPos = propNode;
+    if (sourceCode[patchPos.end] == ',') patchPos.end++;
+    this.needsLinting = true;
+
+    if (sourceEditor) {
+      const patchableRange = Range.fromPositions(
+        sourceEditor.indexToPosition(patchPos.start),
+        sourceEditor.indexToPosition(patchPos.end)
+      );
+      sourceEditor.replace(patchableRange, '');
+      return sourceEditor.textString;
+    }
+
+    if (!sourceEditor) {
+      return string.applyChanges(sourceCode, [
+        { action: 'remove', ...patchPos }
+      ]);
+    }
+  }
+
   // m = module('local://lively-object-modules/component-model-test.cp.js')
 
   onceChangesProcessed () {
@@ -463,10 +502,23 @@ export class ComponentChangeTracker {
     return l && l.layoutableSubmorphs.includes(aMorph);
   }
 
+  isResizedVertically (aMorph) {
+    const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
+    return l && l.resizesMorphVertically(aMorph);
+  }
+
+  isResizedHorizontally (aMorph) {
+    const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
+    return l && l.resizesMorphHorizontally(aMorph);
+  }
+
   ignoreChange (change) {
     if (change.prop == 'position' && (change.target == this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
     if (change.prop && change.prop != 'textAndAttributes' && !change.target.styleProperties.includes(change.prop)) return true;
-    if (change.selector != 'addMorphAt' && change.meta && change.meta.metaInteraction) return true;
+    if (change.target.epiMorph) return true;
+    if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
+        change.args.some(m => m.epiMorph)) return true;
+    if (change.selector != 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
     if (!change.selector && obj.equals(change.prevValue, change.value)) return true;
     return false;
   }
@@ -479,7 +531,6 @@ export class ComponentChangeTracker {
     // that is actually already defined by layout
     // if resize policy is set to fixed for either width or height replace
     // extent property by width or height (clear the extent entirely if needed)
-
     const mod = module(componentModuleId);
     // prefer this.intermediateSource instead for fast consecutive changes
     let sourceCode = (sourceEditor ? sourceEditor.textString : mod._source);
@@ -498,6 +549,7 @@ export class ComponentChangeTracker {
       requiredBindings.push(...Object.entries(valueAsExpr.bindings));
       let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
       const morphDef = getPropertiesNode(responsibleComponent, change.target.name);
+      if (change.prop == 'layout') this.needsLinting = true;
       if (!morphDef) {
         // the entire morph does not exist and needs to be added to the definition!
         updatedSource = this.uncollapseSubmorphHierarchy(
@@ -506,12 +558,32 @@ export class ComponentChangeTracker {
           change.target,
           sourceEditor);
       } else {
-        updatedSource = this.patchProp(
-          sourceCode,
-          morphDef,
-          change.prop,
-          valueAsExpr.__expr__,
-          sourceEditor);
+        // this little dance should be refactored
+        let deleteProp = false; let skipPatch = false;
+        if (change.prop == 'extent') {
+          if (this.isResizedVertically(change.target)) {
+            change = { ...change, prop: 'width' };
+            valueAsExpr.__expr__ = String(change.value.x);
+            deleteProp = true;
+            updatedSource = this.deleteProp(sourceCode, morphDef, 'extent', sourceEditor);
+          }
+          if (this.isResizedVertically(change.target)) {
+            change = { ...change, prop: 'height' };
+            valueAsExpr.__expr__ = String(change.value.y);
+            skipPatch = deleteProp;
+            if (!deleteProp) {
+              updatedSource = this.deleteProp(sourceCode, morphDef, 'extent', sourceEditor);
+            }
+          }
+        }
+        if (!skipPatch) {
+          updatedSource = this.patchProp(
+            sourceCode,
+            morphDef,
+            change.prop,
+            valueAsExpr.__expr__,
+            sourceEditor);
+        }
       }
     }
 
@@ -524,11 +596,15 @@ export class ComponentChangeTracker {
       requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
       if (addedMorph.master) {
         const metaInfo = addedMorph.master.auto[Symbol.for('lively-module-meta')];
+        addedMorphExpr = convertToSpec(addedMorph, {
+          exposeMasterRefs: false,
+          skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'type']
+        });
         addedMorphExpr = {
           // this fails when components are alias imported....
           // we can not insert the model props right now
           // this also serializes way too much
-          __expr__: `part(${metaInfo.export}, {}, ${addedMorphExpr.__expr__})`,
+          __expr__: `part(${metaInfo.export}, ${addedMorphExpr.__expr__})`,
           bindings: {
             ...addedMorphExpr.bindings,
             [COMPONENTS_CORE_MODULE]: ['part'],
