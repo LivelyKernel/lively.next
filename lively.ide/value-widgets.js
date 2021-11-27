@@ -432,15 +432,6 @@ export class NumberWidget extends Morph {
           const m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
           return this.scaleFactor == 1 && m && !!m[1];
         }
-      }, // infer that indirectly by looking at the floating point of the passed number value
-      padding: {
-        isStyleProp: true,
-        defaultValue: rect(5, 3, 0, 0),
-        after: ['submorphs'],
-        set (p) {
-          this.setProperty('padding', p);
-          this.getSubmorphNamed('value').padding = p;
-        }
       },
       extent: { defaultValue: pt(70, 25) },
       scaleFactor: {
@@ -506,65 +497,40 @@ export class NumberWidget extends Morph {
           this.setProperty('fontSize', v);
         }
       },
-      layout: {
-        initialize () {
-          this.layout = new TilingLayout({
-            axis: 'column', orderByIndex: true, align: 'center'
-          });
-        }
-      },
 
       showStepControls: {
         derived: true,
         get () {
-          return this.getSubmorphNamed('up').visible && this.getSubmorphNamed('down').visible;
+          const up = this.getSubmorphNamed('up');
+          const down = this.getSubmorphNamed('down');
+          return up && up.visible && down && down.visible;
         },
         set (active) {
           this.getSubmorphNamed('up').visible = this.getSubmorphNamed('down').visible = active;
           this.clipMode = active ? 'visible' : 'hidden';
         }
-      },
-
-      submorphs: {
-        after: ['min', 'max'],
-        initialize (prev) {
-          if (prev.length > 0) return;
-          this.submorphs = [
-            new ValueScrubber({
-              name: 'value',
-              unit: this.unit,
-              floatingPoint: this.floatingPoint,
-              scaleToBounds: false,
-              min: this.min,
-              max: this.max
-            }),
-
-            {
-              name: 'up',
-              submorphs: [Icon.makeLabel('sort-up', {
-                reactsToPointer: false,
-                name: 'icon'
-              })]
-            },
-            {
-              name: 'down',
-              rotation: Math.PI,
-              submorphs: [Icon.makeLabel('sort-up', {
-                reactsToPointer: false,
-                name: 'icon'
-              })]
-            }
-
-          ];
-        }
       }
     };
+  }
+
+  setMixed () {
+    this.getSubmorphNamed('value').textAndAttributes = ['Mix', null];
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
     if (evt.targetMorph.name == 'up') { this.increment(); }
     if (evt.targetMorph.name == 'down') { this.decrement(); }
+  }
+
+  onMouseUp (evt) {
+    super.onMouseUp(evt);
+    if (evt.targetMorph.name == 'value') { this.interactivelyEdit(); }
+  }
+
+  interactivelyEdit () {
+    this.getSubmorphNamed('value').readOnly = false;
+    this.getSubmorphNamed('value').focus();
   }
 
   spec () {
@@ -575,15 +541,19 @@ export class NumberWidget extends Morph {
     // allows us to selectively skip relayouting
     this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
     signal(this, 'number', this.number);
+    signal(this, 'numberChanged', this.number);
     this.relayout(fromScrubber);
   }
 
   relayoutButtons () {
+    if (!this.showStepControls) return;
     const upButton = this.getSubmorphNamed('up');
     const downButton = this.getSubmorphNamed('down');
-    const value = this.getSubmorphNamed('value');
-    upButton.height = downButton.height = Math.floor(this.height / 2);
-    upButton.width = downButton.width = 20;
+
+    if (upButton && downButton) {
+      upButton.height = downButton.height = Math.floor(this.height / 2);
+      upButton.width = downButton.width = 20;
+    }
   }
 
   onChange (change) {
