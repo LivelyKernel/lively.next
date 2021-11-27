@@ -6,12 +6,12 @@ import { Color, pt, rect } from 'lively.graphics';
 import { promise } from 'lively.lang';
 import { morph, VerticalLayout, Label } from 'lively.morphic';
 import lint from '../../js/linter.js';
-import { part } from 'lively.halos/components/core.js';
+import { part } from 'lively.morphic/components/core.js';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
 let testComponentModule = module(testModuleId);
 const initSource = `
-import { part, component } from 'lively.halos/components/core.js';
+import { part, component } from 'lively.morphic/components/core.js';
 import { Color, pt} from 'lively.graphics';
 import { Text } from "lively.morphic";
 
@@ -260,7 +260,7 @@ describe('component -> source reconciliation', () => {
     extent: pt(400, 400),
     fill: Color.rgb(204, 204, 204)
   })`);
-    expect(updatedSource).to.include('import { part, add, component } from \'lively.halos/components/core.js\';');
+    expect(updatedSource).to.include('import { part, add, component } from \'lively.morphic/components/core.js\';');
   });
 
   // resetEnv()
