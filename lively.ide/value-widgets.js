@@ -592,25 +592,28 @@ export class NumberWidget extends Morph {
   }
 
   relayout (fromScrubber) {
-    const valueContainer = this.getSubmorphNamed('value');
-    const buttonOffset = this.showStepControls ? 20 : 0;
-    if (!valueContainer) return;
-    if (this.autofit) {
-      if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
-      valueContainer.fit();
-      this.height = valueContainer.height;
-      this.width = valueContainer.width + buttonOffset;
-      this.relayoutButtons();
-    } else {
-      if (!fromScrubber) valueContainer.width = this.width - buttonOffset;
-      this.relayoutButtons();
-    }
-    if (!fromScrubber) {
-      valueContainer.value = num.roundTo(this.number * this.scaleFactor, 1);
-      valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
-      valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
-      valueContainer.unit = this.unit;
-    }
+    this.withMetaDo({ metaInteraction: true }, () => {
+      const valueContainer = this.getSubmorphNamed('value');
+      const buttonOffset = this.showStepControls ? 20 : 0;
+      if (!valueContainer) return;
+      valueContainer.readOnly = true;
+      if (this.autofit) {
+        if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
+        valueContainer.fit();
+        this.height = valueContainer.height;
+        this.width = valueContainer.width + buttonOffset;
+        this.relayoutButtons();
+      } else {
+        if (!fromScrubber) valueContainer.width = this.width - buttonOffset;
+        this.relayoutButtons();
+      }
+      if (!fromScrubber && valueContainer.textString != 'Mix') {
+        valueContainer.value = this.floatingPoint ? this.number * this.scaleFactor : num.roundTo(this.number * this.scaleFactor, 1);
+        valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
+        valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
+        valueContainer.unit = this.unit;
+      }
+    });
   }
 
   increment () {
@@ -623,8 +626,6 @@ export class NumberWidget extends Morph {
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
-
-
 
 export class ShadowWidget extends Morph {
   static get properties () {

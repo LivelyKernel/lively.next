@@ -282,10 +282,12 @@ export class Label extends Morph {
   }
 
   fit () {
-    this.extent = this.textBounds().extent().addXY(
-      this.borderWidthLeft + this.borderWidthRight,
-      this.borderWidthTop + this.borderWidthBottom
-    );
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.extent = this.textBounds().extent().addXY(
+        this.borderWidthLeft + this.borderWidthRight,
+        this.borderWidthTop + this.borderWidthBottom
+      );
+    });
     if (!this.visible) {
       this._cachedTextBounds = null;
     } else this._needsFit = false;
@@ -569,4 +571,3 @@ export class Label extends Morph {
     return items;
   }
 }
-

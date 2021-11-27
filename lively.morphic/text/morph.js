@@ -2322,11 +2322,13 @@ export class Text extends Morph {
         this.master && !this.master._appliedMaster) return this;
     const textBounds = this.textBounds().outsetByRect(this.padding);
     const resize = () => {
-      if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
-      if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
-      this.embeddedMorphs.forEach(submorph => {
-        const a = this.embeddedMorphMap.get(submorph).anchor;
-        if (a) a.updateEmbeddedMorph();
+      this.withMetaDo({ metaInteraction: true }, () => {
+        if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
+        if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+        this.embeddedMorphs.forEach(submorph => {
+          const a = this.embeddedMorphMap.get(submorph).anchor;
+          if (a) a.updateEmbeddedMorph();
+        });
       });
     };
     viewState._needsFit = false;
@@ -3481,4 +3483,3 @@ export class Text extends Morph {
     }
   }
 }
-
