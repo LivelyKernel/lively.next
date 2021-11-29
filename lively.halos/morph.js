@@ -11,7 +11,7 @@ import {
 } from 'lively.morphic';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
-import { obj, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
+import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
@@ -38,6 +38,7 @@ export default class Halo extends Morph {
       hasFixedPosition: { defaultValue: true },
       respondsToVisibleWindow: { defaultValue: true },
       acceptsDrops: { defaultValue: false },
+      draggable: { defaultValue: true },
       maskBounds: {
         initialize () {
           this.maskBounds = $world.visibleBounds();
@@ -185,6 +186,7 @@ export default class Halo extends Morph {
     return this.getSubmorphNamed('border-box') || this.addMorphBack(morph({
       name: 'border-box',
       halosEnabled: false,
+      reactsToPointer: false,
       fill: Color.transparent,
       borderColor: this.target.isComponent ? componentAccent : haloBlue,
       borderWidth: 1
@@ -505,6 +507,10 @@ export default class Halo extends Morph {
     this.remove();
   }
 
+  onDrag (evt) {
+    this.target.moveBy(evt.state.dragDelta);
+  }
+
   onMouseDown (evt) {
     const target = evt.state.clickedOnMorph;
     if (!evt.isCommandKey() && target == this.borderBox) {
@@ -513,9 +519,6 @@ export default class Halo extends Morph {
         this.temporaryEditTextMorph(evt);
         return;
       }
-      return promise.delay(200).then(() => {
-        if (evt.state.clickCount != 2) { this.remove(); }
-      });
     }
     if (evt.isShiftDown() && evt.isCommandKey()) {
       const actualMorph = this.target.isMorphSelection
@@ -539,11 +542,6 @@ export default class Halo extends Morph {
     if (target == this && evt.isCommandKey()) {
       const newTarget = this.morphBeneath(evt.position);
       evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
-    }
-    if (target == this) {
-      promise.delay(500).then(() => {
-        this.remove();
-      });
     }
   }
 
@@ -1746,17 +1744,29 @@ class ResizeHandle extends HaloItem {
 
   static for (halo, corner, location, nativeCursor) {
     const name = 'Resize ' + corner;
+    const resizerSize = 10;
     const resizer = halo.getSubmorphNamed(name) || new this({
       name,
       halo,
       corner,
-      tooltip: 'Resize ' + corner,
-      extent: pt(10, 10),
+      tooltip: 'Resize ' + string.decamelize(corner.replace('Center', '')),
+      extent: pt(resizerSize, resizerSize),
       borderWidth: 1,
       borderRadius: 0,
       borderColor: halo.target.isComponent ? componentAccent : haloBlue,
       fill: Color.white
     });
+
+    // if resize one of the sides, make the resizer transparent
+    // and the length of the side
+    if (corner == 'topCenter' || corner == 'bottomCenter') {
+      resizer.width = halo.borderBox.width - resizerSize;
+      resizer.opacity = 0;
+    }
+    if (corner == 'rightCenter' || corner == 'leftCenter') {
+      resizer.height = halo.borderBox.height - resizerSize;
+      resizer.opacity = 0;
+    }
     return Object.assign(resizer, { nativeCursor, location });
   }
 
