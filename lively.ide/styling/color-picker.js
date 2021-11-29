@@ -102,6 +102,14 @@ export class ColorInputModel extends ViewModel {
     }
   }
 
+  closeColorPicker () {
+    if (this.picker) {
+      this.picker.remove();
+      this.picker = null;
+      this.onPickerClosed();
+    }
+  }
+
   async openColorPicker () {
     const { ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js');
     const p = part(ColorPicker, { });

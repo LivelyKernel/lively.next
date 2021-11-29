@@ -233,6 +233,10 @@ export class RichTextControlModel extends ViewModel {
   changeLetterSpacing (spacing) {
     this.changeAttributeInSelectionOrMorph('letterSpacing', spacing);
   }
+
+  deactivate () {
+    this.models.fontColorInput.closeColorPicker();
+  }
 }
 
 // RichTextControl.openInWorld()
@@ -444,6 +448,7 @@ const RichTextControl = component(PropertySection, {
 
   add({
     name: 'bottom wrapper',
+    clipMode: 'hidden',
     extent: pt(251.4, 65.6),
     fill: Color.transparent,
     layout: new TilingLayout({

@@ -49,6 +49,10 @@ export class FillControlModel extends ViewModel {
       // fixme: autofit the image preview
     }
   }
+
+  deactivate () {
+    this.models.fillColorInput.closeColorPicker();
+  }
 }
 
 // FillControl.openInWorld()

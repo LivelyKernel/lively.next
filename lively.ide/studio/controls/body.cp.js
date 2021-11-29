@@ -116,6 +116,8 @@ export class BodyControlModel extends PropertySectionModel {
    */
   deactivate () {
     this.refreshItemLists();
+    // close any open popups
+    this.dynamicControls.forEach(ctr => ctr.closePopup());
     if (this.dynamicControls.length > 0) {
       this.view.master = BodyControl;
       return;
@@ -151,7 +153,7 @@ export class DynamicPropertyModel extends ViewModel {
       },
       isControl: { get () { return true; } },
       expose: {
-        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose']; }
+        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose', 'closePopup']; }
       },
       bindings: {
         get () {
@@ -262,6 +264,7 @@ export class DynamicPropertyModel extends ViewModel {
    */
   closePopup () {
     this.view.fill = Color.transparent;
+    if (!this.popup) return;
     this.popup.remove();
     this.popup = null;
   }

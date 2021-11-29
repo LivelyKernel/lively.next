@@ -120,6 +120,12 @@ export class PropertiesPanelModel extends ViewModel {
   clearFocus () {
     this.ui.backgroundControl.visible = true;
     this.toggleDefaultControls(false);
+    // fixme: clear any open popups
+    this.models.effectsControl.deactivate();
+    this.models.fillControl.deactivate();
+    this.models.borderControl.targetMorph = null;
+    this.models.borderControl.deactivate();
+    this.models.textControl.deactivate();
   }
 
   focusOn (aMorph) {
@@ -127,11 +133,13 @@ export class PropertiesPanelModel extends ViewModel {
     const {
       shapeControl, fillControl, textControl,
       layoutControl, alignmentControl, borderControl,
-      effectsControl
+      effectsControl, backgroundControl
     } = this.models;
 
     this.toggleDefaultControls(true);
+
     this.ui.backgroundControl.visible = false;
+    backgroundControl.deactivate();
 
     shapeControl.focusOn(aMorph);
     if (aMorph.isText || aMorph.isLabel) {
@@ -168,6 +176,8 @@ class BackgroundControlModel extends ViewModel {
   changeBackgroundColor (color) {
     $world.fill = color;
   }
+
+  deactivate () { this.models.backgroundFillInput.closeColorPicker(); }
 }
 
 // BackgroundSection.openInWorld()

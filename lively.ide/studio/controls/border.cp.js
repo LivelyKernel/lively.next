@@ -165,6 +165,8 @@ export class BorderControlModel extends PropertySectionModel {
   deactivate () {
     super.deactivate();
     this.view.master = { auto: PropertySectionInactive, hover: PropertySection };
+    this.closePopup();
+    this.models.borderColorInput.closeColorPicker();
     if (!this.targetMorph) return;
     const { elementsWrapper } = this.ui;
     elementsWrapper.visible = false;
@@ -192,6 +194,7 @@ export class BorderControlModel extends PropertySectionModel {
    * Closes the popup responsible for controlling the property.
    */
   closePopup () {
+    if (!this.popup) return;
     this.popup.close();
     this.popup = null;
   }
@@ -342,6 +345,7 @@ const BorderControlElements = component({
       }]
     }), part(EnumSelector, {
       name: 'border style selector',
+      clipMode: 'hidden',
       extent: pt(90, 22),
       viewModel: {
         items: ['none', 'hidden', 'dotted', 'dashed',
@@ -396,15 +400,6 @@ const BorderPopup = component(DarkPopupWindow, {
           wrapSubmorphs: false
         }),
         submorphs: [
-          // part(AddButton, {
-          //   master: { auto: AddButton, hover: PropertyLabelHovered },
-          //   name: 'all borders',
-          //   padding: rect(4, 4, 0, 0),
-          //   textAndAttributes: ['\ue22f', {
-          //     fontSize: 20,
-          //     textStyleClasses: ['material-icons']
-          //   }]
-          // }),
           part(AddButton, {
             master: { auto: AddButton, hover: PropertyLabelHovered },
             name: 'left border',
