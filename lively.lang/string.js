@@ -1026,6 +1026,21 @@ function camelize (s) {
   return camelized;
 }
 
+function decamelize (s) {
+  // Camels to spaces
+  const len = s.length;
+  let lastSplitAt = 0;
+  const parts = [];
+  for (let i = 0; i < len; i++) {
+    if (s[i] != ' ' && s[i] == s[i].toUpperCase()) {
+      parts.push(s.slice(lastSplitAt, i).toLowerCase());
+      lastSplitAt = i;
+    }
+  }
+  parts.push(s.slice(lastSplitAt).toLowerCase());
+  return parts.join(' ');
+}
+
 function truncate (s, length, truncation) {
   // Enforces that s is not more then `length` characters long.
   // Example:
@@ -1245,5 +1260,6 @@ export {
   longestCommonSubstring,
   applyChange,
   applyChanges,
-  levenshtein
+  levenshtein,
+  decamelize
 };
