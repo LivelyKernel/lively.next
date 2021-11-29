@@ -529,7 +529,7 @@ export default class Halo extends Morph {
         : this.addMorphToSelection(actualMorph);
       return;
     }
-    if (target == this.borderBox && evt.isCommandKey()) {
+    if (target == this && evt.isCommandKey()) {
       // cycle to the next morph below at the point we clicked
       const morphsBelow = evt.world
         .morphsContainingPoint(evt.position)
@@ -539,10 +539,7 @@ export default class Halo extends Morph {
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
       this.remove();
     }
-    if (target == this && evt.isCommandKey()) {
-      const newTarget = this.morphBeneath(evt.position);
-      evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
-    }
+    if (target == this && this.target.isWorld) this.remove();
   }
 
   onContextMenu (evt) {
