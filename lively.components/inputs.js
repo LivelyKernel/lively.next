@@ -3,7 +3,7 @@ import { Morph, HorizontalLayout } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { arr, string } from 'lively.lang';
-import PropertyPath from 'lively.lang/path.js';
+import PropertyPath from 'lively.lang/Path.js';
 
 export class LabeledCheckBoxModel extends ViewModel {
   static get properties () {
