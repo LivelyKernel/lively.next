@@ -531,8 +531,8 @@ export default class Halo extends Morph {
   }
 
   onMouseDown (evt) {
-    const target = evt.state.clickedOnMorph;
-    if (!evt.isCommandKey() && target == this.borderBox) {
+    const evtTarget = evt.state.clickedOnMorph;
+    if (!evt.isCommandKey() && evtTarget == this.borderBox) {
       if (evt.state.clickCount == 2 &&
           this.target.isText) {
         this.temporaryEditTextMorph(evt);
@@ -548,7 +548,7 @@ export default class Halo extends Morph {
         : this.addMorphToSelection(actualMorph);
       return;
     }
-    if (target == this && evt.isCommandKey()) {
+    if (evtTarget == this && evt.isCommandKey()) {
       // cycle to the next morph below at the point we clicked
       const morphsBelow = evt.world
         .morphsContainingPoint(evt.position)
@@ -558,9 +558,10 @@ export default class Halo extends Morph {
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
       this.remove();
     }
-    if (target == this && this.target.isWorld) this.remove();
-    if (target) {
-      if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) this.remove();
+    if (evtTarget == this && this.target.isWorld) { return this.remove(); }
+
+    if (evtTarget == this || evtTarget && !evtTarget.isHaloItem) {
+      if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { this.remove(); }
     }
   }
 
