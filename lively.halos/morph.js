@@ -1129,16 +1129,19 @@ class GrabHaloItem extends HaloItem {
     undo.addTarget(dropTarget);
     dropTarget.onDrop(evt);
     halo.state.activeButton = null;
-    halo.alignWithTarget();
     halo.toggleMorphHighlighter(false, prevDropTarget);
     MorphHighlighter.removeHighlighters(halo);
     halo.target.undoStop('grab-halo');
+    this.opacity = 1;
     if (halo.target.owner.layout) {
+      halo.opacity = 0; // hide the glitch
       halo.target.whenRendered().then(() => {
-        this.opacity = 1;
         halo.alignWithTarget();
+        halo.opacity = 1;
       });
-    } else { this.opacity = 1; }
+    } else {
+      halo.alignWithTarget();
+    }
   }
 
   update () { this.halo.alignWithTarget(); }
