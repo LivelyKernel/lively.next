@@ -228,7 +228,10 @@ export default class Halo extends Morph {
     const boxBounds = targetBounds.intersection(worldBounds);
     // we could fix this, if instead of transforming to world coordinates, we just transform to halo coordinates
 
+    this.setBounds(haloBounds.translatedBy(world.scroll.negated())); // needs adhere to fixedness of halo
+    this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
     if (!this.resizeOnly) this.originHalo().alignInHalo();
+    this.nameHalo().alignInHalo();
 
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
@@ -244,9 +247,7 @@ export default class Halo extends Morph {
       }).forEach(b => { b.visible = true; });
       this.propertyDisplay.disable();
     }
-    this.setBounds(haloBounds.translatedBy(world.scroll.negated())); // needs adhere to fixedness of halo
-    this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
-    this.nameHalo().alignInHalo();
+
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
     return this;
   }
@@ -1132,7 +1133,12 @@ class GrabHaloItem extends HaloItem {
     halo.toggleMorphHighlighter(false, prevDropTarget);
     MorphHighlighter.removeHighlighters(halo);
     halo.target.undoStop('grab-halo');
-    this.opacity = 1;
+    if (halo.target.owner.layout) {
+      halo.target.whenRendered().then(() => {
+        this.opacity = 1;
+        halo.alignWithTarget();
+      });
+    } else { this.opacity = 1; }
   }
 
   update () { this.halo.alignWithTarget(); }
@@ -1183,6 +1189,7 @@ class DragHaloItem extends HaloItem {
     this.halo.target.undoStop('drag-halo');
     this.halo.state.activeButton = null;
     this.halo.alignWithTarget();
+    this.halo.originHalo().alignInHalo();
     this.halo.indicateLooseMovement(false);
     this._dontShowPosition = false;
     this.updateAlignmentGuide(false);
