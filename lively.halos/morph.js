@@ -507,8 +507,19 @@ export default class Halo extends Morph {
     this.remove();
   }
 
+  onDragStart (evt) {
+    this.dragHalo().init();
+  }
+
   onDrag (evt) {
-    this.target.moveBy(evt.state.dragDelta);
+    // fixme: invoke the default dragging interface
+    this.dragHalo().update(evt.state.dragDelta);
+    this.dragHalo().visible = false;
+  }
+
+  onDragEnd (evt) {
+    this.dragHalo().stop();
+    this.dragHalo().visible = true;
   }
 
   onMouseDown (evt) {
@@ -540,6 +551,9 @@ export default class Halo extends Morph {
       this.remove();
     }
     if (target == this && this.target.isWorld) this.remove();
+    if (target) {
+      if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) this.remove();
+    }
   }
 
   onContextMenu (evt) {
