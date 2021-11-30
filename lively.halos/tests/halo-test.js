@@ -5,6 +5,7 @@ import { expect } from 'mocha-es6';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { num, promise, fun } from 'lively.lang';
 import { show } from '../index.js';
+import { LivelyWorld } from 'lively.ide/world.js';
 
 let describeInBrowser = System.get('@system-env').browser
   ? describe
@@ -13,7 +14,7 @@ let describeInBrowser = System.get('@system-env').browser
 let world, submorph1, submorph2, submorph3, eventDispatcher;
 function createDummyWorld () {
   world = morph({
-    type: 'world',
+    type: LivelyWorld,
     name: 'world',
     extent: pt(1000, 1000),
     submorphs: [{
@@ -386,7 +387,7 @@ describeInBrowser('halos', function () {
     hand.update({ halo, position: submorph1.globalBounds().center() });
     expect(halo.borderBox.globalPosition).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(hand);
-    halo.grabHalo().stop(hand);
+    halo.grabHalo().stop({ hand });
     expect(halo.borderBox.globalPosition).equals(submorph2.globalBounds().topLeft());
     expect(submorph2.owner).equals(submorph1);
   });
@@ -395,11 +396,10 @@ describeInBrowser('halos', function () {
     let halo = await world.showHaloFor(submorph2);
     let hand = world.handForPointerId('test-pointer');
     halo.copyHalo().init(hand);
-    let copy = halo.target;
+    let [copy] = hand.grabbedMorphs;
     expect(copy).not.equals(submorph2);
     hand.position = submorph1.globalBounds().center();
     halo.copyHalo().stop(hand);
-    expect(halo.borderBox.globalPosition).equals(copy.globalBounds().topLeft());
     expect(copy.owner).equals(submorph1);
   });
 });

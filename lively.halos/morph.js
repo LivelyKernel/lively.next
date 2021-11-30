@@ -228,6 +228,8 @@ export default class Halo extends Morph {
     const boxBounds = targetBounds.intersection(worldBounds);
     // we could fix this, if instead of transforming to world coordinates, we just transform to halo coordinates
 
+    if (!this.resizeOnly) this.originHalo().alignInHalo();
+
     if (this.state.activeButton) {
       this.buttonControls.forEach(ea => ea.visible = false);
       this.ensureResizeHandles().forEach(h => h.visible = false);
@@ -246,7 +248,6 @@ export default class Halo extends Morph {
     this.borderBox.setBounds($world.transformRectToMorph(this, boxBounds));
     this.nameHalo().alignInHalo();
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
-    if (!this.resizeOnly) this.originHalo().alignInHalo();
     return this;
   }
 
