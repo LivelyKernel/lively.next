@@ -59,7 +59,9 @@ export class MorphPanelModel extends ViewModel {
   }
 
   selectNode (target) {
-    this.ui.sceneGraph.selectMorphInTarget(target);
+    if (Array.isArray(target) && target.length == 1) target = target[0];
+    // fixme: add support for multi selections of 2 or more morphs
+    if (target.isMorph) { this.ui.sceneGraph.selectMorphInTarget(target); }
   }
 
   clearFocus () {

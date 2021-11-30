@@ -130,6 +130,10 @@ export class PropertiesPanelModel extends ViewModel {
 
   focusOn (aMorph) {
     if (aMorph.isWorld) return;
+    if (Array.isArray(aMorph) && aMorph.length == 1) aMorph = aMorph[0];
+    // ignore multi selections of more than one morph for now.
+    // fixme: We still do not support multi select targets... add support for that in the future
+    if (!aMorph.isMorph) return;
     const {
       shapeControl, fillControl, textControl,
       layoutControl, alignmentControl, borderControl,
