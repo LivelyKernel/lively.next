@@ -178,7 +178,6 @@ export class TopBarModel extends ViewModel {
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    super.__additionally_serialize__(snapshot, ref, pool, addFn);
     addFn('haloFilterFn', this.getProperty('haloFilterFn'));
   }
 
