@@ -232,7 +232,7 @@ export class MorphNodeModel extends ViewModel {
         derived: true,
         get () {
           if (this.target) {
-            if (this.submorphs[0].textString.slice(2, -1) != this.target.name) return true;
+            if (this.ui.nameLabel.textString.slice(2, -1) != this.target.name) return true;
             if (this.connectionCount != (this.target.attributeConnections || []).length) return true;
           }
           return false;
@@ -246,7 +246,7 @@ export class MorphNodeModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['refresh', 'highlightTerm', 'target', 'dragTriggerDistance', 'isContainer', 'onDragOutside', 'tree', 'insertAsChild', 'onChildAdded', 'onChildRemoved'];
+          return ['refresh', 'highlightTerm', 'target', 'dragTriggerDistance', 'isContainer', 'onDragOutside', 'tree', 'insertAsChild', 'onChildAdded', 'onChildRemoved', 'nameNeedsUpdate'];
         }
       },
       bindings: {
