@@ -509,10 +509,11 @@ export default class Halo extends Morph {
 
   onDragStart (evt) {
     this.dragHalo().init();
+    this._lastDragPos = evt.startPosition;
   }
 
   onDrag (evt) {
-    // fixme: invoke the default dragging interface
+    if (!this.world()) return;
     this.dragHalo().update(evt.state.dragDelta);
     this.dragHalo().visible = false;
   }
@@ -520,6 +521,13 @@ export default class Halo extends Morph {
   onDragEnd (evt) {
     this.dragHalo().stop();
     this.dragHalo().visible = true;
+  }
+
+  customDrag (evt) {
+    if (!this.world()) return;
+    this.dragHalo().update(evt.position.subPt(this._lastDragPos));
+    this.dragHalo().visible = false;
+    this._lastDragPos = evt.position;
   }
 
   onMouseDown (evt) {

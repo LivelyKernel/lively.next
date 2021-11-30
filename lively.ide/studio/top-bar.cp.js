@@ -479,6 +479,11 @@ export class TopBarModel extends ViewModel {
   }
 
   handleShapeCreation (evt) {
+    if (this._customDrag) {
+      this._customDrag = false;
+      this.world().halos()[0].onDragEnd();
+    }
+
     const target = this.primaryTarget || this.world();
     const type = target._yieldShapeOnClick;
     if (!type) return false;
@@ -653,6 +658,21 @@ export class TopBarModel extends ViewModel {
         return;
       }
       this.showHaloPreviewFor(haloTarget);
+    }
+
+    if (evt.state.draggedMorph) return;
+
+    const [halo] = this.world().halos();
+
+    if (halo && this._customDrag && evt.leftMouseButtonPressed()) {
+      halo.customDrag(evt);
+    }
+
+    if (evt.leftMouseButtonPressed() &&
+        !this._customDrag &&
+        halo) {
+      halo.onDragStart(evt);
+      this._customDrag = true;
     }
   }
 
