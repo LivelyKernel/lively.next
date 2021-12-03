@@ -118,8 +118,11 @@ export class PropertyAnimation {
       const shadowBefore = morph.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0 });
       const shadowAfter = config.dropShadow;
       config.customTween = fun.compose(p => {
-        morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0 }));
-        if (p == 1) morph.dropShadow = shadowAfter;
+        morph.withMetaDo({ metaInteraction: true }, () => {
+          morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0 }));
+          if (p == 1) morph.dropShadow = shadowAfter;
+        });
+
         return p;
       }, config.customTween || (p => {}));
       delete config.dropShadow;
@@ -380,12 +383,16 @@ export class PropertyAnimation {
           const originNode = node.childNodes[0];
           originNode && this.tween(
             originNode,
-            originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
-              transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
-            },
-            originNode.style.top ? { left: `${b.x}px`, top: `${b.y}px` } : {
-              transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
-            }
+            originNode.style.top
+              ? { left: `${b.x}px`, top: `${b.y}px` }
+              : {
+                  transform: `translate3d(${b.x}px, ${b.y}px, 0px)`
+                },
+            originNode.style.top
+              ? { left: `${b.x}px`, top: `${b.y}px` }
+              : {
+                  transform: `translate3d(${a.x}px, ${a.y}px, 0px)`
+                }
           );
         }
       } catch (e) {
