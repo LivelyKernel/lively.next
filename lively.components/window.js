@@ -9,6 +9,7 @@ import {
 } from 'lively.morphic';
 import { connect, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
+import { DefaultWindow, DefaultWindowInactive } from './window.cp.js';
 
 export default class Window extends Morph {
   static get properties () {
@@ -39,7 +40,7 @@ export default class Window extends Morph {
 
       master: {
         initialize () {
-          this.master = { auto: 'styleguide://System/window/light/active' };
+          this.master = { auto: DefaultWindow };
         }
       },
 
@@ -641,7 +642,7 @@ export default class Window extends Morph {
     }
 
     this.master.whenApplied().then(() => {
-      this.master = { auto: 'styleguide://System/window/light/active' };
+      this.master = { auto: DefaultWindow };
     });
 
     if (!this.world()) this.openInWorldNearHand();
@@ -661,9 +662,9 @@ export default class Window extends Morph {
     // if (this.styleClasses.includes('inactive')) return;
     // this.removeStyleClass('active');
     // this.addStyleClass('inactive');
-    if (this.master && this.master.auto == 'styleguide://System/window/light/inactive') return;
+    if (this.master && this.master.auto == DefaultWindowInactive) return;
     this.master.whenApplied().then(() => {
-      this.master = { auto: 'styleguide://System/window/light/inactive' };
+      this.master = { auto: DefaultWindowInactive };
     });
     this.relayoutWindowControls();
     this.renderOnGPU = false;
