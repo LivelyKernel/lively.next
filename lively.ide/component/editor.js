@@ -22,7 +22,7 @@ astq.adapter('mozast');
 const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
-// convertToSpec(this.get('scene graph'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
+// convertToSpec(this.get('header buttons'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
 
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
@@ -53,7 +53,8 @@ function convertToSpec (aMorph, opts = {}) {
       return val;
     },
     ...opts
-  });
+  }) || { __expr__: false };
+  if (!expr) return;
   return {
     bindings,
     __expr__: `${expr.match(/morph\(([^]*)\)/)[1]}`
@@ -378,6 +379,7 @@ export class ComponentChangeTracker {
       masterInScope,
       skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type']
     });
+    if (!uncollapsedHierarchyExpr) return sourceCode;
     // insert at the right position
     return this.addMorph(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, sourceEditor);
   }
