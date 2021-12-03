@@ -1,7 +1,39 @@
 import { component } from 'lively.morphic/components/core.js';
-import { Text, Icon, ShadowObject, Label, HorizontalLayout } from 'lively.morphic';
+import { Text, InputLine, Icon, ShadowObject, Label, HorizontalLayout } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { LabeledCheckBoxModel, CheckBoxMorph, SearchFieldModel } from './inputs.js';
+
+// InputLineDefault.openInWorld()
+const InputLineDefault = component({
+  type: InputLine,
+  name: 'input line light',
+  highlightWhenFocused: true,
+  borderColor: Color.rgb(204, 204, 204),
+  borderRadius: 4,
+  dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
+  haloShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
+  extent: pt(318.1, 34.3),
+  fontFamily: 'IBM Plex Sans',
+  fontSize: 20,
+  padding: rect(10, 3, 0, 0),
+  placeholder: 'Name',
+  submorphs: [{
+    type: Label,
+    name: 'placeholder',
+    fontColor: Color.rgb(204, 204, 204),
+    fontFamily: 'Nunito',
+    fontSize: 20,
+    padding: rect(10, 3, 0, 0),
+    reactsToPointer: false,
+    textAndAttributes: ['Name', null]
+  }]
+});
+
+// InputLineDark.openInWorld()
+const InputLineDark = component(InputLineDefault, {
+  name: 'input line dark',
+  fill: Color.rgb(229, 231, 233)
+});
 
 const LabeledCheckBox = component({
   defaultViewModel: LabeledCheckBoxModel,
@@ -71,4 +103,4 @@ const SearchField = component({
   }]
 });
 
-export { LabeledCheckBox, SearchField };
+export { LabeledCheckBox, SearchField, InputLineDefault, InputLineDark };

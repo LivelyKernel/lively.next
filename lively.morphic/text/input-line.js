@@ -572,16 +572,20 @@ export class PasswordInputLine extends HTMLMorph {
     super.onFocus(evt);
     if (this._originalShadow) return;
     this._originalShadow = this.dropShadow;
-    this.highlightWhenFocused && this.animate({
-      dropShadow: this.haloShadow, duration: 200
-    });
+    this.withAnimationDo(() => {
+      this.withMetaDo({ metaInteraction: true }, () => {
+        if (this.highlightWhenFocused) this.dropShadow = this.haloShadow;
+      });
+    }, { duration: 200 });
   }
 
   onBlur (evt) {
     super.onBlur(evt);
-    this.highlightWhenFocused && this.animate({
-      dropShadow: this._originalShadow || null, duration: 200
-    });
+    this.withAnimationDo(() => {
+      this.withMetaDo({ metaInteraction: true }, () => {
+        if (this.highlightWhenFocused) this.dropShadow = this._originalShadow || null;
+      });
+    }, { duration: 200 });
     this._originalShadow = null;
   }
 
