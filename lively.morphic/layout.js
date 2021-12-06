@@ -754,23 +754,33 @@ export class TilingLayout extends Layout {
 
     const offset = this.computeOffset(morph);
 
-    const margin = {};
+    const margin = { top: 0, left: 0, bottom: 0, right: 0 };
 
-    margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
-    margin.bottom = bounds.bottom() - morph.height - originOffset.y - offset.bottom;
-    margin.left = Math.max(0, -bounds.left()) + originOffset.x - offset.left;
-    margin.right = bounds.right() - morph.width - originOffset.x - offset.right;
+    if (node) {
+      // this is not doing the right thing if the resize policy asks the morph to
+      // fill via height and is not yet rendered
+      margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
+      margin.bottom = bounds.bottom() - morph.height - originOffset.y - offset.bottom;
+      margin.left = Math.max(0, -bounds.left()) + originOffset.x - offset.left;
+      margin.right = bounds.right() - morph.width - originOffset.x - offset.right;
+    }
 
     this.adjustMargin(margin, morph);
 
     if (this.getResizeWidthPolicyFor(morph) == 'fill') {
       if (isVertical) {
         style.width = `calc(100% + ${margin.offset}px)`;
+        margin.left = 0;
+        margin.right = 0;
       } else { style.width = 'unset'; style.flexGrow = 1; } // let flex handle that
     }
     if (this.getResizeHeightPolicyFor(morph) == 'fill') {
       if (isVertical) { style.height = 'unset'; style.flexGrow = 1; } // let flex handle that
-      else { style.height = `calc(100% + ${margin.offset}px)`; }
+      else {
+        style.height = `calc(100% + ${margin.offset}px)`;
+        margin.bottom = 0;
+        margin.top = 0;
+      }
     }
     style.position = 'relative';
     if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.get(morph)) {
