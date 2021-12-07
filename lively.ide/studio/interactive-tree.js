@@ -412,7 +412,8 @@ export class SceneGraphTree extends InteractiveTree {
     if (node) return;
     this.refresh();
     this.treeData.followPath([morph, ...morph.ownerChain()].reverse(), (m, node) => {
-      return node.container && node.container.target == m;
+      if (!node.container) node.container = node.getContainer();
+      if (node.container) return node.container.target == m;
     }).then(node => {
       if (node) this.selectedNode = node;
     });
