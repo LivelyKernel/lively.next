@@ -204,7 +204,7 @@ export class BorderControlModel extends PropertySectionModel {
    * This is invoked in response to user interactions.
    */
   confirm () {
-    if (!this.targetMorph) return;
+    if (!this.targetMorph && this.updateDirectly) return;
     const { borderColorInput, borderWidthInput, borderStyleSelector } = this.ui;
     const border = {
       color: borderColorInput.colorValue,
