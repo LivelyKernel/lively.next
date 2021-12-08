@@ -562,7 +562,7 @@ export default class Halo extends Morph {
     }
     if (evtTarget == this && this.target.isWorld) { return this.remove(); }
 
-    if (evtTarget == this || evtTarget && !evtTarget.isHaloItem) {
+    if (evtTarget == this || evtTarget && !evtTarget.isHaloItem && !this.nameHalo().nameHolders.includes(evtTarget.owner)) {
       if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { this.remove(); }
     }
   }
