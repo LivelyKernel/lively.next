@@ -122,7 +122,7 @@ export class ComponentPolicy {
     if (click) this.click = click;
     if (auto) this.auto = auto;
     if (hover) this.hover = hover;
-    this.resolveMasterComponents();
+    if ([light, dark, click, auto, hover].find(v => typeof v === 'string')) { this.resolveMasterComponents(); }
   }
 
   uses (masterComponent) {
@@ -198,7 +198,9 @@ export class ComponentPolicy {
   __after_deserialize__ (snapshot, objRef) {
     this._overriddenProps = new WeakMap();
     delete this.managedMorphs;
-    this.resolveMasterComponents();
+    const { light, dark, click, auto, hover } = this;
+    if ([light, dark, click, auto, hover].find(v => typeof v === 'string')) { this.resolveMasterComponents(); }
+    // this.resolveMasterComponents(); // this causes some weird race conditions...
   }
 
   async whenApplied () {
@@ -273,14 +275,19 @@ export class ComponentPolicy {
     const target = this.derivedMorph;
     // when does this happen???
     if (!target.env.world) {
-      // wait for env to be installed
+      // wait for env to be installed but already prepare the morph
+      // such that in case it is getting copied before the first application
+      // the overridden props are carried over properly
+      if (!this._hasUnresolvedMaster) this.prepareSubmorphsToBeManaged(target, this.auto);
       once(target.env, 'world', () => {
+        // remove the parametrized props from the submorph hierarchy here
         this.applyIfNeeded(needsUpdate, animationConfig);
       });
       return;
     }
     if (!target.env.eventDispatcher) {
-      // wait for env to be installed fully
+      // wait for env to be installed fully but already prepare the morph
+      if (!this._hasUnresolvedMaster) this.prepareSubmorphsToBeManaged(target, this.auto);
       once(target.env, 'eventDispatcher', () => {
         this.applyIfNeeded(needsUpdate, animationConfig);
       });
