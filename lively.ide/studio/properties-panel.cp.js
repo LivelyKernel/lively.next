@@ -12,6 +12,7 @@ import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
 import { ColorInput } from 'lively.ide/styling/color-picker.cp.js';
 import { connect } from 'lively.bindings';
+import { DarkColorPicker } from './dark-color-picker.cp.js';
 
 ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
@@ -207,7 +208,7 @@ const BackgroundControl = component(PropertySection, {
       name: 'section headline',
       textAndAttributes: ['Background', null]
     }, without('add button'), without('remove button')]
-  }, add(part(ColorInput, { name: 'background fill input', viewModle: { gradientEnabled: true } }))]
+  }, add(part(ColorInput, { name: 'background fill input', viewModel: { gradientEnabled: true, colorPickerComponent: DarkColorPicker } }))]
 });
 
 // bar = part(PropertiesPanel);

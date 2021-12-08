@@ -10,6 +10,7 @@ import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
 import { disconnect, connect } from 'lively.bindings';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
+import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
 export class RichTextControlModel extends ViewModel {
   static get properties () {
@@ -422,6 +423,9 @@ const RichTextControl = component(PropertySection, {
       })]
   }), add(part(ColorInput, {
     name: 'font color input',
+    viewModel: {
+      colorPickerComponent: DarkColorPicker
+    },
     layout: new TilingLayout({
       axisAlign: 'center',
       orderByIndex: true,

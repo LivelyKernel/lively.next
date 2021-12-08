@@ -7,6 +7,7 @@ import { NumberWidget } from '../../value-widgets.js';
 import { arr, string } from 'lively.lang';
 import { once, connect, signal } from 'lively.bindings';
 import { PropertySection, PropertySectionModel, PropertySectionInactive } from './section.cp.js';
+import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
 /**
  * Implements the control elements for border values. This includes the color, width and style of the border.
@@ -317,7 +318,12 @@ const BorderControlElements = component({
     wrapSubmorphs: true,
     hugContentsVertically: true
   }),
-  submorphs: [part(ColorInput, { name: 'border color input' }), {
+  submorphs: [part(ColorInput, {
+    name: 'border color input',
+    viewModel: {
+      colorPickerComponent: DarkColorPicker
+    }
+  }), {
     name: 'border width control',
     extent: pt(196.4, 25),
     fill: Color.rgba(255, 255, 255, 0),

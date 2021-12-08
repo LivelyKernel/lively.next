@@ -23,6 +23,7 @@ export class ColorInputModel extends ViewModel {
   static get properties () {
     return {
       targetMorph: {},
+      colorPickerComponent: {},
       gradientEnabled: {
         defaultValue: false,
         after: ['colorValue']
@@ -54,6 +55,16 @@ export class ColorInputModel extends ViewModel {
         }
       }
     };
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    if (this.colorPickerComponent) {
+      const expr = this.colorPickerComponent[Symbol.for('lively-module-meta')];
+      addFn('colorPickerComponent', pool.expressionSerializer.exprStringEncode({
+        __expr__: expr.export,
+        bindings: { [expr.module]: expr.export }
+      }));
+    }
   }
 
   setMixed (colors) {
@@ -111,7 +122,8 @@ export class ColorInputModel extends ViewModel {
   }
 
   async openColorPicker () {
-    const { ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js');
+    let ColorPicker = this.colorPickerComponent;
+    if (!ColorPicker) ({ ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js'));
     const p = part(ColorPicker, { });
     const color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;

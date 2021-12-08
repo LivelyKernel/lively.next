@@ -6,6 +6,7 @@ import { PropertyLabel, PropLabel, AddButton, NumberInput, DarkPopupWindow, Remo
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, obj, string, arr } from 'lively.lang';
 import { signal, once, connect } from 'lively.bindings';
+import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
 /**
   Controls the morph's "body" which comprises all of the dynamic effect properties.
@@ -520,6 +521,9 @@ const ShadowPopup = component(DarkPopupWindow, {
   }), add(part(ColorInput, {
     name: 'shadow color input',
     height: 27,
+    viewModel: {
+      colorPickerComponent: DarkColorPicker
+    },
     submorphs: [{
       name: 'hex input',
       extent: pt(70, 23),

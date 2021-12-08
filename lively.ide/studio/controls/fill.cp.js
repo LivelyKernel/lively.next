@@ -4,6 +4,7 @@ import { ColorInput } from '../../styling/color-picker.cp.js';
 import { TilingLayout, Image } from 'lively.morphic';
 import { PropLabel } from '../shared.cp.js';
 import { PropertySection } from './section.cp.js';
+import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
 export class FillControlModel extends ViewModel {
   static get properties () {
@@ -70,7 +71,10 @@ const FillControl = component(PropertySection, {
       }]
   }, add(part(ColorInput, {
     name: 'fill color input',
-    viewModel: { gradientEnabled: true },
+    viewModel: {
+      gradientEnabled: true,
+      colorPickerComponent: DarkColorPicker
+    },
     extent: pt(250, 27)
   })), add({
     name: 'image control',
