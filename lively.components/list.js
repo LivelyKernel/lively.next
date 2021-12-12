@@ -712,80 +712,81 @@ export class List extends Morph {
   update () {
     const items = this.items;
     if (!items || !this.scroller) return; // pre-initialize
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.dontRecordChangesWhile(() => {
+        var {
+          itemHeight,
+          itemMorphs, listItemContainer,
+          selectedIndexes,
+          extent: { x: width, y: height },
+          fontSize, fontFamily, fontColor,
+          padding, itemPadding, selectionColor,
+          selectionFontColor, nonSelectionFontColor,
+          itemBorderRadius, scrollBar, scroller, scrollable
+        } = this;
+        const { scroll: { x: left, y: top } } = scroller;
+        var padding = padding || Rectangle.inset(0);
+        const padTop = padding.top(); const padLeft = padding.left();
+        const padBottom = padding.bottom(); const padRight = padding.right();
+        const firstItemIndex = Math.max(0, Math.floor((top) / itemHeight));
+        const lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2);
+        let maxWidth = 0;
+        const goalWidth = this.width - (padLeft + padRight);
 
-    this.dontRecordChangesWhile(() => {
-      var {
-        itemHeight,
-        itemMorphs, listItemContainer,
-        selectedIndexes,
-        extent: { x: width, y: height },
-        fontSize, fontFamily, fontColor,
-        padding, itemPadding, selectionColor,
-        selectionFontColor, nonSelectionFontColor,
-        itemBorderRadius, scrollBar, scroller, scrollable
-      } = this;
-      const { scroll: { x: left, y: top } } = scroller;
-      var padding = padding || Rectangle.inset(0);
-      const padTop = padding.top(); const padLeft = padding.left();
-      const padBottom = padding.bottom(); const padRight = padding.right();
-      const firstItemIndex = Math.max(0, Math.floor((top) / itemHeight));
-      const lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2);
-      let maxWidth = 0;
-      const goalWidth = this.width - (padLeft + padRight);
+        // try to keep itemIndexes in the items that were initially assigned to them
+        let rest, upper, lower;
 
-      // try to keep itemIndexes in the items that were initially assigned to them
-      let rest, upper, lower;
+        itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
+        [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
+        [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
+        itemMorphs = [...lower, ...rest, ...upper];
 
-      itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
-      [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
-      [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
-      itemMorphs = [...lower, ...rest, ...upper];
+        for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
+          const itemIndex = firstItemIndex + i;
+          const item = items[itemIndex];
 
-      for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
-        const itemIndex = firstItemIndex + i;
-        const item = items[itemIndex];
-
-        if (!item) {
+          if (!item) {
           // if no items to display, remove remaining itemMorphs
-          itemMorphs.slice(i).forEach(itemMorph => {
-            itemMorph.remove();
-          });
-          break;
+            itemMorphs.slice(i).forEach(itemMorph => {
+              itemMorph.remove();
+            });
+            break;
+          }
+
+          const style = {
+            fontSize,
+            fontFamily,
+            fontColor: nonSelectionFontColor || fontColor,
+            padding: itemPadding,
+            borderRadius: itemBorderRadius || 0,
+            selectionFontColor,
+            nonSelectionFontColor,
+            selectionColor
+          }; let itemMorph = itemMorphs[i];
+
+          if (!itemMorph) {
+            itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+          }
+          itemMorph.reactsToPointer = !scrollable;
+          itemMorph.displayItem(
+            item, itemIndex,
+            goalWidth, itemHeight,
+            pt(0, itemHeight * itemIndex),
+            selectedIndexes.includes(itemIndex),
+            style);
+
+          maxWidth = Math.max(maxWidth, itemMorph.width);
         }
 
-        const style = {
-          fontSize,
-          fontFamily,
-          fontColor: nonSelectionFontColor || fontColor,
-          padding: itemPadding,
-          borderRadius: itemBorderRadius || 0,
-          selectionFontColor,
-          nonSelectionFontColor,
-          selectionColor
-        }; let itemMorph = itemMorphs[i];
+        itemMorphs.slice(lastItemIndex - firstItemIndex).forEach(ea => ea.remove());
 
-        if (!itemMorph) {
-          itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
-        }
-        itemMorph.reactsToPointer = !scrollable;
-        itemMorph.displayItem(
-          item, itemIndex,
-          goalWidth, itemHeight,
-          pt(0, itemHeight * itemIndex),
-          selectedIndexes.includes(itemIndex),
-          style);
-
-        maxWidth = Math.max(maxWidth, itemMorph.width);
-      }
-
-      itemMorphs.slice(lastItemIndex - firstItemIndex).forEach(ea => ea.remove());
-
-      const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
-      listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
-      scroller.extent = this.extent.subXY(this.borderWidthRight, this.borderWidthBottom);
-      scrollBar.left = maxWidth / 2;
-      scroller.position = pt(0, 0);
-      scrollBar.extent = pt(1, totalItemHeight);
+        const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
+        listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
+        scroller.extent = this.extent.subXY(this.borderWidthRight, this.borderWidthBottom);
+        scrollBar.left = maxWidth / 2;
+        scroller.position = pt(0, 0);
+        scrollBar.extent = pt(1, totalItemHeight);
+      });
     });
   }
 
@@ -1167,13 +1168,15 @@ export class FilterableList extends Morph {
 
   relayout () {
     const { listMorph, inputMorph, paddingMorph, borderWidth: offset } = this;
-    inputMorph.topLeft = pt(offset, offset);
-    inputMorph.width = listMorph.width = this.width - 2 * offset;
-    if (paddingMorph) {
-      paddingMorph.topLeft = inputMorph.bottomLeft;
-    }
-    listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
-    listMorph.height = Math.floor(this.height - listMorph.top - offset);
+    this.withMetaDo({ metaInteraction: true }, () => {
+      inputMorph.topLeft = pt(offset, offset);
+      inputMorph.width = listMorph.width = this.width - 2 * offset;
+      if (paddingMorph) {
+        paddingMorph.topLeft = inputMorph.bottomLeft;
+      }
+      listMorph.position = paddingMorph ? paddingMorph.bottomLeft : inputMorph.bottomLeft;
+      listMorph.height = Math.floor(this.height - listMorph.top - offset);
+    });
   }
 
   focus () { this.get('input').focus(); }
