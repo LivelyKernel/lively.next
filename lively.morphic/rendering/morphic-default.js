@@ -270,7 +270,7 @@ export class ShadowObject {
   }
 
   equals (other) {
-    return !!other && obj.equals(this.toJson(), other.toJson());
+    return !!other && other.isShadowObject && obj.equals(this.toJson(), other.toJson());
   }
 
   toFilterCss () {
