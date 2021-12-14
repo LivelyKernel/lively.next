@@ -521,6 +521,10 @@ export class ComponentChangeTracker {
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args.some(m => m.epiMorph)) return true;
     if (change.selector != 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
+    const { changeManager } = change.target.env;
+    if (change.selector != 'addMorphAt' && changeManager.changeGroupStack.length > 0) {
+      return true;
+    }
     if (!change.selector && obj.equals(change.prevValue, change.value)) return true;
     return false;
   }
