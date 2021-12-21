@@ -5,6 +5,7 @@ import { TilingLayout, Image } from 'lively.morphic';
 import { PropLabel } from '../shared.cp.js';
 import { PropertySection } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
+import { obj } from 'lively.lang';
 
 export class FillControlModel extends ViewModel {
   static get properties () {
@@ -38,6 +39,7 @@ export class FillControlModel extends ViewModel {
 
   confirm () {
     if (!this.targetMorph) return;
+    if (obj.equals(this.targetMorph.fill, this.ui.fillColorInput.colorValue)) return;
     this.targetMorph.fill = this.ui.fillColorInput.colorValue;
   }
 
