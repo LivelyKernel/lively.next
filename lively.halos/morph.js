@@ -924,7 +924,7 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const isLocal = appliedMaster && !!target.world().localComponents.includes(appliedMaster);
+      const isLocal = appliedMaster && !!$world.localComponents.includes(appliedMaster);
       const linkToWorld = appliedMaster ? target.master.getWorldUrlFor(appliedMaster) : 'this project';
       const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
