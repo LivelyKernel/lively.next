@@ -249,7 +249,7 @@ export default class ObjectEditorContext {
   }
 
   async selectClass (className) {
-    // what if classes names are the same, but located in different modules?
+    // fixme: what if classes names are the same, but located in different modules?
     this.selectedClassName = await this.withContextDo(() => {
       const klass = this.classChainOfTarget().find(ea => ea[Symbol.for('__LivelyClassName__')] === className);
       this.selectedMethod = null;
