@@ -1,8 +1,8 @@
 import { component, part } from 'lively.morphic/components/core.js';
-import { ObjectEditor, ObjectEditorModel, ImportControllerModel } from './index.js';
+import { ObjectEditorModel, ImportControllerModel } from './index.js';
 import { pt, rect, Color } from 'lively.graphics';
-import { GridLayout, TilingLayout, ShadowObject, Text, Label, Icon, HorizontalLayout, ProportionalLayout } from 'lively.morphic';
-import { Button, Tree, ListScroller, List } from 'lively.components';
+import { GridLayout, TilingLayout, Text, Icon, HorizontalLayout } from 'lively.morphic';
+import { Tree } from 'lively.components';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { DefaultList } from 'lively.components/list.cp.js';
 import { obj } from 'lively.lang';

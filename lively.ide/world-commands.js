@@ -941,7 +941,7 @@ const commands = [
         return null;
       }
       const li = args.loadingIndicator = LoadingIndicator.open('Open Object Editor...');
-      const { ObjectEditor } = await System.import('lively.ide/js/objecteditor/index.js');
+      const ObjectEditor = await System.import('lively.ide/js/objecteditor/ui.cp.js');
       const ed = await ObjectEditor.open(args);
       li.remove();
       return ed;
