@@ -47,6 +47,10 @@ export class ButtonModel extends ViewModel {
         serialize: false
       },
 
+      expose: {
+        get () { return ['enable', 'disable']; }
+      },
+
       bindings: {
         get () {
           return [
