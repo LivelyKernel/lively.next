@@ -127,7 +127,12 @@ export var snippets = [
   ['fn', 'function($0) {$1}'],
   ['f', '($0) => $1'],
 
-  ['aw', 'await $0']
+  ['aw', 'await $0'],
+
+  // jsdoc
+  ['docstring', `/*
+ * \${0:description}
+ */`]
 
 ];
 
