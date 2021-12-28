@@ -43,7 +43,11 @@ export class AlignmentManager extends ViewModel {
     if (!this.targetMorph) return;
     const owner = this.targetMorph.owner;
     if (owner.isWorld) return;
-    if (!owner.layout && (x != 'fixed' || y != 'fixed')) { owner.layout = new ProportionalLayout({}); }
+    if (!owner.layout && (x != 'fixed' || y != 'fixed')) {
+      owner.layout = new ProportionalLayout({
+        submorphSettings: owner.submorphs.map(m => [m.name, { x: 'fixed', y: 'fixed' }])
+      });
+    }
     return owner.layout;
   }
 
