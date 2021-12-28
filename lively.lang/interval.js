@@ -8,7 +8,7 @@ import { timeToRunN } from './function.js';
 // [`interval.isInterval`](). This abstraction is useful when working with text
 // ranges in rich text, for example.
 
-const GLOBAL = typeof System !== 'undefined' ? System.global
+const GLOB = typeof System !== 'undefined' ? System.global
   : (typeof window !== 'undefined' ? window : global);
 
 function isInterval (object) {
@@ -128,7 +128,7 @@ function intervalsInRangeDo (start, end, intervals, iterator, mergeFunc, context
   //   function(i, isNew) { i.push(isNew); return i; })
   // // => [[2,4,false],[4,5,true],[5,8,false],[8,10,true]]
 
-  context = context || GLOBAL;
+  context = context || GLOB;
   // need to be sorted for the algorithm below
   intervals = this.sort(intervals);
   const free = []; let nextInterval; const collected = [];

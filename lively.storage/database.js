@@ -6,7 +6,7 @@ import { Path } from 'lively.lang';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // PouchDB setup
 
-const GLOBAL = typeof window !== 'undefined'
+const GLOB = typeof window !== 'undefined'
   ? window
   : typeof global !== 'undefined'
     ? global
@@ -35,7 +35,7 @@ function nodejs_leveldbPath (dbName) {
   if (!isNode) throw new Error('nodejs_leveldbPath called under non-nodejs environment');
   let basePath = typeof System !== 'undefined' && System.baseURL.startsWith('file://')
     ? System.baseURL.replace('file://', '')
-    : GLOBAL.process.cwd();
+    : GLOB.process.cwd();
 
   // are we in a typical lively.next env? Meaning serverPath points to
   // lively.next-dir/lively.server. If so, use parent dir of lively.server

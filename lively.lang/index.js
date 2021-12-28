@@ -41,7 +41,7 @@ export {
   Group
 };
 
-const GLOBAL = typeof window !== 'undefined'
+const GLOB = typeof window !== 'undefined'
   ? window : typeof global !== 'undefined'
       ? global : typeof self !== 'undefined'
           ? self : this;
@@ -90,14 +90,14 @@ function createLivelyLangObject () {
 export var livelyLang = createLivelyLangObject();
 
 export function globalInstall () {
-  if (isNode && !GLOBAL.lively) { if (!GLOBAL.lively) return; }
+  if (isNode && !GLOB.lively) { if (!GLOB.lively) return; }
 
-  livelyLang._prevLivelyGlobal = GLOBAL.lively;
-  if (!GLOBAL.lively) GLOBAL.lively = {};
-  if (!GLOBAL.lively.lang) GLOBAL.lively.lang = livelyLang;
+  livelyLang._prevLivelyGlobal = GLOB.lively;
+  if (!GLOB.lively) GLOB.lively = {};
+  if (!GLOB.lively.lang) GLOB.lively.lang = livelyLang;
   else {
     for (const name in livelyLang) {
-      GLOBAL.lively.lang[name] = livelyLang[name];
+      GLOB.lively.lang[name] = livelyLang[name];
     }
   }
 }
@@ -131,8 +131,8 @@ function createChain (interfaceObj, obj) {
 export function noConflict () {
   if (!isNode) {
     const keepLivelyNS = livelyLang._prevLivelyGlobal;
-    if (!keepLivelyNS) delete GLOBAL.lively;
-    else delete GLOBAL.lively.lang;
+    if (!keepLivelyNS) delete GLOB.lively;
+    else delete GLOB.lively.lang;
   }
   return livelyLang;
 }
@@ -162,7 +162,7 @@ export function installGlobals () {
   globalInterfaceSpec.forEach(function (ea) {
     if (ea.action === 'installMethods') {
       var targetPath = Path(ea.target);
-      if (!targetPath.isIn(GLOBAL)) targetPath.set(GLOBAL, {}, true);
+      if (!targetPath.isIn(GLOB)) targetPath.set(GLOB, {}, true);
       const sourcePath = Path(ea.sources[0]);
       ea.methods.forEach(function (name) {
         installProperty(
@@ -179,7 +179,7 @@ export function installGlobals () {
     } else if (ea.action === 'installObject') {
       var targetPath = Path(ea.target);
       const source = Path(ea.source).get(livelyLang);
-      targetPath.set(GLOBAL, source, true);
+      targetPath.set(GLOB, source, true);
     } else throw new Error('Cannot deal with global setup action: ' + ea.action);
   });
 }
@@ -201,7 +201,7 @@ function installProperty (sourcePath, targetPath) {
     };
     prop.toString = function () { return origFunc.toString(); };
   }
-  targetPath.set(GLOBAL, prop, true);
+  targetPath.set(GLOB, prop, true);
 }
 
 export function uninstallGlobals () {
@@ -209,7 +209,7 @@ export function uninstallGlobals () {
     if (ea.action === 'installMethods') {
       var p = Path(ea.target);
       const source = Path(ea.source).get(livelyLang);
-      const target = p.get(GLOBAL);
+      const target = p.get(GLOB);
       if (!target) return;
       ea.methods
         .filter(function (name) { return source === target[name]; })
@@ -221,7 +221,7 @@ export function uninstallGlobals () {
       }
     } else if (ea.action === 'installObject') {
       var p = Path(ea.target);
-      p.del(GLOBAL);
+      p.del(GLOB);
     } else throw new Error('Cannot deal with global setup action: ' + ea.action);
   });
 }

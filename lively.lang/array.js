@@ -9,7 +9,7 @@ import { equals as objectEquals } from './object.js';
 import { delay, once, Null as NullFunction } from './function.js';
 import Group from './Group.js';
 
-const GLOBAL = typeof System !== 'undefined'
+const GLOB = typeof System !== 'undefined'
   ? System.global
   : (typeof window !== 'undefined' ? window : global);
 
@@ -607,7 +607,7 @@ function doAndContinue (array, iterator, endFunc, context) {
   //   function(next) { alert("At " + 2); next(); }
   // ], null, function() { alert("Done"); });
   endFunc = endFunc || NullFunction;
-  context = context || GLOBAL;
+  context = context || GLOB;
   iterator = iterator || function (next, ea, idx) { ea.call(context, next, idx); };
   return array.reduceRight(function (nextFunc, ea, idx) {
     return function () { iterator.call(context, nextFunc, ea, idx); };
@@ -621,7 +621,7 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
   endFunc = endFunc || function () {};
   return array.clone().reverse().reduce(function (nextFunc, ea, idx) {
     return function () {
-      iterator.call(context || GLOBAL, ea, idx);
+      iterator.call(context || GLOB, ea, idx);
       // only really delay every n'th call optionally
       if (optSynchronChunks && (idx % optSynchronChunks !== 0)) {
         nextFunc();
@@ -654,13 +654,13 @@ function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whe
     whenDoneFunc = args[3];
     context = args[4];
   }
-  if (!context) context = typeof window !== 'undefined' ? window : global;
+  if (!context) context = typeof window !== 'undefined' ? window : GLOB;
   if (!labelFunc) labelFunc = function (x) { return x; };
 
   // init progressbar
   if (!progressBar) {
     progressBarAdded = true;
-    const Global = typeof window !== 'undefined' ? window : global;
+    const Global = typeof window !== 'undefined' ? window : GLOB;
     const world = Global.lively && lively.morphic && lively.morphic.World.current();
     progressBar = world
       ? world.addProgressBar()

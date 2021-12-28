@@ -1,17 +1,7 @@
 /* global acorn,global,self */
 import { obj, arr, string, Path } from 'lively.lang';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
-
-const GLOBAL = typeof window !== 'undefined'
-  ? window
-  : typeof global !== 'undefined'
-    ? global
-    : typeof self !== 'undefined'
-      ? self
-      : this;
-
 import * as acorn from 'acorn';
-
 import * as walk from 'acorn-walk';
 import * as loose from 'acorn-loose';
 
