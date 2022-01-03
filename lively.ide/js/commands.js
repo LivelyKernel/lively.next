@@ -168,6 +168,7 @@ export var jsIdeCommands = [
   },
 
   {
+    //TODO: fixme
     name: '[javascript] eslint report',
     exec: async text => {
       const { default: ESLinter } = await System.import('lively.ide/js/eslint/lively-interface.js');
@@ -176,6 +177,7 @@ export var jsIdeCommands = [
   },
 
   {
+    //TODO: fixme
     name: '[javascript] eslint preview fixes',
     exec: async text => {
       const { default: ESLinter } = await System.import('lively.ide/js/eslint/lively-interface.js');
