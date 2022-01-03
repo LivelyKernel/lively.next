@@ -21,7 +21,7 @@ jobs:
     - name: Install jsdocs
       run: npm install -g jsdoc
     - name: Build docs
-      run: jsdoc -c conf.json
+      run: jsdoc -c conf.json -R README.md
     - name: Upload docs as artifact
       uses: actions/upload-artifact@v2
       with:
