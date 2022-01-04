@@ -394,7 +394,7 @@ export class ComponentPolicy {
             if (this._overriddenProps.get(morphToBeStyled)[propName]) {
               if (propName == 'extent' &&
                   Path('owner.layout.constructor').get(morphToBeStyled) == ProportionalLayout &&
-                  !morphToBeStyled.master && !isRoot) {
+                  !morphToBeStyled.master && !isRoot && morphToBeStyled.isLayoutable) {
                 // still apply initially since extents can be valuable for layouts even if they ovverride them
                 if (this._appliedMaster) {
                   // do not do this when we have been already applied once!

@@ -295,7 +295,8 @@ export class ViewModel {
   reifyExposedProps () {
     const { properties } = this.propertiesAndPropertySettings();
     for (let prop of this.expose || []) {
-      if (properties[prop] || Object.getPrototypeOf(this).hasOwnProperty(prop) && !obj.isFunction(Object.getPrototypeOf(this)[prop])) {
+      const descr = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), prop);
+      if (properties[prop] || descr && (!!descr.get || !!descr.set)) {
         // install getter setter
         Object.defineProperty(this.view, prop, {
           configurable: true,
