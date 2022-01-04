@@ -1,8 +1,9 @@
 /* global System, global */
 
-/*
+/**
  * Methods to make working with arrays more convenient and collection-like
  * abstractions for groups, intervals, grids.
+ * @module lively.lang/array 
  */
 
 import { equals as objectEquals } from './object.js';
@@ -20,8 +21,6 @@ const features = {
   findIndex: !!Array.prototype.findIndex,
   includes: !!Array.prototype.includes
 };
-
-// variety of functions for Arrays
 
 // -=-=-=-=-=-=-=-
 // array creations
@@ -43,8 +42,12 @@ function range (begin, end, step) {
   return result;
 }
 
+/**
+ * Makes JS arrays out of array like objects like `arguments` or DOM `childNodes`
+ * @function
+ * @name from
+ */
 const from = features.from ? Array.from : function (iterable) {
-  // Makes JS arrays out of array like objects like `arguments` or DOM `childNodes`
   if (!iterable) return [];
   if (Array.isArray(iterable)) return iterable;
   if (iterable.toArray) return iterable.toArray();
@@ -54,18 +57,27 @@ const from = features.from ? Array.from : function (iterable) {
   return results;
 };
 
-/** arr.withN(3, "Hello") => ["Hello","Hello","Hello"] */
+/** 
+ * ```
+ * arr.withN(3, "Hello") => ["Hello","Hello","Hello"]
+ * ``` 
+ */
 function withN (n, obj) {
   const result = new Array(n);
   while (n > 0) result[--n] = obj;
   return result;
 }
 
+/**
+ * Number -> Function -> Array
+ * 
+ * Takes a generator function that is called for each `n`.
+ * 
+ * ```
+ * arr.genN(3, num.random) // => [46,77,95]
+ * ```
+ */
 function genN (n, generator) {
-  // Number -> Function -> Array
-  // Takes a generator function that is called for each `n`.
-  // Example:
-  //   arr.genN(3, num.random) // => [46,77,95]
   const result = new Array(n);
   while (n > 0) result[--n] = generator(n);
   return result;
@@ -75,11 +87,15 @@ function genN (n, generator) {
 // filtering
 // -=-=-=-=-
 
+/**
+ * [a] -> (a -> Boolean) -> c? -> [a]
+ * 
+ * Calls `iterator` for each element in `array` and returns a subset of it 
+ * including the elements for which `iterator` returned a truthy value.
+ * 
+ * Like `Array.prototype.filter`.
+ */
 function filter (array, iterator, context) {
-  // [a] -> (a -> Boolean) -> c? -> [a]
-  // Calls `iterator` for each element in `array` and returns a subset of it
-  // including the elements for which `iterator` returned a truthy value.
-  // Like `Array.prototype.filter`.
   const res = [];
   for (let idx = 0; idx < array.length; idx++) {
     const currentItem = array[idx];
@@ -90,12 +106,17 @@ function filter (array, iterator, context) {
   return res;
 }
 
+/**
+ * [a] -> (a -> Boolean) -> c? -> a
+ * 
+ * returns the first occurrence of an element in `arr` for which iterator
+ * returns a truthy value
+ * @function
+ * @name detect
+ */
 const detect = features.find
   ? function (arr, iterator, context) { return arr.find(iterator, context); }
   : function (arr, iterator, context) {
-    // [a] -> (a -> Boolean) -> c? -> a
-    // returns the first occurrence of an element in `arr` for which iterator
-    // returns a truthy value
     for (var value, i = 0, len = arr.length; i < len; i++) {
       value = arr[i];
       if (iterator.call(context, value, i)) return value;
@@ -103,21 +124,26 @@ const detect = features.find
     return undefined;
   };
 
+/**
+ * 
+ * Returns the element equal to the given search value or undefined
+ * 
+ * If defined, a converter function will be applied to compare an
+ * array element with the search value
+ * 
+ * If returnClosestElement is true, the element closest to the search value will be returned,
+ * even if it is not equal
+ * 
+ * If false, only an exact match will be returned, otherwise undefined
+ * 
+ * @see {@link https://en.wikipedia.org/wiki/Binary_search_algorithm}
+ */
 function binarySearchFor (array, searchValue, converter, returnClosestElement = false) {
-  // Returns the element equal to the given search value or undefined
-  // If defined, a converter function will be applied to compare an
-  //   array element with the search value
-  // If returnClosestElement is true, the element closest to the search value will be returned,
-  //   even if it is not equal
-  //   If false, only an exact match will be returned, otherwise undefined
-
   if (!array || !isArray(array)) return;
 
   let leftLimit = 0;
   let rightLimit = array.length - 1;
 
-  // classic binary search with converter,
-  //   https://en.wikipedia.org/wiki/Binary_search_algorithm used for reference
   while (leftLimit <= rightLimit) {
     const pivot = leftLimit + Math.floor((rightLimit - leftLimit) / 2);
 
@@ -156,69 +182,93 @@ const findIndex = features.findIndex
     return arr.find(function (ea, j) { i = j; return iterator.call(ea, context); }) ? i : -1;
   };
 
+/**
+ * find the first occurence for which `iterator` returns a truthy value and
+ * return *this* value, i.e. unlike `find` the iterator result and not the
+ * element of the list is returned
+ */
 function findAndGet (arr, iterator) {
-  // find the first occurence for which `iterator` returns a truthy value and
-  // return *this* value, i.e. unlike find the iterator result and not the
-  // element of the list is returned
   let result;
   arr.find(function (ea, i) { return result = iterator(ea, i); });
   return result;
 }
 
+/**
+ * [a] -> String -> [a]
+ * 
+ * ```
+ * var objects = [{x: 3}, {y: 4}, {x:5}]
+ * arr.filterByKey(objects, "x") // => [{x: 3},{x: 5}]
+ * ```
+ */
 function filterByKey (arr, key) {
-  // [a] -> String -> [a]
-  // Example:
-  //   var objects = [{x: 3}, {y: 4}, {x:5}]
-  //   arr.filterByKey(objects, "x") // => [{x: 3},{x: 5}]
   return arr.filter(function (ea) { return !!ea[key]; });
 }
 
+/**
+ * [a] -> String|RegExp -> [a]
+ * 
+ * `filter` can be a String or RegExp. Will stringify each element in the array
+ * ```
+ * ["Hello", "World", "Lively", "User"].grep("l") // => ["Hello","World","Lively"]
+ * ``` 
+*/
 function grep (arr, test, context) {
-  // [a] -> String|RegExp -> [a]
-  // `filter` can be a String or RegExp. Will stringify each element in
-  // Example:
-  // ["Hello", "World", "Lively", "User"].grep("l") // => ["Hello","World","Lively"]
   if (typeof test === 'string') test = new RegExp(test, 'i');
   return filter(arr, filter.test.bind(test));
 }
 
+/**
+ * select every element in array for which array's element is truthy
+ * 
+ * ```
+ * [1,2,3].mask([false, true, false]) => [2]
+ * ``` 
+*/
 function mask (array, mask) {
-  // select every element in array for which array's element is truthy
-  // Example: [1,2,3].mask([false, true, false]) => [2]
   return filter(array, function (_, i) { return !!mask[i]; });
 }
 
 function reject (array, func, context) {
-  // show-in-doc
   function iterator (val, i) { return !func.call(context, val, i); }
   return filter(array, iterator);
 }
 
 function rejectByKey (array, key) {
-  // show-in-doc
   return filter(array, function (ea) { return !ea[key]; });
 }
 
+/**
+ *  non-mutating
+ * ```
+ * arr.without([1,2,3,4,5,6], 3) => [1,2,4,5,6]
+ * ```
+ */
 function without (array, elem) {
-  // non-mutating
-  // Example:
-  // arr.without([1,2,3,4,5,6], 3) // => [1,2,4,5,6]
   return filter(array, val => val !== elem);
 }
 
+/**
+ *  non-mutating
+ * ```
+ * arr.withoutAll([1,2,3,4,5,6], [3,4]) => [1,2,5,6]
+ * ```
+ */
 function withoutAll (array, otherArr) {
-  // non-mutating
-  // Example:
-  // arr.withoutAll([1,2,3,4,5,6], [3,4]) // => [1,2,5,6]
   return filter(array, val => otherArr.indexOf(val) === -1);
 }
 
+/**
+ *  non-mutating
+ * 
+ * Removes duplicates from array.
+ * 
+ * if sorted == true then assume array is sorted which allows `uniq` to be more efficient
+ * ```
+ * arr.uniq([3,5,6,2,3,4,2,6,4]) => [3,5,6,2,4]
+ * ```
+ */
 function uniq (array, sorted) {
-  // non-mutating
-  // Removes duplicates from array.
-  // if sorted == true then assume array is sorted which allows uniq to be more
-  // efficient
-  // uniq([3,5,6,2,3,4,2,6,4])
   if (!array.length) return array;
 
   const result = [array[0]];
@@ -236,9 +286,11 @@ function uniq (array, sorted) {
   return result;
 }
 
-function uniqBy (array, comparator, context) {
-  // like `arr.uniq` but with custom equality: `comparator(a,b)` returns
-  // BOOL. True if a and be should be regarded equal, false otherwise.
+/**
+ * like `arr.uniq` but with custom equality: `comparator(a,b)` returns
+ * BOOL. True if a and be should be regarded equal, false otherwise.
+ */
+function uniqBy (array, comparator, context) { 
   const result = array.slice();
   for (let i = result.length; i--;) {
     const item = array[i];
@@ -249,8 +301,10 @@ function uniqBy (array, comparator, context) {
   return result;
 }
 
+/**
+ * like `arr.uniq` but with equality based on item[key]
+ */
 function uniqByKey (array, key) {
-  // like `arr.uniq` but with equality based on item[key]
   const seen = {}; const result = [];
   for (let i = 0; i < array.length; i++) {
     const item = array[i];
@@ -262,10 +316,13 @@ function uniqByKey (array, key) {
   return result;
 }
 
+/**
+ * removes falsy values
+ * ```
+ * arr.compact([1,2,undefined,4,0]) // => [1,2,4]
+ * ```
+ */
 function compact (array) {
-  // removes falsy values
-  // Example:
-  // arr.compact([1,2,undefined,4,0]) // => [1,2,4]
   return filter(array, Boolean);
 }
 
@@ -284,18 +341,24 @@ function mutableCompact (array) {
 // iteration
 // -=-=-=-=-
 
+/**
+ * [a] -> (a -> Undefined) -> c? -> Undefined
+ * 
+ * `iterator` is called on each element in `array` for side effects. 
+ * Like `Array.prototype.forEach`.
+ */
 function forEach (array, iterator, context) {
-  // [a] -> (a -> Undefined) -> c? -> Undefined
-  // `iterator` is called on each element in `array` for side effects. Like
-  // `Array.prototype.forEach`.
   return array.forEach(iterator, context);
 }
 
+/**
+ * Takes any number of lists as arguments. Combines them elment-wise.
+ * ```
+ * arr.zip([1,2,3], ["a", "b", "c"], ["A", "B"])
+ * => [[1,"a","A"],[2,"b","B"],[3,"c",undefined]]
+ * ```
+ */
 function zip (/* arr, arr2, arr3 */) {
-  // Takes any number of lists as arguments. Combines them elment-wise.
-  // Example:
-  // arr.zip([1,2,3], ["a", "b", "c"], ["A", "B"])
-  // // => [[1,"a","A"],[2,"b","B"],[3,"c",undefined]]
   const args = Array.from(arguments);
   const array = args.shift();
   const iterator = typeof last(args) === 'function'
@@ -307,11 +370,14 @@ function zip (/* arr, arr2, arr3 */) {
   });
 }
 
+/**
+ * Turns a nested collection into a flat one.
+ * ```
+ * arr.flatten([1, [2, [3,4,5], [6]], 7,8])
+ * => [1,2,3,4,5,6,7,8]
+ * ```
+ */
 function flatten (array, optDepth) {
-  // Turns a nested collection into a flat one.
-  // Example:
-  // arr.flatten([1, [2, [3,4,5], [6]], 7,8])
-  // // => [1,2,3,4,5,6,7,8]
   if (typeof optDepth === 'number') {
     if (optDepth <= 0) return array;
     optDepth--;
@@ -334,11 +400,14 @@ function flatmap (array, it, ctx) {
   return results;
 }
 
+/**
+ * Injects delim between elements of array
+ * ```
+ * lively.lang.arr.interpose(["test", "abc", 444], "aha"));
+ * => ["test","aha","abc","aha",444]
+ * ```
+ */
 function interpose (array, delim) {
-  // Injects delim between elements of array
-  // Example:
-  // lively.lang.arr.interpose(["test", "abc", 444], "aha"));
-  // // => ["test","aha","abc","aha",444]
   return array.reduce(function (xs, x) {
     if (xs.length > 0) xs.push(delim);
     xs.push(x); return xs;
@@ -355,26 +424,37 @@ function delimWith (array, delim) {
 // mapping
 // -=-=-=-=-
 
+/**
+ * [a] -> (a -> b) -> c? -> [b]
+ * pplies `iterator` to each element of `array` and returns a new Array
+ * with the results of those calls. Like `Array.prototype.some`.
+ */
 function map (array, iterator, context) {
-  // [a] -> (a -> b) -> c? -> [b]
-  // Applies `iterator` to each element of `array` and returns a new Array
-  // with the results of those calls. Like `Array.prototype.some`.
   return array.map(iterator, context);
 }
 
+/**
+ * Calls `method` on each element in `array`, passing all arguments.
+ * Often a handy way to avoid verbose `map` calls.
+ * ```
+ * arr.invoke(["hello", "world"], "toUpperCase") // => ["HELLO","WORLD"]
+ * ```
+ */
 function invoke (array, method, arg1, arg2, arg3, arg4, arg5, arg6) {
-  // Calls `method` on each element in `array`, passing all arguments. Often
-  // a handy way to avoid verbose `map` calls.
-  // Example: arr.invoke(["hello", "world"], "toUpperCase") // => ["HELLO","WORLD"]
   return array.map(function (ea) {
     return ea[method](arg1, arg2, arg3, arg4, arg5, arg6);
   });
 }
 
+/**
+ * Returns `property` or undefined from each element of array. For quick `map`s and similar to `invoke`.
+ * ```
+ * arr.pluck(["hello", "world"], 0) // => ["h","w"]
+ * ```
+ * @param {*} array 
+ * @param {*} property 
+ */
 function pluck (array, property) {
-  // Returns `property` or undefined from each element of array. For quick
-  // `map`s and similar to `invoke`.
-  // Example: arr.pluck(["hello", "world"], 0) // => ["h","w"]
   return array.map(ea => ea[property]);
 }
 
@@ -382,15 +462,28 @@ function pluck (array, property) {
 // folding
 // -=-=-=-=-
 
+/**
+ * Array -> Function -> Object? -> Object? -> Object?
+ * 
+ * Applies `iterator` to each element of `array` and returns a new Array
+ * with the results of those calls. Like `Array.prototype.some`.
+ * @param {*} array 
+ * @param {*} iterator 
+ * @param {*} memo 
+ * @param {*} context 
+ */
 function reduce (array, iterator, memo, context) {
-  // Array -> Function -> Object? -> Object? -> Object?
-  // Applies `iterator` to each element of `array` and returns a new Array
-  // with the results of those calls. Like `Array.prototype.some`.
   return array.reduce(iterator, memo, context);
 }
 
+/**
+ * 
+ * @param {*} array 
+ * @param {*} iterator 
+ * @param {*} memo 
+ * @param {*} context 
+ */
 function reduceRight (array, iterator, memo, context) {
-  // show-in-doc
   return array.reduceRight(iterator, memo, context);
 }
 
@@ -409,23 +502,39 @@ const includes = features.includes
 
 const include = includes;
 
+/**
+ * [a] -> (a -> Boolean) -> c? -> Boolean
+ * 
+ * Returns true if there is at least one abject in `array` for which
+ * `iterator` returns a truthy result. Like `Array.prototype.some`.
+ * @param {*} array 
+ * @param {*} iterator 
+ * @param {*} context 
+ */
 function some (array, iterator, context) {
-  // [a] -> (a -> Boolean) -> c? -> Boolean
-  // Returns true if there is at least one abject in `array` for which
-  // `iterator` returns a truthy result. Like `Array.prototype.some`.
   return array.some(iterator, context);
 }
 
+/**
+ * [a] -> (a -> Boolean) -> c? -> Boolean
+ * 
+ * Returns true if for all abjects in `array` `iterator` returns a truthy
+ * result. Like `Array.prototype.every`.
+ * @param {*} array 
+ * @param {*} iterator 
+ * @param {*} context 
+ */
 function every (array, iterator, context) {
-  // [a] -> (a -> Boolean) -> c? -> Boolean
-  // Returns true if for all abjects in `array` `iterator` returns a truthy
-  // result. Like `Array.prototype.every`.
   return array.every(iterator, context);
 }
 
+/**
+ * Returns true if each element in `array` is equal (`==`) to its
+ * corresponding element in `otherArray`
+ * @param {*} array 
+ * @param {*} otherArray 
+ */
 function equals (array, otherArray) {
-  // Returns true iff each element in `array` is equal (`==`) to its
-  // corresponding element in `otherArray`
   const len = array.length;
   if (!otherArray || len !== otherArray.length) return false;
   for (let i = 0; i < len; i++) {
@@ -441,9 +550,13 @@ function equals (array, otherArray) {
   return true;
 }
 
-function deepEquals (array, otherArray) {
-  // Returns true iff each element in `array` is structurally equal
-  // (`lang.obj.equals`) to its corresponding element in `otherArray`
+/**
+ * Returns true if each element in `array` is structurally equal
+ * (`lang.obj.equals`) to its corresponding element in `otherArray`
+ * @param {*} array 
+ * @param {*} otherArray 
+ */
+function deepEquals (array, otherArray) { 
   const len = array.length;
   if (!otherArray || len !== otherArray.length) return false;
   for (let i = 0; i < len; i++) {
@@ -456,6 +569,12 @@ function deepEquals (array, otherArray) {
 // sorting
 // -=-=-=-=-
 
+/**
+ * 
+ * @param {*} array 
+ * @param {*} descending 
+ * @returns {Boolean} wether `array` is sorted or not.
+ */
 function isSorted (array, descending) {
   if (descending) {
     for (var i = 1; i < array.length; i++) { if (array[i - 1] < array[i]) return false; }
@@ -470,11 +589,14 @@ function sort (array, sortFunc) {
   // Just `Array.prototype.sort`
   return array.sort(sortFunc);
 }
-
+/**
+ * ```
+ * arr.sortBy(["Hello", "Lively", "User"], function(ea) {
+ *   return ea.charCodeAt(ea.length-1); })
+ * => ["Hello","User","Lively"]
+ * ```
+ */
 function sortBy (array, iterator, context) {
-  // Example:
-  // arr.sortBy(["Hello", "Lively", "User"], function(ea) {
-  //   return ea.charCodeAt(ea.length-1); }) // => ["Hello","User","Lively"]
   return pluck(
     array.map(function (value, index) {
       return { value: value, criteria: iterator.call(context, value, index) };
@@ -484,10 +606,13 @@ function sortBy (array, iterator, context) {
     }), 'value');
 }
 
+/**
+ * ```
+ * lively.lang.arr.sortByKey([{x: 3}, {x: 2}, {x: 8}], "x")
+ * => [{x: 2},{x: 3},{x: 8}]
+ * ```
+ */
 function sortByKey (array, key) {
-  // Example:
-  // lively.lang.arr.sortByKey([{x: 3}, {x: 2}, {x: 8}], "x")
-  // // => [{x: 2},{x: 3},{x: 8}]
   return sortBy(array, ea => ea[key]);
 }
 
@@ -520,13 +645,17 @@ function last (array) { return array[array.length - 1]; }
 // Set operations
 // -=-=-=-=-=-=-=-
 
+/**
+ * set-like intersection
+ */
 function intersect (array1, array2) {
-  // set-like intersection
   return filter(uniq(array1), item => array2.indexOf(item) > -1);
 }
 
+/**
+ * set-like union
+ */
 function union (array1, array2) {
-  // set-like union
   const result = array1.slice();
   for (let i = 0; i < array2.length; i++) {
     const item = array2[i];
@@ -535,51 +664,93 @@ function union (array1, array2) {
   return result;
 }
 
+/**
+ * inserts `item` at `index`, mutating
+ * @param {*} array 
+ * @param {*} item 
+ * @param {*} index 
+ */
 function pushAt (array, item, index) {
-  // inserts `item` at `index`, mutating
   array.splice(index, 0, item);
 }
 
+/**
+ * inserts item at `index`, mutating
+ * @param {*} array 
+ * @param {*} index 
+ */
 function removeAt (array, index) {
-  // inserts item at `index`, mutating
   array.splice(index, 1);
 }
 
+/**
+ * removes first occurrence of item in `array`, mutating
+ * @param {*} array 
+ * @param {*} item 
+ * @returns {*} item
+ */
 function remove (array, item) {
-  // removes first occurrence of item in `array`, mutating
   const index = array.indexOf(item);
   if (index >= 0) removeAt(array, index);
   return item;
 }
 
+/**
+ * appends all `items`, mutating
+ * @param {*} array 
+ * @param {*} items 
+ * @returns {array} array
+ */
 function pushAll (array, items) {
-  // appends all `items`, mutating
   array.push.apply(array, items);
   return array;
 }
 
+/**
+ * inserts all `items` at `idx`, mutating
+ * @param {*} array 
+ * @param {*} items 
+ * @param {*} idx 
+ */
 function pushAllAt (array, items, idx) {
-  // inserts all `items` at `idx`, mutating
   array.splice.apply(array, [idx, 0].concat(items));
 }
 
+/**
+ * only appends `item` if its not already in `array`, mutating
+ * @param {*} array 
+ * @param {*} item 
+ */
 function pushIfNotIncluded (array, item) {
-  // only appends `item` if its not already in `array`, mutating
   if (!array.includes(item)) array.push(item);
 }
 
+/**
+ * mutating
+ * @param {*} array 
+ * @param {*} item 
+ * @param {*} index 
+ */
 function replaceAt (array, item, index) {
-  // mutating
   array.splice(index, 1, item);
 }
 
+/**
+ * removes all items, mutating
+ * @param {*} array 
+ * @returns {array} array
+ */
 function clear (array) {
-  // removes all items, mutating
   array.length = 0; return array;
 }
 
+/**
+ * are all elements in list1 in list2?
+ * @param {*} list1 
+ * @param {*} list2 
+ * @returns {boolean}
+ */
 function isSubset (list1, list2) {
-  // are all elements in list1 in list2?
   for (let i = 0; i < list1.length; i++) {
     if (!list2.includes(list1[i])) { return false; }
   }
@@ -589,22 +760,28 @@ function isSubset (list1, list2) {
 // -=-=-=-=-=-=-=-=-=-=-=-
 // asynchronous iteration
 // -=-=-=-=-=-=-=-=-=-=-=-
+
+/**
+ * Iterates over array but instead of consecutively calling iterator,
+ * iterator gets passed in the invocation for the next iteration step
+ * as a function as first parameter. This allows to wait arbitrarily
+ * between operation steps, great for managing dependencies between tasks.
+ * Related is [`fun.composeAsync`]().
+ * ```
+ * arr.doAndContinue([1,2,3,4], function(next, n) {
+ *   alert("At " + n);
+ *   setTimeout(next, 100);
+ * }, function() { alert("Done"); })
+ * ```
+ * If the elements are functions you can leave out the iterator:
+ * ```
+ * arr.doAndContinue([
+ *   function(next) { alert("At " + 1); next(); },
+ *   function(next) { alert("At " + 2); next(); }
+ * ], null, function() { alert("Done"); }); 
+ ``` 
+ */
 function doAndContinue (array, iterator, endFunc, context) {
-  // Iterates over array but instead of consecutively calling iterator,
-  // iterator gets passed in the invocation for the next iteration step
-  // as a function as first parameter. This allows to wait arbitrarily
-  // between operation steps, great for managing dependencies between tasks.
-  // Related is [`fun.composeAsync`]().
-  // Example:
-  // arr.doAndContinue([1,2,3,4], function(next, n) {
-  //   alert("At " + n);
-  //   setTimeout(next, 100);
-  // }, function() { alert("Done"); })
-  // // If the elements are functions you can leave out the iterator:
-  // arr.doAndContinue([
-  //   function(next) { alert("At " + 1); next(); },
-  //   function(next) { alert("At " + 2); next(); }
-  // ], null, function() { alert("Done"); });
   endFunc = endFunc || NullFunction;
   context = context || GLOB;
   iterator = iterator || function (next, ea, idx) { ea.call(context, next, idx); };
