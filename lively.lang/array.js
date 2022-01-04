@@ -54,9 +54,8 @@ const from = features.from ? Array.from : function (iterable) {
   return results;
 };
 
+/** arr.withN(3, "Hello") => ["Hello","Hello","Hello"] */
 function withN (n, obj) {
-  // Example:
-  //   arr.withN(3, "Hello") // => ["Hello","Hello","Hello"]
   const result = new Array(n);
   while (n > 0) result[--n] = obj;
   return result;

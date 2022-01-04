@@ -1,0 +1,30 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build Docs
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  push
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - name: Install jsdocs
+      run: npm install -g jsdoc
+    - name: Build docs
+      run: jsdoc -c conf.json
+    - name: Upload docs as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: docs
+        path: docs
+      
