@@ -1,6 +1,0 @@
-## properties.js
-
-
-
-<!--*no toc!*-->
-
