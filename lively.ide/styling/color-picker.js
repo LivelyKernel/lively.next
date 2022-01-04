@@ -16,6 +16,7 @@ import { Slider } from 'lively.components/widgets.js';
 import { Popover } from 'lively.components/popup.js';
 import { resource } from 'lively.resources/index.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
+import { ExpressionSerializer } from 'lively.serializer2';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
@@ -125,7 +126,7 @@ export class ColorInputModel extends ViewModel {
     let ColorPicker = this.colorPickerComponent;
     if (!ColorPicker) ({ ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js'));
     const p = part(ColorPicker, { });
-    const color = this.colorValue;
+    let color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;
     p.hasFixedPosition = true;
     if (this.targetMorph) p.focusOnMorph(this.targetMorph, color);
@@ -400,7 +401,8 @@ export class ColorPickerModel extends ViewModel {
       gradientValue: {
         derived: true,
         get () {
-          return this.models.gradientControl.gradientValue;
+          const gc = this.models.gradientControl;
+          return gc.deref(gc.gradientValue);
         },
         set (v) {
           this.models.gradientControl.gradientValue = v;

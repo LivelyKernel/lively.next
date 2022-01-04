@@ -10,8 +10,8 @@ import { num, arr } from 'lively.lang';
 import { connect, noUpdate, signal } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
-import { resource } from 'lively.resources';
 import { ColorStop } from './color-stops.cp.js';
+import { ExpressionSerializer } from 'lively.serializer2';
 
 const WHEEL_URL = joinPath(System.baseURL, '/lively.ide/assets/color-wheel.png');
 
@@ -20,6 +20,11 @@ export class GradientControlModel extends ViewModel {
     return {
       gradientValue: {},
       gradientHalo: {}, // if active, this is openend in the world
+      serializer: {
+        get () {
+          return this._serializer || (this._serializer = new ExpressionSerializer());
+        }
+      },
       isDisabled: {
         get () {
           return this.view && !this.view.visible; // bad style
@@ -102,7 +107,7 @@ export class GradientControlModel extends ViewModel {
   }
 
   initLinearGradient (color) {
-    if (color.isGradient) this.gradientValue = new LinearGradient({ stops: color.stops });
+    if (color.isGradient) this.gradientValue = new LinearGradient({ stops: color.stops.map(s => ({ ...s })) });
     else {
       this.gradientValue = new LinearGradient({
         stops: [{ color, offset: 0 }, { color: Color.transparent, offset: 1 }]
@@ -112,7 +117,7 @@ export class GradientControlModel extends ViewModel {
 
   initRadialGradient (color, target) {
     const bounds = target.innerBounds();
-    if (color.isGradient) this.gradientValue = new RadialGradient({ bounds, stops: color.stops });
+    if (color.isGradient) this.gradientValue = new RadialGradient({ bounds, stops: color.stops.map(s => ({ ...s })) });
     else {
       this.gradientValue = new RadialGradient({
         bounds,
@@ -121,8 +126,12 @@ export class GradientControlModel extends ViewModel {
     }
   }
 
+  deref (gradient) {
+    return this.serializer.deserializeExprObj(gradient.__serialize__());
+  }
+
   setGradient (color, colorPicker) {
-    this.gradientValue = color;
+    this.gradientValue = this.deref(color);
     this.gradientHalo.initFromPicker(colorPicker);
   }
 
@@ -150,7 +159,7 @@ export class GradientControlModel extends ViewModel {
   }
 
   confirm () {
-    signal(this, 'gradientChanged', this.gradientValue);
+    signal(this, 'gradientChanged', this.deref(this.gradientValue));
   }
 
   refresh () {
