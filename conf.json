@@ -5,14 +5,19 @@
     "recurseDepth": 10,
     "source": {
         "include": [
-                    "lively.lang/array.js"
+                    "lively.lang"
                     ],
         "includePattern": "\\.js$"
     },
     "sourceType": "module",
     "opts": {
         "recurse": true,
-        "destination": "./docs/"
+        "destination": "./docs/",
+        "tutorials": "./documents",
+        "template": "node_modules/clean-jsdoc-theme",
+        "theme_opts": {
+            "theme": "dark"
+        }
     },
     "tags": {
         "allowUnknownTags": true,

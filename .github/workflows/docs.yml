@@ -1,6 +1,7 @@
 name: Build Docs
 
 on:
+  # workflow-dispatch
   push
 
 jobs:
@@ -15,6 +16,8 @@ jobs:
         node-version: '16.13.1'
     - name: Install jsdocs
       run: npm install -g jsdoc
+    - name: Install jsodc theme
+      run: npm install clean-jsdoc-theme
     - name: Build docs
       run: jsdoc -c conf.json -R README.md
     - name: Configure git for lively-docs-bot
