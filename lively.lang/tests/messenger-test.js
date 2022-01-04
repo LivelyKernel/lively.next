@@ -5,7 +5,7 @@ import { remove, pluck } from '../array.js';
 import { waitForAll, composeAsync } from '../function.js';
 import { create } from '../messenger.js';
 import { makeEmitter } from '../events.js';
-
+import { chain } from 'lively.lang';
 
 // -=-=-=-=-=-=-
 // some helper
@@ -122,13 +122,13 @@ describe('messengers', function () {
           expect(messenger.outgoingMessages()).to.eql([msg1, msg2]);
           next();
         },
-        lively.lang.chain(setTimeout).flip().curry(150).value(),
+        chain(setTimeout).flip().curry(150).value(),
         function (next) {
           expect(sendData[0]).to.eql(msg1);
           if (messenger.outgoingMessages().length) { expect(messenger.outgoingMessages()).to.eql([msg2]); }
           next();
         },
-        lively.lang.chain(setTimeout).flip().curry(100).value(),
+        chain(setTimeout).flip().curry(100).value(),
         function (next) {
           expect(sendData).to.eql([msg1, msg2]);
           expect(messenger.outgoingMessages()).to.have.length(0);

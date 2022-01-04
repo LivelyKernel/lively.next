@@ -1,17 +1,7 @@
 /* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
 
 import { expect } from 'mocha-es6';
-import {
-  convertCallbackFunWithManyArgs,
-  timeout,
-  delay,
-  deferred,
-  waitFor,
-  delayReject,
-  convertCallbackFun,
-  parallel
-} from '../promise.js';
-
+import { convertCallbackFun, promise, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs } from '../promise.js';
 
 describe('promise', () => {
   describe('cb convertions', () => {
@@ -63,19 +53,19 @@ describe('promise', () => {
     });
 
     it('deals with errors in chain funcs', () =>
-      lively.lang.promise.chain([
+      promise.chain([
         () => new Promise(resolve => setTimeout(() => resolve(1), 10)),
         () => { throw new Error('Foo'); }
       ]).catch(err => expect(err).to.match(/Foo/i)));
 
     it('deals with rejections', () =>
-      lively.lang.promise.chain([
+      promise.chain([
         () => Promise.reject(new Error('Bar')),
         () => { throw new Error('Foo'); }
       ]).catch(err => expect(err).to.match(/Bar/i)));
 
     it('chain function results are coerced into promises', () =>
-      lively.lang.promise.chain([() => 23, (val) => 23+2])
+      promise.chain([() => 23, (val) => 23 + 2])
         .then(results => expect(results).to.equal(25)));
   });
 
