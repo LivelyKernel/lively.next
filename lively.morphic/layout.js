@@ -318,6 +318,7 @@ export class TilingLayout extends Layout {
 
   initializeResizePolicies () {
     const resizePolicies = this._resizePolicies;
+    if (resizePolicies && !Array.isArray(resizePolicies)) return;
     const { layoutableSubmorphs } = this;
     this._resizePolicies = new WeakMap();
     if (Array.isArray(resizePolicies)) {
@@ -369,6 +370,7 @@ export class TilingLayout extends Layout {
    * @returns {TileLayoutSpec}
    */
   getSpec () {
+    if (Array.isArray(this._resizePolicies)) { this.initializeResizePolicies(); }
     let {
       axis, align, axisAlign, spacing, layoutOrder, orderByIndex, resizePolicies,
       reactToSubmorphAnimations, renderViaCSS, padding, wrapSubmorphs,
@@ -395,6 +397,7 @@ export class TilingLayout extends Layout {
     if (orderByIndex = !false) spec.orderByIndex = true;
     if (wrapSubmorphs != true) spec.wrapSubmorphs = false;
     if (!rect(0).equals(padding)) spec.padding = padding;
+    if (reactToSubmorphAnimations) spec.reactToSubmorphAnimations = true;
     return spec;
   }
 

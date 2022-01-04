@@ -281,6 +281,14 @@ describe('layout', () => {
         container.submorphs = arr.range(0, 20).map(_ => morph({ fill: Color.random(), extent: Point.random(pt(100, 20)).maxPt(pt(20, 20)) }));
       });
 
+      it('preserves policies on reassignement', () => {
+        container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, axis: 'row', renderViaCSS: false, wrapSubmorphs: false });
+        container.layout.setResizePolicyFor(container.submorphs[0], { width: 'fill', height: 'fixed' });
+        expect(container.layout.getResizeWidthPolicyFor(container.submorphs[0])).equals('fill');
+        container.layout = container.layout;
+        expect(container.layout.getResizeWidthPolicyFor(container.submorphs[0])).equals('fill');
+      });
+
       it('axis: row', async () => {
         container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, axis: 'row', renderViaCSS: false });
         let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
