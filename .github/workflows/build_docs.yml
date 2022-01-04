@@ -1,8 +1,7 @@
-name: Build Docs
+name: Build and Deploy Docs
 
 on:
-  # workflow-dispatch
-  push
+  workflow_dispatch
 
 jobs:
   build:
