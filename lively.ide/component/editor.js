@@ -313,17 +313,16 @@ export class ComponentChangeTracker {
   get sourceEditor () {
     // find the first system browser that has no unsaved changes
     // and displays the current module
-    const openBrowsers = $world.getSubmorphsByStyleClassName('Browser').filter(browser =>
-      browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') == this.componentModuleId);
+    const openBrowsers = $world.withAllSubmorphsSelect(browser =>
+      browser.isBrowser && browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') == this.componentModuleId);
     const qualifiedBrowser = openBrowsers.find(openBrowser => {
-      if (openBrowser.hasUnsavedChanges() &&
-          this.currentModuleSource &&
-          openBrowser.ui.sourceEditor.textString != this.currentModuleSource) {
+      if (this.currentModuleSource && openBrowser.hasUnsavedChanges(this.currentModuleSource)) {
         return false;
       }
       return true;
     });
-    if (qualifiedBrowser) return qualifiedBrowser.ui.sourceEditor;
+    // fixem: expose this properly
+    if (qualifiedBrowser) return qualifiedBrowser.viewModel.ui.sourceEditor;
   }
 
   get currentModuleSource () {
@@ -522,6 +521,7 @@ export class ComponentChangeTracker {
         change.args.some(m => m.epiMorph)) return true;
     if (change.selector != 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
     const { changeManager } = change.target.env;
+    // fixme: maybe ignoring grouped changes alltogether can cause issues with reconciliation...
     if (change.selector != 'addMorphAt' && changeManager.changeGroupStack.length > 0) {
       return true;
     }
@@ -691,8 +691,8 @@ export class ComponentChangeTracker {
     if (sourceEditor) {
       const browser = sourceEditor.owner;
       if (browser) {
-        browser.state.sourceHash = string.hashCode(updatedSource);
-        browser.indicateNoUnsavedChanges();
+        browser.viewModel.state.sourceHash = string.hashCode(updatedSource);
+        browser.viewModel.indicateNoUnsavedChanges();
       }
     }
     mod.setSource(updatedSource);

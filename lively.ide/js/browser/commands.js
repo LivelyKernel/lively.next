@@ -12,24 +12,14 @@ function isMarkdown (m) {
 }
 
 export default function browserCommands (browser) {
-  const pList = browser.get('packageList');
-  const mList = browser.get('moduleList');
-  const codeEntityTree = browser.get('codeEntityTree');
-  const editor = browser.get('sourceEditor');
   const world = browser.world();
 
   return [
     {
       name: 'focus list with selection',
-      exec: () =>
-        focusList(codeEntityTree.selection
-          ? codeEntityTree
-          : mList.selection ? mList : pList)
+      exec: () => browser.focusColumnView()
     },
-    { name: 'focus code entities', exec: () => focusList(codeEntityTree) },
-    { name: 'focus package list', exec: () => focusList(pList) },
-    { name: 'focus module list', exec: () => focusList(mList) },
-    { name: 'focus source editor', exec: () => { editor.focus(); editor.show(); return true; } },
+    { name: 'focus source editor', exec: () => { browser.focusSourceEditor(); return true; } },
 
     {
       name: 'resize editor panel',
@@ -50,13 +40,14 @@ export default function browserCommands (browser) {
     {
       name: 'jump to codeentity',
       exec: async browser => {
-        if (browser.isTestModule(browser.ui.sourceEditor.textString)) { return browser.execCommand('jump to test'); }
+        const { editorPlugin: { textMorph: ed } } = browser;
+        if (browser.isTestModule(ed.textString)) { return browser.execCommand('jump to test'); }
         if (isMarkdown(browser.selectedModule)) {
-          return browser.ui.sourceEditor.execCommand('[markdown] goto heading');
+          return ed.execCommand('[markdown] goto heading');
         }
 
         const codeEntities = browser.renderedCodeEntities();
-        const currentIdx = codeEntities.indexOf(browser.ui.columnView._selectedNode);
+        const currentIdx = codeEntities.map(m => m.name).indexOf(browser.selectedCodeEntity && browser.selectedCodeEntity.name);
         const items = codeEntities.map((def) => {
           const { name, type, parent } = def;
           return {
@@ -76,7 +67,7 @@ export default function browserCommands (browser) {
             historyId: 'js-browser-codeentity-jump-hist'
           });
         if (choice) {
-          browser.ui.sourceEditor.saveMark();
+          ed.saveMark();
           browser.selectCodeEntity(choice);
         }
         return true;
@@ -86,13 +77,13 @@ export default function browserCommands (browser) {
     {
       name: 'jump to test',
       exec: async browser => {
-        const { selectedModule: m, ui: { sourceEditor } } = browser;
+        const { selectedModule: m, editorPlugin: { textMorph: ed } } = browser;
         if (!m) return true;
 
-        const source = sourceEditor.textString;
+        const source = ed.textString;
         const items = []; const testsByFile = [];
         const lines = source.split('\n');
-        const { cursorPosition: { row: currentRow } } = sourceEditor;
+        const { cursorPosition: { row: currentRow } } = ed;
         let preselect = 0;
 
         const { loadTestModuleAndExtractTestState } = await System.import('mocha-es6');
@@ -121,10 +112,10 @@ export default function browserCommands (browser) {
             preselect
           });
         if (choice) {
-          sourceEditor.saveMark();
-          sourceEditor.cursorPosition = { row: choice.row, column: 0 };
-          sourceEditor.execCommand('goto line start');
-          sourceEditor.centerRow(choice.row);
+          ed.saveMark();
+          ed.cursorPosition = { row: choice.row, column: 0 };
+          ed.execCommand('goto line start');
+          ed.centerRow(choice.row);
         }
         return true;
       }
@@ -132,39 +123,8 @@ export default function browserCommands (browser) {
 
     {
       name: 'browser history browse',
-      exec: async browser => {
-        const { left, right } = browser.state.history;
-        const current = arr.last(left);
-        const currentIdx = left.indexOf(current);
-
-        const items = left.concat(right).map(loc => ({
-          isListItem: true,
-          string: loc.module
-            ? loc.module.nameInPackage
-            : loc.package
-              ? loc.package.name || loc.package.address
-              : 'strange location',
-          value: loc
-        }));
-
-        const { selected: [choice] } = await browser.world().filterableListPrompt(
-          'Jumpt to location', items, { preselect: currentIdx, requester: browser });
-        if (choice) {
-          if (left.includes(choice)) {
-            browser.state.history.left = left.slice(0, left.indexOf(choice) + 1);
-            browser.state.history.right = left.slice(left.indexOf(choice) + 1).concat(right);
-          } else if (right.includes(choice)) {
-            browser.state.history.left = left.concat(right.slice(0, right.indexOf(choice) + 1));
-            browser.state.history.right = right.slice(right.indexOf(choice) + 1);
-          }
-          if (current) {
-            const { scroll, cursor } = browser.historyGetLocation();
-            current.scroll = scroll; current.cursor = cursor;
-          }
-          await browser.historySetLocation(choice);
-        }
-
-        return true;
+      exec: browser => {
+        return browser.interactivelyBrowseHistory();
       }
     },
 
@@ -225,20 +185,7 @@ export default function browserCommands (browser) {
       name: 'create new folder',
       exec: async (browser, opts = {}) => {
         const { dir } = opts;
-        const { columnView } = browser.ui;
-        const td = columnView.treeData;
-        if (!dir) return;
-        const coreInterface = browser.systemInterface.coreInterface;
-        const name = await browser.world().prompt('Enter folder name', { requester: browser });
-        if (!name) return;
-        let dirPath = joinPath(dir, name);
-        if (!dirPath.endsWith('/')) dirPath += '/';
-        await coreInterface.resourceMkdir(dirPath);
-        // uncollapse the parent node of the dir
-        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
-        if (parentNode) await td.collapse(parentNode, false);
-        columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
-        // browser.updateModuleList();
+        return await browser.interactivelyCreateNewFolder(dir);
       }
     },
 
@@ -246,77 +193,15 @@ export default function browserCommands (browser) {
       name: 'create new module',
       exec: async (browser, opts = {}) => {
         const { dir, type } = opts;
-        const { columnView } = browser.ui;
-        const td = columnView.treeData;
-        if (!dir) return;
-        const coreInterface = browser.systemInterface.coreInterface;
-        let name = '';
-        if (type) {
-          name = await browser.world().prompt([
-            'Enter module name', null], { requester: browser });
-          if (name) {
-            name = name.replace(/(\.js|\.md|\.json)$/, '') + '.' + type;
-          }
-        } else {
-          while (name != undefined && !name.match(/(\.js|\.md|\.json)$/)) {
-            name = await browser.world().prompt([
-              'Enter module name\n', null,
-              'Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
-              'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }], { requester: browser });
-          }
-        }
-        if (!name) return;
-        let dirPath = joinPath(dir, name);
-        await coreInterface.resourceEnsureExistance(dirPath);
-        // uncollapse the parent node of the dir
-        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
-        if (parentNode) await td.collapse(parentNode, false);
-        columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+        return await browser.interactivelyAddNewModule(dir, type);
       }
     },
 
     {
       name: 'remove selected entity',
-      exec: async (browser, opts = {}) => {
+      exec: (browser, opts = {}) => {
         const { dir } = opts;
-        const { selectedPackage, ui: { columnView }, systemInterface } = browser;
-        const coreInterface = systemInterface.coreInterface;
-        const td = columnView.treeData;
-        if (!dir || !selectedPackage) return;
-        const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
-        const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
-        const textStyle = { fontSize: 16, fontWeight: 'normal ' };
-        if (!selectedNodeInDir) return;
-        if (browser.isModule(selectedNodeInDir)) {
-          // if is .md or .less, just remove the file
-          // else remove module!
-          if (selectedNodeInDir.url.match(/(\.md|\.less)$/)) {
-            if (await browser.world().confirm([
-              'Really remove file?\n', {}, 'You are about to remove the file:\n', textStyle, selectedNodeInDir.url, { ...textStyle, fontStyle: 'italic' }
-            ], { lineWrapping: false, requester: browser })) {
-              await coreInterface.resourceRemove(selectedNodeInDir.url);
-            } else return;
-          } else {
-            return browser.execCommand('remove module', { mod: selectedNodeInDir });
-          }
-        }
-        if (selectedNodeInDir.type == 'directory') {
-          const proceed = await browser.world().confirm([
-            'Folder removal\n', {},
-            'You are about to remove a folder containing several modules. ', textStyle,
-            'All of these modules will be immediately unloaded from the system.\n', textStyle,
-            'This may potentially crash the system, especially if the modules in question are currently in use by one or more objects. Proceed with caution.', textStyle
-          ], { width: 400, requester: browser });
-          if (!proceed) return;
-          const pkg = await coreInterface.getPackage(selectedPackage.address);
-          const modulesToRemove = pkg.modules.filter(m => m.name.startsWith(selectedNodeInDir.url));
-          for (let mod of modulesToRemove) {
-            await browser.execCommand('remove module', { mod });
-          }
-          await coreInterface.resourceRemove(selectedNodeInDir.url);
-        }
-        if (parentNode) await td.collapse(parentNode, false);
-        browser.updateModuleList();
+        return browser.interactivelyRemoveSelectedItem(dir);
       }
     },
 
@@ -440,7 +325,7 @@ export default function browserCommands (browser) {
           browser.world().inform('No module selected / specified!', { requester: browser, autoWidth: true });
           return true;
         }
-        const lineNumber = c ? browser.ui.sourceEditor.indexToPosition(c.node.start).row : null;
+        const lineNumber = c ? browser.editorPlugin.textMorph.indexToPosition(c.node.start).row : null;
         let url = m.url;
         if (url.startsWith('file://')) url = url.replace('file://', ''); // FIXME
         return browser.world().execCommand('open file', { url, lineNumber });

@@ -997,7 +997,8 @@ const commands = [
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
-      const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
+      // const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
+      const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
       let browser;
       if (args) {
         const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface']);
@@ -1084,7 +1085,7 @@ const commands = [
 
       const browser = opts.browser ||
                  (focused && focused.ownerChain().find(ea => ea.isBrowser));
-      const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
+      const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
       const { localInterface } = await System.import('lively-system-interface');
       const systemInterface = opts && opts.systemInterface
         ? opts.systemInterface

@@ -815,20 +815,26 @@ export class LivelyWorld extends World {
       // sortFunction: (parsedInput, item) => ...
       // filterFunction: (parsedInput, item) => ...
     }) {
+    let list;
+
     if (opts.prompt) {
-      const list = opts.prompt.get('list');
+      list = opts.prompt.get('list');
       list.items = items;
       list.selectedIndex = opts.preselect || 0;
       return this.openPrompt(opts.prompt, opts);
     }
 
-    return this.openPrompt(new ListPrompt({
+    list = new ListPrompt({
       filterable: true,
       padding: Rectangle.inset(3),
       label,
       items,
       ...opts
-    }), opts);
+    });
+
+    const p = this.openPrompt(list, opts);
+    list.whenRendered().then(() => { list.preselect = opts.preselect; });
+    return p;
   }
 
   editListPrompt (label = '', items = [], opts = { requester: null, multiSelect: true, historyId: null }) {
