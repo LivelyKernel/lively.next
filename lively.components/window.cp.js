@@ -117,6 +117,7 @@ const DefaultWindow = component({
     fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(208, 211, 212) }, { offset: 1, color: Color.rgb(179, 182, 183) }], vector: rect(0, 0, 0, 1) }),
     position: pt(-0.2, -0.4),
     reactsToPointer: false,
+    isLayoutable: false,
     submorphs: [{
       name: 'window controls',
       extent: pt(69, 27),
