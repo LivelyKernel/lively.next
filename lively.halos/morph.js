@@ -1238,7 +1238,7 @@ class InspectHaloItem extends HaloItem {
 
   onMouseDown (evt) {
     (async () => {
-      const { SystemInspector } = await System.import('lively.ide/js/inspector/ui.cp.js');
+      const Inspector = await System.import('lively.ide/js/inspector/ui.cp.js');
       const existing = this.world().getSubmorphsByStyleClassName('Inspector')
         .find(i => i.targetObject == this.halo.target);
       let win;
@@ -1247,7 +1247,7 @@ class InspectHaloItem extends HaloItem {
         win.activate();
         win.animate({ center: this.world().visibleBounds().center(), duration: 200 });
       } else {
-        part(SystemInspector, { viewModel: { targetObject: this.halo.target } }).openInWindow();
+        Inspector.openInWindow({ targetObject: this.halo.target });
       }
       this.halo.remove();
     })();

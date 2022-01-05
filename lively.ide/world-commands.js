@@ -964,7 +964,7 @@ const commands = [
   {
     name: 'inspect server',
     exec: async (world) => {
-      const { default: Inspector } = await System.import('lively.ide/js/inspector.js');
+      const Inspector = await System.import('lively.ide/js/inspector/ui.cp.js');
       const { serverInterfaceFor } = await System.import('lively-system-interface');
       const remote = serverInterfaceFor(System.baseURL + 'eval');
       const evalEnvironment = {

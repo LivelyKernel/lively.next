@@ -67,6 +67,7 @@ const DarkDropDownList = component(DarkButton, {
   name: 'dark drop down list'
 });
 
+// part(SystemInspector).openInWindow()
 // part(DarkDropDownList, { items: [1,2,3], listMaster: DarkList}).openInWorld()
 // part(SystemInspector, { viewModel: { targetObject: this } }).openInWindow()
 const SystemInspector = component({
@@ -199,6 +200,10 @@ const SystemInspector = component({
   })]
 });
 
+function openInWindow (modelAttributes) {
+  return part(SystemInspector, { viewModel: modelAttributes }).openInWindow();
+}
+
 // SystemInspector.openInWorld()
 
-export { DarkButton, DarkDropDownList, SystemInspector, InstructionWidget };
+export { DarkButton, DarkDropDownList, SystemInspector, InstructionWidget, openInWindow };

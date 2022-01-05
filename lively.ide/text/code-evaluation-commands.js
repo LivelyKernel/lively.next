@@ -1,4 +1,4 @@
-import Inspector from '../js/inspector.js';
+import * as Inspector from '../js/inspector/ui.cp.js';
 import { string } from 'lively.lang';
 import { Morph } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
@@ -75,7 +75,8 @@ export var codeEvaluationCommands = [
         return result;
       }
       morph.insertTextAndSelect(
-        err ? String(err) + (err.stack ? '\n' + err.stack : '')
+        err
+          ? String(err) + (err.stack ? '\n' + err.stack : '')
           : String(result.value));
       morph.focus();
       return result;
