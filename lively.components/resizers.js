@@ -1,4 +1,4 @@
-import { arr } from 'lively.lang';
+import { arr, obj } from 'lively.lang';
 import { pt, Color } from 'lively.graphics';
 import { Morph } from 'lively.morphic';
 
@@ -84,12 +84,24 @@ export class HorizontalResizer extends Morph {
     return {
       fill: { defaultValue: Color.gray.lighter() },
       nativeCursor: { defaultValue: 'ns-resize' },
-      fixed: { defaultValue: [] },
-      scalingBelow: { defaultValue: [] },
-      scalingAbove: { defaultValue: [] },
+      fixed: {
+        defaultValue: []
+      },
+      scalingBelow: {
+        defaultValue: []
+      },
+      scalingAbove: {
+        defaultValue: []
+      },
       minHeight: { defaultValue: 20 },
       draggable: { defaultValue: true }
     };
+  }
+
+  getRefs (refs) {
+    return arr.uniq(refs.map(m => {
+      return obj.isString(m) ? this.get(m) : m;
+    }));
   }
 
   onDrag (evt) {
@@ -129,16 +141,16 @@ export class HorizontalResizer extends Morph {
   movedVerticallyBy (deltaY) {
     if (!this.resizeIsSave(deltaY)) return;
 
-    let morphsForPosChange = this.fixed.concat(this.scalingBelow);
+    let morphsForPosChange = this.getRefs(this.fixed.concat(this.scalingBelow));
     morphsForPosChange.forEach(m => {
       let pos = m.position;
       m.position = pt(pos.x, pos.y + deltaY);
     });
-    this.scalingAbove.forEach(m => {
+    this.getRefs(this.scalingAbove).forEach(m => {
       let ext = m.extent;
       m.extent = pt(ext.x, ext.y + deltaY);
     });
-    this.scalingBelow.forEach(m => {
+    this.getRefs(this.scalingBelow).forEach(m => {
       let ext = m.extent;
       m.extent = pt(ext.x, ext.y - deltaY);
     });
@@ -146,8 +158,8 @@ export class HorizontalResizer extends Morph {
   }
 
   resizeIsSave (deltaY) {
-    return this.scalingAbove.every(m => (m.extent.y + deltaY) >= this.minHeight) &&
-        this.scalingBelow.every(m => (m.extent.y - deltaY) >= this.minHeight);
+    return this.getRefs(this.scalingAbove).every(m => (m.extent.y + deltaY) >= this.minHeight) &&
+        this.getRefs(this.scalingBelow).every(m => (m.extent.y - deltaY) >= this.minHeight);
   }
 
   addFixed (m) { arr.pushIfNotIncluded(this.fixed, m); }
@@ -156,3 +168,4 @@ export class HorizontalResizer extends Morph {
 
   addScalingBelow (m) { arr.pushIfNotIncluded(this.scalingBelow, m); }
 }
+
