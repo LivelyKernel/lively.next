@@ -313,7 +313,7 @@ export class PathIndicator extends Morph {
       this.master.applyAnimated({ duration });
       pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
-        statusLabel.isLayoutable = false;
+        statusBox.isLayoutable = statusLabel.isLayoutable = false;
         statusLabel.opacity = 0;
         statusBox.opacity = 0;
         clipboardControls.opacity = 0.5;
@@ -326,14 +326,13 @@ export class PathIndicator extends Morph {
 
   showDefault (duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer } = this.ui;
+      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
       this.master = FileStatusDefault;
       this.master.applyAnimated({ duration });
       pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
-        statusLabel.isLayoutable = false;
-        statusLabel.opacity = 0;
-        statusBox.opacity = 0;
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
+        statusBox.opacity = statusLabel.opacity = 0;
         this.adjustHeight();
       }, { duration });
       pathContainer.layout.renderViaCSS = true;
@@ -342,7 +341,7 @@ export class PathIndicator extends Morph {
 
   async showError (err, duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer } = this.ui;
+      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
       statusBox.textString = err;
       statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
       await statusLabel.whenRendered();
@@ -350,9 +349,8 @@ export class PathIndicator extends Morph {
       this.master.applyAnimated({ duration });
       pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
-        statusBox.opacity = 1;
-        statusLabel.isLayoutable = true;
-        statusLabel.opacity = 1;
+        statusLabel.opacity = statusBox.opacity = 1;
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
       }, { duration });
       pathContainer.layout.renderViaCSS = true;
@@ -369,9 +367,8 @@ export class PathIndicator extends Morph {
       this.master.applyAnimated({ duration });
       pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
-        statusBox.opacity = 1;
-        statusLabel.isLayoutable = true;
-        statusLabel.opacity = 1;
+        statusLabel.opacity = statusBox.opacity = 1;
+        statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
       }, { duration });
       pathContainer.layout.renderViaCSS = true;
@@ -383,7 +380,7 @@ export class PathIndicator extends Morph {
     this._animating = true;
 
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer } = this.ui;
+      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
       statusLabel.opacity = 0;
       statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
       await statusLabel.whenRendered();
@@ -392,6 +389,7 @@ export class PathIndicator extends Morph {
       pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         statusBox.opacity = 0;
+        errorControls.isLayoutable = statusBox.isLayoutable = false;
         statusLabel.isLayoutable = true;
         statusLabel.opacity = 1;
         this.adjustHeight();
@@ -418,6 +416,7 @@ export class PathIndicator extends Morph {
     }
   }
 }
+
 
 // b = part(SystemBrowser)
 // b.get('column view').width
@@ -753,7 +752,7 @@ const SystemBrowser = component({
     }, {
       type: Text,
       name: 'status box',
-      visible: false,
+      isLayoutable: false,
       clipMode: 'auto',
       extent: pt(560.7, 85.3),
       fill: Color.rgba(0, 0, 0, 0),
@@ -768,7 +767,7 @@ const SystemBrowser = component({
       readOnly: true
     }, {
       name: 'error controls',
-      visible: false,
+      isLayoutable: false,
       extent: pt(205, 41),
       fill: Color.rgba(0, 0, 0, 0),
       layout: new HorizontalLayout({

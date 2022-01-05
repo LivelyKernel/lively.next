@@ -486,6 +486,12 @@ export class BrowserModel extends ViewModel {
         }
       },
 
+      associatedSearchPanel: {
+        derived: true,
+        get () { return this.state.associatedSearchPanel; },
+        set (panel) { this.state.associatedSearchPanel = panel; }
+      },
+
       editorPlugin: {
         after: ['submorphs'],
         readOnly: true,
