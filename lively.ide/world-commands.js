@@ -14,6 +14,8 @@ import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
 import { CommentBrowser } from 'lively.collab';
 import { once } from 'lively.bindings';
+import { part } from 'lively.morphic/components/core.js';
+import { CodeSearch } from './code-search.cp.js';
 
 const commands = [
 
@@ -1150,7 +1152,10 @@ const commands = [
       const li = LoadingIndicator.open('loading code search');
 
       if (browser && browser.isBrowser) {
-        if (browser.state.associatedSearchPanel) { return browser.state.associatedSearchPanel.getWindow().activate(); }
+        if (browser.associatedSearchPanel) {
+          li.remove();
+          return browser.associatedSearchPanel.getWindow().activate();
+        }
       } else browser = null;
 
       const { localInterface } = await System.import('lively-system-interface');
@@ -1162,7 +1167,7 @@ const commands = [
         else systemInterface = localInterface;
       }
 
-      const searcher = await resource('part://SystemIDE/code search').read();
+      const searcher = part(CodeSearch);
       Object.assign(searcher, {
         browser,
         input: opts.input,
@@ -1174,7 +1179,7 @@ const commands = [
 
       li.remove();
 
-      if (browser) browser.state.associatedSearchPanel = searcher;
+      if (browser) browser.associatedSearchPanel = searcher;
       return searcher;
     }
   },
