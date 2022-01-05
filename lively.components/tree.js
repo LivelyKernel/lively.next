@@ -63,14 +63,6 @@ export class Tree extends Text {
       },
       padding: { defaultValue: Rectangle.inset(3) },
 
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/tree/light'
-          };
-        }
-      },
-
       resizeNodes: {
         defaultValue: false,
         set (val) { this.setProperty('resizeNodes', val); this.resetCache(); this.update(); }
