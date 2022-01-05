@@ -5,6 +5,8 @@ import { initializeClass } from '../runtime.js';
 import '../properties.js';
 import { resource, createFiles } from 'lively.resources';
 import { module } from 'lively.modules';
+import { runEval } from 'lively.vm';
+import { classToFunctionTransform } from '../class-to-function-transform.js';
 
 // FIXME ???
 let m = lively.modules.module('lively.classes/properties.js');
@@ -65,10 +67,11 @@ async function defineModule (modName, modSource) {
     await resource(m.id).write(modSource);
     await module(testDir.join(modName).url).load();
   }
+  return m;
 }
 
 async function evalIn (modName, modSource) {
-  let { value } = await lively.vm.runEval(modSource, { targetModule: testDir.join(modName).url });
+  let { value } = await runEval(modSource, { targetModule: testDir.join(modName).url, classTransform: classToFunctionTransform });
   return value;
 }
 
@@ -86,6 +89,7 @@ describe('inheritance updates', () => {
   it('subclass gets members when superclass changes', async () => {
     await defineModule('module1.js', 'export class A {}');
     await defineModule('module2.js', "import {A} from './module1.js'; class B extends A {}");
+
     let obj = await evalIn('module2.js', 'new B()');
     expect(obj).not.have.key('someMethod');
     await defineModule('module1.js', 'export class A {someMethod() { return 23; }}');

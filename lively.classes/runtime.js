@@ -93,11 +93,24 @@ function installMethods (klass, instanceMethods, classMethods) {
     klass.prototype[initializeSymbol].isDefaultInitializer = true;
     klass.prototype[initializeSymbol].displayName = 'lively-initialize';
   } else {
-    if (Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol)) {
-      if (klass.prototype[initializeSymbol].isDefaultInitializer) {
-        if (klass[superclassSymbol].prototype[initializeSymbol]) {
-          delete klass.prototype[initializeSymbol];
-        }
+    const hasInitializerInstalled = Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol);
+    const hasInitializerDefined = instanceMethods.find(m => m.key == initializeSymbol);
+    if (hasInitializerInstalled) {
+      // if the class already has an initializer installed we need to proceed with care...
+      const isDefaultInitializer = klass.prototype[initializeSymbol].isDefaultInitializer;
+      const superControlledByUs = klass[superclassSymbol].prototype[initializeSymbol];
+      if (isDefaultInitializer && superControlledByUs) {
+        // we possibly override a meaningful constructor in the superclass
+        // so we better delete the default initializer from this class
+        // since it does not contribute anything
+        delete klass.prototype[initializeSymbol];
+      } else if (!hasInitializerDefined) {
+        // the constructor was previously defined and has now been removed
+        // from the definition. So we either...
+        // 1. just remove from class and dispatch to super...
+        if (superControlledByUs) delete klass.prototype[initializeSymbol];
+        // 2 ... or fill in the default one if the superclass is not controlled by us.
+        else klass.prototype[initializeSymbol] = function () {};
       }
     }
   }
