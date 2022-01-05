@@ -35,6 +35,20 @@ export class BodyControlModel extends PropertySectionModel {
     };
   }
 
+  get addEffectButton () {
+    return this.ui.addButton;
+  }
+
+  disableAddEffectButton () {
+    this.addEffectButton.reactsToPointer = false;
+    this.addEffectButton.visible = false;
+  }
+
+  enableAddEffectButton () {
+    this.addEffectButton.reactsToPointer = true;
+    this.addEffectButton.visible = true;
+  }
+
   /**
    * Sets the current morph the effects control is focused on.
    * @params { Morph } aMorph - The morph to be focused on.
@@ -42,6 +56,10 @@ export class BodyControlModel extends PropertySectionModel {
   focusOn (aMorph) {
     this.targetMorph = aMorph;
     this.ensureDynamicControls();
+    // enable adding effects when we come from a morph which had all available effects applied
+    this.enableAddEffectButton();
+    // disable adding effects if the selected morph already has all effects applied
+    if (this.availableItems.length == 0) this.disableAddEffectButton();
   }
 
   /**
@@ -95,6 +113,9 @@ export class BodyControlModel extends PropertySectionModel {
       control.chooseDefault();
       if (refresh) this.refreshItemLists();
     }
+    if (this.availableItems.length == 0) {
+      this.disableAddEffectButton();
+    }
     once(control.viewModel, 'remove', this, 'deactivate');
     connect(control.viewModel, 'selectedProp', this, 'refreshItemLists');
   }
@@ -116,6 +137,9 @@ export class BodyControlModel extends PropertySectionModel {
    * Ensures that the appearance of the body control is faded out.
    */
   deactivate () {
+    if (this.availableItems.length == 1 || (this.availableItems.includes('Drop shadow') && this.availableItems.length == 2)) {
+      this.enableAddEffectButton();
+    }
     this.refreshItemLists();
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());
