@@ -522,7 +522,7 @@ export class SceneGraphTree extends InteractiveTree {
     if (!m.isMorph) return false;
     return m.isContainer || m.isWindow || m.getWindow() || m.isEpiMorph || m.isHand || m.isHaloItem ||
       ['lively.halos'].includes(m.constructor[Symbol.for('lively-module-meta')].package.name) ||
-      ['MorphicSideBar', 'SideBarToggler', 'UserFlap', 'Menu', 'CommentIndicator'].includes(m.constructor.name);
+      ['Menu', 'CommentIndicator'].includes(m.constructor.name);
   }
 
   onDropHoverOut (evt) {
