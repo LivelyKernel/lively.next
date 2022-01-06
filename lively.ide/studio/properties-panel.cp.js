@@ -215,10 +215,11 @@ const BackgroundControl = component(PropertySection, {
 // bar.openInWorld()
 // bar.focusOn($world.get('test 1'))
 // bar.remove()
+export const defaultPropertiesPanelWidth = 250;
 const PropertiesPanel = component({
   defaultViewModel: PropertiesPanelModel,
   name: 'properties panel',
-  width: 250,
+  width: defaultPropertiesPanelWidth,
   height: 1000,
   fill: Color.rgb(30, 30, 30).withA(0.95),
   clipMode: 'auto',

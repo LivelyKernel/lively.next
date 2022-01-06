@@ -18,6 +18,7 @@ import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import ObjectPackage, { interactivelyForkPackage, addScript } from 'lively.classes/object-classes.js';
 import { part } from 'lively.morphic/components/core.js';
 import { TopBar } from 'lively.ide/studio/top-bar.cp.js';
+import { Flap } from 'lively.ide/studio/sidebar-flap.cp.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -72,6 +73,8 @@ export var UserUI = {
     topBar.hasFixedPosition = true;
     topBar.respondsToVisibleWindow = true;
     topBar.openInWorld();
+    part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
+    part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
     topBar.relayout();
     topBar.top = -topBar.height; // tell top bar to hide
     const dropShadow = topBar.dropShadow;
