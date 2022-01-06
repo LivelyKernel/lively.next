@@ -349,8 +349,8 @@ export class TopBarModel extends ViewModel {
     this.sideBar = null;
     this.stylingPalette.remove();
     this.stylingPalette = null;
-    this.openSideBar('Scene Graph');
-    this.openSideBar('Styling Palette');
+    this.openSideBar('scene graph');
+    this.openSideBar('properties panel');
   }
 
   // this.reloadSidebar()
@@ -362,7 +362,7 @@ export class TopBarModel extends ViewModel {
       this.activeSideBars.push(name);
     }
 
-    if (name == 'Scene Graph') {
+    if (name == 'scene graph') {
       if (!this.sideBar) {
         this.sideBar = part(MorphPanel);
         this.sideBar.epiMorph = true;
@@ -373,17 +373,17 @@ export class TopBarModel extends ViewModel {
         this.sideBar.right = 0;
         await this.sideBar.whenRendered();
       }
-      await this.sideBar.toggle(this.activeSideBars.includes('Scene Graph'));
+      await this.sideBar.toggle(this.activeSideBars.includes('scene graph'));
     }
 
-    if (name == 'Styling Palette') {
+    if (name == 'properties panel') {
       if (!this.stylingPalette) {
         this.stylingPalette = part(PropertiesPanel);
         this.stylingPalette.epiMorph = true;
         this.stylingPalette.hasFixedPosition = true;
         this.stylingPalette.respondsToVisibleWindow = true;
       }
-      await this.stylingPalette.toggle(this.activeSideBars.includes('Styling Palette'));
+      await this.stylingPalette.toggle(this.activeSideBars.includes('properties panel'));
     }
 
     const checker = this.ui.livelyVersionChecker;
