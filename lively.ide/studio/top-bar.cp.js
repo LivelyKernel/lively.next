@@ -107,15 +107,6 @@ export class TopBarModel extends ViewModel {
           this.ui.shapeStatusIcon.textAndAttributes = Icon.textAttribute(this.shapeToIcon[shapeName].args[0]);
         }
       },
-      sideBarToIcon: {
-        readOnly: true,
-        get () {
-          return {
-            'Scene Graph': { args: ['sitemap', { textStyleClasses: ['fas'] }] },
-            'Styling Palette': { args: ['palette', { textStyleClasses: ['fas'] }] }
-          };
-        }
-      },
       shapeToIcon: {
         initialize (prevValue) {
           this.shapeToIcon = prevValue || {
@@ -184,7 +175,6 @@ export class TopBarModel extends ViewModel {
   onMouseDown (evt) {
     const selector = this.ui.selectShapeType;
     const shapeModeButton = this.ui.shapeModeButton;
-    const sideBarSelector = this.ui.sideBarSelector;
     const target = this.primaryTarget || this.world();
     if (evt.targetMorph == selector) {
       const menu = this.world().openWorldMenu(evt, this.getShapeMenuItems());
@@ -229,11 +219,6 @@ export class TopBarModel extends ViewModel {
 
     if (evt.targetMorph.name == 'comment browser button') {
       this.toggleCommentBrowser();
-    }
-
-    if (evt.targetMorph == sideBarSelector) {
-      const menu = this.world().openWorldMenu(evt, this.getSideBarMenuItems());
-      menu.position = sideBarSelector.globalBounds().bottomLeft().subPt(this.world().scroll);
     }
   }
 
@@ -322,24 +307,6 @@ export class TopBarModel extends ViewModel {
           this.currentShapeMode = shapeName;
           this.setEditMode('Shape');
         }
-      ];
-    });
-  }
-
-  getSideBarMenuItems () {
-    return Object.entries(this.sideBarToIcon).map(([sideBarName, { args }]) => {
-      return [
-        [
-          ...this.activeSideBars.includes(sideBarName)
-            ? [
-                ...Icon.textAttribute('check', {
-                  fontSize: 11,
-                  paddingTop: '2px'
-                }), '   ', {}
-              ]
-            : ['     ', {}],
-          ...Icon.textAttribute(...args), `   ${sideBarName} `, { float: 'none' }
-        ], () => this.openSideBar(sideBarName)
       ];
     });
   }
@@ -1396,12 +1363,6 @@ const TopBar = component({
         }],
         tooltip: 'Create basic shape mode'
       },
-      part(TopBarButton, {
-        name: 'side bar selector',
-        padding: rect(14, 1, -14, -1),
-        textAndAttributes: Icon.textAttribute('columns'),
-        tooltip: 'Manage sidebars'
-      }),
       part(TopBarButton, {
         name: 'open component browser',
         fontSize: 25,
