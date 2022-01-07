@@ -1045,7 +1045,8 @@ export class LivelyWorld extends World {
       }).openInWorld();
     }]);
 
-    items.push(['Remove Morph', () => { self.abandon(true); }]);
+    items.push(['Remove Morph', () => self.abandon(true)]);
+    items.push(['Open Inspector', () => self.inspect()]);
 
     items.push({ isDivider: true });
     items.push(['Add comment', async () => {
