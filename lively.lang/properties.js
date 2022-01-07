@@ -8,6 +8,22 @@ function all (object, predicate) {
   return a;
 }
 
+/*
+ * For a given object, traverses all prototypes in the proto chain
+ * and collects all property descriptors and merges them into one object.
+ * @param { Object } obj - The object to collect the property descriptors for.
+ * @returns { Object } The collection of property descriptors as a dictionary.
+ */
+function allPropertyDescriptors (obj) {
+  let proto = obj;
+  const descriptors = {};
+  while (proto = proto.__proto__) {
+    // fixme: maybe the performance is not ideal
+    Object.assign(descriptors, Object.getOwnPropertyDescriptors(proto));
+  }
+  return descriptors;
+}
+
 function allOwnPropertiesOrFunctions (obj, predicate) {
   // ignore-in-doc
   return Object.getOwnPropertyNames(obj).reduce(function (result, name) {
@@ -89,6 +105,7 @@ function hash (obj) {
 export {
   all,
   allOwnPropertiesOrFunctions,
+  allPropertyDescriptors,
   own,
   forEachOwn,
   nameFor,
