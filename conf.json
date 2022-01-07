@@ -5,7 +5,8 @@
     "recurseDepth": 10,
     "source": {
         "include": [
-                    "lively.lang"
+                    "lively.lang",
+                    "lively.components/widgets"
                     ],
         "includePattern": "\\.js$"
     },
