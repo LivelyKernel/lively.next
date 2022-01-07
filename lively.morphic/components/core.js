@@ -1,5 +1,5 @@
 import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
-import { string, arr, obj } from 'lively.lang';
+import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
 import { deserializeMorph, serializeMorph } from '../serialization.js';
@@ -293,10 +293,11 @@ export class ViewModel {
   }
 
   reifyExposedProps () {
-    const { properties } = this.propertiesAndPropertySettings();
+    const { properties: props } = this.propertiesAndPropertySettings();
+    const descriptors = properties.allPropertyDescriptors(this);
     for (let prop of this.expose || []) {
-      const descr = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), prop);
-      if (properties[prop] || descr && (!!descr.get || !!descr.set)) {
+      const descr = descriptors[prop];
+      if (props[prop] || descr && (!!descr.get || !!descr.set)) {
         // install getter setter
         Object.defineProperty(this.view, prop, {
           configurable: true,
