@@ -1,3 +1,8 @@
+/**
+ * Methods to streamline the querying of object properties
+ * @module lively.lang/properties
+ */
+
 function all (object, predicate) {
   // ignore-in-doc
   const a = [];
