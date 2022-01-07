@@ -130,7 +130,7 @@ export var snippets = [
   ['aw', 'await $0'],
 
   // jsdoc
-  ['docstring', `/*
+  ['docstring', `/**
  * \${0:description}
  */`]
 

@@ -13,7 +13,7 @@ function all (object, predicate) {
   return a;
 }
 
-/*
+/**
  * For a given object, traverses all prototypes in the proto chain
  * and collects all property descriptors and merges them into one object.
  * @param { Object } obj - The object to collect the property descriptors for.
