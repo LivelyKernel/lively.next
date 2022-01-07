@@ -37,6 +37,8 @@ import {
   EditListPrompt
 } from 'lively.components/prompts.js';
 
+import * as prompts from 'lively.components/prompts.cp.js';
+
 import LoadingIndicator from 'lively.components/loading-indicator.js';
 import { Halo, MorphHighlighter, StatusMessage, StatusMessageForMorph, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
@@ -752,8 +754,10 @@ export class LivelyWorld extends World {
   }
 
   inform (label = 'no message', opts = { fontSize: 16, requester: null, animated: true }) {
-    return this.openPrompt(new InformPrompt({ label, ...opts }), opts);
+    return this.openPrompt(part(prompts.InformPrompt, { viewModel: { label, ...opts } }), opts);
   }
+
+  // $world.prompt('hello', { forceConfirm: true })
 
   prompt (label, opts = { requester: null, input: '', historyId: null, useLastInput: false, selectInput: false }) {
     // await this.world().prompt("test", {input: "123"})
@@ -763,39 +767,48 @@ export class LivelyWorld extends World {
     //   useLastInput: BOOLEAN -- use history for default input?
     //   forceConfirm: BOOLEAN -- force the user to proceed with a valid input
     // }
-    const textPrompt = new TextPrompt({ label, ...opts });
-    if (opts.forceConfirm) {
-      textPrompt.get('cancel button').disable();
-    }
-    return this.openPrompt(textPrompt, opts);
+    // const textPrompt = new TextPrompt({ label, ...opts });
+    return this.openPrompt(part(prompts.TextPrompt, { viewModel: { label, ...opts } }), opts);
   }
 
-  editPrompt (label, opts = { requester: null, input: '', historyId: null, useLastInput: false, textStyle: null, mode: null, evalEnvironment: null }) {
-    return this.openPrompt(new EditPrompt({ label, ...opts }), opts);
+  editPrompt (label, opts = {
+    // await this.world().editPrompt("secret")
+    requester: null,
+    input: '',
+    historyId: null,
+    useLastInput: false,
+    textStyle: null,
+    mode: null,
+    evalEnvironment: null
+  }) {
+    return this.openPrompt(part(prompts.EditPrompt, { viewModel: { label, ...opts } }), opts);
   }
 
   passwordPrompt (label, opts = { requester: null, input: '' }) {
     // await this.world().passwordPrompt("secret")
-    return this.openPrompt(new PasswordPrompt({ label, ...opts }), opts);
+    return this.openPrompt(part(prompts.PasswordPrompt, { viewModel: { label, ...opts } }), opts);
   }
 
   confirm (label, opts = { requester: null, animated: true }) {
     // await this.world().confirm("test")
-    return this.openPrompt(new ConfirmPrompt({ label, ...opts }), opts);
+    return this.openPrompt(part(prompts.ConfirmPrompt, { viewModel: { label, ...opts } }), opts);
   }
 
   multipleChoicePrompt (label, opts = { requester: null, animated: true, choices: [] }) {
     // await this.world().multipleChoicePrompt("test", {choices: ["1","2","3","4"]})
-    return this.openPrompt(new MultipleChoicePrompt({ label, ...opts }), opts);
+    return this.openPrompt(part(prompts.MultipleChoicePrompt, { viewModel: { label, ...opts } }), opts);
   }
 
   listPrompt (label = '', items = [], opts = { requester: null, onSelection: null, preselect: 0 }) {
-    return this.openPrompt(new ListPrompt({
-      filterable: false,
-      padding: Rectangle.inset(3),
-      label,
-      items,
-      ...opts
+    // await this.world().listPrompt("test", ["1","2","3","4"])
+    return this.openPrompt(part(prompts.ListPrompt, {
+      viewModel: {
+        filterable: false,
+        padding: Rectangle.inset(3),
+        label,
+        items,
+        ...opts
+      }
     }), opts);
   }
 
@@ -815,6 +828,7 @@ export class LivelyWorld extends World {
       // sortFunction: (parsedInput, item) => ...
       // filterFunction: (parsedInput, item) => ...
     }) {
+    // await this.world().filterableListPrompt("test", ["1","2","3","4"])
     let list;
 
     if (opts.prompt) {
@@ -824,21 +838,21 @@ export class LivelyWorld extends World {
       return this.openPrompt(opts.prompt, opts);
     }
 
-    list = new ListPrompt({
-      filterable: true,
-      padding: Rectangle.inset(3),
-      label,
-      items,
-      ...opts
+    list = part(prompts.ListPrompt, {
+      viewModel: {
+        filterable: true,
+        padding: Rectangle.inset(3),
+        label,
+        items,
+        ...opts
+      }
     });
 
-    const p = this.openPrompt(list, opts);
-    list.whenRendered().then(() => { list.preselect = opts.preselect; });
-    return p;
+    return this.openPrompt(list, opts);
   }
 
   editListPrompt (label = '', items = [], opts = { requester: null, multiSelect: true, historyId: null }) {
-    return this.openPrompt(new EditListPrompt({ label, multiSelect: true, items, padding: Rectangle.inset(3), ...opts }), opts);
+    return this.openPrompt(part(prompts.EditListPrompt, { viewModel: { label, multiSelect: true, items, padding: Rectangle.inset(3), ...opts } }), opts);
   }
 
   showLoadingIndicatorFor (requester, label) {

@@ -443,15 +443,6 @@ export class RadioButton extends Morph {
         }
       },
 
-      master: {
-        after: ['selected'],
-        initialize () {
-          this.master = {
-            auto: this.getMaster(this.selected)
-          };
-        }
-      },
-
       selectionColor: {},
       selectionStyle: {},
 
@@ -459,10 +450,10 @@ export class RadioButton extends Morph {
         after: ['indicator'],
         defaultValue: false,
         set (bool) {
-          this.whenRendered().then(_ => {
+          this.getMaster(bool).then(async auto => {
             const duration = 200;
             this.master = {
-              auto: this.getMaster(bool)
+              auto
             };
           });
           this.setProperty('selected', !!bool);
@@ -487,10 +478,9 @@ export class RadioButton extends Morph {
     };
   }
 
-  getMaster (selected) {
-    return selected
-      ? 'styleguide://SystemPrompts/prompts/buttons/selection/selected'
-      : 'styleguide://SystemPrompts/prompts/buttons/selection/unselected';
+  async getMaster (selected) {
+    const { ChoiceButtonSelected, ChoiceButtonUnselected } = await System.import('lively.components/prompts.cp.js');
+    return selected ? ChoiceButtonSelected : ChoiceButtonUnselected;
   }
 
   reset () {
@@ -569,8 +559,7 @@ export class RadioButtonGroup extends Morph {
             });
           }
           // fixme: this should be handled by the components themselves
-          this.submorphs[0].master.whenApplied().then(() =>
-            this.setSelection(this.submorphs[0]));
+          this.setSelection(this.submorphs[0]);
         },
         value: {
           derived: true,
@@ -609,7 +598,7 @@ export class RadioButtonGroup extends Morph {
   }
 
   addButton (morph, optValue) {
-    const button = new RadioButton();
+    const button = new RadioButton({ name: 'button ' + (this.submorphs.length + 1) });
     button.reset();
     button.morph = morph;
     if (optValue != undefined) {

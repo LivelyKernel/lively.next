@@ -147,7 +147,7 @@ export class ListScroller extends Morph {
         get () { return this.submorphs[0]; }
       },
       submorphs: {
-        initialize () { this.submorphs = [{ name: 'scrollbar' }]; }
+        initialize () { this.submorphs = [{ name: 'scrollbar', fill: Color.transparent }]; }
       }
     };
   }

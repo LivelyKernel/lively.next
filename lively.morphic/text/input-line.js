@@ -463,6 +463,10 @@ export class PasswordInputLine extends HTMLMorph {
         defaultValue: true
       },
 
+      isPasswordInput: {
+        get () { return true; }
+      },
+
       haloShadow: {
         type: 'Shadow'
       },

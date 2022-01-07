@@ -225,7 +225,6 @@ export class ConfirmPrompt extends AbstractPrompt {
   reject () { super.resolve(false); }
 }
 
-
 // new MultipleChoicePrompt({ label: 'hallo', choices: [1,2,3]}).openInWorld()
 
 export class MultipleChoicePrompt extends AbstractPrompt {
@@ -653,7 +652,7 @@ export class ListPrompt extends AbstractPrompt {
           const list = this.getSubmorphNamed('prompt list');
           if (!list) return;
           list.selectedIndex = idx;
-          list.scrollSelectionIntoView;
+          list.scrollSelectionIntoView(idx);
         }
       },
       onSelection: {
@@ -755,7 +754,6 @@ export class ListPrompt extends AbstractPrompt {
 
   focus () { this.getSubmorphNamed('prompt list').focus(); }
 }
-
 
 export class EditListPrompt extends ListPrompt {
   static async example () {
