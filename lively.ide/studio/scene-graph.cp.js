@@ -254,6 +254,7 @@ export class MorphNodeModel extends ViewModel {
       bindings: {
         get () {
           return [
+            { signal: 'onContextMenu', handler: 'onContextMenu' },
             { signal: 'onBeingDroppedOn', handler: 'onBeingDroppedOn', override: true },
             { signal: 'wantsToBeDroppedOn', handler: 'wantsToBeDroppedOn', override: true },
             { signal: 'onDoubleMouseDown', handler: 'startRenaming' },
@@ -266,6 +267,13 @@ export class MorphNodeModel extends ViewModel {
         }
       }
     };
+  }
+
+  onContextMenu (evt) {
+    this.target.onContextMenu({
+      targetMorph: this.target,
+      stop: () => {}
+    });
   }
 
   toggleVisibility () {

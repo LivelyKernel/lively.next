@@ -1031,6 +1031,8 @@ export class LivelyWorld extends World {
       }).openInWorld();
     }]);
 
+    items.push(['Remove Morph', () => { self.abandon(true); }]);
+
     items.push({ isDivider: true });
     items.push(['Add comment', async () => {
       const commentText = await $world.prompt('Enter comment');
