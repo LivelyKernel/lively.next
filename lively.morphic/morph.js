@@ -720,7 +720,7 @@ export class Morph {
         group: 'styling',
         isStyleProp: true,
         derived: true,
-        after: ['borderStyle', 'borderWidth', 'borderColor'],
+        after: ['borderStyle', 'borderWidth', 'borderColor', 'borderRadius'],
         get () {
           const self = this;
           return {
@@ -730,8 +730,8 @@ export class Morph {
             set width (val) { self.borderWidth = val; },
             get color () { return self.borderColor; },
             set color (val) { self.borderColor = val; },
-            get borderRadius () { return self.borderRadius; },
-            set borderRadius (val) { self.borderRadius = val; }
+            get radius () { return self.borderRadius; },
+            set radius (val) { self.borderRadius = val; }
           };
         },
         set (x) {
@@ -917,13 +917,12 @@ export class Morph {
         if (pool.refForId(id).realObj.isEpiMorph) { arr.removeAt(submorphs, i); }
       }
     }
-
     for (const foldedProp of arr.intersect(this.__only_serialize__, ['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'])) {
       snapshot.props[foldedProp] = {
         key: foldedProp,
         verbatim: true,
         value: obj.extract(
-          this[foldedProp], ['top', 'right', 'bottom', 'left'],
+          this[foldedProp], this.propertiesAndPropertySettings().properties[foldedProp].foldable,
           (prop, value) => value && value.isColor ? value.toTuple() : value)
       };
     }
@@ -2607,29 +2606,22 @@ export class Morph {
     return this.commandHandler.exec(command, this, args, count, evt);
   }
 }
-
+/**
+ * Custom render logic is applied to transform a rectangle into an ellipse by cutting the corners based on its width and height.
+ */
 export class Ellipse extends Morph {
-  // cut the corners so that a rectangle becomes an ellipse
   static get properties () {
     return {
-      borderRadius: {
-        derived: true,
-        get () {
-          return {
-            top: this.borderRadiusTop,
-            right: this.borderRadiusRight,
-            left: this.borderRadiusLeft,
-            bottom: this.borderRadiusBottom,
-            valueOf: () => this.borderRadiusLeft
-          };
-        }
-      },
-      isEllipse: { get () { return true; } },
-      borderRadiusLeft: { get () { return this.height; }, set () {} },
-      borderRadiusRight: { get () { return this.height; }, set () {} },
-      borderRadiusTop: { get () { return this.width; }, set () {} },
-      borderRadiusBottom: { get () { return this.width; }, set () {} }
+      isEllipse: { get () { return true; } }
     };
+  }
+
+  render (renderer) {
+    if (this._requestMasterStyling) {
+      this.master && this.master.applyIfNeeded(true);
+      this._requestMasterStyling = false;
+    }
+    return renderer.renderEllipse(this);
   }
 }
 

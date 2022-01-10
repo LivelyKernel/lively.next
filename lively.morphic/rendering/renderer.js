@@ -238,6 +238,17 @@ export class Renderer {
     }, submorphs);
   }
 
+  renderEllipse (morph) {
+    const submorphs = this.renderSubmorphs(morph);
+    const style = defaultStyle(morph);
+    delete style.borderRadius;
+    style['border-radius'] = '50%';
+    return h('div', {
+      style,
+      ...defaultAttributes(morph, this)
+    }, submorphs);
+  }
+
   renderSubmorphs (morph) {
     return this.renderSelectedSubmorphs(morph, morph.submorphs);
   }
