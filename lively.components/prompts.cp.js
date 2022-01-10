@@ -729,6 +729,7 @@ const ChoiceButtonUnselected = component(ChoiceButtonSelected, {
 const LightPrompt = component({
   name: 'light prompt',
   borderRadius: 8,
+  epiMorph: true,
   dropShadow: new ShadowObject({ distance: 5, rotation: 75, color: Color.rgba(0, 0, 0, 0.37), blur: 60, fast: false }),
   extent: pt(387, 60),
   fill: Color.rgb(251, 252, 252),
