@@ -1564,6 +1564,7 @@ export class BrowserModel extends ViewModel {
     const before = arr.last(this.state.history.left);
 
     this.state.history.right.unshift(current);
+    this.refreshHistoryButtons();
     const { scroll, cursor } = this.historyGetLocation();
     current.scroll = scroll; current.cursor = cursor;
 
@@ -1581,6 +1582,7 @@ export class BrowserModel extends ViewModel {
     const next = this.state.history.right.shift();
     if (!next) return;
     this.state.history.left.push(next);
+    this.refreshHistoryButtons();
 
     if (current) {
       const { scroll, cursor } = this.historyGetLocation();
@@ -1628,6 +1630,18 @@ export class BrowserModel extends ViewModel {
       }
       this.state.history.left.push(loc);
     }
+    this.refreshHistoryButtons();
+  }
+
+  refreshHistoryButtons () {
+    const { goBack, goForward } = this.ui;
+    // if there is no previous history, disable the back button
+    if (this.state.history.left.length < 2) goBack.disable();
+    else goBack.enable();
+
+    // if there is no future, disable the forward button
+    if (this.state.history.right.length == 0) goForward.disable();
+    else goForward.enable();
   }
 
   historyReset () {
@@ -1927,6 +1941,41 @@ export class BrowserModel extends ViewModel {
     const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
     if (parentNode) await td.collapse(parentNode, false);
     columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+  }
+
+  async interactivelyBrowseHistory () {
+    const { left, right } = this.state.history;
+    const current = arr.last(left);
+    const currentIdx = left.indexOf(current);
+
+    const items = left.concat(right).map(loc => ({
+      isListItem: true,
+      string: loc.module
+        ? loc.module.nameInPackage
+        : loc.package
+          ? loc.package.name || loc.package.address
+          : 'strange location',
+      value: loc
+    }));
+
+    const { selected: [choice] } = await this.world().filterableListPrompt(
+      'Jumpt to location', items, { preselect: currentIdx, requester: this.view });
+    if (choice) {
+      if (left.includes(choice)) {
+        this.state.history.left = left.slice(0, left.indexOf(choice) + 1);
+        this.state.history.right = left.slice(left.indexOf(choice) + 1).concat(right);
+      } else if (right.includes(choice)) {
+        this.state.history.left = left.concat(right.slice(0, right.indexOf(choice) + 1));
+        this.state.history.right = right.slice(right.indexOf(choice) + 1);
+      }
+      if (current) {
+        const { scroll, cursor } = this.historyGetLocation();
+        current.scroll = scroll; current.cursor = cursor;
+      }
+      await this.historySetLocation(choice);
+    }
+
+    return true;
   }
 
   async interactivelyRemoveSelectedItem (dir) {
