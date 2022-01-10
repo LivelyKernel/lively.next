@@ -306,9 +306,11 @@ const commands = [
       const halo = world.halos()[0];
       if (!halo || halo.changingName) return false;
 
-      halo.target.selectedMorphs
-        ? halo.target.selectedMorphs.forEach(m => m.abandon())
-        : halo.target.abandon();
+      if (halo.target.selectedMorphs) {
+        halo.target.selectedMorphs.forEach(m => m.abandon());
+        world.halos()[0].remove();
+      } else halo.target.abandon();
+
       return true;
     }
   },
