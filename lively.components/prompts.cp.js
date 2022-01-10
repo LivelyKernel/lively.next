@@ -31,6 +31,10 @@ export class AbstractPromptModel extends ViewModel {
     };
   }
 
+  viewDidLoad () {
+    this.view.hasFixedPosition = true;
+  }
+
   focus () {
     this.view.focus();
   }
@@ -80,6 +84,7 @@ export class InformPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
+    super.viewDidLoad();
     const { view, ui: { promptTitle } } = this;
     promptTitle.lineWrapping = this.lineWrapping;
     promptTitle.textString = this.label;
@@ -132,6 +137,7 @@ export class ConfirmPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
+    super.viewDidLoad();
     const { ui: { promptTitle: title, okButton, cancelButton }, view } = this;
     title.value = this.label;
 
@@ -241,7 +247,7 @@ export class TextPromptModel extends ConfirmPromptModel {
   resolve () {
     const inputLine = this.ui.input;
     if (this.validate(inputLine.input)) {
-      super.resolve(inputLine.acceptInput());
+      return this.answer.resolve(inputLine.acceptInput());
     } else inputLine.indicateError(this.errorMessage);
   }
 
@@ -371,6 +377,8 @@ export class EditPromptModel extends TextPromptModel {
       textStyle, input, mode, evalEnvironment,
       view, ui: { promptTitle, editor }
     } = this;
+
+    view.hasFixedPosition = true;
 
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'Monaco, monospace';
 
