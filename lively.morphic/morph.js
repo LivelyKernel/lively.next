@@ -2701,6 +2701,9 @@ export class Image extends Morph {
       autoResize: {
         isStyleProp: true,
         defaultValue: false
+      },
+      clipMode: {
+        defaultValue: 'auto'
       }
     };
   }
