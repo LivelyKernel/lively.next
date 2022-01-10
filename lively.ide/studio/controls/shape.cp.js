@@ -19,7 +19,7 @@ export class ShapeControlModel extends ViewModel {
             { target: 'width input', signal: 'numberChanged', handler: 'changeWidth' },
             { target: 'height input', signal: 'numberChanged', handler: 'changeHeight' },
             { target: 'rotation input', signal: 'numberChanged', handler: 'changeRotation' },
-            ...['', ' top', ' left', ' right', ' bottom'].map(d => ({
+            ...['', ' top left', ' top right', ' bottom right', ' bottom left'].map(d => ({
               target: 'radius input' + d,
               signal: 'numberChanged',
               handler: 'change' + string.camelCaseString('border radius ' + d),
@@ -74,15 +74,15 @@ export class ShapeControlModel extends ViewModel {
 
   refreshBorderRadiusSides () {
     const {
-      radiusInputTop, radiusInputLeft, radiusInputRight, radiusInputBottom
+      radiusInputTopLeft, radiusInputTopRight, radiusInputBottomLeft, radiusInputBottomRight
     } = this.ui;
     const {
-      borderRadiusLeft, borderRadiusTop, borderRadiusRight, borderRadiusBottom
+      borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft
     } = this.targetMorph;
-    radiusInputLeft.number = borderRadiusLeft;
-    radiusInputRight.number = borderRadiusRight;
-    radiusInputTop.number = borderRadiusTop;
-    radiusInputBottom.number = borderRadiusBottom;
+    radiusInputTopLeft.number = borderRadiusTopLeft;
+    radiusInputTopRight.number = borderRadiusTopRight;
+    radiusInputBottomRight.number = borderRadiusBottomRight;
+    radiusInputBottomLeft.number = borderRadiusBottomLeft;
   }
 
   updateTarget (propName, val) {
@@ -132,10 +132,10 @@ export class ShapeControlModel extends ViewModel {
   }
 
   // fixme: with top left right bottom we can not independently vary each corner. That is a big limitation...
-  changeBorderRadiusTop (rad) { this.updateTarget('borderRadiusTop', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusLeft (rad) { this.updateTarget('borderRadiusLeft', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusBottom (rad) { this.updateTarget('borderRadiusBottom', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusRight (rad) { this.updateTarget('borderRadiusRight', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusTopLeft (rad) { this.updateTarget('borderRadiusTopLeft', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusTopRight (rad) { this.updateTarget('borderRadiusTopRight', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusBottomRight (rad) { this.updateTarget('borderRadiusBottomRight', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusBottomLeft (rad) { this.updateTarget('borderRadiusBottomLeft', rad); this.toggleMixedRadius(); }
 
   toggleMixedRadius () {
     this.ui.radiusInput.setMixed();
@@ -293,34 +293,34 @@ const ShapeControl = component({
           }]
         },
         part(NumberInput, {
-          name: 'radius input top',
+          name: 'radius input top left',
           min: 0,
           extent: pt(35, 22),
-          tooltip: 'Border Radius Top',
+          tooltip: 'Border Radius Top Left',
           borderRadiusRight: 0,
           submorphs: [without('interactive label')]
         }), part(NumberInput, {
-          name: 'radius input right',
+          name: 'radius input top right',
           min: 0,
           borderRadius: 0,
           extent: pt(35, 22),
-          tooltip: 'Border Radius Right',
+          tooltip: 'Border Radius Top Right',
           submorphs: [without('interactive label')]
         }),
         part(NumberInput, {
-          name: 'radius input bottom',
+          name: 'radius input bottom right',
           min: 0,
           borderRadius: 0,
           extent: pt(35, 22),
-          tooltip: 'Border Radius Bottom',
+          tooltip: 'Border Radius Bottom Right',
           submorphs: [without('interactive label')]
         }),
         part(NumberInput, {
-          name: 'radius input left',
+          name: 'radius input bottom left',
           min: 0,
           borderRadiusLeft: 0,
           extent: pt(35, 22),
-          tooltip: 'Border Radius Left',
+          tooltip: 'Border Radius Bottom Left',
           submorphs: [without('interactive label')]
         })
       ]
