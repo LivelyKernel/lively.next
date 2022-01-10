@@ -80,7 +80,7 @@ export class SidebarFlap extends ViewModel {
     view.top = 100;
     if (this.target == 'scene graph') {
       this.ui.label.textString = 'Scene Graph';
-      view.borderRadius = { top: 5, right: 5, bottom: 5, left: 0 };
+      view.borderRadius = { topLeft: 0, topRight: 5, bottomLeft: 0, bottomRight: 5 };
       await view.whenRendered();
       view.left = -flapWidth;
       view.withAnimationDo(() => {
@@ -93,7 +93,7 @@ export class SidebarFlap extends ViewModel {
     if (this.target == 'properties panel') {
       view.left = world.visibleBounds().width;
       this.ui.label.textString = 'Properties Panel';
-      view.borderRadius = { top: 5, right: 0, bottom: 5, left: 5 };
+      view.borderRadius = { topLeft: 5, topRight: 0, bottomLeft: 5, bottomRight: 0 };
       await view.whenRendered();
       view.withAnimationDo(() => {
         view.opacity = 1;

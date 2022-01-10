@@ -39,8 +39,9 @@ export class StyleSheet {
       if (p in props) {
         let v = props[p];
         if (!v) v = 0;
-        props[p] = arr.intersect(obj.keys(v), ['top', 'left', 'bottom', 'right']).length == 4
-          ? v : { top: v, bottom: v, right: v, left: v, valueOf: () => v };
+        props[p] = arr.intersect(obj.keys(v), ['top', 'left', 'bottom', 'right', 'topLeft', 'topRight', 'bottomLeft', 'bottomRight']).length == 4
+          ? v
+          : { top: v, bottom: v, right: v, left: v, valueOf: () => v };
       }
     });
     return props;
@@ -110,7 +111,8 @@ export class StyleSheet {
       }
       if ('padding' in props) {
         props.padding = props.padding.isRect
-          ? props.padding : rect(props.padding, props.padding);
+          ? props.padding
+          : rect(props.padding, props.padding);
       }
       const changedProps = obj.keys(props).filter(key => !obj.equals(morph[key], props[key]));
       const newProps = obj.select(props, changedProps);

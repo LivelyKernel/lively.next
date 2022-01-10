@@ -692,9 +692,7 @@ export class UserFlap extends Morph {
       grabbable: { defaultValue: false },
       acceptsDrops: { defaultValue: false },
       fill: { defaultValue: Color.white },
-      borderRadiusBottom: { defaultValue: 10 },
-      borderRadiusLeft: { defaultValue: 10 },
-      borderRadiusRight: { defaultValue: 10 },
+      borderRadius: { defaultValue: 10 },
       nativeCursor: { defaultValue: 'pointer' },
       respondsToVisibleWindow: { defaultValue: true },
       haloColor: {

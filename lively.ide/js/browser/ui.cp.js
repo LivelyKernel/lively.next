@@ -511,10 +511,10 @@ const SystemBrowser = component({
       part(ButtonDefault, {
         name: 'go back',
         borderRadius: {
-          bottom: 5,
-          left: 5,
-          right: 0,
-          top: 5
+          topLeft: 5,
+          topRight: 0,
+          bottomRight: 0,
+          bottomLeft: 5
         },
         extent: pt(35, 26),
         padding: rect(10, 2, 3, -1),
@@ -533,7 +533,12 @@ const SystemBrowser = component({
         ]
       }), part(ButtonDefault, {
         name: 'go forward',
-        borderRadius: { top: 5, left: 0, right: 5, bottom: 5 },
+        borderRadius: {
+          topLeft: 0,
+          topRight: 5,
+          bottomRight: 5,
+          bottomLeft: 0
+        },
         extent: pt(35, 26),
         padding: rect(15, 2, -5, -1),
         position: pt(74, 12.9),
@@ -547,10 +552,10 @@ const SystemBrowser = component({
         name: 'browse modules',
         extent: pt(35, 26),
         borderRadius: {
-          bottom: 5,
-          left: 5,
-          right: 0,
-          top: 5
+          topLeft: 5,
+          topRight: 0,
+          bottomRight: 0,
+          bottomLeft: 5
         },
         padding: rect(10, 5, 0, 0),
         position: pt(152, 12),
@@ -564,10 +569,10 @@ const SystemBrowser = component({
         name: 'global search',
         extent: pt(35, 26),
         borderRadius: {
-          bottom: 5,
-          left: 0,
-          right: 5,
-          top: 5
+          topLeft: 0,
+          topRight: 5,
+          bottomRight: 5,
+          bottomLeft: 0
         },
         padding: rect(10, 5, 0, 0),
         position: pt(186, 12),
@@ -622,10 +627,10 @@ const SystemBrowser = component({
     acceptsDrops: false,
     borderColor: Color.rgb(204, 204, 204),
     borderRadius: {
-      bottom: 6,
-      left: 6,
-      right: 6,
-      top: 0
+      topLeft: 0,
+      topRight: 0,
+      bottomRight: 6,
+      bottomLeft: 6
     },
     borderWidth: 1,
     clipMode: 'auto',
