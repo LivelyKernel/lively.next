@@ -54,7 +54,7 @@ class VersionChecker extends Morph {
 
   relayout () {
     this.world().withTopBarDo(tb => {
-      if (tb.sideBar && tb.sideBar.visible) {
+      if (tb.sideBar && tb.sideBar.owner) {
         this.bottomLeft = this.world().visibleBounds().bottomLeft().withX(tb.sideBar.right).addXY(10, -10);
       } else {
         this.bottomLeft = this.world().visibleBounds().insetBy(10).bottomLeft();
