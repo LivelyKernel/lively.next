@@ -101,7 +101,19 @@ export class ShapeControlModel extends ViewModel {
     connect(this.targetMorph, 'position', this, 'refreshFromTarget');
     connect(this.targetMorph, 'extent', this, 'refreshFromTarget');
     connect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
+    if (this.targetMorph.isEllipse || this.targetMorph.isPolygon || this.targetMorph.isPath) {
+      this.setBorderRadiusControlState(false);
+    } else this.setBorderRadiusControlState(true);
     this.refreshFromTarget();
+  }
+
+  setBorderRadiusControlState (state) {
+    // auto hide individual border widgets when deactivating border controls but do not necessarily show them when activcating again
+    state ? null : this.multiBorderRadiusActive = state;
+    ['independentCornerToggle', 'radiusInput'].forEach((elem) => {
+      this.ui[elem].reactsToPointer = state;
+      this.ui[elem].visible = state;
+    });
   }
 
   changePosX (newX) { this.updateTarget('left', newX); }
@@ -131,7 +143,6 @@ export class ShapeControlModel extends ViewModel {
     this.withoutBindingsDo(() => this.refreshBorderRadiusSides());
   }
 
-  // fixme: with top left right bottom we can not independently vary each corner. That is a big limitation...
   changeBorderRadiusTopLeft (rad) { this.updateTarget('borderRadiusTopLeft', rad); this.toggleMixedRadius(); }
   changeBorderRadiusTopRight (rad) { this.updateTarget('borderRadiusTopRight', rad); this.toggleMixedRadius(); }
   changeBorderRadiusBottomRight (rad) { this.updateTarget('borderRadiusBottomRight', rad); this.toggleMixedRadius(); }
