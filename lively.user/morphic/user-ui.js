@@ -19,6 +19,7 @@ import ObjectPackage, { interactivelyForkPackage, addScript } from 'lively.class
 import { part } from 'lively.morphic/components/core.js';
 import { TopBar } from 'lively.ide/studio/top-bar.cp.js';
 import { Flap } from 'lively.ide/studio/sidebar-flap.cp.js';
+import { LivelyVersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -109,7 +110,7 @@ export var UserUI = {
           duration: 500
         });
       }
-      const versionChecker = await resource('part://SystemUserUI/version checker').read();
+      const versionChecker = part(LivelyVersionChecker);
       versionChecker.name = 'lively version checker';
       versionChecker.openInWorld();
       versionChecker.relayout();

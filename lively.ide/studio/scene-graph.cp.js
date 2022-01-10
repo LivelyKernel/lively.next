@@ -104,6 +104,7 @@ export class MorphPanelModel extends ViewModel {
   async toggle (active) {
     const { view } = this;
     const bounds = $world.visibleBounds();
+    const versionViewer = $world.get('lively version checker');
     this.onWorldResize(false);
     if (active) {
       $world.withTopBarDo(tb => {
@@ -114,6 +115,7 @@ export class MorphPanelModel extends ViewModel {
       view.withAnimationDo(() => {
         view.opacity = 1;
         view.topLeft = bounds.topLeft();
+        if (versionViewer) versionViewer.relayout();
       }, {
         duration: 300,
         easing: easings.outCirc
@@ -122,9 +124,11 @@ export class MorphPanelModel extends ViewModel {
       this.ui.sceneGraph.refresh();
     } else {
       this.detachFromWorld($world);
-      await view.animate({
-        opacity: 0,
-        topRight: bounds.topLeft(),
+      await view.withAnimationDo(() => {
+        view.opacity = 0;
+        view.topRight = bounds.topLeft();
+        if (versionViewer) versionViewer.relayout();
+      }, {
         duration: 300
       });
       view.remove();
