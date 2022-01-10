@@ -451,16 +451,6 @@ export class NumberWidget extends Morph {
         }
       },
       styleClasses: { defaultValue: ['unfocused'] },
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/number field/light'
-          };
-          this.master.whenApplied().then(() => {
-            this.relayout();
-          });
-        }
-      },
       fontColor: {
         isStyleProp: true,
         defaultValue: Color.rgbHex('#0086b3'),

@@ -359,14 +359,6 @@ export class List extends Morph {
         set (s) { if (this.scroller) this.scroller.scroll = s; }
       },
 
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/list/light'
-          };
-        }
-      },
-
       extent: {
         defaultValue: pt(400, 360),
         set (value) {
@@ -1769,8 +1761,6 @@ export class MorphList extends List {
 export class ListModel extends ViewModel {
   static get properties () {
     return {
-      fill: { defaultValue: Color.white },
-      clipMode: { defaultValue: 'hidden' },
 
       selectionFontColor: { isStyleProp: true, defaultValue: Color.white },
       selectionColor: {
@@ -1780,8 +1770,6 @@ export class ListModel extends ViewModel {
       },
       nonSelectionFontColor: { isStyleProp: true, defaultValue: Color.rgbHex('333') },
       fontColor: { isStyleProp: true, defaultValue: Color.rgbHex('333') },
-
-      styleClasses: { defaultValue: ['default'] },
 
       itemScroll: {
         /*
@@ -1794,23 +1782,6 @@ export class ListModel extends ViewModel {
         after: ['submorphs'],
         get () { return this.scroller ? this.scroller.scroll : pt(0, 0); },
         set (s) { if (this.scroller) this.scroller.scroll = s; }
-      },
-
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/list/light'
-          };
-        }
-      },
-
-      extent: {
-        defaultValue: pt(400, 360),
-        set (value) {
-          if (value.eqPt(this.extent)) return;
-          this.setProperty('extent', value);
-          this.update();
-        }
       },
 
       fontFamily: {

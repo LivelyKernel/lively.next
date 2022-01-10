@@ -6,6 +6,7 @@ import { config, StyleSheet } from 'lively.morphic';
 import L2LClient from 'lively.2lively/client.js';
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from 'lively-system-interface';
 import { Button, DropDownList } from 'lively.components';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
 
 export class EvalBackendButton extends Button {
   static get properties () {
@@ -201,7 +202,7 @@ export default class EvalBackendChooser {
   buildEvalBackendDropdownFor (morph, btn) {
     btn = btn || new EvalBackendButton({
       name: 'eval backend button',
-      master: { auto: 'styleguide://System/buttons/light' },
+      master: ButtonDefault,
       fontSize: 11,
       height: 20,
       target: morph
