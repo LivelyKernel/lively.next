@@ -155,7 +155,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'activeSideBars', 'setEditMode', 'showCurrentUser', 'showHaloFor']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'activeSideBars', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'openSideBar']; } },
       bindings: {
         get () {
           return [

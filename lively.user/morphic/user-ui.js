@@ -73,8 +73,6 @@ export var UserUI = {
     topBar.hasFixedPosition = true;
     topBar.respondsToVisibleWindow = true;
     topBar.openInWorld();
-    part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
-    part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
     topBar.relayout();
     topBar.top = -topBar.height; // tell top bar to hide
     const dropShadow = topBar.dropShadow;
@@ -111,13 +109,13 @@ export var UserUI = {
           duration: 500
         });
       }
-      topBar.viewModel.openSideBar('Scene Graph');
-      topBar.viewModel.openSideBar('Styling Palette');
       const versionChecker = await resource('part://SystemUserUI/version checker').read();
       versionChecker.name = 'lively version checker';
       versionChecker.openInWorld();
       versionChecker.relayout();
       versionChecker.checkVersion();
+      part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
+      part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
     })();
     return topBar;
   },
