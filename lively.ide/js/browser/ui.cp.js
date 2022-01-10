@@ -263,6 +263,14 @@ export class PathIndicator extends Morph {
     };
   }
 
+  reset () {
+    const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+    this.master = FileStatusDefault;
+    errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
+    statusBox.opacity = statusLabel.opacity = 0;
+    this.adjustHeight();
+  }
+
   showInfoInWorkspace () {
     const content = this.ui.statusBox.textString;
     const title = content.split('\n')[0];
@@ -416,7 +424,6 @@ export class PathIndicator extends Morph {
     }
   }
 }
-
 
 // b = part(SystemBrowser)
 // b.get('column view').width
@@ -666,7 +673,6 @@ const SystemBrowser = component({
         axisAlign: 'center',
         justifySubmorphs: 'spaced',
         orderByIndex: true,
-        padding: rect(10, 0, -10, 0),
         reactToSubmorphAnimations: true,
         renderViaCSS: true,
         spacing: 5,
@@ -691,7 +697,6 @@ const SystemBrowser = component({
         fontColor: Color.rgb(255, 255, 255),
         fontSize: 14,
         fontWeight: 'bold',
-        isLayoutable: false,
         opacity: 0,
         padding: rect(10, 4, 0, 0),
         textAndAttributes: ['Error ', null, '', {
@@ -752,7 +757,6 @@ const SystemBrowser = component({
     }, {
       type: Text,
       name: 'status box',
-      isLayoutable: false,
       clipMode: 'auto',
       extent: pt(560.7, 85.3),
       fill: Color.rgba(0, 0, 0, 0),
@@ -761,29 +765,27 @@ const SystemBrowser = component({
       fontColor: Color.rgb(255, 255, 255),
       fontFamily: '"IBM Plex Sans",Sans-Serif',
       fontSize: 16,
+      padding: rect(5, 0, -5, 0),
       lineWrapping: true,
       opacity: 0,
-      position: pt(15.8, 48.5),
       readOnly: true
     }, {
       name: 'error controls',
-      isLayoutable: false,
       extent: pt(205, 41),
       fill: Color.rgba(0, 0, 0, 0),
-      layout: new HorizontalLayout({
-        align: 'top',
-        autoResize: true,
+      layout: new TilingLayout({
+        axis: 'row',
         direction: 'leftToRight',
+        wrapSubmorphs: false,
         orderByIndex: true,
+        hugContentsVertically: true,
         padding: {
-          height: 0,
+          height: -8,
           width: 0,
           x: 8,
           y: 8
         },
         reactToSubmorphAnimations: false,
-        renderViaCSS: true,
-        resizeSubmorphs: false,
         spacing: 8
       }),
       position: pt(385, 123.5),

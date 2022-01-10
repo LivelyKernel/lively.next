@@ -527,6 +527,8 @@ export class BrowserModel extends ViewModel {
             { target: 'export to html', signal: 'onMouseDown', handler: 'renderMarkdown' },
             { target: 'copy to clipboard', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open browse snippet' },
             { target: 'open in editor', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open selected module in text editor' },
+            { target: 'close button', signal: 'onMouseDown', handler: 'closeErrorMessage' },
+            { target: 'open in workspace', signal: 'onMouseDown', handler: 'openErrorMessage' },
 
             { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
@@ -595,6 +597,7 @@ export class BrowserModel extends ViewModel {
       history: { left: [], right: [], navigationInProgress: null }
     };
     this.relayout();
+    this.ui.metaInfoText.reset();
     const ed = this.ui.sourceEditor;
     if (!ed.plugins.length) { ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)); }
 
@@ -1114,7 +1117,13 @@ export class BrowserModel extends ViewModel {
     }
   }
 
-  // this.switchMode('js')
+  closeErrorMessage () {
+    this.ui.metaInfoText.showDefault();
+  }
+
+  openErrorMessage () {
+    this.ui.metaInfoText.openInfoInWorkspace();
+  }
 
   switchMode (mode) {
     let Mode = JavaScriptEditorPlugin;
