@@ -841,6 +841,7 @@ export {
   FileStatusFrozen, FileStatusInactive, FileStatusWarning,
   BackendButtonDefault, BackendButtonClicked,
   DarkButton,
+  BrowserDirectoryControls,
   BrowserPackageControls,
   SystemBrowser,
   open, browse

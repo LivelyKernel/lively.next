@@ -44,7 +44,7 @@ import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 import LESSEditorPlugin from '../../css/less/editor-plugin.js';
 import { ComponentChangeTracker } from '../../component/editor.js';
-import { ViewModel } from 'lively.morphic/components/core.js';
+import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
 
@@ -380,7 +380,7 @@ export class PackageTreeData extends TreeData {
     if (node === this.root) {
       bool = false; // never collapse root
       node.subNodes = await this.listAllPackages();
-      node.listControl = node.listControl || await resource('part://SystemIDE/package controls').read();
+      node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserPackageControls));
       node.listControl.focusOn(this.root.browser);
     }
     node.isCollapsed = bool;
@@ -388,7 +388,7 @@ export class PackageTreeData extends TreeData {
     if (!bool) {
       if (node.type == 'package') {
         node.subNodes = await this.listEditableFilesInPackage(node.url);
-        node.listControl = node.listControl || await resource('part://SystemIDE/directory controls').read();
+        node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
       }
 
@@ -403,7 +403,7 @@ export class PackageTreeData extends TreeData {
 
       if (node.type == 'directory') {
         node.subNodes = await this.listEditableFilesInDir(node.url);
-        node.listControl = node.listControl || await resource('part://SystemIDE/directory controls').read();
+        node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
       }
 
