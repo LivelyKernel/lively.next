@@ -548,7 +548,6 @@ export class Morph {
           if ('style' in x) this.borderStyleLeft = x.style;
           if ('width' in x) this.borderWidthLeft = x.width;
           if ('color' in x) this.borderColorLeft = x.color;
-          if ('radius' in x) this.borderRadiusLeft = x.radius;
         }
       },
 
@@ -568,7 +567,6 @@ export class Morph {
           if ('style' in x) this.borderStyleRight = x.style;
           if ('width' in x) this.borderWidthRight = x.width;
           if ('color' in x) this.borderColorRight = x.color;
-          if ('radius' in x) this.borderRadiusRight = x.radius;
         }
       },
 
@@ -588,7 +586,6 @@ export class Morph {
           if ('style' in x) this.borderStyleBottom = x.style;
           if ('width' in x) this.borderWidthBottom = x.width;
           if ('color' in x) this.borderColorBottom = x.color;
-          if ('radius' in x) this.borderRadiusBottom = x.radius;
         }
       },
 
@@ -608,7 +605,6 @@ export class Morph {
           if ('style' in x) this.borderStyleTop = x.style;
           if ('width' in x) this.borderWidthTop = x.width;
           if ('color' in x) this.borderColorTop = x.color;
-          if ('radius' in x) this.borderRadiusTop = x.radius;
         }
       },
 
@@ -639,31 +635,23 @@ export class Morph {
         isStyleProp: true,
         type: 'Number',
         min: 0,
-        foldable: ['top', 'left', 'right', 'bottom'],
-        defaultValue: { top: 0, bottom: 0, right: 0, left: 0, valueOf: () => 0 },
+        foldable: ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'],
+        defaultValue: { topLeft: 0, topRight: 0, bottomRight: 0, bottomLeft: 0, valueOf: () => 0 },
         get () {
           const v = this.getProperty('borderRadius');
-          return { ...v, valueOf: () => v.left };
+          return { ...v, valueOf: () => v.topLeft };
         },
         set (value) {
           if (!value) value = 0;
           if (obj.isNumber(value)) {
-            const left = value; const right = value; const top = value; const bottom = value;
-            value = { left, right, top, bottom };
-          }
-          if (value.isRectangle) {
-            value = {
-              left: value.left(),
-              right: value.right(),
-              top: value.top(),
-              bottom: value.bottom()
-            };
+            const topLeft = value; const topRight = value; const bottomRight = value; const bottomLeft = value;
+            value = { topLeft, topRight, bottomRight, bottomLeft };
           }
           this.setProperty('borderRadius', value);
         }
       },
 
-      ...generateUnfolded('borderRadius', undefined, 'styling'),
+      ...generateUnfolded('borderRadius', ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'], 'styling'),
 
       borderStyle: {
         group: 'styling',

@@ -61,8 +61,8 @@ function addDisplay (morph, style) {
 }
 
 function addBorderRadius (morph, style) {
-  const { borderRadiusLeft, borderRadiusRight, borderRadiusBottom, borderRadiusTop } = morph;
-  style.borderRadius = `${borderRadiusTop}px ${borderRadiusTop}px ${borderRadiusBottom}px ${borderRadiusBottom}px / ${borderRadiusLeft}px ${borderRadiusRight}px ${borderRadiusRight}px ${borderRadiusLeft}px`;
+  const { borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft } = morph;
+  style.borderRadius = `${borderRadiusTopLeft}px ${borderRadiusTopRight}px ${borderRadiusBottomRight}px ${borderRadiusBottomLeft}px`;
 }
 
 function addBorder (morph, style) {
