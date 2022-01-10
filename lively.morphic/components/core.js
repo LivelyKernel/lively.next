@@ -8,7 +8,7 @@ import { sanitizeFont } from '../helpers.js';
 // varargs, viewModelProps can be skipped
 export function part (masterComponent, overriddenProps = {}, oldParam) {
   if (oldParam) overriddenProps = oldParam;
-  const p = masterComponent._snap ? deserializeMorph(masterComponent._snap, { reinitializeIds: true }) : masterComponent.copy();
+  const p = masterComponent._snap ? deserializeMorph(masterComponent._snap, { reinitializeIds: true, migrations: [] }) : masterComponent.copy();
   // instead of that deserialize the snapshot without the master itself
   p.isComponent = false;
   // ensure master is initialized before overriding
