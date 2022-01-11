@@ -3,7 +3,7 @@
 import { resource, Resource, registerExtension } from 'lively.resources';
 import { Path, obj, date, promise } from 'lively.lang';
 import { HorizontalLayout, VerticalLayout } from './layout.js';
-import { morph } from './helpers.js';
+
 import { Morph } from './morph.js';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { connect } from 'lively.bindings';
@@ -114,8 +114,9 @@ export async function interactivelySavePart (part, options = {}) {
     ({ name, tags, description } = oldCommit);
   }
 
+  let i;
   if (loadingIndicator) {
-    var i = $world.execCommand('open loading indicator', `saving ${name}...`);
+    i = $world.execCommand('open loading indicator', `saving ${name}...`);
     await promise.delay(80);
   }
 
@@ -137,7 +138,7 @@ export async function interactivelySavePart (part, options = {}) {
     }
 
     if (preferWindow && !part.isWindow) {
-      var win = part.getWindow();
+      let win = part.getWindow();
       if (win && win.targetMorph === part) {
         part = win;
         windowMetadata = win.metadata;
@@ -164,7 +165,10 @@ export async function interactivelySavePart (part, options = {}) {
 
     return commit;
   } catch (err) {
+    /* eslint-disable no-unused-vars */
     const [_, typeAndName1, expectedVersion1, actualVersion1] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
+    /* eslint-enable no-unused-vars */
+
     if (expectedVersion1 && actualVersion1) {
       const [newerCommit] = await morphicDB.log(actualVersion1, 1, /* includeCommits = */true);
       const { author: { name: authorName }, timestamp } = newerCommit;
@@ -177,8 +181,9 @@ export async function interactivelySavePart (part, options = {}) {
       actualPart.changeMetaData('commit', commitMetaData, /* serialize = */true, /* merge = */false);
       return interactivelySavePart(actualPart, { ...options, morphicDB, showPublishDialog: false });
     }
-
+    /* eslint-disable no-unused-vars */
     const [__, typeAndName2, expectedVersion2] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but no version entry exists/) || [];
+    /* eslint-enable no-unused-vars */
     if (expectedVersion2) {
       const overwriteQ = `Part ${name} no longer exist in the object database.\n` +
                      'Do you still want to publish it?';
@@ -295,7 +300,7 @@ export class SnapshotEditor {
 
   async interactivelyEditSnapshotJSON (onSave) {
     let { commit, snapshot } = this;
-    const { _id, name, type, author } = commit; let origContent;
+    const { _id, name, type } = commit; let origContent;
     const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
 
     TextEditor.openURL(`<${type}/${name}>`, {
@@ -329,7 +334,7 @@ export class SnapshotEditor {
 
   async interactivelyEditPackageCode (onSaveFn) {
     const { commit, snapshot } = this;
-    const { _id, author, name, type } = commit;
+    const { _id } = commit;
     const snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id);
     const files = new SnapshotPackageHelper(snap).filesInPackages();
     const items = files.map(ea => ({ isListItem: true, string: ea.url, value: ea }));
@@ -342,7 +347,7 @@ export class SnapshotEditor {
   }
 
   async interactivelyEditFileInSnapshotPackage (file, onSaveFn, textPos) {
-    const { snapshot, commit: { _id, author, name, type } } = this;
+    const { snapshot, commit: { _id, name, type } } = this;
     const snap = snapshot || await this.db.fetchSnapshot(undefined, undefined, _id);
     const origContent = file.get(snap);
     const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
@@ -398,14 +403,14 @@ export class PartResource extends Resource {
     part.isComponent = false;
     part.name = 'a' + getClassName(part);
     part.withAllSubmorphsDoExcluding(m => {
-      if (m == part || !m.master) { delete m._parametrizedProps; }
-    }, m => m.master && m != part);
+      if (m === part || !m.master) { delete m._parametrizedProps; }
+    }, m => m.master && m !== part);
     const superMaster = part.master;
     part.master = masterComponent;
     if (part._pool.mastersInSubHierarchy) {
       // fixme: apply these in hierarchical order
       for (const subMaster of part._pool.mastersInSubHierarchy) {
-        if (superMaster == subMaster) continue;
+        if (superMaster === subMaster) continue;
         await subMaster.applyIfNeeded(true);
         if (!subMaster.derivedMorph.ownerChain().includes(part)) {
           subMaster.derivedMorph.requestMasterStyling();
@@ -419,8 +424,6 @@ export class PartResource extends Resource {
       if (typeof m.onLoad === 'function') m.onLoad();
     });
     return part;
-
-    part.openInWorld();
   }
 }
 
@@ -477,7 +480,6 @@ class CommitEditor extends Morph {
           const {
             nameInput,
             typeInput,
-            timestampInput,
             authorNameInput,
             authorEmailInput,
             authorRealmInput,

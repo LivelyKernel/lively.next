@@ -13,14 +13,14 @@ try {
   touchInput = false;
 }
 
-export var touchInputDevice = touchInput;
+export const touchInputDevice = touchInput;
 
-var nameToClassMapping = nameToClassMapping || {};
+let nameToClassMapping = nameToClassMapping || {};
 
 export function sanitizeFont (font) {
   return font && font.split(',').map(subFont => {
     // first clear whitespace before and after
-    subFont = subFont.split(' ').filter(m => m != '').join(' ');
+    subFont = subFont.split(' ').filter(m => m !== '').join(' ');
     if (subFont.includes(' ')) {
       if (subFont.startsWith("'")) subFont = subFont.slice(1);
       if (subFont.endsWith("'")) subFont = subFont.slice(0, -1);
@@ -87,4 +87,4 @@ async function lazyInspect (obj) {
   return realInspect(obj);
 }
 
-export var inspect = lazyInspect;
+export const inspect = lazyInspect;

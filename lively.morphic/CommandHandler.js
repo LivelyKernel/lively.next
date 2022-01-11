@@ -1,5 +1,4 @@
-/* global System */
-import { obj, arr, promise } from 'lively.lang';
+import { obj, promise } from 'lively.lang';
 
 function printArg (x) {
   return obj.inspect(x, { maxDepth: 1 }).replace(/\n/g, '').replace(/\s+/g, ' ');

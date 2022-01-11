@@ -1,4 +1,3 @@
-/* global System */
 export { default as config } from './config.js';
 export * from './morph.js';
 export * from './world.js';
@@ -27,7 +26,6 @@ import { HTMLMorph } from './html-morph.js';
 import InputLine, { PasswordInputLine } from './text/input-line.js';
 export { InputLine, PasswordInputLine };
 
-import { locateClass } from 'lively.serializer2';
 import { morph, addClassMappings, inspect, touchInputDevice } from './helpers.js';
 
 addClassMappings({

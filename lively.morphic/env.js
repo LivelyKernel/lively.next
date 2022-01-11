@@ -181,7 +181,7 @@ export class MorphicEnv {
   }
 
   printStatus () {
-    const { changeManager, world, fontMetric } = this;
+    const { changeManager, world } = this;
     let morphsWithUndo = 0; let undoChanges = 0;
     world && world.withAllSubmorphsDo(ea => {
       if (!ea.undoManager) return;
@@ -197,7 +197,7 @@ export class MorphicEnv {
   updateWhenRenderedRequests () {
     const { whenRenderedRequesters } = this; let nRequesters = 0;
     for (const [morph, requestState] of whenRenderedRequesters) {
-      const { maxAttempts, currentAttempt, resolve, reject } = requestState;
+      const { maxAttempts, resolve, reject } = requestState;
       if (!morph._dirty && !morph._rendering) {
         whenRenderedRequesters.delete(morph);
         resolve(morph);

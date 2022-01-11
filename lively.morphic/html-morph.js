@@ -1,5 +1,4 @@
-/* global show,System */
-import { obj, promise, string } from 'lively.lang';
+import { promise } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
 import vdom from 'virtual-dom';
@@ -249,8 +248,8 @@ export class IFrameMorph extends HTMLMorph {
         set (val) {
           this.iframe.removeAttribute('srcDoc');
           this.iframe.src = val;
-          const { promise: p, resolve, reject } = promise.deferred();
-          this._whenLoaded = promise;
+          const { promise: p, resolve } = promise.deferred();
+          this._whenLoaded = p;
           this.iframe.onload = arg => resolve(arg);
         }
       },
@@ -327,6 +326,6 @@ export class IFrameMorph extends HTMLMorph {
   }
 
   get defaultHTML () {
-    return `<iframe width="100%" height="100%" frameBorder="false" srcdoc=""></iframe>`;
+    return '<iframe width="100%" height="100%" frameBorder="false" srcdoc=""></iframe>';
   }
 }

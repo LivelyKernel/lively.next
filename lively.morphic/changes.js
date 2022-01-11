@@ -1,6 +1,6 @@
 /* global WeakMap */
-import { arr, string, obj } from 'lively.lang';
-import { connect, signal, disconnect } from 'lively.bindings';
+import { arr, obj } from 'lively.lang';
+import { signal } from 'lively.bindings';
 
 function signalBindings (obj, name, change) {
   // optimized lively.bindings.signal
@@ -235,7 +235,7 @@ export class ChangeManager {
     const listener = optFilter
       ? change => optFilter(change) && recorder.changes.push(change)
       : change => recorder.changes.push(change);
-    var recorder = this.changeRecorders[id] = { id, filter: optFilter, changes: [], listener };
+    let recorder = this.changeRecorders[id] = { id, filter: optFilter, changes: [], listener };
 
     this.addChangeListener(listener);
 

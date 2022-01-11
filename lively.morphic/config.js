@@ -1,9 +1,6 @@
 /* global System */
 import { Rectangle, Color } from 'lively.graphics';
-import bowser from 'bowser';
 import { joinPath } from 'lively.lang/string.js';
-
-const isMac = !!bowser.mac;
 
 // fixme: we are now using baseURL for 2 different purposes.
 // 1.) Endpoint for loading a currently frozen part from
