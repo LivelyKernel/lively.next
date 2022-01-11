@@ -1,20 +1,15 @@
 /* global System */
-import { Color, rect, pt, Rectangle } from 'lively.graphics';
+import { Color, pt } from 'lively.graphics';
 import { arr, tree, num, date, Path, obj, fun, promise, string } from 'lively.lang';
-import { connect } from 'lively.bindings';
+
 import {
-  morph, Morph, easings,
-  StyleSheet,
-  HorizontalLayout,
-  GridLayout,
+  Morph,
+  easings,
   config,
-  Icon,
-  ProportionalLayout,
-  ShadowObject
+  Icon
 } from 'lively.morphic';
-import Window from 'lively.components/window.js';
-import { HorizontalResizer } from 'lively.components/resizers.js';
-import { Tree, TreeData } from 'lively.components/tree.js';
+
+import { TreeData } from 'lively.components/tree.js';
 
 import './tree.js';
 import { editableFiles } from './tree.js';
@@ -28,10 +23,9 @@ import browserCommands from './commands.js';
 // Browser UI
 // -=-=-=-=-=-
 
-import { categorizer, fuzzyParse, query, parse } from 'lively.ast';
-import { testsFromSource, findTestModulesInPackage } from '../../test-runner.js';
+import { categorizer, fuzzyParse } from 'lively.ast';
+import { testsFromSource } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
-const { module, semver } = modules;
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
@@ -39,7 +33,7 @@ import { loadPart } from 'lively.morphic/partsbin.js';
 import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
 import { resource } from 'lively.resources/index.js';
 import lint from '../linter.js';
-import { isTestModule } from 'lively-system-interface/commands/modules.js';
+
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 import LESSEditorPlugin from '../../css/less/editor-plugin.js';
@@ -146,7 +140,7 @@ export class PackageTreeData extends TreeData {
     } else if (isDeclaration) {
       return this.displayDeclaration(node);
     } else {
-      let col1Size = 19; let col2Size = 8;
+      let col1Size = 19;
       let datePrinted = lastModified
         ? date.format(lastModified, 'yyyy-mm-dd HH:MM:ss')
         : ' '.repeat(col1Size);
@@ -1535,7 +1529,7 @@ export class BrowserModel extends ViewModel {
       const warningStrings = warnings.map(warning => `"${warning.message}" on line ${warning.line}`);
       const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n'); 
       metaInfoText.showWarning(warningMessage);
-      await promise.delay(2000);
+      await promise.delay(5000);
     } metaInfoText.showSaved();
   }
 
