@@ -1,13 +1,13 @@
-import { component, part } from 'lively.morphic/components/core.js';
-import { ProportionalLayout } from 'lively.morphic';
+import { component, add, part } from 'lively.morphic/components/core.js';
+import { ProportionalLayout, TilingLayout } from 'lively.morphic';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { CodeSearcher } from './code-search.js';
 import { pt, Color, rect } from 'lively.graphics';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { connect } from 'lively.bindings';
+import { SystemList } from './styling/shared.cp.js';
 
 // CodeSearch.openInWorld()
-
 const CodeSearch = component({
   type: CodeSearcher,
   name: 'code search',
@@ -39,7 +39,6 @@ const CodeSearch = component({
       y: 'fixed'
     }]]
   }),
-  position: pt(1049.8, 1111.4),
   selectedAction: 'default',
   submorphs: [part(DefaultList, {
     name: 'list',
@@ -50,6 +49,14 @@ const CodeSearch = component({
     position: pt(0, 27)
   }), part(InputLineDefault, {
     name: 'input',
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      justifySubmorphs: 'spaced',
+      orderByIndex: true,
+      padding: rect(5, 0, 0, 0),
+      wrapSubmorphs: false
+    }),
     borderWidth: 1,
     dropShadow: null,
     fontSize: 14,
@@ -63,35 +70,29 @@ const CodeSearch = component({
       fontSize: 14,
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['Search Source Files', null]
-    }]
-  }),
-  part(DropDownList, {
-    name: 'search chooser',
-    extent: pt(153, 21),
-    borderColor: Color.gray,
-    position: pt(380, 2.5),
-    items: [{
-      isListItem: true,
-      string: 'in loaded modules',
-      value: 'in loaded modules'
-    }, {
-      isListItem: true,
-      string: 'in loaded and unloaded modules',
-      value: 'in loaded and unloaded modules'
-    }, {
-      isListItem: true,
-      string: 'in parts',
-      value: 'in parts'
-    }, {
-      isListItem: true,
-      string: 'in worlds',
-      value: 'in worlds'
-    }],
-    submorphs: [{
-      name: 'label',
-      fontSize: 12
-    }]
-  })]
+    }, add(part(DropDownList, {
+      name: 'search chooser',
+      layout: new TilingLayout({
+        align: 'center',
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(10, 0, 0, 0),
+        wrapSubmorphs: false,
+        hugContentsHorizontally: true
+      }),
+      extent: pt(125.7, 21),
+      borderColor: Color.gray,
+      viewModel: {
+        openListInWorld: true,
+        listMaster: SystemList
+      },
+      submorphs: [{
+        name: 'label',
+        fontSize: 12
+      }]
+    }))]
+  })
+  ]
 });
 
 // initialize connections
