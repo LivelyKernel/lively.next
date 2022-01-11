@@ -6,7 +6,7 @@ export * from './tree.js';
 export * from './iframe.js';
 import Window from './window.js';
 
-import * as prompts from './prompts.js';
+import * as prompts from './prompts.cp.js';
 import * as widgets from './widgets.js';
 import * as LoadingIndicator from './loading-indicator.cp.js';
 import { addClassMappings } from 'lively.morphic/helpers.js';

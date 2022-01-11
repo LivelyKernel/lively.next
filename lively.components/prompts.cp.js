@@ -519,8 +519,8 @@ export class ListPromptModel extends TextPromptModel {
 
 export class EditListPromptModel extends ListPromptModel {
   resolve () {
-    const { values: list, selections } = this.ui.promptList;
-    return this.answer.resolve({ list, selections });
+    const { items: list, selections } = this.ui.promptList;
+    return this.answer.resolve({ list: list.map(item => item.value), selections });
   }
 
   reject () { return this.answer.resolve({ list: [], selections: [], status: 'canceled' }); }
