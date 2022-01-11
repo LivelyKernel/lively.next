@@ -1,9 +1,8 @@
 import { ViewModel, part, component } from 'lively.morphic/components/core.js';
-import { obj, arr } from 'lively.lang';
-import { morph, Label, TilingLayout } from 'lively.morphic';
+import { Label, TilingLayout } from 'lively.morphic';
 import { connect, signal } from 'lively.bindings';
 import { Color } from 'lively.graphics';
-import { rect, pt } from 'lively.graphics/geometry-2d.js';
+import { pt } from 'lively.graphics/geometry-2d.js';
 
 /**
  * Allows to switch between different items by clicking on them. See `ModeSelectorModel.example()`.
@@ -17,21 +16,14 @@ import { rect, pt } from 'lively.graphics/geometry-2d.js';
 class ModeSelectorModel extends ViewModel {
   static get properties () {
     return {
-      items: {},
+      items: { },
       tooltips: {},
       init: {},
       tooltips: {},
-      selectedItem: {},
-      bindings: {
-        get () {
-          return [
-            { signal: 'openInWorld', handler: 'openInWorld' }
-          ];
-        }
-      }
+      selectedItem: {}
     };
   }
-
+  
   static example () {
     const example = part(ModeSelector, {
       viewModel: {
@@ -43,10 +35,10 @@ class ModeSelectorModel extends ViewModel {
     connect(example.viewModel, 'selectionChanged', $world, 'setStatusMessage');
   }
 
-  openInWorld () {
+  viewDidLoad () {
     this.createLabels();
     this.selectedItem = this.items[this.init ? this.init : 0];
-    this.ui.labels.find((label) => label.name == this.selectedItem + 'Label').viewModel.toggleSelection(false);
+    this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection(false);
   }
 
   createLabels () {
@@ -67,9 +59,9 @@ class ModeSelectorModel extends ViewModel {
   }
 
   update (item) {
-    this.ui.labels.find((label) => label.name == this.selectedItem + 'Label').viewModel.toggleSelection();
+    this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection();
     this.selectedItem = item;
-    this.ui.labels.find((label) => label.name == item + 'Label').viewModel.toggleSelection();
+    this.ui.labels.find((label) => label.name === item + 'Label').viewModel.toggleSelection();
     signal(this, 'selectionChanged', this.selectedItem);
   }
 }
