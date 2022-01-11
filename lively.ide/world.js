@@ -26,20 +26,9 @@ import { loadMorphFromSnapshot } from 'lively.morphic/serialization.js';
 import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { uploadFile } from 'lively.morphic/events/html-drop-handler.js';
 
-import {
-  InformPrompt,
-  ConfirmPrompt,
-  MultipleChoicePrompt,
-  TextPrompt,
-  EditPrompt,
-  PasswordPrompt,
-  ListPrompt,
-  EditListPrompt
-} from 'lively.components/prompts.js';
+import { prompts } from 'lively.components';
 
-import * as prompts from 'lively.components/prompts.cp.js';
-
-import LoadingIndicator from 'lively.components/loading-indicator.js';
+import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { Halo, MorphHighlighter, StatusMessage, StatusMessageForMorph, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
 

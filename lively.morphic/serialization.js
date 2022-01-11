@@ -70,7 +70,7 @@ export async function saveWorldToResource (world = MorphicEnv.default().world, t
   // pretty printing bloats 2x!
   let i;
   if (showIndicator) {
-    const { LoadingIndicator } = await System.import('lively.components/loading-indicator.js');
+    const LoadingIndicator = await System.import('lively.components/loading-indicator.cp.js');
     i = LoadingIndicator.open(typeof showIndicator === 'string'
       ? showIndicator
       : 'Snapshotting...');

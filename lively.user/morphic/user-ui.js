@@ -1,5 +1,5 @@
 /* global System */
-import { promise, fun, arr, string } from 'lively.lang';
+import { promise, arr, string } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect, once, signal } from 'lively.bindings';
@@ -8,14 +8,12 @@ import { Menu } from 'lively.components';
 import { loadMorphFromSnapshot, createMorphSnapshot } from 'lively.morphic/serialization.js';
 import UserRegistry from 'lively.user/client/user-registry.js';
 import { ClientUser } from 'lively.user/index.js';
-import { loadPart } from 'lively.morphic/partsbin.js';
-import LoadingIndicator from 'lively.components/loading-indicator.js';
 
 // das kostet was??? 99 euro ey.
 // import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
 import { gapi } from 'https://apis.google.com/js/platform.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
-import ObjectPackage, { interactivelyForkPackage, addScript } from 'lively.classes/object-classes.js';
+import ObjectPackage from 'lively.classes/object-classes.js';
 import { part } from 'lively.morphic/components/core.js';
 import { TopBar } from 'lively.ide/studio/top-bar.cp.js';
 import { Flap } from 'lively.ide/studio/sidebar-flap.cp.js';
