@@ -52,7 +52,7 @@ const FileStatusFrozen = component(FileStatusDefault, {
 });
 
 const FileStatusInactive = component(FileStatusDefault, {
-  name: 'file sttaus inactive',
+  name: 'file status inactive',
   fill: new LinearGradient({
     stops: [
       { offset: 0, color: Color.rgb(128, 139, 150) },
@@ -61,13 +61,16 @@ const FileStatusInactive = component(FileStatusDefault, {
   })
 });
 
+// FileStatusWarning.openInWorld()
 const FileStatusWarning = component(FileStatusDefault, {
   name: 'file status warning',
+  borderColor: Color.rgbHex('DA9819'),
   fill: new LinearGradient({
     stops: [
-      { offset: 0, color: Color.rgb(241, 196, 15) },
-      { offset: 1, color: Color.rgb(249, 231, 159) }],
-    vector: rect(0.5, 1, 0, -1)
+      { offset: 0, color: Color.rgb(249, 213, 68) },
+      { offset: 1, color: Color.rgb(219, 162, 18) }
+    ],
+    vector: rect(0.5, 1, 0, 1) 
   })
 });
 
