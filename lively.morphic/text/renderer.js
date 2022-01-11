@@ -596,7 +596,7 @@ export default class TextRenderer {
       document: doc,
       tabWidth
     } = morph;
-    const style = { overflow: 'hidden' };
+    const style = { overflow: 'hidden', top: '0px', left: '0px' };
     const padRight = padLeft + padWidth;
     const padBottom = padTop + padHeight;
     const textHeight = Math.max(morph.document.height, morph.height);

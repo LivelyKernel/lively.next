@@ -70,7 +70,7 @@ const CodeSearch = component({
       fontSize: 14,
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['Search Source Files', null]
-    }, add(part(DropDownList, {
+    }, add({ name: 'buffer', opacity: 0, reactsToPointer: false }), add(part(DropDownList, {
       name: 'search chooser',
       layout: new TilingLayout({
         align: 'center',

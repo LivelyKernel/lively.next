@@ -9,7 +9,7 @@ import {
   Window,
   FilterableList
 } from 'lively.components';
-import Browser from './js/browser/index.js';
+import * as Browser from './js/browser/ui.cp.js';
 import { MorphicDB } from 'lively.morphic/morphicdb/index.js';
 import { SnapshotEditor } from 'lively.morphic/partsbin.js';
 import { worker } from 'lively.lang';
@@ -304,7 +304,7 @@ export class CodeSearcher extends FilterableList {
       browseSpec, browserOrProps || {},
       browser ? browser.systemInterface : this.systemInterface);
     browser.associatedSearchPanel = this;
-    return browser.activate();
+    return browser.getWindow().activate();
   }
 
   onWindowActivated () {
