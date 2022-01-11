@@ -11,8 +11,8 @@ let eslint;
 const rules = {
   // These are all rules from the default ruleset that are fixable
   // i.e. the linter will auto-format violations without giving other output than reformatted code
-  'curly': ['error', 'multi-line'],
-  'eqeqeq': ['error', 'smart'],
+  curly: ['error', 'multi-line'],
+  eqeqeq: ['error', 'smart'],
   'no-extra-bind': 'error',
   'no-extra-boolean-cast': 'error',
   'no-regex-spaces': 'error',
@@ -29,7 +29,7 @@ const rules = {
     line: { markers: ['*package', '!', '/', ',', '='] },
     block: { balanced: true, markers: ['*package', '!', ',', ':', '::', 'flow-include'], exceptions: ['*'] }
   }],
-  'yoda': ['error', 'never'],
+  yoda: ['error', 'never'],
   'array-bracket-spacing': ['error', 'never'],
   'arrow-spacing': ['error', { before: true, after: true }],
   'block-spacing': ['error', 'always'],
@@ -48,7 +48,7 @@ const rules = {
   'eol-last': 'error',
   'func-call-spacing': ['error', 'never'],
   'generator-star-spacing': ['error', { before: true, after: true }],
-  'indent': ['error', 2, {
+  indent: ['error', 2, {
     SwitchCase: 1,
     VariableDeclarator: 1,
     outerIIFEBody: 1,
@@ -77,7 +77,7 @@ const rules = {
   'object-property-newline': ['error', { allowMultiplePropertiesPerLine: true }],
   'operator-linebreak': ['error', 'after', { overrides: { '?': 'before', ':': 'before', '|>': 'before' } }],
   'padded-blocks': ['error', { blocks: 'never', switches: 'never', classes: 'never' }],
-  'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
+  quotes: ['error', 'single', { avoidEscape: true, allowTemplateLiterals: false }],
   'rest-spread-spacing': ['error', 'never'],
   'semi-spacing': ['error', { before: false, after: true }],
   'space-before-blocks': ['error', 'always'],
@@ -86,13 +86,13 @@ const rules = {
   'space-infix-ops': 'error',
   'space-unary-ops': ['error', { words: true, nonwords: false }],
   // Fixable rules where we changed something opposed to the default config
-  'semi': ['error', 'always'],
+  semi: ['error', 'always'],
   'no-extra-semi': 'error',
   'prefer-const': 'off',
   // These are rules that cannot be automatically fixed, but for which we want to get a warning upon violation
   'no-debugger': 'warn',
   'no-unreachable': 'warn',
-  'no-unused-vars': 'warn'
+  'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }]
 };
 
 config.rules = rules;
