@@ -1,7 +1,7 @@
 import { ViewModel, add, without, part, component } from 'lively.morphic/components/core.js';
 import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label } from 'lively.morphic';
-import { string, num } from 'lively.lang';
+import { string, arr, num } from 'lively.lang';
 import { NumberInput, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, connect } from 'lively.bindings';
 
@@ -19,12 +19,17 @@ export class ShapeControlModel extends ViewModel {
             { target: 'width input', signal: 'numberChanged', handler: 'changeWidth' },
             { target: 'height input', signal: 'numberChanged', handler: 'changeHeight' },
             { target: 'rotation input', signal: 'numberChanged', handler: 'changeRotation' },
-            ...['', ' top left', ' top right', ' bottom right', ' bottom left'].map(d => ({
+            ...arr.flatten(['', ' top left', ' top right', ' bottom right', ' bottom left'].map(d => [{
               target: 'radius input' + d,
               signal: 'numberChanged',
               handler: 'change' + string.camelCaseString('border radius ' + d),
               override: false
-            })),
+            }, {
+              target: 'radius input' + d,
+              signal: 'onMouseDown',
+              handler: 'adjustCornerIndicator',
+              converter: `() => "${string.camelCaseString(d)}"`
+            }])),
             { model: 'clip mode selector', signal: 'selection', handler: 'changeClipMode' },
             { target: 'proportional resize toggle', signal: 'onMouseDown', handler: 'changeResizeMode' },
             { target: 'independent corner toggle', signal: 'onMouseDown', handler: 'toggleBorderMultiVar' }
@@ -47,6 +52,19 @@ export class ShapeControlModel extends ViewModel {
       : {
           auto: AddButton, hover: PropertyLabelHovered
         };
+  }
+
+  adjustCornerIndicator (cornerSide) {
+    const sideToRotation = {
+      TopRight: [0, rect(2, 0, 0.5, 0)],
+      TopLeft: [Math.PI / 2 * 3, rect(0, 2, 0, 0.5)],
+      BottomRight: [Math.PI / 2, rect(0, 2.5, 0, 0)],
+      BottomLeft: [Math.PI, rect(3, 0, -1, 0)]
+    };
+
+    const [rotation, padding] = sideToRotation[cornerSide] || [0, rect(0, 0, 5, 0)];
+    this.ui.borderIndicator.padding = padding;
+    this.ui.borderIndicator.rotation = rotation;
   }
 
   refreshFromTarget () {
@@ -289,6 +307,7 @@ const ShapeControl = component({
       }),
       fill: Color.transparent,
       extent: pt(223.5, 25),
+      clipMode: 'hidden',
       submorphs: [
         {
           type: Label,
@@ -297,7 +316,7 @@ const ShapeControl = component({
           fill: Color.rgba(229, 231, 233, 0),
           fontColor: Color.rgb(178, 235, 242),
           fontFamily: 'Material Icons',
-          padding: rect(0, 0, 5, 0),
+          padding: rect(2.5, 0, 0, 0),
           textAndAttributes: ['', {
             fontSize: 16,
             textStyleClasses: ['material-icons']
@@ -308,7 +327,8 @@ const ShapeControl = component({
           min: 0,
           extent: pt(35, 22),
           tooltip: 'Border Radius Top Left',
-          borderRadiusRight: 0,
+          borderRadiusTopRight: 0,
+          borderRadiusBottomRight: 0,
           submorphs: [without('interactive label')]
         }), part(NumberInput, {
           name: 'radius input top right',
@@ -329,7 +349,8 @@ const ShapeControl = component({
         part(NumberInput, {
           name: 'radius input bottom left',
           min: 0,
-          borderRadiusLeft: 0,
+          borderRadiusTopLeft: 0,
+          borderRadiusBottomLeft: 0,
           extent: pt(35, 22),
           tooltip: 'Border Radius Bottom Left',
           submorphs: [without('interactive label')]
