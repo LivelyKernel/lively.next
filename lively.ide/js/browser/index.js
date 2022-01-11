@@ -527,8 +527,8 @@ export class BrowserModel extends ViewModel {
             { target: 'export to html', signal: 'onMouseDown', handler: 'renderMarkdown' },
             { target: 'copy to clipboard', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open browse snippet' },
             { target: 'open in editor', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open selected module in text editor' },
-            { target: 'close button', signal: 'onMouseDown', handler: 'closeErrorMessage' },
-            { target: 'open in workspace', signal: 'onMouseDown', handler: 'openErrorMessage' },
+            { target: 'close button', signal: 'onMouseDown', handler: 'closeStatusMessage' },
+            { target: 'open in workspace', signal: 'onMouseDown', handler: 'openStatusMessage' },
 
             { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
@@ -1117,12 +1117,12 @@ export class BrowserModel extends ViewModel {
     }
   }
 
-  closeErrorMessage () {
+  closeStatusMessage () {
     this.ui.metaInfoText.showDefault();
   }
 
-  openErrorMessage () {
-    this.ui.metaInfoText.openInfoInWorkspace();
+  openStatusMessage () {
+    this.ui.metaInfoText.showInfoInWorkspace();
   }
 
   switchMode (mode) {
