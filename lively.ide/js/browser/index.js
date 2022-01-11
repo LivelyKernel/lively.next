@@ -1454,7 +1454,7 @@ export class BrowserModel extends ViewModel {
     }
 
     let content = sourceEditor.textString.split(objectReplacementChar).join('');
-
+    let warnings = [];
     // moduleChangeWarning is set when this browser gets notified that the
     // current module was changed elsewhere (onModuleChanged) and it also has
     // unsaved changes
@@ -1503,7 +1503,9 @@ export class BrowserModel extends ViewModel {
           content = sourceEditor.textString;
         }
 
-        content = await lint(content);
+        const linterOutput = await lint(content);
+        content = linterOutput[0];
+        warnings = linterOutput[1];
 
         if (module.isLoaded) { // is loaded in runtime
           await system.interactivelyChangeModule(
@@ -1529,7 +1531,12 @@ export class BrowserModel extends ViewModel {
         : this.save(attempt + 1);
     } finally { this.state.isSaving = false; }
 
-    metaInfoText.showSaved();
+    if (warnings.length > 0) {
+      const warningStrings = warnings.map(warning => `"${warning.message}" on line ${warning.line}`);
+      const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n'); 
+      metaInfoText.showWarning(warningMessage);
+      await promise.delay(2000);
+    } metaInfoText.showSaved();
   }
 
   async reloadModule (hard = false) {

@@ -365,6 +365,24 @@ export class PathIndicator extends Morph {
     });
   }
 
+  async showWarning (warning, duration = 300) {
+    await this.requestTransition(async () => {
+      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      statusBox.textString = warning;
+      statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
+      await statusLabel.whenRendered();
+      this.master = FileStatusWarning;
+      this.master.applyAnimated({ duration });
+      pathContainer.layout.renderViaCSS = false;
+      await this.withAnimationDo(() => {
+        statusLabel.opacity = statusBox.opacity = 1;
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
+        this.adjustHeight();
+      }, { duration });
+      pathContainer.layout.renderViaCSS = true;
+    });
+  }
+
   async showFrozen (frozenMessage, duration = 300) {
     this.requestTransition(async () => {
       const { statusBox, statusLabel, pathContainer } = this.ui;
