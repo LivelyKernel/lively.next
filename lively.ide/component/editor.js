@@ -22,7 +22,7 @@ astq.adapter('mozast');
 const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
-// convertToSpec(this.get('header buttons'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
+// convertToSpec(this.get('master component browser'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
 
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
@@ -555,7 +555,10 @@ export class ComponentChangeTracker {
       requiredBindings.push(...Object.entries(valueAsExpr.bindings));
       let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
       const morphDef = getPropertiesNode(responsibleComponent, change.target.name);
-      if (change.prop == 'layout') this.needsLinting = true;
+      if (change.prop == 'layout') {
+        debugger;
+        this.needsLinting = true;
+      }
       if (!morphDef) {
         // the entire morph does not exist and needs to be added to the definition!
         updatedSource = this.uncollapseSubmorphHierarchy(

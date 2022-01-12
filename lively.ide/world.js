@@ -711,7 +711,8 @@ export class LivelyWorld extends World {
     const focused = this.focusedMorph; const visBounds = this.visibleBounds();
 
     return this.withRequesterDo(opts.requester, async (pos) => {
-      promptMorph.openInWorldNear(pos, this);
+      promptMorph.openInWorld();
+      promptMorph.center = pos;
       if (promptMorph.height > visBounds.height) { promptMorph.height = visBounds.height - 5; }
 
       if (typeof opts.customize === 'function') { opts.customize(promptMorph); }

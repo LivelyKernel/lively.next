@@ -129,7 +129,8 @@ export class AlignmentManager extends ViewModel {
    */
   updateResizingPolicies () {
     const { resizing } = this.models;
-    const { layout } = this.targetMorph.owner;
+    let { layout } = this.targetMorph.owner;
+    layout = layout.copy();
     const localLayout = this.targetMorph.layout;
     const policy = {};
     if (resizing.horizontalResizing != 'hug') policy.width = resizing.horizontalResizing;
@@ -152,6 +153,9 @@ export class AlignmentManager extends ViewModel {
         localLayout.wrapSubmorphs = false;
       }
     }
+    // trigger reconciliationm but this wont work because the layouts are the very same object
+    //  ...
+    this.targetMorph.owner.layout = layout;
   }
 
   /**
@@ -170,7 +174,7 @@ export class AlignmentManager extends ViewModel {
   }
 }
 
-/*
+/**
  * Control the position/resize constraints of a morph inside a morph without any layout
  * or a morph with a ProportionalLayout.
  * A constraint is a policy that dictates how the different sides of a morph relate to its
