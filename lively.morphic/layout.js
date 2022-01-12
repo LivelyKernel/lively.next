@@ -529,8 +529,13 @@ export class TilingLayout extends Layout {
 
   setResizePolicyFor (aLayoutableSubmorph, policy) {
     // policy : width = fixed/fill, height = fixed/fill
-    this._resizePolicies.set(aLayoutableSubmorph, policy);
-    this.onConfigUpdate();
+    if (Array.isArray(this._resizePolicies)) {
+      let entry = this._resizePolicies.find(([name]) => aLayoutableSubmorph.name == name);
+      if (entry) { entry[1] = policy; } else this._resizePolicies.push([aLayoutableSubmorph.name, policy]);
+    } else {
+      this._resizePolicies.set(aLayoutableSubmorph, policy);
+      this.onConfigUpdate();
+    }
   }
 
   resizesMorphHorizontally (aMorph) {
