@@ -1,11 +1,9 @@
 import { arr, promise } from 'lively.lang';
-import { pt, LinearGradient, Color, Rectangle } from 'lively.graphics';
+import { pt, Color, Rectangle } from 'lively.graphics';
 import {
-  Label, GridLayout,
+  Label, 
   morph,
-  Morph,
-  HorizontalLayout,
-  StyleSheet
+  Morph
 } from 'lively.morphic';
 import { connect, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
@@ -268,9 +266,9 @@ export default class Window extends Morph {
         $upd(!this.targetObj.minimized);
       }
     });
-
+    let windowMenuButton;
     if (this.resizable) {
-      var windowMenuButton =
+      windowMenuButton =
         this.getSubmorphNamed('menu') ||
         morph({
           name: 'menu',
@@ -627,7 +625,7 @@ export default class Window extends Morph {
   isActive () {
     const w = this.world();
     if (!w) return false;
-    if (this.ui.windowTitle.fontWeight != 'bold') return false;
+    if (this.ui.windowTitle.fontWeight !== 'bold') return false;
     return arr.last(w.getWindows()) === this;
   }
 
@@ -662,7 +660,7 @@ export default class Window extends Morph {
     // if (this.styleClasses.includes('inactive')) return;
     // this.removeStyleClass('active');
     // this.addStyleClass('inactive');
-    if (this.master && this.master.auto == DefaultWindowInactive) return;
+    if (this.master && this.master.auto === DefaultWindowInactive) return;
     this.master.whenApplied().then(() => {
       this.master = { auto: DefaultWindowInactive };
     });
