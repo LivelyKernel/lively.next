@@ -189,7 +189,7 @@ function getValueExpr (prop, value) {
     const n = {};
     value = serializeNestedProp(prop, value, {
       exprSerializer, nestedExpressions: n, asExpression: true
-    });
+    }, prop == 'borderRadius' ? ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] : ['top', 'left', 'right', 'bottom']);
   }
   valueAsExpr = {
     __expr__: JSON.stringify(value),

@@ -33,7 +33,6 @@ export default class ExpressionSerializer {
     // => {expr: "foo()", bindings: {"package/foo.js": ["foo"]}}
 
     let idx = string.indexOf(':');
-    const prefix = string.slice(0, idx);
     let rest = string.slice(idx + 1);
     const bindings = {};
     const httpPlaceholder = '__HTTP_PLACEHOLDER__';
@@ -267,14 +266,14 @@ export function deserializeSpec (serializedSpec, subSpecHandler = (spec) => spec
 // serializeSpec(this, { asExpression: true, keepFunctions: true, skipUnchangedFromDefault: true, skipAttributes: ['metadata', 'styleClasses'] }).__expr__
 // comp.openInWorld()
 
-export function serializeNestedProp (name, val, serializerContext) {
+export function serializeNestedProp (name, val, serializerContext, members = ['top', 'left', 'right', 'bottom']) {
   const { asExpression, exprSerializer, nestedExpressions } = serializerContext;
   let serializedVal = {};
   // if all members of the val are equal resort to short hand
-  if (arr.uniqBy(Object.values(val).filter(v => typeof v !== 'function'), obj.equals).length == 1) {
-    serializedVal = getExpression(name, val.top, serializerContext);
+  if (arr.uniqBy(Object.values(val).filter(v => typeof v !== 'function'), obj.equals).length === 1) {
+    serializedVal = getExpression(name, val[members[0]], serializerContext);
   } else {
-    for (const mem of ['top', 'left', 'right', 'bottom']) {
+    for (const mem of members) {
       serializedVal[mem] = exprSerializer.embedValue(val[mem], asExpression && nestedExpressions);
     }
   }
@@ -375,9 +374,9 @@ export function serializeSpec (morph, opts = {}) {
     styleProto = masterInScope.auto.get(morph.name) || masterInScope.auto;
   }
 
-  if (morph.isText && morph.textString != '') {
+  if (morph.isText && morph.textString !== '') {
     // text morphs usually do not return text and attributes so we add them by hand
-    if (styleProto && styleProto.textString != morph.textString) {
+    if (styleProto && styleProto.textString !== morph.textString) {
       exported.textAndAttributes = morph.textAndAttributes.map((ea, i) => {
         return ea && ea.isMorph
           ? serializeSpec(ea, {
@@ -395,7 +394,7 @@ export function serializeSpec (morph, opts = {}) {
       ...subopts,
       path: path ? path + '.submorphs.' + i : 'submorphs.' + i
     })).filter(Boolean);
-    if (exported.submorphs.length == 0) delete exported.submorphs;
+    if (exported.submorphs.length === 0) delete exported.submorphs;
   }
 
   let propsNotManagedByMaster;
@@ -404,7 +403,7 @@ export function serializeSpec (morph, opts = {}) {
   }
 
   for (const name in morph.spec(skipUnchangedFromDefault)) {
-    if (name != 'name' &&
+    if (name !== 'name' &&
         styleProto &&
         obj.equals(styleProto[name], morph[name])) continue;
     const val = valueTransform(name, morph[name]);
@@ -412,17 +411,21 @@ export function serializeSpec (morph, opts = {}) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
     if (propsNotManagedByMaster && !propsNotManagedByMaster.includes(name)) continue;
-    if (name == 'master' && exposeMasterRefs) continue;
-    if (name == 'position' && Path('owner.layout.renderViaCSS').get(morph)) continue;
+    if (name === 'master' && exposeMasterRefs) continue;
+    if (name === 'position' && Path('owner.layout.renderViaCSS').get(morph)) continue;
     if (name === 'submorphs' || name === 'type') continue;
-    if (morph.isLabel && name == 'extent') continue;
+    if (morph.isLabel && name === 'extent') continue;
     if (skipAttributes.includes(name)) continue;
     if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
       exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit, subopts) };
       continue;
     }
-    if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(name)) {
+    if (['borderColor', 'borderWidth', 'borderStyle'].includes(name)) {
       exported[name] = serializeNestedProp(name, val, subopts);
+      continue;
+    }
+    if (name === 'borderRadius') {
+      exported[name] = serializeNestedProp(name, val, subopts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
       continue;
     }
     if (val && val.isMorph) {
@@ -434,7 +437,7 @@ export function serializeSpec (morph, opts = {}) {
     }
     if (val && val.__serialize__) {
       if (styleProto &&
-          getExpression(name, val, { ...subopts, asExpression: false }) ==
+          getExpression(name, val, { ...subopts, asExpression: false }) ===
           getExpression(name, valueTransform(name, styleProto[name]), { ...subopts, asExpression: false })) continue;
       exported[name] = getExpression(name, val, subopts);
       continue;
@@ -443,9 +446,9 @@ export function serializeSpec (morph, opts = {}) {
       // check if each array member is seralizable
       const serializedArray = getArrayExpression(name, val, path, subopts);
       if (styleProto) {
-        const r = (k, v) => k == '_rev' ? undefined : v;
+        const r = (k, v) => k === '_rev' ? undefined : v;
         const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, subopts), r);
-        if (JSON.stringify(serializedArray, r) == other) continue;
+        if (JSON.stringify(serializedArray, r) === other) continue;
       }
       exported[name] = serializedArray;
       continue;
@@ -477,7 +480,7 @@ export function serializeSpec (morph, opts = {}) {
     for (const conn of connections) {
       const {
         sourceAttrName, targetMethodName, sourceObj, targetObj,
-        updaterString, converterString, varMapping, garbageCollect
+        updaterString, converterString, garbageCollect
       } = conn;
       const pathToSource = objToPath.get(sourceObj);
       const pathToTarget = objToPath.get(targetObj);
@@ -521,7 +524,7 @@ export function serializeSpec (morph, opts = {}) {
     exported.type = getSerializableClassMeta(morph);
   }
 
-  if (getClassName(morph) == 'Morph' || skipAttributes.includes('type')) {
+  if (getClassName(morph) === 'Morph' || skipAttributes.includes('type')) {
     delete exported.type;
   }
 
@@ -531,8 +534,8 @@ export function serializeSpec (morph, opts = {}) {
       // replace the nestedExpressions after stringification
       __expr__ = `morph(${obj.inspect(exported, {
         keySorter: (a, b) => {
-          if (a == 'name' || a == 'type') return -1;
-          if (a == 'submorphs') return 1;
+          if (a === 'name' || a === 'type') return -1;
+          if (a === 'submorphs') return 1;
           else return 0;
         }
       })})`;
@@ -547,7 +550,7 @@ export function serializeSpec (morph, opts = {}) {
       if (exported) {
         __expr__ = `part(${masterComponentName}, ${obj.inspect(exported, {
         keySorter: (a, b) => {
-          if (a == 'name' || a == 'type' || a == 'tooltip') return -1;
+          if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
           else return 0;
         }
       })})`;
