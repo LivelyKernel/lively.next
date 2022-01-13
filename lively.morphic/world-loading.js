@@ -16,7 +16,6 @@ import './partsbin.js';
 import { joinPath } from 'lively.lang/string.js';
 import { reset } from './components/policy.js';
 import { part } from './components/core.js';
-import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 
 export async function loadWorldFromURL (url, oldWorld, options) {
   const worldResource = url.isResource
@@ -194,6 +193,7 @@ async function setupLively2Lively (world) {
 export async function interactivelySaveWorld (world, options) {
   options = { showSaveDialog: true, useExpectedCommit: true, errorOnMissingExpectedCommit: false, confirmOverwrite: true, ...options };
 
+  const { SaveWorldDialog }= await System.import('lively.ide/studio/dialogs.cp.js');
   let name = world.name; let tags = []; let description = '';
   const oldCommit = await ensureCommitInfo(Path('metadata.commit').get(world));
   let db = options.morphicdb || MorphicDB.default;
