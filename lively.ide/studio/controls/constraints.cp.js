@@ -43,7 +43,7 @@ export class AlignmentManager extends ViewModel {
     if (!this.targetMorph) return;
     const owner = this.targetMorph.owner;
     if (owner.isWorld) return;
-    if (!owner.layout && (x != 'fixed' || y != 'fixed')) {
+    if (!owner.layout && (x !== 'fixed' || y !== 'fixed')) {
       owner.layout = new ProportionalLayout({
         submorphSettings: owner.submorphs.map(m => [m.name, { x: 'fixed', y: 'fixed' }])
       });
@@ -62,19 +62,19 @@ export class AlignmentManager extends ViewModel {
     title = 'n/a';
     resizing.visible = false;
     constraints.visible = false;
-    if (!owner.layout || owner.layout.name() == 'Proportional') {
+    if (!owner.layout || owner.layout.name() === 'Proportional') {
       title = 'Constraints';
       constraints.visible = true;
     }
-    if (target.layout && target.layout.name() == 'Tiling') {
+    if (target.layout && target.layout.name() === 'Tiling') {
       title = 'Constraints and Resizing';
       constraints.visible = true; // fixme: also enable to resizing in here....
     }
-    if (owner.layout && owner.layout.name() == 'Tiling') {
+    if (owner.layout && owner.layout.name() === 'Tiling') {
       title = 'Resizing';
       resizing.visible = true;
       constraints.visible = false;
-      if (target.layout && target.layout.name() == 'Tiling') {
+      if (target.layout && target.layout.name() === 'Tiling') {
         resizing.showInnerControls = true;
       } else {
         resizing.showInnerControls = false;
@@ -97,7 +97,7 @@ export class AlignmentManager extends ViewModel {
     const heightPolicy = layout.getResizeHeightPolicyFor(this.targetMorph);
     const widthPolicy = layout.getResizeWidthPolicyFor(this.targetMorph);
     resizing.verticalResizing = heightPolicy;
-    resizing.horizontalResizie = widthPolicy;
+    resizing.horizontalResizing = widthPolicy;
     if (localLayout && localLayout.hugContentsVertically) resizing.verticalResizing = 'hug';
     if (localLayout && localLayout.hugContentsHorizontally) resizing.horizontalResizing = 'hug';
     resizing.hideSelectors();
@@ -116,7 +116,7 @@ export class AlignmentManager extends ViewModel {
       constraints.horizontalConstraint = 'fixed';
       return;
     }
-    if (layout.name() == 'Proportional') {
+    if (layout.name() === 'Proportional') {
       const policy = layout.settingsFor(this.targetMorph);
       constraints.verticalConstraint = policy.y;
       constraints.horizontalConstraint = policy.x;
@@ -133,23 +133,23 @@ export class AlignmentManager extends ViewModel {
     layout = layout.copy();
     const localLayout = this.targetMorph.layout;
     const policy = {};
-    if (resizing.horizontalResizing != 'hug') policy.width = resizing.horizontalResizing;
-    if (resizing.verticalResizing != 'hug') policy.height = resizing.verticalResizing;
-    if (resizing.horizontalResizing == 'fill') layout.wrapSubmorphs = false;
-    if (resizing.verticalResizing == 'fill') layout.wrapSubmorphs = false;
+    if (resizing.horizontalResizing !== 'hug') policy.width = resizing.horizontalResizing;
+    if (resizing.verticalResizing !== 'hug') policy.height = resizing.verticalResizing;
+    if (resizing.horizontalResizing === 'fill') layout.wrapSubmorphs = false;
+    if (resizing.verticalResizing === 'fill') layout.wrapSubmorphs = false;
 
     layout.setResizePolicyFor(this.targetMorph, policy);
 
-    if (localLayout && localLayout.name() == 'Tiling') {
-      const shouldHugHorizontal = resizing.horizontalResizing == 'hug';
+    if (localLayout && localLayout.name() === 'Tiling') {
+      const shouldHugHorizontal = resizing.horizontalResizing === 'hug';
       // fixme: trigger refresh in the auto layout control
       localLayout.hugContentsHorizontally = shouldHugHorizontal;
-      if (localLayout.axis == 'row' && shouldHugHorizontal) {
+      if (localLayout.axis === 'row' && shouldHugHorizontal) {
         localLayout.wrapSubmorphs = false;
       }
-      const shouldHugVertically = resizing.verticalResizing == 'hug';
+      const shouldHugVertically = resizing.verticalResizing === 'hug';
       localLayout.hugContentsVertically = shouldHugVertically;
-      if (localLayout.axis == 'column' && shouldHugVertically) {
+      if (localLayout.axis === 'column' && shouldHugVertically) {
         localLayout.wrapSubmorphs = false;
       }
     }
@@ -346,7 +346,7 @@ export class ResizingControlModel extends ViewModel {
     // reset scene
     resizingSimulator.getAllNamed(/inner /).forEach(ctrl => ctrl.visible = this.showInnerControls);
 
-    if (prop == 'showInnerControls') {
+    if (prop === 'showInnerControls') {
       this.models.verticalAlignmentSelector.items = this.showInnerControls
         ? [
             { string: 'Fixed height', value: 'fixed', isListItem: true },
@@ -423,6 +423,7 @@ export class ResizingControlModel extends ViewModel {
     }
 
     this.withoutBindingsDo(() => {
+      // this does not update the label properly
       verticalAlignmentSelector.selection = this.verticalResizing;
       verticalAlignmentSelector.get('interactive label').makeDirty();
       horizontalAlignmentSelector.selection = this.horizontalResizing;
@@ -584,19 +585,19 @@ export class ResizingControlModel extends ViewModel {
       switch (markerName) {
         case 'inner top selector':
         case 'inner bottom selector':
-          this.verticalResizing = this.verticalResizing == 'hug' ? 'fixed' : 'hug';
+          this.verticalResizing = this.verticalResizing === 'hug' ? 'fixed' : 'hug';
           break;
         case 'outer top selector':
         case 'outer bottom selector':
-          this.verticalResizing = this.verticalResizing == 'fill' ? 'fixed' : 'fill';
+          this.verticalResizing = this.verticalResizing === 'fill' ? 'fixed' : 'fill';
           break;
         case 'inner left selector':
         case 'inner right selector':
-          this.horizontalResizing = this.horizontalResizing == 'hug' ? 'fixed' : 'hug';
+          this.horizontalResizing = this.horizontalResizing === 'hug' ? 'fixed' : 'hug';
           break;
         case 'outer left selector':
         case 'outer right selector':
-          this.horizontalResizing = this.horizontalResizing == 'fill' ? 'fixed' : 'fill';
+          this.horizontalResizing = this.horizontalResizing === 'fill' ? 'fixed' : 'fill';
           break;
       }
       this.showSelectors();
