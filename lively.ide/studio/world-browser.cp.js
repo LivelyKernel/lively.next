@@ -1,13 +1,196 @@
-import { InputLine, Image, HTMLMorph, Morph, Text, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject } from 'lively.morphic';
+import { InputLine, World, MorphicDB, HorizontalLayout, Image, HTMLMorph, Morph, Text, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject } from 'lively.morphic';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
-import { connect, disconnectAll, disconnect } from 'lively.bindings/index.js';
-import { arr, string } from 'lively.lang/index.js';
+import { arr, graph, date, string } from 'lively.lang/index.js';
 import { component, part } from 'lively.morphic/components/core.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
 import { Spinner } from './shared.cp.js';
 import { DropDownList } from 'lively.components/list.cp.js';
 import { SystemList } from '../styling/shared.cp.js';
 import { MorphList } from 'lively.components';
+import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
+
+export const missingSVG = `data:image/svg+xml;utf8,
+<svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
+`;
+
+class WorldVersion extends Morph {
+  static get properties () {
+    return {
+      commit: {},
+      fill: { defaultValue: Color.transparent },
+      info: {
+        derived: true,
+        get () {
+          const { _id, message, name, timestamp } = this.commit;
+          return [`${_id.slice(0, 6)} `, { fontWeight: 'bold' },
+                  `${string.truncate(message.split('\n')[0], 40)} `, {},
+                  ` (${name} `, {},
+                  `${date.format(new Date(timestamp), 'yyyy-mm-dd HH:MM Z')}`, {}];
+        }
+      },
+      selected: {
+        set (active) {
+          this.setProperty('selected', active);
+          this.update();
+        }
+      },
+      layout: {
+        initialize () {
+          this.layout = new HorizontalLayout({ align: 'center', spacing: 5 });
+        }
+      },
+      submorphs: {
+        initialize () {
+          this.submorphs = [
+            {
+              type: 'image',
+              extent: pt(30, 30),
+              name: 'preview',
+              reactsToPointer: false
+            },
+            {
+              reactsToPointer: false,
+              type: 'label',
+              fill: null,
+              name: 'commit info',
+              fontFamily: 'Nunito',
+              fontColor: Color.gray
+            }
+          ];
+        }
+      }
+    };
+  }
+
+  update () {
+    const [preview, infoLabel] = this.submorphs;
+    preview.imageUrl = this.commit.preview || missingSVG;
+    infoLabel.textAndAttributes = this.info;
+    infoLabel.fontColor = this.selected ? Color.white : Color.darkGray;
+  }
+}
+
+export default class WorldVersionViewer extends Morph {
+  reset () {
+    this.getSubmorphNamed('version list').items = [];
+    this.getSubmorphNamed('version list spinner').visible = false;
+  }
+
+  onMouseDown (evt) {
+    switch (evt.targetMorph.name) {
+      case 'visit button':
+        this.visitSelectedCommit();
+        break;
+      case 'revert button':
+        this.revertToSelectedCommit();
+        break;
+    }
+  }
+
+  async visitSelectedCommit () {
+    const commit = this.get('version list').selection;
+    const i = LoadingIndicator.open(`Loading ${commit.name}...`);
+    const oldWorld = $world;
+
+    const morphicDB = this.db || MorphicDB.default;
+    const commitId = commit._id;
+
+    try {
+      const newWorld = commitId
+        ? await World.loadFromCommit(commitId, undefined, { morphicDB })
+        : await World.loadFromDB(commit.name, commit.ref, undefined, { morphicDB });
+
+      // if (worldList) {
+      //   worldList.onWorldLoaded(newWorld, oldWorld);
+      // }
+
+      return newWorld;
+    } catch (err) {
+      console.error(err);
+      oldWorld.showError('Error loading world:' + err);
+    } finally { i.remove(); }
+  }
+
+  async revertToSelectedCommit () {
+    const commit = this.get('version list').selection;
+    if (!commit) return;
+    const db = this.db || MorphicDB.default;
+    const { _id, name, type } = commit;
+    await db.revert(type, name, _id, /* ref = */'HEAD');
+    return this.initializeFromStartCommit(commit, db, { showRevertButton: true });
+  }
+
+  async initializeFromStartCommit (startCommit, db = MorphicDB.default, opts = {}) {
+    // startCommit = that.metadata.commit;
+    const {
+      indicateStartCommit = true,
+      showRefs = true
+      // showRevertButton = false,
+      // showVisitButton = false
+    } = opts;
+    const { _id, type, name } = (this.startCommit = startCommit);
+    const spinner = this.getSubmorphNamed('version list spinner');
+    spinner.visible = true;
+    spinner.center = this.get('version list').center;
+    this.db = db;
+
+    const { refs, history } = await db.history(type, name);
+    let startCommitId = _id;
+
+    const fwdHist = graph.invert(history);
+    const ancestors = graph.hull(fwdHist, _id);
+
+    const knownCommits = { _id: true }; const ancestorCommits = [startCommit];
+    for (const id of ancestors) {
+      const newCommits = await db.log(id, undefined, /* includeCommits = */true, knownCommits);
+      ancestorCommits.push(...newCommits);
+      newCommits.forEach(ea => knownCommits[ea._id] = true);
+    }
+
+    const newestCommit = arr.max(ancestorCommits, ea => ea.timestamp);
+    startCommitId = newestCommit._id;
+
+    // if (graph.hull(history, refs["HEAD"]).includes(_id)) {
+    //   startCommitId = refs["HEAD"];
+    // } else {
+    //   let allRefs = arr.without(Object.keys(refs), "HEAD");
+    //   let startRef = allRefs.find(ea => graph.hull(history, refs[ea]).includes(_id));
+    //   if (startRef) startCommitId = refs[startRef];
+    // }
+
+    const commits = await db.log(startCommitId, undefined, /* includeCommits = */true);
+    const shaToRef = {}; let maxRefLength = 0;
+    if (showRefs) {
+      for (const ref in refs) {
+        shaToRef[refs[ref]] = ref;
+        maxRefLength = Math.max(ref.length, maxRefLength);
+      }
+    }
+
+    // do this via appearance of the item morphs (extraction)
+    if (indicateStartCommit) {
+      if (shaToRef[_id]) shaToRef[_id] = '=> ' + shaToRef[_id];
+      else shaToRef[_id] = '=>';
+      maxRefLength = Math.max(shaToRef[_id].length, maxRefLength);
+    }
+
+    const items = commits.map(ea => {
+      // replace this by an actual world version morph
+      const morph = new WorldVersion({
+        reactsToPointer: false,
+        commit: ea
+      });
+      morph.update();
+      return {
+        isListItem: true,
+        morph,
+        value: ea
+      };
+    });
+    this.get('version list').items = items;
+    spinner.visible = false;
+  }
+}
 
 class TitleWrapper extends Morph {
   static get properties () {
@@ -57,13 +240,13 @@ class TitleWrapper extends Morph {
     if (!this.title) return;
     const [title] = this.submorphs;
     title.left += this._hoverDelta;
-    if (title.right < this.width - 20 && this._hoverDelta == -1) {
+    if (title.right < this.width - 20 && this._hoverDelta === -1) {
       // do not enter this block twice
       this.startOnce(async () => {
         await this.stopMovingLeft();
         await this.startMovingRight();
       });
-    } else if (title.left > 20 && this._hoverDelta == 1) {
+    } else if (title.left > 20 && this._hoverDelta === 1) {
       // do not enter this block twice
       this.startOnce(async () => {
         await this.stopMovingRight();
