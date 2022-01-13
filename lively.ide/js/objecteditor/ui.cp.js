@@ -327,6 +327,7 @@ const ObjectEditorLight = component({
     extent: pt(180, 442),
     fontFamily: '"IBM Plex Sans"',
     fontSize: 14,
+    borderColor: Color.rgb(204, 204, 204),
     borderWidth: {
       top: 1, bottom: 1, left: 0, right: 0
     },

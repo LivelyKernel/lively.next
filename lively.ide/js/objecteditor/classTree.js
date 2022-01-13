@@ -1,9 +1,7 @@
 import { TreeData } from 'lively.components';
-import { isClass } from 'lively.classes/util.js';
 import { arr } from 'lively.lang';
 import { withSuperclasses } from 'lively.classes/util.js';
 import { lexicalClassMembers } from 'lively.classes/util.js';
-import { isString } from 'lively.lang/object.js';
 import { Icon } from 'lively.morphic';
 
 // var oe = ObjectEditor.open({target: this})

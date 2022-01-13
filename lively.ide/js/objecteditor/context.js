@@ -301,9 +301,9 @@ export default class ObjectEditorContext {
 
   async removeUnusedImports (toRemove) {
     try {
-      var m = this.selectedModule;
-      var origSource = await m.source();
-      var toRemove = await chooseUnusedImports(origSource);
+      let m = this.selectedModule;
+      let origSource = await m.source();
+      let toRemove = await chooseUnusedImports(origSource);
 
       if (!toRemove || !toRemove.changes || !toRemove.changes.length) {
         return { statusMessage: 'Nothing to remove' };
