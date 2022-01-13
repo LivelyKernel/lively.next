@@ -688,7 +688,7 @@ export class ComponentChangeTracker {
     // so the successive updates are still based on the proper source
     if (this.needsLinting) {
       this.needsLinting = false;
-      updatedSource = lint(updatedSource);
+      [updatedSource] = lint(updatedSource);
       if (sourceEditor) sourceEditor.textString = updatedSource;
     }
     if (sourceEditor) {
