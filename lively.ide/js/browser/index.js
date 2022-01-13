@@ -501,7 +501,7 @@ export class BrowserModel extends ViewModel {
             'isBrowser', 'focus', 'keybindings', 'browse', 'browseSnippetForSelection', 'commands',
             'systemInterface', 'selectedModule', 'selectedPackage', 'selectedCodeEntity', 'selectCodeEntity', 'editorPlugin', 'isTestModule',
             'reloadModule', 'renderedCodeEntities', 'focusSourceEditor', 'historyBackward', 'historyForward', 'save', 'hasUnsavedChanges',
-            'interactivelyBrowseHistory', 'interactivelyAddNewModule', 'interactivelyCreateNewFolder', 'interactivelyRemoveSelectedItem', 'updateModuleList'
+            'interactivelyBrowseHistory', 'interactivelyAddNewModule', 'interactivelyCreateNewFolder', 'interactivelyRemoveSelectedItem', 'updateModuleList', 'onWindowClose'
           ];
         }
       },
