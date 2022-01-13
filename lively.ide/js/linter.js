@@ -97,8 +97,31 @@ const rules = {
 
 config.rules = rules;
 
-export default function lint (code) {
+/**
+ * @typedef LinterMessage
+ * @type {object}
+ * @property {number} column - Starting column the warning was located at.
+ * @property {number} endColumn - Ending column the warning was located at.
+ * @property {number} line - Starting line the warning was located at.
+ * @property {number} endLine - Ending line the warning was located at.
+ * @property {String} message - Message that explains the linter violation.
+ * @property {String} messageId - Shorthand for the violated linter rule.
+ * @property {String} ruleId - Id of the violated rule.
+ * @property {String} nodeType - Ast node type at the point of violation.
+ * @property {number} severity - Prioritization of the violation.
+ */
+
+/**
+ * For given source code snippet, returns a linted version of the source code 
+ * together with a set of generated warnings or violations of the linting rules.
+ * We can further provide a custom set of rules that overrides the default
+ * rule set for the analysis of the given source code.
+ * @param { String } code - The source code to be analyzed and autocorrected.
+ * @param { Object } [customRules] - A set of rules to override the default rule set.
+ * @returns { [String, LinterMessage[]] }
+ */
+export default function lint (code, customRules = {}) {
   const linter = new eslint.Linter();
-  const linterOutput = linter.verifyAndFix(code, config);
+  const linterOutput = linter.verifyAndFix(code, { ...config, rules: { ...config.rules, ...customRules } });
   return [linterOutput.output, linterOutput.messages];
 }
