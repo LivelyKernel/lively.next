@@ -190,4 +190,17 @@ const StatusMessageError = component(StatusMessageDefault, {
   ]
 });
 
-export { StatusMessageDefault, StatusMessageConfirm, StatusMessageError };
+// StatusMessageWarning.openInWorld()
+const StatusMessageWarning = component(StatusMessageDefault, {
+  name: 'status message warning',
+  borderColor: Color.rgbHex('DA9819'),
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(249, 213, 68) },
+      { offset: 1, color: Color.rgb(219, 162, 18) }
+    ],
+    vector: rect(0.5, 1, 0, 1) 
+  })
+});
+
+export { StatusMessageDefault, StatusMessageConfirm, StatusMessageError, StatusMessageWarning };
