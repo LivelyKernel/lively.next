@@ -189,7 +189,7 @@ export class MullerColumnViewModel extends ViewModel {
       scrollBarHeight = 5;
     }
     this.lists.forEach(list => {
-      list.height = view.height - scrollBarHeight;
+      list.height = view.height - scrollBarHeight - 1;
       const control = list._managedNode && list._managedNode.listControl;
       if (control) {
         control.bottomRight = list.innerBounds().bottomRight().subXY(5, 0);
