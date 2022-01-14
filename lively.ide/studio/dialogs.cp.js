@@ -39,6 +39,15 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
     };
   }
 
+  get bindings () {
+    return [
+      ...super.bindings, {
+        model: 'storage type selector',
+        signal: 'selection',
+        handler: 'refresh'
+      }];
+  }
+
   alignInWorld (world = this.world()) {
     world.addMorph(this);
     let { width, height } = world.visibleBounds();
@@ -52,6 +61,10 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
     this.ui.nameInput.input = this.worldName;
     this.ui.tagInput.input = this.tags;
     this.ui.description.textString = this.description;
+  }
+
+  refresh () {
+    this.setStorageMode(this.ui.storageTypeSelector.selection);
   }
 
   setStorageMode (mode) {
@@ -299,17 +312,16 @@ const SaveWorldDialog = component(DarkPrompt, {
         openListInWorld: true,
         listAlign: 'selection',
         selection: 'Morphic DB',
-        items: ['JSON', 'Morphic DB']
+        items: [{ string: 'JSON', value: 'json', isListItem: true }, { string: 'Morphic DB', value: 'db', isListItem: true }]
       }
     }), part(InputLineDark, {
       name: 'file path input',
       position: pt(211.2, 0.5),
-      extent: pt(221.3, 24.6),
-      viewModel: {
-        highlightWhenFocused: true,
-        historyId: 'lively.morphic-save-world-names',
-        placeholder: './path/to/snapshot.json'
-      },
+      extent: pt(210, 25),
+      fontSize: 15,
+      highlightWhenFocused: true,
+      historyId: 'lively.morphic-save-world-names',
+      placeholder: './path/to/snapshot.json',
       visible: false
     })
     ]
