@@ -332,5 +332,30 @@ For now only a simple default theme...
       });
       return idAndSnapshot;
     }
+  },
+  
+  {
+    date: '2022-01-14',
+    name: 'migrate comments browser to new components architecture and rebuild rather than save the instances',
+    snapshotConverter: idAndSnapshot => {
+      const { id: rootId, snapshot } = idAndSnapshot;
+      const referencesToRemove = [];
+      const connections = [];
+      Object.keys(snapshot).map(k => {
+        const currentObj = snapshot[k];
+        if (currentObj.props.commentBrowser) delete snapshot[k].props.commentBrowser;
+        if (currentObj['lively.serializer-class-info']) {
+          if (currentObj['lively.serializer-class-info'].className === 'CommentBrowser') referencesToRemove.push(k);
+          if (currentObj['lively.serializer-class-info'].className === 'AttributeConnection') connections.push(k);
+        }
+      });
+      connections.forEach((c) => {
+        if (snapshot[c].props.targetObj.value.id in referencesToRemove) delete snapshot[c];
+      });
+      referencesToRemove.forEach(k => delete snapshot[k]);
+      
+      removeUnreachableObjects([rootId], snapshot);
+      return idAndSnapshot;
+    }
   }
 ];
