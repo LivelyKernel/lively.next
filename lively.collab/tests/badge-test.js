@@ -1,30 +1,30 @@
-/* global System, declare, done, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global it, describe, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
-import { Badge } from 'lively.collab';
 import { Morph } from 'lively.morphic';
 import { pt } from 'lively.graphics';
+import { part } from 'lively.morphic/components/core.js';
+import { CommentCountBadge } from '../comments/components/comment-count-badge.cp.js';
 
 describe('badge', function () {
   let badge;
   const testWorld = $world;
 
   beforeEach(function () {
-    badge = new Badge();
+    badge = part(CommentCountBadge);
   });
 
   it('can be incremented', function () {
-    badge.text = '42';
-    badge.incrementCounter();
-    expect(badge.text).to.equal('43');
+    badge.viewModel.text = '42';
+    badge.viewModel.incrementCounter();
+    expect(badge.viewModel.text).to.equal('43');
   });
 
   it('moves with morph', async function () {
     const morph = new Morph({ extent: pt(100, 100), position: pt(400, 400) });
     testWorld.addMorph(morph);
-    badge.addToMorph(morph);
-    await badge.whenRendered();
-
-    badge.alignWithMorph();
+    badge.viewModel.addToMorph(morph);
+    
+    badge.viewModel.alignWithMorph();
     const initX = badge.globalPosition.x;
     const offset = 20;
     morph.position = morph.position.addPt(pt(offset, 0));
@@ -32,11 +32,6 @@ describe('badge', function () {
     expect(badge.globalPosition.x - initX).to.equal(offset);
 
     morph.abandon();
-  });
-
-  it('can be initiated with text', async function () {
-    const textBadge = Badge.newWithText('Test');
-    expect(textBadge.text).to.equal('Test');
   });
 
   afterEach(function () {

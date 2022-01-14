@@ -1,36 +1,32 @@
-/* global System, declare, done, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global it, describe, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
 import { CommentBrowser } from 'lively.collab';
 import { Morph } from 'lively.morphic';
+import { part } from 'lively.morphic/components/core.js';
+
+let comment;
 
 describe('comment browser', function () {
   let morph;
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
   let browser;
-  let comment;
 
   beforeEach(async function () {
-    morph = new Morph();
+    morph = new Morph().openInWorld();
     morph.name = exampleName;
-    browser = CommentBrowser.instance; // This shouldn't be neccessary
-    await CommentBrowser.whenRendered();
+    browser = part(CommentBrowser).openInWindow().targetMorph;
     comment = await morph.addComment(exampleText);
   });
 
   it('may be opened', function () {
-    expect($world.get('comment browser'));
+    expect($world.get('Comment Browser'));
   });
 
-  it('has only one instance', function () {
-    const browser2 = CommentBrowser.open();
-    expect(browser === browser2);
-  });
-
-  it('has comment displayed', function () {
+  it('has comments displayed', function () {
     let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
+      if (submorph.viewModel && submorph.viewModel.comment && submorph.viewModel.comment.equals(comment)) {
         submorphFound = true;
       }
     });
@@ -51,8 +47,8 @@ describe('comment browser', function () {
     let username;
     const creatorUsername = comment.username;
     browser.withAllSubmorphsDo(submorph => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
-        username = submorph.ui.usernameLabel.textString;
+      if (submorph.viewModel && submorph.viewModel.comment && submorph.viewModel.comment.equals(comment)) {
+        username = submorph.viewModel.ui.userNameLabel.textString;
       }
     });
     expect(creatorUsername.startsWith(username)).to.be.ok;
@@ -60,10 +56,9 @@ describe('comment browser', function () {
   });
 
   it('can resolve comment', function () {
-    comment.unresolve();
     browser.withAllSubmorphsDo(submorph => {
-      if (submorph.comment && submorph.comment.equals(comment)) {
-        submorph.performClickAction('resolve');
+      if (submorph.viewModel && submorph.viewModel.comment && submorph.viewModel.comment.equals(comment)) {
+        submorph.viewModel.toggleResolveStatus();
       }
     });
     expect(comment.isResolved()).to.be.ok;
@@ -89,9 +84,9 @@ describe('comment browser', function () {
   });
 
   it('comment may be removed', async function () {
-    browser.withAllSubmorphsDo(async (submorph) => {
-      if (submorph.comment) {
-        await submorph.performClickAction('remove');
+    browser.withAllSubmorphsDo((submorph) => {
+      if (submorph.viewModel && submorph.viewModel.comment) {
+        submorph.viewModel.removeComment();
       }
     });
     let commentMorphLabel;
@@ -105,14 +100,13 @@ describe('comment browser', function () {
   });
 
   afterEach(function () {
-    morph.emptyComments();
     morph.abandon();
-    CommentBrowser.close();
+    browser.owner.close();
   });
 });
 
 describe('comment indicator', function () {
-  let morph, browser, comment, indicatorCount;
+  let morph, browser, indicatorCount;
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
 
@@ -120,31 +114,29 @@ describe('comment indicator', function () {
     morph = new Morph();
     morph.name = exampleName;
     morph.openInWorld();
-    browser = CommentBrowser.instance; // This shouldn't be neccessary
-    CommentBrowser.open();
-    await CommentBrowser.whenRendered();
-    indicatorCount = browser.getUnresolvedCommentCount();
+    browser = part(CommentBrowser).openInWindow().targetMorph;
     comment = await morph.addComment(exampleText);
+    indicatorCount = 0;
   });
 
   it('is visible when browser is open', function () {
-    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === indicatorCount + 1).to.be.ok;
   });
 
   it('is hidden when browser is not open', function () {
-    CommentBrowser.close();
-    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == 0).to.be.ok;
+    browser.owner.close();
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === 0).to.be.ok;
   });
 
   it('does not get copied when morph with comment is copied', function () {
     const copiedMorph = morph.copy(true);
-    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length == indicatorCount + 1).to.be.ok;
+    expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === indicatorCount + 1).to.be.ok;
     copiedMorph.abandon();
   });
 
   afterEach(function () {
     morph.abandon();
-    CommentBrowser.close();
+    browser.owner.close();
   });
 });
 

@@ -1,6 +1,6 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global it, describe,beforeEach, afterEach */
 import { expect } from 'mocha-es6';
-import { Comment } from 'lively.collab';
+import { CommentData } from 'lively.collab';
 import { Morph, config } from 'lively.morphic';
 import { UserRegistry } from 'lively.user';
 
@@ -9,7 +9,7 @@ describe('comment object', function () {
   const exampleText = 'Example text';
 
   beforeEach(function () {
-    comment = new Comment(exampleText);
+    comment = new CommentData(exampleText);
   });
 
   it('has text', function () {
@@ -17,7 +17,7 @@ describe('comment object', function () {
   });
 
   it('is different from comment with same text', function () {
-    const comment2 = new Comment(comment.text);
+    const comment2 = new CommentData(comment.text);
     expect(comment.text).equals(comment2.text);
     expect(comment.equals(comment2)).equals(false);
   });
@@ -72,7 +72,7 @@ describe('morph', function () {
   it('with comments can be copied to morph with empty comments', async function () {
     comment = await morph.addComment(exampleText);
     const morph2 = morph.copy(true);
-    expect(morph2.comments.length == 0).to.be.ok;
+    expect(morph2.comments.length === 0).to.be.ok;
     expect(morph.comments[0].equals(comment)).to.be.ok;
     morph2.remove();
   });
