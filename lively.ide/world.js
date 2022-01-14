@@ -186,7 +186,7 @@ export class LivelyWorld extends World {
       let li;
       if (li = window.worldLoadingIndicator) {
         const oldWorld = li.world();
-        if (oldWorld.env != this.env) {
+        if (oldWorld && oldWorld.env !== this.env) {
           li.withAllSubmorphsDo(m => m._env = this.env);
           this.addMorph(li);
           await oldWorld.whenRendered();
