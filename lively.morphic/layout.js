@@ -530,7 +530,7 @@ export class TilingLayout extends Layout {
   setResizePolicyFor (aLayoutableSubmorph, policy) {
     // policy : width = fixed/fill, height = fixed/fill
     if (Array.isArray(this._resizePolicies)) {
-      let entry = this._resizePolicies.find(([name]) => aLayoutableSubmorph.name == name);
+      let entry = this._resizePolicies.find(([name]) => aLayoutableSubmorph.name === name);
       if (entry) { entry[1] = policy; } else this._resizePolicies.push([aLayoutableSubmorph.name, policy]);
     } else {
       this._resizePolicies.set(aLayoutableSubmorph, policy);
@@ -779,12 +779,17 @@ export class TilingLayout extends Layout {
         style.width = `calc(100% + ${margin.offset}px)`;
         margin.left = 0;
         margin.right = 0;
-      } else { style.width = 'unset'; style.flexGrow = 1; } // let flex handle that
+      } else { 
+        style.width = 'unset'; 
+        style.flexGrow = 1;
+        style.flexShrink = 1;
+      } // let flex handle that
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
         style.height = 'unset';
         style.flexGrow = 1; // let flex handle that 
+        style.flexShrink = 1;
       } else {
         style.height = `calc(100% + ${margin.offset}px)`;
         margin.bottom = 0;
@@ -802,8 +807,7 @@ export class TilingLayout extends Layout {
     style.marginBottom = `${margin.bottom}px`;
     style.marginLeft = `${margin.left}px`;
     style.marginRight = `${margin.right}px`;
-    if (style.flexGrow !== 1) style.flexShrink = 0;
-
+    if (Number.parseInt(style.flexGrow) !== 1) style.flexShrink = 0;
     this.measureAfterRender(morph);
   }
 
