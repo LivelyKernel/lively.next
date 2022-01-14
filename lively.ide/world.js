@@ -1,4 +1,4 @@
-/* global System,WeakMap,FormData,fetch,DOMParser,XMLHttpRequest */
+/* global System,FormData,DOMParser */
 import { resource } from 'lively.resources';
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
@@ -9,7 +9,6 @@ import {
   easings,
   HTMLMorph,
   Text,
-  morph,
   touchInputDevice,
   Icon,
   Morph,
@@ -137,7 +136,7 @@ export class LivelyWorld extends World {
 
   onKeyDown (evt) {
     super.onKeyDown(evt);
-    if (evt.targetMorph != this) return;
+    if (evt.targetMorph !== this) return;
     this.withTopBarDo(tb => tb.onKeyDown(evt));
   }
 
@@ -146,7 +145,7 @@ export class LivelyWorld extends World {
     const target = evt.state.clickedOnMorph;
     const activeWindow = this.activeWindow();
 
-    if (activeWindow && target == this) activeWindow.deactivate();
+    if (activeWindow && target === this) activeWindow.deactivate();
 
     this.handleHaloCycle(evt);
 
@@ -247,12 +246,11 @@ export class LivelyWorld extends World {
   }
 
   async onNativeDrop (evt) {
-    /* global show, inspect */
     this.nativeDrop_removeUploadIndicator();
-    if (evt.targetMorph != this) return;
+    if (evt.targetMorph !== this) return;
 
     const { domEvt } = evt;
-    const { files, items } = domEvt.dataTransfer;
+    const { files } = domEvt.dataTransfer;
     const baseURL = document.location.origin;
 
     if (files.length) {
@@ -312,7 +310,7 @@ export class LivelyWorld extends World {
         }
         if (videos.length) {
           for (const v of videos) {
-            const video = Object.assign(await loadObjectFromPartsbinFolder('video morph'), {
+            Object.assign(await loadObjectFromPartsbinFolder('video morph'), {
               videoURL: v.url,
               name: v.name
             }).openInWorld();
@@ -434,7 +432,7 @@ export class LivelyWorld extends World {
       ['Exported Components',
         [
           ['Toggle Select All', () => {
-            if (this.getListedComponents().length == 0) {
+            if (this.getListedComponents().length === 0) {
               this.hiddenComponents = [];
             } else {
               this.hiddenComponents = this.withAllSubmorphsSelect(m => m.isComponent).map(m => m.name);
@@ -655,7 +653,7 @@ export class LivelyWorld extends World {
   setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
     if (!StatusMessage) return;
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
-    console[StatusMessageComponent == StatusMessageError ? 'error' : 'log'](message);
+    console[StatusMessageComponent === StatusMessageError ? 'error' : 'log'](message);
     return config.verboseLogging
       ? this.openStatusMessage(part(StatusMessageComponent, { epiMorph: true, viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
@@ -974,11 +972,11 @@ export class LivelyWorld extends World {
       }]);
     }
 
-    if (self.tickingScripts.length != 0) {
+    if (self.tickingScripts.length !== 0) {
       steppingItems.push(['Stop stepping', () => self.stopStepping()]);
     }
 
-    if (steppingItems.length != 0) {
+    if (steppingItems.length !== 0) {
       items.push(['Stepping', steppingItems]);
     }
 
@@ -1188,7 +1186,7 @@ export class LivelyWorld extends World {
       haloTarget = morphsBelowTarget[0] || morphsBelow[0];
     }
     if (isShiftKey && !target.isHaloItem && haloTarget &&
-         evt.halo && evt.halo.borderBox != haloTarget) {
+         evt.halo && evt.halo.borderBox !== haloTarget) {
       evt.halo.addMorphToSelection(haloTarget);
       return;
     }
