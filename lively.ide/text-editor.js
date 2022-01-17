@@ -5,6 +5,7 @@ import { pt, Color } from 'lively.graphics';
 import { connect, signal, once } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import { guessTextModeName } from './editor-plugin.js';
+import { StatusMessageConfirm, StatusMessageWarning } from 'lively.halos/components/messages.cp.js';
 
 // this.world().openInWindow(new TextEditor).activate()
 
@@ -35,7 +36,7 @@ const editorCommands = [
       try {
         let result = await action(textEditor);
         if (result.saved) {
-          textEditor.setStatusMessage(result.message || 'saved', Color.green);
+          textEditor.setStatusMessage(result.message || 'saved', StatusMessageConfirm);
           signal(textEditor, 'contentSaved');
         } else textEditor.setStatusMessage(result.message || 'not saved');
       } catch (e) {
@@ -119,7 +120,7 @@ export default class TextEditor extends Morph {
               lineWrapping: false
             }
           ];
-          let { urlInput, loadButton, saveButton, removeButton, contentText } = this.ui;
+          let { urlInput, loadButton, saveButton, removeButton } = this.ui;
           connect(this, 'extent', this, 'relayout');
           connect(urlInput, 'inputAccepted', this, 'location');
           connect(loadButton, 'fire', this, 'execCommand', { converter: () => 'load file' });
@@ -242,7 +243,7 @@ export default class TextEditor extends Morph {
       } else {
         res = resource(url);
         content = await res.read();
-        if (content.constructor == ArrayBuffer) {
+        if (content.constructor === ArrayBuffer) {
           content = new TextDecoder().decode(content);
         }
       }
@@ -262,7 +263,7 @@ export default class TextEditor extends Morph {
     let ed = this.ui.contentText; let mode; let setupFn;
 
     if (content.length > 2 ** 19/* 0.5MB */) {
-      this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`);
+      this.setStatusMessage(`File content very big, ${num.humanReadableByteSize(content.length)}. Styling is disabled`, StatusMessageWarning);
     } else {
       mode = guessTextModeName(content, url);
     }
@@ -314,4 +315,3 @@ export default class TextEditor extends Morph {
     ].concat(super.keybindings);
   }
 }
-
