@@ -85,8 +85,7 @@ export class LivelyWorld extends World {
       draggable: {
         readOnly: true,
         get () { return !touchInputDevice; }
-      },
-      commentBrowser: {}
+      }
     };
   }
 

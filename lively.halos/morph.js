@@ -15,7 +15,6 @@ import { obj, string, Path as PropertyPath, promise, properties, num, arr } from
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
-import { CommentBrowser } from 'lively.collab';
 
 import { show } from './markers.js';
 import { part } from 'lively.morphic/components/core.js';
@@ -879,7 +878,8 @@ class NameHolder extends Morph {
     if (!this.forceUniqueName || this.validName) {
       this.target.name = newName;
       signal(this, 'active', [false, this]);
-      if (CommentBrowser.instance) CommentBrowser.updateName(this.target);
+      const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+      if (commentBrowser) commentBrowser.viewModel.updateName(this.target);
     }
   }
 }

@@ -12,7 +12,6 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
-import { CommentBrowser } from 'lively.collab';
 import { once } from 'lively.bindings';
 import { part } from 'lively.morphic/components/core.js';
 import { CodeSearch } from './code-search.cp.js';
@@ -1400,15 +1399,7 @@ const commands = [
       }
       return true;
     }
-  },
-
-  {
-    name: 'toggle comment browser',
-    exec: async (world) => {
-      CommentBrowser.toggle();
-    }
   }
-
 ];
 
 export default commands;

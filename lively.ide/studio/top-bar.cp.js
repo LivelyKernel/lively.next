@@ -155,7 +155,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'activeSideBars', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'openSideBar']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'activeSideBars', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'openSideBar', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton']; } },
       bindings: {
         get () {
           return [
@@ -369,17 +369,15 @@ export class TopBarModel extends ViewModel {
     label.master = TopBarButton;
   }
 
-  async toggleCommentBrowser () {
-    if (CommentBrowser.isOpen()) {
+  toggleCommentBrowser () {
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (commentBrowser) {
       this.uncolorCommentBrowserButton();
+      commentBrowser.owner.close();
     } else {
       this.colorCommentBrowserButton();
+      part(CommentBrowser).openInWindow();
     }
-    await this.world().execCommand('toggle comment browser');
-  }
-
-  get commentCountBadge () {
-    return this.ui.commentCountBadge;
   }
 
   async interactivelyLoadComponent () {

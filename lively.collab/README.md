@@ -4,7 +4,7 @@
 
 ## Comments
 
-It provides functionality to comment on any morph in the world. It provides functionality to comment on any morph in a world. Comments are objects that include a text, a timestamp, a relative morph position and the user that created it.
+It provides functionality to comment on any morph in the world. Comments are objects that include a text, a timestamp, a relative morph position and the user that created it.
 
 ### Adding Comments
 
@@ -16,7 +16,7 @@ Most of the functionality of comments is available through the Comment Browser t
 
 ![Topbar with highlighted comment browser button](./img/topbar.png)
 
-The browser displays all comments currently existing in the world grouped by the morph the comment belongs to. Clicking on a comment will highlight the morph it belongs to in the world.
+The browser displays all comments currently existing in the world grouped by the morph the comment belongs to.
 
 #### Actions on Comments
 
@@ -38,7 +38,7 @@ When the browser is opened, each comment is indicated in the world through a com
 
 #### Resolving Comments
 
-By clicking the "Resolve" button for a comment it can marked as such. Resolved comments will be shown in the corresponding tab of the browser. When that tab is activated the indicators of the resolved comments whill be shown and their color is blue. In this tab comments can also be marked as unresolved again. The badge in the topbar will count the number of **unresolved comments** in the world.
+By clicking the "Resolve" button for a comment it can marked as such. Resolved comments will be shown in the corresponding tab of the browser. When that tab is activated the indicators of the resolved comments whill be shown and their color is blue. In this tab comments can also be marked as unresolved again.
 
 ![Comment badge](./img/badge.png)
 

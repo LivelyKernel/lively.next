@@ -48,22 +48,9 @@ export class World extends Morph {
           if (typeof showsUserFlap !== 'undefined') bool = showsUserFlap;
           this.setProperty('showsUserFlap', bool);
           System.import('lively.user/morphic/user-ui.js')
-            .then(userUI => {
-              if (userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this)) { this.enableComments = true; }
-            });
+          .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
         }
       },
-
-      enableComments: {
-        defaultValue: true,
-        set (bool) {
-          this.setProperty('enableComments', bool);
-          if (bool) {
-            System.import('lively.collab').then(({ CommentBrowser }) =>
-              CommentBrowser.initializeCommentBrowser());
-          }
-        }
-      }
     };
   }
 

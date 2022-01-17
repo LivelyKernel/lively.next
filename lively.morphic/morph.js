@@ -2534,22 +2534,23 @@ export class Morph {
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async addComment (commentText, relativePosition = pt(0, 0)) {
-    const { Comment, CommentBrowser } = await System.import('lively.collab');
-    const comment = new Comment(commentText, relativePosition);
+    const { CommentData } = await System.import('lively.collab');
+    const comment = new CommentData(commentText, relativePosition);
     this.comments.push(comment);
-    await CommentBrowser.addCommentForMorph(comment, this);
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (commentBrowser) commentBrowser.viewModel.addCommentForMorph(comment, this);
     return comment;
   }
 
-  async removeComment (commentToRemove) {
-    const { CommentBrowser } = await System.import('lively.collab');
+  removeComment (commentToRemove) {
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (commentBrowser) commentBrowser.viewModel.removeCommentForMorph(commentToRemove, this);
     this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
-    CommentBrowser.removeCommentForMorph(commentToRemove, this);
   }
 
-  async emptyComments () {
-    const { CommentBrowser } = await System.import('lively.collab');
-    this.comments.forEach((comment) => CommentBrowser.removeCommentForMorph(comment, this));
+  emptyComments () {
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');  
+    if (commentBrowser) this.comments.forEach((comment) => commentBrowser.viewModel.removeCommentForMorph(comment, this));
     this.comments = [];
   }
 
