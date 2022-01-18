@@ -37,7 +37,7 @@ export class HeadlessSession {
   constructor (options = {}) {
     this.options = {
       screenshotPath: packagePath + 'screenshots/test.png',
-      aliveTimeout: 30 * 1000,
+      aliveTimeout: 300 * 1000,
       aliveRepeatTimeout: 300,
       ...options
     };
