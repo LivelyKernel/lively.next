@@ -336,7 +336,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   showError (err) {
-    this.world().logError(err);
+    if (this.world()) this.world().logError(err);
   }
 
   removeTestFile (file) {
