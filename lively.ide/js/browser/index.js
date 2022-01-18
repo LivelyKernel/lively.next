@@ -498,10 +498,33 @@ export class BrowserModel extends ViewModel {
       expose: {
         get () {
           return [
-            'isBrowser', 'focus', 'keybindings', 'browse', 'browseSnippetForSelection', 'commands',
-            'systemInterface', 'selectedModule', 'selectedPackage', 'selectedCodeEntity', 'selectCodeEntity', 'editorPlugin', 'isTestModule',
-            'reloadModule', 'renderedCodeEntities', 'focusSourceEditor', 'historyBackward', 'historyForward', 'save', 'hasUnsavedChanges',
-            'interactivelyBrowseHistory', 'interactivelyAddNewModule', 'interactivelyCreateNewFolder', 'interactivelyRemoveSelectedItem', 'updateModuleList', 'onWindowClose'
+            'isBrowser', 
+            'focus',
+            'keybindings',
+            'browse',
+            'browseSnippetForSelection',
+            'commands',
+            'systemInterface',
+            'selectedModule',
+            'selectedPackage',
+            'selectedCodeEntity',
+            'selectCodeEntity',
+            'selectPackageNamed',
+            'editorPlugin',
+            'isTestModule',
+            'reloadModule',
+            'renderedCodeEntities',
+            'focusSourceEditor',
+            'historyBackward',
+            'historyForward',
+            'save',
+            'hasUnsavedChanges',
+            'interactivelyBrowseHistory',
+            'interactivelyAddNewModule',
+            'interactivelyCreateNewFolder',
+            'interactivelyRemoveSelectedItem',
+            'updateModuleList',
+            'onWindowClose'
           ];
         }
       },
