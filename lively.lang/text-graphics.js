@@ -1,4 +1,4 @@
-import { num, string, arr, fun } from "lively.lang";
+import { num, string, arr, fun, tree as treeLang } from 'lively.lang';
 
 class CanvasElement {
   get left () { return this.x; }
@@ -195,8 +195,8 @@ class CanvasTree extends CanvasElement {
     (node.children || []).forEach(child => this.visit(child, iterator, node, depth + 1));
   }
 
-  printNodes() {
-    var canvasTree = lively.lang.tree.mapTree(this.tree,
+  printNodes () {
+    let canvasTree = treeLang.mapTree(this.tree,
       (node, mappedChildren) => {
         let canvasEl = this.nodePrinter(node);
 
