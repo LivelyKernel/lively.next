@@ -42,7 +42,7 @@ export class CommentBrowserModel extends ViewModel {
     this.view.owner.right = bounds.right();
     this.view.owner.top = bounds.top();
     // when properties panel is opened, position comment browser to the left of it
-    if (topbar.activeSideBars.includes('properties panel')) {
+    if (topbar && topbar.activeSideBars.includes('properties panel')) {
       this.view.owner.position = this.view.owner.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
     }
     this.buildCommentGroupMorphs();
@@ -119,7 +119,7 @@ export class CommentBrowserModel extends ViewModel {
    */
   onWindowClose () {
     const topbar = $world.getSubmorphNamed('lively top bar');
-    topbar.uncolorCommentBrowserButton();
+    if (topbar) topbar.uncolorCommentBrowserButton();
     let badge = $world.get('comment count badge');
     if (badge) badge.abandon();
     this.removeAllCommentIndicators();
@@ -137,6 +137,8 @@ export class CommentBrowserModel extends ViewModel {
   updateCommentCountBadge () {
     const count = this.getCommentCount();
     let badge = $world.get('comment count badge');
+    const topbar = $world.get('lively top bar');
+    if (!topbar) return;
     if (badge) {
       if (count <= 0) {
         badge.abandon();
