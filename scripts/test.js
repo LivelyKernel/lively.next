@@ -29,14 +29,18 @@ const req = http.request(options, res => {
       }
       data.forEach((testfile) => {
         testfileName = testfile.file.split("/").pop()
-        if (testfile.tests.some((test) => test.type === 'test' && test.state !== 'succeeded')) console.log(`::group:: ${testfileName} ❌`)
+        if (testfile.tests.some((test) => test.type === 'test' && test.state && test.state !== 'succeeded')) console.log(`::group:: ${testfileName} ❌`)
         else console.log(`::group:: ${testfileName} ✅`)
         testfile.tests.forEach((test) => {
           if (test.type !== 'test') return;
+          if (!test.state) {
+            console.log(`${test.fullTitle} skipped ⏭️`);
+            return;
+          } 
           if (test.state === 'succeeded') console.log(`${test.fullTitle} passed ✅`)
           else {
-            console.log(`::error:: ${test.fullTitle} failed ❌`)
-            process.exitCode = 1
+            console.log(`::error:: ${test.fullTitle} failed ❌`);
+            process.exitCode = 1;
           }
         })
         console.log(`::endgroup::`)
