@@ -24,7 +24,7 @@ const req = http.request(options, res => {
         return;
       }
       if (data.error) {
-        console.log(`::error:: Running the tests produced the following error: ${data.error}`);
+        console.log(`::error:: Running the tests produced the following error: ${JSON.stringify(data.error)}`);
         return;
       }
       data.forEach((testfile) => {

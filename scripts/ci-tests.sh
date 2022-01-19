@@ -28,8 +28,8 @@ testfiles=(
 # "lively.server" needs separate test env as a node process
 "lively.shell"
 "lively.collab"
-"lively.traits"
-# "lively.freezer" cannot be loaded right now, kept around to harden the load mechanism of the test-runner
+"lively.traits" 
+"lively.freezer"
 "lively.headless"
 "lively.keyboard"
 "lively.mirror"
