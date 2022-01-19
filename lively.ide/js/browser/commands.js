@@ -1,14 +1,8 @@
 import { arr } from 'lively.lang';
 import { Icon } from 'lively.morphic';
-import { resource } from 'lively.resources';
-import { joinPath } from 'lively.lang/string.js';
-
-function isTestModule (m, source) {
-  return m && source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
-}
 
 function isMarkdown (m) {
-  return m.type == 'md';
+  return m.type === 'md';
 }
 
 export default function browserCommands (browser) {
@@ -157,13 +151,12 @@ export default function browserCommands (browser) {
     {
       name: 'load or add module',
       exec: async (browser, opts = {}) => {
-        const { dir } = opts;
         const p = browser.selectedPackage;
         const m = browser.selectedModule;
         const system = browser.systemInterface;
-
+        let mods;
         try {
-          var mods = await system.interactivelyAddModule(browser, m ? m.name : p ? p.address : null);
+          mods = await system.interactivelyAddModule(browser, m ? m.name : p ? p.address : null);
         } catch (e) {
           e === 'Canceled'
             ? browser.setStatusMessage(e)
@@ -216,7 +209,7 @@ export default function browserCommands (browser) {
         try {
           await system.interactivelyRemoveModule(browser, m.url || m.name || m.id);
         } catch (e) {
-          if (e != 'Canceled') browser.showError(`Error while trying to load modules:\n${e.stack || e}`);
+          if (e !== 'Canceled') browser.showError(`Error while trying to load modules:\n${e.stack || e}`);
           return true;
         }
 
@@ -269,9 +262,9 @@ export default function browserCommands (browser) {
         if (!p) { browser.world().inform('No package selected', { requester: browser }); return true; }
 
         try {
-          const pkg = await browser.systemInterface.interactivelyRemovePackage(browser, p.address);
+          await browser.systemInterface.interactivelyRemovePackage(browser, p.address);
         } catch (e) {
-          if (e != 'Canceled') throw e;
+          if (e !== 'Canceled') throw e;
           return true;
         }
 
@@ -431,14 +424,6 @@ export default function browserCommands (browser) {
     }
   ];
 
-  function focusList (list) {
-    list.scrollSelectionIntoView();
-    list.update();
-    list.show();
-    list.focus();
-    return list;
-  }
-
   async function runTestsInModule (browser, moduleName, spec) {
     let runner = browser.get('test runner window');
     if (!runner) { runner = await world.execCommand('open test runner'); }
@@ -446,7 +431,7 @@ export default function browserCommands (browser) {
 
     runner = runner.getWindow().targetMorph;
 
-    if (runner.systemInterface != browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
+    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
 
     return spec
       ? runner[spec.type === 'suite' ? 'runSuite' : 'runTest'](spec.fullTitle)
@@ -460,7 +445,7 @@ export default function browserCommands (browser) {
 
     runner = runner.getWindow().targetMorph;
 
-    if (runner.systemInterface != browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
+    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
 
     return runner.runTestsInPackage(packageURL);
   }
