@@ -1,40 +1,52 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-./scripts/test.sh lively.lang
-./scripts/test.sh lively.resources
-./scripts/test.sh lively.bindings
-./scripts/test.sh lively.notifications
-./scripts/test.sh lively.classes
-./scripts/test.sh lively.serializer2
-./scripts/test.sh lively.storage
+TEST_STATUS=0
 
-./scripts/test.sh lively.ast
-./scripts/test.sh lively.source-transform
-./scripts/test.sh lively.vm
-./scripts/test.sh lively.modules
-./scripts/test.sh lively-system-interface
+testfiles=(
+"lively.lang"
+"lively.resources"
+"lively.bindings"
+"lively.notifications"
+"lively.classes"
+"lively.serializer2"
+"lively.storage"
+"lively.ast"
+"lively.source-transform"
+"lively.vm"
+"lively.modules"
+"lively-system-interface"
+"lively.graphics"
+"lively.morphic"
+"lively.components"
+"lively.ide"
+"lively.halos"
+"lively.user"
+"lively.2lively"
+"lively.sync"
+"lively.changesets"
+"lively.git"
+# "lively.server" needs separate test env as a node process
+"lively.shell"
+"lively.collab"
+"lively.traits"
+# "lively.freezer" cannot be loaded right now, kept around to harden the load mechanism of the test-runner
+"lively.headless"
+"lively.keyboard"
+"lively.mirror"
+)
 
-./scripts/test.sh lively.graphics
-./scripts/test.sh lively.morphic
-./scripts/test.sh lively.components
-./scripts/test.sh lively.ide
-./scripts/test.sh lively.halos
+for package in "${testfiles[@]}"; do
+  # start a new lively.next server
+  ./start.sh > /dev/null 2>&1 &
+  # wait until server is guaranteed to be running
+  sleep 30 
+  node ./scripts/test.js "$package"
+  # if we failed a test in `package`, remember it for when we are exiting
+  if [ $? -eq 1 ];
+  then TEST_STATUS=1
+  fi
+  # kill the running server
+  killall node
+done
 
-./scripts/test.sh lively.user
-./scripts/test.sh lively.2lively
-./scripts/test.sh lively.sync
-
-./scripts/test.sh lively.changesets
-./scripts/test.sh lively.git
-
-./scripts/test.sh lively.server
-./scripts/test.sh lively.shell
-
-./scripts/test.sh lively.collab
-
-# no tests:
-# ./scripts/test.sh lively.traits
-# ./scripts/test.sh lively.freezer
-# ./scripts/test.sh lively.headless
-# ./scripts/test.sh lively.keyboard
-# ./scripts/test.sh lively.mirror
+exit $TEST_STATUS
