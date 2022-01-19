@@ -428,7 +428,7 @@ export default function browserCommands (browser) {
     let runner = browser.get('test runner window');
     if (!runner) { runner = await world.execCommand('open test runner'); }
     if (runner.minimized) { runner.toggleMinimize(); }
-
+    runner.bringToFront();
     runner = runner.getWindow().targetMorph;
 
     if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
