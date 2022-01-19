@@ -1,10 +1,9 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global System, it, describe, xdescribe, beforeEach, afterEach, before */
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { expectSelection } from '../test-helpers.js';
 import { Range } from '../../text/range.js';
-import { promise } from 'lively.lang';
 
 expectSelection(chai);
 
@@ -22,7 +21,7 @@ const defaultStyle = {
   fixedCharacterSpacing: false
 };
 
-let fontMetric;
+let fontMetric; // eslint-disable-line no-unused-vars
 
 function text (string, props) {
   let t = new Text({
@@ -60,11 +59,9 @@ describeInBrowser('text attributes', () => {
   it('addTextAttribute merges style ranges', () => {
     let style_a = { fontSize: 12, fontStyle: 'italic' };
     let style_b = { fontSize: 14, fontWeight: 'bold' };
-    var textAttributes;
-
-    let computedDefaultStyle = { ...defaultStyle, link: undefined, nativeCursor: undefined, textStyleClasses: undefined, backgroundColor: undefined };
+    
     sut.addTextAttribute(style_a, Range.create(0, 1, 0, 3));
-    var textAttributes = sut.document.lines[0].textAttributes;
+    const textAttributes = sut.document.lines[0].textAttributes;
     expect(textAttributes).deep.equals([style_a]);
 
     sut.addTextAttribute(style_b, Range.create(0, 2, 0, 4));
@@ -352,21 +349,19 @@ describeInBrowser('text key events', () => {
 });
 
 describeInBrowser('text mouse events', () => {
-  let padLeft, padRight, padTop, padBot,
-    h, w;
+  let padLeft, padTop,
+    h, w; 
   beforeEach(async () => {
     await createSut();
     padLeft = sut.padding.left();
-    padRight = sut.padding.right();
     padTop = sut.padding.top();
-    padBot = sut.padding.bottom();
     ({ height: h, width: w } = sut.textLayout.defaultCharExtent(sut));
     await sut.whenRendered();
   });
   afterEach(() => removeSut());
 
   it('click sets cursor', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 3 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -378,7 +373,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('double-click selects word', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 2 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -391,7 +386,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('triple-click selects line', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 2 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -405,7 +400,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('4-click sets cursor', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 2 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -420,7 +415,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('5-click selects word', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 2 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -436,7 +431,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('6-click selects line', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString } = sut;
+    let { position: { x, y } } = sut;
     let clickPos = pt(x + w * 2 + 2 + padLeft, y + h * 2 - 5 + padTop); // second line, second char
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
@@ -453,7 +448,7 @@ describeInBrowser('text mouse events', () => {
   });
 
   it('drag sets selection', () => {
-    let { position: { x, y }, fontFamily, fontSize, textString, globalPosition: p } = sut;
+    let { globalPosition: p } = sut;
 
     let dragStartPos = p.addPt(pt(padLeft + 1, padTop + 2));
     let dragOvershotPos = p.addPt(pt(3 * w + padLeft + 10, h * 2 + padTop + 10));

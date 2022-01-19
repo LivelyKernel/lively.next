@@ -1,7 +1,5 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global System, it, xit, describe, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
-import { createDOMEnvironment } from '../../rendering/dom-helper.js';
-import { World, MorphicEnv } from '../../index.js';
 import { Text } from '../../text/morph.js';
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { obj, promise } from 'lively.lang';
@@ -81,7 +79,7 @@ describe('text rendering', () => {
     sut.fixedWidth = false;
     let padLeft = sut.padding.left();
     let padRight = sut.padding.right();
-    let { width: cWidth, height: cHeight } = sut.textLayout.defaultCharExtent(sut);
+    let { width: cWidth } = sut.textLayout.defaultCharExtent(sut);
     sut.textString = 'Hello hello';
 
     await sut.whenRendered();
@@ -121,9 +119,9 @@ describe('text rendering', () => {
         let textDecoration = jsStyle.getPropertyValue('text-decoration');
         // note: when running the tests on Firefox "fontWeight" is differently
         // reported than on Chrome
-        if (fontWeight == '400') fontWeight = 'normal';
-        if (fontWeight == '700') fontWeight = 'bold';
-        if (textDecoration == '') textDecoration = 'none';
+        if (fontWeight === '400') fontWeight = 'normal';
+        if (fontWeight === '700') fontWeight = 'bold';
+        if (textDecoration === '') textDecoration = 'none';
         return { fontFamily, fontSize, fontWeight, fontStyle, textDecoration };
       });
 

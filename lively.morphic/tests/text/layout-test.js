@@ -1,16 +1,17 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
-import { expect, chai } from 'mocha-es6';
+/* global System, it, xit, describe, beforeEach, afterEach */
+import { expect } from 'mocha-es6';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { Text } from '../../text/morph.js';
 import { World, MorphicEnv } from '../../index.js';
 import { createDOMEnvironment } from '../../rendering/dom-helper.js';
 
-const describeInBrowser = System.get('@system-env').browser ? describe
+const describeInBrowser = System.get('@system-env').browser
+  ? describe
   : (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); };
 
 const padding = Rectangle.inset(5);
 
-let w, h, t, tl, padl, padr, padt, padb;
+let w, h, t, tl, padl, padr, padt, padb; // eslint-disable-line no-unused-vars
 
 function text (string, props) {
   env = env || MorphicEnv.default();

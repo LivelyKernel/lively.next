@@ -1,9 +1,9 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global System, it, describe, xdescribe, beforeEach */
 import { Selection, MultiSelection } from '../../text/selection.js';
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
 import { expectSelection } from '../test-helpers.js';
-import { pt, Color, Rectangle, Transform, rect } from 'lively.graphics';
+import { pt } from 'lively.graphics';
 
 let describeInBrowser = System.get('@system-env').browser
   ? describe
@@ -11,7 +11,6 @@ let describeInBrowser = System.get('@system-env').browser
 
 expectSelection(chai);
 
-import { Range } from 'lively.morphic/text/range.js';
 import { promise } from 'lively.lang';
 
 function range (startRow, startCol, endRow, endCol) {

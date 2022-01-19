@@ -1,11 +1,12 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global System, it, describe, xdescribe, beforeEach */
 import { Text } from '../../text/morph.js';
 import { Snippet } from 'lively.ide/text/snippets.js';
 import { expect, chai } from 'mocha-es6';
-import { pt, Color, Rectangle, Transform, rect } from 'lively.graphics';
+
 import { expectSelection } from '../test-helpers.js';
 
-const describeInBrowser = System.get('@system-env').browser ? describe
+const describeInBrowser = System.get('@system-env').browser
+  ? describe
   : (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); };
 
 expectSelection(chai);
@@ -23,12 +24,12 @@ describeInBrowser('text plugins', () => {
     text.textString = 'foobaz';
 
     text.cursorPosition = { row: 0, column: 6 };
-    var triggered = new Snippet({ trigger: 'foo', expansion: 'bar' }).tryTrigger(text);
+    let triggered = new Snippet({ trigger: 'foo', expansion: 'bar' }).tryTrigger(text);
     expect(triggered).equals(false, 'triggered, no trigger matching');
     expect(text.textString).equals('foobaz');
 
     text.cursorPosition = { row: 0, column: 3 };
-    var triggered = new Snippet({ trigger: 'foo', expansion: 'bar' }).tryTrigger(text);
+    triggered = new Snippet({ trigger: 'foo', expansion: 'bar' }).tryTrigger(text);
     expect(triggered).equals(true, 'not triggered');
     expect(text.textString).equals('barbaz');
     expect(text.selection).selectionEquals('Selection(0/3 -> 0/3)');

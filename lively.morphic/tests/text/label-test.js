@@ -1,12 +1,11 @@
-/* global declare, it, describe, beforeEach, afterEach, before, after */
+/* global it, describe, before, after */
 import { World, MorphicEnv, Label } from '../../index.js';
 import { createDOMEnvironment } from '../../rendering/dom-helper.js';
-import { Renderer } from '../../rendering/renderer.js';
+
 import { expect } from 'mocha-es6';
-import { pt, rect, Color, Rectangle, Transform } from 'lively.graphics';
-import { arr, promise } from 'lively.lang';
+import { pt, Rectangle } from 'lively.graphics';
+
 import { dummyFontMetric as fontMetric } from '../test-helpers.js';
-import { create as createElement } from 'virtual-dom';
 
 let env;
 async function createMorphicEnv () {

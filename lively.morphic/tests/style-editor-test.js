@@ -1,26 +1,24 @@
-/*global System, declare, it, describe, beforeEach, afterEach, before, after*/
-import { expect } from "mocha-es6";
+/* global describe */
+import { expect } from 'mocha-es6'; // eslint-disable-line no-unused-vars
 
-describe("style-editors", () => {
-
-  describe("gradient-editor", () => {
+describe('style-editors', () => {
+  describe('gradient-editor', () => {
   
   });
 
-  describe("color-picker", () => {
+  describe('color-picker', () => {
   
   });
 
-  describe("color-palette", () => {
+  describe('color-palette', () => {
   
   });
 
-  describe("body-editor", () => {
+  describe('body-editor', () => {
   
   });
 
-  describe("broder-editor", () => {
+  describe('broder-editor', () => {
   
   });
-
 });

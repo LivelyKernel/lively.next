@@ -1,4 +1,4 @@
-/* global declare, it, describe, beforeEach, afterEach, before, after */
+/* global  it, describe, beforeEach, before, after */
 import { expect } from 'mocha-es6';
 import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
@@ -69,7 +69,7 @@ describe('layout', () => {
     });
 
     it('may render submorphs from bottom to top', async () => {
-      const [item1, item2, item3] = m.submorphs;
+      const [_, item3] = m.submorphs;
       m.layout.direction = 'bottomToTop';
       m.layout.autoResize = false;
       m.height = 500;
@@ -85,7 +85,6 @@ describe('layout', () => {
     });
 
     it('may render submorph centered', async () => {
-      const [item1, item2, item3] = m.submorphs;
       m.layout.align = 'center';
       m.layout.direction = 'centered';
       m.layout.spacing = 5;
@@ -118,7 +117,7 @@ describe('layout', () => {
     });
 
     it('adjusts layout when submorph is inserted', async () => {
-      const [item1, item2, item3] = m.submorphs;
+      const [item1, item2, _] = m.submorphs;
       const item4 = new Morph({ extent: pt(200, 200) });
       m.addMorphAt(item4, 1);
       m.applyLayoutIfNeeded();
@@ -175,7 +174,7 @@ describe('layout', () => {
     });
 
     it('can leave the container extent untouched', async () => {
-      const [item1, item2, item3] = m.submorphs;
+      const [item1, item2, _] = m.submorphs;
       m.layout = new VerticalLayout({ autoResize: false, renderViaCSS: true });
       let extentBefore = m.extent;
       item1.width = 10;
@@ -372,7 +371,9 @@ describe('layout', () => {
       let a = grid.row(2).col(2);
       let b = grid.row(1).col(2);
       let aGroup = a.group;
+      console.log(aGroup);
       expect(aGroup.morph).not.to.be.null;
+      console.log(b);
       expect(b.group.morph).to.be.null;
       b.group.connect(a);
       expect(b.group.morph).not.to.be.null;
@@ -442,7 +443,6 @@ describe('layout', () => {
     });
 
     it('aligns stores the dynamic proportions', () => {
-      const [m1, m2, m3] = m.submorphs;
       expect(m.layout.col(0).proportion).equals(1 / 3);
       expect(m.layout.col(1).proportion).equals(1 / 3);
       expect(m.layout.col(2).proportion).equals(1 / 3);
@@ -452,7 +452,6 @@ describe('layout', () => {
     });
 
     it('adjusts dynamic proportions on axis fixation', () => {
-      const [m1, m2, m3] = m.submorphs;
       m.layout.col(1).fixed = true;
       m.layout.row(1).fixed = true;
       expect(m.layout.col(0).proportion).equals(1 / 2);
@@ -468,14 +467,12 @@ describe('layout', () => {
     });
 
     it('expands container when fixed size exceeds initial extent', () => {
-      const [m1, m2, m3] = m.submorphs;
       m.layout.col(0).fixed = 500;
       m.applyLayoutIfNeeded();
       expect(m.extent).equals(pt(500, 300));
     });
 
     it('adjusts dynamic proportions when one axis adjusts width or height', () => {
-      const [m1, m2, m3] = m.submorphs;
       m.layout.col(1).width += 100;
       m.layout.row(1).height += 100;
       expect(m.layout.col(0).proportion).equals(1 / 3);
@@ -487,7 +484,6 @@ describe('layout', () => {
     });
 
     it('adjusts dynamic proportions when one axis reaches or leaves minimum', () => {
-      const [m1, m2, m3] = m.submorphs;
       m.layout.col(1).min = 50;
       m.layout.row(1).min = 50;
       m.extent = pt(25, 25);
@@ -507,7 +503,7 @@ describe('layout', () => {
     });
 
     it('appends missing cells', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [_, m3] = m.submorphs;
       m.layout = new GridLayout({
         grid:
                           [[null, 'm1'],
@@ -532,7 +528,7 @@ describe('layout', () => {
     });
 
     it('allows morphs to take up multiple cells', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, m2, m3] = m.submorphs; // eslint-disable-line no-unused-vars
       m.layout = new GridLayout({
         renderViaCSS: false,
         grid: [
@@ -545,7 +541,7 @@ describe('layout', () => {
     });
 
     it('allows morphs to be reassigned to cells', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, m2] = m.submorphs;
       let group = m.layout.row(2).col(1).group;
       group.morph = m2;
       m.layout.apply();
@@ -707,7 +703,6 @@ describe('layout', () => {
     });
 
     it('can vary the fixed space of axis', () => {
-      const [m1, m2, m3] = m.submorphs;
       m.layout = new GridLayout({
         renderViaCSS: false,
         grid:
@@ -806,7 +801,7 @@ describe('layout', () => {
     it('can remove rows and columns', () => {
       // [[null, null],
       //  [null, "m3"]]
-      const [m1, m2, m3] = m.submorphs;
+      const [_, m3] = m.submorphs;
       m.layout.col(0).remove();
       m.layout.row(1).remove();
       m.layout.apply();
@@ -817,13 +812,13 @@ describe('layout', () => {
     });
 
     it('removes removed submorphs from layout', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, _] = m.submorphs;
       m1.remove();
       expect(m.layout.row(0).col(1).group.morph).to.be.null;
     });
 
     it('can add a padding to different axis', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, m2, _] = m.submorphs;
       m.layout.col(1).paddingLeft = 10;
       m.layout.col(1).paddingRight = 10;
       m.layout.row(0).paddingTop = 5;
@@ -836,7 +831,7 @@ describe('layout', () => {
     });
 
     it('can compensate origin', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, m2, _] = m.submorphs;
       m.layout.compensateOrigin = true;
       m.adjustOrigin(pt(50, 50));
       m.layout.apply();
@@ -845,7 +840,7 @@ describe('layout', () => {
     });
 
     it('allows submorphs to preserve their original extent', () => {
-      const [m1, m2, m3] = m.submorphs;
+      const [m1, _] = m.submorphs;
       m.layout.fitToCell = false;
       m1.extent = pt(22, 33);
       m.layout.apply();
@@ -992,7 +987,7 @@ describe('layout', () => {
     });
 
     it('does layout if extent of morph changes', () => {
-      let b = m.get('B'); let c = m.get('C'); let d = m.get('D'); let a = m;
+      let b = m.get('B'); let a = m;
       a.applyLayoutIfNeeded();
       b.extent = pt(25, 25);
       expect(b.layout.noLayoutActionNeeded).is.false;
