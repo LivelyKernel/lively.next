@@ -523,6 +523,7 @@ export class BrowserModel extends ViewModel {
             'interactivelyAddNewModule',
             'interactivelyCreateNewFolder',
             'interactivelyRemoveSelectedItem',
+            'searchForModuleAndSelect',
             'updateModuleList',
             'onWindowClose'
           ];

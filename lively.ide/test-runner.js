@@ -324,7 +324,7 @@ export default class TestRunner extends HTMLMorph {
       const browser = await this.findBrowserForFile(file);
       browser.getWindow().activate();
       await browser.searchForModuleAndSelect(file);
-      let ed = browser.ui.sourceEditor;
+      let ed = browser.editorPlugin.textMorph;
       const tests = testsFromSource(ed.textString);
       const target = tests.find(ea => ea.fullTitle === test.fullTitle);
       if (!target) throw new Error(`Cannot find test ${test.title} in file ${file}`);
@@ -776,4 +776,3 @@ export default class TestRunner extends HTMLMorph {
     } finally { i.remove(); }
   }
 }
-
