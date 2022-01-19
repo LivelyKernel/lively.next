@@ -1,5 +1,7 @@
 # lively.next
 
+[![Run Tests](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml/badge.svg?branch=master)](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml)
+    
 This is the repository of the [lively.next project](https://lively-next.org).
 
 ## Requirements
