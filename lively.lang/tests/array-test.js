@@ -1,4 +1,4 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
+/* global describe, it, setTimeout */
 
 import { expect } from 'mocha-es6';
 import {
@@ -133,11 +133,6 @@ describe('arr', function () {
       { a: 'foo', b: 5 },
       { a: 'bar', b: 6 }];
     let group = groupBy(elts, ea => ea.a);
-    let expected = {
-      foo: [elts[0], elts[2], elts[4]],
-      bar: [elts[1], elts[5]],
-      baz: [elts[3]]
-    };
 
     expect(group).to.containSubset(group);
     expect([[elts[0], elts[2], elts[4]], [elts[1], elts[5]], [elts[3]]])
@@ -172,7 +167,7 @@ describe('arr', function () {
     ], (a, b) => {
       let valA = a.value || a;
       let valB = b.value || b;
-      return valA == valB || equals(valA, valB);
+      return valA === valB || equals(valA, valB);
     })).deep.equals([
       'edit...', 'local',
       'http://localhost:9011/eval',
@@ -197,9 +192,9 @@ describe('arr', function () {
 
   describe('batchify', function () {
     it('splits array ccording to constraint', function () {
-      function batchConstrained (batch) { return batch.length == 1 || sum(batch) < batchMaxSize; }
-      var batchMaxSize = Math.pow(2, 28)/* 256MB */;
-      let sizes = [
+      function batchConstrained (batch) { return batch.length === 1 || sum(batch) < batchMaxSize; }
+      const batchMaxSize = Math.pow(2, 28)/* 256MB */;
+      const sizes = [
         Math.pow(2, 15), // 32KB
         Math.pow(2, 29), // 512MB
         Math.pow(2, 29), // 512MB
@@ -216,7 +211,7 @@ describe('arr', function () {
 
     it('needs to consume', function () {
       function batchConstrained (batch) { return sum(batch) < batchMaxSize; }
-      var batchMaxSize = 3;
+      const batchMaxSize = 3;
       let sizes = [1, 4, 2, 3];
       expect(() => batchify(sizes, batchConstrained))
         .throws(/does not ensure consumption of at least one/);
@@ -283,19 +278,19 @@ describe('arr', function () {
     });
   });
   it('histogram', function () {
-    var data = [0, 1, 2, 3, 7, 2, 1, 3, 9];
+    let data = [0, 1, 2, 3, 7, 2, 1, 3, 9];
 
-    var hist = histogram(data);
+    let hist = histogram(data);
     expect([[0, 1], [2, 3], [7, 2], [1, 3], [9]]).to.eql(hist);
 
-    var hist = histogram(data, 3); // 3 bins
+    hist = histogram(data, 3); // 3 bins
     expect([[0, 1, 2], [3, 7, 2], [1, 3, 9]]).to.eql(hist);
 
-    var hist = histogram(data, [0, 3, 6]); // 3 bins
+    hist = histogram(data, [0, 3, 6]); // 3 bins
     expect([[0, 1, 2, 2, 1], [3, 3], [7, 9]]).to.eql(hist);
 
-    var data = [1, 2, 3, 4];
-    var hist = histogram(data, [0, 3, 6]); // 3 bins
+    data = [1, 2, 3, 4];
+    hist = histogram(data, [0, 3, 6]); // 3 bins
     expect([[1, 2], [3, 4], []]).to.eql(hist);
   });
 
@@ -365,7 +360,7 @@ describe('arr', function () {
         mapAsync(numbers,
           function (n, i, next) {
             setTimeout(function () { next(null, n); }, random(0, 100));
-            if (i == 2) next(null, n);
+            if (i === 2) next(null, n);
           },
           function (err, result) {
             expect(result).to.eql(numbers);
@@ -376,7 +371,7 @@ describe('arr', function () {
       it('catches errors', function (done) {
         mapAsync(numbers,
           function (n, i, next) {
-            if (i == 2) throw new Error('FOO!');
+            if (i === 2) throw new Error('FOO!');
             setTimeout(function () { next(null, n); }, random(0, 100));
           },
           function (err, result) {

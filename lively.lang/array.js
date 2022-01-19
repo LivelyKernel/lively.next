@@ -34,10 +34,10 @@ function range (begin, end, step) {
   const result = [];
   if (begin <= end) {
     if (step <= 0) step = -step || 1;
-    for (var i = begin; i <= end; i += step) result.push(i);
+    for (let i = begin; i <= end; i += step) result.push(i);
   } else {
     if (step >= 0) step = -step || -1;
-    for (var i = begin; i >= end; i += step) result.push(i);
+    for (let i = begin; i >= end; i += step) result.push(i);
   }
   return result;
 }
@@ -47,15 +47,17 @@ function range (begin, end, step) {
  * @function
  * @name from
  */
-const from = features.from ? Array.from : function (iterable) {
-  if (!iterable) return [];
-  if (Array.isArray(iterable)) return iterable;
-  if (iterable.toArray) return iterable.toArray();
-  let length = iterable.length;
-  const results = new Array(length);
-  while (length--) results[length] = iterable[length];
-  return results;
-};
+const from = features.from
+  ? Array.from
+  : function (iterable) {
+    if (!iterable) return [];
+    if (Array.isArray(iterable)) return iterable;
+    if (iterable.toArray) return iterable.toArray();
+    let length = iterable.length;
+    const results = new Array(length);
+    while (length--) results[length] = iterable[length];
+    return results;
+  };
 
 /** 
  * ```
@@ -117,7 +119,7 @@ function filter (array, iterator, context) {
 const detect = features.find
   ? function (arr, iterator, context) { return arr.find(iterator, context); }
   : function (arr, iterator, context) {
-    for (var value, i = 0, len = arr.length; i < len; i++) {
+    for (let value, i = 0, len = arr.length; i < len; i++) {
       value = arr[i];
       if (iterator.call(context, value, i)) return value;
     }
@@ -215,7 +217,7 @@ function filterByKey (arr, key) {
 */
 function grep (arr, test, context) {
   if (typeof test === 'string') test = new RegExp(test, 'i');
-  return filter(arr, filter.test.bind(test));
+  return arr.filter(filter.test.bind(test));
 }
 
 /**
@@ -226,16 +228,16 @@ function grep (arr, test, context) {
  * ``` 
 */
 function mask (array, mask) {
-  return filter(array, function (_, i) { return !!mask[i]; });
+  return array.filter(function (_, i) { return !!mask[i]; });
 }
 
 function reject (array, func, context) {
   function iterator (val, i) { return !func.call(context, val, i); }
-  return filter(array, iterator);
+  return array.filter(iterator);
 }
 
 function rejectByKey (array, key) {
-  return filter(array, function (ea) { return !ea[key]; });
+  return array.filter(function (ea) { return !ea[key]; });
 }
 
 /**
@@ -245,7 +247,7 @@ function rejectByKey (array, key) {
  * ```
  */
 function without (array, elem) {
-  return filter(array, val => val !== elem);
+  return array.filter(val => val !== elem);
 }
 
 /**
@@ -255,7 +257,7 @@ function without (array, elem) {
  * ```
  */
 function withoutAll (array, otherArr) {
-  return filter(array, val => otherArr.indexOf(val) === -1);
+  return array.filter(val => otherArr.indexOf(val) === -1);
 }
 
 /**
@@ -323,7 +325,7 @@ function uniqByKey (array, key) {
  * ```
  */
 function compact (array) {
-  return filter(array, Boolean);
+  return array.filter(Boolean);
 }
 
 function mutableCompact (array) {
@@ -545,7 +547,7 @@ function equals (array, otherArray) {
         continue;
       }
     }
-    if (array[i] != otherArray[i]) return false;
+    if (array[i] !== otherArray[i]) return false;
   }
   return true;
 }
@@ -577,9 +579,9 @@ function deepEquals (array, otherArray) {
  */
 function isSorted (array, descending) {
   if (descending) {
-    for (var i = 1; i < array.length; i++) { if (array[i - 1] < array[i]) return false; }
+    for (let i = 1; i < array.length; i++) { if (array[i - 1] < array[i]) return false; }
   } else {
-    for (var i = 1; i < array.length; i++) { if (array[i - 1] > array[i]) return false; }
+    for (let i = 1; i < array.length; i++) { if (array[i - 1] > array[i]) return false; }
   }
   return true;
 }
@@ -649,7 +651,7 @@ function last (array) { return array[array.length - 1]; }
  * set-like intersection
  */
 function intersect (array1, array2) {
-  return filter(uniq(array1), item => array2.indexOf(item) > -1);
+  return uniq(array1).filter(item => array2.indexOf(item) > -1);
 }
 
 /**
@@ -1213,7 +1215,7 @@ function collect (arr, iterator, context) {
 }
 
 function findAll (arr, iterator, context) {
-  return filter(arr, iterator, context);
+  return arr.filter(iterator, context);
 }
 
 function inject (array, memo, iterator, context) {
