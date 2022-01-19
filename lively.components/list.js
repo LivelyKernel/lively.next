@@ -756,7 +756,9 @@ export class List extends Morph {
         }; let itemMorph = itemMorphs[i];
 
         if (!itemMorph) {
-          itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+          this.withMetaDo({ skipReconciliation: true }, () => {
+            itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+          });
         }
         itemMorph.reactsToPointer = !scrollable;
         itemMorph.displayItem(
