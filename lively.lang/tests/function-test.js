@@ -1,4 +1,4 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
+/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout, xit, $super */
 
 import { expect } from 'mocha-es6';
 import * as fun from '../function.js';
@@ -45,7 +45,7 @@ describe('fun', function () {
 
     it('can extract a function body a string', function () {
       let f = function (arg1, arg2, arg4) { let x = { n: 33 }; return x.n + arg2 + arg4; };
-      expect(fun.extractBody(f)).to.equal('var x = { n: 33 };\nreturn x.n + arg2 + arg4;');
+      expect(fun.extractBody(f)).to.equal('let x = { n: 33 };\nreturn x.n + arg2 + arg4;');
       expect(fun.extractBody(function () {})).to.equal('');
       expect(fun.extractBody(function () { 123; })).to.equal('123;');
     });
