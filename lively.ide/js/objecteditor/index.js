@@ -68,7 +68,7 @@ export class ObjectEditorModel extends ViewModel {
 
       expose: {
         get () {
-          return ['browse', 'commands', 'keybindings'];
+          return ['browse', 'commands', 'keybindings', 'onWindowClose'];
         }
       },
 
@@ -181,7 +181,7 @@ export class ObjectEditorModel extends ViewModel {
 
       {
         name: '[javascript] inject import',
-        exec: async () => { await this.interactivelyAddImport(); return true; }
+        exec: async () => { await this.models.importController.interactivelyAddImport(); return true; }
       },
 
       {
