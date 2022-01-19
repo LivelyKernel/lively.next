@@ -1,7 +1,7 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from 'lively.lang';
-import { inspect, easings, morph, Text, config } from 'lively.morphic';
+import { inspect, morph, Text, config } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -10,7 +10,6 @@ import { LoadingIndicator } from 'lively.components';
 
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
-import { resource } from 'lively.resources';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
 import { once } from 'lively.bindings';
 import { part } from 'lively.morphic/components/core.js';
@@ -214,7 +213,7 @@ const commands = [
           historyId: 'lively.morphic-select morph',
           onSelection: sel => {
             if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
-            if (sel && sel.show && lastSelected != sel) {
+            if (sel && sel.show && lastSelected !== sel) {
               this.lastSelectionHalo = sel.show();
               lastSelected = sel;
             }
@@ -285,7 +284,7 @@ const commands = [
     exec: (world, opts = { direction: 'left', offset: 1, what: 'move' }) => {
       const halo = world.halos()[0];
       if (!halo || halo.changingName) return false;
-      if (world.focusedMorph != halo) return false;
+      if (world.focusedMorph !== halo) return false;
 
       let { direction, offset, what } = opts;
       const t = halo.target;
@@ -415,12 +414,12 @@ const commands = [
     exec: world => {
       const focused = world.focusedMorph;
       if (!focused) return true;
-      var win = focused.getWindow();
+      let win = focused.getWindow();
       world.undoStart('window close');
       if (win) win.close();
       else {
         arr.last(arr.without(focused.ownerChain(), world)).remove();
-        var win = world.activeWindow();
+        win = world.activeWindow();
         win && win.activate();
       }
       world.undoStop('window close');
@@ -708,8 +707,8 @@ const commands = [
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffSentences"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "patch"})
 
-      var { a, b, format, extent } = opts;
-      if (!format) var { a, b, format } = findFormat(a, b);
+      let { a, b, format, extent } = opts;
+      if (!format) ({ a, b, format } = findFormat(a, b));
       else { a = String(a); b = String(b); }
 
       const diff = await System.import('https://jspm.dev/diff');
@@ -727,11 +726,11 @@ const commands = [
 
       async function diffInWindow (a, b, opts) {
         const { format } = opts;
-        let plugin = null; var content;
+        let plugin = null; let content;
 
         if (format === 'patch') {
           const { headerA, headerB, filenameA, filenameB, context } = opts;
-          var content = [diff.createTwoFilesPatch(
+          content = [diff.createTwoFilesPatch(
             filenameA || 'a', filenameB || 'b', a, b,
             headerA, headerB, typeof context === 'number' ? { context } : undefined), {}];
           const { default: DiffEditorPlugin } = await System.import('lively.ide/diff/editor-plugin.js');
@@ -774,8 +773,9 @@ const commands = [
     exec: async function (world, opts = {}) {
       let { editor1, editor2, merge } = opts;
 
+      let editors = [];
       if (!editor1 || !editor2) {
-        var editors = world.withAllSubmorphsSelect(ea =>
+        editors = world.withAllSubmorphsSelect(ea =>
           ea.isText && !ea.isInputLine && !ea.isUsedAsEpiMorph()).reverse();
       }
       if (!editor1) editor1 = await selectMorph(editors);
@@ -1002,7 +1002,6 @@ const commands = [
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
-      // const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
       const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
       let browser;
       if (args) {
@@ -1045,7 +1044,7 @@ const commands = [
             if (a.isLoaded && !b.isLoaded) return -1;
             if (!a.isLoaded && b.isLoaded) return 1;
             if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
-            if (a.nameInPackage.toLowerCase() == b.nameInPackage.toLowerCase()) return 0;
+            if (a.nameInPackage.toLowerCase() === b.nameInPackage.toLowerCase()) return 0;
             return 1;
           })
           .map(resource => {
@@ -1082,8 +1081,9 @@ const commands = [
     progressIndicator: 'browsing module...',
     handlesCount: true,
     exec: async (world, opts = { browser: undefined, systemInterface: undefined }, count) => {
+      let focused;
       if (!opts.browser) { // invoked from a file browser? => use it
-        var focused = world.focusedMorph;
+        focused = world.focusedMorph;
         const win = focused && focused.getWindow();
         if (win && win.targetMorph && win.targetMorph.isFileBrowser) { return win.targetMorph.execCommand('find file and select', opts, count); }
       }
@@ -1095,7 +1095,7 @@ const commands = [
       const systemInterface = opts && opts.systemInterface
         ? opts.systemInterface
         : browser ? browser.systemInterface : localInterface;
-      const locationString = systemInterface.name == 'local'
+      const locationString = systemInterface.name === 'local'
         ? ''
         : ` on [${
               string.truncate(systemInterface.name, 35, '...')
@@ -1233,7 +1233,6 @@ const commands = [
         li.visible = true;
       }
       if (reuse) {
-        const ea = world.getWindows().slice(-2)[0];
         const editor = arr.findAndGet(world.getWindows(), ea => {
           const t = ea.targetMorph;
           return t && t.isTextEditor && t.location.split(':')[0] === url ? t : null;
@@ -1256,7 +1255,7 @@ const commands = [
       // for using from command line, see l2l default client actions and
       // lively.shell/bin/lively-as-editor.js
       const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
-      const { url, lineNumber } = opts;
+      const { url } = opts;
       // "saved" || "aborted"
       return await TextEditor.openAsEDITOR(url, {});
     }
