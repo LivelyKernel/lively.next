@@ -1654,7 +1654,7 @@ export class CellGroup {
    */
   connect (cell) {
     // connect partial row and col ?
-    if (this.morph === undefined) {
+    if (this.morph === undefined || this.morph === null) {
       this.morph = cell.group.morph;
     }
     if (cell.group) {
