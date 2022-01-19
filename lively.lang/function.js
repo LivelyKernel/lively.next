@@ -617,8 +617,8 @@ function waitFor (timeoutMs, waitTesterFunc, thenDo) {
 /**
  * Wait for multiple asynchronous functions. Once all have called the
  * continuation, call `thenDo`.
- * options can be: `{timeout: NUMBER}` (how long to wait in milliseconds).
- * @param { { timeout: number } Object } options - 
+ * @param { Object } [options] - A set of configuration options.
+ * @param { number } options.timeout - How long to wait in milliseconds.
  * @param { function[] } funcs - The set of functions ot wait for.
  * @param { function } thenDo - The callback to invoke after the wait finishes.
  */
