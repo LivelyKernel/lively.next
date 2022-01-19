@@ -15,6 +15,8 @@ import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentatio
 import { once } from 'lively.bindings';
 import { part } from 'lively.morphic/components/core.js';
 import { CodeSearch } from './code-search.cp.js';
+import { ComponentBrowser } from './studio/component-browser.cp.js';
+import { WorldBrowser } from './studio/world-browser.cp.js';
 
 const commands = [
 
@@ -900,7 +902,7 @@ const commands = [
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
       if (!world._componentsBrowser) await li.whenRendered();
-      const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = await resource('part://SystemDialogs/master component browser').read());
+      const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = part(ComponentBrowser));
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }

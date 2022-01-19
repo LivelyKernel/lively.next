@@ -42,7 +42,7 @@ import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
 
-const COLORS = {
+export const COLORS = {
   js: Color.rgb(46, 204, 113),
   json: Color.rgb(128, 139, 150),
   md: Color.rgb(142, 68, 173),

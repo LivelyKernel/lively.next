@@ -2373,7 +2373,7 @@ export class DropDownListModel extends ButtonModel {
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     const meta = this.listMaster && this.listMaster[Symbol.for('lively-module-meta')];
     if (meta) {
-      addFn('listMaster', new ExpressionSerializer().exprStringEncode({
+      addFn('listMaster', pool.expressionSerializer.exprStringEncode({
         __expr__: meta.export,
         bindings: {
           [meta.module]: meta.export

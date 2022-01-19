@@ -1,7 +1,7 @@
 import { ViewModel, part, component } from 'lively.morphic/components/core.js';
 import { Color, rect, pt } from 'lively.graphics';
 import { HorizontalLayout } from 'lively.morphic';
-import { DefaultList, DarkList } from './list.cp.js';
+import { DefaultList } from './list.cp.js';
 import { signal, noUpdate, connect } from 'lively.bindings';
 import { arr } from 'lively.lang';
 
@@ -46,7 +46,10 @@ export class MullerColumnViewModel extends ViewModel {
           return this.view.submorphs;
         },
         set (lists) {
-          this.view.submorphs = lists;
+          this.view.submorphs = lists.map(l => {
+            l.epiMorph = true;
+            return l;
+          });
         }
       },
       expose: {
@@ -72,6 +75,19 @@ export class MullerColumnViewModel extends ViewModel {
       // is displayed at once. This in turn requires that of all the nodes
       // children, at most one can be collapsed at a time.
     };
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    // this is temporary in order to properly transition the
+    // master components
+
+    let moduleInfo;
+    if (this.listMaster && (moduleInfo = this.listMaster[Symbol.for('lively-module-meta')])) {
+      addFn('listMaster', pool.expressionSerializer.exprStringEncode({
+        __expr__: moduleInfo.export,
+        bindings: { [moduleInfo.module]: [moduleInfo.export] }
+      })); 
+    }
   }
 
   focusActiveList () {
@@ -130,7 +146,7 @@ export class MullerColumnViewModel extends ViewModel {
     This is why we expand each node with a custom iterator.
   */
   async setExpandedPath (
-    matchingNodes = (n) => n == this.treeData.root,
+    matchingNodes = (n) => n === this.treeData.root,
     until = this.treeData.root,
     animated = true
   ) {
@@ -159,8 +175,7 @@ export class MullerColumnViewModel extends ViewModel {
       newLists = [...newLists, ...arr.genN(lenDiff, () => this.newList())];
       this.lists = newLists;
       await view.whenRendered(); // ensure layout has placed all morphs accordingly
-      if (view.layout.renderViaCSS) // thank you virtual-dom....
-      { newLists.map(m => view.layout.expressMeasure(m)); }
+      if (view.layout.renderViaCSS) { newLists.map(m => view.layout.expressMeasure(m)); } // thank you virtual-dom....
       scroll = pt(view.scrollExtent.x - view.width);
       if (animated) {
         view.animate({
@@ -210,7 +225,7 @@ export class MullerColumnViewModel extends ViewModel {
       this.lists.forEach(list => {
         const control = list._managedNode && list._managedNode.listControl;
         if (control) {
-          control.visible = list == hoveredList;
+          control.visible = list === hoveredList;
         }
       });
     }
@@ -250,7 +265,7 @@ export class MullerColumnViewModel extends ViewModel {
     if (!td) return;
     let expandedPath = this.getExpandedPath(); let selectedFile;
     const last = arr.last(expandedPath);
-    if (td.isLeaf(last) && last != td.root) {
+    if (td.isLeaf(last) && last !== td.root) {
       selectedFile = arr.last(expandedPath);
       expandedPath = expandedPath.slice(0, -1);
     }
@@ -266,11 +281,11 @@ export class MullerColumnViewModel extends ViewModel {
       currentList = lists.shift();
       noUpdate(() => currentList.selection = false);
       const originalScroll = currentList.itemScroll;
-      if (currentList._managedNode == node) {
+      if (currentList._managedNode === node) {
         currentList.itemScroll = originalScroll;
         const currentItems = currentList.items;
         const newItems = td.getChildren(node);
-        if (newItems.length == currentItems.length) {
+        if (newItems.length === currentItems.length) {
           arr.zip(currentItems, newItems).forEach(([item, value]) => {
             if (!value) return;
             item.value = value;
@@ -281,7 +296,7 @@ export class MullerColumnViewModel extends ViewModel {
           });
         } else currentList._managedNode = null;
       }
-      if (currentList._managedNode != node) {
+      if (currentList._managedNode !== node) {
         currentList.items = td.getChildren(node).map(each => {
           return { isListItem: true, label: td.display(each), value: each, tooltip: each.tooltip || false };
         });

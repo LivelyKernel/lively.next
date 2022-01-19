@@ -250,6 +250,7 @@ function open (label = 'Loading...', props) {
 // LoadingIndicator.openInWorld()
 const LoadingIndicator = component({
   defaultViewModel: LoadingIndicatorModel,
+  name: 'loading indicator',
   borderRadius: 10,
   clipMode: 'hidden',
   epiMorph: true,
