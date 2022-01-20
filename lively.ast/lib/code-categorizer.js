@@ -38,7 +38,6 @@ export function findDecls (parsed, options) {
 
   const topLevelNodes = parsed.type === 'Program' ? parsed.body : parsed.body.body;
   const defs = [];
-  const hideOneLiners = options.hideOneLiners && parsed.source;
 
   for (let node of topLevelNodes) {
     node = unwrapExport(node);
@@ -46,8 +45,8 @@ export function findDecls (parsed, options) {
              varDefs(node) ||
              funcDef(node) ||
              es6ClassDef(node) ||
-             someObjectExpressionCall(node);
-
+             someObjectExpressionCall(node) ||
+             describe(node);
     if (!found) continue;
 
     if (options.hideOneLiners) {
@@ -94,9 +93,9 @@ function es6ClassMethod (node, parent, i) {
   else if (node.kind === 'method') type = node.static ? 'class-class-method' : 'class-instance-method';
   else if (node.kind === 'get') type = node.static ? 'class-class-getter' : 'class-instance-getter';
   else if (node.kind === 'set') type = node.static ? 'class-class-setter' : 'class-instance-setter';
-  if (type == 'class-instance-getter' && node.key.name == 'commands') return parseCommandsMethod(node, parent, type);
-  if (type == 'class-class-getter' && node.key.name == 'properties') return parsePropertiesMethod(node, parent, type);
-
+  if (type === 'class-instance-getter' && node.key.name === 'commands') return parseCommandsMethod(node, parent, type);
+  if (type === 'class-class-getter' && node.key.name === 'properties') return parsePropertiesMethod(node, parent, type);
+  
   return type
     ? {
         type,
@@ -266,7 +265,7 @@ function isFunctionWrapper (node) {
       Path('expression.callee.type').get(node) === 'FunctionExpression';
 }
 
-function declIds (idNodes) {
+function declIds (idNodes) { // eslint-disable-line no-unused-vars
   return arr.flatmap(idNodes, function (ea) {
     if (!ea) return [];
     if (ea.type === 'Identifier') return [ea];
