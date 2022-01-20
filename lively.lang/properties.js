@@ -67,7 +67,7 @@ function own (object) {
  * @param { Object } object - The object whose properties to traverse.
  * @param { function(string, *): * } func - The iteration function.
  * @param { Object } [context] - The binding of `this` during the execution of `func`.
- * @returns { *[] } The results of each iteration.
+ * @returns { any[] } The results of each iteration.
  */
 function forEachOwn (object, func, context) {
   const result = [];
@@ -97,7 +97,7 @@ function nameFor (object, value) {
 /**
  * Traverse all the values of a given object, including the ones defined in the prototype chain.
  * @param { Object } obj - The object to gather all the values from.
- * @returns { *[] } The list of all values.
+ * @returns { any[] } The list of all values.
  */
 function values (obj) {
   const values = [];
@@ -108,7 +108,7 @@ function values (obj) {
 /**
  * Traverse all the values of a given object, only considering the ones directly defined on the object itself.
  * @param { Object } obj - The object to gather all the local values from.
- * @returns { *[] } The list of all (own) values.
+ * @returns { any[] } The list of all (own) values.
  */
 function ownValues (obj) {
   const values = [];
