@@ -1,4 +1,4 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
+/* global afterEach, describe, it, setTimeout */
 
 import { expect } from 'mocha-es6';
 import { convertCallbackFun, promise, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs } from '../promise.js';
@@ -124,7 +124,7 @@ describe('promise', () => {
 
     it('timesout with value', () => {
       let startTime = Date.now(); let condition = false; let timeoutval = {};
-      setTimeout(() => condition = {}, 100);
+      setTimeout(() => condition = {}, 1000);
       return waitFor(50, () => condition, timeoutval)
         .then(val => {
           expect(val).equals(timeoutval);
