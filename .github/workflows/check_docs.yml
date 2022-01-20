@@ -1,7 +1,7 @@
 name: Check Docs Build
 
 on:
-  pull_request
+  push:
 
 jobs:
   check:
