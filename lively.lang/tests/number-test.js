@@ -1,4 +1,4 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
+/* global, describe, it, setTimeout */
 
 import { expect } from 'mocha-es6';
 import {
