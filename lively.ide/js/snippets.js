@@ -1,7 +1,4 @@
-import { Snippet } from '../text/snippets.js';
-
-export var snippets = [
-
+export const snippets = [
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
   ['typef', 'typeof ${0:object} === "function"$1'],
@@ -132,7 +129,10 @@ export var snippets = [
   // jsdoc
   ['docstring', `/**
  * \${0:description}
- */`]
+ */`],
+
+  // eslint
+  ['desl', '// eslint-disable-line \${0:rule}']
 
 ];
 
