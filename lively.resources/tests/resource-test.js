@@ -1,10 +1,9 @@
 /* global beforeEach, afterEach, describe, it,System */
-
 import { expect } from 'mocha-es6';
-
 import { resource, createFiles, registerExtension, unregisterExtension } from '../index.js';
 import Resource from '../src/resource.js';
 import { relativePathBetween } from '../src/helpers.js';
+import { date } from 'lively.lang';
 
 const dir = System.normalizeSync('lively.resources/tests/');
 const testProjectDir = dir + 'temp-for-tests/';
@@ -101,9 +100,9 @@ describe('http', function () {
   });
 
   it('retrieves file props', async () => {
-    const { size, lastModified, contentType } = await r1.readProperties();
-    expect(lively.lang.date.format(lastModified, 'yyyy/mm/dd'))
-      .equals(lively.lang.date.format(new Date(), 'yyyy/mm/dd')); // beware those midnight test runs!
+    const { lastModified, contentType } = await r1.readProperties();
+    expect(date.format(lastModified, 'yyyy/mm/dd'))
+      .equals(date.format(new Date(), 'yyyy/mm/dd')); // beware those midnight test runs!
 
     if (contentType) { expect(contentType).includes('application/javascript'); }
   });
@@ -271,11 +270,11 @@ describe('url operations', () => {
     expect(() => resource('http://foo.com/').relativePathFrom(resource('http://foo.org/')))
       .throws();
 
-    var a = resource('http://northwestern.itsapirateslife.net:9001/core/lively/bootstrap.js');
+    let a = resource('http://northwestern.itsapirateslife.net:9001/core/lively/bootstrap.js');
     const b = resource('http://northwestern.itsapirateslife.net:9001//questions/Worlds/unknown_user_1434404507629_original.html?autosave=true');
     expect(a.relativePathFrom(b)).equals('../../core/lively/bootstrap.js');
 
-    var a = resource('http://www.foo.org/bar/');
+    a = resource('http://www.foo.org/bar/');
     expect(a.relativePathFrom(a)).equals('', 'identity');
   });
 
