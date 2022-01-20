@@ -18,7 +18,9 @@
         "tutorials": "./documents",
         "template": "node_modules/clean-jsdoc-theme",
         "theme_opts": {
-            "theme": "dark"
+            "theme": "dark",
+            "title": "<img src='logo.svg' />",
+            "favicon": "favicon.ico"
         }
     },
     "tags": {
