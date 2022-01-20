@@ -223,6 +223,24 @@ export class PackageTreeData extends TreeData {
       case 'class-instance-setter':
         icon = ['set ', null];
         break;
+      case 'describe':
+        icon = Icon.textAttribute('vials');
+        break;
+      case 'xdescribe':
+        icon = Icon.textAttribute('vials', { opacity: 0.5 });
+        break;
+      case 'it':
+        icon = Icon.textAttribute('vial');
+        break;
+      case 'xit':
+        icon = Icon.textAttribute('vial', { opacity: 0.5 });
+        break;
+      case 'before':
+      case 'beforeEach':
+      case 'after':
+      case 'afterEach':
+        icon = Icon.textAttribute('hammer');
+        break;
     }
     return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 18, '…'), null];
   }

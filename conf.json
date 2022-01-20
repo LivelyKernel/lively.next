@@ -6,7 +6,8 @@
     "source": {
         "include": [
                     "lively.lang",
-                    "lively.components/widgets"
+                    "lively.components/widgets",
+		            "lively.ast"
                     ],
         "includePattern": "\\.js$"
     },

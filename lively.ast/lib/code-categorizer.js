@@ -212,6 +212,47 @@ function someObjectExpressionCall (node, parentDef) {
   return objectKeyValsAsDefs(objArg, parentDef);
 }
 
+/**
+ * @param { Node } parent A node representing a `describe` block
+ * All subnodes of the passed `Node` will be parsed to extract declarations for contained `describe` blocks, test setup methods (like `after`,...) and test cases.
+ */
+function parseDescribeBlock (parent) {
+  const parseInSuits = ['describe', 'xdescribe', 'it', 'xit', 'after', 'afterEach', 'before', 'beforeEach'];
+  const nodes = [];
+  
+  parent.expression.arguments[1].body.body.forEach((subnode) => {
+    if (subnode.type !== 'ExpressionStatement' || !subnode.expression.callee) return null;
+    
+    const type = subnode.expression.callee.name;
+    if (!parseInSuits.includes(type)) return;
+    // string of the describe/it block or function name like before, after,...
+    const name = subnode.expression.arguments[0].value || subnode.expression.callee.name;
+    
+    let parsedSubNode = { name, node: subnode, type, parent: parent };
+    // recursively parse describe blocks that can contain other describe blocks
+    if (subnode.expression.callee.name === 'describe' || subnode.expression.callee.name === 'xdescribe') {
+      parsedSubNode.children = parseDescribeBlock(subnode);
+    }
+    nodes.push(parsedSubNode);
+  });
+  return nodes;    
+}
+
+/**
+ * @param { Node } node A toplevel node of the parsed source code
+ * If the passed `Node` does not represent a `describe` block, it will not be processed.
+ * If it represents a `describe` block, it will be shown as a declaration and all containing code will be parsed using `parseDescribeBlock()`
+ */
+function describe (node) {
+  if (node.type !== 'ExpressionStatement') return null; 
+  if (node.expression && node.expression.callee.name !== 'describe' && node.expression.callee.name !== 'xdescribe') return null;
+  
+  const parsedNode = { name: node.expression.arguments[0].value, node, type: node.expression.callee.name };
+  parsedNode.children = parseDescribeBlock(node);
+  
+  return [parsedNode];
+}
+
 function functionWrapper (node, options) {
   if (!isFunctionWrapper(node)) return null;
   let decls;
