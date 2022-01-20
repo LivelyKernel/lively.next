@@ -52,9 +52,11 @@ describe('BTree', () => {
     `));
 
   it('2.', () =>
-    expect(insertNumbers(2, 3, 4, 1)).btreePrintsTo(`[1-4]
-                                                  |-[1-2]1,2
-                                                  \-[3-4]3,4`));
+    expect(insertNumbers(2, 3, 4, 1)).btreePrintsTo(`
+    3
+      •
+  ••  ••
+1, 2    4`));
 });
 
 describe('BPlusTree', () => {
