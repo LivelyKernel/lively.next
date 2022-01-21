@@ -1,42 +1,60 @@
-import { newUUID } from './string.js';
-import { pushIfNotIncluded, removeAt } from './array.js';
-/* global require, process, Promise, System */
+/* global Promise */
 
-/*
+/**
  * Methods helping with promises (Promise/A+ model). Not a promise shim.
+ * @module lively.lang/promise
  */
 
+/**
+ * Promise object / function converter
+ * @param { object|function } obj - The value or function to convert into a promise.
+ * @returns { Promise } 
+ * @example
+ * promise("foo");
+ *   // => Promise({state: "fullfilled", value: "foo"})
+ * lively.lang.promise({then: (resolve, reject) => resolve(23)})
+ *   // => Promise({state: "fullfilled", value: 23})
+ * lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
+ *   // => Promise({state: "fullfilled", value: 4})
+ */
 function promise (obj) {
-  // Promise object / function converter
-  // Example:
-  // promise("foo");
-  //   // => Promise({state: "fullfilled", value: "foo"})
-  // lively.lang.promise({then: (resolve, reject) => resolve(23)})
-  //   // => Promise({state: "fullfilled", value: 23})
-  // lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
-  //   // => Promise({state: "fullfilled", value: 4})
   return (typeof obj === 'function')
     ? promise.convertCallbackFun(obj)
     : Promise.resolve(obj);
 }
 
+/**
+ * Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
+ * before resolving
+ * @async
+ * @param { number } ms - The duration to delay the execution in milliseconds.
+ * @param { * } resolveVal - The value to resolve to.
+ */
 function delay (ms, resolveVal) {
-  // Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
-  // before resolving
   return new Promise(resolve =>
     setTimeout(resolve, ms, resolveVal));
 }
 
+/**
+ * like `promise.delay` but rejects instead of resolving.
+ * @async
+ * @param { number } ms - The duration to delay the execution in milliseconds.
+ * @param { * } rejectedVal - The value to reject.
+ */
 function delayReject (ms, rejectVal) {
-  // like `promise.delay` but rejects
   return new Promise((_, reject) =>
     setTimeout(reject, ms, rejectVal));
 }
 
+/**
+ * Takes a promise and either resolves to the value of the original promise
+ * when it succeeds before `ms` milliseconds passed or fails with a timeout
+ * error.
+ * @async
+ * @param { number } ms - The duration to wait for the promise to resolve in milliseconds.
+ * @param { Promise } promise - The promise to wait for to finish.
+ */
 function timeout (ms, promise) {
-  // Takes a promise and either resolves to the value of the original promise
-  // when it succeeds before `ms` milliseconds passed or fails with a timeout
-  // error
   return new Promise((resolve, reject) => {
     let done = false;
     setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
@@ -46,6 +64,12 @@ function timeout (ms, promise) {
   });
 }
 
+/**
+ * For a given promise, computes the time it takes to resolve.
+ * @async
+ * @param { Promise } prom - The promise to time.
+ * @returns { number } The time it took the promise to finish in milliseconds.
+ */
 function timeToRun (prom) {
   const startTime = Date.now();
   return Promise.resolve(prom).then(() => Date.now() - startTime);
@@ -53,29 +77,36 @@ function timeToRun (prom) {
 
 const waitForClosures = {};
 
+/* 
 function clearPendingWaitFors () {
   Object.keys(waitForClosures).forEach(i => {
     delete waitForClosures[i];
     clearInterval(i);
   });
 }
+*/
 
+/**
+ * Tests for a condition calling function `tester` until the result is
+ * truthy. Resolves with last return value of `tester`. If `ms` is defined
+ * and `ms` milliseconds passed, reject with timeout error
+ * if timeoutObj is passed will resolve(!) with this object instead of raise
+ * an error
+ * *This function has a huge performance impact if used carelessly.
+ * Always consider this to be the absolute last resort if a problem
+ * can not be solved by promises/events.*
+ * @param { number } [ms] - The maximum number of milliseconds to wait for `tester` to become true.
+ * @param { function } tester - The function to test for the condition.
+ * @param { object } [timeoutObj] - The object to resolve to if the condition was not met and we timed out.
+ * @returns { object }
+ */
 function waitFor (ms, tester, timeoutObj) {
-  // Tests for a condition calling function `tester` until the result is
-  // truthy. Resolves with last return value of `tester`. If `ms` is defined
-  // and `ms` milliseconds passed, reject with timeout error
-  // if timeoutObj is passed will resolve(!) with this object instead of raise
-  // an error
-  // Warning: This function has a huge performance impact if used carelessly.
-  //          Always consider this to be the absolute last resort if a problem
-  //          can not be solved by promises/events.
   if (typeof ms === 'function') { tester = ms; ms = undefined; }
   let value;
   if (value = tester()) return Promise.resolve(value);
   return new Promise((resolve, reject) => {
     let stopped = false;
     let timedout = false;
-    let timeoutValue;
     let error;
     let value;
     const stopWaiting = (i) => {
@@ -101,11 +132,13 @@ function waitFor (ms, tester, timeoutObj) {
   });
 }
 
+/**
+ * Returns an object that conveniently gives access to the promise itself and 
+ * its resolution and rejection callback. This separates the resolve/reject handling
+ * from the promise itself. Similar to the deprecated `Promise.defer()`.
+ * @returns { { resolve: function, reject: function, promise: Promise } }
+ */
 function deferred () {
-  // returns an object
-  // `{resolve: FUNCTION, reject: FUNCTION, promise: PROMISE}`
-  // that separates the resolve/reject handling from the promise itself
-  // Similar to the deprecated `Promise.defer()`
   let resolve; let reject;
   const promise = new Promise(function (_resolve, _reject) {
     resolve = _resolve; reject = _reject;
@@ -113,19 +146,23 @@ function deferred () {
   return { resolve: resolve, reject: reject, promise: promise };
 }
 
+/**
+ * Takes a function that accepts a nodejs-style callback function as a last
+ * parameter and converts it to a function *not* taking the callback but
+ * producing a promise instead. The promise will be resolved with the
+ * *first* non-error argument.
+ * nodejs callback convention: a function that takes as first parameter an
+ * error arg and second+ parameters are the result(s).
+ * @param { function } func - The callback function to convert.
+ * @returns { function } The converted asyncronous function. 
+ * @example
+ * var fs = require("fs"),
+ *     readFile = promise.convertCallbackFun(fs.readFile);
+ * readFile("./some-file.txt")
+ *   .then(content => console.log(String(content)))
+ *   .catch(err => console.error("Could not read file!", err));
+ */
 function convertCallbackFun (func) {
-  // Takes a function that accepts a nodejs-style callback function as a last
-  // parameter and converts it to a function *not* taking the callback but
-  // producing a promise instead. The promise will be resolved with the
-  // *first* non-error argument.
-  // nodejs callback convention: a function that takes as first parameter an
-  // error arg and second+ parameters are the result(s).
-  // Example:
-  // var fs = require("fs"),
-  //     readFile = promise.convertCallbackFun(fs.readFile);
-  // readFile("./some-file.txt")
-  //   .then(content => console.log(String(content)))
-  //   .catch(err => console.error("Could not read file!", err));
   return function promiseGenerator (/* args */) {
     const args = Array.from(arguments); const self = this;
     return new Promise(function (resolve, reject) {
@@ -135,9 +172,13 @@ function convertCallbackFun (func) {
   };
 }
 
+/**
+ * Like convertCallbackFun but the promise will be resolved with the
+ * all non-error arguments wrapped in an array.
+ * @param { function } func - The callback function to convert.
+ * @returns { function } The converted asyncronous function. 
+ */
 function convertCallbackFunWithManyArgs (func) {
-  // like convertCallbackFun but the promise will be resolved with the
-  // all non-error arguments wrapped in an array.
   return function promiseGenerator (/* args */) {
     const args = Array.from(arguments); const self = this;
     return new Promise(function (resolve, reject) {
@@ -163,38 +204,53 @@ function _chainResolveNext (promiseFuncs, prevResult, akku, resolve, reject) {
   }
 }
 
+/**
+ * Similar to Promise.all but takes a list of promise-producing functions
+ * (instead of Promises directly) that are run sequentially. Each function
+ * gets the result of the previous promise and a shared "state" object passed
+ * in. The function should return either a value or a promise. The result of
+ * the entire chain call is a promise itself that either resolves to the last
+ * returned value or rejects with an error that appeared somewhere in the
+ * promise chain. In case of an error the chain stops at that point.
+ * @async
+ * @param { functions[] } promiseFuncs - The list of functions that each return a promise.
+ * @returns { * } The result the last promise resolves to.
+ * @example
+ * lively.lang.promise.chain([
+ *   () => Promise.resolve(23),
+ *   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
+ *   (prevVal, state) => { state.second = prevVal; return state }
+ * ]).then(result => console.log(result));
+ * // => prints {first: 23,second: 25}
+ */
 function chain (promiseFuncs) {
-  // Similar to Promise.all but takes a list of promise-producing functions
-  // (instead of Promises directly) that are run sequentially. Each function
-  // gets the result of the previous promise and a shared "state" object passed
-  // in. The function should return either a value or a promise. The result of
-  // the entire chain call is a promise itself that either resolves to the last
-  // returned value or rejects with an error that appeared somewhere in the
-  // promise chain. In case of an error the chain stops at that point.
-  // Example:
-  // lively.lang.promise.chain([
-  //   () => Promise.resolve(23),
-  //   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
-  //   (prevVal, state) => { state.second = prevVal; return state }
-  // ]).then(result => console.log(result));
-  // // => prints {first: 23,second: 25}
   return new Promise((resolve, reject) =>
     _chainResolveNext(
       promiseFuncs.slice(), undefined, {},
       resolve, reject));
 }
 
+/**
+ * Converts a given promise to one that executes the `finallyFn` regardless of wether it
+ * resolved successfully or failed during execution.
+ * @param { Promise } promise - The promise to convert.
+ * @param { function } finallyFn - The callback to run after either resolve or reject has been run.
+ * @returns { Promise } The converted promise.
+ */
 function promise_finally (promise, finallyFn) {
   return Promise.resolve(promise)
     .then(result => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } return result; })
     .catch(err => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } throw err; });
 }
 
+/**
+ * Starts functions from `promiseGenFns` that are expected to return a promise
+ * Once `parallelLimit` promises are unresolved at the same time, stops
+ * spawning further promises until a running promise resolves.
+ * @param { function[] } promiseGenFns - A list of functions that each return a promise.
+ * @param { number } parallelLimit - The maximum number of promises to process at the same time. 
+ */
 function parallel (promiseGenFns, parallelLimit = Infinity) {
-  // Starts functions from promiseGenFns that are expected to return a promise
-  // Once `parallelLimit` promises are unresolved at the same time, stops
-  // spawning further promises until a running promise resolves
-
   if (!promiseGenFns.length) return Promise.resolve([]);
 
   const results = [];
