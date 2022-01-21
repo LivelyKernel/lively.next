@@ -424,7 +424,11 @@ export class PackageTreeData extends TreeData {
       }
 
       if (node.type === 'md') {
-        node.subNodes = await this.listMarkdownHeadings(node.url);
+        try {
+          node.subNodes = await this.listMarkdownHeadings(node.url); 
+        } catch (err) {
+          node.subNodes = [];
+        }
       }
 
       if (node.type === 'json') {
@@ -1230,7 +1234,11 @@ export class BrowserModel extends ViewModel {
     const { sourceEditor, metaInfoText } = this.ui;
     const cursorIdx = sourceEditor.positionToIndex(sourceEditor.cursorPosition);
     let { parent, name } = arr.last(this.renderedCodeEntities().filter(
-      ({ node: { start, end } }) => start < cursorIdx && cursorIdx < end)) || {};
+      (entity) => {
+        if (!entity.node) return;
+        const { start, end } = entity.node;
+        return start < cursorIdx && cursorIdx < end;
+      })) || {};
     const parents = parent ? [parent.name, ''] : [];
     while (parent && (parent = parent.parent)) {
       parents.unshift(parent.name);
