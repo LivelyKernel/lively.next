@@ -440,7 +440,8 @@ export class SearchWidget extends Morph {
     }
 
     this.focus();
-    inputMorph.selectAll();
+    if (!text.selection.isEmpty()) inputMorph.textString = text.selectionOrLineString();
+    else inputMorph.selectAll();
   }
 
   advance (backwards) {
