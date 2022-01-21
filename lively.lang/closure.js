@@ -1,39 +1,64 @@
 
-// A `Closure` is a representation of a JavaScript function that controls what
-// values are bound to out-of-scope variables. By default JavaScript has no
-// reflection capabilities over closed values in functions. When needing to
-// serialize execution or when behavior should become part of the state of a
-// system it is often necessary to have first-class control over this language
-// aspect.
-//
-// Typically closures aren't created directly but with the help of [`asScriptOf`](#)
-//
-// Example:
-// function func(a) { return a + b; }
-// var closureFunc = Closure.fromFunction(func, {b: 3}).recreateFunc();
-// closureFunc(4) // => 7
-// var closure = closureFunc.livelyClosure // => {
-// //   varMapping: { b: 3 },
-// //   originalFunc: function func(a) {/*...*/}
-// // }
-// closure.lookup("b") // => 3
-// closure.getFuncSource() // => "function func(a) { return a + b; }"
+/**
+ * A `Closure` is a representation of a JavaScript function that controls what
+ * values are bound to out-of-scope variables. By default JavaScript has no
+ * reflection capabilities over closed values in functions. When needing to
+ * serialize execution or when behavior should become part of the state of a
+ * system it is often necessary to have first-class control over this language
+ * aspect.
+ * 
+ * Typically closures aren't created directly but with the help of [`asScriptOf`](#)
+ * 
+ * @example
+ * function func(a) { return a + b; }
+ * var closureFunc = Closure.fromFunction(func, {b: 3}).recreateFunc();
+ * closureFunc(4) // => 7
+ * var closure = closureFunc.livelyClosure // => {
+ * //   varMapping: { b: 3 },
+ * //   originalFunc: function func(a) {/*...*\/}
+ * // }
+ * closure.lookup("b") // => 3
+ * closure.getFuncSource() // => "function func(a) { return a + b; }"
+ * @module lively.lang/closure
+ */
 
 import { evalJS } from './function.js';
 
 const parameterRegex = /function[^\(]*\(([^\)]*)\)|\(?([^\)=]*)\)?\s*=>/;
 
+/**
+ * The representation of a JavaScript function.
+ */
 export default class Closure {
+  /**
+   * Converts a given `func` into a `Closure`.
+   * @static
+   * @param { function } func - The function to derive the closure from.
+   * @param { object } [varMapping] - The variable bindings for the closure.
+   * @returns { Closure }
+   */
   static fromFunction (func, varMapping) {
-    /* show-in-doc */
     return new this(func, varMapping || {});
   }
 
+  /**
+   * Creates a Closure from a JavaScript source string.
+   * @static
+   * @param { string } source - The source code defining the function.
+   * @param { object } [varMapping] - The variable bindings for the closure.
+   * @param { Closure }
+   */
   static fromSource (source, varMapping) {
-    /* show-in-doc */
     return new this(null, varMapping || {}, source);
   }
 
+  /**
+   * Create a `Closure`.
+   * @param { function } func
+   * @param { object } varMapping
+   * @param { string } source
+   * @param { object } funcProperties
+   */
   constructor (func, varMapping, source, funcProperties) {
     this.originalFunc = func;
     this.varMapping = varMapping || {};
@@ -41,14 +66,18 @@ export default class Closure {
     this.setFuncProperties(func || funcProperties);
   }
 
+  /**
+   * @property { boolean }
+   */
   get isLivelyClosure () { return true; }
 
-  // serialization
   get doNotSerialize () { return ['originalFunc']; }
 
-  // accessing
+  /**
+   * Sets the source code of the closure.
+   * @param { string } src
+   */
   setFuncSource (src) {
-    /* show-in-doc */
     src = typeof lively !== 'undefined' && lively.sourceTransform &&
        typeof lively.sourceTransform.stringifyFunctionWithoutToplevelRecorder === 'function'
       ? lively.sourceTransform.stringifyFunctionWithoutToplevelRecorder(src)
@@ -56,29 +85,43 @@ export default class Closure {
     return this.source = src;
   }
 
+  /**
+   * Returns the source code of the closure.
+   * @returns { string }
+   */
   getFuncSource () {
-    /* show-in-doc */
     return this.source || this.setFuncSource(this.originalFunc);
   }
 
+  /**
+   * Wether or not the closure has the source code of the function stored.
+   * @returns { boolean }
+   */
   hasFuncSource () {
-    /* show-in-doc */
     return this.source && true;
   }
 
+  /**
+   * Retrieve the original javascript function this closure represents.
+   * @returns { function }
+   */
   getFunc () {
-    /* show-in-doc */
     return this.originalFunc || this.recreateFunc();
   }
 
+  /**
+   * A function may have state attached. This returns the stored properties.
+   * @returns { object }
+   */
   getFuncProperties () {
-    // ignore-in-doc
-    // a function may have state attached
     return this.funcProperties || (this.funcProperties = {});
   }
 
+  /**
+   * Attaches state to the function.
+   * @returns { object }
+   */
   setFuncProperties (obj) {
-    // ignore-in-doc
     const props = this.getFuncProperties();
     for (const name in obj) {
       // The AST implementation assumes that Function objects are some
@@ -92,14 +135,23 @@ export default class Closure {
     }
   }
 
+  /**
+   * Lookup the binding of a given variable name.
+   * @param { string } name - The name of the variable.
+   * @returns { * } The value the variable is bound to.
+   */
   lookup (name) {
-    /* show-in-doc */
     return this.varMapping[name];
   }
-
+  
+  /**
+   * Returns the names of all the parameters of the function.
+   * @access private
+   * @param {string} methodString - The source code of the function.
+   * @returns { string[] } The list of parameter names.
+   */
   parameterNames (methodString) {
-    // ignore-in-doc
-
+    // fixme: How to remove dependency of lively.ast? rms 21.1.22
     if (typeof lively !== 'undefined' && lively.ast && lively.ast.parseFunction) {
       return (lively.ast.parseFunction(methodString).params || []).map(function (ea) {
         if (ea.type === 'Identifier') return ea.name;
@@ -113,31 +165,42 @@ export default class Closure {
     const paramsString = paramsMatch[1] || paramsMatch[2] || '';
     return paramsString.split(',').map(function (ea) { return ea.trim(); });
   }
-
+  
+  /**
+   * Returns the first parameter name derived from a given source code string of the function.
+   * @access private
+   * @param {string} src - The source code of the function.
+   * @returns {string} The name of the first parameter.
+   */
   firstParameter (src) {
-    // ignore-in-doc
     return this.parameterNames(src)[0] || null;
   }
 
   // -=-=-=-=-=-=-=-=-=-
   // function creation
   // -=-=-=-=-=-=-=-=-=-
+
+  /**
+   * Creates a real function object.
+   * @returns { function }
+   */
   recreateFunc () {
-    // Creates a real function object
     return this.recreateFuncFromSource(this.getFuncSource(), this.originalFunc);
   }
 
+  /**
+   * what about objects that are copied by value, e.g. numbers?
+   * when those are modified after the originalFunc we captured
+   * varMapping then we will have divergent state.
+   * @access private
+   */
   recreateFuncFromSource (funcSource, optFunc) {
-    // ignore-in-doc
-    // what about objects that are copied by value, e.g. numbers?
-    // when those are modified after the originalFunc we captured
-    // varMapping then we will have divergent state
     const closureVars = [];
-    let thisFound = false;
+    // let thisFound = false;
     const specificSuperHandling = this.firstParameter(funcSource) === '$super';
     for (const name in this.varMapping) {
       if (!this.varMapping.hasOwnProperty(name)) continue;
-      if (name == 'this') { thisFound = true; continue; }
+      // if (name === 'this') { thisFound = true; continue; }
       // closureVars.push(`var ${name} = this.varMapping.${name};\n`);
       closureVars.push('var ' + name + ' = this.varMapping.' + name + ';\n');
     }
@@ -163,8 +226,10 @@ export default class Closure {
     }
   }
 
+  /**
+   * @access private
+   */
   addFuncProperties (func) {
-    // ignore-in-doc
     const props = this.getFuncProperties();
     for (const name in props) {
       if (props.hasOwnProperty(name)) { func[name] = props[name]; }
@@ -172,26 +237,29 @@ export default class Closure {
     this.addClosureInformation(func);
   }
 
+  /**
+   * Signal that function creation was unsuccessful.
+   * @access private
+   */
   couldNotCreateFunc (src) {
-    // ignore-in-doc
     const msg = 'Could not recreate closure from source: \n' + src;
     console.error(msg);
     return function () { throw new Error(msg); };
   }
 
-  // -=-=-=-=-=-
-  // conversion
-  // -=-=-=-=-=-
+  /**
+   * Returns the function represented by the closure.
+   * @returns { function }
+   */
   asFunction () {
-    /* ignore-in-doc */
     return this.recreateFunc();
   }
 
-  // -=-=-=-=-=-=-=-=-=-=-=-
-  // function modification
-  // -=-=-=-=-=-=-=-=-=-=-=-
+  /**
+   * Attach meta attributes to a function object.
+   * @access private
+   */
   addClosureInformation (f) {
-    /* ignore-in-doc-in-doc */
     f.hasLivelyClosure = true;
     f.livelyClosure = this;
     return f;
