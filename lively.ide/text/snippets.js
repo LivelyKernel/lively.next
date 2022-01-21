@@ -89,7 +89,7 @@ export class Snippet {
       this.expansion = this.expansion(m.document.textInRange({ start: m.cursorPosition, end: m.document.endPosition }));
     }
     let indent = m.cursorPosition.column;
-    var expansion = this.expansion;
+    var expansion = this.expansion; // eslint-disable-line no-var
 
     if (this.trigger) { indent -= this.trigger.length; }
     indent = Math.max(0, indent);
@@ -100,7 +100,7 @@ export class Snippet {
       expansion = lines.join('\n');
     }
 
-    var { expansion, steps } = this.createExpansionSteps(expansion);
+    var { expansion, steps } = this.createExpansionSteps(expansion); // eslint-disable-line no-var
 
     if (this.trigger) { sel.growLeft(this.trigger.length); }
 
@@ -150,7 +150,7 @@ export class Snippet {
   }
 
   nextStep () {
-    const { steps, stepIndex, startAnchor, isExpanding } = this.expansionState;
+    const { steps, stepIndex, isExpanding } = this.expansionState;
     const m = this.textMorph;
     if (!isExpanding || !m) return;
     const sel = m.selection;
