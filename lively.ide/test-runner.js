@@ -320,6 +320,7 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async jumpToTest (test, file) {
+    const li = LoadingIndicator.open('Scanning source code...');
     try {
       const browser = await this.findBrowserForFile(file);
       browser.getWindow().activate();
@@ -332,7 +333,9 @@ export default class TestRunner extends HTMLMorph {
       // target = tests[1]
       ed.selection = ed.astNodeRange(target.node);
       ed.centerRow(ed.selection.start.row);
-    } catch (err) { this.showError(err); }
+    } catch (err) { this.showError(err); } finally {
+      li.remove();
+    }
   }
 
   showError (err) {

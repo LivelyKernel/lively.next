@@ -2,6 +2,7 @@ import { resource } from 'lively.resources';
 
 export const editableFiles = ['md', 'js', 'json', 'less'];
 
+/* eslint-disable no-unused-vars */
 async function listEditableFilesInDir (url) {
   const resources = (await resource(url).dirList())
     .filter(res => res.isDirectory() || editableFiles.includes(res.ext()));
@@ -32,3 +33,4 @@ async function listJSONScope (url) {
     };
   });
 }
+/* eslint-enable no-unused-vars */

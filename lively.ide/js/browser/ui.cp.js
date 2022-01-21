@@ -1,14 +1,12 @@
-import { component, part, ViewModel } from 'lively.morphic/components/core.js';
+import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
 import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout } from 'lively.morphic';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
-import { DefaultList } from 'lively.components/list.cp.js';
-import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
-import { PackageTreeData, BrowserModel, DirectoryControls, PackageControls } from './index.js';
-import { signal, noUpdate, connect } from 'lively.bindings';
-import { arr, promise } from 'lively.lang';
-import { EvalBackendButton } from '../eval-backend-ui.js';
 import { HorizontalResizer } from 'lively.components';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
+import { promise } from 'lively.lang';
+import { EvalBackendButton } from '../eval-backend-ui.js';
+import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 
 const FileStatusDefault = component({
   name: 'file status default',
@@ -267,7 +265,7 @@ export class PathIndicator extends Morph {
   }
 
   reset () {
-    const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+    const { statusBox, statusLabel, errorControls } = this.ui;
     this.master = FileStatusDefault;
     errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
     statusBox.opacity = statusLabel.opacity = 0;
@@ -291,7 +289,7 @@ export class PathIndicator extends Morph {
   }
 
   adjustHeight () {
-    const { statusBox, clipboardControls, pathContainer, errorControls } = this.ui;
+    const { errorControls } = this.ui;
     if (this.ui.statusBox.opacity > 0) {
       this.height = errorControls.bottom;
     } else {
@@ -858,6 +856,8 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
 
 async function open () {
   const browser = part(SystemBrowser);
+  await browser.viewModel.toggleWindowStyle(false);
+  await browser.viewModel.ensureColumnViewData();
   browser.openInWindow();
   return browser;
 }

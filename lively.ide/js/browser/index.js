@@ -31,7 +31,7 @@ import DefaultTheme from '../../themes/default.js';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { loadPart } from 'lively.morphic/partsbin.js';
 import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
-import { resource } from 'lively.resources/index.js';
+
 import lint from '../linter.js';
 
 import { mdCompiler } from '../../md/compiler.js';
@@ -79,13 +79,13 @@ export class DirectoryControls extends Morph {
 
   onMouseUp (evt) {
     super.onMouseUp(evt);
-    if (evt.targetMorph.name == 'remove selected') {
+    if (evt.targetMorph.name === 'remove selected') {
       this.removeSelected();
     }
-    if (evt.targetMorph.name == 'add file') {
+    if (evt.targetMorph.name === 'add file') {
       this.addFile(evt);
     }
-    if (evt.targetMorph.name == 'add folder') {
+    if (evt.targetMorph.name === 'add folder') {
       this.addFolder();
     }
   }
@@ -135,7 +135,7 @@ export class PackageTreeData extends TreeData {
 
   display (node) {
     const { type, pkg, isCollapsed, isDeclaration, lastModified, size, name } = node;
-    if (type == 'package') {
+    if (type === 'package') {
       return this.displayPackage(pkg);
     } else if (isDeclaration) {
       return this.displayDeclaration(node);
@@ -249,7 +249,7 @@ export class PackageTreeData extends TreeData {
     return [
       ...Icon.textAttribute('cube'),
       ' ' + string.truncate(pkg.name, 26, '…'), {
-        fontStyle: pkg.kind == 'git' ? 'italic' : 'normal'
+        fontStyle: pkg.kind === 'git' ? 'italic' : 'normal'
       },
       `\t${pkg.kind}`, {
         paddingTop: '3px',
@@ -398,7 +398,7 @@ export class PackageTreeData extends TreeData {
     node.isCollapsed = bool;
     node.isDirty = true;
     if (!bool) {
-      if (node.type == 'package') {
+      if (node.type === 'package') {
         node.subNodes = await this.listEditableFilesInPackage(node.url);
         node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
@@ -413,28 +413,28 @@ export class PackageTreeData extends TreeData {
         node.subNodes = node.children;
       }
 
-      if (node.type == 'directory') {
+      if (node.type === 'directory') {
         node.subNodes = await this.listEditableFilesInDir(node.url);
         node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
       }
 
-      if (node.type == 'js') {
+      if (node.type === 'js') {
         node.subNodes = await this.listModuleScope(node.url);
       }
 
-      if (node.type == 'md') {
+      if (node.type === 'md') {
         node.subNodes = await this.listMarkdownHeadings(node.url);
       }
 
-      if (node.type == 'json') {
+      if (node.type === 'json') {
         node.subNodes = await this.listJSONScope(node.url);
       }
     }
   }
 
   getChildren (parent) {
-    let { isCollapsed, subNodes, type } = parent;
+    let { subNodes } = parent;
     let result = subNodes || [];
     // cache for faster parent lookup
     result && result.forEach(n => this.parentMap.set(n, parent));
@@ -590,10 +590,10 @@ export class BrowserModel extends ViewModel {
 
     // remove unncessary stuff
     // FIXME offer option in object ref or pool or removeFn to automate this stuff!
-    var ref = pool.ref(columnView);
+    let ref = pool.ref(columnView);
     if (ref.currentSnapshot.props.submorphs) { ref.currentSnapshot.props.submorphs.value = []; }
     if (ref.currentSnapshot.props.treeData) { delete ref.currentSnapshot.props.treeData; } // remove prop
-    var ref = pool.ref(this.ui.sourceEditor);
+    ref = pool.ref(this.ui.sourceEditor);
     const props = ref.currentSnapshot.props;
     if (props.textAndAttributes) props.textAndAttributes.value = [];
     if (props.attributeConnections) {
@@ -620,6 +620,13 @@ export class BrowserModel extends ViewModel {
         scroll: sourceEditor.scroll
       }
     };
+  }
+
+  async ensureColumnViewData () {
+    const { columnView } = this.ui;
+    if (!columnView.treeData) {
+      await columnView.setTreeData(new PackageTreeData({ browser: this }));
+    }
   }
 
   async viewDidLoad () {
@@ -710,7 +717,7 @@ export class BrowserModel extends ViewModel {
 
   updateSource (source, cursorPos) {
     const ed = this.ui.sourceEditor;
-    if (ed.textString != source) {
+    if (ed.textString !== source) {
       ed.textString = source;
     }
     source = source.split(objectReplacementChar).join('');
@@ -737,7 +744,7 @@ export class BrowserModel extends ViewModel {
   hasUnsavedChanges (compareToSource) {
     let content = this.ui.sourceEditor.textString;
     content = content.split(objectReplacementChar).join('');
-    if (compareToSource && content != compareToSource) {
+    if (compareToSource && content !== compareToSource) {
       return true;
     }
     return this.state.sourceHash !== string.hashCode(content);
@@ -835,16 +842,12 @@ export class BrowserModel extends ViewModel {
       textPosition,
       codeEntity,
       scroll,
-      codeEntityTreeScroll,
-      moduleListScroll,
       systemInterface
     } = browseSpec;
 
-    const { sourceEditor, columnView } = this.ui;
+    const { sourceEditor } = this.ui;
 
-    if (!columnView.treeData) {
-      await columnView.setTreeData(new PackageTreeData({ browser: this }));
-    }
+    await this.ensureColumnViewData();
 
     if (optSystemInterface || systemInterface) {
       this.systemInterface = optSystemInterface || systemInterface;
@@ -906,7 +909,7 @@ export class BrowserModel extends ViewModel {
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
-      return n == td.root || n.url == p.address + '/';
+      return n === td.root || n.ur === p.address + '/';
     }, td.root, false);
     this.onPackageSelected(p);
     await this.whenPackageUpdated();
@@ -916,8 +919,9 @@ export class BrowserModel extends ViewModel {
   async onPackageSelected (p) {
     this.switchMode('js');
     this.state.selectedPackage = p;
+    let deferred;
     if (!this.state.packageUpdateInProgress) {
-      var deferred = promise.deferred();
+      deferred = promise.deferred();
       this.state.packageUpdateInProgress = deferred.promise;
     }
 
@@ -943,7 +947,7 @@ export class BrowserModel extends ViewModel {
   // this.indicateFrozenModuleIfNeeded()
 
   async indicateFrozenModuleIfNeeded () {
-    const { frozenWarning, sourceEditor, metaInfoText } = this.ui;
+    const { metaInfoText } = this.ui;
     const m = await this.systemInterface.getModule(this.selectedModule.url);
     const pkgName = m.package().name;
     const moduleName = m.pathInPackage();
@@ -976,22 +980,20 @@ export class BrowserModel extends ViewModel {
     if (!m) {
       const system = this.systemInterface;
       const p = this.state.selectedPackage;
-      let url; let nameInPackage;
+      let url;
 
       if (await system.doesModuleExist(mName)) {
         if (p && !mName.startsWith(p.url)) {
-          nameInPackage = mName;
           url = p.url + '/' + mName;
-        } else url = nameInPackage = mName;
+        } else url = mName;
       } else if (p && await system.doesModuleExist(p.url + '/' + mName, true)) {
         url = p.url + '/' + mName;
-        nameInPackage = mName;
       }
 
       if (url) {
         const td = columnView.treeData;
         await columnView.setExpandedPath(node => {
-          return node == td.root || url.startsWith(node.url);
+          return node === td.root || url.startsWith(node.url);
         }, td.root, false);
         this.updateSource(await this.systemInterface.moduleRead(url), { row: 0, column: 0 });
       }
@@ -1004,7 +1006,7 @@ export class BrowserModel extends ViewModel {
   async searchForModuleAndSelect (moduleURI) {
     // moduleURI = System.decanonicalize("lively.vm")
     // var x= await (that.getWindow().searchForModuleAndSelect(System.decanonicalize("lively.vm")));
-    const { selectedModule, selectedPackage } = this;
+    const { selectedModule } = this;
     if (selectedModule && selectedModule.url === moduleURI) { return selectedModule; }
 
     const system = this.systemInterface;
@@ -1026,13 +1028,13 @@ export class BrowserModel extends ViewModel {
 
   async loadES6Mocha () {
     const { value: isInstalled } = await this.systemInterface.runEval(`
-      const g = typeof global != 'undefined' ? global : window;
+      const g = typeof global !== 'undefined' ? global : window;
      !!g.Mocha && !!g.chai
     `, { targetModule: this.selectedModule.url });
     if (isInstalled) return;
     await this.systemInterface.importPackage('mocha-es6');
     await this.systemInterface.runEval(`
-      const g = typeof global != 'undefined' ? global : window;
+      const g = typeof global !== 'undefined' ? global : window;
       const promise = await System.import('lively.lang/promise.js')
       promise.waitFor(30 * 1000, () =>  !!g.Mocha && !!g.chai);
     `, { targetModule: this.selectedModule.url });
@@ -1047,7 +1049,7 @@ export class BrowserModel extends ViewModel {
       this.onModuleSelected(selectedFile);
     }
 
-    if (selectedFile.type == 'package') {
+    if (selectedFile.type === 'package') {
       this.onPackageSelected(selectedFile.pkg);
     }
 
@@ -1066,14 +1068,13 @@ export class BrowserModel extends ViewModel {
   async onModuleSelected (m) {
     const pack = this.selectedPackage;
     const win = this.view.getWindow();
-    const { columnView } = this.ui;
 
     if (this._return) return;
     if (this.selectedModule && this.hasUnsavedChanges()) {
       const proceed = await this.warnForUnsavedChanges();
       if (!proceed) {
         this._return = true;
-        const m = await this.state.history.navigationInProgress;
+        await this.state.history.navigationInProgress;
         await this.selectModuleNamed(arr.last(this.state.history.left).module.url);
         this._return = false;
         return;
@@ -1095,8 +1096,9 @@ export class BrowserModel extends ViewModel {
       return;
     }
 
+    let deferred;
     if (!this.state.moduleUpdateInProgress) {
-      var deferred = promise.deferred();
+      deferred = promise.deferred();
       this.state.moduleUpdateInProgress = deferred.promise;
     }
 
@@ -1244,8 +1246,8 @@ export class BrowserModel extends ViewModel {
 
   async onCodeEntitySelected (entity) {
     if (!entity) return;
-    const { sourceEditor, metaInfoText } = this.ui;
-    if (this.selectedModule.type == 'js') {
+    const { sourceEditor } = this.ui;
+    if (this.selectedModule.type === 'js') {
       const start = sourceEditor.indexToPosition(entity.node.start);
       const end = sourceEditor.indexToPosition(entity.node.end);
       sourceEditor.cursorPosition = start;
@@ -1253,7 +1255,7 @@ export class BrowserModel extends ViewModel {
       sourceEditor.centerRange({ start, end });
       sourceEditor.scrollDown(-60);
     }
-    if (this.selectedModule.type == 'md') {
+    if (this.selectedModule.type === 'md') {
       sourceEditor.execCommand('[markdown] goto heading', { choice: entity });
     }
   }
@@ -1313,7 +1315,7 @@ export class BrowserModel extends ViewModel {
     }
 
     await this.ui.columnView.setExpandedPath((n) => {
-      return n.name == def.name || !!parents.find(p => p.type == n.type && p.name == n.name);
+      return n.name === def.name || !!parents.find(p => p.type === n.type && p.name === n.name);
     }, this.selectedModule, animated);
     this.onListSelectionChange(this.ui.columnView.getExpandedPath());
     return def;
@@ -1332,7 +1334,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async updateCodeEntities (mod) {
-    const { editorPlugin, ui: { columnView } } = this;
+    const { columnView } = this.ui;
     const modNode = columnView.getExpandedPath().find(node => this.isModule(node));
     modNode.subNodes = null;
     await columnView.treeData.collapse(modNode, false);
@@ -1345,11 +1347,11 @@ export class BrowserModel extends ViewModel {
   }
 
   isMarkdown (mod) {
-    return mod.type == 'md';
+    return mod.type === 'md';
   }
 
   updateTestUI (mod) {
-    const { runTestsInModuleButton, sourceEditor, moduleCommands, metaInfoText } = this.ui;
+    const { metaInfoText, sourceEditor } = this.ui;
     let hasTests = false;
     if (this.editorPlugin.isJSEditorPlugin) {
       try {
@@ -1388,28 +1390,25 @@ export class BrowserModel extends ViewModel {
     return items;
   }
 
-  // await this.getInstalledPackagesList()
-
   async updatePackageDependencies () {
-    const parsedJSON = this.editorPlugin.parse();
-    const { sourceEditor } = this.ui;
-    const installedPackages = await this.getInstalledPackagesList();
-    const depDefFields = parsedJSON.body[0].expression.properties.filter(p => {
-      return ['devDependencies', 'dependencies'].includes(p.key.value);
-    });
-    // find added modules
-    return;
-    for (const field of depDefFields) {
-      for (const { key: { value: packageName }, value: { value: range }, end } of field.value.properties) {
-        if (modules.semver.validRange(range) || modules.semver.valid(range)) {
-          if (installedPackages.find(p => p._name === packageName && modules.semver.satisfies(p.version, range))) { continue; }
-          const { versions } = await resource(`https://registry.npmjs.com/${packageName}`).makeProxied().readJson();
-          // find the best match for the version that satisfies the range
-          const version = modules.semver.minSatisfying(obj.keys(versions), range);
-          await this.installPackage(packageName, version, end);
-        }
-      }
-    }
+    // const parsedJSON = this.editorPlugin.parse();
+    // const installedPackages = await this.getInstalledPackagesList();
+    // const depDefFields = parsedJSON.body[0].expression.properties.filter(p => {
+    //   return ['devDependencies', 'dependencies'].includes(p.key.value);
+    // });
+    // // find added modules
+    // 
+    // for (const field of depDefFields) {
+    //   for (const { key: { value: packageName }, value: { value: range }, end } of field.value.properties) {
+    //     if (modules.semver.validRange(range) || modules.semver.valid(range)) {
+    //       if (installedPackages.find(p => p._name === packageName && modules.semver.satisfies(p.version, range))) { continue; }
+    //       const { versions } = await resource(`https://registry.npmjs.com/${packageName}`).makeProxied().readJson();
+    //       // find the best match for the version that satisfies the range
+    //       const version = modules.semver.minSatisfying(obj.keys(versions), range);
+    //       await this.installPackage(packageName, version, end);
+    //     }
+    //   }
+    // }
   }
 
   async installPackage (name, version, sourceIdx) {
@@ -1422,7 +1421,7 @@ export class BrowserModel extends ViewModel {
     }
 
     try {
-      const { pkgRegistry, buildFailed } = await this.runOnServer(`        
+      const { pkgRegistry } = await this.runOnServer(`        
         async function installPackage(name, version) {
           let Module = System._nodeRequire("module"),
               flatn = Module._load("flatn")
@@ -1507,7 +1506,7 @@ export class BrowserModel extends ViewModel {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // FIXME!!!!!! redundant with module load / prepare "mode" code!
     // this seems to always scan the transformed code. this is not what we want...
-    const format = (await system.moduleFormat(module.url)) || 'esm';
+    (await system.moduleFormat(module.url)) || 'esm';
     const [_, ext] = module.name.match(/\.([^\.]+)$/) || [];
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -1519,7 +1518,7 @@ export class BrowserModel extends ViewModel {
           await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
-          if (ext == 'less') {
+          if (ext === 'less') {
             // notify dependent html morphs that are mounted in the world
             $world.getSubmorphsByStyleClassName('HTMLMorph').forEach(html => {
               html.updateLessIfNeeded();
@@ -1683,7 +1682,7 @@ export class BrowserModel extends ViewModel {
     else goBack.enable();
 
     // if there is no future, disable the forward button
-    if (this.state.history.right.length == 0) goForward.disable();
+    if (this.state.history.right.length === 0) goForward.disable();
     else goForward.enable();
   }
 
@@ -1752,7 +1751,7 @@ export class BrowserModel extends ViewModel {
     if (this.state.isSaving) return;
 
     const m = modules.module(evt.module);
-    const { selectedModule, selectedPackage } = this;
+    const { selectedPackage } = this;
 
     if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address) { }
 
@@ -1796,7 +1795,7 @@ export class BrowserModel extends ViewModel {
   }
 
   focus (evt) {
-    const { metaInfoText, sourceEditor } = this.ui;
+    const { sourceEditor } = this.ui;
     sourceEditor.focus();
   }
 
@@ -1923,8 +1922,9 @@ export class BrowserModel extends ViewModel {
     const m = this.selectedModule;
     const system = this.systemInterface;
     const requester = this.view;
+    let mods;
     try {
-      var mods = await system.interactivelyAddModule(requester, m ? m.name : p ? p.address : null);
+      mods = await system.interactivelyAddModule(requester, m ? m.name : p ? p.address : null);
     } catch (e) {
       e === 'Canceled'
         ? requester.setStatusMessage(e)
@@ -1952,9 +1952,9 @@ export class BrowserModel extends ViewModel {
     if (!dirPath.endsWith('/')) dirPath += '/';
     await coreInterface.resourceMkdir(dirPath);
     // uncollapse the parent node of the dir
-    const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+    const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     if (parentNode) await td.collapse(parentNode, false);
-    columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+    columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
   }
 
   async interactivelyAddNewModule (dir, type) {
@@ -1970,7 +1970,7 @@ export class BrowserModel extends ViewModel {
         name = name.replace(/(\.js|\.md|\.json)$/, '') + '.' + type;
       }
     } else {
-      while (name != undefined && !name.match(/(\.js|\.md|\.json)$/)) {
+      while (name !== undefined && !name.match(/(\.js|\.md|\.json)$/)) {
         name = await this.world().prompt([
           'Enter module name\n', null,
           'Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
@@ -1981,9 +1981,9 @@ export class BrowserModel extends ViewModel {
     let dirPath = joinPath(dir, name);
     await coreInterface.resourceEnsureExistance(dirPath);
     // uncollapse the parent node of the dir
-    const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+    const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     if (parentNode) await td.collapse(parentNode, false);
-    columnView.selectNode(parentNode.subNodes.find(n => n.url == dirPath));
+    columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
   }
 
   async interactivelyBrowseHistory () {
@@ -2026,7 +2026,7 @@ export class BrowserModel extends ViewModel {
     const coreInterface = systemInterface.coreInterface;
     const td = columnView.treeData;
     if (!dir || !selectedPackage) return;
-    const parentNode = columnView.getExpandedPath().find(n => n.url == dir);
+    const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
     const textStyle = { fontSize: 16, fontWeight: 'normal ' };
     if (!selectedNodeInDir) return;
@@ -2043,7 +2043,7 @@ export class BrowserModel extends ViewModel {
         return this.execCommand('remove module', { mod: selectedNodeInDir });
       }
     }
-    if (selectedNodeInDir.type == 'directory') {
+    if (selectedNodeInDir.type === 'directory') {
       const proceed = await this.world().confirm([
         'Folder removal\n', {},
         'You are about to remove a folder containing several modules. ', textStyle,
