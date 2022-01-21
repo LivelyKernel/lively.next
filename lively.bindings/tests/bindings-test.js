@@ -12,6 +12,7 @@ import {
 } from 'lively.bindings';
 import { module } from 'lively.modules/index.js';
 import { runEval } from 'lively.vm';
+import { asScript } from 'lively.lang/function.js';
 
 describe('connect', () => {
   it('attribute to attribute connection', function () {
@@ -551,7 +552,7 @@ describe('method connections', () => {
   });
 
   it('connect and disconnect scripts', function () {
-    let obj = { m1: (function () { return 1; }).asScript(), m2: (function () { return 2; }).asScript() };
+    let obj = { m1: asScript(function () { return 1; }), m2: asScript(function () { return 2; }) };
     connect(obj, 'm1', obj, 'm2');
     expect().assert(2, obj.m1(), 'connect not working');
     disconnect(obj, 'm1', obj, 'm2');
