@@ -1371,7 +1371,7 @@ const commands = [
       fader.openInWorld(pt(0, 0));
       fader.animate({ opacity: 1, duration: 300 });
 
-      const worldList = oldWorld.get('a project browser') || await resource('part://partial freezing/project browser').read();
+      const worldList = oldWorld.get('a project browser') || part(WorldBrowser, { name: 'a project browser' });
       worldList.name = 'a project browser';
       worldList.hasFixedPosition = true;
       worldList.epiMorph = true;
