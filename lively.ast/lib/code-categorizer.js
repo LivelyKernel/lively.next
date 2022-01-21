@@ -245,7 +245,7 @@ function parseDescribeBlock (parent) {
  */
 function describe (node) {
   if (node.type !== 'ExpressionStatement') return null; 
-  if (node.expression && node.expression.callee.name !== 'describe' && node.expression.callee.name !== 'xdescribe') return null;
+  if (node.expression && Path('expression.callee.name').get(node) !== 'describe' && Path('expression.callee.name').get(node) !== 'xdescribe') return null;
   
   const parsedNode = { name: node.expression.arguments[0].value, node, type: node.expression.callee.name };
   parsedNode.children = parseDescribeBlock(node);
