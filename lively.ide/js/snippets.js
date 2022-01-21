@@ -1,3 +1,5 @@
+
+import { parseFunction } from 'lively.ast';
 export const snippets = [
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // # typeof tests
@@ -127,10 +129,36 @@ export const snippets = [
   ['aw', 'await $0'],
 
   // jsdoc
-  ['docstring', `/**
- * \${0:description}
- */`],
-
+  // tries to parse the next line a function declaration and create a docstring for the function with parameter names and placeholders for type etc.
+  // if that fails, just create a regular docstring
+  ['docstring', (followingSourceCode) => {
+    try {
+      // get the function declaration part (until parameters brackets closed) on the next line
+      let nextSourceLine = followingSourceCode.split('\n', 2)[1];
+      nextSourceLine = nextSourceLine.replace('get ', 'function ');
+      nextSourceLine = nextSourceLine.replace('set ', 'function ');
+      nextSourceLine = nextSourceLine.replace('function ', '');
+      const nextFuncDef = nextSourceLine.match(/.* \(.*\).*$/gm)[0];
+      const nextFuncSignature = nextFuncDef.substring(0, nextFuncDef.lastIndexOf(' '));
+      // convert the extracted declaration to a function, parse its parameters and get their names
+      const nextFunc = eval('(' + 'function ' + nextFuncSignature + '{}' + ')');
+      const argNodes = parseFunction(nextFunc).params;
+      const args = argNodes.map((argumentNode) => {
+        if (argumentNode.type === 'Identifier') return argumentNode.name;
+        if (argumentNode.type === 'AssignmentPattern') return argumentNode.left.name;
+        if (argumentNode.type === 'RestElement') return argumentNode.argument.name;
+      });
+      // construct docstring following the normal snippet templating language
+      let docstring = '\n/**\n * \${0:description}\n'; let expansionIndex = 1;
+      for (const arg of args) {
+        docstring = docstring.concat(' * @param \{${' + expansionIndex++ + ':type}\} ' + arg + ' - ${' + expansionIndex++ + ':description}\n'); 
+      }
+      docstring = docstring.concat(' */');
+      return docstring; 
+    } catch (error) {
+      return '\n/**\n * ${0:description}\n */'; 
+    }
+  }],
   // eslint
   ['desl', '// eslint-disable-line \${0:rule}']
 
