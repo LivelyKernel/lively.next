@@ -8,6 +8,13 @@ function addIndexToTextPos (textMorph, textPos, index) {
 }
 
 export class Snippet {
+  /**
+   * When `expansion` is a string the default templating language is used.
+   * When `expansion` is a function, if will be executed and get passed all text following the insert position in the document.
+   * The return value of the function will then be used for the expansion, i.e. the function needs to return a string.
+   * The replacement of the function with its return value happens when `expandAtCursor` of the snippet is executed.
+   * The string can contain the normal templating language. This allows to define context-aware snippets.
+   */
   constructor (opts = { trigger: null, expansion: '' }) {
     const { trigger, expansion } = opts;
     this.trigger = trigger;
@@ -78,6 +85,9 @@ export class Snippet {
 
   expandAtCursor (textMorph) {
     const m = textMorph; const sel = m.selection;
+    if (typeof this.expansion === 'function') {
+      this.expansion = this.expansion(m.document.textInRange({ start: m.cursorPosition, end: m.document.endPosition }));
+    }
     let indent = m.cursorPosition.column;
     var expansion = this.expansion;
 
