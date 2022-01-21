@@ -19,7 +19,7 @@
         "template": "node_modules/clean-jsdoc-theme",
         "theme_opts": {
             "theme": "dark",
-            "title": "<img src='logo.svg' />",
+            "title": "<img src='logo.svg' style='padding: 0px 5px;' />",
             "favicon": "favicon.ico"
         }
     },
