@@ -15,7 +15,7 @@ jobs:
       with:
         node-version: '16.13.1'
     - name: Install jsdocs
-      run: npm install -g jsdoc
+      run: npm install -g jsdoc@3.6.7
     - name: Install jsodc theme
       run: npm install clean-jsdoc-theme
     - name: Build docs
