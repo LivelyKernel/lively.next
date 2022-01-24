@@ -2,6 +2,7 @@ name: Check Docs Build
 
 on:
   push:
+  workflow_dispatch:
 
 jobs:
   check:
