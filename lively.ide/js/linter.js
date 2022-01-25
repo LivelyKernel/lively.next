@@ -92,7 +92,8 @@ const rules = {
   // These are rules that cannot be automatically fixed, but for which we want to get a warning upon violation
   'no-debugger': 'warn',
   'no-unreachable': 'warn',
-  'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }]
+  'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }],
+  'no-use-before-define': ['error', { functions: true, classes: true, variables: true }]
 };
 
 config.rules = rules;
