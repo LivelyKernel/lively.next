@@ -109,8 +109,10 @@ export class CommentBrowserModel extends ViewModel {
     this.commentGroups[morph.id].updateName();
   }
 
-  getCommentCount () {
-    return this.ui.container.submorphs.reduce((acc, cur) => cur.viewModel.getCommentCount() + acc, 0);
+  getUnresolvedCommentCount () {
+    let count = 0;
+    $world.withAllSubmorphsDo(m => count += m.comments.filter(c => !c.resolved).length);
+    return count;
   }
 
   /**
@@ -135,7 +137,7 @@ export class CommentBrowserModel extends ViewModel {
   }
 
   updateCommentCountBadge () {
-    const count = this.getCommentCount();
+    const count = this.getUnresolvedCommentCount();
     let badge = $world.get('comment count badge');
     const topbar = $world.get('lively top bar');
     if (!topbar) return;

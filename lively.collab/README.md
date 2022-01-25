@@ -38,7 +38,8 @@ When the browser is opened, each comment is indicated in the world through a com
 
 #### Resolving Comments
 
-By clicking the "Resolve" button for a comment it can marked as such. Resolved comments will be shown in the corresponding tab of the browser. When that tab is activated the indicators of the resolved comments whill be shown and their color is blue. In this tab comments can also be marked as unresolved again.
+By clicking the "Resolve" button for a comment it can marked as such. Resolved comments will be shown in the corresponding tab of the browser. When that tab is activated the indicators of the resolved comments whill be shown and their color is blue. In this tab comments can also be marked as unresolved again. 
+The badge in the topbar will always show the number of **unresolved** comments in the world. 
 
 ![Comment badge](./img/badge.png)
 
