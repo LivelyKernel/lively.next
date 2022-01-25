@@ -192,6 +192,7 @@ export class ViewModel {
     const defaults = this.defaultProperties;
     const { properties } = this.propertiesAndPropertySettings();
     const propsToSerialize = [];
+    if (this.attributeConnections) propsToSerialize.push('attributeConnections');
     for (let key in properties) {
       const descr = properties[key];
       if (
