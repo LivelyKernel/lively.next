@@ -100,7 +100,7 @@ class TabModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isTab', 'content', 'hasMorphicContent', 'caption'];
+          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected'];
         }
       },
       bindings: {
@@ -396,7 +396,7 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab', 'addTab', 'selectedTab'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands'];
         }
       },
       bindings: {
@@ -550,6 +550,38 @@ class TabsModel extends ViewModel {
   viewDidLoad () {
     if (!this.providesContentContainer && this.ui.tabContentContainer) { this.ui.tabContentContainer.remove(); }
     if (!this.showsSingleTab) this.view.visible = false;
+  }
+
+  get keybindings () {
+    return [
+      { keys: 'Alt-W', command: 'close current tab' },
+      { keys: 'Alt-Q', command: 'select previous tab' },
+      { keys: 'Alt-Y', command: 'select next tab' }
+    ];
+  }
+
+  get commands () {
+    return [
+      {
+        name: 'close current tab',
+        exec: () => {
+          this.selectedTab.close();
+        }
+      },
+      {
+        name: 'select previous tab',
+        exec: () => {
+          const i = this.tabs.indexOf(this.selectedTab);
+          this.tabs[i === 0 ? this.tabs.length - 1 : i - 1].selected = true;
+        }
+      },
+      {
+        name: 'select next tab',
+        exec: () => {
+          const i = this.tabs.indexOf(this.selectedTab);
+          this.tabs[i + 1 === this.tabs.length ? 0 : i + 1].selected = true;
+        }
+      }];
   }
 }
 
