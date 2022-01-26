@@ -836,6 +836,22 @@ export class BrowserModel extends ViewModel {
   // browser actions
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  browseSpec () {
+    let codeEntity;
+    if (this.selectedCodeEntity) {
+      if (Array.isArray(this.selectedCodeEntity)) codeEntity = arr.last(this.selectedCodeEntity).name;
+      else codeEntity = this.selectedCodeEntity.name;
+    } else codeEntity = null;
+    return {
+      packageName: this.selectedPackage.name,
+      textPosition: this.ui.sourceEditor.selection.start,
+      scroll: this.ui.sourceEditor.scroll,
+      moduleName: this.selectedModule ? this.selectedModule.nameInPackage : null,
+      codeEntity,
+      systemInterface: this.systemInterface
+    };
+  }
+  
   async browse (browseSpec = {}, optSystemInterface) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
