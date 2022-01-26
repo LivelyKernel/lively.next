@@ -118,7 +118,10 @@ class TabModel extends ViewModel {
       },
       content: {
         defaultValue: undefined
-      }, 
+      },
+      hasMorphicContent: {
+        defaultValue: true 
+      },
       selected: {
         defaultValue: false,
         set (selected) {
@@ -177,7 +180,7 @@ class TabModel extends ViewModel {
   close () {
     // hook for connection to do cleanup
     signal(this, 'onClose');
-    if (this.content) { this.content.remove(); }
+    if (this.hasMorphicContent && this.content) { this.content.remove(); }
     this.view.remove();
   }
 
@@ -332,6 +335,7 @@ const NewTabButton = component(NewTabButtonDefault, { // eslint-disable-line no-
 /**
  * A container containing the actual tabs, providing layout functionality.
  */
+// part(TabContainer).openInWorld();
 const TabContainer = component({
   name: 'tab container',
   defaultViewModel: TabContainerModel,
@@ -391,14 +395,17 @@ class TabsModel extends ViewModel {
           ];
         }
       },
+      providesContentContainer: {
+        defaultValue: true
+      },
       // this only has the expected value when calling onSelectedTabChange
       _previouslySelectedTab: {}
     };
   }
 
-  addTab (caption, content = undefined, selectAfterCreation = true) {
+  addTab (caption, content = undefined, selectAfterCreation = true, hasMorphicContent = this.providesContentContainer) {
     const newTab = part(Tab, {
-      viewModel: { caption, content },
+      viewModel: { caption, content, hasMorphicContent },
       // This is necessary due to a bug where, if we override viewModel properties,
       // custom masters are discarded from the component definition
       // setting it again here solves this problem
@@ -487,6 +494,7 @@ class TabsModel extends ViewModel {
   }
 
   addContentToSelectedTab (content) {
+    if (!this.providesContentContainer) return;
     const tab = this.selectedTab;
     if (tab) {
       tab.viewModel.content = content;
@@ -494,7 +502,12 @@ class TabsModel extends ViewModel {
     }
   }
 
+  /**
+   * When using a tab system with `providesContentContainer = false` connect to this method to get the associated content of a tab upon its selection.
+   * @param {any} content - The content of a tab that has been selected.
+   */
   showContent (content) {
+    if (!this.providesContentContainer) return content;
     const container = this.ui.tabContentContainer;
     container.submorphs.forEach(submorph => submorph.remove());
 
@@ -503,6 +516,10 @@ class TabsModel extends ViewModel {
       content.position = pt(0, 0);
       content.extent = container.extent;
     }
+  }
+
+  viewDidLoad () {
+    if (!this.providesContentContainer) { this.ui.tabContentContainer.remove(); }
   }
 }
 
@@ -516,9 +533,13 @@ const Tabs = component({
   defaultViewModel: TabsModel,
   layout: new TilingLayout({
     axis: 'column',
-    hugContentsVertically: true,
-    hugContentsHorizontally: true,
-    wrapSubmorphs: false
+    align: 'left',
+    axisAlign: 'left',
+    justifySubmorphs: 'packed',
+    wrapSubmorphs: false,
+    resizePolicies: [
+      ['tab container', { height: 'fixed', width: 'fill' }]
+    ] 
   }),
   submorphs: [
     part(TabContainer),
