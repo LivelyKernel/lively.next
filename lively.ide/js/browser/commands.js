@@ -8,6 +8,32 @@ function isMarkdown (m) {
 export default function browserCommands (browser) {
   const world = browser.world();
 
+  async function runTestsInModule (browser, moduleName, spec) {
+    let runner = browser.get('test runner window');
+    if (!runner) { runner = await world.execCommand('open test runner'); }
+    if (runner.minimized) { runner.toggleMinimize(); }
+    runner.bringToFront();
+    runner = runner.getWindow().targetMorph;
+
+    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
+
+    return spec
+      ? runner[spec.type === 'suite' ? 'runSuite' : 'runTest'](spec.fullTitle)
+      : runner.runTestFile(moduleName);
+  }
+
+  async function runTestsInPackage (browser, packageURL) {
+    let runner = browser.get('test runner window');
+    if (!runner) { runner = await world.execCommand('open test runner'); }
+    if (runner.minimized) { runner.toggleMinimize(); }
+
+    runner = runner.getWindow().targetMorph;
+
+    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
+
+    return runner.runTestsInPackage(packageURL);
+  }
+
   return [
     {
       name: 'focus list with selection',
@@ -423,30 +449,4 @@ export default function browserCommands (browser) {
           { what: 'teardown' })
     }
   ];
-
-  async function runTestsInModule (browser, moduleName, spec) {
-    let runner = browser.get('test runner window');
-    if (!runner) { runner = await world.execCommand('open test runner'); }
-    if (runner.minimized) { runner.toggleMinimize(); }
-    runner.bringToFront();
-    runner = runner.getWindow().targetMorph;
-
-    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
-
-    return spec
-      ? runner[spec.type === 'suite' ? 'runSuite' : 'runTest'](spec.fullTitle)
-      : runner.runTestFile(moduleName);
-  }
-
-  async function runTestsInPackage (browser, packageURL) {
-    let runner = browser.get('test runner window');
-    if (!runner) { runner = await world.execCommand('open test runner'); }
-    if (runner.minimized) { runner.toggleMinimize(); }
-
-    runner = runner.getWindow().targetMorph;
-
-    if (runner.systemInterface !== browser.systemInterface) { runner.systemInterface = browser.systemInterface; }
-
-    return runner.runTestsInPackage(packageURL);
-  }
 }
