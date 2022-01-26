@@ -1,5 +1,5 @@
 import { component, part, ViewModel } from 'lively.morphic/components/core.js';
-import { pt, rect, Color } from 'lively.graphics';
+import { pt, LinearGradient, rect, Color } from 'lively.graphics';
 import { connect, disconnect, signal } from 'lively.bindings';
 import { arr } from 'lively.lang';
 import { Label, TilingLayout, Icon } from 'lively.morphic';
@@ -17,10 +17,16 @@ class TabCloseButton extends Label {
 const DefaultTab = component({
   name: 'tab',
   borderColor: Color.rgb(0, 0, 0),
-  borderWidth: { top: 1, bottom: 0, left: 0, right: 0 },
+  borderRadius: { bottomLeft: 0, bottomRight: 0, topLeft: 5, topRight: 5 },
   clipMode: 'hidden',
   extent: pt(300, 32),
-  fill: Color.rgb(222, 222, 222),
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.white },
+      { offset: 1, color: Color.rgb(236, 240, 241) }
+    ],
+    vector: 0
+  }),
   layout: new TilingLayout({
     axis: 'row',
     axisAlign: 'center',
@@ -33,7 +39,6 @@ const DefaultTab = component({
   submorphs: [{
     name: 'horizontal container',
     halosEnabled: false,
-    borderColor: Color.rgb(23, 160, 251),
     borderStyle: 'none',
     fill: Color.rgba(0, 0, 0, 0),
     reactsToPointer: false,
@@ -75,7 +80,8 @@ const ActiveTab = component(DefaultTab, {
 
 // part(SelectedTab).openInWorld();
 const SelectedTab = component(DefaultTab, {
-  fill: Color.rgb(245, 245, 245),
+  borderWidth: { bottom: 3, top: 0, right: 0, left: 0 },
+  borderColor: Color.rgb(33, 47, 60),
   submorphs: [{
     name: 'horizontal container',
     submorphs: 
@@ -111,7 +117,7 @@ class TabModel extends ViewModel {
           if (!caption) return;
           this.setProperty('caption', caption);
           const captionLabel = this.ui.tabCaption;
-          if (captionLabel) captionLabel.textString = caption.length > 50 ? caption.substring(0, 50) + '...' : caption;
+          if (captionLabel) captionLabel.textString = caption.length > 47 ? caption.substring(0, 47) + '...' : caption;
           if (this.view) this.view.tooltip = caption;
           this.name = caption + ' tab';
         }
@@ -286,7 +292,14 @@ class TabContainerModel extends ViewModel {
 const NewTabButtonDefault = component({
   name: 'new tab button',
   extent: pt(32, 32),
-  fill: Color.rgb(222, 222, 222),
+  borderRadius: { topLeft: 5, bottomLeft: 0, bottomRight: 0, topRight: 0 },
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.white },
+      { offset: 1, color: Color.rgb(236, 240, 241) }
+    ],
+    vector: 0
+  }),
   halosEnabled: false,
   layout: new TilingLayout({
     justifySubmorphs: 'center',
