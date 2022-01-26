@@ -109,12 +109,12 @@ class MasterComponentTreeData extends TreeData {
   }
   
   /**
-   * @type { Morph } - The visual representation of the muller columns view presenting this data.
+   * @returns { Morph } - The visual representation of the muller columns view presenting this data.
    */
   get columnView () { return this.root.browser.ui.componentFilesView; }
 
   /**
-   * @type { LivelySystemInterface } - Returns the local interface to be used to resolve the modules (client only)
+   * @returns { LivelySystemInterface } - Returns the local interface to be used to resolve the modules (client only)
    */
   get systemInterface () { return localInterface; }
 

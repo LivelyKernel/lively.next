@@ -1,3 +1,7 @@
+/**
+ * Methods for running eslint on JS code as well as the linter configuration used in lively.next.
+ */
+
 import { importModuleViaNative } from 'lively.resources';
 import config from 'https://jspm.dev/eslint-config-standard';
 
@@ -105,10 +109,10 @@ config.rules = rules;
  * @property {number} endColumn - Ending column the warning was located at.
  * @property {number} line - Starting line the warning was located at.
  * @property {number} endLine - Ending line the warning was located at.
- * @property {String} message - Message that explains the linter violation.
- * @property {String} messageId - Shorthand for the violated linter rule.
- * @property {String} ruleId - Id of the violated rule.
- * @property {String} nodeType - Ast node type at the point of violation.
+ * @property {string} message - Message that explains the linter violation.
+ * @property {string} messageId - Shorthand for the violated linter rule.
+ * @property {string} ruleId - Id of the violated rule.
+ * @property {string} nodeType - Ast node type at the point of violation.
  * @property {number} severity - Prioritization of the violation.
  */
 
@@ -117,9 +121,9 @@ config.rules = rules;
  * together with a set of generated warnings or violations of the linting rules.
  * We can further provide a custom set of rules that overrides the default
  * rule set for the analysis of the given source code.
- * @param { String } code - The source code to be analyzed and autocorrected.
+ * @param { string } code - The source code to be analyzed and autocorrected.
  * @param { Object } [customRules] - A set of rules to override the default rule set.
- * @returns { [String, LinterMessage[]] }
+ * @returns { Array.<string, LinterMessage[]> }
  */
 export default function lint (code, customRules = {}) {
   const linter = new eslint.Linter();
