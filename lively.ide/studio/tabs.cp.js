@@ -19,7 +19,7 @@ const DefaultTab = component({
   borderColor: Color.rgb(0, 0, 0),
   borderWidth: { top: 1, bottom: 0, left: 0, right: 0 },
   clipMode: 'hidden',
-  extent: pt(100, 32),
+  extent: pt(300, 32),
   fill: Color.rgb(222, 222, 222),
   layout: new TilingLayout({
     axis: 'row',
@@ -94,7 +94,7 @@ class TabModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isTab'];
+          return ['isTab', 'content', 'hasMorphicContent', 'caption'];
         }
       },
       bindings: {
@@ -111,7 +111,7 @@ class TabModel extends ViewModel {
           if (!caption) return;
           this.setProperty('caption', caption);
           const captionLabel = this.ui.tabCaption;
-          if (captionLabel) captionLabel.textString = caption.length > 11 ? caption.substring(0, 8) + '...' : caption;
+          if (captionLabel) captionLabel.textString = caption.length > 50 ? caption.substring(0, 50) + '...' : caption;
           if (this.view) this.view.tooltip = caption;
           this.name = caption + ' tab';
         }
@@ -383,7 +383,7 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab'];
         }
       },
       bindings: {
@@ -396,10 +396,13 @@ class TabsModel extends ViewModel {
         }
       },
       providesContentContainer: {
-        defaultValue: true
+        defaultValue: false
       },
       // this only has the expected value when calling onSelectedTabChange
-      _previouslySelectedTab: {}
+      _previouslySelectedTab: {},
+      showsSingleTab: {
+        defaultValue: true
+      }
     };
   }
 
@@ -421,8 +424,20 @@ class TabsModel extends ViewModel {
    
     tabFlapContainer.addMorph(newTab);
     newTab.viewModel.selected = selectAfterCreation;
-    
+
+    this.updateVisibility(false);
     return newTab;
+  }
+
+  updateVisibility (closing) {
+    if (!this.showsSingleTab && this.tabs.length > 1) {
+      this.view.visible = true;
+      signal(this, 'becameVisible');
+    }
+    if (!this.showsSingleTab && this.tabs.length === 2 && closing) {
+      this.view.visible = false;
+      signal(this, 'becameInvisible');
+    }
   }
 
   initializeConnectionsFor (tab) {
@@ -463,6 +478,7 @@ class TabsModel extends ViewModel {
       this._previouslySelectedTab = undefined;
     }
     this.disbandConnectionsFor(closedTab);
+    this.updateVisibility(true);
     return closedTab;
   }
 
@@ -519,14 +535,15 @@ class TabsModel extends ViewModel {
   }
 
   viewDidLoad () {
-    if (!this.providesContentContainer) { this.ui.tabContentContainer.remove(); }
+    if (!this.providesContentContainer && this.ui.tabContentContainer) { this.ui.tabContentContainer.remove(); }
+    if (!this.showsSingleTab) this.view.visible = false;
   }
 }
 
 /**
  * A tab-system which allows to switch between different contents based on the selected tab.
  */
-// part(Tabs).openInWorld()
+// part(Tabs, {viewModel: {showsSingleTab: false}}).openInWorld()
 const Tabs = component({
   name: 'tabs',
   fill: Color.transparent,
