@@ -294,7 +294,13 @@ class TabContainerModel extends ViewModel {
 
   onMouseWheel (event) {
     const node = this.ui.tabFlapScrollContainer.env.renderer.getNodeForMorph(this.ui.tabFlapScrollContainer);
-    node.scrollLeft = node.scrollLeft + event.domEvt.deltaY;
+    let offset;
+    if (Math.abs(event.domEvt.deltaY) > Math.abs(event.domEvt.deltaX)) {
+      offset = event.domEvt.deltaY;
+    } else {
+      offset = event.domEvt.deltaX;
+    }
+    node.scrollLeft = node.scrollLeft + offset;
     this.ui.tabFlapScrollContainer.setProperty('scroll', pt(node.scrollLeft, node.scrollTop));
     event.stop();
   }
