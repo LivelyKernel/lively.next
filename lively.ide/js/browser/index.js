@@ -679,16 +679,16 @@ export class BrowserModel extends ViewModel {
     const { view } = this;
     const headerButtonsVisibleThreshhold = 400;
     const headerButtonsHeight = Math.ceil(headerButtons.height);
-    
+    const tabsOffset = tabs.visible ? tabs.height : 0;
     headerButtons.visible = view.width > headerButtonsVisibleThreshhold;
     if (!headerButtons.visible) {
       columnView.top = tabs.visible ? tabs.height : 0;
       if (tabs.visible) tabs.top = 0;
-      columnView.height = verticalResizer.top;
+      columnView.height = verticalResizer.top - tabsOffset;
     } else {
       columnView.top = tabs.visible ? headerButtonsHeight + tabs.height : headerButtonsHeight;
       if (tabs.visible) tabs.top = headerButtonsHeight;
-      columnView.height = verticalResizer.top - headerButtonsHeight;
+      columnView.height = verticalResizer.top - headerButtonsHeight - tabsOffset;
     }
     smiley.center = sourceEditor.center;
   }

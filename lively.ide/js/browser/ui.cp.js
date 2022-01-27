@@ -7,7 +7,62 @@ import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
-import { Tabs } from '../../studio/tabs.cp.js';
+import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
+
+const BrowserTabDefault = component(DefaultTab, {
+  name: 'browser/tab/default',
+  defaultViewModel: TabModel,
+  borderRadius: 0,
+  fill: Color.black.withA(.3),
+  submorphs: [{
+    name: 'horizontal container',
+    extent: pt(300, 30.7),
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      orderByIndex: true,
+      padding: rect(6, 6, 0, 0),
+      resizePolicies: [['tab caption', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
+      wrapSubmorphs: false
+    })
+  }]
+});
+
+const BrowserTabSelected = component(BrowserTabDefault, {
+  name: 'browser/tab/selected',
+  opacity: 1,
+  borderRadius: 0,
+  dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.5), blur: 5 }),
+  fill: Color.transparent,
+  submorphs: [{
+    name: 'horizontal container',
+    submorphs: [{
+      name: 'tab caption',
+      fontWeight: 700
+    }]
+  }]
+});
+
+const BrowserTabClicked = component(BrowserTabSelected, {
+  name: 'browser/tab/clicked',
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(126, 127, 127) }, { offset: 1, color: Color.rgb(150, 152, 153) }], vector: rect(0, 0, 0, 1) })
+});
+
+const BrowserTabHovered = component(BrowserTabSelected, {
+  name: 'browser/tab/hovered',
+  dropShadow: null,
+  fill: Color.black.withA(.15),
+  submorphs: [{
+    name: 'horizontal container',
+    submorphs: [{
+      name: 'tab caption',
+      fontWeight: 400
+    }]
+  }]
+});
 
 const FileStatusDefault = component({
   name: 'file status default',
@@ -677,7 +732,11 @@ const SystemBrowser = component({
     extent: pt(605, 32),
     position: pt(0, 50),
     viewModel: {
-      showsSingleTab: false
+      showsSingleTab: false,
+      selectedTabMaster: BrowserTabSelected,
+      defaultTabMaster: BrowserTabDefault,
+      clickedTabMaster: BrowserTabClicked,
+      hoveredTabMaster: BrowserTabHovered
     }
   }), part(MullerColumnView, {
     name: 'column view',
@@ -911,6 +970,7 @@ async function open () {
 export {
   FileStatusDefault, FileStatusError, FileStatusSaved,
   FileStatusFrozen, FileStatusInactive, FileStatusWarning,
+  BrowserTabDefault, BrowserTabClicked, BrowserTabSelected, BrowserTabHovered,
   BackendButtonDefault, BackendButtonClicked,
   DarkButton,
   BrowserDirectoryControls,

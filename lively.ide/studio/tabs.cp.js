@@ -98,6 +98,26 @@ const SelectedTab = component(DefaultTab, {
 class TabModel extends ViewModel {
   static get properties () {
     return {
+      selectedTabMaster: {
+        initialize () {
+          this.selectedTabMaster = SelectedTab;
+        }
+      },
+      defaultTabMaster: {
+        initialize () {
+          this.defaultTabMaster = DefaultTab;
+        }
+      },
+      clickedTabMaster: {
+        initialize () {
+          this.clickedTabMaster = ActiveTab;
+        }
+      },
+      hoveredTabMaster: {
+        initialize () {
+          this.hoveredTabMaster = HoverTab;
+        }
+      },
       expose: {
         get () {
           return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently'];
@@ -170,12 +190,12 @@ class TabModel extends ViewModel {
   setAppearance (isSelected) {
     this.view.master = {};
     if (isSelected) {
-      this.view.master.auto = SelectedTab;
+      this.view.master.auto = this.selectedTabMaster;
     } else {
-      this.view.master.auto = DefaultTab; 
+      this.view.master.auto = this.defaultTabMaster; 
     }
-    this.view.master.hover = HoverTab;
-    this.view.master.clicked = ActiveTab;
+    this.view.master.hover = isSelected ? false : this.hoveredTabMaster;
+    this.view.master.click = this.clickedTabMaster;
     this.view.requestMasterStyling();
   }
 
@@ -210,11 +230,11 @@ class TabModel extends ViewModel {
 
   viewDidLoad () {
     this.caption = this.caption;
-    this.setAppearance(this.selected);
+    // this.setAppearance(this.selected);
   }
 
-  onRefresh () {
-    this.setAppearance(this.selected);
+  onRefresh (prop) {
+    if (prop === 'selected') { this.setAppearance(this.selected); }
   }
 }
 
@@ -223,6 +243,7 @@ class TabModel extends ViewModel {
  */
 // part(Tab).openInWorld()
 const Tab = component(DefaultTab, {
+  name: 'tab',
   defaultViewModel: TabModel,
   master: {
     auto: DefaultTab,
@@ -432,20 +453,63 @@ class TabsModel extends ViewModel {
       _previouslySelectedTab: {},
       showsSingleTab: {
         defaultValue: true
+      },
+      selectedTabMaster: {
+        initialize () {
+          this.selectedTabMaster = SelectedTab;
+        }
+      },
+      defaultTabMaster: {
+        initialize () {
+          this.defaultTabMaster = Tab;
+        }
+      },
+      clickedTabMaster: {
+        initialize () {
+          this.clickedTabMaster = ActiveTab;
+        }
+      },
+      hoveredTabMaster: {
+        initialize () {
+          this.hoveredTabMaster = HoverTab;
+        }
       }
     };
   }
 
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    for (let masterProp of ['selectedTabMaster', 'defaultTabMaster', 'clickedTabMaster', 'hoveredTabMaster']) {
+      let meta = this[masterProp] && this[masterProp][Symbol.for('lively-module-meta')];
+      if (meta) {
+        addFn(masterProp, pool.expressionSerializer.exprStringEncode({
+          __expr__: meta.export,
+          bindings: {
+            [meta.module]: meta.export
+          }
+        }));
+      }
+    }
+  }
+
   addTab (caption, content = undefined, selectAfterCreation = true, hasMorphicContent = this.providesContentContainer) {
-    const newTab = part(Tab, {
-      viewModel: { caption, content, hasMorphicContent },
+    const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
+    const newTab = part(this.defaultTabMaster, {
+      viewModel: { 
+        caption,
+        content,
+        hasMorphicContent,
+        defaultTabMaster,
+        clickedTabMaster,
+        hoveredTabMaster,
+        selectedTabMaster
+      },
       // This is necessary due to a bug where, if we override viewModel properties,
       // custom masters are discarded from the component definition
       // setting it again here solves this problem
       master: {
-        auto: DefaultTab,
-        click: ActiveTab,
-        hover: HoverTab
+        auto: defaultTabMaster,
+        click: clickedTabMaster,
+        hover: hoveredTabMaster
       }
     });
     this.initializeConnectionsFor(newTab);
@@ -629,4 +693,4 @@ const Tabs = component({
   ]
 });
 
-export { Tabs };
+export { TabModel, Tabs, DefaultTab, HoverTab, ActiveTab, SelectedTab };
