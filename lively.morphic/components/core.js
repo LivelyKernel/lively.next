@@ -310,6 +310,22 @@ export class ViewModel {
     const { properties: props } = this.propertiesAndPropertySettings();
     const descriptors = properties.allPropertyDescriptors(this);
     for (let prop of this.expose || []) {
+      if (obj.isArray(prop)) {
+        // expose is a redirect
+        const [subProp, { model, target }] = prop;
+        let redirected;
+        if (model) redirected = this.view.getSubmorphNamed(model).viewModel;
+        if (target) redirected = this.view.getSubmorphNamed(target);
+        Object.defineProperty(this.view, subProp, {
+          configurable: true,
+          get: () => { return redirected[subProp]; },
+          // if read only prop then an error will be thrown on the viewModel which is a little confusing
+          // but fine for now
+          set: (v) => { return redirected[subProp] = v; }
+        });
+        continue;
+      }
+      
       const descr = descriptors[prop];
       if (props[prop] || descr && (!!descr.get || !!descr.set)) {
         // install getter setter
