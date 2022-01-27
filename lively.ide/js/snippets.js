@@ -138,6 +138,7 @@ export const snippets = [
       nextSourceLine = nextSourceLine.replace('get ', 'function ');
       nextSourceLine = nextSourceLine.replace('set ', 'function ');
       nextSourceLine = nextSourceLine.replace('function ', '');
+      nextSourceLine = nextSourceLine.replace('async ', '');
       const nextFuncDef = nextSourceLine.match(/.* \(.*\).*$/gm)[0];
       const nextFuncSignature = nextFuncDef.substring(0, nextFuncDef.lastIndexOf(' '));
       // convert the extracted declaration to a function, parse its parameters and get their names
