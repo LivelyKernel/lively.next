@@ -997,7 +997,7 @@ const commands = [
   {
     name: 'open browser',
     progressIndicator: 'opening browser...',
-    exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js' }, _, evt) => {
+    exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) }, _, evt) => {
       // in case there is another morph implementing open browser...
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
@@ -1005,7 +1005,7 @@ const commands = [
       const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
       let browser;
       if (args) {
-        const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface']);
+        const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll']);
         browser = await Browser.browse(loc, { extent: pt(700, 600) });
       } else {
         browser = await Browser.open();

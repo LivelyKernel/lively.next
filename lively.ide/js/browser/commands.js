@@ -39,6 +39,10 @@ export default function browserCommands (browser) {
       name: 'focus list with selection',
       exec: () => browser.focusColumnView()
     },
+    {
+      name: 'open new tab',
+      exec: () => browser.ui.tabs.addTab('New Browser Tab')
+    },
     { name: 'focus source editor', exec: () => { browser.focusSourceEditor(); return true; } },
 
     {

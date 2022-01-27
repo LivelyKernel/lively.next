@@ -7,6 +7,7 @@ import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
+import { Tabs } from '../../studio/tabs.cp.js';
 
 const FileStatusDefault = component({
   name: 'file status default',
@@ -447,7 +448,9 @@ export class PathIndicator extends Morph {
 // b = part(SystemBrowser)
 // b.get('column view').width
 // b.openInWindow()
+// b.openInWorld()
 // SystemBrowser.openInWorld()
+// SystemBrowser.copy()
 const SystemBrowser = component({
   name: 'system browser',
   defaultViewModel: BrowserModel,
@@ -466,6 +469,10 @@ const SystemBrowser = component({
       ['source editor', {
         x: 'resize',
         y: 'resize'
+      }],
+      ['tabs', {
+        x: 'resize',
+        y: 'fixed'
       }],
       ['meta info text', {
         x: 'resize',
@@ -504,6 +511,10 @@ const SystemBrowser = component({
           x: 'move',
           y: 'fixed'
         }],
+        ['add tab', {
+          x: 'fixed',
+          y: 'fixed'
+        }],
         ['global search', {
           x: 'fixed',
           y: 'fixed'
@@ -511,16 +522,20 @@ const SystemBrowser = component({
         ['browse modules', {
           x: 'fixed',
           y: 'fixed'
-        }], ['go forward', {
+        }], 
+        ['go forward', {
           x: 'fixed',
           y: 'fixed'
-        }], ['browse history', {
+        }], 
+        ['browse history', {
           x: 'fixed',
           y: 'fixed'
-        }], ['go back', {
+        }], 
+        ['go back', {
           x: 'fixed',
           y: 'fixed'
-        }], ['eval backend chooser wrapper', {
+        }], 
+        ['eval backend chooser wrapper', {
           x: 'move',
           y: 'fixed'
         }]]
@@ -589,8 +604,8 @@ const SystemBrowser = component({
         extent: pt(35, 26),
         borderRadius: {
           topLeft: 0,
-          topRight: 5,
-          bottomRight: 5,
+          topRight: 0,
+          bottomRight: 0,
           bottomLeft: 0
         },
         padding: rect(10, 5, 0, 0),
@@ -600,6 +615,30 @@ const SystemBrowser = component({
           fontColor: Color.rgb(52, 73, 94),
           fontSize: 14,
           textAndAttributes: Icon.textAttribute('search')
+        }]
+      }),
+      part(ButtonDefault, {
+        name: 'add tab',
+        extent: pt(35, 26),
+        borderRadius: {
+          topLeft: 0,
+          topRight: 5,
+          bottomRight: 5,
+          bottomLeft: 0
+        },
+        borderWidth: {
+          left: 0,
+          top: 1,
+          bottom: 1,
+          right: 1
+        },
+        padding: rect(10, 5, 0, 0),
+        position: pt(221, 12),
+        submorphs: [{
+          name: 'label',
+          fontColor: Color.rgb(52, 73, 94),
+          fontSize: 14,
+          textAndAttributes: Icon.textAttribute('plus')
         }]
       }),
       {
@@ -633,7 +672,14 @@ const SystemBrowser = component({
           }]
         }]
       }]
-  }, part(MullerColumnView, {
+  }, part(Tabs, {
+    name: 'tabs',
+    extent: pt(605, 32),
+    position: pt(0, 50),
+    viewModel: {
+      showsSingleTab: false
+    }
+  }), part(MullerColumnView, {
     name: 'column view',
     extent: pt(605, 221.1),
     borderWidthBottom: 1,

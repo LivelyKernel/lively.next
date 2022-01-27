@@ -100,7 +100,7 @@ class TabModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected'];
+          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently'];
         }
       },
       bindings: {
@@ -184,9 +184,20 @@ class TabModel extends ViewModel {
   }
 
   close () {
+    if (!this.closeable) {
+      $world.setStatusMessage('This tab cannot be closed.');
+      return; 
+    }
     // hook for connection to do cleanup
     signal(this, 'onClose');
     if (this.hasMorphicContent && this.content) { this.content.remove(); }
+    this.view.remove();
+  }
+
+  /**
+   * Can be used to "just close" a tab. No further logic is regarded and no connections are triggered upon removal
+   */
+  closeSilently () {
     this.view.remove();
   }
 
@@ -385,9 +396,9 @@ const TabContainer = component({
           })
         }
       ]
-    },
+    }
     // Comment in to allow for easier manual testing of the tabs
-    part(NewTabButton)
+    // part(NewTabButton)
   ]
 });
 
@@ -396,14 +407,14 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs'];
         }
       },
       bindings: {
         get () {
           return [
             {
-              target: 'new tab button', signal: 'onMouseDown', handler: 'addTab', updater: '($update) => { $update(); }'
+              // target: 'new tab button', signal: 'onMouseDown', handler: 'addTab', updater: '($update) => { $update(); }'
             }
           ];
         }
@@ -487,6 +498,9 @@ class TabsModel extends ViewModel {
 
   onTabClose (closedTab) {
     if (closedTab.selected) this.selectNearestTab(closedTab);
+    if (this.tabs.length === 2) {
+      signal(this, 'oneTabRemaining');
+    }
     if (this.tabs.length === 1) {
       this._previouslySelectedTab = undefined;
     }

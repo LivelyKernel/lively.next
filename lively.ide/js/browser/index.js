@@ -41,6 +41,7 @@ import { ComponentChangeTracker } from '../../component/editor.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
+import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -561,6 +562,7 @@ export class BrowserModel extends ViewModel {
             { model: 'go forward', signal: 'fire', handler: 'execCommand', converter: () => 'browser history forward' },
             { model: 'browse history', signal: 'fire', handler: 'execCommand', converter: () => 'browser history browse' },
             { model: 'browse modules', signal: 'fire', handler: 'execCommand', converter: () => 'choose and browse module' },
+            { target: 'add tab', signal: 'onMouseDown', handler: () => this.ui.tabs.addTab() },
 
             { target: 'run tests in module', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'run all tests in module' },
             { target: 'jump to entity', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'jump to codeentity' },
@@ -572,7 +574,11 @@ export class BrowserModel extends ViewModel {
 
             { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
-            { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' }
+            { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' },
+            { model: 'tabs', signal: 'onSelectedTabChange', handler: 'browsedTabChanged' },
+            { model: 'tabs', signal: 'oneTabRemaining', handler: 'makeTabsNotCloseable' },
+            { model: 'tabs', signal: 'becameVisible', handler: 'relayout' },
+            { model: 'tabs', signal: 'becameInvisible', handler: 'relayout' }
           ];
         }
       }
@@ -654,6 +660,7 @@ export class BrowserModel extends ViewModel {
       await this.browse(s);
     }
     new EvalBackendChooser().buildEvalBackendDropdownFor(this, this.ui.evalBackendList);
+    this.ui.tabs.addTab('Browser Tab', null);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -666,16 +673,22 @@ export class BrowserModel extends ViewModel {
       sourceEditor,
       headerButtons,
       verticalResizer,
-      smiley
+      smiley,
+      tabs
     } = this.ui;
     const { view } = this;
-    headerButtons.visible = view.width > 400;
+    const headerButtonsVisibleThreshhold = 400;
+    const headerButtonsHeight = Math.ceil(headerButtons.height);
+    
+    headerButtons.visible = view.width > headerButtonsVisibleThreshhold;
     if (!headerButtons.visible) {
-      columnView.top = 0;
+      columnView.top = tabs.visible ? tabs.height : 0;
+      if (tabs.visible) tabs.top = 0;
       columnView.height = verticalResizer.top;
     } else {
-      columnView.top = 50;
-      columnView.height = verticalResizer.top - 50;
+      columnView.top = tabs.visible ? headerButtonsHeight + tabs.height : headerButtonsHeight;
+      if (tabs.visible) tabs.top = headerButtonsHeight;
+      columnView.height = verticalResizer.top - headerButtonsHeight;
     }
     smiley.center = sourceEditor.center;
   }
@@ -902,7 +915,7 @@ export class BrowserModel extends ViewModel {
     }
 
     if (codeEntity) {
-      await this.selectCodeEntity(codeEntity, false);
+      await this.selectCodeEntityInColumnView(codeEntity, false);
     }
 
     if (textPosition) {
@@ -952,6 +965,7 @@ export class BrowserModel extends ViewModel {
         win.title = 'browser';
       } else {
         win.title = 'browser - ' + p.name;
+        this.ui.tabs.selectedTab.caption = p.name;
       }
       // this is super slow. find a faster way to check for tests
       // const tests = await findTestModulesInPackage(this.systemInterface, p);
@@ -1106,6 +1120,7 @@ export class BrowserModel extends ViewModel {
     if (!m) {
       this.updateSource('');
       if (win) win.title = 'browser - ' + (pack && pack.name || '');
+      this.ui.tabs.selectedTab.caption = pack.name;
       this.updateCodeEntities(null);
       this.ui.metaInfoText.textString = '';
       return;
@@ -1154,6 +1169,7 @@ export class BrowserModel extends ViewModel {
       }
 
       if (win) win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
+      this.ui.tabs.selectedTab.caption = `[${pack.name}] ${m.nameInPackage}`;
       const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
       this.ui.sourceEditor.scroll = pt(0, 0);
@@ -1316,7 +1332,7 @@ export class BrowserModel extends ViewModel {
     });
   }
 
-  async selectCodeEntity (spec, animated = true) {
+  async selectCodeEntityInColumnView (spec, animated) {
     if (typeof spec === 'string') spec = { name: spec };
     let def;
     const parents = [this.selectedModule];
@@ -1337,10 +1353,15 @@ export class BrowserModel extends ViewModel {
         parents.push(parent);
       }
     }
-
     await this.ui.columnView.setExpandedPath((n) => {
       return n.name === def.name || !!parents.find(p => p.type === n.type && p.name === n.name);
     }, this.selectedModule, animated);
+    return def;
+  }
+  
+  async selectCodeEntity (spec, animated = true) {
+    const def = await this.selectCodeEntityInColumnView(spec, animated);
+    
     this.onListSelectionChange(this.ui.columnView.getExpandedPath());
     return def;
   }
@@ -1752,6 +1773,65 @@ export class BrowserModel extends ViewModel {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // tab integration
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  makeTabsNotCloseable () {
+    this.ui.tabs.tabs.forEach(tab => tab.closeable = false);
+  }
+
+  adaptViewForTabs () {
+    this.ui.columnView.top = this.ui.columnView.top + 32;
+  }
+
+  async browsedTabChanged (tabs) {
+    const { curr, prev } = tabs;
+    // make it so that we cannot close the very first tab until we have another tab
+    if (!prev) {
+      curr.closeable = false;
+      return; 
+    }
+    this.ui.tabs.tabs.forEach(tab => tab.closeable = true);
+    
+    // make sure that we want to change the tab when the currently edited file is not saved
+    if (this.selectedModule && this.hasUnsavedChanges()) {
+      const proceed = await this.warnForUnsavedChanges();
+      // at this point the tabs has technically already been created
+      // we need to circumvent some of the connections inside of the tab system
+      if (!proceed) {
+        prev.setProperty('selected', true);
+        curr.closeSilently();
+        return; 
+      }
+    }
+
+    // save the current editor state associated with the tab we just left
+    prev.content = {
+      spec: this.browseSpec(),
+      history: this.state.history
+    };
+    if (prev.caption.includes('Browser Tab')) prev.caption = `[${prev.content.packageName}]${prev.content.mdouleName ? '- ' + prev.content.moduleName : ''}`;
+
+    // restore the editor tab from the tab we switched to
+    // if the tab was newly created populate the editor state with fresh data    
+    if (!curr.content) {
+      curr.content = {
+        spec: { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
+        history: {
+          left: [],
+          right: [],
+          navigationInProgress: null
+        }
+      };
+      curr.caption = '[lively.morphic] - morph.js';
+    } 
+    const loading = LoadingIndicator.open('Preparing Editor');
+    this.state.history = curr.content.history;
+    this.refreshHistoryButtons();
+    await this.browse(curr.content.spec);
+    loading.remove();   
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // system events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async onModuleChanged (evt) {
@@ -1851,13 +1931,15 @@ export class BrowserModel extends ViewModel {
       { keys: 'Alt-N', command: 'browser history forward' },
       { keys: 'Alt-H', command: 'browser history browse' },
       { keys: 'Meta-Shift-L b a c k e n d', command: 'activate eval backend dropdown list' },
-      { keys: 'Alt-J', command: 'jump to codeentity' }
-    ];
+      { keys: 'Alt-J', command: 'jump to codeentity' },
+      { keys: 'Meta-N', command: 'open new tab' }
+    ].concat(this.ui.tabs.keybindings);
   }
 
   get commands () {
     return browserCommands(this)
-      .concat(EvalBackendChooser.default.activateEvalBackendCommand(this));
+      .concat(EvalBackendChooser.default.activateEvalBackendCommand(this))
+      .concat(this.ui.tabs.commands);
   }
 
   renderMarkdown () {
