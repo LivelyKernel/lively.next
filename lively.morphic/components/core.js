@@ -3,7 +3,8 @@ import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
 import { deserializeMorph, serializeMorph } from '../serialization.js';
-import { sanitizeFont } from '../helpers.js';
+import { sanitizeFont, getClassForName } from '../helpers.js';
+import { adoptObject } from 'lively.classes/runtime.js';
 
 // varargs, viewModelProps can be skipped
 export function part (masterComponent, overriddenProps = {}, oldParam) {
@@ -40,7 +41,7 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
 // first argument can also be a component!
 // the argument after that are then the overridden properties...
 export function component (masterComponentOrProps, overriddenProps) {
-  let c, props;
+  let c, props, type;
   if (!overriddenProps) {
     props = masterComponentOrProps;
     masterComponentOrProps = null;
@@ -52,6 +53,14 @@ export function component (masterComponentOrProps, overriddenProps) {
     c = part(masterComponentOrProps, overriddenProps);
     c.defaultViewModel = masterComponentOrProps.defaultViewModel;
   } else c = morph({ ...props });
+  
+  if (overriddenProps && (type = overriddenProps.type)) {
+    if (obj.isString(type)) {
+      type = getClassForName(type);
+    }
+    adoptObject(c, type);
+  }
+  
   c.isComponent = true;
   if (props.defaultViewModel) {
     // attach the view model;
