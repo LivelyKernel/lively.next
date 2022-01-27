@@ -276,6 +276,10 @@ export class ViewModel {
         if (!target) target = this.view;
         if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
         if (!target) continue;
+        if (obj.isFunction(handler)) {
+          connect(target, signal, handler);
+          continue;
+        }
         connect(target, signal, this, handler, {
           override,
           converter,
@@ -323,6 +327,7 @@ export class ViewModel {
     const collect = conns => {
       conns.forEach(conn => {
         if (conn.targetObj == this && !!bindingDefinitions.find(def => {
+          if (obj.isFunction(def.handler)) { return conn.targetObj.toString() === def.handler.toString(); }
           return conn.sourceAttrName == def.signal && conn.targetMethodName == def.handler;
         })) {
           bindingConnections.push(conn);
