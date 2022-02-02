@@ -820,7 +820,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this._parametrizedProps = obj.select(props, arr.intersect(Object.keys(props), this.styleProperties));
+    this._parametrizedProps = obj.select(props, arr.intersect(Object.keys(props), [...this.styleProperties, 'master']));
     this.initializeProperties(props);
 
     if (props.bounds) {
@@ -848,7 +848,7 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), this.styleProperties));
+    this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), [...this.styleProperties, 'master']));
     this._parametrizedProps.__takenFromSnapshot__ = true;
     const s = pool.expressionSerializer;
     for (const prop in this._parametrizedProps) {
@@ -998,7 +998,14 @@ export class Morph {
   setProperty (key, value, meta) {
     return this.addValueChange(key, value, meta);
   }
-
+  
+  /**
+  * Change the metadata object of the morph.
+  * @param {string} path - The property path inside the meta object to modify.
+  * @param {object} data - The data to put into the metadata.
+  * @param {boolean} serialize - Wether to mark the data as serializable or not.
+  * @param {boolean} merge - Wether to replace or merge in the updated data.
+  */
   changeMetaData (path, data, serialize = true, merge = true) {
     let { metadata } = this;
     if (!metadata) metadata = {};

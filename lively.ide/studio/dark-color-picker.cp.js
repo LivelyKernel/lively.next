@@ -38,7 +38,7 @@ const DarkColorPicker = component(ColorPicker, {
     submorphs: [{
       name: 'color encoding',
       extent: pt(219.2, 25.3),
-      master: null,
+      clipMode: 'hidden',
       submorphs: [
         {
           name: 'color code selector',
@@ -56,7 +56,6 @@ const DarkColorPicker = component(ColorPicker, {
           submorphs: [{
             name: 'hex encoding',
             extent: pt(150, 25),
-            master: null,
             submorphs: [
               {
                 name: 'hex opacity control',
@@ -75,7 +74,6 @@ const DarkColorPicker = component(ColorPicker, {
               }]
           }, {
             name: '3 val encoding',
-            master: null,
             submorphs: [{
               name: 'opacity control',
               master: NumberInput,
@@ -108,7 +106,6 @@ const DarkColorPicker = component(ColorPicker, {
             }]
           }, {
             name: 'css encoding',
-            master: null,
             submorphs: [{
               name: 'css input',
               fontSize: 14,
