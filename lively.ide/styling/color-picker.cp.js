@@ -1,18 +1,19 @@
-import { component, without, add, part } from 'lively.morphic/components/core.js';
+import { component, add, part } from 'lively.morphic/components/core.js';
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { VerticalLayout, morph, Ellipse, ShadowObject, HTMLMorph, InputLine, Icon, Label, TilingLayout, HorizontalLayout } from 'lively.morphic';
+import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, HorizontalLayout } from 'lively.morphic';
+import {
+  ColorEncoderModel, ColorInputModel, ColorPickerModel, 
+  ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
+} from './color-picker.js';
 import { NumberWidget } from '../value-widgets.js';
-import { ValueScrubber } from 'lively.components/widgets.js';
-import { ColorEncoderModel, ColorInputModel, ColorPickerModel, ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel } from './color-picker.js';
 import { DefaultNumberWidget } from '../value-widgets.cp.js';
-import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
+import { DropDownList } from 'lively.components/list.cp.js';
 import { CheckerPattern, PopupWindow, SystemList } from './shared.cp.js';
 import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
 import { TextInput, PropLabel, NumberInput } from '../studio/shared.cp.js'; // that should be revised...
 
 // ColorInput.openInWorld()
-// part(ColorInput, { viewModel: { gradientEnabled: true, context: this.get('target test') }}).openInWorld()
 const ColorInput = component({
   defaultViewModel: ColorInputModel,
   name: 'color input',

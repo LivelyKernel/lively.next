@@ -1,22 +1,11 @@
-import {
-  Morph, HTMLMorph, morph, StyleSheet, Text, Icon,
-  VerticalLayout,
-  GridLayout,
-  HorizontalLayout
-} from 'lively.morphic';
-import { pt, RadialGradient, webSafeColors, flatDesignColors, materialDesignColors, Rectangle, Color, LinearGradient, rect } from 'lively.graphics';
-import { signal, noUpdate, once, connect } from 'lively.bindings';
+import { Morph, HTMLMorph, Icon } from 'lively.morphic';
+import { pt, RadialGradient, webSafeColors, flatDesignColors, materialDesignColors, Color, LinearGradient, rect } from 'lively.graphics';
+import { signal, noUpdate, connect } from 'lively.bindings';
 import { obj, string, arr, num } from 'lively.lang';
-
-import { Window } from 'lively.components';
-
 import { ColorPalette } from './color-palette.js';
 import { FillPopover, colorWidgets } from './style-popover.js';
-import { Slider } from 'lively.components/widgets.js';
 import { Popover } from 'lively.components/popup.js';
-import { resource } from 'lively.resources/index.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
-import { ExpressionSerializer } from 'lively.serializer2';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
@@ -69,7 +58,7 @@ export class ColorInputModel extends ViewModel {
   }
 
   setMixed (colors) {
-    const { hexInput, opacityInput, gradientName, opaque, transparent, gradient } = this.ui;
+    const { hexInput, opacityInput, gradient } = this.ui;
     // if opacity varies, then set that to mixed
     if (arr.uniq(colors.map(c => c.a)).length > 1) opacityInput.setMixed();
     if (arr.uniq(colors.map(c => c.toHexString())).length > 1) {
@@ -103,13 +92,13 @@ export class ColorInputModel extends ViewModel {
     opacityInput.visible = hexInput.visible = !color.isGradient;
     gradientName.visible = !!color.isGradient;
     if (!color.isGradient) {
-      if (hexInput != control) hexInput.input = color.toHexString().toUpperCase();
-      if (opacityInput != control) opacityInput.number = color.a; // do not confirm this
+      if (hexInput !== control) hexInput.input = color.toHexString().toUpperCase();
+      if (opacityInput !== control) opacityInput.number = color.a; // do not confirm this
       opaque.fill = color.withA(1);
       transparent.fill = color;
     } else {
       gradient.fill = color;
-      if (color.type == 'radialGradient') gradient.fill = new RadialGradient({ ...color, bounds: color.bounds.scaleRectTo(rect(0, 0, 22, 22)) });
+      if (color.type === 'radialGradient') gradient.fill = new RadialGradient({ ...color, bounds: color.bounds.scaleRectTo(rect(0, 0, 22, 22)) });
       gradientName.textString = string.capitalize(color.type.replace('Gradient', ''));
     }
   }
@@ -125,6 +114,11 @@ export class ColorInputModel extends ViewModel {
   async openColorPicker () {
     let ColorPicker = this.colorPickerComponent;
     if (!ColorPicker) ({ ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js'));
+    // ensure correct color picker
+    let meta;
+    if (meta = ColorPicker[Symbol.for('lively-module-meta')]) {
+      ({ [meta.export]: ColorPicker } = await System.import(meta.module));
+    }
     const p = part(ColorPicker, { });
     let color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;
@@ -220,8 +214,6 @@ export class ColorPickerField extends Morph {
       },
       submorphs: {
         initialize () {
-          const topRight = this.innerBounds().topRight();
-          const bottomLeft = this.innerBounds().bottomLeft();
           const colorFieldExtent = pt(40, 25);
 
           this.submorphs = [
@@ -281,7 +273,7 @@ export class ColorPickerField extends Morph {
   }
 
   onKeyDown (evt) {
-    if (evt.key == 'Escape') {
+    if (evt.key === 'Escape') {
       this.picker && this.picker.remove();
       this.colorValue.isGradient ? this.fillWidget.remove() : this.palette.remove();
     }
@@ -343,8 +335,6 @@ export class ColorPickerField extends Morph {
 }
 
 colorWidgets.ColorPickerField = ColorPickerField;
-
-// DELETE ALL CLASSES ABOVE
 
 export class ColorPaletteView extends HTMLMorph {
   test () {
@@ -594,6 +584,9 @@ export class ColorEncoderModel extends ViewModel {
           {
             target: 'hex input', signal: 'inputAccepted', handler: 'confirm'
           },
+          {
+            target: 'css input', signal: 'inputAccepted', handler: 'confirm'
+          },
           ...numberWidgets.map(target => ({
             target, signal: 'number', handler: 'confirm'
           }))];
@@ -731,7 +724,7 @@ export class ColorEncoderModel extends ViewModel {
     this.ui.controls.submorphs.map(m => m.visible = m.isLayoutable = false);
     const control = this.ui[nameToUI[encodingName]];
     control.visible = control.isLayoutable = true;
-    if (encodingName == 'RGB') {
+    if (encodingName === 'RGB') {
       [
         control.getSubmorphNamed('first value'),
         control.getSubmorphNamed('second value'),
