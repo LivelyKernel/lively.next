@@ -562,7 +562,7 @@ export class BrowserModel extends ViewModel {
             { model: 'go forward', signal: 'fire', handler: 'execCommand', converter: () => 'browser history forward' },
             { model: 'browse history', signal: 'fire', handler: 'execCommand', converter: () => 'browser history browse' },
             { model: 'browse modules', signal: 'fire', handler: 'execCommand', converter: () => 'choose and browse module' },
-            { target: 'add tab', signal: 'onMouseDown', handler: () => this.ui.tabs.addTab() },
+            { model: 'add tab', signal: 'fire', handler: () => this.ui.tabs.addTab() },
 
             { target: 'run tests in module', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'run all tests in module' },
             { target: 'jump to entity', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'jump to codeentity' },
