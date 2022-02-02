@@ -1,4 +1,3 @@
-/* global Sine */
 import {
   Ellipse, Icon,
   Morph,
@@ -189,7 +188,6 @@ class AxisHalo extends Morph {
   }
 
   minSlider () {
-    const self = this;
     const minSpaceVisualizer = this.minSpaceVisualizer();
     const minViewer = this.minViewer();
 
@@ -452,7 +450,7 @@ class CellGuide extends Morph {
         }]]],
       ['Align at...',
         ['center', ...new Rectangle().sides, ...new Rectangle().corners].map(side => {
-          return [[side, { paddingRight: '2px' }, ...(this.cellGroup.align == side ? checked : unchecked), '  ', null],
+          return [[side, { paddingRight: '2px' }, ...(this.cellGroup.align === side ? checked : unchecked), '  ', null],
             () => this.cellGroup.align = side];
         })
       ]
@@ -507,7 +505,7 @@ export class GridLayoutHalo extends LayoutHalo {
   previewDrop (morphs) {
     if (morphs.length < 1) return;
     let cell = this.cellGuides.find(g => g.fullContainsWorldPoint($world.firstHand.position));
-    if (cell != this.currentCell) {
+    if (cell !== this.currentCell) {
       this.currentCell && this.currentCell.stopPreview();
     }
     this.currentCell = cell;
@@ -642,7 +640,7 @@ export class GridLayoutHalo extends LayoutHalo {
 
   cellResizer (cellGroup, corner) {
     let self = this;
-    let adjacentCorner = corner == 'topLeft' ? 'bottomRight' : 'topLeft';
+    let adjacentCorner = corner === 'topLeft' ? 'bottomRight' : 'topLeft';
     let getCorner = (c) => { return cellGroup.bounds().partNamed(c); };
     return new Ellipse({
       borderWidth: 1,
@@ -741,6 +739,33 @@ export class GridLayoutHalo extends LayoutHalo {
   }
 }
 
+class DropPreview extends Morph {
+  static get properties () {
+    return {
+      isHaloItem: { readOnly: true, get () { return true; } },
+      epiMorph: { readOnly: true, get () { return true; } },
+      fill: { defaultValue: Color.orange.withA(0.3) },
+      hasFixedPosition: { defaultValue: true },
+      borderColor: { defaultValue: Color.orange },
+      borderWidth: { defaultValue: 2 },
+      borderStyle: { defaultValue: 'dashed' },
+      pulseDuration: { defaultValue: 2000 }
+    };
+  }
+
+  clear () {
+    this.stopped = true;
+    this.remove();
+  }
+
+  async step () {
+    const easing = easings.inOutQuad;
+    await this.animate({ opacity: 0.5, duration: (this.pulseDuration - 10) / 2, easing });
+    await this.animate({ opacity: 1, duration: (this.pulseDuration - 10) / 2, easing });
+    if (!this.stopped) this.step();
+  }
+}
+
 export class TilingLayoutHalo extends LayoutHalo {
   static get properties () {
     return {
@@ -823,33 +848,6 @@ export class TilingLayoutHalo extends LayoutHalo {
       [{ ...lineSpec, textString: 'Tiling Align' }, alignControl],
       [{ ...lineSpec, textString: 'Tiling Axis' }, axisControl]
     ].map(x => ({ submorphs: x, fill: null, layout: new HorizontalLayout({ spacing: 3 }) }));
-  }
-}
-
-class DropPreview extends Morph {
-  static get properties () {
-    return {
-      isHaloItem: { readOnly: true, get () { return true; } },
-      epiMorph: { readOnly: true, get () { return true; } },
-      fill: { defaultValue: Color.orange.withA(0.3) },
-      hasFixedPosition: { defaultValue: true },
-      borderColor: { defaultValue: Color.orange },
-      borderWidth: { defaultValue: 2 },
-      borderStyle: { defaultValue: 'dashed' },
-      pulseDuration: { defaultValue: 2000 }
-    };
-  }
-
-  clear () {
-    this.stopped = true;
-    this.remove();
-  }
-
-  async step () {
-    const easing = easings.inOutQuad;
-    await this.animate({ opacity: 0.5, duration: (this.pulseDuration - 10) / 2, easing });
-    await this.animate({ opacity: 1, duration: (this.pulseDuration - 10) / 2, easing });
-    if (!this.stopped) this.step();
   }
 }
 
