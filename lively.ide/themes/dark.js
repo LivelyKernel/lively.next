@@ -45,8 +45,9 @@ class DarkTheme {
   get 'tag' () { return { fontColor: '#170' }; }
   get 'attribute' () { return { fontColor: '#d19a66' }; }
 
-  get 'error' () { return { backgroundColor: '#ff4c4c' }; }
+  get 'error' () { return { backgroundColor: Color.rgba(255, 76, 76, 0.8) }; }
   get 'invalidchar' () { return { backgroundColor: '#ff4c4c' }; }
+  get 'warning' () { return { 'border-bottom': '2px dotted orange' }; }
 
   get 'diff-file-header' () {
     return {

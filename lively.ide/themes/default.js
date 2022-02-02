@@ -42,8 +42,9 @@ class DefaultTheme {
   get 'tag' () { return { fontColor: '#170' }; }
   get 'attribute' () { return { fontColor: '#333' }; }
 
-  get 'error' () { return { backgroundColor: '#ff4c4c' }; }
-  get 'invalidchar' () { return { backgroundColor: '#ff4c4c' }; }
+  get 'error' () { return { backgroundColor: Color.rgba(255, 76, 76, 0.53) }; }
+  get 'invalidchar' () { return { backgroundColor: Color.rgba(255, 76, 76, 0.53) }; }
+  get 'warning' () { return { 'border-bottom': '2px dotted orange' }; }
 
   get 'diff-file-header' () {
     return {
