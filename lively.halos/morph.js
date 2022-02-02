@@ -924,17 +924,16 @@ class NameHaloItem extends HaloItem {
     if (!target || target.isMorphSelection) return;
     if (target.master) {
       const appliedMaster = target.master.determineMaster(target);
-      const isLocal = appliedMaster && !!$world.localComponents.includes(appliedMaster);
-      const linkToWorld = appliedMaster ? target.master.getWorldUrlFor(appliedMaster) : 'this project';
-      const masterLink = this.addMorph(Icon.makeLabel(linkToWorld ? 'external-link-alt' : 'exclamation-triangle', {
+      const meta = appliedMaster ? appliedMaster[Symbol.for('lively-module-meta')] : false;
+      const masterLink = this.addMorph(Icon.makeLabel(meta ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
         padding: rect(8, 0, -8, 0),
         name: 'master link',
-        tooltip: 'Located in ' + linkToWorld
+        tooltip: meta ? 'Located in ' + meta.module : false
       }));
-      linkToWorld && connect(masterLink, 'onMouseDown', () => {
-        isLocal ? this.showLocalMaster(appliedMaster) : window.open(linkToWorld);
+      meta && connect(masterLink, 'onMouseDown', () => {
+        $world.execCommand('open browser', { moduleName: meta.module, codeEntity: meta.export });
       });
     }
   }
