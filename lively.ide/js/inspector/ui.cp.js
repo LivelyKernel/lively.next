@@ -1,13 +1,12 @@
 import { component, part } from 'lively.morphic/components/core.js';
 import { GridLayout, morph, Text, Icon, Label } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';
 import { Inspector } from './index.js';
 import { DropDownListModel } from 'lively.components/list.js';
-import { DarkList, DefaultList } from 'lively.components/list.cp.js';
+import { DarkList } from 'lively.components/list.cp.js';
 import { PropertyTree } from './context.js';
-import { Button } from 'lively.components';
 
 // InstructionWidget.openInWorld()
 const InstructionWidget = component({
@@ -117,7 +116,7 @@ const SystemInspector = component({
         viewModel: { placeholder: 'Search' },
         name: 'search field'
       }),
-      part(ButtonDefault, {
+      part(SystemButton, {
         viewModel: {
           label: { value: Icon.textAttribute('crosshairs') }
         },

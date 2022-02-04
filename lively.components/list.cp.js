@@ -2,7 +2,7 @@ import { component } from 'lively.morphic/components/core.js';
 import { pt, rect, Color } from 'lively.graphics';
 import { List, DropDownListModel } from './list.js';
 import { ShadowObject } from 'lively.morphic';
-import { ButtonDefault, ButtonDark } from './buttons.cp.js';
+import { ButtonDefault, SystemButtonDark, SystemButton, ButtonDark } from './buttons.cp.js';
 
 const DefaultList = component({
   // implementing lists via viewModel does not really make sense since they are
@@ -30,12 +30,12 @@ const DarkList = component(DefaultList, {
   selectionFontColor: Color.rgb(0, 0, 0)
 });
 
-const DropDownList = component(ButtonDefault, {
+const DropDownList = component(SystemButton, {
   defaultViewModel: DropDownListModel,
   name: 'drop down list'
 });
 
-const DarkDropDownList = component(ButtonDark, {
+const DarkDropDownList = component(SystemButtonDark, {
   name: 'dark drop down list',
   defaultViewModel: DropDownListModel
 });

@@ -1,7 +1,7 @@
 import { component } from 'lively.morphic/components/core.js';
-import { HorizontalLayout, ShadowObject, TilingLayout, VerticalLayout, Label } from 'lively.morphic';
+import { TilingLayout, ShadowObject, Label } from 'lively.morphic';
 import { Color, LinearGradient, pt } from 'lively.graphics';
-import { ButtonModel, Button } from './buttons.js';
+import { ButtonModel } from './buttons.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 
 const ButtonDefault = component({
@@ -11,7 +11,7 @@ const ButtonDefault = component({
   // defaultViewModel: ButtonModel,
   // type: Button,
   defaultViewModel: ButtonModel, // remove this once transition is done
-  name: 'default button',
+  name: 'button/default',
   borderColor: Color.rgb(112, 123, 124),
   borderWidth: 1,
   borderRadius: 5,
@@ -40,17 +40,44 @@ const ButtonDefault = component({
   }]
 });
 
+// ButtonClicked.openInWorld()
+const ButtonClicked = component(ButtonDefault, {
+  name: 'button/clicked',
+  borderWidth: 0,
+  dropShadow: new ShadowObject({ distance: 0, rotation: 0, color: Color.rgba(0, 0, 0, 0.39071265243902487), inset: true, blur: 4, spread: 1 }),
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(199, 199, 199) }, { offset: 1, color: Color.rgb(152, 152, 152) }], vector: rect(0, 0, 0, 1) })
+});
+
+// SystemButton.openInWorld()
+const SystemButton = component(ButtonDefault, {
+  name: 'system button',
+  master: { auto: ButtonDefault, click: ButtonClicked }
+});
+
 // ButtonDark.openInWorld()
-const ButtonDark = component(ButtonDefault, {
-  name: 'button dark',
+const ButtonDarkDefault = component(ButtonDefault, {
+  name: 'button/dark/default',
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(149, 165, 166) }, { offset: 1, color: Color.rgb(127, 140, 141) }], vector: rect(0, 0, 0, 1) }),
   submorphs: [{
     name: 'label',
-    fontColor: Color.rgb(255,255,255),
+    fontColor: Color.rgb(255, 255, 255),
     fontSize: 14,
     reactsToPointer: false,
     textAndAttributes: ['a button', null]
   }]
 });
 
-export { ButtonDefault, ButtonDark };
+// ButtonDarkClicked.openInWorld()
+const ButtonDarkClicked = component(ButtonDarkDefault, {
+  name: 'button/dark/clicked',
+  borderWidth: 0,
+  dropShadow: new ShadowObject({ distance: 0, rotation: 0, color: Color.rgba(0, 0, 0, 0.39071265243902487), inset: true, blur: 4, spread: 1 })
+});
+
+// SystemButtonDark.openInWorld()
+const SystemButtonDark = component(ButtonDarkDefault, {
+  name: 'system button/dark',
+  master: { auto: ButtonDarkDefault, click: ButtonDarkClicked }
+});
+
+export { ButtonDefault, ButtonClicked, SystemButton, ButtonDarkDefault, SystemButtonDark, ButtonDarkClicked };

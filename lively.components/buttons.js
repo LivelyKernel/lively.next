@@ -15,15 +15,7 @@ export class ButtonModel extends ViewModel {
 
       pressed: {
         group: '_internal',
-        defaultValue: null,
-        set (val) {
-          const oldVal = this.getProperty('pressed');
-          // this._realFill = (!val && oldVal && oldVal.originalFill);
-          if (this.view) {
-            this._realFill = val ? this.view.fill.darker() : oldVal.originalFill;
-          }
-          this.setProperty('pressed', val);
-        }
+        defaultValue: null
       },
 
       // make this a merge in property

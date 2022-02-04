@@ -2,7 +2,7 @@ import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
 import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { SystemButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
@@ -597,7 +597,7 @@ const SystemBrowser = component({
     }),
     reactsToPointer: false,
     submorphs: [
-      part(ButtonDefault, {
+      part(SystemButton, {
         name: 'go back',
         borderRadius: {
           topLeft: 5,
@@ -611,7 +611,7 @@ const SystemBrowser = component({
         submorphs: [
           { name: 'label', textAndAttributes: Icon.textAttribute('caret-left'), fontSize: 20, fontColor: Color.rgb(52, 73, 94) }
         ]
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'browse history',
         extent: pt(35, 26),
         borderRadius: 0,
@@ -620,7 +620,7 @@ const SystemBrowser = component({
         submorphs: [
           { name: 'label', textAndAttributes: Icon.textAttribute('history'), fontSize: 14 }
         ]
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'go forward',
         borderRadius: {
           topLeft: 0,
@@ -637,7 +637,7 @@ const SystemBrowser = component({
           fontColor: Color.rgb(52, 73, 94),
           textAndAttributes: Icon.textAttribute('caret-right')
         }]
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'browse modules',
         extent: pt(35, 26),
         borderRadius: {
@@ -654,7 +654,7 @@ const SystemBrowser = component({
           fontSize: 14,
           textAndAttributes: Icon.textAttribute('list-alt')
         }]
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'global search',
         extent: pt(35, 26),
         borderRadius: {
@@ -672,7 +672,7 @@ const SystemBrowser = component({
           textAndAttributes: Icon.textAttribute('search')
         }]
       }),
-      part(ButtonDefault, {
+      part(SystemButton, {
         name: 'add tab',
         extent: pt(35, 26),
         borderRadius: {
@@ -717,7 +717,7 @@ const SystemBrowser = component({
         reactsToPointer: false,
         submorphs: [{
           type: EvalBackendButton,
-          master: BackendButtonDefault,
+          master: { auto: BackendButtonDefault, click: BackendButtonClicked },
           name: 'eval backend button',
           padding: rect(5, 4, 0, 0),
           submorphs: [{
