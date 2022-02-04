@@ -1,8 +1,8 @@
 import { ViewModel } from 'lively.morphic/components/core.js';
-import { Morph, morph, Icon, touchInputDevice } from 'lively.morphic';
+import { Morph, morph, touchInputDevice } from 'lively.morphic';
 import { Rectangle, LinearGradient, Color, pt } from 'lively.graphics';
 import { signal, connect } from 'lively.bindings';
-import { arr, obj, Closure } from 'lively.lang';
+import { obj, Closure } from 'lively.lang';
 
 // fixme: Review if this model is really nessecary or rather overkill
 export class ButtonModel extends ViewModel {
@@ -10,8 +10,7 @@ export class ButtonModel extends ViewModel {
     return {
       deactivated: {
         group: 'button',
-        defaultValue: false,
-        after: ['labelMorph']
+        defaultValue: false
       },
 
       pressed: {
@@ -30,7 +29,6 @@ export class ButtonModel extends ViewModel {
       // make this a merge in property
       label: {
         group: 'button',
-        after: ['labelMorph'],
         isStyleProp: true,
         type: 'RichText', // this includes an attributes Array
         set (labelMorphProperties) {
@@ -189,13 +187,7 @@ export class Button extends Morph {
 
       pressed: {
         group: '_internal',
-        defaultValue: null,
-        set (val) {
-          const oldVal = this.getProperty('pressed');
-          this.setProperty('pressed', val);
-          const realFill = (!val && oldVal && oldVal.originalFill) || this.fill;
-          // this.fill = val && realFill ? realFill.darker() : realFill;
-        }
+        defaultValue: null
       },
 
       fontSize: {
@@ -285,20 +277,10 @@ export class Button extends Morph {
     };
   }
 
-  constructor (props) {
-    super(props);
-    if (props) {
-      return;
-      const { width, height, extent, bounds } = props;
-      if (width === undefined && height === undefined &&
-          extent === undefined && bounds === undefined) { this.fit(); }
-    }
-  }
-
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
     addFn('fontSize', this.fontSize); // this is needed to make master components style work
-    if (this.label != this.labelMorph.value) {
+    if (this.label !== this.labelMorph.value) {
       // in cases where someone just directly changed the label,
       // the value of the labelMorph "wins"
       addFn('label', this.labelMorph.value);
@@ -451,7 +433,6 @@ export class RadioButton extends Morph {
         defaultValue: false,
         set (bool) {
           this.getMaster(bool).then(async auto => {
-            const duration = 200;
             this.master = {
               auto
             };
@@ -543,7 +524,7 @@ export class RadioButtonGroup extends Morph {
         set (labels) {
           this.removeAllButtons();
           if (obj.isArray(labels)) {
-            if (labels.length == 0) return;
+            if (labels.length === 0) return;
             labels.forEach(value => {
               this.addButton(morph({
                 name: 'label', type: 'label', value, reactsToPointer: false
@@ -551,7 +532,7 @@ export class RadioButtonGroup extends Morph {
             });
           } else {
             labels = [...labels.entries()];
-            if (labels.length == 0) return;
+            if (labels.length === 0) return;
             labels.forEach(([label, value]) => {
               this.addButton(morph({
                 name: 'label', type: 'label', value: label, reactsToPointer: false
@@ -601,7 +582,7 @@ export class RadioButtonGroup extends Morph {
     const button = new RadioButton({ name: 'button ' + (this.submorphs.length + 1) });
     button.reset();
     button.morph = morph;
-    if (optValue != undefined) {
+    if (optValue !== undefined) {
       button.internalValue = optValue;
       button.valueFunctionString = 'function (morph) { return morph.owner.internalValue; }';
     }

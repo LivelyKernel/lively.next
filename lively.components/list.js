@@ -1,11 +1,10 @@
-import { Morph, VerticalLayout, Text, StyleSheet, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
-import { pt, LinearGradient, Color, Rectangle, rect } from 'lively.graphics';
+import { Morph, Text, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
+import { pt, Color, Rectangle } from 'lively.graphics';
 import { arr, Path, string } from 'lively.lang';
 import { signal, noUpdate, once, connect } from 'lively.bindings';
 import { Button, ButtonModel } from './buttons.js';
-import bowser from 'bowser';
-import { ViewModel, part } from 'lively.morphic/components/core.js';
-import { ExpressionSerializer } from 'lively.serializer2';
+
+import { part } from 'lively.morphic/components/core.js';
 
 export function asItem (obj) {
   // make sure that object is of the form
@@ -16,7 +15,7 @@ export function asItem (obj) {
   obj.string = !label || typeof label === 'string'
     ? String(label)
     : Array.isArray(label)
-      ? label.map((text, i) => i % 2 == 0 ? String(text) : '').join('')
+      ? label.map((text, i) => i % 2 === 0 ? String(text) : '').join('')
       : String(label);
   return obj;
 }
@@ -53,7 +52,7 @@ export class ListItemMorph extends Label {
   }
 
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    if (this.itemIndex == itemIndex && isSelected == this.isSelected && item.fontFamily == this.fontFamily) return;
+    if (this.itemIndex === itemIndex && isSelected === this.isSelected && item.fontFamily === this.fontFamily) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
@@ -62,7 +61,7 @@ export class ListItemMorph extends Label {
     else this.value = label;
 
     this.tooltip = item.tooltip || this.tooltip || this.textString;
-    if (item.tooltip == false) this.tooltip = false;
+    if (item.tooltip === false) this.tooltip = false;
     this.itemIndex = itemIndex;
     this.position = pos;
 
@@ -79,7 +78,7 @@ export class ListItemMorph extends Label {
       if (selectionFontColor && this.selectionFontColor !== selectionFontColor) { this.selectionFontColor = selectionFontColor; }
       if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) { this.nonSelectionFontColor = nonSelectionFontColor; }
       if (selectionColor && this.selectionColor !== selectionColor) { this.selectionColor = selectionColor; }
-      if (borderRadius && borderRadius != this.borderRadius) { this.borderRadius = borderRadius; }
+      if (borderRadius && borderRadius === this.borderRadius) { this.borderRadius = borderRadius; }
       if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
       if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
       if (padding && !this.padding.equals(padding)) this.padding = padding;
@@ -165,7 +164,7 @@ export class ListScroller extends Morph {
       item.makeDirty();
       setTimeout(() => {
         item.pressed = false;
-        if (scrollY - this.scroll.y != 0) return;
+        if (scrollY - this.scroll.y === 0) return;
         return this.owner.clickOnItem(evt);
       }, 300);
       return;
@@ -287,7 +286,6 @@ const listCommands = [
       if (!list.selection) return;
       let { padding, selectedIndex: idx, itemHeight, scroll: { x: scrollX, y: scrollY } } = list;
       const pos = pt(0, idx * itemHeight);
-      const offsetX = 0; const offsetY = 0;
       const h = list.height - itemHeight - padding.top() - padding.bottom();
       if (Math.abs(pos.y - scrollY) < 2) {
         scrollY = pos.y - h;
@@ -312,7 +310,7 @@ const listCommands = [
 
         if (label) {
           if (typeof label === 'string') result += label;
-          else result += label.map((text, i) => i % 2 == 0 ? text : '').join('');
+          else result += label.map((text, i) => i % 2 === 0 ? text : '').join('');
         } else if (string) result += string;
 
         if (annotation) {
@@ -705,24 +703,25 @@ export class List extends Morph {
     const items = this.items;
     if (!items || !this.scroller) return; // pre-initialize
     this.dontRecordChangesWhile(() => {
-      var {
+      let {
         itemHeight,
         itemMorphs, listItemContainer,
         selectedIndexes,
         extent: { x: width, y: height },
         fontSize, fontFamily, fontColor,
-        padding, itemPadding, selectionColor,
+        padding = Rectangle.inset(0), itemPadding, selectionColor,
         selectionFontColor, nonSelectionFontColor,
         itemBorderRadius, scrollBar, scroller, scrollable
       } = this;
-      const { scroll: { x: left, y: top } } = scroller;
-      var padding = padding || Rectangle.inset(0);
-      const padTop = padding.top(); const padLeft = padding.left();
-      const padBottom = padding.bottom(); const padRight = padding.right();
+      const { scroll: { y: top } } = scroller;
+      const padTop = padding.top();
+      const padLeft = padding.left();
+      const padBottom = padding.bottom();
+      const padRight = padding.right();
       const firstItemIndex = Math.max(0, Math.floor((top) / itemHeight));
       const lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2);
       let maxWidth = 0;
-      const goalWidth = this.width - (padLeft + padRight);
+      const goalWidth = width - (padLeft + padRight);
 
       // try to keep itemIndexes in the items that were initially assigned to them
       let rest, upper, lower;
@@ -787,7 +786,7 @@ export class List extends Morph {
   }
 
   scrollIndexIntoView (idx) {
-    const { itemHeight, width, itemScroll, scrollbarOffset } = this;
+    const { itemHeight, width, itemScroll } = this;
     const itemBounds = new Rectangle(0, idx * itemHeight, width, itemHeight);
     const visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(itemScroll);
     const offsetX = 0; let offsetY = 0;
@@ -808,7 +807,7 @@ export class List extends Morph {
     if (this.multiSelect) {
       if (evt.isShiftDown()) {
         if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
+          indexes = selectedIndexes.filter(ea => ea === itemI);
         } else {
           // select from last selected to clicked item
           const from = selectedIndexes[0];
@@ -818,10 +817,10 @@ export class List extends Morph {
       } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
         // deselect item
         if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
+          indexes = selectedIndexes.filter(ea => ea === itemI);
         } else {
           // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI));
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea === itemI));
         }
       } else indexes = [itemI];
     } else indexes = [itemI];
@@ -836,13 +835,10 @@ export class List extends Morph {
   }
 
   onHoverOut (evt) {
-    if (touchInputDevice) return;
-    this.scroller.visible = false;
+    if (!touchInputDevice) { this.scroller.visible = false; }
   }
 
-  onDragStart (evt) {
-    if (!this.multiSelect || !this.multiSelectViaDrag) return;
-  }
+  onDragStart (evt) {}
 
   onDrag (evt) {}
 
@@ -1071,7 +1067,7 @@ export class FilterableList extends Morph {
             if (this.filterFunction === this.fuzzyFilterFunction) { this.filterFunction = this.defaultFilterFunction; }
           } else {
             if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction;
-            if (this.filterFunction == this.defaultFilterFunction) { this.filterFunction = this.fuzzyFilterFunction; }
+            if (this.filterFunction === this.defaultFilterFunction) { this.filterFunction = this.fuzzyFilterFunction; }
           }
         }
       },
@@ -1360,7 +1356,7 @@ export class DropDownList extends Button {
         after: ['listMorph'],
         get () { return this.listMorph.items; },
         set (value) {
-          const updateSelection = this.items.find(item => item.value == this.selection);
+          const updateSelection = this.items.find(item => item.value === this.selection);
           this.listMorph.items = value;
           if (updateSelection) {
             noUpdate(() => {
@@ -1422,7 +1418,7 @@ export class DropDownList extends Button {
       if (focused !== list &&
           focused !== this &&
           list.world() &&
-          !list.withAllSubmorphsDetect(m => m == focused)) {
+          !list.withAllSubmorphsDetect(m => m === focused)) {
         list.fadeOut(200);
       } else if (list.world()) {
         const target = touchInputDevice ? list.scroller : list;
@@ -1664,25 +1660,23 @@ export class MorphList extends List {
     if (!this.listItemContainer) return;
     if (this.scroller) this.scroller.visible = false;
     this.dontRecordChangesWhile(() => {
-      var {
+      let {
         itemHeight,
         itemMorphs, listItemContainer,
         selectedIndexes,
         extent: { x: width, y: height },
         fontSize, fontFamily, fontColor,
-        padding, itemPadding, selectionColor,
+        padding = Rectangle.inset(0), itemPadding, selectionColor,
         selectionFontColor, nonSelectionFontColor,
         itemBorderRadius, scrollBar
       } = this;
-      const { scroll: { x: left, y: top } } = this;
-      var padding = padding || Rectangle.inset(0);
+      const { scroll: { y: top } } = this;
       const padTop = padding.top(); const padLeft = padding.left();
       const padBottom = padding.bottom(); const padRight = padding.right();
-      const scrollOffset = top;
       const firstItemIndex = Math.max(0, Math.floor(top / itemHeight));
       const lastItemIndex = Math.min(items.length, Math.ceil((top + height) / itemHeight));
       let maxWidth = 0;
-      const goalWidth = this.width - (padLeft + padRight);
+      const goalWidth = width - (padLeft + padRight);
 
       // try to keep itemIndexes in the items that were initially assigned to them
       let rest, upper, lower;
@@ -1704,7 +1698,7 @@ export class MorphList extends List {
       };
 
       if (itemMorphs.length && lastItemIndex - firstItemIndex > itemMorphs.length) {
-        if (firstItemIndex != itemMorphs[0].itemIndex) { arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0); } else if (lastItemIndex != arr.last(itemMorphs).itemIndex) { itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style))); }
+        if (firstItemIndex === itemMorphs[0].itemIndex) { arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0); } else if (lastItemIndex === arr.last(itemMorphs).itemIndex) { itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style))); }
       }
 
       for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
@@ -1759,527 +1753,6 @@ export class MorphList extends List {
 }
 
 // VIEW MODELS
-
-export class ListModel extends ViewModel {
-  static get properties () {
-    return {
-
-      selectionFontColor: { isStyleProp: true, defaultValue: Color.white },
-      selectionColor: {
-        type: 'ColorGradient',
-        isStyleProp: true,
-        defaultValue: Color.rgb(21, 101, 192)
-      },
-      nonSelectionFontColor: { isStyleProp: true, defaultValue: Color.rgbHex('333') },
-      fontColor: { isStyleProp: true, defaultValue: Color.rgbHex('333') },
-
-      itemScroll: {
-        /*
-          We need to use a different property name for the list scroll,
-          since the default scroll property is already rendered as a div
-          with overflow hidden|scroll which we do not want since we implement
-          the scroll for ourselves.
-        */
-        derived: true,
-        after: ['submorphs'],
-        get () { return this.scroller ? this.scroller.scroll : pt(0, 0); },
-        set (s) { if (this.scroller) this.scroller.scroll = s; }
-      },
-
-      fontFamily: {
-        isStyleProp: true,
-        defaultValue: 'Helvetica Neue, Arial, sans-serif',
-        set (value) {
-          this.setProperty('fontFamily', value);
-          this.invalidateCache();
-        }
-      },
-
-      fontSize: {
-        isStyleProp: true,
-        defaultValue: 12,
-        set (value) {
-          this.setProperty('fontSize', value);
-          this.invalidateCache();
-        }
-      },
-
-      padding: {
-        isStyleProp: true,
-        defaultValue: Rectangle.inset(3)
-      },
-
-      itemBorderRadius: {
-        isStyleProp: true,
-        defaultValue: 0,
-        set (value) {
-          this.setProperty('itemBorderRadius', value);
-          this.invalidateCache();
-        }
-      },
-
-      itemPadding: {
-        isStyleProp: true,
-        defaultValue: Rectangle.inset(1),
-        set (value) {
-          this.setProperty('itemPadding', value);
-          this.invalidateCache();
-        }
-      },
-
-      items: {
-        group: 'list',
-        defaultValue: [],
-        after: ['submorphs'],
-        set (items) {
-          this.setProperty('items', items.map(asItem));
-          this.itemScroll = pt(0, 0);
-          this.update();
-          if (this.attributeConnections) { signal(this, 'values', this.values); }
-        }
-      },
-
-      multiSelect: {
-        defaultValue: false
-      },
-
-      multiSelectWithSimpleClick: {
-        description: 'Does a simple click toggle selections without deselecting?',
-        defaultValue: false
-      },
-
-      multiSelectViaDrag: {
-        description: 'Does dragging extend selection?',
-        defaultValue: true
-      },
-
-      values: {
-        group: 'list',
-        after: ['items'],
-        readOnly: true,
-        get () { return this.items.map(ea => ea.value); }
-      },
-
-      selectedIndex: {
-        group: 'list',
-        defaultValue: [],
-        after: ['selectedIndexes'],
-        get () { return this.selectedIndexes[0]; },
-        set (i) { return this.selectedIndexes = typeof i === 'number' ? [i] : []; }
-      },
-
-      selectedIndexes: {
-        get () { return this.getProperty('selectedIndexes') || []; },
-        set (indexes) {
-          const maxLength = this.items.length;
-          this.setProperty(
-            'selectedIndexes',
-            (indexes || []).filter(i => i >= 0 && i < maxLength));
-          this.update();
-          signal(this, 'selection', this.selection);
-        }
-      },
-
-      selection: {
-        group: 'list',
-        after: ['selections'],
-        get () { return this.selections[0]; },
-        set (itemOrValue) { this.selections = [itemOrValue]; }
-      },
-
-      selections: {
-        group: 'list',
-        after: ['selectedIndexes'],
-        get () { return this.selectedIndexes.map(i => this.items[i] && this.items[i].value); },
-        set (sels) { this.selectedIndexes = sels.map(ea => this.findIndex(ea)); }
-      },
-
-      selectedItems: {
-        after: ['selectedIndexes'],
-        readOnly: true,
-        get () { return this.selectedIndexes.map(i => this.items[i]); }
-      },
-
-      listItemContainer: {
-        after: ['submorphs'],
-        readOnly: true,
-        get () { return this.getSubmorphNamed('listItemContainer'); }
-      },
-
-      itemMorphs: {
-        after: ['submorphs'],
-        readOnly: true,
-        get () { return this.listItemContainer.submorphs; }
-      },
-
-      scrollBar: {
-        after: ['submorphs'],
-        readOnly: true,
-        get () { return this.getSubmorphNamed('scrollbar'); }
-      },
-
-      scroller: {
-        after: ['submorphs'],
-        readOnly: true,
-        get () { return this.getSubmorphNamed('scroller'); }
-      },
-
-      scrollable: {
-        derived: true,
-        get () {
-          return this.padding.top() + this.items.length * this.itemHeight > this.height;
-        }
-      },
-
-      manualItemHeight: { type: 'Boolean' },
-
-      itemHeight: {
-        isStyleProp: true,
-        after: ['fontFamily', 'fontSize', 'itemPadding'],
-        defaultValue: 10,
-        set (val) {
-          this.setProperty('itemHeight', val);
-          this.manualItemHeight = typeof val === 'number';
-          this.update();
-        },
-        get () {
-          const height = this.getProperty('itemHeight');
-          if (height) return height;
-          let h = this.env.fontMetric.defaultLineHeight(
-            { fontFamily: this.fontFamily, fontSize: this.fontSize });
-          const padding = this.itemPadding;
-          if (padding) h += padding.top() + padding.bottom();
-          this.setProperty('itemHeight', h);
-          return h;
-        }
-      },
-
-      theme: {
-        after: ['styleClasses'],
-        defaultValue: 'default',
-        set (val) {
-          this.removeStyleClass(this.theme);
-          this.addStyleClass(val);
-          this.setProperty('theme', val);
-        }
-      }
-
-    };
-  }
-
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    super.__additionally_serialize__(snapshot, ref, pool, addFn);
-    this.whenRendered().then(() => this.update());
-  }
-
-  onLoad () {
-    this.scroller.visible = touchInputDevice;
-  }
-
-  initializeSubmorphs (submorphs) {
-    let container, scroller;
-    submorphs = submorphs || this.submorphs || [];
-    this.submorphs = submorphs;
-    for (let i = 0; i < submorphs.length; i++) {
-      switch (submorphs[i].name) {
-        case 'listItemContainer': container = submorphs[i]; continue;
-        case 'scroller': scroller = submorphs[i]; continue;
-      }
-    }
-    if (!scroller) {
-      scroller = this.addMorph(new ListScroller({
-        draggable: false,
-        grabbable: false,
-        acceptsDrops: false,
-        halosEnabled: false,
-        name: 'scroller'
-      }));
-    }
-    if (!container) {
-      this.addMorph({
-        name: 'listItemContainer',
-        fill: Color.transparent,
-        halosEnabled: false, // renderOnGPU: true,
-        reactsToPointer: false,
-        acceptsDrops: false,
-        draggable: false
-      });
-    }
-    if (container || scroller) this.update();
-  }
-
-  get isList () { return true; }
-
-  onChange (change) {
-    const { prop } = change;
-    const styleProps = [
-      'fontFamily', 'fontColor', 'fontSize', 'padding',
-      'selectionFontColor', 'selectionColor',
-      'nonSelectionFontColor', 'itemPadding', 'items'];
-    if (styleProps.includes(prop)) this.update();
-    return super.onChange(change);
-  }
-
-  itemForClick (evt) {
-    const clickedPos = evt.positionIn(this.world()).subPt(this.scroll);
-    const items = this.listItemContainer.morphsContainingPoint(clickedPos);
-    return items.find(m => m.isListItem) || items[0];
-  }
-
-  clickOnItem (evt) {
-    const item = this.itemForClick(evt);
-    const { state: { clickCount } } = evt;
-    if (evt.positionIn(this).x > this.width - this.scrollbarOffset.x) return;
-    const method = clickCount === 2 ? 'onItemMorphDoubleClicked' : 'onItemMorphClicked';
-    this[method](evt, item);
-  }
-
-  get connections () {
-    return { selection: { signalOnAssignment: false } };
-  }
-
-  invalidateCache () {
-    if (!this.manualItemHeight) { this.setProperty('itemHeight', null); }
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // items
-
-  find (itemOrValue) {
-    return this.items.find(item => item === itemOrValue || item.value === itemOrValue);
-  }
-
-  findIndex (itemOrValue) {
-    return this.items.findIndex(item => item === itemOrValue || item.value === itemOrValue);
-  }
-
-  addItem (item) { return this.addItemAt(item); }
-
-  addItemAt (item, index = this.items.length) {
-    const items = this.items;
-    index = Math.min(items.length, Math.max(0, index));
-    items.splice(index, 0, asItem(item));
-
-    this.addMethodCallChangeDoing({
-      target: this,
-      selector: 'addItemAt',
-      args: [item, index],
-      undo: {
-        target: this,
-        selector: 'removeItem',
-        args: [item]
-      }
-    }, () => this.update());
-  }
-
-  removeItem (itemOrValue) {
-    const item = this.find(itemOrValue);
-    const items = this.items;
-    const index = items.indexOf(item);
-    if (index === -1) return;
-
-    items.splice(index, 1);
-
-    this.addMethodCallChangeDoing({
-      target: this,
-      selector: 'removeItem',
-      args: [item],
-      undo: {
-        target: this,
-        selector: 'addItemAt',
-        args: [item, index]
-      }
-    }, () => this.update());
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // selection
-
-  selectItemMorph (itemMorph) {
-    this.selectedIndexes = [itemMorph.itemIndex];
-  }
-
-  gotoIndex (i) { this.scrollIndexIntoView(this.selectedIndex = i); }
-
-  indexUp (from) {
-    from = typeof from === 'number' ? from : this.selectedIndex;
-    // wrap around:
-    return (from || this.items.length) - 1;
-  }
-
-  indexDown (index = this.selectedIndex) {
-    index = typeof index === 'number' ? index : -1;
-    return (index + 1) % this.items.length;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // rendering
-
-  update () {
-    const items = this.items;
-    if (!items || !this.scroller) return; // pre-initialize
-
-    this.dontRecordChangesWhile(() => {
-      var {
-        itemHeight,
-        itemMorphs, listItemContainer,
-        selectedIndexes,
-        extent: { x: width, y: height },
-        fontSize, fontFamily, fontColor,
-        padding, itemPadding, selectionColor,
-        selectionFontColor, nonSelectionFontColor,
-        itemBorderRadius, scrollBar, scroller, scrollable
-      } = this;
-      const { scroll: { x: left, y: top } } = scroller;
-      var padding = padding || Rectangle.inset(0);
-      const padTop = padding.top(); const padLeft = padding.left();
-      const padBottom = padding.bottom(); const padRight = padding.right();
-      const firstItemIndex = Math.max(0, Math.floor((top) / itemHeight));
-      const lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2);
-      let maxWidth = 0;
-      const goalWidth = this.width - (padLeft + padRight);
-
-      // try to keep itemIndexes in the items that were initially assigned to them
-      let rest, upper, lower;
-
-      itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
-      [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
-      [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
-      itemMorphs = [...lower, ...rest, ...upper];
-
-      for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
-        const itemIndex = firstItemIndex + i;
-        const item = items[itemIndex];
-
-        if (!item) {
-          // if no items to display, remove remaining itemMorphs
-          itemMorphs.slice(i).forEach(itemMorph => {
-            itemMorph.remove();
-          });
-          break;
-        }
-
-        const style = {
-          fontSize,
-          fontFamily,
-          fontColor: nonSelectionFontColor || fontColor,
-          padding: itemPadding,
-          borderRadius: itemBorderRadius || 0,
-          selectionFontColor,
-          nonSelectionFontColor,
-          selectionColor
-        }; let itemMorph = itemMorphs[i];
-
-        if (!itemMorph) {
-          itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
-        }
-        itemMorph.reactsToPointer = !scrollable;
-        itemMorph.displayItem(
-          item, itemIndex,
-          goalWidth, itemHeight,
-          pt(0, itemHeight * itemIndex),
-          selectedIndexes.includes(itemIndex),
-          style);
-
-        maxWidth = Math.max(maxWidth, itemMorph.width);
-      }
-
-      itemMorphs.slice(lastItemIndex - firstItemIndex).forEach(ea => ea.remove());
-
-      const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
-      listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
-      scroller.extent = this.extent.subXY(this.borderWidthRight, this.borderWidthBottom);
-      scrollBar.left = maxWidth / 2;
-      scroller.position = pt(0, 0);
-      scrollBar.extent = pt(1, totalItemHeight);
-    });
-  }
-
-  scrollSelectionIntoView () {
-    if (this.selection) this.scrollIndexIntoView(this.selectedIndex);
-  }
-
-  scrollIndexIntoView (idx) {
-    const { itemHeight, width, itemScroll, scrollbarOffset } = this;
-    const itemBounds = new Rectangle(0, idx * itemHeight, width, itemHeight);
-    const visibleBounds = this.innerBounds().insetByRect(this.padding).translatedBy(itemScroll);
-    const offsetX = 0; let offsetY = 0;
-    if (itemBounds.bottom() > visibleBounds.bottom()) { offsetY = itemBounds.bottom() - (visibleBounds.bottom()); }
-    if (itemBounds.top() < visibleBounds.top()) { offsetY = itemBounds.top() - visibleBounds.top(); }
-    this.itemScroll = itemScroll.addXY(offsetX, offsetY);
-    this.update();
-  }
-
-  onItemMorphDoubleClicked (evt, itemMorph) {}
-
-  onItemMorphClicked (evt, itemMorph) {
-    const itemI = itemMorph.itemIndex;
-    const { selectedIndexes } = this;
-    const isClickOnSelected = selectedIndexes.includes(itemI);
-    let indexes = [];
-
-    if (this.multiSelect) {
-      if (evt.isShiftDown()) {
-        if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
-        } else {
-          // select from last selected to clicked item
-          const from = selectedIndexes[0];
-          const added = typeof from === 'number' ? arr.range(itemI, from) : [itemI];
-          indexes = added.concat(selectedIndexes.filter(ea => !added.includes(ea)));
-        }
-      } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
-        // deselect item
-        if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea != itemI);
-        } else {
-          // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea != itemI));
-        }
-      } else indexes = [itemI];
-    } else indexes = [itemI];
-
-    this.selectedIndexes = indexes;
-  }
-
-  onItemMorphDragged (evt, itemMorph) {}
-
-  onHoverIn (evt) {
-    if (this.scrollable) { this.scroller.visible = true; }
-  }
-
-  onHoverOut (evt) {
-    if (touchInputDevice) return;
-    this.scroller.visible = false;
-  }
-
-  onDragStart (evt) {
-    if (!this.multiSelect || !this.multiSelectViaDrag) return;
-  }
-
-  onDrag (evt) {}
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // event handling
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  get keybindings () {
-    return [
-      { keys: 'Up|Ctrl-P', command: 'arrow up' },
-      { keys: 'Down|Ctrl-N', command: 'arrow down' },
-      { keys: 'Shift-Up', command: 'select up' },
-      { keys: 'Shift-Down', command: 'select down' },
-      { keys: { win: 'Ctrl-A', mac: 'Meta-A' }, command: 'select all' },
-      { keys: 'Alt-V|PageUp', command: 'page up' },
-      { keys: 'Ctrl-V|PageDown', command: 'page down' },
-      { keys: 'Alt-Shift-,', command: 'goto first item' },
-      { keys: 'Alt-Shift-.', command: 'goto last item' },
-      { keys: 'Alt-Space', command: 'select via filter' },
-      { keys: 'Ctrl-L', command: 'realign top-bottom-center' }
-    ].concat(super.keybindings);
-  }
-
-  get commands () { return listCommands; }
-}
 
 export class DropDownListModel extends ButtonModel {
   static get properties () {
@@ -2385,7 +1858,7 @@ export class DropDownListModel extends ButtonModel {
   }
 
   onRefresh (prop) {
-    const { listAlign, listMorph } = this;
+    const { listMorph } = this;
     const sel = this.selection;
 
     if (!listMorph) return super.onRefresh(prop);
@@ -2403,7 +1876,7 @@ export class DropDownListModel extends ButtonModel {
       }
       if (!item) return super.onRefresh(prop);
 
-      if (prop == 'selection') this.adjustLableFor(item);
+      if (prop === 'selection') this.adjustLableFor(item);
 
       listMorph.selectedIndex = items.indexOf(item);
     }
@@ -2425,7 +1898,7 @@ export class DropDownListModel extends ButtonModel {
       if (focused !== list &&
           focused !== this.view &&
           list.world() &&
-          !list.withAllSubmorphsDetect(m => m == focused)) {
+          !list.withAllSubmorphsDetect(m => m === focused)) {
         list.fadeOut(200);
       } else if (list.world()) {
         const target = touchInputDevice ? list.scroller : list;
@@ -2438,7 +1911,7 @@ export class DropDownListModel extends ButtonModel {
   adjustLableFor (item) {
     let label = item.label || [item.string, null];
     let caret = Icon.textAttribute('angle-down', { paddingTop: '2px' });
-    if (this.listAlign != 'selection') {
+    if (this.listAlign === 'selection') {
       caret = Icon.textAttribute(
         'caret-' + (this.listAlign === 'bottom'
           ? 'down'
@@ -2486,7 +1959,7 @@ export class DropDownListModel extends ButtonModel {
       list.extent = pt(view.width, Math.min(this.listHeight, totalItemHeight));
       if (this.listAlign === 'top') {
         list.bottomLeft = bounds.topLeft().addPt(this.listOffset || pt(0, 0));
-      } else if (this.listAlign == 'bottom') {
+      } else if (this.listAlign === 'bottom') {
         list.topLeft = bounds.bottomLeft().addPt(this.listOffset || pt(0, 0));
       } else {
         // move the list to the selection
