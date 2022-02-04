@@ -170,15 +170,24 @@ export class ComponentPolicy {
   }
 
   __serialize__ () {
-    if (this.auto && this.auto[Symbol.for('lively-module-meta')]) {
-      const { export: exportedName, module: modulePath } = this.auto[Symbol.for('lively-module-meta')];
-      return {
-        __expr__: exportedName,
-        bindings: {
-          [modulePath]: [exportedName]
-        }
-      };
+    let expr, bindings;
+    for (let stateName of ['auto', 'click', 'hover']) {
+      if (!this[stateName]) continue;
+      if (!this[stateName][Symbol.for('lively-module-meta')]) continue;
+      if (!expr) expr = {};
+      if (!bindings) bindings = {};      
+      const { export: exportedName, module: modulePath } = this[stateName][Symbol.for('lively-module-meta')];
+      expr[stateName] = exportedName;
+      if (!bindings[modulePath]) bindings[modulePath] = [exportedName];
+      else arr.pushIfNotIncluded(bindings[modulePath], exportedName);
     }
+
+    if (expr && bindings) { 
+      return {
+        __expr__: `({ auto: ${expr.auto}, click: ${expr.click}, hover: ${expr.hover}})`,
+        bindings
+      };
+    } 
 
     const spec = {};
 
