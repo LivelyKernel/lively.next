@@ -78,7 +78,7 @@ export class ListItemMorph extends Label {
       if (selectionFontColor && this.selectionFontColor !== selectionFontColor) { this.selectionFontColor = selectionFontColor; }
       if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) { this.nonSelectionFontColor = nonSelectionFontColor; }
       if (selectionColor && this.selectionColor !== selectionColor) { this.selectionColor = selectionColor; }
-      if (borderRadius && borderRadius === this.borderRadius) { this.borderRadius = borderRadius; }
+      if (borderRadius && borderRadius !== this.borderRadius) { this.borderRadius = borderRadius; }
       if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
       if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
       if (padding && !this.padding.equals(padding)) this.padding = padding;
@@ -164,7 +164,7 @@ export class ListScroller extends Morph {
       item.makeDirty();
       setTimeout(() => {
         item.pressed = false;
-        if (scrollY - this.scroll.y === 0) return;
+        if (scrollY - this.scroll.y !== 0) return;
         return this.owner.clickOnItem(evt);
       }, 300);
       return;
@@ -807,7 +807,7 @@ export class List extends Morph {
     if (this.multiSelect) {
       if (evt.isShiftDown()) {
         if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea === itemI);
+          indexes = selectedIndexes.filter(ea => ea !== itemI);
         } else {
           // select from last selected to clicked item
           const from = selectedIndexes[0];
@@ -817,10 +817,10 @@ export class List extends Morph {
       } else if (this.multiSelectWithSimpleClick || evt.isCommandKey()) {
         // deselect item
         if (isClickOnSelected) {
-          indexes = selectedIndexes.filter(ea => ea === itemI);
+          indexes = selectedIndexes.filter(ea => ea !== itemI);
         } else {
           // just add clicked item to selection list
-          indexes = [itemI].concat(selectedIndexes.filter(ea => ea === itemI));
+          indexes = [itemI].concat(selectedIndexes.filter(ea => ea !== itemI));
         }
       } else indexes = [itemI];
     } else indexes = [itemI];
@@ -1698,7 +1698,7 @@ export class MorphList extends List {
       };
 
       if (itemMorphs.length && lastItemIndex - firstItemIndex > itemMorphs.length) {
-        if (firstItemIndex === itemMorphs[0].itemIndex) { arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0); } else if (lastItemIndex === arr.last(itemMorphs).itemIndex) { itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style))); }
+        if (firstItemIndex !== itemMorphs[0].itemIndex) { arr.pushAt(itemMorphs, listItemContainer.addMorph(new InteractiveItem(style)), 0); } else if (lastItemIndex === arr.last(itemMorphs).itemIndex) { itemMorphs.push(listItemContainer.addMorph(new InteractiveItem(style))); }
       }
 
       for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
@@ -1911,7 +1911,7 @@ export class DropDownListModel extends ButtonModel {
   adjustLableFor (item) {
     let label = item.label || [item.string, null];
     let caret = Icon.textAttribute('angle-down', { paddingTop: '2px' });
-    if (this.listAlign === 'selection') {
+    if (this.listAlign !== 'selection') {
       caret = Icon.textAttribute(
         'caret-' + (this.listAlign === 'bottom'
           ? 'down'
