@@ -365,6 +365,10 @@ export class ComponentPolicy {
     return false;
   }
 
+  withSubmorphsInScopeDo (scopeMorph, cb) {
+    return scopeMorph.withAllSubmorphsDoExcluding(cb, m => scopeMorph !== m && m.master);
+  }
+
   apply (derivedMorph, master, animationConfig = this._animationConfig) {
     // traverse the masters submorph hierarchy
     if (this._applying) return;
@@ -372,8 +376,8 @@ export class ComponentPolicy {
     try {
       const apply = () => derivedMorph.withMetaDo({ metaInteraction: true }, () => {
         const nameToStylableMorph = this.prepareSubmorphsToBeManaged(derivedMorph, master);
-        master.withAllSubmorphsDoExcluding(masterSubmorph => {
-          const isRoot = masterSubmorph == master;
+        this.withSubmorphsInScopeDo(master, masterSubmorph => {
+          const isRoot = masterSubmorph === master;
           let morphToBeStyled = isRoot ? derivedMorph : nameToStylableMorph[masterSubmorph.name]; // get all named?
           if (!morphToBeStyled) return; // morph to be styled is not present. can this happen? Not when working via direct manipulation tools. But can happen when you work in code purely. In those cases we resort to silent ignore.
           if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
@@ -464,7 +468,7 @@ export class ComponentPolicy {
           }
           if (morphToBeStyled._parametrizedProps) { delete morphToBeStyled._parametrizedProps; }
           // this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
-        }, masterSubmorph => master != masterSubmorph && masterSubmorph.master);
+        });
       });
       if (animationConfig) {
         derivedMorph.withAnimationDo(apply, animationConfig).then(() => {
@@ -491,21 +495,21 @@ export class ComponentPolicy {
 
   prepareSubmorphsToBeManaged (derivedMorph, master) {
     const nameToStylableMorph = {};
-    derivedMorph.withAllSubmorphsDoExcluding(m => {
+    this.withSubmorphsInScopeDo(derivedMorph, m => {
       if (nameToStylableMorph[m.name]) {
         if (!obj.isArray(nameToStylableMorph[m.name])) {
           nameToStylableMorph[m.name] = [nameToStylableMorph[m.name], m];
         } else nameToStylableMorph[m.name].push(m);
       }
       nameToStylableMorph[m.name] = m;
-    }, m => m != derivedMorph && m.master);
+    });
     // assign these based on the current master
-    master.withAllSubmorphsDoExcluding(masterSubmorph => {
-      let morphToBeStyled = masterSubmorph == master ? derivedMorph : nameToStylableMorph[masterSubmorph.name];
+    this.withSubmorphsInScopeDo(master, masterSubmorph => {
+      let morphToBeStyled = masterSubmorph === master ? derivedMorph : nameToStylableMorph[masterSubmorph.name];
       if (!morphToBeStyled) return;
       if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
       this.prepareMorphToBeManaged(morphToBeStyled);
-    }, masterSubmorph => masterSubmorph != master && masterSubmorph.master);
+    });
 
     return nameToStylableMorph;
   }
@@ -622,7 +626,8 @@ export class ComponentPolicy {
     if (!this._overriddenProps.has(derivedSubmorph)) {
       const spec = {};
       for (const prop in derivedSubmorph._parametrizedProps) {
-        if (prop == '__takenFromSnapshot__') continue;
+        if (prop === '__takenFromSnapshot__') continue;
+        if (prop === 'master') continue;
         spec[prop] = true;
       }
       this._overriddenProps.set(derivedSubmorph, spec);
