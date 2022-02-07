@@ -1,5 +1,6 @@
 /*
  * Utility functions that help to inspect, enumerate, and create JS objects
+ * @module lively.lang/object
  */
 
 import { fromString as functionFromString, asScriptOf, argumentNames } from './function.js';
@@ -15,6 +16,11 @@ import { deepEquals as arrayDeepEquals, isSubset, flatten } from './array.js';
 // Prototype is freely distributable under the terms of an MIT-style license.
 // For details, see the Prototype web site: http://www.prototypejs.org/
 
+/**
+ * Returns a stringified representation of an object.
+ * @param { object } object - The object to generate a stringified representation for.
+ * @returns { string } The stringified, formatted representation of the object.
+ */
 function print (object) {
   if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
   if (typeof object !== 'string') { return String(object); }
@@ -25,6 +31,12 @@ function print (object) {
   return result;
 }
 
+/**
+ * Shifts the string a number of times to the right by the contents of `indentString`.
+ * @param { string } str - The string whose contents to shift.
+ * @param { string } indentString - The string to insert on the left.
+ * @param { number } depth - The number of times to indent `str` by.
+ */
 function indent (str, indentString, depth) {
   if (!depth || depth <= 0) return str;
   while (depth > 0) { depth--; str = indentString + str; }
@@ -47,32 +59,29 @@ const getOwnPropertyDescriptors = (typeof Object.getOwnPropertyDescriptors === '
     return descriptors;
   };
 
-// show-in-doc
-
 // -=-=-=-=-
 // testing
 // -=-=-=-=-
 
-function isArray (obj) { /* show-in-doc */ return Array.isArray(obj); }
+function isArray (obj) { return Array.isArray(obj); }
 
-function isElement (object) { /* show-in-doc */ return object && object.nodeType == 1; }
+function isElement (object) { return object && object.nodeType === 1; }
 
-function isFunction (object) { /* show-in-doc */ return object instanceof Function; }
+function isFunction (object) { return object instanceof Function; }
 
-function isBoolean (object) { /* show-in-doc */ return typeof object === 'boolean'; }
+function isBoolean (object) { return typeof object === 'boolean'; }
 
-function isString (object) { /* show-in-doc */ return typeof object === 'string'; }
+function isString (object) { return typeof object === 'string'; }
 
-function isNumber (object) { /* show-in-doc */ return typeof object === 'number'; }
+function isNumber (object) { return typeof object === 'number'; }
 
-function isUndefined (object) { /* show-in-doc */ return typeof object === 'undefined'; }
+function isUndefined (object) { return typeof object === 'undefined'; }
 
-function isRegExp (object) { /* show-in-doc */ return object instanceof RegExp; }
+function isRegExp (object) { return object instanceof RegExp; }
 
-function isObject (object) { /* show-in-doc */ return typeof object === 'object'; }
+function isObject (object) { return typeof object === 'object'; }
 
 function isPrimitive (obj) {
-  // show-in-doc
   if (!obj) return true;
   switch (typeof obj) {
     case 'string':
@@ -83,31 +92,35 @@ function isPrimitive (obj) {
 }
 
 function isEmpty (object) {
-  /* show-in-doc */
   for (const key in object) { if (object.hasOwnProperty(key)) return false; }
   return true;
 }
 
+/**
+ * Is object `a` structurally equivalent to object `b`?. Performs a deep comparison.
+ * @param { object } a - The first object to compare.
+ * @param { object } b - The second object to compare.
+ * @returns { boolean }
+ */
 function equals (a, b) {
-  // Is object `a` structurally equivalent to object `b`? Deep comparison.
   if (a === b) return true;
-  if (!a || !b) return a == b;
+  if (!a || !b) return a === b;
   if (Array.isArray(a)) return arrayDeepEquals(a, b);
   switch (a.constructor) {
     case String:
     case Date:
     case Boolean:
-    case Number: return a == b;
+    case Number: return a === b;
   }
   if (typeof a.isEqualNode === 'function') return a.isEqualNode(b);
   if (typeof a.equals === 'function') return a.equals(b);
   const seenInA = [];
-  for (var name in a) {
+  for (let name in a) {
     seenInA.push(name);
     if (typeof a[name] === 'function') continue;
     if (!equals(a[name], b[name])) return false;
   }
-  for (var name in b) {
+  for (let name in b) {
     if (seenInA.indexOf(name) !== -1) continue;
     if (typeof b[name] === 'function') continue;
     if (!equals(b[name], a[name])) return false;
@@ -121,22 +134,38 @@ function equals (a, b) {
 
 const keys = Object.keys;
 
+/**
+ * Returns the values held by the object properties.
+ * @example
+ * var obj1 = {x: 22}, obj2 = {x: 23, y: {z: 3}};
+ * obj2.__proto__ = obj1;
+ * obj.values(obj1) // => [22]
+ * obj.values(obj2) // => [23,{z: 3}]
+ * @param { object } object - The object to retrive the values from.
+ * @returns { any[] }
+ */
 function values (object) {
-  // Example:
-  // var obj1 = {x: 22}, obj2 = {x: 23, y: {z: 3}};
-  // obj2.__proto__ = obj1;
-  // obj.values(obj1) // => [22]
-  // obj.values(obj2) // => [23,{z: 3}]
   return object ? Object.keys(object).map(function (k) { return object[k]; }) : [];
 }
 
+/**
+ * Returns a new object that copies all properties with `keys` from `obj`.
+ * @param { object } obj - The object to collect the properties from.
+ * @param { string[] } keys - The names of the properties to collect.
+ * @returns { object }
+ */
 function select (obj, keys) {
-  // return a new object that copies all properties with `keys` from `obj`
   const selected = {};
   for (let i = 0; i < keys.length; i++) selected[keys[i]] = obj[keys[i]];
   return selected;
 }
 
+/**
+ * Returns a new object that excludes all of the properties defined in `keys`.
+ * @param { object } object - The object to reduce.
+ * @param { string[] } keys - The list of properties to exclude.
+ * @returns { object }
+ */
 function dissoc (object, keys) {
   object = object || {};
   const descriptors = getOwnPropertyDescriptors(object);
@@ -146,6 +175,13 @@ function dissoc (object, keys) {
   return Object.defineProperties({}, descriptors);
 }
 
+/**
+ * Adds a method to a given `object`.
+ * @param { object } object - The object to extend.
+ * @param { string|function } funcOrString - The function object or source string for the method.
+ * @param { string } [optName] - The name of the method.
+ * @param { object } [optMapping] - The variable mapping for the method, when provided as string.
+ */
 function addScript (object, funcOrString, optName, optMapping) {
   const func = functionFromString(funcOrString);
   return asScriptOf(func, object, optName, optMapping);
@@ -154,13 +190,17 @@ function addScript (object, funcOrString, optName, optMapping) {
 // -=-=-=-=-
 // mutation
 // -=-=-=-=-
-function extend (destination, source) {
-  // Add all properties of `source` to `destination`.
-  // Example:
-  // var dest = {x: 22}, src = {x: 23, y: 24}
-  // obj.extend(dest, src);
-  // dest // => {x: 23,y: 24}
 
+/**
+ * Add all properties of `source` to `destination`.
+ * @example
+ * var dest = {x: 22}, src = {x: 23, y: 24}
+ * obj.extend(dest, src);
+ * dest // => {x: 23,y: 24}
+ * @param { object } destination - The source object.
+ * @param { object } source - The destination object.
+ */
+function extend (destination, source) {
   let currentCategoryNames = null;
   for (let i = 1; i < arguments.length; i++) {
     if (typeof arguments[i] === 'string') {
@@ -171,7 +211,7 @@ function extend (destination, source) {
       continue;
     }
 
-    var source = arguments[i];
+    source = arguments[i];
     for (const property in source) {
       const getter = source.__lookupGetter__(property);
       const setter = source.__lookupSetter__(property);
@@ -197,8 +237,12 @@ function extend (destination, source) {
 // clone
 // -=-=-=-=-
 
+/**
+ * Shallow copy.
+ * @param { object } object - The object to shallow copy.
+ * @returns { object } The copied object.
+ */
 function clone (object) {
-  // Shallow copy
   if (isPrimitive(object)) return object;
   if (Array.isArray(object)) return Array.prototype.slice.call(object);
   const clone = {};
@@ -209,9 +253,15 @@ function clone (object) {
   return clone;
 }
 
+/**
+ * Takes a list of properties and returns a new object with those properties shallow-copied from object.
+ * Similar to `select` but supports an additional `mapFunc`.
+ * @param { object } object - The object to extract the properties from.
+ * @param { string[] } properties - The list of properties to extract.
+ * @param { function } [mapFunc] - Function to map the ectracted properties to custom values.
+ * @returns { object } A new object with the extracted properties. 
+ */
 function extract (object, properties, mapFunc) {
-  // Takes a list of properties and returns a new object with those
-  // properties shallow-copied from object
   const copied = {};
   for (let i = 0; i < properties.length; i++) {
     if (properties[i] in object) {
@@ -233,16 +283,14 @@ function extract (object, properties, mapFunc) {
  * necessarily evaluate to a structurally identical object. `inspect` is
  * meant to be used while interactivively exploring JavaScript programs and
  * state.
- * @params { Object } object - The JavaScript Object to be inspected.
- * @params { InspectOptions } options -
- *   { Boolean } printFunctionSource - Wether or not to show closures' source code.
- *   { Boolean } escapeKeys - Wether or not to escape special characters.
- *   { Number } maxDepth - The maximum depth upon which to inspect the object.
- *   { Function } customPrinter - Custom print function that returns an
- *                                alternative string representation of values.
- *   { Number } maxNumberOfKeys - Limit the number of keys to be printed of an object.
- *   { Function } keySorter - Custom sorting function to define the order in which
- *                            object key/value pairs are printed.
+ * @param { Object } object - The JavaScript Object to be inspected.
+ * @param { InspectOptions } options -
+ * @param { Boolean } options.printFunctionSource - Wether or not to show closures' source code.
+ * @param { Boolean } options.escapeKeys - Wether or not to escape special characters.
+ * @param { Number } options.maxDepth - The maximum depth upon which to inspect the object.
+ * @param { Function } options.customPrinter - Custom print function that returns an alternative string representation of values.
+ * @param { Number } options.maxNumberOfKeys - Limit the number of keys to be printed of an object.
+ * @param { Function } options.keySorter - Custom sorting function to define the order in which object key/value pairs are printed.
  */
 function inspect (object, options, depth) {
   options = options || {};
@@ -329,15 +377,17 @@ function inspect (object, options, depth) {
 // -=-=-=-=-
 // merging
 // -=-=-=-=-
-function merge (objs) {
-  // `objs` can be a list of objects. The return value will be a new object,
-  // containing all properties of all objects. If the same property exist in
-  // multiple objects, the right-most property takes precedence.
-  //
-  // Like `extend` but will not mutate objects in `objs`.
 
-  // if objs are arrays just concat them
-  // if objs are real objs then merge propertdies
+/**
+ * Given a list of objects, return a new object,
+ * containing all properties of all objects. If the same property exist in
+ * multiple objects, the right-most property takes precedence.
+ * Like `extend` but will not mutate objects in `objs`.
+ * if objs are arrays just concat them
+ * if objs are real objs then merge properties
+ * @param { object[] } objs - The list of objects to merge.
+ */
+function merge (objs) {
   if (arguments.length > 1) {
     return merge(Array.prototype.slice.call(arguments));
   }
@@ -354,16 +404,13 @@ function merge (objs) {
   }, {});
 }
 
+/**
+ * Performs a deep merge of two objects that recursively merges the properties in case
+ * they are objects.
+ * @param { object } objA - The first object to merge.
+ * @param { object } objB - The second object to merge.
+ */
 function deepMerge (objA, objB) {
-  // `objs` can be a list of objects. The return value will be a new object,
-  // containing all properties of all objects. If the same property exist in
-  // multiple objects, the right-most property takes precedence.
-  //
-  // Like `extend` but will not mutate objects in `objs`.
-
-  // if objs are arrays just concat them
-  // if objs are real objs then merge propertdies
-
   if (!objA) return objB;
   if (!objB) return objA;
 
@@ -385,21 +432,24 @@ function deepMerge (objA, objB) {
   }, {});
 }
 
+/**
+ * Expects `properties` to be a map of keys to objects having optional
+ * before/after attributes that, if present, should be lists of other property
+ * keys. `sortProperties` will return an ordered list of property keys so
+ * that the before / after requirements are fullfilled. If a cyclic
+ * dependency is encountered an error will be thrown.
+ * Example:
+ * ```
+ * sortProperties({foo: {}, bar: {after: ["foo"], before: ["baz"]}, "baz": {after: ["foo"]}})
+ * // => ["foo","bar","baz"]
+ * ```
+ * ignore-in-doc
+ * 1. convert "before" requirement into "after" and check if all properties
+ * mentioned in after/before are actually there
+ * @param { Map.<string, { after: string, before: string }> } properties - The map of properties to check for.
+ * @param { boolean } [throwErrorOnMissing=false] - Wether or not to throw an error on detection of missing properties.
+ */
 function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing = false) {
-  // Expects `properties` to be a map of keys to objects having optional
-  // before/after attributes that, if present, should be lists of other property
-  // keys. `sortProperties` will return an ordered list of property keys so
-  // that the before / after requirements are fullfilled. If a cyclic
-  // dependency is encountered an error will be thrown.
-  // Example:
-  // ```
-  // sortProperties({foo: {}, bar: {after: ["foo"], before: ["baz"]}, "baz": {after: ["foo"]}})
-  // // => ["foo","bar","baz"]
-  // ```
-
-  // ignore-in-doc
-  // 1. convert "before" requirement into "after" and check if all properties
-  // mentioned in after/before are actually there
   const keys = []; const props = []; const remaining = [];
   for (const key in properties) {
     const prop = properties[key];
@@ -437,7 +487,6 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
     remaining.push(key);
   }
 
-  // ignore-in-doc
   // compute order
   const resolvedGroups = [];
   const resolvedKeys = [];
@@ -474,14 +523,24 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
 // -=-=-=-=-=-=-
 // inheritance
 // -=-=-=-=-=-=-
+
+/**
+ * Wrapper for `Object.create`. Essentially creates a new object that is derived from `obj`;
+ * @param { object } obj - The object to derive.
+ * @returns { object } The derived object.
+ */
 function inherit (obj) { return Object.create(obj); }
 
+/**
+ * Lookup all properties named name in the proto hierarchy of obj.
+ * @example
+ * var a = {foo: 3}, b = Object.create(a), c = Object.create(b);
+ * c.foo = 4;
+ * obj.valuesInPropertyHierarchy(c, "foo") // => [3,4]
+ * @param { object } obj - The object to lookup the property values for.
+ * @param { string } name - The name of the property to gather the values for.
+ */
 function valuesInPropertyHierarchy (obj, name) {
-  // Lookup all properties named name in the proto hierarchy of obj.
-  // Example:
-  // var a = {foo: 3}, b = Object.create(a), c = Object.create(b);
-  // c.foo = 4;
-  // obj.valuesInPropertyHierarchy(c, "foo") // => [3,4]
   const result = []; let lookupObj = obj;
   while (lookupObj) {
     if (lookupObj.hasOwnProperty(name)) result.unshift(lookupObj[name]);
@@ -490,19 +549,27 @@ function valuesInPropertyHierarchy (obj, name) {
   return result;
 }
 
+/**
+ * like `merge` but automatically gets all definitions of the value in the
+ * prototype chain and merges those.
+ * @example
+ * var o1 = {x: {foo: 23}}, o2 = {x: {foo: 24, bar: 15}}, o3 = {x: {baz: "zork"}};
+ * o2.__proto__ = o1; o3.__proto__ = o2;
+ * obj.mergePropertyInHierarchy(o3, "x");
+ * // => {bar: 15, baz: "zork",foo: 24}
+ * @param { object } obj - The object to whose property definitions to merge.
+ * @param { string } propName - The name of the property whose definition to merge.
+ */
 function mergePropertyInHierarchy (obj, propName) {
-  // like `merge` but automatically gets all definitions of the value in the
-  // prototype chain and merges those.
-  // Example:
-  // var o1 = {x: {foo: 23}}, o2 = {x: {foo: 24, bar: 15}}, o3 = {x: {baz: "zork"}};
-  // o2.__proto__ = o1; o3.__proto__ = o2;
-  // obj.mergePropertyInHierarchy(o3, "x");
-  // // => {bar: 15, baz: "zork",foo: 24}
   return merge(valuesInPropertyHierarchy(obj, propName));
 }
 
+/**
+ * Recursively traverses `object` and its properties to create a copy.
+ * @param { object } object - The object to copy.
+ * @returns { object } The deeply copied object.
+ */
 function deepCopy (object) {
-  // Recursively traverses `object` and its properties to create a copy.
   if (!object || typeof object !== 'object' || object instanceof RegExp) return object;
   const result = Array.isArray(object) ? Array(object.length) : {};
   for (const key in object) {
@@ -514,17 +581,36 @@ function deepCopy (object) {
 // -=-=-=-=-=-=-=-=-
 // stringification
 // -=-=-=-=-=-=-=-=-
+
+/**
+ * Returns the constructor's name of a `obj`.
+ * @param { object } obj
+ * @returns { string }
+ */
 function typeStringOf (obj) {
-  // ignore-in-doc
   if (obj === null) return 'null';
   if (typeof obj === 'undefined') return 'undefined';
   return obj.constructor.name;
 }
 
+/**
+ * Returns wether `obj` is a value or mutable type.
+ * @param { * } obj - The object to check for.
+ * @returns { boolean }
+ */
+function isMutableType (obj) {
+  const immutableTypes = ['null', 'undefined', 'Boolean', 'Number', 'String'];
+  return immutableTypes.indexOf(typeStringOf(obj)) === -1;
+}
+
+/**
+ * Returns a short stringified representation of `obj`.
+ * @param { object } obj
+ * @returns { string }
+ */
 function shortPrintStringOf (obj) {
-  // ignore-in-doc
   // primitive values
-  if (!isMutableType(obj)) return safeToString(obj);
+  if (!isMutableType(obj)) return safeToString(obj); // eslint-disable-line no-use-before-define
 
   // constructed objects
   if (obj.constructor.name !== 'Object' && !Array.isArray(obj)) {
@@ -550,19 +636,22 @@ function shortPrintStringOf (obj) {
   return typeString;
 }
 
-function isMutableType (obj) {
-  // Is `obj` a value or mutable type?
-  const immutableTypes = ['null', 'undefined', 'Boolean', 'Number', 'String'];
-  return immutableTypes.indexOf(typeStringOf(obj)) === -1;
-}
-
+/**
+ * Like `toString` but catches errors.
+ * @param { object } obj - The object the should be converted to string.
+ * @returns { string }
+ */
 function safeToString (obj) {
-  // Like `toString` but catches errors.
   try {
     return (obj ? obj.toString() : String(obj)).replace('\n', '');
   } catch (e) { return '<error printing object>'; }
 }
 
+/**
+ * Return the object representation if given a primitive value or just the object itself.
+ * @param { * } obj - The value to convert to object representation if needed.
+ * @returns { object }
+ */
 function asObject (obj) {
   switch (typeof obj) {
     case 'string':
@@ -576,6 +665,12 @@ function asObject (obj) {
   }
 }
 
+/**
+ * Returns a name for a key in an object that is not yet occupied.
+ * @param { object } obj - The object within wich to look for a new unoccupied property name.
+ * @param { string } [base='_'] - The base name of the property that allows us to generate well formed property names.
+ * @returns { string } An unoccpuied property name.
+ */
 function newKeyIn (obj, base = '_') {
   let i = 1; let key;
   do {
