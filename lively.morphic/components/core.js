@@ -2,11 +2,380 @@ import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
-import { deserializeMorph, serializeMorph } from '../serialization.js';
-import { sanitizeFont, getClassForName } from '../helpers.js';
 import { adoptObject } from 'lively.classes/runtime.js';
 
-// varargs, viewModelProps can be skipped
+import { deserializeMorph, serializeMorph } from '../serialization.js';
+import { sanitizeFont, getClassForName } from '../helpers.js';
+
+/**
+ * Defines the core interface for defining and using master components in the system.
+ * Components are defined in component files and allow for a file based definition of master components
+ * such that collaboration on top of "state of the art" collaboration systems is feasable.
+ * Existing systems do only work purely with text, so we are bound to keep up with that
+ * as long as we are reliant on the present collaboration plattforms and toolchains.
+ * @module lively.morphic/components/core.js
+ */
+
+/**
+ * A ViewModel allows the user to decouple custom UI code from the composed morphs.
+ * This is especially useful when working with large scale applications where
+ * we want to keep the behavior separate from the specific UI components.
+ * For instance, a team of designers can work on different UIs that vary in structure and appearance
+ * without interference of the behavior. They do not have to worry about "accidentally" deleting parts
+ * of the morph composition that carry custom behavior. Meanwhile the system allows for the same behavior to be attached
+ * to different components and/or composed morphs. It also provides lifecycle callbacks that provide canonical entry points
+ * where it is safe to update the UI in response to changes in the data.
+ * This allows us to define behavior that is less error prone during (de)serialization.
+ */
+export class ViewModel {
+  static get propertySettings () {
+    return {
+      defaultGetter (key) { return this.getProperty(key); },
+      defaultSetter (key, value) { this.setProperty(key, value); },
+      valueStoreProperty: '_viewState'
+    };
+  }
+
+  toString () {
+    return this.view ? `<${getClassName(this)} - ${this.view.name}>` : `<Unattached ${getClassName(this)}>`;
+  }
+
+  static get properties () {
+    return {
+      view: {
+        set (v) {
+          this.setProperty('view', v);
+          if (v) v.viewModel = this;
+        }
+      },
+      bindings: {
+        readOnly: true,
+        get () {
+          return [];
+        }
+      },
+      models: {
+        derived: true,
+        get () {
+          const nameModelMap = {};
+          if (lively.FreezerRuntime && this._models) return this._models;
+          this.doWithScope(m => {
+            // if a morph blocks its scope, ignore!
+            if (m.viewModel) { nameModelMap[string.camelize(m.name.split(' ').join('-'))] = m.viewModel; }
+          });
+          return this._models = nameModelMap;
+        }
+      },
+      ui: {
+        derived: true,
+        get () {
+          const nameMorphMap = {};
+          const klassCollectionMap = {};
+          if (lively.FreezerRuntime && this._ui) return this._ui;
+          this.doWithScope(m => {
+            // if a morph blocks its scope, ignore!
+            nameMorphMap[string.camelize(m.name.split(' ').join('-'))] = m;
+            const name = getClassName(m);
+            const categoryName = name.charAt(0).toLowerCase() + name.slice(1) + 's';
+            const category = (klassCollectionMap[categoryName] || []);
+            category.push(m);
+            klassCollectionMap[categoryName] = category;
+          });
+          return this._ui = { ...nameMorphMap, ...klassCollectionMap };
+        }
+      }
+    };
+  }
+
+  constructor (props = {}) {
+    this.initializeProperties(props);
+  }
+
+  get __only_serialize__ () {
+    const defaults = this.defaultProperties;
+    const { properties } = this.propertiesAndPropertySettings();
+    const propsToSerialize = [];
+    if (this.attributeConnections) propsToSerialize.push('attributeConnections');
+    for (let key in properties) {
+      const descr = properties[key];
+      if (
+        descr.readOnly ||
+        descr.derived ||
+        (descr.hasOwnProperty('serialize') && !descr.serialize) ||
+        obj.equals(this[key], defaults[key])
+      ) continue;
+      propsToSerialize.push(key);
+    }
+    return propsToSerialize;
+  }
+
+  getProperty (key) {
+    return this._viewState[key];
+  }
+
+  setProperty (key, value) {
+    this._viewState[key] = value;
+    if (this._isRefreshing) return;
+    // also start a refresh request
+    // prevent nested refresh calls from ending in infine loops
+    this._isRefreshing = true;
+    try {
+      if (this.view) this.onRefresh(key);
+    } catch (err) {
+
+    }
+    this._isRefreshing = false;
+  }
+  
+  /**
+   * Returns the world the view currently resides in.
+   * @returns { World } The world morph the view resides in.
+   */
+  world () {
+    return this.view.world();
+  }
+
+  execCommand (cmdName, opts) {
+    return this.view.execCommand(cmdName, opts);
+  }
+  
+  /**
+   * Calls `cb` on every morph within the scope of the view model.
+   * The scope is essentially every morph in the submorph hierarchy that is
+   * not in turn scoped by a different view model.
+   * @param { function } cb - The callback to invoke for each morph in the hierarchy.
+   */
+  doWithScope (cb) {
+    return this.view && this.view.withAllSubmorphsDoExcluding(cb, (m) => m.ignoreScope || (m.viewModel && m.viewModel !== this));
+  }
+  
+  /**
+   * Detatches the view model from the view. This means all bindings and
+   * exposed props are removed, effectively removing all custom behavior from the view.
+   */
+  onDeactivate () {
+    this.getBindingConnections().forEach(conn => conn.disconnect());
+    if (!this.view) return;
+    for (let prop of (this.expose || [])) {
+      if (obj.isArray(prop)) prop = prop[0];
+      delete this.view[prop];
+    }
+  }
+
+  /**
+   * Attaches the view model to the view, instantiating all bindings and exposed properties.
+   */
+  onActivate () {
+    if (this.view.viewModel !== this) return;
+    this.reifyExposedProps();
+    this.reifyBindings();
+  }
+  
+  /**
+   * Called once the view is fully loaded and attached.
+   */
+  viewDidLoad () {
+    
+  }
+  
+  /**
+   * Default refresh callback to perform updates in the view
+   * fixme: Refresh should not get called if view has not been
+   * loaded fully or not attached yet
+   * maybe rename to onChange() analogous to morphs?
+   * @param { object } change - The change object regarding the current property that changed in the view model.
+   */
+  onRefresh (change) {}
+  
+  /**
+   * Instantiate all the bindings within the view as defined.
+   */
+  reifyBindings () {
+    for (let {
+      target, model, signal, handler,
+      override = false, converter = false, updater = false
+    } of this.bindings) {
+      try {
+        if (model) target = this.view.getSubmorphNamed(model).viewModel;
+        if (!target) target = this.view;
+        if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
+        if (!target) continue;
+        if (obj.isFunction(handler)) {
+          connect(target, signal, handler);
+          continue;
+        }
+        connect(target, signal, this, handler, {
+          override,
+          converter,
+          updater
+        });
+      } catch (err) {
+        console.warn('Failed to reify biniding: ', target, model, signal, handler);
+      }
+    }
+  }
+  
+  /**
+   * Install all of the exposed props in the view as defined.
+   */
+  reifyExposedProps () {
+    const { properties: props } = this.propertiesAndPropertySettings();
+    const descriptors = properties.allPropertyDescriptors(this);
+    for (let prop of this.expose || []) {
+      if (obj.isArray(prop)) {
+        // expose is a redirect
+        const [subProp, { model, target }] = prop;
+        let redirected;
+        if (model) redirected = this.view.getSubmorphNamed(model).viewModel;
+        if (target) redirected = this.view.getSubmorphNamed(target);
+        Object.defineProperty(this.view, subProp, {
+          configurable: true,
+          get: () => { 
+            const val = redirected[subProp];
+            if (obj.isFunction(val)) return val.bind(redirected);
+            return val;
+          },
+          // if read only prop then an error will be thrown on the viewModel which is a little confusing
+          // but fine for now
+          set: (v) => { return redirected[subProp] = v; }
+        });
+        continue;
+      }
+      
+      const descr = descriptors[prop];
+      if (props[prop] || descr && (!!descr.get || !!descr.set)) {
+        // install getter setter
+        Object.defineProperty(this.view, prop, {
+          configurable: true,
+          get: () => { return this[prop]; },
+          // if read only prop then an error will be thrown on the viewModel which is a little confusing
+          // but fine for now
+          set: (v) => { return this[prop] = v; }
+        });
+        continue;
+      }
+      // this is not working when the prop defines a custom setter
+      // we need to instead define a custom getter here
+      this.view[prop] = (...args) => {
+        return this[prop](...args);
+      };
+    }
+  }
+  
+  /**
+   * Invoke the given callback function without the bindings in the view being active.
+   * This allows us to perform changes in the view without accidentally triggering any
+   * unintended feedback cycles. In case the function is asynchronous, the bindings will
+   * be disabled as long as the function needs to terminate.
+   * @param { function } cb - The function to invoke while the bindings are disabled.
+   */
+  async withoutBindingsDo (cb) {
+    this.onDeactivate();
+    await cb();
+    this.onActivate();
+  }
+  
+  /**
+   * Returns the list of all bindings connections instantiated within the
+   * scope of the view model.
+   * @return { AttributeConnection[] }
+   */
+  getBindingConnections () {
+    const bindingConnections = [];
+    const bindingDefinitions = this.bindings;
+    const collect = conns => {
+      conns.forEach(conn => {
+        if (conn.targetObj === this && !!bindingDefinitions.find(def => {
+          if (obj.isFunction(def.handler)) { return conn.targetObj.toString() === def.handler.toString(); }
+          return conn.sourceAttrName === def.signal && conn.targetMethodName === def.handler;
+        })) {
+          bindingConnections.push(conn);
+        }
+      });
+    };
+    this.doWithScope(m => {
+      if (m.attributeConnections) {
+        collect(m.attributeConnections);
+      }
+      if (m.viewModel && m.viewModel.attributeConnections) {
+        collect(m.viewModel.attributeConnections);
+      }
+    });
+    return bindingConnections;
+  }
+  
+  /**
+   * Attaches the view model to the given view and initializes all
+   * the bindings and exposed props alongside. Also invokes lifycle methods
+   * accordingly.
+   * @param { Morph } view - The view we are attaching to.
+   */
+  attach (view) {
+    this.view = view;
+    this.reifyBindings();
+    this.reifyExposedProps();
+    view.toString = () => `<${getClassName(view)}[${getClassName(this)}]>`;
+    this.onRefresh();
+    this.viewDidLoad();
+  }
+}
+
+function mergeInHierarchy (root, props, iterator, executeCommands = false) {
+  iterator(root, props);
+  let [commands, nextPropsToApply] = arr.partition([...props.submorphs || []], (prop) => !!prop.COMMAND);
+  props = nextPropsToApply.shift();
+  for (let submorph of root.submorphs) {
+    if (!props) break;
+    if (submorph.name === props.name) {
+      mergeInHierarchy(submorph, props, iterator, executeCommands);
+      props = nextPropsToApply.shift();
+    }
+  }
+  // finally we apply the commands
+  if (!root.isMorph || !executeCommands) return;
+  for (let cmd of commands) {
+    if (cmd.COMMAND === 'remove') {
+      const morphToRemove = root.submorphs.find(m => m.name === cmd.target);
+      if (morphToRemove) morphToRemove.remove();
+    }
+
+    if (cmd.COMMAND === 'add') {
+      const beforeMorph = root.submorphs.find(m => m.name === cmd.before);
+      root.addMorph(cmd.props, beforeMorph).__wasAddedToDerived__ = true;
+    }
+  }
+}
+
+function mergeInMorphicProps (root, props) {
+  const layoutAssignments = [];
+  mergeInHierarchy(root, props, (aMorph, props) => {
+    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout']));
+    if (props.layout) layoutAssignments.push([aMorph, props.layout]);
+  }, true);
+  for (let [aMorph, layout] of layoutAssignments) {
+    aMorph.layout = layout; // trigger assignment now after commands have run through
+  }
+}
+
+function mergeInModelProps (root, props) {
+  mergeInHierarchy(root, props, (aMorph, props) => {
+    if (aMorph.viewModel && props.viewModel) {
+      Object.assign(aMorph.viewModel, props.viewModel);
+    }
+    if (!aMorph.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
+      props.viewModel.attach(aMorph);
+    }
+  });
+}
+
+/**
+ * Instantiates a morph based off a master component. This function also allows to further
+ * customize the derived instance inline, overridding properties and adding/removing certain
+ * submorphs withing the instantiated morph's submorph hierarchy.
+ * @param { Morph } masterComponent - The master component that we want the new morph to be derived from.
+ * @param { object } overriddenProps - A nested object containing properties that override the original properties of morphs within the submorph hierarchy.
+ * @returns { Morph } A new morph derived from the master component.
+ */
 export function part (masterComponent, overriddenProps = {}, oldParam) {
   if (oldParam) overriddenProps = oldParam;
   const p = masterComponent._snap ? deserializeMorph(masterComponent._snap, { reinitializeIds: true, migrations: [] }) : masterComponent.copy();
@@ -15,8 +384,10 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
   // ensure master is initialized before overriding
   delete p._parametrizedProps;
   p.withAllSubmorphsDoExcluding(m => {
-    if (m != p && !m.master) { delete m._parametrizedProps; }
-  }, m => m != p && m.master);
+    if (m !== p && !m.master) {
+      delete m._parametrizedProps;
+    }
+  }, m => m !== p && m.master);
   // this skips derived morphs that are not reachable via submorphs
   p.master = masterComponent;
   p.withAllSubmorphsDo(m => {
@@ -38,8 +409,12 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
   return p;
 }
 
-// first argument can also be a component!
-// the argument after that are then the overridden properties...
+/**
+ * Defines a morph that serves as a master component for other morphs in the system.
+ * @param { Morph|Object } masterComponentOrProps - Either a master component (that this component is to be derived from) or a nested properties structure that fully specs out the submorph hierarchy of the master component to be defined.
+ * @param { Object } [overriddenProps] - In case we derive the component from another component in the system, we can further provide overridden props here as the second argument.
+ * @returns { Morph } A new morph that serves as a master component in the system.
+ */
 export function component (masterComponentOrProps, overriddenProps) {
   let c, props, type;
   if (!overriddenProps) {
@@ -90,10 +465,11 @@ export function component (masterComponentOrProps, overriddenProps) {
 }
 
 /**
- * Decorator function that will wrap a morph's name and ensure
+ * Function that will wrap a morph's name and declare
  * that this morph is removed from the submorph array it is located in.
- * This is meant to be used inside overriden props of part(C, {...}) or component(C, {...})
- * calls. It will not make sense on morph({...}) or component({...}) calls.
+ * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
+ * calls. It will not make sense on `morph({...})` or `component({...})` calls.
+ * @param { string } removedSiblingName - The name of the submorph that is to be removed from the hierarchy.
  */
 export function without (removedSiblingName) {
   return {
@@ -103,12 +479,14 @@ export function without (removedSiblingName) {
 }
 
 /**
- * Decorator function that will wrap a morph definition and ensure
+ * Function that will wrap a morph definition and declares
  * that this morph is added to the submorph array it is placed in.
- * This is meant to be used inside overriden props of part() or component(C, {...})
- * calls. It will not make sense on morph({...}) or component({...}) calls.
+ * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
+ * calls. It will not make sense on `morph({...})` or `component({...})` calls.
  * If before is specified this will ensure that the morph is added before the morph
- * named as before
+ * named as before.
+ * @param { object } props - A nested properties object that specs out the submorph hierarchy to be added. (This can also be a `part()` call).
+ * @param { string } [before] - An optional parameter that denotes the name of the morph this new one should be placed in front of.
  */
 export function add (props, before) {
   return {
@@ -128,303 +506,14 @@ function insertFontCSS (name, fontUrl) {
   } else addOrChangeCSSDeclaration(`${name}`, `@import url("${fontUrl}");`);
 }
 
+/**
+ * Ensures that a set of added fonts is loaded in the system.
+ * @params { object } addedFonts - A map of custom fonts that are to be loaded.
+ */
 export function ensureFont (addedFonts) {
   for (const name in addedFonts) {
     if (!$world.env.fontMetric.isFontSupported(sanitizeFont(name))) {
       insertFontCSS(name, addedFonts[name]);
     }
   }
-}
-
-export class ViewModel {
-  static get propertySettings () {
-    return {
-      defaultGetter (key) { return this.getProperty(key); },
-      defaultSetter (key, value) { this.setProperty(key, value); },
-      valueStoreProperty: '_viewState'
-    };
-  }
-
-  toString () {
-    return this.view ? `<${getClassName(this)} - ${this.view.name}>` : `<Unattached ${getClassName(this)}>`;
-  }
-
-  static get properties () {
-    return {
-      view: {
-        // the root morph of the hierarchy that we are responsible for
-        set (v) {
-          this.setProperty('view', v);
-          if (v) v.viewModel = this;
-        }
-      },
-      bindings: {
-        readOnly: true,
-        get () {
-          return [];
-        }
-      },
-      models: {
-        derived: true,
-        get () {
-          const nameModelMap = {};
-          if (lively.FreezerRuntime && this._models) return this._models;
-          this.doWithScope(m => {
-            // if a morph blocks its scope, ignore!
-            if (m.viewModel) { nameModelMap[string.camelize(m.name.split(' ').join('-'))] = m.viewModel; }
-          });
-          return this._models = nameModelMap;
-        }
-      },
-      ui: {
-        derived: true,
-        get () {
-          const nameMorphMap = {};
-          const klassCollectionMap = {};
-          if (lively.FreezerRuntime && this._ui) return this._ui;
-          this.doWithScope(m => {
-            // if a morph blocks its scope, ignore!
-            nameMorphMap[string.camelize(m.name.split(' ').join('-'))] = m;
-            const name = getClassName(m);
-            const categoryName = name.charAt(0).toLowerCase() + name.slice(1) + 's';
-            const category = (klassCollectionMap[categoryName] || []);
-            category.push(m);
-            klassCollectionMap[categoryName] = category;
-          });
-          return this._ui = { ...nameMorphMap, ...klassCollectionMap };
-        }
-      }
-    };
-  }
-
-  get __only_serialize__ () {
-    const defaults = this.defaultProperties;
-    const { properties } = this.propertiesAndPropertySettings();
-    const propsToSerialize = [];
-    if (this.attributeConnections) propsToSerialize.push('attributeConnections');
-    for (let key in properties) {
-      const descr = properties[key];
-      if (
-        descr.readOnly ||
-        descr.derived ||
-        (descr.hasOwnProperty('serialize') && !descr.serialize) ||
-        obj.equals(this[key], defaults[key])
-      ) continue;
-      propsToSerialize.push(key);
-    }
-    return propsToSerialize;
-  }
-
-  // __after_deserialize__ (snapshot, ref, pool) {
-  //   if (this.view) this.attach(this.view);
-  // }
-
-  world () {
-    return this.view.world();
-  }
-
-  execCommand (cmdName, opts) {
-    return this.view.execCommand(cmdName, opts);
-  }
-
-  doWithScope (cb) {
-    return this.view && this.view.withAllSubmorphsDoExcluding(cb, (m) => m.ignoreScope || (m.viewModel && m.viewModel != this));
-  }
-
-  constructor (props = {}) {
-    this.initializeProperties(props);
-  }
-
-  onDeactivate () {
-    // retrieve all binding connections and disable them
-    this.getBindingConnections().forEach(conn => conn.disconnect());
-  }
-
-  onActivate () {
-    if (this.view.viewModel != this) return;
-    // retrieve all binding connections and enable them
-    this.reifyBindings();
-  }
-
-  viewDidLoad () {
-    // called once the view is fully loaded and attached
-  }
-
-  onRefresh (change) {
-    // default refresh callback to perform updates in the view
-    // fixme: Refresh should not get called if view has not been
-    // loaded fully or not attached yet
-    // maybe rename to onChange() analogous to morphs?
-  }
-
-  getProperty (key) {
-    return this._viewState[key];
-  }
-
-  setProperty (key, value) {
-    this._viewState[key] = value;
-    if (this._isRefreshing) return;
-    // also start a refresh request
-    // prevent nested refresh calls from ending in infine loops
-    this._isRefreshing = true;
-    try {
-      if (this.view) this.onRefresh(key);
-    } catch (err) {
-
-    }
-    this._isRefreshing = false;
-  }
-
-  reifyBindings () {
-    for (let {
-      target, model, signal, handler,
-      override = false, converter = false, updater = false
-    } of this.bindings) {
-      try {
-        if (model) target = this.view.getSubmorphNamed(model).viewModel;
-        if (!target) target = this.view;
-        if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
-        if (!target) continue;
-        if (obj.isFunction(handler)) {
-          connect(target, signal, handler);
-          continue;
-        }
-        connect(target, signal, this, handler, {
-          override,
-          converter,
-          updater
-        });
-      } catch (err) {
-        console.warn('Failed to reify biniding: ', target, model, signal, handler);
-      }
-    }
-  }
-
-  async withoutBindingsDo (cb) {
-    this.onDeactivate();
-    await cb();
-    this.onActivate();
-  }
-
-  reifyExposedProps () {
-    const { properties: props } = this.propertiesAndPropertySettings();
-    const descriptors = properties.allPropertyDescriptors(this);
-    for (let prop of this.expose || []) {
-      if (obj.isArray(prop)) {
-        // expose is a redirect
-        const [subProp, { model, target }] = prop;
-        let redirected;
-        if (model) redirected = this.view.getSubmorphNamed(model).viewModel;
-        if (target) redirected = this.view.getSubmorphNamed(target);
-        Object.defineProperty(this.view, subProp, {
-          configurable: true,
-          get: () => { return redirected[subProp]; },
-          // if read only prop then an error will be thrown on the viewModel which is a little confusing
-          // but fine for now
-          set: (v) => { return redirected[subProp] = v; }
-        });
-        continue;
-      }
-      
-      const descr = descriptors[prop];
-      if (props[prop] || descr && (!!descr.get || !!descr.set)) {
-        // install getter setter
-        Object.defineProperty(this.view, prop, {
-          configurable: true,
-          get: () => { return this[prop]; },
-          // if read only prop then an error will be thrown on the viewModel which is a little confusing
-          // but fine for now
-          set: (v) => { return this[prop] = v; }
-        });
-        continue;
-      }
-      // this is not working when the prop defines a custom setter
-      // we need to instead define a custom getter here
-      this.view[prop] = (...args) => {
-        return this[prop](...args);
-      };
-    }
-  }
-
-  getBindingConnections () {
-    const bindingConnections = [];
-    const bindingDefinitions = this.bindings;
-    const collect = conns => {
-      conns.forEach(conn => {
-        if (conn.targetObj == this && !!bindingDefinitions.find(def => {
-          if (obj.isFunction(def.handler)) { return conn.targetObj.toString() === def.handler.toString(); }
-          return conn.sourceAttrName == def.signal && conn.targetMethodName == def.handler;
-        })) {
-          bindingConnections.push(conn);
-        }
-      });
-    };
-    this.doWithScope(m => {
-      if (m.attributeConnections) {
-        collect(m.attributeConnections);
-      }
-      if (m.viewModel && m.viewModel.attributeConnections) {
-        collect(m.viewModel.attributeConnections);
-      }
-    });
-    return bindingConnections;
-  }
-
-  attach (view) {
-    // connect the bindings!
-    this.view = view;
-    this.reifyBindings();
-    this.reifyExposedProps();
-    view.toString = () => `<${getClassName(view)}[${getClassName(this)}]>`;
-    this.onRefresh();
-    this.viewDidLoad();
-  }
-}
-
-function mergeInHierarchy (root, props, iterator, executeCommands = false) {
-  iterator(root, props);
-  let [commands, nextPropsToApply] = arr.partition([...props.submorphs || []], (prop) => !!prop.COMMAND);
-  props = nextPropsToApply.shift();
-  for (let submorph of root.submorphs) {
-    if (!props) break;
-    if (submorph.name == props.name) {
-      mergeInHierarchy(submorph, props, iterator, executeCommands);
-      props = nextPropsToApply.shift();
-    }
-  }
-  // finally we apply the commands
-  if (!root.isMorph || !executeCommands) return;
-  for (let cmd of commands) {
-    if (cmd.COMMAND == 'remove') {
-      const morphToRemove = root.submorphs.find(m => m.name == cmd.target);
-      if (morphToRemove) morphToRemove.remove();
-    }
-
-    if (cmd.COMMAND == 'add') {
-      const beforeMorph = root.submorphs.find(m => m.name == cmd.before);
-      root.addMorph(cmd.props, beforeMorph).__wasAddedToDerived__ = true;
-    }
-  }
-}
-
-function mergeInMorphicProps (root, props) {
-  const layoutAssignments = [];
-  mergeInHierarchy(root, props, (aMorph, props) => {
-    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout']));
-    if (props.layout) layoutAssignments.push([aMorph, props.layout]);
-  }, true);
-  for (let [aMorph, layout] of layoutAssignments) {
-    aMorph.layout = layout; // trigger assignment now after commands have run through
-  }
-}
-
-function mergeInModelProps (root, props) {
-  mergeInHierarchy(root, props, (aMorph, props) => {
-    if (aMorph.viewModel && props.viewModel) {
-      Object.assign(aMorph.viewModel, props.viewModel);
-    }
-    if (!aMorph.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
-      props.viewModel.attach(aMorph);
-    }
-  });
 }

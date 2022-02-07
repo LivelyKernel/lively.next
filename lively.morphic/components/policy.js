@@ -1,4 +1,4 @@
-import { arr, properties, Path, promise, obj } from 'lively.lang';
+import { arr, Path, promise, obj } from 'lively.lang';
 import { registerExtension, Resource, resource } from 'lively.resources';
 import { pt } from 'lively.graphics';
 import { ObjectPool, ExpressionSerializer, allPlugins, normalizeOptions } from 'lively.serializer2';
@@ -10,13 +10,41 @@ import MorphicDB from '../morphicdb/db.js';
 import { ProportionalLayout } from '../layout.js';
 import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from '../serialization.js';
 
+let localNamePromise;
+const modulesToLoad = modulesToLoad || {}; // eslint-disable-line no-use-before-define
+const masterComponentFetches = masterComponentFetches || {}; // eslint-disable-line no-use-before-define
+const worldToUrl = worldToUrl || {}; // eslint-disable-line no-use-before-define
+
+// debugging
+export function getOverriddenPropsFor (aMorph) {
+  const policyOwner = aMorph.ownerChain().find(m => m.master);
+  if (aMorph.master) {
+    return {
+      local: aMorph.master._overriddenProps.get(aMorph),
+      owner: policyOwner && policyOwner.master._overriddenProps.get(aMorph)
+    };
+  }
+  return policyOwner && policyOwner.master._overriddenProps.get(aMorph);
+}
+
+export function findLocalComponents (snapshot) {
+  return Object
+    .values(snapshot)
+    .filter(m => Path('props.isComponent.value').get(m) === true)
+    .map(m => m.props.name.value);
+}
+
+function getProjectName (world) {
+  return Path('metadata.commit.name').get(world) || world.name;
+}
+
 function ensureAbsoluteComponentRefs (
   {
     snapshotAndPackages,
     localComponents = findLocalComponents(snapshot),
     localWorldName = Path('metadata.commit.name').get($world)
   }) {
-  const { snapshot, packages } = snapshotAndPackages;
+  const { packages } = snapshotAndPackages;
   // transform the code inside tha packages in case the reference local components
   Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
     // parse each module for local component references part://$world or styleguide://$world and replace
@@ -47,13 +75,6 @@ function ensureAbsoluteComponentRefs (
   });
 }
 
-export function findLocalComponents (snapshot) {
-  return Object
-    .values(snapshot)
-    .filter(m => Path('props.isComponent.value').get(m) == true)
-    .map(m => m.props.name.value);
-}
-
 const exprSerializer = new ExpressionSerializer();
 
 export class StyleguidePlugin {
@@ -81,10 +102,6 @@ export class StyleguidePlugin {
   }
 }
 
-function getProjectName (world) {
-  return Path('metadata.commit.name').get(world) || world.name;
-}
-
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
@@ -93,7 +110,7 @@ export class ComponentPolicy {
     else newPolicy = new this(derivedMorph, args);
 
     if (derivedMorph.master) {
-      newPolicy._overriddenProps = derivedMorph.master._overriddenProps;
+      newPolicy.adoptOverriddenProps(derivedMorph.master._overriddenProps);
     }
     return newPolicy;
   }
@@ -140,14 +157,30 @@ export class ComponentPolicy {
       other = other.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
       let self = this.getResourceUrlFor(this.auto);
       if (self) self = self.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
-      return self == other;
+      return self === other;
     }
     for (const master of ['auto', 'click', 'hover']) {
       if (typeof other[master] === 'string') {
-        if (this.getResourceUrlFor(this[master]) != other[master] || null) return false;
-      } else if ((this[master] || null) != (other[master] || null)) return false;
+        if (this.getResourceUrlFor(this[master]) !== other[master] || null) return false;
+      } else if ((this[master] || null) !== (other[master] || null)) return false;
     }
     return true;
+  }
+
+  adoptOverriddenProps (overriddenProps) {
+    this._overriddenProps = overriddenProps;
+    const { auto } = this;
+    if (!auto || !auto.master) return;
+    // walk throught the submorphs and clear the overridden props that are directly present in the
+    // auto master hierarchy
+    this.withSubmorphsInScopeDo(auto, morphInMaster => {
+      const overriddenPropsInMaster = Object.keys(auto.master._overriddenProps.get(morphInMaster) || {});
+      const correspondingMorph = morphInMaster === auto ? this.derivedMorph : this.derivedMorph.getSubmorphNamed(morphInMaster.name);
+      if (!correspondingMorph || !this.managesMorph(correspondingMorph)) return;
+      const overriddenProps = this._overriddenProps.get(correspondingMorph);
+      if (!overriddenProps) return;
+      this._overriddenProps.set(correspondingMorph, obj.dissoc(overriddenProps, overriddenPropsInMaster));
+    });
   }
 
   // called on serialization of Component
@@ -155,7 +188,7 @@ export class ComponentPolicy {
     const managedMorphs = [];
     this.derivedMorph.withAllSubmorphsDo(m => {
       if (this.managesMorph(m)) {
-        const propKeys = Object.keys(this._overriddenProps.get(m)).filter(k => k != '_rev');
+        const propKeys = Object.keys(this._overriddenProps.get(m)).filter(k => k !== '_rev');
         if (propKeys.length > 0) { managedMorphs.push([m, Object.keys(this._overriddenProps.get(m))]); }
       }
     });
@@ -227,14 +260,14 @@ export class ComponentPolicy {
   getResourceUrlFor (component) {
     if (!component) return null;
     if (component._resourceHandle) return component._resourceHandle.url.replace('$world', getProjectName($world)); // we leave this being for remote masters :)
-    if (component.name == undefined) return null;
+    if (component.name === undefined) return null;
     // else we assume the component resides within the current world
     return `styleguide://${getProjectName($world)}/${component.name}`;
   }
 
   getWorldUrlFor (component) {
     const worldOfMaster = resource(typeof component === 'string ' ? component : this.getResourceUrlFor(component)).worldName;
-    if (worldOfMaster == getProjectName($world)) {
+    if (worldOfMaster === getProjectName($world)) {
       return document.location.href;
     }
     return worldToUrl[worldOfMaster];
@@ -324,7 +357,7 @@ export class ComponentPolicy {
       });
     }
     const master = this.determineMaster(target);
-    if (master && this._appliedMaster != master) needsUpdate = true;
+    if (master && this._appliedMaster !== master) needsUpdate = true;
     if (master && needsUpdate) {
       this.apply(target, master);
       this._appliedMaster = master;
@@ -336,7 +369,7 @@ export class ComponentPolicy {
     const styleProps = [];
     let foundLayout = false;
     for (const prop of order) {
-      if (prop == 'layout') {
+      if (prop === 'layout') {
         foundLayout = true; // layouts can be sensitive to initial state, so apply them last always
         continue;
       }
@@ -360,7 +393,7 @@ export class ComponentPolicy {
     if (layout.resizePolicies) {
       const heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
       const widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
-      if (heightPolicy == 'fill' || widthPolicy == 'fill') return { widthPolicy, heightPolicy };
+      if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
     }
     return false;
   }
@@ -385,8 +418,9 @@ export class ComponentPolicy {
             // only do this when the master has changed
 
             if (!masterSubmorph.master.equals(morphToBeStyled.master) &&
-                !this._overriddenProps.get(morphToBeStyled).master) {
+                (!this._overriddenProps.get(morphToBeStyled).master || this._forceMasters)) {
               morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
+              morphToBeStyled.master._forceMasters = this._forceMasters;
               morphToBeStyled.requestMasterStyling();
             }
           }
@@ -405,8 +439,8 @@ export class ComponentPolicy {
 
           for (const propName of this.getStyleProperties(masterSubmorph)) {
             if (this._overriddenProps.get(morphToBeStyled)[propName]) {
-              if (propName == 'extent' &&
-                  Path('owner.layout.constructor').get(morphToBeStyled) == ProportionalLayout &&
+              if (propName === 'extent' &&
+                  Path('owner.layout.constructor').get(morphToBeStyled) === ProportionalLayout &&
                   !morphToBeStyled.master && !isRoot && morphToBeStyled.isLayoutable) {
                 // still apply initially since extents can be valuable for layouts even if they ovverride them
                 if (this._appliedMaster) {
@@ -418,24 +452,24 @@ export class ComponentPolicy {
               }
             }
             // secial handling for ... layout (copy())
-            if (propName == 'layout') {
+            if (propName === 'layout') {
               if (morphToBeStyled.layout && masterSubmorph.layout &&
-                  morphToBeStyled.layout.name() == masterSubmorph.layout.name() &&
+                  morphToBeStyled.layout.name() === masterSubmorph.layout.name() &&
                   morphToBeStyled.layout.equals(masterSubmorph.layout)) { continue; }
               morphToBeStyled.layout = masterSubmorph.layout ? masterSubmorph.layout.copy() : undefined;
               continue;
             }
 
-            if (this.isPositionedByLayout(morphToBeStyled) && propName == 'position') continue;
+            if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
             let resizePolicy;
-            if ((resizePolicy = this.isResizedByLayout(morphToBeStyled)) && propName == 'extent') {
-              if (resizePolicy.widthPolicy == 'fixed') morphToBeStyled.width = masterSubmorph.width;
-              if (resizePolicy.heightPolicy == 'fixed') morphToBeStyled.height = masterSubmorph.height;
+            if ((resizePolicy = this.isResizedByLayout(morphToBeStyled)) && propName === 'extent') {
+              if (resizePolicy.widthPolicy === 'fixed') morphToBeStyled.width = masterSubmorph.width;
+              if (resizePolicy.heightPolicy === 'fixed') morphToBeStyled.height = masterSubmorph.height;
               continue;
             }
 
-            if (masterSubmorph == master) {
-              if (propName == 'extent' &&
+            if (masterSubmorph === master) {
+              if (propName === 'extent' &&
                   !morphToBeStyled.extent.equals(pt(10, 10)) &&
                   (
                     !morphToBeStyled.owner ||
@@ -443,15 +477,11 @@ export class ComponentPolicy {
                      morphToBeStyled.ownerChain().find(m => m.master && m.master.managesMorph(morphToBeStyled)))
                   // not already styled by other master
               ) continue;
-              if (propName == 'position') continue;
+              if (propName === 'position') continue;
             }
-
-            // if (propName == 'origin') {
-            //   morphToBeStyled.adjustOrigin(masterSubmorph.origin);
-            //   continue;
-            // }
+            
             // fixme: other special cases??
-            if (morphToBeStyled.isLabel && propName == 'extent') continue;
+            if (morphToBeStyled.isLabel && propName === 'extent') continue;
 
             if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
@@ -467,7 +497,6 @@ export class ComponentPolicy {
             }
           }
           if (morphToBeStyled._parametrizedProps) { delete morphToBeStyled._parametrizedProps; }
-          // this.reconcileSubmorphs(morphToBeStyled, masterSubmorph);
         });
       });
       if (animationConfig) {
@@ -483,8 +512,8 @@ export class ComponentPolicy {
   }
 
   clearOverriddenPropertiesFor (derivedMorph, propsToClear) {
-    const spec = this._overriddenProps.get(derivedMorph);
-    this._overriddenProps.set(derivedMorph, obj.dissoc(spec, propsToClear));
+    const overriddenProps = this._overriddenProps.get(derivedMorph);
+    this._overriddenProps.set(derivedMorph, obj.dissoc(overriddenProps, propsToClear));
   }
 
   /*
@@ -527,87 +556,9 @@ export class ComponentPolicy {
     return nameToMorphs;
   }
 
-  async reconcileSubmorphs () {
-    /*
-      reconciliation strategy: resolution of identity via name. try to preserve existing (local morphs) with names as much as possible. If their name is nowhere to be found in the restructured master, discard them.
-      new (not yet existing) morphs are inserted into the hierarchy at their precise relative position, and provided with their appropriate submorphs
-      this is a soft approach, since we only add morphs to the hierarchy that did not exist before, and remove morphs that are not needed any more
-    */
-    await this.whenReady();
-
-    const managedMorphs = this.managedMorphs;
-    const insertedMorphs = [];
-    const master = this._appliedMaster || this.auto;
-
-    managedMorphs[master.name] = this.derivedMorph; // hack
-
-    if (!master) return; // no applied master, nothing to reconcile...
-
-    this.derivedMorph.submorphs = master.copy().submorphs;
-    // enforce correct positions on all of these
-    this.derivedMorph.submorphs.forEach((m, i) => {
-      m.position = master.submorphs[i].position;
-    });
-
-    this.prepareSubmorphsToBeManaged(this.derivedMorph, master);
-
-    // master.withAllSubmorphsDo(masterSubmorph => {
-    //   if (master && masterSubmorph == master) {
-    //     // surely no change here...
-    //     insertedMorphs.push(masterSubmorph, this.derivedMorph);
-    //     return;
-    //   }
-    //   let morphToInsert;
-    //   // morph already exists in our hierarchy
-    //   if (morphToInsert = managedMorphs[masterSubmorph.name]) {
-    //     // ensure morph has correct owner
-    //     if (morphToInsert.owner.name == masterSubmorph.owner.name) {
-    //       // if so, we are done
-    //       insertedMorphs.push(morphToInsert); // already inserted...
-    //       return;
-    //     }
-    //     // if not we need to insert this already existing morph at the correct position
-    //     // if the new parent already exists, neat! We just append it to that one
-    //     let ownerToBeAddedTo;
-    //     if (ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]) {
-    //       const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
-    //       insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
-    //
-    //       return;
-    //     }
-    //     // this cant happen really...
-    //     throw new Error('Missing a owner that had to be added previously....');
-    //   } else {
-    //     // insert morph into correct position
-    //     morphToInsert = managedMorphs[masterSubmorph.name] = masterSubmorph.copy();
-    //     const ownerToBeAddedTo = managedMorphs[masterSubmorph.owner.name]; // this must have been resolved
-    //     const insertionIndex = masterSubmorph.owner.submorphs.indexOf(masterSubmorph);
-    //     if (!morphToInsert.master) morphToInsert.submorphs = []; // handle submorphs separately
-    //     insertedMorphs.push(ownerToBeAddedTo.addMorphAt(morphToInsert, insertionIndex));
-    //   }
-    // });
-    //
-    // insertedMorphs = arr.compact(insertedMorphs);
-    //
-    // // finally we remove all the morphs that have not been inserted any more
-    // Object.values(obj.dissoc(managedMorphs, insertedMorphs.map(m => m.name))).forEach(removedMorph => {
-    //   console.log(managedMorphs, insertedMorphs.map(m => m.name));
-    //   removedMorph.remove();
-    // });
-
-    // const [allManaged, allOthers] = arr.partition(morphToBeStyled.submorphs, m => this.managesMorph(m));
-    // const toBeAdded = masterSubmorph.submorphs
-    //   .filter(({ name }) => ![...allManaged, ...allOthers].find(m => m.name == name))
-    //   .map(m => m.copy());
-    // toBeAdded.forEach(m => this.prepareMorphToBeManaged(m));
-    // const toBeRemoved = allManaged.filter(({ name }) => !masterSubmorph.submorphs.find(m => m.name == name));
-    //
-    // morphToBeStyled.submorphs = [...arr.withoutAll(allManaged, toBeRemoved), ...toBeAdded, ...allOthers];
-  }
-
   managesMorph (m) {
     // fixme: this wont work if nothing has been overridden so far
-    return this._overriddenProps.has(m); // confusing, but works
+    return this._overriddenProps && this._overriddenProps.has(m); // confusing, but works
   }
 
   propsToSerializeForMorph (m, candidateProps) {
@@ -615,8 +566,8 @@ export class ComponentPolicy {
     const excludedProps = [];
     for (const propName of this.getStyleProperties(m)) {
       if (this._overriddenProps.get(m)[propName]) continue;
-      if (propName == 'position' && m == this.derivedMorph) continue;
-      if (propName == 'extent' && m == this.derivedMorph) continue;
+      if (propName === 'position' && m === this.derivedMorph) continue;
+      if (propName === 'extent' && m === this.derivedMorph) continue;
       excludedProps.push(propName);
     }
     return arr.withoutAll(candidateProps, excludedProps);
@@ -635,7 +586,7 @@ export class ComponentPolicy {
   }
 
   updateComponentsFromModules () {
-    const { auto, click, hover } = this;
+    const { auto } = this;
     let mod, expr;
     if (auto && auto[Symbol.for('lively-module-meta')]) {
       ({ module: mod, export: expr } = auto[Symbol.for('lively-module-meta')]);
@@ -653,10 +604,10 @@ export class ComponentPolicy {
 
     let master = this.getMasterForState(this, { isHovered, isClicked });
 
-    if (this.light && mode == 'light') {
+    if (this.light && mode === 'light') {
       master = this.getMasterForState(this.light, { isHovered, isClicked }) || master;
     }
-    if (this.dark && mode == 'dark') {
+    if (this.dark && mode === 'dark') {
       master = this.getMasterForState(this.light, { isHovered, isClicked }) || master;
     }
 
@@ -708,18 +659,17 @@ export class ComponentPolicy {
   // invoked whenever a morph within the managed submorph hierarchy changes
   // we check if the morph is managed and update the overridden props
   onMorphChange (morph, change) {
-    // if (this._applying || this._hasUnresolvedMaster || !this._appliedMaster) return;
     if (this._applying) return;
     if (Path('meta.metaInteraction').get(change)) return;
     if (['_rev', 'name'].includes(change.prop)) return;
-    if (change.prop == 'opacity') delete this._originalOpacity;
-    if (change.prop == 'master' && this.managesMorph(morph)) {
+    if (change.prop === 'opacity') delete this._originalOpacity;
+    if (change.prop === 'master' && this.managesMorph(morph)) {
       this._overriddenProps.get(morph).master = true;
     }
 
     if (morph.styleProperties.includes(change.prop)) {
       if (this.managesMorph(morph)) {
-        if (morph.master && morph.master != this) {
+        if (morph.master && morph.master !== this) {
           if (!['extent', 'position'].includes(change.prop)) return;
         }
         this._overriddenProps.get(morph)[change.prop] = true;
@@ -815,13 +765,11 @@ This is done by mainating a local registry, where the resource extension keeps a
 
 */
 
-// r = resource('styleguide://style guide/')
-
 const styleGuideURLRe = /^styleguide:\/\/([^\/]+)\/(.*)$/;
 
-var fetchedSnapshots = fetchedSnapshots || {};
-var fetchedMasters = fetchedMasters || {};
-var resolvedMasters = resolvedMasters || {};
+const fetchedSnapshots = fetchedSnapshots || {}; // eslint-disable-line no-use-before-define
+const fetchedMasters = fetchedMasters || {}; // eslint-disable-line no-use-before-define
+const resolvedMasters = resolvedMasters || {}; // eslint-disable-line no-use-before-define
 
 /*
 async function findUnresolvedMasters() {
@@ -834,13 +782,6 @@ async function findUnresolvedMasters() {
 }
 await findUnresolvedMasters()
 */
-
-var modulesToLoad = modulesToLoad || {};
-
-let li;
-let localNamePromise;
-var masterComponentFetches = masterComponentFetches || {};
-var worldToUrl = worldToUrl || {};
 
 export { resolvedMasters };
 
@@ -857,20 +798,20 @@ export class StyleGuideResource extends Resource {
 
   get componentName () {
     const match = this.url.match(styleGuideURLRe);
-    const [_, worldName, name] = match;
+    const [_, __, name] = match;
     return name;
   }
 
   get worldName () {
     const match = this.url.match(styleGuideURLRe);
-    let [_, worldName, name] = match;
-    if (worldName == '$world') worldName = this.localWorldName();
+    let [_, worldName, __] = match;
+    if (worldName === '$world') worldName = this.localWorldName();
     return worldName;
   }
 
   async dirList (depth, opts) {
     // provide dir last by filtering the components inside the world via the slash based naming scheme
-    if (this.worldName == getProjectName($world)) {
+    if (this.worldName === getProjectName($world)) {
       return arr.uniq([...$world.localComponents, ...$world.withAllSubmorphsSelect(m => m.isComponent)]);
     }
 
@@ -892,7 +833,7 @@ export class StyleGuideResource extends Resource {
     let resolve;
     ({ resolve, promise: localNamePromise } = promise.deferred());
 
-    if (resource(document.location.href).query().name == '__newWorld__') {
+    if (resource(document.location.href).query().name === '__newWorld__') {
       resolve('__newWorld__');
       return localNamePromise;
     }
@@ -922,8 +863,8 @@ export class StyleGuideResource extends Resource {
     if (typeof fetchedMasters[isolatedSnap.url] === 'undefined') {
       let resolveMasterDirectly;
       ({ resolve: resolveMasterDirectly, promise: fetchedMasters[isolatedSnap.url] } = promise.deferred());
-      if (await this.localWorldName() == worldName) {
-        component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
+      if (await this.localWorldName() === worldName) {
+        component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name === name));
         if (!component) { throw Error(`Master component "${name}" can not be found in "${worldName}"`); }
         resolveMasterDirectly(component); // proceed in original control flow
       } else if (await isolatedSnap.exists()) {
@@ -952,12 +893,6 @@ export class StyleGuideResource extends Resource {
       console.log('scheduling fetch of', worldName);
       ({ resolve: resolveSnapshot, promise: fetchedSnapshots[worldName] } = promise.deferred());
     }
-
-    // if (await this.localWorldName() == this.worldName) {
-    //   component = typeof $world !== 'undefined' && ($world.localComponents.find(c => c.name == name));
-    //   if (!component) { throw Error(`Master component "${name}" can not be found in "${this.worldName}"`); }
-    //   return component;
-    // }
 
     let snapshot;
     if (resolveSnapshot) {
@@ -997,7 +932,7 @@ export class StyleGuideResource extends Resource {
     }));
 
     const [idToDeserialize] = Object.entries(snapshot.snapshot).find(([k, v]) => {
-      return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) == name;
+      return Path('props.isComponent.value').get(v) && Path('props.name.value').get(v) === name;
     }) || [];
 
     if (!idToDeserialize) throw Error(`Master component "${name}" can not be found in "${worldName}"`);
@@ -1036,13 +971,13 @@ export class StyleGuideResource extends Resource {
 
   async exists () {
     // checks if the morph exists
-    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name == this.morphName);
+    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name === this.morphName);
     return component && component.isComponent;
   }
 
   async remove () {
     // revokes the component
-    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name == this.morphName);
+    const component = typeof $world !== 'undefined' && $world.localComponents.find(m => m.name === this.morphName);
     if (component) component.isComponent = false;
     return true;
   }
