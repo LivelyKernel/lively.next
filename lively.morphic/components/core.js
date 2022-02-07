@@ -242,6 +242,14 @@ export class ViewModel {
         continue;
       }
       
+      if (obj.isObject(prop)) {
+        const { method, as } = prop;
+        this.view[as] = (...args) => {
+          return this[method](...args);
+        };
+        continue;
+      }
+      
       const descr = descriptors[prop];
       if (props[prop] || descr && (!!descr.get || !!descr.set)) {
         // install getter setter

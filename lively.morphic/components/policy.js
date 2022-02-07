@@ -89,7 +89,9 @@ export class StyleguidePlugin {
     findLocalComponents(snapshot).forEach(componentName =>
       masterURLRemapping[`${localComponentUrl}/${componentName}`] = `styleguide://$world/${componentName}`
     );
-    Object.values(snapshot).forEach(({ props: { master } }) => {
+    Object.values(snapshot).forEach((entry) => {
+      if (!entry.props) return;
+      const { master } = entry.props;
       if (master && master.value) {
         for (const url in masterURLRemapping) {
           if (Object.values(pool.expressionSerializer.deserializeExpr(master.value)).includes(url)) {
