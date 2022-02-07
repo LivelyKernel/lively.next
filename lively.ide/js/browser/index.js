@@ -510,7 +510,6 @@ export class BrowserModel extends ViewModel {
       },
 
       editorPlugin: {
-        after: ['submorphs'],
         readOnly: true,
         derived: true,
         get () {
@@ -548,7 +547,8 @@ export class BrowserModel extends ViewModel {
             'interactivelyRemoveSelectedItem',
             'searchForModuleAndSelect',
             'updateModuleList',
-            'onWindowClose'
+            'onWindowClose',
+            { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
       },
@@ -628,6 +628,27 @@ export class BrowserModel extends ViewModel {
         codeEntity: selectedCodeEntity ? selectedCodeEntity.name : null,
         textPosition: sourceEditor.textPosition,
         scroll: sourceEditor.scroll
+      }
+    };
+  }
+
+  serializeBrowser ($serialize) {
+    const spec = this.browseSpec();
+    const scrollPlaceholder = '__LIVELY-SCROLL-PLACEHOLDER__';
+    const interfacePlaceholder = '__LIVELY-INTERFACE-PLACEHOLDER__';
+    const stringifiedSpec = JSON.stringify(spec, (key, value) => {
+      if (key === 'systemInterface') return interfacePlaceholder; // always resort to local...
+      if (key === 'scroll') return scrollPlaceholder;
+      return value;
+    }).replace(JSON.stringify(scrollPlaceholder), spec.scroll.toString())
+      .replace(JSON.stringify(interfacePlaceholder), 'localInterface');
+    return {
+      __expr__: `let b = part(SystemBrowser); b.browse(${stringifiedSpec}); b;`,
+      bindings: {
+        'lively.morphic/components/core.js': ['part'],
+        'lively.ide/js/browser/ui.cp.js': ['SystemBrowser'],
+        'lively-system-interface': ['localInterface'],
+        'lively.graphics': ['pt']
       }
     };
   }

@@ -4,7 +4,7 @@ import { connect, disconnectAll } from 'lively.bindings';
 
 export function isReference (value) { return value && value.__ref__; }
 
-export var migrations = [
+export const migrations = [
 
   {
     date: '2017-04-08',
@@ -30,9 +30,10 @@ to
         // flatten values
         value = [].concat.apply([], value);
         for (let i = 0; i < value.length; i += 2) {
-          const text = value[i]; const attr = value[i + 1];
-          if (attr && Array.isArray(attr)) // merge multi-attributes
-          { value[i + 1] = Object.assign({}, ...attr); }
+          const attr = value[i + 1];
+          if (attr && Array.isArray(attr)) { // merge multi-attributes
+            value[i + 1] = Object.assign({}, ...attr); 
+          }
         }
         serialized.props.textAndAttributes = { ...textAndAttributes, value };
       }
@@ -48,7 +49,7 @@ A recent change in the structure of windows, that now adds a "button wrapper"
 morph breaks old windows without it.
 `,
     objectConverter: (idAndSnapshot, pool) => {
-      const { snapshot, id } = idAndSnapshot;
+      const { id } = idAndSnapshot;
       const rootMorph = pool.refForId(id).realObj;
       if (rootMorph && rootMorph.isMorph) {
         rootMorph.withAllSubmorphsDo(win => {
@@ -123,7 +124,7 @@ For now only a simple default theme...
     name: 'Unwrapped Style Sheet Props',
     description: 'Style Sheets now store foldable props in their nested format.',
     objectConverter: (idAndSnapshot, pool) => {
-      const { id, snapshot } = idAndSnapshot;
+      const { id } = idAndSnapshot;
       const rootMorph = pool.refForId(id).realObj;
       if (rootMorph && rootMorph.isMorph) {
         rootMorph.withAllSubmorphsDo(m => {
@@ -193,7 +194,7 @@ For now only a simple default theme...
         const serialized = snapshot[key]; const klass = serialized['lively.serializer-class-info'];
         if (!klass || !klass.module) continue;
         const p = klass.module.package.name + '/' + klass.module.pathInPackage;
-        for (const [prefix, replacement, tfm, pathInPackage] of nameToPackages) {
+        for (const [prefix, replacement, pathInPackage] of nameToPackages) {
           if (p.includes(prefix)) {
             klass.module.package.name = replacement;
             klass.module.package.version = '0.1.0';
@@ -230,15 +231,15 @@ For now only a simple default theme...
       for (const key in snapshot) {
         const serialized = snapshot[key]; const klass = serialized['lively.serializer-class-info'];
         if (!klass || !klass.module) continue;
-        if (klass.className == 'Tree' && serialized.props.submorphs) { serialized.props.submorphs.value = []; }
-        if (klass.className == 'TreeNode') delete snapshot[key];
-        if (klass.className == 'InspectorTreeData') {
+        if (klass.className === 'Tree' && serialized.props.submorphs) { serialized.props.submorphs.value = []; }
+        if (klass.className === 'TreeNode') delete snapshot[key];
+        if (klass.className === 'InspectorTreeData') {
           delete snapshot[key];
         }
         if (['PropertyNode', 'InspectionNode', 'MorphNode', 'FoldedNode'].includes(klass.className)) {
           klass.module.pathInPackage = 'js/inspector/context.js';
         }
-        if (serialized.props.name == 'nodeItemContainer') delete snapshot[key];
+        if (serialized.props.name === 'nodeItemContainer') delete snapshot[key];
       }
       return idAndSnapshot;
     }
@@ -250,7 +251,7 @@ For now only a simple default theme...
     snapshotConverter: idAndSnapshot => {
       const { id: rootId, snapshot } = idAndSnapshot;
       Object.values(snapshot).map(m => {
-        if (m.props.metadata && isReference(m.props.metadata.value)) {
+        if (m.props && m.props.metadata && isReference(m.props.metadata.value)) {
           const metaObj = snapshot[m.props.metadata.value.id];
           if (metaObj.props.commit && isReference(metaObj.props.commit.value)) {
             const { type, name, _id } = snapshot[metaObj.props.commit.value.id].props;
@@ -282,9 +283,9 @@ For now only a simple default theme...
     date: '2019-08-05',
     name: 'remove Camphor from system',
     snapshotConverter: idAndSnapshot => {
-      const { id: rootId, snapshot } = idAndSnapshot;
+      const { snapshot } = idAndSnapshot;
       Object.values(snapshot).map(m => {
-        if (m.props.fontFamily && m.props.fontFamily.value == 'Camphor') {
+        if (m.props.fontFamily && m.props.fontFamily.value === 'Camphor') {
           m.props.fontFamily.value = 'Nunito';
         }
       });
@@ -296,7 +297,7 @@ For now only a simple default theme...
     date: '2020-10-09',
     name: 'remove style guide',
     snapshotConverter: idAndSnapshot => {
-      const { id: rootId, snapshot } = idAndSnapshot;
+      const { snapshot } = idAndSnapshot;
       Object.values(snapshot).map(m => {
         if (m.props.master && typeof m.props.master.value === 'string') {
           m.props.master.value = m.props.master.value.split('styleguide://style guide').join('styleguide://System');
@@ -314,13 +315,13 @@ For now only a simple default theme...
     date: '2022-01-10',
     name: 'change semantic of borderRadius property to allow definiton on per-corner basis',
     snapshotConverter: idAndSnapshot => {
-      const { id: rootId, snapshot } = idAndSnapshot;
+      const { snapshot } = idAndSnapshot;
       Object.values(snapshot).map(m => {
         // do not migrate if borderRadius is already migrated
         if (m.props.borderRadius && typeof m.props.borderRadius.value === 'object' && !m.props.borderRadius.value.hasOwnProperty('topLeft')) {
           const borderRadius = m.props.borderRadius.value;
           let newRadius;
-          if (borderRadius.left == borderRadius.right == borderRadius.bottom == borderRadius.top) newRadius = borderRadius.left;
+          if (borderRadius.left === borderRadius.right === borderRadius.bottom === borderRadius.top) newRadius = borderRadius.left;
           else newRadius = Math.max(borderRadius.left, borderRadius.right, borderRadius.bottom, borderRadius.top);
           m.props.borderRadius.value = {
             topLeft: newRadius,
@@ -355,6 +356,39 @@ For now only a simple default theme...
       referencesToRemove.forEach(k => delete snapshot[k]);
       
       removeUnreachableObjects([rootId], snapshot);
+  
+      return idAndSnapshot;
+    }
+  },
+  {
+    date: '2022-01-11',
+    name: 'remove prompts.js',
+    snapshotConverter: idAndSnapshot => {
+      const { snapshot } = idAndSnapshot;
+      for (const key in snapshot) {
+        const serialized = snapshot[key];
+        const klass = serialized['lively.serializer-class-info'];
+        if (!klass) continue;
+        if (klass.module.pathInPackage.endsWith('prompts.js')) {
+          delete serialized['lively.serializer-class-info'];
+        }
+      }
+      return idAndSnapshot;
+    }
+  },
+  {
+    date: '2022-01-18',
+    name: 'remove old Browser',
+    snapshotConverter: idAndSnapshot => {
+      const { snapshot } = idAndSnapshot;
+      for (const key in snapshot) {
+        const serialized = snapshot[key];
+        const klass = serialized['lively.serializer-class-info'];
+        if (!klass) continue;
+        if (klass.module.pathInPackage.endsWith('browser/index.js') && klass.name === 'Browser') {
+          delete snapshot[key];
+        }
+      }
       return idAndSnapshot;
     }
   }

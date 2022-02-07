@@ -913,7 +913,8 @@ export class Morph {
     if (submorphs && !this.isEpiMorph) {
       submorphs = submorphs.value;
       for (let i = submorphs.length; i--;) {
-        const { id } = submorphs[i];
+        const { id, __ref__ } = submorphs[i];
+        if (!__ref__) continue;
         if (pool.refForId(id).realObj.isEpiMorph) { arr.removeAt(submorphs, i); }
       }
     }

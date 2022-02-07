@@ -1,4 +1,4 @@
-/*
+/**
  * Utility functions that help to inspect, enumerate, and create JS objects
  * @module lively.lang/object
  */
