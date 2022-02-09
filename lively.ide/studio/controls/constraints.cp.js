@@ -186,6 +186,8 @@ export class ConstraintsControlModel extends ViewModel {
     return {
       verticalConstraint: { defaultValue: 'fixed' },
       horizontalConstraint: { defaultValue: 'fixed' },
+      activeMarkerComponent: { get () { return this.getProperty('activeMarkerComponent') || ConstraintMarkerActive; } }, // eslint-disable-line no-use-before-define
+      defaultMarkerComponent: { get () { return this.getProperty('defaultMarkerComponent') || ConstraintMarker; } }, // eslint-disable-line no-use-before-define
       bindings: {
         get () {
           return [
@@ -198,6 +200,16 @@ export class ConstraintsControlModel extends ViewModel {
     };
   }
 
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    ['activeMarkerComponent', 'defaultMarkerComponent'].forEach(C => {
+      let expr = this[C][Symbol.for('lively-module-meta')];
+      addFn(C, pool.expressionSerializer.exprStringEncode({
+        __expr__: expr.export,
+        bindings: { [expr.module]: expr.export }
+      }));
+    });
+  }
+
   onRefresh (prop) {
     this.clearAllMarkers();
     const {
@@ -205,22 +217,24 @@ export class ConstraintsControlModel extends ViewModel {
       verticalAlignmentSelector
     } = this.ui;
 
+    const ActiveMarker = this.activeMarkerComponent;
+
     verticalAlignmentSelector.selection = this.verticalConstraint;
     switch (this.verticalConstraint) {
       case 'scale':
         break; // this is not visualized
       case 'move':
-        bottomMarker.master = ConstraintMarkerActive;
+        bottomMarker.master = ActiveMarker;
         break;
       case 'fixed':
-        topMarker.master = ConstraintMarkerActive;
+        topMarker.master = ActiveMarker;
         break;
       case 'resize':
-        topMarker.master = ConstraintMarkerActive;
-        bottomMarker.master = ConstraintMarkerActive;
+        topMarker.master = ActiveMarker;
+        bottomMarker.master = ActiveMarker;
         break;
       case 'center':
-        verticalMarker.master = ConstraintMarkerActive;
+        verticalMarker.master = ActiveMarker;
         break;
     }
     const {
@@ -233,24 +247,25 @@ export class ConstraintsControlModel extends ViewModel {
       case 'scale':
         break; // this is not visualized
       case 'move':
-        rightMarker.master = ConstraintMarkerActive;
+        rightMarker.master = ActiveMarker;
         break;
       case 'fixed':
-        leftMarker.master = ConstraintMarkerActive;
+        leftMarker.master = ActiveMarker;
         break;
       case 'resize':
-        leftMarker.master = ConstraintMarkerActive;
-        rightMarker.master = ConstraintMarkerActive;
+        leftMarker.master = ActiveMarker;
+        rightMarker.master = ActiveMarker;
         break;
       case 'center':
-        horizontalMarker.master = ConstraintMarkerActive;
+        horizontalMarker.master = ActiveMarker;
         break;
     }
   }
 
   clearAllMarkers () {
+    const MarkerDefault = this.defaultMarkerComponent;
     this.view.getAllNamed(/marker/).forEach(m => {
-      m.master = ConstraintMarker;
+      m.master = MarkerDefault;
     });
   }
 
@@ -301,7 +316,7 @@ export class ConstraintsControlModel extends ViewModel {
   }
 }
 
-/*
+/**
  * Control the resizing behavior of a morph
  */
 export class ResizingControlModel extends ViewModel {
@@ -339,6 +354,7 @@ export class ResizingControlModel extends ViewModel {
       horizontalAlignmentSelector,
       verticalAlignmentSelector
     } = this.ui;
+    if (!resizingSimulator) return;
     let bbx = resizingSimulator.innerBounds();
     const widths = { fill: [40, 20], fixed: [40, 20], hug: [15, 15] };
     const horizontalWidth = widths[this.horizontalResizing] || [40, 20];
@@ -609,7 +625,6 @@ export class ResizingControlModel extends ViewModel {
 const Plain = component({ name: 'plain', extent: pt(10, 14), fill: Color.transparent, nativeCursor: 'pointer' });
 const Hovered = component({ name: 'marked', extent: pt(10, 14), fill: Color.rgba(128, 216, 255, 0.5), nativeCursor: 'pointer' });
 
-// part(ConstraintMarker).openInWorld()
 const ConstraintMarker = component({
   name: 'constraint marker',
   master: { auto: Plain, hover: Hovered },
@@ -626,7 +641,7 @@ const ConstraintMarker = component({
   }]
 });
 
-// ConstraintMarkerActive.openInWorld();
+// part(ConstraintMarkerActive).openInWorld();
 const ConstraintMarkerActive = component(ConstraintMarker, {
   name: 'constraint marker active',
   submorphs: [{
@@ -638,7 +653,7 @@ const ConstraintMarkerActive = component(ConstraintMarker, {
 });
 
 // ConstraintsSimulator.openInWorld()
-// part(ConstraintsSimulator).openInWorld()
+// fixme: Think about parametrizing components via component definition/policy
 const ConstraintsSimulator = component({
   name: 'constraints simulator',
   borderColor: Color.darkGray,
@@ -789,8 +804,8 @@ const ConstraintSizeSelectorHovered = component(ConstraintSizeSelectorDefault, {
   layout: new TilingLayout({ wrapSubmorphs: false, axis: 'row', align: 'center', axisAlign: 'center' }),
   fill: Color.rgba(128, 216, 255, 0.5)
 });
-// part(ConstraintSizeSelector).openInWorld()
-// ConstraintSizeSelector
+
+// ConstraintSizeSelector.openInWorld()
 const ConstraintSizeSelector = component(ConstraintSizeSelectorDefault, {
   name: 'constraint size selector',
   master: { auto: ConstraintSizeSelectorDefault, hover: ConstraintSizeSelectorHovered }

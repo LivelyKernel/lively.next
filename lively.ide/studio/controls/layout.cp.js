@@ -42,6 +42,21 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   static get properties () {
     return {
       targetMorph: {},
+      buttonActiveComponent: {
+        get () {
+          return this.getProperty('buttonActiveComponent') || PropertyLabelHovered;
+        }
+      },
+      buttonInactiveComponent: {
+        get () {
+          return this.getProperty('buttonInactiveComponent') || PropertyLabel;
+        }
+      },
+      controlFlapComponent: {
+        get () {
+          return this.getProperty('controlFlapComponent') || AutoLayoutAlignmentFlap;
+        }
+      },
       bindings: {
         get () {
           return [
@@ -86,8 +101,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       if (!layout) return;
       miniLayoutPreview.previewLayout(layout);
       miniLayoutPreview.setActive(!!this.popup);
-      vertical.master = layout.axis == 'column' ? PropertyLabelHovered : PropertyLabel;
-      horizontal.master = layout.axis == 'row' ? PropertyLabelHovered : PropertyLabel;
+      vertical.master = layout.axis == 'column' ? this.buttonActiveComponent : this.buttonInactiveComponent;
+      horizontal.master = layout.axis == 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
       spacingInput.number = layout.spacing;
       if (this.hasMixedPadding()) {
         totalPaddingInput.getSubmorphNamed('value').textString = 'Mix';
@@ -153,7 +168,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
   async openLayoutPopup () {
     if (this.popup) return;
-    const p = this.popup = part(AutoLayoutAlignmentFlap, { viewModel: { targetMorph: this.targetMorph } });
+    // fixme: How to make this parametrizable?
+    const p = this.popup = part(this.controlFlapComponent, { viewModel: { targetMorph: this.targetMorph } });
     connect(p.viewModel, 'update', this, 'update');
     once(p.viewModel, 'close', this, 'closePopup');
     p.openInWorld();
@@ -161,9 +177,9 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     p.opacity = 0;
     await p.whenRendered();
-    p.viewModel.update();
     p.start();
     p.opacity = 1;
+    p.viewModel.update();
   }
 
   closePopup () {
@@ -593,4 +609,4 @@ const GridLayoutControl = component(PropertySection, {
   }]
 });
 
-export { MiniLayoutPreviewActive, MiniLayoutPreview, GridLayoutControl, LayoutControl };
+export { MiniLayoutPreviewActive, MiniLayoutPreview, GridLayoutControl, LayoutControl, AutoLayoutAlignmentFlap };

@@ -1,5 +1,5 @@
 import { component, ensureFont, without, ViewModel, part, add } from 'lively.morphic/components/core.js';
-import { Label, HTMLMorph, Morph, InputLine, TilingLayout } from 'lively.morphic';
+import { Label, ShadowObject, HTMLMorph, Morph, InputLine, TilingLayout } from 'lively.morphic';
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { DarkNumberWidget } from '../value-widgets.cp.js';
 import { ColorCell } from '../styling/color-stops.cp.js';
@@ -77,7 +77,10 @@ const RemoveButton = component(AddButton, {
   }]
 });
 
-const EnumSelector = component(DarkDropDownList, {
+// EnumSelector.openInWorld();
+
+const EnumSelectorDefault = component(DarkDropDownList, {
+  name: 'enum selector/default',
   layout: new TilingLayout({
     align: 'center',
     axisAlign: 'center',
@@ -91,6 +94,18 @@ const EnumSelector = component(DarkDropDownList, {
   borderRadius: 2,
   extent: pt(145.7, 23.3),
   nativeCursor: 'pointer'
+});
+
+// EnumSelectorClicked.openInWorld()
+const EnumSelectorClicked = component(EnumSelectorDefault, {
+  name: 'enum selector/clicked',
+  fill: Color.rgba(54, 61, 61, 1)
+});
+
+// EnumSelector.openInWorld()
+const EnumSelector = component(EnumSelectorDefault, {
+  name: 'enum selector',
+  master: { auto: EnumSelectorDefault, click: EnumSelectorClicked }
 });
 
 // HeadlineLabel.openInWorld()

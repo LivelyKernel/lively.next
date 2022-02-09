@@ -2,7 +2,7 @@ import { ViewModel, add, without, part, component } from 'lively.morphic/compone
 import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label } from 'lively.morphic';
 import { string, arr, num } from 'lively.lang';
-import { NumberInput, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
+import { NumberInput, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, connect } from 'lively.bindings';
 
 export class ShapeControlModel extends ViewModel {
@@ -11,6 +11,13 @@ export class ShapeControlModel extends ViewModel {
       targetMorph: {},
       proportionalResize: { defaultValue: false },
       multiBorderRadiusActive: { defaultValue: false },
+      propertyLabelComponent: {
+        get () {
+          return this.getProperty('propertyLabelComponent') || {
+            active: PropertyLabelActive, hover: PropertyLabelHovered, auto: PropertyLabel 
+          };
+        } 
+      },
       bindings: {
         get () {
           return [
@@ -39,6 +46,26 @@ export class ShapeControlModel extends ViewModel {
     };
   }
 
+  // fixme: this is really horrible and needs to be fixed.
+  // nesting components should not be this complicated
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    const serialized = {};
+
+    for (let mode in this.propertyLabelComponent) {
+      const meta = this.propertyLabelComponent[mode][Symbol.for('lively-module-meta')];
+      serialized[mode] = {
+        __serialize__ () {
+          return {
+            __expr__: meta.export,
+            bindings: { [meta.module]: meta.export }
+          }; 
+        }
+      };
+    }
+    
+    addFn('propertyLabelComponent', serialized);
+  }
+
   attach (view) {
     super.attach(view);
     this.refreshFromTarget();
@@ -48,9 +75,10 @@ export class ShapeControlModel extends ViewModel {
     if (!this.view) return; // this should be handled by the view models superclass
     this.ui.multiRadiusContainer.visible = this.multiBorderRadiusActive;
     this.ui.proportionalResizeToggle.master = this.proportionalResize
-      ? PropertyLabelActive
+      ? this.propertyLabelComponent.active
       : {
-          auto: AddButton, hover: PropertyLabelHovered
+          auto: this.propertyLabelComponent.auto,
+          hover: this.propertyLabelComponent.hover
         };
   }
 
