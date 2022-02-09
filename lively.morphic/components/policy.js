@@ -107,7 +107,7 @@ export class StyleguidePlugin {
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
-
+    
     if (args.constructor === ComponentPolicy) newPolicy = args;
     else newPolicy = new this(derivedMorph, args);
 
@@ -168,13 +168,16 @@ export class ComponentPolicy {
     }
     return true;
   }
-
+  
+  /**
+   * Walk throught the managed submorphs and clear the overridden props that are directly present in the
+   * auto master hierarchy.
+   * @param { object } overriddenProps - The overridden props that we are supposed to carry over.
+   */
   adoptOverriddenProps (overriddenProps) {
     this._overriddenProps = overriddenProps;
     const { auto } = this;
     if (!auto || !auto.master) return;
-    // walk throught the submorphs and clear the overridden props that are directly present in the
-    // auto master hierarchy
     this.withSubmorphsInScopeDo(auto, morphInMaster => {
       const overriddenPropsInMaster = Object.keys(auto.master._overriddenProps.get(morphInMaster) || {});
       const correspondingMorph = morphInMaster === auto ? this.derivedMorph : this.derivedMorph.getSubmorphNamed(morphInMaster.name);
@@ -575,12 +578,31 @@ export class ComponentPolicy {
     return arr.withoutAll(candidateProps, excludedProps);
   }
 
+  getOverriddenPropsInMasterContext (submorph) {
+    const { auto } = this;
+    const nextMaster = auto && auto.master;
+    const correspondingMorph = this.derivedMorph === submorph ? auto : auto.getSubmorphNamed(submorph.name);
+    if (nextMaster && correspondingMorph && nextMaster.managesMorph(correspondingMorph)) {
+      const overridden = obj.keys(nextMaster._overriddenProps.get(correspondingMorph));
+      // only consider the properties "handled" whose value is equal to the corresponding morph in the master hierarchy
+      return overridden.filter(prop => obj.equals(submorph[prop], correspondingMorph[prop]));
+    }
+    if (!nextMaster && 
+        correspondingMorph && 
+        obj.equals(correspondingMorph.master, submorph.master)) return ['master'];
+    return [];
+  }
+
   prepareMorphToBeManaged (derivedSubmorph) {
     if (!this._overriddenProps.has(derivedSubmorph)) {
       const spec = {};
+      const handledByMaster = this.getOverriddenPropsInMasterContext(derivedSubmorph);
       for (const prop in derivedSubmorph._parametrizedProps) {
         if (prop === '__takenFromSnapshot__') continue;
-        if (prop === 'master') continue;
+        // we skip the master property if the corresponding master submorph
+        // has the master prop directly overridden. In this case we assume it
+        // handles this fine already from the start.
+        if (handledByMaster.includes(prop)) continue;
         spec[prop] = true;
       }
       this._overriddenProps.set(derivedSubmorph, spec);
