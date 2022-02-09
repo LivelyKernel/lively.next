@@ -60,6 +60,7 @@ const DarkColorPicker = component(ColorPicker, {
               {
                 name: 'hex opacity control',
                 master: NumberInput,
+                borderRadius: 0,
                 submorphs: [{
                   name: 'value',
                   fontColor: Color.rgbHex('B2EBF2')
@@ -77,6 +78,7 @@ const DarkColorPicker = component(ColorPicker, {
             submorphs: [{
               name: 'opacity control',
               master: NumberInput,
+              borderRadius: 0,
               submorphs: [{
                 name: 'value',
                 fontColor: Color.rgbHex('B2EBF2')
@@ -84,6 +86,7 @@ const DarkColorPicker = component(ColorPicker, {
             }, {
               name: 'first value',
               master: NumberInput,
+              borderRadius: 0,
               submorphs: [{
                 name: 'value',
                 fontColor: Color.rgbHex('B2EBF2')
@@ -92,6 +95,7 @@ const DarkColorPicker = component(ColorPicker, {
             {
               name: 'second value',
               master: NumberInput,
+              borderRadius: 0,
               submorphs: [{
                 name: 'value',
                 fontColor: Color.rgbHex('B2EBF2')
@@ -99,6 +103,7 @@ const DarkColorPicker = component(ColorPicker, {
             }, {
               name: 'third value',
               master: NumberInput,
+              borderRadius: 0,
               submorphs: [{
                 name: 'value',
                 fontColor: Color.rgbHex('B2EBF2')
@@ -109,7 +114,8 @@ const DarkColorPicker = component(ColorPicker, {
             submorphs: [{
               name: 'css input',
               fontSize: 14,
-              master: NumberInput
+              master: NumberInput,
+              borderRadius: 0
             }]
           }]
         }]
