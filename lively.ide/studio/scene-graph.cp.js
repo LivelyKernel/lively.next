@@ -15,7 +15,9 @@ export class MorphPanelModel extends ViewModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['toggle', 'onWorldResize', 'relayout', 'clearFocus']; }
+        get () {
+          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset']; 
+        }
       },
       bindings: {
         get () {
@@ -55,6 +57,10 @@ export class MorphPanelModel extends ViewModel {
     connect(world, 'showHaloFor', this, 'selectNode', {
       garbageCollect: true
     });
+    this.reset(world);
+  }
+
+  reset (world) {
     this.ui.sceneGraph.setTarget(world);
   }
 
