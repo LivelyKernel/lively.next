@@ -208,7 +208,13 @@ const BackgroundControl = component(PropertySection, {
       name: 'section headline',
       textAndAttributes: ['Background', null]
     }, without('add button'), without('remove button')]
-  }, add(part(ColorInput, { name: 'background fill input', viewModel: { gradientEnabled: true, colorPickerComponent: DarkColorPicker } }))]
+  }, add(part(ColorInput, {
+    name: 'background fill input',
+    viewModel: {
+      gradientEnabled: true,
+      colorPickerComponent: DarkColorPicker 
+    }
+  }))]
 });
 
 // bar = part(PropertiesPanel);

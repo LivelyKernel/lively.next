@@ -40,8 +40,6 @@ class VersionChecker extends Morph {
     }
   }
 
-  // this.checkVersion()
-
   checkVersion () {
     this.reset();
     this.checkIfUpToDate();
@@ -73,21 +71,21 @@ class VersionChecker extends Morph {
     }).whenDone();
     const hash1 = stdout.split('\n')[0];
     const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/master').readJson();
-    if (hash1 != hash2) {
+    if (hash1 !== hash2) {
       return this.showOutdated(hash1.slice(0, 6));
     }
     return this.showUpToDate(hash1.slice(0, 6));
   }
 
   showOutdated (version) {
-    const { status, checking, outdated, latest } = this.ui;
+    const { status, checking, outdated } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
     checking.visible = checking.isLayoutable = false;
     outdated.visible = outdated.isLayoutable = true;
   }
 
   showUpToDate (version) {
-    const { status, checking, outdated, latest } = this.ui;
+    const { status, checking, latest } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
     checking.visible = checking.isLayoutable = false;
     latest.visible = latest.isLayoutable = true;

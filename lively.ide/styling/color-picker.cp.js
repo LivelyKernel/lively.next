@@ -75,9 +75,10 @@ const ColorInput = component({
     min: 0,
     scaleFactor: 100,
     submorphs: [{
-      type: Label,
       name: 'interactive label',
-      textAndAttributes: ['', { fontSize: 14, textStyleClasses: ['material-icons'] }]
+      textAndAttributes: ['', {
+        fontSize: 14, textStyleClasses: ['material-icons']
+      }]
     }]
   }), part(PropLabel, {
     name: 'gradient name',

@@ -19,7 +19,6 @@ export class ColorInputModel extends ViewModel {
         after: ['colorValue']
       },
       colorValue: {
-        after: ['submorphs'],
         set (v) {
           if (!(v && (v.isColor || v.isGradient))) {
             v = Color.blue;
@@ -906,7 +905,6 @@ export class HuePickerModel extends AbstractSlider {
       hue: { defaultValue: 0 },
       sliderPosition: {
         derived: true,
-        after: ['submorphs'],
         get () {
           const view = this.view;
           const w = view.width - 10;

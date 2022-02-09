@@ -111,7 +111,7 @@ class MasterComponentTreeData extends TreeData {
   /**
    * @returns { Morph } - The visual representation of the muller columns view presenting this data.
    */
-  get columnView () { return this.root.browser.ui.componentFilesView; }
+  get columnView () { return this.root.browser.models.componentFilesView; }
 
   /**
    * @returns { LivelySystemInterface } - Returns the local interface to be used to resolve the modules (client only)
@@ -332,7 +332,7 @@ export class ExportedComponent extends Morph {
       },
       master: {
         initialize () {
-          this.master = ComponentPreview;
+          this.master = ComponentPreview; // eslint-disable-line no-use-before-define
         }
       },
       component: {
@@ -431,11 +431,11 @@ export class ExportedComponent extends Morph {
     this.isSelected = active;
     if (active) {
       this.master = {
-        auto: ComponentPreviewSelected
+        auto: ComponentPreviewSelected // eslint-disable-line no-use-before-define
       };
     } else {
       this.master = {
-        auto: ComponentPreview
+        auto: ComponentPreview // eslint-disable-line no-use-before-define
       };
     }
   }
@@ -496,7 +496,7 @@ export class ProjectEntry extends Morph {
 
   renderComponents (components) {
     const previewContainer = this.getSubmorphNamed('component previews');
-    const previewProto = part(ComponentPreview);
+    const previewProto = part(ComponentPreview); /* eslint-disable-line no-use-before-define */
     previewContainer.submorphs = components.map(cp => {
       let preview = previewContainer.submorphs.find(p => p.component === cp);
       if (!preview) {
@@ -606,7 +606,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser'];
+          return ['activate', 'isComponentBrowser', 'reset'];
         }
       }
     };
@@ -911,7 +911,7 @@ export class ComponentBrowserModel extends ViewModel {
     // do some smart updating of the list
     const newList = [];
     const currentList = masterComponentList.submorphs;
-    const projectEntry = part(ProjectSection);
+    const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
     // remove all empty lists
     const orderedWorlds = (componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project'));
     for (const worldName of orderedWorlds) {
@@ -942,7 +942,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   showComponentsInFile (fileName, componentsInFile) {
     const { masterComponentList } = this.ui;
-    const projectEntry = part(ProjectSection);
+    const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
 
     projectEntry.worldName = fileName;
     projectEntry.renderComponents(componentsInFile);
