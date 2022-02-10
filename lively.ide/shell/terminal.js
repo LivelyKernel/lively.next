@@ -7,7 +7,8 @@ import { Morph, World, config, InputLine } from 'lively.morphic';
 import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
-import { packagesOfSnapshot } from "lively.morphic/serialization.js";
+import { packagesOfSnapshot } from 'lively.morphic/serialization.js';
+import { DarkButton } from '../js/browser/ui.cp.js';
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()
@@ -63,7 +64,6 @@ export default class Terminal extends Morph {
               lineWrapping: false,
               textString: '',
               ...this.defaultStyle
-              // ...props
             },
 
             new InputLine({
@@ -75,7 +75,6 @@ export default class Terminal extends Morph {
               border: { width: 1, color: Color.gray },
               plugins: [new ShellEditorPlugin(), new EditorPlugin()],
               clipMode: 'hidden'
-              // ...props
             }),
 
             {
@@ -84,6 +83,7 @@ export default class Terminal extends Morph {
               label: 'cwd...',
               extent: pt(60, 20),
               borderRadius: 3,
+              master: DarkButton,
               padding: Rectangle.inset(4, 2)
             }
           ];
@@ -93,7 +93,7 @@ export default class Terminal extends Morph {
           connect(input, 'inputAccepted', this, 'execCommand',
             { updater: ($upd, command) => $upd('[shell terminal] run command or send input', { command }) });
 
-          connect(this, 'extent', changeCwdButton, 'topRight', { converter: ext => ext.withY(0) });
+          connect(this, 'extent', changeCwdButton, 'topRight', { converter: ext => ext.withY(0).addXY(-5, 5) });
           connect(changeCwdButton, 'fire', this, 'execCommand', { converter: () => '[shell] change working directory' });
 
           this.layout = new GridLayout({ grid: [['output'], ['input']] });
@@ -369,5 +369,3 @@ export default class Terminal extends Morph {
     return this.command = this.shellPlugin.runCommand(cmd, opts);
   }
 }
-
-
