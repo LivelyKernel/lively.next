@@ -113,7 +113,7 @@ export class TextSearcher {
 export class SearchWidgetModel extends ViewModel {
   static get properties () {
     return {
-      epiMorph: { defaultValue: true },
+      isEpiMorph: { defaultValue: true },
 
       target: {},
       state: {
@@ -141,7 +141,7 @@ export class SearchWidgetModel extends ViewModel {
 
       expose: {
         get () {
-          return ['state', 'prepareForNewSearch', 'showTextMap', 'commands', 'keybindings'];
+          return ['state', 'prepareForNewSearch', 'showTextMap', 'commands', 'keybindings', 'isEpiMorph'];
         }
       },
       
