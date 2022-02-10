@@ -14,7 +14,7 @@ import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
-import { TextSearcher } from './search.cp.js';
+import { TextSearcher } from './search.js';
 import TextLayout from './layout.js';
 import Renderer, { extractHTMLFromTextMorph } from './renderer.js';
 import commands from './commands.js';
