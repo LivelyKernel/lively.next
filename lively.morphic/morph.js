@@ -2837,7 +2837,7 @@ export class Image extends Morph {
     }
 
     if (!urlString.startsWith('http')) {
-      urlString = `${location.origin}/${urlString}`;
+      urlString = string.joinPath(System.baseURL, urlString);
     }
 
     const { runCommand } = await System.import('lively.ide/shell/shell-interface');
@@ -2866,14 +2866,15 @@ export class Image extends Morph {
     link.click();
   }
 
-  convertTo (type, quality) {
+  async convertTo (type, quality, canvasFilter = false) {
     // this.convertTo("image/jpeg", 0.8)
     // this.convertTo(); 123
     if (!quality) quality = 1;
-    const { ctx, canvas, image } = this.canvasElementAndContext();
-    const { width, height } = this;
+    const { ctx, canvas, image } = await this.canvasElementAndContext();
+    const { x: width, y: height } = await this.determineNaturalExtent();
     canvas.width = image.width;
     canvas.height = image.height;
+    if (canvasFilter) ctx.filter = canvasFilter;
     ctx.drawImage(image, 0, 0, width, height);
     return this.loadUrl(canvas.toDataURL(type, quality), false);
   }
