@@ -110,6 +110,7 @@ class AdditionallySerializePlugin {
 
   additionallyDeserializeAfterProperties (pool, ref, newObj, snapshot, serializedObjMap, path) {
     if (typeof newObj.__after_deserialize__ === 'function') { newObj.__after_deserialize__(snapshot, ref, pool); }
+    delete newObj._rev;
   }
 }
 
