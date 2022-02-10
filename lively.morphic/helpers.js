@@ -17,6 +17,10 @@ export const touchInputDevice = touchInput;
 
 let nameToClassMapping = nameToClassMapping || {};
 
+export function getClassForName (name) {
+  return nameToClassMapping[name] || Object;
+}
+
 export function sanitizeFont (font) {
   return font && font.split(',').map(subFont => {
     // first clear whitespace before and after
