@@ -14,7 +14,7 @@ import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
-import { TextSearcher } from './search.js';
+import { TextSearcher } from './search.cp.js';
 import TextLayout from './layout.js';
 import Renderer, { extractHTMLFromTextMorph } from './renderer.js';
 import commands from './commands.js';
@@ -126,7 +126,7 @@ export class Text extends Morph {
             heightBefore: 0,
             wasScrolled: false,
             afterTextRenderHook: null,
-            fastScroll: true
+            fastScroll: true // for now because the vdom has issues
           };
         }
       },

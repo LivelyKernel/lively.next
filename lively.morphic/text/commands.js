@@ -30,7 +30,8 @@ const commands = [
       const sel = morph.selection;
       const fullText = sel.text;
       const collapseSelection = opts.hasOwnProperty('collapseSelection')
-        ? opts.collapseSelection : true;
+        ? opts.collapseSelection
+        : true;
       morph.saveMark(sel.anchor);
       morph.activeMark = null;
 
@@ -609,7 +610,8 @@ const commands = [
       if (eqPosition({ row: end.row, column: 0 }, end)) return true;
 
       const start = eqPosition(lineRange.start, end)
-        ? { row: end.row, column: 0 } : lineRange.start;
+        ? { row: end.row, column: 0 }
+        : lineRange.start;
       const range = { start, end };
       morph.deleteText(range);
       return true;
@@ -921,7 +923,8 @@ const commands = [
 
       function fitParagraph (para) {
         return /^\s*$/.test(para)
-          ? para : fitRow(para.split('\n').join(' ')).join('\n') + '\n';
+          ? para
+          : fitRow(para.split('\n').join(' ')).join('\n') + '\n';
       }
     }
   },
@@ -1026,8 +1029,10 @@ const commands = [
     exec: function (morph) {
       morph.keepPosAtSameScrollOffsetWhile(() =>
         morph.lineWrapping = morph.lineWrapping
-          ? false : morph.fontMetric.isProportional(morph.fontFamily)
-              ? true : 'by-chars');
+          ? false
+          : morph.fontMetric.isProportional(morph.fontFamily)
+            ? true
+            : 'by-chars');
       return true;
     }
   },
@@ -1348,7 +1353,7 @@ commands.push(...usefulEditorCommands);
 import { activate as iyGotoCharActivate } from './iy-goto-char.js';
 commands.push(iyGotoCharActivate);
 
-import { searchCommands } from './search.js';
+import { searchCommands } from './search.cp.js';
 commands.push(...searchCommands);
 
 export default commands;

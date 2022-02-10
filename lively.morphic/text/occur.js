@@ -5,7 +5,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { arr, obj } from 'lively.lang';
-import { TextSearcher } from './search.js';
+import { TextSearcher } from './search.cp.js';
 import KeyHandler from '../events/KeyHandler.js';
 
 const occurKeyHandler = Object.assign(
