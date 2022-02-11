@@ -277,10 +277,11 @@ export class ViewModel {
    * be disabled as long as the function needs to terminate.
    * @param { function } cb - The function to invoke while the bindings are disabled.
    */
-  async withoutBindingsDo (cb) {
+  withoutBindingsDo (cb) {
     this.onDeactivate();
-    await cb();
-    this.onActivate();
+    const res = cb();
+    if (res && res.then) return res.then(() => this.onActivate());
+    else this.onActivate();
   }
   
   /**
@@ -452,16 +453,14 @@ export function component (masterComponentOrProps, overriddenProps) {
   // detect all sub view models and detach them again, since we dont
   // want to have the bahvior interfere with the morph hierarchy
   // also gather all master in the scope so we can wait for them
-  const mastersInScope = arr.compact(c.withAllSubmorphsDo(m => {
+
+  Promise.all(arr.compact(c.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.onDeactivate();
-    return m.master;
-  }));
-  // also attach the component change monitor here? no because we do not want IDE capabilities in morphic.
-  // instead perform the injection from the system browser
-  Promise.all(mastersInScope.map(m => {
-    if (!m._appliedMaster) m.applyIfNeeded(true);
-    return m.whenApplied();
-  })).then(() => {
+    if (m.master) {
+      m.master.applyIfNeeded(!m.master._appliedMaster);
+      return m.master.whenApplied();
+    }
+  }))).then(() => {
     // this is often not called... especially in cases where we derive from a master
     c.updateDerivedMorphs();
     c._snap = serializeMorph(c);

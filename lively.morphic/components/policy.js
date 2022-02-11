@@ -251,6 +251,7 @@ export class ComponentPolicy {
   }
 
   async whenApplied () {
+    if (this._appliedMaster) return true;
     const { promise: p, resolve: r } = promise.deferred();
     once(this, '_appliedMaster', r);
     await this._hasUnresolvedMaster;
@@ -350,7 +351,7 @@ export class ComponentPolicy {
           target.opacity = 0;
         }
       });
-      // this clogs up the main thread. Instead use a callback from the master.
+
       return this._hasUnresolvedMaster.then(() => {
         this.applyIfNeeded(needsUpdate);
         target.withMetaDo({ metaInteraction: true }, () => {
@@ -423,10 +424,9 @@ export class ComponentPolicy {
             // only do this when the master has changed
 
             if (!masterSubmorph.master.equals(morphToBeStyled.master) &&
-                (!this._overriddenProps.get(morphToBeStyled).master || this._forceMasters)) {
+                (!this._overriddenProps.get(morphToBeStyled).master)) {
               morphToBeStyled.master = masterSubmorph.master.spec(); // assign to the same master
-              morphToBeStyled.master._forceMasters = this._forceMasters;
-              morphToBeStyled.requestMasterStyling();
+              morphToBeStyled.requestMasterStyling(); // this is not happening soon enough
             }
           }
           if (morphToBeStyled.master && !isRoot) {
