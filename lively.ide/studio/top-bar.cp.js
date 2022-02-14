@@ -1350,7 +1350,8 @@ const TopBar = component({
         submorphs: [part(TopBarButton, {
           name: 'shape status icon',
           reactsToPointer: false,
-          textAndAttributes: Icon.textAttribute('square')
+          textAndAttributes: Icon.textAttribute('square'),
+          tooltip: 'Create basic shape mode'
         }), {
           type: Label,
           name: 'select shape type',
@@ -1359,7 +1360,7 @@ const TopBar = component({
           nativeCursor: 'pointer',
           textAndAttributes: Icon.textAttribute('angle-down')
         }],
-        tooltip: 'Create basic shape mode'
+        tooltip: 'Select different shape'
       },
       part(TopBarButton, {
         name: 'open component browser',
