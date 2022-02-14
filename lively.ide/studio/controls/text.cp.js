@@ -121,6 +121,7 @@ export class RichTextControlModel extends ViewModel {
    */
   changeAttributeInSelectionOrMorph (name, valueOrFn) {
     const { targetMorph } = this;
+    if (!targetMorph) return;
     const sel = targetMorph.selection;
     if (targetMorph.isLabel || sel && sel.isEmpty()) {
       targetMorph[name] = typeof valueOrFn === 'function'
@@ -196,7 +197,7 @@ export class RichTextControlModel extends ViewModel {
   changeLineWrapping () {
     // depending on the line wrapping we adjust the bounds resizing
     const text = this.targetMorph;
-    text.lineWrapping = this.ui.lineWrappingSelector.selection;
+    if (text) text.lineWrapping = this.ui.lineWrappingSelector.selection;
   }
 
   toggleItalic () {
