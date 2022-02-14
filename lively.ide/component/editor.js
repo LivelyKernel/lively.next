@@ -1,8 +1,5 @@
-import { serializeSpec, ExpressionSerializer, deserialize, serialize } from 'lively.serializer2';
-import { Icon, ProportionalLayout, Label, Text, ShadowObject, Morph, morph, icons } from 'lively.morphic';
+import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { Icons } from 'lively.morphic/text/icons.js';
-import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { Button } from 'lively.components';
 import { arr, obj, fun, promise, string } from 'lively.lang';
 import ASTQ from 'https://jspm.dev/astq@2.7.5';
 import { parse } from 'lively.ast';
@@ -11,9 +8,7 @@ import { module } from 'lively.modules/index.js';
 import { connect } from 'lively.bindings';
 import lint from '../js/linter.js';
 import { ImportInjector } from 'lively.modules/src/import-modification.js';
-import { subscribe, unsubscribe } from 'lively.notifications/index.js';
 import { undeclaredVariables } from '../js/import-helper.js';
-import { localInterface } from 'lively-system-interface';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
 
 const astq = new ASTQ();
@@ -22,7 +17,7 @@ astq.adapter('mozast');
 const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
-// convertToSpec(this.get('master component browser'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
+// convertToSpec(this.get('default slider'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
 
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
@@ -115,18 +110,20 @@ function getMorphNode (parsedComponent, aMorph) {
   return getPropertiesNode(parsedComponent, aMorph.name);
 }
 
-function getPropertiesNode (parsedComponent, morphName) {
+function getPropertiesNode (parsedComponent, aMorph) {
+  // fixme: This does not take into account the name unique name path
+  //        and often incorrectly resolves the source code location
   const morphDefs = astq.query(parsedComponent, `
   .//  ObjectExpression [
          /:properties "*" [
            Property [
               /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${morphName}']
+           && /:value Literal [ @value == '${aMorph.name}']
            ]
          ]
        ]
   `);
-  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + morphName);
+  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + aMorph.name);
   return morphDefs[0];
 }
 
@@ -142,8 +139,8 @@ function getProp (morphDef, prop) {
   return propNode;
 }
 
-function getSubmorphsArrayNode (parsedComponent, ownerName) {
-  const morphDef = getPropertiesNode(parsedComponent, ownerName);
+function getSubmorphsArrayNode (parsedComponent, ownerMorph) {
+  const morphDef = getPropertiesNode(parsedComponent, ownerMorph);
   if (!morphDef) {
     // in this case the owner wasn't event declaredin the component def
     // if that is the case the morph definition was omitted because it is
@@ -170,14 +167,14 @@ function getComponentScopeFor (parsedComponent, morphInScope) {
   //      - if code missing do not return that scope, instead return the original scope. The uncollapse will
   //        be handled by other code thereby correclty inserting the morph into the code.
   try {
-    return getPropertiesNode(parsedComponent, m.name) || parsedComponent;
+    return getPropertiesNode(parsedComponent, m) || parsedComponent;
   } catch (err) {
 
   }
   // 3. the master component itself was ambigous. Now we recursively call the function for the next scope
   //    and then repeat the query on the recursive result
   const nestedComponentScope = getComponentScopeFor(parsedComponent, m);
-  return getPropertiesNode(nestedComponentScope, m.name);
+  return getPropertiesNode(nestedComponentScope, m);
 }
 
 function getValueExpr (prop, value) {
@@ -330,7 +327,7 @@ export class ComponentChangeTracker {
   }
 
   get componentName () {
-    return string.camelCaseString(this.trackedComponent.name); // we actually need the variable name
+    return string.camelCaseString(this.trackedComponent.name.replace(/\//g, ' ')); // we actually need the variable name
   }
 
   withinDerivedComponent (aMorph) {
@@ -356,6 +353,10 @@ export class ComponentChangeTracker {
       abandonedComponent.remove();
       owner.addMorphAt(this.trackedComponent, idx);
       this.trackedComponent.position = pos;
+      // refresh the scene graph if present!
+      $world.withTopBarDo(tb => {
+        tb.sideBar.reset($world); // fixme: preserve collapse state
+      });
     }
   }
 
@@ -369,7 +370,7 @@ export class ComponentChangeTracker {
       hiddenMorph = nextVisibleParent;
       nextVisibleParent = nextVisibleParent.owner;
       ownerChain.push(nextVisibleParent);
-      propertiesNode = getPropertiesNode(parsedComponent, nextVisibleParent.name);
+      propertiesNode = getPropertiesNode(parsedComponent, nextVisibleParent);
     } while (!propertiesNode);
     const masterInScope = arr.findAndGet(hiddenMorph.ownerChain(), m => m.master);
     const uncollapsedHierarchyExpr = convertToSpec(hiddenMorph, {
@@ -384,7 +385,7 @@ export class ComponentChangeTracker {
   }
 
   addMorph (parsedComponent, sourceCode, newOwner, addedMorphExpr, sourceEditor) {
-    const submorphsArrayNode = getSubmorphsArrayNode(parsedComponent, newOwner.name);
+    const submorphsArrayNode = getSubmorphsArrayNode(parsedComponent, newOwner);
     this.needsLinting = true;
     // check if the component is derived or not
     if (!submorphsArrayNode) {
@@ -393,15 +394,15 @@ export class ComponentChangeTracker {
       // in those cases we are inside part() call that allows to
       // skip certain submorphs or a derived component(masterComponent, {})
       // where the same holds. In those situations we need to uncollapse
-      let propertiesNode = getPropertiesNode(parsedComponent, newOwner.name);
+      let propertiesNode = getPropertiesNode(parsedComponent, newOwner);
       if (!propertiesNode) {
         sourceCode = this.uncollapseSubmorphHierarchy(
           sourceCode,
           parsedComponent,
           newOwner,
           sourceEditor);
-        parsedComponent = getComponentScopeFor(parse(sourceCode), newOwner.name);
-        propertiesNode = getPropertiesNode(parsedComponent, newOwner.name);
+        parsedComponent = getComponentScopeFor(parse(sourceCode), newOwner);
+        propertiesNode = getPropertiesNode(parsedComponent, newOwner);
       }
       return insertProp(
         sourceCode,
@@ -555,9 +556,8 @@ export class ComponentChangeTracker {
       const valueAsExpr = getValueExpr(change.prop, change.value);
       requiredBindings.push(...Object.entries(valueAsExpr.bindings));
       let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
-      const morphDef = getPropertiesNode(responsibleComponent, change.target.name);
+      const morphDef = getPropertiesNode(responsibleComponent, change.target);
       if (change.prop == 'layout') {
-        debugger;
         this.needsLinting = true;
       }
       if (!morphDef) {
@@ -671,7 +671,7 @@ export class ComponentChangeTracker {
 
       if (!insertedRemove && change.target.submorphs.length == 0) {
         // remove the submorphs prop entirely
-        const ownerNode = getPropertiesNode(parsedComponent, change.target.name);
+        const ownerNode = getPropertiesNode(parsedComponent, change.target);
         nodeToRemove = getProp(ownerNode, 'submorphs');
         while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
           nodeToRemove.start--;
