@@ -101,12 +101,28 @@ export class ViewModel {
       if (
         descr.readOnly ||
         descr.derived ||
+        descr.isComponent ||
         (descr.hasOwnProperty('serialize') && !descr.serialize) ||
         obj.equals(this[key], defaults[key])
       ) continue;
       propsToSerialize.push(key);
     }
     return propsToSerialize;
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    const { properties } = this.propertiesAndPropertySettings();
+    for (const key in properties) {
+      const descr = properties[key];
+      if (descr.isComponent && this[key]) {
+        const meta = this[key][Symbol.for('lively-module-meta')];
+        if (!meta) continue;
+        addFn(key, pool.expressionSerializer.exprStringEncode({
+          __expr__: meta.export,
+          bindings: { [meta.module]: meta.export }
+        }));
+      }
+    }
   }
 
   getProperty (key) {
@@ -166,7 +182,9 @@ export class ViewModel {
    * Attaches the view model to the view, instantiating all bindings and exposed properties.
    */
   onActivate () {
-    if (this.view.viewModel !== this) return;
+    if (this.view.viewModel !== this) {
+      return;
+    }
     this.reifyExposedProps();
     this.reifyBindings();
   }
@@ -279,7 +297,12 @@ export class ViewModel {
    */
   withoutBindingsDo (cb) {
     this.onDeactivate();
-    const res = cb();
+    let res;
+    try {
+      res = cb();
+    } catch (err) {
+      console.error(err.message);
+    }
     if (res && res.then) return res.then(() => this.onActivate());
     else this.onActivate();
   }
@@ -358,7 +381,8 @@ function mergeInHierarchy (root, props, iterator, executeCommands = false) {
 function mergeInMorphicProps (root, props) {
   const layoutAssignments = [];
   mergeInHierarchy(root, props, (aMorph, props) => {
-    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout']));
+    if (props.master) aMorph.master = props.master; // assign master before anything else
+    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout', 'master']));
     if (props.layout) layoutAssignments.push([aMorph, props.layout]);
   }, true);
   for (let [aMorph, layout] of layoutAssignments) {
@@ -371,7 +395,7 @@ function mergeInModelProps (root, props) {
     if (aMorph.viewModel && props.viewModel) {
       Object.assign(aMorph.viewModel, props.viewModel);
     }
-    if (!aMorph.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
+    if (aMorph.viewModel !== props.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
       props.viewModel.attach(aMorph);
     }
   });

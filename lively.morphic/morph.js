@@ -86,7 +86,7 @@ export class Morph {
       viewModel: {
         after: ['submorphs'],
         set (vm) {
-          if (this.viewModel) this.viewModel.onDeactivate();
+          if (this.viewModel && this.viewModel !== vm) this.viewModel.onDeactivate();
           this.setProperty('viewModel', vm);
         }
       },
@@ -892,6 +892,7 @@ export class Morph {
       if (
         descr.readOnly ||
         descr.derived ||
+        descr.isComponent ||
         (descr.hasOwnProperty('serialize') && !descr.serialize) ||
         obj.equals(this[key], defaults[key])
       ) continue;
@@ -926,6 +927,19 @@ export class Morph {
           this[foldedProp], this.propertiesAndPropertySettings().properties[foldedProp].foldable,
           (prop, value) => value && value.isColor ? value.toTuple() : value)
       };
+    }
+
+    const { properties } = this.propertiesAndPropertySettings();
+    for (const key in properties) {
+      const descr = properties[key];
+      if (descr.isComponent && this[key]) {
+        const meta = this[key][Symbol.for('lively-module-meta')];
+        if (!meta) continue;
+        addFn(key, pool.expressionSerializer.exprStringEncode({
+          __expr__: meta.export,
+          bindings: { [meta.module]: meta.export }
+        }));
+      }
     }
   }
 
