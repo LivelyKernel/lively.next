@@ -670,6 +670,7 @@ export class BrowserModel extends ViewModel {
       isSaving: false,
       history: { left: [], right: [], navigationInProgress: null }
     };
+    this.refreshHistoryButtons();
     this.relayout();
     this.ui.metaInfoText.reset();
     const ed = this.ui.sourceEditor;
