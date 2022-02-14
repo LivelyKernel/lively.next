@@ -136,6 +136,10 @@ export class ConfirmPromptModel extends AbstractPromptModel {
     };
   }
 
+  get expose () {
+    return ['label', ...super.expose];
+  }
+
   viewDidLoad () {
     super.viewDidLoad();
     const { ui: { promptTitle: title, okButton, cancelButton }, view } = this;
