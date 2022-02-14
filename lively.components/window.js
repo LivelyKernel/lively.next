@@ -629,11 +629,11 @@ export default class Window extends Morph {
     return arr.last(w.getWindows()) === this;
   }
 
-  activate (evt) {
+  activate () {
     if (this.isFaderActive()) return;
     if (this.isActive()) {
       this.bringToFront();
-      this.focus(evt);
+      this.focus();
       this.renderOnGPU = true;
       this.relayoutWindowControls();
       return this;
@@ -648,7 +648,7 @@ export default class Window extends Morph {
     const w = this.world() || this.env.world;
 
     arr.without(w.getWindows(), this).forEach(ea => ea.deactivate());
-    this.focus(evt);
+    this.focus();
 
     signal(this, 'windowActivated', this);
     Promise.resolve(this.master.applyIfNeeded(true)).then(() => this.relayoutWindowControls());
