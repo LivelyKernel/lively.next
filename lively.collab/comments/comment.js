@@ -6,7 +6,6 @@ import { Color } from 'lively.graphics';
 import { CommentIndicator } from './components/comment-indicator.cp.js';
 
 export class CommentModel extends ViewModel {
-  // TODO: clicking a comment should highlight the morph it belongs to
   static get properties () {
     return {
       comment: { },
@@ -20,11 +19,19 @@ export class CommentModel extends ViewModel {
           return [
             { target: 'delete button', signal: 'onMouseDown', handler: 'removeComment' },
             { target: 'resolve button', signal: 'onMouseDown', handler: 'toggleResolveStatus' },
-            { target: 'edit save button', signal: 'onMouseDown', handler: 'toggleEditMode' }
+            { target: 'edit save button', signal: 'onMouseDown', handler: 'toggleEditMode' },
+            { signal: 'onMouseDown', handler: 'onMouseDown' }
           ];
         }
       }
     };
+  }
+
+  onMouseDown (evt) {
+    if (!evt.targetMorph.isText && !evt.targetMorph.isLabel) {
+      this.commentIndicator.show();
+      this.referenceMorph.show();      
+    }
   }
 
   saveComment () {
