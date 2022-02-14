@@ -442,7 +442,7 @@ export class SearchWidgetModel extends ViewModel {
       { name: 'cancel search', exec: () => { this.cancelSearch(false); return true; } },
       { name: 'search next', exec: () => { this.searchNext(); return true; } },
       { name: 'search prev', exec: () => { this.searchPrev(); return true; } },
-      { name: 'only search prev', exec: () => { if (this.get('searchInput').isFocused()) { this.searchPrev(); return true; } } },
+      { name: 'only search prev', exec: () => { if (this.ui.searchInput.isFocused()) { this.searchPrev(); return true; } } },
 
       {
         name: 'search next or replace and go to next',
