@@ -89,7 +89,7 @@ export class CommentBrowserModel extends ViewModel {
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroupFor(morph.id);
     }
-    this.updateCommentCountBadge();
+    this.updateCommentCountBadge(true);
   }
 
   removeCommentGroupFor (morphID) {
@@ -136,8 +136,15 @@ export class CommentBrowserModel extends ViewModel {
     this.ui.container.submorphs.forEach((commentGroup) => commentGroup.viewModel.removeCommentIndicators());
   }
 
-  updateCommentCountBadge () {
-    const count = this.getUnresolvedCommentCount();
+  /**
+   * @param {boolean} decreasing - Wether or not we call this function while
+   * removing a comment. In this case, we need to adjust for the removal of the
+   * comment when counting the overall comments, since this method gets called
+   * before we can remove the actual comment object on the morph.
+   */
+  updateCommentCountBadge (decreasing) {
+    const count = this.getUnresolvedCommentCount() - (decreasing ? 1 : 0);
+
     let badge = $world.get('comment count badge');
     const topbar = $world.get('lively top bar');
     if (!topbar) return;
