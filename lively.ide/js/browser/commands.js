@@ -41,7 +41,13 @@ export default function browserCommands (browser) {
     },
     {
       name: 'open new tab',
-      exec: () => browser.ui.tabs.addTab('New Browser Tab')
+      exec: async () => {
+        if (browser.hasUnsavedChanges()) {
+          const proceed = await browser.warnForUnsavedChanges();
+          if (!proceed) return;
+        }
+        browser.ui.tabs.addTab('New Browser Tab');
+      }
     },
     { name: 'focus source editor', exec: () => { browser.focusSourceEditor(); return true; } },
 
