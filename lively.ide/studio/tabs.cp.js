@@ -498,21 +498,6 @@ class TabsModel extends ViewModel {
       }
     };
   }
-
-<<<<<<< HEAD
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    for (let masterProp of ['selectedTabMaster', 'defaultTabMaster', 'clickedTabMaster', 'hoveredTabMaster']) {
-      let meta = this[masterProp] && this[masterProp][Symbol.for('lively-module-meta')];
-      if (meta) {
-        addFn(masterProp, pool.expressionSerializer.exprStringEncode({
-          __expr__: meta.export,
-          bindings: {
-            [meta.module]: meta.export
-          }
-        }));
-      }
-    }
-  }
   
   /**
    * Takes an array of tabspecs and recreates the therein specified tabs.
@@ -543,9 +528,6 @@ class TabsModel extends ViewModel {
     closeable,
     renameable
   ) {
-=======
-  addTab (caption, content = undefined, selectAfterCreation = true, hasMorphicContent = this.providesContentContainer) {
->>>>>>> 4c078088 (studio: properly define scoped components)
     const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
     const newTab = part(this.defaultTabMaster, {
       viewModel: { 
