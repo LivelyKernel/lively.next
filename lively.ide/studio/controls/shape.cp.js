@@ -12,11 +12,22 @@ export class ShapeControlModel extends ViewModel {
       proportionalResize: { defaultValue: false },
       multiBorderRadiusActive: { defaultValue: false },
       propertyLabelComponent: {
+        isComponent: true,
         get () {
-          return this.getProperty('propertyLabelComponent') || {
-            active: PropertyLabelActive, hover: PropertyLabelHovered, auto: PropertyLabel 
-          };
+          return this.getProperty('propertyLabelComponent') || PropertyLabel;
         } 
+      },
+      propertyLabelComponentActive: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
+        }
+      },
+      propertyLabelComponentHover: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
+        }
       },
       bindings: {
         get () {
@@ -46,26 +57,6 @@ export class ShapeControlModel extends ViewModel {
     };
   }
 
-  // fixme: this is really horrible and needs to be fixed.
-  // nesting components should not be this complicated
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    const serialized = {};
-
-    for (let mode in this.propertyLabelComponent) {
-      const meta = this.propertyLabelComponent[mode][Symbol.for('lively-module-meta')];
-      serialized[mode] = {
-        __serialize__ () {
-          return {
-            __expr__: meta.export,
-            bindings: { [meta.module]: meta.export }
-          }; 
-        }
-      };
-    }
-    
-    addFn('propertyLabelComponent', serialized);
-  }
-
   attach (view) {
     super.attach(view);
     this.refreshFromTarget();
@@ -75,10 +66,10 @@ export class ShapeControlModel extends ViewModel {
     if (!this.view) return; // this should be handled by the view models superclass
     this.ui.multiRadiusContainer.visible = this.multiBorderRadiusActive;
     this.ui.proportionalResizeToggle.master = this.proportionalResize
-      ? this.propertyLabelComponent.active
+      ? this.propertyLabelComponentActive
       : {
-          auto: this.propertyLabelComponent.auto,
-          hover: this.propertyLabelComponent.hover
+          auto: this.propertyLabelComponent,
+          hover: this.propertyLabelComponentHovered
         };
   }
 

@@ -310,6 +310,9 @@ const TabContentContainer = component({
 class TabContainerModel extends ViewModel {
   static get properties () {
     return {
+      expose: {
+        get () { return ['add']; }
+      },
       bindings: {
         get () {
           return [
@@ -322,6 +325,10 @@ class TabContainerModel extends ViewModel {
 
   get tabs () {
     return this.ui.tabFlapContainer.submorphs.filter(submorph => submorph.isTab);
+  }
+
+  add (aTab) {
+    this.ui.tabFlapContainer.addMorph(aTab);
   }
 
   onMouseWheel (event) {
@@ -466,21 +473,25 @@ class TabsModel extends ViewModel {
         defaultValue: true
       },
       selectedTabMaster: {
+        isComponent: true,
         initialize () {
           this.selectedTabMaster = SelectedTab;
         }
       },
       defaultTabMaster: {
+        isComponent: true,
         initialize () {
           this.defaultTabMaster = Tab;
         }
       },
       clickedTabMaster: {
+        isComponent: true,
         initialize () {
           this.clickedTabMaster = ActiveTab;
         }
       },
       hoveredTabMaster: {
+        isComponent: true,
         initialize () {
           this.hoveredTabMaster = HoverTab;
         }
@@ -488,6 +499,7 @@ class TabsModel extends ViewModel {
     };
   }
 
+<<<<<<< HEAD
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     for (let masterProp of ['selectedTabMaster', 'defaultTabMaster', 'clickedTabMaster', 'hoveredTabMaster']) {
       let meta = this[masterProp] && this[masterProp][Symbol.for('lively-module-meta')];
@@ -531,6 +543,9 @@ class TabsModel extends ViewModel {
     closeable,
     renameable
   ) {
+=======
+  addTab (caption, content = undefined, selectAfterCreation = true, hasMorphicContent = this.providesContentContainer) {
+>>>>>>> 4c078088 (studio: properly define scoped components)
     const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
     const newTab = part(this.defaultTabMaster, {
       viewModel: { 
@@ -553,9 +568,8 @@ class TabsModel extends ViewModel {
     });
     this.initializeConnectionsFor(newTab);
 
-    const tabFlapContainer = this.ui.tabContainer.get('tab flap container');
-   
-    tabFlapContainer.addMorph(newTab);
+    this.ui.tabContainer.add(newTab);
+
     newTab.viewModel.selected = selectAfterCreation;
 
     this.updateVisibility(false);
@@ -732,4 +746,4 @@ const Tabs = component({
   ]
 });
 
-export { TabModel, Tabs, DefaultTab, HoverTab, ActiveTab, SelectedTab };
+export { TabModel, Tabs, DefaultTab, HoverTab, ActiveTab, SelectedTab, Tab };

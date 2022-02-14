@@ -186,8 +186,14 @@ export class ConstraintsControlModel extends ViewModel {
     return {
       verticalConstraint: { defaultValue: 'fixed' },
       horizontalConstraint: { defaultValue: 'fixed' },
-      activeMarkerComponent: { get () { return this.getProperty('activeMarkerComponent') || ConstraintMarkerActive; } }, // eslint-disable-line no-use-before-define
-      defaultMarkerComponent: { get () { return this.getProperty('defaultMarkerComponent') || ConstraintMarker; } }, // eslint-disable-line no-use-before-define
+      activeMarkerComponent: { 
+        isComponent: true,
+        get () { return this.getProperty('activeMarkerComponent') || ConstraintMarkerActive; } // eslint-disable-line no-use-before-define
+      }, 
+      defaultMarkerComponent: {
+        isComponent: true,
+        get () { return this.getProperty('defaultMarkerComponent') || ConstraintMarker; } // eslint-disable-line no-use-before-define
+      }, 
       bindings: {
         get () {
           return [
@@ -198,16 +204,6 @@ export class ConstraintsControlModel extends ViewModel {
         }
       }
     };
-  }
-
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    ['activeMarkerComponent', 'defaultMarkerComponent'].forEach(C => {
-      let expr = this[C][Symbol.for('lively-module-meta')];
-      addFn(C, pool.expressionSerializer.exprStringEncode({
-        __expr__: expr.export,
-        bindings: { [expr.module]: expr.export }
-      }));
-    });
   }
 
   onRefresh (prop) {

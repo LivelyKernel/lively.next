@@ -4,7 +4,7 @@ import { TilingLayout, Icon, Morph, ShadowObject, Label } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
 import { PropertyLabel, PropLabel, AddButton, NumberInput, DarkPopupWindow, RemoveButton, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
-import { num, obj, string, arr } from 'lively.lang';
+import { num, obj, arr } from 'lively.lang';
 import { signal, once, connect } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
@@ -15,10 +15,16 @@ export class BodyControlModel extends PropertySectionModel {
   static get properties () {
     return {
       targetMorph: {},
+      dynamicPropertyComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('dynamicPropertyComponent') || DynamicProperty; // eslint-disable-line no-use-before-define
+        }
+      },
       availableItems: {
         derived: true,
         get () {
-          const res = arr.withoutAll(Object.keys(PROP_CONFIG), this.dynamicControls.map(m => m.selectedProp));
+          const res = arr.withoutAll(Object.keys(PROP_CONFIG), this.dynamicControls.map(m => m.selectedProp)); // eslint-disable-line no-use-before-define
           if (!res.includes('Drop shadow') || !res.includes('Inner shadow')) {
             // exclude all shadows if one is applied
             return arr.withoutAll(res, ['Drop shadow', 'Inner shadow']);
@@ -59,7 +65,7 @@ export class BodyControlModel extends PropertySectionModel {
     // enable adding effects when we come from a morph which had all available effects applied
     this.enableAddEffectButton();
     // disable adding effects if the selected morph already has all effects applied
-    if (this.availableItems.length == 0) this.disableAddEffectButton();
+    if (this.availableItems.length === 0) this.disableAddEffectButton();
   }
 
   /**
@@ -69,11 +75,11 @@ export class BodyControlModel extends PropertySectionModel {
    */
   ensureDynamicControls () {
     this.dynamicControls.forEach(m => m.remove());
-    for (const prop in PROP_CONFIG) {
-      const { resetValue, accessor } = PROP_CONFIG[prop];
+    for (const prop in PROP_CONFIG) { // eslint-disable-line no-use-before-define
+      const { resetValue, accessor } = PROP_CONFIG[prop]; // eslint-disable-line no-use-before-define
       if (!obj.equals(resetValue, this.targetMorph[accessor])) {
-        if (prop == 'Inner shadow' && !this.targetMorph[accessor].inset) continue;
-        if (prop == 'Drop shadow' && this.targetMorph[accessor].inset) continue;
+        if (prop === 'Inner shadow' && !this.targetMorph[accessor].inset) continue;
+        if (prop === 'Drop shadow' && this.targetMorph[accessor].inset) continue;
         this.addDynamicProperty(prop, false);
       }
     }
@@ -104,7 +110,7 @@ export class BodyControlModel extends PropertySectionModel {
    */
   addDynamicProperty (selectedProp, refresh = true) {
     const { targetMorph } = this;
-    const control = this.view.addMorph(part(DynamicProperty, { viewModel: { targetMorph } }));
+    const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
     this.view.master._overriddenProps.get(this.view).layout = true;
     control.refreshItems(this.availableItems);
@@ -113,7 +119,7 @@ export class BodyControlModel extends PropertySectionModel {
       control.chooseDefault();
       if (refresh) this.refreshItemLists();
     }
-    if (this.availableItems.length == 0) {
+    if (this.availableItems.length === 0) {
       this.disableAddEffectButton();
     }
     once(control.viewModel, 'remove', this, 'deactivate');
@@ -127,7 +133,7 @@ export class BodyControlModel extends PropertySectionModel {
    */
   activate () {
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = BodyControl;
+    this.view.master = BodyControl; // eslint-disable-line no-use-before-define
     this.addDynamicProperty();
   }
 
@@ -137,14 +143,14 @@ export class BodyControlModel extends PropertySectionModel {
    * Ensures that the appearance of the body control is faded out.
    */
   deactivate () {
-    if (this.availableItems.length == 1 || (this.availableItems.includes('Drop shadow') && this.availableItems.length == 2)) {
+    if (this.availableItems.length === 1 || (this.availableItems.includes('Drop shadow') && this.availableItems.length === 2)) {
       this.enableAddEffectButton();
     }
     this.refreshItemLists();
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());
     if (this.dynamicControls.length > 0) {
-      this.view.master = BodyControl;
+      this.view.master = BodyControl; // eslint-disable-line no-use-before-define
       return;
     }
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
@@ -163,17 +169,18 @@ export class DynamicPropertyModel extends ViewModel {
       targetMorph: {},
       selectedProp: {
         // secure this separately
+        defaultValue: 'Opacity'
       },
       accessor: {
         get () {
-          return PROP_CONFIG[this.selectedProp].accessor;
+          return PROP_CONFIG[this.selectedProp].accessor; // eslint-disable-line no-use-before-define
         }
       },
       popupComponent: {
         readOnly: true,
         serialize: false,
         get () {
-          return PROP_CONFIG[this.selectedProp].popupComponent;
+          return PROP_CONFIG[this.selectedProp].popupComponent; // eslint-disable-line no-use-before-define
         }
       },
       isControl: { get () { return true; } },
@@ -212,7 +219,7 @@ export class DynamicPropertyModel extends ViewModel {
    * controlled by the user.
    */
   selectProperty () {
-    if (this.selectedProp && this.selectedProp != this.ui.effectSelector.selection) { this.resetToDefaultValue(); }
+    if (this.selectedProp && this.selectedProp !== this.ui.effectSelector.selection) { this.resetToDefaultValue(); }
     this.selectedProp = this.ui.effectSelector.selection;
   }
 
@@ -234,7 +241,7 @@ export class DynamicPropertyModel extends ViewModel {
    * Resets the currently controlled effect property back to its default value.
    */
   resetToDefaultValue () {
-    this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].resetValue;
+    this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].resetValue; // eslint-disable-line no-use-before-define
   }
 
   /**
@@ -256,7 +263,7 @@ export class DynamicPropertyModel extends ViewModel {
    * Get the default configuration of the popup for this property.
    */
   getInitPopupProps () {
-    return PROP_CONFIG[this.selectedProp].defaultModelProps(this.targetMorph);
+    return PROP_CONFIG[this.selectedProp].defaultModelProps(this.targetMorph); // eslint-disable-line no-use-before-define
   }
 
   /**
@@ -334,8 +341,8 @@ export class ShadowPopupModel extends ViewModel {
 
   onRefresh (prop) {
     if (!this.view) return;
-    if (prop == 'fastShadow') this.update();
-    if (prop == 'insetShadow') this.update();
+    if (prop === 'fastShadow') this.update();
+    if (prop === 'insetShadow') this.update();
   }
 
   /**

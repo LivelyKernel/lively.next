@@ -13,7 +13,15 @@ export class LayoutPreview extends Morph {
   static get properties () {
     return {
       defaultSpacing: { defaultValue: 2 },
-      defaultPadding: { defaultValue: rect(3, 3, 0, 0) }
+      defaultPadding: { defaultValue: rect(3, 3, 0, 0) },
+      activeComponent: {
+        isComponent: true,
+        get () { return this.getProperty('activeComponent') || MiniLayoutPreviewActive; }
+      },
+      inactiveComponent: {
+        isComponent: true,
+        get () { return this.getProperty('inactiveComponent') || MiniLayoutPreview; }
+      }
     };
   }
 
@@ -34,7 +42,7 @@ export class LayoutPreview extends Morph {
   }
 
   async setActive (active) {
-    this.master = active ? MiniLayoutPreviewActive : MiniLayoutPreview;
+    this.master = active ? this.activeComponent : this.inactiveComponent;
   }
 }
 
@@ -43,16 +51,19 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     return {
       targetMorph: {},
       buttonActiveComponent: {
+        isComponent: true,
         get () {
           return this.getProperty('buttonActiveComponent') || PropertyLabelHovered;
         }
       },
       buttonInactiveComponent: {
+        isComponent: true,
         get () {
           return this.getProperty('buttonInactiveComponent') || PropertyLabel;
         }
       },
       controlFlapComponent: {
+        isComponent: true,
         get () {
           return this.getProperty('controlFlapComponent') || AutoLayoutAlignmentFlap;
         }
@@ -91,16 +102,16 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   update () {
-    if (!this.targetMorph) return;
     this.withoutBindingsDo(() => {
       const {
         miniLayoutPreview, vertical, horizontal,
         spacingInput, totalPaddingInput, wrapSubmorphsCheckbox
       } = this.ui;
+      miniLayoutPreview.setActive(!!this.popup);
+      if (!this.targetMorph) return;
       const layout = this.targetMorph.layout;
       if (!layout) return;
       miniLayoutPreview.previewLayout(layout);
-      miniLayoutPreview.setActive(!!this.popup);
       vertical.master = layout.axis == 'column' ? this.buttonActiveComponent : this.buttonInactiveComponent;
       horizontal.master = layout.axis == 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
       spacingInput.number = layout.spacing;
