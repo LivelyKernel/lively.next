@@ -42,6 +42,7 @@ import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
+import { noUpdate } from 'lively.bindings';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -524,6 +525,7 @@ export class BrowserModel extends ViewModel {
             'focus',
             'keybindings',
             'browse',
+            'browserFromSpec',
             'browseSnippetForSelection',
             'commands',
             'systemInterface',
@@ -586,64 +588,24 @@ export class BrowserModel extends ViewModel {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // initialization
+  // initialization & serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  __additionally_serialize__ (snapshot, objRef, pool, addFn) {
-    // remember browse state
-    let {
-      ui: { sourceEditor, columnView },
-      selectedPackage,
-      selectedModule,
-      selectedCodeEntity
-    } = this;
-
-    // remove unncessary stuff
-    // FIXME offer option in object ref or pool or removeFn to automate this stuff!
-    let ref = pool.ref(columnView);
-    if (ref.currentSnapshot.props.submorphs) { ref.currentSnapshot.props.submorphs.value = []; }
-    if (ref.currentSnapshot.props.treeData) { delete ref.currentSnapshot.props.treeData; } // remove prop
-    ref = pool.ref(this.ui.sourceEditor);
-    const props = ref.currentSnapshot.props;
-    if (props.textAndAttributes) props.textAndAttributes.value = [];
-    if (props.attributeConnections) {
-      // remove connections that point to plugin
-      props.attributeConnections.value = props.attributeConnections.value.filter(({ id }) => {
-        const conn = pool.resolveToObj(id);
-        return conn.targetObj && conn.targetObj.isBrowser;
-      });
-    }
-    if (props.plugins) props.plugins.value = [];
-    if (props.anchors) {
-      props.anchors.value =
-      props.anchors.value.filter(({ id }) => id.startsWith('selection-'));
-    }
-    if (props.savedMarks) props.savedMarks.value = [];
-
-    snapshot.props._serializedState = {
-      verbatim: true,
-      value: {
-        packageName: selectedPackage ? selectedPackage.name : null,
-        moduleName: selectedModule ? selectedModule.nameInPackage : null,
-        codeEntity: selectedCodeEntity ? selectedCodeEntity.name : null,
-        textPosition: sourceEditor.textPosition,
-        scroll: sourceEditor.scroll
-      }
-    };
-  }
-
   serializeBrowser ($serialize) {
-    const spec = this.browseSpec();
+    const browserSpec = this.browserSpec();
     const scrollPlaceholder = '__LIVELY-SCROLL-PLACEHOLDER__';
     const interfacePlaceholder = '__LIVELY-INTERFACE-PLACEHOLDER__';
-    const stringifiedSpec = JSON.stringify(spec, (key, value) => {
-      if (key === 'systemInterface') return interfacePlaceholder; // always resort to local...
-      if (key === 'scroll') return scrollPlaceholder;
-      return value;
-    }).replace(JSON.stringify(scrollPlaceholder), spec.scroll.toString())
-      .replace(JSON.stringify(interfacePlaceholder), 'localInterface');
+    let stringifiedSpec = browserSpec.map((spec) => {
+      return JSON.stringify(spec, (key, value) => {
+        if (key === 'systemInterface') return interfacePlaceholder; // always resort to local...
+        if (key === 'scroll') return scrollPlaceholder;
+        return value;
+      }).replace(JSON.stringify(scrollPlaceholder), spec.content.spec.scroll.toString())
+        .replace(JSON.stringify(interfacePlaceholder), 'localInterface');
+    });
+    stringifiedSpec = '[' + stringifiedSpec.join(',') + ']';
     return {
-      __expr__: `let b = part(SystemBrowser); b.browse(${stringifiedSpec}); b;`,
+      __expr__: `let b = part(SystemBrowser); b.browserFromSpec(${stringifiedSpec}); b;`,
       bindings: {
         'lively.morphic/components/core.js': ['part'],
         'lively.ide/js/browser/ui.cp.js': ['SystemBrowser'],
@@ -885,6 +847,28 @@ export class BrowserModel extends ViewModel {
       codeEntity,
       systemInterface: this.systemInterface
     };
+  }
+
+  browserSpec () {
+    this.ui.tabs.selectedTab.content = {
+      spec: this.browseSpec(),
+      history: this.state.history
+    };
+    
+    let tabs = this.ui.tabs.tabs;
+    let tabsSpec = tabs.map(tab => tab.viewModel.spec);
+    return tabsSpec;
+  }
+
+  browserFromSpec (tabSpecs) {
+    noUpdate(() => {
+      this.ui.tabs.loadFromSpec(tabSpecs);
+    });
+    const curr = this.ui.tabs.selectedTab;
+    this.state.history = curr.content.history;
+    this.refreshHistoryButtons();
+    this.browse(curr.content.spec);
+    return this.view;
   }
   
   async browse (browseSpec = {}, optSystemInterface) {

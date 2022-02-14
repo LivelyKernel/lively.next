@@ -173,6 +173,17 @@ class TabModel extends ViewModel {
     };
   }
 
+  get spec () {
+    return {
+      caption: this.caption,
+      content: this.content,
+      hasMorphicContent: this.hasMorphicContent,
+      selected: this.selected,
+      closeable: this.closeable,
+      renamable: this.renameable
+    }; 
+  }
+  
   menuItems () {
     if (!this.renameable) return; 
     return [
@@ -434,7 +445,7 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs', 'loadFromSpec'];
         }
       },
       bindings: {
@@ -490,8 +501,36 @@ class TabsModel extends ViewModel {
       }
     }
   }
+  
+  /**
+   * Takes an array of tabspecs and recreates the therein specified tabs.
+   * I.e. this method will open new tabs, set their contents, captions,...
+   * Previous state of the tab system will be silently discarded, i.e. without triggering connections.
+   * @param {Object[]} spec - An array of tab specs.
+   */
+  loadFromSpec (specs) {
+    for (let tab of this.tabs) {
+      tab.closeSilently();
+    }  
+    
+    for (let tabSpec of specs) {
+      this.addTab(tabSpec.caption,
+        tabSpec.content,
+        tabSpec.selected,
+        tabSpec.hasMorphicContent,
+        tabSpec.selected,
+        tabSpec.closeable,
+        tabSpec.renameable);
+    }
+  }
 
-  addTab (caption, content = undefined, selectAfterCreation = true, hasMorphicContent = this.providesContentContainer) {
+  addTab (caption,
+    content = undefined,
+    selectAfterCreation = true,
+    hasMorphicContent = this.providesContentContainer,
+    closeable,
+    renameable
+  ) {
     const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
     const newTab = part(this.defaultTabMaster, {
       viewModel: { 
