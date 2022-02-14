@@ -28,7 +28,7 @@ import { uploadFile } from 'lively.morphic/events/html-drop-handler.js';
 import { prompts } from 'lively.components';
 
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
-import { Halo, MorphHighlighter, StatusMessage, StatusMessageForMorph, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
+import { Halo, MorphHighlighter, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
 
 import worldCommands from './world-commands.js';
@@ -635,7 +635,6 @@ export class LivelyWorld extends World {
   // part(StatusMessageDefault, { message: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.' }, { width: 300, maxLines: 3 }).openInWorld()
 
   setStatusMessageFor (morph, message, StatusMessageComponent, delay = 5000, props) {
-    if (!StatusMessageForMorph) return;
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     this.visibleStatusMessagesFor(morph).forEach(ea => ea.remove());
     const msgMorph = part(StatusMessageComponent, { epiMorph: true, viewModel: { slidable: false, message, ...props } });
@@ -650,7 +649,6 @@ export class LivelyWorld extends World {
   }
 
   setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
-    if (!StatusMessage) return;
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
     console[StatusMessageComponent === StatusMessageError ? 'error' : 'log'](message);
     return config.verboseLogging
