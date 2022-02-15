@@ -2,7 +2,60 @@ import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { morph, touchInputDevice } from './helpers.js';
 import config from './config.js';
-import { fun } from 'lively.lang';
+
+export class Tooltip extends Morph {
+  static get properties () {
+    return {
+      hasFixedPosition: { defaultValue: true },
+      reactsToPointer: { defaultValue: false },
+      isEpiMorph: { defaultValue: true },
+      master: {
+        initialize () {
+          this.opacity = 0;
+          System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
+            this.opacity = 1;
+            this.master = SystemTooltip;            
+          });
+        }
+      },
+      description: {
+        after: ['submorphs'],
+        derived: true,
+        get () {
+          const [descriptor] = this.submorphs;
+          return descriptor.value;
+        },
+        set (stringOrAttributes) {
+          const [descriptor] = this.submorphs;
+          descriptor.value = stringOrAttributes;
+          descriptor.fit();
+        }
+      },
+      submorphs: {
+        initialize () {
+          this.submorphs = [
+            new morph({
+              reactsToPointer: false,
+              type: 'label',
+              name: 'label',
+              width: 200
+            })
+          ];
+        }
+      }
+    };
+  }
+
+  update (target) {
+    this.position = target.globalBounds().bottomCenter().subPt(target.world().scroll).addPt(pt(0, 7));
+  }
+
+  async softRemove (cb) {
+    await this.animate({ opacity: 0, duration: 300 });
+    cb && cb(this);
+    this.remove();
+  }
+}
 
 export class TooltipViewer {
   constructor (world) {
@@ -71,8 +124,8 @@ export class TooltipViewer {
 
   hoverOutOfMorph (morph) {
     const current = this.currentTooltip;
-    this.currentTooltip && this.currentTooltip.softRemove((tooltip) =>
-      this.currentTooltip == tooltip && (this.currentTooltip = null));
+    current && current.softRemove((tooltip) =>
+      this.currentTooltip === tooltip && (this.currentTooltip = null));
   }
 
   scheduleTooltipFor (morph, hand) {
@@ -102,54 +155,5 @@ export class TooltipViewer {
     this.currentTooltip = new Tooltip({ position, description: morph.tooltip });
     $world.addMorph(this.currentTooltip);
     this.currentTooltip.update(morph);
-  }
-}
-
-export class Tooltip extends Morph {
-  static get properties () {
-    return {
-      hasFixedPosition: { defaultValue: true },
-      reactsToPointer: { defaultValue: false },
-      isEpiMorph: { defaultValue: true },
-      master: {
-        initialize () {
-          this.master = { auto: 'styleguide://System/tooltip' };
-        }
-      },
-      description: {
-        after: ['submorphs'],
-        derived: true,
-        get () {
-          const [descriptor] = this.submorphs;
-          return descriptor.value;
-        },
-        set (stringOrAttributes) {
-          const [descriptor] = this.submorphs;
-          descriptor.value = stringOrAttributes;
-          descriptor.fit();
-        }
-      },
-      submorphs: {
-        initialize () {
-          this.submorphs = [
-            new morph({
-              reactsToPointer: false,
-              type: 'label',
-              width: 200
-            })
-          ];
-        }
-      }
-    };
-  }
-
-  update (target) {
-    this.position = target.globalBounds().bottomCenter().subPt(target.world().scroll).addPt(pt(0, 7));
-  }
-
-  async softRemove (cb) {
-    await this.animate({ opacity: 0, duration: 300 });
-    cb && cb(this);
-    this.remove();
   }
 }
