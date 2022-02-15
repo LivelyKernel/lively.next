@@ -34,6 +34,7 @@ export class MullerColumnViewModel extends ViewModel {
         // this.treeData
       },
       listMaster: {
+        isComponent: true,
         defaultValue: DefaultList,
         set (url) {
           this.setProperty('listMaster', url);
@@ -75,19 +76,6 @@ export class MullerColumnViewModel extends ViewModel {
       // is displayed at once. This in turn requires that of all the nodes
       // children, at most one can be collapsed at a time.
     };
-  }
-
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    // this is temporary in order to properly transition the
-    // master components
-
-    let moduleInfo;
-    if (this.listMaster && (moduleInfo = this.listMaster[Symbol.for('lively-module-meta')])) {
-      addFn('listMaster', pool.expressionSerializer.exprStringEncode({
-        __expr__: moduleInfo.export,
-        bindings: { [moduleInfo.module]: [moduleInfo.export] }
-      })); 
-    }
   }
 
   focusActiveList () {

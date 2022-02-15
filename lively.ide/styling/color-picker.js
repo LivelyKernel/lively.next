@@ -13,7 +13,9 @@ export class ColorInputModel extends ViewModel {
   static get properties () {
     return {
       targetMorph: {},
-      colorPickerComponent: {},
+      colorPickerComponent: {
+        isComponent: true
+      },
       gradientEnabled: {
         defaultValue: false,
         after: ['colorValue']

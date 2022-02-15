@@ -1760,9 +1760,8 @@ export class DropDownListModel extends ButtonModel {
 
       listHeight: { defaultValue: 100 },
 
-      // unfortunate circular dependency
       listMaster: {
-        // initialize () { this.listMaster = DefaultList; }
+        isComponent: true
       },
 
       listAlign: {
