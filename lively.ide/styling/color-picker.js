@@ -1,11 +1,11 @@
-import { Morph, HTMLMorph, Icon } from 'lively.morphic';
-import { pt, RadialGradient, webSafeColors, flatDesignColors, materialDesignColors, Color, LinearGradient, rect } from 'lively.graphics';
-import { signal, noUpdate, connect } from 'lively.bindings';
-import { obj, string, arr, num } from 'lively.lang';
-import { ColorPalette } from './color-palette.js';
-import { FillPopover, colorWidgets } from './style-popover.js';
-import { Popover } from 'lively.components/popup.js';
+import { HTMLMorph } from 'lively.morphic';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
+import {
+  pt, RadialGradient, webSafeColors, flatDesignColors,
+  materialDesignColors, Color, LinearGradient, rect
+} from 'lively.graphics';
+import { signal, noUpdate, connect } from 'lively.bindings';
+import { string, arr, num } from 'lively.lang';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
@@ -120,7 +120,7 @@ export class ColorInputModel extends ViewModel {
     if (meta = ColorPicker[Symbol.for('lively-module-meta')]) {
       ({ [meta.export]: ColorPicker } = await System.import(meta.module));
     }
-    const p = part(ColorPicker, { });
+    const p = part(ColorPicker);
     let color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;
     p.hasFixedPosition = true;
@@ -158,184 +158,6 @@ export class ColorInputModel extends ViewModel {
     signal(this, 'color', this.colorValue);
   }
 }
-
-export class ColorPickerField extends Morph {
-  static get properties () {
-    return {
-      gradientEnabled: {
-        defaultValue: false,
-        after: ['colorValue'],
-        set (active) {
-          this.setProperty('gradientEnabled', active);
-          this.update(this.colorValue);
-        }
-      },
-      fillWidget: {
-        serialize: false,
-        get () {
-          return (this._fillWidget = new FillPopover({
-            fillValue: this.colorValue
-          }));
-        }
-      },
-      testProp: {
-        get () {
-          return [42];
-        }
-      },
-      palette: {
-        serialize: false,
-        get () {
-          return this._palette || (this._palette = new Popover({
-            position: pt(0, 0),
-            name: 'Color Palette',
-            targetMorph: new ColorPalette({ color: this.colorValue })
-          }));
-        }
-      },
-      colorValue: {
-        after: ['submorphs'],
-        set (v) {
-          if (!(v && (v.isColor || v.isGradient))) {
-            v = Color.blue;
-          }
-          if (!this._updating) return this.update(v);
-          this.setProperty('colorValue', v);
-        },
-        get () {
-          return this.getProperty('colorValue') || Color.white;
-        }
-      },
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/color field'
-          };
-        }
-      },
-      submorphs: {
-        initialize () {
-          const colorFieldExtent = pt(40, 25);
-
-          this.submorphs = [
-            {
-              extent: colorFieldExtent,
-              clipMode: 'hidden',
-              name: 'paletteButton',
-              submorphs: [
-                {
-                  name: 'topLeft',
-                  extent: colorFieldExtent
-                },
-                {
-                  name: 'bottomRight',
-                  type: 'polygon',
-                  extent: colorFieldExtent,
-                  origin: pt(0, 0),
-                  vertices: [pt(0, 0), colorFieldExtent.withX(0), colorFieldExtent]
-                },
-                Icon.makeLabel('chevron-down', {
-                  opacity: 0,
-                  name: 'dropDownIndicator',
-                  center: pt(30, 12.5)
-                })
-              ]
-            },
-            {
-              fill: Color.transparent,
-              extent: pt(25, 25),
-              onHoverIn () {
-                this.fill = Color.black.withA(0.2);
-              },
-              onHoverOut () {
-                this.fill = Color.transparent;
-              },
-              submorphs: [
-                {
-                  name: 'pickerButton',
-                  type: 'image',
-                  autoResize: false,
-                  imageUrl: WHEEL_URL
-                }
-              ]
-            }
-          ];
-          connect(this.getSubmorphNamed('pickerButton'), 'onMouseDown', this, 'openPicker');
-          connect(this.getSubmorphNamed('paletteButton'), 'onMouseDown', this, 'openPalette');
-          connect(this, 'remove', this, 'removeWidgets');
-          this.colorValue && this.update(this.colorValue);
-        }
-      }
-    };
-  }
-
-  spec () {
-    return obj.dissoc(super.spec(), ['submorphs']);
-  }
-
-  onKeyDown (evt) {
-    if (evt.key === 'Escape') {
-      this.picker && this.picker.remove();
-      this.colorValue.isGradient ? this.fillWidget.remove() : this.palette.remove();
-    }
-  }
-
-  onHoverIn () {
-    this.get('dropDownIndicator').animate({ opacity: 1, duration: 300 });
-  }
-
-  onHoverOut () {
-    this.get('dropDownIndicator').animate({ opacity: 0, duration: 300 });
-  }
-
-  update (color) {
-    this._updating = true;
-    const pickerButton = this.submorphs[1];
-    this.colorValue = color;
-    this.get('topLeft').fill = color;
-    this.get('bottomRight').fill = color.isGradient ? Color.transparent : color.withA(1);
-    pickerButton.visible = pickerButton.isLayoutable = !this.gradientEnabled;
-    if (this.gradientEnabled) {
-      this.get('bottomRight').width = this.get('topLeft').width = this.submorphs[0].width = this.width;
-    } else {
-      this.get('bottomRight').width = this.get('topLeft').width = Math.max(1, this.width - pickerButton.width);
-    }
-    this.get('bottomRight').left = 0;
-    this.get('dropDownIndicator').right = this.get('paletteButton').width - 5;
-    this._updating = false;
-  }
-
-  async openPicker (evt) {
-    // this.picker = null
-    // const p = this.picker || await resource('part://SystemWidgets/new color picker').read();
-    const { ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js');
-    const p = part(ColorPicker);
-    const color = this.colorValue;
-    p.solidOnly = !this.gradientEnabled;
-    p.hasFixedPosition = true;
-    p.focusOnMorph(this.context, color);
-    p.toggleHalos(false);
-    p.position = pt(0, -p.height / 2);
-    connect(p.viewModel, 'value', this, 'update');
-    this.picker = p.openInWorld();
-    this.picker.topLeft = this.globalBounds().bottomCenter();
-    this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
-  }
-
-  removePicker () {
-    this.picker && this.picker.remove();
-  }
-
-  async openPalette (evt) {
-    this.openPicker(evt);
-  }
-
-  removeWidgets () {
-    this.removePicker();
-  }
-}
-
-colorWidgets.ColorPickerField = ColorPickerField;
 
 export class ColorPaletteView extends HTMLMorph {
   test () {

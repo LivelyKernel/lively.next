@@ -1,8 +1,9 @@
 import { Morph, Icon } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { connect } from 'lively.bindings';
+import { PopupLight } from './popup.cp.js';
 
-let duration = 300;
+let duration = 200;
 
 export class Popover extends Morph {
   static get properties () {
@@ -11,9 +12,7 @@ export class Popover extends Morph {
       hasFixedPosition: { defaultValue: true },
       master: {
         initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/popover/light'
-          };
+          this.master = PopupLight;
         }
       },
 
@@ -80,9 +79,9 @@ export class Popover extends Morph {
     if (animated) {
       body.animate({
         topCenter: pt(0, offset),
-        duration: 200
+        duration
       });
-      closeBtn.animate({ topRight: body.topRight.addXY(padding, -padding), duration: 200 });
+      closeBtn.animate({ topRight: body.topRight.addXY(padding, -padding), duration });
     } else {
       body.topCenter = pt(0, offset);
       closeBtn.topRight = body.topRight.addXY(padding, -padding);

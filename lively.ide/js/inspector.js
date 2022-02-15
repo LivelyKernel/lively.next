@@ -977,13 +977,6 @@ export default class Inspector extends Morph {
           fontSize: 14,
           fontFamily: config.codeEditor.defaultStyle.fontFamily
         }
-      },
-      master: {
-        initialize () {
-          this.master = {
-            auto: 'styleguide://SystemWidgets/inspector/light'
-          };
-        }
       }
     };
   }

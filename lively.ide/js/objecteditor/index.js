@@ -337,11 +337,7 @@ export class ObjectEditorModel extends ViewModel {
               commit
                 ? `Published ${this.target} as ${commit.name}`
                 : `Failed to publish part ${this.target}`,
-              Color.white, 5000, {
-                master: {
-                  auto: commit ? 'styleguide://System/saveStatusMessage' : 'styleguide://System/errorStatusMessage'
-                }
-              });
+              commit ? StatusMessageConfirm : StatusMessageError, 5000);
           } catch (e) {
             if (e === 'canceled') view.setStatusMessage('canceled');
             else view.showError(e);

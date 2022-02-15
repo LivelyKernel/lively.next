@@ -12,15 +12,6 @@ export class EvalBackendButton extends Button {
   static get properties () {
     return {
 
-      master: {
-        initialize: () => {
-          this.master = {
-            auto: 'styleguide://SystemIDE/backend button/default',
-            click: 'styleguide://SystemIDE/backend button/clicked'
-          };
-        }
-      },
-
       currentBackendName: {
         after: ['label'],
         defaultValue: 'local',
