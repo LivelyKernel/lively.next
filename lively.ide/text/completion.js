@@ -5,6 +5,7 @@ import { connect } from 'lively.bindings';
 import { arr, string } from 'lively.lang';
 import { FilterableList } from 'lively.components/list.js';
 import { Range } from 'lively.morphic/text/range.js';
+import { AutocompleteList } from './completion.cp.js';
 
 export class Completer {
   compute () { return []; }
@@ -208,13 +209,11 @@ export class CompletionController {
       if (!visibleBounds.containsRect(bounds)) {
         bounds = bounds.withTopLeft(visibleBounds.translateForInclusion(bounds).topLeft());
       }
-      bounds = bounds.translatedBy(visibleBounds.insetBy(0).topLeft().negated());
+      bounds = bounds.translatedBy(visibleBounds.insetBy(-1).topLeft().negated());
     }
 
     return {
-      master: {
-        auto: 'styleguide://SystemWidgets/autocomplete list'
-      },
+      master: AutocompleteList,
       hasFixedPosition: true,
       epiMorph: true,
       fontSize,
@@ -301,17 +300,18 @@ export class CompletionController {
     input.clipMode = 'visible';
     input.fill = this.textMorph.fill;
     input.fixedHeight = true;
-    input.fixedWidth = false;
     input.fontSize = list.fontSize;
 
-    //menu.get("padding").height = 0;
     menu.relayout();
+    input.fixedWidth = false;
+    input.width = 0;
+    menu.renderOnGPU = true;
     menu.selectedIndex = 0;
 
-    // force the master styling while styll not visible, to ensure proper measuring
-    menu.master.applyIfNeeded(true);
+    menu.master.applyIfNeeded(true); // apply the master in order to position correctly
     input.focus(); // get the focus already, to receive all text input while style is being applied
     await menu.master.whenApplied();
+    // menu.moveBy(pt(1, 1));
     if (prefix.length) {
       input.gotoDocumentEnd();
       menu.moveBy(pt(-input.textBounds().width, 0));
@@ -329,13 +329,15 @@ export class CompletionController {
   insertCompletion (completion, prefix, customInsertionFn) {
     const m = this.textMorph; const doc = m.document;
     const selections = m.selection.isMultiSelection
-      ? m.selection.selections : [m.selection];
+      ? m.selection.selections
+      : [m.selection];
     m.undoManager.group();
     selections.forEach(sel => {
       sel.collapseToEnd();
       const end = sel.lead;
       const start = prefix
-        ? doc.indexToPosition(doc.positionToIndex(end) - prefix.length) : end;
+        ? doc.indexToPosition(doc.positionToIndex(end) - prefix.length)
+        : end;
       typeof customInsertionFn === 'function'
         ? customInsertionFn(completion, prefix, m, { start, end }, sel)
         : m.replace({ start, end }, completion);
