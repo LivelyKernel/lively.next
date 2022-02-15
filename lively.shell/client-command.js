@@ -18,7 +18,7 @@ export function runCommand (commandString, opts = {}) {
 let dirCache = {};
 export function defaultDirectory (l2lClient) {
   if (dirCache[l2lClient.trackerId]) return dirCache[l2lClient.trackerId];
-  return Promise.resolve().then(async () => {
+  return l2lClient.whenRegistered().then(async () => {
     let { data: { defaultDirectory } } = await l2lClient.sendToAndWait(l2lClient.trackerId, 'lively.shell.info', {});
     return dirCache[l2lClient.trackerId] = defaultDirectory;
   });
