@@ -840,7 +840,7 @@ export class BrowserModel extends ViewModel {
       else codeEntity = this.selectedCodeEntity.name;
     } else codeEntity = null;
     return {
-      packageName: this.selectedPackage.name,
+      packageName: this.selectedPackage ? this.selectedPackage.name : 'lively.morphic',
       textPosition: this.ui.sourceEditor.selection.start,
       scroll: this.ui.sourceEditor.scroll,
       moduleName: this.selectedModule ? this.selectedModule.nameInPackage : null,
