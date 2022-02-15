@@ -551,8 +551,6 @@ function instrumentSourceOfEsmModuleLoad (System, load) {
     //   };
     // });
 
-    if (load.name.endsWith('.cp.js')) translated = ensureModuleMetaForComponentDefinition(translated, load);
-
     const parsed = parse(translated);
     const callExpression = parsed.body.find(
       ea =>
@@ -572,7 +570,6 @@ function instrumentSourceOfEsmModuleLoad (System, load) {
 }
 
 function instrumentSourceOfGlobalModuleLoad (System, load) {
-  // return {localDeps: depNames, declare: declare};
   return System.translate(load).then(translated => ({ translated }));
 }
 
