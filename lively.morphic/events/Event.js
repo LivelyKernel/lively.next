@@ -172,7 +172,7 @@ export class KeyEvent extends Event {
 export class SimulatedDOMEvent {
   constructor (props = {}) {
     if (props.position) {
-      const { position: { x, y }, target } = props;
+      const { position: { x, y } } = props;
       props = obj.dissoc(props, ['position']);
       props.pageX = x; props.pageY = y;
     }
