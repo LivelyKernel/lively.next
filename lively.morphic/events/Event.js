@@ -167,6 +167,19 @@ export class KeyEvent extends Event {
   }
 
   get isKeyEvent () { return true; }
+
+  get hasCharacterPressed () {
+    const keyCode = this.domEvt.keyCode;
+    
+    if (keyCode >= 48 && keyCode <= 57) {
+      return true;
+    } else if (keyCode >= 65 && keyCode <= 90) {
+      return true;
+    } else if (keyCode >= 97 && keyCode <= 122) {
+      return true;
+    }
+    return false; 
+  }
 }
 
 export class SimulatedDOMEvent {
