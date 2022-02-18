@@ -217,21 +217,19 @@ export class MullerColumnViewModel extends ViewModel {
       if (item.originalLabel) { item.label = item.originalLabel; }
     });
     
-    if (evt.key === 'Escape') { // cancel search
-      this.lists.forEach(list => list.scrollSelectionIntoView());
-      this.searchString = '';
-      return;
-    }
-    
     let input;
     if (evt.hasCharacterPressed) {
       input = evt.key;
-    } else if (evt.key === 'Space' || evt.key === 'Escape') {
+    } else if (evt.key === 'Space') {
       input = ' ';
     } else if (evt.key === 'Backspace') {
       input = '';
       this.searchString = this.searchString.slice(0, -1);
-    } else return; // special keys do not influence search
+    } else { // special keys cancel search
+      this.lists.forEach(list => list.scrollSelectionIntoView());
+      this.searchString = '';
+      return;
+    }
    
     if (!this.searchString) this.searchString = '';
     this.searchString = this.searchString + input.toLowerCase();
