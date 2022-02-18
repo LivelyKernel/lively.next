@@ -202,6 +202,10 @@
   padding: 0;
 }
 
+.markdown-body [type="checkbox"] + label {
+  margin-left: 4px;
+}
+
 .markdown-body * {
   box-sizing: border-box;
 }
