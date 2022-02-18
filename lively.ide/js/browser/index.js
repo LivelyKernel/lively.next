@@ -165,6 +165,9 @@ export class PackageTreeData extends TreeData {
         case 'less':
           displayedName = this.displayLess(name, isSelected);
           break;
+        case 'css':
+          displayedName = this.displayCSS(name, isSelected);
+          break;
       }
 
       return [
@@ -307,7 +310,16 @@ export class PackageTreeData extends TreeData {
       ' ' + less, null
     ];
   }
-
+  
+  displayCSS (css, isSelected) {
+    return [
+      ...Icon.textAttribute('css3-alt', {
+        fontColor: isSelected ? Color.white : COLORS.less
+      }),
+      ' ' + css, null
+    ];
+  }
+  
   async listModuleScope (moduleName) {
     const source = await this.systemInterface.moduleRead(moduleName);
     const parsed = fuzzyParse(source);
