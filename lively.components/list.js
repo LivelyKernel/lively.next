@@ -131,6 +131,10 @@ export class ListItemMorph extends Label {
       }
     }
   }
+
+  get isListItemMorph () {
+    return true;
+  }
 }
 
 export class ListScroller extends Morph {

@@ -67,7 +67,9 @@ export class MullerColumnViewModel extends ViewModel {
           return [
             { signal: 'extent', handler: 'relayout' },
             { signal: 'onMouseMove', handler: 'onMouseMove' },
-            { signal: 'onHoverOut', handler: 'onHoverOut' }
+            { signal: 'onHoverOut', handler: 'onHoverOut' },
+            { signal: 'onKeyDown', handler: 'onKeyDown' },
+            { signal: 'onMouseDown', handler: 'onMouseDown' }
           ];
         }
       }
@@ -207,14 +209,123 @@ export class MullerColumnViewModel extends ViewModel {
     });
   }
 
+  async onKeyDown (evt) {
+    await this.refresh();
+    const hoveredList = this.lists.find(list => list.fullContainsWorldPoint($world.firstHand.position));
+    if (!hoveredList) return;
+    hoveredList.items.forEach((item) => {
+      if (item.originalLabel) { item.label = item.originalLabel; }
+    });
+    
+    if (evt.key === 'Escape') { // cancel search
+      this.lists.forEach(list => list.scrollSelectionIntoView());
+      this.searchString = '';
+      return;
+    }
+    
+    let input;
+    if (evt.hasCharacterPressed) {
+      input = evt.key;
+    } else if (evt.key === 'Space' || evt.key === 'Escape') {
+      input = ' ';
+    } else if (evt.key === 'Backspace') {
+      input = '';
+      this.searchString = this.searchString.slice(0, -1);
+    } else return; // special keys do not influence search
+   
+    if (!this.searchString) this.searchString = '';
+    this.searchString = this.searchString + input.toLowerCase();
+    
+    let resetSelection = null;
+    let selectedString;
+    // list items can have an icon before the string we want to seach (e.g. the js icon)
+    // this item does not need to be present for all items in a given list
+    // therefore, we need to  check its existence for each item we handle,
+    // in order to perform the search on the correct string
+    // 
+    // a part of the label always consists of two array items, since the text comes first, followed by its attributes object    
+    let lookUpIndex;
+    
+    if (hoveredList.selectedIndex) {
+      lookUpIndex = hoveredList.items[hoveredList.selectedIndex].label.length > 2 ? 2 : 0;
+      // we will select nothing in the filtered list if the currently selected item does not match the search
+      resetSelection = !hoveredList.items[hoveredList.selectedIndex].string.toLowerCase().includes(this.searchString);
+      // if the currently selected item does match the search, save its string in order to find it again later
+      // since the number of items in the list changes, we need the string to find the new index to select
+      selectedString = hoveredList.items[hoveredList.selectedIndex].string;
+    }
+    hoveredList.items.forEach((item, index) => {
+      item.normalizedIndex = index; // store original index in full list in order to select items in shorter list later
+    });
+    // only keep items in the list that match the search
+    hoveredList.items = hoveredList.items.filter(item => {
+      lookUpIndex = item.label.length > 2 ? 2 : 0;
+      return item.string.toLowerCase().includes(this.searchString); 
+    });
+
+    // this highlights the matching part of an items string
+    // a match is guaranteed to exist, since we filteres all elements above
+    for (let item of hoveredList.items) {
+      lookUpIndex = item.label.length > 2 ? 2 : 0;
+      
+      const stringIndex = item.label[lookUpIndex].toLowerCase().indexOf(this.searchString); // find index at which match begins in the string
+      const array = JSON.parse(JSON.stringify(item.label)); // make deep copy
+      item.originalLabel = JSON.parse(JSON.stringify(item.label));
+
+      // create new text and attributes for the list item
+      // creates three parts for the string that previously were one part
+      // the first one contains any characters before the match with the default textAttributes
+      // the second one contains the match and is highlightes
+      // the third one contains any characters after the match with the default textAttributes
+      // parts of the array before and after the string to search remain untouched
+      array.splice(lookUpIndex, 1, item.label[lookUpIndex].slice(0, stringIndex),
+        item.label[lookUpIndex + 1],
+        item.label[lookUpIndex].slice(stringIndex, stringIndex + this.searchString.length),
+        {
+          fontStyle: item.label[lookUpIndex + 1] ? item.label[lookUpIndex + 1].fontStyle : 'normal',
+          backgroundColor: Color.orange
+        },
+        item.label[lookUpIndex].slice(stringIndex + this.searchString.length)
+      );
+      
+      item.label = array;
+    }
+    noUpdate(() => { // surpress connections that are triggered when changing the selected index of a list
+      if (resetSelection) {
+        hoveredList.selectedIndex = null;
+        hoveredList.update();
+      } else { 
+        hoveredList.selectedIndex = hoveredList.items.findIndex(item => item.string === selectedString); 
+      }  
+    });
+  }
+
   onMouseMove (evt) {
     const hoveredList = this.lists.find(list => list.fullContainsWorldPoint(evt.position));
     if (hoveredList) {
+      hoveredList.focus();
       this.lists.forEach(list => {
         const control = list._managedNode && list._managedNode.listControl;
         if (control) {
           control.visible = list === hoveredList;
         }
+      });
+    }
+  }
+
+  onMouseDown (evt) {
+    if (evt.targetMorph.isListItemMorph) this.clickOnItem(evt);
+  }
+
+  clickOnItem (evt) {
+    if (this.searchString) {
+      const clickedList = evt.targetMorph.owner.owner; // is guaranteed to be list morph
+      const clickedItem = clickedList.items.find(item => item.string === evt.targetMorph.textString);
+      this.refresh().then(() => { // select based on stores index, scroll into view and prepare for next search
+        clickedList.selectedIndex = clickedItem.normalizedIndex; 
+        clickedList.items.forEach(item => item.normalizedIndex = null);
+        this.searchString = null;
+        clickedList.scrollSelectionIntoView();
       });
     }
   }
