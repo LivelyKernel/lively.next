@@ -47,6 +47,12 @@ export class ListItemMorph extends Label {
         get () {
           return this.isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
         }
+      },
+      list: {
+        drived: true,
+        get () {
+          return this.owner.owner;
+        }
       }
     };
   }
@@ -106,18 +112,18 @@ export class ListItemMorph extends Label {
   }
 
   onDragStart (evt) {
-    const list = this.owner.owner;
+    const { list } = this;
     this._dragState = { sourceIsSelected: this.isSelected, source: this, itemsTouched: [] };
     if (!list.multiSelect || !list.multiSelectViaDrag) { list.onItemMorphDragged(evt, this); }
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    this.owner.owner.clickOnItem(evt);
+    this.list.clickOnItem(evt);
   }
 
   onDrag (evt) {
-    const list = this.owner.owner;
+    const { list } = this;
     if (list.multiSelect && list.multiSelectViaDrag) {
       const below = evt.hand.morphBeneath(evt.position);
       const { selectedIndexes, itemMorphs } = list;
@@ -1765,7 +1771,12 @@ export class DropDownListModel extends ButtonModel {
       listHeight: { defaultValue: 100 },
 
       listMaster: {
-        isComponent: true
+        isComponent: true,
+        set (c) {
+          this.setProperty('listMaster', c);
+          if (this.listMorph) this.listMorph.remove();
+          this.initListMorph();
+        }
       },
 
       listAlign: {
@@ -1789,7 +1800,7 @@ export class DropDownListModel extends ButtonModel {
       listMorph: {
         after: ['listMaster'],
         initialize () {
-          this.listMorph = this.listMaster ? part(this.listMaster, { items: [] }, { isLayoutable: false, name: 'dropDownList' }) : new List({ items: [] });
+          this.initListMorph();
         }
       },
 
@@ -1846,6 +1857,10 @@ export class DropDownListModel extends ButtonModel {
       }
 
     };
+  }
+
+  initListMorph () {
+    this.listMorph = this.listMaster ? part(this.listMaster, { isLayoutable: false, name: 'dropDownList', viewModel: { items: [] } }) : new List({ items: [] });
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
