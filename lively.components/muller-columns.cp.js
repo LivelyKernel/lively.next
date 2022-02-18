@@ -210,11 +210,12 @@ export class MullerColumnViewModel extends ViewModel {
   }
 
   async onKeyDown (evt) {
-    await this.refresh();
+    await this.refresh(false);
     const hoveredList = this.lists.find(list => list.fullContainsWorldPoint($world.firstHand.position));
     if (!hoveredList) return;
+    // reset the labels so that search does not need to worry abput previous runs altering labels
     hoveredList.items.forEach((item) => {
-      if (item.originalLabel) { item.label = item.originalLabel; }
+      if (item.originalLabel) item.label = item.originalLabel.filter(elem => true); // get a new array object
     });
     
     let input;
@@ -234,8 +235,6 @@ export class MullerColumnViewModel extends ViewModel {
     if (!this.searchString) this.searchString = '';
     this.searchString = this.searchString + input.toLowerCase();
     
-    let resetSelection = null;
-    let selectedString;
     // list items can have an icon before the string we want to seach (e.g. the js icon)
     // this item does not need to be present for all items in a given list
     // therefore, we need to  check its existence for each item we handle,
@@ -244,31 +243,23 @@ export class MullerColumnViewModel extends ViewModel {
     // a part of the label always consists of two array items, since the text comes first, followed by its attributes object    
     let lookUpIndex;
     
-    if (hoveredList.selectedIndex) {
-      lookUpIndex = hoveredList.items[hoveredList.selectedIndex].label.length > 2 ? 2 : 0;
-      // we will select nothing in the filtered list if the currently selected item does not match the search
-      resetSelection = !hoveredList.items[hoveredList.selectedIndex].string.toLowerCase().includes(this.searchString);
-      // if the currently selected item does match the search, save its string in order to find it again later
-      // since the number of items in the list changes, we need the string to find the new index to select
-      selectedString = hoveredList.items[hoveredList.selectedIndex].string;
-    }
     hoveredList.items.forEach((item, index) => {
       item.normalizedIndex = index; // store original index in full list in order to select items in shorter list later
     });
     // only keep items in the list that match the search
-    hoveredList.items = hoveredList.items.filter(item => {
+    const newItems = hoveredList.items.filter(item => {
       lookUpIndex = item.label.length > 2 ? 2 : 0;
       return item.string.toLowerCase().includes(this.searchString); 
     });
 
     // this highlights the matching part of an items string
     // a match is guaranteed to exist, since we filteres all elements above
-    for (let item of hoveredList.items) {
+    for (let item of newItems) {
       lookUpIndex = item.label.length > 2 ? 2 : 0;
       
       const stringIndex = item.label[lookUpIndex].toLowerCase().indexOf(this.searchString); // find index at which match begins in the string
-      const array = JSON.parse(JSON.stringify(item.label)); // make deep copy
-      item.originalLabel = JSON.parse(JSON.stringify(item.label));
+      const array = item.label;
+      item.originalLabel = item.label.filter(elem => true); // get a new array object
 
       // create new text and attributes for the list item
       // creates three parts for the string that previously were one part
@@ -285,17 +276,9 @@ export class MullerColumnViewModel extends ViewModel {
         },
         item.label[lookUpIndex].slice(stringIndex + this.searchString.length)
       );
-      
       item.label = array;
     }
-    noUpdate(() => { // surpress connections that are triggered when changing the selected index of a list
-      if (resetSelection) {
-        hoveredList.selectedIndex = null;
-        hoveredList.update();
-      } else { 
-        hoveredList.selectedIndex = hoveredList.items.findIndex(item => item.string === selectedString); 
-      }  
-    });
+    hoveredList.items = newItems; // triggers the visual update mechanism via list setter
   }
 
   onMouseMove (evt) {
