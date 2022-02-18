@@ -2938,7 +2938,8 @@ export class Text extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // copy as text
-    evt.domEvt.clipboardData.setData('text/plain', sel.text);
+    
+    evt.domEvt.clipboardData.setData('text/plain', sel.text.replace(objectReplacementChar, ''));
 
     this.execCommand('manual clipboard copy', {
       collapseSelection: config.codeEditor.collapseSelection || false,
