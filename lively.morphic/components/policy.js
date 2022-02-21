@@ -20,11 +20,36 @@ export function getOverriddenPropsFor (aMorph) {
   const policyOwner = aMorph.ownerChain().find(m => m.master);
   if (aMorph.master) {
     return {
-      local: aMorph.master._overriddenProps.get(aMorph),
-      owner: policyOwner && policyOwner.master._overriddenProps.get(aMorph)
+      local: obj.keys(aMorph.master._overriddenProps.get(aMorph)),
+      owner: obj.keys(policyOwner && policyOwner.master._overriddenProps.get(aMorph))
     };
   }
-  return policyOwner && policyOwner.master._overriddenProps.get(aMorph);
+  return policyOwner && obj.keys(policyOwner.master._overriddenProps.get(aMorph));
+}
+
+export function printOverriddenProps (aMorph) {
+  const overriddenPropsInHierarchy = {};
+  const getMasterForMorph = (m) => {
+    for (let o of m.ownerChain()) {
+      if (o.master && o.master.managesMorph(m)) return o.master;
+      if (o === aMorph) return false;
+    }
+  };
+  const gatherOverriddenProps = (m, master) => {
+    let info = overriddenPropsInHierarchy[m.name] || [];
+    info.push(master.__serialize__().__expr__ + ' => ' + Object.keys(master._overriddenProps.get(m)));
+    overriddenPropsInHierarchy[m.name] = info;
+  };
+  aMorph.withAllSubmorphsDo(m => {
+    const master = getMasterForMorph(m);
+    if (master) {
+      gatherOverriddenProps(m, master);
+    }
+    if (m.master) {
+      gatherOverriddenProps(m, m.master);  
+    }
+  });
+  return overriddenPropsInHierarchy;
 }
 
 export function findLocalComponents (snapshot) {
