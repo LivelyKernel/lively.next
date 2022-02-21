@@ -1,54 +1,7 @@
-import bowser from 'bowser';
+
 import { arr, string } from 'lively.lang';
 
 const letterRe = /[a-z]/i;
-
-function computeHashIdOfEvent (evt) {
-  let { key, ctrlKey, altKey, shiftKey, metaKey } = evt;
-  let hashId = 0 | (ctrlKey ? 1 : 0) | (altKey ? 2 : 0) | (shiftKey ? 4 : 0) | (metaKey ? 8 : 0);
-
-  if (hashId === 0 && !canonicalizeFunctionKey(key) && (key && letterRe.test(key))) hashId = -1;
-
-  return hashId;
-}
-
-let MODIFIER_KEYS = {
-  16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta'
-};
-
-let KEY_MODS = (() => {
-  let base = {
-    control: 1,
-    ctrl: 1,
-    alt: 2,
-    option: 2,
-    shift: 4,
-    super: 8,
-    win: 8,
-    meta: 8,
-    command: 8,
-    cmd: 8
-  };
-
-  let mods = ['alt', 'ctrl', 'meta', 'shift'];
-  for (var i = Math.pow(2, mods.length); i--;) { base[i] = mods.filter(x => i & base[x]).join('-') + '-'; }
-
-  base[0] = '';
-  base[-1] = 'input-';
-
-  return base;
-})();
-
-let isNumber = (() => {
-  let numberRe = /^[0-9]+$/;
-  return (key) => numberRe.test(key);
-})();
-
-function isModifier (key) {
-  if (isNumber(key)) return false;
-  key = key.replace(/-$/, '').toLowerCase();
-  return arr.withoutAll(Object.keys(KEY_MODS), ['', 'input-']).includes(key);
-}
 
 let FUNCTION_KEYS = [
   'backspace',
@@ -110,6 +63,53 @@ function canonicalizeFunctionKey (key) {
   }
 
   return FUNCTION_KEYS.includes(key) ? string.capitalize(key) : '';
+}
+
+function computeHashIdOfEvent (evt) {
+  let { key, ctrlKey, altKey, shiftKey, metaKey } = evt;
+  let hashId = 0 | (ctrlKey ? 1 : 0) | (altKey ? 2 : 0) | (shiftKey ? 4 : 0) | (metaKey ? 8 : 0);
+
+  if (hashId === 0 && !canonicalizeFunctionKey(key) && (key && letterRe.test(key))) hashId = -1;
+
+  return hashId;
+}
+
+let MODIFIER_KEYS = {
+  16: 'Shift', 17: 'Ctrl', 18: 'Alt', 224: 'Meta'
+};
+
+let KEY_MODS = (() => {
+  let base = {
+    control: 1,
+    ctrl: 1,
+    alt: 2,
+    option: 2,
+    shift: 4,
+    super: 8,
+    win: 8,
+    meta: 8,
+    command: 8,
+    cmd: 8
+  };
+
+  let mods = ['alt', 'ctrl', 'meta', 'shift'];
+  for (let i = Math.pow(2, mods.length); i--;) { base[i] = mods.filter(x => i & base[x]).join('-') + '-'; }
+
+  base[0] = '';
+  base[-1] = 'input-';
+
+  return base;
+})();
+
+let isNumber = (() => {
+  let numberRe = /^[0-9]+$/;
+  return (key) => numberRe.test(key);
+})();
+
+function isModifier (key) {
+  if (isNumber(key)) return false;
+  key = key.replace(/-$/, '').toLowerCase();
+  return arr.withoutAll(Object.keys(KEY_MODS), ['', 'input-']).includes(key);
 }
 
 function decodeKeyIdentifier (identifier, keyCode) {
@@ -186,7 +186,7 @@ function dedasherize (keyCombo) {
   }
 }
 
-var Keys = {
+const Keys = {
 
   computeHashIdOfEvent,
 
@@ -274,12 +274,7 @@ var Keys = {
     // var evt = {type: "keydown", keyIdentifier: "Meta"}
     // Keys.eventToKeyCombo(x)
     // stringify event to a key or key combo
-    let { ignoreModifiersIfNoCombo, ignoreKeys } = {
-      ignoreModifiersIfNoCombo: false,
-      ignoreKeys: [],
-      ...options
-    };
-
+   
     let { key, data, keyIdentifier } = evt;
 
     // deal with input events: They are considered coming from verbatim key
