@@ -59,7 +59,7 @@ function canonicalizeFunctionKey (key) {
     case 'arrowup': key = 'up'; break;
     case 'arrowdown': key = 'down'; break;
     case 'esc': key = 'escape'; break;
-    case 'return': key = 'enter'; break;
+    case 'numpadenter': key = 'enter'; break;
   }
 
   return FUNCTION_KEYS.includes(key) ? string.capitalize(key) : '';
