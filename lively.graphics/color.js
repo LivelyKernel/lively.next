@@ -266,7 +266,8 @@ export class Color {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   equals (other) {
     if (!other) return false;
-    return this.r === other.r && this.g === other.g && this.b === other.b && this.a === other.a;
+    const delta = 0.00000001;
+    return this.r - other.r < delta && this.g - other.g < delta && this.b - other.b < delta && this.a - other.a < delta;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
