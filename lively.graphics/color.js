@@ -267,7 +267,7 @@ export class Color {
   equals (other) {
     if (!other) return false;
     const delta = 0.00000001;
-    return this.r - other.r < delta && this.g - other.g < delta && this.b - other.b < delta && this.a - other.a < delta;
+    return Math.abs(this.r - other.r) < delta && Math.abs(this.g - other.g) < delta && Math.abs(this.b - other.b) < delta && Math.abs(this.a - other.a) < delta;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
