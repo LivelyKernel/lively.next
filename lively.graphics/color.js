@@ -240,10 +240,13 @@ export class Color {
   get isColor () { return true; }
 
   constructor (r, g, b, a) {
-    this.r = r || 0;
-    this.g = g || 0;
-    this.b = b || 0;
-    this.a = a || (a === 0 ? 0 : 1);
+    // Upon loading a world this is sometimes called with a string instead of a number
+    // which is why the parsing is necessary here.
+    // Fixme: This should not be needed in an optimal case. 2022-021-21
+    this.r = r ? Number.parseFloat(r).toFixed(5) : 0;
+    this.g = g ? Number.parseFloat(g).toFixed(5) : 0;
+    this.b = b ? Number.parseFloat(b).toFixed(5) : 0;
+    this.a = a ? Number.parseFloat(a).toFixed(5) : (a === 0 ? 0 : 1);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
