@@ -1305,9 +1305,10 @@ export class BrowserModel extends ViewModel {
   async onCodeEntitySelected (entity) {
     if (!entity) return;
     const { sourceEditor } = this.ui;
-    if (this.selectedModule.type === 'js') {
-      const start = sourceEditor.indexToPosition(entity.node.start);
-      const end = sourceEditor.indexToPosition(entity.node.end);
+    if (this.selectedModule.type === 'js' || this.selectedModule.type === 'json') {
+      const moduleType = this.selectedModule.type;
+      const start = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.start : entity.start);
+      const end = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.end : entity.end);
       sourceEditor.cursorPosition = start;
       sourceEditor.flash({ start, end }, { id: 'codeentity', time: 1000, fill: Color.rgb(200, 235, 255) });
       sourceEditor.centerRange({ start, end });
