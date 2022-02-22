@@ -611,6 +611,7 @@ export class BrowserModel extends ViewModel {
       return JSON.stringify(spec, (key, value) => {
         if (key === 'systemInterface') return interfacePlaceholder; // always resort to local...
         if (key === 'scroll') return scrollPlaceholder;
+        if (key === 'module') return obj.select(value, ['pathInModule', 'packageName', 'name']);
         return value;
       }).replace(JSON.stringify(scrollPlaceholder), spec.content.spec.scroll.toString())
         .replace(JSON.stringify(interfacePlaceholder), 'localInterface');
