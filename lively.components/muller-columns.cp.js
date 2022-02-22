@@ -30,6 +30,9 @@ const ColumnListDark = component(ColumnListDefault, {
 export class MullerColumnViewModel extends ViewModel {
   static get properties () {
     return {
+      defaultTooltips: {
+        // whether to create tooltips that are equal to name for all entries
+      },
       treeData: {
         // this.treeData
       },
@@ -378,7 +381,7 @@ export class MullerColumnViewModel extends ViewModel {
       }
       if (currentList._managedNode !== node) {
         currentList.items = td.getChildren(node).map(each => {
-          return { isListItem: true, label: td.display(each), value: each, tooltip: each.tooltip || false };
+          return { isListItem: true, label: td.display(each), value: each, tooltip: (this.defaultTooltips ? each.name : (each.tooltip || false)) };
         });
         currentList._managedNode = node;
       }

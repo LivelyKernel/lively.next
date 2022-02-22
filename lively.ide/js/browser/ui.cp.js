@@ -739,6 +739,7 @@ const SystemBrowser = component({
       hoveredTabMaster: BrowserTabHovered
     }
   }), part(MullerColumnView, {
+    viewModel: { defaultTooltips: true },
     name: 'column view',
     extent: pt(605, 221.1),
     borderWidthBottom: 1,
