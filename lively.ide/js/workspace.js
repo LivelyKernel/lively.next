@@ -172,7 +172,7 @@ export default class Workspace extends Window {
           try {
             await workspace.file.write(workspace.content);
           } catch (e) { workspace.showError(e); throw e; }
-          workspace.setStatusMessage(`Saved to ${workspace.file.url}`, Color.green);
+          workspace.setStatusMessage(`Saved to ${workspace.file.url}`, StatusMessageConfirm);
           return workspace;
         }
       }

@@ -5,6 +5,7 @@ import { config, Text } from 'lively.morphic';
 import EvalBackendChooser from '../js/eval-backend-ui.js';
 import CSSEditorPlugin from './editor-plugin.js';
 import { Window } from 'lively.components';
+import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 // new Workspace({ target: this.get('spreadsheet morph')}).activate().openInWorld()
 
@@ -69,7 +70,7 @@ export default class Workspace extends Window {
           if (workspace.target) {
             if (workspace.target.isHTMLMorph) {
               workspace.target.cssDeclaration = css;
-              workspace.setStatusMessage('CSS applied', Color.green);
+              workspace.setStatusMessage('CSS applied', StatusMessageConfirm);
             }
           }
 

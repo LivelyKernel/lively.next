@@ -32,7 +32,7 @@ export default class LESSWorkspace extends CSSWorkspace {
           if (workspace.target) {
             if (workspace.target.isHTMLMorph) {
               workspace.target.lessDeclaration = less;
-              workspace.setStatusMessage('LESS applied', Color.green);
+              workspace.setStatusMessage('LESS applied', StatusMessageConfirm);
             }
           }
         }

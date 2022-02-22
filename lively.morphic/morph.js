@@ -1155,10 +1155,10 @@ export class Morph {
 
   show (loop) { return $world.execCommand('show morph', { morph: this, loop }); }
 
-  setStatusMessage (msg, color, delay, opts) {
+  setStatusMessage (msg, statusMessageComponent, delay, opts) {
     const w = this.world();
     opts = { maxLines: 7, isCompact: true, ...opts };
-    return w ? w.setStatusMessageFor(this, msg, color, delay, opts) : console.log(msg);
+    return w ? w.setStatusMessageFor(this, msg, statusMessageComponent, delay, opts) : console.log(msg);
   }
 
   showError (err) {
