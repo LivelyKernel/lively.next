@@ -9,15 +9,6 @@ export class Tooltip extends Morph {
       hasFixedPosition: { defaultValue: true },
       reactsToPointer: { defaultValue: false },
       isEpiMorph: { defaultValue: true },
-      master: {
-        initialize () {
-          this.opacity = 0;
-          System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
-            this.opacity = 1;
-            this.master = SystemTooltip;            
-          });
-        }
-      },
       description: {
         after: ['submorphs'],
         derived: true,
@@ -153,7 +144,12 @@ export class TooltipViewer {
     this.clearCurrentTooltip();
     const position = hand ? hand.position.addXY(10, 7) : morph.globalBounds().bottomRight();
     this.currentTooltip = new Tooltip({ position, description: morph.tooltip });
-    $world.addMorph(this.currentTooltip);
-    this.currentTooltip.update(morph);
+    // setting the master in the tooltoip definition above directly leads to be tooltip.cs.js being imported on file-level
+    // which causes circular imports and breaks the system
+    System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
+      this.currentTooltip.master = SystemTooltip;            
+      $world.addMorph(this.currentTooltip);
+      this.currentTooltip.update(morph);
+    });
   }
 }
