@@ -2221,12 +2221,13 @@ export class BrowserModel extends ViewModel {
 
     let codeSnip = '$world.execCommand("open browser", {';
     if (m) {
-      if (m) codeSnip += `moduleName: "${p.name}/${m.nameInPackage}"`;
+      codeSnip += `moduleName: "${m.nameInPackage}", `;
+      if (p) codeSnip += `packageName: "${p.name}", `;
     } else {
-      if (p) codeSnip += `packageName: "${p.name}"`;
+      if (p) codeSnip += ` packageName: "${p.name}", `;
     }
     if (c) {
-      codeSnip += `, codeEntity: ${obj.isArray(c) ? JSON.stringify(c.map(c => obj.select(c, ['name', 'type']))) : `"${c.name}"`}`;
+      codeSnip += `codeEntity: ${obj.isArray(c) ? JSON.stringify(c.map(c => obj.select(c, ['name', 'type']))) : `"${c.name}"`}`;
     }
 
     if (sysI.name !== 'local') codeSnip += `, systemInterface: "${sysI.name}"`;
