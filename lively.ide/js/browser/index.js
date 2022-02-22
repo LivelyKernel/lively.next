@@ -808,7 +808,7 @@ export class BrowserModel extends ViewModel {
     const { columnView, sourceEditor } = this.ui;
     columnView.reset();
 
-    if ((await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
+    if (this.editorPlugin.runEval && (await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
       theme = DarkTheme.instance;
       columnView.listMaster = ColumnListDark;
     } else {
@@ -902,10 +902,12 @@ export class BrowserModel extends ViewModel {
     await this.ensureColumnViewData();
 
     if (optSystemInterface || systemInterface) {
-      this.systemInterface = optSystemInterface || systemInterface;
-      if (this.ui.evalBackendList) { await this.ui.evalBackendList.updateFromTarget(); }
+      try {
+        this.systemInterface = optSystemInterface || systemInterface;
+        if (this.ui.evalBackendList) { await this.ui.evalBackendList.updateFromTarget(); }
+      } catch (e) { // known case: switching from a tab with markdown opened to another tab
+      }   
     }
-
     await this.toggleWindowStyle(false);
 
     if (packageName) {
