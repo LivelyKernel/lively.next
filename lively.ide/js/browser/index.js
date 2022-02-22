@@ -43,6 +43,7 @@ import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-colu
 import { joinPath } from 'lively.lang/string.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { noUpdate } from 'lively.bindings';
+import CSSEditorPlugin from '../../css/editor-plugin.js';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -1228,6 +1229,7 @@ export class BrowserModel extends ViewModel {
       case 'jsx': Mode = JSXEditorPlugin; break;
       case 'md': Mode = MarkdownEditorPlugin; break;
       case 'less': Mode = LESSEditorPlugin; break;
+      case 'css': Mode = CSSEditorPlugin; break;
     }
 
     // switch text mode
