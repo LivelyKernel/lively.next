@@ -24,7 +24,35 @@ export var codeEvaluationCommands = [
       return result;
     }
   },
+  {
+    name: 'blame selection',
+    doc: 'Retrieves complete git blame information for the selected code.',
+    exec: async function (morph) {
+      const sel = morph.selection.selections[0];
+      const rangeStart = sel.range.start.row + 1;
+      const rangeEnd = sel.range.end.row + 1;
+      if (!morph.editorPlugin.evalEnvironment.targetModule) {
+        morph.showError('Error!');
+        return;
+      }
+      let fileToBlame = morph.editorPlugin.evalEnvironment.targetModule;
+      if (!fileToBlame.match(/http:/)) {
+        morph.showError('Only available for files located on server.');
+        return;
+      }
+      
+      let baseDir = defaultDirectory().replace('http://localhost:9011/', '').replace('/lively.server', '');
+      fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
+      
+      const command = 'git blame -L ' + rangeStart + ',' + rangeEnd + ' --porcelain --line-porcelain ' + fileToBlame; 
+      
+      let cmd = runCommand(command, { cwd: baseDir });
+      await cmd.whenDone();
+      let result = cmd.output;
 
+      $world.execCommand('open workspace', { title: 'Blame Info', content: result, language: 'text' });
+    }
+  },
   {
     name: 'blame line',
     doc: 'Retrieves git commit message and author name from the last time the line at which the cursor is positioned was changed.',

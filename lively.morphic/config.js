@@ -211,6 +211,7 @@ const config = {
       { keys: { win: 'Ctrl-Shift-E', mac: 'Meta-Shift-E' }, command: 'editit' },
       { keys: { win: 'Ctrl-Shift-U', mac: 'Meta-Shift-U' }, command: 'undefine variable' },
       { keys: { win: 'Alt-B', mac: 'Alt-B' }, command: 'blame line' },
+      { keys: { win: 'Shift-Ctrl-B', mac: 'Shift-Ctrl-B' }, command: 'blame selection' },
 
       { keys: 'Backspace', command: 'delete backwards' },
       { keys: 'Shift-Backspace', command: 'delete backwards' },
