@@ -17,7 +17,7 @@ export function runCommand (commandString, opts = {}) {
 }
 
 // await defaultDirectory()
-export function defaultDirectory () { return _defaultDirectory(L2LClient.ensure(defaultConnection)); }
+export async function defaultDirectory () { return await _defaultDirectory(L2LClient.ensure(defaultConnection)); }
 
 // await env()
 export function env () { return _env(L2LClient.ensure(defaultConnection)); }

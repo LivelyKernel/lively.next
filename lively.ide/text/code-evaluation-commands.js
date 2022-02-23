@@ -41,7 +41,8 @@ export var codeEvaluationCommands = [
         return;
       }
       
-      let baseDir = defaultDirectory().replace('http://localhost:9011/', '').replace('/lively.server', '');
+      let baseDir = await defaultDirectory();
+      baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
       fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
       
       const command = 'git blame -L ' + rangeStart + ',' + rangeEnd + ' --porcelain --line-porcelain ' + fileToBlame; 
@@ -68,7 +69,8 @@ export var codeEvaluationCommands = [
         return;
       }
       
-      let baseDir = defaultDirectory().replace('http://localhost:9011/', '').replace('/lively.server', '');
+      let baseDir = await defaultDirectory();
+      baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
       fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
       
       const command = 'git blame -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame; 
