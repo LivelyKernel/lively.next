@@ -11,7 +11,8 @@ function getCommentPrecedingNode (parsed, node) {
   const blockPath = statementPath.slice(0, -2);
   const block = Path(blockPath).get(parsed);
 
-  return !block.comments || !block.comments.length ? null
+  return !block.comments || !block.comments.length
+    ? null
     : chain(extractComments(parsed))
       .reversed()
       .detect(function (ea) { return ea.followingNode === node; })
@@ -20,9 +21,11 @@ function getCommentPrecedingNode (parsed, node) {
 
 function extractComments (astOrCode, optCode) {
   const parsed = typeof astOrCode === 'string'
-    ? parse(astOrCode, { withComments: true }) : astOrCode;
+    ? parse(astOrCode, { withComments: true })
+    : astOrCode;
   const code = optCode || (typeof astOrCode === 'string'
-    ? astOrCode : stringify(astOrCode));
+    ? astOrCode
+    : stringify(astOrCode));
   const parsedComments = arr.sortBy(commentsWithPathsAndNodes(parsed), c => c.comment.start);
 
   return parsedComments.map(function (c, i) {

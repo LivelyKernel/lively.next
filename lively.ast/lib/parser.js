@@ -62,11 +62,14 @@ function fuzzyParse (source, options) {
   options.plugins = options.plugins || {};
   // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
   options.plugins.jsx = options.plugins.hasOwnProperty('jsx')
-    ? options.plugins.jsx : true;
+    ? options.plugins.jsx
+    : true;
   options.plugins.asyncawait = options.plugins.hasOwnProperty('asyncawait')
-    ? options.plugins.asyncawait : { inAsyncFunction: true };
+    ? options.plugins.asyncawait
+    : { inAsyncFunction: true };
   options.plugins.objectSpread = options.plugins.hasOwnProperty('objectSpread')
-    ? options.plugins.objectSpread : true;
+    ? options.plugins.objectSpread
+    : true;
 
   let ast, safeSource, err;
   if (options.type === 'LabeledStatement') { safeSource = '$={' + source + '}'; }
@@ -169,11 +172,14 @@ function parse (source, options) {
   if (!options.hasOwnProperty('allowImportExportEverywhere')) { options.allowImportExportEverywhere = true; }
   options.plugins = options.plugins || {};
   options.plugins.jsx = options.plugins.hasOwnProperty('jsx')
-    ? options.plugins.jsx : true;
+    ? options.plugins.jsx
+    : true;
   options.plugins.asyncawait = options.plugins.hasOwnProperty('asyncawait')
-    ? options.plugins.asyncawait : { inAsyncFunction: true };
+    ? options.plugins.asyncawait
+    : { inAsyncFunction: true };
   options.plugins.objectSpread = options.plugins.hasOwnProperty('objectSpread')
-    ? options.plugins.objectSpread : true;
+    ? options.plugins.objectSpread
+    : true;
 
   if (options.withComments) {
     // record comments

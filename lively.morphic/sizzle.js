@@ -1,119 +1,111 @@
-import { obj, properties, string, arr } from "lively.lang";
+import { obj, properties, string, arr } from 'lively.lang';
 
 export class SizzleExpression {
-
-  static compile(rule, context) {
+  static compile (rule, context) {
     return new this(rule, context);
   }
 
-  constructor(rule, context) {
+  constructor (rule, context) {
     this.matchStacks = {};
     this.context = context;
     this.compileRule(rule);
   }
 
-  compileRule(rule) {
+  compileRule (rule) {
     this.compiledRule = [];
     for (let token of rule.split(' ')) {
-       this.compiledRule.push(this.createMatcher(token));
+      this.compiledRule.push(this.createMatcher(token));
     }
     if (arr.any(this.compiledRule, matcher => !matcher)) {
-      //throw new Error('Can not compile ' + rule);
+      // throw new Error('Can not compile ' + rule);
       this.compileError = true;
-      return;
     }
   }
 
-  createMatcher(token) {
+  createMatcher (token) {
     return arr.findAndGet([ClassMatcher, NameMatcher, IdMatcher], Matcher =>
       Matcher.create(token)
     );
   }
 
-  reset() {
+  reset () {
     this.active = false;
     this.matchStacks = {};
   }
 
-  startMatching() { 
+  startMatching () { 
     this.animated = false;
     this.active = true;
   }
 
-  matches(morph) {
+  matches (morph) {
     if (this.context == morph) this.startMatching();
     if (!this.active) return false;
-    var {idx: matcherIdx, revoked, applied, animated } = (morph.owner && this.matchStacks[morph.owner.id]) || {idx: 0},
-        match = this.compiledRule[matcherIdx].matches(morph); 
+    let { idx: matcherIdx, revoked, applied, animated } = (morph.owner && this.matchStacks[morph.owner.id]) || { idx: 0 };
+    let match = this.compiledRule[matcherIdx].matches(morph); 
     if (match.applied || match.revoked) {
       match.revoked = match.revoked || revoked;
       match.applied = !match.revoked && (match.applied || applied);
       match.animated = match.animated || animated;
       if (matcherIdx < this.compiledRule.length - 1) {
-        this.matchStacks[morph.id] = {idx: matcherIdx + 1, ...match};
+        this.matchStacks[morph.id] = { idx: matcherIdx + 1, ...match };
       } else {
-        this.matchStacks[morph.id] = {idx: matcherIdx, ...match}; // this is needed to prevent further matching of submorphs
+        this.matchStacks[morph.id] = { idx: matcherIdx, ...match }; // this is needed to prevent further matching of submorphs
         return match;
       }
     } else {
-      this.matchStacks[morph.id] = {idx: matcherIdx, revoked, applied, animated };
+      this.matchStacks[morph.id] = { idx: matcherIdx, revoked, applied, animated };
       return false;
     }
   }
-
 }
 
 class Matcher {
+  static get characterEncoding () { return '(?:\\\\.|[-\\w]|[^\\x00-\\xa0])+'; }
 
-  static get characterEncoding() { return "(?:\\\\.|[-\\w]|[^\\x00-\\xa0])+" }
-
-  static create(token) {
-    var match;
+  static create (token) {
+    let match;
     if (match = this.appliesTo(token)) {
-       return new this(token, match);
+      return new this(token, match);
     }
   }
 
-  constructor(description, token) {
+  constructor (description, token) {
     this.token = token;
     this.description = description;
   }
 
-  static appliesTo(token) {
+  static appliesTo (token) {
     return false;
   }
 
-  matches(morph) {
+  matches (morph) {
     return false;
   }
-
 }
 
 class NameMatcher extends Matcher {
-
-  static appliesTo(token) {
-    var name;
+  static appliesTo (token) {
+    let name;
     if (!this.re) this.re = new RegExp("^\\[name=['\"]?(" + this.characterEncoding + ")['\"]?\\]");
     name = this.re.exec(token);
     return name && name[1];
   }
 
-  matches(morph) {
+  matches (morph) {
     // name changes are not tracked
-    return {applied: morph.name == this.token, revoked: false, animated: false};
+    return { applied: morph.name == this.token, revoked: false, animated: false };
   }
-  
 }
 
 class ClassMatcher extends Matcher {
-
-  static appliesTo(token) {
-    var match = true,
-        classes = [];
-    if (!this.re) this.re = new RegExp("^\\.(" + this.characterEncoding + ")"); 
-    while(match) {
+  static appliesTo (token) {
+    let match = true;
+    let classes = [];
+    if (!this.re) this.re = new RegExp('^\\.(' + this.characterEncoding + ')'); 
+    while (match) {
       match = this.re.exec(token);
-      if(match) {
+      if (match) {
         classes.push(match[1]);
         token = token.replace(match[0], '');
       }
@@ -121,7 +113,7 @@ class ClassMatcher extends Matcher {
     return string.empty(token) && classes.length > 0 ? classes : false;
   }
 
-  matches(morph) {
+  matches (morph) {
     const { 
          removed, added, animation 
       } = morph._animatedStyleClasses || {removed: [], added: []},
@@ -133,50 +125,45 @@ class ClassMatcher extends Matcher {
       applied,
       revoked,
       animated: animation
-    }
+    };
   }
-
 }
 
 class IdMatcher extends Matcher {
-
-  static appliesTo(token) {
-    if (!this.re) this.re = new RegExp("^#(" + this.characterEncoding + ")");
+  static appliesTo (token) {
+    if (!this.re) this.re = new RegExp('^#(' + this.characterEncoding + ')');
     let id = this.re.exec(token);
     return id && id[1];
   }
 
-  matches(morph) {
+  matches (morph) {
     // ids can not be revoked or animated
-    return {applied: morph.id == this.token, revoked: false, animated: false};
+    return { applied: morph.id == this.token, revoked: false, animated: false };
   }
-  
 }
 
 export class Sizzle {
-
-  constructor(context) {
+  constructor (context) {
     this.context = context;
     this.cachedExpressions = {};
   }
 
-  fetchExpressionFor(rule) {
-    var expr = this.cachedExpressions[rule];
+  fetchExpressionFor (rule) {
+    let expr = this.cachedExpressions[rule];
     if (!expr) {
       this.cachedExpressions[rule] = expr = SizzleExpression.compile(rule, this.context);
     }
     return expr;
   }
 
-  matches(rule, morph) {
+  matches (rule, morph) {
     return this.fetchExpressionFor(rule).matches(morph);  
   }
 
-  select(rule) {
+  select (rule) {
     let expr = this.fetchExpressionFor(rule);
     return this.context.withAllSubmorphsSelect(m => expr.matches(m));
   }
-  
 }
 
 // sizzle visitor algorithm
@@ -186,7 +173,6 @@ export class Sizzle {
 // redundant checks and recomputiation of intermediate results
 
 export class SizzleVisitor {
-
   /* A sizzle visitor is an object that is bound to a given morph hierarchy
      (i.e. a context) and designed to efficiently match a set of sizzle expressions
      that is associated with different morphs in the hierarchy and allows to 
@@ -195,18 +181,18 @@ export class SizzleVisitor {
      check all morphs with their associated sizzle expressions whenever changes
      within the morph hierarchy are applied (i.e. changes to name, submorph, styleClasses) */
 
-  constructor(rootMorph) {
+  constructor (rootMorph) {
     this.rootMorph = rootMorph;
     this.expressionCache = {};
   }
 
-  deleteFromCache(morph) {
+  deleteFromCache (morph) {
     morph.withAllSubmorphsDo(m => {
-      delete this.expressionCache[m.id]
-    })
+      delete this.expressionCache[m.id];
+    });
   }
 
-  retrieveExpressions(morph) {
+  retrieveExpressions (morph) {
     /*
          function, that is passed the current morph being visited as an argument,
          and which may return an hashmap of expressions (as strings) to values.
@@ -215,39 +201,38 @@ export class SizzleVisitor {
          The visitor performs automatic internalization of the expressions,
          and fetches the precompiled expressions when available to save memory and allocations.
     */
-    throw Error('Not yet implemented!')
+    throw Error('Not yet implemented!');
   }
 
-  visitMorph(morph, matchingExpressions) {
+  visitMorph (morph, matchingExpressions) {
     /*
          function, that is called on each morph being visited together with an array
          containing the matching expressions' value for that morph.
     */
-    throw Error('Not yet implemented!')
+    throw Error('Not yet implemented!');
   }
 
-  getChildren(morph) {
+  getChildren (morph) {
     /* 
         function returning the next siblings to visit. This can be used to cut down the
         total amount of morphs getting visited.
     */
-    throw Error('Not yet implemented!')
+    throw Error('Not yet implemented!');
   }
   
-  visit(morph) {
-
+  visit (morph) {
     if (!morph) {
       morph = this.rootMorph;
       this.morphExpressions = [];
       for (let id in this.expressionCache) {
         for (let expr in this.expressionCache[id]) {
-          this.expressionCache[id][expr].reset()
+          this.expressionCache[id][expr].reset();
         }
       }
     }
 
-    let exprsToValues = this.retrieveExpressions(morph), 
-        matchingValues = {apply: [], revoke: []};
+    let exprsToValues = this.retrieveExpressions(morph); 
+    let matchingValues = { apply: [], revoke: [] };
 
     // add expressions to scope
     exprsToValues && this.morphExpressions.push([morph, exprsToValues]);
@@ -276,9 +261,9 @@ export class SizzleVisitor {
     exprsToValues && this.morphExpressions.pop();
   }
 
-  matchExpressions(rootMorph, morph, exprsToValues, exprCache, valueContainer) {
+  matchExpressions (rootMorph, morph, exprsToValues, exprCache, valueContainer) {
     for (let expr in exprsToValues) {
-      let match, value, compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, rootMorph);
+      let match; let value; let compiledExpr = exprCache[expr] || SizzleExpression.compile(expr, rootMorph);
       if (!compiledExpr.compileError) {
         // determine wether the expression matched due to a style class that has been animated
         match = compiledExpr.matches(morph) || {};
@@ -288,7 +273,7 @@ export class SizzleVisitor {
         if (match.revoked) {
           valueContainer.revoke.push(value = exprsToValues[expr]);
         }
-        if (match.animated) { value.animated = match.animated }
+        if (match.animated) { value.animated = match.animated; }
         // else we did not match before and dont match right now, so ignore
       }
       exprCache[expr] = compiledExpr;
@@ -297,29 +282,28 @@ export class SizzleVisitor {
 }
 
 export class StylingVisitor extends SizzleVisitor {
-
-  constructor(args) {
+  constructor (args) {
     super(args);
     this.retainedProps = {};
   }
 
-  retrieveExpressions(morph) {
+  retrieveExpressions (morph) {
     if (morph.styleSheets.length < 1) return false;
     return morph.styleSheets.map(ss => ss.applicableRules());
   }
 
-  visitMorph(morph, styleSheetPatches) {
+  visitMorph (morph, styleSheetPatches) {
     if (!morph._wantsStyling) return;
-    let retained = this.retainedProps[morph.id] || {},
-        styledProps = {};
-    var capturedPropValues;
+    let retained = this.retainedProps[morph.id] || {};
+    let styledProps = {};
+    let capturedPropValues;
 
     // the first time we start styling the morph, we capture all the styled properties
     morph.__appliedRules__ = [];
-    for (let {styleSheet, rule, animated} of styleSheetPatches.apply) {
+    for (let { styleSheet, rule, animated } of styleSheetPatches.apply) {
       // changed props and styledProps!
       morph.__appliedRules__.push([styleSheet, rule]);
-      capturedPropValues = styleSheet.applyRule(rule, morph, animated)
+      capturedPropValues = styleSheet.applyRule(rule, morph, animated);
       Object.assign(styledProps, capturedPropValues);
       retained = { ...capturedPropValues, ...retained };
     }
@@ -327,16 +311,16 @@ export class StylingVisitor extends SizzleVisitor {
     // they were at when the style was applied initially, given that the current value
     // coincides with the rules value
     
-    for (let {styleSheet, rule, animated} of styleSheetPatches.revoke) {
-        let restored = obj.dissoc(obj.select(retained, obj.keys(styleSheet.rules[rule])), obj.keys(styledProps));
-        if (animated) {
-          morph.animate({
-            ...restored, duration: animated.duration, easing: animated.easing
-          });
-        } else {
-          Object.assign(morph, restored);
-        }
-        Object.assign(styledProps, restored);
+    for (let { styleSheet, rule, animated } of styleSheetPatches.revoke) {
+      let restored = obj.dissoc(obj.select(retained, obj.keys(styleSheet.rules[rule])), obj.keys(styledProps));
+      if (animated) {
+        morph.animate({
+          ...restored, duration: animated.duration, easing: animated.easing
+        });
+      } else {
+        Object.assign(morph, restored);
+      }
+      Object.assign(styledProps, restored);
     }
     // the remaining rules which used to be applied but no longer are and were not revoked via an animation
     const propsToRevert = obj.dissoc(retained, obj.keys(styledProps));
@@ -345,14 +329,13 @@ export class StylingVisitor extends SizzleVisitor {
     // once applied, a retained prop is removed, to not infer with the
     // custom setting of properties on morphs
 
-    delete morph._animatedStyleClasses
+    delete morph._animatedStyleClasses;
     morph._styledProps = styledProps;
     this.retainedProps[morph.id] = retained;
     morph._wantsStyling = false;
   }
 
-  getChildren(morph) {
+  getChildren (morph) {
     return arr.filter(morph.submorphs, m => m.needsRerender());
   }
-  
 }

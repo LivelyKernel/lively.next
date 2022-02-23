@@ -182,7 +182,8 @@ class InnerTreeNode extends TreeNode {
       const child = this.children[i];
       const childHeight = child.height;
       if (y <= childHeight) {
-        return this.isLeaf ? { line: child, offset: y, y: lineY, row }
+        return this.isLeaf
+          ? { line: child, offset: y, y: lineY, row }
           : child.findLineByVerticalOffset(y, lineY, row);
       }
       y = y - childHeight;
@@ -765,7 +766,8 @@ class InnerTreeNode extends TreeNode {
     const { isLeaf, size, width, height, children } = this;
     return `node (${isLeaf ? 'leaf, ' : ''}` +
          `${isLeaf && children.length
-               ? `rows: ${children[0].row}-${arr.last(children).row} ` : ''}` +
+               ? `rows: ${children[0].row}-${arr.last(children).row} `
+: ''}` +
          `size: ${size} ${width}x${height})`;
   }
 }
@@ -930,7 +932,8 @@ export class Line extends TreeNode {
     let text = '';
     for (let i = 0; i < textAndAttributes.length; i = i + 2) {
       text = text + (typeof textAndAttributes[i] === 'string'
-        ? textAndAttributes[i] : objectReplacementChar);
+        ? textAndAttributes[i]
+        : objectReplacementChar);
     }
     return this.changeText(text, textAndAttributes);
   }
@@ -944,7 +947,8 @@ export class Line extends TreeNode {
 
     function printTextAttrTuple ([content, attrs]) {
       return (typeof content === 'string'
-        ? `"${content}"` : String(content)) + `,${JSON.stringify(attrs)}`;
+        ? `"${content}"`
+        : String(content)) + `,${JSON.stringify(attrs)}`;
     }
   }
 
@@ -1427,7 +1431,8 @@ export default class Document {
 
     if (row === endRow) {
       return column === endColumn
-        ? '' : this.getLineString(row).slice(column, endColumn);
+        ? ''
+        : this.getLineString(row).slice(column, endColumn);
     }
 
     let line = this.getLine(row);
