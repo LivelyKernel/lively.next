@@ -1,11 +1,11 @@
 import Resource from 'lively.resources/src/resource.js';
 import { runCommand } from './client-command.js';
 import { fileInfo, findFiles } from './client-fs-helper.js';
-import { string, promise, arr, obj } from 'lively.lang';
+import { string, obj } from 'lively.lang';
 
 export default class ShellClientResource extends Resource {
-  static get defaultL2lClient () { return this._defaultL2lClient || _defaultL2LClient; }
-  static set defaultL2lClient (l2lClient) { this._defaultL2lClient = _defaultL2LClient = l2lClient; }
+  static get defaultL2lClient () { return this._defaultL2lClient || _defaultL2LClient; } // eslint-disable-line no-use-before-define
+  static set defaultL2lClient (l2lClient) { this._defaultL2lClient = _defaultL2LClient = l2lClient; } // eslint-disable-line no-use-before-define
 
   constructor (url, l2lClient, options = {}) {
     super(url);
@@ -99,7 +99,7 @@ export default class ShellClientResource extends Resource {
 
 let _defaultL2LClient;
 
-export var resourceExtension = {
+export const resourceExtension = {
   name: 'shell-client',
   matches: (url) => url.startsWith('/') || url.match(/[a-z]:\\/i), // abs path
   resourceClass: ShellClientResource

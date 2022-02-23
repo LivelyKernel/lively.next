@@ -1,4 +1,4 @@
-/*global process, require, __dirname*/
+/* global process, require, __dirname */
 /*
  * This script conforms to and can be used as SSH_ASKPASS / GIT_ASKPASS tool.
  * It will be called by ssh/git with a query string as process.argv[2]. This
@@ -13,21 +13,20 @@
 // node askpass.js "Someone there"
 
 // control stdout/err output, silence the node process:
-var stdoutWrite = process.stdout.write;
-var stderrWrite = process.stderr.write;
-process.stderr.write = function() {};
-process.stdout.write = function() {};
+let stdoutWrite = process.stdout.write;
+let stderrWrite = process.stderr.write;
+process.stderr.write = function () {};
+process.stdout.write = function () {};
 
-if (!process.env.WORKSPACE_LK)
-  process.env.WORKSPACE_LK = require("path").join(__dirname, "..");
+if (!process.env.WORKSPACE_LK) { process.env.WORKSPACE_LK = require('path').join(__dirname, '..'); }
 
-require("./commandline2lively")({
+require('./commandline2lively')({
   action: 'ask for',
   data: {
     query: process.argv[2] || 'No query from ASKPASS invocation',
     requiredUser: process.env.L2L_ASKPASS_USER
-  },
-}, function(err, answer) {
+  }
+}, function (err, answer) {
   if (err) {
     stderrWrite.call(process.stderr, String(err));
     process.exit(1);
@@ -35,6 +34,6 @@ require("./commandline2lively")({
     stdoutWrite.call(
       process.stdout, 
       answer && answer.data.answer ? answer.data.answer + '\n' : '');
-    process.exit(0)
+    process.exit(0);
   }
 });

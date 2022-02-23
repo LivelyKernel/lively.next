@@ -4,51 +4,6 @@ import { string, promise, arr } from 'lively.lang';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // uses the "ls" shell utility to get file properties
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export async function fileInfo (fileName, options) {
-  let commandString = fileInfoCommandString(fileName, options);
-  let result = [];
-  let cmd = runCommand(commandString, options);
-
-  await cmd.whenDone();
-  let err = cmd.exitCode != 0 ? cmd.output : null;
-  if (err) throw err;
-  let [fileInfo] = parseDirectoryListFromLs(cmd.stdout, options.rootDirectory || '.');
-  return fileInfo;
-}
-
-function fileInfoCommandString (filename, options = {}) {
-  let { rootDirectory, platform } = options;
-
-  rootDirectory = rootDirectory || '.';
-
-  let slash = platform === 'win32' ? '\\' : '/';
-  if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
-
-  // we expect an consistent timeformat across OSs to parse the results
-  let timeFormatFix = `if [ "$(uname)" = "Darwin" ];
-      then timeformat='-T'; else
-      timeformat="--time-style=+%b %d %T %Y";
-    fi && `;
-
-  // use GMT for time settings by default so the result is comparable
-  // also force US ordering of date/time elements, to help with the parsing
-  let commandString = platform === 'win32'
-    ? `cd ${rootDirectory} && ls -lLd --time-style=locale "${filename}"`
-    : timeFormatFix + `env TZ=GMT LANG=en_US.UTF-8 cd ${rootDirectory} && ls -lLd "$timeformat" "${filename}"`;
-
-  return commandString;
-}
-
-export function parseDirectoryListFromLs (lsString, rootDirectory) {
-  // line like "-rw-r—r—       1 robert   staff       5298 Dec 17 14:04:02 2012 test.html"
-  return string.lines(lsString)
-    .map(line => !line.trim().length
-      ? null
-      : new FileInfo(rootDirectory).readFromDirectoryListLine(line))
-    .filter(Boolean);
-}
-
 class FileInfo {
   constructor (rootDirectory) {
     this.rootDirectory = rootDirectory;
@@ -133,50 +88,58 @@ class FileInfo {
   toString () { return this.path; }
 }
 
+function fileInfoCommandString (filename, options = {}) {
+  let { rootDirectory, platform } = options;
+
+  rootDirectory = rootDirectory || '.';
+
+  let slash = platform === 'win32' ? '\\' : '/';
+  if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
+
+  // we expect an consistent timeformat across OSs to parse the results
+  let timeFormatFix = `if [ "$(uname)" = "Darwin" ];
+      then timeformat='-T'; else
+      timeformat="--time-style=+%b %d %T %Y";
+    fi && `;
+
+  // use GMT for time settings by default so the result is comparable
+  // also force US ordering of date/time elements, to help with the parsing
+  let commandString = platform === 'win32'
+    ? `cd ${rootDirectory} && ls -lLd --time-style=locale "${filename}"`
+    : timeFormatFix + `env TZ=GMT LANG=en_US.UTF-8 cd ${rootDirectory} && ls -lLd "$timeformat" "${filename}"`;
+
+  return commandString;
+}
+
+export function parseDirectoryListFromLs (lsString, rootDirectory) {
+  // line like "-rw-r—r—       1 robert   staff       5298 Dec 17 14:04:02 2012 test.html"
+  return string.lines(lsString)
+    .map(line => !line.trim().length
+      ? null
+      : new FileInfo(rootDirectory).readFromDirectoryListLine(line))
+    .filter(Boolean);
+}
+
+export async function fileInfo (fileName, options) {
+  let commandString = fileInfoCommandString(fileName, options);
+  let cmd = runCommand(commandString, options);
+
+  await cmd.whenDone();
+  let err = cmd.exitCode !== 0 ? cmd.output : null;
+  if (err) throw err;
+  let [fileInfo] = parseDirectoryListFromLs(cmd.stdout, options.rootDirectory || '.');
+  return fileInfo;
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // use the shell find comannd to list files / search for files
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 let findFilesProcesses = {};
-
-export async function findFiles (pattern, options) {
-  // lively.ide.CommandLineSearch.findFiles('*html',
-  //   {exclude: STRING, re: BOOL, depth: NUMBER, cwd: STRING, matchPath: BOOL});
-  let { findFilesGroup, rootDirectory } = { findFilesGroup: 'default-find-files-process', ...options };
-
-  let stateForThisGroup = findFilesProcesses[findFilesGroup] ||
-                      (findFilesProcesses[findFilesGroup] = { promiseState: null, commands: [] });
-  let { commands, promiseState } = stateForThisGroup;
-
-  if (!promiseState) { stateForThisGroup.promiseState = promiseState = promise.deferred(); }
-
-  let commandString = findFilesCommandString(pattern, options);
-  let result = [];
-
-  commands.forEach(oldCmd => oldCmd.kill());
-  let cmd = runCommand(commandString, options);
-  commands.push(cmd);
-  cmd.whenDone().then(() => {
-    arr.remove(commands, cmd);
-    let isOutdated = commands.some(otherCmd => otherCmd.startTime > cmd.startTime);
-    if (isOutdated) {
-      console.log(`[findFiles] command ${cmd} exited but a newer findFiles command was started for group ${findFilesGroup}, discarding output`);
-    } else {
-      let err = cmd.exitCode != 0 ? cmd.output : null;
-      if (err) console.warn(err);
-      let result = err ? [] : parseDirectoryListFromLs(cmd.stdout, rootDirectory) || [];
-      promiseState.resolve(result);
-      Object.assign(stateForThisGroup, { promiseState: null, commands: [] });
-    }
-  }).catch(err => console.error(err));
-
-  return promiseState.promise;
-}
-
 let defaultExcludes = ['.svn', '.git', 'node_modules', '.module_cache'];
 
 function findFilesCommandString (pattern, options = {}) {
-  var { rootDirectory, exclude, depth, platform } = options;
+  const { rootDirectory, exclude, depth, platform } = options;
 
   rootDirectory = rootDirectory || '.';
   exclude = exclude || ('-iname ' + defaultExcludes.map(string.print).join(' -o -iname '));
@@ -194,7 +157,7 @@ function findFilesCommandString (pattern, options = {}) {
     options.re ? '-iregex' : (options.matchPath ? '-ipath' : '-iname'),
     pattern);
 
-  var depth = typeof depth === 'number' ? ' -maxdepth ' + depth : '';
+  depth = typeof depth === 'number' ? ' -maxdepth ' + depth : '';
 
   // use GMT for time settings by default so the result is comparable
   // also force US ordering of date/time elements, to help with the parsing
@@ -220,11 +183,52 @@ function findFilesCommandString (pattern, options = {}) {
   return commandString;
 }
 
+export async function findFiles (pattern, options) {
+  // lively.ide.CommandLineSearch.findFiles('*html',
+  //   {exclude: STRING, re: BOOL, depth: NUMBER, cwd: STRING, matchPath: BOOL});
+  let { findFilesGroup, rootDirectory } = { findFilesGroup: 'default-find-files-process', ...options };
+
+  let stateForThisGroup = findFilesProcesses[findFilesGroup] ||
+                      (findFilesProcesses[findFilesGroup] = { promiseState: null, commands: [] });
+  let { commands, promiseState } = stateForThisGroup;
+
+  if (!promiseState) { stateForThisGroup.promiseState = promiseState = promise.deferred(); }
+
+  let commandString = findFilesCommandString(pattern, options);
+
+  commands.forEach(oldCmd => oldCmd.kill());
+  let cmd = runCommand(commandString, options);
+  commands.push(cmd);
+  cmd.whenDone().then(() => {
+    arr.remove(commands, cmd);
+    let isOutdated = commands.some(otherCmd => otherCmd.startTime > cmd.startTime);
+    if (isOutdated) {
+      console.log(`[findFiles] command ${cmd} exited but a newer findFiles command was started for group ${findFilesGroup}, discarding output`);
+    } else {
+      let err = cmd.exitCode !== 0 ? cmd.output : null;
+      if (err) console.warn(err);
+      let result = err ? [] : parseDirectoryListFromLs(cmd.stdout, rootDirectory) || [];
+      promiseState.resolve(result);
+      Object.assign(stateForThisGroup, { promiseState: null, commands: [] });
+    }
+  }).catch(err => console.error(err));
+
+  return promiseState.promise;
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // for html uploads
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export function convertDirectoryUploadEntriesToFileInfos (entryTree) {
+  function flattenTree (entryTree) {
+    return Array.prototype.concat.apply(
+      [entryTree],
+      entryTree.children ? entryTree.children.map(flattenTree) : []);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  
   let entries = flattenTree(entryTree);
   return entries.map(function (entry) {
     let path = entry.fullPath.replace(/^\//, '');
@@ -242,12 +246,4 @@ export function convertDirectoryUploadEntriesToFileInfos (entryTree) {
       user: undefined
     };
   });
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function flattenTree (entryTree) {
-    return Array.prototype.concat.apply(
-      [entryTree],
-      entryTree.children ? entryTree.children.map(flattenTree) : []);
-  }
 }

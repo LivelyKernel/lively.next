@@ -4,61 +4,11 @@ import { signal } from 'lively.bindings';
 
 let debug = false;
 
-export function runCommand (commandString, opts = {}) {
-  let { l2lClient } = opts;
-
-  if (!l2lClient) { throw new Error('lively.shell client side runCommand needs opts.l2lClient!'); }
-
-  ClientCommand.installLively2LivelyServices(l2lClient);
-  let cmd = new ClientCommand(l2lClient);
-  cmd.spawn({ command: commandString, ...obj.dissoc(opts, ['l2lClient']) });
-  return cmd;
-}
-
-let dirCache = {};
-export function defaultDirectory (l2lClient) {
-  if (dirCache[l2lClient.trackerId]) return dirCache[l2lClient.trackerId];
-  return l2lClient.whenRegistered().then(async () => {
-    let { data: { defaultDirectory } } = await l2lClient.sendToAndWait(l2lClient.trackerId, 'lively.shell.info', {});
-    return dirCache[l2lClient.trackerId] = defaultDirectory;
-  });
-}
-
-// await serverEnv()
-export async function env (l2lClient) {
-  let { data: { env } } = await l2lClient.sendToAndWait(l2lClient.trackerId, 'lively.shell.env', {});
-  return env;
-}
-
-export function readFile (path, options = {}) {
-  options = options || {};
-  let cmd = runCommand(`cat "${path}"`, options);
-  return cmd.whenDone().then(() => {
-    if (cmd.exitCode) throw new Error(`Read ${path} failed: ${cmd.stderr}`);
-    return cmd.output;
-  });
-}
-
-export function writeFile (path, content, options) {
-  if (!options && content && content.content) {
-    options = content;
-    content = options.content;
-  }
-  content = content || '';
-  let cmd = runCommand(`tee "${path}"`, { stdin: content, ...options });
-  return cmd.whenDone().then(() => {
-    if (cmd.exitCode) throw new Error(`Write ${path} failed: ${cmd.stderr}`);
-    return cmd;
-  });
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 export default class ClientCommand extends CommandInterface {
   static installLively2LivelyServices (l2lClient) {
-    Object.keys(L2LServices).forEach(name =>
+    Object.keys(L2LServices).forEach(name => // eslint-disable-line no-use-before-define
       l2lClient.addService(name,
-        async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn)));
+        async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn))); // eslint-disable-line no-use-before-define
   }
 
   constructor (l2lClient) {
@@ -102,7 +52,7 @@ export default class ClientCommand extends CommandInterface {
 
     this.commandString = Array.isArray(command) ? command.join('') : command;
 
-    let { data: { status, error, pid } } = await l2lClient.sendToAndWait(l2lClient.trackerId,
+    let { data: { error, pid } } = await l2lClient.sendToAndWait(l2lClient.trackerId,
       'lively.shell.spawn', { command, env, cwd, stdin }, {
         ackTimeout: 30 * 1000
       });
@@ -174,12 +124,61 @@ export default class ClientCommand extends CommandInterface {
   }
 }
 
-var L2LServices = {
+export function runCommand (commandString, opts = {}) {
+  let { l2lClient } = opts;
 
+  if (!l2lClient) { throw new Error('lively.shell client side runCommand needs opts.l2lClient!'); }
+
+  ClientCommand.installLively2LivelyServices(l2lClient);
+  let cmd = new ClientCommand(l2lClient);
+  cmd.spawn({ command: commandString, ...obj.dissoc(opts, ['l2lClient']) });
+  return cmd;
+}
+
+let dirCache = {};
+export function defaultDirectory (l2lClient) {
+  if (dirCache[l2lClient.trackerId]) return dirCache[l2lClient.trackerId];
+  return l2lClient.whenRegistered().then(async () => {
+    let { data: { defaultDirectory } } = await l2lClient.sendToAndWait(l2lClient.trackerId, 'lively.shell.info', {});
+    return dirCache[l2lClient.trackerId] = defaultDirectory;
+  });
+}
+
+// await serverEnv()
+export async function env (l2lClient) {
+  let { data: { env } } = await l2lClient.sendToAndWait(l2lClient.trackerId, 'lively.shell.env', {});
+  return env;
+}
+
+export function readFile (path, options = {}) {
+  options = options || {};
+  let cmd = runCommand(`cat "${path}"`, options);
+  return cmd.whenDone().then(() => {
+    if (cmd.exitCode) throw new Error(`Read ${path} failed: ${cmd.stderr}`);
+    return cmd.output;
+  });
+}
+
+export function writeFile (path, content, options) {
+  if (!options && content && content.content) {
+    options = content;
+    content = options.content;
+  }
+  content = content || '';
+  let cmd = runCommand(`tee "${path}"`, { stdin: content, ...options });
+  return cmd.whenDone().then(() => {
+    if (cmd.exitCode) throw new Error(`Write ${path} failed: ${cmd.stderr}`);
+    return cmd;
+  });
+}
+
+let cmd;
+const L2LServices = {
+  
   'lively.shell.onOutput': async (client, { data: { pid, stdout, stderr } }, ackFn, sender) => {
     debug && console.log(`[lively.shell] client received lively.shell.onOutput for command ${pid}`);
     try {
-      var cmd = await promise.waitFor(1000, () => ClientCommand.findCommand(pid));
+      cmd = await promise.waitFor(1000, () => ClientCommand.findCommand(pid));
     } catch (e) {
       console.warn(`[lively.shell] received output for command ${pid} but it isn't registered!'`);
       return;
@@ -191,7 +190,7 @@ var L2LServices = {
     debug && console.log(`[lively.shell] client received lively.shell.onExit for command ${pid}`);
 
     try {
-      var cmd = await promise.waitFor(1000, () => ClientCommand.findCommand(pid));
+      cmd = await promise.waitFor(1000, () => ClientCommand.findCommand(pid));
     } catch (e) {
       console.warn(`[lively.shell] received exit message for command ${pid} but it isn't registered!'`);
       return;

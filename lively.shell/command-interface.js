@@ -46,7 +46,7 @@ export default class CommandInterface {
   }
 
   isDone () {
-    return this.exitCode != undefined;
+    return this.exitCode !== undefined;
   }
 
   whenStarted () {

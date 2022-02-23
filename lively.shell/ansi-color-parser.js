@@ -1,6 +1,6 @@
 import { obj } from 'lively.lang';
 
-export var ansiAttributes = {
+export const ansiAttributes = {
   // "\033[7m"              {name: 'invert', style: {}},
   // "\033[5m"              {name: 'blink', style: {}},
   // "\033[0J"              {name: 'eod', style: {}},
@@ -28,7 +28,7 @@ export var ansiAttributes = {
   47: { style: { backgroundColor: 'white' } }
 };
 
-export var ansiAttributesRegexp = new RegExp(String.fromCharCode(0o033) + '\[[0-9;]*m', 'g');
+export const ansiAttributesRegexp = new RegExp(String.fromCharCode(0o033) + '\[[0-9;]*m', 'g');
 
 export function convertToTextStyles (string) {
   /*
@@ -64,7 +64,7 @@ export function convertToTextStyles (string) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   let ranges = [];
   for (let i = 0; i < result.length; i += 2) {
-    let idx = result[i]; let styles = result[i + 1];
+    let idx = result[i];
     let nextIdx = result[i + 2]; let nextStyles = result[i + 3];
     if (idx === nextIdx) continue;
     if (typeof nextIdx !== 'number') break;
