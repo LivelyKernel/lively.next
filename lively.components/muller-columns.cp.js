@@ -213,6 +213,7 @@ export class MullerColumnViewModel extends ViewModel {
   }
 
   async onKeyDown (evt) {
+    if (!this.view.owner.owner.isActive() || this.view.owner.owner.isFaderActive()) return;
     await this.refresh(false);
     const hoveredList = this.lists.find(list => list.fullContainsWorldPoint($world.firstHand.position));
     if (!hoveredList) return;
