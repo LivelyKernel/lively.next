@@ -4,7 +4,7 @@ import { Morph } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { runCommand, defaultDirectory } from '../shell/shell-interface.js';
 
-export var codeEvaluationCommands = [
+export const codeEvaluationCommands = [
 
   {
     name: 'doit',
@@ -154,7 +154,7 @@ export var codeEvaluationCommands = [
     doc: 'Evaluates the expression and opens an object editor on the resulting object.',
     exec: async function (morph, opts) {
       morph.maybeSelectCommentOrLine();
-      let result; let err; let target = morph.textInRange(morph.selection);
+      let result; let target = morph.textInRange(morph.selection);
       const evalEnvironment = morph.evalEnvironment || {};
       const jsPlugin = morph.pluginFind(p => p.isEditorPlugin && typeof p.runEval === 'function');
       if (!evalEnvironment.systemInterface) { evalEnvironment.systemInterface = jsPlugin.systemInterface(opts); }
@@ -162,9 +162,8 @@ export var codeEvaluationCommands = [
         try {
           // enhance the objet editor to track remote t
           result = await morph.doEval(undefined, opts);
-          err = result.error ? result.error : result.isError ? result.value : null;
           target = result.value;
-        } catch (e) { err = e; }
+        } catch (e) { }
       }
       morph.world().execCommand('open object editor', { target, evalEnvironment });
       return result;
@@ -201,12 +200,11 @@ export var codeEvaluationCommands = [
     handlesCount: true,
     exec: async function (morph, opts, count = 1) {
       morph.maybeSelectCommentOrLine();
-      let result, err;
+      let result;
       try {
         opts = { ...opts, inspect: true, inspectDepth: count, logDoit: true };
         result = await morph.doEval(undefined, opts);
-        err = result.error ? result.error : result.isError ? result.value : null;
-      } catch (e) { err = e; }
+      } catch (e) { }
       morph.selection.collapseToEnd();
       morph.insertTextAndSelect(result.value);
       return result;
