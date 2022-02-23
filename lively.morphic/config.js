@@ -210,6 +210,7 @@ const config = {
       { keys: { win: 'Ctrl-Shift-I', mac: 'Meta-Shift-I' }, command: 'inspectit' },
       { keys: { win: 'Ctrl-Shift-E', mac: 'Meta-Shift-E' }, command: 'editit' },
       { keys: { win: 'Ctrl-Shift-U', mac: 'Meta-Shift-U' }, command: 'undefine variable' },
+      { keys: { win: 'Alt-B', mac: 'Alt-B' }, command: 'blame line' },
 
       { keys: 'Backspace', command: 'delete backwards' },
       { keys: 'Shift-Backspace', command: 'delete backwards' },

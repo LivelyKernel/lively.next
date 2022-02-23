@@ -84,6 +84,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
       { command: 'print inspectit', alias: 'print inspect', target: editor, showKeyShortcuts: true },
       { command: 'eval all', target: editor, showKeyShortcuts: true },
       { command: 'text completion', alias: 'code completion', target: editor, showKeyShortcuts: true },
+      { command: 'blame line', target: editor, showKeyShortcuts: true },
       { command: '[javascript] list errors and warnings', alias: 'list errors and warnings', target: editor, showKeyShortcuts: true },
       { isDivider: true }
     ];

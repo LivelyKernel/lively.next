@@ -2,12 +2,13 @@ import * as Inspector from '../js/inspector/ui.cp.js';
 import { string } from 'lively.lang';
 import { Morph } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
+import { runCommand, defaultDirectory } from '../shell/shell-interface.js';
 
 export var codeEvaluationCommands = [
 
   {
     name: 'doit',
-    doc: 'Evaluates the selecte code or the current line and report the result',
+    doc: 'Evaluates the selected code or the current line and report the result',
     exec: async function (morph, opts, count = 1) {
       // opts = {targetModule}
       morph.maybeSelectCommentOrLine();
@@ -24,6 +25,41 @@ export var codeEvaluationCommands = [
     }
   },
 
+  {
+    name: 'blame line',
+    doc: 'Retrieves git commit message and author name from the last time the line at which the cursor is positioned was changed.',
+    exec: async function (morph) {
+      const lineNumber = morph.cursorPosition.row + 1;
+      if (!morph.editorPlugin.evalEnvironment.targetModule) {
+        morph.showError('Error!');
+        return;
+      }
+      let fileToBlame = morph.editorPlugin.evalEnvironment.targetModule;
+      if (!fileToBlame.match(/http:/)) {
+        morph.showError('Only available for files located on server.');
+        return;
+      }
+      
+      let baseDir = defaultDirectory().replace('http://localhost:9011/', '').replace('/lively.server', '');
+      fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
+      
+      const command = 'git blame -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame; 
+      
+      let cmd = runCommand(command, { cwd: baseDir });
+      await cmd.whenDone();
+      let result = cmd.output;
+      
+      let author = result.match(/author (.*)$/m)[1];
+      let commitMessage = result.match(/summary (.*)$/m)[1];
+
+      if (author === 'Not Committed Yet') {
+        author = '';
+        commitMessage = 'Line not yet commited.';
+      } else commitMessage = commitMessage + ' - ';
+      
+      morph.setStatusMessage(commitMessage + author);
+    }
+  },
   {
     name: 'eval all',
     doc: 'Evaluates the entire text contents',
