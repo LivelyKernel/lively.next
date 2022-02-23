@@ -515,12 +515,13 @@ export class TopBarModel extends ViewModel {
       ...type == Polygon ? this.getPolyDefaultAttrs() : {},
       ...type == Path ? this.getPathDefaultAttrs() : {}
     });
-    target._sizeTooltip = morph({
-      type: Tooltip,
-      opacity: 0,
-      padding: Rectangle.inset(5, 5, 5, 5),
-      styleClasses: ['Tooltip']
-    }).openInWorld();
+    // we cannot import the master from tooltip.cs.js dirctly on file-level
+    // since this causes circular imports and breaks the system
+    System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
+      target._sizeTooltip = new Tooltip();
+      target._sizeTooltip.master = SystemTooltip;
+      target._sizeTooltip.openInWorld();
+    });
     return true;
   }
 
@@ -557,7 +558,6 @@ export class TopBarModel extends ViewModel {
       target._yieldedShape.extent = evt.positionIn(target.world()).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1));
       target._sizeTooltip.description = `${target._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${target._yieldedShape.width.toFixed(0)}x${target._yieldedShape.height.toFixed(0)}`;
       target._sizeTooltip.topLeft = evt.positionIn(target.world()).addXY(15, 15);
-      target._sizeTooltip.opacity = 1;
       return true;
     }
     return false;
