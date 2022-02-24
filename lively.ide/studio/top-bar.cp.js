@@ -1109,7 +1109,7 @@ const UserFlap = component({
     grabbable: true,
     nativeCursor: 'pointer',
     reactsToPointer: false,
-    textAndAttributes: ['robin.schreiber', null]
+    textAndAttributes: ['guest', null]
   }, {
     type: Image,
     name: 'avatar',
@@ -1118,7 +1118,7 @@ const UserFlap = component({
     dropShadow: new ShadowObject({ rotation: 72, color: Color.rgba(0, 0, 0, 0.47), blur: 5 }),
     extent: pt(30, 30),
     fill: Color.transparent,
-    imageUrl: 'https://s.gravatar.com/avatar/a11bf7f6aaf0f85fcad17ff5a384def7?s=160',
+    imageUrl: 'https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160',
     nativeCursor: 'pointer',
     naturalExtent: pt(160, 160)
   }]
