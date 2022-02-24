@@ -1015,8 +1015,6 @@ const TopBarButton = component({
   fontSize: 23,
   nativeCursor: 'pointer',
   padding: rect(0, 1, 0, -1),
-  textAndAttributes: Icon.textAttribute('reply'),
-  tooltip: 'Undo'
 });
 
 const TopBarButtonSelected = component(TopBarButton, {
@@ -1062,6 +1060,7 @@ const UserFlap = component({
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(115.3, 41.1),
     fill: Color.rgba(0, 0, 0, 0),
+    tooltip: 'Toggle fast load',
     layout: new HorizontalLayout({
       align: 'center',
       autoResize: false,
@@ -1301,7 +1300,9 @@ const TopBar = component({
     }),
     submorphs: [
       part(TopBarButton, {
-        name: 'undo button'
+        name: 'undo button',
+        textAndAttributes: Icon.textAttribute('reply'),
+        tooltip: 'Undo'
       }),
       part(TopBarButton, {
         name: 'redo button',
