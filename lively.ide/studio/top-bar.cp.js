@@ -636,6 +636,7 @@ export class TopBarModel extends ViewModel {
     if (evt.leftMouseButtonPressed() &&
         !this._customDrag &&
         !evt.state.draggedMorph &&
+        evt.startPosition &&
         evt.startPosition.subPt(evt.position).r() > 25 &&
         halo) {
       halo.onDragStart(evt);
