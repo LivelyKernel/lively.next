@@ -81,13 +81,11 @@ export const codeEvaluationCommands = [
       
       let author = result.match(/author (.*)$/m)[1];
       let commitMessage = result.match(/summary (.*)$/m)[1];
+      let date = result.match(/author-time (.*)$/m)[1];
+      date = new Date(date * 1000).toDateString();
 
-      if (author === 'Not Committed Yet') {
-        author = '';
-        commitMessage = 'Line not yet commited.';
-      } else commitMessage = commitMessage + ' - ';
-      
-      morph.setStatusMessage(commitMessage + author);
+      if (author === 'Not Committed Yet') morph.setStatusMessage('Line not yet commited.');
+      else morph.setStatusMessage(commitMessage + ' - ' + author + ' on ' + date);
     }
   },
   {
