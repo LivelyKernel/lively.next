@@ -441,7 +441,7 @@ export default class TestRunner extends HTMLMorph {
   collapseAll () {
     this.state.collapsedSuites = {};
     chain(this.state.loadedTests)
-      .pluck('tests').flatten().filter(ea => ea.type === 'suite' && ea.fullTitle)
+      .pluck('tests').flat().filter(ea => ea.type === 'suite' && ea.fullTitle)
       .forEach(suite => this.state.collapsedSuites[suite.fullTitle] = true);
     arr.pluck(this.state.loadedTests, 'file')
       .forEach(f => this.state.collapsedSuites[f] = true);

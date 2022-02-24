@@ -116,7 +116,7 @@ function systems () {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function nameOfSystem (System) {
-  return Object.keys(systems()).detect(name => systems()[name] === System);
+  return Object.keys(systems()).some(name => systems()[name] === System);
 }
 
 function getSystem (nameOrSystem, config) {
@@ -570,7 +570,7 @@ function searchLoadedModules (System, searchStr, options) {
   return Promise.all(
     obj.values(loadedModules(System))
       .map(m => m.search(searchStr, options)))
-    .then(res => arr.flatten(res, 1));
+    .then(res => res.flat());
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

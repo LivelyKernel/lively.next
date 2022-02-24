@@ -187,7 +187,7 @@ child_process.fork is unified.
 var messengers = [];
 var messengerSpec = {
   send: function(msg, onSendDone) {
-    var err = null, recv = arr.detect(messengers, function(ea) {
+    var err = null, recv = messengers.find(function(ea) {
           return ea.id() === msg.target; });
     if (recv) recv.onMessage(msg);
     else err = new Error("Could not find receiver " + msg.target);

@@ -75,7 +75,7 @@ class LeashEndpoint extends Ellipse {
       const side = ib[this.attachedSide]();
       const center = ib.center().addPt(ib.center().subPt(side));
       const line = Shapes.line(side.x, side.y, center.x, center.y);
-      const path = Shapes.polyline(arr.flatten(vs.map(({ x, y }) => [x, y])));
+      const path = Shapes.polyline(vs.map(({ x, y }) => [x, y]).flat());
       const { x, y } = arr.min(Intersection.intersect(path, line).points, ({ x, y }) => pt(x, y).dist(side));
       return pt(x, y).addPt(gb.topLeft());
     } else {

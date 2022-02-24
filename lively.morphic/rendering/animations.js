@@ -187,7 +187,7 @@ export class PropertyAnimation {
         this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true)));
     }
     this.needsAnimation[type] = false;
-    if (!arr.any(obj.values(this.needsAnimation), Boolean)) {
+    if (!obj.values(this.needsAnimation).some(Boolean)) {
       this.queue.removeAnimation(this);
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }

@@ -559,7 +559,7 @@ class ModuleInterface {
       'createOrExtendES6ClassForLively',
       'lively.capturing-declaration-wrapper'];
     const rec = this.recorder;
-    if (arr.include(ignored, key)) return;
+    if (ignored.includes(key)) return;
     this._observersOfTopLevelState.forEach(fn => fn(key, rec[key]));
   }
 

@@ -868,13 +868,13 @@ export class ComponentBrowserModel extends ViewModel {
       const term = searchInput.input;
       const parsedInput = this.parseInput();
       const rootUrls = componentFilesView.treeData.root.subNodes.map(m => m.url).slice(1); // ignore the popular stuff
-      const componentModules = arr.flatten(await Promise.all(rootUrls.map(url => {
+      const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
         return resource(url).dirList(10, {
           exclude: (file) => {
             return file.isFile() && !file.url.endsWith('cp.js');
           }
         });
-      }))).filter(file => file.url.endsWith('cp.js'))
+      }))).flat().filter(file => file.url.endsWith('cp.js'))
         .map(file => file.url);
 
       // via system interface

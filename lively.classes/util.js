@@ -83,9 +83,9 @@ export function runtimeClassMembers (klass) {
 
 function runtimeClassMembersInProtoChain (klass) {
   return arr.uniq(
-    arr.flatmap(
-      arr.without(withSuperclasses(klass), Object),
-      ea => runtimeClassMembers(ea)));
+    arr.without(withSuperclasses(klass), Object)
+      .flatMap(ea => runtimeClassMembers(ea))
+  );
 }
 
 function runtimeNonStaticMembers (klass) {
@@ -114,9 +114,9 @@ function runtimeNonStaticMembers (klass) {
 
 function runtimeNonstaticClassMembersInProtoChain (klass) {
   return arr.uniq(
-    arr.flatmap(
-      arr.without(withSuperclasses(klass), Object),
-      ea => runtimeNonStaticMembers(ea)));
+    arr.without(withSuperclasses(klass), Object)
+      .flatMap(ea => runtimeNonStaticMembers(ea))
+  );
 }
 
 export function runtimeStaticClassMembers (klass) {
@@ -145,9 +145,9 @@ export function runtimeStaticClassMembers (klass) {
 
 export function runtimeStaticClassMembersInProtoChain (klass) {
   return arr.uniq(
-    arr.flatmap(
-      arr.without(withSuperclasses(klass), Object),
-      ea => runtimeStaticClassMembers(ea)));
+    arr.without(withSuperclasses(klass), Object)
+      .flatMap(ea => runtimeStaticClassMembers(ea))
+  );
 }
 
 /*

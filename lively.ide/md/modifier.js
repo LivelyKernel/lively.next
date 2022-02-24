@@ -24,7 +24,7 @@ export class MarkdownModifier {
       depth: h.depth + delta,
       lineString: string.times('#', h.depth + delta) + ' ' + h.string
     }));
-    let changes = arr.flatmap(newHeadings, h => [
+    let changes = newHeadings.flatMap(h => [
       ['remove', { row: h.line, column: 0 }, { row: h.line, column: lines[h.line].length }],
       ['insert', { row: h.line, column: 0 }, h.lineString]
     ]);

@@ -87,8 +87,7 @@ export default class ExportLookup {
     Object.keys(exportsByModule).forEach(id =>
       this.resolveExportsOfModule(id, exportsByModule));
 
-    return arr.flatmap(Object.keys(exportsByModule),
-      id => exportsByModule[id] ? exportsByModule[id].resolvedExports || exportsByModule[id].rawExports : []);
+    return Object.keys(exportsByModule).flatMap(id => exportsByModule[id] ? exportsByModule[id].resolvedExports || exportsByModule[id].rawExports : []);
   }
 
   async rawExportsByModule (options) {
@@ -185,7 +184,7 @@ export default class ExportLookup {
       'moduleId', 'isMain', 'packageName', 'packageURL',
       'packageVersion', 'pathInPackage']);
 
-    data.resolvedExports = arr.flatmap(data.rawExports.exports, ({ type, exported, local, fromModule }) => {
+    data.resolvedExports = data.rawExports.exports.flatMap(({ type, exported, local, fromModule }) => {
       if (type !== 'all') return [{ ...base, type, exported, local, fromModule }];
 
       // resolve "* from"

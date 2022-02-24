@@ -1016,7 +1016,7 @@ export class BrowserModel extends ViewModel {
   getDisplayedModuleNodes () {
     const columnView = this.ui.columnView;
     const moduleLists = columnView.submorphs.filter(m => ['directory', 'package'].includes(m._managedNode.type));
-    return arr.flatten(moduleLists.map(list => list.items.map(m => m.value)));
+    return moduleLists.map(list => list.items.map(m => m.value)).flat();
   }
 
   // this.selectModuleNamed('text/renderer.js')

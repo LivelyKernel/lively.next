@@ -186,7 +186,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     return decls.map(v => {
       let nameLength = v.name.length;
       const isExport = importsExports.exports.find(ea => ea.local === v.name);
-      const isImport = arr.include(imports, v.name);
+      const isImport = imports.includes(v.name);
       if (isExport) nameLength += ' [export]'.length;
       if (isImport) nameLength += ' [import]'.length;
       col1Width = Math.max(col1Width, nameLength);

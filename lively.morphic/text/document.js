@@ -126,7 +126,7 @@ class TreeNode {
       }
     }
 
-    report.push(...arr.flatmap(children, ea => ea.consistencyCheck()));
+    report.push(...children.flatMap(ea => ea.consistencyCheck()).filter(Boolean));
     return report;
   }
 }

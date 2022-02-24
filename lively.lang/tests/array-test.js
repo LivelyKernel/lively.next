@@ -3,7 +3,6 @@
 import { expect } from 'mocha-es6';
 import {
   range,
-  mapAsync,
   max,
   drop,
   take,
@@ -12,10 +11,8 @@ import {
   groupBy,
   rotate,
   swap,
-  forEach,
-  flatten,
-  flatmap,
   reMatches,
+  grep,
   isSorted,
   pluck,
   zip,
@@ -32,23 +29,12 @@ import {
   permutations,
   histogram,
   combinations,
-  mapAsyncSeries,
   mutableCompact,
   combinationsPick
 } from '../array.js';
-import { curry } from '../function.js';
-import { random } from '../number.js';
 import { equals } from '../object.js';
 
 describe('arr', function () {
-  it('forEach', function () {
-    let result = '';
-    forEach([4, 5, 6], function (ea, i) {
-      result += '[' + ea + ',' + i + ']';
-    });
-    expect(result).to.equal('[4,0][5,1][6,2]');
-  });
-
   it('range', function () {
     expect(range(1, 1)).to.eql([1]);
     expect(range(1, 1, 10)).to.eql([1]);
@@ -190,6 +176,14 @@ describe('arr', function () {
       { 0: 'ork', index: 1, input: 'zork' }]);
   });
 
+  it('grep', function () {
+    let a = ['foo', 'bar', 'zork', 1, 2, 3];
+    let result = grep(a, '1');
+    expect(result).to.equal([1]);
+    result = grep(a, 'foo');
+    expect(result).to.equal(['foo']);
+  });
+
   describe('batchify', function () {
     it('splits array ccording to constraint', function () {
       function batchConstrained (batch) { return batch.length === 1 || sum(batch) < batchMaxSize; }
@@ -204,7 +198,7 @@ describe('arr', function () {
         Math.pow(2, 24), // 16MB
         Math.pow(2, 26)]; let // 64MB
         batches = batchify(sizes, batchConstrained);
-      expect(flatten(batches)).to.have.length(sizes.length, 'not all batches included?');
+      expect(batches.flat()).to.have.length(sizes.length, 'not all batches included?');
       // the sum of each batch should be < 256MB or batch shoudl just have single item
       expect(batches.every(batchConstrained)).to.equal(true);
     });
@@ -222,33 +216,6 @@ describe('arr', function () {
     it('creates them', function () {
       expect(permutations([3, 1, 2])).to.eql(
         [[3, 1, 2], [3, 2, 1], [1, 3, 2], [1, 2, 3], [2, 3, 1], [2, 1, 3]]);
-    });
-  });
-
-  it('delimWith', function () {
-    expect(delimWith(['test', 'abc', 444], 'aha')).to.eql(['test', 'aha', 'abc', 'aha', 444]);
-  });
-
-  describe('flatten', function () {
-    it('un-nest arrays', function () {
-      expect(flatten([1, [2], [3, [4, [[[5]]]]]])).to.eql([1, 2, 3, 4, 5]);
-    });
-
-    it('un-nest arrays to a certain depth', function () {
-      expect(flatten([1, [2], [3, [4, [[[5]]]]]], 2)).to.eql([1, 2, 3, 4, [[[5]]]]);
-    });
-  });
-
-  describe('flatmap', function () {
-    it('flatmaps', function () {
-      let result = flatmap([1, 2, 3], function (ea, i) { return withN(i + 1, ea); });
-      expect(result).to.eql([1, 2, 2, 3, 3, 3]);
-    });
-
-    it('flatmaps big time', function () {
-      // old flatmap version threw stack overlflow errors
-      let result = flatmap(range(1, 800000), function (ea, i) { return [ea, i]; });
-      expect(result.length).to.eql(800000 * 2);
     });
   });
 
@@ -296,104 +263,6 @@ describe('arr', function () {
 
   it('zips', function () {
     expect(zip([1, 2, 3], [4, 5, 6])).to.eql([[1, 4], [2, 5], [3, 6]]);
-  });
-
-  describe('async', function () {
-    let numbers = range(1, 10);
-
-    describe('mapAsyncSeries()', function () {
-      it('iterates in order', function (done) {
-        mapAsyncSeries(numbers, function (n, i, next) {
-          setTimeout(function () { next(null, i + 1); }, random(0, 100));
-        }, function (err, result) {
-          expect(result).to.eql(numbers);
-          done();
-        });
-      });
-
-      it('catches errors', function (done) {
-        mapAsyncSeries(numbers, function (n, i, next) {
-          if (i === 2) throw new Error('FOO!'); next();
-        }, function (err, result) {
-          expect(err.message).to.eql('FOO!');
-          done();
-        });
-      });
-
-      it('does not invoke callbacks multiple times', function (done) {
-        mapAsyncSeries(numbers, function (n, i, next) {
-          if (i === 2) next(null, n);
-          setTimeout(curry(next, null, n), 10);
-        }, function (err, result) {
-          expect(result).to.eql(numbers);
-          done();
-        });
-      });
-    });
-
-    describe('mapAsync()', function () {
-      it('maps asynchronously', function (done) {
-        mapAsync(numbers,
-          function (n, i, next) { setTimeout(function () { next(null, n); }, random(0, 100)); },
-          function (err, result) {
-            expect(result).to.eql(numbers);
-            done();
-          });
-      });
-
-      it('maps asynchronously one elem', function (done) {
-        mapAsync([1],
-          function (n, i, next) { setTimeout(function () { next(null, n); }, random(0, 100)); },
-          function (err, result) {
-            expect(result).to.eql([1]);
-            done();
-          });
-      });
-
-      it('maps asynchronously empty list', function (done) {
-        mapAsync([],
-          function (n, i, next) { setTimeout(function () { next(null, n); }, random(0, 100)); },
-          function (err, result) { expect(result).to.eql([]); done(); });
-      });
-
-      it('does not invoke callbacks twice', function (done) {
-        mapAsync(numbers,
-          function (n, i, next) {
-            setTimeout(function () { next(null, n); }, random(0, 100));
-            if (i === 2) next(null, n);
-          },
-          function (err, result) {
-            expect(result).to.eql(numbers);
-            done();
-          });
-      });
-
-      it('catches errors', function (done) {
-        mapAsync(numbers,
-          function (n, i, next) {
-            if (i === 2) throw new Error('FOO!');
-            setTimeout(function () { next(null, n); }, random(0, 100));
-          },
-          function (err, result) {
-            expect(err.message).to.equal('FOO!');
-            done();
-          });
-      });
-
-      it('can control the number of parallel iterator invocations', function (done) {
-        let maxInvocations = 0; let invocations = 0;
-        mapAsync(numbers, { parallel: 3 },
-          function (n, i, next) {
-            invocations++;
-            maxInvocations = Math.max(maxInvocations, invocations);
-            setTimeout(function () { invocations--; next(null, n); }, random(0, 100));
-          },
-          function (err, result) {
-            expect(maxInvocations).to.equal(3);
-            done();
-          });
-      });
-    });
   });
 
   describe('dropping and taking', function () {

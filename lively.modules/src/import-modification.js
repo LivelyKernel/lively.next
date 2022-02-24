@@ -154,7 +154,7 @@ export class ImportInjector {
   }
 
   modifyExistingImport (imports, standaloneImport) {
-    const specifiers = arr.flatmap(imports, ({ specifiers }) => specifiers || []);
+    const specifiers = imports.flatMap(({ specifiers }) => specifiers || []);
     if (!specifiers.length) return null;
 
     const [[defaultSpecifier], [normalSpecifier]] =
@@ -333,7 +333,7 @@ export class ImportRemover {
     const parsed = optModuleAst || fuzzyParse(moduleSource);
 
     // 1.get imports with specifiers
-    const imports = arr.flatmap(parsed.body, ea => {
+    const imports = parsed.body.flatMap(ea => {
       if (ea.type !== 'ImportDeclaration' || !ea.specifiers.length) return [];
       return ea.specifiers.map(spec => ({ local: spec.local, importStmt: ea }));
     });
@@ -376,7 +376,7 @@ export class ImportRemover {
       ? fuzzyParse(moduleSourceOrAst)
       : moduleSourceOrAst;
 
-    const imports = arr.flatmap(parsed.body, ea => {
+    const imports = parsed.body.flatMap(ea => {
       if (ea.type !== 'ImportDeclaration' || !ea.specifiers.length) return [];
       return ea.specifiers.map(spec =>
         ({ local: spec.local, from: ea.source ? ea.source.value : '', importStmt: ea }));

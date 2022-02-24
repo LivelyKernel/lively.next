@@ -339,7 +339,7 @@ class SearchInputLine extends InputLine {
 
   fuzzyFilter (items, toString = item => item) {
     let parsedInput = this.parseInput();
-    return arr.filter(items, item => this.fuzzyMatch(toString(item), parsedInput));
+    return items.filter(item => this.fuzzyMatch(toString(item), parsedInput));
   }
 
   parseInput () {
@@ -471,7 +471,7 @@ class WorldDashboard extends Morph {
         // what defines a template ?
         return previews;
       case 'MY PROJECTS':
-        return arr.filter(previews, p => p._commit.author.name === user.name);
+        return previews.filter(p => p._commit.author.name === user.name);
       case 'PUBLISHED':
         return previews;
           // determine if the worlds are frozen or not

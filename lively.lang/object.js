@@ -4,7 +4,7 @@
  */
 
 import { fromString as functionFromString, asScriptOf, argumentNames } from './function.js';
-import { deepEquals as arrayDeepEquals, isSubset, flatten } from './array.js';
+import { deepEquals as arrayDeepEquals, isSubset } from './array.js';
 
 // -=-=-=-=-=-=-=-=-
 // internal helper
@@ -517,7 +517,7 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
     resolvedGroups.push(resolvedGroup);
   }
 
-  return flatten(resolvedGroups, 1);
+  return resolvedGroups.flat();
 }
 
 // -=-=-=-=-=-=-

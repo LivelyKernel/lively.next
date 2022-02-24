@@ -544,7 +544,7 @@ class Package {
         .catch(err => {
           console.error(`Error searching module ${m.name}:\n${err.stack}`);
           return [];
-        }))).then(res => arr.flatten(res, 1));
+        }))).then(res => res.flat());
   }
 }
 

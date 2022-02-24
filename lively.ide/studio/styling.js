@@ -848,7 +848,7 @@ class MasterComponentControl extends Morph {
     if (items.length == 0) return [];
     if (depth > 100) return [];
     const self = this;
-    return arr.flatten(Object.entries(arr.groupBy(items, c => c.path[depth - 1])).map(([name, entries]) => {
+    return Object.entries(arr.groupBy(items, c => c.path[depth - 1])).map(([name, entries]) => {
       const [components, categories] = arr.partition(entries, entry => entry.path.length <= depth);
       const subMenu = [
         name,
@@ -860,7 +860,7 @@ class MasterComponentControl extends Morph {
         }),
         ...subMenu[1].length ? [subMenu] : []
       ];
-    }), 1);
+    }).flat();
   }
 
   async getComponentSelectionMenu (state) {
@@ -906,7 +906,7 @@ class MasterComponentControl extends Morph {
     if (items.length == 0) return [];
     if (depth > 100) return [];
     const self = this;
-    return arr.flatten(Object.entries(arr.groupBy(items, c => c.path[depth - 1])).map(([name, entries]) => {
+    return Object.entries(arr.groupBy(items, c => c.path[depth - 1])).map(([name, entries]) => {
       const [components, categories] = arr.partition(entries, entry => entry.path.length <= depth);
       const subMenu = [
         name,
@@ -918,7 +918,7 @@ class MasterComponentControl extends Morph {
         }),
         ...subMenu[1].length ? [subMenu] : []
       ];
-    }), 1);
+    }).flat();
   }
 
   update () {

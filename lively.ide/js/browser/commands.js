@@ -433,7 +433,7 @@ export default function browserCommands (browser) {
         const what = (args && args.what) || 'setup'; // or: teardown
         const prop = what === 'setup' ? 'setupCalls' : 'teardownCalls';
         let nCalls = 0;
-        const beforeCode = arr.flatmap(testDescriptors, descr => {
+        const beforeCode = testDescriptors.flatMap(descr => {
           return descr[prop].map((beforeFn, i) => {
             nCalls++;
             return `await ((${lively.ast.stringify(beforeFn)})());`;

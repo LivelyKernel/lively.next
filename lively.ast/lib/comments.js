@@ -15,7 +15,7 @@ function getCommentPrecedingNode (parsed, node) {
     ? null
     : chain(extractComments(parsed))
       .reversed()
-      .detect(function (ea) { return ea.followingNode === node; })
+      .find(function (ea) { return ea.followingNode === node; })
       .value();
 }
 
@@ -100,7 +100,7 @@ function extractComments (astOrCode, optCode) {
   }
 
   function followingNodeOf (comment) {
-    return arr.detect(comment.node.body, function (node) {
+    return comment.node.body.find(function (node) {
       return node.start > comment.comment.end;
     });
   }

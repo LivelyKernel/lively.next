@@ -194,7 +194,7 @@ export class Renderer {
 
     if (orderChanged) {
       const scrolls = new WeakMap();
-      const nodes = arr.compact(arr.flatten(fixedMorphs.map(m => m.withAllSubmorphsDo(m => this.getNodeForMorph(m)))));
+      const nodes = arr.compact(fixedMorphs.map(m => m.withAllSubmorphsDo(m => this.getNodeForMorph(m))).flat());
       nodes.forEach(node => scrolls.set(node, node.scrollTop));
       currentFixedMorphNodes.map(n => n && n.parentNode && n.parentNode.removeChild(n));
       nodes.forEach(node => {

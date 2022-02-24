@@ -433,13 +433,13 @@ class Gradient {
   }
 
   getStopsLighter (n) {
-    return arr.collect(this.stops, function (ea) {
+    return this.stops.map(function (ea) {
       return { offset: ea.offset, color: ea.color.lighter(n) };
     });
   }
 
   getStopsDarker (n) {
-    return arr.collect(this.stops, function (ea) {
+    return this.stops.map(function (ea) {
       return { offset: ea.offset, color: ea.color.darker(n) };
     });
   }

@@ -7,14 +7,6 @@ import { equals as objectEquals } from './object.js';
 import { delay, once, Null as NullFunction } from './function.js';
 import Group from './Group.js';
 
-const features = {
-  from: !!Array.from,
-  filter: !!Array.prototype.filter,
-  find: !!Array.prototype.find,
-  findIndex: !!Array.prototype.findIndex,
-  includes: !!Array.prototype.includes
-};
-
 /**
  * Creates an array containing elements from `begin` until `end` with `step`-sized steps.
  * @param {number} begin - First element 
@@ -34,24 +26,6 @@ function range (begin, end, step) {
   }
   return result;
 }
-
-/**
- * Makes JS array out of array like objects like `arguments` or DOM `childNodes`
- * @function
- * @name from
- * @param iterable - object to convert to array
- */
-const from = features.from
-  ? Array.from
-  : function (iterable) {
-    if (!iterable) return [];
-    if (Array.isArray(iterable)) return iterable;
-    if (iterable.toArray) return iterable.toArray();
-    let length = iterable.length;
-    const results = new Array(length);
-    while (length--) results[length] = iterable[length];
-    return results;
-  };
 
 /**
  * Returns an array filled with `obj` for `n` times.
@@ -80,44 +54,6 @@ function genN (n, generator) {
 }
 
 /**
- * Calls `iterator` for each element in `array` and returns a subset of it 
- * including the elements for which `iterator` returned a truthy value.
- * @param {any[]} array
- * @param {function} iterator
- * @param {Object} context - The value to use as `this` when calling `iterator`
- * @returns {any[]}
-*/
-function filter (array, iterator, context) {
-  const res = [];
-  for (let idx = 0; idx < array.length; idx++) {
-    const currentItem = array[idx];
-    if (iterator.call(context, currentItem)) {
-      res.push(currentItem);
-    }
-  }
-  return res;
-}
-
-/**
- * Returns the first occurrence of an element in `arr` for which `iterator` returns a truthy value.
- * @function
- * @name detect
- * @param {any[]} arr
- * @param {function} iterator
- * @param {Object} context - The value to use as `this` when calling `iterator`
- * @returns {Object}
- */
-const detect = features.find
-  ? function (arr, iterator, context) { return arr.find(iterator, context); }
-  : function (arr, iterator, context) {
-    for (let value, i = 0, len = arr.length; i < len; i++) {
-      value = arr[i];
-      if (iterator.call(context, value, i)) return value;
-    }
-    return undefined;
-  };
-
-/**
  * Returns the element equal to the given search value or undefined.
  * 
  * If defined, a converter function will be applied to compare an
@@ -135,7 +71,7 @@ const detect = features.find
  * @see {@link https://en.wikipedia.org/wiki/Binary_search_algorithm}
  */
 function binarySearchFor (array, searchValue, converter, returnClosestElement = false) {
-  if (!array || !isArray(array)) return;
+  if (!array || !Array.isArray(array)) return;
 
   let leftLimit = 0;
   let rightLimit = array.length - 1;
@@ -172,22 +108,6 @@ function binarySearchFor (array, searchValue, converter, returnClosestElement = 
 }
 
 /**
- * Returns the index of the first occurrence of an element in `arr` for which `iterator` returns a truthy value.
- * @function
- * @name findIndex
- * @param {any[]} arr
- * @param {function} iterator
- * @param {Object} context - The value to use as `this` when calling `iterator`
- * @returns {number}
- */
-const findIndex = features.findIndex
-  ? function (arr, iterator, context) { return arr.findIndex(iterator, context); }
-  : function (arr, iterator, context) {
-    let i = -1;
-    return arr.find(function (ea, j) { i = j; return iterator.call(ea, context); }) ? i : -1;
-  };
-
-/**
  * Find the first occurence for which `iterator` returns a truthy value and
  * return *this* value, i.e. unlike `find` the iterator result and not the
  * element of the list is returned.
@@ -212,7 +132,7 @@ function filterByKey (arr, key) {
 }
 
 /**
- * Returns an array that contains all elements of `arr` that contina/satisfy `test`.
+ * Returns an array that contains all elements of `arr` that contain/satisfy `test`.
  * `grep` stringifies all elements in `arr`.
  * @param {any[]} arr 
  * @param {String|RegEx} test 
@@ -220,7 +140,7 @@ function filterByKey (arr, key) {
  */
 function grep (arr, test) {
   if (typeof test === 'string') test = new RegExp(test, 'i');
-  return arr.filter(filter.test.bind(test));
+  return arr.filter(e => String(e).match(test));
 }
 
 /**
@@ -361,17 +281,6 @@ function mutableCompact (array) {
 }
 
 /**
- * Call `iterator` for every value of `array`. `context` will be bound as `this` in `iterator`.
- * @param {any[]} array 
- * @param {function} iterator 
- * @param {Object} context 
- * @returns {any[]}
- */
-function forEach (array, iterator, context) {
-  return array.forEach(iterator, context);
-}
-
-/**
  * Takes any number of lists as arguments. Combines them elment-wise.
  * ```
  * arr.zip([1,2,3], ["a", "b", "c"], ["A", "B"])
@@ -391,42 +300,8 @@ function zip (/* arr, arr2, arr3 */) {
     return iterator(pluck(collections, index), index);
   });
 }
-
 /**
- * Returns a nested array as a flat one. Use [Array.prototype.flat()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat) instead.
- * @param {any[]} array 
- * @param {number} optDepth - How many layers deep should be flattened.
- * @returns {any[]}
- */
-function flatten (array, optDepth) {
-  if (typeof optDepth === 'number') {
-    if (optDepth <= 0) return array;
-    optDepth--;
-  }
-  return array.reduce(function (flattened, value) {
-    return flattened.concat(Array.isArray(value)
-      ? flatten(value, optDepth)
-      : [value]);
-  }, []);
-}
 
-/**
- * Calls `it` on each element of `array` and returns the result flattened. Use [Array.prototype.flatMap()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap) instead.
- * @param {any[]} array 
- * @param {function} it 
- * @param {Object} ctx - Bound to `this` in the call to `it`
- * @returns {any[]}
- */
-function flatmap (array, it, ctx) {
-  // the simple version
-  // Array.prototype.concat.apply([], array.map(it, ctx));
-  // causes stack overflows with really big arrays
-  const results = [];
-  for (let i = 0; i < array.length; i++) {
-    results.push.apply(results, it.call(ctx, array[i], i));
-  }
-  return results;
-}
 
 /**
  * Returns a new array that contains an element of `arra` and `delim` alternating.
@@ -441,20 +316,6 @@ function interpose (array, delim) {
   }, []);
 }
 
-function delimWith (array, delim) {
-  // ignore-in-doc
-  // previously used, use interpose now!
-  return interpose(array, delim);
-}
-
-/**
- * [a] -> (a -> b) -> c? -> [b]
- * pplies `iterator` to each element of `array` and returns a new Array
- * with the results of those calls. Like `Array.prototype.some`.
- */
-function map (array, iterator, context) {
-  return array.map(iterator, context);
-}
 
 /**
  * Calls `method` on each element in `array`, passing all arguments.
@@ -481,66 +342,6 @@ function invoke (array, method, arg1, arg2, arg3, arg4, arg5, arg6) {
  */
 function pluck (array, property) {
   return array.map(ea => ea[property]);
-}
-
-/**
- * Array -> Function -> Object? -> Object? -> Object?
- * 
- * Applies `iterator` to each element of `array` and returns a new Array
- * with the results of those calls. Like `Array.prototype.some`.
- * @param {*} array 
- * @param {*} iterator 
- * @param {*} memo 
- * @param {*} context 
- */
-function reduce (array, iterator, memo, context) {
-  return array.reduce(iterator, memo, context);
-}
-
-/**
- * 
- * @param {*} array 
- * @param {*} iterator 
- * @param {*} memo 
- * @param {*} context 
- */
-function reduceRight (array, iterator, memo, context) {
-  return array.reduceRight(iterator, memo, context);
-}
-
-const isArray = Array.isArray;
-
-const includes = features.includes
-  ? function (array, object) { return array.includes(object); }
-  : function (array, object) {
-    // Example: arr.include([1,2,3], 2) // => true
-    return array.indexOf(object) !== -1;
-  };
-
-const include = includes;
-
-/**
- * Returns true if there is at least one abject in `array` for which
- * `iterator` returns a truthy result. Like `Array.prototype.some`.
- * @param {*} array 
- * @param {*} iterator 
- * @param {*} context 
- */
-function some (array, iterator, context) {
-  return array.some(iterator, context);
-}
-
-/**
- * [a] -> (a -> Boolean) -> c? -> Boolean
- * 
- * Returns true if for all abjects in `array` `iterator` returns a truthy
- * result. Like `Array.prototype.every`.
- * @param {*} array 
- * @param {*} iterator 
- * @param {*} context 
- */
-function every (array, iterator, context) {
-  return array.every(iterator, context);
 }
 
 /**
@@ -597,12 +398,6 @@ function isSorted (array, descending) {
   return true;
 }
 
-function sort (array, sortFunc) {
-  // [a] -> (a -> Number)? -> [a]
-  // Just `Array.prototype.sort`
-  return array.sort(sortFunc);
-}
-
 /**
  * Sorts `array` according to the elements value of `iterator`.
  * @param {any[]} array - the array to sort
@@ -627,8 +422,6 @@ function sortBy (array, iterator, context) {
 function sortByKey (array, key) {
   return sortBy(array, ea => ea[key]);
 }
-
-function reverse (array) { return array.reverse(); }
 
 function reversed (array) { return array.slice().reverse(); }
 
@@ -1031,7 +824,7 @@ const permutations = (function () {
   function computePermutations (restArray, values) {
     return !restArray.length
       ? [values]
-      : flatmap(restArray, function (ea, i) {
+      : restArray.flatMap(function (ea, i) {
         return computePermutations(
           restArray.slice(0, i).concat(restArray.slice(i + 1)),
           values.concat([ea]));
@@ -1197,11 +990,6 @@ function count (array, item) {
 }
 
 /**
- * Returns the length of `array`.
- */
-function size (array) { return array.length; }
-
-/**
  * When called without `binspec`, returns `data` partitioned into lists containing two elements each.
  * `binspec` can be an array of `n` numbers. If given, `histogram` will create `n-1` bins, using the provided values in `binspec` as threshholds.
  * The `n-1` bins will be returned as a list. T
@@ -1242,147 +1030,41 @@ function clone (array) {
   return [].concat(array);
 }
 
-function toArray (array) { return from(array); }
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Enable chaining (lively.lang) for methods on Array.prototype.
+Do not use these directly, use the methods provided by Array.prototype instead.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
 
-// -=-=-=-=-=-
-// DEPRECATED
-// -=-=-=-=-=-
-
-function each (arr, iterator, context) {
-  return arr.forEach(iterator, context);
+function filter (array, iterator, context) {
+  return array.filter(iterator, context);
 }
 
-function all (arr, iterator, context) {
-  return arr.every(iterator, context);
+function find (array, iterator, context) {
+  return array.find(iterator, context);
 }
 
-function any (arr, iterator, context) {
-  return arr.some(iterator, context);
+function map (array, iterator, context) {
+  return array.map(iterator, context);
 }
 
-function collect (arr, iterator, context) {
-  return arr.map(iterator, context);
+function flat (array, optDepth) {
+  return array.flat(optDepth);
 }
 
-function findAll (arr, iterator, context) {
-  return arr.filter(iterator, context);
+function flatMap (array, iterator, context) {
+  return array.flatMap(iterator, context);
 }
 
-function inject (array, memo, iterator, context) {
-  if (context) iterator = iterator.bind(context);
-  return array.reduce(iterator, memo);
+function slice (array, start, end) {
+  return array.slice(start, end);
 }
 
-// asynch methods
-function mapAsyncSeries (array, iterator, callback) {
-  // Apply `iterator` over `array`. Unlike `mapAsync` the invocation of
-  // the iterator happens step by step in the order of the items of the array
-  // and not concurrently.
-
-  // ignore-in-doc
-  // Could simply be:
-  // return exports.arr.mapAsync(array, {parallel: 1}, iterator, callback);
-  // but the version below is 2x faster
-
-  const result = []; let callbackTriggered = false;
-  return array.reduceRight(function (nextFunc, ea, idx) {
-    if (callbackTriggered) return;
-    return function (err, eaResult) {
-      if (err) return maybeDone(err);
-      if (idx > 0) result.push(eaResult);
-      try {
-        iterator(ea, idx, once(nextFunc));
-      } catch (e) { maybeDone(e); }
-    };
-  }, function (err, eaResult) {
-    result.push(eaResult);
-    maybeDone(err, true);
-  })();
-
-  function maybeDone (err, finalCall) {
-    if (callbackTriggered || (!err && !finalCall)) return;
-    callbackTriggered = true;
-    try { callback(err, result); } catch (e) {
-      console.error('Error in mapAsyncSeries - callback invocation error:\n' + (e.stack || e));
-    }
-  }
-}
-
-function mapAsync (array, options, iterator, callback) {
-  // Apply `iterator` over `array`. In each iterator gets a callback as third
-  // argument that should be called when the iteration is done. After all
-  // iterators have called their callbacks, the main `callback` function is
-  // invoked with the result array.
-  // Example:
-  // lively.lang.arr.mapAsync([1,2,3,4],
-  //   function(n, i, next) { setTimeout(function() { next(null, n + i); }, 20); },
-  //   function(err, result) { /* result => [1,3,5,7] */ });
-
-  if (typeof options === 'function') {
-    callback = iterator;
-    iterator = options;
-    options = null;
-  }
-  options = options || {};
-
-  if (!array.length) return callback && callback(null, []);
-
-  if (!options.parallel) options.parallel = Infinity;
-
-  const results = []; const completed = [];
-  let callbackTriggered = false;
-  let lastIteratorIndex = 0;
-  let nActive = 0;
-
-  const iterators = array.map(function (item, i) {
-    return function () {
-      nActive++;
-      try {
-        iterator(item, i, once(function (err, result) {
-          results[i] = err || result;
-          maybeDone(i, err);
-        }));
-      } catch (e) { maybeDone(i, e); }
-    };
-  });
-
-  return activate();
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function activate () {
-    while (nActive < options.parallel && lastIteratorIndex < array.length) { iterators[lastIteratorIndex++](); }
-  }
-
-  function maybeDone (idx, err) {
-    if (completed.indexOf(idx) > -1) return;
-    completed.push(idx);
-    nActive--;
-    if (callbackTriggered) return;
-    if (!err && completed.length < array.length) { activate(); return; }
-    callbackTriggered = true;
-    try { callback && callback(err, results); } catch (e) {
-      console.error('Error in mapAsync - main callback invocation error:\n' + (e.stack || e));
-    }
-  }
-}
-
-// poly-filling...
-if (!features.from) Array.from = from;
-if (!features.filter) Array.prototype.filter = function (it, ctx) { return filter(this, it, ctx); };
-if (!features.find) Array.prototype.find = function (it, ctx) { return detect(this, it, ctx); };
-if (!features.findIndex) Array.prototype.findIndex = function (it, ctx) { return findIndex(this, it, ctx); };
-if (!features.includes) Array.prototype.includes = function (x) { return includes(this, x); };
 
 export {
   range,
-  from,
   withN,
   genN,
-  filter,
-  detect,
   binarySearchFor,
-  findIndex,
   findAndGet,
   filterByKey,
   grep,
@@ -1396,29 +1078,15 @@ export {
   uniqByKey,
   compact,
   mutableCompact,
-  forEach,
   zip,
-  flatten,
-  flatmap,
   interpose,
-  delimWith,
-  map,
   invoke,
   pluck,
-  reduce,
-  reduceRight,
-  isArray,
-  includes,
-  include,
-  some,
-  every,
   equals,
   deepEquals,
   isSorted,
-  sort,
   sortBy,
   sortByKey,
-  reverse,
   reversed,
   reMatches,
   first,
@@ -1455,16 +1123,12 @@ export {
   min,
   sum,
   count,
-  size,
   histogram,
   clone,
-  toArray,
-  each,
-  all,
-  any,
-  collect,
-  findAll,
-  inject,
-  mapAsyncSeries,
-  mapAsync
+  flat,
+  filter,
+  find,
+  map,
+  flatMap,
+  slice
 };

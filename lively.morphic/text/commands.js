@@ -894,7 +894,7 @@ const commands = [
         arr.range(rows.first, rows.last)
           .map(row => morph.getLine(row))
           .join('\n'), { keepEmptyLines: true });
-      const newString = chain(paragraphs.map(fitParagraph)).flatten().value().join('\n');
+      const newString = chain(paragraphs.map(fitParagraph)).flat().value().join('\n');
 
       morph.undoManager.group();
       morph.replace(range, newString);

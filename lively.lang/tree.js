@@ -2,7 +2,6 @@
  * Methods for traversing and transforming tree structures.
  */
 
-import { flatten } from './array.js';
 
 function prewalk (treeNode, iterator, childGetter, counter = { i: 0 }, depth = 0) {
   let i = counter.i++;
@@ -40,9 +39,9 @@ function filter (treeNode, testFunc, childGetter) {
   let result = [];
   if (testFunc(treeNode)) result.push(treeNode);
   return result.concat(
-    flatten((childGetter(treeNode) || []).map(function (n) {
+    (childGetter(treeNode) || []).map(function (n) {
       return filter(n, testFunc, childGetter);
-    })));
+    }).flat());
 }
 
 function map (treeNode, mapFunc, childGetter, depth = 0) {
@@ -50,8 +49,8 @@ function map (treeNode, mapFunc, childGetter, depth = 0) {
   // return values of all mapFunc calls is the result. `childGetter` is a
   // function to retrieve the children from a node.
   return [mapFunc(treeNode, depth)].concat(
-    flatten((childGetter(treeNode) || [])
-      .map(n => map(n, mapFunc, childGetter, depth + 1))));
+    (childGetter(treeNode) || [])
+      .map(n => map(n, mapFunc, childGetter, depth + 1)).flat());
 }
 
 function mapTree (treeNode, mapFunc, childGetter, depth = 0) {

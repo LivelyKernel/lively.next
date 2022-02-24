@@ -51,7 +51,7 @@ export function findDecls (parsed, options) {
 
     if (options.hideOneLiners) {
       if (parsed.loc) {
-        found = arr.filter(found, def =>
+        found = found.filter(def =>
           !def.node.loc || (def.node.loc.start.line !== def.node.loc.end.line));
       } else if (parsed.source) {
         const filtered = [];
@@ -307,7 +307,7 @@ function isFunctionWrapper (node) {
 }
 
 function declIds (idNodes) { // eslint-disable-line no-unused-vars
-  return arr.flatmap(idNodes, function (ea) {
+  return idNodes.flatMap(function (ea) {
     if (!ea) return [];
     if (ea.type === 'Identifier') return [ea];
     if (ea.type === 'RestElement') return [ea.argument];

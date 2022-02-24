@@ -46,7 +46,7 @@ export class AbstractCoreInterface {
   doesModuleExist (name, isNormalized) { todo('doesModuleExist'); }
 
   async getModules () {
-    return arr.flatmap(await this.getPackages(), ea => ea.modules);
+    return await this.getPackages().flatMap(ea => ea.modules);
   }
 
   async getModule (name) {

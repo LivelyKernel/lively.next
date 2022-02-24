@@ -120,7 +120,7 @@ export function defaultDOMEnv () {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function setCSSDef (node, cssDefString, doc) {
-  arr.from(node.childNodes).forEach(c => node.removeChild(c));
+  Array.from(node.childNodes).forEach(c => node.removeChild(c));
   const rules = document.createTextNode(cssDefString);
   if (node.styleSheet) node.styleSheet.cssText = rules.nodeValue;
   else node.appendChild(rules);

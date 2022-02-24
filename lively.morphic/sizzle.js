@@ -16,7 +16,7 @@ export class SizzleExpression {
     for (let token of rule.split(' ')) {
       this.compiledRule.push(this.createMatcher(token));
     }
-    if (arr.any(this.compiledRule, matcher => !matcher)) {
+    if (this.compiledRule.some(matcher => !matcher)) {
       // throw new Error('Can not compile ' + rule);
       this.compileError = true;
     }
@@ -115,10 +115,10 @@ class ClassMatcher extends Matcher {
 
   matches (morph) {
     const { 
-         removed, added, animation 
-      } = morph._animatedStyleClasses || {removed: [], added: []},
-      applied = arr.every(this.token, sc => morph.styleClasses.includes(sc)),
-      revoked = !applied && arr.every(this.token, sc => [...morph.styleClasses, ...removed].includes(sc));
+      removed, added, animation 
+    } = morph._animatedStyleClasses || { removed: [], added: [] };
+    const applied = this.token.every(sc => morph.styleClasses.includes(sc));
+    const revoked = !applied && this.token.every(sc => [...morph.styleClasses, ...removed].includes(sc));
     // first test if classes match ignoring the added and removed
     // these are the "unchanged"
     return {
@@ -288,8 +288,9 @@ export class StylingVisitor extends SizzleVisitor {
   }
 
   retrieveExpressions (morph) {
-    if (morph.styleSheets.length < 1) return false;
-    return morph.styleSheets.map(ss => ss.applicableRules());
+    const styleSheets = Array(morph.styleSheets);
+    if (styleSheets.length < 1) return false;
+    return styleSheets.map(ss => ss.applicableRules());
   }
 
   visitMorph (morph, styleSheetPatches) {
@@ -336,6 +337,6 @@ export class StylingVisitor extends SizzleVisitor {
   }
 
   getChildren (morph) {
-    return arr.filter(morph.submorphs, m => m.needsRerender());
+    return morph.submorphs.filter(m => m.needsRerender());
   }
 }

@@ -1,4 +1,4 @@
-import { chain, arr, obj, string } from 'lively.lang';
+import { arr } from 'lively.lang';
 
 export var multiSelectCommands = [
 

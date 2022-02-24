@@ -397,7 +397,7 @@ export default class InputLine extends Text {
           const { selected } = await inputLine.world().filterableListPrompt(
             'Choose items to delete:', items, { multiSelect: true });
 
-          arr.sort(selected).reverse().forEach(index => {
+          selected.reverse().forEach(index => {
             if (index < hist.index) hist.index--;
             hist.items.splice(index, 1);
           });

@@ -88,7 +88,7 @@ function propertyNamesOf (obj, partition) {
 }
 
 export function isMultiValue (foldableValue, propNames) {
-  return !arr.every(propNames.map(p => foldableValue[p]),
+  return !propNames.map(p => foldableValue[p]).every(
     v => obj.equals(v, foldableValue && foldableValue.valueOf()));
 }
 

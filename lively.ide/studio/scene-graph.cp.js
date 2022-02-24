@@ -365,11 +365,9 @@ export class MorphNodeModel extends ViewModel {
       return;
     }
 
-    nameLabel.textAndAttributes = [...arr.flatten(
-      arr.interpose(
-        inBetween.map(x => [x, {}]), [term, { fontWeight: '900' }]
-      )
-    )];
+    nameLabel.textAndAttributes = [...arr.interpose(
+      inBetween.map(x => [x, {}]), [term, { fontWeight: '900' }]
+    ).flat()];
   }
 
   showPreviewOn (target) {

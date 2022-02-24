@@ -1,7 +1,7 @@
 /* global process, global, exports */
 
-import { arr, obj, string, chain, Path } from 'lively.lang';
-import { helpers, scopes, topLevelDeclsAndRefs, topLevelFuncDecls } from './query.js';
+import { arr, obj, string, Path } from 'lively.lang';
+import { helpers, scopes, topLevelFuncDecls } from './query.js';
 import { parse, fuzzyParse } from './parser.js';
 import objectSpreadTransform from './object-spread-transform.js';
 import {
@@ -66,7 +66,8 @@ function replaceNode (target, replacementFunc, sourceOrChanges) {
   //                      If its and object -- {changes: ARRAY, source: STRING}
 
   const sourceChanges = typeof sourceOrChanges === 'object'
-    ? sourceOrChanges : { changes: [], source: sourceOrChanges };
+    ? sourceOrChanges
+    : { changes: [], source: sourceOrChanges };
   let insideChangedBefore = false;
   const pos = sourceChanges.changes.reduce(function (pos, change) {
     // fixup the start and end indices of target using the del/add
@@ -118,7 +119,8 @@ function replaceNodes (targetAndReplacementFuncs, sourceOrChanges) {
   const sorted = targetAndReplacementFuncs.sort((a, b) =>
     _compareNodesForReplacement(a.target, b.target));
   let sourceChanges = typeof sourceOrChanges === 'object'
-    ? sourceOrChanges : { changes: [], source: sourceOrChanges };
+    ? sourceOrChanges
+    : { changes: [], source: sourceOrChanges };
   for (let i = 0; i < sorted.length; i++) {
     const { target, replacementFunc } = sorted[i];
     sourceChanges = replaceNode(target, replacementFunc, sourceChanges);
@@ -146,7 +148,8 @@ function replace (astOrSource, targetNode, replacementFunc, options) {
 
   const parsed = typeof astOrSource === 'object' ? astOrSource : null;
   const source = typeof astOrSource === 'string'
-    ? astOrSource : (parsed.source || _node2string(parsed));
+    ? astOrSource
+    : (parsed.source || _node2string(parsed));
   return replaceNode(targetNode, replacementFunc, source);
 }
 
@@ -161,9 +164,11 @@ function oneDeclaratorPerVarDecl (astOrSource) {
   //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
 
   const parsed = typeof astOrSource === 'object'
-    ? astOrSource : parse(astOrSource);
+    ? astOrSource
+    : parse(astOrSource);
   const source = typeof astOrSource === 'string'
-    ? astOrSource : (parsed.source || _node2string(parsed));
+    ? astOrSource
+    : (parsed.source || _node2string(parsed));
   const scope = scopes(parsed);
   const varDecls = __findVarDecls(scope);
 
@@ -194,9 +199,11 @@ function oneDeclaratorPerVarDecl (astOrSource) {
 
 function oneDeclaratorForVarsInDestructoring (astOrSource) {
   const parsed = typeof astOrSource === 'object'
-    ? astOrSource : parse(astOrSource);
+    ? astOrSource
+    : parse(astOrSource);
   const source = typeof astOrSource === 'string'
-    ? astOrSource : (parsed.source || _node2string(parsed));
+    ? astOrSource
+    : (parsed.source || _node2string(parsed));
   const scope = scopes(parsed);
   const varDecls = __findVarDecls(scope);
   const targetsAndReplacements = [];

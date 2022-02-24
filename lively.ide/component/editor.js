@@ -235,8 +235,8 @@ function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = 
   // determine where to insert the new property
   // after name and type and before submorphs if present
   // fixme: ensure to be inserted after both type and name
-  const nameProp = arr.findIndex(propertiesNode.properties, prop => prop.key.name == 'name');
-  const typeProp = arr.findIndex(propertiesNode.properties, prop => prop.key.name == 'type');
+  const nameProp = propertiesNode.properties.findIndex(prop => prop.key.name == 'name');
+  const typeProp = propertiesNode.properties.findIndex(prop => prop.key.name == 'type');
   const afterProp = propertiesNode.properties[Math.max(typeProp, nameProp)];
   const keyValueExpr = ',\n' + key + ': ' + valueExpr;
   let insertationPoint;

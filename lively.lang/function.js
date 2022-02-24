@@ -9,7 +9,6 @@
 
 import { merge as objectMerge, safeToString } from './object.js';
 import Closure from './closure.js';
-import * as arr from './array.js';
 
 // -=-=-=-=-=-=-=-=-
 // static functions
@@ -581,7 +580,7 @@ function flip (f) {
 function withNull (func) {
   func = func || function () {};
   return function (/* args */) {
-    const args = arr.from(arguments);
+    const args = Array.from(arguments);
     func.apply(null, [null].concat(args));
   };
 }

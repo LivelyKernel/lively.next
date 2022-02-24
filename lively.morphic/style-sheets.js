@@ -85,7 +85,7 @@ export class StyleSheet {
       }
       if (v) {
         const { top, left, right, bottom } = v;
-        if (arr.all([top, left, right, bottom], (a) => a && obj.equals(a, v.top))) {
+        if ([top, left, right, bottom].every((a) => a && obj.equals(a, v.top))) {
           return continueInspectFn(v.top);
         }
       }

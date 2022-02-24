@@ -168,7 +168,7 @@ export class Occur {
       'box-sizing': 'border-box',
       'box-shadow': '0 0 4px rgb(91, 255, 50)'
     };
-    const ranges = arr.flatmap(this._document._occurMatchingLines, ({ ranges }, row) =>
+    const ranges = this._document._occurMatchingLines.flatMap(({ ranges }, row) =>
       ranges.map(({ start: { column }, end: { column: endColumn } }) =>
         ({ start: { column, row }, end: { column: endColumn, row } })));
 

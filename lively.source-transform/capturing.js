@@ -225,7 +225,7 @@ export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, op
       if (stmt.type !== 'ExpressionStatement' ||
        stmt.expression.type !== 'AssignmentExpression' ||
        stmt.expression.left.type !== 'Identifier' ||
-       arr.include(options.exclude, stmt.expression.left.name)) return stmt;
+       options.exclude.includes(stmt.expression.left.name)) return stmt;
 
       const id = stmt.expression.left;
       const rhs = options.declarationWrapper
@@ -825,7 +825,7 @@ function putFunctionDeclsInFront (parsed, options) {
 function computeDefRanges (parsed, options) {
   const topLevel = topLevelDeclsAndRefs(parsed);
   return chain(topLevel.scope.varDecls)
-    .pluck('declarations').flatten().value()
+    .pluck('declarations').flat().value()
     .concat(topLevel.scope.funcDecls.filter(ea => ea.id))
     .reduce((defs, decl) => {
       if (!defs[decl.id.name]) defs[decl.id.name] = [];

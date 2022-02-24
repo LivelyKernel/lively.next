@@ -18,14 +18,14 @@ export default class TextLayout {
   restore (serializedLineBounds, morph) {
     const decompress = (compressedBounds) => {
       let x = 0; const y = 0;
-      return arr.flatten(arr.histogram(compressedBounds, compressedBounds.length / 3).map(([count, width, height]) => {
+      return arr.histogram(compressedBounds, compressedBounds.length / 3).map(([count, width, height]) => {
         const batch = [];
         for (let i = 0; i < count; i++) {
           batch.push(rect(x, y, width, height));
           x += width;
         }
         return batch;
-      }));
+      }).flat();
     };
 
     for (const [row, compressedBounds] of serializedLineBounds) {
@@ -150,7 +150,7 @@ export default class TextLayout {
     if (!debug &&
         morph.lineCount() < 10 &&
         morph.document.stringSize < 3000 &&
-        !arr.any(morph.textAndAttributes, attr => attr && attr.fontFamily != undefined)) {
+        !morph.textAndAttributes.some(attr => attr && attr.fontFamily != undefined)) {
       const directRenderLineFn = textRenderer.directRenderLineFn(morph);
       const linesBounds = fontMetric.manuallyComputeBoundsOfLines(
         morph, lines, 0, 0, {

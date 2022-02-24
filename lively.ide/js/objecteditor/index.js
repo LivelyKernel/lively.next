@@ -230,7 +230,7 @@ export class ObjectEditorModel extends ViewModel {
           const { classTree: tree, sourceEditor } = this.ui;
           const td = tree.treeData;
           const classNodes = td.getChildren(td.root).slice();
-          const items = arr.flatmap(classNodes.reverse(), node => {
+          const items = classNodes.reverse().flatMap(node => {
             const klass = node.target;
             const methods = td.getChildren(node);
 

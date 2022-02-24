@@ -104,7 +104,7 @@ export async function fileStatus (dir, options = {}) {
   try {
     let mapping = await runGitCommands(commands, { cwd: dir });
     let lines = mapping && mapping.status.split('\n');
-    var fileObjects = arr.flatmap(lines || [], line => {
+    var fileObjects = (lines || []).flatMap(line => {
       if (!line) return [];
       let m; let results = [];
       if (m = line.match(/^(\s[A-Z]|[A-Z]{2})(.*)/)) results.push({ status: 'unstaged', statusString: m[0] });

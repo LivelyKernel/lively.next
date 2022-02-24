@@ -105,7 +105,7 @@ export class RichTextControl extends Morph {
               const top = padding.top();
               const right = padding.right();
               const bottom = padding.bottom();
-              const isMultiVar = !arr.every([left, top, right, bottom], side => side == left);
+              const isMultiVar = ![left, top, right, bottom].every(side => side == left);
 
               control.get('multi value indicator').visible = isMultiVar;
               connect(control.get('multi value indicator'), 'onMouseDown', control.get('padding field'), 'number', {

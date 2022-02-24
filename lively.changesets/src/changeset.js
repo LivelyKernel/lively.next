@@ -31,7 +31,7 @@ class ChangeSet {
 
   getBranches () { // () -> Promise<Array<Branch>>
     return localBranches().then(branches =>
-      arr.flatmap(Object.keys(branches), k => branches[k])
+      Object.keys(branches).flatMap(k => branches[k])
         .filter(b => b.name == this.name));
   }
 

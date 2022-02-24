@@ -1,9 +1,9 @@
-import { arr, chain, num, tree, fun, obj } from 'lively.lang';
+import { arr, num, tree, fun } from 'lively.lang';
 import { BaseVisitor, ScopeVisitor } from './mozilla-ast-visitors.js';
 import { FindToplevelFuncDeclVisitor } from './visitors.js';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
 import { parse } from './parser.js';
-import { acorn, walk, custom } from './acorn-extension.js';
+import { custom } from './acorn-extension.js';
 import stringify from './stringify.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -199,7 +199,7 @@ function scopesAtPos (pos, parsed) {
   // DEPRECATED
   // FIXME "scopes" should actually not referer to a node but to a scope
   // object, see exports.scopes!
-  return arr.filter(nodesAt(pos, parsed), function (node) {
+  return nodesAt(pos, parsed).filter(function (node) {
     return node.type === 'Program' ||
         node.type === 'FunctionDeclaration' ||
         node.type === 'FunctionExpression';
@@ -244,8 +244,8 @@ function declarationsWithIdsOfScope (scope) {
   const bareIds = arr.compact(helpers.declIds(scope.params).concat(scope.catches));
   const declNodes = [
     ...scope.node.id && scope.node.id.name ? [scope.node] : [],
-    ...arr.filter(scope.funcDecls, ea => ea.id),
-    ...arr.filter(scope.classDecls, ea => ea.id)
+    ...scope.funcDecls.filter(ea => ea.id),
+    ...scope.classDecls.filter(ea => ea.id)
   ];
   return bareIds.map(ea => [ea, ea])
     .concat(declNodes.map(ea => [ea, ea.id]))
@@ -323,15 +323,14 @@ function topLevelDeclsAndRefs (parsed, options) {
   const scope = scopes(parsed);
   const useComments = !!options.jslintGlobalComment;
   const declared = _declaredVarNames(scope, useComments);
-  const refs = scope.refs.concat(arr.flatten(
-    scope.subScopes.map(findUndeclaredReferences)));
+  const refs = scope.refs.concat(scope.subScopes.map(findUndeclaredReferences).flat());
   const undeclared = arr.withoutAll(refs.map(ea => ea.name), declared);
 
   return {
     scope: scope,
     varDecls: scope.varDecls,
-    funcDecls: arr.filter(scope.funcDecls, ea => ea.id),
-    classDecls: arr.filter(scope.classDecls, ea => ea.id),
+    funcDecls: scope.funcDecls.filter(ea => ea.id),
+    classDecls: scope.classDecls.filter(ea => ea.id),
     declaredNames: declared,
     undeclaredNames: undeclared,
     refs: refs,
@@ -342,19 +341,17 @@ function topLevelDeclsAndRefs (parsed, options) {
 
   function findUndeclaredReferences (scope) {
     const names = _declaredVarNames(scope, useComments);
-    return arr.filter(
-      scope.subScopes
-        .map(findUndeclaredReferences)
-        .reduce(function (refs, ea) { return refs.concat(ea); }, scope.refs),
-      function (ref) { return names.indexOf(ref.name) === -1; }
-    );
+    return scope.subScopes
+      .map(findUndeclaredReferences)
+      .reduce(function (refs, ea) { return refs.concat(ea); }, scope.refs)
+      .filter(function (ref) { return names.indexOf(ref.name) === -1; });
   }
 }
 
 function findGlobalVarRefs (parsed, options) {
   const topLevel = topLevelDeclsAndRefs(parsed, options);
   const noGlobals = topLevel.declaredNames.concat(knownGlobals);
-  return arr.filter(topLevel.refs, function (ea) {
+  return topLevel.refs.filter(function (ea) {
     return noGlobals.indexOf(ea.name) === -1;
   });
 }
@@ -400,8 +397,7 @@ function findReferencesAndDeclsInScope (scope, name, startingScope = true, resul
 
 function findDeclarationClosestToIndex (parsed, name, index) {
   let found = null;
-  arr.detect(
-    scopesAtIndex(parsed, index).reverse(),
+  scopesAtIndex(parsed, index).reverse().find(
     (scope) => {
       const decls = declarationsOfScope(scope, true);
       const idx = arr.pluck(decls, 'name').indexOf(name);
@@ -447,7 +443,7 @@ function statementOf (parsed, node, options) {
   // let source be "var x = 1; x + 1;" and we are looking for the
   // Identifier "x" in "x+1;". The second statement is what will be found.
   const nodes = nodesAt(node.start, parsed);
-  const found = nodes.reverse().find(node => arr.include(_stmtTypes, node.type));
+  const found = nodes.reverse().find(node => _stmtTypes.includes(node.type));
   if (options && options.asPath) {
     const v = new BaseVisitor(); let foundPath;
     v.accept = fun.wrap(v.accept, (proceed, node, state, path) => {

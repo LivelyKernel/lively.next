@@ -450,7 +450,7 @@ export class ObjectGraphVisualizer extends HTMLMorph {
 
     // nodes.push({group: "nodes", data: {id: "morph"}})
 
-    var edges = arr.flatmap(Object.keys(g), id => g[id].map(id2 => {
+    var edges = Object.keys(g).flatMap(id => g[id].map(id2 => {
       return {group: "edges", data: {source: id, target: id2}};
     }));
 

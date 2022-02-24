@@ -824,7 +824,7 @@ export class Text extends Morph {
         }
       }
       if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
-      cachedLineBounds.push([line.row, arr.flatten(compactBounds)]);
+      cachedLineBounds.push([line.row, compactBounds.flat()]);
     }
 
     snapshot.cachedLineBounds = cachedLineBounds;

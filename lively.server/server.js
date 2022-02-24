@@ -264,7 +264,7 @@ export default class LivelyServer {
       remaining = arr.withoutAll(remaining, resolvedNow);
     }
 
-    return arr.flatten(resolvedGroups, 1);
+    return resolvedGroups.flat();
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

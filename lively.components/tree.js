@@ -256,8 +256,8 @@ export class Tree extends Text {
         displayedNode.fontColor = this.nonSelectionFontColor;
       }
 
-      if (arr.isArray(displayedNode)) {
-        displayedNode = arr.flatten(displayedNode);
+      if (Array.isArray(displayedNode)) {
+        displayedNode = displayedNode.flat();
         arr.pushAllAt(containerTextAndAttributes, displayedNode, j + 4);
         const increment = Math.max(0, displayedNode.length - 2);
         j += increment;
@@ -599,7 +599,7 @@ export class TreeData {
     tree.prewalk(this.root,
       (node, i, depth) => nodesWithIndex.push({ node, depth, i }),
       (node) => this.getChildrenIfUncollapsed(node));
-    return filterFn ? arr.filter(nodesWithIndex, filterFn) : nodesWithIndex;
+    return filterFn ? nodesWithIndex.filter(filterFn) : nodesWithIndex;
   }
 
   pathOf (node) {
@@ -837,7 +837,7 @@ var treeCommands = [
         let parents = arr.compact([td.parentNode(treeMorph.selectedNode)]);
         while (true) {
           if (!parents.length) break;
-          nodesToChange = arr.flatmap(parents, n => allNonLeafChildren(n));
+          nodesToChange = parents.flatMap(n => allNonLeafChildren(n));
           let needCollapseChange = nodesToChange.every(n => td.isCollapsed(n) === doCollapse);
           if (!needCollapseChange) break;
           parents = nodesToChange;
@@ -851,7 +851,7 @@ var treeCommands = [
       return true;
 
       function allNonLeafChildren (parent) {
-        return arr.filter(td.getChildrenIfUncollapsed(parent), n => !td.isLeaf(n));
+        return td.getChildrenIfUncollapsed(parent).filter(n => !td.isLeaf(n));
       }
 
       function collapseOrUncollapse (nodes, doCollapse) {

@@ -11,7 +11,7 @@ let CommandTrait = {
   },
 
   get commandsIncludingOwners () {
-    return lively.lang.arr.flatmap([this].concat(this.ownerChain()), morph =>
+    return [this].concat(this.ownerChain()).flatMap(morph =>
       lively.lang.arr.sortByKey(morph.commands, 'name')
         .map(command => ({ target: morph, command })));
   },

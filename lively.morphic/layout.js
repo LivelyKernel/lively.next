@@ -1424,7 +1424,7 @@ export class ProportionalLayout extends Layout {
     } else if (typeof selector === 'string') {
       morphs = container.submorphs.filter(ea => ea.name === selector);
     } else if (Array.isArray(selector)) {
-      morphs = arr.flatmap(selector, sel => this._morphsMatchingSelector(container, sel));
+      morphs = selector.flatMap(sel => this._morphsMatchingSelector(container, sel));
     }
     return morphs;
   }
@@ -3171,9 +3171,9 @@ export class GridLayout extends Layout {
    * @param {...LayoutAxis} axes - Set of columns or rows that we will go through and measure the morphs they control.
    */
   measureMorphsIn (...axes) {
-    const groupsToMeasure = arr.flatten(arr.compact(axes).map(axis => {
+    const groupsToMeasure = arr.compact(axes).map(axis => {
       return axis.items.map(item => item.group);
-    }));
+    }).flat();
     groupsToMeasure.forEach(({ morph: m, resize }) => {
       if (!m) return;
       const node = this.getNodeFor(m);

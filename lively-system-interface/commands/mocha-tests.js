@@ -21,7 +21,7 @@ export async function runMochaTests (grep, testsByFile, onChange, onError) {
       let files = arr.compact(mocha.suite.suites).map(({ file }) => file);
       let tests = chain(testsByFile)
         .filter(ea => files.includes(ea.file))
-        .pluck('tests').flatten().value();
+        .pluck('tests').flat().value();
 
       if (!tests || !tests.length) { return reject(new Error(`Trying to run tests of ${files.join(', ')} but cannot find them in loaded tests!`)); }
       mocha.reporter(function Reporter (runner) {

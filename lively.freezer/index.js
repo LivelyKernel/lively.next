@@ -317,7 +317,7 @@ function clearWorldSnapshot (snap) {
         if (isReference(v) && deletedIds.includes(v.id)) {
           delete snap.snapshot[id].props[key];
         }
-        if (arr.isArray(v)) {
+        if (Array.isArray(v)) {
           // also remove references that are stuck inside array values
           snap.snapshot[id].props[key].value = v.filter(v => !(isReference(v) && deletedIds.includes(v.id)));
         }
@@ -620,13 +620,12 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   frozenPart.getAssetsFromSnapshot(snap);
 
   // flatten imports to all imports of the object package
-  imports = arr.flatten(
-    imports.map(modId =>
-      module(modId)
-        .requirements()
-        .map(mod => mod.id)
-        .filter(id => belongsToObjectPackage(id))
-        .concat(modId)));
+  imports = imports.map(modId =>
+    module(modId)
+      .requirements()
+      .map(mod => mod.id)
+      .filter(id => belongsToObjectPackage(id))
+      .concat(modId)).flat();
 
   findMasterComponentsInSnapshot(snap).forEach(url => requiredMasterComponents.add(url));
 
@@ -1322,13 +1321,13 @@ class LivelyRollup {
     });
 
     for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
-      const toBeMerged = arr.filter(stmts, stmt => arr.all(stmt.specifiers, spec => spec.type == 'ImportSpecifier'));
+      const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type == 'ImportSpecifier'));
       if (toBeMerged.length > 1) {
         // merge statements
         // fixme: if specifiers are not named, these can not be merged
         // fixme: properly handle default export
         const mergedSpecifiers = arr.uniqBy(
-          arr.flatten(toBeMerged.map(stmt => stmt.specifiers)),
+          toBeMerged.map(stmt => stmt.specifiers).flat(),
           (spec1, spec2) =>
             spec1.type == 'ImportSpecifier' &&
             spec2.type == 'ImportSpecifier' &&

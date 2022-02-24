@@ -63,7 +63,7 @@ describe('tree', function () {
   afterEach(() => tree && tree.remove());
 
   inBrowser('renders items without root', () => {
-    expect(arr.map(tree.document.lines.slice(0, tree.lineCount() - 1), l => l.textAndAttributes[4]))
+    expect(tree.document.lines.slice(0, tree.lineCount() - 1).map(l => l.textAndAttributes[4]))
       .equals(['child 1', 'child 2', 'child 3', 'child 3 - 1', 'child 3 - 2', 'child 4']);
   });
 

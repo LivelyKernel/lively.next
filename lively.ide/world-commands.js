@@ -748,7 +748,7 @@ const commands = [
           plugin = new DiffEditorPlugin();
         } else {
           diffed = diff[format](a, b, opts);
-          content = arr.flatmap(diffed, ({ count, value, added, removed }) => {
+          content = diffed.flatMap(({ count, value, added, removed }) => {
             const attribute = removed
               ? { fontWeight: 'normal', textDecoration: 'line-through', fontColor: Color.red }
               : added

@@ -52,8 +52,8 @@ const GLOB = typeof window !== 'undefined'
 const isNode = typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
 
 const globalInterfaceSpec = [
-  { action: 'installMethods', target: 'Array', sources: ['arr'], methods: ['from', 'genN', 'range', 'withN'] },
-  { action: 'installMethods', target: 'Array.prototype', sources: ['arr'], methods: ['all', 'any', 'batchify', 'clear', 'clone', 'collect', 'compact', 'delimWith', 'detect', 'doAndContinue', 'each', 'equals', 'filterByKey', 'findAll', 'first', 'flatten', 'grep', 'groupBy', 'groupByKey', 'histogram', 'include', 'inject', 'intersect', 'invoke', 'last', 'mapAsync', 'mapAsyncSeries', 'mask', 'max', 'min', 'mutableCompact', 'nestedDelay', 'partition', 'pluck', 'pushAll', 'pushAllAt', 'pushAt', 'pushIfNotIncluded', 'reMatches', 'reject', 'rejectByKey', 'remove', 'removeAt', 'replaceAt', 'rotate', 'shuffle', 'size', 'sortBy', 'sortByKey', 'sum', 'swap', 'toArray', 'toTuples', 'union', 'uniq', 'uniqBy', 'without', 'withoutAll', 'zip'], alias: [['select', 'filter']] },
+  { action: 'installMethods', target: 'Array', sources: ['arr'], methods: ['genN', 'range', 'withN'] },
+  { action: 'installMethods', target: 'Array.prototype', sources: ['arr'], methods: ['batchify', 'clear', 'clone', 'compact', 'doAndContinue', 'equals', 'filterByKey', 'filter', 'first', 'flat', 'flatMap', 'grep', 'groupBy', 'groupByKey', 'histogram', 'intersect', 'invoke', 'last', 'mask', 'map', 'max', 'min', 'mutableCompact', 'nestedDelay', 'partition', 'pluck', 'pushAll', 'pushAllAt', 'pushAt', 'pushIfNotIncluded', 'reMatches', 'reject', 'rejectByKey', 'remove', 'removeAt', 'replaceAt', 'rotate', 'shuffle', 'slice', 'sortBy', 'sortByKey', 'sum', 'swap', 'toTuples', 'union', 'uniq', 'uniqBy', 'uniqByKey', 'without', 'withoutAll', 'zip'], alias: [['select', 'filter']] },
   { action: 'installMethods', target: 'Date', sources: ['date'], methods: [/* "parse" */] },
   { action: 'installMethods', target: 'Date.prototype', sources: ['date'], methods: ['equals', 'format', 'relativeTo'] },
   { action: 'installMethods', target: 'Function', sources: ['fun'], methods: ['fromString'] },
@@ -123,7 +123,7 @@ export function chain (object) {
 function createChain (interfaceObj, obj) {
   return Object.keys(interfaceObj).reduce(function (chained, methodName) {
     chained[methodName] = function (/* args */) {
-      const args = Array.prototype.slice.call(arguments);
+      const args = Array.from(arguments);
       const result = interfaceObj[methodName].apply(null, [obj].concat(args));
       return chain(result);
     };

@@ -112,7 +112,7 @@ export var commands = [
       const lines = morph.withSelectedLinesDo(line => line);
       const indent = arr.min([range.start.column].concat(
         chain(lines).map(line => line.match(/^\s*/))
-          .flatten().compact().pluck('length').value()));
+          .flat().compact().pluck('length').value()));
       const length = arr.max(lines.map(ea => ea.length)) - indent;
       const fence = Array(Math.ceil(length / 2) + 1).join('-=') + '-';
 

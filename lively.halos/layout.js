@@ -490,7 +490,7 @@ export class GridLayoutHalo extends LayoutHalo {
       cells: {
         derived: true,
         get () {
-          return arr.flatten(this.target.col(0).items.map(c => c.row(0).items));
+          return this.target.col(0).items.map(c => c.row(0).items).flat();
         }
       },
       submorphs: {
@@ -554,7 +554,7 @@ export class GridLayoutHalo extends LayoutHalo {
     if (this.target.compensateOrigin) this.moveBy(this.container.origin.negated());
     this.extent = this.container.extent;
     this.addMissingGuides();
-    arr.reverse(this.guides).forEach(guide => guide.alignWithTarget());
+    this.guides.reverse().forEach(guide => guide.alignWithTarget());
   }
 
   addMissingGuides () {

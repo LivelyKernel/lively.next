@@ -56,7 +56,7 @@ class Undo {
   addUndos (undos) {
     undos = arr.sortBy(undos.concat(this).filter(ea => ea.recorded()), ({ no }) => no);
     if (!undos.length) return;
-    this.changes = arr.flatmap(undos, ({ changes }) => changes);
+    this.changes = undos.flatMap(({ changes }) => changes);
     this.timestamp = undos[0].timestamp;
     this.no = undos[0].no;
     this.name = undos.map(({ name }) => name).join('-');

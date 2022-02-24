@@ -231,8 +231,7 @@ function parse (source, options) {
 
   function assignCommentsToBlockNodes (commentData) {
     comments.forEach(function (comment) {
-      let node = arr.detect(
-        nodesAt(comment.start, parsed).reverse(),
+      let node = nodesAt(comment.start, parsed).reverse().find(
         function (node) { return node.type === 'BlockStatement' || node.type === 'Program'; });
       if (!node) node = parsed;
       if (!node.comments) node.comments = [];
@@ -259,7 +258,7 @@ function parse (source, options) {
 
         // if the comments are seperated by a statement, don't merge
         const last = coalesceData.lastComment;
-        const nodeInbetween = arr.detect(blockNode.body, function (node) { return node.start >= last.end && node.end <= comment.start; });
+        const nodeInbetween = blockNode.body.find(function (node) { return node.start >= last.end && node.end <= comment.start; });
         if (nodeInbetween) {
           coalesceData.lastComment = comment;
           return coalesceData;

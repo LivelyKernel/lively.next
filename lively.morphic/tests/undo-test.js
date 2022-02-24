@@ -63,7 +63,7 @@ describe('undo', () => {
     m3.fill = Color.yellow;
     m1.undoStop('test');
 
-    expect(arr.uniq(arr.flatmap(env.undoManager.undos, ({ changes }) => arr.pluck(changes, 'target'))))
+    expect(arr.uniq(env.undoManager.undos.flatMap(({ changes }) => arr.pluck(changes, 'target'))))
       .equals([m1, m2]);
   });
 
@@ -75,7 +75,7 @@ describe('undo', () => {
     m3.fill = Color.yellow;
     m1.undoStop('test');
 
-    expect(arr.uniq(arr.flatmap(env.undoManager.undos, ({ changes }) => arr.pluck(changes, 'target'))))
+    expect(arr.uniq(env.undoManager.undos.flatMap(({ changes }) => arr.pluck(changes, 'target'))))
       .equals([m1, m2, m3]);
   });
 });

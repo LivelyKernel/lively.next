@@ -145,7 +145,7 @@ export class FilePatch {
   }
 
   changesByLines () {
-    return arr.flatten(arr.invoke(this.hunks, 'changesByLines'));
+    return arr.invoke(this.hunks, 'changesByLines').flat();
   }
 
   length () {

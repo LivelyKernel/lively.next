@@ -1432,7 +1432,7 @@ export class Morph {
   }
 
   submorphBounds (filterFn = () => true) {
-    const morphs = arr.filter(this.submorphs, filterFn);
+    const morphs = this.submorphs.filter(filterFn);
     if (morphs.length < 1) return this.innerBounds();
     return morphs.map(submorph => submorph.bounds())
       .reduce((a, b) => a.union(b));
@@ -2593,7 +2593,7 @@ export class Morph {
   }
 
   get commandsIncludingOwners () {
-    return arr.flatmap([this].concat(this.ownerChain()), morph =>
+    return [this].concat(this.ownerChain()).flatMap(morph =>
       arr.sortByKey(morph.commands, 'name').map(command => ({ target: morph, command })));
   }
 

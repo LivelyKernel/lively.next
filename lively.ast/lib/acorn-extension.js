@@ -614,7 +614,7 @@ function findSiblings (parsed, node, beforeOrAfter) {
   const nodes = findNodesIncluding(parsed, node.start);
   const idx = nodes.indexOf(node);
   const parents = nodes.slice(0, idx);
-  const parentWithBody = arr.detect(parents.reverse(), function (p) { return Array.isArray(p.body); });
+  const parentWithBody = parents.reverse().find(function (p) { return Array.isArray(p.body); });
   const siblingsWithNode = parentWithBody.body;
   if (!beforeOrAfter) return arr.without(siblingsWithNode, node);
   const nodeIdxInSiblings = siblingsWithNode.indexOf(node);

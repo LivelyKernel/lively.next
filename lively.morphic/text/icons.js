@@ -15,7 +15,7 @@ Show all icons:
 
 $world.openInWindow(morph({
   extent: pt(300,800), clipMode: "auto", type: "text", fontSize: 20, padding: Rectangle.inset(4),
-  textAndAttributes: lively.lang.arr.flatmap(Object.keys(Icons), name =>
+  textAndAttributes: Object.keys(Icons).flatMap(name =>
     [`${Icons[name].code} ${name}\n`, {fontFamily: "", textStyleClasses: ["fa"]}])
 }), {title: "icons"}).activate();
 

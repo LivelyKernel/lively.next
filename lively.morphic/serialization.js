@@ -248,7 +248,7 @@ export function packagesOfSnapshot (snapshot) {
   const packageMap = {}; const depMap = snapshot.packageDepMap;
   if (!depMap) return packages;
   for (const p of packages) packageMap[p.url] = p;
-  return arr.flatten(graph.sortByReference(depMap)).map(url => packageMap[url]);
+  return graph.sortByReference(depMap).flat().map(url => packageMap[url]);
 }
 
 export async function loadPackagesAndModulesOfSnapshot (snapshot) {

@@ -818,11 +818,9 @@ export class MorphContainer extends InteractiveTreeContainer {
       return;
     }
 
-    label.textAndAttributes = [...iconPart, ...arr.flatten(
-      arr.interpose(
-        inBetween.map(x => [x, {}]), [term, { fontWeight: '900' }]
-      )
-    )];
+    label.textAndAttributes = [...iconPart, ...arr.interpose(
+      inBetween.map(x => [x, {}]), [term, { fontWeight: '900' }]
+    ).flat()];
     label.whenRendered().then(() => {
       label.fitIfNeeded();
     });

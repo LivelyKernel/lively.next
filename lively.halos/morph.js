@@ -700,6 +700,9 @@ class DragHaloItem extends HaloItem {
 
   init () {
     const target = this.halo.target;
+    
+    if (!target.owner) return;
+    
     const interferingLayout = target.owner.layout;
     target.undoStart('drag-halo');
 

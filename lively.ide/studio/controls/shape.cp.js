@@ -1,7 +1,7 @@
 import { ViewModel, add, without, part, component } from 'lively.morphic/components/core.js';
 import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label } from 'lively.morphic';
-import { string, arr, num } from 'lively.lang';
+import { string, num } from 'lively.lang';
 import { NumberInput, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
 
@@ -37,7 +37,7 @@ export class ShapeControlModel extends ViewModel {
             { target: 'width input', signal: 'numberChanged', handler: 'changeWidth' },
             { target: 'height input', signal: 'numberChanged', handler: 'changeHeight' },
             { target: 'rotation input', signal: 'numberChanged', handler: 'changeRotation' },
-            ...arr.flatten(['', ' top left', ' top right', ' bottom right', ' bottom left'].map(d => [{
+            ...['', ' top left', ' top right', ' bottom right', ' bottom left'].map(d => [{
               target: 'radius input' + d,
               signal: 'numberChanged',
               handler: 'change' + string.camelCaseString('border radius ' + d),
@@ -47,7 +47,7 @@ export class ShapeControlModel extends ViewModel {
               signal: 'onMouseDown',
               handler: 'adjustCornerIndicator',
               converter: `() => "${string.camelCaseString(d)}"`
-            }])),
+            }]).flat(),
             { model: 'clip mode selector', signal: 'selection', handler: 'changeClipMode' },
             { target: 'proportional resize toggle', signal: 'onMouseDown', handler: 'changeResizeMode' },
             { target: 'independent corner toggle', signal: 'onMouseDown', handler: 'toggleBorderMultiVar' }

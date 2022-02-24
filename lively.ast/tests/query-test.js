@@ -16,7 +16,7 @@ describe('query', function() {
       var declsAndRefs = query.topLevelDeclsAndRefs(parsed);
 
       var varDecls = declsAndRefs.varDecls;
-      var varIds = chain(declsAndRefs.varDecls).pluck('declarations').flatten().pluck("id").pluck("name").value();
+      var varIds = chain(declsAndRefs.varDecls).pluck('declarations').flat().pluck("id").pluck("name").value();
       expect(["x", "y", "z"]).deep.equals(varIds, "var ids");
 
       var funcIds = chain(declsAndRefs.funcDecls).pluck('id').pluck('name').value();
@@ -95,7 +95,7 @@ describe('query', function() {
       expect(scope).to.containSubset(expected)
 
       // top level scope
-      var varNames = chain(scope.varDecls).pluck('declarations').flatten().value();
+      var varNames = chain(scope.varDecls).pluck('declarations').flat().value();
       expect(1).equals(varNames.length, 'root scope vars');
       var funcNames = chain(scope.funcDecls).pluck('id').pluck('name').value();
       expect(1).equals(scope.funcDecls.length, 'root scope funcs');
@@ -105,7 +105,7 @@ describe('query', function() {
       // sub scope
       expect(1).equals(scope.subScopes.length, 'subscope length');
       var subScope = scope.subScopes[0];
-      var varNames = chain(subScope.varDecls).pluck('declarations').flatten().value();
+      var varNames = chain(subScope.varDecls).pluck('declarations').flat().value();
       expect(2).equals(varNames.length, 'subscope vars');
       expect(0).equals(subScope.funcDecls.length, 'subscope funcs');
       expect(4).equals(subScope.refs.length, 'subscope refs');
