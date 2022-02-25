@@ -1090,6 +1090,7 @@ export class Morph {
   }
 
   inspect (opts) {
+    if (obj.isNumber(opts)) return; // call from chai, which we do not want to react to
     return this.env.world.execCommand('open object inspector', { ...opts, target: this });
   }
 
