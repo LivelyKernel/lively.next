@@ -15,7 +15,7 @@ try {
 
 export const touchInputDevice = touchInput;
 
-let nameToClassMapping = nameToClassMapping || {};
+let nameToClassMapping = nameToClassMapping || {}; // eslint-disable-line no-use-before-define
 
 export function getClassForName (name) {
   return nameToClassMapping[name] || Object;
@@ -86,9 +86,9 @@ export function newMorphId (classOrClassName) {
 
 async function lazyInspect (obj) {
   // lazy load
-  const { inspect: realInspect } = await System.import('lively.ide/js/inspector.js');
-  inspect = realInspect;
+  const { openInWindow: realInspect } = await System.import('lively.ide/js/inspector/ui.cp.js');
+  inspect = realInspect; // eslint-disable-line no-use-before-define
   return realInspect(obj);
 }
 
-export const inspect = lazyInspect;
+export let inspect = lazyInspect;

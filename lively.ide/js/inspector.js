@@ -1197,9 +1197,6 @@ export default class Inspector extends Morph {
             name: 'targetPicker',
             padding: rect(2, 2, 0, 0),
             borderRadius: 15,
-            master: {
-              auto: 'styleguide://System/buttons/light'
-            },
             tooltip: 'Change Inspection Target',
             label: Icon.textAttribute('crosshairs')
           },

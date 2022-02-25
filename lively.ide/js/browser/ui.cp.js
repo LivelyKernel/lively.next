@@ -1,6 +1,6 @@
 import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout } from 'lively.morphic';
+import { ShadowObject, morph, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
