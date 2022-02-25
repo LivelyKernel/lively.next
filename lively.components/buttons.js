@@ -21,7 +21,6 @@ export class ButtonModel extends ViewModel {
       // make this a merge in property
       label: {
         group: 'button',
-        isStyleProp: true,
         type: 'RichText', // this includes an attributes Array
         set (labelMorphProperties) {
           const prevLabel = this.label || {};
@@ -243,7 +242,6 @@ export class Button extends Morph {
       label: {
         group: 'button',
         after: ['labelMorph'],
-        isStyleProp: true,
         type: 'RichText', // this includes an attributes Array
         set (stringOrAttributesOrMorph) {
           if (stringOrAttributesOrMorph.isMorph) {
