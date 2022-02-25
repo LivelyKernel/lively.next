@@ -987,7 +987,7 @@ export class BrowserModel extends ViewModel {
         win.title = 'browser';
       } else {
         win.title = 'browser - ' + p.name;
-        this.ui.tabs.selectedTab.caption = p.name;
+        if (!this.ui.tabs.selectedTab.caption.includes(p.name)) this.ui.tabs.selectedTab.caption = p.name;
       }
       // this is super slow. find a faster way to check for tests
       // const tests = await findTestModulesInPackage(this.systemInterface, p);
@@ -1142,7 +1142,7 @@ export class BrowserModel extends ViewModel {
     if (!m) {
       this.updateSource('');
       if (win) win.title = 'browser - ' + (pack && pack.name || '');
-      this.ui.tabs.selectedTab.caption = pack.name;
+      if (!this.ui.tabs.selectedTab.caption.includes(pack.name)) this.ui.tabs.selectedTab.caption = pack.name;
       this.updateCodeEntities(null);
       this.ui.metaInfoText.textString = '';
       return;
