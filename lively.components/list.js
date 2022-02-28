@@ -1799,6 +1799,7 @@ export class DropDownListModel extends ButtonModel {
 
       listMorph: {
         after: ['listMaster'],
+        serialize: false,
         initialize () {
           this.initListMorph();
         }
