@@ -69,7 +69,7 @@ export class ShapeControlModel extends ViewModel {
       ? this.propertyLabelComponentActive
       : {
           auto: this.propertyLabelComponent,
-          hover: this.propertyLabelComponentHovered
+          hover: this.propertyLabelComponentHover
         };
   }
 
@@ -404,19 +404,7 @@ const ShapeControl = component({
           fontSize: 16,
           textStyleClasses: ['material-icons']
         }]
-      }, 'label'), {
-        name: 'label',
-        fontColor: Color.rgb(236, 239, 241),
-        fontSize: 12,
-        reactsToPointer: false,
-        textAndAttributes: ['Visible', null, ' ', null, '', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-          fontWeight: '900',
-          paddingRight: '0px',
-          paddingTop: '2px',
-          textStyleClasses: ['fa', 'annotation']
-        }]
-      }]
+      }, 'label')]
     })]
 });
 

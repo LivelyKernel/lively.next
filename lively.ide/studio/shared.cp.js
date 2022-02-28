@@ -256,8 +256,7 @@ const DarkPopupWindow = component(PopupWindow, {
       fontColor: Color.rgb(255, 255, 255)
     }, {
       name: 'close button',
-      master: { auto: DarkCloseButton, hover: DarkCloseButtonHovered },
-      fontColor: Color.rgb(255, 255, 255)
+      master: { auto: DarkCloseButton, hover: DarkCloseButtonHovered }
     }]
   }]
 });

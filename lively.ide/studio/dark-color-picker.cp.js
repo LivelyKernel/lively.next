@@ -1,7 +1,7 @@
 import { component, ensureFont, part } from 'lively.morphic/components/core.js';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color, pt } from 'lively.graphics';
-import { EnumSelector, NumberInput, DarkThemeList } from './shared.cp.js';
+import { EnumSelector, NumberInput, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
 // DarkColorPicker.openInWorld()
 
 ensureFont({
@@ -29,8 +29,7 @@ const DarkColorPicker = component(ColorPicker, {
       }
     }, {
       name: 'close button',
-      fontColor: Color.white,
-      opacity: 0.5
+      master: { auto: DarkCloseButton, hover: DarkCloseButtonHovered }
     }]
   }, {
     name: 'color controls',
