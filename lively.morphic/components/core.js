@@ -1,11 +1,12 @@
 import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
-import { getClassName } from 'lively.serializer2';
+import { getClassName, allPlugins } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
 import { adoptObject } from 'lively.classes/runtime.js';
 
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName } from '../helpers.js';
+import { ComponentPolicy } from './policy.js';
 
 /**
  * Defines the core interface for defining and using master components in the system.
@@ -381,7 +382,9 @@ function mergeInHierarchy (root, props, iterator, executeCommands = false) {
 function mergeInMorphicProps (root, props) {
   const layoutAssignments = [];
   mergeInHierarchy(root, props, (aMorph, props) => {
-    if (props.master) aMorph.master = props.master; // assign master before anything else
+    if (props.master) {
+      aMorph.master = props.master; // assign master before anything else
+    }
     Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout', 'master']));
     if (props.layout) layoutAssignments.push([aMorph, props.layout]);
   }, true);
@@ -401,6 +404,45 @@ function mergeInModelProps (root, props) {
   });
 }
 
+// this needs to work more directly without triggering the submorph traversal
+
+export class PolicyRetargeting {
+  // automatically harvest the policy from the root
+  constructor (policyContext) {
+    this.morphsWithPolicies = {};
+    if (policyContext) {
+      policyContext.withAllSubmorphsSelect(m => m.master).forEach(m => {
+        this.morphsWithPolicies[m.id] = m;
+      });
+    }
+  }
+
+  serializeObject (newObj) {
+    if (newObj.master) this.morphsWithPolicies[newObj.id] = newObj;
+    return null;
+  }
+
+  // gather all morphs with policies also outside of submorph hierarchy (connections)
+
+  // ensure that the master is not deserialized, since we manually retarget it anyways.
+  // how? delete the master property will mutate the snapshot...
+  propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
+    return arr.without(keysSoFar, 'master');
+  }
+  
+  // if this plugin is provided the policies are retargeted to the original inline policies
+  additionallyDeserializeAfterProperties (pool, ref, newObj, snapshot, serializedObjMap, path) {
+    const policyHolder = this.morphsWithPolicies[ref.id];
+    if (policyHolder) {
+      newObj.withMetaDo({ metaInteraction: true }, () => {
+        // bypass the setter here so that we do not invoke submorph traversal
+        // newObj.master = { auto: policyHolder.master };
+        newObj.setProperty('master', ComponentPolicy.for(newObj, { auto: policyHolder.master }, false));
+      });
+    }
+  }
+}
+
 /**
  * Instantiates a morph based off a master component. This function also allows to further
  * customize the derived instance inline, overridding properties and adding/removing certain
@@ -411,28 +453,39 @@ function mergeInModelProps (root, props) {
  */
 export function part (masterComponent, overriddenProps = {}, oldParam) {
   if (oldParam) overriddenProps = oldParam;
-  const p = masterComponent._snap ? deserializeMorph(masterComponent._snap, { reinitializeIds: true, migrations: [] }) : masterComponent.copy();
-  // instead of that deserialize the snapshot without the master itself
-  p.isComponent = false;
+  let snap = masterComponent._snap;
+  let retargetPlugin = masterComponent._retargetPlugin || new PolicyRetargeting();
+  if (!snap) {
+    snap = serializeMorph(masterComponent, { plugins: [...allPlugins, retargetPlugin] });
+    delete snap.snapshot[snap.id].props.master;
+    delete snap.snapshot[snap.id].props.isComponent; 
+  }
+  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [], plugins: [...allPlugins, retargetPlugin] }); 
+ 
   // ensure master is initialized before overriding
-  delete p._parametrizedProps;
-  p.withAllSubmorphsDoExcluding(m => {
-    if (m !== p && !m.master) {
-      delete m._parametrizedProps;
-    }
-  }, m => m !== p && m.master);
   // this skips derived morphs that are not reachable via submorphs
-  p.master = masterComponent;
+  p.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
+  p.master = overriddenProps.master || masterComponent;
+  // traverse the morphic props via submorphs and apply the props via name + structure
   p.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.attach(m);
     // this is only needed to detrmine the overriden props.
     // This can also be achieved via proper serialization...
     // This saves us from unnessecary and possibly expensive application cycles
+    if (m.master) {
+      // clear the local overridden props since they are not needed!
+      m.master._overriddenProps = new WeakMap();
+      m.master.applyIfNeeded(true);
+    }
+  });
+
+  mergeInMorphicProps(p, overriddenProps);
+
+  p.withAllSubmorphsDo(m => {
     if (m.master) m.master.applyIfNeeded(true);
   });
-  // traverse the morphic props via submorphs and apply the props via name + structure
-  mergeInMorphicProps(p, overriddenProps);
-  const viewModelClass = overriddenProps.defaultViewModel || masterComponent.defaultViewModel;
+  
+  const viewModelClass = overriddenProps.viewModelClass || masterComponent.viewModelClass || overriddenProps.defaultViewModel || masterComponent.defaultViewModel;
   if (viewModelClass) {
     p.viewModel = new viewModelClass(overriddenProps.viewModel || {});
     p.viewModel.attach(p);
@@ -460,6 +513,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   if (masterComponentOrProps) {
     c = part(masterComponentOrProps, overriddenProps);
     c.defaultViewModel = masterComponentOrProps.defaultViewModel;
+    c.viewModelClass = masterComponentOrProps.viewModelClass;
   } else c = morph({ ...props });
   
   if (overriddenProps && (type = overriddenProps.type)) {
@@ -473,25 +527,26 @@ export function component (masterComponentOrProps, overriddenProps) {
   if (props.defaultViewModel) {
     // attach the view model;
     c.defaultViewModel = props.defaultViewModel;
+    c.viewModelClass = props.viewModelClass;
   }
   // detect all sub view models and detach them again, since we dont
   // want to have the bahvior interfere with the morph hierarchy
   // also gather all master in the scope so we can wait for them
 
-  Promise.all(arr.compact(c.withAllSubmorphsDo(m => {
+  c.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.onDeactivate();
     if (m.master) {
       m.master.applyIfNeeded(!m.master._appliedMaster);
-      return m.master.whenApplied();
     }
-  }))).then(() => {
-    // this is often not called... especially in cases where we derive from a master
-    c.updateDerivedMorphs();
-    c._snap = serializeMorph(c);
-    // remove the master ref from the snap of the component
-    delete c._snap.snapshot[c._snap.id].props.master;
-    delete c._snap.snapshot[c._snap.id].props.isComponent;
   });
+  // this is often not called... especially in cases where we derive from a master
+  c.updateDerivedMorphs();
+  const retargetPlugin = new PolicyRetargeting();
+  c._snap = serializeMorph(c, { plugins: [...allPlugins, retargetPlugin] });
+  c._retargetPlugin = retargetPlugin;
+  // remove the master ref from the snap of the component
+  delete c._snap.snapshot[c._snap.id].props.master;
+  delete c._snap.snapshot[c._snap.id].props.isComponent;
   return c;
 }
 

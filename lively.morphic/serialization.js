@@ -10,6 +10,7 @@ import { resource } from 'lively.resources';
 import { newMorphId, morph, pathForBrowserHistory } from './helpers.js';
 import * as ast from 'lively.ast';
 import { StyleguidePlugin, findLocalComponents } from './components/policy.js';
+import { PolicyRetargeting } from './components/core.js';
 
 function normalizeOptions (options) {
   options = { reinitializeIds: false, plugins: [...allPlugins, new StyleguidePlugin()], ...options };
@@ -86,8 +87,12 @@ export async function saveWorldToResource (world = MorphicEnv.default().world, t
 }
 
 export function copyMorph (morph, realCopy = false) {
+  const retargeting = new PolicyRetargeting();
   if (!realCopy) {
-    return deserializeMorph(serializeMorph(morph), { migrations, reinitializeIds: true });
+    return deserializeMorph(
+      serializeMorph(morph, { plugins: [...allPlugins, retargeting] }),
+      { migrations, reinitializeIds: true, plugins: [...allPlugins, retargeting] }
+    );
   }
   const cachedComments = morph.comments;
   morph.comments = [];
@@ -98,14 +103,14 @@ export function copyMorph (morph, realCopy = false) {
     morph.attributeConnections = morph.attributeConnections.filter(ac => !(ac.targetObj.isCommentIndicator || ac.targetObj.isHalo));
   }
 
-  const serializedMorph = serializeMorph(morph);
+  const serializedMorph = serializeMorph(morph, { plugins: [...allPlugins, retargeting] });
 
   morph.comments = cachedComments;
   if (morph.attributeConnections) {
     morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
   }
 
-  return deserializeMorph(serializedMorph, { migrations, reinitializeIds: true });
+  return deserializeMorph(serializedMorph, { migrations, reinitializeIds: true, plugins: [...allPlugins, retargeting] });
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
