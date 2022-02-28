@@ -1,10 +1,11 @@
 import { Tooltip } from 'lively.morphic';
+import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { num, arr } from 'lively.lang';
 import { syncEval } from 'lively.vm';
 // number scrubbing
 export function onNumberDragStart (evt, scrubState) {
   scrubState.initPos = evt.position;
-  scrubState.factorLabel = new Tooltip({ description: '1x' }).openInWorld(
+  scrubState.factorLabel = new Tooltip({ master: SystemTooltip, description: '1x' }).openInWorld(
     evt.hand.position.addXY(10, 10)
   );
 }

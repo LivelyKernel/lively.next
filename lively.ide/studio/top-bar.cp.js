@@ -13,6 +13,7 @@ import { Selection, SelectionElement } from '../world.js';
 import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { MorphPanel } from './scene-graph.cp.js';
+import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 
 export class FastLoadToggler extends Morph {
   static get properties () {
@@ -517,11 +518,8 @@ export class TopBarModel extends ViewModel {
     });
     // we cannot import the master from tooltip.cs.js dirctly on file-level
     // since this causes circular imports and breaks the system
-    System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
-      target._sizeTooltip = new Tooltip();
-      target._sizeTooltip.master = SystemTooltip;
-      target._sizeTooltip.openInWorld();
-    });
+    target._sizeTooltip = new Tooltip({ master: SystemTooltip });
+    target._sizeTooltip.openInWorld();
     return true;
   }
 
@@ -1015,7 +1013,7 @@ const TopBarButton = component({
   fontColor: Color.rgb(102, 102, 102),
   fontSize: 23,
   nativeCursor: 'pointer',
-  padding: rect(0, 1, 0, -1),
+  padding: rect(0, 1, 0, -1)
 });
 
 const TopBarButtonSelected = component(TopBarButton, {

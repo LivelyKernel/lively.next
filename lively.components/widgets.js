@@ -16,6 +16,7 @@ import {
 
 import kld from 'kld-intersections';
 import { Menu } from 'lively.components';
+import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 
 const { Shapes, Intersection } = kld;
 
@@ -381,7 +382,7 @@ export class ValueScrubber extends Text {
   onDragStart (evt) {
     this.execCommand('toggle active mark');
     this.initPos = evt.position;
-    this.factorLabel = new Tooltip({ description: '1x' }).openInWorld(
+    this.factorLabel = new Tooltip({ master: SystemTooltip, description: '1x' }).openInWorld(
       evt.hand.position.addXY(10, 10)
     );
     evt.hand.extent = pt(30, 30);
