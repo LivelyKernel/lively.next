@@ -1,17 +1,19 @@
 import { ViewModel, part } from 'lively.morphic/components/core.js';
-import { InspectionTree, PropertyTree, isMultiValue, RemoteInspectionTree, printValue } from './context.js';
+import { InspectionTree, isMultiValue, RemoteInspectionTree, printValue } from './context.js';
 import { arr, num, promise, obj, Path } from 'lively.lang';
 import { pt, rect, Color } from 'lively.graphics';
 import { config, HorizontalLayout, Label, VerticalLayout, Morph, morph, Icon } from 'lively.morphic';
-import { connect, noUpdate, disconnect, once } from 'lively.bindings';
-import { LoadingIndicator, DropDownList } from 'lively.components';
+import { connect, disconnect, once } from 'lively.bindings';
+import { LoadingIndicator } from 'lively.components';
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
-import { SearchField, DropDownSelector, LabeledCheckBox } from 'lively.components/widgets.js';
+import { DropDownSelector } from 'lively.components/widgets.js';
 import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
-import { popovers, valueWidgets } from 'lively.ide';
+import { valueWidgets } from 'lively.ide';
 import { onNumberDragStart, generateReferenceExpression, onNumberDragEnd, onNumberDrag } from './helpers.js';
 import { InstructionWidget } from './ui.cp.js';
+import { ColorPicker } from '../../styling/color-picker.cp.js';
+import { ShadowPopup, PositionPopupLight, PaddingPopup } from '../../studio/controls/popups.cp.js';
 
 const inspectorCommands = [
 
@@ -86,15 +88,15 @@ class DraggedProp extends Morph {
 
   update (evt) {
     const handPosition = evt.hand.globalPosition;
-    let target = this.morphBeneath(handPosition); let hiddenMorph;
+    let target = this.morphBeneath(handPosition);
     if (!target) return;
-    if (target == this.morphHighlighter) {
+    if (target === this.morphHighlighter) {
       target = target.morphBeneath(handPosition);
     }
-    while (hiddenMorph = [target, ...target.ownerChain()].find(m => !m.visible)) {
-      target = hiddenMorph = target.morphBeneath(handPosition);
+    while ([target, ...target.ownerChain()].find(m => !m.visible)) {
+      target = target.morphBeneath(handPosition);
     }
-    if (target != this.currentTarget) {
+    if (target !== this.currentTarget) {
       this.currentTarget = target;
       if (this.morphHighlighter) this.morphHighlighter.deactivate();
       if (target.isWorld) return;
@@ -258,13 +260,13 @@ export class PropertyControl extends DraggableTreeLabel {
     });
     connect(propertyControl.control, 'update', propertyControl, 'propertyValue', {
       updater: function ($upd, val) {
-        if (this.targetObj.propertyValue != val) $upd(val);
+        if (this.targetObj.propertyValue !== val) $upd(val);
       }
     });
     connect(propertyControl, 'update', propertyControl.control, 'selectedValue', {
       updater: function ($upd, val) {
         val = (val && val.valueOf) ? val.valueOf() : val;
-        if (this.targetObj.propertyValue != val) $upd(val);
+        if (this.targetObj.propertyValue !== val) $upd(val);
       }
     });
     return propertyControl;
@@ -344,7 +346,6 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderEnumControl (args) {
-    let propertyControl;
     const { value, spec: { values }, valueString, keyString, target, node, tree } = args;
     const handler = async (evt, charPos) => {
       const menu = target.world().openWorldMenu(evt, values.map(v => ({
@@ -367,7 +368,6 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderStringControl (args) {
-    let propertyControl;
     const { value, fastRender, keyString, valueString, node } = args;
     return [
       ...this.renderGrabbableKey(args),
@@ -376,17 +376,14 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderRectangleControl (args) {
-    let propertyControl;
     const { value, keyString, valueString, target, node } = args;
     const handler = async (evt) => {
-      const editor = new popovers.RectanglePopover({
-        hasFixedPosition: true,
-        rectangle: value
-      });
-      editor.relayout();
+      // fixme: add rectangle popup!
+      const editor = part(PaddingPopup, { hasFixedPosition: true });
+      editor.viewModel.startPadding(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor, 'rectangle', (rect) => {
-        target[keyString] = rect;
+      connect(editor.viewModel, 'paddingChanged', (padding) => {
+        target[keyString] = padding;
         node.rerender();
       });
     };
@@ -411,7 +408,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderNumberControl (args) {
-    let propertyControl; const { value, spec, keyString, valueString, fastRender, node, target, tree } = args;
+    const { value, spec, keyString, valueString, fastRender, node, target, tree } = args;
     const { _numberControls = new NumberControls() } = node;
 
     const [up, down] = _numberControls.submorphs;
@@ -419,7 +416,7 @@ export class PropertyControl extends DraggableTreeLabel {
     const scrubState = node._numberControls = _numberControls;
 
     if ('max' in spec && 'min' in spec &&
-        spec.min != -Infinity && spec.max != Infinity) {
+        spec.min !== -Infinity && spec.max !== Infinity) {
       scrubState.baseFactor = (spec.max - spec.min) / 100;
       scrubState.floatingPoint = spec.isFloat;
       scrubState.max = spec.max;
@@ -428,15 +425,15 @@ export class PropertyControl extends DraggableTreeLabel {
       scrubState.floatingPoint = spec.isFloat;
       scrubState.baseFactor = 0.5;
 
-      scrubState.min = spec.min != undefined ? spec.min : -Infinity;
-      scrubState.max = spec.max != undefined ? spec.max : Infinity;
+      scrubState.min = spec.min !== undefined ? spec.min : -Infinity;
+      scrubState.max = spec.max !== undefined ? spec.max : Infinity;
     }
 
     const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
     return [
       ...this.renderGrabbableKey(args),
       ...node._inputMorph ? [node._inputMorph, {}] : [
-        ` ${value != undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? Math.max(4, num.precision(value)) : 0)} `,
+        ` ${value !== undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? Math.max(4, num.precision(value)) : 0)} `,
 
         {
           fontColor: numberColor,
@@ -503,13 +500,11 @@ export class PropertyControl extends DraggableTreeLabel {
     const { keyString, valueString, value, target, node } = args;
     const handler = async (evt) => {
       // if already open, return
-      const editor = new popovers.ShadowPopover({
-        shadowValue: target[keyString],
-        hasFixedPosition: true
-      });
+      const editor = part(ShadowPopup, { hasFixedPosition: true });
+      editor.viewModel.shadowValue = target[keyString];
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor, 'shadowValue', (pointValue) => {
-        target[keyString] = pointValue;
+      connect(editor.viewModel, 'value', (shadowValue) => {
+        target[keyString] = shadowValue;
         node.rerender();
       });
     };
@@ -523,13 +518,10 @@ export class PropertyControl extends DraggableTreeLabel {
     let propertyControl; const { keyString, valueString, value, fontColor, target, node } = args;
     const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
     const handler = async (evt) => {
-      // if already open, return
-      const editor = new popovers.PointPopover({
-        pointValue: target[keyString],
-        hasFixedPosition: true
-      });
+      const editor = part(PositionPopupLight, { hasFixedPosition: true });
+      editor.setPoint(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor, 'pointValue', (pointValue) => {
+      connect(editor.viewModel, 'value', (pointValue) => {
         target[keyString] = pointValue;
         node.rerender();
       });
@@ -560,15 +552,13 @@ export class PropertyControl extends DraggableTreeLabel {
       valueString, keyString, value, target
     } = args;
     const handler = async (evt) => {
-      const editor = new popovers.FillPopover({
-        hasFixedPosition: true,
-        handleMorph: target,
-        fillValue: value,
-        title: 'Fill Control',
-        gradientEnabled
+      const editor = part(ColorPicker, {
+        hasFixedPosition: true
       });
+      editor.solidOnly = !gradientEnabled;
+      editor.focusOnMorph(target, value);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor, 'fillValue', (fill) => {
+      connect(editor.viewModel, 'value', (fill) => {
         target[keyString] = fill;
         node.rerender();
       });
@@ -789,7 +779,7 @@ export class Inspector extends ViewModel {
       codeEditor.evalEnvironment = {
         targetModule: 'lively://lively.morphic/inspector',
         get context () {
-          return thisBindingSelector.selection == 'selection'
+          return thisBindingSelector.selection === 'selection'
             ? self.selectedContext
             : self.targetObject;
         },
@@ -879,14 +869,14 @@ export class Inspector extends ViewModel {
       this.stopStepping();
       return;
     }
-    if (this.targetObject._styleSheetProps != this.lastStyleSheetProps) {
+    if (this.targetObject._styleSheetProps !== this.lastStyleSheetProps) {
       this.refreshTreeView();
       this.lastStyleSheetProps = this.targetObject._styleSheetProps;
       return;
     }
     const change = arr.last(this.targetObject.env.changeManager.changesFor(this.targetObject));
-    if (change == this.lastChange && this.lastSubmorphs == printValue(this.targetObject && this.targetObject.submorphs)) { return; }
-    if (this.focusedNode && this.focusedNode.keyString == change.prop) {
+    if (change === this.lastChange && this.lastSubmorphs === printValue(this.targetObject && this.targetObject.submorphs)) { return; }
+    if (this.focusedNode && this.focusedNode.keyString === change.prop) {
       this.repositionOpenWidget();
     }
     this.lastChange = change;
