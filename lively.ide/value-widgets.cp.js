@@ -30,6 +30,8 @@ const Scrubber = component({
   baseFactor: 0.5,
   extent: pt(53.6, 24),
   fixedWidth: true,
+  selectable: false,
+  readOnly: true,
   fontColor: Color.rgb(40, 116, 166),
   fontFamily: 'IBM Plex Sans',
   fontSize: 16,
@@ -76,15 +78,21 @@ const DefaultNumberWidget = component({
     part(CaretButton, { name: 'down', rotation: Math.PI })]
 });
 
+const ScrubberLight = component(Scrubber, {
+  name: 'scrubber/light',
+  fontColor: Color.rgb(178, 235, 242),
+  cursorColor: Color.rgba(178, 235, 242, 0.5)
+});
+
 const DarkNumberWidget = component(DefaultNumberWidget, {
   name: 'dark number widget',
   fill: Color.rgb(66, 73, 73),
   submorphs: [{
     name: 'value',
-    fontColor: Color.rgb(178, 235, 242)
+    master: ScrubberLight
   }]
 });
 
 // DarkNumberWidget.openInWorld()
 
-export { DefaultNumberWidget, DarkNumberWidget };
+export { DefaultNumberWidget, DarkNumberWidget, Scrubber };

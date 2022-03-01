@@ -1,7 +1,7 @@
 import { ViewModel, part, add, component } from 'lively.morphic/components/core.js';
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
 import { TilingLayout, Label } from 'lively.morphic';
-import { AddButton, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInput, PropertyLabelHovered } from '../shared.cp.js';
+import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInput, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
 import { arr, string } from 'lively.lang';
@@ -20,6 +20,30 @@ export class BorderControlModel extends PropertySectionModel {
       targetMorph: {},
       popup: {},
       updateDirectly: { defaultValue: true },
+      propertyLabelComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponent') || PropertyLabel;
+        } 
+      },
+      propertyLabelComponentActive: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
+        }
+      },
+      propertyLabelComponentHover: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
+        }
+      },
+      borderPopupComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('borderPopupComponent') || BorderPopup; // eslint-disable-line no-use-before-define
+        }
+      },
       hasMixedColor: {
         derived: true,
         get () {
@@ -76,13 +100,13 @@ export class BorderControlModel extends PropertySectionModel {
   }
 
   onRefresh (prop) {
-    if (prop == 'popup') {
+    if (prop === 'popup') {
       this.ui.moreButton.master = this.popup
-        ? PropertyLabelActive
+        ? this.propertyLabelComponentActive
         : {
-            auto: AddButton,
-            hover: PropertyLabelHovered,
-            click: PropertyLabelActive
+            auto: this.propertyLabelComponent,
+            hover: this.propertyLabelComponentHover,
+            click: this.propertyLabelComponentActive
           };
     }
   }
@@ -95,8 +119,8 @@ export class BorderControlModel extends PropertySectionModel {
     this.targetMorph = aMorph;
     if (
       Color.white.equals(this.targetMorph.borderColor.valueOf()) &&
-      this.targetMorph.borderWidth == 0 &&
-      this.targetMorph.borderStyle == 'solid') {
+      this.targetMorph.borderWidth === 0 &&
+      this.targetMorph.borderStyle === 'solid') {
       this.deactivate();
     } else {
       this.activate(false);
@@ -152,7 +176,7 @@ export class BorderControlModel extends PropertySectionModel {
     const { elementsWrapper } = this.ui;
     elementsWrapper.visible = true;
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = BorderControl;
+    this.view.master = BorderControl; // eslint-disable-line no-use-before-define
     if (initBorder) {
       this.targetMorph.border = { color: Color.white, width: 1, style: 'solid' };
       this.update();
@@ -181,7 +205,7 @@ export class BorderControlModel extends PropertySectionModel {
    * Opens the popup responsible for controlling the property.
    */
   openPopup () {
-    const p = this.popup = this.popup || part(BorderPopup);
+    const p = this.popup = this.popup || part(this.borderPopupComponent);
     p.viewModel.targetMorph = this.targetMorph;
     p.openInWorld();
     p.height = 25;
@@ -227,6 +251,24 @@ export class BorderPopupWindow extends ViewModel {
       targetMorph: {}, // this is fine because it only works in the context of a morph
       selectedBorder: { defaultValue: 'all' },
       isHaloItem: { defaultValue: true },
+      propertyLabelComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponent') || PropertyLabel;
+        } 
+      },
+      propertyLabelComponentActive: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
+        }
+      },
+      propertyLabelComponentHover: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
+        }
+      },
       expose: {
         get () {
           return ['close', 'isHaloItem'];
@@ -258,19 +300,19 @@ export class BorderPopupWindow extends ViewModel {
   }
 
   onRefresh (prop) {
-    if (prop == 'selectedBorder') {
-      const { allBorders, leftBorder, rightBorder, bottomBorder, topBorder } = this.ui;
+    if (prop === 'selectedBorder') {
+      const { leftBorder, rightBorder, bottomBorder, topBorder } = this.ui;
       const valToElem = {
         left: leftBorder,
         right: rightBorder,
         bottom: bottomBorder,
         top: topBorder
       };
-      Object.values(valToElem).forEach(control => control.master = { auto: AddButton, hover: PropertyLabelHovered });
-      valToElem[this.selectedBorder].master = PropertyLabelActive;
+      Object.values(valToElem).forEach(control => control.master = { auto: this.propertyLabelComponent, hover: this.propertyLabelComponentHover });
+      valToElem[this.selectedBorder].master = this.propertyLabelComponentActive;
     }
 
-    if (prop == 'targetMorph') {
+    if (prop === 'targetMorph') {
       this.models.borderControl.withBorder(this.targetMorph.borderLeft);
     }
   }
@@ -380,7 +422,6 @@ const BorderControlElements = component({
   }]
 });
 
-// part(BorderPopup)
 const BorderPopup = component(DarkPopupWindow, {
   defaultViewModel: BorderPopupWindow,
   name: 'border popup',

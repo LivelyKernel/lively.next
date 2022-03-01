@@ -134,8 +134,7 @@ const NumberInput = component(DarkNumberWidget, {
   floatingPoint: false,
   submorphs: [{
     name: 'value',
-    fontSize: 14,
-    cursorColor: Color.rgba(178, 235, 242, 0.5)
+    fontSize: 14
   }, {
     name: 'up',
     visible: false

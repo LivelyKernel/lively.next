@@ -536,6 +536,7 @@ const RichTextControl = component(PropertySection, {
         listMaster: DarkThemeList,
         items: [
           { isListItem: true, string: 'No wrapping', value: false },
+          { isListItem: true, string: 'Wrap lines', value: true },
           { isListItem: true, string: 'Wrap by characters', value: 'by-chars' },
           { isListItem: true, string: 'Wrap by words', value: 'by-words' },
           { isListItem: true, string: 'Wrap only by words', value: 'only-by-words' }]
