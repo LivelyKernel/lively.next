@@ -65,6 +65,12 @@ export class ShapeControlModel extends ViewModel {
   onRefresh () {
     if (!this.view) return; // this should be handled by the view models superclass
     this.ui.multiRadiusContainer.visible = this.multiBorderRadiusActive;
+    this.ui.independentCornerToggle.master = this.multiBorderRadiusActive
+      ? this.propertyLabelComponentActive
+      : {
+          auto: this.propertyLabelComponent,
+          hover: this.propertyLabelComponentHover
+        };
     this.ui.proportionalResizeToggle.master = this.proportionalResize
       ? this.propertyLabelComponentActive
       : {
