@@ -1,5 +1,6 @@
 lively.next-node_modules/
 dev-deps/
+esm_cache/
 .livelydbs/
 .module_cache/
 tmp/

@@ -4,12 +4,14 @@ import { unregisterExtension, registerExtension, parseQuery, extensions, createF
 import { resourceExtension as httpResourceExtension } from './src/http-resource.js';
 import { resourceExtension as fileResourceExtension } from './src/fs-resource.js';
 import { resourceExtension as localResourceExtension } from './src/local-resource.js';
+import { resourceExtension as esmResourceExtension } from './src/esm-resource.js';
 import { newUUID } from 'lively.lang/string.js';
 import { waitFor } from 'lively.lang/promise.js';
 
 registerExtension(localResourceExtension);
 registerExtension(httpResourceExtension);
 registerExtension(fileResourceExtension);
+registerExtension(esmResourceExtension);
 
 export async function createFileSpec (baseDir, depth = 'infinity', opts) {
   let files = await baseDir.dirList(depth, opts); let spec = {};
