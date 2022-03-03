@@ -431,6 +431,11 @@ export class ObjectEditorModel extends ViewModel {
 
   // onLoad()
 
+  async warnForUnsavedChanges () {
+    return await this.world().confirm([
+      'Discard Changes\n', {}, 'The unsaved changes to this module are going to be discarded.\nAre you sure you want to proceed?', { fontSize: 16, fontWeight: 'normal' }], { requester: this.view, width: 350 });
+  }
+
   async onWindowClose () {
     let proceed = true;
     if (await this.hasUnsavedChanges()) proceed = await this.warnForUnsavedChanges();
