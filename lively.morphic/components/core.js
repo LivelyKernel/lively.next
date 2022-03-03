@@ -8,6 +8,18 @@ import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName } from '../helpers.js';
 import { ComponentPolicy } from './policy.js';
 
+export function purgeBindingConnections (snapshot, ref, pool) {
+  let { attributeConnections } = snapshot.props;
+  if (attributeConnections) {
+    attributeConnections = attributeConnections.value;
+    for (let i = attributeConnections.length; i--;) {
+      const { id, __ref__ } = attributeConnections[i];
+      if (!__ref__) continue;
+      if (pool.refForId(id).realObj._isBinding) { arr.removeAt(attributeConnections, i); }
+    }
+  }
+}
+
 /**
  * Defines the core interface for defining and using master components in the system.
  * Components are defined in component files and allow for a file based definition of master components
@@ -124,6 +136,9 @@ export class ViewModel {
         }));
       }
     }
+
+    // delete all bindings
+    purgeBindingConnections(snapshot, ref, pool);
   }
 
   getProperty (key) {
@@ -220,14 +235,14 @@ export class ViewModel {
         if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
         if (!target) continue;
         if (obj.isFunction(handler)) {
-          connect(target, signal, handler);
+          connect(target, signal, handler)._isBinding = true;
           continue;
         }
         connect(target, signal, this, handler, {
           override,
           converter,
           updater
-        });
+        })._isBinding = true;
       } catch (err) {
         console.warn('Failed to reify biniding: ', target, model, signal, handler);
       }
