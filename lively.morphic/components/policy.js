@@ -256,6 +256,21 @@ export class ComponentPolicy {
     if (this.managesMorph(managed)) return managed;
   }
 
+  generateExprForPolicy (aPolicy) {
+    const { derivedMorph } = aPolicy;
+    const owners = derivedMorph.ownerChain();
+    const topLevelComponent = arr.last([derivedMorph, ...owners]);
+    // we also need to take into account the master scoping
+    // avoiding ambiguos/clashing names!
+    const policiesInHierarchy = [...owners.filter(m => m.owner && m.master).map(m => m.name).reverse(), derivedMorph.name];
+    const { export: exportedName, module: modulePath } = topLevelComponent[Symbol.for('lively-module-meta')];
+    // this may just be leading to incorrect masters because the policies are not yet fully applied
+    return {
+      __expr__: exportedName + policiesInHierarchy.map(policyOwner => `.get("${policyOwner}")`).join('') + '.master',
+      bindings: { [modulePath]: [exportedName] }
+    };
+  }
+
   get __only_serialize__ () { return ['derivedMorph']; }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
@@ -263,7 +278,7 @@ export class ComponentPolicy {
     for (let stateName of ['auto', 'click', 'hover']) {
       if (!this[stateName]) continue;
       if (this[stateName].isPolicy) {
-        addFn(stateName, this[stateName]);
+        addFn(stateName, pool.expressionSerializer.exprStringEncode(this.generateExprForPolicy(this[stateName])));
         continue;
       }
       if (!this[stateName][Symbol.for('lively-module-meta')]) {
