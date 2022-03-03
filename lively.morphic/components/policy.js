@@ -359,23 +359,16 @@ export class ComponentPolicy {
     const target = this.derivedMorph;
     // when does this happen???
     
-    if (!target.env.world) {
+    if (!this._requestedDelayedExecution && !(target.env.world || target.env.eventDispatcher)) {
       // wait for env to be installed but already prepare the morph
       // such that in case it is getting copied before the first application
       // the overridden props are carried over properly
       if (!this._hasUnresolvedMaster) this.prepareSubmorphsToBeManaged(target, this.auto);
-      once(target.env, 'world', () => {
+      target.env.onSetWorldDo(() => {
         // remove the parametrized props from the submorph hierarchy here
         this.applyIfNeeded(needsUpdate, animationConfig);
       });
-      return;
-    }
-    if (!target.env.eventDispatcher) {
-      // wait for env to be installed fully but already prepare the morph
-      if (!this._hasUnresolvedMaster) this.prepareSubmorphsToBeManaged(target, this.auto);
-      once(target.env, 'eventDispatcher', () => {
-        this.applyIfNeeded(needsUpdate, animationConfig);
-      });
+      this._requestedDelayedExecution = true;
       return;
     }
     if (this._hasUnresolvedMaster) {
