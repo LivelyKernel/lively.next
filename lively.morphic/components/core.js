@@ -56,18 +56,21 @@ export class ViewModel {
   static get properties () {
     return {
       view: {
+        serialize: false,
         set (v) {
           this.setProperty('view', v);
           if (v) v.viewModel = this;
         }
       },
       bindings: {
+        serialize: false,
         readOnly: true,
         get () {
           return [];
         }
       },
       models: {
+        serialize: false,
         derived: true,
         get () {
           const nameModelMap = {};
@@ -79,7 +82,14 @@ export class ViewModel {
           return this._models = nameModelMap;
         }
       },
+      expose: {
+        serialize: false,
+        get () {
+          return [];
+        }
+      },
       ui: {
+        serialize: false,
         derived: true,
         get () {
           const nameMorphMap = {};
