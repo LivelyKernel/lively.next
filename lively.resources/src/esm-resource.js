@@ -6,12 +6,11 @@ const requestMap = {}
 export class ESMREesource extends Resource {
 
   async read () {
+    debugger
     let module;
 
     const baseUrl = 'https://jspm.dev/';
-    
-    const id = this.url.replace('esm://cache/', '');
-    
+    const id = this.url.replace('esm://', '');//.replace('%3A%0A', ':');
     let pathStructure = id.split('/').filter(Boolean);
     
     // jspm servers both the entry point into a package as well as subcontent from package@version/
@@ -27,6 +26,22 @@ export class ESMREesource extends Resource {
       module = await res.read();
     } else {
       module = await resource((baseUrl + id)).read();
+      if (pathStructure.length == 2) {
+        let importAndExports = module.matchAll(/(?:export.*from ['\"](.*)['\"];?$)|(?:import.*['\"](.*)['\"];?$)/gm);
+        importAndExports = [...importAndExports];
+        if (importAndExports.length > 0){
+          for (let match of importAndExports){
+            debugger
+            match = match.filter(Boolean);
+            module = module.replaceAll(match[1], match[1].replaceAll(/(?<!\.)\.\//gm, 'esm://'));
+          }
+        }
+      }
+      module = module.replaceAll(/(?<!\/)\/npm\:/gm, 'esm://npm:');
+      // if (pathStructure.includes('index.js')) {
+      //   module = module.replaceAll(/(?<!\.)\.\//gm, '/');
+      //   module = module.replaceAll('/npm:', 'esm:///npm:');
+      // }
       res.write(module);
     }
     return module;

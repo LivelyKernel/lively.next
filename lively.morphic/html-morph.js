@@ -3,7 +3,7 @@ import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
 import vdom from 'virtual-dom';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
-import css from 'esm://cache/css@3.0.0';
+import css from 'esm://css@3.0.0';
 const { diff, patch, h, create: createElement } = vdom;
 
 // see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
