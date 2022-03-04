@@ -64,18 +64,26 @@ export class ESMREesource extends Resource {
       }
       pathRes = requestMap[currPath + elem] 
       if (!pathRes) {
-        pathRes = resource(currPath).join(elem);
+        pathRes = resource(currPath).join(elem); 
         if (elem.endsWith('/')) {
-          // signal that we are currently creating this resource
-          // and wait for this operation to finish
-          requestMap[currPath + elem] = pathRes.mkdir();
-          pathRes = await requestMap[currPath + elem];
+          const dirExists = await pathRes.exists();
+          if (requestMap[currPath + elem] || dirExists){
+            await requestMap[currPath + elem]
+            currPath = pathRes.url;
+            continue
+          }
+          else {
+            // signal that we are currently creating this resource
+            // and wait for this operation to finish
+            requestMap[currPath + elem] = pathRes.mkdir();
+            pathRes = await requestMap[currPath + elem];
+            } 
         } 
       } else {
       // another request already started the creation of this resource
       // since this happens asynchronously we could be scheduled "in between"
       // wait until this process is done,
-      // since otherwise we will cause server errors when creating a directory that already exists
+      // since otherwise we will cause server errors when creating a resource that already exists
       pathRes = await pathRes;
       }
       currPath = pathRes.url;
