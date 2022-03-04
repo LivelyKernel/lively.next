@@ -1,5 +1,5 @@
-import markdownIt from 'https://jspm.dev/markdown-it';
-import markdownCheckbox from 'https://jspm.dev/markdown-it-checkbox';
+import markdownIt from 'esm://cache/markdown-it@12.3.2';
+import markdownCheckbox from 'esm://cache/markdown-it-checkbox@1.1.0';
 import { string } from 'lively.lang';
 
 class MarkdownCompiler {

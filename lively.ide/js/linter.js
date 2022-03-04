@@ -3,12 +3,13 @@
  */
 
 import { importModuleViaNative } from 'lively.resources';
-import config from 'https://jspm.dev/eslint-config-standard';
+import config from 'esm://cache/eslint-config-standard@16.0.3';
 
 let eslint;
 
 (async () => {
   // fixme: this can become a normal import once we update babel to babel
+  // this might also allow using the custom esm:// cache
   eslint = await importModuleViaNative('https://jspm.dev/eslint@7.32.0');
 })();
 

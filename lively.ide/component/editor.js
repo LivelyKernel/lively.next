@@ -1,7 +1,7 @@
 import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { Icons } from 'lively.morphic/text/icons.js';
 import { arr, obj, fun, promise, string } from 'lively.lang';
-import ASTQ from 'https://jspm.dev/astq@2.7.5';
+import ASTQ from 'esm://cache/astq@2.7.5';
 import { parse } from 'lively.ast';
 import { Range } from 'lively.morphic/text/range.js';
 import { module } from 'lively.modules/index.js';

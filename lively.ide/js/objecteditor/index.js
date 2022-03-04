@@ -1759,6 +1759,7 @@ export class ImportControllerModel extends ViewModel {
         if (jspmModule.status !== 'accepted') return;
         [jspmModule] = jspmModule.selected;
         const { version, name } = jspmModule.package;
+        // fixme: use custom esm://cache mechanism per default here?
         importStmt = `import ... from "https://jspm.dev/${name}@${version}";`;
         importStyle = 'free text'; // transition to free text mode
       }

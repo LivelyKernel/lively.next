@@ -711,7 +711,7 @@ const commands = [
       if (!format) ({ a, b, format } = findFormat(a, b));
       else { a = String(a); b = String(b); }
 
-      const diff = await System.import('https://jspm.dev/diff');
+      const diff = await System.import('esm://cache/diff@5.0.0');
 
       let diffed;
 
