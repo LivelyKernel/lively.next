@@ -685,11 +685,15 @@ export class LivelyWorld extends World {
     return statusMessage;
   }
 
-  async addProgressBar (opts = {}) {
+  addTextWindow (content) {
+    debugger;
+    this.execCommand('open workspace', { content, title: 'Text Window' });  
+  }
+  
+  addProgressBar (opts = {}) {
     const { location = 'center' } = opts;
-    const pBar = await loadObjectFromPartsbinFolder('progress bar');
+    const pBar = LoadingIndicator.open({ location });
     Object.assign(pBar, { progress: 0 }, obj.dissoc(opts, ['location']));
-    this.addMorph(pBar);
     pBar.align(pBar[location], this.visibleBounds()[location]());
     return pBar;
   }

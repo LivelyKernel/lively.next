@@ -411,24 +411,6 @@ function flatten (array, optDepth) {
 }
 
 /**
- * Calls `it` on each element of `array` and returns the result flattened. Use [Array.prototype.flatMap()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flatMap) instead.
- * @param {any[]} array 
- * @param {function} it 
- * @param {Object} ctx - Bound to `this` in the call to `it`
- * @returns {any[]}
- */
-function flatmap (array, it, ctx) {
-  // the simple version
-  // Array.prototype.concat.apply([], array.map(it, ctx));
-  // causes stack overflows with really big arrays
-  const results = [];
-  for (let i = 0; i < array.length; i++) {
-    results.push.apply(results, it.call(ctx, array[i], i));
-  }
-  return results;
-}
-
-/**
  * Returns a new array that contains an element of `arra` and `delim` alternating.
  * @param {any[]} array 
  * @param {any} delim 
@@ -439,12 +421,6 @@ function interpose (array, delim) {
     if (xs.length > 0) xs.push(delim);
     xs.push(x); return xs;
   }, []);
-}
-
-function delimWith (array, delim) {
-  // ignore-in-doc
-  // previously used, use interpose now!
-  return interpose(array, delim);
 }
 
 /**
@@ -830,69 +806,58 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
   }, endFunc)();
 }
 
-// FIXME: progress bar would is to be loaded from the parts bin, which is retired a long time ago
-// Would need to fix the progress bar functionality of the world before fixing this
-// function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whenDoneFunc, context or spec */) {
-// 
-//   const args = Array.from(arguments);
-//   const array = args.shift();
-//   const steps = array.length;
-//   let progressBar; let iterator; let labelFunc; let whenDoneFunc; let context;
-//   let progressBarAdded = false;
-// 
-//   // init args
-//   if (args.length === 1) {
-//     progressBar = args[0].progressBar;
-//     iterator = args[0].iterator;
-//     labelFunc = args[0].labelFunction;
-//     whenDoneFunc = args[0].whenDone;
-//     context = args[0].context;
-//   } else {
-//     progressBar = args[0];
-//     iterator = args[1];
-//     labelFunc = args[2];
-//     whenDoneFunc = args[3];
-//     context = args[4];
-//   }
-//   if (!context) context = typeof window !== 'undefined' ? window : GLOB;
-//   if (!labelFunc) labelFunc = function (x) { return x; };
-// 
-//   // init progressbar
-//   if (!progressBar) {
-//     progressBarAdded = true;
-//     const Global = typeof window !== 'undefined' ? window : GLOB;
-//     progressBar = $world
-//       ? $world.addProgressBar()
-//       : {
-//           value: null,
-//           label: null,
-//           remove: function () {}
-//         };
-//   }
-//   progressBar.value = 0;
-// 
-//   // nest functions so that the iterator calls the next after a delay
-//   (array.reduceRight(function (nextFunc, item, idx) {
-//     return function () {
-//       try {
-//         progressBar.value = (idx / steps);
-//         if (labelFunc) progressBar.label = (labelFunc.call(context, item, idx));
-//         iterator.call(context, item, idx);
-//       } catch (e) {
-//         console.error(
-//           'Error in forEachShowingProgress at %s (%s)\n%s\n%s',
-//           idx, item, e, e.stack);
-//       }
-//       delay(nextFunc, 0);
-//     };
-//   }, function () {
-//     progressBar.value = 1;
-//     if (progressBarAdded) (function () { progressBar.remove(); }).delay(0);
-//     if (whenDoneFunc) whenDoneFunc.call(context);
-//   }))();
-// 
-//   return array;
-// }
+function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whenDoneFunc */) {
+  const args = Array.from(arguments);
+  const array = args.shift();
+  const steps = array.length;
+  
+  let progressBar; let iterator; let labelFunc; let whenDoneFunc; let context;
+  let progressBarAdded = false;
+
+  // init args
+  if (args.length === 1) {
+    progressBar = args[0].progressBar;
+    iterator = args[0].iterator;
+    labelFunc = args[0].labelFunction;
+    whenDoneFunc = args[0].whenDone;
+  } else {
+    progressBar = args[0];
+    iterator = args[1];
+    labelFunc = args[2];
+    whenDoneFunc = args[3];
+  }
+  
+  if (!labelFunc) labelFunc = function (x) { return x; };
+
+  // init progressbar
+  if (!progressBar) {
+    progressBarAdded = true;
+    progressBar = $world.addProgressBar();
+  }
+  progressBar.progress = 0;
+
+  // nest functions so that the iterator calls the next after a delay
+  (array.reduceRight(function (nextFunc, item, idx) {
+    return function () {
+      try {
+        progressBar.progress = (idx / steps);
+        if (labelFunc) progressBar.label = (labelFunc.call(context, item, idx));
+        iterator.call(context, item, idx);
+      } catch (e) {
+        console.error(
+          'Error in forEachShowingProgress at %s (%s)\n%s\n%s',
+          idx, item, e, e.stack);
+      }
+      delay(nextFunc, 0);
+    };
+  }, function () {
+    progressBar.progress = 1;
+    if (progressBarAdded) (function () { progressBar.remove(); }).delay(0);
+    if (whenDoneFunc) whenDoneFunc.call();
+  }))();
+
+  return array;
+}
 
 /**
  * Swap the element at `array[index1]` with the one at `array[index2]`. Mutating.
@@ -1242,7 +1207,10 @@ function clone (array) {
   return [].concat(array);
 }
 
-function toArray (array) { return from(array); }
+/* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Enable chaining (lively.lang) for methods on Array.prototype.
+Do not use these directly, use the methods provided by Array.prototype instead.
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 
 // -=-=-=-=-=-
 // DEPRECATED
@@ -1272,107 +1240,6 @@ function inject (array, memo, iterator, context) {
   if (context) iterator = iterator.bind(context);
   return array.reduce(iterator, memo);
 }
-
-// asynch methods
-function mapAsyncSeries (array, iterator, callback) {
-  // Apply `iterator` over `array`. Unlike `mapAsync` the invocation of
-  // the iterator happens step by step in the order of the items of the array
-  // and not concurrently.
-
-  // ignore-in-doc
-  // Could simply be:
-  // return exports.arr.mapAsync(array, {parallel: 1}, iterator, callback);
-  // but the version below is 2x faster
-
-  const result = []; let callbackTriggered = false;
-  return array.reduceRight(function (nextFunc, ea, idx) {
-    if (callbackTriggered) return;
-    return function (err, eaResult) {
-      if (err) return maybeDone(err);
-      if (idx > 0) result.push(eaResult);
-      try {
-        iterator(ea, idx, once(nextFunc));
-      } catch (e) { maybeDone(e); }
-    };
-  }, function (err, eaResult) {
-    result.push(eaResult);
-    maybeDone(err, true);
-  })();
-
-  function maybeDone (err, finalCall) {
-    if (callbackTriggered || (!err && !finalCall)) return;
-    callbackTriggered = true;
-    try { callback(err, result); } catch (e) {
-      console.error('Error in mapAsyncSeries - callback invocation error:\n' + (e.stack || e));
-    }
-  }
-}
-
-function mapAsync (array, options, iterator, callback) {
-  // Apply `iterator` over `array`. In each iterator gets a callback as third
-  // argument that should be called when the iteration is done. After all
-  // iterators have called their callbacks, the main `callback` function is
-  // invoked with the result array.
-  // Example:
-  // lively.lang.arr.mapAsync([1,2,3,4],
-  //   function(n, i, next) { setTimeout(function() { next(null, n + i); }, 20); },
-  //   function(err, result) { /* result => [1,3,5,7] */ });
-
-  if (typeof options === 'function') {
-    callback = iterator;
-    iterator = options;
-    options = null;
-  }
-  options = options || {};
-
-  if (!array.length) return callback && callback(null, []);
-
-  if (!options.parallel) options.parallel = Infinity;
-
-  const results = []; const completed = [];
-  let callbackTriggered = false;
-  let lastIteratorIndex = 0;
-  let nActive = 0;
-
-  const iterators = array.map(function (item, i) {
-    return function () {
-      nActive++;
-      try {
-        iterator(item, i, once(function (err, result) {
-          results[i] = err || result;
-          maybeDone(i, err);
-        }));
-      } catch (e) { maybeDone(i, e); }
-    };
-  });
-
-  return activate();
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  function activate () {
-    while (nActive < options.parallel && lastIteratorIndex < array.length) { iterators[lastIteratorIndex++](); }
-  }
-
-  function maybeDone (idx, err) {
-    if (completed.indexOf(idx) > -1) return;
-    completed.push(idx);
-    nActive--;
-    if (callbackTriggered) return;
-    if (!err && completed.length < array.length) { activate(); return; }
-    callbackTriggered = true;
-    try { callback && callback(err, results); } catch (e) {
-      console.error('Error in mapAsync - main callback invocation error:\n' + (e.stack || e));
-    }
-  }
-}
-
-// poly-filling...
-if (!features.from) Array.from = from;
-if (!features.filter) Array.prototype.filter = function (it, ctx) { return filter(this, it, ctx); };
-if (!features.find) Array.prototype.find = function (it, ctx) { return detect(this, it, ctx); };
-if (!features.findIndex) Array.prototype.findIndex = function (it, ctx) { return findIndex(this, it, ctx); };
-if (!features.includes) Array.prototype.includes = function (x) { return includes(this, x); };
 
 export {
   range,
@@ -1458,13 +1325,11 @@ export {
   size,
   histogram,
   clone,
-  toArray,
-  each,
-  all,
-  any,
-  collect,
-  findAll,
-  inject,
-  mapAsyncSeries,
-  mapAsync
+  flat,
+  filter,
+  find,
+  map,
+  flatMap,
+  slice,
+  forEachShowingProgress
 };
