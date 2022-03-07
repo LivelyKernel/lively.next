@@ -17,7 +17,7 @@ export default class TestRunner {
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
     const results = await runner.runTestsInPackage(\'${module_to_test}\');
-    results
+    JSON.stringify(results)
     `)
     } catch (err) {
       results = {'error': err}
@@ -38,7 +38,7 @@ export default class TestRunner {
       const [_, module_to_test] = req.url.split('TestRunner/');
       const results = await this.run(module_to_test)
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(results));
+      res.end(results);
     }
   }
 } 
