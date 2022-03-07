@@ -28,7 +28,11 @@ const req = http.request(options, res => {
         return;
       }
       data.forEach((testfile) => {
-        testfileName = testfile.file.split("/").pop()
+        const pathStructure = testfile.file.split("/")
+        const testsFolderIndex = pathStructure.findIndex(p => p === "tests")
+        const testPathStructure = pathStructure.slice(testsFolderIndex + 1)
+        const testfileName = testPathStructure.join(' >> ')
+        
         if (testfile.tests.some((test) => test.type === 'test' && test.state && test.state !== 'succeeded')) console.log(`::group:: ${testfileName} ❌`)
         else console.log(`::group:: ${testfileName} ✅`)
         testfile.tests.forEach((test) => {
