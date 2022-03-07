@@ -1,4 +1,4 @@
-/* global it, describe, beforeEach, afterEach, System */
+/* global it, xit, describe, beforeEach, afterEach, System */
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
 import { loadPart, savePart } from '../partsbin.js';
@@ -41,13 +41,13 @@ describe('partsbin', function () {
   beforeEach(setup);
   afterEach(teardown);
 
-  it('publishes part in db', async () => {
+  xit('publishes part in db', async () => {
     let m = morph({ name: 'test-morph' });
     let commit = await savePart(m, m.name, publishOpts, { author: { name: 'foo-user' } });
     expect(commit.name).equals(m.name);
   });
 
-  it('loads a part', async () => {
+  xit('loads a part', async () => {
     let p = ObjectPackage.withId('package-for-loads-a-part-test');
     packagesToRemove.push(p);
 
@@ -64,7 +64,7 @@ describe('partsbin', function () {
       .containSubset([{ name: partName }]);
   });
 
-  it('loads most recent part state from file', async () => {
+  xit('loads most recent part state from file', async () => {
     // publish version 1
     let p = ObjectPackage.withId('package-for-loads-a-part-test');
     packagesToRemove.push(p);

@@ -701,7 +701,7 @@ export function generateReferenceExpression (morph, opts = {}) {
     // }
 
     if (!exprList) {
-      exprList = [`${rootExpr}.getMorphById("${morph.id}")`];
+      exprList = [`${rootExpr}.getMorphWithId("${morph.id}")`];
     }
 
     return exprList;

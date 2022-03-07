@@ -1,4 +1,4 @@
-/* global it, describe, beforeEach, afterEach */
+/* global it, xit, describe, beforeEach, afterEach */
 import { morph } from '../index.js';
 import { FunctionScript, TargetScript } from '../ticking.js';
 import { expect } from 'mocha-es6';
@@ -21,7 +21,8 @@ describe('ticking scripts', function () {
 
   afterEach(() => aMorph.stopStepping());
 
-  it('morph startStepping', async () => {
+  // this test is useful and currently suceedings, but flaky in CI, probably due to the delay
+  xit('morph startStepping', async () => {
     aMorph.startStepping(50, 'moveBy', pt(1, 1));
     await promise.delay(230);
     expect(aMorph.position.x).within(10 + 3, 10 + 5);

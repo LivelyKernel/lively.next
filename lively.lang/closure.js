@@ -38,7 +38,7 @@ export default class Closure {
    * @returns { Closure }
    */
   static fromFunction (func, varMapping) {
-    return new this(func, varMapping || {});
+    return new Closure(func, varMapping || {});
   }
 
   /**
@@ -200,7 +200,7 @@ export default class Closure {
     const specificSuperHandling = this.firstParameter(funcSource) === '$super';
     for (const name in this.varMapping) {
       if (!this.varMapping.hasOwnProperty(name)) continue;
-      // if (name === 'this') { thisFound = true; continue; }
+      if (name === 'this') { continue; }
       // closureVars.push(`var ${name} = this.varMapping.${name};\n`);
       closureVars.push('var ' + name + ' = this.varMapping.' + name + ';\n');
     }

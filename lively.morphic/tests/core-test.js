@@ -234,16 +234,16 @@ describe('relationship', () => {
         m5.name = 'm5';
         m6.name = 'm6';
         m7.name = 'm7';
-  
-        expect(`$world.getMorphById("${m1.id}")`).equals(generateReferenceExpression(m1));
-        expect(`$world.getMorphById("${m2.id}")`).equals(generateReferenceExpression(m2));
-  
+ 
+        expect(`$world.getMorphWithId("${m1.id}")`).equals(generateReferenceExpression(m1));
+        expect(`$world.getMorphWithId("${m2.id}")`).equals(generateReferenceExpression(m2));
+
         expect('$world.get("m3")').equals(generateReferenceExpression(m3));
         expect('$world.get("m3").get("m4")').equals(generateReferenceExpression(m4));
         expect('$world.get("m3").get("m5")').equals(generateReferenceExpression(m5));
-  
-        expect('this').equals(generateReferenceExpression({ fromMorph: m2 }));
-        expect('$world.get("m3").get("m7")').equals(m7.generateReferenceExpression({ fromMorph: m5 }));
+
+        expect('this').equals(generateReferenceExpression(m2, { fromMorph: m2 }));
+        expect('$world.get("m3").get("m7")').equals(generateReferenceExpression(m7, ({ fromMorph: m5 })));
       });
     });
   });

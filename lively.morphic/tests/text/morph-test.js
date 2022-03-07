@@ -1,4 +1,4 @@
-/* global System, it, describe, xdescribe, beforeEach, afterEach, before */
+/* global it, describe, beforeEach, afterEach, before */
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
 import { pt, Color, Rectangle } from 'lively.graphics';
@@ -6,10 +6,6 @@ import { expectSelection } from '../test-helpers.js';
 import { Range } from '../../text/range.js';
 
 expectSelection(chai);
-
-let describeInBrowser = System.get('@system-env').browser
-  ? describe
-  : (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); };
 
 const defaultStyle = {
   fontFamily: 'Monaco, monospace',
@@ -53,7 +49,7 @@ function removeSut () {
   sut && sut.remove();
 }
 
-describeInBrowser('text attributes', () => {
+describe('text attributes', () => {
   beforeEach(() => sut = text('hello', {}));
 
   it('addTextAttribute merges style ranges', () => {
@@ -61,7 +57,7 @@ describeInBrowser('text attributes', () => {
     let style_b = { fontSize: 14, fontWeight: 'bold' };
     
     sut.addTextAttribute(style_a, Range.create(0, 1, 0, 3));
-    const textAttributes = sut.document.lines[0].textAttributes;
+    let textAttributes = sut.document.lines[0].textAttributes;
     expect(textAttributes).deep.equals([style_a]);
 
     sut.addTextAttribute(style_b, Range.create(0, 2, 0, 4));
@@ -204,7 +200,7 @@ describeInBrowser('text attributes', () => {
   });
 });
 
-describeInBrowser('anchors', () => {
+describe('anchors', () => {
   it('adds anchor by id', () => {
     let t = text('hello\nworld', {});
     let nAnchors = t.anchors.length;
@@ -275,7 +271,7 @@ describeInBrowser('anchors', () => {
   });
 });
 
-describeInBrowser('scroll', () => {
+describe('scroll', () => {
   beforeEach(() => createSut());
   afterEach(() => removeSut());
 
@@ -299,11 +295,11 @@ describeInBrowser('scroll', () => {
     expect(sut.scroll.y).closeTo(2 * lineHeight + padTop + 3, 3, 'scroll y');
     sut.cursorPosition = { column: 0, row: 0 };
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0, 0));
+    expect(sut.scroll).equals(pt(0, 1));
   });
 });
 
-describeInBrowser('text key events', () => {
+describe('text key events', () => {
   beforeEach(() => createSut());
   afterEach(() => removeSut());
 
@@ -348,7 +344,7 @@ describeInBrowser('text key events', () => {
   });
 });
 
-describeInBrowser('text mouse events', () => {
+describe('text mouse events', () => {
   let padLeft, padTop,
     h, w; 
   beforeEach(async () => {
@@ -467,7 +463,7 @@ describeInBrowser('text mouse events', () => {
   });
 });
 
-describeInBrowser('saved marks', () => {
+describe('saved marks', () => {
   let t; beforeEach(() => t = text('hello\n world', { cursorPosition: { row: 0, column: 0 } }));
   // t.openInWorld(); t.focus();
 
@@ -500,7 +496,7 @@ describeInBrowser('saved marks', () => {
   });
 });
 
-describeInBrowser('clipboard buffer / kill ring', () => {
+describe('clipboard buffer / kill ring', () => {
   let t, browserExtension;
   beforeEach(async () => {
     await createSut();
@@ -539,7 +535,7 @@ describeInBrowser('clipboard buffer / kill ring', () => {
   });
 });
 
-describeInBrowser('text movement and selection commands', () => {
+describe('text movement and selection commands', () => {
   it('selection / line string', () => {
     let t = text('hello\n world', {});
     t.selection = range(0, 2, 0, 4);
@@ -655,7 +651,7 @@ describeInBrowser('text movement and selection commands', () => {
   });
 });
 
-describeInBrowser('morph inside textAndAttributes', () => {
+describe('morph inside textAndAttributes', () => {
   let m;
   beforeEach(() => {
     sut = text('text\nfor tests', {
