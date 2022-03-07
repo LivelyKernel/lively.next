@@ -1,8 +1,7 @@
 /* global System,Map,WeakMap,Shapes,Intersection */
 import { Rectangle, Point, rect, Color, pt } from 'lively.graphics';
 import { string, num, obj, fun, promise, arr } from 'lively.lang';
-import { signal, noUpdate, connect, disconnect } from 'lively.bindings';
-import bowser from 'bowser';
+import { signal, noUpdate, disconnect } from 'lively.bindings';
 
 import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
@@ -367,7 +366,7 @@ export class Text extends Morph {
           return this.document ? this.document.textString : '';
         },
         set (value) {
-          value = (value != null) ? String(value) : '';
+          value = (value !== null) ? String(value) : '';
           // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
           this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
           this.insertText(value, { column: 0, row: 0 });
@@ -616,7 +615,6 @@ export class Text extends Morph {
         defaultValue: [],
         after: ['anchors'],
         set (val) {
-          const savedMarks = this.savedMarks;
           val = val.map(
             ea =>
               ea.isAnchor ? ea : this.addAnchor({ ...ea, id: 'saved-mark-' + string.newUUID() })
@@ -815,7 +813,7 @@ export class Text extends Morph {
       if (lineBounds) {
         for (const charBounds of lineBounds) {
           if (prevRect) {
-            if (num.roundTo(prevRect.width, 0.001) == num.roundTo(charBounds.width || 0, 0.001) && charBounds.height == prevRect.height) {
+            if (num.roundTo(prevRect.width, 0.001) === num.roundTo(charBounds.width || 0, 0.001) && charBounds.height === prevRect.height) {
               sameRectCount++;
               continue;
             }
@@ -859,7 +857,6 @@ export class Text extends Morph {
     let hardLayoutChange = false;
     let scrollChange = false;
     let enforceFit = false;
-    const displacementChange = false;
 
     if (selector) {
       textChange = selector === 'replace';
@@ -885,12 +882,12 @@ export class Text extends Morph {
         case 'fontStyle':
         case 'textStyleClasses':
         case 'fixedWidth':
-          hardLayoutChange = change.prevValue != change.value;
+          hardLayoutChange = change.prevValue !== change.value;
           break;
         case 'lineWrapping': hardLayoutChange = true; break;
         case 'borderWidth':
         case 'fixedHeight':
-          softLayoutChange = change.prevValue != change.value;
+          softLayoutChange = change.prevValue !== change.value;
           break;
         case 'padding': softLayoutChange = true; break;
       }
@@ -944,10 +941,10 @@ export class Text extends Morph {
       return;
     }
     const { prop } = change;
-    const isGeometricTransform = prop == 'position' ||
-                               prop == 'extent' ||
-                               prop == 'scale' ||
-                               prop == 'rotation';
+    const isGeometricTransform = prop === 'position' ||
+                               prop === 'extent' ||
+                               prop === 'scale' ||
+                               prop === 'rotation';
 
     // update the displacement shape if the bounds of a displacing morph changed
     if (this.displacingMorphMap.get(submorph) &&
@@ -963,7 +960,7 @@ export class Text extends Morph {
     const { anchor: submorphAnchor } = this.embeddedMorphMap.get(submorph) || {};
     if (submorphAnchor &&
         isGeometricTransform) {
-      if (prop == 'position') {
+      if (prop === 'position') {
         // embedded morphs are fixed, so we just revert the position and are done
         this._positioningSubmorph = submorph;
         submorph.position = change.prevValue;
@@ -975,8 +972,8 @@ export class Text extends Morph {
       const row = submorphAnchor.position.row;
       const line = this.document.getLine(row);
       if (!lastBounds ||
-          lastBounds.height != currentBounds.height ||
-          lastBounds.bottom() != currentBounds.bottom()) {
+          lastBounds.height !== currentBounds.height ||
+          lastBounds.bottom() !== currentBounds.bottom()) {
         line.hasEstimatedExtent = true;
         submorph._lastBounds = currentBounds;
       }
@@ -1052,7 +1049,7 @@ export class Text extends Morph {
       m.setBounds(bounds);
       this.insertText([m, {}], pos);
       this.viewState._needsFit = false;
-      if (prevTop == m.top) {
+      if (prevTop === m.top) {
         m.remove();
         continue;
       }
@@ -1074,7 +1071,7 @@ export class Text extends Morph {
     const computeIntersectionShape = (submorph) => {
       if (submorph.isPath) {
         return Shapes.path(getSvgVertices(submorph.vertices));
-      } else if (getClassName(submorph) == 'Ellipse') {
+      } else if (getClassName(submorph) === 'Ellipse') {
         return Shapes.ellipse(
           submorph.center.x,
           submorph.center.y,
@@ -1145,7 +1142,7 @@ export class Text extends Morph {
     const { anchors } = this; let removed;
     for (let i = anchors.length; i--;) {
       const a = anchors[i];
-      if (a.id == anchor || a === anchor) {
+      if (a.id === anchor || a === anchor) {
         removed = a;
         anchors.splice(i, 1);
       }
@@ -1326,7 +1323,7 @@ export class Text extends Morph {
   }
 
   execCommand (commandOrName, args, count, evt) {
-    const { name, command } = this.lookupCommand(commandOrName) || {};
+    const { command } = this.lookupCommand(commandOrName) || {};
     if (!command) return undefined;
 
     const multiSelect = this.inMultiSelectMode();
@@ -1342,9 +1339,9 @@ export class Text extends Morph {
       const selections = this.selection.selections.slice().reverse();
       this.selection = selections[0];
       this._multiSelection = origSelection;
-
+      let result;
       try {
-        var result = this.execCommand(commandOrName, args, count, evt);
+        result = this.execCommand(commandOrName, args, count, evt);
       } catch (err) {
         this.selection = origSelection;
         this._multiSelection = null;
@@ -1394,10 +1391,10 @@ export class Text extends Morph {
     // Here we know that we don't have to deal with multi select and directly
     // call the command handler
 
-    var result = this.commandHandler.exec(commandOrName, this, args, count, evt);
+    let result = this.commandHandler.exec(commandOrName, this, args, count, evt);
 
     if (result) {
-      if (typeof result.then === 'function' && typeof result.catch === 'function') { result.then(() => cleanupScroll(this)); } else cleanupScroll(this);
+      if (typeof result.then === 'function' && typeof result.catch === 'function') { result.then(() => cleanupScroll(this)); } else cleanupScroll(this); // eslint-disable-line no-use-before-define
     }
 
     return result;
@@ -1418,7 +1415,8 @@ export class Text extends Morph {
   // document changes
 
   changeDocument (doc, resetStyle = false) {
-    if (this.document) var defaultTextStyle = this.defaultTextStyle;
+    let defaultTextStyle;
+    if (this.document) defaultTextStyle = this.defaultTextStyle;
     else resetStyle = false;
     this.document = doc;
     this.textLayout.reset();
@@ -1552,7 +1550,7 @@ export class Text extends Morph {
         : [String(textOrtextAndAttributes || ''), null];
 
     const nothingToInsert =
-      !textAndAttributes.length || (textAndAttributes.length == 2 && !textAndAttributes[0]);
+      !textAndAttributes.length || (textAndAttributes.length === 2 && !textAndAttributes[0]);
     const nothingToDelete = range.isEmpty();
 
     if (nothingToInsert && nothingToDelete) return range;
@@ -1708,9 +1706,9 @@ export class Text extends Morph {
     const self = this; const changes = []; let pos = 0; let offset = 0;
     for (const change of patch) {
       if (change.removed) {
-        offset = remove(pos, pos + change.count, offset, changes);
+        offset = remove(pos, pos + change.count, offset, changes); // eslint-disable-line no-use-before-define
       } else if (change.added) {
-        offset = insert(pos, change.value, offset, changes);
+        offset = insert(pos, change.value, offset, changes); // eslint-disable-line no-use-before-define
       }
       pos += change.count;
     }
@@ -1752,7 +1750,7 @@ export class Text extends Morph {
 
       switch (type) {
         case 'delete': case 'remove':
-          var endPos = typeof endOrText === 'number' ? this.indexToPosition(endOrText) : endOrText;
+          let endPos = typeof endOrText === 'number' ? this.indexToPosition(endOrText) : endOrText;
           changed.push(this.deleteText({ start: startPos, end: endPos }, invalidateTextLayout));
           break;
         case 'insert':
@@ -1902,7 +1900,7 @@ export class Text extends Morph {
   }
 
   textAttributeAt (textPos) {
-    const { document: d, textLayout: tl } = this;
+    const { document: d } = this;
     return d.textAttributeAt(textPos);
   }
 
@@ -1939,7 +1937,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getStyleInRange (range = this.selection) {
-    const attrs = this.textAndAttributesInRange(range).filter((ea, i) => i % 2 != 0);
+    const attrs = this.textAndAttributesInRange(range).filter((ea, i) => i % 2 !== 0);
     return attrs.reduce((all, ea) => {
       for (const key in ea) {
         const val = ea[key];
@@ -2080,7 +2078,7 @@ export class Text extends Morph {
       nextRow = Math.min(Math.max(0, pos.row - n), this.lineCount() - 1);
       if (typeof goalX === 'number') {
         const charBounds = this.textLayout.charBoundsOfRow(this, nextRow);
-        nextCol = columnInCharBoundsClosestToX(charBounds, goalX);
+        nextCol = columnInCharBoundsClosestToX(charBounds, goalX); // eslint-disable-line no-use-before-define
       }
     } else {
       // up / down in screen coordinates is a little difficult, there are a
@@ -2102,9 +2100,7 @@ export class Text extends Morph {
         ranges.length -
         1 -
         ranges.slice().reverse().findIndex(({ start, end }) => start.column <= pos.column);
-      const currentRange = ranges[currentRangeIndex];
       let nextRange;
-      let nextRangeIsAtLineEnd = false;
 
       if (n >= 1) {
         const isFirst = currentRangeIndex === 0;
@@ -2114,7 +2110,6 @@ export class Text extends Morph {
             : arr.last(this.textLayout.rangesOfWrappedLine(this, pos.row - 1))
           : ranges[currentRangeIndex - 1];
         if (!nextRange) return pos;
-        nextRangeIsAtLineEnd = isFirst;
       } else if (n <= -1) {
         const isLast = ranges.length - 1 === currentRangeIndex;
         const nextRanges = isLast
@@ -2124,14 +2119,13 @@ export class Text extends Morph {
           : ranges.slice(currentRangeIndex + 1);
         nextRange = nextRanges[0];
         if (!nextRange) return pos;
-        nextRangeIsAtLineEnd = nextRanges.length === 1;
       }
 
       nextRow = nextRange.start.row;
       const charBounds = this.textLayout
         .charBoundsOfRow(this, nextRow)
         .slice(nextRange.start.column, nextRange.end.column + 1);
-      nextCol = nextRange.start.column + columnInCharBoundsClosestToX(charBounds, goalX);
+      nextCol = nextRange.start.column + columnInCharBoundsClosestToX(charBounds, goalX); // eslint-disable-line no-use-before-define
     }
 
     const newPos = { row: nextRow, column: nextCol };
@@ -2219,7 +2213,7 @@ export class Text extends Morph {
   scrollPositionIntoView (pos, offset = pt(0, 0)) {
     if (!this.isClip()) return;
 
-    const { scroll, padding } = this;
+    const { scroll } = this;
     const viewBounds = this.innerBounds()
       .translatedBy(scroll)
       .insetByRect(this.padding)
@@ -2236,7 +2230,7 @@ export class Text extends Morph {
       .subPt(viewBounds.translateForInclusion(charBounds)[corner]())
       .addPt(offset);
 
-    if (delta.x != 0 || delta.y != 0) {
+    if (delta.x !== 0 || delta.y !== 0) {
       this.scroll = this.scroll.addPt(delta).addPt(offset);
       if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
     }
@@ -2246,14 +2240,14 @@ export class Text extends Morph {
     // doFn has some effect on the text that might change the scrolled
     // position, like changing the font size. This function ensures that the
     // text position given will be at the same scroll offset after running the doFn
-    var { scroll, selection: { lead: pos } } = this;
+    var { scroll, selection: { lead: pos } } = this; // eslint-disable-line no-var
     const offset = this.charBoundsFromTextPosition(pos).y - scroll.y;
     let isPromise = false;
     const cleanup = () =>
       (this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset));
 
     try {
-      var result = doFn();
+      let result = doFn();
       isPromise = result && result instanceof Promise;
     } finally {
       !isPromise && cleanup();
@@ -2290,7 +2284,7 @@ export class Text extends Morph {
         }
       : () => (this.selections = sels);
     try {
-      var result = this.keepPosAtSameScrollOffsetWhile(doFn);
+      let result = this.keepPosAtSameScrollOffsetWhile(doFn);
       isPromise = result && result instanceof Promise;
     } finally {
       !isPromise && cleanup();
@@ -2323,8 +2317,8 @@ export class Text extends Morph {
     const textBounds = this.textBounds().outsetByRect(this.padding);
     const resize = () => {
       this.withMetaDo({ metaInteraction: true }, () => {
-        if (!fixedHeight && this.height != textBounds.height) this.height = textBounds.height;
-        if (!fixedWidth && this.width != textBounds.width) this.width = textBounds.width;
+        if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
+        if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
         this.embeddedMorphs.forEach(submorph => {
           const a = this.embeddedMorphMap.get(submorph).anchor;
           if (a) a.updateEmbeddedMorph();
@@ -2412,7 +2406,7 @@ export class Text extends Morph {
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
 
-    const { position, state: { clickedOnMorph, clickedOnPosition, clickCount } } = evt;
+    const { position, state: { clickedOnMorph, clickCount } } = evt;
 
     if (clickedOnMorph !== this) return;
 
@@ -2500,15 +2494,18 @@ export class Text extends Morph {
     function isWhiteSpace (c) {
       return c === '\t' || c === ' ';
     }
+
     function isAlpha (s) {
       const regEx = /^[a-zA-Z0-9\-]+$/;
       return (s || '').match(regEx);
     }
+
     function periodWithDigit (c, prev) {
       // return true iff c is a period and prev is a digit
-      if (c != '.') return false;
+      if (c !== '.') return false;
       return '0123456789'.indexOf(prev) >= 0;
     }
+
     function matchBrackets (str, chin, chout, start, dir) {
       // starting at index start, look right (dir = -1) or left (dir = -1)
       // for matching bracket chracters. chin is the open-bracket character
@@ -2518,42 +2515,45 @@ export class Text extends Morph {
       let depth = 1;
       while (dir < 0 ? i - 1 >= 0 : i + 1 < str.length) {
         i += dir;
-        if (str[i] == chin && chin != chout) depth++;
-        if (str[i] == chout) depth--;
-        if (depth == 0) return i;
+        if (str[i] === chin && chin !== chout) depth++;
+        if (str[i] === chout) depth--;
+        if (depth === 0) return i;
       }
       return i;
     }
+    
     function findLine (str, start, dir, endChar) {
       // start points to a CR or LF (== endChar)
       let i = start;
       while (dir < 0 ? i - 1 >= 0 : i + 1 < str.length) {
         i += dir;
-        if (str[i] == endChar) return dir > 0 ? [start, i] : [i + 1, start];
+        if (str[i] === endChar) return dir > 0 ? [start, i] : [i + 1, start];
       }
       return dir > 0 ? [start + 1, str.length - 1] : [0, start];
     }
+    
     // selectmatchingBrackets START OF CODE...
+    let i;
     if (!str) return i1;
-    if (i1 == 0 || i1 == str.length) {
+    if (i1 === 0 || i1 === str.length) {
       return [0, str.length - 1];
     }
     // look left for open backets
-    var i2 = i1 - 1;
+    let i2 = i1 - 1;
     if (i1 > 0) {
-      if (str[i1 - 1] == '\n' || str[i1 - 1] == '\r') return findLine(str, i1, 1, str[i1 - 1]);
-      var i = leftBrackets.indexOf(str[i1 - 1]);
-      if (str[i1 - 1] == '*' && (i1 - 2 < 0 || str[i1 - 2] != '/')) i = -1; // spl check for /*
+      if (str[i1 - 1] === '\n' || str[i1 - 1] === '\r') return findLine(str, i1, 1, str[i1 - 1]);
+      i = leftBrackets.indexOf(str[i1 - 1]);
+      if (str[i1 - 1] === '*' && (i1 - 2 < 0 || str[i1 - 2] !== '/')) i = -1; // spl check for /*
       if (i >= 0) {
-        var i2 = matchBrackets(str, leftBrackets[i], rightBrackets[i], i1 - 1, 1);
+        i2 = matchBrackets(str, leftBrackets[i], rightBrackets[i], i1 - 1, 1);
         return [i1, i2 - 1];
       }
     }
     // look right for close brackets
     if (i1 < str.length) {
-      if (str[i1] == '\n' || str[i1] == '\r') return findLine(str, i1, -1, str[i1]);
-      var i = rightBrackets.indexOf(str[i1]);
-      if (str[i1] == '*' && (i1 + 1 >= str.length || str[i1 + 1] != '/')) i = -1; // spl check for */
+      if (str[i1] === '\n' || str[i1] === '\r') return findLine(str, i1, -1, str[i1]);
+      i = rightBrackets.indexOf(str[i1]);
+      if (str[i1] === '*' && (i1 + 1 >= str.length || str[i1 + 1] !== '/')) i = -1; // spl check for */
       if (i >= 0) {
         i1 = matchBrackets(str, rightBrackets[i], leftBrackets[i], i1, -1);
         return [i1 + 1, i2];
@@ -2634,7 +2634,7 @@ export class Text extends Morph {
 
     const grid = arr.range(startRow, realEndRow).reduce((bounds, row) => {
       const charBounds = this.textLayout.charBoundsOfRow(this, row).slice();
-      if (charBounds.length >= 1 && arr.last(charBounds).width == 0) { arr.last(charBounds).width = 12; }
+      if (charBounds.length >= 1 && arr.last(charBounds).width === 0) { arr.last(charBounds).width = 12; }
       if (charBounds.length > 1) {
         const last = arr.last(charBounds);
         charBounds.push({
@@ -2871,7 +2871,7 @@ export class Text extends Morph {
   }
 
   onKeyDown (evt) {
-    if (this.compositionRange || evt.targetMorph != this) return;
+    if (this.compositionRange || evt.targetMorph !== this) return;
     this.selection.cursorBlinkStart();
     KeyHandler.invokeKeyHandlers(this, evt, true /* no input evts */);
   }
@@ -3112,7 +3112,7 @@ export class Text extends Morph {
 
     const endPos = this.documentEndPosition; let pragraphEnd;
 
-    for (var i = row + 1; i <= endPos.row; i++) {
+    for (let i = row + 1; i <= endPos.row; i++) {
       if (this.isLineEmpty(i)) {
         pragraphEnd = { row: i - 1, column: this.getLine(i - 1).length };
         break;
@@ -3121,7 +3121,7 @@ export class Text extends Morph {
     if (!pragraphEnd) pragraphEnd = endPos;
 
     let start;
-    for (var i = pragraphEnd.row - 1; i >= 0; i--) {
+    for (let i = pragraphEnd.row - 1; i >= 0; i--) {
       if (this.isLineEmpty(i)) {
         start = { row: i + 1, column: 0 };
         break;
@@ -3154,13 +3154,13 @@ export class Text extends Morph {
     const morph = this;
     const change = changes[0];
     let range = change.selector === 'replace'
-      ? insertRange(change.args[1], change.args[0].start)
+      ? insertRange(change.args[1], change.args[0].start) // eslint-disable-line no-use-before-define
       : defaultRange;
 
     for (let i = 1; i < changes.length; i++) {
       const change = changes[i];
       range = change.selector === 'replace'
-        ? range.merge(insertRange(change.args[1], change.args[0].start))
+        ? range.merge(insertRange(change.args[1], change.args[0].start)) // eslint-disable-line no-use-before-define
         : range;
     }
 
@@ -3174,7 +3174,7 @@ export class Text extends Morph {
           : objectReplacementChar;
       }
 
-      const lines = morph.parseIntoLines(text); let range;
+      const lines = morph.parseIntoLines(text);
 
       if (lines.length === 1) { return Range.fromPositions(pos, { row: pos.row, column: pos.column + lines[0].length }); }
 
