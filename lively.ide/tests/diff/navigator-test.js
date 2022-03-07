@@ -1,7 +1,6 @@
-/* global declare, it, describe, beforeEach, afterEach, before, after */
+/* global it, describe, before, after */
 import { expect } from 'mocha-es6';
 
-import { arr } from 'lively.lang';
 import { Text } from 'lively.morphic';
 import DiffNavigator from 'lively.ide/diff/navigator.js';
 import { DiffEditorPlugin } from 'lively.ide/diff/editor-plugin.js';

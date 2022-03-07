@@ -1,6 +1,6 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after,describeInBrowser */
-import { promise } from 'lively.lang';
-import { Text, World, MorphicEnv } from 'lively.morphic';
+/* global System, it, describe, beforeEach, afterEach */
+
+import { World, MorphicEnv } from 'lively.morphic';
 import { pt } from 'lively.graphics';
 import { expect } from 'mocha-es6';
 import { NumberWidget } from '../value-widgets.js';
@@ -71,7 +71,6 @@ describe('number widget', () => {
       width: 100,
       height: 25
     });
-    let valueContainer = field.getSubmorphNamed('value');
     env.world.addMorph(field);
     await field.whenRendered();
     expect(field.width).equals(100, 'width before');

@@ -1,4 +1,4 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global System, it, xit, describe, beforeEach, afterEach */
 import { promise } from 'lively.lang';
 import { Text } from 'lively.morphic';
 import { pt } from 'lively.graphics';

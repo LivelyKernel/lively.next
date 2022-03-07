@@ -1,11 +1,11 @@
-/* global System, declare, it, xit, describe, xdescribe, beforeEach, afterEach, before, after */
+/* global it, describe, beforeEach */
 import { expect } from 'mocha-es6';
 import { module } from 'lively.modules/index.js';
 import { ComponentChangeTracker } from '../../component/editor.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { promise } from 'lively.lang';
+
 import { morph, VerticalLayout, Label } from 'lively.morphic';
-import lint from '../../js/linter.js';
+
 import { part } from 'lively.morphic/components/core.js';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
@@ -188,7 +188,7 @@ describe('component -> source reconciliation', () => {
   });
 
   it('skips unnessecary properties of morphs', async () => {
-    const l = ComponentC.addMorph({
+    ComponentC.addMorph({
       type: Label, name: 'some label', extent: pt(42, 42)
     });
     ComponentC.layout = new VerticalLayout({ spacing: 5, renderViaCSS: false });

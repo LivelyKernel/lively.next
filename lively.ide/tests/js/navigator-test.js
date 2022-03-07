@@ -1,4 +1,4 @@
-/* global declare, it, describe, beforeEach, afterEach */
+/* global it, describe, beforeEach */
 import { expect } from 'mocha-es6';
 import { Text } from 'lively.morphic';
 import JavaScriptEditorPlugin from 'lively.ide/js/editor-plugin.js';
@@ -132,14 +132,14 @@ describe('js code navigator expand and contract', () => {
   });
 
   it('expandOnKeyStringLiteral', function () {
-    let src = editor.textString = 'var x = {foo: 234}';
+    editor.textString = 'var x = {foo: 234}';
     assertExpansion(editor, nav, 9, 'foo');
     assertExpansion(editor, nav, 10, 'foo');
     assertExpansion(editor, nav, 8, '{foo: 234}');
   });
 
   it('expandOnString', function () {
-    let src = editor.textString = "var x = 'hello world'";
+    editor.textString = "var x = 'hello world'";
     assertExpansion(editor, nav, 12, 'hello world');
     assertExpansion(editor, nav, 8, "'hello world'");
     assertExpansion(editor, nav, 21, "'hello world'");

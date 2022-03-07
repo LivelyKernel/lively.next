@@ -1,4 +1,4 @@
-/* global declare, it, describe, beforeEach, afterEach */
+/* global it, describe */
 import { expect } from 'mocha-es6';
 
 import { parseCommand } from 'lively.ide/shell/shell-interface.js';

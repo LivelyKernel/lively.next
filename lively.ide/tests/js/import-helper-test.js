@@ -1,6 +1,6 @@
-/* global declare, it, describe, beforeEach, afterEach */
+/* global it, describe, beforeEach */
 import { expect } from 'mocha-es6';
-import { Text, inspect } from 'lively.morphic';
+import { Text } from 'lively.morphic';
 import { cleanupUnusedImports, interactivelyInjectImportIntoText } from 'lively.ide/js/import-helper.js';
 import JavaScriptEditorPlugin from 'lively.ide/js/editor-plugin.js';
 
@@ -13,7 +13,7 @@ function listItem (item) {
   item.string = typeof label === 'string'
     ? label
     : Array.isArray(label)
-      ? label.map((text, i) => i % 2 == 0 ? String(text) : '').join(' ')
+      ? label.map((text, i) => i % 2 === 0 ? String(text) : '').join(' ')
       : String(label);
   return item;
 }
