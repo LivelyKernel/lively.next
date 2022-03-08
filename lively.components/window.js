@@ -130,6 +130,7 @@ export default class Window extends Morph {
         'Window Management', [
           { alias: 'minimize all except this', target: w, command: 'toggle minimize all except active window' },
           { alias: 'close all except this', target: w, command: 'close all except active window' },
+          { alias: 'close all like this', target: w, command: 'close all like this window' },
           { isDivider: true },
           { alias: 'minimize all', target: w, command: 'toggle minimize all windows' },
           { alias: 'close all', target: w, command: 'close all windows' }

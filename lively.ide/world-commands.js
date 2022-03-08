@@ -464,6 +464,17 @@ const commands = [
   },
 
   {
+    name: 'close all like this window',
+    exec: world => {
+      const activeWindow = world.getWindows().filter(w => w.isActive())[0];
+      const type = activeWindow.name.replace('window for', '');
+      const allWindowsLikeThis = world.getWindows().filter(w => w.name.replace('window for', '') === type);
+      allWindowsLikeThis.map(w => w.close());
+      return true;
+    }
+  },
+
+  {
     name: 'close all windows',
     exec: world => {
       const allWindows = world.getWindows();
