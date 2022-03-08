@@ -311,7 +311,7 @@ export class PackageTreeData extends TreeData {
       ' ' + less, null
     ];
   }
-  
+
   displayCSS (css, isSelected) {
     return [
       ...Icon.textAttribute('css3-alt', {
@@ -320,7 +320,7 @@ export class PackageTreeData extends TreeData {
       ' ' + css, null
     ];
   }
-  
+
   async listModuleScope (moduleName) {
     const source = await this.systemInterface.moduleRead(moduleName);
     const parsed = fuzzyParse(source);
@@ -440,7 +440,7 @@ export class PackageTreeData extends TreeData {
 
       if (node.type === 'md') {
         try {
-          node.subNodes = await this.listMarkdownHeadings(node.url); 
+          node.subNodes = await this.listMarkdownHeadings(node.url);
         } catch (err) {
           node.subNodes = [];
         }
@@ -534,7 +534,7 @@ export class BrowserModel extends ViewModel {
       expose: {
         get () {
           return [
-            'isBrowser', 
+            'isBrowser',
             'focus',
             'keybindings',
             'browse',
@@ -868,7 +868,7 @@ export class BrowserModel extends ViewModel {
       spec: this.browseSpec(),
       history: this.state.history
     };
-    
+
     let tabs = this.ui.tabs.tabs;
     let tabsSpec = tabs.map(tab => tab.viewModel.spec);
     return tabsSpec;
@@ -884,7 +884,7 @@ export class BrowserModel extends ViewModel {
     this.browse(curr.content.spec);
     return this.view;
   }
-  
+
   async browse (browseSpec = {}, optSystemInterface) {
     // browse spec:
     // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
@@ -907,7 +907,7 @@ export class BrowserModel extends ViewModel {
         this.systemInterface = optSystemInterface || systemInterface;
         if (this.ui.evalBackendList) { await this.ui.evalBackendList.updateFromTarget(); }
       } catch (e) { // known case: switching from a tab with markdown opened to another tab
-      }   
+      }
     }
     await this.toggleWindowStyle(false);
 
@@ -1382,10 +1382,10 @@ export class BrowserModel extends ViewModel {
     }, this.selectedModule, animated);
     return def;
   }
-  
+
   async selectCodeEntity (spec, animated = true) {
     const def = await this.selectCodeEntityInColumnView(spec, animated);
-    
+
     this.onListSelectionChange(this.ui.columnView.getExpandedPath());
     return def;
   }
@@ -1596,9 +1596,9 @@ export class BrowserModel extends ViewModel {
           if (ext === 'md') {
             // the preview does not get unset when it is closed
             // we thus need to check whether the window that contains the preview is currently member of the world 
-            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) { 
+            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
               await this.renderMarkdown();
-            } 
+            }
           }
           await system.coreInterface.resourceWrite(module.url, content);
         }
@@ -1623,11 +1623,16 @@ export class BrowserModel extends ViewModel {
             module.url, content, { targetModule: module.url, doEval: true });
         } else await system.coreInterface.resourceWrite(module.url, content);
       }
+      const cursorPosition = sourceEditor.cursorPosition;
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
       await this.injectComponentTrackers();
       sourceEditor.focus();
+      // This is to keep the editor from "jumping around" when saving and the source code gets replaced by **altered** output of the linter.
+      // However, this is not a clean solutions. E.g. when empty lines are removed by the linter, the cursor position will be off afterwards.
+      // Thus, this hack is better than what we previously had, but still not great.
+      sourceEditor.cursorPosition = cursorPosition;
     } catch (err) {
       if (attempt > 0 || err instanceof SyntaxError) {
         metaInfoText.showError(err);
@@ -1644,7 +1649,7 @@ export class BrowserModel extends ViewModel {
 
     if (warnings.length > 0) {
       const warningStrings = warnings.map(warning => `"${warning.message}" on line ${warning.line}`);
-      const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n'); 
+      const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n');
       metaInfoText.showWarning(warningMessage);
       await promise.delay(5000);
     } metaInfoText.showSaved();
@@ -1819,10 +1824,10 @@ export class BrowserModel extends ViewModel {
     // make it so that we cannot close the very first tab until we have another tab
     if (!prev) {
       curr.closeable = false;
-      return; 
+      return;
     }
     this.ui.tabs.tabs.forEach(tab => tab.closeable = true);
-    
+
     // make sure that we want to change the tab when the currently edited file is not saved
     if (this.selectedModule && this.hasUnsavedChanges()) {
       const proceed = await this.warnForUnsavedChanges();
@@ -1831,7 +1836,7 @@ export class BrowserModel extends ViewModel {
       if (!proceed) {
         prev.setProperty('selected', true);
         curr.closeSilently();
-        return; 
+        return;
       }
     }
 
@@ -1854,12 +1859,12 @@ export class BrowserModel extends ViewModel {
         }
       };
       curr.caption = '[lively.morphic] - morph.js';
-    } 
+    }
     const loading = LoadingIndicator.open('Preparing Editor');
     this.state.history = curr.content.history;
     this.refreshHistoryButtons();
     await this.browse(curr.content.spec);
-    loading.remove();   
+    loading.remove();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
