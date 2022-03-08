@@ -1,9 +1,9 @@
 const http = require('http')
 
 const targetPackage = process.argv[2]
+let passed = 0, failed = 0, skipped = 0;
 
 console.log(`::notice:: Tests for ${targetPackage} 📦`)
-
 const options = {
   hostname: 'localhost',
   port: 9011,
@@ -39,17 +39,25 @@ const req = http.request(options, res => {
         testfile.tests.forEach((test) => {
           if (test.type !== 'test') return;
           if (!test.state) {
+            skipped += 1;
             console.log(`${test.fullTitle} skipped ⏭️`);
             return;
           } 
-          if (test.state === 'succeeded') console.log(`${test.fullTitle} passed ✅`)
+          if (test.state === 'succeeded') {
+            passed += 1;
+            console.log(`${test.fullTitle} passed ✅`);
+          } 
           else {
+            failed += 1;
             console.log(`::error:: ${test.fullTitle} failed ❌`);
             process.exitCode = 1;
           }
         })
         console.log(`::endgroup::`)
       })
+      console.log(`SUMMARY-passed:${passed}`);
+      console.log(`SUMMARY-skipped:${skipped}`);
+      console.log(`SUMMARY-failed:${failed}`);
     }
     catch (err) {
       console.log(`::error:: Running the tests produced the following error: "${err}"`);

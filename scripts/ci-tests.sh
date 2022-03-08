@@ -1,6 +1,10 @@
 #!/bin/bash
 
 TEST_STATUS=0
+TESTED_PACKAGES=0
+GREEN_TESTS=0
+RED_TESTS=0
+SKIPPED_TESTS=0
 
 testfiles=(
 "lively.lang"
@@ -55,6 +59,7 @@ then
 fi
 
 for package in "${testfiles[@]}"; do
+  ((TESTED_PACKAGES++))
   if [ "$CI" ]; 
   then
     # start a new lively.next server
@@ -62,7 +67,18 @@ for package in "${testfiles[@]}"; do
     # wait until server is guaranteed to be running
     sleep 30 
   fi
-  node ./scripts/test.js "$package"
+  # echo output without the summary stats
+  output=$(node ./scripts/test.js "$package")
+  echo "$output" | sed -s -e 's/SUMMARY.*$//g'
+
+  #parse summary parts and adjust env variables for overall stats
+  green=$(echo "$output" | grep -o -P '(?<=SUMMARY-passed:)\d+')
+  red=$(echo "$output" | grep -o -P '(?<=SUMMARY-failed:)\d+')
+  skipped=$(echo "$output" | grep -o -P '(?<=SUMMARY-skipped:)\d+')
+  ((GREEN_TESTS+=green))
+  ((RED_TESTS+=red))
+  ((SKIPPED_TESTS+=skipped))
+
   # if we failed a test in `package`, remember it for when we are exiting
   if [ $? -eq 1 ];
   then TEST_STATUS=1
@@ -74,4 +90,23 @@ for package in "${testfiles[@]}"; do
   fi
 done
 
+# print out summary statistics
+read -r -d '' SUMMARY << EOM
+███████ ██    ██ ███    ███ ███    ███  █████  ██████  ██    ██ 
+██      ██    ██ ████  ████ ████  ████ ██   ██ ██   ██  ██  ██  
+███████ ██    ██ ██ ████ ██ ██ ████ ██ ███████ ██████    ████   
+     ██ ██    ██ ██  ██  ██ ██  ██  ██ ██   ██ ██   ██    ██    
+███████  ██████  ██      ██ ██      ██ ██   ██ ██   ██    ██    
+                                                                
+                                                                
+EOM
+echo "$SUMMARY"
+((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
+echo "Executed $ALL_TESTS tests in $TESTED_PACKAGES packages."
+((GREEN_PERCENTAGES=GREEN_TESTS*100/ALL_TESTS))
+((RED_PERCENTAGES=RED_TESTS*100/ALL_TESTS))
+((SKIPPED_PERCENTAGES=SKIPPED_TESTS*100/ALL_TESTS))
+echo "✅ $GREEN_TESTS (≈$GREEN_PERCENTAGES %) passed."
+echo "❌ $RED_TESTS (≈$RED_PERCENTAGES %) failed."
+echo "⏩ $SKIPPED_TESTS (≈$SKIPPED_PERCENTAGES %) skipped."
 exit $TEST_STATUS
