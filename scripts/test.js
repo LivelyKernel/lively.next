@@ -34,6 +34,7 @@ const req = http.request(options, res => {
         const testfileName = testPathStructure.join(' >> ')
         
         if (testfile.tests.some((test) => test.type === 'test' && test.state && test.state !== 'succeeded')) console.log(`::group:: ${testfileName} ❌`)
+        else if (testfile.tests.every((test) => !test.state)) console.log(`::group:: ${testfileName} ⏭️`)
         else console.log(`::group:: ${testfileName} ✅`)
         testfile.tests.forEach((test) => {
           if (test.type !== 'test') return;
