@@ -1,6 +1,5 @@
 #!/bin/bash
 
-TEST_STATUS=0
 TESTED_PACKAGES=0
 GREEN_TESTS=0
 RED_TESTS=0
@@ -79,10 +78,6 @@ for package in "${testfiles[@]}"; do
   ((RED_TESTS+=red))
   ((SKIPPED_TESTS+=skipped))
 
-  # if we failed a test in `package`, remember it for when we are exiting
-  if [ $? -eq 1 ];
-  then TEST_STATUS=1
-  fi
   if [ "$CI" ]; 
   then
     # kill the running server
@@ -109,4 +104,9 @@ echo "Executed $ALL_TESTS tests in $TESTED_PACKAGES packages."
 echo "✅ $GREEN_TESTS (≈$GREEN_PERCENTAGES %) passed."
 echo "❌ $RED_TESTS (≈$RED_PERCENTAGES %) failed."
 echo "⏩ $SKIPPED_TESTS (≈$SKIPPED_PERCENTAGES %) skipped."
-exit $TEST_STATUS
+if ((RED_TESTS > 0)); 
+then
+  exit 1
+else 
+  exit 0
+fi
