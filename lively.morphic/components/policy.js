@@ -274,7 +274,6 @@ export class ComponentPolicy {
   get __only_serialize__ () { return ['derivedMorph']; }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    let res = {};
     for (let stateName of ['auto', 'click', 'hover']) {
       if (!this[stateName]) continue;
       if (this[stateName].isPolicy) {
@@ -379,11 +378,10 @@ export class ComponentPolicy {
       // such that in case it is getting copied before the first application
       // the overridden props are carried over properly
       if (!this._hasUnresolvedMaster) this.prepareSubmorphsToBeManaged(target, this.auto);
-      target.env.onSetWorldDo(() => {
+      target.env.onSetWorldDo(this._requestedDelayedExecution = () => {
         // remove the parametrized props from the submorph hierarchy here
-        this.applyIfNeeded(needsUpdate, animationConfig);
+        if (this.derivedMorph.master === this) { this.applyIfNeeded(needsUpdate, animationConfig); }
       });
-      this._requestedDelayedExecution = true;
       return;
     }
     if (this._hasUnresolvedMaster) {
