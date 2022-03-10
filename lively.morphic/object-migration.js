@@ -166,7 +166,7 @@ For now only a simple default theme...
         ['lively.morphic/components/markers.js', 'lively.halos'],
         ['lively.morphic/components/icons.js', 'lively.morphic'],
         ['lively.morphic/components/loading-indicator.js', 'lively.components', imports => `{${imports}}`],
-        ['lively.morphic/components', 'lively.components'],
+        // ['lively.morphic/components', 'lively.components'],
         ['lively.components/markers.js', 'lively.halos'],
         ['lively.morphic/ide', 'lively.ide'],
         ['lively.morphic/text/ui.js', 'lively.ide', null, 'text/ui.js']
@@ -304,6 +304,7 @@ For now only a simple default theme...
         }
         if (m.props.master && m.props.master.value.id) {
           const entry = snapshot[m.props.master.value.id];
+          if (!entry.props.auto || typeof entry.props.auto.value !== 'string') return;
           entry.props.auto.value = entry.props.auto.value.split('styleguide://style guide').join('styleguide://System');
         }
       });
