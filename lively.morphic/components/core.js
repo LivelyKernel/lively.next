@@ -1,6 +1,6 @@
 import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
-import { getClassName, allPlugins } from 'lively.serializer2';
+import { getClassName } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
 import { adoptObject } from 'lively.classes/runtime.js';
 
@@ -479,13 +479,12 @@ export class PolicyRetargeting {
 export function part (masterComponent, overriddenProps = {}, oldParam) {
   if (oldParam) overriddenProps = oldParam;
   let snap = masterComponent._snap;
-  let retargetPlugin = masterComponent._retargetPlugin || new PolicyRetargeting();
   if (!snap) {
-    snap = serializeMorph(masterComponent, { plugins: [...allPlugins, retargetPlugin] });
+    snap = serializeMorph(masterComponent);
     delete snap.snapshot[snap.id].props.master;
     delete snap.snapshot[snap.id].props.isComponent; 
   }
-  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [], plugins: [...allPlugins, retargetPlugin] }); 
+  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [] }); 
  
   // ensure master is initialized before overriding
   // this skips derived morphs that are not reachable via submorphs
@@ -566,9 +565,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   });
   // this is often not called... especially in cases where we derive from a master
   c.updateDerivedMorphs();
-  const retargetPlugin = new PolicyRetargeting();
-  c._snap = serializeMorph(c, { plugins: [...allPlugins, retargetPlugin] });
-  c._retargetPlugin = retargetPlugin;
+  c._snap = serializeMorph(c);
   // remove the master ref from the snap of the component
   delete c._snap.snapshot[c._snap.id].props.master;
   delete c._snap.snapshot[c._snap.id].props.isComponent;
