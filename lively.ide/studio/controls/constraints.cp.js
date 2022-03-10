@@ -129,6 +129,7 @@ export class AlignmentManager extends ViewModel {
    */
   updateResizingPolicies () {
     const { resizing } = this.models;
+    if (!this.targetMorph) return;
     let { layout } = this.targetMorph.owner;
     layout = layout.copy();
     const localLayout = this.targetMorph.layout;
@@ -353,8 +354,8 @@ export class ResizingControlModel extends ViewModel {
     if (!resizingSimulator) return;
     let bbx = resizingSimulator.innerBounds();
     const widths = { fill: [40, 20], fixed: [40, 20], hug: [15, 15] };
-    const horizontalWidth = widths[this.horizontalResizing] || [40, 20];
-    const verticalWidth = widths[this.verticalResizing] || [40, 20];
+    const horizontalWidth = widths[this.horizontalResizing] || widths.fill;
+    const verticalWidth = widths[this.verticalResizing] || widths.fill;
     // reset scene
     resizingSimulator.getAllNamed(/inner /).forEach(ctrl => ctrl.visible = this.showInnerControls);
 
@@ -927,7 +928,7 @@ const AlignmentControl = component(PropertySection, {
     }, without('add button')]
   },
   add(part(ConstraintsControl, { name: 'constraints' })),
-  add(part(ResizingControl, { name: 'resizing', viewModel: { showInnerControls: true } }))
+  add(part(ResizingControl, { name: 'resizing' }))
   ]
 });
 
