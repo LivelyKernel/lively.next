@@ -3,7 +3,7 @@ import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label } from 'lively.morphic';
 import { string, arr, num } from 'lively.lang';
 import { NumberInput, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
-import { disconnect, connect } from 'lively.bindings';
+import { disconnect, epiConnect } from 'lively.bindings';
 
 export class ShapeControlModel extends ViewModel {
   static get properties () {
@@ -141,9 +141,9 @@ export class ShapeControlModel extends ViewModel {
       disconnect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
     }
     this.targetMorph = targetMorph;
-    connect(this.targetMorph, 'position', this, 'refreshFromTarget')._isBinding = true;
-    connect(this.targetMorph, 'extent', this, 'refreshFromTarget')._isBinding = true;
-    connect(this.targetMorph, 'rotation', this, 'refreshFromTarget')._isBinding = true;
+    epiConnect(this.targetMorph, 'position', this, 'refreshFromTarget');
+    epiConnect(this.targetMorph, 'extent', this, 'refreshFromTarget');
+    epiConnect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
     if (this.targetMorph.isEllipse || this.targetMorph.isPolygon || this.targetMorph.isPath) {
       this.setBorderRadiusControlState(false);
     } else this.setBorderRadiusControlState(true);

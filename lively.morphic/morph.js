@@ -19,7 +19,6 @@ import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
 
 import { ComponentPolicy } from './components/policy.js';
-import { purgeBindingConnections } from './components/core.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -948,8 +947,6 @@ export class Morph {
     }
 
     if (this._masterOverridden) snapshot._masterOverridden = true;
-
-    purgeBindingConnections(snapshot, ref, pool);
   }
 
   get isMorph () { return true; }

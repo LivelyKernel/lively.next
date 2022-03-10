@@ -220,6 +220,19 @@ export function clearDanglingConnections (snapshot) {
   }
 }
 
+export function removeEpiConnections (snapshot) {
+  for (const id in snapshot) {
+    if (classNameOfId(snapshot, id) === 'AttributeConnection') {
+      const objSnap = snapshot[id];
+      const sourceObjSnap = snapshot[Path('props.sourceObj.value.id').get(objSnap)];
+      if (objSnap.props._isEpiConnection){
+        sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
+        delete snapshot[id];
+      }
+    }
+  }
+}
+
 const defaultExprSerializer = new ExpressionSerializer();
 
 export function requiredModulesOfSnapshot (snapshot, exprSerializer = defaultExprSerializer) {

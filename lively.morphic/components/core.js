@@ -1,24 +1,12 @@
 import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
-import { connect } from 'lively.bindings';
+import { epiConnect } from 'lively.bindings';
 import { adoptObject } from 'lively.classes/runtime.js';
 
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName } from '../helpers.js';
 import { ComponentPolicy } from './policy.js';
-
-export function purgeBindingConnections (snapshot, ref, pool) {
-  let { attributeConnections } = snapshot.props;
-  if (attributeConnections) {
-    attributeConnections = attributeConnections.value;
-    for (let i = attributeConnections.length; i--;) {
-      const { id, __ref__ } = attributeConnections[i];
-      if (!__ref__) continue;
-      if (pool.refForId(id).realObj._isBinding) { arr.removeAt(attributeConnections, i); }
-    }
-  }
-}
 
 /**
  * Defines the core interface for defining and using master components in the system.
@@ -62,7 +50,7 @@ export class ViewModel {
           if (v) v.viewModel = this;
         }
       },
-      bindings: {
+    bindings: {
         serialize: false,
         readOnly: true,
         get () {
@@ -147,8 +135,6 @@ export class ViewModel {
       }
     }
 
-    // delete all bindings
-    purgeBindingConnections(snapshot, ref, pool);
   }
 
   getProperty (key) {
@@ -245,14 +231,14 @@ export class ViewModel {
         if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
         if (!target) continue;
         if (obj.isFunction(handler)) {
-          connect(target, signal, handler)._isBinding = true;
+          epiConnect(target, signal, handler);
           continue;
         }
-        connect(target, signal, this, handler, {
+        epiConnect(target, signal, this, handler, {
           override,
           converter,
           updater
-        })._isBinding = true;
+        });
       } catch (err) {
         console.warn('Failed to reify biniding: ', target, model, signal, handler);
       }

@@ -2,7 +2,7 @@ import { string, arr, Closure, obj } from 'lively.lang';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import ExpressionSerializer from 'lively.serializer2/plugins/expression-serializer.js';
 
-export { connect, disconnect, disconnectAll, once, signal, noUpdate };
+export { connect, epiConnect, disconnect, disconnectAll, once, signal, noUpdate };
 
 export class AttributeConnection {
   constructor (source, sourceProp, target, targetProp, spec) {
@@ -516,6 +516,12 @@ function connect (sourceObj, attrName, targetObj, targetMethodName, specOrConver
   // 6: If wanted updated the connection right now
   if (connectionPoint && connectionPoint.updateOnConnect) { connection.update(sourceObj[attrName]); }
   return result;
+}
+
+function epiConnect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter) {
+  const conn = connect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter)
+  conn._isEpiConnection = true;
+  return conn;
 }
 
 function disconnect (sourceObj, attrName, targetObj, targetMethodName) {

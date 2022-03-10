@@ -1,7 +1,7 @@
 import './object-extensions.js';
 import { ObjectPool } from './object-pool.js';
 import { version as serializerVersion } from './package.json';
-import { requiredModulesOfSnapshot, removeUnreachableObjects, clearDanglingConnections } from './snapshot-navigation.js';
+import { requiredModulesOfSnapshot, removeUnreachableObjects, clearDanglingConnections, removeEpiConnections } from './snapshot-navigation.js';
 import { allPlugins } from './plugins.js';
 import semver from 'semver';
 
@@ -46,6 +46,7 @@ export function serialize (obj, options) {
 
   removeUnreachableObjects([snapshotAndId.id], snapshotAndId.snapshot);
   clearDanglingConnections(snapshotAndId.snapshot);
+  removeEpiConnections(snapshotAndId.snapshot);
   snapshotAndId.requiredVersion = requiredVersion;
   return snapshotAndId;
 }
