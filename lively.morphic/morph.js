@@ -849,7 +849,10 @@ export class Morph {
     this._cachedPaths = {};
     this._pathDependants = [];
     this._tickingScripts = [];
-    this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), [...this.styleProperties, 'master']));
+    this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), [...this.styleProperties].concat(
+      snapshot._masterOverridden 
+        ? ['master']
+        : [])));
     this._parametrizedProps.__takenFromSnapshot__ = true;
     const s = pool.expressionSerializer;
     for (const prop in this._parametrizedProps) {
@@ -888,6 +891,7 @@ export class Morph {
          master.managesMorph(this) &&
          master._overriddenProps.get(this)[key] !== undefined) {
         propsToSerialize.push(key); // always save away overridden props
+        if (key === 'master') this._masterOverridden = true;
         continue;
       }
       if (
@@ -942,6 +946,8 @@ export class Morph {
         }));
       }
     }
+
+    if (this._masterOverridden) snapshot._masterOverridden = true;
 
     purgeBindingConnections(snapshot, ref, pool);
   }

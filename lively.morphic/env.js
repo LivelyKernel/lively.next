@@ -102,11 +102,6 @@ export class MorphicEnv {
     return this.setWorldRenderedOn(world, rootNode);
   }
 
-  onSetWorldDo (cb) {
-    if (!this._onSetWorldCallbacks) this._onSetWorldCallbacks = [];
-    this._onSetWorldCallbacks.push(cb);
-  }
-
   setWorldRenderedOn (world, rootNode, domNode = null) {
     if (!world || !world.isWorld) { throw new Error('world object does not look like a morphic world'); }
 
@@ -120,7 +115,6 @@ export class MorphicEnv {
     this.renderer = new Renderer(world, rootNode, this.domEnv);
     this.renderer.domNode = domNode;
     this.eventDispatcher = new EventDispatcher(world.isEmbedded ? rootNode : this.domEnv.window, world).install(rootNode);
-    if (this._onSetWorldCallbacks) this._onSetWorldCallbacks.forEach(cb => cb());
     
     world.resumeSteppingAll();
     
