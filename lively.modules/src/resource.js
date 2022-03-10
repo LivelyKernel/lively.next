@@ -73,7 +73,7 @@ async function fetchResource (proceed, load) {
     }
   }
 
-  if (result.length > largeModuleSize && $world && !System._loadingIndicator) {
+  if (result.length > largeModuleSize && typeof $world !== 'undefined' && !System._loadingIndicator) {
     System._loadingIndicator = $world.execCommand('open loading indicator', {
       label: 'loading module',
       status: load.name.replace(System.baseURL, '')
