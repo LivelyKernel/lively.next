@@ -1,11 +1,45 @@
-/* global describe, it, beforeEach, before, xit */
+/* global describe, it, beforeEach, xit */
 import { expect } from 'mocha-es6';
-import { component, without, part, add } from '../components/core.js';
+import { component, ViewModel, without, part, add } from '../components/core.js';
 import { Color } from 'lively.graphics';
-import { ComponentPolicy, printOverriddenProps } from '../components/policy.js';
-import { obj, promise } from 'lively.lang';
+import { obj } from 'lively.lang';
+import { serialize } from 'lively.serializer2';
 
 let c1, c2, c3, c4, d1, d2, d3;
+
+const TLA = component({
+  name: 'tla',
+  fill: Color.orange,
+  submorphs: [
+    { name: 'alice', fill: Color.yellow }
+  ]
+});
+
+const TLB = component(TLA, {
+  name: 'tlb',
+  fill: Color.green,
+  submorphs: [
+    { name: 'alice', master: TLA }
+  ]
+});
+
+class TestViewModel extends ViewModel {
+  static get properties () {
+    return {
+      bindings: {
+        get () {
+          return [
+            { target: 'alice', signal: 'onMouseDown', handler: 'foo' }
+          ];
+        }
+      }
+    };
+  }
+
+  foo () {
+    // something
+  }
+}
 
 describe('components', () => {
   beforeEach(() => {
@@ -17,6 +51,7 @@ describe('components', () => {
     });
     c2 = component({
       name: 'c2',
+      defaultViewModel: TestViewModel,
       fill: Color.green,
       submorphs: [part(c1, {
         name: 'alice',
@@ -167,7 +202,6 @@ describe('components', () => {
     expect(c.get('alice').borderRadiusTopLeft).to.equal(42, 'border radius keeps being overridden');
   });
 
-  // make this fail
   it('does not enforce masters on newly introduced morphs with a different master', () => {
     const t1 = component(c2, {
       name: 't1',
@@ -184,5 +218,58 @@ describe('components', () => {
     });
 
     expect(t1.get('bob').master.auto).equals(d1);
+  });
+
+  it('serializes inline properties to symbolic expressions', () => {
+    const inst = part(TLB);
+    const snap = serialize(inst);
+    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props.auto.value).to.include('TLB.get("alice").master');
+  });
+
+  it('does not serialize bindings but reconstructs them reliably', () => {
+    // instantiate a component with a view model and ensure that the
+    // bindings are not put into the snapshot
+    const inst = part(c2);
+    expect(inst.viewModel).not.to.be.undefined;
+    expect(inst.get('alice').attributeConnections).not.to.be.undefined;
+    const snap = serialize(inst);
+    expect(snap.snapshot[inst.get('alice').id].props.attributeConnections).to.eql({ value: [] });
+  });
+
+  it('includes added morphs into inline policies', () => {
+    const t1 = component(c2, {
+      name: 't1',
+      submorphs: [
+        {
+          name: 'alice',
+          submorphs: [without('bob')]
+        },
+        add({
+          name: 'bob',
+          master: d1
+        })
+      ]
+    });
+    const inst = part(t1);
+    expect(inst.master.managesMorph(inst.get('bob'))).to.be.true;
+  });
+
+  it('does not accidentally create overridden masters when serializing', () => {
+    const inst = part(TLB);
+    const instOverridden = part(TLB, {
+      submorphs: [
+        { name: 'alice', master: TLB }
+      ]
+    });
+    inst.master.applyIfNeeded(true);
+    instOverridden.master.applyIfNeeded(true);
+    const copied = inst.copy();
+    const copied2 = instOverridden.copy();
+    copied.master.applyIfNeeded(true);
+    copied2.master.applyIfNeeded(true);
+    expect(inst.master._overriddenProps.get(inst)).to.eql({});
+    expect(copied.master._overriddenProps.get(copied)).to.eql({});
+    expect(instOverridden.master._overriddenProps.get(instOverridden.get('alice'))).to.eql({ master: true });
+    expect(copied2.master._overriddenProps.get(copied2.get('alice'))).to.eql({ master: true });
   });
 });
