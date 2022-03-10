@@ -791,16 +791,31 @@ class EditHaloItem extends HaloItem {
     };
   }
 
-  onMouseDown (evt) {
-    const existing = this.world().getSubmorphsByStyleClassName('ObjectEditor')
-      .find(oe => oe.target === this.halo.target);
+  async onMouseDown (evt) {
+    let targetToEdit = this.halo.target;
+    const world = this.world();
+    if (targetToEdit.viewModel) {
+      // prompt the user which one to edit
+      targetToEdit = await world.multipleChoicePrompt(['Edit View or Morph?', null, '\nThe selected morph is attached to a view model. Please select which one you would like to edit.', { fontWeight: 'normal', fontSize: 16 }], {
+        choices: new Map([[
+          [...Icon.textAttribute('database', {
+            paddingTop: '3px'
+          }), '   View', null], targetToEdit.viewModel], 
+        [[...Icon.textAttribute('eye', {
+          paddingTop: '3px'
+        }), '   Morph', null], targetToEdit]
+        ])
+      });
+    }
+    const existing = world.getSubmorphsByStyleClassName('ObjectEditor')
+      .find(oe => oe.target === targetToEdit);
     if (existing) {
       const win = existing.getWindow();
       win.bringToFront();
       win.minimized = false;
-      win.animate({ center: this.world().visibleBounds().center(), duration: 200 });
+      win.animate({ center: world.visibleBounds().center(), duration: 200 });
     } else {
-      $world.execCommand('open object editor', { target: this.halo.target });
+      world.execCommand('open object editor', { target: targetToEdit });
     }
     this.halo.remove();
   }
