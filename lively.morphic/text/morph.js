@@ -2246,8 +2246,9 @@ export class Text extends Morph {
     const cleanup = () =>
       (this.scroll = this.scroll.withY(this.charBoundsFromTextPosition(pos).y - offset));
 
+    let result;
     try {
-      let result = doFn();
+      result = doFn();
       isPromise = result && result instanceof Promise;
     } finally {
       !isPromise && cleanup();
@@ -2283,8 +2284,9 @@ export class Text extends Morph {
           });
         }
       : () => (this.selections = sels);
+    let result;
     try {
-      let result = this.keepPosAtSameScrollOffsetWhile(doFn);
+      result = this.keepPosAtSameScrollOffsetWhile(doFn);
       isPromise = result && result instanceof Promise;
     } finally {
       !isPromise && cleanup();
@@ -2521,7 +2523,7 @@ export class Text extends Morph {
       }
       return i;
     }
-    
+
     function findLine (str, start, dir, endChar) {
       // start points to a CR or LF (== endChar)
       let i = start;
@@ -2531,7 +2533,7 @@ export class Text extends Morph {
       }
       return dir > 0 ? [start + 1, str.length - 1] : [0, start];
     }
-    
+
     // selectmatchingBrackets START OF CODE...
     let i;
     if (!str) return i1;
@@ -2938,7 +2940,7 @@ export class Text extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // copy as text
-    
+
     evt.domEvt.clipboardData.setData('text/plain', sel.text.replace(objectReplacementChar, ''));
 
     this.execCommand('manual clipboard copy', {
