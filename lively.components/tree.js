@@ -1,9 +1,8 @@
 /* global Map,WeakMap */
-import { arr, fun, obj, tree, string, promise } from 'lively.lang';
+import { arr, obj, tree, string, promise } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
-import { Morph, Text, config, touchInputDevice, Label } from 'lively.morphic';
-import { connect, signal } from 'lively.bindings';
-import bowser from 'bowser';
+import { Text, config, touchInputDevice } from 'lively.morphic';
+import { signal } from 'lively.bindings';
 
 /*
 
@@ -297,6 +296,7 @@ export class Tree extends Text {
           nodeMorphs,
           selectedNode
         } = this;
+        if (!treeData.isTreeData) return;
         let nodes = treeData.asListWithIndexAndDepth();
         let treeDataRestructured = this.treeData !== this.lastTreeData ||
                                    this.lastNumberOfNodes !== nodes.length;
@@ -550,6 +550,8 @@ export class TreeData {
     this.root = root;
     this.parentMap = new WeakMap();
   }
+
+  get isTreeData () { return true; }
 
   get __dont_serialize__ () { return ['parentMap']; }
   __deserialize__ () { this.parentMap = new WeakMap(); }
