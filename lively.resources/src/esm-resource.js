@@ -1,5 +1,6 @@
 import { Resource } from 'lively.resources';
 import { resource } from 'lively.resources';
+import { string } from 'lively.lang';
 
 const requestMap = {}
 
@@ -34,7 +35,7 @@ export class ESMREesource extends Resource {
 
   async findOrCreatePathStructure(pathElements) {
 
-    const cachePath = 'http://localhost:9011/esm_cache/';
+    const cachePath = string.joinPath(System.baseURL, '/esm_cache/');
     
     let currPath = cachePath;
     let pathRes;
@@ -89,6 +90,10 @@ export class ESMREesource extends Resource {
       currPath = pathRes.url;
     }
     return [pathRes, true]
+  }
+
+  get isESMResource() {
+    return true;
   }
   
   async write (source) {

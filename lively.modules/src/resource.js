@@ -18,7 +18,7 @@ async function fetchResource (proceed, load) {
   const System = this;
   const largeModuleSize = 250 * 1000;
   let res = System.resource(load.name);
-  const useNodeFetch = System.get('@system-env').node && !res.isNodeJSFileResource;
+  const useNodeFetch = System.get('@system-env').node && !res.isNodeJSFileResource && !res.isESMResource;
 
   if (useNodeFetch) res = await fetch(load.name);
   if (!res) return proceed(load);
