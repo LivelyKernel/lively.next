@@ -800,10 +800,10 @@ class EditHaloItem extends HaloItem {
         choices: new Map([[
           [...Icon.textAttribute('database', {
             paddingTop: '3px'
-          }), '   View', null], targetToEdit.viewModel], 
+          }), '   Model', null], targetToEdit.viewModel],
         [[...Icon.textAttribute('eye', {
           paddingTop: '3px'
-        }), '   Morph', null], targetToEdit]
+        }), '   View', null], targetToEdit]
         ])
       });
     }
@@ -1084,7 +1084,7 @@ class CopyHaloItem extends HaloItem {
         return name + n;
       });
     }
-    
+
     if (isMultiSelection) {
       // FIXME! haaaaack
       const copies = arr.compact(target.selectedMorphs.map(ea => {
