@@ -37,6 +37,9 @@ export class AttributeConnection {
     if (spec.converter) { this.setConverter(spec.converter); }
     if (spec.updater) { this.setUpdater(spec.updater); }
     if (spec.varMapping) { this.varMapping = Object.assign(spec.varMapping, this.varMapping); }
+
+    if (spec.isEpiConnection) this._isEpiConnection = true;
+
     this.override = spec.override;
 
     // ensure that spec is valid
@@ -518,8 +521,8 @@ function connect (sourceObj, attrName, targetObj, targetMethodName, specOrConver
   return result;
 }
 
-function epiConnect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter) {
-  const conn = connect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter)
+function epiConnect (sourceObj, attrName, targetObj, targetMethodName, specOrConverter) {
+  const conn = connect(sourceObj, attrName, targetObj, targetMethodName, specOrConverter);
   conn._isEpiConnection = true;
   return conn;
 }
