@@ -170,17 +170,21 @@ const TextInput = component({
 export class LabeledCheckboxMorph extends Morph {
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (evt.targetMorph.name == 'checkbox') signal(this, 'clicked');
+    if (evt.targetMorph.name === 'checkbox') signal(this, 'clicked');
   }
 
   setChecked (active) {
     const checkbox = this.getSubmorphNamed('checkbox');
     const f = checkbox.fill;
     checkbox.borderColor = active ? Color.transparent : Color.white;
+    this.owner.master._overriddenProps.get(this);
+    delete checkbox.master._overriddenProps.get(checkbox).fill; // ensure we adhere to the master that styles us
+    checkbox.master.applyIfNeeded(true);
     checkbox.fill = active ? f.withA(1) : f.withA(0);
     checkbox.fontColor = active ? Color.rgb(65, 65, 65) : Color.transparent;
   }
 }
+
 
 const LabeledCheckbox = component({
   type: LabeledCheckboxMorph,

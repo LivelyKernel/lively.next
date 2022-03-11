@@ -5,7 +5,7 @@ import { Color, rect, pt } from 'lively.graphics';
 import { PropertyLabel, RemoveButton, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { obj, arr } from 'lively.lang';
 import { once, connect } from 'lively.bindings';
-import { ShadowPopup, OpacityPopup, PositionPopupLight, PaddingPopup, NumberWidgetLight, ShadowPopupLight, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
+import { ShadowPopup, OpacityPopup, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
 
 /**
   Controls the morph's "body" which comprises all of the dynamic effect properties.
@@ -18,6 +18,12 @@ export class BodyControlModel extends PropertySectionModel {
         isComponent: true,
         get () {
           return this.getProperty('dynamicPropertyComponent') || DynamicProperty; // eslint-disable-line no-use-before-define
+        }
+      },
+      activeSectionComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('activeSectionComponent') || BodyControl; // eslint-disable-line no-use-before-define
         }
       },
       availableItems: {
@@ -132,7 +138,7 @@ export class BodyControlModel extends PropertySectionModel {
    */
   activate () {
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = BodyControl; // eslint-disable-line no-use-before-define
+    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
     this.addDynamicProperty();
   }
 
@@ -149,11 +155,11 @@ export class BodyControlModel extends PropertySectionModel {
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());
     if (this.dynamicControls.length > 0) {
-      this.view.master = BodyControl; // eslint-disable-line no-use-before-define
+      this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
       return;
     }
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
-    this.view.master = { auto: PropertySectionInactive, hover: PropertySection };
+    this.view.master = { auto: this.inactiveSectionComponent, hover: this.hoverSectionComponent };
   }
 }
 

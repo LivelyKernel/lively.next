@@ -6,6 +6,18 @@ import { HeadlineLabel, RemoveButton, PropertyLabelHovered, AddButton } from '..
 export class PropertySectionModel extends ViewModel {
   static get properties () {
     return {
+      inactiveSectionComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('inactiveSectionComponent') || PropertySectionInactive;
+        }
+      },
+      hoverSectionComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('hoverSectionComponent') || PropertySection;
+        }
+      },
       bindings: {
         get () {
           return [
@@ -27,6 +39,7 @@ export class PropertySectionModel extends ViewModel {
     this.ui.removeButton.visible = false;
   }
 }
+
 
 // PropertySection.openInWorld()
 const PropertySection = component({

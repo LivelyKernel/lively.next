@@ -141,9 +141,9 @@ export class ShapeControlModel extends ViewModel {
       disconnect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
     }
     this.targetMorph = targetMorph;
-    connect(this.targetMorph, 'position', this, 'refreshFromTarget');
-    connect(this.targetMorph, 'extent', this, 'refreshFromTarget');
-    connect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
+    connect(this.targetMorph, 'position', this, 'refreshFromTarget')._isBinding = true;
+    connect(this.targetMorph, 'extent', this, 'refreshFromTarget')._isBinding = true;
+    connect(this.targetMorph, 'rotation', this, 'refreshFromTarget')._isBinding = true;
     if (this.targetMorph.isEllipse || this.targetMorph.isPolygon || this.targetMorph.isPath) {
       this.setBorderRadiusControlState(false);
     } else this.setBorderRadiusControlState(true);

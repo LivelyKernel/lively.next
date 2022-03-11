@@ -97,6 +97,22 @@ export class PropertiesPanelModel extends ViewModel {
     }
   }
 
+  /**
+   * Alternatively to attaching to a world context, we can also connect to an arbitrary
+   * morph as a context and listen for 'onHaloOpened' events.
+   */
+  attachToTarget (aMorph) {
+    connect(aMorph, 'onHaloOpened', this, 'focusOn', {
+      garbageCollect: true
+    });
+  }
+
+  detachFromTarget (aMorph) {
+    aMorph.attributeConnections.forEach(conn => {
+      if (conn.targetObj === this) conn.disconnect();
+    });
+  }
+
   attachToWorld (aWorld) {
     connect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
@@ -131,7 +147,7 @@ export class PropertiesPanelModel extends ViewModel {
 
   focusOn (aMorph) {
     if (aMorph.isWorld) return;
-    if (Array.isArray(aMorph) && aMorph.length == 1) aMorph = aMorph[0];
+    if (Array.isArray(aMorph) && aMorph.length === 1) aMorph = aMorph[0];
     // ignore multi selections of more than one morph for now.
     // fixme: We still do not support multi select targets... add support for that in the future
     if (!aMorph.isMorph) return;
@@ -212,12 +228,14 @@ const BackgroundControl = component(PropertySection, {
     name: 'background fill input',
     viewModel: {
       gradientEnabled: true,
-      colorPickerComponent: DarkColorPicker 
+      colorPickerComponent: DarkColorPicker
     }
   }))]
 });
 
-// bar = part(PropertiesPanel);
+// PropertiesPanel.openInWorld()
+// bar = part(PropertiesPanel).openInWorld();
+// PropertiesPanel.get('remove button').visible
 // bar.openInWorld()
 // bar.focusOn($world.get('test 1'))
 // bar.remove()

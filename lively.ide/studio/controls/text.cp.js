@@ -16,6 +16,18 @@ export class RichTextControlModel extends ViewModel {
   static get properties () {
     return {
       targetMorph: {},
+      hoveredButtonComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('hoveredButtonComponent') || PropertyLabelHovered;
+        }
+      },
+      activeButtonComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('activeButtonComponent') || PropertyLabel;
+        }
+      },
       styledProps: {
         readOnly: true,
         get () {
@@ -78,6 +90,7 @@ export class RichTextControlModel extends ViewModel {
           italicStyle, underlineStyle,
           lineWrappingSelector
         } = this.ui;
+        const { activeButtonComponent, hoveredButtonComponent } = this;
 
         fontFamilySelector.selection = text.fontFamily;
         fontWeightSelector.selection = text.fontWeight; // fixme
@@ -86,16 +99,16 @@ export class RichTextControlModel extends ViewModel {
         letterSpacingInput.number = text.letterSpacing;
         lineWrappingSelector.selection = text.lineWrapping;
         fontColorInput.setColor(text.fontColor);
-        leftAlign.master = text.textAlign == 'left' ? PropertyLabelHovered : PropertyLabel;
-        centerAlign.master = text.textAlign == 'center' ? PropertyLabelHovered : PropertyLabel;
-        rightAlign.master = text.textAlign == 'right' ? PropertyLabelHovered : PropertyLabel;
-        blockAlign.master = text.textAlign == 'block' ? PropertyLabelHovered : PropertyLabel;
-        italicStyle.master = text.fontStyle == 'italic' ? PropertyLabelHovered : PropertyLabel;
-        underlineStyle.master = text.textDecoration == 'underline' ? PropertyLabelHovered : PropertyLabel;
+        leftAlign.master = text.textAlign == 'left' ? hoveredButtonComponent : activeButtonComponent;
+        centerAlign.master = text.textAlign == 'center' ? hoveredButtonComponent : activeButtonComponent;
+        rightAlign.master = text.textAlign == 'right' ? hoveredButtonComponent : activeButtonComponent;
+        blockAlign.master = text.textAlign == 'block' ? hoveredButtonComponent : activeButtonComponent;
+        italicStyle.master = text.fontStyle == 'italic' ? hoveredButtonComponent : activeButtonComponent;
+        underlineStyle.master = text.textDecoration == 'underline' ? hoveredButtonComponent : activeButtonComponent;
         if (text.isMorph) {
-          fixedExtent.master = text.fixedWidth && text.fixedHeight ? PropertyLabelHovered : PropertyLabel;
-          autoHeight.master = !text.fixedWidth && !text.fixedHeight ? PropertyLabelHovered : PropertyLabel;
-          autoWidth.master = !text.fixedWidth && text.fixedHeight ? PropertyLabelHovered : PropertyLabel;
+          fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
+          autoHeight.master = !text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
+          autoWidth.master = !text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
         }
       });
     });

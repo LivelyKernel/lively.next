@@ -187,14 +187,14 @@ export class ConstraintsControlModel extends ViewModel {
     return {
       verticalConstraint: { defaultValue: 'fixed' },
       horizontalConstraint: { defaultValue: 'fixed' },
-      activeMarkerComponent: { 
+      activeMarkerComponent: {
         isComponent: true,
         get () { return this.getProperty('activeMarkerComponent') || ConstraintMarkerActive; } // eslint-disable-line no-use-before-define
-      }, 
+      },
       defaultMarkerComponent: {
         isComponent: true,
         get () { return this.getProperty('defaultMarkerComponent') || ConstraintMarker; } // eslint-disable-line no-use-before-define
-      }, 
+      },
       bindings: {
         get () {
           return [
@@ -878,17 +878,7 @@ const ResizingControl = component(ConstraintsControl, {
           { string: 'Hug contents', value: 'hug', isListItem: true },
           { string: 'Fill container', value: 'fill', isListItem: true }
         ]
-      },
-      submorphs: [{
-        name: 'interactive label',
-        fontColor: Color.rgb(255, 255, 255),
-        padding: rect(0, 0, 8, 0),
-        rotation: -1.5707963267948966,
-        textAndAttributes: [HUG_ICON, {
-          fontSize: 18,
-          textStyleClasses: ['material-icons']
-        }]
-      }]
+      }
     },
     {
       name: 'vertical alignment selector',
@@ -901,16 +891,7 @@ const ResizingControl = component(ConstraintsControl, {
           { string: 'Hug contents', value: 'hug', isListItem: true },
           { string: 'Fill container', value: 'fill', isListItem: true }
         ]
-      },
-      submorphs: [{
-        name: 'interactive label',
-        fontColor: Color.rgb(255, 255, 255),
-        padding: rect(0, 4, 10, -4),
-        textAndAttributes: [HUG_ICON, {
-          fontSize: 18,
-          textStyleClasses: ['material-icons']
-        }]
-      }]
+      }
     }
   ]
 });

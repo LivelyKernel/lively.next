@@ -50,6 +50,12 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   static get properties () {
     return {
       targetMorph: {},
+      activeSectionComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('activeSectionComponent') || LayoutControl;
+        }
+      },
       buttonActiveComponent: {
         isComponent: true,
         get () {
@@ -98,10 +104,10 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   onRefresh (prop) {
-    if (!prop || prop == 'targetMorph') this.update();
+    if (!prop || prop == 'targetMorph') this.update(prop);
   }
 
-  update () {
+  update (prop) {
     this.withoutBindingsDo(() => {
       const {
         miniLayoutPreview, vertical, horizontal,
@@ -120,7 +126,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       } else {
         totalPaddingInput.number = layout.padding.top();
       }
-      wrapSubmorphsCheckbox.setChecked(layout.wrapSubmorphs);
+      if (prop == 'wrapping') { wrapSubmorphsCheckbox.setChecked(layout.wrapSubmorphs); }
     });
   }
 
@@ -136,7 +142,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   toggleWrapping () {
     const layout = this.targetMorph.layout;
     this.targetMorph.layout = layout.with({ wrapSubmorphs: !layout.wrapSubmorphs });
-    this.update();
+    this.update('wrapping');
   }
 
   setVerticalFlow () {
@@ -158,7 +164,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     super.activate();
     this.ui.controls.visible = true;
     this.ui.wrapSubmorphsCheckbox.visible = true;
-    this.view.master = LayoutControl;
+    this.view.master = this.activeSectionComponent;
+
     const layout = this.targetMorph && this.targetMorph.layout;
     if (!layout || layout.name() != 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
     this.update();
@@ -168,7 +175,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     super.deactivate();
     this.ui.controls.visible = false;
     this.ui.wrapSubmorphsCheckbox.visible = false;
-    this.view.master = { auto: PropertySectionInactive, hover: PropertySection };
+    this.view.master = { auto: this.inactiveSectionComponent, hover: this.hoverSectionComponent };
+
     if (this.targetMorph && this.targetMorph.layout) {
       const layoutableSubmorphs = this.targetMorph.layout.layoutableSubmorphs;
       this.targetMorph.layout = null;

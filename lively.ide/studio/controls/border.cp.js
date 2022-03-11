@@ -6,7 +6,7 @@ import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
 import { arr, string } from 'lively.lang';
 import { once, connect, signal } from 'lively.bindings';
-import { PropertySection, PropertySectionModel, PropertySectionInactive } from './section.cp.js';
+import { PropertySection, PropertySectionModel } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
 /**
@@ -20,11 +20,17 @@ export class BorderControlModel extends PropertySectionModel {
       targetMorph: {},
       popup: {},
       updateDirectly: { defaultValue: true },
+      activeSectionComponent: {
+        isComponent: true,
+        get () {
+          return this.getProperty('activeSectionComponent') || BorderControl; // eslint-disable-line no-use-before-define
+        }
+      },
       propertyLabelComponent: {
         isComponent: true,
         get () {
           return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        } 
+        }
       },
       propertyLabelComponentActive: {
         isComponent: true,
@@ -176,7 +182,7 @@ export class BorderControlModel extends PropertySectionModel {
     const { elementsWrapper } = this.ui;
     elementsWrapper.visible = true;
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = BorderControl; // eslint-disable-line no-use-before-define
+    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
     if (initBorder) {
       this.targetMorph.border = { color: Color.white, width: 1, style: 'solid' };
       this.update();
@@ -189,7 +195,7 @@ export class BorderControlModel extends PropertySectionModel {
    */
   deactivate () {
     super.deactivate();
-    this.view.master = { auto: PropertySectionInactive, hover: PropertySection };
+    this.view.master = { auto: this.activeSectionComponent, hover: this.hoverSectionComponent };
     this.closePopup();
     this.models.borderColorInput.closeColorPicker();
     if (!this.targetMorph) return;
@@ -255,7 +261,7 @@ export class BorderPopupWindow extends ViewModel {
         isComponent: true,
         get () {
           return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        } 
+        }
       },
       propertyLabelComponentActive: {
         isComponent: true,
