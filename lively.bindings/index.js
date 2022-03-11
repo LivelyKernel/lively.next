@@ -2,8 +2,6 @@ import { string, arr, Closure, obj } from 'lively.lang';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import ExpressionSerializer from 'lively.serializer2/plugins/expression-serializer.js';
 
-export { connect, epiConnect, disconnect, disconnectAll, once, signal, noUpdate };
-
 export class AttributeConnection {
   constructor (source, sourceProp, target, targetProp, spec) {
     this.init(source, sourceProp, target, targetProp, spec);
@@ -214,9 +212,9 @@ export class AttributeConnection {
     sourceObj.attributeConnections = sourceObj.attributeConnections.filter(con =>
       !this.isSimilarConnection(con));
     const connectionsWithSameSourceAttr = sourceObj.attributeConnections.filter(con =>
-      this.getSourceAttrName() == con.getSourceAttrName());
-    if (sourceObj.attributeConnections.length == 0) { delete sourceObj.attributeConnections; }
-    if (connectionsWithSameSourceAttr.length == 0) { this.removeSourceObjGetterAndSetter(); }
+      this.getSourceAttrName() === con.getSourceAttrName());
+    if (sourceObj.attributeConnections.length === 0) { delete sourceObj.attributeConnections; }
+    if (connectionsWithSameSourceAttr.length === 0) { this.removeSourceObjGetterAndSetter(); }
 
     return null;
   }
@@ -364,7 +362,7 @@ export class AttributeConnection {
     }
     sourceObj[methodName] = function connectionWrapper () {
       if (this.attributeConnections === undefined) { throw new Error('[lively.bindings] Something is wrong with connection source object, it has no attributeConnections'); }
-      const conns = this.attributeConnections.filter(c => c.getSourceAttrName() == methodName);
+      const conns = this.attributeConnections.filter(c => c.getSourceAttrName() === methodName);
       const overridingConnection = conns.find(c => !!c.hasOverride);
       let result;
       if (overridingConnection) {
@@ -376,7 +374,7 @@ export class AttributeConnection {
         result = this[methodName].originalFunction.apply(this, arguments);
       } // make it an option to block the existing function
       for (let i = 0; i < conns.length; i++) {
-        if (conns[i] == overridingConnection) continue;
+        if (conns[i] === overridingConnection) continue;
         conns[i].update(arguments[0]);
       }
       return result;
@@ -409,18 +407,19 @@ export class AttributeConnection {
     } else if (srcObj[realAttrName] && srcObj[realAttrName].isConnectionWrapper) {
       const wrapper = srcObj[realAttrName];
       delete srcObj[realAttrName];
-      if (!srcObj[realAttrName]) // only restore for scripts, non-scripts are restored via prototype chain
-      { srcObj[realAttrName] = wrapper.originalFunction; }
+      if (!srcObj[realAttrName]) { // only restore for scripts, non-scripts are restored via prototype chain
+        srcObj[realAttrName] = wrapper.originalFunction;
+      }
     }
 
     if (srcObj.doNotSerialize && srcObj.doNotSerialize.includes(helperAttrName)) {
       srcObj.doNotSerialize = arr.without(srcObj.doNotSerialize, helperAttrName);
-      if (srcObj.doNotSerialize.length == 0) delete srcObj.doNotSerialize;
+      if (srcObj.doNotSerialize.length === 0) delete srcObj.doNotSerialize;
     }
 
     if (srcObj.doNotCopyProperties && srcObj.doNotCopyProperties.includes(helperAttrName)) {
       srcObj.doNotCopyProperties = arr.without(srcObj.doNotCopyProperties, helperAttrName);
-      if (srcObj.doNotCopyProperties.length == 0) delete srcObj.doNotCopyProperties;
+      if (srcObj.doNotCopyProperties.length === 0) delete srcObj.doNotCopyProperties;
     }
   }
 
@@ -444,11 +443,11 @@ export class AttributeConnection {
   }
 
   isSimilarConnection (other) {
-    if (!other || other.constructor != this.constructor) return false;
-    return this.sourceObj == other.sourceObj &&
-        this.sourceAttrName == other.sourceAttrName &&
-        this.targetObj == other.targetObj &&
-        this.targetMethodName == other.targetMethodName;
+    if (!other || other.constructor !== this.constructor) return false;
+    return this.sourceObj === other.sourceObj &&
+        this.sourceAttrName === other.sourceAttrName &&
+        this.targetObj === other.targetObj &&
+        this.targetMethodName === other.targetMethodName;
   }
 
   get hasOverride () {
@@ -538,9 +537,9 @@ function disconnect (sourceObj, attrName, targetObj, targetMethodName) {
   if (!sourceObj.attributeConnections) return;
 
   for (const con of sourceObj.attributeConnections.slice()) {
-    if (con.getSourceAttrName() == attrName &&
+    if (con.getSourceAttrName() === attrName &&
         con.getTargetObj() === targetObj &&
-        con.getTargetMethodName() == targetMethodName) { con.disconnect(); }
+        con.getTargetMethodName() === targetMethodName) { con.disconnect(); }
   }
 
   if (typeof sourceObj.onDisconnect === 'function') { sourceObj.onDisconnect(attrName, targetObj, targetMethodName); }
@@ -574,13 +573,13 @@ function signal (sourceObj, attrName, newVal) {
   const oldVal = sourceObj[attrName];
   for (let i = 0, len = connections.length; i < len; i++) {
     const c = connections[i];
-    if (c.getSourceAttrName() == attrName) c.update(newVal, oldVal);
+    if (c.getSourceAttrName() === attrName) c.update(newVal, oldVal);
   }
 }
 
 export function callWhenNotNull (sourceObj, sourceProp, targetObj, targetSelector) {
   // ensure that sourceObj[sourceProp] is not null, then run targetObj[targetProp]()
-  if (sourceObj[sourceProp] != null) {
+  if (sourceObj[sourceProp] !== null) {
     targetObj[targetSelector](sourceObj[sourceProp]);
   } else {
     connect(
@@ -639,3 +638,5 @@ function noUpdate (noUpdateSpec, func) {
   }
   return result;
 }
+
+export { connect, epiConnect, disconnect, disconnectAll, once, signal, noUpdate };
