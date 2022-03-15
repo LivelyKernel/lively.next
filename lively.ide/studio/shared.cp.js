@@ -168,6 +168,19 @@ const TextInput = component({
 });
 
 export class LabeledCheckboxMorph extends Morph {
+  static get properties () {
+    return {
+      inactiveCheckboxComponent: {
+        isStyleProp: true,
+        isComponent: true
+      },
+      activeCheckboxComponent: {
+        isStyleProp: true,
+        isComponent: true
+      }
+    };
+  }
+
   onMouseDown (evt) {
     super.onMouseDown(evt);
     if (evt.targetMorph.name === 'checkbox') signal(this, 'clicked');
@@ -175,41 +188,55 @@ export class LabeledCheckboxMorph extends Morph {
 
   setChecked (active) {
     const checkbox = this.getSubmorphNamed('checkbox');
-    const f = checkbox.fill;
-    checkbox.borderColor = active ? Color.transparent : Color.white;
-    this.owner.master._overriddenProps.get(this);
-    delete checkbox.master._overriddenProps.get(checkbox).fill; // ensure we adhere to the master that styles us
-    checkbox.master.applyIfNeeded(true);
-    checkbox.fill = active ? f.withA(1) : f.withA(0);
-    checkbox.fontColor = active ? Color.rgb(65, 65, 65) : Color.transparent;
+    checkbox.master = active ? this.activeCheckboxComponent : this.inactiveCheckboxComponent;
   }
 }
 
+const CheckboxActive = component({
+  name: 'checkbox/active',
+  type: Label,
+  borderWidth: 1,
+  borderColor: Color.transparent,
+  fill: Color.rgb(178, 235, 242),
+  fontColor: Color.rgb(65, 65, 65),
+  borderRadius: 2,
+  padding: rect(0, 0, 5, 0),
+  nativeCursor: 'pointer',
+  textAndAttributes: ['', {
+    fontSize: 13,
+    textStyleClasses: ['material-icons']
+  }]
+});
 
+const CheckboxInactive = component(CheckboxActive, {
+  name: 'checkbox/inactive',
+  borderWidth: 1,
+  borderColor: Color.white,
+  fill: Color.transparent,
+  fontColor: Color.transparent
+});
+
+// part(LabeledCheckbox).openInWorld()
 const LabeledCheckbox = component({
   type: LabeledCheckboxMorph,
+  activeCheckboxComponent: CheckboxActive,
+  inactiveCheckboxComponent: CheckboxInactive,
   name: 'labeled checkbox',
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(202, 31),
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
     axisAlign: 'center',
-    justifySubmorphs: 'packed',
-    padding: Rectangle.inset(20, 0, 0),
     orderByIndex: true,
+    padding: rect(20, 8, -20, 0),
+    resizePolicies: [['checkbox', {
+      height: 'fill',
+      width: 'fixed'
+    }]],
     wrapSubmorphs: false
   }),
-  submorphs: [part(AddButton, {
-    name: 'checkbox',
-    borderWidth: 1,
-    borderColor: Color.transparent,
-    fill: Color.rgb(178, 235, 242),
-    fontColor: Color.rgb(65, 65, 65),
-    padding: rect(0),
-    textAndAttributes: ['', {
-      fontSize: 13,
-      textStyleClasses: ['material-icons']
-    }]
+  submorphs: [part(CheckboxActive, {
+    name: 'checkbox'
   }), part(PropLabel, {
     type: Label,
     name: 'prop label',
@@ -359,4 +386,4 @@ const Spinner = component({
   scale: 0.3244543390629232
 });
 
-export { AddButton, RemoveButton, HeadlineLabel, PropLabel, NumberInput, TextInput, EnumSelector, PropertyLabel, PropertyLabelHovered, PropertyLabelActive, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner };
+export { AddButton, RemoveButton, HeadlineLabel, PropLabel, NumberInput, TextInput, EnumSelector, PropertyLabel, PropertyLabelHovered, PropertyLabelActive, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner, CheckboxActive, CheckboxInactive };
