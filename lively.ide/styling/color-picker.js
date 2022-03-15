@@ -20,6 +20,10 @@ export class ColorInputModel extends ViewModel {
         defaultValue: false,
         after: ['colorValue']
       },
+      activeColor: {
+        isStyleProp: true,
+        defaultValue: Color.gray.withA(.5)
+      },
       colorValue: {
         set (v) {
           if (!(v && (v.isColor || v.isGradient))) {
@@ -131,7 +135,7 @@ export class ColorInputModel extends ViewModel {
     connect(p.viewModel, 'value', this, 'setColor');
     connect(p.viewModel, 'close', this, 'onPickerClosed');
     p.viewModel.withColor(color);
-    this.view.fill = Color.gray.withA(0.5);
+    this.view.fill = this.activeColor;
     this.picker = p.openInWorld();
     // this two step alignment is the simplest way to make the picker find its optimal position
     this.picker.topRight = this.view.globalBounds().topLeft();
