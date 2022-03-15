@@ -46,7 +46,7 @@ export function printOverriddenProps (aMorph) {
       gatherOverriddenProps(m, master);
     }
     if (m.master) {
-      gatherOverriddenProps(m, m.master);  
+      gatherOverriddenProps(m, m.master);
     }
   });
   return overriddenPropsInHierarchy;
@@ -136,15 +136,15 @@ export class StyleguidePlugin {
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
-    
+
     if (args.constructor === ComponentPolicy) {
       newPolicy = args;
     } else newPolicy = new this(derivedMorph, args);
-    
+
     if (derivedMorph.master) {
       newPolicy.adoptOverriddenPropsFrom(derivedMorph.master);
     }
-    
+
     return newPolicy;
   }
 
@@ -192,7 +192,7 @@ export class ComponentPolicy {
     return [this.auto, this.click, this.hover].includes(masterComponent);
   }
 
-  spec () { 
+  spec () {
     const spec = obj.select(this, ['auto', 'click', 'hover', 'light', 'dark']);
     spec.overriddenProps = {};
     this.withSubmorphsInScopeDo(this.derivedMorph, m => {
@@ -217,7 +217,7 @@ export class ComponentPolicy {
     }
     return true;
   }
-  
+
   /**
    * Walk throught the managed submorphs and clear the overridden props that are directly present in the
    * auto master hierarchy.
@@ -292,7 +292,7 @@ export class ComponentPolicy {
         addFn(stateName, this[stateName]);
         continue;
       }
-      
+
       const { export: exportedName, module: modulePath } = this[stateName][Symbol.for('lively-module-meta')];
       addFn(stateName, pool.expressionSerializer.exprStringEncode({
         __expr__: exportedName,
@@ -379,7 +379,7 @@ export class ComponentPolicy {
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     if (animationConfig) this._animationConfig = animationConfig;
     const target = this.derivedMorph;
-    
+
     if (this._hasUnresolvedMaster) {
       this._originalOpacity = target.opacity;
       // fixme: this may still be too late if applyIfNeeded is triggered at render time
@@ -402,12 +402,11 @@ export class ComponentPolicy {
       });
     }
     const master = this.determineMaster(target);
-    // if (master) needsUpdate = true;
     if (master && needsUpdate) {
       this.apply(target, master);
       this._appliedMaster = master;
     }
-    
+
     let overriddenProps;
     if (overriddenProps = this._overriddenPropsToApply) {
       delete this._overriddenPropsToApply;
@@ -455,7 +454,7 @@ export class ComponentPolicy {
   withSubmorphsInScopeDo (scopeMorph, cb) {
     return scopeMorph.withAllSubmorphsDoExcluding(cb, m => scopeMorph !== m && m.master);
   }
-  
+
   /**
    * Generates a synthesized object the comprises all the properties
    * with respect to the overriden properties in the policy chain.
@@ -544,7 +543,7 @@ export class ComponentPolicy {
   apply (derivedMorph, master, animationConfig = this._animationConfig) {
     if (this._applying) return;
     this._applying = true;
-    
+
     let policyToSynthesize;
     if (master.isPolicy) {
       // the actual solution is to do both things: further dig down the actual master component
@@ -557,7 +556,7 @@ export class ComponentPolicy {
     if (master.isComponent && master.master) {
       policyToSynthesize = master.master;
     }
-    
+
     try {
       const apply = () => derivedMorph.withMetaDo({ metaInteraction: true }, () => {
         const nameToStylableMorph = this.prepareSubmorphsToBeManaged(derivedMorph, master);
@@ -568,7 +567,7 @@ export class ComponentPolicy {
           // Not when working via direct manipulation tools. But can happen when you work in code purely. In those cases we resort to silent ignore.
           if (!morphToBeStyled) return;
           if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
-          
+
           if (masterSubmorph.master && !isRoot) { // the root is already taken care of so we do not want to enter an infine loop here.
             // only assign the policy if the local policy is not equal to the one in the master
             if (Path('master.auto').get(morphToBeStyled) !== masterSubmorph.master &&
@@ -582,10 +581,6 @@ export class ComponentPolicy {
               //        and the top level master component property.
               morphToBeStyled.master = { auto: masterSubmorph.master }; // use policy as the master!
             }
-            // if this is a sub-master that has not changed, there still may be
-            // a sub-sub... master that has some overridden properties and still needs to be visited
-            morphToBeStyled.requestMasterStyling(); // always trigger the master styling here
-            // 
           }
           if (morphToBeStyled.master && !isRoot) {
             const overriddenProps = morphToBeStyled.master._overriddenProps.get(morphToBeStyled) || morphToBeStyled._parametrizedProps || {};
@@ -603,7 +598,7 @@ export class ComponentPolicy {
           // now that we are about to style the submorph, we need to sythesize the properties accordingly
           // honoring the derivation chain of policies/top level master components
           const synthesizedProperties = policyToSynthesize ? this.synthesizeProperties(masterSubmorph, policyToSynthesize, derivedMorph) : masterSubmorph;
-          
+
           for (const propName of this.getStyleProperties(masterSubmorph)) {
             if (this._overriddenProps.get(morphToBeStyled)[propName]) {
               if (propName === 'extent' &&
@@ -646,7 +641,7 @@ export class ComponentPolicy {
               ) continue;
               if (propName === 'position') continue;
             }
-            
+
             // fixme: other special cases??
             if (morphToBeStyled.isLabel && propName === 'extent') continue;
 
@@ -692,7 +687,7 @@ export class ComponentPolicy {
   */
 
   prepareSubmorphsToBeManaged (derivedMorph, master) {
-    if (master.isPolicy) master = master.derivedMorph; 
+    if (master.isPolicy) master = master.derivedMorph;
     const nameToStylableMorph = {};
     this.withSubmorphsInScopeDo(derivedMorph, m => {
       if (nameToStylableMorph[m.name]) {
@@ -754,8 +749,8 @@ export class ComponentPolicy {
       // only consider the properties "handled" whose value is equal to the corresponding morph in the master hierarchy
       return overridden.filter(prop => obj.equals(submorph[prop], correspondingMorph[prop]));
     }
-    if (!nextPolicy && 
-        correspondingMorph && 
+    if (!nextPolicy &&
+        correspondingMorph &&
         obj.equals(correspondingMorph.master, submorph.master)) return ['master'];
     return [];
   }
@@ -854,7 +849,7 @@ export class ComponentPolicy {
     if (Path('meta.metaInteraction').get(change)) return;
     if (['_rev', 'name'].includes(change.prop)) return;
     if (change.prop === 'opacity') delete this._originalOpacity;
-    
+
     if (change.prop === 'master' && this.managesMorph(morph)) {
       this._overriddenProps.get(morph).master = true;
     }
@@ -867,7 +862,7 @@ export class ComponentPolicy {
         this._overriddenProps.get(morph)[change.prop] = true;
         return;
       }
-      
+
       if (morph._parametrizedProps) morph._parametrizedProps[change.prop] = change.value;
       else morph._parametrizedProps = { [change.prop]: change.value };
     }
