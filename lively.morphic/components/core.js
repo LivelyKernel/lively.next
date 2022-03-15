@@ -50,7 +50,7 @@ export class ViewModel {
           if (v) v.viewModel = this;
         }
       },
-    bindings: {
+      bindings: {
         serialize: false,
         readOnly: true,
         get () {
@@ -74,6 +74,19 @@ export class ViewModel {
         serialize: false,
         get () {
           return [];
+        }
+      },
+      styleProperties: {
+        group: 'styling',
+        derived: true,
+        readOnly: true,
+        get () {
+          const { properties, order } = this.propertiesAndPropertySettings();
+          const styleProps = [];
+          for (const prop of order) {
+            if (properties[prop].isStyleProp || properties[prop].isComponent) { styleProps.push(prop); }
+          }
+          return styleProps;
         }
       },
       ui: {
@@ -134,7 +147,6 @@ export class ViewModel {
         }));
       }
     }
-
   }
 
   getProperty (key) {
@@ -154,7 +166,7 @@ export class ViewModel {
     }
     this._isRefreshing = false;
   }
-  
+
   /**
    * Returns the world the view currently resides in.
    * @returns { World } The world morph the view resides in.
@@ -166,7 +178,7 @@ export class ViewModel {
   execCommand (cmdName, opts) {
     return this.view.execCommand(cmdName, opts);
   }
-  
+
   /**
    * Calls `cb` on every morph within the scope of the view model.
    * The scope is essentially every morph in the submorph hierarchy that is
@@ -176,7 +188,7 @@ export class ViewModel {
   doWithScope (cb) {
     return this.view && this.view.withAllSubmorphsDoExcluding(cb, (m) => m.ignoreScope || (m.viewModel && m.viewModel !== this));
   }
-  
+
   /**
    * Detatches the view model from the view. This means all bindings and
    * exposed props are removed, effectively removing all custom behavior from the view.
@@ -200,14 +212,14 @@ export class ViewModel {
     this.reifyExposedProps();
     this.reifyBindings();
   }
-  
+
   /**
    * Called once the view is fully loaded and attached.
    */
   viewDidLoad () {
-    
+
   }
-  
+
   /**
    * Default refresh callback to perform updates in the view
    * fixme: Refresh should not get called if view has not been
@@ -216,7 +228,7 @@ export class ViewModel {
    * @param { object } change - The change object regarding the current property that changed in the view model.
    */
   onRefresh (change) {}
-  
+
   /**
    * Instantiate all the bindings within the view as defined.
    */
@@ -244,7 +256,7 @@ export class ViewModel {
       }
     }
   }
-  
+
   /**
    * Install all of the exposed props in the view as defined.
    */
@@ -260,7 +272,7 @@ export class ViewModel {
         if (target) redirected = this.view.getSubmorphNamed(target);
         Object.defineProperty(this.view, subProp, {
           configurable: true,
-          get: () => { 
+          get: () => {
             const val = redirected[subProp];
             if (obj.isFunction(val)) return val.bind(redirected);
             return val;
@@ -271,7 +283,7 @@ export class ViewModel {
         });
         continue;
       }
-      
+
       if (obj.isObject(prop)) {
         const { method, as } = prop;
         this.view[as] = (...args) => {
@@ -279,7 +291,7 @@ export class ViewModel {
         };
         continue;
       }
-      
+
       const descr = descriptors[prop];
       if (props[prop] || descr && (!!descr.get || !!descr.set)) {
         // install getter setter
@@ -299,7 +311,7 @@ export class ViewModel {
       };
     }
   }
-  
+
   /**
    * Invoke the given callback function without the bindings in the view being active.
    * This allows us to perform changes in the view without accidentally triggering any
@@ -318,7 +330,7 @@ export class ViewModel {
     if (res && res.then) return res.then(() => this.onActivate());
     else this.onActivate();
   }
-  
+
   /**
    * Returns the list of all bindings connections instantiated within the
    * scope of the view model.
@@ -347,7 +359,7 @@ export class ViewModel {
     });
     return bindingConnections;
   }
-  
+
   /**
    * Attaches the view model to the given view and initializes all
    * the bindings and exposed props alongside. Also invokes lifycle methods
@@ -440,7 +452,7 @@ export class PolicyRetargeting {
   propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
     return arr.without(keysSoFar, 'master');
   }
-  
+
   // if this plugin is provided the policies are retargeted to the original inline policies
   additionallyDeserializeAfterProperties (pool, ref, newObj, snapshot, serializedObjMap, path) {
     const policyHolder = this.morphsWithPolicies[ref.id];
@@ -468,10 +480,10 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
   if (!snap) {
     snap = serializeMorph(masterComponent);
     delete snap.snapshot[snap.id].props.master;
-    delete snap.snapshot[snap.id].props.isComponent; 
+    delete snap.snapshot[snap.id].props.isComponent;
   }
-  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [] }); 
- 
+  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [] });
+
   // ensure master is initialized before overriding
   // this skips derived morphs that are not reachable via submorphs
   p.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
@@ -494,10 +506,19 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
   p.withAllSubmorphsDo(m => {
     if (m.master) m.master.applyIfNeeded(true);
   });
-  
+
   const viewModelClass = overriddenProps.viewModelClass || masterComponent.viewModelClass || overriddenProps.defaultViewModel || masterComponent.defaultViewModel;
   if (viewModelClass) {
-    p.viewModel = new viewModelClass(overriddenProps.viewModel || {});
+    let params = overriddenProps.viewModel;
+    if (!params && p.viewModel) {
+      params = obj.select(p.viewModel, p.viewModel.styleProperties);
+      // remove the keys that are undefined
+      for (let key in params) {
+        if (params[key] === undefined) delete params[key];
+      }
+    }
+    if (!params) params = {};
+    p.viewModel = new viewModelClass(params); // why cant we rewrap?
     p.viewModel.attach(p);
   }
   mergeInModelProps(p, overriddenProps);
@@ -525,14 +546,14 @@ export function component (masterComponentOrProps, overriddenProps) {
     c.defaultViewModel = masterComponentOrProps.defaultViewModel;
     c.viewModelClass = masterComponentOrProps.viewModelClass;
   } else c = morph({ ...props });
-  
+
   if (overriddenProps && (type = overriddenProps.type)) {
     if (obj.isString(type)) {
       type = getClassForName(type);
     }
     adoptObject(c, type);
   }
-  
+
   c.isComponent = true;
   if (props.defaultViewModel) {
     // attach the view model;
