@@ -4,7 +4,7 @@
  */
 
 import { equals as objectEquals } from './object.js';
-import { delay, once, Null as NullFunction } from './function.js';
+import { Null as NullFunction } from './function.js';
 import Group from './Group.js';
 
 /**
@@ -226,7 +226,7 @@ function uniq (array, sorted) {
  * @param {Object} context - Used as `this` when calling `comparator`.
  * @returns {any[]}
  */
-function uniqBy (array, comparator, context) { 
+function uniqBy (array, comparator, context) {
   const result = array.slice();
   for (let i = result.length; i--;) {
     const item = array[i];
@@ -292,16 +292,15 @@ function mutableCompact (array) {
 function zip (/* arr, arr2, arr3 */) {
   const args = Array.from(arguments);
   const array = args.shift();
-  const iterator = typeof last(args) === 'function'
+  const iterator = typeof last(args) === 'function' // eslint-disable-line no-use-before-define
     ? args.pop()
     : function (x) { return x; };
   const collections = [array].concat(args).map(function (ea) { return Array.from(ea); });
   return array.map(function (value, index) {
-    return iterator(pluck(collections, index), index);
+    return iterator(pluck(collections, index), index); // eslint-disable-line no-use-before-define
   });
 }
 /**
-
 
 /**
  * Returns a new array that contains an element of `arra` and `delim` alternating.
@@ -315,7 +314,6 @@ function interpose (array, delim) {
     xs.push(x); return xs;
   }, []);
 }
-
 
 /**
  * Calls `method` on each element in `array`, passing all arguments.
@@ -374,7 +372,7 @@ function equals (array, otherArray) {
  * @param {any[]} otherArray 
  * @returns {boolean}
  */
-function deepEquals (array, otherArray) { 
+function deepEquals (array, otherArray) {
   const len = array.length;
   if (!otherArray || len !== otherArray.length) return false;
   for (let i = 0; i < len; i++) {
@@ -770,7 +768,7 @@ function partition (array, iterator, context) {
  * @param {Object} context - bound to `this` when calling `constrainedFunc`
  */
 function batchify (array, constrainedFunc, context) {
-  return findBatches([], array);
+  return findBatches([], array); // eslint-disable-line no-use-before-define
 
   function extractBatch (batch, sizes) {
     // Array -> Array -> Array[Array,Array]
@@ -1030,10 +1028,10 @@ function clone (array) {
   return [].concat(array);
 }
 
-/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+/* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 Enable chaining (lively.lang) for methods on Array.prototype.
 Do not use these directly, use the methods provided by Array.prototype instead.
--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
 
 function filter (array, iterator, context) {
   return array.filter(iterator, context);
