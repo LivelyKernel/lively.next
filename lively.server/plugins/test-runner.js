@@ -12,7 +12,7 @@ export default class TestRunner {
     this.headlessSession = new HeadlessSession();
     await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&showsUserFlap=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld'`))
     results = await this.headlessSession.runEval(`
-    const {promise } = await System.import('lively.lang')
+    const { promise } = await System.import('lively.lang')
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
