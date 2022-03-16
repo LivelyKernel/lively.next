@@ -1,8 +1,8 @@
 /* global System */
 import { arr, promise, obj, chain, fun } from 'lively.lang';
-import { query, parse, acorn, walk } from 'lively.ast';
+import { query, parse, walk } from 'lively.ast';
 import { pt, Color } from 'lively.graphics';
-import { addOrChangeCSSDeclaration } from 'lively.morphic/rendering/dom-helper.js';
+
 import { HTMLMorph } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import EvalBackendChooser from './js/eval-backend-ui.js';
@@ -10,26 +10,12 @@ import EvalBackendChooser from './js/eval-backend-ui.js';
 import { LoadingIndicator } from 'lively.components';
 import JavaScriptEditorPlugin from './js/editor-plugin.js';
 import { resource } from 'lively.resources/index.js';
-import { es5Transpilation } from 'lively.source-transform';
+
 
 let jsDiff;
 (async function loadJsDiff () {
   jsDiff = await System.import('https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js');
 })();
-
-export async function findTestModulesInPackage (systemInterface, packageOrUrl) {
-  const resources = await systemInterface.resourcesOfPackage(packageOrUrl);
-  return Promise.all(
-    resources.map(async ({ url }) => {
-      if (!url.endsWith('.js')) return null;
-      const source = await systemInterface.moduleRead(url); let parsed;
-      try { parsed = parse(source); } catch (err) { return null; }
-      const hasMochaImports = query.imports(query.scopes(parsed)).some(({ fromModule }) =>
-        fromModule.includes('mocha-es6'));
-      if (!hasMochaImports) return null;
-      try { return testsFromSource(source).length ? url : null; } catch (e) { return null; }
-    })).then(tests => tests.filter(Boolean));
-}
 
 export function testsFromSource (sourceOrAst) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
@@ -46,8 +32,9 @@ export function testsFromSource (sourceOrAst) {
 
   walk.recursive(parsed, {}, {
     CallExpression: (node, state, c) => {
+      let spec;
       if (node.callee.name && node.callee.name.match(/^(describe|it|describeInBrowser|xdescribe|xit)$/) && node.arguments.length >= 2) {
-        var spec = {
+        spec = {
           title: node.arguments[0].value,
           type: node.callee.name.match(/describe/) ? 'suite' : 'test'
         };
@@ -64,7 +51,7 @@ export function testsFromSource (sourceOrAst) {
 }
 
 export function testsFromMocha (mocha) {
-  return _buildTestList(mocha.suite)
+  return _buildTestList(mocha.suite) // eslint-disable-line no-use-before-define
     .reduce((byFile, test) => {
       if (!test.file) return byFile;
       const found = byFile.find(ea => ea.file === test.file);
@@ -98,6 +85,19 @@ export function testsFromMocha (mocha) {
   }
 }
 
+export async function findTestModulesInPackage (systemInterface, packageOrUrl) {
+  const resources = await systemInterface.resourcesOfPackage(packageOrUrl);
+  return Promise.all(
+    resources.map(async ({ url }) => {
+      if (!url.endsWith('.js')) return null;
+      const source = await systemInterface.moduleRead(url); let parsed;
+      try { parsed = parse(source); } catch (err) { return null; }
+      const hasMochaImports = query.imports(query.scopes(parsed)).some(({ fromModule }) =>
+        fromModule.includes('mocha-es6'));
+      if (!hasMochaImports) return null;
+      try { return testsFromSource(source).length ? url : null; } catch (e) { return null; }
+    })).then(tests => tests.filter(Boolean));
+}
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const testRunnerCSS = `
@@ -366,7 +366,6 @@ export default class TestRunner extends HTMLMorph {
     if (!test) throw new Error('Cannot find test file for test ' + suiteName);
 
     const grep = new RegExp('^' + suiteName.replace(/\*/g, '\\*') + '.*');
-    const existingUnchangedTests = test.tests.filter(ea => !ea.fullTitle.match(grep));
     await this.runTestFile(test.file, grep);
 
     // restore unchanged tests
@@ -474,7 +473,7 @@ export default class TestRunner extends HTMLMorph {
 
       if (recursive) {
         if (file === target) {
-          var testsOfFile = tests.find(ea => ea.file === file);
+          const testsOfFile = tests.find(ea => ea.file === file);
           if (testsOfFile) testsOfFile.tests.forEach(t => delete collapsed[t.fullTitle]);
         } else {
           Object.keys(collapsed).forEach(k => k.indexOf(target) === 0 && (delete collapsed[k]));
@@ -483,7 +482,7 @@ export default class TestRunner extends HTMLMorph {
     } else {
       collapsed[target] = true;
       if (recursive) {
-        var testsOfFile = tests.find(ea => ea.file === file);
+        const testsOfFile = tests.find(ea => ea.file === file);
         if (file === target) {
           if (testsOfFile) {
             testsOfFile.tests.forEach(t =>
@@ -564,7 +563,6 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async renderTests (state) {
-    const self = this;
     const collapsed = Object.keys(state.collapsedSuites);
     const tests = state.loadedTests || [];
     const runningTest = tests.find(test => test.state === 'running');
@@ -701,7 +699,7 @@ export default class TestRunner extends HTMLMorph {
     const printed = this.stringifyExpectedAndActualOfError(test.error);
 
     if (jsDiff && printed && printed.expected && printed.actual) {
-      return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`;
+      return `${msg}<p>diff + = actual, - = expected:</p><pre>${diffIt(printed.expected, printed.actual)}</pre>`; // eslint-disable-line no-use-before-define
     } else {
       return `${msg}<p>expected:</p><pre>${String(test.error.expected)}</pre><p>actual:</p><pre>${String(test.error.actual)}</pre>`;
     }
@@ -720,8 +718,8 @@ export default class TestRunner extends HTMLMorph {
     return !error.expected || !error.actual
       ? null
       : {
-          expected: tryPrint(error.expected),
-          actual: tryPrint(error.actual)
+          expected: tryPrint(error.expected), // eslint-disable-line no-use-before-define
+          actual: tryPrint(error.actual) // eslint-disable-line no-use-before-define
         };
 
     function tryPrint (o) {
