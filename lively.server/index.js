@@ -39,8 +39,10 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
     .then(modules => {
       // migrate the system over 
       modules.changeSystem(livelySystem);
-      modules.unwrapModuleResolution();
-      modules.wrapModuleResolution();
+      modules.unwrapModuleResolution(livelySystem);
+      modules.unwrapModuleLoad(livelySystem);
+      modules.wrapModuleResolution(livelySystem);
+      modules.wrapModuleLoad(livelySystem);
     }).then(() =>
       silenceDuring(
         // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...
