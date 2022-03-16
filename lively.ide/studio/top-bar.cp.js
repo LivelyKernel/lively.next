@@ -810,7 +810,11 @@ export class TopBarModel extends ViewModel {
     connect(target, 'onDragEnd', this, 'finishDragSelectionIfNeeded', {
       garbageCollect: true
     });
-    target.draggable = true;
+    try {
+      target.draggable = true;
+    } catch (err) {
+      // sometimes draggable is read only...
+    }
   }
 }
 
