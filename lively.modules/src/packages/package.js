@@ -6,6 +6,11 @@ import PackageConfiguration from './configuration.js';
 import { isURL, join } from '../url-helpers.js';
 import { classHolder } from '../cycle-breaker.js';
 
+export async function packagesConfig () {
+  const config = System.decanonicalize('lively.installer/packages-config.json');
+  return JSON.parse(await resource(config).read());
+}
+
 function normalizePackageURL (System, packageURL, allPackageURLs = []) {
   if (allPackageURLs.some(ea => ea === packageURL)) return packageURL;
 

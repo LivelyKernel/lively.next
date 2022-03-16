@@ -11,6 +11,8 @@ import { LoadingIndicator } from 'lively.components';
 import JavaScriptEditorPlugin from './js/editor-plugin.js';
 import { resource } from 'lively.resources/index.js';
 
+import { packagesConfig } from 'lively.modules/src/packages/package.js';
+import { localInterface } from 'lively-system-interface';
 
 let jsDiff;
 (async function loadJsDiff () {
@@ -305,7 +307,6 @@ export default class TestRunner extends HTMLMorph {
 
   setEvalBackend (choice) {
     this.editorPlugin.setSystemInterfaceNamed(choice);
-    this.get('eval backend button').setAndSelectBackend(this.systemInterface);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -426,8 +427,16 @@ export default class TestRunner extends HTMLMorph {
     }
   }
 
-  async runTestsInPackage (packageURL) {
-    const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageURL);
+  updateEvalBackendForPackage (wantsServer) {
+    if (wantsServer) this.systemInterface = EvalBackendChooser.default.httpEvalBackends[0];
+    else this.systemInterface = localInterface;
+  }
+
+  async runTestsInPackage (packageName) {
+    const pkgsConf = await packagesConfig();
+    const wantsServerInterface = pkgsConf.find(pkg => pkg.name === packageName).wantsServerInterface;
+    this.updateEvalBackendForPackage(wantsServerInterface);
+    const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);
     const results = [];
     for (const url of testModuleURLs) { results.push(await this.runTestFile(url)); }
     return results;
