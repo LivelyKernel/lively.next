@@ -282,7 +282,7 @@ export class Label extends Morph {
   }
 
   fit () {
-    this.withMetaDo({ metaInteraction: true }, () => {
+    this.withMetaDo({ skipReconciliation: true }, () => {
       this.extent = this.textBounds().extent().addXY(
         this.borderWidthLeft + this.borderWidthRight,
         this.borderWidthTop + this.borderWidthBottom
