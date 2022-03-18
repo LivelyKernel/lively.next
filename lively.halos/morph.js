@@ -700,9 +700,9 @@ class DragHaloItem extends HaloItem {
 
   init () {
     const target = this.halo.target;
-    
+
     if (!target.owner) return;
-    
+
     const interferingLayout = target.owner.layout;
     target.undoStart('drag-halo');
 
@@ -799,6 +799,7 @@ class EditHaloItem extends HaloItem {
     const world = this.world();
     if (targetToEdit.viewModel) {
       // prompt the user which one to edit
+      this.halo.remove();
       targetToEdit = await world.multipleChoicePrompt(['Edit View or Morph?', null, '\nThe selected morph is attached to a view model. Please select which one you would like to edit.', { fontWeight: 'normal', fontSize: 16 }], {
         choices: new Map([[
           [...Icon.textAttribute('database', {
