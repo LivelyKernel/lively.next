@@ -563,6 +563,8 @@ export class BrowserModel extends ViewModel {
             'searchForModuleAndSelect',
             'updateModuleList',
             'onWindowClose',
+            'onModuleLoaded',
+            'onModuleChanged',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
