@@ -37,6 +37,10 @@ textarea.lively-text-input.debug {
   display: none;
 }
 
+.hiddenScrollbar {
+  scrollbar-width: none;
+}
+
 
 /*-=- generic morphic -=-*/
 
