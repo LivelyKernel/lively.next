@@ -14,6 +14,7 @@ import {
 import { Transform, pt } from 'lively.graphics';
 import { getSvgVertices, canBePromotedToCompositionLayer } from './property-dom-mapping.js';
 import config from '../config.js';
+import { Path } from 'lively.lang';
 
 const { h, diff, patch, create: createNode } = vdom;
 
@@ -230,12 +231,91 @@ export class Renderer {
     }
   }
 
+  scrollBarsForMorph (morph) {
+    return [
+      h('div.scrollbar-wrapper--vertical',{
+        style: {
+          width: 0,
+          height: 0,
+          float: 'right',
+          top: 0,
+          position: 'sticky'
+        }
+      },
+      [
+        h('div.lively-scrollbar.lively-scrollbar--vertical', {
+        style: {
+          border: '1px solid red',
+          'border-top-style': 'none',
+          'border-bottom-style': 'none',
+          width: '10px',
+          height: Math.floor(morph.height) + 'px',
+          //position: 'sticky',
+          'box-sizing': 'border-box',
+          //'margin-left': 'auto',
+          'border-radius': '20px',
+          visibility: 'hidden',
+          // top: 0,
+        }
+      }, [
+        h('div.lively-scrollbar--scroller.lively-scrollbar--scroller--vertical', {
+        style: {
+          border: '1px solid red',
+          position: 'absolute',
+          width: '10px',
+          background: 'red',
+          height: '20px',
+          'box-sizing': 'border-box',
+          'border-radius': '20px'
+        }
+      }
+      )]
+      )
+    ])
+      , 
+      h('div.scrollbar-wrapper--horizontal',{
+        style: {
+          width: 0,
+          height: 0,
+          bottom: 0,
+          position: 'sticky'
+        }}, [
+          h('div.lively-scrollbar.lively-scrollbar--horizontal', {
+            style: {
+              border: '1px solid red',
+              'border-left-style': 'none',
+              'border-right-style': 'none',
+              height: '10px',
+              width: Math.floor(morph.width) + 'px',
+              'box-sizing': 'border-box',
+              'border-radius': '20px',
+              visibility: 'hidden'
+            }
+          }, [h('div.lively-scrollbar--scroller.lively-scrollbar--scroller--horizontal', {
+            style: {
+              border: '1px solid red',
+              position: 'absolute',
+              width: '20px',
+              background: 'red',
+              height: '10px',
+              'box-sizing': 'border-box',
+              'border-radius': '20px'
+            }
+          })])
+        ])];
+  }
+
   renderMorph (morph) {
     const submorphs = this.renderSubmorphs(morph);
+    const scrollbars = this.scrollBarsForMorph(morph);
     return h('div', {
       style: defaultStyle(morph),
       ...defaultAttributes(morph, this)
-    }, submorphs);
+    }, [...((morph.clipMode === 'scroll' || morph.clipMode === 'auto')
+        ? scrollbars
+        : []),
+        submorphs      
+    ]);
   }
 
   renderEllipse (morph) {
@@ -256,18 +336,26 @@ export class Renderer {
   renderSelectedSubmorphs (morph, submorphs) {
     let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
     let i = submorphs.length - 1; let renderedSubmorphs = new Array(i + 1);
-    let skipWrapping = morph.layout && morph.layout.renderViaCSS;
+    // let skipWrapping = morph.layout && morph.layout.renderViaCSS;
+    let skipWrapping = false;
     for (; i >= 0; i--) {
       renderedSubmorphs[i] = this.render(submorphs[i]);
     }
     if (skipWrapping || renderedSubmorphs.length == 0) {
       return renderedSubmorphs;
     }
+    let layoutStyle = {}
+
+    if (Path('layout.renderViaCSS').get(morph)) {
+      morph.layout.addContainerCSS(morph, layoutStyle);
+      layoutStyle.width = (morph.layout.hugContentsHorizontally ? "auto" : `calc(100% - ${layoutStyle.paddingLeft} - ${layoutStyle.paddingRight}`)
+      layoutStyle.height =  (morph.layout.hugContentsVertically ? "auto" : `calc(100% - ${layoutStyle.paddingTop} - ${layoutStyle.paddingBottom}`) 
+    }
 
     return h('div', {
       key: 'submorphs-' + morph.id,
       style: {
-        position: 'absolute',
+        position: Path('layout.renderViaCSS').get(morph) ? 'initial' : 'absolute',
         left: `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`,
         top: `${oY - (morph.isPath ? 0 : borderWidthTop)}px`,
         ...(morph.isPolygon
@@ -281,7 +369,8 @@ export class Renderer {
                   }
                 : {})
             }
-          : {})
+          : {}),
+          ...layoutStyle,
       }
     }, renderedSubmorphs);
   }

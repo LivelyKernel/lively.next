@@ -575,7 +575,15 @@ export default class EventDispatcher {
             const target = targetNode.documentElement || targetNode;
             const { scrollLeft: newX, scrollTop: newY, style } = target;
             const { x, y } = targetMorph.scroll;
-            if (style.overflow != 'hidden' && x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
+            if (style.overflow != 'hidden' && x !== newX || y !== newY) {
+              targetMorph.scroll = pt(newX, newY);
+              const scrollBar = targetNode.querySelector('.lively-scrollbar--scroller--vertical');
+              if (scrollBar) {
+                const scrolledPercentage = (newY / (targetMorph.scrollExtent.y - targetMorph.extent.y + 20));
+                if (((scrolledPercentage * targetMorph.extent.y) + 20) > targetMorph.extent.y) scrollBar.style.top = (targetMorph.extent.y - 20) + 'px';
+                else scrollBar.style.top = scrolledPercentage * 100 + '%';
+              }
+            }
           })];
         break;
 
@@ -644,6 +652,26 @@ export default class EventDispatcher {
     if (!targetMorph && focusTargetingEvents.includes(type)) {
       targetMorph = state.focusedMorph || world;
     } else if (!targetMorph) {
+      if (domEvt.target && domEvt.target.classList.contains('lively-scrollbar--vertical')) {
+        if (domEvt.type === 'pointerdown') {
+          const morphToScroll = nodeMorphMap.get(domEvt.target.parentNode);
+          const movedPercentage = ((domEvt.pageY - morphToScroll.top) / morphToScroll.extent.y);
+          const newScrollTop = (morphToScroll.scrollExtent.y - morphToScroll.extent.y) * movedPercentage;
+          this.simulateDOMEvents({ type: 'scroll', target: domEvt.target.parentNode, scrollTop: newScrollTop });
+        }
+      }
+      if (domEvt.target && domEvt.target.classList.contains('lively-scrollbar--scroller--vertical')) {
+        if (domEvt.type === 'pointerdown') this.customScrollDrag = true;
+        if (domEvt.type === 'pointerup' ||
+            domEvt.type === 'pointerout' ||
+           domEvt.type === 'pointerleave') this.customScrollDrag = false;
+        if (this.customScrollDrag && domEvt.type === 'pointermove') {
+          const morphToScroll = nodeMorphMap.get(domEvt.target.parentNode.parentNode);
+          const movedPercentage = ((domEvt.pageY - morphToScroll.top) / morphToScroll.extent.y);
+          const newScrollTop = (morphToScroll.scrollExtent.y - morphToScroll.extent.y) * movedPercentage;
+          this.simulateDOMEvents({ type: 'scroll', target: domEvt.target.parentNode.parentNode, scrollTop: newScrollTop });
+        }
+      }
       // search for the target node that represents a morph: Not all nodes with
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs.
       // rms 13.4.20: What to do in case of a morph that is rendered to canvas?

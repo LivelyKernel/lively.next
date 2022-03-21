@@ -44,6 +44,10 @@ textarea.lively-text-input.debug {
 
 /*-=- generic morphic -=-*/
 
+.Morph:hover > .lively-scrollbar {
+  visibility: visible !important;
+}
+
 .Morph {
   outline: none;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
@@ -59,6 +63,11 @@ textarea.lively-text-input.debug {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  scrollbar-width: none;
+}
+
+.Morph::-webkit-scrollbar {
+  display: none;
 }
 
 .Morph img {
@@ -305,7 +314,8 @@ export function defaultStyle (morph) {
     morph.owner.layout.addSubmorphCSS(morph, layoutStyle);
   }
   if (Path('layout.renderViaCSS').get(morph)) {
-    morph.layout.addContainerCSS(morph, layoutStyle);
+    if (morph.layout.hugContentsVertically)layoutStyle.height = 'auto';
+    if (morph.layout.hugContentsHorizontally)layoutStyle.width = 'auto';
   }
   // problem: If we resize the parent, the submorphs have not yet taken the adjusted height/width
   //          this means measuring the contentRect for these updates is not the correct ground truth but
@@ -360,7 +370,7 @@ MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValu
       this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
     }
     if (Path('morph.layout.renderViaCSS').get(this)) {
-      this.morph.layout.ensureBoundsMonitor(node, this.morph);
+      this.morph.layout.ensureBoundsMonitor(node.children[0], this.morph);
     }
   }
 
@@ -368,7 +378,7 @@ MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValu
     this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
   }
   if (Path('morph.layout.renderViaCSS').get(this)) {
-    this.morph.layout.ensureBoundsMonitor(node, this.morph);
+    this.morph.layout.ensureBoundsMonitor(node.children[0], this.morph);
   }
 
   if (isInDOM || attempt > 3) {
