@@ -579,7 +579,7 @@ function signal (sourceObj, attrName, newVal) {
 
 export function callWhenNotNull (sourceObj, sourceProp, targetObj, targetSelector) {
   // ensure that sourceObj[sourceProp] is not null, then run targetObj[targetProp]()
-  if (sourceObj[sourceProp] !== null) {
+  if (sourceObj[sourceProp]) {
     targetObj[targetSelector](sourceObj[sourceProp]);
   } else {
     connect(
