@@ -210,6 +210,12 @@ export class ColorPickerModel extends ViewModel {
     return {
       isHaloItem: { defaultValue: true },
       colorMode: {},
+      context: {
+        serialize: false,
+        get () {
+          return this._target && (this._target._context || this._target.world());
+        }
+      },
       hsb: {
         initialize () {
           this.hsb = [...Color.red.toHSB(), 1];
@@ -301,22 +307,21 @@ export class ColorPickerModel extends ViewModel {
   }
 
   focusOnMorph (aMorph, color) {
-    const world = aMorph && aMorph.world();
-    if (world) {
-      // fixme: how do we combine the halos with the gradient controls?
-      world.halos().forEach(m => m.remove());
-      world.withTopBarDo(topBar => {
+    this._target = aMorph;
+    const { context } = this;
+    if (context) {
+      context.halos().forEach(m => m.remove());
+      context.withTopBarDo(topBar => {
         topBar.setEditMode('Hand', true);
       });
     }
-    this._target = aMorph;
     this.withColor(color);
   }
 
   close () {
     this.view.remove();
-    const world = this._target && this._target.world();
-    if (world) world.withTopBarDo(topBar => topBar.setEditMode('Halo', true));
+    const { context } = this;
+    if (context) context.withTopBarDo(topBar => topBar.setEditMode('Halo', true));
     this.ui.gradientControl.toggle(false, this);
   }
 
@@ -702,6 +707,7 @@ export class OpacityPickerModel extends AbstractSlider {
           return pt(5 + w * this.alpha, view.height / 2);
         },
         set (pos) {
+          if (!this.view) return;
           const view = this.view;
           const w = view.width - 10;
           this.alpha = num.clamp(pos.x / w, 0, 1);
@@ -739,6 +745,7 @@ export class HuePickerModel extends AbstractSlider {
           return pt(5 + w * (this.hue / 360), view.height / 2);
         },
         set (pos) {
+          if (!this.view) return;
           const view = this.view;
           const w = view.width - 10;
           this.hue = Math.max(0, Math.min((pos.x / w) * 360, 359));
