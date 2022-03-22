@@ -126,7 +126,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       } else {
         totalPaddingInput.number = layout.padding.top();
       }
-      if (prop == 'wrapping') { wrapSubmorphsCheckbox.setChecked(layout.wrapSubmorphs); }
+      wrapSubmorphsCheckbox.setChecked(layout.wrapSubmorphs);
     });
   }
 
