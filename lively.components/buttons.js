@@ -119,6 +119,7 @@ export class ButtonModel extends ViewModel {
   }
 
   considerPress (evt) {
+    this.view.updateTransform(); // fixme: something with css layouts makes this nessecary
     if (touchInputDevice) return true;
     else return this.view.innerBoundsContainsPoint(evt.positionIn(this.view));
   }
