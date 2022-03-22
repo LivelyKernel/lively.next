@@ -102,24 +102,28 @@ export class PropertiesPanelModel extends ViewModel {
    * morph as a context and listen for 'onHaloOpened' events.
    */
   attachToTarget (aMorph) {
+    this.models.backgroundControl.focusOn(aMorph);
     connect(aMorph, 'onHaloOpened', this, 'focusOn', {
       garbageCollect: true
     });
   }
 
   detachFromTarget (aMorph) {
+    this.models.backgroundControl.clearFocus();
     aMorph.attributeConnections.forEach(conn => {
       if (conn.targetObj === this) conn.disconnect();
     });
   }
 
   attachToWorld (aWorld) {
+    this.models.backgroundControl.focusOn(aWorld);
     connect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
     });
   }
 
   detachFromWorld (aWorld) {
+    this.models.backgroundControl.clearFocus();
     aWorld.attributeConnections.forEach(conn => {
       if (conn.targetObj === this) conn.disconnect();
     });
@@ -136,6 +140,7 @@ export class PropertiesPanelModel extends ViewModel {
 
   clearFocus () {
     this.ui.backgroundControl.visible = true;
+    this.models.backgroundControl.onRefresh();
     this.toggleDefaultControls(false);
     // fixme: clear any open popups
     this.models.effectsControl.deactivate();
@@ -190,16 +195,26 @@ class BackgroundControlModel extends ViewModel {
     };
   }
 
+  focusOn (aMorph) {
+    this.targetMorph = aMorph;
+    this.models.backgroundFillInput.targetMorph = aMorph;
+  }
+
+  clearFocus () {
+    this.targetMorph = null;
+  }
+
   onRefresh () {
-    this.ui.backgroundFillInput.setColor($world.fill);
+    if (this.targetMorph) { this.ui.backgroundFillInput.setColor(this.targetMorph.fill); }
   }
 
   changeBackgroundColor (color) {
-    $world.fill = color;
+    if (this.targetMorph) { this.targetMorph.fill = color; } // use primary target instead
   }
 
   deactivate () { this.models.backgroundFillInput.closeColorPicker(); }
 }
+
 
 // BackgroundSection.openInWorld()
 const BackgroundControl = component(PropertySection, {

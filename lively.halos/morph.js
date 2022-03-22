@@ -586,6 +586,10 @@ class CloseHaloItem extends HaloItem {
       ? halo.target.selectedMorphs.forEach(m => m.abandon())
       : halo.target.abandon();
     o.undoStop('close-halo');
+    halo.world().withTopBarDo(tb => {
+      if (tb.stylingPalette) { tb.stylingPalette.clearFocus(); }
+      if (tb.sideBar) { tb.sideBar.clearFocus(); }
+    });
     halo.remove();
   }
 
