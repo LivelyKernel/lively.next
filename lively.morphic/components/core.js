@@ -289,6 +289,7 @@ export class ViewModel {
         this.view[as] = (...args) => {
           return this[method](...args);
         };
+        this.view[as].toString = () => this[method].toString();
         continue;
       }
 
@@ -309,6 +310,9 @@ export class ViewModel {
       this.view[prop] = (...args) => {
         return this[prop](...args);
       };
+      if (obj.isFunction(this[prop])) {
+        this.view[prop].toString = () => this[prop].toString();
+      }
     }
   }
 
