@@ -26,10 +26,15 @@ export class BodyControlModel extends PropertySectionModel {
           return this.getProperty('activeSectionComponent') || BodyControl; // eslint-disable-line no-use-before-define
         }
       },
+      propConfig: {
+        get () {
+          return this.getProperty('propConfig') || PROP_CONFIG; // eslint-disable-line no-use-before-define
+        }
+      },
       availableItems: {
         derived: true,
         get () {
-          const res = arr.withoutAll(Object.keys(PROP_CONFIG), this.dynamicControls.map(m => m.selectedProp)); // eslint-disable-line no-use-before-define
+          const res = arr.withoutAll(Object.keys(this.propConfig), this.dynamicControls.map(m => m.selectedProp));
           if (!res.includes('Drop shadow') || !res.includes('Inner shadow')) {
             // exclude all shadows if one is applied
             return arr.withoutAll(res, ['Drop shadow', 'Inner shadow']);
@@ -80,8 +85,8 @@ export class BodyControlModel extends PropertySectionModel {
    */
   ensureDynamicControls () {
     this.dynamicControls.forEach(m => m.remove());
-    for (const prop in PROP_CONFIG) { // eslint-disable-line no-use-before-define
-      const { resetValue, accessor } = PROP_CONFIG[prop]; // eslint-disable-line no-use-before-define
+    for (const prop in this.propConfig) { // eslint-disable-line no-use-before-define
+      const { resetValue, accessor } = this.propConfig[prop]; // eslint-disable-line no-use-before-define
       if (!obj.equals(resetValue, this.targetMorph[accessor])) {
         if (prop === 'Inner shadow' && !this.targetMorph[accessor].inset) continue;
         if (prop === 'Drop shadow' && this.targetMorph[accessor].inset) continue;
@@ -114,8 +119,8 @@ export class BodyControlModel extends PropertySectionModel {
    *                              for bulk updates.
    */
   addDynamicProperty (selectedProp, refresh = true) {
-    const { targetMorph } = this;
-    const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph } }));
+    const { targetMorph, propConfig } = this;
+    const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
     this.view.master._overriddenProps.get(this.view).layout = true;
     control.refreshItems(this.availableItems);
@@ -178,14 +183,20 @@ export class DynamicPropertyModel extends ViewModel {
       },
       accessor: {
         get () {
-          return PROP_CONFIG[this.selectedProp].accessor; // eslint-disable-line no-use-before-define
+          return this.propConfig[this.selectedProp].accessor;
+        }
+      },
+      propConfig: {
+        serialize: false, // Dynamic properties are ephemeral, so we dont care
+        get () {
+          return this.getProperty('propConfig') || PROP_CONFIG; // eslint-disable-line no-use-before-define
         }
       },
       popupComponent: {
         readOnly: true,
         serialize: false,
         get () {
-          return PROP_CONFIG[this.selectedProp].popupComponent; // eslint-disable-line no-use-before-define
+          return this.propConfig[this.selectedProp].popupComponent;
         }
       },
       isControl: { get () { return true; } },
