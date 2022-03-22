@@ -481,6 +481,13 @@ export class Morph {
         }
       },
 
+      hideScrollbars: {
+        group: 'styling',
+        type: 'Boolean',
+        isStyleProp: true,
+        defaultValue: 'true'
+      },
+
       scroll: {
         group: 'geometry',
         defaultValue: pt(0, 0),
