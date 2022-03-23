@@ -856,7 +856,7 @@ export class Morph {
     this._pathDependants = [];
     this._tickingScripts = [];
     this._parametrizedProps = obj.select(snapshot.props, arr.intersect(Object.keys(snapshot.props), [...this.styleProperties].concat(
-      snapshot._masterOverridden 
+      snapshot._masterOverridden
         ? ['master']
         : [])));
     this._parametrizedProps.__takenFromSnapshot__ = true;
@@ -1026,7 +1026,7 @@ export class Morph {
   setProperty (key, value, meta) {
     return this.addValueChange(key, value, meta);
   }
-  
+
   /**
   * Change the metadata object of the morph.
   * @param {string} path - The property path inside the meta object to modify.
@@ -2585,7 +2585,7 @@ export class Morph {
   }
 
   emptyComments () {
-    const commentBrowser = $world.getSubmorphNamed('Comment Browser');  
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
     if (commentBrowser) this.comments.forEach((comment) => commentBrowser.viewModel.removeCommentForMorph(comment, this));
     this.comments = [];
   }
