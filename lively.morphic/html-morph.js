@@ -25,7 +25,6 @@ class CustomVNode {
     // The placeholder in vdom that our real dom node will replace
     const key = 'customNode-key-' + morph.id;
 
-    if (!vtree.children[0] || vtree.children[0].key !== key) { vtree.children.unshift(h(morph.domNodeTagName || 'div', { key }, [])); }
     if (morph._updateCSSDeclaration) {
       morph.ensureCSSDeclaration();
       morph._updateCSSDeclaration = false;
@@ -37,8 +36,8 @@ class CustomVNode {
     const domNode = createElement(this.renderMorph(), this.renderer.domEnvironment);
     // here we replace the placeholder node with our custom node, this only
     // needs to happen when we create the DOM node for the entire morph
-    domNode.childNodes[0].setAttribute('style', this.morph.domNodeStyle);
-    domNode.childNodes[0].appendChild(this.morph.domNode);
+    // domNode.childNodes[0].setAttribute('style', this.morph.domNodeStyle);
+    domNode.insertBefore(this.morph.domNode, domNode.childNodes[0]);
     // mount the style node
     if (this.morph.cssDeclaration) { this.morph.ensureCSSDeclaration(); }
     return domNode;
