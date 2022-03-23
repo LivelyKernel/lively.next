@@ -5,6 +5,7 @@ import { config, Text } from 'lively.morphic';
 import EvalBackendChooser from '../js/eval-backend-ui.js';
 import HTMLEditorPlugin from './editor-plugin.js';
 import JSWorkspace from '../js/workspace.js';
+import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 // new Workspace().activate()
 
@@ -117,13 +118,13 @@ export default class Workspace extends JSWorkspace {
               await workspace.file.write(html);
             } catch (e) { workspace.showError(e); throw e; }
             workspace.setStatusMessage(
-              `Saved to ${workspace.file.url}`, Color.green);
+              `Saved to ${workspace.file.url}`, StatusMessageConfirm);
             await promise.delay(500);
           }
 
           try {
             await workspace.saveDocumentHTML(html);
-            workspace.setStatusMessage('HTML applied', Color.green);
+            workspace.setStatusMessage('HTML applied', StatusMessageConfirm);
           } catch (err) { workspace.showError(err); }
           return workspace;
         }
