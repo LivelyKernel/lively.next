@@ -1,4 +1,4 @@
-/* global System,TextEncoder */
+/* global System */
 import * as Rollup from 'rollup';
 import jsonPlugin from 'https://jspm.dev/@rollup/plugin-json';
 import { MorphicDB, config, morph } from 'lively.morphic';
@@ -23,8 +23,7 @@ import { LoadingIndicator } from 'lively.components';
 import { requiredModulesOfSnapshot, ExpressionSerializer, serialize, locateClass, removeUnreachableObjects } from 'lively.serializer2';
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
 import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-import { loadPart } from 'lively.morphic/partsbin.js';
-import { runEval } from 'lively.vm';
+
 import { localInterface } from 'lively-system-interface';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
@@ -48,22 +47,6 @@ await jspmCompile(
 )
 
 */
-
-async function jspmCompile (url, out, globalName, redirect = {}) {
-  module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
-  m.excludedModules = ['babel-plugin-transform-jsx'];
-  const res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min);
-}
-
-async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
-  module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false, jspm: true });
-  m.excludedModules = ['babel-plugin-transform-jsx'];
-  const res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min);
-}
 
 function fixSourceForBugsInGoogleClosure (id, source) {
   /*
@@ -131,6 +114,18 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
   'lively.halos'
 ];
+
+function transpileAttributeConnections (snap) {
+  const transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
+  Object.values(snap.snapshot).filter(m => Path(['lively.serializer-class-info', 'className']).get(m) === 'AttributeConnection').forEach(m => {
+    if (m.props.converterString) {
+      return m.props.converterString.value = transpile(m.props.converterString.value);
+    }
+    if (m.props.updaterString) {
+      return m.props.updaterString.value = transpile(m.props.updaterString.value);
+    }
+  });
+}
 
 function generateResourceExtensionModule (frozenPart) {
   return `
@@ -234,7 +229,7 @@ export async function generateLoadHtml (part, format = 'global') {
             default: return "other";
         }
         })(window.navigator.userAgent.toLowerCase());
-        if (browser == 'edge' || browser =='ie') {
+        if (browser === 'edge' || browser =='ie') {
           window.BROWSER_UNSUPPORTED = true;
         }
       </script>
@@ -280,12 +275,12 @@ function clearWorldSnapshot (snap) {
     delete snap.snapshot[id].props.localComponents; // remove local components since we dont need them in frozen snaps
     delete snap.snapshot[id].props.metadata;
     delete snap.snapshot[id]._cachedLineCharBounds;
-    if (id == snap.id) {
+    if (id === snap.id) {
       snap.snapshot[id].props.showsUserFlap = { value: false };
     }
     const module = moduleOfId(snap.snapshot, id);
     if (!module.package) continue;
-    if (module.package.name == 'lively.ide') toolIds.push(id);
+    if (module.package.name === 'lively.ide') toolIds.push(id);
     if (DEFAULT_EXCLUDED_MODULES_WORLD.includes(module.package.name)) {
       // fixme: we also need to kill of packages which themselves require one of the "taboo" packages
       delete snap.snapshot[id];
@@ -328,59 +323,6 @@ function clearWorldSnapshot (snap) {
   return snap;
 }
 
-export async function interactivelyFreezeWorld (world) {
-  /*
-    Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder.
-  */
-  const userName = $world.getCurrentUser().name;
-  const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
-  let publicAlias = world.metadata.commit.name;
-  let publicationDir = frozenPartsDir.join(publicAlias + '/');
-  const assetDir = await publicationDir.join('assets/').ensureExistance();
-  while (await publicationDir.exists()) {
-    const proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
-      rejectLabel: 'CHANGE NAME'
-    });
-    if (proceed) break;
-    publicAlias = await $world.prompt('Please enter a different name for this published world:');
-    if (!publicAlias) return;
-    publicationDir = frozenPartsDir.join(publicAlias + '/');
-  }
-
-  await publicationDir.ensureExistance();
-
-  // remove the metadata props
-  const worldSnap = clearWorldSnapshot(serializeMorph(world));
-
-  // freeze the world
-  let frozen;
-  try {
-    frozen = await bundlePart(worldSnap, {
-      compress: true,
-      exclude: DEFAULT_EXCLUDED_MODULES_WORLD
-    });
-  } catch (e) {
-    throw e;
-  }
-
-  const li = LoadingIndicator.open('Freezing World', { status: 'Writing files...' });
-  await publicationDir.join('index.html').write(await generateLoadHtml(world, frozen.format));
-  await publicationDir.join('load.js').write(frozen.min);
-  li.status = 'copying asset files...';
-  for (const asset of frozen.assets) await asset.copyTo(assetDir);
-  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
-    await dynamicParts.join(partName + '.json').writeJson(snapshot);
-  }
-  li.remove();
-  $world.setStatusMessage([`Published ${publicAlias}. Click `, null, 'here', {
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], StatusMessageConfirm, 10000);
-}
-
 async function promptForFreezing (target, requester) {
   const freezerPrompt = await resource('part://SystemDialogs/freezer prompt').read();
   const userName = $world.getCurrentUser().name;
@@ -395,130 +337,6 @@ async function promptForFreezing (target, requester) {
     res = await freezerPrompt.activate();
   });
   return res;
-}
-
-let masterComponents;
-
-export async function interactivelyFreezePart (part, requester = false) {
-  /*
-    Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder.
-  */
-
-  const userName = $world.getCurrentUser().name;
-  const options = await promptForFreezing(part, requester);
-
-  if (!options) return;
-  const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
-  const publicationDirShell = resource(await defaultDirectory()).join('..').join(options.location).withRelativePartsResolved().asDirectory();
-
-  part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
-  part.changeMetaData('publishedLocation', options.location, true, false);
-
-  await publicationDir.ensureExistance();
-
-  let worldSnap;
-  if (part.isWorld) {
-    worldSnap = clearWorldSnapshot(serializeMorph(part));
-  }
-
-  // freeze the part
-  let frozen;
-  try {
-    frozen = await bundlePart(worldSnap || part, {
-      compress: true,
-      useTerser: options.useTerser,
-      exclude: options.excludedPackages,
-      requester: false
-    });
-  } catch (e) {
-    throw e;
-  }
-
-  const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
-  let currentFile = '';
-  publicationDir.onProgress = (evt) => {
-    // set progress of loading indicator
-    const p = evt.loaded / evt.total;
-    li.progress = p;
-    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
-  };
-  currentFile = 'index.html';
-  // if the module is split, include systemjs
-  await publicationDir.join(currentFile).write(await generateLoadHtml(part, frozen.format));
-
-  if (obj.isArray(frozen)) {
-    for (const part of frozen) {
-      currentFile = part.fileName;
-      await publicationDir.join(currentFile).write(part.min);
-      try {
-        await publicationDirShell.join(currentFile + '.gz').gzip(part.min);
-        await publicationDirShell.join(currentFile + '.br').brotli(part.min);
-      } catch (err) {
-
-      }
-    }
-    currentFile = 'load.js';
-    await publicationDir.join(currentFile).write(frozen.load.min);
-    try {
-      currentFile = 'load.js.gz';
-      await publicationDirShell.join(currentFile).gzip(frozen.load.min);
-      currentFile = 'load.js.br';
-      await publicationDirShell.join(currentFile).brotli(frozen.load.min);
-    } catch (err) {
-
-    }
-  } else {
-    currentFile = 'load.js';
-    await publicationDir.join(currentFile).write(frozen.min);
-    currentFile = 'load.js.gz';
-    await publicationDirShell.join(currentFile).gzip(frozen.min);
-    currentFile = 'load.js.br';
-    await publicationDirShell.join(currentFile).brotli(frozen.min);
-  }
-
-  li.status = 'Copying dynamic parts...'; // to be unified by url parts fetching
-  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
-    if (partName.startsWith('part://')) {
-      frozen.masterComponents[partName.replace('part://', 'styleguide://')] = snapshot;
-      continue;
-    }
-    currentFile = partName + '.json';
-    await dynamicParts.join(currentFile).writeJson(snapshot);
-  }
-  li.status = 'Copying assets...';
-  const assetDir = await publicationDir.join('assets/').ensureExistance();
-  // copy font awesome assets
-  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
-  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
-  // copy inconsoloata
-  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
-  for (const asset of frozen.assets) {
-    currentFile = asset.url;
-    // skip if exists
-    // if (await assetDir.join(asset.name()).exists()) continue;
-    await asset.copyTo(assetDir);
-  }
-
-  // then copy over the style morphs
-  li.status = 'Copying master components...';
-  // replace this by prefetched master components
-  masterComponents = frozen.masterComponents;
-  const masterDir = await publicationDir.join('masters/').ensureExistance();
-  for (const url in frozen.masterComponents) {
-    const masterFile = await masterDir
-      .join(url.replace('styleguide://', '') + '.json')
-      .ensureExistance();
-    await masterFile.writeJson(frozen.masterComponents[url]);
-  }
-
-  li.remove();
-  $world.setStatusMessage([`Published ${part.name}. Click `, null, 'here', {
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], StatusMessageConfirm, false);
 }
 
 export async function displayFrozenPartsFor (user = $world.getCurrentUser(), requester) {
@@ -599,7 +417,7 @@ function findMasterComponentsInSnapshot (snap) {
       // also handle expression!
       if (typeof props.value === 'string') {
         props = exprSerializer.deserializeExpr(props.value);
-      } else if (props.value == false) {
+      } else if (props.value === false) {
         continue;
       } else {
         props = snap.snapshot[props.value.id].props;
@@ -769,7 +587,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   };
 }
 
-async function compileViaGoogle (code, li, fileName) {
+export async function compileViaGoogle (code, li, fileName) {
   const compile = resource('https://closure-compiler.appspot.com/compile');
   compile.headers['Content-type'] = 'application/x-www-form-urlencoded';
   li.status = `Compiling ${fileName} on Google's servers.`;
@@ -789,7 +607,7 @@ async function compileViaGoogle (code, li, fileName) {
 
 async function compileOnServer (code, loadingIndicator, fileName = 'data', useTerser) {
   const osName = await evalOnServer('process.platform');
-  const googleClosure = System.decanonicalize(`google-closure-compiler-${osName == 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
+  const googleClosure = System.decanonicalize(`google-closure-compiler-${osName === 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
   const tmp = resource(System.decanonicalize('lively.freezer/tmp.js'));
   const min = resource(System.decanonicalize('lively.freezer/tmp.min.js'));
   tmp.onProgress = (evt) => {
@@ -850,7 +668,7 @@ async function compileOnServer (code, loadingIndicator, fileName = 'data', useTe
     loadingIndicator.progress = (i + 1) / (code.length / compressionSpeed);
   }
   await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
-  if (c.stderr && c.exitCode != 0) {
+  if (c.stderr && c.exitCode !== 0) {
     loadingIndicator && loadingIndicator.remove();
     throw new Error(c.stderr);
   }
@@ -859,18 +677,6 @@ async function compileOnServer (code, loadingIndicator, fileName = 'data', useTe
   res.min = await min.read();
   await Promise.all([tmp, min].map(m => m.remove()));
   return res;
-}
-
-function transpileAttributeConnections (snap) {
-  const transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
-  Object.values(snap.snapshot).filter(m => Path(['lively.serializer-class-info', 'className']).get(m) == 'AttributeConnection').forEach(m => {
-    if (m.props.converterString) {
-      return m.props.converterString.value = transpile(m.props.converterString.value);
-    }
-    if (m.props.updaterString) {
-      return m.props.updaterString.value = transpile(m.props.updaterString.value);
-    }
-  });
 }
 
 class LivelyRollup {
@@ -989,7 +795,7 @@ class LivelyRollup {
     // snapshot = snap
     // fp = { warnings: {}, dynamicParts: {}, dynamicModules: new Set(), requiredMasterComponents: new Set(), modulesWithDynamicLoads: new Set() }
     // let { requiredModules: modules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(snapshot, fp);
-    const { requiredModules: modules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(snapshot, this);
+    const { requiredModules: modules } = await getRequiredModulesFromSnapshot(snapshot, this);
     console.log('required modules:', partNameOrUrl, modules);
     return modules.map(path => `import "${path}"`).join('\n');
   }
@@ -1000,7 +806,7 @@ class LivelyRollup {
       return await this.rootModule.source();
     }
     this.dynamicParts = {}; // needed such that required modules are fetched correctly
-    const { requiredModules, requiredMasterComponents } = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
+    const { requiredModules } = await getRequiredModulesFromSnapshot(this.snapshot, this, true);
     this.importedModules = requiredModules;
     this.checkIfImportedModuleExcluded();
     // console.log('Masters for root:', requiredMasterComponents, requiredModules);
@@ -1033,7 +839,7 @@ class LivelyRollup {
                     obj.resizePolicy === 'elastic' && obj.execCommand("resize to fit window");
                   } else {
                     try {
-                      if (node != document.body) {
+                      if (node !== document.body) {
                         const observer = new window.ResizeObserver(entries =>
                           obj.execCommand('resize on client', entries[0]));
                         observer.observe(node);
@@ -1051,13 +857,13 @@ class LivelyRollup {
   }
 
   async resolveId (id, importer) {
-    if (id == 'fs') return 'fs';
+    if (id === 'fs') return 'fs';
     if (this.resolved[id]) return this.resolved[id];
     if (id === '__root_module__') return id;
     if (id.startsWith('[PART_MODULE]')) return id;
     if (!importer) return id;
     const isCdnImport = ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn));
-    if (importer != '__root_module__' &&
+    if (importer !== '__root_module__' &&
         isCdnImport &&
         this.jspm && importer) {
       const { url } = resource(importer).root();
@@ -1073,8 +879,6 @@ class LivelyRollup {
       }
     }
     const importingPackage = module(importer).package();
-    const importedPackage = module(id).package();
-    let mappedId;
     if (['lively.ast', 'lively.modules'].includes(id) && this.excludedModules.includes(id)) {
       return id;
     }
@@ -1090,7 +894,6 @@ class LivelyRollup {
 
     if (importingPackage && importingPackage.map) this.globalMap = { ...this.globalMap, ...importingPackage.map };
     if (importingPackage && importingPackage.map[id] || this.globalMap[id]) {
-      mappedId = id;
       if (!importingPackage.map[id] && this.globalMap[id]) {
         console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
       }
@@ -1126,12 +929,12 @@ class LivelyRollup {
   async load (id) {
     id = this.redirect[id] || id;
     if (this.excludedModules.includes(id)) {
-      if (id == 'lively.ast') {
+      if (id === 'lively.ast') {
         return `
         let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
         export { nodes, query, transform, BaseVisitor };`;
       }
-      if (id == 'lively.modules') {
+      if (id === 'lively.modules') {
         return `
         let scripting = {};
         export { scripting };`;
@@ -1179,7 +982,7 @@ class LivelyRollup {
   needsClassInstrumentation (moduleId, moduleSource) {
     if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph)/)) return true;
     if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; }
-    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName == moduleId) || belongsToObjectPackage(moduleId)) {
+    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName === moduleId) || belongsToObjectPackage(moduleId)) {
       return true;
     }
   }
@@ -1225,7 +1028,7 @@ class LivelyRollup {
           // target: node.callee, replacementFunc: () => 'lively.FreezerRuntime.loadObjectFromPartsbinFolder'
         });
       }
-      // if (node.type === 'CallExpression' && Path('callee.name').get(node) == 'resource' &&
+      // if (node.type === 'CallExpression' && Path('callee.name').get(node) === 'resource' &&
       //     (Path('arguments.0.value').get(node) || '').match(/^part:\/\/.*\/.+/)) {
       //   const partUrl = Path('arguments.0.value').get(node);
       //   nodesToReplace.push({
@@ -1282,7 +1085,6 @@ class LivelyRollup {
     const recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const captureObj = { name: '__varRecorder__', type: 'Identifier' };
-    const exportObj = { name: '__expRecorder__', type: 'Identifier' };
     // id = 'lively.vm/index.js'
     const mod = module(id);
     // source = mod._source
@@ -1297,12 +1099,12 @@ class LivelyRollup {
     const toBeReplaced = [];
 
     ast.custom.forEachNode(instrumented, (n) => {
-      if (n.type == 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
-      if (n.type == 'Literal' && typeof n.value === 'string' && n.value.match(/^styleguide:\/\/.+\/.+/)) {
+      if (n.type === 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
+      if (n.type === 'Literal' && typeof n.value === 'string' && n.value.match(/^styleguide:\/\/.+\/.+/)) {
         if (!this.requiredMasterComponents.has(n.value)) console.log('DID NOT CAPTURE', n.value);
         this.requiredMasterComponents.add(n.value);
       }
-      if (n.type == 'ExportDefaultDeclaration') {
+      if (n.type === 'ExportDefaultDeclaration') {
         let exp;
         switch (n.declaration.type) {
           case 'Literal':
@@ -1321,7 +1123,7 @@ class LivelyRollup {
     });
 
     for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
-      const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type == 'ImportSpecifier'));
+      const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type === 'ImportSpecifier'));
       if (toBeMerged.length > 1) {
         // merge statements
         // fixme: if specifiers are not named, these can not be merged
@@ -1329,10 +1131,10 @@ class LivelyRollup {
         const mergedSpecifiers = arr.uniqBy(
           toBeMerged.map(stmt => stmt.specifiers).flat(),
           (spec1, spec2) =>
-            spec1.type == 'ImportSpecifier' &&
-            spec2.type == 'ImportSpecifier' &&
-            spec1.imported.name == spec2.imported.name &&
-            spec1.local.name == spec2.local.name
+            spec1.type === 'ImportSpecifier' &&
+            spec2.type === 'ImportSpecifier' &&
+            spec1.imported.name === spec2.imported.name &&
+            spec1.local.name === spec2.local.name
         );
         toBeMerged[0].specifiers = mergedSpecifiers;
         toBeReplaced.push(...toBeMerged.slice(1).map(stmt => {
@@ -1372,8 +1174,8 @@ class LivelyRollup {
                 ${mod._source} 
              };
              exec(exports, require);
-             if (typeof module.exports != 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
-             if (typeof module.exports != 'function' && Object.keys(module.exports).length === 0) {
+             if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
+             if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) {
                 exec(); // try to run as global
              }
              ${globalVarName} = module.exports;
@@ -1419,7 +1221,7 @@ class LivelyRollup {
       code += `
          const _originalRegister = System.register.bind(System);
          System.register = (name, deps, def) => {
-           if (typeof name != 'string') {
+           if (typeof name !== 'string') {
              def = deps;
              deps = name;
              return _originalRegister(deps, (exports, module) => {
@@ -1491,11 +1293,11 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
         if (!v.props[prop]) continue; // may be styled and not present in snapshot
         if (v.props[prop].value.startsWith('assets')) continue; // already copied
         const path = v.props[prop].value;
-        if (path == '' || path.startsWith('data:')) continue; // data URL can not be copied
+        if (path === '' || path.startsWith('data:')) continue; // data URL can not be copied
         const asset = resource(path);
-        if (asset.host() != resource(System.baseURL).host()) continue;
+        if (asset.host() !== resource(System.baseURL).host()) continue;
         asset._from = k;
-        if (!this.assetsToCopy.find(res => res.url == asset.url)) { this.assetsToCopy.push(asset); }
+        if (!this.assetsToCopy.find(res => res.url === asset.url)) { this.assetsToCopy.push(asset); }
         v.props[prop].value = 'assets/' + asset.name(); // this may be causing duplicates
       }
     });
@@ -1577,7 +1379,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
         snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",`);
       });
 
-      const { min, code } = await this.transpileAndCompressOnServer({
+      const { min } = await this.transpileAndCompressOnServer({
         depsCode,
         bundledCode: [loadCode, ...res.map(snippet => snippet.instrumentedCode)].join('\n'),
         output,
@@ -1671,7 +1473,7 @@ export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [
     try {
       res = await bundle.rollup(compress, output);
     } catch (e) {
-      if (e.name == 'Exclusion Conflict') {
+      if (e.name === 'Exclusion Conflict') {
         // adjust the excluded Modules
         const proceed = await $world.confirm([
           e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', { fontSize: 13, fontWeight: 'normal' }], { requester, width: 600, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
@@ -1685,4 +1487,193 @@ export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [
     return res;
   };
   return await rollupBundle();
+}
+
+export async function jspmCompile (url, out, globalName, redirect = {}) {
+  module(url)._source = null;
+  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
+  m.excludedModules = ['babel-plugin-transform-jsx'];
+  const res = await m.rollup(true, 'es2019');
+  await resource(System.baseURL).join(out).write(res.min);
+}
+
+export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
+  module(url)._source = null;
+  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false, jspm: true });
+  m.excludedModules = ['babel-plugin-transform-jsx'];
+  const res = await m.rollup(true, 'es2019');
+  await resource(System.baseURL).join(out).write(res.min);
+}
+
+export async function interactivelyFreezeWorld (world) {
+  /*
+    Function prompts the user for a name to publish the part under.
+    Data is uploaded to directory and then returns a link to the folder.
+  */
+  const userName = $world.getCurrentUser().name;
+  const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+  let publicAlias = world.metadata.commit.name;
+  let publicationDir = frozenPartsDir.join(publicAlias + '/');
+  const assetDir = await publicationDir.join('assets/').ensureExistance();
+  while (await publicationDir.exists()) {
+    const proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
+      rejectLabel: 'CHANGE NAME'
+    });
+    if (proceed) break;
+    publicAlias = await $world.prompt('Please enter a different name for this published world:');
+    if (!publicAlias) return;
+    publicationDir = frozenPartsDir.join(publicAlias + '/');
+  }
+
+  await publicationDir.ensureExistance();
+
+  // remove the metadata props
+  const worldSnap = clearWorldSnapshot(serializeMorph(world));
+
+  // freeze the world
+  let frozen;
+  try {
+    frozen = await bundlePart(worldSnap, {
+      compress: true,
+      exclude: DEFAULT_EXCLUDED_MODULES_WORLD
+    });
+  } catch (e) {
+    throw e;
+  }
+
+  const li = LoadingIndicator.open('Freezing World', { status: 'Writing files...' });
+  await publicationDir.join('index.html').write(await generateLoadHtml(world, frozen.format));
+  await publicationDir.join('load.js').write(frozen.min);
+  li.status = 'copying asset files...';
+  for (const asset of frozen.assets) await asset.copyTo(assetDir);
+  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
+  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
+    await dynamicParts.join(partName + '.json').writeJson(snapshot);
+  }
+  li.remove();
+  $world.setStatusMessage([`Published ${publicAlias}. Click `, null, 'here', {
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
+  }, ' to view.'], StatusMessageConfirm, 10000);
+}
+
+export async function interactivelyFreezePart (part, requester = false) {
+  /*
+    Function prompts the user for a name to publish the part under.
+    Data is uploaded to directory and then returns a link to the folder.
+  */
+
+  const options = await promptForFreezing(part, requester);
+
+  if (!options) return;
+  const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
+  const publicationDirShell = resource(await defaultDirectory()).join('..').join(options.location).withRelativePartsResolved().asDirectory();
+
+  part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
+  part.changeMetaData('publishedLocation', options.location, true, false);
+
+  await publicationDir.ensureExistance();
+
+  let worldSnap;
+  if (part.isWorld) {
+    worldSnap = clearWorldSnapshot(serializeMorph(part));
+  }
+
+  // freeze the part
+  let frozen;
+  try {
+    frozen = await bundlePart(worldSnap || part, {
+      compress: true,
+      useTerser: options.useTerser,
+      exclude: options.excludedPackages,
+      requester: false
+    });
+  } catch (e) {
+    throw e;
+  }
+
+  const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
+  let currentFile = '';
+  publicationDir.onProgress = (evt) => {
+    // set progress of loading indicator
+    const p = evt.loaded / evt.total;
+    li.progress = p;
+    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
+  };
+  currentFile = 'index.html';
+  // if the module is split, include systemjs
+  await publicationDir.join(currentFile).write(await generateLoadHtml(part, frozen.format));
+
+  if (obj.isArray(frozen)) {
+    for (const part of frozen) {
+      currentFile = part.fileName;
+      await publicationDir.join(currentFile).write(part.min);
+      try {
+        await publicationDirShell.join(currentFile + '.gz').gzip(part.min);
+        await publicationDirShell.join(currentFile + '.br').brotli(part.min);
+      } catch (err) {
+
+      }
+    }
+    currentFile = 'load.js';
+    await publicationDir.join(currentFile).write(frozen.load.min);
+    try {
+      currentFile = 'load.js.gz';
+      await publicationDirShell.join(currentFile).gzip(frozen.load.min);
+      currentFile = 'load.js.br';
+      await publicationDirShell.join(currentFile).brotli(frozen.load.min);
+    } catch (err) {
+
+    }
+  } else {
+    currentFile = 'load.js';
+    await publicationDir.join(currentFile).write(frozen.min);
+    currentFile = 'load.js.gz';
+    await publicationDirShell.join(currentFile).gzip(frozen.min);
+    currentFile = 'load.js.br';
+    await publicationDirShell.join(currentFile).brotli(frozen.min);
+  }
+
+  li.status = 'Copying dynamic parts...'; // to be unified by url parts fetching
+  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
+  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
+    if (partName.startsWith('part://')) {
+      frozen.masterComponents[partName.replace('part://', 'styleguide://')] = snapshot;
+      continue;
+    }
+    currentFile = partName + '.json';
+    await dynamicParts.join(currentFile).writeJson(snapshot);
+  }
+  li.status = 'Copying assets...';
+  const assetDir = await publicationDir.join('assets/').ensureExistance();
+  // copy font awesome assets
+  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
+  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
+  // copy inconsoloata
+  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
+  for (const asset of frozen.assets) {
+    currentFile = asset.url;
+    // skip if exists
+    // if (await assetDir.join(asset.name()).exists()) continue;
+    await asset.copyTo(assetDir);
+  }
+
+  // then copy over the style morphs
+  li.status = 'Copying master components...';
+  // replace this by prefetched master components
+  const masterDir = await publicationDir.join('masters/').ensureExistance();
+  for (const url in frozen.masterComponents) {
+    const masterFile = await masterDir
+      .join(url.replace('styleguide://', '') + '.json')
+      .ensureExistance();
+    await masterFile.writeJson(frozen.masterComponents[url]);
+  }
+
+  li.remove();
+  $world.setStatusMessage([`Published ${part.name}. Click `, null, 'here', {
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
+  }, ' to view.'], StatusMessageConfirm, false);
 }
