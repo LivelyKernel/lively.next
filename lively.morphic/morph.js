@@ -485,7 +485,7 @@ export class Morph {
         group: 'styling',
         type: 'Boolean',
         isStyleProp: true,
-        defaultValue: 'true'
+        defaultValue: false
       },
 
       scroll: {
