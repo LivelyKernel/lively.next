@@ -198,6 +198,7 @@ class BackgroundControlModel extends ViewModel {
   focusOn (aMorph) {
     this.targetMorph = aMorph;
     this.models.backgroundFillInput.targetMorph = aMorph;
+    this.onRefresh();
   }
 
   clearFocus () {
@@ -214,7 +215,6 @@ class BackgroundControlModel extends ViewModel {
 
   deactivate () { this.models.backgroundFillInput.closeColorPicker(); }
 }
-
 
 // BackgroundSection.openInWorld()
 const BackgroundControl = component(PropertySection, {
