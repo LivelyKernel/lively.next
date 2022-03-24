@@ -2,6 +2,7 @@
 import * as Rollup from 'rollup';
 import jsonPlugin from 'https://jspm.dev/@rollup/plugin-json';
 import { MorphicDB, config, morph } from 'lively.morphic';
+import { part } from 'lively.morphic/components/core.js';
 import {
   createMorphSnapshot, serializeMorph,
   loadPackagesAndModulesOfSnapshot,
@@ -26,6 +27,7 @@ import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.j
 
 import { localInterface } from 'lively-system-interface';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { FreezerPrompt } from './src/ui.cp.js';
 
 const { module } = modules;
 
@@ -85,6 +87,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
 
 const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev'];
 
+// fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
   'lively.lang'
 ];
@@ -101,6 +104,7 @@ const ADVANCED_EXCLUDED_MODULES = [
   'localconfig.js'
 ];
 
+// fixme: Why is that a difference between parts and worlds? Why do we need kld-intersections at all?
 const DEFAULT_EXCLUDED_MODULES_PART = [
   'kld-intersections'
 ];
@@ -115,6 +119,11 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'lively.halos'
 ];
 
+/**
+ * In order to ensure that our connections are initialized in a lively.vm/lively.ast free environment
+ * without Babel support, we need to transpile these source strings in advance.
+ * @param { object } snap - The snapshot to convert the connection objects for.
+ */
 function transpileAttributeConnections (snap) {
   const transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
   Object.values(snap.snapshot).filter(m => Path(['lively.serializer-class-info', 'className']).get(m) === 'AttributeConnection').forEach(m => {
@@ -127,6 +136,7 @@ function transpileAttributeConnections (snap) {
   });
 }
 
+// DEPRECATED
 function generateResourceExtensionModule (frozenPart) {
   return `
     import { resource, unregisterExtension, registerExtension } from "lively.resources";
@@ -189,7 +199,7 @@ function generateResourceExtensionModule (frozenPart) {
   `;
 }
 
-export async function generateLoadHtml (part, format = 'global') {
+export async function generateLoadHtml (part) {
   const addScripts = `
       <noscript>
          <meta http-equiv="refresh" content="0;url=noscript.html">
@@ -229,7 +239,7 @@ export async function generateLoadHtml (part, format = 'global') {
             default: return "other";
         }
         })(window.navigator.userAgent.toLowerCase());
-        if (browser === 'edge' || browser =='ie') {
+        if (browser =='ie') {
           window.BROWSER_UNSUPPORTED = true;
         }
       </script>
@@ -266,10 +276,17 @@ export async function generateLoadHtml (part, format = 'global') {
   return html;
 }
 
+/**
+ * This clears up all of the ide related tools that may be still present in the world
+ * but are not meant to be bundled. There is also some minor cleanup of unneeded data
+ * and attribute connections.
+ * @param { object } snap - The snapshot of the world.
+ */
 function clearWorldSnapshot (snap) {
   const deletedIds = [];
   const toolIds = [];
   obj.values(snap.snapshot).forEach(m => delete m.props.metadata);
+  transpileAttributeConnections(snap);
   // remove objects that are part of the lively.ide or lively.halo package (dev tools)
   for (const id in snap.snapshot) {
     delete snap.snapshot[id].props.localComponents; // remove local components since we dont need them in frozen snaps
@@ -286,17 +303,6 @@ function clearWorldSnapshot (snap) {
       delete snap.snapshot[id];
       deletedIds.push(id);
       continue;
-    }
-
-    // transform sources for attribute connections
-    if (classNameOfId(snap.snapshot, id) === 'AttributeConnection') {
-      const props = snap.snapshot[id].props;
-      if (props.converterString) {
-        props.converterString.value = es5Transpilation(`(${props.converterString.value})`);
-      }
-      if (props.updaterString) {
-        props.updaterString.value = es5Transpilation(`(${props.updaterString.value})`);
-      }
     }
   }
 
@@ -323,8 +329,14 @@ function clearWorldSnapshot (snap) {
   return snap;
 }
 
+/**
+ * The prompts the user to configure and confirm the settings for 
+ * the bunding process,
+ * @param { Morph } target - The part/world to be frozen.
+ * @param { Morph } requester - The tool that requested the prompt (usually the Object Editor)
+ */
 async function promptForFreezing (target, requester) {
-  const freezerPrompt = await resource('part://SystemDialogs/freezer prompt').read();
+  const freezerPrompt = part(FreezerPrompt);
   const userName = $world.getCurrentUser().name;
   const previouslyExcludedPackages = Path('metadata.excludedPackages').get(target) || ADVANCED_EXCLUDED_MODULES;
   const previouslyPublishedDir = Path('metadata.publishedLocation').get(target) || resource(System.baseURL).join('users').join(userName).join('published').join(target.name).url;
@@ -339,6 +351,7 @@ async function promptForFreezing (target, requester) {
   return res;
 }
 
+// would be nice to kick this one out asap
 export async function displayFrozenPartsFor (user = $world.getCurrentUser(), requester) {
   const userName = user.name;
   const frozenPartsDir = resource(System.baseURL).join('users').join(userName).join('published/');
@@ -386,14 +399,13 @@ function belongsToLivelyPackage (moduleId) {
   return pkg && pkg.name.startsWith('lively');
 }
 
+// Maybe this is no longer needed.
 function cleanSnapshot ({ snapshot }) {
   Object.values(snapshot).forEach(entry => {
     delete entry.rev;
     if (entry.props && entry.props._rev) delete entry.props._rev;
   });
 }
-
-// await evalOnServer('1 + 1')
 
 export async function evalOnServer (code) {
   if (System.get('@system-env').node) {
@@ -408,6 +420,8 @@ export async function evalOnServer (code) {
   return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
 }
 
+// This is no longer needed since our master components all reside in
+// javascript modules and are referenced by expressions.
 function findMasterComponentsInSnapshot (snap) {
   const masterComponents = new Set();
   const exprSerializer = new ExpressionSerializer();
@@ -497,6 +511,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
     // try to resolve them
     if (!frozenPart.__cachedSnapshots__) frozenPart.__cachedSnapshots__ = {};
 
+    // to be removed
     for (const partUrl of arr.compact(dynamicPartFetches)) {
       const styleguideUrl = partUrl.replace('part://', 'styleguide://'); // makes for faster freezing
       if (!frozenPart.__cachedSnapshots__[styleguideUrl]) console.log('snapshotting', partUrl);
@@ -530,6 +545,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
       }
     }
 
+    // to be removed
     for (const partName of arr.compact(dynamicPartLoads)) {
       const dynamicCommit = await MorphicDB.default.fetchCommit('part', partName);
       if (!dynamicCommit) continue; // this is not within the db
@@ -567,6 +583,8 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   // provider. a master component should not come with a custom class that has nothing to do with the original.
   const urlToSnap = {};
   if (!frozenPart._masterToMods) frozenPart._masterToMods = {};
+
+  // this is also no longer needed
   for (const url of requiredMasterComponents) {
     if (frozenPart.requiredMasterComponents.has(url)) {
       if (frozenPart._masterToMods[url]) { dynamicPartImports.push(...frozenPart._masterToMods[url]); }
@@ -587,24 +605,7 @@ async function getRequiredModulesFromSnapshot (snap, frozenPart, includeDynamicP
   };
 }
 
-export async function compileViaGoogle (code, li, fileName) {
-  const compile = resource('https://closure-compiler.appspot.com/compile');
-  compile.headers['Content-type'] = 'application/x-www-form-urlencoded';
-  li.status = `Compiling ${fileName} on Google's servers.`;
-  const queryString = compile.withQuery({
-    js_code: code,
-    warning_level: 'QUIET',
-    output_format: 'text',
-    output_info: 'compiled_code',
-    language_out: 'ECMASCRIPT5'
-  }).path().split('?')[1];
-  const min = await compile.post(queryString);
-  return {
-    min,
-    code
-  };
-}
-
+// REFACTOR!
 async function compileOnServer (code, loadingIndicator, fileName = 'data', useTerser) {
   const osName = await evalOnServer('process.platform');
   const googleClosure = System.decanonicalize(`google-closure-compiler-${osName === 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../');
@@ -690,8 +691,6 @@ class LivelyRollup {
     rootModule,
     globalName,
     asBrowserModule = true,
-    includeRuntime = true,
-    jspm = false,
     useTerser = true,
     redirect = {
       fs: modules.module('lively.freezer/node-fs-wrapper.js').id,
@@ -699,26 +698,25 @@ class LivelyRollup {
     },
     includePolyfills = true
   }) {
-    this.useTerser = useTerser;
-    this.globalMap = {};
-    this.jspm = jspm;
-    this.includePolyfills = includePolyfills;
-    this.includeRuntime = includeRuntime;
-    this.snapshot = snapshot;
-    this.rootModule = rootModule;
-    this.globalName = globalName;
-    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....")
+    this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
+    this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
+    this.snapshot = snapshot; // the snapshot to be used as a base for developing a bundled app
+    this.rootModule = rootModule; // alternatively to the snapshot, we can also use a root module as an entry point
+    this.globalName = globalName; // The global variable name to export the root module export via.
+    this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
+    this.redirect = redirect; //  Hard redirect of certain packages that overriddes any other resolution mechanisms. Why is this needed?
+    this.excludedModules = excludedModules; // Set of package names whose modules to exclude from the bundle.
+
+    this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
+    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....") // deprecated
     this.dynamicModules = new Set(); // modules loaded via System.import(...)
-    this.modulesWithDynamicLoads = new Set();
-    this.hasDynamicImports = false;
-    this.globalModules = {};
-    this.importedModules = [];
-    this.asBrowserModule = asBrowserModule;
+    this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
+    this.hasDynamicImports = false; // Internal flag that indicates wether or not we need to perform code splitting or not.
+    this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?
+    this.importedModules = []; // Collection of all the required modules from the passed snapshot. This is not popuplated if we utilize rootModule.
     this.resolved = {};
-    this.redirect = redirect;
-    this.excludedModules = excludedModules;
     this.assetsToCopy = [];
-    this.requiredMasterComponents = new Set();
+    this.requiredMasterComponents = new Set(); // populated after the snapshot and modules with dynamic loads have been fully analyzed. No longer needed with component modules.
   }
 
   async resolveRelativeImport (moduleId, path) {
@@ -863,9 +861,7 @@ class LivelyRollup {
     if (id.startsWith('[PART_MODULE]')) return id;
     if (!importer) return id;
     const isCdnImport = ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn));
-    if (importer !== '__root_module__' &&
-        isCdnImport &&
-        this.jspm && importer) {
+    if (importer && importer !== '__root_module__' && isCdnImport) {
       const { url } = resource(importer).root();
       if (ESM_CDNS.find(cdn => url.includes(cdn))) {
         if (id.startsWith('.')) {
@@ -904,10 +900,6 @@ class LivelyRollup {
     if (id.startsWith('.')) {
       id = await this.resolveRelativeImport(importer, id);
       if (!dynamicContext && this.excludedModules.includes(id)) return false;
-    }
-    if (!id.endsWith('.json') && module(id).format() !== 'register' && !this.jspm) {
-      this.globalModules[id] = true;
-      return { id, external: true };
     }
     if (!id.endsWith('.js') && !isCdnImport) {
       const normalizedId = await System.normalize(id);
@@ -1460,6 +1452,10 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
   }
 }
 
+/**
+ * Bundles a given part (in the form of a snapshot or as a live object) into a standalone
+ * static website that can be loaded very quickly.
+ */
 export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
@@ -1467,7 +1463,7 @@ export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [
     })
     : partOrSnapshot;
   transpileAttributeConnections(snapshot);
-  const bundle = new LivelyRollup({ excludedModules, snapshot, jspm: true, useTerser });
+  const bundle = new LivelyRollup({ excludedModules, snapshot, useTerser });
   const rollupBundle = async () => {
     let res;
     try {
@@ -1491,7 +1487,7 @@ export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [
 
 export async function jspmCompile (url, out, globalName, redirect = {}) {
   module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, includeRuntime: false, jspm: true, redirect });
+  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, redirect });
   m.excludedModules = ['babel-plugin-transform-jsx'];
   const res = await m.rollup(true, 'es2019');
   await resource(System.baseURL).join(out).write(res.min);
@@ -1499,7 +1495,7 @@ export async function jspmCompile (url, out, globalName, redirect = {}) {
 
 export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
   module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName, includeRuntime: false, jspm: true });
+  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName });
   m.excludedModules = ['babel-plugin-transform-jsx'];
   const res = await m.rollup(true, 'es2019');
   await resource(System.baseURL).join(out).write(res.min);
