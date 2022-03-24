@@ -488,7 +488,6 @@ export class ObjectEditorModel extends ViewModel {
     await view.layout.enable(timeout ? { duration: timeout } : null);
     (enable ? importController : sourceEditor).focus();
     await promise.delay(2 * timeout);
-    await frozenWarning.whenRendered();
   }
 
   /*
@@ -937,8 +936,6 @@ export class ObjectEditorModel extends ViewModel {
     await this.updateTitle();
     await this.ui.importController.setModule(descr.moduleId);
 
-    this.displayFrozenWarningIfNeeded();
-
     if (!tree.selectedNode || tree.selectedNode.target !== klass) {
       const node = tree.nodes.find(ea => !ea.isRoot && ea.isClass && ea.name === klass);
       tree.selectedNode = node;
@@ -1086,7 +1083,7 @@ export class ObjectEditorModel extends ViewModel {
     }, {
       content
     }));
-    
+
     let warnings = false;
     [content, warnings] = lint(content, { 'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: `_|${className}` }] });
 
@@ -1749,7 +1746,8 @@ export class ImportControllerModel extends ViewModel {
       if (importStyle === 'jspm') {
         let jspmModule = await this.world().filterableListPrompt('Browse NPM', [], {
           requester,
-          onFilter: fun.debounce(500, async (list) => {
+          onFilter: fun.debounce(500, async (param) => {
+            const list = param.target.owner; // gets a MethodCallChange as parameter
             if (list._lastTerm === list.input) return;
             list._lastTerm = list.input;
             list.items = await this.doNewNPMSearch(list.input);
@@ -1843,7 +1841,7 @@ export class ImportControllerModel extends ViewModel {
       let m, origSource;
       try {
         m = ctx.selectedModule;
-        origSource = await m.source();  
+        origSource = await m.source();
         await m.removeImports(sels);
         return false;
       } catch (e) {
