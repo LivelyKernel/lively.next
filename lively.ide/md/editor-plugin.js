@@ -1,5 +1,5 @@
 import { CodeMirrorEnabledEditorPlugin } from '../editor-plugin.js';
-
+import { snippets as mdSnippets } from './snippets.js';
 import './mode.js';
 import { tokenizeDocument } from '../editor-modes.js';
 import { arr, string } from 'lively.lang';
@@ -10,6 +10,7 @@ import { mdCompiler } from './compiler.js';
 import MarkdownNavigator from './navigator.js';
 import { MarkdownPreviewMorph } from './morphs.js';
 import { pt, Color } from 'lively.graphics';
+import { Snippet } from '../text/snippets.js';
 
 let commands = [
 
@@ -153,6 +154,11 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
       { command: '[markdown] goto heading', alias: 'goto heading', target: this.textMorph },
       { isDivider: true }
     ].concat(items);
+  }
+
+  getSnippets () {
+    return mdSnippets.map(([trigger, expansion]) =>
+      new Snippet({ trigger, expansion }));
   }
 
   onTextChange (change) {
