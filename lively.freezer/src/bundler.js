@@ -46,7 +46,7 @@ const ADVANCED_EXCLUDED_MODULES = [
   'localconfig.js'
 ];
 
-export class LivelyRollup {
+export default class LivelyRollup {
   constructor (props = {}) {
     this.setup(props);
   }
@@ -58,6 +58,7 @@ export class LivelyRollup {
     globalName,
     asBrowserModule = true,
     useTerser = true,
+    isResurrectionBuild = false,
     redirect = {
       fs: modules.module('lively.freezer/node-fs-wrapper.js').id,
       'https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js': 'https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js' // this is always needed
@@ -72,6 +73,7 @@ export class LivelyRollup {
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
     this.redirect = redirect; //  Hard redirect of certain packages that overriddes any other resolution mechanisms. Why is this needed?
     this.excludedModules = excludedModules; // Set of package names whose modules to exclude from the bundle.
+    this.isResurrectionBuild = isResurrectionBuild; // If set to true, this will make the lively.core modules hot swappable. This requires not only scope capturing but also embedding of constructs in the build that allow for hot swapping of the modules in the static build scripts.
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....") // deprecated
@@ -222,6 +224,10 @@ export class LivelyRollup {
   needsScopeToBeCaptured (moduleId, importModuleId) {
     if (this.isResurrectionBuild) return !this.wasFetchedFromEsmCdn(moduleId);
     return this.isComponentModule(moduleId) || this.isComponentModule(importModuleId); // fixme: Dont we actually need the convex hull of the imports of the component modules?
+  }
+
+  wasFetchedFromEsmCdn (moduleId) {
+    return !!ESM_CDNS.find(url => moduleId.includes(url));
   }
 
   /**

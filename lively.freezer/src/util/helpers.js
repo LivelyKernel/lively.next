@@ -3,7 +3,8 @@ import { toJsIdentifier } from 'lively.classes/util.js';
 import * as classes from 'lively.classes';
 import { resource } from 'lively.resources';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
-import { arr, promise } from 'lively.lang';
+import { arr, Path, fun, promise } from 'lively.lang';
+import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 
 const isNode = typeof System !== 'undefined'
   ? System.get('@system-env').node
@@ -57,6 +58,23 @@ export async function gzip (blob, inflate = true) {
   let compressed = gzipFunc(blob);
   return compressed.toString('utf8');
   // return compressed.toString(inflate ? 'base64' : 'utf8');
+}
+
+/**
+ * In order to ensure that our connections are initialized in a lively.vm/lively.ast free environment
+ * without Babel support, we need to transpile these source strings in advance.
+ * @param { object } snap - The snapshot to convert the connection objects for.
+ */
+export function transpileAttributeConnections (snap) {
+  const transpile = fun.compose((c) => `(${c})`, es5Transpilation, stringifyFunctionWithoutToplevelRecorder);
+  Object.values(snap.snapshot).filter(m => Path(['lively.serializer-class-info', 'className']).get(m) === 'AttributeConnection').forEach(m => {
+    if (m.props.converterString) {
+      return m.props.converterString.value = transpile(m.props.converterString.value);
+    }
+    if (m.props.updaterString) {
+      return m.props.updaterString.value = transpile(m.props.updaterString.value);
+    }
+  });
 }
 
 /**
