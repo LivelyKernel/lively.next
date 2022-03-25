@@ -44,13 +44,15 @@ import { joinPath } from 'lively.lang/string.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { noUpdate } from 'lively.bindings';
 import CSSEditorPlugin from '../../css/editor-plugin.js';
+import HTMLEditorPlugin from '../../html/editor-plugin.js';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
   json: Color.rgb(128, 139, 150),
   md: Color.rgb(142, 68, 173),
   less: Color.rgbHex('1D365E'),
-  cp: Color.rgbHex('E67E22')
+  cp: Color.rgbHex('E67E22'),
+  html: Color.rgbHex('0091EA')
 };
 
 export class PackageControls extends Morph {
@@ -168,6 +170,9 @@ export class PackageTreeData extends TreeData {
           break;
         case 'css':
           displayedName = this.displayCSS(name, isSelected);
+          break;
+        case 'html':
+          displayedName = this.displayHTML(name, isSelected);
           break;
       }
 
@@ -318,6 +323,15 @@ export class PackageTreeData extends TreeData {
         fontColor: isSelected ? Color.white : COLORS.less
       }),
       ' ' + css, null
+    ];
+  }
+
+  displayHTML (html, isSelected) {
+    return [
+      ...Icon.textAttribute('file-code', {
+        fontColor: isSelected ? Color.white : COLORS.html
+      }),
+      ' ' + html + ' ', null
     ];
   }
 
@@ -1232,6 +1246,7 @@ export class BrowserModel extends ViewModel {
       case 'md': Mode = MarkdownEditorPlugin; break;
       case 'less': Mode = LESSEditorPlugin; break;
       case 'css': Mode = CSSEditorPlugin; break;
+      case 'html': Mode = HTMLEditorPlugin; break;
     }
 
     // switch text mode
