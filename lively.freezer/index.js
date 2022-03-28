@@ -147,48 +147,17 @@ async function promptForFreezing (target, requester) {
   return res;
 }
 
-// would be nice to kick this one out asap
-export async function displayFrozenPartsFor (user = $world.getCurrentUser(), requester) {
-  const userName = user.name;
-  const frozenPartsDir = resource(System.baseURL).join('users').join(userName).join('published/');
-  if (!await frozenPartsDir.exists()) return;
-  const publishedItems = (await frozenPartsDir.dirList()).map(dir => [dir.name(), dir.join('index.html').url]);
-  $world.filterableListPrompt('Published Parts', publishedItems.map(([name, url]) => {
-    return {
-      isListItem: true,
-      autoFit: true,
-      string: name,
-      morph: morph({
-        type: 'text',
-        fontSize: 14,
-        fontColor: Color.white,
-        fill: Color.transparent,
-        readOnly: true,
-        fixedWidth: true,
-        textAndAttributes: [url.replace(System.baseURL, ''), {
-          link: url, fontColor: 'inherit'
-        }, name, {
-          fontStyle: 'italic',
-          fontWeight: 'bold',
-          textStyleClasses: ['annotation', 'truncated-text']
-        }]
-      })
-    };
-  }), {
-    requester,
-    fuzzy: true,
-    onSelection: (_, prompt) => {
-      prompt.submorphs[2].items.forEach(item => item.morph.fontColor = Color.white);
-      if (prompt.submorphs[2].selectedItems[0]) { prompt.submorphs[2].selectedItems[0].morph.fontColor = Color.black; }
-    }
-  });
-}
-
 /**
  * Bundles a given part (in the form of a snapshot or as a live object) into a standalone
  * static website that can be loaded very quickly.
  */
-export async function bundlePart (partOrSnapshot, { exclude: excludedModules = [], compress = false, output = 'es2019', requester, useTerser }) {
+export async function bundlePart (partOrSnapshot, {
+  exclude: excludedModules = [],
+  compress = false,
+  output = 'es2019',
+  requester,
+  useTerser
+}) {
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
       frozenSnapshot: true

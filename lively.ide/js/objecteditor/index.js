@@ -20,7 +20,7 @@ import ObjectEditorContext from './context.js';
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
-import { interactivelyFreezePart, displayFrozenPartsFor } from 'lively.freezer';
+import { interactivelyFreezePart } from 'lively.freezer';
 import { generateReferenceExpression } from '../inspector.js';
 import { getClassName } from 'lively.serializer2';
 import { resource } from 'lively.resources';
@@ -75,12 +75,6 @@ export class ObjectEditorModel extends ViewModel {
       bindings: {
         get () {
           return [
-            {
-              model: 'show frozen parts button',
-              signal: 'fire',
-              handler: 'execCommand',
-              converter: () => 'show frozen parts'
-            },
             {
               model: 'publish button',
               signal: 'fire',
@@ -317,13 +311,6 @@ export class ObjectEditorModel extends ViewModel {
             if (e === 'canceled') this.view.setStatusMessage('canceled');
             else this.view.showError(e);
           }
-        }
-      },
-
-      {
-        name: 'show frozen parts',
-        exec: async () => {
-          await displayFrozenPartsFor(this.world().getCurrentUser(), this.view);
         }
       },
 
