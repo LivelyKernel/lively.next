@@ -72,6 +72,7 @@ const rules = {
   'key-spacing': ['error', { beforeColon: false, afterColon: true }],
   'keyword-spacing': ['error', { before: true, after: true }],
   'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
+  'linebreak-style': ["error", "unix"],
   'multiline-ternary': ['error', 'always-multiline'],
   'new-parens': 'error',
   'no-multi-spaces': 'error',
