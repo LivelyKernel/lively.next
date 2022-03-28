@@ -1,26 +1,26 @@
-import { Tooltip } from 'lively.morphic';
+import { Tooltip, config } from 'lively.morphic';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { num, arr } from 'lively.lang';
 import { syncEval } from 'lively.vm';
+import { module } from 'lively.modules';
+
+export async function ensureDefaultImports () {
+  const inspectorEvalContext = module('lively://lively.morphic/inspector');
+  const imports = config.ide.js.defaultInspectorImports;
+  for (let modName in imports) {
+    const exports = await System.import(modName);
+    imports[modName].forEach(v => {
+      inspectorEvalContext.define(v, exports[v], false);
+    });
+  }
+}
+
 // number scrubbing
 export function onNumberDragStart (evt, scrubState) {
   scrubState.initPos = evt.position;
   scrubState.factorLabel = new Tooltip({ master: SystemTooltip, description: '1x' }).openInWorld(
     evt.hand.position.addXY(10, 10)
   );
-}
-
-export function onNumberDrag (evt, scrubState) {
-  const { scale, offset } = getScaleAndOffset(evt, scrubState);
-  scrubState.factorLabel.position = evt.hand.position.addXY(10, 10);
-  scrubState.factorLabel.description = `${scale}x`;
-  return getCurrentValue(offset, scale, scrubState);
-}
-
-export function onNumberDragEnd (evt, scrubState) {
-  const { offset, scale } = getScaleAndOffset(evt, scrubState);
-  scrubState.factorLabel.softRemove();
-  return getCurrentValue(offset, scale, scrubState);
 }
 
 export function getScaleAndOffset (evt, scrubState) {
@@ -32,6 +32,19 @@ export function getScaleAndOffset (evt, scrubState) {
 export function getCurrentValue (delta, s, scrubState) {
   const v = scrubState.scrubbedValue + (scrubState.floatingPoint ? delta * s : Math.round(delta * s));
   return Math.max(scrubState.min, Math.min(scrubState.max, v));
+}
+
+export function onNumberDragEnd (evt, scrubState) {
+  const { offset, scale } = getScaleAndOffset(evt, scrubState);
+  scrubState.factorLabel.softRemove();
+  return getCurrentValue(offset, scale, scrubState);
+}
+
+export function onNumberDrag (evt, scrubState) {
+  const { scale, offset } = getScaleAndOffset(evt, scrubState);
+  scrubState.factorLabel.position = evt.hand.position.addXY(10, 10);
+  scrubState.factorLabel.description = `${scale}x`;
+  return getCurrentValue(offset, scale, scrubState);
 }
 
 export function generateReferenceExpression (morph, opts = {}) {
@@ -54,7 +67,7 @@ export function generateReferenceExpression (morph, opts = {}) {
   // can we find it at all? if not return a generic "morph"
   if (!world && (!morph.name || fromMorph.get(morph.name) !== morph)) { return 'morph'; }
 
-  const exprs = makeReferenceExpressionListFor(morph);
+  const exprs = makeReferenceExpressionListFor(morph); // eslint-disable-line no-use-before-define
 
   return exprs.length > maxLength
     ? `$world.getMorphWithId("${morph.id}")`
@@ -78,7 +91,7 @@ export function generateReferenceExpression (morph, opts = {}) {
         exprList = [`$world.get("${name}")`];
       }
 
-      if (!exprList && owner != world) {
+      if (!exprList && owner !== world) {
         for (let i = owners.length - 1; i--;) {
           if (owners[i].getAllNamed(name).length === 1) {
             exprList = [...makeReferenceExpressionListFor(owners[i]), `get("${name}")`];
@@ -105,13 +118,5 @@ export function generateReferenceExpression (morph, opts = {}) {
     }
 
     return exprList;
-  }
-
-  function commonOwner (m1, m2) {
-    const owners1 = m1.ownerChain();
-    const owners2 = m2.ownerChain();
-    if (owners1.includes(m2)) return m2;
-    if (owners2.includes(m1)) return m1;
-    return arr.intersect(owners1, owners2)[0];
   }
 }

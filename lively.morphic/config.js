@@ -80,7 +80,10 @@ const config = {
                url.includes('custom-npm-modules') ||
                url.includes('mocha-es6') ||
                url.includes('test-resources/es6')
-      ]
+      ],
+      defaultInspectorImports: {
+        'lively.graphics': ['pt', 'Color']
+      }
     },
 
     modes: {

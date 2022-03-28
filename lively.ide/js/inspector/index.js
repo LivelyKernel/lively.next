@@ -10,10 +10,13 @@ import DefaultTheme from '../../themes/default.js';
 import { DropDownSelector } from 'lively.components/widgets.js';
 import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
 import { valueWidgets } from 'lively.ide';
-import { onNumberDragStart, generateReferenceExpression, onNumberDragEnd, onNumberDrag } from './helpers.js';
+import { onNumberDragStart, ensureDefaultImports, generateReferenceExpression, onNumberDragEnd, onNumberDrag } from './helpers.js';
 import { InstructionWidget } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
 import { ShadowPopup, PositionPopupLight, PaddingPopup } from '../../studio/controls/popups.cp.js';
+import { module } from 'lively.modules/index.js';
+
+ensureDefaultImports();
 
 const inspectorCommands = [
 
