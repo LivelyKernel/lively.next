@@ -2,7 +2,7 @@ import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
-import { module } from 'lively.modules/index.js';
+import { module } from 'lively.modules';
 import { localInterface } from 'lively-system-interface';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import { es5Transpilation } from 'lively.source-transform';
@@ -13,6 +13,12 @@ import * as Rollup from 'esm://cache/rollup@2.28.2';
 import jsonPlugin from 'esm://cache/@rollup/plugin-json';
 import { fixSourceForBugsInGoogleClosure, translateToEsm, compileOnServer } from './util/helpers.js';
 // fixme: requires newer Babel version to import latest version...
+
+const SYSTEMJS_STUB = `
+var G = typeof window !== "undefined" ? window :
+      typeof global!=="undefined" ? global :
+        typeof self!=="undefined" ? self : this;
+if (!G.System) G.System = G.lively.FreezerRuntime;`;
 
 const CLASS_INSTRUMENTATION_MODULES = [
   'lively.morphic',
@@ -33,6 +39,32 @@ const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev'];
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
   'lively.lang'
 ];
+
+// this needs to be handled differently when loaded from the shell script...
+function resolveModuleId (moduleName) {
+  return module(moduleName).id;
+}
+
+async function normalizeFileName (fileName) {
+  return await System.normalize(fileName);
+}
+
+function resolvePackage (moduleName) {
+  return module(moduleName).package();
+}
+
+function dontTransform (moduleId) {
+  return module(moduleId).dontTransform;
+}
+
+function pathInPackageFor (moduleId) {
+  return module(moduleId).pathInPackage();
+}
+
+// how to achieve this from env without fully prepared SystemJS?
+function detectFormat (moduleId) {
+  return module(moduleId).format();
+}
 
 const ADVANCED_EXCLUDED_MODULES = [
   'lively.ast',
@@ -60,7 +92,7 @@ export default class LivelyRollup {
     useTerser = true,
     isResurrectionBuild = false,
     redirect = {
-      fs: modules.module('lively.freezer/node-fs-wrapper.js').id,
+      fs: resolveModuleId('lively.freezer/node-fs-wrapper.js'),
       'https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js': 'https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js' // this is always needed
     },
     includePolyfills = true
@@ -104,8 +136,8 @@ export default class LivelyRollup {
    * @param { string } path - The relative path to be imported.
    */
   async resolveRelativeImport (moduleId, path) {
-    if (!path.startsWith('.')) return System.normalize(path);
-    return resource(await System.normalize(moduleId)).join('..').join(path).withRelativePartsResolved().url;
+    if (!path.startsWith('.')) return normalizeFileName(path);
+    return resource(await normalizeFileName(moduleId)).join('..').join(path).withRelativePartsResolved().url;
   }
 
   /**
@@ -122,25 +154,25 @@ export default class LivelyRollup {
    * in a way that makes sense in a frozen build.
    * @param { Module } mod - The module object to transform the class definitions for.
    */
-  getTransformOptions (mod) {
-    if (mod.id === '@empty') return {};
+  getTransformOptions (modId) {
+    if (modId === '@empty') return {};
     let version, name;
-    const pkg = mod.package();
+    const pkg = resolvePackage(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
     } else {
-      // assuming the module if from jspm
-      version = mod.id.split('@')[1];
-      name = mod.id.split('npm:')[1].split('@')[0];
+      // assuming the module comes from jspm
+      version = modId.split('@')[1];
+      name = modId.split('npm:')[1].split('@')[0];
     }
     const classToFunction = {
-      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(mod.id)}"))`),
+      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(modId)}"))`),
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
       transform: classes.classToFunctionTransform,
       currentModuleAccessor: ast.parse(`({
         pathInPackage: () => {
-           return "${mod.pathInPackage()}"
+           return "${pathInPackageFor(modId)}"
         },
         unsubscribeFromToplevelDefinitionChanges: () => () => {},
         subscribeToToplevelDefinitionChanges: () => () => {},
@@ -155,7 +187,7 @@ export default class LivelyRollup {
     return {
       exclude: [
         'System',
-        ...mod.dontTransform,
+        ...dontTransform(modId),
         ...arr.range(0, 50).map(i => `__captured${i}__`)],
       classToFunction
     };
@@ -167,8 +199,8 @@ export default class LivelyRollup {
    * for the benefit of the doubt.
    */
   checkIfImportedPackageExcluded () {
-    const excludedPackages = arr.compact(this.excludedModules.map(id => module(id).package()));
-    const importedPackages = this.importedModules.map(id => module(id).package());
+    const excludedPackages = arr.compact(this.excludedModules.map(id => resolvePackage(id)));
+    const importedPackages = this.importedModules.map(id => resolvePackage(id));
     const conflicts = arr.intersect(excludedPackages, importedPackages);
     if (conflicts.length > 0) {
       const multiple = conflicts.length > 1;
@@ -200,7 +232,7 @@ export default class LivelyRollup {
    * are required to successfully deserialize the snapshot that for the frozen part.
    */
   async synthesizeSnapshotModule () {
-    const snapshotModuleSource = await module('lively.freezer/src/util/snapshot-module.js').source();
+    const snapshotModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/snapshot-module.js')).read();
     const { requiredModules } = await this.getRequiredModulesFromSnapshot(this.snapshot);
 
     this.importedModules = requiredModules;
@@ -348,18 +380,18 @@ export default class LivelyRollup {
         }
       }
     }
-    const importingPackage = module(importer).package();
+    const importingPackage = resolvePackage(importer);
     if (['lively.ast', 'lively.modules'].includes(id) && this.excludedModules.includes(id)) {
       return id;
     }
 
     // if we are imported from a non dynamic context this does not apply
-    const dynamicContext = this.dynamicModules.has(module(importer).id) || this.dynamicModules.has(module(id).id);
+    const dynamicContext = this.dynamicModules.has(resolveModuleId(importer)) || this.dynamicModules.has(resolveModuleId(id));
     if (!dynamicContext) {
       if (importingPackage && this.excludedModules.includes(importingPackage.name)) return false;
       if (this.excludedModules.includes(id)) return false;
     } else {
-      this.dynamicModules.add(module(id).id);
+      this.dynamicModules.add(resolveModuleId(id));
     }
 
     if (importingPackage && importingPackage.map) this.globalMap = { ...this.globalMap, ...importingPackage.map };
@@ -376,10 +408,10 @@ export default class LivelyRollup {
       if (!dynamicContext && this.excludedModules.includes(id)) return false;
     }
     if (!id.endsWith('.js') && !isCdnImport) {
-      const normalizedId = await System.normalize(id);
+      const normalizedId = await normalizeFileName(id);
       return this.resolved[id] = normalizedId;
     }
-    return this.resolved[id] = module(id).id; // this does not seem to work for non .js modules
+    return this.resolved[id] = resolveModuleId(id);
   }
 
   async load (id) {
@@ -404,20 +436,20 @@ export default class LivelyRollup {
     if (id === 'fs') {
       return 'const fs = require("fs"); export default fs;';
     }
-    const mod = module(id);
-    const pkg = mod.package();
+    const modId = resolveModuleId(id);
+    const pkg = resolvePackage(id);
     if (pkg && this.excludedModules.includes(pkg.name) &&
-        !mod.id.endsWith('.json') &&
+        !modId.endsWith('.json') &&
         !this.dynamicModules.has(pkg.name) &&
-        !this.dynamicModules.has(mod.id)) {
+        !this.dynamicModules.has(modId)) {
       return '';
     }
+
+    let s = await resource(modId).read();
     if (id.endsWith('.json')) {
       // return await resource(mod.id).read();
-      return translateToEsm(mod._source || await mod.source());
+      return translateToEsm(s);
     }
-    let s = await mod.source();
-
     s = fixSourceForBugsInGoogleClosure(id, s);
 
     return s;
@@ -438,14 +470,14 @@ export default class LivelyRollup {
     const recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const captureObj = { name: '__varRecorder__', type: 'Identifier' };
-    // id = 'lively.vm/index.js'
-    const mod = module(id);
-    // source = mod._source
     const parsed = ast.parse(source);
-    // opts = {}
 
-    const opts = this.getTransformOptions(mod);
-    if (this.needsClassInstrumentation(id)) { classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n'; } else { opts.classToFunction = false; }
+    const opts = this.getTransformOptions(resolveModuleId(id));
+    if (this.needsClassInstrumentation(id)) {
+      classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
+    } else {
+      opts.classToFunction = false;
+    }
     const instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
     const imports = [];
     let defaultExport = '';
@@ -504,14 +536,14 @@ export default class LivelyRollup {
   deriveVarName (moduleId) { return string.camelize(arr.last(moduleId.split('/')).replace(/\.js|\.min/g, '').split('.').join('')); }
 
   async wrapStandalone (moduleId) {
-    const mod = module(moduleId);
-    if (!mod._source) await mod.source();
+    moduleId = resolveModuleId(moduleId);
+    const source = await resource(moduleId).read();
     const globalVarName = this.deriveVarName(moduleId);
     let code;
-    if (mod.format() === 'global') {
+    if (detectFormat(moduleId) === 'global') {
       code = `var ${globalVarName} = (function() {
-         var fetchGlobals = prepareGlobal("${mod.id}");
-         ${mod._source};
+         var fetchGlobals = prepareGlobal("${moduleId}");
+         ${source};
          return fetchGlobals();
       })();\n`;
     } else {
@@ -524,7 +556,7 @@ export default class LivelyRollup {
 
              // try to simulate node.js context
              var exec = function(exports, require) {
-                ${mod._source} 
+                ${source} 
              };
              exec(exports, require);
              if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
@@ -618,16 +650,12 @@ export default class LivelyRollup {
   }
 
   async getRuntimeCode () {
-    let runtimeCode = await module('lively.freezer/src/util/runtime.js').source();
+    let runtimeCode = await resource(await normalizeFileName('lively.freezer/src/util/runtime.js')).read();
     runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
       // can stub it with our FreezerRuntime
-      runtimeCode += `
-var G = typeof window !== "undefined" ? window :
-      typeof global!=="undefined" ? global :
-        typeof self!=="undefined" ? self : this;
-if (!G.System) G.System = G.lively.FreezerRuntime;`;
+      runtimeCode += SYSTEMJS_STUB;
     }
     return es5Transpilation(runtimeCode);
   }
@@ -677,7 +705,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
           resolveDynamicImport: (id, importer) => {
             // schedule a request to initiate a nested rollup that bundles
             // the dynamically loaded bundles separately
-            this.dynamicModules.add(module(id).id);
+            this.dynamicModules.add(resolveModuleId(id));
             const res = this.resolveId(id, importer); // dynamic imports are never excluded
             if (res && obj.isString(res)) {
               return {
@@ -796,7 +824,7 @@ if (!G.System) G.System = G.lively.FreezerRuntime;`;
     const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
     const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
     let polyfills = '';
-    polyfills += !includePolyfills ? '' : await module('lively.freezer/deps/fetch.umd.js').source();
+    polyfills += !includePolyfills ? '' : await resource(await normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
 
     const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
 
