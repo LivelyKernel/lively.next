@@ -1,9 +1,7 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { HorizontalLayout, config, touchInputDevice, VerticalLayout, TilingLayout, ProportionalLayout, Tooltip, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon } from 'lively.morphic';
+import { HorizontalLayout, config, touchInputDevice, TilingLayout, Tooltip, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
-import { Closure, string, promise, obj, arr } from 'lively.lang';
-import { LoadingIndicator, Menu } from 'lively.components';
+import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { PropertiesPanel } from './properties-panel.cp.js';
 import { CommentBrowser } from 'lively.collab';
@@ -56,14 +54,14 @@ export class FastLoadToggler extends Morph {
     const toggleIndicator = this.getSubmorphNamed('toggle indicator');
     const label = this.getSubmorphNamed('label');
     const bolt = this.getSubmorphNamed('bolt');
-    let active = Object.values(this.loadConfig).every(v => v == 'frozen');
-    label.master = bolt.master = toggleIndicator.master = active ? TopBarButtonSelected : TopBarButton;
+    let active = Object.values(this.loadConfig).every(v => v === 'frozen');
+    label.master = bolt.master = toggleIndicator.master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
     toggleIndicator.textAndAttributes = Icon.textAttribute(active ? 'toggle-on' : 'toggle-off');
   }
 
   toggleFastLoad () {
     const { loadConfig } = this;
-    let active = Object.values(loadConfig).every(v => v == 'frozen');
+    let active = Object.values(loadConfig).every(v => v === 'frozen');
     for (let key in loadConfig) loadConfig[key] = active ? 'dynamic' : 'frozen';
     this.loadConfig = loadConfig;
     this.refresh();
@@ -177,54 +175,54 @@ export class TopBarModel extends ViewModel {
     const selector = this.ui.selectShapeType;
     const shapeModeButton = this.ui.shapeModeButton;
     const target = this.primaryTarget || this.world();
-    if (evt.targetMorph == selector) {
+    if (evt.targetMorph === selector) {
       const menu = this.world().openWorldMenu(evt, this.getShapeMenuItems());
       menu.position = shapeModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
     }
 
-    if (evt.targetMorph.name == 'undo button') {
+    if (evt.targetMorph.name === 'undo button') {
       target.execCommand('undo');
     }
 
-    if (evt.targetMorph.name == 'redo button') {
+    if (evt.targetMorph.name === 'redo button') {
       target.execCommand('redo');
     }
 
-    if (evt.targetMorph.name == 'save button') {
+    if (evt.targetMorph.name === 'save button') {
       $world.execCommand('save world');
     }
 
-    if (evt.targetMorph == shapeModeButton) {
+    if (evt.targetMorph === shapeModeButton) {
       this.setEditMode('Shape');
     }
 
-    if (evt.targetMorph.name == 'text mode button') {
+    if (evt.targetMorph.name === 'text mode button') {
       this.setEditMode('Text');
     }
 
-    if (evt.targetMorph.name == 'hand mode button') {
+    if (evt.targetMorph.name === 'hand mode button') {
       this.setEditMode('Hand');
     }
 
-    if (evt.targetMorph.name == 'halo mode button') {
+    if (evt.targetMorph.name === 'halo mode button') {
       this.setEditMode('Halo');
     }
 
-    if (evt.targetMorph.name == 'open component browser') {
+    if (evt.targetMorph.name === 'open component browser') {
       this.interactivelyLoadComponent();
     }
 
-    if (evt.targetMorph.name == 'load world button') {
+    if (evt.targetMorph.name === 'load world button') {
       this.world().execCommand('load world');
     }
 
-    if (evt.targetMorph.name == 'comment browser button') {
+    if (evt.targetMorph.name === 'comment browser button') {
       this.toggleCommentBrowser();
     }
   }
 
   onKeyUp (evt) {
-    if (this._tmpEditMode == 'Hand') {
+    if (this._tmpEditMode === 'Hand') {
       this.setEditMode('Hand', true);
     }
   }
@@ -232,7 +230,7 @@ export class TopBarModel extends ViewModel {
   onKeyDown (evt) {
     if (evt.isCommandKey()) {
       // temporary toggle halo mode
-      if (this._tmpEditMode == 'Hand') {
+      if (this._tmpEditMode === 'Hand') {
         this.setEditMode('Halo', true);
         return;
       }
@@ -283,8 +281,7 @@ export class TopBarModel extends ViewModel {
   adjustElements () {
     const statusBar = this.ui.ipadStatusBar;
     if (statusBar) statusBar.width = this.view.width;
-    if (this.ui.userFlap.owner == this) // only adjust position if this flap is within top bar
-    {
+    if (this.ui.userFlap.owner === this) { // only adjust position if this flap is within top bar
       this.ui.userFlap.right = this.width - 10;
       this.ui.userFlap.visible = this.width > 750;
     }
@@ -330,7 +327,7 @@ export class TopBarModel extends ViewModel {
       this.activeSideBars.push(name);
     }
 
-    if (name == 'scene graph') {
+    if (name === 'scene graph') {
       if (!this.sideBar) {
         this.sideBar = part(MorphPanel);
         this.sideBar.epiMorph = true;
@@ -344,7 +341,7 @@ export class TopBarModel extends ViewModel {
       await this.sideBar.toggle(this.activeSideBars.includes('scene graph'));
     }
 
-    if (name == 'properties panel') {
+    if (name === 'properties panel') {
       if (!this.stylingPalette) {
         this.stylingPalette = part(PropertiesPanel);
         this.stylingPalette.epiMorph = true;
@@ -355,19 +352,19 @@ export class TopBarModel extends ViewModel {
     }
 
     const checker = this.ui.livelyVersionChecker;
-    if (checker && checker.owner == $world) {
+    if (checker && checker.owner === $world) {
       checker.relayout();
     }
   }
 
   colorCommentBrowserButton () {
     const label = this.ui.commentBrowserButton;
-    label.master = TopBarButtonSelected;
+    label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
   }
 
   uncolorCommentBrowserButton () {
     const label = this.ui.commentBrowserButton;
-    label.master = TopBarButton;
+    label.master = TopBarButton; // eslint-disable-line no-use-before-define
   }
 
   toggleCommentBrowser () {
@@ -383,9 +380,9 @@ export class TopBarModel extends ViewModel {
 
   async interactivelyLoadComponent () {
     const label = this.ui.openComponentBrowser;
-    label.master = TopBarButtonSelected;
+    label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');
-    label.master = TopBarButton;
+    label.master = TopBarButton; // eslint-disable-line no-use-before-define
   }
 
   setEditMode (mode, shallow = false) {
@@ -407,23 +404,23 @@ export class TopBarModel extends ViewModel {
       ['Hand', [handModeButton]],
       ['Halo', [haloModeButton]]
     ].forEach(([modeName, morphsToUpdate]) => {
-      if (mode == 'Shape') {
+      if (mode === 'Shape') {
         this.toggleShapeMode(target, true, this.currentShapeMode);
-      } else if (mode == 'Text') {
+      } else if (mode === 'Text') {
         this.toggleShapeMode(target, true, 'Text');
       } else {
         this.toggleShapeMode(target, false);
       }
-      this.showHaloPreviews(mode == 'Halo');
-      if (!shallow && mode != 'Halo') this.world().halos().forEach(h => h.remove());
+      this.showHaloPreviews(mode === 'Halo');
+      if (!shallow && mode !== 'Halo') this.world().halos().forEach(h => h.remove());
 
-      if (modeName == mode) {
+      if (modeName === mode) {
         morphsToUpdate.forEach(m => {
-          m.master = TopBarButtonSelected;
+          m.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
         });
       } else {
         morphsToUpdate.forEach(m => {
-          m.master = TopBarButton;
+          m.master = TopBarButton; // eslint-disable-line no-use-before-define
         });
       }
     });
@@ -454,7 +451,7 @@ export class TopBarModel extends ViewModel {
     const type = target._yieldShapeOnClick;
     if (!type) return false;
     if (target._sizeTooltip) target._sizeTooltip.remove();
-    if (evt.targetMorph != target) return false;
+    if (evt.targetMorph !== target) return false;
     if (target._shapeRequest && type && !target._yieldedShape) {
       const position = target.localize(this.world().firstHand.position);
       switch (type) {
@@ -487,7 +484,7 @@ export class TopBarModel extends ViewModel {
           break;
       }
     }
-    if (type == Text && target._yieldedShape) {
+    if (type === Text && target._yieldedShape) {
       target._yieldedShape.focus();
     } else if (target._yieldedShape && target._yieldedShape.owner) {
       this.showHaloFor(target._yieldedShape);
@@ -511,10 +508,10 @@ export class TopBarModel extends ViewModel {
       fixedHeight: true,
       fixedWidth: true,
       lineWrapping: true,
-      ...type == Text ? this.getDefaultTextAttrs() : {},
-      ...type == Image ? this.getImageDefaultAttrs() : {},
-      ...type == Polygon ? this.getPolyDefaultAttrs() : {},
-      ...type == Path ? this.getPathDefaultAttrs() : {}
+      ...type === Text ? this.getDefaultTextAttrs() : {},
+      ...type === Image ? this.getImageDefaultAttrs() : {},
+      ...type === Polygon ? this.getPolyDefaultAttrs() : {},
+      ...type === Path ? this.getPathDefaultAttrs() : {}
     });
     // we cannot import the master from tooltip.cs.js dirctly on file-level
     // since this causes circular imports and breaks the system
@@ -565,19 +562,19 @@ export class TopBarModel extends ViewModel {
     const world = this.world();
     const target = this.primaryTarget || world;
     const [currentHalo] = world.halos();
-    if (this._showHaloPreview && this._currentlyHighlighted && world.halos().length == 0) {
+    if (this._showHaloPreview && this._currentlyHighlighted && world.halos().length === 0) {
       evt.stop();
       world.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
       this.showHaloFor(this._currentlyHighlighted);
     }
     if (currentHalo &&
-        currentHalo.target == evt.state.prevClick.clickedOnMorph &&
-        evt.targetMorph.name == 'border-box' &&
+        currentHalo.target === evt.state.prevClick.clickedOnMorph &&
+        evt.targetMorph.name === 'border-box' &&
         evt.state.timeOfLastActivity - evt.state.prevClick.clickedAtTime < 50) {
       currentHalo.temporaryEditTextMorph(evt);
       return;
     }
-    if (evt.targetMorph != target) return;
+    if (evt.targetMorph !== target) return;
     target._shapeRequest = true;
   }
 
@@ -585,11 +582,11 @@ export class TopBarModel extends ViewModel {
     let halo;
     if (!targets) return;
     if (obj.isArray(targets)) {
-      if (targets.length == 0) return;
+      if (targets.length === 0) return;
       halo = this.world().showHaloForSelection(targets);
     } else halo = this.world().showHaloFor(targets);
     once(halo, 'remove', () => {
-      if (halo.target != this.world().focusedMorph) {
+      if (halo.target !== this.world().focusedMorph) {
         signal(this.primaryTarget, 'onHaloRemoved', targets);
       }
     });
@@ -605,7 +602,7 @@ export class TopBarModel extends ViewModel {
       const { haloFilterFn } = this;
       const target = this.primaryTarget || this.world();
       let morphsContainingPoint = target.morphsContainingPoint(evt.positionIn(target.world()));
-      if (evt.type == 'hoverout') {
+      if (evt.type === 'hoverout') {
         morphsContainingPoint = [target];
       }
       const haloTarget = morphsContainingPoint.filter(m => {
@@ -615,7 +612,7 @@ export class TopBarModel extends ViewModel {
                !m.styleClasses.includes('HaloPreview'));
       })[0];
       // when we are hovering a menu item or one of the sidebars, then we do not trigger the halo preview
-      if (morphsContainingPoint.find(m => m.isMenuItem || m == this.sideBar || m == this.stylingPalette)) {
+      if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.stylingPalette)) {
         this._currentlyHighlighted = false;
         this.clearHaloPreviews();
         return;
@@ -647,9 +644,9 @@ export class TopBarModel extends ViewModel {
     if (!aMorph) return;
     if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
     else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
-    else if (aMorph == target) aMorph = null; // reset halo preview
+    else if (aMorph === target) aMorph = null; // reset halo preview
     // if the previously highlighted morph is different one, then clean all exisiting previews
-    if (this._currentlyHighlighted != aMorph) {
+    if (this._currentlyHighlighted !== aMorph) {
       this.clearHaloPreviews();
       this._currentlyHighlighted = aMorph;
     }
@@ -921,7 +918,7 @@ export class UserFlapModel extends ViewModel {
   }
 
   ensureMenu () {
-    const menu = this.ui.userMenu || this.view.addMorph(part(UserMenu));
+    const menu = this.ui.userMenu || this.view.addMorph(part(UserMenu)); // eslint-disable-line no-use-before-define
     menu.name = 'user menu';
     menu.visible = false;
     menu.opacity = 0;
@@ -976,7 +973,7 @@ export class UserFlapModel extends ViewModel {
   }
 
   async showUser (user, animated = false) {
-    const { nameLabel, userMenu, avatar, loginItem, logoutItem, profileItem } = this.ui;
+    const { nameLabel, userMenu, avatar } = this.ui;
     let userName = String(user.name);
     const gravatar = resource('https://s.gravatar.com/avatar').join(string.md5(user.email || '')).withQuery({ s: 160 }).url;
     this.ensureMenu();

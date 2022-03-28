@@ -1,6 +1,5 @@
-import { ViewModel, add, part, component } from 'lively.morphic/components/core.js';
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, ProportionalLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject } from 'lively.morphic';
+import { TilingLayout, ProportionalLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { GreenButton, RedButton, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Spinner } from './shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
@@ -25,7 +24,7 @@ class MasterComponentTreeData extends TreeData {
     super(props);
     this.ensurePopularComponentsCollection();
   }
-  
+
   isCollapsed ({ isCollapsed }) { return isCollapsed; }
 
   async collapse (node, bool) {
@@ -85,7 +84,7 @@ class MasterComponentTreeData extends TreeData {
         : ' '.repeat(col1Size);
       let sizePrinted = size ? num.humanReadableByteSize(size) : '';
       let displayedName;
-      
+
       switch (type) {
         case 'cp.js':
           if (!node.isLoaded && isSelected) node.isLoaded = true;
@@ -95,7 +94,7 @@ class MasterComponentTreeData extends TreeData {
           displayedName = this.displayDirectory(name, !isCollapsed);
           break;
       }
-    
+
       return [
         ...displayedName,
         `\t${sizePrinted} ${datePrinted}`, {
@@ -107,7 +106,7 @@ class MasterComponentTreeData extends TreeData {
       ];
     }
   }
-  
+
   /**
    * @returns { Morph } - The visual representation of the muller columns view presenting this data.
    */
@@ -179,7 +178,7 @@ class MasterComponentTreeData extends TreeData {
         this.root.browser.showComponentsInFile(mod.replace('.cp.js', ''), components);
       });
     }
-    
+
     return [
       ...Icon.textAttribute('shapes', {
         fontColor: isSelected ? Color.white : COLORS.cp,
@@ -259,15 +258,15 @@ class MasterComponentTreeData extends TreeData {
 
   async getLoadedComponentFileUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
-    const files = await resource(selectedPkg.url).dirList(1, { 
+    const files = await resource(selectedPkg.url).dirList(1, {
       exclude: (res) => {
         return !(res.url.endsWith('.cp.js') || res.isDirectory());
       }
     });
-    if (selectedPkg.name !== 'Popular') { 
+    if (selectedPkg.name !== 'Popular') {
       // ensure the package is present in the system
       // so that we do not get any orphaned modules...     
-      await this.systemInterface.getPackage(selectedPkg.url); 
+      await this.systemInterface.getPackage(selectedPkg.url);
     }
     const loadedModules = {};
     files.forEach(file => {
@@ -292,7 +291,7 @@ class MasterComponentTreeData extends TreeData {
         type
       };
     });
-    
+
     const loadedFiles = await this.getLoadedComponentFileUrls();
     return files.map(file => {
       file.isLoaded = !!loadedFiles[file.url];
@@ -309,7 +308,7 @@ export class ExportedComponent extends Morph {
       componentBrowser: {
         derived: true,
         get () {
-          return this.ownerChain().find(m => m.isComponentBrowser);  
+          return this.ownerChain().find(m => m.isComponentBrowser);
         }
       },
       dragTriggerDistance: {
@@ -357,7 +356,7 @@ export class ExportedComponent extends Morph {
     this.get('component name').textString = this.component.name;
     container.submorphs = [preview];
   }
-  
+
   async initExportIndicatorIfNeeded () {
     if (this.fetchUrl.startsWith('part://$world/')) {
       const exportIndicator = this.addMorph(
@@ -399,7 +398,7 @@ export class ExportedComponent extends Morph {
   onMouseDown (evt) {
     super.onMouseDown(evt);
     // this is pretty bad style
-    if (this.project) { 
+    if (this.project) {
       this.project.selectComponent(this);
       // notify the column view to update accordingly if active...
     }
@@ -627,7 +626,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       {
         target: 'search input',
-        signal: 'inputChanged', 
+        signal: 'inputChanged',
         handler: 'filterAllComponents'
       },
       {
@@ -735,7 +734,7 @@ export class ComponentBrowserModel extends ViewModel {
       this.toggleBusyState(false);
     })();
   }
-  
+
   async withoutUpdates (cb) {
     this._pauseUpdates = true;
     await cb();
@@ -886,7 +885,7 @@ export class ComponentBrowserModel extends ViewModel {
         this.toggleBusyState(false);
         return;
       }
-    
+
       // filter the candidates and render the projects together with the matches
       const filteredIndex = {};
       await Promise.all(componentModules.map(async modUrl => {
@@ -1119,7 +1118,7 @@ const ComponentBrowser = component(LightPrompt, {
     submorphs: [add(part(Spinner, {
       name: 'spinner',
       position: pt(448.2, 5.4),
-      visible: false 
+      visible: false
     })), {
       name: 'placeholder',
       extent: pt(232, 34.3),

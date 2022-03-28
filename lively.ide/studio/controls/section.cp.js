@@ -1,6 +1,5 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
 import { Color, pt, Rectangle } from 'lively.graphics';
-import { TilingLayout } from 'lively.morphic';
+import { TilingLayout, component, ViewModel, part } from 'lively.morphic';
 import { HeadlineLabel, RemoveButton, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 
 export class PropertySectionModel extends ViewModel {
@@ -9,13 +8,13 @@ export class PropertySectionModel extends ViewModel {
       inactiveSectionComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('inactiveSectionComponent') || PropertySectionInactive;
+          return this.getProperty('inactiveSectionComponent') || PropertySectionInactive; // eslint-disable-line no-use-before-define
         }
       },
       hoverSectionComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('hoverSectionComponent') || PropertySection;
+          return this.getProperty('hoverSectionComponent') || PropertySection; // eslint-disable-line no-use-before-define
         }
       },
       bindings: {
@@ -39,7 +38,6 @@ export class PropertySectionModel extends ViewModel {
     this.ui.removeButton.visible = false;
   }
 }
-
 
 // PropertySection.openInWorld()
 const PropertySection = component({

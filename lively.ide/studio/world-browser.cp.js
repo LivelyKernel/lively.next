@@ -1,7 +1,6 @@
-import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, HorizontalLayout, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject } from 'lively.morphic';
+import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, HorizontalLayout, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject, component, part } from 'lively.morphic';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
 import { arr, promise, fun, graph, date, string } from 'lively.lang/index.js';
-import { component, part } from 'lively.morphic/components/core.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
 import { Spinner } from './shared.cp.js';
 import { DropDownList } from 'lively.components/list.cp.js';
@@ -492,7 +491,7 @@ class WorldDashboard extends Morph {
       opacity: 1, duration: 300
     });
     const worldCommits = await this.db.latestCommits('world');
-    const previewSpec = part(WorldPreviewTile);
+    const previewSpec = part(WorldPreviewTile); // eslint-disable-line no-use-before-define
     this.previews = worldCommits.map(commit => {
       const placeholder = morph({
         reactsToPointer: false,
@@ -558,7 +557,7 @@ class GrowingWorldList extends Morph {
         get () {
           return {
             bufferTop: this.getSubmorphNamed('buffer top'),
-            bufferBottom: this.getSubmorphNamed('buffer bottom')            
+            bufferBottom: this.getSubmorphNamed('buffer bottom')
           };
         }
       },
@@ -627,7 +626,7 @@ class GrowingWorldList extends Morph {
         item.whenRendered().then(async () => {
           item._initialized = true;
           await item.displayPreview();
-        }); 
+        });
       }
     }
     if (sort) {
@@ -638,7 +637,7 @@ class GrowingWorldList extends Morph {
     scrollContainer.layout.enable();
     if (sort || itemsToBeAdded.length > 0) {
       bufferBottom.top = this.submorphBounds().height;
-      scrollContainer.layout.apply(); 
+      scrollContainer.layout.apply();
     }
   }
 }
@@ -770,7 +769,7 @@ export class WorldPreview extends Morph {
   async showVersions () {
     const duration = 200; const easing = easings.inOutExpo;
     const { previewContainer } = this.ui;
-    const versionContainer = part(VersionContainer, { name: 'version container', position: pt(0, 0) });
+    const versionContainer = part(VersionContainer, { name: 'version container', position: pt(0, 0) }); // eslint-disable-line no-use-before-define
     this.addMorph(versionContainer);
     versionContainer.reactsToPointer = versionContainer.visible = true;
     versionContainer.initializeFromStartCommit(this._commit);
@@ -1133,7 +1132,7 @@ const WorldBrowser = component({
     extent: pt(871.9, 63.9),
     fill: new LinearGradient({
       stops: [{ offset: 0, color: Color.rgb(112, 123, 124) }, { offset: 1, color: Color.rgba(112, 123, 124, 0) }],
-      vector: rect(0, 0, 0, 1) 
+      vector: rect(0, 0, 0, 1)
     }),
     submorphs: [part(GreenButton, {
       name: 'new project button',

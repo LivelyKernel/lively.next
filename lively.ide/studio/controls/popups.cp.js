@@ -1,5 +1,4 @@
-import { component, add, ViewModel, part } from 'lively.morphic/components/core.js';
-import { TilingLayout, Icon, Morph, ShadowObject, Label } from 'lively.morphic';
+import { TilingLayout, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
 import { PropertyLabel, PropLabel, AddButton, NumberInput, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
@@ -200,7 +199,7 @@ export class PaddingPopupModel extends ViewModel {
         isComponent: true,
         get () {
           return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        } 
+        }
       },
       propertyLabelComponentActive: {
         isComponent: true,
@@ -245,8 +244,8 @@ export class PaddingPopupModel extends ViewModel {
     this.ui.paddingLeft.number = left;
     this.ui.paddingRight.number = right;
     this.ui.paddingTop.number = top;
-    
-    this.ui.paddingAll.number = left;    
+
+    this.ui.paddingAll.number = left;
   }
 
   viewDidLoad () {
@@ -285,13 +284,13 @@ export class PaddingPopupModel extends ViewModel {
 
   confirm () {
     const {
-      paddingAll, multiPaddingControl, 
-      paddingTop, paddingRight, paddingBottom, paddingLeft 
+      paddingAll, multiPaddingControl,
+      paddingTop, paddingRight, paddingBottom, paddingLeft
     } = this.ui;
     if (paddingAll.visible) {
       signal(this, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
     }
-    
+
     if (multiPaddingControl.visible) {
       signal(this, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
     }
@@ -504,7 +503,7 @@ const PositionPopupLight = component(PopupWindow, {
         spacing: 20
       }),
       submorphs: [
-        part(NumberInput, { 
+        part(NumberInput, {
           name: 'position x input',
           master: NumberWidgetLight,
           submorphs: [{
@@ -567,7 +566,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           submorphs: [{
             name: 'interactive label',
             fontColor: Color.rgba(101, 135, 139, .5)
-          }] 
+          }]
         },
         {
           name: 'y offset',
@@ -575,7 +574,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           submorphs: [{
             name: 'interactive label',
             fontColor: Color.rgba(101, 135, 139, .5)
-          }] 
+          }]
         },
         {
           name: 'spread input',
@@ -583,7 +582,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           submorphs: [{
             name: 'interactive label',
             fontColor: Color.rgba(101, 135, 139, .5)
-          }] 
+          }]
         }
       ]
     },

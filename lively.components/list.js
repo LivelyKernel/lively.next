@@ -1,10 +1,8 @@
-import { Morph, Text, Label, Icon, morph, touchInputDevice } from 'lively.morphic';
+import { Morph, Text, Label, Icon, morph, touchInputDevice, part } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { arr, Path, string } from 'lively.lang';
 import { signal, noUpdate, once, connect } from 'lively.bindings';
 import { Button, ButtonModel } from './buttons.js';
-
-import { part } from 'lively.morphic/components/core.js';
 
 export function asItem (obj) {
   // make sure that object is of the form

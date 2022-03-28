@@ -1,6 +1,5 @@
-import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Icon, Label, HorizontalLayout } from 'lively.morphic';
+import { ShadowObject, Icon, Label, HorizontalLayout, component, part } from 'lively.morphic';
 
 const WindowButtonClose = component({
   name: 'window button close',

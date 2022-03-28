@@ -1,5 +1,4 @@
-import { component, part } from 'lively.morphic/components/core.js';
-import { GridLayout, morph, Text, Icon, Label } from 'lively.morphic';
+import { GridLayout, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';

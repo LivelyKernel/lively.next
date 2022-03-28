@@ -1,17 +1,17 @@
-import { component, without, add, ensureFont, ViewModel, part } from 'lively.morphic/components/core.js';
+import { TilingLayout, easings, touchInputDevice, component, without, add, ensureFont, ViewModel, part } from 'lively.morphic';
+import { Color, Rectangle } from 'lively.graphics';
+import { pt, rect } from 'lively.graphics/geometry-2d.js';
+import { ColorInput } from 'lively.ide/styling/color-picker.cp.js';
+import { connect } from 'lively.bindings';
+
 import { RichTextControl } from './controls/text.cp.js';
-import { TilingLayout, easings, touchInputDevice } from 'lively.morphic';
 import { ShapeControl } from './controls/shape.cp.js';
 import { LayoutControl } from './controls/layout.cp.js';
 import { BorderControl } from './controls/border.cp.js';
 import { FillControl } from './controls/fill.cp.js';
 import { AlignmentControl } from './controls/constraints.cp.js';
-import { Color, Rectangle } from 'lively.graphics';
-import { pt, rect } from 'lively.graphics/geometry-2d.js';
 import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
-import { ColorInput } from 'lively.ide/styling/color-picker.cp.js';
-import { connect } from 'lively.bindings';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
 
 ensureFont({

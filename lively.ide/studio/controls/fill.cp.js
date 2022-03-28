@@ -1,4 +1,4 @@
-import { ViewModel, part, add, without, component } from 'lively.morphic/components/core.js';
+import { ViewModel, part, add, without, component } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { TilingLayout, Image } from 'lively.morphic';

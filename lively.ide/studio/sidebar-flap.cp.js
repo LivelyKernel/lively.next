@@ -1,10 +1,8 @@
-import { component, without, add, ensureFont, ViewModel, part } from 'lively.morphic/components/core.js';
 import { Color, pt } from 'lively.graphics';
-import { Label, easings, TilingLayout } from 'lively.morphic';
+import { Label, easings, TilingLayout, component, ViewModel } from 'lively.morphic';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { connect, disconnect } from 'lively.bindings';
 import { defaultPropertiesPanelWidth } from './properties-panel.cp.js';
-import { promise } from 'lively.lang';
 
 export class SidebarFlap extends ViewModel {
   static get properties () {
@@ -40,32 +38,32 @@ export class SidebarFlap extends ViewModel {
     const targetSidebar = $world.get(this.target);
     if (sidebarIsFadingOut) {
       this.view.animate({
-        left: (this.target == 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
+        left: (this.target === 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
         duration: 300
       });
 
-      if (this.target == 'scene graph') {
+      if (this.target === 'scene graph') {
         disconnect(targetSidebar, 'extent', this.view, 'left');
       }
     } else {
       // rms 10.2.22 we have to wait for the property panel to be mounted
       // because it will kill our animation du to the expensive VDOM update in progress.
-      if (this.target != 'scene graph' || !sceneGraphPresent) await targetSidebar.whenRendered();
-      const left = (this.target == 'scene graph') ? targetSidebar.width : $world.visibleBounds().width - targetSidebar.width - this.view.width;
+      if (this.target !== 'scene graph' || !sceneGraphPresent) await targetSidebar.whenRendered();
+      const left = (this.target === 'scene graph') ? targetSidebar.width : $world.visibleBounds().width - targetSidebar.width - this.view.width;
       this.view.animate({
         left,
         duration: 300,
         easing: easings.outCirc
       });
 
-      if (this.target == 'scene graph') {
+      if (this.target === 'scene graph') {
         connect(targetSidebar, 'extent', this.view, 'left', { converter: (extent) => extent.x });
       }
     }
   }
 
   onWorldResize () {
-    if (this.target == 'scene graph') return;
+    if (this.target === 'scene graph') return;
     const propertiesPanelExists = $world.get(this.target);
     if (propertiesPanelExists) this.view.position = pt($world.visibleBounds().width - defaultPropertiesPanelWidth - this.view.extent.x, this.view.position.y);
     else this.view.position = pt($world.visibleBounds().width - this.view.width, this.view.position.y);
@@ -78,7 +76,7 @@ export class SidebarFlap extends ViewModel {
     view.opacity = 0;
     view.hasFixedPosition = true;
     view.top = 100;
-    if (this.target == 'scene graph') {
+    if (this.target === 'scene graph') {
       this.ui.label.textString = 'Scene Graph';
       view.borderRadius = { topLeft: 0, topRight: 5, bottomLeft: 0, bottomRight: 5 };
       await view.whenRendered();
@@ -90,7 +88,7 @@ export class SidebarFlap extends ViewModel {
         else view.position = pt(0, view.top);
       });
     }
-    if (this.target == 'properties panel') {
+    if (this.target === 'properties panel') {
       view.left = world.visibleBounds().width;
       this.ui.label.textString = 'Properties Panel';
       view.borderRadius = { topLeft: 5, topRight: 0, bottomLeft: 5, bottomRight: 0 };

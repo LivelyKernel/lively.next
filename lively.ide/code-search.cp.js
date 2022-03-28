@@ -1,11 +1,10 @@
-import { component, add, part } from 'lively.morphic/components/core.js';
-import { ProportionalLayout, TilingLayout } from 'lively.morphic';
-import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
-import { CodeSearcher } from './code-search.js';
+import { ProportionalLayout, TilingLayout, component, add, part } from 'lively.morphic';
 import { pt, Color, rect } from 'lively.graphics';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
+import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { connect } from 'lively.bindings';
 import { SystemList } from './styling/shared.cp.js';
+import { CodeSearcher } from './code-search.js';
 
 // CodeSearch.openInWorld()
 const CodeSearch = component({

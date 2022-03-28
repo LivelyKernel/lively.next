@@ -1,8 +1,7 @@
-import { component, part, ViewModel } from 'lively.morphic/components/core.js';
 import { pt, LinearGradient, rect, Color } from 'lively.graphics';
 import { connect, disconnect, signal } from 'lively.bindings';
 import { arr } from 'lively.lang';
-import { Label, TilingLayout, Icon } from 'lively.morphic';
+import { Label, TilingLayout, Icon, component, part, ViewModel } from 'lively.morphic';
 
 class TabCloseButton extends Label {
   get tab () {
@@ -84,7 +83,7 @@ const SelectedTab = component(DefaultTab, {
   borderColor: Color.rgb(33, 47, 60),
   submorphs: [{
     name: 'horizontal container',
-    submorphs: 
+    submorphs:
     [{
       name: 'tab caption',
       fontColor: Color.rgba(0, 0, 0, 1)
@@ -146,7 +145,7 @@ class TabModel extends ViewModel {
         defaultValue: undefined
       },
       hasMorphicContent: {
-        defaultValue: true 
+        defaultValue: true
       },
       selected: {
         defaultValue: false,
@@ -163,7 +162,7 @@ class TabModel extends ViewModel {
             {
               this.ui.tabClose.visible = closeable;
               this.ui.tabClose.isLayoutable = closeable;
-              this.ui.tabCaption.padding = closeable ? rect(6, 3, -6, -2) : rect(6, 3, 0, -2); } 
+              this.ui.tabCaption.padding = closeable ? rect(6, 3, -6, -2) : rect(6, 3, 0, -2); }
           }
         }
       },
@@ -181,20 +180,20 @@ class TabModel extends ViewModel {
       selected: this.selected,
       closeable: this.closeable,
       renamable: this.renameable
-    }; 
+    };
   }
-  
+
   menuItems () {
-    if (!this.renameable) return; 
+    if (!this.renameable) return;
     return [
       [
         'Rename Tab', async () => {
           const newName = await $world.prompt('Tab name:', { input: this.caption });
           if (newName) {
             this.caption = newName;
-          }   
+          }
         }
-      ]  
+      ]
     ];
   }
 
@@ -203,7 +202,7 @@ class TabModel extends ViewModel {
     if (isSelected) {
       this.view.master.auto = this.selectedTabMaster;
     } else {
-      this.view.master.auto = this.defaultTabMaster; 
+      this.view.master.auto = this.defaultTabMaster;
     }
     this.view.master.hover = isSelected ? false : this.hoveredTabMaster;
     this.view.master.click = this.clickedTabMaster;
@@ -217,7 +216,7 @@ class TabModel extends ViewModel {
   close () {
     if (!this.closeable) {
       $world.setStatusMessage('This tab cannot be closed.');
-      return; 
+      return;
     }
     // hook for connection to do cleanup
     signal(this, 'onClose');
@@ -236,7 +235,7 @@ class TabModel extends ViewModel {
     if (arr.first(evt.targetMorphs) === this.ui.tabClose) return;
     if (!this.selected) {
       this.selected = true;
-    } 
+    }
   }
 
   viewDidLoad () {
@@ -279,14 +278,14 @@ class TabContentContainerModel extends ViewModel {
           ];
         }
       }
-    };  
+    };
   }
 
   onDrop (evt) {
     const content = this.view.submorphs[0];
     if (content) { this.view.owner.addContentToSelectedTab(content); }
   }
-  
+
   resize (size) {
     const content = this.view.submorphs[0];
     if (!content) return;
@@ -498,7 +497,7 @@ class TabsModel extends ViewModel {
       }
     };
   }
-  
+
   /**
    * Takes an array of tabspecs and recreates the therein specified tabs.
    * I.e. this method will open new tabs, set their contents, captions,...
@@ -508,8 +507,8 @@ class TabsModel extends ViewModel {
   loadFromSpec (specs) {
     for (let tab of this.tabs) {
       tab.closeSilently();
-    }  
-    
+    }
+
     for (let tabSpec of specs) {
       this.addTab(tabSpec.caption,
         tabSpec.content,
@@ -530,7 +529,7 @@ class TabsModel extends ViewModel {
   ) {
     const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
     const newTab = part(this.defaultTabMaster, {
-      viewModel: { 
+      viewModel: {
         caption,
         content,
         hasMorphicContent,
@@ -720,7 +719,7 @@ const Tabs = component({
     wrapSubmorphs: false,
     resizePolicies: [
       ['tab container', { height: 'fixed', width: 'fill' }]
-    ] 
+    ]
   }),
   submorphs: [
     part(TabContainer),

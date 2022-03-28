@@ -1,5 +1,4 @@
-import { component } from 'lively.morphic/components/core.js';
-import { TilingLayout, ShadowObject, Label } from 'lively.morphic';
+import { TilingLayout, ShadowObject, Label, component } from 'lively.morphic';
 import { Color, LinearGradient, pt } from 'lively.graphics';
 import { ButtonModel } from './buttons.js';
 import { rect } from 'lively.graphics/geometry-2d.js';

@@ -1,11 +1,11 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
-import { PropertySection, PropertySectionInactive, PropertySectionModel } from './section.cp.js';
-import { TilingLayout } from 'lively.morphic';
+import { TilingLayout, component, ViewModel, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
-import { PropertyLabel, RemoveButton, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { obj, arr } from 'lively.lang';
 import { once, connect } from 'lively.bindings';
+
 import { ShadowPopup, OpacityPopup, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
+import { PropertySection, PropertySectionInactive, PropertySectionModel } from './section.cp.js';
+import { PropertyLabel, RemoveButton, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 
 /**
   Controls the morph's "body" which comprises all of the dynamic effect properties.

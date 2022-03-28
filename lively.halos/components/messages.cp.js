@@ -1,5 +1,4 @@
-import { VerticalLayout, morph, TilingLayout, Label, Icon, Text, ShadowObject } from 'lively.morphic';
-import { component, without, add, part } from 'lively.morphic/components/core.js';
+import { VerticalLayout, TilingLayout, Label, Icon, Text, ShadowObject, component, part } from 'lively.morphic';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics';
 import { StatusMessage } from './messages.js';
@@ -199,7 +198,7 @@ const StatusMessageWarning = component(StatusMessageDefault, {
       { offset: 0, color: Color.rgb(249, 213, 68) },
       { offset: 1, color: Color.rgb(219, 162, 18) }
     ],
-    vector: rect(0.5, 1, 0, 1) 
+    vector: rect(0.5, 1, 0, 1)
   })
 });
 

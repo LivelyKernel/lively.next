@@ -1,6 +1,5 @@
-import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, morph, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout } from 'lively.morphic';
+import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -124,7 +123,7 @@ const FileStatusWarning = component(FileStatusDefault, {
       { offset: 0, color: Color.rgb(249, 213, 68) },
       { offset: 1, color: Color.rgb(219, 162, 18) }
     ],
-    vector: rect(0.5, 1, 0, 1) 
+    vector: rect(0.5, 1, 0, 1)
   })
 });
 
@@ -577,19 +576,19 @@ const SystemBrowser = component({
         ['browse modules', {
           x: 'fixed',
           y: 'fixed'
-        }], 
+        }],
         ['go forward', {
           x: 'fixed',
           y: 'fixed'
-        }], 
+        }],
         ['browse history', {
           x: 'fixed',
           y: 'fixed'
-        }], 
+        }],
         ['go back', {
           x: 'fixed',
           y: 'fixed'
-        }], 
+        }],
         ['eval backend chooser wrapper', {
           x: 'move',
           y: 'fixed'

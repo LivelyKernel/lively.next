@@ -1,6 +1,5 @@
-import { component } from 'lively.morphic/components/core.js';
 import { Color, pt } from 'lively.graphics';
-import { Polygon, Label, Icon, VerticalLayout, ShadowObject } from 'lively.morphic';
+import { Polygon, Label, Icon, VerticalLayout, ShadowObject, component } from 'lively.morphic';
 import { Button } from 'lively.components';
 
 // PopupLight.openInWorld()

@@ -1,8 +1,7 @@
-import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { InspectionTree, isMultiValue, RemoteInspectionTree, printValue } from './context.js';
 import { arr, num, promise, obj, Path } from 'lively.lang';
 import { pt, rect, Color } from 'lively.graphics';
-import { config, HorizontalLayout, Label, VerticalLayout, Morph, morph, Icon } from 'lively.morphic';
+import { config, HorizontalLayout, Label, VerticalLayout, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
 import { connect, disconnect, once } from 'lively.bindings';
 import { LoadingIndicator } from 'lively.components';
 import DarkTheme from '../../themes/dark.js';
@@ -14,7 +13,6 @@ import { onNumberDragStart, ensureDefaultImports, generateReferenceExpression, o
 import { InstructionWidget } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
 import { ShadowPopup, PositionPopupLight, PaddingPopup } from '../../studio/controls/popups.cp.js';
-import { module } from 'lively.modules/index.js';
 
 ensureDefaultImports();
 

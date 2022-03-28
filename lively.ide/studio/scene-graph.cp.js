@@ -1,14 +1,13 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
-import { Text, easings, touchInputDevice, Icon, morph, TilingLayout } from 'lively.morphic';
-import { pt, Rectangle, Color } from 'lively.graphics';
+import { component, ViewModel, part, easings, touchInputDevice, Icon, morph, TilingLayout } from 'lively.morphic';
+import { pt, Color } from 'lively.graphics';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { PropLabel } from 'lively.ide/studio/shared.cp.js';
-import { SceneGraphTree, MorphContainer, InteractiveTreeData } from './interactive-tree.js';
+import { SceneGraphTree, InteractiveTreeData } from './interactive-tree.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
 import { getClassName } from 'lively.serializer2';
 import { arr, fun } from 'lively.lang';
-import { noUpdate, connect } from 'lively.bindings';
+import { connect } from 'lively.bindings';
 
 // part(MorphPanel).openInWorld();
 export class MorphPanelModel extends ViewModel {
@@ -16,7 +15,7 @@ export class MorphPanelModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset']; 
+          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset'];
         }
       },
       bindings: {
@@ -65,7 +64,7 @@ export class MorphPanelModel extends ViewModel {
   }
 
   selectNode (target) {
-    if (Array.isArray(target) && target.length == 1) target = target[0];
+    if (Array.isArray(target) && target.length === 1) target = target[0];
     // fixme: add support for multi selections of 2 or more morphs
     if (target.isMorph) { this.ui.sceneGraph.selectMorphInTarget(target); }
   }
@@ -153,7 +152,7 @@ export class MorphPanelModel extends ViewModel {
 
 export class NewSceneGraphTree extends SceneGraphTree {
   renderContainerFor (submorph = morph({ name: 'root' }), embedded = true) {
-    const container = part(MorphNode, {
+    const container = part(MorphNode, { // eslint-disable-line no-use-before-define
       width: this.width,
       // opacity: 0,
       viewModel: {
@@ -244,8 +243,8 @@ export class MorphNodeModel extends ViewModel {
         derived: true,
         get () {
           if (this.target) {
-            if (this.ui.nameLabel.textString.slice(2, -1) != this.target.name) return true;
-            if (this.connectionCount != (this.target.attributeConnections || []).length) return true;
+            if (this.ui.nameLabel.textString.slice(2, -1) !== this.target.name) return true;
+            if (this.connectionCount !== (this.target.attributeConnections || []).length) return true;
           }
           return false;
         }
@@ -320,9 +319,9 @@ export class MorphNodeModel extends ViewModel {
     const { morphIcon, layoutIndicator, nameLabel, visibilityIcon } = this.ui;
     morphIcon.value = this.getIcon(target);
     layoutIndicator.visible = false;
-    if (target.layout && target.layout.name() == 'TilingLayout') {
+    if (target.layout && target.layout.name() === 'TilingLayout') {
       layoutIndicator.visible = true;
-      layoutIndicator.rotation = target.layout.axis == 'column' ? Math.PI / 2 : 0;
+      layoutIndicator.rotation = target.layout.axis === 'column' ? Math.PI / 2 : 0;
     }
     nameLabel.textString = target.name;
     visibilityIcon.value = [

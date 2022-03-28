@@ -1,8 +1,7 @@
-import { component, add, part } from 'lively.morphic/components/core.js';
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, HorizontalLayout } from 'lively.morphic';
+import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, HorizontalLayout, component, add, part } from 'lively.morphic';
 import {
-  ColorEncoderModel, ColorInputModel, ColorPickerModel, 
+  ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
 } from './color-picker.js';
 import { NumberWidget } from '../value-widgets.js';

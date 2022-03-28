@@ -1,5 +1,4 @@
-import { ViewModel } from 'lively.morphic/components/core.js';
-import { Morph, morph, touchInputDevice } from 'lively.morphic';
+import { Morph, morph, touchInputDevice, ViewModel } from 'lively.morphic';
 import { Rectangle, LinearGradient, Color, pt } from 'lively.graphics';
 import { signal, connect } from 'lively.bindings';
 import { obj, Closure } from 'lively.lang';

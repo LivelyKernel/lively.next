@@ -1,6 +1,5 @@
-import { component, ViewModel, part, add, without } from 'lively.morphic/components/core.js';
 import { PropertySection } from './section.cp.js';
-import { TilingLayout, ProportionalLayout, Label } from 'lively.morphic';
+import { TilingLayout, ProportionalLayout, Label, component, ViewModel, part, add, without } from 'lively.morphic';
 import { Rectangle, rect, pt, Color } from 'lively.graphics';
 import { EnumSelector, DarkThemeList } from '../shared.cp.js';
 import { signal } from 'lively.bindings';

@@ -1,7 +1,6 @@
-import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Polygon, HTMLMorph } from 'lively.morphic';
-import { GradientHaloModel, ColorStopModel, GradientControlModel } from './gradient-editor.js';
+import { ShadowObject, component, part } from 'lively.morphic';
+import { GradientHaloModel, GradientControlModel } from './gradient-editor.js';
 import { CheckerPattern } from './shared.cp.js';
 
 // GradientHalo.openInWorld()

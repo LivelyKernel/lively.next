@@ -1,4 +1,4 @@
-import { component, ensureFont, part } from 'lively.morphic/components/core.js';
+import { component, ensureFont, part } from 'lively.morphic';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { EnumSelector, NumberInput, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';

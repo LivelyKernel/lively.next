@@ -1,6 +1,5 @@
-import { ViewModel, part, add, without, component } from 'lively.morphic/components/core.js';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
-import { TilingLayout, config, Icon } from 'lively.morphic';
+import { TilingLayout, config, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
 import { obj, arr } from 'lively.lang';
 import {
   EnumSelector, BoundsContainerHovered, BoundsContainerInactive, PropertyLabelHovered,
@@ -99,12 +98,12 @@ export class RichTextControlModel extends ViewModel {
         letterSpacingInput.number = text.letterSpacing;
         lineWrappingSelector.selection = text.lineWrapping;
         fontColorInput.setColor(text.fontColor);
-        leftAlign.master = text.textAlign == 'left' ? hoveredButtonComponent : activeButtonComponent;
-        centerAlign.master = text.textAlign == 'center' ? hoveredButtonComponent : activeButtonComponent;
-        rightAlign.master = text.textAlign == 'right' ? hoveredButtonComponent : activeButtonComponent;
-        blockAlign.master = text.textAlign == 'block' ? hoveredButtonComponent : activeButtonComponent;
-        italicStyle.master = text.fontStyle == 'italic' ? hoveredButtonComponent : activeButtonComponent;
-        underlineStyle.master = text.textDecoration == 'underline' ? hoveredButtonComponent : activeButtonComponent;
+        leftAlign.master = text.textAlign === 'left' ? hoveredButtonComponent : activeButtonComponent;
+        centerAlign.master = text.textAlign === 'center' ? hoveredButtonComponent : activeButtonComponent;
+        rightAlign.master = text.textAlign === 'right' ? hoveredButtonComponent : activeButtonComponent;
+        blockAlign.master = text.textAlign === 'block' ? hoveredButtonComponent : activeButtonComponent;
+        italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
+        underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
         if (text.isMorph) {
           fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
           autoHeight.master = !text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
@@ -215,13 +214,13 @@ export class RichTextControlModel extends ViewModel {
 
   toggleItalic () {
     this.changeAttributeInSelectionOrMorph('fontStyle', style =>
-      style == 'italic' ? 'normal' : 'italic');
+      style === 'italic' ? 'normal' : 'italic');
     this.update();
   }
 
   toggleUnderline () {
     this.changeAttributeInSelectionOrMorph('textDecoration', decoration =>
-      decoration == 'underline' ? 'none' : 'underline');
+      decoration === 'underline' ? 'none' : 'underline');
     this.update();
   }
 

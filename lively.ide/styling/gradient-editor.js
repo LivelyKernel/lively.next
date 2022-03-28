@@ -6,10 +6,10 @@ import {
   Color,
   LinearGradient
 } from 'lively.graphics';
+import { ViewModel, part } from 'lively.morphic';
 import { num, arr } from 'lively.lang';
 import { connect, noUpdate, signal } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
-import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColorStop } from './color-stops.cp.js';
 import { ExpressionSerializer } from 'lively.serializer2';
 
@@ -59,13 +59,13 @@ export class GradientControlModel extends ViewModel {
   }
 
   onKeyDown (evt) {
-    if (evt.keyCombo == 'Delete') {
+    if (evt.keyCombo === 'Delete') {
       this.removeStop(this.selectedStopControl);
     }
   }
 
   onMouseDown (evt) {
-    if (evt.targetMorph.name == 'gradient preview') {
+    if (evt.targetMorph.name === 'gradient preview') {
       const offset = evt.positionIn(evt.targetMorph).x / evt.targetMorph.width;
       this.addStopAt(offset);
     }
@@ -138,14 +138,14 @@ export class GradientControlModel extends ViewModel {
   update (colorPicker) {
     if (this.isDisabled) return;
     const { selectedStopControl } = this;
-    if (!this.gradientValue || this.gradientValue.type != colorPicker.colorMode) {
-      if (colorPicker.colorMode == 'linearGradient') this.initLinearGradient(this.gradientValue || colorPicker.color);
-      if (colorPicker.colorMode == 'radialGradient') this.initRadialGradient(this.gradientValue || colorPicker.color, colorPicker._target);
+    if (!this.gradientValue || this.gradientValue.type !== colorPicker.colorMode) {
+      if (colorPicker.colorMode === 'linearGradient') this.initLinearGradient(this.gradientValue || colorPicker.color);
+      if (colorPicker.colorMode === 'radialGradient') this.initRadialGradient(this.gradientValue || colorPicker.color, colorPicker._target);
       this.gradientHalo.initFromPicker(colorPicker);
       this.gradientHalo.confirm();
     }
     if (selectedStopControl) {
-      const stopToChange = this.gradientValue.stops.find(aStop => selectedStopControl.stop == aStop);
+      const stopToChange = this.gradientValue.stops.find(aStop => selectedStopControl.stop === aStop);
       if (stopToChange) stopToChange.color = colorPicker.color;
       this.confirm();
     }
@@ -211,7 +211,7 @@ export class GradientControlModel extends ViewModel {
   deselectAllStopsExcept (aStopControl, haloOrEditor) {
     noUpdate(() => {
       haloOrEditor.stopControls.forEach(each => {
-        if (each.stop != aStopControl.stop) {
+        if (each.stop !== aStopControl.stop) {
           each.deselect();
         } else {
           each.select();
@@ -226,7 +226,7 @@ export class GradientControlModel extends ViewModel {
     let stopControls = haloOrEditor.stopControls;
     // fixme: do not rely on the ordering of stop controls
     for (const stop of stops) {
-      let control = stopControls.find(s => s.stop == stop);
+      let control = stopControls.find(s => s.stop === stop);
       if (control) {
         // adjust the color of the stops if needed
         control.forStop(stop);
@@ -288,8 +288,8 @@ export class GradientHaloModel extends ViewModel {
     this.onActivate(); // since that is not toggled by the system... bad
     const gradient = picker.gradientValue;
     this.picker = picker;
-    if (gradient.type == 'linearGradient') { this.initFromLinearGradient(this.targetMorph, gradient); }
-    if (gradient.type == 'radialGradient') { this.initFromRadialGradient(this.targetMorph, gradient); }
+    if (gradient.type === 'linearGradient') { this.initFromLinearGradient(this.targetMorph, gradient); }
+    if (gradient.type === 'radialGradient') { this.initFromRadialGradient(this.targetMorph, gradient); }
     this.alignWithTarget();
   }
 
@@ -305,7 +305,7 @@ export class GradientHaloModel extends ViewModel {
     const [p1, p2] = targetBounds.lineIntersection(tl.lineTo(br));
     // the direction point the the one closes to br
     let directionPoint = arr.min([p1, p2], p => p.dist(br));
-    this.originPoint = directionPoint == p1 ? p2 : p1;
+    this.originPoint = directionPoint === p1 ? p2 : p1;
     this.directionPoint = directionPoint;
     this.orthogonalDist = arr.min(targetBounds.edges(), edge => edge.distanceFromLine(p2)).length() / 2;
 
@@ -356,10 +356,10 @@ export class GradientHaloModel extends ViewModel {
 
   confirm () {
     const { gradientControl } = this.picker.models;
-    if (gradientControl.gradientValue.type == 'linearGradient') {
+    if (gradientControl.gradientValue.type === 'linearGradient') {
       gradientControl.gradientValue.vector = this.angle;
     }
-    if (gradientControl.gradientValue.type == 'radialGradient') {
+    if (gradientControl.gradientValue.type === 'radialGradient') {
       const v = gradientControl.gradientValue;
       const width = Math.abs(this.orthogonalDist) * 2;
       const height = this.originPoint.dist(this.directionPoint) * 2;
@@ -399,13 +399,6 @@ export class GradientHaloModel extends ViewModel {
   }
 
   refresh (gradientControl, target) {
-    const {
-      originHandle,
-      directionHandle,
-      orthogonalHandle,
-      colorStopWrapper
-    } = this.ui;
-
     const gradientValue = gradientControl.gradientValue;
     this.alignWithTarget();
     gradientControl.updateStopControls(gradientValue.stops, this);

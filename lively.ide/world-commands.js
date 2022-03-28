@@ -1,7 +1,7 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from 'lively.lang';
-import { inspect, morph, Text, config } from 'lively.morphic';
+import { inspect, morph, Text, config, part } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -12,7 +12,6 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
 import { once } from 'lively.bindings';
-import { part } from 'lively.morphic/components/core.js';
 import { CodeSearch } from './code-search.cp.js';
 import { ComponentBrowser } from './studio/component-browser.cp.js';
 import { WorldBrowser } from './studio/world-browser.cp.js';

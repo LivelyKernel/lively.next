@@ -1,5 +1,4 @@
-import { ViewModel } from 'lively.morphic/components/core.js';
-import { Morph, HorizontalLayout } from 'lively.morphic';
+import { Morph, ViewModel } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { arr, string } from 'lively.lang';

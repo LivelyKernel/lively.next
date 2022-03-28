@@ -1,11 +1,8 @@
-import { component, ensureFont, without, ViewModel, part, add } from 'lively.morphic/components/core.js';
-import { Label, ShadowObject, HTMLMorph, Morph, InputLine, TilingLayout } from 'lively.morphic';
-import { Color, Rectangle, pt, rect } from 'lively.graphics';
-import { DarkNumberWidget } from '../value-widgets.cp.js';
-import { ColorCell } from '../styling/color-stops.cp.js';
-import { NumberWidget } from '../value-widgets.js';
+import { Label, HTMLMorph, Morph, InputLine, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
+import { Color, Rectangle, pt, rect } from 'lively.graphics';
+import { DarkNumberWidget } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
 
 ensureFont({

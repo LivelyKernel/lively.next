@@ -1,5 +1,4 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
-import { Polygon } from 'lively.morphic';
+import { Polygon, component, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { CheckerPattern } from './shared.cp.js';
 import { signal } from 'lively.bindings';
@@ -45,8 +44,8 @@ export class ColorStopControl extends Polygon {
       this.ui.transparent.fill = this.stop.color;
       this.ui.opaque.fill = this.stop.color.withA(1);
     }
-    if (changedProp == 'isSelected') {
-      this.master = this.isSelected ? SelectedColorStop : ColorStop;
+    if (changedProp === 'isSelected') {
+      this.master = this.isSelected ? SelectedColorStop : ColorStop; // eslint-disable-line no-use-before-define
     }
   }
 

@@ -1,9 +1,9 @@
-import { Morph, Icon, HTMLMorph, Label, HorizontalLayout } from 'lively.morphic';
-import { evalOnServer } from 'lively.freezer';
+import { component, Morph, Icon, HTMLMorph, Label, HorizontalLayout } from 'lively.morphic';
+import { evalOnServer } from 'lively.freezer/src/util/helpers';
 import { resource } from 'lively.resources';
-import { runCommand } from '../shell/shell-interface.js';
-import { component } from 'lively.morphic/components/core.js';
 import { Color, pt } from 'lively.graphics';
+
+import { runCommand } from '../shell/shell-interface.js';
 
 class VersionChecker extends Morph {
   static get properties () {

@@ -6,7 +6,8 @@ import {
   Morph,
   easings,
   config,
-  Icon
+  Icon,
+  ViewModel, part
 } from 'lively.morphic';
 
 import { TreeData } from 'lively.components/tree.js';
@@ -38,7 +39,6 @@ import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 import LESSEditorPlugin from '../../css/less/editor-plugin.js';
 import { ComponentChangeTracker } from '../../component/editor.js';
-import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
@@ -637,7 +637,7 @@ export class BrowserModel extends ViewModel {
     return {
       __expr__: `let b = part(SystemBrowser); b.browserFromSpec(${stringifiedSpec}); b;`,
       bindings: {
-        'lively.morphic/components/core.js': ['part'],
+        'lively.morphic': ['part'],
         'lively.ide/js/browser/ui.cp.js': ['SystemBrowser'],
         'lively-system-interface': ['localInterface'],
         'lively.graphics': ['pt']

@@ -1,7 +1,6 @@
-import { component } from 'lively.morphic/components/core.js';
 import { pt, rect, Color } from 'lively.graphics';
 import { List, DropDownListModel } from './list.js';
-import { ShadowObject } from 'lively.morphic';
+import { ShadowObject, component } from 'lively.morphic';
 import { ButtonDefault, SystemButtonDark, SystemButton, ButtonDark } from './buttons.cp.js';
 
 const DefaultList = component({

@@ -1,10 +1,9 @@
-import { component, ViewModel, add, part } from 'lively.morphic/components/core.js';
 import { LightPrompt, RedButton, GreenButton } from 'lively.components/prompts.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { DarkButton } from 'lively.ide/js/browser/ui.cp.js';
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, ProportionalLayout, Label, Text } from 'lively.morphic';
+import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, ProportionalLayout, Label, Text, component, ViewModel, add, part } from 'lively.morphic';
 import { PackageRegistry } from 'lively.modules/index.js';
 import EditorPlugin from 'lively.ide/editor-plugin.js';
 import { resource } from 'lively.resources';

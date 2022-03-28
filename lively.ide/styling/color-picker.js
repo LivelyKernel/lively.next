@@ -1,5 +1,4 @@
-import { HTMLMorph } from 'lively.morphic';
-import { ViewModel, part } from 'lively.morphic/components/core.js';
+import { HTMLMorph, ViewModel, part } from 'lively.morphic';
 import {
   pt, RadialGradient, webSafeColors, flatDesignColors,
   materialDesignColors, Color, LinearGradient, rect

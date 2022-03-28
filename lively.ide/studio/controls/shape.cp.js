@@ -1,6 +1,5 @@
-import { ViewModel, add, without, part, component } from 'lively.morphic/components/core.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { TilingLayout, Label } from 'lively.morphic';
+import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';
 import { NumberInput, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
@@ -15,7 +14,7 @@ export class ShapeControlModel extends ViewModel {
         isComponent: true,
         get () {
           return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        } 
+        }
       },
       propertyLabelComponentActive: {
         isComponent: true,

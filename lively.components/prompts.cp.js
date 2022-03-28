@@ -1,11 +1,9 @@
-import { component, ViewModel, add, part } from 'lively.morphic/components/core.js';
-import { Button, List, FilterableList, RadioButtonGroup } from 'lively.components';
-import { ShadowObject, GridLayout, morph, TilingLayout, InputLine, PasswordInputLine, Ellipse, HorizontalLayout, Text, VerticalLayout, Icon, Label } from 'lively.morphic';
+import { List, FilterableList, RadioButtonGroup } from 'lively.components';
+import { ShadowObject, TilingLayout, InputLine, PasswordInputLine, Ellipse, HorizontalLayout, Text, VerticalLayout, Icon, Label, component, ViewModel, add, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { ButtonDefault } from './buttons.cp.js';
 import { InputLineDefault } from './inputs.cp.js';
-import { obj, arr, promise } from 'lively.lang';
-import { connect } from 'lively.bindings';
+import { arr, promise } from 'lively.lang';
 
 export class AbstractPromptModel extends ViewModel {
   static get properties () {
@@ -258,7 +256,7 @@ export class TextPromptModel extends ConfirmPromptModel {
   viewDidLoad () {
     const {
       ui: { promptTitle: title, input: inputLine },
-      view, label, historyId, input, useLastInput, selectInput
+      label, historyId, input, useLastInput, selectInput
     } = this;
     title.value = label;
 
@@ -379,7 +377,7 @@ export class EditPromptModel extends TextPromptModel {
   viewDidLoad () {
     const {
       textStyle, input, mode, evalEnvironment,
-      view, ui: { promptTitle, editor }
+      view, ui: { editor }
     } = this;
 
     view.hasFixedPosition = true;
@@ -565,7 +563,7 @@ export class EditListPromptModel extends ListPromptModel {
 
   async removeSelectedItemsFromList () {
     const list = this.ui.promptList;
-    const selectAfterwards = list.selectedItems.length != 1
+    const selectAfterwards = list.selectedItems.length !== 1
       ? -1
       : list.selectedIndex === 0 ? 0 : list.selectedIndex - 1;
     list.items = arr.withoutAll(list.items, list.selectedItems);

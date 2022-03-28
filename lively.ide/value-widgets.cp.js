@@ -1,6 +1,5 @@
-import { component, part } from 'lively.morphic/components/core.js';
 import { Color, rect, pt } from 'lively.graphics';
-import { TilingLayout, ShadowObject, Icon, Label } from 'lively.morphic';
+import { TilingLayout, ShadowObject, Icon, Label, component, part } from 'lively.morphic';
 import { ValueScrubber } from 'lively.components/widgets.js';
 import { NumberWidget } from './value-widgets.js';
 

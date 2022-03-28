@@ -1,5 +1,4 @@
-import { ViewModel, part, component } from 'lively.morphic/components/core.js';
-import { Label, TilingLayout } from 'lively.morphic';
+import { Label, TilingLayout, ViewModel, part, component } from 'lively.morphic';
 import { connect, signal } from 'lively.bindings';
 import { Color } from 'lively.graphics';
 import { pt } from 'lively.graphics/geometry-2d.js';
@@ -23,9 +22,9 @@ class ModeSelectorModel extends ViewModel {
       selectedItem: {}
     };
   }
-  
+
   static example () {
-    const example = part(ModeSelector, {
+    const example = part(ModeSelector, { // eslint-disable-line no-use-before-define
       viewModel: {
         items: ['demo1', 'demo2'],
         tooltips: ['toggle demo 1', 'toggle demo 2'],
@@ -43,7 +42,7 @@ class ModeSelectorModel extends ViewModel {
 
   createLabels () {
     this.view.submorphs = this.items.map((item, i) => {
-      const label = part(ModeSelectorLabel, {
+      const label = part(ModeSelectorLabel, { // eslint-disable-line no-use-before-define
         textString: item,
         name: item + 'Label',
         tooltip: this.tooltips && this.tooltips[i] ? this.tooltips[i] : ''

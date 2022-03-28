@@ -1,5 +1,4 @@
-import { component } from 'lively.morphic/components/core.js';
-import { Text, InputLine, Icon, ShadowObject, Label, HorizontalLayout } from 'lively.morphic';
+import { Text, InputLine, Icon, ShadowObject, Label, HorizontalLayout, component } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { LabeledCheckBoxModel, CheckBoxMorph, SearchFieldModel } from './inputs.js';
 

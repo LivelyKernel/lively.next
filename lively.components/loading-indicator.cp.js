@@ -1,7 +1,5 @@
-import { component, ViewModel, part } from 'lively.morphic/components/core.js';
-import { ShadowObject, easings, stringToEasing, Morph, Icon, Label, HTMLMorph, HorizontalLayout, VerticalLayout } from 'lively.morphic';
+import { ShadowObject, easings, stringToEasing, Morph, Icon, Label, HTMLMorph, HorizontalLayout, VerticalLayout, component, ViewModel, part } from 'lively.morphic';
 import { Color, Rectangle, rect, pt } from 'lively.graphics';
-import { Button } from 'lively.components';
 import { promise, num } from 'lively.lang';
 import { ButtonDefault } from './buttons.cp.js';
 

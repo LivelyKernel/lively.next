@@ -1,5 +1,4 @@
-import { Morph, VerticalLayout, TilingLayout } from 'lively.morphic';
-import { component, without, ViewModel, part, add } from 'lively.morphic/components/core.js';
+import { Morph, VerticalLayout, TilingLayout, component, without, ViewModel, part, add } from 'lively.morphic';
 import { pt, rect, Rectangle, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
 import { connect, disconnect, once } from 'lively.bindings';
@@ -7,7 +6,7 @@ import {
   AddButton, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
   LabeledCheckbox, NumberInput, PropertyLabelHovered
 } from '../shared.cp.js';
-import { PropertySection, PropertySectionModel, PropertySectionInactive } from './section.cp.js';
+import { PropertySection, PropertySectionModel } from './section.cp.js';
 
 export class LayoutPreview extends Morph {
   static get properties () {
@@ -16,11 +15,11 @@ export class LayoutPreview extends Morph {
       defaultPadding: { defaultValue: rect(3, 3, 0, 0) },
       activeComponent: {
         isComponent: true,
-        get () { return this.getProperty('activeComponent') || MiniLayoutPreviewActive; }
+        get () { return this.getProperty('activeComponent') || MiniLayoutPreviewActive; } // eslint-disable-line no-use-before-define
       },
       inactiveComponent: {
         isComponent: true,
-        get () { return this.getProperty('inactiveComponent') || MiniLayoutPreview; }
+        get () { return this.getProperty('inactiveComponent') || MiniLayoutPreview; } // eslint-disable-line no-use-before-define
       }
     };
   }
@@ -37,7 +36,7 @@ export class LayoutPreview extends Morph {
       wrapSubmorphs: false
     });
     ['mini bar 1', 'mini bar 2', 'mini bar 3'].forEach(bar => {
-      this.getSubmorphNamed(bar).rotation = autoLayout.axis == 'row' ? 0 : Math.PI / 2;
+      this.getSubmorphNamed(bar).rotation = autoLayout.axis === 'row' ? 0 : Math.PI / 2;
     });
   }
 
@@ -53,25 +52,25 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       activeSectionComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('activeSectionComponent') || LayoutControl;
+          return this.getProperty('activeSectionComponent') || LayoutControl; // eslint-disable-line no-use-before-define
         }
       },
       buttonActiveComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('buttonActiveComponent') || PropertyLabelHovered;
+          return this.getProperty('buttonActiveComponent') || PropertyLabelHovered; // eslint-disable-line no-use-before-define
         }
       },
       buttonInactiveComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('buttonInactiveComponent') || PropertyLabel;
+          return this.getProperty('buttonInactiveComponent') || PropertyLabel; // eslint-disable-line no-use-before-define
         }
       },
       controlFlapComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('controlFlapComponent') || AutoLayoutAlignmentFlap;
+          return this.getProperty('controlFlapComponent') || AutoLayoutAlignmentFlap; // eslint-disable-line no-use-before-define
         }
       },
       bindings: {
@@ -94,7 +93,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
   focusOn (aMorph) {
     this.targetMorph = null;
-    if (!aMorph.layout || aMorph.layout.name() != 'Tiling') {
+    if (!aMorph.layout || aMorph.layout.name() !== 'Tiling') {
       this.deactivate();
       this.targetMorph = aMorph;
     } else {
@@ -104,7 +103,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   onRefresh (prop) {
-    if (!prop || prop == 'targetMorph') this.update(prop);
+    if (!prop || prop === 'targetMorph') this.update(prop);
   }
 
   update (prop) {
@@ -118,8 +117,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       const layout = this.targetMorph.layout;
       if (!layout) return;
       miniLayoutPreview.previewLayout(layout);
-      vertical.master = layout.axis == 'column' ? this.buttonActiveComponent : this.buttonInactiveComponent;
-      horizontal.master = layout.axis == 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
+      vertical.master = layout.axis === 'column' ? this.buttonActiveComponent : this.buttonInactiveComponent;
+      horizontal.master = layout.axis === 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
       spacingInput.number = layout.spacing;
       if (this.hasMixedPadding()) {
         totalPaddingInput.getSubmorphNamed('value').textString = 'Mix';
@@ -167,7 +166,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     this.view.master = this.activeSectionComponent;
 
     const layout = this.targetMorph && this.targetMorph.layout;
-    if (!layout || layout.name() != 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
+    if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
     this.update();
   }
 
@@ -263,7 +262,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
       const {
         paddingTop, paddingRight, paddingBottom,
         paddingLeft, containerPlaceholder,
-        spacingSelector, spacingPreview
+        spacingSelector
       } = this.ui;
       const layout = this.targetMorph.layout;
       paddingTop.number = layout.padding.top();
@@ -291,7 +290,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
     spacingPreview.opacity = 0.3;
 
     let pos = evt.positionIn(spacingPreview);
-    if (layout.axis == 'row') pos = pt(pos.y, pos.x);
+    if (layout.axis === 'row') pos = pt(pos.y, pos.x);
 
     let align = 'left';
     if (pos.y > spacingPreview.height / 3) align = 'center';
@@ -314,7 +313,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
   }
 
   closeIfClickedOutside (evt) {
-    if (![evt.targetMorph, ...evt.targetMorph.ownerChain()].find(m => m == this.view || m.isList)) {
+    if (![evt.targetMorph, ...evt.targetMorph.ownerChain()].find(m => m === this.view || m.isList)) {
       this.close();
     }
   }

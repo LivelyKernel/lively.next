@@ -1,6 +1,5 @@
-import { ViewModel, part, add, component } from 'lively.morphic/components/core.js';
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
-import { TilingLayout, Label } from 'lively.morphic';
+import { TilingLayout, Label, ViewModel, part, add, component } from 'lively.morphic';
 import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInput, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';

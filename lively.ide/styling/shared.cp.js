@@ -1,7 +1,6 @@
-import { component, ensureFont, part } from 'lively.morphic/components/core.js';
-import { HTMLMorph, TilingLayout, Label, VerticalLayout, ShadowObject } from 'lively.morphic';
+import { HTMLMorph, TilingLayout, Label, VerticalLayout, ShadowObject, component, ensureFont, part } from 'lively.morphic';
 import { Color, LinearGradient, pt, rect } from 'lively.graphics';
-import { DefaultList, DropDownList } from 'lively.components/list.cp.js';
+import { DefaultList } from 'lively.components/list.cp.js';
 
 ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'

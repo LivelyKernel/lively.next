@@ -1,9 +1,8 @@
-import { ViewModel, part, component } from 'lively.morphic/components/core.js';
 import { Color, rect, pt } from 'lively.graphics';
-import { HorizontalLayout } from 'lively.morphic';
-import { DefaultList } from './list.cp.js';
+import { HorizontalLayout, ViewModel, part, component } from 'lively.morphic';
 import { signal, noUpdate, connect } from 'lively.bindings';
 import { arr } from 'lively.lang';
+import { DefaultList } from './list.cp.js';
 
 // maybe these are not needed at all
 // ColumnListDefault.openInWorld()
@@ -221,7 +220,7 @@ export class MullerColumnViewModel extends ViewModel {
     hoveredList.items.forEach((item) => {
       if (item.originalLabel) item.label = item.originalLabel.filter(elem => true); // get a new array object
     });
-    
+
     let input;
     if (evt.hasCharacterPressed) {
       input = evt.key;
@@ -235,10 +234,10 @@ export class MullerColumnViewModel extends ViewModel {
       this.searchString = '';
       return;
     }
-   
+
     if (!this.searchString) this.searchString = '';
     this.searchString = this.searchString + input.toLowerCase();
-    
+
     // list items can have an icon before the string we want to seach (e.g. the js icon)
     // this item does not need to be present for all items in a given list
     // therefore, we need to  check its existence for each item we handle,
@@ -246,21 +245,21 @@ export class MullerColumnViewModel extends ViewModel {
     // 
     // a part of the label always consists of two array items, since the text comes first, followed by its attributes object    
     let lookUpIndex;
-    
+
     hoveredList.items.forEach((item, index) => {
       item.normalizedIndex = index; // store original index in full list in order to select items in shorter list later
     });
     // only keep items in the list that match the search
     const newItems = hoveredList.items.filter(item => {
       lookUpIndex = item.label.length > 2 ? 2 : 0;
-      return item.string.toLowerCase().includes(this.searchString); 
+      return item.string.toLowerCase().includes(this.searchString);
     });
 
     // this highlights the matching part of an items string
     // a match is guaranteed to exist, since we filteres all elements above
     for (let item of newItems) {
       lookUpIndex = item.label.length > 2 ? 2 : 0;
-      
+
       const stringIndex = item.label[lookUpIndex].toLowerCase().indexOf(this.searchString); // find index at which match begins in the string
       const array = item.label;
       item.originalLabel = item.label.filter(elem => true); // get a new array object
@@ -307,7 +306,7 @@ export class MullerColumnViewModel extends ViewModel {
       const clickedList = evt.targetMorph.owner.owner; // is guaranteed to be list morph
       const clickedItem = clickedList.items.find(item => item.string === evt.targetMorph.textString);
       this.refresh().then(() => { // select based on stores index, scroll into view and prepare for next search
-        clickedList.selectedIndex = clickedItem.normalizedIndex; 
+        clickedList.selectedIndex = clickedItem.normalizedIndex;
         clickedList.items.forEach(item => item.normalizedIndex = null);
         this.searchString = null;
         clickedList.scrollSelectionIntoView();
