@@ -1,7 +1,7 @@
 import vdom from 'virtual-dom';
 import parser from 'vdom-parser';
-import { num, Path, obj, arr, properties, promise } from 'lively.lang';
-import { Color, RadialGradient, pt, Point, LinearGradient, rect } from 'lively.graphics';
+import { num, Path, obj, arr, promise } from 'lively.lang';
+import { Color, Point } from 'lively.graphics';
 import config from '../config.js';
 import { styleProps, addSvgAttributes, addPathAttributes } from './property-dom-mapping.js';
 import bowser from 'bowser';
@@ -239,7 +239,7 @@ export class ShadowObject {
       __expr__: `new ShadowObject({${
          arr.compact(
            Object.entries({ distance, rotation, color, inset, blur, spread, fast }).map(([k, v]) => {
-           return v == undefined ? null : `${k}:${v}`;
+           return v === undefined ? null : `${k}:${v}`;
          })).join(',')
       }})`,
       bindings: {
@@ -263,12 +263,12 @@ export class ShadowObject {
   toJson () {
     // only select the properties that are different from default
     const res = {};
-    if (this.rotation != 45) res.rotation = this.rotation;
-    if (this.distance != 2) res.distance = this.distance;
-    if (this.blur != 6) res.blur = this.blur;
+    if (this.rotation !== 45) res.rotation = this.rotation;
+    if (this.distance !== 2) res.distance = this.distance;
+    if (this.blur !== 6) res.blur = this.blur;
     if (!this.color.equals(Color.gray.darker())) res.color = this.color;
-    if (this.inset == true) res.inset = this.inset;
-    if (this.spread != 0) res.spread = this.spread;
+    if (this.inset === true) res.inset = this.inset;
+    if (this.spread !== 0) res.spread = this.spread;
     if (!this.fast) res.fast = this.fast;
     return res;
   }
@@ -278,7 +278,7 @@ export class ShadowObject {
   }
 
   toFilterCss () {
-    let { distance, rotation, blur, color, spread } = this;
+    let { distance, rotation, blur, color } = this;
     const { x, y } = Point.polar(distance, num.toRadians(rotation));
     blur = bowser.chrome ? blur / 3 : blur / 2;
     return `drop-shadow(${x.toFixed(2)}px ${y.toFixed(2)}px ${blur.toFixed(2)}px ${color.toString()})`;
@@ -298,7 +298,7 @@ export class ShadowObject {
 }
 
 export function defaultStyle (morph) {
-  const { opacity, reactsToPointer, nativeCursor, clipMode } = morph;
+  const { reactsToPointer, nativeCursor, clipMode } = morph;
   const layoutStyle = {};
   // this also performs measure of the actual morphs height, so do that before rendering the style props
   if (Path('owner.layout.renderViaCSS').get(morph)) {
@@ -445,7 +445,7 @@ export function defaultAttributes (morph, renderer) {
   };
   if (bowser.ios && morph.draggable && !morph.isWorld) {
     attrs.attributes['touch-action'] = 'none';
-  } else if (bowser.ios && morph.clipMode != 'visible' && !morph.isWorld) {
+  } else if (bowser.ios && morph.clipMode !== 'visible' && !morph.isWorld) {
     attrs.attributes['touch-action'] = 'auto';
   } else {
     attrs.attributes['touch-action'] = 'manipulation';
