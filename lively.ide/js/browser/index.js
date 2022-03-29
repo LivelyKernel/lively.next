@@ -2161,7 +2161,7 @@ export class BrowserModel extends ViewModel {
     }));
 
     const { selected: [choice] } = await this.world().filterableListPrompt(
-      'Jumpt to location', items, { preselect: currentIdx, requester: this.view });
+      'Jump to location', items, { preselect: currentIdx, requester: this.view });
     if (choice) {
       if (left.includes(choice)) {
         this.state.history.left = left.slice(0, left.indexOf(choice) + 1);
