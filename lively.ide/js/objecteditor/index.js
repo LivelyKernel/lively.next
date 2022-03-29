@@ -1150,6 +1150,11 @@ export class ObjectEditorModel extends ViewModel {
       await this.withContextDo(ctx => ctx.isSaving = false);
       this.updateSource(content, selectedModuleId);
     }
+
+    if (this.target instanceof ViewModel) {
+      this.target.reifyBindings();
+      this.target.reifyExposedProps();
+    }
   }
 
   /*
@@ -1557,6 +1562,7 @@ export class ObjectEditorModel extends ViewModel {
     if (statusMessage && !opts.silent) this.view.setStatusMessage(statusMessage);
   }
 }
+
 
 export class ImportControllerModel extends ViewModel {
   static get properties () {
