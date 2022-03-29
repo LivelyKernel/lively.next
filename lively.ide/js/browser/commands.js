@@ -1,5 +1,7 @@
 import { arr } from 'lively.lang';
 import { Icon } from 'lively.morphic';
+import { interactivelyFreezeModule } from 'lively.freezer';
+import { module } from 'lively.modules/index.js';
 
 function isMarkdown (m) {
   return m.type === 'md';
@@ -457,6 +459,14 @@ export default function browserCommands (browser) {
         browser.execCommand(
           'run setup code of tests (before and beforeEach)',
           { what: 'teardown' })
+    },
+
+    {
+      name: 'freeze selected module',
+      doc: 'Enters the freeze prompt which allows the user to configure and execute a build for the currently selected module. The resulting bundle will execute the specified main() method in the current module and pass the default world object as a parameter. This allows us to bundle apps in lively without snapshots.',
+      exec: async (browser) => {
+        interactivelyFreezeModule(module(browser.selectedModule.url), browser);
+      }
     }
   ];
 }

@@ -856,32 +856,39 @@ const SystemBrowser = component({
           spacing: 5,
           wrapSubmorphs: false
         }),
-        submorphs: [part(EmbeddedIcon, {
-          type: Label,
-          tooltip: 'Open file in editor',
-          name: 'open in editor'
-        }), part(EmbeddedIcon, {
-          type: Label,
-          tooltip: 'Open path in workspace',
-          name: 'copy to clipboard',
-          textAndAttributes: Icon.textAttribute('clipboard')
-        }), part(EmbeddedIcon, {
-          type: Label,
-          tooltip: 'Jump to code entity',
-          name: 'jump to entity',
-          textAndAttributes: Icon.textAttribute('search')
-        }), part(EmbeddedIcon, {
-          type: Label,
-          tooltip: 'Export markdown to HTML',
-          name: 'export to html',
-          textAndAttributes: Icon.textAttribute('file-export')
-        }), part(EmbeddedIcon, {
-          type: Label,
-          tooltip: 'Run tests in this module',
-          name: 'run tests in module',
-          visible: false,
-          textAndAttributes: Icon.textAttribute('tachometer-alt')
-        })]
+        submorphs: [
+          part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Freeze this module',
+            name: 'freeze button',
+            textAndAttributes: Icon.textAttribute('snowflake')
+          }),
+          part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Open file in editor',
+            name: 'open in editor'
+          }), part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Open path in workspace',
+            name: 'copy to clipboard',
+            textAndAttributes: Icon.textAttribute('clipboard')
+          }), part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Jump to code entity',
+            name: 'jump to entity',
+            textAndAttributes: Icon.textAttribute('search')
+          }), part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Export markdown to HTML',
+            name: 'export to html',
+            textAndAttributes: Icon.textAttribute('file-export')
+          }), part(EmbeddedIcon, {
+            type: Label,
+            tooltip: 'Run tests in this module',
+            name: 'run tests in module',
+            visible: false,
+            textAndAttributes: Icon.textAttribute('tachometer-alt')
+          })]
       }]
     }, {
       type: Text,
@@ -897,6 +904,7 @@ const SystemBrowser = component({
       padding: rect(5, 0, -5, 0),
       lineWrapping: true,
       opacity: 0,
+      reactsToPointer: false,
       readOnly: true
     }, {
       name: 'error controls',

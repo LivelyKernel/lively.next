@@ -599,6 +599,7 @@ export class BrowserModel extends ViewModel {
             { target: 'jump to entity', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'jump to codeentity' },
             { target: 'export to html', signal: 'onMouseDown', handler: 'renderMarkdown' },
             { target: 'copy to clipboard', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open browse snippet' },
+            { target: 'freeze button', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'freeze selected module' },
             { target: 'open in editor', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'open selected module in text editor' },
             { target: 'close button', signal: 'onMouseDown', handler: 'closeStatusMessage' },
             { target: 'open in workspace', signal: 'onMouseDown', handler: 'openStatusMessage' },
