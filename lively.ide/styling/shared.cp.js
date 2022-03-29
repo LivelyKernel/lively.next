@@ -105,9 +105,10 @@ const SystemList = component(DefaultList, {
   manualItemHeight: true,
   padding: rect(2, 2, 0, 0),
   position: pt(1811.5, 370.6),
+  itemBorderRadius: 2,
   selectionColor: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(66, 165, 245) }, { offset: 1, color: Color.rgb(41, 121, 255) }], vector: rect(0, 0, 0, 1) })
 });
-
+// SystemList.openInWorld()
 // part(SystemList, { items: [1,2,3]}).openInWorld()
 
 export { CheckerPattern, SystemList, PopupWindow, CloseButton, CloseButtonDefault, CloseButtonHovered };
