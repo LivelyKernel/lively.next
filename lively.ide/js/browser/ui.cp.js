@@ -758,7 +758,7 @@ const SystemBrowser = component({
     },
     borderWidth: 1,
     clipMode: 'auto',
-    extent: pt(605, 472.2),
+    extent: pt(605,474),
     fixedHeight: true,
     fixedWidth: true,
     fontFamily: '"IBM Plex Mono"',

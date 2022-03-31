@@ -1,5 +1,5 @@
 /* global System */
-import { Color, pt } from 'lively.graphics';
+import { Color, Rectangle, pt } from 'lively.graphics';
 import { arr, tree, num, date, Path, obj, fun, promise, string } from 'lively.lang';
 
 import {
@@ -761,12 +761,18 @@ export class BrowserModel extends ViewModel {
 
   indicateUnsavedChanges () {
     Object.assign(this.ui.sourceEditor,
-      { border: { width: 2, color: Color.red } });
+      {
+        padding: Rectangle.inset(2, 60 - 2, 2, 0),
+        border: { width: 2, color: Color.red }
+      });
   }
 
   indicateNoUnsavedChanges () {
     Object.assign(this.ui.sourceEditor,
-      { border: { width: 2, color: Color.transparent } });
+      {
+        padding: Rectangle.inset(4, 60, 4, 0),
+        border: { width: 0, color: Color.transparent }
+      });
   }
 
   /*
@@ -2162,7 +2168,7 @@ export class BrowserModel extends ViewModel {
     }));
 
     const { selected: [choice] } = await this.world().filterableListPrompt(
-      'Jump to location', items, { preselect: currentIdx, requester: this.view });
+      'Jumpt to location', items, { preselect: currentIdx, requester: this.view });
     if (choice) {
       if (left.includes(choice)) {
         this.state.history.left = left.slice(0, left.indexOf(choice) + 1);
