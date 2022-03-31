@@ -72,7 +72,7 @@ const rules = {
   'key-spacing': ['error', { beforeColon: false, afterColon: true }],
   'keyword-spacing': ['error', { before: true, after: true }],
   'lines-between-class-members': ['error', 'always', { exceptAfterSingleLine: true }],
-  'linebreak-style': ["error", "unix"],
+  'linebreak-style': ['error', 'unix'],
   'multiline-ternary': ['error', 'always-multiline'],
   'new-parens': 'error',
   'no-multi-spaces': 'error',
@@ -96,9 +96,10 @@ const rules = {
   'no-extra-semi': 'error',
   'prefer-const': 'off',
   // These are rules that cannot be automatically fixed, but for which we want to get a warning upon violation
-  'no-trailing-spaces': ['error', { "ignoreComments": true }],
+  'no-trailing-spaces': ['error', { ignoreComments: true }],
   'no-debugger': 'warn',
   'no-unreachable': 'warn',
+  'no-const-assign': 'warn',
   'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }],
   'no-use-before-define': ['error', { functions: true, classes: true, variables: true }]
 };
