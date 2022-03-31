@@ -334,7 +334,7 @@ export function defaultStyle (morph) {
   domStyle.position = 'absolute';
   domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
   domStyle.cursor = nativeCursor;
-
+  if (nativeCursor === 'auto') delete domStyle.cursor;
   Object.assign(domStyle, layoutStyle);
 
   return domStyle;
