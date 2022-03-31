@@ -1,10 +1,12 @@
 /* global global, babel */
-import * as capturing from './capturing.js';
-export { capturing };
-import { parseFunction, stringify, ReplaceVisitor } from 'lively.ast';
+import { parseFunction, parse, stringify, ReplaceVisitor } from 'lively.ast';
+import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 import transformJSX from 'babel-plugin-transform-jsx';
 import catchBinding from 'babel-catch-binding';
 import importMeta from 'babel-import-meta';
+
+import * as capturing from './capturing.js';
+export { capturing };
 
 // fixme: this is a sort of bad placement
 
@@ -87,4 +89,35 @@ export function es5Transpilation (source) {
   transpiled = transpiled.replace(/\}\)\.call\(undefined\);$/, '}).call(this)');
   if (transpiled.startsWith('(function') && transpiled.endsWith(');')) transpiled = transpiled.slice(1, -2);
   return transpiled;
+}
+
+export function ensureModuleMetaForComponentDefinition (translated, moduleName, recorderName) {
+  return QueryReplaceManyVisitor.run(
+    typeof translated == 'string' ? parse(translated) : translated, `
+         // ExpressionStatement [
+              /:expression AssignmentExpression [
+                  /:left MemberExpression [
+                    /:property Identifier [ @name ]
+                  ]
+               && /:right CallExpression [
+                     (/:callee MemberExpression [
+                           /:property Identifier [ @name == 'component' ]
+                        && /:object Identifier [ @name == '${recorderName}' ]
+                       ])
+                     ||
+                     (/:arguments "*" [
+                       CallExpression [
+                        /:callee MemberExpression [
+                           /:property Identifier [ @name == 'component' ]
+                        && /:object Identifier [ @name == '${recorderName}' ]
+                          ]
+                       ]
+                     ])
+                   ]
+                ]
+              ]`,
+    (node) => {
+      const exp = node.expression;
+      return [exp, ...parse(`${stringify(exp.left)}[Symbol.for('lively-module-meta')] = { module: "${moduleName}", export: "${exp.left.property.name}"};`).body];
+    });
 }

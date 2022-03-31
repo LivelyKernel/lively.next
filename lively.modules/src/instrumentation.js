@@ -1,17 +1,18 @@
 /* global System,process */
-import { parse, stringify, nodes, isValidIdentifier, ReplaceManyVisitor, query } from 'lively.ast';
+import { parse, stringify, nodes, isValidIdentifier } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
-import { arr, string, properties } from 'lively.lang';
-import module, { detectModuleFormat } from './module.js';
+import { string, properties } from 'lively.lang';
 import { resource } from 'lively.resources';
+import { classToFunctionTransform } from 'lively.classes';
+import { ensureModuleMetaForComponentDefinition } from 'lively.source-transform';
+
 import {
   install as installHook,
   remove as removeHook,
   isInstalled as isHookInstalled
 } from './hooks.js';
-import { classToFunctionTransform } from 'lively.classes';
-import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
+import module, { detectModuleFormat } from './module.js';
 
 const isNode = System.get('@system-env').node;
 
@@ -469,7 +470,7 @@ async function customTranslate (proceed, load) {
     }
 
     // insert the component meta stuff
-    if (load.name.endsWith('.cp.js')) translated = ensureModuleMetaForComponentDefinition(translated, load);
+    if (load.name.endsWith('.cp.js')) { translated = stringify(ensureModuleMetaForComponentDefinition(translated, load.name.replace(System.baseURL, '')), mod.recorderName); }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // cache experiment part 2
     if (isNode && useCache && isEsm) {
@@ -496,32 +497,6 @@ async function customTranslate (proceed, load) {
     debug && console.log('[lively.modules customTranslate] done %s after %sms', load.name, Date.now() - start);
     return translated;
   });
-}
-
-function ensureModuleMetaForComponentDefinition (translated, load) {
-  return stringify(QueryReplaceManyVisitor.run(
-    parse(translated), `
-         // ExpressionStatement [
-              /:expression AssignmentExpression [
-                  /:left MemberExpression [
-                    /:property Identifier [ @name ]
-                  ]
-               && /:right CallExpression [
-                     /:arguments "*" [
-                       CallExpression [
-                        /:callee MemberExpression [
-                           /:property Identifier [ @name == 'component' ]
-                        && /:object Identifier [ @name == '__lvVarRecorder' ]
-                          ]
-                       ]
-                     ]
-                   ]
-                ]
-              ]`,
-    (node) => {
-      const exp = node.expression;
-      return [exp, ...parse(`${stringify(exp.left)}[Symbol.for('lively-module-meta')] = { module: "${load.name.replace(System.baseURL, '')}", export: "${exp.left.property.name}"};`).body];
-    }));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
