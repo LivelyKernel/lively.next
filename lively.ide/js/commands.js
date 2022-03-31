@@ -1,13 +1,8 @@
 /* global System */
-import { arr, promise, string } from 'lively.lang';
+import { arr, promise } from 'lively.lang';
 import { show } from 'lively.halos';
 import { Range } from 'lively.morphic/text/range.js';
-import { query, BaseVisitor } from 'lively.ast';
-
-function getEvalEnv (morph) {
-  const plugin = morph.pluginFind(p => p.isJSEditorPlugin);
-  return plugin ? plugin.evalEnvironment : null;
-}
+import { query } from 'lively.ast';
 
 function setEvalEnv (morph, newEnv) {
   const plugin = morph.pluginFind(p => p.isJSEditorPlugin);
@@ -15,7 +10,7 @@ function setEvalEnv (morph, newEnv) {
   return plugin.evalEnvironment;
 }
 
-export var jsEditorCommands = [
+export const jsEditorCommands = [
 
   {
     name: 'undefine variable',
@@ -34,7 +29,7 @@ export var jsEditorCommands = [
       }
 
       // this.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv()
-      var env = ed.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv();
+      env = ed.pluginFind(p => p.isJSEditorPlugin).sanatizedJsEnv();
       const source = `lively.modules.module("${env.targetModule}").undefine("${varName}")`;
       let result; let err;
 
@@ -102,7 +97,7 @@ export var jsEditorCommands = [
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export var jsIdeCommands = [
+export const jsIdeCommands = [
 
   {
     name: '[javascript] list errors and warnings',
@@ -165,130 +160,6 @@ export var jsIdeCommands = [
       text.setStatusMessage(status);
       return true;
     }
-  },
-
-  {
-    //TODO: fixme
-    name: '[javascript] eslint report',
-    exec: async text => {
-      const { default: ESLinter } = await System.import('lively.ide/js/eslint/lively-interface.js');
-      try { return ESLinter.reportOnMorph(text); } catch (e) { text.showError(e); }
-    }
-  },
-
-  {
-    //TODO: fixme
-    name: '[javascript] eslint preview fixes',
-    exec: async text => {
-      const { default: ESLinter } = await System.import('lively.ide/js/eslint/lively-interface.js');
-      try { return ESLinter.previewFixesOnMorph(text); } catch (e) { text.showError(e); }
-    }
-  },
-
-  {
-    name: '[javascript] auto format code',
-    handlesCount: true,
-    exec: async (text, opts, count) => {
-      const margin = 7 * (text.width / 100);
-      const printWidth = count || Math.floor(text.width / text.defaultCharExtent().width);
-
-      opts = {
-        printWidth,
-        tabWidth: 2,
-        useTabs: false,
-        bracketSpacing: false,
-        ...opts
-      };
-
-      const module = lively.modules.module;
-      const prettierURL = System.normalizeSync('prettier/standalone.js');
-      const prettier = await module(prettierURL).load({ format: 'global', instrument: false });
-      const { findNodeByAstIndex } = await module('lively.ast/lib/acorn-extension.js').load();
-      const { parse, printAst, withMozillaAstDo } = await module('lively.ast').load();
-      const { nodesAt } = await module('lively.ast/lib/query.js').load();
-      const jsdiff = await System.import('jsdiff', System.decanonicalize('lively.morphic'));
-
-      const range = text.selection.isEmpty() ? text.documentRange : text.selection.range;
-      const rangeStart = text.positionToIndex(range.start);
-      const rangeEnd = text.positionToIndex(range.end);
-      const formatted = prettier.format(text.textString, {
-        ...opts,
-        rangeStart,
-        rangeEnd,
-        parser: (text, parsers, options) =>
-          parse(text, { allowReturnOutsideFunction: true })
-      });
-
-      text.undoManager.group();
-      const diff = jsdiff.diffChars(text.textString, formatted);
-      text.applyJsDiffPatch(diff);
-      text.selection.text = fixPrettified(text.selection.text);
-      text.undoManager.group();
-      return true;
-
-      function fixPrettified (source) {
-        return fixVarDeclIndentation(source);
-      }
-
-      function fixVarDeclIndentation (src, parsed) {
-        // Example:
-        // fixVarDeclIndentation("var foo = 23,\nbar;")
-        //   => "var foo = 23,\n    bar;"
-
-        if (!parsed) parsed = parse(src, { allowReturnOutsideFunction: true });
-
-        // visitor to find variable declarations
-        const ranges = string.lineRanges(src);
-        const lines = src.split('\n');
-        const actions = [];
-        const v = new BaseVisitor();
-        const superVisitVariableDeclaration = v.visitVariableDeclaration;
-
-        v.visitVariableDeclaration = (node, state, path) => {
-          if (node.declarations.length > 1) {
-            // whats the "indent" of the first var decl? offset from start of its line
-            // to ident
-
-            const firstRow = string.findLineWithIndexInLineRanges(ranges, node.start);
-            const firstIndent = node.declarations[0].start - ranges[firstRow][0];
-
-            // for the following decls, compare their indent and emit delete or insert
-            // action
-            for (let i = 1; i < node.declarations.length; i++) {
-              const decl = node.declarations[i];
-              const row = string.findLineWithIndexInLineRanges(ranges, decl.start);
-              if (firstRow === row) continue;
-              const declIndent = lines[row].match(/\s*/)[0].length;
-              const offset = firstIndent - declIndent;
-              if (offset === 0) continue;
-              // var decl bodies can be multi line, fix all of them
-              const endRowOfDecl = string.findLineWithIndexInLineRanges(ranges, decl.end);
-              const actionType = offset > 0 ? 'insert' : 'delete';
-              const arg = offset > 0 ? ' '.repeat(offset) : -offset;
-              actions.push(
-                ...arr.range(row, endRowOfDecl).map(row => [actionType, ranges[row][0], arg]));
-            }
-          }
-          return superVisitVariableDeclaration.call(v, node, state, path);
-        };
-
-        // visit!
-        v.accept(parsed, {}, []);
-
-        // patch src
-        for (let i = actions.length; i--;) {
-          const [action, index, arg] = actions[i];
-          if (action === 'insert') {
-            src = src.slice(0, index) + arg + src.slice(index);
-          } else if (action === 'delete') {
-            src = src.slice(0, index) + src.slice(index + arg);
-          }
-        }
-
-        return src;
-      }
-    }
-
   }
 
 ];
@@ -299,10 +170,9 @@ export var jsIdeCommands = [
 // note: additional generic ast commands are in text/code-navigation-commands.js
 
 // helper
-function pToI (ed, pos) { return ed.positionToIndex(pos); }
 function iToP (ed, pos) { return ed.indexToPosition(pos); }
 
-export var astEditorCommands = [
+export const astEditorCommands = [
 
   {
     name: 'selectDefinition',
@@ -359,7 +229,8 @@ export var astEditorCommands = [
       const sel = ed.selection;
       let ranges = found.refs.map(({ start, end }) => Range.fromPositions(iToP(ed, start), iToP(ed, end)))
         .concat(found.decl
-          ? Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end)) : [])
+          ? Range.fromPositions(iToP(ed, found.decl.start), iToP(ed, found.decl.end))
+          : [])
         // .filter(range => !sel.ranges.some(otherRange => range.equals(otherRange)))
         .sort(Range.compare);
 
