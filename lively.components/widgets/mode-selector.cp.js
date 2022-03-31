@@ -16,7 +16,6 @@ class ModeSelectorModel extends ViewModel {
   static get properties () {
     return {
       items: { },
-      tooltips: {},
       init: {},
       tooltips: {},
       selectedItem: {}

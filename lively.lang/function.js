@@ -1118,6 +1118,7 @@ function logCompletion (func, module) {
  */
 function logCalls (func, isUrgent) {
   const original = func;
+  let result;
   const advice = function logCallsAdvice (proceed) {
     const args = Array.prototype.slice.call(arguments);
     args.shift(), result = proceed.apply(func, args);
@@ -1131,7 +1132,7 @@ function logCalls (func, isUrgent) {
 
   advice.methodName = '$logCallsAdvice::' + qualifiedMethodName(func);
 
-  const result = wrap(func, advice);
+  result = wrap(func, advice);
   result.originalFunction = func;
   result.methodName = '$logCallsWrapper::' + qualifiedMethodName(func);
   return result;

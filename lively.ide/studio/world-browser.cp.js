@@ -762,7 +762,7 @@ export class WorldPreview extends Morph {
 
   async transitionToLivelyWorld (baseURL, commit, loadingIndicator) {
     const progress = part();
-    const { bootstrap } = await System.import('local://lively-object-modules/PartialFreezing/bootstrap.js'); // replace this import
+    const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js'); // replace this import
     await bootstrap({ commit, loadingIndicator, progress });
   }
 

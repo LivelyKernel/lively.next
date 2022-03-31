@@ -89,9 +89,7 @@ class FileInfo {
 }
 
 function fileInfoCommandString (filename, options = {}) {
-  let { rootDirectory, platform } = options;
-
-  rootDirectory = rootDirectory || '.';
+  let { rootDirectory = '.', platform } = options;
 
   let slash = platform === 'win32' ? '\\' : '/';
   if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
@@ -139,10 +137,11 @@ let findFilesProcesses = {};
 let defaultExcludes = ['.svn', '.git', 'node_modules', '.module_cache'];
 
 function findFilesCommandString (pattern, options = {}) {
-  const { rootDirectory, exclude, depth, platform } = options;
-
-  rootDirectory = rootDirectory || '.';
-  exclude = exclude || ('-iname ' + defaultExcludes.map(string.print).join(' -o -iname '));
+  let {
+    rootDirectory = '.',
+    exclude = '-iname ' + defaultExcludes.map(string.print).join(' -o -iname '),
+    depth, platform
+  } = options;
 
   let slash = platform === 'win32' ? '\\' : '/';
   if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
@@ -157,7 +156,7 @@ function findFilesCommandString (pattern, options = {}) {
     options.re ? '-iregex' : (options.matchPath ? '-ipath' : '-iname'),
     pattern);
 
-  depth = typeof depth === 'number' ? ' -maxdepth ' + depth : '';
+  const stringifiedDepth = typeof depth === 'number' ? ' -maxdepth ' + depth : '';
 
   // use GMT for time settings by default so the result is comparable
   // also force US ordering of date/time elements, to help with the parsing
@@ -170,7 +169,7 @@ function findFilesCommandString (pattern, options = {}) {
       (options.re ? '-E ' : ''),
       exclude.replace(/"/g, ''),
       searchPart.replace(/"/g, ''),
-      depth)
+      stringifiedDepth)
 
     : timeFormatFix + string.format(
       'env TZ=GMT LANG=en_US.UTF-8 ' +
@@ -178,7 +177,7 @@ function findFilesCommandString (pattern, options = {}) {
     '%s %s -print0 | xargs -0 -I{} ls -lLd "$timeformat" "{}"',
       rootDirectory,
       (options.re ? '-E ' : ''),
-      exclude, searchPart, depth);
+      exclude, searchPart, stringifiedDepth);
 
   return commandString;
 }
@@ -228,7 +227,7 @@ export function convertDirectoryUploadEntriesToFileInfos (entryTree) {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  
+
   let entries = flattenTree(entryTree);
   return entries.map(function (entry) {
     let path = entry.fullPath.replace(/^\//, '');
