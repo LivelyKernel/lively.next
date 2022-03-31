@@ -481,8 +481,8 @@ export default class TextRenderer {
         position: 'absolute',
         top: 0 + 'px',
         ...morph.viewState.fastScroll ? { overflow: morph.scrollActive ? morph.clipMode : 'hidden' } : {},
-        width: morph.width + 'px',
-        height: morph.height + 'px'
+        width: '100%',
+        height: '100%'
       }
     }, [h('div', {
       style: {
