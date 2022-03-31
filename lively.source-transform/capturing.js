@@ -562,7 +562,7 @@ export function insertCapturesForExportedImports (parsed, options) {
       nodes = nodes.concat(parse(
         sourceImport +
         decls.map(([exp, imp]) => {
-          return `${recorder}.${exp} = ${imp};\n` + `${recorder}.${imp} = ${imp};\n`;
+          return `${recorder}.${exp} = ${imp};\n` + (imp !== exp ? `${recorder}.${imp} = ${imp};\n` : '');
         }).join('\n')));
     }
     if (stmt.type === 'ExportAllDeclaration') {
