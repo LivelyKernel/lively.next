@@ -156,7 +156,9 @@ export class LivelyWorld extends World {
   onMouseUp (evt) {
     if (evt.isCommandKey()/* || evt.isShiftDown() */) evt.stop();
     if (evt.isAltDown() && config.altClickDefinesThat) {
-      const target = this.morphsContainingPoint(evt.position)[0];
+      let target = this.morphsContainingPoint(evt.position)[0];
+      // alt+click in halo mode causes the border box of the halo to be selected
+      if (target.owner.isHalo) target = target.owner.target;
       // FIXME currently delayed to overwrite that in old morphic
       setTimeout(() => System.global.that = target, 100);
       target.show();

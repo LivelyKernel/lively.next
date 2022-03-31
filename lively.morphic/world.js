@@ -48,9 +48,9 @@ export class World extends Morph {
           if (typeof showsUserFlap !== 'undefined') bool = showsUserFlap;
           this.setProperty('showsUserFlap', bool);
           System.import('lively.user/morphic/user-ui.js')
-          .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
+            .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
         }
-      },
+      }
     };
   }
 
@@ -218,18 +218,6 @@ export class World extends Morph {
     if (evt.state.menu) evt.state.menu.remove();
     this.onWindowScroll();
     this._tooltipViewer.mouseDown(evt);
-  }
-
-  onMouseUp (evt) {
-    if (evt.isCommandKey()/* || evt.isShiftDown() */) evt.stop();
-    if (evt.isAltDown() && config.altClickDefinesThat) {
-      const target = this.morphsContainingPoint(evt.position)[0];
-      // FIXME currently delayed to overwrite that in old morphic
-      setTimeout(() => System.global.that = target, 100);
-      target.show();
-      evt.stop();
-      console.log(`Set global "that" to ${target}`);
-    }
   }
 
   onMouseWheel (evt) {
