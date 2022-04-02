@@ -1,13 +1,14 @@
-import { LightPrompt, RedButton, GreenButton } from 'lively.components/prompts.cp.js';
+import { LightPrompt, AbstractPromptModel, RedButton, GreenButton } from 'lively.components/prompts.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { DarkButton } from 'lively.ide/js/browser/ui.cp.js';
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, ProportionalLayout, Label, Text, component, ViewModel, add, part } from 'lively.morphic';
+import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, ProportionalLayout, Label, Text, component, add, part } from 'lively.morphic';
 import { PackageRegistry } from 'lively.modules/index.js';
 import EditorPlugin from 'lively.ide/editor-plugin.js';
 import { resource } from 'lively.resources';
-import { fun } from 'lively.lang/index.js';
+import { fun, arr } from 'lively.lang/index.js';
+import { SystemList } from 'lively.ide/styling/shared.cp.js';
 
 class PackageTextCompleter {
   isValidPrefix (prefix) {
@@ -70,7 +71,7 @@ class PackageInputPlugin extends EditorPlugin {
   }
 }
 
-export default class FreezerPromptModel extends ViewModel {
+export default class FreezerPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       directory: {
@@ -83,6 +84,8 @@ export default class FreezerPromptModel extends ViewModel {
         }
       },
       epiMorph: { defaultValue: true },
+      isModuleBundle: { defaultValue: true },
+      mainCandidates: { defaultValue: [] },
       excludedPackages: {
         derived: true,
         set (packageNames) {
@@ -90,6 +93,11 @@ export default class FreezerPromptModel extends ViewModel {
         },
         get () {
           return this.ui.packageList.items.map(m => m.value);
+        }
+      },
+      expose: {
+        get () {
+          return [...super.prototype.expose, 'excludedPackages', 'directory', 'isModuleBundle', 'mainCandidates'];
         }
       },
       bindings: {
@@ -102,10 +110,37 @@ export default class FreezerPromptModel extends ViewModel {
             model: 'remove package button', signal: 'fire', handler: 'removeExcludedPackage'
           }, {
             model: 'confirm excluded package', signal: 'fire', handler: 'confirmExcludedPackage'
+          }, {
+            model: 'cancel button', signal: 'fire', handler: 'cancel'
+          }, {
+            model: 'ok button', signal: 'fire', handler: 'resolve'
           }];
         }
       }
     };
+  }
+
+  async viewDidLoad () {
+    super.viewDidLoad();
+    const { layoutWrapper } = this.ui;
+    this.view.opacity = 0; // hide weird flicker interaction due to proportional and css layouts
+    await this.view.whenRendered();
+    layoutWrapper.layout.apply();
+    this.view.opacity = 1;
+  }
+
+  onRefresh (prop) {
+    const AVG_CHAR_WIDTH = 8;
+    if (prop == 'mainCandidates') {
+      this.models.mainSelector.items = this.mainCandidates;
+      this.ui.mainFunctionExplaination.visible = this.mainCandidates.length > 0;
+      this.ui.mainSelector.width = Math.max(100, arr.max(this.mainCandidates, name => name.length).length * AVG_CHAR_WIDTH);
+    }
+  }
+
+  cancel () {
+    this.view.remove();
+    this.reject();
   }
 
   focus () {
@@ -114,11 +149,12 @@ export default class FreezerPromptModel extends ViewModel {
   }
 
   resolve () {
-    const { dirInput, packageList, compilerSelector } = this.ui;
+    const { dirInput, packageList, compilerSelector, mainSelector } = this.ui;
     return super.resolve({
       location: this.directory,
       useTerser: compilerSelector.selection == 'Terser + Babel',
-      excludedPackages: this.excludedPackages
+      excludedPackages: this.excludedPackages,
+      mainFunction: mainSelector.selection
     });
   }
 
@@ -217,12 +253,13 @@ const FreezerPrompt = component(LightPrompt, {
   defaultViewModel: FreezerPromptModel,
   name: 'freezer prompt',
   extent: pt(481, 440.8),
+  clipMode: 'hidden',
   layout: new TilingLayout({
     axis: 'column',
     hugContentsVertically: true,
     orderByIndex: true,
     padding: rect(16, 16, 0, 0),
-    resizePolicies: [['promptTitle', {
+    resizePolicies: [['prompt title', {
       height: 'fixed',
       width: 'fill'
     }], ['dir input', {
@@ -246,7 +283,7 @@ const FreezerPrompt = component(LightPrompt, {
   }),
   position: pt(960.8, 161.4),
   submorphs: [{
-    name: 'promptTitle',
+    name: 'prompt title',
     textAndAttributes: ['Freeze Part', null]
   }, add({
     type: Label,
@@ -270,7 +307,7 @@ const FreezerPrompt = component(LightPrompt, {
     name: 'dir warning',
     borderColor: Color.rgb(204, 204, 204),
     borderRadius: 3,
-    extent: pt(451.3, 0),
+    extent: pt(451.3, 17.2),
     fill: Color.rgba(255, 255, 255, 0),
     fixedWidth: true,
     fontColor: Color.rgb(231, 76, 60),
@@ -300,8 +337,14 @@ const FreezerPrompt = component(LightPrompt, {
         name: 'compiler selector',
         extent: pt(127.3, 25.9),
         position: pt(104.4, 0),
-        viewModel: { selection: 'Google Closure', items: ['Google Closure', 'Terser + Babel'] }
-      }), { textAlign: 'left' }, '   \n', { fontSize: 7 }, '\nSelect the compiler to be used to compress the resulting bundle. Generally speaking Google Closure will yield smaller bundles but may break some parts of your bundle due to aggressive optimization. Terser + Babel is less aggressive but may fail with very large bundles > 10MB.', null]
+        viewModel: {
+          selection: 'Google Closure',
+          items: ['Google Closure', 'Terser + Babel'],
+          listAlign: 'selection',
+          listMaster: SystemList,
+          openListInWorld: true
+        }
+      }), { textAlign: 'left' }, '   \n', { fontSize: 5 }, '\nSelect the compiler to be used to compress the resulting bundle. Generally speaking Google Closure will yield smaller bundles but may break some parts of your bundle due to aggressive optimization. Terser + Babel is less aggressive but may fail with very large bundles > 10MB.', null]
   }), add({
     type: Label,
     name: 'excluded package label',
@@ -326,6 +369,43 @@ const FreezerPrompt = component(LightPrompt, {
     nativeCursor: 'default',
     textAlign: 'center'
   }), add({
+    type: Text,
+    name: 'main function explaination',
+    borderColor: Color.rgb(204, 204, 204),
+    borderRadius: 3,
+    extent: pt(449, 109),
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedWidth: true,
+    fontColor: Color.rgb(102, 102, 102),
+    fontFamily: 'IBM Plex Sans',
+    lineWrapping: true,
+    nativeCursor: 'default',
+    readOnly: true,
+    textAlign: 'left',
+    textAndAttributes: [
+      'Main Function:', { textAlign: 'left', fontSize: 16, fontColor: Color.rgb(45, 45, 45) }, ' ', { textAlign: 'left', fontSize: 16 }, ' ', { textAlign: 'left' }, part(DropDownList, {
+        name: 'main selector',
+        layout: new TilingLayout({
+          align: 'right',
+          axisAlign: 'center',
+          orderByIndex: true,
+          padding: rect(10, 0, 0, 0),
+          wrapSubmorphs: false
+        }),
+        extent: pt(300.1, 25.9),
+        position: pt(104.4, 0),
+        viewModel: {
+          selection: 'main',
+          items: ['main'],
+          listMaster: SystemList,
+          listHeight: 1000,
+          listAlign: 'selection',
+          openListInWorld: true
+        }
+      }), { textAlign: 'left' }, '   \n', { fontSize: 5 }, '\nSelected the function within the module that is supposed to be automatically invoked on load of the bundle. Default paramter passed to the function will be the world object.', null]
+  }),
+
+  add({
     name: 'layout wrapper',
     extent: pt(450, 155),
     fill: Color.rgba(46, 75, 223, 0),
