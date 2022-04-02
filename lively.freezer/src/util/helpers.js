@@ -1,3 +1,4 @@
+/* global require */
 /* global System,global,process,Buffer */
 import { toJsIdentifier } from 'lively.classes/util.js';
 import * as classes from 'lively.classes';
@@ -52,7 +53,8 @@ export async function gzip (blob, inflate = true) {
       // }
     return res;
   }
-  let zlib = await System.import('zlib');
+  if (!System.get('@system-env').node) return;
+  let zlib = require('zlib');
   let gzipFunc = (inflate ? zlib.gzipSync : zlib.gunzipSync);
   blob = inflate ? blob : new Buffer(blob, 'base64');
   let compressed = gzipFunc(blob);
@@ -203,4 +205,52 @@ export function translateToEsm (jsonString) {
     source += `export var ${key} = ${JSON.stringify(value)};\n`;
   }
   return source;
+}
+
+export function instrumentStaticSystemJS (system) {
+  const _origGet = system.get ? system.get.bind(system) : () => {};
+  system.get = (id, recorder = true) => (lively.FreezerRuntime && lively.FreezerRuntime.get(id, recorder)) || _origGet(id);
+  const _origDecanonicalize = system.decanonicalize ? system.decanonicalize.bind(system) : (id) => id;
+  system.decanonicalize = (id) =>
+    lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
+  window._missingExportShim = () => {};
+  const _originalRegister = system.register.bind(system);
+  system.register = (name, deps, def) => {
+    if (typeof name !== 'string') {
+      def = deps;
+      deps = name;
+      return _originalRegister(deps, (exports, module) => {
+        let res = def(exports, module);
+        if (!res.setters) res.setters = [];
+        return res;
+      });
+    }
+    return _originalRegister(name, deps, (exports, module) => {
+      let res = def(exports, module);
+      if (!res.setters) res.setters = [];
+      return res;
+    });
+  };
+
+  if (!system.config) system.config = () => {}; // no need for config anyways...
+
+  if (!system.global) system.global = window;
+
+  // map fs as global
+  if (system.set && system.newModule) {
+    // handle this via import-map instead
+    system.set('stub-transpiler', system.newModule({
+      translate: (load) => {
+        return load.source;
+      }
+    }));
+  }
+
+  if (!system.newModule) system.newModule = (exports) => exports;
+  system.config({
+    transpiler: 'stub-transpiler' // this is tp be revised when we migrate the entire system to the new systemjs
+  });
+  system.get('@lively-env').loadedModules = lively.FreezerRuntime.registry;
+  system.baseURL = lively.FreezerRuntime.baseURL;
+  system.trace = false;
 }
