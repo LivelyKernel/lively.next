@@ -28,7 +28,6 @@ const rules = {
   'no-useless-return': 'error',
   'no-var': 'warn',
   'one-var': ['error', { initialized: 'never' }],
-  'prefer-const': ['error', { destructuring: 'all' }],
   'quote-props': ['error', 'as-needed'],
   'spaced-comment': ['error', 'always', {
     line: { markers: ['*package', '!', '/', ',', '='] },
