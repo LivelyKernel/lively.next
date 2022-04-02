@@ -1,26 +1,18 @@
 /* global System */
-import { config, morph } from 'lively.morphic';
-import { part } from 'lively.morphic/components/core.js';
-import {
-  createMorphSnapshot,
-  serializeMorph
-} from 'lively.morphic/serialization.js';
-import * as modules from 'lively.modules';
-
+import { config, part } from 'lively.morphic';
 import { resource } from 'lively.resources';
 import { Path, obj, arr } from 'lively.lang';
-import { Color } from 'lively.graphics';
 import { LoadingIndicator } from 'lively.components';
 import { removeUnreachableObjects } from 'lively.serializer2';
+
+import { createMorphSnapshot, serializeMorph } from 'lively.morphic/serialization.js';
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
-import { FreezerPrompt } from './src/ui.cp.js';
-import LivelyRollup from './src/bundler.js';
-import { transpileAttributeConnections } from './src/util/helpers.js';
 
-const { module } = modules;
+import { FreezerPrompt } from './src/ui.cp.js';
+import LivelyRollup, { resolvePackage, decanonicalizeFileName } from './src/bundler.js';
+import { transpileAttributeConnections } from './src/util/helpers.js';
 
 /*
 
@@ -51,8 +43,23 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
   'lively-system-interface',
   'pouchdb',
   'pouchdb-adapter-mem',
-  'https://unpkg.com/rollup@1.17.0/dist/rollup.browser.js',
+  'rollup',
   'lively.halos'
+];
+
+const DEFAULT_EXCLUDED_MODULES = [
+  'lively.ast',
+  'lively.vm',
+  'lively-system-interface',
+  'pouchdb',
+  'pouchdb-adapter-mem',
+  'rollup',
+  'lively.halos',
+  'lively.ide',
+  'lively.freezer',
+  'lively.modules',
+  'lively.storage',
+  'lively.user'
 ];
 
 /**
@@ -63,13 +70,25 @@ const DEFAULT_EXCLUDED_MODULES_WORLD = [
  * @param { Morph } part - The morph that is supposed to be frozen.
  * @returns { string } The html code of the index.html.
  */
-export async function generateLoadHtml (part) {
-  const htmlTemplate = await resource(System.decanonicalize('lively.freezer/src/util/load-template.html')).read();
+export async function generateLoadHtml (partOrModule, importMap) {
+  const htmlTemplate = await resource(await decanonicalizeFileName('lively.freezer/src/util/load-template.html')).read();
+  // fixme: what to do when we receive a module?
+  let title = partOrModule.title || partOrModule.name;
+  let head = partOrModule.__head_html__ || '';
+  let load = partOrModule.__loading_html__ || '';
+  let crawler = partOrModule.__crawler_html__ || '';
+  if (typeof partOrModule === 'string') {
+    // extract stuff from the source code
+    title = '[Static Module]'; //  fixme
+    if (importMap) {
+      head += importMap;
+    }
+  }
   return htmlTemplate
-    .replace('__TITLE_TAG__', part.title || part.name)
-    .replace('__HEAD_HTML__', part.__head_html__ || '')
-    .replace('__LOADING_HTML__', part.__loading_html__ || '')
-    .replace('__CRAWLER_HTML__', part.__crawler_html__ || '');
+    .replace('__TITLE_TAG__', title)
+    .replace('__HEAD_HTML__', head)
+    .replace('__LOADING_HTML__', load)
+    .replace('__CRAWLER_HTML__', crawler);
 }
 
 /**
@@ -128,22 +147,66 @@ function clearWorldSnapshot (snap) {
 /**
  * The prompts the user to configure and confirm the settings for 
  * the bunding process,
- * @param { Morph } target - The part/world to be frozen.
+ * @param { Morph|string } targetOrModule - The part/world to be frozen.
  * @param { Morph } requester - The tool that requested the prompt (usually the Object Editor)
  */
-async function promptForFreezing (target, requester) {
-  const freezerPrompt = part(FreezerPrompt);
+async function promptForFreezing (targetOrModule, requester, title = 'Freeze Part') {
+  const freezerPrompt = part(FreezerPrompt, {
+    submorphs: [
+      {
+        name: 'prompt title',
+        textAndAttributes: [title, null]
+      }
+    ]
+  });
   const userName = $world.getCurrentUser().name;
-  const previouslyExcludedPackages = Path('metadata.excludedPackages').get(target);
-  const previouslyPublishedDir = Path('metadata.publishedLocation').get(target) || resource(System.baseURL).join('users').join(userName).join('published').join(target.name).url;
+  const previouslyExcludedPackages = Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
+  const previouslyPublishedDir = Path('metadata.publishedLocation').get(targetOrModule) ||
+                                 resource(System.baseURL).join('users').join(userName).join('published').join(targetOrModule.name ||
+                                 resolvePackage(targetOrModule).name).url;
   let res;
   await $world.withRequesterDo(requester, async (pos) => {
+    freezerPrompt.isModuleBundle = typeof targetOrModule === 'string';
+    if (freezerPrompt.isModuleBundle && requester.isBrowser) {
+      freezerPrompt.mainCandidates = requester.renderedCodeEntities()
+        .filter(node => node.type === 'function-decl')
+        .map(node => node.name);
+    }
     freezerPrompt.excludedPackages = previouslyExcludedPackages;
     freezerPrompt.directory = previouslyPublishedDir;
     freezerPrompt.openInWorld();
-    freezerPrompt.center = pos;
+    await freezerPrompt.whenRendered();
+    freezerPrompt.center = pos; // wait for css layout...
     res = await freezerPrompt.activate();
   });
+  return res;
+}
+
+async function rollupBundle ({ bundle, compress, output, requester }) {
+  let res;
+  try {
+    res = await bundle.rollup(compress, output);
+  } catch (e) {
+    if (e.name === 'Exclusion Conflict') {
+      // adjust the excluded Modules
+      const proceed = await requester.world().confirm([
+        e.message.replace('Could not load __root_module__:', ''), {}, '\n', {},
+        'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.',
+        { fontSize: 13, fontWeight: 'normal' }
+      ],
+      {
+        requester,
+        width: 600,
+        confirmLabel: 'Remove Package from Exclusion Set',
+        rejectLabel: 'Cancel'
+      });
+      if (proceed) {
+        bundle.excludedModules = e.reducedExclusionSet;
+        return await rollupBundle();
+      }
+    }
+    throw e;
+  }
   return res;
 }
 
@@ -165,53 +228,136 @@ export async function bundlePart (partOrSnapshot, {
     : partOrSnapshot;
   transpileAttributeConnections(snapshot);
   const bundle = new LivelyRollup({ excludedModules, snapshot, useTerser });
-  const rollupBundle = async () => {
-    let res;
-    try {
-      res = await bundle.rollup(compress, output);
-    } catch (e) {
-      if (e.name === 'Exclusion Conflict') {
-        // adjust the excluded Modules
-        const proceed = await $world.confirm([
-          e.message.replace('Could not load __root_module__:', ''), {}, '\n', {}, 'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.', { fontSize: 13, fontWeight: 'normal' }], { requester, width: 600, confirmLabel: 'Remove Package from Exclusion Set', rejectLabel: 'Cancel' });
-        if (proceed) {
-          bundle.excludedModules = e.reducedExclusionSet;
-          return await rollupBundle();
-        }
-      }
-      throw e;
-    }
-    return res;
-  };
-  return await rollupBundle();
+  return await rollupBundle({ bundle, compress, output, requester });
+}
+
+/**
+ * Bundles a given part (in the form of a snapshot or as a live object) into a standalone
+ * static website that can be loaded very quickly.
+ */
+// frozen = await bundleModule(module('galyleo-dashboard').id, { exclude: DEFAULT_EXCLUDED_MODULES, compress: true, requester: $world, mainFunction: 'main', useTerser: false })
+export async function bundleModule (moduleId, {
+  exclude: excludedModules = [],
+  compress = false,
+  output = 'es2019',
+  requester,
+  mainFunction,
+  useTerser
+}) {
+  const bundle = new LivelyRollup({ excludedModules, rootModule: moduleId, mainFunction, useTerser, useLivelyWorld: true });
+  return await rollupBundle({ bundle, compress, output, requester });
 }
 
 export async function jspmCompile (url, out, globalName, redirect = {}) {
-  module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), includePolyfills: false, globalName, redirect });
+  const m = new LivelyRollup({ rootModule: url, includePolyfills: false, globalName, redirect });
   m.excludedModules = ['babel-plugin-transform-jsx'];
   const res = await m.rollup(true, 'es2019');
   await resource(System.baseURL).join(out).write(res.min);
 }
 
 export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
-  module(url)._source = null;
-  const m = new LivelyRollup({ rootModule: module(url), asBrowserModule, globalName });
+  const m = new LivelyRollup({ rootModule: url, asBrowserModule, globalName });
   m.excludedModules = ['babel-plugin-transform-jsx'];
   const res = await m.rollup(true, 'es2019');
   await resource(System.baseURL).join(out).write(res.min);
 }
 
+/**
+ * Handles the writing of all the files of a finished frozen bundle.
+ * @param { object } frozen - A finished build.
+ * @param { LoadingIndicator } li - Indicator to visualize the progress of writing the files.
+ * @param { object } handles - Resource handles that will be utilized to write to the proper directory.
+ * @param { HTTPResource } handles.dir - A http resource handle.
+ * @param { ShellResource } handles.shell - A shell resource handle for sending shell commands to the server in order to compress files.
+ */
+async function writeFiles (frozen, li, { dir, shell }) {
+  const target = frozen.part || frozen.rootModule;
+  let currentFile = '';
+  dir.onProgress = (evt) => {
+    // set progress of loading indicator
+    const p = evt.loaded / evt.total;
+    li.progress = p;
+    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
+  };
+  currentFile = 'index.html';
+  // if the module is split, include systemjs
+  await dir.join(currentFile).write(await generateLoadHtml(target, frozen.importMap));
+
+  if (obj.isArray(frozen)) {
+    for (const splitModule of frozen) {
+      currentFile = splitModule.fileName;
+      await dir.join(currentFile).write(splitModule.min);
+      try {
+        await shell.join(currentFile + '.gz').gzip(splitModule.min);
+        await shell.join(currentFile + '.br').brotli(splitModule.min);
+      } catch (err) {
+
+      }
+    }
+    currentFile = 'load.js';
+    await dir.join(currentFile).write(frozen.load.min);
+    try {
+      currentFile = 'load.js.gz';
+      await shell.join(currentFile).gzip(frozen.load.min);
+      currentFile = 'load.js.br';
+      await shell.join(currentFile).brotli(frozen.load.min);
+    } catch (err) {
+
+    }
+  } else {
+    currentFile = 'load.js';
+    await dir.join(currentFile).write(frozen.min);
+    currentFile = 'load.js.gz';
+    await shell.join(currentFile).gzip(frozen.min);
+    currentFile = 'load.js.br';
+    await shell.join(currentFile).brotli(frozen.min);
+  }
+
+  await dir.join('@empty').write('');
+
+  li.status = 'Copying assets...';
+  const assetDir = await dir.join('assets/').ensureExistance();
+  // copy font awesome assets
+  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
+  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
+  // copy inconsoloata font
+  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
+  for (const asset of frozen.assets) {
+    currentFile = asset.url;
+    // skip if exists
+    await asset.copyTo(assetDir);
+  }
+
+  // then copy over the style morphs
+  li.status = 'Copying master components...';
+  // replace this by prefetched master components
+  for (const url in frozen.masterComponents) {
+    const masterDir = await dir.join('masters/').ensureExistance();
+    const masterFile = await masterDir
+      .join(url.replace('styleguide://', '') + '.json')
+      .ensureExistance();
+    await masterFile.writeJson(frozen.masterComponents[url]);
+  }
+
+  li.remove();
+  $world.setStatusMessage([`Published ${target.name || target.url}. Click `, null, 'here', {
+    textDecoration: 'underline',
+    fontWeight: 'bold',
+    doit: { code: `window.open("${dir.join('index.html').url}")` }
+  }, ' to view.'], StatusMessageConfirm, false);
+}
+
+/**
+ * Function prompts the user for a name to publish the part under.
+ * Data is uploaded to directory and then returns a link to the folder.
+ */
 export async function interactivelyFreezeWorld (world) {
-  /*
-    Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder.
-  */
-  const userName = $world.getCurrentUser().name;
-  const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+  const userName = world.getCurrentUser().name;
   let publicAlias = world.metadata.commit.name;
+  const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
+  const publicationDirShell = resource(await defaultDirectory()).join('..').join('users').join(userName).join('published/').withRelativePartsResolved().asDirectory();
+
   let publicationDir = frozenPartsDir.join(publicAlias + '/');
-  const assetDir = await publicationDir.join('assets/').ensureExistance();
   while (await publicationDir.exists()) {
     const proceed = await $world.confirm(`A world published as "${publicAlias}" already exists.\nDo you want to overwrite this publication?`, {
       rejectLabel: 'CHANGE NAME'
@@ -221,7 +367,6 @@ export async function interactivelyFreezeWorld (world) {
     if (!publicAlias) return;
     publicationDir = frozenPartsDir.join(publicAlias + '/');
   }
-
   await publicationDir.ensureExistance();
 
   // remove the metadata props
@@ -234,34 +379,21 @@ export async function interactivelyFreezeWorld (world) {
       compress: true,
       exclude: DEFAULT_EXCLUDED_MODULES_WORLD
     });
+    frozen.part = world;
   } catch (e) {
     throw e;
   }
 
   const li = LoadingIndicator.open('Freezing World', { status: 'Writing files...' });
-  await publicationDir.join('index.html').write(await generateLoadHtml(world, frozen.format));
-  await publicationDir.join('load.js').write(frozen.min);
-  li.status = 'copying asset files...';
-  for (const asset of frozen.assets) await asset.copyTo(assetDir);
-  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
-    await dynamicParts.join(partName + '.json').writeJson(snapshot);
-  }
-  li.remove();
-  $world.setStatusMessage([`Published ${publicAlias}. Click `, null, 'here', {
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], StatusMessageConfirm, 10000);
+  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
 }
 
+/**
+ * Function prompts the user for a name to publish the part under.
+ * Data is uploaded to directory and then returns a link to the folder.
+ */
 export async function interactivelyFreezePart (part, requester = false) {
-  /*
-    Function prompts the user for a name to publish the part under.
-    Data is uploaded to directory and then returns a link to the folder.
-  */
-
-  const options = await promptForFreezing(part, requester);
+  const options = await promptForFreezing(part, requester, 'Freeze Part');
 
   if (!options) return;
   const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
@@ -269,8 +401,6 @@ export async function interactivelyFreezePart (part, requester = false) {
 
   part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
   part.changeMetaData('publishedLocation', options.location, true, false);
-
-  await publicationDir.ensureExistance();
 
   let worldSnap;
   if (part.isWorld) {
@@ -286,91 +416,39 @@ export async function interactivelyFreezePart (part, requester = false) {
       exclude: options.excludedPackages,
       requester: false
     });
+    frozen.part = part;
   } catch (e) {
     throw e;
   }
 
   const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
-  let currentFile = '';
-  publicationDir.onProgress = (evt) => {
-    // set progress of loading indicator
-    const p = evt.loaded / evt.total;
-    li.progress = p;
-    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
-  };
-  currentFile = 'index.html';
-  // if the module is split, include systemjs
-  await publicationDir.join(currentFile).write(await generateLoadHtml(part, frozen.format));
+  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
+}
 
-  if (obj.isArray(frozen)) {
-    for (const part of frozen) {
-      currentFile = part.fileName;
-      await publicationDir.join(currentFile).write(part.min);
-      try {
-        await publicationDirShell.join(currentFile + '.gz').gzip(part.min);
-        await publicationDirShell.join(currentFile + '.br').brotli(part.min);
-      } catch (err) {
+export async function interactivelyFreezeModule (moduleId, requester) {
+  const options = await promptForFreezing(moduleId, requester, 'Freeze Module');
 
-      }
-    }
-    currentFile = 'load.js';
-    await publicationDir.join(currentFile).write(frozen.load.min);
-    try {
-      currentFile = 'load.js.gz';
-      await publicationDirShell.join(currentFile).gzip(frozen.load.min);
-      currentFile = 'load.js.br';
-      await publicationDirShell.join(currentFile).brotli(frozen.load.min);
-    } catch (err) {
+  if (!options) return;
+  const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
+  const publicationDirShell = resource(await defaultDirectory()).join('..').join(options.location).withRelativePartsResolved().asDirectory();
 
-    }
-  } else {
-    currentFile = 'load.js';
-    await publicationDir.join(currentFile).write(frozen.min);
-    currentFile = 'load.js.gz';
-    await publicationDirShell.join(currentFile).gzip(frozen.min);
-    currentFile = 'load.js.br';
-    await publicationDirShell.join(currentFile).brotli(frozen.min);
+  // part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
+  // part.changeMetaData('publishedLocation', options.location, true, false);
+  let frozen;
+  try {
+    frozen = await bundleModule(moduleId, {
+      compress: true,
+      useTerser: options.useTerser,
+      exclude: options.excludedPackages,
+      mainFunction: options.mainFunction,
+      requester
+    });
+    frozen.rootModule = await resource(moduleId).read();
+  } catch (e) {
+    throw e;
   }
 
-  li.status = 'Copying dynamic parts...'; // to be unified by url parts fetching
-  const dynamicParts = await publicationDir.join('dynamicParts/').ensureExistance();
-  for (const [partName, snapshot] of Object.entries(frozen.dynamicParts)) {
-    if (partName.startsWith('part://')) {
-      frozen.masterComponents[partName.replace('part://', 'styleguide://')] = snapshot;
-      continue;
-    }
-    currentFile = partName + '.json';
-    await dynamicParts.join(currentFile).writeJson(snapshot);
-  }
-  li.status = 'Copying assets...';
-  const assetDir = await publicationDir.join('assets/').ensureExistance();
-  // copy font awesome assets
-  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
-  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
-  // copy inconsoloata
-  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
-  for (const asset of frozen.assets) {
-    currentFile = asset.url;
-    // skip if exists
-    // if (await assetDir.join(asset.name()).exists()) continue;
-    await asset.copyTo(assetDir);
-  }
+  const li = LoadingIndicator.open('Freezing Module', { status: 'Writing files...' });
 
-  // then copy over the style morphs
-  li.status = 'Copying master components...';
-  // replace this by prefetched master components
-  const masterDir = await publicationDir.join('masters/').ensureExistance();
-  for (const url in frozen.masterComponents) {
-    const masterFile = await masterDir
-      .join(url.replace('styleguide://', '') + '.json')
-      .ensureExistance();
-    await masterFile.writeJson(frozen.masterComponents[url]);
-  }
-
-  li.remove();
-  $world.setStatusMessage([`Published ${part.name}. Click `, null, 'here', {
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-    doit: { code: `window.open("${publicationDir.join('index.html').url}")` }
-  }, ' to view.'], StatusMessageConfirm, false);
+  writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
 }
