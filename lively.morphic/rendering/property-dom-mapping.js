@@ -1,4 +1,4 @@
-import { Color, pt } from 'lively.graphics';
+import { Color } from 'lively.graphics';
 import { string, Path } from 'lively.lang';
 import bowser from 'bowser';
 // addPathAttributes
@@ -15,9 +15,9 @@ export function styleProps (morph) {
   addBorder(morph, style);
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
-  if (morph.grayscale && morph.grayscale > 0) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`;
-  if (morph.blur && morph.blur > 0) style.filter = `${style.filter || ''} blur(${morph.blur}px)`;
-  if (morph.opacity != null && morph.opacity !== 1) style.opacity = morph.opacity;
+  if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`;
+  if (morph.blur) style.filter = `${style.filter || ''} blur(${morph.blur}px)`;
+  if (morph.opacity != null) style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
   // on ios touch-action is an undocumented html attribute and can not be set via css
   return style;
@@ -38,23 +38,21 @@ export function addTransform (morph, style) {
     style.willChange = 'transform';
   }
   if ((owner && owner.isText && !Path('layout.renderViaCSS').get(owner)) || promoteToCompositionLayer) {
-    style.transform = `translate(${x}px, ${y}px)`;
+    style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
   } else {
     style.transform = '';
     style.top = `${y}px`;
     style.left = `${x}px`;
   }
-  if (scale && scale !== 1) style.transform += ` scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
-  if (rotation && rotation !== 0) style.transform += ` rotate(${rotation.toFixed(2)}rad)`;
+  style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
   if (perspective) style.perspective = `${perspective}px`;
   if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
   if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
-  if (style.transform === '') delete style.transform;
 }
 
 function addTransformOrigin (morph, style) {
   const { origin } = morph;
-  if (!pt(0, 0).equals(origin) || (style.transform && style.transform !== '')) style.transformOrigin = `${origin.x}px ${origin.y}px`;
+  if (origin) style.transformOrigin = `${origin.x}px ${origin.y}px`;
 }
 
 function addDisplay (morph, style) {
@@ -64,7 +62,6 @@ function addDisplay (morph, style) {
 
 function addBorderRadius (morph, style) {
   const { borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft } = morph;
-  if (borderRadiusTopLeft === 0 && borderRadiusTopRight === 0 && borderRadiusBottomRight === 0 && borderRadiusBottomLeft === 0) return;
   style.borderRadius = `${borderRadiusTopLeft}px ${borderRadiusTopRight}px ${borderRadiusBottomRight}px ${borderRadiusBottomLeft}px`;
 }
 
@@ -75,11 +72,6 @@ function addBorder (morph, style) {
     borderWidthBottom, borderColorBottom, borderStyleBottom,
     borderWidthTop, borderColorTop, borderStyleTop
   } = morph;
-
-  // In these cases the border is effectively not present, thus we can get away without inline styles.
-  if (borderWidthLeft === 0 && borderWidthRight === 0 && borderWidthBottom === 0 && borderWidthTop === 0) return;
-  if (borderStyleLeft === 'none' && borderStyleRight === 'none' && borderStyleBottom === 'none' && borderStyleTop === 'none') return;
-
   const t = (s) => bowser.safari ? string.camelize(s) : s;
   style[t('border-left-style')] = `${borderStyleLeft}`;
   style[t('border-right-style')] = `${borderStyleRight}`;
@@ -98,7 +90,8 @@ function addBorder (morph, style) {
 
 function addFill (morph, style) {
   const { fill } = morph;
-  if (!fill || Color.transparent.equals(fill)) {
+  if (!fill) {
+    style.background = Color.transparent.toString();
     return;
   }
   if (fill.isGradient) style.backgroundImage = fill.toString();
