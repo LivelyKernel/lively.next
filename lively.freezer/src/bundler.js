@@ -4,15 +4,26 @@ import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
 import { module } from 'lively.modules';
 import { localInterface } from 'lively-system-interface';
-import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
-import { es5Transpilation } from 'lively.source-transform';
-import { classNameOfId, moduleOfId } from 'lively.serializer2/snapshot-navigation.js';
-import { locateClass, requiredModulesOfSnapshot, serialize } from 'lively.serializer2';
+import { es5Transpilation, ensureModuleMetaForComponentDefinition } from 'lively.source-transform';
 import { LoadingIndicator } from 'lively.components';
-import * as Rollup from 'esm://cache/rollup@2.28.2';
-import jsonPlugin from 'esm://cache/@rollup/plugin-json';
-import { fixSourceForBugsInGoogleClosure, translateToEsm, compileOnServer } from './util/helpers.js';
-// fixme: requires newer Babel version to import latest version...
+import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
+import { locateClass, requiredModulesOfSnapshot } from 'lively.serializer2';
+import { classNameOfId, moduleOfId } from 'lively.serializer2/snapshot-navigation.js';
+
+import * as Rollup from 'rollup';
+import jsonPlugin from '@rollup/plugin-json'; // fixme: requires newer Babel version to import latest version...
+
+import { fixSourceForBugsInGoogleClosure, instrumentStaticSystemJS, compileOnServer } from './util/helpers.js';
+
+import ESBuild from 'esm://cache/esbuild-wasm@0.14.28';
+import { detectModuleFormat } from 'lively.modules/src/module.js';
+try {
+  ESBuild.initialize({
+    wasmURL: 'https://unpkg.com/esbuild-wasm@0.14.28/esbuild.wasm'
+  });
+} catch (err) {
+  // already called initialize
+}
 
 const SYSTEMJS_STUB = `
 var G = typeof window !== "undefined" ? window :
@@ -33,14 +44,14 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev'];
+const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache'];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
   'lively.lang'
 ];
 
-// this needs to be handled differently when loaded from the shell script...
+// this needs to be handled differently when loaded from the shell script... since there is no SystemJS that can import the modules nor could we reliably import these modules
 function resolveModuleId (moduleName) {
   return module(moduleName).id;
 }
@@ -49,7 +60,11 @@ async function normalizeFileName (fileName) {
   return await System.normalize(fileName);
 }
 
-function resolvePackage (moduleName) {
+export async function decanonicalizeFileName (fileName) {
+  return await System.decanonicalize(fileName);
+}
+
+export function resolvePackage (moduleName) {
   return module(moduleName).package();
 }
 
@@ -87,12 +102,14 @@ export default class LivelyRollup {
     excludedModules = [],
     snapshot,
     rootModule,
+    mainFunction = false,
     globalName,
+    useLivelyWorld = false,
     asBrowserModule = true,
-    useTerser = true,
+    useTerser = false,
     isResurrectionBuild = false,
     redirect = {
-      fs: resolveModuleId('lively.freezer/node-fs-wrapper.js'),
+      fs: resolveModuleId('lively.freezer/src/util/node-fs-wrapper.js'),
       'https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js': 'https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js' // this is always needed
     },
     includePolyfills = true
@@ -100,7 +117,9 @@ export default class LivelyRollup {
     this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
     this.snapshot = snapshot; // the snapshot to be used as a base for developing a bundled app
-    this.rootModule = rootModule; // alternatively to the snapshot, we can also use a root module as an entry point
+    this.rootModule = typeof rootModule === 'string' ? module(rootModule) : rootModule; // alternatively to the snapshot, we can also use a root module as an entry point
+    this.useLivelyWorld = useLivelyWorld;
+    this.mainFunction = mainFunction; // If root module is specified then this denotes the function that is to be executed on loading of the script.
     this.globalName = globalName; // The global variable name to export the root module export via.
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
     this.redirect = redirect; //  Hard redirect of certain packages that overriddes any other resolution mechanisms. Why is this needed?
@@ -116,12 +135,12 @@ export default class LivelyRollup {
     this.importedModules = []; // Collection of all the required modules from the passed snapshot. This is not popuplated if we utilize rootModule.
     this.resolved = {};
     this.assetsToCopy = [];
-    this.requiredMasterComponents = new Set(); // populated after the snapshot and modules with dynamic loads have been fully analyzed. No longer needed with component modules.
   }
 
   /**
    * More or less unnessecary convenience method that extracts the required modules from a given snapshot.
-   * (Alongside the required assets)
+   * (Alongside the required assets). This only includes the modules that are directly required to
+   * deserialize the given snapshot. It does not compute the convex hull of the root module.
    * @param { object } snap - The snapshot to be analyzed.
    */
   async getRequiredModulesFromSnapshot (snap) {
@@ -188,7 +207,8 @@ export default class LivelyRollup {
       exclude: [
         'System',
         ...dontTransform(modId),
-        ...arr.range(0, 50).map(i => `__captured${i}__`)],
+        ...arr.range(0, 50).map(i => `__captured${i}__`)
+      ],
       classToFunction
     };
   }
@@ -198,9 +218,9 @@ export default class LivelyRollup {
    * by the root module. This heuristic is somewhat sketchy, but it sometimes works
    * for the benefit of the doubt.
    */
-  checkIfImportedPackageExcluded () {
+  checkIfImportedPackageExcluded (importedModules) {
     const excludedPackages = arr.compact(this.excludedModules.map(id => resolvePackage(id)));
-    const importedPackages = this.importedModules.map(id => resolvePackage(id));
+    const importedPackages = importedModules.map(id => resolvePackage(id));
     const conflicts = arr.intersect(excludedPackages, importedPackages);
     if (conflicts.length > 0) {
       const multiple = conflicts.length > 1;
@@ -219,12 +239,25 @@ export default class LivelyRollup {
    */
   async getRootModule () {
     if (this.rootModule) {
-      if ((await this.rootModule.exports()).length > 0) {
+      if (!this.mainFunction) { // if there is no main function specified, we just export the entire module in the root module
         return `export * from "${this.rootModule.id}";`;
       }
-      return await this.rootModule.source();
+      return await this.synthesizeMainModule();
     }
     return await this.synthesizeSnapshotModule();
+  }
+
+  /**
+   * Returns the source code of a synthesized modules that creates plain
+   * morphic world and then calls the configured main method with that
+   * world as the argument.
+   */
+  async synthesizeMainModule () {
+    let mainModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/main-module.js')).read();
+    if (this.useLivelyWorld) {
+      mainModuleSource = mainModuleSource.replace('import { World } from \'lively.morphic\'', 'import { LivelyWorld as World } from \'lively.ide/world.js\'');
+    }
+    return mainModuleSource.replace('main(', `const { ${this.mainFunction}: main } = await System.import('${this.rootModule.id}');\nmain(`);
   }
 
   /**
@@ -234,10 +267,8 @@ export default class LivelyRollup {
   async synthesizeSnapshotModule () {
     const snapshotModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/snapshot-module.js')).read();
     const { requiredModules } = await this.getRequiredModulesFromSnapshot(this.snapshot);
-
-    this.importedModules = requiredModules;
-    this.checkIfImportedPackageExcluded();
-    return arr.uniq((await this.getRequiredModulesFromSnapshot(this.snapshot)).requiredModules.map(path => `import "${path}"`)).join('\n') +
+    this.checkIfImportedPackageExcluded(requiredModules); // consequence of this may an exception and termination of this process
+    return arr.uniq(requiredModules.map(path => `import "${path}"`)).join('\n') +
       (this.excludedModules.includes('localconfig.js') ? '' : await resource(System.baseURL).join('localconfig.js').read()) +
      snapshotModuleSource.replace('{"SNAPSHOT": "PLACEHOLDER"}', JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))));
   }
@@ -253,11 +284,24 @@ export default class LivelyRollup {
    * @param { string } moduleId - The id of the module.
    * @param { string } importModuleId - The id of the module that imported the module.
    */
-  needsScopeToBeCaptured (moduleId, importModuleId) {
-    if (this.isResurrectionBuild) return !this.wasFetchedFromEsmCdn(moduleId);
-    return this.isComponentModule(moduleId) || this.isComponentModule(importModuleId); // fixme: Dont we actually need the convex hull of the imports of the component modules?
+  needsScopeToBeCaptured (moduleId, importModuleId, sourceCode = false) {
+    if (this.redirect[moduleId]) return false; // skip redirected modules by default
+    if (sourceCode && detectModuleFormat(sourceCode) === 'global') return false; // skip global modules since they are non esm
+    if (importModuleId && resource(moduleId).host() !== resource(importModuleId).host()) {
+      return false; // 3rd party modules are not to be captured
+    }
+    if (!this.wasFetchedFromEsmCdn(moduleId)) return true;
+    // fixme: Maybe utilize the required modules of the snapshot if present...
+    // fixme: If no snapshot but main module instead, utilize the required modules (convex hull) of that main module for the set of captured modules
+    // fixem: maybe also just always capture if not explicitly told not to. Since rollup already computes the convex hull
+    // return this.isComponentModule(moduleId) || this.isComponentModule(importModuleId) || !this.wasFetchedFromEsmCdn(moduleId); // fixme: Dont we actually need the convex hull of the imports of the component modules?
   }
 
+  /**
+   * Returns wether or not a particular module was loaded from an ESM server.
+   * @param { string } moduleId - The module in question.
+   * @returns { boolean }
+   */
   wasFetchedFromEsmCdn (moduleId) {
     return !!ESM_CDNS.find(url => moduleId.includes(url));
   }
@@ -274,11 +318,14 @@ export default class LivelyRollup {
    * @param { string } moduleSource - The source code of the module.
    */
   needsClassInstrumentation (moduleId, moduleSource) {
-    if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/)) return true;
-    if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; }
-    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName === moduleId) || this.isComponentModule(moduleId)) {
+    if (CLASS_INSTRUMENTATION_MODULES_EXCLUSION.some(pkgName => moduleId.includes(pkgName))) { return false; } // is explicitly excluded
+    if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName === moduleId)) { // belongs to lively package
       return true;
     }
+    if (this.isComponentModule(moduleId)) return true; // defines components
+    if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/)) return true; // contains lively class defs, but...
+    // fixme: ...how about 3rd party derivations of lively classes in non lively modules (such as local project?) i.e: [class CustomMorph extends MyMorph] extends Morph ?
+    return false;
   }
 
   /**
@@ -312,16 +359,17 @@ export default class LivelyRollup {
 
     ast.AllNodesVisitor.run(parsed, (node, path) => {
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
-        if (node.callee.property.name === 'import' && node.callee.object.name === 'System') {
+        if (node.callee.property.name === 'import' && node.callee.object.name === 'System' && node.arguments.length === 1) {
           // evaluate the imported expression on the spot
           const idx = importUrls.push(localInterface.runEval(ast.stringify(node.arguments[0]), {
             targetModule: moduleId
           }));
           nodesToReplace.push({
             target: node.arguments[0],
-            replacementFunc: () => {
+            replacementFunc: (target, current) => {
               // if the result has not been computed, log an error
               if (importUrls[idx - 1]) { return `"${importUrls[idx - 1]}"`; }
+              return current; // what to do with these???
             }
           });
           nodesToReplace.push({
@@ -331,7 +379,7 @@ export default class LivelyRollup {
       }
     });
 
-    importUrls = (await Promise.all(importUrls)).map(res => res.value); // fixme: detect if there was an error
+    importUrls = (await Promise.all(importUrls)).map(res => res.isError ? undefined : res.value); // fixme: detect if there was an error
 
     // last minute discovery of dynamic imports
     if (!this.hasDynamicImports) this.hasDynamicImports = importUrls.length > 0;
@@ -345,21 +393,28 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module to be transformed.
    */
   async transform (source, id) {
-    if (id === '__root_module__' || id.endsWith('.json')) {
+    if (id.endsWith('.json')) {
       return source;
     }
 
     if (this.needsDynamicLoadTransform(source)) {
       source = await this.instrumentDynamicLoads(source, id);
     }
+
+    if (id === '__root_module__') return source;
     // this capturing stuff needs to behave differently when we have dynamic imports. Why??
-    if (this.needsScopeToBeCaptured(id) || this.needsClassInstrumentation(id, source)) {
+    if (this.needsScopeToBeCaptured(id, null, source) || this.needsClassInstrumentation(id, source)) {
       source = this.captureScope(source, id);
     }
 
     return source;
   }
 
+  /**
+   * A custom resolve() callback for RollupJS
+   * @param { string } id - The module id to be resolved.
+   * @param { string } importer - The module id that is importing said module.
+   */
   async resolveId (id, importer) {
     if (id === 'fs') return 'fs';
     if (this.resolved[id]) return this.resolved[id];
@@ -414,6 +469,12 @@ export default class LivelyRollup {
     return this.resolved[id] = resolveModuleId(id);
   }
 
+  /**
+   * A custom load() for RollupJS. This handles the fetching of the source code
+   * for a given module id.
+   * @param { string } id - The module id to getch the source code for.
+   * @returns { string } The source code.
+   */
   async load (id) {
     id = this.redirect[id] || id;
     if (this.excludedModules.includes(id)) {
@@ -433,9 +494,6 @@ export default class LivelyRollup {
       const res = await this.getRootModule();
       return res;
     }
-    if (id === 'fs') {
-      return 'const fs = require("fs"); export default fs;';
-    }
     const modId = resolveModuleId(id);
     const pkg = resolvePackage(id);
     if (pkg && this.excludedModules.includes(pkg.name) &&
@@ -445,16 +503,26 @@ export default class LivelyRollup {
       return '';
     }
 
-    let s = await resource(modId).read();
+    let s;
+    try {
+      s = await resource(modId).read();
+    } catch (err) {
+      s = await resource(modId).makeProxied().read();
+    }
     if (id.endsWith('.json')) {
-      // return await resource(mod.id).read();
-      return translateToEsm(s);
+      return s;
+      // return translateToEsm(s); // no longer needed due to plugin
     }
     s = fixSourceForBugsInGoogleClosure(id, s);
 
     return s;
   }
 
+  /**
+   * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
+   * @param { object } warning - The warning object.
+   * @param { function } warn - The custom error function to utilize for logging the warning.
+   */
   warn (warning, warn) {
     switch (warning.code) {
       case 'THIS_IS_UNDEFINED':
@@ -465,30 +533,40 @@ export default class LivelyRollup {
     warn(warning);
   }
 
+  /**
+   * Instruments code of a module such that the scope of the module
+   * i.e. the class/function/variable definitions are captured and can
+   * be accessed at runtime. This is essential to enable serialization
+   * in bundles or allow resurrection builds that can be incrementally
+   * enhanced dynamically later on.
+   * @param { string } source - The source code of the module to be instrumented.
+   * @param { string } id - The id of the module.
+   * @returns { string } The instrumented source code.
+   */
   captureScope (source, id) {
     let classRuntimeImport = '';
-    const recorderString = `const __varRecorder__ = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
-    const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
-    const captureObj = { name: '__varRecorder__', type: 'Identifier' };
+    const recorderName = '__varRecorder__';
+    const recorderString = `const ${recorderName} = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
+    const captureObj = { name: recorderName, type: 'Identifier' };
     const parsed = ast.parse(source);
-
+    const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(resolveModuleId(id));
+
     if (this.needsClassInstrumentation(id)) {
       classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
     } else {
       opts.classToFunction = false;
     }
-    const instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+    let instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+    if (this.isComponentModule(id)) {
+      instrumented = ensureModuleMetaForComponentDefinition(instrumented, this.normalizedId(id), recorderName);
+    }
     const imports = [];
     let defaultExport = '';
     const toBeReplaced = [];
 
     ast.custom.forEachNode(instrumented, (n) => {
       if (n.type === 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
-      if (n.type === 'Literal' && typeof n.value === 'string' && n.value.match(/^styleguide:\/\/.+\/.+/)) {
-        if (!this.requiredMasterComponents.has(n.value)) console.log('DID NOT CAPTURE', n.value);
-        this.requiredMasterComponents.add(n.value);
-      }
       if (n.type === 'ExportDefaultDeclaration') {
         let exp;
         switch (n.declaration.type) {
@@ -533,8 +611,21 @@ export default class LivelyRollup {
     return recorderString + classRuntimeImport + ast.stringify(instrumented) + defaultExport;
   }
 
+  /**
+   * Automatically generates a variable name from a module id.
+   * This variable name can be used for storing the module scope
+   * in the bundle source code.
+   * @returns { string } The variable name.
+   */
   deriveVarName (moduleId) { return string.camelize(arr.last(moduleId.split('/')).replace(/\.js|\.min/g, '').split('.').join('')); }
 
+  /**
+   * Generates the source code of a module that should be loaded as a global module.
+   * Global modules are populating the global name space after they are executed.
+   * This requires us to capture the sideeffects on the global scope in order to extract
+   * the exports for the module scope.
+   * @param { string } moduleId - The id of the module.
+   */
   async wrapStandalone (moduleId) {
     moduleId = resolveModuleId(moduleId);
     const source = await resource(moduleId).read();
@@ -549,35 +640,35 @@ export default class LivelyRollup {
     } else {
       code = `
       var ${globalVarName};
-      (function(module /* exports, require */) {
-             // optional parameters
-             var exports = arguments.length > 0 && arguments[1] !== undefined ? arguments[1] : {};
-             var require = arguments.length > 1 && arguments[2] !== undefined ? arguments[2] : function () {};
-
-             // try to simulate node.js context
-             var exec = function(exports, require) {
-                ${source} 
-             };
-             exec(exports, require);
-             if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
-             if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) {
-                exec(); // try to run as global
-             }
-             ${globalVarName} = module.exports;
-           })({exports: {}});\n`;
+        (function(module /* exports, require */) {
+         // optional parameters
+         var exports = arguments.length > 0 && arguments[1] !== undefined ? arguments[1] : {};
+         var require = arguments.length > 1 && arguments[2] !== undefined ? arguments[2] : function () {};
+  
+         // try to simulate node.js context
+         var exec = function(exports, require) {
+            ${source} 
+         };
+         exec(exports, require);
+         if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) Object.assign(module.exports, exports);
+         if (typeof module.exports !== 'function' && Object.keys(module.exports).length === 0) {
+            exec(); // try to run as global
+         }
+         ${globalVarName} = module.exports;
+       })({exports: {}});\n`;
     }
     return { code, global: globalVarName };
   }
 
   async generateGlobals (systemJsEnabled) {
-    let code = '';
+    let code = ''; let importMap = false;
     const globals = {};
 
     if (!systemJsEnabled) {
       code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`;
     }
 
-    // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed?
+    // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed? Not entirely....
     for (const modId in this.globalModules) {
       const { code: newCode, global: newGlobal } = await this.wrapStandalone(modId);
       code += newCode;
@@ -587,55 +678,26 @@ export default class LivelyRollup {
     if (systemJsEnabled) {
       // we can use the stripped down https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js
       // however that does not allow us to transition to the dynamic lively.modules system
-      code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
-      // code += await resource(System.decanonicalize('systemjs/dist/system.js')).read();
-      // code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js').read();
-      // code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/master/dist/extras/named-register.js').read();
+      // so we can only utilize s.js in case we do not want to resurrect
+      if (this.isResurrectionBuild) {
+        code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
+      } else {
+        code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/6.12.1/dist/system.js').read();
+      }
       // stub the globals
-      code += `
-         const _origGet = System.get.bind(System);
-         System.get = (id, recorder = true) => (lively.FreezerRuntime && lively.FreezerRuntime.get(id, recorder)) || _origGet(id);
-      `;
-      // if (this.asBrowserModule) code += 'System.global = window;\n'
-      code += `
-         const _origDecanonicalize = System.decanonicalize.bind(System);
-         System.decanonicalize = (id) =>
-            lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
-      `;
-      code += 'window._missingExportShim = () => {};\n';
-      code += `
-         const _originalRegister = System.register.bind(System);
-         System.register = (name, deps, def) => {
-           if (typeof name !== 'string') {
-             def = deps;
-             deps = name;
-             return _originalRegister(deps, (exports, module) => {
-               let res = def(exports, module);
-               if (!res.setters) res.setters = [];
-               return res;
-             });
-           }
-           return _originalRegister(name, deps, (exports, module) => {
-             let res = def(exports, module);
-             if (!res.setters) res.setters = [];
-             return res;
-           })
-        };
-      `;
-      // map fs as global
-      code += `System.set('stub-transpiler', System.newModule({
-        translate: (load) => {
-           return load.source;
+      code += `(${instrumentStaticSystemJS.toString()})(System);\n`;
+
+      if (this.isResurrectionBuild) { // for the time being and where we are still tied to old SystemJS
+        for (const id of this.excludedModules.concat(this.asBrowserModule ? ['fs', 'events'] : [])) {
+          code += `System.set("${id}", System.newModule({ default: {} }));\n`;
         }
-      }));\n`;
-      code += `System.config({
-        transpiler: 'stub-transpiler'
-      });\n`;
-      code += 'System.trace = false;\n';
-      for (const id of this.excludedModules.concat(this.asBrowserModule ? ['fs', 'events'] : [])) {
-        // code += `"${id}": "@empty",`
-        code += `System.set("${id}", System.newModule({ default: {} }));\n`;
-        // code += `System.register("${id}", [], (exports) => ({ execute: () => { console.log('loaded ${id}'); exports({ default: {} }) }, setters: []}));\n`;
+      } else {
+        // generate a import map
+        importMap = '<script type="systemjs-importmap">\n{\n"imports": {\n';
+        importMap += this.excludedModules
+          .concat(this.asBrowserModule ? ['fs', 'events'] : [])
+          .map(id => `"${id}": "./@empty"`).join(',\n');
+        importMap += '\n  }\n}\n</script>';
       }
     } else {
       for (const id of this.excludedModules) {
@@ -645,7 +707,7 @@ export default class LivelyRollup {
     }
 
     return {
-      code, globals
+      code, globals, importMap
     };
   }
 
@@ -686,27 +748,30 @@ export default class LivelyRollup {
   }
 
   async rollup (compressBundle, output) {
-    const li = LoadingIndicator.open('Freezing Part', { status: 'Bundling...' });
     let depsCode, bundledCode, splitModule;
+    const li = LoadingIndicator.open('Freezing ' + (this.rootModule ? 'module' : 'snapshot'));
+    li.status = 'Bundling...';
 
     if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
 
-    await li.whenRendered();
+    await li.whenRendered(); // ensure that the loading indicator is visible
+    let importMap;
     try {
       const bundle = await Rollup.rollup({
-        input: this.rootModule ? this.rootModule.id : '__root_module__',
+        input: '__root_module__',
         shimMissingExports: true,
         onwarn: (warning, warn) => { return this.warn(warning, warn); },
         plugins: [{
           resolveId: async (id, importer) => {
-            const res = await this.resolveId(id, importer);
-            return res;
+            return await this.resolveId(id, importer);
           },
-          resolveDynamicImport: (id, importer) => {
+          resolveDynamicImport: (node, importer) => {
             // schedule a request to initiate a nested rollup that bundles
             // the dynamically loaded bundles separately
-            this.dynamicModules.add(resolveModuleId(id));
-            const res = this.resolveId(id, importer); // dynamic imports are never excluded
+            if (node.type) return null; // treat this as external
+            const id = node;
+            // this.dynamicModules.add(resolveModuleId(id));
+            const res = this.resolveId(id, importer); // dynamic imports are never excluded. WRONG
             if (res && obj.isString(res)) {
               return {
                 external: false,
@@ -716,29 +781,47 @@ export default class LivelyRollup {
             return res;
           },
           load: async (id) => {
-            const src = await this.load(id);
-            return src;
+            return await this.load(id);
           },
           transform: async (source, id) => { return await this.transform(source, id); }
         }, jsonPlugin()]
       });
       let globals;
-      ({ code: depsCode, globals } = await this.generateGlobals(this.hasDynamicImports));
+      ({ code: depsCode, globals, importMap } = await this.generateGlobals(this.hasDynamicImports));
       if (this.hasDynamicImports) {
         splitModule = (await bundle.generate({ format: 'system', globals }));
-      } else { bundledCode = (await bundle.generate({ format: this.asBrowserModule ? 'iife' : 'cjs', globals, name: this.globalName || 'frozenPart' })).output[0].code; }
+      } else {
+        bundledCode = (await bundle.generate({
+          format: this.asBrowserModule ? 'iife' : 'cjs',
+          name: this.globalName || 'frozenPart',
+          globals
+        })).output[0].code;
+      }
     } finally {
       li.remove();
     }
 
     let res;
-    if (splitModule) {
-      res = splitModule.output;
-      // it seems like rollup sometimes returns duplicates which are optimized away by closure
-      // causing issues when reassigned the minified pieces
-      // res = arr.uniqBy(res, (snipped1, snipped2) => snipped1.code === snipped2.code);
-      const loadCode = `
-        
+    if (this.hasDynamicImports) {
+      res = await this.handleSplittedBuild(splitModule.output, depsCode, output);
+      res.format = 'systemjs';
+    } else {
+      res = await this.transpileAndCompressOnServer({
+        depsCode, bundledCode: bundledCode, output, compressBundle
+      });
+      res.format = 'global';
+    }
+    res.assets = this.assetsToCopy;
+    res.rollup = this;
+    res.importMap = importMap;
+
+    return res;
+  }
+
+  async handleSplittedBuild (modules, dependencies, output) {
+    // it seems like rollup sometimes returns duplicates which are optimized away by closure
+    // causing issues when reassigned the minified pieces
+    const loadCode = `
         window.frozenPart = {
           renderFrozenPart: (domNode, baseURL) => {
             if (baseURL) System.config( { baseURL });
@@ -746,68 +829,44 @@ export default class LivelyRollup {
             System.config({
               meta: {
                ${
-                res.map(snippet => `[baseURL + '${snippet.fileName}']: {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
+                modules.map(snippet => `[baseURL + '${snippet.fileName}']: {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
                 }
               }
             });
-            System.import("__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
+            System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
           }
         }
       `;
       // concat all snippets and compile them on server
       // insert hint strings
-      res.forEach((snippet, i) => {
-        snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",`);
-      });
+    modules.forEach((snippet, i) => {
+      snippet.instrumentedCode = snippet.code.replace('System.register(', `System.register("${i}",`);
+    });
 
-      const { min } = await this.transpileAndCompressOnServer({
-        depsCode,
-        bundledCode: [loadCode, ...res.map(snippet => snippet.instrumentedCode)].join('\n'),
-        output,
-        compressBundle: false
-      });
+    const { min } = await this.transpileAndCompressOnServer({
+      depsCode: dependencies,
+      bundledCode: [loadCode, ...modules.map(snippet => snippet.instrumentedCode)].join('"moppler";'),
+      output,
+      compressBundle: false
+    });
 
-      // let [compiledLoad, ...compiledSnippets] = [depsCode + loadCode, ...res.map(snippet => snippet.instrumentedCode)]
-      let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /\nSystem.register\(/);
+    let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /"moppler";\n?System.register\(/);
 
-      // ensure that all compiled snippets are present
-      // clear the hints
-      const adjustedSnippets = new Map(); // ensure order
-      res.forEach((snippet, i) => {
-        adjustedSnippets.set(i, snippet.code);
-      });
-      compiledSnippets.forEach((compiledSnippet) => {
-        const hint = Number(compiledSnippet.match(/\"[0-9]+\"/)[0].slice(1, -1));
-        adjustedSnippets.set(hint, compiledSnippet.replace(/\"[0-9]+\"\,/, 'System.register('));
-      });
-      compiledSnippets = [...adjustedSnippets.values()];
+    // ensure that all compiled snippets are present
+    // clear the hints
+    const adjustedSnippets = new Map(); // ensure order
+    modules.forEach((snippet, i) => {
+      adjustedSnippets.set(i, snippet.code);
+    });
+    compiledSnippets.forEach((compiledSnippet) => {
+      const hint = Number(compiledSnippet.match(/\"[0-9]+\"/)[0].slice(1, -1));
+      adjustedSnippets.set(hint, compiledSnippet.replace(/\"[0-9]+\"\,/, 'System.register('));
+    });
+    compiledSnippets = [...adjustedSnippets.values()];
 
-      res.load = { min: compiledLoad };
-      for (const [snippet, compiled] of arr.zip(res, compiledSnippets)) { snippet.min = compiled; }
-    } else {
-      res = await this.transpileAndCompressOnServer({
-        depsCode, bundledCode: bundledCode, output, compressBundle
-      });
-    }
-
-    res.format = !this.hasDynamicImports ? 'global' : 'systemjs';
-    for (const part in this.dynamicParts) {
-      this.getAssetsFromSnapshot(this.dynamicParts[part]);
-    }
-    // extract the master components
-    res.masterComponents = {};
-    for (const comp of this.requiredMasterComponents) {
-      const snap = serialize(await resource(comp).read());
-      this.getAssetsFromSnapshot(snap);
-      res.masterComponents[comp] = snap;
-    }
-    res.dynamicParts = this.dynamicParts;
-    res.assets = this.assetsToCopy;
-    // res.masterComponents = this.requiredMasterComponents];
-
-    res.rollup = this;
-
-    return res;
+    modules.load = { min: compiledLoad };
+    for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) { snippet.min = compiled; }
+    return modules;
   }
 
   async transpileAndCompressOnServer ({
@@ -823,15 +882,12 @@ export default class LivelyRollup {
     const li = LoadingIndicator.open('Freezing Part', { status: 'Optimizing...' });
     const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
     const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
-    let polyfills = '';
-    polyfills += !includePolyfills ? '' : await resource(await normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
-
+    const polyfills = !includePolyfills ? '' : await resource(await normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
     const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
 
     // write file
     if (!optimize) { li.remove(); return { code, min: code }; }
     const res = await compileOnServer(code, li, fileName, this.useTerser); // seems to be faster for now
-    // res = await compileViaGoogle(code, li, fileName);
 
     li.remove();
     return res;
