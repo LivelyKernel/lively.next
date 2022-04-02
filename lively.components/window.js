@@ -1,7 +1,7 @@
 import { arr, promise } from 'lively.lang';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import {
-  Label, 
+  Label,
   morph,
   Morph
 } from 'lively.morphic';
@@ -31,7 +31,8 @@ export default class Window extends Morph {
             header: this.get('header'),
             resizer: this.get('resizer'),
             windowControls: this.get('window controls'),
-            windowTitle: this.get('window title')
+            windowTitle: this.get('window title'),
+            contentsWrapper: this.get('contents wrapper')
           };
         }
       },
@@ -45,6 +46,8 @@ export default class Window extends Morph {
       styleClasses: { defaultValue: ['active'] },
       clipMode: { defaultValue: 'hidden' },
       resizable: { defaultValue: true },
+      resizerInset: { readOnly: true, get () { return 10; } },
+      resizerOutset: { readOnly: true, get () { return -this.resizerInset * 0.75; } },
 
       title: {
         after: ['submorphs'],
@@ -73,12 +76,13 @@ export default class Window extends Morph {
         after: ['submorphs'],
         derived: true,
         get () {
-          return arr.withoutAll(this.submorphs, [this.get('header'), this.get('resizer')])[0];
+          return arr.withoutAll(this.ui.contentsWrapper.submorphs, [this.get('header')])[0];
         },
         set (morph) {
-          const ctrls = [this.get('header'), this.get('resizer')];
-          arr.withoutAll(this.submorphs, ctrls).forEach(ea => ea.remove());
-          if (morph) this.addMorph(morph, this.resizable ? this.get('resizer') : false);
+          const { contentsWrapper } = this.ui;
+          const ctrls = [this.get('header')];
+          arr.withoutAll(contentsWrapper.submorphs, ctrls).forEach(ea => ea.remove());
+          if (morph) contentsWrapper.addMorph(morph);
           this.relayoutWindowControls();
         }
       },
@@ -102,7 +106,7 @@ export default class Window extends Morph {
   }
 
   build () {
-    this.submorphs = [this.buildHeader(), this.buildResizer()];
+    this.submorphs = [{ name: 'contents wrapper', submorphs: [this.buildHeader()] }, this.buildResizer()];
   }
 
   async openWindowMenu () {
@@ -146,16 +150,17 @@ export default class Window extends Morph {
   }
 
   async toggleFader (active) {
-    const fader = this.getSubmorphNamed('fader') || this.addMorph({
+    const fader = this.getSubmorphNamed('fader') || this.ui.contentsWrapper.addMorph({
       position: pt(0, 0),
       name: 'fader',
       fill: Color.black.withA(0.5),
       opacity: 0,
       extent: this.extent
     });
+    const bounds = this.position.extent(this.extent);
     if (active) {
-      const shiftedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.bounds());
-      this._originalBounds = this.bounds();
+      const shiftedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(bounds);
+      this._originalBounds = bounds;
       this.animate({ bounds: shiftedBounds, duration: 300 });
       this.borderColor = Color.gray.darker();
       this._faderTriggered = true;
@@ -189,12 +194,13 @@ export default class Window extends Morph {
     const resizer = this.ui.resizer;
     const labelBounds = innerB.withHeight(25);
     const header = this.ui.header;
+    const wrapper = this.ui.contentsWrapper;
     const lastButtonOrWrapper = this.ui.windowControls;
     const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
     const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
 
     // resizer
-    resizer.bottomRight = innerB.bottomRight();
+    resizer.position = pt(0, 0);
 
     // title
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
@@ -205,6 +211,7 @@ export default class Window extends Morph {
     if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) { this.targetMorph.setBounds(this.targetMorphBounds()); }
 
     header.width = this.width;
+    wrapper.extent = this.extent;
   }
 
   ensureNotOverTheTop () {
@@ -316,7 +323,7 @@ export default class Window extends Morph {
   resizeAt ([corner, dist]) {
     let right;
     let x, y, height, width;
-    const b = this.bounds();
+    const b = this.position.extent(this.extent);
     switch (corner) {
       case 'right':
         this.resizeBy(dist.withY(0)); break;
@@ -325,14 +332,13 @@ export default class Window extends Morph {
       case 'bottom':
         this.resizeBy(dist.withX(0)); break;
       case 'left':
-        right = this.right;
         this.resizeBy(dist.withY(0).negated());
-        this.right = right;
+        this.position = pt(b.x + dist.x, b.y);
         break; // more adjustment needed
       case 'bottom left':
-        right = this.right;
-        this.resizeBy(dist.scaleByPt(pt(-1, 1)));
-        this.right = right;
+        dist = dist.scaleByPt(pt(-1, 1));
+        this.resizeBy(dist);
+        this.position = pt(b.x - dist.x, b.y);
         break; // adjustment needed
       case 'top':
         x = b.x;
@@ -362,34 +368,40 @@ export default class Window extends Morph {
   relayoutResizer () {
     try {
       const resizer = this.getSubmorphNamed('resizer');
+      const { resizerInset, resizerOutset } = this;
       const {
         submorphs: [
-          rightResizer, bottomRightResizer, leftResizer,
-          bottomLeftResizer, bottomResizer, topResizer,
-          topLeftResizer, topRightResizer
+          rightResizer,
+          leftResizer,
+          bottomResizer,
+          topResizer,
+          bottomLeftResizer,
+          bottomRightResizer,
+          topLeftResizer,
+          topRightResizer
         ]
       } = resizer;
-      const resizerInset = 10;
 
-      rightResizer.height = this.height - resizerInset;
-      rightResizer.bottomRight = this.extent.subXY(0, resizerInset);
+      rightResizer.height = this.height + resizerOutset;
+      rightResizer.bottomRight = this.extent.subXY(resizerOutset, resizerInset + resizerOutset); // fix Y
 
-      bottomRightResizer.bottomRight = this.extent;
+      bottomRightResizer.bottomRight = this.extent.subXY(resizerOutset, resizerOutset);
 
-      leftResizer.height = this.height - resizerInset;
-      leftResizer.bottomLeft = pt(0, this.height - resizerInset);
+      leftResizer.height = this.height + resizerOutset;
+      leftResizer.bottomLeft = pt(resizerOutset, this.height - (resizerInset + resizerOutset)); // fix Y
 
-      bottomLeftResizer.bottomLeft = pt(0, this.height);
+      bottomLeftResizer.bottomLeft = pt(resizerOutset, this.height - resizerOutset);
 
-      bottomResizer.width = this.width - 2 * resizerInset;
-      bottomResizer.bottomLeft = pt(resizerInset, this.height);
+      bottomResizer.width = this.width + resizerOutset;
+      bottomResizer.bottomLeft = pt(resizerInset + resizerOutset, this.height - resizerOutset); // fix X
 
-      topResizer.width = this.width - 2 * resizerInset;
-      topResizer.bottomLeft = pt(resizerInset, resizerInset / 4);
+      topResizer.width = this.width + resizerOutset;
+      topResizer.height = resizerInset;
+      topResizer.bottomLeft = pt(resizerInset + resizerOutset, resizerInset + resizerOutset); // fix X
 
-      topLeftResizer.topLeft = pt(0, 0);
+      topLeftResizer.topLeft = pt(resizerOutset, resizerOutset);
 
-      topRightResizer.topRight = pt(this.width, 0);
+      topRightResizer.topRight = pt(this.width - resizerOutset, resizerOutset);
 
       resizer.position = pt(0, 0);
     } catch (err) {
@@ -401,10 +413,10 @@ export default class Window extends Morph {
     const win = this;
     let rightResizer, bottomRightResizer, leftResizer, bottomLeftResizer, bottomResizer, topResizer, topLeftResizer, topRightResizer;
     const fill = Color.transparent;
-    const resizerInset = 10;
+    const { resizerInset } = this;
     const resizer = morph({
       name: 'resizer',
-      fill: Color.transparent,
+      fill,
       position: pt(0, 0),
       submorphs: [
         rightResizer = morph({
@@ -414,26 +426,12 @@ export default class Window extends Morph {
           draggable: true,
           nativeCursor: 'ew-resize'
         }),
-        bottomRightResizer = morph({
-          name: 'bottom right resizer',
-          fill,
-          extent: pt(10, 10),
-          draggable: true,
-          nativeCursor: 'nwse-resize'
-        }),
         leftResizer = morph({
           name: 'left resizer',
           fill,
           width: resizerInset,
           draggable: true,
           nativeCursor: 'ew-resize'
-        }),
-        bottomLeftResizer = morph({
-          name: 'bottom left resizer',
-          draggable: true,
-          fill,
-          extent: pt(10, 10),
-          nativeCursor: 'nesw-resize'
         }),
         bottomResizer = morph({
           name: 'bottom resizer',
@@ -449,18 +447,32 @@ export default class Window extends Morph {
           height: resizerInset / 4,
           nativeCursor: 'ns-resize'
         }),
+        bottomLeftResizer = morph({
+          name: 'bottom left resizer',
+          draggable: true,
+          fill,
+          extent: pt(resizerInset, resizerInset),
+          nativeCursor: 'nesw-resize'
+        }),
+        bottomRightResizer = morph({
+          name: 'bottom right resizer',
+          fill,
+          extent: pt(resizerInset, resizerInset),
+          draggable: true,
+          nativeCursor: 'nwse-resize'
+        }),
         topLeftResizer = morph({
           name: 'top left resizer',
           draggable: true,
           fill,
-          extent: pt(10, 10),
+          extent: pt(resizerInset, resizerInset),
           nativeCursor: 'nwse-resize'
         }),
         topRightResizer = morph({
           name: 'top rigth resizer',
           draggable: true,
           fill,
-          extent: pt(10, 10),
+          extent: pt(resizerInset, resizerInset),
           nativeCursor: 'nesw-resize'
         })
       ]
