@@ -11,7 +11,9 @@
     "uglify-es": "^3.3.9",
     "google-closure-compiler-linux": "^20200927.0.0",
     "google-closure-compiler-osx": "^20200927.0.0",
-    "wasm-brotli": "1.0.2"
+    "wasm-brotli": "1.0.2",
+    "rollup": "2.28.2",
+    "@rollup/plugin-json": "4.1.0"
   },
   "systemjs": {
     "meta": {
@@ -22,7 +24,8 @@
     "map": {
       "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
       "semver": "https://jspm.dev/semver",
-      "rollup": "https://jspm.dev/rollup@2.28.2"
+      "rollup": "esm://cache/rollup@2.28.2",
+      "@rollup/plugin-json": "esm://cache/@rollup/plugin-json"
     }
   },
   "lively": {
