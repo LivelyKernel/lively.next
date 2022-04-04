@@ -104,12 +104,7 @@ function initWorker () {
         messenger.answer(msg, true);
       },
       freezeSnapshot: async function (msg, messenger) {
-        const { FreezerPart } = await System.import('lively.freezer/part.js');
-        const { deserialize } = await System.import('lively.serializer2');
-        const { resource } = await System.import('lively.resources');
-        const { snapshot, path, progress } = deserialize(msg.data);
-        const frozenPart = await FreezerPart.fromSnapshot(JSON.parse(snapshot));
-        messenger.answer(msg, await frozenPart.standalone({ progress: progress && progress.asWorkerEndpoint(msg) }));
+
       },
       exportsOfModules: async function (msg, messenger) {
         const { localInterface } = await System.import('lively-system-interface');
