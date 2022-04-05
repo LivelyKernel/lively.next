@@ -38,7 +38,7 @@ import lint from '../linter.js';
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 import LESSEditorPlugin from '../../css/less/editor-plugin.js';
-import { ComponentChangeTracker } from '../../component/editor.js';
+
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
@@ -1228,7 +1228,6 @@ export class BrowserModel extends ViewModel {
       this.updateModuleList();
     } finally {
       this.indicateFrozenModuleIfNeeded();
-      await this.injectComponentTrackers();
       if (deferred) {
         this.state.moduleUpdateInProgress = null;
         deferred.resolve(m);
@@ -1651,7 +1650,6 @@ export class BrowserModel extends ViewModel {
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
-      await this.injectComponentTrackers();
       sourceEditor.focus();
       // This is to keep the editor from "jumping around" when saving and the source code gets replaced by **altered** output of the linter.
       // However, this is not a clean solutions. E.g. when empty lines are removed by the linter, the cursor position will be off afterwards.
@@ -1936,11 +1934,6 @@ export class BrowserModel extends ViewModel {
 
   addModuleChangeWarning (mid) {
     this.state.moduleChangeWarning = mid;
-  }
-
-  async injectComponentTrackers () {
-    const { url: moduleId } = this.selectedModule;
-    await ComponentChangeTracker.injectComponentTrackers(moduleId);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
