@@ -504,7 +504,7 @@ class ModuleInterface {
 
     const { System, id, recorder } = this;
 
-    // System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
+    System.debug && console.log(`[lively.modules] ${this.shortName()} defines ${varName}`);
 
     const metaSym = Symbol.for('lively-object-meta');
     const moduleSym = Symbol.for('lively-module-meta');

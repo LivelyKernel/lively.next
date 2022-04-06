@@ -1,11 +1,9 @@
-/* global System,process */
-import { parse, stringify, nodes, isValidIdentifier } from 'lively.ast';
+/* global System */
+import { parse, nodes, isValidIdentifier } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { string, properties } from 'lively.lang';
-import { resource } from 'lively.resources';
 import { classToFunctionTransform } from 'lively.classes';
-import { ensureModuleMetaForComponentDefinition } from 'lively.source-transform';
 
 import {
   install as installHook,
@@ -13,192 +11,9 @@ import {
   isInstalled as isHookInstalled
 } from './hooks.js';
 import module, { detectModuleFormat } from './module.js';
+import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cache.js';
 
 const isNode = System.get('@system-env').node;
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// helpers
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function canonicalURL (url) {
-  // removes double slashes, doesn't resolve relative parts yet
-  const m = url.match(/([^:]+:\/\/)(.*)/);
-  if (m) {
-    var protocol = m[1];
-    url = m[2];
-  }
-  url = url.replace(/([^:])\/[\/]+/g, '$1/');
-  return (protocol || '') + url;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// module cache experiment
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export class ModuleTranslationCache {
-  static get earliestDate () {
-    return +(new Date('Sun Oct 18 2020 16:00:00 GMT-0800 (PST)'));
-  }
-
-  cacheModuleSource (moduleId, hash, source) { throw new Error('not yet implemented'); }
-  fetchStoredModuleSource (moduleId) { throw new Error('not yet implemented'); }
-  deleteCachedData (moduleId) { throw new Error('not yet implemented'); }
-}
-
-let nodejsCacheDirURL = null;
-function prepareNodejsCaching () {
-  const fs = System._nodeRequire('fs');
-  const path = System._nodeRequire('path');
-  const isWindows = process.platform === 'win32';
-  const nodejsCacheDir =
-        !isWindows && process.cwd() === '/'
-          ? path.join(process.env.HOME, '.lively.next')
-          : process.cwd();
-  nodejsCacheDirURL = isWindows
-    ? `file:///${nodejsCacheDir.replace(/\\/g, '/')}`
-    : `file://${nodejsCacheDir}`;
-  if (!fs.existsSync(nodejsCacheDir)) fs.mkdirSync(nodejsCacheDir);
-}
-
-export class NodeModuleTranslationCache extends ModuleTranslationCache {
-  get moduleCacheDir () {
-    if (!nodejsCacheDirURL) prepareNodejsCaching();
-    return resource(`${nodejsCacheDirURL}/.module_cache/`);
-  }
-
-  async ensurePath (path) {
-    if (await this.moduleCacheDir.join(path).exists()) return;
-    let url = ''; let r; let packageInfo;
-    for (const dir of path.split('/')) {
-      url += dir + '/';
-
-      r = this.moduleCacheDir.join(url);
-      // why not use r.ensureExistance() ??
-      if (!await r.exists()) {
-        try { await r.mkdir(); } catch (e) { if (e.code != 'EEXIST') throw e; }
-      }
-
-      r = resource('file://' + url + '/package.json');
-      if (await r.exists()) {
-        packageInfo = await r.read();
-        await this.moduleCacheDir.join(url + '/package.json').write(packageInfo);
-      }
-    }
-  }
-
-  async dumpModuleCache () {
-    for (const path in System._nodeRequire('module').Module._cache) {
-      const r = resource('file://' + path);
-      if (await r.exists()) { await this.cacheModuleSource(path, 'NO_HASH', await r.read()); }
-    }
-  }
-
-  getFileName (moduleId) {
-    return moduleId.match(/([^\/]*.)(\.js)?$/)[0];
-  }
-
-  async fetchStoredModuleSource (moduleId) {
-    var moduleId = moduleId.replace('file://', '');
-    const fname = this.getFileName(moduleId);
-    const fpath = moduleId.replace(fname, '');
-    const r = this.moduleCacheDir.join(moduleId);
-    if (!await r.exists()) return null;
-    const { birthtime: timestamp } = await r.stat();
-    const source = await r.read();
-    const hash = await this.moduleCacheDir.join(fpath + '/.hash_' + fname).read();
-    return { source, timestamp, hash };
-  }
-
-  async cacheModuleSource (moduleId, hash, source) {
-    var moduleId = moduleId.replace('file://', '');
-    const fname = this.getFileName(moduleId);
-    const fpath = moduleId.replace(fname, '');
-    await this.ensurePath(fpath);
-    await this.moduleCacheDir.join(moduleId).write(source);
-    await this.moduleCacheDir.join(fpath + '/.hash_' + fname).write(hash);
-  }
-
-  async deleteCachedData (moduleId) {
-    moduleId = moduleId.replace('file://', '');
-    const fname = this.getFileName(moduleId);
-    const fpath = moduleId.replace(fname, '');
-    const r = this.moduleCacheDir.join(moduleId);
-    if (!await r.exists()) return false;
-    await r.remove();
-    return true;
-  }
-}
-
-export class BrowserModuleTranslationCache extends ModuleTranslationCache {
-  constructor (dbName = 'lively.modules-module-translation-cache') {
-    super();
-    this.version = 2;
-    this.sourceCodeCacheStoreName = 'sourceCodeStore';
-    this.dbName = dbName;
-    this.db = this.openDb();
-  }
-
-  openDb () {
-    const req = System.global.indexedDB.open(this.version);
-    return new Promise((resolve, reject) => {
-      req.onsuccess = function (evt) { resolve(this.result); };
-      req.onerror = evt => reject(evt.target);
-      req.onupgradeneeded = (evt) =>
-        evt.currentTarget.result.createObjectStore(this.sourceCodeCacheStoreName, { keyPath: 'moduleId' });
-    });
-  }
-
-  deleteDb () {
-    const req = System.global.indexedDB.deleteDatabase(this.dbName);
-    return new Promise((resolve, reject) => {
-      req.onerror = evt => reject(evt.target);
-      req.onsuccess = evt => resolve(evt);
-    });
-  }
-
-  async closeDb () {
-    const db = await this.db;
-    const req = db.close();
-    return new Promise((resolve, reject) => {
-      req.onsuccess = function (evt) { resolve(this.result); };
-      req.onerror = evt => reject(evt.target.errorCode);
-    });
-  }
-
-  async cacheModuleSource (moduleId, hash, source) {
-    const db = await this.db;
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.sourceCodeCacheStoreName], 'readwrite');
-      const store = transaction.objectStore(this.sourceCodeCacheStoreName);
-      const timestamp = Date.now();
-      store.put({ moduleId, hash, source, timestamp });
-      transaction.oncomplete = resolve;
-      transaction.onerror = reject;
-    });
-  }
-
-  async fetchStoredModuleSource (moduleId) {
-    const db = await this.db;
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.sourceCodeCacheStoreName]);
-      const objectStore = transaction.objectStore(this.sourceCodeCacheStoreName);
-      const req = objectStore.get(moduleId);
-      req.onerror = reject;
-      req.onsuccess = evt => resolve(req.result);
-    });
-  }
-
-  async deleteCachedData (moduleId) {
-    const db = await this.db;
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.sourceCodeCacheStoreName], 'readwrite');
-      const objectStore = transaction.objectStore(this.sourceCodeCacheStoreName);
-      const req = objectStore.delete(moduleId);
-      req.onerror = reject;
-      req.onsuccess = evt => resolve(req.result);
-    });
-  }
-}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // code instrumentation
@@ -213,7 +28,6 @@ let exceptions = [
   id => id.endsWith('dist/acorn.js') || id.endsWith('dist/escodegen.browser.js') || id.endsWith('bowser.js') || id.endsWith('TweenMax.min.js'),
   id => id.endsWith('babel-core/browser.js') || id.endsWith('system.src.js') || id.includes('systemjs-plugin-babel')
 ];
-const pendingConfigs = []; const configInitialized = false;
 
 function getExceptions () { return exceptions; }
 function setExceptions (v) { return exceptions = v; }
@@ -292,7 +106,6 @@ export function prepareTranslatedCodeForSetterCapture (System, source, moduleId,
         'moduleEnv'),
       literal(moduleId))
   };
-  const isGlobal = module.recorderName === 'System.global';
 
   try {
     const rewrittenSource = evalCodeTransformOfSystemRegisterSetters(source, tfmOptions);
@@ -368,40 +181,40 @@ async function customTranslate (proceed, load) {
   const mod = module(System, load.name);
   let instrumented = false;
   const isEsm = format === 'esm';
-  const isCjs = format === 'cjs';
-  const isGlobal = format === 'global';
 
   mod.setSource(load.source);
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // cache experiment part 1
+  let useCache, indexdb, hashForCache;
   try {
-    var useCache = System.useModuleTranslationCache;
-    var indexdb = System.global.indexedDB;
-    var hashForCache = useCache && String(string.hashCode(load.source));
+    useCache = System.useModuleTranslationCache;
+    indexdb = System.global.indexedDB;
+    hashForCache = useCache && String(string.hashCode(load.source));
     if (useCache && indexdb && isEsm) {
-      var cache = System._livelyModulesTranslationCache ||
+      let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-      var stored = await cache.fetchStoredModuleSource(load.name);
-      if (stored && stored.hash == hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate) {
+      let stored = await cache.fetchStoredModuleSource(load.name);
+      if (stored && stored.hash === hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate) {
         if (stored.source) {
           meta.format = 'register';
-          meta.deps = []; // the real deps will be populated when the
+          // the real deps will be populated when the
           // system register code is run, still need
           // to define it here to avoid an
           // undefined entry later!
+          meta.deps = [];
 
           debug && console.log('[lively.modules customTranslate] loaded %s from browser cache after %sms', load.name, Date.now() - start);
           return Promise.resolve(stored.source);
         }
       }
     } else if (isNode && useCache && isEsm) {
-      var cache =
+      let cache =
         System._livelyModulesTranslationCache ||
         (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
-      var stored = await cache.fetchStoredModuleSource(load.name);
+      let stored = await cache.fetchStoredModuleSource(load.name);
       if (
-        stored && stored.hash == hashForCache &&
+        stored && stored.hash === hashForCache &&
         stored.timestamp >= NodeModuleTranslationCache.earliestDate
       ) {
         if (stored.source) {
@@ -425,39 +238,28 @@ async function customTranslate (proceed, load) {
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  var options = {};
+  let options = {};
+  let source = load.source;
 
   if (isEsm) {
     mod.recorderName = '__lvVarRecorder';
     if (mod.recorder === System.global) { mod.unloadEnv(); }
     load.metadata.format = 'esm';
-    var { options, source } = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug);
+    ({ options, source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
     load.source = source;
     load.metadata['lively.modules instrumented'] = true;
     instrumented = true;
     debug && console.log('[lively.modules] loaded %s as es6 module', load.name);
-    // debug && console.log(load.source)
   } else if (load.metadata.format === 'global') {
     mod.recorderName = 'System.global';
     mod.recorder = System.global;
     load.metadata.format = 'global';
-    var { options, source } = prepareCodeForCustomCompile(System, load.source, load.name, mod, debug);
+    ({ options, source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
     load.source = source;
     load.metadata['lively.modules instrumented'] = true;
     instrumented = true;
     debug && console.log('[lively.modules] loaded %s as instrumented global module', load.name);
   }
-
-  // cjs is currently not supported to be instrumented
-  // } else if (isCjs && isNode) {
-  //   load.metadata.format = "cjs";
-  //   var id = cjs.resolve(load.address.replace(/^file:\/\//, ""));
-  //   load.source = cjs._prepareCodeForCustomCompile(load.source, id, cjs.envFor(id), debug);
-  //   load.metadata["lively.modules instrumented"] = true;
-  //   instrumented = true;
-  //   debug && console.log("[lively.modules] loaded %s as instrumented cjs module", load.name)
-  //   // console.log("[lively.modules] no rewrite for cjs module", load.name)
-  // }
 
   if (!instrumented) {
     debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
@@ -472,7 +274,7 @@ async function customTranslate (proceed, load) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // cache experiment part 2
     if (isNode && useCache && isEsm) {
-      var cache = System._livelyModulesTranslationCache ||
+      let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
       try {
         await cache.cacheModuleSource(load.name, hashForCache, translated);
@@ -481,7 +283,7 @@ async function customTranslate (proceed, load) {
         console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
       }
     } else if (useCache && indexdb && isEsm) {
-      var cache = System._livelyModulesTranslationCache ||
+      let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
       try {
         await cache.cacheModuleSource(load.name, hashForCache, translated);
