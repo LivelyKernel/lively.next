@@ -12,7 +12,7 @@ import * as ast from 'lively.ast';
 import { StyleguidePlugin, findLocalComponents } from './components/policy.js';
 
 function normalizeOptions (options) {
-  options = { reinitializeIds: false, plugins: [...allPlugins, new StyleguidePlugin()], ...options };
+  options = { reinitializeIds: false, plugins: allPlugins, ...options };
 
   if (options.reinitializeIds) {
     options.reinitializeIds = typeof options.reinitializeIds === 'function'

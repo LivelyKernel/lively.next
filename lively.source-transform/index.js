@@ -121,3 +121,19 @@ export function ensureModuleMetaForComponentDefinition (translated, moduleName, 
       return [exp, ...parse(`${stringify(exp.left)}[Symbol.for('lively-module-meta')] = { module: "${moduleName}", export: "${exp.left.property.name}"};`).body];
     });
 }
+
+export function ensureComponentDescriptors (translated, moduleName) {
+  return QueryReplaceManyVisitor.run(
+    typeof translated == 'string' ? parse(translated) : translated, `
+         // VariableDeclarator [
+              /:id Identifier [ @name ]
+               && /:init CallExpression [
+                   (/:callee Identifier [ @name == 'component'])
+                 ]
+              ]`,
+    (node) => {
+      const componentRef = node.id.name;
+      // replace the expression with ComponentDescriptor...
+      return parse(`const ${componentRef} = component.for(() => component(${node.init.arguments.map(n => stringify(n)).join(',')}), { module: "${moduleName}", export: "${componentRef}"}, ${componentRef})`).body[0].declarations;
+    });
+}

@@ -1,6 +1,6 @@
 import { arr, Path } from 'lively.lang';
 import { parse, stringify, transform, query, nodes } from 'lively.ast';
-import { capturing, es5Transpilation } from 'lively.source-transform';
+import { capturing, es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
 import { getGlobal } from './util.js';
 
 let { id, literal, member, objectLiteral } = nodes;
@@ -30,6 +30,10 @@ export function evalCodeTransform (code, options) {
   let parsed = parse(code, { withComments: true });
 
   options = processInlineCodeTransformOptions(parsed, options);
+
+  // A: Rewrite the component definitions to create component descriptors.
+  const moduleName = options.declarationWrapperName.includes(System.baseURL) && options.declarationWrapperName.split(System.baseURL)[1];
+  parsed = ensureComponentDescriptors(parsed, moduleName);
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.

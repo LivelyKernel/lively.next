@@ -155,7 +155,7 @@ export class ComponentPolicy {
     // where managesMorph(m) returns true
     this._overriddenProps = new WeakMap(); // keep the list of props that are overridden by that morph and not affected by master components
 
-    if (args.isMorph || typeof args === 'string') {
+    if (args.isMorph || typeof args === 'string' || args.isComponentDescriptor) {
       this.auto = args;
       if (args.isMorph && !args.isComponent) {
         this.auto.isComponent = true;
@@ -268,13 +268,11 @@ export class ComponentPolicy {
     const { derivedMorph } = aPolicy;
     const owners = derivedMorph.ownerChain();
     const topLevelComponent = arr.last([derivedMorph, ...owners]);
-    // we also need to take into account the master scoping
-    // avoiding ambiguos/clashing names!
     const policiesInHierarchy = [...owners.filter(m => m.owner && m.master).map(m => m.name).reverse(), derivedMorph.name];
     const { export: exportedName, module: modulePath } = topLevelComponent[Symbol.for('lively-module-meta')];
-    // this may just be leading to incorrect masters because the policies are not yet fully applied
     return {
-      __expr__: exportedName + policiesInHierarchy.map(policyOwner => `.get("${policyOwner}")`).join('') + '.master',
+      // fixme: remove ternary expression
+      __expr__: `(${exportedName}.isComponentDescriptor ? ${exportedName}.getComponent() : ${exportedName})` + policiesInHierarchy.map(policyOwner => `.get("${policyOwner}")`).join('') + '.master',
       bindings: { [modulePath]: [exportedName] }
     };
   }
@@ -742,6 +740,7 @@ export class ComponentPolicy {
   getOverriddenPropsInMasterContext (submorph) {
     let { auto } = this;
     if (auto.isPolicy) auto = auto.derivedMorph;
+    if (auto.isComponentDescriptor) auto = auto.getComponent();
     const nextPolicy = auto && auto.master;
     const correspondingMorph = this.derivedMorph === submorph ? auto : this.findCorrespondingMasterIn(auto, submorph);
     if (nextPolicy && correspondingMorph && nextPolicy.managesMorph(correspondingMorph)) {
@@ -805,40 +804,11 @@ export class ComponentPolicy {
     let master = auto;
     if (isHovered) {
       if (hover) master = hover;
-      // else if (master && master.isComponent) { // referencing a top level component
-      //   // drill down in the master chain if a different hover can be found on this component
-      //   let nextPolicy = master && master.master;
-      //   const seen = [];
-      //   while (nextPolicy) {
-      //     if (nextPolicy.hover) {
-      //       master = nextPolicy.hover;
-      //       break;
-      //     }
-      //     nextPolicy = Path('auto.master').get(nextPolicy); // if this references a policy again we break 
-      //     if (seen.includes(nextPolicy)) break; // break circular refs
-      //     seen.push(nextPolicy);
-      //   }
-      // }
     }
     if (isClicked) {
-      // master = auto; // start from beginning
       if (click) master = click;
-      // else {
-      //   // drill down in the master chain if a different click can be found
-      //   let superMaster = master && master.master;
-      //   const seen = [];
-      //   while (superMaster) {
-      //     if (superMaster.click) {
-      //       // take into account the overridden props of the masters in between
-      //       master = superMaster.click;
-      //       break;
-      //     }
-      //     superMaster = Path('auto.master').get(superMaster);
-      //     if (seen.includes(superMaster)) break;
-      //     seen.push(superMaster);
-      //   }
-      // }
     }
+    if (master && master.isComponentDescriptor) return master.getComponent();
     return master;
   }
 

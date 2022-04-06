@@ -1,7 +1,7 @@
 import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
-import { epiConnect } from 'lively.bindings';
+import { epiConnect, signal } from 'lively.bindings';
 import { adoptObject } from 'lively.classes/runtime.js';
 
 import { deserializeMorph, serializeMorph } from '../serialization.js';
@@ -16,6 +16,93 @@ import { ComponentPolicy } from './policy.js';
  * as long as we are reliant on the present collaboration plattforms and toolchains.
  * @module lively.morphic/components/core.js
  */
+
+/**
+ * When we define master components, we do not want them to directly evaluate
+ * to morphs themselves. Instead we return this ComponentDescriptor object
+ * which contains the following bits of information:
+ * 1. The module meta information about where the component's definition is stored.
+ * 2. A derivation info, which keeps a list of dependent component descriptors which need to be informed in case the master component's defintion changes.
+ * 3. A generator function that returns us a fresh instance of the master component. This can be used to create new derivations or the actual instance of the master component for direct manipulation.
+ */
+export class ComponentDescriptor {
+  static for (generatorFunction, meta, previousDescriptor) {
+    if (previousDescriptor && previousDescriptor.isComponentDescriptor) {
+      return previousDescriptor.init(generatorFunction, meta);
+    }
+    return new ComponentDescriptor(generatorFunction, meta);
+  }
+
+  /**
+   * Transforms the callsite white the component is declared into a proper ComponentDescriptor.for()
+   * call that ensures a descriptor is created and assigned to the component.
+   */
+  static transformCallsite (node) {
+    // Idea: Transform const compName = component(...args); => const compName = ComponentDescriptor.for(() => part(...args), { ...meta }, compName);
+  }
+
+  constructor (generatorFunction, meta) {
+    this.init(generatorFunction, meta);
+  }
+
+  get isComponentDescriptor () { return true; }
+
+  init (generatorFunction, meta) {
+    delete this._snap;
+    delete this._cachedComponent;
+    this.generatorFunction = generatorFunction;
+    this[Symbol.for('lively-module-meta')] = meta;
+    this.notifyDependents(); // get the derived components to notice!
+    return this;
+  }
+
+  derive () {
+    let m;
+    if (this._snap) {
+      // this should be both be able to serve an initial component and an initial part....
+      m = deserializeMorph(this._snap, { reinitializeIds: true, migrations: [] });
+    } else {
+      m = this.generatorFunction(); // more expensive
+      this.defaultViewModel = m.defaultViewModel;
+      this.viewModelClass = m.viewModelClass; // can this be done better??
+      this._snap = m._snap;
+    }
+    return m;
+  }
+
+  getComponent () {
+    let c = this._cachedComponent;
+    return c || (
+      c = this.derive(),
+      // c.withAllSubmorphsDo(m => {
+      //   if (m.master) m.master.applyIfNeeded(!m.master._appliedMaster);
+      // }),
+      c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
+      this._cachedComponent = c
+    );
+  }
+
+  getInstance () {
+    if (!this._cachedComponent) this.getComponent(); // always create component first
+    let inst = this.derive();
+    inst.isComponent = false;
+    inst.master = null; // delete the overridden props
+    inst.master = this;
+    inst._requestMasterStyling = false; // no need to apply the master for the instance
+    return inst;
+  }
+
+  async edit () {
+    const { ComponentChangeTracker } = await System.import('lively.ide/component/editor.js');
+    const c = this.getComponent();
+    if (!c._changeTracker) { new ComponentChangeTracker(c); }
+    c.openInWorld();
+  }
+
+  notifyDependents () {
+    signal(this, 'changed');
+  }
+}
 
 /**
  * A ViewModel allows the user to decouple custom UI code from the composed morphs.
@@ -261,6 +348,8 @@ export class ViewModel {
    * Install all of the exposed props in the view as defined.
    */
   reifyExposedProps () {
+    // fixme: also delete previously exposed props such that they
+    //        are no longer exposed!
     const { properties: props } = this.propertiesAndPropertySettings();
     const descriptors = properties.allPropertyDescriptors(this);
     for (let prop of this.expose || []) {
@@ -478,29 +567,23 @@ export class PolicyRetargeting {
  * @param { object } overriddenProps - A nested object containing properties that override the original properties of morphs within the submorph hierarchy.
  * @returns { Morph } A new morph derived from the master component.
  */
-export function part (masterComponent, overriddenProps = {}, oldParam) {
-  if (oldParam) overriddenProps = oldParam;
-  let snap = masterComponent._snap;
-  if (!snap) {
-    snap = serializeMorph(masterComponent);
-    delete snap.snapshot[snap.id].props.master;
-    delete snap.snapshot[snap.id].props.isComponent;
+export function part (masterComponent, overriddenProps = {}) {
+  let p;
+  if (masterComponent.isComponentDescriptor) {
+    p = masterComponent.getInstance();
+  } else {
+    // snapshot dance... this should be moved into ComponentDescriptor.derive()
+    p = deserializeMorph(masterComponent._snap, { reinitializeIds: true, migrations: [] });
+    p.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
+    // end of snapshot dance...
   }
-  const p = deserializeMorph(snap, { reinitializeIds: true, migrations: [] });
 
-  // ensure master is initialized before overriding
-  // this skips derived morphs that are not reachable via submorphs
-  p.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
   p.master = overriddenProps.master || masterComponent;
-  // traverse the morphic props via submorphs and apply the props via name + structure
+
   p.withAllSubmorphsDo(m => {
     if (m.viewModel) m.viewModel.attach(m);
-    // this is only needed to detrmine the overriden props.
-    // This can also be achieved via proper serialization...
-    // This saves us from unnessecary and possibly expensive application cycles
     if (m.master) {
-      // clear the local overridden props since they are not needed!
-      m.master._overriddenProps = new WeakMap();
+      m.master._overriddenProps = new WeakMap(); // clear the local overridden props since they are not needed (new instance)!
       m.master.applyIfNeeded(true);
     }
   });
@@ -516,7 +599,7 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
     let params = overriddenProps.viewModel;
     if (!params && p.viewModel) {
       params = obj.select(p.viewModel, p.viewModel.styleProperties);
-      // remove the keys that are undefined
+      // remove the keys that are undefined manually
       for (let key in params) {
         if (params[key] === undefined) delete params[key];
       }
@@ -526,7 +609,6 @@ export function part (masterComponent, overriddenProps = {}, oldParam) {
     p.viewModel.attach(p);
   }
   mergeInModelProps(p, overriddenProps);
-  // now apply viewModel adjustements to submorphs
   return p;
 }
 
@@ -545,8 +627,10 @@ export function component (masterComponentOrProps, overriddenProps) {
     props = overriddenProps;
   }
 
+  console.log('[COMPONENT] Defining: ' + props.name);
+
   if (masterComponentOrProps) {
-    c = part(masterComponentOrProps, overriddenProps);
+    c = part(masterComponentOrProps, overriddenProps); // invoke the previous master instantiation
     c.defaultViewModel = masterComponentOrProps.defaultViewModel;
     c.viewModelClass = masterComponentOrProps.viewModelClass;
   } else c = morph({ ...props });
@@ -558,8 +642,7 @@ export function component (masterComponentOrProps, overriddenProps) {
     adoptObject(c, type);
   }
 
-  c.isComponent = true;
-  if (props.defaultViewModel) {
+  if (props.defaultViewModel || props.viewModelClass) {
     // attach the view model;
     c.defaultViewModel = props.defaultViewModel;
     c.viewModelClass = props.viewModelClass;
@@ -577,11 +660,11 @@ export function component (masterComponentOrProps, overriddenProps) {
   // this is often not called... especially in cases where we derive from a master
   c.updateDerivedMorphs();
   c._snap = serializeMorph(c);
-  // remove the master ref from the snap of the component
-  delete c._snap.snapshot[c._snap.id].props.master;
-  delete c._snap.snapshot[c._snap.id].props.isComponent;
+  c.isComponent = true;
   return c;
 }
+
+component.for = ComponentDescriptor.for;
 
 /**
  * Function that will wrap a morph's name and declare

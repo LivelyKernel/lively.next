@@ -469,8 +469,6 @@ async function customTranslate (proceed, load) {
       translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
     }
 
-    // insert the component meta stuff
-    if (load.name.endsWith('.cp.js')) { translated = stringify(ensureModuleMetaForComponentDefinition(translated, load.name.replace(System.baseURL, ''), mod.recorderName)); }
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // cache experiment part 2
     if (isNode && useCache && isEsm) {

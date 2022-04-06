@@ -95,9 +95,10 @@ const CodeSearch = component({
 });
 
 // initialize connections
-connect(CodeSearch.get('input'), 'inputChanged', CodeSearch, 'updateFilter');
-connect(CodeSearch.get('search chooser'), 'selection', CodeSearch, 'searchAgain');
-connect(CodeSearch.get('list'), 'selection', CodeSearch, 'selectionChanged');
-connect(CodeSearch.get('list'), 'onItemMorphDoubleClicked', CodeSearch, 'acceptInput');
+const C = CodeSearch.getComponent();
+connect(C.get('input'), 'inputChanged', CodeSearch, 'updateFilter');
+connect(C.get('search chooser'), 'selection', CodeSearch, 'searchAgain');
+connect(C.get('list'), 'selection', CodeSearch, 'selectionChanged');
+connect(C.get('list'), 'onItemMorphDoubleClicked', CodeSearch, 'acceptInput');
 
 export { CodeSearch };
