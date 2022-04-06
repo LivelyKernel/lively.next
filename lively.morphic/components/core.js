@@ -74,9 +74,6 @@ export class ComponentDescriptor {
     let c = this._cachedComponent;
     return c || (
       c = this.derive(),
-      // c.withAllSubmorphsDo(m => {
-      //   if (m.master) m.master.applyIfNeeded(!m.master._appliedMaster);
-      // }),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       this._cachedComponent = c
     );
@@ -85,10 +82,8 @@ export class ComponentDescriptor {
   getInstance () {
     if (!this._cachedComponent) this.getComponent(); // always create component first
     let inst = this.derive();
-    inst.isComponent = false;
-    inst.master = null; // delete the overridden props
     inst.master = this;
-    inst._requestMasterStyling = false; // no need to apply the master for the instance
+    // inst._requestMasterStyling = false; // no need to apply the master for the instance
     return inst;
   }
 
@@ -588,7 +583,7 @@ export function part (masterComponent, overriddenProps = {}) {
     }
   });
 
-  mergeInMorphicProps(p, overriddenProps);
+  p.withMetaDo({ metaInteraction: false }, () => mergeInMorphicProps(p, overriddenProps));
 
   p.withAllSubmorphsDo(m => {
     if (m.master) m.master.applyIfNeeded(true);
@@ -660,6 +655,8 @@ export function component (masterComponentOrProps, overriddenProps) {
   // this is often not called... especially in cases where we derive from a master
   c.updateDerivedMorphs();
   c._snap = serializeMorph(c);
+  delete c._snap.snapshot[c.id].props.isComponent;
+  delete c._snap.snapshot[c.id].props.master;
   c.isComponent = true;
   return c;
 }
