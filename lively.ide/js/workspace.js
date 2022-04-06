@@ -53,7 +53,7 @@ export default class Workspace extends Window {
             format: 'esm'
           };
           const sys = this.jsPlugin.systemInterface();
-          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
+          this.ui.contentsWrapper.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
             this, sys ? sys.name : 'local'));
         }
       },
