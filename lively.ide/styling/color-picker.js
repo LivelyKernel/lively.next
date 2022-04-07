@@ -118,11 +118,6 @@ export class ColorInputModel extends ViewModel {
   async openColorPicker () {
     let ColorPicker = this.colorPickerComponent;
     if (!ColorPicker) ({ ColorPicker } = await System.import('lively.ide/styling/color-picker.cp.js'));
-    // ensure correct color picker
-    let meta;
-    if (meta = ColorPicker[Symbol.for('lively-module-meta')]) {
-      ({ [meta.export]: ColorPicker } = await System.import(meta.module));
-    }
     const p = part(ColorPicker);
     let color = this.colorValue;
     p.solidOnly = !this.gradientEnabled;
