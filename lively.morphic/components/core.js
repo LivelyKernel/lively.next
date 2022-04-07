@@ -83,6 +83,7 @@ export class ComponentDescriptor {
     if (!this._cachedComponent) this.getComponent(); // always create component first
     let inst = this.derive();
     inst.master = this;
+    inst.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
     // inst._requestMasterStyling = false; // no need to apply the master for the instance
     return inst;
   }
