@@ -13,6 +13,8 @@ import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { FreezerPrompt } from './src/ui.cp.js';
 import LivelyRollup, { resolvePackage, decanonicalizeFileName } from './src/bundler.js';
 import { transpileAttributeConnections } from './src/util/helpers.js';
+import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
+import { parse, stringify } from 'lively.ast';
 
 /*
 
@@ -77,9 +79,8 @@ export async function generateLoadHtml (partOrModule, importMap) {
   let head = partOrModule.__head_html__ || '';
   let load = partOrModule.__loading_html__ || '';
   let crawler = partOrModule.__crawler_html__ || '';
-  if (typeof partOrModule === 'string') {
+  if (partOrModule.source) {
     // extract stuff from the source code
-    title = '[Static Module]'; //  fixme
     if (importMap) {
       head += importMap;
     }
@@ -150,7 +151,7 @@ function clearWorldSnapshot (snap) {
  * @param { Morph|string } targetOrModule - The part/world to be frozen.
  * @param { Morph } requester - The tool that requested the prompt (usually the Object Editor)
  */
-async function promptForFreezing (targetOrModule, requester, title = 'Freeze Part') {
+async function promptForFreezing (targetOrModule, requester, title = 'Freeze Part', excludedModules = false) {
   const freezerPrompt = part(FreezerPrompt, {
     submorphs: [
       {
@@ -160,7 +161,7 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
     ]
   });
   const userName = $world.getCurrentUser().name;
-  const previouslyExcludedPackages = Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
+  const previouslyExcludedPackages = excludedModules || Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
   const previouslyPublishedDir = Path('metadata.publishedLocation').get(targetOrModule) ||
                                  resource(System.baseURL).join('users').join(userName).join('published').join(targetOrModule.name ||
                                  resolvePackage(targetOrModule).name).url;
@@ -425,25 +426,34 @@ export async function interactivelyFreezePart (part, requester = false) {
   await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
 }
 
-export async function interactivelyFreezeModule (moduleId, requester) {
-  const options = await promptForFreezing(moduleId, requester, 'Freeze Module');
-
+export async function interactivelyFreezeModule (moduleUrl, requester) {
+  const source = await resource(moduleUrl).read();
+  const { varDecls } = topLevelDeclsAndRefs(parse(source));
+  const excludedModuleNode = varDecls.find(decl => Path('declarations.0.id.name').get(decl) === 'EXCLUDED_MODULES');
+  const titleNode = varDecls.find(decl => Path('declarations.0.id.name').get(decl) === 'TITLE');
+  let excludedModules = DEFAULT_EXCLUDED_MODULES; let title = moduleUrl;
+  try {
+    excludedModules = eval(stringify(excludedModuleNode.declarations[0].init));
+    title = eval(stringify(titleNode.declarations[0].init));
+  } catch (err) {
+    // do nothing
+  }
+  const options = await promptForFreezing(moduleUrl, requester, 'Freeze Module', excludedModules);
   if (!options) return;
   const publicationDir = await resource(System.baseURL).join(options.location).asDirectory().ensureExistance();
   const publicationDirShell = resource(await defaultDirectory()).join('..').join(options.location).withRelativePartsResolved().asDirectory();
 
-  // part.changeMetaData('excludedPackages', options.excludedPackages, true, false);
-  // part.changeMetaData('publishedLocation', options.location, true, false);
+  // check for excluded modules
   let frozen;
   try {
-    frozen = await bundleModule(moduleId, {
+    frozen = await bundleModule(moduleUrl, {
       compress: true,
       useTerser: options.useTerser,
       exclude: options.excludedPackages,
       mainFunction: options.mainFunction,
       requester
     });
-    frozen.rootModule = await resource(moduleId).read();
+    frozen.rootModule = { source, title };
   } catch (e) {
     throw e;
   }

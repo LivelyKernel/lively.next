@@ -8,7 +8,7 @@
   <noscript>
   <meta http-equiv="refresh" content="0;url=noscript.html">
   </noscript>
-  <title>TITLE_TAG</title>
+  <title>__TITLE_TAG__</title>
   __HEAD_HTML__
   <link type="text/css" rel="stylesheet" id="lively-font-awesome" href="assets/fontawesome-free-5.12.1/css/all.css">
   <link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="assets/inconsolata/inconsolata.css">
@@ -28,6 +28,7 @@
       window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
     }
     lively = {};
+    window.SERVER_URL = window.location.origin;
   </script>
   <script>
   // check browser support
