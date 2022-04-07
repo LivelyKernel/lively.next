@@ -598,6 +598,9 @@ export class ComponentBrowserModel extends ViewModel {
       isComponentBrowser: {
         get () { return true; }
       },
+      isEpiMorph: {
+        get () { return true; }
+      },
       db: {
         serialize: false,
         readOnly: true,
@@ -605,7 +608,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph'];
         }
       }
     };
@@ -673,9 +676,9 @@ export class ComponentBrowserModel extends ViewModel {
     view.doNotAcceptDropsForThisAndSubmorphs();
     this._promise = promise.deferred();
     view.openInWorld();
+    view.clipMode = 'hidden';
+    view.center = $world.visibleBounds().center();
     this.ui.searchInput.focus();
-    await view.whenRendered();
-    view.center = this.world().visibleBounds().center();
     // this.filterList();
     this.ensureImportButton();
     return this._promise.promise;
