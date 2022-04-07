@@ -180,8 +180,8 @@ export class World extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   getCurrentUser () {
-    const reg = UserRegistry.current;
-    return reg.loadUserFromLocalStorage(window.AUTH_SERVER_URL || config.users.authServerURL);
+    const reg = UserRegistry && UserRegistry.current;
+    return reg && reg.loadUserFromLocalStorage(window.AUTH_SERVER_URL || config.users.authServerURL);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
