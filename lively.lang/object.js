@@ -459,11 +459,18 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
     keys.push(key);
     props.push(prop);
 
+    let stringified = '';
+    try {
+      stringified = String(this);
+    } catch (err) {
+
+    }
+
     for (let i = before.length; i--;) {
       const beforePropName = before[i];
       const beforeProp = properties[beforePropName];
       if (!beforeProp) {
-    	    console.warn(`[initializeProperties] ${this} sortProperties: ` +
+    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` +
                     `Property ${key} requires to be initialized before ${beforePropName} ` +
                     'but that property cannot be found.');
         before.splice(i, 1);
@@ -477,7 +484,7 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
       const afterPropName = after[i];
       const afterProp = properties[afterPropName];
       if (!afterProp) {
-    	    console.warn(`[initializeProperties] ${this} sortProperties: ` +
+    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` +
                     `Property ${key} requires to be initialized after ${afterPropName} ` +
                     'but that property cannot be found.');
         after.splice(i, 1);
