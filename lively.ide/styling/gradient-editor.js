@@ -21,6 +21,7 @@ export class GradientControlModel extends ViewModel {
       gradientValue: {},
       gradientHalo: {}, // if active, this is openend in the world
       serializer: {
+        serialize: false,
         get () {
           return this._serializer || (this._serializer = new ExpressionSerializer());
         }
