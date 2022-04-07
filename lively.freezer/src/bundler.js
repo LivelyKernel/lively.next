@@ -4,7 +4,7 @@ import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
 import { module } from 'lively.modules';
 import { localInterface } from 'lively-system-interface';
-import { es5Transpilation, ensureModuleMetaForComponentDefinition } from 'lively.source-transform';
+import { es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
 import { LoadingIndicator } from 'lively.components';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import { locateClass, requiredModulesOfSnapshot } from 'lively.serializer2';
@@ -102,7 +102,7 @@ export default class LivelyRollup {
     excludedModules = [],
     snapshot,
     rootModule,
-    mainFunction = false,
+    autoRun = true,
     globalName,
     useLivelyWorld = false,
     asBrowserModule = true,
@@ -119,7 +119,7 @@ export default class LivelyRollup {
     this.snapshot = snapshot; // the snapshot to be used as a base for developing a bundled app
     this.rootModule = typeof rootModule === 'string' ? module(rootModule) : rootModule; // alternatively to the snapshot, we can also use a root module as an entry point
     this.useLivelyWorld = useLivelyWorld;
-    this.mainFunction = mainFunction; // If root module is specified then this denotes the function that is to be executed on loading of the script.
+    this.autoRun = autoRun; // If root module is specified then this flag indicates that the main function of the module is to be invoked on load.
     this.globalName = globalName; // The global variable name to export the root module export via.
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
     this.redirect = redirect; //  Hard redirect of certain packages that overriddes any other resolution mechanisms. Why is this needed?
@@ -239,7 +239,7 @@ export default class LivelyRollup {
    */
   async getRootModule () {
     if (this.rootModule) {
-      if (!this.mainFunction) { // if there is no main function specified, we just export the entire module in the root module
+      if (!this.autoRun) { // if there is no main function specified, we just export the entire module in the root module
         return `export * from "${this.rootModule.id}";`;
       }
       return await this.synthesizeMainModule();
@@ -254,10 +254,7 @@ export default class LivelyRollup {
    */
   async synthesizeMainModule () {
     let mainModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/main-module.js')).read();
-    if (this.useLivelyWorld) {
-      mainModuleSource = mainModuleSource.replace('import { World } from \'lively.morphic\'', 'import { LivelyWorld as World } from \'lively.ide/world.js\'');
-    }
-    return mainModuleSource.replace('main(', `const { ${this.mainFunction}: main } = await System.import('${this.rootModule.id}');\nmain(`);
+    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModule.id}')`);
   }
 
   /**
@@ -557,10 +554,12 @@ export default class LivelyRollup {
     } else {
       opts.classToFunction = false;
     }
-    let instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+    let instrumented = parsed;
     if (this.isComponentModule(id)) {
-      instrumented = ensureModuleMetaForComponentDefinition(instrumented, this.normalizedId(id), recorderName);
+      instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id));
     }
+    instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+
     const imports = [];
     let defaultExport = '';
     const toBeReplaced = [];
