@@ -3,14 +3,27 @@ import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics';
 import { StatusMessage } from './messages.js';
 
-// ButtonDefault.openInWorld();
-// StatusMessageDefault.openInWorld()
-// StatusMessageError.openInWorld()
-// StatusMessageConfirm.openInWorld()
-// part(StatusMessageConfirm, { viewModel: { isCompact: true }}).openInWorld()
-// part(StatusMessageDefault).openInWorld()
-// part(StatusMessageError).openInWorld()
-// $world.logError('hello man')
+const MessageButton = component(ButtonDefault, {
+  viewModel: {
+    label: {
+      value: Icon.textAttribute('times'),
+      fontColor: Color.rgb(66, 73, 73),
+      fontSize: 20,
+      padding: rect(1, 1, 0, 0)
+    }
+  },
+  name: 'message button',
+  borderColor: Color.rgb(149, 165, 166),
+  borderRadius: 25,
+  borderWidth: 0,
+  extent: pt(25, 25),
+  fill: Color.rgba(255, 255, 255, 0)
+});
+
+const MessageButtonClick = component(MessageButton, {
+  name: 'message button/click',
+  fill: Color.black.withA(.2)
+});
 
 const StatusMessageDefault = component({
   name: 'status message default',
@@ -73,12 +86,13 @@ const StatusMessageDefault = component({
       reactsToPointer: false,
       textAndAttributes: ['Something to think about...', null]
     },
-    // prevent the attachement of the view model but keet it parametrized
-    // for instance we do not want the button to switch fill on clicking
-    // when it plays the role of being a part of the master component
     part(
       ButtonDefault,
       {
+        master: {
+          auto: MessageButton,
+          click: MessageButtonClick
+        },
         viewModel: {
           label: {
             value: Icon.textAttribute('times'),
@@ -88,12 +102,8 @@ const StatusMessageDefault = component({
           }
         },
         name: 'close button',
-        borderColor: Color.rgb(149, 165, 166),
-        borderRadius: 5,
-        borderWidth: 0,
-        extent: pt(40, 40),
-        fill: Color.rgba(255, 255, 255, 0),
         position: pt(465.2, 0.2),
+        width: 30,
         tooltip: 'Close this status message.'
       })]
   }, {
@@ -139,10 +149,8 @@ const StatusMessageConfirm = component(StatusMessageDefault, {
         fontColor: Color.white,
         textAndAttributes: ['Saved file...', null]
       },
-      // no need to mention the part() again since this is pure override props
       {
         name: 'close button',
-        borderWidth: 0,
         viewModel: { label: { fontColor: Color.white } }
       }
     ]
@@ -177,7 +185,6 @@ const StatusMessageError = component(StatusMessageDefault, {
         },
         {
           name: 'close button',
-          borderWidth: 0, // for some reason this does not get carried over from master
           viewModel: { label: { fontColor: Color.white } }
         }
       ]

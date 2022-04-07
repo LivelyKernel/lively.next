@@ -2,7 +2,6 @@ import { ViewModel } from 'lively.morphic/components/core.js';
 import { Color, pt } from 'lively.graphics';
 import { string } from 'lively.lang';
 import { easings } from 'lively.morphic';
-import { promise } from 'lively.lang/promise.js';
 
 export class StatusMessage extends ViewModel {
   static get properties () {
@@ -24,13 +23,9 @@ export class StatusMessage extends ViewModel {
 
       title: {
         isStyleProp: true,
-        derived: true,
-        // this does not work well when we are not yet attached
+        defaultValue: 'Something to think about...',
         set (t) {
-          this.ui.messageTitle.value = this.sanitizeString(t);
-        },
-        get () {
-          return this.ui.messageTitle.value;
+          this.setProperty('title', this.sanitizeString(t));
         }
       },
 
@@ -81,6 +76,7 @@ export class StatusMessage extends ViewModel {
   }
 
   sanitizeString (s) {
+    if (Array.isArray(s)) s = s[0];
     return s.split('\n').join('');
   }
 
@@ -108,7 +104,12 @@ export class StatusMessage extends ViewModel {
     if (!this.view) return;
     this.ui.messageText.isLayoutable = !this.isCompact;
     this.ui.messageText.visible = !this.isCompact;
-    if (prop == 'message') this.updateMessage();
+    if (prop === 'message') this.updateMessage();
+    if (prop === 'title') { this.updateTitle(); }
+  }
+
+  updateTitle () {
+    this.ui.messageTitle.textString = this.title;
   }
 
   updateMessage () {
@@ -138,6 +139,7 @@ export class StatusMessage extends ViewModel {
     if (textEnd.column !== 0) text.insertText('\n', textEnd);
     const f = 10;
     this.title = string.truncate(text.textString || '', (this.view.width / f).toFixed(), '...');
+    this.updateTitle();
   }
 
   onViewResize () {
