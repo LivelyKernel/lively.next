@@ -20,6 +20,11 @@ const MessageButton = component(ButtonDefault, {
   fill: Color.rgba(255, 255, 255, 0)
 });
 
+const MessageButtonHover = component(MessageButton, {
+  name: 'message button/hover',
+  fill: Color.black.withA(.1)
+});
+
 const MessageButtonClick = component(MessageButton, {
   name: 'message button/click',
   fill: Color.black.withA(.2)
@@ -91,7 +96,8 @@ const StatusMessageDefault = component({
       {
         master: {
           auto: MessageButton,
-          click: MessageButtonClick
+          click: MessageButtonClick,
+          hover: MessageButtonHover
         },
         viewModel: {
           label: {
