@@ -14,7 +14,7 @@ const GLOB = typeof window !== 'undefined'
 
 const isNode = typeof global !== 'undefined' && typeof process !== 'undefined';
 let PouchDB = _PouchDB;
-if (PouchDB.plugin && pouchdbAdapterMem) PouchDB.plugin(pouchdbAdapterMem);
+if (PouchDB && PouchDB.plugin && pouchdbAdapterMem) PouchDB.plugin(pouchdbAdapterMem);
 
 function nodejsRequire (name) {
   if (!isNode) throw new Error('nodejsRequire can only be used in nodejs!');

@@ -1,7 +1,7 @@
 import { pt, rect, Color } from 'lively.graphics';
 import { List, DropDownListModel } from './list.js';
 import { ShadowObject, component } from 'lively.morphic';
-import { ButtonDefault, SystemButtonDark, SystemButton, ButtonDark } from './buttons.cp.js';
+import { SystemButtonDark, SystemButton } from './buttons.cp.js';
 
 const DefaultList = component({
   // implementing lists via viewModel does not really make sense since they are

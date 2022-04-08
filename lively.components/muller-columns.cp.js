@@ -138,7 +138,7 @@ export class MullerColumnViewModel extends ViewModel {
     This is why we expand each node with a custom iterator.
   */
   async setExpandedPath (
-    matchingNodes = (n) => n === this.treeData.root,
+    matchingNodes = (function (n) { return n === this.treeData.root; }).bind(this),
     until = this.treeData.root,
     animated = true
   ) {

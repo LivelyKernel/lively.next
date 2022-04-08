@@ -5,6 +5,7 @@ import { syncEval } from 'lively.vm';
 import { module } from 'lively.modules';
 
 export async function ensureDefaultImports () {
+  if (typeof module === 'undefined') return;
   const inspectorEvalContext = module('lively://lively.morphic/inspector');
   const imports = config.ide.js.defaultInspectorImports;
   for (let modName in imports) {
