@@ -2,7 +2,6 @@ import { ProportionalLayout, TilingLayout, component, add, part } from 'lively.m
 import { pt, Color, rect } from 'lively.graphics';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
-import { connect } from 'lively.bindings';
 import { SystemList } from './styling/shared.cp.js';
 import { CodeSearcher } from './code-search.js';
 
@@ -93,12 +92,5 @@ const CodeSearch = component({
   })
   ]
 });
-
-// initialize connections
-const C = CodeSearch.getComponent();
-connect(C.get('input'), 'inputChanged', CodeSearch, 'updateFilter');
-connect(C.get('search chooser'), 'selection', CodeSearch, 'searchAgain');
-connect(C.get('list'), 'selection', CodeSearch, 'selectionChanged');
-connect(C.get('list'), 'onItemMorphDoubleClicked', CodeSearch, 'acceptInput');
 
 export { CodeSearch };

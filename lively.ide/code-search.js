@@ -1,4 +1,4 @@
-/* global System,self */
+/* global System */
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { config, show } from 'lively.morphic';
@@ -12,9 +12,7 @@ import {
 import * as Browser from './js/browser/ui.cp.js';
 import { MorphicDB } from 'lively.morphic/morphicdb/index.js';
 import { SnapshotEditor } from 'lively.morphic/partsbin.js';
-import { worker } from 'lively.lang';
-import { serialize } from 'lively.serializer2';
-import { plugins, allPlugins } from 'lively.serializer2/plugins.js';
+
 import { callService, ProgressMonitor } from './service-worker.js';
 
 export async function doSearch (
@@ -177,7 +175,12 @@ export class CodeSearcher extends FilterableList {
       this.get('search chooser').selection = 'in loaded modules';
     });
     this.getWindow() && (this.getWindow().title = 'code search');
-    // this.get("search chooser").listAlign = "bottom"
+
+    // initialize connections
+    connect(this.get('input'), 'inputChanged', this, 'updateFilter');
+    connect(this.get('search chooser'), 'selection', this, 'searchAgain');
+    connect(this.get('list'), 'selection', this, 'selectionChanged');
+    connect(this.get('list'), 'onItemMorphDoubleClicked', this, 'acceptInput');
   }
 
   ensureIndicator (label, progress) {
@@ -225,7 +228,7 @@ export class CodeSearcher extends FilterableList {
     if (win && win.targetMorph === this) { win.title = `${win.title.split('-')[0].trim()} - ${filterTokens.join(' + ')}`; }
 
     let searchTerm = filterTokens.shift();
-    let newSearch = searchTerm != this.currentSearchTerm;
+    let newSearch = searchTerm !== this.currentSearchTerm;
 
     if (newSearch) {
       this.currentSearchTerm = searchTerm;
