@@ -32,8 +32,8 @@ export function evalCodeTransform (code, options) {
   options = processInlineCodeTransformOptions(parsed, options);
 
   // A: Rewrite the component definitions to create component descriptors.
-  const moduleName = options.declarationWrapperName.includes(System.baseURL) && options.declarationWrapperName.split(System.baseURL)[1];
-  parsed = ensureComponentDescriptors(parsed, moduleName);
+  const moduleName = options.declarationWrapperName && options.declarationWrapperName.includes(System.baseURL) && options.declarationWrapperName.split(System.baseURL)[1];
+  if (moduleName) { parsed = ensureComponentDescriptors(parsed, moduleName); }
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.

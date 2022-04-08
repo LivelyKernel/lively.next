@@ -6,6 +6,8 @@ import catchBinding from 'babel-catch-binding';
 import importMeta from 'babel-import-meta';
 
 import * as capturing from './capturing.js';
+import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
+import { arr } from 'lively.lang';
 export { capturing };
 
 // fixme: this is a sort of bad placement
@@ -123,8 +125,12 @@ export function ensureModuleMetaForComponentDefinition (translated, moduleName, 
 }
 
 export function ensureComponentDescriptors (translated, moduleName) {
+  // check first for top level decls
+  translated = typeof translated == 'string' ? parse(translated) : translated;
+  let { varDecls } = topLevelDeclsAndRefs(translated);
+  varDecls = arr.compact(varDecls.map(m => m.declarations && m.declarations[0]));
   return QueryReplaceManyVisitor.run(
-    typeof translated == 'string' ? parse(translated) : translated, `
+    translated, `
          // VariableDeclarator [
               /:id Identifier [ @name ]
                && /:init CallExpression [
@@ -132,8 +138,10 @@ export function ensureComponentDescriptors (translated, moduleName) {
                  ]
               ]`,
     (node) => {
+      const isCaptured = varDecls.includes(node);
       const componentRef = node.id.name;
+      // if the componentRef is not a top level declaration do not pass the component ref as 
       // replace the expression with ComponentDescriptor...
-      return parse(`const ${componentRef} = component.for(() => component(${node.init.arguments.map(n => stringify(n)).join(',')}), { module: "${moduleName}", export: "${componentRef}"}, ${componentRef})`).body[0].declarations;
+      return parse(`const ${componentRef} = component.for(() => component(${node.init.arguments.map(n => stringify(n)).join(',')}), { module: "${moduleName}", export: "${componentRef}"}${ isCaptured ? ', ' + componentRef : ''})`).body[0].declarations;
     });
 }
