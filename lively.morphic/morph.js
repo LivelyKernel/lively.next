@@ -2725,6 +2725,8 @@ export class Image extends Morph {
             if (this.imageUrl !== url) return;
             this.isLoaded = true;
             if (autoResize) this.extent = this.naturalExtent;
+          }).catch((err) => {
+            // just ignore
           });
         }
       },
