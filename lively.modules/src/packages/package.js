@@ -541,7 +541,7 @@ class Package {
     let modules = options.includeUnloaded
       ? (await this.resources(
           url => url.endsWith('.js'),
-          ['.git', 'node_modules', 'dist', '.module_cache', 'lively.next-node_modules']))
+          ['.git', 'node_modules', 'dist', '.module_cache', 'lively.next-node_modules', ...options.excludedModules || []]))
           .map(({ url }) => module(this.System, url))
       : this.modules().filter(ea => ea.isLoaded());
     return Promise.all(

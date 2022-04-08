@@ -17,7 +17,7 @@ import { callService, ProgressMonitor } from './service-worker.js';
 
 export async function doSearch (
   livelySystem, searchTerm,
-  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js/],
+  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js|dashboard|loading-screen/],
   excludedPackages = [],
   includeUnloaded = true,
   caseSensitive = false,
