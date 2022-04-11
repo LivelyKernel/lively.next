@@ -55,6 +55,10 @@ export class Canvas extends Morph {
     connect(this, 'extent', this, 'onExtentChanged');
   }
 
+  get isCanvas () {
+    return true;
+  }
+
   afterRender (canvasNode, hasNewCanvasNode) {
     if (hasNewCanvasNode) this._canvas = canvasNode;
     else if (typeof this.__canvas_init__ === 'function') {
