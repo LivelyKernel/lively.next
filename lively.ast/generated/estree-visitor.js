@@ -1,5 +1,5 @@
 // <<<<<<<<<<<<< BEGIN OF AUTO GENERATED CODE <<<<<<<<<<<<<
-// Generated on 20-02-27 10:47 GMT+0100
+// Generated on 22-04-11 17:07 GMT+0200
 class Visitor {
   accept (node, state, path) {
     if (!node) throw new Error('Undefined AST node in Visitor.accept:\n  ' + path.join('.') + '\n  ' + node);
@@ -11,7 +11,6 @@ class Visitor {
       case 'Program': return this.visitProgram(node, state, path);
       case 'Function': return this.visitFunction(node, state, path);
       case 'Statement': return this.visitStatement(node, state, path);
-      case 'Directive': return this.visitDirective(node, state, path);
       case 'SwitchCase': return this.visitSwitchCase(node, state, path);
       case 'CatchClause': return this.visitCatchClause(node, state, path);
       case 'VariableDeclarator': return this.visitVariableDeclarator(node, state, path);
@@ -34,6 +33,11 @@ class Visitor {
       case 'JSXText': return this.visitJSXText(node, state, path);
       case 'JSXOpeningFragment': return this.visitJSXOpeningFragment(node, state, path);
       case 'JSXClosingFragment': return this.visitJSXClosingFragment(node, state, path);
+      case 'ChainElement': return this.visitChainElement(node, state, path);
+      case 'PropertyDefinition': return this.visitPropertyDefinition(node, state, path);
+      case 'PrivateIdentifier': return this.visitPrivateIdentifier(node, state, path);
+      case 'Decorator': return this.visitDecorator(node, state, path);
+      case 'AccessorProperty': return this.visitAccessorProperty(node, state, path);
       case 'Identifier': return this.visitIdentifier(node, state, path);
       case 'Literal': return this.visitLiteral(node, state, path);
       case 'ExpressionStatement': return this.visitExpressionStatement(node, state, path);
@@ -97,8 +101,10 @@ class Visitor {
       case 'JSXSpreadAttribute': return this.visitJSXSpreadAttribute(node, state, path);
       case 'JSXElement': return this.visitJSXElement(node, state, path);
       case 'JSXFragment': return this.visitJSXFragment(node, state, path);
+      case 'ChainExpression': return this.visitChainExpression(node, state, path);
       case 'ImportExpression': return this.visitImportExpression(node, state, path);
       case 'RegExpLiteral': return this.visitRegExpLiteral(node, state, path);
+      case 'Directive': return this.visitDirective(node, state, path);
       case 'FunctionBody': return this.visitFunctionBody(node, state, path);
       case 'FunctionDeclaration': return this.visitFunctionDeclaration(node, state, path);
       case 'VariableDeclaration': return this.visitVariableDeclaration(node, state, path);
@@ -106,6 +112,7 @@ class Visitor {
       case 'ClassDeclaration': return this.visitClassDeclaration(node, state, path);
       case 'JSXIdentifier': return this.visitJSXIdentifier(node, state, path);
       case 'BigIntLiteral': return this.visitBigIntLiteral(node, state, path);
+      case 'StaticBlock': return this.visitStaticBlock(node, state, path);
     }
     throw new Error('No visit function in AST visitor Visitor for:\n  ' + path.join('.') + '\n  ' + JSON.stringify(node));
   }
@@ -165,13 +172,6 @@ class Visitor {
 
   visitStatement (node, state, path) {
     const visitor = this;
-    return node;
-  }
-
-  visitDirective (node, state, path) {
-    const visitor = this;
-    // expression is of types Literal
-    node.expression = visitor.accept(node.expression, state, path.concat(['expression']));
     return node;
   }
 
@@ -263,12 +263,21 @@ class Visitor {
     }
     // body is of types ClassBody
     node.body = visitor.accept(node.body, state, path.concat(['body']));
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
   visitClassBody (node, state, path) {
     const visitor = this;
-    // body is a list with types MethodDefinition
+    // body is a list with types MethodDefinition, PropertyDefinition, StaticBlock, AccessorProperty
     const newElements = [];
     for (let i = 0; i < node.body.length; i++) {
       const ea = node.body[i];
@@ -282,10 +291,19 @@ class Visitor {
 
   visitMethodDefinition (node, state, path) {
     const visitor = this;
-    // key is of types Expression
+    // key is of types Expression, PrivateIdentifier
     node.key = visitor.accept(node.key, state, path.concat(['key']));
     // value is of types FunctionExpression
     node.value = visitor.accept(node.value, state, path.concat(['value']));
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
@@ -350,6 +368,63 @@ class Visitor {
 
   visitJSXClosingFragment (node, state, path) {
     const visitor = this;
+    return node;
+  }
+
+  visitChainElement (node, state, path) {
+    const visitor = this;
+    return node;
+  }
+
+  visitPropertyDefinition (node, state, path) {
+    const visitor = this;
+    // key is of types Expression, PrivateIdentifier
+    node.key = visitor.accept(node.key, state, path.concat(['key']));
+    // value is of types Expression
+    if (node.value) {
+      node.value = visitor.accept(node.value, state, path.concat(['value']));
+    }
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
+    return node;
+  }
+
+  visitPrivateIdentifier (node, state, path) {
+    const visitor = this;
+    return node;
+  }
+
+  visitDecorator (node, state, path) {
+    const visitor = this;
+    // expression is of types Expression
+    node.expression = visitor.accept(node.expression, state, path.concat(['expression']));
+    return node;
+  }
+
+  visitAccessorProperty (node, state, path) {
+    const visitor = this;
+    // key is of types Expression, PrivateIdentifier
+    node.key = visitor.accept(node.key, state, path.concat(['key']));
+    // value is of types Expression
+    if (node.value) {
+      node.value = visitor.accept(node.value, state, path.concat(['value']));
+    }
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
@@ -614,7 +689,7 @@ class Visitor {
 
   visitBinaryExpression (node, state, path) {
     const visitor = this;
-    // left is of types Expression
+    // left is of types Expression, PrivateIdentifier
     node.left = visitor.accept(node.left, state, path.concat(['left']));
     // right is of types Expression
     node.right = visitor.accept(node.right, state, path.concat(['right']));
@@ -643,7 +718,7 @@ class Visitor {
     const visitor = this;
     // object is of types Expression, Super
     node.object = visitor.accept(node.object, state, path.concat(['object']));
-    // property is of types Expression
+    // property is of types Expression, PrivateIdentifier
     node.property = visitor.accept(node.property, state, path.concat(['property']));
     return node;
   }
@@ -737,19 +812,19 @@ class Visitor {
   visitTemplateLiteral (node, state, path) {
     const visitor = this;
     // quasis is a list with types TemplateElement
-    var newElements = [];
-    for (var i = 0; i < node.quasis.length; i++) {
-      var ea = node.quasis[i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['quasis', i])) : ea;
+    let newElements = [];
+    for (let i = 0; i < node.quasis.length; i++) {
+      const ea = node.quasis[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['quasis', i])) : ea;
       if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
       else newElements.push(acceptedNodes);
     }
     node.quasis = newElements;
     // expressions is a list with types Expression
-    var newElements = [];
-    for (var i = 0; i < node.expressions.length; i++) {
-      var ea = node.expressions[i];
-      var acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['expressions', i])) : ea;
+    newElements = [];
+    for (let i = 0; i < node.expressions.length; i++) {
+      const ea = node.expressions[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['expressions', i])) : ea;
       if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
       else newElements.push(acceptedNodes);
     }
@@ -833,6 +908,15 @@ class Visitor {
     }
     // body is of types ClassBody
     node.body = visitor.accept(node.body, state, path.concat(['body']));
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
@@ -863,7 +947,7 @@ class Visitor {
 
   visitImportSpecifier (node, state, path) {
     const visitor = this;
-    // imported is of types Identifier
+    // imported is of types Identifier, Literal
     node.imported = visitor.accept(node.imported, state, path.concat(['imported']));
     // local is of types Identifier
     node.local = visitor.accept(node.local, state, path.concat(['local']));
@@ -908,9 +992,9 @@ class Visitor {
 
   visitExportSpecifier (node, state, path) {
     const visitor = this;
-    // exported is of types Identifier
+    // exported is of types Identifier, Literal
     node.exported = visitor.accept(node.exported, state, path.concat(['exported']));
-    // local is of types Identifier
+    // local is of types Identifier, Literal
     node.local = visitor.accept(node.local, state, path.concat(['local']));
     return node;
   }
@@ -947,6 +1031,15 @@ class Visitor {
     }
     // body is of types ClassBody
     node.body = visitor.accept(node.body, state, path.concat(['body']));
+    // decorators is a list with types Decorator
+    const newElements = [];
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
@@ -961,6 +1054,10 @@ class Visitor {
     const visitor = this;
     // source is of types Literal
     node.source = visitor.accept(node.source, state, path.concat(['source']));
+    // exported is of types Identifier, Literal
+    if (node.exported) {
+      node.exported = visitor.accept(node.exported, state, path.concat(['exported']));
+    }
     return node;
   }
 
@@ -1057,6 +1154,13 @@ class Visitor {
     return node;
   }
 
+  visitChainExpression (node, state, path) {
+    const visitor = this;
+    // expression is of types ChainElement
+    node.expression = visitor.accept(node.expression, state, path.concat(['expression']));
+    return node;
+  }
+
   visitImportExpression (node, state, path) {
     const visitor = this;
     // source is of types Expression
@@ -1066,6 +1170,13 @@ class Visitor {
 
   visitRegExpLiteral (node, state, path) {
     const visitor = this;
+    return node;
+  }
+
+  visitDirective (node, state, path) {
+    const visitor = this;
+    // expression is of types Literal, Expression
+    node.expression = visitor.accept(node.expression, state, path.concat(['expression']));
     return node;
   }
 
@@ -1086,9 +1197,7 @@ class Visitor {
   visitFunctionDeclaration (node, state, path) {
     const visitor = this;
     // id is of types Identifier
-    if (node.id) {
-      node.id = visitor.accept(node.id, state, path.concat(['id']));
-    }
+    node.id = visitor.accept(node.id, state, path.concat(['id']));
     // params is a list with types Pattern
     const newElements = [];
     for (let i = 0; i < node.params.length; i++) {
@@ -1138,6 +1247,16 @@ class Visitor {
     }
     // body is of types ClassBody
     node.body = visitor.accept(node.body, state, path.concat(['body']));
+    // decorators is a list with types Decorator
+    const newElements = [];
+    if (!node.decorators) debugger;
+    for (let i = 0; i < node.decorators.length; i++) {
+      const ea = node.decorators[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.decorators = newElements;
     return node;
   }
 
@@ -1150,7 +1269,20 @@ class Visitor {
     const visitor = this;
     return node;
   }
-}
 
+  visitStaticBlock (node, state, path) {
+    const visitor = this;
+    // body is a list with types Statement
+    const newElements = [];
+    for (let i = 0; i < node.body.length; i++) {
+      const ea = node.body[i];
+      const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['body', i])) : ea;
+      if (Array.isArray(acceptedNodes)) newElements.push.apply(newElements, acceptedNodes);
+      else newElements.push(acceptedNodes);
+    }
+    node.body = newElements;
+    return node;
+  }
+}
 export default Visitor;
 // >>>>>>>>>>>>> END OF AUTO GENERATED CODE >>>>>>>>>>>>>

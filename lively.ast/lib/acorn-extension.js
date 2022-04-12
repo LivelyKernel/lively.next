@@ -1,18 +1,10 @@
 /* global acorn,global,self */
 import { obj, arr, string, Path } from 'lively.lang';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
-import * as acorn from 'acorn';
+import AcornDecorators from './acorn-decorators.js';
+import * as acornDefault from 'acorn';
 import * as walk from 'acorn-walk';
 import * as loose from 'acorn-loose';
-
-// // rk 2016-05-17 FIXME: the current version of acorn.walk doesn't support async
-// // await. We patch the walker here until it does
-// if (!walk.base.AwaitExpression) {
-//   walk.base.AwaitExpression = function (node, st, c) {
-//     if (node.argument)
-//         c(node.argument, st, 'Expression');
-//   }
-// }
 
 const custom = {};
 
@@ -25,6 +17,13 @@ custom.findSiblings = findSiblings;
 custom.findNodeByAstIndex = findNodeByAstIndex;
 custom.findStatementOfNode = findStatementOfNode;
 custom.addAstIndex = addAstIndex;
+
+const Parser = acornDefault.Parser.extend(AcornDecorators);
+
+const acorn = {};
+Object.assign(acorn, acornDefault);
+acorn.Parser = Parser;
+acorn.parse = (source, opts) => Parser.parse(source, opts);
 
 export {
   walk, loose, acorn, custom,
@@ -64,20 +63,6 @@ function matchNodes (parsed, visitor, state, options) {
   }
   return forEachNode(parsed, visit, state, options);
 }
-
-// findNodesIncluding: function(ast, pos, test, base) {
-//   var nodes = [];
-//   base = base || acorn.walk.make({});
-//   Object.keys(base).forEach(function(name) {
-//       var orig = base[name];
-//       base[name] = function(node, state, cont) {
-//           nodes.pushIfNotIncluded(node);
-//           return orig(node, state, cont);
-//       }
-//   });
-//   acorn.walk.findNodeAround(ast, pos, test, base);
-//   return nodes;
-// }
 
 function findNodesIncluding (parsed, pos, test, base) {
   const nodes = [];

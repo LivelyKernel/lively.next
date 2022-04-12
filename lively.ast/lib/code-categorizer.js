@@ -95,7 +95,7 @@ function es6ClassMethod (node, parent, i) {
   else if (node.kind === 'set') type = node.static ? 'class-class-setter' : 'class-instance-setter';
   if (type === 'class-instance-getter' && node.key.name === 'commands') return parseCommandsMethod(node, parent, type);
   if (type === 'class-class-getter' && node.key.name === 'properties') return parsePropertiesMethod(node, parent, type);
-  
+
   return type
     ? {
         type,
@@ -219,15 +219,15 @@ function someObjectExpressionCall (node, parentDef) {
 function parseDescribeBlock (parent) {
   const parseInSuits = ['describe', 'xdescribe', 'it', 'xit', 'after', 'afterEach', 'before', 'beforeEach'];
   const nodes = [];
-  
+
   parent.expression.arguments[1].body.body.forEach((subnode) => {
     if (subnode.type !== 'ExpressionStatement' || !subnode.expression.callee) return null;
-    
+
     const type = subnode.expression.callee.name;
     if (!parseInSuits.includes(type)) return;
     // string of the describe/it block or function name like before, after,...
     const name = subnode.expression.arguments[0].value || subnode.expression.callee.name;
-    
+
     let parsedSubNode = { name, node: subnode, type, parent: parent };
     // recursively parse describe blocks that can contain other describe blocks
     if (subnode.expression.callee.name === 'describe' || subnode.expression.callee.name === 'xdescribe') {
@@ -235,7 +235,7 @@ function parseDescribeBlock (parent) {
     }
     nodes.push(parsedSubNode);
   });
-  return nodes;    
+  return nodes;
 }
 
 /**
@@ -244,12 +244,12 @@ function parseDescribeBlock (parent) {
  * If it represents a `describe` block, it will be shown as a declaration and all containing code will be parsed using `parseDescribeBlock()`
  */
 function describe (node) {
-  if (node.type !== 'ExpressionStatement') return null; 
+  if (node.type !== 'ExpressionStatement') return null;
   if (node.expression && Path('expression.callee.name').get(node) !== 'describe' && Path('expression.callee.name').get(node) !== 'xdescribe') return null;
-  
+
   const parsedNode = { name: node.expression.arguments[0].value, node, type: node.expression.callee.name };
   parsedNode.children = parseDescribeBlock(node);
-  
+
   return [parsedNode];
 }
 
