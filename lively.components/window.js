@@ -562,6 +562,7 @@ export default class Window extends Morph {
     windowTitle.reactsToPointer = !this.minimized;
     resizer.visible = !this.minimized;
     this.relayoutWindowControls();
+    this.relayoutResizer();
   }
 
   setBounds (bounds) {
