@@ -33,6 +33,14 @@ export class ComponentDescriptor {
     return new ComponentDescriptor(generatorFunction, meta);
   }
 
+  __serialize__ (pool) {
+    const meta = this[Symbol.for('lively-module-meta')];
+    return pool.expressionSerializer.exprStringEncode({
+      __expr__: meta.export,
+      bindings: { [meta.module]: meta.export }
+    });
+  }
+
   /**
    * Transforms the callsite white the component is declared into a proper ComponentDescriptor.for()
    * call that ensures a descriptor is created and assigned to the component.
