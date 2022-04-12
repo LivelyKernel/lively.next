@@ -304,16 +304,7 @@ export class Renderer {
   }
 
   renderImage (image) {
-    let url = image.imageUrl;
-    if (url.startsWith('data:')) {
-      const dataPos = url.indexOf(',');
-      const header = url.substring(5, dataPos);
-      const [mimeType, encoding] = header.split(';');
-      const data = url.substring(dataPos + 1);
-      if (encoding !== 'base64') {
-        url = string.createDataURI(data, mimeType);
-      }
-    }
+    let url = image.getURLForImgNode();
 
     return h('div', {
       ...defaultAttributes(image, this),

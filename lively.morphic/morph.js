@@ -2783,6 +2783,20 @@ export class Image extends Morph {
     return renderer.nodeForImage(this);
   }
 
+  getURLForImgNode () {
+    let url = this.imageUrl;
+    if (url.startsWith('data:')) {
+      const dataPos = url.indexOf(',');
+      const header = url.substring(5, dataPos);
+      const [mimeType, encoding] = header.split(';');
+      const data = url.substring(dataPos + 1);
+      if (encoding !== 'base64') {
+        url = string.createDataURI(data, mimeType);
+      }
+    }
+    return url;
+  }
+
   clear () {
     // transparent gif:
     return this.loadUrl('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', false);
