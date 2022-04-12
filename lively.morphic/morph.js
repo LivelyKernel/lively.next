@@ -839,7 +839,8 @@ export class Morph {
       hasStructuralChanges: false,
       needsRerender: false,
       animationAdded: false,
-      hasCSSLayoutChange: false
+      hasCSSLayoutChange: false,
+      specialProps: {}
     };
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
@@ -2795,6 +2796,17 @@ export class Image extends Morph {
       }
     }
     return url;
+  }
+
+  patchSpecialProps (node) {
+    if (this.renderingState.specialProps.imageUrl !== this.imageUrl) {
+      node.firstChild.src = this.getURLForImgNode();
+      this.renderingState.specialProps.imageUrl = this.imageUrl;
+    }
+    if (this.renderingState.specialProps.tooltip !== this.tooltip) {
+      node.firstChild.alt = morph.tooltip;
+      this.renderingState.specialProps.tooltip = this.tooltip;
+    }
   }
 
   clear () {
