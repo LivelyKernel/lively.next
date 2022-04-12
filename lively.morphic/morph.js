@@ -3368,6 +3368,17 @@ export class Path extends Morph {
     return renderer.renderPath(this);
   }
 
+  renderStyles (style) {
+    style = obj.select(style, ['position', 'filter', 'display', 'opacity',
+      'transform', 'top', 'left', 'transformOrigin', 'cursor', 'overflow']);
+
+    style.width = this.width + 'px';
+    style.height = this.height + 'px';
+    style['pointer-events'] = this.reactsToPointer ? 'auto' : 'none';
+
+    return style;
+  }
+
   getNodeForRenderer (renderer) {
     return renderer.nodeForPath(this);
   }
