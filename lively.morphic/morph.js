@@ -2804,7 +2804,7 @@ export class Image extends Morph {
       this.renderingState.specialProps.imageUrl = this.imageUrl;
     }
     if (this.renderingState.specialProps.tooltip !== this.tooltip) {
-      node.firstChild.alt = morph.tooltip;
+      node.firstChild.alt = this.tooltip;
       this.renderingState.specialProps.tooltip = this.tooltip;
     }
   }
