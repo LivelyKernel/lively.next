@@ -110,6 +110,17 @@ export class Canvas extends Morph {
     return renderer.nodeForCanvas(this);
   }
 
+  patchSpecialProps (node) {
+    if (this.renderingState.specialProps.width !== this.width) {
+      node.firstChild.style.width = `${this.width}px`;
+      this.renderingState.specialProps.width = this.width;
+    }
+    if (this.renderingState.specialProps.height !== this.height) {
+      node.firstChild.style.height = `${this.height}px`;
+      this.renderingState.specialProps.height = this.height;
+    }
+  }
+
   getHooksForRenderer (renderer) {
     return renderer.hooksForCanvas();
   }
