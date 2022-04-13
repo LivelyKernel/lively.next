@@ -3258,7 +3258,6 @@ export class Path extends Morph {
   }
 
   get isPath () { return true; }
-  get isSvgMorph () { return true; }
 
   onVertexChanged (vertex) {
     this.makeDirty();
