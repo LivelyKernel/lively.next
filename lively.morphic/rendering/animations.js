@@ -143,9 +143,7 @@ export class PropertyAnimation {
     }
     this.config = this.convertBounds(config);
     this.needsAnimation = {
-      svg: morph.isSvgMorph,
       path: morph.isPath
-      // polygon: morph.isPolygon
     };
     this.capturedProperties = obj.select(this.morph, this.propsToCapture);
   }
@@ -297,10 +295,9 @@ export class PropertyAnimation {
 
   gatherAnimationProps () {
     const { morph } = this;
-    const { isSvgMorph, isPath, isPolygon } = morph;
+    const { isPath, isPolygon } = morph;
     const props = {};
     props.css = styleProps(this.morph);
-    if (isSvgMorph) props.svg = addSvgAttributes(morph, {});
     if (isPath) props.path = addPathAttributes(morph, {});
     if (isPolygon) props.polygon = addPathAttributes(morph, {});
     return props;

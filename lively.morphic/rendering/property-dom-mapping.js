@@ -109,7 +109,7 @@ function shadowCss (morph) {
 }
 
 function addShadowStyle (morph, style) {
-  if (morph.isSvgMorph || morph.isImage) { style.filter = shadowCss(morph); return; }
+  if (morph.isPath || morph.isImage) { style.filter = shadowCss(morph); return; }
 
   const { dropShadow } = morph;
   if ((dropShadow && dropShadow.fast) || (dropShadow && dropShadow.inset)) {
