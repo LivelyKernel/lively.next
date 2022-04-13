@@ -27,9 +27,9 @@ const jsDavPlugins = {};
   };
   console.log = () => {};
   try {
-    DavHandler = System._nodeRequire('@pylonide/jsdav/lib/DAV/handler');
-    FsTree = System._nodeRequire('@pylonide/jsdav/lib/DAV/backends/fs/tree');
-    jsDavPlugins.browser = System._nodeRequire('@pylonide/jsdav/lib/DAV/plugins/browser.js');
+    DavHandler = System._nodeRequire('jsDAV/lib/DAV/handler');
+    FsTree = System._nodeRequire('jsDAV/lib/DAV/backends/fs/tree');
+    jsDavPlugins.browser = System._nodeRequire('jsDAV/lib/DAV/plugins/browser.js');
   } catch (err) { console.error('cannot load jsdav:', err); } finally { console.log = log; }
 })();
 

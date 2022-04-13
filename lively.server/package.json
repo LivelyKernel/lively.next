@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "dependencies": {
     "http-proxy": "^1.16.2",
-    "jsDAV": "^0.3.4",
-    "@pylonide/jsdav": "^0.4.2",
+    "jsDAV": "mnutt/jsDAV",
     "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
     "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
     "lively.modules": "*",

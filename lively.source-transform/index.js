@@ -2,8 +2,8 @@
 import { parseFunction, parse, stringify, ReplaceVisitor } from 'lively.ast';
 import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 import transformJSX from 'babel-plugin-transform-jsx';
-import catchBinding from 'babel-catch-binding';
-import importMeta from 'babel-import-meta';
+import catchBinding from '@babel/plugin-syntax-import-meta';
+import importMeta from '@babel/plugin-syntax-import-meta';
 
 import * as capturing from './capturing.js';
 import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';

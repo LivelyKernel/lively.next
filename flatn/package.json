@@ -12,7 +12,7 @@
     "flatn_env": "./bin/flatn_env"
   },
   "dependencies": {
-    "node-gyp": "3.6.2"
+    "node-gyp": "9.0.0"
   },
   "systemjs": {
     "map": {
