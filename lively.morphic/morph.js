@@ -3383,6 +3383,78 @@ export class Path extends Morph {
     return renderer.nodeForPath(this);
   }
 
+  patchSpecialProps (node, renderer) {
+    if (!obj.equals(this.borderColor, this.renderingState.specialProps.borderColor)) {
+      renderer.renderPolygonBorderColor(this);
+      this.renderingState.specialProps.borderColor = this.borderColor;
+    }
+
+    if (!obj.equals(this.endMarker, this.renderingState.specialProps.endMarker)) {
+      renderer.renderPathMarker(this, 'end');
+      this.renderingState.specialProps.endMarker = this.endMarker;
+    }
+
+    if (!obj.equals(this.startMarker, this.renderingState.specialProps.startMarker)) {
+      renderer.renderPathMarker(this, 'start');
+      this.renderingState.specialProps.startMarker = this.startMarker;
+    }
+
+    if (!this.clipMode !== this.renderingState.specialProps.clipMode) {
+      renderer.renderPolygonClipMode(this);
+      this.renderingState.specialProps.clipMode = this.clipMode;
+    }
+
+    if (!obj.equals(this.vertices, this.renderingState.specialProps.vertices) ||
+       this.isSmooth !== this.renderingState.specialProps.isSmooth) {
+      renderer.renderPolygonDrawAttribute(this);
+      renderer.renderControlPoints(this);
+
+      this.renderingState.specialProps.vertices = this.vertices;
+      this.renderingState.specialProps.isSmooth = this.isSmooth;
+    }
+
+    if (this.showControlPoints !== this.renderingState.specialProps.showControlPoints) {
+      renderer.renderControlPoints(this);
+      this.renderingState.specialProps.showControlPoints = this.showControlPoints;
+    }
+
+    if (!obj.equals(this.fill, this.renderingState.specialProps.fill)) {
+      renderer.renderPolygonFill(this);
+      this.renderingState.specialProps.fill = this.fill;
+    }
+
+    if (!obj.equals(this.cornerStyle, this.renderingState.specialProps.cornerStyle) ||
+       !obj.equals(this.endStyle, this.renderingState.specialProps.endStyle)) {
+      renderer.renderPolygonStrokeStyle(this);
+      this.renderingState.specialProps.cornerStyle = this.cornerStyle;
+      this.renderingState.specialProps.endStyle = this.endStyle;
+    }
+
+    if (!obj.equals(this.borderStyle, this.renderingState.specialProps.borderStyle) ||
+       !obj.equals(this.borderWidth, this.renderingState.specialProps.borderWidth)) {
+      renderer.renderPolygonBorder(this);
+      this.renderingState.specialProps.borderWidth = this.borderWidth;
+      this.renderingState.specialProps.borderStyle = this.borderStyle;
+    }
+
+    if (!obj.equals(this.width, this.renderingState.specialProps.width) ||
+       !obj.equals(this.height, this.renderingState.specialProps.height)) {
+      renderer.renderPolygonSVGAttributes(this);
+      renderer.renderPolygonDrawAttribute(this);
+      renderer.renderControlPoints(this);
+      if (this.drawnProportion) renderer.renderPolygonMask(this);
+
+      this.renderingState.specialProps.vertices = this.vertices;
+      this.renderingState.specialProps.width = this.width;
+      this.renderingState.specialProps.height = this.height;
+    }
+
+    if (this.drawnProportion !== this.renderingState.drawnProportion) {
+      renderer.renderPolygonMask(this);
+      this.renderingState.drawnProportion = this.drawnProportion;
+    }
+  }
+
   get _pathNode () {
     const renderer = PropertyPath('env.renderer').get(this);
     const node = renderer && renderer.getNodeForMorph(this);
