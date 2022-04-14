@@ -26,14 +26,16 @@ Object.defineProperty(Symbol.prototype, '__serialize__', {
   })()
 });
 
+const hasSystem = typeof System !== 'undefined';
+
 // System
-Object.defineProperty(System, '__serialize__', {
+hasSystem && Object.defineProperty(System, '__serialize__', {
   configurable: true,
   value: () => ({ __expr__: 'System' })
 });
 
 // window/global
-Object.defineProperty(System.global, '__serialize__', {
+hasSystem && Object.defineProperty(System.global, '__serialize__', {
   configurable: true,
   value: () => ({ __expr__: 'System.global' })
 });

@@ -1,6 +1,6 @@
 /* global alert */
-import ClassHelper from './class-helper.js';
 import { Path, obj, arr, graph } from 'lively.lang';
+import ClassHelper from './class-helper.js';
 import ExpressionSerializer from './plugins/expression-serializer.js';
 
 export function referenceGraph (snapshot) {
@@ -225,7 +225,7 @@ export function removeEpiConnections (snapshot) {
     if (classNameOfId(snapshot, id) === 'AttributeConnection') {
       const objSnap = snapshot[id];
       const sourceObjSnap = snapshot[Path('props.sourceObj.value.id').get(objSnap)];
-      if (objSnap.props._isEpiConnection){
+      if (objSnap.props._isEpiConnection) {
         sourceObjSnap.props.attributeConnections.value = sourceObjSnap.props.attributeConnections.value.filter(ref => ref.id != id);
         delete snapshot[id];
       }

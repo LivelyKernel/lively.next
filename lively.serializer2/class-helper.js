@@ -118,8 +118,8 @@ export default class ClassHelper {
       let modA = a.module; let modB = b.module;
       if ((!modA && !modB) || (modA && !modB) || (!modA && modB)) { return a.className === b.className; }
       return a.className === b.className &&
-          modA.package.name == modB.package.name &&
-          modA.package.pathInPackage == modB.package.pathInPackage;
+          modA.package.name === modB.package.name &&
+          modA.package.pathInPackage === modB.package.pathInPackage;
     });
   }
 }

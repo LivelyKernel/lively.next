@@ -1,9 +1,11 @@
 import './object-extensions.js';
 import { ObjectPool } from './object-pool.js';
-import { version as serializerVersion } from './package.json';
+// import { version as serializerVersion } from './package.json';
 import { requiredModulesOfSnapshot, removeUnreachableObjects, clearDanglingConnections, removeEpiConnections } from './snapshot-navigation.js';
 import { allPlugins } from './plugins.js';
 import semver from 'semver';
+
+const serializerVersion = '0.1.3';
 
 export function normalizeOptions (options) {
   options = { plugins: allPlugins, reinitializeIds: false, skipMigrations: true, ...options };
