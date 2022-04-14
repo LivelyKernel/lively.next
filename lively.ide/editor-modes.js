@@ -465,7 +465,7 @@ export var modeInfo = [
     name: 'JavaScript',
     mimes: ['text/javascript', 'text/ecmascript', 'application/javascript', 'application/x-javascript', 'application/ecmascript'],
     mode: 'javascript',
-    ext: ['js'],
+    ext: ['js', 'mjs'],
     alias: ['ecmascript', 'js', 'node']
   },
   { name: 'JSON', mimes: ['application/json', 'application/x-json'], mode: 'json', ext: ['json', 'map'], alias: ['json5'] },
