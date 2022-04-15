@@ -17,10 +17,13 @@ import { classToFunctionTransform } from './class-to-function-transform.js';
 const objectPackageSym = Symbol.for('lively-object-package-data');
 // defaultBaseURL = System.normalizeSync("lively.morphic/parts/packages/"),
 const defaultBaseURL = 'local://lively-object-modules';
-const globalClasses = Object.keys(System.global).map(ea => {
-  const val = System.global[ea];
-  return typeof val === 'function' && val.name && val;
-}).filter(Boolean);
+
+function globalClasses () {
+  return Object.keys(System.global).map(ea => {
+    const val = System.global[ea];
+    return typeof val === 'function' && val.name && val;
+  }).filter(Boolean);
+}
 
 function normalizeOptions (options) {
   options = { baseURL: defaultBaseURL, System: System, ...options };
@@ -283,7 +286,7 @@ class ObjectModule {
     className = className || string.capitalize(toJsIdentifier(objectPackage.id));
     let superClassName = superClass[Symbol.for('__LivelyClassName__')];
     const isAnonymousSuperclass = !superClassName;
-    const globalSuperClass = globalClasses.includes(superClass);
+    const globalSuperClass = globalClasses().includes(superClass);
     let source = '';
     let bindings = null;
 
