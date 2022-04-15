@@ -98,7 +98,8 @@ export default function extendParser (Parser) {
             this.raise(this.start, 'Inline decorators must be attached to a property declaration');
           }
         case acorn.tokTypes.name:
-        case acorn.tokTypes._with: // fixme
+        case acorn.tokTypes._with: // this seems to get confused when we use javascript keywords
+        case acorn.tokTypes._delete: // dito...
           let node = super.parseClassElement(constructorAllowsSuper);
           node.decorators = decorators;
           if (decorators.length) {

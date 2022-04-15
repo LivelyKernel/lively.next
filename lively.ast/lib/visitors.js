@@ -1,5 +1,5 @@
 import Visitor from '../generated/estree-visitor.js';
-import ASTQ from 'https://jspm.dev/astq@2.7.5';
+import ASTQ from 'astq';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // simple ast traversing

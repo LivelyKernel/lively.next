@@ -1,7 +1,7 @@
 /* global require,global */
 import { obj } from 'lively.lang';
-import estraverse from 'https://jspm.dev/@javascript-obfuscator/estraverse';
-import esutils from 'https://jspm.dev/esutils';
+import estraverse from '@javascript-obfuscator/estraverse';
+import esutils from 'esutils';
 
 // FORKED ESCODEGEN
 function ESCODEGEN () {
