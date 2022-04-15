@@ -3,6 +3,7 @@
   "version": "0.1.20",
   "description": "EcmaScript 6 classes for live development",
   "main": "dist/lively.classes.js",
+  "type": "module",
   "systemjs": {
     "main": "index.js"
   },

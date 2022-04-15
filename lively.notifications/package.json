@@ -8,7 +8,8 @@
     "url": "https://github.com/LivelyKernel/lively.notifications/issues"
   },
   "homepage": "https://github.com/LivelyKernel/lively.notifications#readme",
-  "main": "dist/lively.notifications.js",
+  "main": "index.js",
+  "type": "module",
   "systemjs": {
     "main": "./index.js"
   },

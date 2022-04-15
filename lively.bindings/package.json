@@ -1,6 +1,7 @@
 {
   "name": "lively.bindings",
   "version": "0.1.2",
+  "type": "module",
   "dependencies": {
     "lively.lang": "*"
   },

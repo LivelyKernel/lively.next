@@ -2,7 +2,8 @@
   "name": "lively.ast",
   "version": "0.11.3",
   "description": "Parsing JS code into ASTs and tools to query and transform these trees.",
-  "main": "dist/lively.ast.js",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node ./tools/build.js"
@@ -26,10 +27,17 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.ast",
   "dependencies": {
-    "lively.lang": "^1.0.0"
+    "lively.lang": "^1.0.0",
+    "esutils": "2.0.3",
+    "@javascript-obfuscator/estraverse": "5.4.0",
+    "astq": "2.7.5",
+    "escodegen": "2.0.0",
+    "acorn": "8.0.4",
+    "acorn-walk": "8.2.0",
+    "acorn-loose": "8.3.0"
   },
   "devDependencies": {
-    "acorn": "^5.2.1",
+    "acorn": "8.0.4",
     "acorn-jsx": "^4.1.0",
     "acorn-es7-plugin": "^1.1.7",
     "acorn5-object-spread": "^4.0.0",
@@ -47,10 +55,13 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "escodegen": "https://jspm.dev/escodegen",
-      "acorn-walk": "https://jspm.dev/acorn-walk",
-      "acorn-loose": "https://jspm.dev/acorn-loose",
+      "escodegen": "https://jspm.dev/escodegen@2.0.0",
+      "acorn-walk": "https://jspm.dev/acorn-walk@8.2.0",
+      "acorn-loose": "https://jspm.dev/acorn-loose@8.3.0",
       "acorn": "https://jspm.dev/acorn@8.0.4",
+      "esutils": "https://jspm.dev/esutils@2.0.3",
+      "astq": "https://jspm.dev/astq@2.7.5",
+      "@javascript-obfuscator/estraverse": "https://jspm.dev/@javascript-obfuscator/estraverse@5.4.0",
       "util": {
         "node": "@node/util",
         "~node": "@empty"

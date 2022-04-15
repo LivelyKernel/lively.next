@@ -1,6 +1,7 @@
 {
   "name": "lively.freezer",
   "version": "0.1.0",
+  "type": "module",
   "dependencies": {
     "@babel/core": "^7.12.3",
     "@babel/cli": "^7.12.1",

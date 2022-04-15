@@ -1,6 +1,8 @@
 {
   "name": "lively.serializer2",
   "version": "0.1.3",
+  "type": "module",
+  "main": "index.js",
   "dependencies": {
     "lively.lang": "^1.0.5",
     "semver": "^5.3.0"

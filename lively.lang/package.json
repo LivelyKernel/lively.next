@@ -2,7 +2,8 @@
   "name": "lively.lang",
   "version": "1.0.25",
   "description": "JavaScript utils providing useful abstractions for working with collections, functions, objects.",
-  "main": "dist/lively.lang.js",
+  "main": "./index.js",
+  "type": "module",
   "systemjs": {
     "main": "index.js",
     "map": {
@@ -32,6 +33,9 @@
       },
       "articles": "https://jspm.dev/npm:articles@0.2.2"
     }
+  },
+  "dependencies": {
+    "articles": "^0.2.2"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
