@@ -1,54 +1,21 @@
-/* global System, process */
-
+/* global System, process, require */
 import CommandInterface from './command-interface.js';
 import { stripAnsiAttributes } from './ansi-color-parser.js';
 import { promise, arr, string } from 'lively.lang';
 import { signal } from 'lively.bindings';
-import { spawn, exec } from 'child_process';
-import { inspect, format } from 'util';
+import { format } from 'util';
 import fs from 'fs';
 import path from 'path';
 
+let spawn, exec, isWindows, defaultEnv;
+let askPassScript = '';
+let editorScript = '';
+let doKill;
 let debug = false;
-
-let isWindows = process.platform !== 'linux' &&
-             process.platform !== 'darwin' &&
-             process.platform.include('win');
-
 let LIVELY = System.baseURL.replace(/^file:\/\//, '');
-
 let binDir = System.decanonicalize('lively.shell/bin').replace(/^file:\/\//, '');
 
-let defaultEnv = Object.assign(
-  Object.create(process.env), {
-    SHELL: '/bin/bash',
-    PAGER: 'ul | cat -s',
-    MANPAGER: 'ul | cat -s',
-    TERM: 'xterm',
-    PATH: binDir + path.delimiter + process.env.PATH,
-    LIVELY: LIVELY
-  });
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-/*
- * ASKPASS support for tunneling sudo / ssh / git password requests back to the
- * browser session
- */
-let askPassScript = '';
-(function setupAskpass () {
-  askPassScript = path.join(binDir, 'askpass' + (isWindows ? '.win.sh' : '.sh'));
-  if (!isWindows) { try { fs.chmodSync(askPassScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
-})();
-
-/*
- * EDITOR support
- */
-let editorScript = '';
-(function setupEditor () {
-  editorScript = path.join(binDir, 'lively-as-editor.sh');
-  if (!isWindows) { try { fs.chmodSync(editorScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
-})();
 
 /*
  * determine the kill command at startup. if pkill is available then use that
@@ -77,20 +44,15 @@ function pkillKill (pid, signal, thenDo) {
   });
 }
 
-let doKill = defaultKill;
-(function determineKillCommand () {
-  exec('which pkill', function (code) { if (!code) doKill = pkillKill; });
-})();
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // var c = new Command();
 // c.spawn({command: "ls"})
 
 export default class ServerCommand extends CommandInterface {
   static installLively2LivelyServices (tracker) {
-    Object.keys(L2LServices).forEach(name =>
+    Object.keys(L2LServices).forEach(name => // eslint-disable-line no-use-before-define
       tracker.addService(name,
-        async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn)));
+        async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn))); // eslint-disable-line no-use-before-define
   }
 
   constructor () {
@@ -110,6 +72,7 @@ export default class ServerCommand extends CommandInterface {
   }
 
   spawn (cmdInstructions = { command: null, env: {}, cwd: null, stdin: null, stripAnsiAttributes: true }) {
+    let cwd, stdin, command, args;
     let options = {
       env: null,
       cwd: null,
@@ -124,7 +87,7 @@ export default class ServerCommand extends CommandInterface {
       throw new Error(`${this} already has process attached, won't spawn again!`);
     }
 
-    var { command, cwd, stdin } = options;
+    ({ command, cwd, stdin } = options);
     let env = Object.assign(Object.create(defaultEnv), this.envForCommand(options));
     cwd = cwd || process.cwd();
 
@@ -138,9 +101,9 @@ export default class ServerCommand extends CommandInterface {
 
     if (!isWindows) command = `source ${binDir}/lively.profile; ${command}`;
 
-    var [command, args] = isWindows
+    ([command, args] = (isWindows
       ? ['cmd', ['/C', command]]
-      : ['/bin/bash', ['-c', command]];
+      : ['/bin/bash', ['-c', command]]));
 
     let proc = spawn(command, args, { env, cwd, stdio: 'pipe', detached: true });
 
@@ -219,7 +182,7 @@ export default class ServerCommand extends CommandInterface {
   }
 }
 
-var L2LServices = {
+const L2LServices = {
 
   async 'lively.shell.spawn' (tracker, { sender, data }, ackFn) {
     let answer;
@@ -293,149 +256,44 @@ var L2LServices = {
 
 };
 
-// var L2LService = {
-//
-//   writeToShellCommand: function(sessionServer, connection, msg) {
-//     // sends input (stdin) to running processes
-//     function answer(data) {
-//         connection.send({action: msg.action + 'Result',
-//             inResponseTo: msg.messageId, data: data});
-//     }
-//     var pid = msg.data.pid, input = msg.data.input;
-//     if (!pid) { answer({error: 'no pid'}); return; }
-//     if (!input) { answer({error: 'no input'}); return; }
-//     var cmd = findShellCommand(pid);
-//     if (!cmd) { answer({error: 'command not found'}); return; }
-//     if (!cmd.process) { answer({error: 'command not running'}); return; }
-//     debug && console.log('writing to shell command %s: %s', pid, input);
-//     cmd.process.stdin.write(input);
-//     answer({message: 'OK'});
-//   }
-//
-// }
+try {
+  ({ spawn, exec } = require('child_process'));
 
-//
-// // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//
-// /*
-//  * Lively2Lively services
-//  */
+  isWindows = process.platform !== 'linux' &&
+             process.platform !== 'darwin' &&
+             process.platform.include('win');
 
-// var services = require("./LivelyServices").services;
-// util._extend(services, shellServices);
-//
-// // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-//
-// module.exports = d.bind(function(route, app) {
-//
-//     app.get(route + 'download-file', function(req,res) {
-//         // GET http://lively-web.org/nodejs/DownloadExampleServer/callmeanything.txt/this%20is%20the%20file%20content
-//         // donwloads a file named callmeanything.txt with "this is the file content"
-//         var p = req.query.path, resolvedPath = path.resolve(p);
-//
-//         var err = !p ? "no path query" :
-//             (!fs.existsSync(resolvedPath) ? "no such file: " + resolvedPath : null);
-//         if (err) { res.status(400).end(err); return; }
-//
-//         var name = path.basename(resolvedPath);
-//
-//         res.set("Content-Disposition", "attachment; filename='" + name + "';");
-//         res.set("Content-Type", "application/octet-stream");
-//
-//         var stream = fs.createReadStream(resolvedPath).pipe(res);
-//         stream.on('error', function() {
-//             res.status(500).end("Error reading / sending " + resolvedPath);
-//         });
-//     });
-//
-//     app.get(route + "read-file", function(req, res) {
-//       var q = require("url").parse(req.url, true).query;
-//       var fn = q.fileName;
-//       var mimeType = q.mimeType || "text/plain";
-//       if (!fn || !fs.existsSync(fn) || !fs.statSync(fn).isFile()) {
-//         res.status(400).end("cannot read " + fn);
-//         return;
-//       }
-//
-//       res.contentType(mimeType);
-//       fs.createReadStream(fn).pipe(res);
-//     });
-//
-//     app.get(route, function(req, res) {
-//         res.json({platform: process.platform, cwd: dir});
-//     });
-//
-//     app.delete(route, function(req, res) {
-//         var pid = req.body && req.body.pid,
-//             commandsToKill = pid ? shellCommands.filter(function(cmd) { return cmd.process && cmd.process.pid === pid; }) : shellCommands,
-//             pids = [];
-//         commandsToKill.forEach(function(cmd) {
-//             if (!cmd.process) return;
-//             var pid = cmd.process.pid;
-//             pids.push(pid);
-//             console.log('Killing CommandLineServer command process with pid ' + pid);
-//             cmd.process && cmd.process.kill();
-//         });
-//         res.end(JSON.stringify({
-//             message: !pids || !pids.length ?
-//                 'no process were running' :
-//                 'processes with pids ' + pids + ' killed'}));
-//     });
-//
-//     app.post(route, function(req, res) {
-//         var command = req.body && req.body.command,
-//             stdin = req.body && req.body.stdin,
-//             env = req.body && req.body.env,
-//             dir = req.body && req.body.cwd,
-//             isExec = req.body && req.body.isExec,
-//             auth = req.headers.authorization;
-//
-//         if (!command) { res.status(400).end(); return; }
-//
-//         if (auth) {
-//           env = env || {};
-//           env.L2L_ASKPASS_AUTH_HEADER = auth; // needed in bin/commandline2lively.js
-//         }
-//
-//         var cmd, cmdInstructions = {
-//             command: command,
-//             cwd: dir,
-//             env: env,
-//             isExec: isExec,
-//             stdin: stdin
-//         };
-//
-//         try {
-//             cmd = runShellCommand(cmdInstructions);
-//         } catch(e) {
-//             var msg = 'Error invoking shell: ' + e + '\n' + e.stack;
-//             console.error(msg);
-//             res.status(500).json({error: msg}).end(); return;
-//         }
-//         if (!cmd || !cmd.process) {
-//             res.status(400).json({error: 'Could not run ' + command}).end();
-//             return;
-//         }
-//
-//         // make it a streaming response:
-//         res.removeHeader('Content-Length');
-//         res.set({
-//           'Content-Type': 'text/plain',
-//           'Transfer-Encoding': 'chunked'
-//         });
-//
-//         cmd.process.stdout.on('data', function (data) {
-//             res.write(formattedResponseText('STDOUT', data));
-//         });
-//
-//         cmd.process.stderr.on('data', function (data) {
-//             res.write(formattedResponseText('STDERR', data));
-//         });
-//
-//         cmd.process.on('close', function(code) {
-//             res.write(formattedResponseText('CODE', cmd.lastExitCode));
-//             res.end();
-//         });
-//     });
-//
-// });
+  defaultEnv = Object.assign(
+    Object.create(process.env), {
+      SHELL: '/bin/bash',
+      PAGER: 'ul | cat -s',
+      MANPAGER: 'ul | cat -s',
+      TERM: 'xterm',
+      PATH: binDir + path.delimiter + process.env.PATH,
+      LIVELY: LIVELY
+    });
+
+  /*
+   * ASKPASS support for tunneling sudo / ssh / git password requests back to the
+   * browser session
+   */
+  (function setupAskpass () {
+    askPassScript = path.join(binDir, 'askpass' + (isWindows ? '.win.sh' : '.sh'));
+    if (!isWindows) { try { fs.chmodSync(askPassScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
+  })();
+
+  /*
+   * EDITOR support
+   */
+  (function setupEditor () {
+    editorScript = path.join(binDir, 'lively-as-editor.sh');
+    if (!isWindows) { try { fs.chmodSync(editorScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
+  })();
+
+  (function determineKillCommand () {
+    doKill = defaultKill;
+    exec('which pkill', function (code) { if (!code) doKill = pkillKill; });
+  })();
+} catch (err) {
+
+}
