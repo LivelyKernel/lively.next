@@ -115,6 +115,7 @@ function addShadowStyle (morph, style) {
   if ((dropShadow && dropShadow.fast) || (dropShadow && dropShadow.inset)) {
     style.boxShadow = dropShadow ? dropShadow.toCss() : 'none';
   } else {
+    style.boxShadow = '';
     style.filter = dropShadow ? dropShadow.toFilterCss() : '';
   }
 }
