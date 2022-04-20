@@ -39,6 +39,8 @@ export function addTransform (morph, style) {
   }
   if ((owner && owner.isText && !Path('layout.renderViaCSS').get(owner)) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
+    style.top = '';
+    style.left = '';
   } else {
     style.transform = '';
     style.top = `${y}px`;
