@@ -90,8 +90,17 @@ function formatArgs(args){
 }
 
 function setupLogger() {
-  let logger = new winston.Logger();
-  logger.add(winston.transports.Console, {colorize: true, timestamp: true});
+  let logger = new winston.createLogger();
+const myFormat = winston.format.printf(({ level, message, label, timestamp }) => {
+  return `${timestamp} ${level}: ${message}`;
+});
+  logger.add(new winston.transports.Console({
+	format: winston.format.combine(
+		winston.format.colorize(),
+		winston.format.timestamp(),
+                myFormat
+		)
+	}));
   console.livelyLogger = logger;
   console.log = function() { logger.info.apply(logger, formatArgs(arguments)); };
   console.info = function() { logger.info.apply(logger, formatArgs(arguments)); };
