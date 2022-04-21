@@ -29,7 +29,7 @@ export default class ClientCommand extends CommandInterface {
       // L2L_ASKPASS_AUTH_HEADER:
       ASKPASS_SESSIONID: id,
       L2L_EDITOR_SESSIONID: id,
-      L2L_SESSIONTRACKER_SERVER: origin.replace('localhost', '127.0.0.1'),
+      L2L_SESSIONTRACKER_SERVER: origin,
       L2L_SESSIONTRACKER_PATH: path,
       L2L_SESSIONTRACKER_NS: namespace,
       ...env
@@ -174,7 +174,7 @@ export function writeFile (path, content, options) {
 
 let cmd;
 const L2LServices = {
-
+  
   'lively.shell.onOutput': async (client, { data: { pid, stdout, stderr } }, ackFn, sender) => {
     debug && console.log(`[lively.shell] client received lively.shell.onOutput for command ${pid}`);
     try {
