@@ -104,7 +104,7 @@ echo "Executed $ALL_TESTS tests in $TESTED_PACKAGES packages."
 echo "✅ $GREEN_TESTS (≈$GREEN_PERCENTAGES %) passed."
 echo "❌ $RED_TESTS (≈$RED_PERCENTAGES %) failed."
 echo "⏩ $SKIPPED_TESTS (≈$SKIPPED_PERCENTAGES %) skipped."
-if ((RED_TESTS > 0)); 
+if ((RED_TESTS > 0 || ALL_TESTS == 0)); 
 then
   exit 1
 else 
