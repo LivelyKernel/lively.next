@@ -52,8 +52,8 @@
         "~node": "https://jspm.dev/pouchdb@7.2.1"
       },
       "pouchdb-adapter-mem": {
-	"node": "./dist/pouchdb-adapter-mem.js",
-	"~node": "https://jspm.dev/pouchdb-adapter-memory"
+	      "node": "./dist/pouchdb-adapter-mem.js",
+ 	      "~node": "https://jspm.dev/pouchdb-adapter-memory@7.2.1"
       }
     }
   }
