@@ -2,6 +2,7 @@
 require("systemjs");
 const modules = require("lively.modules");
 const resource = lively.resources.resource;
+const obj = lively.lang.obj;
 require("socket.io");
 const util = require('util');
 const winston = require("winston")
@@ -43,6 +44,14 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
       modules.unwrapModuleLoad(livelySystem);
       modules.wrapModuleResolution(livelySystem);
       modules.wrapModuleLoad(livelySystem);
+      // what about the package registry???
+      const oldRegistry = livelySystem['__lively.modules__packageRegistry'];
+      delete livelySystem['__lively.modules__packageRegistry'];
+      const newRegistry = livelySystem['__lively.modules__packageRegistry'] = modules.PackageRegistry.ofSystem(livelySystem);
+      Object.assign(newRegistry, obj.select(oldRegistry, [
+        'packageMap', 'individualPackageDirs', 'devPackageDirs', 'packageBaseDirs'
+      ]));
+      newRegistry.resetByURL();
     }).then(() =>
       silenceDuring(
         // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...
