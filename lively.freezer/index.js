@@ -319,8 +319,8 @@ async function writeFiles (frozen, li, { dir, shell }) {
   li.status = 'Copying assets...';
   const assetDir = await dir.join('assets/').ensureExistance();
   // copy font awesome assets
-  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-5.12.1/css/'));
-  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-5.12.1/webfonts/'));
+  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-6.1.1-web/css/'));
+  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-6.1.1-web/webfonts/'));
   // copy inconsoloata font
   await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
   for (const asset of frozen.assets) {

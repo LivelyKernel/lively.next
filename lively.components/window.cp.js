@@ -58,7 +58,7 @@ const WindowButtonMenu = component({
     fontSize: 14,
     position: pt(2, 1),
     reactsToPointer: false,
-    textAndAttributes: Icon.textAttribute('chevron-down')
+    textAndAttributes: Icon.textAttribute('angle-down')
   }],
   tooltip: 'Open Window Menu'
 });
@@ -154,6 +154,9 @@ const DefaultWindow = component({
             }
           }), part(WindowButtonMenu, {
             name: 'menu',
+            position: pt(48, 0),
+            submorphs: [
+              { name: 'label', position: pt(2, 0) }],
             master: {
               auto: WindowButtonMenu,
               hover: WindowButtonMenuHovered

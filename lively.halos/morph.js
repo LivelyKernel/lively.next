@@ -603,7 +603,7 @@ class GrabHaloItem extends HaloItem {
 
   static get properties () {
     return {
-      styleClasses: { defaultValue: ['far', 'fa-hand-rock'] },
+      styleClasses: { defaultValue: ['fa-solid', 'fa-hand-back-fist'] },
       tooltip: { defaultValue: 'Grab the morph' },
       draggable: { defaultValue: true }
     };
@@ -765,7 +765,7 @@ class InspectHaloItem extends HaloItem {
     return {
       tooltip: { defaultValue: "Inspect the morph's local state" },
       draggable: { defaultValue: false },
-      styleClasses: { defaultValue: ['fas', 'fa-cogs'] }
+      styleClasses: { defaultValue: ['fas', 'fa-magnifying-glass-chart'] }
     };
   }
 
