@@ -42,17 +42,23 @@ function installResolver() {
 }
 
 function findPackageConfig(modulePath) {
-  let dir = path.dirname(modulePath), config = null;
+  let dir = path.dirname(modulePath), configs = [];
+  // accumulate all found package.json files and merge them into one
+  // until we reach one of the packageCollectionDirs or individualPackageDirs
+  let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv();
   while (true) {
     if (fs.existsSync(path.join(dir, "package.json"))) {
-      config = JSON.parse(fs.readFileSync(path.join(dir, "package.json")));
-      break;
+      configs.push(JSON.parse(fs.readFileSync(path.join(dir, "package.json"))));
     }
     let nextDir = path.dirname(dir);
     if (nextDir === dir) break;
+    if (packageCollectionDirs.includes(nextDir)) break;
+    if (individualPackageDirs.includes(nextDir)) break;
     dir = nextDir;
   }
-  return config;
+  return configs.reduce(function(configA, configB) {
+    return Object.assign(configA, configB);
+  }, {});
 }
 
 function depMap(packageConfig) {
