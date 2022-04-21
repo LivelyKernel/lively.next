@@ -9,4 +9,4 @@ if [ -z "$WORKSPACE_LK" ]; then
   export WORKSPACE_LK=$(dirname $DIR)
 fi
 
-node $WORKSPACE_LK/bin/send-to-lively.js $@
+node --dns-result-order ipv4first $WORKSPACE_LK/bin/send-to-lively.js $@
