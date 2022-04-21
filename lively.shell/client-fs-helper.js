@@ -139,9 +139,11 @@ let defaultExcludes = ['.svn', '.git', 'node_modules', '.module_cache'];
 function findFilesCommandString (pattern, options = {}) {
   let {
     rootDirectory = '.',
-    exclude = '-iname ' + defaultExcludes.map(string.print).join(' -o -iname '),
+    exclude,
     depth, platform
   } = options;
+
+  if (!exclude) exclude = '-iname ' + defaultExcludes.map(string.print).join(' -o -iname ');
 
   let slash = platform === 'win32' ? '\\' : '/';
   if (platform !== 'win32' && !rootDirectory.endsWith(slash)) rootDirectory += slash;
