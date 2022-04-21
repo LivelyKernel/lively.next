@@ -84,7 +84,7 @@ export default class ServerCommand extends CommandInterface {
     this.startTime = new Date();
 
     if (this.process) {
-      throw new Error(`${this} already has process attached, won't spawn again!`);
+      throw new Error(`${this} already has process attached, wont spawn again!`);
     }
 
     ({ command, cwd, stdin } = options);
@@ -257,7 +257,9 @@ const L2LServices = {
 };
 
 try {
-  ({ spawn, exec } = require('child_process'));
+  const proc = require('child_process');
+  spawn = proc.spawn;
+  exec = proc.exec;
 
   isWindows = process.platform !== 'linux' &&
              process.platform !== 'darwin' &&
