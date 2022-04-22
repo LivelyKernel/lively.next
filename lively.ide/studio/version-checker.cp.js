@@ -63,12 +63,17 @@ class VersionChecker extends Morph {
   async checkIfUpToDate () {
     const cmd = 'git rev-parse master';
     const cwd = await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
-    await runCommand('git fetch', {
-      cwd
-    }).whenDone();
-    const { stdout } = await runCommand(cmd, {
-      cwd
-    }).whenDone();
+    let stdout;
+    try {
+      await runCommand('git fetch', {
+        cwd
+      }).whenDone();
+      ({ stdout } = await runCommand(cmd, { cwd }).whenDone());
+    } catch (err) {
+      debugger;
+      this.showError();
+      return;
+    }
     const hash1 = stdout.split('\n')[0];
     const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/master').readJson();
     if (hash1 !== hash2) {
@@ -80,6 +85,13 @@ class VersionChecker extends Morph {
   showOutdated (version) {
     const { status, checking, outdated } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
+    checking.visible = checking.isLayoutable = false;
+    outdated.visible = outdated.isLayoutable = true;
+  }
+
+  showError () {
+    const { status, checking, outdated } = this.ui;
+    status.value = 'Error while checking';
     checking.visible = checking.isLayoutable = false;
     outdated.visible = outdated.isLayoutable = true;
   }
