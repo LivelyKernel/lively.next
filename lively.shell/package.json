@@ -9,7 +9,7 @@
     "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
     "lively.lang": "*",
     "lively.resources": "*",
-    "socket.io-client": "^2.0.3"
+    "socket.io-client": "^4.4.1"
   },
   "devDependencies": {
     "mocha-es6": "^0.5",

@@ -1,6 +1,6 @@
-/*global System*/
+/*global System, require*/
 import { arr } from "lively.lang";
-const socketio = System._nodeRequire("socket.io");
+import socketio from "socket.io";
 
 export default class SocketioPlugin {
 
