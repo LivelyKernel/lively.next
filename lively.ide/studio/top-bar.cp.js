@@ -820,7 +820,7 @@ export class UserFlapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isUserFlap', 'isMaximized'];
+          return ['isUserFlap', 'isMaximized', 'updateNetworkIndicator'];
         }
       },
       bindings: {
@@ -1003,7 +1003,7 @@ export class UserFlapModel extends ViewModel {
       if (l2lClient.isOnline()) color = 'yellow';
       if (l2lClient.isRegistered()) color = 'green';
     }
-    this.get('network-indicator').animate({
+    this.ui.networkIndicator.animate({
       fill: Color[color], duration: 300
     });
   }
