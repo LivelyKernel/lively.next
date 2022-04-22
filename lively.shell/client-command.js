@@ -52,17 +52,22 @@ export default class ClientCommand extends CommandInterface {
 
     this.commandString = Array.isArray(command) ? command.join('') : command;
 
-    let { data: { error, pid } } = await l2lClient.sendToAndWait(l2lClient.trackerId,
-      'lively.shell.spawn', { command, env, cwd, stdin }, {
-        ackTimeout: 30 * 1000
-      });
+    let error, pid;
+    if (!l2lClient.isOnline()) error = 'L2L not connected';
+    else {
+      ({ data: { error, pid } } = await l2lClient.sendToAndWait(l2lClient.trackerId,
+        'lively.shell.spawn', { command, env, cwd, stdin }, {
+          ackTimeout: 30 * 1000
+        }));
+    }
 
     if (error) {
       debug && console.error(`[${this}] error at start: ${error}`);
       this.process = { error };
       this.exitCode = 1;
       signal(this, 'error', error);
-      throw new Error(error);
+      this._whenDone.reject(error);
+      return;
     }
 
     this.process = { pid };
@@ -174,7 +179,7 @@ export function writeFile (path, content, options) {
 
 let cmd;
 const L2LServices = {
-  
+
   'lively.shell.onOutput': async (client, { data: { pid, stdout, stderr } }, ackFn, sender) => {
     debug && console.log(`[lively.shell] client received lively.shell.onOutput for command ${pid}`);
     try {
