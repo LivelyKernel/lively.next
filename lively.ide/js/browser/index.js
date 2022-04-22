@@ -191,6 +191,8 @@ export class PackageTreeData extends TreeData {
   displayDeclaration (decl) {
     let icon = [];
     switch (decl.type) {
+      case ('md-heading'):
+        return ['    '.repeat(`${decl.level}` - 1) + string.truncate(decl.name, 18, '…'), null];
       case 'class-class-method':
         icon = ['static ', {}];
         break;
@@ -358,7 +360,10 @@ export class PackageTreeData extends TreeData {
   async listMarkdownHeadings (mdFile) {
     const { headings } = mdCompiler.parse({ textString: await this.systemInterface.moduleRead(mdFile) });
     return headings.map(heading => {
+      // FIXME: just counting the # works good enough, but will break if someone puts a hastag into the text of the heading itself
+      heading.level = (heading.string.match(/#/g) || []).length;
       heading.isDeclaration = true;
+      heading.type = 'md-heading';
       heading.isCollapsed = true;
       heading.name = heading.string.replace(/^#+\s?/, '');
       return heading;
