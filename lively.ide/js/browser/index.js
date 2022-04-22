@@ -561,6 +561,7 @@ export class BrowserModel extends ViewModel {
             'selectedCodeEntity',
             'selectCodeEntity',
             'selectPackageNamed',
+            'setEvalBackend',
             'editorPlugin',
             'isTestModule',
             'reloadModule',
@@ -674,7 +675,8 @@ export class BrowserModel extends ViewModel {
       delete this._serializedState;
       await this.browse(s);
     }
-    new EvalBackendChooser().buildEvalBackendDropdownFor(this, this.ui.evalBackendList);
+    this.ui.evalBackendButton.target = this.view;
+    new EvalBackendChooser().buildEvalBackendDropdownFor(this, this.ui.evalBackendButton);
     this.ui.tabs.addTab('Browser Tab', null);
   }
 
@@ -809,20 +811,7 @@ export class BrowserModel extends ViewModel {
     if (newRemote !== oldSystemInterface.name) {
       this.editorPlugin.setSystemInterfaceNamed(newRemote);
       await this.toggleWindowStyle();
-      this.reset();
-      const { systemInterface: newSystemInterface } = this;
-      const packages = await newSystemInterface.getPackages();
-      const pSpec = p && packages.find(ea => ea.name === p);
-      if (pSpec) {
-        await this.selectPackageNamed(p);
-        const modFound = pSpec.modules.find(
-          ea => newSystemInterface.shortModuleName(ea.name, pSpec) === mod);
-        await this.selectModuleNamed(modFound ? mod : pSpec.main);
-      } else {
-        await this.selectPackageNamed(packages[0].name);
-        await this.selectModuleNamed(packages[0].main);
-      }
-      this.relayout();
+      this.browse(this.browseSpec());
     }
   }
 
@@ -1023,11 +1012,10 @@ export class BrowserModel extends ViewModel {
     }
   }
 
-  // this.indicateFrozenModuleIfNeeded()
-
   async indicateFrozenModuleIfNeeded () {
     const { metaInfoText } = this.ui;
     const m = await this.systemInterface.getModule(this.selectedModule.url);
+    if (!m) return; // possibly operating within server context
     const pkgName = m.package().name;
     const moduleName = m.pathInPackage();
 
@@ -2273,3 +2261,4 @@ export class BrowserModel extends ViewModel {
     ].filter(Boolean);
   }
 }
+
