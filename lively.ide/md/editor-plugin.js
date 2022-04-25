@@ -133,8 +133,8 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
   get isMarkdownEditorPlugin () { return true; }
   get shortName () { return 'md'; }
   get longName () { return 'markdown'; }
-  get openPairs () { return { '{': '}', '[': ']', '(': ')', '"': '"', "'": "'" }; }
-  get closePairs () { return { '}': '{', ']': '[', ')': '(', '"': '"', "'": "'" }; }
+  get openPairs () { return { '{': '}', '[': ']', '(': ')', '"': '"', "'": "'", '`': '`' }; }
+  get closePairs () { return { '}': '{', ']': '[', ')': '(', '"': '"', "'": "'", '`': '`' }; }
 
   getNavigator () { return new MarkdownNavigator(); }
 
