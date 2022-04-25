@@ -4,7 +4,6 @@ import './mode.js';
 import { tokenizeDocument } from '../editor-modes.js';
 import { arr, string } from 'lively.lang';
 
-import { loadPart } from 'lively.morphic/partsbin.js';
 import { addOrChangeLinkedCSS } from 'lively.morphic/rendering/dom-helper.js';
 import { mdCompiler } from './compiler.js';
 import MarkdownNavigator from './navigator.js';
@@ -111,7 +110,7 @@ let commands = [
   }
 ];
 
-export var defaultMarkdownOptions = {
+export const defaultMarkdownOptions = {
   html: true,
   linkify: true,
   typographer: true,

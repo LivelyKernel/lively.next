@@ -16,11 +16,10 @@ import { commands as navCommands } from './text/code-navigation-commands.js';
 import { commands as codeCommands } from './text/generic-code-commands.js';
 import { codeEvaluationCommands } from './text/code-evaluation-commands.js';
 import { commands as richTextCommands } from './text/rich-text-commands.js';
-import { Color } from 'lively.graphics';
+
 import { Range } from 'lively.morphic/text/range.js';
 
 export function guessTextModeName (contentOrEditor, filename = '', hint) {
-  let mode = hint || 'text';
   let fileExt = filename && arr.last(filename.split('.')).toLowerCase();
   let peekString = ''; let size = 0; let maxSize = 1000;
 
@@ -109,7 +108,6 @@ export default class EditorPlugin {
 
   onViewChange () {
     // this.requestHighlight();
-    let { firstVisibleRow, lastVisibleRow } = this.textMorph.viewState;
     this.requestHighlight();
   }
 
@@ -265,7 +263,6 @@ export default class EditorPlugin {
     let { row, column } = cursorPos;
     let before = lineString[column - 1];
     let after = lineString[column];
-    let fill = ' '.repeat(indentDepth) + '\n';
     morph.selection.text = '\n';
     morph.selection.collapseToEnd();
     if (before === '{' && after === '}') {
@@ -318,15 +315,12 @@ export default class EditorPlugin {
   cmd_insertstring (string) {
     let { openPairs, closePairs, textMorph: morph } = this;
     let sel = morph.selection;
-    let sels = sel.isMultiSelection ? sel.selections : [sel];
-    let offsetColumn = 0;
     let isOpen = morph.autoInsertPairs && string in openPairs;
     let isClose = morph.autoInsertPairs && string in closePairs;
 
     if (!isOpen && !isClose) return false;
 
     let line = morph.getLine(sel.end.row);
-    let left = line[sel.end.column - 1];
     let right = line[sel.end.column];
 
     if (!sel.isEmpty()) {
@@ -334,7 +328,7 @@ export default class EditorPlugin {
       // we've selected something and are inserting an open pair => instead of
       // replacing the selection we insert the open part in front of it and
       // closing behind, then select everything
-      var undo = morph.undoManager.ensureNewGroup(morph);
+      const undo = morph.undoManager.ensureNewGroup(morph);
       morph.insertText(openPairs[string], sel.end);
       morph.insertText(string, sel.start);
       morph.undoManager.group(undo);
@@ -353,16 +347,13 @@ export default class EditorPlugin {
     if (isClose && !isOpen) return false;
 
     // insert pair
-    offsetColumn = 1;
-    var undo = morph.undoManager.ensureNewGroup(morph);
+    const undo = morph.undoManager.ensureNewGroup(morph);
     morph.insertText(string + openPairs[string]);
     morph.undoManager.group(undo);
     sel.goLeft(1);
     return true;
   }
 }
-
-
 
 export class CodeMirrorEnabledEditorPlugin extends EditorPlugin {
   constructor () {
