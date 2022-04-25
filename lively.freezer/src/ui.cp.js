@@ -7,7 +7,7 @@ import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, Proportion
 import { PackageRegistry } from 'lively.modules/index.js';
 import EditorPlugin from 'lively.ide/editor-plugin.js';
 import { resource } from 'lively.resources';
-import { fun, arr } from 'lively.lang/index.js';
+import { fun } from 'lively.lang/index.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 
 class PackageTextCompleter {
@@ -85,7 +85,6 @@ export default class FreezerPromptModel extends AbstractPromptModel {
       },
       epiMorph: { defaultValue: true },
       isModuleBundle: { defaultValue: true },
-      mainCandidates: { defaultValue: [] },
       excludedPackages: {
         derived: true,
         set (packageNames) {
@@ -97,7 +96,7 @@ export default class FreezerPromptModel extends AbstractPromptModel {
       },
       expose: {
         get () {
-          return [...super.prototype.expose, 'excludedPackages', 'directory', 'isModuleBundle', 'mainCandidates'];
+          return [...super.prototype.expose, 'excludedPackages', 'directory', 'isModuleBundle'];
         }
       },
       bindings: {
@@ -129,15 +128,6 @@ export default class FreezerPromptModel extends AbstractPromptModel {
     this.view.opacity = 1;
   }
 
-  onRefresh (prop) {
-    const AVG_CHAR_WIDTH = 8;
-    if (prop == 'mainCandidates') {
-      this.models.mainSelector.items = this.mainCandidates;
-      this.ui.mainFunctionExplaination.visible = this.mainCandidates.length > 0;
-      this.ui.mainSelector.width = Math.max(100, arr.max(this.mainCandidates, name => name.length).length * AVG_CHAR_WIDTH);
-    }
-  }
-
   cancel () {
     this.view.remove();
     this.reject();
@@ -149,12 +139,11 @@ export default class FreezerPromptModel extends AbstractPromptModel {
   }
 
   resolve () {
-    const { dirInput, packageList, compilerSelector, mainSelector } = this.ui;
+    const { dirInput, packageList, compilerSelector } = this.ui;
     return super.resolve({
       location: this.directory,
       useTerser: compilerSelector.selection == 'Terser + Babel',
-      excludedPackages: this.excludedPackages,
-      mainFunction: mainSelector.selection
+      excludedPackages: this.excludedPackages
     });
   }
 
@@ -368,41 +357,6 @@ const FreezerPrompt = component(LightPrompt, {
     textAndAttributes: ['Excluding packages from the bundle of the frozen part can reduce the total payload and its loading time ', null, 'dramatically', { fontWeight: 'bold' }, '. This however needs to be done with care. Make sure that none of your functionality depends of these excluded packages. If you do not know what you are doing it is best to leave this list as is.', { textAlign: 'left' }],
     nativeCursor: 'default',
     textAlign: 'center'
-  }), add({
-    type: Text,
-    name: 'main function explaination',
-    borderColor: Color.rgb(204, 204, 204),
-    borderRadius: 3,
-    extent: pt(449, 109),
-    fill: Color.rgba(255, 255, 255, 0),
-    fixedWidth: true,
-    fontColor: Color.rgb(102, 102, 102),
-    fontFamily: 'IBM Plex Sans',
-    lineWrapping: true,
-    nativeCursor: 'default',
-    readOnly: true,
-    textAlign: 'left',
-    textAndAttributes: [
-      'Main Function:', { textAlign: 'left', fontSize: 16, fontColor: Color.rgb(45, 45, 45) }, ' ', { textAlign: 'left', fontSize: 16 }, ' ', { textAlign: 'left' }, part(DropDownList, {
-        name: 'main selector',
-        layout: new TilingLayout({
-          align: 'right',
-          axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(10, 0, 0, 0),
-          wrapSubmorphs: false
-        }),
-        extent: pt(300.1, 25.9),
-        position: pt(104.4, 0),
-        viewModel: {
-          selection: 'main',
-          items: ['main'],
-          listMaster: SystemList,
-          listHeight: 1000,
-          listAlign: 'selection',
-          openListInWorld: true
-        }
-      }), { textAlign: 'left' }, '   \n', { fontSize: 5 }, '\nSelected the function within the module that is supposed to be automatically invoked on load of the bundle. Default paramter passed to the function will be the world object.', null]
   }),
 
   add({
