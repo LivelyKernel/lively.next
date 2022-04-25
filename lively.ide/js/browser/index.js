@@ -1612,7 +1612,7 @@ export class BrowserModel extends ViewModel {
           if (ext === 'md') {
             // the preview does not get unset when it is closed
             // we thus need to check whether the window that contains the preview is currently member of the world 
-            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
+            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.ownerChain().includes($world)) {
               await this.renderMarkdown();
             }
           }
