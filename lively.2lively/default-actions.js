@@ -1,4 +1,4 @@
-export var defaultActions = {
+export const defaultActions = {
 
   'l2l-ping': (tracker, { sender, data: { timestamp } }, ackFn, socket) => {
     const t = Date.now();
@@ -36,7 +36,7 @@ export var defaultActions = {
 
 };
 
-export var defaultTrackerActions = {
+export const defaultTrackerActions = {
 
   async '[broadcast] send' (tracker, { sender, data }, ackFn, socket) {
     let {
@@ -51,11 +51,11 @@ export var defaultTrackerActions = {
       const { id } = tracker; const trackers = tracker.getTrackerList();
       console.log(trackers);
       broadcasters = trackers.map(ea =>
-        ea.id != id ? ea.io.nsps['/' + ea.namespace] : socket.broadcast);
+        ea.id !== id ? ea.io._nsps.get('/' + ea.namespace) : socket.broadcast);
     } else {
       if (isSystemBroadcast) namespace = tracker.namespace;
       broadcasters.push(namespace
-        ? tracker.io.nsps['/' + namespace]
+        ? tracker.io._nsps.get('/' + namespace)
         : socket.broadcast);
     }
 
@@ -66,6 +66,7 @@ export var defaultTrackerActions = {
         broadcast: true,
         data: broadcast
       });
+      debugger;
       ea.to(room).emit(action, {
         action,
         sender,
@@ -85,14 +86,13 @@ export var defaultTrackerActions = {
 
   async '[broadcast] join room' (tracker, { sender, data: { room } }, ackFn, socket) {
     let status; let joined = false;
-    const rooms = tracker.io.nsps['/' + tracker.namespace].adapter.rooms;
-    const isInRoom = rooms[room] && rooms[room].sockets && rooms[room].sockets[socket.id];
+    const rooms = tracker.io._nsps.get('/' + tracker.namespace).adapter.rooms;
+    const isInRoom = rooms.get(room) && rooms.get(room).has(socket.id);
 
     if (isInRoom) {
       status = `${sender} already in ${room}`;
     } else {
-      await new Promise((resolve, reject) =>
-        socket.join(room, err => err ? reject(err) : resolve()));
+      await socket.join(room);
       status = `${sender} joined ${room}`;
       joined = true;
     }
@@ -101,14 +101,13 @@ export var defaultTrackerActions = {
 
   async '[broadcast] leave room' (tracker, { sender, data: { room } }, ackFn, socket) {
     let status; let left = false;
-    const rooms = tracker.io.nsps['/' + tracker.namespace].adapter.rooms;
-    const isInRoom = rooms[room] && rooms[room].sockets && rooms[room].sockets[socket.id];
+    const rooms = tracker.io._nsps.get('/' + tracker.namespace).adapter.rooms;
+    const isInRoom = rooms.get(room) && rooms.get(room).has(socket.id);
 
     if (!isInRoom) {
       status = `${sender} not in ${room}`;
     } else {
-      await new Promise((resolve, reject) =>
-        socket.leave(room, err => err ? reject(err) : resolve()));
+      await socket.leave(room);
       status = `${sender} left room ${room}`;
       left = true;
     }
@@ -122,17 +121,17 @@ export var defaultTrackerActions = {
   },
 
   '[broadcast] all rooms' (tracker, { sender }, ackFn, socket) {
-    ackFn(tracker.io.nsps['/' + tracker.namespace].adapter.rooms);
+    ackFn(tracker.io._nsps.get('/' + tracker.namespace).adapter.rooms);
   },
 
   '[broadcast] list room members' (tracker, { sender, data: { room } }, ackFn, socket) {
     const { io } = tracker; let contents;
     if (!room) { ackFn({ isError: true, error: '`room` paramerter missing!' }); return; }
-    contents = io.nsps['/' + tracker.namespace].adapter.rooms[room];
+    contents = io._nsps.get('/' + tracker.namespace).adapter.rooms.get(room);
     ackFn({
       room,
-      sockets: contents ? contents.sockets : {},
-      length: contents ? contents.length : 0
+      sockets: contents ? [...contents.entries()].reduce((res, [a]) => { return res[a] = true, res; }, {}) : {},
+      length: contents ? contents.size : 0
     });
   },
 
@@ -142,7 +141,7 @@ export var defaultTrackerActions = {
   }
 };
 
-export var defaultClientActions = {
+export const defaultClientActions = {
 
   async 'getRoomList' ({ client, ackFn }) {
     const result = client._socketioClient.rooms;

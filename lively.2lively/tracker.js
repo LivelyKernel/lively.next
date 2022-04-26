@@ -104,11 +104,9 @@ export default class L2LTracker extends L2LConnection {
 
     let ns = this.namespace.replace(/^\/?/, '/');
     const namespace = this.io._nsps.get(ns);
-    namespace.sockets.forEach(id => {
+    namespace.sockets.forEach(s => {
       try {
-        let s = namespace.sockets.get(id);
         s.disconnect(true);
-        namespace.remove(s);
       } catch (e) {
         console.error(`error in ${this}.disconnect`, e.stack || e);
       }
