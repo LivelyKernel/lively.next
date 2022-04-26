@@ -36,17 +36,17 @@ export const codeEvaluationCommands = [
         return;
       }
       let fileToBlame = morph.editorPlugin.evalEnvironment.targetModule;
-      if (!fileToBlame.match(/http:/)) {
-        morph.showError('Only available for files located on server.');
+      if (!fileToBlame.match(/http:/) && !fileToBlame.match(/file:/)) {
+        morph.showError('Only available for files located in the file system.');
         return;
       }
-      
+
       let baseDir = await defaultDirectory();
       baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
-      fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
-      
-      const command = 'git blame -L ' + rangeStart + ',' + rangeEnd + ' --porcelain --line-porcelain ' + fileToBlame; 
-      
+      fileToBlame = fileToBlame.replace('http://localhost:9011/', '').replace('file://', '');
+
+      const command = 'git blame -L ' + rangeStart + ',' + rangeEnd + ' --porcelain --line-porcelain ' + fileToBlame;
+
       let cmd = runCommand(command, { cwd: baseDir });
       await cmd.whenDone();
       let result = cmd.output;
@@ -64,21 +64,21 @@ export const codeEvaluationCommands = [
         return;
       }
       let fileToBlame = morph.editorPlugin.evalEnvironment.targetModule;
-      if (!fileToBlame.match(/http:/)) {
-        morph.showError('Only available for files located on server.');
+      if (!fileToBlame.match(/http:/) && !fileToBlame.match(/file:/)) {
+        morph.showError('Only available for files located in the file system.');
         return;
       }
-      
+
       let baseDir = await defaultDirectory();
       baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
-      fileToBlame = fileToBlame.replace('http://localhost:9011/', '');
-      
-      const command = 'git blame -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame; 
-      
+      fileToBlame = fileToBlame.replace('http://localhost:9011/', '').replace('file://', '');
+
+      const command = 'git blame -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame;
+
       let cmd = runCommand(command, { cwd: baseDir });
       await cmd.whenDone();
       let result = cmd.output;
-      
+
       let author = result.match(/author (.*)$/m)[1];
       let commitMessage = result.match(/summary (.*)$/m)[1];
       let date = result.match(/author-time (.*)$/m)[1];
