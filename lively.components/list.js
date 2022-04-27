@@ -620,6 +620,7 @@ export class List extends Morph {
 
   clickOnItem (evt) {
     const item = this.itemForClick(evt);
+    if (!item) return;
     const { state: { clickCount } } = evt;
     if (evt.positionIn(this).x > this.width - this.scrollbarOffset.x) return;
     const method = clickCount === 2 ? 'onItemMorphDoubleClicked' : 'onItemMorphClicked';
@@ -807,6 +808,7 @@ export class List extends Morph {
   onItemMorphDoubleClicked (evt, itemMorph) {}
 
   onItemMorphClicked (evt, itemMorph) {
+    if (itemMorph.itemIndex === undefined) return;
     const itemI = itemMorph.itemIndex;
     const { selectedIndexes } = this;
     const isClickOnSelected = selectedIndexes.includes(itemI);
