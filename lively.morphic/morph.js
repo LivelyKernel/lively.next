@@ -2499,6 +2499,10 @@ export class Morph {
     });
   }
 
+  get borderOptions () {
+    return ['none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'];
+  }
+
   renderAsRoot (renderer) {
     this.dontRecordChangesWhile(() => {
       this.applyLayoutIfNeeded();
@@ -3539,6 +3543,10 @@ export class Path extends Morph {
     if (!this._pathNode) return pt(0, 0);
     const { x, y } = this._pathNode.getPointAtLength(this._pathNode.getTotalLength() * n) || pt(0, 0);
     return pt(x, y);
+  }
+
+  get borderOptions () {
+    return ['solid', 'dotted', 'dashed'];
   }
 }
 

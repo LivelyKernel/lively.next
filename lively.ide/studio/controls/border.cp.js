@@ -137,6 +137,9 @@ export class BorderControlModel extends PropertySectionModel {
    * Refresh the UI to reflect the current border of the focused morph.
    */
   update () {
+    this.ui.borderStyleSelector.items = this.targetMorph.borderOptions.map(v => ({
+      string: string.capitalize(v), value: v, isListItem: true
+    }));
     this.withBorder(this.targetMorph.border);
   }
 
@@ -401,10 +404,6 @@ const BorderControlElements = component({
       clipMode: 'hidden',
       extent: pt(90, 22),
       viewModel: {
-        items: ['none', 'hidden', 'dotted', 'dashed',
-          'solid', 'double', 'groove', 'ridge', 'inset', 'outset'].map(v => ({
-          string: string.capitalize(v), value: v, isListItem: true
-        })),
         listAlign: 'selection',
         openListInWorld: true,
         listHeight: 500,
