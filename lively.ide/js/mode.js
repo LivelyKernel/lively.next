@@ -173,6 +173,10 @@ defineMode('javascript', function createMode (config, parserConfig) {
         state.tokenize = tokenComment;
         return tokenComment(stream, state);
       } else if (stream.eat('/')) {
+        if (stream.match(' TODO', true, true)) {
+          stream.skipToEnd();
+          return ret('todo-comment', 'todo-comment');
+        }
         stream.skipToEnd();
         return ret('comment', 'comment');
       } else if (expressionAllowed(stream, state, 1)) {

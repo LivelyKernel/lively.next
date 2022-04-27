@@ -33,6 +33,13 @@ class DefaultTheme {
   get 'variable-2' () { return { fontColor: '#05a' }; }
   get 'variable-3' () { return { fontColor: '#085' }; }
   get 'comment' () { return { fontColor: '#666' }; }
+  get 'todo-comment' () {
+    return {
+      backgroundColor: '#FFFF00',
+      fontColor: '#666'
+    };
+  }
+
   get 'string' () { return { fontColor: '#181' }; }
   get 'string-2' () { return { fontColor: '#0B2' }; }
   get 'meta' () { return { fontColor: '#555' }; }
