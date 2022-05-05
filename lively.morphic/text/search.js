@@ -144,7 +144,7 @@ export class SearchWidgetModel extends ViewModel {
           return ['state', 'prepareForNewSearch', 'showTextMap', 'commands', 'keybindings', 'isEpiMorph'];
         }
       },
-      
+
       bindings: {
         get () {
           return [
@@ -230,7 +230,7 @@ export class SearchWidgetModel extends ViewModel {
   acceptSearch () {
     if (this.state.inProgress) { this.state.last = this.state.inProgress; }
     if (this.applySearchResult(this.state.inProgress)) {
-      this.state.before && this.target.saveMark(this.state.before.position); 
+      this.state.before && this.target.saveMark(this.state.before.position);
     }
     this.ui.searchInput.acceptInput(); // for history
     this.cleanup();
@@ -351,8 +351,10 @@ export class SearchWidgetModel extends ViewModel {
     }
 
     this.focus();
-    if (!text.selection.isEmpty()) searchInput.textString = text.selectionOrLineString();
-    else searchInput.selectAll();
+    if (!text.selection.isEmpty()) {
+      searchInput.textString = text.selectionOrLineString();
+      text.selection.collapse();
+    } else searchInput.selectAll();
   }
 
   advance (backwards) {
