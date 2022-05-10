@@ -1070,7 +1070,7 @@ export class BrowserModel extends ViewModel {
         this.updateSource(await this.systemInterface.moduleRead(url), { row: 0, column: 0 });
       }
     }
-
+    this.ui.sourceEditor.undoManager.reset();
     await this.whenModuleUpdated();
     return m;
   }
@@ -1211,6 +1211,7 @@ export class BrowserModel extends ViewModel {
       const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
       this.ui.sourceEditor.scroll = pt(0, 0);
+      this.ui.sourceEditor.undoManager.reset();
 
       await this.prepareCodeEditorForModule(m);
 
@@ -2266,4 +2267,3 @@ export class BrowserModel extends ViewModel {
     ].filter(Boolean);
   }
 }
-
