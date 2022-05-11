@@ -40,6 +40,13 @@ class DefaultTheme {
     };
   }
 
+  get 'fixme-comment' () {
+    return {
+      backgroundColor: Color.rgba(255, 76, 76, 0.53),
+      fontColor: '#666'
+    };
+  }
+
   get 'string' () { return { fontColor: '#181' }; }
   get 'string-2' () { return { fontColor: '#0B2' }; }
   get 'meta' () { return { fontColor: '#555' }; }

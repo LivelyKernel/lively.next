@@ -177,6 +177,10 @@ defineMode('javascript', function createMode (config, parserConfig) {
           stream.skipToEnd();
           return ret('todo-comment', 'todo-comment');
         }
+        if (stream.match(' FIXME', true, true)) {
+          stream.skipToEnd();
+          return ret('fixme-comment', 'fixme-comment');
+        }
         stream.skipToEnd();
         return ret('comment', 'comment');
       } else if (expressionAllowed(stream, state, 1)) {

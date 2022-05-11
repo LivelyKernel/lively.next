@@ -42,6 +42,13 @@ class DarkTheme {
     };
   }
 
+  get 'fixme-comment' () {
+    return {
+      backgroundColor: Color.rgba(255, 76, 76, 0.8),
+      fontColor: Color.white
+    };
+  }
+
   get 'string' () { return { fontColor: '#98c378' }; }
   get 'string-2' () { return { fontColor: '#98c378' }; }
   get 'meta' () { return { fontColor: '#555' }; }
