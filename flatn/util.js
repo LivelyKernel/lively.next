@@ -1,8 +1,8 @@
-/*global process, require, module, __filename*/
+/*global process, require, module, __filename, URL*/
 
 import { exec } from "child_process";
-import { join as j, basename } from "path";
-import { mkdirSync, symlinkSync, existsSync } from "fs";
+import { join as j, basename, dirname } from "path";
+import { mkdirSync, symlinkSync, existsSync, readFileSync } from "fs";
 import { tmpdir as nodeTmpdir } from "os";
 import { resource } from "./deps/lively.resources.js";
 import semver from "./deps/semver.min.js";
@@ -13,6 +13,25 @@ const crossDeviceTest = {
   customTmpDirExists: false,
   customTmpDir: j(process.cwd(), "tmp")
 };
+
+
+function configFile(dir) {
+  return dir.startsWith('file://') ? new URL("package.json", dir) : j(dir, 'package.json')
+}
+
+function findPackageConfig(modulePath) {
+  let dir = dirname(modulePath), config = null;
+  while (true) {
+    if (existsSync(configFile(dir))) {
+      config = JSON.parse(readFileSync(configFile(dir)));
+      break;
+    }
+    let nextDir = dirname(dir);
+    if (nextDir === dir) break;
+    dir = nextDir;
+  }
+  return config;
+}
 
 function tmpdir() {
   const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
@@ -326,5 +345,6 @@ export {
   x,
   npmFallbackEnv,
   gitSpecFromVersion,
-  tmpdir
+  tmpdir,
+  findPackageConfig
 };

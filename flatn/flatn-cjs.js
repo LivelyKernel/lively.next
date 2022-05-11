@@ -1,12 +1,14 @@
 // >>> util.js
-/*global process, require, module, __filename*/
+/*global process, require, module, __filename, URL*/
 
 var { exec } = require("child_process");
 var { join: j } = require("path");
 var { basename } = require("path");
+var { dirname } = require("path");
 var { mkdirSync } = require("fs");
 var { symlinkSync } = require("fs");
 var { existsSync } = require("fs");
+var { readFileSync } = require("fs");
 var { tmpdir: nodeTmpdir } = require("os");
 var { resource } = require("./deps/lively.resources.js");
 var semver = require("./deps/semver.min.js");
@@ -17,6 +19,25 @@ var crossDeviceTest = {
   customTmpDirExists: false,
   customTmpDir: j(process.cwd(), "tmp")
 };
+
+
+function configFile(dir) {
+  return dir.startsWith('file://') ? new URL("package.json", dir) : j(dir, 'package.json')
+}
+
+function findPackageConfig(modulePath) {
+  let dir = dirname(modulePath), config = null;
+  while (true) {
+    if (existsSync(configFile(dir))) {
+      config = JSON.parse(readFileSync(configFile(dir)));
+      break;
+    }
+    let nextDir = dirname(dir);
+    if (nextDir === dir) break;
+    dir = nextDir;
+  }
+  return config;
+}
 
 function tmpdir() {
   const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
@@ -330,6 +351,7 @@ module.exports.x = x;
 module.exports.npmFallbackEnv = npmFallbackEnv;
 module.exports.gitSpecFromVersion = gitSpecFromVersion;
 module.exports.tmpdir = tmpdir;
+module.exports.findPackageConfig = findPackageConfig;
 // <<< util.js
 
 // >>> package-map.js
