@@ -3,18 +3,20 @@ import { packageDownload } from "./download.js";
 import { PackageMap, PackageSpec } from "./package-map.js";
 import { BuildProcess } from "./build.js";
 
+export * from './util.js';
+
 import { basename, dirname, isAbsolute, normalize as normPath, join as j } from "path";
 import fs from "fs";
 import { inspect } from "util";
 
-import semver from "./deps/semver.min.js"
+import semver from "semver"
 
 // FIXME for resources
-import node_fetch from "./deps/node-fetch.js";
+import node_fetch from "node-fetch";
 if (!global.fetch) {
   Object.assign(
     global,
-    { fetch: node_fetch.default },
+    { fetch: node_fetch },
     ["Response", "Headers", "Request"].reduce((all, name) =>
       Object.assign(all, node_fetch[name]), {}));
 }

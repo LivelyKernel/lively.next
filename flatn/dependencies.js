@@ -1,4 +1,4 @@
-import { graph } from "./deps/lively.lang.min.js"
+import { graph } from "lively.lang"
 
 export {
   buildStages,
@@ -14,7 +14,7 @@ function buildStages(packageSpec, packageMap, dependencyFields) {
     for (let i = 0; i < deps[dep].length; i++)
       if (!deps[deps[dep][i]]) deps[dep][i] = resolvedVersions[deps[dep][i]];
 
-  return lively.lang.graph.sortByReference(deps, `${name}@${version}`);
+  return graph.sortByReference(deps, `${name}@${version}`);
 }
 
 function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) {

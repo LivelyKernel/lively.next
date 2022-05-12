@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { gitSpecFromVersion } from "./util.js";
-import { resource } from "./deps/lively.resources.js";
-import semver from "./deps/semver.min.js";
+import { resource } from "lively.resources";
+import semver from "semver";
 
 /*
 

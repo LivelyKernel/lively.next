@@ -4,7 +4,7 @@
   "main": "flatn-cjs.js",
   "scripts": {
     "test": "mocha-es6 tests/test.js",
-    "build": "node tools/build-cjs.js"
+    "build": "node --no-warnings --experimental-import-meta-resolve --experimental-loader ./resolver.mjs tools/build-cjs.mjs"
   },
   "bin": {
     "flatn": "./bin/flatn",
@@ -12,19 +12,12 @@
     "flatn_env": "./bin/flatn_env"
   },
   "dependencies": {
-    "node-gyp": "9.0.0"
-  },
-  "systemjs": {
-    "map": {
-      "lively.resources": "./deps/lively.resources.js",
-      "lively.ast": "./deps/lively.ast.js"
-    },
-    "meta": {
-      "./deps/lively.resources.js": {
-        "deps": [
-          "fs"
-        ]
-      }
-    }
+    "node-gyp": "9.0.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
+    "node-fetch": "3.2.4",
+    "rollup": "2.68.0",
+    "@rollup/plugin-commonjs": "22.0.0",
+    "minimist": "1.2.6",
+    "semver": "5.7.1"
   }
 }

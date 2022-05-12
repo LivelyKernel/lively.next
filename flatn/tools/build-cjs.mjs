@@ -1,10 +1,48 @@
-var System = require('systemjs');
-var { resource } = require("../deps/lively.resources");
-var { arr } = require("lively.lang");
-var { query } = require("../deps/lively.ast");
-var { getPackage, importPackage, module } = require("lively.modules");
+/* global global, process */
+import System from 'systemjs';
+import { resource } from "lively.resources";
+import { arr } from "lively.lang";
+import { query } from "lively.ast";
+import modules from "lively.modules";
 
-build();
+import { rollup } from 'rollup';
+import commonjs from '@rollup/plugin-commonjs';
+import { resolve } from '../resolver.mjs';
+
+
+// build();
+
+const bundle = await rollup({
+  input: './index.js',
+  plugins: [
+    {
+      resolveId: async (id, parentURL) => {
+        // directly use flatn to resolve this shit
+        if (id.startsWith('node:'))
+          return { id: id.replace('node:', ''), external: true };
+        try {
+          if (id.startsWith('lively.')) {
+            return (await resolve(id, parentURL ? { parentURL } : false)).url.replace('file://', '');
+          }
+          if (!id.startsWith('.')) 
+            return (await resolve(id, parentURL ? { parentURL } : false)).url.replace('file://', '');
+        } catch (err) {
+          return null; 
+        }
+      }
+    },
+    commonjs({
+      ignoreDynamicRequires: true,
+      exclude: [/node:.*/]
+    })
+  ]
+});
+
+await bundle.write({
+  format: 'cjs',
+  inlineDynamicImports: true,
+  file: 'flatn-cjs.js'
+});
 
 let files = [
   "util.js",
@@ -15,10 +53,12 @@ let files = [
   "index.js",
 ]
 
+// FIXME: Also update the files inside ./deps/... to ensure they are also up to date
+
 // await p.reload()
 async function build() {
-  let pkg = await importPackage(".");
-  pkg = getPackage('flatn');
+  let pkg = await modules.importPackage(".");
+  pkg = modules.getPackage('flatn');
   let bundledSource = await bundleToCjs(pkg, files),
       dist = resource(pkg.url).join(`flatn-cjs.js`);
   await dist.parent().ensureExistance();
@@ -32,14 +72,14 @@ async function build() {
 // let parsed = await m.ast()
 
 async function bundleToCjs(pkg, bundleFiles) {
-  let modules = bundleFiles.map(ea => module(pkg.url + "/" + ea)),
-      _ = modules.forEach(m => m.reset()),
-      moduleImports = await Promise.all(modules.map(ea => ea.imports())),
-      moduleExports = await Promise.all(modules.map(ea => ea.exports())),
-      moduleSources = await Promise.all(modules.map(ea => ea.source())),
-      moduleAsts = await Promise.all(modules.map(ea => ea.ast()));
+  let moduleFiles = bundleFiles.map(ea => modules.module(pkg.url + "/" + ea)),
+      _ = moduleFiles.forEach(m => m.reset()),
+      moduleImports = await Promise.all(moduleFiles.map(ea => ea.imports())),
+      moduleExports = await Promise.all(moduleFiles.map(ea => ea.exports())),
+      moduleSources = await Promise.all(moduleFiles.map(ea => ea.source())),
+      moduleAsts = await Promise.all(moduleFiles.map(ea => ea.ast()));
 
-  return modules
+  return moduleFiles
     .map((ea, i) => {
       const moduleMarker = ea.id.slice(System.baseURL.length);
       return (
@@ -50,7 +90,7 @@ async function bundleToCjs(pkg, bundleFiles) {
           moduleExports[i],
           moduleSources[i],
           moduleAsts[i],
-          modules
+          moduleFiles
         ) +
         `// <<< ${moduleMarker}\n`
       );

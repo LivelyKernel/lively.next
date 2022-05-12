@@ -3,8 +3,8 @@ import { join as j } from "path";
 import { tmpdir, x } from "./util.js";
 import { gitClone, npmDownloadArchive, untar, gitSpecFromVersion } from "./util.js";
 import { PackageSpec } from "./package-map.js";
-import semver from "./deps/semver.min.js";
-import { resource } from "./deps/lively.resources.js";
+import semver from "semver";
+import { resource } from "lively.resources";
 
 export {
   packageDownload

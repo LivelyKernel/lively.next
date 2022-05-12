@@ -4,8 +4,8 @@ import { exec } from "child_process";
 import { join as j, basename, dirname } from "path";
 import { mkdirSync, symlinkSync, existsSync, readFileSync } from "fs";
 import { tmpdir as nodeTmpdir } from "os";
-import { resource } from "./deps/lively.resources.js";
-import semver from "./deps/semver.min.js";
+import { resource } from "lively.resources";
+import semver from "semver";
 
 const crossDeviceTest = {
   done: false,
