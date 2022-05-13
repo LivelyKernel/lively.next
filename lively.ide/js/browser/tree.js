@@ -1,7 +1,7 @@
 import { resource } from 'lively.resources';
 import { parse } from 'lively.ast';
 
-export const editableFiles = ['md', 'js', 'json', 'css', 'less', 'html'];
+export const editableFiles = ['md', 'js', 'json', 'css', 'less', 'html', 'mjs', 'cjs'];
 
 /* eslint-disable no-unused-vars */
 async function listEditableFilesInDir (url) {

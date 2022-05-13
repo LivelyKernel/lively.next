@@ -157,6 +157,8 @@ export class PackageTreeData extends TreeData {
           displayedName = this.displayMarkdown(name, isSelected);
           break;
         case 'js':
+        case 'mjs':
+        case 'cjs':
           displayedName = this.displayModule(name, isSelected, node.isLoaded);
           break;
         case 'json':
@@ -191,8 +193,6 @@ export class PackageTreeData extends TreeData {
   displayDeclaration (decl) {
     let icon = [];
     switch (decl.type) {
-      case ('md-heading'):
-        return ['    '.repeat(`${decl.level}` - 1) + string.truncate(decl.name, 18, '…'), null];
       case 'class-class-method':
         icon = ['static ', {}];
         break;
@@ -360,10 +360,7 @@ export class PackageTreeData extends TreeData {
   async listMarkdownHeadings (mdFile) {
     const { headings } = mdCompiler.parse({ textString: await this.systemInterface.moduleRead(mdFile) });
     return headings.map(heading => {
-      // FIXME: just counting the # works good enough, but will break if someone puts a hastag into the text of the heading itself
-      heading.level = (heading.string.match(/#/g) || []).length;
       heading.isDeclaration = true;
-      heading.type = 'md-heading';
       heading.isCollapsed = true;
       heading.name = heading.string.replace(/^#+\s?/, '');
       return heading;
@@ -1613,7 +1610,7 @@ export class BrowserModel extends ViewModel {
           if (ext === 'md') {
             // the preview does not get unset when it is closed
             // we thus need to check whether the window that contains the preview is currently member of the world 
-            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.ownerChain().includes($world)) {
+            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
               await this.renderMarkdown();
             }
           }
