@@ -1,10 +1,11 @@
 {
   "name": "lively.modules",
   "version": "0.8.38",
-  "main": "dist/new_lively.modules.bootstrap.min.js",
+  "main": "./index.js",
   "repository": "https://github.com/LivelyKernel/lively.modules",
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"

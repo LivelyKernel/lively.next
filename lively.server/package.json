@@ -1,6 +1,7 @@
 {
   "name": "lively.server",
   "version": "0.1.0",
+  "type": "module",
   "dependencies": {
     "http-proxy": "^1.16.2",
     "jsDAV": "mnutt/jsDAV",

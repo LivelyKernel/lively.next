@@ -20,7 +20,8 @@
   "dependencies": {
     "lively.lang": "^1.0.0",
     "lively.resources": "^0.1.18",
-    "pouchdb": "7.2.1"
+    "pouchdb": "7.2.1",
+    "pouchdb-adapter-memory": "7.2.1"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
@@ -51,7 +52,7 @@
         "node": "pouchdb/dist/pouchdb.js",
         "~node": "https://jspm.dev/pouchdb@7.2.1"
       },
-      "pouchdb-adapter-mem": {
+      "pouchdb-adapter-memory": {
 	      "node": "./dist/pouchdb-adapter-mem.js",
  	      "~node": "https://jspm.dev/pouchdb-adapter-memory@7.2.1"
       }
