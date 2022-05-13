@@ -2,7 +2,9 @@
 /*
  * For usage as EDITOR env variable.
  */
-require('./commandline2lively')({
+import execCommand from './commandline2lively.js';
+
+execCommand({
   action: process.argv[2],
   data: { args: process.argv.slice(3) }
 }, function (err, answer) {

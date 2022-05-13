@@ -59,19 +59,14 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
     const contextFetch = obj.isString(options.context) ? options.context : false;
     options = obj.dissoc(options, ['systemInterface', 'System', 'context', 'classTransform']);
     return `
-(function() {
+(async function() {
   var arg = ${JSON.stringify(arg)},
       options = ${JSON.stringify(options)};
-  if (typeof lively === "undefined" || !lively.vm) {
-    return Promise.resolve({
-      isEvalResult: true,
-      isError: true,
-      value: 'lively.vm not available!'
-    });
-  }
+  const { runEval, completions } = await System.import("lively.vm");
+  const { classToFunctionTransform } = await System.import("lively.classes");
   var hasSystem = typeof System !== "undefined"
   options.context = ${contextFetch};
-  options.classTransform = lively.classes.classToFunctionTransform;
+  options.classTransform = classToFunctionTransform;
   if (!options.context) {
     options.context = hasSystem
       ? System.global
@@ -89,7 +84,7 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
       options = Object.assign({topLevelVarRecorderName: "GLOBAL"}, options);
       delete options.targetModule;
     }
-    let res = await lively.vm.runEval(source, options);
+    let res = await runEval(source, options);
     try {
        JSON.stringify(res.value);
     } catch(e) {
@@ -98,7 +93,7 @@ export class RemoteEvalStrategy extends LivelyVmEvalStrategy {
     return res;
   }
   function keysOfObjectFunction(prefix, options) {
-    return lively.vm.completions.getCompletions(code => evalFunction(code, options), prefix)
+    return completions.getCompletions(code => evalFunction(code, options), prefix)
       .then(result => ({isEvalResult: true, completions: result.completions, prefix: result.startLetters}));
   }
   return ${action === 'eval' ? 'evalFunction' : 'keysOfObjectFunction'}(arg, options)

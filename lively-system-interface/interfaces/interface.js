@@ -165,9 +165,10 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
           opts = ${JSON.stringify(options)};
       opts.context = ${contextFetch};
       opts.classTransform = (await System.import("lively.classes")).classToFunctionTransform;
-      var evalFn = code => lively.vm.runEval(code, opts);
+      var { runEval, completions } = await System.import("lively.vm");
+      var evalFn = code => runEval(code, opts);
       if (typeof System === "undefined") delete opts.targetModule;
-      lively.vm.completions.getCompletions(evalFn, prefix).then(function(result) {
+      completions.getCompletions(evalFn, prefix).then(function(result) {
         if (result.isError) throw result.value;
         return {
           completions: result.completions,
@@ -246,8 +247,9 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     return this.runEvalAndStringify(`
       ${this.livelySystemAccessor()};
       var options = ${JSON.stringify(options)};
+      var { syncEval } = await System.import('lively.vm');
       options.excluded = options.excluded.map(ea => {
-        let evaled = lively.vm.syncEval(ea).value;
+        let evaled = syncEval(ea).value;
         return typeof evaled === "function" ? evaled : ea;
       });
       await livelySystem.localInterface.getPackages(options)

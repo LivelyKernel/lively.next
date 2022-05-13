@@ -9,4 +9,6 @@ if [ -z "$WORKSPACE_LK" ]; then
   export WORKSPACE_LK=$(dirname $DIR)
 fi
 
-node --dns-result-order ipv4first $WORKSPACE_LK/bin/send-to-lively.js $@
+RESOLVER=$(node -e "console.log(require.resolve('flatn/resolver.mjs'))") 
+
+node --no-warnings --experimental-loader $RESOLVER --dns-result-order ipv4first $WORKSPACE_LK/bin/send-to-lively.js $@

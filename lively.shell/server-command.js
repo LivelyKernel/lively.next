@@ -12,8 +12,13 @@ let askPassScript = '';
 let editorScript = '';
 let doKill;
 let debug = false;
-let LIVELY = System.baseURL.replace(/^file:\/\//, '');
-let binDir = System.decanonicalize('lively.shell/bin').replace(/^file:\/\//, '');
+let LIVELY = typeof System !== 'undefined' ? System.baseURL.replace(/^file:\/\//, '') : process.cwd();
+
+let binDir = typeof System !== 'undefined'
+  ? System.decanonicalize('lively.shell/bin').replace(/^file:\/\//, '')
+  : import.meta.resolve('lively.shell/bin').then((res) => {
+    binDir = res.replace(/^file:\/\//, ''); // fixme: this may still cause issues
+  });
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
