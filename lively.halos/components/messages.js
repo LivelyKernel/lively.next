@@ -16,7 +16,6 @@ export class StatusMessage extends ViewModel {
       isCompact: {
         defaultValue: false
       },
-
       message: {
         after: ['view']
       },
@@ -178,6 +177,7 @@ export class StatusMessage extends ViewModel {
     if (!world || this.isMaximized) return;
     this.isMaximized = true;
     this.stayOpen = true;
+    this.isCompact = false;
     const text = this.ui.messageText;
     text.lineWrapping = false;
     Object.assign(text, { clipMode: 'auto', readOnly: true, reactsToPointer: true });
@@ -215,3 +215,4 @@ export class StatusMessage extends ViewModel {
     text && text.focus();
   }
 }
+
