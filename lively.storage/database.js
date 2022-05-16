@@ -1,6 +1,6 @@
 /* global global,self,process,System,require */
 import _PouchDB from 'pouchdb'; // 7.2.2 breaks stuff
-import pouchdbAdapterMem from 'pouchdb-adapter-mem';
+import pouchdbAdapterMem from 'pouchdb-adapter-memory';
 import { Path } from 'lively.lang';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
