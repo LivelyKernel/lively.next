@@ -5,7 +5,7 @@ require('./deps/system.src.cjs');
 let nodeVersion = process.versions.node;
 let majorVersion = Number(nodeVersion.split('.')[0]);
 if (majorVersion < 17) {
-  console.error("Your node.js version %s not supported by lively.next.  Please use at least node.js 17.", majorVersion);
+  console.error("Your node.js version %s is not supported by lively.next.  Please use at least node.js 17.", majorVersion);
   process.exit(1);
 }
 

@@ -10,7 +10,7 @@ This is the repository of the [lively.next project](https://lively-next.org).
 
 Make sure you have the following software installed.
 
-1. node.js version 8 or later.
+1. node.js version 17 or later.
 2. git
 
 ## Installation and Setup
