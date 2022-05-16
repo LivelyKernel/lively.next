@@ -7,9 +7,9 @@
  * protocol and prompt the query. The prompt input will be written to stdout.
  */
 
-let path = require('path');
-let util = require('util');
-let io = require('socket.io-client');
+import path from 'path';
+import util from 'util';
+import io from 'socket.io-client';
 let debug = false;
 let debugOut = debug && require('fs').createWriteStream(process.env.HOME + '/.commandline2lively-debug.log');
 let env = process.env;
@@ -56,7 +56,7 @@ function createConnection (thenDo) {
   } catch (e) { thenDo(e); }
 }
 
-function queryLively (msg, thenDo) {
+export default function queryLively (msg, thenDo) {
   // lively-2-lively session id to be used to ask for password:
   let clientSessionId = env.L2L_EDITOR_SESSIONID || env.ASKPASS_SESSIONID;
   if (clientSessionId && !msg.target) msg.target = clientSessionId;
@@ -97,5 +97,3 @@ function queryLively (msg, thenDo) {
     ioSocket.connect();
   });
 }
-
-module.exports = queryLively;

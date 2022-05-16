@@ -12,15 +12,18 @@
 // L2L_SESSIONTRACKER_SERVER="http://localhost:9010" \
 // node askpass.js "Someone there"
 
+import { join } from "path";
+import cmd from './commandline2lively';
+
 // control stdout/err output, silence the node process:
 let stdoutWrite = process.stdout.write;
 let stderrWrite = process.stderr.write;
 process.stderr.write = function () {};
 process.stdout.write = function () {};
 
-if (!process.env.WORKSPACE_LK) { process.env.WORKSPACE_LK = require('path').join(__dirname, '..'); }
+if (!process.env.WORKSPACE_LK) { process.env.WORKSPACE_LK = join(__dirname, '..'); }
 
-require('./commandline2lively')({
+cmd({
   action: 'ask for',
   data: {
     query: process.argv[2] || 'No query from ASKPASS invocation',

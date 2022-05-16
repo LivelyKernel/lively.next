@@ -1,7 +1,9 @@
 /*
  * For usage as EDITOR env variable.
  */
-require("./commandline2lively")({
+import cmd from "./commandline2lively"
+
+cmd({
   action: 'open editor',
   data: {args: process.argv.slice(2)}
 }, function(err, answer) {

@@ -19,4 +19,5 @@ if [ "${FILE:0:1}" != "/" ]; then
   fi
 fi
 
-node $DIR/lively-as-editor.js "$FILE"
+RESOLVER=$(node -e "console.log(require.resolve('flatn/resolver.mjs'))") 
+node --no-warnings --experimental-loader $RESOLVER --dns-result-order ipv4first $DIR/lively-as-editor.js "$FILE"
