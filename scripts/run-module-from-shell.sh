@@ -9,7 +9,7 @@
 
 lv_next_dir=$PWD
 
-. $lv_next_dir/lively.installer/assets/lively-next-flatn-env.sh
+. $lv_next_dir/scripts/lively-next-flatn-env.sh
 lively_next_flatn_env $lv_next_dir
 
 # ln -sf $lv_next_dir/mocha-es6/bin/{mocha-es6.js,mocha-es6}
