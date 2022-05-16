@@ -123,6 +123,10 @@ export class NodeJSFileResource extends Resource {
     return this._assignPropsFromStat(await this.stat());
   }
 
+  makeProxied () {
+    return this;
+  }
+
   async copyTo (otherResource, ensureParent = true) {
     if (this.isFile()) {
       const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
@@ -181,7 +185,7 @@ export class NodeJSWindowsFileResource extends NodeJSFileResource {
   }
 }
 
-export var resourceExtension = {
+export const resourceExtension = {
   name: 'nodejs-file-resource',
   matches: url => url.startsWith('file:'),
   resourceClass: typeof process !== 'undefined' && process.platform === 'win32'
