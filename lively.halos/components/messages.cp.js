@@ -17,6 +17,7 @@ const MessageButton = component(ButtonDefault, {
   borderRadius: 25,
   borderWidth: 0,
   extent: pt(25, 25),
+  halosEnabled: false,
   fill: Color.rgba(255, 255, 255, 0)
 });
 
@@ -56,6 +57,7 @@ const StatusMessageDefault = component({
     extent: pt(669, 40),
     fill: Color.rgba(0, 0, 0, 0),
     reactsToPointer: false,
+    halosEnabled: false,
     layout: new TilingLayout({
       axisAlign: 'center',
       orderByIndex: true,
@@ -74,6 +76,7 @@ const StatusMessageDefault = component({
       fontSize: 20,
       padding: rect(1, 1, 0, 0),
       reactsToPointer: false,
+      halosEnabled: false,
       textAndAttributes: Icon.textAttribute('info-circle')
     }, {
       type: Text,
@@ -89,6 +92,7 @@ const StatusMessageDefault = component({
       lineWrapping: true,
       padding: rect(8, 5, 0, 3),
       reactsToPointer: false,
+      halosEnabled: false,
       textAndAttributes: ['Something to think about...', null]
     },
     part(
@@ -110,7 +114,8 @@ const StatusMessageDefault = component({
         name: 'close button',
         position: pt(465.2, 0.2),
         width: 30,
-        tooltip: 'Close this status message.'
+        tooltip: 'Close this status message.',
+        halosEnabled: false
       })]
   }, {
     type: Text,
@@ -126,6 +131,7 @@ const StatusMessageDefault = component({
     lineWrapping: true,
     padding: rect(10, 10, 0, 0),
     reactsToPointer: false,
+    halosEnabled: false,
     textAndAttributes: ['The module "lively.morphic/morph.js" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "lively.morphic".', null]
   }]
 });
@@ -163,6 +169,7 @@ const StatusMessageConfirm = component(StatusMessageDefault, {
   }, {
     name: 'message text',
     fontColor: Color.white
+
   }]
 });
 
