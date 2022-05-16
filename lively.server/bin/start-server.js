@@ -1,12 +1,13 @@
 #!/bin/sh
 ':' //; exec "$(command -v nodejs || command -v node)" "$0" "$@"
 
-var start = require("../index.js");
+import start from "../index.js";
 //var start = require("./server.min.js");
+import parseArgs from 'minimist';
+import url from 'url'
 
-var parseArgs = require('minimist'),
-    defaultRootDirectory = process.cwd(),
-    isMain = !module.parent;
+const isMain = import.meta.url === url.pathToFileURL(process.argv[1]).href;
+const defaultRootDirectory = process.cwd();
 
 if (isMain) {
   var args = parseArgs(process.argv.slice(2), {

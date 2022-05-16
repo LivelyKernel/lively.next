@@ -1,14 +1,15 @@
-/*global process,require,__dirname,module*/
-require("systemjs");
-const modules = require("lively.modules");
-const resource = lively.resources.resource;
-const obj = lively.lang.obj;
-require("socket.io");
-const util = require('util');
-const winston = require("winston")
+/*global process,require,__dirname,module,global*/
+import "systemjs";
+import * as babel from  "babel-core";
+import * as modules from "lively.modules";
+import { resource } from 'lively.resources';
+import { obj } from 'lively.lang';
+import "socket.io";
+import util from 'util';
+import winston from "winston";
+import { setupSystem } from "lively.installer";
 
-
-const defaultServerDir = __dirname;
+const defaultServerDir = process.cwd();
 var livelySystem;
 var config = {
   serverDir: defaultServerDir,
@@ -18,13 +19,14 @@ var config = {
   plugins: []
 };
 
-module.exports = function start(hostname, port, configFile, rootDirectory, serverDir) {
+export default async function start(hostname, port, configFile, rootDirectory, serverDir) {
   config.rootDirectory = rootDirectory || process.cwd();
   config.serverDir = serverDir || defaultServerDir;
   setupLogger();
   var step = 1;
   console.log(`[lively.server] system base directory: ${rootDirectory}`);
   return setupSystem(config.rootDirectory)
+    .then(sys => livelySystem = sys)
     .then(() => console.log(`[lively.server] ${step++}. preparing system`))
     .then(() => modules.registerPackage(config.serverDir))
 
@@ -33,9 +35,9 @@ module.exports = function start(hostname, port, configFile, rootDirectory, serve
     .then(resources => resources.ensureFetch())
     .then(() => livelySystem.import("lively.storage"))
     .then(() => livelySystem.import("lively.vm"))
-    .then(vm => lively.vm = vm)
+    //.then(vm => lively.vm = vm)
     .then(() => livelySystem.import("lively.classes"))
-    .then(klass => lively.classes = klass)
+    //.then(klass => lively.classes = klass)
     .then(() => livelySystem.import('lively.modules'))
     .then(modules => {
       // migrate the system over 
@@ -117,17 +119,6 @@ const myFormat = winston.format.printf(({ level, message, label, timestamp }) =>
   console.error = function() { logger.error.apply(logger, formatArgs(arguments)); };
   console.debug = function() { logger.debug.apply(logger, formatArgs(arguments)); };
   return logger;
-}
-
-function setupSystem(rootDirectory) {
-  var baseURL = "file://" + rootDirectory;
-  livelySystem = modules.getSystem("lively", {baseURL});
-  modules.changeSystem(livelySystem, true);
-  var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
-  registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
-  registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
-  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
-  return registry.update();
 }
 
 function startServer(serverMod, config) {
