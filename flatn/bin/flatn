@@ -1,14 +1,16 @@
-#!/usr/bin/env node
+#!/usr/bin/env sh
+":" //; exec node --no-warnings --experimental-loader `dirname "$0"`/../resolver.mjs --input-type=module - "$@" < "$0"
 
 /*global require, global, process*/
-const parseArgs = require('../deps/minimist.js'),
-      { string, arr } = (typeof lively !== "undefined" && lively.lang) || require("../deps/lively.lang.min.js"),
-      { resource } = (typeof lively !== "undefined" && lively.resources) || require("../deps/lively.resources.js"),
-      { join: j, isAbsolute, normalize } = require("path"),
-      fs = require("fs"),
-      { spawn } = require("child_process"),
-      flatn = require("../flatn-cjs.js"),
-      args = process.argv.slice(2);
+import parseArgs from 'minimist';
+import { string, arr } from "lively.lang";
+import { resource } from "lively.resources";
+import { join as j, isAbsolute, normalize } from "path";
+import fs from "fs";
+import { spawn } from "child_process";
+import flatn from "flatn/flatn-cjs.js";
+
+let args = process.argv.slice(2);
 
 if (printHelp(args)) process.exit(0);
 

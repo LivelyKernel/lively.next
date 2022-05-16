@@ -3,7 +3,7 @@ import System from 'systemjs';
 import { resource } from "lively.resources";
 import { arr } from "lively.lang";
 import { query } from "lively.ast";
-import modules from "lively.modules";
+import * as modules from "lively.modules";
 
 import { rollup } from 'rollup';
 import commonjs from '@rollup/plugin-commonjs';
