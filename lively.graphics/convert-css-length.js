@@ -14,7 +14,7 @@ function parseUnit (str, out) {
 
 let baseFontSize = '16px';
 
-if (System.get('@system-env').browser) {
+if (typeof System !== 'undefined' && System.get('@system-env').browser) {
   try {
     const newBaseFontSize = genericCssLengthParser(baseFontSize)(window.getComputedStyle(document.body).fontSize);
     if (newBaseFontSize && newBaseFontSize.slice(0, 3) !== 'NaN') { baseFontSize = newBaseFontSize; }
