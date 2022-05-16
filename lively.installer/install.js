@@ -1,11 +1,14 @@
-/*global process,System*/
+/*global process,System,global*/
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
 import { buildPackageMap, installDependenciesOfPackage, buildPackage } from "flatn";
+import { resource } from 'lively.resources';
+import { promise } from 'lively.lang';
+import * as babel from  "babel-core";
+import * as modules from "lively.modules";
 
-var resource = lively.resources.resource,
-    packageSpecFile = getPackageSpec(),
+var packageSpecFile = getPackageSpec(),
     timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
 
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
@@ -33,9 +36,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // FIXME
     if (false && hasUI) {
       $world.openSystemConsole();
-      await lively.lang.promise.delay(300)
+      await promise.delay(300)
       $world.get("LogMessages").targetMorph.clear();
-      var indicator = hasUI && await lively.ide.withLoadingIndicatorDo("lively install");
+      var indicator = hasUI && (await System.import('lively.components')).LoadingIndicator.open("lively install");
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -245,23 +248,26 @@ async function safelyRemove(baseDir, file) {
   console.log(`>>> Moving old file ${file.url} to ${backupDir.url} <<<`);
 }
 
-function setupSystem(baseURL) {
-  let livelySystem = lively.modules.getSystem("lively", {baseURL});
-  lively.modules.changeSystem(livelySystem, true);
-  var registry = livelySystem["__lively.modules__packageRegistry"] = new lively.modules.PackageRegistry(livelySystem);
+export async function setupSystem(baseURL) {
+  global.babel = babel;
+  await import("lively.modules/systemjs-init.js");
+  let livelySystem = modules.getSystem("lively", {baseURL});
+  modules.changeSystem(livelySystem, true);
+  var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
-  return registry.update();
+  await registry.update();
+  return livelySystem;
 }
 
 async function setupObjectDB(baseDir, packageMap) {
   System._nodeRequire(packageMap.lookup("flatn").location + "/module-resolver.js")
-  let { ensureFetch, resource } = await lively.modules.importPackage(join(baseDir, "/lively.resources"));
+  let { ensureFetch, resource } = await modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
   if (!global.navigator) global.navigator = {};
 
-  let { ObjectDB, Database } = await lively.modules.importPackage(join(baseDir, "/lively.storage/"));
+  let { ObjectDB, Database } = await modules.importPackage(join(baseDir, "/lively.storage/"));
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-version-graph/").ensureExistance();

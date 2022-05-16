@@ -1,6 +1,7 @@
 import { exec } from "./shell-exec.js";
 import { join } from "./helpers.js";
 import { Repository } from "./git-repo.js";
+import { resource } from 'lively.resources';
 
 export class Package {
 
@@ -35,13 +36,13 @@ export class Package {
   async readConfig() {
     var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
         configFile = join(url, "package.json")
-    if (!await lively.resources.resource(url).exists() || !await lively.resources.resource(join(url, "package.json")).exists()) {
+    if (!await resource(url).exists() || !await resource(join(url, "package.json")).exists()) {
       console.log(`package ${this.directory} does not exit yet`);
       return this;
     }
 
     try {
-      var content = await lively.resources.resource(configFile).read();
+      var content = await resource(configFile).read();
       if (content) this.config = Object.assign(this.config, JSON.parse(content));
     } catch (e) {
       console.warn(`Error when reading package config for ${this.directory}: ${e}`)
@@ -190,11 +191,13 @@ function rm(path) {
 
   async fixNPMPackages(packages) {
     if (!packages) packages = await this.npmPackagesThatNeedFixing();
-    var indicator;
-    if (typeof lively !== "undefined" && lively.ide)
-      indicator = await lively.ide.withLoadingIndicatorDo();
+    let indicator;
+    if (typeof $world !== 'undefined') {
+      const { LoadingIndicator } = await System.import('lively.components');
+      indicator = LoadingIndicator.open();
+    }
     for (let p of packages) {
-      if (indicator) indicator.setLabel(`npm install\n${p}`);
+      if (indicator) indicator.label = `npm install\n${p}`;
       var {code, output} = await exec(`npm install ${p}`, {log: this._log, cwd: this.directory});
       if (code) {
         var msg = `npm install of ${p}failed:\n${output}`;

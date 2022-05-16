@@ -13,4 +13,5 @@ mkdir esm_cache
 flatn --C ./lively.next-node_modules install brotli
 flatn --C ./lively.next-node_modules install node-fetch@2.6.0
 
-node lively.installer/install-with-node.js $PWD
+node --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
+     lively.installer/install-with-node.cjs $PWD \
