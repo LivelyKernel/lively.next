@@ -122,6 +122,7 @@ export const snippets = [
   ['l2lC', 'import L2LClient from "lively.2lively/client.js";\nlet l2lClient = L2LClient.default();$0'],
 
   // functions
+  ['afun', 'async function ${0:functionName}($1) {$2}'],
   ['fun', 'function ${0:functionName}($1) {$2}'],
   ['fn', 'function($0) {$1}'],
   ['f', '($0) => $1'],
@@ -152,12 +153,12 @@ export const snippets = [
       // construct docstring following the normal snippet templating language
       let docstring = '\n/**\n * \${0:description}\n'; let expansionIndex = 1;
       for (const arg of args) {
-        docstring = docstring.concat(' * @param \{${' + expansionIndex++ + ':type}\} ' + arg + ' - ${' + expansionIndex++ + ':description}\n'); 
+        docstring = docstring.concat(' * @param \{${' + expansionIndex++ + ':type}\} ' + arg + ' - ${' + expansionIndex++ + ':description}\n');
       }
       docstring = docstring.concat(' */');
-      return docstring; 
+      return docstring;
     } catch (error) {
-      return '\n/**\n * ${0:description}\n */'; 
+      return '\n/**\n * ${0:description}\n */';
     }
   }],
   // eslint
