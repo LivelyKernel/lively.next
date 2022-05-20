@@ -41,4 +41,4 @@ if [ -z $real_node ]; then
    exit 1
 fi
 
-$real_node -r "$FLATN_DIR../module-resolver.js" "$@"
+$real_node -r "$FLATN_DIR../resolver.cjs" "$@"

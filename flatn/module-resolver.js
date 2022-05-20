@@ -1,44 +1,26 @@
-"format cjs";
-/*global require,process,__dirname*/
+/*global require,process,__dirname, module*/
 var path = require("path");
 var fs = require("fs");
 var Module = require("module");
 var { x: execSync } = require("child_process");
 var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 
-var originalResolve;
-installResolver();
-
 process.execPath = process.argv[0] = path.join(__dirname, "bin/node");
 
-let counter = 0;
-function installResolver() {
-  if (!originalResolve) originalResolve = Module._resolveFilename;
-  Module._resolveFilename = function(request, parent, isMain) {
-
-    try {
-      let result = originalResolve.call(this, request, parent, isMain);
-      // console.log(`${request} => ${result}`);
-      return result;
-
-    } catch (err) {
-      let parentId = parent ? parent.filename || parent.id : "",
-          // _ = console.log(`[_resolveFilename] searching for "${request}" from ${parentId}`),
-          config = findPackageConfig(parentId),
-          deps = config ? depMap(config) : {},
-          basename = request.startsWith('@') ? request.split("/").slice(0, 2).join('/') : request.split('/')[0],
-          {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
-          packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
-          packageFound = packageMap.lookup(basename, deps[basename])
-                      || packageMap.lookup(request, deps[request])/*for package names with "/"*/,
-          resolved = packageFound && findModuleInPackage(packageFound, basename, request);
-      
-      if (resolved) return resolved;
-      process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
-
-      throw err;
-    }
-  }
+function flatnResolve(request, parentUrl) {
+   let parentId = parentUrl ? parentUrl : "",
+       config = findPackageConfig(parentId),
+       deps = config ? depMap(config) : {},
+       basename = request.startsWith('@') ? request.split("/").slice(0, 2).join('/') : request.split('/')[0],
+       {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
+       packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
+       packageFound = packageMap.lookup(basename, deps[basename])
+                   || packageMap.lookup(request, deps[request])/*for package names with "/"*/,
+       resolved = packageFound && findModuleInPackage(packageFound, basename, request);
+   
+   if (resolved) return resolved;
+   process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
+   return false;
 }
 
 function findPackageConfig(modulePath) {
@@ -98,3 +80,5 @@ function findModuleInPackage(requesterPackage, basename, request) {
     return path.join(pathToPackage, "index.js");
   return null;
 }
+
+module.exports = { flatnResolve, findModuleInPackage, depMap, findPackageConfig };
