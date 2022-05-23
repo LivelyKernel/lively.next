@@ -3014,18 +3014,6 @@ export class Text extends Morph {
     super.onBlur(evt);
   }
 
-  onScroll (evt) {
-    if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
-    // FIXME rk 2017-07-25: quick hack to make text map work
-    {
-      const node = this.env.renderer.getNodeForMorph(this);
-      if (node) {
-        const { scrollTop, scrollLeft } = node;
-        signal(this, 'viewChanged', { prop: 'scroll', value: pt(scrollLeft, scrollTop) });
-      }
-    }
-  }
-
   ensureKeyInputHelperAtCursor () {
     // move the textarea to the text cursor
     if (this.env.eventDispatcher.keyInputHelper) { this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this); }
