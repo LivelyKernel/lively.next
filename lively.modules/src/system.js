@@ -249,6 +249,7 @@ function urlQuery () {
 const dotSlashStartRe = /^\.?\//;
 const trailingSlashRe = /\/$/;
 const jsExtRe = /\.js$/;
+const cjsExtRe = /\.cjs$/;
 const jsxExtRe = /\.jsx$/;
 const nodeExtRe = /\.node$/;
 const jsonExtRe = /\.json$/;
@@ -365,7 +366,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
   if (parent && name == 'cjs') return 'cjs';
   const System = this;
   const stage1 = preNormalize(System, name, parent);
-  const stage2 = await proceed(stage1, parent, parentAddress);
+  const stage2 = await proceed(stage1, parent, true);
   let stage3 = postNormalize(System, stage2 || stage1, false);
   const isNodePath = stage3.startsWith('file:');
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
@@ -373,6 +374,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
     // Make sure we did not ask for a js or jsx file in the initial query.
     !jsExtRe.test(name) &&
     !jsxExtRe.test(name) &&
+    !cjsExtRe.test(name) &&
     // Make sure SystemJS has not yet resolved to a json or node module.
     // If this happens, the resolution algorithm most likely has already
     // figured out things and we assume that it has come up with a reasonable
