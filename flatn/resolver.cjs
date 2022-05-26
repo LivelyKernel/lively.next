@@ -16,7 +16,7 @@ function installResolver() {
       result = originalResolve.call(this, request, parent, isMain);
       return result;
     } catch (err) {
-      if (result = flatnResolve(request, parent.filename || parent.id)) {
+      if (result = flatnResolve(request, !parent ? parent : parent.filename || parent.id)) {
         return result;
       }
       throw err;

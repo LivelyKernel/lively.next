@@ -20,7 +20,7 @@ function flatnResolve(request, parentUrl) {
    
    if (resolved) return resolved;
    process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
-   return false;
+   return null;
 }
 
 function findPackageConfig(modulePath) {
@@ -44,7 +44,7 @@ function findPackageConfig(modulePath) {
 }
 
 function depMap(packageConfig) {
-  return ["peerDependencies","dependencies","devDependencies", "optionalDependencies"]
+  return [ "dependencies","devDependencies", "peerDependencies", "optionalDependencies"]
     .reduce((deps, field) => {
        if (!packageConfig[field]) return deps;
       for (let name in packageConfig[field])
