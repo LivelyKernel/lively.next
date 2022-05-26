@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import { Color } from 'lively.graphics';
 import { string, Path } from 'lively.lang';
 import bowser from 'bowser';
@@ -123,7 +124,7 @@ function addShadowStyle (morph, style) {
 }
 
 export function addSvgAttributes (morph, style) {
-  const { width, height, borderWidth } = morph;
+  const { width, height } = morph;
   style.width = width || 1;
   style.height = height || 1;
   style.viewBox = [0, 0, width || 1, height || 1].join(' ');
@@ -144,7 +145,7 @@ export function getSvgVertices (vertices) {
   for (let i = 1; i < vertices.length - 1; i++) {
     const vertex = vertices[i];
     const { x, y } = vertex.position;
-    const { isSmooth, controlPoints: { previous: p, next: n } } = vertex;
+    const { isSmooth, controlPoints: { previous: p } } = vertex;
     d = isSmooth
       ? d + `C ${X + lastV.controlPoints.next.x} ${Y + lastV.controlPoints.next.y} ${x + p.x} ${y + p.y} ${x} ${y} `
       : d + `L ${x} ${y} `;
