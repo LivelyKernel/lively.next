@@ -1,5 +1,5 @@
 /* global System */
-import { promise, obj, arr } from 'lively.lang';
+import { promise, obj } from 'lively.lang';
 import { Rectangle } from 'lively.graphics';
 
 export function cumulativeOffset (element) {
@@ -54,12 +54,24 @@ function requestAnimationFramePolyfill (window) {
   if (!window.cancelAnimationFrame) { window.cancelAnimationFrame = function (id) { clearTimeout(id); }; }
 }
 
+class DomEnvironment {
+  constructor (window, document, destroyFn) {
+    requestAnimationFramePolyfill(window);
+    this.window = window;
+    this.document = document;
+    this.destroyFn = destroyFn;
+  }
+
+  destroy () {
+    if (typeof this.destroyFn === 'function') { this.destroyFn(); }
+  }
+}
+
 async function createDOMEnvironment_browser () {
-  return new IFramedDomEnvironment(await createIFrame(document.body));
+  return new IFramedDomEnvironment(await createIFrame(document.body)); // eslint-disable-line no-use-before-define
 }
 
 function createDOMEnvironment_node () {
-  const morphicDir = System.decanonicalize('lively.morphic/').replace(/file:\/\//, '');
   const jsdom = System._nodeRequire('jsdom');
   const virtualConsole = jsdom.createVirtualConsole().sendTo(console);
   return new Promise((resolve, reject) => {
@@ -80,17 +92,14 @@ export function createDOMEnvironment () {
     : createDOMEnvironment_node();
 }
 
-class DomEnvironment {
-  constructor (window, document, destroyFn) {
-    requestAnimationFramePolyfill(window);
-    this.window = window;
-    this.document = document;
-    this.destroyFn = destroyFn;
-  }
-
-  destroy () {
-    if (typeof this.destroyFn === 'function') { this.destroyFn(); }
-  }
+let _defaultEnv;
+export function defaultDOMEnv () {
+  return _defaultEnv || (_defaultEnv = System.get('@system-env').browser
+    ? new DomEnvironment(window, document, () => {
+      // clean body
+      // clean header
+    })
+    : createDOMEnvironment());
 }
 
 class IFramedDomEnvironment extends DomEnvironment {
@@ -106,17 +115,6 @@ class IFramedDomEnvironment extends DomEnvironment {
     this.iframe = iframe;
   }
 }
-
-let _defaultEnv;
-export function defaultDOMEnv () {
-  return _defaultEnv || (_defaultEnv = System.get('@system-env').browser
-    ? new DomEnvironment(window, document, () => {
-      // clean body
-      // clean header
-    })
-    : createDOMEnvironment());
-}
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function setCSSDef (node, cssDefString, doc) {
@@ -167,17 +165,9 @@ export function addOrChangeLinkedCSS (id, url, doc = document, overwrite = true)
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export const hyperscriptFnForDocument = (function () {
-  const h_dom_cache = new WeakMap();
-
   return function hyperscriptFnForDocument (document = window.document) {
     // h() function that renders using document instead of virtual nodes
-    return h_dom;
-
-    const existing = h_dom_cache.get(document);
-    if (!existing) h_dom_cache.set(document, h_dom);
-    return existing || h_dom;
-
-    function h_dom (tagname, childrenOrAttrs, children) {
+    return function h_dom (tagname, childrenOrAttrs, children) {
       let attrs = childrenOrAttrs || undefined;
 
       if (typeof children === 'undefined') {
@@ -185,15 +175,14 @@ export const hyperscriptFnForDocument = (function () {
         attrs = undefined;
       }
 
-      const cssClasses = []; let id = null;
+      const cssClasses = [];
       const tokens = tagname.split('.');
 
       if (tokens.length > 1) {
         tagname = tokens.shift();
-        for (var i = 0; i < tokens.length; i++) {
-          let token = tokens[i]; var hashIndex;
+        for (let i = 0; i < tokens.length; i++) {
+          let token = tokens[i]; let hashIndex;
           if ((hashIndex = token.indexOf('#')) > -1) {
-            id = token.slice(hashIndex + 1);
             token = token.slice(0, hashIndex);
           }
           cssClasses.push(token);
@@ -202,7 +191,6 @@ export const hyperscriptFnForDocument = (function () {
       const tagnameAndId = tagname.split('#');
       if (tagnameAndId.length > 1) {
         tagname = tagnameAndId[0];
-        id = tagnameAndId[1];
       }
 
       const el = document.createElement(tagname);
@@ -215,8 +203,8 @@ export const hyperscriptFnForDocument = (function () {
         if (style) for (const styleKey in style) el.style[styleKey] = style[styleKey];
         const dataset = attrs.dataset;
         if (dataset) {
-          if (el.dataset) for (var dsKey in dataset) el.dataset[dsKey] = dataset[dsKey];
-          else for (var dsKey in dataset) el.setAttribute('data-' + dsKey, dataset[dsKey]);
+          if (el.dataset) for (const dsKey in dataset) el.dataset[dsKey] = dataset[dsKey];
+          else for (const dsKey in dataset) el.setAttribute('data-' + dsKey, dataset[dsKey]);
         }
         const attributes = attrs.attributes;
         if (attributes) {
@@ -231,7 +219,7 @@ export const hyperscriptFnForDocument = (function () {
       if (typeof children === 'string') {
         el.appendChild(document.createTextNode(children));
       } else if (Array.isArray(children)) {
-        for (var i = 0; i < children.length; i++) {
+        for (let i = 0; i < children.length; i++) {
           const child = children[i];
           el.appendChild(typeof child === 'string'
             ? document.createTextNode(child)
@@ -244,6 +232,6 @@ export const hyperscriptFnForDocument = (function () {
       }
 
       return el;
-    }
+    };
   };
 })();
