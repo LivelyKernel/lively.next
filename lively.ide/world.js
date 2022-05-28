@@ -4,7 +4,7 @@ import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
 import { once } from 'lively.bindings';
 import {
-  GridLayout,
+  GridLayout, Path,
   MorphicDB,
   easings,
   HTMLMorph,
@@ -387,17 +387,28 @@ export class LivelyWorld extends World {
           //     `There was 1 image uploaded. Open it?`);
           if (openImages) {
             images.forEach(ea => {
-              const img = new Image({
-                imageUrl: ea.url,
-                autoResize: true,
-                name: ea.name
-              });
-              img.whenLoaded().then(async () => {
-                img.extent = img.naturalExtent.scaleBy(0.8 * this.visibleBounds().height / img.height);
-                img.openInWorld();
-                await img.whenRendered();
-                img.center = this.visibleBounds().center();
-              });
+              if (!ea.type.includes('svg')) {
+                const img = new Image({
+                  imageUrl: ea.url,
+                  autoResize: true,
+                  name: ea.name
+                });
+
+                img.whenLoaded().then(async () => {
+                  img.extent = img.naturalExtent.scaleBy(0.8 * this.visibleBounds().height / img.height);
+                  img.openInWorld();
+                  await img.whenRendered();
+                  img.center = this.visibleBounds().center();
+                });
+              } else {
+                let p = new Path({
+                  borderWidth: 2,
+                  vertices: [pt(0, 0), pt(100, 100)],
+                  position: pt(100, 100)
+                });
+                p.openInWorld();
+                p.show();
+              }
             });
           }
         }
