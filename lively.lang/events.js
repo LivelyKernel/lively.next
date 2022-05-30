@@ -1,4 +1,6 @@
-/* global process, require */
+/* global process */
+
+import _events from 'events';
 
 /*
  * A simple node.js-like cross-platform event emitter implementation that can
@@ -20,18 +22,16 @@
 
 const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
 
-const makeEmitter = isNode ? function (obj, options) {
-  if (obj.on && obj.removeListener) return obj;
-  const events = typeof System !== 'undefined'
-    ? System._nodeRequire('events')
-    : require('events');
-  Object.assign(obj, events.EventEmitter.prototype);
-  events.EventEmitter.call(obj);
-  if (options && options.maxListenerLimit) { obj.setMaxListeners(options.maxListenerLimit); }
-
-  return obj;
-}
-
+const makeEmitter = isNode
+  ? function (obj, options) {
+    if (obj.on && obj.removeListener) { return obj; }
+    let events = _events;
+    if (!events) events = System._nodeRequire('events');
+    Object.assign(obj, events.EventEmitter.prototype);
+    events.EventEmitter.call(obj);
+    if (options && options.maxListenerLimit) { obj.setMaxListeners(options.maxListenerLimit); }
+    return obj;
+  }
   : function (obj) {
     if (obj.on && obj.removeListener) return obj;
 
