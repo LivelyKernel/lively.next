@@ -7,7 +7,7 @@ import * as modules from "lively.modules";
 
 import { rollup } from 'rollup';
 import commonjs from '@rollup/plugin-commonjs';
-import { resolve } from '../resolver.mjs';
+import { flatnResolve } from '../module-resolver.js';
 
 
 // build();
@@ -22,10 +22,10 @@ const bundle = await rollup({
           return { id: id.replace('node:', ''), external: true };
         try {
           if (id.startsWith('lively.')) {
-            return (await resolve(id, parentURL ? { parentURL } : false)).url.replace('file://', '');
+            return await flatnResolve(id, parentURL);
           }
           if (!id.startsWith('.')) 
-            return (await resolve(id, parentURL ? { parentURL } : false)).url.replace('file://', '');
+            return await flatnResolve(id, parentURL);
         } catch (err) {
           return null; 
         }

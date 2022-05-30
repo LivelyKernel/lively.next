@@ -2,7 +2,7 @@
 import { packageDownload } from "./download.js";
 import { PackageMap, PackageSpec } from "./package-map.js";
 import { BuildProcess } from "./build.js";
-
+export { default as parseArgs } from "minimist";
 export * from './util.js';
 
 import { basename, dirname, isAbsolute, normalize as normPath, join as j } from "path";

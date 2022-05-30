@@ -6,6 +6,7 @@ var path = require('path');
 var child_process = require('child_process');
 var fs = require('fs');
 var os = require('os');
+require('events');
 var util = require('util');
 var http = require('http');
 var https = require('https');
@@ -1382,7 +1383,7 @@ typeof System !== 'undefined'
   ? System.global
   : (typeof window !== 'undefined' ? window : global);
 
-/* global process, require */
+/* global process */
 
 /*
  * A simple node.js-like cross-platform event emitter implementation that can
@@ -4886,6 +4887,256 @@ class BuildProcess {
     }
   }
 
+}
+
+var _1_2_6 = function (args, opts) {
+    if (!opts) opts = {};
+    
+    var flags = { bools : {}, strings : {}, unknownFn: null };
+
+    if (typeof opts['unknown'] === 'function') {
+        flags.unknownFn = opts['unknown'];
+    }
+
+    if (typeof opts['boolean'] === 'boolean' && opts['boolean']) {
+      flags.allBools = true;
+    } else {
+      [].concat(opts['boolean']).filter(Boolean).forEach(function (key) {
+          flags.bools[key] = true;
+      });
+    }
+    
+    var aliases = {};
+    Object.keys(opts.alias || {}).forEach(function (key) {
+        aliases[key] = [].concat(opts.alias[key]);
+        aliases[key].forEach(function (x) {
+            aliases[x] = [key].concat(aliases[key].filter(function (y) {
+                return x !== y;
+            }));
+        });
+    });
+
+    [].concat(opts.string).filter(Boolean).forEach(function (key) {
+        flags.strings[key] = true;
+        if (aliases[key]) {
+            flags.strings[aliases[key]] = true;
+        }
+     });
+
+    var defaults = opts['default'] || {};
+    
+    var argv = { _ : [] };
+    Object.keys(flags.bools).forEach(function (key) {
+        setArg(key, defaults[key] === undefined ? false : defaults[key]);
+    });
+    
+    var notFlags = [];
+
+    if (args.indexOf('--') !== -1) {
+        notFlags = args.slice(args.indexOf('--')+1);
+        args = args.slice(0, args.indexOf('--'));
+    }
+
+    function argDefined(key, arg) {
+        return (flags.allBools && /^--[^=]+$/.test(arg)) ||
+            flags.strings[key] || flags.bools[key] || aliases[key];
+    }
+
+    function setArg (key, val, arg) {
+        if (arg && flags.unknownFn && !argDefined(key, arg)) {
+            if (flags.unknownFn(arg) === false) return;
+        }
+
+        var value = !flags.strings[key] && isNumber(val)
+            ? Number(val) : val
+        ;
+        setKey(argv, key.split('.'), value);
+        
+        (aliases[key] || []).forEach(function (x) {
+            setKey(argv, x.split('.'), value);
+        });
+    }
+
+    function setKey (obj, keys, value) {
+        var o = obj;
+        for (var i = 0; i < keys.length-1; i++) {
+            var key = keys[i];
+            if (isConstructorOrProto(o, key)) return;
+            if (o[key] === undefined) o[key] = {};
+            if (o[key] === Object.prototype || o[key] === Number.prototype
+                || o[key] === String.prototype) o[key] = {};
+            if (o[key] === Array.prototype) o[key] = [];
+            o = o[key];
+        }
+
+        var key = keys[keys.length - 1];
+        if (isConstructorOrProto(o, key)) return;
+        if (o === Object.prototype || o === Number.prototype
+            || o === String.prototype) o = {};
+        if (o === Array.prototype) o = [];
+        if (o[key] === undefined || flags.bools[key] || typeof o[key] === 'boolean') {
+            o[key] = value;
+        }
+        else if (Array.isArray(o[key])) {
+            o[key].push(value);
+        }
+        else {
+            o[key] = [ o[key], value ];
+        }
+    }
+    
+    function aliasIsBoolean(key) {
+      return aliases[key].some(function (x) {
+          return flags.bools[x];
+      });
+    }
+
+    for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        
+        if (/^--.+=/.test(arg)) {
+            // Using [\s\S] instead of . because js doesn't support the
+            // 'dotall' regex modifier. See:
+            // http://stackoverflow.com/a/1068308/13216
+            var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
+            var key = m[1];
+            var value = m[2];
+            if (flags.bools[key]) {
+                value = value !== 'false';
+            }
+            setArg(key, value, arg);
+        }
+        else if (/^--no-.+/.test(arg)) {
+            var key = arg.match(/^--no-(.+)/)[1];
+            setArg(key, false, arg);
+        }
+        else if (/^--.+/.test(arg)) {
+            var key = arg.match(/^--(.+)/)[1];
+            var next = args[i + 1];
+            if (next !== undefined && !/^-/.test(next)
+            && !flags.bools[key]
+            && !flags.allBools
+            && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+                setArg(key, next, arg);
+                i++;
+            }
+            else if (/^(true|false)$/.test(next)) {
+                setArg(key, next === 'true', arg);
+                i++;
+            }
+            else {
+                setArg(key, flags.strings[key] ? '' : true, arg);
+            }
+        }
+        else if (/^-[^-]+/.test(arg)) {
+            var letters = arg.slice(1,-1).split('');
+            
+            var broken = false;
+            for (var j = 0; j < letters.length; j++) {
+                var next = arg.slice(j+2);
+                
+                if (next === '-') {
+                    setArg(letters[j], next, arg);
+                    continue;
+                }
+                
+                if (/[A-Za-z]/.test(letters[j]) && /=/.test(next)) {
+                    setArg(letters[j], next.split('=')[1], arg);
+                    broken = true;
+                    break;
+                }
+                
+                if (/[A-Za-z]/.test(letters[j])
+                && /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) {
+                    setArg(letters[j], next, arg);
+                    broken = true;
+                    break;
+                }
+                
+                if (letters[j+1] && letters[j+1].match(/\W/)) {
+                    setArg(letters[j], arg.slice(j+2), arg);
+                    broken = true;
+                    break;
+                }
+                else {
+                    setArg(letters[j], flags.strings[letters[j]] ? '' : true, arg);
+                }
+            }
+            
+            var key = arg.slice(-1)[0];
+            if (!broken && key !== '-') {
+                if (args[i+1] && !/^(-|--)[^-]/.test(args[i+1])
+                && !flags.bools[key]
+                && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+                    setArg(key, args[i+1], arg);
+                    i++;
+                }
+                else if (args[i+1] && /^(true|false)$/.test(args[i+1])) {
+                    setArg(key, args[i+1] === 'true', arg);
+                    i++;
+                }
+                else {
+                    setArg(key, flags.strings[key] ? '' : true, arg);
+                }
+            }
+        }
+        else {
+            if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
+                argv._.push(
+                    flags.strings['_'] || !isNumber(arg) ? arg : Number(arg)
+                );
+            }
+            if (opts.stopEarly) {
+                argv._.push.apply(argv._, args.slice(i + 1));
+                break;
+            }
+        }
+    }
+    
+    Object.keys(defaults).forEach(function (key) {
+        if (!hasKey(argv, key.split('.'))) {
+            setKey(argv, key.split('.'), defaults[key]);
+            
+            (aliases[key] || []).forEach(function (x) {
+                setKey(argv, x.split('.'), defaults[key]);
+            });
+        }
+    });
+    
+    if (opts['--']) {
+        argv['--'] = new Array();
+        notFlags.forEach(function(key) {
+            argv['--'].push(key);
+        });
+    }
+    else {
+        notFlags.forEach(function(key) {
+            argv._.push(key);
+        });
+    }
+
+    return argv;
+};
+
+function hasKey (obj, keys) {
+    var o = obj;
+    keys.slice(0,-1).forEach(function (key) {
+        o = (o[key] || {});
+    });
+
+    var key = keys[keys.length - 1];
+    return key in o;
+}
+
+function isNumber (x) {
+    if (typeof x === 'number') return true;
+    if (/^0x[0-9a-f]+$/i.test(x)) return true;
+    return /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
+}
+
+
+function isConstructorOrProto (obj, key) {
+    return key === 'constructor' && typeof obj[key] === 'function' || key === '__proto__';
 }
 
 /**
@@ -8790,7 +9041,7 @@ function requirePonyfill_es2018 () {
 	return ponyfill_es2018.exports;
 }
 
-var _5_2_1 = {};
+var _5_6_0 = {};
 
 var b64 = {};
 
@@ -9011,15 +9262,19 @@ function require_1_1_4 () {
  * @license  MIT
  */
 
-var hasRequired_5_2_1;
+var hasRequired_5_6_0;
 
-function require_5_2_1 () {
-	if (hasRequired_5_2_1) return _5_2_1;
-	hasRequired_5_2_1 = 1;
+function require_5_6_0 () {
+	if (hasRequired_5_6_0) return _5_6_0;
+	hasRequired_5_6_0 = 1;
 	(function (exports) {
 
 		var base64 = requireB64();
 		var ieee754 = require_1_1_4();
+		var customInspectSymbol =
+		  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
+		    ? Symbol.for('nodejs.util.inspect.custom')
+		    : null;
 
 		exports.Buffer = Buffer;
 		exports.SlowBuffer = SlowBuffer;
@@ -9056,7 +9311,9 @@ function require_5_2_1 () {
 		  // Can typed array instances can be augmented?
 		  try {
 		    var arr = new Uint8Array(1);
-		    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } };
+		    var proto = { foo: function () { return 42 } };
+		    Object.setPrototypeOf(proto, Uint8Array.prototype);
+		    Object.setPrototypeOf(arr, proto);
 		    return arr.foo() === 42
 		  } catch (e) {
 		    return false
@@ -9085,7 +9342,7 @@ function require_5_2_1 () {
 		  }
 		  // Return an augmented `Uint8Array` instance
 		  var buf = new Uint8Array(length);
-		  buf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(buf, Buffer.prototype);
 		  return buf
 		}
 
@@ -9112,17 +9369,6 @@ function require_5_2_1 () {
 		  return from(arg, encodingOrOffset, length)
 		}
 
-		// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-		if (typeof Symbol !== 'undefined' && Symbol.species != null &&
-		    Buffer[Symbol.species] === Buffer) {
-		  Object.defineProperty(Buffer, Symbol.species, {
-		    value: null,
-		    configurable: true,
-		    enumerable: false,
-		    writable: false
-		  });
-		}
-
 		Buffer.poolSize = 8192; // not used by this implementation
 
 		function from (value, encodingOrOffset, length) {
@@ -9135,7 +9381,7 @@ function require_5_2_1 () {
 		  }
 
 		  if (value == null) {
-		    throw TypeError(
+		    throw new TypeError(
 		      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
 		      'or Array-like Object. Received type ' + (typeof value)
 		    )
@@ -9143,6 +9389,12 @@ function require_5_2_1 () {
 
 		  if (isInstance(value, ArrayBuffer) ||
 		      (value && isInstance(value.buffer, ArrayBuffer))) {
+		    return fromArrayBuffer(value, encodingOrOffset, length)
+		  }
+
+		  if (typeof SharedArrayBuffer !== 'undefined' &&
+		      (isInstance(value, SharedArrayBuffer) ||
+		      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
 		    return fromArrayBuffer(value, encodingOrOffset, length)
 		  }
 
@@ -9187,8 +9439,8 @@ function require_5_2_1 () {
 
 		// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 		// https://github.com/feross/buffer/pull/148
-		Buffer.prototype.__proto__ = Uint8Array.prototype;
-		Buffer.__proto__ = Uint8Array;
+		Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype);
+		Object.setPrototypeOf(Buffer, Uint8Array);
 
 		function assertSize (size) {
 		  if (typeof size !== 'number') {
@@ -9292,7 +9544,8 @@ function require_5_2_1 () {
 		  }
 
 		  // Return an augmented `Uint8Array` instance
-		  buf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(buf, Buffer.prototype);
+
 		  return buf
 		}
 
@@ -9614,6 +9867,9 @@ function require_5_2_1 () {
 		  if (this.length > max) str += ' ... ';
 		  return '<Buffer ' + str + '>'
 		};
+		if (customInspectSymbol) {
+		  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect;
+		}
 
 		Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
 		  if (isInstance(target, Uint8Array)) {
@@ -9739,7 +9995,7 @@ function require_5_2_1 () {
 		        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 		      }
 		    }
-		    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+		    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
 		  }
 
 		  throw new TypeError('val must be string, number or Buffer')
@@ -10068,7 +10324,7 @@ function require_5_2_1 () {
 
 		  var out = '';
 		  for (var i = start; i < end; ++i) {
-		    out += toHex(buf[i]);
+		    out += hexSliceLookupTable[buf[i]];
 		  }
 		  return out
 		}
@@ -10105,7 +10361,8 @@ function require_5_2_1 () {
 
 		  var newBuf = this.subarray(start, end);
 		  // Return an augmented `Uint8Array` instance
-		  newBuf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(newBuf, Buffer.prototype);
+
 		  return newBuf
 		};
 
@@ -10594,6 +10851,8 @@ function require_5_2_1 () {
 		    }
 		  } else if (typeof val === 'number') {
 		    val = val & 255;
+		  } else if (typeof val === 'boolean') {
+		    val = Number(val);
 		  }
 
 		  // Invalid ranges are not set to a default, so can range check early.
@@ -10649,11 +10908,6 @@ function require_5_2_1 () {
 		    str = str + '=';
 		  }
 		  return str
-		}
-
-		function toHex (n) {
-		  if (n < 16) return '0' + n.toString(16)
-		  return n.toString(16)
 		}
 
 		function utf8ToBytes (string, units) {
@@ -10785,8 +11039,22 @@ function require_5_2_1 () {
 		  // For IE11 support
 		  return obj !== obj // eslint-disable-line no-self-compare
 		}
-} (_5_2_1));
-	return _5_2_1;
+
+		// Create lookup table for `toString('hex')`
+		// See: https://github.com/feross/buffer/issues/219
+		var hexSliceLookupTable = (function () {
+		  var alphabet = '0123456789abcdef';
+		  var table = new Array(256);
+		  for (var i = 0; i < 16; ++i) {
+		    var i16 = i * 16;
+		    for (var j = 0; j < 16; ++j) {
+		      table[i16 + j] = alphabet[i] + alphabet[j];
+		    }
+		  }
+		  return table
+		})();
+} (_5_6_0));
+	return _5_6_0;
 }
 
 /* c8 ignore start */
@@ -10818,7 +11086,7 @@ if (!globalThis.ReadableStream) {
 try {
   // Don't use node: prefix for this, require+node: is not supported until node v14.14
   // Only `import()` can use prefix in 12.20 and later
-  const { Blob } = require_5_2_1();
+  const { Blob } = require_5_6_0();
   if (Blob && !Blob.prototype.stream) {
     Blob.prototype.stream = function name (params) {
       let position = 0;
@@ -13838,6 +14106,7 @@ exports.npmDownloadArchive = npmDownloadArchive;
 exports.npmFallbackEnv = npmFallbackEnv;
 exports.npmSearchForVersions = npmSearchForVersions;
 exports.packageDirsFromEnv = packageDirsFromEnv;
+exports.parseArgs = _1_2_6;
 exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 exports.tmpdir = tmpdir;
 exports.untar = untar;

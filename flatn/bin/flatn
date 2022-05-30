@@ -2,7 +2,6 @@
 ":" //; exec node --no-warnings --experimental-loader `dirname "$0"`/../resolver.mjs --input-type=module - "$@" < "$0"
 
 /*global require, global, process*/
-import parseArgs from 'minimist';
 import { string, arr } from "lively.lang";
 import { resource } from "lively.resources";
 import { join as j, isAbsolute, normalize } from "path";
@@ -35,7 +34,7 @@ switch (command) {
 
 function readGenericArgs(args, requireAtLeastOnePackageDir = true) {
   return currentPackages(
-    parseArgs(args, {
+    flatn.parseArgs(args, {
       alias: {
         packages: "C",
         "dev-package": "D",
@@ -155,7 +154,7 @@ function doNode(genericArgs, args) {
   // starts a node process that uses the package dirs from arguments and from
   // the process env to resolve package names
 
-  let cmdArgs = parseArgs(args, {"--": true});
+  let cmdArgs = flatn.parseArgs(args, {"--": true});
   unexpectedArgs(cmdArgs, ["--"], "node");
 
   // so node knows about the package dirs passed by arguments....
@@ -184,7 +183,7 @@ function doNode(genericArgs, args) {
 
 
 function doList(genericArgs, args) {
-  let cmdArgs = parseArgs(args, {alias: {}});
+  let cmdArgs = flatn.parseArgs(args, {alias: {}});
   unexpectedArgs(cmdArgs, [], "list");
 
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);
@@ -211,7 +210,7 @@ function doList(genericArgs, args) {
 
 
 function doInstall(genericArgs, args) {
-  let cmdArgs = parseArgs(args, {
+  let cmdArgs = flatn.parseArgs(args, {
     boolean: ["save-dev", "save"],
     alias: {
       "save-dev": "D",
@@ -333,7 +332,7 @@ function doInstall(genericArgs, args) {
 }
 
 function doEnv(genericArgs, args) {
-  let cmdArgs = parseArgs(args, {boolean: ["json"]});
+  let cmdArgs = flatn.parseArgs(args, {boolean: ["json"]});
   unexpectedArgs(cmdArgs, ["json"], "env");
 
   let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = readGenericArgs(genericArgs);

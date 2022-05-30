@@ -4,7 +4,7 @@
   "main": "flatn-cjs.js",
   "scripts": {
     "test": "mocha-es6 tests/test.js",
-    "build": "node --no-warnings --experimental-import-meta-resolve --experimental-loader ./resolver.mjs tools/build-cjs.mjs"
+    "build": ". ../scripts/lively-next-flatn-env.sh; lively_next_flatn_env $(dirname \"$(pwd)\"); node --no-warnings --experimental-import-meta-resolve --experimental-loader ./resolver.mjs tools/build-cjs.mjs"
   },
   "bin": {
     "flatn": "./bin/flatn",
@@ -18,6 +18,7 @@
     "rollup": "2.68.0",
     "@rollup/plugin-commonjs": "22.0.0",
     "minimist": "1.2.6",
-    "semver": "5.7.1"
+    "semver": "5.7.1",
+    "systemjs": "^0.19.40"
   }
 }
