@@ -5,8 +5,11 @@ import { Package } from "./package.js";
 import { buildPackageMap, installDependenciesOfPackage, buildPackage } from "flatn";
 import { resource } from 'lively.resources';
 import { promise } from 'lively.lang';
-import * as babel from  "babel-core";
+import * as babel from  "@babel/core";
 import * as modules from "lively.modules";
+
+// hack
+global.babel = babel;
 
 var packageSpecFile = getPackageSpec(),
     timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
@@ -38,7 +41,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
       $world.openSystemConsole();
       await promise.delay(300)
       $world.get("LogMessages").targetMorph.clear();
-      var indicator = hasUI && (await System.import('lively.components')).LoadingIndicator.open("lively install");
+      var indicator = $world.showLoadingIndicatorFor($world, "lively install");
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -249,9 +252,8 @@ async function safelyRemove(baseDir, file) {
 }
 
 export async function setupSystem(baseURL) {
-  global.babel = babel;
   await import("lively.modules/systemjs-init.js");
-  let livelySystem = modules.getSystem("lively", {baseURL});
+  let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
@@ -262,11 +264,12 @@ export async function setupSystem(baseURL) {
 }
 
 async function setupObjectDB(baseDir, packageMap) {
-  System._nodeRequire(packageMap.lookup("flatn").location + "/module-resolver.js")
+  console.log('loading resources...')
   let { ensureFetch, resource } = await modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
   if (!global.navigator) global.navigator = {};
 
+  console.log('loading storage')
   let { ObjectDB, Database } = await modules.importPackage(join(baseDir, "/lively.storage/"));
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();

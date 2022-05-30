@@ -7,6 +7,9 @@
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.installer"
   },
+  "scripts": {
+    "build": ". ../scripts/lively-next-flatn-env.sh; lively_next_flatn_env $(dirname \"$(pwd)\"); node --no-warnings --experimental-import-meta-resolve --experimental-loader ../flatn/resolver.mjs build.js"
+  },
   "systemjs": {
     "map": {
       "child_process": {
@@ -21,14 +24,16 @@
   },
   "dependencies": {
     "lively.modules": "*",
-    "systemjs": "^0.19.31",
-    "flatn": "*"
-  },
-  "systemjs": {
-    "map": {
-      "lively.modules": "./deps/lively.modules.js",
-      "babel": "./deps/babel.min.js",
-      "systemjs": "./deps/system.src.js"
-    }
+    "systemjs": "^0.19.40",
+    "flatn": "*",
+    "@rollup/plugin-json": "4.1.0",
+    "rollup": "^2.70.2",
+    "rollup-plugin-polyfill-node": "0.9.0",
+    "babel-runtime": "6.20.0",
+    "acorn": "8.0.4",
+    "@buxlabs/amd-to-es6": "0.16.3",
+    "@babel/core": "^7.12.0",
+    "@babel/plugin-transform-modules-systemjs": "7.18.0",
+    "@babel/plugin-transform-modules-commonjs": "7.14.0"
   }
 }

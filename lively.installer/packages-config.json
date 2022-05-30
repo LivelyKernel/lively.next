@@ -135,5 +135,9 @@
   {
     "name": "lively.collab",
     "repoURL": "https://github.com/hpi-swa-lab/lively.next"
+  },
+  {
+    "name": "galyleo-dashboard",
+    "repoURL": "https://github.com/engageLively/galyleo-dashboard"
   }
 ]

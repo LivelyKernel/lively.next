@@ -82,7 +82,7 @@ install_installer() {
 
 install_rest() {
   cd $LIVELY_INSTALLER_DIR
-  node --no-warnings --experimental-loader $LIVELY_INSTALLER_DIR/flatn/resolver.mjs install-with-node.cjs "$LIVELY_INSTALLER_DIR/.."
+  node --no-warnings --experimental-loader $LIVELY_FLATN_DIR/resolver.mjs $LIVELY_INSTALLER_DIR/bin/install.cjs "$LIVELY_INSTALLER_DIR/.."
   cd ..
   return
 }
