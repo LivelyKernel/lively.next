@@ -1,10 +1,41 @@
-/* global acorn,global,self */
 import { obj, arr, string, Path } from 'lively.lang';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
-import AcornDecorators from './acorn-decorators.js';
+import _Decorators from './acorn-decorators.cjs';
+import _ClassFields from 'acorn-class-fields';
+import _StaticClassFeatures from 'acorn-static-class-features';
+import _PrivateMethods from 'acorn-private-methods';
 import * as acornDefault from 'acorn';
 import * as walk from 'acorn-walk';
 import * as loose from 'acorn-loose';
+
+// If we are running in node, load the modules natively.
+// The reason is, that in node.js we can not load the esm
+// compiled modules served via jspm.dev but instead have to
+// use the ones that are installed from NPM.org via flatn.
+// These are entirely written in cjs, which does not bode well
+// with our SystemJS version + custom source transformation.
+// If lively.ast is loaded entirely natively this is not an issue.
+// If lively.ast is loaded in the client via lively.modules this is also not issue.
+// However it becomes an issue when we load modules via lively.modules in node.js.
+const isNode = typeof System !== 'undefined'
+  ? System.get('@system-env').node
+  : false;
+
+let Decorators, ClassFields, StaticClassFeatures, PrivateMethods;
+if (isNode) {
+  // we need to utilize the native require here to bypass the source transform of the class
+  // we can not use the native import, since that is asynchronous.
+  // top level import is causing class instrumentation
+  Decorators = _ClassFields ? _Decorators : System._nodeRequire('lively.ast/lib/acorn-decorators.cjs');
+  ClassFields = _ClassFields || System._nodeRequire('acorn-class-fields');
+  StaticClassFeatures = _StaticClassFeatures || System._nodeRequire('acorn-static-class-features');
+  PrivateMethods = _PrivateMethods || System._nodeRequire('acorn-private-methods');
+} else {
+  Decorators = _Decorators;
+  ClassFields = _ClassFields;
+  StaticClassFeatures = _StaticClassFeatures;
+  PrivateMethods = _PrivateMethods;
+}
 
 const custom = {};
 
@@ -18,7 +49,7 @@ custom.findNodeByAstIndex = findNodeByAstIndex;
 custom.findStatementOfNode = findStatementOfNode;
 custom.addAstIndex = addAstIndex;
 
-const Parser = acornDefault.Parser.extend(AcornDecorators);
+const Parser = acornDefault.Parser.extend(ClassFields, StaticClassFeatures, PrivateMethods, Decorators);
 
 const acorn = {};
 Object.assign(acorn, acornDefault);

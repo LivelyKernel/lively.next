@@ -1,4 +1,4 @@
-import * as acorn from 'acorn';
+const acorn = require('acorn');
 
 const getAcorn = Parser => {
   if (Parser.acorn) return Parser.acorn;
@@ -24,7 +24,7 @@ const getAcorn = Parser => {
  * These can be applied to class definitions or field within
  * class definitions.
  */
-export default function extendParser (Parser) {
+module.exports = function extendParser (Parser) {
   // Only load this plugin once.
   if (Parser.prototype._parseDecorator) {
     return Parser;
@@ -97,6 +97,9 @@ export default function extendParser (Parser) {
               this.type !== acorn.tokTypes.star) {
             this.raise(this.start, 'Inline decorators must be attached to a property declaration');
           }
+        case this.privateIdentifierToken:
+        case acorn.tokTypes.star:
+        case acorn.tokTypes.bracketL:
         case acorn.tokTypes.name:
         case acorn.tokTypes._with: // this seems to get confused when we use javascript keywords
         case acorn.tokTypes._delete: // dito...
