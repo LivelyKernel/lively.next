@@ -16,7 +16,11 @@
   if (transpiler === 'lively.transpiler') setupLivelyTranspiler(features);
   else if (transpiler === 'plugin-babel') setupPluginBabelTranspiler(features);
   else console.error('[lively.modules] could not find System transpiler for platform!');
-
+ 
+  if (typeof require !== 'undefined')
+    System._nodeRequire = eval("require"); // hack to enable dynamic requires in bundles
+  if (typeof global !== 'undefined')
+    global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire;
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function decideAboutTranspiler (features) {
@@ -58,7 +62,9 @@
       let System = this.System;
       let opts = Object.assign({}, System.babelOptions);
       opts.plugins = opts.plugins ? opts.plugins.slice() : [];
-      opts.plugins.push('transform-es2015-modules-systemjs');
+      opts.plugins.push(System._nodeRequire ? System._nodeRequire('@babel/plugin-proposal-dynamic-import') : 'proposal-dynamic-import');
+      opts.plugins.push(System._nodeRequire ? System._nodeRequire('@babel/plugin-proposal-class-properties') : 'proposal-class-properties');
+      opts.plugins.push(System._nodeRequire ? System._nodeRequire('@babel/plugin-transform-modules-systemjs') : 'transform-modules-systemjs');
       return System.global.babel.transform(source, opts).code;
     };
 
@@ -73,7 +79,7 @@
       babelOptions: {
         sourceMaps: false,
         compact: 'auto',
-        comments: 'true',
+        comments: true,
         presets: features.supportsAsyncAwait ? [] : ['es2015']
       }
     });

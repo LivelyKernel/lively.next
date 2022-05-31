@@ -20,6 +20,10 @@
       "fs": {
         "node": "@node/fs",
         "~node": "@empty"
+      },
+      "node-fetch": {
+        "node": "@empty",
+        "~node": "@empty"
       }
     }
   },
@@ -27,6 +31,7 @@
     "babel-core": "^6.21.0",
     "babel-regenerator-runtime": "^6.5.0",
     "babel-standalone": "^6.21.1-0",
+    "@babel/standalone": "^7.18.3",
     "lively.ast": "^0.11",
     "lively.lang": "^1",
     "lively.notifications": "*",
@@ -38,7 +43,7 @@
     "systemjs-plugin-babel": "0.0.13",
     "uglify-es": "^3.1.1",
     "brotli": "^1.3.2",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^3.2.4"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",

@@ -158,6 +158,8 @@ function prepareSystem (System, config) {
     : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
 
+  if (config._nodeRequire) System._nodeRequire = config._nodeRequire;
+
   System.set('@lively-env', System.newModule(livelySystemEnv(System)));
 
   const isWorker = typeof WorkerGlobalScope !== 'undefined';
@@ -194,8 +196,8 @@ function prepareSystem (System, config) {
       'cluster', 'console', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs',
       'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring',
       'readline', 'repl', 'stream', 'stringdecoder', 'timers', 'tls',
-      'tty', 'url', 'util', 'v8', 'vm', 'zlib', 'constants'];
-    var map = nodejsCoreModules.reduce((map, ea) => { map[ea] = '@node/' + ea; return map; }, {});
+      'tty', 'url', 'util', 'v8', 'vm', 'zlib', 'constants', 'worker_threads', 'process'];
+    var map = nodejsCoreModules.reduce((map, ea) => { map[ea] = map['node:' + ea] = '@node/' + ea; return map; }, {});
     config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
     // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);

@@ -1,15 +1,23 @@
-/* global Buffer */
+/* global Buffer, require */
 import { resource, Resource } from 'lively.resources';
+import { promise } from 'lively.lang';
 import {
   install as installHook,
   remove as removeHook,
   isInstalled as isHookInstalled
 } from './hooks.js';
+import _fetch from 'node-fetch';
 
 let brotli, fetch;
-if (System.get('@system-env').node) {
-  fetch = System._nodeRequire('node-fetch');
-  brotli = System._nodeRequire('brotli');
+if (typeof System !== 'undefined' && System.get('@system-env').node) {
+  // we can not directly use require since this is an ESM module
+  // and the native node.js runtime will complain.
+  // In total there are 4 types of evaluation for each import:
+  // 1. Native ESM import in node.js -> Just import as is
+  // 2. Compiled import via cjs bundle of rollup. -> Just bundle as is
+  // 3. SystemJS import in node.js -> bypass SystemJS since it cant load node-fetch properly
+  // 4. SystemJS import in browser. -> no need to load fetch
+  fetch = _fetch || System._nodeRequire('node-fetch');
 }
 
 let jsFileHashMap;
@@ -35,7 +43,7 @@ async function fetchResource (proceed, load) {
   const cache = System._livelyModulesTranslationCache;
   if (!System.get('@system-env').node && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
-    if (stored && (jsFileHashMap[load.name.replace(System.baseURL, '/')] == stored.hash || load.name.includes('jspm'))) {
+    if (stored && (jsFileHashMap[load.name.replace(System.baseURL, '/')] === stored.hash || load.name.includes('jspm'))) {
       load.metadata.instrument = false; // skip instrumentation
       return stored.source;
     }
@@ -62,15 +70,7 @@ async function fetchResource (proceed, load) {
   if (error) throw error;
 
   if (useNodeFetch) {
-    // since we run outside of a browser, it is likely not handling brotli decompression
-    // out of the box if needed
-    const { _headers } = result.headers || {};
-    const [encoding] = _headers && _headers['content-encoding'] || [];
-    if (encoding == 'br') {
-      result = Buffer.from(brotli.decompress(await result.buffer())).toString();
-    } else {
-      result = await result.text();
-    }
+    result = await result.text();
   }
 
   if (result.length > largeModuleSize && typeof $world !== 'undefined' && !System._loadingIndicator) {
@@ -90,7 +90,7 @@ const livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
 function livelyProtocol (proceed, url) {
   const match = url.match(livelyURLRe);
   if (!match) return proceed(url);
-  const [_, worldId, id] = match;
+  const [_, __, id] = match;
   return {
     read () {
       const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
@@ -124,7 +124,7 @@ class LivelyResource extends Resource {
 
   get morphId () {
     const match = this.url.match(livelyURLRe);
-    const [_, worldId, id] = match;
+    const [_, __, id] = match;
     return id;
   }
 
@@ -161,5 +161,4 @@ export const resourceExtension = {
 };
 
 import { registerExtension } from 'lively.resources';
-import { promise } from 'lively.lang';
 registerExtension(resourceExtension);
