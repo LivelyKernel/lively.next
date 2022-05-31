@@ -1,11 +1,10 @@
 /*global process,require,__dirname,module,global*/
 import "systemjs";
-import * as babel from  "babel-core";
 import * as modules from "lively.modules";
 import { resource } from 'lively.resources';
 import { obj } from 'lively.lang';
 import "socket.io";
-import util from 'util';
+import util from 'node:util';
 import winston from "winston";
 import { setupSystem } from "lively.installer";
 
@@ -33,11 +32,9 @@ export default async function start(hostname, port, configFile, rootDirectory, s
     // 1. This loads the lively system
     .then(() => livelySystem.import("lively.resources"))
     .then(resources => resources.ensureFetch())
-    .then(() => livelySystem.import("lively.storage"))
+    .then(() => modules.importPackage("lively.storage"))
     .then(() => livelySystem.import("lively.vm"))
-    //.then(vm => lively.vm = vm)
     .then(() => livelySystem.import("lively.classes"))
-    //.then(klass => lively.classes = klass)
     .then(() => livelySystem.import('lively.modules'))
     .then(modules => {
       // migrate the system over 

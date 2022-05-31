@@ -46,16 +46,24 @@ export default class LibLookupPlugin {
     if (path === "/package-registry.json") return this.sendPackageRegistry(req, res);
 
     if (!path.startsWith(libPath) || path === libPath) return next();
+    if (fs.existsSync(join(fsRootDir, path))) return next();
 
     path = decodeURIComponent(path);
-    let [_, _2, fullPackageName, ...rest] = path.split("/"),
-        [packageName, version] = fullPackageName.split("@"),
-        fullLibPath = join(fsRootDir, libPath);
+    let lookupPath = path.split("/").slice(2).join("/"),
+        version = false, // for now disable
+        fullLibPath = System._nodeRequire.resolve(lookupPath);
 
     if (version) {
       if (fs.existsSync(join(fullLibPath, packageName, version))) return next();
     } else {
-      if (fs.existsSync(join(fullLibPath, packageName, ...rest))) return next();
+      if (fs.existsSync(fullLibPath)) {
+        if (fullLibPath.endsWith(path)) { return next(); }
+        else {
+          res.writeHead(301, { location: fullLibPath.replace(fsRootDir, '') });
+          res.end();
+          return;
+        }
+      }
     }
     
 

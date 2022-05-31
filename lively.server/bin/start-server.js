@@ -2,7 +2,6 @@
 ':' //; exec "$(command -v nodejs || command -v node)" "$0" "$@"
 
 import start from "../index.js";
-//var start = require("./server.min.js");
 import parseArgs from 'minimist';
 import url from 'url'
 
