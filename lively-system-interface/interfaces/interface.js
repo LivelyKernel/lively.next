@@ -1,6 +1,6 @@
 import { parseJsonLikeObj } from '../helpers.js';
-import { arr, Closure, obj } from 'lively.lang';
-import { resource } from 'lively.resources';
+import { obj } from 'lively.lang';
+
 import { transform } from 'lively.ast';
 import * as modules from 'lively.modules';
 
@@ -215,30 +215,35 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   livelySystemAccessor (varName = 'livelySystem') {
-    return `var ${varName} = (typeof lively !== "undefined" && lively.systemInterface)
+    return `${this.livelyModulesAccessor()};
+      var ${varName} = (typeof lively !== "undefined" && lively.systemInterface)
       || System.get(System.decanonicalize("lively-system-interface"))
-      || (typeof lively !== "undefined" && lively.modules && await lively.modules.importPackage("lively-system-interface"));
+      || (await modules.importPackage("lively-system-interface"));
     if (!${varName}) throw new Error("lively-system-interface not available!");`;
   }
 
+  livelyModulesAccessor (varName = 'modules') {
+    return `${varName} = System.get(System.decanonicalize("lively.modules"))`;
+  }
+
   normalizeSync (name, parentName, isPlugin) {
-    return this.runEvalAndStringify(`lively.modules.System.decanonicalize(${JSON.stringify(name)}, ${JSON.stringify(parentName)}, ${isPlugin})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.System.decanonicalize(${JSON.stringify(name)}, ${JSON.stringify(parentName)}, ${isPlugin})`);
   }
 
   normalize (name, parent, parentAddress) {
-    return this.runEvalAndStringify(`lively.modules.System.normalize(${JSON.stringify(name)}, ${JSON.stringify(parent)}, ${JSON.stringify(parentAddress)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.System.normalize(${JSON.stringify(name)}, ${JSON.stringify(parent)}, ${JSON.stringify(parentAddress)})`);
   }
 
   printSystemConfig () {
-    return this.runEvalAndStringify('lively.modules.printSystemConfig()');
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.printSystemConfig()`);
   }
 
   getConfig () {
-    return this.runEvalAndStringify('var c = Object.assign({}, lively.modules.System.getConfig()); for (var name in c) if (name.indexOf("__lively.modules__") === 0 || name.indexOf("loads") === 0) delete c[name]; c');
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}; var c = Object.assign({}, modules.System.getConfig()); for (var name in c) if (name.indexOf("__lively.modules__") === 0 || name.indexOf("loads") === 0) delete c[name]; c`);
   }
 
   setConfig (conf) {
-    return this.runEvalAndStringify(`lively.modules.System.config(${JSON.stringify(conf)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.System.config(${JSON.stringify(conf)})`);
   }
 
   getPackages (options) {
@@ -267,27 +272,27 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   isModuleLoaded (name, isNormalized) {
-    return this.runEvalAndStringify(`lively.modules.isModuleLoaded("${name}", ${isNormalized})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.isModuleLoaded("${name}", ${isNormalized})`);
   }
 
   doesModuleExist (name, isNormalized) {
-    return this.runEvalAndStringify(`lively.modules.doesModuleExist("${name}", ${isNormalized})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.doesModuleExist("${name}", ${isNormalized})`);
   }
 
   async registerPackage (packageURL) {
-    return this.runEvalAndStringify(`lively.modules.registerPackage(${JSON.stringify(packageURL)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.registerPackage(${JSON.stringify(packageURL)})`);
   }
 
   async importPackage (packageURL) {
-    return this.runEvalAndStringify(`lively.modules.importPackage(${JSON.stringify(packageURL)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.importPackage(${JSON.stringify(packageURL)})`);
   }
 
   async removePackage (packageURL) {
-    return this.runEvalAndStringify(`lively.modules.removePackage(${JSON.stringify(packageURL)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.removePackage(${JSON.stringify(packageURL)})`);
   }
 
   async reloadPackage (packageURL, opts) {
-    return this.runEvalAndStringify(`lively.modules.reloadPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(opts)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.reloadPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(opts)})`);
   }
 
   packageConfChange (source, confFile) {
@@ -313,27 +318,27 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   }
 
   importModule (name) {
-    return this.runEvalAndStringify(`lively.modules.System.import(${JSON.stringify(name)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.System.import(${JSON.stringify(name)})`);
   }
 
   forgetModule (name, opts) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(name)}).unload(${JSON.stringify(opts)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(name)}).unload(${JSON.stringify(opts)})`);
   }
 
   reloadModule (name, opts) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(name)}).reload(${JSON.stringify(opts)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(name)}).reload(${JSON.stringify(opts)})`);
   }
 
   moduleFormat (moduleName) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).format();`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).format();`);
   }
 
   moduleRead (moduleName) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).source()`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).source()`);
   }
 
   moduleSourceChange (moduleName, newSource, options) {
-    return this.runEvalAndStringify(`lively.modules.module(${JSON.stringify(moduleName)}).changeSource(${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).changeSource(${JSON.stringify(newSource)}, ${JSON.stringify(options)})`);
   }
 
   keyValueListOfVariablesInModule (moduleName, sourceOrAst) {
@@ -346,9 +351,9 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   // imports/exports
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   importsAndExportsOf (modId, sourceOrAst) {
-    return this.runEvalAndStringify(`({
-      imports: await lively.modules.module(${JSON.stringify(modId)}).imports(),
-      exports: await lively.modules.module(${JSON.stringify(modId)}).exports()})`);
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, ({
+      imports: await modules.module(${JSON.stringify(modId)}).imports(),
+      exports: await modules.module(${JSON.stringify(modId)}).exports()})`);
   }
 
   exportsOfModules (options) {
