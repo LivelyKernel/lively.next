@@ -87,12 +87,23 @@ export async function interactivelyLoadPackage (system, requester, relatedPackag
                       await system.getPackageForModule(relatedPackageAddress);
   }
 
-  let dir = await requester.world().prompt('What is the package directory?', {
-    requester,
-    input: relatedPackage ? relatedPackage.address : config.baseURL,
-    historyId: 'lively.vm-editor-package-load-history',
-    useLastInput: false
+  let packageCandidates = await resource(config.baseURL).dirList(2, {
+    exclude: dir => {
+      return dir.isFile() && !dir.name().endsWith('package.json');
+    }
   });
+  packageCandidates = packageCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
+  let [dir] = (await requester.world().filterableListPrompt('Select package directory', [{ isListItem: true, label: 'Enter custom package...', value: 'custom' }, ...packageCandidates.map(m => m.url)], {
+    multiSelect: false
+  })).selected;
+  if (dir == 'custom') {
+    dir = await requester.world().prompt('What is the package directory?', {
+      requester,
+      input: relatedPackage ? relatedPackage.address : config.baseURL,
+      historyId: 'lively.vm-editor-package-load-history',
+      useLastInput: false
+    });
+  }
 
   if (!dir) throw 'Canceled';
 
