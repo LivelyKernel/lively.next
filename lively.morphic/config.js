@@ -6,7 +6,9 @@ import { joinPath } from 'lively.lang/string.js';
 // 1.) Endpoint for loading a currently frozen part from
 // 2.) Endpoint to fetch modules from aka where the lively server sits at
 // This needs to be pulled apart.
-const baseURL = window.SERVER_URL || System.baseURL || document.location.origin;
+const baseURL = typeof window !== 'undefined' && window.SERVER_URL ||
+                typeof System !== 'undefined' && System.baseURL ||
+                typeof document !== 'undefined' && document.location.origin || 'http://localhost:9011';
 
 if (typeof $world !== 'undefined') {
   $world.withAllSubmorphsDo(ea =>
@@ -63,7 +65,7 @@ const config = {
   showTooltipsAfter: 0.8,
 
   users: {
-    authServerURL: window.AUTH_SERVER_URL || 'https://auth.lively-next.org',
+    authServerURL: typeof window !== 'undefined' && window.AUTH_SERVER_URL || 'https://auth.lively-next.org',
     autoLoginAsGuest: false
   },
 
@@ -397,7 +399,7 @@ const config = {
   },
 
   remotes: {
-    server: System.get('@system-env').browser ? `${document.location.origin}/eval` : null
+    server: typeof System !== 'undefined' && System.get('@system-env').browser ? `${document.location.origin}/eval` : null
   },
 
   css: {
