@@ -1,20 +1,23 @@
 /* global System */
-import { config, part } from 'lively.morphic';
+import { part } from 'lively.morphic';
 import { resource } from 'lively.resources';
 import { Path, obj, arr } from 'lively.lang';
 import { LoadingIndicator } from 'lively.components';
 import { removeUnreachableObjects } from 'lively.serializer2';
-
 import { createMorphSnapshot, serializeMorph } from 'lively.morphic/serialization.js';
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
-
 import { FreezerPrompt } from './src/ui.cp.js';
-import LivelyRollup, { resolvePackage, decanonicalizeFileName } from './src/bundler.js';
-import { transpileAttributeConnections } from './src/util/helpers.js';
+
+import { transpileAttributeConnections, writeFiles } from './src/util/helpers.js';
 import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
 import { parse, stringify } from 'lively.ast';
+import BrowserResolver from './src/resolvers/browser.js';
+
+import { rollup } from 'rollup';
+import jsonPlugin from '@rollup/plugin-json';
+import { lively } from './src/plugins/rollup.js'; // for rollup
+import nodePolyfills from 'rollup-plugin-polyfill-node';
 
 /*
 
@@ -63,34 +66,6 @@ const DEFAULT_EXCLUDED_MODULES = [
   'lively.storage',
   'lively.user'
 ];
-
-/**
- * Generates the html file that will serve as the index.html for loading the
- * frozen morph. Note that this convenience method only works when we freeze
- * instantiated morphs, it does not yet work when we bundle a library that
- * auto executes.
- * @param { Morph } part - The morph that is supposed to be frozen.
- * @returns { string } The html code of the index.html.
- */
-export async function generateLoadHtml (partOrModule, importMap) {
-  const htmlTemplate = await resource(await decanonicalizeFileName('lively.freezer/src/util/load-template.html')).read();
-  // fixme: what to do when we receive a module?
-  let title = partOrModule.title || partOrModule.name;
-  let head = partOrModule.__head_html__ || '';
-  let load = partOrModule.__loading_html__ || '';
-  let crawler = partOrModule.__crawler_html__ || '';
-  if (partOrModule.source) {
-    // extract stuff from the source code
-    if (importMap) {
-      head += importMap;
-    }
-  }
-  return htmlTemplate
-    .replace('__TITLE_TAG__', title)
-    .replace('__HEAD_HTML__', head)
-    .replace('__LOADING_HTML__', load)
-    .replace('__CRAWLER_HTML__', crawler);
-}
 
 /**
  * This clears up all of the ide related tools that may be still present in the world
@@ -164,7 +139,7 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
   const previouslyExcludedPackages = excludedModules || Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
   const previouslyPublishedDir = Path('metadata.publishedLocation').get(targetOrModule) ||
                                  resource(System.baseURL).join('users').join(userName).join('published').join(targetOrModule.name ||
-                                 resolvePackage(targetOrModule).name).url;
+                                 BrowserResolver.resolvePackage(targetOrModule).name).url;
   let res;
   await $world.withRequesterDo(requester, async (pos) => {
     freezerPrompt.isModuleBundle = typeof targetOrModule === 'string';
@@ -183,34 +158,6 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
   return res;
 }
 
-async function rollupBundle ({ bundle, compress, output, requester }) {
-  let res;
-  try {
-    res = await bundle.rollup(compress, output);
-  } catch (e) {
-    if (e.name === 'Exclusion Conflict') {
-      // adjust the excluded Modules
-      const proceed = await requester.world().confirm([
-        e.message.replace('Could not load __root_module__:', ''), {}, '\n', {},
-        'Packages are usually excluded to reduce the payload of a frozen interactive.\nIn order to fix this issue you can either remove the problematic package from the exclusion list,\nor remove the morph that requires this package directly. Removing the package from the\nexclusion list is a quick fix yet it may increase the payload of your frozen interactive substantially.',
-        { fontSize: 13, fontWeight: 'normal' }
-      ],
-      {
-        requester,
-        width: 600,
-        confirmLabel: 'Remove Package from Exclusion Set',
-        rejectLabel: 'Cancel'
-      });
-      if (proceed) {
-        bundle.excludedModules = e.reducedExclusionSet;
-        return await rollupBundle();
-      }
-    }
-    throw e;
-  }
-  return res;
-}
-
 /**
  * Bundles a given part (in the form of a snapshot or as a live object) into a standalone
  * static website that can be loaded very quickly.
@@ -218,7 +165,6 @@ async function rollupBundle ({ bundle, compress, output, requester }) {
 export async function bundlePart (partOrSnapshot, {
   exclude: excludedModules = [],
   compress = false,
-  output = 'es2019',
   requester,
   useTerser
 }) {
@@ -228,8 +174,24 @@ export async function bundlePart (partOrSnapshot, {
     })
     : partOrSnapshot;
   transpileAttributeConnections(snapshot);
-  const bundle = new LivelyRollup({ excludedModules, snapshot, useTerser });
-  return await rollupBundle({ bundle, compress, output, requester });
+  const freezerPlugin = lively({
+    excludedModules,
+    snapshot, // use this as an entry point
+    useTerser,
+    resolver: BrowserResolver
+  });
+  const bundle = await rollup({
+    plugins: [
+      freezerPlugin,
+      jsonPlugin()
+    ]
+  });
+  return await bundle.generate({
+    globalName: 'frozenPart',
+    format: 'system',
+    plugins: [freezerPlugin]
+  });
+  // TODO: just write the files...
 }
 
 /**
@@ -243,109 +205,64 @@ export async function bundleModule (moduleId, {
   output = 'es2019',
   requester,
   mainFunction,
+  htmlConfig,
   useTerser
 }) {
-  const bundle = new LivelyRollup({ excludedModules, rootModule: moduleId, mainFunction, useTerser, useLivelyWorld: true });
-  return await rollupBundle({ bundle, compress, output, requester });
+  // fixme: maybe its better to make the plugin devoid of state...?
+  const bundle = await rollup({
+    input: moduleId,
+    plugins: [
+      nodePolyfills(), // only if this is a browser module
+      lively({
+        excludedModules,
+        mainFunction,
+        useTerser,
+        autoRun: htmlConfig
+      }),
+      jsonPlugin()
+    ]
+  });
+  return await bundle.generate({
+    format: 'system'
+  });
 }
 
 export async function jspmCompile (url, out, globalName, redirect = {}) {
-  const m = new LivelyRollup({ rootModule: url, includePolyfills: false, globalName, redirect });
-  m.excludedModules = ['babel-plugin-transform-jsx'];
-  const res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min);
+  const freezerPlugin = lively({
+    includePolyfills: false,
+    redirect,
+    excludedModules: ['babel-plugin-transform-jsx']
+  });
+  const bundle = await rollup({
+    input: url,
+    plugins: [
+      nodePolyfills(), // only if this is a browser module
+      freezerPlugin,
+      jsonPlugin()
+    ]
+  });
+  await bundle.generate({
+    globalName,
+    format: 'system',
+    plugins: [freezerPlugin]
+  });
 }
 
 export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
-  const m = new LivelyRollup({ rootModule: url, asBrowserModule, globalName });
-  m.excludedModules = ['babel-plugin-transform-jsx'];
-  const res = await m.rollup(true, 'es2019');
-  await resource(System.baseURL).join(out).write(res.min);
-}
-
-/**
- * Handles the writing of all the files of a finished frozen bundle.
- * @param { object } frozen - A finished build.
- * @param { LoadingIndicator } li - Indicator to visualize the progress of writing the files.
- * @param { object } handles - Resource handles that will be utilized to write to the proper directory.
- * @param { HTTPResource } handles.dir - A http resource handle.
- * @param { ShellResource } handles.shell - A shell resource handle for sending shell commands to the server in order to compress files.
- */
-async function writeFiles (frozen, li, { dir, shell }) {
-  const target = frozen.part || frozen.rootModule;
-  let currentFile = '';
-  dir.onProgress = (evt) => {
-    // set progress of loading indicator
-    const p = evt.loaded / evt.total;
-    li.progress = p;
-    li.status = 'Writing file ' + currentFile + ' ' + (100 * p).toFixed() + '%';
-  };
-  currentFile = 'index.html';
-  // if the module is split, include systemjs
-  await dir.join(currentFile).write(await generateLoadHtml(target, frozen.importMap));
-
-  if (obj.isArray(frozen)) {
-    for (const splitModule of frozen) {
-      currentFile = splitModule.fileName;
-      await dir.join(currentFile).write(splitModule.min);
-      try {
-        await shell.join(currentFile + '.gz').gzip(splitModule.min);
-        await shell.join(currentFile + '.br').brotli(splitModule.min);
-      } catch (err) {
-
-      }
-    }
-    currentFile = 'load.js';
-    await dir.join(currentFile).write(frozen.load.min);
-    try {
-      currentFile = 'load.js.gz';
-      await shell.join(currentFile).gzip(frozen.load.min);
-      currentFile = 'load.js.br';
-      await shell.join(currentFile).brotli(frozen.load.min);
-    } catch (err) {
-
-    }
-  } else {
-    currentFile = 'load.js';
-    await dir.join(currentFile).write(frozen.min);
-    currentFile = 'load.js.gz';
-    await shell.join(currentFile).gzip(frozen.min);
-    currentFile = 'load.js.br';
-    await shell.join(currentFile).brotli(frozen.min);
-  }
-
-  await dir.join('@empty').write('');
-
-  li.status = 'Copying assets...';
-  const assetDir = await dir.join('assets/').ensureExistance();
-  // copy font awesome assets
-  await resource(config.css.fontAwesome).parent().copyTo(assetDir.join('fontawesome-free-6.1.1-web/css/'));
-  await resource(config.css.fontAwesome).parent().parent().join('webfonts/').copyTo(assetDir.join('fontawesome-free-6.1.1-web/webfonts/'));
-  // copy inconsoloata font
-  await resource(config.css.inconsolata).parent().copyTo(assetDir.join('inconsolata/'));
-  for (const asset of frozen.assets) {
-    currentFile = asset.url;
-    // skip if exists
-    await asset.copyTo(assetDir);
-  }
-
-  // then copy over the style morphs
-  li.status = 'Copying master components...';
-  // replace this by prefetched master components
-  for (const url in frozen.masterComponents) {
-    const masterDir = await dir.join('masters/').ensureExistance();
-    const masterFile = await masterDir
-      .join(url.replace('styleguide://', '') + '.json')
-      .ensureExistance();
-    await masterFile.writeJson(frozen.masterComponents[url]);
-  }
-
-  li.remove();
-  $world.setStatusMessage([`Published ${target.name || target.url}. Click `, null, 'here', {
-    textDecoration: 'underline',
-    fontWeight: 'bold',
-    doit: { code: `window.open("${dir.join('index.html').url}")` }
-  }, ' to view.'], StatusMessageConfirm, false);
+  const bundle = await rollup({
+    input: url,
+    plugins: [
+      lively({
+        asBrowserModule,
+        excludedModules: ['babel-plugin-transform-jsx']
+      }),
+      jsonPlugin()
+    ]
+  });
+  await bundle.generate({
+    format: 'system',
+    globalName
+  });
 }
 
 /**
@@ -386,7 +303,7 @@ export async function interactivelyFreezeWorld (world) {
   }
 
   const li = LoadingIndicator.open('Freezing World', { status: 'Writing files...' });
-  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
+  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell, resolver: BrowserResolver });
 }
 
 /**
@@ -423,13 +340,14 @@ export async function interactivelyFreezePart (part, requester = false) {
   }
 
   const li = LoadingIndicator.open('Freezing Part', { status: 'Writing files...' });
-  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
+  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell, resolver: BrowserResolver });
 }
 
 export async function interactivelyFreezeModule (moduleUrl, requester) {
   const source = await resource(moduleUrl).read();
   const { varDecls } = topLevelDeclsAndRefs(parse(source));
   const excludedModuleNode = varDecls.find(decl => Path('declarations.0.id.name').get(decl) === 'EXCLUDED_MODULES');
+  // fixme: what about head, loadHtml etc?
   const titleNode = varDecls.find(decl => Path('declarations.0.id.name').get(decl) === 'TITLE');
   let excludedModules = DEFAULT_EXCLUDED_MODULES; let title = moduleUrl;
   try {
@@ -450,15 +368,14 @@ export async function interactivelyFreezeModule (moduleUrl, requester) {
       compress: true,
       useTerser: options.useTerser,
       exclude: options.excludedPackages,
-      mainFunction: options.mainFunction,
+      htmlConfig: { title }, // auto generate a index.html that does the absolute basics
       requester
     });
-    frozen.rootModule = { source, title };
   } catch (e) {
     throw e;
   }
 
   const li = LoadingIndicator.open('Freezing Module', { status: 'Writing files...' });
 
-  writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell });
+  await writeFiles(frozen, li, { dir: publicationDir, shell: publicationDirShell, resolver: BrowserResolver });
 }

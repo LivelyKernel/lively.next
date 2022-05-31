@@ -1,29 +1,33 @@
+/* global process */
 import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
-import { module } from 'lively.modules';
-import { localInterface } from 'lively-system-interface';
 import { es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
-import { LoadingIndicator } from 'lively.components';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import { locateClass, requiredModulesOfSnapshot } from 'lively.serializer2';
 import { classNameOfId, moduleOfId } from 'lively.serializer2/snapshot-navigation.js';
+import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
+import {
+  fixSourceForBugsInGoogleClosure,
+  gzip,
+  brotli,
+  ROOT_ID,
+  generateLoadHtml,
+  instrumentStaticSystemJS,
+  compileOnServer
+} from './util/helpers.js';
+import { joinPath } from 'lively.lang/string.js';
 
-import * as Rollup from 'rollup';
-import jsonPlugin from '@rollup/plugin-json'; // fixme: requires newer Babel version to import latest version...
-
-import { fixSourceForBugsInGoogleClosure, instrumentStaticSystemJS, compileOnServer } from './util/helpers.js';
-
-import ESBuild from 'esm://cache/esbuild-wasm@0.14.28';
-import { detectModuleFormat } from 'lively.modules/src/module.js';
-try {
-  ESBuild.initialize({
-    wasmURL: 'https://unpkg.com/esbuild-wasm@0.14.28/esbuild.wasm'
-  });
-} catch (err) {
-  // already called initialize
-}
+// import ESBuild from 'esm://cache/esbuild-wasm@0.14.28';
+// 
+// try {
+//   ESBuild.initialize({
+//     wasmURL: 'https://unpkg.com/esbuild-wasm@0.14.28/esbuild.wasm'
+//   });
+// } catch (err) {
+//   // already called initialize
+// }
 
 const SYSTEMJS_STUB = `
 var G = typeof window !== "undefined" ? window :
@@ -51,36 +55,6 @@ const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
   'lively.lang'
 ];
 
-// this needs to be handled differently when loaded from the shell script... since there is no SystemJS that can import the modules nor could we reliably import these modules
-function resolveModuleId (moduleName) {
-  return module(moduleName).id;
-}
-
-async function normalizeFileName (fileName) {
-  return await System.normalize(fileName);
-}
-
-export async function decanonicalizeFileName (fileName) {
-  return await System.decanonicalize(fileName);
-}
-
-export function resolvePackage (moduleName) {
-  return module(moduleName).package();
-}
-
-function dontTransform (moduleId) {
-  return module(moduleId).dontTransform;
-}
-
-function pathInPackageFor (moduleId) {
-  return module(moduleId).pathInPackage();
-}
-
-// how to achieve this from env without fully prepared SystemJS?
-function detectFormat (moduleId) {
-  return module(moduleId).format();
-}
-
 const ADVANCED_EXCLUDED_MODULES = [
   'lively.ast',
   'lively.vm',
@@ -93,38 +67,69 @@ const ADVANCED_EXCLUDED_MODULES = [
   'localconfig.js'
 ];
 
+const baseURL = typeof System !== 'undefined' ? System.baseURL : 'file://' + (process.env.lv_next_dir || process.cwd());
+
+/**
+ * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
+ * @param { object } warning - The warning object.
+ * @param { function } warn - The custom error function to utilize for logging the warning.
+ */
+export function customWarn (warning, warn) {
+  switch (warning.code) {
+    case 'THIS_IS_UNDEFINED':
+    case 'EVAL':
+    case 'MODULE_LEVEL_DIRECTIVE':
+      return;
+  }
+  warn(warning);
+}
+
+function resolutionId (id, importer) {
+  if (!importer) return id;
+  else return importer + ' -> ' + id;
+}
+
+function isCdnImport (id, importer) {
+  if (ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn)) && importer && importer !== ROOT_ID) {
+    const { url } = resource(importer).root(); // get the cdn host root
+    return ESM_CDNS.find(cdn => url.includes(cdn));
+  }
+  return false;
+}
+
 export default class LivelyRollup {
   constructor (props = {}) {
     this.setup(props);
   }
 
   setup ({
-    excludedModules = [],
     snapshot,
     rootModule,
-    autoRun = true,
-    globalName,
-    useLivelyWorld = false,
+    resolver,
+    excludedModules = [],
+    autoRun = false,
     asBrowserModule = true,
     useTerser = false,
     isResurrectionBuild = false,
-    redirect = {
-      fs: resolveModuleId('lively.freezer/src/util/node-fs-wrapper.js'),
-      'https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js': 'https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js' // this is always needed
-    },
-    includePolyfills = true
+    includePolyfills = true,
+    includeLivelyAssets = true,
+    compress = true,
+    minify = true,
+    captureModuleScope = true
   }) {
+    this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
     this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
     this.snapshot = snapshot; // the snapshot to be used as a base for developing a bundled app
-    this.rootModule = typeof rootModule === 'string' ? module(rootModule) : rootModule; // alternatively to the snapshot, we can also use a root module as an entry point
-    this.useLivelyWorld = useLivelyWorld;
+    if (rootModule) { this.rootModuleId = resolver.resolveModuleId(rootModule); } // alternatively to the snapshot, we can also use a root module as an entry point
     this.autoRun = autoRun; // If root module is specified then this flag indicates that the main function of the module is to be invoked on load.
-    this.globalName = globalName; // The global variable name to export the root module export via.
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
-    this.redirect = redirect; //  Hard redirect of certain packages that overriddes any other resolution mechanisms. Why is this needed?
     this.excludedModules = excludedModules; // Set of package names whose modules to exclude from the bundle.
+    this.captureModuleScope = captureModuleScope; // Wether or not the scopes of the modules should be captured. This is needed for supporting meta programming capabilities in the bundle.
     this.isResurrectionBuild = isResurrectionBuild; // If set to true, this will make the lively.core modules hot swappable. This requires not only scope capturing but also embedding of constructs in the build that allow for hot swapping of the modules in the static build scripts.
+    this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle.
+    this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
+    this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....") // deprecated
@@ -155,8 +160,10 @@ export default class LivelyRollup {
    * @param { string } path - The relative path to be imported.
    */
   async resolveRelativeImport (moduleId, path) {
-    if (!path.startsWith('.')) return normalizeFileName(path);
-    return resource(await normalizeFileName(moduleId)).join('..').join(path).withRelativePartsResolved().url;
+    if (!path.startsWith('.')) return this.resolver.normalizeFileName(path);
+    // how to achieve that without the nasty file handle
+    return await this.resolver.normalizeFileName(
+      string.joinPath(await this.resolver.normalizeFileName(moduleId), '..', path));
   }
 
   /**
@@ -164,7 +171,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    */
   normalizedId (id) {
-    return id.replace(System.baseURL, '').replace('local://lively-object-modules/', '');
+    return id.replace(baseURL, '').replace('local://lively-object-modules/', '');
   }
 
   /**
@@ -176,7 +183,7 @@ export default class LivelyRollup {
   getTransformOptions (modId) {
     if (modId === '@empty') return {};
     let version, name;
-    const pkg = resolvePackage(modId);
+    const pkg = this.resolver.resolvePackage(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
@@ -191,7 +198,7 @@ export default class LivelyRollup {
       transform: classes.classToFunctionTransform,
       currentModuleAccessor: ast.parse(`({
         pathInPackage: () => {
-           return "${pathInPackageFor(modId)}"
+           return "${this.resolver.pathInPackageFor(modId)}"
         },
         unsubscribeFromToplevelDefinitionChanges: () => () => {},
         subscribeToToplevelDefinitionChanges: () => () => {},
@@ -206,7 +213,7 @@ export default class LivelyRollup {
     return {
       exclude: [
         'System',
-        ...dontTransform(modId),
+        ...this.resolver.dontTransform(modId),
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       classToFunction
@@ -219,8 +226,8 @@ export default class LivelyRollup {
    * for the benefit of the doubt.
    */
   checkIfImportedPackageExcluded (importedModules) {
-    const excludedPackages = arr.compact(this.excludedModules.map(id => resolvePackage(id)));
-    const importedPackages = importedModules.map(id => resolvePackage(id));
+    const excludedPackages = arr.compact(this.excludedModules.map(id => this.resolver.resolvePackage(id)));
+    const importedPackages = importedModules.map(id => this.resolver.resolvePackage(id));
     const conflicts = arr.intersect(excludedPackages, importedPackages);
     if (conflicts.length > 0) {
       const multiple = conflicts.length > 1;
@@ -238,9 +245,9 @@ export default class LivelyRollup {
    * @returns { string } The source code of the root module.
    */
   async getRootModule () {
-    if (this.rootModule) {
+    if (this.rootModuleId) {
       if (!this.autoRun) { // if there is no main function specified, we just export the entire module in the root module
-        return `export * from "${this.rootModule.id}";`;
+        return `export * from "${this.rootModuleId}";`;
       }
       return await this.synthesizeMainModule();
     }
@@ -253,8 +260,8 @@ export default class LivelyRollup {
    * world as the argument.
    */
   async synthesizeMainModule () {
-    let mainModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/main-module.js')).read();
-    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModule.id}')`);
+    let mainModuleSource = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js')).read();
+    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
   }
 
   /**
@@ -262,11 +269,11 @@ export default class LivelyRollup {
    * are required to successfully deserialize the snapshot that for the frozen part.
    */
   async synthesizeSnapshotModule () {
-    const snapshotModuleSource = await resource(await normalizeFileName('lively.freezer/src/util/snapshot-module.js')).read();
+    const snapshotModuleSource = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/snapshot-module.js')).read();
     const { requiredModules } = await this.getRequiredModulesFromSnapshot(this.snapshot);
     this.checkIfImportedPackageExcluded(requiredModules); // consequence of this may an exception and termination of this process
     return arr.uniq(requiredModules.map(path => `import "${path}"`)).join('\n') +
-      (this.excludedModules.includes('localconfig.js') ? '' : await resource(System.baseURL).join('localconfig.js').read()) +
+      (this.excludedModules.includes('localconfig.js') ? '' : await resource(baseURL).join('localconfig.js').read()) +
      snapshotModuleSource.replace('{"SNAPSHOT": "PLACEHOLDER"}', JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))));
   }
 
@@ -282,8 +289,8 @@ export default class LivelyRollup {
    * @param { string } importModuleId - The id of the module that imported the module.
    */
   needsScopeToBeCaptured (moduleId, importModuleId, sourceCode = false) {
-    if (this.redirect[moduleId]) return false; // skip redirected modules by default
-    if (sourceCode && detectModuleFormat(sourceCode) === 'global') return false; // skip global modules since they are non esm
+    // if (this.redirect[moduleId]) return false; // skip redirected modules by default
+    if (sourceCode && this.resolver.detectFormatFromSource(sourceCode) === 'global') return false; // skip global modules since they are non esm
     if (importModuleId && resource(moduleId).host() !== resource(importModuleId).host()) {
       return false; // 3rd party modules are not to be captured
     }
@@ -333,6 +340,10 @@ export default class LivelyRollup {
     return moduleId.endsWith('.cp.js');
   }
 
+  isLivelyCoreModule (moduleId) {
+    return moduleId.includes('lively.');
+  }
+
   /**
    * Returns true if the given module contains code of the sort of System.import(...) which we need 
    * to convert into plain import() calls for rollup to consume correctly.
@@ -358,20 +369,23 @@ export default class LivelyRollup {
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System' && node.arguments.length === 1) {
           // evaluate the imported expression on the spot
-          const idx = importUrls.push(localInterface.runEval(ast.stringify(node.arguments[0]), {
-            targetModule: moduleId
-          }));
-          nodesToReplace.push({
-            target: node.arguments[0],
-            replacementFunc: (target, current) => {
-              // if the result has not been computed, log an error
-              if (importUrls[idx - 1]) { return `"${importUrls[idx - 1]}"`; }
-              return current; // what to do with these???
-            }
-          });
-          nodesToReplace.push({
-            target: node.callee, replacementFunc: () => 'import'
-          });
+          // this forces lively.modules into the system. This can not be supported
+          try {
+            const idx = importUrls.push(eval(ast.stringify(node.arguments[0])));
+            nodesToReplace.push({
+              target: node.arguments[0],
+              replacementFunc: (target, current) => {
+                // if the result has not been computed, log an error
+                if (importUrls[idx - 1]) { return `"${importUrls[idx - 1]}"`; }
+                return current; // what to do with these???
+              }
+            });
+            nodesToReplace.push({
+              target: node.callee, replacementFunc: () => 'import'
+            });
+          } catch (err) {
+
+          }
         }
       }
     });
@@ -390,7 +404,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module to be transformed.
    */
   async transform (source, id) {
-    if (id.endsWith('.json')) {
+    if (id.startsWith('\0') || id.endsWith('.json')) {
       return source;
     }
 
@@ -398,7 +412,7 @@ export default class LivelyRollup {
       source = await this.instrumentDynamicLoads(source, id);
     }
 
-    if (id === '__root_module__') return source;
+    if (id === ROOT_ID) return source;
     // this capturing stuff needs to behave differently when we have dynamic imports. Why??
     if (this.needsScopeToBeCaptured(id, null, source) || this.needsClassInstrumentation(id, source)) {
       source = this.captureScope(source, id);
@@ -413,57 +427,79 @@ export default class LivelyRollup {
    * @param { string } importer - The module id that is importing said module.
    */
   async resolveId (id, importer) {
-    if (id === 'fs') return 'fs';
-    if (this.resolved[id]) return this.resolved[id];
-    if (id === '__root_module__') return id;
-    if (id.startsWith('[PART_MODULE]')) return id;
-    if (!importer) return id;
-    const isCdnImport = ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn));
-    if (importer && importer !== '__root_module__' && isCdnImport) {
-      const { url } = resource(importer).root();
-      if (ESM_CDNS.find(cdn => url.includes(cdn))) {
-        if (id.startsWith('.')) {
-          id = resource(importer).parent().join(id).withRelativePartsResolved().url;
-        } else {
-          id = resource(url).join(id).withRelativePartsResolved().url;
-        }
-        if (this.redirect[id]) {
-          id = this.redirect[id];
-        }
+    if (this.resolved[resolutionId(id, importer)]) return this.resolved[resolutionId(id, importer)];
+    if (id === ROOT_ID) return id;
+    // handle standalone
+    if (!importer) return this.resolver.resolveModuleId(id);
+
+    // handle ESM CDN imports
+    if (isCdnImport(id, importer)) {
+      if (id.startsWith('.')) {
+        id = resource(importer).parent().join(id).withRelativePartsResolved().url;
+      } else {
+        id = resource(importer).root().join(id).withRelativePartsResolved().url;
       }
     }
-    const importingPackage = resolvePackage(importer);
-    if (['lively.ast', 'lively.modules'].includes(id) && this.excludedModules.includes(id)) {
-      return id;
-    }
 
+    // fixme: this is another one of these super weird pruning strategies...
     // if we are imported from a non dynamic context this does not apply
-    const dynamicContext = this.dynamicModules.has(resolveModuleId(importer)) || this.dynamicModules.has(resolveModuleId(id));
+    const dynamicContext = this.dynamicModules.has(this.resolver.resolveModuleId(importer)) ||
+                            this.dynamicModules.has(this.resolver.resolveModuleId(id));
     if (!dynamicContext) {
-      if (importingPackage && this.excludedModules.includes(importingPackage.name)) return false;
       if (this.excludedModules.includes(id)) return false;
     } else {
-      this.dynamicModules.add(resolveModuleId(id));
+      this.dynamicModules.add(this.resolver.resolveModuleId(id, importer));
     }
 
-    if (importingPackage && importingPackage.map) this.globalMap = { ...this.globalMap, ...importingPackage.map };
-    if (importingPackage && importingPackage.map[id] || this.globalMap[id]) {
-      if (!importingPackage.map[id] && this.globalMap[id]) {
-        console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
+    const importingPackage = this.resolver.resolvePackage(importer);
+    // honor the systemjs options within the package config
+    if (importingPackage && importingPackage.map) {
+      this.globalMap = { ...this.globalMap, ...importingPackage.map };
+      if (importingPackage.map[id] || this.globalMap[id]) {
+        if (!importingPackage.map[id] && this.globalMap[id]) {
+          console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
+        }
+        id = importingPackage.map[id] || this.globalMap[id];
+        if (id['~node']) id = id['~node'];
+        importer = importingPackage.url;
       }
-      id = importingPackage.map[id] || this.globalMap[id];
-      if (id['~node']) id = id['~node'];
-      importer = importingPackage.url;
     }
-    if (id.startsWith('.')) {
-      id = await this.resolveRelativeImport(importer, id);
-      if (!dynamicContext && this.excludedModules.includes(id)) return false;
+
+    if (id.startsWith('.')) { // handle some kind of relative import
+      try {
+        return this.resolved[resolutionId(id, importer)] = await this.resolveRelativeImport(importer, id);
+      } catch (err) {
+        return null;
+      }
     }
+
     if (!id.endsWith('.js') && !isCdnImport) {
-      const normalizedId = await normalizeFileName(id);
-      return this.resolved[id] = normalizedId;
+      return this.resolved[resolutionId(id, importer)] = await this.resolver.normalizeFileName(id);
     }
-    return this.resolved[id] = resolveModuleId(id);
+
+    if (!dynamicContext && this.excludedModules.includes(id)) return false;
+    // this needs to be done by flatn if we are running in nodejs. In the client, this also may lead to bogus
+    // results since we are not taking into account in package.json
+    return this.resolved[resolutionId(id, importer)] = this.resolver.resolveModuleId(id, importer);
+  }
+
+  /**
+   * A custom resolveDynamicImport() which takes into account some of 
+   * the excluded modules.
+   * @param { AstNode } node - The ast node that represents the dynamic import call site.
+   * @param { string } importer - The id of the module where the dynamic import is triggered from.
+   */
+  resolveDynamicImport (node, importer) {
+    if (node.type && this.isLivelyCoreModule(importer)) return null;
+    const id = node;
+    const res = this.resolveId(id, importer);
+    if (res && obj.isString(res)) {
+      return {
+        external: false,
+        id: res
+      };
+    }
+    return res;
   }
 
   /**
@@ -473,7 +509,7 @@ export default class LivelyRollup {
    * @returns { string } The source code.
    */
   async load (id) {
-    id = this.redirect[id] || id;
+    // id = this.redirect[id] || id;
     if (this.excludedModules.includes(id)) {
       if (id === 'lively.ast') {
         return `
@@ -487,47 +523,31 @@ export default class LivelyRollup {
       }
     }
 
-    if (id === '__root_module__') {
+    if (id === ROOT_ID) {
       const res = await this.getRootModule();
       return res;
     }
-    const modId = resolveModuleId(id);
-    const pkg = resolvePackage(id);
+    const pkg = this.resolver.resolvePackage(id);
     if (pkg && this.excludedModules.includes(pkg.name) &&
-        !modId.endsWith('.json') &&
+        !id.endsWith('.json') &&
         !this.dynamicModules.has(pkg.name) &&
-        !this.dynamicModules.has(modId)) {
+        !this.dynamicModules.has(id)) {
       return '';
     }
 
-    let s;
-    try {
-      s = await resource(modId).read();
-    } catch (err) {
-      s = await resource(modId).makeProxied().read();
-    }
+    let s = await this.resolver.load(id);
     if (id.endsWith('.json')) {
       return s;
-      // return translateToEsm(s); // no longer needed due to plugin
     }
     s = fixSourceForBugsInGoogleClosure(id, s);
 
     return s;
   }
 
-  /**
-   * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
-   * @param { object } warning - The warning object.
-   * @param { function } warn - The custom error function to utilize for logging the warning.
-   */
-  warn (warning, warn) {
-    switch (warning.code) {
-      case 'THIS_IS_UNDEFINED':
-      case 'EVAL':
-      case 'MODULE_LEVEL_DIRECTIVE':
-        return;
-    }
-    warn(warning);
+  async buildStart () {
+    this.resolver.setStatus({ status: 'Bundling...' });
+    if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
+    await this.resolver.whenReady();
   }
 
   /**
@@ -543,11 +563,13 @@ export default class LivelyRollup {
   captureScope (source, id) {
     let classRuntimeImport = '';
     const recorderName = '__varRecorder__';
-    const recorderString = `const ${recorderName} = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`;
+    const recorderString = this.captureModuleScope
+      ? `const ${recorderName} = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`
+      : '';
     const captureObj = { name: recorderName, type: 'Identifier' };
     const parsed = ast.parse(source);
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
-    const opts = this.getTransformOptions(resolveModuleId(id));
+    const opts = this.getTransformOptions(this.resolver.resolveModuleId(id));
 
     if (this.needsClassInstrumentation(id)) {
       classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
@@ -558,52 +580,54 @@ export default class LivelyRollup {
     if (this.isComponentModule(id)) {
       instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id));
     }
-    instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
 
-    const imports = [];
     let defaultExport = '';
-    const toBeReplaced = [];
+    if (this.captureModuleScope) {
+      instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
 
-    ast.custom.forEachNode(instrumented, (n) => {
-      if (n.type === 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
-      if (n.type === 'ExportDefaultDeclaration') {
-        let exp;
-        switch (n.declaration.type) {
-          case 'Literal':
-            exp = Path('declaration.raw').get(n);
-            break;
-          case 'Identifier':
-            exp = Path('declaration.name').get(n);
-            break;
-          case 'ClassDeclaration':
-          case 'FunctionDeclaration':
-            exp = Path('declaration.id.name').get(n);
-            break;
+      const imports = [];
+      const toBeReplaced = [];
+
+      ast.custom.forEachNode(instrumented, (n) => {
+        if (n.type === 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
+        if (n.type === 'ExportDefaultDeclaration') {
+          let exp;
+          switch (n.declaration.type) {
+            case 'Literal':
+              exp = Path('declaration.raw').get(n);
+              break;
+            case 'Identifier':
+              exp = Path('declaration.name').get(n);
+              break;
+            case 'ClassDeclaration':
+            case 'FunctionDeclaration':
+              exp = Path('declaration.id.name').get(n);
+              break;
+          }
+          if (exp) defaultExport = `${captureObj.name}.default = ${exp};\n`;
         }
-        if (exp) defaultExport = `${captureObj.name}.default = ${exp};\n`;
-      }
-    });
-
-    for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
-      const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type === 'ImportSpecifier'));
-      if (toBeMerged.length > 1) {
+      });
+      for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
+        const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type === 'ImportSpecifier'));
+        if (toBeMerged.length > 1) {
         // merge statements
         // fixme: if specifiers are not named, these can not be merged
         // fixme: properly handle default export
-        const mergedSpecifiers = arr.uniqBy(
-          toBeMerged.map(stmt => stmt.specifiers).flat(),
-          (spec1, spec2) =>
-            spec1.type === 'ImportSpecifier' &&
+          const mergedSpecifiers = arr.uniqBy(
+            toBeMerged.map(stmt => stmt.specifiers).flat(),
+            (spec1, spec2) =>
+              spec1.type === 'ImportSpecifier' &&
             spec2.type === 'ImportSpecifier' &&
             spec1.imported.name === spec2.imported.name &&
             spec1.local.name === spec2.local.name
-        );
-        toBeMerged[0].specifiers = mergedSpecifiers;
-        toBeReplaced.push(...toBeMerged.slice(1).map(stmt => {
-          stmt.body = [];
-          stmt.type = 'Program';
-          return stmt;
-        }));
+          );
+          toBeMerged[0].specifiers = mergedSpecifiers;
+          toBeReplaced.push(...toBeMerged.slice(1).map(stmt => {
+            stmt.body = [];
+            stmt.type = 'Program';
+            return stmt;
+          }));
+        }
       }
     }
 
@@ -626,11 +650,11 @@ export default class LivelyRollup {
    * @param { string } moduleId - The id of the module.
    */
   async wrapStandalone (moduleId) {
-    moduleId = resolveModuleId(moduleId);
+    moduleId = this.resolver.resolveModuleId(moduleId);
     const source = await resource(moduleId).read();
     const globalVarName = this.deriveVarName(moduleId);
     let code;
-    if (detectFormat(moduleId) === 'global') {
+    if (this.resolver.detectFormat(moduleId) === 'global') {
       code = `var ${globalVarName} = (function() {
          var fetchGlobals = prepareGlobal("${moduleId}");
          ${source};
@@ -659,7 +683,7 @@ export default class LivelyRollup {
     return { code, global: globalVarName };
   }
 
-  async generateGlobals (systemJsEnabled) {
+  async generateGlobals (systemJsEnabled = this.hasDynamicImports) {
     let code = ''; let importMap = false;
     const globals = {};
 
@@ -711,7 +735,7 @@ export default class LivelyRollup {
   }
 
   async getRuntimeCode () {
-    let runtimeCode = await resource(await normalizeFileName('lively.freezer/src/util/runtime.js')).read();
+    let runtimeCode = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js')).read();
     runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
@@ -737,87 +761,164 @@ export default class LivelyRollup {
         const path = v.props[prop].value;
         if (path === '' || path.startsWith('data:')) continue; // data URL can not be copied
         const asset = resource(path);
-        if (asset.host() !== resource(System.baseURL).host()) continue;
+        if (asset.host() !== resource(baseURL).host()) continue;
         asset._from = k;
         if (!this.assetsToCopy.find(res => res.url === asset.url)) { this.assetsToCopy.push(asset); }
         v.props[prop].value = 'assets/' + asset.name(); // this may be causing duplicates
       }
     });
-    console.log('[ASSETS]', this.assetsToCopy);
   }
 
-  async rollup (compressBundle, output) {
-    let depsCode, bundledCode, splitModule;
-    const li = LoadingIndicator.open('Freezing ' + (this.rootModule ? 'module' : 'snapshot'));
-    li.status = 'Bundling...';
+  async generateIndexHtml (importMap, modules) {
+    return await generateLoadHtml(this.autoRun, importMap, this.resolver, modules);
+  }
 
-    if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
-
-    await li.whenRendered(); // ensure that the loading indicator is visible
-    let importMap;
-    try {
-      const bundle = await Rollup.rollup({
-        input: '__root_module__',
-        shimMissingExports: true,
-        onwarn: (warning, warn) => { return this.warn(warning, warn); },
-        plugins: [{
-          resolveId: async (id, importer) => {
-            return await this.resolveId(id, importer);
-          },
-          resolveDynamicImport: (node, importer) => {
-            // schedule a request to initiate a nested rollup that bundles
-            // the dynamically loaded bundles separately
-            if (node.type) return null; // treat this as external
-            const id = node;
-            // this.dynamicModules.add(resolveModuleId(id));
-            const res = this.resolveId(id, importer); // dynamic imports are never excluded. WRONG
-            if (res && obj.isString(res)) {
-              return {
-                external: false,
-                id: res
-              };
-            }
-            return res;
-          },
-          load: async (id) => {
-            return await this.load(id);
-          },
-          transform: async (source, id) => { return await this.transform(source, id); }
-        }, jsonPlugin()]
+  // also emit the files that are the compressed versions of all the files
+  // elso emit the assets as files as needed
+  async generateBundle (plugin, bundle, depsCode, importMap, opts) {
+    const modules = Object.values(bundle);
+    const separator = '__Separator__';
+    if (this.minify && opts.format !== 'esm') {
+      modules.forEach((chunk, i) => {
+        chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
       });
-      let globals;
-      ({ code: depsCode, globals, importMap } = await this.generateGlobals(this.hasDynamicImports));
-      if (this.hasDynamicImports) {
-        splitModule = (await bundle.generate({ format: 'system', globals }));
-      } else {
-        bundledCode = (await bundle.generate({
-          format: this.asBrowserModule ? 'iife' : 'cjs',
-          name: this.globalName || 'frozenPart',
-          globals
-        })).output[0].code;
-      }
-    } finally {
-      li.remove();
+      const codeToMinify = modules.map(chunk => chunk.instrumentedCode).join('\n');
+      const { min: minfiedCode } = await compileOnServer(codeToMinify, this.resolver, this.useTerser);
+      let compiledSnippets = minfiedCode.split(/"__Separator__";\n?/);
+      const adjustedSnippets = new Map(); // ensure order
+      modules.forEach((snippet, i) => {
+        adjustedSnippets.set(i, snippet.code); // populate with original source in case the transpiler kicked the chunk away
+      });
+      compiledSnippets.forEach((compiledSnippet) => {
+        const hit = compiledSnippet.match(/^[0-9]+;\n?/);
+        if (!hit) return; // fixme: google closure seems to add some weird polyfill stuff...
+        const hint = Number(hit[0].replace(/;\n?/, ''));
+        adjustedSnippets.set(hint, compiledSnippet.replace(/^[0-9]+;\n?/, ''));
+      });
+      compiledSnippets = [...adjustedSnippets.values()];
+      for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) {
+        snippet.code = compiled;
+      } // override the code attribute
     }
 
+    if (this.compress) {
+      for (let chunk of modules) {
+        plugin.emitFile({
+          type: 'asset',
+          fileName: chunk.fileName + '.gz',
+          source: await gzip(chunk.code)
+        });
+        plugin.emitFile({
+          type: 'asset',
+          fileName: chunk.fileName + '.br',
+          source: await brotli(chunk.code)
+        });
+      }
+    }
+
+    if (this.includeLivelyAssets) {
+      const cssFiles = await resource(config.css.fontAwesome).parent().dirList();
+      const webFonts = await resource(config.css.fontAwesome).parent().parent().join('webfonts').dirList();
+      const inconsolata = await resource(config.css.inconsolata).parent().dirList();
+      for (let file of cssFiles) {
+        plugin.emitFile({
+          type: 'asset',
+          fileName: joinPath('assets/fontawesome-free-5.12.1/css/', file.name()),
+          source: await file.read()
+        });
+      }
+
+      for (let file of webFonts) {
+        let source = await file.read();
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        plugin.emitFile({
+          type: 'asset',
+          fileName: joinPath('assets/fontawesome-free-5.12.1/webfonts/', file.name()),
+          source
+        });
+      }
+
+      for (let file of inconsolata) {
+        let source = await file.read();
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        plugin.emitFile({
+          type: 'asset',
+          fileName: joinPath('assets/inconsolata/', file.name()),
+          source
+        });
+      }
+
+      for (let file of this.assetsToCopy) {
+        let source = await file.read();
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        plugin.emitFile({
+          type: 'asset',
+          fileName: joinPath('assets', file.name()),
+          source
+        });
+      }
+    }
+
+    // add the blank import file to make systemjs happy
+    plugin.emitFile({
+      type: 'asset',
+      fileName: '@empty',
+      source: ''
+    });
+
+    if (this.autoRun) {
+      plugin.emitFile({
+        type: 'asset',
+        fileName: 'deps.js',
+        source: depsCode
+      });
+      plugin.emitFile({
+        type: 'asset',
+        fileName: 'index.html',
+        source: await this.generateIndexHtml(importMap, modules)
+      });
+    }
+
+    this.resolver.finish();
+  }
+
+  // this needs to be extracted into the index.js or also the concrete use case of the lively rollup plugin
+  async finishBundle (bundle) {
+    let depsCode, importMap, globals, build;
+    ({ code: depsCode, globals, importMap } = await this.generateGlobals());
     let res;
     if (this.hasDynamicImports) {
-      res = await this.handleSplittedBuild(splitModule.output, depsCode, output);
+      build = await bundle.generate({ format: 'system', globals });
+      res = await this.handleSplittedBuild(build.output, depsCode);
       res.format = 'systemjs';
     } else {
+      build = await bundle.generate({
+        format: this.asBrowserModule ? 'iife' : 'cjs',
+        globals
+      });
       res = await this.transpileAndCompressOnServer({
-        depsCode, bundledCode: bundledCode, output, compressBundle
+        bundledCode: build.output[0].code,
+        depsCode
       });
       res.format = 'global';
     }
+
     res.assets = this.assetsToCopy;
     res.rollup = this;
     res.importMap = importMap;
 
+    this.resolver.finish();
+
     return res;
   }
 
-  async handleSplittedBuild (modules, dependencies, output) {
+  /**
+   * Wrapper for server transpilation for splitted builds.
+   * These are concatinated together and separated by markers such that the server transpilation can work on a single file.
+   * @param { Object[] } modules - The set of compiled modules
+   * @param { string } depsCode - The dependency source code.
+   */
+  async handleSplittedBuild (modules, depsCode) {
     // it seems like rollup sometimes returns duplicates which are optimized away by closure
     // causing issues when reassigned the minified pieces
     const loadCode = `
@@ -828,11 +929,13 @@ export default class LivelyRollup {
             System.config({
               meta: {
                ${
-                modules.map(snippet => `[baseURL + '${snippet.fileName}']: {format: "system"}`).join(',\n') // makes sure that compressed modules are still recognized as such
+                modules.map(snippet =>
+                  `[baseURL + '${snippet.fileName}']: {format: "system"}`
+                ).join(',\n') // makes sure that compressed modules are still recognized as such
                 }
               }
             });
-            System.import("./__root_module__.js").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
+            System.import("./${ROOT_ID}").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
           }
         }
       `;
@@ -843,13 +946,11 @@ export default class LivelyRollup {
     });
 
     const { min } = await this.transpileAndCompressOnServer({
-      depsCode: dependencies,
-      bundledCode: [loadCode, ...modules.map(snippet => snippet.instrumentedCode)].join('"moppler";'),
-      output,
-      compressBundle: false
+      depsCode,
+      bundledCode: [loadCode, ...modules.map(snippet => snippet.instrumentedCode)].join('"__Separator__";')
     });
 
-    let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /"moppler";\n?System.register\(/);
+    let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /"__Separator__";\n?System.register\(/);
 
     // ensure that all compiled snippets are present
     // clear the hints
@@ -871,24 +972,20 @@ export default class LivelyRollup {
   async transpileAndCompressOnServer ({
     depsCode = '',
     bundledCode,
-    output,
     fileName = '',
-    compressBundle,
     addRuntime = true,
     optimize = true,
     includePolyfills = this.includePolyfills && this.asBrowserModule
   }) {
-    const li = LoadingIndicator.open('Freezing Part', { status: 'Optimizing...' });
+    this.resolver.setStatus({ title: 'Freezing Part', status: 'Optimizing...' });
     const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
     const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
-    const polyfills = !includePolyfills ? '' : await resource(await normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
+    const polyfills = !includePolyfills ? '' : await resource(await this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
     const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
 
     // write file
-    if (!optimize) { li.remove(); return { code, min: code }; }
-    const res = await compileOnServer(code, li, fileName, this.useTerser); // seems to be faster for now
-
-    li.remove();
+    if (!optimize) { return { code, min: code }; }
+    const res = await compileOnServer(code, this.resolver, fileName, this.useTerser); // seems to be faster for now
     return res;
   }
 }
