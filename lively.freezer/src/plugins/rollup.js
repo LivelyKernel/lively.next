@@ -2,22 +2,65 @@ import LivelyRollup, { customWarn } from '../bundler.js';
 import { ROOT_ID } from '../util/helpers.js';
 import { obj } from 'lively.lang';
 
+/**
+ * Checks wether or not a given module is an internal module
+ * of the current JS runtime. Usually used within the node.js
+ * context.
+ * @param { string } id - The module name to check for.
+ * @param { Resolver } resolver - The resolver that tells us the builtin modules.
+ */
+function isBuiltin (id, resolver) {
+  return id.startsWith('node:') ||
+         resolver.builtinModules.includes(id);
+}
+
+/**
+ * Checks if the given module id belongs to some of the generated ones
+ * from the commonjs transform plugin. Those we usually should ignore
+ * when attempting to load or transform since they are not living in the filesystem.
+ * @param { string } id - The module id.
+ */
+function isCommonJsModule (id) {
+  return id.includes('?commonjs-external') ||
+         id.includes('?commonjs-exports') ||
+         id.includes('?commonjs-entry') ||
+         id.includes('commonjsHelpers.js');
+}
+
 export function lively (args) {
   let globals, importMap, depsCode;
   const bundler = new LivelyRollup(args);
+  const { map = {} } = args;
   return {
     name: 'rollup-plugin-lively',
     buildStart: () => bundler.buildStart(),
-    resolveId: (id, importer) => {
-      return bundler.resolveId(id, importer);
+    resolveId: async (id, importer) => {
+      if (isBuiltin(id, bundler.resolver)) return null;
+      let res = await bundler.resolveId(map[id] || id, importer);
+      return res;
     },
-    resolveDynamicImport: (node, importer) => {
-      return bundler.resolveDynamicImport(node, importer);
+    resolveDynamicImport: async (node, importer) => {
+      if (typeof node === 'string' && isBuiltin(node, bundler.resolver)) return null;
+      let res = await bundler.resolveDynamicImport(node, importer);
+      return res;
     },
     load: (id) => {
-      return bundler.load(id);
+      if (id.startsWith('\0')) return null;
+      if (isBuiltin(id, bundler.resolver) || isCommonJsModule(id)) return null;
+      try {
+        return bundler.load(id);
+      } catch (err) {
+        return null;
+      }
     },
-    transform: async (source, id) => { return bundler.transform(source, id); },
+    transform: async (source, id) => {
+      if (id.startsWith('\0')) return null;
+      try {
+        return await bundler.transform(source, id);
+      } catch (err) {
+        return null;
+      }
+    },
     async buildEnd () {
       ({ code: depsCode, globals, importMap } = await bundler.generateGlobals());
     },
