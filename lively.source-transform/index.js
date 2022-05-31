@@ -1,7 +1,6 @@
 /* global global, babel */
 import { parseFunction, parse, stringify, ReplaceVisitor } from 'lively.ast';
 import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
-import transformJSX from 'babel-plugin-transform-jsx';
 import catchBinding from '@babel/plugin-syntax-import-meta';
 import importMeta from '@babel/plugin-syntax-import-meta';
 
@@ -11,11 +10,6 @@ import { arr } from 'lively.lang';
 export { capturing };
 
 // fixme: this is a sort of bad placement
-
-function ensureJSXPlugin () {
-  if (!transformJSX) return;
-  typeof babel !== 'undefined' && !babel.availablePlugins['transform-jsx'] && !(lively || global.lively).FreezerRuntime && babel.registerPlugin('transform-jsx', transformJSX.default);
-}
 
 function ensureOptionalCatchBinding () {
   if (!catchBinding) return;
@@ -31,7 +25,6 @@ export function stringifyFunctionWithoutToplevelRecorder (
   funcOrSourceOrAst,
   varRecorderName = '__lvVarRecorder'
 ) {
-  ensureJSXPlugin();
   // stringifyFunctionWithoutToplevelRecorder((x) => hello + x)
   // => x => hello + x
   // instead of String((x) => hello + x) // => x => __lvVarRecorder.hello + x
@@ -66,7 +59,6 @@ export function es5Transpilation (source) {
     console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
     return source;
   }
-  ensureJSXPlugin();
   ensureOptionalCatchBinding();
   ensureImportMeta();
   const options = {

@@ -27,7 +27,6 @@
     "lively.ast": "https://github.com/LivelyKernel/lively.ast",
     "lively.lang": "https://github.com/LivelyKernel/lively.lang",
     "lively.classes": "https://github.com/LivelyKernel/lively.classes",
-    "babel-plugin-transform-jsx": "2.0.0",
     "@babel/plugin-proposal-optional-catch-binding": "7.16.7",
     "@babel/plugin-syntax-import-meta": "7.10.4"
   },
@@ -38,7 +37,6 @@
     "babel-plugin-syntax-object-rest-spread": "^6.13.0",
     "babel-plugin-transform-async-to-generator": "^6.16.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
-    "babel-plugin-transform-jsx": "2.0.0",
     "babel-preset-es2015": "^6.16.0",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1"
@@ -46,10 +44,6 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "babel-plugin-transform-jsx": {
-        "~node": "https://jspm.dev/babel-plugin-transform-jsx",
-        "node": "@empty"
-      },
       "@babel/plugin-proposal-optional-catch-binding": {
         "~node": "https://jspm.dev/@babel/plugin-proposal-optional-catch-binding",
         "node": "@empty"
