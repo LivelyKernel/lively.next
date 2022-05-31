@@ -67,7 +67,7 @@ for package in "${testfiles[@]}"; do
     sleep 30 
   fi
   # echo output without the summary stats
-  output=$(node ./scripts/test.js "$package")
+  output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
   echo "$output" | sed -s -e 's/SUMMARY.*$//g'
 
   #parse summary parts and adjust env variables for overall stats
