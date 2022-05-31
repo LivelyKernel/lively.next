@@ -14,7 +14,8 @@
     "google-closure-compiler-osx": "^20200927.0.0",
     "wasm-brotli": "1.0.2",
     "rollup": "2.28.2",
-    "@rollup/plugin-json": "4.1.0"
+    "@rollup/plugin-json": "4.1.0",
+    "rollup-plugin-polyfill-node": "0.9.0"
   },
   "systemjs": {
     "meta": {
@@ -26,7 +27,14 @@
       "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
       "semver": "https://jspm.dev/semver",
       "rollup": "esm://cache/rollup@2.28.2",
-      "@rollup/plugin-json": "esm://cache/@rollup/plugin-json"
+      "@rollup/plugin-json": "esm://cache/@rollup/plugin-json",
+      "rollup-plugin-polyfill-node": "esm://cache/rollup-plugin-polyfill-node",
+      "flatn/resolver.mjs": {
+        "~node": "@empty"
+      },
+      "node:module": {
+        "~node": "@empty"
+      }
     }
   },
   "lively": {
