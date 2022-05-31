@@ -2,7 +2,7 @@
 import { exec } from "./shell-exec.js";
 import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
 import { Package } from "./package.js";
-import { buildPackageMap, installDependenciesOfPackage, buildPackage } from "flatn";
+import { buildPackageMap, installDependenciesOfPackage, buildPackage, resetPackageMap } from "flatn";
 import { resource } from 'lively.resources';
 import { promise } from 'lively.lang';
 import * as babel from  "@babel/core";
@@ -260,6 +260,8 @@ export async function setupSystem(baseURL) {
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
   await registry.update();
+  // also reset the flatn package map, so that native requires wont fail
+  resetPackageMap();
   return livelySystem;
 }
 

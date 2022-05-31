@@ -31,8 +31,11 @@ export {
   buildPackageMap,
   ensurePackageMap,
   setPackageDirsOfEnv,
-  packageDirsFromEnv
+  packageDirsFromEnv,
+  resetPackageMap
 }
+
+function resetPackageMap() { PackageMap._cache = {} } 
 
 function ensurePathFormat(dirOrArray) {
   // for flatn pure we expect directories to be specified in normal file system

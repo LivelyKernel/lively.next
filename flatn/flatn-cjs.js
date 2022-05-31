@@ -13413,6 +13413,8 @@ if (!global.fetch) {
 
 const debug = false;
 
+function resetPackageMap() { PackageMap._cache = {}; } 
+
 function ensurePathFormat(dirOrArray) {
   // for flatn pure we expect directories to be specified in normal file system
   // form like /home/foo/bar/, not as lively.resources or as URL file://...
@@ -14107,6 +14109,7 @@ exports.npmFallbackEnv = npmFallbackEnv;
 exports.npmSearchForVersions = npmSearchForVersions;
 exports.packageDirsFromEnv = packageDirsFromEnv;
 exports.parseArgs = _1_2_6;
+exports.resetPackageMap = resetPackageMap;
 exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 exports.tmpdir = tmpdir;
 exports.untar = untar;
