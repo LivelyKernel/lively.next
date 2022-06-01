@@ -869,7 +869,6 @@ export class UserFlapModel extends ViewModel {
   }
 
   toggleKeyboardInput (active = !touchInputDevice) {
-    touchInputDevice = active; // but this does not really have a system wide effect unfortunately
     const keyboardToggleButton = this.ui.keyboardInput;
     if (!active) {
       keyboardToggleButton.fontColor = this.fontColor;
