@@ -430,7 +430,9 @@ export class PasswordPromptModel extends TextPromptModel {
 export class ListPromptModel extends TextPromptModel {
   static get properties () {
     return {
-      items: { defaultValue: [] },
+      items: {
+        defaultValue: []
+      },
       multiSelect: { defaultValue: false },
       filterable: { defaultValue: false },
       padding: { defaultValue: rect(0, 0, 0, 0) },
@@ -501,6 +503,12 @@ export class ListPromptModel extends TextPromptModel {
     if (filterable && selectedAction) { list.selectedAction = selectedAction; }
   }
 
+  onRefresh (prop) {
+    if (prop === 'items') {
+      this.ui.promptList.items = this.items;
+    }
+  }
+
   resolve (arg) {
     const list = this.ui.promptList;
     const answer = arg || list instanceof FilterableList
@@ -518,6 +526,7 @@ export class ListPromptModel extends TextPromptModel {
     });
   }
 }
+
 
 export class EditListPromptModel extends ListPromptModel {
   resolve () {

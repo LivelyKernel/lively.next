@@ -817,9 +817,8 @@ export class LivelyWorld extends World {
     let list;
 
     if (opts.prompt) {
-      list = opts.prompt.ui.list;
-      list.items = items;
-      list.selectedIndex = opts.preselect || 0;
+      opts.prompt.items = items;
+      opts.prompt.ui.list.selectedIndex = opts.preselect || 0;
       return this.openPrompt(opts.prompt.view, opts);
     }
 
