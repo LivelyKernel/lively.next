@@ -36,6 +36,7 @@ import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from '
 import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
+import { SVGMorph } from 'lively.morphic/svg-morph.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -337,13 +338,11 @@ export class LivelyWorld extends World {
                   img.center = this.visibleBounds().center();
                 });
               } else {
-                let p = new Path({
-                  borderWidth: 2,
-                  vertices: [pt(0, 0), pt(100, 100)],
-                  position: pt(100, 100)
+                const svgMorph = new SVGMorph({
+                  svgUrl: ea.url,
+                  name: ea.name
                 });
-                p.openInWorld();
-                p.show();
+                svgMorph.openInWorld();
               }
             });
           }

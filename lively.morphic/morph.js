@@ -1,4 +1,4 @@
-/* global System,Uint8Array,Blob,location */
+/* global System,Uint8Array,Blob,location,fetch */
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from 'lively.graphics';
 import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
