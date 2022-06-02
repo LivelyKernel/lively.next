@@ -101,7 +101,7 @@ export class RichTextControlModel extends ViewModel {
         leftAlign.master = text.textAlign === 'left' ? hoveredButtonComponent : activeButtonComponent;
         centerAlign.master = text.textAlign === 'center' ? hoveredButtonComponent : activeButtonComponent;
         rightAlign.master = text.textAlign === 'right' ? hoveredButtonComponent : activeButtonComponent;
-        blockAlign.master = text.textAlign === 'block' ? hoveredButtonComponent : activeButtonComponent;
+        blockAlign.master = text.textAlign === 'justify' ? hoveredButtonComponent : activeButtonComponent;
         italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
         underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
         if (text.isMorph) {
@@ -173,7 +173,7 @@ export class RichTextControlModel extends ViewModel {
       'left align': 'left',
       'right align': 'right',
       'center align': 'center',
-      'block align': 'block'
+      'block align': 'justify'
     })[evt.targetMorph.name];
     if (align) {
       this.changeAttributeInSelectionOrMorph('textAlign', align);
