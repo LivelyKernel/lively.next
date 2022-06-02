@@ -195,7 +195,7 @@ export class RichTextControlModel extends ViewModel {
         text.fixedHeight = true;
         break;
       case 'auto height':
-        text.fixedWidth = false;
+        text.fixedWidth = true;
         text.fixedHeight = false;
         break;
       case 'fixed extent':
