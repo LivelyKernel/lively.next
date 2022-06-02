@@ -15,7 +15,8 @@ try {
 
 export const touchInputDevice = touchInput;
 
-let nameToClassMapping = nameToClassMapping || {}; // eslint-disable-line no-use-before-define
+let nameToClassMapping;
+nameToClassMapping = nameToClassMapping || {}; // eslint-disable-line no-use-before-define
 
 export function getClassForName (name) {
   return nameToClassMapping[name] || Object;

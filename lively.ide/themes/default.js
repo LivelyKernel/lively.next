@@ -16,7 +16,6 @@ class DefaultTheme {
   get positive () { return { fontColor: '#292' }; }
   get strong () { return { fontWeight: 'bold' }; }
   get em () { return { fontStyle: 'italic' }; }
-  get link () { return { textDecoration: 'underline' }; }
   get strikethrough () { return { textDecoration: 'line-through' }; }
   get 'hr' () { return { fontColor: '#999' }; }
   get 'link' () { return { textDecoration: 'underline', fontColor: '#2c2cff' }; }

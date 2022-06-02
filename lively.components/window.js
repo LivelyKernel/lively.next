@@ -321,7 +321,6 @@ export default class Window extends Morph {
   }
 
   resizeAt ([corner, dist]) {
-    let right;
     let x, y, height, width;
     const b = this.position.extent(this.extent);
     switch (corner) {
@@ -563,12 +562,6 @@ export default class Window extends Morph {
     resizer.visible = !this.minimized;
     this.relayoutWindowControls();
     this.relayoutResizer();
-  }
-
-  setBounds (bounds) {
-    super.setBounds(bounds);
-    this.relayoutResizer();
-    this.relayoutWindowControls();
   }
 
   setBounds (bounds) {

@@ -18,10 +18,9 @@ class DarkTheme {
   get positive () { return { fontColor: '#292' }; }
   get strong () { return { fontWeight: 'bold' }; }
   get em () { return { fontStyle: 'italic' }; }
-  get link () { return { textDecoration: 'underline' }; }
   get strikethrough () { return { textDecoration: 'line-through' }; }
   get 'hr' () { return { fontColor: '#999' }; }
-  get 'link' () { return { textDecoration: 'underline', fontColor: '#2c2cff' }; }
+  get link () { return { textDecoration: 'underline', fontColor: '#2c2cff' }; }
   get 'url' () { return { textDecoration: 'underline', fontColor: '#2c2cff' }; }
 
   get 'keyword' () { return { fontColor: Color.rgb(204, 109, 243) }; }

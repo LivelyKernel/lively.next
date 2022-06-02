@@ -506,13 +506,6 @@ export class PasswordInputLine extends HTMLMorph {
     };
   }
 
-  onChange (change) {
-    super.onChange(change);
-    if (change.prop == 'borderRadius') {
-      this.updateHtml(this.input);
-    }
-  }
-
   constructor (opts = {}) {
     super(opts);
     this.onLoad();

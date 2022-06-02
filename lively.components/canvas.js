@@ -66,7 +66,7 @@ export class Canvas extends Morph {
     if (typeof this.__canvas_init__ === 'function') {
       this.__canvas_init__();
       delete this.__canvas_init__;
-    } else if (preserveContents && contextType == '2d' &&
+    } else if (preserveContents && contextType === '2d' &&
                old_canvas && old_canvas !== new_canvas) {
       this.context.drawImage(old_canvas, 0, 0);
     }
@@ -192,20 +192,6 @@ export class Canvas extends Morph {
       c.fillStyle = fillColor;
       c.fill();
     }
-  }
-
-  line (from, to, style = {}) {
-    /*
-      draw a line from from to to, where both from and to are points.
-
-      this.line(pt(0,0), pt(20,20));
-    */
-    const c = this.context;
-    c.beginPath();
-    c.moveTo(from.x, from.y);
-    c.lineTo(to.x, to.y);
-    c.lineCap = 'round';
-    this.finishDraw(style);
   }
 
   arc (center, radius, startTheta, endTheta, counterClockwise = false, style = {}) {
