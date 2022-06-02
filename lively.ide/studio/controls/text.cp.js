@@ -518,7 +518,7 @@ const RichTextControl = component(PropertySection, {
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
         rotation: -1.57,
-        textAndAttributes: ['', {
+        textAndAttributes: ['\ue94f', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
         }]
@@ -526,7 +526,7 @@ const RichTextControl = component(PropertySection, {
         name: 'auto height',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
-        textAndAttributes: ['\ue26c', {
+        textAndAttributes: ['\ue94f', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
         }]
