@@ -10,7 +10,7 @@ import { LoadingIndicator } from 'lively.components';
 
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
-import { BrowserModuleTranslationCache } from 'lively.modules/src/instrumentation.js';
+import { BrowserModuleTranslationCache } from 'lively.modules/src/cache.js';
 import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
 import { ComponentBrowser } from './studio/component-browser.cp.js';
