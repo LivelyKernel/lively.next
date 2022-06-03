@@ -286,6 +286,7 @@ export class RemoteInspectionTree extends InspectionTree {
   }
 
   constructor (args) {
+    super(args);
     this.parentMap = new WeakMap();
     this.root = args.proxy;
     this.evalEnvironment = args.evalEnvironment;
