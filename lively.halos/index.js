@@ -1,10 +1,10 @@
 import Halo, { MorphHighlighter, InteractiveMorphSelector } from './morph.js';
-import { show, showConnector } from './markers.js';
+import { show } from './markers.js';
 import { ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from './layout.js';
 import { showAndSnapToGuides, removeSnapToGuidesOf } from './drag-guides.js';
 
 export {
-  show, showConnector,
+  show,
   Halo, MorphHighlighter, InteractiveMorphSelector,
   ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo,
   showAndSnapToGuides, removeSnapToGuidesOf
