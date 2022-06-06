@@ -1,5 +1,6 @@
+/* global XMLSerializer */
 /* global fetch */
-import { Morph } from 'lively.morphic';
+import { Morph, Icon } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
@@ -77,6 +78,9 @@ export class SVGMorph extends Morph {
             this.node.update(oldPath, this.node);
           }
         }
+      },
+      showControlPoints: {
+        defaultValue: false
       }
     };
   }
@@ -110,9 +114,18 @@ export class SVGMorph extends Morph {
 
   menuItems () {
     const items = super.menuItems();
-    items.unshift(
-      ['edit svg...', () => this.world().execCommand('open workspace', { language: 'html', content: this.svgPath, target: this })],
-      { isDivider: true });
-    return items;
+    let s = new XMLSerializer();
+    let str = s.serializeToString(this.svgPath);
+
+    const checked = Icon.textAttribute('check-square', { textStyleClasses: ['far'] });
+    const unchecked = Icon.textAttribute('square', { textStyleClasses: ['far'] });
+
+    return [
+      [[...(this.showControlPoints ? checked : unchecked), ' control points'],
+        () => this.showControlPoints = !this.showControlPoints],
+      ['edit svg...', () => this.world().execCommand('open workspace', { language: 'html', content: str, target: this })],
+      { isDivider: true },
+      ...super.menuItems()
+    ];
   }
 }
