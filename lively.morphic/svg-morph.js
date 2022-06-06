@@ -36,7 +36,6 @@ class SVGVNode {
     const oldTree = previous.morphVtree || this.renderMorph();
     const newTree = this.renderMorph();
     const patches = diff(oldTree, newTree);
-
     patch(domNode, patches);
     // if (this.morph.afterRenderHook) this.morph.afterRenderHook();
     return null;
@@ -51,21 +50,29 @@ class SVGVNode {
 export class SVGMorph extends Morph {
   static get properties () {
     return {
-      extent: { defaultValue: pt(420, 330) },
+      extent: {
+        defaultValue: pt(800, 450),
+        set (extent) {
+          this.setProperty('extent', extent);
+          this.svgPath.setAttribute('height', extent.y);
+          this.svgPath.setAttribute('width', extent.x);
+        }
+      },
       fill: { defaultValue: Color.transparent },
       borderColor: { defaultValue: Color.transparent },
       svgUrl: {
         defaultValue: '',
         set (url) {
           this.setProperty('svgUrl', url);
-          this.svgElement();
+          this.setSVGPath();
         }
       },
       svgPath: {
         set (svgPath) {
           const oldPath = this.svgPath;
           this.setProperty('svgPath', svgPath);
-          this.extent = pt(this.svgPath.getAttribute('height'), this.svgPath.getAttribute('width'));
+          const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
+          this.width = this.height * ratio;
           if (this.node) {
             this.node.update(oldPath, this.node);
           }
@@ -86,7 +93,7 @@ export class SVGMorph extends Morph {
     return this.node;
   }
 
-  svgElement () {
+  setSVGPath () {
     fetch(this.svgUrl)
       .then((response) => response.text())
       .then((response) => {
@@ -99,5 +106,13 @@ export class SVGMorph extends Morph {
         span.innerHTML = svgStr;
         this.svgPath = span.getElementsByTagName('svg')[0];
       });
+  }
+
+  menuItems () {
+    const items = super.menuItems();
+    items.unshift(
+      ['edit svg...', () => this.world().execCommand('open workspace', { language: 'html', content: this.svgPath, target: this })],
+      { isDivider: true });
+    return items;
   }
 }
