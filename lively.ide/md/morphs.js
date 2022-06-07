@@ -1,8 +1,8 @@
-import { HTMLMorph, Morph, morph } from 'lively.morphic';
-import { mdCompiler } from '../json/editor-plugin.js';
-import { connect, disconnect } from 'lively.bindings/index.js';
-import { fun, arr } from 'lively.lang/index.js';
-import { Color, rect } from 'lively.graphics/index.js';
+import { HTMLMorph, Morph } from 'lively.morphic';
+import { mdCompiler } from './compiler.js';
+import { connect } from 'lively.bindings/index.js';
+import { fun } from 'lively.lang/index.js';
+import { rect } from 'lively.graphics/index.js';
 
 export class MarkdownPreviewMorph extends HTMLMorph {
   static get properties () {
@@ -96,7 +96,7 @@ export class MarkdownPreviewMorph extends HTMLMorph {
       if (deltaY < 1 || Date.now() - startTime > maxTime) { this._smoothScroll.splice(i, 1); continue; }
       if (!scrollDeltaY) scrollDeltaY = spec[2] = deltaY / 10;
       if (deltaY < scrollDeltaY) scrollDeltaY = deltaY;
-      
+
       if (node.scrollTop > scrollToY) scrollDeltaY = -scrollDeltaY;
       node.scrollTop = node.scrollTop + scrollDeltaY;
 
@@ -145,13 +145,18 @@ export class MarkdownPreviewMorph extends HTMLMorph {
   syncMarkdownScrollToHTMLScroll (editor = this.markdownEditor) {
     if (!editor) return;
 
-    let { whatsVisible: { startRow, endRow }, cursorPosition } = editor;
+    let { whatsVisible: { startRow, endRow } } = editor;
     let nLines = editor.lineCount();
     let nRowsVisible = endRow - startRow;
     let centerRow = Math.round(startRow + (endRow - startRow) / 2);
     let { markdownToHTMLPositionMap } = this;
     let debug = this.debug;
     let targetRow;
+
+    function sigmoid (x) {
+      let L = nRowsVisible; let k = .7; let x0 = nLines / 2;
+      return L / (1 + Math.pow(Math.E, -k * (x - x0)));
+    }
 
     // ramp up to center row
     if (startRow < nRowsVisible / 2) {
@@ -175,18 +180,13 @@ export class MarkdownPreviewMorph extends HTMLMorph {
 
     if (typeof markdownToHTMLPositionMap[targetRow] !== 'number') return;
 
-    this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.activate());    
+    this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.activate());
     // fun.debounceNamed("syncScroll_connection_activator1" + this.id, 300, () =>
     //   this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.deactivate()))();
 
     this.smoothScrollStart(this, markdownToHTMLPositionMap[targetRow]);
     // this.domNode.parentNode.scrollTop = markdownToHTMLPositionMap[targetRow];
     fun.waitFor(() => !this._smoothScroll, () => this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.deactivate()));
-    
-    function sigmoid (x) {
-      let L = nRowsVisible; let k = .7; let x0 = nLines / 2;
-      return L / (1 + Math.pow(Math.E, -k * (x - x0)));
-    }
   }
 
   syncHTMLScrollToMarkdownScroll (editor = this.markdownEditor) {
@@ -373,8 +373,8 @@ export class MarkdownEditor extends Morph {
 
   async addPreview () {
     if (this.mdPreviewMorph) return;
-    
-    let preview = await this.mdEditorMorph.execCommand('[markdown] convert to html', { openInWorld: false });    
+
+    let preview = await this.mdEditorMorph.execCommand('[markdown] convert to html', { openInWorld: false });
     this.addMorph(preview);
     preview.border = this.mdEditorMorph.border;
 
@@ -398,7 +398,7 @@ export class MarkdownEditor extends Morph {
       this.get('show preview checkbox').bottomLeft.addXY(0, 5),
       this.innerBounds().bottomRight().addXY(-5, -5)));
   }
-  
+
   async editCSS () {
     let result = await $world.editPrompt('edit css for markdown', {
       requester: this,
