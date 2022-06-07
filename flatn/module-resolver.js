@@ -7,11 +7,29 @@ var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
 
 process.execPath = process.argv[0] = path.join(__dirname, "bin/node");
 
-function flatnResolve(request, parentUrl) {
-   let parentId = parentUrl ? parentUrl : "",
-       config = findPackageConfig(parentId),
+function resolveBaseName(request, config, context) {
+  let map, baseName = request;
+  // support the custom systemjs remapping
+  if (context.startsWith('systemjs-') && (map = config.systemjs?.map)) {
+    const envName = context === 'systemjs-node' ? 'node' : '~node';
+    let remapping;
+    if (remapping = map[request]?.[envName] || map[request]) {
+      baseName = remapping;
+    }
+  }
+  return baseName.startsWith('@') ? baseName.split("/").slice(0, 2).join('/') : baseName.split('/')[0];
+}
+
+/**
+ * Resolve a module path/name to a url pointing to the file of the module (if present)
+ * @param { string } request - The module name or partial path we want to resolve.
+ * @param { string } parentId - The url of the module from which the requested module is imported from.
+ * @param { 'node'|'system-browser'|'system-node' } context - Aside from resolving the package.json exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
+ */
+function flatnResolve(request, parentId="", context='node') {
+   let config = findPackageConfig(parentId),
        deps = config ? depMap(config) : {},
-       basename = request.startsWith('@') ? request.split("/").slice(0, 2).join('/') : request.split('/')[0],
+       basename = resolveBaseName(request, config, context),
        {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
        packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
        packageFound = packageMap.lookup(basename, deps[basename])
