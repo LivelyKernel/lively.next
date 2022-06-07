@@ -1,7 +1,7 @@
 /* global System */
 import { fun, arr, obj, string } from 'lively.lang';
 import { pt, Color, Rectangle } from 'lively.graphics';
-import { config, show } from 'lively.morphic';
+import { config } from 'lively.morphic';
 import { connect, noUpdate } from 'lively.bindings';
 import { localInterface } from 'lively-system-interface/index.js';
 import {
@@ -14,6 +14,7 @@ import { MorphicDB } from 'lively.morphic/morphicdb/index.js';
 import { SnapshotEditor } from 'lively.morphic/partsbin.js';
 
 import { callService, ProgressMonitor } from './service-worker.js';
+import { show } from 'lively.halos';
 
 export async function doSearch (
   livelySystem, searchTerm,
