@@ -1,4 +1,4 @@
-/* global System */
+/* global System, process */
 import { Rectangle, Color } from 'lively.graphics';
 import { joinPath } from 'lively.lang/string.js';
 
@@ -8,7 +8,8 @@ import { joinPath } from 'lively.lang/string.js';
 // This needs to be pulled apart.
 const baseURL = typeof window !== 'undefined' && window.SERVER_URL ||
                 typeof System !== 'undefined' && System.baseURL ||
-                typeof document !== 'undefined' && document.location.origin || 'http://localhost:9011';
+                typeof document !== 'undefined' && document.location.origin || 
+                typeof process !== 'undefined' && 'file://' + process.env.lv_next_dir;
 
 if (typeof $world !== 'undefined') {
   $world.withAllSubmorphsDo(ea =>
