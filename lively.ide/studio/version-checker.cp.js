@@ -70,7 +70,6 @@ class VersionChecker extends Morph {
       }).whenDone();
       ({ stdout } = await runCommand(cmd, { cwd }).whenDone());
     } catch (err) {
-      debugger;
       this.showError();
       return;
     }
