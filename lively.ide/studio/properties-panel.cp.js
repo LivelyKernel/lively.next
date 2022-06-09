@@ -171,6 +171,7 @@ export class PropertiesPanelModel extends ViewModel {
     if (aMorph.isText || aMorph.isLabel) {
       textControl.view.visible = true;
       textControl.focusOn(aMorph);
+      layoutControl.view.visible = false;
     } else {
       textControl.view.visible = false;
     }
