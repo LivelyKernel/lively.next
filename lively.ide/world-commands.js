@@ -303,8 +303,10 @@ const commands = [
     name: 'close halo target',
     exec: (world) => {
       const halo = world.halos()[0];
-      if (!halo || halo.changingName) return false;
-
+      const focusedMorph = $world.focusedMorph;
+      if (!halo ||
+          halo.changingName ||
+         focusedMorph.isText || focusedMorph.isNumberWidget) { return false; }
       if (halo.target.selectedMorphs) {
         halo.target.selectedMorphs.forEach(m => m.abandon());
         world.halos()[0].remove();
