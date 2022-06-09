@@ -430,7 +430,7 @@ export class NumberWidget extends Morph {
             return this.getProperty('floatingPoint');
           }
           const m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-          return this.scaleFactor == 1 && m && !!m[1];
+          return this.scaleFactor === 1 && m && !!m[1];
         }
       },
       extent: { defaultValue: pt(70, 25) },
@@ -460,7 +460,7 @@ export class NumberWidget extends Morph {
       },
       isSelected: {
         set (selected) {
-          if (this.getProperty('isSelected') != selected) {
+          if (this.getProperty('isSelected') !== selected) {
             // fixme: style sheets should restore the initial value, once a rule no longer applies
             if (selected) {
               this.addStyleClass('selected');
@@ -503,19 +503,23 @@ export class NumberWidget extends Morph {
     };
   }
 
+  get isNumberWidget () {
+    return true;
+  }
+
   setMixed () {
     this.getSubmorphNamed('value').textAndAttributes = ['Mix', null];
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (evt.targetMorph.name == 'up') { this.increment(); }
-    if (evt.targetMorph.name == 'down') { this.decrement(); }
+    if (evt.targetMorph.name === 'up') { this.increment(); }
+    if (evt.targetMorph.name === 'down') { this.decrement(); }
   }
 
   onMouseUp (evt) {
     super.onMouseUp(evt);
-    if (evt.targetMorph.name == 'value') { this.interactivelyEdit(); }
+    if (evt.targetMorph.name === 'value') { this.interactivelyEdit(); }
   }
 
   interactivelyEdit () {
@@ -548,7 +552,7 @@ export class NumberWidget extends Morph {
 
   onChange (change) {
     super.onChange(change);
-    if (change.prop == 'extent' && !this.autofit) this.relayout();
+    if (change.prop === 'extent' && !this.autofit) this.relayout();
   }
 
   relayout (fromScrubber) {
@@ -567,25 +571,26 @@ export class NumberWidget extends Morph {
         if (!fromScrubber) valueContainer.width = this.width - buttonOffset;
         this.relayoutButtons();
       }
-      if (!fromScrubber && valueContainer.textString != 'Mix') {
+      if (!fromScrubber && valueContainer.textString !== 'Mix') {
         valueContainer.value = this.floatingPoint ? this.number * this.scaleFactor : num.roundTo(this.number * this.scaleFactor, 1);
-        valueContainer.min = this.min != -Infinity ? this.min * this.scaleFactor : this.min;
-        valueContainer.max = this.max != Infinity ? this.max * this.scaleFactor : this.max;
+        valueContainer.min = this.min !== -Infinity ? this.min * this.scaleFactor : this.min;
+        valueContainer.max = this.max !== Infinity ? this.max * this.scaleFactor : this.max;
         valueContainer.unit = this.unit;
       }
     });
   }
 
   increment () {
-    if (this.max != undefined && this.number >= this.max) return;
+    if (this.max !== undefined && this.number >= this.max) return;
     this.update(this.number + (1 / this.scaleFactor), false);
   }
 
   decrement () {
-    if (this.min != undefined && this.number <= this.min) return;
+    if (this.min !== undefined && this.number <= this.min) return;
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
+
 
 export class ShadowWidget extends Morph {
   static get properties () {
