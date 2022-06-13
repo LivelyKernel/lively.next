@@ -34,6 +34,9 @@
       },
       "node:module": {
         "~node": "@empty"
+      },
+      "zlib": {
+        "~node": "@empty"
       }
     }
   },
