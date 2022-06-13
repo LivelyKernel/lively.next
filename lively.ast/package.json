@@ -65,7 +65,9 @@
         "~node": "https://jspm.dev/acorn@8.0.4"
       },
       "esutils": "https://jspm.dev/esutils@2.0.3",
-      "astq": "https://jspm.dev/astq@2.7.5",
+      "astq": {
+        "~node": "https://jspm.dev/astq@2.7.5"
+      },
       "acorn-private-methods": {
         "~node": "https://jspm.dev/acorn-private-methods@1.0.0",
 	"node": "@empty"
