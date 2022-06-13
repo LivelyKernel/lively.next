@@ -1,6 +1,6 @@
 import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe, stringifyQuery } from './helpers.js';
 
-const slashEndRe = /\/+$/;
+export const slashEndRe = /\/+$/;
 const slashStartRe = /^\/+/;
 const protocolRe = /^[a-z0-9-_\.]+:/;
 const slashslashRe = /^\/\/[^\/]+/;
