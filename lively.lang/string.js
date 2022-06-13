@@ -422,6 +422,8 @@ const pathDotRe = /\/\.\//g;
 const pathDoubleDotRe = /\/[^\/]+\/\.\./;
 const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
 const urlStartRe = /^[a-z0-9-_\.]+:\/\//;
+const slashEndRe = /\/+$/;
+
 function normalizePath (pathString) {
   const urlStartMatch = pathString.match(urlStartRe);
   const urlStart = urlStartMatch ? urlStartMatch[0] : null;
@@ -439,16 +441,30 @@ function normalizePath (pathString) {
   return result;
 }
 
+/**
+ * Joins the strings passed as paramters together so that ea string is
+ * connected via a single "/".
+ * @example
+ * string.joinPath("foo", "bar") // => "foo/bar";
+ * @params { string[] } paths - The set of paths to be joined.
+ * @returns { string } The joined path.
+ */
 function joinPath (/* paths */) {
-  // Joins the strings passed as paramters together so that ea string is
-  // connected via a single "/".
-  // Example:
-  // string.joinPath("foo", "bar") // => "foo/bar";
   return normalizePath(
     Array.prototype.slice.call(arguments).reduce((path, ea) =>
       typeof ea === 'string'
         ? path.replace(/\/*$/, '') + '/' + ea.replace(/^\/*/, '')
         : path));
+}
+
+/**
+ * Given a path such as "path/to/file" returns a folderized version
+ * such as: "path/to/file/".
+ * @param {string} pathString - The path to transform.
+ * @returns { string } The transformed path;
+ */
+function ensureFolder (pathString) {
+  return pathString.replace(slashEndRe, '') + '/';
 }
 
 // -=-=-=-=-=-=-=-=-
@@ -1261,5 +1277,6 @@ export {
   applyChange,
   applyChanges,
   levenshtein,
-  decamelize
+  decamelize,
+  ensureFolder
 };

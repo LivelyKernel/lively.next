@@ -1,6 +1,7 @@
 import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe, stringifyQuery } from './helpers.js';
+import { ensureFolder } from 'lively.lang/string.js';
 
-export const slashEndRe = /\/+$/;
+const slashEndRe = /\/+$/;
 const slashStartRe = /^\/+/;
 const protocolRe = /^[a-z0-9-_\.]+:/;
 const slashslashRe = /^\/\/[^\/]+/;
@@ -173,7 +174,7 @@ export default class Resource {
 
   asDirectory () {
     if (this.url.endsWith('/')) return this;
-    return this.newResource(this.url.replace(slashEndRe, '') + '/');
+    return this.newResource(ensureFolder(this.url));
   }
 
   root () {
