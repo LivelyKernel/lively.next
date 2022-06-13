@@ -1,9 +1,9 @@
-/*global require,process,__dirname, module*/
-var path = require("path");
-var fs = require("fs");
-var Module = require("module");
-var { x: execSync } = require("child_process");
-var { ensurePackageMap, packageDirsFromEnv } = require("./flatn-cjs.js");
+/* global require,process,__dirname, module */
+let path = require('path');
+let fs = require('fs');
+let Module = require('module');
+let { x: execSync } = require('child_process');
+let { ensurePackageMap, packageDirsFromEnv } = require('./flatn-cjs.js');
 
 process.execPath = process.argv[0] = path.join(__dirname, "bin/node");
 
@@ -41,22 +41,38 @@ function flatnResolve(request, parentId="", context='node') {
    return null;
 }
 
-function findPackageConfig(modulePath) {
-  let dir = path.dirname(modulePath), configs = [];
+function traverseUntilPkgDir(modulePath, cb) {
+   let dir = path.dirname(modulePath);
   // accumulate all found package.json files and merge them into one
   // until we reach one of the packageCollectionDirs or individualPackageDirs
-  let {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv();
+  let { packageCollectionDirs, individualPackageDirs, devPackageDirs } = packageDirsFromEnv();
   while (true) {
-    if (fs.existsSync(path.join(dir, "package.json"))) {
-      configs.push(JSON.parse(fs.readFileSync(path.join(dir, "package.json"))));
-    }
+    cb(dir);
+    if (devPackageDirs.includes(dir)) break; // dev package dirs directly define pkg locations, do they are no "parent" dirs.
     let nextDir = path.dirname(dir);
     if (nextDir === dir) break;
     if (packageCollectionDirs.includes(nextDir)) break;
     if (individualPackageDirs.includes(nextDir)) break;
     dir = nextDir;
   }
-  return configs.reduce(function(configA, configB) {
+}
+
+function findPackagePathForModule(modulePath) {
+  let dir;
+  traverseUntilPkgDir(modulePath, (curr) => dir = curr);
+  return dir;
+}
+
+function findPackageConfig (modulePath) {
+  let configs = [];
+  // accumulate all found package.json files and merge them into one
+  // until we reach one of the packageCollectionDirs or individualPackageDirs
+  traverseUntilPkgDir(modulePath, (dir) => {
+    if (fs.existsSync(path.join(dir, 'package.json'))) {
+      configs.push(JSON.parse(fs.readFileSync(path.join(dir, 'package.json'))));
+    }
+  })
+  return configs.reduce(function (configA, configB) {
     return Object.assign(configA, configB);
   }, {});
 }
@@ -99,4 +115,4 @@ function findModuleInPackage(requesterPackage, basename, request) {
   return null;
 }
 
-module.exports = { flatnResolve, findModuleInPackage, depMap, findPackageConfig };
+module.exports = { flatnResolve, findModuleInPackage, depMap, findPackageConfig, findPackagePathForModule };
