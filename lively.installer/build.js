@@ -18,7 +18,7 @@ const build = await rollup({
     {
       name: 'system-require-handler',
       transform: (code, id) => {
-	return code.replaceAll(/\s(System|this)._nodeRequire\(/g, ' require(');
+	       return code.replaceAll(/\s(System|this)._nodeRequire\(/g, ' require(');
       }
     },
     {
@@ -55,7 +55,6 @@ const build = await rollup({
       transformMixedEsModules: true,
       dynamicRequireRoot: path.dirname(process.env.PWD),
       dynamicRequireTargets: [
-         //resolver.resolveModuleId('lively.modules/systemjs-init.js'),
          resolver.resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]
     }),
@@ -66,9 +65,9 @@ const build = await rollup({
       captureModuleScope: false,
       compress: false, // this should be disabled by default on node.js      
       excludedModules: [
-	'mocha-es6', 'mocha', // references old lgtg that breaks the build
-	'rollup', // has a dist file that cant be parsed by rollup
-	'lively.morphic',
+	      'mocha-es6', 'mocha', // references old lgtg that breaks the build
+	      'rollup', // has a dist file that cant be parsed by rollup
+	      'lively.morphic',
         'lively.components',
         'lively.ide' // contains code not required for this install script
       ],
