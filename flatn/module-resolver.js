@@ -17,7 +17,9 @@ function resolveBaseName (request, config, context) {
       baseName = remapping;
     }
   }
-  return baseName.startsWith('@') ? baseName.split("/").slice(0, 2).join('/') : baseName.split('/')[0];
+  if (baseName.match(/^https?\:\/\//)) return baseName;
+  if (baseName.startsWith('@')) return baseName.split('/').slice(0, 2).join('/');
+  return baseName.split('/')[0];
 }
 
 /**
@@ -26,19 +28,21 @@ function resolveBaseName (request, config, context) {
  * @param { string } parentId - The url of the module from which the requested module is imported from.
  * @param { 'node'|'system-browser'|'system-node' } context - Aside from resolving the package.json exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
  */
-function flatnResolve(request, parentId="", context='node') {
-   let config = findPackageConfig(parentId),
-       deps = config ? depMap(config) : {},
-       basename = resolveBaseName(request, config, context),
-       {packageCollectionDirs, individualPackageDirs, devPackageDirs} = packageDirsFromEnv(),
-       packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs),
-       packageFound = packageMap.lookup(basename, deps[basename])
-                   || packageMap.lookup(request, deps[request])/*for package names with "/"*/,
-       resolved = packageFound && findModuleInPackage(packageFound, basename, request);
-   
-   if (resolved) return resolved;
-   process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
-   return null;
+function flatnResolve (request, parentId = '', context = 'node') {
+  let config = findPackageConfig(parentId);
+  let deps = config ? depMap(config) : {};
+  let basename = resolveBaseName(request, config, context);
+  let { packageCollectionDirs, individualPackageDirs, devPackageDirs } = packageDirsFromEnv();
+  let packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+  let packageFound = packageMap.lookup(basename, deps[basename]) ||
+                   packageMap.lookup(request, deps[request])/* for package names with "/" */;
+  let resolved = packageFound && findModuleInPackage(packageFound, basename, request, context);
+
+  if (basename === '@empty') return '@empty';
+  if (basename && basename.match(/^https?\:\/\//)) return basename;
+  if (resolved) return resolved;
+  process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
+  return null;
 }
 
 function traverseUntilPkgDir(modulePath, cb) {
@@ -86,16 +90,18 @@ function depMap (packageConfig) {
     }, {});
 }
 
-function findModuleInPackage(requesterPackage, basename, request) {
+function findModuleInPackage (requesterPackage, basename, request, context) {
   // Given {name, version, path} from resolveFlatPackageToModule, will find the
   // full path to the module inside of the package, using the module request
   // let {config: {name, version}, location: pathToPackage} = requesterPackage
-  let {name, version, location: pathToPackage} = requesterPackage
+  let { name, version, location: pathToPackage } = requesterPackage;
   let fullpath;
+  const isNode = context.includes('node');
 
   if (name === request) {
-    let config = findPackageConfig(path.join(pathToPackage, "index.js"));
-    if (!config || !config.main) fullpath = path.join(pathToPackage, "index.js");
+    let config = findPackageConfig(path.join(pathToPackage, 'index.js'));
+    if (!config || !config.main && !(!isNode && config.browser)) fullpath = path.join(pathToPackage, 'index.js');
+    else if (!isNode && config.browser && typeof config.browser === 'string') fullpath = path.join(pathToPackage, config.browser);
     else fullpath = path.join(pathToPackage, config.main);
   } else fullpath = path.join(pathToPackage, request.slice(basename.length));
 
