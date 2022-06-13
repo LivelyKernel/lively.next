@@ -1347,6 +1347,26 @@ export class Morph {
       : this.innerBounds()).extent().addPt(this.scrollbarOffset);
   }
 
+  /**
+   * Returns whether or not the horizontal scrollbar of this Morphs is visible.
+   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthongonal to each other.
+   */
+  get horizontalScrollbarVisible () {
+    const extent = this.extent.x;
+    const scrollExtent = this.scrollExtent.x - this.scrollbarOffset.x;
+    return scrollExtent > extent || this.clipMode === 'scroll';
+  }
+
+  /**
+   * Returns whether or not the vertical scrollbar of this Morphs is visible.
+   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthongonal to each other.
+   */
+  get verticalScrollbarVisible () {
+    const extent = this.extent.y;
+    const scrollExtent = this.scrollExtent.y - this.scrollbarOffset.y;
+    return scrollExtent > extent || this.clipMode === 'scroll';
+  }
+
   scrollBounds () {
     const { x, y } = this.scroll;
     const { x: w, y: h } = this.scrollExtent;

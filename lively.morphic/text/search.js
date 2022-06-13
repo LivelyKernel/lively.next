@@ -333,6 +333,7 @@ export class SearchWidgetModel extends ViewModel {
     if (!world) return;
     view.openInWorld(world.visibleBounds().center(), world);
     view.topRight = text.globalBounds().insetBy(5).topRight().addXY(0, text.padding.top());
+    if (text.verticalScrollbarVisible) view.topRight = view.topRight.subXY(text.scrollbarOffset.x, 0);
 
     if (text.getWindow()) once(text.getWindow(), 'remove', view, 'remove');
 
