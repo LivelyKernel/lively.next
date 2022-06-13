@@ -1,12 +1,12 @@
-import { obj, string, chain, arr, fun, Path } from 'lively.lang';
+import { obj, chain, arr, Path } from 'lively.lang';
 import {
   parse,
   stringify,
   query,
   transform,
   nodes,
-  BaseVisitor as Visitor,
-  ReplaceManyVisitor, ReplaceVisitor
+  ReplaceManyVisitor,
+  ReplaceVisitor
 } from 'lively.ast';
 
 const {
@@ -641,10 +641,10 @@ function insertDeclarationsForExports (parsed, options) {
   const topLevel = topLevelDeclsAndRefs(parsed); let body = [];
   for (let i = 0; i < parsed.body.length; i++) {
     const stmt = parsed.body[i];
-    if (options.classToFunction &&
-        stmt.type === 'ExportDefaultDeclaration' &&
+    if (stmt.type === 'ExportDefaultDeclaration' &&
         stmt.declaration && !stmt.declaration.type.includes('Declaration') &&
-        (stmt.declaration.type === 'Identifier' || stmt.declaration.id)) {
+        (stmt.declaration.type === 'Identifier' || stmt.declaration.id) &&
+        !topLevel.declaredNames.includes(stmt.declaration.name)) {
       body = body.concat([
         varDeclOrAssignment(parsed, {
           type: 'VariableDeclarator',
