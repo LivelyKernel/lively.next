@@ -5,10 +5,10 @@ let Module = require('module');
 let { x: execSync } = require('child_process');
 let { ensurePackageMap, packageDirsFromEnv } = require('./flatn-cjs.js');
 
-process.execPath = process.argv[0] = path.join(__dirname, "bin/node");
+process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
 
-function resolveBaseName(request, config, context) {
-  let map, baseName = request;
+function resolveBaseName (request, config, context) {
+  let map; let baseName = request;
   // support the custom systemjs remapping
   if (context.startsWith('systemjs-') && (map = config.systemjs?.map)) {
     const envName = context === 'systemjs-node' ? 'node' : '~node';
@@ -77,12 +77,11 @@ function findPackageConfig (modulePath) {
   }, {});
 }
 
-function depMap(packageConfig) {
-  return [ "dependencies","devDependencies", "peerDependencies", "optionalDependencies"]
+function depMap (packageConfig) {
+  return ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
     .reduce((deps, field) => {
-       if (!packageConfig[field]) return deps;
-      for (let name in packageConfig[field])
-        Object.assign(deps, packageConfig[field]);
+      if (!packageConfig[field]) return deps;
+      for (let name in packageConfig[field]) { Object.assign(deps, packageConfig[field]); }
       return deps;
     }, {});
 }
@@ -101,17 +100,17 @@ function findModuleInPackage(requesterPackage, basename, request) {
   } else fullpath = path.join(pathToPackage, request.slice(basename.length));
 
   if (fs.existsSync(fullpath)) {
-    return !fs.statSync(fullpath).isDirectory() ?
-      fullpath :
-      fs.existsSync(fullpath + ".js") ?
-        fullpath + ".js" : path.join(fullpath, "index.js");
+    return !fs.statSync(fullpath).isDirectory()
+      ? fullpath
+      : fs.existsSync(fullpath + '.js')
+        ? fullpath + '.js'
+        : path.join(fullpath, 'index.js');
   }
-  if (fs.existsSync(fullpath + ".js")) return fullpath + ".js";
-  if (fs.existsSync(fullpath + ".json")) return fullpath + ".json";
+  if (fs.existsSync(fullpath + '.js')) return fullpath + '.js';
+  if (fs.existsSync(fullpath + '.json')) return fullpath + '.json';
   // packageConfig.main field wrong? yes, this happens...
-  if (fullpath !== path.join(pathToPackage, "index.js") &&
-     fs.existsSync(path.join(pathToPackage, "index.js")))
-    return path.join(pathToPackage, "index.js");
+  if (fullpath !== path.join(pathToPackage, 'index.js') &&
+     fs.existsSync(path.join(pathToPackage, 'index.js'))) { return path.join(pathToPackage, 'index.js'); }
   return null;
 }
 
