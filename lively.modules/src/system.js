@@ -366,6 +366,7 @@ async function checkExistence (url, System) {
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
   if (parent && name == 'cjs') return 'cjs';
+  if (name == '@system-env') return name;
   const System = this;
   const stage1 = preNormalize(System, name, parent);
   const stage2 = await proceed(stage1, parent, true);
