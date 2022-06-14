@@ -17,17 +17,7 @@ import {
   instrumentStaticSystemJS,
   compileOnServer
 } from './util/helpers.js';
-import { joinPath } from 'lively.lang/string.js';
-
-// import ESBuild from 'esm://cache/esbuild-wasm@0.14.28';
-// 
-// try {
-//   ESBuild.initialize({
-//     wasmURL: 'https://unpkg.com/esbuild-wasm@0.14.28/esbuild.wasm'
-//   });
-// } catch (err) {
-//   // already called initialize
-// }
+import { joinPath, ensureFolder } from 'lively.lang/string.js';
 
 const SYSTEMJS_STUB = `
 var G = typeof window !== "undefined" ? window :
@@ -67,7 +57,7 @@ const ADVANCED_EXCLUDED_MODULES = [
   'localconfig.js'
 ];
 
-const baseURL = typeof System !== 'undefined' ? System.baseURL : 'file://' + (process.env.lv_next_dir || process.cwd());
+const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
 
 /**
  * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
