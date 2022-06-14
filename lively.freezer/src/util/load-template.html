@@ -23,7 +23,7 @@
       touch-action: manipulation;
     }
   </style> 
-  <script src="deps.js"></script>
+  <link rel="preload" id="loader" href="deps.js" as="script">
   <script>
     if (!window.location.origin) {
       window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
@@ -49,7 +49,6 @@
       window.BROWSER_UNSUPPORTED = true;
     }
   </script>
-  <link rel="preload" id="loader" href="load.js" as="script">
   </head>
   <body style="margin: 0; overflow-x: hidden; width: 100%; height: 100%;">
     <div id="loading-screen">__LOADING_HTML__</div>
@@ -61,7 +60,7 @@
         if (!re.test(userAgent) && !window.BROWSER_UNSUPPORTED) {
           document.getElementById("crawler content").remove();
           var script = document.createElement('script');
-          script.setAttribute('src',"load.js");
+          script.setAttribute('src',"deps.js");
           script.onload = function() {
             if (window.frozenPart && window.frozenPart.renderFrozenPart)
               window.frozenPart.renderFrozenPart();
