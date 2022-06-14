@@ -566,10 +566,16 @@ export default class LivelyRollup {
     return s;
   }
 
-  async buildStart () {
+  async buildStart (plugin) {
     this.resolver.setStatus({ status: 'Bundling...' });
     if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
     await this.resolver.whenReady();
+    if (this.autoRun) {
+      plugin.emitFile({
+        type: 'chunk',
+        id: ROOT_ID
+      });
+    }
   }
 
   /**
