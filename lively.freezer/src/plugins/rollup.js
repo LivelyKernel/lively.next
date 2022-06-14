@@ -33,14 +33,14 @@ export function lively (args) {
   const { map = {} } = args;
   return {
     name: 'rollup-plugin-lively',
-    buildStart: () => bundler.buildStart(),
+    buildStart () { return bundler.buildStart(this); },
     resolveId: async (id, importer) => {
-      if (isBuiltin(id, bundler.resolver)) return null;
+      if (isBuiltin(id, bundler.resolver)) return id.replace('node:', ''); // ensure that this can be fed to the polyfill
       let res = await bundler.resolveId(map[id] || id, importer);
       return res;
     },
     resolveDynamicImport: async (node, importer) => {
-      if (typeof node === 'string' && isBuiltin(node, bundler.resolver)) return null;
+      if (typeof node === 'string' && isBuiltin(node, bundler.resolver)) return node.replace('node:', '');
       let res = await bundler.resolveDynamicImport(node, importer);
       return res;
     },
@@ -65,10 +65,13 @@ export function lively (args) {
       ({ code: depsCode, globals, importMap } = await bundler.generateGlobals());
     },
     options (opts) {
-      if (bundler.snapshot) {
+      if (bundler.snapshot || !!bundler.autoRun) {
         // since we are supposed to resolve from the snapshot, we set the input
         // to be the synthesized module.
-        opts.input = ROOT_ID;
+        // delete the input
+        bundler.rootModuleId = opts.input;
+        delete opts.input;
+        // emit the root module
       }
       if (bundler.excludedModules.length > 0) {
         opts.shimMissingExports = true; // since we are asked to exclude some of the lively modules, we set this flag to true. Can we isolate this??
