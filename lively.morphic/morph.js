@@ -2182,6 +2182,14 @@ export class Morph {
 
   get dragTriggerDistance () { return 0; }
 
+  /**
+   * Called when mouse down event is received on the area of this Morph while its halo is active.
+   * @param {Object} evt - The DOM event causing the call 
+   */
+  onHaloMouseDown (evt) {
+
+  }
+
   onMouseDown (evt) {
     if (this === evt.targetMorph) {
       evt.state.clickedMorph = this;
