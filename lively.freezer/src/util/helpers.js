@@ -112,24 +112,24 @@ export async function evalOnServer (code) {
   return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
 }
 
-export async function getConfig () {
+export async function getConfig (resolver) {
   const os = await await evalOnServer('process.platform');
   return {
     os,
-    cwd: await evalOnServer('System.baseURL + "lively.freezer/"').then(cwd => cwd.replace('file://', '')),
-    tmp: resource(System.decanonicalize('lively.freezer/tmp.js')),
-    min: resource(System.decanonicalize('lively.freezer/tmp.min.js')),
-    presetPath: await evalOnServer('System.decanonicalize(\'@babel/preset-env\').replace(\'file://\', \'\')'),
-    babelPath: await evalOnServer('System.decanonicalize(\'@babel/cli/bin/babel.js\').replace(System.baseURL, \'../\')'),
-    babelConfig: System.normalizeSync('lively.freezer/.babelrc'),
-    pathToGoogleClosure: System.decanonicalize(`google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}/compiler`).replace(System.baseURL, '../')
+    cwd: (await evalOnServer('require.resolve("lively.freezer")')).replace('/index.js', ''),
+    presetPath: await evalOnServer('require.resolve(\'@babel/preset-env\').replace(\'file://\', \'\')'),
+    babelPath: await evalOnServer('require.resolve(\'@babel/cli/bin/babel.js\')'),
+    tmp: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.js'))),
+    min: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.min.js'))),
+    babelConfig: resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc')),
+    pathToGoogleClosure: resolver.decanonicalizeFileName(`google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}/compiler`)
   };
 }
 
 export async function compileOnServer (code, resolver, useTerser) {
   const transpilationSpeed = 100000;
   const compressionSpeed = 150000;
-  const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure } = await getConfig();
+  const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure } = await getConfig(resolver);
   tmp.onProgress = (evt) => {
     // set progress of loading indicator
     const p = evt.loaded / evt.total;
@@ -142,6 +142,7 @@ export async function compileOnServer (code, resolver, useTerser) {
   };
   await tmp.write(code); // write the file to the filesystem for working in the shell
   let c; const res = {};
+  resolver.setStatus({ status: 'Compressing source files...', progress: 0.01 });
   if (useTerser) {
     // Terser fails to convert class definitions into functions, so we need to
     // preprocess with babel transform
@@ -159,11 +160,10 @@ export async function compileOnServer (code, resolver, useTerser) {
     c = await resolver.spawn({ command: 'terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.es5.js', cwd });
   } else {
     c = await resolver.spawn({
-      command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET`,
+      command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018`,
       cwd
     });
   }
-  resolver.setStatus({ status: 'Compressing source files...', progress: 0.01 });
   for (const i of arr.range(0, code.length / compressionSpeed)) {
     await promise.delay(400);
     if (c.status.startsWith('exited')) break;
@@ -241,7 +241,7 @@ export function instrumentStaticSystemJS (system) {
     transpiler: 'stub-transpiler' // this is tp be revised when we migrate the entire system to the new systemjs
   });
   system.get('@lively-env').loadedModules = lively.FreezerRuntime.registry;
-  system.baseURL = lively.FreezerRuntime.baseURL;
+  if (system.baseURL !== lively.FreezerRuntime.baseURL) { system.baseURL = lively.FreezerRuntime.baseURL; }
   system.trace = false;
 }
 
@@ -254,8 +254,9 @@ export function instrumentStaticSystemJS (system) {
  * @returns { string } The html code of the index.html.
  */
 export async function generateLoadHtml (htmlConfig, importMap, resolver, modules) {
-  const htmlTemplate = await resource(await resolver.decanonicalizeFileName('lively.freezer/src/util/load-template.html')).read();
-  // fixme: what to do when we receive a module?
+  const htmlTemplate = await resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/src/util/load-template.html'))).read();
+  const entryPoint = modules.find(snippet => snippet.isEntry).fileName;
+  // fixme: this only makes sense for auto run builds 
   const loadCode = `
     window.frozenPart = {
       renderFrozenPart: (domNode, baseURL) => {
@@ -270,7 +271,7 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
             }
           }
         });
-        System.import("./${ROOT_ID}").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
+        System.import("./${entryPoint}").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
       }
     }
   `;
@@ -299,7 +300,6 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
  * @param { ShellResource } handles.shell - A shell resource handle for sending shell commands to the server in order to compress files.
  */
 export async function writeFiles (frozen, li, { dir, shell, resolver }) {
-  const target = frozen.part || frozen.rootModule;
   let currentFile = '';
   dir.onProgress = (evt) => {
     // set progress of loading indicator
