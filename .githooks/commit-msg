@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# prohibit cleanup commits without context
+test -n "$(grep -i '^[[:blank:]]*cleanup[[:blank:]]*$' "${1}")" && {
+        printf >&2 "❌  Please provide more context in your commit message.\n"
+        exit 1
+}
+
+firstLine=$(sed -n '1p' "${1}")
+test "${#firstLine}" -lt 73 || {
+        printf >&2 "❌  The first line of your commit message should not be longer than 72 characters.\nFeel free to provide more context separated by a blank line.\n"
+        exit 1
+}

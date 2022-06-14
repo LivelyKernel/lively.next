@@ -29,6 +29,12 @@ A docker image exists for this to try it out in the environment of your choice.
 
 Some hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki).
 
+The actual documentation can be found [here](https://livelykernel.github.io/lively.next/).
+
+## Contributing
+
+Please make sure to run `make hooks` from the root of the repository before starting to develop.
+
 ## License
 
 This project is [MIT licensed](LICENSE).
