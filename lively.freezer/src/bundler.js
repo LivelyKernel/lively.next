@@ -74,6 +74,13 @@ export function customWarn (warning, warn) {
   warn(warning);
 }
 
+/**
+ * Generates unique id for a importer, importee pair.
+ * This is for internal and debugging purpose only.
+ * @param {string} id - The id of the imported module.
+ * @param {string} importer - The id of the importing module.
+ * @returns {string} A unique id for the module pair.
+ */
 function resolutionId (id, importer) {
   if (!importer) return id;
   else return importer + ' -> ' + id;
@@ -141,6 +148,24 @@ export default class LivelyRollup {
   }
 
   /**
+   * Wether or not we need the (soon to be replaced) 0.21 version of SystemJS instead of SystemJS 6.x.x.
+   */
+  get needsOldSystem () {
+    return this.isResurrectionBuild || !this.excludedModules.includes('lively.modules');
+  }
+
+  /**
+   * Depending in the configuration of the bundle, we return a different
+   * kind of resolution context. This can be plain flatn, or flatn combined with
+   * systemjs custom import maps for either node.js or the browser.
+   * @returns { "node"|"systemjs-node"|"systemjs-browser" }
+   */
+  getResolutionContext () {
+    if (!this.asBrowserModule) { return 'node'; } else { return 'systemjs-browser'; }
+    // fixme: how to configure "system-node"
+  }
+
+  /**
    * More or less unnessecary convenience method that extracts the required modules from a given snapshot.
    * (Alongside the required assets). This only includes the modules that are directly required to
    * deserialize the given snapshot. It does not compute the convex hull of the root module.
@@ -152,8 +177,6 @@ export default class LivelyRollup {
 
   /**
    * Dispatches the responsibility of resolving relative imports to the loaded SystemJS.
-   * Fixme: This heavily relies on a preinitialized module system, making it hard to invoke
-   *        this code from the console. This needs to be resolved differently.
    * @param { string } moduleId - The module from where the import happens.
    * @param { string } path - The relative path to be imported.
    */
@@ -177,6 +200,7 @@ export default class LivelyRollup {
    * such that it transforms the custom class definitions in our modules
    * in a way that makes sense in a frozen build.
    * @param { Module } mod - The module object to transform the class definitions for.
+   * @returns { object } The transform options.
    */
   getTransformOptions (modId) {
     if (modId === '@empty') return {};
@@ -211,7 +235,7 @@ export default class LivelyRollup {
     return {
       exclude: [
         'System',
-        ...this.resolver.dontTransform(modId),
+        ...this.resolver.dontTransform(modId, ast.query.knownGlobals),
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       classToFunction
@@ -446,7 +470,7 @@ export default class LivelyRollup {
     if (!dynamicContext) {
       if (this.excludedModules.includes(id)) return false;
     } else {
-      this.dynamicModules.add(this.resolver.resolveModuleId(id, importer));
+      this.dynamicModules.add(this.resolver.resolveModuleId(id, importer, this.getResolutionContext()));
     }
 
     const importingPackage = this.resolver.resolvePackage(importer);
@@ -478,7 +502,7 @@ export default class LivelyRollup {
     if (!dynamicContext && this.excludedModules.includes(id)) return false;
     // this needs to be done by flatn if we are running in nodejs. In the client, this also may lead to bogus
     // results since we are not taking into account in package.json
-    return this.resolved[resolutionId(id, importer)] = this.resolver.resolveModuleId(id, importer);
+    return this.resolved[resolutionId(id, importer)] = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
   }
 
   /**
@@ -569,7 +593,7 @@ export default class LivelyRollup {
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id));
 
-    if (this.needsClassInstrumentation(id)) {
+    if (this.needsClassInstrumentation(id, source)) {
       classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
     } else {
       opts.classToFunction = false;
@@ -648,7 +672,7 @@ export default class LivelyRollup {
    * @param { string } moduleId - The id of the module.
    */
   async wrapStandalone (moduleId) {
-    moduleId = this.resolver.resolveModuleId(moduleId);
+    moduleId = this.resolver.resolveModuleId(moduleId, undefined, this.getResolutionContext());
     const source = await resource(moduleId).read();
     const globalVarName = this.deriveVarName(moduleId);
     let code;
