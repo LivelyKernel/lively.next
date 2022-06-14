@@ -6,6 +6,7 @@ import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
 import { Window } from 'lively.components';
+import SVGWorkspace from './SVGWorkspace.js';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -135,29 +136,5 @@ export class SVGMorph extends Morph {
       { isDivider: true },
       ...super.menuItems()
     ];
-  }
-}
-export default class SVGWorkspace extends Window {
-  static get properties () {
-    return {
-
-      title: { defaultValue: 'SVG Workspace' },
-      name: { defaultValue: 'svg-workspace' },
-
-      targetMorph: {},
-
-      content: {
-        derived: true,
-        after: ['targetMorph'],
-        set (content) {
-          this.setProperty('content', content);
-          const span = this.env.domEnv.document.createElement('span');
-          span.innerHTML = content;
-          this.targetMorph.svgPath = span.getElementsByTagName('svg')[0];
-        }
-      },
-
-      extent: { defaultValue: pt(400, 300) }
-    };
   }
 }
