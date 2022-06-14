@@ -89,9 +89,17 @@ function resolutionId (id, importer) {
   else return importer + ' -> ' + id;
 }
 
-function isCdnImport (id, importer) {
+/**
+ * For a given id, returns wether or not it is imported
+ * from one of the supported ESM CDNs.
+ * @param { string } id - The id of the module in question.
+ * @param { string } importer - The importing module.
+ * @param { object } resolver - The resolver for the current build context (browser or node.js).
+ * @returns { boolean } Wether or not the module was served from an ESM CDN.
+ */
+function isCdnImport (id, importer, resolver) {
   if (ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn)) && importer && importer !== ROOT_ID) {
-    const { url } = resource(importer).root(); // get the cdn host root
+    const { url } = resource(resolver.ensureFileFormat(importer)).root(); // get the cdn host root
     return ESM_CDNS.find(cdn => url.includes(cdn));
   }
   return false;
@@ -260,7 +268,7 @@ export default class LivelyRollup {
    * world as the argument.
    */
   async synthesizeMainModule () {
-    let mainModuleSource = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js')).read();
+    let mainModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
   }
 
@@ -269,11 +277,11 @@ export default class LivelyRollup {
    * are required to successfully deserialize the snapshot that for the frozen part.
    */
   async synthesizeSnapshotModule () {
-    const snapshotModuleSource = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/snapshot-module.js')).read();
+    const snapshotModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/snapshot-module.js'))).read();
     const { requiredModules } = await this.getRequiredModulesFromSnapshot(this.snapshot);
     this.checkIfImportedPackageExcluded(requiredModules); // consequence of this may an exception and termination of this process
     return arr.uniq(requiredModules.map(path => `import "${path}"`)).join('\n') +
-      (this.excludedModules.includes('localconfig.js') ? '' : await resource(baseURL).join('localconfig.js').read()) +
+      (this.excludedModules.includes('localconfig.js') ? '' : await this.resolver.load(string.joinPath(baseURL, 'localconfig.js'))) +
      snapshotModuleSource.replace('{"SNAPSHOT": "PLACEHOLDER"}', JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))));
   }
 
@@ -433,7 +441,7 @@ export default class LivelyRollup {
     if (!importer) return this.resolver.resolveModuleId(id);
 
     // handle ESM CDN imports
-    if (isCdnImport(id, importer)) {
+    if (isCdnImport(id, importer, this.resolver)) {
       if (id.startsWith('.')) {
         id = resource(importer).parent().join(id).withRelativePartsResolved().url;
       } else {
@@ -735,13 +743,18 @@ export default class LivelyRollup {
   }
 
   async getRuntimeCode () {
-    let runtimeCode = await resource(await this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js')).read();
+    const includePolyfills = this.includePolyfills && this.asBrowserModule;
+    let runtimeCode = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js'))).read();
+    const regeneratorSource = await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read();
+    const polyfills = includePolyfills ? await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js'))).read() : '';
     runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
       // can stub it with our FreezerRuntime
       runtimeCode += SYSTEMJS_STUB;
     }
+    runtimeCode += regeneratorSource;
+    runtimeCode += polyfills;
     return es5Transpilation(runtimeCode);
   }
 
@@ -817,13 +830,15 @@ export default class LivelyRollup {
     }
 
     if (this.includeLivelyAssets) {
-      const cssFiles = await resource(config.css.fontAwesome).parent().dirList();
-      const webFonts = await resource(config.css.fontAwesome).parent().parent().join('webfonts').dirList();
+      const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
+      const fontAwesomeDir = resource(config.css.fontAwesome).parent().parent();
+      const cssFiles = await fontAwesomeDir.join('css').dirList();
+      const webFonts = await fontAwesomeDir.join('webfonts').dirList();
       const inconsolata = await resource(config.css.inconsolata).parent().dirList();
       for (let file of cssFiles) {
         plugin.emitFile({
           type: 'asset',
-          fileName: joinPath('assets/fontawesome-free-5.12.1/css/', file.name()),
+          fileName: joinPath(fontAwesomeDir.url.replace(morphicUrl, ''), 'css', file.name()),
           source: await file.read()
         });
       }
@@ -973,15 +988,10 @@ export default class LivelyRollup {
     depsCode = '',
     bundledCode,
     fileName = '',
-    addRuntime = true,
-    optimize = true,
-    includePolyfills = this.includePolyfills && this.asBrowserModule
+    optimize = true
   }) {
     this.resolver.setStatus({ title: 'Freezing Part', status: 'Optimizing...' });
-    const runtimeCode = addRuntime ? await this.getRuntimeCode() : '';
-    const regeneratorSource = addRuntime ? await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read() : '';
-    const polyfills = !includePolyfills ? '' : await resource(await this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js')).read();
-    const code = runtimeCode + polyfills + regeneratorSource + depsCode + bundledCode;
+    const code = depsCode + bundledCode;
 
     // write file
     if (!optimize) { return { code, min: code }; }
