@@ -1,11 +1,13 @@
-/* global System,global,process,Buffer,require */
+/* global System,global,process,Buffer */
 import * as classes from 'lively.classes';
 import { toJsIdentifier } from 'lively.classes/util.js';
 import { resource } from 'lively.resources';
 import { arr, Path, fun, promise } from 'lively.lang';
 import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
+import runEval from './eval.cjs';
+import zlib from 'zlib';
 
-export const ROOT_ID = '\0__rootModule__';
+export const ROOT_ID = '__rootModule__';
 
 export const isNode = typeof System !== 'undefined'
   ? System.get('@system-env').node
@@ -45,22 +47,14 @@ export async function gzip (blob, inflate = true, useBrotli = false) {
         await gzip(${
            JSON.stringify(blob) // JSON.stringify(inflate ? blob : btoa(blob))
         }, ${inflate}, ${useBrotli});`);
-      // if (inflate) {
-      //   // if we instructed the server to compress, it sends the response in
-      //   // base64, which we have to convert to utf8 such that we can
-      //   // write it to a file again.
-      //   return atob(res);
-      // }
     return res;
   }
   if (!isNode) return;
-  let zlib = require('zlib');
   let compressionFn = useBrotli
     ? (inflate ? zlib.brotliCompressSync : zlib.brotliDecompressSync)
     : (inflate ? zlib.gzipSync : zlib.gunzipSync);
   blob = inflate ? blob : new Buffer(blob, 'base64');
   let compressed = compressionFn(blob);
-  // return compressed.toString('utf8');
   return compressed.toString(inflate ? 'base64' : 'utf8');
 }
 
@@ -107,7 +101,7 @@ export function fixSourceForBugsInGoogleClosure (id, source) {
 
 export async function evalOnServer (code) {
   if (isNode) {
-    return eval(code);
+    return runEval(code);
   }
   const { default: EvalBackendChooser } = await System.import('lively.ide/js/eval-backend-ui.js');
   const { RemoteCoreInterface } = await System.import('lively-system-interface/interfaces/interface.js');
