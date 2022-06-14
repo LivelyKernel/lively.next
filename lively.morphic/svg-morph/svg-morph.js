@@ -1,9 +1,11 @@
 /* global XMLSerializer */
 /* global fetch */
+
 import { Morph, Icon } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
+import { Window } from 'lively.components';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -113,9 +115,8 @@ export class SVGMorph extends Morph {
   }
 
   menuItems () {
-    const items = super.menuItems();
     let s = new XMLSerializer();
-    let str = s.serializeToString(this.svgPath);
+    let str = s.serializeToString(this.svgPath).replace(/\/>/ig, '/>\n');
 
     const checked = Icon.textAttribute('check-square', { textStyleClasses: ['far'] });
     const unchecked = Icon.textAttribute('square', { textStyleClasses: ['far'] });
@@ -123,9 +124,40 @@ export class SVGMorph extends Morph {
     return [
       [[...(this.showControlPoints ? checked : unchecked), ' control points'],
         () => this.showControlPoints = !this.showControlPoints],
-      ['edit svg...', () => this.world().execCommand('open workspace', { language: 'html', content: str, target: this })],
+      ['edit svg...', () => {
+        new SVGWorkspace({
+          center: $world.center,
+          content: str,
+          targetMorph: this
+        }).activate();
+        console.log(this.svgPath);
+      }],
       { isDivider: true },
       ...super.menuItems()
     ];
+  }
+}
+export default class SVGWorkspace extends Window {
+  static get properties () {
+    return {
+
+      title: { defaultValue: 'SVG Workspace' },
+      name: { defaultValue: 'svg-workspace' },
+
+      targetMorph: {},
+
+      content: {
+        derived: true,
+        after: ['targetMorph'],
+        set (content) {
+          this.setProperty('content', content);
+          const span = this.env.domEnv.document.createElement('span');
+          span.innerHTML = content;
+          this.targetMorph.svgPath = span.getElementsByTagName('svg')[0];
+        }
+      },
+
+      extent: { defaultValue: pt(400, 300) }
+    };
   }
 }
