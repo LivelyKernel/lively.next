@@ -706,11 +706,12 @@ export default class LivelyRollup {
   }
 
   async generateGlobals (systemJsEnabled = this.hasDynamicImports) {
-    let code = ''; let importMap = false;
+    let code = await this.getRuntimeCode();
+    let importMap = false;
     const globals = {};
 
     if (!systemJsEnabled) {
-      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim, show, System, require, timing, lively, Namespace, localStorage;`;
+      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim = () => {}, show, System, require, timing, lively, Namespace, localStorage;`;
     }
 
     // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed? Not entirely....
@@ -724,7 +725,7 @@ export default class LivelyRollup {
       // we can use the stripped down https://raw.githubusercontent.com/systemjs/systemjs/master/dist/s.js
       // however that does not allow us to transition to the dynamic lively.modules system
       // so we can only utilize s.js in case we do not want to resurrect
-      if (this.isResurrectionBuild) {
+      if (this.needsOldSystem) {
         code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
       } else {
         code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/6.12.1/dist/system.js').read();
@@ -732,7 +733,7 @@ export default class LivelyRollup {
       // stub the globals
       code += `(${instrumentStaticSystemJS.toString()})(System);\n`;
 
-      if (this.isResurrectionBuild) { // for the time being and where we are still tied to old SystemJS
+      if (this.needsOldSystem) { // for the time being and where we are still tied to old SystemJS
         for (const id of this.excludedModules.concat(this.asBrowserModule ? ['fs', 'events'] : [])) {
           code += `System.set("${id}", System.newModule({ default: {} }));\n`;
         }
@@ -788,6 +789,7 @@ export default class LivelyRollup {
         const path = v.props[prop].value;
         if (path === '' || path.startsWith('data:')) continue; // data URL can not be copied
         const asset = resource(path);
+        // fixme: how to handle that when we are bundling from node.js? There is is not host here...
         if (asset.host() !== resource(baseURL).host()) continue;
         asset._from = k;
         if (!this.assetsToCopy.find(res => res.url === asset.url)) { this.assetsToCopy.push(asset); }
@@ -800,8 +802,6 @@ export default class LivelyRollup {
     return await generateLoadHtml(this.autoRun, importMap, this.resolver, modules);
   }
 
-  // also emit the files that are the compressed versions of all the files
-  // elso emit the assets as files as needed
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
     const separator = '__Separator__';
