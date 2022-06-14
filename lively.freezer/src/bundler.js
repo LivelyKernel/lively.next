@@ -858,16 +858,18 @@ export default class LivelyRollup {
       }
 
       for (let file of webFonts) {
+        file.beBinary();
         let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
         plugin.emitFile({
           type: 'asset',
-          fileName: joinPath('assets/fontawesome-free-5.12.1/webfonts/', file.name()),
+          fileName: joinPath(fontAwesomeDir.url.replace(morphicUrl, ''), 'webfonts', file.name()),
           source
         });
       }
 
       for (let file of inconsolata) {
+        file.beBinary();
         let source = await file.read();
         if (source instanceof ArrayBuffer) source = new Uint8Array(source);
         plugin.emitFile({
@@ -878,6 +880,7 @@ export default class LivelyRollup {
       }
 
       for (let file of this.assetsToCopy) {
+        file.beBinary();
         let source = await file.read();
         if (source instanceof ArrayBuffer) source = new Uint8Array(source);
         plugin.emitFile({
