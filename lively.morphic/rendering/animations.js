@@ -1,7 +1,6 @@
-/* global SVG, System */
 import { obj, promise, fun, num, properties, arr, string } from 'lively.lang';
 import { Color } from 'lively.graphics';
-import { styleProps, addPathAttributes, addSvgAttributes } from './property-dom-mapping.js';
+import { styleProps, addPathAttributes } from './property-dom-mapping.js';
 import flubber from 'flubber';
 import Bezier from 'bezier-easing';
 import 'web-animations-js';
@@ -37,15 +36,6 @@ export const easings = {
   linear: 'cubic-bezier(0.5, 0.5, 0.5, 0.5)'
 };
 
-function convertToSvgEasing (easing) {
-  for (const k in easings) {
-    if (easings[k] !== easing) continue;
-    if (k.includes('inOut')) return k.replace('inOut', '').toLowerCase() + 'InOut';
-    if (k.includes('out')) return k.replace('out', '').toLowerCase() + 'Out';
-    if (k.includes('in')) return k.replace('in', '').toLowerCase() + 'In';
-  }
-}
-
 export function stringToEasing (easingString) {
   return obj.isFunction(easingString) ? easingString : Bezier(...eval(`([${easingString.match(/\((.*)\)/)[1]}])`));
 }
@@ -66,7 +56,7 @@ export class AnimationQueue {
   }
 
   registerAnimation (config) {
-    const anim = new PropertyAnimation(this, this.morph, config);
+    const anim = new PropertyAnimation(this, this.morph, config); // eslint-disable-line no-use-before-define
     this.morph.makeDirty();
     return this.morph.withMetaDo({ animation: anim }, () => {
       const existing = anim.affectsMorph && this.animations.find(a => a.equals(anim));
@@ -120,7 +110,7 @@ export class PropertyAnimation {
       config.customTween = fun.compose(p => {
         morph.withMetaDo({ metaInteraction: true }, () => {
           morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0 }));
-          if (p == 1) morph.dropShadow = shadowAfter;
+          if (p === 1) morph.dropShadow = shadowAfter;
         });
 
         return p;
@@ -128,7 +118,7 @@ export class PropertyAnimation {
       delete config.dropShadow;
       morph.dropShadow = shadowBefore;
     }
-    if ('visible' in config && config.visible != morph.visible) {
+    if ('visible' in config && config.visible !== morph.visible) {
       const { originalOpacity = morph.opacity } = queue;
       queue.originalOpacity = originalOpacity;
       const targetVisibility = config.visible;
@@ -136,11 +126,11 @@ export class PropertyAnimation {
         if (this._otherVisibleTransformationInProgress) {
           return p;
         }
-        if (p == 0 && targetVisibility == true) {
+        if (p === 0 && targetVisibility === true) {
           morph.visible = true;
         }
         morph.opacity = targetVisibility ? num.interpolate(p, 0, originalOpacity) : num.interpolate(p, originalOpacity, 0);
-        if (p == 1) {
+        if (p === 1) {
           morph.visible = targetVisibility;
           morph.opacity = originalOpacity;
           delete queue.originalOpacity;
@@ -194,10 +184,10 @@ export class PropertyAnimation {
   }
 
   convertBounds (config) {
-    var { bounds, origin, rotation, scale, layout, fill } = config;
-    var origin = origin || this.morph.origin;
-    var rotation = rotation || this.morph.rotation;
-    var scale = scale || this.morph.scale;
+    let { bounds, origin, rotation, scale } = config;
+    origin = origin || this.morph.origin;
+    rotation = rotation || this.morph.rotation;
+    scale = scale || this.morph.scale;
     if (bounds) {
       return {
         ...obj.dissoc(config, ['bounds']),
@@ -217,7 +207,7 @@ export class PropertyAnimation {
   }
 
   canMerge (animation) {
-    return this.easing == animation.easing && this.duration == animation.duration;
+    return this.easing === animation.easing && this.duratio === animation.duration;
   }
 
   mergeWith (animation) {
@@ -272,20 +262,20 @@ export class PropertyAnimation {
 
   getAnimationProps (type) {
     const [before, after] = this.getChangedProps(this.beforeProps[type], this.afterProps[type]);
-    let { fill: fillBefore, dropShadow: shadowBefore } = this.capturedProperties;
-    let { fill: fillAfter, dropShadow: shadowAfter } = this.config;
-    if (this.morph.isPolygon && type == 'css') {
+    let { fill: fillBefore } = this.capturedProperties;
+    let { fill: fillAfter } = this.config;
+    if (this.morph.isPolygon && type === 'css') {
       fillBefore = fillAfter = false;
       delete before.background;
       delete after.background;
       delete before.backgroundImage;
       delete after.backgroundImage;
     }
-    if (before.filter == 'none' && after.boxShadow) {
+    if (before.filter === 'none' && after.boxShadow) {
       delete before.filter;
       before.boxShadow = 'none';
     }
-    if (after.filter == 'none' && before.boxShadow) {
+    if (after.filter === 'none' && before.boxShadow) {
       delete after.filter;
       after.boxShadow = 'none';
     }
