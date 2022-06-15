@@ -1,6 +1,6 @@
 /* global System */
-import { string, Path, arr } from 'lively.lang';
-import { parse, isValidIdentifier, stringify, parseFunction } from 'lively.ast';
+import { string, Path, obj } from 'lively.lang';
+import { isValidIdentifier, parseFunction } from 'lively.ast';
 import { resource } from 'lively.resources';
 import { runEval } from 'lively.vm';
 import { scripting, ExportLookup } from 'lively.modules';
@@ -11,7 +11,6 @@ const {
 
 import { RuntimeSourceDescriptor } from './source-descriptors.js';
 import { toJsIdentifier, withSuperclasses } from './util.js';
-import { adoptObject } from './runtime.js';
 import { classToFunctionTransform } from './class-to-function-transform.js';
 
 const objectPackageSym = Symbol.for('lively-object-package-data');
@@ -54,7 +53,7 @@ export async function interactivelyForkPackage (target, forkedName) {
   const pkg = ObjectPackage.lookupPackageForObject(target);
   const { baseURL, System } = pkg;
   const forkedPackage = await pkg.fork(forkedName, { baseURL, System });
-  await adoptObject(target, forkedPackage.objectClass);
+  await obj.adoptObject(target, forkedPackage.objectClass);
   return forkedPackage.objectClass[Symbol.for('__LivelyClassName__')];
 }
 
@@ -155,7 +154,7 @@ export default class ObjectPackage {
   async adoptObject (object) {
     if (this.objectClass === object.constructor) return;
     const klass = await this.ensureObjectClass(object.constructor);
-    adoptObject(object, klass);
+    obj.adoptObject(object, klass);
   }
 
   addScript (object, funcSource, name) {
@@ -242,7 +241,7 @@ class ObjectModule {
   async adoptObject (object, optClassName) {
     if (this.objectClass === object.constructor) return;
     const klass = await this.ensureObjectClass(object.constructor, optClassName);
-    adoptObject(object, klass);
+    obj.adoptObject(object, klass);
   }
 
   ensureObjectClass (superClass, optClassName) {

@@ -1,5 +1,6 @@
 import { prepareClassForManagedPropertiesAfterCreation } from './properties.js';
 import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from './util.js';
+import { setPrototypeOf } from 'lively.lang/object.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
 
@@ -13,17 +14,6 @@ const defaultPropertyDescriptorForValue = {
   configurable: true,
   writable: true
 };
-
-export const setPrototypeOf = typeof Object.setPrototypeOf === 'function'
-  ? (obj, proto) => Object.setPrototypeOf(obj, proto)
-  : (obj, proto) => obj.__proto__ = proto;
-
-export function adoptObject (object, newClass) {
-  // change the class of object to newClass
-  if (newClass === object.constructor) return;
-  object.constructor = newClass;
-  setPrototypeOf(object, newClass.prototype);
-}
 
 export function setSuperclass (klass, superclassOrSpec) {
   // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
