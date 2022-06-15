@@ -266,12 +266,10 @@ export async function setupSystem(baseURL) {
 }
 
 async function setupObjectDB(baseDir, packageMap) {
-  console.log('loading resources...')
   let { ensureFetch, resource } = await modules.importPackage(join(baseDir, "/lively.resources"));
   await ensureFetch();
   if (!global.navigator) global.navigator = {};
 
-  console.log('loading storage')
   let { ObjectDB, Database } = await modules.importPackage(join(baseDir, "/lively.storage/"));
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb/snapshots/").ensureExistance();
   await resource(baseDir).join("lively.morphic/objectdb/morphicdb-commits/").ensureExistance();

@@ -15,6 +15,7 @@ const build = await rollup({
   input: './install-with-node.js',
   external: ['flatn'],
   plugins: [
+    // This handler is solely injected in node.js builds
     {
       name: 'system-require-handler',
       transform: (code, id) => {
@@ -36,7 +37,13 @@ const build = await rollup({
       // hack that allows us to incorporate all of astq into the bundle
       // by adjusting the code of some of the files directly
       name: 'astq-handler',
-      // fixme: add the onWrite hook to copy the grammar file
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'astq-query-parse.pegjs',
+          source: fs.readFileSync(resolver.resolveModuleId('astq/src/astq-query-parse.pegjs'))
+        })
+      },
       transform: (code, id) => {
         if (id.includes('astq.js')) {
           return code.replace('module.exports = ASTQ', 'export default ASTQ'); 
@@ -54,6 +61,7 @@ const build = await rollup({
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
       dynamicRequireRoot: path.dirname(process.env.PWD),
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js'],
       dynamicRequireTargets: [
          resolver.resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]
@@ -63,6 +71,7 @@ const build = await rollup({
       minify: false,
       includeLivelyAssets: false,
       captureModuleScope: false,
+      asBrowserModule: false,
       compress: false, // this should be disabled by default on node.js      
       excludedModules: [
 	      'mocha-es6', 'mocha', // references old lgtg that breaks the build
@@ -84,6 +93,3 @@ await build.write({
   file: './bin/install.cjs',
   format: 'cjs'
 });
-
-// copy the peg grammar
-fs.copyFileSync(resolver.resolveModuleId('astq/src/astq-query-parse.pegjs'), './bin/astq-query-parse.pegjs');
