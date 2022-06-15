@@ -686,6 +686,25 @@ function newKeyIn (obj, base = '_') {
   return key;
 }
 
+/**
+ * Convenience method for adjusting the prototype of an object.
+ */
+const setPrototypeOf = typeof Object.setPrototypeOf === 'function'
+  ? (obj, proto) => Object.setPrototypeOf(obj, proto)
+  : (obj, proto) => obj.__proto__ = proto;
+
+/**
+ * Adopts a given object to a new class.
+ * @param { object } object - The object to change the class for.
+ * @param { function } newClass - The new class we want to configure for the object. 
+ */
+function adoptObject (object, newClass) {
+  // change the class of object to newClass
+  if (newClass === object.constructor) return;
+  object.constructor = newClass;
+  setPrototypeOf(object, newClass.prototype);
+}
+
 export {
   isArray,
   isElement,
@@ -721,5 +740,7 @@ export {
   safeToString,
   asObject,
   newKeyIn,
-  getOwnPropertyDescriptors
+  getOwnPropertyDescriptors,
+  adoptObject,
+  setPrototypeOf
 };
