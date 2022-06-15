@@ -11,6 +11,7 @@ import { LoadingIndicator } from 'lively.components';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { interactivelyFreezeWorld } from 'lively.freezer';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/cache.js';
+import * as modules from 'lively.modules';
 import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
 import { ComponentBrowser } from './studio/component-browser.cp.js';
@@ -1372,9 +1373,9 @@ const commands = [
       const { id, commit, name, ref, world } = args;
       const World = oldWorld.constructor;
 
-      if (world) return World.loadWorld(world, oldWorld);
-      if (id || commit) return World.loadFromCommit(id || commit, oldWorld);
-      if (name) return World.loadFromDB(name, ref, oldWorld);
+      if (world) return World.loadWorld(world, oldWorld, { moduleManager: modules });
+      if (id || commit) return World.loadFromCommit(id || commit, oldWorld, { moduleManager: modules });
+      if (name) return World.loadFromDB(name, ref, oldWorld, { moduleManager: modules });
 
       const li = LoadingIndicator.open('loading project browser...');
       await li.whenRendered();
