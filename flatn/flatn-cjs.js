@@ -25,6 +25,239 @@ var https__default = /*#__PURE__*/_interopDefaultLegacy(https);
 var zlib__default = /*#__PURE__*/_interopDefaultLegacy(zlib);
 var Stream__default = /*#__PURE__*/_interopDefaultLegacy(Stream);
 
+/* global clearTimeout, setTimeout */
+
+// -=-=-=-=-=-
+// inspection
+// -=-=-=-=-=-
+
+/**
+ * Extract the names of all parameters for a given function object.
+ * @param { function } f - The function object to extract the parameter names of.
+ * @returns { String[] }
+ * @example
+ * argumentNames(function(arg1, arg2) {}) // => ["arg1","arg2"]
+ * argumentNames(function() {}) // => []
+ */
+function argumentNames (f) {
+  if (f.superclass) return []; // it's a class...
+  const src = f.toString(); let names = '';
+  const arrowMatch = src.match(/(?:\(([^\)]*)\)|([^\(\)-+!]+))\s*=>/);
+  if (arrowMatch) names = arrowMatch[1] || arrowMatch[2] || '';
+  else {
+    const headerMatch = src.match(/^[\s\(]*function[^(]*\(([^)]*)\)/);
+    if (headerMatch && headerMatch[1]) names = headerMatch[1];
+  }
+  return names.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
+    .replace(/\s+/g, '').split(',')
+    .map(function (ea) { return ea.trim(); })
+    .filter(function (name) { return !!name; });
+}
+
+/**
+ * Utility functions that help to inspect, enumerate, and create JS objects
+ * @module lively.lang/object
+ */
+
+// -=-=-=-=-=-=-=-=-
+// internal helper
+// -=-=-=-=-=-=-=-=-
+
+// serveral methods in lib/object.js are inspired or derived from
+// Prototype JavaScript framework, version 1.6.0_rc1
+// (c) 2005-2007 Sam Stephenson
+// Prototype is freely distributable under the terms of an MIT-style license.
+// For details, see the Prototype web site: http://www.prototypejs.org/
+
+/**
+ * Returns a stringified representation of an object.
+ * @param { object } object - The object to generate a stringified representation for.
+ * @returns { string } The stringified, formatted representation of the object.
+ */
+function print (object) {
+  if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
+  if (typeof object !== 'string') { return String(object); }
+  let result = String(object);
+  result = result.replace(/\n/g, '\\n\\\n');
+  result = result.replace(/(")/g, '\\$1');
+  result = '\"' + result + '\"';
+  return result;
+}
+
+/**
+ * Shifts the string a number of times to the right by the contents of `indentString`.
+ * @param { string } str - The string whose contents to shift.
+ * @param { string } indentString - The string to insert on the left.
+ * @param { number } depth - The number of times to indent `str` by.
+ */
+function indent (str, indentString, depth) {
+  if (!depth || depth <= 0) return str;
+  while (depth > 0) { depth--; str = indentString + str; }
+  return str;
+}
+
+// -=-=-=-=-=-
+// inspection
+// -=-=-=-=-=-
+
+/**
+ * Prints a human-readable representation of `obj`. The printed
+ * representation will be syntactically correct JavaScript but will not
+ * necessarily evaluate to a structurally identical object. `inspect` is
+ * meant to be used while interactivively exploring JavaScript programs and
+ * state.
+ * @param { Object } object - The JavaScript Object to be inspected.
+ * @param { InspectOptions } options -
+ * @param { Boolean } options.printFunctionSource - Wether or not to show closures' source code.
+ * @param { Boolean } options.escapeKeys - Wether or not to escape special characters.
+ * @param { Number } options.maxDepth - The maximum depth upon which to inspect the object.
+ * @param { Function } options.customPrinter - Custom print function that returns an alternative string representation of values.
+ * @param { Number } options.maxNumberOfKeys - Limit the number of keys to be printed of an object.
+ * @param { Function } options.keySorter - Custom sorting function to define the order in which object key/value pairs are printed.
+ */
+function inspect (object, options, depth) {
+  options = options || {};
+  depth = depth || 0;
+
+  if (options.customPrinter) {
+    const ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
+    const continueInspectFn = (obj) => inspect(obj, options, depth + 1);
+    const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
+    if (customInspected !== ignoreSignal) return customInspected;
+  }
+  if (!object) return print(object);
+
+  // print function
+  if (typeof object === 'function') {
+    return options.printFunctionSource
+      ? String(object)
+      : 'function' + (object.name ? ' ' + object.name : '') +
+      '(' + argumentNames(object).join(',') + ') {/*...*/}';
+  }
+
+  // print "primitive"
+  switch (object.constructor) {
+    case String:
+    case Boolean:
+    case RegExp:
+    case Number: return print(object);
+  }
+
+  if (typeof object.serializeExpr === 'function') { return object.serializeExpr(); }
+
+  const isArray = object && Array.isArray(object);
+  const openBr = isArray ? '[' : '{'; const closeBr = isArray ? ']' : '}';
+  if (options.maxDepth && depth >= options.maxDepth) { return openBr + '/*...*/' + closeBr; }
+
+  let printedProps = [];
+  if (isArray) {
+    printedProps = object.map(function (ea) { return inspect(ea, options, depth + 1); });
+  } else {
+    let propsToPrint = Object.keys(object)
+      .sort(function (a, b) {
+        const aIsFunc = typeof object[a] === 'function';
+        const bIsFunc = typeof object[b] === 'function';
+        if (aIsFunc === bIsFunc) {
+          if (a < b) return -1;
+          if (a > b) return 1;
+          return 0;
+        }
+        return aIsFunc ? 1 : -1;
+      });
+    if (typeof options.keySorter === 'function') {
+      propsToPrint = propsToPrint.sort(options.keySorter);
+    }
+    for (let i = 0; i < propsToPrint.length; i++) {
+      if (i > (options.maxNumberOfKeys || Infinity)) {
+        const hiddenEntryCount = propsToPrint.length - i;
+        printedProps.push(`...${hiddenEntryCount} hidden ${hiddenEntryCount > 1 ? 'entries' : 'entry'}...`);
+        break;
+      }
+      const key = propsToPrint[i];
+      if (isArray) inspect(object[key], options, depth + 1);
+      const printedVal = inspect(object[key], options, depth + 1);
+      printedProps.push((options.escapeKeys
+        ? JSON.stringify(key)
+        : key) + ': ' + printedVal);
+    }
+  }
+
+  if (printedProps.length === 0) { return openBr + closeBr; }
+
+  let printedPropsJoined = printedProps.join(', ');
+  const useNewLines = (!isArray || options.newLineInArrays) &&
+        (!options.minLengthForNewLine ||
+        printedPropsJoined.length >= options.minLengthForNewLine);
+  const ind = indent('', options.indent || '  ', depth);
+  const propIndent = indent('', options.indent || '  ', depth + 1);
+  const startBreak = useNewLines && !isArray ? '\n' + propIndent : '';
+  const eachBreak = useNewLines ? '\n' + propIndent : '';
+  const endBreak = useNewLines && !isArray ? '\n' + ind : '';
+  if (useNewLines) printedPropsJoined = printedProps.join(',' + eachBreak);
+  return openBr + startBreak + printedPropsJoined + endBreak + closeBr;
+}
+
+var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+// Generated by CoffeeScript 1.10.0
+(function() {
+
+}).call(commonjsGlobal);
+
+/* global btoa,JsDiff */
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-
+// file system path support
+// -=-=-=-=-=-=-=-=-=-=-=-=-
+const pathDotRe$1 = /\/\.\//g;
+const pathDoubleDotRe$1 = /\/[^\/]+\/\.\./;
+const pathDoubleSlashRe$1 = /(^|[^:])[\/]+/g;
+const urlStartRe = /^[a-z0-9-_\.]+:\/\//;
+const slashEndRe$1 = /\/+$/;
+
+function normalizePath$1 (pathString) {
+  const urlStartMatch = pathString.match(urlStartRe);
+  const urlStart = urlStartMatch ? urlStartMatch[0] : null;
+  let result = urlStart ? pathString.slice(urlStart.length) : pathString;
+  // /foo/../bar --> /bar
+  do {
+    pathString = result;
+    result = pathString.replace(pathDoubleDotRe$1, '');
+  } while (result != pathString);
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe$1, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe$1, '/');
+  if (urlStart) result = urlStart + result;
+  return result;
+}
+
+/**
+ * Joins the strings passed as paramters together so that ea string is
+ * connected via a single "/".
+ * @example
+ * string.joinPath("foo", "bar") // => "foo/bar";
+ * @params { string[] } paths - The set of paths to be joined.
+ * @returns { string } The joined path.
+ */
+function joinPath (/* paths */) {
+  return normalizePath$1(
+    Array.prototype.slice.call(arguments).reduce((path, ea) =>
+      typeof ea === 'string'
+        ? path.replace(/\/*$/, '') + '/' + ea.replace(/^\/*/, '')
+        : path));
+}
+
+/**
+ * Given a path such as "path/to/file" returns a folderized version
+ * such as: "path/to/file/".
+ * @param {string} pathString - The path to transform.
+ * @returns { string } The transformed path;
+ */
+function ensureFolder (pathString) {
+  return pathString.replace(slashEndRe$1, '') + '/';
+}
+
 function applyExclude$1 (exclude, resources) {
   if (Array.isArray(exclude)) {
     return exclude.reduce((intersect, exclude) =>
@@ -89,23 +322,23 @@ function stringifyQuery (query) {
 }
 const urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/;
 // for resolve path:
-const pathDotRe$1 = /\/\.\//g;
-const pathDoubleDotRe$1 = /\/[^\/]+\/\.\./;
-const pathDoubleSlashRe$1 = /(^|[^:])[\/]+/g;
+const pathDotRe = /\/\.\//g;
+const pathDoubleDotRe = /\/[^\/]+\/\.\./;
+const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
 
 function withRelativePartsResolved (inputPath) {
   let path = inputPath; let result = path;
 
   // foo//bar --> foo/bar
-  result = result.replace(pathDoubleSlashRe$1, '$1/');
+  result = result.replace(pathDoubleSlashRe, '$1/');
 
   // foo/./bar --> foo/bar
-  result = result.replace(pathDotRe$1, '/');
+  result = result.replace(pathDotRe, '/');
 
   // /foo/../bar --> /bar
   do {
     path = result;
-    result = path.replace(pathDoubleDotRe$1, '');
+    result = path.replace(pathDoubleDotRe, '');
   } while (result != path);
 
   return result;
@@ -370,7 +603,7 @@ class Resource {
 
   asDirectory () {
     if (this.url.endsWith('/')) return this;
-    return this.newResource(this.url.replace(slashEndRe, '') + '/');
+    return this.newResource(ensureFolder(this.url));
   }
 
   root () {
@@ -466,223 +699,6 @@ class Resource {
   __serialize__ () {
     return { __expr__: `var r = null; try { r = resource("${this.url}");} catch (err) {}; r`, bindings: { 'lively.resources': ['resource'] } };
   }
-}
-
-/* global clearTimeout, setTimeout */
-
-// -=-=-=-=-=-
-// inspection
-// -=-=-=-=-=-
-
-/**
- * Extract the names of all parameters for a given function object.
- * @param { function } f - The function object to extract the parameter names of.
- * @returns { String[] }
- * @example
- * argumentNames(function(arg1, arg2) {}) // => ["arg1","arg2"]
- * argumentNames(function() {}) // => []
- */
-function argumentNames (f) {
-  if (f.superclass) return []; // it's a class...
-  const src = f.toString(); let names = '';
-  const arrowMatch = src.match(/(?:\(([^\)]*)\)|([^\(\)-+!]+))\s*=>/);
-  if (arrowMatch) names = arrowMatch[1] || arrowMatch[2] || '';
-  else {
-    const headerMatch = src.match(/^[\s\(]*function[^(]*\(([^)]*)\)/);
-    if (headerMatch && headerMatch[1]) names = headerMatch[1];
-  }
-  return names.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
-    .replace(/\s+/g, '').split(',')
-    .map(function (ea) { return ea.trim(); })
-    .filter(function (name) { return !!name; });
-}
-
-/**
- * Utility functions that help to inspect, enumerate, and create JS objects
- * @module lively.lang/object
- */
-
-// -=-=-=-=-=-=-=-=-
-// internal helper
-// -=-=-=-=-=-=-=-=-
-
-// serveral methods in lib/object.js are inspired or derived from
-// Prototype JavaScript framework, version 1.6.0_rc1
-// (c) 2005-2007 Sam Stephenson
-// Prototype is freely distributable under the terms of an MIT-style license.
-// For details, see the Prototype web site: http://www.prototypejs.org/
-
-/**
- * Returns a stringified representation of an object.
- * @param { object } object - The object to generate a stringified representation for.
- * @returns { string } The stringified, formatted representation of the object.
- */
-function print (object) {
-  if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
-  if (typeof object !== 'string') { return String(object); }
-  let result = String(object);
-  result = result.replace(/\n/g, '\\n\\\n');
-  result = result.replace(/(")/g, '\\$1');
-  result = '\"' + result + '\"';
-  return result;
-}
-
-/**
- * Shifts the string a number of times to the right by the contents of `indentString`.
- * @param { string } str - The string whose contents to shift.
- * @param { string } indentString - The string to insert on the left.
- * @param { number } depth - The number of times to indent `str` by.
- */
-function indent (str, indentString, depth) {
-  if (!depth || depth <= 0) return str;
-  while (depth > 0) { depth--; str = indentString + str; }
-  return str;
-}
-
-// -=-=-=-=-=-
-// inspection
-// -=-=-=-=-=-
-
-/**
- * Prints a human-readable representation of `obj`. The printed
- * representation will be syntactically correct JavaScript but will not
- * necessarily evaluate to a structurally identical object. `inspect` is
- * meant to be used while interactivively exploring JavaScript programs and
- * state.
- * @param { Object } object - The JavaScript Object to be inspected.
- * @param { InspectOptions } options -
- * @param { Boolean } options.printFunctionSource - Wether or not to show closures' source code.
- * @param { Boolean } options.escapeKeys - Wether or not to escape special characters.
- * @param { Number } options.maxDepth - The maximum depth upon which to inspect the object.
- * @param { Function } options.customPrinter - Custom print function that returns an alternative string representation of values.
- * @param { Number } options.maxNumberOfKeys - Limit the number of keys to be printed of an object.
- * @param { Function } options.keySorter - Custom sorting function to define the order in which object key/value pairs are printed.
- */
-function inspect (object, options, depth) {
-  options = options || {};
-  depth = depth || 0;
-
-  if (options.customPrinter) {
-    const ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
-    const continueInspectFn = (obj) => inspect(obj, options, depth + 1);
-    const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
-    if (customInspected !== ignoreSignal) return customInspected;
-  }
-  if (!object) return print(object);
-
-  // print function
-  if (typeof object === 'function') {
-    return options.printFunctionSource
-      ? String(object)
-      : 'function' + (object.name ? ' ' + object.name : '') +
-      '(' + argumentNames(object).join(',') + ') {/*...*/}';
-  }
-
-  // print "primitive"
-  switch (object.constructor) {
-    case String:
-    case Boolean:
-    case RegExp:
-    case Number: return print(object);
-  }
-
-  if (typeof object.serializeExpr === 'function') { return object.serializeExpr(); }
-
-  const isArray = object && Array.isArray(object);
-  const openBr = isArray ? '[' : '{'; const closeBr = isArray ? ']' : '}';
-  if (options.maxDepth && depth >= options.maxDepth) { return openBr + '/*...*/' + closeBr; }
-
-  let printedProps = [];
-  if (isArray) {
-    printedProps = object.map(function (ea) { return inspect(ea, options, depth + 1); });
-  } else {
-    let propsToPrint = Object.keys(object)
-      .sort(function (a, b) {
-        const aIsFunc = typeof object[a] === 'function';
-        const bIsFunc = typeof object[b] === 'function';
-        if (aIsFunc === bIsFunc) {
-          if (a < b) return -1;
-          if (a > b) return 1;
-          return 0;
-        }
-        return aIsFunc ? 1 : -1;
-      });
-    if (typeof options.keySorter === 'function') {
-      propsToPrint = propsToPrint.sort(options.keySorter);
-    }
-    for (let i = 0; i < propsToPrint.length; i++) {
-      if (i > (options.maxNumberOfKeys || Infinity)) {
-        const hiddenEntryCount = propsToPrint.length - i;
-        printedProps.push(`...${hiddenEntryCount} hidden ${hiddenEntryCount > 1 ? 'entries' : 'entry'}...`);
-        break;
-      }
-      const key = propsToPrint[i];
-      if (isArray) inspect(object[key], options, depth + 1);
-      const printedVal = inspect(object[key], options, depth + 1);
-      printedProps.push((options.escapeKeys
-        ? JSON.stringify(key)
-        : key) + ': ' + printedVal);
-    }
-  }
-
-  if (printedProps.length === 0) { return openBr + closeBr; }
-
-  let printedPropsJoined = printedProps.join(', ');
-  const useNewLines = (!isArray || options.newLineInArrays) &&
-        (!options.minLengthForNewLine ||
-        printedPropsJoined.length >= options.minLengthForNewLine);
-  const ind = indent('', options.indent || '  ', depth);
-  const propIndent = indent('', options.indent || '  ', depth + 1);
-  const startBreak = useNewLines && !isArray ? '\n' + propIndent : '';
-  const eachBreak = useNewLines ? '\n' + propIndent : '';
-  const endBreak = useNewLines && !isArray ? '\n' + ind : '';
-  if (useNewLines) printedPropsJoined = printedProps.join(',' + eachBreak);
-  return openBr + startBreak + printedPropsJoined + endBreak + closeBr;
-}
-
-var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
-// Generated by CoffeeScript 1.10.0
-(function() {
-
-}).call(commonjsGlobal);
-
-/* global btoa,JsDiff */
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-
-// file system path support
-// -=-=-=-=-=-=-=-=-=-=-=-=-
-const pathDotRe = /\/\.\//g;
-const pathDoubleDotRe = /\/[^\/]+\/\.\./;
-const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
-const urlStartRe = /^[a-z0-9-_\.]+:\/\//;
-function normalizePath$1 (pathString) {
-  const urlStartMatch = pathString.match(urlStartRe);
-  const urlStart = urlStartMatch ? urlStartMatch[0] : null;
-  let result = urlStart ? pathString.slice(urlStart.length) : pathString;
-  // /foo/../bar --> /bar
-  do {
-    pathString = result;
-    result = pathString.replace(pathDoubleDotRe, '');
-  } while (result != pathString);
-  // foo//bar --> foo/bar
-  result = result.replace(pathDoubleSlashRe, '$1/');
-  // foo/./bar --> foo/bar
-  result = result.replace(pathDotRe, '/');
-  if (urlStart) result = urlStart + result;
-  return result;
-}
-
-function joinPath (/* paths */) {
-  // Joins the strings passed as paramters together so that ea string is
-  // connected via a single "/".
-  // Example:
-  // string.joinPath("foo", "bar") // => "foo/bar";
-  return normalizePath$1(
-    Array.prototype.slice.call(arguments).reduce((path, ea) =>
-      typeof ea === 'string'
-        ? path.replace(/\/*$/, '') + '/' + ea.replace(/^\/*/, '')
-        : path));
 }
 
 /**
