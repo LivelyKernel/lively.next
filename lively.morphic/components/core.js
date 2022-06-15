@@ -2,8 +2,6 @@ import { morph, addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, arr, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { epiConnect, signal } from 'lively.bindings';
-import { adoptObject } from 'lively.classes/runtime.js';
-
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName } from '../helpers.js';
 import { ComponentPolicy } from './policy.js';
@@ -643,7 +641,7 @@ export function component (masterComponentOrProps, overriddenProps) {
     if (obj.isString(type)) {
       type = getClassForName(type);
     }
-    adoptObject(c, type);
+    obj.adoptObject(c, type);
   }
 
   if (props.defaultViewModel || props.viewModelClass) {
