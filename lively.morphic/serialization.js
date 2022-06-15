@@ -64,7 +64,7 @@ export function deserializeMorph (idAndSnapshot, options = {}) {
 /**
  * Creates a deep copy of a morph.
  * If desired, the copy can also carry over comments that have been assigned to the morphs.
- * Fixme: The commends should be removed from the morphs entirely, since they only make
+ * FIXME: The comments should be removed from the morphs entirely, since they only make
  * sense in the context of the IDE world.
  * @param { Morph } morph - The morph to copy.
  * @param { boolean } [realCopy=false] - Wether or not to carry over the commends assigned to the morph (deprecated).
@@ -97,7 +97,7 @@ export function copyMorph (morph, realCopy = false) {
 }
 
 /**
- * Convertes a resource handle pointing to a directory recursively
+ * Converts a resource handle pointing to a directory recursively
  * into JSON data structure. This can be helpful for incorporating
  * directories into snapshots.
  * @param { Resource } currentResource - The resource handle pointing to the directory to extract.
