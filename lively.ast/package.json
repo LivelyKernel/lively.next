@@ -66,15 +66,16 @@
       },
       "esutils": "https://jspm.dev/esutils@2.0.3",
       "astq": {
-        "~node": "https://jspm.dev/astq@2.7.5"
+        "~node": "https://jspm.dev/astq@2.7.5",
+        "node": "@empty"
       },
       "acorn-private-methods": {
         "~node": "https://jspm.dev/acorn-private-methods@1.0.0",
-	"node": "@empty"
+        "node": "@empty"
       },
       "acorn-class-fields": {
         "~node": "https://jspm.dev/acorn-class-fields@1.0.0",
-	"node": "@empty"
+        "node": "@empty"
       },
       "acorn-static-class-features": {
         "~node": "https://jspm.dev/acorn-static-class-features@1.0.0",

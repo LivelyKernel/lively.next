@@ -1,5 +1,10 @@
 import Visitor from '../generated/estree-visitor.js';
-import ASTQ from 'astq';
+import _ASTQ from 'astq';
+
+// Importing ASTQ in SystemJS 0.21 on node.js fails is it was not loaded natively before.
+// This causes issues with setups where we can not possible load astq, such as the install bundle.
+// To make these scripts work, we backtrack to import via native require instead.
+let ASTQ = _ASTQ || System._nodeRequire('astq');
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // simple ast traversing
