@@ -340,7 +340,8 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
         verbose: true,
         localconfig: true,
         l2l: true,
-        shell: true
+        shell: true,
+        moduleManager: lively.modules
       };
       if (snapshot) {
         let World, loadMorphFromSnapshot, loadWorld;
