@@ -18,6 +18,7 @@ export async function renderFrozenPart (node = document.body) {
     world.stealFocus = true;
     MorphicEnv.default().setWorldRenderedOn(world, node, window.prerenderNode);
   }
+  System.trace = false;
   // if IDE world required import that now and require that stuff too!
   main();
 }
