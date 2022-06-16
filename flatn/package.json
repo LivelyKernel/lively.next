@@ -12,6 +12,8 @@
     "flatn_env": "./bin/flatn_env"
   },
   "dependencies": {
+    "lively.lang": "*",
+    "lively.resources": "*",
     "node-gyp": "9.0.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
     "node-fetch": "3.2.4",
