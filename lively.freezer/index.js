@@ -1,4 +1,6 @@
 /* global System */
+import { rollup } from 'rollup';
+import jsonPlugin from '@rollup/plugin-json';
 import { part } from 'lively.morphic';
 import { resource } from 'lively.resources';
 import { Path, obj, arr } from 'lively.lang';
@@ -7,17 +9,13 @@ import { removeUnreachableObjects } from 'lively.serializer2';
 import { createMorphSnapshot, serializeMorph } from 'lively.morphic/serialization.js';
 import { moduleOfId, isReference, referencesOfId, classNameOfId } from 'lively.serializer2/snapshot-navigation.js';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-import { FreezerPrompt } from './src/ui.cp.js';
 
+import { FreezerPrompt } from './src/ui.cp.js';
 import { transpileAttributeConnections, writeFiles } from './src/util/helpers.js';
 import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
 import { parse, stringify } from 'lively.ast';
 import BrowserResolver from './src/resolvers/browser.js';
-
-import { rollup } from 'rollup';
-import jsonPlugin from '@rollup/plugin-json';
 import { lively } from './src/plugins/rollup.js'; // for rollup
-import nodePolyfills from 'rollup-plugin-polyfill-node';
 
 /*
 
@@ -198,6 +196,7 @@ export async function bundlePart (partOrSnapshot, {
  * Bundles a given part (in the form of a snapshot or as a live object) into a standalone
  * static website that can be loaded very quickly.
  */
+// import { module } from 'lively.modules';
 // frozen = await bundleModule(module('galyleo-dashboard').id, { exclude: DEFAULT_EXCLUDED_MODULES, compress: true, requester: $world, mainFunction: 'main', useTerser: false })
 export async function bundleModule (moduleId, {
   exclude: excludedModules = [],
@@ -212,11 +211,11 @@ export async function bundleModule (moduleId, {
   const bundle = await rollup({
     input: moduleId,
     plugins: [
-      nodePolyfills(), // only if this is a browser module
       lively({
         excludedModules,
         mainFunction,
         useTerser,
+        resolver: BrowserResolver,
         autoRun: htmlConfig
       }),
       jsonPlugin()
@@ -231,12 +230,12 @@ export async function jspmCompile (url, out, globalName, redirect = {}) {
   const freezerPlugin = lively({
     includePolyfills: false,
     redirect,
+    resolver: BrowserResolver,
     excludedModules: ['babel-plugin-transform-jsx']
   });
   const bundle = await rollup({
     input: url,
     plugins: [
-      nodePolyfills(), // only if this is a browser module
       freezerPlugin,
       jsonPlugin()
     ]
@@ -254,6 +253,7 @@ export async function bootstrapLibrary (url, out, asBrowserModule = true, global
     plugins: [
       lively({
         asBrowserModule,
+        resolver: BrowserResolver,
         excludedModules: ['babel-plugin-transform-jsx']
       }),
       jsonPlugin()

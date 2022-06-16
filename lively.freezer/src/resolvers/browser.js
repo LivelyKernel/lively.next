@@ -3,6 +3,8 @@ import { LoadingIndicator } from 'lively.components';
 import { detectModuleFormat } from 'lively.modules/src/module.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { resource } from 'lively.resources';
+import commonjs from '@rollup/plugin-commonjs';
+import nodePolyfills from 'rollup-plugin-polyfill-node';
 
 function resolveModuleId (moduleName, importer) {
   // in the client, we just discard the importer. This works out almost all the time.
@@ -80,8 +82,16 @@ async function load (url) {
   return s;
 }
 
-function supportingPlugins() {
-  return []
+function supportingPlugins () {
+  return [
+    commonjs({
+      sourceMap: false,
+      defaultIsModuleExports: true,
+      transformMixedEsModules: true,
+      dynamicRequireRoot: System.baseURL
+    }),
+    nodePolyfills()
+  ];
 }
 
 const builtinModules = [];
