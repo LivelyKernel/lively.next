@@ -16,12 +16,14 @@ function resolveModuleId (moduleName, importer) {
   return module(moduleName).id;
 }
 
+function ensureFileFormat (url) { return url; }
+
 async function normalizeFileName (fileName) {
   return await System.normalize(fileName);
 }
 
-export async function decanonicalizeFileName (fileName) {
-  return await System.decanonicalize(fileName);
+function decanonicalizeFileName (fileName) {
+  return System.decanonicalize(fileName);
 }
 
 export function resolvePackage (moduleName) {
@@ -67,14 +69,19 @@ function spawn ({ command, cwd }) {
   return runCommand(command, { cwd });
 }
 
-async function load(url) {
+async function load (url) {
   let s;
+  if (url === '@empty') return '';
   try {
     s = await resource(url).read();
   } catch (err) {
     s = await resource(url).makeProxied().read();
   }
   return s;
+}
+
+function supportingPlugins() {
+  return []
 }
 
 const builtinModules = [];
@@ -92,7 +99,10 @@ const BrowserResolver = {
   finish,
   whenReady,
   spawn,
-  builtinModules
+  load,
+  builtinModules,
+  ensureFileFormat,
+  supportingPlugins
 };
 
 export default BrowserResolver;

@@ -3,9 +3,13 @@ const { findPackageConfig } = require('flatn/flatn-cjs.js');
 const babel = require('@babel/core');
 const { flatnResolve, findPackagePathForModule } = require('flatn/module-resolver.js');
 const path = require('node:path');
+const fs = require('node:fs');
 const { builtinModules } = require('node:module');
 const child_process = require("node:child_process");
-
+const commonjs = require('@rollup/plugin-commonjs');
+const amdtoes6 = require('@buxlabs/amd-to-es6');
+const es6tocjs = require('@babel/plugin-transform-modules-commonjs');
+const nodePolyfills = require('rollup-plugin-polyfill-node');
 
 // Problem: Just defering to rollup seems to bypass the flatn resolution mechanism
 // flatn 
@@ -115,6 +119,70 @@ async function load(url) {
   return code;
 }
 
+function supportingPlugins(context = 'node') {
+  return [
+    context == 'node' && {
+      name: 'system-require-handler',
+      transform: (code, id) => {
+  	       return code.replaceAll(/\s(System|this)._nodeRequire\(/g, ' require(');
+      }
+    },
+    context == 'browser' && {
+       name: 'node-prefix-remover',
+       resolveId(id, importer, options) {
+         return this.resolve(id.replace('node:', ''), importer, { skipSelf: true, ...options });       
+       }
+    },
+    context == 'node' && {
+      // source-map and related packages are written in AMD format
+      // we transform this here to ESM in order to be properly consumed by rollup. 
+      name: 'source-map-handler',
+      transform: (code, id) => {
+        if (id.includes('source-map') && code.includes('define')) {
+          return babel.transform(amdtoes6(code), { plugins: [es6tocjs], babelrc: false }).code;
+        }
+        return null;
+      }
+    },
+    context == 'node' && {
+      // hack that allows us to incorporate all of astq into the bundle
+      // by adjusting the code of some of the files directly
+      // this is not needed, if we bundle with the browser as the target
+      // platform
+      name: 'astq-handler',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'astq-query-parse.pegjs',
+          source: fs.readFileSync(resolveModuleId('astq/src/astq-query-parse.pegjs'))
+        })
+      },
+      transform: (code, id) => {
+        if (id.includes('astq.js')) {
+          return code.replace('module.exports = ASTQ', 'export default ASTQ'); 
+        }
+        if (id.includes('astq-version.js')) {
+          return code.replace(/\$major/g, 2)
+            .replace( /\$minor/g, 7)
+            .replace( /\$micro/g, 5)
+            .replace( /\$date/g, 20210107);
+        }
+      }
+    },
+    context == 'browser' && nodePolyfills(), // only if we bundle for the browser  
+    commonjs({
+      sourceMap: false,
+      defaultIsModuleExports: true,
+      transformMixedEsModules: true,
+      dynamicRequireRoot: path.dirname(process.env.PWD),
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js'],
+      dynamicRequireTargets: [
+         resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
+      ]
+    })
+  ].filter(Boolean);
+}
+
 const NodeResolver = {
   resolveModuleId,
   normalizeFileName,
@@ -130,7 +198,8 @@ const NodeResolver = {
   spawn,
   builtinModules,
   ensureFileFormat,
-  load
+  load,
+  supportingPlugins
 };
 
 module.exports = NodeResolver;
