@@ -154,6 +154,10 @@ export class PropertyAnimation {
     return ['fill', 'origin'];
   }
 
+  get stillNeedsAnimations () {
+    return obj.values(this.needsAnimation).some(Boolean);
+  }
+
   asPromise () {
     return this._promise || (this._promise = new Promise((resolve, reject) => {
       this.resolveCallback = () => {
@@ -177,7 +181,7 @@ export class PropertyAnimation {
         this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true)));
     }
     this.needsAnimation[type] = false;
-    if (!obj.values(this.needsAnimation).some(Boolean)) {
+    if (!this.stillNeedsAnimations) {
       this.queue.removeAnimation(this);
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
