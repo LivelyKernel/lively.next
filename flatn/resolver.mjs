@@ -1,8 +1,8 @@
 /*global process, URL */
-import path from "path";
+import path from 'path';
 import { flatnResolve } from './module-resolver.js';
 
-process.execPath = process.argv[0] = path.join(import.meta.url, "bin/node");
+process.execPath = process.argv[0] = path.join(import.meta.url, 'bin/node');
 
 // implements a custom resolver for node.js ESM modules.
 

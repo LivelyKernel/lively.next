@@ -1,26 +1,24 @@
-/*global process, require, module, __filename, URL*/
-
-import { exec } from "child_process";
-import { join as j, basename, dirname } from "path";
-import { mkdirSync, symlinkSync, existsSync, readFileSync } from "fs";
-import { tmpdir as nodeTmpdir } from "os";
-import { resource } from "lively.resources";
-import semver from "semver";
+/* global process, __filename, URL */
+import { exec } from 'child_process';
+import { join as j, basename, dirname } from 'path';
+import { mkdirSync, symlinkSync, existsSync, readFileSync } from 'fs';
+import { tmpdir as nodeTmpdir } from 'os';
+import { resource } from 'lively.resources';
+import semver from 'semver';
 
 const crossDeviceTest = {
   done: false,
   isOnOtherDevice: undefined,
   customTmpDirExists: false,
-  customTmpDir: j(process.cwd(), "tmp")
+  customTmpDir: j(process.cwd(), 'tmp')
 };
 
-
-function configFile(dir) {
-  return dir.startsWith('file://') ? new URL("package.json", dir) : j(dir, 'package.json')
+function configFile (dir) {
+  return dir.startsWith('file://') ? new URL('package.json', dir) : j(dir, 'package.json');
 }
 
-function findPackageConfig(modulePath) {
-  let dir = dirname(modulePath), config = null;
+function findPackageConfig (modulePath) {
+  let dir = dirname(modulePath); let config = null;
   while (true) {
     if (existsSync(configFile(dir))) {
       config = JSON.parse(readFileSync(configFile(dir)));
@@ -33,17 +31,16 @@ function findPackageConfig(modulePath) {
   return config;
 }
 
-function tmpdir() {
+function tmpdir () {
   const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
   if (done) {
     if (!isOnOtherDevice) return nodeTmpdir();
     if (!customTmpDirExists) {
       // console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
-      if (!existsSync(customTmpDir))
-        mkdirSync(customTmpDir);
+      if (!existsSync(customTmpDir)) { mkdirSync(customTmpDir); }
       crossDeviceTest.customTmpDirExists = true;
     }
-    return customTmpDir
+    return customTmpDir;
   }
 
   crossDeviceTest.done = true;
@@ -56,25 +53,22 @@ function tmpdir() {
   return tmpdir();
 }
 
-function maybeFileResource(url) {
-  if (typeof url === "string" && url.startsWith("/"))
-    url = "file://" + url;
+function maybeFileResource (url) {
+  if (typeof url === 'string' && url.startsWith('/')) { url = 'file://' + url; }
   return url.isResource ? url : resource(url);
 }
 
-var fixGnuTar = undefined;
+let fixGnuTar;
 
-async function npmSearchForVersions(pname, range = "*") {
-  // let packageNameAndRange = "lively.lang@~0.4"
+async function npmSearchForVersions (pname, range = '*') {
   try {
-    // pname = pname.replace(/\@/g, "_40");
-    pname = pname.replace(/\//g, "%2f");
+    pname = pname.replace(/\//g, '%2f');
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
-    const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
-          version = pname == 'graceful-fs' ?
-                       semver.maxSatisfying(Object.keys(versions), range, true) :
-                       semver.minSatisfying(Object.keys(versions), range, true),
-          { name, dist: { shasum, tarball } } = versions[version];
+    const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson();
+    const version = pname === 'graceful-fs'
+      ? semver.maxSatisfying(Object.keys(versions), range, true)
+      : semver.minSatisfying(Object.keys(versions), range, true);
+    const { name, dist: { tarball } } = versions[version];
     return { name, version, tarball };
   } catch (err) {
     console.error(err);
@@ -82,10 +76,10 @@ async function npmSearchForVersions(pname, range = "*") {
   }
 }
 
-async function npmDownloadArchive(pname, range, destinationDir) {
+async function npmDownloadArchive (pname, range, destinationDir) {
   destinationDir = maybeFileResource(destinationDir);
   let { version, name, tarball: archiveURL } = await npmSearchForVersions(pname, range);
-  let nameForArchive = name.replace(/\//g, "%2f");
+  let nameForArchive = name.replace(/\//g, '%2f');
   let archive = `${nameForArchive}-${version}.tgz`;
 
   if (!archiveURL) {
@@ -97,6 +91,18 @@ async function npmDownloadArchive(pname, range, destinationDir) {
   return { downloadedArchive, name, version };
 }
 
+function x (cmd, opts = {}) {
+  return new Promise((resolve, reject) => {
+    let p = exec(cmd, opts, (code, stdout, stderr) =>
+      code
+        ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
+        : resolve(stdout));
+    if (opts.verbose) {
+      p.stdout.pipe(process.stdout);
+      p.stderr.pipe(process.stderr);
+    }
+  });
+}
 
 // let {downloadedArchive} = await npmDownloadArchive("lively.lang@^0.3", "local://lively.node-packages-test/test-download/")
 // let z = await untar(downloadedArchive, resource("file:///Users/robert/temp/"))
@@ -104,18 +110,16 @@ async function npmDownloadArchive(pname, range, destinationDir) {
 // await z.dirList()
 // https://registry.npmjs.org/lively.lang/-/lively.lang-0.3.5.tgz
 
-async function untar(downloadedArchive, targetDir, name) {
-  // FIXME use tar module???
-
-  if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
-  name = name.replace(/\//g, "%2f");
+async function untar (downloadedArchive, targetDir, name) {
+  if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, '');
+  name = name.replace(/\//g, '%2f');
 
   downloadedArchive = maybeFileResource(downloadedArchive);
   targetDir = maybeFileResource(targetDir);
 
   let untarDir = resource(`file://${tmpdir()}/npm-helper-untar/`);
   await untarDir.ensureExistance();
-  if (!downloadedArchive.url.startsWith("file://")) { // need to run exec
+  if (!downloadedArchive.url.startsWith('file://')) { // need to run exec
     let tmpDir = untarDir.join(downloadedArchive.name());
     await downloadedArchive.copyTo(tmpDir);
     downloadedArchive = tmpDir;
@@ -134,20 +138,20 @@ async function untar(downloadedArchive, targetDir, name) {
 
   if (fixGnuTar === undefined) {
     try {
-      await x(`tar --version | grep -q 'gnu'`);
-      fixGnuTar = "--warning=no-unknown-keyword ";
+      await x('tar --version | grep -q \'gnu\'');
+      fixGnuTar = '--warning=no-unknown-keyword ';
     } catch (err) {
-      fixGnuTar = "";
+      fixGnuTar = '';
     }
   }
 
   try {
-    let cmd = `mkdir "${name}" && `
-      + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
-      + `rm "${downloadedArchive.path()}"`
+    let cmd = `mkdir "${name}" && ` +
+      `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && ` +
+      `rm "${downloadedArchive.path()}"`;
     await x(cmd, { verbose: false, cwd: untarDir.path() });
   } catch (err) {
-    try { await x(`rm -rf ${untarDir.path()}`) } catch (err) { }
+    try { await x(`rm -rf ${untarDir.path()}`); } catch (err) { }
   } finally {
     try { await targetDir.join(name).asDirectory().remove(); } catch (err) { }
   }
@@ -156,16 +160,15 @@ async function untar(downloadedArchive, targetDir, name) {
   return targetDir.join(name).asDirectory();
 }
 
-
 // await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
 
-async function gitClone(gitURL, intoDir, branch = "master") {
+async function gitClone (gitURL, intoDir, branch = 'master') {
   intoDir = maybeFileResource(intoDir).asDirectory();
-  let name = intoDir.name(), tmp;
-  if (!intoDir.url.startsWith("file://")) {
+  let name = intoDir.name(); let tmp;
+  if (!intoDir.url.startsWith('file://')) {
     tmp = resource(`file://${tmpdir()}/npm-helper-gitclone/`);
     await tmp.ensureExistance();
-    if (tmp.join(name).exists()) await tmp.join(name).remove()
+    if (tmp.join(name).exists()) await tmp.join(name).remove();
   } else {
     intoDir.parent().ensureExistance();
     if (intoDir.exists()) await intoDir.remove();
@@ -189,24 +192,6 @@ async function gitClone(gitURL, intoDir, branch = "master") {
   if (tmp) await x(`mv ${tmp.join(name).path()} ${intoDir.asFile().path()}`);
 }
 
-
-
-function x(cmd, opts = {}) {
-  return new Promise((resolve, reject) => {
-    let p = exec(cmd, opts, (code, stdout, stderr) =>
-      code
-        ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
-        : resolve(stdout));
-    if (opts.verbose) {
-      // p.stdout.on("data", d => console.log(d));
-      // p.stderr.on("data", d => console.log(d));
-      p.stdout.pipe(process.stdout);
-      p.stderr.pipe(process.stderr);
-    }
-  });
-}
-
-
 const npmFallbackEnv = {
   npm_config_access: '',
   npm_config_also: '',
@@ -215,7 +200,7 @@ const npmFallbackEnv = {
   npm_config_bin_links: 'true',
   npm_config_browser: '',
   npm_config_ca: '',
-  npm_config_cache: j(process.env.HOME || "", '.npm'),
+  npm_config_cache: j(process.env.HOME || '', '.npm'),
   npm_config_cache_lock_retries: '10',
   npm_config_cache_lock_stale: '60000',
   npm_config_cache_lock_wait: '10000',
@@ -239,8 +224,8 @@ const npmFallbackEnv = {
   npm_config_global: '',
   npm_config_global_style: '',
 
-  npm_config_globalconfig: j(process.env.HOME || "", 'npmrc'),
-  npm_config_globalignorefile: j(process.env.HOME || "", 'npmignore'),
+  npm_config_globalconfig: j(process.env.HOME || '', 'npmrc'),
+  npm_config_globalignorefile: j(process.env.HOME || '', 'npmignore'),
   npm_config_group: '20',
   npm_config_ham_it_up: '',
   npm_config_heading: 'npm',
@@ -251,7 +236,7 @@ const npmFallbackEnv = {
   npm_config_init_author_name: '',
   npm_config_init_author_url: '',
   npm_config_init_license: 'ISC',
-  npm_config_init_module: j(process.env.HOME || "", '.npm-init.js'),
+  npm_config_init_module: j(process.env.HOME || '', '.npm-init.js'),
   npm_config_init_version: '1.0.0',
   npm_config_json: '',
   npm_config_key: '',
@@ -269,7 +254,7 @@ const npmFallbackEnv = {
   npm_config_only: '',
   npm_config_optional: 'true',
   npm_config_parseable: '',
-  npm_config_prefix: process.env.HOME || "",
+  npm_config_prefix: process.env.HOME || '',
   npm_config_production: '',
   npm_config_progress: 'true',
   npm_config_proprietary_attribs: 'true',
@@ -305,35 +290,37 @@ const npmFallbackEnv = {
   npm_config_usage: '',
   npm_config_user: '501',
   npm_config_user_agent: 'npm/4.4.4 node/v7.7.4 darwin x64',
-  npm_config_userconfig: j(process.env.HOME || "", '.npmrc'),
+  npm_config_userconfig: j(process.env.HOME || '', '.npmrc'),
   npm_config_version: '',
   npm_config_versions: '',
   npm_config_viewer: 'man',
   npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
   npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
-}
+};
 
 // gitSpecFromVersion("git+ssh://user@hostname/project.git#commit-ish")
 // gitSpecFromVersion("https://rksm/flatn#commit-ish")
 // gitSpecFromVersion("rksm/flatn#commit-ish")
-function gitSpecFromVersion(version = "") {
-  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
-    [_1, gitRepo, gitBranch] = gitMatch || [],
-    githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
-    [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+function gitSpecFromVersion (version = '') {
+  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/);
+  let [_1, gitRepo, gitBranch] = gitMatch || [];
+  let githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/);
+  let [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
   if (!githubMatch && !gitMatch) return null;
 
-  if (!githubMatch)
+  if (!githubMatch) {
     return {
       branch: gitBranch,
       gitURL: gitRepo,
-      versionInFileName: gitRepo.replace(/[:\/\+#]/g, "_") + "_" + gitBranch
+      versionInFileName: gitRepo.replace(/[:\/\+#]/g, '_') + '_' + gitBranch
     };
+  }
 
   let gitURL = `https://github.com/${githubUser}/${githubRepo}`;
   return {
-    branch: githubBranch, gitURL,
-    versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
+    branch: githubBranch,
+    gitURL,
+    versionInFileName: gitURL.replace(/[:\/\+#]/g, '_') + '_' + githubBranch
   };
 }
 
