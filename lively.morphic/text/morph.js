@@ -2859,6 +2859,11 @@ export class Text extends Morph {
     return this.pluginCollect('getSnippets', []);
   }
 
+  cleanupSnippetsExpansions () {
+    this.markers = this.markers.filter(m => !m.id.includes('snippet'));
+    this.anchors = this.anchors.filter(a => !a.id.includes('snippet'));
+  }
+
   onHoverIn (evt) {
     super.onHoverIn(evt);
     this.scrollActive = true;

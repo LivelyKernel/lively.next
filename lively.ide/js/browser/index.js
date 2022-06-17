@@ -1593,6 +1593,7 @@ export class BrowserModel extends ViewModel {
 
     state.isSaving = true;
     try {
+      sourceEditor.cleanupSnippetsExpansions();
       // deal with non-js code, this needs to be cleaned up as well!
       if (ext !== 'js' && ext !== 'jsx') {
         if (module.nameInPackage === 'package.json') {
