@@ -134,8 +134,25 @@ export const snippets = [
   // if that fails, just create a regular docstring
   ['docstring', (followingSourceCode) => {
     try {
+      const sourceCodeByLine = followingSourceCode.split('\n');
       // get the function declaration part (until parameters brackets closed) on the next line
-      let nextSourceLine = followingSourceCode.split('\n', 2)[1];
+      let nextSourceLine = sourceCodeByLine[1];
+      // find the end of the method (by counting brackets) to determine wether or not we return something inside of the method
+      let brackets = 0;
+      let funcString = '';
+      let i = 1;
+      while (true) {
+        const currLine = sourceCodeByLine[i];
+        [...currLine].forEach(c => {
+          if (c === '{') brackets++;
+          if (c === '}') brackets--;
+        });
+        i++;
+        funcString = funcString + currLine;
+        if (brackets === 0) break;
+      }
+      const hasReturn = new RegExp('return', 'm').test(funcString);
+
       nextSourceLine = nextSourceLine.replace('get ', 'function ');
       nextSourceLine = nextSourceLine.replace('set ', 'function ');
       nextSourceLine = nextSourceLine.replace('function ', '');
@@ -155,6 +172,7 @@ export const snippets = [
       for (const arg of args) {
         docstring = docstring.concat(' * @param \{${' + expansionIndex++ + ':type}\} ' + arg + ' - ${' + expansionIndex++ + ':description}\n');
       }
+      if (hasReturn) docstring = docstring.concat(' * @returns \{${' + expansionIndex++ + ':type}\} ${' + expansionIndex++ + ':description}\n');
       docstring = docstring.concat(' */');
       return docstring;
     } catch (error) {
