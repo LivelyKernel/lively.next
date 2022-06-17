@@ -807,9 +807,7 @@ export class BrowserModel extends ViewModel {
 
   async setEvalBackend (newRemote) {
     newRemote = newRemote || 'local';
-    const { selectedPackage, selectedModule, systemInterface: oldSystemInterface } = this;
-    const p = selectedPackage && selectedPackage.name;
-    const mod = selectedModule && selectedModule.nameInPackage;
+    const { systemInterface: oldSystemInterface } = this;
     if (newRemote !== oldSystemInterface.name) {
       this.editorPlugin.setSystemInterfaceNamed(newRemote);
       await this.toggleWindowStyle();
