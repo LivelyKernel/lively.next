@@ -182,7 +182,7 @@ describe('ast.transform', function () {
 
         code = 'var x = 3, y = (function() { var y = 3, z = 2; })(); ';
         result = oneDeclaratorPerVarDecl(code);
-        expected = 'var x = 3;\nvar y = function () {\n    var y = 3;\n    var z = 2;\n}(); ';
+        expected = 'var x = 3;\nvar y = (function () {\n    var y = 3;\n    var z = 2;\n}()); ';
         expect(result.source.replace(/\s/g, '')).equals(expected.replace(/\s/g, ''));
       });
     });

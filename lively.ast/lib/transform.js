@@ -160,8 +160,7 @@ function __findVarDecls (scope, varDecls = []) {
 }
 
 function oneDeclaratorPerVarDecl (astOrSource) {
-  // exports.transform.oneDeclaratorPerVarDecl(
-  //    "var x = 3, y = (function() { var y = 3, x = 2; })(); ").source
+  // oneDeclaratorPerVarDecl("var x = 3, y = (function() { var y = 3, x = 2; })(); ").source 
 
   const parsed = typeof astOrSource === 'object'
     ? astOrSource
