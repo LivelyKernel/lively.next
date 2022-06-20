@@ -522,45 +522,6 @@ function mergeInModelProps (root, props) {
   });
 }
 
-// this needs to work more directly without triggering the submorph traversal
-
-export class PolicyRetargeting {
-  // automatically harvest the policy from the root
-  constructor (policyContext) {
-    this.morphsWithPolicies = {};
-    if (policyContext) {
-      policyContext.withAllSubmorphsSelect(m => m.master).forEach(m => {
-        this.morphsWithPolicies[m.id] = m;
-      });
-    }
-  }
-
-  serializeObject (newObj) {
-    if (newObj.master) this.morphsWithPolicies[newObj.id] = newObj;
-    return null;
-  }
-
-  // gather all morphs with policies also outside of submorph hierarchy (connections)
-
-  // ensure that the master is not deserialized, since we manually retarget it anyways.
-  // how? delete the master property will mutate the snapshot...
-  propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
-    return arr.without(keysSoFar, 'master');
-  }
-
-  // if this plugin is provided the policies are retargeted to the original inline policies
-  additionallyDeserializeAfterProperties (pool, ref, newObj, snapshot, serializedObjMap, path) {
-    const policyHolder = this.morphsWithPolicies[ref.id];
-    if (policyHolder) {
-      newObj.withMetaDo({ metaInteraction: true }, () => {
-        // bypass the setter here so that we do not invoke submorph traversal
-        // newObj.master = { auto: policyHolder.master };
-        newObj.setProperty('master', ComponentPolicy.for(newObj, { auto: policyHolder.master }, false));
-      });
-    }
-  }
-}
-
 /**
  * Instantiates a morph based off a master component. This function also allows to further
  * customize the derived instance inline, overridding properties and adding/removing certain
