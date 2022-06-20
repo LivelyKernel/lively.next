@@ -1,60 +1,100 @@
 /* global System,fetch */
 import { resource, registerExtension as registerResourceExension } from 'lively.resources';
-
-import { Path, obj, date, promise } from 'lively.lang';
+import { subscribe, emit } from 'lively.notifications';
+import { Path, obj, date, promise, string } from 'lively.lang';
+import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
 
 import { MorphicEnv } from './env.js';
 import { createMorphSnapshot } from './serialization.js';
 import { MorphicDB } from './morphicdb/index.js';
-
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
-import { subscribe, emit } from 'lively.notifications';
-import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-import ShellClientResource from 'lively.shell/client-resource.js';
 import './partsbin.js';
-import { joinPath } from 'lively.lang/string.js';
-import { reset } from './components/policy.js';
 import { part } from './components/core.js';
 
-export async function loadWorldFromURL (url, oldWorld, options) {
-  const worldResource = url.isResource
-    ? url
-    : resource(System.decanonicalize(url));
-  const name = worldResource.nameWithoutExt();
-  return loadWorldFromDB(name, undefined, oldWorld, options);
+function reportWorldLoad (world, user) {
+  const userId = user ? `${user.name} (${(user.token || '').slice(0, 5)})` : '---';
+  fetch(string.joinPath(System.baseURL, '/report-world-load'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: `${userId} logged in at ${world.name} [${window._livelyLoadId}]`
+    })
+  }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
 
-export async function loadWorldFromCommit (commitOrId, oldWorld, options) {
-  if (oldWorld) {
-    reset();
-    oldWorld.name = null;
-    if (oldWorld.metadata) oldWorld.metadata.commit = {};
+async function setupLively2Lively (world) {
+  const user = world.getCurrentUser();
+  const info = { world: world.name };
+  if (user) {
+    info.userToken = user.token;
+    info.userRealm = user.realm;
   }
-  const db = MorphicDB.default;
-  const newWorld = await db.load('world', undefined, options, commitOrId);
-  const queryString = typeof document !== 'undefined' ? document.location.search : '';
-  options = {
-    pathForBrowserHistory: pathForBrowserHistory(newWorld.name, queryString),
-    ...options
-  };
-  return loadWorld(newWorld, oldWorld, options);
+
+  await lively.modules.importPackage('lively.2lively');
+  const { default: L2LClient } = await System.import('lively.2lively/client.js');
+  const client = await L2LClient.forLivelyInBrowser(info);
+  console.log(`[lively] lively2lively client created ${client}`);
+
+  // FIXME... put this go somewhere else...?
+  if (!client._onUserChange) {
+    client._onUserChange = function (evt) {
+      if (client.isOnline() && evt.user) {
+        const { token: userToken, realm: userRealm } = evt.user;
+        client.info = { ...client.info, userToken, userRealm };
+        client.unregister().then(() => client.register())
+          .then(() => console.log('re-registered after user change'));
+      }
+    };
+
+    subscribe('lively.user/userchanged', client._onUserChange, System);
+
+    client.once('registered', () => {
+      reportWorldLoad(world, user);
+    });
+
+    client.on('registered', () => {
+      const flap = world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('connected', () => {
+      const flap = world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('reconnecting', () => {
+      const flap = world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('disconnected', () => {
+      const flap = world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+  } else reportWorldLoad(world, user);
+
+  return client;
 }
 
-export async function loadWorldFromDB (name, ref, oldWorld, options) {
-  if (oldWorld) {
-    reset();
-    oldWorld.name = null;
-    if (oldWorld.metadata) oldWorld.metadata.commit = {};
+async function setupLivelyShell (opts) {
+  await lively.modules.importPackage('lively.shell');
+  const { default: ClientCommand } = await System.import('lively.shell/client-command.js');
+  const { resourceExtension } = await System.import('lively.shell/client-resource.js');
+  const { l2lClient } = opts;
+  ClientCommand.installLively2LivelyServices(l2lClient);
+  resourceExtension.resourceClass.defaultL2lClient = l2lClient;
+  registerResourceExension(resourceExtension);
+  console.log('[lively] lively.shell setup');
+}
+
+async function loadLocalConfig () {
+  const localconfig = lively.modules.module('localconfig.js');
+  try {
+    // reload so that localconfig module actually executes, even if it was loaded before
+    if (await resource(localconfig.id).exists()) { await localconfig.reload({ resetEnv: false, reloadDeps: false }); }
+  } catch (err) {
+    console.error('Error loading localconfig:', err);
+    if (typeof $world !== 'undefined') { $world.showError(`Error loading localconfig.js: ${err}`); }
   }
-  const db = MorphicDB.default;
-  const newWorld = await db.load('world', name, options, undefined/* commit||id */, ref || undefined);
-  const queryString = typeof document !== 'undefined' ? document.location.search : '';
-  options = {
-    pathForBrowserHistory: pathForBrowserHistory(name, queryString),
-    ...options
-  };
-  return loadWorld(newWorld, oldWorld, options);
 }
 
 export async function loadWorld (newWorld, oldWorld, options = {}) {
@@ -115,77 +155,42 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
   }
 }
 
-async function loadLocalConfig () {
-  const localconfig = lively.modules.module('localconfig.js');
-  try {
-    // reload so that localconfig module actually executes, even if it was loaded before
-    if (await resource(localconfig.id).exists()) { await localconfig.reload({ resetEnv: false, reloadDeps: false }); }
-  } catch (err) {
-    console.error('Error loading localconfig:', err);
-    if (typeof $world !== 'undefined') { $world.showError(`Error loading localconfig.js: ${err}`); }
+export async function loadWorldFromCommit (commitOrId, oldWorld, options) {
+  if (oldWorld) {
+    oldWorld.name = null;
+    if (oldWorld.metadata) oldWorld.metadata.commit = {};
   }
+  const db = MorphicDB.default;
+  const newWorld = await db.load('world', undefined, options, commitOrId);
+  const queryString = typeof document !== 'undefined' ? document.location.search : '';
+  options = {
+    pathForBrowserHistory: pathForBrowserHistory(newWorld.name, queryString),
+    ...options
+  };
+  return loadWorld(newWorld, oldWorld, options);
 }
 
-async function setupLivelyShell (opts) {
-  await lively.modules.importPackage('lively.shell');
-  const { default: ClientCommand } = await System.import('lively.shell/client-command.js');
-  const { resourceExtension } = await System.import('lively.shell/client-resource.js');
-  const { l2lClient } = opts;
-  ClientCommand.installLively2LivelyServices(l2lClient);
-  resourceExtension.resourceClass.defaultL2lClient = l2lClient;
-  registerResourceExension(resourceExtension);
-  console.log('[lively] lively.shell setup');
+export async function loadWorldFromDB (name, ref, oldWorld, options) {
+  if (oldWorld) {
+    oldWorld.name = null;
+    if (oldWorld.metadata) oldWorld.metadata.commit = {};
+  }
+  const db = MorphicDB.default;
+  const newWorld = await db.load('world', name, options, undefined/* commit||id */, ref || undefined);
+  const queryString = typeof document !== 'undefined' ? document.location.search : '';
+  options = {
+    pathForBrowserHistory: pathForBrowserHistory(name, queryString),
+    ...options
+  };
+  return loadWorld(newWorld, oldWorld, options);
 }
 
-async function setupLively2Lively (world) {
-  const user = world.getCurrentUser();
-  const info = { world: world.name };
-  if (user) {
-    info.userToken = user.token;
-    info.userRealm = user.realm;
-  }
-
-  await lively.modules.importPackage('lively.2lively');
-  const { default: L2LClient } = await System.import('lively.2lively/client.js');
-  const client = await L2LClient.forLivelyInBrowser(info);
-  console.log(`[lively] lively2lively client created ${client}`);
-
-  // FIXME... put this go somewhere else...?
-  if (!client._onUserChange) {
-    client._onUserChange = function (evt) {
-      if (client.isOnline() && evt.user) {
-        const { token: userToken, realm: userRealm } = evt.user;
-        client.info = { ...client.info, userToken, userRealm };
-        client.unregister().then(() => client.register())
-          .then(() => console.log('re-registered after user change'));
-      }
-    };
-
-    subscribe('lively.user/userchanged', client._onUserChange, System);
-
-    client.once('registered', () => {
-      reportWorldLoad(world, user);
-    });
-
-    client.on('registered', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('connected', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('reconnecting', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('disconnected', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-  } else reportWorldLoad(world, user);
-
-  return client;
+export async function loadWorldFromURL (url, oldWorld, options) {
+  const worldResource = url.isResource
+    ? url
+    : resource(System.decanonicalize(url));
+  const name = worldResource.nameWithoutExt();
+  return loadWorldFromDB(name, undefined, oldWorld, options);
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -193,7 +198,7 @@ async function setupLively2Lively (world) {
 export async function interactivelySaveWorld (world, options) {
   options = { showSaveDialog: true, useExpectedCommit: true, errorOnMissingExpectedCommit: false, confirmOverwrite: true, ...options };
 
-  const { SaveWorldDialog }= await System.import('lively.ide/studio/dialogs.cp.js');
+  const { SaveWorldDialog } = await System.import('lively.ide/studio/dialogs.cp.js');
   let name = world.name; let tags = []; let description = '';
   const oldCommit = await ensureCommitInfo(Path('metadata.commit').get(world));
   let db = options.morphicdb || MorphicDB.default;
@@ -304,7 +309,7 @@ export async function interactivelySaveWorld (world, options) {
       return interactivelySaveWorld(world, { ...options, morphicdb: db, useExpectedCommit: false, showSaveDialog: false });
     }
 
-    const [_, typeAndName, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
+    const [_, __, expectedVersion, actualVersion] = err.message.match(/Trying to store "([^\"]+)" on top of expected version ([^\s]+) but ref HEAD is of version ([^\s\!]+)/) || [];
     if (expectedVersion && actualVersion) {
       const [newerCommit] = await db.log(actualVersion, 1, /* includeCommits = */true);
       let overwrite = true;
@@ -323,15 +328,4 @@ export async function interactivelySaveWorld (world, options) {
     console.error(err);
     world.logError('Error saving world: ' + err);
   } finally { i.remove(); }
-}
-
-function reportWorldLoad (world, user) {
-  const userId = user ? `${user.name} (${(user.token || '').slice(0, 5)})` : '---';
-  fetch(joinPath(System.baseURL, '/report-world-load'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      message: `${userId} logged in at ${world.name} [${window._livelyLoadId}]`
-    })
-  }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
