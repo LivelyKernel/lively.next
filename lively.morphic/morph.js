@@ -2902,7 +2902,7 @@ export class Image extends Morph {
       urlString = string.joinPath(System.baseURL, urlString);
     }
 
-    const { runCommand } = await System.import('lively.ide/shell/shell-interface');
+    const { runCommand } = await System.import('lively.ide/shell/shell-interface.js');
     const cmd = `curl --silent "${urlString}" | openssl base64`;
     const { stdout } = await runCommand(cmd).whenDone();
     return this.loadUrl(`data:image/${type};base64,${stdout}`, false);
