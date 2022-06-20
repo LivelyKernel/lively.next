@@ -336,9 +336,13 @@ function replaceRefs (parsed, options) {
     if (node.type === 'AssignmentExpression' && node.left.type === 'ObjectPattern') {
       const intermediate = id(`__inter${intermediateCounter++}__`);
       return nodes.program(
-        assignExpr(options.captureObj, intermediate, node.right),
+        varDecl(intermediate, node.right),
         ...node.left.properties.map(prop => {
-          return assignExpr(options.captureObj, prop.key, member(member(options.captureObj, intermediate), prop.key));
+          if (refsToReplace.includes(prop.key)) {
+            return assignExpr(options.captureObj, prop.key, member(intermediate, prop.key));
+          } else {
+            return exprStmt(assign(prop.key, member(intermediate, prop.key)));
+          }
         }));
     }
 
