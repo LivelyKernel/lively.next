@@ -28,7 +28,7 @@ for dependant in need_to_check_deps:
         # check if some of the files we depend on have been changed
         with Sultan.load(logging=False) as s:
             modified_files = (
-                s.git(f"diff --name-only {target_branch_name}").run().stdout
+                s.git(f"diff --name-only origin/{target_branch_name}").run().stdout
             )
             if not modified_files:
                 print(f"✅ Build of {dependant} is up to date!\n")
