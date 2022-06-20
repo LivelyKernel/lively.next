@@ -2,7 +2,7 @@
 import { expect, chai } from 'mocha-es6';
 import ObjectDB from '../objectdb.js';
 import { fillDB1 } from './test-helper.js';
-import { promise } from 'lively.lang';
+import { promise, arr } from 'lively.lang';
 
 import { resource } from 'lively.resources';
 import { Database } from 'lively.storage';
@@ -67,9 +67,9 @@ describe('replication', function () {
       pouchDBForCommits, pouchDBForHist, replicationLocation, { replicationFilter: { onlyTypesAndNames: { ['world/' + world2.name]: true } } });
     await replication.waitForIt();
 
-    let commitReplicated = lively.lang.arr.uniq((await pouchDBForCommits.getAll()).map(ci => ci.name || ci._id)).sort();
+    let commitReplicated = arr.uniq((await pouchDBForCommits.getAll()).map(ci => ci.name || ci._id)).sort();
     expect(commitReplicated).equals(['_design/conflict_index', '_design/nameAndTimestamp_index', '_design/nameTypeFilter', '_design/nameWithMaxMinTimestamp_index', '_design/name_index', world2.name]);
-    let histReplicated = lively.lang.arr.uniq((await pouchDBForHist.getAll()).map(ci => ci._id)).sort();
+    let histReplicated = arr.uniq((await pouchDBForHist.getAll()).map(ci => ci._id)).sort();
     expect(histReplicated).equals(['_design/conflict_index', '_design/nameTypeFilter', `world/${world2.name}`]);
 
     let root = objectDB.snapshotLocation;

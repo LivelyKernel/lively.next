@@ -4,6 +4,7 @@ import { expect } from 'mocha-es6';
 
 import { StorageDatabase } from '../storage-resource.js';
 import { resource, createFiles } from 'lively.resources';
+import { date } from 'lively.lang';
 
 let dbName = 'test-storage-db'; let db;
 
@@ -180,8 +181,8 @@ describe('lively.storage resource', () => {
     it('retrieves file props', async () => {
       let r = resource(`lively.storage://${dbName}/file1.js`);
       let { size, lastModified, contentType } = await r.readProperties();
-      expect(lively.lang.date.format(lastModified, 'yyyy/mm/dd'))
-        .equals(lively.lang.date.format(new Date(), 'yyyy/mm/dd')); // beware those midnight test runs!
+      expect(date.format(lastModified, 'yyyy/mm/dd'))
+        .equals(date.format(new Date(), 'yyyy/mm/dd')); // beware those midnight test runs!
 
       if (contentType) { expect(contentType).includes('application/javascript'); }
     });

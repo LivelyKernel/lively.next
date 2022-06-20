@@ -15,7 +15,7 @@ describe('empty ObjectDB', function () {
     objectDB = ObjectDB.named('lively-morphic-objectdb-empty-test', { snapshotLocation: resource('local://lively-morphic-objectdb-empty-test/snapshots/') });
   });
 
-  after(() => objectDB.destroy());
+  after(async () => await objectDB.destroy());
 
   it('querying objects of empty DB', async () => {
     let objects = await objectDB.objects();
@@ -28,11 +28,12 @@ describe('basic API ObjectDB', function () {
 
   before(async () => {
     ({
-      part1, world1, world2,
+      part1, world2, world1,
       commit1, commit5, commit4, commit3, commit2,
       author1, author2,
       objectDB, snapshotLocation
     } = await fillDB1());
+    await promise.delay(1000);
   });
 
   after(async () => {
@@ -152,7 +153,7 @@ describe('loading objects', function () {
 
   before(async () => {
     ({
-      world1, world2,
+      world2, world1,
       commit1, commit4, commit3, commit2,
       author1, author2,
       objectDB, snapshotLocation
