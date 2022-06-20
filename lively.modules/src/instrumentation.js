@@ -337,7 +337,7 @@ function instrumentSourceOfEsmModuleLoad (System, load) {
     const depNames = registerCall.arguments[0].elements.map(ea => ea.value);
     const declareFuncNode = registerCall.arguments[1];
     const declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end);
-    const declare = eval(`var __moduleName = "${load.name}";\n(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
+    const declare = eval(`var SystemJS = System; var __moduleName = "${load.name}";\n(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
     if (System.debug && $world !== 'undefined' && $world.get('log') && $world.get('log').isText) { $world.get('log').textString = declare; }
 
     return { localDeps: depNames, declare: declare };
