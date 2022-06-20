@@ -1,4 +1,3 @@
-/* global System */
 import { string, arr } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 import { runEval } from 'lively.vm';
@@ -7,6 +6,7 @@ const objMetaSym = Symbol.for('lively-object-meta');
 const moduleSym = Symbol.for('lively-module-meta');
 // descriptorCache = new WeakMap();
 const descriptorCache = new Map();
+const localSystem = System;
 
 // SourceDescriptor: Represents a code object specified by a {start, end}
 // sourceLocation inside source code (moduleSource).
@@ -145,7 +145,7 @@ export class RuntimeSourceDescriptor {
     if (this._moduleSource && moduleSource && this._moduleSource !== moduleSource) { this.reset(); }
   }
 
-  get System () { return this._System || System; }
+  get System () { return this._System || localSystem; }
   set System (S) { this._System = S; }
 
   get module () {
@@ -156,7 +156,9 @@ export class RuntimeSourceDescriptor {
     let mId = mName.includes('://') ? mName : pName + '/' + mName;
     let m = this.System._scripting.module(System, mId);
 
-    if (!m._frozenModule && !m._source && this.moduleSource) { m.setSource(this.moduleSource); }
+    if (!m._frozenModule && !m._source && this.moduleSource) {
+      m.setSource(this.moduleSource);
+    }
     return m;
   }
 
@@ -252,7 +254,7 @@ export class RuntimeSourceDescriptor {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   changeSourceSync (newSource) {
-    let { module, System } = this;
+    let { System } = this;
     this._basicChangeSource(newSource);
     this.module.changeSource(this.moduleSource, { doSave: true });
     let result = runEval(newSource, { sync: true, targetModule: this.module.id, System });
@@ -263,7 +265,9 @@ export class RuntimeSourceDescriptor {
   async changeSource (newSource) {
     let { module } = this;
     await module.changeSourceAction(oldSource => {
-      if (oldSource !== this.moduleSource) { throw new Error(`source of module ${module.id} and source of ${this} don't match`); }
+      if (oldSource !== this.moduleSource) {
+        throw new Error(`source of module ${module.id} and source of ${this} don't match`);
+      }
       this._basicChangeSource(newSource);
       return this.moduleSource;
     });
