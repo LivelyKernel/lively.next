@@ -5,11 +5,14 @@ import { expect } from 'mocha-es6';
 import { classToFunctionTransform } from '../class-to-function-transform.js';
 
 import {
-  initializeClass,
+  initializeClass
+} from '../runtime.js';
+
+import {
   initializeSymbol,
   instanceRestorerSymbol,
   superclassSymbol
-} from '../runtime.js';
+} from '../util.js';
 
 import { runEval } from 'lively.vm/lib/eval.js';
 

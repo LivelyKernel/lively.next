@@ -4,10 +4,11 @@ import { string } from 'lively.lang';
 import { expect } from 'mocha-es6';
 import ObjectPackage, { ensureLocalPackage, addScript, ensureObjectClass } from '../object-classes.js';
 import { createFiles, resource } from 'lively.resources';
-import { getSystem, registerPackage, removeSystem } from 'lively.modules';
+import { getSystem, registerPackage, removeSystem, scripting } from 'lively.modules';
 import { importPackage, lookupPackage } from 'lively.modules/src/packages/package.js';
 import module from 'lively.modules/src/module.js';
 import { RuntimeSourceDescriptor } from '../source-descriptors.js';
+import { adoptObject } from 'lively.lang/object.js';
 
 let testBaseURL = 'local://object-scripting-test';
 let project1Dir = testBaseURL + '/project1/';
@@ -26,6 +27,7 @@ let S, opts, packagesToRemove;
 describe('object package', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testBaseURL });
+    S._scripting = scripting;
     opts = { baseURL: testBaseURL, System: S };
     await createFiles(testBaseURL, testResources);
     await importPackage(S, 'project1');
@@ -34,8 +36,12 @@ describe('object package', function () {
 
   afterEach(async () => {
     removeSystem('test');
-    await Promise.all(packagesToRemove.map(ea => ea.remove()));
-    return resource(testBaseURL).remove();
+    try {
+      await Promise.all(packagesToRemove.map(ea => ea.remove()));
+      await resource(testBaseURL).remove();
+    } catch (err) {
+
+    }
   });
 
   it('ensure object package', async () => {
@@ -80,22 +86,25 @@ describe('object package', function () {
       let p = ObjectPackage.withId('package-for-test', opts);
       packagesToRemove.push(p);
       await p.adoptObject(obj);
-      ObjectPackage.lookupPackageForObject(obj);
-      await addScript(obj, 'function(a) { return a + 1; }', 'foo', { baseURL: testBaseURL, System: S });
+      await addScript(obj, 'function(a) { return a + 1; }', 'foo', opts);
+      expect(p.objectModule.systemModule.recorder.PackageForTest.prototype.foo, 'foo is defined').not.to.be.undefined;
+      expect(obj.constructor).equals(p.objectModule.systemModule.recorder.PackageForTest);
       expect(obj.foo(1)).equals(2);
       expect(obj.constructor.prototype.foo).equals(obj.foo, 'not method of object class');
-      await addScript(obj, 'function(a) { return 22; }', 'bar', { baseURL: testBaseURL, System: S });
+      await addScript(obj, 'function(a) { return 22; }', 'bar', opts);
+      expect(p.objectModule.systemModule.recorder.PackageForTest.prototype.bar, 'bar is defined').not.to.be.undefined;
       expect(obj.foo(1)).equals(2);
       expect(obj.bar()).equals(22);
     });
 
-    it('of object with anonymouse class', async () => {
+    it('to object with anonymous class', async () => {
       let obj = new (class { x () { return 23; }})();
       let p = ObjectPackage.withId('package-for-test', opts);
       packagesToRemove.push(p);
       await p.adoptObject(obj);
       expect(obj.x()).equals(23, '1');
-      addScript(obj, 'function(a) { return a + 1; }', 'foo', { baseURL: testBaseURL, System: S });
+      await addScript(obj, 'function(a) { return a + 1; }', 'foo', { ...opts, package: p });
+      expect(obj.foo(22)).equals(23);
       expect(obj.x()).equals(23, '2');
     });
 

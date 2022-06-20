@@ -24,6 +24,7 @@ describe('source descriptors', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testDir });
     // S.debug = true
+    S._scripting = System._scripting;
     await createFiles(testDir, testResources);
     await importPackage(S, 'project1');
   });

@@ -136,13 +136,13 @@ describe('class transform', () => {
 }]`, 'undefined', '_rec', 'undefined', 0, 46)));
 
   it('super call in constructor is converted to initialize call', () =>
-    expect(stringify(classToFunctionTransform('class Foo {constructor(arg) { super(arg, 23); }}', opts))).to.equal(
-      classTemplateDecl('Foo', 'undefined', `[{
+    expect(stringify(classToFunctionTransform('class Foo extends Object { constructor(arg) { super(arg, 23); } }', opts))).to.equal(
+      classTemplateDecl('Foo', 'Object', `[{
   key: Symbol.for("lively-instance-initialize"),
   value: function Foo_initialize_(arg) {
     initializeClass._get(Object.getPrototypeOf(__lively_class__.prototype), Symbol.for("lively-instance-initialize"), this).call(this, arg, 23);
   }
-}]`, 'undefined', '_rec', 'undefined', 0, 48)));
+}]`, 'undefined', '_rec', 'undefined', 0, 65)));
 
   it('with export default', () =>
     expect(stringify(classToFunctionTransform('export default class Foo {}', opts))).to.equal(
