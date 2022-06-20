@@ -420,7 +420,7 @@ describe('object migrations', () => {
     ];
     let copy = deserializeWithMigrations(serialize(obj), migrations);
 
-    expect(copy).deep.equals({ _rev: 0, foo: { _rev: 0, baz: 24 } });
+    expect(copy).deep.equals({ foo: { baz: 24 } });
   });
 
   it('applies object converters', () => {
@@ -436,7 +436,7 @@ describe('object migrations', () => {
     let copy = deserializeWithMigrations(serialize(obj), migrations);
 
     expect(obj).deep.equals({ foo: { bar: 23 } });
-    expect(copy).deep.equals({ _rev: 0, foo: { _rev: 0, bar: 24 } });
+    expect(copy).deep.equals({ foo: { bar: 24 } });
   });
 });
 
