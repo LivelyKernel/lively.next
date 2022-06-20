@@ -1,4 +1,7 @@
 #!/bin/bash
+# This script is used by the CI test running pipeline.
+# It executes all tests present in the test folders of the packages specified in `testfiles`.
+# It is not possible to run only some selected packages (only when modifying the below array).
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
 # On mac, make sure to habe `gsed` installed.
 
