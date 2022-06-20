@@ -1,19 +1,11 @@
-import { arr, Path, promise, obj } from 'lively.lang';
-import { registerExtension, Resource, resource } from 'lively.resources';
+import { arr, tree, Path, promise, obj } from 'lively.lang';
+import { resource } from 'lively.resources';
 import { pt } from 'lively.graphics';
-import { ObjectPool, copy, ExpressionSerializer, allPlugins, normalizeOptions } from 'lively.serializer2';
-import { subscribeOnce } from 'lively.notifications';
+import { copy, ExpressionSerializer } from 'lively.serializer2';
 import { once } from 'lively.bindings';
-import * as ast from 'lively.ast';
-
-import MorphicDB from '../morphicdb/db.js';
 import { ProportionalLayout } from '../layout.js';
-import { deserializeMorph, loadPackagesAndModulesOfSnapshot } from '../serialization.js';
 
-let localNamePromise;
-const modulesToLoad = modulesToLoad || {}; // eslint-disable-line no-use-before-define
-const masterComponentFetches = masterComponentFetches || {}; // eslint-disable-line no-use-before-define
-const worldToUrl = worldToUrl || {}; // eslint-disable-line no-use-before-define
+const exprSerializer = new ExpressionSerializer();
 
 // debugging
 export function getOverriddenPropsFor (aMorph) {
@@ -59,80 +51,54 @@ export function findLocalComponents (snapshot) {
     .map(m => m.props.name.value);
 }
 
-function getProjectName (world) {
-  return Path('metadata.commit.name').get(world) || world.name;
-}
+/**
+ * This is an abstract policy, that is not applied to an actual morph
+ * but instead is stored inside the internal spec representation of the
+ * master component system. Its main purpose is to manage and synthesize
+ * specs that can then be used for 1.) deriving new morphs or 2.) applying styles
+ */
+export class InlinePolicy {
+  constructor (spec) {
+    this.spec = spec;
+    this.prepareIndex();
+  }
 
-function ensureAbsoluteComponentRefs (
-  {
-    snapshotAndPackages,
-    localComponents = findLocalComponents(snapshot),
-    localWorldName = Path('metadata.commit.name').get($world)
-  }) {
-  const { packages } = snapshotAndPackages;
-  // transform the code inside tha packages in case the reference local components
-  Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
-    // parse each module for local component references part://$world or styleguide://$world and replace
-    // with absolute version
-    // IF THE SNAPSHOT DOES NOT INCLUDE THAT LOCAL COMPONENT
-    Object.entries(pkgModules).forEach(([moduleName, source]) => {
-      if (moduleName.endsWith('.json')) return;
-      const parsed = ast.parse(source);
-      const nodesToReplace = [];
-      ast.AllNodesVisitor.run(parsed, (node, path) => {
-        if (node.type === 'Literal' && typeof node.value === 'string') {
-          if (node.value.match(/^styleguide:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('styleguide://$world/', ''))) {
-            nodesToReplace.push({
-              target: node,
-              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
-            });
-          }
-          if (node.value.match(/^part:\/\/\$world\/.+/) && !localComponents.includes(node.value.replace('part://$world/', ''))) {
-            nodesToReplace.push({
-              target: node,
-              replacementFunc: () => JSON.stringify(node.value.replace('$world', localWorldName))
-            });
-          }
-        }
-      });
-      pkgModules[moduleName] = ast.transform.replaceNodes(nodesToReplace, source).source;
-    });
-  });
-}
+  get isPolicy () { return true; }
 
-const exprSerializer = new ExpressionSerializer();
+  prepareIndex () {
+    this.subSpecIndex = {};
+    tree.prewalk(this.spec, node => {
+      this.subSpecIndex[node.name] = node;
+    }, node => !node.isPolicy && node.submorphs);
+  }
 
-export class StyleguidePlugin {
-  afterSerialization (pool, snapshot, rootId) {
-    // determine all components that are part of this snapshot and could be resolved locally
-    // all the other ones are left as absolute paths
+  determineMaster (targetMorph) {
+    const { master } = this.spec; // masters are specified in the spec
+    if (!master) return this; // we are the one responsible
+    // now return based on the state of target Morph...
+  }
 
-    // also check for all morphs that can not be resolved locally yet declared as local
-    // in those cases convert to absolute references
-    const masterURLRemapping = {};
-    const localComponentUrl = `styleguide://${getProjectName($world)}`;
-    findLocalComponents(snapshot).forEach(componentName =>
-      masterURLRemapping[`${localComponentUrl}/${componentName}`] = `styleguide://$world/${componentName}`
-    );
-    Object.values(snapshot).forEach((entry) => {
-      if (!entry.props) return;
-      const { master } = entry.props;
-      if (master && master.value && obj.isString(master.value)) {
-        for (const url in masterURLRemapping) {
-          if (Object.values(pool.expressionSerializer.deserializeExpr(master.value)).includes(url)) {
-            master.value = master.value.split(url).join(masterURLRemapping[url]);
-          }
-        }
-        // master.value = master.value.split(localComponentUrl).join('styleguide://$world'); // NO! this can not nessecarily be resolved since the master components are not carried over. what is this supposed to do??
-      }
-    });
+  getSubSpecFor (submorphName) {
+    return this.subSpecIndex[submorphName]; // this may also be a sub policy!
+  }
+
+  // spec stuff
+  synthesizeSpec (submorphNameInPolicyContext, policy, targetMorph) {
+    let subSpec = policy.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
+    if (!subSpec) return {}; // policy does not manage the morph at all
+    const qualifyingMaster = policy.determineMaster(targetMorph);
+    let nextLevelSpec = {};
+    if (qualifyingMaster.isComponentDescriptor) {
+      nextLevelSpec = qualifyingMaster.getSubSpecFor(submorphNameInPolicyContext); // extract the proper sub spec
+    }
+    if (qualifyingMaster.isPolicy) {
+      nextLevelSpec = qualifyingMaster.synthesizeSpec(submorphNameInPolicyContext, qualifyingMaster, targetMorph);
+    }
+
+    return { ...nextLevelSpec, ...subSpec };
   }
 }
 
-// once(ComponentPolicy[Symbol.for("lively-module-meta")].package, 'name', () => { debugger })
-// ComponentPolicy[Symbol.for("lively-module-meta")].package.name
-// meta = ComponentPolicy[Symbol.for("lively-module-meta")]
-// meta === ComponentPolicy[Symbol.for("lively-module-meta")]
 export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
@@ -203,17 +169,9 @@ export class ComponentPolicy {
 
   equals (other) {
     if (!other) return false;
-    if (typeof other === 'string') {
-      other = other.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
-      let self = this.getResourceUrlFor(this.auto);
-      if (self) self = self.replace('styleguide://$world', `styleguide://${getProjectName($world)}`);
-      return self === other;
-    }
     if (other.auto === this) return true;
     for (const master of ['auto', 'click', 'hover']) {
-      if (typeof other[master] === 'string') {
-        if (this.getResourceUrlFor(this[master]) !== other[master] || null) return false;
-      } else if ((this[master] || null) !== (other[master] || null)) return false;
+      if ((this[master] || null) !== (other[master] || null)) return false;
     }
     return true;
   }
@@ -317,22 +275,6 @@ export class ComponentPolicy {
 
   async whenReady () {
     await this._hasUnresolvedMaster;
-  }
-
-  getResourceUrlFor (component) {
-    if (!component) return null;
-    if (component._resourceHandle) return component._resourceHandle.url.replace('$world', getProjectName($world)); // we leave this being for remote masters :)
-    if (component.name === undefined) return null;
-    // else we assume the component resides within the current world
-    return `styleguide://${getProjectName($world)}/${component.name}`;
-  }
-
-  getWorldUrlFor (component) {
-    const worldOfMaster = resource(typeof component === 'string ' ? component : this.getResourceUrlFor(component)).worldName;
-    if (worldOfMaster === getProjectName($world)) {
-      return document.location.href;
-    }
-    return worldToUrl[worldOfMaster];
   }
 
   async resolveMasterComponents () {
@@ -459,7 +401,7 @@ export class ComponentPolicy {
    * @param { Morph } submorphInPolicyContext - The current morph in the policy context to consult.
    * @param { ComponentPolicy } policy - The current policy to check for overridden props.
    * @param { Morph } targetMorph - The morph the policy is going to apply to.
-   * @param { boolean } includeTopLevelComponent - Wether or not to collect to properties in the top level component as well.
+   * @param { boolean } includeTopLevelComponent - Wether or not to collect the properties in the top level component as well.
    */
   synthesizeProperties (submorphInPolicyContext, policy, targetMorph, includeTopLevelComponent = true) {
     // recursively synthesize the style properties
@@ -470,8 +412,8 @@ export class ComponentPolicy {
     const nextLevelSynthesizedProps = new WeakMap();
     const qualifyingMaster = policy.determineMaster(targetMorph);
     let correspondingMasterSubmorph;
-    if (qualifyingMaster && qualifyingMaster.isComponent) {
-      correspondingMasterSubmorph = isRoot ? qualifyingMaster : this.findCorrespondingMasterIn(qualifyingMaster, submorphInPolicyContext);
+    if (qualifyingMaster.isComponent) {
+      correspondingMasterSubmorph = isRoot ? qualifyingMaster : this.findCorrespondingMasterIn(qualifyingMaster, submorphInPolicyContext); // why is this separate search needed?
     }
     let synthesizedPropsOfTopLevelMaster;
     // this needs to be done only if the master is overridden locally
@@ -483,7 +425,7 @@ export class ComponentPolicy {
         synthesizedProps[prop] = submorphInPolicyContext[prop]; // ref issue are handled by the application code
         continue;
       }
-      // 2. if the property is not overridden locally, then we investigate further and ask the approproiate
+      // 2. if the property is not overridden locally, then we investigate further and ask the appropriate
       //    qualifying master the policy would suggest instead
       // 2.A: The qualifying master is itself again a policy
       if (qualifyingMaster.isPolicy) {
