@@ -1,12 +1,18 @@
+/* global global,self */
 import { string, arr } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 import { runEval } from 'lively.vm';
 
 const objMetaSym = Symbol.for('lively-object-meta');
 const moduleSym = Symbol.for('lively-module-meta');
+let G = typeof window !== 'undefined'
+  ? window
+  : typeof global !== 'undefined'
+    ? global
+    : typeof self !== 'undefined' ? self : this;
 // descriptorCache = new WeakMap();
 const descriptorCache = new Map();
-const localSystem = System;
+const localSystem = G.System;
 
 // SourceDescriptor: Represents a code object specified by a {start, end}
 // sourceLocation inside source code (moduleSource).
