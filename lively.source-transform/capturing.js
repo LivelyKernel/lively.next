@@ -19,7 +19,8 @@ const {
   exprStmt,
   conditional,
   binaryExpr,
-  funcCall
+  funcCall,
+  block
 } = nodes;
 const { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
 const { transformSingleExpression, wrapInStartEndCall } = transform;
@@ -292,6 +293,7 @@ function replaceRefs (parsed, options) {
   const topLevel = topLevelDeclsAndRefs(parsed);
   const refsToReplace = topLevel.refs.filter(ref => shouldRefBeCaptured(ref, topLevel, options));
   const locallyIgnored = [];
+  let intermediateCounter = 0;
 
   const replaced = ReplaceVisitor.run(parsed, (node, path) => {
     // cs 2016/06/27, 1a4661
@@ -328,6 +330,16 @@ function replaceRefs (parsed, options) {
           options.captureObj,
           options)
       };
+    }
+
+    // declaration wrapper for destructuring assignments like ({ a, b, c } = d); => _inter = d; _rec.a = _inter.a; _rec.b = _inter.b; _rec.c = _inter.c;a
+    if (node.type === 'AssignmentExpression' && node.left.type === 'ObjectPattern') {
+      const intermediate = id(`__inter${intermediateCounter++}__`);
+      return nodes.program(
+        assignExpr(options.captureObj, intermediate, node.right),
+        ...node.left.properties.map(prop => {
+          return assignExpr(options.captureObj, prop.key, member(member(options.captureObj, intermediate), prop.key));
+        }));
     }
 
     return node;
