@@ -713,16 +713,17 @@ const commands = [
 
   {
     name: 'diff and open in window',
-    exec: async (world, opts = { a: '', b: '', format: null, extent: pt(500, 600) }) => {
+    exec: async (world, opts = {}) => {
       // $world.execCommand("diff and open in window", {a: {foo: 23}, b: {bax: 23, foo: 23}})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffChars"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "diffSentences"})
       // $world.execCommand("diff and open in window", {a: "Hello\nworld", b: "Helo\nworld", format: "patch"})
 
-      let { a, b, format, extent } = opts;
-      if (!format) ({ a, b, format } = findFormat(a, b));
-      else { a = String(a); b = String(b); }
+      let { a = '', b = '', format = null, extent = pt(500, 600) } = opts;
+      if (!format) {
+        ({ a, b, format } = findFormat(a, b));
+      } else { a = String(a); b = String(b); }
 
       const diff = await System.import('esm://cache/diff@5.0.0');
 
