@@ -252,6 +252,7 @@ var defaultSystem = defaultSystem || prepareSystem(GLOBAL.System);
 function changeSystem (newSystem, makeGlobal) {
   defaultSystem = newSystem;
   if (makeGlobal) GLOBAL.System = newSystem;
+  newSystem._scripting = scripting;
   return newSystem;
 }
 function wrapModuleResolution () { _wrapModuleResolution(defaultSystem); }
