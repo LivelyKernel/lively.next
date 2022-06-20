@@ -283,8 +283,8 @@ class ObjectModule {
 
     const { System, systemModule: module, objectPackage } = this;
     className = className || string.capitalize(toJsIdentifier(objectPackage.id));
-    let superClassName = superClass[Symbol.for('__LivelyClassName__')];
-    const isAnonymousSuperclass = !superClassName;
+    let superClassName = superClass[Symbol.for('__LivelyClassName__')] || superClass.name;
+    const isAnonymousSuperclass = !superClassName || superClassName == 'anonymous_class';
     const globalSuperClass = globalClasses().includes(superClass);
     let source = '';
     let bindings = null;
@@ -292,6 +292,7 @@ class ObjectModule {
     if (isAnonymousSuperclass) {
       superClassName = '__anonymous_superclass__';
       bindings = { [superClassName]: superClass };
+      source += 'let __anonymous_superclass__ = __anonymous_superclass__;\n'; // to capture the variable
     } else if (!globalSuperClass) {
       const exportForClass = await ExportLookup.findExportOfValue(superClass, System);
       if (exportForClass) {
@@ -310,6 +311,12 @@ class ObjectModule {
       : `class ${className} extends ${superClassName} {}\n`;
     source += `export default ${classSource}\n`;
 
+    if (!module.isLoaded()) {
+      await module.setSource('"format esm";');
+      if (isAnonymousSuperclass) {
+        module.recorder[superClassName] = superClass; // how to ensure that when we add a script to the module?
+      }
+    }
     await module.changeSource(source);
     await module.load();
 
