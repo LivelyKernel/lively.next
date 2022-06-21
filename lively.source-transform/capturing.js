@@ -332,16 +332,16 @@ function replaceRefs (parsed, options) {
       };
     }
 
-    // declaration wrapper for destructuring assignments like ({ a, b, c } = d); => _inter = d; _rec.a = _inter.a; _rec.b = _inter.b; _rec.c = _inter.c;a
+    // declaration wrapper for destructuring assignments like ({ a: blub, b, c } = d); => _inter = d; _rec.a = _inter.a; _rec.b = _inter.b; _rec.c = _inter.c;a
     if (node.type === 'AssignmentExpression' && node.left.type === 'ObjectPattern') {
       const intermediate = id(`__inter${intermediateCounter++}__`);
       return nodes.program(
         varDecl(intermediate, node.right),
         ...node.left.properties.map(prop => {
-          if (refsToReplace.includes(prop.key)) {
-            return assignExpr(options.captureObj, prop.key, member(intermediate, prop.key));
+          if (refsToReplace.includes(prop.value)) {
+            return assignExpr(options.captureObj, prop.value, member(intermediate, prop.key));
           } else {
-            return exprStmt(assign(prop.key, member(intermediate, prop.key)));
+            return exprStmt(assign(prop.value, member(intermediate, prop.key)));
           }
         }));
     }
