@@ -1197,7 +1197,7 @@ class Visitor {
   visitFunctionDeclaration (node, state, path) {
     const visitor = this;
     // id is of types Identifier
-    node.id = visitor.accept(node.id, state, path.concat(['id']));
+    if (node.id) { node.id = visitor.accept(node.id, state, path.concat(['id'])); }
     // params is a list with types Pattern
     const newElements = [];
     for (let i = 0; i < node.params.length; i++) {
