@@ -1,5 +1,6 @@
 #!/bin/bash
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
+# On mac, make sure to habe `gsed` installed.
 
 TESTED_PACKAGES=0
 GREEN_TESTS=0
@@ -56,7 +57,7 @@ then
     exit 1
   fi
 
-  if grep ':9011' > /dev/null <<< "$ACTIVE_PORTS"; then
+  if grep -E '(:9011|.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
     echo "Found a running lively server that will be used for testing."
   else
     echo "No local lively server was found. Start one to run tests on."
@@ -78,7 +79,15 @@ for package in "${testfiles[@]}"; do
   fi
   # echo output without the summary stats
   output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
-  echo "$output" | sed -s -e 's/SUMMARY.*$//g'
+  
+  if uname | grep 'Linux' > /dev/null; then
+    echo "$output" | sed -s -e 's/SUMMARY.*$//g'
+  elif uname | grep 'Darwin' > /dev/null; then
+    echo "$output" | gsed -s -e 's/SUMMARY.*$//g'
+   else 
+    cat "Only MacOS and Linux are supported at the moment."
+    exit 1
+  fi
 
   #parse summary parts and adjust env variables for overall stats
   green=$(echo "$output" | grep -o -P '(?<=SUMMARY-passed:)\d+')
