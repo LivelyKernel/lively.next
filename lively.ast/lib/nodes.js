@@ -1,28 +1,3 @@
-export {
-  isIdentifier,
-  id,
-  literal,
-  objectLiteral,
-  prop,
-  exprStmt,
-  returnStmt,
-  empty,
-  binaryExpr,
-  funcExpr,
-  funcCall,
-  varDecl,
-  member,
-  memberChain,
-  assign,
-  block,
-  program,
-  tryStmt,
-  ifStmt,
-  forIn,
-  conditional,
-  logical
-};
-
 const identifierRe = /[_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*$/;
 function isIdentifier (string) {
   // Note: It's not so easy...
@@ -36,6 +11,13 @@ function id (name) { return name === 'this' ? { type: 'ThisExpression' } : { nam
 function literal (value) { return { type: 'Literal', value: value }; }
 
 function exprStmt (expression) { return { type: 'ExpressionStatement', expression: expression }; }
+
+function sqncExpr (...expressions) {
+  return {
+    type: 'SequenceExpression',
+    expressions
+  };
+}
 
 function returnStmt (expr) { return { type: 'ReturnStatement', argument: expr }; }
 
@@ -59,7 +41,8 @@ function funcExpr ({ arrow, id: funcId, expression, generator }, params = [], ..
     id: funcId ? (typeof funcId === 'string' ? id(funcId) : funcId) : undefined,
     params: params,
     body: expression && statements.length === 1
-      ? statements[0] : { body: statements, type: 'BlockStatement' },
+      ? statements[0]
+      : { body: statements, type: 'BlockStatement' },
     expression: expression || false,
     generator: generator || false
   };
@@ -219,3 +202,29 @@ function logical (op, left, right) {
     type: 'LogicalExpression'
   };
 }
+
+export {
+  isIdentifier,
+  id,
+  literal,
+  objectLiteral,
+  prop,
+  exprStmt,
+  returnStmt,
+  empty,
+  sqncExpr,
+  binaryExpr,
+  funcExpr,
+  funcCall,
+  varDecl,
+  member,
+  memberChain,
+  assign,
+  block,
+  program,
+  tryStmt,
+  ifStmt,
+  forIn,
+  conditional,
+  logical
+};
