@@ -90,9 +90,10 @@ for package in "${testfiles[@]}"; do
   fi
 
   #parse summary parts and adjust env variables for overall stats
-  green=$(echo "$output" | grep -o -P '(?<=SUMMARY-passed:)\d+')
-  red=$(echo "$output" | grep -o -P '(?<=SUMMARY-failed:)\d+')
-  skipped=$(echo "$output" | grep -o -P '(?<=SUMMARY-skipped:)\d+')
+  # For perl magic see: https://stackoverflow.com/a/16658690
+  green=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-passed:)\d+}g')
+  red=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-failed:)\d+}g')
+  skipped=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-skipped:)\d+}g')
   ((GREEN_TESTS+=green))
   ((RED_TESTS+=red))
   ((SKIPPED_TESTS+=skipped))
