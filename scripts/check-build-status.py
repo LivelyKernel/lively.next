@@ -36,7 +36,7 @@ for dependant in need_to_check_deps:
             modified_deps = [
                 file
                 for file in modified_files
-                if any(dep in file for dep in in_house_deps)
+                if any(dep+'/' in file for dep in in_house_deps)
             ]
             if not modified_deps:
                 print(f"✅ Build of {dependant} is up to date!\n")
@@ -64,7 +64,7 @@ for dependant in need_to_check_deps:
                 # If this is not the case, we need to rebuild.
                 # The return value of `os.system()` is a bit weird. 256 means bash return code 1.
                 # See https://stackoverflow.com/a/35362488
-                test = os.system(f"git rev-list {commit_of_build} | grep {commit}")
+                test = os.system(f"git rev-list {commit_of_build} | grep {commit} > /dev/null")
                 if test == 256:
                     print(f"❌ {dependant} needs to be rebuild!")
                     print(
