@@ -1,4 +1,5 @@
 #!/bin/bash
+# For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
 
 TESTED_PACKAGES=0
 GREEN_TESTS=0
@@ -46,7 +47,16 @@ testfiles=(
 
 if [ ! "$CI" ];
 then
-  if ss -lt | grep ':9011' > /dev/null; then
+  if uname | grep 'Linux' > /dev/null; then
+    ACTIVE_PORTS=$(ss -lt)
+  elif uname | grep 'Darwin' > /dev/null; then
+    ACTIVE_PORTS=$(netstat -tunlp tcp)
+  else 
+    cat "Only MacOS and Linux are supported at the moment."
+    exit 1
+  fi
+
+  if grep ':9011' > /dev/null <<< "$ACTIVE_PORTS"; then
     echo "Found a running lively server that will be used for testing."
   else
     echo "No local lively server was found. Start one to run tests on."
