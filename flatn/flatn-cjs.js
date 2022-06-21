@@ -3,10 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var path = require('path');
-var child_process = require('child_process');
 var fs = require('fs');
-var os = require('os');
-require('events');
 var util = require('util');
 var http = require('http');
 var https = require('https');
@@ -15,6 +12,9 @@ var Stream = require('stream');
 var buffer = require('buffer');
 var url = require('url');
 var net = require('net');
+require('events');
+var child_process = require('child_process');
+var os = require('os');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -25,2225 +25,7 @@ var https__default = /*#__PURE__*/_interopDefaultLegacy(https);
 var zlib__default = /*#__PURE__*/_interopDefaultLegacy(zlib);
 var Stream__default = /*#__PURE__*/_interopDefaultLegacy(Stream);
 
-/* global clearTimeout, setTimeout */
-
-// -=-=-=-=-=-
-// inspection
-// -=-=-=-=-=-
-
-/**
- * Extract the names of all parameters for a given function object.
- * @param { function } f - The function object to extract the parameter names of.
- * @returns { String[] }
- * @example
- * argumentNames(function(arg1, arg2) {}) // => ["arg1","arg2"]
- * argumentNames(function() {}) // => []
- */
-function argumentNames (f) {
-  if (f.superclass) return []; // it's a class...
-  const src = f.toString(); let names = '';
-  const arrowMatch = src.match(/(?:\(([^\)]*)\)|([^\(\)-+!]+))\s*=>/);
-  if (arrowMatch) names = arrowMatch[1] || arrowMatch[2] || '';
-  else {
-    const headerMatch = src.match(/^[\s\(]*function[^(]*\(([^)]*)\)/);
-    if (headerMatch && headerMatch[1]) names = headerMatch[1];
-  }
-  return names.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
-    .replace(/\s+/g, '').split(',')
-    .map(function (ea) { return ea.trim(); })
-    .filter(function (name) { return !!name; });
-}
-
-/**
- * Utility functions that help to inspect, enumerate, and create JS objects
- * @module lively.lang/object
- */
-
-// -=-=-=-=-=-=-=-=-
-// internal helper
-// -=-=-=-=-=-=-=-=-
-
-// serveral methods in lib/object.js are inspired or derived from
-// Prototype JavaScript framework, version 1.6.0_rc1
-// (c) 2005-2007 Sam Stephenson
-// Prototype is freely distributable under the terms of an MIT-style license.
-// For details, see the Prototype web site: http://www.prototypejs.org/
-
-/**
- * Returns a stringified representation of an object.
- * @param { object } object - The object to generate a stringified representation for.
- * @returns { string } The stringified, formatted representation of the object.
- */
-function print (object) {
-  if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
-  if (typeof object !== 'string') { return String(object); }
-  let result = String(object);
-  result = result.replace(/\n/g, '\\n\\\n');
-  result = result.replace(/(")/g, '\\$1');
-  result = '\"' + result + '\"';
-  return result;
-}
-
-/**
- * Shifts the string a number of times to the right by the contents of `indentString`.
- * @param { string } str - The string whose contents to shift.
- * @param { string } indentString - The string to insert on the left.
- * @param { number } depth - The number of times to indent `str` by.
- */
-function indent (str, indentString, depth) {
-  if (!depth || depth <= 0) return str;
-  while (depth > 0) { depth--; str = indentString + str; }
-  return str;
-}
-
-// -=-=-=-=-=-
-// inspection
-// -=-=-=-=-=-
-
-/**
- * Prints a human-readable representation of `obj`. The printed
- * representation will be syntactically correct JavaScript but will not
- * necessarily evaluate to a structurally identical object. `inspect` is
- * meant to be used while interactivively exploring JavaScript programs and
- * state.
- * @param { Object } object - The JavaScript Object to be inspected.
- * @param { InspectOptions } options -
- * @param { Boolean } options.printFunctionSource - Wether or not to show closures' source code.
- * @param { Boolean } options.escapeKeys - Wether or not to escape special characters.
- * @param { Number } options.maxDepth - The maximum depth upon which to inspect the object.
- * @param { Function } options.customPrinter - Custom print function that returns an alternative string representation of values.
- * @param { Number } options.maxNumberOfKeys - Limit the number of keys to be printed of an object.
- * @param { Function } options.keySorter - Custom sorting function to define the order in which object key/value pairs are printed.
- */
-function inspect (object, options, depth) {
-  options = options || {};
-  depth = depth || 0;
-
-  if (options.customPrinter) {
-    const ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
-    const continueInspectFn = (obj) => inspect(obj, options, depth + 1);
-    const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
-    if (customInspected !== ignoreSignal) return customInspected;
-  }
-  if (!object) return print(object);
-
-  // print function
-  if (typeof object === 'function') {
-    return options.printFunctionSource
-      ? String(object)
-      : 'function' + (object.name ? ' ' + object.name : '') +
-      '(' + argumentNames(object).join(',') + ') {/*...*/}';
-  }
-
-  // print "primitive"
-  switch (object.constructor) {
-    case String:
-    case Boolean:
-    case RegExp:
-    case Number: return print(object);
-  }
-
-  if (typeof object.serializeExpr === 'function') { return object.serializeExpr(); }
-
-  const isArray = object && Array.isArray(object);
-  const openBr = isArray ? '[' : '{'; const closeBr = isArray ? ']' : '}';
-  if (options.maxDepth && depth >= options.maxDepth) { return openBr + '/*...*/' + closeBr; }
-
-  let printedProps = [];
-  if (isArray) {
-    printedProps = object.map(function (ea) { return inspect(ea, options, depth + 1); });
-  } else {
-    let propsToPrint = Object.keys(object)
-      .sort(function (a, b) {
-        const aIsFunc = typeof object[a] === 'function';
-        const bIsFunc = typeof object[b] === 'function';
-        if (aIsFunc === bIsFunc) {
-          if (a < b) return -1;
-          if (a > b) return 1;
-          return 0;
-        }
-        return aIsFunc ? 1 : -1;
-      });
-    if (typeof options.keySorter === 'function') {
-      propsToPrint = propsToPrint.sort(options.keySorter);
-    }
-    for (let i = 0; i < propsToPrint.length; i++) {
-      if (i > (options.maxNumberOfKeys || Infinity)) {
-        const hiddenEntryCount = propsToPrint.length - i;
-        printedProps.push(`...${hiddenEntryCount} hidden ${hiddenEntryCount > 1 ? 'entries' : 'entry'}...`);
-        break;
-      }
-      const key = propsToPrint[i];
-      if (isArray) inspect(object[key], options, depth + 1);
-      const printedVal = inspect(object[key], options, depth + 1);
-      printedProps.push((options.escapeKeys
-        ? JSON.stringify(key)
-        : key) + ': ' + printedVal);
-    }
-  }
-
-  if (printedProps.length === 0) { return openBr + closeBr; }
-
-  let printedPropsJoined = printedProps.join(', ');
-  const useNewLines = (!isArray || options.newLineInArrays) &&
-        (!options.minLengthForNewLine ||
-        printedPropsJoined.length >= options.minLengthForNewLine);
-  const ind = indent('', options.indent || '  ', depth);
-  const propIndent = indent('', options.indent || '  ', depth + 1);
-  const startBreak = useNewLines && !isArray ? '\n' + propIndent : '';
-  const eachBreak = useNewLines ? '\n' + propIndent : '';
-  const endBreak = useNewLines && !isArray ? '\n' + ind : '';
-  if (useNewLines) printedPropsJoined = printedProps.join(',' + eachBreak);
-  return openBr + startBreak + printedPropsJoined + endBreak + closeBr;
-}
-
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
-
-// Generated by CoffeeScript 1.10.0
-(function() {
-
-}).call(commonjsGlobal);
-
-/* global btoa,JsDiff */
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-
-// file system path support
-// -=-=-=-=-=-=-=-=-=-=-=-=-
-const pathDotRe$1 = /\/\.\//g;
-const pathDoubleDotRe$1 = /\/[^\/]+\/\.\./;
-const pathDoubleSlashRe$1 = /(^|[^:])[\/]+/g;
-const urlStartRe = /^[a-z0-9-_\.]+:\/\//;
-const slashEndRe$1 = /\/+$/;
-
-function normalizePath$1 (pathString) {
-  const urlStartMatch = pathString.match(urlStartRe);
-  const urlStart = urlStartMatch ? urlStartMatch[0] : null;
-  let result = urlStart ? pathString.slice(urlStart.length) : pathString;
-  // /foo/../bar --> /bar
-  do {
-    pathString = result;
-    result = pathString.replace(pathDoubleDotRe$1, '');
-  } while (result != pathString);
-  // foo//bar --> foo/bar
-  result = result.replace(pathDoubleSlashRe$1, '$1/');
-  // foo/./bar --> foo/bar
-  result = result.replace(pathDotRe$1, '/');
-  if (urlStart) result = urlStart + result;
-  return result;
-}
-
-/**
- * Joins the strings passed as paramters together so that ea string is
- * connected via a single "/".
- * @example
- * string.joinPath("foo", "bar") // => "foo/bar";
- * @params { string[] } paths - The set of paths to be joined.
- * @returns { string } The joined path.
- */
-function joinPath (/* paths */) {
-  return normalizePath$1(
-    Array.prototype.slice.call(arguments).reduce((path, ea) =>
-      typeof ea === 'string'
-        ? path.replace(/\/*$/, '') + '/' + ea.replace(/^\/*/, '')
-        : path));
-}
-
-/**
- * Given a path such as "path/to/file" returns a folderized version
- * such as: "path/to/file/".
- * @param {string} pathString - The path to transform.
- * @returns { string } The transformed path;
- */
-function ensureFolder (pathString) {
-  return pathString.replace(slashEndRe$1, '') + '/';
-}
-
-function applyExclude$1 (exclude, resources) {
-  if (Array.isArray(exclude)) {
-    return exclude.reduce((intersect, exclude) =>
-      applyExclude$1(exclude, intersect), resources);
-  }
-  if (typeof exclude === 'string') { return resources.filter(ea => ea.path() !== exclude && ea.name() !== exclude); }
-  if (exclude instanceof RegExp) { return resources.filter(ea => !exclude.test(ea.path()) && !exclude.test(ea.name())); }
-  if (typeof exclude === 'function') { return resources.filter(ea => !exclude(ea)); }
-  return resources;
-}
-
-/*
-
-applyExclude(["foo", "foo"], [
-  {path: () => "foo", name: () => "foo"},
-  {path: () => "bar", name: () => "bar"},
-  {path: () => "baz", name: () => "baz"}
-])
-
-applyExclude(["bar", "foo"], [
-  {path: () => "foo", name: () => "foo"},
-  {path: () => "bar", name: () => "bar"},
-  {path: () => "baz", name: () => "baz"}
-])
-
-*/
-
-// parseQuery('?hello=world&x={"foo":{"bar": "baz"}}')
-// parseQuery("?db=test-object-db&url=lively.morphic%2Fworlds%2Fdefault.json&type=world&name=default&commitSpec=%7B%22user%22%3A%7B%22name%22%3A%22robert%22%2C%22realm%22%3A%22https%3A%2F%2Fauth.lively-next.org%22%2C%22email%22%3A%22robert%40kra.hn%22%7D%2C%22description%22%3A%22An%20empty%20world.%20A%20place%20to%20start%20from%20scratch.%22%2C%22metadata%22%3A%7B%22belongsToCore%22%3Atrue%7D%7D&purgeHistory=true")
-
-function parseQuery (url) {
-  var url = url;
-  const [_, search] = url.split('?');
-  const query = {};
-  if (!search) return query;
-  const args = search.split('&');
-  if (args) {
-    for (let i = 0; i < args.length; i++) {
-      const keyAndVal = args[i].split('=');
-      const key = keyAndVal[0];
-      let val = true;
-      if (keyAndVal.length > 1) {
-        val = decodeURIComponent(keyAndVal.slice(1).join('='));
-        if (val === 'undefined') val = undefined;
-        else if (val.match(/^(true|false|null|[0-9"[{].*)$/)) {
-          try { val = JSON.parse(val); } catch (e) {
-            if (val[0] === '[') val = val.slice(1, -1).split(','); // handle string arrays
-            // if not JSON use string itself
-          }
-        }
-      }
-      query[key] = val;
-    }
-  }
-  return query;
-}
-
-function stringifyQuery (query) {
-  return Object.keys(query)
-    .map(key => `${key}=${encodeURIComponent(String(query[key]))}`)
-    .join('&');
-}
-const urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/;
-// for resolve path:
-const pathDotRe = /\/\.\//g;
-const pathDoubleDotRe = /\/[^\/]+\/\.\./;
-const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
-
-function withRelativePartsResolved (inputPath) {
-  let path = inputPath; let result = path;
-
-  // foo//bar --> foo/bar
-  result = result.replace(pathDoubleSlashRe, '$1/');
-
-  // foo/./bar --> foo/bar
-  result = result.replace(pathDotRe, '/');
-
-  // /foo/../bar --> /bar
-  do {
-    path = result;
-    result = path.replace(pathDoubleDotRe, '');
-  } while (result != path);
-
-  return result;
-}
-
-function _relativePathBetween_checkPathes (path1, path2) {
-  if (path1.startsWith('/')) path1 = path1.slice(1);
-  if (path2.startsWith('/')) path2 = path2.slice(1);
-  const paths1 = path1.split('/');
-  const paths2 = path2.split('/');
-  for (var i = 0; i < paths2.length; i++) { if (!paths1[i] || (paths1[i] != paths2[i])) break; }
-  // now that's some JavaScript FOO
-  const result = '../'.repeat(Math.max(0, paths2.length - i - 1)) +
-             paths1.splice(i, paths1.length).join('/');
-  return result;
-}
-
-// pathA = "http://foo/bar/"
-// pathB = "http://foo/bar/oink/baz.js";
-
-function relativePathBetween (pathA, pathB) {
-  // produces the relative path to get from `pathA` to `pathB`
-  // Example:
-  //   relativePathBetween("/foo/bar/", "/foo/baz.js"); // => ../baz.js
-  const urlMatchA = pathA.match(urlRe);
-  const urlMatchB = pathB.match(urlRe);
-  let protocolA; let domainA; let protocolB; let domainB;
-  let compatible = true;
-  if ((urlMatchA && !urlMatchB) || (!urlMatchA && urlMatchB)) compatible = false;
-  if (urlMatchA && urlMatchB) {
-    protocolA = urlMatchA[1];
-    domainA = urlMatchA[2];
-    protocolB = urlMatchB[1];
-    domainB = urlMatchB[2];
-    if (protocolA !== protocolB) compatible = false;
-    else if (domainA !== domainB) compatible = false;
-    else { pathA = urlMatchA[3]; pathB = urlMatchB[3]; }
-  }
-  if (!compatible) { throw new Error(`[relativePathBetween] incompatible paths: ${pathA} vs. ${pathB}`); }
-  pathA = withRelativePartsResolved(pathA);
-  pathB = withRelativePartsResolved(pathB);
-  if (pathA == pathB) return '';
-  const relPath = _relativePathBetween_checkPathes(pathB, pathA);
-  if (!relPath) { throw new Error('pathname differs in relativePathFrom ' + pathA + ' vs ' + pathB); }
-  return relPath;
-}
-
-var extensions = extensions || [];
-
-function resource (url, opts) {
-  if (!url) throw new Error('lively.resource resource constructor: expects url but got ' + url);
-  if (url.isResource) return url;
-  url = String(url);
-  for (let i = 0; i < extensions.length; i++) {
-    if (extensions[i].matches(url)) { return new extensions[i].resourceClass(url, opts); }
-  }
-  throw new Error(`Cannot find resource type for url ${url}`);
-}
-
-async function createFiles (baseDir, fileSpec, opts) {
-  // creates resources as specified in fileSpec, e.g.
-  // {"foo.txt": "hello world", "sub-dir/bar.js": "23 + 19"}
-  // supports both sync and async resources
-  const base = resource(baseDir, opts).asDirectory();
-  await base.ensureExistance();
-  for (const name in fileSpec) {
-    if (!fileSpec.hasOwnProperty(name)) continue;
-    const resource = base.join(name);
-    typeof fileSpec[name] === 'object'
-      ? await createFiles(resource, fileSpec[name], opts)
-      : await resource.write(fileSpec[name]);
-  }
-  return base;
-}
-
-function registerExtension (extension) {
-  // extension = {name: STRING, matches: FUNCTION, resourceClass: RESOURCE}
-  // name: uniquely identifying this extension
-  // predicate matches gets a resource url (string) passed and decides if the
-  // extension handles it
-  // resourceClass needs to implement the Resource interface
-  const { name } = extension;
-  extensions = extensions.filter(ea => ea.name !== name).concat(extension);
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-const windowsURLPrefixRe = /^file:\/\/\/[a-z]:\//i;
-const windowsPathPrefixRe = /^[a-z]:\//i;
-const windowsRootPathRe = /^[a-z]:\/$/i;
-
-const slashEndRe = /\/+$/;
-const slashStartRe = /^\/+/;
-const protocolRe = /^[a-z0-9-_\.]+:/;
-const slashslashRe = /^\/\/[^\/]+/;
-
-function nyi (obj, name) {
-  throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
-}
-
-class Resource {
-  static fromProps (props = {}) {
-    // props can have the keys contentType, type, size, etag, created, lastModified, url
-    // it should have at least url
-    return new this(props.url).assignProperties(props);
-  }
-
-  constructor (url, opts = {}) {
-    if (!url) throw new Error('Cannot create resource without url');
-    this.url = String(url);
-    this.binary = false;
-    this.lastModified = undefined;
-    this.created = undefined;
-    this.etag = undefined;
-    this.size = undefined;
-    this.type = undefined;
-    this.contentType = undefined;
-    this.user = undefined;
-    this.group = undefined;
-    this.mode = undefined;
-    this._isDirectory = undefined;
-    this._isLink = undefined;
-    this.linkCount = undefined;
-  }
-
-  get isResource () { return true; }
-
-  get canDealWithJSON () { return false; }
-
-  equals (otherResource) {
-    if (!otherResource || this.constructor !== otherResource.constructor) { return false; }
-    let myURL = this.url; let otherURL = otherResource.url;
-    if (myURL[myURL.length - 1] === '/') myURL = myURL.slice(0, -1);
-    if (otherURL[otherURL.length - 1] === '/') otherURL = otherURL.slice(0, -1);
-    return myURL === otherURL;
-  }
-
-  toString () {
-    return `${this.constructor.name}("${this.url}")`;
-  }
-
-  newResource (url) { return resource(url, this); }
-
-  path () {
-    const path = this.url
-      .replace(protocolRe, '')
-      .replace(slashslashRe, '');
-    return path === '' ? '/' : path;
-  }
-
-  pathWithoutQuery () { return this.path().split('?')[0]; }
-
-  name () {
-    let path = this.path();
-    const queryIndex = path.lastIndexOf('?');
-    if (queryIndex > -1) path = path.slice(0, queryIndex);
-    if (path.endsWith('/')) path = path.slice(0, -1);
-    const parts = path.split('/');
-    const lastPart = parts[parts.length - 1];
-    return decodeURIComponent(lastPart);
-  }
-
-  ext () {
-    const url = this.url;
-    if (url.endsWith('/')) return '';
-    const [_, ext] = url.match(/\.([^\/\.]+$)/) || ['', ''];
-    return ext.toLowerCase();
-  }
-
-  nameWithoutExt () {
-    let name = this.name();
-    const extIndex = name.lastIndexOf('.');
-    if (extIndex > 0) name = name.slice(0, extIndex);
-    return name;
-  }
-
-  scheme () { return this.url.split(':')[0]; }
-
-  host () {
-    const idx = this.url.indexOf('://');
-    if (idx === -1) return null;
-    const noScheme = this.url.slice(idx + 3);
-    const slashIdx = noScheme.indexOf('/');
-    return noScheme.slice(0, slashIdx > -1 ? slashIdx : noScheme.length);
-  }
-
-  schemeAndHost () {
-    if (this.isRoot()) return this.asFile().url;
-    return this.url.slice(0, this.url.length - this.path().length);
-  }
-
-  parent () {
-    // drops the query
-    return this.isRoot()
-      ? null
-      : this.newResource(this.url.split('?')[0].replace(slashEndRe, '').split('/').slice(0, -1).join('/') + '/');
-  }
-
-  parents () {
-    const result = []; let p = this.parent();
-    while (p) { result.unshift(p); p = p.parent(); }
-    return result;
-  }
-
-  isParentOf (otherRes) {
-    return otherRes.schemeAndHost() === this.schemeAndHost() &&
-        otherRes.parents().some(p => p.equals(this));
-  }
-
-  query () { return parseQuery(this.url); }
-
-  withQuery (queryObj) {
-    const query = { ...this.query(), ...queryObj };
-    const [url] = this.url.split('?');
-    const queryString = stringifyQuery(query);
-    return this.newResource(`${url}?${queryString}`);
-  }
-
-  commonDirectory (other) {
-    if (other.schemeAndHost() !== this.schemeAndHost()) return null;
-    if (this.isDirectory() && this.equals(other)) return this;
-    if (this.isRoot()) return this.asDirectory();
-    if (other.isRoot()) return other.asDirectory();
-    const otherParents = other.parents();
-    const myParents = this.parents();
-    let common = this.root();
-    for (let i = 0; i < myParents.length; i++) {
-      const myP = myParents[i]; const otherP = otherParents[i];
-      if (!otherP || !myP.equals(otherP)) return common;
-      common = myP;
-    }
-    return common;
-  }
-
-  withRelativePartsResolved () {
-    const path = this.path(); let result = withRelativePartsResolved(path);
-    if (result === path) return this;
-    if (result.startsWith('/')) result = result.slice(1);
-    if (result[1] === ':'.startsWith('/')) result = result.slice(1);
-    else if (result[1] === ':' && result.match(windowsPathPrefixRe)) result = result.slice(3);
-    return this.newResource(this.root().url + result);
-  }
-
-  relativePathFrom (fromResource) {
-    return relativePathBetween(fromResource.url, this.url);
-  }
-
-  withPath (path) {
-    const root = this.isRoot() ? this : this.root();
-    return root.join(path);
-  }
-
-  join (path) {
-    return this.newResource(this.url.replace(slashEndRe, '') + '/' + path.replace(slashStartRe, ''));
-  }
-
-  isRoot () { return this.path() === '/'; }
-
-  isFile () { return !this.isRoot() && !this.url.match(slashEndRe); }
-
-  isDirectory () { return !this.isFile(); }
-
-  asDirectory () {
-    if (this.url.endsWith('/')) return this;
-    return this.newResource(ensureFolder(this.url));
-  }
-
-  root () {
-    if (this.isRoot()) return this;
-    const toplevel = this.url.slice(0, -this.path().length);
-    return this.newResource(toplevel + '/');
-  }
-
-  asFile () {
-    if (!this.url.endsWith('/')) return this;
-    return this.newResource(this.url.replace(slashEndRe, ''));
-  }
-
-  assignProperties (props) {
-    // lastModified, etag, ...
-    for (const name in props) {
-      if (name === 'url') continue;
-      // rename some properties to not create conflicts
-      let myPropName = name;
-      if (name === 'isLink' || name === 'isDirectory') { myPropName = '_' + name; }
-      this[myPropName] = props[name];
-    }
-    return this;
-  }
-
-  async ensureExistance (optionalContent) {
-    if (await this.exists()) return this;
-    await this.parent().ensureExistance();
-    if (this.isFile()) await this.write(optionalContent || '');
-    else await this.mkdir();
-    return this;
-  }
-
-  async copyTo (otherResource, ensureParent = true) {
-    if (this.isFile()) {
-      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
-      if (ensureParent) { await toFile.parent().ensureExistance(); }
-      await toFile.write(await this.read());
-    } else {
-      if (!otherResource.isDirectory()) throw new Error('Cannot copy a directory to a file!');
-      const fromResources = await this.dirList('infinity');
-      const toResources = fromResources.map(ea => otherResource.join(ea.relativePathFrom(this)));
-
-      // First create directory structure, this needs to happen in order
-      await otherResource.ensureExistance();
-      await fromResources.reduceRight((next, ea, i) =>
-        () => Promise.resolve(
-          ea.isDirectory() && toResources[i].ensureExistance()).then(next),
-      () => Promise.resolve())();
-
-      // copy individual files, this can happen in parallel but certain protocols
-      // might not be able to handle a large amount of parallel writes so we
-      // synchronize this as well by default
-      await fromResources.reduceRight((next, ea, i) =>
-        () => Promise.resolve(
-          ea.isFile() && ea.copyTo(toResources[i], false)).then(next),
-      () => Promise.resolve())();
-    }
-
-    return this;
-  }
-
-  async rename (otherResource) {
-    await this.copyTo(otherResource);
-    this.remove();
-    return otherResource;
-  }
-
-  beBinary (bool) { return this.setBinary(true); }
-
-  setBinary (bool) {
-    this.binary = bool;
-    return this;
-  }
-
-  async read () { nyi(this, 'read'); }
-  async write () { nyi(this, 'write'); }
-  async mkdir () { nyi(this, 'mkdir'); }
-  async exists () { nyi(this, 'exists'); }
-  async remove () { nyi(this, 'remove'); }
-  async dirList (depth, opts) { nyi(this, 'dirList'); }
-  async readProperties (opts) { nyi(this, 'readProperties'); }
-
-  writeJson (obj, pretty = false) {
-    return this.write(pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj));
-  }
-
-  async readJson (obj) { return JSON.parse(await this.read()); }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // serialization
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  __serialize__ () {
-    return { __expr__: `var r = null; try { r = resource("${this.url}");} catch (err) {}; r`, bindings: { 'lively.resources': ['resource'] } };
-  }
-}
-
-/**
- * Utility functions for JS Numbers.
- * @module lively.lang/number
- */
-
-/**
- * Returns wether `x` is between `a` and `b` and keeps `eps` distance from both of them.
- * @param {number} x - The number that should be between two bounds 
- * @param {number} a - One bound (can be upper or lower)
- * @param {number} b - Another bound (can be upper or lower)
- * @param {number} eps - Epsilon value that indicates the distance that should be kept from the boundaries
- * @returns {boolean}
- */
-function between (x, a, b, eps) {
-  eps = eps || 0;
-  let min, max;
-  if (a < b) { min = a, max = b; } else { max = a, min = b; }
-  return (max - x + eps >= 0) && (min - x - eps <= 0);
-}
-
-/* global Promise */
-
-/**
- * Methods helping with promises (Promise/A+ model). Not a promise shim.
- * @module lively.lang/promise
- */
-
-/**
- * Promise object / function converter
- * @param { object|function } obj - The value or function to convert into a promise.
- * @returns { Promise } 
- * @example
- * promise("foo");
- *   // => Promise({state: "fullfilled", value: "foo"})
- * lively.lang.promise({then: (resolve, reject) => resolve(23)})
- *   // => Promise({state: "fullfilled", value: 23})
- * lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
- *   // => Promise({state: "fullfilled", value: 4})
- */
-function promise (obj) {
-  return (typeof obj === 'function')
-    ? promise.convertCallbackFun(obj)
-    : Promise.resolve(obj);
-}
-
-/**
- * Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
- * before resolving
- * @async
- * @param { number } ms - The duration to delay the execution in milliseconds.
- * @param { * } resolveVal - The value to resolve to.
- */
-function delay (ms, resolveVal) {
-  return new Promise(resolve =>
-    setTimeout(resolve, ms, resolveVal));
-}
-
-/**
- * like `promise.delay` but rejects instead of resolving.
- * @async
- * @param { number } ms - The duration to delay the execution in milliseconds.
- * @param { * } rejectedVal - The value to reject.
- */
-function delayReject (ms, rejectVal) {
-  return new Promise((_, reject) =>
-    setTimeout(reject, ms, rejectVal));
-}
-
-/**
- * Takes a promise and either resolves to the value of the original promise
- * when it succeeds before `ms` milliseconds passed or fails with a timeout
- * error.
- * @async
- * @param { number } ms - The duration to wait for the promise to resolve in milliseconds.
- * @param { Promise } promise - The promise to wait for to finish.
- */
-function timeout (ms, promise) {
-  return new Promise((resolve, reject) => {
-    let done = false;
-    setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
-    promise.then(
-      val => !done && (done = true) && resolve(val),
-      err => !done && (done = true) && reject(err));
-  });
-}
-
-const waitForClosures = {};
-
-/* 
-function clearPendingWaitFors () {
-  Object.keys(waitForClosures).forEach(i => {
-    delete waitForClosures[i];
-    clearInterval(i);
-  });
-}
-*/
-
-/**
- * Tests for a condition calling function `tester` until the result is
- * truthy. Resolves with last return value of `tester`. If `ms` is defined
- * and `ms` milliseconds passed, reject with timeout error
- * if timeoutObj is passed will resolve(!) with this object instead of raise
- * an error
- * *This function has a huge performance impact if used carelessly.
- * Always consider this to be the absolute last resort if a problem
- * can not be solved by promises/events.*
- * @param { number } [ms] - The maximum number of milliseconds to wait for `tester` to become true.
- * @param { function } tester - The function to test for the condition.
- * @param { object } [timeoutObj] - The object to resolve to if the condition was not met and we timed out.
- * @returns { object }
- */
-function waitFor (ms, tester, timeoutObj) {
-  if (typeof ms === 'function') { tester = ms; ms = undefined; }
-  let value;
-  if (value = tester()) return Promise.resolve(value);
-  return new Promise((resolve, reject) => {
-    let stopped = false;
-    let timedout = false;
-    let error;
-    let value;
-    const stopWaiting = (i) => {
-      clearInterval(i);
-      delete waitForClosures[i];
-    };
-    const i = setInterval(() => {
-      if (stopped) return stopWaiting(i);
-      try { value = tester(); } catch (e) { error = e; }
-      if (!value && !error && !timedout) return;
-      stopped = true;
-      stopWaiting(i);
-      if (error) return reject(error);
-      if (timedout) {
-        return typeof timeoutObj === 'undefined'
-          ? reject(new Error('timeout'))
-          : resolve(timeoutObj);
-      }
-      return resolve(value);
-    }, 10);
-    waitForClosures[i] = i;
-    if (typeof ms === 'number') setTimeout(() => timedout = true, ms);
-  });
-}
-
-/**
- * Returns an object that conveniently gives access to the promise itself and 
- * its resolution and rejection callback. This separates the resolve/reject handling
- * from the promise itself. Similar to the deprecated `Promise.defer()`.
- * @returns { { resolve: function, reject: function, promise: Promise } }
- */
-function deferred () {
-  let resolve; let reject;
-  const promise = new Promise(function (_resolve, _reject) {
-    resolve = _resolve; reject = _reject;
-  });
-  return { resolve: resolve, reject: reject, promise: promise };
-}
-
-/**
- * Takes a function that accepts a nodejs-style callback function as a last
- * parameter and converts it to a function *not* taking the callback but
- * producing a promise instead. The promise will be resolved with the
- * *first* non-error argument.
- * nodejs callback convention: a function that takes as first parameter an
- * error arg and second+ parameters are the result(s).
- * @param { function } func - The callback function to convert.
- * @returns { function } The converted asyncronous function. 
- * @example
- * var fs = require("fs"),
- *     readFile = promise.convertCallbackFun(fs.readFile);
- * readFile("./some-file.txt")
- *   .then(content => console.log(String(content)))
- *   .catch(err => console.error("Could not read file!", err));
- */
-function convertCallbackFun (func) {
-  return function promiseGenerator (/* args */) {
-    const args = Array.from(arguments); const self = this;
-    return new Promise(function (resolve, reject) {
-      args.push(function (err, result) { return err ? reject(err) : resolve(result); });
-      func.apply(self, args);
-    });
-  };
-}
-
-/**
- * Like convertCallbackFun but the promise will be resolved with the
- * all non-error arguments wrapped in an array.
- * @param { function } func - The callback function to convert.
- * @returns { function } The converted asyncronous function. 
- */
-function convertCallbackFunWithManyArgs (func) {
-  return function promiseGenerator (/* args */) {
-    const args = Array.from(arguments); const self = this;
-    return new Promise(function (resolve, reject) {
-      args.push(function (/* err + args */) {
-        const args = Array.from(arguments);
-        const err = args.shift();
-        return err ? reject(err) : resolve(args);
-      });
-      func.apply(self, args);
-    });
-  };
-}
-
-function _chainResolveNext (promiseFuncs, prevResult, akku, resolve, reject) {
-  const next = promiseFuncs.shift();
-  if (!next) resolve(prevResult);
-  else {
-    try {
-      Promise.resolve(next(prevResult, akku))
-        .then(result => _chainResolveNext(promiseFuncs, result, akku, resolve, reject))
-        .catch(function (err) { reject(err); });
-    } catch (err) { reject(err); }
-  }
-}
-
-/**
- * Similar to Promise.all but takes a list of promise-producing functions
- * (instead of Promises directly) that are run sequentially. Each function
- * gets the result of the previous promise and a shared "state" object passed
- * in. The function should return either a value or a promise. The result of
- * the entire chain call is a promise itself that either resolves to the last
- * returned value or rejects with an error that appeared somewhere in the
- * promise chain. In case of an error the chain stops at that point.
- * @async
- * @param { functions[] } promiseFuncs - The list of functions that each return a promise.
- * @returns { * } The result the last promise resolves to.
- * @example
- * lively.lang.promise.chain([
- *   () => Promise.resolve(23),
- *   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
- *   (prevVal, state) => { state.second = prevVal; return state }
- * ]).then(result => console.log(result));
- * // => prints {first: 23,second: 25}
- */
-function chain (promiseFuncs) {
-  return new Promise((resolve, reject) =>
-    _chainResolveNext(
-      promiseFuncs.slice(), undefined, {},
-      resolve, reject));
-}
-
-/**
- * Converts a given promise to one that executes the `finallyFn` regardless of wether it
- * resolved successfully or failed during execution.
- * @param { Promise } promise - The promise to convert.
- * @param { function } finallyFn - The callback to run after either resolve or reject has been run.
- * @returns { Promise } The converted promise.
- */
-function promise_finally (promise, finallyFn) {
-  return Promise.resolve(promise)
-    .then(result => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } return result; })
-    .catch(err => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } throw err; });
-}
-
-/**
- * Starts functions from `promiseGenFns` that are expected to return a promise
- * Once `parallelLimit` promises are unresolved at the same time, stops
- * spawning further promises until a running promise resolves.
- * @param { function[] } promiseGenFns - A list of functions that each return a promise.
- * @param { number } parallelLimit - The maximum number of promises to process at the same time. 
- */
-function parallel (promiseGenFns, parallelLimit = Infinity) {
-  if (!promiseGenFns.length) return Promise.resolve([]);
-
-  const results = [];
-  let error = null;
-  let index = 0;
-  let left = promiseGenFns.length;
-  let resolve; let reject;
-
-  return new Promise((res, rej) => {
-    resolve = () => res(results);
-    reject = err => rej(error = err);
-    spawnMore();
-  });
-
-  function spawn () {
-    parallelLimit--;
-    try {
-      const i = index++; const prom = promiseGenFns[i]();
-      prom.then(result => {
-        parallelLimit++;
-        results[i] = result;
-        if (--left === 0) resolve();
-        else spawnMore();
-      }).catch(err => reject(err));
-    } catch (err) { reject(err); }
-  }
-
-  function spawnMore () {
-    while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0) { spawn(); }
-  }
-}
-
-// FIXME!
-Object.assign(promise, {
-  delay,
-  delayReject,
-  timeout,
-  waitFor,
-  deferred,
-  convertCallbackFun,
-  convertCallbackFunWithManyArgs,
-  chain,
-  finally: promise_finally,
-  parallel
-});
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function Path (p, splitter) {
-  if (p instanceof Path) return p;
-  if (!(this instanceof Path)) return new Path(p, splitter);
-  this.setSplitter(splitter || '.');
-  this.fromPath(p);
-}
-
-Object.assign(Path.prototype, {
-
-  get isPathAccessor () { return true; },
-
-  fromPath (path) {
-    // ignore-in-doc
-    if (typeof path === 'string' && path !== '' && path !== this.splitter) {
-      this._parts = path.split(this.splitter);
-      this._path = path;
-    } else if (Array.isArray(path)) {
-      this._parts = [].concat(path);
-      this._path = path.join(this.splitter);
-    } else {
-      this._parts = [];
-      this._path = '';
-    }
-    return this;
-  },
-
-  setSplitter (splitter) {
-    // ignore-in-doc
-    if (splitter) this.splitter = splitter;
-    return this;
-  },
-
-  map (fn) {
-    this._mapper = fn;
-    return this;
-  },
-
-  parts () { /* key names as array */ return this._parts; },
-
-  size () { /* show-in-doc */ return this._parts.length; },
-
-  slice (n, m) { /* show-in-doc */ return Path(this.parts().slice(n, m)); },
-
-  normalizePath () {
-    // ignore-in-doc
-    // FIXME: define normalization
-    return this._path;
-  },
-
-  isRoot (obj) { return this._parts.length === 0; },
-
-  isIn (obj) {
-    // Does the Path resolve to a value when applied to `obj`?
-    if (this.isRoot()) return true;
-    const parent = this.get(obj, -1);
-    return parent && parent.hasOwnProperty(this._parts[this._parts.length - 1]);
-  },
-
-  equals (obj) {
-    // Example:
-    // var p1 = Path("foo.1.bar.baz"), p2 = Path(["foo", 1, "bar", "baz"]);
-    // // Path's can be both created via strings or pre-parsed with keys in a list.
-    // p1.equals(p2) // => true
-    return obj && obj.isPathAccessor && this.parts().equals(obj.parts());
-  },
-
-  isParentPathOf (otherPath) {
-    // Example:
-    // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1.bar");
-    // p2.isParentPathOf(p1) // => true
-    // p1.isParentPathOf(p2) // => false
-    otherPath = otherPath && otherPath.isPathAccessor
-      ? otherPath : Path(otherPath);
-    const parts = this.parts();
-    const otherParts = otherPath.parts();
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i] != otherParts[i]) return false;
-    }
-    return true;
-  },
-
-  relativePathTo (otherPath) {
-    // Example:
-    // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1");
-    // p2.relativePathTo(p1) // => Path(["bar","baz"])
-    // p1.relativePathTo(p2) // => undefined
-    otherPath = Path(otherPath);
-    return this.isParentPathOf(otherPath)
-      ? otherPath.slice(this.size(), otherPath.size()) : undefined;
-  },
-
-  del (obj) {
-    if (this.isRoot()) return false;
-    let parent = obj;
-    for (let i = 0; i < this._parts.length - 1; i++) {
-      const part = this._parts[i];
-      if (parent.hasOwnProperty(part)) {
-        parent = parent[part];
-      } else return false;
-    }
-    return delete parent[this._parts[this._parts.length - 1]];
-  },
-
-  withParentAndKeyDo (obj, ensure, doFunc) {
-    // Deeply resolve path in `obj`, not fully, however, only to the parent
-    // element of the last part of path. Take the parent, the key (the last
-    // part of path) and pass it to `doFunc`. When `ensure` is true, create
-    // objects along path it path does not resolve
-    if (this.isRoot()) return doFunc(null, null);
-    let parent = obj;
-    for (let i = 0; i < this._parts.length - 1; i++) {
-      const part = this._parts[i];
-      if (parent.hasOwnProperty(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
-        parent = parent[part];
-      } else if (ensure) {
-        parent = parent[part] = {};
-      } else {
-        return doFunc(null, part);
-      }
-    }
-    return doFunc(parent, this._parts[this._parts.length - 1]);
-  },
-
-  set (obj, val, ensure) {
-    // Deeply resolve path in `obj` and set the resulting property to `val`. If
-    // `ensure` is true, create nested structure in between as necessary.
-    // Example:
-    // var o1 = {foo: {bar: {baz: 42}}};
-    // var path = Path("foo.bar.baz");
-    // path.set(o1, 43)
-    // o1 // => {foo: {bar: {baz: 43}}}
-    // var o2 = {foo: {}};
-    // path.set(o2, 43, true)
-    // o2 // => {foo: {bar: {baz: 43}}}
-    return this.withParentAndKeyDo(obj, ensure,
-      function (parent, key) { return parent ? parent[key] = val : undefined; });
-  },
-
-  defineProperty (obj, propertySpec, ensure) {
-    // like `Path>>set`, however uses Objeect.defineProperty
-    return this.withParentAndKeyDo(obj, ensure,
-      function (parent, key) {
-        return parent
-          ? Object.defineProperty(parent, key, propertySpec)
-          : undefined;
-      });
-  },
-
-  get (obj, n) {
-    // show-in-doc
-    const parts = n ? this._parts.slice(0, n) : this._parts;
-    const self = this;
-    return parts.reduce(function (current, pathPart) {
-      return current ? (self._mapper ? self._mapper(pathPart, current[pathPart]) : current[pathPart]) : current;
-    }, obj);
-  },
-
-  concat (p, splitter) {
-    // show-in-doc
-    return Path(this.parts().concat(Path(p, splitter).parts()));
-  },
-
-  toString () { return this.normalizePath(); },
-
-  serializeExpr () {
-    // ignore-in-doc
-    return 'lively.lang.Path(' + inspect(this.parts()) + ')';
-  },
-
-  watch (options) {
-    // React or be notified on reads or writes to a path in a `target`. Options:
-    // ```js
-    // {
-    //   target: OBJECT,
-    //   uninstall: BOOLEAN,
-    //   onGet: FUNCTION,
-    //   onSet: FUNCTION,
-    //   haltWhenChanged: BOOLEAN,
-    //   verbose: BOOLEAN
-    // }
-    // ```
-    // Example:
-    // // Quite useful for debugging to find out what call-sites change an object.
-    // var o = {foo: {bar: 23}};
-    // Path("foo.bar").watch({target: o, verbose: true});
-    // o.foo.bar = 24; // => You should see: "[object Object].bar changed: 23 -> 24"
-    if (!options || this.isRoot()) return;
-    const target = options.target;
-    const parent = this.get(target, -1);
-    const propName = this.parts().slice(-1)[0];
-    const newPropName = 'propertyWatcher$' + propName;
-    const watcherIsInstalled = parent && parent.hasOwnProperty(newPropName);
-    const uninstall = options.uninstall;
-    const haltWhenChanged = options.haltWhenChanged;
-    const showStack = options.showStack;
-    const getter = parent.__lookupGetter__(propName);
-    const setter = parent.__lookupSetter__(propName);
-    if (!target || !propName || !parent) return;
-    if (uninstall) {
-      if (!watcherIsInstalled) return;
-      delete parent[propName];
-      parent[propName] = parent[newPropName];
-      delete parent[newPropName];
-      var msg = 'Watcher for ' + parent + '.' + propName + ' uninstalled';
-      return;
-    }
-    if (watcherIsInstalled) {
-      var msg = 'Watcher for ' + parent + '.' + propName + ' already installed';
-      return;
-    }
-    if (getter || setter) {
-      var msg = parent + '["' + propName + '"] is a getter/setter, watching not support';
-      console.log(msg);
-      return;
-    }
-    // observe slots, for debugging
-    parent[newPropName] = parent[propName];
-    parent.__defineSetter__(propName, function (v) {
-      const oldValue = parent[newPropName];
-      if (options.onSet) options.onSet(v, oldValue);
-      let msg = parent + '.' + propName + ' changed: ' + oldValue + ' -> ' + v;
-      if (showStack) {
-        msg += '\n' + (typeof lively !== 'undefined'
-          ? lively.printStack() : console.trace());
-      }
-      if (options.verbose) {
-        console.log(msg);
-      }
-      if (haltWhenChanged) debugger;
-      return parent[newPropName] = v;
-    });
-    parent.__defineGetter__(propName, function () {
-      if (options.onGet) options.onGet(parent[newPropName]);
-      return parent[newPropName];
-    });
-    var msg = 'Watcher for ' + parent + '.' + propName + ' installed';
-    console.log(msg);
-  },
-
-  debugFunctionWrapper (options) {
-    // ignore-in-doc
-    // options = {target, [haltWhenChanged, showStack, verbose, uninstall]}
-    const target = options.target;
-    const parent = this.get(target, -1);
-    const funcName = this.parts().slice(-1)[0];
-    const uninstall = options.uninstall;
-    const haltWhenChanged = options.haltWhenChanged === undefined ? true : options.haltWhenChanged;
-    options.showStack;
-    const func = parent && funcName && parent[funcName];
-    const debuggerInstalled = func && func.isDebugFunctionWrapper;
-    if (!target || !funcName || !func || !parent) return;
-    if (uninstall) {
-      if (!debuggerInstalled) return;
-      parent[funcName] = parent[funcName].debugTargetFunction;
-      var msg = 'Uninstalled debugFunctionWrapper for ' + parent + '.' + funcName;
-      console.log(msg);
-      return;
-    }
-    if (debuggerInstalled) {
-      var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' already installed';
-      console.log(msg);
-      return;
-    }
-    const debugFunc = parent[funcName] = func.wrap(function (proceed) {
-      const args = Array.from(arguments);
-      if (haltWhenChanged) debugger;
-      return args.shift().apply(parent, args);
-    });
-    debugFunc.isDebugFunctionWrapper = true;
-    debugFunc.debugTargetFunction = func;
-    var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' installed';
-    console.log(msg);
-  }
-
-});
-
-/**
- * Computation over graphs. Unless otherwise specified a graph is a simple JS
- * object whose properties are interpreted as nodes that refer to arrays whose
- * elements describe edges.
- * 
- * ```js
- * var testGraph = {
- *   "a": ["b", "c"],
- *   "b": ["c", "d", "e", "f"],
- *   "d": ["c", "f"],
- *   "e": ["a", "f"],
- *   "f": []
- * }
- * ```
- * @module lively.lang/graph 
- */
-
-/**
- * Sorts graph into an array of arrays. Each "bucket" contains the graph
- * nodes that have no other incoming nodes than those already visited. This
- * means, we start with the leaf nodes and then walk our way up.
- * This is useful for computing how to traverse a dependency graph: You get
- * a sorted list of dependencies that also allows circular references.
- * @param { Object.<string, string[]> } depGraph - The graph to sort into buckets.
- * @param { string } startNode - The id of the node at the top of the dependency graph.
- * @returns { string[][] } The sorted sets of nodes.
- * @example
- * var depGraph = {a: ["b", "c"], b: ["c"], c: ["b"]};
- * sortByReference(depGraph, "a");
- * // => [["c"], ["b"], ["a"]]
- */
-function sortByReference (depGraph, startNode) {
-  // establish unique list of keys
-  const remaining = []; const remainingSeen = {}; const uniqDepGraph = {}; const inverseDepGraph = {};
-  for (const key in depGraph) {
-    if (!remainingSeen.hasOwnProperty(key)) {
-      remainingSeen[key] = true;
-      remaining.push(key);
-    }
-    const deps = depGraph[key]; const uniqDeps = {};
-    if (deps) {
-      uniqDepGraph[key] = [];
-      for (const dep of deps) {
-        if (uniqDeps.hasOwnProperty(dep) || key === dep) continue;
-        const inverse = inverseDepGraph[dep] || (inverseDepGraph[dep] = []);
-        if (!inverse.includes(key)) inverse.push(key);
-        uniqDeps[dep] = true;
-        uniqDepGraph[key].push(dep);
-        if (!remainingSeen.hasOwnProperty(dep)) {
-          remainingSeen[dep] = true;
-          remaining.push(dep);
-        }
-      }
-    }
-  }
-
-  // for each iteration find the keys with the minimum number of dependencies
-  // and add them to the result group list
-  const groups = [];
-  while (remaining.length) {
-    let minDepCount = Infinity; let minKeys = []; let minKeyIndexes = []; let affectedKeys = [];
-    for (let i = 0; i < remaining.length; i++) {
-      let key = remaining[i];
-      const deps = uniqDepGraph[key] || [];
-      if (deps.length > minDepCount) continue;
-
-      // if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
-      if (deps.length === minDepCount && !deps.some(ea => minKeys.includes(ea))) {
-        minKeys.push(key);
-        minKeyIndexes.push(i);
-        affectedKeys.push(...inverseDepGraph[key] || []);
-        continue;
-      }
-      minDepCount = deps.length;
-      minKeys = [key];
-      minKeyIndexes = [i];
-      affectedKeys = (inverseDepGraph[key] || []).slice();
-    }
-    for (let i = minKeyIndexes.length; i--;) {
-      let key = remaining[minKeyIndexes[i]];
-      inverseDepGraph[key] = [];
-      remaining.splice(minKeyIndexes[i], 1);
-    }
-    for (let key of affectedKeys) {
-      uniqDepGraph[key] = uniqDepGraph[key].filter(ea => !minKeys.includes(ea));
-    }
-    groups.push(minKeys);
-  }
-  return groups;
-}
-
-/* global System, global */
-
-/**
- * Intervals are arrays whose first two elements are numbers and the
- * first element should be less or equal to the second element, see
- * [`interval.isInterval`](). This abstraction is useful when working with text
- * ranges in rich text, for example.
- * @module lively.lang/interval
- */
-
-/**
- * An interval defining an upper and a lower bound.
- * @typedef { number[] } Interval
- * @property {number} 0 - The lower bound of the interval. 
- * @property {number} 1 - The upper bound of the interval.
- */
-
-typeof System !== 'undefined'
-  ? System.global
-  : (typeof window !== 'undefined' ? window : global);
-
-/* global process */
-
-/*
- * A simple node.js-like cross-platform event emitter implementation that can
- * be used as a mixin. Emitters support the methods: `on(eventName, handlerFunc)`,
- * `once(eventName, handlerFunc)`, `emit(eventName, eventData)`,
- * `removeListener(eventName, handlerFunc)`, `removeAllListeners(eventName)`
- * Example:
- * var emitter = events.makeEmitter({});
- * var log = [];
- * emitter.on("test", function() { log.push("listener1"); });
- * emitter.once("test", function() { log.push("listener2"); });
- * emitter.emit("test");
- * emitter.emit("test");
- * log // => ["listener1","listener2","listener1"]
- * emitter.removeAllListeners("test");
- * emitter.emit("test");
- * log // => is still ["listener1","listener2","listener1"]
- */
-
-typeof process !== 'undefined' && process.versions && process.versions.node;
-
-/* global global,self,process */
-
-typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
-
-/* global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer */
-
-class XPathQuery {
-  constructor (expression) {
-    this.expression = expression;
-    this.contextNode = null;
-    this.xpe = new XPathEvaluator();
-  }
-
-  establishContext (node) {
-    if (this.nsResolver) return;
-    const ctx = node.ownerDocument ? node.ownerDocument.documentElement : node.documentElement;
-    if (ctx !== this.contextNode) {
-      this.contextNode = ctx;
-      this.nsResolver = this.xpe.createNSResolver(ctx);
-    }
-  }
-
-  manualNSLookup () {
-    this.nsResolver = function (prefix) {
-      return Namespace[prefix.toUpperCase()] || null;
-    };
-    return this;
-  }
-
-  findAll (node, defaultValue) {
-    this.establishContext(node);
-    const result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
-    const accumulator = [];
-    let res = null;
-    while (res = result.iterateNext()) accumulator.push(res);
-    return accumulator.length > 0 || defaultValue === undefined ? accumulator : defaultValue;
-  }
-
-  findFirst (node) {
-    this.establishContext(node);
-    const result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
-    return result.iterateNext();
-  }
-}
-
-function davNs (xmlString) {
-  // finds the declaration of the webdav namespace, usually "d" or "D"
-  const davNSMatch = xmlString.match(/\/([a-z]+?):multistatus/i);
-  return davNSMatch ? davNSMatch[1] : 'd';
-}
-
-const propertyNodeMap = {
-  getlastmodified: 'lastModified',
-  creationDate: 'created',
-  getetag: 'etag',
-  getcontentlength: 'size',
-  resourcetype: 'type', // collection or file
-  getcontenttype: 'contentType' // mime type
-};
-function readPropertyNode (propNode, result = {}) {
-  const tagName = propNode.tagName.replace(/[^:]+:/, '');
-  const key = propertyNodeMap[tagName];
-  let value = propNode.textContent;
-  switch (key) {
-    case 'lastModified':
-    case 'created': value = new Date(value); break;
-    case 'size': value = Number(value); break;
-    // code
-  }
-  result[key] = value;
-  return result;
-}
-
-function readXMLPropfindResult (xmlString) {
-  // the xmlString looks like this:
-  // <?xml version="1.0" encoding="utf-8"?>
-  // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
-  //   <d:response>
-  //     <d:href>sub-dir/</d:href>
-  //     <d:propstat>
-  //       <d:prop>
-  //         <d:getlastmodified xmlns:b="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" b:dt="dateTime.rfc1123">Fri, 24 Jun 2016 09:58:20 -0700</d:getlastmodified>
-  //         <d:resourcetype>
-  //           <d:collection/>
-  //         </d:resourcetype>
-  //       </d:prop>
-  //       <d:status>HTTP/1.1 200 Ok</d:status>
-  //     </d:propstat>
-  //   </d:response>
-  // ...
-  // </d:multistatus>
-
-  const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
-  const ns = davNs(xmlString);
-  const nodes = new XPathQuery(`/${ns}:multistatus/${ns}:response`).findAll(doc.documentElement);
-  const urlQ = new XPathQuery(`${ns}:href`);
-  const propsQ = new XPathQuery(`${ns}:propstat/${ns}:prop`);
-
-  return nodes.map(node => {
-    const propsNode = propsQ.findFirst(node);
-    const props = Array.from(propsNode.childNodes).reduce((props, node) =>
-      readPropertyNode(node, props), {});
-    const urlNode = urlQ.findFirst(node);
-    props.url = urlNode.textContent || urlNode.text; // text is FIX for IE9+;
-    return props;
-  });
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// MIT License Copyright (c) Sindre Sorhus <sindresorhus@gmail.com>
-// https://github.com/sindresorhus/binary-extensions
-const binaryExtensions = ['3ds', '3g2', '3gp', '7z', 'a', 'aac', 'adp', 'ai', 'aif', 'aiff', 'alz', 'ape', 'apk', 'ar', 'arj', 'asf', 'au', 'avi', 'bak', 'bh', 'bin', 'bk', 'bmp', 'btif', 'bz2', 'bzip2', 'cab', 'caf', 'cgm', 'class', 'cmx', 'cpio', 'cr2', 'csv', 'cur', 'dat', 'deb', 'dex', 'djvu', 'dll', 'dmg', 'dng', 'doc', 'docm', 'docx', 'dot', 'dotm', 'dra', 'DS_Store', 'dsk', 'dts', 'dtshd', 'dvb', 'dwg', 'dxf', 'ecelp4800', 'ecelp7470', 'ecelp9600', 'egg', 'eol', 'eot', 'epub', 'exe', 'f4v', 'fbs', 'fh', 'fla', 'flac', 'fli', 'flv', 'fpx', 'fst', 'fvt', 'g3', 'gif', 'graffle', 'gz', 'gzip', 'h261', 'h263', 'h264', 'icns', 'ico', 'ief', 'img', 'ipa', 'iso', 'jar', 'jpeg', 'jpg', 'jpgv', 'jpm', 'jxr', 'key', 'ktx', 'lha', 'lvp', 'lz', 'lzh', 'lzma', 'lzo', 'm3u', 'm4a', 'm4v', 'mar', 'mdi', 'mht', 'mid', 'midi', 'mj2', 'mka', 'mkv', 'mmr', 'mng', 'mobi', 'mov', 'movie', 'mp3', 'mp4', 'mp4a', 'mpeg', 'mpg', 'mpga', 'mxu', 'nef', 'npx', 'numbers', 'o', 'oga', 'ogg', 'ogv', 'otf', 'pages', 'pbm', 'pcx', 'pdf', 'pea', 'pgm', 'pic', 'png', 'pnm', 'pot', 'potm', 'potx', 'ppa', 'ppam', 'ppm', 'pps', 'ppsm', 'ppsx', 'ppt', 'pptm', 'pptx', 'psd', 'pya', 'pyc', 'pyo', 'pyv', 'qt', 'rar', 'ras', 'raw', 'rgb', 'rip', 'rlc', 'rmf', 'rmvb', 'rtf', 'rz', 's3m', 's7z', 'scpt', 'sgi', 'shar', 'sil', 'sketch', 'slk', 'smv', 'so', 'sub', 'swf', 'tar', 'tbz', 'tbz2', 'tga', 'tgz', 'thmx', 'tif', 'tiff', 'tlz', 'ttc', 'ttf', 'txz', 'udf', 'uvh', 'uvi', 'uvm', 'uvp', 'uvs', 'uvu', 'viv', 'vob', 'war', 'wav', 'wax', 'wbmp', 'wdp', 'weba', 'webm', 'webp', 'whl', 'wim', 'wm', 'wma', 'wmv', 'wmx', 'woff', 'woff2', 'wvx', 'xbm', 'xif', 'xla', 'xlam', 'xls', 'xlsb', 'xlsm', 'xlsx', 'xlt', 'xltm', 'xltx', 'xm', 'xmind', 'xpi', 'xpm', 'xwd', 'xz', 'z', 'zip', 'zipx'];
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-const isNode = typeof System !== 'undefined'
-  ? System.get('@system-env').node
-  : (typeof global !== 'undefined' && typeof process !== 'undefined');
-
-function defaultOrigin () {
-  return System.baseURL || document.location.origin;
-}
-
-function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
-  let url = resource.url;
-  var { useCors, useProxy, headers: moreHeaders } = resource;
-  var useCors = typeof useCors !== 'undefined' ? useCors : true;
-  var useProxy = typeof useProxy !== 'undefined' ? useProxy : true;
-  const fetchOpts = { method };
-
-  if (useProxy) {
-    Object.assign(headers, {
-      // pragma: 'no-cache',
-      'cache-control': 'no-cache',
-      'x-lively-proxy-request': url
-    });
-
-    url = resource.proxyDomain || defaultOrigin();
-  }
-
-  if (useCors) fetchOpts.mode = 'cors';
-  if (body) fetchOpts.body = body;
-  fetchOpts.redirect = 'follow';
-  fetchOpts.headers = { ...headers, ...moreHeaders };
-
-  return fetch(url, fetchOpts);
-}
-
-function upload (resource, body) {
-  let {
-    useProxy = true, useCors = true, url,
-    onLoad, headers, onProgress
-  } = resource;
-  const xhr = new XMLHttpRequest();
-  const res = promise.deferred();
-
-  xhr.open('PUT', url);
-
-  if (useProxy) {
-    Object.assign(headers, {
-      pragma: 'no-cache',
-      'cache-control': 'no-cache',
-      'x-lively-proxy-request': url
-    });
-
-    url = resource.proxyDomain || defaultOrigin();
-  }
-
-  for (const header in headers) { xhr.setRequestHeader(header, headers[header]); }
-  xhr.upload.addEventListener('progress', onProgress);
-  xhr.responseType = 'json';
-  xhr.onload = () => {
-    onLoad(xhr.response);
-    res.resolve(xhr);
-  };
-
-  if (useCors) xhr.withCredentials = true;
-  xhr.send(body);
-  return res.promise;
-}
-
-class WebDAVResource extends Resource {
-  constructor (url, opts = {}) {
-    super(url, opts);
-    this.onLoad = opts.onLoad || (() => {});
-    this.onProgress = opts.onProgress || (() => {});
-    this.useProxy = opts.hasOwnProperty('useProxy') ? opts.useProxy : false;
-    this.proxyDomain = opts.proxyDomain || undefined;
-    this.useCors = opts.hasOwnProperty('useCors') ? opts.useCors : false;
-    this.headers = opts.headers || {};
-    this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
-    this.errorOnHTTPStatusCodes = opts.hasOwnProperty('errorOnHTTPStatusCodes')
-      ? opts.errorOnHTTPStatusCodes
-      : true;
-  }
-
-  get isHTTPResource () { return true; }
-
-  join (path) {
-    return Object.assign(
-      super.join(path),
-      { headers: this.headers, useCors: this.useCors, useProxy: this.useProxy, proxyDomain: this.proxyDomain });
-  }
-
-  makeProxied (proxyDomain) {
-    if (proxyDomain !== undefined) this.proxyDomain = proxyDomain;
-    return this.useProxy
-      ? this
-      : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain });
-  }
-
-  noErrorOnHTTPStatusCodes () { this.errorOnHTTPStatusCodes = false; return this; }
-
-  async read () {
-    const res = await makeRequest(this);
-    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`); }
-    if (!this.binary) return res.text();
-    if (this.binary === 'blob') return res.blob();
-    if (typeof res.arrayBuffer === 'function') return res.arrayBuffer();
-    if (typeof res.buffer === 'function') return res.buffer(); // node only
-    throw new Error(`Don't now how to read binary resource ${this}'`);
-  }
-
-  async write (content) {
-    if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
-    const res = await upload(this, content);
-
-    if (!between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
-    return this;
-  }
-
-  async mkdir () {
-    if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
-    const res = await makeRequest(this, 'MKCOL');
-    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot create directory ${this.url}: ${res.statusText} ${res.status}`); }
-    return this;
-  }
-
-  async exists () {
-    return this.isRoot() ? true : !!(await makeRequest(this, 'HEAD')).ok;
-  }
-
-  async remove () {
-    await makeRequest(this, 'DELETE');
-    return this;
-  }
-
-  async _propfind () {
-    const res = await makeRequest(this, 'PROPFIND',
-      null, // propfindRequestPayload(),
-      {
-        'Content-Type': 'text/xml'
-        // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
-        // 'Depth': String(depth)
-      });
-
-    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`); }
-    const xmlString = await res.text();
-    const root = this.root();
-    // list of properties for all resources in the multistatus list
-    return readXMLPropfindResult(xmlString).map(props =>
-      root.join(props.url).assignProperties(props));
-  }
-
-  async dirList (depth = 1, opts = {}) {
-    // depth = number >= 1 or 'infinity'
-
-    if (typeof depth !== 'number' && depth !== 'infinity') { throw new Error(`dirList – invalid depth argument: ${depth}`); }
-
-    const { exclude } = opts;
-
-    if (depth <= 0) depth = 1;
-
-    if (depth === 1) {
-      let resources = await this._propfind(); // request to set resources props...
-      resources.shift();
-      if (exclude) resources = applyExclude$1(exclude, resources);
-      return resources;
-    } else {
-      const subResources = await this.dirList(1, opts);
-      const subCollections = subResources.filter(ea => ea.isDirectory());
-      return Promise.all(subCollections.map(col =>
-        col.dirList(typeof depth === 'number' ? depth - 1 : depth, opts)))
-        .then(recursiveResult =>
-          recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
-    }
-  }
-
-  async readProperties (opts) {
-    const props = (await this._propfind())[0];
-    return this.assignProperties(props); // lastModified, etag, ...
-  }
-
-  async post (body = null) {
-    if (typeof body !== 'string') body = JSON.stringify(body);
-    const res = await makeRequest(this, 'POST', body, {});
-    let text; let json;
-    try { text = await res.text(); } catch (err) {}
-    if (text && res.headers.get('content-type') === 'application/json') {
-      try { json = JSON.parse(text); } catch (err) {}
-    }
-    if (!res.ok && this.errorOnHTTPStatusCodes) {
-      throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
-    } else return json || text;
-  }
-
-  async copyTo (otherResource, ensureParent = true) {
-    if (this.isFile()) {
-      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
-      // optimized copy, using pipes, for HTTP
-      if (isNode) {
-        if (toFile.isHTTPResource) return this._copyTo_file_nodejs_http(toFile, ensureParent);
-        if (toFile.isNodeJSFileResource) return this._copyTo_file_nodejs_fs(toFile, ensureParent);
-      }
-    }
-    return super.copyTo(otherResource, ensureParent);
-  }
-
-  async _copyFrom_file_nodejs_fs (fromFile, ensureParent = true) {
-    if (ensureParent) await this.parent().ensureExistance();
-    let error;
-    const stream = fromFile._createReadStream();
-    stream.on('error', err => error = err);
-    const toRes = await makeRequest(this, 'PUT', stream);
-    if (error) throw error;
-    if (!toRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${toRes.statusText} ${toRes.status}`); }
-    return this;
-  }
-
-  async _copyTo_file_nodejs_fs (toFile, ensureParent = true) {
-    if (ensureParent) await toFile.parent().ensureExistance();
-    const fromRes = await makeRequest(this, 'GET');
-    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`); }
-    let error;
-    return new Promise((resolve, reject) =>
-      fromRes.body.pipe(toFile._createWriteStream())
-        .on('error', err => error = err)
-        .on('finish', () => error ? reject(error) : resolve(this)));
-  }
-
-  async _copyTo_file_nodejs_http (toFile, ensureParent = true) {
-    if (ensureParent) await toFile.parent().ensureExistance();
-    const fromRes = await makeRequest(this, 'GET');
-    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`); }
-    const toRes = await makeRequest(toFile, 'PUT', fromRes.body);
-    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot PUT: ${toRes.statusText} ${toRes.status}`); }
-  }
-}
-
-var resourceExtension$3 = {
-  name: 'http-webdav-resource',
-  matches: (url) => url.startsWith('http:') || url.startsWith('https:'),
-  resourceClass: WebDAVResource
-};
-
-/* global process */
-
-function wrapInPromise (func) {
-  return (...args) =>
-    new Promise((resolve, reject) =>
-      func.apply(null, args.concat((err, result) => err ? reject(err) : resolve(result))));
-}
-
-const readFileP = wrapInPromise(fs.readFile);
-const writeFileP = wrapInPromise(fs.writeFile);
-const existsP = (path) => new Promise((resolve, _reject) =>
-  fs.exists(path, (exists) => resolve(!!exists)));
-const readdirP = wrapInPromise(fs.readdir);
-const mkdirP = wrapInPromise(fs.mkdir);
-const rmdirP = wrapInPromise(fs.rmdir);
-const unlinkP = wrapInPromise(fs.unlink);
-const lstatP = wrapInPromise(fs.lstat);
-const renameP = wrapInPromise(fs.rename);
-
-class NodeJSFileResource extends Resource {
-  get isNodeJSFileResource () { return true; }
-
-  path () {
-    return this.url.replace('file://', '');
-  }
-
-  async stat () {
-    return lstatP(this.path());
-  }
-
-  async read () {
-    const readP = readFileP(this.path());
-    return this.binary ? readP : readP.then(String);
-  }
-
-  async write (content) {
-    if (this.isDirectory()) throw new Error(`Cannot write into a directory: ${this.path()}`);
-    await writeFileP(this.path(), content);
-    return this;
-  }
-
-  async mkdir () {
-    if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.path()}`);
-    await mkdirP(this.path());
-    return this;
-  }
-
-  async exists () {
-    return this.isRoot() ? true : existsP(this.path());
-  }
-
-  async dirList (depth = 1, opts = {}) {
-    if (typeof depth !== 'number' && depth !== 'infinity') { throw new Error(`dirList – invalid depth argument: ${depth}`); }
-
-    const { exclude } = opts;
-
-    if (depth <= 0) depth = 1;
-
-    if (depth === 1) {
-      let subResources = [];
-      for (const name of await readdirP(this.path())) {
-        let subResource = this.join(name);
-        const stat = await subResource.stat();
-        subResource = stat.isDirectory() ? subResource.asDirectory() : subResource;
-        subResource._assignPropsFromStat(stat);
-        subResources.push(subResource);
-      }
-      if (exclude) subResources = applyExclude$1(exclude, subResources);
-      return subResources;
-    }
-
-    const subResources = await this.dirList(1, opts);
-    const subCollections = subResources.filter(ea => ea.isDirectory());
-    return Promise.all(subCollections.map(col =>
-      col.dirList(typeof depth === 'number' ? depth - 1 : depth, opts)))
-      .then(recursiveResult =>
-        recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
-  }
-
-  async isEmptyDirectory () {
-    return (await this.dirList()).length === 0;
-  }
-
-  async rename (toResource) {
-    if (!(toResource instanceof this.constructor)) { return super.rename(toResource); }
-
-    // optimized for file system move
-    if (this.isFile()) {
-      toResource = toResource.asFile();
-      renameP(this.path(), toResource.path());
-    } else {
-      toResource = toResource.asDirectory();
-      await toResource.ensureExistance();
-      const files = []; const dirs = [];
-      for (const subR of await this.dirList('infinity')) {
-        if (subR.isDirectory()) dirs.push(subR);
-        else files.push(subR);
-      }
-      for (const subdir of dirs) { await toResource.join(subdir.relativePathFrom(this)).ensureExistance(); }
-      for (const file of files) { await file.rename(toResource.join(file.relativePathFrom(this))); }
-      await this.remove();
-    }
-    return toResource;
-  }
-
-  async remove () {
-    if (!(await this.exists())) ; else if (this.isDirectory()) {
-      for (const subResource of await this.dirList()) { await subResource.remove(); }
-      await rmdirP(this.path());
-    } else {
-      await unlinkP(this.path());
-    }
-    return this;
-  }
-
-  async readProperties () {
-    return this._assignPropsFromStat(await this.stat());
-  }
-
-  makeProxied () {
-    return this;
-  }
-
-  async copyTo (otherResource, ensureParent = true) {
-    if (this.isFile()) {
-      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
-      // optimized copy, using pipes, for HTTP
-      if (toFile.isHTTPResource) { return toFile._copyFrom_file_nodejs_fs(this, ensureParent = true); }
-    }
-    return super.copyTo(otherResource, ensureParent);
-  }
-
-  _assignPropsFromStat (stat) {
-    return this.assignProperties({
-      lastModified: stat.mtime,
-      created: stat.ctime,
-      size: stat.size,
-      type: stat.isDirectory() ? 'directory' : 'file',
-      isLink: stat.isSymbolicLink()
-    });
-  }
-
-  _createWriteStream () { return fs.createWriteStream(this.path()); }
-  _createReadStream () { return fs.createReadStream(this.path()); }
-}
-
-class NodeJSWindowsFileResource extends NodeJSFileResource {
-  constructor (url, opts) {
-    // rkrk 2019-10-31:
-    // Windows file uris have three slashes. Since we have used
-    // file:// throughout the code base we introduce this as a
-    // single point fix for the time being...
-    const prefix = url.slice(0, 8);
-    if (prefix !== 'file:///' && url.slice(0, 7) === 'file://') {
-      url = 'file:///' + url.slice(7);
-    }
-    if (url.includes('\\')) {
-      url = url.replace(/\\/g, '/');
-    }
-    super(url, opts);
-  }
-
-  path () {
-    return this.url.replace('file:///', '');
-  }
-
-  isRoot () {
-    return !!this.path().match(windowsRootPathRe);
-  }
-
-  root () {
-    if (this.isRoot()) return this;
-    console.log(this.url);
-    const toplevelMatch = this.url.match(windowsURLPrefixRe);
-    if (toplevelMatch) return this.newResource(toplevelMatch[0]);
-    throw new Error(
-      'Could not determine root path of windows file resource for url ' +
-        this.url);
-  }
-}
-
-const resourceExtension$2 = {
-  name: 'nodejs-file-resource',
-  matches: url => url.startsWith('file:'),
-  resourceClass: typeof process !== 'undefined' && process.platform === 'win32'
-    ? NodeJSWindowsFileResource
-    : NodeJSFileResource
-};
-
-const slashRe = /\//g;
-
-function applyExclude (resource, exclude) {
-  if (!exclude) return true;
-  if (typeof exclude === 'string') return !resource.url.includes(exclude);
-  if (typeof exclude === 'function') return !exclude(resource);
-  if (exclude instanceof RegExp) return !exclude.test(resource.url);
-  return true;
-}
-
-class LocalResourceInMemoryBackend {
-  static get hosts () {
-    return this._hosts || (this._hosts = {});
-  }
-
-  static removeHost (name) {
-    delete this.hosts[name];
-  }
-
-  static ensure (filespec, options = {}) {
-    const host = this.named(options.host);
-    return Promise.resolve()
-      .then(() => filespec ? createFiles(`local://${host.name}`, filespec) : null)
-      .then(() => this);
-  }
-
-  static named (name) {
-    if (!name) name = 'default';
-    return this.hosts[name] || (this.hosts[name] = new this(name));
-  }
-
-  constructor (name, filespec = {}) {
-    if (!name || typeof name !== 'string') { throw new Error('LocalResourceInMemoryBackend needs name!'); }
-    this.name = name;
-    this._filespec = filespec;
-  }
-
-  get filespec () { return this._filespec; }
-  set filespec (filespec) { this._filespec = filespec; }
-
-  get (path) { return this._filespec[path]; }
-  set (path, spec) { this._filespec[path] = spec; }
-
-  write (path, content) {
-    let spec = this._filespec[path];
-    if (!spec) spec = this._filespec[path] = { created: new Date() };
-    spec.content = content;
-    spec.isDirectory = false;
-    spec.lastModified = new Date();
-  }
-
-  read (path) {
-    const spec = this._filespec[path];
-    return !spec || !spec.content ? '' : spec.content;
-  }
-
-  mkdir (path) {
-    let spec = this._filespec[path];
-    if (spec && spec.isDirectory) return;
-    if (!spec) spec = this._filespec[path] = { created: new Date() };
-    if (spec.content) delete spec.content;
-    spec.isDirectory = true;
-    spec.lastModified = new Date();
-  }
-
-  partialFilespec (path = '/', depth = Infinity) {
-    const result = {};
-    const filespec = this.filespec;
-    const paths = Object.keys(filespec);
-
-    for (let i = 0; i < paths.length; i++) {
-      const childPath = paths[i];
-      if (!childPath.startsWith(path) || path === childPath) continue;
-      const trailing = childPath.slice(path.length);
-      const childDepth = trailing.includes('/') ? trailing.match(slashRe).length + 1 : 1;
-      if (childDepth > depth) continue;
-      result[childPath] = filespec[childPath];
-    }
-    return result;
-  }
-}
-
-class LocalResource extends Resource {
-  get localBackend () {
-    return LocalResourceInMemoryBackend.named(this.host());
-  }
-
-  read () { return Promise.resolve(this.localBackend.read(this.path())); }
-
-  write (content) {
-    if (this.isDirectory()) { throw new Error(`Cannot write into a directory! (${this.url})`); }
-    const spec = this.localBackend.get(this.path());
-    if (spec && spec.isDirectory) { throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`); }
-    this.localBackend.write(this.path(), content);
-    return Promise.resolve(this);
-  }
-
-  mkdir () {
-    if (!this.isDirectory()) { throw new Error(`Cannot mkdir a file! (${this.url})`); }
-    const spec = this.localBackend.get(this.path());
-    if (spec && spec.isDirectory) return Promise.resolve(this);
-    if (spec && !spec.isDirectory) { throw new Error(`${this.url} already exists and is a file (cannot mkdir it!)`); }
-    this.localBackend.mkdir(this.path());
-    return Promise.resolve(this);
-  }
-
-  exists () {
-    return Promise.resolve(this.isRoot() || this.path() in this.localBackend.filespec);
-  }
-
-  remove () {
-    const thisPath = this.path();
-    Object.keys(this.localBackend.filespec).forEach(path =>
-      path.startsWith(thisPath) && delete this.localBackend.filespec[path]);
-    return Promise.resolve(this);
-  }
-
-  readProperties () {
-    throw new Error('not yet implemented');
-  }
-
-  dirList (depth = 1, opts = {}) {
-    if (!this.isDirectory()) return this.asDirectory().dirList(depth, opts);
-
-    const { exclude } = opts;
-    const prefix = this.path();
-    const children = [];
-    const paths = Object.keys(this.localBackend.filespec);
-
-    if (depth === 'infinity') depth = Infinity;
-
-    for (let i = 0; i < paths.length; i++) {
-      const childPath = paths[i];
-      if (!childPath.startsWith(prefix) || prefix === childPath) continue;
-      const trailing = childPath.slice(prefix.length);
-      const childDepth = trailing.includes('/') ? trailing.match(slashRe).length + 1 : 1;
-      if (childDepth > depth) {
-        // add the dir pointing to child
-        const dirToChild = this.join(trailing.split('/').slice(0, depth).join('/') + '/');
-        if (!children.some(ea => ea.equals(dirToChild))) children.push(dirToChild);
-        continue;
-      }
-      const child = this.join(trailing);
-      if (!exclude || applyExclude(child, exclude)) { children.push(child); }
-    }
-    return Promise.resolve(children);
-  }
-}
-
-var resourceExtension$1 = {
-  name: 'local-resource',
-  matches: (url) => url.startsWith('local:'),
-  resourceClass: LocalResource
-};
-
-const requestMap = {};
-
-class ESMREesource extends Resource {
-
-  async read () {
-    let module;
-
-    const baseUrl = 'https://jspm.dev/';
-    
-    const id = this.url.replace('esm://cache/', '');
-    
-    let pathStructure = id.split('/').filter(Boolean);
-    
-    // jspm servers both the entry point into a package as well as subcontent from package@version/
-    // differentiate these cases by introducing an index.js which will automatically be served by systemJS
-    if (pathStructure.length === 1 || !pathStructure[pathStructure.length - 1].endsWith('js') && !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
-      if (pathStructure.length === 1) pathStructure[0] = pathStructure[0].replace('!cjs', '');
-      pathStructure.push('index.js');
-    }
-
-    const [res, created] = await this.findOrCreatePathStructure(pathStructure);
-    
-    if (!created) {
-      module = await res.read();
-    } else {
-      module = await resource((baseUrl + id)).read();
-      res.write(module);
-    }
-    return module;
-  }
-
-  async findOrCreatePathStructure(pathElements) {
-
-    const cachePath = joinPath(System.baseURL, '/esm_cache/');
-    
-    let currPath = cachePath;
-    let pathRes;
-    
-    // pathElements can together either describe a directory or a file
-    // in the case that it is not a file (will be either js or !cjs) we need to fixup the last part of the path
-    if (!pathElements[pathElements.length - 1].endsWith('js') && !pathElements[pathElements.length - 1].endsWith('!cjs')) {
-      pathElements[pathElements.length - 1] = pathElements[pathElements.length - 1] + '/'; 
-    }
-
-    const fullPath = pathElements.join('/');
-    
-    // another request already started the creation of this resource
-    // since this happens asynchronously we could be scheduled "in between"
-    // wait until this process is done,
-    // since otherwise we will cause server errors when creating a directory that already exists
-    const runningCreation = requestMap[cachePath + fullPath];
-    if (runningCreation) await runningCreation;
-    
-    const res = resource(cachePath + fullPath);
-    const isExisting = await res.exists();
-    if (isExisting) return [res, false]
-    
-    for (let elem of pathElements){
-      if (elem !== pathElements[pathElements.length - 1]){
-        elem = elem + '/';
-      }
-      pathRes = requestMap[currPath + elem]; 
-      if (!pathRes) {
-        pathRes = resource(currPath).join(elem); 
-        if (elem.endsWith('/')) {
-          const dirExists = await pathRes.exists();
-          if (requestMap[currPath + elem] || dirExists){
-            await requestMap[currPath + elem];
-            currPath = pathRes.url;
-            continue
-          }
-          else {
-            // signal that we are currently creating this resource
-            // and wait for this operation to finish
-            requestMap[currPath + elem] = pathRes.mkdir();
-            pathRes = await requestMap[currPath + elem];
-            } 
-        } 
-      } else {
-      // another request already started the creation of this resource
-      // since this happens asynchronously we could be scheduled "in between"
-      // wait until this process is done,
-      // since otherwise we will cause server errors when creating a resource that already exists
-      pathRes = await pathRes;
-      }
-      currPath = pathRes.url;
-    }
-    return [pathRes, true]
-  }
-
-  get isESMResource() {
-    return true;
-  }
-  
-  async write (source) {
-    console.error('Not supported by resource type.');
-  }
-
-  async mkdir () {
-    console.error('Not supported by resource type.');
-  }
-
-  async exists () {
-    // stub that needs to exist
-  }
-
-  async remove () {
-    console.error('Not supported by resource type.');
-  }
-}
-
-const resourceExtension = {
-  name: 'ecma-script-module-resource',
-  matches: (url) => url.startsWith('esm://'),
-  resourceClass: ESMREesource
-};
-
-/* global System,babel */
-
-registerExtension(resourceExtension$1);
-registerExtension(resourceExtension$3);
-registerExtension(resourceExtension$2);
-registerExtension(resourceExtension);
 
 var semver$1 = {exports: {}};
 
@@ -3734,1426 +1516,6 @@ var semver$1 = {exports: {}};
 } (semver$1, semver$1.exports));
 
 var semver = semver$1.exports;
-
-/*global process, require, module, __filename, URL*/
-
-const crossDeviceTest = {
-  done: false,
-  isOnOtherDevice: undefined,
-  customTmpDirExists: false,
-  customTmpDir: path.join(process.cwd(), "tmp")
-};
-
-
-function configFile(dir) {
-  return dir.startsWith('file://') ? new URL("package.json", dir) : path.join(dir, 'package.json')
-}
-
-function findPackageConfig(modulePath) {
-  let dir = path.dirname(modulePath), config = null;
-  while (true) {
-    if (fs.existsSync(configFile(dir))) {
-      config = JSON.parse(fs.readFileSync(configFile(dir)));
-      break;
-    }
-    let nextDir = path.dirname(dir);
-    if (nextDir === dir) break;
-    dir = nextDir;
-  }
-  return config;
-}
-
-function tmpdir() {
-  const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
-  if (done) {
-    if (!isOnOtherDevice) return os.tmpdir();
-    if (!customTmpDirExists) {
-      // console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
-      if (!fs.existsSync(customTmpDir))
-        fs.mkdirSync(customTmpDir);
-      crossDeviceTest.customTmpDirExists = true;
-    }
-    return customTmpDir
-  }
-
-  crossDeviceTest.done = true;
-  try {
-    fs.symlinkSync(__filename), path.join(os.tmpdir(), path.basename(__filename));
-    crossDeviceTest.isOnOtherDevice = false;
-  } catch (err) {
-    crossDeviceTest.isOnOtherDevice = true;
-  }
-  return tmpdir();
-}
-
-function maybeFileResource$1(url) {
-  if (typeof url === "string" && url.startsWith("/"))
-    url = "file://" + url;
-  return url.isResource ? url : resource(url);
-}
-
-var fixGnuTar = undefined;
-
-async function npmSearchForVersions(pname, range = "*") {
-  // let packageNameAndRange = "lively.lang@~0.4"
-  try {
-    // pname = pname.replace(/\@/g, "_40");
-    pname = pname.replace(/\//g, "%2f");
-    // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
-    const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson(),
-          version = pname == 'graceful-fs' ?
-                       semver.maxSatisfying(Object.keys(versions), range, true) :
-                       semver.minSatisfying(Object.keys(versions), range, true),
-          { name, dist: { shasum, tarball } } = versions[version];
-    return { name, version, tarball };
-  } catch (err) {
-    console.error(err);
-    throw new Error(`Cannot find npm package for ${pname}@${range}`);
-  }
-}
-
-async function npmDownloadArchive(pname, range, destinationDir) {
-  destinationDir = maybeFileResource$1(destinationDir);
-  let { version, name, tarball: archiveURL } = await npmSearchForVersions(pname, range);
-  let nameForArchive = name.replace(/\//g, "%2f");
-  let archive = `${nameForArchive}-${version}.tgz`;
-
-  if (!archiveURL) {
-    archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
-  }
-  console.log(`[flatn] downloading ${name}@${version} - ${archiveURL}`);
-  let downloadedArchive = destinationDir.join(archive);
-  await resource(archiveURL).beBinary().copyTo(downloadedArchive);
-  return { downloadedArchive, name, version };
-}
-
-
-// let {downloadedArchive} = await npmDownloadArchive("lively.lang@^0.3", "local://lively.node-packages-test/test-download/")
-// let z = await untar(downloadedArchive, resource("file:///Users/robert/temp/"))
-// let z = await untar(downloadedArchive, resource("local://lively.node-packages-test/test-download/"))
-// await z.dirList()
-// https://registry.npmjs.org/lively.lang/-/lively.lang-0.3.5.tgz
-
-async function untar(downloadedArchive, targetDir, name) {
-  // FIXME use tar module???
-
-  if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, "");
-  name = name.replace(/\//g, "%2f");
-
-  downloadedArchive = maybeFileResource$1(downloadedArchive);
-  targetDir = maybeFileResource$1(targetDir);
-
-  let untarDir = resource(`file://${tmpdir()}/npm-helper-untar/`);
-  await untarDir.ensureExistance();
-  if (!downloadedArchive.url.startsWith("file://")) { // need to run exec
-    let tmpDir = untarDir.join(downloadedArchive.name());
-    await downloadedArchive.copyTo(tmpDir);
-    downloadedArchive = tmpDir;
-  }
-
-  if (untarDir.join(name).exists()) {
-    try {
-      await untarDir.join(name).remove();
-    } catch (err) {
-      // sometimes remove above errors with EPERM...
-      await x$1(`rm -rf "${name}"`, { cwd: untarDir.path() });
-    }
-  }
-
-  // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
-
-  if (fixGnuTar === undefined) {
-    try {
-      await x$1(`tar --version | grep -q 'gnu'`);
-      fixGnuTar = "--warning=no-unknown-keyword ";
-    } catch (err) {
-      fixGnuTar = "";
-    }
-  }
-
-  try {
-    let cmd = `mkdir "${name}" && `
-      + `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && `
-      + `rm "${downloadedArchive.path()}"`;
-    await x$1(cmd, { verbose: false, cwd: untarDir.path() });
-  } catch (err) {
-    try { await x$1(`rm -rf ${untarDir.path()}`); } catch (err) { }
-  } finally {
-    try { await targetDir.join(name).asDirectory().remove(); } catch (err) { }
-  }
-
-  await x$1(`mv ${untarDir.join(name).path()} ${targetDir.join(name).path()}`, {});
-  return targetDir.join(name).asDirectory();
-}
-
-
-// await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
-
-async function gitClone(gitURL, intoDir, branch = "master") {
-  intoDir = maybeFileResource$1(intoDir).asDirectory();
-  let name = intoDir.name(), tmp;
-  if (!intoDir.url.startsWith("file://")) {
-    tmp = resource(`file://${tmpdir()}/npm-helper-gitclone/`);
-    await tmp.ensureExistance();
-    if (tmp.join(name).exists()) await tmp.join(name).remove();
-  } else {
-    intoDir.parent().ensureExistance();
-    if (intoDir.exists()) await intoDir.remove();
-  }
-
-  // console.log(`git clone -b "${branch}" "${gitURL}" "${name}"`)
-  // console.log(tmp ? tmp.path() : intoDir.parent().path())
-
-  let destPath = tmp ? tmp.path() : intoDir.parent().path();
-  try {
-    try {
-      await x$1(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, { cwd: destPath });
-    } catch (err) {
-      // specific shas can't be cloned, so do it manually:
-      await x$1(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, { cwd: destPath });
-    }
-  } catch (err) {
-    throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
-  }
-
-  if (tmp) await x$1(`mv ${tmp.join(name).path()} ${intoDir.asFile().path()}`);
-}
-
-
-
-function x$1(cmd, opts = {}) {
-  return new Promise((resolve, reject) => {
-    let p = child_process.exec(cmd, opts, (code, stdout, stderr) =>
-      code
-        ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
-        : resolve(stdout));
-    if (opts.verbose) {
-      // p.stdout.on("data", d => console.log(d));
-      // p.stderr.on("data", d => console.log(d));
-      p.stdout.pipe(process.stdout);
-      p.stderr.pipe(process.stderr);
-    }
-  });
-}
-
-
-const npmFallbackEnv = {
-  npm_config_access: '',
-  npm_config_also: '',
-  npm_config_always_auth: '',
-  npm_config_auth_type: 'legacy',
-  npm_config_bin_links: 'true',
-  npm_config_browser: '',
-  npm_config_ca: '',
-  npm_config_cache: path.join(process.env.HOME || "", '.npm'),
-  npm_config_cache_lock_retries: '10',
-  npm_config_cache_lock_stale: '60000',
-  npm_config_cache_lock_wait: '10000',
-  npm_config_cache_max: 'Infinity',
-  npm_config_cache_min: '10',
-  npm_config_cafile: '',
-  npm_config_cert: '',
-  npm_config_color: 'true',
-  npm_config_depth: 'Infinity',
-  npm_config_description: 'true',
-  npm_config_dev: '',
-  npm_config_dry_run: '',
-  npm_config_engine_strict: '',
-  npm_config_fetch_retries: '2',
-  npm_config_fetch_retry_factor: '10',
-  npm_config_fetch_retry_maxtimeout: '60000',
-  npm_config_fetch_retry_mintimeout: '10000',
-  npm_config_force: '',
-  npm_config_git: 'git',
-  npm_config_git_tag_version: 'true',
-  npm_config_global: '',
-  npm_config_global_style: '',
-
-  npm_config_globalconfig: path.join(process.env.HOME || "", 'npmrc'),
-  npm_config_globalignorefile: path.join(process.env.HOME || "", 'npmignore'),
-  npm_config_group: '20',
-  npm_config_ham_it_up: '',
-  npm_config_heading: 'npm',
-  npm_config_https_proxy: '',
-  npm_config_if_present: '',
-  npm_config_ignore_scripts: '',
-  npm_config_init_author_email: '',
-  npm_config_init_author_name: '',
-  npm_config_init_author_url: '',
-  npm_config_init_license: 'ISC',
-  npm_config_init_module: path.join(process.env.HOME || "", '.npm-init.js'),
-  npm_config_init_version: '1.0.0',
-  npm_config_json: '',
-  npm_config_key: '',
-  npm_config_legacy_bundling: '',
-  npm_config_link: '',
-  npm_config_local_address: '',
-  npm_config_loglevel: 'warn',
-  npm_config_logs_max: '10',
-  npm_config_long: '',
-  npm_config_maxsockets: '50',
-  npm_config_message: '%s',
-  npm_config_metrics_registry: 'https://registry.npmjs.org/',
-  npm_config_node_version: '7.7.4',
-  npm_config_onload_script: '',
-  npm_config_only: '',
-  npm_config_optional: 'true',
-  npm_config_parseable: '',
-  npm_config_prefix: process.env.HOME || "",
-  npm_config_production: '',
-  npm_config_progress: 'true',
-  npm_config_proprietary_attribs: 'true',
-  npm_config_proxy: '',
-  npm_config_rebuild_bundle: 'true',
-  npm_config_registry: 'https://registry.npmjs.org/',
-  npm_config_rollback: 'true',
-  npm_config_save: '',
-  npm_config_save_bundle: '',
-  npm_config_save_dev: '',
-  npm_config_save_exact: '',
-  npm_config_save_optional: '',
-  npm_config_save_prefix: '^',
-  npm_config_scope: '',
-  npm_config_scripts_prepend_node_path: 'warn-only',
-  npm_config_searchexclude: '',
-  npm_config_searchlimit: '20',
-  npm_config_searchopts: '',
-  npm_config_searchstaleness: '900',
-  npm_config_send_metrics: '',
-  npm_config_shell: 'bash',
-  npm_config_shrinkwrap: 'true',
-  npm_config_sign_git_tag: '',
-  npm_config_sso_poll_frequency: '500',
-  npm_config_sso_type: 'oauth',
-  npm_config_strict_ssl: 'true',
-  npm_config_tag: 'latest',
-  npm_config_tag_version_prefix: 'v',
-  npm_config_tmp: crossDeviceTest.customTmpDir,
-  npm_config_umask: '0022',
-  npm_config_unicode: 'true',
-  npm_config_unsafe_perm: 'true',
-  npm_config_usage: '',
-  npm_config_user: '501',
-  npm_config_user_agent: 'npm/4.4.4 node/v7.7.4 darwin x64',
-  npm_config_userconfig: path.join(process.env.HOME || "", '.npmrc'),
-  npm_config_version: '',
-  npm_config_versions: '',
-  npm_config_viewer: 'man',
-  npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
-  npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
-};
-
-// gitSpecFromVersion("git+ssh://user@hostname/project.git#commit-ish")
-// gitSpecFromVersion("https://rksm/flatn#commit-ish")
-// gitSpecFromVersion("rksm/flatn#commit-ish")
-function gitSpecFromVersion(version = "") {
-  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/),
-    [_1, gitRepo, gitBranch] = gitMatch || [],
-    githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/),
-    [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
-  if (!githubMatch && !gitMatch) return null;
-
-  if (!githubMatch)
-    return {
-      branch: gitBranch,
-      gitURL: gitRepo,
-      versionInFileName: gitRepo.replace(/[:\/\+#]/g, "_") + "_" + gitBranch
-    };
-
-  let gitURL = `https://github.com/${githubUser}/${githubRepo}`;
-  return {
-    branch: githubBranch, gitURL,
-    versionInFileName: gitURL.replace(/[:\/\+#]/g, "_") + "_" + githubBranch
-  };
-}
-
-/*
-
-lively.lang.fun.timeToRun(() => {
-  let pm = PackageMap.build(["/Users/robert/Lively/lively-dev2/lively.next-node_modules"])
-  pm.lookup("lively.morphic")
-}, 100);
-
-let dir = System.resource(System.baseURL).join("lively.next-node_modules/")
-let pmap = AsyncPackageMap.build([dir]); await pmap.whenReady()
-
-let dir = "/Users/robert/Lively/lively-dev2/lively.next-node_modules/"
-let pmap = PackageMap.build([dir]);
-
-let json = pmap.allPackages().reduce((map, spec) => {
-  let {name,version} = spec;
-  map[name + "@" + version] = spec;
-  return map
-}, {});
-
-
-lively.lang.num.humanReadableByteSize(JSON.stringify(json).length)
-
-await fs_dirList(pmap.lookup("react").location)
-fs_dirList(pmap.lookup("react").location)
-
-*/
-
-function isAbsolute(path) {
-  return path.startsWith("/") || path.match(/^[a-z\.-_\+]+:/i)
-}
-
-function parentDir(p) {
-  if (p.isResource) return p.parent();
-  return path__default["default"].basename(p);
-}
-
-function equalLocation(a, b) {
-  if (a.isResource) return a.equals(b);
-  return a == b;
-}
-
-function join(a, b) {
-  if (a.isResource) return a.join(b);
-  return path__default["default"].join(a, b);
-}
-
-function normalizePath(p) {
-  if (p.isResource) return p.withRelativePartsResolved()
-  return path__default["default"].normalize(p);
-}
-
-function fs_isDirectory(location) {
-  if (location.isResource) return location.isDirectory();
-  return fs__default["default"].statSync(location).isDirectory();
-}
-
-function fs_exists(location) {
-  if (location.isResource) return location.exists();
-  return fs__default["default"].existsSync(location);
-}
-
-function fs_read(location) {
-  if (location.isResource) return location.read();
-  return fs__default["default"].readFileSync(location);
-}
-
-function fs_write(location, content) {
-  if (location.isResource) return location.write(content);
-  return fs__default["default"].writeFileSync(location, content);
-}
-
-function fs_readJson(location) {
-  if (location.isResource) return location.exists().then(exists => exists ? location.readJson() : null);
-  return fs__default["default"].existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
-}
-
-function fs_writeJson(location, jso) {
-  if (location.isResource) return location.writeJson(jso);
-  return fs_write(location, JSON.stringify(jso));
-}
-
-function fs_dirList(location) {
-  if (location.isResource) return location.dirList(1);
-  return fs__default["default"].readdirSync(location).map(ea => join(location, ea));
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-class PackageMap {
-
-  static empty() { return new this(); }
-
-  static get cache() { return this._cache || (this._cache = {}); }
-
-  static keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-    return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`
-  }
-
-  static ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-    let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
-    return this.cache[key] || (this.cache[key] = this.build(
-      packageCollectionDirs, individualPackageDirs, devPackageDirs));
-  }
-
-  static build(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
-    let map = new this();
-    map.buildDependencyMap(
-      packageCollectionDirs,
-      individualPackageDirs,
-      devPackageDirs);
-    return map;
-  }
-
-  constructor() {
-    this.dependencyMap = {};
-    this.byPackageNames = {};
-    this.key = "";
-    this.devPackageDirs = [];
-    this.individualPackageDirs = [];
-    this.packageCollectionDirs = [];
-    this._readyPromise = null;
-  }
-
-  whenReady() { return this._readyPromise || Promise.resolve(); }
-
-  isReady() { return !this._readyPromise; }
-
-  withPackagesDo(doFn) {
-    let result = [];
-    for (let key in this.dependencyMap)
-      result.push(doFn(key, this.dependencyMap[key]));
-    return result;
-  }
-
-  findPackage(matchFn) {
-    for (let key in this.dependencyMap) {
-      let pkg = this.dependencyMap[key];
-      if (matchFn(key, pkg)) return pkg
-    }
-    return null;
-  }
-
-  allPackages() {
-    let pkgs = [];
-    for (let key in this.dependencyMap)
-      pkgs.push(this.dependencyMap[key]);
-    return pkgs;
-  }
-
-  coversDirectory(dir) {
-    let { packageCollectionDirs, devPackageDirs, individualPackageDirs } = this;
-
-    if (individualPackageDirs.some(ea => equalLocation(ea, dir))) return "individualPackageDirs";
-    if (devPackageDirs.some(ea => equalLocation(ea, dir))) return "devPackageDirs";
-    let parent = parentDir(dir);
-    if (packageCollectionDirs.some(ea => equalLocation(ea, parent))) {
-      return this.allPackages().find(pkg => equalLocation(pkg.location, parent)) ?
-        "packageCollectionDirs" : "maybe packageCollectionDirs";
-    }
-    return null;
-  }
-
-  addPackage(packageSpec, isDev = false) {
-    // returns false if package already installed, true otherwise
-
-    let self = this;
-    if (typeof packageSpec === "string")
-      packageSpec = PackageSpec.fromDir(packageSpec);
-
-    return packageSpec instanceof Promise ?
-      packageSpec.then(resolvedPackageSpec => {
-        packageSpec = resolvedPackageSpec;
-        return isPackageSpecIncluded();
-      }) : isPackageSpecIncluded();
-
-    function isPackageSpecIncluded() {
-      let { location, name, version } = packageSpec,
-        { packageCollectionDirs, devPackageDirs, individualPackageDirs } = self,
-        isCovered = self.coversDirectory(location);
-
-      if (["devPackageDirs", "individualPackageDirs", "packageCollectionDirs"].includes(isCovered))
-        return false;
-      if (isDev) devPackageDirs = devPackageDirs.concat(location);
-      else individualPackageDirs = individualPackageDirs.concat(location);
-
-      // FIXME key changes....
-      let build = self.buildDependencyMap(
-        packageCollectionDirs,
-        individualPackageDirs,
-        devPackageDirs);
-      return build instanceof Promise ? build.then(() => true) : true;
-    }
-  }
-
-  buildDependencyMap(packageCollectionDirs, individualPackageDirs = [], devPackageDirs = []) {
-    // looks up all the packages in can find in packageDirs and creates
-    // packageSpecs for them.  If a package specifies more flatn_package_dirs in its
-    // config then repeat the process until no more new package dirs are found.
-    // Finally, combine all the packages found into a single map, like
-    // {package-name@version: packageSpec, ...}.
-    //
-    // Merging of the results of the different package dirs happens so that dirs
-    // specified first take precedence. I.e. if a dependency foo@1 is found via
-    // packageDirs and then another package specifies a dir that leads to the
-    // discovery of another foo@1, the first one ends up in tha packageDir
-
-    let key = this.constructor.keyFor(
-      packageCollectionDirs,
-      individualPackageDirs,
-      devPackageDirs
-    );
-
-    let pkgMap = {},
-      byPackageNames = {},
-      seen = { packageDirs: {}, collectionDirs: {} };
-
-    // 1. find all the packages in collection dirs and separate package dirs;
-    for (let p of this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
-      let { name, version } = p;
-      pkgMap[`${name}@${version}`] = p;
-      (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
-    }
-
-    for (let dir of individualPackageDirs)
-      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let { name, version } = p;
-        pkgMap[`${name}@${version}`] = p;
-        (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
-      }
-
-    // 2. read dev packages, those shadow all normal dependencies with the same package name;
-
-    for (let dir of devPackageDirs)
-      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
-        let { name, version } = p;
-        pkgMap[`${name}`] = p;
-        p.isDevPackage = true;
-        let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
-        if (versionsOfPackage) for (let key of versionsOfPackage) delete pkgMap[key];
-        versionsOfPackage.push(name);
-      }
-
-    this.dependencyMap = pkgMap;
-    this.byPackageNames = byPackageNames;
-    this.packageCollectionDirs = packageCollectionDirs;
-    this.individualPackageDirs = individualPackageDirs;
-    this.devPackageDirs = devPackageDirs;
-    this.key = key;
-
-    return this;
-  }
-
-
-  lookup(name, versionRange) {
-    // Query the package map if it has a package name@version
-    // Compatibility is either a semver match or if package comes from a git
-    // repo then if the git commit matches.  Additionally dev packages are
-    // supported.  If a dev package with `name` is found it always matches
-
-    let gitSpec = gitSpecFromVersion(versionRange || "");
-    if (!gitSpec && versionRange) {
-      try {
-        // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
-        versionRange = new semver.Range(versionRange, true).toString();
-      } catch (err) { }
-    }
-    return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
-  }
-
-  _discoverPackagesInCollectionDirs(
-    packageCollectionDirs,
-    seen = { packageDirs: {}, collectionDirs: {} }
-  ) {
-    // package collection dir structure is like
-    // packages
-    // |-package-1
-    // | |-0.1.0
-    // | | \-package.json
-    // | \-0.1.1
-    // |   \-package.json
-    // |-package-2
-    // ...
-
-    let found = [];
-    for (let dir of packageCollectionDirs) {
-      if (!fs_exists(dir)) continue;
-      for (let packageDir of fs_dirList(dir)) {
-        if (!fs_isDirectory(packageDir)) continue;
-        for (let versionDir of fs_dirList(packageDir))
-          found.push(...this._discoverPackagesInPackageDir(versionDir, seen));
-      }
-    }
-    return found;
-  }
-
-  _discoverPackagesInPackageDir(
-    packageDir,
-    seen = { packageDirs: {}, collectionDirs: {} }
-  ) {
-    let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
-    if (!spec) return [];
-
-    let found = [spec],
-      { location, flatn_package_dirs } = spec;
-
-    if (flatn_package_dirs) {
-      for (let dir of flatn_package_dirs) {
-        if (!isAbsolute(dir)) dir = normalizePath(join(location, dir));
-        if (seen.collectionDirs[dir]) continue;
-        console.log(`[flatn] project ${location} specifies package dir ${dir}`);
-        seen.collectionDirs[dir] = true;
-        found.push(...this._discoverPackagesInCollectionDirs([dir], seen));
-      }
-    }
-
-    return found;
-  }
-
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// PackageSpec => package representation for dependency resolution and build
-
-
-const lvInfoFileName = ".lv-npm-helper-info.json";
-
-class PackageSpec {
-
-  static fromDir(packageDir) {
-    let spec = new this(packageDir),
-      read = spec.read();
-    return read instanceof Promise
-      ? read.then(read => (read ? spec : null))
-      : read ? spec : null;
-  }
-
-  constructor(location) {
-    this.location = location;
-    this.isDevPackage = false;
-
-    // from config
-    this.scripts = null;
-    this.bin = null;
-    this.flatn_package_dirs = null;
-    this.name = "";
-    this.version = "";
-    this.dependencies = {};
-    this.devDependencies = {};
-
-    // from git spec
-    this.branch = null;
-    this.gitURL = null;
-    this.versionInFileName = null; // @https___github.com_foo_bar#zork
-  }
-
-  matches(pName, versionRange, gitSpec) {
-    // does this package spec match the package pName@versionRange?
-    let { name, version, isDevPackage } = this;
-
-    if (name !== pName) return false;
-
-    if (!versionRange || isDevPackage) return true;
-
-    if (gitSpec && (gitSpec.versionInFileName === version
-      || this.versionInFileName === gitSpec.versionInFileName)) {
-      return true
-    }
-
-    if (semver.parse(version || "", true) && semver.satisfies(version, versionRange, true))
-      return true;
-
-    return false;
-  }
-
-  read() {
-    let self = this,
-      packageDir = this.location,
-      configFile = join(packageDir, "package.json");
-
-    if (!fs_isDirectory(packageDir)) return false;
-
-    let hasConfig = fs_exists(configFile);
-
-    return hasConfig instanceof Promise ? hasConfig.then(step2) : step2(hasConfig);
-
-    function step2(hasConfig) {
-      if (!hasConfig) return false;
-      let config = fs_readJson(configFile);
-      return config instanceof Promise ? config.then(step3) : step3(config);
-    }
-
-    function step3(config) {
-      let {
-        name, version, bin, scripts,
-        dependencies, devDependencies,
-        flatn_package_dirs
-      } = config;
-
-      if (bin) {
-        // npm allows bin to just be a string, it is then mapped to the package name
-        bin = typeof bin === "string" ? { [name.replace(/\//g, "__SLASH__")]: bin } : Object.assign({}, bin);
-      }
-
-      Object.assign(self, {
-        location: packageDir,
-        name, version, bin, scripts,
-        dependencies, devDependencies,
-        flatn_package_dirs
-      });
-
-      let info = self.readLvInfo();
-      return info instanceof Promise ? info.then(step4) : step4(info);
-    }
-
-    function step4(info) {
-      if (info) {
-        let { branch, gitURL, versionInFileName } = info;
-        Object.assign(self, { branch, gitURL, versionInFileName });
-      }
-      return true;
-    }
-  }
-
-  readConfig() {
-    const config = fs_readJson(join(this.location, "package.json"));
-    return config instanceof Promise ?
-      config.then(ensureConfig) : ensureConfig(config);
-    function ensureConfig(config) {
-      if (config) return config;
-      const { name, version } = this;
-      return { name, version };
-    }
-  }
-
-  readLvInfo() {
-    let infoF = join(this.location, lvInfoFileName);
-    try {
-      let read = fs_readJson(infoF);
-      return read instanceof Promise ?
-        read.catch(err => null) : read;
-    } catch (err) { }
-    return null;
-  }
-
-  writeLvInfo(spec) {
-    return fs_writeJson(join(this.location, lvInfoFileName), spec);
-  }
-
-  changeLvInfo(changeFn) {
-    let read = this.readLvInfo();
-    return read instanceof Promise ?
-      read.then(read => this.writeLvInfo(changeFn(read))) :
-      this.writeLvInfo(changeFn(read));
-  }
-
-}
-
-/*global require, module*/
-
-
-function maybeFileResource(url) {
-  if (typeof url === "string" && url.startsWith("/"))
-    url = "file://" + url;
-  return url.isResource ? url : resource(url);
-}
-
-function pathForNameAndVersion(name, version, destinationDir) {
-  // pathForNameAndVersion("foo-bar", "1.2.3", "file:///x/y")
-  // pathForNameAndVersion("foo-bar", "foo/bar", "file:///x/y")
-  // pathForNameAndVersion("foo-bar", "git+https://github.com/foo/bar#master", "file:///x/y")
-
-  let gitSpec = gitSpecFromVersion(version);
-
-  // "git clone -b my-branch git@github.com:user/myproject.git"
-  return gitSpec ?
-    Object.assign({}, gitSpec, { location: null, name, version: gitSpec.gitURL }) :
-    { location: null, name, version };
-}
-
-
-async function packageDownload(name, range, destinationDir, verbose, attempt = 0) {
-  // packageNameAndRange like "lively.modules@^0.7.45"
-  // if no @ part than we assume @*
-
-  try {
-
-    destinationDir = maybeFileResource(destinationDir);
-
-    if (!range) {
-      // any version
-      range = "*";
-    }
-
-    // download package to tmp location
-    let tmp = resource("file://" + tmpdir()).join("package_install_tmp/");
-    await tmp.ensureExistance();
-
-    let pathSpec = pathForNameAndVersion(name, range, destinationDir.path()),
-      downloadDir = pathSpec.gitURL
-        ? await packageDownloadViaGit(pathSpec, tmp, verbose)
-        : await packageDownloadViaNpm(name, range, tmp, verbose);
-
-
-    let packageJSON = downloadDir.join("package.json"), config;
-    if (!await packageJSON.exists())
-      throw new Error(`Downloaded package ${name}@${range} does not have a package.json file at ${packageJSON}`);
-
-    config = await packageJSON.readJson();
-    let packageDir;
-    if (pathSpec.gitURL) {
-      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + pathSpec.versionInFileName;
-      packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
-    } else {
-      let dirName = config.name.replace(/\//g, "__SLASH__") + "/" + config.version;
-      packageDir = destinationDir.join(dirName).asDirectory();
-      pathSpec = Object.assign({}, pathSpec, { location: packageDir });
-    }
-
-    await addNpmSpecificConfigAdditions(
-      packageJSON, config, name, range, pathSpec.gitURL);
-
-    await packageDir.parent().ensureExistance();
-    await x$1(`mv ${downloadDir.asFile().path()} ${packageDir.asFile().path()}`);
-
-    let packageSpec = PackageSpec.fromDir(packageDir.path());
-    packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
-
-    return packageSpec;
-
-  } catch (err) {
-    if (attempt >= 3) {
-      console.error(`Download of ${name}@${range} failed:`, err.stack);
-      throw err;
-    }
-    console.log(`[flatn] retrying download of ${name}@${range}`);
-    return packageDownload(name, range, destinationDir, verbose, attempt + 1);
-  }
-}
-
-
-async function packageDownloadViaGit({ gitURL: url, name, branch }, targetDir, verbose) {
-  // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
-  branch = branch || "master";
-  url = url.replace(/#[^#]+$/, "");
-  let dir = targetDir.join(name).asDirectory();
-  await gitClone(url, dir, branch);
-  return dir;
-}
-
-async function packageDownloadViaNpm(nameRaw, range, targetDir, verbose) {
-  // packageNameAndRange like "lively.modules@^0.7.45"
-  // if no @ part than we assume @*
-  let {
-    downloadedArchive,
-    name, version
-  } = await npmDownloadArchive(nameRaw, range, targetDir);
-  return untar(downloadedArchive, targetDir, name);
-}
-
-function addNpmSpecificConfigAdditions(configFile, config, name, version, gitURL) {
-  // npm adds some magic "_" properties to the package.json. There is no
-  // specification of it and the official stance is that it is npm internal but
-  // some packages depend on that. In order to allow npm scripts like install to
-  // work smoothly we add a subset of those props here.
-  let _id = gitURL ?
-    `${name}@${version}` :
-    `${config.name}@${config.version}`,
-    _from = gitURL ?
-      `${config.name}@${gitURL}` :
-      `${config.name}@${semver.validRange(version)}`;
-  return configFile.writeJson(Object.assign({ _id, _from }, config), true);
-}
-
-function buildStages(packageSpec, packageMap, dependencyFields) {
-  let {name, version} = packageSpec,
-      {deps, packages: packageDeps, resolvedVersions} = depGraph(packageSpec, packageMap);
-
-  for (let dep in deps)
-    for (let i = 0; i < deps[dep].length; i++)
-      if (!deps[deps[dep][i]]) deps[dep][i] = resolvedVersions[deps[dep][i]];
-
-  return sortByReference(deps, `${name}@${version}`);
-}
-
-function depGraph(packageSpec, packageMap, dependencyFields = ["dependencies"]) {
-  // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
-  // let packages = getInstalledPackages(centralPackageDir);
-
-  let pNameAndVersion = `${packageSpec.name}@${packageSpec.version}`,
-      queue = [pNameAndVersion],
-      resolvedVersions = {},
-      deps = {}, packages = {};
-
-  while (queue.length) {
-    let nameAndVersion = queue.shift();
-    if (nameAndVersion in resolvedVersions) continue;
-
-    let atIndex = nameAndVersion.lastIndexOf("@");
-    if (atIndex === -1) atIndex = nameAndVersion.length;
-    let name = nameAndVersion.slice(0, atIndex),
-        version = nameAndVersion.slice(atIndex+1),
-        pSpec = packageMap.lookup(name, version);
-    if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
-
-    let resolvedNameAndVersion = `${pSpec.name}@${pSpec.version}`;
-
-    resolvedVersions[nameAndVersion] = resolvedNameAndVersion;
-
-    if (!packages[pSpec.name]) packages[pSpec.name] = [];
-    if (!packages[pSpec.name].includes(resolvedNameAndVersion))
-      packages[pSpec.name].push(resolvedNameAndVersion);
-
-    if (!deps[resolvedNameAndVersion]) {
-      let localDeps = Object.assign({},
-          dependencyFields.reduce((map, key) =>
-            Object.assign(map, pSpec[key]), {}));
-
-      deps[resolvedNameAndVersion] = Object.keys(localDeps).map(name => {
-        let fullName = name + "@" + localDeps[name];
-        queue.push(fullName);
-        return fullName;
-      });
-    }
-  }
-
-  return {deps, packages, resolvedVersions};
-}
-
-/*global System,process,global,require,module,__dirname*/
-
-const dir = typeof __dirname !== "undefined"
-  ? __dirname
-  : System.decanonicalize("flatn/").replace("file://", ""),
-  helperBinDir = path.join(dir, "bin");
-  path.join(helperBinDir, "node");
-
-let _npmEnv;
-function npmEnv() {
-  return _npmEnv || (_npmEnv = (() => {
-    let cacheFile = path.join(tmpdir(), "npm-env.json"), env = {};
-    if (fs__default["default"].existsSync(cacheFile)) {
-      let cached = JSON.parse(String(fs__default["default"].readFileSync(cacheFile)));
-      if (Date.now() - cached.time < 1000 * 60) return cached.env;
-    }
-    try {
-      var dir = path.join(tmpdir(), "npm-test-env-project");
-      if (!fs__default["default"].existsSync(dir)) fs__default["default"].mkdirSync(dir);
-      fs__default["default"].writeFileSync(path.join(dir, "package.json"), `{"scripts": {"print-env": "${process.env.npm_node_execpath || "node"} ./print-env.js"}}`);
-      fs__default["default"].writeFileSync(path.join(dir, "print-env.js"), `console.log(JSON.stringify(process.env))`);
-      let PATH = process.env.PATH.split(":").filter(ea => ea !== helperBinDir).join(":");
-      Object.keys(process.env).forEach(ea => {
-        if (ea.toLowerCase().startsWith("npm_config_"))
-          env[ea] = process.env[ea];
-      });
-      env = Object.assign({},
-        JSON.parse(String(child_process.execSync(`npm --silent run print-env`, { cwd: dir, env: Object.assign({}, process.env, { PATH }) }))),
-        env);
-      for (let key in env)
-        if (!key.toLowerCase().startsWith("npm") || key.toLowerCase().startsWith("npm_package"))
-          delete env[key];
-    } catch (err) {
-      console.warn(`Cannot figure out real npm env, ${err}`);
-      env = {};
-    } finally {
-      try {
-        if (fs__default["default"].existsSync(path.join(dir, "package.json")))
-          fs__default["default"].unlinkSync(path.join(dir, "package.json"));
-        fs__default["default"].unlinkSync(path.join(dir, "print-env.js"));
-        fs__default["default"].rmdirSync(dir);
-      } catch (err) { }
-    }
-    fs__default["default"].writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
-    return env;
-  })());
-}
-
-function npmCreateEnvVars(configObj, env = {}, path = "npm_package") {
-  if (Array.isArray(configObj))
-    configObj.forEach((ea, i) => add(i, configObj[i]));
-  else
-    Object.keys(configObj).forEach(name => add(name, configObj[name]));
-  return env;
-
-  function add(key, val) {
-    key = String(key).replace(/[-\.]/g, "_");
-    if (typeof val === "object") npmCreateEnvVars(val, env, path + "_" + key);
-    else env[path + "_" + key] = String(val);
-  }
-}
-
-function linkBins(packageSpecs, linkState = {}, verbose = false) {
-  let linkLocation = path.join(tmpdir(), "npm-helper-bin-dir");
-  if (!fs__default["default"].existsSync(linkLocation)) fs__default["default"].mkdirSync(linkLocation);
-  packageSpecs.forEach(({ bin, location }) => {
-    if (location.startsWith("file://"))
-      location = location.replace(/^file:\/\//, "");
-    if (!bin) return;
-    if (linkState[location]) return;
-    for (let linkName in bin) {
-      let realFile = bin[linkName];
-      try {
-        // fs.existsSync follows links, so broken links won't be reported as existing
-        fs__default["default"].lstatSync(path.join(linkLocation, linkName));
-        fs__default["default"].unlinkSync(path.join(linkLocation, linkName));
-      } catch (err) { }
-      verbose && console.log(`[flatn build] linking ${path.join(location, realFile)} => ${path.join(linkLocation, linkName)}`);
-      fs__default["default"].symlinkSync(path.join(location, realFile), path.join(linkLocation, linkName));
-    }
-    linkState[location] = true;
-  });
-  return linkLocation;
-}
-
-class BuildProcess {
-
-  static for(packageSpec, packageMap, dependencyFields, forceBuild = false, verbose = false) {
-    let stages = buildStages(packageSpec, packageMap);
-    return new this(stages, packageMap, forceBuild, verbose);
-  }
-
-  constructor(buildStages, packageMap, forceBuild, verbose = false) {
-    this.buildStages = buildStages; // 2d list, package specs in sorted order
-    this.packageMap = packageMap;
-    this.builtPackages = [];
-    this.binLinkState = {};
-    this.binLinkLocation = "";
-    this.forceBuild = forceBuild;
-    this.verbose = verbose;
-  }
-
-  async run() {
-
-    // let {buildStages, packageMap} = build
-    let { buildStages, packageMap } = this,
-      i = 1, n = buildStages.length;
-
-    this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`);
-
-    while (buildStages.length) {
-      let stage = buildStages[0];
-      if (!stage.length) {
-        buildStages.shift();
-        this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
-        continue;
-      }
-
-      let next = stage[0],
-        atIndex = next.lastIndexOf("@");
-      if (atIndex === -1) atIndex = next.length;
-      let name = next.slice(0, atIndex),
-        version = next.slice(atIndex + 1),
-        packageSpec = packageMap.lookup(name, version);
-      if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
-
-      await this.build(packageSpec);
-      stage.shift();
-    }
-  }
-
-  normalizeScripts({ scripts, location }) {
-    if (!scripts || !scripts.install) {
-      let hasBindingGyp = fs__default["default"].existsSync(path.join(location, "binding.gyp"));
-      if (hasBindingGyp) {
-        scripts = Object.assign({ install: "node-gyp rebuild" }, scripts);
-      }
-    }
-    return scripts;
-  }
-
-  hasBuiltScripts(scripts) {
-    return scripts && Object.keys(scripts).some(scriptName =>
-      ["prepare", "preinstall", "install", "postinstall"].includes(scriptName));
-  }
-
-  async build(packageSpec) {
-    this.binLinkLocation = linkBins(
-      this.builtPackages.concat([packageSpec]),
-      this.binLinkState,
-      this.verbose);
-
-    let env = npmCreateEnvVars(await packageSpec.readConfig());
-    let needsBuilt =
-      this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
-
-    if (needsBuilt) {
-      let scripts = this.normalizeScripts(packageSpec);
-      if (this.hasBuiltScripts(scripts)) {
-        console.log(`[flatn] ${packageSpec.name} build starting`);
-        await this.runScript(scripts, "preinstall", packageSpec, env);
-        await this.runScript(scripts, "install", packageSpec, env);
-        await this.runScript(scripts, "postinstall", packageSpec, env);
-        await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
-        console.log(`[flatn] ${packageSpec.name} build done`);
-      }
-    }
-
-    this.builtPackages.push(packageSpec);
-  }
-
-  async runScript(scripts, scriptName, { name, location }, env) {
-    if (!scripts || !scripts[scriptName]) return false;
-    this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
-
-    let pathParts = process.env.PATH.split(":");
-    pathParts.unshift(helperBinDir);
-    pathParts.unshift(this.binLinkLocation);
-
-    env = Object.assign({},
-      process.env,
-      npmFallbackEnv,
-      npmEnv(),
-      env,
-      {
-        npm_lifecycle_event: scriptName,
-        npm_lifecycle_script: scripts[scriptName].split(" ")[0],
-        PATH: pathParts.join(":")
-      });
-
-    try {
-      return await x$1(`/bin/sh -c '${scripts[scriptName]}'`, {
-        verbose: true,
-        cwd: location.replace(/^file:\/\//, ""),
-        env
-      });
-
-    } catch (err) {
-      console.error(`[build ${name}] error running ${scripts[scriptName]}:\n${err}`);
-      if (err.stdout || err.stderr) {
-        console.log("The command output:");
-        console.log(err.stdout);
-        console.log(err.stderr);
-      }
-      throw err;
-    }
-  }
-
-}
-
-var _1_2_6 = function (args, opts) {
-    if (!opts) opts = {};
-    
-    var flags = { bools : {}, strings : {}, unknownFn: null };
-
-    if (typeof opts['unknown'] === 'function') {
-        flags.unknownFn = opts['unknown'];
-    }
-
-    if (typeof opts['boolean'] === 'boolean' && opts['boolean']) {
-      flags.allBools = true;
-    } else {
-      [].concat(opts['boolean']).filter(Boolean).forEach(function (key) {
-          flags.bools[key] = true;
-      });
-    }
-    
-    var aliases = {};
-    Object.keys(opts.alias || {}).forEach(function (key) {
-        aliases[key] = [].concat(opts.alias[key]);
-        aliases[key].forEach(function (x) {
-            aliases[x] = [key].concat(aliases[key].filter(function (y) {
-                return x !== y;
-            }));
-        });
-    });
-
-    [].concat(opts.string).filter(Boolean).forEach(function (key) {
-        flags.strings[key] = true;
-        if (aliases[key]) {
-            flags.strings[aliases[key]] = true;
-        }
-     });
-
-    var defaults = opts['default'] || {};
-    
-    var argv = { _ : [] };
-    Object.keys(flags.bools).forEach(function (key) {
-        setArg(key, defaults[key] === undefined ? false : defaults[key]);
-    });
-    
-    var notFlags = [];
-
-    if (args.indexOf('--') !== -1) {
-        notFlags = args.slice(args.indexOf('--')+1);
-        args = args.slice(0, args.indexOf('--'));
-    }
-
-    function argDefined(key, arg) {
-        return (flags.allBools && /^--[^=]+$/.test(arg)) ||
-            flags.strings[key] || flags.bools[key] || aliases[key];
-    }
-
-    function setArg (key, val, arg) {
-        if (arg && flags.unknownFn && !argDefined(key, arg)) {
-            if (flags.unknownFn(arg) === false) return;
-        }
-
-        var value = !flags.strings[key] && isNumber(val)
-            ? Number(val) : val
-        ;
-        setKey(argv, key.split('.'), value);
-        
-        (aliases[key] || []).forEach(function (x) {
-            setKey(argv, x.split('.'), value);
-        });
-    }
-
-    function setKey (obj, keys, value) {
-        var o = obj;
-        for (var i = 0; i < keys.length-1; i++) {
-            var key = keys[i];
-            if (isConstructorOrProto(o, key)) return;
-            if (o[key] === undefined) o[key] = {};
-            if (o[key] === Object.prototype || o[key] === Number.prototype
-                || o[key] === String.prototype) o[key] = {};
-            if (o[key] === Array.prototype) o[key] = [];
-            o = o[key];
-        }
-
-        var key = keys[keys.length - 1];
-        if (isConstructorOrProto(o, key)) return;
-        if (o === Object.prototype || o === Number.prototype
-            || o === String.prototype) o = {};
-        if (o === Array.prototype) o = [];
-        if (o[key] === undefined || flags.bools[key] || typeof o[key] === 'boolean') {
-            o[key] = value;
-        }
-        else if (Array.isArray(o[key])) {
-            o[key].push(value);
-        }
-        else {
-            o[key] = [ o[key], value ];
-        }
-    }
-    
-    function aliasIsBoolean(key) {
-      return aliases[key].some(function (x) {
-          return flags.bools[x];
-      });
-    }
-
-    for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        
-        if (/^--.+=/.test(arg)) {
-            // Using [\s\S] instead of . because js doesn't support the
-            // 'dotall' regex modifier. See:
-            // http://stackoverflow.com/a/1068308/13216
-            var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
-            var key = m[1];
-            var value = m[2];
-            if (flags.bools[key]) {
-                value = value !== 'false';
-            }
-            setArg(key, value, arg);
-        }
-        else if (/^--no-.+/.test(arg)) {
-            var key = arg.match(/^--no-(.+)/)[1];
-            setArg(key, false, arg);
-        }
-        else if (/^--.+/.test(arg)) {
-            var key = arg.match(/^--(.+)/)[1];
-            var next = args[i + 1];
-            if (next !== undefined && !/^-/.test(next)
-            && !flags.bools[key]
-            && !flags.allBools
-            && (aliases[key] ? !aliasIsBoolean(key) : true)) {
-                setArg(key, next, arg);
-                i++;
-            }
-            else if (/^(true|false)$/.test(next)) {
-                setArg(key, next === 'true', arg);
-                i++;
-            }
-            else {
-                setArg(key, flags.strings[key] ? '' : true, arg);
-            }
-        }
-        else if (/^-[^-]+/.test(arg)) {
-            var letters = arg.slice(1,-1).split('');
-            
-            var broken = false;
-            for (var j = 0; j < letters.length; j++) {
-                var next = arg.slice(j+2);
-                
-                if (next === '-') {
-                    setArg(letters[j], next, arg);
-                    continue;
-                }
-                
-                if (/[A-Za-z]/.test(letters[j]) && /=/.test(next)) {
-                    setArg(letters[j], next.split('=')[1], arg);
-                    broken = true;
-                    break;
-                }
-                
-                if (/[A-Za-z]/.test(letters[j])
-                && /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) {
-                    setArg(letters[j], next, arg);
-                    broken = true;
-                    break;
-                }
-                
-                if (letters[j+1] && letters[j+1].match(/\W/)) {
-                    setArg(letters[j], arg.slice(j+2), arg);
-                    broken = true;
-                    break;
-                }
-                else {
-                    setArg(letters[j], flags.strings[letters[j]] ? '' : true, arg);
-                }
-            }
-            
-            var key = arg.slice(-1)[0];
-            if (!broken && key !== '-') {
-                if (args[i+1] && !/^(-|--)[^-]/.test(args[i+1])
-                && !flags.bools[key]
-                && (aliases[key] ? !aliasIsBoolean(key) : true)) {
-                    setArg(key, args[i+1], arg);
-                    i++;
-                }
-                else if (args[i+1] && /^(true|false)$/.test(args[i+1])) {
-                    setArg(key, args[i+1] === 'true', arg);
-                    i++;
-                }
-                else {
-                    setArg(key, flags.strings[key] ? '' : true, arg);
-                }
-            }
-        }
-        else {
-            if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
-                argv._.push(
-                    flags.strings['_'] || !isNumber(arg) ? arg : Number(arg)
-                );
-            }
-            if (opts.stopEarly) {
-                argv._.push.apply(argv._, args.slice(i + 1));
-                break;
-            }
-        }
-    }
-    
-    Object.keys(defaults).forEach(function (key) {
-        if (!hasKey(argv, key.split('.'))) {
-            setKey(argv, key.split('.'), defaults[key]);
-            
-            (aliases[key] || []).forEach(function (x) {
-                setKey(argv, x.split('.'), defaults[key]);
-            });
-        }
-    });
-    
-    if (opts['--']) {
-        argv['--'] = new Array();
-        notFlags.forEach(function(key) {
-            argv['--'].push(key);
-        });
-    }
-    else {
-        notFlags.forEach(function(key) {
-            argv._.push(key);
-        });
-    }
-
-    return argv;
-};
-
-function hasKey (obj, keys) {
-    var o = obj;
-    keys.slice(0,-1).forEach(function (key) {
-        o = (o[key] || {});
-    });
-
-    var key = keys[keys.length - 1];
-    return key in o;
-}
-
-function isNumber (x) {
-    if (typeof x === 'number') return true;
-    if (/^0x[0-9a-f]+$/i.test(x)) return true;
-    return /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
-}
-
-
-function isConstructorOrProto (obj, key) {
-    return key === 'constructor' && typeof obj[key] === 'function' || key === '__proto__';
-}
 
 /**
  * Returns a `Buffer` instance from the given data URI `uri`.
@@ -9057,7 +5419,7 @@ function requirePonyfill_es2018 () {
 	return ponyfill_es2018.exports;
 }
 
-var _5_6_0 = {};
+var _5_2_1 = {};
 
 var b64 = {};
 
@@ -9278,19 +5640,15 @@ function require_1_1_4 () {
  * @license  MIT
  */
 
-var hasRequired_5_6_0;
+var hasRequired_5_2_1;
 
-function require_5_6_0 () {
-	if (hasRequired_5_6_0) return _5_6_0;
-	hasRequired_5_6_0 = 1;
+function require_5_2_1 () {
+	if (hasRequired_5_2_1) return _5_2_1;
+	hasRequired_5_2_1 = 1;
 	(function (exports) {
 
 		var base64 = requireB64();
 		var ieee754 = require_1_1_4();
-		var customInspectSymbol =
-		  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
-		    ? Symbol.for('nodejs.util.inspect.custom')
-		    : null;
 
 		exports.Buffer = Buffer;
 		exports.SlowBuffer = SlowBuffer;
@@ -9327,9 +5685,7 @@ function require_5_6_0 () {
 		  // Can typed array instances can be augmented?
 		  try {
 		    var arr = new Uint8Array(1);
-		    var proto = { foo: function () { return 42 } };
-		    Object.setPrototypeOf(proto, Uint8Array.prototype);
-		    Object.setPrototypeOf(arr, proto);
+		    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } };
 		    return arr.foo() === 42
 		  } catch (e) {
 		    return false
@@ -9358,7 +5714,7 @@ function require_5_6_0 () {
 		  }
 		  // Return an augmented `Uint8Array` instance
 		  var buf = new Uint8Array(length);
-		  Object.setPrototypeOf(buf, Buffer.prototype);
+		  buf.__proto__ = Buffer.prototype;
 		  return buf
 		}
 
@@ -9385,6 +5741,17 @@ function require_5_6_0 () {
 		  return from(arg, encodingOrOffset, length)
 		}
 
+		// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+		if (typeof Symbol !== 'undefined' && Symbol.species != null &&
+		    Buffer[Symbol.species] === Buffer) {
+		  Object.defineProperty(Buffer, Symbol.species, {
+		    value: null,
+		    configurable: true,
+		    enumerable: false,
+		    writable: false
+		  });
+		}
+
 		Buffer.poolSize = 8192; // not used by this implementation
 
 		function from (value, encodingOrOffset, length) {
@@ -9397,7 +5764,7 @@ function require_5_6_0 () {
 		  }
 
 		  if (value == null) {
-		    throw new TypeError(
+		    throw TypeError(
 		      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
 		      'or Array-like Object. Received type ' + (typeof value)
 		    )
@@ -9405,12 +5772,6 @@ function require_5_6_0 () {
 
 		  if (isInstance(value, ArrayBuffer) ||
 		      (value && isInstance(value.buffer, ArrayBuffer))) {
-		    return fromArrayBuffer(value, encodingOrOffset, length)
-		  }
-
-		  if (typeof SharedArrayBuffer !== 'undefined' &&
-		      (isInstance(value, SharedArrayBuffer) ||
-		      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
 		    return fromArrayBuffer(value, encodingOrOffset, length)
 		  }
 
@@ -9455,8 +5816,8 @@ function require_5_6_0 () {
 
 		// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 		// https://github.com/feross/buffer/pull/148
-		Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype);
-		Object.setPrototypeOf(Buffer, Uint8Array);
+		Buffer.prototype.__proto__ = Uint8Array.prototype;
+		Buffer.__proto__ = Uint8Array;
 
 		function assertSize (size) {
 		  if (typeof size !== 'number') {
@@ -9560,8 +5921,7 @@ function require_5_6_0 () {
 		  }
 
 		  // Return an augmented `Uint8Array` instance
-		  Object.setPrototypeOf(buf, Buffer.prototype);
-
+		  buf.__proto__ = Buffer.prototype;
 		  return buf
 		}
 
@@ -9883,9 +6243,6 @@ function require_5_6_0 () {
 		  if (this.length > max) str += ' ... ';
 		  return '<Buffer ' + str + '>'
 		};
-		if (customInspectSymbol) {
-		  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect;
-		}
 
 		Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
 		  if (isInstance(target, Uint8Array)) {
@@ -10011,7 +6368,7 @@ function require_5_6_0 () {
 		        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 		      }
 		    }
-		    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
+		    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
 		  }
 
 		  throw new TypeError('val must be string, number or Buffer')
@@ -10340,7 +6697,7 @@ function require_5_6_0 () {
 
 		  var out = '';
 		  for (var i = start; i < end; ++i) {
-		    out += hexSliceLookupTable[buf[i]];
+		    out += toHex(buf[i]);
 		  }
 		  return out
 		}
@@ -10377,8 +6734,7 @@ function require_5_6_0 () {
 
 		  var newBuf = this.subarray(start, end);
 		  // Return an augmented `Uint8Array` instance
-		  Object.setPrototypeOf(newBuf, Buffer.prototype);
-
+		  newBuf.__proto__ = Buffer.prototype;
 		  return newBuf
 		};
 
@@ -10867,8 +7223,6 @@ function require_5_6_0 () {
 		    }
 		  } else if (typeof val === 'number') {
 		    val = val & 255;
-		  } else if (typeof val === 'boolean') {
-		    val = Number(val);
 		  }
 
 		  // Invalid ranges are not set to a default, so can range check early.
@@ -10924,6 +7278,11 @@ function require_5_6_0 () {
 		    str = str + '=';
 		  }
 		  return str
+		}
+
+		function toHex (n) {
+		  if (n < 16) return '0' + n.toString(16)
+		  return n.toString(16)
 		}
 
 		function utf8ToBytes (string, units) {
@@ -11055,22 +7414,8 @@ function require_5_6_0 () {
 		  // For IE11 support
 		  return obj !== obj // eslint-disable-line no-self-compare
 		}
-
-		// Create lookup table for `toString('hex')`
-		// See: https://github.com/feross/buffer/issues/219
-		var hexSliceLookupTable = (function () {
-		  var alphabet = '0123456789abcdef';
-		  var table = new Array(256);
-		  for (var i = 0; i < 16; ++i) {
-		    var i16 = i * 16;
-		    for (var j = 0; j < 16; ++j) {
-		      table[i16 + j] = alphabet[i] + alphabet[j];
-		    }
-		  }
-		  return table
-		})();
-} (_5_6_0));
-	return _5_6_0;
+} (_5_2_1));
+	return _5_2_1;
 }
 
 /* c8 ignore start */
@@ -11102,7 +7447,7 @@ if (!globalThis.ReadableStream) {
 try {
   // Don't use node: prefix for this, require+node: is not supported until node v14.14
   // Only `import()` can use prefix in 12.20 and later
-  const { Blob } = require_5_6_0();
+  const { Blob } = require_5_2_1();
   if (Blob && !Blob.prototype.stream) {
     Blob.prototype.stream = function name (params) {
       let position = 0;
@@ -11424,7 +7769,7 @@ r=Math.random,
 m='append,set,get,getAll,delete,keys,values,entries,forEach,constructor'.split(','),
 f$1=(a,b,c)=>(a+='',/^(Blob|File)$/.test(b && b[t])?[(c=c!==void 0?c+'':b[t]=='File'?b.name:'blob',a),b.name!==c||b[t]=='blob'?new File([b],c,b):b]:[a,b+'']),
 e=(c,f)=>(f?c:c.replace(/\r?\n|\r/g,'\r\n')).replace(/\n/g,'%0A').replace(/\r/g,'%0D').replace(/"/g,'%22'),
-x=(n, a, e)=>{if(a.length<e){throw new TypeError(`Failed to execute '${n}' on 'FormData': ${e} arguments required, but only ${a.length} present.`)}};
+x$1=(n, a, e)=>{if(a.length<e){throw new TypeError(`Failed to execute '${n}' on 'FormData': ${e} arguments required, but only ${a.length} present.`)}};
 
 /** @type {typeof globalThis.FormData} */
 const FormData = class FormData {
@@ -11433,13 +7778,13 @@ constructor(...a){if(a.length)throw new TypeError(`Failed to construct 'FormData
 get [t]() {return 'FormData'}
 [i](){return this.entries()}
 static [h](o) {return o&&typeof o==='object'&&o[t]==='FormData'&&!m.some(m=>typeof o[m]!='function')}
-append(...a){x('append',arguments,2);this.#d.push(f$1(...a));}
-delete(a){x('delete',arguments,1);a+='';this.#d=this.#d.filter(([b])=>b!==a);}
-get(a){x('get',arguments,1);a+='';for(var b=this.#d,l=b.length,c=0;c<l;c++)if(b[c][0]===a)return b[c][1];return null}
-getAll(a,b){x('getAll',arguments,1);b=[];a+='';this.#d.forEach(c=>c[0]===a&&b.push(c[1]));return b}
-has(a){x('has',arguments,1);a+='';return this.#d.some(b=>b[0]===a)}
-forEach(a,b){x('forEach',arguments,1);for(var [c,d]of this)a.call(b,d,c,this);}
-set(...a){x('set',arguments,2);var b=[],c=!0;a=f$1(...a);this.#d.forEach(d=>{d[0]===a[0]?c&&(c=!b.push(a)):b.push(d);});c&&b.push(a);this.#d=b;}
+append(...a){x$1('append',arguments,2);this.#d.push(f$1(...a));}
+delete(a){x$1('delete',arguments,1);a+='';this.#d=this.#d.filter(([b])=>b!==a);}
+get(a){x$1('get',arguments,1);a+='';for(var b=this.#d,l=b.length,c=0;c<l;c++)if(b[c][0]===a)return b[c][1];return null}
+getAll(a,b){x$1('getAll',arguments,1);b=[];a+='';this.#d.forEach(c=>c[0]===a&&b.push(c[1]));return b}
+has(a){x$1('has',arguments,1);a+='';return this.#d.some(b=>b[0]===a)}
+forEach(a,b){x$1('forEach',arguments,1);for(var [c,d]of this)a.call(b,d,c,this);}
+set(...a){x$1('set',arguments,2);var b=[],c=!0;a=f$1(...a);this.#d.forEach(d=>{d[0]===a[0]?c&&(c=!b.push(a)):b.push(d);});c&&b.push(a);this.#d=b;}
 *entries(){yield*this.#d;}
 *keys(){for(var[a]of this)yield a;}
 *values(){for(var[,a]of this)yield a;}};
@@ -13418,85 +9763,3701 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 	});
 }
 
-/*global require, module,process*/
+var _1_2_6 = function (args, opts) {
+    if (!opts) opts = {};
+    
+    var flags = { bools : {}, strings : {}, unknownFn: null };
+
+    if (typeof opts['unknown'] === 'function') {
+        flags.unknownFn = opts['unknown'];
+    }
+
+    if (typeof opts['boolean'] === 'boolean' && opts['boolean']) {
+      flags.allBools = true;
+    } else {
+      [].concat(opts['boolean']).filter(Boolean).forEach(function (key) {
+          flags.bools[key] = true;
+      });
+    }
+    
+    var aliases = {};
+    Object.keys(opts.alias || {}).forEach(function (key) {
+        aliases[key] = [].concat(opts.alias[key]);
+        aliases[key].forEach(function (x) {
+            aliases[x] = [key].concat(aliases[key].filter(function (y) {
+                return x !== y;
+            }));
+        });
+    });
+
+    [].concat(opts.string).filter(Boolean).forEach(function (key) {
+        flags.strings[key] = true;
+        if (aliases[key]) {
+            flags.strings[aliases[key]] = true;
+        }
+     });
+
+    var defaults = opts['default'] || {};
+    
+    var argv = { _ : [] };
+    Object.keys(flags.bools).forEach(function (key) {
+        setArg(key, defaults[key] === undefined ? false : defaults[key]);
+    });
+    
+    var notFlags = [];
+
+    if (args.indexOf('--') !== -1) {
+        notFlags = args.slice(args.indexOf('--')+1);
+        args = args.slice(0, args.indexOf('--'));
+    }
+
+    function argDefined(key, arg) {
+        return (flags.allBools && /^--[^=]+$/.test(arg)) ||
+            flags.strings[key] || flags.bools[key] || aliases[key];
+    }
+
+    function setArg (key, val, arg) {
+        if (arg && flags.unknownFn && !argDefined(key, arg)) {
+            if (flags.unknownFn(arg) === false) return;
+        }
+
+        var value = !flags.strings[key] && isNumber(val)
+            ? Number(val) : val
+        ;
+        setKey(argv, key.split('.'), value);
+        
+        (aliases[key] || []).forEach(function (x) {
+            setKey(argv, x.split('.'), value);
+        });
+    }
+
+    function setKey (obj, keys, value) {
+        var o = obj;
+        for (var i = 0; i < keys.length-1; i++) {
+            var key = keys[i];
+            if (isConstructorOrProto(o, key)) return;
+            if (o[key] === undefined) o[key] = {};
+            if (o[key] === Object.prototype || o[key] === Number.prototype
+                || o[key] === String.prototype) o[key] = {};
+            if (o[key] === Array.prototype) o[key] = [];
+            o = o[key];
+        }
+
+        var key = keys[keys.length - 1];
+        if (isConstructorOrProto(o, key)) return;
+        if (o === Object.prototype || o === Number.prototype
+            || o === String.prototype) o = {};
+        if (o === Array.prototype) o = [];
+        if (o[key] === undefined || flags.bools[key] || typeof o[key] === 'boolean') {
+            o[key] = value;
+        }
+        else if (Array.isArray(o[key])) {
+            o[key].push(value);
+        }
+        else {
+            o[key] = [ o[key], value ];
+        }
+    }
+    
+    function aliasIsBoolean(key) {
+      return aliases[key].some(function (x) {
+          return flags.bools[x];
+      });
+    }
+
+    for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        
+        if (/^--.+=/.test(arg)) {
+            // Using [\s\S] instead of . because js doesn't support the
+            // 'dotall' regex modifier. See:
+            // http://stackoverflow.com/a/1068308/13216
+            var m = arg.match(/^--([^=]+)=([\s\S]*)$/);
+            var key = m[1];
+            var value = m[2];
+            if (flags.bools[key]) {
+                value = value !== 'false';
+            }
+            setArg(key, value, arg);
+        }
+        else if (/^--no-.+/.test(arg)) {
+            var key = arg.match(/^--no-(.+)/)[1];
+            setArg(key, false, arg);
+        }
+        else if (/^--.+/.test(arg)) {
+            var key = arg.match(/^--(.+)/)[1];
+            var next = args[i + 1];
+            if (next !== undefined && !/^-/.test(next)
+            && !flags.bools[key]
+            && !flags.allBools
+            && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+                setArg(key, next, arg);
+                i++;
+            }
+            else if (/^(true|false)$/.test(next)) {
+                setArg(key, next === 'true', arg);
+                i++;
+            }
+            else {
+                setArg(key, flags.strings[key] ? '' : true, arg);
+            }
+        }
+        else if (/^-[^-]+/.test(arg)) {
+            var letters = arg.slice(1,-1).split('');
+            
+            var broken = false;
+            for (var j = 0; j < letters.length; j++) {
+                var next = arg.slice(j+2);
+                
+                if (next === '-') {
+                    setArg(letters[j], next, arg);
+                    continue;
+                }
+                
+                if (/[A-Za-z]/.test(letters[j]) && /=/.test(next)) {
+                    setArg(letters[j], next.split('=')[1], arg);
+                    broken = true;
+                    break;
+                }
+                
+                if (/[A-Za-z]/.test(letters[j])
+                && /-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) {
+                    setArg(letters[j], next, arg);
+                    broken = true;
+                    break;
+                }
+                
+                if (letters[j+1] && letters[j+1].match(/\W/)) {
+                    setArg(letters[j], arg.slice(j+2), arg);
+                    broken = true;
+                    break;
+                }
+                else {
+                    setArg(letters[j], flags.strings[letters[j]] ? '' : true, arg);
+                }
+            }
+            
+            var key = arg.slice(-1)[0];
+            if (!broken && key !== '-') {
+                if (args[i+1] && !/^(-|--)[^-]/.test(args[i+1])
+                && !flags.bools[key]
+                && (aliases[key] ? !aliasIsBoolean(key) : true)) {
+                    setArg(key, args[i+1], arg);
+                    i++;
+                }
+                else if (args[i+1] && /^(true|false)$/.test(args[i+1])) {
+                    setArg(key, args[i+1] === 'true', arg);
+                    i++;
+                }
+                else {
+                    setArg(key, flags.strings[key] ? '' : true, arg);
+                }
+            }
+        }
+        else {
+            if (!flags.unknownFn || flags.unknownFn(arg) !== false) {
+                argv._.push(
+                    flags.strings['_'] || !isNumber(arg) ? arg : Number(arg)
+                );
+            }
+            if (opts.stopEarly) {
+                argv._.push.apply(argv._, args.slice(i + 1));
+                break;
+            }
+        }
+    }
+    
+    Object.keys(defaults).forEach(function (key) {
+        if (!hasKey(argv, key.split('.'))) {
+            setKey(argv, key.split('.'), defaults[key]);
+            
+            (aliases[key] || []).forEach(function (x) {
+                setKey(argv, x.split('.'), defaults[key]);
+            });
+        }
+    });
+    
+    if (opts['--']) {
+        argv['--'] = new Array();
+        notFlags.forEach(function(key) {
+            argv['--'].push(key);
+        });
+    }
+    else {
+        notFlags.forEach(function(key) {
+            argv._.push(key);
+        });
+    }
+
+    return argv;
+};
+
+function hasKey (obj, keys) {
+    var o = obj;
+    keys.slice(0,-1).forEach(function (key) {
+        o = (o[key] || {});
+    });
+
+    var key = keys[keys.length - 1];
+    return key in o;
+}
+
+function isNumber (x) {
+    if (typeof x === 'number') return true;
+    if (/^0x[0-9a-f]+$/i.test(x)) return true;
+    return /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
+}
+
+
+function isConstructorOrProto (obj, key) {
+    return key === 'constructor' && typeof obj[key] === 'function' || key === '__proto__';
+}
+
+function applyExclude$1 (exclude, resources) {
+  if (Array.isArray(exclude)) {
+    return exclude.reduce((intersect, exclude) =>
+      applyExclude$1(exclude, intersect), resources);
+  }
+  if (typeof exclude === 'string') { return resources.filter(ea => ea.path() !== exclude && ea.name() !== exclude); }
+  if (exclude instanceof RegExp) { return resources.filter(ea => !exclude.test(ea.path()) && !exclude.test(ea.name())); }
+  if (typeof exclude === 'function') { return resources.filter(ea => !exclude(ea)); }
+  return resources;
+}
+
+/*
+
+applyExclude(["foo", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+applyExclude(["bar", "foo"], [
+  {path: () => "foo", name: () => "foo"},
+  {path: () => "bar", name: () => "bar"},
+  {path: () => "baz", name: () => "baz"}
+])
+
+*/
+
+// parseQuery('?hello=world&x={"foo":{"bar": "baz"}}')
+// parseQuery("?db=test-object-db&url=lively.morphic%2Fworlds%2Fdefault.json&type=world&name=default&commitSpec=%7B%22user%22%3A%7B%22name%22%3A%22robert%22%2C%22realm%22%3A%22https%3A%2F%2Fauth.lively-next.org%22%2C%22email%22%3A%22robert%40kra.hn%22%7D%2C%22description%22%3A%22An%20empty%20world.%20A%20place%20to%20start%20from%20scratch.%22%2C%22metadata%22%3A%7B%22belongsToCore%22%3Atrue%7D%7D&purgeHistory=true")
+
+function parseQuery (url) {
+  var url = url;
+  const [_, search] = url.split('?');
+  const query = {};
+  if (!search) return query;
+  const args = search.split('&');
+  if (args) {
+    for (let i = 0; i < args.length; i++) {
+      const keyAndVal = args[i].split('=');
+      const key = keyAndVal[0];
+      let val = true;
+      if (keyAndVal.length > 1) {
+        val = decodeURIComponent(keyAndVal.slice(1).join('='));
+        if (val === 'undefined') val = undefined;
+        else if (val.match(/^(true|false|null|[0-9"[{].*)$/)) {
+          try { val = JSON.parse(val); } catch (e) {
+            if (val[0] === '[') val = val.slice(1, -1).split(','); // handle string arrays
+            // if not JSON use string itself
+          }
+        }
+      }
+      query[key] = val;
+    }
+  }
+  return query;
+}
+
+function stringifyQuery (query) {
+  return Object.keys(query)
+    .map(key => `${key}=${encodeURIComponent(String(query[key]))}`)
+    .join('&');
+}
+const urlRe = /^([^:\/]+):\/\/([^\/]*)(.*)/;
+// for resolve path:
+const pathDotRe$1 = /\/\.\//g;
+const pathDoubleDotRe$1 = /\/[^\/]+\/\.\./;
+const pathDoubleSlashRe$1 = /(^|[^:])[\/]+/g;
+
+function withRelativePartsResolved (inputPath) {
+  let path = inputPath; let result = path;
+
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe$1, '$1/');
+
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe$1, '/');
+
+  // /foo/../bar --> /bar
+  do {
+    path = result;
+    result = path.replace(pathDoubleDotRe$1, '');
+  } while (result != path);
+
+  return result;
+}
+
+function _relativePathBetween_checkPathes (path1, path2) {
+  if (path1.startsWith('/')) path1 = path1.slice(1);
+  if (path2.startsWith('/')) path2 = path2.slice(1);
+  const paths1 = path1.split('/');
+  const paths2 = path2.split('/');
+  for (var i = 0; i < paths2.length; i++) { if (!paths1[i] || (paths1[i] != paths2[i])) break; }
+  // now that's some JavaScript FOO
+  const result = '../'.repeat(Math.max(0, paths2.length - i - 1)) +
+             paths1.splice(i, paths1.length).join('/');
+  return result;
+}
+
+// pathA = "http://foo/bar/"
+// pathB = "http://foo/bar/oink/baz.js";
+
+function relativePathBetween (pathA, pathB) {
+  // produces the relative path to get from `pathA` to `pathB`
+  // Example:
+  //   relativePathBetween("/foo/bar/", "/foo/baz.js"); // => ../baz.js
+  const urlMatchA = pathA.match(urlRe);
+  const urlMatchB = pathB.match(urlRe);
+  let protocolA; let domainA; let protocolB; let domainB;
+  let compatible = true;
+  if ((urlMatchA && !urlMatchB) || (!urlMatchA && urlMatchB)) compatible = false;
+  if (urlMatchA && urlMatchB) {
+    protocolA = urlMatchA[1];
+    domainA = urlMatchA[2];
+    protocolB = urlMatchB[1];
+    domainB = urlMatchB[2];
+    if (protocolA !== protocolB) compatible = false;
+    else if (domainA !== domainB) compatible = false;
+    else { pathA = urlMatchA[3]; pathB = urlMatchB[3]; }
+  }
+  if (!compatible) { throw new Error(`[relativePathBetween] incompatible paths: ${pathA} vs. ${pathB}`); }
+  pathA = withRelativePartsResolved(pathA);
+  pathB = withRelativePartsResolved(pathB);
+  if (pathA == pathB) return '';
+  const relPath = _relativePathBetween_checkPathes(pathB, pathA);
+  if (!relPath) { throw new Error('pathname differs in relativePathFrom ' + pathA + ' vs ' + pathB); }
+  return relPath;
+}
+
+var extensions = extensions || [];
+
+function resource (url, opts) {
+  if (!url) throw new Error('lively.resource resource constructor: expects url but got ' + url);
+  if (url.isResource) return url;
+  url = String(url);
+  for (let i = 0; i < extensions.length; i++) {
+    if (extensions[i].matches(url)) { return new extensions[i].resourceClass(url, opts); }
+  }
+  throw new Error(`Cannot find resource type for url ${url}`);
+}
+
+async function createFiles (baseDir, fileSpec, opts) {
+  // creates resources as specified in fileSpec, e.g.
+  // {"foo.txt": "hello world", "sub-dir/bar.js": "23 + 19"}
+  // supports both sync and async resources
+  const base = resource(baseDir, opts).asDirectory();
+  await base.ensureExistance();
+  for (const name in fileSpec) {
+    if (!fileSpec.hasOwnProperty(name)) continue;
+    const resource = base.join(name);
+    typeof fileSpec[name] === 'object'
+      ? await createFiles(resource, fileSpec[name], opts)
+      : await resource.write(fileSpec[name]);
+  }
+  return base;
+}
+
+function registerExtension (extension) {
+  // extension = {name: STRING, matches: FUNCTION, resourceClass: RESOURCE}
+  // name: uniquely identifying this extension
+  // predicate matches gets a resource url (string) passed and decides if the
+  // extension handles it
+  // resourceClass needs to implement the Resource interface
+  const { name } = extension;
+  extensions = extensions.filter(ea => ea.name !== name).concat(extension);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+const windowsURLPrefixRe = /^file:\/\/\/[a-z]:\//i;
+const windowsPathPrefixRe = /^[a-z]:\//i;
+const windowsRootPathRe = /^[a-z]:\/$/i;
+
+/* global clearTimeout, setTimeout */
+
+// -=-=-=-=-=-
+// inspection
+// -=-=-=-=-=-
+
+/**
+ * Extract the names of all parameters for a given function object.
+ * @param { function } f - The function object to extract the parameter names of.
+ * @returns { String[] }
+ * @example
+ * argumentNames(function(arg1, arg2) {}) // => ["arg1","arg2"]
+ * argumentNames(function() {}) // => []
+ */
+function argumentNames (f) {
+  if (f.superclass) return []; // it's a class...
+  const src = f.toString(); let names = '';
+  const arrowMatch = src.match(/(?:\(([^\)]*)\)|([^\(\)-+!]+))\s*=>/);
+  if (arrowMatch) names = arrowMatch[1] || arrowMatch[2] || '';
+  else {
+    const headerMatch = src.match(/^[\s\(]*function[^(]*\(([^)]*)\)/);
+    if (headerMatch && headerMatch[1]) names = headerMatch[1];
+  }
+  return names.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
+    .replace(/\s+/g, '').split(',')
+    .map(function (ea) { return ea.trim(); })
+    .filter(function (name) { return !!name; });
+}
+
+/**
+ * Utility functions that help to inspect, enumerate, and create JS objects
+ * @module lively.lang/object
+ */
+
+// -=-=-=-=-=-=-=-=-
+// internal helper
+// -=-=-=-=-=-=-=-=-
+
+// serveral methods in lib/object.js are inspired or derived from
+// Prototype JavaScript framework, version 1.6.0_rc1
+// (c) 2005-2007 Sam Stephenson
+// Prototype is freely distributable under the terms of an MIT-style license.
+// For details, see the Prototype web site: http://www.prototypejs.org/
+
+/**
+ * Returns a stringified representation of an object.
+ * @param { object } object - The object to generate a stringified representation for.
+ * @returns { string } The stringified, formatted representation of the object.
+ */
+function print (object) {
+  if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
+  if (typeof object !== 'string') { return String(object); }
+  let result = String(object);
+  result = result.replace(/\n/g, '\\n\\\n');
+  result = result.replace(/(")/g, '\\$1');
+  result = '\"' + result + '\"';
+  return result;
+}
+
+/**
+ * Shifts the string a number of times to the right by the contents of `indentString`.
+ * @param { string } str - The string whose contents to shift.
+ * @param { string } indentString - The string to insert on the left.
+ * @param { number } depth - The number of times to indent `str` by.
+ */
+function indent (str, indentString, depth) {
+  if (!depth || depth <= 0) return str;
+  while (depth > 0) { depth--; str = indentString + str; }
+  return str;
+}
+
+// -=-=-=-=-=-
+// inspection
+// -=-=-=-=-=-
+
+/**
+ * Prints a human-readable representation of `obj`. The printed
+ * representation will be syntactically correct JavaScript but will not
+ * necessarily evaluate to a structurally identical object. `inspect` is
+ * meant to be used while interactivively exploring JavaScript programs and
+ * state.
+ * @param { Object } object - The JavaScript Object to be inspected.
+ * @param { InspectOptions } options -
+ * @param { Boolean } options.printFunctionSource - Wether or not to show closures' source code.
+ * @param { Boolean } options.escapeKeys - Wether or not to escape special characters.
+ * @param { Number } options.maxDepth - The maximum depth upon which to inspect the object.
+ * @param { Function } options.customPrinter - Custom print function that returns an alternative string representation of values.
+ * @param { Number } options.maxNumberOfKeys - Limit the number of keys to be printed of an object.
+ * @param { Function } options.keySorter - Custom sorting function to define the order in which object key/value pairs are printed.
+ */
+function inspect (object, options, depth) {
+  options = options || {};
+  depth = depth || 0;
+
+  if (options.customPrinter) {
+    const ignoreSignal = options._ignoreSignal || (options._ignoreSignal = {});
+    const continueInspectFn = (obj) => inspect(obj, options, depth + 1);
+    const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
+    if (customInspected !== ignoreSignal) return customInspected;
+  }
+  if (!object) return print(object);
+
+  // print function
+  if (typeof object === 'function') {
+    return options.printFunctionSource
+      ? String(object)
+      : 'function' + (object.name ? ' ' + object.name : '') +
+      '(' + argumentNames(object).join(',') + ') {/*...*/}';
+  }
+
+  // print "primitive"
+  switch (object.constructor) {
+    case String:
+    case Boolean:
+    case RegExp:
+    case Number: return print(object);
+  }
+
+  if (typeof object.serializeExpr === 'function') { return object.serializeExpr(); }
+
+  const isArray = object && Array.isArray(object);
+  const openBr = isArray ? '[' : '{'; const closeBr = isArray ? ']' : '}';
+  if (options.maxDepth && depth >= options.maxDepth) { return openBr + '/*...*/' + closeBr; }
+
+  let printedProps = [];
+  if (isArray) {
+    printedProps = object.map(function (ea) { return inspect(ea, options, depth + 1); });
+  } else {
+    let propsToPrint = Object.keys(object)
+      .sort(function (a, b) {
+        const aIsFunc = typeof object[a] === 'function';
+        const bIsFunc = typeof object[b] === 'function';
+        if (aIsFunc === bIsFunc) {
+          if (a < b) return -1;
+          if (a > b) return 1;
+          return 0;
+        }
+        return aIsFunc ? 1 : -1;
+      });
+    if (typeof options.keySorter === 'function') {
+      propsToPrint = propsToPrint.sort(options.keySorter);
+    }
+    for (let i = 0; i < propsToPrint.length; i++) {
+      if (i > (options.maxNumberOfKeys || Infinity)) {
+        const hiddenEntryCount = propsToPrint.length - i;
+        printedProps.push(`...${hiddenEntryCount} hidden ${hiddenEntryCount > 1 ? 'entries' : 'entry'}...`);
+        break;
+      }
+      const key = propsToPrint[i];
+      if (isArray) inspect(object[key], options, depth + 1);
+      const printedVal = inspect(object[key], options, depth + 1);
+      printedProps.push((options.escapeKeys
+        ? JSON.stringify(key)
+        : key) + ': ' + printedVal);
+    }
+  }
+
+  if (printedProps.length === 0) { return openBr + closeBr; }
+
+  let printedPropsJoined = printedProps.join(', ');
+  const useNewLines = (!isArray || options.newLineInArrays) &&
+        (!options.minLengthForNewLine ||
+        printedPropsJoined.length >= options.minLengthForNewLine);
+  const ind = indent('', options.indent || '  ', depth);
+  const propIndent = indent('', options.indent || '  ', depth + 1);
+  const startBreak = useNewLines && !isArray ? '\n' + propIndent : '';
+  const eachBreak = useNewLines ? '\n' + propIndent : '';
+  const endBreak = useNewLines && !isArray ? '\n' + ind : '';
+  if (useNewLines) printedPropsJoined = printedProps.join(',' + eachBreak);
+  return openBr + startBreak + printedPropsJoined + endBreak + closeBr;
+}
+
+// Generated by CoffeeScript 1.10.0
+(function() {
+
+}).call(commonjsGlobal);
+
+/* global btoa,JsDiff */
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-
+// file system path support
+// -=-=-=-=-=-=-=-=-=-=-=-=-
+const pathDotRe = /\/\.\//g;
+const pathDoubleDotRe = /\/[^\/]+\/\.\./;
+const pathDoubleSlashRe = /(^|[^:])[\/]+/g;
+const urlStartRe = /^[a-z0-9-_\.]+:\/\//;
+const slashEndRe$1 = /\/+$/;
+
+function normalizePath$1 (pathString) {
+  const urlStartMatch = pathString.match(urlStartRe);
+  const urlStart = urlStartMatch ? urlStartMatch[0] : null;
+  let result = urlStart ? pathString.slice(urlStart.length) : pathString;
+  // /foo/../bar --> /bar
+  do {
+    pathString = result;
+    result = pathString.replace(pathDoubleDotRe, '');
+  } while (result != pathString);
+  // foo//bar --> foo/bar
+  result = result.replace(pathDoubleSlashRe, '$1/');
+  // foo/./bar --> foo/bar
+  result = result.replace(pathDotRe, '/');
+  if (urlStart) result = urlStart + result;
+  return result;
+}
+
+/**
+ * Joins the strings passed as paramters together so that ea string is
+ * connected via a single "/".
+ * @example
+ * string.joinPath("foo", "bar") // => "foo/bar";
+ * @params { string[] } paths - The set of paths to be joined.
+ * @returns { string } The joined path.
+ */
+function joinPath (/* paths */) {
+  return normalizePath$1(
+    Array.prototype.slice.call(arguments).reduce((path, ea) =>
+      typeof ea === 'string'
+        ? path.replace(/\/*$/, '') + '/' + ea.replace(/^\/*/, '')
+        : path));
+}
+
+/**
+ * Given a path such as "path/to/file" returns a folderized version
+ * such as: "path/to/file/".
+ * @param {string} pathString - The path to transform.
+ * @returns { string } The transformed path;
+ */
+function ensureFolder (pathString) {
+  return pathString.replace(slashEndRe$1, '') + '/';
+}
+
+const slashEndRe = /\/+$/;
+const slashStartRe = /^\/+/;
+const protocolRe = /^[a-z0-9-_\.]+:/;
+const slashslashRe = /^\/\/[^\/]+/;
+
+function nyi (obj, name) {
+  throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
+}
+
+class Resource {
+  static fromProps (props = {}) {
+    // props can have the keys contentType, type, size, etag, created, lastModified, url
+    // it should have at least url
+    return new this(props.url).assignProperties(props);
+  }
+
+  constructor (url, opts = {}) {
+    if (!url) throw new Error('Cannot create resource without url');
+    this.url = String(url);
+    this.binary = false;
+    this.lastModified = undefined;
+    this.created = undefined;
+    this.etag = undefined;
+    this.size = undefined;
+    this.type = undefined;
+    this.contentType = undefined;
+    this.user = undefined;
+    this.group = undefined;
+    this.mode = undefined;
+    this._isDirectory = undefined;
+    this._isLink = undefined;
+    this.linkCount = undefined;
+  }
+
+  get isResource () { return true; }
+
+  get canDealWithJSON () { return false; }
+
+  equals (otherResource) {
+    if (!otherResource || this.constructor !== otherResource.constructor) { return false; }
+    let myURL = this.url; let otherURL = otherResource.url;
+    if (myURL[myURL.length - 1] === '/') myURL = myURL.slice(0, -1);
+    if (otherURL[otherURL.length - 1] === '/') otherURL = otherURL.slice(0, -1);
+    return myURL === otherURL;
+  }
+
+  toString () {
+    return `${this.constructor.name}("${this.url}")`;
+  }
+
+  newResource (url) { return resource(url, this); }
+
+  path () {
+    const path = this.url
+      .replace(protocolRe, '')
+      .replace(slashslashRe, '');
+    return path === '' ? '/' : path;
+  }
+
+  pathWithoutQuery () { return this.path().split('?')[0]; }
+
+  name () {
+    let path = this.path();
+    const queryIndex = path.lastIndexOf('?');
+    if (queryIndex > -1) path = path.slice(0, queryIndex);
+    if (path.endsWith('/')) path = path.slice(0, -1);
+    const parts = path.split('/');
+    const lastPart = parts[parts.length - 1];
+    return decodeURIComponent(lastPart);
+  }
+
+  ext () {
+    const url = this.url;
+    if (url.endsWith('/')) return '';
+    const [_, ext] = url.match(/\.([^\/\.]+$)/) || ['', ''];
+    return ext.toLowerCase();
+  }
+
+  nameWithoutExt () {
+    let name = this.name();
+    const extIndex = name.lastIndexOf('.');
+    if (extIndex > 0) name = name.slice(0, extIndex);
+    return name;
+  }
+
+  scheme () { return this.url.split(':')[0]; }
+
+  host () {
+    const idx = this.url.indexOf('://');
+    if (idx === -1) return null;
+    const noScheme = this.url.slice(idx + 3);
+    const slashIdx = noScheme.indexOf('/');
+    return noScheme.slice(0, slashIdx > -1 ? slashIdx : noScheme.length);
+  }
+
+  schemeAndHost () {
+    if (this.isRoot()) return this.asFile().url;
+    return this.url.slice(0, this.url.length - this.path().length);
+  }
+
+  parent () {
+    // drops the query
+    return this.isRoot()
+      ? null
+      : this.newResource(this.url.split('?')[0].replace(slashEndRe, '').split('/').slice(0, -1).join('/') + '/');
+  }
+
+  parents () {
+    const result = []; let p = this.parent();
+    while (p) { result.unshift(p); p = p.parent(); }
+    return result;
+  }
+
+  isParentOf (otherRes) {
+    return otherRes.schemeAndHost() === this.schemeAndHost() &&
+        otherRes.parents().some(p => p.equals(this));
+  }
+
+  query () { return parseQuery(this.url); }
+
+  withQuery (queryObj) {
+    const query = { ...this.query(), ...queryObj };
+    const [url] = this.url.split('?');
+    const queryString = stringifyQuery(query);
+    return this.newResource(`${url}?${queryString}`);
+  }
+
+  commonDirectory (other) {
+    if (other.schemeAndHost() !== this.schemeAndHost()) return null;
+    if (this.isDirectory() && this.equals(other)) return this;
+    if (this.isRoot()) return this.asDirectory();
+    if (other.isRoot()) return other.asDirectory();
+    const otherParents = other.parents();
+    const myParents = this.parents();
+    let common = this.root();
+    for (let i = 0; i < myParents.length; i++) {
+      const myP = myParents[i]; const otherP = otherParents[i];
+      if (!otherP || !myP.equals(otherP)) return common;
+      common = myP;
+    }
+    return common;
+  }
+
+  withRelativePartsResolved () {
+    const path = this.path(); let result = withRelativePartsResolved(path);
+    if (result === path) return this;
+    if (result.startsWith('/')) result = result.slice(1);
+    if (result[1] === ':'.startsWith('/')) result = result.slice(1);
+    else if (result[1] === ':' && result.match(windowsPathPrefixRe)) result = result.slice(3);
+    return this.newResource(this.root().url + result);
+  }
+
+  relativePathFrom (fromResource) {
+    return relativePathBetween(fromResource.url, this.url);
+  }
+
+  withPath (path) {
+    const root = this.isRoot() ? this : this.root();
+    return root.join(path);
+  }
+
+  join (path) {
+    return this.newResource(this.url.replace(slashEndRe, '') + '/' + path.replace(slashStartRe, ''));
+  }
+
+  isRoot () { return this.path() === '/'; }
+
+  isFile () { return !this.isRoot() && !this.url.match(slashEndRe); }
+
+  isDirectory () { return !this.isFile(); }
+
+  asDirectory () {
+    if (this.url.endsWith('/')) return this;
+    return this.newResource(ensureFolder(this.url));
+  }
+
+  root () {
+    if (this.isRoot()) return this;
+    const toplevel = this.url.slice(0, -this.path().length);
+    return this.newResource(toplevel + '/');
+  }
+
+  asFile () {
+    if (!this.url.endsWith('/')) return this;
+    return this.newResource(this.url.replace(slashEndRe, ''));
+  }
+
+  assignProperties (props) {
+    // lastModified, etag, ...
+    for (const name in props) {
+      if (name === 'url') continue;
+      // rename some properties to not create conflicts
+      let myPropName = name;
+      if (name === 'isLink' || name === 'isDirectory') { myPropName = '_' + name; }
+      this[myPropName] = props[name];
+    }
+    return this;
+  }
+
+  async ensureExistance (optionalContent) {
+    if (await this.exists()) return this;
+    await this.parent().ensureExistance();
+    if (this.isFile()) await this.write(optionalContent || '');
+    else await this.mkdir();
+    return this;
+  }
+
+  async copyTo (otherResource, ensureParent = true) {
+    if (this.isFile()) {
+      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      if (ensureParent) { await toFile.parent().ensureExistance(); }
+      await toFile.write(await this.read());
+    } else {
+      if (!otherResource.isDirectory()) throw new Error('Cannot copy a directory to a file!');
+      const fromResources = await this.dirList('infinity');
+      const toResources = fromResources.map(ea => otherResource.join(ea.relativePathFrom(this)));
+
+      // First create directory structure, this needs to happen in order
+      await otherResource.ensureExistance();
+      await fromResources.reduceRight((next, ea, i) =>
+        () => Promise.resolve(
+          ea.isDirectory() && toResources[i].ensureExistance()).then(next),
+      () => Promise.resolve())();
+
+      // copy individual files, this can happen in parallel but certain protocols
+      // might not be able to handle a large amount of parallel writes so we
+      // synchronize this as well by default
+      await fromResources.reduceRight((next, ea, i) =>
+        () => Promise.resolve(
+          ea.isFile() && ea.copyTo(toResources[i], false)).then(next),
+      () => Promise.resolve())();
+    }
+
+    return this;
+  }
+
+  async rename (otherResource) {
+    await this.copyTo(otherResource);
+    this.remove();
+    return otherResource;
+  }
+
+  beBinary (bool) { return this.setBinary(true); }
+
+  setBinary (bool) {
+    this.binary = bool;
+    return this;
+  }
+
+  async read () { nyi(this, 'read'); }
+  async write () { nyi(this, 'write'); }
+  async mkdir () { nyi(this, 'mkdir'); }
+  async exists () { nyi(this, 'exists'); }
+  async remove () { nyi(this, 'remove'); }
+  async dirList (depth, opts) { nyi(this, 'dirList'); }
+  async readProperties (opts) { nyi(this, 'readProperties'); }
+
+  writeJson (obj, pretty = false) {
+    return this.write(pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj));
+  }
+
+  async readJson (obj) { return JSON.parse(await this.read()); }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // serialization
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  __serialize__ () {
+    return { __expr__: `var r = null; try { r = resource("${this.url}");} catch (err) {}; r`, bindings: { 'lively.resources': ['resource'] } };
+  }
+}
+
+/**
+ * Utility functions for JS Numbers.
+ * @module lively.lang/number
+ */
+
+/**
+ * Returns wether `x` is between `a` and `b` and keeps `eps` distance from both of them.
+ * @param {number} x - The number that should be between two bounds 
+ * @param {number} a - One bound (can be upper or lower)
+ * @param {number} b - Another bound (can be upper or lower)
+ * @param {number} eps - Epsilon value that indicates the distance that should be kept from the boundaries
+ * @returns {boolean}
+ */
+function between (x, a, b, eps) {
+  eps = eps || 0;
+  let min, max;
+  if (a < b) { min = a, max = b; } else { max = a, min = b; }
+  return (max - x + eps >= 0) && (min - x - eps <= 0);
+}
+
+/* global Promise */
+
+/**
+ * Methods helping with promises (Promise/A+ model). Not a promise shim.
+ * @module lively.lang/promise
+ */
+
+/**
+ * Promise object / function converter
+ * @param { object|function } obj - The value or function to convert into a promise.
+ * @returns { Promise } 
+ * @example
+ * promise("foo");
+ *   // => Promise({state: "fullfilled", value: "foo"})
+ * lively.lang.promise({then: (resolve, reject) => resolve(23)})
+ *   // => Promise({state: "fullfilled", value: 23})
+ * lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
+ *   // => Promise({state: "fullfilled", value: 4})
+ */
+function promise (obj) {
+  return (typeof obj === 'function')
+    ? promise.convertCallbackFun(obj)
+    : Promise.resolve(obj);
+}
+
+/**
+ * Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
+ * before resolving
+ * @async
+ * @param { number } ms - The duration to delay the execution in milliseconds.
+ * @param { * } resolveVal - The value to resolve to.
+ */
+function delay (ms, resolveVal) {
+  return new Promise(resolve =>
+    setTimeout(resolve, ms, resolveVal));
+}
+
+/**
+ * like `promise.delay` but rejects instead of resolving.
+ * @async
+ * @param { number } ms - The duration to delay the execution in milliseconds.
+ * @param { * } rejectedVal - The value to reject.
+ */
+function delayReject (ms, rejectVal) {
+  return new Promise((_, reject) =>
+    setTimeout(reject, ms, rejectVal));
+}
+
+/**
+ * Takes a promise and either resolves to the value of the original promise
+ * when it succeeds before `ms` milliseconds passed or fails with a timeout
+ * error.
+ * @async
+ * @param { number } ms - The duration to wait for the promise to resolve in milliseconds.
+ * @param { Promise } promise - The promise to wait for to finish.
+ */
+function timeout (ms, promise) {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
+    promise.then(
+      val => !done && (done = true) && resolve(val),
+      err => !done && (done = true) && reject(err));
+  });
+}
+
+const waitForClosures = {};
+
+/* 
+function clearPendingWaitFors () {
+  Object.keys(waitForClosures).forEach(i => {
+    delete waitForClosures[i];
+    clearInterval(i);
+  });
+}
+*/
+
+/**
+ * Tests for a condition calling function `tester` until the result is
+ * truthy. Resolves with last return value of `tester`. If `ms` is defined
+ * and `ms` milliseconds passed, reject with timeout error
+ * if timeoutObj is passed will resolve(!) with this object instead of raise
+ * an error
+ * *This function has a huge performance impact if used carelessly.
+ * Always consider this to be the absolute last resort if a problem
+ * can not be solved by promises/events.*
+ * @param { number } [ms] - The maximum number of milliseconds to wait for `tester` to become true.
+ * @param { function } tester - The function to test for the condition.
+ * @param { object } [timeoutObj] - The object to resolve to if the condition was not met and we timed out.
+ * @returns { object }
+ */
+function waitFor (ms, tester, timeoutObj) {
+  if (typeof ms === 'function') { tester = ms; ms = undefined; }
+  let value;
+  if (value = tester()) return Promise.resolve(value);
+  return new Promise((resolve, reject) => {
+    let stopped = false;
+    let timedout = false;
+    let error;
+    let value;
+    const stopWaiting = (i) => {
+      clearInterval(i);
+      delete waitForClosures[i];
+    };
+    const i = setInterval(() => {
+      if (stopped) return stopWaiting(i);
+      try { value = tester(); } catch (e) { error = e; }
+      if (!value && !error && !timedout) return;
+      stopped = true;
+      stopWaiting(i);
+      if (error) return reject(error);
+      if (timedout) {
+        return typeof timeoutObj === 'undefined'
+          ? reject(new Error('timeout'))
+          : resolve(timeoutObj);
+      }
+      return resolve(value);
+    }, 10);
+    waitForClosures[i] = i;
+    if (typeof ms === 'number') setTimeout(() => timedout = true, ms);
+  });
+}
+
+/**
+ * Returns an object that conveniently gives access to the promise itself and 
+ * its resolution and rejection callback. This separates the resolve/reject handling
+ * from the promise itself. Similar to the deprecated `Promise.defer()`.
+ * @returns { { resolve: function, reject: function, promise: Promise } }
+ */
+function deferred () {
+  let resolve; let reject;
+  const promise = new Promise(function (_resolve, _reject) {
+    resolve = _resolve; reject = _reject;
+  });
+  return { resolve: resolve, reject: reject, promise: promise };
+}
+
+/**
+ * Takes a function that accepts a nodejs-style callback function as a last
+ * parameter and converts it to a function *not* taking the callback but
+ * producing a promise instead. The promise will be resolved with the
+ * *first* non-error argument.
+ * nodejs callback convention: a function that takes as first parameter an
+ * error arg and second+ parameters are the result(s).
+ * @param { function } func - The callback function to convert.
+ * @returns { function } The converted asyncronous function. 
+ * @example
+ * var fs = require("fs"),
+ *     readFile = promise.convertCallbackFun(fs.readFile);
+ * readFile("./some-file.txt")
+ *   .then(content => console.log(String(content)))
+ *   .catch(err => console.error("Could not read file!", err));
+ */
+function convertCallbackFun (func) {
+  return function promiseGenerator (/* args */) {
+    const args = Array.from(arguments); const self = this;
+    return new Promise(function (resolve, reject) {
+      args.push(function (err, result) { return err ? reject(err) : resolve(result); });
+      func.apply(self, args);
+    });
+  };
+}
+
+/**
+ * Like convertCallbackFun but the promise will be resolved with the
+ * all non-error arguments wrapped in an array.
+ * @param { function } func - The callback function to convert.
+ * @returns { function } The converted asyncronous function. 
+ */
+function convertCallbackFunWithManyArgs (func) {
+  return function promiseGenerator (/* args */) {
+    const args = Array.from(arguments); const self = this;
+    return new Promise(function (resolve, reject) {
+      args.push(function (/* err + args */) {
+        const args = Array.from(arguments);
+        const err = args.shift();
+        return err ? reject(err) : resolve(args);
+      });
+      func.apply(self, args);
+    });
+  };
+}
+
+function _chainResolveNext (promiseFuncs, prevResult, akku, resolve, reject) {
+  const next = promiseFuncs.shift();
+  if (!next) resolve(prevResult);
+  else {
+    try {
+      Promise.resolve(next(prevResult, akku))
+        .then(result => _chainResolveNext(promiseFuncs, result, akku, resolve, reject))
+        .catch(function (err) { reject(err); });
+    } catch (err) { reject(err); }
+  }
+}
+
+/**
+ * Similar to Promise.all but takes a list of promise-producing functions
+ * (instead of Promises directly) that are run sequentially. Each function
+ * gets the result of the previous promise and a shared "state" object passed
+ * in. The function should return either a value or a promise. The result of
+ * the entire chain call is a promise itself that either resolves to the last
+ * returned value or rejects with an error that appeared somewhere in the
+ * promise chain. In case of an error the chain stops at that point.
+ * @async
+ * @param { functions[] } promiseFuncs - The list of functions that each return a promise.
+ * @returns { * } The result the last promise resolves to.
+ * @example
+ * lively.lang.promise.chain([
+ *   () => Promise.resolve(23),
+ *   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
+ *   (prevVal, state) => { state.second = prevVal; return state }
+ * ]).then(result => console.log(result));
+ * // => prints {first: 23,second: 25}
+ */
+function chain (promiseFuncs) {
+  return new Promise((resolve, reject) =>
+    _chainResolveNext(
+      promiseFuncs.slice(), undefined, {},
+      resolve, reject));
+}
+
+/**
+ * Converts a given promise to one that executes the `finallyFn` regardless of wether it
+ * resolved successfully or failed during execution.
+ * @param { Promise } promise - The promise to convert.
+ * @param { function } finallyFn - The callback to run after either resolve or reject has been run.
+ * @returns { Promise } The converted promise.
+ */
+function promise_finally (promise, finallyFn) {
+  return Promise.resolve(promise)
+    .then(result => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } return result; })
+    .catch(err => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } throw err; });
+}
+
+/**
+ * Starts functions from `promiseGenFns` that are expected to return a promise
+ * Once `parallelLimit` promises are unresolved at the same time, stops
+ * spawning further promises until a running promise resolves.
+ * @param { function[] } promiseGenFns - A list of functions that each return a promise.
+ * @param { number } parallelLimit - The maximum number of promises to process at the same time. 
+ */
+function parallel (promiseGenFns, parallelLimit = Infinity) {
+  if (!promiseGenFns.length) return Promise.resolve([]);
+
+  const results = [];
+  let error = null;
+  let index = 0;
+  let left = promiseGenFns.length;
+  let resolve; let reject;
+
+  return new Promise((res, rej) => {
+    resolve = () => res(results);
+    reject = err => rej(error = err);
+    spawnMore();
+  });
+
+  function spawn () {
+    parallelLimit--;
+    try {
+      const i = index++; const prom = promiseGenFns[i]();
+      prom.then(result => {
+        parallelLimit++;
+        results[i] = result;
+        if (--left === 0) resolve();
+        else spawnMore();
+      }).catch(err => reject(err));
+    } catch (err) { reject(err); }
+  }
+
+  function spawnMore () {
+    while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0) { spawn(); }
+  }
+}
+
+// FIXME!
+Object.assign(promise, {
+  delay,
+  delayReject,
+  timeout,
+  waitFor,
+  deferred,
+  convertCallbackFun,
+  convertCallbackFunWithManyArgs,
+  chain,
+  finally: promise_finally,
+  parallel
+});
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function Path (p, splitter) {
+  if (p instanceof Path) return p;
+  if (!(this instanceof Path)) return new Path(p, splitter);
+  this.setSplitter(splitter || '.');
+  this.fromPath(p);
+}
+
+Object.assign(Path.prototype, {
+
+  get isPathAccessor () { return true; },
+
+  fromPath (path) {
+    // ignore-in-doc
+    if (typeof path === 'string' && path !== '' && path !== this.splitter) {
+      this._parts = path.split(this.splitter);
+      this._path = path;
+    } else if (Array.isArray(path)) {
+      this._parts = [].concat(path);
+      this._path = path.join(this.splitter);
+    } else {
+      this._parts = [];
+      this._path = '';
+    }
+    return this;
+  },
+
+  setSplitter (splitter) {
+    // ignore-in-doc
+    if (splitter) this.splitter = splitter;
+    return this;
+  },
+
+  map (fn) {
+    this._mapper = fn;
+    return this;
+  },
+
+  parts () { /* key names as array */ return this._parts; },
+
+  size () { /* show-in-doc */ return this._parts.length; },
+
+  slice (n, m) { /* show-in-doc */ return Path(this.parts().slice(n, m)); },
+
+  normalizePath () {
+    // ignore-in-doc
+    // FIXME: define normalization
+    return this._path;
+  },
+
+  isRoot (obj) { return this._parts.length === 0; },
+
+  isIn (obj) {
+    // Does the Path resolve to a value when applied to `obj`?
+    if (this.isRoot()) return true;
+    const parent = this.get(obj, -1);
+    return parent && parent.hasOwnProperty(this._parts[this._parts.length - 1]);
+  },
+
+  equals (obj) {
+    // Example:
+    // var p1 = Path("foo.1.bar.baz"), p2 = Path(["foo", 1, "bar", "baz"]);
+    // // Path's can be both created via strings or pre-parsed with keys in a list.
+    // p1.equals(p2) // => true
+    return obj && obj.isPathAccessor && this.parts().equals(obj.parts());
+  },
+
+  isParentPathOf (otherPath) {
+    // Example:
+    // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1.bar");
+    // p2.isParentPathOf(p1) // => true
+    // p1.isParentPathOf(p2) // => false
+    otherPath = otherPath && otherPath.isPathAccessor
+      ? otherPath : Path(otherPath);
+    const parts = this.parts();
+    const otherParts = otherPath.parts();
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] != otherParts[i]) return false;
+    }
+    return true;
+  },
+
+  relativePathTo (otherPath) {
+    // Example:
+    // var p1 = Path("foo.1.bar.baz"), p2 = Path("foo.1");
+    // p2.relativePathTo(p1) // => Path(["bar","baz"])
+    // p1.relativePathTo(p2) // => undefined
+    otherPath = Path(otherPath);
+    return this.isParentPathOf(otherPath)
+      ? otherPath.slice(this.size(), otherPath.size()) : undefined;
+  },
+
+  del (obj) {
+    if (this.isRoot()) return false;
+    let parent = obj;
+    for (let i = 0; i < this._parts.length - 1; i++) {
+      const part = this._parts[i];
+      if (parent.hasOwnProperty(part)) {
+        parent = parent[part];
+      } else return false;
+    }
+    return delete parent[this._parts[this._parts.length - 1]];
+  },
+
+  withParentAndKeyDo (obj, ensure, doFunc) {
+    // Deeply resolve path in `obj`, not fully, however, only to the parent
+    // element of the last part of path. Take the parent, the key (the last
+    // part of path) and pass it to `doFunc`. When `ensure` is true, create
+    // objects along path it path does not resolve
+    if (this.isRoot()) return doFunc(null, null);
+    let parent = obj;
+    for (let i = 0; i < this._parts.length - 1; i++) {
+      const part = this._parts[i];
+      if (parent.hasOwnProperty(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
+        parent = parent[part];
+      } else if (ensure) {
+        parent = parent[part] = {};
+      } else {
+        return doFunc(null, part);
+      }
+    }
+    return doFunc(parent, this._parts[this._parts.length - 1]);
+  },
+
+  set (obj, val, ensure) {
+    // Deeply resolve path in `obj` and set the resulting property to `val`. If
+    // `ensure` is true, create nested structure in between as necessary.
+    // Example:
+    // var o1 = {foo: {bar: {baz: 42}}};
+    // var path = Path("foo.bar.baz");
+    // path.set(o1, 43)
+    // o1 // => {foo: {bar: {baz: 43}}}
+    // var o2 = {foo: {}};
+    // path.set(o2, 43, true)
+    // o2 // => {foo: {bar: {baz: 43}}}
+    return this.withParentAndKeyDo(obj, ensure,
+      function (parent, key) { return parent ? parent[key] = val : undefined; });
+  },
+
+  defineProperty (obj, propertySpec, ensure) {
+    // like `Path>>set`, however uses Objeect.defineProperty
+    return this.withParentAndKeyDo(obj, ensure,
+      function (parent, key) {
+        return parent
+          ? Object.defineProperty(parent, key, propertySpec)
+          : undefined;
+      });
+  },
+
+  get (obj, n) {
+    // show-in-doc
+    const parts = n ? this._parts.slice(0, n) : this._parts;
+    const self = this;
+    return parts.reduce(function (current, pathPart) {
+      return current ? (self._mapper ? self._mapper(pathPart, current[pathPart]) : current[pathPart]) : current;
+    }, obj);
+  },
+
+  concat (p, splitter) {
+    // show-in-doc
+    return Path(this.parts().concat(Path(p, splitter).parts()));
+  },
+
+  toString () { return this.normalizePath(); },
+
+  serializeExpr () {
+    // ignore-in-doc
+    return 'lively.lang.Path(' + inspect(this.parts()) + ')';
+  },
+
+  watch (options) {
+    // React or be notified on reads or writes to a path in a `target`. Options:
+    // ```js
+    // {
+    //   target: OBJECT,
+    //   uninstall: BOOLEAN,
+    //   onGet: FUNCTION,
+    //   onSet: FUNCTION,
+    //   haltWhenChanged: BOOLEAN,
+    //   verbose: BOOLEAN
+    // }
+    // ```
+    // Example:
+    // // Quite useful for debugging to find out what call-sites change an object.
+    // var o = {foo: {bar: 23}};
+    // Path("foo.bar").watch({target: o, verbose: true});
+    // o.foo.bar = 24; // => You should see: "[object Object].bar changed: 23 -> 24"
+    if (!options || this.isRoot()) return;
+    const target = options.target;
+    const parent = this.get(target, -1);
+    const propName = this.parts().slice(-1)[0];
+    const newPropName = 'propertyWatcher$' + propName;
+    const watcherIsInstalled = parent && parent.hasOwnProperty(newPropName);
+    const uninstall = options.uninstall;
+    const haltWhenChanged = options.haltWhenChanged;
+    const showStack = options.showStack;
+    const getter = parent.__lookupGetter__(propName);
+    const setter = parent.__lookupSetter__(propName);
+    if (!target || !propName || !parent) return;
+    if (uninstall) {
+      if (!watcherIsInstalled) return;
+      delete parent[propName];
+      parent[propName] = parent[newPropName];
+      delete parent[newPropName];
+      var msg = 'Watcher for ' + parent + '.' + propName + ' uninstalled';
+      return;
+    }
+    if (watcherIsInstalled) {
+      var msg = 'Watcher for ' + parent + '.' + propName + ' already installed';
+      return;
+    }
+    if (getter || setter) {
+      var msg = parent + '["' + propName + '"] is a getter/setter, watching not support';
+      console.log(msg);
+      return;
+    }
+    // observe slots, for debugging
+    parent[newPropName] = parent[propName];
+    parent.__defineSetter__(propName, function (v) {
+      const oldValue = parent[newPropName];
+      if (options.onSet) options.onSet(v, oldValue);
+      let msg = parent + '.' + propName + ' changed: ' + oldValue + ' -> ' + v;
+      if (showStack) {
+        msg += '\n' + (typeof lively !== 'undefined'
+          ? lively.printStack() : console.trace());
+      }
+      if (options.verbose) {
+        console.log(msg);
+      }
+      if (haltWhenChanged) debugger;
+      return parent[newPropName] = v;
+    });
+    parent.__defineGetter__(propName, function () {
+      if (options.onGet) options.onGet(parent[newPropName]);
+      return parent[newPropName];
+    });
+    var msg = 'Watcher for ' + parent + '.' + propName + ' installed';
+    console.log(msg);
+  },
+
+  debugFunctionWrapper (options) {
+    // ignore-in-doc
+    // options = {target, [haltWhenChanged, showStack, verbose, uninstall]}
+    const target = options.target;
+    const parent = this.get(target, -1);
+    const funcName = this.parts().slice(-1)[0];
+    const uninstall = options.uninstall;
+    const haltWhenChanged = options.haltWhenChanged === undefined ? true : options.haltWhenChanged;
+    options.showStack;
+    const func = parent && funcName && parent[funcName];
+    const debuggerInstalled = func && func.isDebugFunctionWrapper;
+    if (!target || !funcName || !func || !parent) return;
+    if (uninstall) {
+      if (!debuggerInstalled) return;
+      parent[funcName] = parent[funcName].debugTargetFunction;
+      var msg = 'Uninstalled debugFunctionWrapper for ' + parent + '.' + funcName;
+      console.log(msg);
+      return;
+    }
+    if (debuggerInstalled) {
+      var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' already installed';
+      console.log(msg);
+      return;
+    }
+    const debugFunc = parent[funcName] = func.wrap(function (proceed) {
+      const args = Array.from(arguments);
+      if (haltWhenChanged) debugger;
+      return args.shift().apply(parent, args);
+    });
+    debugFunc.isDebugFunctionWrapper = true;
+    debugFunc.debugTargetFunction = func;
+    var msg = 'debugFunctionWrapper for ' + parent + '.' + funcName + ' installed';
+    console.log(msg);
+  }
+
+});
+
+/**
+ * Computation over graphs. Unless otherwise specified a graph is a simple JS
+ * object whose properties are interpreted as nodes that refer to arrays whose
+ * elements describe edges.
+ * 
+ * ```js
+ * var testGraph = {
+ *   "a": ["b", "c"],
+ *   "b": ["c", "d", "e", "f"],
+ *   "d": ["c", "f"],
+ *   "e": ["a", "f"],
+ *   "f": []
+ * }
+ * ```
+ * @module lively.lang/graph 
+ */
+
+/**
+ * Sorts graph into an array of arrays. Each "bucket" contains the graph
+ * nodes that have no other incoming nodes than those already visited. This
+ * means, we start with the leaf nodes and then walk our way up.
+ * This is useful for computing how to traverse a dependency graph: You get
+ * a sorted list of dependencies that also allows circular references.
+ * @param { Object.<string, string[]> } depGraph - The graph to sort into buckets.
+ * @param { string } startNode - The id of the node at the top of the dependency graph.
+ * @returns { string[][] } The sorted sets of nodes.
+ * @example
+ * var depGraph = {a: ["b", "c"], b: ["c"], c: ["b"]};
+ * sortByReference(depGraph, "a");
+ * // => [["c"], ["b"], ["a"]]
+ */
+function sortByReference (depGraph, startNode) {
+  // establish unique list of keys
+  const remaining = []; const remainingSeen = {}; const uniqDepGraph = {}; const inverseDepGraph = {};
+  for (const key in depGraph) {
+    if (!remainingSeen.hasOwnProperty(key)) {
+      remainingSeen[key] = true;
+      remaining.push(key);
+    }
+    const deps = depGraph[key]; const uniqDeps = {};
+    if (deps) {
+      uniqDepGraph[key] = [];
+      for (const dep of deps) {
+        if (uniqDeps.hasOwnProperty(dep) || key === dep) continue;
+        const inverse = inverseDepGraph[dep] || (inverseDepGraph[dep] = []);
+        if (!inverse.includes(key)) inverse.push(key);
+        uniqDeps[dep] = true;
+        uniqDepGraph[key].push(dep);
+        if (!remainingSeen.hasOwnProperty(dep)) {
+          remainingSeen[dep] = true;
+          remaining.push(dep);
+        }
+      }
+    }
+  }
+
+  // for each iteration find the keys with the minimum number of dependencies
+  // and add them to the result group list
+  const groups = [];
+  while (remaining.length) {
+    let minDepCount = Infinity; let minKeys = []; let minKeyIndexes = []; let affectedKeys = [];
+    for (let i = 0; i < remaining.length; i++) {
+      let key = remaining[i];
+      const deps = uniqDepGraph[key] || [];
+      if (deps.length > minDepCount) continue;
+
+      // if (deps.length === minDepCount && !minKeys.some(ea => deps.includes(ea))) {
+      if (deps.length === minDepCount && !deps.some(ea => minKeys.includes(ea))) {
+        minKeys.push(key);
+        minKeyIndexes.push(i);
+        affectedKeys.push(...inverseDepGraph[key] || []);
+        continue;
+      }
+      minDepCount = deps.length;
+      minKeys = [key];
+      minKeyIndexes = [i];
+      affectedKeys = (inverseDepGraph[key] || []).slice();
+    }
+    for (let i = minKeyIndexes.length; i--;) {
+      let key = remaining[minKeyIndexes[i]];
+      inverseDepGraph[key] = [];
+      remaining.splice(minKeyIndexes[i], 1);
+    }
+    for (let key of affectedKeys) {
+      uniqDepGraph[key] = uniqDepGraph[key].filter(ea => !minKeys.includes(ea));
+    }
+    groups.push(minKeys);
+  }
+  return groups;
+}
+
+/* global System, global */
+
+/**
+ * Intervals are arrays whose first two elements are numbers and the
+ * first element should be less or equal to the second element, see
+ * [`interval.isInterval`](). This abstraction is useful when working with text
+ * ranges in rich text, for example.
+ * @module lively.lang/interval
+ */
+
+/**
+ * An interval defining an upper and a lower bound.
+ * @typedef { number[] } Interval
+ * @property {number} 0 - The lower bound of the interval. 
+ * @property {number} 1 - The upper bound of the interval.
+ */
+
+typeof System !== 'undefined'
+  ? System.global
+  : (typeof window !== 'undefined' ? window : global);
+
+/* global process */
+
+/*
+ * A simple node.js-like cross-platform event emitter implementation that can
+ * be used as a mixin. Emitters support the methods: `on(eventName, handlerFunc)`,
+ * `once(eventName, handlerFunc)`, `emit(eventName, eventData)`,
+ * `removeListener(eventName, handlerFunc)`, `removeAllListeners(eventName)`
+ * Example:
+ * var emitter = events.makeEmitter({});
+ * var log = [];
+ * emitter.on("test", function() { log.push("listener1"); });
+ * emitter.once("test", function() { log.push("listener2"); });
+ * emitter.emit("test");
+ * emitter.emit("test");
+ * log // => ["listener1","listener2","listener1"]
+ * emitter.removeAllListeners("test");
+ * emitter.emit("test");
+ * log // => is still ["listener1","listener2","listener1"]
+ */
+
+typeof process !== 'undefined' && process.versions && process.versions.node;
+
+/* global global,self,process */
+
+typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
+
+/* global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer */
+
+class XPathQuery {
+  constructor (expression) {
+    this.expression = expression;
+    this.contextNode = null;
+    this.xpe = new XPathEvaluator();
+  }
+
+  establishContext (node) {
+    if (this.nsResolver) return;
+    const ctx = node.ownerDocument ? node.ownerDocument.documentElement : node.documentElement;
+    if (ctx !== this.contextNode) {
+      this.contextNode = ctx;
+      this.nsResolver = this.xpe.createNSResolver(ctx);
+    }
+  }
+
+  manualNSLookup () {
+    this.nsResolver = function (prefix) {
+      return Namespace[prefix.toUpperCase()] || null;
+    };
+    return this;
+  }
+
+  findAll (node, defaultValue) {
+    this.establishContext(node);
+    const result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
+    const accumulator = [];
+    let res = null;
+    while (res = result.iterateNext()) accumulator.push(res);
+    return accumulator.length > 0 || defaultValue === undefined ? accumulator : defaultValue;
+  }
+
+  findFirst (node) {
+    this.establishContext(node);
+    const result = this.xpe.evaluate(this.expression, node, this.nsResolver, XPathResult.ANY_TYPE, null);
+    return result.iterateNext();
+  }
+}
+
+function davNs (xmlString) {
+  // finds the declaration of the webdav namespace, usually "d" or "D"
+  const davNSMatch = xmlString.match(/\/([a-z]+?):multistatus/i);
+  return davNSMatch ? davNSMatch[1] : 'd';
+}
+
+const propertyNodeMap = {
+  getlastmodified: 'lastModified',
+  creationDate: 'created',
+  getetag: 'etag',
+  getcontentlength: 'size',
+  resourcetype: 'type', // collection or file
+  getcontenttype: 'contentType' // mime type
+};
+function readPropertyNode (propNode, result = {}) {
+  const tagName = propNode.tagName.replace(/[^:]+:/, '');
+  const key = propertyNodeMap[tagName];
+  let value = propNode.textContent;
+  switch (key) {
+    case 'lastModified':
+    case 'created': value = new Date(value); break;
+    case 'size': value = Number(value); break;
+    // code
+  }
+  result[key] = value;
+  return result;
+}
+
+function readXMLPropfindResult (xmlString) {
+  // the xmlString looks like this:
+  // <?xml version="1.0" encoding="utf-8"?>
+  // <d:multistatus xmlns:d="DAV:" xmlns:a="http://ajax.org/2005/aml">
+  //   <d:response>
+  //     <d:href>sub-dir/</d:href>
+  //     <d:propstat>
+  //       <d:prop>
+  //         <d:getlastmodified xmlns:b="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" b:dt="dateTime.rfc1123">Fri, 24 Jun 2016 09:58:20 -0700</d:getlastmodified>
+  //         <d:resourcetype>
+  //           <d:collection/>
+  //         </d:resourcetype>
+  //       </d:prop>
+  //       <d:status>HTTP/1.1 200 Ok</d:status>
+  //     </d:propstat>
+  //   </d:response>
+  // ...
+  // </d:multistatus>
+
+  const doc = new DOMParser().parseFromString(xmlString, 'text/xml');
+  const ns = davNs(xmlString);
+  const nodes = new XPathQuery(`/${ns}:multistatus/${ns}:response`).findAll(doc.documentElement);
+  const urlQ = new XPathQuery(`${ns}:href`);
+  const propsQ = new XPathQuery(`${ns}:propstat/${ns}:prop`);
+
+  return nodes.map(node => {
+    const propsNode = propsQ.findFirst(node);
+    const props = Array.from(propsNode.childNodes).reduce((props, node) =>
+      readPropertyNode(node, props), {});
+    const urlNode = urlQ.findFirst(node);
+    props.url = urlNode.textContent || urlNode.text; // text is FIX for IE9+;
+    return props;
+  });
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// MIT License Copyright (c) Sindre Sorhus <sindresorhus@gmail.com>
+// https://github.com/sindresorhus/binary-extensions
+const binaryExtensions = ['3ds', '3g2', '3gp', '7z', 'a', 'aac', 'adp', 'ai', 'aif', 'aiff', 'alz', 'ape', 'apk', 'ar', 'arj', 'asf', 'au', 'avi', 'bak', 'bh', 'bin', 'bk', 'bmp', 'btif', 'bz2', 'bzip2', 'cab', 'caf', 'cgm', 'class', 'cmx', 'cpio', 'cr2', 'csv', 'cur', 'dat', 'deb', 'dex', 'djvu', 'dll', 'dmg', 'dng', 'doc', 'docm', 'docx', 'dot', 'dotm', 'dra', 'DS_Store', 'dsk', 'dts', 'dtshd', 'dvb', 'dwg', 'dxf', 'ecelp4800', 'ecelp7470', 'ecelp9600', 'egg', 'eol', 'eot', 'epub', 'exe', 'f4v', 'fbs', 'fh', 'fla', 'flac', 'fli', 'flv', 'fpx', 'fst', 'fvt', 'g3', 'gif', 'graffle', 'gz', 'gzip', 'h261', 'h263', 'h264', 'icns', 'ico', 'ief', 'img', 'ipa', 'iso', 'jar', 'jpeg', 'jpg', 'jpgv', 'jpm', 'jxr', 'key', 'ktx', 'lha', 'lvp', 'lz', 'lzh', 'lzma', 'lzo', 'm3u', 'm4a', 'm4v', 'mar', 'mdi', 'mht', 'mid', 'midi', 'mj2', 'mka', 'mkv', 'mmr', 'mng', 'mobi', 'mov', 'movie', 'mp3', 'mp4', 'mp4a', 'mpeg', 'mpg', 'mpga', 'mxu', 'nef', 'npx', 'numbers', 'o', 'oga', 'ogg', 'ogv', 'otf', 'pages', 'pbm', 'pcx', 'pdf', 'pea', 'pgm', 'pic', 'png', 'pnm', 'pot', 'potm', 'potx', 'ppa', 'ppam', 'ppm', 'pps', 'ppsm', 'ppsx', 'ppt', 'pptm', 'pptx', 'psd', 'pya', 'pyc', 'pyo', 'pyv', 'qt', 'rar', 'ras', 'raw', 'rgb', 'rip', 'rlc', 'rmf', 'rmvb', 'rtf', 'rz', 's3m', 's7z', 'scpt', 'sgi', 'shar', 'sil', 'sketch', 'slk', 'smv', 'so', 'sub', 'swf', 'tar', 'tbz', 'tbz2', 'tga', 'tgz', 'thmx', 'tif', 'tiff', 'tlz', 'ttc', 'ttf', 'txz', 'udf', 'uvh', 'uvi', 'uvm', 'uvp', 'uvs', 'uvu', 'viv', 'vob', 'war', 'wav', 'wax', 'wbmp', 'wdp', 'weba', 'webm', 'webp', 'whl', 'wim', 'wm', 'wma', 'wmv', 'wmx', 'woff', 'woff2', 'wvx', 'xbm', 'xif', 'xla', 'xlam', 'xls', 'xlsb', 'xlsm', 'xlsx', 'xlt', 'xltm', 'xltx', 'xm', 'xmind', 'xpi', 'xpm', 'xwd', 'xz', 'z', 'zip', 'zipx'];
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+const isNode = typeof System !== 'undefined'
+  ? System.get('@system-env').node
+  : (typeof global !== 'undefined' && typeof process !== 'undefined');
+
+function defaultOrigin () {
+  return System.baseURL || document.location.origin;
+}
+
+function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
+  let url = resource.url;
+  var { useCors, useProxy, headers: moreHeaders } = resource;
+  var useCors = typeof useCors !== 'undefined' ? useCors : true;
+  var useProxy = typeof useProxy !== 'undefined' ? useProxy : true;
+  const fetchOpts = { method };
+
+  if (useProxy) {
+    Object.assign(headers, {
+      // pragma: 'no-cache',
+      'cache-control': 'no-cache',
+      'x-lively-proxy-request': url
+    });
+
+    url = resource.proxyDomain || defaultOrigin();
+  }
+
+  if (useCors) fetchOpts.mode = 'cors';
+  if (body) fetchOpts.body = body;
+  fetchOpts.redirect = 'follow';
+  fetchOpts.headers = { ...headers, ...moreHeaders };
+
+  return fetch(url, fetchOpts);
+}
+
+function upload (resource, body) {
+  let {
+    useProxy = true, useCors = true, url,
+    onLoad, headers, onProgress
+  } = resource;
+  const xhr = new XMLHttpRequest();
+  const res = promise.deferred();
+
+  xhr.open('PUT', url);
+
+  if (useProxy) {
+    Object.assign(headers, {
+      pragma: 'no-cache',
+      'cache-control': 'no-cache',
+      'x-lively-proxy-request': url
+    });
+
+    url = resource.proxyDomain || defaultOrigin();
+  }
+
+  for (const header in headers) { xhr.setRequestHeader(header, headers[header]); }
+  xhr.upload.addEventListener('progress', onProgress);
+  xhr.responseType = 'json';
+  xhr.onload = () => {
+    onLoad(xhr.response);
+    res.resolve(xhr);
+  };
+
+  if (useCors) xhr.withCredentials = true;
+  xhr.send(body);
+  return res.promise;
+}
+
+class WebDAVResource extends Resource {
+  constructor (url, opts = {}) {
+    super(url, opts);
+    this.onLoad = opts.onLoad || (() => {});
+    this.onProgress = opts.onProgress || (() => {});
+    this.useProxy = opts.hasOwnProperty('useProxy') ? opts.useProxy : false;
+    this.proxyDomain = opts.proxyDomain || undefined;
+    this.useCors = opts.hasOwnProperty('useCors') ? opts.useCors : false;
+    this.headers = opts.headers || {};
+    this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
+    this.errorOnHTTPStatusCodes = opts.hasOwnProperty('errorOnHTTPStatusCodes')
+      ? opts.errorOnHTTPStatusCodes
+      : true;
+  }
+
+  get isHTTPResource () { return true; }
+
+  join (path) {
+    return Object.assign(
+      super.join(path),
+      { headers: this.headers, useCors: this.useCors, useProxy: this.useProxy, proxyDomain: this.proxyDomain });
+  }
+
+  makeProxied (proxyDomain) {
+    if (proxyDomain !== undefined) this.proxyDomain = proxyDomain;
+    return this.useProxy
+      ? this
+      : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain });
+  }
+
+  noErrorOnHTTPStatusCodes () { this.errorOnHTTPStatusCodes = false; return this; }
+
+  async read () {
+    const res = await makeRequest(this);
+    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`); }
+    if (!this.binary) return res.text();
+    if (this.binary === 'blob') return res.blob();
+    if (typeof res.arrayBuffer === 'function') return res.arrayBuffer();
+    if (typeof res.buffer === 'function') return res.buffer(); // node only
+    throw new Error(`Don't now how to read binary resource ${this}'`);
+  }
+
+  async write (content) {
+    if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
+    const res = await upload(this, content);
+
+    if (!between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
+    return this;
+  }
+
+  async mkdir () {
+    if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.url}`);
+    const res = await makeRequest(this, 'MKCOL');
+    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot create directory ${this.url}: ${res.statusText} ${res.status}`); }
+    return this;
+  }
+
+  async exists () {
+    return this.isRoot() ? true : !!(await makeRequest(this, 'HEAD')).ok;
+  }
+
+  async remove () {
+    await makeRequest(this, 'DELETE');
+    return this;
+  }
+
+  async _propfind () {
+    const res = await makeRequest(this, 'PROPFIND',
+      null, // propfindRequestPayload(),
+      {
+        'Content-Type': 'text/xml'
+        // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+        // 'Depth': String(depth)
+      });
+
+    if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`); }
+    const xmlString = await res.text();
+    const root = this.root();
+    // list of properties for all resources in the multistatus list
+    return readXMLPropfindResult(xmlString).map(props =>
+      root.join(props.url).assignProperties(props));
+  }
+
+  async dirList (depth = 1, opts = {}) {
+    // depth = number >= 1 or 'infinity'
+
+    if (typeof depth !== 'number' && depth !== 'infinity') { throw new Error(`dirList – invalid depth argument: ${depth}`); }
+
+    const { exclude } = opts;
+
+    if (depth <= 0) depth = 1;
+
+    if (depth === 1) {
+      let resources = await this._propfind(); // request to set resources props...
+      resources.shift();
+      if (exclude) resources = applyExclude$1(exclude, resources);
+      return resources;
+    } else {
+      const subResources = await this.dirList(1, opts);
+      const subCollections = subResources.filter(ea => ea.isDirectory());
+      return Promise.all(subCollections.map(col =>
+        col.dirList(typeof depth === 'number' ? depth - 1 : depth, opts)))
+        .then(recursiveResult =>
+          recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
+    }
+  }
+
+  async readProperties (opts) {
+    const props = (await this._propfind())[0];
+    return this.assignProperties(props); // lastModified, etag, ...
+  }
+
+  async post (body = null) {
+    if (typeof body !== 'string') body = JSON.stringify(body);
+    const res = await makeRequest(this, 'POST', body, {});
+    let text; let json;
+    try { text = await res.text(); } catch (err) {}
+    if (text && res.headers.get('content-type') === 'application/json') {
+      try { json = JSON.parse(text); } catch (err) {}
+    }
+    if (!res.ok && this.errorOnHTTPStatusCodes) {
+      throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
+    } else return json || text;
+  }
+
+  async copyTo (otherResource, ensureParent = true) {
+    if (this.isFile()) {
+      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      // optimized copy, using pipes, for HTTP
+      if (isNode) {
+        if (toFile.isHTTPResource) return this._copyTo_file_nodejs_http(toFile, ensureParent);
+        if (toFile.isNodeJSFileResource) return this._copyTo_file_nodejs_fs(toFile, ensureParent);
+      }
+    }
+    return super.copyTo(otherResource, ensureParent);
+  }
+
+  async _copyFrom_file_nodejs_fs (fromFile, ensureParent = true) {
+    if (ensureParent) await this.parent().ensureExistance();
+    let error;
+    const stream = fromFile._createReadStream();
+    stream.on('error', err => error = err);
+    const toRes = await makeRequest(this, 'PUT', stream);
+    if (error) throw error;
+    if (!toRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${toRes.statusText} ${toRes.status}`); }
+    return this;
+  }
+
+  async _copyTo_file_nodejs_fs (toFile, ensureParent = true) {
+    if (ensureParent) await toFile.parent().ensureExistance();
+    const fromRes = await makeRequest(this, 'GET');
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`); }
+    let error;
+    return new Promise((resolve, reject) =>
+      fromRes.body.pipe(toFile._createWriteStream())
+        .on('error', err => error = err)
+        .on('finish', () => error ? reject(error) : resolve(this)));
+  }
+
+  async _copyTo_file_nodejs_http (toFile, ensureParent = true) {
+    if (ensureParent) await toFile.parent().ensureExistance();
+    const fromRes = await makeRequest(this, 'GET');
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot GET: ${fromRes.statusText} ${fromRes.status}`); }
+    const toRes = await makeRequest(toFile, 'PUT', fromRes.body);
+    if (!fromRes.ok && this.errorOnHTTPStatusCodes) { throw new Error(`copyTo: Cannot PUT: ${toRes.statusText} ${toRes.status}`); }
+  }
+}
+
+var resourceExtension$3 = {
+  name: 'http-webdav-resource',
+  matches: (url) => url.startsWith('http:') || url.startsWith('https:'),
+  resourceClass: WebDAVResource
+};
+
+/* global process */
+
+function wrapInPromise (func) {
+  return (...args) =>
+    new Promise((resolve, reject) =>
+      func.apply(null, args.concat((err, result) => err ? reject(err) : resolve(result))));
+}
+
+const readFileP = wrapInPromise(fs.readFile);
+const writeFileP = wrapInPromise(fs.writeFile);
+const existsP = (path) => new Promise((resolve, _reject) =>
+  fs.exists(path, (exists) => resolve(!!exists)));
+const readdirP = wrapInPromise(fs.readdir);
+const mkdirP = wrapInPromise(fs.mkdir);
+const rmdirP = wrapInPromise(fs.rmdir);
+const unlinkP = wrapInPromise(fs.unlink);
+const lstatP = wrapInPromise(fs.lstat);
+const renameP = wrapInPromise(fs.rename);
+
+class NodeJSFileResource extends Resource {
+  get isNodeJSFileResource () { return true; }
+
+  path () {
+    return this.url.replace('file://', '');
+  }
+
+  async stat () {
+    return lstatP(this.path());
+  }
+
+  async read () {
+    const readP = readFileP(this.path());
+    return this.binary ? readP : readP.then(String);
+  }
+
+  async write (content) {
+    if (this.isDirectory()) throw new Error(`Cannot write into a directory: ${this.path()}`);
+    await writeFileP(this.path(), content);
+    return this;
+  }
+
+  async mkdir () {
+    if (this.isFile()) throw new Error(`Cannot mkdir on a file: ${this.path()}`);
+    await mkdirP(this.path());
+    return this;
+  }
+
+  async exists () {
+    return this.isRoot() ? true : existsP(this.path());
+  }
+
+  async dirList (depth = 1, opts = {}) {
+    if (typeof depth !== 'number' && depth !== 'infinity') { throw new Error(`dirList – invalid depth argument: ${depth}`); }
+
+    const { exclude } = opts;
+
+    if (depth <= 0) depth = 1;
+
+    if (depth === 1) {
+      let subResources = [];
+      for (const name of await readdirP(this.path())) {
+        let subResource = this.join(name);
+        const stat = await subResource.stat();
+        subResource = stat.isDirectory() ? subResource.asDirectory() : subResource;
+        subResource._assignPropsFromStat(stat);
+        subResources.push(subResource);
+      }
+      if (exclude) subResources = applyExclude$1(exclude, subResources);
+      return subResources;
+    }
+
+    const subResources = await this.dirList(1, opts);
+    const subCollections = subResources.filter(ea => ea.isDirectory());
+    return Promise.all(subCollections.map(col =>
+      col.dirList(typeof depth === 'number' ? depth - 1 : depth, opts)))
+      .then(recursiveResult =>
+        recursiveResult.reduce((all, ea) => all.concat(ea), subResources));
+  }
+
+  async isEmptyDirectory () {
+    return (await this.dirList()).length === 0;
+  }
+
+  async rename (toResource) {
+    if (!(toResource instanceof this.constructor)) { return super.rename(toResource); }
+
+    // optimized for file system move
+    if (this.isFile()) {
+      toResource = toResource.asFile();
+      renameP(this.path(), toResource.path());
+    } else {
+      toResource = toResource.asDirectory();
+      await toResource.ensureExistance();
+      const files = []; const dirs = [];
+      for (const subR of await this.dirList('infinity')) {
+        if (subR.isDirectory()) dirs.push(subR);
+        else files.push(subR);
+      }
+      for (const subdir of dirs) { await toResource.join(subdir.relativePathFrom(this)).ensureExistance(); }
+      for (const file of files) { await file.rename(toResource.join(file.relativePathFrom(this))); }
+      await this.remove();
+    }
+    return toResource;
+  }
+
+  async remove () {
+    if (!(await this.exists())) ; else if (this.isDirectory()) {
+      for (const subResource of await this.dirList()) { await subResource.remove(); }
+      await rmdirP(this.path());
+    } else {
+      await unlinkP(this.path());
+    }
+    return this;
+  }
+
+  async readProperties () {
+    return this._assignPropsFromStat(await this.stat());
+  }
+
+  makeProxied () {
+    return this;
+  }
+
+  async copyTo (otherResource, ensureParent = true) {
+    if (this.isFile()) {
+      const toFile = otherResource.isFile() ? otherResource : otherResource.join(this.name());
+      // optimized copy, using pipes, for HTTP
+      if (toFile.isHTTPResource) { return toFile._copyFrom_file_nodejs_fs(this, ensureParent = true); }
+    }
+    return super.copyTo(otherResource, ensureParent);
+  }
+
+  _assignPropsFromStat (stat) {
+    return this.assignProperties({
+      lastModified: stat.mtime,
+      created: stat.ctime,
+      size: stat.size,
+      type: stat.isDirectory() ? 'directory' : 'file',
+      isLink: stat.isSymbolicLink()
+    });
+  }
+
+  _createWriteStream () { return fs.createWriteStream(this.path()); }
+  _createReadStream () { return fs.createReadStream(this.path()); }
+}
+
+class NodeJSWindowsFileResource extends NodeJSFileResource {
+  constructor (url, opts) {
+    // rkrk 2019-10-31:
+    // Windows file uris have three slashes. Since we have used
+    // file:// throughout the code base we introduce this as a
+    // single point fix for the time being...
+    const prefix = url.slice(0, 8);
+    if (prefix !== 'file:///' && url.slice(0, 7) === 'file://') {
+      url = 'file:///' + url.slice(7);
+    }
+    if (url.includes('\\')) {
+      url = url.replace(/\\/g, '/');
+    }
+    super(url, opts);
+  }
+
+  path () {
+    return this.url.replace('file:///', '');
+  }
+
+  isRoot () {
+    return !!this.path().match(windowsRootPathRe);
+  }
+
+  root () {
+    if (this.isRoot()) return this;
+    console.log(this.url);
+    const toplevelMatch = this.url.match(windowsURLPrefixRe);
+    if (toplevelMatch) return this.newResource(toplevelMatch[0]);
+    throw new Error(
+      'Could not determine root path of windows file resource for url ' +
+        this.url);
+  }
+}
+
+const resourceExtension$2 = {
+  name: 'nodejs-file-resource',
+  matches: url => url.startsWith('file:'),
+  resourceClass: typeof process !== 'undefined' && process.platform === 'win32'
+    ? NodeJSWindowsFileResource
+    : NodeJSFileResource
+};
+
+const slashRe = /\//g;
+
+function applyExclude (resource, exclude) {
+  if (!exclude) return true;
+  if (typeof exclude === 'string') return !resource.url.includes(exclude);
+  if (typeof exclude === 'function') return !exclude(resource);
+  if (exclude instanceof RegExp) return !exclude.test(resource.url);
+  return true;
+}
+
+class LocalResourceInMemoryBackend {
+  static get hosts () {
+    return this._hosts || (this._hosts = {});
+  }
+
+  static removeHost (name) {
+    delete this.hosts[name];
+  }
+
+  static ensure (filespec, options = {}) {
+    const host = this.named(options.host);
+    return Promise.resolve()
+      .then(() => filespec ? createFiles(`local://${host.name}`, filespec) : null)
+      .then(() => this);
+  }
+
+  static named (name) {
+    if (!name) name = 'default';
+    return this.hosts[name] || (this.hosts[name] = new this(name));
+  }
+
+  constructor (name, filespec = {}) {
+    if (!name || typeof name !== 'string') { throw new Error('LocalResourceInMemoryBackend needs name!'); }
+    this.name = name;
+    this._filespec = filespec;
+  }
+
+  get filespec () { return this._filespec; }
+  set filespec (filespec) { this._filespec = filespec; }
+
+  get (path) { return this._filespec[path]; }
+  set (path, spec) { this._filespec[path] = spec; }
+
+  write (path, content) {
+    let spec = this._filespec[path];
+    if (!spec) spec = this._filespec[path] = { created: new Date() };
+    spec.content = content;
+    spec.isDirectory = false;
+    spec.lastModified = new Date();
+  }
+
+  read (path) {
+    const spec = this._filespec[path];
+    return !spec || !spec.content ? '' : spec.content;
+  }
+
+  mkdir (path) {
+    let spec = this._filespec[path];
+    if (spec && spec.isDirectory) return;
+    if (!spec) spec = this._filespec[path] = { created: new Date() };
+    if (spec.content) delete spec.content;
+    spec.isDirectory = true;
+    spec.lastModified = new Date();
+  }
+
+  partialFilespec (path = '/', depth = Infinity) {
+    const result = {};
+    const filespec = this.filespec;
+    const paths = Object.keys(filespec);
+
+    for (let i = 0; i < paths.length; i++) {
+      const childPath = paths[i];
+      if (!childPath.startsWith(path) || path === childPath) continue;
+      const trailing = childPath.slice(path.length);
+      const childDepth = trailing.includes('/') ? trailing.match(slashRe).length + 1 : 1;
+      if (childDepth > depth) continue;
+      result[childPath] = filespec[childPath];
+    }
+    return result;
+  }
+}
+
+class LocalResource extends Resource {
+  get localBackend () {
+    return LocalResourceInMemoryBackend.named(this.host());
+  }
+
+  read () { return Promise.resolve(this.localBackend.read(this.path())); }
+
+  write (content) {
+    if (this.isDirectory()) { throw new Error(`Cannot write into a directory! (${this.url})`); }
+    const spec = this.localBackend.get(this.path());
+    if (spec && spec.isDirectory) { throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`); }
+    this.localBackend.write(this.path(), content);
+    return Promise.resolve(this);
+  }
+
+  mkdir () {
+    if (!this.isDirectory()) { throw new Error(`Cannot mkdir a file! (${this.url})`); }
+    const spec = this.localBackend.get(this.path());
+    if (spec && spec.isDirectory) return Promise.resolve(this);
+    if (spec && !spec.isDirectory) { throw new Error(`${this.url} already exists and is a file (cannot mkdir it!)`); }
+    this.localBackend.mkdir(this.path());
+    return Promise.resolve(this);
+  }
+
+  exists () {
+    return Promise.resolve(this.isRoot() || this.path() in this.localBackend.filespec);
+  }
+
+  remove () {
+    const thisPath = this.path();
+    Object.keys(this.localBackend.filespec).forEach(path =>
+      path.startsWith(thisPath) && delete this.localBackend.filespec[path]);
+    return Promise.resolve(this);
+  }
+
+  readProperties () {
+    throw new Error('not yet implemented');
+  }
+
+  dirList (depth = 1, opts = {}) {
+    if (!this.isDirectory()) return this.asDirectory().dirList(depth, opts);
+
+    const { exclude } = opts;
+    const prefix = this.path();
+    const children = [];
+    const paths = Object.keys(this.localBackend.filespec);
+
+    if (depth === 'infinity') depth = Infinity;
+
+    for (let i = 0; i < paths.length; i++) {
+      const childPath = paths[i];
+      if (!childPath.startsWith(prefix) || prefix === childPath) continue;
+      const trailing = childPath.slice(prefix.length);
+      const childDepth = trailing.includes('/') ? trailing.match(slashRe).length + 1 : 1;
+      if (childDepth > depth) {
+        // add the dir pointing to child
+        const dirToChild = this.join(trailing.split('/').slice(0, depth).join('/') + '/');
+        if (!children.some(ea => ea.equals(dirToChild))) children.push(dirToChild);
+        continue;
+      }
+      const child = this.join(trailing);
+      if (!exclude || applyExclude(child, exclude)) { children.push(child); }
+    }
+    return Promise.resolve(children);
+  }
+}
+
+var resourceExtension$1 = {
+  name: 'local-resource',
+  matches: (url) => url.startsWith('local:'),
+  resourceClass: LocalResource
+};
+
+const requestMap = {};
+
+class ESMREesource extends Resource {
+
+  async read () {
+    let module;
+
+    const baseUrl = 'https://jspm.dev/';
+    
+    const id = this.url.replace('esm://cache/', '');
+    
+    let pathStructure = id.split('/').filter(Boolean);
+    
+    // jspm servers both the entry point into a package as well as subcontent from package@version/
+    // differentiate these cases by introducing an index.js which will automatically be served by systemJS
+    if (pathStructure.length === 1 || !pathStructure[pathStructure.length - 1].endsWith('js') && !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
+      if (pathStructure.length === 1) pathStructure[0] = pathStructure[0].replace('!cjs', '');
+      pathStructure.push('index.js');
+    }
+
+    const [res, created] = await this.findOrCreatePathStructure(pathStructure);
+    
+    if (!created) {
+      module = await res.read();
+    } else {
+      module = await resource((baseUrl + id)).read();
+      res.write(module);
+    }
+    return module;
+  }
+
+  async findOrCreatePathStructure(pathElements) {
+
+    const cachePath = joinPath(System.baseURL, '/esm_cache/');
+    
+    let currPath = cachePath;
+    let pathRes;
+    
+    // pathElements can together either describe a directory or a file
+    // in the case that it is not a file (will be either js or !cjs) we need to fixup the last part of the path
+    if (!pathElements[pathElements.length - 1].endsWith('js') && !pathElements[pathElements.length - 1].endsWith('!cjs')) {
+      pathElements[pathElements.length - 1] = pathElements[pathElements.length - 1] + '/'; 
+    }
+
+    const fullPath = pathElements.join('/');
+    
+    // another request already started the creation of this resource
+    // since this happens asynchronously we could be scheduled "in between"
+    // wait until this process is done,
+    // since otherwise we will cause server errors when creating a directory that already exists
+    const runningCreation = requestMap[cachePath + fullPath];
+    if (runningCreation) await runningCreation;
+    
+    const res = resource(cachePath + fullPath);
+    const isExisting = await res.exists();
+    if (isExisting) return [res, false]
+    
+    for (let elem of pathElements){
+      if (elem !== pathElements[pathElements.length - 1]){
+        elem = elem + '/';
+      }
+      pathRes = requestMap[currPath + elem]; 
+      if (!pathRes) {
+        pathRes = resource(currPath).join(elem); 
+        if (elem.endsWith('/')) {
+          const dirExists = await pathRes.exists();
+          if (requestMap[currPath + elem] || dirExists){
+            await requestMap[currPath + elem];
+            currPath = pathRes.url;
+            continue
+          }
+          else {
+            // signal that we are currently creating this resource
+            // and wait for this operation to finish
+            requestMap[currPath + elem] = pathRes.mkdir();
+            pathRes = await requestMap[currPath + elem];
+            } 
+        } 
+      } else {
+      // another request already started the creation of this resource
+      // since this happens asynchronously we could be scheduled "in between"
+      // wait until this process is done,
+      // since otherwise we will cause server errors when creating a resource that already exists
+      pathRes = await pathRes;
+      }
+      currPath = pathRes.url;
+    }
+    return [pathRes, true]
+  }
+
+  get isESMResource() {
+    return true;
+  }
+  
+  async write (source) {
+    console.error('Not supported by resource type.');
+  }
+
+  async mkdir () {
+    console.error('Not supported by resource type.');
+  }
+
+  async exists () {
+    // stub that needs to exist
+  }
+
+  async remove () {
+    console.error('Not supported by resource type.');
+  }
+}
+
+const resourceExtension = {
+  name: 'ecma-script-module-resource',
+  matches: (url) => url.startsWith('esm://'),
+  resourceClass: ESMREesource
+};
+
+/* global System,babel */
+
+registerExtension(resourceExtension$1);
+registerExtension(resourceExtension$3);
+registerExtension(resourceExtension$2);
+registerExtension(resourceExtension);
+
+/* global process, __filename, URL */
+
+const crossDeviceTest = {
+  done: false,
+  isOnOtherDevice: undefined,
+  customTmpDirExists: false,
+  customTmpDir: path.join(process.cwd(), 'tmp')
+};
+
+function configFile (dir) {
+  return dir.startsWith('file://') ? new URL('package.json', dir) : path.join(dir, 'package.json');
+}
+
+function findPackageConfig (modulePath) {
+  let dir = path.dirname(modulePath); let config = null;
+  while (true) {
+    if (fs.existsSync(configFile(dir))) {
+      config = JSON.parse(fs.readFileSync(configFile(dir)));
+      break;
+    }
+    let nextDir = path.dirname(dir);
+    if (nextDir === dir) break;
+    dir = nextDir;
+  }
+  return config;
+}
+
+function tmpdir () {
+  const { done, isOnOtherDevice, customTmpDirExists, customTmpDir } = crossDeviceTest;
+  if (done) {
+    if (!isOnOtherDevice) return os.tmpdir();
+    if (!customTmpDirExists) {
+      // console.log(`[flatn] using custom tmp dir: ${customTmpDir}`);
+      if (!fs.existsSync(customTmpDir)) { fs.mkdirSync(customTmpDir); }
+      crossDeviceTest.customTmpDirExists = true;
+    }
+    return customTmpDir;
+  }
+
+  crossDeviceTest.done = true;
+  try {
+    fs.symlinkSync(__filename), path.join(os.tmpdir(), path.basename(__filename));
+    crossDeviceTest.isOnOtherDevice = false;
+  } catch (err) {
+    crossDeviceTest.isOnOtherDevice = true;
+  }
+  return tmpdir();
+}
+
+function maybeFileResource$1 (url) {
+  if (typeof url === 'string' && url.startsWith('/')) { url = 'file://' + url; }
+  return url.isResource ? url : resource(url);
+}
+
+let fixGnuTar;
+
+async function npmSearchForVersions (pname, range = '*') {
+  try {
+    pname = pname.replace(/\//g, '%2f');
+    // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
+    const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson();
+    const version = pname === 'graceful-fs'
+      ? semver.maxSatisfying(Object.keys(versions), range, true)
+      : semver.minSatisfying(Object.keys(versions), range, true);
+    const { name, dist: { tarball } } = versions[version];
+    return { name, version, tarball };
+  } catch (err) {
+    console.error(err);
+    throw new Error(`Cannot find npm package for ${pname}@${range}`);
+  }
+}
+
+async function npmDownloadArchive (pname, range, destinationDir) {
+  destinationDir = maybeFileResource$1(destinationDir);
+  let { version, name, tarball: archiveURL } = await npmSearchForVersions(pname, range);
+  let nameForArchive = name.replace(/\//g, '%2f');
+  let archive = `${nameForArchive}-${version}.tgz`;
+
+  if (!archiveURL) {
+    archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
+  }
+  console.log(`[flatn] downloading ${name}@${version} - ${archiveURL}`);
+  let downloadedArchive = destinationDir.join(archive);
+  await resource(archiveURL).beBinary().copyTo(downloadedArchive);
+  return { downloadedArchive, name, version };
+}
+
+function x (cmd, opts = {}) {
+  return new Promise((resolve, reject) => {
+    let p = child_process.exec(cmd, opts, (code, stdout, stderr) =>
+      code
+        ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
+        : resolve(stdout));
+    if (opts.verbose) {
+      p.stdout.pipe(process.stdout);
+      p.stderr.pipe(process.stderr);
+    }
+  });
+}
+
+// let {downloadedArchive} = await npmDownloadArchive("lively.lang@^0.3", "local://lively.node-packages-test/test-download/")
+// let z = await untar(downloadedArchive, resource("file:///Users/robert/temp/"))
+// let z = await untar(downloadedArchive, resource("local://lively.node-packages-test/test-download/"))
+// await z.dirList()
+// https://registry.npmjs.org/lively.lang/-/lively.lang-0.3.5.tgz
+
+async function untar (downloadedArchive, targetDir, name) {
+  if (!name) name = downloadedArchive.name().replace(/(\.tar|\.tar.tgz|.tgz)$/, '');
+  name = name.replace(/\//g, '%2f');
+
+  downloadedArchive = maybeFileResource$1(downloadedArchive);
+  targetDir = maybeFileResource$1(targetDir);
+
+  let untarDir = resource(`file://${tmpdir()}/npm-helper-untar/`);
+  await untarDir.ensureExistance();
+  if (!downloadedArchive.url.startsWith('file://')) { // need to run exec
+    let tmpDir = untarDir.join(downloadedArchive.name());
+    await downloadedArchive.copyTo(tmpDir);
+    downloadedArchive = tmpDir;
+  }
+
+  if (untarDir.join(name).exists()) {
+    try {
+      await untarDir.join(name).remove();
+    } catch (err) {
+      // sometimes remove above errors with EPERM...
+      await x(`rm -rf "${name}"`, { cwd: untarDir.path() });
+    }
+  }
+
+  // console.log(`[${name}] extracting ${downloadedArchive.path()} => ${targetDir.join(name).asDirectory().url}`);
+
+  if (fixGnuTar === undefined) {
+    try {
+      await x('tar --version | grep -q \'gnu\'');
+      fixGnuTar = '--warning=no-unknown-keyword ';
+    } catch (err) {
+      fixGnuTar = '';
+    }
+  }
+
+  try {
+    let cmd = `mkdir "${name}" && ` +
+      `tar xzf "${downloadedArchive.path()}" ${fixGnuTar}--strip-components 1 -C "${name}" && ` +
+      `rm "${downloadedArchive.path()}"`;
+    await x(cmd, { verbose: false, cwd: untarDir.path() });
+  } catch (err) {
+    try { await x(`rm -rf ${untarDir.path()}`); } catch (err) { }
+  } finally {
+    try { await targetDir.join(name).asDirectory().remove(); } catch (err) { }
+  }
+
+  await x(`mv ${untarDir.join(name).path()} ${targetDir.join(name).path()}`, {});
+  return targetDir.join(name).asDirectory();
+}
+
+// await gitClone("https://github.com/LivelyKernel/lively.morphic", "local://lively.node-packages-test/test-download/lively.morphic.test")
+
+async function gitClone (gitURL, intoDir, branch = 'master') {
+  intoDir = maybeFileResource$1(intoDir).asDirectory();
+  let name = intoDir.name(); let tmp;
+  if (!intoDir.url.startsWith('file://')) {
+    tmp = resource(`file://${tmpdir()}/npm-helper-gitclone/`);
+    await tmp.ensureExistance();
+    if (tmp.join(name).exists()) await tmp.join(name).remove();
+  } else {
+    intoDir.parent().ensureExistance();
+    if (intoDir.exists()) await intoDir.remove();
+  }
+
+  // console.log(`git clone -b "${branch}" "${gitURL}" "${name}"`)
+  // console.log(tmp ? tmp.path() : intoDir.parent().path())
+
+  let destPath = tmp ? tmp.path() : intoDir.parent().path();
+  try {
+    try {
+      await x(`git clone --single-branch -b "${branch}" "${gitURL}" "${name}"`, { cwd: destPath });
+    } catch (err) {
+      // specific shas can't be cloned, so do it manually:
+      await x(`git clone "${gitURL}" "${name}" && cd ${name} && git reset --hard "${branch}" `, { cwd: destPath });
+    }
+  } catch (err) {
+    throw new Error(`git clone of ${gitURL} branch ${branch} into ${destPath} failed:\n${err}`);
+  }
+
+  if (tmp) await x(`mv ${tmp.join(name).path()} ${intoDir.asFile().path()}`);
+}
+
+const npmFallbackEnv = {
+  npm_config_access: '',
+  npm_config_also: '',
+  npm_config_always_auth: '',
+  npm_config_auth_type: 'legacy',
+  npm_config_bin_links: 'true',
+  npm_config_browser: '',
+  npm_config_ca: '',
+  npm_config_cache: path.join(process.env.HOME || '', '.npm'),
+  npm_config_cache_lock_retries: '10',
+  npm_config_cache_lock_stale: '60000',
+  npm_config_cache_lock_wait: '10000',
+  npm_config_cache_max: 'Infinity',
+  npm_config_cache_min: '10',
+  npm_config_cafile: '',
+  npm_config_cert: '',
+  npm_config_color: 'true',
+  npm_config_depth: 'Infinity',
+  npm_config_description: 'true',
+  npm_config_dev: '',
+  npm_config_dry_run: '',
+  npm_config_engine_strict: '',
+  npm_config_fetch_retries: '2',
+  npm_config_fetch_retry_factor: '10',
+  npm_config_fetch_retry_maxtimeout: '60000',
+  npm_config_fetch_retry_mintimeout: '10000',
+  npm_config_force: '',
+  npm_config_git: 'git',
+  npm_config_git_tag_version: 'true',
+  npm_config_global: '',
+  npm_config_global_style: '',
+
+  npm_config_globalconfig: path.join(process.env.HOME || '', 'npmrc'),
+  npm_config_globalignorefile: path.join(process.env.HOME || '', 'npmignore'),
+  npm_config_group: '20',
+  npm_config_ham_it_up: '',
+  npm_config_heading: 'npm',
+  npm_config_https_proxy: '',
+  npm_config_if_present: '',
+  npm_config_ignore_scripts: '',
+  npm_config_init_author_email: '',
+  npm_config_init_author_name: '',
+  npm_config_init_author_url: '',
+  npm_config_init_license: 'ISC',
+  npm_config_init_module: path.join(process.env.HOME || '', '.npm-init.js'),
+  npm_config_init_version: '1.0.0',
+  npm_config_json: '',
+  npm_config_key: '',
+  npm_config_legacy_bundling: '',
+  npm_config_link: '',
+  npm_config_local_address: '',
+  npm_config_loglevel: 'warn',
+  npm_config_logs_max: '10',
+  npm_config_long: '',
+  npm_config_maxsockets: '50',
+  npm_config_message: '%s',
+  npm_config_metrics_registry: 'https://registry.npmjs.org/',
+  npm_config_node_version: '7.7.4',
+  npm_config_onload_script: '',
+  npm_config_only: '',
+  npm_config_optional: 'true',
+  npm_config_parseable: '',
+  npm_config_prefix: process.env.HOME || '',
+  npm_config_production: '',
+  npm_config_progress: 'true',
+  npm_config_proprietary_attribs: 'true',
+  npm_config_proxy: '',
+  npm_config_rebuild_bundle: 'true',
+  npm_config_registry: 'https://registry.npmjs.org/',
+  npm_config_rollback: 'true',
+  npm_config_save: '',
+  npm_config_save_bundle: '',
+  npm_config_save_dev: '',
+  npm_config_save_exact: '',
+  npm_config_save_optional: '',
+  npm_config_save_prefix: '^',
+  npm_config_scope: '',
+  npm_config_scripts_prepend_node_path: 'warn-only',
+  npm_config_searchexclude: '',
+  npm_config_searchlimit: '20',
+  npm_config_searchopts: '',
+  npm_config_searchstaleness: '900',
+  npm_config_send_metrics: '',
+  npm_config_shell: 'bash',
+  npm_config_shrinkwrap: 'true',
+  npm_config_sign_git_tag: '',
+  npm_config_sso_poll_frequency: '500',
+  npm_config_sso_type: 'oauth',
+  npm_config_strict_ssl: 'true',
+  npm_config_tag: 'latest',
+  npm_config_tag_version_prefix: 'v',
+  npm_config_tmp: crossDeviceTest.customTmpDir,
+  npm_config_umask: '0022',
+  npm_config_unicode: 'true',
+  npm_config_unsafe_perm: 'true',
+  npm_config_usage: '',
+  npm_config_user: '501',
+  npm_config_user_agent: 'npm/4.4.4 node/v7.7.4 darwin x64',
+  npm_config_userconfig: path.join(process.env.HOME || '', '.npmrc'),
+  npm_config_version: '',
+  npm_config_versions: '',
+  npm_config_viewer: 'man',
+  npm_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/lib/node_modules/npm/bin/npm-cli.js',
+  npm_node_execpath: '/Users/robert/.nvm/versions/node/v7.7.4/bin/node'
+};
+
+// gitSpecFromVersion("git+ssh://user@hostname/project.git#commit-ish")
+// gitSpecFromVersion("https://rksm/flatn#commit-ish")
+// gitSpecFromVersion("rksm/flatn#commit-ish")
+function gitSpecFromVersion (version = '') {
+  let gitMatch = version.match(/^([^:]+:\/\/[^#]+)(?:#(.+))?/);
+  let [_1, gitRepo, gitBranch] = gitMatch || [];
+  let githubMatch = version.match(/^(?:github:)?([^\/]+)\/([^#\/]+)(?:#(.+))?/);
+  let [_2, githubUser, githubRepo, githubBranch] = githubMatch || [];
+  if (!githubMatch && !gitMatch) return null;
+
+  if (!githubMatch) {
+    return {
+      branch: gitBranch,
+      gitURL: gitRepo,
+      versionInFileName: gitRepo.replace(/[:\/\+#]/g, '_') + '_' + gitBranch
+    };
+  }
+
+  let gitURL = `https://github.com/${githubUser}/${githubRepo}`;
+  return {
+    branch: githubBranch,
+    gitURL,
+    versionInFileName: gitURL.replace(/[:\/\+#]/g, '_') + '_' + githubBranch
+  };
+}
+
+/*
+
+lively.lang.fun.timeToRun(() => {
+  let pm = PackageMap.build(["/Users/robert/Lively/lively-dev2/lively.next-node_modules"])
+  pm.lookup("lively.morphic")
+}, 100);
+
+let dir = System.resource(System.baseURL).join("lively.next-node_modules/")
+let pmap = AsyncPackageMap.build([dir]); await pmap.whenReady()
+
+let dir = "/Users/robert/Lively/lively-dev2/lively.next-node_modules/"
+let pmap = PackageMap.build([dir]);
+
+let json = pmap.allPackages().reduce((map, spec) => {
+  let {name,version} = spec;
+  map[name + "@" + version] = spec;
+  return map
+}, {});
+
+lively.lang.num.humanReadableByteSize(JSON.stringify(json).length)
+
+await fs_dirList(pmap.lookup("react").location)
+fs_dirList(pmap.lookup("react").location)
+
+*/
+
+function isAbsolute (path) {
+  return path.startsWith('/') || path.match(/^[a-z\.-_\+]+:/i);
+}
+
+function parentDir (p) {
+  if (p.isResource) return p.parent();
+  return path__default["default"].basename(p);
+}
+
+function equalLocation (a, b) {
+  if (a.isResource) return a.equals(b);
+  return a === b;
+}
+
+function join (a, b) {
+  if (a.isResource) return a.join(b);
+  return path__default["default"].join(a, b);
+}
+
+function normalizePath (p) {
+  if (p.isResource) return p.withRelativePartsResolved();
+  return path__default["default"].normalize(p);
+}
+
+function fs_isDirectory (location) {
+  if (location.isResource) return location.isDirectory();
+  return fs__default["default"].statSync(location).isDirectory();
+}
+
+function fs_exists (location) {
+  if (location.isResource) return location.exists();
+  return fs__default["default"].existsSync(location);
+}
+
+function fs_read (location) {
+  if (location.isResource) return location.read();
+  return fs__default["default"].readFileSync(location);
+}
+
+function fs_write (location, content) {
+  if (location.isResource) return location.write(content);
+  return fs__default["default"].writeFileSync(location, content);
+}
+
+function fs_readJson (location) {
+  if (location.isResource) return location.exists().then(exists => exists ? location.readJson() : null);
+  return fs__default["default"].existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
+}
+
+function fs_writeJson (location, jso) {
+  if (location.isResource) return location.writeJson(jso);
+  return fs_write(location, JSON.stringify(jso));
+}
+
+function fs_dirList (location) {
+  if (location.isResource) return location.dirList(1);
+  return fs__default["default"].readdirSync(location).map(ea => join(location, ea));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// PackageSpec => package representation for dependency resolution and build
+
+const lvInfoFileName = '.lv-npm-helper-info.json';
+
+class PackageSpec {
+  static fromDir (packageDir) {
+    let spec = new this(packageDir);
+    let read = spec.read();
+    return read instanceof Promise
+      ? read.then(read => (read ? spec : null))
+      : read ? spec : null;
+  }
+
+  constructor (location) {
+    this.location = location;
+    this.isDevPackage = false;
+
+    // from config
+    this.scripts = null;
+    this.bin = null;
+    this.flatn_package_dirs = null;
+    this.name = '';
+    this.version = '';
+    this.dependencies = {};
+    this.devDependencies = {};
+
+    // from git spec
+    this.branch = null;
+    this.gitURL = null;
+    this.versionInFileName = null; // @https___github.com_foo_bar#zork
+  }
+
+  matches (pName, versionRange, gitSpec) {
+    // does this package spec match the package pName@versionRange?
+    let { name, version, isDevPackage } = this;
+
+    if (name !== pName) return false;
+
+    if (!versionRange || isDevPackage) return true;
+
+    if (gitSpec && (gitSpec.versionInFileName === version ||
+      this.versionInFileName === gitSpec.versionInFileName)) {
+      return true;
+    }
+
+    if (semver.parse(version || '', true) && semver.satisfies(version, versionRange, true)) { return true; }
+
+    return false;
+  }
+
+  read () {
+    let self = this;
+    let packageDir = this.location;
+    let configFile = join(packageDir, 'package.json');
+
+    if (!fs_isDirectory(packageDir)) return false;
+
+    let hasConfig = fs_exists(configFile);
+
+    function step4 (info) {
+      if (info) {
+        let { branch, gitURL, versionInFileName } = info;
+        Object.assign(self, { branch, gitURL, versionInFileName });
+      }
+      return true;
+    }
+
+    function step3 (config) {
+      let {
+        name, version, bin, scripts,
+        dependencies, devDependencies,
+        flatn_package_dirs
+      } = config;
+
+      if (bin) {
+        // npm allows bin to just be a string, it is then mapped to the package name
+        bin = typeof bin === 'string' ? { [name.replace(/\//g, '__SLASH__')]: bin } : Object.assign({}, bin);
+      }
+
+      Object.assign(self, {
+        location: packageDir,
+        name,
+        version,
+        bin,
+        scripts,
+        dependencies,
+        devDependencies,
+        flatn_package_dirs
+      });
+
+      let info = self.readLvInfo();
+      return info instanceof Promise ? info.then(step4) : step4(info);
+    }
+
+    function step2 (hasConfig) {
+      if (!hasConfig) return false;
+      let config = fs_readJson(configFile);
+      return config instanceof Promise ? config.then(step3) : step3(config);
+    }
+
+    return hasConfig instanceof Promise ? hasConfig.then(step2) : step2(hasConfig);
+  }
+
+  readConfig () {
+    function ensureConfig (config) {
+      if (config) return config;
+      const { name, version } = this;
+      return { name, version };
+    }
+    const config = fs_readJson(join(this.location, 'package.json'));
+    return config instanceof Promise
+      ? config.then(ensureConfig)
+      : ensureConfig(config);
+  }
+
+  readLvInfo () {
+    let infoF = join(this.location, lvInfoFileName);
+    try {
+      let read = fs_readJson(infoF);
+      return read instanceof Promise
+        ? read.catch(err => null)
+        : read;
+    } catch (err) { }
+    return null;
+  }
+
+  writeLvInfo (spec) {
+    return fs_writeJson(join(this.location, lvInfoFileName), spec);
+  }
+
+  changeLvInfo (changeFn) {
+    let read = this.readLvInfo();
+    return read instanceof Promise
+      ? read.then(read => this.writeLvInfo(changeFn(read)))
+      : this.writeLvInfo(changeFn(read));
+  }
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+class PackageMap {
+  static empty () { return new this(); }
+
+  static get cache () { return this._cache || (this._cache = {}); }
+
+  static keyFor (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    return `all: ${packageCollectionDirs} ea: ${individualPackageDirs} dev: ${devPackageDirs}`;
+  }
+
+  static ensure (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
+    return this.cache[key] || (this.cache[key] = this.build(
+      packageCollectionDirs, individualPackageDirs, devPackageDirs));
+  }
+
+  static build (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+    let map = new this();
+    map.buildDependencyMap(
+      packageCollectionDirs,
+      individualPackageDirs,
+      devPackageDirs);
+    return map;
+  }
+
+  constructor () {
+    this.dependencyMap = {};
+    this.byPackageNames = {};
+    this.key = '';
+    this.devPackageDirs = [];
+    this.individualPackageDirs = [];
+    this.packageCollectionDirs = [];
+    this._readyPromise = null;
+  }
+
+  whenReady () { return this._readyPromise || Promise.resolve(); }
+
+  isReady () { return !this._readyPromise; }
+
+  withPackagesDo (doFn) {
+    let result = [];
+    for (let key in this.dependencyMap) { result.push(doFn(key, this.dependencyMap[key])); }
+    return result;
+  }
+
+  findPackage (matchFn) {
+    for (let key in this.dependencyMap) {
+      let pkg = this.dependencyMap[key];
+      if (matchFn(key, pkg)) return pkg;
+    }
+    return null;
+  }
+
+  allPackages () {
+    let pkgs = [];
+    for (let key in this.dependencyMap) { pkgs.push(this.dependencyMap[key]); }
+    return pkgs;
+  }
+
+  coversDirectory (dir) {
+    let { packageCollectionDirs, devPackageDirs, individualPackageDirs } = this;
+
+    if (individualPackageDirs.some(ea => equalLocation(ea, dir))) return 'individualPackageDirs';
+    if (devPackageDirs.some(ea => equalLocation(ea, dir))) return 'devPackageDirs';
+    let parent = parentDir(dir);
+    if (packageCollectionDirs.some(ea => equalLocation(ea, parent))) {
+      return this.allPackages().find(pkg => equalLocation(pkg.location, parent))
+        ? 'packageCollectionDirs'
+        : 'maybe packageCollectionDirs';
+    }
+    return null;
+  }
+
+  /**
+   * Installs a package into the package map.
+   * @param { object|string } packageSpec - The spec of the package to be installed.
+   * @param { boolean } isDev - Wether or not we are installing the package as a dev package.
+   * @param { boolean } Returns true if installed successfully, false if already installed.
+   */
+  addPackage (packageSpec, isDev = false) {
+    let self = this;
+    if (typeof packageSpec === 'string') { packageSpec = PackageSpec.fromDir(packageSpec); }
+
+    function isPackageSpecIncluded () {
+      let { location } = packageSpec;
+      let { packageCollectionDirs, devPackageDirs, individualPackageDirs } = self;
+      let isCovered = self.coversDirectory(location);
+
+      if (['devPackageDirs', 'individualPackageDirs', 'packageCollectionDirs'].includes(isCovered)) { return false; }
+      if (isDev) devPackageDirs = devPackageDirs.concat(location);
+      else individualPackageDirs = individualPackageDirs.concat(location);
+
+      // FIXME key changes....
+      let build = self.buildDependencyMap(
+        packageCollectionDirs,
+        individualPackageDirs,
+        devPackageDirs);
+      return build instanceof Promise ? build.then(() => true) : true;
+    }
+
+    return packageSpec instanceof Promise
+      ? packageSpec.then(resolvedPackageSpec => {
+        packageSpec = resolvedPackageSpec;
+        return isPackageSpecIncluded();
+      })
+      : isPackageSpecIncluded();
+  }
+
+  /**
+   * Looks up all the packages in can find in packageDirs and creates
+   * packageSpecs for them.  If a package specifies more flatn_package_dirs in its
+   * config then repeat the process until no more new package dirs are found.
+   * Finally, combine all the packages found into a single map, like
+   * {package-name@version: packageSpec, ...}.
+   * 
+   * Merging of the results of the different package dirs happens so that dirs
+   * specified first take precedence. I.e. if a dependency foo@1 is found via
+   * packageDirs and then another package specifies a dir that leads to the
+   * discovery of another foo@1, the first one ends up in tha packageDir
+   * @param { string[] } packageCollectionDirs - Set of paths to the directories containing *package collections*.
+   * @param { string[] } [individualPackageDirs = []] - Set of paths to individual package directories.
+   * @param { string[] } [devPackageDirs = []] - Set of paths to individual packages that are only required to resolve dev deps.
+   */
+  buildDependencyMap (packageCollectionDirs, individualPackageDirs = [], devPackageDirs = []) {
+    let key = this.constructor.keyFor(
+      packageCollectionDirs,
+      individualPackageDirs,
+      devPackageDirs
+    );
+
+    let pkgMap = {};
+    let byPackageNames = {};
+    let seen = { packageDirs: {}, collectionDirs: {} };
+
+    // 1. find all the packages in collection dirs and separate package dirs;
+    for (let p of this._discoverPackagesInCollectionDirs(packageCollectionDirs, seen)) {
+      let { name, version } = p;
+      pkgMap[`${name}@${version}`] = p;
+      (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
+    }
+
+    for (let dir of individualPackageDirs) {
+      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
+        let { name, version } = p;
+        pkgMap[`${name}@${version}`] = p;
+        (byPackageNames[name] || (byPackageNames[name] = [])).push(`${name}@${version}`);
+      }
+    }
+
+    // 2. read dev packages, those shadow all normal dependencies with the same package name;
+    for (let dir of devPackageDirs) {
+      for (let p of this._discoverPackagesInPackageDir(dir, seen)) {
+        let { name } = p;
+        pkgMap[`${name}`] = p;
+        p.isDevPackage = true;
+        let versionsOfPackage = byPackageNames[name] || (byPackageNames[name] = []);
+        if (versionsOfPackage) for (let key of versionsOfPackage) delete pkgMap[key];
+        versionsOfPackage.push(name);
+      }
+    }
+
+    this.dependencyMap = pkgMap;
+    this.byPackageNames = byPackageNames;
+    this.packageCollectionDirs = packageCollectionDirs;
+    this.individualPackageDirs = individualPackageDirs;
+    this.devPackageDirs = devPackageDirs;
+    this.key = key;
+
+    return this;
+  }
+
+  /**
+   * Query the package map if it has a package name@version
+   * Compatibility is either a semver match or if package comes from a git
+   * repo then if the git commit matches.  Additionally dev packages are
+   * supported.  If a dev package with `name` is found it always matches
+   * @param { string } name - The name of the package to be looked for.
+   * @param { string } versionRange - A semver version range string.
+   * @returns { object | undefined } The found package.
+   */
+  lookup (name, versionRange) {
+    let gitSpec = gitSpecFromVersion(versionRange || '');
+    if (!gitSpec && versionRange) {
+      try {
+        // parse stuff like "3001.0001.0000-dev-harmony-fb" into "3001.1.0-dev-harmony-fb"
+        versionRange = new semver.Range(versionRange, true).toString();
+      } catch (err) { }
+    }
+    return this.findPackage((key, pkg) => pkg.matches(name, versionRange, gitSpec));
+  }
+
+  _discoverPackagesInCollectionDirs (
+    packageCollectionDirs,
+    seen = { packageDirs: {}, collectionDirs: {} }
+  ) {
+    // package collection dir structure is like
+    // packages
+    // |-package-1
+    // | |-0.1.0
+    // | | \-package.json
+    // | \-0.1.1
+    // |   \-package.json
+    // |-package-2
+    // ...
+
+    let found = [];
+    for (let dir of packageCollectionDirs) {
+      if (!fs_exists(dir)) continue;
+      for (let packageDir of fs_dirList(dir)) {
+        if (!fs_isDirectory(packageDir)) continue;
+        for (let versionDir of fs_dirList(packageDir)) { found.push(...this._discoverPackagesInPackageDir(versionDir, seen)); }
+      }
+    }
+    return found;
+  }
+
+  _discoverPackagesInPackageDir (
+    packageDir,
+    seen = { packageDirs: {}, collectionDirs: {} }
+  ) {
+    let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
+    if (!spec) return [];
+
+    let found = [spec];
+    let { location, flatn_package_dirs } = spec;
+
+    if (flatn_package_dirs) {
+      for (let dir of flatn_package_dirs) {
+        if (!isAbsolute(dir)) dir = normalizePath(join(location, dir));
+        if (seen.collectionDirs[dir]) continue;
+        console.log(`[flatn] project ${location} specifies package dir ${dir}`);
+        seen.collectionDirs[dir] = true;
+        found.push(...this._discoverPackagesInCollectionDirs([dir], seen));
+      }
+    }
+
+    return found;
+  }
+}
+
+function maybeFileResource (url) {
+  if (typeof url === 'string' && url.startsWith('/')) { url = 'file://' + url; }
+  return url.isResource ? url : resource(url);
+}
+
+function pathForNameAndVersion (name, version, destinationDir) {
+  // pathForNameAndVersion("foo-bar", "1.2.3", "file:///x/y")
+  // pathForNameAndVersion("foo-bar", "foo/bar", "file:///x/y")
+  // pathForNameAndVersion("foo-bar", "git+https://github.com/foo/bar#master", "file:///x/y")
+
+  let gitSpec = gitSpecFromVersion(version);
+
+  // "git clone -b my-branch git@github.com:user/myproject.git"
+  return gitSpec
+    ? Object.assign({}, gitSpec, { location: null, name, version: gitSpec.gitURL })
+    : { location: null, name, version };
+}
+
+async function packageDownloadViaGit ({ gitURL: url, name, branch }, targetDir, verbose) {
+  // packageNameAndRepo like "lively.modules@https://github.com/LivelyKernel/lively.modules"
+  branch = branch || 'master';
+  url = url.replace(/#[^#]+$/, '');
+  let dir = targetDir.join(name).asDirectory();
+  await gitClone(url, dir, branch);
+  return dir;
+}
+
+async function packageDownloadViaNpm (nameRaw, range, targetDir, verbose) {
+  // packageNameAndRange like "lively.modules@^0.7.45"
+  // if no @ part than we assume @*
+  let {
+    downloadedArchive,
+    name
+  } = await npmDownloadArchive(nameRaw, range, targetDir);
+  return untar(downloadedArchive, targetDir, name);
+}
+
+function addNpmSpecificConfigAdditions (configFile, config, name, version, gitURL) {
+  // npm adds some magic "_" properties to the package.json. There is no
+  // specification of it and the official stance is that it is npm internal but
+  // some packages depend on that. In order to allow npm scripts like install to
+  // work smoothly we add a subset of those props here.
+  let _id = gitURL
+    ? `${name}@${version}`
+    : `${config.name}@${config.version}`;
+  let _from = gitURL
+    ? `${config.name}@${gitURL}`
+    : `${config.name}@${semver.validRange(version)}`;
+  return configFile.writeJson(Object.assign({ _id, _from }, config), true);
+}
+
+async function packageDownload (name, range, destinationDir, verbose, attempt = 0) {
+  // packageNameAndRange like "lively.modules@^0.7.45"
+  // if no @ part than we assume @*
+
+  try {
+    destinationDir = maybeFileResource(destinationDir);
+
+    if (!range) {
+      // any version
+      range = '*';
+    }
+
+    // download package to tmp location
+    let tmp = resource('file://' + tmpdir()).join('package_install_tmp/');
+    await tmp.ensureExistance();
+
+    let pathSpec = pathForNameAndVersion(name, range, destinationDir.path());
+    let downloadDir = pathSpec.gitURL
+      ? await packageDownloadViaGit(pathSpec, tmp, verbose)
+      : await packageDownloadViaNpm(name, range, tmp, verbose);
+
+    let packageJSON = downloadDir.join('package.json'); let config;
+    if (!await packageJSON.exists()) { throw new Error(`Downloaded package ${name}@${range} does not have a package.json file at ${packageJSON}`); }
+
+    config = await packageJSON.readJson();
+    let packageDir;
+    if (pathSpec.gitURL) {
+      let dirName = config.name.replace(/\//g, '__SLASH__') + '/' + pathSpec.versionInFileName;
+      packageDir = maybeFileResource(destinationDir).join(dirName).asDirectory();
+    } else {
+      let dirName = config.name.replace(/\//g, '__SLASH__') + '/' + config.version;
+      packageDir = destinationDir.join(dirName).asDirectory();
+      pathSpec = Object.assign({}, pathSpec, { location: packageDir });
+    }
+
+    await addNpmSpecificConfigAdditions(
+      packageJSON, config, name, range, pathSpec.gitURL);
+
+    await packageDir.parent().ensureExistance();
+    await x(`mv ${downloadDir.asFile().path()} ${packageDir.asFile().path()}`);
+
+    let packageSpec = PackageSpec.fromDir(packageDir.path());
+    packageSpec.writeLvInfo(Object.assign({ build: false }, pathSpec));
+
+    return packageSpec;
+  } catch (err) {
+    if (attempt >= 3) {
+      console.error(`Download of ${name}@${range} failed:`, err.stack);
+      throw err;
+    }
+    console.log(`[flatn] retrying download of ${name}@${range}`);
+    return packageDownload(name, range, destinationDir, verbose, attempt + 1);
+  }
+}
+
+function depGraph (packageSpec, packageMap, dependencyFields = ['dependencies']) {
+  // console.log(lively.lang.string.indent(pNameAndVersion, " ", depth));
+  // let packages = getInstalledPackages(centralPackageDir);
+
+  let pNameAndVersion = `${packageSpec.name}@${packageSpec.version}`;
+  let queue = [pNameAndVersion];
+  let resolvedVersions = {};
+  let deps = {}; let packages = {};
+
+  while (queue.length) {
+    let nameAndVersion = queue.shift();
+    if (nameAndVersion in resolvedVersions) continue;
+
+    let atIndex = nameAndVersion.lastIndexOf('@');
+    if (atIndex === -1) atIndex = nameAndVersion.length;
+    let name = nameAndVersion.slice(0, atIndex);
+    let version = nameAndVersion.slice(atIndex + 1);
+    let pSpec = packageMap.lookup(name, version);
+    if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
+
+    let resolvedNameAndVersion = `${pSpec.name}@${pSpec.version}`;
+
+    resolvedVersions[nameAndVersion] = resolvedNameAndVersion;
+
+    if (!packages[pSpec.name]) packages[pSpec.name] = [];
+    if (!packages[pSpec.name].includes(resolvedNameAndVersion)) { packages[pSpec.name].push(resolvedNameAndVersion); }
+
+    if (!deps[resolvedNameAndVersion]) {
+      let localDeps = Object.assign({},
+        dependencyFields.reduce((map, key) =>
+          Object.assign(map, pSpec[key]), {}));
+
+      deps[resolvedNameAndVersion] = Object.keys(localDeps).map(name => {
+        let fullName = name + '@' + localDeps[name];
+        queue.push(fullName);
+        return fullName;
+      });
+    }
+  }
+
+  return { deps, packages, resolvedVersions };
+}
+
+function buildStages (packageSpec, packageMap, dependencyFields) {
+  let { name, version } = packageSpec;
+  let { deps, resolvedVersions } = depGraph(packageSpec, packageMap);
+
+  for (let dep in deps) {
+    for (let i = 0; i < deps[dep].length; i++) {
+      if (!deps[deps[dep][i]]) deps[dep][i] = resolvedVersions[deps[dep][i]];
+    }
+  }
+
+  return sortByReference(deps, `${name}@${version}`);
+}
+
+/* global System,process,__dirname */
+
+const dir = typeof __dirname !== 'undefined'
+  ? __dirname
+  : System.decanonicalize('flatn/').replace('file://', '');
+const helperBinDir = path.join(dir, 'bin');
+
+let _npmEnv;
+function npmEnv () {
+  return _npmEnv || (_npmEnv = (() => {
+    let dir; let cacheFile = path.join(tmpdir(), 'npm-env.json'); let env = {};
+    if (fs__default["default"].existsSync(cacheFile)) {
+      let cached = JSON.parse(String(fs__default["default"].readFileSync(cacheFile)));
+      if (Date.now() - cached.time < 1000 * 60) return cached.env;
+    }
+    try {
+      dir = path.join(tmpdir(), 'npm-test-env-project');
+      if (!fs__default["default"].existsSync(dir)) fs__default["default"].mkdirSync(dir);
+      fs__default["default"].writeFileSync(path.join(dir, 'package.json'), `{"scripts": {"print-env": "${process.env.npm_node_execpath || 'node'} ./print-env.js"}}`);
+      fs__default["default"].writeFileSync(path.join(dir, 'print-env.js'), 'console.log(JSON.stringify(process.env))');
+      let PATH = process.env.PATH.split(':').filter(ea => ea !== helperBinDir).join(':');
+      Object.keys(process.env).forEach(ea => {
+        if (ea.toLowerCase().startsWith('npm_config_')) { env[ea] = process.env[ea]; }
+      });
+      env = Object.assign({},
+        JSON.parse(String(child_process.execSync('npm --silent run print-env', { cwd: dir, env: Object.assign({}, process.env, { PATH }) }))),
+        env);
+      for (let key in env) {
+        if (!key.toLowerCase().startsWith('npm') || key.toLowerCase().startsWith('npm_package')) { delete env[key]; }
+      }
+    } catch (err) {
+      console.warn(`Cannot figure out real npm env, ${err}`);
+      env = {};
+    } finally {
+      try {
+        if (fs__default["default"].existsSync(path.join(dir, 'package.json'))) { fs__default["default"].unlinkSync(path.join(dir, 'package.json')); }
+        fs__default["default"].unlinkSync(path.join(dir, 'print-env.js'));
+        fs__default["default"].rmdirSync(dir);
+      } catch (err) { }
+    }
+    fs__default["default"].writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
+    return env;
+  })());
+}
+
+function npmCreateEnvVars (configObj, env = {}, path = 'npm_package') {
+  function add (key, val) {
+    key = String(key).replace(/[-\.]/g, '_');
+    if (typeof val === 'object') npmCreateEnvVars(val, env, path + '_' + key);
+    else env[path + '_' + key] = String(val);
+  }
+
+  if (Array.isArray(configObj)) {
+    configObj.forEach((ea, i) => add(i, configObj[i]));
+  } else {
+    Object.keys(configObj).forEach(name => add(name, configObj[name]));
+  }
+
+  return env;
+}
+
+function linkBins (packageSpecs, linkState = {}, verbose = false) {
+  let linkLocation = path.join(tmpdir(), 'npm-helper-bin-dir');
+  if (!fs__default["default"].existsSync(linkLocation)) fs__default["default"].mkdirSync(linkLocation);
+  packageSpecs.forEach(({ bin, location }) => {
+    if (location.startsWith('file://')) { location = location.replace(/^file:\/\//, ''); }
+    if (!bin) return;
+    if (linkState[location]) return;
+    for (let linkName in bin) {
+      let realFile = bin[linkName];
+      try {
+        // fs.existsSync follows links, so broken links won't be reported as existing
+        fs__default["default"].lstatSync(path.join(linkLocation, linkName));
+        fs__default["default"].unlinkSync(path.join(linkLocation, linkName));
+      } catch (err) { }
+      verbose && console.log(`[flatn build] linking ${path.join(location, realFile)} => ${path.join(linkLocation, linkName)}`);
+      fs__default["default"].symlinkSync(path.join(location, realFile), path.join(linkLocation, linkName));
+    }
+    linkState[location] = true;
+  });
+  return linkLocation;
+}
+
+class BuildProcess {
+  static for (packageSpec, packageMap, dependencyFields, forceBuild = false, verbose = false) {
+    let stages = buildStages(packageSpec, packageMap);
+    return new this(stages, packageMap, forceBuild, verbose);
+  }
+
+  constructor (buildStages, packageMap, forceBuild, verbose = false) {
+    this.buildStages = buildStages; // 2d list, package specs in sorted order
+    this.packageMap = packageMap;
+    this.builtPackages = [];
+    this.binLinkState = {};
+    this.binLinkLocation = '';
+    this.forceBuild = forceBuild;
+    this.verbose = verbose;
+  }
+
+  async run () {
+    // let {buildStages, packageMap} = build
+    let { buildStages, packageMap } = this;
+    let i = 1; let n = buildStages.length;
+
+    this.verbose && console.log(`[flatn] Running build stage ${i++}/${n}`);
+
+    while (buildStages.length) {
+      let stage = buildStages[0];
+      if (!stage.length) {
+        buildStages.shift();
+        this.verbose && buildStages.length && console.log(`[flatn] Running build stage ${i++}/${n}`);
+        continue;
+      }
+
+      let next = stage[0];
+      let atIndex = next.lastIndexOf('@');
+      if (atIndex === -1) atIndex = next.length;
+      let name = next.slice(0, atIndex);
+      let version = next.slice(atIndex + 1);
+      let packageSpec = packageMap.lookup(name, version);
+      if (!packageSpec) throw new Error(`[flatn build] package ${next} cannot be found in package map, skipping its build`);
+
+      await this.build(packageSpec);
+      stage.shift();
+    }
+  }
+
+  normalizeScripts ({ scripts, location }) {
+    if (!scripts || !scripts.install) {
+      let hasBindingGyp = fs__default["default"].existsSync(path.join(location, 'binding.gyp'));
+      if (hasBindingGyp) {
+        scripts = Object.assign({ install: 'node-gyp rebuild' }, scripts);
+      }
+    }
+    return scripts;
+  }
+
+  hasBuiltScripts (scripts) {
+    return scripts && Object.keys(scripts).some(scriptName =>
+      ['prepare', 'preinstall', 'install', 'postinstall'].includes(scriptName));
+  }
+
+  async build (packageSpec) {
+    this.binLinkLocation = linkBins(
+      this.builtPackages.concat([packageSpec]),
+      this.binLinkState,
+      this.verbose);
+
+    let env = npmCreateEnvVars(await packageSpec.readConfig());
+    let needsBuilt =
+      this.forceBuild || packageSpec.isDevPackage || !(packageSpec.readLvInfo() || {}).build;
+
+    if (needsBuilt) {
+      let scripts = this.normalizeScripts(packageSpec);
+      if (this.hasBuiltScripts(scripts)) {
+        console.log(`[flatn] ${packageSpec.name} build starting`);
+        await this.runScript(scripts, 'preinstall', packageSpec, env);
+        await this.runScript(scripts, 'install', packageSpec, env);
+        await this.runScript(scripts, 'postinstall', packageSpec, env);
+        await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
+        console.log(`[flatn] ${packageSpec.name} build done`);
+      }
+    }
+
+    this.builtPackages.push(packageSpec);
+  }
+
+  async runScript (scripts, scriptName, { name, location }, env) {
+    if (!scripts || !scripts[scriptName]) return false;
+    this.verbose && console.log(`[flatn] build ${name}: running ${scriptName}`);
+
+    let pathParts = process.env.PATH.split(':');
+    pathParts.unshift(helperBinDir);
+    pathParts.unshift(this.binLinkLocation);
+
+    env = Object.assign({},
+      process.env,
+      npmFallbackEnv,
+      npmEnv(),
+      env,
+      {
+        npm_lifecycle_event: scriptName,
+        npm_lifecycle_script: scripts[scriptName].split(' ')[0],
+        PATH: pathParts.join(':')
+      });
+
+    try {
+      return await x(`/bin/sh -c '${scripts[scriptName]}'`, {
+        verbose: true,
+        cwd: location.replace(/^file:\/\//, ''),
+        env
+      });
+    } catch (err) {
+      console.error(`[build ${name}] error running ${scripts[scriptName]}:\n${err}`);
+      if (err.stdout || err.stderr) {
+        console.log('The command output:');
+        console.log(err.stdout);
+        console.log(err.stderr);
+      }
+      throw err;
+    }
+  }
+}
+
+/* global process, global */
+
 if (!global.fetch) {
   Object.assign(
     global,
     { fetch: fetch$1 },
-    ["Response", "Headers", "Request"].reduce((all, name) =>
+    ['Response', 'Headers', 'Request'].reduce((all, name) =>
       Object.assign(all, fetch$1[name]), {}));
 }
 
 const debug = false;
 
-function resetPackageMap() { PackageMap._cache = {}; } 
+function resetPackageMap () { PackageMap._cache = {}; }
 
-function ensurePathFormat(dirOrArray) {
+function ensurePathFormat (dirOrArray) {
   // for flatn pure we expect directories to be specified in normal file system
   // form like /home/foo/bar/, not as lively.resources or as URL file://...
   // This ensures that...
   if (Array.isArray(dirOrArray)) return dirOrArray.map(ensurePathFormat);
-  if (dirOrArray.isResource) return dirOrArray.path()
-  if (dirOrArray.startsWith("file://")) dirOrArray = dirOrArray.replace("file://", "");
+  if (dirOrArray.isResource) return dirOrArray.path();
+  if (dirOrArray.startsWith('file://')) dirOrArray = dirOrArray.replace('file://', '');
   return dirOrArray;
 }
 
-function buildPackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+function buildPackageMap (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   if (packageCollectionDirs) packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   if (individualPackageDirs) individualPackageDirs = ensurePathFormat(individualPackageDirs);
   if (devPackageDirs) devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.build(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
-function ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+function ensurePackageMap (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   if (packageCollectionDirs) packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   if (individualPackageDirs) individualPackageDirs = ensurePathFormat(individualPackageDirs);
   if (devPackageDirs) devPackageDirs = ensurePathFormat(devPackageDirs);
   return PackageMap.ensure(packageCollectionDirs, individualPackageDirs, devPackageDirs);
 }
 
-function packageDirsFromEnv() {
+function packageDirsFromEnv () {
   let env = process.env;
   return {
-    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || "").split(":").filter(Boolean),
-    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean),
-    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || "").split(":").filter(Boolean)
-  }
+    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean),
+    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean),
+    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean)
+  };
 }
 
-function setPackageDirsOfEnv(packageCollectionDirs, individualPackageDirs, devPackageDirs) {
+function setPackageDirsOfEnv (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
   packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   individualPackageDirs = ensurePathFormat(individualPackageDirs);
   devPackageDirs = ensurePathFormat(devPackageDirs);
-  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(":");
-  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(":");
-  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(":");
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(':');
+  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(':');
+  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(':');
 }
 
-
-async function buildPackage(
+async function buildPackage (
   packageSpecOrDir,
   packageMapOrDirs,
-  dependencyFields = ["dependencies"],
+  dependencyFields = ['dependencies'],
   verbose = false,
   forceBuild = false
 ) {
-  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
-    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
-  if (Array.isArray(packageMapOrDirs))
-    packageMapOrDirs = ensurePathFormat(packageMapOrDirs);
+  if (typeof packageSpecOrDir === 'string' || packageSpecOrDir.isResource) { packageSpecOrDir = ensurePathFormat(packageSpecOrDir); }
+  if (Array.isArray(packageMapOrDirs)) { packageMapOrDirs = ensurePathFormat(packageMapOrDirs); }
 
-  let packageSpec = typeof packageSpecOrDir === "string"
+  let packageSpec = typeof packageSpecOrDir === 'string'
     ? PackageSpec.fromDir(packageSpecOrDir)
-    : packageSpecOrDir,
-    packageMap = Array.isArray(packageMapOrDirs)
-      ? buildPackageMap(packageMapOrDirs)
-      : packageMapOrDirs;
+    : packageSpecOrDir;
+  let packageMap = Array.isArray(packageMapOrDirs)
+    ? buildPackageMap(packageMapOrDirs)
+    : packageMapOrDirs;
   return await BuildProcess.for(packageSpec, packageMap, dependencyFields, forceBuild, verbose).run();
 }
 
-
-async function installPackage(
+async function installPackage (
   pNameAndVersion,
   destinationDir,
   packageMap,
@@ -13504,37 +13465,34 @@ async function installPackage(
   isDev = false,
   verbose = false
 ) {
-
   // will lookup or install a package matching pNameAndVersion.  Will
   // recursively install dependencies
 
   if (!packageMap) console.warn(`[flatn] install of ${pNameAndVersion}: No package map specified, using empty package map.`);
   if (!packageMap) packageMap = PackageMap.empty();
 
-  if (!dependencyFields) dependencyFields = ["dependencies"];
+  if (!dependencyFields) dependencyFields = ['dependencies'];
 
   destinationDir = ensurePathFormat(destinationDir);
 
-  if (!fs__default["default"].existsSync(destinationDir))
-    fs__default["default"].mkdirSync(destinationDir);
+  if (!fs__default["default"].existsSync(destinationDir)) { fs__default["default"].mkdirSync(destinationDir); }
 
-  let atIndex = pNameAndVersion.lastIndexOf("@");
+  let atIndex = pNameAndVersion.lastIndexOf('@');
   if (atIndex === -1) atIndex = pNameAndVersion.length;
-  let name = pNameAndVersion.slice(0, atIndex),
-    version = pNameAndVersion.slice(atIndex + 1),
-    queue = [[name, version]],
-    seen = {},
-    newPackages = [];
+  let name = pNameAndVersion.slice(0, atIndex);
+  let version = pNameAndVersion.slice(atIndex + 1);
+  let queue = [[name, version]];
+  let seen = {};
+  let newPackages = [];
 
   while (queue.length) {
-    let [name, version] = queue.shift(),
-      installed = packageMap.lookup(name, version);
+    let [name, version] = queue.shift();
+    let installed = packageMap.lookup(name, version);
 
     if (!installed) {
       (verbose || debug) && console.log(`[flatn] installing package ${name}@${version}`);
       installed = await packageDownload(name, version, destinationDir, verbose);
-      if (!installed)
-        throw new Error(`Could not download package ${name + "@" + version}`);
+      if (!installed) { throw new Error(`Could not download package ${name + '@' + version}`); }
 
       packageMap.addPackage(installed, isDev);
 
@@ -13544,7 +13502,6 @@ async function installPackage(
     }
 
     if (!installed) throw new Error(`cannot install package ${name}@${version}!`);
-
 
     let deps = Object.assign({},
       dependencyFields.reduce((map, key) =>
@@ -13558,14 +13515,12 @@ async function installPackage(
     }
   }
 
-  if (newPackages.length > 0)
-    console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`);
+  if (newPackages.length > 0) { console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`); }
 
   return { packageMap, newPackages };
 }
 
-
-function addDependencyToPackage(
+function addDependencyToPackage (
   packageSpecOrDir,
   depNameAndRange,
   packageDepDir,
@@ -13574,15 +13529,13 @@ function addDependencyToPackage(
   save = true,
   verbose = false
 ) {
-
-  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
-    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+  if (typeof packageSpecOrDir === 'string' || packageSpecOrDir.isResource) { packageSpecOrDir = ensurePathFormat(packageSpecOrDir); }
 
   packageDepDir = ensurePathFormat(packageDepDir);
 
-  if (!dependencyField) dependencyField = "dependencies"; /*vs devDependencies etc.*/
+  if (!dependencyField) dependencyField = 'dependencies'; /* vs devDependencies etc. */
 
-  let packageSpec = typeof packageSpecOrDir === "string"
+  let packageSpec = typeof packageSpecOrDir === 'string'
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
@@ -13590,18 +13543,18 @@ function addDependencyToPackage(
 
   if (!packageSpec[dependencyField]) packageSpec[dependencyField] = {};
 
-  let atIndex = depNameAndRange.lastIndexOf("@");
+  let atIndex = depNameAndRange.lastIndexOf('@');
   if (atIndex === -1) atIndex = depNameAndRange.length;
-  let depName = depNameAndRange.slice(0, atIndex),
-    depVersionRange = depNameAndRange.slice(atIndex + 1),
-    depVersion = packageSpec[dependencyField][depName];
+  let depName = depNameAndRange.slice(0, atIndex);
+  let depVersionRange = depNameAndRange.slice(atIndex + 1);
+  let depVersion = packageSpec[dependencyField][depName];
 
   return installPackage(
     depNameAndRange,
     packageDepDir,
     packageMap,
-    [dependencyField]/*dependencyFields*/,
-    false/*isDev*/,
+    [dependencyField]/* dependencyFields */,
+    false/* isDev */,
     verbose
   ).then(result => {
     if (!save) return result;
@@ -13609,25 +13562,24 @@ function addDependencyToPackage(
     if (!depVersionRange) depVersionRange = dep.version;
     let isRange = semver.validRange(depVersionRange, true);
     let isRealRange = !semver.parse(depVersionRange, true);
-    if (!isRange) depVersionRange = "*";
-    else if (!isRealRange) depVersionRange = "^" + depVersionRange;
+    if (!isRange) depVersionRange = '*';
+    else if (!isRealRange) depVersionRange = '^' + depVersionRange;
     if (dep) {
       if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
-        let config = fs__default["default"].existsSync(path.join(location, "package.json")) ?
-          JSON.parse(String(fs__default["default"].readFileSync(path.join(location, "package.json")))) :
-          { name: depName, version: dep.version };
+        let config = fs__default["default"].existsSync(path.join(location, 'package.json'))
+          ? JSON.parse(String(fs__default["default"].readFileSync(path.join(location, 'package.json'))))
+          : { name: depName, version: dep.version };
         if (!config[dependencyField]) config[dependencyField] = {};
         config[dependencyField][depName] = depVersionRange;
-        fs__default["default"].writeFileSync(path.join(location, "package.json"), JSON.stringify(config, null, 2));
+        fs__default["default"].writeFileSync(path.join(location, 'package.json'), JSON.stringify(config, null, 2));
       }
     }
     return result;
   });
 }
 
-
-async function installDependenciesOfPackage(
+async function installDependenciesOfPackage (
   packageSpecOrDir,
   dirToInstallDependenciesInto,
   packageMap,
@@ -13637,25 +13589,22 @@ async function installDependenciesOfPackage(
   // Given a package spec of an installed package (retrieved via
   // `PackageSpec.fromDir`), make sure all dependencies (specified in properties
   // `dependencyFields` of package.json) are installed
-  if (typeof packageSpecOrDir === "string" || packageSpecOrDir.isResource)
-    packageSpecOrDir = ensurePathFormat(packageSpecOrDir);
+  if (typeof packageSpecOrDir === 'string' || packageSpecOrDir.isResource) { packageSpecOrDir = ensurePathFormat(packageSpecOrDir); }
 
-  if (dirToInstallDependenciesInto)
-    dirToInstallDependenciesInto = ensurePathFormat(dirToInstallDependenciesInto);
+  if (dirToInstallDependenciesInto) { dirToInstallDependenciesInto = ensurePathFormat(dirToInstallDependenciesInto); }
 
-  let packageSpec = typeof packageSpecOrDir === "string"
+  let packageSpec = typeof packageSpecOrDir === 'string'
     ? PackageSpec.fromDir(packageSpecOrDir)
     : packageSpecOrDir;
 
-  if (!packageSpec)
-    throw new Error(`Cannot resolve package: ${util.inspect(packageSpec, { depth: 0 })}`);
+  if (!packageSpec) { throw new Error(`Cannot resolve package: ${util.inspect(packageSpec, { depth: 0 })}`); }
 
   if (!dirToInstallDependenciesInto) dirToInstallDependenciesInto = path.dirname(packageSpec.location);
-  if (!dependencyFields) dependencyFields = ["dependencies"];
+  if (!dependencyFields) dependencyFields = ['dependencies'];
 
   let deps = Object.assign({},
-    dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {})),
-    newPackages = [];
+    dependencyFields.reduce((map, key) => Object.assign(map, packageSpec[key]), {}));
+  let newPackages = [];
 
   for (let name in deps) {
     let newPackagesSoFar = newPackages;
@@ -13663,15 +13612,14 @@ async function installDependenciesOfPackage(
       `${name}@${deps[name]}`,
       dirToInstallDependenciesInto,
       packageMap,
-      ["dependencies"],
+      ['dependencies'],
       false,
       verbose
     ));
     newPackages = newPackages.concat(newPackagesSoFar);
   }
 
-  if ((verbose || debug) && !newPackages.length)
-    console.log(`[flatn] no new packages need to be installed for ${packageSpec.name}`);
+  if ((verbose || debug) && !newPackages.length) { console.log(`[flatn] no new packages need to be installed for ${packageSpec.name}`); }
 
   return { packageMap, newPackages };
 }
@@ -14107,8 +14055,8 @@ async function toFormData(Body, ct) {
 }
 
 var multipartParser = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  toFormData: toFormData
+	__proto__: null,
+	toFormData: toFormData
 });
 
 exports.addDependencyToPackage = addDependencyToPackage;
@@ -14129,4 +14077,4 @@ exports.resetPackageMap = resetPackageMap;
 exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 exports.tmpdir = tmpdir;
 exports.untar = untar;
-exports.x = x$1;
+exports.x = x;
