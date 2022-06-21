@@ -15,6 +15,7 @@ target_branch_name = "main"
 need_to_check_deps = {"lively.installer": "/bin/install.cjs", "flatn": "/flatn-cjs.js"}
 # flag used to check if the script should fail (i.e. at least one dependent needs to be rebuild)
 fail = False
+modified_files = []
 for dependant in need_to_check_deps:
     # flag to determine if this specific dependent is ok, just for nicer output
     single_fail = False
@@ -36,7 +37,7 @@ for dependant in need_to_check_deps:
             modified_deps = [
                 file
                 for file in modified_files
-                if any(dep+'/' in file for dep in in_house_deps)
+                if any(dep + "/" in file for dep in in_house_deps)
             ]
             if not modified_deps:
                 print(f"✅ Build of {dependant} is up to date!\n")
@@ -64,7 +65,9 @@ for dependant in need_to_check_deps:
                 # If this is not the case, we need to rebuild.
                 # The return value of `os.system()` is a bit weird. 256 means bash return code 1.
                 # See https://stackoverflow.com/a/35362488
-                test = os.system(f"git rev-list {commit_of_build} | grep {commit} > /dev/null")
+                test = os.system(
+                    f"git rev-list {commit_of_build} | grep {commit} > /dev/null"
+                )
                 if test == 256:
                     print(f"❌ {dependant} needs to be rebuild!")
                     print(
@@ -81,3 +84,17 @@ if fail:
 else:
     print("")
     print("✅ All internal builds are up to date!")
+    print()
+
+# Below are blocks that check the integrity of each altered build file.
+# Only files that were rebuild in this PR are tested.
+
+# installer and flatn are tested together, since the install process uses flatn anyway
+# and rebuilding flatn would require a sucessfull install
+if any(("install.cjs" in file or "flatn-cjs.js") for file in modified_files):
+    test = os.system("./install.sh >/dev/null 2>&1")
+    if test == 256:
+        print("❌ New installer/flatn build is corrupt.")
+        exit(1)
+    else:
+        print("✅ New installer/flatn build works.")
