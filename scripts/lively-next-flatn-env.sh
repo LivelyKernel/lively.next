@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function lively_next_flatn_env {
     lv_next_dir=$1
     echo "Setting env vars for FLATN_PACKAGE_DIRS, FLATN_PACKAGE_COLLECTION_DIRS, FLATN_DEV_PACKAGE_DIRS for lively.next"
