@@ -9,7 +9,7 @@ from sultan.api import Sultan
 import os
 
 # branch against which to diff changes
-target_branch_name = "master"
+target_branch_name = "main"
 # mapping from package -> build artifact of the package
 # packages in this dictionary are checked to be up to date (i.e. last build newer than latest change in package dependencies)
 need_to_check_deps = {"lively.installer": "/bin/install.cjs", "flatn": "/flatn-cjs.js"}
