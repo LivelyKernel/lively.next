@@ -61,7 +61,7 @@ class VersionChecker extends Morph {
   }
 
   async checkIfUpToDate () {
-    const cmd = 'git rev-parse master';
+    const cmd = 'git rev-parse main';
     const cwd = await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
     let stdout;
     try {
@@ -74,7 +74,7 @@ class VersionChecker extends Morph {
       return;
     }
     const hash1 = stdout.split('\n')[0];
-    const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/master').readJson();
+    const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/main').readJson();
     if (hash1 !== hash2) {
       return this.showOutdated(hash1.slice(0, 6));
     }
