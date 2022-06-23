@@ -6,6 +6,7 @@ on:
 
 jobs:
   check:
+    name: Check Build Artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Setup node
