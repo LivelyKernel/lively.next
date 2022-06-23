@@ -5,6 +5,7 @@ import { ChangeManager } from './changes.js';
 import { UndoManager } from './undo.js';
 import EventDispatcher from './events/EventDispatcher.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
+import { clearStylePropertiesForClassesIn } from './helpers.js';
 
 // MorphicEnv.reset();
 
@@ -115,9 +116,9 @@ export class MorphicEnv {
     this.renderer = new Renderer(world, rootNode, this.domEnv);
     this.renderer.domNode = domNode;
     this.eventDispatcher = new EventDispatcher(world.isEmbedded ? rootNode : this.domEnv.window, world).install(rootNode);
-    
+
     world.resumeSteppingAll();
-    
+
     if (this.isDefault()) this.domEnv.window.$world = world;
     if (!world.stealFocus) world.focus();
     world.makeDirty();
@@ -137,8 +138,10 @@ export class MorphicEnv {
       subscribe('lively.modules/moduleloaded', (evt) =>
         this.getTargetsFor('onModuleLoaded').forEach(ea => ea.onModuleLoaded(evt)))];
     systemChangeHandlers['lively.modules/modulechanged'] = [
-      subscribe('lively.modules/modulechanged', (evt) =>
-        this.getTargetsFor('onModuleChanged').forEach(ea => ea.onModuleChanged(evt)))];
+      subscribe('lively.modules/modulechanged', (evt) => {
+        clearStylePropertiesForClassesIn(evt.module);
+        this.getTargetsFor('onModuleChanged').forEach(ea => ea.onModuleChanged(evt));
+      })];
     systemChangeHandlers['lively.partsbin/partpublished'] = [
       subscribe('lively.partsbin/partpublished', (evt) =>
         this.getTargetsFor('onPartPublished').forEach(ea => ea.onPartPublished(evt)))];
