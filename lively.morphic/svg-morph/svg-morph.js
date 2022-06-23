@@ -87,7 +87,24 @@ export class SVGMorph extends Morph {
   toggleEditMode () {
     this.editMode = !this.editMode;
     const t = SVG(this.svgPath);
-    const bbox = t.bbox();
+    if (this.editMode) {
+      const bbox_node = t.rect();
+      bbox_node.addClass('my-bbox-selection');
+      bbox_node.attr(t.bbox());
+      bbox_node.attr({
+        'fill-opacity': 0.0,
+        stroke: '#000',
+        'stroke-width': 2,
+        x: t.bbox().x,
+        y: t.bbox().y,
+        width: t.bbox().width,
+        height: t.bbox().height
+      });
+      t.add(bbox_node);
+      bbox_node.back();
+    } else {
+      t.findOne('rect.my-bbox-selection').remove();
+    }
 
     console.log(this.editMode);
   }
