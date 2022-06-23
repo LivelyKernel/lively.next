@@ -1472,6 +1472,24 @@ class MenuHaloItem extends HaloItem {
   }
 }
 
+class SVGHaloItem extends HaloItem {
+  static get morphName () { return 'custom'; }
+
+  static get properties () {
+    return {
+      tooltip: { defaultValue: 'Enable edit features for the SVG morph' },
+      draggable: { defaultValue: false },
+      styleClasses: { defaultValue: ['fas', 'fa-bezier-curve'] }
+    };
+  }
+
+  async onMouseDown (evt) {
+    const target = this.halo.target;
+    this.halo.remove();
+    target.toggleEditMode();
+  }
+}
+
 export class InteractiveMorphSelector {
   static selectMorph (world, controllingMorph, filterFn) {
     const sel = new this(world, controllingMorph, filterFn);
@@ -1672,7 +1690,7 @@ export default class Halo extends Morph {
         [null, null, null, null, null, null, null],
         ['component', null, null, null, null, null, 'inspect'],
         [null, null, null, null, null, null, null],
-        ['rotate', null, null, null, null, null, 'resize'],
+        ['rotate', null, null, null, null, null, 'custom'],
         [null, 'name', 'name', 'name', 'name', 'name', null]]
     });
 
@@ -1696,7 +1714,8 @@ export default class Halo extends Morph {
             this.componentHalo(),
             this.rotateHalo(),
             this.nameHalo(),
-            this.originHalo()
+            this.originHalo(),
+            this.customHalo()
           ]
     ];
   }
@@ -1815,6 +1834,7 @@ export default class Halo extends Morph {
   copyHalo () { return CopyHaloItem.for(this); }
   originHalo () { return OriginHaloItem.for(this); }
   componentHalo () { return ComponentHaloItem.for(this); }
+  customHalo () { if (this.target.isSVGMorph) return SVGHaloItem.for(this); }
 
   get buttonControls () { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
@@ -2090,6 +2110,10 @@ export default class Halo extends Morph {
       if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { return this.remove(); }
     }
     this.target.onHaloMouseDown(evt);
+  }
+
+  onDoubleMouseDown (evt) {
+    this.target.onHaloDoubleMouseDown(evt);
   }
 
   onContextMenu (evt) {

@@ -5,8 +5,8 @@ import { Morph, Icon } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
-import { Window } from 'lively.components';
 import SVGWorkspace from './SVGWorkspace.js';
+import { SVG } from './svg.js';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -75,13 +75,37 @@ export class SVGMorph extends Morph {
         }
 
       },
+      editMode: {
+        defaultValue: false
+      },
       showControlPoints: {
         defaultValue: false
       }
     };
   }
 
-  get isSVG () { return true; }
+  toggleEditMode () {
+    this.editMode = !this.editMode;
+    const t = SVG(this.svgPath);
+    const bbox = t.bbox();
+
+    console.log(this.editMode);
+  }
+
+  selectElement (target) {
+    console.log('select', target.id, target.selected);
+    if (target.selected) {
+      target.selected = false;
+      // remove bbox
+    } else {
+      target.selected = true;
+      const t = SVG(target);
+      const bbox = t.bbox();
+      t.opacity(0.5);
+    }
+  }
+
+  get isSVGMorph () { return true; }
 
   render (renderer) {
     if (!this.svgPath) return;
@@ -90,6 +114,7 @@ export class SVGMorph extends Morph {
       this._requestMasterStyling = false;
     }
     this.node = new SVGVNode(this, renderer);
+    console.log(this.node);
     return this.node;
   }
 
@@ -112,6 +137,7 @@ export class SVGMorph extends Morph {
   initializeSVGPath (svgPath) {
     this.svgPath = svgPath;
     const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
+    SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
     this.width = this.height * ratio;
   }
 
