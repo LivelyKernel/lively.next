@@ -4,6 +4,7 @@ import { Morph } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
+import SVGWorkspace from './SVGWorkspace.js';
 import { SVG } from './svg.js';
 
 class SVGVNode {
@@ -78,6 +79,9 @@ export class SVGMorph extends Morph {
         }
       },
       editMode: {
+        defaultValue: false
+      },
+      showControlPoints: {
         defaultValue: false
       }
     };
@@ -156,6 +160,7 @@ export class SVGMorph extends Morph {
       this._requestMasterStyling = false;
     }
     this.node = new SVGVNode(this, renderer);
+    console.log(this.node);
     return this.node;
   }
 
