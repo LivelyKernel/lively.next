@@ -91,10 +91,12 @@ else:
 
 # installer and flatn are tested together, since the install process uses flatn anyway
 # and rebuilding flatn would require a sucessfull install
-if any(("install.cjs" in file or "flatn-cjs.js") for file in modified_files):
+if any(("install.cjs" in file or "flatn-cjs.js" in file) for file in modified_files):
     test = os.system("./install.sh >/dev/null 2>&1")
     if test == 256:
         print("❌ New installer/flatn build is corrupt.")
         exit(1)
     else:
         print("✅ New installer/flatn build works.")
+else:
+    print("🏃 Builds have not been modified, no need to run them.")
