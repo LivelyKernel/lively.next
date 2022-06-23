@@ -1,6 +1,6 @@
 /* global System */
 import { locateClass } from 'lively.serializer2';
-import { string } from 'lively.lang';
+import { string, obj } from 'lively.lang';
 import { parseQuery } from 'lively.resources';
 import { stringifyQuery } from 'lively.resources/src/helpers.js';
 
@@ -15,6 +15,8 @@ try {
 
 export const touchInputDevice = touchInput;
 
+let CachedStyleProperties;
+CachedStyleProperties = CachedStyleProperties || new Map();
 let nameToClassMapping;
 nameToClassMapping = nameToClassMapping || {}; // eslint-disable-line no-use-before-define
 
@@ -61,6 +63,30 @@ export function pathForBrowserHistory (worldName, queryString) {
 
 export function addClassMappings (mapping) {
   Object.assign(nameToClassMapping, mapping);
+}
+
+// fixme: how do we invalidate this cache if style properties for a class change?
+// possible solution: store the modules for each of the classes we cache the style props for and clear the cache when a change in the module is sent around from lively.notifications
+
+export function clearStylePropertiesForClassesIn (moduleId) {
+  CachedStyleProperties.forEach((klass, props) => {
+    if (moduleId.endsWith(props.moduleId)) CachedStyleProperties.delete(klass); // clear from cache
+  });
+}
+
+export function getStylePropertiesFor (type) {
+  // caching strategy for faster evaluation?
+  if (CachedStyleProperties.has(type)) return CachedStyleProperties.get(type);
+  const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
+  const { package: pkg, pathInPackage } = klass[Symbol.for('lively-module-meta')];
+  const { properties: props } = klass[Symbol.for('lively.classes-properties-and-settings')];
+  const styleProps = [];
+  styleProps.moduleId = string.joinPath(pkg.name, pathInPackage);
+  for (let prop in props) {
+    if (props[prop].isStyleProp) styleProps.push(prop);
+  }
+  CachedStyleProperties.set(type, styleProps);
+  return styleProps;
 }
 
 export function morph (props = {}, opts = { restore: false }) {
