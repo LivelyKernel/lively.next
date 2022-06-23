@@ -55,11 +55,14 @@ export class SVGMorph extends Morph {
   static get properties () {
     return {
       extent: {
+        after: ['svgUrl'],
         defaultValue: pt(800, 450),
         set (extent) {
           this.setProperty('extent', extent);
-          this.svgPath.setAttribute('height', extent.y);
-          this.svgPath.setAttribute('width', extent.x);
+          if (this.svgPath) {
+            this.svgPath.setAttribute('height', extent.y);
+            this.svgPath.setAttribute('width', extent.x);
+          }
         }
       },
       fill: { defaultValue: Color.transparent },
@@ -70,17 +73,7 @@ export class SVGMorph extends Morph {
           this.setProperty('svgUrl', url);
           this.setSVGPath();
         }
-      },
-      svgPath: {
-        set (svgPath) {
-          const oldPath = this.svgPath;
-          this.setProperty('svgPath', svgPath);
-          const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
-          this.width = this.height * ratio;
-          if (this.node) {
-            this.node.update(oldPath, this.node);
-          }
-        }
+
       },
       showControlPoints: {
         defaultValue: false
@@ -111,8 +104,15 @@ export class SVGMorph extends Morph {
         }
         const span = this.env.domEnv.document.createElement('span');
         span.innerHTML = svgStr;
-        this.svgPath = span.getElementsByTagName('svg')[0];
+        const svgPath = span.getElementsByTagName('svg')[0];
+        this.initializeSVGPath(svgPath);
       });
+  }
+
+  initializeSVGPath (svgPath) {
+    this.svgPath = svgPath;
+    const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
+    this.width = this.height * ratio;
   }
 
   menuItems () {
