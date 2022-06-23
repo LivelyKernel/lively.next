@@ -1,4 +1,4 @@
-/* global System, it, xit, describe, beforeEach, afterEach */
+/* global System, it, describe, beforeEach, afterEach */
 import { promise } from 'lively.lang';
 import { Text } from 'lively.morphic';
 import { pt } from 'lively.graphics';
@@ -7,13 +7,9 @@ import { DynamicJavaScriptCompleter } from '../js/completers.js';
 import { expect } from 'mocha-es6';
 import { joinPath } from 'lively.lang/string.js';
 
-let describeInBrowser = System.get('@system-env').browser
-  ? describe
-  : (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); };
-
 let text;
 
-describeInBrowser('completion controller', () => {
+describe('completion controller', () => {
   beforeEach(() =>
     text = new Text({ textString: 'abc\nafg\n' }));
 
@@ -37,7 +33,7 @@ describeInBrowser('completion controller', () => {
   });
 });
 
-describeInBrowser('completion widget', () => {
+describe('completion widget', () => {
   beforeEach(() => {
     text = new Text({ textString: 'abc\nafg\n', extent: pt(400, 300), editorModeName: joinPath(System.baseURL, 'lively.ide/editor-plugin.js') }).openInWorld();
   });
@@ -49,10 +45,11 @@ describeInBrowser('completion widget', () => {
     text.remove();
   });
 
-  it('opens it', async () => {
+  it('opens', async () => {
     await text.whenRendered();
     text.cursorPosition = text.documentEndPosition;
-    await text.simulateKeys('Alt-Space');
+
+    await text.execCommand('text completion');
     let menu = await promise.waitFor(1000, () => text.world().get('text completion menu'));
     expect(menu.get('list').items.map(({ value: { completion } }) => completion).slice(0, 2)).deep.equals(['afg', 'abc']);
   });
@@ -61,7 +58,7 @@ describeInBrowser('completion widget', () => {
     await text.whenRendered();
     text.cursorDown(2);
     text.insertText('a');
-    await text.simulateKeys('Alt-Space');
+    await text.execCommand('text completion');
     await promise.delay(0);
     let menu = text.world().get('text completion menu');
     expect(menu.get('input').textString).equals('a', "input line content doesn't show prefix");
