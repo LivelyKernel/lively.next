@@ -406,6 +406,7 @@ export class LivelyWorld extends World {
                   svgUrl: ea.url,
                   name: ea.name
                 });
+                svgMorph.initialize();
                 svgMorph.openInWorld();
               }
             });

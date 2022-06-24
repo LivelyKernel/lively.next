@@ -55,7 +55,7 @@ export class SVGMorph extends Morph {
   static get properties () {
     return {
       extent: {
-        after: ['svgUrl'],
+        after: ['svgPathString'],
         defaultValue: pt(800, 450),
         set (extent) {
           this.setProperty('extent', extent);
@@ -68,12 +68,18 @@ export class SVGMorph extends Morph {
       fill: { defaultValue: Color.transparent },
       borderColor: { defaultValue: Color.transparent },
       svgUrl: {
+        defaultValue: ''
+      },
+      svgPathString: {
         defaultValue: '',
-        set (url) {
-          this.setProperty('svgUrl', url);
-          this.setSVGPath();
+        after: ['svgUrl'],
+        set (svgPathString) {
+          this.setProperty('svgPathString', svgPathString);
+          const span = this.env.domEnv.document.createElement('span');
+          span.innerHTML = this.svgPathString;
+          const svgPath = span.getElementsByTagName('svg')[0];
+          this.initializeSVGPath(svgPath);
         }
-
       },
       editMode: {
         defaultValue: false
@@ -84,13 +90,16 @@ export class SVGMorph extends Morph {
     };
   }
 
+  initialize () {
+    this.setSVGPath();
+  }
+
   toggleEditMode () {
     this.editMode = !this.editMode;
     const t = SVG(this.svgPath);
     if (this.editMode) {
       const bbox_node = t.rect();
-      bbox_node.addClass('my-bbox-selection');
-      bbox_node.attr(t.bbox());
+      bbox_node.addClass('my-svg-selection');
       bbox_node.attr({
         'fill-opacity': 0.0,
         stroke: '#000',
@@ -103,7 +112,11 @@ export class SVGMorph extends Morph {
       t.add(bbox_node);
       bbox_node.back();
     } else {
-      t.findOne('rect.my-bbox-selection').remove();
+      t.findOne('rect.my-svg-selection').remove();
+      if (this.target && this.target.selected) {
+        t.findOne('rect.my-path-selection').remove();
+        this.target.selected = false;
+      }
     }
 
     console.log(this.editMode);
@@ -111,15 +124,30 @@ export class SVGMorph extends Morph {
 
   selectElement (target) {
     console.log('select', target.id, target.selected);
-    if (target.selected) {
-      target.selected = false;
-      // remove bbox
-    } else {
-      target.selected = true;
-      const t = SVG(target);
-      const bbox = t.bbox();
-      t.opacity(0.5);
+    const t = SVG(this.svgPath);
+    let wasSelected = false;
+    if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
+    if (this.target) {
+      if (this.target.selected) t.findOne('rect.my-path-selection').remove();
+      this.target.selected = false;
     }
+    if (wasSelected) return;
+    this.target = target;
+    this.target.selected = true;
+    const tar = SVG(target);
+    const bbox_node = t.rect();
+    bbox_node.addClass('my-path-selection');
+    bbox_node.attr({
+      'fill-opacity': 0.0,
+      stroke: '#000',
+      'stroke-width': 2,
+      x: tar.bbox().x,
+      y: tar.bbox().y,
+      width: tar.bbox().width,
+      height: tar.bbox().height
+    });
+    tar.after(bbox_node);
+    bbox_node.back();
   }
 
   get isSVGMorph () { return true; }
@@ -136,18 +164,15 @@ export class SVGMorph extends Morph {
   }
 
   setSVGPath () {
+    console.log('fetch path again');
     fetch(this.svgUrl)
       .then((response) => response.text())
       .then((response) => {
         const svgStr = response;
-
         if (svgStr.indexOf('<svg') === -1) {
           return;
         }
-        const span = this.env.domEnv.document.createElement('span');
-        span.innerHTML = svgStr;
-        const svgPath = span.getElementsByTagName('svg')[0];
-        this.initializeSVGPath(svgPath);
+        this.svgPathString = svgStr;
       });
   }
 
