@@ -114,6 +114,7 @@ export class SVGMorph extends Morph {
         t.findOne('rect.my-path-selection').remove();
         this.target.selected = false;
       }
+      this.removeAllControlPoints();
     }
   }
 
@@ -122,7 +123,7 @@ export class SVGMorph extends Morph {
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
     if (this.target) {
-      if (this.target.selected) t.findOne('rect.my-path-selection').remove();
+      if (this.target.selected && t.findOne('rect.my-path-selection')) t.findOne('rect.my-path-selection').remove();
       this.target.selected = false;
     }
     if (wasSelected) return;
@@ -158,10 +159,7 @@ export class SVGMorph extends Morph {
   get isSVGMorph () { return true; }
 
   getControlPoints () {
-    let oldControlPoints = document.getElementsByClassName('control-point');
-    while (oldControlPoints.length > 0) {
-      oldControlPoints[0].remove();
-    }
+    this.removeAllControlPoints();
 
     const targetPath = SVG(this.target).array();
     for (let i = 0; i < targetPath.length; i++) {
@@ -183,6 +181,8 @@ export class SVGMorph extends Morph {
           let lPoint = this.createControlPointAt(i, element[1], element[2], 'yellow');
 
           this.svgPath.parentNode.appendChild(lPoint);
+          break;
+        case 'Z':
           break;
         default:
           let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
@@ -206,6 +206,13 @@ export class SVGMorph extends Morph {
     // point.style.background-radius = "25px"
 
     return point;
+  }
+
+  removeAllControlPoints () {
+    let oldControlPoints = document.getElementsByClassName('control-point');
+    while (oldControlPoints.length > 0) {
+      oldControlPoints[0].remove();
+    }
   }
 
   render (renderer) {
