@@ -157,6 +157,7 @@ export class SearchWidgetModel extends ViewModel {
             { target: 'searchInput', signal: 'inputChanged', handler: 'search' },
             { target: 'replaceButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace and go to next' },
             { target: 'replaceAllButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace all' },
+            { target: 'caseModeButton', signal: 'fire', handler: 'toggleCaseMode' },
             { signal: 'onBlur', handler: 'onBlur', override: true }
           ];
         }
@@ -181,6 +182,15 @@ export class SearchWidgetModel extends ViewModel {
         }
       }
     ]);
+  }
+
+  toggleCaseMode () {
+    debugger;
+    this.state.caseMode = !this.state.caseMode;
+    this.ui.caseModeButton.opacity = this.state.caseMode ? 1 : 0.5;
+
+    this.cleanup();
+    this.search();
   }
 
   async focus () {
@@ -381,7 +391,7 @@ export class SearchWidgetModel extends ViewModel {
     }
 
     const state = this.state; const { backwards, position } = state;
-    const opts = { backwards, start: position };
+    const opts = { backwards, start: position, caseSensitive: this.state.caseMode };
     const found = this.target.search(this.input, opts);
 
     const result = this.state.inProgress = { ...opts, needle: this.input, found };

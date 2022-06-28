@@ -54,22 +54,21 @@ const WidgetButton = component({
     textAndAttributes: ['replace all', null]
   }]
 });
-
-// SearchWidget.openInWorld()
+// part(SearchWidget).openInWorld();
 const SearchWidget = component({
   name: 'search widget',
   defaultViewModel: SearchWidgetModel,
   borderColor: Color.rgb(204, 204, 204),
   borderRadius: 6,
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.4863477979397931) }),
-  extent: pt(303.3, 56),
+  extent: pt(323.3, 56),
   fill: Color.rgba(0, 0, 0, 0.7471867324206476),
   layout: new GridLayout({
     autoAssign: false,
-    columns: [0, {
+    columns: [0, { // inputs
       paddingLeft: 5,
       paddingRight: 5,
-      width: 43
+      width: 60
     }, 1, {
       fixed: 25
     }, 2, {
@@ -81,10 +80,18 @@ const SearchWidget = component({
     }, 5, {
       fixed: 25
     }, 6, {
+      fixed: 5
+    }, 7, {
+      fixed: 25
+    }, 8, {
+      fixed: 25
+    }, 9, {
       fixed: 10,
       paddingRight: 4
     }],
-    grid: [['searchInput', 'nextButton', 'prevButton', null, 'acceptButton', 'cancelButton', null], ['replaceInput', 'replaceButton', 'replaceButton', null, 'replaceAllButton', 'replaceAllButton', 'replaceAllButton']],
+    grid: [
+      ['searchInput', 'caseModeButton', 'regexModeButton', null, 'nextButton', 'prevButton', null, 'acceptButton', 'cancelButton', null],
+      ['replaceInput', 'replaceButton', 'replaceButton', 'replaceButton', 'replaceButton', 'replaceAllButton', 'replaceAllButton', 'replaceAllButton', 'replaceAllButton', 'replaceAllButton']],
     groups: {
       acceptButton: {
         align: 'topLeft',
@@ -208,6 +215,22 @@ const SearchWidget = component({
     submorphs: [{
       name: 'label',
       textAndAttributes: ['replace all', null]
+    }]
+  }), part(IconButton, {
+    name: 'regexModeButton',
+    opacity: 0.5,
+    submorphs: [{
+      name: 'label',
+      tooltip: 'Match with Regular Expressions',
+      textAndAttributes: Icon.textAttribute('circle-question')
+    }]
+  }), part(IconButton, {
+    name: 'caseModeButton',
+    opacity: 0.5,
+    submorphs: [{
+      name: 'label',
+      tooltip: 'Match Case Sensitive',
+      textAndAttributes: Icon.textAttribute('circle-h')
     }]
   })]
 });
