@@ -221,7 +221,7 @@ const SearchWidget = component({
     opacity: 0.5,
     submorphs: [{
       name: 'label',
-      tooltip: 'Match with Regular Expressions',
+      tooltip: 'Match with Regular Expressions.\n Either directly type your regular expression,\n or use JS slash syntax if you want to use RegEx flags.',
       textAndAttributes: Icon.textAttribute('circle-question')
     }]
   }), part(IconButton, {
