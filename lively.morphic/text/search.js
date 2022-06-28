@@ -123,7 +123,8 @@ export class SearchWidgetModel extends ViewModel {
             before: null,
             position: null,
             inProgress: null,
-            last: null
+            last: null,
+            caseMode: false
           };
         }
       },
@@ -177,7 +178,7 @@ export class SearchWidgetModel extends ViewModel {
         exec: async () => {
           this.target.execCommand('realign top-bottom-center');
           this.addSearchMarkersForPreview(
-            this.state.inProgress && this.state.inProgress.found, false);
+            this.state.inProgress && this.state.inProgress.found, false, this.state.caseMode);
           return true;
         }
       }
@@ -185,7 +186,6 @@ export class SearchWidgetModel extends ViewModel {
   }
 
   toggleCaseMode () {
-    debugger;
     this.state.caseMode = !this.state.caseMode;
     this.ui.caseModeButton.opacity = this.state.caseMode ? 1 : 0.5;
 
@@ -332,7 +332,7 @@ export class SearchWidgetModel extends ViewModel {
 
   addSearchMarkersForPreview (found, noCursor = true) {
     if (!found) return;
-    this.addSearchMarkers(found);
+    this.addSearchMarkers(found, false, this.state.caseMode);
     noCursor && this.target.removeMarker('search-highlight-cursor');
   }
 
@@ -358,7 +358,7 @@ export class SearchWidgetModel extends ViewModel {
 
     if (state.last && state.last.found) {
       this.withoutBindingsDo(() => this.input = state.last.needle);
-      this.addSearchMarkersForPreview(state.last.found);
+      this.addSearchMarkersForPreview(state.last.found, false, state.caseMode);
     }
 
     this.focus();
@@ -390,14 +390,14 @@ export class SearchWidgetModel extends ViewModel {
       return null;
     }
 
-    const state = this.state; const { backwards, position } = state;
+    const state = this.state; const { backwards, position, caseMode } = state;
     const opts = { backwards, start: position, caseSensitive: this.state.caseMode };
     const found = this.target.search(this.input, opts);
 
     const result = this.state.inProgress = { ...opts, needle: this.input, found };
     this.applySearchResult(result);
     if (found) {
-      this.addSearchMarkers(found, backwards);
+      this.addSearchMarkers(found, backwards, caseMode);
     } else {
       this.cleanup();
     }
