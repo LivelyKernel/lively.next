@@ -124,7 +124,8 @@ export class SearchWidgetModel extends ViewModel {
             position: null,
             inProgress: null,
             last: null,
-            caseMode: false
+            caseMode: false,
+            regexMode: false
           };
         }
       },
@@ -132,8 +133,14 @@ export class SearchWidgetModel extends ViewModel {
       input: {
         get () {
           const text = this.ui.searchInput.textString;
-          const reMatch = text.match(/^\/(.*)\/([a-z]*)$/);
-          return reMatch ? new RegExp(reMatch[1], reMatch[2]) : text;
+          if (this.state.regexMode) {
+            const reMatch = text.match(/^\/(.*)\/([a-z]*)$/);
+            if (reMatch) {
+              return RegExp(reMatch[1], reMatch[2]);
+            }
+            return new RegExp(text);
+          }
+          return text;
         },
         set (v) { this.ui.searchInput.textString = String(v); }
       },
@@ -159,6 +166,7 @@ export class SearchWidgetModel extends ViewModel {
             { target: 'replaceButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace and go to next' },
             { target: 'replaceAllButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace all' },
             { target: 'caseModeButton', signal: 'fire', handler: 'toggleCaseMode' },
+            { target: 'regexModeButton', signal: 'fire', handler: 'toggleRegexMode' },
             { signal: 'onBlur', handler: 'onBlur', override: true }
           ];
         }
@@ -183,6 +191,14 @@ export class SearchWidgetModel extends ViewModel {
         }
       }
     ]);
+  }
+
+  toggleRegexMode () {
+    this.state.regexMode = !this.state.regexMode;
+    this.ui.regexModeButton.opacity = this.state.regexMode ? 1 : 0.5;
+
+    this.cleanup();
+    this.search();
   }
 
   toggleCaseMode () {
