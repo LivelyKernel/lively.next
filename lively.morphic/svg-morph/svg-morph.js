@@ -123,7 +123,7 @@ export class SVGMorph extends Morph {
   }
 
   selectElement (target) {
-    console.log('select', target.id, target.selected);
+    console.log('select', target.id, target.selected, SVG(target));
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
@@ -135,19 +135,29 @@ export class SVGMorph extends Morph {
     this.target = target;
     this.target.selected = true;
     const tar = SVG(target);
-    const bbox_node = t.rect();
-    bbox_node.addClass('my-path-selection');
-    bbox_node.attr({
+    let selection_node;
+    switch (tar.type) {
+      // case 'path':
+      //  selection_node = SVG(target.outerHTML);
+      //  break;
+      default:
+        selection_node = t.rect();
+        selection_node.attr({
+          x: tar.bbox().x,
+          y: tar.bbox().y,
+          width: tar.bbox().width,
+          height: tar.bbox().height
+        });
+    }
+    selection_node.addClass('my-path-selection');
+    selection_node.attr({
       'fill-opacity': 0.0,
       stroke: '#000',
       'stroke-width': 2,
-      x: tar.bbox().x,
-      y: tar.bbox().y,
-      width: tar.bbox().width,
-      height: tar.bbox().height
+      'pointer-events': 'none'
     });
-    tar.after(bbox_node);
-    bbox_node.back();
+    tar.after(selection_node);
+    selection_node.front();
   }
 
   get isSVGMorph () { return true; }
