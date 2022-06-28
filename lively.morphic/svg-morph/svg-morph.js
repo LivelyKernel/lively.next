@@ -131,6 +131,10 @@ export class SVGMorph extends Morph {
     const tar = SVG(target);
     let selection_node;
     switch (tar.type) {
+      case 'path':
+        console.log('here');
+        selection_node = SVG(target.outerHTML);
+        this.getControlPoints();
       default:
         selection_node = t.rect();
         selection_node.attr({
@@ -152,6 +156,57 @@ export class SVGMorph extends Morph {
   }
 
   get isSVGMorph () { return true; }
+
+  getControlPoints () {
+    let oldControlPoints = document.getElementsByClassName('control-point');
+    while (oldControlPoints.length > 0) {
+      oldControlPoints[0].remove();
+    }
+
+    const targetPath = SVG(this.target).array();
+    for (let i = 0; i < targetPath.length; i++) {
+      let element = targetPath[i];
+      console.log(element);
+      switch (element[0]) {
+        case 'M':
+          let mPoint = this.createControlPointAt(i, element[1], element[2], 'red');
+
+          this.svgPath.parentNode.appendChild(mPoint);
+
+          break;
+        case 'C':
+          let cPoint = this.createControlPointAt(i, element[5], element[6], 'yellow');
+
+          this.svgPath.parentNode.appendChild(cPoint);
+          break;
+        case 'L':
+          let lPoint = this.createControlPointAt(i, element[1], element[2], 'yellow');
+
+          this.svgPath.parentNode.appendChild(lPoint);
+          break;
+        default:
+          let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
+
+          this.svgPath.parentNode.appendChild(defaultPoint);
+      }
+      let lastElement = element;
+    }
+  }
+
+  createControlPointAt (id, x, y, color) {
+    let point = document.createElement('div');
+    point.className = 'control-point';
+    point.id = 'control-point-' + id;
+    point.style.width = '10px';
+    point.style.height = '10px';
+    point.style.background = color;
+    point.style.position = 'absolute';
+    point.style.left = y + 'px';
+    point.style.top = x + 'px';
+    // point.style.background-radius = "25px"
+
+    return point;
+  }
 
   render (renderer) {
     if (!this.svgPath) return;
