@@ -4,7 +4,6 @@ import { string } from 'lively.lang';
 import { transform } from 'lively.ast';
 
 let containerized = process.env.CONTAINERIZED || false;
-// let puppeteer = System._nodeRequire("puppeteer");
 let packagePath = System.decanonicalize('lively.headless/').replace('file://', '');
 let puppeteer = System._nodeRequire('puppeteer');
 
@@ -42,22 +41,30 @@ export class HeadlessSession {
       ...options
     };
     this.id = string.newUUID();
-    // if (options.browser)
-    //   this.constructor.browser = browser;
-    // this.browser = options.browser || null;
+    if (options.browser)
+       this.constructor.browser = browser;
+    this.browser = options.browser || null;
     this.error = null;
     this.page = null;
     this.state = SESSION_STATE.CLOSED;
   }
 
   async ensureBrowser () {
-    return this.constructor.browser ||
-       (this.constructor.browser = await puppeteer.launch({
+      const newBrowser = (this.constructor.browser = await puppeteer.launch({
          userDataDir: packagePath + 'chrome-data-dir',
-         ...containerized ? { executablePath: 'google-chrome-stable' } : {}
+         ...containerized ? { executablePath: 'google-chrome-stable' } : {},
+         args: [
+          // these are necessary to run headless chrome inside of docker containers
+          // be aware, that disabling sandboxing comes with heavy security implications
+          "--disable-gpu",
+          "--disable-dev-shm-usage",
+          "--disable-setuid-sandbox",
+          "--no-sandbox",
+         ] 
          // headless: false,
          // args: ["--disk-cache-dir", packagePath + "chrome-cache-dir"]
        }));
+       return this.constructor.browser || newBrowser;
   }
 
   isReady () { return this.state === SESSION_STATE.OPEN; }
