@@ -1,11 +1,9 @@
-/* global XMLSerializer */
 /* global fetch */
 
-import { Morph, Icon } from 'lively.morphic';
+import { Morph } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
-import SVGWorkspace from './SVGWorkspace.js';
 import { SVG } from './svg.js';
 
 class SVGVNode {
@@ -67,9 +65,7 @@ export class SVGMorph extends Morph {
       },
       fill: { defaultValue: Color.transparent },
       borderColor: { defaultValue: Color.transparent },
-      svgUrl: {
-        defaultValue: ''
-      },
+      svgUrl: {},
       svgPathString: {
         defaultValue: '',
         after: ['svgUrl'],
@@ -118,12 +114,9 @@ export class SVGMorph extends Morph {
         this.target.selected = false;
       }
     }
-
-    console.log(this.editMode);
   }
 
   selectElement (target) {
-    console.log('select', target.id, target.selected, SVG(target));
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
@@ -137,9 +130,6 @@ export class SVGMorph extends Morph {
     const tar = SVG(target);
     let selection_node;
     switch (tar.type) {
-      // case 'path':
-      //  selection_node = SVG(target.outerHTML);
-      //  break;
       default:
         selection_node = t.rect();
         selection_node.attr({
@@ -169,12 +159,10 @@ export class SVGMorph extends Morph {
       this._requestMasterStyling = false;
     }
     this.node = new SVGVNode(this, renderer);
-    console.log(this.node);
     return this.node;
   }
 
   setSVGPath () {
-    console.log('fetch path again');
     fetch(this.svgUrl)
       .then((response) => response.text())
       .then((response) => {
@@ -191,28 +179,5 @@ export class SVGMorph extends Morph {
     const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
     SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
     this.width = this.height * ratio;
-  }
-
-  menuItems () {
-    let s = new XMLSerializer();
-    let str = s.serializeToString(this.svgPath).replace(/\/>/ig, '/>\n');
-
-    const checked = Icon.textAttribute('check-square', { textStyleClasses: ['far'] });
-    const unchecked = Icon.textAttribute('square', { textStyleClasses: ['far'] });
-
-    return [
-      [[...(this.showControlPoints ? checked : unchecked), ' control points'],
-        () => this.showControlPoints = !this.showControlPoints],
-      ['edit svg...', () => {
-        new SVGWorkspace({
-          center: $world.center,
-          content: str,
-          targetMorph: this
-        }).activate();
-        console.log(this.svgPath);
-      }],
-      { isDivider: true },
-      ...super.menuItems()
-    ];
   }
 }
