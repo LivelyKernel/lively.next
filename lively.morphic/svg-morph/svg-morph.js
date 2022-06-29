@@ -133,7 +133,6 @@ export class SVGMorph extends Morph {
     let selection_node;
     switch (tar.type) {
       case 'path':
-        console.log('here');
         selection_node = SVG(target.outerHTML);
         this.getControlPoints();
       default:
@@ -161,49 +160,36 @@ export class SVGMorph extends Morph {
   getControlPoints () {
     this.removeAllControlPoints();
 
+    const tar = SVG(this.target);
     const targetPath = SVG(this.target).array();
+
     for (let i = 0; i < targetPath.length; i++) {
       let element = targetPath[i];
       console.log(element);
       switch (element[0]) {
-        case 'M':
-          let mPoint = this.createControlPointAt(i, element[1], element[2], 'red');
-
-          this.svgPath.parentNode.appendChild(mPoint);
-
-          break;
-        case 'C':
-          let cPoint = this.createControlPointAt(i, element[5], element[6], 'yellow');
-
-          this.svgPath.parentNode.appendChild(cPoint);
-          break;
-        case 'L':
-          let lPoint = this.createControlPointAt(i, element[1], element[2], 'yellow');
-
-          this.svgPath.parentNode.appendChild(lPoint);
-          break;
         case 'Z':
           break;
         default:
           let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
-
-          this.svgPath.parentNode.appendChild(defaultPoint);
+          tar.after(defaultPoint);
+          defaultPoint.front();
       }
       let lastElement = element;
     }
   }
 
   createControlPointAt (id, x, y, color) {
-    let point = document.createElement('div');
-    point.className = 'control-point';
-    point.id = 'control-point-' + id;
-    point.style.width = '10px';
-    point.style.height = '10px';
-    point.style.background = color;
-    point.style.position = 'absolute';
-    point.style.left = y + 'px';
-    point.style.top = x + 'px';
-    // point.style.background-radius = "25px"
+    const t = SVG(this.svgPath);
+    let point = t.circle();
+
+    point.attr({
+      cx: x,
+      cy: y,
+      r: 5,
+      id: 'control-point-' + id,
+      fill: color
+    });
+    point.addClass('control-point');
 
     return point;
   }
