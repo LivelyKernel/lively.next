@@ -10,6 +10,8 @@ hooks:
 	git config --local core.hooksPath $(shell pwd)/.githooks
 
 docker-build:
+	# Force permissions again, as newly created files (such as caches) since last build will not have the correct permissions which will break the image build 
+	sudo chmod a+rwx -R * || true
 	# Builds the image our containers are based on, including all dependencies which are not installed via flatn
 	docker build -t lively:latest .
 	# Delete old lively.next container in case we previously had containers on this system
