@@ -13,8 +13,3 @@ mkdir esm_cache
 
 node --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
      lively.installer/bin/install.cjs $PWD \
-
-if [ "$CONTAINERIZED" ]; 
-  then
-     chmod a+rwx -R *
-  fi
