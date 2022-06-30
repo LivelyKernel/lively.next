@@ -591,9 +591,9 @@ export default class TestRunner extends HTMLMorph {
     this.html = `
        <div class="mocha-test-runner">
        <div class="controls" ${this.showControls ? '' : 'style="display: none;"'}>
-         <input type="button" class="load-test-button run-button" value="load test" onmouseup="${this.htmlRef}.interactivelyloadTests()"></input>
+         <input type="button" class="load-test-button run-button" value="load test" onmousedown="${this.htmlRef}.interactivelyloadTests()"></input>
          <input type="button" class="run-button" value="run all" onmouseup="${this.htmlRef}.runAllTests()"></input>
-         <input type="button" class="collapse-button run-button" value="toggle collapse" onmouseup="${this.htmlRef}.collapseToggle()"></input>
+         <input type="button" class="collapse-button run-button" value="toggle collapse" onmousedown="${this.htmlRef}.collapseToggle()"></input>
          <span class="${runningTest ? '' : 'hidden'}">Running: ${runningTest && runningTest.title}</span>
        </div>
        <div class="suites">${renderedFiles.join('\n')}</div>
@@ -616,7 +616,7 @@ export default class TestRunner extends HTMLMorph {
     return `<div class="row ${isCollapsed ? 'collapsed' : ''} ${classes.join(' ')}">
               <span
                 class="${classes.join(' ')}"
-                onmouseup="${this.htmlRef}.onClickTest(event, '${id}', '${file}', this);"
+                onmousedown="${this.htmlRef}.onClickTest(event, '${id}', '${file}', this);"
                 id="${id}"
                 style="margin-left: ${depthOffset}px;"
                 >${title}</span>
@@ -627,9 +627,9 @@ export default class TestRunner extends HTMLMorph {
                 >${test.duration}ms</span>
               <input
                 type="button" class="run-button" value="run"
-                onmouseup="${this.htmlRef}.runTest('${id}')"></input>
+                onmousedown="${this.htmlRef}.runTest('${id}')"></input>
               <div
-                onmouseup="${this.htmlRef}.onClickError(event, '${id}', '${file}', this);"
+                onmousedown="${this.htmlRef}.onClickError(event, '${id}', '${file}', this);"
                 class="error ${test.error ? '' : 'hidden'}"
                 style="margin-left: ${depthOffset + 10}px;"
                 >${this.renderError(test)}
@@ -655,16 +655,16 @@ export default class TestRunner extends HTMLMorph {
     return `<div class="row ${parentCollapsed ? 'collapsed' : ''} ${classes.join(' ')}">
               <span
                 class="collapse-button ${collapseStart ? 'collapsed' : ''}"
-                onmouseup="${this.htmlRef}.onClickCollapseButton(event, '${id}', '${file}', this);"
+                onmousedown="${this.htmlRef}.onClickCollapseButton(event, '${id}', '${file}', this);"
                 style="margin-left: ${depthOffset}px;">${collapseStart ? '► ' : '▼ '}</span>
               <span
                 class="${classes.join(' ')}"
-                onmouseup="${this.htmlRef}.onClickSuite(event, '${id}', '${file}', this);"
+                onmousedown="${this.htmlRef}.onClickSuite(event, '${id}', '${file}', this);"
                 id="${id}">${title}</span>
               <span class="duration">${duration}ms</span>
               <input
                 type="button" class="run-button" value="run"
-                onmouseup="${this.htmlRef}.runSuite('${id}')"></input>
+                onmousedown="${this.htmlRef}.runSuite('${id}')"></input>
             </div>`;
   }
 
@@ -684,17 +684,17 @@ export default class TestRunner extends HTMLMorph {
     return `<div class="row ${classes.join(' ')}">
               <span
                 class="collapse-button ${isCollapsed ? 'collapsed' : ''}"
-                onmouseup="${this.htmlRef}.onClickCollapseButton(event, '${id}', '${file}', this);">
+                onmousedown="${this.htmlRef}.onClickCollapseButton(event, '${id}', '${file}', this);">
                 ${isCollapsed ? '► ' : '▼ '}</span>
               <h2 class="${classes.join(' ')}"
-                  onmouseup="${this.htmlRef}.onClickFile(event, '${id}', this);"
+                  onmousedown="${this.htmlRef}.onClickFile(event, '${id}', this);"
                >${name}</h2>
               <span class="duration">${duration}ms</span>
               <input
                 type="button" class="run-button" value="run"
-                onmouseup="${this.htmlRef}.runTestFile('${id}')"></input>
+                onmousedown="${this.htmlRef}.runTestFile('${id}')"></input>
               <i class="far fa-window-close remove-button"
-                 onmouseup="${this.htmlRef}.removeTestFile('${id}')"></i>
+                 onmousedown="${this.htmlRef}.removeTestFile('${id}')"></i>
             </div>`;
   }
 
@@ -786,3 +786,4 @@ export default class TestRunner extends HTMLMorph {
     } finally { i.remove(); }
   }
 }
+
