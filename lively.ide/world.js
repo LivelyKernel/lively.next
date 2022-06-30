@@ -713,7 +713,7 @@ export class LivelyWorld extends World {
       if (typeof opts.customize === 'function') { opts.customize(promptMorph); }
 
       if (opts.animated) {
-        if (this.previousPrompt && this.previousPrompt.world()) {
+        if (this.previousPrompt && this.previousPrompt.world() && this.previousPrompt.transitionTo) {
           this.previousPrompt.transitionTo(promptMorph);
         }
       }
