@@ -1,3 +1,4 @@
+/* global xit */
 /* global describe, it */
 import { expect } from 'mocha-es6';
 import { component, ViewModel, without, part, add } from '../components/core.js';
@@ -312,11 +313,30 @@ describe('spec based components', () => {
 
   it('can be applied to a morph', () => {
     const m = part(e1);
-    e2.inlinePolicy.apply(m); // completely whipes the appearance, since there is no collapse of overridden props!
+    // completely whipes the appearance, since there is no collapse of overridden props!
+    e2.inlinePolicy.apply(m, true);
     expect(m.fill).to.equal(Color.yellow);
+    expect(m.get('bob').fill).to.equal(Color.red);
   });
 
-  it('allows to create a component proxy for editing the spec', async () => {
+  it('reassigns master component policies in the hierarchy, once applied', () => {
+    const m = part(e1);
+    expect(m.get('bob').master).to.be.undefined;
+    e2.inlinePolicy.apply(m, true);
+    expect(m.get('bob').master).not.to.be.undefined;
+  });
+
+  it('updates the specs of the directly attached component policies on change', () => {
+    const m = part(e1); // still using the old approach
+    m.get('bob').position = pt(40, 40);
+    m.get('bob').extent = pt(100, 100);
+    expect(m.get('bob').master.spec.position).to.equal(pt(40, 40));
+    expect(m.get('bob').master.spec.extent).to.equal(pt(100, 100));
+  });
+
+  // FIXME: These tests should go into lively.ide, since they are testing
+  //        tooling specific behavior
+  xit('allows to create a component proxy for editing the spec', async () => {
     // define an ad hoc component
     const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec 
     expect(c.isComponent).to.be.true;
@@ -324,7 +344,7 @@ describe('spec based components', () => {
     expect(c.spec.get('alice').fill).to.eql(Color.green);
   });
 
-  it('allows to reify source code based on changes applied to its spec', () => {
+  xit('allows to reify source code based on changes applied to its spec', () => {
     expect(e1.getSourceCode()).to.equal(`component({
   name: 'e1',
   fill: Color.red,
@@ -354,7 +374,7 @@ describe('spec based components', () => {
 })`);
   });
 
-  it('allows to instantiate a morph from the spec', () => {
+  xit('allows to instantiate a morph from the spec', () => {
     const m = e1.spec.instantiate();
     expect(m.master.auto).equals(e1); // better to reference the descritptor instead of the policy for auto update mechanism when components are directly manipulated or rewritten via codee.
   });
