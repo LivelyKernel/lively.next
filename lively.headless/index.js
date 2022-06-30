@@ -52,7 +52,7 @@ export class HeadlessSession {
   async ensureBrowser () {
       const newBrowser = (this.constructor.browser = await puppeteer.launch({
          userDataDir: packagePath + 'chrome-data-dir',
-         ...containerized ? { executablePath: 'google-chrome-stable' } : {},
+         ...containerized ? { executablePath: 'chromium' } : {},
          args: [
           // these are necessary to run headless chrome inside of docker containers
           // be aware, that disabling sandboxing comes with heavy security implications
