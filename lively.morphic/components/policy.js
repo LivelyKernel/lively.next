@@ -79,6 +79,30 @@ export function mergeInHierarchy (
   }
 }
 
+function getEventState (targetMorph, customBreakpoints) {
+  if (!customBreakpoints) customBreakpoints = [];
+  const { world, eventDispatcher } = targetMorph.env;
+  const mode = world && world.colorScheme; // "dark" | "light"
+  const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(targetMorph); // bool
+  const isClicked = eventDispatcher && eventDispatcher.isMorphClicked(targetMorph); // bool
+  const matchingBreakpoint = customBreakpoints.find(bp => {
+    if (bp.minWidth || bp.maxWidth) {
+      const { minWidth = -Infinity, maxWidth = Infinity } = bp;
+      return minWidth <= targetMorph.width && targetMorph.width < maxWidth;
+    }
+    if (bp.minHeight || bp.maxHeight) {
+      const { minHeight = -Infinity, maxHeight = Infinity } = bp;
+      return minHeight <= targetMorph.height && targetMorph.height < maxHeight;
+    }
+  });
+  return {
+    matchingBreakpoint: matchingBreakpoint && matchingBreakpoint.master,
+    mode,
+    isHovered,
+    isClicked
+  };
+}
+
 /**
  * This is an abstract policy, that is not applied to an actual morph
  * but instead is stored inside the internal spec representation of the
@@ -87,7 +111,7 @@ export function mergeInHierarchy (
  * It is in turn used by ComponentPolicies in order to quickly get the properties
  * to be applied to a styled submorph hierarchy.
  */
-export class InlinePolicy {
+export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with this one
   /**
    * Creates a new Inline Policy. Inline Policies are the underlying building blocks
    * of component definitions. Except for top level component definitions
@@ -149,17 +173,43 @@ export class InlinePolicy {
       this._parent = policyOrDescriptor.auto;
       // these are ALWAYS top level policies, and therefore Component Descriptors.
       // Dispatch based masters can not be inline policies, since there is no possible way
-      // to "derive" from a click, hover, or light/dark mode master.
-      if (policyOrDescriptor.click) this._clickMaster = policyOrDescriptor.click;
-      if (policyOrDescriptor.hover) this._hoverMaster = policyOrDescriptor.hover;
-      // Q: How is the precedence handled here?
-      if (policyOrDescriptor.light) this._lightModeMaster = policyOrDescriptor.light;
-      if (policyOrDescriptor.dark) this._darkModeMaster = policyOrDescriptor.dark;
-      if (policyOrDescriptor.breakpoints) this._viewPortBreakPointMasters = policyOrDescriptor.breakpoints;
+      // to for click, hover, light/dark or breakpoint masters to serve as structure providers.
+      // A inline policy REQUIRES a structure provider in order to be created.
+      this._autoMaster = policyOrDescriptor.auto || this._parent; // auto is always defined. We default to the parent, if not specified otherwise.
+      const { click, hover, light, dark, breakpoints } = policyOrDescriptor;
+
+      // We perform this dance here, in order to provide the user with a little bit
+      // more insightful error messages.
+      if ((click || hover || light || dark) && !((click || hover) ^ (light || dark))) {
+        throw Error('Cannot mix mouse event with light/dark mode dispatch!');
+      }
+
+      if ((click || hover || !!breakpoints) && !((click || hover) ^ !!breakpoints)) {
+        throw Error('Cannot mix mouse event with breakpoint dispatch!');
+      }
+
+      if ((light || dark || !!breakpoints) && !((light || dark) ^ !!breakpoints)) {
+        throw Error('Cannot mix light/dark mode with breakpoint dispatch!');
+      }
+
+      // mouse event component dispatch
+      if (click) this._clickMaster = click;
+      if (hover) this._hoverMaster = hover;
+      // light/dark component dispatch
+      if (light) this._lightModeMaster = light;
+      if (dark) this._darkModeMaster = dark;
+      // breakpoint component dispatch
+      if (breakpoints) this._breakpointMasters = policyOrDescriptor.breakpoints;
     }
   }
 
   get isPolicy () { return true; }
+
+  get isEventPolicy () { return this._clickMaster || this._hoverMaster; }
+
+  get isLightDarkModePolicy () { return this._lightModeMaster || this._darkModeMaster; }
+
+  get isBreakpointPolicy () { return !!this._breakpointMasters; }
 
   /**
    * Usually, we declare inline policies by calling part() within our component() definition.
@@ -233,34 +283,11 @@ export class InlinePolicy {
   }
 
   /**
-   * Prepares an internal index structure for quickly retrieving
-   * a subsec for the respective submorph via the morph's name.
-   */
-  prepareIndex () {
-    this.subSpecIndex = {};
-    tree.prewalk(this.spec, node => {
-      this.subSpecIndex[node.name] = node;
-    }, node => !node.isPolicy && node.submorphs);
-  }
-
-  determineMaster (targetMorph) {
-    const { master } = this.spec; // masters are specified in the spec
-    if (!master) return this; // we are the one responsible
-    // now return based on the state of target Morph...
-    // this is usually handled by the policies, however we do not operate in the morphic domain any more
-    // How to avoid a code duplication here?
-  }
-
-  getSubSpecFor (submorphName) {
-    return this.subSpecIndex[submorphName]; // this may also be a sub policy!
-  }
-
-  /**
    * Creates a new morph from the fully synthesized spec.
    * @returns { Morph } The new morph based off the sully synthesized spec.
    */
   instantiate () {
-    return morph(this.getBuildSpec());
+    return morph(this.getBuildSpec(false));
   }
 
   /**
@@ -269,7 +296,8 @@ export class InlinePolicy {
    * @returns { Morph } The master component as a morph.
    */
   edit () {
-    return morph(this.getBuildSpec(true));
+    // fixme: this code should go into the lively.ide part
+    return morph(this.getBuildSpec());
   }
 
   /**
@@ -283,6 +311,13 @@ export class InlinePolicy {
    * @return { object } The build spec.
    */
   getBuildSpec (discardStyleProps = true) {
+    // FIXME: Just a flag to indicate the discarding of next level style props is not enough to
+    //        cover all desirable use cases for this routine.
+    //        We want the following cases:
+    //        1.) Not carry over any style props since all is managed by the component policies.
+    //        2.) Carry over the 1st level style props, in general to reify the master components as morphs.
+    //        3.) Carry over all the n-1 style props (excluding the root) in order to basically collapse all
+    //            the overridden properties in the policy chain into one spec.    
     // important also, to create a completely new spec structure, such that
     // we do not accidentally alter the specs of parent policies.
     function filterProps (owner, submorphs, discardStyleProps) {
@@ -415,24 +450,188 @@ export class InlinePolicy {
     return buildSpec;
   }
 
-  // spec stuff
-  synthesizeSubSpec (submorphNameInPolicyContext, policy, targetMorph) {
-    let subSpec = policy.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
-    if (!subSpec) return {}; // policy does not manage the morph at all
-    let qualifyingMaster = policy.determineMaster(targetMorph); // taking into account the target morph's event state
+  /**
+   * Given a target morph, traverse the submorph hierarchy
+   * covering the policy's scope and apply the style properties
+   * according to the synthesized sub spec.
+   * At the border of the scope, we in turn ask the encountered inline policies
+   * to apply themselves to the remainder of the submorph hierarchy.
+   * @param { Morph } targetMorph - The root morph of the hierarchy.
+   */
+  apply (targetMorph, isRoot = false) {
+    targetMorph.withMetaDo({ metaInteraction: true }, () => {
+      this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
+        let submorphName = null;
+        if (morphInScope !== targetMorph) submorphName = morphInScope.name;
+        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph);
+        if (synthesizedSpec.isPolicy) morphInScope.setProperty('master', synthesizedSpec); // might be redundant
+        else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution
+
+        if (morphInScope !== targetMorph && morphInScope.master) {
+          return morphInScope.master.apply(morphInScope); // let the policy handle the traversal
+        }
+      });
+    });
+  }
+
+  applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
+    for (const propName of arr.intersect(getStylePropertiesFor(morphToBeStyled.constructor), obj.keys(styleProps))) {
+      if (propName === 'layout') {
+        if (morphToBeStyled.layout && styleProps.layout &&
+            morphToBeStyled.layout.name() === styleProps.layout.name() &&
+            morphToBeStyled.layout.equals(styleProps.layout)) { continue; }
+        morphToBeStyled.layout = styleProps.layout ? styleProps.layout.copy() : undefined;
+        continue;
+      }
+
+      if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
+      let resizePolicy;
+      if ((resizePolicy = this.isResizedByLayout(morphToBeStyled)) && propName === 'extent') {
+        if (resizePolicy.widthPolicy === 'fixed') morphToBeStyled.width = styleProps.extent.x;
+        if (resizePolicy.heightPolicy === 'fixed') morphToBeStyled.height = styleProps.extent.y;
+        continue;
+      }
+
+      if (isRoot) {
+        if (propName === 'extent' &&
+            !morphToBeStyled.extent.equals(pt(10, 10)) &&
+            (
+              !morphToBeStyled.owner ||
+               morphToBeStyled.owner.isWorld ||
+               morphToBeStyled.ownerChain().find(m => m.master && m.master.managesMorph(morphToBeStyled)))
+        // not already styled by other master
+        ) continue;
+        if (propName === 'position') continue;
+      }
+
+      // fixme: other special cases??
+      if (morphToBeStyled.isLabel && propName === 'extent') continue;
+
+      if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
+
+      if (!obj.equals(morphToBeStyled[propName], styleProps[propName])) {
+        morphToBeStyled[propName] = styleProps[propName];
+      }
+
+      // we may be late for the game when setting these props
+      // se we need to make sure, we restore the morphs "intended extent"
+      // for this purpose we enforce the masterSubmorph extent
+      if (['fixedHeight', 'fixedWidth'].includes(propName) &&
+                morphToBeStyled._parametrizedProps?.extent) {
+        morphToBeStyled.extent = morphToBeStyled._parametrizedProps.extent;
+      }
+    }
+  }
+
+  /**
+   * Traverse all the submorphs within the scope of the component policy.
+   * @param { Morph } parentOfScope - The morph that sits at the top of the policy scope.
+   * @param { function } cb - The callback function to invoke for each of the morphs in the scope.
+   */
+  withSubmorphsInScopeDo (parentOfScope, cb) {
+    return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && m.master);
+  }
+
+  /**
+   * Returns the appropriate next level master based on the target morph's event state.
+   * @param { Morph } targetMorph - The target morph to base the component dispatch on.
+   * @returns { InlinePolicy } The appropriate policy for the dispatch.
+   */
+  determineMaster (targetMorph) {
+    const {
+      isHovered,
+      isClicked,
+      mode,
+      breakpointMaster
+    } = getEventState(targetMorph, this._breakpointMasters);
+
+    if (this.isEventPolicy) {
+      if (isClicked) return this._clickMaster;
+      if (isHovered) return this._hoverMaster;
+      return this._autoMaster;
+    }
+
+    if (this.isLightDarkModePolicy) {
+      switch (mode) {
+        case 'dark':
+          return this._darkModeMaster;
+        case 'light':
+          return this._lightModeMaster;
+        default:
+          return this._autoMaster;
+      }
+    }
+
+    if (this.isBreakpointPolicy) {
+      return breakpointMaster || this._autoMaster;
+    }
+
+    return this._parent; // default to the parent if we are neither of the above
+  }
+
+  /**
+   * Synthesizes the sub spec corresponding to a particular name
+   * of a morph in the submorph hierarchy.
+   * @param { string } submorphNameInPolicyContext - The name of the sub spec.
+   * @param { Morph } parentOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
+   * @returns { object } The synthesized spec.
+   */
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope) {
+    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
+
+    let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
+
+    if (subSpec.isPolicy) return new InlinePolicy({ name: submorphNameInPolicyContext }, subSpec, false);
+    if (!qualifyingMaster) return subSpec;
+
     let nextLevelSpec = {};
     if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
       qualifyingMaster = qualifyingMaster.inlinePolicy;
     }
-    if (qualifyingMaster.isPolicy) {
-      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, qualifyingMaster, targetMorph);
-    }
 
-    return { ...nextLevelSpec, ...subSpec };
+    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
+
+    return obj.dissoc({ ...nextLevelSpec, ...subSpec }, ['submorphs']); // not really needed since we do not traverse submorph prop anyways
   }
 
-  equals (other) {
-    return true; // fixme: figure out if this is needed beyond just testing...
+  /**
+   * description
+   * @param { string | null } submorphName - The submorph name for which to find the corresponding sub spec. If null, assume we ask for root.
+   * @returns { object } The sub spec corresponding to that name.
+   */
+  getSubSpecFor (submorphName) {
+    if (!submorphName) return this.spec; // assume we ask for root
+    // just find the correct sub spec inside our spec
+    // if no entry is present for this name,
+    // we escalate the query to the parent (structure provider)
+    return tree.find(this.spec, node => node.name === submorphName, node => node.submorphs) || {};
+  }
+
+  /**
+   * Check wether or not a particular morph is actively positioned by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean } Wether or not the morph's position is by a layout.
+   */
+  isPositionedByLayout (aSubmorph) {
+    return aSubmorph.owner &&
+      aSubmorph.owner.layout &&
+      aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
+  }
+
+  /**
+   * Check wether or not a particular morph is actively resized by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean | object } Wether or not size is controlled via layout and if so, the concrete policy.
+   */
+  isResizedByLayout (aSubmorph) {
+    const layout = aSubmorph.owner && aSubmorph.owner.layout;
+    if (!layout) return false;
+    if (layout.resizePolicies) {
+      const heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
+      const widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
+      if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
+    }
+    return false;
   }
 }
 
@@ -721,12 +920,22 @@ export class ComponentPolicy {
     return styleProps;
   }
 
+  /**
+   * Check wether or not a particular morph is actively positioned by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean } Wether or not the morph's position is by a layout.
+   */
   isPositionedByLayout (aSubmorph) {
     return aSubmorph.owner &&
       aSubmorph.owner.layout &&
       aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
   }
 
+  /**
+   * Check wether or not a particular morph is actively resized by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean | object } Wether or not size is controlled via layout and if so, the concrete policy.
+   */
   isResizedByLayout (aSubmorph) {
     const layout = aSubmorph.owner && aSubmorph.owner.layout;
     if (!layout) return false;
@@ -738,8 +947,13 @@ export class ComponentPolicy {
     return false;
   }
 
-  withSubmorphsInScopeDo (scopeMorph, cb) {
-    return scopeMorph.withAllSubmorphsDoExcluding(cb, m => scopeMorph !== m && m.master);
+  /**
+   * Traverse all the submorphs within the scope of the component policy.
+   * @param { Morph } parentOfScope - The morph that sits at the top of the policy scope.
+   * @param { function } cb - The callback function to invoke for each of the morphs in the scope.
+   */
+  withSubmorphsInScopeDo (parentOfScope, cb) {
+    return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && m.master);
   }
 
   /**
@@ -1072,11 +1286,9 @@ export class ComponentPolicy {
   }
 
   determineMaster (target) {
-    const { world, eventDispatcher } = target.env;
-    const mode = world && world.colorScheme; // "dark" | "light"
-    const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(target); // bool
-    const isClicked = eventDispatcher && eventDispatcher.isMorphClicked(target); // bool
+    const { isHovered, isClicked, mode } = getEventState(target);
 
+    // fixme: also do the proper separation into mouse event / light dark / breakpoints policies
     let master = this.getMasterForState(this, { isHovered, isClicked });
 
     if (this.light && mode === 'light') {
