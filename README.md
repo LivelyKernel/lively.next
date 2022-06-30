@@ -41,7 +41,7 @@ Having `docker`, `git` (,and `make`) installed are the only prerequisites.
 #### Installation Instructions
 
 1. Clone this repository
-2. Run `make docker-build` from the root of this repository. Since docker uses the `root` user inside of containers, we will need to adapt file permissions inside of the lively repository. You will be prompted for `sudo` authentication.
+2. Run `make docker-build` from the root of this repository. 
 
 This process takes a while, ending with a running lively server at [http://localhost:9011](http://localhost:9011).
 When opting for the docker based approach, you can still use `git` as usual from your file system.
