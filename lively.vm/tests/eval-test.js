@@ -1,8 +1,10 @@
-/* global beforeEach, afterEach, describe, it, global,System,xdescribe */
+/* global beforeEach, describe, it, global,System,xdescribe */
 
 import { expect } from 'mocha-es6';
-import { runEval, syncEval, defaultTopLevelVarRecorderName } from '../index.js';
+import { runEval, syncEval } from '../index.js';
 import * as lang from 'lively.lang';
+import { classToFunctionTransform } from 'lively.classes';
+import { initializeClass } from 'lively.classes/runtime.js';
 
 let Global = typeof global !== 'undefined' ? global : window;
 
@@ -37,9 +39,9 @@ describe('evaluation', function () {
   });
 
   it('eval single expressions', function () {
-    var result = syncEval('function() {}');
+    let result = syncEval('function() {}');
     expect(result.value).to.be.a('function');
-    var result = syncEval('{x: 3}');
+    result = syncEval('{x: 3}');
     expect(result.value).to.an('object');
     expect(result.value.x).equals(3);
   });
@@ -249,8 +251,10 @@ describe('declaration callback', () => {
 describe('persistent definitions', () => {
   let varMapper, opts;
   beforeEach(() => {
-    varMapper = {};
-    opts = { topLevelVarRecorder: varMapper };
+    varMapper = {
+      initializeES6ClassForLively: initializeClass
+    };
+    opts = { topLevelVarRecorder: varMapper, classTransform: classToFunctionTransform };
   });
 
   describe('primitives', () => {
@@ -313,8 +317,8 @@ describe('persistent definitions', () => {
 
   describe('class', () => {
     beforeEach(() =>
-      runEval('class Foo {a() { return 1 } get b() { return 2 } static c() { return 3; }}', opts));
-
+      runEval('class Foo {a() { return 1 } get b() { return 2 } static c() { return 3; }};', opts)
+    );
     it('keeps identity', async () => {
       let Foo1 = varMapper.Foo;
       await runEval('class Foo {a() { return 2 }}', opts);
@@ -339,7 +343,9 @@ describe('persistent definitions', () => {
     });
 
     it('redefines class twice and keeps identity', async () => {
-      let isIdentical = (await runEval('class Bar {}; class Bar {}; Bar === new Bar().constructor', opts)).value;
+      // rms 30.07.22: having 2 class declarations with the same name in to level scope is a syntax error by now
+      await runEval('class Bar {};', opts);
+      let isIdentical = (await runEval('class Bar {}; Bar === new Bar().constructor', opts)).value;
       expect(isIdentical).equals(true);
     });
 

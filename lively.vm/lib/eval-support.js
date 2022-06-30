@@ -13,7 +13,7 @@ function processInlineCodeTransformOptions (parsed, options) {
   let livelyComment = parsed.comments.find(ea => ea.text.startsWith('lively.vm '));
   if (!livelyComment) return options;
   try {
-    let inlineOptions = eval('inlineOptions = {' + livelyComment.text.slice('lively.vm '.length) + '};');
+    let inlineOptions = eval('({' + livelyComment.text.slice('lively.vm '.length) + '});');
     return Object.assign(options, inlineOptions);
   } catch (err) { return options; }
 }
