@@ -972,7 +972,7 @@ export class BrowserModel extends ViewModel {
   whenModuleUpdated () { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
   async selectPackageNamed (pName) {
-    const p = pName ? await this.systemInterface.getPackage(pName) : null;
+    const p = pName ? await this.systemInterface.getPackage(pName) : await this.systemInterface.getPackage('lively.morphic');
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
