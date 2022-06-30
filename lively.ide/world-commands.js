@@ -1340,7 +1340,7 @@ const commands = [
       // in case there is another morph implementing save...
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
-      args = { confirmOverwrite: true, showSaveDialog: true, ...args };
+      args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
       const focused = world.focusedMorph;
       const saved = await interactivelySaveWorld(world, args);
       if (focused && focused.focus());

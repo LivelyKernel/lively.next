@@ -196,7 +196,13 @@ export async function loadWorldFromURL (url, oldWorld, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export async function interactivelySaveWorld (world, options) {
-  options = { showSaveDialog: true, useExpectedCommit: true, errorOnMissingExpectedCommit: false, confirmOverwrite: true, ...options };
+  options = {
+    showSaveDialog: true,
+    useExpectedCommit: true,
+    errorOnMissingExpectedCommit: false,
+    confirmOverwrite: true,
+    ...options
+  };
 
   const { SaveWorldDialog } = await System.import('lively.ide/studio/dialogs.cp.js');
   let name = world.name; let tags = []; let description = '';
@@ -259,7 +265,8 @@ export async function interactivelySaveWorld (world, options) {
       previewWidth: 200,
       previewHeight: 200,
       previewType: 'png',
-      ignoreMorphs: [i]
+      ignoreMorphs: [i],
+      moduleManager: options.moduleManager
     };
     const ref = 'HEAD';
     const oldName = oldCommit ? oldCommit.name : world.name;
