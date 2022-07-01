@@ -198,7 +198,7 @@ export class PackageRegistry {
   }
 
   sortPackagesByVersion (pkgs) {
-    return pkgs.sort((a, b) => semver.compare(a.version, b.version, true));
+    return pkgs.sort((a, b) => semver.compare(b.version, a.version, true));
   }
 
   matches (pkg, pName, versionRange) {
