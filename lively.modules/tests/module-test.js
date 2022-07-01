@@ -147,7 +147,12 @@ describe('module loading', () => {
     it('removes import', async () => {
       await importPackage(S, testDir);
       let m = await module(S, testDir + 'file1.js');
-      await m.removeImports([{ local: 'y' }]);
+      expect(await m.source()).equals("import { y } from './file2.js'; export var x = y + 1;");
+      try {
+        await m.removeImports([{ local: 'y' }]);
+      } catch (err) {
+        // causes an error because the code is not longer valid
+      }
       expect(await m.source()).equals(' export var x = y + 1;');
       expect().assert(!m.recorder.hasOwnProperty('y'), 'var y not removed from module internals');
     });

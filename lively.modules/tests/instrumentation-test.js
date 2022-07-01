@@ -1,6 +1,6 @@
-/* global System, beforeEach, afterEach, describe, it */
+/* global beforeEach, afterEach, describe, it */
 
-import { expect } from 'mocha-es6';
+import { expect, chai } from 'mocha-es6';
 
 import { getSystem, removeSystem } from '../src/system.js';
 import module from '../src/module.js';
@@ -79,18 +79,18 @@ describe('instrumentation', () => {
     it('with function', async () => {
       await module1.changeSource('function foo() {}');
       expect(recorded.meta.evalId).match(/\d+/);
-      expect(recorded).containSubset({
+      expect(recorded).to.containSubset({
         varName: 'foo',
-        value: module1.recorder.foo,
+        value: () => module1.recorder.foo,
         meta: { end: 17, moduleSource: 'function foo() {}', start: 0, kind: 'function' }
       });
     });
 
     it('with class', async () => {
       await module1.changeSource('class Foo {}');
-      expect(recorded).containSubset({
+      expect(recorded).to.containSubset({
         varName: 'Foo',
-        value: module1.recorder.Foo,
+        value: () => module1.recorder.Foo,
         meta: { end: 12, moduleSource: 'class Foo {}', start: 0, kind: 'class' }
       });
     });
