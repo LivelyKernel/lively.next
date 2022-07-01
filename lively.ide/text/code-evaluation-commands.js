@@ -193,6 +193,23 @@ export const codeEvaluationCommands = [
   },
 
   {
+    name: 'log it',
+    doc: 'Evaluates the expression and `console.log`s the result.',
+    exec: async function (morph, opts) {
+      morph.maybeSelectCommentOrLine();
+      let result;
+      const evalEnvironment = morph.evalEnvironment || {};
+      const jsPlugin = morph.pluginFind(p => p.isEditorPlugin && typeof p.runEval === 'function');
+      if (!evalEnvironment.systemInterface) evalEnvironment.systemInterface = jsPlugin.systemInterface(opts);
+      if (evalEnvironment.systemInterface.name === 'local') {
+        result = await morph.doEval(undefined, opts);
+      }
+      console.log(result.value || result.error);
+      return result;
+    }
+  },
+
+  {
     name: 'print inspectit',
     doc: "Prints a representation of the object showing it's properties. The count argument defines how deep (recursively) objects will be printed.",
     handlesCount: true,
