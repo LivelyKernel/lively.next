@@ -226,7 +226,7 @@ export class Color {
       darkGray: Color.rgb(102, 102, 102),
       lightGray: Color.rgb(230, 230, 230),
       veryLightGray: Color.rgb(243, 243, 243),
-      transparent: Color.rgba(0, 0, 0, 0),
+      transparent: Color.rgba(69, 85, 134, 0),
       lively: Color.rgb(245, 124, 0)
     };
   }
