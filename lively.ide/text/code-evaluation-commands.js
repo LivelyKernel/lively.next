@@ -45,7 +45,10 @@ export const codeEvaluationCommands = [
       baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
       fileToBlame = fileToBlame.replace('http://localhost:9011/', '').replace('file://', '');
 
-      const command = 'git blame -L ' + rangeStart + ',' + rangeEnd + ' --porcelain --line-porcelain ' + fileToBlame;
+      const command = `git blame --date=short -L ${rangeStart},${rangeEnd} ${fileToBlame} | while read hash others;
+        do
+          echo $(git log -1 --pretty=%s $hash) " -- " $others
+        done`;
 
       let cmd = runCommand(command, { cwd: baseDir });
       await cmd.whenDone();
@@ -73,7 +76,7 @@ export const codeEvaluationCommands = [
       baseDir = baseDir.replace('http://localhost:9011/', '').replace('/lively.server', '');
       fileToBlame = fileToBlame.replace('http://localhost:9011/', '').replace('file://', '');
 
-      const command = 'git blame -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame;
+      const command = 'git blame --date=short -L ' + lineNumber + ',' + lineNumber + ' --porcelain ' + fileToBlame;
 
       let cmd = runCommand(command, { cwd: baseDir });
       await cmd.whenDone();
