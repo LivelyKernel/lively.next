@@ -1,9 +1,41 @@
-import { ProportionalLayout, TilingLayout, component, add, part } from 'lively.morphic';
+import { ProportionalLayout, Icon, TilingLayout, component, add, part } from 'lively.morphic';
 import { pt, Color, rect } from 'lively.graphics';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { SystemList } from './styling/shared.cp.js';
 import { CodeSearcher } from './code-search.js';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
+
+const ModeButtonInactive = component(ButtonDefault, {
+  extent: pt(27, 27),
+  borderStyle: 'none',
+  fill: Color.transparent
+});
+
+const ModeButtonInactiveHover = component(ModeButtonInactive, {
+  fill: Color.gray
+});
+
+const ModeButtonActiveClick = ModeButtonInactiveHover;
+
+const ModeButtonInactiveClick = component(ModeButtonInactive, {
+  fill: Color.darkGray
+});
+
+const ModeButtonActiveHover = ModeButtonInactiveClick;
+
+const ModeButtonActive = component(ModeButtonInactive, {
+  fill: Color.darkGray,
+  submorphs: [{
+    name: 'label',
+    fontColor: Color.white
+  }]
+});
+
+const ModeButtonDisabled = component(ModeButtonInactive, {
+  visible: false,
+  reactsToPointer: false
+});
 
 // CodeSearch.openInWorld()
 const CodeSearch = component({
@@ -68,29 +100,58 @@ const CodeSearch = component({
       fontSize: 14,
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['Search Source Files', null]
-    }, add({ name: 'buffer', opacity: 0, reactsToPointer: false }), add(part(DropDownList, {
-      name: 'search chooser',
+    }, add({ name: 'buffer', opacity: 0, reactsToPointer: false }),
+    add({
+      name: 'holder',
       layout: new TilingLayout({
-        align: 'center',
         axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(10, 0, 0, 0),
-        wrapSubmorphs: false,
-        hugContentsHorizontally: true
+        axis: 'column'
       }),
-      extent: pt(125.7, 21),
-      borderColor: Color.gray,
-      viewModel: {
-        openListInWorld: true,
-        listMaster: SystemList
-      },
-      submorphs: [{
-        name: 'label',
-        fontSize: 12
-      }]
-    }))]
-  })
-  ]
-});
+      submorphs: [
+        part(ModeButtonInactive, {
+          name: 'caseMode',
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('circle-h')
+          }],
+          master: { auto: ModeButtonInactive, hover: ModeButtonInactiveHover, click: ModeButtonInactiveClick },
+          tooltip: 'Search Case Sensitive'
+        }),
+        part(ModeButtonInactive, {
+          name: 'regexMode',
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('circle-question')
+          }],
+          master: { auto: ModeButtonInactive, hover: ModeButtonInactiveHover, click: ModeButtonInactiveClick },
+          tooltip: 'Search based on regular expressions.\nRegular expression should be given without quotes or literal mode slashes.'
+        }),
+        part(DropDownList, {
+          name: 'search chooser',
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center',
+            orderByIndex: true,
+            padding: rect(10, 0, 0, 0),
+            wrapSubmorphs: false,
+            hugContentsHorizontally: true
+          }),
+          extent: pt(125.7, 27),
+          borderColor: Color.gray,
+          viewModel: {
+            openListInWorld: true,
+            listMaster: SystemList
+          },
+          submorphs: [{
+            name: 'label',
+            fontSize: 12
+          }]
+        })]
+    })]
 
-export { CodeSearch };
+  }
+  )]
+})
+ ;
+
+export { CodeSearch, ModeButtonActive, ModeButtonInactive, ModeButtonActiveClick, ModeButtonInactiveClick, ModeButtonActiveHover, ModeButtonInactiveHover, ModeButtonDisabled };

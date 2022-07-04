@@ -15,6 +15,7 @@ import { SnapshotEditor } from 'lively.morphic/partsbin.js';
 
 import { callService, ProgressMonitor } from './service-worker.js';
 import { show } from 'lively.halos';
+import { ModeButtonActive, ModeButtonDisabled, ModeButtonInactiveClick, ModeButtonInactiveHover, ModeButtonInactive, ModeButtonActiveClick, ModeButtonActiveHover } from './code-search.cp.js';
 
 export async function doSearch (
   livelySystem, searchTerm,
@@ -22,6 +23,7 @@ export async function doSearch (
   excludedPackages = [],
   includeUnloaded = true,
   caseSensitive = false,
+  regexMode = false,
   progress
 ) {
   if (searchTerm.length <= 2) { return []; }
@@ -34,12 +36,13 @@ export async function doSearch (
       excludedPackages,
       includeUnloaded,
       caseSensitive,
+      regexMode,
       progress
     });
   }
 
   let searchResult = await livelySystem.searchInAllPackages(
-    searchTerm, { caseSensitive, excludedModules, excludedPackages, includeUnloaded, progress });
+    searchTerm, { caseSensitive, regexMode, excludedModules, excludedPackages, includeUnloaded, progress });
 
   let [errors, found] = arr.partition(searchResult, ({ isError }) => isError);
 
@@ -161,9 +164,10 @@ export class CodeSearcher extends FilterableList {
   }
 
   reset () {
+    this.caseModeActive = false;
+    this.regexModeActive = false;
     this.currentSearchTerm = '';
     connect(this, 'accepted', this, 'openSelection');
-    connect(this.get('search chooser'), 'selection', this, 'searchAgain');
     this.get('list').items = [];
     this.get('input').input = '';
     this.get('search chooser').items = [
@@ -178,10 +182,59 @@ export class CodeSearcher extends FilterableList {
     this.getWindow() && (this.getWindow().title = 'code search');
 
     // initialize connections
+    connect(this.get('caseMode').viewModel, 'fire', this, 'caseModeToggled', { converter: '() => target.searchModeToggled("case")' });
+    connect(this.get('regexMode').viewModel, 'fire', this, 'regexModeToggled', { converter: '() => target.searchModeToggled("regex")' });
+    connect(this.get('search chooser').viewModel, 'selection', this, 'handleSpecialSearchModes');
+    connect(this.get('search chooser').viewModel, 'selection', this, 'searchAgain');
     connect(this.get('input'), 'inputChanged', this, 'updateFilter');
-    connect(this.get('search chooser'), 'selection', this, 'searchAgain');
     connect(this.get('list'), 'selection', this, 'selectionChanged');
     connect(this.get('list'), 'onItemMorphDoubleClicked', this, 'acceptInput');
+  }
+
+  handleSpecialSearchModes () {
+    this.caseModeActive = false;
+    this.regexModeActive = false;
+
+    const searchTargetSelection = this.get('search chooser').selection;
+    if (searchTargetSelection === 'in worlds' || searchTargetSelection === 'in parts') {
+      this.get('caseMode').master = { auto: ModeButtonDisabled };
+      this.get('regexMode').master = { auto: ModeButtonDisabled };
+    } else {
+      [this.get('caseMode'), this.get('regexMode')].forEach(button => button.master = {
+        auto: ModeButtonInactive,
+        hover: ModeButtonInactiveHover,
+        click: ModeButtonInactiveClick
+      });
+    }
+  }
+
+  searchModeToggled (type) {
+    const button = type === 'case' ? this.get('caseMode') : this.get('regexMode');
+    let active;
+    if (type === 'case') {
+      this.caseModeActive = !this.caseModeActive;
+      active = this.caseModeActive;
+    }
+    if (type === 'regex') {
+      this.regexModeActive = !this.regexModeActive;
+      active = this.regexModeActive;
+    }
+
+    if (active) {
+      button.master = {
+        auto: ModeButtonActive,
+        hover: ModeButtonActiveHover,
+        click: ModeButtonActiveClick
+      };
+    } else {
+      button.master = {
+        auto: ModeButtonInactive,
+        hover: ModeButtonInactiveHover,
+        click: ModeButtonInactiveClick
+      };
+    }
+
+    this.searchAgain();
   }
 
   ensureIndicator (label, progress) {
@@ -217,6 +270,7 @@ export class CodeSearcher extends FilterableList {
     if (needle <= 2) return;
     this.getSubmorphNamed('list').items = [];
     this.currentSearchTerm = '';
+
     this.searchAndUpdate(needle);
   }
 
@@ -257,10 +311,13 @@ export class CodeSearcher extends FilterableList {
           undefined, /* excluded modules */
           config.ide.js.ignoredPackages,
           !!searchInAllModules/* includeUnloaded */,
-          false,
+          this.caseModeActive,
+          this.regexModeActive,
           progressMonitor
         );
       } else if (searchInParts || searchInWorlds) {
+        // FIXME lh 2022-07-05: When the new project management has landed, this should be made consistent with the new idea of parts/worlds
+        // When this is tackled, regex mode and case sensitivity should be introduced here as well.
         let pbar = await $world.addProgressBar({ label: 'morphicdb search' });
         let type = searchInWorlds ? 'world' : 'part';
         let found = await MorphicDB.default.codeSearchInPackages(

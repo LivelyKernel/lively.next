@@ -12,6 +12,7 @@ import { runtime as classRuntime } from 'lively.classes';
 import { ImportInjector, GlobalInjector, ImportRemover } from './import-modification.js';
 import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
+import { regExpEscape } from 'lively.lang/string.js';
 
 export var detectModuleFormat = (function () {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
@@ -801,7 +802,10 @@ class ModuleInterface {
       if (searchStr.multiline) flags += 'm';
       re = RegExp(searchStr.source, flags);
     } else {
-      re = RegExp(searchStr, 'g');
+      let flags = 'g';
+      if (!options.caseSensitive) flags = flags + 'i';
+      if (!options.regexMode) searchStr = regExpEscape(searchStr);
+      re = RegExp(searchStr, flags);
     }
 
     let match; const res = [];
