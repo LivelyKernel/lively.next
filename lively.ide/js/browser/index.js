@@ -969,7 +969,10 @@ export class BrowserModel extends ViewModel {
   }
 
   whenPackageUpdated () { return this.state.packageUpdateInProgress || Promise.resolve(); }
-  whenModuleUpdated () { return this.state.moduleUpdateInProgress || Promise.resolve(); }
+  whenModuleUpdated () {
+    this.reactivateEditor();
+    return this.state.moduleUpdateInProgress || Promise.resolve();
+  }
 
   async selectPackageNamed (pName, selectPackageNode = false) {
     pName = pName || 'lively.morphic';
@@ -1136,11 +1139,23 @@ export class BrowserModel extends ViewModel {
     }
 
     if (['directory', 'package'].includes(selectedFile.type)) {
-      this.ui.sourceEditor.opacity = 0.7;
-      this.ui.sourceEditor.readOnly = true;
-      this.updateSource('');
-      this.ui.metaInfoText.showInactive();
+      this.deactivateEditor();
     }
+  }
+
+  deactivateEditor () {
+    const { sourceEditor, metaInfoText } = this.ui;
+    sourceEditor.opacity = 0.7;
+    sourceEditor.readOnly = true;
+    this.updateSource('');
+    metaInfoText.showInactive();
+  }
+
+  reactivateEditor () {
+    const { sourceEditor, metaInfoText } = this.ui;
+    sourceEditor.opacity = 1;
+    sourceEditor.readOnly = false;
+    metaInfoText.showInactive();
   }
 
   async onModuleSelected (m) {
