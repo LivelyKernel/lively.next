@@ -38,8 +38,9 @@ export class FillControlModel extends ViewModel {
     if (prop === 'targetMorph') this.update();
   }
 
+  // fixme (lh 2022-07-04): this makes it so that it is possible to open multiple halos with ctrl-click
   ensureHalo () {
-    $world.showHaloFor(this.targetMorph);
+    if (this.targetMorph.world()) $world.showHaloFor(this.targetMorph);
   }
 
   confirm () {
