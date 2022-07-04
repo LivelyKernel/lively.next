@@ -100,7 +100,8 @@ const rules = {
   'no-unreachable': 'warn',
   'no-const-assign': 'warn',
   'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }],
-  'no-use-before-define': ['error', { functions: true, classes: true, variables: true }]
+  'no-use-before-define': ['error', { functions: true, classes: true, variables: true }],
+  'no-constructor-return': 'error'
 };
 
 config.rules = rules;
