@@ -473,13 +473,12 @@ describe('package registry', () => {
         name: 'p1',
         version: '0.2.2'
       });
-      debugger;
-      expect(registry.lookup('p1', '>=0.2')).containSubset({
+      expect(registry.lookup('p1', '^0.2')).containSubset({
         url: testDir + 'packages/p1/0.2.2',
         name: 'p1',
         version: '0.2.2'
       });
-      expect(registry.lookup('p1', '>=0.1')).containSubset({
+      expect(registry.lookup('p1', '^0.1')).containSubset({
         url: testDir + 'packages/p1/0.1.0',
         name: 'p1',
         version: '0.1.0'
@@ -492,7 +491,6 @@ describe('package registry', () => {
     });
 
     it('find dependency of package', async () => {
-      registry.findPackageDependency;
       expect(registry.findPackageDependency(registry.lookup('p1', '0.1.0'), 'p2'))
         .property('nameAndVersion', 'p2@2.0.0');
       expect(registry.findPackageDependency(registry.lookup('p1', '0.2.2'), 'p2'))
@@ -506,7 +504,7 @@ describe('package registry', () => {
 
       expect(registry.resolvePath('./bar.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p1/0.2.2/bar.js');
       expect(registry.resolvePath('../bar.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p1/bar.js');
-      // does not seem to be able to resolve absolute paths
+
       expect(registry.resolvePath('p2/index.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p2/1.0.0/index.js');
       expect(registry.resolvePath('p2', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p2/1.0.0');
     });
