@@ -67,7 +67,7 @@ function constructorTemplate (name, fields) {
       block(),
       block(
         ...classFieldsInitialization(fields),
-        exprStmt(
+        returnStmt(
           funcCall(
             member(
               member('this', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')), true),
