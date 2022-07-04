@@ -287,7 +287,7 @@ export default function browserCommands (browser) {
           return true;
         }
 
-        await browser.selectPackageNamed(pkg.name);
+        await browser.selectPackageNamed(pkg.name, true);
         return true;
       }
     },
@@ -305,7 +305,7 @@ export default function browserCommands (browser) {
           return true;
         }
 
-        await browser.selectPackageNamed(null);
+        await browser.selectPackageNamed(null, true);
 
         return true;
       }

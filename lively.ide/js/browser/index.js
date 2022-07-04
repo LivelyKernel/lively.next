@@ -971,15 +971,26 @@ export class BrowserModel extends ViewModel {
   whenPackageUpdated () { return this.state.packageUpdateInProgress || Promise.resolve(); }
   whenModuleUpdated () { return this.state.moduleUpdateInProgress || Promise.resolve(); }
 
-  async selectPackageNamed (pName) {
-    const p = pName ? await this.systemInterface.getPackage(pName) : await this.systemInterface.getPackage('lively.morphic');
+  async selectPackageNamed (pName, selectPackageNode = false) {
+    pName = pName || 'lively.morphic';
+    const p = await this.systemInterface.getPackage(pName);
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
       return n === td.root || n.ur === p.address + '/';
     }, td.root, false);
-    this.onPackageSelected(p);
+
+    if (selectPackageNode) {
+      let pNode = columnView.treeData.root.subNodes.find(({ name }) => pName === name);
+      await columnView.selectNode(pNode);
+      columnView.submorphs.forEach(list => {
+        list.scrollSelectionIntoView();
+      });
+    }
+
+    await this.onPackageSelected(p);
     await this.whenPackageUpdated();
+
     return p;
   }
 
