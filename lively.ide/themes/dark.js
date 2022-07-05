@@ -34,17 +34,10 @@ class DarkTheme {
   get 'variable-2' () { return { fontColor: '#e06c75' }; }
   get 'variable-3' () { return { fontColor: '#085' }; }
   get 'comment' () { return { fontColor: '#7F848E' }; }
-  get 'todo-comment' () {
+  get 'commentHighlight' () {
     return {
       backgroundColor: '#FFFF00',
       fontColor: '#7F848E'
-    };
-  }
-
-  get 'fixme-comment' () {
-    return {
-      backgroundColor: Color.rgba(255, 76, 76, 0.8),
-      fontColor: Color.white
     };
   }
 

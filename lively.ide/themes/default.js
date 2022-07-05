@@ -32,16 +32,9 @@ class DefaultTheme {
   get 'variable-2' () { return { fontColor: '#05a' }; }
   get 'variable-3' () { return { fontColor: '#085' }; }
   get 'comment' () { return { fontColor: '#666' }; }
-  get 'todo-comment' () {
+  get 'commentHighlight' () {
     return {
       backgroundColor: '#FFFF00',
-      fontColor: '#666'
-    };
-  }
-
-  get 'fixme-comment' () {
-    return {
-      backgroundColor: Color.rgba(255, 76, 76, 0.53),
       fontColor: '#666'
     };
   }
