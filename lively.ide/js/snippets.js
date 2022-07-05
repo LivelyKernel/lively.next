@@ -180,6 +180,7 @@ export const snippets = [
     }
   }],
   // eslint
+  ['fdesl', '/* eslint-disable \${0:rule} */'],
   ['desl', '// eslint-disable-line \${0:rule}']
 
 ];
