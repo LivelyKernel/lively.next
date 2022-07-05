@@ -1,13 +1,13 @@
 /* global System, beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
-import { modifyJSON, noTrailingSlash, inspect as i } from './helpers.js';
+import { modifyJSON, noTrailingSlash } from './helpers.js';
 
-import { obj, arr } from 'lively.lang';
+import { arr } from 'lively.lang';
 import { resource, createFiles } from 'lively.resources';
 import module from '../src/module.js';
-import { getSystem, removeSystem, printSystemConfig, loadedModules } from '../src/system.js';
-import { Package, getPackage, ensurePackage, applyConfig, getPackageSpecs } from '../src/packages/package.js';
+import { getSystem, removeSystem } from '../src/system.js';
+import { getPackage, ensurePackage, applyConfig, getPackageSpecs } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
 
 let testDir = System.decanonicalize('lively.modules/tests/package-tests-temp/');
@@ -93,7 +93,7 @@ describe('package loading', function () {
     });
 
     it('enumerates packages', async () => {
-      let p1 = await ensurePackage(S, project1aDir);
+      await ensurePackage(S, project1aDir);
       let p2 = await ensurePackage(S, project2Dir);
       await p2.import();
 
@@ -171,7 +171,7 @@ describe('package loading', function () {
 
     it('finds resources of registered package', async () => {
       let innerDir = project1aDir + 'my-projects/sub-project/';
-      let p2 = await ensurePackage(S, innerDir);
+      await ensurePackage(S, innerDir);
       let p = await ensurePackage(S, project1aDir);
       expect(arr.pluck(await p.resources(), 'url'))
         .equals(['entry-a.js', 'other.js', 'package.json'].map(ea => project1aDir + ea));
@@ -365,7 +365,7 @@ describe('package configuration test', () => {
 
   it('installs meta data in package', async () => {
     await ensurePackage(S, project1aDir);
-    let p = await applyConfig(S, {
+    await applyConfig(S, {
       ...await resource(project1aDir).join('package.json').readJson(),
       lively: { meta: { foo: { format: 'global' } } }
     }, 'some-project');
@@ -467,7 +467,6 @@ describe('package registry', () => {
 
   describe('lookup', () => {
     it('from packageBaseDirs', async () => {
-      // semver somehow does not correctly check the versions any more
       expect(registry.lookup('p1')).containSubset({
         url: testDir + 'packages/p1/0.2.2',
         name: 'p1',

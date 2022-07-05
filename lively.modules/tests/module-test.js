@@ -1,4 +1,4 @@
-/* global System, beforeEach, afterEach, describe, it */
+/* global beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
 import { promise } from 'lively.lang';
@@ -151,7 +151,12 @@ describe('module loading', () => {
       try {
         await m.removeImports([{ local: 'y' }]);
       } catch (err) {
-        // causes an error because the code is not longer valid
+        // Causes an error because the code is not longer valid
+        // The error is caused by the acornjs parser throwing a syntax error
+        // when the module wants to initialize the scope.
+        // This used not to be the case in earlier versions of acorn.
+        // Since the point of this test is not to test for this exception, we just
+        // capture it here to move on with the test.
       }
       expect(await m.source()).equals(' export var x = y + 1;');
       expect().assert(!m.recorder.hasOwnProperty('y'), 'var y not removed from module internals');
