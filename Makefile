@@ -1,7 +1,11 @@
-.PHONY: clear-esm-cache start install hooks docker-build docker-start docker-watch docker-bash docker-stop
+.PHONY: clear-esm-cache clear-headless-cache start install hooks docker-build docker-start docker-watch docker-bash docker-stop
 clear-esm-cache:
 	rm -rf esm_cache
 	mkdir esm_cache
+
+clear-headless-cache:
+	rm -r lively.headless/chrome-data-dir
+	mkdir lively.headless/chrome-data-dir && touch lively.headless/chrome-data-dir/.gitkeep
 
 start:
 	./start.sh
