@@ -3,7 +3,8 @@ FROM node:17-buster
 RUN apt update
 RUN apt install -y \
     python3-pip \
-    brotli
+    brotli \
+    aspell
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
