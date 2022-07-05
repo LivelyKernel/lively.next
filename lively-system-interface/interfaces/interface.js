@@ -406,6 +406,6 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
             }
           }));
       }
-      result = {testsByFile, isError, error}`);
+      result = {testsByFile, isError, error};`);
   }
 }

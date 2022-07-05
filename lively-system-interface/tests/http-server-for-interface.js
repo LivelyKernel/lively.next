@@ -1,63 +1,66 @@
-import { string, promise } from "lively.lang";
-import { exec as node_exec } from "child_process";
-import * as fs from "fs";
+/* global process */
+import { string, promise } from 'lively.lang';
+import { exec as node_exec } from 'child_process';
+import * as fs from 'fs';
 
-const isNode = System.get("@system-env").node;
+const isNode = System.get('@system-env').node;
 
-function writeFile(fn, content) {
+function writeFile (fn, content) {
   if (isNode) {
     fs.writeFileSync(fn, content);
-    return Promise.resolve(); 
+    return Promise.resolve();
   } else {
     return lively.shell.writeFile(fn, content);
   }
 }
 
-function exec(cmdString, opts) {
-  opts = Object.assign({cwd: undefined}, opts)
+function exec (cmdString, opts) {
+  opts = Object.assign({ cwd: undefined }, opts);
 
-  var cmd;
+  let cmd;
   if (isNode) {
-    var proc, exit, stdout = "", stderr = "", deferred = promise.deferred();
-    proc = node_exec(cmdString, {cwd: opts.cwd}, (_exit) => { exit = _exit; });
-    proc.stdout.on("data", (d) => stdout += d);
-    proc.stderr.on("data", (d) => stderr += d);
-    var rawCmd = {
-      get process() { return proc },
-      get code() { return exit },
-      get output() { return stdout + "\n" + stderr },
-      get stdout() { return stdout },
-      isRunning() { return typeof exit === "undefined" },
-      kill(sig = "SIGKILL") {
-        proc.kill(sig);
+    let proc; let exit; let stdout = ''; let stderr = ''; let deferred = promise.deferred();
+    proc = node_exec(cmdString, { cwd: opts.cwd }, (_exit) => { exit = _exit; });
+    proc.stdout.on('data', (d) => stdout += d);
+    proc.stderr.on('data', (d) => stderr += d);
+    let rawCmd = {
+      get process () { return proc; },
+      get code () { return exit; },
+      get output () { return stdout + '\n' + stderr; },
+      get stdout () { return stdout; },
+      isRunning () { return typeof exit === 'undefined'; },
+      kill (sig = 'SIGTERM') {
+        const pid = Number.parseInt(stdout.match(/PID\=([0-9]*)/)[1]);
+        process.kill(pid); // somehow the server is running in a separate process, so we need to directly parse the pid from the process output
         return new Promise((resolve, reject) => !this.isRunning());
       }
-    }
+    };
     cmd = deferred.promise;
-    cmd.__defineGetter__("process", rawCmd.__lookupGetter__("process"));
-    cmd.__defineGetter__("code",    rawCmd.__lookupGetter__("code"));
-    cmd.__defineGetter__("output",  rawCmd.__lookupGetter__("output"));
-    cmd.__defineGetter__("stdout",  rawCmd.__lookupGetter__("stdout"));
-    cmd.__defineGetter__("stdout",  rawCmd.__lookupGetter__("stdout"));
+    cmd.__defineGetter__('process', rawCmd.__lookupGetter__('process'));
+    cmd.__defineGetter__('code', rawCmd.__lookupGetter__('code'));
+    cmd.__defineGetter__('output', rawCmd.__lookupGetter__('output'));
+    cmd.__defineGetter__('stdout', rawCmd.__lookupGetter__('stdout'));
+    cmd.__defineGetter__('stdout', rawCmd.__lookupGetter__('stdout'));
     cmd.isRunning = rawCmd.isRunning.bind(rawCmd);
     cmd.kill = rawCmd.kill.bind(rawCmd);
-    promise.waitFor(() => !cmd.isRunning()).then(() => deferred.resolve(rawCmd))
-  } else {
-    cmd = lively.shell.run(cmdString, {cwd: opts.cwd});
+    promise.waitFor(() => !cmd.isRunning()).then(() => deferred.resolve(rawCmd));
   }
   return cmd;
 }
 
-var serverCode = `
-require("systemjs");
-require("lively.modules");
-require("lively.vm");
-var http = require("http");
+let serverCode = `
+import "systemjs";
+import * as modules from "lively.modules";
+import { setupSystem } from "lively.installer";
+import http from "http";
 
 process.on('uncaughtException', function(err) { console.error(err); });
 
-Promise.resolve()
-  .then(() => new Promise((resolve, reject) =>
+console.log("PID=" + process.pid);
+
+setupSystem(process.env.lv_next_dir)
+   .then(() => 
+   new Promise((resolve, reject) =>
     http.createServer(function(req, res) {
       cors(req, res, () => {
         evalHandler("__PATH__")(req, res, () => {
@@ -67,7 +70,7 @@ Promise.resolve()
       })
     }).listen(__PORT__, resolve)))
   .then(() => console.log("lively.system running at http://localhost:__PORT____PATH__"))
-  .then(() => lively.modules.importPackage("__SYSTEMINTERFACE_PATH__"))
+  .then(() => modules.importPackage("../lively-system-interface"))
   .then((system) => { global.livelySystem = system; console.log("lively-system-interface imported"); })
   .catch(err => console.error("Error starting server: " + err.stack || err));
 
@@ -108,32 +111,30 @@ function cors(req, res, next) {
   res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Depth, Cookie, Set-Cookie, Accept, Access-Control-Allow-Credentials, Origin, Content-Type, Request-Id , X-Api-Version, X-Request-Id, Authorization");
   res.setHeader("Access-Control-Expose-Headers", "Date, Etag, Set-Cookie");
   next();
-}`
+}`;
 
-export async function startServer(path = "/lively", port = 3011, timeout = 30*1000/*ms*/) {
+export async function startServer (path = '/lively', port = 3011, timeout = 30 * 1000/* ms */) {
   // 1. prepare server file
-  var WORKSPACE_LK = (isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK) || ".",
-      fn = string.joinPath(WORKSPACE_LK, ".lively.next-eval-server-for-test.js"),
-      systemInterfacePath = WORKSPACE_LK !== "." ? "node_modules/lively-system-interface" : ".",
-      serverCodePatched = serverCode
-                            .replace(/__PORT__/g, port)
-                            .replace(/__PATH__/g, path)
-                            .replace(/__SYSTEMINTERFACE_PATH__/g, systemInterfacePath);
+  let WORKSPACE_LK = (isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK) || '.';
+  let fn = string.joinPath(WORKSPACE_LK, '.lively.next-eval-server-for-test.js');
+  let serverCodePatched = serverCode
+    .replace(/__PORT__/g, port)
+    .replace(/__PATH__/g, path);
+  // .replace(/__SYSTEMINTERFACE_PATH__/g, systemInterfacePath);
   await writeFile(fn, serverCodePatched);
-  
-  // 2. start server process and wait until lively-system-interface is ready
-  var cmd = exec(`node ${fn}`, {cwd: WORKSPACE_LK}),
-      start = Date.now(), outputSeen = "";
-  return new Promise(function waitForServerStart(resolve, reject) {
 
+  // 2. start server process and wait until lively-system-interface is ready
+  let cmd = exec(`node --experimental-loader $lv_next_dir/flatn/resolver.mjs ${fn}`, { cwd: WORKSPACE_LK });
+  let start = Date.now(); let outputSeen = '';
+  return new Promise(function waitForServerStart (resolve, reject) {
     if (cmd.output !== outputSeen) { // for debugging
       console.log(cmd.output.slice(outputSeen.length));
       outputSeen = cmd.output;
     }
 
     if (!cmd.isRunning()) reject(new Error(`server crashed: ${cmd.output}`));
-    else if (string.include(cmd.output, "lively-system-interface imported")) resolve({server: cmd});
-    else if (Date.now() - start > timeout) reject(new Error(`server start timout`))
+    else if (string.include(cmd.output, 'lively-system-interface imported')) resolve({ server: cmd });
+    else if (Date.now() - start > timeout) reject(new Error('server start timout'));
     else setTimeout(() => waitForServerStart(resolve, reject), 10);
   });
 }
