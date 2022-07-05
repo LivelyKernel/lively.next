@@ -248,16 +248,16 @@ let GLOBAL = typeof window !== 'undefined'
       ? global
       : (typeof self !== 'undefined' ? self : this));
 
-var defaultSystem = defaultSystem || prepareSystem(GLOBAL.System);
+var defaultSystem = defaultSystem || prepareSystem(GLOBAL.System); // eslint-disable-line no-use-before-define, no-var
 function changeSystem (newSystem, makeGlobal) {
   defaultSystem = newSystem;
   if (makeGlobal) GLOBAL.System = newSystem;
-  newSystem._scripting = scripting;
+  newSystem._scripting = scripting; // eslint-disable-line no-use-before-define
   return newSystem;
 }
 function wrapModuleResolution () { _wrapModuleResolution(defaultSystem); }
 function unwrapModuleResolution () { _unwrapModuleResolution(defaultSystem); }
-function loadedModules () { return Object.keys(requireMap()); }
+function loadedModules () { return Object.keys(requireMap()); } // eslint-disable-line no-use-before-define
 function module (id) { return _module(defaultSystem, id); }
 function isModuleLoaded (name, isNormalized) {
   return _isModuleLoaded(defaultSystem, name, isNormalized);

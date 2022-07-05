@@ -4,7 +4,7 @@ import { expect } from 'mocha-es6';
 
 import { removeDir, createFiles } from './helpers.js';
 
-import { getSystem, searchLoadedModules, loadedModules } from '../src/system.js';
+import { getSystem, searchLoadedModules } from '../src/system.js';
 import mod from '../src/module.js';
 import { importPackage, removePackage, getPackage } from '../src/packages/package.js';
 
@@ -137,7 +137,7 @@ describe('search', () => {
 
     it('can exclude modules', async () => {
       const res = await searchLoadedModules(S,
-        /(im|ex)port/, { excludedModules: [ea => ea != file2m] });
+        /(im|ex)port/, { excludedModules: [ea => ea !== file2m] });
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
         { moduleId: file2m, line: 1, column: 0, length: 6 }]);

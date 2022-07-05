@@ -1,4 +1,4 @@
-/* global System, beforeEach, afterEach, describe, it */
+/* global System, beforeEach, describe, it */
 
 import { expect } from 'mocha-es6';
 import { ImportInjector, GlobalInjector, ImportRemover } from '../src/import-modification.js';

@@ -1,6 +1,6 @@
 import semver from 'semver';
 import { arr, obj, promise } from 'lively.lang';
-import { getPackage, Package } from './package.js';
+import { Package } from './package.js';
 import { resource } from 'lively.resources';
 import { isURL } from '../url-helpers.js';
 import { classHolder } from '../cycle-breaker.js';
@@ -87,9 +87,9 @@ export class PackageRegistry {
 
     return {
       packageMap: packageMapJso,
-      individualPackageDirs: individualPackageDirs.map(serializeURL),
-      devPackageDirs: devPackageDirs.map(serializeURL),
-      packageBaseDirs: packageBaseDirs.map(serializeURL)
+      individualPackageDirs: individualPackageDirs.map(serializeURL), // eslint-disable-line no-use-before-define
+      devPackageDirs: devPackageDirs.map(serializeURL), // eslint-disable-line no-use-before-define
+      packageBaseDirs: packageBaseDirs.map(serializeURL) // eslint-disable-line no-use-before-define
     };
 
     function serializeURL ({ url }) {
@@ -116,9 +116,9 @@ export class PackageRegistry {
     }
 
     this.packageMap = packageMap;
-    this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL);
-    this.devPackageDirs = jso.devPackageDirs.map(deserializeURL);
-    this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL);
+    this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
+    this.devPackageDirs = jso.devPackageDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
+    this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
     this.resetByURL();
     classHolder.ModulePackageMapping.forSystem(System).clearCache();
 

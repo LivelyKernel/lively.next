@@ -73,7 +73,6 @@ describe('lively.modules aware eval', function () {
   });
 
   it('of new export', async () => {
-    let m1 = await S.import(module1.id);
     let m2 = await S.import(module2.id);
     let result = await runEval('export var xxx = 99;', { asString: true, System: S, targetModule: module2.id });
     // result = await runEval("var xxx = 99; export { xxx }", {asString: true, System: S, targetModule: module2});
@@ -88,13 +87,13 @@ describe('lively.modules aware eval', function () {
     // define a new var that is exported
     await runEval('var zork = 1; export { zork }', { asString: true, System: S, targetModule: module1.id });
     expect(module1.record().exports).to.have.property('zork', 1, 'of record');
-    var m1 = await S.import(module1.id);
+    let m1 = await S.import(module1.id);
     expect(m1).to.have.property('zork', 1, 'of module');
 
     // now change that var and see if the export is updated
     await runEval('var zork = 2;', { asString: true, System: S, targetModule: module1.id });
     expect(module1.record().exports).to.have.property('zork', 2, 'of record after change');
-    var m1 = await S.import(module1.id);
+    m1 = await S.import(module1.id);
     expect(m1).to.have.property('zork', 2, 'of module after change');
   });
 
@@ -126,7 +125,7 @@ describe('lively.modules aware eval', function () {
   });
 
   it('reload module dependencies', async () => {
-    var m = await S.import(module1.id);
+    let m = await S.import(module1.id);
     expect(m.x).to.equal(3);
     // we change module3 and check that the value of module1 that indirectly
     // depends on module3 has changed as well
@@ -135,7 +134,7 @@ describe('lively.modules aware eval', function () {
     let result = await runEval(source, { asString: true, System: S, targetModule: module3.id });
     expect(result.value).to.not.match(/error/i);
     module3.unloadDeps();
-    var m = await S.import(module1.id);
+    m = await S.import(module1.id);
     expect(m.x).to.equal(4);
   });
 

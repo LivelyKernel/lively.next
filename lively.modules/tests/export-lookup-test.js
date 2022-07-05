@@ -1,4 +1,4 @@
-/* global System, beforeEach, afterEach, describe, it */
+/* global beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
@@ -35,8 +35,7 @@ let testProject2Spec = {
                     '}'
 };
 
-let S, module1, module2, module3;
-
+let S;
 describe('export lookup', () => {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testProjectDir });
@@ -106,9 +105,9 @@ describe('export lookup', () => {
   // });
 
   it('exports after unloads are updated', async () => {
-    var exports = await ExportLookup.run(S);
+    let exports = await ExportLookup.run(S);
     await module(S, file1m).unload();
-    var exports = await ExportLookup.run(S);
+    exports = await ExportLookup.run(S);
     expect(exports).containSubset([
       { local: 'y', moduleId: file2m },
       { local: 'z', moduleId: file3m }]);

@@ -14,7 +14,7 @@ import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
 
-export var detectModuleFormat = (function () {
+export const detectModuleFormat = (function () {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
   const cjsFormatCommentRegExp = /['"]format cjs['"];/;
   // Stolen from SystemJS
@@ -22,7 +22,7 @@ export var detectModuleFormat = (function () {
 
   return (source, metadata) => {
     if (metadata && metadata.format) {
-      if (metadata.format == 'es6') metadata.format == 'esm';
+      if (metadata.format === 'es6') metadata.forma === 'esm';
       return metadata.format;
     }
 
@@ -38,7 +38,7 @@ export var detectModuleFormat = (function () {
 export default function module (System, moduleName, parent) {
   const sysEnv = livelySystemEnv(System);
   const id = System.decanonicalize(moduleName, parent);
-  return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id));
+  return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id)); // eslint-disable-line no-use-before-define
 }
 
 classHolder.module = module;
@@ -50,12 +50,12 @@ export function isModuleLoaded (System, name, isNormalized = false) {
 }
 
 export async function doesModuleExist (System, name, isNormalized = false) {
-  const sysEnv = livelySystemEnv(System);
   const id = isNormalized ? name : System.normalizeSync(name);
   if (isModuleLoaded(System, id, true)) return true;
   const p = Package.forModuleId(System, id);
-  return !p || p.name === 'no group'
-    ?/* FIXME */ System.resource(id).exists() : await p.hasResource(id);
+  return !p || p.name === 'no group'/* FIXME */
+    ? System.resource(id).exists()
+    : await p.hasResource(id);
 }
 
 const globalProps = { initialized: false, descriptors: {} };
@@ -249,8 +249,6 @@ class ModuleInterface {
     await this.System.resource(newId).write(await this.source());
     const {
       System,
-      recorderName,
-      sourceAccessorName,
       _recorder,
       _source,
       _ast,
@@ -417,7 +415,7 @@ class ModuleInterface {
     if (!globalProps.initialized) {
       globalProps.initialized = true;
       for (const prop in S.global) {
-        if (S.global.__lookupGetter__(prop) || prop == 'closed') {
+        if (S.global.__lookupGetter__(prop) || prop === 'closed') {
           globalProps.descriptors[prop] = {
             value: undefined,
             configurable: true,
@@ -487,7 +485,7 @@ class ModuleInterface {
             // updated, which is good enough for "virtual modules"
             imports => Object.assign(self.recorder, imports));
 
-          if (key == undefined) return depExports;
+          if (key === undefined) return depExports;
 
           if (!depExports.hasOwnProperty(key)) { console.warn(`import from ${depExports}: Has no export ${key}!`); }
 
@@ -613,7 +611,7 @@ class ModuleInterface {
   async exports () { return query.exports(await this.scope()); }
 
   async addImports (specs) {
-    var source = await this.source();
+    let source = await this.source();
 
     for (const spec of specs) {
       const fromModule = module(this.System, spec.from || spec.moduleId);
@@ -626,8 +624,8 @@ class ModuleInterface {
         pathInPackage: fromModule.pathInPackage()
       };
       const alias = spec.local;
-      var { newSource: source, standAloneImport } = ImportInjector.run(
-        this.System, this.id, this.package(), source, importData, alias);
+      ({ newSource: source } = ImportInjector.run(
+        this.System, this.id, this.package(), source, importData, alias));
     }
 
     await this.changeSource(source);
@@ -678,8 +676,8 @@ class ModuleInterface {
     const id = nodes[nodes.length - 1];
     const member = nodes[nodes.length - 2];
 
-    if (id.type != 'Identifier' ||
-     member.type != 'MemberExpression' ||
+    if (id.type !== 'Identifier' ||
+     member.type !== 'MemberExpression' ||
      member.computed ||
      member.object.type !== 'Identifier') { return [null, null]; }
 
@@ -697,9 +695,9 @@ class ModuleInterface {
 
   async _resolveImportedDecl (decl) {
     if (!decl) return [];
-    const { start, name, type } = decl.id;
+    const { name } = decl.id;
     const imports = await this.imports();
-    const im = imports.find(i => i.local == name);
+    const im = imports.find(i => i.local === name);
     if (im) {
       const imM = module(this.System, im.fromModule, this.id);
       return [decl].concat(await imM.bindingPathForExport(im.imported));
@@ -814,7 +812,7 @@ class ModuleInterface {
     for (let i = 0, j = 0, line = 1, lineStart = 0;
       i < src.length && j < res.length;
       i++) {
-      if (src[i] == '\n') {
+      if (src[i] === '\n') {
         line++;
         lineStart = i + 1;
       }

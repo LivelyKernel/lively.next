@@ -1,9 +1,8 @@
-import { arr, fun, promise, obj } from "lively.lang"
-import { resource } from "lively.resources";
+import { obj } from 'lively.lang';
+import { resource } from 'lively.resources';
 
-
-export async function buildPackageMap(
-  dir, options = {maxDepth: 0, excludes: []},
+export async function buildPackageMap (
+  dir, options = { maxDepth: 0, excludes: [] },
   map = {}, // internal
   depth = 0 // internal
 ) {
@@ -23,74 +22,68 @@ export async function buildPackageMap(
   //         devDependencies: { 'mocha-es6': '*' },
   //         main: undefined } }
 
-  var {maxDepth, excludes} = options;
+  let { maxDepth, excludes } = options;
 
   if (maxDepth > 0 && depth > maxDepth) return map;
 
   try {
+    let config = JSON.parse(await resource(dir).join('package.json').read());
+    let key = `${config.name}@${config.version}`;
 
-    var config = JSON.parse(await resource(dir).join("package.json").read()),
-        key = `${config.name}@${config.version}`;
-
-    if (map[key] || excludes.includes(config.name))
-      return map;
+    if (map[key] || excludes.includes(config.name)) { return map; }
 
     map[key] = {
       url: dir,
-      ...obj.select(config, ["name", "version", "dependencies", "devDependencies", "main"])
+      ...obj.select(config, ['name', 'version', 'dependencies', 'devDependencies', 'main'])
     };
-
   } catch (e) { return map; }
-
+  let node_modules;
   try {
-    var node_modules = await resource(dir).join("node_modules").dirList(1);
+    node_modules = await resource(dir).join('node_modules').dirList(1);
   } catch (e) { return map; }
 
-  for (let {url} of node_modules)
-    map = await buildPackageMap(url, options, map, depth+1);
+  for (let { url } of node_modules) { map = await buildPackageMap(url, options, map, depth + 1); }
 
   return map;
 }
 
-
-export function resolvePackageDependencies(pkg, packageMap) {
+export function resolvePackageDependencies (pkg, packageMap) {
   // util.inspect(resolvePackageDependencies(packageMap["socket.io@1.5.1"], packageMap))
   // =>
   // "{ debug: 'debug@2.2.0',
   //   'engine.io': 'engine.io@1.7.2', ...}
 
-  var deps = {...pkg.dependencies, ...pkg.devDependencies};
+  let deps = { ...pkg.dependencies, ...pkg.devDependencies };
   return Object.keys(deps).reduce((depMap, depName) => {
-    var depVersion = deps[depName],
-        {name, version} = obj.values(packageMap).find(({name, version}) =>
-          name === depName && lively.modules.semver.satisfies(version, depVersion)) || {};
+    let depVersion = deps[depName];
+    let { name, version } = obj.values(packageMap).find(({ name, version }) =>
+      name === depName && lively.modules.semver.satisfies(version, depVersion)) || {};
     depMap[depName] = name ? `${name}@${version}` : undefined;
     return depMap;
   }, {});
 }
 
-
-export function dependencyGraph(packageMap) {
+export function dependencyGraph (packageMap) {
   // builds dependency graph of package-name@version tuples:
   // {'lively.server@0.1.0':  ['lively.modules@0.5.41', ...],
   //  'lively.modules@0.5.41': [...]}
 
-  var packages = obj.values(packageMap),
-      cachedVersionQueries = {};
+  let packages = obj.values(packageMap);
+  let cachedVersionQueries = {};
 
   return Object.keys(packageMap).reduce((depMap, name) => {
-    var pkg = packageMap[name],
-        deps = {...pkg.dependencies, ...pkg.devDependencies};
+    let pkg = packageMap[name];
+    let deps = { ...pkg.dependencies, ...pkg.devDependencies };
     depMap[name] = Object.keys(deps)
-      .map(depName => findAvailablePackage(depName, deps[depName]))
+      .map(depName => findAvailablePackage(depName, deps[depName])) // eslint-disable-line no-use-before-define
       .filter(ea => !!ea);
     return depMap;
   }, {});
 
-  function findAvailablePackage(depName, depVersionRange) {
-    var cacheKey = `${depName}@${depVersionRange}`
+  function findAvailablePackage (depName, depVersionRange) {
+    let cacheKey = `${depName}@${depVersionRange}`;
     if (cacheKey in cachedVersionQueries) return cachedVersionQueries[cacheKey];
-    let {name, version} = packages.find(({name, version}) =>
+    let { name, version } = packages.find(({ name, version }) =>
       name === depName && lively.modules.semver.satisfies(version, depVersionRange)) || {};
     return cachedVersionQueries[cacheKey] = name ? `${name}@${version}` : undefined;
   }

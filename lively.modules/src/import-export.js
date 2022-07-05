@@ -13,14 +13,6 @@ export function scheduleModuleExportsChange (System, moduleId, name, value, addN
   }
 }
 
-export function runScheduledExportChanges (System, moduleId) {
-  let pendingExportChanges = System.get('@lively-env').pendingExportChanges;
-  let keysAndValues = pendingExportChanges[moduleId];
-  if (!keysAndValues) return;
-  clearPendingModuleExportChanges(System, moduleId);
-  updateModuleExports(System, moduleId, keysAndValues);
-}
-
 function clearPendingModuleExportChanges (System, moduleId) {
   let pendingExportChanges = System.get('@lively-env').pendingExportChanges;
   delete pendingExportChanges[moduleId];
@@ -69,11 +61,11 @@ function updateModuleExports (System, moduleId, keysAndValues) {
       debug && console.log('[lively.vm es6 updateModuleExports] updating %s dependents of %s', record.importers.length, moduleId);
       for (let i = 0, l = record.importers.length; i < l; i++) {
         let importerModule = record.importers[i];
+        let importerIndex;
         if (!importerModule.locked) {
           // via the module bindings to importer modules we refresh the values
           // bound in those modules by triggering the setters defined in the
           // records of those modules
-          var importerIndex;
           let found = importerModule.dependencies.some((dep, i) => {
             importerIndex = i;
             return dep && dep.name === record.name;
@@ -97,4 +89,12 @@ function updateModuleExports (System, moduleId, keysAndValues) {
       }
     }
   });
+}
+
+export function runScheduledExportChanges (System, moduleId) {
+  let pendingExportChanges = System.get('@lively-env').pendingExportChanges;
+  let keysAndValues = pendingExportChanges[moduleId];
+  if (!keysAndValues) return;
+  clearPendingModuleExportChanges(System, moduleId);
+  updateModuleExports(System, moduleId, keysAndValues);
 }

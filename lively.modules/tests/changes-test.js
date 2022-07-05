@@ -20,7 +20,7 @@ const file2m = testProjectDir + 'file2.js';
 const file3m = testProjectDir + 'sub-dir/file3.js';
 const file4m = testProjectDir + 'file4.js';
 
-let S, module1, module2, module3, module4;
+let S, module1, module2, module4;
 
 function changeModule2Source () {
   // "internal = 1" => "internal = 2"
@@ -35,7 +35,6 @@ describe('code changes of esm format module', function () {
     S.useModuleTranslationCache = false;
     module1 = module(S, file1m);
     module2 = module(S, file2m);
-    module3 = module(S, file3m);
     module4 = module(S, file4m);
     await createFiles(testProjectDir, testProjectSpec);
   });
@@ -99,7 +98,6 @@ describe('code changes of esm format module', function () {
   });
 
   it('affects eval state', async () => {
-    let m = await S.import(file2m);
     await changeModule2Source();
     expect(module2.env().recorder).property('y').equal(2);
     expect(module2.env().recorder).property('internal').equal(2);
@@ -187,13 +185,13 @@ describe('code changes of global format module', () => {
   afterEach(async () => { removeSystem('test'); await resource(testProjectDir).remove(); });
 
   it('modifies module and its exports', async () => {
-    var m = await S.import(file1m);
+    let m = await S.import(file1m);
     expect(module1.env().recorder.zzz).to.equal(4, 'zzz state before change');
     expect(m.z).to.equal(2, 'export state before change');
     await module1.changeSourceAction(s => s.replace(/zzz = 4;/, 'zzz = 6;'));
     expect(module1.env().recorder.zzz).to.equal(6, 'zzz state after change');
     // expect(m.z).to.equal(3, "export state after change");
-    var m = await S.import(file1m);
+    m = await S.import(file1m);
     expect(m.z).to.equal(3, 'export state after change and re-import');
   });
 
@@ -248,12 +246,11 @@ describe('persistent definitions', () => {
 });
 
 describe('notifications of toplevel changes', () => {
-  let S, module1, module2, module3, module4;
+  let S, module1, module2, module4;
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testProjectDir });
     module1 = module(S, file1m);
     module2 = module(S, file2m);
-    module3 = module(S, file3m);
     module4 = module(S, file4m);
     await createFiles(testProjectDir, testProjectSpec);
   });

@@ -1,8 +1,8 @@
 /* global System,process,self,WorkerGlobalScope,location,global */
+/* eslint-disable no-use-before-define */
 import { arr, obj, promise } from 'lively.lang';
 import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from './hooks.js';
 import { classHolder } from './cycle-breaker.js';
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const isNode = System.get('@system-env').node;
@@ -182,10 +182,10 @@ function prepareSystem (System, config) {
   wrapResource(System);
   wrapModuleLoad(System);
   wrapModuleResolution(System);
-
+  let map;
   if (isElectron) {
     const electronCoreModules = ['electron'];
-    var map = electronCoreModules.reduce((map, ea) => {
+    map = electronCoreModules.reduce((map, ea) => {
       map[ea] = '@node/' + ea; return map;
     }, {});
     config.map = obj.merge(map, config.map);
@@ -197,7 +197,7 @@ function prepareSystem (System, config) {
       'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring',
       'readline', 'repl', 'stream', 'stringdecoder', 'timers', 'tls',
       'tty', 'url', 'util', 'v8', 'vm', 'zlib', 'constants', 'worker_threads', 'process'];
-    var map = nodejsCoreModules.reduce((map, ea) => { map[ea] = map['node:' + ea] = '@node/' + ea; return map; }, {});
+    map = nodejsCoreModules.reduce((map, ea) => { map[ea] = map['node:' + ea] = '@node/' + ea; return map; }, {});
     config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
     // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
@@ -323,16 +323,16 @@ function postNormalize (System, normalizeResult, isSync) {
   if (packageRegistry) {
     const referencedPackage = packageRegistry.findPackageWithURL(base);
     if (referencedPackage) {
-      var main = (referencedPackage.main || 'index.js').replace(dotSlashStartRe, '');
-      var withMain = base.replace(trailingSlashRe, '') + '/' + main;
+      let main = (referencedPackage.main || 'index.js').replace(dotSlashStartRe, '');
+      let withMain = base.replace(trailingSlashRe, '') + '/' + main;
       // console.log(`>> [postNormalize] ${withMain} (main 1)`);
       return withMain;
     }
   } else {
     if (base in System.packages) {
-      var main = System.packages[base].main;
+      let main = System.packages[base].main;
       if (main) {
-        var withMain = base.replace(trailingSlashRe, '') + '/' + main.replace(dotSlashStartRe, '');
+        let withMain = base.replace(trailingSlashRe, '') + '/' + main.replace(dotSlashStartRe, '');
         // console.log(`>> [postNormalize] ${withMain} (main 2)`);
         return withMain;
       }
@@ -365,8 +365,8 @@ async function checkExistence (url, System) {
 }
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
-  if (parent && name == 'cjs') return 'cjs';
-  if (name == '@system-env') return name;
+  if (parent && name === 'cjs') return 'cjs';
+  if (name === '@system-env') return name;
   const System = this;
   const stage1 = preNormalize(System, name, parent);
   const stage2 = await proceed(stage1, parent, true);
@@ -393,7 +393,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
       const indexjs = stage3.replace('.js', '/index.js');
       if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
       return stage3.replace('.js', '/index.node');
-    } else if (!stage3.includes('jspm.dev') && stage3 != '@empty') {
+    } else if (!stage3.includes('jspm.dev') && stage3 !== '@empty') {
       if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
       if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
     }
@@ -421,7 +421,7 @@ function decanonicalizeHook (proceed, name, parent, isPlugin) {
 async function locateHook (proceed, load) {
   // we only support loading of esm modules
   // any plugins via the ! notation are ignored
-  const [url, plugin] = load.name.split('!');
+  const [url, _] = load.name.split('!');
   load.name = url;
   const res = await proceed(load);
   return res;
@@ -442,7 +442,7 @@ function normalize_doMapWithObject (mappedObject, pkg, loader) {
   // first map condition to match is used
   let resolved;
   for (const e in mappedObject) {
-    const negate = e[0] == '~';
+    const negate = e[0] === '~';
     const value = normalize_readMemberExpression(negate ? e.substr(1) : e, env);
     if (!negate && value || negate && !value) {
       resolved = mappedObject[e];

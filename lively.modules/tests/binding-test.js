@@ -3,7 +3,7 @@
 import { expect } from 'mocha-es6';
 import { removeDir, createFiles } from './helpers.js';
 
-import { getSystem, removeSystem } from '../src/system.js';
+import { getSystem } from '../src/system.js';
 import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 

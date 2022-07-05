@@ -1,6 +1,6 @@
 /* global beforeEach, afterEach, describe, it */
 
-import { expect, chai } from 'mocha-es6';
+import { expect } from 'mocha-es6';
 
 import { getSystem, removeSystem } from '../src/system.js';
 import module from '../src/module.js';
@@ -24,12 +24,11 @@ let testProjectSpec = {
   })
 };
 
-let S, module1, module2, module3, module4, module5;
+let S, module1, module3, module4, module5;
 
 async function setup () {
   S = getSystem('test', { baseURL: dir });
   module1 = module(S, testProjectDir + 'file1.js');
-  module2 = module(S, testProjectDir + 'file2.js');
   module3 = module(S, testProjectDir + 'file3.js');
   module4 = module(S, testProjectDir + 'file4.js');
   module5 = module(S, testProjectDir + 'file5.js');
@@ -117,7 +116,7 @@ describe('instrumentation', () => {
 
     it('classes have module meta data', async () => {
       await registerPackage(S, testProjectDir);
-      let exports = await S.import(`${testProjectDir}file4.js`);
+      await S.import(`${testProjectDir}file4.js`);
       let Foo = module4.recorder.Foo;
       expect(Foo[Symbol.for('lively-instance-superclass')]).equals(Object);
       expect(Foo[Symbol.for('lively-module-meta')]).containSubset({

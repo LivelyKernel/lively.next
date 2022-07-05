@@ -6,7 +6,7 @@ export function asDir (url) {
   return isJsFile(url) ? url.replace(/\/[^\/]*$/, '') : url.replace(/\/$/, '');
 }
 
-export var join = string.joinPath;
+export const join = string.joinPath;
 
 export function isURL (string) { return /^[^:\\]+:\/\//.test(string); }
 
@@ -21,7 +21,7 @@ export function urlResolve (url) {
   do {
     path = result;
     result = path.replace(/\/[^\/]+\/\.\./, '');
-  } while (result != path);
+  } while (result !== path);
   // foo//bar --> foo/bar
   result = result.replace(/(^|[^:])[\/]+/g, '$1/');
   // foo/./bar --> foo/bar
