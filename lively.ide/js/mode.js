@@ -128,9 +128,9 @@ defineMode('javascript', function crea (config, parserConfig) {
     } else if (ch == '/') {
       if (stream.eat('*')) {
         state.tokenize = tokenComment;
-        return tokenComment(stream, state);
+        return ret('comment', 'comment');
       } else if (stream.eat('/')) {
-        stream.skipToEnd();
+        state.tokenize = tokenLineComment;
         return ret('comment', 'comment');
       } else if (expressionAllowed(stream, state, 1)) {
         readRegexp(stream);
@@ -195,12 +195,40 @@ defineMode('javascript', function crea (config, parserConfig) {
 
   function tokenComment (stream, state) {
     let maybeEnd = false; let ch;
-    while (ch = stream.next()) {
+    let ateSome = false;
+    while (ch = stream.eat(/[^\w\$_\xa1-\uffff]/)) {
+      ateSome = true;
       if (ch == '/' && maybeEnd) {
         state.tokenize = tokenBase;
         break;
       }
       maybeEnd = (ch == '*');
+    }
+    if (ateSome) return ret('comment', 'comment');
+    if (stream.eatWhile(/[\w\$_\xa1-\uffff]/)) {
+      let cur = stream.current();
+      if (cur == 'TODO' || cur == 'FIXME') {
+        return ret('commentHighlight', 'commentHighlight');
+      }
+    }
+    ret('comment', 'comment');
+  }
+
+  function tokenLineComment (stream, state) {
+    if (stream.eatWhile(/[^\w\$_\xa1-\uffff]/)) {
+      if (stream.eol()) {
+        state.tokenize = tokenBase;
+      }
+      return ('comment', 'comment');
+    }
+    if (stream.eatWhile(/[\w\$_\xa1-\uffff]/)) {
+      if (stream.eol()) {
+        state.tokenize = tokenBase;
+      }
+      let cur = stream.current();
+      if (cur == 'TODO' || cur == 'FIXME') {
+        return ret('commentHighlight', 'commentHighlight');
+      }
     }
     return ret('comment', 'comment');
   }
