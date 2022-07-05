@@ -45,7 +45,8 @@
   },
   {
     "name": "lively-system-interface",
-    "repoURL": "https://github.com/LivelyKernel/lively-system-interface"
+    "repoURL": "https://github.com/LivelyKernel/lively-system-interface",
+    "wantsServerInterface": true
   },
   {
     "name": "lively.installer",
