@@ -23,7 +23,8 @@ For some more advanced development operations (bulk testing from the command lin
 - `ss` or `netstat` on MacOs
 - `perl`
 - `python3` with `sultan` installed
-- `brotli`.
+- `brotli`
+- `aspell`.
 
 #### Installation Instructions
 
@@ -60,7 +61,7 @@ On Linux and Windows machines, both of the aforementioned options should usually
 This means, that you can use `start.sh` and `make docker-start` both, independent of the initial means of installation.
 
 **On macs with Apple Silicon, this does not hold.** When switching on such a machine, you will need to remove the `next-node_modules/leveldown` directory and run `install.sh`/`make docker-build` again.
-
+    
 ## Documentation
 
 Some hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki).
