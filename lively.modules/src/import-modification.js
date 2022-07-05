@@ -91,7 +91,7 @@ export class ImportInjector {
   importsToBeReused (importsOfFromModule, importsOfVar, newImport) {
     if (newImport.isDefault) {
       importsOfFromModule = importsOfFromModule.filter(ea =>
-        !ea.specifiers.some(spec => spec.type == 'ImportDefaultSpecifier'));
+        !ea.specifiers.some(spec => spec.type === 'ImportDefaultSpecifier'));
     }
     return importsOfFromModule;
   }
@@ -169,12 +169,12 @@ export class ImportInjector {
     // Since this method is only called with imports this should never happen:
     if (isDefault) console.assert(!!normalSpecifier, 'no ImportSpecifier found');
     else console.assert(normalSpecifier || defaultSpecifier, 'at least one kine of specifier is expected');
-
+    let generated, pos;
     if (isDefault) {
-      var pos = src.slice(0, normalSpecifier.start).lastIndexOf('{') - 1;
+      pos = src.slice(0, normalSpecifier.start).lastIndexOf('{') - 1;
       if (pos < 0) return null;
 
-      var generated = (alias || defaultImpName) + ',';
+      generated = (alias || defaultImpName) + ',';
       const pre = src.slice(0, pos);
       const post = src.slice(pos);
 
@@ -192,7 +192,7 @@ export class ImportInjector {
       };
     }
 
-    var pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end;
+    pos = normalSpecifier ? normalSpecifier.end : defaultSpecifier.end;
     const aliased = alias && alias !== impName;
     const namePart = aliased ? `${impName} as ${alias}` : impName;
     generated = normalSpecifier ? `, ${namePart}` : `, { ${namePart} }`;

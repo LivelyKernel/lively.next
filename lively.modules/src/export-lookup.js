@@ -3,7 +3,7 @@
 // lookup exports of modules
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-import { arr, obj } from 'lively.lang';
+import { obj } from 'lively.lang';
 import { subscribe, unsubscribe } from 'lively.notifications';
 import module from './module.js';
 
@@ -95,7 +95,6 @@ export default class ExportLookup {
     let System = this.System;
     let livelyEnv = System.get('@lively-env') || {};
     let mods = Object.keys(livelyEnv.loadedModules || {});
-    let cache = this.exportByModuleCache;
     let exportsByModule = {};
     let progressLogger = i => {
       if (i % 50 < 1 && options.progress.step) { options.progress.step('Scanning ...', i / mods.length); }
@@ -120,8 +119,6 @@ export default class ExportLookup {
     let excludedPackageURLs = opts.excludedPackageURLs ||
                            (opts.excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
                              System.decanonicalize(url.replace(/\/?$/, '/')).replace(/\/$/, ''))));
-    let livelyEnv = opts.livelyEnv || (opts.livelyEnv = System.get('@lively-env') || {});
-    let mods = opts.modes || (opts.modes = Object.keys(livelyEnv.loadedModules || {}));
 
     if (cache[moduleId]) {
       let result = cache[moduleId].rawExports;

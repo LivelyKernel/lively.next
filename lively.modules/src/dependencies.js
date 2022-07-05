@@ -1,4 +1,4 @@
-import { graph, arr, obj } from 'lively.lang';
+import { arr } from 'lively.lang';
 import { loadedModules } from './system.js';
 
 function computeRequireMap (System) {

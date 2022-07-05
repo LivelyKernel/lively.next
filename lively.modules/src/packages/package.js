@@ -61,7 +61,7 @@ function importPackage (System, packageURL) {
 }
 
 function removePackage (System, packageURL) {
-  let { pkg, url, registry } = lookupPackage(System, packageURL);
+  let { pkg } = lookupPackage(System, packageURL);
   return pkg ? pkg.remove() : null;
 }
 
@@ -108,7 +108,7 @@ function getPackageSpecs (System) {
   //   version: semver version number
   // }, ... ]
   // ```
-  return Package.allPackages(System).map(p => p.asSpec());
+  return Package.allPackages(System).map(p => p.asSpec()); // eslint-disable-line no-use-before-define
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -272,7 +272,7 @@ class Package {
   }
 
   hasResource (urlOrLocalName) {
-    let { System, url: packageURL } = this;
+    let { url: packageURL } = this;
     let res = urlOrLocalName.startsWith(packageURL)
       ? resource(urlOrLocalName)
       : resource(packageURL).join(urlOrLocalName);
@@ -369,7 +369,7 @@ class Package {
 
     try {
       let cfg = optPkgConfig || await this.tryToLoadPackageConfig();
-      let packageConfigResult = this.registerWithConfig(cfg);
+      this.registerWithConfig(cfg);
       this.registerProcess.resolve(cfg);
     } catch (err) {
       this.registerProcess.reject(err);
@@ -452,7 +452,7 @@ class Package {
   async changeAddress (newURL, newName = null, removeOriginal = true) {
     newURL = newURL.replace(/\/?/, '');
 
-    let { System, url: oldURL, name: oldName, version: oldVersion } = this;
+    let { System, url: oldURL } = this;
     let config = await this.runtimeConfig;
     let oldPackageDir = resource(oldURL).asDirectory();
     let newP = new Package(System, newURL);

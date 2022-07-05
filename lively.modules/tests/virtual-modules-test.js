@@ -2,7 +2,6 @@
 
 import { removeDir, createFiles } from './helpers.js';
 import { expect } from 'mocha-es6';
-import { promise } from 'lively.lang';
 
 import { getSystem, removeSystem } from 'lively.modules/src/system.js';
 import module from 'lively.modules/src/module.js';

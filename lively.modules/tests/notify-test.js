@@ -18,8 +18,6 @@ let testProjectSpec = {
   'package.json': '{"name": "test-project-1", "main": "file1.js"}'
 };
 let module1 = testProjectDir + '/file1.js';
-let module2 = testProjectDir + '/file2.js';
-let module3 = testProjectDir + '/file3.js';
 
 describe('notify', () => {
   let system, modulechanged, moduleloaded, moduleunloaded, packageregistered, packageremoved;

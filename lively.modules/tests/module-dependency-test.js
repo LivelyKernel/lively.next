@@ -43,12 +43,12 @@ describe('dependencies', () => {
 
   it('updates exports when internal state changes', async () => {
     await S.import('file1.js');
-    var { y } = await S.import('file2.js');
+    let { y } = await S.import('file2.js');
     expect(y).equals(1);
     expect(module2.recorder.y).equals(1);
     expect(module1.recorder.y).equals(1);
     module2.recorder.inc();
-    var { y } = await S.import('file2.js');
+    ({ y } = await S.import('file2.js'));
     expect(y).equals(2, 'exported state not updated');
     expect(module2.recorder.y).equals(2, 'local state not updated');
     expect(module1.recorder.y).equals(2, 'imported state in module 1 not update');

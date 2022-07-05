@@ -1,4 +1,3 @@
-/* global Buffer, require */
 import { resource, Resource } from 'lively.resources';
 import { promise } from 'lively.lang';
 import {
@@ -8,7 +7,7 @@ import {
 } from './hooks.js';
 import _fetch from 'node-fetch';
 
-let brotli, fetch;
+let fetch;
 if (typeof System !== 'undefined' && System.get('@system-env').node) {
   // we can not directly use require since this is an ESM module
   // and the native node.js runtime will complain.

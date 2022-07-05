@@ -1,4 +1,5 @@
 /* global System,Babel,global,require,__dirname,self */
+/* eslint-disable no-use-before-define */
 'format global';
 (function configure () {
   if (typeof System === 'undefined') System = global.System;
@@ -16,11 +17,9 @@
   if (transpiler === 'lively.transpiler') setupLivelyTranspiler(features);
   else if (transpiler === 'plugin-babel') setupPluginBabelTranspiler(features);
   else console.error('[lively.modules] could not find System transpiler for platform!');
- 
-  if (typeof require !== 'undefined')
-    System._nodeRequire = eval("require"); // hack to enable dynamic requires in bundles
-  if (typeof global !== 'undefined')
-    global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire;
+
+  if (typeof require !== 'undefined') { System._nodeRequire = eval('require'); } // hack to enable dynamic requires in bundles
+  if (typeof global !== 'undefined') { global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire; }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function decideAboutTranspiler (features) {
@@ -51,7 +50,7 @@
     Transpiler.prototype.transpileDoit = function transpileDoit (source, options) {
       // wrap in async function so we can use await top-level
       let System = this.System;
-      var source = '(async function(__rec) {\n' + source.replace(/(\/\/# sourceURL=.+)$|$/, '\n}).call(this);\n$1');
+      var source = '(async function(__rec) {\n' + source.replace(/(\/\/# sourceURL=.+)$|$/, '\n}).call(this);\n$1'); // eslint-disable-line no-var
       let opts = System.babelOptions;
       let needsBabel = (opts.plugins && opts.plugins.length) || (opts.presets && opts.presets.length);
       return needsBabel
