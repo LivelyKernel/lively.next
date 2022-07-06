@@ -74,6 +74,8 @@ for dependant in need_to_check_deps:
                     # Last hope that we do not need to commit a new build: Rebuilding would not change the bundle!\
                     # Build it!
                     print(f"ℹ️ Checking if rebuilding {dependant} would cause changes...")
+                    print(f"ℹ️ Installing lively...")
+                    install = os.system("./install.sh >/dev/null 2>&1")
                     s.npm(f"--prefix {dependant} run build").run()
                     # Check whether we could commit a changed bundle file.
                     git_status = s.git("status").run().stdout
