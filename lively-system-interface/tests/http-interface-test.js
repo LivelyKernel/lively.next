@@ -12,7 +12,7 @@ describe('http lively-system-interface', function () {
     system = serverInterfaceFor('http://localhost:3011/lively-tester');
   });
 
-  after(async () => {
+  after(() => {
     server.kill();
   });
 
