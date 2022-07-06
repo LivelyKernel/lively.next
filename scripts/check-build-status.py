@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 # This script checks whether or not the below defined artifacts (`need_to_check_deps`) are up to date.
-# An artifact is up to date if its dependecies have not been altered since the last build.
+# An artifact is up to date if its dependecies have not been altered since the last build or if its contents would not change when rebuilding.
 # This is checked on a commit basis and should be satisfied before a PR is merged into the main branch.
 # This script assumes that it will be executed from the base of a lively.next repository!
+# Be aware, that this script might run build processes. It is assumed, that this is done in CI and any resulting file changes are thus discarded!
+# If you run this locally, the contents of your repository might change!
 
 import json
 from sultan.api import Sultan
@@ -62,20 +64,27 @@ for dependant in need_to_check_deps:
                 # This figures out if `commit_of_build` is an ancestor of `commit`
                 # See https://git-scm.com/docs/git-rev-list
                 # In this case, we built after modifying the dependency, all is well.
-                # If this is not the case, we need to rebuild.
+                # If this is not the case, we might need to rebuild.
                 # The return value of `os.system()` is a bit weird. 256 means bash return code 1.
                 # See https://stackoverflow.com/a/35362488
                 test = os.system(
                     f"git rev-list {commit_of_build} | grep {commit} > /dev/null"
                 )
                 if test == 256:
-                    print(f"❌ {dependant} needs to be rebuild!")
-                    print(
-                        f"ℹ️  Try running `npm run build` in {dependant}'s directory.\n"
-                    )
-                    fail = True
-                    single_fail = True
-                    break
+                    # Last hope that we do not need to commit a new build: Rebuilding would not change the bundle!\
+                    # Build it!
+                    print(f"ℹ️ Checking if rebuilding {dependant} would cause changes...")
+                    s.npm(f"--prefix {dependant} run build").run()
+                    # Check whether we could commit a changed bundle file.
+                    git_status = s.git("status").run().stdout
+                    if f"{need_to_check_deps[dependant]}" in git_status:
+                        print(f"❌ {dependant} needs to be rebuild!")
+                        print(
+                            f"ℹ️  Try running `npm run build` in {dependant}'s directory.\n"
+                        )
+                        fail = True
+                        single_fail = True
+                        break
             if not single_fail:
                 print(f"✅ Build of {dependant} is up to date!\n")
 
