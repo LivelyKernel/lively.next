@@ -54,7 +54,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
   var __lively_class__ = ${classFunctionHeader}(__first_arg__) {
     if (__first_arg__ && __first_arg__[Symbol.for("lively-instance-restorer")]) {
     } else {
-      this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
+      return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
   };
   return _createOrExtendClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, __lively_classholder__, ${moduleMeta}${pos});
