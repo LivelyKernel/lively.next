@@ -31,7 +31,7 @@ export class CommentBrowserModel extends ViewModel {
             { signal: 'openInWindow', handler: 'openInWindow' }
           ];
         }
-      }      
+      }
     };
   }
 
@@ -39,15 +39,16 @@ export class CommentBrowserModel extends ViewModel {
     const topbar = $world.getSubmorphNamed('lively top bar');
     const margin = 25;
     const bounds = $world.visibleBoundsExcludingTopBar().insetBy(margin);
-    this.view.owner.right = bounds.right();
-    this.view.owner.top = bounds.top();
+    const window = this.view.ownerChain().find(m => m.isWindow);
+    window.right = bounds.right();
+    window.top = bounds.top();
     // when properties panel is opened, position comment browser to the left of it
     if (topbar && topbar.activeSideBars.includes('properties panel')) {
-      this.view.owner.position = this.view.owner.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
+      window.position = window.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
     }
     this.buildCommentGroupMorphs();
     this.updateCommentCountBadge();
-    this.view.owner.epiMorph = true;
+    window.epiMorph = true;
   }
 
   buildCommentGroupMorphs () {
@@ -96,7 +97,7 @@ export class CommentBrowserModel extends ViewModel {
     this.commentGroups[morphID].view.remove();
     delete this.commentGroups[morphID];
   }
-  
+
   toggleArchive () {
     this.showsResolvedComments = !this.showsResolvedComments;
     this.removeAllCommentIndicators();

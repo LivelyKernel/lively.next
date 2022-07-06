@@ -4,7 +4,6 @@ import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { TilingLayout } from 'lively.morphic';
 import { CommentBrowserModel } from '../comment-browser.js';
 
-// CommentBrowser.openInWorld()
 const CommentBrowser = component({
   defaultViewModel: CommentBrowserModel,
   name: 'Comment Browser',
@@ -33,10 +32,10 @@ const CommentBrowser = component({
       layout: new TilingLayout({
         axis: 'column',
         axisAlign: 'center',
-        orderByIndex: true 
+        orderByIndex: true
       })
     }
-  ] 
+  ]
 });
 
 export { CommentBrowser };
