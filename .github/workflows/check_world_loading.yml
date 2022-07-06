@@ -17,6 +17,8 @@ jobs:
           node-version: '17.8.0'
       - name: Checkout repository
         uses: actions/checkout@v3
+      - name: Install puppeteer
+        run: npm i puppeteer
       - name: Install lively.next 
         run:  |
          chmod a+x ./install.sh
