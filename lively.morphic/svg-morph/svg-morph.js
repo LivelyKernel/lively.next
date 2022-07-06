@@ -4,8 +4,8 @@ import { Morph } from 'lively.morphic';
 import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
-import SVGWorkspace from './SVGWorkspace.js';
 import { SVG } from './svg.js';
+import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -83,6 +83,9 @@ export class SVGMorph extends Morph {
       },
       showControlPoints: {
         defaultValue: false
+      },
+      draggable: {
+        defaultValue: true
       }
     };
   }
@@ -118,13 +121,15 @@ export class SVGMorph extends Morph {
     }
   }
 
-  selectElement (target) {
+  selectElement (evt, target) {
+    if (target.id.startsWith('control-point')) return;
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
-    if (this.target) {
+    if (this.target && !evt.controlPoint) {
       if (this.target.selected && t.findOne('rect.my-path-selection')) t.findOne('rect.my-path-selection').remove();
       this.target.selected = false;
+      // this.removeAllControlPoints();
     }
     if (wasSelected) return;
     this.target = target;
@@ -148,8 +153,9 @@ export class SVGMorph extends Morph {
     selection_node.attr({
       'fill-opacity': 0.0,
       stroke: '#000',
-      'stroke-width': 2,
-      'pointer-events': 'none'
+      'stroke-width': 1,
+      'pointer-events': 'none',
+      'stroke-dasharray': '5, 3'
     });
     tar.after(selection_node);
     selection_node.front();
@@ -165,7 +171,6 @@ export class SVGMorph extends Morph {
 
     for (let i = 0; i < targetPath.length; i++) {
       let element = targetPath[i];
-      console.log(element);
       switch (element[0]) {
         case 'Z':
           break;
@@ -192,6 +197,31 @@ export class SVGMorph extends Morph {
     point.addClass('control-point');
 
     return point;
+  }
+
+  onDragStart (evt) {
+    const { domEvt: { target } } = evt;
+    const cssClass = new PropertyPath('attributes.class.value').get(target);
+    if (cssClass && cssClass.includes('control-point')) {
+      this._controlPointDrag = { marker: target };
+    }
+  }
+
+  onDrag (evt) {
+    if (!this._controlPointDrag) return super.onDrag(evt);
+    let { marker, lastDelta } = this._controlPointDrag;
+    this._controlPointDrag.lastDelta = evt.state.absDragDelta;
+    lastDelta = lastDelta || { x: 0, y: 0 };
+    let deltaX = evt.state.absDragDelta.x - lastDelta.x;
+    let deltaY = evt.state.absDragDelta.y - lastDelta.y;
+    SVG(marker).dmove(deltaX, deltaY);
+  }
+
+  onDragEnd (evt) {
+    const { _controlPointDrag } = this;
+    if (_controlPointDrag) {
+      delete this._controlPointDrag;
+    }
   }
 
   removeAllControlPoints () {
@@ -227,7 +257,7 @@ export class SVGMorph extends Morph {
   initializeSVGPath (svgPath) {
     this.svgPath = svgPath;
     const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
-    SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
+    SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt, evt.target); });
     this.width = this.height * ratio;
   }
 }
