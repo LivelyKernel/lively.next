@@ -1,0 +1,31 @@
+name: Check if lively boots
+
+on:
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check if lively boots
+    if: github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '17.8.0'
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install lively.next 
+        run:  |
+         chmod a+x ./install.sh
+         ./install.sh
+      - name: Start the lively server
+        run: |
+          chmod a+x ./start.sh
+          ./start.sh > /dev/null 2>&1 &
+          # wait until server is guaranteed to be running
+          sleep 30
+      - name: Run boot check script
+        run: node scripts/check_boot.js
