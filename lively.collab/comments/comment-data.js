@@ -11,6 +11,7 @@ export class CommentData {
     this.position = relativePosition;
     this.resolved = undefined;
     this.username = UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL).name;
+    this.viewCollapsed = false;
   }
 
   equals (comment) {
