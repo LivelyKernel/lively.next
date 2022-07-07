@@ -7,6 +7,11 @@ test -n "$(grep -i '^[[:blank:]]*cleanup[[:blank:]]*$' "${1}")" && {
 }
 
 firstLine=$(sed -n '1p' "${1}")
+test -n "$(grep -E '^.*[[:upper:]].*+$' <<< "$firstLine")" && {
+        printf >&2 "❌  Do not use upper case letters in the first line of your commit message.\n"
+        exit 1
+}
+
 test "$(wc -m <<< "$firstLine")" -lt 73 || {
         printf >&2 "❌  The first line of your commit message should not be longer than 72 characters.\nFeel free to provide more context separated by a blank line.\n"
         exit 1
