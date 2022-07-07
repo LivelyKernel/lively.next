@@ -26,6 +26,7 @@ import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.
 import { uploadFile } from 'lively.morphic/events/html-drop-handler.js';
 
 import { prompts } from 'lively.components';
+import * as moduleManager from 'lively.modules';
 
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { Halo, MorphHighlighter, ProportionalLayoutHalo, GridLayoutHalo, FlexLayoutHalo } from 'lively.halos';
@@ -497,7 +498,7 @@ export class LivelyWorld extends World {
         if (!Array.isArray(snapshots)) snapshots = [snapshots];
         li = LoadingIndicator.open('pasting morphs...');
         for (const s of snapshots) {
-          const morph = await loadMorphFromSnapshot(s);
+          const morph = await loadMorphFromSnapshot(s, { moduleManager });
           morph.openInWorld(evt.hand.position);
           if (s.copyMeta && s.copyMeta.offset) {
             const { x, y } = s.copyMeta.offset;
@@ -505,6 +506,7 @@ export class LivelyWorld extends World {
           }
           morphs.push(morph);
         }
+        this.halos().forEach(h => h.remove());
         this.showHaloFor(morphs);
       }
     } catch (e) {

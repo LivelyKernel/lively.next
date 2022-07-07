@@ -13,6 +13,7 @@ import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
 import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
 import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
+import * as moduleManager from 'lively.modules';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 
@@ -1185,7 +1186,7 @@ class CopyHaloItem extends HaloItem {
     halo.remove(); // we do not want to copy the halo
     try {
       for (const m of modifiedMorphsToCopy) {
-        const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false });
+        const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false, moduleManager });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);
         html += m.renderPreview();
