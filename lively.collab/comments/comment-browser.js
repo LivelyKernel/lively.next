@@ -4,6 +4,7 @@ import { defaultPropertiesPanelWidth } from 'lively.ide/studio/properties-panel.
 
 import { CommentGroup } from './components/comment.cp.js';
 import { CommentCountBadge } from './components/comment-count-badge.cp.js';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 /**
  * `commentGroups` -- an Object mapping Morphs in the world to CommentGroups listing their comments, based on their Morph ID
  */
@@ -120,9 +121,19 @@ export class CommentBrowserModel extends ViewModel {
 
   /**
    * Needs to return true to indicate that the window should really be closed.
-   * TODO: This could fail if a comment gets edited at the time of closing the `CommentBrowser` (lh: 2021-01-12)
    */
   onWindowClose () {
+    let earlyReturn = false;
+    this.view.withAllSubmorphsDo(m => {
+      if (m.viewModel && m.viewModel.isCommentModel) {
+        if (m.viewModel.isInEditMode) {
+          m.show();
+          $world.setStatusMessage('A comment is currently being edited.', StatusMessageError);
+          earlyReturn = true;
+        }
+      }
+    });
+    if (earlyReturn) return false;
     const topbar = $world.getSubmorphNamed('lively top bar');
     if (topbar) topbar.uncolorCommentBrowserButton();
     let badge = $world.get('comment count badge');
