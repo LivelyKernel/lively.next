@@ -19,7 +19,7 @@ const CommentIndicator = component({
 const ResolvedIndicator = component({
   type: Label,
   tooltip: 'A comment was placed here and resolved',
-  fontColor: Color.rgb(174, 214, 241) 
+  fontColor: Color.rgb(174, 214, 241)
 });
 
 const UnresolvedIndicator = component({

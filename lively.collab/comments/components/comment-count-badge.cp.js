@@ -13,7 +13,7 @@ const CommentCountBadge = component({
     hugContentsHorizontally: true,
     hugContentsVertically: true,
     wrapSubmorphs: false,
-    padding: 2 
+    padding: 4
   }),
   submorphs: [{
     type: Label,
