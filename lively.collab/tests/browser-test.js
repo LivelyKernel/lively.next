@@ -4,13 +4,10 @@ import { CommentBrowser } from 'lively.collab';
 import { Morph } from 'lively.morphic';
 import { part } from 'lively.morphic/components/core.js';
 
-let comment;
-
 describe('comment browser', function () {
-  let morph;
+  let morph, browser, comment;
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
-  let browser;
 
   beforeEach(async function () {
     morph = new Morph().openInWorld();
@@ -26,11 +23,26 @@ describe('comment browser', function () {
   it('has comments displayed', function () {
     let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.viewModel && submorph.viewModel.comment && submorph.viewModel.comment.equals(comment)) {
+      if (submorph.viewModel && submorph.viewModel.isCommentModel && submorph.viewModel.comment.equals(comment)) {
         submorphFound = true;
       }
     });
     expect(submorphFound).to.be.ok;
+  });
+
+  it('has idempotent structure', function () {
+    const beforeStructure = [];
+    browser.withAllSubmorphsDo((submorph) => {
+      beforeStructure.push(submorph.name);
+    });
+    browser.ownerChain().find(m => m.isWindow).close();
+    browser = part(CommentBrowser).openInWindow().targetMorph;
+    const afterStructure = [];
+    browser.withAllSubmorphsDo((submorph) => {
+      afterStructure.push(submorph.name);
+    });
+    expect(beforeStructure).to.deep.equal(afterStructure);
+    $world.withAllSubmorphsDo(m => { if (m.isCommentIndicator) m.remove(); });
   });
 
   it('has name of morph displayed', function () {
@@ -75,18 +87,17 @@ describe('comment browser', function () {
   }
 
   it('comment count label counts comments', async function () {
-    const comment2 = await morph.addComment(exampleText);
     const comment2 = await $world.addCommentFor(morph, exampleText);
-    let label = await getCommentCountLabelString();
+    let label = getCommentCountLabelString();
     expect(label).equals('2');
-    await $world.removeCommentFor(morph, comment2);
-    label = await getCommentCountLabelString();
+    $world.removeCommentFor(morph, comment2);
+    label = getCommentCountLabelString();
     expect(label).equals('1');
   });
 
-  it('comment may be removed', async function () {
+  it('comment may be removed', function () {
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.viewModel && submorph.viewModel.comment) {
+      if (submorph.viewModel && submorph.viewModel.isCommentModel) {
         submorph.viewModel.removeComment();
       }
     });
@@ -100,23 +111,22 @@ describe('comment browser', function () {
     expect(commentMorphLabel).to.be.not.ok;
   });
 
-  afterEach(function () {
+  afterEach(async function () {
     morph.abandon();
-    browser.ownerChain().find(m => m.isWindow).close();
+    await browser.ownerChain().find(m => m.isWindow).close();
   });
 });
 
 describe('comment indicator', function () {
   let morph, browser, indicatorCount;
-  const exampleText = 'Example text';
   const exampleName = 'a test morph';
+  const exampleText = 'Example text';
 
   beforeEach(async function () {
-    morph = new Morph();
+    morph = new Morph().openInWorld();
     morph.name = exampleName;
-    morph.openInWorld();
     browser = part(CommentBrowser).openInWindow().targetMorph;
-    comment = await $world.addCommentFor(morph, exampleText);
+    await $world.addCommentFor(morph, exampleText);
     indicatorCount = 0;
   });
 
@@ -124,8 +134,8 @@ describe('comment indicator', function () {
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === indicatorCount + 1).to.be.ok;
   });
 
-  it('is hidden when browser is not open', function () {
-    browser.ownerChain().find(m => m.isWindow).close();
+  it('is hidden when browser is not open', async function () {
+    await browser.ownerChain().find(m => m.isWindow).close();
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === 0).to.be.ok;
   });
 
@@ -135,9 +145,10 @@ describe('comment indicator', function () {
     copiedMorph.abandon();
   });
 
-  afterEach(function () {
+  afterEach(async function () {
+    debugger;
     morph.abandon();
-    browser.ownerChain().find(m => m.isWindow).close();
+    if (browser.world()) await browser.ownerChain().find(m => m.isWindow).close();
   });
 });
 
