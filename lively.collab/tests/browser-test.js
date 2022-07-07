@@ -45,6 +45,21 @@ describe('comment browser', function () {
     $world.withAllSubmorphsDo(m => { if (m.isCommentIndicator) m.remove(); });
   });
 
+  it('keeps collapsed comment groups collapsed', function () {
+    browser.withAllSubmorphsDo(m => {
+      if (m.viewModel && m.viewModel.isCommentGroupModel) m.viewModel.toggleExpanded();
+    });
+    browser.ownerChain().find(m => m.isWindow).close();
+
+    browser = part(CommentBrowser).openInWindow().targetMorph;
+    let isCollapsed = false;
+    browser.withAllSubmorphsDo(m => {
+      if (m.viewModel && m.viewModel.isCommentGroupModel) isCollapsed = !m.viewModel.isExpanded;
+    });
+    $world.withAllSubmorphsDo(m => { if (m.isCommentIndicator) m.remove(); });
+    expect(isCollapsed).to.be.ok;
+  });
+
   it('has name of morph displayed', function () {
     let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
@@ -146,7 +161,6 @@ describe('comment indicator', function () {
   });
 
   afterEach(async function () {
-    debugger;
     morph.abandon();
     if (browser.world()) await browser.ownerChain().find(m => m.isWindow).close();
   });

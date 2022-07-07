@@ -154,8 +154,6 @@ export class CommentGroupModel extends ViewModel {
           this.setProperty('referenceMorph', referenceMorph);
         }
       },
-      // TODO: this should be saved somewhere, to make the collapse state persistent across sessions
-      // a possible solution would be to mirror this into the state of the CommentData objects 
       isExpanded: {
         defaultValue: true
       },
@@ -175,6 +173,10 @@ export class CommentGroupModel extends ViewModel {
     };
   }
 
+  get isCommentGroupModel () {
+    return true;
+  }
+
   viewDidLoad () {
     this.updateName();
   }
@@ -192,6 +194,10 @@ export class CommentGroupModel extends ViewModel {
     if (commentBrowser) {
       commentBrowser.viewModel.removeAllCommentIndicators();
       commentBrowser.viewModel.showAllCommentIndicators();
+    }
+    if (comment.viewCollapsed) {
+      this.isExpanded = false;
+      this.applyExpanded();
     }
   }
 
@@ -224,6 +230,9 @@ export class CommentGroupModel extends ViewModel {
   toggleExpanded () {
     this.isExpanded = !this.isExpanded;
     this.applyExpanded();
+    this.commentMorphs.forEach(commentMorph => {
+      commentMorph.viewModel.comment.viewCollapsed = !this.isExpanded;
+    });
   }
 
   updateCommentContainerSubmorphs () {
