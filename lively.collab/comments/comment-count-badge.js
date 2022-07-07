@@ -28,7 +28,6 @@ export class CommentCountBadgeModel extends ViewModel {
   }
 
   alignWithMorph () {
-    // TODO: this looks slightly weird at the moment (lh 2022-01-17)
     this.view.position = this.morph.innerBounds().topRight().addPt(pt(-this.width / 2, 0));
   }
 
