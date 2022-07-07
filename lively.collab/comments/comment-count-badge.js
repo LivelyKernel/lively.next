@@ -2,9 +2,6 @@ import { pt } from 'lively.graphics';
 import { connect, disconnect } from 'lively.bindings';
 import { ViewModel } from 'lively.morphic/components/core.js';
 
-// TODO: This should always count the number of unresolved Comments in the world
-// the quick-and-dirty switch to just counting submorphs broke this functionality
-// lh 2022-01-17
 export class CommentCountBadgeModel extends ViewModel {
   static get properties () {
     return {
