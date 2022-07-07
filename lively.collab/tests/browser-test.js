@@ -16,7 +16,7 @@ describe('comment browser', function () {
     morph = new Morph().openInWorld();
     morph.name = exampleName;
     browser = part(CommentBrowser).openInWindow().targetMorph;
-    comment = await morph.addComment(exampleText);
+    comment = await $world.addCommentFor(morph, exampleText);
   });
 
   it('may be opened', function () {
@@ -76,9 +76,10 @@ describe('comment browser', function () {
 
   it('comment count label counts comments', async function () {
     const comment2 = await morph.addComment(exampleText);
+    const comment2 = await $world.addCommentFor(morph, exampleText);
     let label = await getCommentCountLabelString();
     expect(label).equals('2');
-    await morph.removeComment(comment2);
+    await $world.removeCommentFor(morph, comment2);
     label = await getCommentCountLabelString();
     expect(label).equals('1');
   });
@@ -101,7 +102,7 @@ describe('comment browser', function () {
 
   afterEach(function () {
     morph.abandon();
-    browser.owner.close();
+    browser.ownerChain().find(m => m.isWindow).close();
   });
 });
 
@@ -115,7 +116,7 @@ describe('comment indicator', function () {
     morph.name = exampleName;
     morph.openInWorld();
     browser = part(CommentBrowser).openInWindow().targetMorph;
-    comment = await morph.addComment(exampleText);
+    comment = await $world.addCommentFor(morph, exampleText);
     indicatorCount = 0;
   });
 
@@ -124,7 +125,7 @@ describe('comment indicator', function () {
   });
 
   it('is hidden when browser is not open', function () {
-    browser.owner.close();
+    browser.ownerChain().find(m => m.isWindow).close();
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === 0).to.be.ok;
   });
 
@@ -136,7 +137,7 @@ describe('comment indicator', function () {
 
   afterEach(function () {
     morph.abandon();
-    browser.owner.close();
+    browser.ownerChain().find(m => m.isWindow).close();
   });
 });
 

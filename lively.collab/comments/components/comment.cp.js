@@ -22,7 +22,7 @@ const CommentGroup = component({
   borderRadius: 5,
   extent: pt(270.0, 80.0),
   submorphs: [
-    { 
+    {
       name: 'header',
       layout: new TilingLayout({
         orderByIndex: true,
@@ -34,7 +34,7 @@ const CommentGroup = component({
       }),
       height: 32,
       submorphs: [
-        { 
+        {
           name: 'collapse indicator',
           type: Label,
           layout: new TilingLayout({
@@ -43,19 +43,19 @@ const CommentGroup = component({
           textAndAttributes: Icon.textAttribute('caret-down'),
           padding: rect(10, 12, -1, -4)
         },
-        { 
+        {
           name: 'group name label',
           type: Label,
           textString: 'aGroupName',
           fontSize: 15,
           padding: rect(0, 10, 0, -4)
-                    
+
         },
         {
           name: 'container spacer',
           fill: Color.transparent
-        },        
-        { 
+        },
+        {
           name: 'comment count label',
           type: Label,
           fontSize: 15,
@@ -64,7 +64,7 @@ const CommentGroup = component({
         }
       ]
     },
-    { 
+    {
       name: 'comment container',
       layout: new TilingLayout({
         axis: 'column',
@@ -72,10 +72,10 @@ const CommentGroup = component({
         orderByIndex: true,
         wrapSubmorphs: false,
         padding: 5,
-        hugContentsVertically: true 
+        hugContentsVertically: true
       })
     }]
-  
+
 });
 
 const commentButtonEnabled = component({
@@ -83,7 +83,7 @@ const commentButtonEnabled = component({
   fontColor: Color.rgb(127, 140, 141),
   fontSize: 15,
   nativeCursor: 'pointer',
-  halosEnabled: false  
+  halosEnabled: false
 });
 
 const commentButtonDisabled = component({
@@ -95,7 +95,8 @@ const commentLabel = component({
   type: Label,
   fontColor: Color.rgb(112, 123, 124),
   halosEnabled: false,
-  readOnly: true
+  readOnly: true,
+  reactsToPointer: false
 });
 
 // part(Comment).openInWorld()
@@ -123,7 +124,7 @@ const CommentView = component({
       name: 'header',
       height: 40,
       halosEnabled: false,
-      layout: new TilingLayout({  
+      layout: new TilingLayout({
         resizePolicies: [
           ['text container', { height: 'fill', width: 'fill' }]
         ]
@@ -159,7 +160,7 @@ const CommentView = component({
               position: pt(39.6, -7.2),
               master: commentLabel,
               textString: '2022-01-12'
-            }, 
+            },
             {
               type: Label,
               name: 'from label',
@@ -167,11 +168,11 @@ const CommentView = component({
               position: pt(3.6, -7.2),
               master: commentLabel,
               textString: 'From'
-            }, 
+            },
             {
               type: Label,
               name: 'by label',
-              extent: pt(14, 17), 
+              extent: pt(14, 17),
               position: pt(4.4, 7.8),
               master: commentLabel,
               textString: 'By'
@@ -210,7 +211,7 @@ const CommentView = component({
             }
           ]
         }
-        
+
       ]
     },
     // TODO: This showcases a layouting bug which is triggered when the `Comment` needs to grow vertically because lines have been added to the text inside of the `comment text field`
