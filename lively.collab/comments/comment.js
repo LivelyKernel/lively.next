@@ -27,6 +27,10 @@ export class CommentModel extends ViewModel {
     };
   }
 
+  get isCommentModel () {
+    return true;
+  }
+
   onMouseDown (evt) {
     if (!evt.targetMorph.isText && !evt.targetMorph.isLabel) {
       this.commentIndicator.show();
