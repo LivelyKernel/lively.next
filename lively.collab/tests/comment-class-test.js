@@ -4,6 +4,17 @@ import { CommentData } from 'lively.collab';
 import { Morph, config } from 'lively.morphic';
 import { UserRegistry } from 'lively.user';
 
+function morphHasNumberOfComments (morph, number) {
+  if (number === 0) {
+    if (!$world.morphCommentMap.has(morph)) return true;
+  }
+  return $world.morphCommentMap.get(morph).length === number;
+}
+
+function morphHasNoComments (morph) {
+  return morphHasNumberOfComments(morph, 0);
+}
+
 describe('comment object', function () {
   let comment;
   const exampleText = 'Example text';
@@ -49,28 +60,28 @@ describe('morph', function () {
   });
 
   it('a comment may be added', async function () {
-    comment = await morph.addComment(exampleText);
+    comment = await $world.addCommentFor(morph, exampleText);
     expect(morphHasNumberOfComments(morph, 1));
     expect(morph.comments[0].text).equals(exampleText);
   });
 
   it('a comment may be removed', async function () {
-    comment = await morph.addComment(exampleText);
+    comment = await $world.addCommentFor(morph, exampleText);
     expect(morph.comments[0].equals(comment)).to.be.ok;
-    await morph.removeComment(comment);
+    await $world.removeCommentFor(morph, comment);
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 
   it('comments may be emptied', async function () {
-    await morph.addComment(exampleText);
-    await morph.addComment(exampleText);
+    await $world.addCommentFor(morph, exampleText);
+    await $world.addCommentFor(morph, exampleText);
     expect(morphHasNumberOfComments(morph, 2)).to.be.ok;
-    await morph.emptyComments();
+    await $world.emptyCommentsFor(morph);
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 
   it('with comments can be copied to morph with empty comments', async function () {
-    comment = await morph.addComment(exampleText);
+    comment = await $world.addCommentFor(morph, exampleText);
     const morph2 = morph.copy(true);
     expect(morph2.comments.length === 0).to.be.ok;
     expect(morph.comments[0].equals(comment)).to.be.ok;
@@ -78,15 +89,7 @@ describe('morph', function () {
   });
 
   afterEach(async function () {
-    morph.emptyComments();
+    $world.emptyCommentsFor(morph);
     morph.abandon();
   });
-
-  function morphHasNoComments (morph) {
-    return morphHasNumberOfComments(morph, 0);
-  }
-
-  function morphHasNumberOfComments (morph, number) {
-    return morph.comments.length === number;
-  }
 });

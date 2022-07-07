@@ -112,7 +112,9 @@ export class CommentBrowserModel extends ViewModel {
 
   getUnresolvedCommentCount () {
     let count = 0;
-    $world.withAllSubmorphsDo(m => count += m.comments.filter(c => !c.resolved).length);
+    for (const commentsOfMorph of $world.morphCommentMap.values()) {
+      count += commentsOfMorph.filter(c => !c.resolved).length;
+    }
     return count;
   }
 

@@ -1681,6 +1681,11 @@ export class Morph {
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
   }
 
+  /**
+   * Removes a morph from the morph hierarchy, meaning it has no longer any owner and is thus not visible.
+   * If a reference to the morph exists, it can again be added into the hierarchy later.
+   * @returns {Morph} The Morph on which this method was called.
+   */
   remove () {
     signal(this, 'onRemove');
     this.ownerChain().forEach(m => {
@@ -1696,10 +1701,16 @@ export class Morph {
     return this;
   }
 
+  /**
+   * Different than `remove`, this method should be used to indicate than this morph is no longer needed.
+   * It can be handy to e.g. clean up connections and other resources.
+   * @param {Boolean} remove - Whether or not remove() should be called. Normally, it does not make sense to set this to be false, as abandoning indicates that a morph is no longer to be used.
+   * `remove` was introduced as a band-aid for the old master component system (before we had declarative components)
+   * FIXME: can the parameter be removed?
+   */
   abandon (remove = true) {
-    // Use this method to signal the wish to permanently delete this object. Overwrite this method to clean up resources on its deletion. We do not have access to the JS VM, this method does not interact with the garbage collector and does not result in the actual deletion of the object, if there are still left over references to this object.
     signal(this, 'onAbandon');
-    this.emptyComments();
+    if ($world.isIDEWorld) $world.emptyCommentsFor(this);
     if (remove) this.remove();
     this.submorphs.forEach(submorph => submorph.abandon(false)); // do not remove submorphs
   }
@@ -2601,25 +2612,19 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // comments
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  async addComment (commentText, relativePosition = pt(0, 0)) {
-    const { CommentData } = await System.import('lively.collab');
-    const comment = new CommentData(commentText, relativePosition);
-    this.comments.push(comment);
-    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    if (commentBrowser) commentBrowser.viewModel.addCommentForMorph(comment, this);
-    return comment;
-  }
 
-  removeComment (commentToRemove) {
-    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    if (commentBrowser) commentBrowser.viewModel.removeCommentForMorph(commentToRemove, this);
-    this.comments = this.comments.filter(comment => !commentToRemove.equals(comment));
-  }
-
-  emptyComments () {
-    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    if (commentBrowser) this.comments.forEach((comment) => commentBrowser.viewModel.removeCommentForMorph(comment, this));
-    this.comments = [];
+  /**
+   * Retrieves comments made on this morph from the world and returns them. Returns an empty array when no comments exist.
+   * @see `lively.collab` for more information on comments.
+   * Comments are only available when the world is a `LivelyWorld` provided by `lively.ide`.
+   * When comments are not available, this method returns an empty array.
+   * @returns {[CommentData]} An array of the comments on this morph or an empty array 
+   */
+  get comments () {
+    if (!$world.isIDEWorld) return [];
+    const commentMap = $world.morphCommentMap;
+    if (!commentMap.has(this)) return [];
+    else return commentMap.get(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

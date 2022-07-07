@@ -37,6 +37,7 @@ import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from '
 import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
+import { CommentData } from 'lively.collab';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -84,8 +85,18 @@ export class LivelyWorld extends World {
       draggable: {
         readOnly: true,
         get () { return !touchInputDevice; }
+      },
+      morphCommentMap: {
+        initialize () {
+          this.morphCommentMap = new Map();
+        },
+        doc: 'Stores a mapping from Morphs to an Array with their comments (if they have any).'
       }
     };
+  }
+
+  get isIDEWorld () {
+    return true;
   }
 
   visibleBoundsExcludingTopBar () {
@@ -522,6 +533,52 @@ export class LivelyWorld extends World {
       this.showError(e);
     } finally {
       if (li) li.remove();
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // comments
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  /**
+   * Creates a comment with `commentText` on `morph` at `relativePosition`.
+   * For more information on the comments feature @see `lively.collab`.
+   * @param {Morph} morph
+   * @param {String} commentText
+   * @param {Point} relativePosition
+   * @returns {CommentData} The comment created. CommentData holds some more information, e.g. the timestamp of the comment creation.
+   */
+  async addCommentFor (morph, commentText, relativePosition = pt(0, 0)) {
+    const comment = new CommentData(commentText, relativePosition);
+    if (this.morphCommentMap.has(morph)) this.morphCommentMap.set(morph, this.morphCommentMap.get(morph).concat([comment]));
+    else this.morphCommentMap.set(morph, [comment]);
+
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (commentBrowser) commentBrowser.viewModel.addCommentForMorph(comment, morph);
+    return comment;
+  }
+
+  /**
+   * Removes the specified `commentToRemove` that was made on `morph`.
+   * @param {Morph} morph
+   * @param {CommentData} commentToRemove 
+   */
+  removeCommentFor (morph, commentToRemove) {
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (commentBrowser) commentBrowser.viewModel.removeCommentForMorph(commentToRemove, morph);
+    this.morphCommentMap.set(morph, arr.without(this.morphCommentMap.get(morph), commentToRemove));
+  }
+
+  /**
+   * Shorthand to remove all comments belonging to `morph`.
+   * Used e.g. when a morph is abandoned, thus rendering its comments obsolete.
+   * @param {Morph} morph
+   */
+  emptyCommentsFor (morph) {
+    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    if (this.morphCommentMap.has(morph)) {
+      if (commentBrowser) this.morphCommentMap.get(morph).forEach((comment) => commentBrowser.viewModel.removeCommentForMorph(comment, morph));
+      this.morphCommentMap.set(morph, []);
     }
   }
 
@@ -1053,7 +1110,7 @@ export class LivelyWorld extends World {
           const yRelative = self.localize(evt.position).y / self.height;
           relativePosition = pt(xRelative, yRelative);
         }
-        await self.addComment(commentText, relativePosition);
+        await $world.addCommentFor(self, commentText, relativePosition);
         $world.setStatusMessage('Comment saved', StatusMessageConfirm);
       } else {
         $world.setStatusMessage('Comment not saved', StatusMessageError);

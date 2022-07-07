@@ -30,7 +30,7 @@ export class CommentModel extends ViewModel {
   onMouseDown (evt) {
     if (!evt.targetMorph.isText && !evt.targetMorph.isLabel) {
       this.commentIndicator.show();
-      this.referenceMorph.show();      
+      this.referenceMorph.show();
     }
   }
 
@@ -38,7 +38,7 @@ export class CommentModel extends ViewModel {
     this.comment.text = this.ui.commentTextField.textString;
     this.setDefaultUI();
   }
-  
+
   abortCommentEdit () {
     this.ui.commentTextField.textString = this.comment.text;
     this.setDefaultUI();
@@ -78,12 +78,12 @@ export class CommentModel extends ViewModel {
   enabledButtonAppearance () {
     this.ui.resolveButton.master = commentButtonEnabled;
     this.ui.resolveButton.tooltip = this.comment.isResolved() ? 'Unresolve Comment' : 'Resolve Comment';
-    this.ui.resolveButton.textAndAttributes = Icon.textAttribute(this.comment.isResolved() ? 'undo-alt' : 'check'); 
-    
+    this.ui.resolveButton.textAndAttributes = Icon.textAttribute(this.comment.isResolved() ? 'undo-alt' : 'check');
+
     this.ui.deleteButton.master = commentButtonEnabled;
     this.ui.deleteButton.tooltip = 'Delete Comment';
   }
-  
+
   disabledButtonAppearance () {
     this.ui.resolveButton.master = commentButtonDisabled;
     this.ui.resolveButton.tooltip = 'Save comment to be able to resolve it';
@@ -100,9 +100,9 @@ export class CommentModel extends ViewModel {
   }
 
   removeComment () {
-    this.referenceMorph.removeComment(this.comment);
+    $world.removeCommentFor(this.referenceMorph, this.comment);
   }
-  
+
   viewDidLoad () {
     this.enabledButtonAppearance();
     this.ui.commentTextField.textString = this.comment.text;
@@ -112,7 +112,7 @@ export class CommentModel extends ViewModel {
 
   setDate () {
     const [date, time] = new Date(this.comment.timestamp).toLocaleString('de-DE', { hour12: false }).split(', ');
-    this.ui.dateLabel.textString = date + ' ' + time; 
+    this.ui.dateLabel.textString = date + ' ' + time;
   }
 
   setUser () {
@@ -122,11 +122,11 @@ export class CommentModel extends ViewModel {
     }
     this.ui.userNameLabel.textString = username;
   }
-  
+
   showCommentIndicator () {
     this.commentIndicator = part(CommentIndicator, {
-      viewModel: { 
-        referenceMorph: this.referenceMorph, 
+      viewModel: {
+        referenceMorph: this.referenceMorph,
         commentMorph: this,
         comment: this.comment,
         _referenceMorphMoving: false
