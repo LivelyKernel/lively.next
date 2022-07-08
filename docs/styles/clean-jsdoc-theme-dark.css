@@ -1,0 +1,390 @@
+@media (prefers-color-scheme: light) {
+    :root {
+        --code-background: #f9f9f9;
+        --search-background: #dcdcdc;
+        --table-background: #f9f9f900;
+        --code-keyword: #708;
+        --code-string: #181;
+        --code-comment: #666;
+        --code-literal: #174;
+        --code-punctuation: #05a;
+        --code-openbracket: #997;
+        --code-declaration: #05a;
+        --code-pln: #000;
+
+        --bg: white;
+        --bg-nav: #f8f8fa;
+        --bg-nav-sub: #dedede;
+        --font: #2f343a;
+        --name: #2f343a;
+        --link: #00799e;
+        --delim: #2f343a;
+        --bg-search: white;
+        --search-hover: rgb(57, 127, 232);
+        --font-hover: white;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --code-background: rgb(44, 62, 80);
+        --table-background: rgba(44, 62, 80, 0.5);
+        --search-background: var(--code-background);
+        --code-keyword: rgb(204, 109, 243);
+        --code-string: #98c378;
+        --code-comment: #7F848E;
+        --code-literal: rgb(255,153,0);
+        --code-punctuation: #abb2bf;
+        --code-openbracket: #515a6b;
+        --code-declaration: #d19a66;
+        --code-pln: #d19a66;
+
+        --bg: #1b1f25;
+        --bg-nav: #252b34;
+        --bg-nav-sub: #333b48;
+        --font: white;
+        --name: white;
+        --link: #00a3d5;
+        --delim: #7F848E;
+        --bg-search: black;
+        --search-hover: rgb(116, 213, 215);
+        --font-hover: black;
+    }
+}
+
+::selection {
+    background: rgba(212,230,241,0.8);
+    /* color: #1d1919; */
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--font)
+}
+
+a,
+a:active {
+    color: var(--link)
+}
+
+hr {
+    border: 1px solid #eee;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--font)
+}
+
+h1,
+h2 {
+    border-bottom: 0.0625rem solid #eee;
+}
+
+.navbar {
+    background: var(--bg-nav);
+}
+
+.navbar-ham {
+    background: #ddd;
+}
+
+.navbar-ham .first,
+.navbar-ham .second,
+.navbar-ham .third {
+    background: #000;
+}
+
+.navbar-resize {
+    background: #eee;
+}
+
+.resize-dots-container .dots {
+    background-color: #000;
+}
+
+blockquote {
+    background: #f7f7f7;
+    color: #888;
+}
+
+
+.search-box-input-container {
+    background: var(--search-background);
+}
+
+.search-icon {
+    fill: #888;
+}
+
+.search-box-input {
+    color: var(--font);
+}
+
+.search-box-input::placeholder {
+    color: #888;
+}
+
+.search-box-input:focus + .search-icon {
+    fill: var(--link);
+}
+
+.search-item-ul {
+    background: var(--bg-search);
+}
+
+.search-item-ul li:hover {
+    background: var(--search-hover);
+}
+
+.search-item-ul a:hover {
+    color: var(--font-hover);
+}
+
+.search-item-ul a,
+.search-item-ul li {
+    color: var(--font);
+    font-family: code;
+}
+
+.accordion-heading {
+    color: var(--font);
+    fill: var(--font);
+}
+
+.accordion-content {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.accordion-content a {
+    color: var(--font);
+}
+
+.methods.accordion-content {
+    background: var(--bg-nav-sub);
+    font-style: italic;
+    padding-left: 10px;
+}
+
+.menu-link {
+    color: var(--font);
+}
+
+.signature-attributes {
+    color: #aaa;
+}
+
+.ancestors {
+    color: #999;
+}
+
+.ancestors a {
+    color: #999 !important;
+}
+
+.important {
+    color: #950b02;
+}
+
+.type-signature {
+    color: rgb(245,124,0);
+}
+
+.name,
+.name a {
+    color: var(--name)
+}
+
+h4.name {
+    padding-top: 10px;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--delim);
+}
+
+.details {
+    border-radius: 8px;
+    background: var(--code-background);
+    color: var(--font);
+}
+
+.member-item-container strong,
+.method-member-container strong {
+    color: var(--font);
+}
+
+.prettyprint,
+.pre-top-bar-container {
+    background: var(--code-background);
+}
+
+.prettyprint code {
+    background-color: var(--code-background);
+}
+
+.prettyprint.linenums li {
+    border-left: 3px #222831 solid;
+}
+
+/* stylelint-disable */
+.prettyprint.linenums li.selected,
+.prettyprint.linenums li.selected * {
+    background-color: #404040;
+}
+/* stylelint-enable */
+
+table,
+.params,
+.props {
+    overflow: hidden;
+    background: var(--table-background);
+    box-shadow: 0 0 15px -4px rgba(0, 0, 0, 0.1);
+}
+
+table .name,
+.params .name,
+.props .name,
+.name code {
+    color: var(--font);
+}
+
+table td,
+.params td {
+    border-top: 1px solid #eee;
+}
+
+table thead tr,
+.params thead tr,
+.props thead tr {
+    background-color: var(--code-background);
+    color: var(--font);
+}
+
+/* stylelint-disable */
+table .params thead tr,
+.params .params thead tr,
+.props .props thead tr {
+    background-color: #fff;
+    color: #000;
+}
+
+/* dl.param-type {
+    border-bottom: 1px solid hsl(0, 0%, 87%);
+} */
+
+.disabled {
+    color: #454545;
+}
+
+
+.code-copy-icon-container {
+    fill: #fff;
+}
+
+.code-copy-icon-container:hover {
+    background-color: #fff;
+    fill: #000;
+}
+
+.code-lang-name {
+    color: #ff8a00;
+}
+
+.tooltip {
+    background: #ffce76;
+    color: #000;
+}
+
+.tooltip .pun,
+.tooltip .typ {
+    background: #ffce76;
+    color: #000;
+}
+
+.pln {
+    color: var(--code-pln);
+}
+
+/* string content */
+.str {
+    color: var(--code-string);
+}
+
+/* a keyword */
+.kwd {
+    color: var(--code-keyword);
+}
+
+/* a comment */
+.com {
+    color: var(--code-comment);
+}
+
+/* a type name */
+.typ {
+    color: #b1b1b1;
+}
+
+/* a literal value */
+.lit {
+    color: var(--code-literal);
+}
+
+/* punctuation */
+.pun {
+    color: var(--code-punctuation);
+}
+
+/* lisp open bracket */
+.opn {
+    color: var(--code-openbracket);
+}
+
+/* lisp close bracket */
+.clo {
+    color: var(--code-openbracket);
+}
+
+/* a markup tag name */
+.tag {
+    color: #007bff;
+}
+
+/* a markup attribute name */
+.atn {
+    color: #f5d67b;
+}
+
+/* a markup attribute value */
+.atv {
+    color: #3e999f;
+}
+
+/* a declaration */
+.dec {
+    color: var(--code-declaration);
+}
+
+/* a variable name */
+.var {
+    color: var(--code-declaration)
+}
+
+/* a function name */
+.fun {
+    color: var(--code-declaration)
+}
+
+ol.linenums li {
+    color: #fff;
+}
+
+
+code {
+    background: var(--code-background);
+    color: var(--font);
+}

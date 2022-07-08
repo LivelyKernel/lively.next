@@ -1,0 +1,2745 @@
+<!DOCTYPE html><html lang="en" style="font-size:16px"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="favicon.ico"><title>lively.ast/lib/stringify.js</title><!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--><script src="scripts/third-party/hljs.js" defer="defer"></script><script src="scripts/third-party/hljs-line-num.js" defer="defer"></script><script src="scripts/third-party/popper.js" defer="defer"></script><script src="scripts/third-party/tippy.js" defer="defer"></script><script src="scripts/third-party/tocbot.js"></script><script>var baseURL="/",locationPathname="",baseURL=(locationPathname=document.location.pathname).substr(0,locationPathname.lastIndexOf("/")+1)</script><link rel="stylesheet" href="styles/clean-jsdoc-theme.min.css"><svg aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none"><defs><symbol id="copy-icon" viewbox="0 0 488.3 488.3"><g><path d="M314.25,85.4h-227c-21.3,0-38.6,17.3-38.6,38.6v325.7c0,21.3,17.3,38.6,38.6,38.6h227c21.3,0,38.6-17.3,38.6-38.6V124    C352.75,102.7,335.45,85.4,314.25,85.4z M325.75,449.6c0,6.4-5.2,11.6-11.6,11.6h-227c-6.4,0-11.6-5.2-11.6-11.6V124    c0-6.4,5.2-11.6,11.6-11.6h227c6.4,0,11.6,5.2,11.6,11.6V449.6z"/><path d="M401.05,0h-227c-21.3,0-38.6,17.3-38.6,38.6c0,7.5,6,13.5,13.5,13.5s13.5-6,13.5-13.5c0-6.4,5.2-11.6,11.6-11.6h227    c6.4,0,11.6,5.2,11.6,11.6v325.7c0,6.4-5.2,11.6-11.6,11.6c-7.5,0-13.5,6-13.5,13.5s6,13.5,13.5,13.5c21.3,0,38.6-17.3,38.6-38.6    V38.6C439.65,17.3,422.35,0,401.05,0z"/></g></symbol><symbol id="search-icon" viewBox="0 0 512 512"><g><g><path d="M225.474,0C101.151,0,0,101.151,0,225.474c0,124.33,101.151,225.474,225.474,225.474    c124.33,0,225.474-101.144,225.474-225.474C450.948,101.151,349.804,0,225.474,0z M225.474,409.323    c-101.373,0-183.848-82.475-183.848-183.848S124.101,41.626,225.474,41.626s183.848,82.475,183.848,183.848    S326.847,409.323,225.474,409.323z"/></g></g><g><g><path d="M505.902,476.472L386.574,357.144c-8.131-8.131-21.299-8.131-29.43,0c-8.131,8.124-8.131,21.306,0,29.43l119.328,119.328    c4.065,4.065,9.387,6.098,14.715,6.098c5.321,0,10.649-2.033,14.715-6.098C514.033,497.778,514.033,484.596,505.902,476.472z"/></g></g></symbol><symbol id="font-size-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11.246 15H4.754l-2 5H.6L7 4h2l6.4 16h-2.154l-2-5zm-.8-2L8 6.885 5.554 13h4.892zM21 12.535V12h2v8h-2v-.535a4 4 0 1 1 0-6.93zM19 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></symbol><symbol id="add-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></symbol><symbol id="minus-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M5 11h14v2H5z"/></symbol><symbol id="dark-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></symbol><symbol id="light-theme-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></symbol><symbol id="reset-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.537 19.567A9.961 9.961 0 0 1 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c0 2.136-.67 4.116-1.81 5.74L17 12h3a8 8 0 1 0-2.46 5.772l.997 1.795z"/></symbol><symbol id="down-icon" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.7803 6.21967C13.0732 6.51256 13.0732 6.98744 12.7803 7.28033L8.53033 11.5303C8.23744 11.8232 7.76256 11.8232 7.46967 11.5303L3.21967 7.28033C2.92678 6.98744 2.92678 6.51256 3.21967 6.21967C3.51256 5.92678 3.98744 5.92678 4.28033 6.21967L8 9.93934L11.7197 6.21967C12.0126 5.92678 12.4874 5.92678 12.7803 6.21967Z"></path></symbol><symbol id="codepen-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M16.5 13.202L13 15.535v3.596L19.197 15 16.5 13.202zM14.697 12L12 10.202 9.303 12 12 13.798 14.697 12zM20 10.869L18.303 12 20 13.131V10.87zM19.197 9L13 4.869v3.596l3.5 2.333L19.197 9zM7.5 10.798L11 8.465V4.869L4.803 9 7.5 10.798zM4.803 15L11 19.131v-3.596l-3.5-2.333L4.803 15zM4 13.131L5.697 12 4 10.869v2.262zM2 9a1 1 0 0 1 .445-.832l9-6a1 1 0 0 1 1.11 0l9 6A1 1 0 0 1 22 9v6a1 1 0 0 1-.445.832l-9 6a1 1 0 0 1-1.11 0l-9-6A1 1 0 0 1 2 15V9z"/></symbol><symbol id="close-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 10.586l4.95-4.95 1.414 1.414-4.95 4.95 4.95 4.95-1.414 1.414-4.95-4.95-4.95 4.95-1.414-1.414 4.95-4.95-4.95-4.95L7.05 5.636z"/></symbol><symbol id="menu-icon" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"/><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></symbol></defs></svg></head><body class="dark" data-theme="dark"><div class="sidebar-container"><div class="sidebar" id="sidebar"><img src="logo.svg" style="padding:0 5px"><div class="sidebar-items-container"><div class="sidebar-section-title with-arrow" data-isopen="false" id="FWs4wI-IV8R9wzGO04k5k"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="lively.module_lang_array.html">lang/array</a></div><div class="sidebar-section-children"><a href="lively.module_lang_array-projection.html">lang/array-projection</a></div><div class="sidebar-section-children"><a href="lively.module_lang_closure.html">lang/closure</a></div><div class="sidebar-section-children"><a href="lively.module_lang_function.html">lang/function</a></div><div class="sidebar-section-children"><a href="lively.module_lang_graph.html">lang/graph</a></div><div class="sidebar-section-children"><a href="lively.module_lang_interval.html">lang/interval</a></div><div class="sidebar-section-children"><a href="lively.module_lang_number.html">lang/number</a></div><div class="sidebar-section-children"><a href="lively.module_lang_object.html">lang/object</a></div><div class="sidebar-section-children"><a href="lively.module_lang_promise.html">lang/promise</a></div><div class="sidebar-section-children"><a href="lively.module_lang_properties.html">lang/properties</a></div><div class="sidebar-section-children"><a href="module-symbol-tree.html">symbol-tree</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="mRYPhYMJq11CFyVsy8K9t"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSDocumentRule.html">CSSDocumentRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSFontFaceRule.html">CSSFontFaceRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSHostRule.html">CSSHostRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSImportRule.html">CSSImportRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSKeyframeRule.html">CSSKeyframeRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSKeyframesRule.html">CSSKeyframesRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSMediaRule.html">CSSMediaRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSRule.html">CSSRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleDeclaration.html">CSSStyleDeclaration</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleRule.html">CSSStyleRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleSheet.html">CSSStyleSheet</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSValue.html">CSSValue</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSValueExpression.html">CSSValueExpression</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.MatcherList.html">MatcherList</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.MediaList.html">MediaList</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.StyleSheet.html">StyleSheet</a></div><div class="sidebar-section-children"><a href="BodyControlModel.html">BodyControlModel</a></div><div class="sidebar-section-children"><a href="BorderControlModel.html">BorderControlModel</a></div><div class="sidebar-section-children"><a href="BorderPopupWindow.html">BorderPopupWindow</a></div><div class="sidebar-section-children"><a href="ConstraintsControlModel.html">ConstraintsControlModel</a></div><div class="sidebar-section-children"><a href="DynamicPropertyModel.html">DynamicPropertyModel</a></div><div class="sidebar-section-children"><a href="lively.module_lang_closure.html">module:lang/closure</a></div><div class="sidebar-section-children"><a href="MasterComponentTreeData.html">MasterComponentTreeData</a></div><div class="sidebar-section-children"><a href="ModeSelectorModel.html">ModeSelectorModel</a></div><div class="sidebar-section-children"><a href="module-symbol-tree.html">module:symbol-tree</a></div><div class="sidebar-section-children"><a href="ResizingControlModel.html">ResizingControlModel</a></div><div class="sidebar-section-children"><a href="SingleNumberModel.html">SingleNumberModel</a></div><div class="sidebar-section-children"><a href="SingleSelectionModel.html">SingleSelectionModel</a></div><div class="sidebar-section-children"><a href="Snippet_Snippet.html">Snippet</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="Xo_iQ65Li3XIUkLpbFFqg"><div>Tutorials</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="tutorial-Documentation.html">Documentation</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="XJflU5F9G727fbo7CQ0ZF"><div>Interfaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="core.NodeFilter.acceptNode.html">acceptNode</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="KNNU7BhlaqN9aHvD2kGw9"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#describe">describe</a></div><div class="sidebar-section-children"><a href="global.html#ensureFolder">ensureFolder</a></div><div class="sidebar-section-children"><a href="global.html#joinPath">joinPath</a></div><div class="sidebar-section-children"><a href="global.html#LinterMessage">LinterMessage</a></div><div class="sidebar-section-children"><a href="global.html#parseDescribeBlock">parseDescribeBlock</a></div><div class="sidebar-section-children"><a href="global.html#punycode">punycode</a></div><div class="sidebar-section-children"><a href="global.html#Tab">Tab</a></div><div class="sidebar-section-children"><a href="global.html#TabContainer">TabContainer</a></div><div class="sidebar-section-children"><a href="global.html#TabContentContainer">TabContentContainer</a></div><div class="sidebar-section-children"><a href="global.html#Tabs">Tabs</a></div></div></div></div></div><div class="navbar-container" id="VuAckcnZhf"><nav class="navbar"><div class="navbar-left-items"></div><div class="navbar-right-items"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#light-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div><nav></nav></nav></div><div class="toc-container"><div class="toc-content"><span class="bold">On this page</span><div id="eed4d2a0bfd64539bb9df78095dec881"></div></div></div><div class="body-wrapper"><div class="main-content"><div class="main-wrapper"><section id="source-page" class="source-page"><header><h1 id="title" class="has-anchor">lively.ast_lib_stringify.js</h1></header><article><pre class="prettyprint source lang-js"><code>/* global require,global */
+import { obj } from 'lively.lang';
+import estraverse from '@javascript-obfuscator/estraverse';
+import esutils from 'esutils';
+
+// FORKED ESCODEGEN
+function ESCODEGEN () {
+  let Syntax,
+    Precedence,
+    BinaryPrecedence,
+    SourceNode,
+    base,
+    indent,
+    json,
+    renumber,
+    hexadecimal,
+    quotes,
+    escapeless,
+    newline,
+    space,
+    parentheses,
+    semicolons,
+    safeConcatenation,
+    directive,
+    extra,
+    parse,
+    sourceMap,
+    sourceCode,
+    preserveBlankLines,
+    FORMAT_MINIFY,
+    FORMAT_DEFAULTS;
+
+  Syntax = estraverse.Syntax;
+
+  // Generation is done by generateExpression.
+  function isExpression (node) {
+    return CodeGenerator.Expression.hasOwnProperty(node.type); // eslint-disable-line no-use-before-define
+  }
+
+  // Generation is done by generateStatement.
+  function isStatement (node) {
+    return CodeGenerator.Statement.hasOwnProperty(node.type); // eslint-disable-line no-use-before-define
+  }
+
+  Precedence = {
+    Sequence: 0,
+    Yield: 1,
+    Assignment: 1,
+    Conditional: 2,
+    ArrowFunction: 2,
+    NullishCoalescing: 3,
+    LogicalOR: 3,
+    LogicalAND: 4,
+    BitwiseOR: 5,
+    BitwiseXOR: 6,
+    BitwiseAND: 7,
+    Equality: 8,
+    Relational: 9,
+    BitwiseSHIFT: 10,
+    Additive: 11,
+    Multiplicative: 12,
+    Exponentiation: 13,
+    Await: 14,
+    Unary: 14,
+    Postfix: 15,
+    OptionalChaining: 16,
+    Call: 17,
+    New: 18,
+    TaggedTemplate: 19,
+    Member: 20,
+    Primary: 21
+  };
+
+  BinaryPrecedence = {
+    '??': Precedence.NullishCoalescing,
+    '||': Precedence.LogicalOR,
+    '&amp;&amp;': Precedence.LogicalAND,
+    '|': Precedence.BitwiseOR,
+    '^': Precedence.BitwiseXOR,
+    '&amp;': Precedence.BitwiseAND,
+    '==': Precedence.Equality,
+    '!=': Precedence.Equality,
+    '===': Precedence.Equality,
+    '!==': Precedence.Equality,
+    is: Precedence.Equality,
+    isnt: Precedence.Equality,
+    '&lt;': Precedence.Relational,
+    '>': Precedence.Relational,
+    '&lt;=': Precedence.Relational,
+    '>=': Precedence.Relational,
+    in: Precedence.Relational,
+    instanceof: Precedence.Relational,
+    '&lt;&lt;': Precedence.BitwiseSHIFT,
+    '>>': Precedence.BitwiseSHIFT,
+    '>>>': Precedence.BitwiseSHIFT,
+    '+': Precedence.Additive,
+    '-': Precedence.Additive,
+    '*': Precedence.Multiplicative,
+    '%': Precedence.Multiplicative,
+    '/': Precedence.Multiplicative,
+    '**': Precedence.Exponentiation
+  };
+
+  // Flags
+  let F_ALLOW_IN = 1;
+  let F_ALLOW_CALL = 1 &lt;&lt; 1;
+  let F_ALLOW_UNPARATH_NEW = 1 &lt;&lt; 2;
+  let F_FUNC_BODY = 1 &lt;&lt; 3;
+  let F_DIRECTIVE_CTX = 1 &lt;&lt; 4;
+  let F_SEMICOLON_OPT = 1 &lt;&lt; 5;
+
+  // Expression flag sets
+  // NOTE: Flag order:
+  // F_ALLOW_IN
+  // F_ALLOW_CALL
+  // F_ALLOW_UNPARATH_NEW
+  let E_FTT = F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW;
+  let E_TTF = F_ALLOW_IN | F_ALLOW_CALL;
+  let E_TTT = F_ALLOW_IN | F_ALLOW_CALL | F_ALLOW_UNPARATH_NEW;
+  let E_TFF = F_ALLOW_IN;
+  let E_FFT = F_ALLOW_UNPARATH_NEW;
+  let E_TFT = F_ALLOW_IN | F_ALLOW_UNPARATH_NEW;
+
+  // Statement flag sets
+  // NOTE: Flag order:
+  // F_ALLOW_IN
+  // F_FUNC_BODY
+  // F_DIRECTIVE_CTX
+  // F_SEMICOLON_OPT
+  let S_TFFF = F_ALLOW_IN;
+  let S_TFFT = F_ALLOW_IN | F_SEMICOLON_OPT;
+  let S_FFFF = 0x00;
+  let S_TFTF = F_ALLOW_IN | F_DIRECTIVE_CTX;
+  let S_TTFF = F_ALLOW_IN | F_FUNC_BODY;
+
+  function getDefaultOptions () {
+    // default options
+    return {
+      indent: null,
+      base: null,
+      parse: null,
+      comment: false,
+      format: {
+        indent: {
+          style: '    ',
+          base: 0,
+          adjustMultilineComment: false
+        },
+        newline: '\n',
+        space: ' ',
+        json: false,
+        renumber: false,
+        hexadecimal: false,
+        quotes: 'single',
+        escapeless: false,
+        compact: false,
+        parentheses: true,
+        semicolons: true,
+        safeConcatenation: false,
+        preserveBlankLines: false
+      },
+      moz: {
+        comprehensionExpressionStartsWithAssignment: false,
+        starlessGenerator: false
+      },
+      sourceMap: null,
+      sourceMapRoot: null,
+      sourceMapWithCode: false,
+      directive: false,
+      raw: true,
+      verbatim: null,
+      sourceCode: null
+    };
+  }
+
+  function stringRepeat (str, num) {
+    let result = '';
+
+    for (num |= 0; num > 0; num >>>= 1, str += str) {
+      if (num &amp; 1) {
+        result += str;
+      }
+    }
+
+    return result;
+  }
+
+  function hasLineTerminator (str) {
+    return (/[\r\n]/g).test(str);
+  }
+
+  function endsWithLineTerminator (str) {
+    let len = str.length;
+    return len &amp;&amp; esutils.code.isLineTerminator(str.charCodeAt(len - 1));
+  }
+
+  function merge (target, override) {
+    let key;
+    for (key in override) {
+      if (override.hasOwnProperty(key)) {
+        target[key] = override[key];
+      }
+    }
+    return target;
+  }
+
+  function updateDeeply (target, override) {
+    let key, val;
+
+    function isHashObject (target) {
+      return typeof target === 'object' &amp;&amp; target instanceof Object &amp;&amp; !(target instanceof RegExp);
+    }
+
+    for (key in override) {
+      if (override.hasOwnProperty(key)) {
+        val = override[key];
+        if (isHashObject(val)) {
+          if (isHashObject(target[key])) {
+            updateDeeply(target[key], val);
+          } else {
+            target[key] = updateDeeply({}, val);
+          }
+        } else {
+          target[key] = val;
+        }
+      }
+    }
+    return target;
+  }
+
+  function generateNumber (value) {
+    let result, point, temp, exponent, pos;
+
+    if (value !== value) {
+      throw new Error('Numeric literal whose value is NaN');
+    }
+    if (value &lt; 0 || (value === 0 &amp;&amp; 1 / value &lt; 0)) {
+      throw new Error('Numeric literal whose value is negative');
+    }
+
+    if (value === 1 / 0) {
+      return json ? 'null' : renumber ? '1e400' : '1e+400';
+    }
+
+    result = '' + value;
+    if (!renumber || result.length &lt; 3) {
+      return result;
+    }
+
+    point = result.indexOf('.');
+    if (!json &amp;&amp; result.charCodeAt(0) === 0x30 /* 0 */ &amp;&amp; point === 1) {
+      point = 0;
+      result = result.slice(1);
+    }
+    temp = result;
+    result = result.replace('e+', 'e');
+    exponent = 0;
+    if ((pos = temp.indexOf('e')) > 0) {
+      exponent = +temp.slice(pos + 1);
+      temp = temp.slice(0, pos);
+    }
+    if (point >= 0) {
+      exponent -= temp.length - point - 1;
+      temp = +(temp.slice(0, point) + temp.slice(point + 1)) + '';
+    }
+    pos = 0;
+    while (temp.charCodeAt(temp.length + pos - 1) === 0x30 /* 0 */) {
+      --pos;
+    }
+    if (pos !== 0) {
+      exponent -= pos;
+      temp = temp.slice(0, pos);
+    }
+    if (exponent !== 0) {
+      temp += 'e' + exponent;
+    }
+    if ((temp.length &lt; result.length ||
+                    (hexadecimal &amp;&amp; value > 1e12 &amp;&amp; Math.floor(value) === value &amp;&amp; (temp = '0x' + value.toString(16)).length &lt; result.length)) &amp;&amp;
+                +temp === value) {
+      result = temp;
+    }
+
+    return result;
+  }
+
+  // Generate valid RegExp expression.
+  // This function is based on https://github.com/Constellation/iv Engine
+
+  function escapeRegExpCharacter (ch, previousIsBackslash) {
+    // not handling '\' and handling \u2028 or \u2029 to unicode escape sequence
+    if ((ch &amp; ~1) === 0x2028) {
+      return (previousIsBackslash ? 'u' : '\\u') + ((ch === 0x2028) ? '2028' : '2029');
+    } else if (ch === 10 || ch === 13) { // \n, \r
+      return (previousIsBackslash ? '' : '\\') + ((ch === 10) ? 'n' : 'r');
+    }
+    return String.fromCharCode(ch);
+  }
+
+  function generateRegExp (reg) {
+    let match, result, flags, i, iz, ch, characterInBrack, previousIsBackslash;
+
+    result = reg.toString();
+
+    if (reg.source) {
+      // extract flag from toString result
+      match = result.match(/\/([^/]*)$/);
+      if (!match) {
+        return result;
+      }
+
+      flags = match[1];
+      result = '';
+
+      characterInBrack = false;
+      previousIsBackslash = false;
+      for (i = 0, iz = reg.source.length; i &lt; iz; ++i) {
+        ch = reg.source.charCodeAt(i);
+
+        if (!previousIsBackslash) {
+          if (characterInBrack) {
+            if (ch === 93) { // ]
+              characterInBrack = false;
+            }
+          } else {
+            if (ch === 47) { // /
+              result += '\\';
+            } else if (ch === 91) { // [
+              characterInBrack = true;
+            }
+          }
+          result += escapeRegExpCharacter(ch, previousIsBackslash);
+          previousIsBackslash = ch === 92; // \
+        } else {
+          // if new RegExp("\\\n') is provided, create /\n/
+          result += escapeRegExpCharacter(ch, previousIsBackslash);
+          // prevent like /\\[/]/
+          previousIsBackslash = false;
+        }
+      }
+
+      return '/' + result + '/' + flags;
+    }
+
+    return result;
+  }
+
+  function escapeAllowedCharacter (code, next) {
+    let hex;
+
+    if (code === 0x08 /* \b */) {
+      return '\\b';
+    }
+
+    if (code === 0x0C /* \f */) {
+      return '\\f';
+    }
+
+    if (code === 0x09 /* \t */) {
+      return '\\t';
+    }
+
+    hex = code.toString(16).toUpperCase();
+    if (json || code > 0xFF) {
+      return '\\u' + '0000'.slice(hex.length) + hex;
+    } else if (code === 0x0000 &amp;&amp; !esutils.code.isDecimalDigit(next)) {
+      return '\\0';
+    } else if (code === 0x000B /* \v */) { // '\v'
+      return '\\x0B';
+    } else {
+      return '\\x' + '00'.slice(hex.length) + hex;
+    }
+  }
+
+  function escapeDisallowedCharacter (code) {
+    if (code === 0x5C /* \ */) {
+      return '\\\\';
+    }
+
+    if (code === 0x0A /* \n */) {
+      return '\\n';
+    }
+
+    if (code === 0x0D /* \r */) {
+      return '\\r';
+    }
+
+    if (code === 0x2028) {
+      return '\\u2028';
+    }
+
+    if (code === 0x2029) {
+      return '\\u2029';
+    }
+
+    throw new Error('Incorrectly classified character');
+  }
+
+  function escapeDirective (str) {
+    let i, iz, code, quote;
+
+    quote = quotes === 'double' ? '"' : '\'';
+    for (i = 0, iz = str.length; i &lt; iz; ++i) {
+      code = str.charCodeAt(i);
+      if (code === 0x27 /* ' */) {
+        quote = '"';
+        break;
+      } else if (code === 0x22 /* " */) {
+        quote = '\'';
+        break;
+      } else if (code === 0x5C /* \ */) {
+        ++i;
+      }
+    }
+
+    return quote + str + quote;
+  }
+
+  function escapeString (str) {
+    let result = ''; let i; let len; let code; let singleQuotes = 0; let doubleQuotes = 0; let single; let quote;
+
+    for (i = 0, len = str.length; i &lt; len; ++i) {
+      code = str.charCodeAt(i);
+      if (code === 0x27 /* ' */) {
+        ++singleQuotes;
+      } else if (code === 0x22 /* " */) {
+        ++doubleQuotes;
+      } else if (code === 0x2F /* / */ &amp;&amp; json) {
+        result += '\\';
+      } else if (esutils.code.isLineTerminator(code) || code === 0x5C /* \ */) {
+        result += escapeDisallowedCharacter(code);
+        continue;
+      } else if (!esutils.code.isIdentifierPartES5(code) &amp;&amp; (json &amp;&amp; code &lt; 0x20 /* SP */ || !json &amp;&amp; !escapeless &amp;&amp; (code &lt; 0x20 /* SP */ || code > 0x7E /* ~ */))) {
+        result += escapeAllowedCharacter(code, str.charCodeAt(i + 1));
+        continue;
+      }
+      result += String.fromCharCode(code);
+    }
+
+    single = !(quotes === 'double' || (quotes === 'auto' &amp;&amp; doubleQuotes &lt; singleQuotes));
+    quote = single ? '\'' : '"';
+
+    if (!(single ? singleQuotes : doubleQuotes)) {
+      return quote + result + quote;
+    }
+
+    str = result;
+    result = quote;
+
+    for (i = 0, len = str.length; i &lt; len; ++i) {
+      code = str.charCodeAt(i);
+      if ((code === 0x27 /* ' */ &amp;&amp; single) || (code === 0x22 /* " */ &amp;&amp; !single)) {
+        result += '\\';
+      }
+      result += String.fromCharCode(code);
+    }
+
+    return result + quote;
+  }
+
+  /**
+     * flatten an array to a string, where the array can contain
+     * either strings or nested arrays
+     */
+  function flattenToString (arr) {
+    let i; let iz; let elem; let result = '';
+    for (i = 0, iz = arr.length; i &lt; iz; ++i) {
+      elem = arr[i];
+      result += Array.isArray(elem) ? flattenToString(elem) : elem;
+    }
+    return result;
+  }
+
+  /**
+     * convert generated to a SourceNode when source maps are enabled.
+     */
+  function toSourceNodeWhenNeeded (generated, node) {
+    if (!sourceMap) {
+      // with no source maps, generated is either an
+      // array or a string.  if an array, flatten it.
+      // if a string, just return it
+      if (Array.isArray(generated)) {
+        return flattenToString(generated);
+      } else {
+        return generated;
+      }
+    }
+    if (node == null) {
+      if (generated instanceof SourceNode) {
+        return generated;
+      } else {
+        node = {};
+      }
+    }
+    if (node.loc == null) {
+      return new SourceNode(null, null, sourceMap, generated, node.name || null);
+    }
+    return new SourceNode(node.loc.start.line, node.loc.start.column, (sourceMap === true ? node.loc.source || null : sourceMap), generated, node.name || null);
+  }
+
+  function noEmptySpace () {
+    return (space) || ' ';
+  }
+
+  function join (left, right) {
+    let leftSource,
+      rightSource,
+      leftCharCode,
+      rightCharCode;
+
+    leftSource = toSourceNodeWhenNeeded(left).toString();
+    if (leftSource.length === 0) {
+      return [right];
+    }
+
+    rightSource = toSourceNodeWhenNeeded(right).toString();
+    if (rightSource.length === 0) {
+      return [left];
+    }
+
+    leftCharCode = leftSource.charCodeAt(leftSource.length - 1);
+    rightCharCode = rightSource.charCodeAt(0);
+
+    if ((leftCharCode === 0x2B /* + */ || leftCharCode === 0x2D /* - */) &amp;&amp; leftCharCode === rightCharCode ||
+            esutils.code.isIdentifierPartES5(leftCharCode) &amp;&amp; esutils.code.isIdentifierPartES5(rightCharCode) ||
+            leftCharCode === 0x2F /* / */ &amp;&amp; rightCharCode === 0x69 /* i */) { // infix word operators all start with `i`
+      return [left, noEmptySpace(), right];
+    } else if (esutils.code.isWhiteSpace(leftCharCode) || esutils.code.isLineTerminator(leftCharCode) ||
+                esutils.code.isWhiteSpace(rightCharCode) || esutils.code.isLineTerminator(rightCharCode)) {
+      return [left, right];
+    }
+    return [left, space, right];
+  }
+
+  function addIndent (stmt) {
+    return [base, stmt];
+  }
+
+  function withIndent (fn) {
+    let previousBase;
+    previousBase = base;
+    base += indent;
+    fn(base);
+    base = previousBase;
+  }
+
+  function calculateSpaces (str) {
+    let i;
+    for (i = str.length - 1; i >= 0; --i) {
+      if (esutils.code.isLineTerminator(str.charCodeAt(i))) {
+        break;
+      }
+    }
+    return (str.length - 1) - i;
+  }
+
+  function adjustMultilineComment (value, specialBase) {
+    let array, i, len, line, j, spaces, previousBase, sn;
+
+    array = value.split(/\r\n|[\r\n]/);
+    spaces = Number.MAX_VALUE;
+
+    // first line doesn't have indentation
+    for (i = 1, len = array.length; i &lt; len; ++i) {
+      line = array[i];
+      j = 0;
+      while (j &lt; line.length &amp;&amp; esutils.code.isWhiteSpace(line.charCodeAt(j))) {
+        ++j;
+      }
+      if (spaces > j) {
+        spaces = j;
+      }
+    }
+
+    if (typeof specialBase !== 'undefined') {
+      // pattern like
+      // {
+      //   var t = 20;  /*
+      //                 * this is comment
+      //                 */
+      // }
+      previousBase = base;
+      if (array[1][spaces] === '*') {
+        specialBase += ' ';
+      }
+      base = specialBase;
+    } else {
+      if (spaces &amp; 1) {
+        // /*
+        //  *
+        //  */
+        // If spaces are odd number, above pattern is considered.
+        // We waste 1 space.
+        --spaces;
+      }
+      previousBase = base;
+    }
+
+    for (i = 1, len = array.length; i &lt; len; ++i) {
+      sn = toSourceNodeWhenNeeded(addIndent(array[i].slice(spaces)));
+      array[i] = sourceMap ? sn.join('') : sn;
+    }
+
+    base = previousBase;
+
+    return array.join('\n');
+  }
+
+  function generateComment (comment, specialBase) {
+    if (comment.type === 'Line') {
+      if (endsWithLineTerminator(comment.value)) {
+        return '//' + comment.value;
+      } else {
+        // Always use LineTerminator
+        let result = '//' + comment.value;
+        if (!preserveBlankLines) {
+          result += '\n';
+        }
+        return result;
+      }
+    }
+    if (extra.format.indent.adjustMultilineComment &amp;&amp; /[\n\r]/.test(comment.value)) {
+      return adjustMultilineComment('/*' + comment.value + '*/', specialBase);
+    }
+    return '/*' + comment.value + '*/';
+  }
+
+  function addComments (stmt, result) {
+    let i, len, comment, save, tailingToStatement, specialBase, fragment,
+      extRange, range, prevRange, prefix, infix, suffix, count;
+
+    if (stmt.leadingComments &amp;&amp; stmt.leadingComments.length > 0) {
+      save = result;
+
+      if (preserveBlankLines) {
+        comment = stmt.leadingComments[0];
+        result = [];
+
+        extRange = comment.extendedRange;
+        range = comment.range;
+
+        prefix = sourceCode.substring(extRange[0], range[0]);
+        count = (prefix.match(/\n/g) || []).length;
+        if (count > 0) {
+          result.push(stringRepeat('\n', count));
+          result.push(addIndent(generateComment(comment)));
+        } else {
+          result.push(prefix);
+          result.push(generateComment(comment));
+        }
+
+        prevRange = range;
+
+        for (i = 1, len = stmt.leadingComments.length; i &lt; len; i++) {
+          comment = stmt.leadingComments[i];
+          range = comment.range;
+
+          infix = sourceCode.substring(prevRange[1], range[0]);
+          count = (infix.match(/\n/g) || []).length;
+          result.push(stringRepeat('\n', count));
+          result.push(addIndent(generateComment(comment)));
+
+          prevRange = range;
+        }
+
+        suffix = sourceCode.substring(range[1], extRange[1]);
+        count = (suffix.match(/\n/g) || []).length;
+        result.push(stringRepeat('\n', count));
+      } else {
+        comment = stmt.leadingComments[0];
+        result = [];
+        if (safeConcatenation &amp;&amp; stmt.type === Syntax.Program &amp;&amp; stmt.body.length === 0) {
+          result.push('\n');
+        }
+        result.push(generateComment(comment));
+        if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+          result.push('\n');
+        }
+
+        for (i = 1, len = stmt.leadingComments.length; i &lt; len; ++i) {
+          comment = stmt.leadingComments[i];
+          fragment = [generateComment(comment)];
+          if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+            fragment.push('\n');
+          }
+          result.push(addIndent(fragment));
+        }
+      }
+
+      result.push(addIndent(save));
+    }
+
+    if (stmt.trailingComments) {
+      if (preserveBlankLines) {
+        comment = stmt.trailingComments[0];
+        extRange = comment.extendedRange;
+        range = comment.range;
+
+        prefix = sourceCode.substring(extRange[0], range[0]);
+        count = (prefix.match(/\n/g) || []).length;
+
+        if (count > 0) {
+          result.push(stringRepeat('\n', count));
+          result.push(addIndent(generateComment(comment)));
+        } else {
+          result.push(prefix);
+          result.push(generateComment(comment));
+        }
+      } else {
+        tailingToStatement = !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString());
+        specialBase = stringRepeat(' ', calculateSpaces(toSourceNodeWhenNeeded([base, result, indent]).toString()));
+        for (i = 0, len = stmt.trailingComments.length; i &lt; len; ++i) {
+          comment = stmt.trailingComments[i];
+          if (tailingToStatement) {
+            // We assume target like following script
+            //
+            // var t = 20;  /**
+            //               * This is comment of t
+            //               */
+            if (i === 0) {
+              // first case
+              result = [result, indent];
+            } else {
+              result = [result, specialBase];
+            }
+            result.push(generateComment(comment, specialBase));
+          } else {
+            result = [result, addIndent(generateComment(comment))];
+          }
+          if (i !== len - 1 &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+            result = [result, '\n'];
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  function generateBlankLines (start, end, result) {
+    let j; let newlineCount = 0;
+
+    for (j = start; j &lt; end; j++) {
+      if (sourceCode[j] === '\n') {
+        newlineCount++;
+      }
+    }
+
+    for (j = 1; j &lt; newlineCount; j++) {
+      result.push(newline);
+    }
+  }
+
+  function parenthesize (text, current, should) {
+    if (current &lt; should) {
+      return ['(', text, ')'];
+    }
+    return text;
+  }
+
+  function generateVerbatimString (string) {
+    let i, iz, result;
+    result = string.split(/\r\n|\n/);
+    for (i = 1, iz = result.length; i &lt; iz; i++) {
+      result[i] = newline + base + result[i];
+    }
+    return result;
+  }
+
+  function generateVerbatim (expr, precedence) {
+    let verbatim, result, prec;
+    verbatim = expr[extra.verbatim];
+
+    if (typeof verbatim === 'string') {
+      result = parenthesize(generateVerbatimString(verbatim), Precedence.Sequence, precedence);
+    } else {
+      // verbatim is object
+      result = generateVerbatimString(verbatim.content);
+      prec = (verbatim.precedence != null) ? verbatim.precedence : Precedence.Sequence;
+      result = parenthesize(result, prec, precedence);
+    }
+
+    return toSourceNodeWhenNeeded(result, expr);
+  }
+
+  function CodeGenerator () {}
+
+  // Helpers.
+
+  CodeGenerator.prototype.maybeBlock = function (stmt, flags) {
+    let result; let noLeadingComment; let that = this;
+
+    noLeadingComment = !extra.comment || !stmt.leadingComments;
+
+    if (stmt.type === Syntax.BlockStatement &amp;&amp; noLeadingComment) {
+      return [space, this.generateStatement(stmt, flags)];
+    }
+
+    if (stmt.type === Syntax.EmptyStatement &amp;&amp; noLeadingComment) {
+      return ';';
+    }
+
+    withIndent(function () {
+      result = [
+        newline,
+        addIndent(that.generateStatement(stmt, flags))
+      ];
+    });
+
+    return result;
+  };
+
+  CodeGenerator.prototype.maybeBlockSuffix = function (stmt, result) {
+    let ends = endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString());
+    if (stmt.type === Syntax.BlockStatement &amp;&amp; (!extra.comment || !stmt.leadingComments) &amp;&amp; !ends) {
+      return [result, space];
+    }
+    if (ends) {
+      return [result, base];
+    }
+    return [result, newline, base];
+  };
+
+  function generateIdentifier (node) {
+    let identifierName = node.name;
+
+    if (node.type === Syntax.PrivateIdentifier) {
+      identifierName = '#' + identifierName;
+    }
+
+    return toSourceNodeWhenNeeded(identifierName, node);
+  }
+
+  function generateAsyncPrefix (node, spaceRequired) {
+    return node.async ? 'async' + (spaceRequired ? noEmptySpace() : space) : '';
+  }
+
+  function generateStarSuffix (node) {
+    let isGenerator = node.generator &amp;&amp; !extra.moz.starlessGenerator;
+    return isGenerator ? '*' + space : '';
+  }
+
+  function generateMethodPrefix (prop) {
+    let func = prop.value; let prefix = '';
+    if (func.async) {
+      prefix += generateAsyncPrefix(func, !prop.computed);
+    }
+    if (func.generator) {
+      // avoid space before method name
+      prefix += generateStarSuffix(func) ? '*' : '';
+    }
+    return prefix;
+  }
+
+  CodeGenerator.prototype.generatePattern = function (node, precedence, flags) {
+    if (node.type === Syntax.Identifier) {
+      return generateIdentifier(node);
+    }
+    return this.generateExpression(node, precedence, flags);
+  };
+
+  CodeGenerator.prototype.generateFunctionParams = function (node) {
+    let i, iz, result, hasDefault;
+
+    hasDefault = false;
+
+    if (node.type === Syntax.ArrowFunctionExpression &amp;&amp;
+                !node.rest &amp;&amp; (!node.defaults || node.defaults.length === 0) &amp;&amp;
+                node.params.length === 1 &amp;&amp; node.params[0].type === Syntax.Identifier) {
+      // arg => { } case
+      result = [generateAsyncPrefix(node, true), generateIdentifier(node.params[0])];
+    } else {
+      result = node.type === Syntax.ArrowFunctionExpression ? [generateAsyncPrefix(node, false)] : [];
+      result.push('(');
+      if (node.defaults) {
+        hasDefault = true;
+      }
+      for (i = 0, iz = node.params.length; i &lt; iz; ++i) {
+        if (hasDefault &amp;&amp; node.defaults[i]) {
+          // Handle default values.
+          result.push(this.generateAssignment(node.params[i], node.defaults[i], '=', Precedence.Assignment, E_TTT));
+        } else {
+          result.push(this.generatePattern(node.params[i], Precedence.Assignment, E_TTT));
+        }
+        if (i + 1 &lt; iz) {
+          result.push(',' + space);
+        }
+      }
+
+      if (node.rest) {
+        if (node.params.length) {
+          result.push(',' + space);
+        }
+        result.push('...');
+        result.push(generateIdentifier(node.rest));
+      }
+
+      result.push(')');
+    }
+
+    return result;
+  };
+
+  CodeGenerator.prototype.generateFunctionBody = function (node) {
+    let result, expr;
+
+    result = this.generateFunctionParams(node);
+
+    if (node.type === Syntax.ArrowFunctionExpression) {
+      result.push(space);
+      result.push('=>');
+    }
+
+    if (node.expression) {
+      result.push(space);
+      expr = this.generateExpression(node.body, Precedence.Assignment, E_TTT);
+      if (expr.toString().charAt(0) === '{') {
+        expr = ['(', expr, ')'];
+      }
+      result.push(expr);
+    } else {
+      result.push(this.maybeBlock(node.body, S_TTFF));
+    }
+
+    return result;
+  };
+
+  CodeGenerator.prototype.generateIterationForStatement = function (operator, stmt, flags) {
+    let result = ['for' + (stmt.await ? noEmptySpace() + 'await' : '') + space + '(']; let that = this;
+    withIndent(function () {
+      if (stmt.left.type === Syntax.VariableDeclaration) {
+        withIndent(function () {
+          result.push(stmt.left.kind + noEmptySpace());
+          result.push(that.generateStatement(stmt.left.declarations[0], S_FFFF));
+        });
+      } else {
+        result.push(that.generateExpression(stmt.left, Precedence.Call, E_TTT));
+      }
+
+      result = join(result, operator);
+      result = [join(
+        result,
+        that.generateExpression(stmt.right, Precedence.Assignment, E_TTT)
+      ), ')'];
+    });
+    result.push(this.maybeBlock(stmt.body, flags));
+    return result;
+  };
+
+  CodeGenerator.prototype.generatePropertyKey = function (expr, computed) {
+    let result = [];
+
+    if (computed) {
+      result.push('[');
+    }
+
+    result.push(this.generateExpression(expr, Precedence.Assignment, E_TTT));
+
+    if (computed) {
+      result.push(']');
+    }
+
+    return result;
+  };
+
+  CodeGenerator.prototype.generateAssignment = function (left, right, operator, precedence, flags) {
+    if (Precedence.Assignment &lt; precedence) {
+      flags |= F_ALLOW_IN;
+    }
+
+    return parenthesize(
+      [
+        this.generateExpression(left, Precedence.Call, flags),
+        space + operator + space,
+        this.generateExpression(right, Precedence.Assignment, flags)
+      ],
+      Precedence.Assignment,
+      precedence
+    );
+  };
+
+  CodeGenerator.prototype.semicolon = function (flags) {
+    if (!semicolons &amp;&amp; flags &amp; F_SEMICOLON_OPT) {
+      return '';
+    }
+    return ';';
+  };
+
+  // Statements.
+
+  CodeGenerator.Statement = {
+
+    BlockStatement: function (stmt, flags) {
+      let range; let content; let result = ['{', newline]; let that = this;
+
+      withIndent(function () {
+        // handle functions without any code
+        if (stmt.body.length === 0 &amp;&amp; preserveBlankLines) {
+          range = stmt.range;
+          if (range[1] - range[0] > 2) {
+            content = sourceCode.substring(range[0] + 1, range[1] - 1);
+            if (content[0] === '\n') {
+              result = ['{'];
+            }
+            result.push(content);
+          }
+        }
+
+        let i, iz, fragment, bodyFlags;
+        bodyFlags = S_TFFF;
+        if (flags &amp; F_FUNC_BODY) {
+          bodyFlags |= F_DIRECTIVE_CTX;
+        }
+
+        for (i = 0, iz = stmt.body.length; i &lt; iz; ++i) {
+          if (preserveBlankLines) {
+            // handle spaces before the first line
+            if (i === 0) {
+              if (stmt.body[0].leadingComments) {
+                range = stmt.body[0].leadingComments[0].extendedRange;
+                content = sourceCode.substring(range[0], range[1]);
+                if (content[0] === '\n') {
+                  result = ['{'];
+                }
+              }
+              if (!stmt.body[0].leadingComments) {
+                generateBlankLines(stmt.range[0], stmt.body[0].range[0], result);
+              }
+            }
+
+            // handle spaces between lines
+            if (i > 0) {
+              if (!stmt.body[i - 1].trailingComments &amp;&amp; !stmt.body[i].leadingComments) {
+                generateBlankLines(stmt.body[i - 1].range[1], stmt.body[i].range[0], result);
+              }
+            }
+          }
+
+          if (i === iz - 1) {
+            bodyFlags |= F_SEMICOLON_OPT;
+          }
+
+          if (stmt.body[i].leadingComments &amp;&amp; preserveBlankLines) {
+            fragment = that.generateStatement(stmt.body[i], bodyFlags);
+          } else {
+            fragment = addIndent(that.generateStatement(stmt.body[i], bodyFlags));
+          }
+
+          result.push(fragment);
+          if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+            if (preserveBlankLines &amp;&amp; i &lt; iz - 1) {
+              // don't add a new line if there are leading coments
+              // in the next statement
+              if (!stmt.body[i + 1].leadingComments) {
+                result.push(newline);
+              }
+            } else {
+              result.push(newline);
+            }
+          }
+
+          if (preserveBlankLines) {
+            // handle spaces after the last line
+            if (i === iz - 1) {
+              if (!stmt.body[i].trailingComments) {
+                generateBlankLines(stmt.body[i].range[1], stmt.range[1], result);
+              }
+            }
+          }
+        }
+      });
+
+      result.push(addIndent('}'));
+      return result;
+    },
+
+    BreakStatement: function (stmt, flags) {
+      if (stmt.label) {
+        return 'break ' + stmt.label.name + this.semicolon(flags);
+      }
+      return 'break' + this.semicolon(flags);
+    },
+
+    ContinueStatement: function (stmt, flags) {
+      if (stmt.label) {
+        return 'continue ' + stmt.label.name + this.semicolon(flags);
+      }
+      return 'continue' + this.semicolon(flags);
+    },
+
+    ClassBody: function (stmt, flags) {
+      let result = ['{', newline]; let that = this;
+
+      withIndent(function (indent) {
+        let i, iz;
+
+        for (i = 0, iz = stmt.body.length; i &lt; iz; ++i) {
+          result.push(indent);
+          result.push(that.generateExpression(stmt.body[i], Precedence.Sequence, E_TTT));
+          if (i + 1 &lt; iz) {
+            result.push(newline);
+          }
+        }
+      });
+
+      if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+        result.push(newline);
+      }
+      result.push(base);
+      result.push('}');
+      return result;
+    },
+
+    ClassDeclaration: function (stmt, flags) {
+      let result = []; let fragment;
+      if (stmt.decorators.length) {
+        for (let dec of stmt.decorators) {
+          result.push(this.generateStatement(dec));
+          result.push(base);
+        }
+      }
+      result.push('class');
+      if (stmt.id) {
+        result = join(result, this.generateExpression(stmt.id, Precedence.Sequence, E_TTT));
+      }
+      if (stmt.superClass) {
+        fragment = join('extends', this.generateExpression(stmt.superClass, Precedence.Unary, E_TTT));
+        result = join(result, fragment);
+      }
+      result.push(space);
+      result.push(this.generateStatement(stmt.body, S_TFFT));
+      return result;
+    },
+
+    DirectiveStatement: function (stmt, flags) {
+      if (extra.raw &amp;&amp; stmt.raw) {
+        return stmt.raw + this.semicolon(flags);
+      }
+      return escapeDirective(stmt.directive) + this.semicolon(flags);
+    },
+
+    DoWhileStatement: function (stmt, flags) {
+      // Because `do 42 while (cond)` is Syntax Error. We need semicolon.
+      let result = join('do', this.maybeBlock(stmt.body, S_TFFF));
+      result = this.maybeBlockSuffix(stmt.body, result);
+      return join(result, [
+        'while' + space + '(',
+        this.generateExpression(stmt.test, Precedence.Sequence, E_TTT),
+        ')' + this.semicolon(flags)
+      ]);
+    },
+
+    CatchClause: function (stmt, flags) {
+      let result; let that = this;
+      withIndent(function () {
+        let guard;
+
+        if (stmt.param) {
+          result = [
+            'catch' + space + '(',
+            that.generateExpression(stmt.param, Precedence.Sequence, E_TTT),
+            ')'
+          ];
+
+          if (stmt.guard) {
+            guard = that.generateExpression(stmt.guard, Precedence.Sequence, E_TTT);
+            result.splice(2, 0, ' if ', guard);
+          }
+        } else {
+          result = ['catch'];
+        }
+      });
+      result.push(this.maybeBlock(stmt.body, S_TFFF));
+      return result;
+    },
+
+    DebuggerStatement: function (stmt, flags) {
+      return 'debugger' + this.semicolon(flags);
+    },
+
+    EmptyStatement: function (stmt, flags) {
+      return ';';
+    },
+
+    ExportDefaultDeclaration: function (stmt, flags) {
+      let result = ['export']; let bodyFlags;
+
+      bodyFlags = (flags &amp; F_SEMICOLON_OPT) ? S_TFFT : S_TFFF;
+
+      // export default HoistableDeclaration[Default]
+      // export default AssignmentExpression[In] ;
+      result = join(result, 'default');
+      if (isStatement(stmt.declaration)) {
+        result = join(result, this.generateStatement(stmt.declaration, bodyFlags));
+      } else {
+        result = join(result, this.generateExpression(stmt.declaration, Precedence.Assignment, E_TTT) + this.semicolon(flags));
+      }
+      return result;
+    },
+
+    ExportNamedDeclaration: function (stmt, flags) {
+      let result = ['export']; let bodyFlags; let that = this;
+
+      bodyFlags = (flags &amp; F_SEMICOLON_OPT) ? S_TFFT : S_TFFF;
+
+      // export VariableStatement
+      // export Declaration[Default]
+      if (stmt.declaration) {
+        return join(result, this.generateStatement(stmt.declaration, bodyFlags));
+      }
+
+      // export ExportClause[NoReference] FromClause ;
+      // export ExportClause ;
+      if (stmt.specifiers) {
+        if (stmt.specifiers.length === 0) {
+          result = join(result, '{' + space + '}');
+        } else if (stmt.specifiers[0].type === Syntax.ExportBatchSpecifier) {
+          result = join(result, this.generateExpression(stmt.specifiers[0], Precedence.Sequence, E_TTT));
+        } else {
+          result = join(result, '{');
+          withIndent(function (indent) {
+            let i, iz;
+            result.push(newline);
+            for (i = 0, iz = stmt.specifiers.length; i &lt; iz; ++i) {
+              result.push(indent);
+              result.push(that.generateExpression(stmt.specifiers[i], Precedence.Sequence, E_TTT));
+              if (i + 1 &lt; iz) {
+                result.push(',' + newline);
+              }
+            }
+          });
+          if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+            result.push(newline);
+          }
+          result.push(base + '}');
+        }
+
+        if (stmt.source) {
+          result = join(result, [
+            'from' + space,
+            // ModuleSpecifier
+            this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
+            this.semicolon(flags)
+          ]);
+        } else {
+          result.push(this.semicolon(flags));
+        }
+      }
+      return result;
+    },
+
+    ExportAllDeclaration: function (stmt, flags) {
+      // export * FromClause ;
+      let result = [
+        'export' + space,
+        '*' + space
+      ];
+
+      if (stmt.exported) {
+        result.push('as ' + stmt.exported.name + ' ');
+      }
+
+      result = join(result, [
+        'from' + space,
+        // ModuleSpecifier
+        this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
+        this.semicolon(flags)
+      ]);
+
+      return result;
+    },
+
+    ExpressionStatement: function (stmt, flags) {
+      let result, fragment;
+
+      function isClassPrefixed (fragment) {
+        let code;
+        if (fragment.slice(0, 5) !== 'class') {
+          return false;
+        }
+        code = fragment.charCodeAt(5);
+        return code === 0x7B /* '{' */ || esutils.code.isWhiteSpace(code) || esutils.code.isLineTerminator(code);
+      }
+
+      function isFunctionPrefixed (fragment) {
+        let code;
+        if (fragment.slice(0, 8) !== 'function') {
+          return false;
+        }
+        code = fragment.charCodeAt(8);
+        return code === 0x28 /* '(' */ || esutils.code.isWhiteSpace(code) || code === 0x2A /* '*' */ || esutils.code.isLineTerminator(code);
+      }
+
+      function isAsyncPrefixed (fragment) {
+        let code, i, iz;
+        if (fragment.slice(0, 5) !== 'async') {
+          return false;
+        }
+        if (!esutils.code.isWhiteSpace(fragment.charCodeAt(5))) {
+          return false;
+        }
+        for (i = 6, iz = fragment.length; i &lt; iz; ++i) {
+          if (!esutils.code.isWhiteSpace(fragment.charCodeAt(i))) {
+            break;
+          }
+        }
+        if (i === iz) {
+          return false;
+        }
+        if (fragment.slice(i, i + 8) !== 'function') {
+          return false;
+        }
+        code = fragment.charCodeAt(i + 8);
+        return code === 0x28 /* '(' */ || esutils.code.isWhiteSpace(code) || code === 0x2A /* '*' */ || esutils.code.isLineTerminator(code);
+      }
+
+      result = [this.generateExpression(stmt.expression, Precedence.Sequence, E_TTT)];
+      // 12.4 '{', 'function', 'class' is not allowed in this position.
+      // wrap expression with parentheses
+      fragment = toSourceNodeWhenNeeded(result).toString();
+      if (fragment.charCodeAt(0) === 0x7B /* '{' */ || // ObjectExpression
+                    isClassPrefixed(fragment) ||
+                    isFunctionPrefixed(fragment) ||
+                    isAsyncPrefixed(fragment) ||
+                    (directive &amp;&amp; (flags &amp; F_DIRECTIVE_CTX) &amp;&amp; stmt.expression.type === Syntax.Literal &amp;&amp; typeof stmt.expression.value === 'string')) {
+        result = ['(', result, ')' + this.semicolon(flags)];
+      } else {
+        result.push(this.semicolon(flags));
+      }
+      return result;
+    },
+
+    ImportDeclaration: function (stmt, flags) {
+      // ES6: 15.2.1 valid import declarations:
+      //     - import ImportClause FromClause ;
+      //     - import ModuleSpecifier ;
+      let result; let cursor; let that = this;
+
+      // If no ImportClause is present,
+      // this should be `import ModuleSpecifier` so skip `from`
+      // ModuleSpecifier is StringLiteral.
+      if (stmt.specifiers.length === 0) {
+        // import ModuleSpecifier ;
+        return [
+          'import',
+          space,
+          // ModuleSpecifier
+          this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
+          this.semicolon(flags)
+        ];
+      }
+
+      // import ImportClause FromClause ;
+      result = [
+        'import'
+      ];
+      cursor = 0;
+
+      // ImportedBinding
+      if (stmt.specifiers[cursor].type === Syntax.ImportDefaultSpecifier) {
+        result = join(result, [
+          this.generateExpression(stmt.specifiers[cursor], Precedence.Sequence, E_TTT)
+        ]);
+        ++cursor;
+      }
+
+      if (stmt.specifiers[cursor]) {
+        if (cursor !== 0) {
+          result.push(',');
+        }
+
+        if (stmt.specifiers[cursor].type === Syntax.ImportNamespaceSpecifier) {
+          // NameSpaceImport
+          result = join(result, [
+            space,
+            this.generateExpression(stmt.specifiers[cursor], Precedence.Sequence, E_TTT)
+          ]);
+        } else {
+          // NamedImports
+          result.push(space + '{');
+
+          if ((stmt.specifiers.length - cursor) === 1) {
+            // import { ... } from "...";
+            result.push(space);
+            result.push(this.generateExpression(stmt.specifiers[cursor], Precedence.Sequence, E_TTT));
+            result.push(space + '}' + space);
+          } else {
+            // import {
+            //    ...,
+            //    ...,
+            // } from "...";
+            withIndent(function (indent) {
+              let i, iz;
+              result.push(newline);
+              for (i = cursor, iz = stmt.specifiers.length; i &lt; iz; ++i) {
+                result.push(indent);
+                result.push(that.generateExpression(stmt.specifiers[i], Precedence.Sequence, E_TTT));
+                if (i + 1 &lt; iz) {
+                  result.push(',' + newline);
+                }
+              }
+            });
+            if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+              result.push(newline);
+            }
+            result.push(base + '}' + space);
+          }
+        }
+      }
+
+      result = join(result, [
+        'from' + space,
+        // ModuleSpecifier
+        this.generateExpression(stmt.source, Precedence.Sequence, E_TTT),
+        this.semicolon(flags)
+      ]);
+      return result;
+    },
+
+    VariableDeclarator: function (stmt, flags) {
+      let itemFlags = (flags &amp; F_ALLOW_IN) ? E_TTT : E_FTT;
+      if (stmt.init) {
+        return [
+          this.generateExpression(stmt.id, Precedence.Assignment, itemFlags),
+          space,
+          '=',
+          space,
+          this.generateExpression(stmt.init, Precedence.Assignment, itemFlags)
+        ];
+      }
+      return this.generatePattern(stmt.id, Precedence.Assignment, itemFlags);
+    },
+
+    VariableDeclaration: function (stmt, flags) {
+      // VariableDeclarator is typed as Statement,
+      // but joined with comma (not LineTerminator).
+      // So if comment is attached to target node, we should specialize.
+      let result; let i; let iz; let node; let bodyFlags; let that = this;
+
+      result = [stmt.kind];
+
+      bodyFlags = (flags &amp; F_ALLOW_IN) ? S_TFFF : S_FFFF;
+
+      function block () {
+        node = stmt.declarations[0];
+        if (extra.comment &amp;&amp; node.leadingComments) {
+          result.push('\n');
+          result.push(addIndent(that.generateStatement(node, bodyFlags)));
+        } else {
+          result.push(noEmptySpace());
+          result.push(that.generateStatement(node, bodyFlags));
+        }
+
+        for (i = 1, iz = stmt.declarations.length; i &lt; iz; ++i) {
+          node = stmt.declarations[i];
+          if (extra.comment &amp;&amp; node.leadingComments) {
+            result.push(',' + newline);
+            result.push(addIndent(that.generateStatement(node, bodyFlags)));
+          } else {
+            result.push(',' + space);
+            result.push(that.generateStatement(node, bodyFlags));
+          }
+        }
+      }
+
+      if (stmt.declarations.length > 1) {
+        withIndent(block);
+      } else {
+        block();
+      }
+
+      result.push(this.semicolon(flags));
+
+      return result;
+    },
+
+    StaticBlock: function (stmt, flags) {
+      return [
+        'static' + space,
+        this.BlockStatement(stmt, flags)
+      ];
+    },
+
+    ThrowStatement: function (stmt, flags) {
+      return [join(
+        'throw',
+        this.generateExpression(stmt.argument, Precedence.Sequence, E_TTT)
+      ), this.semicolon(flags)];
+    },
+
+    TryStatement: function (stmt, flags) {
+      let result, i, iz, guardedHandlers;
+
+      result = ['try', this.maybeBlock(stmt.block, S_TFFF)];
+      result = this.maybeBlockSuffix(stmt.block, result);
+
+      if (stmt.handlers) {
+        // old interface
+        for (i = 0, iz = stmt.handlers.length; i &lt; iz; ++i) {
+          result = join(result, this.generateStatement(stmt.handlers[i], S_TFFF));
+          if (stmt.finalizer || i + 1 !== iz) {
+            result = this.maybeBlockSuffix(stmt.handlers[i].body, result);
+          }
+        }
+      } else {
+        guardedHandlers = stmt.guardedHandlers || [];
+
+        for (i = 0, iz = guardedHandlers.length; i &lt; iz; ++i) {
+          result = join(result, this.generateStatement(guardedHandlers[i], S_TFFF));
+          if (stmt.finalizer || i + 1 !== iz) {
+            result = this.maybeBlockSuffix(guardedHandlers[i].body, result);
+          }
+        }
+
+        // new interface
+        if (stmt.handler) {
+          if (Array.isArray(stmt.handler)) {
+            for (i = 0, iz = stmt.handler.length; i &lt; iz; ++i) {
+              result = join(result, this.generateStatement(stmt.handler[i], S_TFFF));
+              if (stmt.finalizer || i + 1 !== iz) {
+                result = this.maybeBlockSuffix(stmt.handler[i].body, result);
+              }
+            }
+          } else {
+            result = join(result, this.generateStatement(stmt.handler, S_TFFF));
+            if (stmt.finalizer) {
+              result = this.maybeBlockSuffix(stmt.handler.body, result);
+            }
+          }
+        }
+      }
+      if (stmt.finalizer) {
+        result = join(result, ['finally', this.maybeBlock(stmt.finalizer, S_TFFF)]);
+      }
+      return result;
+    },
+
+    SwitchStatement: function (stmt, flags) {
+      let result; let fragment; let i; let iz; let bodyFlags; let that = this;
+      withIndent(function () {
+        result = [
+          'switch' + space + '(',
+          that.generateExpression(stmt.discriminant, Precedence.Sequence, E_TTT),
+          ')' + space + '{' + newline
+        ];
+      });
+      if (stmt.cases) {
+        bodyFlags = S_TFFF;
+        for (i = 0, iz = stmt.cases.length; i &lt; iz; ++i) {
+          if (i === iz - 1) {
+            bodyFlags |= F_SEMICOLON_OPT;
+          }
+          fragment = addIndent(this.generateStatement(stmt.cases[i], bodyFlags));
+          result.push(fragment);
+          if (!endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+            result.push(newline);
+          }
+        }
+      }
+      result.push(addIndent('}'));
+      return result;
+    },
+
+    SwitchCase: function (stmt, flags) {
+      let result; let fragment; let i; let iz; let bodyFlags; let that = this;
+      withIndent(function () {
+        if (stmt.test) {
+          result = [
+            join('case', that.generateExpression(stmt.test, Precedence.Sequence, E_TTT)),
+            ':'
+          ];
+        } else {
+          result = ['default:'];
+        }
+
+        i = 0;
+        iz = stmt.consequent.length;
+        if (iz &amp;&amp; stmt.consequent[0].type === Syntax.BlockStatement) {
+          fragment = that.maybeBlock(stmt.consequent[0], S_TFFF);
+          result.push(fragment);
+          i = 1;
+        }
+
+        if (i !== iz &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+          result.push(newline);
+        }
+
+        bodyFlags = S_TFFF;
+        for (; i &lt; iz; ++i) {
+          if (i === iz - 1 &amp;&amp; flags &amp; F_SEMICOLON_OPT) {
+            bodyFlags |= F_SEMICOLON_OPT;
+          }
+          fragment = addIndent(that.generateStatement(stmt.consequent[i], bodyFlags));
+          result.push(fragment);
+          if (i + 1 !== iz &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+            result.push(newline);
+          }
+        }
+      });
+      return result;
+    },
+
+    IfStatement: function (stmt, flags) {
+      let result; let bodyFlags; let semicolonOptional; let that = this;
+      withIndent(function () {
+        result = [
+          'if' + space + '(',
+          that.generateExpression(stmt.test, Precedence.Sequence, E_TTT),
+          ')'
+        ];
+      });
+      semicolonOptional = flags &amp; F_SEMICOLON_OPT;
+      bodyFlags = S_TFFF;
+      if (semicolonOptional) {
+        bodyFlags |= F_SEMICOLON_OPT;
+      }
+      if (stmt.alternate) {
+        result.push(this.maybeBlock(stmt.consequent, S_TFFF));
+        result = this.maybeBlockSuffix(stmt.consequent, result);
+        if (stmt.alternate.type === Syntax.IfStatement) {
+          result = join(result, ['else ', this.generateStatement(stmt.alternate, bodyFlags)]);
+        } else {
+          result = join(result, join('else', this.maybeBlock(stmt.alternate, bodyFlags)));
+        }
+      } else {
+        result.push(this.maybeBlock(stmt.consequent, bodyFlags));
+      }
+      return result;
+    },
+
+    ForStatement: function (stmt, flags) {
+      let result; let that = this;
+      withIndent(function () {
+        result = ['for' + space + '('];
+        if (stmt.init) {
+          if (stmt.init.type === Syntax.VariableDeclaration) {
+            result.push(that.generateStatement(stmt.init, S_FFFF));
+          } else {
+            // F_ALLOW_IN becomes false.
+            result.push(that.generateExpression(stmt.init, Precedence.Sequence, E_FTT));
+            result.push(';');
+          }
+        } else {
+          result.push(';');
+        }
+
+        if (stmt.test) {
+          result.push(space);
+          result.push(that.generateExpression(stmt.test, Precedence.Sequence, E_TTT));
+          result.push(';');
+        } else {
+          result.push(';');
+        }
+
+        if (stmt.update) {
+          result.push(space);
+          result.push(that.generateExpression(stmt.update, Precedence.Sequence, E_TTT));
+          result.push(')');
+        } else {
+          result.push(')');
+        }
+      });
+
+      result.push(this.maybeBlock(stmt.body, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF));
+      return result;
+    },
+
+    ForInStatement: function (stmt, flags) {
+      return this.generateIterationForStatement('in', stmt, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF);
+    },
+
+    ForOfStatement: function (stmt, flags) {
+      return this.generateIterationForStatement('of', stmt, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF);
+    },
+
+    LabeledStatement: function (stmt, flags) {
+      return [stmt.label.name + ':', this.maybeBlock(stmt.body, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF)];
+    },
+
+    Program: function (stmt, flags) {
+      let result, fragment, i, iz, bodyFlags;
+      iz = stmt.body.length;
+      result = [safeConcatenation &amp;&amp; iz > 0 ? '\n' : ''];
+      bodyFlags = S_TFTF;
+      for (i = 0; i &lt; iz; ++i) {
+        if (!safeConcatenation &amp;&amp; i === iz - 1) {
+          bodyFlags |= F_SEMICOLON_OPT;
+        }
+
+        if (preserveBlankLines) {
+          // handle spaces before the first line
+          if (i === 0) {
+            if (!stmt.body[0].leadingComments) {
+              generateBlankLines(stmt.range[0], stmt.body[i].range[0], result);
+            }
+          }
+
+          // handle spaces between lines
+          if (i > 0) {
+            if (!stmt.body[i - 1].trailingComments &amp;&amp; !stmt.body[i].leadingComments) {
+              generateBlankLines(stmt.body[i - 1].range[1], stmt.body[i].range[0], result);
+            }
+          }
+        }
+
+        fragment = addIndent(this.generateStatement(stmt.body[i], bodyFlags));
+        result.push(fragment);
+        if (i + 1 &lt; iz &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+          if (preserveBlankLines) {
+            if (!stmt.body[i + 1].leadingComments) {
+              result.push(newline);
+            }
+          } else {
+            result.push(newline);
+          }
+        }
+
+        if (preserveBlankLines) {
+          // handle spaces after the last line
+          if (i === iz - 1) {
+            if (!stmt.body[i].trailingComments) {
+              generateBlankLines(stmt.body[i].range[1], stmt.range[1], result);
+            }
+          }
+        }
+      }
+      return result;
+    },
+
+    FunctionDeclaration: function (stmt, flags) {
+      return [
+        generateAsyncPrefix(stmt, true),
+        'function',
+        generateStarSuffix(stmt) || noEmptySpace(),
+        stmt.id ? generateIdentifier(stmt.id) : '',
+        this.generateFunctionBody(stmt)
+      ];
+    },
+
+    ReturnStatement: function (stmt, flags) {
+      if (stmt.argument) {
+        return [join(
+          'return',
+          this.generateExpression(stmt.argument, Precedence.Sequence, E_TTT)
+        ), this.semicolon(flags)];
+      }
+      return ['return' + this.semicolon(flags)];
+    },
+
+    WhileStatement: function (stmt, flags) {
+      let result; let that = this;
+      withIndent(function () {
+        result = [
+          'while' + space + '(',
+          that.generateExpression(stmt.test, Precedence.Sequence, E_TTT),
+          ')'
+        ];
+      });
+      result.push(this.maybeBlock(stmt.body, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF));
+      return result;
+    },
+
+    WithStatement: function (stmt, flags) {
+      let result; let that = this;
+      withIndent(function () {
+        result = [
+          'with' + space + '(',
+          that.generateExpression(stmt.object, Precedence.Sequence, E_TTT),
+          ')'
+        ];
+      });
+      result.push(this.maybeBlock(stmt.body, flags &amp; F_SEMICOLON_OPT ? S_TFFT : S_TFFF));
+      return result;
+    }
+
+  };
+
+  merge(CodeGenerator.prototype, CodeGenerator.Statement);
+
+  // Expressions.
+
+  CodeGenerator.Expression = {
+
+    SequenceExpression: function (expr, precedence, flags) {
+      let result, i, iz;
+      if (Precedence.Sequence &lt; precedence) {
+        flags |= F_ALLOW_IN;
+      }
+      result = [];
+      for (i = 0, iz = expr.expressions.length; i &lt; iz; ++i) {
+        result.push(this.generateExpression(expr.expressions[i], Precedence.Assignment, flags));
+        if (i + 1 &lt; iz) {
+          result.push(',' + space);
+        }
+      }
+      return parenthesize(result, Precedence.Sequence, precedence);
+    },
+
+    AssignmentExpression: function (expr, precedence, flags) {
+      return this.generateAssignment(expr.left, expr.right, expr.operator, precedence, flags);
+    },
+
+    ArrowFunctionExpression: function (expr, precedence, flags) {
+      return parenthesize(this.generateFunctionBody(expr), Precedence.ArrowFunction, precedence);
+    },
+
+    ConditionalExpression: function (expr, precedence, flags) {
+      if (Precedence.Conditional &lt; precedence) {
+        flags |= F_ALLOW_IN;
+      }
+      return parenthesize(
+        [
+          this.generateExpression(expr.test, Precedence.LogicalOR, flags),
+          space + '?' + space,
+          this.generateExpression(expr.consequent, Precedence.Assignment, flags),
+          space + ':' + space,
+          this.generateExpression(expr.alternate, Precedence.Assignment, flags)
+        ],
+        Precedence.Conditional,
+        precedence
+      );
+    },
+
+    LogicalExpression: function (expr, precedence, flags) {
+      return this.BinaryExpression(expr, precedence, flags);
+    },
+
+    BinaryExpression: function (expr, precedence, flags) {
+      let result, leftPrecedence, rightPrecedence, currentPrecedence, fragment, leftSource;
+      currentPrecedence = BinaryPrecedence[expr.operator];
+
+      leftPrecedence = currentPrecedence;
+      rightPrecedence = currentPrecedence + 1;
+
+      switch (expr.operator) {
+        case '**':
+          leftPrecedence = Precedence.Postfix;
+          rightPrecedence = currentPrecedence;
+          break;
+
+        case '??':
+          if (expr.left.type === Syntax.LogicalExpression &amp;&amp; (expr.left.operator === '||' || expr.left.operator === '&amp;&amp;')) {
+            leftPrecedence = BinaryPrecedence[expr.left.operator] + 1;
+          }
+
+          if (expr.right.type === Syntax.LogicalExpression &amp;&amp; expr.right.operator === '&amp;&amp;') {
+            rightPrecedence = BinaryPrecedence[expr.right.operator] + 1;
+          }
+
+          break;
+
+        case '||':
+          if (expr.left.type === Syntax.LogicalExpression &amp;&amp; expr.left.operator === '??') {
+            leftPrecedence = BinaryPrecedence[expr.left.operator] + 1;
+          }
+
+          break;
+      }
+
+      if (currentPrecedence &lt; precedence) {
+        flags |= F_ALLOW_IN;
+      }
+
+      fragment = this.generateExpression(expr.left, leftPrecedence, flags);
+
+      leftSource = fragment.toString();
+
+      if (leftSource.charCodeAt(leftSource.length - 1) === 0x2F /* / */ &amp;&amp; esutils.code.isIdentifierPartES5(expr.operator.charCodeAt(0))) {
+        result = [fragment, noEmptySpace(), expr.operator];
+      } else {
+        result = join(fragment, expr.operator);
+      }
+
+      fragment = this.generateExpression(expr.right, rightPrecedence, flags);
+
+      if (expr.operator === '/' &amp;&amp; fragment.toString().charAt(0) === '/' ||
+            expr.operator.slice(-1) === '&lt;' &amp;&amp; fragment.toString().slice(0, 3) === '!--') {
+        // If '/' concats with '/' or `&lt;` concats with `!--`, it is interpreted as comment start
+        result.push(noEmptySpace());
+        result.push(fragment);
+      } else {
+        result = join(result, fragment);
+      }
+
+      if (expr.operator === 'in' &amp;&amp; !(flags &amp; F_ALLOW_IN)) {
+        return ['(', result, ')'];
+      }
+      return parenthesize(result, currentPrecedence, precedence);
+    },
+
+    CallExpression: function (expr, precedence, flags) {
+      let result, i, iz, isIIFE;
+
+      // F_ALLOW_UNPARATH_NEW becomes false.
+      result = [this.generateExpression(expr.callee, Precedence.Call, E_TTF)];
+
+      if (expr.optional) {
+        result.push('?.');
+      }
+
+      result.push('(');
+      for (i = 0, iz = expr['arguments'].length; i &lt; iz; ++i) {
+        result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT));
+        if (i + 1 &lt; iz) {
+          result.push(',' + space);
+        }
+      }
+      result.push(')');
+
+      if (!(flags &amp; F_ALLOW_CALL)) {
+        return ['(', result, ')'];
+      }
+
+      isIIFE = expr.callee.id === null &amp;&amp; expr.callee.params.length === 0;
+
+      return isIIFE
+        ? parenthesize(result, precedence, Precedence.Call)
+        : parenthesize(result, Precedence.Call, precedence);
+    },
+
+    ChainExpression: function (expr, precedence, flags) {
+      if (Precedence.OptionalChaining &lt; precedence) {
+        flags |= F_ALLOW_CALL;
+      }
+
+      let result = this.generateExpression(expr.expression, Precedence.OptionalChaining, flags);
+
+      return parenthesize(result, Precedence.OptionalChaining, precedence);
+    },
+
+    NewExpression: function (expr, precedence, flags) {
+      let result, length, i, iz, itemFlags;
+      length = expr['arguments'].length;
+
+      // F_ALLOW_CALL becomes false.
+      // F_ALLOW_UNPARATH_NEW may become false.
+      itemFlags = (flags &amp; F_ALLOW_UNPARATH_NEW &amp;&amp; !parentheses &amp;&amp; length === 0) ? E_TFT : E_TFF;
+
+      result = join(
+        'new',
+        this.generateExpression(expr.callee, Precedence.New, itemFlags)
+      );
+
+      if (!(flags &amp; F_ALLOW_UNPARATH_NEW) || parentheses || length > 0) {
+        result.push('(');
+        for (i = 0, iz = length; i &lt; iz; ++i) {
+          result.push(this.generateExpression(expr['arguments'][i], Precedence.Assignment, E_TTT));
+          if (i + 1 &lt; iz) {
+            result.push(',' + space);
+          }
+        }
+        result.push(')');
+      }
+
+      return parenthesize(result, Precedence.New, precedence);
+    },
+
+    MemberExpression: function (expr, precedence, flags) {
+      let result, fragment;
+
+      // F_ALLOW_UNPARATH_NEW becomes false.
+      result = [this.generateExpression(expr.object, Precedence.Call, (flags &amp; F_ALLOW_CALL) ? E_TTF : E_TFF)];
+
+      if (expr.computed) {
+        if (expr.optional) {
+          result.push('?.');
+        }
+
+        result.push('[');
+        result.push(this.generateExpression(expr.property, Precedence.Sequence, flags &amp; F_ALLOW_CALL ? E_TTT : E_TFT));
+        result.push(']');
+      } else {
+        if (!expr.optional &amp;&amp; expr.object.type === Syntax.Literal &amp;&amp; typeof expr.object.value === 'number') {
+          fragment = toSourceNodeWhenNeeded(result).toString();
+          // When the following conditions are all true,
+          //   1. No floating point
+          //   2. Don't have exponents
+          //   3. The last character is a decimal digit
+          //   4. Not hexadecimal OR octal number literal
+          // we should add a floating point.
+          if (
+            fragment.indexOf('.') &lt; 0 &amp;&amp;
+                            !/[eExX]/.test(fragment) &amp;&amp;
+                            esutils.code.isDecimalDigit(fragment.charCodeAt(fragment.length - 1)) &amp;&amp;
+                            !(fragment.length >= 2 &amp;&amp; fragment.charCodeAt(0) === 48) // '0'
+          ) {
+            result.push(' ');
+          }
+        }
+        result.push(expr.optional ? '?.' : '.');
+        result.push(generateIdentifier(expr.property));
+      }
+
+      return parenthesize(result, Precedence.Member, precedence);
+    },
+
+    MetaProperty: function (expr, precedence, flags) {
+      let result;
+      result = [];
+      result.push(typeof expr.meta === 'string' ? expr.meta : generateIdentifier(expr.meta));
+      result.push('.');
+      result.push(typeof expr.property === 'string' ? expr.property : generateIdentifier(expr.property));
+      return parenthesize(result, Precedence.Member, precedence);
+    },
+
+    UnaryExpression: function (expr, precedence, flags) {
+      let result, fragment, rightCharCode, leftSource, leftCharCode;
+      fragment = this.generateExpression(expr.argument, Precedence.Unary, E_TTT);
+
+      if (space === '') {
+        result = join(expr.operator, fragment);
+      } else {
+        result = [expr.operator];
+        if (expr.operator.length > 2) {
+          // delete, void, typeof
+          // get `typeof []`, not `typeof[]`
+          result = join(result, fragment);
+        } else {
+          // Prevent inserting spaces between operator and argument if it is unnecessary
+          // like, `!cond`
+          leftSource = toSourceNodeWhenNeeded(result).toString();
+          leftCharCode = leftSource.charCodeAt(leftSource.length - 1);
+          rightCharCode = fragment.toString().charCodeAt(0);
+
+          if (((leftCharCode === 0x2B /* + */ || leftCharCode === 0x2D /* - */) &amp;&amp; leftCharCode === rightCharCode) ||
+                            (esutils.code.isIdentifierPartES5(leftCharCode) &amp;&amp; esutils.code.isIdentifierPartES5(rightCharCode))) {
+            result.push(noEmptySpace());
+            result.push(fragment);
+          } else {
+            result.push(fragment);
+          }
+        }
+      }
+      return parenthesize(result, Precedence.Unary, precedence);
+    },
+
+    YieldExpression: function (expr, precedence, flags) {
+      let result;
+      if (expr.delegate) {
+        result = 'yield*';
+      } else {
+        result = 'yield';
+      }
+      if (expr.argument) {
+        result = join(
+          result,
+          this.generateExpression(expr.argument, Precedence.Yield, E_TTT)
+        );
+      }
+      return parenthesize(result, Precedence.Yield, precedence);
+    },
+
+    AwaitExpression: function (expr, precedence, flags) {
+      let result = join(
+        expr.all ? 'await*' : 'await',
+        this.generateExpression(expr.argument, Precedence.Await, E_TTT)
+      );
+      return parenthesize(result, Precedence.Await, precedence);
+    },
+
+    UpdateExpression: function (expr, precedence, flags) {
+      if (expr.prefix) {
+        return parenthesize(
+          [
+            expr.operator,
+            this.generateExpression(expr.argument, Precedence.Unary, E_TTT)
+          ],
+          Precedence.Unary,
+          precedence
+        );
+      }
+      return parenthesize(
+        [
+          this.generateExpression(expr.argument, Precedence.Postfix, E_TTT),
+          expr.operator
+        ],
+        Precedence.Postfix,
+        precedence
+      );
+    },
+
+    FunctionExpression: function (expr, precedence, flags) {
+      let result = [
+        generateAsyncPrefix(expr, true),
+        'function'
+      ];
+      if (expr.id) {
+        result.push(generateStarSuffix(expr) || noEmptySpace());
+        result.push(generateIdentifier(expr.id));
+      } else {
+        result.push(generateStarSuffix(expr) || space);
+      }
+      result.push(this.generateFunctionBody(expr));
+      return result;
+    },
+
+    ArrayPattern: function (expr, precedence, flags) {
+      return this.ArrayExpression(expr, precedence, flags, true);
+    },
+
+    ArrayExpression: function (expr, precedence, flags, isPattern) {
+      let result; let multiline; let that = this;
+      if (!expr.elements.length) {
+        return '[]';
+      }
+      multiline = isPattern ? false : expr.elements.length > 1;
+      result = ['[', multiline ? newline : ''];
+      withIndent(function (indent) {
+        let i, iz;
+        for (i = 0, iz = expr.elements.length; i &lt; iz; ++i) {
+          if (!expr.elements[i]) {
+            if (multiline) {
+              result.push(indent);
+            }
+            if (i + 1 === iz) {
+              result.push(',');
+            }
+          } else {
+            result.push(multiline ? indent : '');
+            result.push(that.generateExpression(expr.elements[i], Precedence.Assignment, E_TTT));
+          }
+          if (i + 1 &lt; iz) {
+            result.push(',' + (multiline ? newline : space));
+          }
+        }
+      });
+      if (multiline &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+        result.push(newline);
+      }
+      result.push(multiline ? base : '');
+      result.push(']');
+      return result;
+    },
+
+    RestElement: function (expr, precedence, flags) {
+      return '...' + this.generatePattern(expr.argument);
+    },
+
+    ClassExpression: function (expr, precedence, flags) {
+      let result, fragment;
+      result = ['class'];
+      if (expr.id) {
+        result = join(result, this.generateExpression(expr.id, Precedence.Sequence, E_TTT));
+      }
+      if (expr.superClass) {
+        fragment = join('extends', this.generateExpression(expr.superClass, Precedence.Unary, E_TTT));
+        result = join(result, fragment);
+      }
+      result.push(space);
+      result.push(this.generateStatement(expr.body, S_TFFT));
+      return result;
+    },
+
+    MethodDefinition: function (expr, precedence, flags) {
+      let result = []; let fragment;
+      if (expr.decorators.length) {
+        for (let dec of expr.decorators) {
+          result.push(this.generateStatement(dec));
+          result.push(base);
+        }
+      }
+      if (expr['static']) {
+        result.push('static' + space);
+      }
+      if (expr.kind === 'get' || expr.kind === 'set') {
+        fragment = [
+          join(expr.kind, this.generatePropertyKey(expr.key, expr.computed)),
+          this.generateFunctionBody(expr.value)
+        ];
+      } else {
+        fragment = [
+          generateMethodPrefix(expr),
+          this.generatePropertyKey(expr.key, expr.computed),
+          this.generateFunctionBody(expr.value)
+        ];
+      }
+      return join(result, fragment);
+    },
+
+    PrivateIdentifier: function (expr, precedence, flags) {
+      return generateIdentifier(expr);
+    },
+
+    Decorator: function (expr, precedence, flags) {
+      return ['@', this.generateExpression(expr.expression, Precedence.Call, F_ALLOW_CALL), newline];
+    },
+
+    Property: function (expr, precedence, flags) {
+      if (expr.kind === 'get' || expr.kind === 'set') {
+        return [
+          expr.kind, noEmptySpace(),
+          this.generatePropertyKey(expr.key, expr.computed),
+          this.generateFunctionBody(expr.value)
+        ];
+      }
+
+      if (expr.shorthand) {
+        if (expr.value.type === 'AssignmentPattern') {
+          return this.AssignmentPattern(expr.value, Precedence.Sequence, E_TTT);
+        }
+        return this.generatePropertyKey(expr.key, expr.computed);
+      }
+
+      if (expr.method) {
+        return [
+          generateMethodPrefix(expr),
+          this.generatePropertyKey(expr.key, expr.computed),
+          this.generateFunctionBody(expr.value)
+        ];
+      }
+
+      return [
+        this.generatePropertyKey(expr.key, expr.computed),
+        ':' + space,
+        this.generateExpression(expr.value, Precedence.Assignment, E_TTT)
+      ];
+    },
+
+    PropertyDefinition: function (expr, precedence, flags) {
+      let result;
+
+      if (expr.static) {
+        result = ['static '];
+      } else {
+        result = [];
+      }
+
+      result.push(this.generatePropertyKey(expr.key, expr.computed));
+
+      if (expr.value) {
+        result.push(space + '=' + space);
+        result.push(this.generateExpression(expr.value, Precedence.Assignment, E_TTT));
+      }
+
+      result.push(this.semicolon(flags));
+
+      return result;
+    },
+
+    ObjectExpression: function (expr, precedence, flags) {
+      let multiline; let result; let fragment; let that = this;
+
+      if (!expr.properties.length) {
+        return '{}';
+      }
+      multiline = expr.properties.length > 1;
+
+      withIndent(function () {
+        fragment = that.generateExpression(expr.properties[0], Precedence.Sequence, E_TTT);
+      });
+
+      if (!multiline) {
+        // issues 4
+        // Do not transform from
+        //   dejavu.Class.declare({
+        //       method2: function () {}
+        //   });
+        // to
+        //   dejavu.Class.declare({method2: function () {
+        //       }});
+        if (!hasLineTerminator(toSourceNodeWhenNeeded(fragment).toString())) {
+          return ['{', space, fragment, space, '}'];
+        }
+      }
+
+      withIndent(function (indent) {
+        let i, iz;
+        result = ['{', newline, indent, fragment];
+
+        if (multiline) {
+          result.push(',' + newline);
+          for (i = 1, iz = expr.properties.length; i &lt; iz; ++i) {
+            result.push(indent);
+            result.push(that.generateExpression(expr.properties[i], Precedence.Sequence, E_TTT));
+            if (i + 1 &lt; iz) {
+              result.push(',' + newline);
+            }
+          }
+        }
+      });
+
+      if (!endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+        result.push(newline);
+      }
+      result.push(base);
+      result.push('}');
+      return result;
+    },
+
+    AssignmentPattern: function (expr, precedence, flags) {
+      return this.generateAssignment(expr.left, expr.right, '=', precedence, flags);
+    },
+
+    ObjectPattern: function (expr, precedence, flags) {
+      let result; let i; let iz; let multiline; let property; let that = this;
+      if (!expr.properties.length) {
+        return '{}';
+      }
+
+      multiline = false;
+      if (expr.properties.length === 1) {
+        property = expr.properties[0];
+        if (
+          property.type === Syntax.Property &amp;&amp;
+                    property.value.type !== Syntax.Identifier
+        ) {
+          multiline = true;
+        }
+      } else {
+        for (i = 0, iz = expr.properties.length; i &lt; iz; ++i) {
+          property = expr.properties[i];
+          if (
+            property.type === Syntax.Property &amp;&amp;
+                        !property.shorthand
+          ) {
+            multiline = true;
+            break;
+          }
+        }
+      }
+      result = ['{', multiline ? newline : ''];
+
+      withIndent(function (indent) {
+        let i, iz;
+        for (i = 0, iz = expr.properties.length; i &lt; iz; ++i) {
+          result.push(multiline ? indent : '');
+          result.push(that.generateExpression(expr.properties[i], Precedence.Sequence, E_TTT));
+          if (i + 1 &lt; iz) {
+            result.push(',' + (multiline ? newline : space));
+          }
+        }
+      });
+
+      if (multiline &amp;&amp; !endsWithLineTerminator(toSourceNodeWhenNeeded(result).toString())) {
+        result.push(newline);
+      }
+      result.push(multiline ? base : '');
+      result.push('}');
+      return result;
+    },
+
+    ThisExpression: function (expr, precedence, flags) {
+      return 'this';
+    },
+
+    Super: function (expr, precedence, flags) {
+      return 'super';
+    },
+
+    Identifier: function (expr, precedence, flags) {
+      return generateIdentifier(expr);
+    },
+
+    ImportDefaultSpecifier: function (expr, precedence, flags) {
+      return generateIdentifier(expr.id || expr.local);
+    },
+
+    ImportNamespaceSpecifier: function (expr, precedence, flags) {
+      let result = ['*'];
+      let id = expr.id || expr.local;
+      if (id) {
+        result.push(space + 'as' + noEmptySpace() + generateIdentifier(id));
+      }
+      return result;
+    },
+
+    ImportSpecifier: function (expr, precedence, flags) {
+      let imported = expr.imported;
+      let result = [imported.name];
+      let local = expr.local;
+      if (local &amp;&amp; local.name !== imported.name) {
+        result.push(noEmptySpace() + 'as' + noEmptySpace() + generateIdentifier(local));
+      }
+      return result;
+    },
+
+    ExportSpecifier: function (expr, precedence, flags) {
+      let local = expr.local;
+      let result = [local.name];
+      let exported = expr.exported;
+      if (exported &amp;&amp; exported.name !== local.name) {
+        result.push(noEmptySpace() + 'as' + noEmptySpace() + generateIdentifier(exported));
+      }
+      return result;
+    },
+
+    Literal: function (expr, precedence, flags) {
+      let raw;
+      if (expr.hasOwnProperty('raw') &amp;&amp; parse &amp;&amp; extra.raw) {
+        try {
+          raw = parse(expr.raw).body[0].expression;
+          if (raw.type === Syntax.Literal) {
+            if (raw.value === expr.value) {
+              return expr.raw;
+            }
+          }
+        } catch (e) {
+          // not use raw property
+        }
+      }
+
+      if (expr.regex) {
+        return '/' + expr.regex.pattern + '/' + expr.regex.flags;
+      }
+
+      // BigInt, eg: 1n
+      if (typeof expr.bigint === 'string' &amp;&amp; expr.raw) {
+        return expr.raw;
+      }
+
+      if (expr.value === null) {
+        return 'null';
+      }
+
+      if (typeof expr.value === 'string') {
+        return escapeString(expr.value);
+      }
+
+      if (typeof expr.value === 'number') {
+        // Has Numeric Separator
+        if (expr.raw &amp;&amp; expr.raw.indexOf('_') !== -1) {
+          return expr.raw;
+        }
+
+        return generateNumber(expr.value);
+      }
+
+      if (typeof expr.value === 'boolean') {
+        return expr.value ? 'true' : 'false';
+      }
+
+      return generateRegExp(expr.value);
+    },
+
+    GeneratorExpression: function (expr, precedence, flags) {
+      return this.ComprehensionExpression(expr, precedence, flags);
+    },
+
+    ComprehensionExpression: function (expr, precedence, flags) {
+      // GeneratorExpression should be parenthesized with (...), ComprehensionExpression with [...]
+      // Due to https://bugzilla.mozilla.org/show_bug.cgi?id=883468 position of expr.body can differ in Spidermonkey and ES6
+
+      let result; let i; let iz; let fragment; let that = this;
+      result = (expr.type === Syntax.GeneratorExpression) ? ['('] : ['['];
+
+      if (extra.moz.comprehensionExpressionStartsWithAssignment) {
+        fragment = this.generateExpression(expr.body, Precedence.Assignment, E_TTT);
+        result.push(fragment);
+      }
+
+      if (expr.blocks) {
+        withIndent(function () {
+          for (i = 0, iz = expr.blocks.length; i &lt; iz; ++i) {
+            fragment = that.generateExpression(expr.blocks[i], Precedence.Sequence, E_TTT);
+            if (i > 0 || extra.moz.comprehensionExpressionStartsWithAssignment) {
+              result = join(result, fragment);
+            } else {
+              result.push(fragment);
+            }
+          }
+        });
+      }
+
+      if (expr.filter) {
+        result = join(result, 'if' + space);
+        fragment = this.generateExpression(expr.filter, Precedence.Sequence, E_TTT);
+        result = join(result, ['(', fragment, ')']);
+      }
+
+      if (!extra.moz.comprehensionExpressionStartsWithAssignment) {
+        fragment = this.generateExpression(expr.body, Precedence.Assignment, E_TTT);
+
+        result = join(result, fragment);
+      }
+
+      result.push((expr.type === Syntax.GeneratorExpression) ? ')' : ']');
+      return result;
+    },
+
+    ComprehensionBlock: function (expr, precedence, flags) {
+      let fragment;
+      if (expr.left.type === Syntax.VariableDeclaration) {
+        fragment = [
+          expr.left.kind, noEmptySpace(),
+          this.generateStatement(expr.left.declarations[0], S_FFFF)
+        ];
+      } else {
+        fragment = this.generateExpression(expr.left, Precedence.Call, E_TTT);
+      }
+
+      fragment = join(fragment, expr.of ? 'of' : 'in');
+      fragment = join(fragment, this.generateExpression(expr.right, Precedence.Sequence, E_TTT));
+
+      return ['for' + space + '(', fragment, ')'];
+    },
+
+    SpreadElement: function (expr, precedence, flags) {
+      return [
+        '...',
+        this.generateExpression(expr.argument, Precedence.Assignment, E_TTT)
+      ];
+    },
+
+    TaggedTemplateExpression: function (expr, precedence, flags) {
+      let itemFlags = E_TTF;
+      if (!(flags &amp; F_ALLOW_CALL)) {
+        itemFlags = E_TFF;
+      }
+      let result = [
+        this.generateExpression(expr.tag, Precedence.Call, itemFlags),
+        this.generateExpression(expr.quasi, Precedence.Primary, E_FFT)
+      ];
+      return parenthesize(result, Precedence.TaggedTemplate, precedence);
+    },
+
+    TemplateElement: function (expr, precedence, flags) {
+      // Don't use "cooked". Since tagged template can use raw template
+      // representation. So if we do so, it breaks the script semantics.
+      return expr.value.raw;
+    },
+
+    TemplateLiteral: function (expr, precedence, flags) {
+      let result, i, iz;
+      result = ['`'];
+      for (i = 0, iz = expr.quasis.length; i &lt; iz; ++i) {
+        result.push(this.generateExpression(expr.quasis[i], Precedence.Primary, E_TTT));
+        if (i + 1 &lt; iz) {
+          result.push('${' + space);
+          result.push(this.generateExpression(expr.expressions[i], Precedence.Sequence, E_TTT));
+          result.push(space + '}');
+        }
+      }
+      result.push('`');
+      return result;
+    },
+
+    ModuleSpecifier: function (expr, precedence, flags) {
+      return this.Literal(expr, precedence, flags);
+    },
+
+    ImportExpression: function (expr, precedence, flag) {
+      return parenthesize([
+        'import(',
+        this.generateExpression(expr.source, Precedence.Assignment, E_TTT),
+        ')'
+      ], Precedence.Call, precedence);
+    }
+  };
+
+  merge(CodeGenerator.prototype, CodeGenerator.Expression);
+
+  CodeGenerator.prototype.generateExpression = function (expr, precedence, flags) {
+    let result, type;
+
+    type = expr.type || Syntax.Property;
+
+    if (extra.verbatim &amp;&amp; expr.hasOwnProperty(extra.verbatim)) {
+      return generateVerbatim(expr, precedence);
+    }
+
+    result = this[type](expr, precedence, flags);
+
+    if (extra.comment) {
+      result = addComments(expr, result);
+    }
+    return toSourceNodeWhenNeeded(result, expr);
+  };
+
+  CodeGenerator.prototype.generateStatement = function (stmt, flags) {
+    let result,
+      fragment;
+
+    result = this[stmt.type](stmt, flags);
+
+    // Attach comments
+
+    if (extra.comment) {
+      result = addComments(stmt, result);
+    }
+
+    fragment = toSourceNodeWhenNeeded(result).toString();
+    if (stmt.type === Syntax.Program &amp;&amp; !safeConcatenation &amp;&amp; newline === '' &amp;&amp; fragment.charAt(fragment.length - 1) === '\n') {
+      result = sourceMap ? toSourceNodeWhenNeeded(result).replaceRight(/\s+$/, '') : fragment.replace(/\s+$/, '');
+    }
+
+    return toSourceNodeWhenNeeded(result, stmt);
+  };
+
+  function generateInternal (node) {
+    let codegen;
+
+    codegen = new CodeGenerator();
+    if (isStatement(node)) {
+      return codegen.generateStatement(node, S_TFFF);
+    }
+
+    if (isExpression(node)) {
+      return codegen.generateExpression(node, Precedence.Sequence, E_TTT);
+    }
+
+    throw new Error('Unknown node type: ' + node.type);
+  }
+
+  function generate (node, options) {
+    let defaultOptions = getDefaultOptions(); let result; let pair;
+
+    if (options != null) {
+      // Obsolete options
+      //
+      //   `options.indent`
+      //   `options.base`
+      //
+      // Instead of them, we can use `option.format.indent`.
+      if (typeof options.indent === 'string') {
+        defaultOptions.format.indent.style = options.indent;
+      }
+      if (typeof options.base === 'number') {
+        defaultOptions.format.indent.base = options.base;
+      }
+      options = updateDeeply(defaultOptions, options);
+      indent = options.format.indent.style;
+      if (typeof options.base === 'string') {
+        base = options.base;
+      } else {
+        base = stringRepeat(indent, options.format.indent.base);
+      }
+    } else {
+      options = defaultOptions;
+      indent = options.format.indent.style;
+      base = stringRepeat(indent, options.format.indent.base);
+    }
+    json = options.format.json;
+    renumber = options.format.renumber;
+    hexadecimal = json ? false : options.format.hexadecimal;
+    quotes = json ? 'double' : options.format.quotes;
+    escapeless = options.format.escapeless;
+    newline = options.format.newline;
+    space = options.format.space;
+    if (options.format.compact) {
+      newline = space = indent = base = '';
+    }
+    parentheses = options.format.parentheses;
+    semicolons = options.format.semicolons;
+    safeConcatenation = options.format.safeConcatenation;
+    directive = options.directive;
+    parse = json ? null : options.parse;
+    sourceMap = options.sourceMap;
+    sourceCode = options.sourceCode;
+    preserveBlankLines = options.format.preserveBlankLines &amp;&amp; sourceCode !== null;
+    extra = options;
+
+    if (sourceMap) {
+      if (!exports.browser) {
+        // We assume environment is node.js
+        // And prevent from including source-map by browserify
+        SourceNode = require('source-map').SourceNode;
+      } else {
+        SourceNode = global.sourceMap.SourceNode;
+      }
+    }
+
+    result = generateInternal(node);
+
+    if (!sourceMap) {
+      pair = { code: result.toString(), map: null };
+      return options.sourceMapWithCode ? pair : pair.code;
+    }
+
+    pair = result.toStringWithSourceMap({
+      file: options.file,
+      sourceRoot: options.sourceMapRoot
+    });
+
+    if (options.sourceContent) {
+      pair.map.setSourceContent(options.sourceMap,
+        options.sourceContent);
+    }
+
+    if (options.sourceMapWithCode) {
+      return pair;
+    }
+
+    return pair.map.toString();
+  }
+
+  FORMAT_MINIFY = {
+    indent: {
+      style: '',
+      base: 0
+    },
+    renumber: true,
+    hexadecimal: true,
+    quotes: 'auto',
+    escapeless: true,
+    compact: true,
+    parentheses: false,
+    semicolons: false
+  };
+
+  const exports = {};
+
+  FORMAT_DEFAULTS = getDefaultOptions().format;
+
+  exports.generate = generate;
+  exports.attachComments = estraverse.attachComments;
+  exports.Precedence = updateDeeply({}, Precedence);
+  exports.browser = false;
+  exports.FORMAT_MINIFY = FORMAT_MINIFY;
+  exports.FORMAT_DEFAULTS = FORMAT_DEFAULTS;
+
+  return exports;
+}
+
+const es = ESCODEGEN();
+
+export { es as escodegen };
+
+// FORKED ESCODEGEN
+
+export default function stringify (node, opts = {}) {
+  const optsIndent = (opts &amp;&amp; opts.format &amp;&amp; opts.format.indent) || {};
+  const indent = {
+    style: '  ',
+    base: 0,
+    adjustMultilineComment: false,
+    optsIndent
+  };
+
+  const optsFormat = (opts &amp;&amp; opts.format) || {};
+  const format = {
+    indent,
+    quotes: 'double',
+    ...obj.dissoc(optsFormat, ['indent'])
+  };
+
+  opts = {
+    format,
+    comment: false,
+    ...obj.dissoc(opts, ['format'])
+  };
+
+  return es.generate(node, opts);
+}
+</code></pre></article></section></div></div></div><div class="search-container" id="PkfLWpAbet" style="display:none"><div class="wrapper" id="iCxFxjkHbP"><button class="icon-button search-close-button" id="VjLlGakifb" aria-label="close search"><svg><use xlink:href="#close-icon"></use></svg></button><div class="search-box-c"><svg><use xlink:href="#search-icon"></use></svg> <input type="text" id="vpcKVYIppa" class="search-input" placeholder="Search..." autofocus></div><div class="search-result-c" id="fWwVHRuDuN">Type anything to view search result</div></div></div><div class="mobile-menu-icon-container"><button class="icon-button" id="mobile-menu" data-isopen="false" aria-label="menu"><svg><use xlink:href="#menu-icon"></use></svg></button></div><div id="mobile-sidebar" class="mobile-sidebar-container"><div class="mobile-sidebar-wrapper"><img src="logo.svg" style="padding:0 5px"><div class="mobile-nav-links"></div><div class="mobile-sidebar-items-c"><div class="sidebar-section-title with-arrow" data-isopen="false" id="FWs4wI-IV8R9wzGO04k5k"><div>Modules</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="lively.module_lang_array.html">lang/array</a></div><div class="sidebar-section-children"><a href="lively.module_lang_array-projection.html">lang/array-projection</a></div><div class="sidebar-section-children"><a href="lively.module_lang_closure.html">lang/closure</a></div><div class="sidebar-section-children"><a href="lively.module_lang_function.html">lang/function</a></div><div class="sidebar-section-children"><a href="lively.module_lang_graph.html">lang/graph</a></div><div class="sidebar-section-children"><a href="lively.module_lang_interval.html">lang/interval</a></div><div class="sidebar-section-children"><a href="lively.module_lang_number.html">lang/number</a></div><div class="sidebar-section-children"><a href="lively.module_lang_object.html">lang/object</a></div><div class="sidebar-section-children"><a href="lively.module_lang_promise.html">lang/promise</a></div><div class="sidebar-section-children"><a href="lively.module_lang_properties.html">lang/properties</a></div><div class="sidebar-section-children"><a href="module-symbol-tree.html">symbol-tree</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="mRYPhYMJq11CFyVsy8K9t"><div>Classes</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSDocumentRule.html">CSSDocumentRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSFontFaceRule.html">CSSFontFaceRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSHostRule.html">CSSHostRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSImportRule.html">CSSImportRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSKeyframeRule.html">CSSKeyframeRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSKeyframesRule.html">CSSKeyframesRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSMediaRule.html">CSSMediaRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSRule.html">CSSRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleDeclaration.html">CSSStyleDeclaration</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleRule.html">CSSStyleRule</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSStyleSheet.html">CSSStyleSheet</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSValue.html">CSSValue</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.CSSValueExpression.html">CSSValueExpression</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.MatcherList.html">MatcherList</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.MediaList.html">MediaList</a></div><div class="sidebar-section-children"><a href="-_anonymous_-CSSOM.StyleSheet.html">StyleSheet</a></div><div class="sidebar-section-children"><a href="BodyControlModel.html">BodyControlModel</a></div><div class="sidebar-section-children"><a href="BorderControlModel.html">BorderControlModel</a></div><div class="sidebar-section-children"><a href="BorderPopupWindow.html">BorderPopupWindow</a></div><div class="sidebar-section-children"><a href="ConstraintsControlModel.html">ConstraintsControlModel</a></div><div class="sidebar-section-children"><a href="DynamicPropertyModel.html">DynamicPropertyModel</a></div><div class="sidebar-section-children"><a href="lively.module_lang_closure.html">module:lang/closure</a></div><div class="sidebar-section-children"><a href="MasterComponentTreeData.html">MasterComponentTreeData</a></div><div class="sidebar-section-children"><a href="ModeSelectorModel.html">ModeSelectorModel</a></div><div class="sidebar-section-children"><a href="module-symbol-tree.html">module:symbol-tree</a></div><div class="sidebar-section-children"><a href="ResizingControlModel.html">ResizingControlModel</a></div><div class="sidebar-section-children"><a href="SingleNumberModel.html">SingleNumberModel</a></div><div class="sidebar-section-children"><a href="SingleSelectionModel.html">SingleSelectionModel</a></div><div class="sidebar-section-children"><a href="Snippet_Snippet.html">Snippet</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="Xo_iQ65Li3XIUkLpbFFqg"><div>Tutorials</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="tutorial-Documentation.html">Documentation</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="XJflU5F9G727fbo7CQ0ZF"><div>Interfaces</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="core.NodeFilter.acceptNode.html">acceptNode</a></div></div><div class="sidebar-section-title with-arrow" data-isopen="false" id="KNNU7BhlaqN9aHvD2kGw9"><div>Global</div><svg><use xlink:href="#down-icon"></use></svg></div><div class="sidebar-section-children-container"><div class="sidebar-section-children"><a href="global.html#describe">describe</a></div><div class="sidebar-section-children"><a href="global.html#ensureFolder">ensureFolder</a></div><div class="sidebar-section-children"><a href="global.html#joinPath">joinPath</a></div><div class="sidebar-section-children"><a href="global.html#LinterMessage">LinterMessage</a></div><div class="sidebar-section-children"><a href="global.html#parseDescribeBlock">parseDescribeBlock</a></div><div class="sidebar-section-children"><a href="global.html#punycode">punycode</a></div><div class="sidebar-section-children"><a href="global.html#Tab">Tab</a></div><div class="sidebar-section-children"><a href="global.html#TabContainer">TabContainer</a></div><div class="sidebar-section-children"><a href="global.html#TabContentContainer">TabContentContainer</a></div><div class="sidebar-section-children"><a href="global.html#Tabs">Tabs</a></div></div></div><div class="mobile-navbar-actions"><div class="navbar-right-item"><button class="icon-button search-button" aria-label="open-search"><svg><use xlink:href="#search-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button theme-toggle" aria-label="toggle-theme"><svg><use class="theme-svg-use" xlink:href="#light-theme-icon"></use></svg></button></div><div class="navbar-right-item"><button class="icon-button font-size" aria-label="change-font-size"><svg><use xlink:href="#font-size-icon"></use></svg></button></div></div></div></div><script type="text/javascript" src="scripts/core.min.js"></script><script src="scripts/search.min.js" defer="defer"></script><script src="scripts/third-party/fuse.js" defer="defer"></script><script type="text/javascript">tocbot.init({tocSelector:"#eed4d2a0bfd64539bb9df78095dec881",contentSelector:".main-content",headingSelector:"h1, h2, h3",hasInnerContainers:!0,scrollContainer:".main-content",headingsOffset:130,onClick:bringLinkToView})</script></body></html>
