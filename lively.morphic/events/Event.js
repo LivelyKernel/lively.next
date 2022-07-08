@@ -168,9 +168,19 @@ export class KeyEvent extends Event {
 
   get isKeyEvent () { return true; }
 
+  /**
+   * Returns `true` when an arrow key press triggered this event and `false` otherwise.
+   * @returns {Boolean} 
+   */
+  get hasArrowPressed () {
+    const keyCode = this.domEvt.keyCode;
+    if (keyCode >= 37 || keyCode <= 40) return true;
+    return false;
+  }
+
   get hasCharacterPressed () {
     const keyCode = this.domEvt.keyCode;
-    
+
     if (keyCode >= 48 && keyCode <= 57) {
       return true;
     } else if (keyCode >= 65 && keyCode <= 90) {
@@ -178,7 +188,7 @@ export class KeyEvent extends Event {
     } else if (keyCode >= 97 && keyCode <= 122) {
       return true;
     }
-    return false; 
+    return false;
   }
 }
 
