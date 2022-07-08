@@ -40,30 +40,24 @@ export class CommentIndicatorModel extends ViewModel {
     this.alignWithMorph();
   }
 
+  /**
+   * Comment indicators should move together with the morphs they have been made on, as they have a position relative to the morph but are not implemented as submorphs.
+   */
   connectMorphs () {
     // When the morph that has the comment is a child in a hierarchy, it does not generate 'onChange' Events when the morphs that are higher in the hierarchy are moved.
     // Therefore we need to connect the indication with all morphs higher in the hierarchy.
     let referenceMorph = this.referenceMorph;
     while (referenceMorph && referenceMorph !== $world) {
-      connect(referenceMorph, 'onChange', this, 'referenceMoving', { garbageCollect: true});
-      connect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs', { garbageCollect: true});
+      connect(referenceMorph, 'onChange', this, 'referenceMoving', { garbageCollect: true });
+      connect(referenceMorph, 'onOwnerChanged', this, 'connectMorphs', { garbageCollect: true });
       referenceMorph = referenceMorph.owner;
     }
   }
 
-  hide () {
-    let referenceMorph = this.referenceMorph;
-    while (referenceMorph && referenceMorph !== $world) {
-      referenceMorph.attributeConnections.forEach(connection => {
-        if (connection.targetObj === this) {
-          connection.disconnect();
-        }
-      });
-      referenceMorph = referenceMorph.owner;
-    }
-    this.view.remove();
-  }
-
+  /**
+   * @see `lively.morphic/morph.js`
+   * When the indicator itself is being moved, we update the relative position of the comment it represents.
+   */
   onChange (change) {
     const { prop } = change;
     if (this.referenceMorph && !this._referenceMorphMoving && prop === 'position') {
@@ -97,7 +91,16 @@ export class CommentIndicatorModel extends ViewModel {
   }
 
   abandon () {
-    this.hide();
+    let referenceMorph = this.referenceMorph;
+    while (referenceMorph && referenceMorph !== $world) {
+      referenceMorph.attributeConnections.forEach(connection => {
+        if (connection.targetObj === this) {
+          connection.disconnect();
+        }
+      });
+      referenceMorph = referenceMorph.owner;
+    }
+    this.view.remove();
   }
 
   canBeCopied () {

@@ -5,20 +5,17 @@ import { defaultPropertiesPanelWidth } from 'lively.ide/studio/properties-panel.
 import { CommentGroup } from './components/comment.cp.js';
 import { CommentCountBadge } from './components/comment-count-badge.cp.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
-/**
- * `commentGroups` -- an Object mapping Morphs in the world to CommentGroups listing their comments, based on their Morph ID
- */
+
 export class CommentBrowserModel extends ViewModel {
   static get properties () {
     return {
       commentGroups: {
-        defaultValue: {}
-      },
-      wasOpenedBefore: {
-        defaultValue: false
+        defaultValue: {},
+        doc: 'An Object mapping Morphs in the world to CommentGroups listing their comments, based on their Morph ID. Use for the grouping in the view.'
       },
       showsResolvedComments: {
-        defaultValue: false
+        defaultValue: false,
+        doc: 'Whether currently the resolved or unresolved comments are displayed.'
       },
       expose: {
         get () {
@@ -36,6 +33,11 @@ export class CommentBrowserModel extends ViewModel {
     };
   }
 
+  /**
+   * Called when the view gets opened inside a Window (via a binding). @see `lively.morphic` for more info on `openInWindow`.
+   * This method also takes care of initializing/building the visual representation of the currently existing comments.
+   * Thus, this is the only supported way of opening a Comment Browser.
+   */
   openInWindow () {
     const topbar = $world.getSubmorphNamed('lively top bar');
     const margin = 25;
@@ -52,6 +54,9 @@ export class CommentBrowserModel extends ViewModel {
     window.epiMorph = true;
   }
 
+  /**
+   * Adds visual representations for all comments on all morphs that currently exist in the world.
+   */
   buildCommentGroupMorphs () {
     this.commentGroups = {};
     $world.withAllSubmorphsDo((morph) => {
@@ -64,6 +69,12 @@ export class CommentBrowserModel extends ViewModel {
     });
   }
 
+  /**
+   * Adds the visual representation for a specific `comment` on a specific `morph`.
+   * This method takes care of the correct per morph grouping of the visual representations.
+   * @param {CommentData} comment
+   * @param {Morph} morph
+   */
   addCommentForMorph (comment, morph) {
     console.log(`Adding a comment ${comment.text} from morph ${morph.name}`);
 
@@ -80,7 +91,9 @@ export class CommentBrowserModel extends ViewModel {
   }
 
   /**
-   * @param {Comment} - The `Comment` to be deleted
+   * Removes the visual representation of `comment` on `morph`.
+   * Takes care of cleaning up empty comment group visualization when necessary.
+   * @param {CommentData} - The `Comment` to be deleted
    * @param {Morph} - The `Morph` this comment was made on
    */
   removeCommentForMorph (comment, morph) {
@@ -94,11 +107,18 @@ export class CommentBrowserModel extends ViewModel {
     this.updateCommentCountBadge(true);
   }
 
+  /**
+   * Removes the CommentGroup that is collecting the comments for a Morph with `morphID`.
+   * @param {UUID} morphID
+   */
   removeCommentGroupFor (morphID) {
     this.commentGroups[morphID].view.remove();
     delete this.commentGroups[morphID];
   }
 
+  /**
+   * Toggles the browser between showing unresolved and resolved comments.
+   */
   toggleArchive () {
     this.showsResolvedComments = !this.showsResolvedComments;
     this.removeAllCommentIndicators();
@@ -107,10 +127,17 @@ export class CommentBrowserModel extends ViewModel {
     this.updateCommentCountBadge();
   }
 
+  /**
+   * Can be called to update the name that is displayed in `morph`s comment group when `morph`s name has changed.
+   * @param {Morph} morph
+   */
   updateName (morph) {
     this.commentGroups[morph.id].updateName();
   }
 
+  /**
+   * @returns {Number} The number of currently existing unresolved comments on all morphs in the world.
+   */
   getUnresolvedCommentCount () {
     let count = 0;
     for (const commentArray of $world.morphCommentMap.values()) {
@@ -122,7 +149,9 @@ export class CommentBrowserModel extends ViewModel {
   }
 
   /**
-   * Needs to return true to indicate that the window should really be closed.
+   * Checks whether the comment browser can currently be closed (is prohibited when a comment is being edited).
+   * If the browser is allowed to be closed, this method takes care of cleaning up comment indicators, etc.
+   * @returns {Boolean} Whether or not the window should actually be closed
    */
   onWindowClose () {
     let earlyReturn = false;
@@ -144,15 +173,22 @@ export class CommentBrowserModel extends ViewModel {
     return true;
   }
 
+  /**
+   * Makes comment indicators visible.
+   */
   showAllCommentIndicators () {
     this.ui.container.submorphs.forEach((commentGroup) => commentGroup.viewModel.showCommentIndicators());
   }
 
+  /**
+   * Removes all comment indicators from the world.
+   */
   removeAllCommentIndicators () {
     this.ui.container.submorphs.forEach((commentGroup) => commentGroup.viewModel.removeCommentIndicators());
   }
 
   /**
+   * Takes care of displaying the correct number of currently existing unresolved comments in the top bar badge when it changes.
    * @param {boolean} decreasing - Wether or not we call this function while
    * removing a comment. In this case, we need to adjust for the removal of the
    * comment when counting the overall comments, since this method gets called

@@ -185,6 +185,11 @@ export class CommentGroupModel extends ViewModel {
     this.ui.groupNameLabel.textString = this.referenceMorph.name;
   }
 
+  /**
+   * Adds the visual representation of `comment` to this group.
+   * If the comment stores the information that the group has to be collapsed, take care of that.
+   * @param {type} comment - description
+   */
   addCommentMorph (comment) {
     const commentMorph = part(CommentView, { viewModel: { comment: comment, referenceMorph: this.referenceMorph } });
     this.commentMorphs.push(commentMorph);
@@ -227,6 +232,10 @@ export class CommentGroupModel extends ViewModel {
     }
   }
 
+  /**
+   * Expands/Collapses this group and updates the displayed comment data object accordingly. 
+   * As the view and viewmodels of the comment browser and its submorphs are never stored, we store the information whether a comment group has been collapsed in the comment data itself.   
+   */
   toggleExpanded () {
     this.isExpanded = !this.isExpanded;
     this.applyExpanded();
