@@ -4,6 +4,7 @@ import { remove } from 'lively.lang/array.js';
 import { Icon } from 'lively.morphic';
 import { Color } from 'lively.graphics';
 import { CommentIndicator } from './components/comment-indicator.cp.js';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 export class CommentModel extends ViewModel {
   static get properties () {
@@ -13,6 +14,11 @@ export class CommentModel extends ViewModel {
       commentIndicator: {},
       isInEditMode: {
         defaultValue: false
+      },
+      expose: {
+        get () {
+          return ['prohibitsClosing', 'isComment'];
+        }
       },
       bindings: {
         get () {
@@ -27,7 +33,7 @@ export class CommentModel extends ViewModel {
     };
   }
 
-  get isCommentModel () {
+  get isComment () {
     return true;
   }
 
@@ -36,6 +42,15 @@ export class CommentModel extends ViewModel {
       this.commentIndicator.show();
       this.referenceMorph.show();
     }
+  }
+
+  prohibitsClosing () {
+    if (this.isInEditMode) {
+      this.view.show();
+      $world.setStatusMessage('A comment is currently being edited.', StatusMessageError);
+      return true;
+    }
+    return false;
   }
 
   saveComment () {
@@ -163,6 +178,11 @@ export class CommentGroupModel extends ViewModel {
       commentIndicators: {
         defaultValue: []
       },
+      expose: {
+        get () {
+          return ['showCommentIndicators', 'removeCommentIndicators'];
+        }
+      },
       bindings: {
         get () {
           return [
@@ -188,7 +208,7 @@ export class CommentGroupModel extends ViewModel {
   /**
    * Adds the visual representation of `comment` to this group.
    * If the comment stores the information that the group has to be collapsed, take care of that.
-   * @param {type} comment - description
+   * @param {CommentData} comment
    */
   addCommentMorph (comment) {
     const commentMorph = part(CommentView, { viewModel: { comment: comment, referenceMorph: this.referenceMorph } });

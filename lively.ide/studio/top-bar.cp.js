@@ -371,7 +371,7 @@ export class TopBarModel extends ViewModel {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
     if (commentBrowser) {
       this.uncolorCommentBrowserButton();
-      commentBrowser.ownerChain().find(m => m.isWindow).close();
+      commentBrowser.getWindow().close();
     } else {
       this.colorCommentBrowserButton();
       part(CommentBrowser).openInWindow();

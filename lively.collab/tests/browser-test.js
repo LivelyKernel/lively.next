@@ -23,7 +23,7 @@ describe('comment browser', function () {
   it('has comments displayed', function () {
     let submorphFound = false;
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.viewModel && submorph.viewModel.isCommentModel && submorph.viewModel.comment.equals(comment)) {
+      if (submorph.isComment && submorph.viewModel.comment.equals(comment)) {
         submorphFound = true;
       }
     });
@@ -35,7 +35,7 @@ describe('comment browser', function () {
     browser.withAllSubmorphsDo((submorph) => {
       beforeStructure.push(submorph.name);
     });
-    browser.ownerChain().find(m => m.isWindow).close();
+    browser.getWindow().close();
     browser = part(CommentBrowser).openInWindow().targetMorph;
     const afterStructure = [];
     browser.withAllSubmorphsDo((submorph) => {
@@ -49,7 +49,7 @@ describe('comment browser', function () {
     browser.withAllSubmorphsDo(m => {
       if (m.viewModel && m.viewModel.isCommentGroupModel) m.viewModel.toggleExpanded();
     });
-    browser.ownerChain().find(m => m.isWindow).close();
+    browser.getWindow().close();
 
     browser = part(CommentBrowser).openInWindow().targetMorph;
     let isCollapsed = false;
@@ -112,7 +112,7 @@ describe('comment browser', function () {
 
   it('comment may be removed', function () {
     browser.withAllSubmorphsDo((submorph) => {
-      if (submorph.viewModel && submorph.viewModel.isCommentModel) {
+      if (submorph.isComment) {
         submorph.viewModel.removeComment();
       }
     });
@@ -128,7 +128,7 @@ describe('comment browser', function () {
 
   afterEach(async function () {
     morph.abandon();
-    await browser.ownerChain().find(m => m.isWindow).close();
+    await browser.getWindow().close();
   });
 });
 
@@ -150,7 +150,7 @@ describe('comment indicator', function () {
   });
 
   it('is hidden when browser is not open', async function () {
-    await browser.ownerChain().find(m => m.isWindow).close();
+    await browser.getWindow().close();
     expect($world.submorphs.filter((submorph) => submorph.isCommentIndicator).length === 0).to.be.ok;
   });
 
@@ -162,7 +162,7 @@ describe('comment indicator', function () {
 
   afterEach(async function () {
     morph.abandon();
-    if (browser.world()) await browser.ownerChain().find(m => m.isWindow).close();
+    if (browser.world()) await browser.getWindow().close();
   });
 });
 

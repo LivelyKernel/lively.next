@@ -4,7 +4,6 @@ import { defaultPropertiesPanelWidth } from 'lively.ide/studio/properties-panel.
 
 import { CommentGroup } from './components/comment.cp.js';
 import { CommentCountBadge } from './components/comment-count-badge.cp.js';
-import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 export class CommentBrowserModel extends ViewModel {
   static get properties () {
@@ -42,16 +41,16 @@ export class CommentBrowserModel extends ViewModel {
     const topbar = $world.getSubmorphNamed('lively top bar');
     const margin = 25;
     const bounds = $world.visibleBoundsExcludingTopBar().insetBy(margin);
-    const window = this.view.ownerChain().find(m => m.isWindow);
-    window.right = bounds.right();
-    window.top = bounds.top();
+    const win = this.view.getWindow();
+    win.right = bounds.right();
+    win.top = bounds.top();
     // when properties panel is opened, position comment browser to the left of it
     if (topbar && topbar.activeSideBars.includes('properties panel')) {
-      window.position = window.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
+      win.position = win.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
     }
     this.buildCommentGroupMorphs();
     this.updateCommentCountBadge();
-    window.epiMorph = true;
+    win.epiMorph = true;
   }
 
   /**
@@ -156,12 +155,8 @@ export class CommentBrowserModel extends ViewModel {
   onWindowClose () {
     let earlyReturn = false;
     this.view.withAllSubmorphsDo(m => {
-      if (m.viewModel && m.viewModel.isCommentModel) {
-        if (m.viewModel.isInEditMode) {
-          m.show();
-          $world.setStatusMessage('A comment is currently being edited.', StatusMessageError);
-          earlyReturn = true;
-        }
+      if (m.isComment) {
+        earlyReturn = m.prohibitsClosing() || earlyReturn;
       }
     });
     if (earlyReturn) return false;
@@ -177,14 +172,14 @@ export class CommentBrowserModel extends ViewModel {
    * Makes comment indicators visible.
    */
   showAllCommentIndicators () {
-    this.ui.container.submorphs.forEach((commentGroup) => commentGroup.viewModel.showCommentIndicators());
+    this.ui.container.submorphs.forEach((commentGroup) => commentGroup.showCommentIndicators());
   }
 
   /**
    * Removes all comment indicators from the world.
    */
   removeAllCommentIndicators () {
-    this.ui.container.submorphs.forEach((commentGroup) => commentGroup.viewModel.removeCommentIndicators());
+    this.ui.container.submorphs.forEach((commentGroup) => commentGroup.removeCommentIndicators());
   }
 
   /**
@@ -207,10 +202,10 @@ export class CommentBrowserModel extends ViewModel {
       }
     } else if (count > 0) {
       badge = part(CommentCountBadge);
-      badge.viewModel.addToMorph($world.get('lively top bar').get('comment browser button'));
+      badge.addToMorph($world.get('lively top bar').get('comment browser button'));
     }
     if (badge) {
-      badge.viewModel.text = count;
+      badge.text = count;
       badge.tooltip = count + ' unresolved comment' + (count === 1 ? '' : 's');
     }
   }
