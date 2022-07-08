@@ -107,6 +107,7 @@ export const snippets = [
   ['$w', '$world'],
   ['$m', "$morph('${0:name}')"],
   ['get', 'get("${0:name}")'],
+  ['vm', 'viewModel'],
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // string stuff
