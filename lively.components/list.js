@@ -187,8 +187,7 @@ const listCommands = [
     exec: (list) => {
       const index = list.selectedIndex;
       const newIndex = Math.max(0, index - Math.round(list.height / list.itemHeight));
-      list.gotoIndex(newIndex);
-      return true;
+      return list.gotoIndex(newIndex);
     }
   },
 
@@ -197,32 +196,28 @@ const listCommands = [
     exec: (list) => {
       const index = list.selectedIndex;
       const newIndex = Math.min(list.items.length - 1, index + Math.round(list.height / list.itemHeight));
-      list.gotoIndex(newIndex);
-      return true;
+      return list.gotoIndex(newIndex);
     }
   },
 
   {
     name: 'goto first item',
-    exec: (list) => { list.gotoIndex(0); return true; }
+    exec: (list) => { return list.gotoIndex(0); }
   },
 
   {
     name: 'goto last item',
-    exec: (list) => { list.gotoIndex(list.items.length - 1); return true; }
+    exec: (list) => { return list.gotoIndex(list.items.length - 1); }
   },
 
   {
     name: 'arrow up',
-    exec: (list) => { list.gotoIndex(list.indexUp()); return true; }
+    exec: (list) => { return list.gotoIndex(list.indexUp()); }
   },
 
   {
     name: 'arrow down',
-    exec: (list) => {
-      list.gotoIndex(list.indexDown());
-      return true;
-    }
+    exec: (list) => { return list.gotoIndex(list.indexDown()); }
   },
 
   {
@@ -692,7 +687,11 @@ export class List extends Morph {
     this.selectedIndexes = [itemMorph.itemIndex];
   }
 
-  gotoIndex (i) { this.scrollIndexIntoView(this.selectedIndex = i); }
+  gotoIndex (i) {
+    if (this.owner.listNavigationProhibited) return false;
+    this.scrollIndexIntoView(this.selectedIndex = i);
+    return true;
+  }
 
   indexUp (from) {
     from = typeof from === 'number' ? from : this.selectedIndex;
@@ -1330,7 +1329,6 @@ export class FilterableList extends Morph {
     ]);
   }
 }
-
 
 export class DropDownList extends Button {
   // new DropDownList({selection: 1, items: [1,2,3,4]}).openInWorld()
