@@ -14,16 +14,16 @@ describe('badge', function () {
   });
 
   it('can be incremented', function () {
-    badge.viewModel.text = '42';
+    badge.text = '42';
     badge.viewModel.incrementCounter();
-    expect(badge.viewModel.text).to.equal('43');
+    expect(badge.text).to.equal('43');
   });
 
   it('moves with morph', async function () {
     const morph = new Morph({ extent: pt(100, 100), position: pt(400, 400) });
     testWorld.addMorph(morph);
-    badge.viewModel.addToMorph(morph);
-    
+    badge.addToMorph(morph);
+
     badge.viewModel.alignWithMorph();
     const initX = badge.globalPosition.x;
     const offset = 20;
