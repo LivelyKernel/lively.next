@@ -12,7 +12,7 @@ test -n "$(grep -E '^.*: [[:upper:]].*+$' <<< "$firstLine")" && {
         exit 1
 }
 
-test "$(wc -m <<< "$firstLine")" -lt 73 || {
+test "$(wc -m <<< "$firstLine")" -lt 74 || {
         printf >&2 "❌  The first line of your commit message should not be longer than 72 characters.\nFeel free to provide more context separated by a blank line.\n"
         exit 1
 }
