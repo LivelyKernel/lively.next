@@ -551,6 +551,7 @@ export class BrowserModel extends ViewModel {
         get () {
           return [
             'isBrowser',
+            'listNavigationProhibited',
             'focus',
             'keybindings',
             'browse',
@@ -741,6 +742,10 @@ export class BrowserModel extends ViewModel {
 
   get selectedDirectory () {
     return this.ui.columnView.getExpandedPath().reverse().find(m => ['package', 'directory'].includes(m.type));
+  }
+
+  get listNavigationProhibited () {
+    return this.hasUnsavedChanges() || !this.view.getWindow().isActive();
   }
 
   isModule (node) {

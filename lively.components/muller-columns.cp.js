@@ -60,7 +60,8 @@ export class MullerColumnViewModel extends ViewModel {
           return [
             'listMaster', 'treeData', 'setTreeData', 'isSelected',
             'selectNode', 'getExpandedPath', 'refresh',
-            'keybindings', 'commands', 'reset', 'setExpandedPath'
+            'keybindings', 'commands', 'reset', 'setExpandedPath',
+            'listNavigationProhibited'
           ];
         }
       },
@@ -84,6 +85,10 @@ export class MullerColumnViewModel extends ViewModel {
 
   focusActiveList () {
     arr.last(this.lists.filter(m => !!m.selection)).focus();
+  }
+
+  get listNavigationProhibited () {
+    return this.view.owner.listNavigationProhibited;
   }
 
   truncateNameIfNeeded (displayedName) {
@@ -327,6 +332,7 @@ export class MullerColumnViewModel extends ViewModel {
       {
         name: 'select previous entry of last list',
         exec: () => {
+          if (this.listNavigationProhibited) return;
           const nextNode = this.treeData.parentNode(this._selectedNode);
           this.selectNode(nextNode);
         }
@@ -334,6 +340,7 @@ export class MullerColumnViewModel extends ViewModel {
       {
         name: 'select first entry of next list',
         exec: () => {
+          if (this.listNavigationProhibited) return;
           const current = this._selectedNode;
           const nextNode = current.subNodes && current.subNodes[0];
           if (nextNode) {
