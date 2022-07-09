@@ -195,6 +195,7 @@ export class SVGMorph extends Morph {
       fill: color
     });
     point.addClass('control-point');
+    point.addClass('control-point-' + id);
 
     return point;
   }
@@ -214,13 +215,27 @@ export class SVGMorph extends Morph {
     lastDelta = lastDelta || { x: 0, y: 0 };
     let deltaX = evt.state.absDragDelta.x - lastDelta.x;
     let deltaY = evt.state.absDragDelta.y - lastDelta.y;
-    SVG(marker).dmove(deltaX, deltaY);
+    SVG(marker).dmove(deltaX, -deltaY);
+    this.changeSVGToControlPoint(marker, pt(deltaX, -deltaY));
   }
 
   onDragEnd (evt) {
     const { _controlPointDrag } = this;
     if (_controlPointDrag) {
       delete this._controlPointDrag;
+    }
+  }
+
+  changeSVGToControlPoint (controlPoint, moveDelta) {
+    const cssClass = new PropertyPath('attributes.class.value').get(controlPoint);
+    if (cssClass && cssClass.includes('control-point')) {
+      const [_, n, ctrlN] = cssClass.match(/control-point-([0-9]+)(?:-control-([0-9]+))?$/);
+      if (SVG(this.target).type == 'path') {
+        let selectedPoint = SVG(this.target).array()[n];
+        SVG(this.target).array()[n][selectedPoint.length - 2] += moveDelta.x;
+        SVG(this.target).array()[n][selectedPoint.length - 1] += moveDelta.y;
+        this.target.setAttribute('d', SVG(this.target).array().copyWithin());
+      }
     }
   }
 
