@@ -231,10 +231,22 @@ export class SVGMorph extends Morph {
     if (cssClass && cssClass.includes('control-point')) {
       const [_, n, ctrlN] = cssClass.match(/control-point-([0-9]+)(?:-control-([0-9]+))?$/);
       if (SVG(this.target).type == 'path') {
-        let selectedPoint = SVG(this.target).array()[n];
-        SVG(this.target).array()[n][selectedPoint.length - 2] += moveDelta.x;
-        SVG(this.target).array()[n][selectedPoint.length - 1] += moveDelta.y;
-        this.target.setAttribute('d', SVG(this.target).array().copyWithin());
+        const selectedPath = SVG(this.target);
+        let selectedPoint = selectedPath.array()[n];
+        selectedPath.array()[n][selectedPoint.length - 2] += moveDelta.x;
+        selectedPath.array()[n][selectedPoint.length - 1] += moveDelta.y;
+        this.target.setAttribute('d', selectedPath.array().copyWithin());
+        let bbox = SVG(this.svgPath).findOne('rect.my-path-selection');
+        /* bbox.setAttribute('x', selectedPath.bbox().x);
+        bbox.setAttribute('y', selectedPath.bbox().y);
+        bbox.setAttribute('width', selectedPath.bbox().width);
+        bbox.setAttribute('height', selectedPath.bbox().height); */
+        bbox.attr({
+          x: selectedPath.bbox().x,
+          y: selectedPath.bbox().y,
+          width: selectedPath.bbox().width,
+          height: selectedPath.bbox().height
+        });
       }
     }
   }
