@@ -121,15 +121,14 @@ export class SVGMorph extends Morph {
     }
   }
 
-  selectElement (evt, target) {
+  selectElement (target) {
     if (target.id.startsWith('control-point')) return;
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
-    if (this.target && !evt.controlPoint) {
+    if (this.target && !this._controlPointDrag) {
       if (this.target.selected && t.findOne('rect.my-path-selection')) t.findOne('rect.my-path-selection').remove();
       this.target.selected = false;
-      // this.removeAllControlPoints();
     }
     if (wasSelected) return;
     this.target = target;
@@ -237,10 +236,6 @@ export class SVGMorph extends Morph {
         selectedPath.array()[n][selectedPoint.length - 1] += moveDelta.y;
         this.target.setAttribute('d', selectedPath.array().copyWithin());
         let bbox = SVG(this.svgPath).findOne('rect.my-path-selection');
-        /* bbox.setAttribute('x', selectedPath.bbox().x);
-        bbox.setAttribute('y', selectedPath.bbox().y);
-        bbox.setAttribute('width', selectedPath.bbox().width);
-        bbox.setAttribute('height', selectedPath.bbox().height); */
         bbox.attr({
           x: selectedPath.bbox().x,
           y: selectedPath.bbox().y,
@@ -265,7 +260,6 @@ export class SVGMorph extends Morph {
       this._requestMasterStyling = false;
     }
     this.node = new SVGVNode(this, renderer);
-    console.log(this.node);
     return this.node;
   }
 
@@ -284,7 +278,7 @@ export class SVGMorph extends Morph {
   initializeSVGPath (svgPath) {
     this.svgPath = svgPath;
     const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
-    SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt, evt.target); });
+    SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
     this.width = this.height * ratio;
   }
 }
