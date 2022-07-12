@@ -12,7 +12,6 @@ import { promise, Path, graph, arr } from 'lively.lang';
 
 import { MorphicEnv } from './env.js';
 import { newMorphId, morph, pathForBrowserHistory } from './helpers.js';
-import { findLocalComponents } from './components/policy.js';
 import { migrations } from './object-migration.js';
 
 /**
@@ -344,7 +343,10 @@ export async function createMorphSnapshot (aMorph, options = {}) {
     // 1. save object packages
     const { packages, depMap } = await findRequiredPackagesOfSnapshot(snapshot, moduleManager);
     snapshot.packages = packages;
-    const localComponents = findLocalComponents(snapshot.snapshot);
+    // this does not make sense any more, since we dont store components in 
+    // the world any more but inside modules which can be local or on the server,
+    // but this is handled by the module system.
+    const localComponents = [];
     // transform the code inside tha packages in case the reference local components
     Object.values(packages['local://lively-object-modules/'] || {}).forEach(pkgModules => {
       // parse each module for local component references part://$world or styleguide://$world and replace
