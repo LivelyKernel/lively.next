@@ -77,9 +77,9 @@ export class Morph {
         before: ['metadata'],
         group: 'core',
         set (args) {
-          if (this.master && this.master.equals(args)) return;
+          if (this.master instanceof ComponentPolicy && this.master.equals(args)) return;
           this.setProperty('master', args ? ComponentPolicy.for(this, args) : (args === false ? false : null));
-          args && this.requestMasterStyling();
+          if (args) this.requestMasterStyling();
         }
       },
 
