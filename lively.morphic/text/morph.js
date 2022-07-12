@@ -782,6 +782,11 @@ export class Text extends Morph {
     };
   }
 
+  directRender () {
+    // FIXME
+    // This is just a shim so that everything boots nicely
+    }
+
   constructor (props = {}) {
     const {
       position,
