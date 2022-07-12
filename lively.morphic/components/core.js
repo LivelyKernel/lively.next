@@ -4,7 +4,7 @@ import { getClassName } from 'lively.serializer2';
 import { epiConnect, signal } from 'lively.bindings';
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName, morph } from '../helpers.js';
-import { mergeInHierarchy, InlinePolicy } from './policy.js';
+import { mergeInHierarchy, StylePolicy } from './policy.js';
 
 /**
  * By default component() or part() calls return morph instances. However when we evalute top level
@@ -78,7 +78,7 @@ export class ComponentDescriptor {
     let spec = {};
     try {
       spec = generatorFunction();
-      if (!spec.isPolicy) { spec = new InlinePolicy(spec); } // make part calls return the a synthesized spec
+      if (!spec.isPolicy) { spec = new StylePolicy(spec); } // make part calls return the a synthesized spec
     } finally {
       evaluateAsSpec = false; // always disbable this flag 
     }
@@ -100,7 +100,7 @@ export class ComponentDescriptor {
     delete this._snap;
     delete this._cachedComponent;
     if (generatorFunctionOrInlinePolicy.isPolicy) {
-      this.inlinePolicy = generatorFunctionOrInlinePolicy; // is a inline policy object that can return us a spec object which can be used to create instances and components
+      this.stylePolicy = generatorFunctionOrInlinePolicy; // is a inline policy object that can return us a spec object which can be used to create instances and components
     } else {
       this.generatorFunction = generatorFunctionOrInlinePolicy; // returns old fashioned component object
     }
@@ -116,7 +116,7 @@ export class ComponentDescriptor {
 
   extend (spec) {
     // create an abstract inline policy. For that we need to figure out how that should be encoded exactly
-    return new InlinePolicy(spec, this);
+    return new StylePolicy(spec, this);
   }
 
   getInlinePolicy (path) {
@@ -133,8 +133,8 @@ export class ComponentDescriptor {
       this.defaultViewModel = m.defaultViewModel;
       this.viewModelClass = m.viewModelClass; // can this be done better??
       this._snap = m._snap;
-    } else if (this.inlinePolicy) {
-      m = morph(this.inlinePolicy.getBuildSpec());
+    } else if (this.stylePolicy) {
+      m = this.stylePolicy.instantiate(); // this does not return something with master policies!
     }
     return m;
   }
@@ -635,7 +635,7 @@ export function component (masterComponentOrProps, overriddenProps) {
     // synthesize the masterComponent with the overridden props and do NOT
     // create a custom morph. This is instead deferred.
     if (masterComponentOrProps) {
-      return new InlinePolicy(props, masterComponentOrProps);
+      return new StylePolicy(props, masterComponentOrProps);
     } else {
       // just return the already unrolled props! (part did properly react to the evaluateAsSpec flag)
       return props;

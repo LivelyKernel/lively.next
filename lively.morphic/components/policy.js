@@ -111,7 +111,7 @@ function getEventState (targetMorph, customBreakpoints) {
  * It is in turn used by ComponentPolicies in order to quickly get the properties
  * to be applied to a styled submorph hierarchy.
  */
-export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with this one
+export class StylePolicy {
   /**
    * Creates a new Inline Policy. Inline Policies are the underlying building blocks
    * of component definitions. Except for top level component definitions
@@ -120,7 +120,7 @@ export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with th
    * A derivation of a component is the reuse of structural and/or style properties within the context
    * of another component.
    * @param { object } spec - The structural composition of the component, similar to morphic build specs.
-   * @param { InlinePolicy } parent - The inline policies that we are derived from.
+   * @param { StylePolicy } parent - The inline policies that we are derived from.
    * @param { boolean } [inheritStructure = true] - Wether or not we are supposed to inherit the structure of the parent policy.
    */
   constructor (spec, parent, inheritStructure = true) {
@@ -140,10 +140,10 @@ export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with th
   /**
    * Inline policies usually have a parent inline policy they are derived from
    * except if they are are a master component completely created from scratch.
-   * @returns { InlinePolicy | null } The inline policy that we are derived from.
+   * @returns { StylePolicy | null } The inline policy that we are derived from.
    */
   get parent () {
-    return this._parent?.isComponentDescriptor ? this._parent.inlinePolicy : this._parent;
+    return this._parent?.isComponentDescriptor ? this._parent.stylePolicy : this._parent;
   }
 
   get type () {
@@ -164,7 +164,7 @@ export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with th
    * re applied in response to the updated component definition.
    * This however is only handled by component policies, not inline policies.
    * So this feature is not really needed. Maybe remove once we are done with this.
-   * @type { object | InlinePolicy | ComponentDescriptor }
+   * @type { object | StylePolicy | ComponentDescriptor }
    */
   set parent (policyOrDescriptor) {
     if (policyOrDescriptor.isPolicy || policyOrDescriptor.isComponentDescriptor) {
@@ -535,7 +535,7 @@ export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with th
   /**
    * Returns the appropriate next level master based on the target morph's event state.
    * @param { Morph } targetMorph - The target morph to base the component dispatch on.
-   * @returns { InlinePolicy } The appropriate policy for the dispatch.
+   * @returns { StylePolicy } The appropriate policy for the dispatch.
    */
   determineMaster (targetMorph) {
     const {
@@ -586,7 +586,7 @@ export class InlinePolicy { // FIXME: Eventually replace ComponentPolicy with th
 
     let nextLevelSpec = {};
     if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
-      qualifyingMaster = qualifyingMaster.inlinePolicy;
+      qualifyingMaster = qualifyingMaster.stylePolicy;
     }
 
     nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
