@@ -95,7 +95,7 @@ const rules = {
   'no-extra-semi': 'error',
   'prefer-const': 'off',
   // These are rules that cannot be automatically fixed, but for which we want to get a warning upon violation
-  'no-trailing-spaces': ['error', { ignoreComments: true }],
+  'no-trailing-spaces': ['error', { ignoreComments: false }],
   'no-debugger': 'warn',
   'no-unreachable': 'warn',
   'no-const-assign': 'warn',
