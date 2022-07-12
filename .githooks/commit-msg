@@ -7,8 +7,8 @@ test -n "$(grep -i '^[[:blank:]]*cleanup[[:blank:]]*$' "${1}")" && {
 }
 
 firstLine=$(sed -n '1p' "${1}")
-test -n "$(grep -E '^.*[[:upper:]].*+$' <<< "$firstLine")" && {
-        printf >&2 "❌  Do not use upper case letters in the first line of your commit message.\n"
+test -n "$(grep -E '^.*: [[:upper:]].*+$' <<< "$firstLine")" && {
+        printf >&2 "❌  Do not use upper case letter to start your commit message.\n"
         exit 1
 }
 
