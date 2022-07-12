@@ -220,12 +220,13 @@ export class StylePolicy {
    * they are stored as InlinePolicies accordingly.
    */
   ensureImplicitInlinePolicies () {
+    const klass = this.constructor;
     // scan this.spec and detect overridden/set master components
     // or further refined inline policies
     if (!this.parent || !this.inheritStructure) {
       this.spec = tree.mapTree(this.spec, node => {
         return !node.isPolicy && node.master && node !== this.spec
-          ? new InlinePolicy(obj.dissoc(node, ['master']), node.master)
+          ? new klass(obj.dissoc(node, ['master']), node.master)
           : node;
       }, node => node.submorphs);
       return;
@@ -242,20 +243,18 @@ export class StylePolicy {
       // in place modifications of our local spec
       mergeInHierarchy(parentBuildSpec, this.spec, (parentSpec, localSpec) => {
         if (localSpec === this.spec) return; // do not tweak root
-        if (localSpec.isPolicy) return; // already a inline policy
+        if (localSpec.isPolicy) return this.ensurePolicy(localSpec, replace); // already a inline policy
         if (localSpec.master && parentSpec.master) {
           // return collapsed inline policy
           return replace(localSpec, parentSpec.master.collapse(localSpec.master));
         }
         if (localSpec.master) {
           // return "fresh" inline policy
-          return replace(localSpec, new InlinePolicy(obj.dissoc(localSpec, ['master']), localSpec.master, false));
+          return replace(localSpec, new klass(obj.dissoc(localSpec, ['master']), localSpec.master, false));
         }
         if (parentSpec.master) {
           // return 2nd degree inline policy
-          // this creates an infinit loop, since this new inline policy wants to constantly
-          // inherit the parent structure
-          return replace(localSpec, new InlinePolicy(localSpec, parentSpec.master, false));
+          return replace(localSpec, new klass(localSpec, parentSpec.master, false));
         }
       });
 
@@ -270,6 +269,10 @@ export class StylePolicy {
     }
   }
 
+  ensurePolicy (currentPolicy, replaceFn) {
+    // do nothing
+  }
+
   /**
    * Gather all the overridden props until top level policy
    * is reached, then return a new inline policy, that includes
@@ -278,8 +281,7 @@ export class StylePolicy {
    * We do NOT inherit the structure of the new parent policy.
    */
   collapse (newParent) {
-    const synthesizedProps = this.getBuildSpec(false);
-    return new InlinePolicy(synthesizedProps, newParent, false); // ensure that we do not inherit the structure of the new parent, since we are collapsed
+    return new StylePolicy(this.getCollapsedSpec(), newParent, false); // ensure that we do not inherit the structure of the new parent, since we are collapsed
   }
 
   /**
@@ -287,7 +289,9 @@ export class StylePolicy {
    * @returns { Morph } The new morph based off the sully synthesized spec.
    */
   instantiate () {
-    return morph(this.getBuildSpec(false));
+    // we may be able to avoid this explicit wrapping of the policies
+    // by moving that logic into the master setter at a later stage
+    return morph(PolicyApplicator.for(this).getBuildSpec()); // eslint-disable-line no-use-before-define
   }
 
   /**
@@ -296,8 +300,31 @@ export class StylePolicy {
    * @returns { Morph } The master component as a morph.
    */
   edit () {
-    // fixme: this code should go into the lively.ide part
-    return morph(this.getBuildSpec());
+    // FIXME: this code should go into the lively.ide part
+    return morph(this.getEditSpec());
+  }
+
+  /**
+   * Returns a build spec that includes all the overridden props up until the
+   * top level component (the one without a parent).
+   * Only covers the scope of the style policy, ignores the sub policies, which it keeps untouched.
+   * If the sub policies are altered by the new policy the same collapse logic is applied recursively.
+   * @returns { object } The collapsed build spec.
+   */
+  getCollapsedSpec () {
+    // FIXME: Actually collapse until the top level component (the one without a parent);
+    return obj.dissoc(this.getBuildSpec(false), ['master']);
+  }
+
+  /**
+   * Returns a build spec suitable for generating a morph representation of the component definition
+   * which in turn can be used for editing the component definition via direct manipulation.
+   * FIXME: Do we really want to have this IDE specific code living inside morphic?
+   *        How about moving it out into the reconciliation module?
+   * @returns { object } The edit build spec.
+   */
+  getEditSpec () {
+    return this.getBuildSpec(false);
   }
 
   /**
@@ -347,7 +374,7 @@ export class StylePolicy {
 
     let buildSpec = this.parent.getBuildSpec(); // always discard the style props from our parent, regardless
 
-    if (discardStyleProps) buildSpec.master = this;
+    if (discardStyleProps) buildSpec.master = this; // always return a new policy
 
     // fixme: what if we are configure not to inherit the structure of the parent?
     //        In this case we need to kick out all of the subspecs that are not
@@ -451,6 +478,168 @@ export class StylePolicy {
   }
 
   /**
+   * Returns the appropriate next level master based on the target morph's event state.
+   * @param { Morph } targetMorph - The target morph to base the component dispatch on.
+   * @returns { StylePolicy } The appropriate policy for the dispatch.
+   */
+  determineMaster (targetMorph) {
+    const {
+      isHovered,
+      isClicked,
+      mode,
+      breakpointMaster
+    } = getEventState(targetMorph, this._breakpointMasters);
+
+    if (this.isEventPolicy) {
+      if (isClicked) return this._clickMaster;
+      if (isHovered) return this._hoverMaster;
+      return this._autoMaster;
+    }
+
+    if (this.isLightDarkModePolicy) {
+      switch (mode) {
+        case 'dark':
+          return this._darkModeMaster;
+        case 'light':
+          return this._lightModeMaster;
+        default:
+          return this._autoMaster;
+      }
+    }
+
+    if (this.isBreakpointPolicy) {
+      return breakpointMaster || this._autoMaster;
+    }
+
+    return this._parent; // default to the parent if we are neither of the above
+  }
+
+  /**
+   * Synthesizes the sub spec corresponding to a particular name
+   * of a morph in the submorph hierarchy.
+   * @param { string } submorphNameInPolicyContext - The name of the sub spec.
+   * @param { Morph } parentOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
+   * @returns { object } The synthesized spec.
+   */
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope) {
+    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
+
+    let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
+
+    if (subSpec.isPolicy || !qualifyingMaster) return subSpec;
+
+    let nextLevelSpec = {};
+    if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
+      qualifyingMaster = qualifyingMaster.stylePolicy;
+    }
+
+    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
+
+    return obj.dissoc({ ...nextLevelSpec, ...subSpec }, ['submorphs']); // not really needed since we do not traverse submorph prop anyways
+  }
+
+  /**
+   * description
+   * @param { string | null } submorphName - The submorph name for which to find the corresponding sub spec. If null, assume we ask for root.
+   * @returns { object } The sub spec corresponding to that name.
+   */
+  getSubSpecFor (submorphName) {
+    if (!submorphName) return this.spec; // assume we ask for root
+    // just find the correct sub spec inside our spec
+    // if no entry is present for this name,
+    // we escalate the query to the parent (structure provider)
+    return tree.find(this.spec, node => node.name === submorphName, node => node.submorphs) || {};
+  }
+
+  /**
+   * Check wether or not a particular morph is actively positioned by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean } Wether or not the morph's position is by a layout.
+   */
+  isPositionedByLayout (aSubmorph) {
+    return aSubmorph.owner &&
+      aSubmorph.owner.layout &&
+      aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
+  }
+
+  /**
+   * Check wether or not a particular morph is actively resized by a comprising layout.
+   * @param {Morph} aSubmorph - The morph to check for.
+   * @returns { boolean | object } Wether or not size is controlled via layout and if so, the concrete policy.
+   */
+  isResizedByLayout (aSubmorph) {
+    const layout = aSubmorph.owner && aSubmorph.owner.layout;
+    if (!layout) return false;
+    if (layout.resizePolicies) {
+      const heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
+      const widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
+      if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
+    }
+    return false;
+  }
+
+  /**
+   * Callback that is invoked once a morph that is managed by the applicator changes.
+   * In general this means that if the change is a style property, we override this style prop locally.
+   * @param { Morph } changedMorph - The morph the change applies to.
+   * @param { object } change - The change object 
+   */
+  onMorphChange (changedMorph, change) {
+    const subSpec = this.getSubSpecFor(changedMorph.name);
+    if (!subSpec) return; // the morph is not managed by this applicator
+    subSpec[change.prop] = change.value;
+  }
+}
+
+/**
+ * While we use StylePolicy to model the component definitions
+ * themselves, we need something a little different, when we turn
+ * to actual morphs and their respective master component policies.
+ * Compared to InlinePolicies, the PolicyApplicator is able to dynamically
+ * detect overridden props, with respect to changes in the morph props.
+ * PolicyApplicator serializes to a form, where overridden props (which vary
+ * from a case by case basis) are serialized as well.
+ * Can be derived from either a StylePolicy OR ComponentDescriptor.
+ * Knows, how it can be applied to a morph hierarchy!
+ */
+export class PolicyApplicator extends StylePolicy {
+  // turns a policy or a descriptor
+  // into a nested construct of policy applicators
+  // who in turn can be 1.) assigned as masters to morphs
+  // and 2.) Know how to apply the style properties to the
+  // morph hierarchy.
+  static for (policyOrDescriptor) {
+    // we actually need a little bit more then just that...
+    // the index that holds the overridden props for each of the morphs
+    // in the scope, as well as refs to other MasterPolicies in the
+    // subsequent scopes.
+    const self = new this({}, policyOrDescriptor, true);
+    // this is creating a slightly incorrect structure with StylePolices instead of PolicyApplicators...
+    // ... that has however no effect, since the application ensures the style policies are referenced entirely
+    // ... but it is better to fix rather than having dangling in between policies!
+    // self.ensureImplicitInlinePolicies();
+    return self;
+  }
+
+  ensureImplicitInlinePolicies () {
+    // ensure that the structure is duplicated in the spec
+    if (this.parent) {
+      const parentSpec = this.parent.getBuildSpec(); // contains the entire 
+      // traverse the spec and swap out all of the inline policies with
+      // PolicyApplicators
+      this.spec = tree.mapTree(parentSpec, (node, submorphs) => {
+        if (!node.isPolicy && node.master && node !== parentSpec) {
+          return new PolicyApplicator(obj.dissoc(node, ['master']), node.master); // traverse recursively?
+        } else { return obj.dissoc({ ...node, submorphs }, ['master']); }
+      }, node => node.submorphs);
+    }
+
+    super.ensureImplicitInlinePolicies();
+  }
+
+  // APPLICATION TO MORPH HIERARCHIES
+
+  /**
    * Given a target morph, traverse the submorph hierarchy
    * covering the policy's scope and apply the style properties
    * according to the synthesized sub spec.
@@ -474,6 +663,18 @@ export class StylePolicy {
     });
   }
 
+  applyIfNeeded () {
+
+  }
+
+  /**
+   * For a particular morph, handle the application of a set of style properties.
+   * Aside from proper order of application, this method also attempts to avoid
+   * redundant or unnessecary property applications.
+   * @param { Morph } morphToBeStyled - The morph we apply the props to.
+   * @param { object } styleProps - The props to be applied as key,value pairs.
+   * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
+   */
   applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
     for (const propName of arr.intersect(getStylePropertiesFor(morphToBeStyled.constructor), obj.keys(styleProps))) {
       if (propName === 'layout') {
@@ -531,109 +732,10 @@ export class StylePolicy {
   withSubmorphsInScopeDo (parentOfScope, cb) {
     return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && m.master);
   }
-
-  /**
-   * Returns the appropriate next level master based on the target morph's event state.
-   * @param { Morph } targetMorph - The target morph to base the component dispatch on.
-   * @returns { StylePolicy } The appropriate policy for the dispatch.
-   */
-  determineMaster (targetMorph) {
-    const {
-      isHovered,
-      isClicked,
-      mode,
-      breakpointMaster
-    } = getEventState(targetMorph, this._breakpointMasters);
-
-    if (this.isEventPolicy) {
-      if (isClicked) return this._clickMaster;
-      if (isHovered) return this._hoverMaster;
-      return this._autoMaster;
-    }
-
-    if (this.isLightDarkModePolicy) {
-      switch (mode) {
-        case 'dark':
-          return this._darkModeMaster;
-        case 'light':
-          return this._lightModeMaster;
-        default:
-          return this._autoMaster;
-      }
-    }
-
-    if (this.isBreakpointPolicy) {
-      return breakpointMaster || this._autoMaster;
-    }
-
-    return this._parent; // default to the parent if we are neither of the above
-  }
-
-  /**
-   * Synthesizes the sub spec corresponding to a particular name
-   * of a morph in the submorph hierarchy.
-   * @param { string } submorphNameInPolicyContext - The name of the sub spec.
-   * @param { Morph } parentOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
-   * @returns { object } The synthesized spec.
-   */
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope) {
-    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
-
-    let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
-
-    if (subSpec.isPolicy) return new InlinePolicy({ name: submorphNameInPolicyContext }, subSpec, false);
-    if (!qualifyingMaster) return subSpec;
-
-    let nextLevelSpec = {};
-    if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
-      qualifyingMaster = qualifyingMaster.stylePolicy;
-    }
-
-    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
-
-    return obj.dissoc({ ...nextLevelSpec, ...subSpec }, ['submorphs']); // not really needed since we do not traverse submorph prop anyways
-  }
-
-  /**
-   * description
-   * @param { string | null } submorphName - The submorph name for which to find the corresponding sub spec. If null, assume we ask for root.
-   * @returns { object } The sub spec corresponding to that name.
-   */
-  getSubSpecFor (submorphName) {
-    if (!submorphName) return this.spec; // assume we ask for root
-    // just find the correct sub spec inside our spec
-    // if no entry is present for this name,
-    // we escalate the query to the parent (structure provider)
-    return tree.find(this.spec, node => node.name === submorphName, node => node.submorphs) || {};
-  }
-
-  /**
-   * Check wether or not a particular morph is actively positioned by a comprising layout.
-   * @param {Morph} aSubmorph - The morph to check for.
-   * @returns { boolean } Wether or not the morph's position is by a layout.
-   */
-  isPositionedByLayout (aSubmorph) {
-    return aSubmorph.owner &&
-      aSubmorph.owner.layout &&
-      aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
-  }
-
-  /**
-   * Check wether or not a particular morph is actively resized by a comprising layout.
-   * @param {Morph} aSubmorph - The morph to check for.
-   * @returns { boolean | object } Wether or not size is controlled via layout and if so, the concrete policy.
-   */
-  isResizedByLayout (aSubmorph) {
-    const layout = aSubmorph.owner && aSubmorph.owner.layout;
-    if (!layout) return false;
-    if (layout.resizePolicies) {
-      const heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
-      const widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
-      if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
-    }
-    return false;
-  }
 }
+
+// FIXME: The stuff below is deprecated and to be removed once the above is able
+//        to handle all the styles in the system.
 
 /**
  * This is a component policy that is directly applied to a concrete morph.
@@ -649,7 +751,11 @@ export class ComponentPolicy {
   static for (derivedMorph, args) {
     let newPolicy;
 
-    if (args.constructor === ComponentPolicy) {
+    if (args.isComponentDescriptor && args.stylePolicy) {
+      return PolicyApplicator.for(derivedMorph, args);
+    } else if (args.constructor === PolicyApplicator) {
+      return args;
+    } else if (args.constructor === ComponentPolicy) {
       newPolicy = args;
     } else newPolicy = new this(derivedMorph, args);
 
@@ -677,10 +783,12 @@ export class ComponentPolicy {
       if (typeof args === 'string') this.resolveMasterComponents();
 
       // in order to honor changes in the submorph masters, we reset the master in this scope for now
-      // this.withSubmorphsInScopeDo(this.derivedMorph, m => {
-      //   if (m.master) m.master = null;
-      // });
       return;
+    }
+
+    // FIXME: temporary in order to make old and new components work simultaneously
+    if (args.constructor === StylePolicy) {
+      this.auto = args;
     }
 
     const { click, auto, hover, light = {}, dark = {} } = args;
