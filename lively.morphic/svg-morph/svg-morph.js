@@ -54,7 +54,6 @@ export class SVGMorph extends Morph {
   static get properties () {
     return {
       extent: {
-        after: ['svgPathString'],
         defaultValue: pt(800, 450),
         set (extent) {
           this.setProperty('extent', extent);
@@ -67,17 +66,6 @@ export class SVGMorph extends Morph {
       fill: { defaultValue: Color.transparent },
       borderColor: { defaultValue: Color.transparent },
       svgUrl: {},
-      svgPathString: {
-        defaultValue: '',
-        after: ['svgUrl'],
-        set (svgPathString) {
-          this.setProperty('svgPathString', svgPathString);
-          const span = this.env.domEnv.document.createElement('span');
-          span.innerHTML = this.svgPathString;
-          const svgPath = span.getElementsByTagName('svg')[0];
-          this.initializeSVGPath(svgPath);
-        }
-      },
       editMode: {
         defaultValue: false
       },
@@ -112,12 +100,25 @@ export class SVGMorph extends Morph {
       t.add(bbox_node);
       bbox_node.back();
     } else {
-      t.findOne('rect.my-svg-selection').remove();
+      this.removeSVGSelection;
       if (this.target && this.target.selected) {
-        t.findOne('rect.my-path-selection').remove();
-        this.target.selected = false;
+        this.removePathSelection();
       }
       this.removeAllControlPoints();
+    }
+  }
+
+  removeSVGSelection () {
+    const t = SVG(this.svgPath);
+    if (t.findOne('rect.my-svg-selection'))t.findOne('rect.my-svg-selection').remove();
+    this.editMode = false;
+  }
+
+  removePathSelection () {
+    const t = SVG(this.svgPath);
+    if (this.target) {
+      if (t.findOne('rect.my-path-selection'))t.findOne('rect.my-path-selection').remove();
+      this.target.selected = false;
     }
   }
 
@@ -127,8 +128,7 @@ export class SVGMorph extends Morph {
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
     if (this.target && !this._controlPointDrag) {
-      if (this.target.selected && t.findOne('rect.my-path-selection')) t.findOne('rect.my-path-selection').remove();
-      this.target.selected = false;
+      if (this.target.selected) this.removePathSelection();
     }
     if (wasSelected) return;
     this.target = target;
@@ -272,7 +272,15 @@ export class SVGMorph extends Morph {
           return;
         }
         this.svgPathString = svgStr;
+        this.createDomNode(this.svgPathString);
       });
+  }
+
+  createDomNode (svgString) {
+    const span = this.env.domEnv.document.createElement('span');
+    span.innerHTML = this.svgPathString;
+    const svgPath = span.getElementsByTagName('svg')[0];
+    this.initializeSVGPath(svgPath);
   }
 
   initializeSVGPath (svgPath) {
@@ -280,5 +288,23 @@ export class SVGMorph extends Morph {
     const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
     SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
     this.width = this.height * ratio;
+  }
+
+  removeAllSelections () {
+    this.removeSVGSelection();
+    this.removePathSelection();
+    this.removeAllControlPoints();
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    this.removeAllSelections();
+    snapshot.props.svgPathString = { value: this.svgPath.outerHTML };
+  }
+
+  __after_deserialize__ (snapshot, objRef, pool) {
+    super.__after_deserialize__(snapshot, objRef, pool);
+
+    this.createDomNode(this.svgPathString);
   }
 }
