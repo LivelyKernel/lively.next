@@ -79,9 +79,24 @@ const e2 = ComponentDescriptor.abstract(() => component(e1, {
       name: 'alice',
       fill: Color.black
     },
-    { name: 'bob', master: e1 }, // DOES NOT INHERIT STRUCTURE!
-    add(part(e1, { name: 'foo', fill: Color.gray, submorphs: [{ name: 'bob', fill: Color.green }] })),
-    add({ name: 'bar', borderRadius: 5, borderColor: Color.black, borderWidth: 2 })
+    {
+      name: 'bob',
+      master: e1 // DOES NOT INHERIT STRUCTURE!
+    },
+    add(part(e1, {
+      name: 'foo',
+      fill: Color.gray,
+      submorphs: [{
+        name: 'bob',
+        fill: Color.green
+      }]
+    })),
+    add({
+      name: 'bar',
+      borderRadius: 5,
+      borderColor: Color.black,
+      borderWidth: 2
+    })
   ]
 }), {});
 
@@ -262,6 +277,26 @@ describe('spec based components', () => {
     expect(e2.stylePolicy.getEditSpec()).to.eql(expectedMasterBuildSpec);
   });
 
+  it('properly synthesizes style policies', () => {
+    expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
+      name: 'bar',
+      borderRadius: 5,
+      borderColor: Color.black,
+      borderWidth: 2
+    });
+    expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(new StylePolicy({
+      name: 'foo',
+      fill: Color.gray,
+      submorphs: [{ name: 'bob', fill: Color.green }]
+    }, e1));
+    expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
+      name: 'alice',
+      fill: Color.black,
+      type: 'text',
+      textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
+    });
+  });
+
   it('creates properly collapsed overridden properties when master of inline policy gets overridden', () => {
     const c = ComponentDescriptor.abstract(() => component(e2, {
       name: 'c',
@@ -277,23 +312,25 @@ describe('spec based components', () => {
         // for the submorph hierarchy of foo
         new StylePolicy({
           name: 'foo', // crucial in order to figure out the binding where this policy belongs to
-          fill: Color.gray,
-          submorphs: [
-            { name: 'alice', type: 'text', textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }] },
-            { name: 'bob', fill: Color.green }]
-        }, e2, false)
+          master: e2
+        }, e2.stylePolicy.getSubSpecFor('foo'), true)
       ]
     }, e2);
 
     expect(c.stylePolicy).to.eql(expectedInternalSpecC);
+    expect(c.stylePolicy.synthesizeSubSpec('foo')).to.eql(new StylePolicy({
+      name: 'foo',
+      master: e2
+    }, e2.stylePolicy.getSubSpecFor('foo'), true));
 
     const d = ComponentDescriptor.abstract(() => component(e3, {
       name: 'd',
       submorphs: [
         { name: 'foo', master: e3 }, // causes the collapse of the overridden props of the inline policy of foo
-        { name: 'molly', master: e1 } // causes the collapse of the overridden props of the inline policy of molly
+        { name: 'molly', master: e1, opacity: 0.5 } // causes the collapse of the overridden props of the inline policy of molly
       ]
     }));
+
     const expectedInternalSpecD = new StylePolicy({
       name: 'd',
       submorphs: [
@@ -302,24 +339,30 @@ describe('spec based components', () => {
         // for the submorph hierarchy of foo
         new StylePolicy({
           name: 'foo', // crucial in order to figure out the binding where this policy belongs to
-          fill: Color.gray,
-          extent: pt(10, 10),
-          submorphs: [
-            { name: 'alice', type: 'text', textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }] },
-            { name: 'bob', fill: Color.green }]
-        }, e3, false),
+          master: e3
+        }, e3.stylePolicy.synthesizeSubSpec('foo')),
         new StylePolicy({
+          // FIXME: how to we keep the info that all of this is just the result of collapsing
+          //       the style policy? This will be needed for proper reconciliation.
           name: 'molly', // crucial in order to figure out the binding where this policy belongs to
-          fill: Color.gray,
-          position: pt(45, 45),
-          submorphs: [
-            { name: 'alice', type: 'text', textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }] },
-            { name: 'bob', fill: Color.green }]
-        }, e1, false)
+          master: e1,
+          opacity: 0.5
+        }, e3.stylePolicy.synthesizeSubSpec('molly'))
       ]
     }, e3);
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
+    expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
+      name: 'foo',
+      fill: Color.gray,
+      extent: pt(10, 10)
+    });
+    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null)).to.eql({
+      name: 'molly',
+      opacity: 0.5,
+      position: pt(45, 45),
+      fill: Color.red
+    });
   });
 
   it('removes morphs if declared as such', () => {
