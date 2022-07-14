@@ -186,6 +186,8 @@ export class SVGMorph extends Morph {
     this.removeAllControlPoints();
 
     const tar = SVG(this.target);
+    $world.svgSelect(tar);
+
     const targetPath = SVG(this.target).array();
 
     for (let i = 0; i < targetPath.length; i++) {

@@ -183,6 +183,11 @@ export class World extends Morph {
     return focused && focused.world() === this ? focused : this;
   }
 
+  svgSelect (target) {
+    target.isSvgComponent = true;
+    signal(this, 'svgSelect', target);
+  }
+
   onMouseMove (evt) {
     evt.hand && evt.hand.update(evt);
     this._tooltipViewer.mouseMove(evt);

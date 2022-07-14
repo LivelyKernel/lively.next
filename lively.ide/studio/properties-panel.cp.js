@@ -9,6 +9,7 @@ import { ShapeControl } from './controls/shape.cp.js';
 import { LayoutControl } from './controls/layout.cp.js';
 import { BorderControl } from './controls/border.cp.js';
 import { FillControl } from './controls/fill.cp.js';
+import { SVGControl } from './controls/svg.cp.js';
 import { AlignmentControl } from './controls/constraints.cp.js';
 import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
@@ -118,6 +119,9 @@ export class PropertiesPanelModel extends ViewModel {
     connect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
     });
+    connect(aWorld, 'svgSelect', this, 'focusOn', {
+      garbageCollect: true
+    });
   }
 
   detachFromWorld (aWorld) {
@@ -143,6 +147,8 @@ export class PropertiesPanelModel extends ViewModel {
     // fixme: clear any open popups
     this.models.effectsControl.deactivate();
     this.models.fillControl.deactivate();
+    this.models.svgControl.deactivate();
+    this.ui.svgControl.visible = false;
     this.models.borderControl.targetMorph = null;
     this.models.borderControl.deactivate();
     this.models.textControl.deactivate();
@@ -150,15 +156,28 @@ export class PropertiesPanelModel extends ViewModel {
 
   focusOn (aMorph) {
     if (aMorph.isWorld) return;
+
+    const {
+      shapeControl, fillControl, textControl,
+      layoutControl, alignmentControl, borderControl,
+      effectsControl, backgroundControl, svgControl
+    } = this.models;
+
+    if (aMorph.isSvgComponent) {
+      if (aMorph.type === 'path') {
+        this.ui.backgroundControl.visible = false;
+        backgroundControl.deactivate();
+        this.toggleDefaultControls(false);
+        svgControl.focusOn(aMorph);
+        svgControl.view.visible = true;
+      }
+    } else {
+      svgControl.view.visible = false;
+    }
     if (Array.isArray(aMorph) && aMorph.length === 1) aMorph = aMorph[0];
     // ignore multi selections of more than one morph for now.
     // fixme: We still do not support multi select targets... add support for that in the future
     if (!aMorph.isMorph) return;
-    const {
-      shapeControl, fillControl, textControl,
-      layoutControl, alignmentControl, borderControl,
-      effectsControl, backgroundControl
-    } = this.models;
 
     this.toggleDefaultControls(true);
 
@@ -273,7 +292,8 @@ const PropertiesPanel = component({
       ['layout control', { width: 'fill', height: 'fixed' }],
       ['alignment control', { width: 'fill', height: 'fixed' }],
       ['border control', { width: 'fill', height: 'fixed' }],
-      ['effects control', { width: 'fill', height: 'fixed' }]
+      ['effects control', { width: 'fill', height: 'fixed' }],
+      ['svg control', { width: 'fill', height: 'fixed' }]
     ]
   }),
   submorphs: [
@@ -285,6 +305,7 @@ const PropertiesPanel = component({
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
     part(BodyControl, { name: 'effects control', visible: false })
+    part(SVGControl, { name: 'svg control', visible: false })
   ]
 });
 
