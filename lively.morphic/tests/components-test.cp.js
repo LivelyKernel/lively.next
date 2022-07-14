@@ -279,7 +279,6 @@ describe('spec based components', () => {
 
   it('properly synthesizes style policies', () => {
     expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
-      name: 'bar',
       borderRadius: 5,
       borderColor: Color.black,
       borderWidth: 2
@@ -290,7 +289,6 @@ describe('spec based components', () => {
       submorphs: [{ name: 'bob', fill: Color.green }]
     }, e1));
     expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
-      name: 'alice',
       fill: Color.black,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
@@ -312,7 +310,7 @@ describe('spec based components', () => {
         // for the submorph hierarchy of foo
         new StylePolicy({
           name: 'foo', // crucial in order to figure out the binding where this policy belongs to
-          master: e2
+          master: e2.stylePolicy
         }, e2.stylePolicy.getSubSpecFor('foo'), true)
       ]
     }, e2);
@@ -320,7 +318,7 @@ describe('spec based components', () => {
     expect(c.stylePolicy).to.eql(expectedInternalSpecC);
     expect(c.stylePolicy.synthesizeSubSpec('foo')).to.eql(new StylePolicy({
       name: 'foo',
-      master: e2
+      master: e2.stylePolicy
     }, e2.stylePolicy.getSubSpecFor('foo'), true));
 
     const d = ComponentDescriptor.abstract(() => component(e3, {
@@ -339,13 +337,13 @@ describe('spec based components', () => {
         // for the submorph hierarchy of foo
         new StylePolicy({
           name: 'foo', // crucial in order to figure out the binding where this policy belongs to
-          master: e3
+          master: e3.stylePolicy
         }, e3.stylePolicy.synthesizeSubSpec('foo')),
         new StylePolicy({
           // FIXME: how to we keep the info that all of this is just the result of collapsing
           //       the style policy? This will be needed for proper reconciliation.
           name: 'molly', // crucial in order to figure out the binding where this policy belongs to
-          master: e1,
+          master: e1.stylePolicy,
           opacity: 0.5
         }, e3.stylePolicy.synthesizeSubSpec('molly'))
       ]
@@ -353,15 +351,19 @@ describe('spec based components', () => {
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
     expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
-      name: 'foo',
       fill: Color.gray,
       extent: pt(10, 10)
     });
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null)).to.eql({
-      name: 'molly',
       opacity: 0.5,
       position: pt(45, 45),
-      fill: Color.red
+      extent: pt(50, 50), // default values in new master do not override custom in original
+      fill: Color.yellow
+    });
+    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice')).to.eql({
+      fill: Color.black, // not blue since it was overridden in e2
+      type: 'text',
+      textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
     });
   });
 

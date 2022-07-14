@@ -170,13 +170,13 @@ export class StylePolicy {
     if (policyOrDescriptor.isPolicy || policyOrDescriptor.isComponentDescriptor) {
       this._parent = policyOrDescriptor;
     } else {
-      this._parent = policyOrDescriptor.auto;
+      const { click, hover, light, dark, breakpoints, auto = this._parent } = policyOrDescriptor;
+      this._parent = auto;
       // these are ALWAYS top level policies, and therefore Component Descriptors.
       // Dispatch based masters can not be inline policies, since there is no possible way
       // to for click, hover, light/dark or breakpoint masters to serve as structure providers.
       // A inline policy REQUIRES a structure provider in order to be created.
-      this._autoMaster = policyOrDescriptor.auto || this._parent; // auto is always defined. We default to the parent, if not specified otherwise.
-      const { click, hover, light, dark, breakpoints } = policyOrDescriptor;
+      this._autoMaster = auto; // auto is always defined. We default to the parent, if not specified otherwise.
 
       // We perform this dance here, in order to provide the user with a little bit
       // more insightful error messages.
@@ -199,7 +199,7 @@ export class StylePolicy {
       if (light) this._lightModeMaster = light;
       if (dark) this._darkModeMaster = dark;
       // breakpoint component dispatch
-      if (breakpoints) this._breakpointMasters = policyOrDescriptor.breakpoints;
+      if (breakpoints) this._breakpointMasters = breakpoints;
     }
   }
 
@@ -210,6 +210,13 @@ export class StylePolicy {
   get isLightDarkModePolicy () { return this._lightModeMaster || this._darkModeMaster; }
 
   get isBreakpointPolicy () { return !!this._breakpointMasters; }
+
+  /**
+   * If there is a locally overridden master in the parent of the scope,
+   * it is retrievable via this property.
+   * @type { StylePolicy | undefined }
+   */
+  get overriddenMaster () { return this.spec.master !== this && this.spec.master; }
 
   /**
    * Usually, we declare inline policies by calling part() within our component() definition.
@@ -246,15 +253,19 @@ export class StylePolicy {
         if (localSpec.isPolicy) return this.ensurePolicy(localSpec, replace); // already a inline policy
         if (localSpec.master && parentSpec.master) {
           // return collapsed inline policy
-          return replace(localSpec, parentSpec.master.collapse(localSpec.master));
+          // return replace(localSpec, parentSpec.master.collapse(localSpec.master));
+          // rms 13.7.22 OK to get rid of the descritptors here, since we are "inside" of a def which is reevaluated on change anyways.
+          const parent = parentSpec.master.stylePolicy || parentSpec.master;
+          const localMaster = localSpec.master.isComponentDescriptor ? localSpec.master.stylePolicy : localSpec.master;
+          return replace(localSpec, new klass({ ...localSpec, master: localMaster }, parent));
         }
         if (localSpec.master) {
-          // return "fresh" inline policy
+          // return "fresh" inline policy, no overridden props present, except for the local ones!
           return replace(localSpec, new klass(obj.dissoc(localSpec, ['master']), localSpec.master, false));
         }
         if (parentSpec.master) {
-          // return 2nd degree inline policy
-          return replace(localSpec, new klass(localSpec, parentSpec.master, false));
+          // return 2nd degree inline policy, which is derived from a previously existing one
+          return replace(localSpec, new klass(localSpec, parentSpec.master));
         }
       });
 
@@ -313,7 +324,7 @@ export class StylePolicy {
    */
   getCollapsedSpec () {
     // FIXME: Actually collapse until the top level component (the one without a parent);
-    return obj.dissoc(this.getBuildSpec(false), ['master']);
+    return obj.dissoc(this.getBuildSpec((policy) => !policy.parent), ['master']);
   }
 
   /**
@@ -324,7 +335,7 @@ export class StylePolicy {
    * @returns { object } The edit build spec.
    */
   getEditSpec () {
-    return this.getBuildSpec(false);
+    return this.getBuildSpec((policy) => !(this === policy || policy.parent === this.parent));
   }
 
   /**
@@ -337,7 +348,7 @@ export class StylePolicy {
    * @param { boolean } discardStyleProps - Wether or not the morph spec should yield an instance or the master component itself.
    * @return { object } The build spec.
    */
-  getBuildSpec (discardStyleProps = true) {
+  getBuildSpec (discardStyleProps = () => true) {
     // FIXME: Just a flag to indicate the discarding of next level style props is not enough to
     //        cover all desirable use cases for this routine.
     //        We want the following cases:
@@ -347,12 +358,12 @@ export class StylePolicy {
     //            the overridden properties in the policy chain into one spec.    
     // important also, to create a completely new spec structure, such that
     // we do not accidentally alter the specs of parent policies.
-    function filterProps (owner, submorphs, discardStyleProps) {
+    const filterProps = (owner, submorphs, discardStyleProps) => {
       // ensure that inline policies are treated correctly...
       let subSpec = owner;
       if (owner.isPolicy) {
-        return owner.getBuildSpec(); // always discard the build specs of the parent
-      } else if (discardStyleProps) {
+        return owner.getBuildSpec(discardStyleProps); // always discard the build specs of the parent
+      } else if (discardStyleProps(this)) {
         subSpec = {
           ...obj.dissoc(owner, ['master', ...getStylePropertiesFor(owner.type)])
         };
@@ -360,7 +371,7 @@ export class StylePolicy {
       if (submorphs.length > 0) subSpec.submorphs = submorphs;
 
       return subSpec;
-    }
+    };
 
     function filterSpec (spec) {
       return tree.mapTree(spec, (owner, submorphs) => {
@@ -374,7 +385,7 @@ export class StylePolicy {
 
     let buildSpec = this.parent.getBuildSpec(); // always discard the style props from our parent, regardless
 
-    if (discardStyleProps) buildSpec.master = this; // always return a new policy
+    if (discardStyleProps(this)) buildSpec.master = this; // always return a new policy
 
     // fixme: what if we are configure not to inherit the structure of the parent?
     //        In this case we need to kick out all of the subspecs that are not
@@ -409,14 +420,14 @@ export class StylePolicy {
         for (let key in styleProperties) delete curr[key];
 
         // then we need to do do either one of two things:
-        if (discardStyleProps) {
+        if (discardStyleProps(this)) {
           // we discard the local props and just assign the inline policy as the master
           curr.master = props;
         }
 
-        if (!discardStyleProps) {
+        if (!discardStyleProps(this)) {
           // we return the first level build spec of the policy
-          Object.assign(curr, props.getBuildSpec(false));
+          Object.assign(curr, props.getBuildSpec(discardStyleProps));
           if (props.parent) curr.master = props.parent;
         }
 
@@ -434,11 +445,11 @@ export class StylePolicy {
       }
 
       // what if the props are themselves inline policies?
-      if (discardStyleProps) {
+      if (discardStyleProps(this)) {
         Object.assign(curr, obj.dissoc(props, [...styleProperties, 'master', 'submorphs']));
       }
 
-      if (!discardStyleProps) {
+      if (!discardStyleProps(this)) {
         Object.assign(curr, obj.dissoc(props, ['submorphs'])); // include all properties, submorphs will be handled by merge
       }
 
@@ -465,7 +476,7 @@ export class StylePolicy {
       let subSpec;
       if (toBeAdded.isPolicy) {
         subSpec = toBeAdded.getBuildSpec(discardStyleProps); // carry that over
-        if (discardStyleProps) subSpec.master = toBeAdded;
+        if (discardStyleProps(this)) subSpec.master = toBeAdded;
         else if (toBeAdded.parent) subSpec.master = toBeAdded.parent;
       } else {
         subSpec = filterSpec(toBeAdded);
@@ -483,6 +494,8 @@ export class StylePolicy {
    * @returns { StylePolicy } The appropriate policy for the dispatch.
    */
   determineMaster (targetMorph) {
+    if (!targetMorph) return this._autoMaster || this._parent; // best guess
+
     const {
       isHovered,
       isClicked,
@@ -519,9 +532,10 @@ export class StylePolicy {
    * of a morph in the submorph hierarchy.
    * @param { string } submorphNameInPolicyContext - The name of the sub spec.
    * @param { Morph } parentOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
+   * @param { function } [checkNext = () => true] - Custom checker that allows us to control how far we traverse the derivation chain to synthesize the sub spec.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope) {
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
 
     let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
@@ -533,9 +547,32 @@ export class StylePolicy {
       qualifyingMaster = qualifyingMaster.stylePolicy;
     }
 
-    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
+    if (checkNext(qualifyingMaster)) {
+      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext);
+    }
 
-    return obj.dissoc({ ...nextLevelSpec, ...subSpec }, ['submorphs']); // not really needed since we do not traverse submorph prop anyways
+    let synthesized = {};
+
+    // always check the sub spec for the parentInScope, not the current one!
+    if (this.overriddenMaster) {
+      let topLevelComponent = qualifyingMaster;
+      while (topLevelComponent.parent) topLevelComponent = topLevelComponent.parent;
+      Object.assign(
+        synthesized,
+        // fill in the top level props just in case they are needed (propably mostly overridden)
+        topLevelComponent.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope),
+        // add in the style props for the adjusted master
+        this.overriddenMaster.synthesizeSubSpec(null, parentOfScope),
+        // adhere to the overridden props of the structural derivation
+        qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, (next) => next !== topLevelComponent),
+        subSpec
+      );
+      // this approach only works for root! We need to be also checking if there is a recently introduced scope?
+    } else {
+      Object.assign(synthesized, nextLevelSpec, subSpec);
+    }
+
+    return obj.dissoc(synthesized, ['submorphs', 'master', 'name']); // not really needed since we do not traverse submorph prop anyways
   }
 
   /**
@@ -548,7 +585,11 @@ export class StylePolicy {
     // just find the correct sub spec inside our spec
     // if no entry is present for this name,
     // we escalate the query to the parent (structure provider)
-    return tree.find(this.spec, node => node.name === submorphName, node => node.submorphs) || {};
+    const matchingNode = tree.find(this.spec, node => {
+      if (node.COMMAND === 'add') return node.props.name === submorphName;
+      return node.name === submorphName;
+    }, node => node.submorphs) || {};
+    return matchingNode ? matchingNode.props || matchingNode : null;
   }
 
   /**
