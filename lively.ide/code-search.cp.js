@@ -105,6 +105,7 @@ const CodeSearch = component({
       name: 'holder',
       layout: new TilingLayout({
         axisAlign: 'center',
+        align: 'center',
         axis: 'column'
       }),
       submorphs: [
@@ -136,7 +137,7 @@ const CodeSearch = component({
             wrapSubmorphs: false,
             hugContentsHorizontally: true
           }),
-          extent: pt(125.7, 27),
+          extent: pt(125.7, 22),
           borderColor: Color.gray,
           viewModel: {
             openListInWorld: true,
@@ -148,9 +149,7 @@ const CodeSearch = component({
           }]
         })]
     })]
-
-  }
-  )]
+  })]
 })
  ;
 
