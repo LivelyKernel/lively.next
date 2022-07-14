@@ -105,12 +105,14 @@ const CodeSearch = component({
       name: 'holder',
       layout: new TilingLayout({
         axisAlign: 'center',
+        spacing: 2,
         align: 'center',
         axis: 'column'
       }),
       submorphs: [
         part(ModeButtonInactive, {
           name: 'caseMode',
+          height: 22,
           submorphs: [{
             name: 'label',
             textAndAttributes: Icon.textAttribute('circle-h')
@@ -120,6 +122,7 @@ const CodeSearch = component({
         }),
         part(ModeButtonInactive, {
           name: 'regexMode',
+          height: 22,
           submorphs: [{
             name: 'label',
             textAndAttributes: Icon.textAttribute('circle-question')
@@ -129,6 +132,7 @@ const CodeSearch = component({
         }),
         part(DropDownList, {
           name: 'search chooser',
+          master: { auto: ModeButtonActive, click: ModeButtonInactiveClick },
           layout: new TilingLayout({
             align: 'center',
             axisAlign: 'center',
