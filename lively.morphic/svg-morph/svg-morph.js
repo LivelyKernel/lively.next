@@ -127,14 +127,14 @@ export class SVGMorph extends Morph {
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
-    if (this.target && !this._controlPointDrag) {
-      if (this.target.selected) this.removePathSelection();
-    }
+
     if (wasSelected) return;
     this.target = target;
     this.target.selected = true;
     const tar = SVG(target);
     let selection_node;
+    this.removePathSelection();
+    this.removeAllControlPoints();
     switch (tar.type) {
       case 'path':
         selection_node = SVG(target.outerHTML);
@@ -170,13 +170,10 @@ export class SVGMorph extends Morph {
 
     for (let i = 0; i < targetPath.length; i++) {
       let element = targetPath[i];
-      switch (element[0]) {
-        case 'Z':
-          break;
-        default:
-          let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
-          tar.after(defaultPoint);
-          defaultPoint.front();
+      if (element[0] != 'Z') {
+        let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
+        tar.after(defaultPoint);
+        defaultPoint.front();
       }
       let lastElement = element;
     }
@@ -214,8 +211,10 @@ export class SVGMorph extends Morph {
     lastDelta = lastDelta || { x: 0, y: 0 };
     let deltaX = evt.state.absDragDelta.x - lastDelta.x;
     let deltaY = evt.state.absDragDelta.y - lastDelta.y;
-    SVG(marker).dmove(deltaX, -deltaY);
-    this.changeSVGToControlPoint(marker, pt(deltaX, -deltaY));
+    const screenCTM = this.target.getScreenCTM();
+    deltaY = screenCTM.d < 0 ? -deltaY : deltaY; // d determines the y direction
+    SVG(marker).dmove(deltaX, deltaY);
+    this.changeSVGToControlPoint(marker, pt(deltaX, deltaY));
   }
 
   onDragEnd (evt) {
@@ -299,12 +298,11 @@ export class SVGMorph extends Morph {
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
     this.removeAllSelections();
-    snapshot.props.svgPathString = { value: this.svgPath.outerHTML };
+    snapshot.props.svgPathString = { value: this.svgPath.parentElement.outerHTML };
   }
 
   __after_deserialize__ (snapshot, objRef, pool) {
     super.__after_deserialize__(snapshot, objRef, pool);
-
     this.createDomNode(this.svgPathString);
   }
 }
