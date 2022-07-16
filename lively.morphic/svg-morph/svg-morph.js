@@ -123,7 +123,7 @@ export class SVGMorph extends Morph {
   }
 
   selectElement (target) {
-    if (target.id.startsWith('control-point')) return;
+    if (target.id.startsWith('control-point') || this._controlPointDrag) return;
     const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
@@ -285,7 +285,7 @@ export class SVGMorph extends Morph {
 
   initializeSVGPath (svgPath) {
     this.svgPath = svgPath;
-    const ratio = svgPath.getAttribute('height').replace(/\D/g, '') / svgPath.getAttribute('width').replace(/\D/g, '');
+    const ratio = parseFloat(svgPath.getAttribute('width')) / parseFloat(svgPath.getAttribute('height'));
     SVG(svgPath).click((evt) => { if (this.editMode) this.selectElement(evt.target); });
     this.width = this.height * ratio;
   }
