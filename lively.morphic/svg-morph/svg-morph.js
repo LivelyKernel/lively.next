@@ -5,7 +5,7 @@ import vdom from 'virtual-dom';
 import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
 import { SVG } from './svg.js';
-import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
+import { Path as PropertyPath } from 'lively.lang';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -167,16 +167,17 @@ export class SVGMorph extends Morph {
 
     for (let i = 0; i < targetPath.length; i++) {
       let element = targetPath[i];
-      if (element[0] != 'Z') {
-        let defaultPoint = this.createControlPointAt(i, element[element.length - 2], element[element.length - 1], 'yellow');
-        tar.after(defaultPoint);
-        defaultPoint.front();
+      if (element[0] !== 'Z') {
+        const x = element[element.length - 2];
+        const y = element[element.length - 1];
+        let controlPoint = this.createControlPointAt(i, x, y);
+        tar.after(controlPoint);
+        controlPoint.front();
       }
-      let lastElement = element;
     }
   }
 
-  createControlPointAt (id, x, y, color) {
+  createControlPointAt (id, x, y) {
     const t = SVG(this.svgPath);
     let point = t.circle();
 
@@ -185,7 +186,7 @@ export class SVGMorph extends Morph {
       cy: y,
       r: 5,
       id: 'control-point-' + id,
-      fill: color
+      fill: 'yellow'
     });
     point.addClass('control-point');
     point.addClass('control-point-' + id);
@@ -225,7 +226,7 @@ export class SVGMorph extends Morph {
     const cssClass = new PropertyPath('attributes.class.value').get(controlPoint);
     if (cssClass && cssClass.includes('control-point')) {
       const [_, n, ctrlN] = cssClass.match(/control-point-([0-9]+)(?:-control-([0-9]+))?$/);
-      if (SVG(this.target).type == 'path') {
+      if (SVG(this.target).type === 'path') {
         const selectedPath = SVG(this.target);
         let selectedPoint = selectedPath.array()[n];
         selectedPath.array()[n][selectedPoint.length - 2] += moveDelta.x;
@@ -290,6 +291,7 @@ export class SVGMorph extends Morph {
     this.removeSVGSelection();
     this.removePathSelection();
     this.removeAllControlPoints();
+    this.editMode = false;
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
