@@ -97,7 +97,7 @@ export class SVGMorph extends Morph {
       t.add(bbox_node);
       bbox_node.back();
     } else {
-      this.removeSVGSelection;
+      this.removeSVGSelection();
       if (this.target && this.target.selected) {
         this.removePathSelection();
       }
@@ -113,8 +113,8 @@ export class SVGMorph extends Morph {
 
   removePathSelection () {
     const t = SVG(this.svgPath);
-    if (this.target) {
-      if (t.findOne('rect.my-path-selection'))t.findOne('rect.my-path-selection').remove();
+    if (this.target && t.findOne('rect.my-path-selection')) {
+      t.findOne('rect.my-path-selection').remove();
       this.target.selected = false;
     }
   }
