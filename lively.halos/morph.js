@@ -2116,10 +2116,6 @@ export default class Halo extends Morph {
     this.target.onHaloDoubleMouseDown(evt);
   }
 
-  onDoubleMouseDown (evt) {
-    this.target.onHaloDoubleMouseDown(evt);
-  }
-
   onContextMenu (evt) {
     evt.stop();
     Promise
