@@ -69,9 +69,6 @@ export class SVGMorph extends Morph {
       editMode: {
         defaultValue: false
       },
-      showControlPoints: {
-        defaultValue: false
-      },
       draggable: {
         defaultValue: true
       }
