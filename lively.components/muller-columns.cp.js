@@ -248,8 +248,8 @@ export class MullerColumnViewModel extends ViewModel {
     // this item does not need to be present for all items in a given list
     // therefore, we need to  check its existence for each item we handle,
     // in order to perform the search on the correct string
-    // 
-    // a part of the label always consists of two array items, since the text comes first, followed by its attributes object    
+    //
+    // a part of the label always consists of two array items, since the text comes first, followed by its attributes object
     let lookUpIndex;
 
     hoveredList.items.forEach((item, index) => {
