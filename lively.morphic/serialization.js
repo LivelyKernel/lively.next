@@ -77,9 +77,6 @@ export function copyMorph (morph, realCopy = false) {
       { migrations, reinitializeIds: true }
     );
   }
-  const cachedComments = morph.comments;
-  morph.comments = [];
-
   let cachedConnections = [];
   if (morph.attributeConnections) {
     cachedConnections = morph.attributeConnections.filter(ac => ac.targetObj.isCommentIndicator);
@@ -88,7 +85,6 @@ export function copyMorph (morph, realCopy = false) {
 
   const serializedMorph = serializeMorph(morph);
 
-  morph.comments = cachedComments;
   if (morph.attributeConnections) {
     morph.attributeConnections = morph.attributeConnections.concat(cachedConnections);
   }
