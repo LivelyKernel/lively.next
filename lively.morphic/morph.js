@@ -803,12 +803,6 @@ export class Morph {
         }
       },
 
-      comments: {
-        doc: 'Holds all comments belonging to this Morph.',
-        type: 'list',
-        defaultValue: []
-      },
-
       metadata: { group: 'core' }
     };
   }
