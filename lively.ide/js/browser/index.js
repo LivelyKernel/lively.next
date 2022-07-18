@@ -551,7 +551,6 @@ export class BrowserModel extends ViewModel {
         get () {
           return [
             'isBrowser',
-            'listNavigationProhibited',
             'focus',
             'keybindings',
             'browse',
@@ -614,7 +613,10 @@ export class BrowserModel extends ViewModel {
             { model: 'tabs', signal: 'onSelectedTabChange', handler: 'browsedTabChanged' },
             { model: 'tabs', signal: 'oneTabRemaining', handler: 'makeTabsNotCloseable' },
             { model: 'tabs', signal: 'becameVisible', handler: 'relayout' },
-            { model: 'tabs', signal: 'becameInvisible', handler: 'relayout' }
+            { model: 'tabs', signal: 'becameInvisible', handler: 'relayout' },
+
+            { signal: 'onWindowActivated', handler: 'allowKeyboardNavigation' },
+            { signal: 'onWindowDeactivated', handler: 'prohibitKeyboardNavigation' }
           ];
         }
       }
@@ -744,10 +746,6 @@ export class BrowserModel extends ViewModel {
     return this.ui.columnView.getExpandedPath().reverse().find(m => ['package', 'directory'].includes(m.type));
   }
 
-  get listNavigationProhibited () {
-    return this.hasUnsavedChanges() || !this.view.getWindow().isActive();
-  }
-
   isModule (node) {
     return node && editableFiles.includes(node.type);
   }
@@ -769,6 +767,7 @@ export class BrowserModel extends ViewModel {
   }
 
   indicateUnsavedChanges () {
+    this.prohibitKeyboardNavigation();
     Object.assign(this.ui.sourceEditor,
       {
         padding: Rectangle.inset(2, 60 - 2, 2, 0),
@@ -777,6 +776,7 @@ export class BrowserModel extends ViewModel {
   }
 
   indicateNoUnsavedChanges () {
+    this.allowKeyboardNavigation();
     Object.assign(this.ui.sourceEditor,
       {
         padding: Rectangle.inset(4, 60, 4, 0),
@@ -804,6 +804,18 @@ export class BrowserModel extends ViewModel {
 
   updateUnsavedChangeIndicator () {
     this[this.hasUnsavedChanges() ? 'indicateUnsavedChanges' : 'indicateNoUnsavedChanges']();
+  }
+
+  prohibitKeyboardNavigation () {
+    const cv = this.ui.columnView;
+    cv.treeData.listNavigationProhibited = true;
+    cv.lists.forEach(list => list.arrowNavigationProhibited = true);
+  }
+
+  allowKeyboardNavigation () {
+    const cv = this.ui.columnView;
+    cv.treeData.listNavigationProhibited = false;
+    cv.lists.forEach(list => list.arrowNavigationProhibited = false);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

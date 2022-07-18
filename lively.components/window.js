@@ -638,6 +638,7 @@ export default class Window extends Morph {
 
   activate () {
     if (this.isFaderActive()) return;
+    this.targetMorph.onWindowActivated();
     if (this.isActive()) {
       this.bringToFront();
       this.focus();
@@ -664,6 +665,7 @@ export default class Window extends Morph {
   }
 
   deactivate () {
+    this.targetMorph.onWindowDeactivated();
     // if (this.styleClasses.includes('inactive')) return;
     // this.removeStyleClass('active');
     // this.addStyleClass('inactive');
