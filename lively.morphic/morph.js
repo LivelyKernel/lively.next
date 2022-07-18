@@ -2411,6 +2411,8 @@ export class Morph {
     eventDispatcher && eventDispatcher.focusMorph(this);
   }
 
+  onWindowActivated () {}
+  onWindowDeactivated () {}
   onFocus (evt) {}
   onBlur (evt) {}
   isFocused () {

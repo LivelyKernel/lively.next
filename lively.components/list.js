@@ -688,7 +688,7 @@ export class List extends Morph {
   }
 
   gotoIndex (i) {
-    if (this.owner.listNavigationProhibited) return false;
+    if (this.arrowNavigationProhibited) return false;
     this.scrollIndexIntoView(this.selectedIndex = i);
     return true;
   }
