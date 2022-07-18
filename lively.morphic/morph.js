@@ -2209,7 +2209,7 @@ export class Morph {
 
   /**
    * Called when mouse down event is received on the area of this Morph while its halo is active.
-   * @param {Object} evt - The DOM event causing the call 
+   * @param {Object} evt - The DOM event causing the call
    */
   onHaloMouseDown (evt) {
 
@@ -2614,7 +2614,7 @@ export class Morph {
    * @see `lively.collab` for more information on comments.
    * Comments are only available when the world is a `LivelyWorld` provided by `lively.ide`.
    * When comments are not available, this method returns an empty array.
-   * @returns {[CommentData]} An array of the comments on this morph or an empty array 
+   * @returns {[CommentData]} An array of the comments on this morph or an empty array
    */
   get comments () {
     if (!$world.isIDEWorld) return [];

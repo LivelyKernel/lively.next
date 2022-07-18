@@ -1521,7 +1521,7 @@ export class BrowserModel extends ViewModel {
     //   return ['devDependencies', 'dependencies'].includes(p.key.value);
     // });
     // // find added modules
-    // 
+    //
     // for (const field of depDefFields) {
     //   for (const { key: { value: packageName }, value: { value: range }, end } of field.value.properties) {
     //     if (modules.semver.validRange(range) || modules.semver.valid(range)) {
@@ -1651,7 +1651,7 @@ export class BrowserModel extends ViewModel {
           }
           if (ext === 'md') {
             // the preview does not get unset when it is closed
-            // we thus need to check whether the window that contains the preview is currently member of the world 
+            // we thus need to check whether the window that contains the preview is currently member of the world
             if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
               await this.renderMarkdown();
             }
@@ -1903,7 +1903,7 @@ export class BrowserModel extends ViewModel {
     if (prev.caption.includes('Browser Tab')) prev.caption = `[${prev.content.packageName}]${prev.content.mdouleName ? '- ' + prev.content.moduleName : ''}`;
 
     // restore the editor tab from the tab we switched to
-    // if the tab was newly created populate the editor state with fresh data    
+    // if the tab was newly created populate the editor state with fresh data
     if (!curr.content) {
       curr.content = {
         spec: { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
