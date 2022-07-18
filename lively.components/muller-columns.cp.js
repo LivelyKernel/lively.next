@@ -61,7 +61,7 @@ export class MullerColumnViewModel extends ViewModel {
             'listMaster', 'treeData', 'setTreeData', 'isSelected',
             'selectNode', 'getExpandedPath', 'refresh',
             'keybindings', 'commands', 'reset', 'setExpandedPath',
-            'listNavigationProhibited'
+            'listNavigationProhibited', 'lists'
           ];
         }
       },
@@ -88,7 +88,7 @@ export class MullerColumnViewModel extends ViewModel {
   }
 
   get listNavigationProhibited () {
-    return this.view.owner.listNavigationProhibited;
+    return this.treeData.listNavigationProhibited;
   }
 
   truncateNameIfNeeded (displayedName) {
