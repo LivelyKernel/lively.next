@@ -1,14 +1,12 @@
 name: Check if lively boots
 
 on:
-  pull_request_review:
-    types: [submitted]
+  push:
   workflow_dispatch:
 
 jobs:
   check:
     name: Check if lively boots
-    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     steps:
       - name: Setup node
