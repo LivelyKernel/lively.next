@@ -161,6 +161,7 @@ export class World extends Morph {
   }
 
   world () { return this; }
+  
 
   makeDirty () {
     if (this._dirty) return;
