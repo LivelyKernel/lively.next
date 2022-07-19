@@ -1,0 +1,26 @@
+name: Label PRs with other branch than main as base
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+    branches-ignore:
+      - main
+    
+env:
+  TOKEN: ${{ secrets.LABELLING_TOKEN_LINUS }}
+  NUMBER: ${{ github.event.number }}
+
+jobs:
+  labeler:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17.9
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install octokit
+      run: npm install octokit
+    - name: Run API call
+      run: node ./scripts/labeler.mjs
