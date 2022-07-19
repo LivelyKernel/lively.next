@@ -3,8 +3,8 @@ name: Label PRs with other branch than main as base
 on:
   pull_request_target:
     types: [opened, reopened]
-    branches:    
-      - '!main'
+    branches-ignore:
+      - main
     
 env:
   TOKEN: ${{ secrets.LABELLING_TOKEN_LINUS }}
