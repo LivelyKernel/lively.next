@@ -84,6 +84,9 @@ export function getStylePropertiesFor (type) {
   styleProps.moduleId = string.joinPath(pkg.name, pathInPackage);
   for (let prop in props) {
     if (props[prop].isStyleProp) styleProps.push(prop);
+    if (props[prop].foldable) {
+      styleProps.push(...props[prop].foldable.map(sub => prop + string.capitalize(sub)));
+    }
   }
   CachedStyleProperties.set(type, styleProps);
   return styleProps;
