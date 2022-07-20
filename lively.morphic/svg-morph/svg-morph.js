@@ -87,12 +87,13 @@ export class SVGMorph extends Morph {
       bbox_node.addClass('my-svg-selection');
       bbox_node.attr({
         'fill-opacity': 0.0,
-        stroke: '#000',
-        'stroke-width': 2,
+        stroke: 'orange',
+        'stroke-width': 3,
         x: t.bbox().x,
         y: t.bbox().y,
         width: t.bbox().width,
-        height: t.bbox().height
+        height: t.bbox().height,
+        'stroke-dasharray': '2, 2'
       });
       t.add(bbox_node);
       bbox_node.back();
