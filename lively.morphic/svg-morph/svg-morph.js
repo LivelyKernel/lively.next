@@ -1,4 +1,4 @@
-/* global fetch */
+/* global fetch, DOMPoint */
 
 import { Morph } from 'lively.morphic';
 import vdom from 'virtual-dom';
@@ -198,21 +198,23 @@ export class SVGMorph extends Morph {
     const { domEvt: { target } } = evt;
     const cssClass = new PropertyPath('attributes.class.value').get(target);
     if (cssClass && cssClass.includes('control-point')) {
-      this._controlPointDrag = { marker: target };
+      this._controlPointDrag = { targetPoint: target };
     }
   }
 
   onDrag (evt) {
     if (!this._controlPointDrag) return super.onDrag(evt);
-    let { marker, lastDelta } = this._controlPointDrag;
-    this._controlPointDrag.lastDelta = evt.state.absDragDelta;
-    lastDelta = lastDelta || { x: 0, y: 0 };
-    let deltaX = evt.state.absDragDelta.x - lastDelta.x;
-    let deltaY = evt.state.absDragDelta.y - lastDelta.y;
-    const screenCTM = this.target.getScreenCTM();
-    deltaY = screenCTM.d < 0 ? -deltaY : deltaY; // d determines the y direction
-    SVG(marker).dmove(deltaX, deltaY);
-    this.changeSVGToControlPoint(marker, pt(deltaX, deltaY));
+    let { targetPoint } = this._controlPointDrag;
+
+    const CTM = this.target.getCTM();
+    let point = new DOMPoint();
+    point.x = evt.state.dragDelta.x;
+    point.y = evt.state.dragDelta.y;
+    console.log(point);
+    point = point.matrixTransform(this.svgPath.getCTM()); // gives transform matrix relative to svg origin
+    point.y = CTM.d < 0 ? -point.y : point.y; // d determines the y direction
+    SVG(targetPoint).dmove(point.x, point.y);
+    this.changeSVGToControlPoint(targetPoint, pt(point.x, point.y));
   }
 
   onDragEnd (evt) {
