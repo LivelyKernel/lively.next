@@ -285,61 +285,17 @@ export class StylePolicy {
   }
 
   /**
-   * Gather all the overridden props until top level policy
-   * is reached, then return a new inline policy, that includes
-   * all of those gathered overriden props for the entire morphic scope
-   * of this inline policy. Further we stick to our original structure.
-   * We do NOT inherit the structure of the new parent policy.
-   */
-  collapse (newParent) {
-    return new StylePolicy(this.getCollapsedSpec(), newParent, false); // ensure that we do not inherit the structure of the new parent, since we are collapsed
-  }
-
-  /**
    * Creates a new morph from the fully synthesized spec.
    * @returns { Morph } The new morph based off the sully synthesized spec.
    */
   instantiate () {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    return morph(PolicyApplicator.for(this).getBuildSpec()); // eslint-disable-line no-use-before-define
+    return morph(PolicyApplicator.for(this).asBuildSpec()); // eslint-disable-line no-use-before-define
   }
 
   /**
-   * Creates a new morph from the internal spec in order to
-   * alter the component definition via direct manipulation.
-   * @returns { Morph } The master component as a morph.
-   */
-  edit () {
-    // FIXME: this code should go into the lively.ide part
-    return morph(this.getEditSpec());
-  }
-
-  /**
-   * Returns a build spec that includes all the overridden props up until the
-   * top level component (the one without a parent).
-   * Only covers the scope of the style policy, ignores the sub policies, which it keeps untouched.
-   * If the sub policies are altered by the new policy the same collapse logic is applied recursively.
-   * @returns { object } The collapsed build spec.
-   */
-  getCollapsedSpec () {
-    // FIXME: Actually collapse until the top level component (the one without a parent);
-    return obj.dissoc(this.getBuildSpec((policy) => !policy.parent), ['master']);
-  }
-
-  /**
-   * Returns a build spec suitable for generating a morph representation of the component definition
-   * which in turn can be used for editing the component definition via direct manipulation.
-   * FIXME: Do we really want to have this IDE specific code living inside morphic?
-   *        How about moving it out into the reconciliation module?
-   * @returns { object } The edit build spec.
-   */
-  getEditSpec () {
-    return this.getBuildSpec((policy) => !(this === policy || policy.parent === this.parent));
-  }
-
-  /**
-   * Synthesizes all contained sub specs up to the first level overridden props, 
+   * Synthesizes all contained sub specs up to the first level overridden props,
    * in order to create a build spec that can be used to create a new morph hierarchy.
    * Optionally we can also create the build spec in such a way, that a morph representation
    * of the master component can be generated.
