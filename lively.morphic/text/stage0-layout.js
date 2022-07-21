@@ -69,10 +69,15 @@ export default class NewLayout {
       padding, debug, defaultTextStyle
     } = morph;
     let { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
-    const paddingLeft = padding.left();
-    const paddingRight = padding.right();
-    const paddingTop = padding.top();
-    const paddingBottom = padding.bottom();
+
+    // TODO: Is this the reason the list item morph is fucked up?
+    // In any case, it is not entirely clear why cases happen in which this is necessary.
+    // The scenario that lead to the introduction of this code was an undefined padding upon the creation of ListItemMorphs via `update()` of `List` 
+    const paddingLeft = padding ? padding.left() : 0;
+    const paddingRight = padding ? padding.right() : 0;
+    const paddingTop = padding ? padding.top() : 0;
+    const paddingBottom = padding ? padding.bottom() : 0;
+
     const textRenderer = window.stage0renderer;
     const directRenderTextLayerFn = textRenderer.textLayerNodeFunctionFor(morph);
     const textAttributes = line.textAndAttributes; const styles = []; let inlineMorph;
