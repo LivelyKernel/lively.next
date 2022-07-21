@@ -580,18 +580,6 @@ export class StylePolicy {
     }
     return false;
   }
-
-  /**
-   * Callback that is invoked once a morph that is managed by the applicator changes.
-   * In general this means that if the change is a style property, we override this style prop locally.
-   * @param { Morph } changedMorph - The morph the change applies to.
-   * @param { object } change - The change object 
-   */
-  onMorphChange (changedMorph, change) {
-    const subSpec = this.getSubSpecFor(changedMorph.name);
-    if (!subSpec) return; // the morph is not managed by this applicator
-    subSpec[change.prop] = change.value;
-  }
 }
 
 /**
@@ -611,36 +599,38 @@ export class PolicyApplicator extends StylePolicy {
   // who in turn can be 1.) assigned as masters to morphs
   // and 2.) Know how to apply the style properties to the
   // morph hierarchy.
-  static for (policyOrDescriptor) {
+  static for (policyOrDescriptor, props = {}) {
     // we actually need a little bit more then just that...
     // the index that holds the overridden props for each of the morphs
     // in the scope, as well as refs to other MasterPolicies in the
     // subsequent scopes.
-    const self = new this({}, policyOrDescriptor, true);
+    return new this(props, policyOrDescriptor, true);
     // this is creating a slightly incorrect structure with StylePolices instead of PolicyApplicators...
     // ... that has however no effect, since the application ensures the style policies are referenced entirely
     // ... but it is better to fix rather than having dangling in between policies!
-    // self.ensureImplicitInlinePolicies();
-    return self;
+    // self.ensureImplicitInlinePolicies();;
   }
 
-  ensureImplicitInlinePolicies () {
-    // ensure that the structure is duplicated in the spec
-    if (this.parent) {
-      const parentSpec = this.parent.getBuildSpec(); // contains the entire 
-      // traverse the spec and swap out all of the inline policies with
-      // PolicyApplicators
-      this.spec = tree.mapTree(parentSpec, (node, submorphs) => {
-        if (!node.isPolicy && node.master && node !== parentSpec) {
-          return new PolicyApplicator(obj.dissoc(node, ['master']), node.master); // traverse recursively?
-        } else { return obj.dissoc({ ...node, submorphs }, ['master']); }
-      }, node => node.submorphs);
-    }
+  get isPolicyApplicator () { return true; }
 
-    super.ensureImplicitInlinePolicies();
+  toString () { return `<PolicyApplicator>`; }
+
+  asBuildSpec (discardStyleProps = () => true) {
+    const spec = super.asBuildSpec(discardStyleProps);
+    // this does not ensure that overridden props are getting carried over
+    // we need to directly initialize the applicators with the overriden props properly
+    return tree.mapTree(spec, (node, submorphs) => {
+      if (node.master && !node.master.isPolicyApplicator) {
+        return { ...node, submorphs, master: PolicyApplicator.for(node.master) };
+      } else { return { ...node, submorphs }; }
+    }, node => node.submorphs);
   }
 
   // APPLICATION TO MORPH HIERARCHIES
+
+  attach (targetMorph) {
+    this.targetMorph = targetMorph;
+  }
 
   /**
    * Given a target morph, traverse the submorph hierarchy
@@ -656,14 +646,24 @@ export class PolicyApplicator extends StylePolicy {
         let submorphName = null;
         if (morphInScope !== targetMorph) submorphName = morphInScope.name;
         const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph);
-        if (synthesizedSpec.isPolicy) morphInScope.setProperty('master', synthesizedSpec); // might be redundant
-        else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution
+        if (synthesizedSpec.isPolicy) {
+          morphInScope.setProperty('master', synthesizedSpec); // might be redundant
+          synthesizedSpec.targetMorph = morphInScope;
+        } else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution
 
         if (morphInScope !== targetMorph && morphInScope.master) {
           return morphInScope.master.apply(morphInScope); // let the policy handle the traversal
         }
       });
     });
+  }
+
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext);
+    if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
+      return PolicyApplicator.for(subSpec);
+    }
+    return subSpec;
   }
 
   applyIfNeeded () {
@@ -735,6 +735,37 @@ export class PolicyApplicator extends StylePolicy {
   withSubmorphsInScopeDo (parentOfScope, cb) {
     return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && m.master);
   }
+
+  /**
+   * Callback that is invoked once a morph that is managed by the applicator changes.
+   * In general this means that if the change is a style property, we override this style prop locally.
+   * @param { Morph } changedMorph - The morph the change applies to.
+   * @param { object } change - The change object
+   */
+  onMorphChange (changedMorph, change) {
+    if (change.meta.metaInteraction || !this.targetMorph) return;
+    let subSpec = this.ensureSubSpecFor(changedMorph);
+    if (change.value === this) return;
+    if (change.prop) { subSpec[change.prop] = change.value; }
+  }
+
+  /**
+   * Scans the master component derivation chain in order to
+   * determine the path to the sub spec that is then created
+   * on the spot.
+   * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
+   */
+  ensureSubSpecFor (submorph) {
+    const targetName = this.targetMorph === submorph ? null : submorph.name;
+    let currSpec = this.getSubSpecFor(targetName);
+    if (currSpec) return currSpec;
+    currSpec = { name: submorph.name };
+    const parentSpec = this.ensureSubSpecFor(submorph.owner);
+    const { submorphs = [] } = parentSpec;
+    submorphs.push(currSpec);
+    parentSpec.submorphs = submorphs;
+    return currSpec;
+  }
 }
 
 // FIXME: The stuff below is deprecated and to be removed once the above is able
@@ -758,6 +789,8 @@ export class ComponentPolicy {
       return PolicyApplicator.for(derivedMorph, args);
     } else if (args.constructor === PolicyApplicator) {
       return args;
+    } else if (args.constructor === StylePolicy) {
+      return PolicyApplicator.for(args);
     } else if (args.constructor === ComponentPolicy) {
       newPolicy = args;
     } else newPolicy = new this(derivedMorph, args);
@@ -1175,7 +1208,7 @@ export class ComponentPolicy {
         this.withSubmorphsInScopeDo(master, masterSubmorph => {
           const isRoot = masterSubmorph === master;
           let morphToBeStyled = isRoot ? derivedMorph : nameToStylableMorph[masterSubmorph.name]; // get all named?
-          // morph to be styled is not present. can this happen? 
+          // morph to be styled is not present. can this happen?
           // Not when working via direct manipulation tools. But can happen when you work in code purely. In those cases we resort to silent ignore.
           if (!morphToBeStyled) return;
           if (obj.isArray(morphToBeStyled)) morphToBeStyled = morphToBeStyled.pop();
@@ -1186,7 +1219,7 @@ export class ComponentPolicy {
                 !this._overriddenProps.get(morphToBeStyled).master) {
               // fixme: this needs to be considering the overridden props as well
               //        just carrying over the same master will not apply the expected style.
-              //        right now overridden props are only carried over if we instantiate from 
+              //        right now overridden props are only carried over if we instantiate from
               //        a component hierarchy. If we however swap out master components, we do not
               //        apply the correct overridden prop values. SOLUTION: utilize policies as master components
               //        thereby synthesizing the current property based on the overridden props in the chain of policies
