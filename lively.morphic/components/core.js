@@ -4,7 +4,7 @@ import { getClassName } from 'lively.serializer2';
 import { epiConnect, signal } from 'lively.bindings';
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName, morph } from '../helpers.js';
-import { mergeInHierarchy, StylePolicy } from './policy.js';
+import { mergeInHierarchy, StylePolicy, PolicyApplicator } from './policy.js';
 
 /**
  * By default component() or part() calls return morph instances. However when we evalute top level
@@ -80,7 +80,7 @@ export class ComponentDescriptor {
       spec = generatorFunction();
       if (!spec.isPolicy) { spec = new StylePolicy(spec); } // make part calls return the a synthesized spec
     } finally {
-      evaluateAsSpec = false; // always disbable this flag 
+      evaluateAsSpec = false; // always disbable this flag
     }
     return spec;
   }
@@ -573,8 +573,11 @@ export function part (componentDescriptor, overriddenProps = {}) {
     return componentDescriptor.extend(overriddenProps); // creates an abstract inline policy
   }
 
+  // FIXME: maybe handle these 2 cases entirely via Applicators
   if (componentDescriptor.isComponentDescriptor) {
-    p = componentDescriptor.getInstance();
+    p = componentDescriptor.getInstance(overriddenProps);
+  } else if (componentDescriptor.isPolicy) {
+    p = componentDescriptor.instantiate(overriddenProps);
   } else {
     // snapshot dance... this should be moved into ComponentDescriptor.derive()
     p = deserializeMorph(componentDescriptor._snap, { reinitializeIds: true, migrations: [] });
@@ -713,6 +716,23 @@ export function add (props, before = null) {
     props,
     before
   };
+}
+
+/**
+ * Creates a new morph from the internal spec in order to
+ * alter the component definition via direct manipulation.
+ * @returns { Morph } The master component as a morph.
+ * FIXME: move this into the IDE!
+ */
+export function edit (componentDescriptor) {
+  const { parent, spec } = componentDescriptor.stylePolicy;
+  let applicator;
+  if (parent) {
+    applicator = PolicyApplicator.for(parent, spec);
+  } else {
+    applicator = PolicyApplicator.for(componentDescriptor);
+  }
+  return morph(applicator.asBuildSpec((policy) => !(applicator === policy || applicator.parent === policy.parent)));
 }
 
 function insertFontCSS (name, fontUrl) {
