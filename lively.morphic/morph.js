@@ -1640,7 +1640,6 @@ export class Morph {
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
     if (!this._isInline) {
       this.renderingState.hasStructuralChanges = true
-      arr.remove(this.renderingState.renderedMorphs, morph);
     };
   }
 
