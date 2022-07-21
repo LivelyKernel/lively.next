@@ -60,19 +60,20 @@ export function mergeInHierarchy (
   for (let submorph of root.submorphs || []) {
     if (!props) break;
     if (submorph.name === props.name) {
-      mergeInHierarchy(submorph, props, iterator, executeCommands);
+      mergeInHierarchy(submorph, props, iterator, executeCommands, removeFn, addFn);
       props = nextPropsToApply.shift();
     }
   }
   // finally we apply the commands
-  if (!executeCommands || !root.submorphs) return;
+  if (!executeCommands) return;
   for (let cmd of commands) {
-    if (cmd.COMMAND === 'remove') {
+    if (cmd.COMMAND === 'remove' && root.submorphs) {
       const morphToRemove = root.submorphs.find(m => m.name === cmd.target);
       if (morphToRemove) removeFn(root, morphToRemove);
     }
 
     if (cmd.COMMAND === 'add') {
+      if (!root.submorphs) root.submorphs = [];
       const beforeMorph = cmd.before && root.submorphs.find(m => m.name === cmd.before);
       addFn(root, cmd.props, beforeMorph);
     }
@@ -498,7 +499,7 @@ export class StylePolicy {
    * @returns { object } The synthesized spec.
    */
   synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
-    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext); // get the sub spec for the submorphInPolicyContext
+    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
 
@@ -511,6 +512,7 @@ export class StylePolicy {
 
     if (checkNext(qualifyingMaster)) {
       nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext);
+      if (nextLevelSpec.isPolicy) return nextLevelSpec;
     }
 
     let synthesized = {};
@@ -550,7 +552,7 @@ export class StylePolicy {
     const matchingNode = tree.find(this.spec, node => {
       if (node.COMMAND === 'add') return node.props.name === submorphName;
       return node.name === submorphName;
-    }, node => node.submorphs) || {};
+    }, node => node.submorphs);
     return matchingNode ? matchingNode.props || matchingNode : null;
   }
 
