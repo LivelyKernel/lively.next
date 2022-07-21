@@ -127,7 +127,7 @@ export class StylePolicy {
     this.spec = spec; // the spec object which constitutes overridden props and added, removed submorphs
     if (parent) this.parent = parent; // can be either an inline policy or a component descriptor
     this.inheritStructure = inheritStructure;
-    this.ensureImplicitInlinePolicies();
+    this.ensureStylePoliciesInSpec();
     // this.prepareIndex(); // synthesizes the policy for quick application and/or spec generation.
     // fixme: What to do about { hover, click, breakpoint } masters? How do they fit into the picture here?
     // Right now the derivation chain only manages the auto, that is default master component and declares that
@@ -225,8 +225,11 @@ export class StylePolicy {
    * declaring a 2nd, 3rd, etc rate inline policy is not signified by a part call. We however still need to wrap
    * these cases. This is why this routing scans our current spec for these cases and ensures
    * they are stored as InlinePolicies accordingly.
+   * We also ensure the presence of "empty" style policies, that did not get adressed
+   * in the derivation at all. This is mainly for the purpose of simplifying the generation
+   * of build specs.
    */
-  ensureImplicitInlinePolicies () {
+  ensureStylePoliciesInSpec () {
     const klass = this.constructor;
     // scan this.spec and detect overridden/set master components
     // or further refined inline policies
@@ -241,7 +244,7 @@ export class StylePolicy {
 
     if (this.parent) {
       // we need to traverse the spec and the parent's build spec simultaneously
-      const parentBuildSpec = this.parent.getBuildSpec(); // get the fully collapsed spec
+      const parentBuildSpec = this.parent.asBuildSpec(); // get the fully collapsed spec
       // we are abusing the merging traversal a little in order to perform
       const toBeReplaced = new WeakMap();
       function replace (node, replacement) {
@@ -249,6 +252,7 @@ export class StylePolicy {
       }
       // in place modifications of our local spec
       mergeInHierarchy(parentBuildSpec, this.spec, (parentSpec, localSpec) => {
+        // ensure the presence of all nodes
         if (localSpec === this.spec) return; // do not tweak root
         if (localSpec.isPolicy) return this.ensurePolicy(localSpec, replace); // already a inline policy
         if (localSpec.master && parentSpec.master) {
@@ -304,21 +308,21 @@ export class StylePolicy {
    * @param { boolean } discardStyleProps - Wether or not the morph spec should yield an instance or the master component itself.
    * @return { object } The build spec.
    */
-  getBuildSpec (discardStyleProps = () => true) {
+  asBuildSpec (discardStyleProps = () => true) {
     // FIXME: Just a flag to indicate the discarding of next level style props is not enough to
     //        cover all desirable use cases for this routine.
     //        We want the following cases:
     //        1.) Not carry over any style props since all is managed by the component policies.
     //        2.) Carry over the 1st level style props, in general to reify the master components as morphs.
     //        3.) Carry over all the n-1 style props (excluding the root) in order to basically collapse all
-    //            the overridden properties in the policy chain into one spec.    
+    //            the overridden properties in the policy chain into one spec.
     // important also, to create a completely new spec structure, such that
     // we do not accidentally alter the specs of parent policies.
     const filterProps = (owner, submorphs, discardStyleProps) => {
       // ensure that inline policies are treated correctly...
       let subSpec = owner;
       if (owner.isPolicy) {
-        return owner.getBuildSpec(discardStyleProps); // always discard the build specs of the parent
+        return owner.asBuildSpec(discardStyleProps); // always discard the build specs of the parent
       } else if (discardStyleProps(this)) {
         subSpec = {
           ...obj.dissoc(owner, ['master', ...getStylePropertiesFor(owner.type)])
@@ -335,11 +339,13 @@ export class StylePolicy {
       }, props => props.submorphs);
     }
 
+    let buildSpec;
     if (!this.parent) {
-      return filterSpec(this.spec);
+      buildSpec = filterSpec(this.spec);
+      return buildSpec;
+    } else {
+      buildSpec = this.parent.asBuildSpec(); // always discard the style props from our parent, regardless
     }
-
-    let buildSpec = this.parent.getBuildSpec(); // always discard the style props from our parent, regardless
 
     if (discardStyleProps(this)) buildSpec.master = this; // always return a new policy
 
@@ -383,7 +389,7 @@ export class StylePolicy {
 
         if (!discardStyleProps(this)) {
           // we return the first level build spec of the policy
-          Object.assign(curr, props.getBuildSpec(discardStyleProps));
+          Object.assign(curr, props.asBuildSpec(discardStyleProps));
           if (props.parent) curr.master = props.parent;
         }
 
@@ -415,7 +421,7 @@ export class StylePolicy {
       //           first place? In the future we want to remove the "treating morphs as component data structures" - scheme
       //           anyways and cleanup morph.js. After that, we will not use the preexisting properties on
       //           morphs to detect overrides any more, making this discarding to style props only useful for code generation.
-      //           
+      //
       //           1. Get rid of parametrized props after we have transitioned to lean components. (morph.js)
       //           2. Manage overrides entirely within component policies and inline policies.
       //           3. Flip the logic here and allow to instead produce "fully synthesized" morph hierarchies OR reduced style properties
@@ -431,7 +437,7 @@ export class StylePolicy {
       // fixme: perform mapTree of toBeAdded to also filter its props accordingly
       let subSpec;
       if (toBeAdded.isPolicy) {
-        subSpec = toBeAdded.getBuildSpec(discardStyleProps); // carry that over
+        subSpec = toBeAdded.asBuildSpec(discardStyleProps); // carry that over
         if (discardStyleProps(this)) subSpec.master = toBeAdded;
         else if (toBeAdded.parent) subSpec.master = toBeAdded.parent;
       } else {
