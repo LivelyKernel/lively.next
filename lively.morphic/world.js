@@ -154,7 +154,6 @@ export class World extends Morph {
   world () { return this; }
 
   makeDirty () {
-    if (this._dirty) return;
     this._dirty = true;
     const r = this.env.renderer;
     r && r.renderLater();
