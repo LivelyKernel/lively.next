@@ -784,6 +784,8 @@ export class Line extends TreeNode {
     this.hasEstimatedExtent = false;
     this.modeState = null;
 
+    this.needsRerender = true;
+
     // line text settings
     this.textAlign = 'left';
     this.lineHeight = null;
@@ -857,6 +859,7 @@ export class Line extends TreeNode {
     this.width = newWidth;
     this.height = newHeight;
     this.hasEstimatedExtent = isEstimated;
+    // if (!isEstimated) debugger;
     if (width !== newWidth || height !== newHeight) {
       const heightDelta = newHeight - height;
       while (parent) {
@@ -881,6 +884,7 @@ export class Line extends TreeNode {
   }
 
   changeText (newText, textAndAttributes = null) {
+    this.needsRerender = true;
     let { parent, text, height } = this;
     const deltaLength = (newText.length + 1) - (text.length + 1);
     let deltaHeight = 0;
@@ -1380,7 +1384,12 @@ export default class Document {
     return attrs[attrs.length - 1];
   }
 
-  textAndAttributesInRange ({ start, end }) {
+  textAndAttributesInRange (range) {
+    let start, end;
+    if (range.isRange){
+      start = range.start;
+      end = range.end;
+    } else ({ start, end } = range);
     if (eqPosition(start, end)) { return ['', null]; }
 
     if (lessPosition(end, start)) { [start, end] = [end, start]; }

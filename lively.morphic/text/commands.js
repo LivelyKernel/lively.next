@@ -12,6 +12,7 @@ const commands = [
     doc: 'placeholder for native copy',
     scrollCursorIntoView: false,
     exec: function (morph) {
+      if (morph.readOnly) return false;
       if (morph.selection.isEmpty()) { morph.selectLine(morph.cursorPosition.row); }
       return true;
     }

@@ -107,7 +107,6 @@ export default class EditorPlugin {
   }
 
   onViewChange () {
-    // this.requestHighlight();
     this.requestHighlight();
   }
 

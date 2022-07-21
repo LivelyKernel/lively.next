@@ -29,7 +29,7 @@ import { testsFromSource } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
-import { objectReplacementChar } from 'lively.morphic/text/document.js';
+import { objectReplacementChar } from 'lively.morphic/text/new-document.js';
 import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
 
 import lint from '../linter.js';
@@ -1111,8 +1111,6 @@ export class BrowserModel extends ViewModel {
     return moduleLists.map(list => list.items.map(m => m.value)).flat();
   }
 
-  // this.selectModuleNamed('text/renderer.js')
-  // mName = 'text/renderer.js'
   async selectModuleNamed (mName, animated = true) {
     const columnView = this.ui.columnView;
     let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>

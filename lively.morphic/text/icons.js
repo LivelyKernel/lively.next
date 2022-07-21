@@ -40,6 +40,19 @@ export class Icon {
     });
   }
 
+  static makeText(iconName, props = {prefix: "", suffix: "", noDoc: true, readOnly: true}) {
+    var {prefix, suffix} = props;
+    var textAndAttributes = [];
+    if (prefix) textAndAttributes.push(...typeof prefix === "string" ? [prefix || "", {}] : prefix);
+    textAndAttributes.push(...this.textAttribute(iconName, obj.dissoc(props, ['fontSize'])));
+    if (suffix) textAndAttributes.push(...typeof suffix === "string" ? [suffix || "", {}] : suffix);
+    return morph({
+      type: 'text',
+      value: textAndAttributes,
+      ...obj.dissoc(props, ["prefix", "suffix"])
+    });
+  }
+
   static textAttribute(iconName, attrs = {}) {
     let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
     return [

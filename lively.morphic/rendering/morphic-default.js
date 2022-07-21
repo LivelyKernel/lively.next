@@ -512,21 +512,6 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
         })));
 }
 
-function initDOMState (renderer, world) {
-  renderer.rootNode.appendChild(renderer.domNode);
-  renderer.ensureDefaultCSS()
-    .then(() => promise.delay(500))
-    .then(() => world.env.fontMetric && world.env.fontMetric.reset())
-    .then(() => world.withAllSubmorphsDo(ea => {
-      if (ea.isText || ea.isLabel) {
-        const { serializationInfo } = ea.metadata || {};
-        if (serializationInfo && serializationInfo.recoveredTextBounds) return;
-        ea.forceRerender();
-      }
-    }))
-    .catch(err => console.error(err));
-}
-
 export function renderMorph (morph, renderer = morph.env.renderer) {
   // helper that outputs a dom element for the morph, independent from the
   // morph being rendered as part of a world or not. The node returned *is not*
@@ -534,45 +519,3 @@ export function renderMorph (morph, renderer = morph.env.renderer) {
   return createNode(morph.render(renderer), renderer.domEnvironment);
 }
 
-export function renderSubTree (morph, renderer) {
-  // a function which allows to force rendering in a subhierarchy of the world
-  // useful in situation where in order for synchronous execution to continue, we
-  // quickly need to push changes to the dom and update the DOM state (text and label morphs)
-  const tree = renderer.renderMap.get(morph);
-  const domNode = renderer.getNodeForMorph(morph);
-
-  if (!domNode || !tree) return;
-
-  const newTree = renderer.render(morph);
-  const patches = diff(tree, newTree);
-
-  // insert new tree into global tree
-  const parentNode = renderer.renderMap.get(morph.owner);
-  if (!parentNode) return;
-  const siblings = parentNode.children[0].children;
-  const treeIndex = siblings.indexOf(tree);
-  siblings[treeIndex] = newTree;
-
-  patch(domNode, patches);
-}
-
-export function renderRootMorph (world, renderer) {
-  if (!world.needsRerender()) return;
-
-  let hydrated = false;
-  let domNode = renderer.domNode;
-  const tree = renderer.renderMap.get(world) || (domNode && (hydrated = true) && parser(domNode)) || renderer.render(world);
-  const newTree = renderer.render(world);
-
-  if (hydrated) tree.key = newTree.key;
-
-  const patches = diff(tree, newTree);
-
-  domNode = domNode || (renderer.domNode = createNode(tree, renderer.domEnvironment));
-
-  if (!domNode.parentNode) initDOMState(renderer, world);
-
-  patch(domNode, patches);
-
-  renderer.renderFixedMorphs(newTree.fixedMorphs, world);
-}

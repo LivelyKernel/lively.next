@@ -1,25 +1,24 @@
 /* global System,Map,WeakMap,Shapes,Intersection */
 import { Rectangle, Point, rect, Color, pt } from 'lively.graphics';
-import { string, num, obj, fun, promise, arr } from 'lively.lang';
+import { string, obj, fun, promise, arr } from 'lively.lang';
 import { signal, noUpdate, disconnect } from 'lively.bindings';
 
 import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
 import { Morph } from '../morph.js';
 import { Selection, MultiSelection } from './selection.js';
-import Document, { objectReplacementChar } from './document.js';
+import Document, { objectReplacementChar } from './new-document.js';
 import { Anchor } from './anchors.js';
 import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
-import TextLayout from './layout.js';
-import Renderer, { extractHTMLFromTextMorph } from './renderer.js';
+import { TextSearcher } from './search.js';
+import NewLayout from './stage0-layout.js';
 import commands from './commands.js';
-import { textAndAttributesWithSubRanges } from './attributes.js';
+import { textAndAttributesWithSubRanges, splitTextAndAttributesIntoLines } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
-import { renderSubTree, ShadowObject } from '../rendering/morphic-default.js';
 import { getClassName } from 'lively.serializer2';
 
 export class Text extends Morph {
@@ -62,6 +61,38 @@ export class Text extends Morph {
 
   static get properties () {
     return {
+      renderingState: {
+        before: ['textAndAttributes'],
+        defaultValue: {},
+        initialize () {
+          const state = {};
+          state.renderedMorphs = [];
+          state.hasStructuralChanges = false;
+          state.needsRerender = false;
+          state.animationAdded = false;
+          state.hasCSSLayoutChange = false;
+          state.specialProps = {};
+
+          state.textAndAttributesToDisplay;
+          state.renderedTextAndAttributes = [];
+          state.lineIds = {};
+          state.currLineId = 0;
+          state.renderedLines = [];
+          state.visibleLines = [];
+
+          this.setProperty('renderingState', state);
+        }
+      },
+
+      // Setting a layout on Text is forbidden/not applied.
+      // This specification is to explicitly override the inherited Morph behavior.
+      layout: {
+        readOnly: true,
+        get () {
+          return null;
+        }
+      },
+
       clipMode: {
         isStyleProp: true,
         defaultValue: 'visible',
@@ -69,6 +100,14 @@ export class Text extends Morph {
           this.setProperty('clipMode', value);
           this.fixedWidth = this.fixedHeight = this.isClip();
         }
+      },
+
+      debug: {
+        group: '_debugging',
+        isStyleProp: true,
+        after: ['textLayout'],
+        defaultValue: false,
+        doc: 'For visualizing and debugging text layout and rendering'
       },
 
       fontMetric: {
@@ -87,18 +126,10 @@ export class Text extends Morph {
         }
       },
 
-      textRenderer: {
-        group: '_rendering',
-        after: ['viewState'],
-        initialize () {
-          this.textRenderer = new Renderer(this.env);
-        }
-      },
-
       debug: {
         group: '_debugging',
         isStyleProp: true,
-        after: ['textRenderer', 'textLayout'],
+        after: ['textLayout'],
         defaultValue: false,
         doc: 'For visualizing and debugging text layout and rendering'
       },
@@ -161,24 +192,11 @@ export class Text extends Morph {
       },
 
       textLayout: {
-        group: '_rendering',
-        after: ['textRenderer'],
-        initialize () {
-          this.textLayout = new TextLayout(this);
-        }
+        group: '_rendering'
       },
 
       document: {
-        group: 'text',
-        initialize () {
-          this.document = Document.fromString('', {
-            maxLeafSize: 50,
-            minLeafSize: 25,
-            maxNodeSize: 35,
-            minNodeSize: 7
-          });
-          this.consistencyCheck();
-        }
+        group: 'text'
       },
 
       draggable: { defaultValue: false },
@@ -236,6 +254,35 @@ export class Text extends Morph {
         isStyleProp: true,
         after: ['clipMode', 'viewState'],
         defaultValue: false
+      },
+
+      autofit: {
+        derived: true,
+        get () {
+          return !this.fixedHeight && !this.fixedWidth;
+        }
+      },
+
+      labelMode: {
+        group: 'text',
+        isStyleProp: true,
+        // FIXME
+        defaultValue: false,
+        after: ['textAndAttributes'],
+        set (mode) {
+          if (mode) { // no editing
+            if (this.document) { // migrate document to text and attributes
+              this.makeUninteractive();
+            }
+            // nothing more to do, since we do not have a document
+          } else { // editing is activated
+            if (!this.document) { // migrate text and attributes to document
+              this.makeInteractive();
+            }
+            // nothing more to do, since we already have a document
+          }
+          this.setProperty('labelMode', mode);
+        }
       },
 
       readOnly: {
@@ -330,12 +377,19 @@ export class Text extends Morph {
           // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
           const currentSel = this.getProperty('selection');
           if (!selOrRange && currentSel) {
+            if (this._isDowngrading) {
+              this.setProperty('selection', null);
+              return;
+            }
             if (currentSel.isMultiSelection) {
               currentSel.disableMultiSelect();
             }
             currentSel.collapse();
-          } else if (selOrRange.isSelection) this.setProperty('selection', selOrRange);
-          else if (currentSel) currentSel.range = selOrRange;
+          } else if (selOrRange.isSelection) {
+            this.setProperty('selection', selOrRange);
+          } else if (currentSel) {
+            currentSel.range = selOrRange;
+          }
         }
       },
 
@@ -359,16 +413,20 @@ export class Text extends Morph {
 
       textString: {
         group: 'text',
-        after: ['document'],
+        after: ['document', 'textAndAttributes'],
         derived: true,
         get () {
-          return this.document ? this.document.textString : '';
+          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? text : '').join('');
         },
         set (value) {
-          value = (value !== null) ? String(value) : '';
-          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
-          this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
-          this.insertText(value, { column: 0, row: 0 });
+          if (this.document) {
+            value = (value !== null) ? String(value) : '';
+            // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
+            this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
+            this.insertText(value, { column: 0, row: 0 });
+          } else { // "label mode"
+            this.textAndAttributes = [value, null];
+          }
         }
       },
 
@@ -393,21 +451,42 @@ export class Text extends Morph {
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // default font styling
-
       textAndAttributes: {
         group: 'text',
         derived: true,
         after: ['document', 'submorphs'],
+        renderSynchronously: true,
         get () {
-          return this.document.textAndAttributes;
+          if (this.document && !this._isUpgrading) return this.document.textAndAttributes;
+          // "label mode"
+          else {
+            let val = this.getProperty('textAndAttributes');
+            if (!val || val.length < 1) val = ['', null];
+            return val;
+          }
         },
         set (textAndAttributes) {
           // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
-          this.replace(
-            { start: { row: 0, column: 0 }, end: this.documentEndPosition },
-            textAndAttributes
-          );
+          if (this.document && !this._isDowngrading) {
+            this.replace(
+              { start: { row: 0, column: 0 }, end: this.documentEndPosition },
+              textAndAttributes
+            );
+            this.fit(); // exemption for fixed width/height is handled in fit method 
+          } else { // "label mode"
+            if (!Array.isArray(textAndAttributes)) textAndAttributes = String(textAndAttributes).split(/(?<=\n)/).map(line => [line, null]);
+            else if (textAndAttributes.length === 0) textAndAttributes = ['', {}];
+            else if (!this._isDowngrading) {
+              textAndAttributes = splitTextAndAttributesIntoLines(textAndAttributes);
+            }
+            this.setProperty('textAndAttributes', textAndAttributes);
+            signal(this, 'value', textAndAttributes);
+          }
         }
+      },
+
+      scroll: {
+        renderSynchronously: true
       },
 
       defaultTextStyleProps: {
@@ -448,6 +527,31 @@ export class Text extends Morph {
       },
 
       nativeCursor: { defaultValue: 'text', isDefaultTextStyleProp: true },
+
+      selectionMode: {
+        type: 'Enum',
+        values: ['none', 'native', 'lively'],
+        defaultValue: 'none',
+        set (mode) {
+          if (mode === 'native') {
+            if (!this.labelMode && !this.readOnly === true) $world.setStatusMessage('Only possible for non-editable texts.');
+            this.stealFocus = true;
+            this._node.querySelector('.newtext-text-layer').classList.add('selectable');
+            this._node.querySelector('.newtext-text-layer').style['pointer-events'] = 'all';
+          }
+          if (mode === 'lively') {
+            if (this.labelMode) $world.setStatusMessage('Only possible for interactive texts.');
+            this.stealFocus = false;
+            this._node.querySelector('.newtext-text-layer').classList.remove('selectable');
+          }
+          if (mode === 'none') {
+            this.selectable = false;
+            this.stealFocus = false;
+            this._node.querySelector('.newtext-text-layer').classList.remove('selectable');
+          }
+          this.setProperty('selectionMode', mode);
+        }
+      },
 
       fontFamily: {
         group: 'text styling',
@@ -575,13 +679,12 @@ export class Text extends Morph {
         // possible values:
         // false: no line wrapping, lines are as long as authored
         // true or "by-words": break lines at word boundaries. If not possible break line
-        // anywhere to enforce text width
         // only-by-words: break lines at word boundaries. If not possible, line will be
         // wider than text
         // by-chars: Break line whenever character sequence reaches text width
         group: 'text',
         type: 'Enum',
-        values: [false, true, 'by-words', 'anywhere', 'only-by-words', 'wider', 'by-chars'],
+        values: [false, true, 'by-words', 'only-by-words', 'by-chars'],
         isStyleProp: true,
         defaultValue: false,
         after: ['document', 'viewState']
@@ -696,13 +799,13 @@ export class Text extends Morph {
       topLeft,
       center
     } = props;
-
     super(props);
 
     this.undoManager.reset();
+    this.makeInteractive();
 
-    this.fit();
-
+    // this.fit();
+    // todo: why exactly was this needed?
     // Update position after fit
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
@@ -725,8 +828,7 @@ export class Text extends Morph {
 
     this.viewState = this.defaultViewState;
     this.markers = [];
-    this.textRenderer = new Renderer(this.env);
-    this.textLayout = new TextLayout(this); // delayed
+    this.textLayout = new NewLayout(this); // delayed
     this.changeDocument(Document.fromString(''));
     this.ensureUndoManager();
     if (snapshot.cachedLineBounds) {
@@ -801,32 +903,32 @@ export class Text extends Morph {
       })
     };
 
-    const cachedLineBounds = [];
-    for (const line of this.document.lines) {
-      // line = this.document.lines[810]
-      const lineBounds = this.textLayout.lineCharBoundsCache.get(line);
-      if (!lineBounds) continue;
-      const compactBounds = [];
-      let prevRect;
-      let sameRectCount = 0;
-      if (lineBounds) {
-        for (const charBounds of lineBounds) {
-          if (prevRect) {
-            if (num.roundTo(prevRect.width, 0.001) === num.roundTo(charBounds.width || 0, 0.001) && charBounds.height === prevRect.height) {
-              sameRectCount++;
-              continue;
-            }
-            compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
-          }
-          sameRectCount = 1;
-          prevRect = charBounds;
-        }
-      }
-      if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
-      cachedLineBounds.push([line.row, compactBounds.flat()]);
-    }
+    // const cachedLineBounds = [];
+    // for (const line of this.document.lines) {
+    //   // line = this.document.lines[810]
+    //   const lineBounds = this.textLayout.lineCharBoundsCache.get(line);
+    //   if (!lineBounds) continue;
+    //   const compactBounds = [];
+    //   let prevRect;
+    //   let sameRectCount = 0;
+    //   if (lineBounds) {
+    //     for (const charBounds of lineBounds) {
+    //       if (prevRect) {
+    //         if (num.roundTo(prevRect.width, 0.001) === num.roundTo(charBounds.width || 0, 0.001) && charBounds.height === prevRect.height) {
+    //           sameRectCount++;
+    //           continue;
+    //         }
+    //         compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
+    //       }
+    //       sameRectCount = 1;
+    //       prevRect = charBounds;
+    //     }
+    //   }
+    //   if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
+    //   cachedLineBounds.push([line.row, compactBounds.flat()]);
+    // }
 
-    snapshot.cachedLineBounds = cachedLineBounds;
+    // snapshot.cachedLineBounds = cachedLineBounds;
   }
 
   spec () {
@@ -842,8 +944,13 @@ export class Text extends Morph {
     return true;
   }
 
+  get isSmartText () {
+    return true;
+  }
+
   makeDirty () {
     if (this._positioningSubmorph) return;
+    this.renderingState.needsRerender = true; // fixme
     super.makeDirty();
   }
 
@@ -899,9 +1006,9 @@ export class Text extends Morph {
 
       if (scrollChange) this.viewState.wasScrolled = true;
 
-      if (hardLayoutChange ||
+      if (this.document && (hardLayoutChange ||
           enforceFit ||
-          (softLayoutChange && !meta.styleSheetChange)) {
+          (softLayoutChange && !meta.styleSheetChange))) {
         this.invalidateTextLayout(
           hardLayoutChange /* reset char bounds */,
           hardLayoutChange /* reset line heights */);
@@ -1157,6 +1264,7 @@ export class Text extends Morph {
     this.removeMarker(marker.id);
     this.markers.push(marker);
     this.makeDirty();
+    this.renderingState.needsRerender = true;
     return marker;
   }
 
@@ -1164,6 +1272,7 @@ export class Text extends Morph {
     const id = typeof marker === 'string' ? marker : marker.id;
     this.markers = this.markers.filter(ea => ea.id !== id);
     this.makeDirty();
+    this.renderingState.needsRerender = true;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1292,18 +1401,28 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
-    if (this._isDeserializing) return;
-    const vs = this.viewState;
-    if (!vs) return;
-    if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
+    // if (this._isDeserializing) return;
+    // const vs = this.viewState;
+    // if (!vs) return;
+    // if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
     const tl = this.textLayout;
     if (tl) {
       if (resetCharBoundsCache) tl.resetLineCharBoundsCache(this);
-      tl.estimateLineHeights(this, resetLineHeights);
+      tl.estimateLineExtents(this, resetLineHeights);
     }
   }
 
-  textBounds () { return this.textLayout.textBounds(this); }
+  textBounds () {
+    if (this.document) {
+      return this.textLayout.textBounds(this);
+    } else { // label mode
+      return this.measureBoundsFor();
+    }
+  }
+
+  measureBoundsFor () {
+    return window.stage0renderer.measureBoundsFor(this);
+  }
 
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
@@ -1617,7 +1736,7 @@ export class Text extends Morph {
           textAndAttributes,
           removedTextAndAttributes);
 
-        if (!this._isDeserializing || !this._initializedByCachedBounds) { this.textLayout.estimateLineHeights(this, false); }
+        if (!this._isDeserializing || !this._initializedByCachedBounds) { /* this.textLayout.estimateLineHeights(this, false); */ }
 
         if (consistencyCheck) { this.consistencyCheck(); }
       });
@@ -1831,6 +1950,45 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  makeUninteractive () {
+    this._node = null;
+    this._isDowngrading = true;
+    const textAndAttributes = this.document.lines.map(l => l.textAndAttributes);
+    this.document = null;
+    this.textLayout = null;
+    this.textAndAttributes = textAndAttributes;
+    this.selection = null;
+    this.renderingState.needsScrollLayerRemoved = true;
+    this._isDowngrading = false;
+  }
+
+  makeInteractive () {
+    this._node = null;
+    this._isUpgrading = true;
+    this.document = Document.fromString('', {
+      maxLeafSize: 50,
+      minLeafSize: 25,
+      maxNodeSize: 35,
+      minNodeSize: 7
+    });
+    let textAndAttributesToInsert;
+    if (!arr.equals(this.textAndAttributes, ['', null])) {
+      textAndAttributesToInsert = this.textAndAttributes.flatMap(textAndAttributesPerLine => {
+        textAndAttributesPerLine[textAndAttributesPerLine.length - 2] += '\n';
+        return textAndAttributesPerLine;
+      });
+    } else textAndAttributesToInsert = ['', null];
+
+    this.document.insertTextAndAttributes(
+      textAndAttributesToInsert,
+      { row: 0, column: 0 });
+    this.textLayout = new NewLayout();
+    this.textLayout.estimateLineExtents(this);
+    if (!this.fixedHeight) this.height = this.document.height;
+    if (!this.fixedWidth) this.width = this.document.width;
+    this.renderingState.needsScrollLayerAdded = true;
+    this._isUpgrading = false;
+  }
 
   addTextAttribute (attr, range = this.selection) {
     const plainRange = { start: range.start, end: range.end };
@@ -1885,7 +2043,6 @@ export class Text extends Morph {
     // second element is an attribute:
     // [range1, attr1, range2, attr2, ...]
     // ranges are expected to be sorted and non-overlapping!!!
-    // console.log(textAttributesAndRanges)
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
     this.consistencyCheck();
     let i = 0;
@@ -1893,9 +2050,6 @@ export class Text extends Morph {
       this.onAttributesChanged(textAttributesAndRanges[i]);
       i += 2;
     }
-    // this.invalidateTextLayout(true, true);
-    // FIXME only update affected range!
-    // this.onAttributesChanged({start: {row: 0, column: 0}, end: this.documentEndPosition});
   }
 
   textAttributeAt (textPos) {
@@ -1919,10 +2073,15 @@ export class Text extends Morph {
 
   onAttributesChanged (range) {
     this.invalidateTextLayout(false, false);
-    const tl = this.textLayout;
-    if (tl) {
-      tl.resetLineCharBoundsCacheOfRange(this, range);
+    if (this.document) {
+      for (let i of arr.range(range.start.row, range.end.row, 1)) {
+        this.document.lines[i].needsRerender = true;
+      }
     }
+    // const tl = this.textLayout;
+    // if (tl) {
+    //  tl.resetLineCharBoundsCacheOfRange(this, range);
+    // }
     this.makeDirty();
   }
 
@@ -2310,27 +2469,39 @@ export class Text extends Morph {
   // text layout related
 
   fit () {
-    const { viewState, fixedWidth, fixedHeight } = this;
-    viewState._needsFit = false;
-    if ((fixedHeight && fixedWidth) ||
+    // text morph mode
+    if (this.document) {
+      const { fixedWidth, fixedHeight } = this;
+      if ((fixedHeight && fixedWidth) ||
         !this.textLayout /* not init'ed yet */ ||
         this.master && !this.master._appliedMaster) return this;
-    const textBounds = this.textBounds().outsetByRect(this.padding);
-    const resize = () => {
-      this.withMetaDo({ metaInteraction: true }, () => {
-        if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
-        if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
-        this.embeddedMorphs.forEach(submorph => {
-          const a = this.embeddedMorphMap.get(submorph).anchor;
-          if (a) a.updateEmbeddedMorph();
+      const textBounds = this.textBounds().outsetByRect(this.padding);
+      const resize = () => {
+        this.withMetaDo({ metaInteraction: true }, () => {
+          if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
+          if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
+          this.embeddedMorphs.forEach(submorph => {
+            const a = this.embeddedMorphMap.get(submorph).anchor;
+            if (a) a.updateEmbeddedMorph();
+          });
         });
-      });
-    };
-    viewState._needsFit = false;
-    if (this.document.lines.find(l => l.hasEstimatedExtent)) {
-      this.whenRendered().then(resize);
-    } else {
+      };
+      // if (this.document.lines.find(l => l.hasEstimatedExtent)) {
+      //  this.whenRendered().then(resize);
+      // } else {
       resize();
+      // }
+    } else { // label mode
+      this.withMetaDo({ skipReconciliation: true }, () => {
+        this.extent = this.textBounds().extent().addXY(
+          this.borderWidthLeft + this.borderWidthRight,
+          this.borderWidthTop + this.borderWidthBottom
+        );
+      });
+      if (!this.visible) {
+        this._cachedTextBounds = null;
+      } else this._needsFit = false;
+      return this;
     }
 
     return this;
@@ -2369,8 +2540,9 @@ export class Text extends Morph {
 
   forceRerender () {
     // expensive!
-    this.textLayout.reset();
-    this.makeDirty();
+    // this.textLayout.reset();
+    // this.makeDirty();
+    this._node = window.stage0renderer.renderMorph(this, true);
   }
 
   aboutToRender (renderer) {
@@ -2386,24 +2558,109 @@ export class Text extends Morph {
     super.applyLayoutIfNeeded();
   }
 
-  render (renderer) {
-    return this.textRenderer.renderMorph(this, renderer);
+  getNodeForRenderer (renderer) {
+    return this._node || renderer.nodeForText(this);
   }
 
-  directRender () {
-    const renderer = this.env.renderer;
-    const textRenderer = this.textRenderer;
-    if (renderer && textRenderer) {
-      if (renderer._stopped) return;
-      renderSubTree(this, renderer);
-      textRenderer.manuallyTriggerTextRenderHook(this, renderer);
+  patchSpecialProps (node, renderer) {
+    if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
+      renderer.handleScrollLayer(node, this);
     }
+    if (!obj.equals(this.renderingState.extent, this.extent)) {
+      this.invalidateTextLayout(true, true);
+      renderer.renderTextAndAttributes(node, this);
+    }
+
+    // FIXME: this is not an adequate separation, read only should also support e.g. line height
+    // take care of this when fixing the conceptual separation between both
+    if (!this.labelMode) {
+      if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
+         !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
+        this.invalidateTextLayout(true, true);
+        renderer.patchLineHeightAndLetterSpacing(node, this);
+      }
+      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+        renderer.scrollScrollLayerFor(node, this);
+      }
+      // FIXME: this condition is not enough, other changes can cause this as well
+      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
+         this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
+        renderer.renderTextAndAttributes(node, this);
+      }
+
+      if (this.textLayout) {
+        renderer.patchSelectionLayer(node, this); // todo: can we get this to work with the comparison model?  
+      }
+      if (!obj.equals(this.renderingState.markers, this.markers)) {
+        renderer.patchMarkerLayer(node, this);
+      }
+
+      if (this.renderingState.scrollActive !== this.scrollActive) {
+        renderer.patchClipModeForText(node, this, this.scrollActive);
+      }
+      const currentTextLayerStyleObject = this.styleObject();
+      if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
+        renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
+      }
+      if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
+         (this.renderingState.fixedWidth !== this.fixedWidth)) {
+        renderer.patchLineWrapping(node, this);
+      }
+      renderer.adjustScrollLayerChildSize(node, this); // fixme: should probably be wrapped in a trigger
+      renderer.updateDebugLayer(node, this);
+    } else {
+      // does this need a guard clause? 
+      renderer.renderTextAndAttributes(node, this);
+    }
+  }
+
+  styleObject () {
+    const {
+      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      fontStyle,
+      fontWeight,
+      fontFamily,
+      fontColor,
+      textAlign,
+      fontSize,
+      textDecoration,
+      backgroundColor,
+      lineHeight,
+      wordSpacing,
+      letterSpacing,
+      tabWidth
+    } = this;
+
+    const padRight = padLeft + padWidth;
+    const padBottom = padTop + padHeight;
+
+    const style = { overflow: 'hidden', top: '0px', left: '0px' };
+
+    if (padLeft > 0) style.paddingLeft = padLeft + 'px';
+    if (padRight > 0) style.paddingRight = padRight + 'px';
+    if (padTop > 0) style.marginTop = padTop + 'px';
+    if (padBottom > 0) style.marginBottom = padBottom + 'px';
+    if (letterSpacing) style.letterSpacing = letterSpacing + 'px';
+    if (wordSpacing) style.wordSpacing = wordSpacing + 'px';
+    if (lineHeight) style.lineHeight = lineHeight;
+    if (fontFamily) style.fontFamily = fontFamily;
+    if (fontWeight) style.fontWeight = fontWeight;
+    if (fontStyle) style.fontStyle = fontStyle;
+    if (textDecoration) style.textDecoration = textDecoration;
+    if (fontSize) style.fontSize = fontSize + 'px';
+    if (textAlign) style.textAlign = textAlign;
+    if (fontColor) style.color = String(fontColor);
+    if (backgroundColor) style.backgroundColor = backgroundColor;
+    if (tabWidth !== 8) style.tabSize = tabWidth;
+
+    return style;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // mouse events
 
   onMouseDown (evt) {
+    if (this.labelMode) return; // allow for native selection
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
 
@@ -2415,7 +2672,6 @@ export class Text extends Morph {
     const normedClickCount = (clickCount - 1) % maxClicks + 1;
     const clickPos = this.localize(position);
     const clickTextPos = this.textPositionFromPoint(clickPos);
-
     if (
       evt.leftMouseButtonPressed() &&
       !evt.isShiftDown() &&
@@ -2483,6 +2739,7 @@ export class Text extends Morph {
   }
 
   onMouseMove (evt) {
+    if (this.labelMode) return; // allow for native selection
     if (!evt.leftMouseButtonPressed() || !this.selectable || evt.state.clickedOnMorph !== this) { return; }
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position));
   }
@@ -2616,6 +2873,8 @@ export class Text extends Morph {
       const textPos = this.textPositionFromPoint(this.localize(evt.hand.globalPosition));
       this.insertText([morphs[0], null], textPos);
       morphs[0].opacity = evt.state.originalOpacity || 1;
+      morphs[0]._isInline = true;
+      this.renderingState.needsRerender = true;
     }
   }
 
@@ -2936,7 +3195,7 @@ export class Text extends Morph {
           textAndAttributes[i] = deserializeMorph(snap, { reinitializeIds: true });
         }
 
-        const html = extractHTMLFromTextMorph(this, textAndAttributes);
+        const html = this.env.renderer.extractHTMLFromTextMorph(this, textAndAttributes);
         evt.domEvt.clipboardData.setData('text/html', html);
 
         for (const i in copyMap) textAndAttributes[i] = copyMap[i];
@@ -2996,18 +3255,18 @@ export class Text extends Morph {
 
   onFocus (evt) {
     super.onFocus(evt);
-    this.makeDirty();
-    this.selection.cursorBlinkStart();
-    if (this._originalShadow) return;
-    let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
-    if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
-    if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
-    this.withMetaDo({ metaInteraction: true }, () => {
-      this.highlightWhenFocused && this.animate({
-        dropShadow: haloShadow,
-        duration: 200
-      });
-    });
+    // this.makeDirty();
+    // this.selection.cursorBlinkStart();
+    // if (this._originalShadow) return;
+    // let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
+    // if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
+    // if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
+    // this.withMetaDo({ metaInteraction: true }, () => {
+    //   this.highlightWhenFocused && this.animate({
+    //     dropShadow: haloShadow,
+    //     duration: 200
+    //   });
+    // });
   }
 
   onBlur (evt) {
@@ -3023,7 +3282,7 @@ export class Text extends Morph {
 
   ensureKeyInputHelperAtCursor () {
     // move the textarea to the text cursor
-    if (this.env.eventDispatcher.keyInputHelper) { this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this); }
+    // if (this.env.eventDispatcher.keyInputHelper) { this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this); }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
