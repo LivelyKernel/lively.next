@@ -168,14 +168,16 @@ export class ChangeManager {
       morph._morphicState[change.prop] = change.value;
     }
 
-    morph.makeDirty(change);
     // FIXME
     // Hack for transitioning between the bundles loading screen and the live world with new rendering, morph creation, etc.
     if (!morph.renderingState) {
       morph.remove();
       return;
     }
-    morph.renderingState.needsRerender = true;
+    if (!obj.equals(change.prevValue,change.value)) {
+      morph.makeDirty(change);
+      morph.renderingState.needsRerender = true;
+    }
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {
