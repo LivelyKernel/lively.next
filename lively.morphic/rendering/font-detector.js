@@ -62,7 +62,7 @@ export default class FontDetector {
       w.style['pointer-events'] = 'none';
       w.style['-webkit-user-select'] = 'none';
       w.appendChild(s);
-      h.appendChild(w);
+      h.insertBefore(w, h.firstChild);
     }
     for (const j in fontWeights) {
       for (const i in baseFonts) {
