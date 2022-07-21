@@ -200,22 +200,19 @@ export class SVGMorph extends Morph {
     const cssClass = new PropertyPath('attributes.class.value').get(target);
     if (cssClass && cssClass.includes('control-point')) {
       this._controlPointDrag = { targetPoint: target };
+    } else if (target.instance.type === 'path') {
+      this._pathDrag = { targetPath: target };
     }
   }
 
   onDrag (evt) {
-    if (!this._controlPointDrag) return super.onDrag(evt);
-    let { targetPoint } = this._controlPointDrag;
-
-    const CTM = this.target.getCTM();
-    let point = new DOMPoint();
-    point.x = evt.state.dragDelta.x;
-    point.y = evt.state.dragDelta.y;
-    console.log(point);
-    point = point.matrixTransform(this.svgPath.getCTM()); // gives transform matrix relative to svg origin
-    point.y = CTM.d < 0 ? -point.y : point.y; // d determines the y direction
-    SVG(targetPoint).dmove(point.x, point.y);
-    this.changeSVGToControlPoint(targetPoint, pt(point.x, point.y));
+    if (this._controlPointDrag) {
+      this.controlPointDrag(evt);
+    } else if (this._pathDrag) {
+      this.pathDrag(evt);
+    } else {
+      super.onDrag(evt);
+    }
   }
 
   onDragEnd (evt) {
@@ -223,6 +220,32 @@ export class SVGMorph extends Morph {
     if (_controlPointDrag) {
       delete this._controlPointDrag;
     }
+  }
+
+  pathDrag (evt) {
+    console.log('yay!');
+    let targetPath = this.pathDrag.targetPath;
+    const point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
+    SVG(this.target).dmove(point.x, point.y);
+  }
+
+  controlPointDrag (evt) {
+    let { targetPoint } = this._controlPointDrag;
+
+    let point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
+    SVG(targetPoint).dmove(point.x, point.y);
+    this.changeSVGToControlPoint(targetPoint, pt(point.x, point.y));
+  }
+
+  convertPointToCTMOf (target, x, y) {
+    const CTM = this.target.getCTM();
+    let point = new DOMPoint();
+    point.x = x;
+    point.y = y;
+    point = point.matrixTransform(this.svgPath.getCTM()); // gives transform matrix relative to svg origin
+    point.y = CTM.d < 0 ? -point.y : point.y; // d determines the y direction
+
+    return point;
   }
 
   changeSVGToControlPoint (controlPoint, moveDelta) {
