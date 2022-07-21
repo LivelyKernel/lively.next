@@ -347,6 +347,7 @@ export default class TextInput {
 
   ensureBeingAtCursorOfText (textMorph) {
     // move the textarea to the text cursor
+    if (textMorph.isSmartText && textMorph.readOnly) return;
 
     const world = textMorph.world();
     if (!world) return;

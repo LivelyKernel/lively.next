@@ -100,6 +100,7 @@ export class Selection {
     this.endAnchor.position = range.end;
 
     this.textMorph.makeDirty();
+    if (this.textMorph.renderingState) this.textMorph.renderingState.needsRerender = true;
     signal(this.textMorph, 'selectionChange', this);
   }
 

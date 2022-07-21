@@ -117,7 +117,7 @@ class IFramedDomEnvironment extends DomEnvironment {
 }
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function setCSSDef (node, cssDefString, doc) {
+export function setCSSDef (node, cssDefString, doc) {
   Array.from(node.childNodes).forEach(c => node.removeChild(c));
   const rules = document.createTextNode(cssDefString);
   if (node.styleSheet) node.styleSheet.cssText = rules.nodeValue;

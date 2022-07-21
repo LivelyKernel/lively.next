@@ -5,7 +5,7 @@ import { noUpdate } from 'lively.bindings/index.js';
 import { arr, obj, fun, tree } from 'lively.lang/index.js';
 
 import { getClassName } from 'lively.serializer2';
-import TextLayout from 'lively.morphic/text/layout.js';
+import NewLayout from 'lively.morphic/text/stage0-layout.js';
 
 export class InteractiveTreeContainer extends Morph {
   static get properties () {
@@ -374,9 +374,9 @@ export class InteractiveTree extends Tree {
   }
 }
 
-class SceneGraphTreeLayout extends TextLayout {
+class SceneGraphTreeLayout extends NewLayout {
   estimateExtentOfLine (morph, line, transform = morph.getGlobalTransform()) {
-    const container = line.textAndAttributes.find(m => m.isMorph);
+    const container = line.textAndAttributes.find(m => m && m.isMorph);
     if (container) { line.changeExtent(morph.width, container.height); }
   }
 }

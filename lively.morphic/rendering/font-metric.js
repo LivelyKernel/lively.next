@@ -216,6 +216,10 @@ export default class FontMetric {
     return this._domMeasure.defaultCharExtent(morph, styleOpts, rendertTextLayerFn);
   }
 
+  newDefaultCharExtent (morph, rendertTextLayerFn) {
+    return this._domMeasure.defaultCharExtent(morph, null, rendertTextLayerFn);
+  }
+
   manuallyComputeCharBoundsOfLine (
     morph, line, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
@@ -231,6 +235,22 @@ export default class FontMetric {
       this);
   }
 
+  newManuallyComputeCharBoundsOfLine (
+    morph, line, offsetX = 0, offsetY = 0,
+    rendertTextLayerFn, renderLineFn
+  ) {
+    return this._domMeasure.computeCharBBoxes(
+      morph,
+      line,
+      (offsetX = 0),
+      (offsetY = 0),
+      null,
+      rendertTextLayerFn,
+      renderLineFn,
+      this);
+  }
+
+  // TODO: This can be deleted after moving to the new renderer, since it was only used in a shortcut that has become obsolete when rendering without VDOM. 
   manuallyComputeBoundsOfLines (
     morph, lines, offsetX = 0, offsetY = 0, styleOpts,
     rendertTextLayerFn, renderLineFn
@@ -245,6 +265,10 @@ export default class FontMetric {
 // font measuring inside text
 
 function textlayerNodeForFontMeasure (morph) {
+  if (morph.isSmartText) {
+    if (window.stage0renderer && window.stage0renderer.getNodeForMorph(morph) && window.stage0renderer.getNodeForMorph(morph).querySelector('.font-measure')) return window.stage0renderer.getNodeForMorph(morph).querySelector('.font-measure');
+    return null;
+  }
   let { text_layer_node, fontmetric_text_layer_node } = morph.viewState;
 
   // due to vdom, references to actual nodes don't guarantee that a node is
@@ -329,35 +353,62 @@ class DOMTextMeasure {
   }
 
   generateStyleKey (styleOpts) {
-    const {
-      defaultTextStyle: {
+    if (styleOpts.isMorph) {
+      const {
+
         fontFamily,
         fontSize,
         fontWeight,
         fontStyle,
         textDecoration,
-        textStyleClasses
-      },
-      paddingLeft, paddingRight, paddingTop, paddingBottom,
-      width, height, clipMode, lineWrapping, textAlign
-    } = styleOpts;
-    return [
-      fontFamily,
-      fontSize,
-      fontWeight,
-      fontStyle,
-      textDecoration,
-      textStyleClasses,
-      paddingLeft, paddingRight, paddingTop, paddingBottom,
-      width, height, clipMode, lineWrapping, textAlign
-    ].join('-');
+        textStyleClasses,
+
+        paddingLeft, paddingRight, paddingTop, paddingBottom,
+        width, height, clipMode, lineWrapping, textAlign
+      } = styleOpts; // textmorph
+      return [
+        fontFamily,
+        fontSize,
+        fontWeight,
+        fontStyle,
+        textDecoration,
+        textStyleClasses,
+        paddingLeft, paddingRight, paddingTop, paddingBottom,
+        width, height, clipMode, lineWrapping, textAlign
+      ].join('-');
+    } else {
+      const {
+        defaultTextStyle: {
+          fontFamily,
+          fontSize,
+          fontWeight,
+          fontStyle,
+          textDecoration,
+          textStyleClasses
+        },
+        paddingLeft, paddingRight, paddingTop, paddingBottom,
+        width, height, clipMode, lineWrapping, textAlign
+      } = styleOpts;
+      return [
+        fontFamily,
+        fontSize,
+        fontWeight,
+        fontStyle,
+        textDecoration,
+        textStyleClasses,
+        paddingLeft, paddingRight, paddingTop, paddingBottom,
+        width, height, clipMode, lineWrapping, textAlign
+      ].join('-');
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interface
 
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {
-    const styleKey = this.generateStyleKey(styleOpts);
+    let styleKey;
+    if (styleOpts) styleKey = this.generateStyleKey(styleOpts);
+    else styleKey = this.generateStyleKey(morph); // new way of doing this
     const found = this.defaultCharWidthHeightCache[styleKey];
 
     if (typeof found !== 'undefined' &&
@@ -450,12 +501,13 @@ class DOMTextMeasure {
   ) {
     return this.withTextLayerNodeDo(
       morph, renderTextLayerFn, styleOpts,
-      this.generateStyleKey(styleOpts),
+      styleOpts ? this.generateStyleKey(styleOpts) : this.generateStyleKey(morph),
       (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
         const lineNode = renderLineFn(line);
         const _ = textNode.appendChild(lineNode);
         const result = (line.stringSize > 10000 &&
 
+                   // FIXME: is this method working with new smarttext?
                    charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
                      morph, fontMetric, line, lineNode,
                      offsetX,
@@ -478,16 +530,21 @@ class DOMTextMeasure {
     // try to use the already rendered morph, it already has a layer node
     // for font measuring:
     let textNode = textlayerNodeForFontMeasure(morph);
-
     if (!textNode) textNode = cache[styleKey];
 
     if (!textNode) {
       this.textlayerNodeCacheCount++;
-      textNode = cache[styleKey] = rendertTextLayerFn(styleOpts, []);
+      if (!morph.isSmartText) textNode = rendertTextLayerFn(styleOpts, []);
+      else textNode = rendertTextLayerFn();
+      cache[styleKey] = textNode;
       textNode.id = styleKey;
 
-      const { width, clipMode } = styleOpts;
-      if (styleOpts.width || (styleOpts.clipMode && styleOpts.clipMode !== 'visible')) {
+      let width, clipMode;
+
+      if (morph.isSmartText) ({ width, clipMode } = morph);
+      else ({ width, clipMode } = styleOpts);
+
+      if (width || clipMode && clipMode !== 'visible') {
         const clipNode = document.createElement('div');
         clipNode.style.position = 'absolute';
         if (clipMode) clipNode.style.overflow = clipMode;
@@ -499,10 +556,18 @@ class DOMTextMeasure {
     }
 
     const tfm = morph.getGlobalTransform().inverse();
-    if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) &&
+    if (!morph.isSmartText) {
+      if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) &&
         (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
-      tfm.e = tfm.f = 0;
-      textNode.style.transform = tfm.toString();
+        tfm.e = tfm.f = 0;
+        textNode.style.transform = tfm.toString();
+      }
+    } else {
+      if (window.stage0renderer && window.stage0renderer.getNodeForMorph(morph) &&
+        (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
+        tfm.e = tfm.f = 0;
+        textNode.style.transform = tfm.toString();
+      }
     }
 
     const layerBounds = textNode.getBoundingClientRect();
@@ -566,12 +631,14 @@ function charBoundsOfBigMonospacedLine (
   return result;
 }
 
-function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
+export function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
+  // ELEMENT_NODE === 1
+  // TEXT_NODE === 3, nodeType property of DOM Node
   const { ELEMENT_NODE, TEXT_NODE } = lineNode;
   const maxLength = Infinity;
+  // the DOM document
   const document = lineNode.ownerDocument;
   const result = [];
-
   let index = 0;
   let textNode; let left; let top; let width; let height; let x; let y;
   let emptyNodeFill; let node;
@@ -580,30 +647,30 @@ function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
   else if (lineNode.className.includes('line')) {
     offsetX = offsetX - lineNode.offsetLeft;
     offsetY = offsetY - lineNode.offsetTop;
-    node = lineNode.childNodes[0];
+    node = lineNode.childNodes[0]; // node becomes the first span of the line
   } else {
-    const realLineNode = lineNode.getElementsByClassName('line')[0];
-    node = realLineNode.childNodes[0];
+    const realLineNode = lineNode.getElementsByClassName('line')[0]; // TODO: why?? in this case someone fucked up 
+    node = realLineNode.childNodes[0]; // node becomes the first span of the line
 
     offsetX = offsetX - lineNode.offsetLeft + getComputedMarginLeft(lineNode);
     offsetY = offsetY - lineNode.offsetTop;
   }
 
   if (!node) {
-    emptyNodeFill = node = document.createElement('br');
+    emptyNodeFill = node = document.createElement('br'); // only to fixup that we do not have childnodes otherwise I believe? not sure
     lineNode.appendChild(emptyNodeFill);
   }
 
   while (node) {
-    if (index > maxLength) break;
+    if (index > maxLength) break; // fixme: I do not think that this ever happens
 
     textNode = (node.tagName !== 'BR' &&
             node.nodeType === ELEMENT_NODE &&
-            node.childNodes[0]) || node;
+            node.childNodes[0]) || node; // spans contain a text node, other morphs would also contain stuff
 
     if (textNode.nodeType === TEXT_NODE) {
       const length = textNode.length;
-      for (let i = 0; i < length; i++) {
+      for (let i = 0; i < length; i++) { // iterate over all characters in text
         // "right" bias for rect means that if we get multiple rects for a
         // single char (if it comes after a line break caused by wrapping, we
         // prefer the bounds on the next (the wrapped) line)
@@ -613,7 +680,7 @@ function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
 
         result[index++] = { x, y, width, height };
       }
-    } else if (node.nodeType === ELEMENT_NODE) {
+    } else if (node.nodeType === ELEMENT_NODE) { // morph or stuff
       ({ left, top, width, height } = node.getBoundingClientRect());
       x = left + offsetX,
       y = top + offsetY;
@@ -634,7 +701,7 @@ function measureCharInner (document, node, index, bias = 'left') {
     for (let i = 0; i < 4; i++) { // Retry a maximum of 4 times when nonsense rectangles are returned
       rect = getUsefulRect(range(document, node, start, end).getClientRects(), bias); // eslint-disable-line no-use-before-define
       if (rect.left || rect.right || start === 0) break;
-      end = start;
+      end = start; // todo: what the fuck?
       start = start - 1;
     }
   }

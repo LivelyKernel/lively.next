@@ -4,7 +4,6 @@ import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'live
 import { signal } from 'lively.bindings';
 import { deserializeSpec, ExpressionSerializer, serializeSpec, getClassName } from 'lively.serializer2';
 import {
-  renderRootMorph,
   ShadowObject
 } from './rendering/morphic-default.js';
 import { AnimationQueue, easings } from './rendering/animations.js';
@@ -59,7 +58,19 @@ export class Morph {
     return {
 
       renderingState: {
-        defaultValue: {}
+        defaultValue: {},
+        initialize () {
+          const state = {};
+
+          state.renderedMorphs = [];
+          state.hasStructuralChanges = false;
+          state.needsRerender = false;
+          state.animationAdded = false;
+          state.hasCSSLayoutChange = false;
+          state.specialProps = {};
+
+          this.setProperty('renderingState', state);
+        }
       },
 
       name: {
@@ -820,6 +831,7 @@ export class Morph {
 
   constructor (props) {
     if (!props) props = {};
+
     const env = props.env || MorphicEnv.default();
     this._env = env;
     this._rev = env.changeManager.revision;
@@ -842,15 +854,6 @@ export class Morph {
     }
     if (props.height !== undefined || props.width !== undefined) { this._parametrizedProps.extent = this.extent; }
     // if (props.layout) this.layout = props.layout;
-
-    this.renderingState = {
-      renderedMorphs: [],
-      hasStructuralChanges: false,
-      needsRerender: false,
-      animationAdded: false,
-      hasCSSLayoutChange: false,
-      specialProps: {}
-    };
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
   }
@@ -1599,7 +1602,7 @@ export class Morph {
   }
 
   addMorph (submorph, insertBeforeMorph) {
-    this.renderingState.hasStructuralChanges = true;
+    if (!this._isInline) this.renderingState.hasStructuralChanges = true;
     // insert at right position in submorph list, according to insertBeforeMorph
     const submorphs = this.submorphs;
     const insertBeforeMorphIndex = insertBeforeMorph
@@ -1639,7 +1642,10 @@ export class Morph {
       morph._owner = null;
     });
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
-    this.renderingState.hasStructuralChanges = true;
+    if (!this._isInline) {
+      this.renderingState.hasStructuralChanges = true
+      arr.remove(this.renderingState.renderedMorphs, morph);
+    };
   }
 
   /**
@@ -2494,13 +2500,6 @@ export class Morph {
 
   get borderOptions () {
     return ['none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'];
-  }
-
-  renderAsRoot (renderer) {
-    this.dontRecordChangesWhile(() => {
-      this.applyLayoutIfNeeded();
-    });
-    return renderRootMorph(this, renderer);
   }
 
   renderPreview (opts = {}, renderer = this.env.renderer) {

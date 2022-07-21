@@ -6,7 +6,7 @@ import { Range } from '../text/range.js';
 
 function todo (name) { throw new Error('not yet implemented ' + name); }
 
-export default class TextLayout {
+export default class NewLayout {
   constructor () {
     this.reset();
   }
@@ -38,7 +38,7 @@ export default class TextLayout {
   resetLineCharBoundsCache (morph) {
     this.lineCharBoundsCache = new WeakMap();
     if (morph && !morph._isDeserializing) {
-      this.estimateLineHeights(morph);
+      this.estimateLineExtents(morph);
       morph.makeDirty();
     }
   }
@@ -59,21 +59,22 @@ export default class TextLayout {
   }
 
   estimateLineHeightsInRange (morph, range) {
-    const doc = morph.document; const transform = morph.getGlobalTransform();
-    for (let row = range.start.row; row <= range.end.row; row++) { this.resetLineCharBoundsCacheOfRow(morph, doc.getLine(row), transform); }
+    const doc = morph.document;
+    for (let row = range.start.row; row <= range.end.row; row++) { this.resetLineCharBoundsCacheOfRow(morph, doc.getLine(row)); }
   }
 
   estimateExtentOfLine (morph, line, transform = morph.getGlobalTransform()) {
     const {
       fontMetric, lineWrapping,
-      padding, textRenderer, debug, defaultTextStyle
+      padding, debug, defaultTextStyle
     } = morph;
     let { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
     const paddingLeft = padding.left();
     const paddingRight = padding.right();
     const paddingTop = padding.top();
     const paddingBottom = padding.bottom();
-    const directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
+    const textRenderer = window.stage0renderer;
+    const directRenderTextLayerFn = textRenderer.textLayerNodeFunctionFor(morph);
     const textAttributes = line.textAndAttributes; const styles = []; let inlineMorph;
 
     morphWidth = morphWidth - paddingLeft - paddingRight;
@@ -98,15 +99,7 @@ export default class TextLayout {
     let charWidthSum = 0;
     let charHeight = 0;
     for (let h = 0; h < measureCount; h++) {
-      const { width, height } = fontMetric.defaultCharExtent(morph, {
-        defaultTextStyle: styles[h],
-        width: 1000,
-        transform,
-        paddingBottom,
-        paddingTop,
-        paddingRight,
-        paddingLeft
-      }, directRenderTextLayerFn);
+      const { width, height } = fontMetric.newDefaultCharExtent(morph, directRenderTextLayerFn);
       charHeight = Math.max(height, charHeight);
       charWidthSum = charWidthSum + width;
     }
@@ -125,57 +118,25 @@ export default class TextLayout {
     line.changeExtent(estimatedWidth, estimatedHeight, true);
   }
 
-  estimateLineHeights (morph, force) {
+  estimateLineExtents (morph, force) {
     let {
-      fontMetric, textRenderer, document,
-      defaultTextStyle,
-      clipMode, textAlign, padding, lineWrapping,
-      debug
+      debug,
+      document
     } = morph;
     const { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
     const transform = morph.getGlobalTransform();
-    const paddingLeft = padding.left();
-    const paddingRight = padding.right();
-    const paddingTop = padding.top();
-    const paddingBottom = padding.bottom();
     const { lines, stringSize } = document;
-    const directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
 
     if (debug) {
       debug = morph.debugHelper(debug);
       if (!debug.debugTextLayout) debug = false;
     }
 
-    // fast and exact version for small texts and no fontFamily inside textAndAttributes:
-    if (!debug &&
-        morph.lineCount() < 10 &&
-        morph.document.stringSize < 3000 &&
-        !morph.textAndAttributes.some(attr => attr && attr.fontFamily != undefined)) {
-      const directRenderLineFn = textRenderer.directRenderLineFn(morph);
-      const linesBounds = fontMetric.manuallyComputeBoundsOfLines(
-        morph, lines, 0, 0, {
-          defaultTextStyle,
-          width: morphWidth,
-          height: morphHeight,
-          clipMode,
-          lineWrapping,
-          textAlign,
-          transform,
-          paddingLeft,
-          paddingRight,
-          paddingTop,
-          paddingBottom
-        }, directRenderTextLayerFn, directRenderLineFn);
-      for (var i = 0; i < lines.length; i++) {
-        const { width, height } = linesBounds[i];
-        lines[i].changeExtent(width, height, !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight));
-      }
-      return;
-    }
+    // an optimization for smaller amounts of text exists, could be used again if necessary
 
     let nMeasured = 0;
 
-    for (var i = 0; i < lines.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
       if (!force && line.height > 0) continue;
@@ -190,10 +151,10 @@ export default class TextLayout {
   }
 
   defaultCharExtent (morph) {
-    const { textRenderer, fontMetric, defaultTextStyle } = morph;
+    const { fontMetric, defaultTextStyle } = morph;
     const transform = morph.getGlobalTransform();
-    const directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
-    return fontMetric.defaultCharExtent(morph, { transform, defaultTextStyle, width: 1000 }, directRenderTextLayerFn);
+    const directRenderTextLayerFn = window.stage0renderer.textLayerNodeFunctionFor(morph);
+    return fontMetric.newDefaultCharExtent(morph, directRenderTextLayerFn);
   }
 
   textBounds (morph) {
@@ -228,7 +189,8 @@ export default class TextLayout {
     return row >= morph.viewState.firstFullyVisibleRow && row <= morph.viewState.lastFullyVisibleRow;
   }
 
-  whatsVisible (morph) {
+  whatsVisible (morph) { // fixme: will always fail for morphs that are in label mode
+  // i.e. that do not have a document
     const startRow = morph.viewState.firstVisibleRow;
     const endRow = morph.viewState.lastVisibleRow;
     const lines = morph.document.lines.slice(startRow, endRow);
@@ -285,7 +247,8 @@ export default class TextLayout {
       const nextColumn = range.end.column + 1;
       if (nextColumn >= lineLength) break;
       if (nextColumn <= column) {
-        if (!morph.env.renderer.getNodeForMorph(morph)) {
+        // TODO - What the heck??
+        if (!window.stage0renderer.getNodeForMorph(morph)) {
           column = nextColumn;
           break;
         }
@@ -299,20 +262,20 @@ export default class TextLayout {
   chunkAtPos (morph, pos) { todo('chunkAtPos'); }
 
   charBoundsOfRow (morph, row) {
+    if (!morph.owner) return [];
     const doc = morph.document;
     const line = doc.getLine(row);
 
-    if (morph._initializedByCachedBounds && !this._restored) {
-      this.restore(morph._initializedByCachedBounds, morph);
-      this._restored = true;
-    }
+    // if (morph._initializedByCachedBounds && !this._restored) {
+    //   this.restore(morph._initializedByCachedBounds, morph);
+    //   this._restored = true;
+    // }
 
     const cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
-
     const { x: width, y: height } = morph.getProperty('extent');
     const {
-      fontMetric, textRenderer,
+      fontMetric,
       defaultTextStyle,
       clipMode, textAlign, padding, lineWrapping
     } = morph;
@@ -321,22 +284,12 @@ export default class TextLayout {
     const paddingRight = padding.right();
     const paddingTop = padding.top();
     const paddingBottom = padding.bottom();
-    const directRenderLineFn = textRenderer.directRenderLineFn(morph);
-    const directRenderTextLayerFn = textRenderer.directRenderTextLayerFn(morph);
-    const charBounds = fontMetric.manuallyComputeCharBoundsOfLine(
-      morph, line, 0, 0, {
-        defaultTextStyle,
-        width,
-        height,
-        clipMode,
-        lineWrapping,
-        textAlign,
-        paddingLeft,
-        paddingRight,
-        paddingTop,
-        paddingBottom,
-        transform
-      }, directRenderTextLayerFn, directRenderLineFn);
+    const directRenderLineFn = window.stage0renderer.lineNodeFunctionFor(morph);
+    const directRenderTextLayerFn = window.stage0renderer.textLayerNodeFunctionFor(morph);
+
+    const charBounds = fontMetric.newManuallyComputeCharBoundsOfLine(
+      morph, line, 0, 0, directRenderTextLayerFn, directRenderLineFn);
+
     if (charBounds.find(r => r.width == undefined && r.height == undefined)) {
       // measuring failed, probably due to https://stackoverflow.com/questions/57590718/range-getclientrects-is-returning-0-rectangle-when-used-with-textarea-in-html
       // delay measuring until next render
@@ -403,7 +356,7 @@ export default class TextLayout {
 
   textPositionFromPoint (morph, point) {
     let { x, y } = point.addPt(morph.origin);
-    const { document: doc, padding, origin } = morph;
+    const { document: doc, padding } = morph;
     const padL = padding.left();
     const padT = padding.top();
 
@@ -428,7 +381,7 @@ export default class TextLayout {
 
     // everything to the left of the first char + half its width is col 0
     if (nChars === 0 || (x <= first.x + Math.round(first.width / 2) &&
-                      y >= first.y && y <= first.y + first.height)) return result;
+                       y >= first.y && y <= first.y + first.height)) return result;
 
     if (x > last.x + Math.round(last.width / 2) && y >= last.y && y <= last.y + last.height) {
       result.column = nChars;
@@ -438,7 +391,7 @@ export default class TextLayout {
     // find col so that x between right side of char[col-1] and left side of char[col]
     // consider wrapped lines, i.e. charBounds.y <= y <= charBounds.y+charBounds.height
     const wrappedCharBoundsWithMatchingVerticalPos = [];
-    for (var i = nChars - 1; i >= 0; i--) {
+    for (let i = nChars - 1; i >= 0; i--) {
       const cb = charBounds[i];
       const { x: cbX, width: cbWidth, y: cbY, height: cbHeight } = cb;
       if (y < cbY || y > cbY + cbHeight) continue;
@@ -460,7 +413,7 @@ export default class TextLayout {
 
     // if still not found we go by proximity...
     let minDist = Infinity; let minIndex = -1;
-    for (var i = 0; i < charBounds.length; i++) {
+    for (let i = 0; i < charBounds.length; i++) {
       const cb = charBounds[i];
       const { x: cbX, width: cbWidth, y: cbY, height: cbHeight } = cb;
       const dist = point.distSquared(pt(cbX + cbWidth / 2, cbY + cbHeight / 2));
