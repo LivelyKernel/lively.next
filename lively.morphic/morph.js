@@ -43,11 +43,8 @@ export class Morph {
       defaultSetter (key, value) {
         this.setProperty(key, value);
         if (this.propertiesAndPropertySettings().properties[key].renderSynchronously) {
-          let stage0morph = this.ownerChain().find(m => m.isStage0Morph);
-          if (stage0morph) {
-            stage0morph.renderer.renderStylingChanges(this);
-            console.log('Render mit Warpspeed, Dude!');
-          }
+          $world._renderer.renderStylingChanges(this);
+          console.log('Render mit Warpspeed, Dude!');
         }
       },
       valueStoreProperty: '_morphicState'

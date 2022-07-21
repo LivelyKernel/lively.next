@@ -1,5 +1,5 @@
 import { defaultDOMEnv } from './rendering/dom-helper.js';
-import { Renderer } from './rendering/renderer.js';
+import Stage0Renderer from '../stage0-morph/renderer.js';
 import FontMetric from './rendering/font-metric.js';
 import { ChangeManager } from './changes.js';
 import { UndoManager } from './undo.js';
@@ -113,8 +113,7 @@ export class MorphicEnv {
     this.deleteHistory();
     this.uninstallWorldRelated();
     this.world = world;
-    this.renderer = new Renderer(world, rootNode, this.domEnv);
-    this.renderer.domNode = domNode;
+    this.renderer = new Stage0Renderer(world, rootNode, this.domEnv);
     this.eventDispatcher = new EventDispatcher(world.isEmbedded ? rootNode : this.domEnv.window, world).install(rootNode);
 
     world.resumeSteppingAll();
@@ -124,7 +123,7 @@ export class MorphicEnv {
     world.makeDirty();
     this.renderer.renderLater();
 
-    return world.whenRendered().then(() => this);
+    return this;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
