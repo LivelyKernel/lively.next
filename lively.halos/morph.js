@@ -2095,6 +2095,7 @@ export default class Halo extends Morph {
   }
 
   onContextMenu (evt) {
+    evt.stop();
     Promise
       .resolve($world.defaultMenuItems(this.target)).then(items => this.target.openMenu(items, evt))
       .catch(err => $world.logError(err));
