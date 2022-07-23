@@ -172,7 +172,7 @@ export class PropertiesPanelModel extends ViewModel {
         svgControl.view.visible = true;
       }
     } else {
-      svgControl.view.visible = false;
+      svgControl.deactivate();
     }
     if (Array.isArray(aMorph) && aMorph.length === 1) aMorph = aMorph[0];
     // ignore multi selections of more than one morph for now.

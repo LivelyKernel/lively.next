@@ -1,10 +1,12 @@
 import { ViewModel, TilingLayout, part, add, without, component } from 'lively.morphic';
 import { PropertySection } from './section.cp.js';
-import { pt, rect } from 'lively.graphics';
+import { pt, Color, rect } from 'lively.graphics';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
+import { BorderControlElements } from './border.cp.js';
+import { string } from 'lively.lang';
 
-export class SVGControlModel extends ViewModel {
+export class SVGFillControlModel extends ViewModel {
   static get properties () {
     return {
       target: {},
@@ -18,10 +20,6 @@ export class SVGControlModel extends ViewModel {
     };
   }
 
-  focusOn (target) {
-    this.target = target;
-  }
-
   onRefresh (prop) {
     if (prop === 'target') this.update();
   }
@@ -33,8 +31,8 @@ export class SVGControlModel extends ViewModel {
   }
 
   async update () {
-    console.log('update: ', this.target.attr('fill'));
-    // this.ui.fillColorInput.setColor(this.target.attr('fill'));
+    // TODO: Fixme, color must not be defined via css in the svg
+    // this.ui.fillColorInput.setColor(this.target.css.fill);
   }
 
   deactivate () {
@@ -42,6 +40,188 @@ export class SVGControlModel extends ViewModel {
   }
 }
 
+export class SVGBorderControlModel extends ViewModel {
+  static get properties () {
+    return {
+      target: {},
+      bindings: {
+        get () {
+          return [
+            {
+              model: 'border color input',
+              signal: 'color',
+              handler: 'confirm'
+            },
+            {
+              target: 'border width input',
+              signal: 'number',
+              handler: 'confirm'
+            },
+            {
+              model: 'border style selector',
+              signal: 'selection',
+              handler: 'confirm'
+            }
+          ];
+        }
+      }
+    };
+  }
+
+  onRefresh (prop) {
+  }
+
+  focusOn () {
+  }
+
+  update () {
+    this.ui.borderStyleSelector.items = ['solid', 'dotted', 'dashed'].map(v => ({
+      string: string.capitalize(v), value: v, isListItem: true
+    }));
+    debugger;
+    this.ui.borderStyleSelector.selection = 'solid';
+  }
+
+  activate () {
+    const { elementsWrapper } = this.ui;
+    elementsWrapper.visible = true;
+    this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
+    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
+    this.update();
+  }
+
+  deactivate () {
+    this.models.borderColorInput.closeColorPicker();
+    if (!this.target) return;
+    const { elementsWrapper } = this.ui;
+    elementsWrapper.visible = false;
+    this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
+  }
+
+  /**
+   * Update the current border value based on the inputs in the UI.
+   * This is invoked in response to user interactions.
+   */
+  confirm () {
+    if (!this.target) return;
+    const { borderColorInput, borderWidthInput, borderStyleSelector } = this.ui;
+    // style: borderStyleSelector.selection
+    this.target.css({
+      stroke: borderColorInput.colorValue,
+      'stroke-width': borderWidthInput.number
+    });
+  }
+}
+
+export class SVGControlModel extends ViewModel {
+  focusOn (target) {
+    this.target = target;
+    Object.values(this.models).forEach(each => each.target = this.target);
+  }
+
+  deactivate () {
+    this.view.visible = false;
+    Object.values(this.models).forEach(each => { if (each !== this) each.deactivate(); });
+  }
+}
+
+// part(SVGFillControl).openInWorld()
+
+const SVGFillControl = component(PropertySection, {
+  defaultViewModel: SVGFillControlModel,
+  name: 'svg fill control',
+  fill: Color.transparent,
+  layout: new TilingLayout({
+    axis: 'column',
+    orderByIndex: true,
+    padding: rect(0, 10, 0, 10),
+    resizePolicies: [['h floater', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10,
+    wrapSubmorphs: false
+  }),
+  extent: pt(250, 121),
+  submorphs: [
+    {
+      name: 'h floater',
+      submorphs: [
+        without('add button'), {
+          name: 'section headline',
+          textAndAttributes: ['Fill', null]
+        }]
+    },
+    add(part(ColorInput, {
+      name: 'fill color input',
+      viewModel: {
+        gradientEnabled: true,
+        colorPickerComponent: DarkColorPicker
+      },
+      extent: pt(250, 27)
+    }))
+
+  ]
+});
+
+// part(SVGBorderControl).openInWorld()
+
+const SVGBorderControl = component(PropertySection, {
+  name: 'svg border control',
+  defaultViewModel: SVGBorderControlModel,
+  height: 100,
+  width: 250,
+  borderWidth: 0,
+  fill: Color.transparent,
+  submorphs: [
+    {
+      name: 'h floater',
+      submorphs: [
+        without('add button'), {
+          name: 'section headline',
+          textAndAttributes: ['Stroke', null]
+        }]
+    },
+    add(part(BorderControlElements, {
+      name: 'elements wrapper',
+      extent: pt(250, 50),
+      submorphs: [
+        {
+          name: 'border color input',
+          submorphs: [{
+            name: 'hex input',
+            extent: pt(80, 23)
+          }]
+        },
+        {
+          name: 'border width control',
+          extent: pt(175, 25),
+          fill: Color.rgba(255, 255, 255, 0),
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            justifySubmorphs: 'spaced',
+            orderByIndex: true,
+            padding: rect(20, 0, -10, 0),
+            spacing: 10,
+            wrapSubmorphs: false
+          }),
+          submorphs: [{
+            name: 'border width input',
+            extent: pt(59.9, 22),
+            min: 0,
+            tooltip: 'Border Width',
+            submorphs: [{
+              name: 'value',
+              extent: pt(45.7, 21)
+            }]
+          }]
+        }
+      ]
+    }))
+  ]
+});
+
+// part(SVGControl).openInWorld()
 const SVGControl = component(PropertySection, {
   defaultViewModel: SVGControlModel,
   name: 'svg control',
@@ -59,22 +239,9 @@ const SVGControl = component(PropertySection, {
   }),
   extent: pt(250, 121),
   submorphs: [
-    {
-      name: 'h floater',
-      submorphs: [
-        without('add button'), {
-          name: 'section headline',
-          textAndAttributes: ['SVG Path', null]
-        }]
-    },
-    add(part(ColorInput, {
-      name: 'fill color input',
-      viewModel: {
-        gradientEnabled: true,
-        colorPickerComponent: DarkColorPicker
-      },
-      extent: pt(250, 27)
-    }))
+    { name: 'h floater', visible: false },
+    add(part(SVGFillControl, { name: 'svg fill control' })),
+    add(part(SVGBorderControl, { name: 'svg border control' }))
   ]
 });
 
