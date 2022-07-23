@@ -216,9 +216,11 @@ export class SVGMorph extends Morph {
   }
 
   onDragEnd (evt) {
-    const { _controlPointDrag } = this;
+    const { _controlPointDrag, _pathDrag } = this;
     if (_controlPointDrag) {
       delete this._controlPointDrag;
+    } else if (_pathDrag) {
+      delete this._pathDrag;
     }
   }
 
