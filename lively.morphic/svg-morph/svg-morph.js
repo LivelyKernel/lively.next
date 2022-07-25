@@ -7,6 +7,7 @@ const { diff, patch, create: createElement } = vdom;
 import { SVG } from './svg.js';
 import { Path as PropertyPath } from 'lively.lang';
 import { connect, disconnect } from 'lively.bindings';
+import { URL } from 'esm://cache/npm:@jspm/core@2.0.0-beta.24/nodelibs/url';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -350,6 +351,28 @@ export class SVGMorph extends Morph {
     this.removePathSelection();
     this.removeAllControlPoints();
     this.editMode = false;
+  }
+
+  exportSVG () {
+    this.svgPath.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    let svgData = this.svgPath.parentElement.outerHTML;
+    let preface = '<?xml version="1.0" standalone="no"?>\r\n';
+    let svgBlob = new Blob([preface, svgData], { type: 'image/svg+xml;charset=utf-8' });
+    let svgUrl = URL.createObjectURL(svgBlob);
+    let downloadLink = document.createElement('a');
+    downloadLink.href = svgUrl;
+    downloadLink.download = 'export.svg';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+
+  menuItems () {
+    return [
+      ['export SVG', () => this.exportSVG()],
+      { isDivider: true },
+      ...super.menuItems()
+    ];
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
