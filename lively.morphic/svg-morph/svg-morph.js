@@ -6,6 +6,7 @@ import { pt, Color } from 'lively.graphics';
 const { diff, patch, create: createElement } = vdom;
 import { SVG } from './svg.js';
 import { Path as PropertyPath } from 'lively.lang';
+import { connect, disconnect } from 'lively.bindings';
 
 class SVGVNode {
   constructor (morph, renderer) {
@@ -77,6 +78,16 @@ export class SVGMorph extends Morph {
 
   initialize () {
     this.setSVGPath();
+    connect($world, 'showHaloFor', this, 'deactivateEditMode');
+  }
+
+  abandon (remvoe) {
+    super.abandon();
+    disconnect($world, 'showHaloFor', this, 'deactivateEditMode');
+  }
+
+  deactivateEditMode () {
+    if (this.editMode) this.toggleEditMode();
   }
 
   toggleEditMode () {
