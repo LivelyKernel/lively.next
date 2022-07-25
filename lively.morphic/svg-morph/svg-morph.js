@@ -133,7 +133,8 @@ export class SVGMorph extends Morph {
       y: t.bbox().y,
       width: t.bbox().width,
       height: t.bbox().height,
-      'stroke-dasharray': '2, 2'
+      'stroke-dasharray': '2, 2',
+      'pointer-events': 'none'
     });
     t.add(bbox_node);
     bbox_node.back();
@@ -225,9 +226,10 @@ export class SVGMorph extends Morph {
 
   onDrag (evt) {
     if (this._controlPointDrag || this._pathDrag) {
-      if (this._controlPointDrag) this.controlPointDrag(evt);
+      const point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
 
-      else this.pathDrag(evt);
+      if (this._controlPointDrag) this.controlPointDrag(point);
+      else this.pathDrag(point);
 
       this.createSVGSelectionBox();
     } else {
@@ -235,7 +237,7 @@ export class SVGMorph extends Morph {
     }
   }
 
-  onDragEnd (evt) {
+  onDragEnd (moveDelta) {
     const { _controlPointDrag, _pathDrag } = this;
     if (_controlPointDrag) {
       delete this._controlPointDrag;
@@ -244,20 +246,17 @@ export class SVGMorph extends Morph {
     }
   }
 
-  pathDrag (evt) {
-    let targetPath = this.pathDrag.targetPath;
-    const point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
-    SVG(this.target).dmove(point.x, point.y);
+  pathDrag (moveDelta) {
+    SVG(this.target).dmove(moveDelta.x, moveDelta.y);
 
     this.createSelectionBoxandPointsFor(this.target);
   }
 
-  controlPointDrag (evt) {
+  controlPointDrag (moveDelta) {
     let { targetPoint } = this._controlPointDrag;
 
-    let point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
-    SVG(targetPoint).dmove(point.x, point.y);
-    this.changeSVGToControlPoint(targetPoint, pt(point.x, point.y));
+    SVG(targetPoint).dmove(moveDelta.x, moveDelta.y);
+    this.changeSVGToControlPoint(targetPoint, pt(moveDelta.x, moveDelta.y));
   }
 
   convertPointToCTMOf (target, x, y) {
