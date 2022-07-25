@@ -4,7 +4,6 @@ import { pt, Color, rect } from 'lively.graphics';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { BorderControlElements } from './border.cp.js';
-import { string } from 'lively.lang';
 
 export class SVGFillControlModel extends ViewModel {
   static get properties () {
@@ -68,34 +67,8 @@ export class SVGBorderControlModel extends ViewModel {
     };
   }
 
-  onRefresh (prop) {
-  }
-
-  focusOn () {
-  }
-
-  update () {
-    this.ui.borderStyleSelector.items = ['solid', 'dotted', 'dashed'].map(v => ({
-      string: string.capitalize(v), value: v, isListItem: true
-    }));
-    debugger;
-    this.ui.borderStyleSelector.selection = 'solid';
-  }
-
-  activate () {
-    const { elementsWrapper } = this.ui;
-    elementsWrapper.visible = true;
-    this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
-    this.update();
-  }
-
   deactivate () {
     this.models.borderColorInput.closeColorPicker();
-    if (!this.target) return;
-    const { elementsWrapper } = this.ui;
-    elementsWrapper.visible = false;
-    this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
   }
 
   /**
@@ -105,10 +78,11 @@ export class SVGBorderControlModel extends ViewModel {
   confirm () {
     if (!this.target) return;
     const { borderColorInput, borderWidthInput, borderStyleSelector } = this.ui;
-    // style: borderStyleSelector.selection
     this.target.css({
       stroke: borderColorInput.colorValue,
-      'stroke-width': borderWidthInput.number
+      'stroke-width': borderWidthInput.number,
+      'stroke-dasharray': borderStyleSelector.selection,
+      'stroke-linecap': 'round'
     });
   }
 }
@@ -214,9 +188,20 @@ const SVGBorderControl = component(PropertySection, {
               name: 'value',
               extent: pt(45.7, 21)
             }]
-          }]
-        }
-      ]
+          },
+          {
+            name: 'border style selector',
+            viewModel: {
+              items: [
+                { string: 'Solid', value: '0', isListItem: true },
+                { string: 'Dotted', value: '0, 10', isListItem: true },
+                { string: 'Dashed', value: '5, 10', isListItem: true }],
+              selection: '0'
+            }
+
+          }
+          ]
+        }]
     }))
   ]
 });
