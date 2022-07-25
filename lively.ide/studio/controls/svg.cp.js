@@ -129,7 +129,6 @@ const SVGFillControl = component(PropertySection, {
     add(part(ColorInput, {
       name: 'fill color input',
       viewModel: {
-        gradientEnabled: true,
         colorPickerComponent: DarkColorPicker
       },
       extent: pt(250, 27)
