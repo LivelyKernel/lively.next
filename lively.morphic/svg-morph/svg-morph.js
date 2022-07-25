@@ -90,7 +90,6 @@ export class SVGMorph extends Morph {
       }
       this.removeAllControlPoints();
       this.target.selected = false;
-      // delete this.target;
     }
   }
 
@@ -117,7 +116,7 @@ export class SVGMorph extends Morph {
     this.target = target;
     this.target.selected = true;
     this.removeAllControlPoints();
-    this.createSelectionBoxandPointsFor(target);
+    this.createSelectionBoxAndPointsFor(target);
   }
 
   createSVGSelectionBox () {
@@ -140,7 +139,7 @@ export class SVGMorph extends Morph {
     bbox_node.back();
   }
 
-  createSelectionBoxandPointsFor (target) {
+  createSelectionBoxAndPointsFor (target) {
     this.removePathSelection();
     let t = SVG(this.svgPath);
     const tar = SVG(target);
@@ -227,10 +226,8 @@ export class SVGMorph extends Morph {
   onDrag (evt) {
     if (this._controlPointDrag || this._pathDrag) {
       const point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
-
       if (this._controlPointDrag) this.controlPointDrag(point);
       else this.pathDrag(point);
-
       this.createSVGSelectionBox();
     } else {
       super.onDrag(evt);
