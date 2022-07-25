@@ -129,10 +129,12 @@ export class SVGMorph extends Morph {
     if (wasSelected) return;
     this.target = target;
     this.target.selected = true;
+  }
+  createSelectionBoxandPointsFor (target) {
+    this.removePathSelection();
+    let t = SVG(this.svgPath);
     const tar = SVG(target);
     let selection_node;
-    this.removePathSelection();
-    this.removeAllControlPoints();
     switch (tar.type) {
       case 'path':
         selection_node = SVG(target.outerHTML);
@@ -197,19 +199,28 @@ export class SVGMorph extends Morph {
 
   onDragStart (evt) {
     const { domEvt: { target } } = evt;
-    const cssClass = new PropertyPath('attributes.class.value').get(target);
-    if (cssClass && cssClass.includes('control-point')) {
-      this._controlPointDrag = { targetPoint: target };
-    } else if (target.instance.type === 'path') {
-      this._pathDrag = { targetPath: target };
+
+    if (this.editMode) {
+      const cssClass = new PropertyPath('attributes.class.value').get(target);
+      if (cssClass && cssClass.includes('control-point')) {
+        this._controlPointDrag = { targetPoint: target };
+      } else if (target.instance && target.instance.type === 'path') {
+        this._pathDrag = { targetPath: target };
+      } else {
+        this.removeAllControlPoints();
+        this.removePathSelection();
+        this.target.selected = false;
+      }
     }
   }
 
   onDrag (evt) {
-    if (this._controlPointDrag) {
-      this.controlPointDrag(evt);
-    } else if (this._pathDrag) {
-      this.pathDrag(evt);
+    if (this._controlPointDrag || this._pathDrag) {
+      if (this._controlPointDrag) this.controlPointDrag(evt);
+
+      else this.pathDrag(evt);
+
+      this.createSVGSelectionBox();
     } else {
       super.onDrag(evt);
     }
@@ -225,10 +236,11 @@ export class SVGMorph extends Morph {
   }
 
   pathDrag (evt) {
-    console.log('yay!');
     let targetPath = this.pathDrag.targetPath;
     const point = this.convertPointToCTMOf(this.target, evt.state.dragDelta.x, evt.state.dragDelta.y);
     SVG(this.target).dmove(point.x, point.y);
+
+    this.createSelectionBoxandPointsFor(this.target);
   }
 
   controlPointDrag (evt) {
