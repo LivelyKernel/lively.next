@@ -259,7 +259,7 @@ export class SVGMorph extends Morph {
   pathDrag (moveDelta) {
     SVG(this.target).dmove(moveDelta.x, moveDelta.y);
 
-    this.createSelectionBoxandPointsFor(this.target);
+    this.createSelectionBoxAndPointsFor(this.target);
   }
 
   controlPointDrag (moveDelta) {
