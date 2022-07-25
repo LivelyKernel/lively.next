@@ -78,17 +78,13 @@ export class SVGMorph extends Morph {
   }
 
   initialize () {
+    connect($world, 'showHaloFor', this, 'removeAllSelections');
     this.setSVGPath();
-    connect($world, 'showHaloFor', this, 'deactivateEditMode');
   }
 
   abandon (remvoe) {
     super.abandon();
-    disconnect($world, 'showHaloFor', this, 'deactivateEditMode');
-  }
-
-  deactivateEditMode () {
-    if (this.editMode) this.toggleEditMode();
+    disconnect($world, 'showHaloFor', this, 'removeAllSelections');
   }
 
   toggleEditMode () {
@@ -96,18 +92,14 @@ export class SVGMorph extends Morph {
     if (this.editMode) {
       this.createSVGSelectionBox();
     } else {
-      this.removeSVGSelection();
-      if (this.target && this.target.selected) {
-        this.removePathSelection();
-      }
-      this.removeAllControlPoints();
-      this.target.selected = false;
+      this.removeAllSelections();
+      if (this.target) this.target.selected = false;
     }
   }
 
   removeSVGSelection () {
     const t = SVG(this.svgPath);
-    if (t.findOne('rect.my-svg-selection'))t.findOne('rect.my-svg-selection').remove();
+    if (t.findOne('rect.my-svg-selection')) t.findOne('rect.my-svg-selection').remove();
   }
 
   removePathSelection () {
@@ -120,7 +112,6 @@ export class SVGMorph extends Morph {
 
   selectElement (target) {
     if (target.id.startsWith('control-point') || this._controlPointDrag) return;
-    const t = SVG(this.svgPath);
     let wasSelected = false;
     if (this.target && this.target.id === target.id && this.target.selected) wasSelected = true;
 
@@ -212,7 +203,8 @@ export class SVGMorph extends Morph {
       cy: y,
       r: 5,
       id: 'control-point-' + id,
-      fill: 'yellow'
+      fill: 'yellow',
+      cursor: 'move'
     });
     point.addClass('control-point');
     point.addClass('control-point-' + id);
@@ -384,5 +376,6 @@ export class SVGMorph extends Morph {
   __after_deserialize__ (snapshot, objRef, pool) {
     super.__after_deserialize__(snapshot, objRef, pool);
     this.createDomNode(this.svgPathString);
+    connect($world, 'showHaloFor', this, 'removeAllSelections');
   }
 }
