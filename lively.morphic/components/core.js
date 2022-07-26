@@ -78,7 +78,7 @@ export class ComponentDescriptor {
     let spec = {};
     try {
       spec = generatorFunction();
-      if (!spec.isPolicy) { spec = new StylePolicy(spec); } // make part calls return the a synthesized spec
+      if (!spec.isPolicy) { spec = new PolicyApplicator(spec); } // make part calls return the a synthesized spec
     } finally {
       evaluateAsSpec = false; // always disbable this flag
     }
@@ -116,7 +116,7 @@ export class ComponentDescriptor {
 
   extend (spec) {
     // create an abstract inline policy. For that we need to figure out how that should be encoded exactly
-    return new StylePolicy(spec, this);
+    return new PolicyApplicator(spec, this);
   }
 
   getInlinePolicy (path) {
@@ -638,7 +638,7 @@ export function component (masterComponentOrProps, overriddenProps) {
     // synthesize the masterComponent with the overridden props and do NOT
     // create a custom morph. This is instead deferred.
     if (masterComponentOrProps) {
-      return new StylePolicy(props, masterComponentOrProps);
+      return new PolicyApplicator(props, masterComponentOrProps);
     } else {
       // just return the already unrolled props! (part did properly react to the evaluateAsSpec flag)
       return props;
@@ -725,14 +725,7 @@ export function add (props, before = null) {
  * FIXME: move this into the IDE!
  */
 export function edit (componentDescriptor) {
-  const { parent, spec } = componentDescriptor.stylePolicy;
-  let applicator;
-  if (parent) {
-    applicator = PolicyApplicator.for(parent, spec);
-  } else {
-    applicator = PolicyApplicator.for(componentDescriptor);
-  }
-  return morph(applicator.asBuildSpec((policy) => !(applicator === policy || applicator.parent === policy.parent)));
+  return morph(componentDescriptor.stylePolicy.asBuildSpecSimple());
 }
 
 function insertFontCSS (name, fontUrl) {
