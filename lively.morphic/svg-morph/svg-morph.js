@@ -311,7 +311,7 @@ export class SVGMorph extends Morph {
     let point = new DOMPoint();
     point.x = x;
     point.y = y;
-    point = point.matrixTransform(this.svgPath.getCTM()); // gives transform matrix relative to svg origin
+    point = point.matrixTransform(this.svgPath.getCTM().inverse()); // gives transform matrix relative to svg origin
     point.y = CTM.d < 0 ? -point.y : point.y; // d determines the y direction
 
     return point;
