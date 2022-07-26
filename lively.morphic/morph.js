@@ -1,4 +1,4 @@
-/* global System,Uint8Array,Blob,location */
+/* global System,Uint8Array,Blob */
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from 'lively.graphics';
 import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -79,6 +79,7 @@ export class Morph {
         set (args) {
           if (this.master instanceof ComponentPolicy && this.master.equals(args)) return;
           this.setProperty('master', args ? ComponentPolicy.for(this, args) : (args === false ? false : null));
+          if (args && args.isPolicyApplicator) args.attach(this); // FIXME: remove that
           if (args) this.requestMasterStyling();
         }
       },
