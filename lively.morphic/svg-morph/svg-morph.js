@@ -347,7 +347,7 @@ export class SVGMorph extends Morph {
 
   exportSVG () {
     this.svgPath.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    let svgData = this.svgPath.parentElement.outerHTML;
+    let svgData = this.svgPath.parentElement.innerHTML;
     let preface = '<?xml version="1.0" standalone="no"?>\r\n';
     let svgBlob = new Blob([preface, svgData], { type: 'image/svg+xml;charset=utf-8' });
     let svgUrl = URL.createObjectURL(svgBlob);
