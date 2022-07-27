@@ -351,12 +351,7 @@ export class SVGMorph extends Morph {
     let preface = '<?xml version="1.0" standalone="no"?>\r\n';
     let svgBlob = new Blob([preface, svgData], { type: 'image/svg+xml;charset=utf-8' });
     let svgUrl = URL.createObjectURL(svgBlob);
-    let downloadLink = document.createElement('a');
-    downloadLink.href = svgUrl;
-    downloadLink.download = 'export.svg';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    $world.serveFileAsDownload(svgBlob, { fileName: 'export-' + this.name, type: 'svg+xml' });
   }
 
   menuItems () {
