@@ -216,7 +216,13 @@ export class StylePolicy {
    * it is retrievable via this property.
    * @type { StylePolicy | undefined }
    */
-  get overriddenMaster () { return this.spec.master !== this && this.spec.master; }
+  get overriddenMaster () {
+    const overridden = this.spec.master !== this && this.spec.master;
+    if (overridden?.isComponentDescriptor) {
+      return overridden.stylePolicy;
+    }
+    return overridden;
+  }
 
   /**
    * Usually, we declare inline policies by calling part() within our component() definition.
@@ -231,6 +237,12 @@ export class StylePolicy {
    */
   ensureStylePoliciesInSpec (spec) {
     const klass = this.constructor;
+    const overriddenMaster = spec.master?.stylePolicy || spec.master;
+    const getLocalMaster = (name) => {
+      const localMaster = overriddenMaster && overriddenMaster.getSubSpecFor(name);
+      if (localMaster && !localMaster.isPolicy && !localMaster.isComponentDescriptor) return false;
+      return localMaster;
+    };
     // scan this.spec and detect overridden/set master components
     // or further refined inline policies
     if (!this.parent || !this.inheritStructure) {
@@ -248,11 +260,10 @@ export class StylePolicy {
         // weird way of processing the commands of the parent spec
         if (node.COMMAND === 'add') node = node.props;
         if (node.COMMAND === 'remove') return null;
-        // FIXME: We possibly create a bunch of intermediate policies that we end up replacing. Maybe instead of replacing, just extend?
-        //        Or just return the previous policy here, and defer creation of the inline policy to later!
-        //        WRONG: This only makes us replace the policies that are covered by the local spec def
-        //               It then skips replacing all the other missing ones...
-        if (node.isPolicy) return new klass({}, node); // create new empty policy, which in turn handles the futher traversal internally
+
+        let localMaster = getLocalMaster(node.name || node.spec?.name);
+        if (node.isPolicy) return new klass(localMaster ? { master: localMaster } : {}, node); // create new empty policy, which in turn handles the futher traversal internally
+        // how to handle localMaster in case node is not a policy?
         node = obj.dissoc(node, ['master', 'submorphs', ...getStylePropertiesFor(node.type)]);
         if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
         return node;
@@ -272,16 +283,14 @@ export class StylePolicy {
         if (localSpec.isPolicy) {
           return;
         } // do not tweak root
-        // FIXME: how can the plain spec contain a policy directly when we have been derived from a parent?
-        //        This does not look like a plausible scenario.
-        if (localSpec.master && parentSpec.isPolicy) {
-          // return collapsed inline policy
-          // return replace(localSpec, parentSpec.master.collapse(localSpec.master));
-          // rms 13.7.22 OK to get rid of the descritptors here, since we are "inside" of a def which is reevaluated on change anyways.
-          const localMaster = localSpec.master.isComponentDescriptor ? localSpec.master.stylePolicy : localSpec.master;
+
+        let localMaster = localSpec.master || getLocalMaster(parentSpec.name);
+        if (localMaster && parentSpec.isPolicy) {
+          // rms 13.7.22 OK to get rid of the descriptor here, since we are "inside" of a def which is reevaluated on change anyways.
+          localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec.parent));
         }
-        if (localSpec.master) {
+        if (localMaster) {
           // return "fresh" inline policy, no overridden props present, except for the local ones!
           // FIXME: This is different to when we overriden a previously derived morph's master property.
           //        In that scenario we keep the derivation chain, and then inject the custom props of the new StylePolicy
@@ -291,7 +300,7 @@ export class StylePolicy {
           //           1. We have a derivation chain but we also want to patch that derivation chain with a
           // introduce inline policy
           const specName = parentSpec.name;
-          const localMaster = localSpec.master.isComponentDescriptor ? localSpec.master.stylePolicy : localSpec.master;
+          localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // enusre the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(specName)));
         }
         if (parentSpec.isPolicy) {
@@ -321,6 +330,7 @@ export class StylePolicy {
 
       // replace the marked entries
       return {
+        ...obj.dissoc(baseSpec, ['master', 'submorphs', ...getStylePropertiesFor(baseSpec.type)]),
         ...spec,
         submorphs: tree.mapTree(baseSpec, (node, submorphs) => {
           if (toBeReplaced.has(node)) return toBeReplaced.get(node);
@@ -345,10 +355,15 @@ export class StylePolicy {
    * Creates a new morph from the fully synthesized spec.
    * @returns { Morph } The new morph based off the sully synthesized spec.
    */
-  instantiate () {
+  instantiate (props = {}) {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    return morph(PolicyApplicator.for(this).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
+    const inst = morph(PolicyApplicator.for(this, props).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
+    // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
+    inst.withAllSubmorphsDo(m => {
+      if (m.viewModel) m.viewModel.attach(m);
+    });
+    return inst;
   }
 
   asBuildSpecSimple () {
@@ -359,12 +374,13 @@ export class StylePolicy {
       }
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
       if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpecSimple();
-      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', ...getStylePropertiesFor(specOrPolicy.type)]);
+      const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
+      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', ...getStylePropertiesFor(specOrPolicy.type)]);
       if (submorphs.length > 0) specOrPolicy.submorphs = arr.compact(submorphs);
+      if (modelClass) specOrPolicy.viewModel = new modelClass(specOrPolicy.viewModel || {});
       return specOrPolicy;
     }, node => node.submorphs);
-    if (this.parent) buildSpec.master = this;
-    if (this.overriddenMaster) buildSpec.master = this; // this is not the right way to do this
+    if (this.parent || this.overriddenMaster) buildSpec.master = this;
     return buildSpec;
   }
 
@@ -569,11 +585,19 @@ export class StylePolicy {
    */
   synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
     if (!checkNext(this)) return {};
+    const klass = this.constructor;
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
 
-    if (subSpec.isPolicy || !qualifyingMaster) return subSpec;
+    if (!qualifyingMaster) return subSpec;
+    if (subSpec.isPolicy) {
+      // if (this.overriddenMaster) {
+      //   const alternativeSubSpec = this.overriddenMaster.getSubSpecFor(submorphNameInPolicyContext);
+      //   if (alternativeSubSpec.isPolicy) return new klass({ ...subSpec.spec, master: alternativeSubSpec }, subSpec.parent);
+      // }
+      return subSpec; // this prevents any ability for the overriddenMaster to have an effect here
+    }
 
     let nextLevelSpec = {};
     if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
@@ -590,13 +614,14 @@ export class StylePolicy {
     // always check the sub spec for the parentInScope, not the current one!
     if (this.overriddenMaster) {
       let topLevelComponent = qualifyingMaster;
+      const overriddenSynthesizedSpec = this.overriddenMaster.synthesizeSubSpec(null, parentOfScope);
       while (topLevelComponent.parent) topLevelComponent = topLevelComponent.parent;
       Object.assign(
         synthesized,
         // fill in the top level props just in case they are needed (propably mostly overridden)
         topLevelComponent.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope),
         // add in the style props for the adjusted master
-        this.overriddenMaster.synthesizeSubSpec(null, parentOfScope),
+        overriddenSynthesizedSpec, // what if this is a policy??
         // adhere to the overridden props of the structural derivation
         qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, (next) => next !== topLevelComponent),
         subSpec
@@ -627,8 +652,11 @@ export class StylePolicy {
   }
 
   managesMorph (aMorph) {
-    return aMorph === this.targetMorph || !!this.getSubSpecFor(aMorph.name);
+    return false; // to keep out of existing logic
+    // return aMorph === this.targetMorph || !!this.getSubSpecFor(aMorph.name);
   }
+
+  propsToSerializeForMorph (m, candidateProps) { return candidateProps; }
 
   /**
    * Check wether or not a particular morph is actively positioned by a comprising layout.
@@ -822,7 +850,7 @@ export class PolicyApplicator extends StylePolicy {
     if (change.meta.metaInteraction || !this.targetMorph) return;
     let subSpec = this.ensureSubSpecFor(changedMorph);
     if (change.value === this) return;
-    if (change.prop) { subSpec[change.prop] = change.value; }
+    if (getStylePropertiesFor(changedMorph.constructor).includes(change.prop)) { subSpec[change.prop] = change.value; }
   }
 
   /**

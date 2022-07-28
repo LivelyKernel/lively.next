@@ -123,7 +123,7 @@ export class ComponentDescriptor {
 
   }
 
-  derive () {
+  derive (props, asComponentProxy = false) {
     let m;
     if (this._snap) {
       // this should be both be able to serve an initial component and an initial part....
@@ -134,26 +134,26 @@ export class ComponentDescriptor {
       this.viewModelClass = m.viewModelClass; // can this be done better??
       this._snap = m._snap;
     } else if (this.stylePolicy) {
-      m = this.stylePolicy.instantiate(); // this does not return something with master policies!
+      return this.stylePolicy.instantiate(props);
     }
+    if (asComponentProxy) return m;
+    m.master = this;
+    m.withAllSubmorphsDo(m => delete m._parametrizedProps);
     return m;
   }
 
   getComponent () {
     let c = this._cachedComponent;
     return c || (
-      c = this.derive(),
+      c = this.derive({}, true),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       this._cachedComponent = c
     );
   }
 
-  getInstance () {
+  getInstance (props) {
     if (!this._cachedComponent) this.getComponent(); // always create component first
-    let inst = this.derive();
-    inst.master = this;
-    inst.withAllSubmorphsDo(m => delete m._parametrizedProps);
-    return inst;
+    return this.derive(props);
   }
 
   async edit () {
@@ -576,8 +576,10 @@ export function part (componentDescriptor, overriddenProps = {}) {
   // FIXME: maybe handle these 2 cases entirely via Applicators
   if (componentDescriptor.isComponentDescriptor) {
     p = componentDescriptor.getInstance(overriddenProps);
+    if (componentDescriptor.stylePolicy) return p; // to prevent the vanilla stuff from breaking
   } else if (componentDescriptor.isPolicy) {
     p = componentDescriptor.instantiate(overriddenProps);
+    return p;
   } else {
     // snapshot dance... this should be moved into ComponentDescriptor.derive()
     p = deserializeMorph(componentDescriptor._snap, { reinitializeIds: true, migrations: [] });
