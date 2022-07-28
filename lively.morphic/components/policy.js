@@ -224,6 +224,37 @@ export class StylePolicy {
     return overridden;
   }
 
+  __serialize__ (pool) {
+    const meta = this[Symbol.for('lively-module-meta')];
+    if (!meta) return;
+    return pool.expressionSerializer.exprStringEncode({
+      __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt(${meta.path.map(name => JSON.stringify(name)).join(',')})` : '.stylePolicy'),
+      bindings: { [meta.moduleId]: meta.exportedName }
+    });
+  }
+
+  /**
+   * Add meta info about module and retrieval to policy and its sub policies.
+   * @param { object } metaInfo
+   * @param { string } metaInfo.exportedName - The exported variable name the root policy.
+   * @param { string } metaInfo.moduleId - The module id where this policy was declared in.
+   * @param { string[] } metaInfo.path - If we are a sub style policy, this contains the names of the policy's parents. This info is important for expression generation and serialization.
+   */
+  // FIXME: add IDE subclass that is covers more advanced meta info support such as source mapping sourceLocation = false, exprString = false,
+  addMetaInfo ({ exportedName, moduleId, path = [] }, spec = this) {
+    if (spec.isPolicy) {
+      spec[Symbol.for('lively-module-meta')] = {
+        exportedName, moduleId, path
+      };
+      spec = spec.spec;
+    }
+    for (let subSpec of spec.submorphs || []) {
+      if (subSpec.COMMAND === 'add') subSpec = subSpec.props;
+      if (subSpec.isPolicy) path = [...path, subSpec.spec?.name]; // only scopes matter
+      this.addMetaInfo({ exportedName, moduleId, path }, subSpec);
+    }
+  }
+
   /**
    * Usually, we declare inline policies by calling part() within our component() definition.
    * However inline policies can also be declared "implicitly".
@@ -649,6 +680,16 @@ export class StylePolicy {
       return node.name === submorphName;
     }, node => node.submorphs);
     return matchingNode ? matchingNode.props || matchingNode : null;
+  }
+
+  /**
+   * Analogous to getSubSecFor but is able to traverse multiple policy scopes
+   * by providing the owner policy names that precede the sub spec name.
+   */
+  getSubSpecAt (...path) {
+    let curr = this.getSubSpecFor(path.shift());
+    if (curr && path.length > 0) return curr.getSubSpecAt(path);
+    return curr;
   }
 
   managesMorph (aMorph) {
