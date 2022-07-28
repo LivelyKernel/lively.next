@@ -96,15 +96,17 @@ export class ComponentDescriptor {
 
   get isComponentDescriptor () { return true; }
 
-  init (generatorFunctionOrInlinePolicy, meta) {
+  init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
     delete this._snap;
     delete this._cachedComponent;
     if (generatorFunctionOrInlinePolicy.isPolicy) {
       this.stylePolicy = generatorFunctionOrInlinePolicy; // is a inline policy object that can return us a spec object which can be used to create instances and components
+      this.stylePolicy.addMetaInfo(meta); // also add the meta info to this property, so that we can properly serialize policies
     } else {
       this.generatorFunction = generatorFunctionOrInlinePolicy; // returns old fashioned component object
     }
     this[Symbol.for('lively-module-meta')] = meta;
+
     this.notifyDependents(); // get the derived components to notice!
     return this;
   }

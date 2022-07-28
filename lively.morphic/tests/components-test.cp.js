@@ -2,11 +2,13 @@
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree } from 'lively.lang';
-import { serialize } from 'lively.serializer2';
+import { serialize, ExpressionSerializer } from 'lively.serializer2';
 import { ComponentDescriptor, morph } from 'lively.morphic';
 
 import { component, edit, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, PolicyApplicator } from '../components/policy.js';
+
+const moduleId = import.meta.url.replace(System.baseURL, '');
 
 /**
  * Retrieve a sub policy embedded within an inline policy.
@@ -39,8 +41,8 @@ const TLA = ComponentDescriptor.abstract(() => component({
     { name: 'alice', fill: Color.yellow }
   ]
 }), {
-  export: 'TLA',
-  module: import.meta.url
+  exportedName: 'TLA',
+  moduleId
 });
 
 const TLB = ComponentDescriptor.abstract(() => component(TLA, {
@@ -50,8 +52,8 @@ const TLB = ComponentDescriptor.abstract(() => component(TLA, {
     { name: 'alice', master: TLA }
   ]
 }), {
-  export: 'TLB',
-  module: import.meta.url
+  exportedName: 'TLB',
+  moduleId
 });
 
 class TestViewModel extends ViewModel {
@@ -84,7 +86,10 @@ const e1 = ComponentDescriptor.abstract(() => component({
     },
     { name: 'bob', fill: Color.orange, submorphs: [{ name: 'lolly', fill: Color.pink }] }
   ]
-}));
+}), {
+  exportedName: 'e1',
+  moduleId
+});
 
 const e2 = ComponentDescriptor.abstract(() => component(e1, {
   name: 'e2',
@@ -114,7 +119,10 @@ const e2 = ComponentDescriptor.abstract(() => component(e1, {
       borderWidth: 2
     })
   ]
-}));
+}), {
+  exportedName: 'e2',
+  moduleId
+});
 
 const e3 = ComponentDescriptor.abstract(() => component(e2, {
   name: 'e3',
@@ -127,19 +135,22 @@ const e3 = ComponentDescriptor.abstract(() => component(e2, {
       position: pt(45, 45)
     }))
   ]
-}));
+}), {
+  exportedName: 'e3',
+  moduleId
+});
 
 const d1 = ComponentDescriptor.abstract(() => component({ name: 'd1', fill: Color.purple }), {
-  export: 'd1',
-  module: import.meta.url
+  exportedName: 'd1',
+  moduleId
 });
 const d2 = ComponentDescriptor.abstract(() => component({ name: 'd2', fill: Color.black }));
 const c1 = ComponentDescriptor.abstract(() => component({
   name: 'c1',
   fill: Color.red
 }), {
-  export: 'c1',
-  module: import.meta.url
+  exportedName: 'c1',
+  moduleId
 });
 
 const c2 = ComponentDescriptor.abstract(() => component({
@@ -152,8 +163,8 @@ const c2 = ComponentDescriptor.abstract(() => component({
     submorphs: [add(part(d1, { name: 'bob' }))]
   })]
 }), {
-  export: 'c2',
-  module: import.meta.url
+  exportedName: 'c2',
+  moduleId
 });
 
 const d3 = ComponentDescriptor.abstract(() => component(c2, {
@@ -730,7 +741,7 @@ describe('components', () => {
   it('serializes inline properties to symbolic expressions', () => {
     const inst = part(TLB);
     const snap = serialize(inst);
-    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props.auto.value).to.include('(TLB.isComponentDescriptor ? TLB.getComponent() : TLB).get("alice").master');
+    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props.parent.value).to.include('TLB.stylePolicy.getSubSpecAt("alice")');
   });
 
   it('does not accidentally create overridden masters when serializing', () => {
