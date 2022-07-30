@@ -206,7 +206,7 @@ export class SVGMorph extends Morph {
               const prevY = prevElement[prevElement.length - 1];
               bezierLine = this.createBezierLine(i, j, prevX, prevY, x1, y1);
             } else {
-              bezierLine = this.createBezierLine(i, j, x, y, x1, y, i);
+              bezierLine = this.createBezierLine(i, j, x1, y1, x, y, i);
             }
             tar.after(bezierLine);
             bezierLine.front();
@@ -226,7 +226,7 @@ export class SVGMorph extends Morph {
 
     const line = t.line(startX, startY, endX, endY);
     line.id = 'bezier-line-' + id + '-' + number;
-    line.stroke({ color: 'grey', width: 2, linecap: 'round' });
+    line.stroke({ color: number == 0 ? 'grey' : 'black', width: 2, linecap: 'round' });
     line.addClass('bezier-line');
     line.addClass('bezier-line-' + id + '-' + number);
     line.attr({
