@@ -73,6 +73,9 @@ export class SVGMorph extends Morph {
       },
       draggable: {
         defaultValue: true
+      },
+      showBezierPoints: {
+        defaultValue: true
       }
     };
   }
@@ -176,6 +179,7 @@ export class SVGMorph extends Morph {
 
   getControlPoints () {
     this.removeAllControlPoints();
+    this.removeAllBezierLines();
 
     const tar = SVG(this.target);
     $world.svgSelect(tar);
@@ -190,20 +194,74 @@ export class SVGMorph extends Morph {
         let controlPoint = this.createControlPointAt(i, x, y);
         tar.after(controlPoint);
         controlPoint.front();
+        if (element[0] === 'C' && this.showBezierPoints) {
+          for (let j = 0; j < 2; j++) {
+            const x1 = element[1 + (2 * j)];
+            const y1 = element[2 + (2 * j)];
+
+            let bezierLine;
+            if (j == 0) {
+              let prevElement = targetPath[i - 1]; // first in array will never be 'C'
+              const prevX = prevElement[prevElement.length - 2];
+              const prevY = prevElement[prevElement.length - 1];
+              bezierLine = this.createBezierLine(i, j, prevX, prevY, x1, y1);
+            } else {
+              bezierLine = this.createBezierLine(i, j, x, y, x1, y, i);
+            }
+            tar.after(bezierLine);
+            bezierLine.front();
+
+            let bezierPoint = this.createBezierPointAt(i, j, x1, y1);
+            bezierPoint.addClass('bezier-point'); // TODO: find better idea instead of adding this class too
+            tar.after(bezierPoint);
+            bezierPoint.front();
+          }
+        }
       }
     }
   }
 
+  createBezierLine (id, number, startX, startY, endX, endY) {
+    const t = SVG(this.svgPath);
+
+    const line = t.line(startX, startY, endX, endY);
+    line.id = 'bezier-line-' + id + '-' + number;
+    line.stroke({ color: 'grey', width: 2, linecap: 'round' });
+    line.addClass('bezier-line');
+    line.addClass('bezier-line-' + id + '-' + number);
+    line.attr({
+      'pointer-events': 'none'
+    });
+    line.startPath = id;
+    line.nmbBezier = number;
+
+    return line;
+  }
+
+  createBezierPointAt (id, number, x, y) {
+    const idString = 'bezier-point-' + id + '-' + number;
+    let point = this.createPointAt(idString, 'control-point', x, y, 'red');
+    point.isBezierPoint = true;
+    return point;
+  }
+
   createControlPointAt (id, x, y) {
+    const idString = 'control-point-' + id;
+    let point = this.createPointAt(idString, 'control-point', x, y, 'yellow');
+    point.isControlPoint = true;
+    return point;
+  }
+
+  createPointAt (idString, pointClass, x, y, color) {
     const t = SVG(this.svgPath);
     let point = t.circle();
 
     point.attr({
       cx: x,
       cy: y,
-      r: 5,
-      id: 'control-point-' + id,
-      fill: 'yellow',
+      r: 3,
+      id: idString,
+      fill: color,
       cursor: 'move'
     });
     point.addClass('control-point');
@@ -275,29 +333,91 @@ export class SVGMorph extends Morph {
 
   changeSVGToControlPoint (controlPoint, moveDelta) {
     const cssClass = new PropertyPath('attributes.class.value').get(controlPoint);
-    if (cssClass && cssClass.includes('control-point')) {
-      const [_, n, ctrlN] = cssClass.match(/control-point-([0-9]+)(?:-control-([0-9]+))?$/);
-      if (SVG(this.target).type === 'path') {
-        const selectedPath = SVG(this.target);
-        let selectedPoint = selectedPath.array()[n];
-        selectedPath.array()[n][selectedPoint.length - 2] += moveDelta.x;
-        selectedPath.array()[n][selectedPoint.length - 1] += moveDelta.y;
-        this.target.setAttribute('d', selectedPath.array().copyWithin());
-        let bbox = SVG(this.svgPath).findOne('rect.my-path-selection');
-        bbox.attr({
-          x: selectedPath.bbox().x,
-          y: selectedPath.bbox().y,
-          width: selectedPath.bbox().width,
-          height: selectedPath.bbox().height
-        });
+    const selectedPath = SVG(this.target);
+    let selectedPoint;
+    let _, n, ctrlN;
+
+    if (this.isBezierPoint(controlPoint)) {
+      [_, n, ctrlN] = cssClass.match(/bezier-point-([0-9]+)-([0-9]+)/);
+
+      selectedPoint = selectedPath.array()[n];
+      selectedPoint[1 + (2 * ctrlN)] += moveDelta.x;
+      selectedPoint[2 + (2 * ctrlN)] += moveDelta.y;
+      this.target.setAttribute('d', selectedPath.array().copyWithin());
+      this.updatePathBBox(selectedPath);
+    } else if (cssClass && cssClass.includes('control-point')) {
+      [_, n, ctrlN] = cssClass.match(/control-point-([0-9]+)(?:-control-([0-9]+))?$/);
+
+      selectedPoint = selectedPath.array()[n];
+      selectedPath.array()[n][selectedPoint.length - 2] += moveDelta.x;
+      selectedPath.array()[n][selectedPoint.length - 1] += moveDelta.y;
+      this.target.setAttribute('d', selectedPath.array().copyWithin());
+      this.updatePathBBox(selectedPath);
+    }
+    n = parseInt(n);
+    ctrlN = parseInt(ctrlN);
+    if (this.isControlPointWithBezierLine(selectedPath, n)) {
+      this.updateBezierLine(controlPoint, n, ctrlN, moveDelta);
+    }
+  }
+
+  isBezierPoint (controlPoint) {
+    return controlPoint.id.startsWith('bezier-point');
+  }
+
+  updateBezierLine (controlPoint, id, number, moveDelta) {
+    const selectedPath = SVG(this.target).array();
+    let startPoints = [];
+    if (this.isBezierPoint(controlPoint)) {
+      if (number === 0) {
+        startPoints = [{ id: id, index: selectedPath[id - 1].length - 2, number: 0, moveStart: false }];
+      } else {
+        startPoints = [{ id: id, index: 3, number: 1, moveStart: true }];
+      }
+    } else {
+      startPoints = [{ id: id, index: selectedPath[id].length - 2, number: 0, moveStart: true }];
+      if (selectedPath[id][0] === 'C') startPoints.push({ id: id, index: 2, number: 1, moveStart: false });
+    }
+    const t = SVG(this.svgPath);
+    for (let i = 0; i < startPoints.length; i++) {
+      // debugger;
+      let line = t.findOne('line.bezier-line-' + startPoints[i].id + '-' + startPoints[i].number);
+      const lineArray = line.array();
+      if (startPoints[i].moveStart) {
+        line.plot(lineArray[0][0] + moveDelta.x, lineArray[0][1] + moveDelta.y, lineArray[1][0], lineArray[1][1]);
+      } else {
+        line.plot(lineArray[0][0], lineArray[0][1], lineArray[1][0] + moveDelta.x, lineArray[1][1] + moveDelta.y);
       }
     }
+  }
+
+  isControlPointWithBezierLine (selectedPath, n) {
+    const selectedPoint = selectedPath.array()[n];
+    const nextPoint = selectedPath.array()[n + 1];
+    return this.showBezierPoints && (selectedPoint[0] == 'C' || (nextPoint && nextPoint[0] == 'C'));
+  }
+
+  updatePathBBox (selectedPath) {
+    let bbox = SVG(this.svgPath).findOne('rect.my-path-selection');
+    bbox.attr({
+      x: selectedPath.bbox().x,
+      y: selectedPath.bbox().y,
+      width: selectedPath.bbox().width,
+      height: selectedPath.bbox().height
+    });
   }
 
   removeAllControlPoints () {
     let oldControlPoints = document.getElementsByClassName('control-point');
     while (oldControlPoints.length > 0) {
       oldControlPoints[0].remove();
+    }
+  }
+
+  removeAllBezierLines () {
+    let oldBezierLines = document.getElementsByClassName('bezier-line');
+    while (oldBezierLines.length > 0) {
+      oldBezierLines[0].remove();
     }
   }
 
