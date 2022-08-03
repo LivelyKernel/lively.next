@@ -363,10 +363,11 @@ export class SVGMorph extends Morph {
         startPoints = [{ id: id, index: 3, number: 1, moveStart: true }];
       }
     } else {
-      startPoints = [{ id: id + 1, index: selectedPath[id].length - 2, number: 0, moveStart: true }];
+      if (selectedPath[id + 1][0] === 'C')startPoints = [{ id: id + 1, index: selectedPath[id].length - 2, number: 0, moveStart: true }];
       if (selectedPath[id][0] === 'C') startPoints.push({ id: id, index: 2, number: 1, moveStart: false });
     }
     const t = SVG(this.svgPath);
+
     for (let i = 0; i < startPoints.length; i++) {
       let line = t.findOne('line.bezier-line-' + startPoints[i].id + '-' + startPoints[i].number);
       const lineArray = line.array();
