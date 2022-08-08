@@ -1773,8 +1773,7 @@ export class Morph {
     if (!world) return this;
     if (this.master) {
       this.opacity = 0;
-      this.master.whenApplied().then(async () => {
-        await this.whenRendered();
+      this.master.whenApplied().then(() => {
         this.opacity = 1;
       });
     }
