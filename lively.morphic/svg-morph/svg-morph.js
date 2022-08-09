@@ -480,8 +480,9 @@ export class SVGMorph extends Morph {
 
   initializeSVGPath (svgPath) {
     this.svgPath = svgPath;
-    const ratio = parseFloat(svgPath.getAttribute('width')) / parseFloat(svgPath.getAttribute('height'));
+    let ratio = parseFloat(svgPath.getAttribute('width')) / parseFloat(svgPath.getAttribute('height'));
     SVG(svgPath).mousedown((evt) => { if (this.editMode) this.selectElement(evt.target); });
+    if (!ratio) ratio = 1.25; // default svg width is 10 and height is 8
     this.width = this.height * ratio;
   }
 
