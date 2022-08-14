@@ -98,7 +98,7 @@ export class SVGMorph extends Morph {
     this.target.selected = true;
     this.removeAllControlPoints();
     this.removeAllBezierLines();
-    this.createSelectionBoxAndPointsFor(target);
+    this.createSelectionFor(target);
   }
 
   createSVGSelectionBox () {
@@ -121,11 +121,8 @@ export class SVGMorph extends Morph {
     bbox_node.back();
   }
 
-  createSelectionBoxAndPointsFor (target) {
-    // TODO: abstraction layers of SVG Selection box and Path selection here
-    this.removePathSelection();
-    this.createSVGSelectionBox();
-    let t = SVG(this.svgPath);
+  createElementSelectionBox (target) {
+    const t = SVG(this.svgPath);
     const tar = SVG(target);
     let selection_node;
     switch (tar.type) {
@@ -153,6 +150,14 @@ export class SVGMorph extends Morph {
     selection_node.front();
   }
 
+  createSelectionFor (target) {
+    this.removePathSelection();
+    this.createSVGSelectionBox();
+    const tar = SVG(target);
+    this.createElementSelectionBox(target);
+    if (tar.type === 'path') this.getControlPoints();
+  }
+
   get isSVGMorph () { return true; }
 
   // ======= Control- and Bezierpoints for SVG paths ===========
@@ -175,7 +180,7 @@ export class SVGMorph extends Morph {
         tar.after(controlPoint);
         controlPoint.front();
         if (element[0] === 'C' && this.showBezierPoints) {
-          for (let j = 0; j < 2; j++) { // TODO: should we use something like: for j in [0,1]
+          for (let j = 0; j < 2; j++) {
             const x1 = element[1 + (2 * j)];
             const y1 = element[2 + (2 * j)];
 
@@ -291,14 +296,14 @@ export class SVGMorph extends Morph {
 
   pathDrag (moveDelta) {
     SVG(this.target).dmove(moveDelta.x, moveDelta.y);
-    this.createSelectionBoxAndPointsFor(this.target);
+    this.createSelectionFor(this.target);
   }
 
   controlPointDrag (moveDelta) {
     let { targetPoint } = this._controlPointDrag;
 
     SVG(targetPoint).dmove(moveDelta.x, moveDelta.y);
-    this.changeSVGToControlPoint(targetPoint, pt(moveDelta.x, moveDelta.y));
+    this.updateSVGafterControlPointDrag(targetPoint, pt(moveDelta.x, moveDelta.y));
   }
 
   convertPointToCTMOf (target, x, y) {
@@ -312,7 +317,7 @@ export class SVGMorph extends Morph {
     return point;
   }
 
-  changeSVGToControlPoint (controlPoint, moveDelta) {
+  updateSVGafterControlPointDrag (controlPoint, moveDelta) {
     const selectedPath = SVG(this.target);
     const selectedPathArray = selectedPath.array();
     let selectedPoint;
@@ -337,7 +342,6 @@ export class SVGMorph extends Morph {
     }
     n = parseInt(n);
     ctrlN = parseInt(ctrlN);
-    // TODO: would like to do that in another method since it is not part of changing the SVG but don't know yet how and where
     if (this.isControlPointWithBezierLine(selectedPath, n)) {
       this.updateBezierLine(controlPoint, n, ctrlN, moveDelta);
     }
@@ -348,7 +352,7 @@ export class SVGMorph extends Morph {
     let startPoints = [];
     if (this.isBezierPoint(controlPoint)) {
       if (number === 0) {
-        startPoints = [{ id: id, index: selectedPath[id - 1].length - 2, number: 0, moveStart: false }]; // TODO: set numer to number?
+        startPoints = [{ id: id, index: selectedPath[id - 1].length - 2, number: 0, moveStart: false }];
       } else {
         startPoints = [{ id: id, index: 3, number: 1, moveStart: true }];
       }
