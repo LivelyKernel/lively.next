@@ -271,8 +271,6 @@ export class TopBarModel extends ViewModel {
     } finally {}
   }
 
-  // this.relayout()
-
   relayout () {
     this.ui.ipadStatusBar.width = this.view.width = this.world().visibleBounds().width;
     this.view.position = pt(0, 0);
@@ -310,15 +308,13 @@ export class TopBarModel extends ViewModel {
   }
 
   reloadSidebar () {
-    this.sideBar.remove();
-    this.sideBar = null;
-    this.stylingPalette.remove();
-    this.stylingPalette = null;
+    this.sceneGraph.remove();
+    this.sceneGraph = null;
+    this.propertiesPanel.remove();
+    this.propertiesPanel = null;
     this.openSideBar('scene graph');
     this.openSideBar('properties panel');
   }
-
-  // this.reloadSidebar()
 
   async openSideBar (name) {
     if (this.activeSideBars.includes(name)) {
@@ -328,27 +324,27 @@ export class TopBarModel extends ViewModel {
     }
 
     if (name === 'scene graph') {
-      if (!this.sideBar) {
-        this.sideBar = part(MorphPanel);
-        this.sideBar.epiMorph = true;
+      if (!this.sceneGraph) {
+        this.sceneGraph = part(MorphPanel);
+        this.sceneGraph.epiMorph = true;
         // this.sideBar.isHaloItem = true;
-        this.sideBar.hasFixedPosition = true;
-        this.sideBar.respondsToVisibleWindow = true;
-        this.sideBar.openInWorld();
-        this.sideBar.right = 0;
-        await this.sideBar.whenRendered();
+        this.sceneGraph.hasFixedPosition = true;
+        this.sceneGraph.respondsToVisibleWindow = true;
+        this.sceneGraph.openInWorld();
+        this.sceneGraph.right = 0;
+        await this.sceneGraph.whenRendered();
       }
-      await this.sideBar.toggle(this.activeSideBars.includes('scene graph'));
+      await this.sceneGraph.toggle(this.activeSideBars.includes('scene graph'));
     }
 
     if (name === 'properties panel') {
-      if (!this.stylingPalette) {
-        this.stylingPalette = part(PropertiesPanel);
-        this.stylingPalette.epiMorph = true;
-        this.stylingPalette.hasFixedPosition = true;
-        this.stylingPalette.respondsToVisibleWindow = true;
+      if (!this.propertiesPanel) {
+        this.propertiesPanel = part(PropertiesPanel);
+        this.propertiesPanel.epiMorph = true;
+        this.propertiesPanel.hasFixedPosition = true;
+        this.propertiesPanel.respondsToVisibleWindow = true;
       }
-      await this.stylingPalette.toggle(this.activeSideBars.includes('properties panel'));
+      await this.propertiesPanel.toggle(this.activeSideBars.includes('properties panel'));
     }
 
     const checker = this.ui.livelyVersionChecker;
@@ -612,7 +608,7 @@ export class TopBarModel extends ViewModel {
                !m.styleClasses.includes('HaloPreview'));
       })[0];
       // when we are hovering a menu item or one of the sidebars, then we do not trigger the halo preview
-      if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.stylingPalette)) {
+      if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.propertiesPanel)) {
         this._currentlyHighlighted = false;
         this.clearHaloPreviews();
         return;

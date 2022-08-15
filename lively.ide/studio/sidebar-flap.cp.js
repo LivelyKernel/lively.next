@@ -32,10 +32,12 @@ export class SidebarFlap extends ViewModel {
     // there is an initial lag which obstructs the animation.
     let sceneGraphPresent = false;
     this.world().withTopBarDo(topBar => {
-      sceneGraphPresent = !!topBar.sideBar;
+      sceneGraphPresent = !!topBar.sceneGraph;
       topBar.openSideBar(this.target);
     });
+
     const targetSidebar = $world.get(this.target);
+    // sidebar gets faded out
     if (sidebarIsFadingOut) {
       this.view.animate({
         left: (this.target === 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
@@ -45,10 +47,11 @@ export class SidebarFlap extends ViewModel {
       if (this.target === 'scene graph') {
         disconnect(targetSidebar, 'extent', this.view, 'left');
       }
+    // sidebar gets faded in
     } else {
       // rms 10.2.22 we have to wait for the property panel to be mounted
       // because it will kill our animation du to the expensive VDOM update in progress.
-      if (this.target !== 'scene graph' || !sceneGraphPresent) await targetSidebar.whenRendered();
+      if (this.target === 'properties panel' || !sceneGraphPresent) await targetSidebar.whenRendered();
       const left = (this.target === 'scene graph') ? targetSidebar.width : $world.visibleBounds().width - targetSidebar.width - this.view.width;
       this.view.animate({
         left,
@@ -104,7 +107,6 @@ export class SidebarFlap extends ViewModel {
 }
 
 // part(Flap, {viewModel: {target: 'properties panel'} }).openInWorld();
-// Flap.openInWorld()
 const Flap = component({
   name: 'flap',
   nativeCursor: 'pointer',
