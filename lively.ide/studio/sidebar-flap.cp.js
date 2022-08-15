@@ -125,13 +125,14 @@ const Flap = component({
   halosEnabled: true,
   epiMorph: true,
   submorphs: [
-    new Label({
+    {
+      type: 'label',
       reactsToPointer: false,
       name: 'label',
       rotation: 1.5708,
       fontColor: '#B2EBF2',
       fontSize: 14
-    })
+    }
   ]
 });
 

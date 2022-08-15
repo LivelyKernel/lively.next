@@ -500,6 +500,7 @@ export class PathIndicator extends Morph {
 }
 
 // b = part(SystemBrowser)
+
 // b.get('column view').width
 // b.openInWindow()
 // b.openInWorld()
