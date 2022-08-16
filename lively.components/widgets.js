@@ -326,7 +326,7 @@ class SliderHandle extends Ellipse {
   }
 }
 
-export class ValueScrubber extends Text {
+export class ValueScrubber extends Label {
   static get properties () {
     return {
       scaleToBounds: {
@@ -403,7 +403,7 @@ export class ValueScrubber extends Text {
     this.scrub(v);
     let valueString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
     if (this.unit) valueString += ' ' + this.unit;
-    this.replace(this.documentRange, valueString, false, this.scaleToBounds, false, false);
+    this.textString = valueString;  
     this.factorLabel.description = scale.toFixed(this.precision) + 'x';
     this.factorLabel.position = evt.hand.position.addXY(10, 10);
     evt.hand.moveBy(pt(-5, -5));
@@ -424,14 +424,12 @@ export class ValueScrubber extends Text {
   }
 
   set value (v) {
-    // FIXME: This is a hack as long as the Text/Label abstraction is broken
-    if (!this.labelMode && !this.document) this.makeInteractive();
     v = Math.max(this.min, Math.min(this.max, v));
     if (!this.isBeingDragged) { this.scrubbedValue = v; }
     let textString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
     if (this.unit) textString += ' ' + this.unit;
     else textString += '';
-    this.replace(this.documentRange, textString, false, true);
+    this.textString = textString;
     this.relayout();
   }
 

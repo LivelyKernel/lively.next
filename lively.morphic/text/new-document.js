@@ -1062,6 +1062,10 @@ export default class Document {
     this.lines = lines;
   }
 
+  get isDocument () {
+    return true;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // tree controls
 
