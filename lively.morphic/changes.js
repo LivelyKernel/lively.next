@@ -174,9 +174,16 @@ export class ChangeManager {
       morph.remove();
       return;
     }
-    if (!obj.equals(change.prevValue,change.value)) {
-      morph.makeDirty(change);
-      morph.renderingState.needsRerender = true;
+
+    // This is a hack since Scrubbers otherwise get caught up in a loop
+    // when trying to compare their document properties
+    // which is circular
+    if ( change.prevValue && change.prevValue.isDocument ||
+      change.value && change.value.isDocument ||
+      !obj.equals(change.prevValue,change.value)
+      ) {
+       morph.makeDirty(change);
+       morph.renderingState.needsRerender = true;
     }
 
     const grouping = arr.last(this.changeGroupStack);
