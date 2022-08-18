@@ -259,7 +259,7 @@ function clone (object) {
  * @param { object } object - The object to extract the properties from.
  * @param { string[] } properties - The list of properties to extract.
  * @param { function } [mapFunc] - Function to map the ectracted properties to custom values.
- * @returns { object } A new object with the extracted properties. 
+ * @returns { object } A new object with the extracted properties.
  */
 function extract (object, properties, mapFunc) {
   const copied = {};
@@ -421,7 +421,7 @@ function deepMerge (objA, objB) {
     return merged;
   }
 
-  if (typeof objA !== 'object' || typeof objB !== 'object') return objB;
+  if (objA.constructor !== Object || objB.constructor !== Object) return objB;
 
   return Object.keys(objA).concat(Object.keys(objB)).reduce(function (merged, name) {
     if (!objA[name]) merged[name] = objB[name];
@@ -696,7 +696,7 @@ const setPrototypeOf = typeof Object.setPrototypeOf === 'function'
 /**
  * Adopts a given object to a new class.
  * @param { object } object - The object to change the class for.
- * @param { function } newClass - The new class we want to configure for the object. 
+ * @param { function } newClass - The new class we want to configure for the object.
  */
 function adoptObject (object, newClass) {
   // change the class of object to newClass
