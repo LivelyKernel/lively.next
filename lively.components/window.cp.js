@@ -154,9 +154,6 @@ const DefaultWindow = component({
             }
           }), part(WindowButtonMenu, {
             name: 'menu',
-            position: pt(48, 0),
-            submorphs: [
-              { name: 'label', position: pt(2, 0) }],
             master: {
               auto: WindowButtonMenu,
               hover: WindowButtonMenuHovered

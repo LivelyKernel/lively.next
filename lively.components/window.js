@@ -38,13 +38,14 @@ export default class Window extends Morph {
       },
 
       master: {
+        before: ['extent'],
         initialize () {
           this.master = { auto: DefaultWindow };
         }
       },
 
       styleClasses: { defaultValue: ['active'] },
-      clipMode: { defaultValue: 'hidden' },
+      clipMode: { defaultValue: 'visible' },
       resizable: { defaultValue: true },
       resizerInset: { readOnly: true, get () { return 10; } },
       resizerOutset: { readOnly: true, get () { return -this.resizerInset * 0.75; } },
