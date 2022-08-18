@@ -107,6 +107,11 @@ export class StatusMessage extends ViewModel {
     if (prop === 'title') { this.updateTitle(); }
   }
 
+  viewDidLoad () {
+    this.updateMessage();
+    this.updateTitle();
+  }
+
   updateTitle () {
     this.ui.messageTitle.textString = this.title;
   }
@@ -215,4 +220,3 @@ export class StatusMessage extends ViewModel {
     text && text.focus();
   }
 }
-
