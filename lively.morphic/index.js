@@ -4,6 +4,7 @@ export * from './world.js';
 export * from './text/morph.js';
 export * from './text/label.js';
 export * from './text/anchors.js';
+export * from './text/range.js';
 export * from './html-morph.js';
 export * from './env.js';
 export * from './layout.js';
