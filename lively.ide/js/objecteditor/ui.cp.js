@@ -3,7 +3,7 @@ import { ObjectEditorModel, ImportControllerModel } from './index.js';
 import { pt, rect, Color } from 'lively.graphics';
 import { GridLayout, TilingLayout, Text, Icon, HorizontalLayout } from 'lively.morphic';
 import { Tree } from 'lively.components';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { DefaultList } from 'lively.components/list.cp.js';
 import { obj } from 'lively.lang';
 
@@ -24,7 +24,7 @@ const ImportController = component({
         align: 'topLeft',
         resize: true
       },
-      importsList: {
+      'imports list': {
         align: 'topLeft',
         resize: true
       }
@@ -55,7 +55,7 @@ const ImportController = component({
     extent: pt(199.1, 29.3),
     fill: Color.rgba(0, 0, 0, 0),
     reactsToPointer: false,
-    submorphs: [part(ButtonDefault, {
+    submorphs: [part(SystemButton, {
       name: 'add import button',
       extent: pt(26, 24),
       submorphs: [{
@@ -63,7 +63,7 @@ const ImportController = component({
         textAndAttributes: Icon.textAttribute('plus')
       }],
       tooltip: 'add new import'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'remove import button',
       extent: pt(26, 24),
       submorphs: [{
@@ -72,7 +72,7 @@ const ImportController = component({
         textAndAttributes: Icon.textAttribute('minus')
       }],
       tooltip: 'remove selected import(s)'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'cleanup button',
       extent: pt(53, 24),
       submorphs: [{
@@ -81,7 +81,7 @@ const ImportController = component({
         textAndAttributes: ['cleanup', null]
       }],
       tooltip: 'remove unused imports'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'open button',
       extent: pt(38, 24),
       submorphs: [{
@@ -118,11 +118,11 @@ const ObjectEditorLight = component({
       ['class and method controls', 'source editor controls', 'import controller']
     ],
     groups: {
-      classAndMethodControls: {
+      'class and method controls': {
         align: 'topLeft',
         resize: true
       },
-      classTree: {
+      'class tree': {
         align: 'topLeft',
         resize: true
       },
@@ -130,19 +130,19 @@ const ObjectEditorLight = component({
         align: 'topLeft',
         resize: true
       },
-      importController: {
+      'import controller': {
         align: 'topLeft',
         resize: true
       },
-      objectCommands: {
+      'object commands': {
         align: 'topLeft',
         resize: true
       },
-      sourceEditor: {
+      'source editor': {
         align: 'topLeft',
         resize: true
       },
-      sourceEditorControls: {
+      'source editor controls': {
         align: 'topLeft',
         resize: true
       }
@@ -195,7 +195,7 @@ const ObjectEditorLight = component({
       position: pt(271.9, 0),
       reactsToPointer: false,
       submorphs: [
-        part(ButtonDefault, {
+        part(SystemButton, {
           name: 'inspect object button',
           extent: pt(28, 24),
           tooltip: 'open object inspector',
@@ -204,7 +204,7 @@ const ObjectEditorLight = component({
             textAndAttributes: Icon.textAttribute('cogs')
           }]
         }),
-        part(ButtonDefault, {
+        part(SystemButton, {
           extent: pt(28, 24),
           name: 'publish button',
           tooltip: 'Freeze this morph',
@@ -213,7 +213,7 @@ const ObjectEditorLight = component({
             textAndAttributes: Icon.textAttribute('cloud-upload-alt')
           }]
         }),
-        part(ButtonDefault, {
+        part(SystemButton, {
           name: 'choose target button',
           extent: pt(26, 24),
           tooltip: 'select another target',
@@ -245,7 +245,7 @@ const ObjectEditorLight = component({
       }),
       position: pt(626, 0),
       reactsToPointer: false,
-      submorphs: [part(ButtonDefault, {
+      submorphs: [part(SystemButton, {
         name: 'show frozen parts button',
         extent: pt(30, 24),
         tooltip: 'show published parts',
@@ -275,7 +275,7 @@ const ObjectEditorLight = component({
       resizeSubmorphs: false,
       spacing: 2
     }),
-    submorphs: [part(ButtonDefault, {
+    submorphs: [part(SystemButton, {
       name: 'add button',
       extent: pt(26, 24),
       submorphs: [{
@@ -283,7 +283,7 @@ const ObjectEditorLight = component({
         textAndAttributes: Icon.textAttribute('plus')
       }],
       tooltip: 'add a new method'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'remove button',
       extent: pt(26, 24),
       submorphs: [{
@@ -291,7 +291,7 @@ const ObjectEditorLight = component({
         textAndAttributes: Icon.textAttribute('minus')
       }],
       tooltip: 'remove a method or class'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'fork package button',
       extent: pt(26, 24),
       submorphs: [{
@@ -299,7 +299,7 @@ const ObjectEditorLight = component({
         textAndAttributes: Icon.textAttribute('code-branch')
       }],
       tooltip: 'fork package'
-    }), part(ButtonDefault, {
+    }), part(SystemButton, {
       name: 'open in browser button',
       extent: pt(26, 24),
       submorphs: [{
@@ -366,15 +366,15 @@ const ObjectEditorLight = component({
       }],
       grid: [[null, 'save button', 'run method button', null, 'toggle imports button']],
       groups: {
-        runMethodButton: {
+        'run method button': {
           align: 'topLeft',
           resize: true
         },
-        saveButton: {
+        'save button': {
           align: 'topLeft',
           resize: true
         },
-        toggleImportsButton: {
+        'toggle imports button': {
           align: 'topLeft',
           resize: true
         }
@@ -386,7 +386,7 @@ const ObjectEditorLight = component({
       }]
     }),
     submorphs: [
-      part(ButtonDefault, {
+      part(SystemButton, {
         name: 'save button',
         extent: pt(29, 23),
         submorphs: [{
@@ -394,7 +394,7 @@ const ObjectEditorLight = component({
           textAndAttributes: Icon.textAttribute('save')
         }],
         tooltip: 'save'
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'run method button',
         extent: pt(28, 23),
         submorphs: [{
@@ -402,7 +402,7 @@ const ObjectEditorLight = component({
           textAndAttributes: Icon.textAttribute('play-circle')
         }],
         tooltip: 'execute selected method'
-      }), part(ButtonDefault, {
+      }), part(SystemButton, {
         name: 'toggle imports button',
         extent: pt(70, 23),
         submorphs: [{
