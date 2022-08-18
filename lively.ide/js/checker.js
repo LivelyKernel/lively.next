@@ -1,3 +1,4 @@
+import { Range } from 'lively.morphic'
 const defaultWarnStyle = { 'border-bottom': '2px dotted orange' };
 const defaultErrorStyle = { 'background-color': 'red' };
 
@@ -10,6 +11,7 @@ export default class JavaScriptChecker {
   }
 
   hasEmbeddedMorphInRange (textMorph, range) {
+    if (!range.isRange) range = new Range(range);
     return [...textMorph.embeddedMorphMap.values()].find(({ anchor }) => {
       return range.containsPosition(anchor.position);
     });
