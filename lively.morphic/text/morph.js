@@ -263,6 +263,10 @@ export class Text extends Morph {
         }
       },
 
+      /*
+      Changing this property is the **only** supported way of doing the up/downgrade.
+      Directly calling e.g., `makeUniteractive` will **not work**.
+      */
       labelMode: {
         group: 'text',
         // isStyleProp: true,
