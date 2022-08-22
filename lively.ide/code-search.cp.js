@@ -37,7 +37,7 @@ const ModeButtonDisabled = component(ModeButtonInactive, {
   reactsToPointer: false
 });
 
-// CodeSearch.openInWorld()
+// part(CodeSearch).openInWorld()
 const CodeSearch = component({
   type: CodeSearcher,
   name: 'code search',
@@ -145,7 +145,13 @@ const CodeSearch = component({
           borderColor: Color.gray,
           viewModel: {
             openListInWorld: true,
-            listMaster: SystemList
+            listMaster: SystemList,
+            items: [
+              'in loaded modules',
+              'in loaded and unloaded modules',
+              'in parts',
+              'in worlds'
+            ]
           },
           submorphs: [{
             name: 'label',
