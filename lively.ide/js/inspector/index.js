@@ -792,43 +792,9 @@ export class Inspector extends ViewModel {
     ).catch(err => $world.logError(err));
   }
 
-  // __after_deserialize__ (snapshot, ref, pool) {
-  //   const t = this._serializableTarget;
-  //   const tree = new PropertyTree({
-  //     name: 'propertyTree',
-  //     ...this.treeStyle,
-  //     treeData: InspectionTree.forObject(null, this)
-  //   });
-  //
-  //   this.addMorph(tree, this.ui.terminalToggler);
-  //
-  //   super.__after_deserialize__(snapshot, ref, pool);
-  //
-  //   !this.isComponent && this.master.whenApplied().then(
-  //     () => {
-  //       this.layout.col(0).row(1).group.morph = tree;
-  //       // if (this.targetObject.isMorph &&
-  //       //     this.targetObject.world() == this.world()) {
-  //       //   this.targetObject = this.targetObject;
-  //       // } else {
-  //       //   tree.value = ['Please select a target!', {
-  //       //     textAlign: 'center',
-  //       //     fontStyle: 'italic'
-  //       //   }];
-  //       // }
-  //       if (this.targetObject) { this.targetObject = this.targetObject; }
-  //     }
-  //   );
-  // }
-
-  // __additionally_serialize__ (snapshot, ref, pool, addFn) {
-  //   // remove tree
-  //   const submorphs = snapshot.props.submorphs.value;
-  //   for (let i = submorphs.length; i--;) {
-  //     const { id } = submorphs[i];
-  //     if (pool.refForId(id).realObj == this.ui.propertyTree) arr.removeAt(submorphs, i);
-  //   }
-  // }
+  viewDidLoad () {
+    this.prepareForNewTargetObject(this.targetObject);
+  }
 
   fixUndeclaredVariables () {
     this.ui.codeEditor.execCommand(
