@@ -68,6 +68,7 @@ const DarkDropDownList = component(DarkButton, {
 // part(SystemInspector).openInWindow()
 // part(DarkDropDownList, { items: [1,2,3], listMaster: DarkList}).openInWorld()
 // part(SystemInspector, { viewModel: { targetObject: this } }).openInWindow()
+// m = part(SystemInspector)
 const SystemInspector = component({
   defaultViewModel: Inspector,
   name: 'system inspector',
@@ -76,6 +77,24 @@ const SystemInspector = component({
   layout: new GridLayout({
     autoAssign: false,
     grid: [['search bar'], ['property tree'], ['resizer'], ['code editor']],
+    groups: {
+      'search bar': {
+        align: 'topLeft',
+        resize: true
+      },
+      'property tree': {
+        align: 'topLeft',
+        resize: true
+      },
+      resizer: {
+        align: 'topLeft',
+        resize: true
+      },
+      'code editor': {
+        align: 'topLeft',
+        resize: true
+      }
+    },
     rows: [0, {
       fixed: 30
     }, 1, {
@@ -92,6 +111,24 @@ const SystemInspector = component({
     layout: new GridLayout({
       autoAssign: false,
       grid: [['search field', 'target picker', 'internals', 'unknowns']],
+      groups: {
+        'search field': {
+          align: 'topLeft',
+          resize: true
+        },
+        'target picker': {
+          align: 'topLeft',
+          resize: true
+        },
+        internals: {
+          align: 'topLeft',
+          resize: true
+        },
+        unknowns: {
+          align: 'topLeft',
+          resize: true
+        }
+      },
       columns: [0, {
         paddingLeft: 5,
         paddingRight: 2,
