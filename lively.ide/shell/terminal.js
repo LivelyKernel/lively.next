@@ -83,6 +83,7 @@ export default class Terminal extends Morph {
               label: 'cwd...',
               extent: pt(60, 20),
               borderRadius: 3,
+              fontSize: 12,
               master: DarkButton,
               padding: Rectangle.inset(4, 2)
             }
@@ -96,8 +97,20 @@ export default class Terminal extends Morph {
           connect(this, 'extent', changeCwdButton, 'topRight', { converter: ext => ext.withY(0).addXY(-5, 5) });
           connect(changeCwdButton, 'fire', this, 'execCommand', { converter: () => '[shell] change working directory' });
 
-          this.layout = new GridLayout({ grid: [['output'], ['input']] });
-          this.layout.row(1).fixed = 25;
+          this.layout = new GridLayout({
+            grid: [['output'], ['input']],
+            rows: [1, { fixed: 25 }],
+            groups: {
+              output: {
+                align: 'topLeft',
+                resize: true
+              },
+              input: {
+                align: 'topLeft',
+                resize: true
+              }
+            }
+          });
         }
       },
 
