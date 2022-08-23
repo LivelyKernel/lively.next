@@ -122,7 +122,6 @@ export class BodyControlModel extends PropertySectionModel {
     const { targetMorph, propConfig } = this;
     const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
-    this.view.master._overriddenProps.get(this.view).layout = true;
     control.refreshItems(this.availableItems);
     if (selectedProp) control.choose(selectedProp);
     else {
