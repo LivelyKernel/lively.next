@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout, component, part } from 'lively.morphic';
+import { ShadowObject, morph, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -411,13 +411,11 @@ export class PathIndicator extends Morph {
       await statusLabel.whenRendered();
       this.master = FileStatusError;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         statusLabel.opacity = statusBox.opacity = 1;
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
       }, { duration });
-      pathContainer.layout.renderViaCSS = true;
     });
   }
 
@@ -429,13 +427,12 @@ export class PathIndicator extends Morph {
       await statusLabel.whenRendered();
       this.master = FileStatusWarning;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
+        console.log(pathContainer.layout.renderViaCSS);
         statusLabel.opacity = statusBox.opacity = 1;
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
       }, { duration });
-      pathContainer.layout.renderViaCSS = true;
     });
   }
 
@@ -447,7 +444,6 @@ export class PathIndicator extends Morph {
       await statusLabel.whenRendered();
       this.master = FileStatusFrozen;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         statusLabel.opacity = statusBox.opacity = 1;
         statusBox.isLayoutable = statusLabel.isLayoutable = true;
@@ -468,7 +464,6 @@ export class PathIndicator extends Morph {
       await statusLabel.whenRendered();
       this.master = FileStatusSaved;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         statusBox.opacity = 0;
         errorControls.isLayoutable = statusBox.isLayoutable = false;
@@ -476,7 +471,6 @@ export class PathIndicator extends Morph {
         statusLabel.opacity = 1;
         this.adjustHeight();
       }, { duration });
-      pathContainer.layout.renderViaCSS = true;
     });
 
     await promise.delay(timeout);
