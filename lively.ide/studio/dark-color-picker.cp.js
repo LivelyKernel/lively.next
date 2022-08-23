@@ -23,7 +23,6 @@ const DarkColorPicker = component(ColorPicker, {
       name: 'color type selector',
       master: EnumSelector,
       viewModel: {
-        listMorph: part(DarkThemeList, { items: [] }),
         listMaster: DarkThemeList,
         listAlign: 'selection'
       }
@@ -43,7 +42,6 @@ const DarkColorPicker = component(ColorPicker, {
           name: 'color code selector',
           master: EnumSelector,
           viewModel: {
-            listMorph: part(DarkThemeList, { items: [] }),
             listMaster: DarkThemeList,
             listHeight: 500,
             listAlign: 'selection'
@@ -126,7 +124,6 @@ const DarkColorPicker = component(ColorPicker, {
       extent: pt(98.2, 25),
       master: EnumSelector,
       viewModel: {
-        listMorph: part(DarkThemeList, { items: [] }),
         listMaster: DarkThemeList,
         listAlign: 'selection'
       }
