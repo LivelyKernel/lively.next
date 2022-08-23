@@ -31,10 +31,16 @@ export class BorderControlModel extends PropertySectionModel {
           return this.getProperty('propertyLabelComponent') || PropertyLabel;
         }
       },
+      propertyLabelClickable: {
+        isComponent: true,
+        get () {
+          return this.getProperty('propertyLabelComponent') || ClickableButton; // eslint-disable-line no-use-before-define
+        }
+      },
       propertyLabelComponentActive: {
         isComponent: true,
         get () {
-          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
+          return this.getProperty('propertyLabelComponentActive') || ClickedButton; // eslint-disable-line no-use-before-define
         }
       },
       propertyLabelComponentHover: {
@@ -108,11 +114,7 @@ export class BorderControlModel extends PropertySectionModel {
     if (prop === 'popup') {
       this.ui.moreButton.master = this.popup
         ? this.propertyLabelComponentActive
-        : {
-            auto: this.propertyLabelComponent,
-            hover: this.propertyLabelComponentHover,
-            click: this.propertyLabelComponentActive
-          };
+        : this.propertyLabelClickable;
     }
   }
 
@@ -358,6 +360,17 @@ export class BorderPopupWindow extends ViewModel {
     signal(this, 'target updated');
   }
 }
+const ClickableButton = component(AddButton, {
+  master: {
+    hover: PropertyLabelHovered,
+    click: PropertyLabelActive
+  },
+  padding: rect(6, 4, 0, 0) // this gets dropped once the master is being swapped
+});
+
+const ClickedButton = component(PropertyLabelActive, {
+  padding: rect(6, 4, 0, 0) // this gets dropped once the master is being swapped
+});
 
 // BorderControlElements.openInWorld()
 const BorderControlElements = component({
@@ -548,16 +561,8 @@ const BorderControl = component(PropertySection, {
             extent: pt(45.7, 21)
           }]
         }]
-      }, add(part(AddButton, {
-        master: {
-          auto: AddButton,
-          hover: PropertyLabelHovered,
-          click: PropertyLabelActive
-        },
-        type: Label,
+      }, add(part(ClickableButton, {
         name: 'more button',
-        fontFamily: 'Material Icons',
-        padding: rect(6, 4, 0, 0),
         textAndAttributes: ['', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
