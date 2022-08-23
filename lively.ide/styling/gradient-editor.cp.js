@@ -47,8 +47,10 @@ const GradientHalo = component({
   }]
 });
 
+// part(GradientControl)
 const GradientControl = component({
-  viewModel: new GradientControlModel({ gradientHalo: part(GradientHalo) }),
+  viewModelClass: GradientControlModel,
+  viewModel: { gradientHalo: part(GradientHalo) },
   name: 'gradient control',
   borderWidth: 0,
   borderColor: Color.rgb(215, 219, 221),
