@@ -430,7 +430,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       name: 'opacity input',
       width: 70
     }]
-  })), add({ name: 'buffer', height: 10, fill: Color.transprent }), add({
+  })), add({ name: 'buffer', height: 10, fill: Color.transparent }), add({
     name: 'footer',
     borderColor: Color.rgbHex('616A6B'),
     borderWidth: 1,
@@ -476,7 +476,7 @@ const NumberWidgetLight = component(DefaultNumberWidget, {
   borderWidth: 1,
   dropShadow: null,
   submorphs: [
-    { name: 'value', fontColor: Color.black, cursorColor: Color.gray },
+    { name: 'value', fontColor: Color.black, cursorColor: Color.gray, fontSize: 14 },
     { name: 'up', visible: false },
     { name: 'down', visible: false }
   ]
@@ -537,12 +537,6 @@ const ShadowPopupLight = component(ShadowPopup, {
   name: 'shadow popup/light',
   master: PopupWindow,
   submorphs: [
-    {
-      name: 'header menu',
-      submorphs: [
-        { name: 'close button', master: CloseButton }
-      ]
-    },
     {
       name: 'shadow controls',
       layout: new TilingLayout({
@@ -608,6 +602,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           borderRadius: 2,
           borderWidth: 1,
           dropShadow: null,
+          fontSize: 14,
           master: InputLineDefault
         },
         {

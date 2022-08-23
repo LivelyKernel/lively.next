@@ -26,7 +26,7 @@ const CloseButtonHovered = component(CloseButtonDefault, { name: 'close button h
 
 const CloseButton = component(CloseButtonDefault, {
   name: 'close button',
-  master: { auto: CloseButtonDefault, hover: CloseButtonHovered }
+  master: { hover: CloseButtonHovered }
 });
 
 const CheckerPattern = component({

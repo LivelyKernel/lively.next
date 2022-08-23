@@ -741,7 +741,7 @@ const SystemBrowser = component({
   }), part(MullerColumnView, {
     viewModel: { defaultTooltips: true },
     name: 'column view',
-    extent: pt(605, 221.1),
+    extent: pt(605, 221),
     borderWidthBottom: 1,
     borderWidthTop: 1,
     borderColor: Color.rgb(112, 123, 124),
@@ -956,7 +956,7 @@ const SystemBrowser = component({
     fixed: ['meta info text'],
     extent: pt(605, 8.7),
     fill: Color.rgba(230, 230, 230, 0),
-    position: pt(-0.6, 271.1)
+    position: pt(0, 271)
   }]
 });
 
