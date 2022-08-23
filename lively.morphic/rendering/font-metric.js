@@ -407,21 +407,29 @@ class DOMTextMeasure {
       (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
         const lineNode = renderLineFn(line);
         const _ = textNode.appendChild(lineNode);
-        const result = (line.stringSize > 10000 &&
+        let result;
+        if (line.stringSize > 10000) {
+          // FIXME: is this method working with new smarttext?
+          result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
+            morph, fontMetric, line, lineNode,
+            offsetX,
+            offsetY,
+            styleOpts, renderTextLayerFn)
+        } else {
+          result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
+          offsetX - textNodeOffsetLeft,
+          offsetY - textNodeOffsetTop); 
+        }
 
-                   // FIXME: is this method working with new smarttext?
-                   charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
-                     morph, fontMetric, line, lineNode,
-                     offsetX,
-                     offsetY,
-                     styleOpts, renderTextLayerFn)) ||
+        const nodeForMorph = $world.env.renderer.getNodeForMorph(morph)
+        if (!nodeForMorph) return result;
 
-                charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
-                  offsetX - textNodeOffsetLeft,
-                  offsetY - textNodeOffsetTop);
-
-        if (!this.debug) { lineNode.parentNode.removeChild(lineNode); }
-
+        const actualTextNode = nodeForMorph.querySelector(`#${morph.id}textLayer`);
+        const dataRowId = lineNode.getAttribute('data-row');
+        const nodeForRenderedLineInActualLayer = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId)
+        if (nodeForRenderedLineInActualLayer) {
+          actualTextNode.replaceChild(lineNode, nodeForRenderedLineInActualLayer);
+        }
         return result;
       });
   }
