@@ -219,7 +219,7 @@ const ShapeControl = component({
     padding: rect(20, 20, 0, 0),
     spacing: 16
   }),
-  fill: Color.rgba(0, 0, 0, 0.6),
+  fill: Color.transparent,
   extent: pt(250, 215.4),
   submorphs: [
     part(NumberInput, {
