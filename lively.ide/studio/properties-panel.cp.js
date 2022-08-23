@@ -278,14 +278,14 @@ const PropertiesPanel = component({
     ]
   }),
   submorphs: [
-    part(BackgroundControl, { name: 'background control', fill: Color.transparent }),
-    part(ShapeControl, { name: 'shape control', fill: Color.transparent, visible: false }),
-    part(RichTextControl, { name: 'text control', fill: Color.transparent, visible: false }),
-    part(LayoutControl, { name: 'layout control', fill: Color.transparent, visible: false }),
-    part(AlignmentControl, { name: 'alignment control', fill: Color.transparent, visible: false }),
-    part(FillControl, { name: 'fill control', fill: Color.transparent, visible: false }),
-    part(BorderControl, { name: 'border control', fill: Color.transparent, visible: false }),
-    part(BodyControl, { name: 'effects control', fill: Color.transparent, visible: false })
+    part(BackgroundControl, { name: 'background control' }),
+    part(ShapeControl, { name: 'shape control', visible: false }),
+    part(RichTextControl, { name: 'text control', visible: false }),
+    part(LayoutControl, { name: 'layout control', visible: false }),
+    part(AlignmentControl, { name: 'alignment control', visible: false }),
+    part(FillControl, { name: 'fill control', visible: false }),
+    part(BorderControl, { name: 'border control', visible: false }),
+    part(BodyControl, { name: 'effects control', visible: false })
   ]
 });
 
