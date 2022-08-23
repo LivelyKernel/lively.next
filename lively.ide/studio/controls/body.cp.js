@@ -23,7 +23,7 @@ export class BodyControlModel extends PropertySectionModel {
       activeSectionComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('activeSectionComponent') || BodyControl; // eslint-disable-line no-use-before-define
+          return this.getProperty('activeSectionComponent') || PropertySection; // eslint-disable-line no-use-before-define
         }
       },
       propConfig: {
