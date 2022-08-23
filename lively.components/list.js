@@ -1875,6 +1875,10 @@ export class DropDownListModel extends ButtonModel {
     }
   }
 
+  viewDidLoad () {
+    this.onRefresh('selection');
+  }
+
   onRefresh (prop) {
     const { listMorph } = this;
     const sel = this.selection;
