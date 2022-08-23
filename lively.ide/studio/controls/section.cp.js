@@ -54,7 +54,7 @@ const PropertySection = component({
     hugContentsVertically: true
   }),
   clipMode: 'hidden',
-  fill: Color.rgba(0, 0, 0, 0.6),
+  fill: Color.transparent,
   borderWidth: { top: 0, left: 0, right: 0, bottom: 1 },
   extent: pt(195.1, 51),
   submorphs: [{
