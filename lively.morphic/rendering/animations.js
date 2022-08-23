@@ -184,6 +184,7 @@ export class PropertyAnimation {
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
     this.morph.renderingState.needsRerender = true;
+    if (this.morph.owner.isSmartText) this.morph.owner.invalidateTextLayout(true, true);
   }
 
   convertBounds (config) {
