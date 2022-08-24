@@ -2,8 +2,8 @@
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree } from 'lively.lang';
-import { serialize, ExpressionSerializer } from 'lively.serializer2';
-import { ComponentDescriptor, morph } from 'lively.morphic';
+import { serialize } from 'lively.serializer2';
+import { ComponentDescriptor } from 'lively.morphic';
 
 import { component, edit, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, PolicyApplicator } from '../components/policy.js';
@@ -140,7 +140,7 @@ const e3 = ComponentDescriptor.abstract(() => component(e2, {
   moduleId
 });
 
-const d1 = ComponentDescriptor.abstract(() => component({ name: 'd1', fill: Color.purple }), {
+const d1 = ComponentDescriptor.abstract(() => component({ name: 'd1', fill: Color.purple, opacity: 0.5 }), {
   exportedName: 'd1',
   moduleId
 });
@@ -243,7 +243,7 @@ describe('spec based components', () => {
   });
 
   it('inline policies can be converted to build specs', () => {
-    let inline1, inline2, inline3, inline4;
+    let inline1, inline4;
     const internalSpec = new StylePolicy({ // should this itself be an inline policy???
       name: 'e2',
       fill: Color.yellow,
@@ -341,12 +341,25 @@ describe('spec based components', () => {
     expect(bs.submorphs[0].submorphs[0].master.parent).to.eql(c3.stylePolicy.spec.submorphs[0].spec.submorphs[0], 'Points to overridden master policy');
   });
 
+  it('correctly creates build specs for components that have not parent', () => {
+    const expectedBuildSpec = {
+      name: 'c2',
+      viewModel: new TestViewModel(),
+      fill: Color.green,
+      submorphs: [{
+        name: 'alice',
+        master: c2.stylePolicy.spec.submorphs[0],
+        submorphs: [{ name: 'bob', master: c2.stylePolicy.spec.submorphs[0].spec.submorphs[0].props }]
+      }]
+    };
+    expect(c2.stylePolicy.asBuildSpecSimple()).to.eql(expectedBuildSpec);
+  });
+
   it('properly initializes morphs that resemble the component definition', () => {
     const editableComponent = edit(e2);
     editableComponent.withAllSubmorphsDo(m => m.master && m.master.apply(m));
 
     expect(editableComponent.get('alice').fill).to.equal(Color.black);
-    editableComponent.get('bob').master.synthesizeSubSpec(null);
     expect(editableComponent.get('bob').fill).to.equal(Color.red);
     expect(editableComponent.get('foo').master.spec.fill).to.equal(Color.gray, 'does carry over inline policy props');
     expect(editableComponent.get('foo').fill).to.equal(Color.gray);
@@ -414,7 +427,7 @@ describe('spec based components', () => {
       submorphs: [
         {
           name: 'foo',
-          master: e3.stylePolicy
+          master: e3
         },
         {
           name: 'molly',
@@ -425,21 +438,44 @@ describe('spec based components', () => {
     }, e3);
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
+    expect(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
+      fill: Color.yellow,
+      extent: pt(50, 50) // extent is controlled by e3
+    });
+    d.stylePolicy.synthesizeSubSpec('foo').overriddenMaster;
     expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
-      fill: Color.gray,
-      extent: pt(10, 10)
+      fill: Color.yellow,
+      extent: pt(10, 10) // this is because the encolsing extent "wins"
     });
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null)).to.eql({
       opacity: 0.5,
       position: pt(45, 45),
       extent: pt(50, 50), // default values in new master do not override custom in original
-      fill: Color.yellow
+      fill: Color.red
     });
+    d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice').fill;
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice')).to.eql({
-      fill: Color.black, // not blue since it was overridden in e2
+      fill: Color.blue,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
     });
+  });
+
+  it('can override masters with dispatch logic', () => {
+    const c = ComponentDescriptor.abstract(() => component(e2, {
+      name: 'c',
+      submorphs: [
+        {
+          name: 'foo',
+          master: {
+            auto: d1, hover: d2
+          }
+        }
+      ]
+    }), {});
+    const inst = part(c);
+    inst.master.apply(inst, true);
+    expect(inst.get('foo').opacity).to.eql(0.5);
   });
 
   it('removes morphs if declared as such', () => {
@@ -490,7 +526,7 @@ describe('spec based components', () => {
   describe('policy applicators', () => {
     it('can be applied to a morph', () => {
       const m = part(e1);
-      const e2Policy = PolicyApplicator.for(e2);
+      const e2Policy = new PolicyApplicator({}, e2);
       e2Policy.apply(m, true);
       expect(m.fill).to.equal(Color.yellow);
       expect(m.get('bob').fill).to.equal(Color.red); // master not handled properly
@@ -502,8 +538,8 @@ describe('spec based components', () => {
       // that can be applied to a morph hierarchy, that is each of these
       // policies are directly placed into the morphs in a hierarchy
       // after which the application of the policies can concurr.
-      const e2Policy = PolicyApplicator.for(e2);
-      const c3Policy = PolicyApplicator.for(c3);
+      const e2Policy = new PolicyApplicator({}, e2);
+      const c3Policy = new PolicyApplicator({}, c3);
       let spec = e2Policy.asBuildSpecSimple();
       expect(spec.master).to.be.instanceof(PolicyApplicator);
       expect(spec.submorphs[1].master).to.be.instanceof(PolicyApplicator);
@@ -515,7 +551,7 @@ describe('spec based components', () => {
 
     it('reassigns policy applicators in the hierarchy, once applied', () => {
       const m = part(e1);
-      const e2Policy = PolicyApplicator.for(e2);
+      const e2Policy = new PolicyApplicator({}, e2);
       const spec = e2Policy.asBuildSpecSimple();
       expect(m.get('bob').master).to.be.undefined;
       e2Policy.apply(m, true);
@@ -526,15 +562,15 @@ describe('spec based components', () => {
 
     it('updates the specs of the directly attached component policies on change', () => {
       const m = part(e2); // still using the old approach...
-      m.master = PolicyApplicator.for(e2);
+      m.master = new PolicyApplicator({}, e2);
       m.get('bob').position = pt(40, 40);
       m.get('bob').extent = pt(100, 100);
       m.get('bar').position = pt(25, 25);
       m.extent = pt(100, 100);
-      expect(m.master.spec.extent).to.equal(pt(100, 100));
-      expect(m.get('bob').master.spec.position).to.equal(pt(40, 40));
-      expect(m.get('bob').master.spec.extent).to.equal(pt(100, 100));
-      expect(m.master.spec.submorphs[3].position).to.equal(pt(25, 25), 'auto inserts new sub specs if not present before');
+      expect(m.master.spec.extent).to.equal(Symbol.for('lively.skip-property'));
+      expect(m.get('bob').master.spec.position).to.equal(Symbol.for('lively.skip-property'));
+      expect(m.get('bob').master.spec.extent).to.equal(Symbol.for('lively.skip-property'));
+      expect(m.master.spec.submorphs[3].position).to.equal(Symbol.for('lively.skip-property'), 'auto inserts new sub specs if not present before');
     });
   });
 });
@@ -582,7 +618,7 @@ describe('components', () => {
 
     expect(masterFoo.master).to.eql(c3.stylePolicy.spec.submorphs[0]);
     expect(masterFoo.master.spec).not.to.have.property('master'); // ist direct derivation, since part()
-    // expect(masterAlice.master.spec.master).to.eql(d2.stylePolicy, 'stores inline master in spec'); // this is broken
+    expect(masterAlice.master.spec.master).to.eql(d2.stylePolicy, 'stores inline master in spec');
 
     const inst3 = part(c3);
     const alice = inst3.getSubmorphNamed('alice');
@@ -684,7 +720,7 @@ describe('components', () => {
     expect(c.get('alice').borderColorTop).to.equal(Color.red);
     expect(c.get('alice').borderRadiusTopLeft).to.equal(42);
     expect(c.get('alice').master.isPolicy).to.be.true;
-    c.get('alice').master = PolicyApplicator.for(d2);
+    c.get('alice').master = new PolicyApplicator({}, d2);
     c.get('alice').master.apply(c.get('alice'), true);
     expect(c.get('alice').fill).to.equal(Color.black);
     expect(c.get('alice').borderColorTop).to.equal(Color.red, 'border color keeps being overridden');
@@ -707,7 +743,7 @@ describe('components', () => {
     }));
 
     expect(part(T1).get('bob').master.parent.spec.master).to.eql(T1.stylePolicy.getSubSpecFor('bob').spec.master);
-    expect(part(T1).get('bob').master.parent.spec.master.parent).to.eql(d1.stylePolicy, 'wraps an unnessecary in between policy');
+    expect(part(T1).get('bob').master.parent.parent).to.eql(d1.stylePolicy, 'wraps an unnessecary in between policy');
   });
 
   it('includes added morphs into inline policies', () => {
@@ -741,7 +777,7 @@ describe('components', () => {
   it('serializes inline properties to symbolic expressions', () => {
     const inst = part(TLB);
     const snap = serialize(inst);
-    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props.parent.value).to.include('TLB.stylePolicy.getSubSpecAt("alice")');
+    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props._parent.value).to.include('TLB.stylePolicy.getSubSpecAt("alice")');
   });
 
   it('does not accidentally create overridden masters when serializing', () => {
@@ -751,12 +787,8 @@ describe('components', () => {
         { name: 'alice', master: TLB }
       ]
     });
-    inst.master.applyIfNeeded(true);
-    instOverridden.master.applyIfNeeded(true);
     const copied = inst.copy();
     const copied2 = instOverridden.copy();
-    copied.master.applyIfNeeded(true);
-    copied2.master.applyIfNeeded(true);
     expect(inst.master.getSubSpecFor()).has.keys('name', 'submorphs');
     expect(copied.master.getSubSpecFor()).has.keys('name', 'submorphs');
     expect(instOverridden.master.getSubSpecFor('alice').spec).has.keys('name', 'submorphs', 'master');
