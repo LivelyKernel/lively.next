@@ -15,7 +15,6 @@ function getOverriddenMaster (spec, localMaster) {
 }
 
 // property merging
-
 export function mergeInHierarchy (
   root,
   props,
@@ -97,13 +96,7 @@ export class StylePolicy {
     if (parent) this.parent = parent; // can be either an inline policy or a component descriptor
     this.inheritStructure = inheritStructure;
     this.spec = this.ensureStylePoliciesInSpec(spec);
-    // this.prepareIndex(); // synthesizes the policy for quick application and/or spec generation.
-    // fixme: What to do about { hover, click, breakpoint } masters? How do they fit into the picture here?
-    // Right now the derivation chain only manages the auto, that is default master component and declares that
-    // as the parent. In principle that is OK, since if at all, the structure should only be propagated
-    // via the parent. However still we need to find a way to handle system/event state dependent
-    // master components, that apply themselves instead of the auto master component if the
-    // event/system state declares that to be the case.
+    if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
   }
 
   /**
@@ -237,21 +230,28 @@ export class StylePolicy {
    */
   ensureStylePoliciesInSpec (spec) {
     const klass = this.constructor;
-    const overriddenMaster = spec.master?.stylePolicy || spec.master;
+    const overriddenMaster = getOverriddenMaster(spec, this);
     const getLocalMaster = (name) => {
       const localMaster = overriddenMaster && overriddenMaster.getSubSpecFor(name);
       if (localMaster && !localMaster.isPolicy && !localMaster.isComponentDescriptor) return false;
       return localMaster;
     };
+    const ensureStylePoliciesInStandalone = (spec) => {
+      return tree.mapTree(spec, (node, submorphs) => {
+        if (node.isPolicy) return node;
+        if (node.master && node !== spec) {
+          return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
+        }
+        if (node.master) {
+          return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
+        }
+        return { ...node, submorphs };
+      }, node => node.submorphs || []);
+    };
     // scan this.spec and detect overridden/set master components
     // or further refined inline policies
     if (!this.parent || !this.inheritStructure) {
-      return tree.mapTree(spec, (node) => {
-        // this is no longer really appropriate, leave this master as is
-        return !node.isPolicy && node.master && node !== this.spec
-          ? { ...node, master: new klass({}, node.master) }
-          : node;
-      }, node => node.submorphs || []);
+      return ensureStylePoliciesInStandalone(spec);
     }
 
     if (this.parent) {
@@ -267,7 +267,7 @@ export class StylePolicy {
         node = obj.dissoc(node, ['master', 'submorphs', ...getStylePropertiesFor(node.type)]);
         if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
         return node;
-      }, node => node.isPolicy ? [] : node.submorphs); // get the fully collapsed spec
+      }, node => node.submorphs || node.props?.submorphs || []); // get the fully collapsed spec
       // we are abusing the merging traversal a little in order to perform
       const toBeReplaced = new WeakMap();
       function replace (node, replacement) {
@@ -300,7 +300,7 @@ export class StylePolicy {
           //           1. We have a derivation chain but we also want to patch that derivation chain with a
           // introduce inline policy
           const specName = parentSpec.name;
-          localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // enusre the local master
+          localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(specName)));
         }
         if (parentSpec.isPolicy) {
@@ -319,14 +319,18 @@ export class StylePolicy {
       (parent, toBeAdded, before) => {
         // insert add command directly into the baseSpec
         const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
-        if (toBeAdded.master) {
-          toBeAdded = new klass(toBeAdded);
+        if (!toBeAdded.isPolicyApplicator) {
+          toBeAdded = ensureStylePoliciesInStandalone(toBeAdded);
         }
         arr.pushAt(parent.submorphs, {
           COMMAND: 'add',
-          props: toBeAdded
+          props: toBeAdded // FIXME: we need to also traverse this stuff!
         }, index);
       });
+
+      if (baseSpec.viewModel && spec.viewModel) {
+        spec.viewModel = obj.deepMerge(baseSpec.viewModel, spec.viewModel);
+      }
 
       // replace the marked entries
       return {
