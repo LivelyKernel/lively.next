@@ -7,12 +7,13 @@ function nyi (msg) { throw new Error(`Not yet implemented: ${msg}`); }
 // add my commento
 
 class Layout {
-  constructor (args = {}) {
+  constructor (config = {}) {
     const {
       spacing, padding, border, container, manualUpdate,
       autoResize, ignore, onScheduleApply, layoutOrder,
       reactToSubmorphAnimations
-    } = args;
+    } = config;
+    this.config = config;
     this.applyRequests = false;
     this.border = { top: 0, left: 0, right: 0, bottom: 0, ...border };
     this.ignore = ignore || [];
@@ -312,8 +313,8 @@ export class TilingLayout extends Layout {
   }
 
   attach () {
-    super.attach();
     this.initializeResizePolicies();
+    super.attach();
   }
 
   initializeResizePolicies () {
@@ -370,6 +371,7 @@ export class TilingLayout extends Layout {
    * @returns {TileLayoutSpec}
    */
   getSpec () {
+    if (!this.container) return this.config;
     if (Array.isArray(this._resizePolicies)) { this.initializeResizePolicies(); }
     let {
       axis, align, axisAlign, spacing, orderByIndex, resizePolicies,
@@ -779,8 +781,8 @@ export class TilingLayout extends Layout {
         style.width = `calc(100% + ${margin.offset}px)`;
         margin.left = 0;
         margin.right = 0;
-      } else { 
-        style.width = 'unset'; 
+      } else {
+        style.width = 'unset';
         style.flexGrow = 1;
         style.flexShrink = 1;
       } // let flex handle that
@@ -788,7 +790,7 @@ export class TilingLayout extends Layout {
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
         style.height = 'unset';
-        style.flexGrow = 1; // let flex handle that 
+        style.flexGrow = 1; // let flex handle that
         style.flexShrink = 1;
       } else {
         style.height = `calc(100% + ${margin.offset}px)`;
@@ -1131,6 +1133,7 @@ export class TilingLayout extends Layout {
 export class VerticalLayout extends TilingLayout {
   constructor (props) {
     super({ renderViaCSS: props.renderViaCSS, reactToSubmorphAnimations: props.reactToSubmorphAnimations });
+    this.config = props;
     this.align = props.align || 'left';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'topToBottom';
@@ -1151,6 +1154,7 @@ export class VerticalLayout extends TilingLayout {
   }
 
   getSpec () {
+    if (!this.container) return this.config;
     const { autoResize, direction, resizeSubmorphs } = this;
     return {
       ...obj.dissoc(super.getSpec(), [
@@ -1220,6 +1224,7 @@ export class VerticalLayout extends TilingLayout {
 export class HorizontalLayout extends TilingLayout {
   constructor (props) {
     super({ renderViaCSS: props.renderViaCSS, reactToSubmorphAnimations: props.reactToSubmorphAnimations });
+    this.config = props;
     this.align = props.align || 'top';
     this.resizeSubmorphs = props.resizeSubmorphs || false;
     this.direction = props.direction || 'leftToRight';
@@ -1305,6 +1310,7 @@ export class HorizontalLayout extends TilingLayout {
   }
 
   getSpec () {
+    if (!this.container) return this.config;
     let {
       spacing, resizeSubmorphs, autoResize, align,
       direction, padding, reactToSubmorphAnimations, orderByIndex, renderViaCSS
@@ -1332,17 +1338,18 @@ export class ProportionalLayout extends Layout {
   name () { return 'Proportional'; }
   description () { return 'Resizes, scales, and moves morphs according to their original position.'; }
 
-  constructor (args) {
-    super(args);
+  constructor (props) {
+    super(props);
     this.extentDelta = pt(0, 0);
     this.proportionalLayoutSettingsForMorphs = new WeakMap();
-    this.submorphSettings = (args && args.submorphSettings) || [];
-    this.lastExtent = args.lastExtent;
+    this.submorphSettings = (props && props.submorphSettings) || [];
+    this.lastExtent = props.lastExtent;
     delete this.spacing;
     delete this.autoResize;
   }
 
   getSpec () {
+    if (!this.container) return this.config;
     return {
       submorphSettings: this.submorphSettings,
       reactToSubmorphAnimations: this.reactToSubmorphAnimations,
@@ -2545,7 +2552,6 @@ export class GridLayout extends Layout {
     super(config);
     config = { autoAssign: true, fitToCell: true, ...config };
     this.cellGroups = [];
-    this.config = config;
     this.renderViaCSS = typeof config.renderViaCSS !== 'undefined' ? config.renderViaCSS : true;
   }
 
@@ -2611,6 +2617,7 @@ export class GridLayout extends Layout {
    * @return { GridLayoutSpec }
    */
   getSpec () {
+    if (!this.container) return this.config;
     const grid = [];
     const rows = [];
     const columns = [];
