@@ -784,8 +784,28 @@ export class PolicyApplicator extends StylePolicy {
     return subSpec;
   }
 
-  applyIfNeeded () {
+  applyIfNeeded (needsUpdate = false, animationConfig = false) {
+    const needsApplication = needsUpdate && this.targetMorph;
+    if (animationConfig && needsApplication) {
+      let resolve;
+      ({ promise: this._animating, resolve } = promise.deferred());
+      this.targetMorph.withAnimationDo(() => this.apply(this.targetMorph), animationConfig).then(() => {
+        this._animating = false;
+        resolve(true);
+      });
+      return this._animating;
+    }
+    if (needsApplication) {
+      this.apply(this.targetMorph);
+    }
+  }
 
+  async whenApplied () {
+    // do nothing
+  }
+
+  applyAnimated (config = { duration: 1000 }) {
+    return this.applyIfNeeded(true, config);
   }
 
   /**
@@ -797,30 +817,44 @@ export class PolicyApplicator extends StylePolicy {
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
   applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
-    for (const propName of arr.intersect(getStylePropertiesFor(morphToBeStyled.constructor), obj.keys(styleProps))) {
+    for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
+      let propValue = styleProps[propName];
+      if (propValue === skippedValue) continue;
+      if (propValue === undefined) {
+        if (PROPS_TO_RESET.includes(propName)) { propValue = getDefaultValueFor(morphToBeStyled.constructor, propName); }
+        if (propValue === undefined) continue;
+      }
+      if (propValue?.onlyAtInstantiation) {
+        if (!this._includeInstantiationProps) continue;
+        propValue = propValue.value;
+      }
       if (propName === 'layout') {
-        if (morphToBeStyled.layout && styleProps.layout &&
-            morphToBeStyled.layout.name() === styleProps.layout.name() &&
-            morphToBeStyled.layout.equals(styleProps.layout)) { continue; }
-        morphToBeStyled.layout = styleProps.layout ? styleProps.layout.copy() : undefined;
+        if (morphToBeStyled.layout?.name() === propValue?.name() &&
+            morphToBeStyled.layout?.equals(propValue)) { continue; }
+        const lv = propValue ? propValue.copy() : undefined;
+        if (this._animating) {
+          const origCSS = lv.renderViaCSS;
+          lv.renderViaCSS = false;
+          this._animating.then(() => lv.renderViaCSS = origCSS);
+        }
+        morphToBeStyled.layout = lv;
         continue;
       }
 
       if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
       let resizePolicy;
-      if ((resizePolicy = this.isResizedByLayout(morphToBeStyled)) && propName === 'extent') {
-        if (resizePolicy.widthPolicy === 'fixed') morphToBeStyled.width = styleProps.extent.x;
-        if (resizePolicy.heightPolicy === 'fixed') morphToBeStyled.height = styleProps.extent.y;
+      if (propName === 'extent' && (resizePolicy = this.isResizedByLayout(morphToBeStyled))) {
+        if (resizePolicy.widthPolicy === 'fixed') morphToBeStyled.width = propValue.x;
+        if (resizePolicy.heightPolicy === 'fixed') morphToBeStyled.height = propValue.y;
         continue;
       }
 
       if (isRoot) {
         if (propName === 'extent' &&
             !morphToBeStyled.extent.equals(pt(10, 10)) &&
-            (
-              !morphToBeStyled.owner ||
-               morphToBeStyled.owner.isWorld ||
-               morphToBeStyled.ownerChain().find(m => m.master && m.master.managesMorph(morphToBeStyled)))
+            (!morphToBeStyled.owner ||
+             morphToBeStyled.owner.isWorld ||
+             morphToBeStyled.ownerChain().find(m => m.master && m.master.managesMorph(morphToBeStyled.name)))
         // not already styled by other master
         ) continue;
         if (propName === 'position') continue;
@@ -831,8 +865,8 @@ export class PolicyApplicator extends StylePolicy {
 
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
-      if (!obj.equals(morphToBeStyled[propName], styleProps[propName])) {
-        morphToBeStyled[propName] = styleProps[propName];
+      if (!obj.equals(morphToBeStyled[propName], propValue)) {
+        morphToBeStyled[propName] = propValue;
       }
 
       // we may be late for the game when setting these props
