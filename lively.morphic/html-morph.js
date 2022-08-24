@@ -192,6 +192,10 @@ export class HTMLMorph extends Morph {
     return new CustomVNode(this, renderer);
   }
 
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForHTMLMorph(this);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   menuItems () {

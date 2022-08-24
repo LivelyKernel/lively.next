@@ -169,6 +169,7 @@ export class ChangeManager {
     }
 
     morph.makeDirty(change);
+    morph.renderingState.needsRerender = true;
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {

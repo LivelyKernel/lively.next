@@ -185,6 +185,7 @@ export class PropertyAnimation {
       this.queue.removeAnimation(this);
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
+    this.morph.renderingState.needsRerender = true;
   }
 
   convertBounds (config) {
