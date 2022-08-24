@@ -1,68 +1,8 @@
 import { promise } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { Morph } from './morph.js';
-import vdom from 'virtual-dom';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import css from 'esm://cache/css@3.0.0';
-const { diff, patch, h, create: createElement } = vdom;
-
-// see https://github.com/Matt-Esch/virtual-dom/blob/master/docs/widget.md
-class CustomVNode {
-  constructor (morph, renderer) {
-    this.morph = morph;
-    this.renderer = renderer;
-    this.morphVtree = null;
-    // this is needed to ensure that virtual dom can correctly
-    // identify this node when morph hierarchies change
-    this.key = `custom-${morph.id}`;
-  }
-
-  get type () { return 'Widget'; }
-
-  renderMorph () {
-    const { morph, renderer } = this;
-    const vtree = this.morphVtree = renderer.renderMorph(morph);
-    // The placeholder in vdom that our real dom node will replace
-    const key = 'customNode-key-' + morph.id;
-
-    if (morph._updateCSSDeclaration) {
-      morph.ensureCSSDeclaration();
-      morph._updateCSSDeclaration = false;
-    }
-    return vtree;
-  }
-
-  init () {
-    const domNode = createElement(this.renderMorph(), this.renderer.domEnvironment);
-    // here we replace the placeholder node with our custom node, this only
-    // needs to happen when we create the DOM node for the entire morph
-    // domNode.childNodes[0].setAttribute('style', this.morph.domNodeStyle);
-    domNode.insertBefore(this.morph.domNode, domNode.childNodes[0]);
-    // mount the style node
-    if (this.morph.cssDeclaration) { this.morph.ensureCSSDeclaration(); }
-    return domNode;
-  }
-
-  update (previous, domNode) {
-    const oldTree = previous.morphVtree || this.renderMorph();
-    const newTree = this.renderMorph();
-    const patches = diff(oldTree, newTree);
-    // We patch the node representing the morph. Since oldVnode and newVNode
-    // both include the same virtual placeholder, the customNode
-    // will be left alone by the patch operation
-    patch(domNode, patches);
-    if (this.morph.afterRenderHook) this.morph.afterRenderHook();
-    return null;
-  }
-
-  destroy (domNode) {
-    // clear the css node of the morph
-    const doc = this.renderer.domEnvironment.document;
-    const style = doc.getElementById('css-for-' + this.morph.id);
-    if (style) style.remove();
-    console.log(`[HTMLMorph] node of ${this.morph.name} gets removed from DOM`);
-  }
-}
 
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
@@ -77,7 +17,6 @@ export class HTMLMorph extends Morph {
   static get properties () {
     return {
       extent: { defaultValue: pt(420, 330) },
-
       html: {
         after: ['cssDeclaration'],
         isStyleProp: true,
@@ -106,13 +45,14 @@ export class HTMLMorph extends Morph {
           }
         }
       },
-
-      domNodeTagName: { readOnly: true, get () { return 'div'; } },
+      domNodeTagName: {
+        readOnly: true,
+        get () { return 'div'; }
+      },
       domNodeStyle: {
         readOnly: true,
         get () { return 'position: absolute; width: 100%; height: 100%;'; }
       },
-
       domNode: {
         derived: true, /* FIXME only for dont serialize... */
         get () {
@@ -123,32 +63,41 @@ export class HTMLMorph extends Morph {
           return this._domNode;
         },
         set (node) {
-          if (this.domNode.parentNode) { this.domNode.parentNode.replaceChild(node, this.domNode); }
+          if (this.domNode.parentNode) {
+            this.domNode.parentNode.replaceChild(node, this.domNode);
+          }
           return this._domNode = node;
         }
       },
-
       document: {
         readOnly: true,
         get () { return this.env.domEnv.document; }
       },
-
       scrollExtent: {
         readOnly: true,
         get () { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
       },
-
       cssDeclaration: {
         isStyleProp: true,
         set (val) {
           this.setProperty('cssDeclaration', val);
+          const doc = this.env.domEnv.document;
           if (!val) {
-            const doc = this.env.domEnv.document;
             const style = doc.getElementById('css-for-' + this.id);
             if (style) style.remove();
           } else {
+            try {
+              const parsed = css.parse(this.cssDeclaration);
+              // prepend morph id to each rule so that css is scoped to morph
+              parsed.stylesheet.rules.forEach(r => {
+                if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
+              });
+              addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed));
+            
+            } catch (err) {
+              console.error(`Error setting cssDeclaration of ${this}: ${err}`);
+            }
             this.makeDirty();
-            this._updateCSSDeclaration = true;
           }
         }
       }
@@ -156,22 +105,6 @@ export class HTMLMorph extends Morph {
   }
 
   get isHTMLMorph () { return true; }
-
-  ensureCSSDeclaration () {
-    try {
-      const parsed = css.parse(this.cssDeclaration);
-      // prepend morph id to each rule so that css is scoped to morph
-      this.whenRendered().then(() => {
-        // wait until morphs id has been determined
-        parsed.stylesheet.rules.forEach(r => {
-          if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-        });
-        addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed));
-      });
-    } catch (err) {
-      console.error(`Error setting cssDeclaration of ${this}: ${err}`);
-    }
-  }
 
   get defaultHTML () {
     return `
@@ -184,16 +117,14 @@ export class HTMLMorph extends Morph {
 </div>`;
   }
 
-  render (renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
-    return new CustomVNode(this, renderer);
-  }
-
   getNodeForRenderer (renderer) {
     return renderer.nodeForHTMLMorph(this);
+  }
+
+  remove() {
+    // clean up created style tag
+    this.cssDeclaration = null;
+    super.remove();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
