@@ -918,10 +918,22 @@ export class PolicyApplicator extends StylePolicy {
    * @param { object } change - The change object
    */
   onMorphChange (changedMorph, change) {
-    if (change.meta.metaInteraction || !this.targetMorph) return;
+    if (change.meta?.metaInteraction || !this.targetMorph || this._animating) return;
     let subSpec = this.ensureSubSpecFor(changedMorph);
+    if (subSpec?.isPolicyApplicator) {
+      return subSpec.onMorphChange(changedMorph, change);
+    }
     if (change.value === this) return;
-    if (getStylePropertiesFor(changedMorph.constructor).includes(change.prop)) { subSpec[change.prop] = change.value; }
+    if (change.selector === 'addMorphAt') {
+      this.insertSpecIfMentioned(change.args[0]);
+    }
+    if (getStylePropertiesFor(changedMorph.constructor).includes(change.prop)) {
+      subSpec[change.prop] = skippedValue;
+    }
+    if (change.prop === 'extent') {
+      if (change.value.y !== change.prevValue.y) subSpec.height = skippedValue;
+      if (change.value.x !== change.prevValue.x) subSpec.width = skippedValue;
+    }
   }
 
   /**
