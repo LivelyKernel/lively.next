@@ -49,6 +49,10 @@ export class Morph {
   static get properties () {
     return {
 
+      renderingState: {
+        defaultValue: {}
+      },
+
       name: {
         group: 'core',
         initialize (name) {
@@ -538,6 +542,8 @@ export class Morph {
         type: 'Layout',
         after: ['submorphs', 'extent', 'origin', 'position', 'isLayoutable'],
         set (value) {
+          // TODO: rename this flag eventually
+          this.renderingState.hasCSSLayoutChange = true;
           if (value) value.container = this;
           this.setProperty('layout', value);
         }
@@ -827,6 +833,14 @@ export class Morph {
     }
     if (props.height !== undefined || props.width !== undefined) { this._parametrizedProps.extent = this.extent; }
     // if (props.layout) this.layout = props.layout;
+
+    this.renderingState = {
+      renderedMorphs: [],
+      hasStructuralChanges: false,
+      needsRerender: false,
+      animationAdded: false,
+      hasCSSLayoutChange: false
+    };
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
   }
@@ -1235,6 +1249,7 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async animate (config) {
+    this.renderingState.animationAdded = true;
     const anim = this._animationQueue.registerAnimation(config);
     if (!this._animationQueue.animationsActive) {
       anim && anim.finish();
@@ -1574,6 +1589,7 @@ export class Morph {
   }
 
   addMorph (submorph, insertBeforeMorph) {
+    this.renderingState.hasStructuralChanges = true;
     // insert at right position in submorph list, according to insertBeforeMorph
     const submorphs = this.submorphs;
     const insertBeforeMorphIndex = insertBeforeMorph
@@ -1613,6 +1629,7 @@ export class Morph {
       morph._owner = null;
     });
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
+    this.renderingState.hasStructuralChanges = true;
   }
 
   /**
@@ -2436,6 +2453,10 @@ export class Morph {
     return renderer.renderMorph(this);
   }
 
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForMorph(this);
+  }
+
   applyLayoutIfNeeded () {
     if (!this._dirty) return;
     for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
@@ -2621,6 +2642,12 @@ export class Ellipse extends Morph {
     }
     return renderer.renderEllipse(this);
   }
+
+  renderStyles (styleProps) {
+    delete styleProps.borderRadius;
+    styleProps['border-radius'] = '50%';
+    return styleProps;
+  }
 }
 
 export class Triangle extends Morph {
@@ -2750,6 +2777,10 @@ export class Image extends Morph {
       this._requestMasterStyling = false;
     }
     return renderer.renderImage(this);
+  }
+
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForImage(this);
   }
 
   clear () {
@@ -3309,6 +3340,10 @@ export class Path extends Morph {
       this._requestMasterStyling = false;
     }
     return renderer.renderPath(this);
+  }
+
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForPath(this);
   }
 
   get _pathNode () {

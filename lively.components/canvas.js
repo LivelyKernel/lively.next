@@ -102,6 +102,14 @@ export class Canvas extends Morph {
     }
   }
 
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForCanvas(this);
+  }
+
+  getHooksForRenderer (renderer) {
+    return renderer.hooksForCanvas();
+  }
+
   render (renderer) { return renderer.renderCanvas(this); }
 
   withContextDo (func) {

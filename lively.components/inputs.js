@@ -265,6 +265,10 @@ export class CheckBoxMorph extends Morph {
     };
   }
 
+  get isCheckbox () {
+    return true;
+  }
+
   trigger () {
     try {
       this.checked = !this.checked;
@@ -282,5 +286,20 @@ export class CheckBoxMorph extends Morph {
 
   render (renderer) {
     return renderer.renderCheckBox(this);
+  }
+
+  patchSpecialProps (node) {
+    if (this.renderingState.specialProps.checked !== this.checked) {
+      node.firstChild.checked = this.checked;
+      this.renderingState.specialProps.checked = this.checked;
+    }
+    if (this.renderingState.specialProps.active !== this.active) {
+      node.firstChild.disabled = !this.active;
+      this.renderingState.specialProps.active = this.active;
+    }
+  }
+
+  getNodeForRenderer (renderer) {
+    return renderer.nodeForCheckbox(this);
   }
 }
