@@ -18,7 +18,7 @@ import KeyHandler, { findKeysForPlatform } from './events/KeyHandler.js';
 import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
 
-import { ComponentPolicy } from './components/policy.js';
+import { PolicyApplicator } from './components/policy.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -75,12 +75,21 @@ export class Morph {
 
       master: {
         before: ['metadata'],
+        after: ['clipMode'],
         group: 'core',
         set (args) {
-          if (this.master instanceof ComponentPolicy && this.master.equals(args)) return;
-          this.setProperty('master', args ? ComponentPolicy.for(this, args) : (args === false ? false : null));
-          if (args && args.isPolicyApplicator) args.attach(this); // FIXME: remove that
-          if (args) this.requestMasterStyling();
+          // if (this.master instanceof PolicyApplicator && this.master.equals(args)) return;
+          // FIXME: when we set the master of a morph we need to modify that policy applicator in place
+          // since else the enclosing applicator is not being notified, the master is now overridden
+          const policy = args ? PolicyApplicator.for(this, args) : (args === false ? false : null);
+          if (this.master?.isPolicyApplicator && this.master?.parent[Symbol.for('lively-module-meta')]?.path.length) {
+            // how about we only do this with inline policies?
+            this.master.spec.master = policy;
+          } else {
+            this.setProperty('master', policy);
+            if (policy?.isPolicyApplicator) policy.attach(this); // FIXME: remove that
+          }
+          if (policy) this.requestMasterStyling();
         }
       },
 
@@ -2677,6 +2686,7 @@ export class Morph {
     return this.commandHandler.exec(command, this, args, count, evt);
   }
 }
+
 /**
  * Custom render logic is applied to transform a rectangle into an ellipse by cutting the corners based on its width and height.
  */
@@ -3189,7 +3199,6 @@ export class Path extends Morph {
 
       vertices: {
         defaultValue: [],
-        isStyleProp: true,
         after: ['isSmooth', 'borderWidth'],
         before: ['extent', 'origin'],
         type: 'Vertices',
