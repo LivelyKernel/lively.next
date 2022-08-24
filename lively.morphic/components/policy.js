@@ -937,16 +937,36 @@ export class PolicyApplicator extends StylePolicy {
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
     // ensure we are mentioned in the derivation chain
-    let parent = this; let mentioned = false;
-    while (parent = parent.parent) {
-      mentioned = !!parent.getSubSpecFor(targetName);
-    }
-    if (!mentioned) return currSpec;
+    if (!this.mentionedInHierarchy(targetName)) return currSpec;
     const parentSpec = this.ensureSubSpecFor(submorph.owner);
     const { submorphs = [] } = parentSpec;
     submorphs.push(currSpec);
     parentSpec.submorphs = submorphs;
     return currSpec;
+  }
+
+  /**
+   * @param { string } submorphNameInPolicyContext - The name of the submorph to be checked for being mentioned.
+   * @returns { boolean } Wether or not the a sub spec for the given name could be found in the derivation chain.
+   */
+  mentionedInHierarchy (submorphNameInPolicyContext) {
+    let mentioned = false; let parent = this;
+    while (parent = parent.parent) {
+      mentioned = !!parent.getSubSpecFor(submorphNameInPolicyContext);
+    }
+    return mentioned;
+  }
+
+  /**
+   * Given two a morph, ensure that a subspec be present, if its mentioned in the structural derivation chain.
+   * @param { Morph } aMorph - The morph in question.
+   * @returns { object|null } If mentioned, the corresponding sub spec.
+   */
+  insertSpecIfMentioned (aMorph) {
+    if (this.mentionedInHierarchy(aMorph.name)) {
+      return this.ensureSubSpecFor(aMorph);
+    }
+    return null;
   }
 
   adoptOverriddenPropsFrom (otherPolicy) {
