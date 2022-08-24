@@ -15,6 +15,8 @@ try {
 
 export const touchInputDevice = touchInput;
 
+let CachedDefaultValues;
+CachedDefaultValues = CachedDefaultValues || new Map();
 let CachedStyleProperties;
 CachedStyleProperties = CachedStyleProperties || new Map();
 let nameToClassMapping;
@@ -74,22 +76,41 @@ export function clearStylePropertiesForClassesIn (moduleId) {
   });
 }
 
-export function getStylePropertiesFor (type) {
-  // caching strategy for faster evaluation?
-  if (CachedStyleProperties.has(type)) return CachedStyleProperties.get(type);
-  const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
+function getPropSettings(type) {
+   const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
   const { package: pkg, pathInPackage } = klass[Symbol.for('lively-module-meta')];
   const { properties: props } = klass[Symbol.for('lively.classes-properties-and-settings')];
+  return { props, moduleId: string.joinPath(pkg.name, pathInPackage) };
+}
+
+export function getStylePropertiesFor (type) {
+  if (CachedStyleProperties.has(type)) return CachedStyleProperties.get(type);
+  const { props, moduleId } = getPropSettings(type);
   const styleProps = [];
-  styleProps.moduleId = string.joinPath(pkg.name, pathInPackage);
+  styleProps.moduleId = moduleId;
   for (let prop in props) {
     if (props[prop].isStyleProp) styleProps.push(prop);
     if (props[prop].foldable) {
       styleProps.push(...props[prop].foldable.map(sub => prop + string.capitalize(sub)));
     }
+    if (props[prop].group === 'geometry' && props[prop].derived) styleProps.push(prop);
   }
   CachedStyleProperties.set(type, styleProps);
   return styleProps;
+}
+
+
+export function getDefaultValueFor (type, propName) {
+  if (CachedDefaultValues.has(type)) return CachedDefaultValues.get(type)[propName];
+  const {props} = getPropSettings(type);
+  const defaultValues = {};
+  for (let prop in props) {
+    if (props[prop].isStyleProp && 'defaultValue' in props[prop]) {
+      defaultValues[prop] = props[prop].defaultValue;
+    }
+  }
+  CachedDefaultValues.set(type, defaultValues);
+  return defaultValues[propName];
 }
 
 export function morph (props = {}, opts = { restore: false }) {
