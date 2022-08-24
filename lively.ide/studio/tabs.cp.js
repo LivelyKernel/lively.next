@@ -198,15 +198,15 @@ class TabModel extends ViewModel {
   }
 
   setAppearance (isSelected) {
-    this.view.master = {};
+    let newMaster = {};
     if (isSelected) {
-      this.view.master.auto = this.selectedTabMaster;
+      newMaster.auto = this.selectedTabMaster;
     } else {
-      this.view.master.auto = this.defaultTabMaster;
+      newMaster.auto = this.defaultTabMaster;
     }
-    this.view.master.hover = isSelected ? false : this.hoveredTabMaster;
-    this.view.master.click = this.clickedTabMaster;
-    this.view.requestMasterStyling();
+    if (!isSelected) newMaster.hover = this.hoveredTabMaster;
+    newMaster.click = this.clickedTabMaster;
+    this.view.master = newMaster;
   }
 
   get isTab () {
@@ -247,6 +247,7 @@ class TabModel extends ViewModel {
     if (prop === 'selected') { this.setAppearance(this.selected); }
   }
 }
+
 
 /**
  * An actual tab.
