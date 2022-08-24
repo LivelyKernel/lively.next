@@ -923,7 +923,8 @@ export class PolicyApplicator extends StylePolicy {
   /**
    * Scans the master component derivation chain in order to
    * determine the path to the sub spec that is then created
-   * on the spot.
+   * on the spot. If the a morph with this name was never mentioned
+   * in the derivation chain, we return an empty object.
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
   ensureSubSpecFor (submorph) {
@@ -931,6 +932,12 @@ export class PolicyApplicator extends StylePolicy {
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
+    // ensure we are mentioned in the derivation chain
+    let parent = this; let mentioned = false;
+    while (parent = parent.parent) {
+      mentioned = !!parent.getSubSpecFor(targetName);
+    }
+    if (!mentioned) return currSpec;
     const parentSpec = this.ensureSubSpecFor(submorph.owner);
     const { submorphs = [] } = parentSpec;
     submorphs.push(currSpec);
