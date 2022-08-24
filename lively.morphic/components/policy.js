@@ -557,8 +557,8 @@ export class StylePolicy {
     } = getEventState(targetMorph, this._breakpointMasters);
 
     if (this.isEventPolicy) {
-      if (isClicked) return this._clickMaster;
-      if (isHovered) return this._hoverMaster;
+      if (isClicked) return this._clickMaster || this._autoMaster;
+      if (isHovered) return this._hoverMaster || this._autoMaster;
       return this._autoMaster;
     }
 
