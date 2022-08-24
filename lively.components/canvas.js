@@ -33,16 +33,16 @@ export class Canvas extends Morph {
     };
   }
 
-  // get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context () {
-    if (this._canvas) { return this._canvas.getContext(this.contextType, { willReadFrequently: this.willReadFrequently }); } else if (!this.world() || !this.env.renderer.getNodeForMorph(this)) {
+    if (this._canvas) {
+      return this._canvas.getContext(this.contextType, { willReadFrequently: this.willReadFrequently });
+    } else if (!this.world() || !this.env.renderer.getNodeForMorph(this)) {
       console.warn('Context not yet rendered. Please ensure that the Canvas Morph has been rendered first before accessing the context. This can be achieved by waiting for the whenRendered() promise before you proceed accessing the context property.');
     }
     return null;
   }
 
   set _canvas (new_canvas) {
-    // renderer created a new HTMLCanvasElement for us
     const old_canvas = this.__canvas__;
     this.__canvas__ = new_canvas;
     this.restoreContent(old_canvas, new_canvas);
@@ -119,10 +119,6 @@ export class Canvas extends Morph {
       node.firstChild.style.height = `${this.height}px`;
       this.renderingState.specialProps.height = this.height;
     }
-  }
-
-  getHooksForRenderer (renderer) {
-    return renderer.hooksForCanvas();
   }
 
   withContextDo (func) {
