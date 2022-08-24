@@ -140,20 +140,6 @@ export class StylePolicy {
       // A inline policy REQUIRES a structure provider in order to be created.
       this._autoMaster = auto; // auto is always defined. We default to the parent, if not specified otherwise.
 
-      // We perform this dance here, in order to provide the user with a little bit
-      // more insightful error messages.
-      if ((click || hover || light || dark) && !((click || hover) ^ (light || dark))) {
-        throw Error('Cannot mix mouse event with light/dark mode dispatch!');
-      }
-
-      if ((click || hover || !!breakpoints) && !((click || hover) ^ !!breakpoints)) {
-        throw Error('Cannot mix mouse event with breakpoint dispatch!');
-      }
-
-      if ((light || dark || !!breakpoints) && !((light || dark) ^ !!breakpoints)) {
-        throw Error('Cannot mix light/dark mode with breakpoint dispatch!');
-      }
-
       // mouse event component dispatch
       if (click) this._clickMaster = click;
       if (hover) this._hoverMaster = hover;
