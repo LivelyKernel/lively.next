@@ -348,11 +348,16 @@ export class StylePolicy {
   instantiate (props = {}) {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    const inst = morph(PolicyApplicator.for(this, props).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
+    const inst = morph(new PolicyApplicator(props, this).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
+    inst.master._includeInstantiationProps = true;
+    inst.master.applyIfNeeded(true);
+    inst.master._includeInstantiationProps = false;
+    const toAttach = [];
     inst.withAllSubmorphsDo(m => {
-      if (m.viewModel) m.viewModel.attach(m);
+      if (m.viewModel) toAttach.unshift(m);
     });
+    toAttach.forEach(m => m.viewModel.attach(m));
     return inst;
   }
 
@@ -365,9 +370,18 @@ export class StylePolicy {
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
       if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpecSimple();
       const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
-      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', ...getStylePropertiesFor(specOrPolicy.type)]);
+      const modelParams = specOrPolicy.viewModel || {}; // accumulate the derivation chain for the viewModel
+      for (let param in modelParams) {
+        if (modelParams[param]?.isPolicyApplicator) {
+          modelParams[param] = modelParams[param].instantiate();
+        }
+      }
+      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
+        ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
+      ]);
       if (submorphs.length > 0) specOrPolicy.submorphs = arr.compact(submorphs);
-      if (modelClass) specOrPolicy.viewModel = new modelClass(specOrPolicy.viewModel || {});
+      if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
+
       return specOrPolicy;
     }, node => node.submorphs);
     if (this.parent || this.overriddenMaster) buildSpec.master = this;
