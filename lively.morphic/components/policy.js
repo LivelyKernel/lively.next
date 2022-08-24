@@ -676,9 +676,13 @@ export class StylePolicy {
     return curr;
   }
 
-  managesMorph (aMorph) {
-    return false; // to keep out of existing logic
-    // return aMorph === this.targetMorph || !!this.getSubSpecFor(aMorph.name);
+  /**
+   * Returns wether or not a morph of a given name is managed by this policy.
+   * @param { string } nameOfMorph - The name of the morph in question.
+   */
+  managesMorph (nameOfMorph) {
+    if (!nameOfMorph) return true;
+    return !!tree.find(this.spec, node => node.name === nameOfMorph, node => node.submorphs);
   }
 
   propsToSerializeForMorph (m, candidateProps) { return candidateProps; }
