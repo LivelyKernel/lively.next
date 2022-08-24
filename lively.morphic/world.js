@@ -123,8 +123,6 @@ export class World extends Morph {
     return true;
   }
 
-  render (renderer) { return renderer.renderWorld(this); }
-
   get grabbable () { return false; }
   set grabbable (_) {}
 

@@ -125,8 +125,6 @@ export class Canvas extends Morph {
     return renderer.hooksForCanvas();
   }
 
-  render (renderer) { return renderer.renderCanvas(this); }
-
   withContextDo (func) {
     if (this._canvas) func(this.context);
     else this.__canvas_init__ = () => func(this.context);

@@ -8,7 +8,6 @@ import bowser from 'bowser';
 
 const { h, diff, patch, create: createNode } = vdom;
 
-// await $world.env.renderer.ensureDefaultCSS()
 export const defaultCSS = `
 
 /*-=- html fixes -=-*/
