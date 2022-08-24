@@ -69,6 +69,7 @@ const typeMethodMap = {
   svg: 'toSvg'
 };
 
+// TODO: This is not tested with new renderer, might be broken
 export async function renderMorphToDataURI (morph, opts = {}) {
   // Takes a morph and options like opts = {width: NUMBER, height: NUMBER,
   // center: BOOL}, then calls morph.renderPreview() which creates a DOM node

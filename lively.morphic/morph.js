@@ -2478,7 +2478,7 @@ export class Morph {
     return ['none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset'];
   }
 
-  renderPreview (opts = {}, renderer = this.env.renderer) {
+  renderPreview (opts = {}, renderer = $world.env.renderer) {
     // Creates a DOM node that is a "preview" of the morph, i.e. a
     // representation that looks like the morph but doesn't morphic behavior
     // attached
