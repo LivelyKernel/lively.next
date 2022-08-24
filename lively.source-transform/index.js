@@ -132,8 +132,10 @@ export function ensureComponentDescriptors (translated, moduleName) {
     (node) => {
       const isCaptured = varDecls.includes(node);
       const componentRef = node.id.name;
-      // if the componentRef is not a top level declaration do not pass the component ref as 
+      // also traverse the
+      // if the componentRef is not a top level declaration do not pass the component ref as
       // replace the expression with ComponentDescriptor...
-      return parse(`const ${componentRef} = component.for(() => component(${node.init.arguments.map(n => stringify(n)).join(',')}), { module: "${moduleName}", export: "${componentRef}"}${ isCaptured ? ', ' + componentRef : ''})`).body[0].declarations;
+      const spec = node.init.arguments.map(n => stringify(n)).join(',');
+      return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}${ isCaptured ? ', ' + componentRef : ''})`).body[0].declarations;
     });
 }
