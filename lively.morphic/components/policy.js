@@ -6,7 +6,7 @@ const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 
 // property merging
-export function mergeInHierarchy (
+function mergeInHierarchy (
   root,
   props,
   iterator,
@@ -189,7 +189,6 @@ export class StylePolicy {
    * @param { string } metaInfo.moduleId - The module id where this policy was declared in.
    * @param { string[] } metaInfo.path - If we are a sub style policy, this contains the names of the policy's parents. This info is important for expression generation and serialization.
    */
-  // FIXME: add IDE subclass that is covers more advanced meta info support such as source mapping sourceLocation = false, exprString = false,
   addMetaInfo ({ exportedName, moduleId, path = [], range = false }, spec = this) {
     if (spec.isPolicy) {
       spec[Symbol.for('lively-module-meta')] = {
@@ -278,20 +277,11 @@ export class StylePolicy {
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec.parent));
         }
         if (localMaster) {
-          // return "fresh" inline policy, no overridden props present, except for the local ones!
-          // FIXME: This is different to when we overriden a previously derived morph's master property.
-          //        In that scenario we keep the derivation chain, and then inject the custom props of the new StylePolicy
-          //        when synthesizing props. Is this altered behavior justified? Why do we just drop the props of this spec
-          //        further up the derivation chain?
-          //        This is justified if we want to enable 2 Scnarios:
-          //           1. We have a derivation chain but we also want to patch that derivation chain with a
-          // introduce inline policy
           const specName = parentSpec.name;
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(specName)));
         }
         if (parentSpec.isPolicy) {
-          // return 2nd degree inline policy, which is derived from a previously existing one
           return replace(parentSpec, new klass(localSpec, parentSpec.parent)); // insert a different style policy that has the correct overrides
         }
         Object.assign(parentSpec, obj.dissoc(localSpec, ['submorphs'])); // just apply the current local spec
@@ -311,7 +301,7 @@ export class StylePolicy {
         }
         arr.pushAt(parent.submorphs, {
           COMMAND: 'add',
-          props: toBeAdded // FIXME: we need to also traverse this stuff!
+          props: toBeAdded
         }, index);
       });
 
@@ -440,12 +430,9 @@ export class StylePolicy {
 
     if (discardStyleProps(this)) buildSpec.master = this; // always return a new policy
 
-    // fixme: what if we are configure not to inherit the structure of the parent?
-    //        In this case we need to kick out all of the subspecs that are not
-    //        explicitly mentioned in our own spec.
-
     if (!this.inheritStructure) {
-      // buildSpec, this.spec => traverse buildSpec and synthesize but also kick out any subspecs that are not present in this.spec (via name)
+      // buildSpec, this.spec => traverse buildSpec and synthesize but also kick
+      // out any subspecs that are not present in this.spec (via name)
       // we need to traverse the spec and the parent's build spec simultaneously
       // we are abusing the merging traversal a little in order to perform
       const toBeKept = new Set();
@@ -485,19 +472,8 @@ export class StylePolicy {
         }
 
         return;
-
-        // Q: Why is it OK to completely "discard" the current entry as defined by the build spec?
-        // A: For that we need to differntiate further: If we encounter an inline policy its one of two "kinds":
-        //    1. An overriding inline policy, which means it assigns or overrides the master at this point
-        //       to an enirely different top level component. In this case it is OK to just discard the preexisting parent entry.
-        //       We also do not need to worry about the "bookkeeping" of overridden props in the previous inline policy chain since that
-        //       is already taken care of by the implicit policy generation routine run at creation time.
-        //    2. An extending inline policy, which derives from the previously existing inline policy in the parent.
-        //       This is also suitable to completely discard the existing entry, since it keeps track of the parent policy,
-        //       and can traverse its derivation chain by itself and correctly inform us about the synthesized props on its own.
       }
 
-      // what if the props are themselves inline policies?
       if (discardStyleProps(this)) {
         Object.assign(curr, obj.dissoc(props, [...styleProperties, 'master', 'submorphs']));
       }
@@ -505,18 +481,6 @@ export class StylePolicy {
       if (!discardStyleProps(this)) {
         Object.assign(curr, obj.dissoc(props, ['submorphs'])); // include all properties, submorphs will be handled by merge
       }
-
-      // Question: The performance of initializing a morph from a "lean" spec could be unnessecary slow,
-      //           since we initially apply a bunch of default values, which alter on are "corrected" after the
-      //           component policies are applied. Instead of kicking those out, cant we just return them in the
-      //           first place? In the future we want to remove the "treating morphs as component data structures" - scheme
-      //           anyways and cleanup morph.js. After that, we will not use the preexisting properties on
-      //           morphs to detect overrides any more, making this discarding to style props only useful for code generation.
-      //
-      //           1. Get rid of parametrized props after we have transitioned to lean components. (morph.js)
-      //           2. Manage overrides entirely within component policies and inline policies.
-      //           3. Flip the logic here and allow to instead produce "fully synthesized" morph hierarchies OR reduced style properties
-      //              for the sake of source code generation.
     },
     true,
     (parent, toBeRemoved) => {
@@ -525,7 +489,6 @@ export class StylePolicy {
     (parent, toBeAdded, before) => {
       const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
       // also make sure the added elements are actually filtered props
-      // fixme: perform mapTree of toBeAdded to also filter its props accordingly
       let subSpec;
       if (toBeAdded.isPolicy) {
         subSpec = toBeAdded.asBuildSpec(discardStyleProps); // carry that over
@@ -537,7 +500,6 @@ export class StylePolicy {
       arr.pushAt(parent.submorphs, subSpec, index);
     });
 
-    // how do we build up the morph spec?
     return buildSpec;
   }
 
@@ -793,6 +755,7 @@ export class PolicyApplicator extends StylePolicy {
         } else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution
 
         if (morphInScope !== targetMorph && morphInScope.master) {
+          morphInScope._requestMasterStyling = false;
           return morphInScope.master.apply(morphInScope); // let the policy handle the traversal
         }
       });
@@ -839,12 +802,15 @@ export class PolicyApplicator extends StylePolicy {
    * @param { object } styleProps - The props to be applied as key,value pairs.
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
+  // FIXME: How to avoid unnessecary applies? We dont want to apply nor synthesize stuff that does not have any effect.
   applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
       if (propValue === undefined) {
-        if (PROPS_TO_RESET.includes(propName)) { propValue = getDefaultValueFor(morphToBeStyled.constructor, propName); }
+        if (PROPS_TO_RESET.includes(propName)) {
+          propValue = getDefaultValueFor(morphToBeStyled.constructor, propName);
+        }
         if (propValue === undefined) continue;
       }
       if (propValue?.onlyAtInstantiation) {
@@ -883,7 +849,7 @@ export class PolicyApplicator extends StylePolicy {
         if (propName === 'position') continue;
       }
 
-      // fixme: other special cases??
+      // FIXME: other special cases??
       if (morphToBeStyled.isLabel && propName === 'extent') continue;
 
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
