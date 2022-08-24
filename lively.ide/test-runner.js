@@ -262,9 +262,6 @@ export default class TestRunner extends HTMLMorph {
           this.editorPlugin.setSystemInterface(systemInterface);
           this.get('eval backend button').updateFromTarget();
         }
-      },
-      cssDeclaration: {
-        defaultValue: testRunnerCSS
       }
     };
   }
@@ -273,6 +270,7 @@ export default class TestRunner extends HTMLMorph {
     super(props);
     this.reset();
     connect(this, 'extent', this, 'relayout');
+    this.cssDeclaration = testRunnerCSS;
   }
 
   async onLoad () {

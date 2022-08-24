@@ -121,10 +121,10 @@ export class HTMLMorph extends Morph {
     return renderer.nodeForHTMLMorph(this);
   }
 
-  remove() {
+  abandon() {
     // clean up created style tag
     this.cssDeclaration = null;
-    super.remove();
+    super.abandon();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
