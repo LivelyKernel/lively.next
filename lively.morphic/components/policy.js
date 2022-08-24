@@ -693,9 +693,8 @@ export class StylePolicy {
    * @returns { boolean } Wether or not the morph's position is by a layout.
    */
   isPositionedByLayout (aSubmorph) {
-    return aSubmorph.owner &&
-      aSubmorph.owner.layout &&
-      aSubmorph.owner.layout.layoutableSubmorphs.includes(aSubmorph);
+    const layout = aSubmorph.owner?.layout;
+    return layout?.name() !== 'Proportional' && layout?.layoutableSubmorphs?.includes(aSubmorph);
   }
 
   /**
