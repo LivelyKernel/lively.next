@@ -128,6 +128,10 @@ export class Label extends Morph {
         }
       },
 
+      master: {
+        after: ['padding']
+      },
+
       padding: {
         type: 'Rectangle',
         isStyleProp: true,
