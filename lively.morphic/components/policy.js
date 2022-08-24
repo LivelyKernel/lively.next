@@ -727,16 +727,24 @@ export class PolicyApplicator extends StylePolicy {
   // who in turn can be 1.) assigned as masters to morphs
   // and 2.) Know how to apply the style properties to the
   // morph hierarchy.
-  static for (policyOrDescriptor, props = {}) {
-    // we actually need a little bit more then just that...
-    // the index that holds the overridden props for each of the morphs
-    // in the scope, as well as refs to other MasterPolicies in the
-    // subsequent scopes.
-    return new this(props, policyOrDescriptor, true);
-    // this is creating a slightly incorrect structure with StylePolices instead of PolicyApplicators...
-    // ... that has however no effect, since the application ensures the style policies are referenced entirely
-    // ... but it is better to fix rather than having dangling in between policies!
-    // self.ensureImplicitInlinePolicies();;
+  static for (derivedMorph, args) {
+    let newPolicy;
+
+    if (args.constructor === PolicyApplicator) {
+      newPolicy = args;
+    } else if (args.isComponentDescriptor && args.stylePolicy) {
+      newPolicy = new this({}, { auto: args });
+    } else if (args.constructor === StylePolicy) {
+      newPolicy = new this({}, args);
+    } else if (arr.isSubset(obj.keys(args), ['auto', 'hover', 'click'])) {
+      newPolicy = new this({}, args);
+    }
+
+    if (derivedMorph.master) {
+      newPolicy.adoptOverriddenPropsFrom(derivedMorph.master);
+    }
+
+    return newPolicy;
   }
 
   get isPolicyApplicator () { return true; }
@@ -749,7 +757,7 @@ export class PolicyApplicator extends StylePolicy {
     // we need to directly initialize the applicators with the overriden props properly
     return tree.mapTree(spec, (node, submorphs) => {
       if (node.master && !node.master.isPolicyApplicator) {
-        return { ...node, submorphs, master: PolicyApplicator.for(node.master) };
+        return { ...node, submorphs, master: new PolicyApplicator({}, node.master) };
       } else { return { ...node, submorphs }; }
     }, node => node.submorphs);
   }
