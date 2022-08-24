@@ -190,10 +190,10 @@ export class StylePolicy {
    * @param { string[] } metaInfo.path - If we are a sub style policy, this contains the names of the policy's parents. This info is important for expression generation and serialization.
    */
   // FIXME: add IDE subclass that is covers more advanced meta info support such as source mapping sourceLocation = false, exprString = false,
-  addMetaInfo ({ exportedName, moduleId, path = [] }, spec = this) {
+  addMetaInfo ({ exportedName, moduleId, path = [], range = false }, spec = this) {
     if (spec.isPolicy) {
       spec[Symbol.for('lively-module-meta')] = {
-        exportedName, moduleId, path
+        exportedName, moduleId, path, range
       };
       spec = spec.spec;
     }
@@ -472,7 +472,7 @@ export class StylePolicy {
         // first we clear all style props from curr:
         for (let key in styleProperties) delete curr[key];
 
-        // then we need to do do either one of two things:
+        // then we need to do do either one of two things
         if (discardStyleProps(this)) {
           // we discard the local props and just assign the inline policy as the master
           curr.master = props;
