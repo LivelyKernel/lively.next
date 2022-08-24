@@ -493,19 +493,12 @@ class WorldDashboard extends Morph {
       opacity: 1, duration: 300
     });
     const worldCommits = await this.db.latestCommits('world');
-    const previewSpec = part(WorldPreviewTile); // eslint-disable-line no-use-before-define
     this.previews = worldCommits.map(commit => {
-      const placeholder = morph({
-        reactsToPointer: false,
-        fill: Color.transparent,
-        clipMode: 'hidden',
-        dropShadow: previewSpec.dropShadow,
-        extent: previewSpec.extent
-      });
+      const placeholder = part(Placeholder); // eslint-disable-line no-use-before-define
 
       placeholder._commit = commit;
       placeholder.displayPreview = async () => {
-        const preview = previewSpec.copy();
+        const preview = part(WorldPreviewTile); // eslint-disable-line no-use-before-define
         preview.dropShadow = null;
         preview._commit = commit;
         preview.opacity = 0;
@@ -856,6 +849,14 @@ export class WorldPreview extends Morph {
   }
 }
 
+const Placeholder = component({
+  reactsToPointer: false,
+  fill: Color.transparent,
+  clipMode: 'hidden',
+  dropShadow: new ShadowObject({ distance: 20, rotation: 75, color: Color.rgba(0, 0, 0, 0.11), blur: 50 }),
+  extent: pt(245, 368.2)
+});
+
 // VersionContainer.openInWorld()
 const VersionContainer = component({
   type: WorldVersionViewer,
@@ -916,7 +917,7 @@ const VersionContainer = component({
   })]
 });
 
-// WorldPreview.openInWorld()
+// part(WorldPreviewTile).openInWorld()
 const WorldPreviewTile = component({
   type: WorldPreview,
   name: 'world preview',
@@ -1039,7 +1040,7 @@ const WorldPreviewTile = component({
   }]
 });
 
-// WorldBrowser.openInWorld()
+// part(WorldBrowser).openInWorld()
 const WorldBrowser = component({
   type: WorldDashboard,
   name: 'world browser',
