@@ -483,10 +483,6 @@ export class CheckBox extends Morph {
     if (this.active) this.trigger();
   }
 
-  render (renderer) {
-    return renderer.renderCheckBox(this);
-  }
-
   patchSpecialProps (node) {
     if (this.renderingState.specialProps.checked !== this.checked) {
       node.firstChild.checked = this.checked;

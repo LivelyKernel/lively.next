@@ -2430,20 +2430,12 @@ export class Morph {
   // rendering
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  makeDirty (change) {
-    // for notifying renderer that this morph needs to be updated. The flag is
-    // reset by aboutToRender() which then transitions the morph to the
-    // _rendering = true state. This gets reset in MorphAfterRenderHook when
-    // the render process is done
+  makeDirty () {
     this._dirty = true;
     if (this.owner) this.owner.makeDirty();
   }
 
   needsRerender () { return this._dirty; }
-
-  aboutToRender (renderer) {
-    this._dirty = false; this._rendering = true;
-  }
 
   onAfterRender (node) {}
 
@@ -2451,14 +2443,6 @@ export class Morph {
     return this.env.whenRendered(this, maxChecks)
       .then(() => true)
       .catch(() => false);
-  }
-
-  render (renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
-    return renderer.renderMorph(this);
   }
 
   getNodeForRenderer (renderer) {
@@ -2636,14 +2620,6 @@ export class Ellipse extends Morph {
     };
   }
 
-  render (renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
-    return renderer.renderEllipse(this);
-  }
-
   renderStyles (styleProps) {
     delete styleProps.borderRadius;
     styleProps['border-radius'] = '50%';
@@ -2771,14 +2747,6 @@ export class Image extends Morph {
   }
 
   determineNaturalExtent () { return this.whenLoaded().then(() => this.naturalExtent); }
-
-  render (renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
-    return renderer.renderImage(this);
-  }
 
   getNodeForRenderer (renderer) {
     return renderer.nodeForImage(this);
@@ -3357,14 +3325,6 @@ export class Path extends Morph {
     const { length, point: insertionPoint } = this.findClosestPointOnPath(point, 10, 3);
     const insertBefore = length <= closestLength ? closestV : next ? next.vertex : null;
     return this.addVertex(insertionPoint, insertBefore);
-  }
-
-  render (renderer) {
-    if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
-      this._requestMasterStyling = false;
-    }
-    return renderer.renderPath(this);
   }
 
   renderStyles (style) {

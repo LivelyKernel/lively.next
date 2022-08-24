@@ -2555,11 +2555,6 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
-
-  aboutToRender (renderer) {
-    super.aboutToRender(renderer);
-  }
-
   applyLayoutIfNeeded () {
     if (this._requestMasterStyling) {
       this.master && this.master.applyIfNeeded(true);

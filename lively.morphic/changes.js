@@ -182,7 +182,7 @@ export class ChangeManager {
       change.value && change.value.isDocument ||
       !obj.equals(change.prevValue,change.value)
       ) {
-       morph.makeDirty(change);
+       morph.makeDirty();
        morph.renderingState.needsRerender = true;
     }
 
