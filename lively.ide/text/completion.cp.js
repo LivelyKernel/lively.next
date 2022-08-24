@@ -8,7 +8,6 @@ const AutocompleteList = component({
   borderWidth: 0,
   name: 'autocomplete list',
   extent: pt(400, 360),
-  position: pt(81.7, 337.4),
   renderOnGPU: true,
   selectedAction: 'default',
   submorphs: [{
