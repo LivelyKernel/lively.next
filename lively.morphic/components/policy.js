@@ -1,48 +1,17 @@
-import { arr, tree, Path, promise, obj } from 'lively.lang';
-import { resource } from 'lively.resources';
+import { arr, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import { copy, ExpressionSerializer } from 'lively.serializer2';
-import { once } from 'lively.bindings';
-import { ProportionalLayout } from '../layout.js';
-import { morph, getStylePropertiesFor } from '../helpers.js';
+import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 
-const exprSerializer = new ExpressionSerializer();
+const skippedValue = Symbol.for('lively.skip-property');
+const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 
-// debugging
-export function getOverriddenPropsFor (aMorph) {
-  const policyOwner = aMorph.ownerChain().find(m => m.master);
-  if (aMorph.master) {
-    return {
-      local: obj.keys(aMorph.master._overriddenProps.get(aMorph)),
-      owner: obj.keys(policyOwner?.master._overriddenProps.get(aMorph))
-    };
+function getOverriddenMaster (spec, localMaster) {
+  let inlineMaster = spec.master?.stylePolicy || spec.master;
+  if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover']) && !inlineMaster.auto) {
+    inlineMaster.auto = localMaster.parent; // ensure auto is present
   }
-  return policyOwner && obj.keys(policyOwner.master._overriddenProps.get(aMorph));
-}
-
-export function printOverriddenProps (aMorph) {
-  const overriddenPropsInHierarchy = {};
-  const getMasterForMorph = (m) => {
-    for (let o of m.ownerChain()) {
-      if (o.master?.managesMorph(m)) return o.master;
-      if (o === aMorph) return false;
-    }
-  };
-  const gatherOverriddenProps = (m, master) => {
-    let info = overriddenPropsInHierarchy[m.name] || [];
-    info.push(master.__serialize__().__expr__ + ' => ' + Object.keys(master._overriddenProps.get(m)));
-    overriddenPropsInHierarchy[m.name] = info;
-  };
-  aMorph.withAllSubmorphsDo(m => {
-    const master = getMasterForMorph(m);
-    if (master) {
-      gatherOverriddenProps(m, master);
-    }
-    if (m.master) {
-      gatherOverriddenProps(m, m.master);
-    }
-  });
-  return overriddenPropsInHierarchy;
+  if (inlineMaster && !inlineMaster.isPolicy) return new PolicyApplicator({}, inlineMaster); // eslint-disable-line no-use-before-define
+  return inlineMaster;
 }
 
 // property merging
