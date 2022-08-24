@@ -4,7 +4,7 @@ import { getClassName } from 'lively.serializer2';
 import { epiConnect, signal } from 'lively.bindings';
 import { deserializeMorph, serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName, morph } from '../helpers.js';
-import { mergeInHierarchy, StylePolicy, PolicyApplicator } from './policy.js';
+import { mergeInHierarchy, PolicyApplicator } from './policy.js';
 
 /**
  * By default component() or part() calls return morph instances. However when we evalute top level
@@ -34,24 +34,12 @@ let evaluateAsSpec = false;
 export class ComponentDescriptor {
   /**
    * The old deprecated static component initializer. This is what the transpiled
-   * code of a master component definition utilizes. It evaluates to a morphic structure
-   * which allows for easy traversal and property handling but severely degrades performance.
-   * Using for() is therefore deprecated.
-   */
-  static for (generatorFunction, meta, previousDescriptor) {
-    if (previousDescriptor && previousDescriptor.isComponentDescriptor) {
-      return previousDescriptor.init(generatorFunction, meta);
-    }
-    return new ComponentDescriptor(generatorFunction, meta);
-  }
-
-  /**
-   * Alternative to for() and instead evaluates the component definition to an
+   * code of a master component definition utilizes. It evaluates to an
    * internal spec representation, which avoids any morphic related initialization
    * and object allocations. Allows for fast component definition initalization, derivation
    * and style application.
    */
-  static abstract (generatorFunction, meta, previousDescriptor) {
+  static for (generatorFunction, meta, previousDescriptor) {
     const spec = this.extractSpec(generatorFunction);
     if (previousDescriptor && previousDescriptor.isComponentDescriptor) {
       return previousDescriptor.init(spec, meta);
@@ -107,66 +95,30 @@ export class ComponentDescriptor {
     }
     this[Symbol.for('lively-module-meta')] = meta;
 
-    this.notifyDependents(); // get the derived components to notice!
     return this;
   }
 
-  getSourceCode () {
-    // returns the symbolic expression that creates the component.
-    // This is the core of the reconciliation algorithm.
-  }
-
+  /**
+   * Create a policy that is derived from the current one.
+   * @param { object } spec - The overridden properties that "extends" the policy.
+   * @returns { PolicyApplicator } The new derived policy.
+   */
   extend (spec) {
-    // create an abstract inline policy. For that we need to figure out how that should be encoded exactly
     return new PolicyApplicator(spec, this);
   }
 
-  getInlinePolicy (path) {
-
-  }
-
-  derive (props, asComponentProxy = false) {
-    let m;
-    if (this._snap) {
-      // this should be both be able to serve an initial component and an initial part....
-      m = deserializeMorph(this._snap, { reinitializeIds: true, migrations: [] });
-    } else if (this.generatorFunction) {
-      m = this.generatorFunction(); // more expensive
-      this.defaultViewModel = m.defaultViewModel;
-      this.viewModelClass = m.viewModelClass; // can this be done better??
-      this._snap = m._snap;
-    } else if (this.stylePolicy) {
-      return this.stylePolicy.instantiate(props);
-    }
-    if (asComponentProxy) return m;
-    m.master = this;
-    m.withAllSubmorphsDo(m => delete m._parametrizedProps);
-    return m;
-  }
-
-  getComponent () {
-    let c = this._cachedComponent;
-    return c || (
-      c = this.derive({}, true),
-      c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
-      this._cachedComponent = c
-    );
+  /**
+   * Creates a morph from the policy.
+   * @param { object } props - The overridden properties that apply for this concrete instantiation.
+   * @param { boolean } asComponentProxy - Wether or not the created morph should serve as a direct manipulation representation of the policy definition.
+   * @returns { Morph } The derived morph.
+   */
+  derive (props) {
+    return this.stylePolicy.instantiate(props);
   }
 
   getInstance (props) {
-    if (!this._cachedComponent) this.getComponent(); // always create component first
     return this.derive(props);
-  }
-
-  async edit () {
-    const { ComponentChangeTracker } = await System.import('lively.ide/component/editor.js');
-    const c = this.getComponent();
-    if (!c._changeTracker) { new ComponentChangeTracker(c); }
-    c.openInWorld();
-  }
-
-  notifyDependents () {
-    signal(this, 'changed');
   }
 }
 
@@ -569,58 +521,15 @@ function mergeInModelProps (root, props) {
  * @returns { Morph } A new morph derived from the master component.
  */
 export function part (componentDescriptor, overriddenProps = {}) {
-  let p;
-
   if (evaluateAsSpec) {
     return componentDescriptor.extend(overriddenProps); // creates an abstract inline policy
   }
 
-  // FIXME: maybe handle these 2 cases entirely via Applicators
   if (componentDescriptor.isComponentDescriptor) {
-    p = componentDescriptor.getInstance(overriddenProps);
-    if (componentDescriptor.stylePolicy) return p; // to prevent the vanilla stuff from breaking
+    return componentDescriptor.getInstance(overriddenProps);
   } else if (componentDescriptor.isPolicy) {
-    p = componentDescriptor.instantiate(overriddenProps);
-    return p;
-  } else {
-    // snapshot dance... this should be moved into ComponentDescriptor.derive()
-    p = deserializeMorph(componentDescriptor._snap, { reinitializeIds: true, migrations: [] });
-    p.withAllSubmorphsDo(m => delete m._parametrizedProps); // we do not need to take into account parametrized props from the deserialization
-    // end of snapshot dance...
+    return componentDescriptor.instantiate(overriddenProps);
   }
-
-  p.master = overriddenProps.master || componentDescriptor;
-
-  p.withAllSubmorphsDo(m => {
-    if (m.viewModel) m.viewModel.attach(m);
-    if (m.master) {
-      m.master._overriddenProps = new WeakMap(); // clear the local overridden props since they are not needed (new instance)!
-      m.master.applyIfNeeded(true);
-    }
-  });
-
-  p.withMetaDo({ metaInteraction: false }, () => mergeInMorphicProps(p, overriddenProps));
-
-  p.withAllSubmorphsDo(m => {
-    if (m.master) m.master.applyIfNeeded(true);
-  });
-
-  const viewModelClass = overriddenProps.viewModelClass || componentDescriptor.viewModelClass || overriddenProps.defaultViewModel || componentDescriptor.defaultViewModel;
-  if (viewModelClass) {
-    let params = overriddenProps.viewModel;
-    if (!params && p.viewModel) {
-      params = obj.select(p.viewModel, p.viewModel.styleProperties);
-      // remove the keys that are undefined manually
-      for (let key in params) {
-        if (params[key] === undefined) delete params[key];
-      }
-    }
-    if (!params) params = {};
-    p.viewModel = new viewModelClass(params); // why cant we rewrap?
-    p.viewModel.attach(p);
-  }
-  mergeInModelProps(p, overriddenProps);
-  return p;
 }
 
 /**
@@ -688,8 +597,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   return c;
 }
 
-component.for = ComponentDescriptor.for;
-
+component.for = (generator, meta, prev) => ComponentDescriptor.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
 /**
  * Function that will wrap a morph's name and declare
  * that this morph is removed from the submorph array it is located in.
