@@ -5,11 +5,12 @@ import ASTQ from 'esm://cache/astq@2.7.5';
 import { parse } from 'lively.ast';
 import { Range } from 'lively.morphic/text/range.js';
 import { module } from 'lively.modules/index.js';
-import { connect } from 'lively.bindings';
+import { connect, signal } from 'lively.bindings';
 import lint from '../js/linter.js';
 import { ImportInjector } from 'lively.modules/src/import-modification.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
+import { ComponentDescriptor } from 'lively.morphic';
 
 const astq = new ASTQ();
 astq.adapter('mozast');
@@ -713,5 +714,32 @@ export class ComponentChangeTracker {
       }
       delete this._finishPromise;
     })();
+  }
+}
+
+class InteractiveComponentDescriptor extends ComponentDescriptor {
+  getComponent () {
+    let c = this._cachedComponent;
+    return c || (
+      c = this.getInstance(),
+      c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
+      this._cachedComponent = c
+    );
+  }
+
+  async edit () {
+    const c = this.getComponent();
+    if (!c._changeTracker) { new ComponentChangeTracker(c); }
+    c.openInWorld();
+  }
+
+  init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
+    const descr = super.init(generatorFunctionOrInlinePolicy, meta);
+    this.notifyDependents(); // get the derived components to notice!
+    return descr;
+  }
+
+  notifyDependents () {
+    signal(this, 'changed');
   }
 }
