@@ -683,6 +683,7 @@ export class BrowserModel extends ViewModel {
     this.ui.evalBackendButton.target = this.view;
     new EvalBackendChooser().buildEvalBackendDropdownFor(this, this.ui.evalBackendButton);
     this.ui.tabs.addTab('Browser Tab', null);
+    this.ui.verticalResizer.movedVerticallyBy(0); // FIXME: in order to avoid the master from inserting the wrong position...
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
