@@ -1,6 +1,6 @@
 /* global Map */
 import { Color, Rectangle, pt } from 'lively.graphics';
-import { morph, ShadowObject, StyleSheet } from 'lively.morphic';
+import { part } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import { arr, string } from 'lively.lang';
 import { FilterableList } from 'lively.components/list.js';
@@ -16,19 +16,19 @@ export class WordCompleter {
     const words = [];
     const completions = [];
     const lines = textMorph.document.lineStrings;
-    const { row, column } = textMorph.cursorPosition;
+    const { row } = textMorph.cursorPosition;
     const basePriority = 1000;
 
-    for (var i = row - 1; i >= 0; i--) {
-      for (var word of lines[i].split(/[^0-9a-z@_]+/i)) {
+    for (let i = row - 1; i >= 0; i--) {
+      for (let word of lines[i].split(/[^0-9a-z@_]+/i)) {
         if (!word || words.includes(word) || word === prefix) continue;
         words.push(word);
         completions.push({ priority: basePriority - (row - i), completion: word });
       }
     }
 
-    for (var i = row + 1; i < lines.length; i++) {
-      for (var word of lines[i].split(/[^0-9a-z_@]+/i)) {
+    for (let i = row + 1; i < lines.length; i++) {
+      for (let word of lines[i].split(/[^0-9a-z_@]+/i)) {
         if (!word || words.includes(word) || word === prefix) continue;
         words.push(word);
         completions.push({ priority: basePriority - (i - row), completion: word });
@@ -39,7 +39,7 @@ export class WordCompleter {
   }
 }
 
-export var defaultCompleters = [
+export const defaultCompleters = [
   new WordCompleter()
 ];
 
@@ -143,12 +143,12 @@ export class CompletionController {
     // want to consider the static priority of the item itself but adjust it
     // across the priority of all items
     if (!item._cache) item._cache = {};
-    var cache = item._cache[parsedInput.input] || (item._cache[parsedInput.input] = {});
+    let cache = item._cache[parsedInput.input] || (item._cache[parsedInput.input] = {});
     if (cache.hasOwnProperty('sortVal')) return cache.sortVal;
 
-    var cache = item._cache[parsedInput.input] = {};
-    var { highestPriority, completion, priority } = item.value;
-    var completion = completion.replace(/\([^\)]*\)$/, '').toLowerCase();
+    cache = item._cache[parsedInput.input] = {};
+    let { highestPriority, completion, priority } = item.value;
+    completion = completion.replace(/\([^\)]*\)$/, '').toLowerCase();
 
     let boosted = 0;
     parsedInput.lowercasedTokens.forEach(t => {
@@ -178,7 +178,7 @@ export class CompletionController {
 
   async completionListSpec () {
     const m = this.textMorph;
-    const { fontSize, fontFamily, fontColor } = m;
+    const { fontSize, fontFamily } = m;
     const position = this.positionForMenu();
     const prefix = this.prefix();
     const { items, maxCol } = await this.computeCompletions(prefix);
@@ -213,7 +213,7 @@ export class CompletionController {
     }
 
     return {
-      master: AutocompleteList,
+      type: FilterableList,
       hasFixedPosition: true,
       epiMorph: true,
       fontSize,
@@ -224,7 +224,24 @@ export class CompletionController {
       name: 'text completion menu',
       historyId: 'lively.morphic-text completion',
       filterFunction: this.filterFunction,
-      sortFunction: this.sortFunction
+      sortFunction: this.sortFunction,
+      renderOnGPU: true,
+      selectedIndex: 0,
+      submorphs: [
+        {
+          name: 'input',
+          fontColor: m.fontColor,
+          clipMode: 'visible',
+          fill: m.fill,
+          fixedHeight: true,
+          fixedWidth: false,
+          padding: Rectangle.inset(0, 0, 0, 0)
+        },
+        {
+          name: 'padding',
+          height: 2
+        }
+      ]
     };
   }
 
@@ -244,8 +261,7 @@ export class CompletionController {
   async openCompletionList () {
     const currentCursorPos = this.textMorph.selection.start;
     const spec = await this.completionListSpec();
-    const { theme } = this.textMorph.pluginFind(p => p.theme) || {};
-    const menu = new FilterableList(spec);
+    const menu = part(AutocompleteList, spec);
     const intermittendTextRange = new Range({
       start: currentCursorPos,
       end: this.textMorph.selection.start
@@ -259,13 +275,13 @@ export class CompletionController {
       fill: Color.transparent,
       bounds: input.textBounds()
     }, input);
-    list.master = null;
+
     if (!intermittendTextRange.isEmpty()) {
       this.textMorph.deleteText(intermittendTextRange);
       input.input = intermittendInput;
       input.gotoDocumentEnd();
     }
-    input.fontColor = this.textMorph.fontColor;
+    // input.fontColor = this.textMorph.fontColor;
     connect(input, 'textString', mask, 'setBounds', {
       converter: '() => input.textBounds()',
       varMapping: { input }
@@ -295,29 +311,16 @@ export class CompletionController {
 
     // fixme: the styling of the completion menu should be defined by the theme itself
     list.addStyleClass('hiddenScrollbar');
-    menu.paddingMorph.height = 2;
     input.height = list.itemHeight;
-    input.clipMode = 'visible';
-    input.fill = this.textMorph.fill;
-    input.fixedHeight = true;
     input.fontSize = list.fontSize;
-
     menu.relayout();
-    input.fixedWidth = false;
-    input.width = 0;
-    menu.renderOnGPU = true;
-    menu.selectedIndex = 0;
 
-    menu.master.applyIfNeeded(true); // apply the master in order to position correctly
     input.focus(); // get the focus already, to receive all text input while style is being applied
-    await menu.master.whenApplied();
-    // menu.moveBy(pt(1, 1));
     if (prefix.length) {
       input.gotoDocumentEnd();
       menu.moveBy(pt(-input.textBounds().width, 0));
     }
     world.addMorph(menu);
-    menu.inputPadding = Rectangle.inset(0, 0, 0, 0);
     return menu;
   }
 
@@ -346,7 +349,7 @@ export class CompletionController {
   }
 }
 
-export var completionCommands = [
+export const completionCommands = [
 
   {
     name: 'text completion',
