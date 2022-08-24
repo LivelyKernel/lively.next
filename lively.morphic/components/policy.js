@@ -573,20 +573,17 @@ export class StylePolicy {
    * @param { function } [checkNext = () => true] - Custom checker that allows us to control how far we traverse the derivation chain to synthesize the sub spec.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, ignoreOverriddenMaster = false) {
     if (!checkNext(this)) return {};
-    const klass = this.constructor;
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
 
-    if (!qualifyingMaster) return subSpec;
+    if (!qualifyingMaster) {
+      return subSpec;
+    }
     if (subSpec.isPolicy) {
-      // if (this.overriddenMaster) {
-      //   const alternativeSubSpec = this.overriddenMaster.getSubSpecFor(submorphNameInPolicyContext);
-      //   if (alternativeSubSpec.isPolicy) return new klass({ ...subSpec.spec, master: alternativeSubSpec }, subSpec.parent);
-      // }
-      return subSpec; // this prevents any ability for the overriddenMaster to have an effect here
+      return subSpec;
     }
 
     let nextLevelSpec = {};
@@ -595,25 +592,38 @@ export class StylePolicy {
     }
 
     if (checkNext(qualifyingMaster)) {
-      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext);
+      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, ignoreOverriddenMaster);
       if (nextLevelSpec.isPolicy) return nextLevelSpec;
     }
 
-    let synthesized = {};
-
+    let synthesized = {}; let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
-    if (this.overriddenMaster) {
-      let topLevelComponent = qualifyingMaster;
-      const overriddenSynthesizedSpec = this.overriddenMaster.synthesizeSubSpec(null, parentOfScope);
-      while (topLevelComponent.parent) topLevelComponent = topLevelComponent.parent;
+    if (overriddenMaster && !ignoreOverriddenMaster) {
+      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
+      if (nextLevelSpec.fontColor &&
+          !overriddenMasterSynthesizedSpec.fontColor &&
+          overriddenMaster.managesMorph(submorphNameInPolicyContext)) {
+        overriddenMasterSynthesizedSpec.fontColor = getDefaultValueFor(nextLevelSpec.type, 'fontColor');
+      }
+      if (nextLevelSpec.fill &&
+          !overriddenMasterSynthesizedSpec.fill &&
+          overriddenMaster.managesMorph(submorphNameInPolicyContext)) {
+        overriddenMasterSynthesizedSpec.fill = getDefaultValueFor(nextLevelSpec.type, 'fill');
+      }
       Object.assign(
         synthesized,
-        // fill in the top level props just in case they are needed (propably mostly overridden)
-        topLevelComponent.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope),
-        // add in the style props for the adjusted master
-        overriddenSynthesizedSpec, // what if this is a policy??
+        // fill in the top level props just in case they are needed to serve as "defaults" (propably mostly overridden)
+        nextLevelSpec,
         // adhere to the overridden props of the structural derivation
-        qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, (next) => next !== topLevelComponent),
+        // we sometimes do not apply implicitly assumed default values for props of the overridden master
+        // at this point we should provide that
+        obj.dissoc(
+          overriddenMasterSynthesizedSpec,
+          !submorphNameInPolicyContext &&
+          !!nextLevelSpec.extent
+            ? ['extent']
+            : []
+        ), // special handling of extent
         subSpec
       );
       // this approach only works for root! We need to be also checking if there is a recently introduced scope?
@@ -637,7 +647,7 @@ export class StylePolicy {
     const matchingNode = tree.find(this.spec, node => {
       if (node.COMMAND === 'add') return node.props.name === submorphName;
       return node.name === submorphName;
-    }, node => node.submorphs);
+    }, node => node.submorphs || node.props?.submorphs);
     return matchingNode ? matchingNode.props || matchingNode : null;
   }
 
@@ -762,10 +772,10 @@ export class PolicyApplicator extends StylePolicy {
     });
   }
 
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext);
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, ignoreOverriddenMasters = false) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, ignoreOverriddenMasters);
     if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
-      return PolicyApplicator.for(subSpec);
+      return new PolicyApplicator({}, subSpec);
     }
     return subSpec;
   }
