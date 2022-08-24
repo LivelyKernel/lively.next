@@ -32,7 +32,7 @@ to
         for (let i = 0; i < value.length; i += 2) {
           const attr = value[i + 1];
           if (attr && Array.isArray(attr)) { // merge multi-attributes
-            value[i + 1] = Object.assign({}, ...attr); 
+            value[i + 1] = Object.assign({}, ...attr);
           }
         }
         serialized.props.textAndAttributes = { ...textAndAttributes, value };
@@ -335,7 +335,7 @@ For now only a simple default theme...
       return idAndSnapshot;
     }
   },
-  
+
   {
     date: '2022-01-14',
     name: 'migrate comments browser to new components architecture and rebuild rather than save the instances',
@@ -355,9 +355,9 @@ For now only a simple default theme...
         if (snapshot[c].props.targetObj.value.id in referencesToRemove) delete snapshot[c];
       });
       referencesToRemove.forEach(k => delete snapshot[k]);
-      
+
       removeUnreachableObjects([rootId], snapshot);
-  
+
       return idAndSnapshot;
     }
   },
@@ -369,8 +369,7 @@ For now only a simple default theme...
       for (const key in snapshot) {
         const serialized = snapshot[key];
         const klass = serialized['lively.serializer-class-info'];
-        if (!klass) continue;
-        if (klass.module.pathInPackage.endsWith('prompts.js')) {
+        if (klass?.module?.pathInPackage.endsWith('prompts.js')) {
           delete serialized['lively.serializer-class-info'];
         }
       }
@@ -385,8 +384,7 @@ For now only a simple default theme...
       for (const key in snapshot) {
         const serialized = snapshot[key];
         const klass = serialized['lively.serializer-class-info'];
-        if (!klass) continue;
-        if (klass.module.pathInPackage.endsWith('browser/index.js') && klass.name === 'Browser') {
+        if (klass?.module?.pathInPackage.endsWith('browser/index.js') && klass.name === 'Browser') {
           delete snapshot[key];
         }
       }
