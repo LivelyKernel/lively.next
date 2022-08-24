@@ -34,7 +34,7 @@ function detach (descriptorOrPolicy) {
   }, node => node.submorphs);
 }
 
-const TLA = ComponentDescriptor.abstract(() => component({
+const TLA = ComponentDescriptor.for(() => component({
   name: 'tla',
   fill: Color.orange,
   submorphs: [
@@ -45,7 +45,7 @@ const TLA = ComponentDescriptor.abstract(() => component({
   moduleId
 });
 
-const TLB = ComponentDescriptor.abstract(() => component(TLA, {
+const TLB = ComponentDescriptor.for(() => component(TLA, {
   name: 'tlb',
   fill: Color.green,
   submorphs: [
@@ -74,7 +74,7 @@ class TestViewModel extends ViewModel {
   }
 }
 
-const e1 = ComponentDescriptor.abstract(() => component({
+const e1 = ComponentDescriptor.for(() => component({
   name: 'e1',
   fill: Color.red,
   submorphs: [
@@ -91,7 +91,7 @@ const e1 = ComponentDescriptor.abstract(() => component({
   moduleId
 });
 
-const e2 = ComponentDescriptor.abstract(() => component(e1, {
+const e2 = ComponentDescriptor.for(() => component(e1, {
   name: 'e2',
   fill: Color.yellow,
   extent: pt(50, 50),
@@ -124,7 +124,7 @@ const e2 = ComponentDescriptor.abstract(() => component(e1, {
   moduleId
 });
 
-const e3 = ComponentDescriptor.abstract(() => component(e2, {
+const e3 = ComponentDescriptor.for(() => component(e2, {
   name: 'e3',
   submorphs: [
     {
@@ -140,12 +140,12 @@ const e3 = ComponentDescriptor.abstract(() => component(e2, {
   moduleId
 });
 
-const d1 = ComponentDescriptor.abstract(() => component({ name: 'd1', fill: Color.purple, opacity: 0.5 }), {
+const d1 = ComponentDescriptor.for(() => component({ name: 'd1', fill: Color.purple, opacity: 0.5 }), {
   exportedName: 'd1',
   moduleId
 });
-const d2 = ComponentDescriptor.abstract(() => component({ name: 'd2', fill: Color.black }));
-const c1 = ComponentDescriptor.abstract(() => component({
+const d2 = ComponentDescriptor.for(() => component({ name: 'd2', fill: Color.black }));
+const c1 = ComponentDescriptor.for(() => component({
   name: 'c1',
   fill: Color.red
 }), {
@@ -153,7 +153,7 @@ const c1 = ComponentDescriptor.abstract(() => component({
   moduleId
 });
 
-const c2 = ComponentDescriptor.abstract(() => component({
+const c2 = ComponentDescriptor.for(() => component({
   name: 'c2',
   defaultViewModel: TestViewModel,
   fill: Color.green,
@@ -167,7 +167,7 @@ const c2 = ComponentDescriptor.abstract(() => component({
   moduleId
 });
 
-const d3 = ComponentDescriptor.abstract(() => component(c2, {
+const d3 = ComponentDescriptor.for(() => component(c2, {
   name: 'd3',
   fill: Color.cyan,
   submorphs: [
@@ -179,7 +179,7 @@ const d3 = ComponentDescriptor.abstract(() => component(c2, {
   ]
 }));
 
-const c3 = ComponentDescriptor.abstract(() => component({
+const c3 = ComponentDescriptor.for(() => component({
   name: 'c3',
   fill: Color.orange,
   submorphs: [part(c2, {
@@ -187,7 +187,7 @@ const c3 = ComponentDescriptor.abstract(() => component({
     submorphs: [{ name: 'alice', master: d2 }]
   })]
 }));
-const c4 = ComponentDescriptor.abstract(() => component(c3, {
+const c4 = ComponentDescriptor.for(() => component(c3, {
   name: 'c4',
   submorphs: [
     { name: 'foo', master: d3 }
@@ -389,7 +389,7 @@ describe('spec based components', () => {
   });
 
   it('creates properly collapsed overridden properties when master of inline policy gets overridden', () => {
-    const c = ComponentDescriptor.abstract(() => component(e2, {
+    const c = ComponentDescriptor.for(() => component(e2, {
       name: 'c',
       submorphs: [
         { name: 'foo', master: e2 }
@@ -414,7 +414,7 @@ describe('spec based components', () => {
       master: e2.stylePolicy
     }, e2.stylePolicy.getSubSpecFor('foo'), true));
 
-    const d = ComponentDescriptor.abstract(() => component(e3, {
+    const d = ComponentDescriptor.for(() => component(e3, {
       name: 'd',
       submorphs: [
         { name: 'foo', master: e3 }, // causes the collapse of the overridden props of the inline policy of foo
@@ -462,7 +462,7 @@ describe('spec based components', () => {
   });
 
   it('can override masters with dispatch logic', () => {
-    const c = ComponentDescriptor.abstract(() => component(e2, {
+    const c = ComponentDescriptor.for(() => component(e2, {
       name: 'c',
       submorphs: [
         {
@@ -479,7 +479,7 @@ describe('spec based components', () => {
   });
 
   it('removes morphs if declared as such', () => {
-    const c = ComponentDescriptor.abstract(() => component(e2, {
+    const c = ComponentDescriptor.for(() => component(e2, {
       name: 'c',
       submorphs: [
         without('alice')
@@ -582,14 +582,14 @@ describe('components', () => {
 
   it('prevents accumulation of overridden props', () => {
     // let's create a couple of derived components from c1
-    const A = ComponentDescriptor.abstract(() => component(c1, {
+    const A = ComponentDescriptor.for(() => component(c1, {
       name: 'A',
       fill: Color.green,
       borderWidth: 5,
       borderRadius: 10
     }));
 
-    const B = ComponentDescriptor.abstract(() => component(A, {
+    const B = ComponentDescriptor.for(() => component(A, {
       name: 'B',
       fill: Color.orange,
       borderWidth: 0
@@ -649,7 +649,7 @@ describe('components', () => {
   });
 
   it('does not create superflous overridden props', () => {
-    const B = ComponentDescriptor.abstract(() => component(c2, {
+    const B = ComponentDescriptor.for(() => component(c2, {
       submorphs: [
         {
           name: 'alice',
@@ -670,7 +670,7 @@ describe('components', () => {
   });
 
   it('does honor overridden props in case of nested masters when manually applied to different hierarchy', () => {
-    const T1 = ComponentDescriptor.abstract(() => component(c2, {
+    const T1 = ComponentDescriptor.for(() => component(c2, {
       master: d3,　// this master again does not override the locally overridden props
       name: 't1',
       submorphs: [
@@ -728,7 +728,7 @@ describe('components', () => {
   });
 
   it('does not enforce masters on newly introduced morphs with a different master', () => {
-    const T1 = ComponentDescriptor.abstract(() => component(c2, {
+    const T1 = ComponentDescriptor.for(() => component(c2, {
       name: 't1',
       submorphs: [
         {
@@ -747,7 +747,7 @@ describe('components', () => {
   });
 
   it('includes added morphs into inline policies', () => {
-    const t1 = ComponentDescriptor.abstract(() => component(c2, {
+    const t1 = ComponentDescriptor.for(() => component(c2, {
       name: 't1',
       submorphs: [
         {
