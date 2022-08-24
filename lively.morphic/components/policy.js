@@ -5,15 +5,6 @@ import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js'
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 
-function getOverriddenMaster (spec, localMaster) {
-  let inlineMaster = spec.master?.stylePolicy || spec.master;
-  if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover']) && !inlineMaster.auto) {
-    inlineMaster.auto = localMaster.parent; // ensure auto is present
-  }
-  if (inlineMaster && !inlineMaster.isPolicy) return new PolicyApplicator({}, inlineMaster); // eslint-disable-line no-use-before-define
-  return inlineMaster;
-}
-
 // property merging
 export function mergeInHierarchy (
   root,
@@ -165,11 +156,21 @@ export class StylePolicy {
    * @type { StylePolicy | undefined }
    */
   get overriddenMaster () {
-    const overridden = this.spec.master !== this && this.spec.master;
+    const overridden = this._getOverriddenMaster(this.spec, this);
+    if (overridden && overridden === this) return null;
     if (overridden?.isComponentDescriptor) {
       return overridden.stylePolicy;
     }
     return overridden;
+  }
+
+  _getOverriddenMaster (spec, localMaster) {
+    let inlineMaster = spec.master?.stylePolicy || spec.master;
+    if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover']) && !inlineMaster.auto) {
+      inlineMaster.auto = localMaster.parent; // ensure auto is present
+    }
+    if (inlineMaster && !inlineMaster.isPolicy) return new PolicyApplicator({}, inlineMaster); // eslint-disable-line no-use-before-define
+    return inlineMaster;
   }
 
   __serialize__ (pool) {
@@ -216,7 +217,7 @@ export class StylePolicy {
    */
   ensureStylePoliciesInSpec (spec) {
     const klass = this.constructor;
-    const overriddenMaster = getOverriddenMaster(spec, this);
+    const overriddenMaster = this._getOverriddenMaster(spec, this);
     const getLocalMaster = (name) => {
       const localMaster = overriddenMaster && overriddenMaster.getSubSpecFor(name);
       if (localMaster && !localMaster.isPolicy && !localMaster.isComponentDescriptor) return false;
