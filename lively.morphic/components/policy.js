@@ -786,6 +786,7 @@ export class PolicyApplicator extends StylePolicy {
         let submorphName = null;
         if (morphInScope !== targetMorph) submorphName = morphInScope.name;
         const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph);
+        if (obj.isEmpty(synthesizedSpec)) return;
         if (synthesizedSpec.isPolicy) {
           morphInScope.setProperty('master', synthesizedSpec); // might be redundant
           synthesizedSpec.targetMorph = morphInScope;
