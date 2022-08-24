@@ -1,10 +1,10 @@
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
-import { epiConnect, signal } from 'lively.bindings';
-import { deserializeMorph, serializeMorph } from '../serialization.js';
+import { epiConnect } from 'lively.bindings';
+import { serializeMorph } from '../serialization.js';
 import { sanitizeFont, getClassForName, morph } from '../helpers.js';
-import { mergeInHierarchy, PolicyApplicator } from './policy.js';
+import { PolicyApplicator } from './policy.js';
 
 /**
  * By default component() or part() calls return morph instances. However when we evalute top level
@@ -485,31 +485,6 @@ export class ViewModel {
     this.onRefresh();
     this.viewDidLoad();
   }
-}
-
-function mergeInMorphicProps (root, props) {
-  const layoutAssignments = [];
-  mergeInHierarchy(root, props, (aMorph, props) => {
-    if (props.master) {
-      aMorph.master = props.master; // assign master before anything else
-    }
-    Object.assign(aMorph, obj.dissoc(props, ['submorphs', 'viewModel', 'layout', 'master']));
-    if (props.layout) layoutAssignments.push([aMorph, props.layout]);
-  }, true);
-  for (let [aMorph, layout] of layoutAssignments) {
-    aMorph.layout = layout; // trigger assignment now after commands have run through
-  }
-}
-
-function mergeInModelProps (root, props) {
-  mergeInHierarchy(root, props, (aMorph, props) => {
-    if (aMorph.viewModel && props.viewModel) {
-      Object.assign(aMorph.viewModel, props.viewModel);
-    }
-    if (aMorph.viewModel !== props.viewModel && props.viewModel && props.viewModel instanceof ViewModel) {
-      props.viewModel.attach(aMorph);
-    }
-  });
 }
 
 /**
