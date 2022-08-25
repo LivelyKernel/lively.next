@@ -1008,7 +1008,10 @@ const TopBarButton = component({
   type: Label,
   name: 'top bar button',
   fontColor: Color.rgb(102, 102, 102),
-  fontSize: 23,
+  fontSize: {
+    value: 23,
+    onlyAtInstantiation: true
+  },
   nativeCursor: 'pointer',
   padding: rect(0, 1, 0, -1)
 });
