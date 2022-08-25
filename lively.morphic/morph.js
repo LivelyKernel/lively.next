@@ -1598,7 +1598,7 @@ export class Morph {
   }
 
   addMorph (submorph, insertBeforeMorph) {
-    if (!this._isInline) this.renderingState.hasStructuralChanges = true;
+    this.renderingState.hasStructuralChanges = true;
     // insert at right position in submorph list, according to insertBeforeMorph
     const submorphs = this.submorphs;
     const insertBeforeMorphIndex = insertBeforeMorph
@@ -1638,9 +1638,7 @@ export class Morph {
       morph._owner = null;
     });
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
-    if (!this._isInline) {
-      this.renderingState.hasStructuralChanges = true;
-    }
+    this.renderingState.hasStructuralChanges = true;
   }
 
   /**

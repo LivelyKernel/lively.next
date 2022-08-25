@@ -1,10 +1,6 @@
-import { obj, promise, string, properties } from 'lively.lang';
-import { Rectangle, Color } from 'lively.graphics';
-import { signal } from 'lively.bindings';
-
+import {  promise } from 'lively.lang';
+import { Color } from 'lively.graphics';
 import { Icon } from './icons.js';
-
-import { splitTextAndAttributesIntoLines } from './attributes.js';
 import { Text } from './morph.js';
 
 

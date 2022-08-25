@@ -220,21 +220,6 @@ export default class FontMetric {
     return this._domMeasure.defaultCharExtent(morph, null, rendertTextLayerFn);
   }
 
-  manuallyComputeCharBoundsOfLine (
-    morph, line, offsetX = 0, offsetY = 0, styleOpts,
-    rendertTextLayerFn, renderLineFn
-  ) {
-    return this._domMeasure.computeCharBBoxes(
-      morph,
-      line,
-      (offsetX = 0),
-      (offsetY = 0),
-      styleOpts,
-      rendertTextLayerFn,
-      renderLineFn,
-      this);
-  }
-
   newManuallyComputeCharBoundsOfLine (
     morph, line, offsetX = 0, offsetY = 0,
     rendertTextLayerFn, renderLineFn
@@ -249,48 +234,15 @@ export default class FontMetric {
       renderLineFn,
       this);
   }
-
-  // TODO: This can be deleted after moving to the new renderer, since it was only used in a shortcut that has become obsolete when rendering without VDOM. 
-  manuallyComputeBoundsOfLines (
-    morph, lines, offsetX = 0, offsetY = 0, styleOpts,
-    rendertTextLayerFn, renderLineFn
-  ) {
-    return this._domMeasure.computeBBoxesOfLines(
-      morph, lines, offsetX = 0, offsetY = 0, styleOpts,
-      rendertTextLayerFn, renderLineFn);
-  }
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // font measuring inside text
 
 function textlayerNodeForFontMeasure (morph) {
-  if (morph.isSmartText) {
-    if (window.stage0renderer && window.stage0renderer.getNodeForMorph(morph) && window.stage0renderer.getNodeForMorph(morph).querySelector('.font-measure')) return window.stage0renderer.getNodeForMorph(morph).querySelector('.font-measure');
+    let node = $world.env.renderer.getNodeForMorph(morph)
+    if (node) return node.querySelector(`#${morph.id}font-measure`);
     return null;
-  }
-  let { text_layer_node, fontmetric_text_layer_node } = morph.viewState;
-
-  // due to vdom, references to actual nodes don't guarantee that a node is
-  // used in the way we think it would...
-  if (text_layer_node) {
-    if (!text_layer_node.className.includes('newtext-text-layer')) {
-      morph.viewState.text_layer_node = text_layer_node =
-        text_layer_node.parentNode.querySelector('.newtext-text-layer.actual');
-    }
-  }
-  if (fontmetric_text_layer_node) {
-    if (!fontmetric_text_layer_node.className.includes('newtext-text-layer')) {
-      morph.viewState.fontmetric_text_layer_node = fontmetric_text_layer_node = null;
-    }
-  }
-
-  if (text_layer_node && !fontmetric_text_layer_node && text_layer_node.parentNode) {
-    fontmetric_text_layer_node = morph.viewState.fontmetric_text_layer_node =
-      text_layer_node.parentNode.querySelector('.newtext-text-layer.font-measure');
-  }
-
-  return fontmetric_text_layer_node;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -442,56 +394,6 @@ class DOMTextMeasure {
           width: width / testStringW.length,
           height: Math.ceil(height / 4)
         };
-      });
-  }
-
-  computeBBoxesOfLines (
-    morph, lines, offsetX = 0, offsetY = 0, styleOpts,
-    rendertTextLayerFn, renderLineFn
-  ) {
-    const styleKey = this.generateStyleKey(styleOpts);
-    const result = new Array(lines.length);
-    let allInCache = true;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const cached = !line.textAttributes.length && // if line has attributes, don't use cache
-                this.lineBBoxCache[styleKey + '_' + lines[i].text];
-      if (cached && cached.height && cached.width) result[i] = cached;
-      else allInCache = false;
-    }
-
-    if (allInCache) return result;
-
-    return this.withTextLayerNodeDo(
-      morph, rendertTextLayerFn, styleOpts, styleKey,
-      (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
-        // render in once go, then read, not intermixed!
-        const lineNodes = new Array(lines.length);
-        const results = new Array(lines.length);
-        for (let i = 0; i < lines.length; i++) {
-          if (results[i]) continue;
-          const lineNode = renderLineFn(lines[i]);
-          // FIXME!!!!
-          lineNode.style.display = 'inline-block';
-          textNode.appendChild(lineNode);
-          lineNodes[i] = lineNode;
-        }
-        for (let i = 0; i < lineNodes.length; i++) {
-          if (results[i]) continue;
-          const node = lineNodes[i];
-          const { left, top, width, height } = node.getBoundingClientRect();
-
-          this.lineBBoxCache[styleKey + '_' + lines[i].text] = results[i] = {
-            x: left - node.offsetLeft + offsetX - textNodeOffsetLeft,
-            y: top - node.offsetTop + offsetY - textNodeOffsetTop,
-            width,
-            height
-          };
-        }
-
-        for (let i = 0; i < lineNodes.length; i++) { textNode.removeChild(lineNodes[i]); }
-
-        return results;
       });
   }
 

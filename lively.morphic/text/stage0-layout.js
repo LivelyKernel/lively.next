@@ -278,19 +278,10 @@ export default class NewLayout {
 
     const cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
-    const { x: width, y: height } = morph.getProperty('extent');
-    const {
-      fontMetric,
-      defaultTextStyle,
-      clipMode, textAlign, padding, lineWrapping
-    } = morph;
-    const transform = morph.getGlobalTransform();
-    const paddingLeft = padding.left();
-    const paddingRight = padding.right();
-    const paddingTop = padding.top();
-    const paddingBottom = padding.bottom();
-    const directRenderLineFn = window.stage0renderer.lineNodeFunctionFor(morph);
-    const directRenderTextLayerFn = window.stage0renderer.textLayerNodeFunctionFor(morph);
+    const {fontMetric } = morph;
+
+    const directRenderLineFn = $world.env.renderer.lineNodeFunctionFor(morph);
+    const directRenderTextLayerFn = $world.env.renderer.textLayerNodeFunctionFor(morph);
 
     const charBounds = fontMetric.newManuallyComputeCharBoundsOfLine(
       morph, line, 0, 0, directRenderTextLayerFn, directRenderLineFn);
