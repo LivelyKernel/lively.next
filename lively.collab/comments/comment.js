@@ -115,7 +115,7 @@ export class CommentModel extends ViewModel {
     this.abortCommentEdit();
     this.comment.toggleResolveStatus();
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    commentBrowser.viewModel.removeCommentForMorph(this.comment, this.referenceMorph);
+    commentBrowser.viewModel.removeCommentForMorph(this.comment, this.referenceMorph, true);
   }
 
   removeComment () {

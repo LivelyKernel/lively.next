@@ -75,8 +75,6 @@ export class CommentBrowserModel extends ViewModel {
    * @param {Morph} morph
    */
   addCommentForMorph (comment, morph) {
-    console.log(`Adding a comment ${comment.text} from morph ${morph.name}`);
-
     if (comment.isResolved() !== this.showsResolvedComments) {
       return;
     }
@@ -95,7 +93,7 @@ export class CommentBrowserModel extends ViewModel {
    * @param {CommentData} - The `Comment` to be deleted
    * @param {Morph} - The `Morph` this comment was made on
    */
-  removeCommentForMorph (comment, morph) {
+  removeCommentForMorph (comment, morph, forResolve = false) {
     const groupOfCommentMorph = this.commentGroups[morph.id];
     // This can happen when deleting a morph and thus calling `emptyComments()`
     if (!groupOfCommentMorph) return;
@@ -103,7 +101,7 @@ export class CommentBrowserModel extends ViewModel {
     if (groupOfCommentMorph.getCommentCount() === 0) {
       this.removeCommentGroupFor(morph.id);
     }
-    this.updateCommentCountBadge(true);
+    this.updateCommentCountBadge(!forResolve);
   }
 
   /**
