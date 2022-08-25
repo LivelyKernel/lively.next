@@ -44,7 +44,15 @@ export class Label extends Text {
         derived: true,
         after: ['textAndAttributes'],
         get () { return this.textAndAttributes.map((text, i) => i % 2 == 0 ? text : '').join(''); },
-        set (value) { this.textAndAttributes = [value, null]; }
+        set (value) {
+          // This is only needed because the timing of the Text -> Label transition is messed up....
+          if (this.document) {
+            value = (value !== null) ? String(value) : '';
+            this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
+            this.insertText(value, { column: 0, row: 0 });
+          } 
+          this.textAndAttributes = [String(value), null]; 
+        }
       },
 
       textAndAttributes: {
