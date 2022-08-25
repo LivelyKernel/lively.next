@@ -458,7 +458,6 @@ export class Text extends Morph {
       textAndAttributes: {
         group: 'text',
         after: ['document', 'submorphs'],
-        //derived: true, // TODO: is this correct?
         renderSynchronously: true,
         get () {
           if (this.document && !this._isUpgrading) return this.document.textAndAttributes;
@@ -815,8 +814,7 @@ export class Text extends Morph {
     this.undoManager.reset();
     this.makeInteractive();
 
-    // this.fit();
-    // todo: why exactly was this needed?
+    // TODO: why exactly was this needed?
     // Update position after fit
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
@@ -1964,7 +1962,6 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   makeUninteractive () {
-    this._node = null;
     this._isDowngrading = true;
     let textAndAttributes = this.document.lines.map(l => l.textAndAttributes);
     textAndAttributes = textAndAttributes.filter(ta => !(ta[0] === '' && ta[1] === null));
@@ -1977,7 +1974,6 @@ export class Text extends Morph {
   }
 
   makeInteractive () {
-    this._node = null;
     this._isUpgrading = true;
     this.document = Document.fromString('', {
       maxLeafSize: 50,
@@ -2574,7 +2570,7 @@ export class Text extends Morph {
   }
 
   getNodeForRenderer (renderer) {
-    return this._node || renderer.nodeForText(this);
+    return renderer.nodeForText(this);
   }
 
   patchSpecialProps (node, renderer) {
@@ -2889,7 +2885,6 @@ export class Text extends Morph {
       const textPos = this.textPositionFromPoint(this.localize(evt.hand.globalPosition));
       this.insertText([morphs[0], null], textPos);
       morphs[0].opacity = evt.state.originalOpacity || 1;
-      morphs[0]._isInline = true;
       this.renderingState.needsRerender = true;
     }
   }
