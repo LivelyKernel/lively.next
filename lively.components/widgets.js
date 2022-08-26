@@ -424,6 +424,8 @@ export class ValueScrubber extends Text {
   }
 
   set value (v) {
+    // FIXME: This is a hack as long as the Text/Label abstraction is broken
+    if (!this.labelMode && !this.document) this.makeInteractive();
     v = Math.max(this.min, Math.min(this.max, v));
     if (!this.isBeingDragged) { this.scrubbedValue = v; }
     let textString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);

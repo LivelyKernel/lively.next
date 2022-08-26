@@ -265,7 +265,7 @@ export class Text extends Morph {
 
       labelMode: {
         group: 'text',
-        isStyleProp: true,
+        // isStyleProp: true,
         // FIXME
         defaultValue: false,
         after: ['textAndAttributes'],
@@ -376,11 +376,11 @@ export class Text extends Morph {
         set (selOrRange) {
           // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
           const currentSel = this.getProperty('selection');
+          if (this._isDowngrading || this._isUpgrading) {
+            this.setProperty('selection', null);
+            return;
+          }
           if (!selOrRange && currentSel) {
-            if (this._isDowngrading) {
-              this.setProperty('selection', null);
-              return;
-            }
             if (currentSel.isMultiSelection) {
               currentSel.disableMultiSelect();
             }
@@ -453,8 +453,8 @@ export class Text extends Morph {
       // default font styling
       textAndAttributes: {
         group: 'text',
-        derived: true,
         after: ['document', 'submorphs'],
+        //derived: true, // TODO: is this correct?
         renderSynchronously: true,
         get () {
           if (this.document && !this._isUpgrading) return this.document.textAndAttributes;
@@ -474,13 +474,15 @@ export class Text extends Morph {
             );
             this.fit(); // exemption for fixed width/height is handled in fit method 
           } else { // "label mode"
-            if (!Array.isArray(textAndAttributes)) textAndAttributes = String(textAndAttributes).split(/(?<=\n)/).map(line => [line, null]);
-            else if (textAndAttributes.length === 0) textAndAttributes = ['', {}];
-            else if (!this._isDowngrading) {
-              textAndAttributes = splitTextAndAttributesIntoLines(textAndAttributes);
+            if (!this.valueAndAnnotationMode) {
+              if (!Array.isArray(textAndAttributes)) textAndAttributes = String(textAndAttributes).split(/(?<=\n)/).map(line => [line, null]);
+              else if (textAndAttributes.length === 0) textAndAttributes = ['', {}];
+              else if (!this._isDowngrading) {
+                textAndAttributes = splitTextAndAttributesIntoLines(textAndAttributes);
+              }
             }
             this.setProperty('textAndAttributes', textAndAttributes);
-            signal(this, 'value', textAndAttributes);
+            // signal(this, 'value', textAndAttributes);
           }
         }
       },
@@ -1407,9 +1409,9 @@ export class Text extends Morph {
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
     // if (this._isDeserializing) return;
-    // const vs = this.viewState;
+    const vs = this.viewState;
     // if (!vs) return;
-    // if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
+    if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
     const tl = this.textLayout;
     if (tl) {
       if (resetCharBoundsCache) tl.resetLineCharBoundsCache(this);
@@ -1688,7 +1690,9 @@ export class Text extends Morph {
 
     const morphsInAddedText = [];
     for (let i = 0; i < textAndAttributes.length; i = i + 2) {
-      const content = textAndAttributes[i]; const attrs = textAndAttributes[i + 1];
+      const content = textAndAttributes[i];
+      if (!content) break;
+      const attrs = textAndAttributes[i + 1];
       if (content.isMorph) morphsInAddedText.push(content);
       if (attrToExtend) textAndAttributes[i + 1] = { ...attrToExtend, ...attrs };
     }
@@ -1760,7 +1764,7 @@ export class Text extends Morph {
     const { embeddedMorphMap } = this;
     for (let i = 0; i < removedTextAndAttributes.length; i = i + 2) {
       const content = removedTextAndAttributes[i];
-      if (content.isMorph && !morphsInAddedText.includes(content)) {
+      if (content && content.isMorph && !morphsInAddedText.includes(content)) {
         if (embeddedMorphMap) {
           const existing = embeddedMorphMap.get(content);
           if (existing && existing.anchor) {
@@ -1958,7 +1962,8 @@ export class Text extends Morph {
   makeUninteractive () {
     this._node = null;
     this._isDowngrading = true;
-    const textAndAttributes = this.document.lines.map(l => l.textAndAttributes);
+    let textAndAttributes = this.document.lines.map(l => l.textAndAttributes);
+    textAndAttributes = textAndAttributes.filter(ta => !(ta[0] === '' && ta[1] === null));
     this.document = null;
     this.textLayout = null;
     this.textAndAttributes = textAndAttributes;
@@ -1977,7 +1982,8 @@ export class Text extends Morph {
       minNodeSize: 7
     });
     let textAndAttributesToInsert;
-    if (!arr.equals(this.textAndAttributes, ['', null])) {
+    if (this.isMenuItem || this.isListItem) textAndAttributesToInsert = this.textAndAttributes 
+    else if (!arr.equals(this.textAndAttributes, ['', null])) {
       textAndAttributesToInsert = this.textAndAttributes.flatMap(textAndAttributesPerLine => {
         textAndAttributesPerLine[textAndAttributesPerLine.length - 2] += '\n';
         return textAndAttributesPerLine;
@@ -2498,14 +2504,21 @@ export class Text extends Morph {
       // }
     } else { // label mode
       this.withMetaDo({ skipReconciliation: true }, () => {
-        this.extent = this.textBounds().extent().addXY(
-          this.borderWidthLeft + this.borderWidthRight,
-          this.borderWidthTop + this.borderWidthBottom
-        );
+        // TODO: handle cases were only one side is fixed
+        if (this.fixedWidth && this.fixedHeight){
+          this.width = this.width;
+          this.height = this.height;
+        }
+        else {
+          this.extent = this.textBounds().extent().addXY(
+            this.borderWidthLeft + this.borderWidthRight,
+            this.borderWidthTop + this.borderWidthBottom
+          );
+        }
       });
       if (!this.visible) {
         this._cachedTextBounds = null;
-      } else this._needsFit = false;
+      } else this.viewState._needsFit = false;
       return this;
     }
 
@@ -2543,13 +2556,6 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
 
-  forceRerender () {
-    // expensive!
-    // this.textLayout.reset();
-    // this.makeDirty();
-    this._node = window.stage0renderer.renderMorph(this, true);
-  }
-
   aboutToRender (renderer) {
     super.aboutToRender(renderer);
   }
@@ -2575,6 +2581,11 @@ export class Text extends Morph {
       this.invalidateTextLayout(true, true);
       renderer.renderTextAndAttributes(node, this);
     }
+
+    const currentTextLayerStyleObject = this.styleObject();
+      if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
+        renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
+      }
 
     // FIXME: this is not an adequate separation, read only should also support e.g. line height
     // take care of this when fixing the conceptual separation between both
@@ -2602,10 +2613,6 @@ export class Text extends Morph {
 
       if (this.renderingState.scrollActive !== this.scrollActive) {
         renderer.patchClipModeForText(node, this, this.scrollActive);
-      }
-      const currentTextLayerStyleObject = this.styleObject();
-      if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
-        renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
       }
       if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
          (this.renderingState.fixedWidth !== this.fixedWidth)) {

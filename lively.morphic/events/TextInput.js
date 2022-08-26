@@ -181,7 +181,7 @@ export default class TextInput {
     if (bowser.firefox) // FF needs an extra invitation...
     { Promise.resolve().then(() => node.getRootNode().activeElement !== node && node.focus()); }
 
-    if (morph && morph.isText && morph.focusable) {
+    if (morph && morph.isText && morph.focusable && !morph.labelMode) {
       // need this even if node === activeElement
       // to bring up virtual keyboard on iPad
       if (touchInputDevice) node.focus();

@@ -60,9 +60,15 @@ export class ListItemMorph extends Label {
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
-    if (item.annotation) this.valueAndAnnotation = { value: label, annotation: item.annotation };
-    else if (typeof label === 'string') this.textString = label;
-    else this.value = label;
+    if (item.annotation){
+      this.valueAndAnnotation = { value: label, annotation: item.annotation }
+    }
+    else if (typeof label === 'string') this.textAndAttributes = label;
+    // It is actually very important to use setProperty here
+    // triggering the textAndAttributes setter will sometimes fuckup the values in label
+    // this his rather a hack than a nice solution, and should be changed again
+    // when there is a working and unified implementation of text and labels in the same way
+    else this.setProperty('textAndAttributes', label);
 
     this.tooltip = item.tooltip || this.tooltip || this.textString;
     if (item.tooltip === false) this.tooltip = false;
