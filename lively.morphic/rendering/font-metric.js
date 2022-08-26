@@ -305,7 +305,7 @@ class DOMTextMeasure {
   }
 
   generateStyleKey (styleOpts) {
-    if (styleOpts.isMorph) {
+    if (!styleOpts.isMorph) {
       const {
 
         fontFamily,
@@ -317,7 +317,7 @@ class DOMTextMeasure {
 
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
-      } = styleOpts; // textmorph
+      } = styleOpts;
       return [
         fontFamily,
         fontSize,
@@ -409,12 +409,13 @@ class DOMTextMeasure {
         const _ = textNode.appendChild(lineNode);
         let result;
         if (line.stringSize > 10000) {
-          // FIXME: is this method working with new smarttext?
           result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
-            morph, fontMetric, line, lineNode,
+            morph, 
+            line,
+            lineNode,
             offsetX,
             offsetY,
-            styleOpts, renderTextLayerFn)
+            renderTextLayerFn)
         } else {
           result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
           offsetX - textNodeOffsetLeft,
@@ -512,22 +513,20 @@ const getComputedMarginLeft = typeof GLOBAL.getComputedStyle === 'function'
   ? node => parseInt(GLOBAL.getComputedStyle(node).marginLeft) || 0
   : () => 0;
 
-function charBoundsOfBigMonospacedLine (
-  morph, fontMetric, line, lineNode,
-  offsetX = 0, offsetY = 0,
-  styleOpts, directRenderTextLayerFn
-) {
+function charBoundsOfBigMonospacedLine (morph, line, lineNode, offsetX = 0, offsetY = 0, directRenderTextLayerFn) {
   const textLength = line.text.length;
 
-  if (textLength < 500 || fontMetric.isProportional(getComputedFontFamily(lineNode))) { return null; }
+  if (textLength < 500 || $world.env.fontMetric.isProportional(getComputedFontFamily(lineNode))) { return null; }
 
   let lineWidth = Infinity;
-  const { defaultTextStyle, lineWrapping } = styleOpts;
 
-  if (lineWrapping) { ({ width: lineWidth } = lineNode.getBoundingClientRect()); }
+  if (morph.lineWrapping) { ({ width: lineWidth } = lineNode.getBoundingClientRect()); }
 
-  const { width, height } = fontMetric._domMeasure.defaultCharExtent(
-    morph, { defaultTextStyle }, directRenderTextLayerFn);
+  let { width, height } = $world.env.fontMetric._domMeasure.defaultCharExtent(
+    morph, morph.defaultTextStyle, directRenderTextLayerFn);
+
+  height = morph.fontSize * morph.lineHeight;
+
   let x = offsetX;
   let y = offsetY;
   const result = new Array(textLength);
