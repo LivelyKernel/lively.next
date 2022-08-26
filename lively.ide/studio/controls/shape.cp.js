@@ -465,7 +465,9 @@ const ShapeControl = component({
         fontSize: 13,
         fontFamily: 'IBM Plex Mono',
         padding: rect(8, 0, -1, 0),
-        textAndAttributes: ['X', null]
+        textAndAttributes: ['X', {
+          textStyleClasses: [''],
+        }]
       }]
     }), part(DarkNumberIconWidget, {
       name: 'y input',
@@ -478,7 +480,9 @@ const ShapeControl = component({
         padding: rect(7, 0, 0, 0),
         fontFamily: 'IBM Plex Mono',
         fontSize: 13,
-        textAndAttributes: ['Y', null]
+        textAndAttributes: ['Y', {
+          textStyleClasses: [''],
+        }]
       }]
     }), { opacity: 0, name: 'buffer after position', width: 25 },
     part(DarkNumberIconWidget, {

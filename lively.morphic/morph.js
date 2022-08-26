@@ -564,7 +564,7 @@ export class Morph {
             this.renderingState.hasCSSLayoutChange = true;
             value.container = this;
           }
-           this.setProperty('layout', value);
+          this.setProperty('layout', value);
         }
       },
 
@@ -1639,8 +1639,8 @@ export class Morph {
     });
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
     if (!this._isInline) {
-      this.renderingState.hasStructuralChanges = true
-    };
+      this.renderingState.hasStructuralChanges = true;
+    }
   }
 
   /**

@@ -343,12 +343,12 @@ export class Menu extends Morph {
 
     this.submorphs.forEach(ea => {
       if (ea.isLabel) {
-        ea.fit();
         ea.autofit = false;
         ea.fixedWidth = true;
         ea.fixedHeight = true;
       }
       ea.width = maxWidth;
+      if (ea.fit) ea.fit();
     });
 
     this.extent = pt(maxWidth + pRight + pLeft, pos.y + pBottom);
