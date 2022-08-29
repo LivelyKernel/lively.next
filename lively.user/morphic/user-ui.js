@@ -14,9 +14,6 @@ import { ClientUser } from 'lively.user/index.js';
 // import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
 import { gapi } from 'https://apis.google.com/js/platform.js';
 import ObjectPackage from 'lively.classes/object-classes.js';
-import { TopBar } from 'lively.ide/studio/top-bar.cp.js';
-import { Flap } from 'lively.ide/studio/sidebar-flap.cp.js';
-import { LivelyVersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -64,7 +61,8 @@ export var UserUI = {
   },
 
   // fixme: move this logic into the top bar itself...
-  showUserFlap (world = $world) {
+  async showUserFlap (world = $world) {
+    const { TopBar } = await System.import('lively.ide/studio/top-bar.cp.js');
     const topBar = part(TopBar);
     topBar.epiMorph = true;
     topBar.name = 'lively top bar';
@@ -107,11 +105,13 @@ export var UserUI = {
           duration: 500
         });
       }
+      const { LivelyVersionChecker } = await System.import('lively.ide/studio/version-checker.cp.js');
       const versionChecker = part(LivelyVersionChecker);
       versionChecker.name = 'lively version checker';
       versionChecker.openInWorld();
       versionChecker.relayout();
       versionChecker.checkVersion();
+      const { Flap } = await System.import('lively.ide/studio/sidebar-flap.cp.js');
       part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
       part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
     })();
