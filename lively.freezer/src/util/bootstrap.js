@@ -3,8 +3,8 @@ import { resource, unregisterExtension, registerExtension, loadViaScript } from 
 import { string, obj } from 'lively.lang';
 import * as modulePackage from 'lively.modules';
 import { easings } from 'lively.morphic';
-import { adoptObject } from 'lively.classes/runtime.js';
 import { resourceExtension as partResourceExtension } from 'lively.morphic/partsbin.js';
+import { adoptObject } from 'lively.lang/object.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -148,7 +148,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         initBaseURL = initBaseURL.slice(0, -1);
       }
       const packageCached = await resource(baseURL).join('package-registry.json').readJson();
-      await loadViaScript(resource(baseURL).join('/lively.next-node_modules/babel-standalone/babel.js').url);
+      await loadViaScript(resource(baseURL).join('/lively.next-node_modules/@babel/standalone/babel.js').url);
       await loadViaScript(resource(baseURL).join('/lively.next-node_modules/systemjs/dist/system.src.js').url);
       await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
       const System = lively.modules.getSystem('bootstrapped', { baseURL });
@@ -176,7 +176,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         );
       }
     }).then(async function () {
-      progress.animate({ opacity: 1, easing: easings.outExpo, duration: 300 });
+      progress.animate({ opacity: 1, easing: easings.outExpo });
       if (loadConfig['lively.ast'] === 'dynamic' && !fastLoad) {
         return importPackageAndDo(
           'lively.ast',
@@ -299,10 +299,7 @@ function fastPrepLivelySystem (li) {
 export async function bootstrap ({ filePath, worldName, snapshot, commit, loadingIndicator: li, progress, logError = (err) => console.log(err) }) {
   try {
     const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.user":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
-    progress.opacity = 0;
-    progress.hasFixedPosition = true;
-    progress.openInWorld();
-    progress.bottomCenter = li.topCenter;
+    li.center = progress.bottomCenter;
     await polyfills();
     const oldEnv = $world.env;
     doBootstrap ? await bootstrapLivelySystem(li, progress, loadConfig) : await fastPrepLivelySystem(li);
