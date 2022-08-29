@@ -14,7 +14,6 @@ import { BrowserModuleTranslationCache } from 'lively.modules/src/cache.js';
 import * as modules from 'lively.modules';
 import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
-import { ComponentBrowser } from './studio/component-browser.cp.js';
 import { WorldBrowser } from './studio/world-browser.cp.js';
 
 const commands = [
@@ -915,6 +914,7 @@ const commands = [
     name: 'browse and load component',
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
+      const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
       if (!world._componentsBrowser) await li.whenRendered();
       const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = part(ComponentBrowser));
       li.remove();
