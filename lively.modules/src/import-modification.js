@@ -255,10 +255,10 @@ export class GlobalInjector {
   static getGlobals (src, optAst) {
     const parsed = optAst || fuzzyParse(src, { withComments: true });
     const globalComment = parsed.comments
-      ? parsed.comments.find(c => c.isBlock && c.text.startsWith('global'))
+      ? parsed.comments.find(c => c.isBlock && c.text.match(/^\s*global/))
       : null;
     const declaredGlobals = globalComment
-      ? globalComment.text.replace(/^global\s*/, '')
+      ? globalComment.text.replace(/^\s*global\s*/, '')
         .split(',').map(ea => ea.trim()).filter(Boolean)
       : [];
     const knownGlobals = [...declaredGlobals, ...query.knownGlobals];
