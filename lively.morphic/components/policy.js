@@ -717,6 +717,22 @@ export class PolicyApplicator extends StylePolicy {
 
   toString () { return '<PolicyApplicator>'; }
 
+  /**
+   * Evaluates to true, in case the policy changes its style in response to click states.
+   */
+  get respondsToClick () {
+    if (this._clickMaster) return true;
+    return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
+  }
+
+  /**
+   * Evaluates to true, in case the policy changes its style in response to hover events.
+   */
+  get respondsToHover () {
+    if (this._hoverMaster) return true;
+    return !!this.parent?.respondsToHover || !!this.overriddenMaster?.respondsToHover;
+  }
+
   asBuildSpec (discardStyleProps = () => true) {
     const spec = super.asBuildSpec(discardStyleProps);
     // this does not ensure that overridden props are getting carried over
@@ -802,7 +818,6 @@ export class PolicyApplicator extends StylePolicy {
    * @param { object } styleProps - The props to be applied as key,value pairs.
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
-  // FIXME: How to avoid unnessecary applies? We dont want to apply nor synthesize stuff that does not have any effect.
   applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
