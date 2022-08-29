@@ -89,7 +89,7 @@ export class Morph {
             this.setProperty('master', policy);
             if (policy?.isPolicyApplicator) policy.attach(this); // FIXME: remove that
           }
-          if (policy) this.requestMasterStyling();
+          if (this.master) this.requestMasterStyling();
         }
       },
 
@@ -1238,18 +1238,8 @@ export class Morph {
   }
 
   onSubmorphChange (change, submorph) {
-    if (this.isComponent && !PropertyPath('meta.metaInteraction').get(change) && !PropertyPath('meta.layoutAction').get(change)) {
-      const world = this.world();
-      world && world.withAllSubmorphsDo(m => {
-        if (m.master && m.master.uses(this)) {
-          m.requestMasterStyling();
-        }
-      });
-    }
-    if (this.master) {
-      this.master.onMorphChange(submorph, change);
-    }
-    this.layout && this.layout.onSubmorphChange(submorph, change);
+    this.master?.onMorphChange(submorph, change);
+    this.layout?.onSubmorphChange(submorph, change);
   }
 
   get changes () { return this.env.changeManager.changesFor(this); }
