@@ -5419,7 +5419,7 @@ function requirePonyfill_es2018 () {
 	return ponyfill_es2018.exports;
 }
 
-var _5_2_1 = {};
+var _5_6_0 = {};
 
 var b64 = {};
 
@@ -5640,15 +5640,19 @@ function require_1_1_4 () {
  * @license  MIT
  */
 
-var hasRequired_5_2_1;
+var hasRequired_5_6_0;
 
-function require_5_2_1 () {
-	if (hasRequired_5_2_1) return _5_2_1;
-	hasRequired_5_2_1 = 1;
+function require_5_6_0 () {
+	if (hasRequired_5_6_0) return _5_6_0;
+	hasRequired_5_6_0 = 1;
 	(function (exports) {
 
 		var base64 = requireB64();
 		var ieee754 = require_1_1_4();
+		var customInspectSymbol =
+		  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
+		    ? Symbol.for('nodejs.util.inspect.custom')
+		    : null;
 
 		exports.Buffer = Buffer;
 		exports.SlowBuffer = SlowBuffer;
@@ -5685,7 +5689,9 @@ function require_5_2_1 () {
 		  // Can typed array instances can be augmented?
 		  try {
 		    var arr = new Uint8Array(1);
-		    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } };
+		    var proto = { foo: function () { return 42 } };
+		    Object.setPrototypeOf(proto, Uint8Array.prototype);
+		    Object.setPrototypeOf(arr, proto);
 		    return arr.foo() === 42
 		  } catch (e) {
 		    return false
@@ -5714,7 +5720,7 @@ function require_5_2_1 () {
 		  }
 		  // Return an augmented `Uint8Array` instance
 		  var buf = new Uint8Array(length);
-		  buf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(buf, Buffer.prototype);
 		  return buf
 		}
 
@@ -5741,17 +5747,6 @@ function require_5_2_1 () {
 		  return from(arg, encodingOrOffset, length)
 		}
 
-		// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-		if (typeof Symbol !== 'undefined' && Symbol.species != null &&
-		    Buffer[Symbol.species] === Buffer) {
-		  Object.defineProperty(Buffer, Symbol.species, {
-		    value: null,
-		    configurable: true,
-		    enumerable: false,
-		    writable: false
-		  });
-		}
-
 		Buffer.poolSize = 8192; // not used by this implementation
 
 		function from (value, encodingOrOffset, length) {
@@ -5764,7 +5759,7 @@ function require_5_2_1 () {
 		  }
 
 		  if (value == null) {
-		    throw TypeError(
+		    throw new TypeError(
 		      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
 		      'or Array-like Object. Received type ' + (typeof value)
 		    )
@@ -5772,6 +5767,12 @@ function require_5_2_1 () {
 
 		  if (isInstance(value, ArrayBuffer) ||
 		      (value && isInstance(value.buffer, ArrayBuffer))) {
+		    return fromArrayBuffer(value, encodingOrOffset, length)
+		  }
+
+		  if (typeof SharedArrayBuffer !== 'undefined' &&
+		      (isInstance(value, SharedArrayBuffer) ||
+		      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
 		    return fromArrayBuffer(value, encodingOrOffset, length)
 		  }
 
@@ -5816,8 +5817,8 @@ function require_5_2_1 () {
 
 		// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 		// https://github.com/feross/buffer/pull/148
-		Buffer.prototype.__proto__ = Uint8Array.prototype;
-		Buffer.__proto__ = Uint8Array;
+		Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype);
+		Object.setPrototypeOf(Buffer, Uint8Array);
 
 		function assertSize (size) {
 		  if (typeof size !== 'number') {
@@ -5921,7 +5922,8 @@ function require_5_2_1 () {
 		  }
 
 		  // Return an augmented `Uint8Array` instance
-		  buf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(buf, Buffer.prototype);
+
 		  return buf
 		}
 
@@ -6243,6 +6245,9 @@ function require_5_2_1 () {
 		  if (this.length > max) str += ' ... ';
 		  return '<Buffer ' + str + '>'
 		};
+		if (customInspectSymbol) {
+		  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect;
+		}
 
 		Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
 		  if (isInstance(target, Uint8Array)) {
@@ -6368,7 +6373,7 @@ function require_5_2_1 () {
 		        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 		      }
 		    }
-		    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+		    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
 		  }
 
 		  throw new TypeError('val must be string, number or Buffer')
@@ -6697,7 +6702,7 @@ function require_5_2_1 () {
 
 		  var out = '';
 		  for (var i = start; i < end; ++i) {
-		    out += toHex(buf[i]);
+		    out += hexSliceLookupTable[buf[i]];
 		  }
 		  return out
 		}
@@ -6734,7 +6739,8 @@ function require_5_2_1 () {
 
 		  var newBuf = this.subarray(start, end);
 		  // Return an augmented `Uint8Array` instance
-		  newBuf.__proto__ = Buffer.prototype;
+		  Object.setPrototypeOf(newBuf, Buffer.prototype);
+
 		  return newBuf
 		};
 
@@ -7223,6 +7229,8 @@ function require_5_2_1 () {
 		    }
 		  } else if (typeof val === 'number') {
 		    val = val & 255;
+		  } else if (typeof val === 'boolean') {
+		    val = Number(val);
 		  }
 
 		  // Invalid ranges are not set to a default, so can range check early.
@@ -7278,11 +7286,6 @@ function require_5_2_1 () {
 		    str = str + '=';
 		  }
 		  return str
-		}
-
-		function toHex (n) {
-		  if (n < 16) return '0' + n.toString(16)
-		  return n.toString(16)
 		}
 
 		function utf8ToBytes (string, units) {
@@ -7414,8 +7417,22 @@ function require_5_2_1 () {
 		  // For IE11 support
 		  return obj !== obj // eslint-disable-line no-self-compare
 		}
-} (_5_2_1));
-	return _5_2_1;
+
+		// Create lookup table for `toString('hex')`
+		// See: https://github.com/feross/buffer/issues/219
+		var hexSliceLookupTable = (function () {
+		  var alphabet = '0123456789abcdef';
+		  var table = new Array(256);
+		  for (var i = 0; i < 16; ++i) {
+		    var i16 = i * 16;
+		    for (var j = 0; j < 16; ++j) {
+		      table[i16 + j] = alphabet[i] + alphabet[j];
+		    }
+		  }
+		  return table
+		})();
+} (_5_6_0));
+	return _5_6_0;
 }
 
 /* c8 ignore start */
@@ -7447,7 +7464,7 @@ if (!globalThis.ReadableStream) {
 try {
   // Don't use node: prefix for this, require+node: is not supported until node v14.14
   // Only `import()` can use prefix in 12.20 and later
-  const { Blob } = require_5_2_1();
+  const { Blob } = require_5_6_0();
   if (Blob && !Blob.prototype.stream) {
     Blob.prototype.stream = function name (params) {
       let position = 0;
@@ -13423,9 +13440,9 @@ function ensurePackageMap (packageCollectionDirs, individualPackageDirs, devPack
 function packageDirsFromEnv () {
   let env = process.env;
   return {
-    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean),
-    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean),
-    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean)
+    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean))],
+    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean))],
+    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean))]
   };
 }
 
