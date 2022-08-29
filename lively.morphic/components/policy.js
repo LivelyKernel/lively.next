@@ -355,7 +355,7 @@ export class StylePolicy {
   instantiate (props = {}) {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    const inst = morph(new PolicyApplicator(props, this).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
+    const inst = morph(new PolicyApplicator(props, this).asBuildSpec()); // eslint-disable-line no-use-before-define
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
     inst.master.applyIfNeeded(true);
     const toAttach = [];
@@ -364,33 +364,6 @@ export class StylePolicy {
     });
     toAttach.forEach(m => m.viewModel.attach(m));
     return inst;
-  }
-
-  asBuildSpecSimple () {
-    const buildSpec = tree.mapTree(this.spec, (specOrPolicy, submorphs) => {
-      if (specOrPolicy.COMMAND === 'add') {
-        specOrPolicy = specOrPolicy.props;
-        // FIXME: we also need to make sure that the build spec places the added submorph at the correct position
-      }
-      if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
-      if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpecSimple();
-      const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
-      const modelParams = specOrPolicy.viewModel || {}; // accumulate the derivation chain for the viewModel
-      for (let param in modelParams) {
-        if (modelParams[param]?.isPolicyApplicator) {
-          modelParams[param] = modelParams[param].instantiate();
-        }
-      }
-      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
-        ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
-      ]);
-      if (submorphs.length > 0) specOrPolicy.submorphs = arr.compact(submorphs);
-      if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
-
-      return specOrPolicy;
-    }, node => node.submorphs);
-    if (this.parent || this.overriddenMaster) buildSpec.master = this;
-    return buildSpec;
   }
 
   /**
@@ -403,117 +376,41 @@ export class StylePolicy {
    * @param { boolean } discardStyleProps - Wether or not the morph spec should yield an instance or the master component itself.
    * @return { object } The build spec.
    */
-  asBuildSpec (discardStyleProps = () => true) {
-    // FIXME: Just a flag to indicate the discarding of next level style props is not enough to
-    //        cover all desirable use cases for this routine.
-    //        We want the following cases:
-    //        1.) Not carry over any style props since all is managed by the component policies.
-    //        2.) Carry over the 1st level style props, in general to reify the master components as morphs.
-    //        3.) Carry over all the n-1 style props (excluding the root) in order to basically collapse all
-    //            the overridden properties in the policy chain into one spec.
-    // important also, to create a completely new spec structure, such that
-    // we do not accidentally alter the specs of parent policies.
-    const filterProps = (owner, submorphs, discardStyleProps) => {
-      // ensure that inline policies are treated correctly...
-      let subSpec = owner;
-      if (owner.isPolicy) {
-        return owner.asBuildSpec(discardStyleProps); // always discard the build specs of the parent
-      } else if (discardStyleProps(this)) {
-        subSpec = {
-          ...obj.dissoc(owner, ['master', ...getStylePropertiesFor(owner.type)])
-        };
+  asBuildSpec () {
+    const buildSpec = tree.mapTree(this.spec, (specOrPolicy, submorphs) => {
+      if (specOrPolicy.COMMAND === 'add') {
+        specOrPolicy = specOrPolicy.props;
       }
-      if (submorphs.length > 0) subSpec.submorphs = submorphs;
-
-      return subSpec;
-    };
-
-    function filterSpec (spec) {
-      return tree.mapTree(spec, (owner, submorphs) => {
-        return filterProps(owner, submorphs, discardStyleProps);
-      }, props => props.submorphs || []);
-    }
-
-    let buildSpec;
-    if (!this.parent) {
-      buildSpec = filterSpec(this.spec);
-      return buildSpec;
-    } else {
-      buildSpec = this.parent.asBuildSpec(); // always discard the style props from our parent, regardless
-    }
-
-    if (discardStyleProps(this)) buildSpec.master = this; // always return a new policy
-
-    if (!this.inheritStructure) {
-      // buildSpec, this.spec => traverse buildSpec and synthesize but also kick
-      // out any subspecs that are not present in this.spec (via name)
-      // we need to traverse the spec and the parent's build spec simultaneously
-      // we are abusing the merging traversal a little in order to perform
-      const toBeKept = new Set();
-      function keep (node) {
-        toBeKept.add(node);
-      }
-      // in place modifications of our local spec
-      mergeInHierarchy(buildSpec, this.spec, (specToKeep) => {
-        keep(specToKeep);
-      });
-
-      // remove all unmarked sub specs
-      buildSpec = tree.mapTree(buildSpec, (node, submorphs) => {
-        node.submorphs = submorphs.filter(m => toBeKept.has(m));
-        return node;
-      }, node => node.submorphs);
-      // after that proceed with the usual merging in of props
-    }
-
-    mergeInHierarchy(buildSpec, this.spec, (curr, props) => {
-      const styleProperties = getStylePropertiesFor(curr.type || props.type);
-      if (props.isPolicy) {
-        // if we encounter an inline policy
-        // first we clear all style props from curr:
-        for (let key in styleProperties) delete curr[key];
-
-        // then we need to do do either one of two things
-        if (discardStyleProps(this)) {
-          // we discard the local props and just assign the inline policy as the master
-          curr.master = props;
+      if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
+      if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpec();
+      const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
+      const modelParams = specOrPolicy.viewModel || {}; // accumulate the derivation chain for the viewModel
+      for (let param in modelParams) {
+        if (modelParams[param]?.isPolicyApplicator) {
+          modelParams[param] = modelParams[param].instantiate();
         }
-
-        if (!discardStyleProps(this)) {
-          // we return the first level build spec of the policy
-          Object.assign(curr, props.asBuildSpec(discardStyleProps));
-          if (props.parent) curr.master = props.parent;
+      }
+      specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
+        ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
+      ]);
+      if (submorphs.length > 0) {
+        let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
+        for (let spec of submorphs) {
+          if (spec?.__before__ !== undefined) {
+            {
+              const idx = transformedSubmorphs.findIndex(m => m.name === spec.__before__);
+              arr.pushAt(transformedSubmorphs, spec, idx);
+              delete spec.__before__;
+            }
+          }
         }
-
-        return;
+        specOrPolicy.submorphs = transformedSubmorphs;
       }
+      if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
 
-      if (discardStyleProps(this)) {
-        Object.assign(curr, obj.dissoc(props, [...styleProperties, 'master', 'submorphs']));
-      }
-
-      if (!discardStyleProps(this)) {
-        Object.assign(curr, obj.dissoc(props, ['submorphs'])); // include all properties, submorphs will be handled by merge
-      }
-    },
-    true,
-    (parent, toBeRemoved) => {
-      arr.remove(parent.submorphs, toBeRemoved);
-    },
-    (parent, toBeAdded, before) => {
-      const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
-      // also make sure the added elements are actually filtered props
-      let subSpec;
-      if (toBeAdded.isPolicy) {
-        subSpec = toBeAdded.asBuildSpec(discardStyleProps); // carry that over
-        if (discardStyleProps(this)) subSpec.master = toBeAdded;
-        else if (toBeAdded.parent) subSpec.master = toBeAdded.parent;
-      } else {
-        subSpec = filterSpec(toBeAdded);
-      }
-      arr.pushAt(parent.submorphs, subSpec, index);
-    });
-
+      return specOrPolicy;
+    }, node => node.submorphs);
+    if (this.parent || this.overriddenMaster) buildSpec.master = this;
     return buildSpec;
   }
 

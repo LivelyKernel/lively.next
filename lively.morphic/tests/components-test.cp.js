@@ -244,7 +244,7 @@ describe('spec based components', () => {
 
   it('inline policies can be converted to build specs', () => {
     let inline1, inline4;
-    const internalSpec = new StylePolicy({ // should this itself be an inline policy???
+    const internalSpec = new PolicyApplicator({ // should this itself be an inline policy???
       name: 'e2',
       fill: Color.yellow,
       extent: pt(50, 50),
@@ -253,7 +253,7 @@ describe('spec based components', () => {
         { name: 'bob', master: e1 },
         {
           COMMAND: 'add',
-          props: inline1 = new StylePolicy({
+          props: inline1 = new PolicyApplicator({
             name: 'foo',
             fill: Color.gray,
             submorphs: [{ name: 'bob', fill: Color.green }]
@@ -273,7 +273,7 @@ describe('spec based components', () => {
       ]
     }, e1);
 
-    inline4 = new StylePolicy({ name: 'bob', master: e1.stylePolicy }, new StylePolicy({
+    inline4 = new PolicyApplicator({ name: 'bob', master: e1.stylePolicy }, new PolicyApplicator({
       name: 'bob',
       fill: Color.orange,
       submorphs: [
@@ -329,11 +329,11 @@ describe('spec based components', () => {
       ]
     };
 
-    expect(internalSpec.asBuildSpecSimple()).to.eql(expectedBuildSpec, 'equals generated');
-    expect(e2.stylePolicy.asBuildSpecSimple()).to.eql(expectedBuildSpec, 'equals defined'); // structurally they should be the same...
+    expect(internalSpec.asBuildSpec()).to.eql(expectedBuildSpec, 'equals generated');
+    expect(e2.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec, 'equals defined'); // structurally they should be the same...
 
     const pa = new PolicyApplicator({}, c3);
-    const bs = pa.asBuildSpecSimple();
+    const bs = pa.asBuildSpec();
 
     expect(bs.master.parent).to.eql(c3.stylePolicy);
     expect(pa.spec.submorphs[0]).not.to.eql(c3.stylePolicy.spec.submorphs[0], 'Inserts empty inline policy');
@@ -352,7 +352,7 @@ describe('spec based components', () => {
         submorphs: [{ name: 'bob', master: c2.stylePolicy.spec.submorphs[0].spec.submorphs[0].props }]
       }]
     };
-    expect(c2.stylePolicy.asBuildSpecSimple()).to.eql(expectedBuildSpec);
+    expect(c2.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec);
   });
 
   it('properly initializes morphs that resemble the component definition', () => {
@@ -520,7 +520,7 @@ describe('spec based components', () => {
     };
 
     expect(c.stylePolicy).to.eql(expectedInternalSpec);
-    expect(c.stylePolicy.asBuildSpecSimple()).to.eql(expectedBuildSpec);
+    expect(c.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec);
   });
 
   describe('policy applicators', () => {
@@ -540,10 +540,10 @@ describe('spec based components', () => {
       // after which the application of the policies can concurr.
       const e2Policy = new PolicyApplicator({}, e2);
       const c3Policy = new PolicyApplicator({}, c3);
-      let spec = e2Policy.asBuildSpecSimple();
+      let spec = e2Policy.asBuildSpec();
       expect(spec.master).to.be.instanceof(PolicyApplicator);
       expect(spec.submorphs[1].master).to.be.instanceof(PolicyApplicator);
-      spec = c3Policy.asBuildSpecSimple();
+      spec = c3Policy.asBuildSpec();
       expect(spec.master.parent).to.eql(c3.stylePolicy);
       expect(spec.submorphs[0].master.parent).to.eql(c3.stylePolicy.spec.submorphs[0]);
       expect(spec.submorphs[0].submorphs[0].master).to.be.instanceof(PolicyApplicator);
@@ -552,7 +552,7 @@ describe('spec based components', () => {
     it('reassigns policy applicators in the hierarchy, once applied', () => {
       const m = part(e1);
       const e2Policy = new PolicyApplicator({}, e2);
-      const spec = e2Policy.asBuildSpecSimple();
+      const spec = e2Policy.asBuildSpec();
       expect(m.get('bob').master).to.be.undefined;
       e2Policy.apply(m, true);
       expect(m.get('bob').master).not.to.be.undefined;
