@@ -151,6 +151,22 @@ export class StylePolicy {
   get isBreakpointPolicy () { return !!this._breakpointMasters; }
 
   /**
+   * Evaluates to true, in case the policy changes its style in response to click states.
+   */
+  get respondsToClick () {
+    if (this._clickMaster) return true;
+    return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
+  }
+
+  /**
+   * Evaluates to true, in case the policy changes its style in response to hover events.
+   */
+  get respondsToHover () {
+    if (this._hoverMaster) return true;
+    return !!this.parent?.respondsToHover || !!this.overriddenMaster?.respondsToHover;
+  }
+
+  /**
    * If there is a locally overridden master in the parent of the scope,
    * it is retrievable via this property.
    * @type { StylePolicy | undefined }
@@ -721,33 +737,6 @@ export class PolicyApplicator extends StylePolicy {
   get isPolicyApplicator () { return true; }
 
   toString () { return '<PolicyApplicator>'; }
-
-  /**
-   * Evaluates to true, in case the policy changes its style in response to click states.
-   */
-  get respondsToClick () {
-    if (this._clickMaster) return true;
-    return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
-  }
-
-  /**
-   * Evaluates to true, in case the policy changes its style in response to hover events.
-   */
-  get respondsToHover () {
-    if (this._hoverMaster) return true;
-    return !!this.parent?.respondsToHover || !!this.overriddenMaster?.respondsToHover;
-  }
-
-  asBuildSpec (discardStyleProps = () => true) {
-    const spec = super.asBuildSpec(discardStyleProps);
-    // this does not ensure that overridden props are getting carried over
-    // we need to directly initialize the applicators with the overriden props properly
-    return tree.mapTree(spec, (node, submorphs) => {
-      if (node.master && !node.master.isPolicyApplicator) {
-        return { ...node, submorphs, master: new PolicyApplicator({}, node.master) };
-      } else { return { ...node, submorphs }; }
-    }, node => node.submorphs);
-  }
 
   // APPLICATION TO MORPH HIERARCHIES
 
