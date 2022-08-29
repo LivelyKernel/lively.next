@@ -157,7 +157,7 @@ export class StylePolicy {
    */
   get overriddenMaster () {
     const overridden = this._getOverriddenMaster(this.spec, this);
-    if (overridden && overridden === this) return null;
+    if (overridden && overridden === this) return null; // prevent loops
     if (overridden?.isComponentDescriptor) {
       return overridden.stylePolicy;
     }
@@ -341,9 +341,7 @@ export class StylePolicy {
     // by moving that logic into the master setter at a later stage
     const inst = morph(new PolicyApplicator(props, this).asBuildSpecSimple()); // eslint-disable-line no-use-before-define
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
-    inst.master._includeInstantiationProps = true;
     inst.master.applyIfNeeded(true);
-    inst.master._includeInstantiationProps = false;
     const toAttach = [];
     inst.withAllSubmorphsDo(m => {
       if (m.viewModel) toAttach.unshift(m);
@@ -550,7 +548,7 @@ export class StylePolicy {
    * @param { function } [checkNext = () => true] - Custom checker that allows us to control how far we traverse the derivation chain to synthesize the sub spec.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, ignoreOverriddenMaster = false) {
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, skipOptionalProps = false) {
     if (!checkNext(this)) return {};
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
@@ -569,14 +567,14 @@ export class StylePolicy {
     }
 
     if (checkNext(qualifyingMaster)) {
-      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, ignoreOverriddenMaster);
+      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, skipOptionalProps);
       if (nextLevelSpec.isPolicy) return nextLevelSpec;
     }
 
     let synthesized = {}; let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
-    if (overriddenMaster && !ignoreOverriddenMaster) {
-      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope);
+    if (overriddenMaster) {
+      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, () => true, true);
       if (nextLevelSpec.fontColor &&
           !overriddenMasterSynthesizedSpec.fontColor &&
           overriddenMaster.managesMorph(submorphNameInPolicyContext)) {
@@ -608,7 +606,17 @@ export class StylePolicy {
       Object.assign(synthesized, nextLevelSpec, subSpec);
     }
 
-    return obj.dissoc(synthesized, ['submorphs', 'master', 'name']); // not really needed since we do not traverse submorph prop anyways
+    delete synthesized.submorphs;
+    delete synthesized.master;
+    delete synthesized.name;
+    for (let prop in synthesized) {
+      if (synthesized[prop]?.onlyAtInstantiation) {
+        if (skipOptionalProps) delete synthesized[prop];
+        else synthesized[prop] = synthesized[prop].value;
+      }
+    }
+
+    return synthesized;
   }
 
   /**
@@ -778,8 +786,8 @@ export class PolicyApplicator extends StylePolicy {
     });
   }
 
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, ignoreOverriddenMasters = false) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, ignoreOverriddenMasters);
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, skipOptionalProps = false) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, skipOptionalProps);
     if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
       return new PolicyApplicator({}, subSpec);
     }
@@ -827,10 +835,6 @@ export class PolicyApplicator extends StylePolicy {
           propValue = getDefaultValueFor(morphToBeStyled.constructor, propName);
         }
         if (propValue === undefined) continue;
-      }
-      if (propValue?.onlyAtInstantiation) {
-        if (!this._includeInstantiationProps) continue;
-        propValue = propValue.value;
       }
       if (propName === 'layout') {
         if (morphToBeStyled.layout?.name() === propValue?.name() &&
