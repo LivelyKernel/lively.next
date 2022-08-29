@@ -45,12 +45,12 @@
     "main": "index.js",
     "map": {
       "@babel/plugin-proposal-optional-catch-binding": {
-        "~node": "https://jspm.dev/@babel/plugin-proposal-optional-catch-binding",
+        "~node": "esm://cache/@babel/plugin-proposal-optional-catch-binding",
         "node": "@empty"
       },
       "@babel/plugin-syntax-import-meta": {
-        "node": "@empty",
-        "~node": "https://jspm.dev/@babel/plugin-syntax-import-meta"
+        "~node": "esm://cache/@babel/plugin-syntax-import-meta",
+        "node": "@empty"
       }
     }
   }

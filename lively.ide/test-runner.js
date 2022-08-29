@@ -13,11 +13,7 @@ import { resource } from 'lively.resources/index.js';
 
 import { packagesConfig } from 'lively.modules/src/packages/package.js';
 import { localInterface } from 'lively-system-interface';
-
-let jsDiff;
-(async function loadJsDiff () {
-  jsDiff = await System.import('https://cdnjs.cloudflare.com/ajax/libs/jsdiff/3.0.0/diff.js');
-})();
+import jsDiff from 'esm://cache/diff@3.0.0';
 
 export function testsFromSource (sourceOrAst) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
@@ -786,4 +782,3 @@ export default class TestRunner extends HTMLMorph {
     } finally { i.remove(); }
   }
 }
-

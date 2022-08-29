@@ -14,7 +14,7 @@
     "main": "./index.js",
     "map": {
       "semver": {
-        "~node": "https://jspm.dev/semver@7.3.7",
+        "~node": "esm://cache/semver@7.3.7",
         "node": "semver"
       },
       "fs": {
