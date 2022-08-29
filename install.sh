@@ -11,5 +11,5 @@ eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").re
 mkdir lively.next-node_modules
 mkdir esm_cache
 
-node --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
+node --no-experimental-fetch --inspect --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
      lively.installer/bin/install.cjs $PWD \
