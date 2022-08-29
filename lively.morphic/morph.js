@@ -2400,11 +2400,11 @@ export class Morph {
   }
 
   onHoverIn (evt) {
-    if (this.master) { this.requestMasterStyling(); }
+    if (this.master?.respondsToHover) { this.requestMasterStyling(); }
   }
 
   onHoverOut (evt) {
-    if (this.master) { this.requestMasterStyling(); }
+    if (this.master?.respondsToHover) { this.requestMasterStyling(); }
   }
 
   onScroll (evt) {}
