@@ -9,7 +9,13 @@ export async function ensureDefaultImports () {
   const inspectorEvalContext = module('lively://lively.morphic/inspector');
   const imports = config.ide.js.defaultInspectorImports;
   for (let modName in imports) {
-    const exports = await System.import(modName);
+    let exports;
+    try {
+      exports = await System.import(modName);
+    } catch (err) {
+      console.log('Failed to load inspector workspace default import: ' + modName);
+      continue;
+    }
     imports[modName].forEach(v => {
       inspectorEvalContext.define(v, exports[v], false);
     });
