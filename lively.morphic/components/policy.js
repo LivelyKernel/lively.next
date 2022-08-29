@@ -5,7 +5,9 @@ import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js'
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 
-// property merging
+/**
+ * Merges two different specs.
+ */
 function mergeInHierarchy (
   root,
   props,
@@ -39,6 +41,15 @@ function mergeInHierarchy (
   }
 }
 
+/**
+ * Returns the event state a given morph is currently in.
+ * This is usually with respect system specific settings/input, such as: Hover/Click state or light/dark mode.
+ * However we can also provide custom breakpoints of the viewport, which coincide with a particular width or height
+ * of the morph to check for. With this we are able to implement responsive design with master components.
+ * @param { Morph } targetMorph - The morph to check the state for.
+ * @param {type} customBreakpoints - A list of custom breakpoints in response to the width/height of the `targetMorph`.
+ * @returns { object } The event state corresponding to the morph.
+ */
 function getEventState (targetMorph, customBreakpoints) {
   if (!customBreakpoints) customBreakpoints = [];
   const { world, eventDispatcher } = targetMorph.env;
@@ -99,10 +110,16 @@ export class StylePolicy {
     return this._parent?.isComponentDescriptor ? this._parent.stylePolicy : this._parent;
   }
 
+  /**
+   * @type { [string] } The morph type of the root element of this policy.
+   */
   get type () {
     return this.spec.type;
   }
 
+  /**
+   * @type { [string] } The name of the root element of this policy.
+   */
   get name () {
     return this.spec.name; // this is not needed useful for top level inline policies...
   }
@@ -125,11 +142,7 @@ export class StylePolicy {
     } else {
       const { click, hover, light, dark, breakpoints, auto = this._parent } = policyOrDescriptor;
       this._parent = auto;
-      // these are ALWAYS top level policies, and therefore Component Descriptors.
-      // Dispatch based masters can not be inline policies, since there is no possible way
-      // to for click, hover, light/dark or breakpoint masters to serve as structure providers.
-      // A inline policy REQUIRES a structure provider in order to be created.
-      this._autoMaster = auto; // auto is always defined. We default to the parent, if not specified otherwise.
+      this._autoMaster = auto;
 
       // mouse event component dispatch
       if (click) this._clickMaster = click;
@@ -604,6 +617,7 @@ export class StylePolicy {
  * from a case by case basis) are serialized as well.
  * Can be derived from either a StylePolicy OR ComponentDescriptor.
  * Knows, how it can be applied to a morph hierarchy!
+ * FIXME: This can be merged into StylePolicy
  */
 export class PolicyApplicator extends StylePolicy {
   // turns a policy or a descriptor

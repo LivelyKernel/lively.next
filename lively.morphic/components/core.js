@@ -2,8 +2,7 @@ import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, properties, obj } from 'lively.lang';
 import { getClassName } from 'lively.serializer2';
 import { epiConnect } from 'lively.bindings';
-import { serializeMorph } from '../serialization.js';
-import { sanitizeFont, getClassForName, morph } from '../helpers.js';
+import { sanitizeFont, morph } from '../helpers.js';
 import { PolicyApplicator } from './policy.js';
 
 /**
@@ -47,6 +46,8 @@ export class ComponentDescriptor {
     return new ComponentDescriptor(spec, meta);
   }
 
+  get isComponentDescriptor () { return true; }
+
   __serialize__ (pool) {
     const meta = this[Symbol.for('lively-module-meta')];
     return pool.expressionSerializer.exprStringEncode({
@@ -82,8 +83,6 @@ export class ComponentDescriptor {
     this.init(generatorFunctionOrSpec, meta);
   }
 
-  get isComponentDescriptor () { return true; }
-
   init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
     delete this._snap;
     delete this._cachedComponent;
@@ -115,10 +114,6 @@ export class ComponentDescriptor {
    */
   derive (props) {
     return this.stylePolicy.instantiate(props);
-  }
-
-  getInstance (props) {
-    return this.derive(props);
   }
 }
 
@@ -502,7 +497,7 @@ export function part (componentDescriptor, overriddenProps = {}) {
   }
 
   if (componentDescriptor.isComponentDescriptor) {
-    return componentDescriptor.getInstance(overriddenProps);
+    return componentDescriptor.derive(overriddenProps);
   } else if (componentDescriptor.isPolicy) {
     return componentDescriptor.instantiate(overriddenProps);
   }
@@ -515,7 +510,7 @@ export function part (componentDescriptor, overriddenProps = {}) {
  * @returns { Morph } A new morph that serves as a master component in the system.
  */
 export function component (masterComponentOrProps, overriddenProps) {
-  let c, props, type;
+  let props;
   if (!overriddenProps) {
     props = masterComponentOrProps;
     masterComponentOrProps = null;
@@ -523,54 +518,11 @@ export function component (masterComponentOrProps, overriddenProps) {
     props = overriddenProps;
   }
 
-  if (evaluateAsSpec) {
-    // synthesize the masterComponent with the overridden props and do NOT
-    // create a custom morph. This is instead deferred.
-    if (masterComponentOrProps) {
-      return new PolicyApplicator(props, masterComponentOrProps);
-    } else {
-      // just return the already unrolled props! (part did properly react to the evaluateAsSpec flag)
-      return props;
-    }
-  }
-
-  console.log('[COMPONENT] Defining: ' + props.name);
-
   if (masterComponentOrProps) {
-    c = part(masterComponentOrProps, overriddenProps); // invoke the previous master instantiation
-    c.defaultViewModel = masterComponentOrProps.defaultViewModel;
-    c.viewModelClass = masterComponentOrProps.viewModelClass;
-  } else c = morph({ ...props });
-
-  if (overriddenProps && (type = overriddenProps.type)) {
-    if (obj.isString(type)) {
-      type = getClassForName(type);
-    }
-    obj.adoptObject(c, type);
+    return new PolicyApplicator(props, masterComponentOrProps);
+  } else {
+    return props;
   }
-
-  if (props.defaultViewModel || props.viewModelClass) {
-    // attach the view model;
-    c.defaultViewModel = props.defaultViewModel;
-    c.viewModelClass = props.viewModelClass;
-  }
-  // detect all sub view models and detach them again, since we dont
-  // want to have the bahvior interfere with the morph hierarchy
-  // also gather all master in the scope so we can wait for them
-
-  c.withAllSubmorphsDo(m => {
-    if (m.viewModel) m.viewModel.onDeactivate();
-    if (m.master) {
-      m.master.applyIfNeeded(!m.master._appliedMaster);
-    }
-  });
-  // this is often not called... especially in cases where we derive from a master
-  c.updateDerivedMorphs();
-  c._snap = serializeMorph(c);
-  delete c._snap.snapshot[c.id].props.isComponent;
-  delete c._snap.snapshot[c.id].props.master;
-  c.isComponent = true;
-  return c;
 }
 
 component.for = (generator, meta, prev) => ComponentDescriptor.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
