@@ -575,15 +575,12 @@ export class StylePolicy {
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
       const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, () => true, true);
-      if (nextLevelSpec.fontColor &&
-          !overriddenMasterSynthesizedSpec.fontColor &&
-          overriddenMaster.managesMorph(submorphNameInPolicyContext)) {
-        overriddenMasterSynthesizedSpec.fontColor = getDefaultValueFor(nextLevelSpec.type, 'fontColor');
-      }
-      if (nextLevelSpec.fill &&
-          !overriddenMasterSynthesizedSpec.fill &&
-          overriddenMaster.managesMorph(submorphNameInPolicyContext)) {
-        overriddenMasterSynthesizedSpec.fill = getDefaultValueFor(nextLevelSpec.type, 'fill');
+      for (let prop in nextLevelSpec) {
+        if (!skipOptionalProps || !overriddenMaster.managesMorph(submorphNameInPolicyContext)) break;
+        if (!overriddenMasterSynthesizedSpec[prop]) {
+          const defaultVal = getDefaultValueFor(nextLevelSpec.type, prop);
+          if (typeof defaultVal !== 'undefined') overriddenMasterSynthesizedSpec[prop] = defaultVal;
+        }
       }
       Object.assign(
         synthesized,
