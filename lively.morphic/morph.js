@@ -1719,12 +1719,15 @@ export class Morph {
     this.submorphs.forEach(submorph => submorph.abandon(false)); // do not remove submorphs
   }
 
+  /**
+   * Called whenever this morph has moved in our out of another morph hierarchy.
+   * If `newOwner` is `null`, the morph was removed from a morph.
+   * In case it was attached to a new parent, that morph is referenced by `newOwner`.
+   * @param { Morph|null } newOwner - If applicable, the new owner the morph is assigned to.
+   */
   onOwnerChanged (newOwner) {
     // newOwner = null => me or any of my owners was removed
     // newOwner = morp => me or any of my owners was added to another morph
-    if (newOwner && this.master) {
-      this.requestMasterStyling(); // I may have surfaced and now need to refresh
-    }
   }
 
   async fadeOut (duration = 1000) {
