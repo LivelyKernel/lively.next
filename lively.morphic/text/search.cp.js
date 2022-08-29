@@ -110,12 +110,12 @@ const SearchWidget = component({
         resize: false
       },
       replaceAllButton: {
-        align: 'topLeft',
-        resize: true
+        align: 'topRight',
+        resize: false
       },
       replaceButton: {
         align: 'topLeft',
-        resize: true
+        resize: false
       },
       replaceInput: {
         align: 'topLeft',
@@ -206,12 +206,14 @@ const SearchWidget = component({
     }]
   }, part(WidgetButton, {
     name: 'replaceButton',
+    width: 81,
     submorphs: [{
       name: 'label',
       textAndAttributes: ['replace', null]
     }]
   }), part(WidgetButton, {
     name: 'replaceAllButton',
+    width: 81,
     submorphs: [{
       name: 'label',
       textAndAttributes: ['replace all', null]
@@ -221,7 +223,7 @@ const SearchWidget = component({
     opacity: 0.5,
     submorphs: [{
       name: 'label',
-      tooltip: 'Match with Regular Expressions.\n Either directly type your regular expression,\n or use JS slash syntax if you want to use RegEx flags.',
+      tooltip: ['Match with Regular Expressions.\n', { fontWeight: 'bold' }, 'Either directly type your regular expression,\nor use JS slash syntax if you want to use RegEx flags.'],
       textAndAttributes: Icon.textAttribute('circle-question')
     }]
   }), part(IconButton, {
