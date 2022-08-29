@@ -171,10 +171,10 @@ export default class WorldLoadingPlugin {
 
       const parsedUrl = parseUrl(url, true);
       const [_, sub] = parsedUrl.pathname.match(/^\/dashboard\/?(.*)/);
-      req.url = url.replace('/dashboard', '/lively.freezer/dashboard');
+      req.url = url.replace('/dashboard', '/lively.freezer/landing-page');
       if (!sub) {
         req.url += '/index.html';
-        const s = await resource(System.baseURL).join('lively.freezer/dashboard/index.html').read();
+        const s = await resource(System.baseURL).join('lively.freezer/landing-page/index.html').read();
         res.writeHead(200);
         res.end(s.replace('AUTH_SERVER_URL', `AUTH_SERVER_URL = "${this.authServerURL}"; window.SERVER_URL = location.origin;`));
         return;
