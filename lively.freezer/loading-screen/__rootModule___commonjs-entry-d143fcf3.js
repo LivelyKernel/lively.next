@@ -1,0 +1,1 @@
+System.register(["./__rootModule___commonjs-entry-71573ff5.js","@babel/plugin-syntax-import-meta"],function(Lc){return{setters:[function(pd){Lc("renderFrozenPart",pd.c6)},function(){}],execute:function(){}}});

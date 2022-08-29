@@ -1,0 +1,1 @@
+System.register([],function(){return{execute:function(){window.lively.FreezerRuntime.recorderFor("lively.2lively/index.js")}}});
