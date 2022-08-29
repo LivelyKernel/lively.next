@@ -50,9 +50,9 @@ function ensurePackageMap (packageCollectionDirs, individualPackageDirs, devPack
 function packageDirsFromEnv () {
   let env = process.env;
   return {
-    packageCollectionDirs: (env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean),
-    individualPackageDirs: (env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean),
-    devPackageDirs: (env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean)
+    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean))],
+    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean))],
+    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean))]
   };
 }
 
