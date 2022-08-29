@@ -61,6 +61,12 @@ function fuzzyParse (source, options) {
   options.sourceType = options.sourceType || 'module';
   options.plugins = options.plugins || {};
   // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
+  const comments = [];
+  if (options.withComments) {
+    options.onComment = (isBlock, text) => comments.push({
+      isBlock, text
+    });
+  }
   options.plugins.jsx = options.plugins.hasOwnProperty('jsx')
     ? options.plugins.jsx
     : true;
@@ -98,6 +104,7 @@ function fuzzyParse (source, options) {
     ast.isFuzzy = true;
     ast.parseError = err;
   }
+  if (options.withComments) ast.comments = comments;
   return ast;
 }
 
