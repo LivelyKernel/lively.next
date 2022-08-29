@@ -2652,7 +2652,7 @@ function ESCODEGEN () {
       if (!exports.browser) {
         // We assume environment is node.js
         // And prevent from including source-map by browserify
-        SourceNode = require('source-map').SourceNode;
+        SourceNode = System._nodeRequire('source-map').SourceNode;
       } else {
         SourceNode = global.sourceMap.SourceNode;
       }
