@@ -338,6 +338,7 @@ export class ViewModel {
    * Instantiate all the bindings within the view as defined.
    */
   reifyBindings () {
+    delete this._ui;
     for (let {
       target, model, signal, handler,
       override = false, converter = false, updater = false
