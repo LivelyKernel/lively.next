@@ -503,7 +503,7 @@ export class StylePolicy {
       const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, () => true, true);
       for (let prop in nextLevelSpec) {
         if (!skipOptionalProps || !overriddenMaster.managesMorph(submorphNameInPolicyContext)) break;
-        if (!overriddenMasterSynthesizedSpec[prop]) {
+        if (typeof overriddenMasterSynthesizedSpec[prop] === 'undefined') {
           const defaultVal = getDefaultValueFor(nextLevelSpec.type, prop);
           if (typeof defaultVal !== 'undefined') overriddenMasterSynthesizedSpec[prop] = defaultVal;
         }
