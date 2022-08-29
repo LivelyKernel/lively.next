@@ -9,7 +9,6 @@ import {
   Window,
   FilterableList
 } from 'lively.components';
-import * as Browser from './js/browser/ui.cp.js';
 import { MorphicDB } from 'lively.morphic/morphicdb/index.js';
 import { SnapshotEditor } from 'lively.morphic/partsbin.js';
 
@@ -361,6 +360,7 @@ export class CodeSearcher extends FilterableList {
       moduleName: pathInPackage,
       textPosition: { column, row: line - 1 }
     };
+    const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     browser = await Browser.browse(
       browseSpec, browserOrProps || {},
       browser ? browser.systemInterface : this.systemInterface);
