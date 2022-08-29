@@ -4,8 +4,7 @@ import * as moduleManager from 'lively.modules';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
 import { arr, promise, fun, graph, date, string } from 'lively.lang/index.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
-import { DropDownList } from 'lively.components/list.cp.js';
-import { MorphList } from 'lively.components';
+import { DropDownList, MorphList } from 'lively.components/list.cp.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 
@@ -56,7 +55,7 @@ class WorldVersion extends Morph {
               type: 'label',
               fill: null,
               name: 'commit info',
-              fontFamily: 'Nunito',
+              fontFamily: 'IBM Plex Sans',
               fontColor: Color.gray
             }
           ];
@@ -532,6 +531,10 @@ class WorldDashboard extends Morph {
     // navigate to worlds/new
     document.location = '/worlds/load?name=__newWorld__';
   }
+
+  allFontsLoaded () {
+    return this.ui.newProjectButton.submorphs[0].whenFontLoaded();
+  }
 }
 
 class GrowingWorldList extends Morph {
@@ -723,10 +726,9 @@ export class WorldPreview extends Morph {
     copy.respondsToVisibleWindow = true;
     await copy.ui.spinner.animate({
       center: copy.innerBounds().center(),
-      duration,
-      easing: easings.inOutQuint
+      easing: easings.inOutQuint,
+      duration
     });
-    await promise.delay(1000);
     return copy;
   }
 
@@ -756,8 +758,12 @@ export class WorldPreview extends Morph {
   }
 
   async transitionToLivelyWorld (baseURL, commit, loadingIndicator) {
-    const progress = part();
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
+    const { ProgressIndicator } = await System.import('lively.freezer/src/loading-screen.cp.js');
+    const progress = part(ProgressIndicator, {
+      opacity: 0, hasFixedPosition: true
+    }).openInWorld();
+    progress.startStepping('updateProgressBar');
     await bootstrap({ commit, loadingIndicator, progress });
   }
 
@@ -1144,7 +1150,7 @@ const WorldBrowser = component({
       submorphs: [{
         name: 'label',
         fontWeight: 600,
-        textAndAttributes: [...Icon.textAttribute('plus-circle'), ' NEW PROJECT']
+        textAndAttributes: [...Icon.textAttribute('plus-circle', { paddingTop: '2px', paddingRight: '5px' }), ' NEW PROJECT']
       }]
     })]
   }, {
