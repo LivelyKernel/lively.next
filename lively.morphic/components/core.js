@@ -613,7 +613,7 @@ export function add (props, before = null) {
  * FIXME: move this into the IDE!
  */
 export function edit (componentDescriptor) {
-  return morph(componentDescriptor.stylePolicy.asBuildSpecSimple());
+  return morph(componentDescriptor.stylePolicy.asBuildSpec());
 }
 
 function insertFontCSS (name, fontUrl) {
