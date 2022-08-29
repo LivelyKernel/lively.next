@@ -470,21 +470,33 @@ export class StylePolicy {
    * Synthesizes the sub spec corresponding to a particular name
    * of a morph in the submorph hierarchy.
    * @param { string } submorphNameInPolicyContext - The name of the sub spec.
-   * @param { Morph } parentOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
+   * @param { Morph } ownerOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
    * @param { function } [checkNext = () => true] - Custom checker that allows us to control how far we traverse the derivation chain to synthesize the sub spec.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, skipOptionalProps = false) {
+  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, checkNext = () => true, skipOptionalProps = false) {
     if (!checkNext(this)) return {};
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
-    let qualifyingMaster = this.determineMaster(parentOfScope); // taking into account the target morph's event state
-
-    if (!qualifyingMaster) {
-      return subSpec;
-    }
     if (subSpec.isPolicy) {
       return subSpec;
+    }
+
+    let qualifyingMaster = this.determineMaster(ownerOfScope); // taking into account the target morph's event state
+
+    if (!qualifyingMaster) {
+      const rootSpec = { ...subSpec };
+      for (let prop of !submorphNameInPolicyContext ? getStylePropertiesFor(rootSpec.type) : []) {
+        if (typeof rootSpec[prop] === 'undefined') {
+          const defaultVal = getDefaultValueFor(subSpec.type, prop);
+          if (typeof defaultVal === 'undefined') continue;
+          rootSpec[prop] = {
+            value: defaultVal,
+            onlyAtInstantiation: true
+          };
+        }
+      }
+      return rootSpec; // there are no parents, so we fill in the default values to be used optionally
     }
 
     let nextLevelSpec = {};
@@ -493,21 +505,14 @@ export class StylePolicy {
     }
 
     if (checkNext(qualifyingMaster)) {
-      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, skipOptionalProps);
+      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, checkNext, skipOptionalProps);
       if (nextLevelSpec.isPolicy) return nextLevelSpec;
     }
 
     let synthesized = {}; let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
-      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, () => true, true);
-      for (let prop in nextLevelSpec) {
-        if (!skipOptionalProps || !overriddenMaster.managesMorph(submorphNameInPolicyContext)) break;
-        if (typeof overriddenMasterSynthesizedSpec[prop] === 'undefined') {
-          const defaultVal = getDefaultValueFor(nextLevelSpec.type, prop);
-          if (typeof defaultVal !== 'undefined') overriddenMasterSynthesizedSpec[prop] = defaultVal;
-        }
-      }
+      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, () => true, true);
       Object.assign(
         synthesized,
         // fill in the top level props just in case they are needed to serve as "defaults" (propably mostly overridden)
