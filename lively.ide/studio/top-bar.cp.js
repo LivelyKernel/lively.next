@@ -3,14 +3,12 @@ import { HorizontalLayout, config, touchInputDevice, TilingLayout, Tooltip, morp
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
-import { PropertiesPanel } from './properties-panel.cp.js';
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
 import { getClassName } from 'lively.serializer2';
 import { Selection, SelectionElement } from '../world.js';
 import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
-import { MorphPanel } from './scene-graph.cp.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 
 export class FastLoadToggler extends Morph {
@@ -325,9 +323,9 @@ export class TopBarModel extends ViewModel {
 
     if (name === 'scene graph') {
       if (!this.sceneGraph) {
+        const { MorphPanel } = await System.import('lively.ide/studio/scene-graph.cp.js');
         this.sceneGraph = part(MorphPanel);
         this.sceneGraph.epiMorph = true;
-        // this.sideBar.isHaloItem = true;
         this.sceneGraph.hasFixedPosition = true;
         this.sceneGraph.respondsToVisibleWindow = true;
         this.sceneGraph.openInWorld();
@@ -339,6 +337,7 @@ export class TopBarModel extends ViewModel {
 
     if (name === 'properties panel') {
       if (!this.propertiesPanel) {
+        const { PropertiesPanel } = await System.import('lively.ide/studio/properties-panel.cp.js');
         this.propertiesPanel = part(PropertiesPanel);
         this.propertiesPanel.epiMorph = true;
         this.propertiesPanel.hasFixedPosition = true;
