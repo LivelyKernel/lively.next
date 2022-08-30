@@ -350,6 +350,7 @@ export default class LivelyRollup {
     if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName === moduleId)) { // belongs to lively package
       return true;
     }
+    if (this.wasFetchedFromEsmCdn(moduleId)) return false; // never instrument stuff from ESM cdns
     if (this.isComponentModule(moduleId)) return true; // defines components
     if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/)) return true; // contains lively class defs, but...
     // fixme: ...how about 3rd party derivations of lively classes in non lively modules (such as local project?) i.e: [class CustomMorph extends MyMorph] extends Morph ?
