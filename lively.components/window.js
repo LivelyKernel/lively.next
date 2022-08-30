@@ -538,9 +538,10 @@ export default class Window extends Morph {
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
         duration,
         easing
-      });
+      }).then(() => this.clipMode = 'visible');
       collapseButton.tooltip = 'collapse window';
     } else {
+      this.clipMode = 'hidden';
       this.nonMinizedBounds = bounds;
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
       const labelBounds = windowTitle.textBounds();
@@ -548,21 +549,24 @@ export default class Window extends Morph {
       if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width) { minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5); }
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = 'uncollapse window';
-      await this.animate({
+      this.animate({
         styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
         bounds: minimizedBounds,
         duration,
         easing
+      }).then(() => {
+        if (this.targetMorph) {
+          if (!this.targetMorph.isComponent) this.targetMorph.visible = false;
+          else this.targetMorph.top = this.height;
+        }
       });
-      if (this.targetMorph) {
-        if (!this.targetMorph.isComponent) this.targetMorph.visible = false;
-        else this.targetMorph.top = this.height;
-      }
     }
     windowTitle.reactsToPointer = !this.minimized;
     resizer.visible = !this.minimized;
-    this.relayoutWindowControls();
-    this.relayoutResizer();
+    this.withAnimationDo(() => {
+      this.relayoutWindowControls();
+      this.relayoutResizer();
+    }, { duration, easing });
   }
 
   setBounds (bounds) {
