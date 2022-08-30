@@ -45,7 +45,7 @@ export class BodyControlModel extends PropertySectionModel {
       dynamicControls: {
         derived: true,
         get () {
-          return this.view.submorphs.filter(m => m.isControl);
+          return this.view?.submorphs.filter(m => m.isControl) || [];
         }
       }
     };
