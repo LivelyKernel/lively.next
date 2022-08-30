@@ -127,9 +127,15 @@ export default class Workspace extends Window {
     const list = this.getSubmorphNamed('eval backend button');
     const title = this.ui.windowTitle;
     if (list) {
+      list.visible = !this.minimized;
       list.height = 21;
-      list.topRight = this.innerBounds().topRight().addXY(-5, 2);
-      if (list.left < title.right + 3) list.left = title.right + 3;
+      const tr = this.innerBounds().topRight().addXY(-5, 2);
+      this.minimized;
+      if (tr.x - list.width < title.right + 3) {
+        list.topLeft = tr.withX(title.right + 3);
+      } else {
+        list.topRight = tr;
+      }
     }
   }
 
