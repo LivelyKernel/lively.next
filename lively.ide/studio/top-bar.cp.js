@@ -378,7 +378,7 @@ export class TopBarModel extends ViewModel {
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');
-    label.master = TopBarButton; // eslint-disable-line no-use-before-define
+    label.master = null; // eslint-disable-line no-use-before-define
   }
 
   setEditMode (mode, shallow = false) {
@@ -416,7 +416,7 @@ export class TopBarModel extends ViewModel {
         });
       } else {
         morphsToUpdate.forEach(m => {
-          m.master = TopBarButton; // eslint-disable-line no-use-before-define
+          m.master = null; // eslint-disable-line no-use-before-define
         });
       }
     });
@@ -913,8 +913,7 @@ export class UserFlapModel extends ViewModel {
   }
 
   ensureMenu () {
-    const menu = this.ui.userMenu || this.view.addMorph(part(UserMenu)); // eslint-disable-line no-use-before-define
-    menu.name = 'user menu';
+    const menu = this.ui.userMenu || this.view.addMorph(part(UserMenu, { name: 'user menu' })); // eslint-disable-line no-use-before-define
     menu.visible = false;
     menu.opacity = 0;
     menu.scale = 0.8;
@@ -1007,13 +1006,19 @@ export class UserFlapModel extends ViewModel {
 const TopBarButton = component({
   type: Label,
   name: 'top bar button',
-  fontColor: Color.rgb(102, 102, 102),
+  fontColor: {
+    value: Color.rgb(102, 102, 102),
+    onlyAtInstantiation: true
+  },
   fontSize: {
     value: 23,
     onlyAtInstantiation: true
   },
   nativeCursor: 'pointer',
-  padding: rect(0, 1, 0, -1)
+  padding: {
+    value: rect(0, 1, 0, -1),
+    onlyAtInstantiation: true
+  }
 });
 
 const TopBarButtonSelected = component(TopBarButton, {
@@ -1103,7 +1108,10 @@ const UserFlap = component({
     name: 'name label',
     draggable: true,
     fill: Color.rgba(255, 255, 255, 0),
-    fontColor: Color.rgb(102, 102, 102),
+    fontColor: {
+      onlyAtInstantiation: true,
+      value: Color.rgb(102, 102, 102)
+    },
     fontSize: 16,
     grabbable: true,
     nativeCursor: 'pointer',
@@ -1123,23 +1131,25 @@ const UserFlap = component({
   }]
 });
 
-// DarkUserFlap.openInWorld();
+// part(DarkUserFlap).openInWorld();
 const DarkUserFlap = component(UserFlap, {
   name: 'dark user flap',
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [{
-    name: 'label',
-    textAndAttributes: ['robin', null],
-    fontColor: Color.rgb(255, 255, 255)
-  }, {
     name: 'fast load toggler',
     submorphs: [{
-      name: 'toggle indicator',
-      fontColor: Color.rgb(255, 255, 255)
-    }, {
       name: 'bolt',
       fontColor: Color.rgb(255, 255, 255)
+    }, {
+      name: 'label',
+      fontColor: Color.white
+    }, {
+      name: 'toggle indicator',
+      fontColor: Color.rgb(255, 255, 255)
     }]
+  }, {
+    name: 'name label',
+    fontColor: Color.white
   }, {
     name: 'user menu',
     position: pt(15, 40),
@@ -1347,19 +1357,20 @@ const TopBar = component({
           spacing: 5
         }),
         nativeCursor: 'pointer',
-        submorphs: [part(TopBarButton, {
-          name: 'shape status icon',
-          reactsToPointer: false,
-          textAndAttributes: Icon.textAttribute('square'),
-          tooltip: 'Create basic shape mode'
-        }), {
-          type: Label,
-          name: 'select shape type',
-          fontColor: Color.rgb(102, 102, 102),
-          fontSize: 23,
-          nativeCursor: 'pointer',
-          textAndAttributes: Icon.textAttribute('angle-down')
-        }],
+        submorphs: [
+          part(TopBarButton, {
+            name: 'shape status icon',
+            reactsToPointer: false,
+            textAndAttributes: Icon.textAttribute('square'),
+            tooltip: 'Create basic shape mode'
+          }),
+          part(TopBarButton, {
+            name: 'select shape type',
+            fontSize: 23,
+            nativeCursor: 'pointer',
+            textAndAttributes: Icon.textAttribute('angle-down')
+          })
+        ],
         tooltip: 'Select different shape'
       },
       part(TopBarButton, {

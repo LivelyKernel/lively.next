@@ -1,5 +1,5 @@
 import { pt, rect, Color } from 'lively.graphics';
-import { List, DropDownListModel } from './list.js';
+import { List, DropDownListModel, MorphList } from './list.js';
 import { ShadowObject, component } from 'lively.morphic';
 import { SystemButtonDark, SystemButton } from './buttons.cp.js';
 
@@ -39,4 +39,4 @@ const DarkDropDownList = component(SystemButtonDark, {
   defaultViewModel: DropDownListModel
 });
 
-export { DefaultList, DarkList, DropDownList, DarkDropDownList };
+export { DefaultList, DarkList, DropDownList, DarkDropDownList, MorphList };

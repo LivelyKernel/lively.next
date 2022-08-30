@@ -79,4 +79,15 @@ const SystemButtonDark = component(ButtonDarkDefault, {
   master: { auto: ButtonDarkDefault, click: ButtonDarkClicked }
 });
 
-export { ButtonDefault, ButtonClicked, SystemButton, ButtonDarkDefault, SystemButtonDark, ButtonDarkClicked };
+const DarkButton = component(ButtonDefault, {
+  name: 'dark button',
+  borderWidth: 0,
+  fill: Color.rgba(0, 0, 0, 0.75),
+  submorphs: [{
+    name: 'label',
+    fontSize: 9,
+    fontColor: Color.rgb(255, 255, 255)
+  }]
+});
+
+export { ButtonDefault, ButtonClicked, SystemButton, ButtonDarkDefault, SystemButtonDark, ButtonDarkClicked, DarkButton };

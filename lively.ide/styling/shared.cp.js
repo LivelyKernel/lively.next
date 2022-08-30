@@ -87,7 +87,8 @@ const PopupWindow = component({
         name: 'title',
         padding: rect(10, 0, -10, 0),
         fontWeight: 'bold',
-        textString: 'Window title'
+        textString: 'Window title',
+        fontColor: { value: Color.black, onlyAtInstantiation: true }
       },
       part(CloseButton, { name: 'close button' })
     ]
