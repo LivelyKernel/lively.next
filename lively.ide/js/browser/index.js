@@ -1173,7 +1173,7 @@ export class BrowserModel extends ViewModel {
     const { sourceEditor, metaInfoText } = this.ui;
     sourceEditor.opacity = 1;
     sourceEditor.readOnly = false;
-    metaInfoText.showInactive();
+    metaInfoText.showDefault();
   }
 
   async onModuleSelected (m) {
