@@ -8,6 +8,7 @@ import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } f
 import { locateClass, requiredModulesOfSnapshot } from 'lively.serializer2';
 import { classNameOfId, moduleOfId } from 'lively.serializer2/snapshot-navigation.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
+import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import {
   fixSourceForBugsInGoogleClosure,
   gzip,
@@ -202,7 +203,7 @@ export default class LivelyRollup {
    * @param { Module } mod - The module object to transform the class definitions for.
    * @returns { object } The transform options.
    */
-  getTransformOptions (modId) {
+  getTransformOptions (modId, parsedSource) {
     if (modId === '@empty') return {};
     let version, name;
     const pkg = this.resolver.resolvePackage(modId);
@@ -235,7 +236,7 @@ export default class LivelyRollup {
     return {
       exclude: [
         'System',
-        ...this.resolver.dontTransform(modId, ast.query.knownGlobals),
+        ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...GlobalInjector.getGlobals(null, parsedSource)]),
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       classToFunction
@@ -597,7 +598,7 @@ export default class LivelyRollup {
     const captureObj = { name: recorderName, type: 'Identifier' };
     const parsed = ast.parse(source);
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
-    const opts = this.getTransformOptions(this.resolver.resolveModuleId(id));
+    const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
 
     if (this.needsClassInstrumentation(id, source)) {
       classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
