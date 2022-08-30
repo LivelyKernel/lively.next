@@ -158,7 +158,7 @@ export default class FreezerPromptModel extends AbstractPromptModel {
           ...Icon.textAttribute('exclamation-circle'),
           '  Directory will be overwritten.',
           {
-            fontFamily: 'Nunito',
+            fontFamily: 'IBM Plex Sans',
             fontWeight: '600'
           }
         ];
