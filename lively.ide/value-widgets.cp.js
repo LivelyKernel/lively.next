@@ -29,7 +29,7 @@ const Scrubber = component({
   baseFactor: 0.5,
   extent: pt(53.6, 24),
   fixedWidth: true,
-  selectable: false,
+  selectable: true,
   readOnly: true,
   fontColor: Color.rgb(40, 116, 166),
   fontFamily: 'IBM Plex Sans',
