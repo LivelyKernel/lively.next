@@ -20,6 +20,8 @@ import {
 } from './util/helpers.js';
 import { joinPath, ensureFolder } from 'lively.lang/string.js';
 
+const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
+
 const SYSTEMJS_STUB = `
 var G = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
@@ -811,14 +813,13 @@ export default class LivelyRollup {
 
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
-    const separator = '__Separator__';
     if (this.minify && opts.format !== 'esm') {
       modules.forEach((chunk, i) => {
         chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
       });
       const codeToMinify = modules.map(chunk => chunk.instrumentedCode).join('\n');
       const { min: minfiedCode } = await compileOnServer(codeToMinify, this.resolver, this.useTerser);
-      let compiledSnippets = minfiedCode.split(/"__Separator__";\n?/);
+      let compiledSnippets = minfiedCode.split(new RegExp(`"${separator}";\n?`));
       const adjustedSnippets = new Map(); // ensure order
       modules.forEach((snippet, i) => {
         adjustedSnippets.set(i, snippet.code); // populate with original source in case the transpiler kicked the chunk away
@@ -986,10 +987,10 @@ export default class LivelyRollup {
 
     const { min } = await this.transpileAndCompressOnServer({
       depsCode,
-      bundledCode: [loadCode, ...modules.map(snippet => snippet.instrumentedCode)].join('"__Separator__";')
+      bundledCode: [loadCode, ...modules.map(snippet => snippet.instrumentedCode)].join(`"${separator}";`)
     });
 
-    let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : /"__Separator__";\n?System.register\(/);
+    let [compiledLoad, ...compiledSnippets] = min.split(this.useTerser ? /\,System.register\(/ : new RegExp(`\"${separator}\";\n?System.register\(`));
 
     // ensure that all compiled snippets are present
     // clear the hints
