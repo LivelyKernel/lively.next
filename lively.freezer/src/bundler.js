@@ -141,7 +141,6 @@ export default class LivelyRollup {
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....") // deprecated
-    this.dynamicModules = new Set(); // modules loaded via System.import(...)
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
     this.hasDynamicImports = false; // Internal flag that indicates wether or not we need to perform code splitting or not.
     this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?
@@ -370,7 +369,7 @@ export default class LivelyRollup {
   }
 
   /**
-   * Returns true if the given module contains code of the sort of System.import(...) which we need 
+   * Returns true if the given module contains code of the sort of System.import(...) which we need
    * to convert into plain import() calls for rollup to consume correctly.
    * @param { string } moduleId - The module id.
    */
@@ -466,16 +465,6 @@ export default class LivelyRollup {
       }
     }
 
-    // fixme: this is another one of these super weird pruning strategies...
-    // if we are imported from a non dynamic context this does not apply
-    const dynamicContext = this.dynamicModules.has(this.resolver.resolveModuleId(importer)) ||
-                            this.dynamicModules.has(this.resolver.resolveModuleId(id));
-    if (!dynamicContext) {
-      if (this.excludedModules.includes(id)) return false;
-    } else {
-      this.dynamicModules.add(this.resolver.resolveModuleId(id, importer, this.getResolutionContext()));
-    }
-
     const importingPackage = this.resolver.resolvePackage(importer);
     // honor the systemjs options within the package config
     if (importingPackage && importingPackage.map) {
@@ -509,7 +498,7 @@ export default class LivelyRollup {
   }
 
   /**
-   * A custom resolveDynamicImport() which takes into account some of 
+   * A custom resolveDynamicImport() which takes into account some of
    * the excluded modules.
    * @param { AstNode } node - The ast node that represents the dynamic import call site.
    * @param { string } importer - The id of the module where the dynamic import is triggered from.
@@ -554,9 +543,7 @@ export default class LivelyRollup {
     }
     const pkg = this.resolver.resolvePackage(id);
     if (pkg && this.excludedModules.includes(pkg.name) &&
-        !id.endsWith('.json') &&
-        !this.dynamicModules.has(pkg.name) &&
-        !this.dynamicModules.has(id)) {
+        !id.endsWith('.json')) {
       return '';
     }
 
