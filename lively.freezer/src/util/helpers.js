@@ -241,7 +241,6 @@ export function instrumentStaticSystemJS (system) {
     transpiler: 'stub-transpiler' // this is tp be revised when we migrate the entire system to the new systemjs
   });
   system.get('@lively-env').loadedModules = lively.FreezerRuntime.registry;
-  if (system.baseURL !== lively.FreezerRuntime.baseURL) { system.baseURL = lively.FreezerRuntime.baseURL; }
   system.trace = false;
 }
 
