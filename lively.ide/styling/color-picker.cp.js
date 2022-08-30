@@ -334,7 +334,7 @@ const DefaultSlider = component({
       blur: 4,
       fast: false
     }),
-    extent: pt(14.6, 15.3),
+    extent: pt(15, 15),
     fill: Color.rgba(0, 0, 0, 0),
     nativeCursor: 'ns-resize',
     reactsToPointer: false
@@ -371,7 +371,7 @@ const OpacitySlider = component(DefaultSlider, {
   ]
 });
 
-// OpacitySlider.openInWorld();
+// part(DefaultSlider).openInWorld()
 
 const HueSlider = component(DefaultSlider, {
   defaultViewModel: HuePickerModel,
