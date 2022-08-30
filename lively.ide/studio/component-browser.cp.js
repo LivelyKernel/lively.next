@@ -1097,7 +1097,7 @@ const ComponentBrowser = component(LightPrompt, {
   }),
   submorphs: [{
     name: 'prompt title',
-    textAndAttributes: ['Browse Components', null]
+    textString: 'Browse Components'
   }, add(part(InputLineDefault, {
     name: 'search input',
     layout: new ProportionalLayout({

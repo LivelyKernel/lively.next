@@ -1,5 +1,5 @@
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
-import { TilingLayout, Label, ViewModel, part, add, component } from 'lively.morphic';
+import { TilingLayout, Morph, Label, ViewModel, part, add, component } from 'lively.morphic';
 import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInput, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
@@ -407,7 +407,8 @@ const BorderControlElements = component({
         listAlign: 'selection',
         openListInWorld: true,
         listHeight: 500,
-        listMaster: DarkThemeList
+        listMaster: DarkThemeList,
+        items: Morph.prototype.borderOptions
       },
       submorphs: [add({
         type: Label,
@@ -426,10 +427,17 @@ const BorderControlElements = component({
   }]
 });
 
+// part(BorderPopup).viewModel.models
 const BorderPopup = component(DarkPopupWindow, {
   defaultViewModel: BorderPopupWindow,
   name: 'border popup',
-  submorphs: [add({
+  submorphs: [{
+    name: 'header menu',
+    submorphs: [{
+      name: 'title',
+      textAndAttributes: ['Advanced Stroke', null]
+    }]
+  }, add({
     name: 'multi border control',
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(241, 115.1),
@@ -488,14 +496,8 @@ const BorderPopup = component(DarkPopupWindow, {
             }]
           })
         ]
-      }, part(BorderControlElements, { name: 'border control', viewModel: new BorderControlModel({ updateDirectly: false }) })]
-  }), {
-    name: 'header menu',
-    submorphs: [{
-      name: 'title',
-      textAndAttributes: ['Advanced Stroke', null]
-    }]
-  }]
+      }, part(BorderControlElements, { name: 'border control', viewModelClass: BorderControlModel, viewModel: { updateDirectly: false } })]
+  })]
 });
 
 // part(BorderControl).openInWorld()

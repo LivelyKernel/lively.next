@@ -325,7 +325,6 @@ BodyControl.openInWorld()
 const BodyControl = component(PropertySection, {
   name: 'body control',
   defaultViewModel: BodyControlModel,
-  master: { auto: PropertySectionInactive, hover: PropertySection },
   submorphs: [{
     name: 'h floater',
     submorphs: [{

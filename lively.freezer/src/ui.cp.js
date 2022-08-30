@@ -1,7 +1,6 @@
 import { LightPrompt, AbstractPromptModel, RedButton, GreenButton } from 'lively.components/prompts.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
-import { DarkButton } from 'lively.ide/js/browser/ui.cp.js';
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, easings, ShadowObject, HorizontalLayout, Icon, ProportionalLayout, Label, Text, component, add, part } from 'lively.morphic';
 import { PackageRegistry } from 'lively.modules/index.js';
@@ -9,6 +8,7 @@ import EditorPlugin from 'lively.ide/editor-plugin.js';
 import { resource } from 'lively.resources';
 import { fun } from 'lively.lang/index.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
+import { DarkButton } from 'lively.components/buttons.cp.js';
 
 class PackageTextCompleter {
   isValidPrefix (prefix) {

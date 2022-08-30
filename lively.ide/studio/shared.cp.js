@@ -102,10 +102,10 @@ const EnumSelectorClicked = component(EnumSelectorDefault, {
   fill: Color.rgba(54, 61, 61, 1)
 });
 
-// EnumSelector.openInWorld()
+// part(EnumSelector).openInWorld()
 const EnumSelector = component(EnumSelectorDefault, {
   name: 'enum selector',
-  master: { auto: EnumSelectorDefault, click: EnumSelectorClicked }
+  master: { click: EnumSelectorClicked }
 });
 
 // HeadlineLabel.openInWorld()

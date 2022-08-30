@@ -1,6 +1,6 @@
 import { GridLayout, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
-import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
+import { ButtonDefault, DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
 import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';
 import { Inspector } from './index.js';
 import { DropDownListModel } from 'lively.components/list.js';
@@ -38,20 +38,6 @@ const InstructionWidget = component({
   ]
 });
 
-const DarkButton = component(ButtonDefault, {
-  name: 'dark button',
-  borderWidth: 0,
-  extent: pt(115, 20),
-  fill: Color.rgba(0, 0, 0, 0.5),
-  submorphs: [{
-    name: 'label',
-    fontColor: Color.rgb(255, 255, 255),
-    fontSize: 12,
-    reactsToPointer: false,
-    textAndAttributes: ['a button', null]
-  }]
-});
-
 const SmallList = component(DarkList, {
   fontSize: 10
 });
@@ -62,7 +48,8 @@ const SmallList = component(DarkList, {
 
 const DarkDropDownList = component(DarkButton, {
   defaultViewModel: DropDownListModel,
-  name: 'dark drop down list'
+  name: 'dark drop down list',
+  submorphs: [{ name: 'label', fontSize: 12 }]
 });
 
 // part(SystemInspector).openInWindow()
@@ -183,15 +170,14 @@ const SystemInspector = component({
     treeData: {}
   }, {
     type: Label,
+    master: DarkButton,
     name: 'terminal toggler',
     position: pt(7.3, 572.6),
     isLayoutable: false,
     extent: pt(27, 19),
-    borderRadius: 5,
-    fill: Color.rgba(0, 0, 0, 0.5),
-    fontColor: Color.rgb(255, 255, 255),
-    fontSize: 15,
+    fontColor: Color.white,
     nativeCursor: 'pointer',
+    fontSize: 15,
     padding: rect(5, 2, 0, 0),
     textAndAttributes: Icon.textAttribute('keyboard')
   }, {
@@ -213,7 +199,7 @@ const SystemInspector = component({
     padding: rect(4, 2, 0, 0)
   }, part(DarkButton, {
     viewModel: {
-      label: { value: 'fix undeclared vars' }
+      label: { value: 'fix undeclared vars', fontSize: 12 }
     },
     name: 'fix import button',
     position: pt(221.4, 570.8),

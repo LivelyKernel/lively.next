@@ -1,7 +1,7 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
 import { ShadowObject, morph, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
-import { SystemButton, ButtonDefault } from 'lively.components/buttons.cp.js';
+import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
@@ -178,18 +178,6 @@ const EmbeddedIconClicked = component(EmbeddedIconDefault, {
 const EmbeddedIcon = component(EmbeddedIconDefault, {
   name: 'embedded icon',
   master: { auto: EmbeddedIconDefault, hover: EmbeddedIconHovered, click: EmbeddedIconClicked }
-});
-
-// DarkButton.openInWorld()
-const DarkButton = component(ButtonDefault, {
-  name: 'dark button',
-  borderWidth: 0,
-  fill: Color.rgba(0, 0, 0, 0.75),
-  submorphs: [{
-    name: 'label',
-    fontSize: 9,
-    fontColor: Color.rgb(255, 255, 255)
-  }]
 });
 
 const BrowserDirectoryControls = component({
@@ -428,7 +416,6 @@ export class PathIndicator extends Morph {
       this.master = FileStatusWarning;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
-        console.log(pathContainer.layout.renderViaCSS);
         statusLabel.opacity = statusBox.opacity = 1;
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
