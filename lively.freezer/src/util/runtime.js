@@ -191,6 +191,7 @@ export function runtimeDefinition () {
       return module;
     },
     decanonicalize (name) {
+      if (name.startsWith('lively://')) return name;
       if (name.endsWith('.json')) return G.lively.resources.resource(G.origin).join(name).url;
       if (!name.endsWith('.js') && !name.endsWith('/') && !name.endsWith('.svg')) // just import via package name
       { return name.split('/').concat(['index.js']).filter(Boolean).join('/'); }
