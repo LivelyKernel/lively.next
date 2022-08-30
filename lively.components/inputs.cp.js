@@ -20,7 +20,7 @@ const InputLineDefault = component({
     type: Label,
     name: 'placeholder',
     fontColor: Color.rgb(204, 204, 204),
-    fontFamily: 'Nunito',
+    fontFamily: 'IBM Plex Sans',
     fontSize: 20,
     padding: rect(10, 3, 0, 0),
     reactsToPointer: false,
