@@ -122,7 +122,7 @@ export async function getConfig (resolver) {
     tmp: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.js'))),
     min: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.min.js'))),
     babelConfig: resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc')),
-    pathToGoogleClosure: await evalOnServer(`System._nodeRequire('lively.freezer/src/resolvers/node.cjs').decanonicalizeFileName(\"google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}\/compiler\")`)
+    pathToGoogleClosure: await evalOnServer(`require('lively.freezer/src/resolvers/node.cjs').decanonicalizeFileName(\"google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}\/compiler\")`)
   };
 }
 
