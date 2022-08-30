@@ -76,6 +76,12 @@ export class ObjectEditorModel extends ViewModel {
         get () {
           return [
             {
+              model: 'inspect object button',
+              signal: 'fire',
+              handler: 'execCommand',
+              converter: () => 'open object inspector for target'
+            },
+            {
               model: 'publish button',
               signal: 'fire',
               handler: 'execCommand',
@@ -1159,7 +1165,7 @@ export class ObjectEditorModel extends ViewModel {
 
   /*
    * Selects the member/method in the class panel depending on the current cursor position.
-   * FIXME: This still does not work well and interferes with auto positioning of 
+   * FIXME: This still does not work well and interferes with auto positioning of
    *        the cursor from the system and manual selection.
    */
   async jumpToMethodAtCursorPosition () {
@@ -1562,7 +1568,6 @@ export class ObjectEditorModel extends ViewModel {
     if (statusMessage && !opts.silent) this.view.setStatusMessage(statusMessage);
   }
 }
-
 
 export class ImportControllerModel extends ViewModel {
   static get properties () {

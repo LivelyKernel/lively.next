@@ -139,7 +139,7 @@ async function lazyInspect (obj) {
   // lazy load
   const { openInWindow: realInspect } = await System.import('lively.ide/js/inspector/ui.cp.js');
   inspect = realInspect; // eslint-disable-line no-use-before-define
-  return realInspect(obj);
+  return realInspect({ targetObject: obj });
 }
 
 export let inspect = lazyInspect;
