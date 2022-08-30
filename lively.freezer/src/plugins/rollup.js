@@ -35,10 +35,7 @@ export function lively (args) {
     name: 'rollup-plugin-lively',
     buildStart () { return bundler.buildStart(this); },
     resolveId: async (id, importer) => {
-      if (isBuiltin(id, bundler.resolver)) {
-        return null;
-        // return id.replace('node:', ''); // ensure that this can be fed to the polyfill
-      }
+      if (isBuiltin(id, bundler.resolver) || id.startsWith('\0')) return null;
       let res = await bundler.resolveId(map[id] || id, importer);
       return res;
     },
@@ -87,7 +84,7 @@ export function lively (args) {
       // we still need to make sure that the options are invoked
       for (let plugin of opts.plugins) {
         if (plugin.name === 'rollup-plugin-lively') continue;
-        if (plugin.options) opts = plugin.options(opts);
+        if (plugin.options) opts = plugin.options.bind(this)(opts) || opts;
       }
       return opts;
     },
