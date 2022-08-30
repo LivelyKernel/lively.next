@@ -815,7 +815,7 @@ export class UserFlapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isUserFlap', 'isMaximized', 'updateNetworkIndicator'];
+          return ['isUserFlap', 'isMaximized', 'updateNetworkIndicator', 'alignInWorld'];
         }
       },
       bindings: {
@@ -891,12 +891,12 @@ export class UserFlapModel extends ViewModel {
     if (!owner) return;
     await this.view.whenRendered();
 
-    if (this.hasFixedPosition && owner.isWorld) {
-      this.topRight = pt(this.world().visibleBounds().width, 0);
+    if (this.view.hasFixedPosition && owner.isWorld) {
+      this.view.topRight = pt(this.world().visibleBounds().width, 0);
     } else if (owner.isWorld) {
       const tr = $world.visibleBounds().topRight().withY(0).subXY(10, 0);
-      if (animated) this.animate({ topRight: tr, duration: 200 });
-      else this.topRight = tr;
+      if (animated) this.view.animate({ topRight: tr, duration: 200 });
+      else this.view.topRight = tr;
     }
   }
 
@@ -1026,7 +1026,7 @@ const TopBarButtonSelected = component(TopBarButton, {
   fontColor: Color.rgb(0, 176, 255)
 });
 
-// UserFlap.openInWorld()
+// part(UserFlap).openInWorld()
 const UserFlap = component({
   name: 'user flap',
   defaultViewModel: UserFlapModel,
