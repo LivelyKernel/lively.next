@@ -480,22 +480,39 @@ export default class LivelyRollup {
       }
     }
 
+    let absolutePath;
+
     if (id.startsWith('.')) { // handle some kind of relative import
       try {
-        return this.resolved[resolutionId(id, importer)] = await this.resolveRelativeImport(importer, id);
+        absolutePath = await this.resolveRelativeImport(importer, id);
+        if (this.belongsToExcludedPackage(absolutePath)) return null;
+        return this.resolved[resolutionId(id, importer)] = absolutePath;
       } catch (err) {
         return null;
       }
     }
 
     if (!id.endsWith('.js') && !isCdnImport) {
-      return this.resolved[resolutionId(id, importer)] = await this.resolver.normalizeFileName(id);
+      absolutePath = await this.resolver.normalizeFileName(id);
+      if (this.belongsToExcludedPackage(absolutePath)) return null;
+      return this.resolved[resolutionId(id, importer)] = absolutePath;
     }
 
-    if (!dynamicContext && this.excludedModules.includes(id)) return false;
     // this needs to be done by flatn if we are running in nodejs. In the client, this also may lead to bogus
     // results since we are not taking into account in package.json
-    return this.resolved[resolutionId(id, importer)] = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
+
+    absolutePath = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
+    if (this.belongsToExcludedPackage(absolutePath)) return null;
+    return this.resolved[resolutionId(id, importer)] = absolutePath;
+  }
+
+  belongsToExcludedPackage (id) {
+    if (id === null) return true;
+    const pkg = this.resolver.resolvePackage(id);
+    if (pkg && this.excludedModules.includes(pkg.name)) {
+      return true;
+    }
+    return false;
   }
 
   /**
