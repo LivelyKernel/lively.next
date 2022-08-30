@@ -435,6 +435,11 @@ export class ValueScrubber extends Text {
     this.replace(this.documentRange, textString, false, true);
     this.relayout();
   }
+
+  onBlur (evt) {
+    super.onBlur(evt);
+    this.collapseSelection();
+  }
 }
 
 export class CheckBox extends Morph {
