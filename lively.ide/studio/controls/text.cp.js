@@ -106,7 +106,7 @@ export class RichTextControlModel extends ViewModel {
         underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
         if (text.isMorph) {
           fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
-          autoHeight.master = !text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
+          autoHeight.master = text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
           autoWidth.master = !text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
         }
       });
