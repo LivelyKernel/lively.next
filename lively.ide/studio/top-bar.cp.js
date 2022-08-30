@@ -1177,7 +1177,7 @@ const ProfileItem = component({
   fill: Color.rgba(0, 0, 0, 0),
   fixedHeight: true,
   fixedWidth: true,
-  fontFamily: 'Nunito',
+  fontFamily: 'IBM Plex Sans',
   fontSize: 16,
   nativeCursor: 'pointer',
   padding: rect(10, 3, -5, 0),

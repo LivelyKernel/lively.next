@@ -527,7 +527,6 @@ export class ListPromptModel extends TextPromptModel {
   }
 }
 
-
 export class EditListPromptModel extends ListPromptModel {
   resolve () {
     const { items: list, selections } = this.ui.promptList;
@@ -650,7 +649,7 @@ const GreenButtonClicked = component(GreenButton, {
   fill: Color.rgb(40, 155, 104)
 });
 
-// PlainButton.openInWorld()
+// part(PlainButton).openInWorld()
 const PlainButton = component(ButtonDefault, {
   name: 'plain button',
   borderWidth: 0,
@@ -661,7 +660,7 @@ const PlainButton = component(ButtonDefault, {
     type: Label,
     name: 'label',
     fontColor: Color.rgb(253, 254, 254),
-    fontFamily: 'Nunito',
+    fontFamily: 'IBM Plex Sans',
     fontSize: 14,
     fontWeight: 'bold',
     position: pt(13.5, 11.5),
