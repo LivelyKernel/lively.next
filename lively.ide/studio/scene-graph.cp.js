@@ -560,7 +560,7 @@ const MorphPanel = component({
   defaultViewModel: MorphPanelModel,
   name: 'morph panel',
   nativeCursor: 'ew-resize',
-  extent: pt(249.3, 1000),
+  extent: pt(250, 1000),
   draggable: true,
   layout: new TilingLayout({
     axis: 'column',

@@ -330,9 +330,8 @@ export class TopBarModel extends ViewModel {
         this.sceneGraph.respondsToVisibleWindow = true;
         this.sceneGraph.openInWorld();
         this.sceneGraph.right = 0;
-        await this.sceneGraph.whenRendered();
       }
-      await this.sceneGraph.toggle(this.activeSideBars.includes('scene graph'));
+      this.sceneGraph.toggle(this.activeSideBars.includes('scene graph'));
     }
 
     if (name === 'properties panel') {
@@ -343,13 +342,21 @@ export class TopBarModel extends ViewModel {
         this.propertiesPanel.hasFixedPosition = true;
         this.propertiesPanel.respondsToVisibleWindow = true;
       }
-      await this.propertiesPanel.toggle(this.activeSideBars.includes('properties panel'));
+      // FIXME: This can be removed once we move away from the vdom renderer.
+      //        Since the properties panel is mounted into the world, the vdom
+      //        has to create a significant amount of new vdom nodes and also
+      //        visit a bunch of submorphs. This can be ignored, once we work
+      //        with the vanilla DOM api, where can just simply use the previously
+      //        rendered dom node for the properties panel.
+      await this.propertiesPanel.whenRendered();
+      this.propertiesPanel.toggle(this.activeSideBars.includes('properties panel'));
     }
 
     const checker = this.ui.livelyVersionChecker;
     if (checker && checker.owner === $world) {
       checker.relayout();
     }
+    return name === 'properties panel' ? this.propertiesPanel : this.sceneGraph;
   }
 
   colorCommentBrowserButton () {

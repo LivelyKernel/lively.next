@@ -28,41 +28,41 @@ export class SidebarFlap extends ViewModel {
 
   async toggleSidebar () {
     const sidebarIsFadingOut = !!this.world().get(this.target);
-    // rms 10.2.22: If we open the scene graph for the first time
-    // there is an initial lag which obstructs the animation.
-    let sceneGraphPresent = false;
-    this.world().withTopBarDo(topBar => {
+    this.world().withTopBarDo(async topBar => {
+      let sceneGraphPresent = false;
       sceneGraphPresent = !!topBar.sceneGraph;
-      topBar.openSideBar(this.target);
+      const targetSidebar = await topBar.openSideBar(this.target);
+
+      if (sidebarIsFadingOut) {
+        this.view.animate({
+          left: (this.target === 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
+          duration: 300
+        });
+
+        if (this.target === 'scene graph') {
+          disconnect(targetSidebar, 'extent', this.view, 'left');
+        }
+      } else {
+        const sideBarWidth = targetSidebar?.width || defaultPropertiesPanelWidth;
+        const dragAreaWidth = 5;
+        const left = (this.target === 'scene graph')
+          ? sideBarWidth - dragAreaWidth
+          : $world.visibleBounds().width - sideBarWidth - this.view.width;
+        if (this.target === 'scene graph') {
+          connect(targetSidebar, 'extent', this.view, 'left', {
+            updater: ($upd, extent) => {
+              $upd(extent.x - dragAreaWidth);
+            },
+            varMapping: { dragAreaWidth }
+          });
+        }
+        this.view.animate({
+          left,
+          duration: 300,
+          easing: easings.outCirc
+        });
+      }
     });
-
-    const targetSidebar = $world.get(this.target);
-    // sidebar gets faded out
-    if (sidebarIsFadingOut) {
-      this.view.animate({
-        left: (this.target === 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
-        duration: 300
-      });
-
-      if (this.target === 'scene graph') {
-        disconnect(targetSidebar, 'extent', this.view, 'left');
-      }
-    // sidebar gets faded in
-    } else {
-      // rms 10.2.22 we have to wait for the property panel to be mounted
-      // because it will kill our animation du to the expensive VDOM update in progress.
-      if (this.target === 'properties panel' || !sceneGraphPresent) await targetSidebar.whenRendered();
-      const left = (this.target === 'scene graph') ? targetSidebar.width : $world.visibleBounds().width - targetSidebar.width - this.view.width;
-      this.view.animate({
-        left,
-        duration: 300,
-        easing: easings.outCirc
-      });
-
-      if (this.target === 'scene graph') {
-        connect(targetSidebar, 'extent', this.view, 'left', { converter: (extent) => extent.x });
-      }
-    }
   }
 
   onWorldResize () {
