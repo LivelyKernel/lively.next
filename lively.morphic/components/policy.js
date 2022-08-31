@@ -406,6 +406,11 @@ export class StylePolicy {
       specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
         ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
       ]);
+      // special handling for text attributes
+      if (specOrPolicy.textString) {
+        specOrPolicy.textAndAttributes = [specOrPolicy.textString, null];
+        delete specOrPolicy.textString;
+      }
       if (submorphs.length > 0) {
         let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
         for (let spec of submorphs) {
