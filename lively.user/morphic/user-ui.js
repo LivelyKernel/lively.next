@@ -112,7 +112,8 @@ export var UserUI = {
       versionChecker.relayout();
       versionChecker.checkVersion();
       const { Flap } = await System.import('lively.ide/studio/sidebar-flap.cp.js');
-      part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
+      const sceneGraphFlap = part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
+      connect(sceneGraphFlap, 'position', versionChecker, 'relayout');
       part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
     })();
     return topBar;
