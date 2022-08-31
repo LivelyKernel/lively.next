@@ -61,6 +61,11 @@ export class ColorInputModel extends ViewModel {
     }
   }
 
+  get isMixed () {
+    const { hexInput, opacityInput } = this.ui;
+    return opacityInput.isMixed || hexInput.input === 'Mix';
+  }
+
   setMixed (colors) {
     const { hexInput, opacityInput, gradient } = this.ui;
     // if opacity varies, then set that to mixed
@@ -76,6 +81,7 @@ export class ColorInputModel extends ViewModel {
         }))
       });
     }
+    this.colorValue = colors[0]; // just pick the first one
   }
 
   setColor (color) {
@@ -152,7 +158,8 @@ export class ColorInputModel extends ViewModel {
 
   confirm () {
     const { hexInput, opacityInput, gradientName } = this.ui;
-    if (!gradientName.visible) this.colorValue = Color.rgbHex(hexInput.input).withA(opacityInput.number);
+    const currentColor = this.isMixed ? this.colorValue : Color.rgbHex(hexInput.input);
+    if (!gradientName.visible) this.colorValue = currentColor.withA(opacityInput.number);
     signal(this, 'color', this.colorValue);
   }
 }

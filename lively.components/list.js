@@ -1821,7 +1821,7 @@ export class DropDownListModel extends ButtonModel {
 
       expose: {
         get () {
-          return ['keybindings', 'commands', 'items', 'selection', 'setMixed'];
+          return ['keybindings', 'commands', 'items', 'selection', 'setMixed', 'isMixed'];
         }
       },
 
@@ -1950,6 +1950,10 @@ export class DropDownListModel extends ButtonModel {
       label[5].textStyleClasses = ['fa', 'annotation'];
     }
     this.label = { value: label };
+  }
+
+  get isMixed () {
+    return this.label?.value[0] === 'Mix';
   }
 
   setMixed () {

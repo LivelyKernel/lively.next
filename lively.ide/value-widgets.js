@@ -507,8 +507,12 @@ export class NumberWidget extends Morph {
     return true;
   }
 
+  get isMixed () {
+    return this.getSubmorphNamed('value').isMixed;
+  }
+
   setMixed () {
-    this.getSubmorphNamed('value').textAndAttributes = ['Mix', null];
+    this.getSubmorphNamed('value').setMixed();
   }
 
   onMouseDown (evt) {
@@ -590,7 +594,6 @@ export class NumberWidget extends Morph {
     this.update(this.number - (1 / this.scaleFactor), false);
   }
 }
-
 
 export class ShadowWidget extends Morph {
   static get properties () {
