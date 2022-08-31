@@ -77,15 +77,13 @@ export class PropertiesPanelModel extends ViewModel {
         $world.addMorph(view, topBar.view);
       });
       view.topLeft = bounds.topRight();
-      await view.whenRendered();
-      await view.withAnimationDo(() => {
-        view.opacity = 1;
-        view.topRight = bounds.topRight();
-      }, {
+      this.attachToWorld($world);
+      await view.animate({
+        opacity: 1,
+        topRight: bounds.topRight(),
         easing: easings.outCirc,
         duration: 300
       });
-      this.attachToWorld($world);
     } else {
       this.detachFromWorld($world);
       await view.animate({
