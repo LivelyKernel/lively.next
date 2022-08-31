@@ -436,6 +436,14 @@ export class ValueScrubber extends Text {
     this.relayout();
   }
 
+  setMixed () {
+    this.textString = 'Mix';
+  }
+
+  get isMixed () {
+    return this.textString === 'Mix';
+  }
+
   onBlur (evt) {
     super.onBlur(evt);
     this.collapseSelection();
