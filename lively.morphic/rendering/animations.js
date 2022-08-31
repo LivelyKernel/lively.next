@@ -1,6 +1,6 @@
 import { obj, promise, fun, num, properties, arr, string } from 'lively.lang';
 import { Color } from 'lively.graphics';
-import { styleProps, addPathAttributes } from './property-dom-mapping.js';
+import { styleProps, addSvgAttributes, addPathAttributes } from './property-dom-mapping.js';
 import flubber from 'flubber';
 import Bezier from 'bezier-easing';
 import 'web-animations-js';
