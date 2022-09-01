@@ -1,5 +1,5 @@
 import { defaultDOMEnv } from './rendering/dom-helper.js';
-import Stage0Renderer from '../stage0-morph/renderer.js';
+import Renderer from './rendering/renderer.js';
 import FontMetric from './rendering/font-metric.js';
 import { ChangeManager } from './changes.js';
 import { UndoManager } from './undo.js';
@@ -7,8 +7,6 @@ import EventDispatcher from './events/EventDispatcher.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
 import { clearStylePropertiesForClassesIn } from './helpers.js';
 import promise from 'lively.lang/promise.js';
-
-// MorphicEnv.reset();
 
 export class MorphicEnv {
   static reset () {
@@ -114,7 +112,7 @@ export class MorphicEnv {
     this.deleteHistory();
     this.uninstallWorldRelated();
     this.world = world;
-    this.renderer = new Stage0Renderer(world, rootNode, this.domEnv);
+    this.renderer = new Renderer(world, rootNode, this.domEnv);
     this.eventDispatcher = new EventDispatcher(world.isEmbedded ? rootNode : this.domEnv.window, world).install(rootNode);
 
     world.resumeSteppingAll();
