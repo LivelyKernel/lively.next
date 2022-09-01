@@ -1,12 +1,210 @@
-import vdom from 'virtual-dom';
-import parser from 'vdom-parser';
-import { num, Path, obj, arr, promise } from 'lively.lang';
+import { num, Path, obj, arr } from 'lively.lang';
 import { Color, Point } from 'lively.graphics';
 import config from '../config.js';
-import { styleProps, addSvgAttributes, addPathAttributes } from './property-dom-mapping.js';
+import { styleProps, addSvgAttributes, addPathAttributes, stylepropsToNode } from './property-dom-mapping.js';
 import bowser from 'bowser';
 
-const { h, diff, patch, create: createNode } = vdom;
+/**
+  * @param {Morph} morph - The Morph for which to generate the attributes. 
+  */
+ export function defaultAttributes (morph) {
+  const attrs = {
+    id: morph.id,
+    class: (morph.hideScrollbars
+      ? morph.styleClasses.concat('hiddenScrollbar')
+      : morph.styleClasses).join(' '),
+    draggable: false
+  };
+  if (bowser.ios && morph.draggable && !morph.isWorld) {
+    attrs['touch-action'] = 'none';
+  } else if (bowser.ios && morph.clipMode !== 'visible' && !morph.isWorld) {
+    attrs['touch-action'] = 'auto';
+  } else {
+    attrs['touch-action'] = 'manipulation';
+  }
+  return attrs;
+}
+
+/**
+ * Extract the styling information from `morph`'s morphic model and applies them to its DOM node.
+ * Classes subclassing Morph can implement `renderStyles` that gets the Object with the styles to be applied passed before they are applied to the node. 
+ * @see defaultStyle.
+ * @param {Morph} morph - The Morph to be rendered.
+ * @param {Node} node - The node in which `morph` is rendered into the DOM.
+ * @returns {Node} `morph`'s DOM node with applied styling attributes.
+ */
+ export function applyStylingToNode (morph, node) {
+  let styleProps = defaultStyle(morph);
+
+  if (typeof morph.renderStyles === 'function') {
+    styleProps = morph.renderStyles(styleProps);
+  }
+
+  stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
+
+  if (morph.owner && morph.owner.isSmartText && morph.owner.embeddedMorphMap.has(morph)){
+    node.style.position = 'sticky';
+    node.style.transform = '';
+    node.style.textAlign = 'initial';
+    node.style.removeProperty('top');
+    node.style.removeProperty('left');
+  }
+
+  return node;
+}
+
+export const cssForTexts = `
+
+    /* markers */
+
+    .newtext-marker-layer {
+      position: absolute;
+    }
+
+    /* selection / cursor */
+
+    .newtext-cursor {
+      z-index: 5;
+      pointer-events: none;
+      position: absolute;
+      background-color: black;
+    }
+
+    .hidden-cursor .newtext-cursor {
+      background-color: transparent !important;
+    }
+
+    .newtext-cursor.diminished {
+      background-color: gray;
+    }
+
+    .newtext-selection-layer {
+      position: absolute;
+    }
+
+    /*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* text layer / content */
+    .font-measure {
+      visibility: hidden;
+    }
+
+    .newtext-text-layer {
+      box-sizing: border-box;
+      position: absolute;
+      white-space: pre;
+      z-index: 10; /* fixme: hackz */
+      min-width: 100%;
+      pointer-events: none;
+    }
+
+    .newtext-before-filler {}
+
+    .newtext-text-layer.wrap-by-words {
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.only-wrap-by-words {
+      white-space: pre-wrap;
+      overflow-wrap: break-all;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.wrap-by-chars {
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    .newtext-text-layer.no-wrapping {
+    }
+
+    .newtext-text-layer a {
+       pointer-events: auto;
+    }
+
+    .newtext-text-layer.auto-width .line {
+      width: fit-content;
+    }
+
+    .newtext-text-layer .line {
+      -moz-border-radius: 0;
+      -webkit-border-radius: 0;
+      border-radius: 0;
+      border-width: 0;
+      background: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      margin: 0;
+      word-wrap: normal;
+      line-height: inherit;
+      color: inherit;
+      position: relative;
+      overflow: visible;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-variant-ligatures: contextual;
+      font-variant-ligatures: contextual;
+    }
+
+    .line > .Morph {
+      display: inline-block !important;
+      vertical-align: top !important;
+    }
+
+    blockquote {
+      margin: 0;
+      -webkit-margin-start: 0;
+      -webkit-margin-end: 0;
+    }
+
+    .newtext-text-layer blockquote {
+      margin-left: 2em;
+      margin-right: 2em;
+      border-left: 2px lightgray solid;
+      padding-left: 2%;
+    }
+
+    .selectable {
+      user-select: text;
+    }
+
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+    /* debug styling */
+
+    .debug-info {
+      position: absolute;
+      outline: 1px solid green;
+      pointer-events: none;
+      z-index: 4;
+      text-align: center;
+      font-family: monospace;
+      color: green;
+      background-color: white;
+      font-size: small;
+      vertical-align: baseline;
+    }
+
+    .debug-line {
+      position: absolute;
+      outline: 1px solid red;
+      pointer-events: none;
+      z-index: 4,
+      text-align: right;
+      font-family: monospace;
+      font-size: small;
+      vertical-align: baseline;
+      color: red;
+    }
+
+    .debug-char {
+      position: absolute;
+      outline: 1px solid orange;
+      pointer-events: none;
+      z-index: 3
+    }
+
+  `;
 
 export const defaultCSS = `
 
@@ -434,28 +632,6 @@ SvgAnimation.prototype.hook = function (node) {
   this.morph._animationQueue.startSvgAnimationsFor(node, this.type);
 };
 
-export function defaultAttributes (morph, renderer) {
-  const attrs = {
-    animation: new Animation(morph),
-    key: morph.id,
-    id: morph.id,
-    attributes: {},
-    className: (morph.hideScrollbars
-      ? morph.styleClasses.concat('hiddenScrollbar')
-      : morph.styleClasses).join(' '),
-    draggable: false,
-    'morph-after-render-hook': new MorphAfterRenderHook(morph, renderer)
-  };
-  if (bowser.ios && morph.draggable && !morph.isWorld) {
-    attrs.attributes['touch-action'] = 'none';
-  } else if (bowser.ios && morph.clipMode !== 'visible' && !morph.isWorld) {
-    attrs.attributes['touch-action'] = 'auto';
-  } else {
-    attrs.attributes['touch-action'] = 'manipulation';
-  }
-  return attrs;
-}
-
 export function svgAttributes (svg) {
   const animation = new SvgAnimation(svg, 'svg'); const attributes = {};
   addSvgAttributes(svg, attributes);
@@ -471,50 +647,3 @@ export function pathAttributes (path) {
   Object.assign(attributes, path._animationQueue.maskedProps('path'));
   return { animation, attributes };
 }
-
-export function renderGradient (id, extent, gradient) {
-  gradient = gradient.valueOf();
-  const { bounds, focus, vector, stops } = gradient;
-  const { x: width, y: height } = extent;
-  const props = {
-    namespace: 'http://www.w3.org/2000/svg',
-    attributes: {
-      id: 'gradient-' + id,
-      gradientUnits: 'userSpaceOnUse',
-      r: '50%'
-    }
-  };
-  if (vector) {
-    props.attributes.gradientTransform =
-      `rotate(${num.toDegrees(vector.extent().theta())}, ${width / 2}, ${height / 2})`;
-  }
-  if (focus && bounds) {
-    const { width: bw, height: bh } = bounds;
-    const { x, y } = focus;
-    props.attributes.gradientTransform = `matrix(
-${bw / width}, 0, 0, ${bh / height},
-${((width / 2) - (bw / width) * (width / 2)) + (x * width) - (width / 2)},
-${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`;
-  }
-
-  return h(gradient.type, props,
-    stops.map(stop =>
-      h('stop',
-        {
-          namespace: 'http://www.w3.org/2000/svg',
-          attributes:
-                       {
-                         offset: (stop.offset * 100) + '%',
-                         'stop-opacity': stop.color.a,
-                         'stop-color': stop.color.withA(1).toString()
-                       }
-        })));
-}
-
-export function renderMorph (morph, renderer = morph.env.renderer) {
-  // helper that outputs a dom element for the morph, independent from the
-  // morph being rendered as part of a world or not. The node returned *is not*
-  // the DOM node that represents the morph as part of its world! It's a new node!
-  return createNode(morph.render(renderer), renderer.domEnvironment);
-}
-

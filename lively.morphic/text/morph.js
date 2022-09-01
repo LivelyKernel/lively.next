@@ -7,14 +7,14 @@ import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
 import { Morph } from '../morph.js';
 import { Selection, MultiSelection } from './selection.js';
-import Document, { objectReplacementChar } from './new-document.js';
+import Document, { objectReplacementChar } from './document.js';
 import { Anchor } from './anchors.js';
 import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import { TextSearcher } from './search.js';
-import NewLayout from './stage0-layout.js';
+import Layout from './layout.js';
 import commands from './commands.js';
 import { textAndAttributesWithSubRanges, splitTextAndAttributesIntoLines } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
@@ -837,7 +837,7 @@ export class Text extends Morph {
 
     this.viewState = this.defaultViewState;
     this.markers = [];
-    this.textLayout = new NewLayout(this); // delayed
+    this.textLayout = new Layout(this); // delayed
     this.changeDocument(Document.fromString(''));
     this.ensureUndoManager();
     if (snapshot.cachedLineBounds) {
@@ -1993,7 +1993,7 @@ export class Text extends Morph {
     this.document.insertTextAndAttributes(
       textAndAttributesToInsert,
       { row: 0, column: 0 });
-    this.textLayout = new NewLayout();
+    this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
     if (!this.fixedHeight) this.height = this.document.height;
     if (!this.fixedWidth) this.width = this.document.width;
@@ -2600,7 +2600,7 @@ export class Text extends Morph {
       }
 
       if (this.textLayout) {
-        renderer.patchSelectionLayer(node, this); // todo: can we get this to work with the comparison model?  
+        renderer.patchSelectionLayer(node, this); // FIXME: can we get this to work with the comparison model?  
       }
       if (!obj.equals(this.renderingState.markers, this.markers)) {
         renderer.patchMarkerLayer(node, this);

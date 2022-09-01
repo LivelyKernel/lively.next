@@ -6,7 +6,7 @@ import { Range } from '../text/range.js';
 
 function todo (name) { throw new Error('not yet implemented ' + name); }
 
-export default class NewLayout {
+export default class Layout {
   constructor () {
     this.reset();
   }
