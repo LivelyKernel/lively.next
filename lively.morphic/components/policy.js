@@ -570,7 +570,7 @@ export class StylePolicy {
   }
 
   /**
-   * Analogous to getSubSecFor but is able to traverse multiple policy scopes
+   * Analogous to getSubSpecFor but is able to traverse multiple policy scopes
    * by providing the owner policy names that precede the sub spec name.
    */
   getSubSpecAt (...path) {
