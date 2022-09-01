@@ -378,7 +378,7 @@ export class TopBarModel extends ViewModel {
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');
-    label.master = null; // eslint-disable-line no-use-before-define
+    label.master = null;
   }
 
   setEditMode (mode, shallow = false) {
@@ -416,7 +416,7 @@ export class TopBarModel extends ViewModel {
         });
       } else {
         morphsToUpdate.forEach(m => {
-          m.master = null; // eslint-disable-line no-use-before-define
+          m.master = null;
         });
       }
     });
