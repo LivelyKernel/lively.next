@@ -125,15 +125,8 @@ export class StylePolicy {
   }
 
   /**
-   * We can set a inline policy's parent to be either a descriptor or another inline policy.
-   * The nice thing about having descriptors as parents is, that they are immutable references
-   * that stay the same, even if their definition changes. That way we can easily stay up to date
-   * without a manual update notification mechanism.
-   * However this is not really useful between component definitions and inline policies since they are always "re evaluated"
-   * anyways. It is useful if an instantiated component sits around and is supposed to have its policy
-   * re applied in response to the updated component definition.
-   * This however is only handled by component policies, not inline policies.
-   * So this feature is not really needed. Maybe remove once we are done with this.
+   * The parent of the policy. If not overridden the `auto` master defaults to this policy.
+   * We also inherit all the structure from this policy.
    * @type { object | StylePolicy | ComponentDescriptor }
    */
   set parent (policyOrDescriptor) {
@@ -408,7 +401,7 @@ export class StylePolicy {
       ]);
       // special handling for text attributes
       if (specOrPolicy.textString) {
-        specOrPolicy.textAndAttributes = [specOrPolicy.textString, null];
+        specOrPolicy.textAndAttributes = specOrPolicy.textAndAttributes || [specOrPolicy.textString, null];
         delete specOrPolicy.textString;
       }
       if (submorphs.length > 0) {
