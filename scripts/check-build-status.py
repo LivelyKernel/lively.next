@@ -44,10 +44,14 @@ for dependant in need_to_check_deps:
             if not modified_deps:
                 print(f"✅ Build of {dependant} is up to date!\n")
                 continue
+            print("ℹ️ Collecting commit informations...")
             # Figure out the last commit that changed all modified dependencies
             # https://stackoverflow.com/a/32774290
             commits_of_dep_modification = [
-                s.git(f"rev-list -1 HEAD {file}").run().stdout for file in modified_deps
+                # the `--` is important, as it allows the specification of paths
+                # even if they do no longer exist in the current working tree
+                # see https://stackoverflow.com/a/9604647
+                s.git(f"rev-list -1 HEAD -- {file}").run().stdout for file in modified_deps 
             ]
             commits_of_dep_modification = [
                 commit for arr in commits_of_dep_modification for commit in arr
