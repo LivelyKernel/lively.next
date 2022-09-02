@@ -3,12 +3,16 @@ import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
-import { ComponentDescriptor } from 'lively.morphic';
+import { ComponentDescriptor, morph } from 'lively.morphic';
 
-import { component, edit, ViewModel, without, part, add } from '../components/core.js';
+import { component, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, PolicyApplicator } from '../components/policy.js';
 
 const moduleId = import.meta.url.replace(System.baseURL, '');
+
+function edit (componentDescriptor) {
+  return morph(componentDescriptor.stylePolicy.asBuildSpec());
+}
 
 /**
  * Retrieve a sub policy embedded within an inline policy.
