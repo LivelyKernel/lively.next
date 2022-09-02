@@ -1,7 +1,7 @@
 import { num, Path, obj, arr } from 'lively.lang';
 import { Color, Point } from 'lively.graphics';
 import config from '../config.js';
-import { styleProps, addSvgAttributes, addPathAttributes, stylepropsToNode } from './property-dom-mapping.js';
+import { styleProps, stylepropsToNode } from './property-dom-mapping.js';
 import bowser from 'bowser';
 
 /**
@@ -209,7 +209,6 @@ export const cssForTexts = `
 export const defaultCSS = `
 
 /*-=- html fixes -=-*/
-
 html {
   overflow: visible;
 }
@@ -218,15 +217,6 @@ textarea.lively-text-input.debug {
   z-index: 20 !important;
   opacity: 1 !important;
   background: rgba(0,255,0,0.5) !important;
-}
-
-.no-html-select {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 .hiddenScrollbar::-webkit-scrollbar {
@@ -238,9 +228,7 @@ textarea.lively-text-input.debug {
   scrollbar-width: none;
 }
 
-
 /*-=- generic morphic -=-*/
-
 .Morph {
   outline: none;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
@@ -298,7 +286,6 @@ textarea.lively-text-input.debug {
 }
 
 /*-=- text -=-*/
-
 .center-text {
   text-align: center;
 }
@@ -311,8 +298,6 @@ textarea.lively-text-input.debug {
 div.text-layer span {
   line-height: normal;
 }
-
-/*-=- text -=-*/
 
 .Label span {
   white-space: pre;
@@ -498,7 +483,7 @@ export class ShadowObject {
   }
 }
 
-export function defaultStyle (morph) {
+function defaultStyle (morph) {
   const { reactsToPointer, nativeCursor, clipMode } = morph;
   const layoutStyle = {};
   // this also performs measure of the actual morphs height, so do that before rendering the style props
@@ -539,111 +524,4 @@ export function defaultStyle (morph) {
   Object.assign(domStyle, layoutStyle);
 
   return domStyle;
-}
-
-// Sets the scroll later...
-// See https://github.com/Matt-Esch/virtual-dom/issues/338 for why that is necessary.
-// See https://github.com/Matt-Esch/virtual-dom/blob/dcb8a14e96a5f78619510071fd39a5df52d381b7/docs/hooks.md
-// for why this has to be a function of prototype
-function MorphAfterRenderHook (morph, renderer) { this.morph = morph; this.renderer = renderer; }
-MorphAfterRenderHook.prototype.hook = function (node, propertyName, previousValue, attempt = 0) {
-  const isInDOM = !!node.parentNode;
-
-  if (isInDOM) {
-    // 2. update scroll of morph itself
-    // 3. Update scroll of DOM nodes of submorphs
-    if (this.morph._submorphOrderChanged && this.morph.submorphs.length) {
-      this.morph._submorphOrderChanged = false;
-      this.updateScrollOfSubmorphs(this.morph, this.renderer);
-    } else if (this.morph.isClip()) this.updateScroll(this.morph, node);
-
-    if (Path('morph.owner.layout.renderViaCSS').get(this)) {
-      this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
-    }
-    if (Path('morph.layout.renderViaCSS').get(this)) {
-      this.morph.layout.ensureBoundsMonitor(node, this.morph);
-    }
-  }
-
-  if (Path('morph.owner.layout.renderViaCSS').get(this)) {
-    this.morph.owner.layout.ensureBoundsMonitor(node, this.morph);
-  }
-  if (Path('morph.layout.renderViaCSS').get(this)) {
-    this.morph.layout.ensureBoundsMonitor(node, this.morph);
-  }
-
-  if (isInDOM || attempt > 3) {
-    this.morph._rendering = false; // see morph.makeDirty();
-    this.morph.onAfterRender(node);
-    return;
-  }
-
-  // wait for node to be really rendered, i.e. it's in DOM
-  attempt++;
-  setTimeout(() => this.hook(node, propertyName, previousValue, attempt), 20 * attempt);
-};
-MorphAfterRenderHook.prototype.updateScroll = function (morph, node, fromScroll) {
-  // If there is a scroll in progress (e.g. the user scrolled the morph via
-  // trackpad), we register that via onScroll event handlers and update the scroll
-  // prperty of the morph.  However, while the scroll is ongoing, we will not set
-  // the scrollLeft/scrollTop DOM element attributes b/c that would interfere with
-  // "smooth" scrolling and appear jerky.
-  // evt.state.scroll.interactiveScrollInProgress promise is used for tracking
-  // that.
-  const { interactiveScrollInProgress } = morph.env.eventDispatcher.eventState.scroll;
-  if (node && interactiveScrollInProgress) {
-    return interactiveScrollInProgress.then(() => this.updateScroll(morph, node, true)); // scheduled more then once!!
-  }
-  if (morph.isWorld) return;
-  if (node) {
-    const { x, y } = morph.scroll;
-
-    if (morph._animationQueue.animations.find(anim => anim.animatedProps.scroll)) return;
-    const scrollLayer = morph.isText && morph.viewState.fastScroll ? node.querySelector('.scrollLayer') : node;
-
-    if (morph._skipScrollUpdate) return;
-    if (!scrollLayer) return;
-    // prevent interference with bounce back animation
-    // this is only there to immediately respoond in the view to a setScroll
-    scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
-    scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
-
-    !fromScroll && requestAnimationFrame(() => {
-      scrollLayer.scrollTop !== y && (scrollLayer.scrollTop = y);
-      scrollLayer.scrollLeft !== x && (scrollLayer.scrollLeft = x);
-    }, morph.id);
-  }
-};
-MorphAfterRenderHook.prototype.updateScrollOfSubmorphs = function (morph, renderer) {
-  morph.submorphs.forEach(m => {
-    if (m.isClip()) { this.updateScroll(m, renderer.getNodeForMorph(m)); }
-    this.updateScrollOfSubmorphs(m, renderer);
-  });
-};
-
-// simple toplevel constructor, not a class and not wrapped for efficiency
-function Animation (morph) { this.morph = morph; }
-Animation.prototype.hook = function (node) {
-  this.morph._animationQueue.startAnimationsFor(node);
-};
-
-export function SvgAnimation (morph, type) { this.morph = morph; this.type = type; }
-SvgAnimation.prototype.hook = function (node) {
-  this.morph._animationQueue.startSvgAnimationsFor(node, this.type);
-};
-
-export function svgAttributes (svg) {
-  const animation = new SvgAnimation(svg, 'svg'); const attributes = {};
-  addSvgAttributes(svg, attributes);
-  Object.assign(attributes, svg._animationQueue.maskedProps('svg'));
-  return { animation, attributes };
-}
-
-export function pathAttributes (path) {
-  const animation = new SvgAnimation(path, 'path'); const attributes = {
-    mask: path.drawnProportion !== 0 ? 'url(#mask' + path.id + ')' : ''
-  };
-  addPathAttributes(path, attributes);
-  Object.assign(attributes, path._animationQueue.maskedProps('path'));
-  return { animation, attributes };
 }

@@ -556,9 +556,9 @@ export default class EventDispatcher {
             // Here we install a debouncer for letting the renderer know when it is
             // safe to update the DOM for scroll values without interrupting
             // the browser internal scroll.
-            // See MorphAfterRenderHook>>updateScroll in rendering/morphic-default.js and
-            // https://github.com/LivelyKernel/lively.morphic/issues/88
-            // for more info
+            // See https://github.com/LivelyKernel/lively.morphic/issues/88 for more info
+            // FIXME:/TODO: Is this sufficiently working with the new renderer?
+            // Do we still need this with the new renderer?
             const scrollInProgress = !!state.scroll.interactiveScrollInProgress;
             if (!scrollInProgress) {
               const { promise: p, resolve } = promise.deferred();
