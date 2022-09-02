@@ -281,7 +281,7 @@ export class CompletionController {
       input.input = intermittendInput;
       input.gotoDocumentEnd();
     }
-    // input.fontColor = this.textMorph.fontColor;
+
     connect(input, 'textString', mask, 'setBounds', {
       converter: '() => input.textBounds()',
       varMapping: { input }
