@@ -484,8 +484,7 @@ export class StylePolicy {
    * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, checkNext = () => true, skipOptionalProps = false) {
-    if (!checkNext(this)) return {};
+  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps = true) {
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     if (subSpec.isPolicy) {
@@ -514,15 +513,13 @@ export class StylePolicy {
       qualifyingMaster = qualifyingMaster.stylePolicy;
     }
 
-    if (checkNext(qualifyingMaster)) {
-      nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, checkNext, skipOptionalProps);
-      if (nextLevelSpec.isPolicy) return nextLevelSpec;
-    }
+    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps);
+    if (nextLevelSpec.isPolicy) return nextLevelSpec;
 
     let synthesized = {}; let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
-      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, () => true, true);
+      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope);
       Object.assign(
         synthesized,
         // fill in the top level props just in case they are needed to serve as "defaults" (propably mostly overridden)
@@ -549,7 +546,7 @@ export class StylePolicy {
     delete synthesized.name;
     for (let prop in synthesized) {
       if (synthesized[prop]?.onlyAtInstantiation) {
-        if (skipOptionalProps) delete synthesized[prop];
+        if (skipInstantiationProps) delete synthesized[prop];
         else synthesized[prop] = synthesized[prop].value;
       }
     }
@@ -674,7 +671,7 @@ export class PolicyApplicator extends StylePolicy {
       this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
         let submorphName = null;
         if (morphInScope !== targetMorph) submorphName = morphInScope.name;
-        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph);
+        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, false);
         if (obj.isEmpty(synthesizedSpec)) return;
         if (synthesizedSpec.isPolicy) {
           morphInScope.setProperty('master', synthesizedSpec); // might be redundant
@@ -689,8 +686,8 @@ export class PolicyApplicator extends StylePolicy {
     });
   }
 
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, checkNext = () => true, skipOptionalProps = false) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, checkNext, skipOptionalProps);
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, skipInstantiationProps = true) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, skipInstantiationProps);
     if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
       return new PolicyApplicator({}, subSpec);
     }
