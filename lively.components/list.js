@@ -25,6 +25,8 @@ export class ListItemMorph extends Label {
       autofit: { defaultValue: false },
       isSelected: { defaultValue: false },
       draggable: { defaultValue: !touchInputDevice },
+      fixedWidth: { defaultValue: true },
+      fixedHeight: { defaultValue: true },
       fill: {
         derived: true,
         get () {
@@ -60,10 +62,9 @@ export class ListItemMorph extends Label {
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
-    if (item.annotation){
-      this.valueAndAnnotation = { value: label, annotation: item.annotation }
-    }
-    else if (typeof label === 'string') this.textAndAttributes = label;
+    if (item.annotation) {
+      this.valueAndAnnotation = { value: label, annotation: item.annotation };
+    } else if (typeof label === 'string') this.textAndAttributes = label;
     // It is actually very important to use setProperty here
     // triggering the textAndAttributes setter will sometimes fuckup the values in label
     // this his rather a hack than a nice solution, and should be changed again
