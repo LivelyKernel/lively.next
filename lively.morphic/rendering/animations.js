@@ -57,7 +57,6 @@ export class AnimationQueue {
 
   registerAnimation (config) {
     const anim = new PropertyAnimation(this, this.morph, config); // eslint-disable-line no-use-before-define
-    this.morph.makeDirty();
     return this.morph.withMetaDo({ animation: anim }, () => {
       const existing = anim.affectsMorph && this.animations.find(a => a.equals(anim));
       if (!existing) {
@@ -143,6 +142,7 @@ export class PropertyAnimation {
     }
     this.config = this.convertBounds(config);
     this.needsAnimation = {
+      svg: morph.isPath,
       path: morph.isPath
     };
     this.capturedProperties = obj.select(this.morph, this.propsToCapture);
@@ -210,7 +210,7 @@ export class PropertyAnimation {
   }
 
   canMerge (animation) {
-    return this.easing === animation.easing && this.duratio === animation.duration;
+    return this.easing === animation.easing && this.duration === animation.duration;
   }
 
   mergeWith (animation) {
@@ -338,6 +338,7 @@ export class PropertyAnimation {
   }
 
   startSvg (svgNode, type) {
+    if (type === 'path') svgNode = svgNode.firstChild;
     if (this.needsAnimation[type]) {
       this.needsAnimation[type] = false;
       const [before, after] = this.getAnimationProps(type);
@@ -400,7 +401,7 @@ export class PropertyAnimation {
     const onComplete = () => {
       if (!remove) return;
       this.finish('css');
-      this.morph.makeDirty();
+      this.morph.renderingState.needsRerender = true;
     };
     if (customTween) {
       let startTime;

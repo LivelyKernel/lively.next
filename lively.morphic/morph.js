@@ -1261,10 +1261,7 @@ export class Morph {
   async animate (config) {
     this.renderingState.animationAdded = true;
     const anim = this._animationQueue.registerAnimation(config);
-    if (!this._animationQueue.animationsActive) {
-      anim && anim.finish();
-      return Promise.resolve(this);
-    }
+    this.renderingState.needsRerender = true;
     if (anim) {
       return await anim.asPromise();
     }

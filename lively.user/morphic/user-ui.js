@@ -82,7 +82,7 @@ export var UserUI = {
       await topBar.whenRendered();
       await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
       if (!world.metadata) {
-        world.animate({
+        await world.animate({
           customTween: p => {
             topBar.blur = world.blur = p * 3;
           },
@@ -98,7 +98,7 @@ export var UserUI = {
         //        to reliably load the package at all times the world is loaded
         const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
         await pkg.adoptObject(world);
-        world.animate({
+        await world.animate({
           customTween: p => {
             topBar.blur = world.blur = (1 - p) * 3;
           },
