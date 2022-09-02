@@ -558,16 +558,6 @@ export function add (props, before = null) {
   };
 }
 
-/**
- * Creates a new morph from the internal spec in order to
- * alter the component definition via direct manipulation.
- * @returns { Morph } The master component as a morph.
- * FIXME: move this into the IDE!
- */
-export function edit (componentDescriptor) {
-  return morph(componentDescriptor.stylePolicy.asBuildSpec());
-}
-
 function insertFontCSS (name, fontUrl) {
   if (fontUrl.endsWith('.otf')) {
     addOrChangeCSSDeclaration(`${name}`,
