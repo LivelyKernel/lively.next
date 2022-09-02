@@ -223,7 +223,7 @@ export class StylePolicy {
   }
 
   /**
-   * The maun purpose of this method is to properly initialize style policies within our spec in order to reify
+   * The main purpose of this method is to properly initialize style policies within our spec in order to reify
    * what is called "inline policies".
    * Usually, we declare an inline policy by placing a part() within one
    * of the submorph arrays in the spec we pass to component().
@@ -304,7 +304,7 @@ export class StylePolicy {
         }
         if (localMaster) {
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(parentSpec.name)));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)));
         }
         if (parentSpec.isPolicy) {
           return replace(parentSpec, new klass(localSpec, parentSpec.parent)); // insert a different style policy that has the correct overrides
@@ -358,10 +358,10 @@ export class StylePolicy {
    * @param { string } specName - The name of the sub spec.
    * @returns { StylePolicy|null} If sub spec is found in this policy, the newly initialized style policy based on that sub spec.
    */
-  extractInlinePolicyFor (specName) {
+  extractStylePolicyFor (specName) {
     const subSpec = this.getSubSpecFor(specName);
     const klass = this.constructor;
-    if (subSpec) return new klass(subSpec, this.parent ? this.parent.extractInlinePolicyFor(specName) : null);
+    if (subSpec) return new klass(subSpec, this.parent ? this.parent.extractStylePolicyFor(specName) : null);
     return null;
   }
 
