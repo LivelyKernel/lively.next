@@ -63,6 +63,7 @@ for dependant in need_to_check_deps:
                 .run()
                 .stdout[0]
             )
+            installed = False
             for commit in commits_of_dep_modification:
                 # We use `os` instead of `sultan` here, since `sultan` does not allow for failing commands...
                 # This figures out if `commit_of_build` is an ancestor of `commit`
@@ -77,9 +78,11 @@ for dependant in need_to_check_deps:
                 if test == 256:
                     # Last hope that we do not need to commit a new build: Rebuilding would not change the bundle!\
                     # Build it!
-                    print(f"ℹ️ Checking if rebuilding {dependant} would cause changes...")
-                    print(f"ℹ️ Installing lively...")
-                    install = os.system("./install.sh >/dev/null 2>&1")
+                    print(f"ℹ️ Checking if rebuilding {dependant} would cause changes (due to {commit})...")
+                    if not installed:
+                        print("ℹ️ Installing lively...")
+                        os.system("./install.sh >/dev/null 2>&1")
+                        installed = True
                     s.npm(f"--prefix {dependant} run build").run()
                     # Check whether we could commit a changed bundle file.
                     git_status = s.git("status").run().stdout
