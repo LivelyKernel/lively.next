@@ -1709,10 +1709,7 @@ export class Morph {
    * In case it was attached to a new parent, that morph is referenced by `newOwner`.
    * @param { Morph|null } newOwner - If applicable, the new owner the morph is assigned to.
    */
-  onOwnerChanged (newOwner) {
-    // newOwner = null => me or any of my owners was removed
-    // newOwner = morp => me or any of my owners was added to another morph
-  }
+  onOwnerChanged (newOwner) {}
 
   async fadeOut (duration = 1000) {
     await this.animate({ opacity: 0, duration, easing: easings.outQuad });
