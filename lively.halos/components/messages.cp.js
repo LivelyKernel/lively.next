@@ -208,7 +208,7 @@ const StatusMessageError = component(StatusMessageDefault, {
     }
   ]
 });
-// StatusMessageWarning.openInWorld()
+
 const StatusMessageWarning = component(StatusMessageDefault, {
   name: 'status message warning',
   borderColor: Color.rgbHex('DA9819'),

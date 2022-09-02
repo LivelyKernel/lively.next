@@ -75,36 +75,33 @@ function getEventState (targetMorph, customBreakpoints) {
 }
 
 /**
- * This is an abstract policy, that is not applied to an actual morph
- * but instead is stored inside the internal spec representation of the
- * master component system. Its main purpose is to manage and synthesize
- * specs that can then be used for 1.) deriving new morphs or 2.) applying styles.
- * It is in turn used by ComponentPolicies in order to quickly get the properties
- * to be applied to a styled submorph hierarchy.
+ * We use StylePolicies to implement 2 kinds of abstractions in the system:
+ * 1. Component Definitions:
+ *    These are top level definitions of reusable UI Elements that we can apply to morphs or use to create morphs from.
+ *    We can also define new components that are derived from other components.
+ * 2. Inline Style Policies:
+ *    In cases where we want to reuse a particular component definition, but do not want to create
+ *    a dedicated top level definition (since there is not scenario for reuse) we can insert *Inline Policies*
+ *    into a component definition.
  */
 export class StylePolicy {
   /**
-   * Creates a new Inline Policy. Inline Policies are the underlying building blocks
-   * of component definitions. Except for top level component definitions
-   * (those that are not derived from any other existing components in the system) most
-   * of the components are defined in terms of derivations of other components in the system.
-   * A derivation of a component is the reuse of structural and/or style properties within the context
-   * of another component.
+   * Creates a new StylePolicy.
    * @param { object } spec - The structural composition of the component, similar to morphic build specs.
-   * @param { StylePolicy } parent - The inline policies that we are derived from.
+   * @param { StylePolicy | ComponentDescriptor } parent - The policy that we are derived from.
    * @param { boolean } [inheritStructure = true] - Wether or not we are supposed to inherit the structure of the parent policy.
    */
   constructor (spec, parent, inheritStructure = true) {
-    if (parent) this.parent = parent; // can be either an inline policy or a component descriptor
+    if (parent) this.parent = parent;
     this.inheritStructure = inheritStructure;
     this.spec = this.ensureStylePoliciesInSpec(spec);
     if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
   }
 
   /**
-   * Inline policies usually have a parent inline policy they are derived from
+   * StylePolicies usually have a parent policy they are derived from
    * except if they are are a master component completely created from scratch.
-   * @returns { StylePolicy | null } The inline policy that we are derived from.
+   * @returns { StylePolicy | null } The policy that we are derived from.
    */
   get parent () {
     return this._parent?.isComponentDescriptor ? this._parent.stylePolicy : this._parent;
@@ -121,12 +118,12 @@ export class StylePolicy {
    * @type { [string] } The name of the root element of this policy.
    */
   get name () {
-    return this.spec.name; // this is not needed useful for top level inline policies...
+    return this.spec.name;
   }
 
   /**
    * The parent of the policy. If not overridden the `auto` master defaults to this policy.
-   * We also inherit all the structure from this policy.
+   * We also inherit all the structure (submorphs) from this policy.
    * @type { object | StylePolicy | ComponentDescriptor }
    */
   set parent (policyOrDescriptor) {
@@ -226,15 +223,20 @@ export class StylePolicy {
   }
 
   /**
-   * Usually, we declare inline policies by calling part() within our component() definition.
+   * The maun purpose of this method is to properly initialize style policies within our spec in order to reify
+   * what is called "inline policies".
+   * Usually, we declare an inline policy by placing a part() within one
+   * of the submorph arrays in the spec we pass to component().
    * However inline policies can also be declared "implicitly".
    * Overriding the master property in one of our submorphs in the component or
-   * declaring a 2nd, 3rd, etc rate inline policy is not signified by a part call. We however still need to wrap
+   * declaring a 2nd, 3rd, etc rate inline policy is not signified by a part call. We however we still need to wrap
    * these cases. This is why this routing scans our current spec for these cases and ensures
-   * they are stored as InlinePolicies accordingly.
+   * they are stored as StylePolicies accordingly.
    * We also ensure the presence of "empty" style policies, that did not get adressed
    * in the derivation at all. This is mainly for the purpose of simplifying the generation
    * of build specs.
+   * @param { object } spec - The spec object to scan for policies that need to be inserted.
+   * @returns { object } The spec with the explicit/implicit style policies inserted.
    */
   ensureStylePoliciesInSpec (spec) {
     const klass = this.constructor;
@@ -256,8 +258,8 @@ export class StylePolicy {
         return { ...node, submorphs };
       }, node => node.submorphs || []);
     };
-    // scan this.spec and detect overridden/set master components
-    // or further refined inline policies
+    // scan this.spec and detect overridden/set master props
+    // or further refined style policies
     if (!this.parent || !this.inheritStructure) {
       return ensureStylePoliciesInStandalone(spec);
     }
@@ -265,23 +267,24 @@ export class StylePolicy {
     if (this.parent) {
       // we need to traverse the spec and the parent's build spec simultaneously
       const baseSpec = tree.mapTree(this.parent.spec, (node, submorphs) => {
-        // weird way of processing the commands of the parent spec
         if (node.COMMAND === 'add') node = node.props;
         if (node.COMMAND === 'remove') return null;
 
         let localMaster = getLocalMaster(node.name || node.spec?.name);
-        if (node.isPolicy) return new klass(localMaster ? { master: localMaster } : {}, node); // create new empty policy, which in turn handles the futher traversal internally
-        // how to handle localMaster in case node is not a policy?
+        if (node.isPolicy) {
+          // create new empty policy, which in turn handles the futher traversal internally
+          return new klass(localMaster ? { master: localMaster } : {}, node);
+        }
         node = obj.dissoc(node, ['master', 'submorphs', ...getStylePropertiesFor(node.type)]);
         if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
         return node;
       }, node => node.submorphs || node.props?.submorphs || []); // get the fully collapsed spec
-      // we are abusing the merging traversal a little in order to perform
+
       const toBeReplaced = new WeakMap();
       function replace (node, replacement) {
         toBeReplaced.set(node, replacement);
       }
-      // in place modifications of our local spec
+
       mergeInHierarchy(baseSpec, spec, (parentSpec, localSpec) => {
         // ensure the presence of all nodes
         if (localSpec === spec) {
@@ -294,7 +297,8 @@ export class StylePolicy {
 
         let localMaster = localSpec.master || getLocalMaster(parentSpec.name);
         if (localMaster && parentSpec.isPolicy) {
-          // rms 13.7.22 OK to get rid of the descriptor here, since we are "inside" of a def which is reevaluated on change anyways.
+          // rms 13.7.22 OK to get rid of the descriptor here,
+          // since we are "inside" of a def which is reevaluated on change anyways.
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec.parent));
         }
@@ -347,6 +351,14 @@ export class StylePolicy {
     }
   }
 
+  /**
+   * Turns a spec object that used to not be a style policy before into a style policy.
+   * This involves traversing the parents and initializing the previously missing style policies
+   * for every time the sub spec was mentioned. Note, that this process does not "alter" the parent
+   * component definitions.
+   * @param { string } specName - The name of the sub spec.
+   * @returns { StylePolicy|null} If sub spec is found in this policy, the newly initialized style policy based on that sub spec.
+   */
   extractInlinePolicyFor (specName) {
     const subSpec = this.getSubSpecFor(specName);
     const klass = this.constructor;
@@ -468,8 +480,8 @@ export class StylePolicy {
    * Synthesizes the sub spec corresponding to a particular name
    * of a morph in the submorph hierarchy.
    * @param { string } submorphNameInPolicyContext - The name of the sub spec.
-   * @param { Morph } ownerOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching to other inline policies.
-   * @param { function } [checkNext = () => true] - Custom checker that allows us to control how far we traverse the derivation chain to synthesize the sub spec.
+   * @param { Morph } ownerOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching between differnt style policies based on the event state (hover, click).
+   * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
    * @returns { object } The synthesized spec.
    */
   synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, checkNext = () => true, skipOptionalProps = false) {
@@ -552,9 +564,6 @@ export class StylePolicy {
    */
   getSubSpecFor (submorphName) {
     if (!submorphName) return this.spec; // assume we ask for root
-    // just find the correct sub spec inside our spec
-    // if no entry is present for this name,
-    // we escalate the query to the parent (structure provider)
     const matchingNode = tree.find(this.spec, node => {
       if (node.COMMAND === 'add') return node.props.name === submorphName;
       return node.name === submorphName;
@@ -565,6 +574,8 @@ export class StylePolicy {
   /**
    * Analogous to getSubSpecFor but is able to traverse multiple policy scopes
    * by providing the owner policy names that precede the sub spec name.
+   * @param { string[] } path - The names of the parents to ending with the final sub spec or policy to be retrieved.
+   * @returns { StylePolicy|object }
    */
   getSubSpecAt (...path) {
     let curr = this.getSubSpecFor(path.shift());
@@ -614,20 +625,14 @@ export class StylePolicy {
  * While we use StylePolicy to model the component definitions
  * themselves, we need something a little different, when we turn
  * to actual morphs and their respective master component policies.
- * Compared to InlinePolicies, the PolicyApplicator is able to dynamically
+ * Compared to StylePolices, the PolicyApplicator is able to dynamically
  * detect overridden props, with respect to changes in the morph props.
  * PolicyApplicator serializes to a form, where overridden props (which vary
  * from a case by case basis) are serialized as well.
  * Can be derived from either a StylePolicy OR ComponentDescriptor.
  * Knows, how it can be applied to a morph hierarchy!
- * FIXME: This can be merged into StylePolicy
  */
 export class PolicyApplicator extends StylePolicy {
-  // turns a policy or a descriptor
-  // into a nested construct of policy applicators
-  // who in turn can be 1.) assigned as masters to morphs
-  // and 2.) Know how to apply the style properties to the
-  // morph hierarchy.
   static for (derivedMorph, args) {
     let newPolicy;
 
@@ -662,7 +667,7 @@ export class PolicyApplicator extends StylePolicy {
    * Given a target morph, traverse the submorph hierarchy
    * covering the policy's scope and apply the style properties
    * according to the synthesized sub spec.
-   * At the border of the scope, we in turn ask the encountered inline policies
+   * At the border of the scope, we in turn ask the encountered style policies
    * to apply themselves to the remainder of the submorph hierarchy.
    * @param { Morph } targetMorph - The root morph of the hierarchy.
    */
