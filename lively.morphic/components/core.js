@@ -32,9 +32,7 @@ let evaluateAsSpec = false;
  */
 export class ComponentDescriptor {
   /**
-   * The old deprecated static component initializer. This is what the transpiled
-   * code of a master component definition utilizes. It evaluates to an
-   * internal spec representation, which avoids any morphic related initialization
+   * Evaluates to an internal spec representation, which avoids any morphic related initialization
    * and object allocations. Allows for fast component definition initalization, derivation
    * and style application.
    */
@@ -67,9 +65,9 @@ export class ComponentDescriptor {
     let spec = {};
     try {
       spec = generatorFunction();
-      if (!spec.isPolicy) { spec = new PolicyApplicator(spec); } // make part calls return the a synthesized spec
+      if (!spec.isPolicy) { spec = new PolicyApplicator(spec); } // make part calls return the synthesized spec
     } finally {
-      evaluateAsSpec = false; // always disbable this flag
+      evaluateAsSpec = false; // always disable this flag after spec initialization is finished
     }
     return spec;
   }
