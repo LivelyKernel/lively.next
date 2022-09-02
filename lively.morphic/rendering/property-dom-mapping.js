@@ -167,14 +167,6 @@ function addShadowStyle (morph, style) {
   }
 }
 
-export function addSvgAttributes (morph, style) {
-  const { width, height } = morph;
-  style.width = width || 1;
-  style.height = height || 1;
-  style.viewBox = [0, 0, width || 1, height || 1].join(' ');
-  return style;
-}
-
 export function getSvgVertices (vertices) {
   let X, Y, lastV;
   let d = '';
