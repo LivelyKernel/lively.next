@@ -87,7 +87,8 @@ export default class ExpressionSerializer {
   }
 
   getExpressionForFunction (func) {
-    const { package: pkg, pathInPackage } = func[Symbol.for('lively-module-meta')];
+    const { package: pkg, pathInPackage } = func[Symbol.for('lively-module-meta')];
+
     return this.exprStringEncode({
       __expr__: func.name,
       bindings: {
@@ -399,7 +400,7 @@ export function serializeSpec (morph, opts = {}) {
 
   let propsNotManagedByMaster;
   if (masterInScope) {
-    propsNotManagedByMaster = masterInScope.propsToSerializeForMorph(morph, morph.__only_serialize__);
+    propsNotManagedByMaster = morph.__only_serialize__;
   }
 
   for (const name in morph.spec(skipUnchangedFromDefault)) {
