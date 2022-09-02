@@ -47,7 +47,7 @@ function mergeInHierarchy (
  * However we can also provide custom breakpoints of the viewport, which coincide with a particular width or height
  * of the morph to check for. With this we are able to implement responsive design with master components.
  * @param { Morph } targetMorph - The morph to check the state for.
- * @param {type} customBreakpoints - A list of custom breakpoints in response to the width/height of the `targetMorph`.
+ * @param { object[] } customBreakpoints - A list of custom breakpoints in response to the width/height of the `targetMorph`.
  * @returns { object } The event state corresponding to the morph.
  */
 function getEventState (targetMorph, customBreakpoints) {
@@ -303,9 +303,8 @@ export class StylePolicy {
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec.parent));
         }
         if (localMaster) {
-          const specName = parentSpec.name;
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(specName)));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractInlinePolicyFor(parentSpec.name)));
         }
         if (parentSpec.isPolicy) {
           return replace(parentSpec, new klass(localSpec, parentSpec.parent)); // insert a different style policy that has the correct overrides
@@ -342,8 +341,8 @@ export class StylePolicy {
         submorphs: tree.mapTree(baseSpec, (node, submorphs) => {
           if (toBeReplaced.has(node)) return toBeReplaced.get(node);
           else {
-          // this allows us to skip the unnessecary creation of an object
-            if (!node.isPolicy && submorphs.length > 0) { node.submorphs = submorphs; } // Policies take care of the traversal on their own
+            // this allows us to skip the unnessecary creation of an object
+            if (!node.isPolicy && submorphs.length > 0) { node.submorphs = submorphs; }
             return node;
           }
         }, node => node.submorphs || []).submorphs || []
@@ -520,6 +519,11 @@ export class StylePolicy {
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
       const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope);
+      for (let prop in overriddenMasterSynthesizedSpec) {
+        if (overriddenMasterSynthesizedSpec[prop]?.onlyAtInstantiation) {
+          if (skipInstantiationProps) delete overriddenMasterSynthesizedSpec[prop];
+        }
+      }
       Object.assign(
         synthesized,
         // fill in the top level props just in case they are needed to serve as "defaults" (propably mostly overridden)
