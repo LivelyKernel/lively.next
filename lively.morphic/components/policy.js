@@ -592,8 +592,6 @@ export class StylePolicy {
     return !!tree.find(this.spec, node => node.name === nameOfMorph, node => node.submorphs);
   }
 
-  propsToSerializeForMorph (m, candidateProps) { return candidateProps; }
-
   /**
    * Check wether or not a particular morph is actively positioned by a comprising layout.
    * @param {Morph} aSubmorph - The morph to check for.

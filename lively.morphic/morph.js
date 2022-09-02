@@ -914,12 +914,6 @@ export class Morph {
       propsToSerialize.push(key);
     }
 
-    // also take into account styled properties via master
-    // but make sure that morph is actually part of the serialization
-
-    if (master && !this.isComponent) {
-      return master.propsToSerializeForMorph(this, propsToSerialize);
-    }
     return propsToSerialize;
   }
 
