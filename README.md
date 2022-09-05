@@ -72,6 +72,48 @@ The actual documentation can be found [here](https://livelykernel.github.io/live
 
 Please make sure to run `make hooks` from the root of the repository before starting to develop.
 
+Please adhere to the following convention for commit messages:
+
+`affected package(s): what was changed (first letter lower case)`. The first line should not be longer than 72 characters.
+
+The packages are coded with emojis as follows:
+
+- 2lively: 🗨️
+- ast: 🌳
+- bindings: 🎀
+- changesets: 🔣
+- CI/scripts/docs: 🛠️
+- classes: 🧑‍🏫
+- collab: 💭
+- components: 🎛️
+- context: 🗺️
+- docker: 🐳
+- flatn: 🫓
+- freezer: ❄️
+- git: 🛤️
+- graphics: 🖌️
+- halos: 👼
+- headless: 🤕
+- ide: 🧰
+- installer: 📦
+- keyboard: ⌨️
+- lang: 📙
+- mirror: 🪞
+- modules: 🧩
+- morphic: 🎨
+- notifications: 🔔
+- resources: 🪨
+- serializer2: 📇
+- server: 👔
+- shell: 🐚
+- source-transform: 🔁
+- storage: 💾
+- sync: ☁️
+- system-interface: 📠
+- traits: ⚙️
+- user: 👤
+- vm: 🖥️
+
 ## License
 
 This project is [MIT licensed](LICENSE).
