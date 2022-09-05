@@ -60,7 +60,6 @@ function fuzzyParse (source, options) {
   options.ecmaVersion = options.ecmaVersion || 11;
   options.sourceType = options.sourceType || 'module';
   options.plugins = options.plugins || {};
-  // if (options.plugins.hasOwnProperty("jsx")) options.plugins.jsx = options.plugins.jsx;
   const comments = [];
   if (options.withComments) {
     options.onComment = (isBlock, text) => comments.push({

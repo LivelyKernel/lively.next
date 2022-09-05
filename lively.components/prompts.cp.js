@@ -599,7 +599,6 @@ export class EditListPromptModel extends ListPromptModel {
   }
 }
 
-// RedButton.openInWorld()
 const RedButton = component(ButtonDefault, {
   name: 'red button',
   borderWidth: 0,
@@ -624,7 +623,6 @@ const RedButtonClicked = component(RedButton, {
   fill: Color.rgb(177, 57, 44)
 });
 
-// GreenButton.openInWorld()
 const GreenButton = component(ButtonDefault, {
   name: 'green button',
   borderWidth: 0,
@@ -649,7 +647,6 @@ const GreenButtonClicked = component(GreenButton, {
   fill: Color.rgb(40, 155, 104)
 });
 
-// part(PlainButton).openInWorld()
 const PlainButton = component(ButtonDefault, {
   name: 'plain button',
   borderWidth: 0,
@@ -674,7 +671,6 @@ const PlainButtonClicked = component(PlainButton, {
   fill: Color.rgb(127, 140, 141)
 });
 
-// part(ChoiceButtonSelected).openInWorld()
 const ChoiceButtonSelected = component({
   // type: RadioButton,
   name: 'choice button Selected',
@@ -722,7 +718,6 @@ const ChoiceButtonSelected = component({
   }]
 });
 
-// ChoiceButtonUnselected.openInWorld()
 const ChoiceButtonUnselected = component(ChoiceButtonSelected, {
   name: 'choice button unselected',
   opacity: 0.5,
@@ -735,7 +730,6 @@ const ChoiceButtonUnselected = component(ChoiceButtonSelected, {
   }]
 });
 
-// LightPrompt.openInWorld()
 const LightPrompt = component({
   name: 'light prompt',
   borderRadius: 8,
@@ -769,7 +763,6 @@ const LightPrompt = component({
   }]
 });
 
-// DarkPrompt.openInWorld()
 const DarkPrompt = component(LightPrompt, {
   name: 'dark prompt',
   dropShadow: new ShadowObject({ distance: 5, rotation: 75.00000000000001, color: Color.rgba(0, 0, 0, 0.5), blur: 60, fast: false }),
@@ -780,7 +773,6 @@ const DarkPrompt = component(LightPrompt, {
   }]
 });
 
-// InformPrompt.openInWorld()
 const InformPrompt = component(LightPrompt, {
   defaultViewModel: InformPromptModel,
   name: 'inform prompt',
@@ -809,7 +801,6 @@ const InformPrompt = component(LightPrompt, {
   })]
 });
 
-// ConfirmPrompt.openInWorld()
 const ConfirmPrompt = component(LightPrompt, {
   defaultViewModel: ConfirmPromptModel,
   name: 'confirm prompt',
@@ -847,7 +838,6 @@ const ConfirmPrompt = component(LightPrompt, {
   })]
 });
 
-// MultipleChoicePrompt.openInWorld()
 const MultipleChoicePrompt = component(ConfirmPrompt, {
   defaultViewModel: MultipleChoicePromptModel,
   name: 'multiple choice prompt',
@@ -870,14 +860,12 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   }, 'button wrapper')]
 });
 
-// TextPrompt.openInWorld()
 const TextPrompt = component(ConfirmPrompt, {
   defaultViewModel: TextPromptModel,
   name: 'text prompt',
   submorphs: [add(part(InputLineDefault, { name: 'input' }), 'button wrapper')]
 });
 
-// EditPrompt.openInWorld()
 const EditPrompt = component(ConfirmPrompt, {
   defaultViewModel: EditPromptModel,
   name: 'edit prompt',
@@ -889,7 +877,6 @@ const EditPrompt = component(ConfirmPrompt, {
   }, 'button wrapper')]
 });
 
-// PasswordPrompt.openInWorld()
 const PasswordPrompt = component(ConfirmPrompt, {
   defaultViewModel: PasswordPromptModel,
   name: 'password prompt',
@@ -909,7 +896,6 @@ const PasswordPrompt = component(ConfirmPrompt, {
   ]
 });
 
-// ListPrompt.openInWorld()
 const ListPrompt = component(ConfirmPrompt, {
   defaultViewModel: ListPromptModel,
   name: 'list prompt',
@@ -981,7 +967,6 @@ const ListPrompt = component(ConfirmPrompt, {
   ]
 });
 
-// EditListPrompt.openInWorld()
 const EditListPrompt = component(ListPrompt, {
   defaultViewModel: EditListPromptModel,
   name: 'edit list prompt',
