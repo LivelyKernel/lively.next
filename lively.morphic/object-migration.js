@@ -390,5 +390,18 @@ For now only a simple default theme...
       }
       return idAndSnapshot;
     }
-  }
+  },
+  {
+    date: '2022-09-05',
+    name: 'remove Nunito from system',
+    snapshotConverter: idAndSnapshot => {
+      const { snapshot } = idAndSnapshot;
+      Object.values(snapshot).map(m => {
+        if (m.props.fontFamily && m.props.fontFamily.value === 'Nunito') {
+          m.props.fontFamily.value = 'IBM Plex Mono';
+        }
+      });
+      return idAndSnapshot;
+    }
+  },
 ];
