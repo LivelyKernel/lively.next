@@ -104,8 +104,6 @@ export class WorldLoadingScreen extends Morph {
     this.get('json target indicator').topRight = this.innerBounds().insetBy(25).topRight();
   }
 
-  // this.indicateMissingWorld(false)
-
   indicateMissingWorld (active) {
     this.get('package loading indicator').visible = !active;
     this.get('broken heart').visible = this.get('broken heart').isLayoutable = active;
@@ -149,7 +147,6 @@ export default class ModuleProgress extends Morph {
     });
   }
 
-  // this.startStepping('updateProgressBar')
   updateProgressBar () {
     if (!this._lastWidth) return;
     this.relayout();
@@ -169,9 +166,6 @@ export default class ModuleProgress extends Morph {
       await promise.delay(200);
     }
   }
-
-  // this.finishPackage({ packageName: 'lively.source-transform', loaded: true });
-  // this.reset()
 
   finishPackage ({
     packageName, frozen, loaded
@@ -235,7 +229,6 @@ export default class ModuleProgress extends Morph {
   }
 }
 
-// part(Stage).openInWorld()
 const Stage = component({
   name: 'stage',
   extent: pt(58, 119),
@@ -290,7 +283,6 @@ const Stage = component({
   }]
 });
 
-// part(ProgressIndicator).openInWorld()
 const ProgressIndicator = component({
   type: ModuleProgress,
   borderRadius: 6,
@@ -430,7 +422,6 @@ const ProgressIndicator = component({
   })]
 });
 
-// part(ErrorIndicator).openInWorld();
 const ErrorIndicator = component({
   type: Label,
   fontColor: Color.rgb(231, 76, 60),
@@ -456,7 +447,6 @@ const ErrorIndicator = component({
   textAndAttributes: Icon.textAttribute('heart-broken')
 });
 
-// part(LoadingScreen).openInWorld();
 const LoadingScreen = component({
   type: WorldLoadingScreen,
   name: 'loading screen',

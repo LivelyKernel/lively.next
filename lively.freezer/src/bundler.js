@@ -492,12 +492,6 @@ export default class LivelyRollup {
       }
     }
 
-    if (!id.endsWith('.js') && !isCdnImport) {
-      absolutePath = await this.resolver.normalizeFileName(id);
-      if (this.belongsToExcludedPackage(absolutePath)) return null;
-      return this.resolved[resolutionId(id, importer)] = absolutePath;
-    }
-
     // this needs to be done by flatn if we are running in nodejs. In the client, this also may lead to bogus
     // results since we are not taking into account in package.json
 

@@ -29,7 +29,6 @@ class WebGLCanvas extends Canvas {
   }
 
   restoreContent (old_canvas, new_canvas) {
-    const { contextType, preserveContents } = this;
     if (this.renderer && old_canvas && old_canvas !== new_canvas) {
       this.owner.context.drawImage(this.renderer.getContext().canvas, 0, 0);
       this.renderer = new WebGLRenderer({ context: this.context, antialiasing: true });
@@ -56,18 +55,15 @@ class WebGLCanvas extends Canvas {
   }
 
   limitLoop (fn, fps) {
-    // Use var then = Date.now(); if you
-    // don't care about targetting < IE9
-    let then = new Date().getTime(); const self = this;
+    let then = Date.now(); const self = this;
 
     // custom fps, otherwise fallback to 60
     let loop;
 
-    return (loop = (time) => {
+    return (loop = () => {
       self.renderLoop = requestAnimationFrame(loop);
 
-      // again, Date.now() if it's available
-      const now = new Date().getTime();
+      const now = Date.now();
       const delta = now - then;
       const interval = (1000 / (fps || this.fps));
 
@@ -93,7 +89,6 @@ class Globe extends WebGLCanvas {
   }
 
   async onLoad () {
-    // if (navigator.webdriver || !lively.FreezerRuntime) return;
     await this.whenRendered();
     this.renderGlobe();
     await this.fullyLoaded();
@@ -320,7 +315,6 @@ class WorldLandingPage extends Morph {
   }
 }
 
-// part(LandingPage).openInWorld()
 const LandingPage = component({
   type: WorldLandingPage,
   name: 'landing page',

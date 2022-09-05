@@ -1026,7 +1026,6 @@ const TopBarButtonSelected = component(TopBarButton, {
   fontColor: Color.rgb(0, 176, 255)
 });
 
-// part(UserFlap).openInWorld()
 const UserFlap = component({
   name: 'user flap',
   defaultViewModel: UserFlapModel,
@@ -1130,7 +1129,6 @@ const UserFlap = component({
   }]
 });
 
-// part(DarkUserFlap).openInWorld();
 const DarkUserFlap = component(UserFlap, {
   name: 'dark user flap',
   fill: Color.rgba(255, 255, 255, 0),
@@ -1187,13 +1185,11 @@ const ProfileItem = component({
   selectable: false
 });
 
-// ProfileItemSelected.openInWorld()
 const ProfileItemSelected = component(ProfileItem, {
   name: 'profile item selected',
   fill: Color.rgb(215, 219, 221)
 });
 
-// UserMenu.openInWorld()
 const UserMenu = component({
   name: 'user menu',
   borderColor: Color.rgb(202, 207, 210),
@@ -1266,8 +1262,6 @@ const UserMenu = component({
   }]
 });
 
-// TopBar.openInWorld()
-// part(TopBar).openInWorld()
 const TopBar = component({
   name: 'top bar',
   layout: new TilingLayout({
