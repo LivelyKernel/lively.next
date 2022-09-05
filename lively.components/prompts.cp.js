@@ -743,7 +743,13 @@ const LightPrompt = component({
     direction: 'topToBottom',
     orderByIndex: true,
     resizeSubmorphs: true,
-    spacing: 16
+    spacing: 16,
+    // TODO: Since we no longer instantiates from actual morphs but from specs, the CSS layout cannot kick in before we are rendered.
+    // This lead to e.g., the world naming prompt being off center.
+    // This solves the problem, but causes the layout to be managed by JS all the time, which has worse performance.
+    // What should be done is to implement some kind of "use JS layout until rendered" strategy, e.g.,
+    // by setting a flag that gets consumed by the renderer who will then change the layout from JS to CSS
+    renderViaCSS: false
   }),
   submorphs: [{
     type: Text,
