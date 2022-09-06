@@ -719,6 +719,7 @@ export default class Renderer {
    * @returns {Node} DOM Node of scrollLayer.
    */
   renderScrollLayer (morph) {
+    if (!morph.document) return;
     const horizontalScrollBarVisible = morph.document.width > morph.width;
     const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
     const verticalPaddingOffset = morph.padding.top() + morph.padding.bottom();
@@ -1751,9 +1752,11 @@ export default class Renderer {
     if (!node) return Rectangle.inset(0);
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
+    this.placeholder.className = morph.isLabel ? 'Label' : 'Text';
     this.placeholder.appendChild(textNode);
     const domMeasure = textNode.getBoundingClientRect();
-    const bounds = new Rectangle(domMeasure.x, domMeasure.y, domMeasure.width, domMeasure.height);
+    const pad = morph.padding;
+    const bounds = new Rectangle(domMeasure.x - pad.left(), domMeasure.y - pad.top(), domMeasure.width + pad.right() + pad.bottom(), domMeasure.height + pad.bottom() + pad.top());
     prevParent.appendChild(textNode);
 
     morph._cachedBounds = bounds;

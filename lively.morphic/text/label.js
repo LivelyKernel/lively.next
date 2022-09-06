@@ -1,8 +1,7 @@
-import {  promise } from 'lively.lang';
+import { promise } from 'lively.lang';
 import { Color } from 'lively.graphics';
 import { Icon } from './icons.js';
 import { Text } from './morph.js';
-
 
 export class Label extends Text {
   static get properties () {
@@ -11,16 +10,11 @@ export class Label extends Text {
         defaultValue: false
       },
 
-      fill: { defaultValue: Color.transparent },
-      draggable: { defaultValue: false },
-      nativeCursor: { defaultValue: 'default' },
-
-      isIcon: {
-        derived: true,
-        get () {
-          return properties.values(Icons).map(({ code }) => code).includes(this.textString);
-        }
+      fill: {
+        defaultValue: Color.transparent
       },
+
+      lineHeight: { defaultValue: 1 },
 
       value: {
         derived: true,
@@ -50,26 +44,8 @@ export class Label extends Text {
             value = (value !== null) ? String(value) : '';
             this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
             this.insertText(value, { column: 0, row: 0 });
-          } 
-          this.textAndAttributes = [String(value), null]; 
-        }
-      },
-
-      textAndAttributes: {
-        after: ['autofit'],
-        get () {
-          let val = this.getProperty('textAndAttributes');
-          if (!val || val.length < 1) val = ['', null];
-          return val;
-        },
-
-        set (value) {
-          if (!Array.isArray(value)) value = [String(value), {}];
-          if (value.length === 0) value = ['', {}];
-          const prevValue = this.textAndAttributes;
-          this.setProperty('textAndAttributes', value);
-          if (this.autofit) this.invalidateTextLayout();
-          signal(this, 'value', value);
+          }
+          this.textAndAttributes = [String(value), null];
         }
       },
 
@@ -83,6 +59,7 @@ export class Label extends Text {
         derived: true,
         after: ['textAndAttributes'],
 
+        // TODO: is this still working?
         get () {
           let value = this.textAndAttributes; let annotation = null;
           if (value.length > 2) {
@@ -111,106 +88,15 @@ export class Label extends Text {
             let annAttr = annotation[1];
             if (!annAttr) annAttr = annotation[1] = {};
             textAndAttributes.push(...annotation);
-            annAttr.textStyleClasses = (annAttr.textStyleClasses || []).concat('annotation');
+            annAttr.textStyleClasses = (annAttr.textStyleClasses || []);
             if (!annAttr.textStyleClasses.includes('annotation')) { annAttr.textStyleClasses.push('annotation'); }
           }
-
+          // valueAndAnnotation mode is a flag that prevents the usual line splitting when settings textAndAttributes
+          this.valueAndAnnotationMode = true;
           this.textAndAttributes = textAndAttributes;
+          this.valueAndAnnotationMode = false;
         }
 
-      },
-
-      autofit: {
-        defaultValue: true,
-        set (value) {
-          this.setProperty('autofit', value);
-          if (value) this._needsFit = true;
-        }
-      },
-
-      master: {
-        after: ['padding']
-      },
-
-      padding: {
-        type: 'Rectangle',
-        isStyleProp: true,
-        defaultValue: Rectangle.inset(0),
-        after: ['autofit'],
-        initialize (value) { this.padding = value; /* for num -> rect conversion */ },
-        set (value) {
-          if (!value) value = Rectangle.inset(0);
-          const previousPadding = this.padding;
-          this.setProperty('padding', typeof value === 'number' ? Rectangle.inset(value) : value);
-          if (this.autofit && !previousPadding.equals(value)) this.invalidateTextLayout();
-        }
-      },
-
-      fontFamily: {
-        isStyleProp: true,
-        type: 'Enum',
-        values: config.text.basicFontItems,
-        after: ['autofit'],
-        defaultValue: 'IBM Plex Sans, Sans-Serif',
-        set (fontFamily) {
-          const previousFontFamily = this.fontFamily;
-          this.setProperty('fontFamily', fontFamily);
-          if (this.autofit && previousFontFamily != fontFamily) this.invalidateTextLayout();
-        }
-      },
-
-      fontSize: {
-        type: 'Number',
-        min: 1,
-        isStyleProp: true,
-        defaultValue: 12,
-        after: ['autofit'],
-        set (fontSize) {
-          const previousFontSize = this.fontSize;
-          this.setProperty('fontSize', fontSize);
-          if (this.autofit && fontSize != previousFontSize) this.invalidateTextLayout();
-        }
-      },
-
-      fontColor: { type: 'Color', isStyleProp: true, defaultValue: Color.black },
-
-      fontWeight: {
-        type: 'Enum',
-        values: ['bold', 'bolder', 'light', 'lighter'],
-        isStyleProp: true,
-        defaultValue: 'normal',
-        after: ['autofit'],
-        set (fontWeight) {
-          const previousFontWeight = this.fontWeight;
-          this.setProperty('fontWeight', fontWeight);
-          if (this.autofit && previousFontWeight != fontWeight) this.invalidateTextLayout();
-        }
-      },
-
-      fontStyle: {
-        type: 'Enum',
-        values: ['normal', 'italic', 'oblique'],
-        isStyleProp: true,
-        defaultValue: 'normal',
-        after: ['autofit'],
-        set (fontStyle) {
-          const previousFontStyle = this.fontStyle;
-          this.setProperty('fontStyle', fontStyle);
-          if (this.autofit && previousFontStyle != fontStyle) this.invalidateTextLayout();
-        }
-      },
-
-      textShadow: { type: 'String', isStyleProp: true, defaultValue: '' },
-
-      textDecoration: { defaultValue: 'none' },
-
-      textStyleClasses: {
-        defaultValue: undefined,
-        after: ['autofit'],
-        set (textStyleClasses) {
-          this.setProperty('textStyleClasses', textStyleClasses);
-          if (this.autofit) this.invalidateTextLayout();
-        }
       }
     };
   }
@@ -218,7 +104,7 @@ export class Label extends Text {
   static icon (iconName, props = { prefix: '', suffix: '' }) {
     return Icon.makeLabel(iconName, props);
   }
-  
+
   onDropHoverUpdate (evt) {
     // prevent default
   }
