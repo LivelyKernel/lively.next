@@ -27,6 +27,7 @@ export class ListItemMorph extends Label {
       draggable: { defaultValue: !touchInputDevice },
       fixedWidth: { defaultValue: true },
       fixedHeight: { defaultValue: true },
+      nativeCursor: { defaultValue: 'auto' },
       fill: {
         derived: true,
         get () {
