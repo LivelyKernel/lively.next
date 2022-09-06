@@ -72,13 +72,14 @@ export default class Layout {
 
     // TODO: Is this the reason the list item morph is fucked up?
     // In any case, it is not entirely clear why cases happen in which this is necessary.
-    // The scenario that lead to the introduction of this code was an undefined padding upon the creation of ListItemMorphs via `update()` of `List` 
+    // The scenario that lead to the introduction of this code was an undefined padding upon the creation of ListItemMorphs via `update()` of `List`
     const paddingLeft = padding ? padding.left() : 0;
     const paddingRight = padding ? padding.right() : 0;
     const paddingTop = padding ? padding.top() : 0;
     const paddingBottom = padding ? padding.bottom() : 0;
 
-    const textRenderer = window.stage0renderer;
+    const textRenderer = morph.env.renderer || window.stage0Renderer;
+    if (!textRenderer) return; // we can not estimate anything...
     const directRenderTextLayerFn = textRenderer.textLayerNodeFunctionFor(morph);
     const textAttributes = line.textAndAttributes; const styles = []; let inlineMorph;
 
@@ -278,7 +279,7 @@ export default class Layout {
 
     const cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
-    const {fontMetric } = morph;
+    const { fontMetric } = morph;
 
     const directRenderLineFn = $world.env.renderer.lineNodeFunctionFor(morph);
     const directRenderTextLayerFn = $world.env.renderer.textLayerNodeFunctionFor(morph);
