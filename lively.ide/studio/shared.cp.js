@@ -236,7 +236,7 @@ const CheckboxActive = component({
   fill: Color.rgb(178, 235, 242),
   fontColor: Color.rgb(65, 65, 65),
   borderRadius: 2,
-  padding: rect(0, 0, 5, 0),
+  padding: rect(0, 0, 0, 0),
   nativeCursor: 'pointer',
   textAndAttributes: ['', {
     fontSize: 13,

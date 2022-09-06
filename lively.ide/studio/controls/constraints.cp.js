@@ -359,7 +359,7 @@ const ConstraintsControl = component({
       submorphs: [add({
         type: Label,
         name: 'interactive label',
-        padding: rect(0, 0, 8, 0),
+        padding: rect(0, 0, 0, 0),
         rotation: -1.5707963267948966,
         fontColor: Color.white,
         textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
@@ -389,7 +389,7 @@ const ConstraintsControl = component({
       submorphs: [add({
         type: Label,
         name: 'interactive label',
-        padding: rect(0, 4, 10, -4),
+        padding: rect(0, 0, 0, 0),
         fontColor: Color.white,
         textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
       }, 'label'), {
