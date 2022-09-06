@@ -295,6 +295,8 @@ export class TilingLayout extends Layout {
     if (this.renderViaCSS && !this._configChanged) {
       this._configChanged = true;
       this.layoutableSubmorphs.forEach(m => m.makeDirty());
+      if (this.container)
+        this.container.renderingState.hasCSSLayoutChange = true;
     }
   }
 
