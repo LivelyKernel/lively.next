@@ -139,6 +139,17 @@ export default class Renderer {
 
     this.renderFixedMorphs();
 
+    for (let morph of morphsToHandle) {
+      if (morph.isLabel) morph.fitIfNeeded();
+    }
+
+    for (let morph of morphsToHandle) {
+      if (morph._requestMasterStyling && morph.master) {
+        morph.master.applyIfNeeded(true);
+        morph._requestMasterStyling = false;
+      }
+    }
+
     // handling these first allows us to assume correct wrapping, when we have submorphs already!
     for (let morph of morphsToHandle) {
       if (morph.renderingState.hasCSSLayoutChange) this.renderLayoutChange(morph);
