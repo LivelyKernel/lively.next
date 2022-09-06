@@ -26,8 +26,7 @@ class VersionChecker extends Morph {
           return {
             status: this.get('version status label'),
             checking: this.get('loading indicator'),
-            outdated: this.get('icon outdated'),
-            latest: this.get('icon latest')
+            statusIcon: this.get('status icon label')
           };
         }
       }
@@ -81,40 +80,68 @@ class VersionChecker extends Morph {
     const hash1 = stdout.split('\n')[0];
     const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/main').readJson();
     if (hash1 !== hash2) {
-      return this.showOutdated(hash1.slice(0, 6));
+      return this.showBehind(hash1.slice(0, 6));
     }
-    return this.showUpToDate(hash1.slice(0, 6));
+    return this.showEven(hash1.slice(0, 6));
   }
 
-  showOutdated (version) {
-    const { status, checking, outdated } = this.ui;
+  showEven (version) {
+    const { status } = this.ui;
+    status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
+    this.updateShownIcon('even');
+  }
+
+  showBehind (version) {
+    const { status } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
-    checking.visible = checking.isLayoutable = false;
-    outdated.visible = outdated.isLayoutable = true;
+    this.updateShownIcon('behind');
+  }
+
+  showAhead (version) {
+
+  }
+
+  showDiverged (version) {
+
   }
 
   showError () {
-    const { status, checking, outdated } = this.ui;
+    const { status } = this.ui;
     status.value = 'Error while checking';
-    checking.visible = checking.isLayoutable = false;
-    outdated.visible = outdated.isLayoutable = true;
+    this.updateShownIcon('error');
   }
 
-  showUpToDate (version) {
-    const { status, checking, latest } = this.ui;
-    status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
+  updateShownIcon (mode) {
+    const { checking, statusIcon } = this.ui;
+    switch (mode) {
+      case 'checking': {
+        checking.visible = checking.isLayoutable = true;
+        statusIcon.visible = statusIcon.isLayoutable = false;
+        return;
+      }
+      case 'even': {
+        statusIcon.textAndAttributes = Icon.textAttribute('check-circle');
+        statusIcon.fontColor = Color.rgb(40, 180, 99);
+        break;
+      }
+      case 'error':
+      case 'behind': {
+        statusIcon.textAndAttributes = Icon.textAttribute('exclamation-triangle');
+        statusIcon.fontColor = Color.rgb(231, 76, 60);
+        break;
+      }
+    }
     checking.visible = checking.isLayoutable = false;
-    latest.visible = latest.isLayoutable = true;
+    statusIcon.visible = statusIcon.isLayoutable = true;
   }
 
   reset () {
-    const { status, checking, outdated, latest } = this.ui;
+    const { status } = this.ui;
     status.value = 'Checking version...';
-    checking.visible = checking.isLayoutable = true;
-    outdated.visible = latest.visible = outdated.isLayoutable = latest.isLayoutable = false;
+    this.updateShownIcon('checking');
   }
 }
-// LivelyVersionChecker.openInWorld()
+
 const LivelyVersionChecker = component({
   type: VersionChecker,
   name: 'lively version checker',
@@ -235,17 +262,10 @@ const LivelyVersionChecker = component({
     scale: 0.2214986798373248
   }, {
     type: Label,
-    name: 'icon outdated',
+    name: 'status icon label',
     fontColor: Color.rgb(231, 76, 60),
     isLayoutable: false,
     textAndAttributes: Icon.textAttribute('exclamation-triangle'),
-    visible: false
-  }, {
-    type: Label,
-    name: 'icon latest',
-    fontColor: Color.rgb(40, 180, 99),
-    isLayoutable: false,
-    textAndAttributes: Icon.textAttribute('check-circle'),
     visible: false
   }]
 });
