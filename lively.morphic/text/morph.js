@@ -475,12 +475,13 @@ export class Text extends Morph {
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
               textAndAttributes
             );
-            this.fit(); // exemption for fixed width/height is handled in fit method 
+            this.fit(); // exemption for fixed width/height is handled in fit method
           } else { // "label mode"
             if (!this.valueAndAnnotationMode) {
               if (!Array.isArray(textAndAttributes)) textAndAttributes = String(textAndAttributes).split(/(?<=\n)/).map(line => [line, null]);
               else if (textAndAttributes.length === 0) textAndAttributes = ['', {}];
               else if (!this._isDowngrading) {
+                this.whenFontLoaded().then(() => this.fit()); // also needs fitting. But why only at downgrading?
                 textAndAttributes = splitTextAndAttributesIntoLines(textAndAttributes);
               }
             }
@@ -790,7 +791,7 @@ export class Text extends Morph {
   directRender () {
     // FIXME
     // This is just a shim so that everything boots nicely
-    }
+  }
 
   constructor (props = {}) {
     const {
@@ -812,7 +813,7 @@ export class Text extends Morph {
     super(props);
 
     this.undoManager.reset();
-    this.makeInteractive();
+    if (this.isSmartText) { this.makeInteractive(); }
 
     // TODO: why exactly was this needed?
     // Update position after fit
@@ -940,6 +941,40 @@ export class Text extends Morph {
     // snapshot.cachedLineBounds = cachedLineBounds;
   }
 
+  allFontsLoaded (fontFaceSet) {
+    const { fontMetric } = this.env;
+    return [
+      this,
+      ...this.textAndAttributes.map((attr, i) => {
+        if (i % 2) {
+          return {
+            fontFamily: (attr && attr.fontFamily) || this.fontFamily,
+            fontWeight: (attr && attr.fontWeight) || this.fontWeight
+          };
+        }
+      }).filter(Boolean)
+    ].every(attr => {
+      if (fontFaceSet) {
+        const face = fontFaceSet.find(face =>
+          face.family == attr.fontFamily &&
+          face.weight == (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
+        return !!face;
+        // document.fonts.check(`normal ${attr.fontWeight} 12px ${attr.fontFamily}`)
+      } else return fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight);
+    });
+  }
+
+  async whenFontLoaded () {
+    // fixme: remove busy wait, since it kills performance
+    if (this.allFontsLoaded()) return true;
+    const fonts = [...(await document.fonts.ready)];
+    if (this.allFontsLoaded(fonts.filter(face => face.status == 'loaded'))) return true;
+    // as a last resort, do a busy wait...
+    return promise.waitFor(5000, () => {
+      return this.allFontsLoaded();
+    });
+  }
+
   spec () {
     const spec = super.spec();
     spec.textString = this.textString;
@@ -954,7 +989,7 @@ export class Text extends Morph {
   }
 
   get isSmartText () {
-    return true;
+    return !this.labelMode;
   }
 
   makeDirty () {
@@ -1021,6 +1056,10 @@ export class Text extends Morph {
         this.invalidateTextLayout(
           hardLayoutChange /* reset char bounds */,
           hardLayoutChange /* reset line heights */);
+      }
+
+      if (!this.document && enforceFit) {
+        this.whenFontLoaded().then(() => this.fit());
       }
 
       if (softLayoutChange || hardLayoutChange) {
@@ -1430,7 +1469,7 @@ export class Text extends Morph {
   }
 
   measureBoundsFor () {
-    return window.stage0renderer.measureBoundsFor(this);
+    return this.env.renderer.measureBoundsFor(this);
   }
 
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
@@ -1969,6 +2008,7 @@ export class Text extends Morph {
     this.textLayout = null;
     this.textAndAttributes = textAndAttributes;
     this.selection = null;
+    this.renderingState.needsScrollLayerAdded = false; // just in case
     this.renderingState.needsScrollLayerRemoved = true;
     this._isDowngrading = false;
   }
@@ -1982,7 +2022,7 @@ export class Text extends Morph {
       minNodeSize: 7
     });
     let textAndAttributesToInsert;
-    if (this.isMenuItem || this.isListItem) textAndAttributesToInsert = this.textAndAttributes 
+    if (this.isMenuItem || this.isListItem) textAndAttributesToInsert = this.textAndAttributes;
     else if (!arr.equals(this.textAndAttributes, ['', null])) {
       textAndAttributesToInsert = this.textAndAttributes.flatMap(textAndAttributesPerLine => {
         textAndAttributesPerLine[textAndAttributesPerLine.length - 2] += '\n';
@@ -2504,17 +2544,14 @@ export class Text extends Morph {
       // }
     } else { // label mode
       this.withMetaDo({ skipReconciliation: true }, () => {
-        // TODO: handle cases were only one side is fixed
-        if (this.fixedWidth && this.fixedHeight){
-          this.width = this.width;
-          this.height = this.height;
-        }
-        else {
-          this.extent = this.textBounds().extent().addXY(
-            this.borderWidthLeft + this.borderWidthRight,
-            this.borderWidthTop + this.borderWidthBottom
-          );
-        }
+        let textBoundsExtent = this.textBounds().extent();
+        if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
+        if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
+        this.extent = textBoundsExtent.addXY(
+          this.borderWidthLeft + this.borderWidthRight,
+          this.borderWidthTop + this.borderWidthBottom
+        );
+        // }
       });
       if (!this.visible) {
         this._cachedTextBounds = null;
@@ -2578,9 +2615,9 @@ export class Text extends Morph {
     }
 
     const currentTextLayerStyleObject = this.styleObject();
-      if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
-        renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
-      }
+    if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
+      renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
+    }
 
     // FIXME: this is not an adequate separation, read only should also support e.g. line height
     // take care of this when fixing the conceptual separation between both
@@ -2600,7 +2637,7 @@ export class Text extends Morph {
       }
 
       if (this.textLayout) {
-        renderer.patchSelectionLayer(node, this); // FIXME: can we get this to work with the comparison model?  
+        renderer.patchSelectionLayer(node, this); // FIXME: can we get this to work with the comparison model?
       }
       if (!obj.equals(this.renderingState.markers, this.markers)) {
         renderer.patchMarkerLayer(node, this);
@@ -2616,7 +2653,7 @@ export class Text extends Morph {
       renderer.adjustScrollLayerChildSize(node, this); // fixme: should probably be wrapped in a trigger
       renderer.updateDebugLayer(node, this);
     } else {
-      // does this need a guard clause? 
+      // does this need a guard clause?
       renderer.renderTextAndAttributes(node, this);
     }
   }
