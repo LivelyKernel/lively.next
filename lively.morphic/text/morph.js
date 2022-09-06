@@ -2704,6 +2704,7 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown (evt) {
+    super.onMouseDown(evt);
     if (this.labelMode) return; // allow for native selection
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
