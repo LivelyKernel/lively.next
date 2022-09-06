@@ -89,7 +89,7 @@ export default class Window extends Morph {
       },
 
       minimizedBounds: { serialize: false },
-      nonMinizedBounds: {},
+      nonMinimizedBounds: {},
       nonMaximizedBounds: {},
       minimized: {
         set (isMinimized) {
@@ -506,7 +506,7 @@ export default class Window extends Morph {
     return resizer;
   }
 
-  toggleMaximize () { if (!this.minized) this.maximized = !this.maximized; }
+  toggleMaximize () { if (!this.minimized) this.maximized = !this.maximized; }
 
   applyMaximize () {
     if (this.maximized) {
@@ -520,7 +520,7 @@ export default class Window extends Morph {
 
   async applyMinimize () {
     if (!this.targetMorph) return;
-    let { nonMinizedBounds, minimized, width } = this;
+    let { nonMinimizedBounds, minimized, width } = this;
     const { windowTitle, resizer } = this.ui;
     const bounds = this.bounds();
     const duration = 100;
@@ -532,9 +532,9 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      nonMinizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(nonMinizedBounds || bounds);
+      nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(nonMinimizedBounds || bounds);
       this.animate({
-        bounds: nonMinizedBounds,
+        bounds: nonMinimizedBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
         duration,
         easing
@@ -542,7 +542,7 @@ export default class Window extends Morph {
       collapseButton.tooltip = 'collapse window';
     } else {
       this.clipMode = 'hidden';
-      this.nonMinizedBounds = bounds;
+      this.nonMinimizedBounds = bounds;
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
       const labelBounds = windowTitle.textBounds();
       const buttonOffset = this.get('window controls').bounds().right() + 3;
