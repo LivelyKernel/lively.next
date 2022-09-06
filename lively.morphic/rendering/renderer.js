@@ -63,8 +63,8 @@ export default class Renderer {
 
     const placeholder = this.doc.createElement('div');
     placeholder.id = 'placeholder';
-    placeholder.style.height = 'auto';
-    placeholder.style.width = 'auto';
+    placeholder.style.height = 'fit-content';
+    placeholder.style.width = 'fit-content';
     placeholder.style.visibility = 'hidden';
     placeholder.style.position = 'absolute';
     this.placeholder = this.doc.body.appendChild(placeholder);
@@ -1754,9 +1754,12 @@ export default class Renderer {
     const prevParent = textNode.parentNode;
     this.placeholder.className = morph.isLabel ? 'Label' : 'Text';
     this.placeholder.appendChild(textNode);
-    const domMeasure = textNode.getBoundingClientRect();
-    const pad = morph.padding;
-    const bounds = new Rectangle(domMeasure.x - pad.left(), domMeasure.y - pad.top(), domMeasure.width + pad.right() + pad.bottom(), domMeasure.height + pad.bottom() + pad.top());
+    textNode.style.width = 'max-content';
+    textNode.style.position = 'static';
+    const domMeasure = this.placeholder.getBoundingClientRect();
+    textNode.style.removeProperty('width');
+    textNode.style.removeProperty('position');
+    const bounds = new Rectangle(domMeasure.x, domMeasure.y, domMeasure.width, domMeasure.height);
     prevParent.appendChild(textNode);
 
     morph._cachedBounds = bounds;
