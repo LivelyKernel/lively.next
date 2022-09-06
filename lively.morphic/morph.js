@@ -549,7 +549,6 @@ export class Morph {
         set (value) {
           this._cachedStyleClasses = null;
           this.setProperty('styleClasses', arr.withoutAll(value, this.constructor.styleClasses));
-          this.requestStyling();
         }
       },
 
@@ -1579,7 +1578,6 @@ export class Morph {
       submorph._owner = this;
       submorph._cachedPaths = {};
       if (tfm) submorph.setTransform(tfm);
-      submorph.requestStyling();
       this._morphicState.submorphs = submorphs;
 
       this._submorphOrderChanged = true;
@@ -2457,21 +2455,10 @@ export class Morph {
 
   requestMasterStyling () {
     if (this._rendering) return;
-    if (this.master && this.master._hasUnresolvedMaster) {
-      this.master._capturedExtents = new WeakMap();
-      this.withAllSubmorphsDo(m => this.master._capturedExtents.set(m, m.extent));
-    }
     if (this.master) {
       this._requestMasterStyling = true;
       this.makeDirty();
     }
-  }
-
-  requestStyling () {
-    this.withAllSubmorphsDo(m => {
-      m._wantsStyling = true;
-      m.makeDirty();
-    });
   }
 
   get borderOptions () {
