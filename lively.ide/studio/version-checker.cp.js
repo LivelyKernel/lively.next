@@ -1,6 +1,5 @@
 import { component, Morph, Icon, HTMLMorph, Label, HorizontalLayout } from 'lively.morphic';
 import { evalOnServer } from 'lively.freezer/src/util/helpers';
-import { resource } from 'lively.resources';
 import { Color, pt } from 'lively.graphics';
 
 import { runCommand } from '../shell/shell-interface.js';
@@ -65,24 +64,27 @@ class VersionChecker extends Morph {
   }
 
   async checkIfUpToDate () {
-    const cmd = 'git rev-parse main';
+    const headHashCmd = 'git rev-parse @';
+    // See https://stackoverflow.com/a/27940027 for how this works
+    const comparingCmd = 'git rev-list --left-right --count origin/main...@';
     const cwd = await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
-    let stdout;
+
+    let hash, comparison;
     try {
-      await runCommand('git fetch', {
-        cwd
-      }).whenDone();
-      ({ stdout } = await runCommand(cmd, { cwd }).whenDone());
+      ({ stdout: hash } = await runCommand(headHashCmd, { cwd }).whenDone());
+      ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
     } catch (err) {
       this.showError();
       return;
     }
-    const hash1 = stdout.split('\n')[0];
-    const { sha: hash2 } = await resource('https://api.github.com/repos/LivelyKernel/lively.next/commits/main').readJson();
-    if (hash1 !== hash2) {
-      return this.showBehind(hash1.slice(0, 6));
-    }
-    return this.showEven(hash1.slice(0, 6));
+    hash = hash.slice(0, 6);
+    comparison = comparison.replace('\n', '').split('\t');
+    const numberOfUniqueCommitsOnRemote = parseInt(comparison[0]);
+    const numberOfUniqueCommitsLocal = parseInt(comparison[1]);
+    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal === 0) return this.showEven(hash);
+    if (numberOfUniqueCommitsOnRemote !== 0 && numberOfUniqueCommitsLocal === 0) return this.showBehind(hash);
+    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal !== 0) return this.showAhead(hash);
+    return this.showDiverged(hash);
   }
 
   showEven (version) {
@@ -98,11 +100,15 @@ class VersionChecker extends Morph {
   }
 
   showAhead (version) {
-
+    const { status } = this.ui;
+    status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
+    this.updateShownIcon('ahead');
   }
 
   showDiverged (version) {
-
+    const { status } = this.ui;
+    status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
+    this.updateShownIcon('diverged');
   }
 
   showError () {
@@ -124,9 +130,23 @@ class VersionChecker extends Morph {
         statusIcon.fontColor = Color.rgb(40, 180, 99);
         break;
       }
-      case 'error':
-      case 'behind': {
+      case 'ahead': {
+        statusIcon.textAndAttributes = Icon.textAttribute('arrow-up');
+        statusIcon.fontColor = Color.rgb(72, 152, 243);
+        break;
+      }
+      case 'diverged': {
+        statusIcon.textAndAttributes = Icon.textAttribute('arrows-up-down');
+        statusIcon.fontColor = Color.rgb(231, 76, 60);
+        break;
+      }
+      case 'error': {
         statusIcon.textAndAttributes = Icon.textAttribute('exclamation-triangle');
+        statusIcon.fontColor = Color.rgb(231, 76, 60);
+        break;
+      }
+      case 'behind': {
+        statusIcon.textAndAttributes = Icon.textAttribute('arrow-down');
         statusIcon.fontColor = Color.rgb(231, 76, 60);
         break;
       }
@@ -263,6 +283,7 @@ const LivelyVersionChecker = component({
   }, {
     type: Label,
     name: 'status icon label',
+    fontSize: 14,
     fontColor: Color.rgb(231, 76, 60),
     isLayoutable: false,
     textAndAttributes: Icon.textAttribute('exclamation-triangle'),
