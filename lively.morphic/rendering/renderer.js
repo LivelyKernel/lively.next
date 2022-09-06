@@ -561,6 +561,8 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to update the scroll of its node.
    */
   updateNodeScrollFromMorph (morph) {
+    if (morph.isSmartText) return;
+
     const node = this.getNodeForMorph(morph);
     // FIXME: this might be not needed and could be removed?
     if (!node) {
@@ -788,6 +790,8 @@ export default class Renderer {
       node.childNodes.forEach(c => scrollWrapper.appendChild(c));
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
+      scrollLayer.scrollTop = this.scroll.y;
+      scrollLayer.scrollLeft = this.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
       if (!node.querySelector('.scrollWrapper')) {
@@ -1730,8 +1734,10 @@ export default class Renderer {
     const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
     if (!scrollLayer) return;
 
-    if (scrollActive) scrollLayer.style.overflow = morph.clipMode;
-    else scrollLayer.style.overflow = 'hidden';
+    if (scrollActive) {
+      scrollLayer.style.overflow = morph.clipMode;
+      this.scrollScrollLayerFor(node, morph);
+    } else scrollLayer.style.overflow = 'hidden';
 
     morph.renderingState.scrollActive = morph.scrollActive;
   }
