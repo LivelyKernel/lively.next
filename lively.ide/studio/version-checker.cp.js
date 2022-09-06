@@ -191,6 +191,7 @@ const LivelyVersionChecker = component({
     type: Label,
     name: 'version status label',
     fontColor: Color.rgb(253, 254, 254),
+    lineHeight: 1.4,
     reactsToPointer: false,
     textAndAttributes: ['Checking version...', null]
   }, {
