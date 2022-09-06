@@ -257,7 +257,6 @@ export default class InputLine extends Text {
     placeholder.visible = true;
     placeholder.height = this.height;
     placeholder.padding = this.padding;
-    placeholder.defaultTextStyle = this.defaultTextStyle;
     placeholder.lineHeight = this.height + 'px';
     placeholder.fit();
     placeholder.topLeft = this.label.length
