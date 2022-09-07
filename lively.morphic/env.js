@@ -8,6 +8,8 @@ import { subscribe, unsubscribe } from 'lively.notifications';
 import { clearStylePropertiesForClassesIn } from './helpers.js';
 import promise from 'lively.lang/promise.js';
 
+let envs = envs || []; // eslint-disable-line no-use-before-define
+
 export class MorphicEnv {
   static reset () {
     while (true) {
@@ -27,7 +29,7 @@ export class MorphicEnv {
 
   static popDefault () { return this.envs.pop(); }
 
-  static get envs () { return this._envs || (this._envs = []); }
+  static get envs () { return envs; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // initialize / release
