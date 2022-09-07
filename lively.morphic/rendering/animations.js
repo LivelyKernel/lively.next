@@ -184,6 +184,7 @@ export class PropertyAnimation {
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
     this.morph.renderingState.needsRerender = true;
+    this.morph.makeDirty();
     if (this.morph.owner && this.morph.owner.isSmartText) this.morph.owner.invalidateTextLayout(true, true);
   }
 
@@ -403,6 +404,7 @@ export class PropertyAnimation {
       if (!remove) return;
       this.finish('css');
       this.morph.renderingState.needsRerender = true;
+      this.morph.makeDirty();
     };
     if (customTween) {
       let startTime;
