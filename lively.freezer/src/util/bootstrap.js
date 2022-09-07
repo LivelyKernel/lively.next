@@ -328,12 +328,26 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
     window.worldLoadingIndicator = li;
     try {
       const opts = {
-        root: $world.env.renderer.rootNode,
+        root: $world.env.renderer.bodyNode,
         verbose: true,
         localconfig: true,
         l2l: true,
         shell: true,
-        moduleManager: lively.modules
+        moduleManager: lively.modules,
+        onRenderStart: async () => {
+          if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
+            document.body.style.background = 'white';
+            progress.finishPackage({ packageName: 'world', loaded: true });
+            progress.animate({ opacity: 0 });
+            li.animate({ opacity: 0, top: li.top + 15 });
+            await oldEnv.renderer.worldMorph.animate({ opacity: 0 });
+            oldEnv.renderer.renderStep();
+            await oldEnv.renderer.clear();
+            oldEnv.fontMetric.uninstall();
+            oldEnv.eventDispatcher.uninstall();
+            li.remove();
+          }
+        }
       };
       if (snapshot) {
         let World, loadMorphFromSnapshot, loadWorld;
@@ -380,22 +394,10 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
       window.__loadError__ = err;
     }
 
-    progress.finishPackage({ packageName: 'world', loaded: true });
-    progress.fadeIntoBack();
-
     window.addEventListener('popstate', (event) => {
       if (document.location === landingPageUrl) { document.location.reload(); }
     });
     // lively.modules.removeHook('fetch', 'logFetch');
-    // to this only once world has finished loading
-    await $world.whenReady();
-    li.remove();
-    await oldEnv.renderer.worldMorph.whenRendered();
-    if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
-      oldEnv.renderer.clear();
-      oldEnv.fontMetric.uninstall();
-      oldEnv.eventDispatcher.uninstall();
-    }
   } catch (err) {
     if (err.originalErr) err = err.originalErr; // do not hide vital information!
     let printed = err.message;

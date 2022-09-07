@@ -285,7 +285,7 @@ const ProgressIndicator = component({
   type: ModuleProgress,
   borderRadius: 6,
   dropShadow: false,
-  extent: pt(1003, 300),
+  extent: pt(1003, 400),
   fill: Color.rgba(253, 254, 254, 0),
   name: 'progress indicator',
   layout: new TilingLayout({
