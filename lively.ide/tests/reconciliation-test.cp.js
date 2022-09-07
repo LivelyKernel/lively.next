@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { ComponentDescriptor, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 
-const e1 = ComponentDescriptor.abstract(() => component({
+const e1 = ComponentDescriptor.for(() => component({
   name: 'e1',
   fill: Color.red,
   submorphs: [
@@ -17,7 +17,7 @@ const e1 = ComponentDescriptor.abstract(() => component({
   ]
 }), {});
 
-const e2 = ComponentDescriptor.abstract(() => component(e1, {
+const e2 = ComponentDescriptor.for(() => component(e1, {
   name: 'e2',
   fill: Color.yellow,
   submorphs: [
@@ -36,7 +36,7 @@ describe('component definition reconciliation', () => {
   //        tooling specific behavior
   it('allows to create a component proxy for editing the spec', async () => {
     // define an ad hoc component
-    const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec 
+    const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
     expect(c.isComponent).to.be.true;
     c.get('alice').fill = Color.green;
     expect(c.spec.get('alice').fill).to.eql(Color.green);
