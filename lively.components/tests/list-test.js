@@ -20,6 +20,10 @@ describe('lists', function () {
     list = new List({ extent: pt(100, 100) });
   });
 
+  afterEach(() => {
+    list.remove();
+  });
+
   describe('interface', () => {
     inBrowser('adds items', () => {
       list.addItem('foo');
