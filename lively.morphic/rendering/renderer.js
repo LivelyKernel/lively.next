@@ -29,7 +29,6 @@ export default class Renderer {
       const doc = rootNode.getRootNode();
       domEnvironment = { window: System.global, document: doc };
     }
-
     this.worldMorph = world;
     this.worldMorph.renderingState.renderedFixedMorphs = [];
     this.renderMap = new WeakMap();
@@ -85,18 +84,18 @@ export default class Renderer {
   }
 
   async clear () {
-    const domNode = this.domNode;
+    const domNode = this.rootNode;
+
     try {
       await this.stopRenderWorldLoop();
     } catch (err) {
-
     }
     if (domNode) {
       const parent = domNode.parentNode;
       const domNodeIndex = Array.from(parent.children).findIndex(n => n === domNode);
-
-      for (let i = domNodeIndex; i < parent.children.length; i++) {
-        parent.children[i].remove();
+      const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
+      for (let m of [this.worldMorph, ...fixedSubmorphs]) {
+        this.renderMap.get(m).remove();
       }
     }
     this.domNode = null;

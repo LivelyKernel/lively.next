@@ -38,6 +38,10 @@ export default class FontDetector {
     this.span = null;
   }
 
+  clear () {
+    this.span?.parentNode.remove();
+  }
+
   prepare () {
     const defaultWidth = this.defaultWidth;
     const defaultHeight = this.defaultHeight;
