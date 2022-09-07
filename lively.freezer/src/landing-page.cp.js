@@ -240,7 +240,7 @@ class WorldLandingPage extends Morph {
     return `
 <script> window.AUTH_SERVER_URL; </script>
 <link type="text/css" rel="stylesheet" id="lively-font-awesome" href="/lively.morphic/assets/font-awesome/css/font-awesome.css">
-<link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="/lively.morphic/assets/inconsolata/inconsolata.css">`
+<link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="/lively.morphic/assets/inconsolata/inconsolata.css">`;
   }
 
   get commands () {
@@ -290,7 +290,7 @@ class WorldLandingPage extends Morph {
     await this.whenRendered();
     if (!lively.FreezerRuntime) return;
     $world.fill = Color.black;
-    document.documentElement.style.background = Color.black;
+    document.body.style.background = Color.black;
     this.showWorldList();
   }
 
