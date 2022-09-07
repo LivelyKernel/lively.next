@@ -61,10 +61,12 @@ export default class FontMetric {
   }
 
   uninstall () {
-    if (!this.element) return;
-    if (this.element.parentNode) this.element.parentNode.removeChild(this.element);
-    this.element = null;
     if (this._domMeasure) this._domMeasure.uninstall();
+    if (this.element?.parentNode) {
+      this.element.parentNode.removeChild(this.element);
+    }
+    this.fontDetector?.clear();
+    this.element = null;
   }
 
   setMeasureNodeStyles (style, isRoot) {
@@ -240,9 +242,9 @@ export default class FontMetric {
 // font measuring inside text
 
 function textlayerNodeForFontMeasure (morph) {
-    let node = $world.env.renderer.getNodeForMorph(morph)
-    if (node) return node.querySelector(`#${morph.id}font-measure`);
-    return null;
+  let node = $world.env.renderer.getNodeForMorph(morph);
+  if (node) return node.querySelector(`#${morph.id}font-measure`);
+  return null;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -410,24 +412,24 @@ class DOMTextMeasure {
         let result;
         if (line.stringSize > 10000) {
           result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
-            morph, 
+            morph,
             line,
             lineNode,
             offsetX,
             offsetY,
-            renderTextLayerFn)
+            renderTextLayerFn);
         } else {
           result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
-          offsetX - textNodeOffsetLeft,
-          offsetY - textNodeOffsetTop); 
+            offsetX - textNodeOffsetLeft,
+            offsetY - textNodeOffsetTop);
         }
 
-        const nodeForMorph = $world.env.renderer.getNodeForMorph(morph)
+        const nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
         if (!nodeForMorph) return result;
 
         const actualTextNode = nodeForMorph.querySelector(`#${morph.id}textLayer`);
         const dataRowId = lineNode.getAttribute('data-row');
-        const nodeForRenderedLineInActualLayer = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId)
+        const nodeForRenderedLineInActualLayer = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
         if (nodeForRenderedLineInActualLayer) {
           actualTextNode.replaceChild(lineNode, nodeForRenderedLineInActualLayer);
         }
@@ -558,7 +560,7 @@ export function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
     offsetY = offsetY - lineNode.offsetTop;
     node = lineNode.childNodes[0]; // node becomes the first span of the line
   } else {
-    const realLineNode = lineNode.getElementsByClassName('line')[0]; // TODO: why?? in this case someone fucked up 
+    const realLineNode = lineNode.getElementsByClassName('line')[0]; // TODO: why?? in this case someone fucked up
     node = realLineNode.childNodes[0]; // node becomes the first span of the line
 
     offsetX = offsetX - lineNode.offsetLeft + getComputedMarginLeft(lineNode);
