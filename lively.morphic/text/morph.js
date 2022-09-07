@@ -995,7 +995,6 @@ export class Text extends Morph {
 
   makeDirty () {
     if (this._positioningSubmorph) return;
-    this.renderingState.needsRerender = true; // fixme
     super.makeDirty();
   }
 
@@ -1312,7 +1311,6 @@ export class Text extends Morph {
     this.removeMarker(marker.id);
     this.markers.push(marker);
     this.makeDirty();
-    this.renderingState.needsRerender = true;
     return marker;
   }
 
@@ -1320,7 +1318,6 @@ export class Text extends Morph {
     const id = typeof marker === 'string' ? marker : marker.id;
     this.markers = this.markers.filter(ea => ea.id !== id);
     this.makeDirty();
-    this.renderingState.needsRerender = true;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2123,7 +2120,7 @@ export class Text extends Morph {
     this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
-        this.document.lines[i].needsRerender = true;
+        this.document.lines[i].lineNeedsRerender = true;
       }
     }
     // const tl = this.textLayout;
@@ -2915,7 +2912,6 @@ export class Text extends Morph {
       const textPos = this.textPositionFromPoint(this.localize(evt.hand.globalPosition));
       this.insertText([morphs[0], null], textPos);
       morphs[0].opacity = evt.state.originalOpacity || 1;
-      this.renderingState.needsRerender = true;
     }
   }
 

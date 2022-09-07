@@ -152,7 +152,7 @@ export class World extends Morph {
   world () { return this; }
 
   makeDirty () {
-    this._dirty = true;
+    this.renderingState.needsRerender = true;
     const r = this.env.renderer;
     r && r.renderLater();
   }

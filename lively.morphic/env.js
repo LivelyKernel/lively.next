@@ -201,42 +201,38 @@ export class MorphicEnv {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // whenRendered updates
 
-  // updateWhenRenderedRequests () {
-  //   const { whenRenderedRequesters } = this; let nRequesters = 0;
-  //   for (const [morph, requestState] of whenRenderedRequesters) {
-  //     const { maxAttempts, resolve, reject } = requestState;
-  //     if (!morph._dirty && !morph._rendering) {
-  //       whenRenderedRequesters.delete(morph);
-  //       resolve(morph);
-  //     } else if (++requestState.currentAttempt > maxAttempts) {
-  //       whenRenderedRequesters.delete(morph);
-  //       reject(new Error(`Failed to wait for whenRendered of ${morph} (tried ${maxAttempts}x)`));
-  //     } else nRequesters++;
-  //   }
-  //   if (!nRequesters) this.whenRenderedTickingProcess = null;
-  //   else {
-  //     this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
-  //       () => this.updateWhenRenderedRequests());
-  //   }
-  // }
+  updateWhenRenderedRequests () {
+    const { whenRenderedRequesters } = this; let nRequesters = 0;
+    for (const [morph, requestState] of whenRenderedRequesters) {
+      const { maxAttempts, resolve, reject } = requestState;
+      if (!morph.needsRerender()) {
+        whenRenderedRequesters.delete(morph);
+        resolve(morph);
+      } else if (++requestState.currentAttempt > maxAttempts) {
+        whenRenderedRequesters.delete(morph);
+        reject(new Error(`Failed to wait for whenRendered of ${morph} (tried ${maxAttempts}x)`));
+      } else nRequesters++;
+    }
+    if (!nRequesters) this.whenRenderedTickingProcess = null;
+    else this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(() => this.updateWhenRenderedRequests());
+  }
+
+
 
   whenRendered (morph, maxAttempts = 50) {
-  //   const { whenRenderedRequesters, whenRenderedTickingProcess } = this;
-  //   let requestState = whenRenderedRequesters.get(morph);
-  //   if (!requestState) {
-  //     let resolve; let reject; const promise = new Promise((rs, rj) => { resolve = rs; reject = rj; });
-  //     whenRenderedRequesters.set(morph, requestState = {
-  //       maxAttempts,
-  //       currentAttempt: 0,
-  //       resolve,
-  //       reject,
-  //       promise
-  //     });
-  //   }
-  //   if (!whenRenderedTickingProcess) {
-  //     this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
-  //       () => this.updateWhenRenderedRequests());
-  //   }
-    return promise.delay(10, true);
-  }
+    const { whenRenderedRequesters, whenRenderedTickingProcess } = this;
+    let requestState = whenRenderedRequesters.get(morph);
+    if (!requestState) {
+      let resolve; let reject; const promise = new Promise((rs, rj) => { resolve = rs; reject = rj; });
+      whenRenderedRequesters.set(morph, requestState = {
+        maxAttempts,
+        currentAttempt: 0,
+        resolve,
+        reject,
+        promise
+      });
+    }
+    if (!whenRenderedTickingProcess) this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(() => this.updateWhenRenderedRequests());
+    return requestState.promise;
+    }
 }

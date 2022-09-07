@@ -39,32 +39,6 @@ import { CommentData } from 'lively.collab';
 export class LivelyWorld extends World {
   static get properties () {
     return {
-      localComponents: {
-        initialize () {
-          // this is maybe better placed inside migrations since
-          // it only serves to make old worlds pour their components
-          // into this property automatically
-
-          this.whenRendered().then(() => {
-            if (this.localComponents) {
-              this.localComponents.forEach(async c => {
-                if (!c.owner) {
-                  const unappliedSubMasters = c.withAllSubmorphsSelect(m => m.master && !m.master._appliedMaster);
-                  for (const subComponent of unappliedSubMasters) { await subComponent.master.applyIfNeeded(true); }
-                  const derivedMorphs = this.withAllSubmorphsSelect(m => m.master && m.master.uses(c));
-                  const derivedMasters = this.localComponents.filter(m => m.master && m.master.uses(c));
-                  derivedMorphs.forEach(m => {
-                    m.requestMasterStyling();
-                  });
-                  derivedMasters.forEach(m => m.master.applyIfNeeded(true));
-                }
-              });
-              return;
-            }
-            this.localComponents = this.withAllSubmorphsSelect(m => m.isComponent);
-          });
-        }
-      },
       name: {
         set (name) {
           this.setProperty('name', name);
@@ -464,26 +438,6 @@ export class LivelyWorld extends World {
       { command: 'run command', target: this },
       { command: 'select morph', target: this },
       { command: 'window switcher', target: this },
-      ['Exported Components',
-        [
-          ['Toggle Select All', () => {
-            if (this.getListedComponents().length === 0) {
-              this.hiddenComponents = [];
-            } else {
-              this.hiddenComponents = this.withAllSubmorphsSelect(m => m.isComponent).map(m => m.name);
-            }
-          }],
-          ...this.withAllSubmorphsSelect(m => m.isComponent).map(c => {
-            const isHidden = this.hiddenComponents.includes(c.name);
-            return [[...Icon.textAttribute(isHidden ? 'square' : 'check-square'), '  ' + c.name, {}], () => {
-              if (isHidden) {
-                this.hiddenComponents = arr.without(this.hiddenComponents, c.name);
-              } else {
-                this.hiddenComponents = [c.name, ...this.hiddenComponents];
-              }
-            }];
-          })]
-      ],
       ['Resize',
         this.resizePolicy === 'static'
           ? [

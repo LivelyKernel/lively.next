@@ -834,9 +834,6 @@ export class Morph {
     this._env = env;
     this._rev = env.changeManager.revision;
     this._owner = null;
-    this._dirty = true; // for renderer, signals need  to re-render
-    this._rendering = false; // for knowing when rendering is done
-    this._submorphOrderChanged = false; // extra info for renderer
     this._id = newMorphId(getClassName(this));
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
@@ -863,9 +860,6 @@ export class Morph {
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
-    this._dirty = true; // for renderer, signals need  to re-render
-    this._rendering = false; // for knowing when rendering is done
-    this._submorphOrderChanged = false; // extra info for renderer
     this._id = objRef.id;
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
@@ -1097,15 +1091,12 @@ export class Morph {
       'attributeConnections',
       '_animationQueue',
       '_morphicState',
-      '_dirty',
       'doNotCopyProperties',
       'doNotSerialize',
       '_env',
       '_cachedPaths',
       '_pathDependants',
-      '_rendering',
       '_rev',
-      '_submorphOrderChanged',
       '_tickingScripts',
       '_transform',
       '_invTransform',
@@ -1262,7 +1253,7 @@ export class Morph {
   async animate (config) {
     this.renderingState.animationAdded = true;
     const anim = this._animationQueue.registerAnimation(config);
-    this.renderingState.needsRerender = true;
+    this.makeDirty();
     if (anim) {
       return await anim.asPromise();
     }
@@ -1580,7 +1571,6 @@ export class Morph {
       if (tfm) submorph.setTransform(tfm);
       this._morphicState.submorphs = submorphs;
 
-      this._submorphOrderChanged = true;
       this.makeDirty();
       submorph.resumeSteppingAll();
 
@@ -2395,9 +2385,6 @@ export class Morph {
     this._env = spec.env || spec._env || MorphicEnv.default();
     this._rev = 0;
     this._owner = null;
-    this._dirty = true;
-    this._rendering = false;
-    this._submorphOrderChanged = false;
     this._id = spec._id || newMorphId(getClassName(this));
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
@@ -2429,13 +2416,14 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   makeDirty () {
-    this._dirty = true;
+    this.renderingState.needsRerender = true;
     if (this.owner) this.owner.makeDirty();
   }
 
-  needsRerender () { return this._dirty; }
-
-  onAfterRender (node) {}
+  needsRerender () {
+    const renderingState = this.renderingState;
+    return renderingState.needsRerender //&& renderingState.hasStructuralChanges && renderingState.hasCSSLayoutChange && renderingState.hasAnimationAdded;
+  }
 
   whenRendered (maxChecks = 50) {
     return this.env.whenRendered(this, maxChecks)
@@ -2448,13 +2436,13 @@ export class Morph {
   }
 
   applyLayoutIfNeeded () {
-    if (!this._dirty) return;
+    // TODO: if (!this._dirty) return;
+    // Do we need something similar again? 
     for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
     this.layout && !this.layout.manualUpdate && this.layout.onContainerRender();
   }
 
   requestMasterStyling () {
-    if (this._rendering) return;
     if (this.master) {
       this._requestMasterStyling = true;
       this.makeDirty();
@@ -2985,6 +2973,7 @@ export class PathPoint {
   set position ({ x, y }) {
     this.x = x;
     this.y = y;
+    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.path.makeDirty();
   }
 
@@ -3021,6 +3010,7 @@ export class PathPoint {
     // ensure points
     const { next, previous } = cps;
     this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0, 0), previous: previous ? Point.fromLiteral(previous) : pt(0, 0) };
+    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.path.makeDirty();
   }
 
@@ -3215,6 +3205,7 @@ export class Path extends Morph {
   get isPath () { return true; }
 
   onVertexChanged (vertex) {
+    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.makeDirty();
     this.updateBounds(this.vertices);
   }
