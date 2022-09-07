@@ -107,12 +107,15 @@ export async function loadWorld (newWorld, oldWorld, options = {}) {
     l2l = true,
     shell = true,
     worldLoadDialog = false,
+    onRenderStart,
     showUserFlap = typeof newWorld.showsUserFlap === 'undefined'
       ? true
       : newWorld.showsUserFlap
   } = options;
 
   env = env || (oldWorld ? oldWorld.env : MorphicEnv.default());
+
+  if (onRenderStart) env.onRenderStart = onRenderStart;
 
   const doc = env.domEnv.document || document;
   const nativeLoadingIndicator = doc.getElementById('dom-loading-indicator');

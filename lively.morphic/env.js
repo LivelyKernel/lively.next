@@ -121,8 +121,13 @@ export class MorphicEnv {
 
     if (this.isDefault()) this.domEnv.window.$world = world;
     if (!world.stealFocus) world.focus();
-    world.makeDirty();
-    this.renderer.renderLater();
+    if (this.onRenderStart) {
+      // ensure the previous renderer is disabled before starting to render
+      return Promise.resolve(this.onRenderStart()).then(() => {
+	world.makeDirty();
+        return this;
+      });
+    } else world.makeDirty();
 
     return this;
   }
@@ -232,6 +237,6 @@ export class MorphicEnv {
   //     this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(
   //       () => this.updateWhenRenderedRequests());
   //   }
-    return promise.delay(10,true);
+    return promise.delay(10, true);
   }
 }
