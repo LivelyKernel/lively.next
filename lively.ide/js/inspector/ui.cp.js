@@ -215,7 +215,7 @@ const SystemInspector = component({
     },
     name: 'this binding selector',
     position: pt(92.2, 571.2),
-    height: 22,
+    extent: pt(120, 22),
     isLayoutable: false,
     visible: false
   })]
