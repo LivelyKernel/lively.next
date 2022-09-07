@@ -112,11 +112,11 @@ export class Canvas extends Morph {
 
   patchSpecialProps (node) {
     if (this.renderingState.specialProps.width !== this.width) {
-      node.firstChild.style.width = `${this.width}px`;
+      node.firstChild.width = this.width;
       this.renderingState.specialProps.width = this.width;
     }
     if (this.renderingState.specialProps.height !== this.height) {
-      node.firstChild.style.height = `${this.height}px`;
+      node.firstChild.height = this.height;
       this.renderingState.specialProps.height = this.height;
     }
   }
