@@ -533,10 +533,6 @@ export class PasswordInputLine extends HTMLMorph {
     this._errorIcon && this._errorIcon.remove();
   }
 
-  onAfterRender (node) {
-    this.ensureInputNode();
-  }
-
   ensureInputNode () {
     return this.whenRendered().then(() => {
       const n = this.domNode;

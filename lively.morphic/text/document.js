@@ -784,7 +784,7 @@ export class Line extends TreeNode {
     this.hasEstimatedExtent = false;
     this.modeState = null;
 
-    this.needsRerender = true;
+    this.lineNeedsRerender = true;
 
     // line text settings
     this.textAlign = 'left';
@@ -884,7 +884,7 @@ export class Line extends TreeNode {
   }
 
   changeText (newText, textAndAttributes = null) {
-    this.needsRerender = true;
+    this.lineNeedsRerender = true;
     let { parent, text, height } = this;
     const deltaLength = (newText.length + 1) - (text.length + 1);
     let deltaHeight = 0;

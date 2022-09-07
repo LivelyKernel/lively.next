@@ -181,10 +181,7 @@ export class ChangeManager {
     if ( change.prevValue && change.prevValue.isDocument ||
       change.value && change.value.isDocument ||
       !obj.equals(change.prevValue,change.value)
-      ) {
-       morph.makeDirty();
-       morph.renderingState.needsRerender = true;
-    }
+      ) morph.makeDirty();
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {

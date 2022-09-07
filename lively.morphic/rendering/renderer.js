@@ -492,7 +492,6 @@ export default class Renderer {
     applyStylingToNode(morph, node);
 
     if (morph.isText && morph.document) node.style.overflow = 'hidden';
-
     morph.renderingState.needsRerender = false;
   }
 
@@ -953,7 +952,7 @@ export default class Renderer {
       }
     }
 
-    if (lineObject.isLine && isRealRender) lineObject.needsRerender = false;
+    if (lineObject.isLine && isRealRender) lineObject.lineNeedsRerender = false;
     return node;
   }
 
@@ -987,7 +986,7 @@ export default class Renderer {
     if (attr.paddingLeft) rendered.style.marginLeft = attr.paddingLeft;
     if (attr.paddingRight) rendered.style.marginRight = attr.paddingRight;
     if (attr.paddingBottom) rendered.style.marginBottom = attr.paddingBottom;
-    morph.needsRerender = false;
+    morph.renderingState.needsRerender = false;
     return rendered;
   }
 
@@ -1515,7 +1514,7 @@ export default class Renderer {
       for (const line of morph.renderingState.renderedLines) {
         i++;
         // FIXME: this basically ignores the needsRerender flag for now when embedding morphs inline into a text
-        if (!line.needsRerender && line.textAndAttributes && !line.textAndAttributes.some(ta => ta && ta.isMorph)) continue;
+        if (!line.lineNeedsRerender && line.textAndAttributes && !line.textAndAttributes.some(ta => ta && ta.isMorph)) continue;
         const oldLineNode = textNode.children[i];
         if (!oldLineNode) continue;
         const newLineNode = this.nodeForLine(line, morph, true);
@@ -1818,7 +1817,7 @@ export default class Renderer {
           if (inlineMorph && inlineMorph.isMorph) {
             morph._positioningSubmorph = inlineMorph;
             inlineMorph.position = morph.textLayout.pixelPositionFor(morph, { row: docLine.row, column }).subPt(morph.origin);
-            inlineMorph._dirty = false; // no need to rerender
+            inlineMorph.renderingState.needsRerender = false;
             morph._positioningSubmorph = null;
             column++;
           } else if (inlineMorph) {

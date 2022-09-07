@@ -183,7 +183,6 @@ export class PropertyAnimation {
       this.queue.removeAnimation(this);
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
-    this.morph.renderingState.needsRerender = true;
     this.morph.makeDirty();
     if (this.morph.owner && this.morph.owner.isText) this.morph.owner.invalidateTextLayout(true, true);
   }
@@ -403,7 +402,6 @@ export class PropertyAnimation {
     const onComplete = () => {
       if (!remove) return;
       this.finish('css');
-      this.morph.renderingState.needsRerender = true;
       this.morph.makeDirty();
     };
     if (customTween) {

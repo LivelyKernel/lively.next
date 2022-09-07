@@ -100,7 +100,6 @@ export class Selection {
     this.endAnchor.position = range.end;
 
     this.textMorph.makeDirty();
-    if (this.textMorph.renderingState) this.textMorph.renderingState.needsRerender = true;
     signal(this.textMorph, 'selectionChange', this);
   }
 
@@ -251,7 +250,6 @@ export class Selection {
         if (!this._cursorVisible && hiddenCursorIndex === -1) {
           node.className = [...classNames, 'hidden-cursor'].join(' ');
         }
-        // this.textMorph.makeDirty();
       }, timeout * 1000);
     }
   }
