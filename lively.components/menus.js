@@ -24,6 +24,7 @@ export class MenuItem extends Label {
       draggable: { defaultValue: false },
       readOnly: { defaultValue: true },
       nativeCursor: { defaultValue: 'pointer' },
+      lineHeight: { defaultValue: 1.4 },
       selected: {
         defaultValue: false,
         set (value) {
@@ -337,16 +338,13 @@ export class Menu extends Morph {
             position: pos,
             ...defaultStyle
           }));
+      if (itemMorph.fit) itemMorph.fit();
       pos = itemMorph.bottomLeft;
       maxWidth = Math.max(itemMorph.width, maxWidth);
     });
 
     this.submorphs.forEach(ea => {
-      if (ea.isLabel) {
-        ea.autofit = false;
-        ea.fixedWidth = true;
-        ea.fixedHeight = true;
-      }
+      ea.fixedWidth = true;
       ea.width = maxWidth;
       if (ea.fit) ea.fit();
     });
