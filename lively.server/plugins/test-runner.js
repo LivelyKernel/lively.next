@@ -20,7 +20,7 @@ export default class TestRunner {
     JSON.stringify(results)
     `)
     } catch (err) {
-      results = {'error': err}
+      results = JSON.stringify({'error': err.message});
     }
     finally {
       this.headlessSession.dispose()
