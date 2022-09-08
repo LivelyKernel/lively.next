@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 
 import { Text } from 'lively.morphic';
 import DiffNavigator from 'lively.ide/diff/navigator.js';
-import { DiffEditorPlugin } from 'lively.ide/diff/editor-plugin.js';
+import DiffEditorPlugin from 'lively.ide/diff/editor-plugin.js';
 
 let editor;
 
