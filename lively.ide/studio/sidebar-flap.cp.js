@@ -1,5 +1,5 @@
 import { Color, pt } from 'lively.graphics';
-import { Label, easings, TilingLayout, component, ViewModel } from 'lively.morphic';
+import { easings, TilingLayout, component, ViewModel } from 'lively.morphic';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { connect, disconnect } from 'lively.bindings';
 import { defaultPropertiesPanelWidth } from './properties-panel.cp.js';
@@ -27,42 +27,41 @@ export class SidebarFlap extends ViewModel {
   }
 
   async toggleSidebar () {
-    const sidebarIsFadingOut = !!this.world().get(this.target);
-    this.world().withTopBarDo(async topBar => {
-      let sceneGraphPresent = false;
-      sceneGraphPresent = !!topBar.sceneGraph;
-      const targetSidebar = await topBar.openSideBar(this.target);
+    const world = this.world(); 
+    const sidebarIsFadingOut = world.get(this.target);
+    let sceneGraphPresent = false;
+    sceneGraphPresent = !!world.sceneGraph;
+    const targetSidebar = await world.openSideBar(this.target);
 
-      if (sidebarIsFadingOut) {
-        this.view.animate({
-          left: (this.target === 'scene graph') ? 0 : $world.visibleBounds().width - this.view.width,
-          duration: 300
-        });
+    if (sidebarIsFadingOut) {
+      this.view.animate({
+        left: (this.target === 'scene graph') ? 0 : world.visibleBounds().width - this.view.width,
+        duration: 300
+      });
 
-        if (this.target === 'scene graph') {
-          disconnect(targetSidebar, 'extent', this.view, 'left');
-        }
-      } else {
-        const sideBarWidth = targetSidebar?.width || defaultPropertiesPanelWidth;
-        const dragAreaWidth = 5;
-        const left = (this.target === 'scene graph')
-          ? sideBarWidth - dragAreaWidth
-          : $world.visibleBounds().width - sideBarWidth - this.view.width;
-        if (this.target === 'scene graph') {
-          connect(targetSidebar, 'extent', this.view, 'left', {
-            updater: ($upd, extent) => {
-              $upd(extent.x - dragAreaWidth);
-            },
-            varMapping: { dragAreaWidth }
-          });
-        }
-        this.view.animate({
-          left,
-          duration: 300,
-          easing: easings.outCirc
+      if (this.target === 'scene graph') {
+        disconnect(targetSidebar, 'extent', this.view, 'left');
+      }
+    } else {
+      const sideBarWidth = targetSidebar?.width || defaultPropertiesPanelWidth;
+      const dragAreaWidth = 5;
+      const left = (this.target === 'scene graph')
+        ? sideBarWidth - dragAreaWidth
+        : world.visibleBounds().width - sideBarWidth - this.view.width;
+      if (this.target === 'scene graph') {
+        connect(targetSidebar, 'extent', this.view, 'left', {
+          updater: ($upd, extent) => {
+            $upd(extent.x - dragAreaWidth);
+          },
+          varMapping: { dragAreaWidth }
         });
       }
-    });
+      this.view.animate({
+        left,
+        duration: 300,
+        easing: easings.outCirc
+      });
+    }
   }
 
   onWorldResize () {
