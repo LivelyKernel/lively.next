@@ -33,6 +33,16 @@ function createDummyWorld () {
   return world;
 }
 
+let env;
+async function setup () {
+  env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+  await env.setWorld(createDummyWorld());
+}
+
+function teardown () {
+  MorphicEnv.popDefault().uninstall();
+}
+
 function closeToPoint (p1, p2) {
   let { x, y } = p1;
   expect(x).closeTo(p2.x, 0.1, 'x');
@@ -40,14 +50,11 @@ function closeToPoint (p1, p2) {
 }
 
 describeInBrowser('halos', function () {
-  this.timeout(10 * 1000);
+  // this.timeout(10 * 1000);
 
-  beforeEach(async () =>
-    MorphicEnv.pushDefault(
-      new MorphicEnv(await createDOMEnvironment()))
-      .setWorld(createDummyWorld()));
+  beforeEach(setup);
 
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+  afterEach(teardown);
 
   it('halo items are placed correctly', async () => {
     submorph1.origin = pt(20, 30);
