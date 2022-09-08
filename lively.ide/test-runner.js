@@ -430,7 +430,9 @@ export default class TestRunner extends HTMLMorph {
 
   async runTestsInPackage (packageName) {
     const pkgsConf = await packagesConfig();
-    const wantsServerInterface = pkgsConf.find(pkg => pkg.name === packageName).wantsServerInterface;
+    const pkg = pkgsConf.find(pkg => pkg.name === packageName);
+    if (!pkg) throw new Error('Cannot find package for name: ' + packageName);
+    const wantsServerInterface = pkg.wantsServerInterface;
     this.updateEvalBackendForPackage(wantsServerInterface);
     const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);
     const results = [];
