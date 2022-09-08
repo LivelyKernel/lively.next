@@ -1,6 +1,6 @@
 /* global it, describe, beforeEach */
 import { expect } from 'mocha-es6';
-import { Text } from 'lively.morphic';
+import { Text, World } from 'lively.morphic';
 import { cleanupUnusedImports, interactivelyInjectImportIntoText } from 'lively.ide/js/import-helper.js';
 import JavaScriptEditorPlugin from 'lively.ide/js/editor-plugin.js';
 
@@ -46,14 +46,13 @@ describe('import helper - injection command', function () {
   beforeEach(() => {
     ed = new Text({ plugins: [new JavaScriptEditorPlugin()] });
     let targetModule = `lively://import-helper-test/${Date.now()}`;
-    let dummyWorld = {
-      filterableListPrompt: (label, items) => {
-        return {
-          selected: items
-            .filter(item => queryMatcher(listItem(item).string))
-            .map(ea => ea.value)
-        };
-      }
+    let dummyWorld = new World();
+    dummyWorld.filterableListPrompt = (label, items) => {
+      return {
+        selected: items
+          .filter(item => queryMatcher(listItem(item).string))
+          .map(ea => ea.value)
+      };
     };
 
     ed.plugins[0].evalEnvironment.targetModule = targetModule;
