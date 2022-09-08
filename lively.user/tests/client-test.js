@@ -14,7 +14,7 @@ describe("client user", function () {
   this.timeout(20000);
 
   before(async () => server = await start({hostname, port, userdb: testDBUrl, debug: true}));
-  after(() => server.close());
+  after(async () => await server.close());
 
   beforeEach(() => {
     userDB = UserDB.ensureDB(testDBUrl, {});
