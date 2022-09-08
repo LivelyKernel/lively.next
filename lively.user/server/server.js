@@ -118,7 +118,7 @@ export default class LivelyAuthServer {
     server.close();
     server.removeListener("request", this._requestFn);
 
-    this.whenClosed(() => this.constructor._unregister(this));
+    this.whenClosed(() => this.constructor._unregister(this)).catch((err) => {});
 
     return this;
   }
