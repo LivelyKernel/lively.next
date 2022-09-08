@@ -15,18 +15,15 @@ function wait (n) {
   return n ? promise.delay(n * 1000) : Promise.resolve();
 }
 
-let env, win;
+let env;
 async function setup () {
-  win = typeof $$world !== 'undefined' && $$world.activeWindow();
   env = new MorphicEnv(await createDOMEnvironment());
-  // env = new MorphicEnv();
   MorphicEnv.pushDefault(env);
   await env.setWorld(createDummyWorld());
 }
 
 function teardown () {
   MorphicEnv.popDefault().uninstall();
-  wait(0.5).then(() => typeof win !== 'undefined' && win.activate());
 }
 
 let world;
