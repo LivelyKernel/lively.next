@@ -94,9 +94,6 @@ export class TopBarModel extends ViewModel {
           ).asFunction();
         }
       },
-      activeSideBars: {
-        initialize () { this.activeSideBars = []; }
-      },
       currentShapeMode: {
         defaultValue: 'Rectangle',
         set (shapeName) {
@@ -152,7 +149,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'activeSideBars', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'openSideBar', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton']; } },
       bindings: {
         get () {
           return [
@@ -303,60 +300,6 @@ export class TopBarModel extends ViewModel {
         }
       ];
     });
-  }
-
-  reloadSidebar () {
-    this.sceneGraph.remove();
-    this.sceneGraph = null;
-    this.propertiesPanel.remove();
-    this.propertiesPanel = null;
-    this.openSideBar('scene graph');
-    this.openSideBar('properties panel');
-  }
-
-  async openSideBar (name) {
-    if (this.activeSideBars.includes(name)) {
-      arr.remove(this.activeSideBars, name);
-    } else {
-      this.activeSideBars.push(name);
-    }
-
-    if (name === 'scene graph') {
-      if (!this.sceneGraph) {
-        const { MorphPanel } = await System.import('lively.ide/studio/scene-graph.cp.js');
-        this.sceneGraph = part(MorphPanel);
-        this.sceneGraph.epiMorph = true;
-        this.sceneGraph.hasFixedPosition = true;
-        this.sceneGraph.respondsToVisibleWindow = true;
-        this.sceneGraph.openInWorld();
-        this.sceneGraph.right = 0;
-      }
-      this.sceneGraph.toggle(this.activeSideBars.includes('scene graph'));
-    }
-
-    if (name === 'properties panel') {
-      if (!this.propertiesPanel) {
-        const { PropertiesPanel } = await System.import('lively.ide/studio/properties-panel.cp.js');
-        this.propertiesPanel = part(PropertiesPanel);
-        this.propertiesPanel.epiMorph = true;
-        this.propertiesPanel.hasFixedPosition = true;
-        this.propertiesPanel.respondsToVisibleWindow = true;
-      }
-      // FIXME: This can be removed once we move away from the vdom renderer.
-      //        Since the properties panel is mounted into the world, the vdom
-      //        has to create a significant amount of new vdom nodes and also
-      //        visit a bunch of submorphs. This can be ignored, once we work
-      //        with the vanilla DOM api, where can just simply use the previously
-      //        rendered dom node for the properties panel.
-      await this.propertiesPanel.whenRendered();
-      this.propertiesPanel.toggle(this.activeSideBars.includes('properties panel'));
-    }
-
-    const checker = this.ui.livelyVersionChecker;
-    if (checker && checker.owner === $world) {
-      checker.relayout();
-    }
-    return name === 'properties panel' ? this.propertiesPanel : this.sceneGraph;
   }
 
   colorCommentBrowserButton () {

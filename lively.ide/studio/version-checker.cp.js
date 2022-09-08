@@ -51,16 +51,14 @@ class VersionChecker extends Morph {
   relayout () {
     const padding = 10;
     const dragAreaWidth = 5;
-    this.world().withTopBarDo(tb => {
-      if (tb.sceneGraph && tb.sceneGraph.owner) {
-        this.bottomLeft = this.world().visibleBounds().bottomLeft()
-          .withX(tb.sceneGraph.right)
-          .addXY(padding, -padding)
-          .subXY(dragAreaWidth, 0);
-      } else {
-        this.bottomLeft = this.world().visibleBounds().insetBy(padding).bottomLeft();
-      }
-    });
+    if (this.world().sceneGraph && this.world().sceneGraph.owner) {
+      this.bottomLeft = this.world().visibleBounds().bottomLeft()
+        .withX(this.world().sceneGraph.right)
+        .addXY(padding, -padding)
+        .subXY(dragAreaWidth, 0);
+    } else {
+      this.bottomLeft = this.world().visibleBounds().insetBy(padding).bottomLeft();
+    }
   }
 
   async checkIfUpToDate () {
