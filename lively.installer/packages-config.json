@@ -77,10 +77,6 @@
     "repoURL": "https://github.com/LivelyKernel/lively.mirror"
   },
   {
-    "name": "lively.sync",
-    "repoURL": "https://github.com/LivelyKernel/lively.sync"
-  },
-  {
     "name": "lively.changesets",
     "repoURL": "https://github.com/LivelyKernel/lively.changesets"
   },
