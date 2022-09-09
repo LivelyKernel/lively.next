@@ -73,10 +73,6 @@
     "repoURL": "https://github.com/LivelyKernel/lively.morphic"
   },
   {
-    "name": "lively.mirror",
-    "repoURL": "https://github.com/LivelyKernel/lively.mirror"
-  },
-  {
     "name": "lively.changesets",
     "repoURL": "https://github.com/LivelyKernel/lively.changesets"
   },

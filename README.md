@@ -98,7 +98,6 @@ The packages are coded with emojis as follows:
 - installer: 📦
 - keyboard: ⌨️
 - lang: 📙
-- mirror: 🪞
 - modules: 🧩
 - morphic: 🎨
 - notifications: 🔔
