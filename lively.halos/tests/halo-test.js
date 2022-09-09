@@ -35,7 +35,6 @@ function createDummyWorld () {
 let env;
 async function setup () {
   env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
-  await promise.waitFor(() => env.fontMetric);
   await env.setWorld(createDummyWorld());
 }
 
@@ -73,6 +72,7 @@ describeInBrowser('halos', function () {
     submorph1.origin = pt(20, 30);
     submorph1.extent = pt(20, 20);
     let halo = await world.showHaloFor(submorph1);
+    await halo.whenRendered();
     let innerButton = halo.buttonControls.find(item =>
       halo.buttonControls.find(otherItem =>
         otherItem !== item && !otherItem.isHandle && otherItem !== halo.borderBox &&
