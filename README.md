@@ -108,7 +108,6 @@ The packages are coded with emojis as follows:
 - shell: 🐚
 - source-transform: 🔁
 - storage: 💾
-- sync: ☁️
 - system-interface: 📠
 - traits: ⚙️
 - user: 👤
