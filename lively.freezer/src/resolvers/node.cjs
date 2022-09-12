@@ -174,7 +174,7 @@ function supportingPlugins(context = 'node') {
       sourceMap: false,
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
-      dynamicRequireRoot: path.dirname(process.env.PWD),
+      dynamicRequireRoot: process.env.lv_next_dir,
       exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js'],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
