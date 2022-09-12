@@ -587,10 +587,9 @@ class CloseHaloItem extends HaloItem {
       ? halo.target.selectedMorphs.forEach(m => m.abandon())
       : halo.target.abandon();
     o.undoStop('close-halo');
-    halo.world().withTopBarDo(tb => {
-      if (tb.stylingPalette) { tb.stylingPalette.clearFocus(); }
-      if (tb.sideBar) { tb.sideBar.clearFocus(); }
-    });
+    const world = halo.world();
+    if (world.propertiesPanel) { world.propertiesPanel.clearFocus(); }
+    if (world.sceneGraph) { world.sceneGraph.clearFocus(); }
     halo.remove();
   }
 
@@ -741,11 +740,10 @@ class DragHaloItem extends HaloItem {
     }
     this.halo.target.position = newPos;
     this.updateAlignmentGuide(grid);
-    this.world().withTopBarDo(tb => {
-      if (tb.activeSideBars.includes('Styling Palette')) {
-        tb.stylingPalette.onHierarchyChange();
-      }
-    });
+    const world = this.world();
+    if (world.activeSideBars.includes('properties panel')) {
+      world.propertiesPanel.onHierarchyChange();
+    }
     if (!grid) {
       showAndSnapToGuides(
         this.halo.target, true /* showGuides */, snapToGuides,
@@ -1884,11 +1882,10 @@ export default class Halo extends Morph {
     }
     this.active = false;
     this.alignWithTarget();
-    this.world().withTopBarDo(tb => {
-      if (tb.activeSideBars.includes('Styling Palette')) {
-        tb.stylingPalette.onHierarchyChange();
-      }
-    });
+    const world = this.world();
+    if (world.activeSideBars.includes('properties panel')) {
+      world.propertiesPanel.onHierarchyChange();
+    }
   }
 
   proportionalDelta (corner, delta, bounds) {
