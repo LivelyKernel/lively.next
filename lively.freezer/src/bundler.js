@@ -22,10 +22,11 @@ import { joinPath, ensureFolder } from 'lively.lang/string.js';
 
 const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
 
-const SYSTEMJS_STUB = `
-var G = typeof window !== "undefined" ? window :
+const GLOBAL_FETCH = `var G = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
-        typeof self!=="undefined" ? self : this;
+        typeof self!=="undefined" ? self : this;`
+const SYSTEMJS_STUB = `
+${GLOBAL_FETCH}
 if (!G.System) G.System = G.lively.FreezerRuntime;`;
 
 const CLASS_INSTRUMENTATION_MODULES = [
@@ -593,11 +594,12 @@ export default class LivelyRollup {
   captureScope (source, id) {
     let classRuntimeImport = '';
     const recorderName = '__varRecorder__';
+    const parsed = ast.parse(source);
+    const localLivelyVar = ast.query.topLevelDeclsAndRefs(parsed).declaredNames.includes('lively');
     const recorderString = this.captureModuleScope
-      ? `const ${recorderName} = lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`
+      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = ${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`
       : '';
     const captureObj = { name: recorderName, type: 'Identifier' };
-    const parsed = ast.parse(source);
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
 
@@ -606,6 +608,7 @@ export default class LivelyRollup {
     } else {
       opts.classToFunction = false;
     }
+    
     let instrumented = parsed;
     if (this.isComponentModule(id)) {
       instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id));
@@ -617,6 +620,7 @@ export default class LivelyRollup {
 
       const imports = [];
       const toBeReplaced = [];
+      
 
       ast.custom.forEachNode(instrumented, (n) => {
         if (n.type === 'ImportDeclaration') arr.pushIfNotIncluded(imports, n);
