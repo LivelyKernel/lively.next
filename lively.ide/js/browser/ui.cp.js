@@ -300,7 +300,8 @@ export class PathIndicator extends Morph {
             statusLabel: this.getSubmorphNamed('status label'),
             errorControls: this.getSubmorphNamed('error controls'),
             exportToHtml: this.getSubmorphNamed('export to html'),
-            runTestsButton: this.getSubmorphNamed('run tests in module')
+            runTestsButton: this.getSubmorphNamed('run tests in module'),
+            freezeButton: this.getSubmorphNamed('freeze button')
           };
         }
       }
@@ -345,9 +346,10 @@ export class PathIndicator extends Morph {
   }
 
   setPath (path) {
-    const { filePath, clipboardControls, exportToHtml } = this.ui;
+    const { filePath, clipboardControls, exportToHtml, freezeButton } = this.ui;
     clipboardControls.opacity = 1;
     filePath.value = path;
+    freezeButton.isLayoutable = freezeButton.visible = filePath.textString.includes('.js');
     exportToHtml.isLayoutable = exportToHtml.visible = filePath.textString.includes('.md');
   }
 
@@ -586,6 +588,7 @@ const SystemBrowser = component({
           bottomRight: 0,
           bottomLeft: 5
         },
+        tooltip: 'Move backwards in history.',
         extent: pt(35, 26),
         padding: rect(10, 2, 3, -1),
         position: pt(7, 12.9),
@@ -598,6 +601,7 @@ const SystemBrowser = component({
         borderRadius: 0,
         padding: rect(10, 5, 0, 0),
         position: pt(40, 12.9),
+        tooltip: 'Browse navigation history.',
         submorphs: [
           { name: 'label', textAndAttributes: Icon.textAttribute('history'), fontSize: 14 }
         ]
@@ -609,6 +613,7 @@ const SystemBrowser = component({
           bottomRight: 5,
           bottomLeft: 0
         },
+        tooltip: 'Move forwards in history.',
         extent: pt(35, 26),
         padding: rect(15, 2, -5, -1),
         position: pt(74, 12.9),
@@ -627,6 +632,7 @@ const SystemBrowser = component({
           bottomRight: 0,
           bottomLeft: 5
         },
+        tooltip: 'Browse loaded modules in the system.',
         padding: rect(10, 5, 0, 0),
         position: pt(152, 12),
         submorphs: [{
@@ -644,6 +650,7 @@ const SystemBrowser = component({
           bottomRight: 0,
           bottomLeft: 0
         },
+        tooltip: 'Open global code search.',
         padding: rect(10, 5, 0, 0),
         position: pt(186, 12),
         submorphs: [{
@@ -656,6 +663,7 @@ const SystemBrowser = component({
       part(SystemButton, {
         name: 'add tab',
         extent: pt(35, 26),
+        tooltip: 'Open up a new browser tab.',
         borderRadius: {
           topLeft: 0,
           topRight: 5,
@@ -700,7 +708,9 @@ const SystemBrowser = component({
           type: EvalBackendButton,
           master: { auto: BackendButtonDefault, click: BackendButtonClicked },
           name: 'eval backend button',
+          tooltip: 'Select evaluation backend for browser.',
           padding: rect(5, 4, 0, 0),
+          nativeCursor: 'pointer',
           submorphs: [{
             type: Label,
             name: 'label',
