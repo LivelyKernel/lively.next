@@ -10,10 +10,11 @@ import lint from '../js/linter.js';
 import { ImportInjector } from 'lively.modules/src/import-modification.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
-import { ComponentDescriptor } from 'lively.morphic';
+import { ComponentDescriptor, morph } from 'lively.morphic';
 
 const astq = new ASTQ();
 astq.adapter('mozast');
+const exprSerializer = new ExpressionSerializer();
 
 const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
@@ -31,9 +32,9 @@ function convertToSpec (aMorph, opts = {}) {
     skipAttributes: DEFAULT_SKIPPED_ATTRIBUTES,
     valueTransform: (key, val) => {
       if (val && val.isPoint) return val.roundTo(0.1);
-      if (key == 'label' || key == 'textAndAttributes') {
+      if (key === 'label' || key === 'textAndAttributes') {
         let hit;
-        if (Array.isArray(val) && (hit = Object.entries(Icons).find(([iconName, iconValue]) => iconValue.code == val[0]))) {
+        if (Array.isArray(val) && (hit = Object.entries(Icons).find(([iconName, iconValue]) => iconValue.code === val[0]))) {
           return {
             __serialize__ () {
               return {
@@ -85,6 +86,23 @@ function getComponentNode (parsedContent, componentName) {
   return parsedComponent;
 }
 
+function getPropertiesNode (parsedComponent, aMorph) {
+  // fixme: This does not take into account the name unique name path
+  //        and often incorrectly resolves the source code location
+  const morphDefs = astq.query(parsedComponent, `
+  .//  ObjectExpression [
+         /:properties "*" [
+           Property [
+              /:key Identifier [ @name == 'name' ]
+           && /:value Literal [ @value == '${aMorph.name}']
+           ]
+         ]
+       ]
+  `);
+  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + aMorph.name);
+  return morphDefs[0];
+}
+
 function getMorphNode (parsedComponent, aMorph) {
   // often that is just the properties node itself
   // but when the morph is derived from another master component
@@ -108,24 +126,7 @@ function getMorphNode (parsedComponent, aMorph) {
   if (partRef) { return partRef; } // covers part() and add() cases
   // }
   // also catch the case where we are wrapped inside an add call
-  return getPropertiesNode(parsedComponent, aMorph.name);
-}
-
-function getPropertiesNode (parsedComponent, aMorph) {
-  // fixme: This does not take into account the name unique name path
-  //        and often incorrectly resolves the source code location
-  const morphDefs = astq.query(parsedComponent, `
-  .//  ObjectExpression [
-         /:properties "*" [
-           Property [
-              /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${aMorph.name}']
-           ]
-         ]
-       ]
-  `);
-  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + aMorph.name);
-  return morphDefs[0];
+  return getPropertiesNode(parsedComponent, aMorph);
 }
 
 function getProp (morphDef, prop) {
@@ -187,7 +188,7 @@ function getValueExpr (prop, value) {
     const n = {};
     value = serializeNestedProp(prop, value, {
       exprSerializer, nestedExpressions: n, asExpression: true
-    }, prop == 'borderRadius' ? ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] : ['top', 'left', 'right', 'bottom']);
+    }, prop === 'borderRadius' ? ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] : ['top', 'left', 'right', 'bottom']);
   }
   valueAsExpr = {
     __expr__: JSON.stringify(value),
@@ -236,12 +237,12 @@ function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = 
   // determine where to insert the new property
   // after name and type and before submorphs if present
   // fixme: ensure to be inserted after both type and name
-  const nameProp = propertiesNode.properties.findIndex(prop => prop.key.name == 'name');
-  const typeProp = propertiesNode.properties.findIndex(prop => prop.key.name == 'type');
+  const nameProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'name');
+  const typeProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'type');
   const afterProp = propertiesNode.properties[Math.max(typeProp, nameProp)];
   const keyValueExpr = ',\n' + key + ': ' + valueExpr;
   let insertationPoint;
-  if (!afterProp || key == 'submorphs') {
+  if (!afterProp || key === 'submorphs') {
     insertationPoint = arr.last(propertiesNode.properties).end;
   }
   if (afterProp && !insertationPoint) {
@@ -257,8 +258,6 @@ function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = 
     { action: 'insert', start: insertationPoint, lines: [keyValueExpr] }
   ]);
 }
-
-const exprSerializer = new ExpressionSerializer();
 
 // m = morph()
 // tracker = new ComponentChangeTracker
@@ -277,7 +276,7 @@ export class ComponentChangeTracker {
     if (mod.id.endsWith('.cp.js')) {
       const moduleExports = await mod.exports();
       // also for non exported components!
-      const exportedComponents = moduleExports
+      moduleExports
         .map(exp => mod.recorder[exp.local])
         .filter(m => m.isComponent)
         .forEach(c => {
@@ -288,7 +287,7 @@ export class ComponentChangeTracker {
 
   constructor (aComponent, oldName = aComponent.name) {
     this.trackedComponent = aComponent;
-    this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].module;
+    this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
     this.componentModule = module(this.componentModuleId);
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
     connect(aComponent, 'onChange', this, 'processChangeInComponent', { garbageCollect: true });
@@ -297,8 +296,8 @@ export class ComponentChangeTracker {
   }
 
   equals (otherTracker, componentName) {
-    return this.componentModuleId == otherTracker.componentModuleId &&
-           otherTracker.trackedComponent.name == componentName;
+    return this.componentModuleId === otherTracker.componentModuleId &&
+           otherTracker.trackedComponent.name === componentName;
   }
 
   highlightMorphInSource (aSubmorph) {
@@ -312,7 +311,7 @@ export class ComponentChangeTracker {
     // find the first system browser that has no unsaved changes
     // and displays the current module
     const openBrowsers = $world.withAllSubmorphsSelect(browser =>
-      browser.isBrowser && browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') == this.componentModuleId);
+      browser.isBrowser && browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') === this.componentModuleId);
     const qualifiedBrowser = openBrowsers.find(openBrowser => {
       if (this.currentModuleSource && openBrowser.hasUnsavedChanges(this.currentModuleSource)) {
         return false;
@@ -335,7 +334,7 @@ export class ComponentChangeTracker {
     // that is not enough. If we are wrapped by an add call that does not
     // contain part() we are not within a derived component
     for (const each of [aMorph, ...aMorph.ownerChain()]) {
-      if (each.isComponent && each.master) return true;
+      if (each.master) return true;
       if (each.__wasAddedToDerived__) return false;
     }
     return false;
@@ -457,7 +456,7 @@ export class ComponentChangeTracker {
     }
 
     const patchPos = propNode;
-    if (sourceCode[patchPos.end] == ',') patchPos.end++;
+    if (sourceCode[patchPos.end] === ',') patchPos.end++;
     this.needsLinting = true;
 
     if (sourceEditor) {
@@ -485,7 +484,7 @@ export class ComponentChangeTracker {
   fixUndeclaredVars (updatedSource, requiredBindings, mod) {
     const knownGlobals = mod.dontTransform;
     const undeclared = undeclaredVariables(updatedSource, knownGlobals).map(n => n.name);
-    if (undeclared.length == 0) return updatedSource;
+    if (undeclared.length === 0) return updatedSource;
     for (let [importedModuleId, exportedIds] of requiredBindings) {
       for (let exportedId of exportedIds) {
         // check if binding already present and continue if that is the case
@@ -517,15 +516,15 @@ export class ComponentChangeTracker {
 
   ignoreChange (change) {
     if (change.meta && change.meta.skipReconciliation) return true;
-    if (change.prop == 'position' && (change.target == this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
-    if (change.prop && change.prop != 'textAndAttributes' && !change.target.styleProperties.includes(change.prop)) return true;
+    if (change.prop === 'position' && (change.target === this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
+    if (change.prop && change.prop !== 'textAndAttributes' && !change.target.styleProperties.includes(change.prop)) return true;
     if (change.target.epiMorph) return true;
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args.some(m => m.epiMorph)) return true;
-    if (change.selector != 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
+    if (change.selector !== 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
     const { changeManager } = change.target.env;
     // fixme: maybe ignoring grouped changes alltogether can cause issues with reconciliation...
-    if (change.selector != 'addMorphAt' && changeManager.changeGroupStack.length > 0) {
+    if (change.selector !== 'addMorphAt' && changeManager.changeGroupStack.length > 0) {
       return true;
     }
     if (!change.selector && obj.equals(change.prevValue, change.value)) return true;
@@ -558,7 +557,7 @@ export class ComponentChangeTracker {
       requiredBindings.push(...Object.entries(valueAsExpr.bindings));
       let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
       const morphDef = getPropertiesNode(responsibleComponent, change.target);
-      if (change.prop == 'layout') {
+      if (change.prop === 'layout') {
         this.needsLinting = true;
       }
       if (!morphDef) {
@@ -571,7 +570,7 @@ export class ComponentChangeTracker {
       } else {
         // this little dance should be refactored
         let deleteProp = false; let skipPatch = false;
-        if (change.prop == 'extent') {
+        if (change.prop === 'extent') {
           if (this.isResizedVertically(change.target)) {
             change = { ...change, prop: 'width' };
             valueAsExpr.__expr__ = String(change.value.x);
@@ -600,13 +599,13 @@ export class ComponentChangeTracker {
 
     // handle a morph added
     // if this happens inside overridden props, we need to use the command instead
-    if (change.selector == 'addMorphAt') {
+    if (change.selector === 'addMorphAt') {
       const newOwner = change.target;
       const [addedMorph] = change.args;
       let addedMorphExpr = convertToSpec(addedMorph);
       requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
       if (addedMorph.master) {
-        const metaInfo = addedMorph.master.auto[Symbol.for('lively-module-meta')];
+        const metaInfo = addedMorph.master.parent[Symbol.for('lively-module-meta')];
         addedMorphExpr = convertToSpec(addedMorph, {
           exposeMasterRefs: false,
           skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'type']
@@ -634,7 +633,7 @@ export class ComponentChangeTracker {
     }
 
     // handle a morph removal
-    if (change.selector == 'removeMorph') {
+    if (change.selector === 'removeMorph') {
       // maybe also cleanup unneeded imports here...
       const [removedMorph] = change.args;
       let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
@@ -655,7 +654,7 @@ export class ComponentChangeTracker {
       }
       if (nodeToRemove && (change.target.submorphs.length > 0 || insertedRemove)) {
         if (insertedRemove) sourceCode = updatedSource;
-        if (sourceCode[nodeToRemove.end] == ',') nodeToRemove.end++;
+        if (sourceCode[nodeToRemove.end] === ',') nodeToRemove.end++;
         if (sourceEditor) {
           const morphRange = Range.fromPositions(
             sourceEditor.indexToPosition(nodeToRemove.start),
@@ -670,7 +669,7 @@ export class ComponentChangeTracker {
         }
       }
 
-      if (!insertedRemove && change.target.submorphs.length == 0) {
+      if (!insertedRemove && change.target.submorphs.length === 0) {
         // remove the submorphs prop entirely
         const ownerNode = getPropertiesNode(parsedComponent, change.target);
         nodeToRemove = getProp(ownerNode, 'submorphs');
@@ -717,20 +716,20 @@ export class ComponentChangeTracker {
   }
 }
 
-class InteractiveComponentDescriptor extends ComponentDescriptor {
-  getComponent () {
+export class InteractiveComponentDescriptor extends ComponentDescriptor {
+  getComponentMorph () {
     let c = this._cachedComponent;
     return c || (
-      c = this.getInstance(),
+      c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       this._cachedComponent = c
     );
   }
 
-  async edit () {
-    const c = this.getComponent();
+  edit () {
+    const c = this.getComponentMorph();
     if (!c._changeTracker) { new ComponentChangeTracker(c); }
-    c.openInWorld();
+    return c;
   }
 
   init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
