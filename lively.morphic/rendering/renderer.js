@@ -843,7 +843,6 @@ export default class Renderer {
   nodeForLine (lineObject, morph, isRealRender = false) {
     if (!lineObject) lineObject = '';
     let line = lineObject.isLine ? lineObject.textAndAttributes : lineObject;
-    const size = line.length;
 
     const renderedChunks = [];
 
@@ -863,7 +862,12 @@ export default class Renderer {
           continue;
         }
 
-        if (!attributes) { renderedChunks.push(content); continue; }
+        if (!attributes) {
+          const node = this.doc.createElement('span');
+          node.textContent = content;
+          renderedChunks.push(node);
+          continue;
+        }
 
         chunkNodeStyle = {};
         chunkNodeAttributes = {};
