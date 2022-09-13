@@ -71,7 +71,6 @@ const FileStatusDefault = component({
   dropShadow: new ShadowObject({ distance: 0, color: Color.rgba(0, 0, 0, 0.5) }),
   extent: pt(176.3, 35.3),
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) }),
-  position: pt(772.1, 1648.5)
 });
 
 const FileStatusError = component(FileStatusDefault, {
