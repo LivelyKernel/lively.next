@@ -847,7 +847,6 @@ export default class Renderer {
     const renderedChunks = [];
 
     let content, attributes, fontSize, nativeCursor, textStyleClasses, link, tagname, chunkNodeStyle, paddingRight, paddingLeft, paddingTop, paddingBottom, lineHeight, textAlign, wordSpacing, letterSpacing, quote, textStroke, fontFamily, fontWeight, textDecoration, fontStyle, fontColor, backgroundColor, verticalAlign, chunkNodeAttributes;
-    let minFontSize = morph.fontSize;
 
     if (line.length > 0) {
       for (let i = 0; i < line.length; i = i + 2) {
@@ -896,8 +895,6 @@ export default class Renderer {
 
         tagname = 'span';
 
-        if (fontSize && attributes.fontSize < minFontSize) minFontSize = attributes.fontSize;
-
         if (link) {
           tagname = 'a';
           chunkNodeAttributes.href = link;
@@ -934,7 +931,6 @@ export default class Renderer {
 
     const lineStyle = {};
 
-    if (morph.fontSize > minFontSize) lineStyle.fontSize = minFontSize + 'px';
     if (lineHeight) lineStyle.lineHeight = lineHeight;
     if (textAlign) lineStyle.textAlign = textAlign;
     if (letterSpacing) lineStyle.letterSpacing = letterSpacing + 'px';
