@@ -113,7 +113,7 @@ describe('component -> source reconciliation', () => {
     await ComponentA._changeTracker.onceChangesProcessed();
     let updatedSource = await testComponentModule.source();
     expect(updatedSource.includes('type: Text,\n    name: \'some submorph\','), 'removes a morph from source').to.be.false;
-    expect(updatedSource.includes('submorphs: [part(D, {}, { name: \'some ref\'})]'), 'removes the submorph from array').to.be.true;
+    expect(updatedSource.includes('submorphs: [part(D, { name: \'some ref\'})]'), 'removes the submorph from array').to.be.true;
     ComponentA.getSubmorphNamed('some ref').remove();
     await ComponentA._changeTracker.onceChangesProcessed();
     updatedSource = await testComponentModule.source();
@@ -121,18 +121,18 @@ describe('component -> source reconciliation', () => {
   });
 
   it('updates the source if a part is added', async () => {
-    ComponentC.addMorph(part(ComponentB, {}, {
+    ComponentC.addMorph(part(B, {
       name: 'derived morph',
       borderColor: Color.black,
       borderWidth: 2
     }));
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource.includes(`submorphs: [part(B, {}, {
+    updatedSource;
+    expect(updatedSource.includes(`submorphs: [part(B, {
     name: 'derived morph',
     borderColor: Color.rgb(0, 0, 0),
     borderWidth: 2,
-    extent: pt(100, 100)
   })]`), 'inserts part reference into source code').to.be.true;
   });
 
@@ -140,7 +140,7 @@ describe('component -> source reconciliation', () => {
     ComponentA.getSubmorphNamed('some ref').borderRadius = 10;
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource.includes(`part(D, {}, {
+    expect(updatedSource.includes(`part(D, {
     name: 'some ref',
     borderRadius: 10
   })`)).to.be.true;
@@ -151,14 +151,13 @@ describe('component -> source reconciliation', () => {
     ComponentB.borderRadius = 25;
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource.includes('borderWidth: 50,') && updatedSource.includes('borderRadius: 25,')).to.be.true;
+    expect(updatedSource.includes('borderWidth: 50') && updatedSource.includes('borderRadius: 25')).to.be.true;
   });
 
   it('uncollapses submorph hierarchy if a deeply located submorph is modified', async () => {
     ComponentB.getSubmorphNamed('a deep morph').fill = Color.blue;
     await ComponentB._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    // resetEnv()
     expect(updatedSource).to.include(`const B = component(A, {
   name: 'B',
   submorphs: [{
@@ -173,18 +172,21 @@ describe('component -> source reconciliation', () => {
   }]
 });`);
   });
-  // resetEnv()
-  // two morphs with the same name but different master component hierarchies are reconciled correctly
+
   it('scopes submorphs properly by master components', async () => {
     ComponentC.addMorph({
       type: Label, name: 'some submorph'
     });
-    const trap = part(ComponentC, {}, { name: 'name trap' });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    await testComponentModule.reload();
+    ({ C } = await testComponentModule.load());
+    const trap = part(C, { name: 'name trap' });
     ComponentA.addMorph(trap);
     trap.getSubmorphNamed('some submorph').fill = Color.black;
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource).to.include(`(C, {}, {
+    updatedSource;
+    expect(updatedSource).to.include(`part(C, {
     name: 'name trap',
     submorphs: [{
       type: Label,
@@ -267,18 +269,13 @@ describe('component -> source reconciliation', () => {
     extent: pt(400, 400),
     fill: Color.rgb(204, 204, 204)
   })`);
-    expect(updatedSource).to.include('import { part, add, component } from \'lively.morphic/components/core.js\';');
+    expect(updatedSource).to.include('import { part, add, component, ComponentDescriptor } from \'lively.morphic/components/core.js\';');
   });
 
-  // resetEnv()
   it('updates a part ref if we remove a submorph from it', async () => {
     ComponentB.get('some submorph').remove();
     await ComponentB._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('submorphs: [without(\'some submorph\')]');
   });
-});
-
-describe('source -> component reconciliation', () => {
-
 });
