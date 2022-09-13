@@ -1,19 +1,24 @@
 /* global it, describe, beforeEach */
 import { expect } from 'mocha-es6';
 import { module } from 'lively.modules/index.js';
-import { ComponentChangeTracker } from '../../component/editor.js';
 import { Color, pt, rect } from 'lively.graphics';
-
 import { morph, VerticalLayout, Label } from 'lively.morphic';
-
 import { part } from 'lively.morphic/components/core.js';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
 let testComponentModule = module(testModuleId);
 const initSource = `
-import { part, component } from 'lively.morphic/components/core.js';
+import { part, component, ComponentDescriptor } from 'lively.morphic/components/core.js';
+import { InteractiveComponentDescriptor } from 'lively.ide/components/editor.js';
 import { Color, pt} from 'lively.graphics';
 import { Text } from "lively.morphic";
+
+component.DescriptorClass = InteractiveComponentDescriptor;
+
+const C = component({
+  name: 'C',
+  fill: Color.grey,
+});
 
 const D = component({
   name: 'D',
@@ -35,7 +40,7 @@ const A = component({
     fixedWidth: true,
     fixedHeight: true,
     fill: Color.yellow,
-  },part(D, {}, { name: 'some ref'})]
+  },part(D, { name: 'some ref'})]
 });
 
 const B = component(A, {
@@ -46,27 +51,30 @@ const B = component(A, {
   }]
 });
 
-const C = component({
-  name: 'C',
-  fill: Color.grey,
-});
+component.DescriptorClass = ComponentDescriptor;
 
 export { A, B, C, D };
 `;
 
-let ComponentA, ComponentB, ComponentC, ComponentD;
+let ComponentA, ComponentB, ComponentC, ComponentD, A, B, C, D;
 
 async function resetEnv () {
-  await testComponentModule.setFormat('esm');
-  await testComponentModule.changeSource(initSource);
-  if (!testComponentModule.isLoaded()) {
-    await testComponentModule.load();
-  } // update the native module
-  await ComponentChangeTracker.injectComponentTrackers(testModuleId);
-  ComponentA = testComponentModule.recorder.A;
-  ComponentB = testComponentModule.recorder.B;
-  ComponentC = testComponentModule.recorder.C;
-  ComponentD = testComponentModule.recorder.D;
+  await testComponentModule.reset();
+  if (testComponentModule.format() === 'global') {
+    await testComponentModule.reload();
+    await testComponentModule.setFormat('register');
+    await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
+    await testComponentModule.reload();
+  } else {
+    // reset the module to its original code
+    await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
+  }
+  // reload the module
+  ({ A, B, C, D } = await testComponentModule.load());
+  ComponentA = await A.edit();
+  ComponentB = await B.edit();
+  ComponentC = await C.edit();
+  ComponentD = await D.edit();
 }
 
 describe('component -> source reconciliation', () => {
