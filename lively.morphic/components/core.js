@@ -41,7 +41,7 @@ export class ComponentDescriptor {
     if (previousDescriptor && previousDescriptor.isComponentDescriptor) {
       return previousDescriptor.init(spec, meta);
     }
-    return new ComponentDescriptor(spec, meta);
+    return new this(spec, meta);
   }
 
   get isComponentDescriptor () { return true; }
@@ -539,7 +539,8 @@ export function component (masterComponentOrProps, overriddenProps) {
   }
 }
 
-component.for = (generator, meta, prev) => ComponentDescriptor.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
+component.DescriptorClass = ComponentDescriptor;
+component.for = (generator, meta, prev) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
 /**
  * Function that will wrap a morph's name and declare
  * that this morph is removed from the submorph array it is located in.
