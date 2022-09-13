@@ -288,6 +288,7 @@ export class EditPromptModel extends TextPromptModel {
     return {
       textStyle: { defaultValue: {} },
       historyId: { defaultValue: 'edit prompt' },
+      mode: { defaultValue: 'text' },
       maxWidth: {
         initialize () {
           this.maxWidth = $world.visibleBounds().width - 20;
@@ -376,7 +377,7 @@ export class EditPromptModel extends TextPromptModel {
 
   viewDidLoad () {
     const {
-      textStyle, input, mode, evalEnvironment,
+      textStyle, input, mode, evalEnvironment, maxWidth,
       view, ui: { editor }
     } = this;
 
@@ -393,7 +394,7 @@ export class EditPromptModel extends TextPromptModel {
 
     const inputWidth = editor.textBounds().width + 50;
     // if the input string we pre-fill is wide than we try to make it fit
-    if (inputWidth > view.width - 25) { view.width = Math.min(view.maxWidth, inputWidth + 125); }
+    if (inputWidth > view.width - 25) { view.width = Math.min(maxWidth, inputWidth + 125); }
 
     editor.gotoDocumentEnd();
     editor.scrollCursorIntoView();
@@ -878,6 +879,7 @@ const EditPrompt = component(ConfirmPrompt, {
   submorphs: [add({
     name: 'editor',
     type: Text,
+    fontSize: 12,
     master: InputLineDefault,
     height: 300
   }, 'button wrapper')]
