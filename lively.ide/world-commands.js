@@ -8,7 +8,6 @@ import { show, showAndSnapToGuides, removeSnapToGuidesOf } from 'lively.halos';
 import { LoadingIndicator } from 'lively.components';
 
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
-import { interactivelyFreezeWorld } from 'lively.freezer';
 import { BrowserModuleTranslationCache } from 'lively.modules/src/cache.js';
 import * as modules from 'lively.modules';
 import { once } from 'lively.bindings';
@@ -1274,7 +1273,8 @@ const commands = [
   {
     name: 'freeze world',
     exec: async (world) => {
-      await interactivelyFreezeWorld(world);
+      let freezer = await System.import('lively.freezer');
+      await freezer.interactivelyFreezeWorld(world);
     }
   },
 
