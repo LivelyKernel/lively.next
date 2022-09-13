@@ -295,6 +295,10 @@ export class ComponentChangeTracker {
     this.replaceAbandonedComponent(oldName);
   }
 
+  whenReady () {
+    return !!this.componentModule.source(); // ready once the source is fetched
+  }
+
   equals (otherTracker, componentName) {
     return this.componentModuleId === otherTracker.componentModuleId &&
            otherTracker.trackedComponent.name === componentName;
@@ -532,14 +536,13 @@ export class ComponentChangeTracker {
   }
 
   processChangeInComponent (change) {
-    const { componentModuleId, componentName, sourceEditor } = this;
+    const { componentModule: mod, componentName, sourceEditor } = this;
     if (this.ignoreChange(change)) return;
 
     // if morph is amanged by tiling layout and the prop is extent, check if
     // that is actually already defined by layout
     // if resize policy is set to fixed for either width or height replace
     // extent property by width or height (clear the extent entirely if needed)
-    const mod = module(componentModuleId);
     // prefer this.intermediateSource instead for fast consecutive changes
     let sourceCode = (sourceEditor ? sourceEditor.textString : mod._source);
     if (!sourceCode) {
@@ -602,7 +605,7 @@ export class ComponentChangeTracker {
     if (change.selector === 'addMorphAt') {
       const newOwner = change.target;
       const [addedMorph] = change.args;
-      let addedMorphExpr = convertToSpec(addedMorph);
+      let addedMorphExpr = convertToSpec(addedMorph, { dropMorphsWithNameOnly: false });
       requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
       if (addedMorph.master) {
         const metaInfo = addedMorph.master.parent[Symbol.for('lively-module-meta')];
@@ -614,11 +617,11 @@ export class ComponentChangeTracker {
           // this fails when components are alias imported....
           // we can not insert the model props right now
           // this also serializes way too much
-          __expr__: `part(${metaInfo.export}, ${addedMorphExpr.__expr__})`,
+          __expr__: `part(${metaInfo.exportedName}, ${addedMorphExpr.__expr__})`,
           bindings: {
             ...addedMorphExpr.bindings,
             [COMPONENTS_CORE_MODULE]: ['part'],
-            [metaInfo.module]: [metaInfo.export]
+            [metaInfo.moduleId]: [metaInfo.exportedName]
           }
         };
       }
@@ -726,10 +729,10 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     );
   }
 
-  edit () {
+  async edit () {
     const c = this.getComponentMorph();
     if (!c._changeTracker) { new ComponentChangeTracker(c); }
-    return c;
+    return await c._changeTracker.whenReady() && c;
   }
 
   init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
