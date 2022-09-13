@@ -323,7 +323,7 @@ export class TopBarModel extends ViewModel {
               ]
             : ['     ', {}],
           ...Icon.textAttribute(...args), `   ${shapeName} `, { float: 'none' },
-          '      ' + shortcut, { float: 'right', fontSize: 11, opacity: 0.5, fontFamily: 'IBM Plex Mono' }
+          '      ' + shortcut, { fontSize: 11, opacity: 0.5, fontFamily: 'IBM Plex Mono', textStyleClasses: ['annotation'] }
         ], () => {
           this.currentShapeMode = shapeName;
           this.setEditMode('Shape');
