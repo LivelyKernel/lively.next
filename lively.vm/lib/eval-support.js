@@ -32,7 +32,14 @@ export function evalCodeTransform (code, options) {
   options = processInlineCodeTransformOptions(parsed, options);
 
   // A: Rewrite the component definitions to create component descriptors.
-  const moduleName = options.declarationWrapperName && options.declarationWrapperName.includes(System.baseURL) && options.declarationWrapperName.split(System.baseURL)[1];
+  let moduleName = false;
+  if (options.declarationWrapperName?.includes(System.baseURL)) {
+    moduleName = options.declarationWrapperName.split(System.baseURL)[1];
+  }
+  if (options.declarationWrapperName?.includes('lively-object-modules/')) {
+    moduleName = options.declarationWrapperName.split('lively-object-modules/')[1];
+    moduleName = `local://lively-object-modules/${moduleName}`;
+  }
   if (moduleName) { parsed = ensureComponentDescriptors(parsed, moduleName); }
 
   // 2. Annotate definitions with code location. This is being used by the
