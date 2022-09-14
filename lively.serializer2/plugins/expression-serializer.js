@@ -412,7 +412,7 @@ export function serializeSpec (morph, opts = {}) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
     if (propsNotManagedByMaster && !propsNotManagedByMaster.includes(name)) continue;
-    if (name === 'master' && exposeMasterRefs) continue;
+    if (name === 'master') continue;
     if (name === 'position' && Path('owner.layout.renderViaCSS').get(morph)) continue;
     if (name === 'submorphs' || name === 'type') continue;
     if (morph.isLabel && name === 'extent') continue;
@@ -504,7 +504,9 @@ export function serializeSpec (morph, opts = {}) {
     if (!asExpression) exported.__connections__ = connectionExpressions;
   }
 
-  if (dropMorphsWithNameOnly && arr.isSubset(Object.keys(exported), ['type', 'name'])) {
+  if (dropMorphsWithNameOnly &&
+      (exposeMasterRefs || morph.master !== masterInScope) &&
+      arr.isSubset(Object.keys(exported), ['type', 'name'])) {
     return null;
   }
   if (onlyInclude && !onlyInclude.includes(morph)) {
