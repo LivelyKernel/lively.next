@@ -188,7 +188,7 @@ export default class ExpressionSerializer {
 
   embedValue (val, nestedExpressions) {
     if (val && val.__serialize__) {
-      val = val.__serialize__();
+      val = val.__serialize__({ expressionSerializer: this });
       if (val && val.__expr__) {
         if (nestedExpressions) {
           const uuid = string.newUUID();
@@ -284,10 +284,13 @@ export function serializeNestedProp (name, val, serializerContext, members = ['t
 function getExpression (name, val, ctx) {
   const { exprSerializer, asExpression, nestedExpressions } = ctx;
   try {
-    // fixme: check for class and also serialize that
     if (val[Symbol.for('__LivelyClassName__')]) {
       val = exprSerializer.exprStringDecode(exprSerializer.getExpressionForFunction(val));
-    } else val = val.__serialize__(); // serializeble expressions
+    } else {
+      val = val.__serialize__({ expressionSerializer: exprSerializer });
+      if (exprSerializer.isSerializedExpression(val)) val = exprSerializer.exprStringDecode(val);
+      exprSerializer;
+    }
     if (asExpression) {
       const exprId = string.newUUID();
       nestedExpressions[exprId] = val;
