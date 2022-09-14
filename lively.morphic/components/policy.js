@@ -201,9 +201,11 @@ export class StylePolicy {
 
   __serialize__ (pool) {
     const meta = this[Symbol.for('lively-module-meta')];
-    if (!meta) return;
+    if (!meta) {
+      return this.parent?.__serialize__(pool);
+    }
     return pool.expressionSerializer.exprStringEncode({
-      __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt(${meta.path.map(name => JSON.stringify(name)).join(',')})` : '.stylePolicy'),
+      __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt(${meta.path.map(name => JSON.stringify(name)).join(',')})` : ''),
       bindings: { [meta.moduleId]: meta.exportedName }
     });
   }
