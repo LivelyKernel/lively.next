@@ -3,7 +3,7 @@ import { connect } from 'lively.bindings';
 import { arr, obj } from 'lively.lang';
 import { defaultDirectory } from './shell-interface.js';
 import { GridLayout } from 'lively.morphic/layout.js';
-import { Morph, World, config, InputLine } from 'lively.morphic';
+import { Morph, Text, World, config, InputLine } from 'lively.morphic';
 import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
@@ -18,6 +18,12 @@ import { DarkButton } from '../js/browser/ui.cp.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // 2016-11-21 FIXME, move this to a common location
+
+class TerminalView extends Text {
+  setStatusMessage (...args) {
+    return this.getWindow().setStatusMessage(...args);
+  }
+}
 
 export default class Terminal extends Morph {
   static open (options = {}) {
@@ -59,7 +65,7 @@ export default class Terminal extends Morph {
         initialize () {
           this.submorphs = [
             {
-              type: 'text',
+              type: TerminalView,
               name: 'output',
               lineWrapping: false,
               textString: '',
