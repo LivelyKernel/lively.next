@@ -19,8 +19,6 @@ const exprSerializer = new ExpressionSerializer();
 const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
-// convertToSpec(this.get('default slider'), { exposeMasterRefs: false, skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES] }).__expr__
-
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
     asExpression: true,
@@ -712,6 +710,7 @@ export class ComponentChangeTracker {
       // however we do not want to mess up the update mechanism
       await mod.changeSource(mod._source, { doSave: true, doEval: false });
       if (this._finishPromise) {
+        await mod.source();
         this._finishPromise.resolve(true);
       }
       delete this._finishPromise;
