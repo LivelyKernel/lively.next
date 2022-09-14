@@ -374,8 +374,11 @@ export function serializeSpec (morph, opts = {}) {
   let styleProto;
   if (skipUnchangedFromMaster &&
         masterInScope &&
-        masterInScope.managesMorph(morph)) {
-    styleProto = masterInScope.auto.get(morph.name) || masterInScope.auto;
+        masterInScope.managesMorph(morph.name)) {
+    styleProto = masterInScope.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
+    while (styleProto.isPolicyApplicator) {
+      styleProto = styleProto.synthesizeSubSpec(null, null, false);
+    }
   }
 
   if (morph.isText && morph.textString !== '') {
