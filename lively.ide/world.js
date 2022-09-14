@@ -132,6 +132,7 @@ export class LivelyWorld extends World {
       targetMorph: morph
     }).openInWorld();
     win.ensureNotOverTheTop();
+    win.ensureNotBeyondBottom();
     return win;
   }
 
@@ -609,7 +610,7 @@ export class LivelyWorld extends World {
   /**
    * Removes the specified `commentToRemove` that was made on `morph`.
    * @param {Morph} morph
-   * @param {CommentData} commentToRemove 
+   * @param {CommentData} commentToRemove
    */
   removeCommentFor (morph, commentToRemove) {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');

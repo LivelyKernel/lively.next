@@ -215,13 +215,22 @@ export default class Window extends Morph {
     wrapper.extent = this.extent;
   }
 
+  ensureNotBeyondBottom () {
+    const world = this.world();
+    if (!world) return;
+    let bounds = this.globalBounds();
+    if (bounds.bottom() > world.visibleBounds().bottom()) {
+      this.resizeBy(pt(0, bounds.bottom() - world.visibleBounds().bottom()).negated());
+    }
+  }
+
   ensureNotOverTheTop () {
     const world = this.world();
     if (!world) return;
-    const bounds = this.globalBounds();
+    let bounds = this.globalBounds();
     world.withTopBarDo(tb => {
-      if (bounds.top() < tb.height) {
-        this.moveBy(pt(0, tb.height - bounds.top()));
+      if (bounds.top() < tb.view.height) {
+        this.moveBy(pt(0, tb.view.height - bounds.top()));
       }
     });
   }
