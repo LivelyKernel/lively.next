@@ -61,7 +61,7 @@ export class Morph {
 
           state.renderedMorphs = [];
           state.hasStructuralChanges = false;
-          state.needsRerender = false;
+          state.needsRerender = true;
           state.animationAdded = false;
           state.hasCSSLayoutChange = false;
           state.specialProps = {};
@@ -2422,7 +2422,7 @@ export class Morph {
 
   needsRerender () {
     const renderingState = this.renderingState;
-    return renderingState.needsRerender //&& renderingState.hasStructuralChanges && renderingState.hasCSSLayoutChange && renderingState.hasAnimationAdded;
+    return renderingState.needsRerender; // && renderingState.hasStructuralChanges && renderingState.hasCSSLayoutChange && renderingState.hasAnimationAdded;
   }
 
   whenRendered (maxChecks = 50) {
@@ -2437,7 +2437,7 @@ export class Morph {
 
   applyLayoutIfNeeded () {
     // TODO: if (!this._dirty) return;
-    // Do we need something similar again? 
+    // Do we need something similar again?
     for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
     this.layout && !this.layout.manualUpdate && this.layout.onContainerRender();
   }

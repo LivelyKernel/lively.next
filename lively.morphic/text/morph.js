@@ -101,7 +101,7 @@ export class Text extends Morph {
           state._needsFit = true;
           state.scrollTop = 0; // TODO: could be removed?
           state.scrollHeight = 0; // TODO: could be removed?
-          state.scrollBottom = 0; // TODO: could be removed? 
+          state.scrollBottom = 0; // TODO: could be removed?
           state.textHeight = 0; // TODO: could be removed?
           state.textWidth = 0; // TODO: could be removed?
           state.firstVisibleRow = 0;
@@ -1047,7 +1047,6 @@ export class Text extends Morph {
 
     const updateTextEngine = () => {
       this._textChange = true;
-
 
       if (this.document && (hardLayoutChange ||
           enforceFit ||
@@ -1999,7 +1998,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   /**
-   * 
+   *
    */
   removeDocument () {
     this._isDowngrading = true;
@@ -2013,8 +2012,8 @@ export class Text extends Morph {
     this._isDowngrading = false;
   }
 
-  /** 
-   * 
+  /**
+   *
    */
   backWithDocument () {
     this._isUpgrading = true;
@@ -3095,7 +3094,7 @@ export class Text extends Morph {
   }
 
   menuItemsFromLabel () {
-    const items = []; 
+    const items = [];
     items.unshift(['change label', () => this.interactivelyChangeLabel()]);
     items.unshift(['set Icon', () => this.interactivelySetIcon()]);
     return items;
