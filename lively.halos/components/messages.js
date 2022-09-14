@@ -86,9 +86,16 @@ export class StatusMessage extends ViewModel {
 
     view.bringToFront();
 
-    view.width = forMorph.bounds().width;
+    let targetBounds = forMorph.bounds();
+    if (forMorph.isWindow) {
+      targetBounds = targetBounds.insetBy(7.5);
+    }
 
-    if (forMorph.world()) { view.position = forMorph.owner.worldPoint(forMorph.bounds().bottomLeft()); }
+    view.width = targetBounds.width;
+
+    if (forMorph.world()) {
+      view.position = forMorph.owner.worldPoint(targetBounds.bottomLeft());
+    }
 
     const visibleBounds = world.visibleBounds();
     const bounds = view.bounds();
