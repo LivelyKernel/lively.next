@@ -14,7 +14,7 @@ export default class ExpressionSerializer {
   }
 
   isSerializedExpression (string) {
-    return string.indexOf(this.prefix) === 0;
+    return obj.isString(string) && string.indexOf(this.prefix) === 0;
   }
 
   requiredModulesOf__expr__ (__expr__) {
