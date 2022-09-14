@@ -61,6 +61,7 @@ let ComponentA, ComponentB, ComponentC, ComponentD, A, B, C, D;
 async function resetEnv () {
   await testComponentModule.reset();
   if (testComponentModule.format() === 'global') {
+    await testComponentModule.changeSource('', { moduleId: testModuleId });
     await testComponentModule.reload();
     await testComponentModule.setFormat('register');
     await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
@@ -77,7 +78,7 @@ async function resetEnv () {
   ComponentD = await D.edit();
 }
 
-describe('component -> source reconciliation', () => {
+describe('component -> source reconciliation', function () {
   beforeEach(async () => {
     await resetEnv();
   });
@@ -128,11 +129,10 @@ describe('component -> source reconciliation', () => {
     }));
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    updatedSource;
     expect(updatedSource.includes(`submorphs: [part(B, {
     name: 'derived morph',
     borderColor: Color.rgb(0, 0, 0),
-    borderWidth: 2,
+    borderWidth: 2
   })]`), 'inserts part reference into source code').to.be.true;
   });
 
@@ -179,20 +179,20 @@ describe('component -> source reconciliation', () => {
     });
     await ComponentC._changeTracker.onceChangesProcessed();
     await testComponentModule.reload();
-    ({ C } = await testComponentModule.load());
+    ({ C, A } = await testComponentModule.load());
+    ComponentA = await A.edit();
     const trap = part(C, { name: 'name trap' });
     ComponentA.addMorph(trap);
+    trap.master.spec.submorphs[0];
+    await ComponentA._changeTracker.onceChangesProcessed();
     trap.getSubmorphNamed('some submorph').fill = Color.black;
-    await ComponentC._changeTracker.onceChangesProcessed();
+    await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    updatedSource;
     expect(updatedSource).to.include(`part(C, {
     name: 'name trap',
     submorphs: [{
-      type: Label,
       name: 'some submorph',
-      fill: Color.rgb(0, 0, 0),
-      textAndAttributes: ['', null]
+      fill: Color.rgb(0, 0, 0)
     }]
   })`);
   });
