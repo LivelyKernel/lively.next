@@ -544,17 +544,17 @@ export function serializeSpec (morph, opts = {}) {
         'lively.morphic': ['morph']
       };
     } else if (exposeMasterRefs && morph.master) {
-      const { export: masterComponentName, module: modulePath } = morph.master.auto[Symbol.for('lively-module-meta')];
+      const { exportedName: masterComponentName, moduleId: modulePath } = morph.master.parent[Symbol.for('lively-module-meta')];
       // right now still no good way to reconcile the modelView props
       // awlays drop morphs with only names here, since those are copied over by
       // the part already
       if (exported) {
         __expr__ = `part(${masterComponentName}, ${obj.inspect(exported, {
-        keySorter: (a, b) => {
-          if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
-          else return 0;
-        }
-      })})`;
+          keySorter: (a, b) => {
+            if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
+            else return 0;
+          }
+        })})`;
       }
       bindings = {
         [modulePath]: masterComponentName,
