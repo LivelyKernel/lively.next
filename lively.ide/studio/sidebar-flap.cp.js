@@ -27,10 +27,8 @@ export class SidebarFlap extends ViewModel {
   }
 
   async toggleSidebar () {
-    const world = this.world(); 
+    const world = this.world();
     const sidebarIsFadingOut = world.get(this.target);
-    let sceneGraphPresent = false;
-    sceneGraphPresent = !!world.sceneGraph;
     const targetSidebar = await world.openSideBar(this.target);
 
     if (sidebarIsFadingOut) {
@@ -72,10 +70,10 @@ export class SidebarFlap extends ViewModel {
   }
 
   async openInWorld () {
-    $world.clipMode = 'hidden' 
     const world = this.world();
     const { view } = this;
     const flapWidth = 28;
+    world.clipMode = 'hidden';
     view.opacity = 0;
     view.hasFixedPosition = false;
     view.top = 100;
@@ -84,30 +82,28 @@ export class SidebarFlap extends ViewModel {
       view.borderRadius = { topLeft: 0, topRight: 5, bottomLeft: 0, bottomRight: 5 };
       await view.whenRendered();
       view.left = -flapWidth;
-      view.withAnimationDo(() => {
+      await view.withAnimationDo(() => {
         view.opacity = 1;
         const scene_graph = world.get(this.target);
         if (scene_graph) view.left = scene_graph.right;
         else view.position = pt(0, view.top);
-      }).then(() => {
-        $world.clipMode = 'visible'
-        view.hasFixedPosition = true
       });
+      world.clipMode = 'visible';
+      view.hasFixedPosition = true;
     }
     if (this.target === 'properties panel') {
       view.left = world.visibleBounds().width;
       this.ui.label.textString = 'Properties Panel';
       view.borderRadius = { topLeft: 5, topRight: 0, bottomLeft: 5, bottomRight: 0 };
       await view.whenRendered();
-      view.withAnimationDo(() => {
+      await view.withAnimationDo(() => {
         view.opacity = 1;
         const properties_panel = world.get(this.target);
         if (properties_panel) view.left = world.visibleBounds().width - defaultPropertiesPanelWidth - view.width;
         else view.position = pt(world.visibleBounds().width - flapWidth, view.top);
-      }).then(() => {
-        $world.clipMode = 'visible'
-        view.hasFixedPosition = true
       });
+      world.clipMode = 'visible';
+      view.hasFixedPosition = true;
     }
   }
 }
