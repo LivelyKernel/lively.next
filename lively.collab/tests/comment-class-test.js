@@ -59,36 +59,36 @@ describe('morph', function () {
     expect(morphHasNoComments(morph));
   });
 
-  it('a comment may be added', async function () {
-    comment = await $world.addCommentFor(morph, exampleText);
+  it('a comment may be added', function () {
+    comment = $world.addCommentFor(morph, exampleText);
     expect(morphHasNumberOfComments(morph, 1));
     expect(morph.comments[0].text).equals(exampleText);
   });
 
-  it('a comment may be removed', async function () {
-    comment = await $world.addCommentFor(morph, exampleText);
+  it('a comment may be removed', function () {
+    comment = $world.addCommentFor(morph, exampleText);
     expect(morph.comments[0].equals(comment)).to.be.ok;
-    await $world.removeCommentFor(morph, comment);
+    $world.removeCommentFor(morph, comment);
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 
-  it('comments may be emptied', async function () {
-    await $world.addCommentFor(morph, exampleText);
-    await $world.addCommentFor(morph, exampleText);
+  it('comments may be emptied', function () {
+    $world.addCommentFor(morph, exampleText);
+    $world.addCommentFor(morph, exampleText);
     expect(morphHasNumberOfComments(morph, 2)).to.be.ok;
-    await $world.emptyCommentsFor(morph);
+    $world.emptyCommentsFor(morph);
     expect(morphHasNoComments(morph)).to.be.ok;
   });
 
-  it('with comments can be copied to morph with empty comments', async function () {
-    comment = await $world.addCommentFor(morph, exampleText);
+  it('with comments can be copied to morph with empty comments', function () {
+    comment = $world.addCommentFor(morph, exampleText);
     const morph2 = morph.copy(true);
     expect(morph2.comments.length === 0).to.be.ok;
     expect(morph.comments[0].equals(comment)).to.be.ok;
     morph2.remove();
   });
 
-  afterEach(async function () {
+  afterEach(function () {
     $world.emptyCommentsFor(morph);
     morph.abandon();
   });

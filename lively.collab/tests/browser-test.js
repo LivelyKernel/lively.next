@@ -9,11 +9,11 @@ describe('comment browser', function () {
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
 
-  beforeEach(async function () {
+  beforeEach(function () {
     morph = new Morph().openInWorld();
     morph.name = exampleName;
     browser = part(CommentBrowser).openInWindow().targetMorph;
-    comment = await $world.addCommentFor(morph, exampleText);
+    comment = $world.addCommentFor(morph, exampleText);
   });
 
   it('may be opened', function () {
@@ -102,7 +102,7 @@ describe('comment browser', function () {
   }
 
   it('comment count label counts comments', async function () {
-    const comment2 = await $world.addCommentFor(morph, exampleText);
+    const comment2 = $world.addCommentFor(morph, exampleText);
     let label = getCommentCountLabelString();
     expect(label).equals('2');
     $world.removeCommentFor(morph, comment2);
@@ -141,7 +141,7 @@ describe('comment indicator', function () {
     morph = new Morph().openInWorld();
     morph.name = exampleName;
     browser = part(CommentBrowser).openInWindow().targetMorph;
-    await $world.addCommentFor(morph, exampleText);
+    $world.addCommentFor(morph, exampleText);
     indicatorCount = 0;
   });
 
