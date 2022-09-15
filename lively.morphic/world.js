@@ -1,17 +1,17 @@
-/* global System,WeakMap,FormData,fetch,DOMParser */
+/* global System,WeakMap */
 import bowser from 'bowser';
 import { Rectangle, Color, pt } from 'lively.graphics';
-import { arr, fun, promise, Path, obj } from 'lively.lang';
+import { arr, Path, obj } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import config from './config.js';
 import { MorphicEnv } from './env.js';
 import { Morph } from './morph.js';
-import { TooltipViewer, Tooltip } from './tooltips.js';
+import { TooltipViewer } from './tooltips.js';
 
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from './world-loading.js';
-import { touchInputDevice } from './helpers.js';
+
 import { UserRegistry } from 'lively.user';
-import { emit } from 'lively.notifications/index.js';
+
 import { resource } from 'lively.resources/index.js';
 import { loadMorphFromSnapshot } from './serialization.js';
 
@@ -28,7 +28,7 @@ export class World extends Morph {
         set (val) {
           this.setProperty('resizePolicy', val);
           this.clipMode = val === 'static' ? 'visible' : 'hidden';
-          if (val == 'elastic') this.execCommand('resize to fit window');
+          if (val === 'elastic') this.execCommand('resize to fit window');
         }
       },
 
@@ -126,7 +126,7 @@ export class World extends Morph {
   set grabbable (_) {}
 
   existingHandForPointerId (pointerId) {
-    return this.submorphs.find(m => m instanceof Hand && m.pointerId === pointerId);
+    return this.submorphs.find(m => m.isHand && m.pointerId === pointerId);
   }
 
   layoutHaloForPointerId (pointerId) { /* only in LivelyWorld */ }
@@ -140,7 +140,7 @@ export class World extends Morph {
       this.firstHand.pointerId = pointerId;
       return this.firstHand;
     }
-    return this.addMorph(new Hand(pointerId), this.submorphs[0]);
+    return this.addMorph(new Hand(pointerId), this.submorphs[0]); // eslint-disable-line no-use-before-define
   }
 
   removeHandForPointerId (pointerId) {
