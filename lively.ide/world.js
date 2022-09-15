@@ -517,7 +517,7 @@ export class LivelyWorld extends World {
    * @param {Point} relativePosition
    * @returns {CommentData} The comment created. CommentData holds some more information, e.g. the timestamp of the comment creation.
    */
-  async addCommentFor (morph, commentText, relativePosition = pt(0, 0)) {
+  addCommentFor (morph, commentText, relativePosition = pt(0, 0)) {
     const comment = new CommentData(commentText, relativePosition);
     if (this.morphCommentMap.has(morph)) this.morphCommentMap.set(morph, this.morphCommentMap.get(morph).concat([comment]));
     else this.morphCommentMap.set(morph, [comment]);
@@ -1119,7 +1119,7 @@ export class LivelyWorld extends World {
           const yRelative = self.localize(evt.position).y / self.height;
           relativePosition = pt(xRelative, yRelative);
         }
-        await $world.addCommentFor(self, commentText, relativePosition);
+        $world.addCommentFor(self, commentText, relativePosition);
         $world.setStatusMessage('Comment saved', StatusMessageConfirm);
       } else {
         $world.setStatusMessage('Comment not saved', StatusMessageError);
