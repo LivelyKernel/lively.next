@@ -390,7 +390,9 @@ export class Hand extends Morph {
   morphsContainingPoint (point, list) { return list; }
 
   update (evt) {
-    this.position = this.world().visibleBounds().insetBy(15).constrainPt(evt.position.subXY(window.scrollX, window.scrollY));
+    let visibleBox = this.world().visibleBounds();
+    visibleBox = pt(0).extent(visibleBox.extent()).insetBy(15);
+    this.position = visibleBox.constrainPt(evt.position.subXY(window.scrollX, window.scrollY));
   }
 
   async cancelGrab (animate = true, causingEvent) {
