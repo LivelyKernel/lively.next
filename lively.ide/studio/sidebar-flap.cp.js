@@ -72,11 +72,12 @@ export class SidebarFlap extends ViewModel {
   }
 
   async openInWorld () {
+    $world.clipMode = 'hidden' 
     const world = this.world();
     const { view } = this;
     const flapWidth = 28;
     view.opacity = 0;
-    view.hasFixedPosition = true;
+    view.hasFixedPosition = false;
     view.top = 100;
     if (this.target === 'scene graph') {
       this.ui.label.textString = 'Scene Graph';
@@ -88,6 +89,9 @@ export class SidebarFlap extends ViewModel {
         const scene_graph = world.get(this.target);
         if (scene_graph) view.left = scene_graph.right;
         else view.position = pt(0, view.top);
+      }).then(() => {
+        $world.clipMode = 'visible'
+        view.hasFixedPosition = true
       });
     }
     if (this.target === 'properties panel') {
@@ -100,6 +104,9 @@ export class SidebarFlap extends ViewModel {
         const properties_panel = world.get(this.target);
         if (properties_panel) view.left = world.visibleBounds().width - defaultPropertiesPanelWidth - view.width;
         else view.position = pt(world.visibleBounds().width - flapWidth, view.top);
+      }).then(() => {
+        $world.clipMode = 'visible'
+        view.hasFixedPosition = true
       });
     }
   }
