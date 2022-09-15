@@ -205,31 +205,36 @@ export class Color {
     return [r, g, b];
   }
 
+  shorthand (nickname) {
+    this.nickname = nickname;
+    return this;
+  }
+
   static get named () {
     if (this._named) return this._named;
     return this._named = {
-      black: new Color(0, 0, 0),
-      almostBlack: Color.rgb(64, 64, 64),
-      white: new Color(1, 1, 1),
-      gray: new Color(0.8, 0.8, 0.8),
-      red: new Color(0.8, 0, 0),
-      green: new Color(0, 0.8, 0),
-      yellow: new Color(0.8, 0.8, 0),
-      blue: new Color(0, 0, 0.8),
-      purple: new Color(0.5, 0, 0.5),
-      magenta: new Color(1, 0, 1),
-      pink: Color.rgb(255, 30, 153),
-      turquoise: Color.rgb(0, 240, 255),
-      tangerine: Color.rgb(242, 133, 0),
-      orange: Color.rgb(255, 153, 0),
-      cyan: Color.rgb(0, 255, 255),
-      brown: Color.rgb(182, 67, 0),
-      limeGreen: Color.rgb(51, 255, 0),
-      darkGray: Color.rgb(102, 102, 102),
-      lightGray: Color.rgb(230, 230, 230),
-      veryLightGray: Color.rgb(243, 243, 243),
-      transparent: Color.rgba(69, 85, 134, 0),
-      lively: Color.rgb(245, 124, 0)
+      black: new Color(0, 0, 0).shorthand('black'),
+      almostBlack: Color.rgb(64, 64, 64).shorthand('almostBlack'),
+      white: new Color(1, 1, 1).shorthand('white'),
+      gray: new Color(0.8, 0.8, 0.8).shorthand('gray'),
+      red: new Color(0.8, 0, 0).shorthand('red'),
+      green: new Color(0, 0.8, 0).shorthand('green'),
+      yellow: new Color(0.8, 0.8, 0).shorthand('yellow'),
+      blue: new Color(0, 0, 0.8).shorthand('blue'),
+      purple: new Color(0.5, 0, 0.5).shorthand('purple'),
+      magenta: new Color(1, 0, 1).shorthand('magenta'),
+      pink: Color.rgb(255, 30, 153).shorthand('pink'),
+      turquoise: Color.rgb(0, 240, 255).shorthand('turquoise'),
+      tangerine: Color.rgb(242, 133, 0).shorthand('tangerine'),
+      orange: Color.rgb(255, 153, 0).shorthand('orange'),
+      cyan: Color.rgb(0, 255, 255).shorthand('cyan'),
+      brown: Color.rgb(182, 67, 0).shorthand('brown'),
+      limeGreen: Color.rgb(51, 255, 0).shorthand('limeGreen'),
+      darkGray: Color.rgb(102, 102, 102).shorthand('darkGray'),
+      lightGray: Color.rgb(230, 230, 230).shorthand('lightGray'),
+      veryLightGray: Color.rgb(243, 243, 243).shorthand('veryLightGray'),
+      transparent: Color.rgba(69, 85, 134, 0).shorthand('transparent'),
+      lively: Color.rgb(245, 124, 0).shorthand('lively')
     };
   }
 
@@ -381,7 +386,7 @@ export class Color {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   __serialize__ () {
     return {
-      __expr__: 'Color.' + this.toString(),
+      __expr__: 'Color.' + (this.nickname || this.toString()),
       bindings: { 'lively.graphics/color.js': ['Color'] }
     };
   }
