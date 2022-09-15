@@ -383,7 +383,7 @@ export function serializeSpec (morph, opts = {}) {
 
   if (morph.isText && morph.textString !== '') {
     // text morphs usually do not return text and attributes so we add them by hand
-    if (styleProto && styleProto.textString !== morph.textString) {
+    if (styleProto?.textString !== morph.textString) {
       exported.textAndAttributes = morph.textAndAttributes.map((ea, i) => {
         return ea && ea.isMorph
           ? serializeSpec(ea, {
@@ -474,7 +474,21 @@ export function serializeSpec (morph, opts = {}) {
     exported[name] = val;
   }
 
-  if (morph.isText) delete exported.textString;
+  if (morph.isText) {
+    delete exported.textString;
+
+    if (morph.fixedWidth && morph.fixedHeight) {
+      // do nothing
+    } else if (morph.fixedWidth) {
+      exported.width = exported.extent.x;
+      delete exported.extent;
+    } else if (morph.fixedHeight) {
+      exported.height = exported.extent.y;
+      delete exported.extent;
+    } else {
+      delete exported.extent; // just ignore the extent completely
+    }
+  }
 
   if (!asExpression) exported._id = morph._id;
   // this.exportToJSON()
