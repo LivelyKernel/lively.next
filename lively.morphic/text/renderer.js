@@ -1076,16 +1076,16 @@ export default class TextRenderer {
         const offset = 6;
         const offsetV1 = prevV.subPt(currentV).normalized().scaleBy(offset);
         const p1 = currentV.addPt(offsetV1);
-        p1._next = offsetV1.scaleBy(-1);
+        p1._next = offsetV1.scaleBy(-1).roundTo(1);
         const offsetV2 = nextV.subPt(currentV).normalized().scaleBy(offset);
         const p2 = currentV.addPt(offsetV2);
-        p2._prev = offsetV2.scaleBy(-1);
+        p2._prev = offsetV2.scaleBy(-1).roundTo(1);
 
         updatedVs.push(p1, p2);
       }
 
       updatedVs = updatedVs.map(p => ({
-        position: p.subPt(pos), isSmooth: true, controlPoints: { next: p._next || pt(0), previous: p._prev || pt(0) }
+        position: p.subPt(pos).roundTo(1), isSmooth: true, controlPoints: { next: p._next || pt(0), previous: p._prev || pt(0) }
       })
       );
 
