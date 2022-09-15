@@ -38,14 +38,13 @@ export class CommentBrowserModel extends ViewModel {
    * Thus, this is the only supported way of opening a Comment Browser.
    */
   openInWindow () {
-    const topbar = $world.getSubmorphNamed('lively top bar');
     const margin = 25;
     const bounds = $world.visibleBoundsExcludingTopBar().insetBy(margin);
     const win = this.view.getWindow();
     win.right = bounds.right();
     win.top = bounds.top();
     // when properties panel is opened, position comment browser to the left of it
-    if (topbar && topbar.activeSideBars.includes('properties panel')) {
+    if ($world.activeSideBars.includes('properties panel')) {
       win.position = win.position.addPt(pt(-defaultPropertiesPanelWidth, 0));
     }
     this.buildCommentGroupMorphs();
