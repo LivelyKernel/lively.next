@@ -287,6 +287,7 @@ export class ComponentChangeTracker {
     this.trackedComponent = aComponent;
     this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
     this.componentModule = module(this.componentModuleId);
+    this.componentPolicy = aComponent.master;
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
     connect(aComponent, 'onChange', this, 'processChangeInComponent', { garbageCollect: true });
     aComponent._changeTracker = this;
@@ -534,8 +535,21 @@ export class ComponentChangeTracker {
   }
 
   processChangeInComponent (change) {
-    const { componentModule: mod, componentName, sourceEditor } = this;
     if (this.ignoreChange(change)) return;
+    this.processChangeInComponentPolicy(change);
+    this.processChangeInComponentSource(change);
+  }
+
+  processChangeInComponentPolicy (change) {
+    this._lastChange = change;
+    if (change.prop) {
+      const subSpec = this.componentPolicy.getSubSpecFor(change.target.name);
+      subSpec[change.prop] = change.value;
+    }
+  }
+
+  processChangeInComponentSource (change) {
+    const { componentModule: mod, componentName, sourceEditor } = this;
 
     // if morph is amanged by tiling layout and the prop is extent, check if
     // that is actually already defined by layout
@@ -738,6 +752,11 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     const descr = super.init(generatorFunctionOrInlinePolicy, meta);
     this.notifyDependents(); // get the derived components to notice!
     return descr;
+  }
+
+  getSourceCode () {
+    this._cachedComponent = null; // ensure to recreate the component morph
+    return lint(createInitialComponentDefinition(this.getComponentMorph()))[0];
   }
 
   notifyDependents () {
