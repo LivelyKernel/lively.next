@@ -287,13 +287,6 @@ export class LivelyWorld extends World {
     return worldName;
   }
 
-  onWindowResize (evt) {
-    super.onWindowResize(evt);
-    if (this.resizePolicy === 'elastic') {
-      this.execCommand('resize to fit window');
-    }
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html5 drag - drop
 
