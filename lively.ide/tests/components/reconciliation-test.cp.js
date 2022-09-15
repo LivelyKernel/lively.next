@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { ComponentDescriptor, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
-import { InteractiveComponentDescriptor } from '../components/editor.js';
+import { InteractiveComponentDescriptor } from '../../components/editor.js';
 
 component.DescriptorClass = InteractiveComponentDescriptor;
 
@@ -41,6 +41,7 @@ describe('component definition reconciliation', () => {
     // define an ad hoc component
     const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
     c.get('alice').fill = Color.green;
+    await c._changeTracker.onceChangesProcessed();
     expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.green);
   });
 
@@ -48,30 +49,42 @@ describe('component definition reconciliation', () => {
     expect(e1.getSourceCode()).to.equal(`component({
   name: 'e1',
   fill: Color.red,
-  submorphs: [
-    { 
-      name: 'alice',
-      fill: Color.blue,
-      textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
-    },
-    { name: 'bob', fill: Color.orange }
-  ]
-})`);
+  submorphs: [{
+    type: Text,
+    name: 'alice',
+    fill: Color.blue,
+    textAndAttributes: ['hello', {
+      fontWeight: 'bold'
+    }, 'world', {
+      fontStyle: 'italic'
+    }]
+  }, {
+    name: 'bob',
+    fill: Color.orange
+  }]
+});
+`);
     e1.stylePolicy.getSubSpecFor('alice').fill = Color.magenta;
     e1.stylePolicy.getSubSpecFor('alice').position = pt(100, 100);
     expect(e1.getSourceCode()).to.equal(`component({
   name: 'e1',
   fill: Color.red,
-  submorphs: [
-    {
-      name: 'alice',
-      fill: Color.magenta,
-      position: pt(100,100),
-      textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
-    },
-    { name: 'bob', fill: Color.orange }
-  ]
-})`);
+  submorphs: [{
+    type: Text,
+    name: 'alice',
+    fill: Color.magenta,
+    position: pt(100, 100),
+    textAndAttributes: ['hello', {
+      fontWeight: 'bold'
+    }, 'world', {
+      fontStyle: 'italic'
+    }]
+  }, {
+    name: 'bob',
+    fill: Color.orange
+  }]
+});
+`);
   });
 
   it('allows to instantiate a morph from the spec', () => {
