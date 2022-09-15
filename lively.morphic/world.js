@@ -1,7 +1,7 @@
 /* global System,WeakMap,FormData,fetch,DOMParser */
 import bowser from 'bowser';
 import { Rectangle, Color, pt } from 'lively.graphics';
-import { arr, promise, Path, obj } from 'lively.lang';
+import { arr, fun, promise, Path, obj } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import config from './config.js';
 import { MorphicEnv } from './env.js';
@@ -105,21 +105,9 @@ export class World extends Morph {
       ...super.commands, {
         name: 'resize to fit window',
         exec: async (world) => {
-          const resize = () => {
-            world.extent = lively.FreezerRuntime
-              ? world.windowBounds().extent()
-              : world.windowBounds().union(world.submorphBounds(m => !m.isEpiMorph && !m.hasFixedPosition)).extent();
-          };
-          const needsMoreResize = async () => {
-            await world.whenRendered();
-            delete world._cachedWindowBounds;
-            return !world.windowBounds().extent().equals(world.extent);
-          };
-          let attempts = 0;
-          while (attempts < 5 && await needsMoreResize()) {
-            attempts++;
-            resize();
-          }
+          world.extent = lively.FreezerRuntime
+            ? world.windowBounds().extent()
+            : world.windowBounds().union(world.submorphBounds(m => !m.isEpiMorph && !m.isHand)).extent();
           world.relayout();
           return true;
         }
@@ -279,7 +267,6 @@ export class World extends Morph {
   }
 
   async onWindowResize (evt) {
-    await this.whenRendered();
     this._cachedWindowBounds = null;
     if (this.resizePolicy === 'elastic') { await this.execCommand('resize to fit window'); }
     this.updateVisibleWindowMorphs();
