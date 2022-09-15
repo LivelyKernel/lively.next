@@ -2032,6 +2032,7 @@ export class Text extends Morph {
     if (!this.fixedWidth) this.width = this.document.width;
     this.renderingState.needsScrollLayerAdded = true;
     this._isUpgrading = false;
+    this.env.renderer.renderStep();
   }
 
   addTextAttribute (attr, range = this.selection) {
@@ -2905,6 +2906,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onDrop (evt) {
+    this.backWithDocument();
     const morphs = evt.hand.grabbedMorphs.filter(ea => ea.isLayoutable);
     super.onDrop(evt);
     if (morphs[0]) {

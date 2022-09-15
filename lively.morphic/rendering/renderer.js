@@ -771,8 +771,8 @@ export default class Renderer {
       if (!scrollLayer) debugger;
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
-      scrollLayer.scrollTop = this.scroll.y;
-      scrollLayer.scrollLeft = this.scroll.x;
+      scrollLayer.scrollTop = morph.scroll.y;
+      scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
       if (!node.querySelector('.scrollWrapper')) {
