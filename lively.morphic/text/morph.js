@@ -546,20 +546,22 @@ export class Text extends Morph {
         defaultValue: 'none',
         set (mode) {
           if (mode === 'native') {
-            if (this.document && !this.readOnly === true) $world.setStatusMessage('Only possible for non-editable texts.');
+            if (this.document && !this.readOnly === true) {
+              $world.setStatusMessage('Only possible for non-editable texts.');
+              return;
+            }
             this.stealFocus = true;
-            this._node.querySelector('.newtext-text-layer').classList.add('selectable');
-            this._node.querySelector('.newtext-text-layer').style['pointer-events'] = 'all';
           }
           if (mode === 'lively') {
-            if (!this.document) $world.setStatusMessage('Only possible for interactive texts.');
+            if (!this.document) {
+              $world.setStatusMessage('Only possible for interactive texts.');
+              return;
+            }
             this.stealFocus = false;
-            this._node.querySelector('.newtext-text-layer').classList.remove('selectable');
           }
           if (mode === 'none') {
             this.selectable = false;
             this.stealFocus = false;
-            this._node.querySelector('.newtext-text-layer').classList.remove('selectable');
           }
           this.setProperty('selectionMode', mode);
         }
@@ -2611,6 +2613,9 @@ export class Text extends Morph {
     const currentTextLayerStyleObject = this.styleObject();
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
+    }
+    if (!this.renderingState.selectionMode === this.selectionMode){
+      renderer.patchSelectionMode(node, this);
     }
 
     // FIXME: this is not an adequate separation, read only should also support e.g. line height
