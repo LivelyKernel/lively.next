@@ -1082,10 +1082,9 @@ export default class Renderer {
     return node;
   }
 
-  // FIXME: this needs to be updated once the different selection modes (native, lively, none) work as expected.
   /**
-   * When a TextMorph is set up to support selections we render our custom
-   * selection layer instead of the HTML one which we can not control.
+   * When a Text is set up to support lively selections, we render our custom
+   * selection layer instead of the HTML one which we cannot control.
    * @param {Text} morph - The TextMorph to be rendered.
    * @returns {Node[]} An array of SVG Nodes that represent the selection to be displayed, including a cursor.
    */
@@ -1547,9 +1546,25 @@ export default class Renderer {
     node.querySelectorAll('div.newtext-cursor').forEach(c => c.remove());
     node.querySelectorAll('svg.selection').forEach(s => s.remove());
     const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
-    nodeToAppendTo.append(...this.renderSelectionLayer(morph));
+    if (nodeToAppendTo) nodeToAppendTo.append(...this.renderSelectionLayer(morph));
     // FIXME: not yet working, the update mechanism for this has no flags, i.e., might running more often than necessary
     morph.renderingState.selection = morph.selection;
+  }
+
+  /**
+   * 
+   * @param {*} node 
+   * @param {*} morph 
+   */
+  patchSelectionMode (node, morph){
+    if (morph.selectionMode === 'native'){
+      node.querySelector('.newtext-text-layer').classList.add('selectable');
+    };
+    if (morph.selectionMode === 'lively' || morph.selectionMode === 'none'){
+      node.querySelector('.newtext-text-layer').classList.remove('selectable');
+    };
+
+    morph.renderingState.selectionMode = morph.selectionMode;
   }
 
   /**

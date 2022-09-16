@@ -167,6 +167,11 @@ export const cssForTexts = `
 
     .selectable {
       user-select: text;
+      pointer-events: all;
+    }
+
+    ::selection  {
+      background: rgba(212,230,241,0.8);
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/

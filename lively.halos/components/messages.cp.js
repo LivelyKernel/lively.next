@@ -123,6 +123,7 @@ const StatusMessageDefault = component({
     type: Text,
     needsDocument: true,
     name: 'message text',
+    selectionMode: 'native',
     clipMode: 'auto',
     extent: pt(669, 87.5),
     fill: Color.rgba(0, 0, 0, 0),
