@@ -283,11 +283,11 @@ export class ComponentChangeTracker {
     }
   }
 
-  constructor (aComponent, oldName = aComponent.name) {
+  constructor (aComponent, policy, oldName = aComponent.name) {
     this.trackedComponent = aComponent;
     this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
     this.componentModule = module(this.componentModuleId);
-    this.componentPolicy = aComponent.master;
+    this.componentPolicy = policy;
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
     connect(aComponent, 'onChange', this, 'processChangeInComponent', { garbageCollect: true });
     aComponent._changeTracker = this;
@@ -321,7 +321,6 @@ export class ComponentChangeTracker {
       }
       return true;
     });
-    // fixem: expose this properly
     if (qualifiedBrowser) return qualifiedBrowser.viewModel.ui.sourceEditor;
   }
 
@@ -330,7 +329,7 @@ export class ComponentChangeTracker {
   }
 
   get componentName () {
-    return string.camelCaseString(this.trackedComponent.name.replace(/\//g, ' ')); // we actually need the variable name
+    return this.componentPolicy[Symbol.for('lively-module-meta')].exportedName;
   }
 
   withinDerivedComponent (aMorph) {
@@ -478,8 +477,6 @@ export class ComponentChangeTracker {
     }
   }
 
-  // m = module('local://lively-object-modules/component-model-test.cp.js')
-
   onceChangesProcessed () {
     return this._finishPromise ? this._finishPromise.promise : Promise.resolve(true);
   }
@@ -534,22 +531,26 @@ export class ComponentChangeTracker {
     return false;
   }
 
-  processChangeInComponent (change) {
+  async processChangeInComponent (change) {
     if (this.ignoreChange(change)) return;
     this.processChangeInComponentPolicy(change);
-    this.processChangeInComponentSource(change);
+    await this.processChangeInComponentSource(change);
   }
 
   processChangeInComponentPolicy (change) {
     this._lastChange = change;
     if (change.prop) {
-      const subSpec = this.componentPolicy.getSubSpecFor(change.target.name);
+      const policy = this.componentPolicy || change.target.master;
+      if (!policy) return;
+      const subSpec = policy.ensureSubSpecFor(change.target);
       subSpec[change.prop] = change.value;
     }
   }
 
   processChangeInComponentSource (change) {
     const { componentModule: mod, componentName, sourceEditor } = this;
+
+    if (!mod) return;
 
     // if morph is amanged by tiling layout and the prop is extent, check if
     // that is actually already defined by layout
@@ -744,7 +745,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   async edit () {
     const c = this.getComponentMorph();
-    if (!c._changeTracker) { new ComponentChangeTracker(c); }
+    if (!c._changeTracker) { new ComponentChangeTracker(c, this.stylePolicy); }
     return await c._changeTracker.whenReady() && c;
   }
 
