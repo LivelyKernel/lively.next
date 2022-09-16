@@ -88,8 +88,8 @@ describe('component -> source reconciliation', function () {
     ComponentA.getSubmorphNamed('some submorph').width = 100;
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource.includes('fill: Color.rgb(255,153,0),'), 'updates fill in code').to.be.true;
-    expect(updatedSource.includes('extent: pt(100,50),'), 'updates width in code').to.be.true;
+    expect(updatedSource.includes('fill: Color.orange'), 'updates fill in code').to.be.true;
+    expect(updatedSource.includes('extent: pt(100,50)'), 'updates width in code').to.be.true;
   });
 
   it('updates the imports if we introduce undefined refs', async () => {
@@ -131,7 +131,7 @@ describe('component -> source reconciliation', function () {
     const updatedSource = await testComponentModule.source();
     expect(updatedSource.includes(`submorphs: [part(B, {
     name: 'derived morph',
-    borderColor: Color.rgb(0, 0, 0),
+    borderColor: Color.black,
     borderWidth: 2
   })]`), 'inserts part reference into source code').to.be.true;
   });
@@ -167,7 +167,7 @@ describe('component -> source reconciliation', function () {
     name: 'some ref',
     submorphs: [{
       name: 'a deep morph',
-      fill: Color.rgb(0, 0, 204)
+      fill: Color.blue
     }]
   }]
 });`);
@@ -192,7 +192,7 @@ describe('component -> source reconciliation', function () {
     name: 'name trap',
     submorphs: [{
       name: 'some submorph',
-      fill: Color.rgb(0, 0, 0)
+      fill: Color.black
     }]
   })`);
   });
@@ -249,8 +249,8 @@ describe('component -> source reconciliation', function () {
   submorphs: [{
     type: Label,
     name: 'foo',
-    fill: Color.rgb(204, 0, 0),
-    fontColor: Color.rgb(0, 204, 0),
+    fill: Color.red,
+    fontColor: Color.green,
     textAndAttributes: ['', null]
   }]
 });`);
@@ -267,7 +267,7 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource).to.include(`add({
     name: 'some new morph',
     extent: pt(400, 400),
-    fill: Color.rgb(204, 204, 204)
+    fill: Color.gray
   })`);
     expect(updatedSource).to.include('import { part, add, component, ComponentDescriptor } from \'lively.morphic/components/core.js\';');
   });
