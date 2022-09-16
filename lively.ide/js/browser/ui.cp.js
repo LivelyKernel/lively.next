@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import { ShadowObject, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -7,6 +7,82 @@ import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
+
+class ComponentEditButtonMorph extends Morph {
+  async expand () {
+    const componentMorph = await this.componentDescriptor.edit();
+    const pos = this.globalPosition;
+    this.openInWorld();
+    this.layout = null;
+    this.position = pos;
+    const wrapper = this.addMorph({
+      fill: Color.transparent,
+      opacity: 0,
+      submorphs: [componentMorph]
+    });
+    componentMorph.position = pt(0, 0);
+    await this.withAnimationDo(() => {
+      this.submorphs[0].opacity = 0;
+      this.extent = componentMorph.bounds().extent();
+      this.center = this.world().visibleBounds().center();
+      this.submorphs[0].center = this.extent.scaleBy(.5);
+      this.fill = Color.transparent;
+      wrapper.opacity = 1;
+    }, { duration: 300, easing: easings.outQuint });
+    await promise.delay(1000);
+    const p = componentMorph.globalPosition;
+    componentMorph.openInWorld();
+    componentMorph.position = p;
+    this.remove();
+  }
+
+  async positionInLine () {
+    const editor = this.owner;
+    if (!editor.isText) return;
+    await editor.whenRendered();
+    const range = this.componentDescriptor[Symbol.for('lively-module-meta')].range;
+    const pos = editor.indexToPosition(range.start);
+    const end = editor.lineRange(pos.row).end;
+    this.leftCenter = editor.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+  }
+
+  onMouseUp (evt) {
+    super.onMouseUp(evt);
+    this.expand();
+  }
+}
+
+const ComponentEditButtonDefault = component({
+  type: ComponentEditButtonMorph,
+  fill: Color.gray,
+  nativeCursor: 'pointer',
+  borderRadius: 20,
+  layout: new TilingLayout({
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true
+  }),
+  submorphs: [
+    {
+      type: 'label',
+      name: 'label',
+      reactsToPointer: false,
+      padding: rect(5, 1, 0, 0),
+      fontColor: Color.white,
+      fontWeight: 'bold',
+      fontSize: 12,
+      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('circle-right', { paddingTop: '2px' })]
+    }
+  ]
+});
+
+const ComponentEditButtonClicked = component(ComponentEditButtonDefault, {
+  fill: Color.rgb(180, 180, 180)
+});
+
+const ComponentEditButton = component(ComponentEditButtonDefault, {
+  master: { click: ComponentEditButtonClicked }
+});
 
 const BrowserTabDefault = component(DefaultTab, {
   name: 'browser/tab/default',
@@ -113,7 +189,6 @@ const FileStatusInactive = component(FileStatusDefault, {
   })
 });
 
-// FileStatusWarning.openInWorld()
 const FileStatusWarning = component(FileStatusDefault, {
   name: 'file status warning',
   borderColor: Color.rgbHex('DA9819'),
@@ -126,7 +201,6 @@ const FileStatusWarning = component(FileStatusDefault, {
   })
 });
 
-// BackendButtonDefault.openInWorld()
 const BackendButtonDefault = component(ButtonDefault, {
   name: 'backend button default',
   borderColor: Color.rgb(44, 62, 80),
@@ -140,7 +214,6 @@ const BackendButtonDefault = component(ButtonDefault, {
   }]
 });
 
-// BackendButtonClicked.openInWorld()
 const BackendButtonClicked = component(BackendButtonDefault, {
   name: 'backend button clicked',
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(33, 48, 63) }, { offset: 1, color: Color.rgb(33, 47, 60) }], vector: rect(0.5, 0, 0, 1) }),
@@ -173,7 +246,6 @@ const EmbeddedIconClicked = component(EmbeddedIconDefault, {
   fill: Color.rgba(0, 0, 0, 0.4)
 });
 
-// part(EmbeddedIcon).openInWorld()
 const EmbeddedIcon = component(EmbeddedIconDefault, {
   name: 'embedded icon',
   master: { auto: EmbeddedIconDefault, hover: EmbeddedIconHovered, click: EmbeddedIconClicked }
@@ -957,6 +1029,7 @@ async function open () {
 }
 
 export {
+  ComponentEditButton,
   FileStatusDefault, FileStatusError, FileStatusSaved,
   FileStatusFrozen, FileStatusInactive, FileStatusWarning,
   BrowserTabDefault, BrowserTabClicked, BrowserTabSelected, BrowserTabHovered,

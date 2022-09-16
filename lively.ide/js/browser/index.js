@@ -44,6 +44,8 @@ import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { noUpdate } from 'lively.bindings';
 import CSSEditorPlugin from '../../css/editor-plugin.js';
 import HTMLEditorPlugin from '../../html/editor-plugin.js';
+import { InteractiveComponentDescriptor } from '../../components/editor.js';
+import { adoptObject } from 'lively.lang/object.js';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -625,6 +627,7 @@ export class BrowserModel extends ViewModel {
             { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
             { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' },
+            { target: 'source editor', signal: 'onScroll', handler: 'repositionComponentButtons' },
             { model: 'tabs', signal: 'onSelectedTabChange', handler: 'browsedTabChanged' },
             { model: 'tabs', signal: 'oneTabRemaining', handler: 'makeTabsNotCloseable' },
             { model: 'tabs', signal: 'becameVisible', handler: 'relayout' },
@@ -1368,6 +1371,7 @@ export class BrowserModel extends ViewModel {
     this.editorPlugin.requestHighlight(true);
 
     await this.updateTestUI(mod);
+    await this.injectComponentEditControls(mod);
     this.ui.metaInfoText.setPath([
         `[${pack.name}]`,
         {
@@ -1535,6 +1539,32 @@ export class BrowserModel extends ViewModel {
       }
     }
     metaInfoText.toggleTestButton(hasTests);
+  }
+
+  async injectComponentEditControls (mod) {
+    if (!mod.name.endsWith('.cp.js')) return;
+    mod = modules.module(mod.url);
+    const exports = await mod.exports();
+    this.ui.sourceEditor.submorphs = [];
+    for (let exp of exports) {
+      if (mod.recorder[exp.local]?.isComponentDescriptor) {
+        await this.ensureEditButtonFor(mod.recorder[exp.local]);
+      }
+    }
+  }
+
+  repositionComponentButtons () {
+    this.ui.sourceEditor.submorphs.forEach(m => m.positionInLine());
+  }
+
+  async ensureEditButtonFor (componentDescriptor) {
+    const { ComponentEditButton } = await System.import('lively.ide/js/browser/ui.cp.js');
+    const btn = part(ComponentEditButton, { name: 'edit component btn' });
+    adoptObject(componentDescriptor, InteractiveComponentDescriptor);
+    btn.componentDescriptor = componentDescriptor;
+    const editor = this.ui.sourceEditor;
+    editor.addMorph(btn);
+    btn.positionInLine();
   }
 
   async runOnServer (source) {
