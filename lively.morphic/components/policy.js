@@ -897,7 +897,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { function } cb - The callback function to invoke for each of the morphs in the scope.
    */
   withSubmorphsInScopeDo (parentOfScope, cb) {
-    return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && m.master);
+    return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && (m.master || m.isComponent));
   }
 
   /**
@@ -940,7 +940,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
   ensureSubSpecFor (submorph) {
-    const targetName = this.targetMorph === submorph ? null : submorph.name;
+    const targetName = (this.targetMorph === submorph || submorph.isComponent) ? null : submorph.name;
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
