@@ -880,8 +880,6 @@ export class Inspector extends ViewModel {
     if (newTarget) this.targetObject = newTarget;
   }
 
-  // part(InstructionWidget, { opacity: 0.5 }).openInWorld()
-
   toggleSelectionInstructions (active) {
     if (active && !this.instructionWidget) {
       this.instructionWidget = this.view.addMorph(part(InstructionWidget, {

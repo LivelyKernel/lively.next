@@ -3,7 +3,6 @@ import { ShadowObject, component, part } from 'lively.morphic';
 import { GradientHaloModel, GradientControlModel } from './gradient-editor.js';
 import { CheckerPattern } from './shared.cp.js';
 
-// GradientHalo.openInWorld()
 const GradientHalo = component({
   defaultViewModel: GradientHaloModel,
   name: 'gradient halo',
@@ -47,7 +46,6 @@ const GradientHalo = component({
   }]
 });
 
-// part(GradientControl)
 const GradientControl = component({
   viewModelClass: GradientControlModel,
   viewModel: { gradientHalo: part(GradientHalo) },
@@ -79,7 +77,5 @@ const GradientControl = component({
     }]
   }]
 });
-
-// GradientControl.openInWorld()
 
 export { GradientHalo, GradientControl };

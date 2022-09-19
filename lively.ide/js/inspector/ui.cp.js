@@ -7,7 +7,6 @@ import { DropDownListModel } from 'lively.components/list.js';
 import { DarkList } from 'lively.components/list.cp.js';
 import { PropertyTree } from './context.js';
 
-// InstructionWidget.openInWorld()
 const InstructionWidget = component({
   type: Text,
   fixedWidth: true,
@@ -42,20 +41,12 @@ const SmallList = component(DarkList, {
   fontSize: 10
 });
 
-// part(SmallList, { items: [1,2,3]}).openInWorld()
-
-// DarkButton.openInWorld()
-
 const DarkDropDownList = component(DarkButton, {
   defaultViewModel: DropDownListModel,
   name: 'dark drop down list',
   submorphs: [{ name: 'label', fontSize: 12 }]
 });
 
-// part(SystemInspector).openInWindow()
-// part(DarkDropDownList, { items: [1,2,3], listMaster: DarkList}).openInWorld()
-// part(SystemInspector, { viewModel: { targetObject: this } }).openInWindow()
-// m = part(SystemInspector)
 const SystemInspector = component({
   defaultViewModel: Inspector,
   name: 'system inspector',
@@ -231,7 +222,5 @@ function openInWindow (modelAttributes) {
   inspector.viewModel.relayout();
   return inspector;
 }
-
-// SystemInspector.openInWorld()
 
 export { DarkButton, DarkDropDownList, SystemInspector, InstructionWidget, openInWindow };

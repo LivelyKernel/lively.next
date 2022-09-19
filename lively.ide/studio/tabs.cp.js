@@ -12,7 +12,7 @@ class TabCloseButton extends Label {
     this.owner.owner.viewModel.close();
   }
 }
-// DefaultTab.openInWorld()
+
 const DefaultTab = component({
   name: 'tab',
   borderColor: Color.rgb(0, 0, 0),
@@ -77,7 +77,6 @@ const ActiveTab = component(DefaultTab, {
   fill: Color.rgb(183, 183, 183)
 });
 
-// part(SelectedTab).openInWorld();
 const SelectedTab = component(DefaultTab, {
   borderWidth: { bottom: 3, top: 0, right: 0, left: 0 },
   borderColor: Color.rgb(33, 47, 60),
@@ -248,11 +247,9 @@ class TabModel extends ViewModel {
   }
 }
 
-
 /**
  * An actual tab.
  */
-// part(Tab).openInWorld()
 const Tab = component(DefaultTab, {
   name: 'tab',
   defaultViewModel: TabModel,
@@ -298,7 +295,6 @@ class TabContentContainerModel extends ViewModel {
 /**
  * A container for the content associated with a tab providing layout functionality.
  */
-// part(TabContentContainer).openInWorld()
 const TabContentContainer = component({
   name: 'tab content container',
   defaultViewModel: TabContentContainerModel,
@@ -391,7 +387,6 @@ const NewTabButtonActive = component(NewTabButtonDefault, {
   }]
 });
 
-// part(NewTabButton).openInWorld()
 const NewTabButton = component(NewTabButtonDefault, { // eslint-disable-line no-unused-vars
   name: 'new tab button',
   master: {
@@ -404,7 +399,6 @@ const NewTabButton = component(NewTabButtonDefault, { // eslint-disable-line no-
 /**
  * A container containing the actual tabs, providing layout functionality.
  */
-// part(TabContainer).openInWorld();
 const TabContainer = component({
   name: 'tab container',
   defaultViewModel: TabContainerModel,
@@ -443,7 +437,6 @@ const TabContainer = component({
       ]
     }
     // Comment in to allow for easier manual testing of the tabs
-    // part(NewTabButton)
   ]
 });
 
@@ -707,7 +700,6 @@ class TabsModel extends ViewModel {
 /**
  * A tab-system which allows to switch between different contents based on the selected tab.
  */
-// part(Tabs, {viewModel: {showsSingleTab: false}}).openInWorld()
 const Tabs = component({
   name: 'tabs',
   fill: Color.transparent,

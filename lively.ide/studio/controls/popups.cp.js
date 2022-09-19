@@ -416,8 +416,6 @@ export class PositionPopupModel extends PopupModel {
   }
 }
 
-// part(ShadowPopup).openInWorld()
-
 const ShadowPopup = component(DarkPopupWindow, {
   defaultViewModel: ShadowPopupModel,
   name: 'shadow popup',
@@ -614,7 +612,6 @@ export function parameterizedNumberPopupLight (spec) {
   });
 }
 
-// PositionPopupLight.openInWorld()
 const PositionPopupLight = component(PopupWindow, {
   name: 'position popup/light',
   defaultViewModel: PositionPopupModel,
@@ -664,7 +661,6 @@ const PositionPopupLight = component(PopupWindow, {
   ]
 });
 
-// part(ShadowPopupLight).openInWorld()
 const ShadowPopupLight = component(ShadowPopup, {
   name: 'shadow popup/light',
   master: PopupWindow,
@@ -772,7 +768,6 @@ const ShadowPopupLight = component(ShadowPopup, {
   ]
 });
 
-// InsetShadowPopup.openInWorld()
 const InsetShadowPopup = component(ShadowPopup, {
   name: 'inset shadow popup',
   submorphs: [{
@@ -1014,8 +1009,6 @@ const PaddingPopup = component(PopupWindow, {
   }, add(part(PaddingControlsLight))]
 });
 
-// BlurPopup.openInWorld()
-// part(BlurPopup).openInWorld()
 const BlurPopup = component(DarkPopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'blur popup',
@@ -1047,7 +1040,6 @@ const BlurPopup = component(DarkPopupWindow, {
   })]
 });
 
-// OpacityPopup.openInWorld()
 const OpacityPopup = component(DarkPopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'opacity popup',
@@ -1082,7 +1074,6 @@ const OpacityPopup = component(DarkPopupWindow, {
   })]
 });
 
-// CursorPopup.openInWorld()
 const CursorPopup = component(DarkPopupWindow, {
   defaultViewModel: SingleSelectionModel,
   name: 'cursor popup',
@@ -1126,7 +1117,6 @@ const CursorPopup = component(DarkPopupWindow, {
   })]
 });
 
-// TiltPopup.openInWorld()
 const TiltPopup = component(DarkPopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'tilt popup',
@@ -1158,7 +1148,6 @@ const TiltPopup = component(DarkPopupWindow, {
   })]
 });
 
-// FlipPopup.openInWorld()
 const FlipPopup = component(DarkPopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'flip popup',

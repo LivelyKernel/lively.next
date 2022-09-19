@@ -288,8 +288,6 @@ export class RichTextControlModel extends ViewModel {
   }
 }
 
-// RichTextControl.openInWorld()
-// part(RichTextControl, { viewModel: { targetMorph: this.get('test text')}}).openInWorld()
 const RichTextControl = component(PropertySection, {
   defaultViewModel: RichTextControlModel,
   name: 'rich text control',

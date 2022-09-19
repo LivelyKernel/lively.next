@@ -6,7 +6,6 @@ ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
 });
 
-// CloseButtonDefault.openInWorld()
 const CloseButtonDefault = component({
   type: Label,
   name: 'close button default',
@@ -60,7 +59,6 @@ const CheckerPattern = component({
   reactsToPointer: false
 });
 
-// PopupWindow.openInWorld()
 const PopupWindow = component({
   name: 'popup window',
   borderColor: Color.rgb(149, 165, 166),
@@ -127,7 +125,5 @@ const SystemList = component(DefaultList, {
   itemBorderRadius: 2,
   selectionColor: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(66, 165, 245) }, { offset: 1, color: Color.rgb(41, 121, 255) }], vector: rect(0, 0, 0, 1) })
 });
-// SystemList.openInWorld()
-// part(SystemList, { items: [1,2,3]}).openInWorld()
 
 export { CheckerPattern, SystemList, PopupWindow, CloseButton, DarkCloseButton, CloseButtonDefault, CloseButtonHovered };

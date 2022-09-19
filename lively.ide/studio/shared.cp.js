@@ -9,7 +9,6 @@ ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
 });
 
-// DarkThemeList.openInWorld()
 const DarkThemeList = component(DarkList, {
   name: 'sidebar list',
   selectionColor: Color.rgb(178, 235, 242),
@@ -19,7 +18,6 @@ const DarkThemeList = component(DarkList, {
   ]
 });
 
-// PropertyLabel.openInWorld()
 const PropertyLabel = component({
   type: Label,
   name: 'property label',
@@ -38,7 +36,6 @@ const PropertyLabel = component({
   }]
 });
 
-// PropertyLabelHovered.openInWorld()
 const PropertyLabelHovered = component(PropertyLabel, {
   name: 'property label hovered',
   fill: Color.rgb(66, 73, 73)
@@ -49,7 +46,6 @@ const PropertyLabelHoveredLight = component(PropertyLabel, {
   fill: Color.rgba(192, 192, 192, 0.7829)
 });
 
-// PropertyLabelActive.openInWorld()
 const PropertyLabelActive = component(PropertyLabel, {
   name: 'property label active',
   fill: Color.rgb(178, 235, 242),
@@ -88,8 +84,6 @@ const RemoveButton = component(AddButton, {
   }]
 });
 
-// EnumSelector.openInWorld();
-
 const EnumSelectorDefault = component(DarkDropDownList, {
   name: 'enum selector/default',
   layout: new TilingLayout({
@@ -107,19 +101,16 @@ const EnumSelectorDefault = component(DarkDropDownList, {
   nativeCursor: 'pointer'
 });
 
-// EnumSelectorClicked.openInWorld()
 const EnumSelectorClicked = component(EnumSelectorDefault, {
   name: 'enum selector/clicked',
   fill: Color.rgba(54, 61, 61, 1)
 });
 
-// part(EnumSelector).openInWorld()
 const EnumSelector = component(EnumSelectorDefault, {
   name: 'enum selector',
   master: { click: EnumSelectorClicked }
 });
 
-// HeadlineLabel.openInWorld()
 const HeadlineLabel = component({
   type: Label,
   name: 'headline label',
@@ -129,7 +120,6 @@ const HeadlineLabel = component({
   textAndAttributes: ['A Headling Label', null]
 });
 
-// PropLabel.openInWorld()
 const PropLabel = component(HeadlineLabel, {
   name: 'prop label',
   textAndAttributes: ['Property', null],
@@ -198,7 +188,6 @@ const DarkNumberIconWidget = component(DarkNumberWidget, {
   }, 'value')]
 });
 
-// TextInput.openInWorld()
 const TextInput = component({
   name: 'text input',
   type: InputLine,
@@ -258,7 +247,6 @@ const CheckboxInactive = component(CheckboxActive, {
   fontColor: Color.transparent
 });
 
-// part(LabeledCheckbox).openInWorld()
 const LabeledCheckbox = component({
   type: LabeledCheckboxMorph,
   activeCheckboxComponent: CheckboxActive,
@@ -311,7 +299,6 @@ const BoundsContainerHovered = component({
   clipMode: 'hidden'
 });
 
-// DarkPopupWindow.openInWorld()
 const DarkPopupWindow = component(PopupWindow, {
   name: 'dark popup window',
   borderColor: Color.rgba(112, 123, 124, 1),

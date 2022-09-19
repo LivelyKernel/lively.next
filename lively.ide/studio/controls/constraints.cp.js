@@ -258,7 +258,6 @@ const ConstraintMarker = component({
   }]
 });
 
-// part(ConstraintMarkerActive).openInWorld();
 const ConstraintMarkerActive = component(ConstraintMarker, {
   name: 'constraint marker active',
   submorphs: [{
@@ -269,7 +268,6 @@ const ConstraintMarkerActive = component(ConstraintMarker, {
   }]
 });
 
-// ConstraintsSimulator.openInWorld()
 // fixme: Think about parametrizing components via component definition/policy
 const ConstraintsSimulator = component({
   name: 'constraints simulator',
@@ -320,7 +318,6 @@ const ConstraintsSimulator = component({
     }]
 });
 
-// ConstraintsControl.openInWorld()
 const ConstraintsControl = component({
   defaultViewModel: ConstraintsControlModel,
   name: 'constraint controller',
@@ -399,7 +396,6 @@ const ConstraintsControl = component({
     })]
 });
 
-// part(ConstraintSizeSelectorDefault).openInWorld()
 const ConstraintSizeSelectorDefault = component({
   name: 'constraint size selector default',
   extent: pt(38.6, 10),

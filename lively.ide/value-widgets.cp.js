@@ -41,7 +41,6 @@ const Scrubber = component({
   textAndAttributes: ['13', null]
 });
 
-// DefaultNumberWidget.openInWorld()
 const DefaultNumberWidget = component({
   type: NumberWidget,
   name: 'default number widget',
@@ -92,7 +91,5 @@ const DarkNumberWidget = component(DefaultNumberWidget, {
     master: ScrubberLight
   }]
 });
-
-// DarkNumberWidget.openInWorld()
 
 export { DefaultNumberWidget, DarkNumberWidget, Scrubber };

@@ -12,7 +12,6 @@ import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
 import { TextInput, PropLabel, DarkNumberIconWidget } from '../studio/shared.cp.js'; // that should be revised...
 
-// ColorInput.openInWorld()
 const ColorInput = component({
   defaultViewModel: ColorInputModel,
   name: 'color input',
@@ -92,7 +91,6 @@ const ColorInput = component({
   })]
 });
 
-// DefaultInputLine.openInWorld()
 const DefaultInputLine = component({
   type: InputLine,
   name: 'default input line',
@@ -117,7 +115,6 @@ const DefaultInputLine = component({
   }]
 });
 
-// HexEncoder.openInWorld()
 const HexEncoder = component({
   name: 'hex encoder',
   borderColor: Color.rgb(23, 160, 251),
@@ -348,8 +345,6 @@ const DefaultSlider = component({
   }]
 });
 
-// DefaultSlider.openInWorld()
-
 const OpacitySlider = component(DefaultSlider, {
   defaultViewModel: OpacityPickerModel,
   name: 'opacity slider',
@@ -378,8 +373,6 @@ const OpacitySlider = component(DefaultSlider, {
   ]
 });
 
-// part(DefaultSlider).openInWorld()
-
 const HueSlider = component(DefaultSlider, {
   defaultViewModel: HuePickerModel,
   name: 'hue slider',
@@ -394,8 +387,6 @@ const HueSlider = component(DefaultSlider, {
     vector: 'eastwest'
   })
 });
-
-// HueSlider.openInWorld()
 
 const FieldPicker = component({
   defaultViewModel: FieldPickerModel,

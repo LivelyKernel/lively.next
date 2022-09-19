@@ -3,7 +3,6 @@ import { Color, Rectangle } from 'lively.graphics';
 import { TilingLayout, ShadowObject, Ellipse, Label, part } from 'lively.morphic';
 import { CommentCountBadgeModel } from '../comment-count-badge.js';
 
-// part(CommentCountBadge).openInWorld();
 const CommentCountBadge = component({
   name: 'comment count badge',
   defaultViewModel: CommentCountBadgeModel,

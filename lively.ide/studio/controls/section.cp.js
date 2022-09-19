@@ -39,7 +39,6 @@ export class PropertySectionModel extends ViewModel {
   }
 }
 
-// PropertySection.openInWorld()
 const PropertySection = component({
   name: 'property section',
   borderColor: Color.rgba(97, 106, 107, 1),
@@ -87,7 +86,6 @@ const PropertySection = component({
   }]
 });
 
-// PropertySectionInactive.openInWorld()
 const PropertySectionInactive = component(PropertySection, {
   name: 'property section inactive',
   submorphs: [{

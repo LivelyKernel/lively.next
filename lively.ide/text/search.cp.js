@@ -56,7 +56,7 @@ const WidgetButton = component({
     textAndAttributes: ['replace all', null]
   }]
 });
-// part(SearchWidget).openInWorld();
+
 const SearchWidget = component({
   name: 'search widget',
   defaultViewModel: SearchWidgetModel,

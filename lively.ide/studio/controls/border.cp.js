@@ -363,7 +363,6 @@ export class BorderPopupWindow extends PopupModel {
   }
 }
 
-// BorderControlElements.openInWorld()
 const BorderControlElements = component({
   name: 'border control elements',
   fill: Color.transparent,
@@ -432,7 +431,6 @@ const BorderControlElements = component({
   }]
 });
 
-// part(BorderPopup).viewModel.models
 const BorderPopup = component(DarkPopupWindow, {
   defaultViewModel: BorderPopupWindow,
   name: 'border popup',
@@ -509,11 +507,6 @@ const BorderPopup = component(DarkPopupWindow, {
   })]
 });
 
-// part(BorderControl).openInWorld()
-// BorderControl.openInWorld()
-// i = part(BorderControl).get('border width input')
-// i.width
-// i.master._overriddenProps.get(i)
 const BorderControl = component(PropertySection, {
   name: 'border control',
   defaultViewModel: BorderControlModel,
