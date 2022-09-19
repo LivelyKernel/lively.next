@@ -232,6 +232,7 @@ export class Selection {
   }
 
   cursorBlinkStart () {
+    if (this.textMorph.readOnly) return;
     this.cursorBlinkStop();
     const timeout = config.text.cursorBlinkPeriod;
     if (timeout) {

@@ -775,6 +775,7 @@ export default class Renderer {
       scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
+      this.removeTextSpecialsFromDOMFor(node, morph)
       if (!node.querySelector('.scrollWrapper')) {
         delete morph.renderingState.needsScrollLayerRemoved;
         return;
@@ -786,6 +787,24 @@ export default class Renderer {
       wrapper.remove();
       delete morph.renderingState.needsScrollLayerRemoved;
     }
+  }
+
+  /**
+   * When a Text is downgraded from being backed with a Document to not having one, it looses support for lively selections and markers.
+   * As it is not interactively editable, it also does not need a cursor any longer.
+   * This method cleans up render artifacts that might still exist in the DOM from when these were still supported. 
+   * @param {Node} node
+   * @param {Text} morph
+   */
+  removeTextSpecialsFromDOMFor (node, morph) {
+    const cursorNode = node.querySelector('.newtext-cursor');
+    cursorNode.remove();
+
+    const selectionNodes = node.querySelectorAll('.selection');
+    selectionNodes.forEach(n => n?.remove());
+
+    const markerNodes = node.querySelectorAll('.newtext-marker-layer');
+    markerNodes.forEach(n => n?.remove());
   }
 
   /**
