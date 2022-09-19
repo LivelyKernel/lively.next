@@ -60,7 +60,6 @@ const WidgetButton = component({
   }]
 });
 
-// part(SearchWidget).openInWorld()
 const SearchWidget = component({
   name: 'search widget',
   defaultViewModel: SearchWidgetModel,

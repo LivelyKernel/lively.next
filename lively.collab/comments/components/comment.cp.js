@@ -98,8 +98,6 @@ const commentLabel = component({
   reactsToPointer: false
 });
 
-// part(Comment).openInWorld()
-// Comment.openInWorld()
 const CommentView = component({
   name: 'comment',
   defaultViewModel: CommentModel,

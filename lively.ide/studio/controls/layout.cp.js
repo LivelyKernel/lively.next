@@ -346,7 +346,6 @@ const PaddingInput = component(DarkNumberIconWidget, {
     }]
 });
 
-// PaddingInputHovered.openInWorld()
 const PaddingInputHovered = component(PaddingInput, {
   name: 'padding input hovered',
   borderWidth: 1
@@ -435,7 +434,6 @@ const MiniLayoutPreview = component({
   }]
 });
 
-// MiniLayoutPreviewActive.openInWorld()
 const MiniLayoutPreviewActive = component(MiniLayoutPreview, {
   name: 'mini layout preview active',
   fill: Color.rgb(178, 235, 242),
@@ -457,8 +455,7 @@ const MiniLayoutPreviewActive = component(MiniLayoutPreview, {
       }]
   }]
 });
-// LayoutControl.openInWorld()
-// part(LayoutControl).openInWorld()
+
 const LayoutControl = component(PropertySection, {
   defaultViewModel: AutoLayoutControlModel,
   name: 'layout control',

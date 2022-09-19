@@ -69,8 +69,6 @@ export class ColorStopControl extends Polygon {
   }
 }
 
-// part(ColorStop).openInWorld()
-
 const ColorCell = component({
   name: 'color cell',
   borderRadius: 1,
@@ -114,5 +112,4 @@ const SelectedColorStop = component(ColorStop, {
   borderWidth: 0
 });
 
-// SelectedColorStop.openInWorld()
 export { SelectedColorStop, ColorStop, ColorCell };
