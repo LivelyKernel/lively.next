@@ -168,6 +168,18 @@ export class StylePolicy {
   }
 
   /**
+   * Checks wether or not another policy is in the derivation chain of this
+   * policy.
+   */
+  uses (aPolicy) {
+    if (this.parent === aPolicy) {
+      return true;
+    }
+    if (this.parent?.uses(aPolicy)) return true;
+    return this.overriddenMaster?.uses(aPolicy) || false;
+  }
+
+  /**
    * Evaluates to true, in case the policy changes its style in response to hover events.
    */
   get respondsToHover () {

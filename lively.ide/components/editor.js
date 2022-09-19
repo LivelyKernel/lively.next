@@ -545,6 +545,11 @@ export class ComponentChangeTracker {
       const subSpec = policy.ensureSubSpecFor(change.target);
       subSpec[change.prop] = change.value;
     }
+    this.refreshDependants();
+  }
+
+  refreshDependants () {
+    this.componentPolicy?.refreshDependants();
   }
 
   processChangeInComponentSource (change) {
@@ -762,5 +767,13 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   notifyDependents () {
     signal(this, 'changed');
+  }
+
+  refreshDependants () {
+    $world.withAllSubmorphsDo(m => {
+      if (m.master?.uses(this.stylePolicy)) {
+        m.master.applyIfNeeded(true);
+      }
+    });
   }
 }
