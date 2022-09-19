@@ -44,7 +44,6 @@ export class Morph {
         this.setProperty(key, value);
         if (this.propertiesAndPropertySettings().properties[key].renderSynchronously) {
           $world._renderer.renderStylingChanges(this);
-          console.log('Render mit Warpspeed, Dude!');
         }
       },
       valueStoreProperty: '_morphicState'
