@@ -824,8 +824,6 @@ export default class Renderer {
 
     let textLayerClasses = 'newtext-text-layer actual';
 
-    // TODO: we want to support right and left align also for morpht that have a non-fixed widht and or height
-    // This is something that should be thought of when developing the new Text abstraction
     textLayerClasses = textLayerClasses + ' ' + (fixedWidth ? lineWrappingToClass(lineWrapping) : lineWrappingToClass(false));
 
     if (selectionMode === 'native') textLayerClasses = textLayerClasses + ' selectable';
@@ -991,7 +989,6 @@ export default class Renderer {
    * @returns {Node} The node of the morph to be added as a child of a node for a line.
    */
   renderMorphInLine (morph, attr) {
-    // FIXME: investigate if this is necessary
     attr = attr || {};
     const rendered = this.renderMorph(morph);
     rendered.style.position = 'sticky';
@@ -1133,6 +1130,7 @@ export default class Renderer {
    */
   renderSelectionPart (morph, selection, diminished = false, cursorWidth = 2) {
     if (!selection) return [];
+
     const { textLayout } = morph;
 
     const { start, end, cursorVisible, selectionColor } = selection;
@@ -1773,7 +1771,7 @@ export default class Renderer {
 
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
-    this.placeholder.className = morph.isLabel ? 'Label' : 'Text';
+    this.placeholder.className = 'Text';
     this.placeholder.appendChild(textNode);
     textNode.style.width = 'max-content';
     textNode.style.position = 'static';

@@ -304,23 +304,10 @@ div.text-layer span {
   line-height: normal;
 }
 
-.Label span {
-  white-space: pre;
-  float: left;
-  line-height: initial;
-  -moz-user-select: none;
-}
-
 .Text .annotation {
-  text-align: right;
   position: absolute;
   right: 0;
-}
-
-.Label .annotation {
-  float: right;
-  position: relative;
-  top: 50%;
+  bottom: 0;
 }
 
 .truncated-text {

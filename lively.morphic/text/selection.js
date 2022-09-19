@@ -72,6 +72,7 @@ export class Selection {
     if (start === undefined || end === undefined) return;
 
     const d = this.textMorph.document;
+    if (!d) return;
     if (typeof start === 'number') range.start = start = d.indexToPosition(start);
     if (typeof end === 'number') range.end = end = d.indexToPosition(end);
     if (!Range.isValidLiteral(range)) return;

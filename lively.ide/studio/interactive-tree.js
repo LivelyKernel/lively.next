@@ -42,6 +42,8 @@ export class InteractiveTreeContainer extends Morph {
   toggleSelected (active) {
     if (!this.tree) return;
     const { selectionFontColor, nonSelectionFontColor } = this.tree;
+    // FIXME: The "Label" Styleclass should no longer be applied, one would think
+    // However, no appearances seem to be broken? ¯\_(ツ)_/¯ 
     this.submorphs.filter(m => !m._isControlElement && m.styleClasses.includes('Label')).forEach(m => {
       m.fontColor = active ? selectionFontColor : nonSelectionFontColor;
     });

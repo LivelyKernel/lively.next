@@ -321,6 +321,7 @@ export class Menu extends Morph {
         fontWeight: 'bold',
         ...defaultStyle
       });
+      if (title.fit) title.fit();
       pos = title.bottomLeft;
       maxWidth = Math.max(title.width, maxWidth);
     }

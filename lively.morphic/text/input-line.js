@@ -259,7 +259,7 @@ export default class InputLine extends Text {
     placeholder.height = this.height;
     placeholder.padding = this.padding;
     placeholder.lineHeight = this.height + 'px';
-    placeholder.fit();
+    if (placeholder.fit) placeholder.fit();
     placeholder.topLeft = this.label.length
       ? textB.topLeft().addXY(0, this.borderWidth)
       : textB.topLeft().withX(0);
