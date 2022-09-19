@@ -101,7 +101,6 @@ const WindowButtonMinimizeHovered = component(WindowButtonMinimize, {
   }]
 });
 
-// DefaultWindow.openInWorld()
 const DefaultWindow = component({
   name: 'default window',
   draggable: true,
@@ -175,7 +174,6 @@ const DefaultWindow = component({
   }]
 });
 
-// DefaultWindowInactive.openInWorld()
 const DefaultWindowInactive = component(DefaultWindow, {
   name: 'default window inactive',
   dropShadow: new ShadowObject({ distance: 8, rotation: 90, color: Color.rgba(0, 0, 0, 0.1), blur: 10 }),
@@ -210,7 +208,6 @@ const DefaultWindowInactive = component(DefaultWindow, {
   ]
 });
 
-// DarkWindow.openInWorld()
 const DarkWindow = component(DefaultWindow, {
   name: 'dark window',
   dropShadow: new ShadowObject({ distance: 8, rotation: 90, color: Color.rgba(0, 0, 0, 0.1), blur: 10 }),
@@ -230,7 +227,6 @@ const DarkWindow = component(DefaultWindow, {
   }]
 });
 
-// DarkWindowInactive.openInWorld()
 const DarkWindowInactive = component(DefaultWindowInactive, {
   name: 'dark window inactive',
   dropShadow: new ShadowObject({ distance: 8, rotation: 90, color: Color.rgba(0, 0, 0, 0.1), blur: 10 }),
