@@ -4,8 +4,6 @@ import { signal, noUpdate, connect } from 'lively.bindings';
 import { arr } from 'lively.lang';
 import { DefaultList } from './list.cp.js';
 
-// maybe these are not needed at all
-// ColumnListDefault.openInWorld()
 const ColumnListDefault = component(DefaultList, {
   name: 'column list default',
   borderWidthRight: 1,
@@ -420,7 +418,6 @@ export class MullerColumnViewModel extends ViewModel {
   }
 }
 
-// MullerColumnView.openInWorld()
 const MullerColumnView = component({
   defaultViewModel: MullerColumnViewModel,
   name: 'muller column view',

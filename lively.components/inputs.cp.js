@@ -4,7 +4,6 @@ import { LabeledCheckBoxModel, CheckBoxMorph } from './inputs.js';
 import { arr, string, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
 
-// part(InputLineDefault).
 const InputLineDefault = component({
   type: InputLine,
   name: 'input line light',
@@ -32,7 +31,6 @@ const InputLineDefault = component({
   }]
 });
 
-// InputLineDark.openInWorld()
 const InputLineDark = component(InputLineDefault, {
   name: 'input line dark',
   fill: Color.rgb(229, 231, 233)
@@ -230,7 +228,6 @@ export class SearchFieldModel extends ViewModel {
   }
 }
 
-// part(SearchField, { name: 'hello'}).openInWorld()
 const SearchField = component({
   defaultViewModel: SearchFieldModel,
   extent: pt(188, 21),

@@ -40,7 +40,6 @@ const ButtonDefault = component({
   }]
 });
 
-// ButtonClicked.openInWorld()
 const ButtonClicked = component(ButtonDefault, {
   name: 'button/clicked',
   borderWidth: 0,
@@ -48,13 +47,11 @@ const ButtonClicked = component(ButtonDefault, {
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(199, 199, 199) }, { offset: 1, color: Color.rgb(152, 152, 152) }], vector: rect(0, 0, 0, 1) })
 });
 
-// SystemButton.openInWorld()
 const SystemButton = component(ButtonDefault, {
   name: 'system button',
   master: { auto: ButtonDefault, click: ButtonClicked }
 });
 
-// ButtonDark.openInWorld()
 const ButtonDarkDefault = component(ButtonDefault, {
   name: 'button/dark/default',
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(149, 165, 166) }, { offset: 1, color: Color.rgb(127, 140, 141) }], vector: rect(0, 0, 0, 1) }),
@@ -67,14 +64,12 @@ const ButtonDarkDefault = component(ButtonDefault, {
   }]
 });
 
-// ButtonDarkClicked.openInWorld()
 const ButtonDarkClicked = component(ButtonDarkDefault, {
   name: 'button/dark/clicked',
   borderWidth: 0,
   dropShadow: new ShadowObject({ distance: 0, rotation: 0, color: Color.rgba(0, 0, 0, 0.39071265243902487), inset: true, blur: 4, spread: 1 })
 });
 
-// SystemButtonDark.openInWorld()
 const SystemButtonDark = component(ButtonDarkDefault, {
   name: 'system button/dark',
   master: { auto: ButtonDarkDefault, click: ButtonDarkClicked }
