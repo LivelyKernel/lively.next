@@ -42,8 +42,10 @@ describe('component definition reconciliation', () => {
     const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
     c._changeTracker.componentModule = null; // prevents this file from being changed
     c.get('alice').fill = Color.green;
+    c.fill = Color.purple;
     await c._changeTracker.onceChangesProcessed();
     expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.green);
+    expect(e2.stylePolicy.spec.fill).to.eql(Color.purple);
   });
 
   it('allows to reify source code based on changes applied to its spec', () => {

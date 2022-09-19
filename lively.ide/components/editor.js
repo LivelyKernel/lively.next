@@ -87,6 +87,16 @@ function getComponentNode (parsedContent, componentName) {
 function getPropertiesNode (parsedComponent, aMorph) {
   // fixme: This does not take into account the name unique name path
   //        and often incorrectly resolves the source code location
+
+  if (aMorph.isComponent) {
+    // then the name is more or less irrelevant
+    return astq.query(parsedComponent, `
+  .//  ObjectExpression [
+         /:properties "*"
+       ]
+  `)[0];
+  }
+
   const morphDefs = astq.query(parsedComponent, `
   .//  ObjectExpression [
          /:properties "*" [
@@ -356,9 +366,7 @@ export class ComponentChangeTracker {
       owner.addMorphAt(this.trackedComponent, idx);
       this.trackedComponent.position = pos;
       // refresh the scene graph if present!
-      $world.withTopBarDo(tb => {
-        tb.sideBar.reset($world); // fixme: preserve collapse state
-      });
+      $world.sceneGraph?.reset($world);
     }
   }
 
@@ -741,9 +749,12 @@ export class ComponentChangeTracker {
 export class InteractiveComponentDescriptor extends ComponentDescriptor {
   getComponentMorph () {
     let c = this._cachedComponent;
+    const componentName = string.decamelize(this[Symbol.for('lively-module-meta')].exportedName);
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
+      c.isComponent = true,
+      c.name = componentName,
       this._cachedComponent = c
     );
   }
