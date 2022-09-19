@@ -1,5 +1,5 @@
-import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import { Color, rect, LinearGradient, pt } from 'lively.graphics';D
+import { ShadowObject, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -8,11 +8,111 @@ import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { BlackOnWhite } from '../../text/defaults.cp.js';
+import { once } from 'lively.bindings';
+
+async function positionInRange (context, range, label) {
+  if (!context.isText) return;
+  await context.whenRendered();
+  const pos = context.indexToPosition(range.start);
+  const end = context.lineRange(pos.row).end;
+  label.leftCenter = context.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+}
+
+class EditButtonPlaceholder extends Label {
+  static get properties () {
+    return {
+      componentDescriptor: {
+        // the component descriptor object pointing to the policy
+      },
+      componentMorph: {
+        // reference to the morph that reifies the visual representation of the component definition
+      }
+    };
+  }
+
+  positionInLine () {
+    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+  }
+
+  async onMouseUp (evt) {
+    super.onMouseUp(evt);
+    if (this._active || this._initializing) return;
+    this._active = true;
+    const {
+      componentMorph,
+      owner: editor,
+      position: placeholderPos
+    } = this;
+    const pos = componentMorph.position;
+    const wrapper = morph({
+      fill: Color.transparent,
+      submorphs: [componentMorph]
+    }).openInWorld();
+    componentMorph.position = pt(0);
+    wrapper.position = pos;
+    await wrapper.withAnimationDo(() => {
+      wrapper.scale = 0;
+      wrapper.opacity = 0;
+      wrapper.center = editor.worldPoint(placeholderPos.subPt(editor.scroll));
+    }, { duration: 300, easing: easings.outQuint });
+    componentMorph.remove();
+    wrapper.remove();
+    this._active = false;
+  }
+
+  async collapse (editButton) {
+    const editor = this.owner;
+    editButton.reset();
+    editButton.opacity = 0;
+    editor.addMorph(editButton);
+    await editButton.positionInLine();
+    await this.animate({
+      opacity: 0,
+      scale: .2,
+      center: this.center, // to preserve tfm origin
+      duration: 300,
+      easing: easings.outQuint
+    });
+    this.remove();
+    const { center } = editButton;
+    editButton.scale = 1.2;
+    editButton.center = center;
+    editButton.animate({
+      scale: 1,
+      opacity: 1,
+      center,
+      duration: 300,
+      easing: easings.outQuint
+    });
+  }
+}
 
 class ComponentEditButtonMorph extends Morph {
+  static get properties () {
+    return {
+      componentDescriptor: {
+        // the component descriptor object pointing to the policy
+      }
+    };
+  }
+
   async expand () {
-    const componentMorph = await this.componentDescriptor.edit();
-    const pos = this.globalPosition;
+    const {
+      componentDescriptor,
+      globalPosition: pos,
+      owner: editor,
+      leftCenter: lineAnchorPoint
+    } = this;
+    const componentMorph = await componentDescriptor.edit();
+    const btnPlaceholder = editor.addMorph(part(CloseComponentButton, { // eslint-disable-line no-use-before-define
+      name: 'edit button placeholder',
+      componentMorph,
+      componentDescriptor,
+      opacity: 0,
+      scale: .2
+    }));
+    btnPlaceholder._initializing = true;
+    btnPlaceholder.leftCenter = lineAnchorPoint;
     this.openInWorld();
     this.layout = null;
     this.position = pos;
@@ -22,29 +122,37 @@ class ComponentEditButtonMorph extends Morph {
       submorphs: [componentMorph]
     });
     componentMorph.position = pt(0, 0);
-    await this.withAnimationDo(() => {
+    wrapper.scale = 0;
+    await editor.withAnimationDo(() => {
+      btnPlaceholder.opacity = 1;
+      btnPlaceholder.scale = 1;
+      btnPlaceholder.leftCenter = lineAnchorPoint;
       this.submorphs[0].opacity = 0;
       this.extent = componentMorph.bounds().extent();
       this.center = this.world().visibleBounds().center();
       this.submorphs[0].center = this.extent.scaleBy(.5);
       this.fill = Color.transparent;
       wrapper.opacity = 1;
+      wrapper.scale = 1;
     }, { duration: 300, easing: easings.outQuint });
-    await promise.delay(1000);
+    await componentMorph.whenRendered();
     const p = componentMorph.globalPosition;
     componentMorph.openInWorld();
     componentMorph.position = p;
+    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
     this.remove();
+    btnPlaceholder._initializing = false;
   }
 
-  async positionInLine () {
-    const editor = this.owner;
-    if (!editor.isText) return;
-    await editor.whenRendered();
-    const range = this.componentDescriptor[Symbol.for('lively-module-meta')].range;
-    const pos = editor.indexToPosition(range.start);
-    const end = editor.lineRange(pos.row).end;
-    this.leftCenter = editor.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+  positionInLine () {
+    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+  }
+
+  reset () {
+    this.master = null;
+    this.master = ComponentEditButton; // eslint-disable-line no-use-before-define
+    this.master.applyIfNeeded(true);
+    this.submorphs = [this.submorphs[0]]; // just keep the label
   }
 
   onMouseUp (evt) {
@@ -53,9 +161,11 @@ class ComponentEditButtonMorph extends Morph {
   }
 }
 
+
 const ComponentEditButtonDefault = component({
   type: ComponentEditButtonMorph,
-  fill: Color.gray,
+  isLayoutable: false,
+  fill: Color.rgba(76, 175, 80, 0.7539),
   nativeCursor: 'pointer',
   borderRadius: 20,
   layout: new TilingLayout({
@@ -72,17 +182,37 @@ const ComponentEditButtonDefault = component({
       fontColor: Color.white,
       fontWeight: 'bold',
       fontSize: 12,
-      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('circle-right', { paddingTop: '2px' })]
+      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('play', { paddingTop: '2px' })]
     }
   ]
 });
 
 const ComponentEditButtonClicked = component(ComponentEditButtonDefault, {
-  fill: Color.rgb(180, 180, 180)
+  fill: Color.rgba(27, 94, 32, 0.7095)
 });
 
 const ComponentEditButton = component(ComponentEditButtonDefault, {
   master: { click: ComponentEditButtonClicked }
+});
+
+const CloseComponentButtonDefault = component({
+  type: EditButtonPlaceholder,
+  nativeCursor: 'pointer',
+  borderRadius: 15,
+  padding: rect(5, 1, 0, 0),
+  fill: Color.rgb(221, 37, 37),
+  fontColor: Color.white,
+  fontWeight: 'bold',
+  fontSize: 12,
+  textAndAttributes: ['Stop ', {}, ...Icon.textAttribute('pause', { paddingTop: '2px' })]
+});
+
+const CloseComponentButtonClicked = component(CloseComponentButtonDefault, {
+  fill: Color.rgb(183, 28, 28)
+});
+
+const CloseComponentButton = component(CloseComponentButtonDefault, {
+  master: { click: CloseComponentButtonClicked }
 });
 
 const BrowserTabDefault = component(DefaultTab, {
@@ -123,7 +253,13 @@ const BrowserTabSelected = component(BrowserTabDefault, {
 
 const BrowserTabClicked = component(BrowserTabSelected, {
   name: 'browser/tab/clicked',
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(126, 127, 127) }, { offset: 1, color: Color.rgb(150, 152, 153) }], vector: rect(0, 0, 0, 1) })
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(126, 127, 127) },
+      { offset: 1, color: Color.rgb(150, 152, 153) }
+    ],
+    vector: rect(0, 0, 0, 1)
+  })
 });
 
 const BrowserTabHovered = component(BrowserTabSelected, {
@@ -724,11 +860,6 @@ const MetaInfoContainerCollapsed = component(MetaInfoContainerExpanded, {
   }]
 });
 
-// b.get('column view').width
-// b.openInWindow()
-// b.openInWorld()
-// SystemBrowser.openInWorld()
-// SystemBrowser.copy()
 const SystemBrowser = component({
   name: 'system browser',
   defaultViewModel: BrowserModel,
