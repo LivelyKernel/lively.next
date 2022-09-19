@@ -46,6 +46,7 @@ import CSSEditorPlugin from '../../css/editor-plugin.js';
 import HTMLEditorPlugin from '../../html/editor-plugin.js';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { adoptObject } from 'lively.lang/object.js';
+import { resource } from 'lively.resources';
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -405,8 +406,11 @@ export class PackageTreeData extends TreeData {
 
   async getLoadedModuleUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
-    // this is super slow. Fix me!
-    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git']);
+    const gitignore = [];
+    if (await resource(selectedPkg.url).join('.gitignore').exists()) {
+      gitignore.push(...(await resource(selectedPkg.url).join('.gitignore').read()).split('\n'));
+    }
+    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git', ...gitignore]);
     await this.systemInterface.getPackage(selectedPkg.url);
     const loadedModules = {};
     files.forEach(file => {
@@ -416,8 +420,6 @@ export class PackageTreeData extends TreeData {
   }
 
   async listEditableFilesInDir (folderLocation) {
-    // fixme: dir only works locally
-    // replace with systemInterface approach
     const files = (await this.systemInterface.runEval(`
       await listEditableFilesInDir('${folderLocation}');
     `, {
@@ -627,7 +629,7 @@ export class BrowserModel extends ViewModel {
             { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
             { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' },
-            { target: 'source editor', signal: 'onScroll', handler: 'repositionComponentButtons' },
+            { target: 'source editor', signal: 'onScroll', handler: 'repositionComponentEditButtons' },
             { model: 'tabs', signal: 'onSelectedTabChange', handler: 'browsedTabChanged' },
             { model: 'tabs', signal: 'oneTabRemaining', handler: 'makeTabsNotCloseable' },
             { model: 'tabs', signal: 'becameVisible', handler: 'relayout' },
@@ -733,6 +735,7 @@ export class BrowserModel extends ViewModel {
       columnView.height = verticalResizer.top - headerButtonsHeight - tabsOffset;
     }
     smiley.center = sourceEditor.center;
+    this.repositionComponentEditButtons();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -788,6 +791,7 @@ export class BrowserModel extends ViewModel {
 
   indicateUnsavedChanges () {
     this.prohibitKeyboardNavigation();
+    this.hideComponentEditButtons();
     Object.assign(this.ui.sourceEditor,
       {
         padding: Rectangle.inset(2, 60 - 2, 2, 0),
@@ -797,6 +801,7 @@ export class BrowserModel extends ViewModel {
 
   indicateNoUnsavedChanges () {
     this.allowKeyboardNavigation();
+    this.showComponentEditButtons();
     Object.assign(this.ui.sourceEditor,
       {
         padding: Rectangle.inset(4, 60, 4, 0),
@@ -1215,6 +1220,7 @@ export class BrowserModel extends ViewModel {
     const { sourceEditor, metaInfoText } = this.ui;
     sourceEditor.opacity = 0.7;
     sourceEditor.readOnly = true;
+    sourceEditor.submorphs = [];
     this.updateSource('');
     metaInfoText.showInactive();
   }
@@ -1542,27 +1548,39 @@ export class BrowserModel extends ViewModel {
   }
 
   async injectComponentEditControls (mod) {
+    this.ui.sourceEditor.submorphs = [];
     if (!mod.name.endsWith('.cp.js')) return;
     mod = modules.module(mod.url);
-    const exports = await mod.exports();
-    this.ui.sourceEditor.submorphs = [];
-    for (let exp of exports) {
-      if (mod.recorder[exp.local]?.isComponentDescriptor) {
-        await this.ensureEditButtonFor(mod.recorder[exp.local]);
+    const { varDecls } = await mod.scope();
+    for (let decl of varDecls) {
+      const varName = decl.declarations[0]?.id?.name;
+      if (!varName) continue;
+      const val = mod.recorder[varName];
+      if (val?.isComponentDescriptor) {
+        await this.ensureComponentEditButtonFor(val);
+        val.refreshDependants();
       }
     }
   }
 
-  repositionComponentButtons () {
+  repositionComponentEditButtons () {
     this.ui.sourceEditor.submorphs.forEach(m => m.positionInLine());
   }
 
-  async ensureEditButtonFor (componentDescriptor) {
+  showComponentEditButtons () {
+    this.repositionComponentEditButtons();
+    this.ui.sourceEditor.submorphs.forEach(m => m.visible = true);
+  }
+
+  hideComponentEditButtons () {
+    this.ui.sourceEditor.submorphs.forEach(m => m.visible = false);
+  }
+
+  async ensureComponentEditButtonFor (componentDescriptor) {
     const { ComponentEditButton } = await System.import('lively.ide/js/browser/ui.cp.js');
-    const btn = part(ComponentEditButton, { name: 'edit component btn' });
-    adoptObject(componentDescriptor, InteractiveComponentDescriptor);
-    btn.componentDescriptor = componentDescriptor;
+    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor });
     const editor = this.ui.sourceEditor;
+    adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);
     btn.positionInLine();
   }
@@ -1745,6 +1763,7 @@ export class BrowserModel extends ViewModel {
       this.updateSource(content);
       await this.updateCodeEntities(module);
       await this.updateTestUI(module);
+      await this.injectComponentEditControls(module);
       sourceEditor.focus();
       // This is to keep the editor from "jumping around" when saving and the source code gets replaced by **altered** output of the linter.
       // However, this is not a clean solutions. E.g. when empty lines are removed by the linter, the cursor position will be off afterwards.

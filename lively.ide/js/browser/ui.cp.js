@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import { ShadowObject, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -7,11 +7,111 @@ import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
+import { once } from 'lively.bindings';
+
+async function positionInRange (context, range, label) {
+  if (!context.isText) return;
+  await context.whenRendered();
+  const pos = context.indexToPosition(range.start);
+  const end = context.lineRange(pos.row).end;
+  label.leftCenter = context.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+}
+
+class EditButtonPlaceholder extends Label {
+  static get properties () {
+    return {
+      componentDescriptor: {
+        // the component descriptor object pointing to the policy
+      },
+      componentMorph: {
+        // reference to the morph that reifies the visual representation of the component definition
+      }
+    };
+  }
+
+  positionInLine () {
+    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+  }
+
+  async onMouseUp (evt) {
+    super.onMouseUp(evt);
+    if (this._active || this._initializing) return;
+    this._active = true;
+    const {
+      componentMorph,
+      owner: editor,
+      position: placeholderPos
+    } = this;
+    const pos = componentMorph.position;
+    const wrapper = morph({
+      fill: Color.transparent,
+      submorphs: [componentMorph]
+    }).openInWorld();
+    componentMorph.position = pt(0);
+    wrapper.position = pos;
+    await wrapper.withAnimationDo(() => {
+      wrapper.scale = 0;
+      wrapper.opacity = 0;
+      wrapper.center = editor.worldPoint(placeholderPos.subPt(editor.scroll));
+    }, { duration: 300, easing: easings.outQuint });
+    componentMorph.remove();
+    wrapper.remove();
+    this._active = false;
+  }
+
+  async collapse (editButton) {
+    const editor = this.owner;
+    editButton.reset();
+    editButton.opacity = 0;
+    editor.addMorph(editButton);
+    await editButton.positionInLine();
+    await this.animate({
+      opacity: 0,
+      scale: .2,
+      center: this.center, // to preserve tfm origin
+      duration: 300,
+      easing: easings.outQuint
+    });
+    this.remove();
+    const { center } = editButton;
+    editButton.scale = 1.2;
+    editButton.center = center;
+    editButton.animate({
+      scale: 1,
+      opacity: 1,
+      center,
+      duration: 300,
+      easing: easings.outQuint
+    });
+  }
+}
 
 class ComponentEditButtonMorph extends Morph {
+  static get properties () {
+    return {
+      componentDescriptor: {
+        // the component descriptor object pointing to the policy
+      }
+    };
+  }
+
   async expand () {
-    const componentMorph = await this.componentDescriptor.edit();
-    const pos = this.globalPosition;
+    const {
+      componentDescriptor,
+      globalPosition: pos,
+      owner: editor,
+      leftCenter: lineAnchorPoint
+    } = this;
+    const componentMorph = await componentDescriptor.edit();
+    const btnPlaceholder = editor.addMorph(part(CloseComponentButton, { // eslint-disable-line no-use-before-define
+      name: 'edit button placeholder',
+      componentMorph,
+      componentDescriptor,
+      opacity: 0,
+      scale: .2
+    }));
+    btnPlaceholder._initializing = true;
+    btnPlaceholder.leftCenter = lineAnchorPoint;
     this.openInWorld();
     this.layout = null;
     this.position = pos;
@@ -21,29 +121,37 @@ class ComponentEditButtonMorph extends Morph {
       submorphs: [componentMorph]
     });
     componentMorph.position = pt(0, 0);
-    await this.withAnimationDo(() => {
+    wrapper.scale = 0;
+    await editor.withAnimationDo(() => {
+      btnPlaceholder.opacity = 1;
+      btnPlaceholder.scale = 1;
+      btnPlaceholder.leftCenter = lineAnchorPoint;
       this.submorphs[0].opacity = 0;
       this.extent = componentMorph.bounds().extent();
       this.center = this.world().visibleBounds().center();
       this.submorphs[0].center = this.extent.scaleBy(.5);
       this.fill = Color.transparent;
       wrapper.opacity = 1;
+      wrapper.scale = 1;
     }, { duration: 300, easing: easings.outQuint });
-    await promise.delay(1000);
+    await componentMorph.whenRendered();
     const p = componentMorph.globalPosition;
     componentMorph.openInWorld();
     componentMorph.position = p;
+    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
     this.remove();
+    btnPlaceholder._initializing = false;
   }
 
-  async positionInLine () {
-    const editor = this.owner;
-    if (!editor.isText) return;
-    await editor.whenRendered();
-    const range = this.componentDescriptor[Symbol.for('lively-module-meta')].range;
-    const pos = editor.indexToPosition(range.start);
-    const end = editor.lineRange(pos.row).end;
-    this.leftCenter = editor.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+  positionInLine () {
+    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+  }
+
+  reset () {
+    this.master = null;
+    this.master = ComponentEditButton; // eslint-disable-line no-use-before-define
+    this.master.applyIfNeeded(true);
+    this.submorphs = [this.submorphs[0]]; // just keep the label
   }
 
   onMouseUp (evt) {
@@ -52,9 +160,203 @@ class ComponentEditButtonMorph extends Morph {
   }
 }
 
+export class PathIndicator extends Morph {
+  static get properties () {
+    return {
+      ui: {
+        get () {
+          return {
+            filePath: this.getSubmorphNamed('file path'),
+            pathContainer: this.getSubmorphNamed('path container'),
+            clipboardControls: this.getSubmorphNamed('clipboard controls'),
+            statusBox: this.getSubmorphNamed('status box'),
+            statusLabel: this.getSubmorphNamed('status label'),
+            errorControls: this.getSubmorphNamed('error controls'),
+            exportToHtml: this.getSubmorphNamed('export to html'),
+            runTestsButton: this.getSubmorphNamed('run tests in module'),
+            freezeButton: this.getSubmorphNamed('freeze button')
+          };
+        }
+      }
+    };
+  }
+
+  reset () {
+    const { statusBox, statusLabel, errorControls } = this.ui;
+    this.master = FileStatusDefault;
+    errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
+    statusBox.opacity = statusLabel.opacity = 0;
+    this.adjustHeight();
+  }
+
+  showInfoInWorkspace () {
+    const content = this.ui.statusBox.textString;
+    const title = content.split('\n')[0];
+    this.world().execCommand('open workspace',
+      { title, content, language: 'text' });
+  }
+
+  relayout () {
+    const { filePath, clipboardControls, statusBox, errorControls } = this.ui;
+    let pad = 10 + filePath.left;
+    filePath.width = this.width - clipboardControls.width - pad;
+    clipboardControls.right = this.width;
+    statusBox.width = this.width - 30;
+    errorControls.topRight = statusBox.bottomRight.withX(this.width);
+  }
+
+  adjustHeight () {
+    const { errorControls } = this.ui;
+    if (this.ui.statusBox.opacity > 0) {
+      this.height = errorControls.bottom;
+    } else {
+      this.height = 50;
+    }
+  }
+
+  getPath () {
+    return this.ui.filePath.textAndAttributes;
+  }
+
+  setPath (path) {
+    const { filePath, clipboardControls, exportToHtml, freezeButton } = this.ui;
+    clipboardControls.opacity = 1;
+    filePath.value = path;
+    freezeButton.isLayoutable = freezeButton.visible = filePath.textString.includes('.js');
+    exportToHtml.isLayoutable = exportToHtml.visible = filePath.textString.includes('.md');
+  }
+
+  toggleTestButton (active) {
+    this.ui.runTestsButton.visible = this.ui.runTestsButton.isLayoutable = active;
+  }
+
+  showInactive (duration = 300) {
+    this.requestTransition(async () => {
+      const { filePath, statusBox, statusLabel, pathContainer, clipboardControls } = this.ui;
+      filePath.value = 'No file selected';
+      this.master = FileStatusInactive;
+      this.master.applyAnimated({ duration });
+      pathContainer.layout.renderViaCSS = false;
+      await this.withAnimationDo(() => {
+        statusBox.isLayoutable = statusLabel.isLayoutable = false;
+        statusLabel.opacity = 0;
+        statusBox.opacity = 0;
+        clipboardControls.opacity = 0.5;
+        this.adjustHeight();
+      }, { duration });
+
+      pathContainer.layout.renderViaCSS = true;
+    });
+  }
+
+  showDefault (duration = 300) {
+    this.requestTransition(async () => {
+      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      this.master = FileStatusDefault;
+      this.master.applyAnimated({ duration });
+      pathContainer.layout.renderViaCSS = false;
+      await this.withAnimationDo(() => {
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
+        statusBox.opacity = statusLabel.opacity = 0;
+        this.adjustHeight();
+      }, { duration });
+      pathContainer.layout.renderViaCSS = true;
+    });
+  }
+
+  async showError (err, duration = 300) {
+    this.requestTransition(async () => {
+      const { statusBox, statusLabel, errorControls } = this.ui;
+      statusBox.textString = err;
+      statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
+      await statusLabel.whenRendered();
+      this.master = FileStatusError;
+      this.master.applyAnimated({ duration });
+      await this.withAnimationDo(() => {
+        statusLabel.opacity = statusBox.opacity = 1;
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
+        this.adjustHeight();
+      }, { duration });
+    });
+  }
+
+  async showWarning (warning, duration = 300) {
+    await this.requestTransition(async () => {
+      const { statusBox, statusLabel, errorControls } = this.ui;
+      statusBox.textString = warning;
+      statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
+      await statusLabel.whenRendered();
+      this.master = FileStatusWarning;
+      this.master.applyAnimated({ duration });
+      await this.withAnimationDo(() => {
+        statusLabel.opacity = statusBox.opacity = 1;
+        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
+        this.adjustHeight();
+      }, { duration });
+    });
+  }
+
+  async showFrozen (frozenMessage, duration = 300) {
+    this.requestTransition(async () => {
+      const { statusBox, statusLabel, pathContainer } = this.ui;
+      statusBox.textString = frozenMessage;
+      statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
+      await statusLabel.whenRendered();
+      this.master = FileStatusFrozen;
+      this.master.applyAnimated({ duration });
+      await this.withAnimationDo(() => {
+        statusLabel.opacity = statusBox.opacity = 1;
+        statusBox.isLayoutable = statusLabel.isLayoutable = true;
+        this.adjustHeight();
+      }, { duration });
+      pathContainer.layout.renderViaCSS = true;
+    });
+  }
+
+  async showSaved (duration = 300, timeout = 5000) {
+    if (this._animating) return;
+    this._animating = true;
+
+    this.requestTransition(async () => {
+      const { statusBox, statusLabel, errorControls } = this.ui;
+      statusLabel.opacity = 0;
+      statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
+      await statusLabel.whenRendered();
+      this.master = FileStatusSaved;
+      this.master.applyAnimated({ duration });
+      await this.withAnimationDo(() => {
+        statusBox.opacity = 0;
+        errorControls.isLayoutable = statusBox.isLayoutable = false;
+        statusLabel.isLayoutable = true;
+        statusLabel.opacity = 1;
+        this.adjustHeight();
+      }, { duration });
+    });
+
+    await promise.delay(timeout);
+    this._animating = false;
+    // cancel if another saved was triggered in the meantime
+    this.showDefault(duration);
+  }
+
+  async requestTransition (transition) {
+    if (this._currentTransition) {
+      this._nextTransition = transition;
+      await this._currentTransition; // in the meantime multiple next transitions may pour in
+      this.requestTransition(this._nextTransition); // just animate the last transition that poured in
+      this._nextTransition = null;
+    } else {
+      this._currentTransition = transition();
+      await this._currentTransition;
+      this._currentTransition = null;
+    }
+  }
+}
+
 const ComponentEditButtonDefault = component({
   type: ComponentEditButtonMorph,
-  fill: Color.gray,
+  isLayoutable: false,
+  fill: Color.rgba(76, 175, 80, 0.7539),
   nativeCursor: 'pointer',
   borderRadius: 20,
   layout: new TilingLayout({
@@ -71,17 +373,37 @@ const ComponentEditButtonDefault = component({
       fontColor: Color.white,
       fontWeight: 'bold',
       fontSize: 12,
-      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('circle-right', { paddingTop: '2px' })]
+      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('play', { paddingTop: '2px' })]
     }
   ]
 });
 
 const ComponentEditButtonClicked = component(ComponentEditButtonDefault, {
-  fill: Color.rgb(180, 180, 180)
+  fill: Color.rgba(27, 94, 32, 0.7095)
 });
 
 const ComponentEditButton = component(ComponentEditButtonDefault, {
   master: { click: ComponentEditButtonClicked }
+});
+
+const CloseComponentButtonDefault = component({
+  type: EditButtonPlaceholder,
+  nativeCursor: 'pointer',
+  borderRadius: 15,
+  padding: rect(5, 1, 0, 0),
+  fill: Color.rgb(221, 37, 37),
+  fontColor: Color.white,
+  fontWeight: 'bold',
+  fontSize: 12,
+  textAndAttributes: ['Stop ', {}, ...Icon.textAttribute('pause', { paddingTop: '2px' })]
+});
+
+const CloseComponentButtonClicked = component(CloseComponentButtonDefault, {
+  fill: Color.rgb(183, 28, 28)
+});
+
+const CloseComponentButton = component(CloseComponentButtonDefault, {
+  master: { click: CloseComponentButtonClicked }
 });
 
 const BrowserTabDefault = component(DefaultTab, {
@@ -123,7 +445,13 @@ const BrowserTabSelected = component(BrowserTabDefault, {
 
 const BrowserTabClicked = component(BrowserTabSelected, {
   name: 'browser/tab/clicked',
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(126, 127, 127) }, { offset: 1, color: Color.rgb(150, 152, 153) }], vector: rect(0, 0, 0, 1) })
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(126, 127, 127) },
+      { offset: 1, color: Color.rgb(150, 152, 153) }
+    ],
+    vector: rect(0, 0, 0, 1)
+  })
 });
 
 const BrowserTabHovered = component(BrowserTabSelected, {
@@ -355,189 +683,6 @@ const BrowserPackageControls = component({
     })]
 });
 
-export class PathIndicator extends Morph {
-  static get properties () {
-    return {
-      ui: {
-        get () {
-          return {
-            filePath: this.getSubmorphNamed('file path'),
-            pathContainer: this.getSubmorphNamed('path container'),
-            clipboardControls: this.getSubmorphNamed('clipboard controls'),
-            statusBox: this.getSubmorphNamed('status box'),
-            statusLabel: this.getSubmorphNamed('status label'),
-            errorControls: this.getSubmorphNamed('error controls'),
-            exportToHtml: this.getSubmorphNamed('export to html'),
-            runTestsButton: this.getSubmorphNamed('run tests in module'),
-            freezeButton: this.getSubmorphNamed('freeze button')
-          };
-        }
-      }
-    };
-  }
-
-  reset () {
-    const { statusBox, statusLabel, errorControls } = this.ui;
-    this.master = FileStatusDefault;
-    errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
-    statusBox.opacity = statusLabel.opacity = 0;
-    this.adjustHeight();
-  }
-
-  showInfoInWorkspace () {
-    const content = this.ui.statusBox.textString;
-    const title = content.split('\n')[0];
-    this.world().execCommand('open workspace',
-      { title, content, language: 'text' });
-  }
-
-  adjustHeight () {
-    const { errorControls } = this.ui;
-    if (this.ui.statusBox.opacity > 0) {
-      this.height = errorControls.bottom;
-    } else {
-      this.height = 50;
-    }
-  }
-
-  getPath () {
-    return this.ui.filePath.textAndAttributes;
-  }
-
-  setPath (path) {
-    const { filePath, clipboardControls, exportToHtml, freezeButton } = this.ui;
-    clipboardControls.opacity = 1;
-    filePath.value = path;
-    freezeButton.isLayoutable = freezeButton.visible = filePath.textString.includes('.js');
-    exportToHtml.isLayoutable = exportToHtml.visible = filePath.textString.includes('.md');
-  }
-
-  toggleTestButton (active) {
-    this.ui.runTestsButton.visible = this.ui.runTestsButton.isLayoutable = active;
-  }
-
-  // this.showInactive(300)
-
-  showInactive (duration = 300) {
-    this.requestTransition(async () => {
-      const { filePath, statusBox, statusLabel, clipboardControls } = this.ui;
-      filePath.value = 'No file selected';
-      this.master = FileStatusInactive;
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusBox.isLayoutable = statusLabel.isLayoutable = false;
-        statusLabel.opacity = 0;
-        statusBox.opacity = 0;
-        clipboardControls.opacity = 0.5;
-        this.adjustHeight();
-      }, { duration });
-    });
-  }
-
-  showDefault (duration = 300) {
-    this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
-      this.master = FileStatusDefault;
-      this.master.applyAnimated({ duration });
-      this.withAnimationDo(() => {
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
-        statusBox.opacity = statusLabel.opacity = 0;
-        this.adjustHeight();
-      }, { duration });
-    });
-  }
-
-  async showError (err, duration = 300) {
-    this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
-      statusBox.textString = err;
-      statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
-      this.master = FileStatusError;
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.opacity = statusBox.opacity = 1;
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
-        this.adjustHeight();
-      }, { duration });
-    });
-  }
-
-  async showWarning (warning, duration = 300) {
-    await this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
-      statusBox.textString = warning;
-      statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
-      this.master = FileStatusWarning;
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.opacity = statusBox.opacity = 1;
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
-        this.adjustHeight();
-      }, { duration });
-    });
-  }
-
-  async showFrozen (frozenMessage, duration = 300) {
-    this.requestTransition(async () => {
-      const { statusBox, statusLabel } = this.ui;
-      statusBox.textString = frozenMessage;
-      statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
-      this.master = FileStatusFrozen;
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.opacity = statusBox.opacity = 1;
-        statusBox.isLayoutable = statusLabel.isLayoutable = true;
-        this.adjustHeight();
-      }, { duration });
-    });
-  }
-
-  async showSaved (duration = 300, timeout = 5000) {
-    if (this._animating) return;
-    this._animating = true;
-
-    this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
-      statusLabel.opacity = 0;
-      statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
-      this.master = FileStatusSaved;
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusBox.opacity = 0;
-        errorControls.isLayoutable = statusBox.isLayoutable = false;
-        statusLabel.isLayoutable = true;
-        statusLabel.opacity = 1;
-        this.adjustHeight();
-      }, { duration });
-    });
-
-    await promise.delay(timeout);
-    this._animating = false;
-    // cancel if another saved was triggered in the meantime
-    this.showDefault(duration);
-  }
-
-  async requestTransition (transition) {
-    if (this._currentTransition) {
-      this._nextTransition = transition;
-      await this._currentTransition; // in the meantime multiple next transitions may pour in
-      this.requestTransition(this._nextTransition); // just animate the last transition that poured in
-      this._nextTransition = null;
-    } else {
-      this._currentTransition = transition();
-      await this._currentTransition;
-      this._currentTransition = null;
-    }
-  }
-}
-
-// b = part(SystemBrowser)
-
-// b.get('column view').width
-// b.openInWindow()
-// b.openInWorld()
-// SystemBrowser.openInWorld()
-// SystemBrowser.copy()
 const SystemBrowser = component({
   name: 'system browser',
   defaultViewModel: BrowserModel,
