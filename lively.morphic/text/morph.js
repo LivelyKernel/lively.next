@@ -774,6 +774,7 @@ export class Text extends Morph {
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // markers
       markers: {
+        renderSynchronously: true,
         group: 'core',
         defaultValue: []
       },
