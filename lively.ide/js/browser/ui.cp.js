@@ -437,7 +437,6 @@ const BrowserDirectoryControls = component({
     })]
 });
 
-// BrowserPackageControls.openInWorld();
 const BrowserPackageControls = component({
   type: PackageControls,
   name: 'browser package controls',

@@ -264,7 +264,6 @@ class BackgroundControlModel extends ViewModel {
   deactivate () { this.models.backgroundFillInput.closeColorPicker(); }
 }
 
-// BackgroundSection.openInWorld()
 const BackgroundControl = component(PropertySection, {
   defaultViewModel: BackgroundControlModel,
   name: 'background control',
@@ -295,12 +294,6 @@ const BackgroundControl = component(PropertySection, {
   }))]
 });
 
-// PropertiesPanel.openInWorld()
-// bar = part(PropertiesPanel).openInWorld();
-// PropertiesPanel.get('remove button').visible
-// bar.openInWorld()
-// bar.focusOn($world.get('test 1'))
-// bar.remove()
 export const defaultPropertiesPanelWidth = 250;
 const PropertiesPanel = component({
   defaultViewModel: PropertiesPanelModel,

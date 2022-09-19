@@ -434,8 +434,6 @@ export class ShapeControlModel extends ViewModel {
   }
 }
 
-// ShapeControl.openInWorld()
-// part(ShapeControl, { viewModel: { targetMorph: this.get('test target')} }).openInWorld()
 const ShapeControl = component({
   name: 'shape control',
   borderRadius: 0,

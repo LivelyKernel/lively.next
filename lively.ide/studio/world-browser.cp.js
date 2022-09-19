@@ -855,7 +855,6 @@ const Placeholder = component({
   extent: pt(245, 368.2)
 });
 
-// VersionContainer.openInWorld()
 const VersionContainer = component({
   type: WorldVersionViewer,
   name: 'version container',
@@ -915,7 +914,6 @@ const VersionContainer = component({
   })]
 });
 
-// part(WorldPreviewTile).openInWorld()
 const WorldPreviewTile = component({
   type: WorldPreview,
   name: 'world preview',
@@ -1038,7 +1036,6 @@ const WorldPreviewTile = component({
   }]
 });
 
-// part(WorldBrowser).openInWorld()
 const WorldBrowser = component({
   type: WorldDashboard,
   name: 'world browser',

@@ -188,7 +188,6 @@ export class GradientHaloModel extends ViewModel {
   }
 }
 
-// GradientHalo.openInWorld()
 const GradientHalo = component({
   defaultViewModel: GradientHaloModel,
   name: 'gradient halo',
