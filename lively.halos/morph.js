@@ -2,6 +2,7 @@
 import {
   Morph, config,
   TilingLayout,
+  part,
   Path,
   Text,
   GridLayout,
@@ -1150,13 +1151,11 @@ class CopyHaloItem extends RoundHaloItem {
       halo.alignWithTarget();
     } else {
       const pos = target.globalPosition;
-      const copy = target.copy(true);
-      if (target.isComponent) {
-        copy.isComponent = false;
-        copy.withAllSubmorphsDoExcluding(m => {
-          if (m === copy || !m.master) { delete m._parametrizedProps; }
-        }, m => m.master && m !== copy);
-        copy.master = target;
+      let copy;
+      if (target.isComponent && target._changeTracker) {
+        copy = part(target._changeTracker.componentPolicy);
+      } else {
+        copy = target.copy(true);
       }
       copy.name = findNewName(target, target.name);
       world.addMorph(copy);
