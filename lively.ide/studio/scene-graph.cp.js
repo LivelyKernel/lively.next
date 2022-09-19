@@ -9,7 +9,6 @@ import { getClassName } from 'lively.serializer2';
 import { arr, obj, fun } from 'lively.lang';
 import { connect } from 'lively.bindings';
 
-// part(MorphPanel).openInWorld();
 export class MorphPanelModel extends ViewModel {
   static get properties () {
     return {
@@ -553,7 +552,7 @@ const MorphNode = component({
   }
   ]
 });
-// part(MorphPanel).openInWorld()
+
 const MorphPanel = component({
   defaultViewModel: MorphPanelModel,
   name: 'morph panel',

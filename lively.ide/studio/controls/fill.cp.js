@@ -67,8 +67,6 @@ export class FillControlModel extends ViewModel {
   }
 }
 
-// FillControl.openInWorld()
-// ColorInput.openInWorld()
 const FillControl = component(PropertySection, {
   defaultViewModel: FillControlModel,
   name: 'fill control',

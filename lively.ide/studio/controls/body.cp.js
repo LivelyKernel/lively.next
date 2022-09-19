@@ -430,8 +430,6 @@ const PROP_CONFIG = {
   }
 };
 
-// DynamicProperty.openInWorld()
-// part(DynamicProperty)
 const DynamicProperty = component({
   defaultViewModel: DynamicPropertyModel,
   name: 'dynamic property',
