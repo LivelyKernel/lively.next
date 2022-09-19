@@ -823,6 +823,8 @@ export default class Renderer {
     } = morph;
 
     let textLayerClasses = 'newtext-text-layer actual';
+    if (!fixedWidth) textLayerClasses = textLayerClasses + ' auto-width';
+    if (!fixedHeight) textLayerClasses = textLayerClasses + ' auto-height';
 
     textLayerClasses = textLayerClasses + ' ' + (fixedWidth ? lineWrappingToClass(lineWrapping) : lineWrappingToClass(false));
 
