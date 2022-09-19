@@ -1522,12 +1522,12 @@ export class Text extends Morph {
     if (this.document) {
       return this.textLayout.textBounds(this);
     } else { // label mode
-      return this.measureBoundsFor();
+      return this.measureStaticTextBounds();
     }
   }
 
-  measureBoundsFor () {
-    return this.env.renderer.measureBoundsFor(this);
+  measureStaticTextBounds () {
+    return this.env.renderer.measureStaticTextBoundsFor(this);
   }
 
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
@@ -2586,26 +2586,22 @@ export class Text extends Morph {
   // text layout related
 
   fit () {
-    // text morph mode
     if (this.document) {
       const { fixedWidth, fixedHeight } = this;
       if ((fixedHeight && fixedWidth) ||
         !this.textLayout /* not init'ed yet */ ||
         this.master && !this.master._appliedMaster) return this;
+      
       const textBounds = this.textBounds().outsetByRect(this.padding);
-      const resize = () => {
-        this.withMetaDo({ metaInteraction: true }, () => {
-          if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
-          if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
-          this.embeddedMorphs.forEach(submorph => {
-            const a = this.embeddedMorphMap.get(submorph).anchor;
-            if (a) a.updateEmbeddedMorph();
-          });
+      this.withMetaDo({ metaInteraction: true }, () => {
+        if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
+        if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
+        this.embeddedMorphs.forEach(submorph => {
+          const a = this.embeddedMorphMap.get(submorph).anchor;
+          if (a) a.updateEmbeddedMorph();
         });
-      };
-      resize();
-      // }
-    } else { // label mode
+      });
+    } else {
       this.withMetaDo({ skipReconciliation: true }, () => {
         let textBoundsExtent = this.textBounds().extent();
         if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
@@ -2614,7 +2610,6 @@ export class Text extends Morph {
           this.borderWidthLeft + this.borderWidthRight,
           this.borderWidthTop + this.borderWidthBottom
         );
-        // }
       });
       if (!this.visible) {
         this._cachedTextBounds = null;
