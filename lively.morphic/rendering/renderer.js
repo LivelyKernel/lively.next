@@ -1758,12 +1758,12 @@ export default class Renderer {
   // TEXTRENDERING - MEASURING AFTER RENDER
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   /**
-   * TODO: Is this nice? Shouldn't this just also use the fontmetric?
-   * Measures the bounds of `morph` in the DOM. Only used for label mode to enable autofit without more sophisticated measuring methods.
-   * @param {TextMorph} morph - A TextMorph in Label mode.
+   * Measures the bounds of `morph` in the DOM. Only used for `Text` that is not backed by Document.
+   * Without a `Document`, the `Text` also does not have a `Layout`, which means we have to measure ourself.
+   * @param {TextMorph} morph - A `Text` which is not backed by a Document.
    * @returns {Rectangle} The actual bounds of `morph` when rendered into the DOM.
    */
-  measureBoundsFor (morph) {
+   measureStaticTextBoundsFor (morph) {
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
 
     let node = this.getNodeForMorph(morph);
@@ -1850,7 +1850,7 @@ export default class Renderer {
          morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-        morph.renderingState._needsFit = true; // FIXME: is this still needed? what did it do?
+        morph.renderingState._needsFit = true;
       }
 
       // positions embedded morphs
