@@ -21,11 +21,22 @@ import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
 import { Icon, Icons } from './icons.js';
+import { ShadowObject } from '../rendering/morphic-default.js';
 
+/**
+ * A Morph to display and edit text.
+ * Most of the time, this will just work for you. To toggle between a state where editing is possible and impossible, use the `readOnly` property.
+ * When interactive editing is supported, you can use all features of text in lively, such as markers (think: highlighting syntax highlighting).
+ * When interactive editing is deactivated, you can enable native selection of text.
+ * 
+ * **SOME TECHNICAL NOTES**
+ * You should refrain from manipulating the Document of a Text manually, if you are not exactly sure what you are doing.
+ * `backWithDocument` and `removeDocument` are also not to be called directly in most use cases.
+ * If you need a Document but no interactive editing (e.g. `Tree`s), use the `needsDocument` property instead.
+ */
 export class Text extends Morph {
   static makeLabel (value, props) {
     return new morph({
-      type: 'label',
       value,
       fontFamily: 'IBM Plex, Helvetica Neue, Arial, sans-serif',
       fontColor: Color.almostBlack,
@@ -60,6 +71,8 @@ export class Text extends Morph {
     return (this._defaultTextStyleProps = styleProps);
   }
 
+  // TODO: This should probably be renamed once we tackle a nice workflow/design for editing text.
+  // For now, this is a blunt migration from the old Label class.
   async interactivelyChangeLabel () {
     const newTextString = await this.world().prompt('edit label', {
       input: this.textString,
@@ -81,6 +94,7 @@ export class Text extends Morph {
     return {
       renderingState: {
         before: ['textAndAttributes'],
+        group: '_rendering',
         defaultValue: {},
         initialize () {
           const state = {};
@@ -99,11 +113,6 @@ export class Text extends Morph {
           state.renderedLines = [];
           state.visibleLines = [];
           state._needsFit = true;
-          state.scrollTop = 0; // TODO: could be removed?
-          state.scrollHeight = 0; // TODO: could be removed?
-          state.scrollBottom = 0; // TODO: could be removed?
-          state.textHeight = 0; // TODO: could be removed?
-          state.textWidth = 0; // TODO: could be removed?
           state.firstVisibleRow = 0;
           state.lastVisibleRow = 0;
           state.heightBefore = 0;
@@ -112,13 +121,12 @@ export class Text extends Morph {
         }
       },
 
-      // Setting a layout on Text is forbidden/not applied.
-      // This specification is to explicitly override the inherited Morph behavior.
       layout: {
         readOnly: true,
         get () {
           return null;
-        }
+        },
+        doc: 'Setting a layout on Text is forbidden/not applied. This specification is to explicitly override the inherited Morph behavior'
       },
 
       clipMode: {
@@ -135,6 +143,13 @@ export class Text extends Morph {
         isStyleProp: true,
         after: ['textLayout'],
         defaultValue: false,
+        set (value) {
+          if (!this.document && value) {
+            $world.setStatusMessage('Debug Layer only available when Text is backed by Document.');
+            return;
+          }
+          this.setProperty('debug', value);
+        },
         doc: 'For visualizing and debugging text layout and rendering'
       },
 
@@ -178,18 +193,16 @@ export class Text extends Morph {
         }
       },
 
+      document: {
+        group: '_rendering',
+        after: ['readOnly'],
+        initialize () {
+          if (!this.readOnly || this.needsDocument) this.backWithDocument();
+        }
+      },
+
       textLayout: {
         group: '_rendering'
-      },
-
-      document: {
-        group: 'text'
-      },
-
-      // TODO: implement this switch
-      keepDocument: {
-        group: 'text',
-        defaultValue: false
       },
 
       draggable: { defaultValue: false },
@@ -258,19 +271,42 @@ export class Text extends Morph {
 
       readOnly: {
         group: 'text',
+        defaultValue: true,
         isStyleProp: true,
-        defaultValue: false
+        set (readOnly) {
+          if (!readOnly) {
+            this.backedUpSelectionMode = this.selectionMode;
+            this.backWithDocument();
+            this.selectionMode = 'lively';
+            this.nativeCursor = 'text';
+          }
+          else {
+            if (!this.needsDocument) {
+              this.removeDocument();
+              if (this.backedUpSelectionMode) this.selectionMode = this.backedUpSelectionMode;
+              else this.selectionMode = 'none';
+            }
+            this.nativeCursor = 'auto';
+          }
+          this.setProperty('readOnly', readOnly);
+        }
+      },
+
+      needsDocument: {
+        defaultValue: false,
+        set (needsDocument) {
+          if (needsDocument) {
+            this.backWithDocument();
+          }
+          this.setProperty('needsDocument', needsDocument);
+        }
       },
 
       selectable: {
         group: 'selection',
-        isStyleProp: true,
-        defaultValue: true,
-        set (value) {
-          this.setProperty('selectable', value);
-          if (!value && this.getProperty('selection') && !this.selection.isEmpty()) {
-            this.selection.collapse();
-          }
+        derived: true,
+        get () {
+          return this.selectionMode === 'lively'
         }
       },
 
@@ -345,12 +381,13 @@ export class Text extends Morph {
           return sel;
         },
         set (selOrRange) {
-          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
-          const currentSel = this.getProperty('selection');
-          if (this._isDowngrading || this._isUpgrading) {
+          if (this._isDowngrading || this._isUpgrading || !selOrRange) {
             this.setProperty('selection', null);
             return;
           }
+          if (!this.document) this.backWithDocument();
+          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
+          const currentSel = this.getProperty('selection');
           if (!selOrRange && currentSel) {
             if (currentSel.isMultiSelection) {
               currentSel.disableMultiSelect();
@@ -395,15 +432,15 @@ export class Text extends Morph {
             // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
             this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
             this.insertText(value, { column: 0, row: 0 });
-          } else { // "label mode"
-            this.textAndAttributes = [value, null];
+          } else {
+            this.textAndAttributes = [String(value), null];
           }
         }
       },
 
       value: {
         group: 'text',
-        after: ['document', 'embeddedMorphMap'],
+        after: ['document', 'embeddedMorphMap', 'textAndAttributes'],
         derived: true,
         get () {
           const { textAndAttributes } = this;
@@ -421,16 +458,12 @@ export class Text extends Morph {
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // This is the one and only best way to set and retrieve mighty text!
-      // textString and value are only derivatives of this!
       textAndAttributes: {
         group: 'text',
         after: ['document', 'submorphs'],
         renderSynchronously: true,
         get () {
-          // case in which we are backed by document
           if (this.document && !this._isUpgrading) return this.document.textAndAttributes;
-          // case in which we are not backed by document
           else {
             let val = this.getProperty('textAndAttributes');
             if (!val || val.length < 1) val = ['', null];
@@ -444,24 +477,22 @@ export class Text extends Morph {
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
               textAndAttributes
             );
-          // case in which we are not backed by document
           } else {
-              if (textAndAttributes.length === 0) textAndAttributes = ['', null];
-            }
-            this.setProperty('textAndAttributes', textAndAttributes);
-            this.whenFontLoaded().then(()=>this.fit());
+            if (textAndAttributes.length === 0) textAndAttributes = ['', null];
+            if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
           }
+          this.setProperty('textAndAttributes', textAndAttributes);
+          this.whenFontLoaded().then(() => this.fit());
+        }
       },
 
       // valueAndAnnotation is a way to put rich text content followed by a right
       // aligned annotation into a label. It simply is using textAndAttributes with
-      // the convention that the last string/attribue pair in textAndAttributes is the
+      // the convention that the last string/attribute pair in textAndAttributes is the
       // annotation (the attribute includes the textStyleClass "annotation")
       valueAndAnnotation: {
         derived: true,
         after: ['textAndAttributes'],
-
-        // TODO: is this still working?
         get () {
           let value = this.textAndAttributes; let annotation = null;
           if (value.length > 2) {
@@ -538,7 +569,10 @@ export class Text extends Morph {
         }
       },
 
-      nativeCursor: { defaultValue: 'text', isDefaultTextStyleProp: true },
+      nativeCursor: {
+        isDefaultTextStyleProp: true,
+        initialize () { this.readOnly ? 'auto' : 'text'}
+      },
 
       selectionMode: {
         type: 'Enum',
@@ -554,13 +588,13 @@ export class Text extends Morph {
           }
           if (mode === 'lively') {
             if (!this.document) {
-              $world.setStatusMessage('Only possible for interactive texts.');
+              this.selectionMode = 'native';
               return;
             }
             this.stealFocus = false;
           }
           if (mode === 'none') {
-            this.selectable = false;
+            if (this.getProperty('selection') && !this.selection.isEmpty()) this.selection.collapse();
             this.stealFocus = false;
           }
           this.setProperty('selectionMode', mode);
@@ -596,6 +630,7 @@ export class Text extends Morph {
         type: 'Color',
         defaultValue: Color.rgba(212, 230, 241, 0.8),
         isStyleProp: true,
+        doc: 'Changes the color of lively selections.',
         after: ['defaultTextStyle']
       },
 
@@ -605,6 +640,25 @@ export class Text extends Morph {
         isStyleProp: true,
         after: ['defaultTextStyle'],
         defaultValue: Color.black
+      },
+
+      fill: {
+        group: 'styling',
+        after: ['document'],
+        isStyleProp: true,
+        initialize () {
+          this.fill = this.document ? Color.white : Color.transparent;
+        },
+        defaultValue: Color.transparent
+      },
+
+      acceptsDrops: {
+        group: 'styling',
+        after: ['document'],
+        isStyleProp: true,
+        initialize () {
+          this.acceptsDrops = !!this.document;
+        }
       },
 
       fontColor: {
@@ -658,7 +712,6 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
       },
-      // TODO: This needs some work to work with and without Document 
       textAlign: {
         group: 'text styling',
         type: 'Enum',
@@ -674,7 +727,7 @@ export class Text extends Morph {
         isFloat: true,
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        defaultValue: 1.4,
+        initialize () { this.lineHeight = this.document ? 1.4 : 1; },
         after: ['document', 'defaultTextStyle', 'renderingState']
       },
       letterSpacing: {
@@ -823,7 +876,6 @@ export class Text extends Morph {
 
     this.undoManager.reset();
 
-    // TODO: why exactly was this needed?
     // Update position after fit
     if (position !== undefined) this.position = position;
     if (rightCenter !== undefined) this.rightCenter = rightCenter;
@@ -972,7 +1024,7 @@ export class Text extends Morph {
   }
 
   async whenFontLoaded () {
-    // fixme: remove busy wait, since it kills performance
+    // FIXME: remove busy wait, since it kills performance
     if (this.allFontsLoaded()) return true;
     const fonts = [...(await document.fonts.ready)];
     if (this.allFontsLoaded(fonts.filter(face => face.status == 'loaded'))) return true;
@@ -995,9 +1047,17 @@ export class Text extends Morph {
     return true;
   }
 
+  get isLabel () {
+    return !this.document;
+  }
+
   makeDirty () {
     if (this._positioningSubmorph) return;
     super.makeDirty();
+  }
+
+  static icon (iconName, props = { prefix: '', suffix: '' }) {
+    return Icon.makeLabel(iconName, props);
   }
 
   onChange (change) {
@@ -2000,9 +2060,14 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   /**
-   *
+   * This removes a Document and a TextLayout to a Text.
+   * There are necessary for features like interactive editing, but are expensive.
+   * Thus, we try to only keep them around when they are necessary.
+   * This is an internal function and you should probably not call it yourself!
    */
   removeDocument () {
+    if (!this.document) return;
+
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
     this.document = null;
@@ -2015,9 +2080,14 @@ export class Text extends Morph {
   }
 
   /**
-   *
+   * This adds a Document and a TextLayout to a Text.
+   * There are necessary for features like interactive editing, but are expensive.
+   * Thus, we try to only keep them around when they are necessary.
+   * This is an internal function and you should probably not call it yourself!
    */
   backWithDocument () {
+    if (this.document) return;
+
     this._isUpgrading = true;
     this.document = Document.fromString('', {
       maxLeafSize: 50,
@@ -2533,9 +2603,6 @@ export class Text extends Morph {
           });
         });
       };
-      // if (this.document.lines.find(l => l.hasEstimatedExtent)) {
-      //  this.whenRendered().then(resize);
-      // } else {
       resize();
       // }
     } else { // label mode
@@ -2614,7 +2681,7 @@ export class Text extends Morph {
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
     }
-    if (!this.renderingState.selectionMode === this.selectionMode){
+    if (this.renderingState.selectionMode !== this.selectionMode){
       renderer.patchSelectionMode(node, this);
     }
 
@@ -2652,8 +2719,9 @@ export class Text extends Morph {
       renderer.adjustScrollLayerChildSize(node, this); // fixme: should probably be wrapped in a trigger
       renderer.updateDebugLayer(node, this);
     } else {
-      // does this need a guard clause?
-      renderer.renderTextAndAttributes(node, this);
+      //if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+        renderer.renderTextAndAttributes(node, this);
+      //}
     }
   }
 
@@ -2704,7 +2772,7 @@ export class Text extends Morph {
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (!this.document) return; // allow for native selection
+    if (this.readOnly && this.selectionMode === 'native') return; // allow for native selection
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
 
@@ -2715,16 +2783,14 @@ export class Text extends Morph {
     const maxClicks = 3;
     const normedClickCount = (clickCount - 1) % maxClicks + 1;
     const clickPos = this.localize(position);
+    if (!this.document) return;
     const clickTextPos = this.textPositionFromPoint(clickPos);
     if (
       evt.leftMouseButtonPressed() &&
       !evt.isShiftDown() &&
       !evt.isAltDown() &&
       this.callTextAttributeDoitFromMouseEvent(evt, clickPos)
-    ) {
-      // evt.stop();
-      // return;
-    }
+    ) { }
 
     if (!this.selectable) return;
 
@@ -2754,7 +2820,7 @@ export class Text extends Morph {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // click-doit support
-  // FIXME move this to somewhere else?
+  // FIXME: move this to somewhere else?
 
   evalEnvForDoit (doit/* from attribute.doit */) {
     const moduleId = `lively://text-doit/${this.id}`;
@@ -3180,14 +3246,14 @@ export class Text extends Morph {
   onHoverIn (evt) {
     super.onHoverIn(evt);
     this.scrollActive = true;
-    this.makeDirty();
+    if (!this.readOnly) this.makeDirty();
   }
 
   onHoverOut (evt) {
     super.onHoverOut(evt);
     if (touchInputDevice) return;
     this.scrollActive = false;
-    this.makeDirty();
+    if (!this.readOnly) this.makeDirty();
   }
 
   onKeyDown (evt) {
@@ -3307,22 +3373,20 @@ export class Text extends Morph {
 
   onFocus (evt) {
     super.onFocus(evt);
-    // this.makeDirty();
-    // this.selection.cursorBlinkStart();
-    // if (this._originalShadow) return;
-    // let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
-    // if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
-    // if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
-    // this.withMetaDo({ metaInteraction: true }, () => {
-    //   this.highlightWhenFocused && this.animate({
-    //     dropShadow: haloShadow,
-    //     duration: 200
-    //   });
-    // });
+    this.selection.cursorBlinkStart();
+    if (this._originalShadow) return;
+    let haloShadow = this.haloShadow || this.propertiesAndPropertySettings().properties.haloShadow.defaultValue;
+    if (haloShadow && !haloShadow.equals) haloShadow = new ShadowObject(haloShadow);
+    if (haloShadow && !haloShadow.equals(this.dropShadow)) this._originalShadow = this.dropShadow;
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.highlightWhenFocused && this.animate({
+        dropShadow: haloShadow,
+        duration: 200
+      });
+    });
   }
 
   onBlur (evt) {
-    this.makeDirty();
     this.selection.cursorBlinkStop();
     this.highlightWhenFocused && this.animate({
       dropShadow: this._originalShadow || null,
@@ -3334,7 +3398,7 @@ export class Text extends Morph {
 
   ensureKeyInputHelperAtCursor () {
     // move the textarea to the text cursor
-    // if (this.env.eventDispatcher.keyInputHelper) { this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this); }
+    if (this.env.eventDispatcher.keyInputHelper && !this.readOnly) { this.env.eventDispatcher.keyInputHelper.ensureBeingAtCursorOfText(this); }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -3775,6 +3839,7 @@ export class Text extends Morph {
   }
 
   consistencyCheck () {
+    if (!this.document) return;
     // don't fix in debug mode
     if (this.debug) return this.document.consistencyCheck();
     try {
