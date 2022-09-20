@@ -589,6 +589,7 @@ export class TilingLayout extends Layout {
   onDomResize (node, morph) {
     if (morph === this.container) {
       morph.withMetaDo({ isLayoutAction: true }, () => {
+        morph.renderingState.inlineFlexImportant = true;
         this.updateContainerViaDom(node, true);
       });
       return;
@@ -703,7 +704,6 @@ export class TilingLayout extends Layout {
   updateContainerViaDom (node, makeDirty = false) {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     if (!node && !(node = this.getNodeFor(container))) return;
-    if (node && this.hasEmbeddedContainer()) node.style.setProperty('display', 'inline-flex', 'important');
     const width = Math.round(node.offsetWidth);
     const height = Math.round(node.offsetHeight);
     if (width === 0 && height === 0) return; // we are probably not rendered
@@ -2884,7 +2884,7 @@ export class GridLayout extends Layout {
     if (!renderer) return;
     const node = this.getNodeFor(this.container);
     if (node && this.hasEmbeddedContainer()) {
-      node.style.setProperty('display', 'inline-grid', 'important');
+      this.container.renderingState.inlineGridImportant = true;
     }
   }
 

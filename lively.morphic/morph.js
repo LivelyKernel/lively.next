@@ -558,6 +558,8 @@ export class Morph {
         type: 'Layout',
         after: ['submorphs', 'extent', 'origin', 'position', 'isLayoutable'],
         set (value) {
+          delete this.renderingState.inlineGridImportant;
+          delete this.renderingState.inlineFlexImportant;
           // TODO: rename this flag eventually
           if (value) {
             this.renderingState.hasCSSLayoutChange = true;
