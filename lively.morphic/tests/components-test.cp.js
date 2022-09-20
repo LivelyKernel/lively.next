@@ -198,6 +198,16 @@ const c4 = ComponentDescriptor.for(() => component(c3, {
   ]
 }));
 
+const c5 = ComponentDescriptor.for(() => component({
+  type: 'text',
+  textAndAttributes: [
+    'Something: ', {},
+    part(c4, { name: 'holly' }), null,
+    'or: ', null,
+    morph({ name: 'wood', fill: Color.orange }), null
+  ]
+}));
+
 describe('spec based components', () => {
   afterEach(() => {
     detach(e2);
@@ -782,5 +792,13 @@ describe('components', () => {
     expect(instOverridden.master.getSubSpecFor('alice').spec).has.keys('name', 'submorphs', 'master');
     expect(instOverridden.master.getSubSpecFor('alice').spec.master).to.eql(TLB.stylePolicy);
     expect(copied2.master.getSubSpecFor('alice').spec).has.keys('name', 'submorphs', 'master');
+  });
+
+  it('initializes embedded morphs in textAndAttributes correctly', () => {
+    const m = part(c5);
+    const m1 = part(c5);
+    expect(m.get('holly')).not.to.be.null;
+    expect(m1.get('wood')).not.to.be.null;
+    expect(m.get('wood')).not.to.be.null;
   });
 });
