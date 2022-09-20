@@ -1578,7 +1578,7 @@ export class BrowserModel extends ViewModel {
 
   async ensureComponentEditButtonFor (componentDescriptor) {
     const { ComponentEditButton } = await System.import('lively.ide/js/browser/ui.cp.js');
-    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor });
+    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor, epiMorph: true });
     const editor = this.ui.sourceEditor;
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);

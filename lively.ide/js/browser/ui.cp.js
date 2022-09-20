@@ -118,6 +118,7 @@ class ComponentEditButtonMorph extends Morph {
     const wrapper = this.addMorph({
       fill: Color.transparent,
       opacity: 0,
+      epiMorph: true,
       submorphs: [componentMorph]
     });
     componentMorph.position = pt(0, 0);
