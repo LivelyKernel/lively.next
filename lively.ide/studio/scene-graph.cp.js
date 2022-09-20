@@ -465,7 +465,6 @@ export class MorphNodeModel extends ViewModel {
   onBeingDroppedOn ($super, hand, recipient) {
     const { view } = this;
     this.tree._dropInProgress = true;
-    $super(hand, recipient);
     const after = () => {
       view.fill = Color.gray.withA(0.5);
       view.opacity = 1;
