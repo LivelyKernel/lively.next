@@ -646,9 +646,6 @@ export class Text extends Morph {
         group: 'styling',
         after: ['document'],
         isStyleProp: true,
-        initialize () {
-          this.fill = this.document ? Color.white : Color.transparent;
-        },
         defaultValue: Color.transparent
       },
 
@@ -727,7 +724,7 @@ export class Text extends Morph {
         isFloat: true,
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        initialize () { this.lineHeight = this.document ? 1.4 : 1; },
+        defaultValue: 1.4,
         after: ['document', 'defaultTextStyle', 'renderingState']
       },
       letterSpacing: {
