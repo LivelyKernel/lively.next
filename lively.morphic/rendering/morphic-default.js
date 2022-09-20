@@ -307,9 +307,10 @@ div.text-layer span {
 }
 
 .Text .annotation {
-  position: absolute;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  float: right;
+  top: 50%;
+  text-align: right;
 }
 
 .truncated-text {
