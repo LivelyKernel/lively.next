@@ -30,13 +30,26 @@ const e2 = component(e1, {
     },
     { name: 'bob', master: e1 },
     add(part(e1, { name: 'foo', fill: Color.gray, submorphs: [{ name: 'bob', fill: Color.green }] })),
-    add({ name: 'bar', borderRadius: 5, borderColor: Color.black, borderWidth: 2 })
+    add({
+      name: 'bar',
+      borderRadius: 5,
+      borderColor: Color.black,
+      borderWidth: 2,
+      submorphs: [part(e1, {
+        name: 'moppel'
+      })]
+    })
   ]
 });
 
 component.DescriptorClass = ComponentDescriptor;
 
 describe('component definition reconciliation', () => {
+  it('component proxy includes added morphs', async () => {
+    const c = await e2.edit();
+    expect(c.get('moppel')).not.to.be.null;
+  });
+
   it('allows to create a component proxy for editing the spec', async () => {
     // define an ad hoc component
     const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
