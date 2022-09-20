@@ -76,8 +76,8 @@ export function clearStylePropertiesForClassesIn (moduleId) {
   });
 }
 
-function getPropSettings(type) {
-   const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
+function getPropSettings (type) {
+  const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
   const { package: pkg, pathInPackage } = klass[Symbol.for('lively-module-meta')];
   const { properties: props } = klass[Symbol.for('lively.classes-properties-and-settings')];
   return { props, moduleId: string.joinPath(pkg.name, pathInPackage) };
@@ -99,10 +99,9 @@ export function getStylePropertiesFor (type) {
   return styleProps;
 }
 
-
 export function getDefaultValueFor (type, propName) {
   if (CachedDefaultValues.has(type)) return CachedDefaultValues.get(type)[propName];
-  const {props} = getPropSettings(type);
+  const { props } = getPropSettings(type);
   const defaultValues = {};
   for (let prop in props) {
     if (props[prop].isStyleProp && 'defaultValue' in props[prop]) {
@@ -120,6 +119,8 @@ export function morph (props = {}, opts = { restore: false }) {
     if (typeof props.type === 'object') klass = locateClass(props.type);
     else if (typeof props.type === 'string') { klass = nameToClassMapping[props.type.toLowerCase()] || klass; }
   }
+
+  if (morph.evaluateAsSpec) return { ...props, __isSpec__: true };
 
   return opts.restore
     ? new klass({ [Symbol.for('lively-instance-restorer')]: true }).initFromJSON(props)

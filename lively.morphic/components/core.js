@@ -61,13 +61,14 @@ export class ComponentDescriptor {
    * calls that occur in our generatorFunction()
    */
   static extractSpec (generatorFunction) {
-    evaluateAsSpec = true;
+    morph.evaluateAsSpec = evaluateAsSpec = true;
+
     let spec = {};
     try {
       spec = generatorFunction();
       if (!spec.isPolicy) { spec = new PolicyApplicator(spec); } // make part calls return the synthesized spec
     } finally {
-      evaluateAsSpec = false; // always disable this flag after spec initialization is finished
+      morph.evaluateAsSpec = evaluateAsSpec = false; // always disable this flag after spec initialization is finished
     }
     return spec;
   }

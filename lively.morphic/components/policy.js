@@ -260,6 +260,18 @@ export class StylePolicy {
         if (node.master) {
           return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
         }
+        if (node.textAndAttributes) {
+          return {
+            ...node,
+            submorphs,
+            textAndAttributes: node.textAndAttributes.map(textOrAttr => {
+              if (textOrAttr?.__isSpec__) {
+                return ensureStylePoliciesInStandalone(textOrAttr);
+              }
+              return textOrAttr;
+            })
+          };
+        }
         return { ...node, submorphs };
       }, node => node.submorphs || []);
     };
@@ -399,7 +411,7 @@ export class StylePolicy {
    * @return { object } The build spec.
    */
   asBuildSpec () {
-    const buildSpec = tree.mapTree(this.spec, (specOrPolicy, submorphs) => {
+    const extractBuildSpecs = (specOrPolicy, submorphs) => {
       if (specOrPolicy.COMMAND === 'add') {
         specOrPolicy = specOrPolicy.props;
       }
@@ -420,6 +432,13 @@ export class StylePolicy {
         specOrPolicy.textAndAttributes = specOrPolicy.textAndAttributes || [specOrPolicy.textString, null];
         delete specOrPolicy.textString;
       }
+      if (specOrPolicy.textAndAttributes) {
+        specOrPolicy.textAndAttributes = specOrPolicy.textAndAttributes.map(textOrAttr => {
+          if (textOrAttr?.__isSpec__) return morph(tree.mapTree(textOrAttr, extractBuildSpecs, node => node.submorphs)); // ensure sub build specs...
+          if (textOrAttr?.isPolicy) return morph(textOrAttr.asBuildSpec());
+          return textOrAttr;
+        });
+      }
       if (submorphs.length > 0) {
         let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
         for (let spec of submorphs) {
@@ -436,7 +455,8 @@ export class StylePolicy {
       if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
 
       return specOrPolicy;
-    }, node => node.submorphs);
+    };
+    const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.submorphs);
     if (this.parent || this.overriddenMaster) buildSpec.master = this;
     return buildSpec;
   }
