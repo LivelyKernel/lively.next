@@ -293,16 +293,18 @@ export class ComponentChangeTracker {
     }
   }
 
-  constructor (aComponent, policy, oldName = aComponent.name) {
+  constructor (aComponent, descriptor, oldName = aComponent.name) {
     this.trackedComponent = aComponent;
     this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
     this.componentModule = module(this.componentModuleId);
-    this.componentPolicy = policy;
+    this.componentDescriptor = descriptor;
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
     connect(aComponent, 'onChange', this, 'processChangeInComponent', { garbageCollect: true });
     aComponent._changeTracker = this;
     this.replaceAbandonedComponent(oldName);
   }
+
+  get componentPolicy () { return this.componentDescriptor.stylePolicy; }
 
   whenReady () {
     return !!this.componentModule.source(); // ready once the source is fetched
@@ -557,7 +559,7 @@ export class ComponentChangeTracker {
   }
 
   refreshDependants () {
-    this.componentPolicy?.refreshDependants();
+    this.componentDescriptor?.refreshDependants();
   }
 
   processChangeInComponentSource (change) {
@@ -761,7 +763,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   async edit () {
     const c = this.getComponentMorph();
-    if (!c._changeTracker) { new ComponentChangeTracker(c, this.stylePolicy); }
+    if (!c._changeTracker) { new ComponentChangeTracker(c, this); }
     return await c._changeTracker.whenReady() && c;
   }
 
