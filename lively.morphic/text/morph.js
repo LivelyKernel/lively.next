@@ -2672,6 +2672,18 @@ export class Text extends Morph {
       this.invalidateTextLayout(true, true);
       renderer.renderTextAndAttributes(node, this);
     }
+    if (this.renderingState.fixedWidth !== this.fixedWidth){
+      const textLayer = node.querySelector('.actual');
+      if (this.fixedWidth) textLayer.classList.remove('auto-width')
+      else textLayer.classList.add('auto-width');
+      this.renderingState.fixedWidth = this.fixedWidth;
+    }
+    if (this.renderingState.fixedHeight !== this.fixedHeight){
+      const textLayer = node.querySelector('.actual');
+      if (this.fixedWidth) textLayer.classList.remove('auto-width')
+      else textLayer.classList.add('auto-width');
+      this.renderingState.fixedHeight = this.fixedHeight;
+    }
 
     const currentTextLayerStyleObject = this.styleObject();
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
