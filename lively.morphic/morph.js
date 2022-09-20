@@ -1391,14 +1391,16 @@ export class Morph {
   }
 
   adjustOrigin (newOrigin) {
-    const oldOrigin = this.origin;
-    const oldPos = this.globalBounds().topLeft();
-    this.origin = newOrigin;
-    this.submorphs.forEach((m) =>
-      m.position = m.position.subPt(newOrigin.subPt(oldOrigin)));
-    const newPos = this.globalBounds().topLeft();
-    const globalDelta = oldPos.subPt(newPos);
-    this.globalPosition = this.globalPosition.addPt(globalDelta);
+    this.withMetaDo({ metaInteraction: true }, () => {
+      const oldOrigin = this.origin;
+      const oldPos = this.globalBounds().topLeft();
+      this.origin = newOrigin;
+      this.submorphs.forEach((m) =>
+        m.position = m.position.subPt(newOrigin.subPt(oldOrigin)));
+      const newPos = this.globalBounds().topLeft();
+      const globalDelta = oldPos.subPt(newPos);
+      this.globalPosition = this.globalPosition.addPt(globalDelta);
+    });
   }
 
   setBounds (bounds) {
