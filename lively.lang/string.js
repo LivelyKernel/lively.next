@@ -1048,7 +1048,10 @@ function decamelize (s) {
   let lastSplitAt = 0;
   const parts = [];
   for (let i = 0; i < len; i++) {
-    if (s[i] != ' ' && s[i] === s[i].toUpperCase() && i !== 0) {
+    if (s[i] != ' ' &&
+        isNaN(Number.parseInt(s[i])) &&
+        s[i] === s[i].toUpperCase() &&
+        i !== 0) {
       parts.push(s.slice(lastSplitAt, i).toLowerCase());
       lastSplitAt = i;
     }
