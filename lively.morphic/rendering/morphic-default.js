@@ -49,6 +49,8 @@ import bowser from 'bowser';
     node.style.removeProperty('top');
     node.style.removeProperty('left');
   }
+  if (morph.renderingState.inlineGridImportant && node.style['display'] !== 'none') node.style.setProperty('display', 'inline-grid', 'important');
+  if (morph.renderingState.inlineFlexImportant && node.style['display'] !== 'none') node.style.setProperty('display','inline-flex','important');
 
   return node;
 }
