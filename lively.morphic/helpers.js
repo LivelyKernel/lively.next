@@ -80,7 +80,7 @@ function getPropSettings (type) {
   const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
   const { package: pkg, pathInPackage } = klass[Symbol.for('lively-module-meta')];
   const { properties: props, order } = klass[Symbol.for('lively.classes-properties-and-settings')];
-  return { order, props, moduleId: string.joinPath(pkg.name, pathInPackage) };
+  return { order, props, moduleId: string.joinPath(pkg.name || '', pathInPackage) };
 }
 
 export function getStylePropertiesFor (type) {
