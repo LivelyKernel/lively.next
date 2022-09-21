@@ -398,7 +398,7 @@ export class Text extends Morph {
       textAndAttributes: {
         group: 'text',
         derived: true,
-        after: ['document'],
+        after: ['document', 'submorphs'],
         get () {
           return this.document.textAndAttributes;
         },
