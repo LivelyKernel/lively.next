@@ -200,6 +200,9 @@ const c4 = ComponentDescriptor.for(() => component(c3, {
 
 const c5 = ComponentDescriptor.for(() => component({
   type: 'text',
+  submorphs: [
+    part(c4, { name: 'lively', fill: Color.lively })
+  ],
   textAndAttributes: [
     'Something: ', {},
     part(c4, { name: 'holly' }), null,
@@ -800,5 +803,13 @@ describe('components', () => {
     expect(m.get('holly')).not.to.be.null;
     expect(m1.get('wood')).not.to.be.null;
     expect(m.get('wood')).not.to.be.null;
+  });
+
+  it('attaches the proper style polcies to embedded morphs', () => {
+    const m = part(c5);
+    expect(m.get('lively').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
+    expect(m.get('holly').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
+    expect(c5.stylePolicy.getSubSpecFor('holly')).to.be.instanceof(StylePolicy);
+    expect(c5.stylePolicy.getSubSpecFor('wood')).to.be.instanceof(Object);
   });
 });
