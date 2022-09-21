@@ -279,8 +279,7 @@ export class Text extends Morph {
             this.backWithDocument();
             this.selectionMode = 'lively';
             this.nativeCursor = 'text';
-          }
-          else {
+          } else {
             if (!this.needsDocument) {
               this.removeDocument();
               if (this.backedUpSelectionMode) this.selectionMode = this.backedUpSelectionMode;
@@ -306,7 +305,7 @@ export class Text extends Morph {
         group: 'selection',
         derived: true,
         get () {
-          return this.selectionMode === 'lively'
+          return this.selectionMode === 'lively';
         }
       },
 
@@ -571,7 +570,7 @@ export class Text extends Morph {
 
       nativeCursor: {
         isDefaultTextStyleProp: true,
-        initialize () { this.readOnly ? 'auto' : 'text'}
+        initialize () { this.readOnly ? 'auto' : 'text'; }
       },
 
       selectionMode: {
@@ -2589,7 +2588,7 @@ export class Text extends Morph {
       if ((fixedHeight && fixedWidth) ||
         !this.textLayout /* not init'ed yet */ ||
         this.master && !this.master._appliedMaster) return this;
-      
+
       const textBounds = this.textBounds().outsetByRect(this.padding);
       this.withMetaDo({ metaInteraction: true }, () => {
         if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
@@ -2669,15 +2668,15 @@ export class Text extends Morph {
       this.invalidateTextLayout(true, true);
       renderer.renderTextAndAttributes(node, this);
     }
-    if (this.renderingState.fixedWidth !== this.fixedWidth){
+    if (this.renderingState.fixedWidth !== this.fixedWidth) {
       const textLayer = node.querySelector('.actual');
-      if (this.fixedWidth) textLayer.classList.remove('auto-width')
+      if (this.fixedWidth) textLayer.classList.remove('auto-width');
       else textLayer.classList.add('auto-width');
       this.renderingState.fixedWidth = this.fixedWidth;
     }
-    if (this.renderingState.fixedHeight !== this.fixedHeight){
+    if (this.renderingState.fixedHeight !== this.fixedHeight) {
       const textLayer = node.querySelector('.actual');
-      if (this.fixedWidth) textLayer.classList.remove('auto-width')
+      if (this.fixedWidth) textLayer.classList.remove('auto-width');
       else textLayer.classList.add('auto-width');
       this.renderingState.fixedHeight = this.fixedHeight;
     }
@@ -2686,7 +2685,7 @@ export class Text extends Morph {
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
     }
-    if (this.renderingState.selectionMode !== this.selectionMode){
+    if (this.renderingState.selectionMode !== this.selectionMode) {
       renderer.patchSelectionMode(node, this);
     }
 
@@ -2715,7 +2714,7 @@ export class Text extends Morph {
         renderer.patchLineWrapping(node, this);
       }
       // We cannot just store away the whole selections, as they contain references on their containing `Text`.
-      if (!obj.equals(this.selection._selections.map(s => s.range), this.renderingState.selectionRanges)){
+      if (!obj.equals(this.selection._selections.map(s => s.range), this.renderingState.selectionRanges)) {
         renderer.patchSelectionLayer(node, this);
       }
       // FIXME: This should probably be wrapped in a trigger
@@ -2728,11 +2727,11 @@ export class Text extends Morph {
       }
       if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
-          renderer.patchLineHeightAndLetterSpacing(node, this);
-         }
-         if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
-          renderer.renderTextAndAttributes(node, this);
-        }
+        renderer.patchLineHeightAndLetterSpacing(node, this);
+      }
+      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+        renderer.renderTextAndAttributes(node, this);
+      }
     }
   }
 
@@ -3900,3 +3899,4 @@ export class Text extends Morph {
     topBar.showHaloFor(this);
   }
 }
+
