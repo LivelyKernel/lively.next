@@ -53,7 +53,7 @@ export default class Renderer {
   }
 
   /**
-   * Placeholder currently used for measuring the bounds of TextMorph in Label mode.
+   * Placeholder currently used for measuring the bounds of Text that is not backed by a Document.
    * @returns {Node} The node in which the nodes to be measured can be mounted.
    */
   installPlaceholder () {
@@ -357,7 +357,7 @@ export default class Renderer {
   renderStructuralChanges (morph) {
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
- 
+
     let submorphsToRender = morph.submorphs; // the order of these is important to make sure that morphs overlap each other correctly
 
     if (morph.isWorld) {
@@ -665,7 +665,7 @@ export default class Renderer {
    * This is a) because it consists of many different nodes and b) the updating logic of it is complex,
    * since lines need to be rendered efficiently even when interactively edited and since we wing selections, cursors, etc. ourselves,
    * we need to keep book where each line/character starts and ends.
-   * @param {TextMorph} morph - The TextMorph to create a node for.
+   * @param {Text} morph - The Text to create a node for.
    * @returns {Node} The DOM node for `morph`, with text layer etc.
    */
   nodeForText (morph) {
@@ -695,9 +695,9 @@ export default class Renderer {
       node.appendChild(scrollWrapper);
       scrollWrapper.appendChild(textLayer);
     } else node.appendChild(textLayer);
-    
+
     this.renderTextAndAttributes(node, morph);
-    
+
     if (morph.document) {
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
       this.updateExtentsOfLines(textLayerNode, morph);
@@ -707,9 +707,9 @@ export default class Renderer {
   }
 
   /**
-   * When the TextMorph is set up to be interactive we decouple scrolling of the text
+   * When the Text is set up to be interactive we decouple scrolling of the text
    * via a separate scroll layer that captures the scroll events from the user.
-   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Text} morph - The Text to be rendered.
    * @returns {Node} DOM Node of scrollLayer.
    */
   renderScrollLayer (morph) {
@@ -735,7 +735,7 @@ export default class Renderer {
   }
 
   /**
-   * @param {TextMorph} morph
+   * @param {Text} morph
    * @returns {Node} DOM Node of the scrolLWrappers, i.e. the node in which scrollable content (lines,...) are wrapped.
    */
   scrollWrapperFor (morph) {
@@ -750,12 +750,12 @@ export default class Renderer {
   }
 
   /**
-   * Changing a TextMorph's mode from Label-Mode to interactive warrants the addition of a scrollLayer.
+   * Changing a Text's mode from Label-Mode to interactive warrants the addition of a scrollLayer.
    * @see renderScrollLayer.
    * The other way around will warrant the removal of this layer.
    * This method gets called when either an addition or removal is needed and takes care of the necessary DOM operations.
-   * @param {Node} node - Node of a TextMorph.
-   * @param {TextMorph} morph - The TextMorph which has changes that warrant the addition/removal of a ScrollLayer.
+   * @param {Node} node - Node of a Text.
+   * @param {Text} morph - The Text which has changes that warrant the addition/removal of a ScrollLayer.
    */
   handleScrollLayer (node, morph) {
     if (!node) return;
@@ -775,7 +775,7 @@ export default class Renderer {
       scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
-      this.removeTextSpecialsFromDOMFor(node, morph)
+      this.removeTextSpecialsFromDOMFor(node, morph);
       if (!node.querySelector('.scrollWrapper')) {
         delete morph.renderingState.needsScrollLayerRemoved;
         return;
@@ -792,7 +792,7 @@ export default class Renderer {
   /**
    * When a Text is downgraded from being backed with a Document to not having one, it looses support for lively selections and markers.
    * As it is not interactively editable, it also does not need a cursor any longer.
-   * This method cleans up render artifacts that might still exist in the DOM from when these were still supported. 
+   * This method cleans up render artifacts that might still exist in the DOM from when these were still supported.
    * @param {Node} node
    * @param {Text} morph
    */
@@ -808,10 +808,10 @@ export default class Renderer {
   }
 
   /**
-   * The texlayer is a node that wraps text content (line node,...) of a TextMorph.
+   * The texlayer is a node that wraps text content (line node,...) of a Text.
    * It sets styling properties that are applicable for the whole text (like a specific font set on the morph property).
    * Those might be overriden by styes that are later rendered inline on line nodes.
-   * @param {TextMorph} morph - TextMorph for which the text layer node is to be created.
+   * @param {Text} morph - Text for which the text layer node is to be created.
    * @returns {Node} A DOM node for the text layer of `morph`.
    */
   textLayerNodeFor (morph) {
@@ -843,7 +843,7 @@ export default class Renderer {
   /**
    * Wrapper function to create textLayerNodes inside of the fontMetric.
    * This is necessary to calculate e.g. default line/letter extents before actually rendering Text.
-   * This way, we can e.g. estimate which lines need to be renderer inside of a scrolled TextMorph.
+   * This way, we can e.g. estimate which lines need to be renderer inside of a scrolled Text.
    * @param {Morph} morph - The Morph for which to render the fontMetric.
    */
   textLayerNodeFunctionFor (morph) {
@@ -854,7 +854,7 @@ export default class Renderer {
    * Renders chunks (1 pair of text and textAttributes) into lines (divs),
    * Thus returns an array of divs that can each contain multiple spans
    * @param {Line|Object} lineObject - The line to be rendered. Can either be a `Line` object or a simple Object adhering to `textAndAttributes` semantics.
-   * @param {TextMorph} morph - The TextMorph in which the line is to be displayed.
+   * @param {Text} morph - The Text in which the line is to be displayed.
    * @param {Boolean} isRealRender - Indicates whether this is an actual render to display the resulting node in the DOM or if it is a render inside of an invisible node to measure the text to be renderer.
    * @returns {Node} The DOM node for the line (`DIV`).
    */
@@ -944,8 +944,8 @@ export default class Renderer {
         if (textStyleClasses && textStyleClasses.length) { chunkNode.className = textStyleClasses.join(' '); }
         stylepropsToNode(chunkNodeStyle, chunkNode);
         renderedChunks.push(chunkNode);
-     }
-    } else renderedChunks.push(this.doc.createElement('br'))
+      }
+    } else renderedChunks.push(this.doc.createElement('br'));
 
     const lineStyle = {};
 
@@ -1016,7 +1016,7 @@ export default class Renderer {
   renderWholeText (morph) {
     const renderedLines = [];
     const textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
-    for (let line of textAndAttributesByLine){
+    for (let line of textAndAttributesByLine) {
       renderedLines.push(this.nodeForLine(line, morph, true));
     }
     return renderedLines;
@@ -1025,7 +1025,7 @@ export default class Renderer {
   /**
    * Creates the nodes responsible for markers in text.
    * Markers for example take care of highlighting undeclared variables and syntax highlighting.
-   * @param {Text} morph - The TextMorph owning the markers.
+   * @param {Text} morph - The Text owning the markers.
    * @returns {Node[]} An array of all marker nodes.
    */
   renderMarkerLayer (morph) {
@@ -1065,7 +1065,7 @@ export default class Renderer {
 
   /**
    * Creates a node representing a slice of a single/multiline marker.
-   * @param {TextMorph} morph - The text morph owning the markers.
+   * @param {Text} morph - The text morph owning the markers.
    * @param {TextPosition} start - The position in the text where the marker starts.
    * @param {TextPosition} end - The position in the text where the marker ends.
    * @param {CSSStyle} style - Custom styles for the marker to override the defaults.
@@ -1103,7 +1103,7 @@ export default class Renderer {
   /**
    * When a Text is set up to support lively selections, we render our custom
    * selection layer instead of the HTML one which we cannot control.
-   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Text} morph - The Text to be rendered.
    * @returns {Node[]} An array of SVG Nodes that represent the selection to be displayed, including a cursor.
    */
   renderSelectionLayer (morph) {
@@ -1123,8 +1123,8 @@ export default class Renderer {
 
   /**
    * Since we can not control the selection of HTML DOM-Nodes we wing it ourselves.
-   * Here we render a custom DOM representation of the current selection within a TextMorph.
-   * @param {Text} morph - The TextMorph to display selections.
+   * Here we render a custom DOM representation of the current selection within a Text.
+   * @param {Text} morph - The Text to display selections.
    * @param {Selection} selection - The selection to be rendered.
    * @param {Boolean} diminished - Wether or not to render the cursor diminished.
    * @param {Integer} cursorWidth - The width of the cursor.
@@ -1238,7 +1238,7 @@ export default class Renderer {
   }
 
   /**
-   * Renders a TextMorph's text cursor.
+   * Renders a Text's text cursor.
    * @param {Point} pos - The position of the Cursor.
    * @param {Number} height - Height of the cursor to be rendered in pixels.
    * @param {Boolean} visible - Wether or not to display the cursor.
@@ -1264,7 +1264,7 @@ export default class Renderer {
    * selection style that is stolen from Visual Studio Code.
    * @param {Rectangle[]} slice - The slices to render.
    * @param {Color} selectionColor - The color of the rendered selection.
-   * @param {Text} morph - The TextMorph to be rendered.
+   * @param {Text} morph - The Text to be rendered.
    * @returns {SVGNode} Rendered slices as `SVG`.
    */
   selectionLayerRounded (slices, selectionColor, morph) {
@@ -1338,8 +1338,8 @@ export default class Renderer {
   }
 
   /**
-   * Renders the debug layer of a TextMorph, which visualizes the bounds computed by the text layout.
-   * @param {TextMorph} morph - The text morph to visualize the text layout for.
+   * Renders the debug layer of a Text, which visualizes the bounds computed by the text layout.
+   * @param {Text} morph - The text morph to visualize the text layout for.
    * @return {Node[]} An array of DOM nodes that comprise the debug layer.
    */
   renderDebugLayer (morph) {
@@ -1415,7 +1415,7 @@ export default class Renderer {
    * Finds out how many and which lines can be dislpayed in `morph`, adapts the values in `morphs`'s renderingState accordingly,
    * and updates the fillerDiv that is used to push the lines inside of the visible are of `morph`'s node.
    * The last part is necessary since the scrolling layer and the content part of the `morph` are decoupled.
-   * @param {TextMorph} morph - The morph for which we want to find out which lines are visible.
+   * @param {Text} morph - The morph for which we want to find out which lines are visible.
    * @param {Node} node - `morph`'s node inside of the DOM.
    * @returns {Line[]} An arry containing the `Line` objects of all visible lines.
    */
@@ -1487,10 +1487,10 @@ export default class Renderer {
   }
 
   /**
-   * Takes care of creating and/or updating the necessary nodes to display a TextMorphs text.
+   * Takes care of creating and/or updating the necessary nodes to display a Texts text.
    * Reconciles LineNodes when e.g. a new Line is inserted between already existing ones and takes care of updating existing lines that have been changed.
    * @param {Node} node - The DOM Node of `morph`
-   * @param {TextMorph} morph - The TextMorph for which the text should be (re)rendered.
+   * @param {Text} morph - The Text for which the text should be (re)rendered.
    */
   renderTextAndAttributes (node, morph) {
     const textNode = node.querySelector(`#${morph.id}textLayer`);
@@ -1532,7 +1532,7 @@ export default class Renderer {
         null
       );
       morph.renderingState.renderedLines = morph.renderingState.visibleLines;
-      if (patchLines){
+      if (patchLines) {
         let i = 0; // the first child is always the filler, we can skip it
         let previousLineChanged = false;
         for (const line of morph.renderingState.renderedLines) {
@@ -1541,7 +1541,7 @@ export default class Renderer {
           // It might be that we introduced a new line (by line breaking).
           // The document is smart and changes the minimal amount of lines.
           // We still need to update all following lines as the node contents need to be different now.
-          if (line.lineNeedsRerender){
+          if (line.lineNeedsRerender) {
             previousLineChanged = true;
           }
           const oldLineNode = textNode.children[i];
@@ -1568,9 +1568,9 @@ export default class Renderer {
   }
 
   /**
-   * Removes and rerenders the current selections in a TextMorph to update them.
+   * Removes and rerenders the current selections in a Text to update them.
    * @param {Node} node - The DOM node in which `morph` is rendered.
-   * @param {TextMorph} morph - The TextMorph which selections were changed.
+   * @param {Text} morph - The Text which selections were changed.
    */
   patchSelectionLayer (node, morph) {
     if (!node) return;
@@ -1583,25 +1583,25 @@ export default class Renderer {
   }
 
   /**
-   * 
-   * @param {*} node 
-   * @param {*} morph 
+   *
+   * @param {*} node
+   * @param {*} morph
    */
-  patchSelectionMode (node, morph){
-    if (morph.selectionMode === 'native'){
+  patchSelectionMode (node, morph) {
+    if (morph.selectionMode === 'native') {
       node.querySelector('.newtext-text-layer').classList.add('selectable');
-    };
-    if (morph.selectionMode === 'lively' || morph.selectionMode === 'none'){
+    }
+    if (morph.selectionMode === 'lively' || morph.selectionMode === 'none') {
       node.querySelector('.newtext-text-layer').classList.remove('selectable');
-    };
+    }
 
     morph.renderingState.selectionMode = morph.selectionMode;
   }
 
   /**
-   * Removes and rerenders the current markers in a TextMorph to update them.
+   * Removes and rerenders the current markers in a Text to update them.
    * @param {Node} node - The DOM node in which `morph` is rendered.
-   * @param {TextMorph} morph - The TextMorph which markers were changed.
+   * @param {Text} morph - The Text which markers were changed.
    */
   patchMarkerLayer (node, morph) {
     if (!node) return;
@@ -1615,7 +1615,7 @@ export default class Renderer {
    * Updates the line height and/or letter spacing properties of a text morph.
    * Takes care of also adjusting (rerendering) already visible parts.
    * @param {Node} node - The node in which the text morph is rendered.
-   * @param {TextMorph} morph
+   * @param {Text} morph
    */
   patchLineHeightAndLetterSpacing (node, morph) {
     node.querySelectorAll('.newtext-text-layer').forEach(node => {
@@ -1651,7 +1651,7 @@ export default class Renderer {
 
   /**
    * @param {Node} node - DOM node in which a text morph is rendered.
-   * @param {TextMorph} morph
+   * @param {Text} morph
    */
   // FIXME: Somehow, the size of the child is unbound, as the document continuously grows when scrolling
   adjustScrollLayerChildSize (node, morph) {
@@ -1667,8 +1667,8 @@ export default class Renderer {
   /**
    * Used to mirror the scroll state from the morphic model back into the DOM.
    * @see updateNodeScrollFromMorph.
-   * @param {Node} node - Node of a TextMorph.
-   * @param {TextMorph} morph
+   * @param {Node} node - Node of a Text.
+   * @param {Text} morph
    */
   scrollScrollLayerFor (node, morph) {
     const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
@@ -1694,7 +1694,7 @@ export default class Renderer {
    * The style object contains e.g. padding, fontWeigth, ...
    * @see { SmartText >> styleObject() }
    * @param {Node} node - DOM node in which a Text is rendered.
-   * @param {TextMorph} morph - TextMorph of which the textLayer is to be updated.
+   * @param {Text} morph - Text of which the textLayer is to be updated.
    * @param {Object} newStyle - Style Object which is to be applied to the text layer node.
    */
   patchTextLayerStyleObject (node, morph, newStyle) {
@@ -1707,9 +1707,9 @@ export default class Renderer {
   }
 
   /**
-   * Takes care of adjusting the relevant CSS classes after the lineWrapping property of a TextMorph was updated.
+   * Takes care of adjusting the relevant CSS classes after the lineWrapping property of a Text was updated.
    * @param {Node} node - The node which is used to render `morph`
-   * @param {TextMorph} morph - The textMorph for which lineWrapping was updated
+   * @param {Text} morph - The Text for which lineWrapping was updated
    */
   patchLineWrapping (node, morph) {
     const oldWrappingClass = lineWrappingToClass(morph.renderingState.lineWrapping);
@@ -1729,10 +1729,10 @@ export default class Renderer {
   }
 
   /**
-   * Updates the clipMode of a TextMorph. Takes into account that we have decoupled the scroll from the node.
+   * Updates the clipMode of a Text. Takes into account that we have decoupled the scroll from the node.
    * @see renderScrollLayer.
-   * @param {Node} node - DOM node in which a TextMorph is rendered.
-   * @param {TextMorph} morph - TextMorph of which the clipMode is to be updated.
+   * @param {Node} node - DOM node in which a Text is rendered.
+   * @param {Text} morph - Text of which the clipMode is to be updated.
    * @param {scrollActive} fromMorph - If this is true, we set the correct clipMode according to the Morph. Otherwise, we set hidden.
    */
   patchClipModeForText (node, morph, scrollActive) {
@@ -1750,7 +1750,7 @@ export default class Renderer {
   /**
    * Exchanges all nodes for the debug layer in the DOM. Actually deletes and recreates the nodes.
    * @param {Node} node - The node of the text morph for which the debug layer is to be displayed.
-   * @param {TextMorph} morph - The morph for which the debug layer is to be displayed.
+   * @param {Text} morph - The morph for which the debug layer is to be displayed.
    */
   updateDebugLayer (node, morph) {
     const textNode = node.querySelector(`#${morph.id}textLayer`);
@@ -1764,10 +1764,10 @@ export default class Renderer {
   /**
    * Measures the bounds of `morph` in the DOM. Only used for `Text` that is not backed by Document.
    * Without a `Document`, the `Text` also does not have a `Layout`, which means we have to measure ourself.
-   * @param {TextMorph} morph - A `Text` which is not backed by a Document.
+   * @param {Text} morph - A `Text` which is not backed by a Document.
    * @returns {Rectangle} The actual bounds of `morph` when rendered into the DOM.
    */
-   measureStaticTextBoundsFor (morph) {
+  measureStaticTextBoundsFor (morph) {
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
 
     let node = this.getNodeForMorph(morph);
@@ -1791,10 +1791,10 @@ export default class Renderer {
   }
 
   /**
-   * Iterates over the visible lines of a TextMorph, measures their bounds in the DOM and updates the data model in their Document.
+   * Iterates over the visible lines of a Text, measures their bounds in the DOM and updates the data model in their Document.
    * @see updateLineHeightOfNode.
-   * @param {Node} textlayerNode - The textLayerNode of a TextMorph.
-   * @param {TextMorph} morph - The TextMorph to which `textlayerNode` belongs.
+   * @param {Node} textlayerNode - The textLayerNode of a Text.
+   * @param {Text} morph - The Text to which `textlayerNode` belongs.
    */
   updateExtentsOfLines (textlayerNode, morph) {
     // figure out what lines are displayed in the text layer node and map those
@@ -1835,7 +1835,7 @@ export default class Renderer {
   }
 
   /**
-   * @param {TextMorph} morph
+   * @param {Text} morph
    * @param {Line} docLine
    * @param {Node} lineNode - The Node in which `Line` is rendered.
    * @returns
@@ -1885,22 +1885,22 @@ export default class Renderer {
 
   extractHTMLFromTextMorph (textMorph, textAndAttributes = textMorph.textAndAttributesInRange(textMorph.selection.range)) {
     const text = new textMorph.constructor({
-     ...textMorph.defaultTextStyle,
-     width: textMorph.width,
-     textAndAttributes: textAndAttributes,
-     needsDocument: true,
+      ...textMorph.defaultTextStyle,
+      width: textMorph.width,
+      textAndAttributes: textAndAttributes,
+      needsDocument: true
     });
     const render = this.textLayerNodeFunctionFor(text);
     const renderLine = this.lineNodeFunctionFor(text);
     const textLayerNode = render();
     const style = System.global && System.global.getComputedStyle ? System.global.getComputedStyle(textLayerNode) : null;
     if (style) {
-     textLayerNode.ownerDocument.body.appendChild(textLayerNode);
-     textLayerNode.style.whiteSpace = style.whiteSpace;
-     textLayerNode.style.overflowWrap = style.overflowWrap;
-     textLayerNode.style.wordBreak = style.wordBreak;
-     textLayerNode.style.minWidth = style.minWidth;
-     textLayerNode.parentNode.removeChild(textLayerNode);
+      textLayerNode.ownerDocument.body.appendChild(textLayerNode);
+      textLayerNode.style.whiteSpace = style.whiteSpace;
+      textLayerNode.style.overflowWrap = style.overflowWrap;
+      textLayerNode.style.wordBreak = style.wordBreak;
+      textLayerNode.style.minWidth = style.minWidth;
+      textLayerNode.parentNode.removeChild(textLayerNode);
     }
     for (const line of text.document.lines) { textLayerNode.appendChild(renderLine(line)); }
     return textLayerNode.outerHTML;

@@ -2423,6 +2423,7 @@ export class Morph {
 
   needsRerender () {
     const renderingState = this.renderingState;
+    // TODO: Should the other flags for the renderer influence this as well?
     return renderingState.needsRerender; // && renderingState.hasStructuralChanges && renderingState.hasCSSLayoutChange && renderingState.hasAnimationAdded;
   }
 
