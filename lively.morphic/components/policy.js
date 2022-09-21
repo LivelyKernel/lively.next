@@ -435,7 +435,7 @@ export class StylePolicy {
       if (specOrPolicy.textAndAttributes) {
         specOrPolicy.textAndAttributes = specOrPolicy.textAndAttributes.map(textOrAttr => {
           if (textOrAttr?.__isSpec__) return morph(tree.mapTree(textOrAttr, extractBuildSpecs, node => node.submorphs)); // ensure sub build specs...
-          if (textOrAttr?.isPolicy) return morph(textOrAttr.asBuildSpec());
+          if (textOrAttr?.isPolicy) return textOrAttr.instantiate();
           return textOrAttr;
         });
       }
