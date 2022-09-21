@@ -104,7 +104,7 @@ export class Text extends Morph {
           state.animationAdded = false;
           state.hasCSSLayoutChange = false;
           state.specialProps = {};
-          // TODO: only these are textmorph specific, the above are the same as for morph
+          // TODO: only these are Text specific, the above are the same as for morph
           // Would be nice to not have this kind of code duplication
           state.textAndAttributesToDisplay;
           state.renderedTextAndAttributes = [];
@@ -2690,8 +2690,6 @@ export class Text extends Morph {
       renderer.patchSelectionMode(node, this);
     }
 
-    // FIXME: this is not an adequate separation, read only should also support e.g. line height
-    // take care of this when fixing the conceptual separation between both
     if (this.document) {
       if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
@@ -2701,14 +2699,9 @@ export class Text extends Morph {
       if (!obj.equals(this.renderingState.scroll, this.scroll)) {
         renderer.scrollScrollLayerFor(node, this);
       }
-      // FIXME: this condition is not enough, other changes can cause this as well
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
          this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
-      }
-
-      if (this.textLayout) {
-        renderer.patchSelectionLayer(node, this); // FIXME: can we get this to work with the comparison model?
       }
       if (!obj.equals(this.renderingState.markers, this.markers)) {
         renderer.patchMarkerLayer(node, this);
@@ -2721,12 +2714,25 @@ export class Text extends Morph {
          (this.renderingState.fixedWidth !== this.fixedWidth)) {
         renderer.patchLineWrapping(node, this);
       }
-      renderer.adjustScrollLayerChildSize(node, this); // fixme: should probably be wrapped in a trigger
+      // We cannot just store away the whole selections, as they contain references on their containing `Text`.
+      if (!obj.equals(this.selection._selections.map(s => s.range), this.renderingState.selectionRanges)){
+        renderer.patchSelectionLayer(node, this);
+      }
+      // FIXME: This should probably be wrapped in a trigger
+      renderer.adjustScrollLayerChildSize(node, this);
       renderer.updateDebugLayer(node, this);
     } else {
-      //if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
-        renderer.renderTextAndAttributes(node, this);
-      //}
+      if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
+         (this.renderingState.fixedWidth !== this.fixedWidth)) {
+        renderer.patchLineWrapping(node, this);
+      }
+      if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
+         !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
+          renderer.patchLineHeightAndLetterSpacing(node, this);
+         }
+         if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+          renderer.renderTextAndAttributes(node, this);
+        }
     }
   }
 

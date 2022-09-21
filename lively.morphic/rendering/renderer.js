@@ -1578,8 +1578,8 @@ export default class Renderer {
     node.querySelectorAll('svg.selection').forEach(s => s.remove());
     const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
     if (nodeToAppendTo) nodeToAppendTo.append(...this.renderSelectionLayer(morph));
-    // FIXME: not yet working, the update mechanism for this has no flags, i.e., might running more often than necessary
-    morph.renderingState.selection = morph.selection;
+
+    morph.renderingState.selectionRanges = morph.selection._selections.map(s => s.range);
   }
 
   /**
@@ -1623,8 +1623,10 @@ export default class Renderer {
       else delete node.style.letteSpacing;
       node.style.lineHeight = morph.lineHeight;
     });
-    morph.document.lines.forEach(l => l.needsRerender = true);
-    this.renderTextAndAttributes(node, morph);
+    if (morph.document) {
+      morph.document.lines.forEach(l => l.needsRerender = true);
+      this.renderTextAndAttributes(node, morph);
+    }
     morph.renderingState.lineHeight = morph.lineHeight;
     morph.renderingState.letterSpacing = morph.letterSpacing;
   }
