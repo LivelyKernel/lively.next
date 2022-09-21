@@ -805,11 +805,31 @@ describe('components', () => {
     expect(m.get('wood')).not.to.be.null;
   });
 
-  it('attaches the proper style polcies to embedded morphs', () => {
+  it('attaches the proper style policies to embedded morphs', () => {
     const m = part(c5);
     expect(m.get('lively').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
     expect(m.get('holly').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
     expect(c5.stylePolicy.getSubSpecFor('holly')).to.be.instanceof(StylePolicy);
     expect(c5.stylePolicy.getSubSpecFor('wood')).to.be.instanceof(Object);
+  });
+
+  it('applies style policies correctly to embedded morphs', () => {
+    const m = morph({
+      type: 'text',
+      textAndAttributes: [
+        'Something: ', {},
+        morph({ name: 'holly', fill: Color.blue }), null,
+        'or: ', null,
+        morph({ name: 'wood', fill: Color.yellow }), null
+      ],
+      submorphs: [
+        { name: 'lively', fill: Color.red }
+      ]
+    });
+    m.master = c5;
+    m.master.applyIfNeeded(true);
+    expect(m.get('wood').fill).to.eql(Color.orange);
+    expect(m.get('lively').fill).to.eql(Color.lively);
+    expect(m.get('holly').fill).to.eql(Color.orange);
   });
 });
