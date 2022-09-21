@@ -45,7 +45,7 @@ export default class Renderer {
     this.installTextCSS();
     this.installPlaceholder();
     this.ensureDefaultCSS();
-    window.stage0renderer = this;
+    window.renderer = this;
     this.domEnvironment = domEnvironment;
     this.bodyNode.appendChild(this.rootNode);
     world._renderer = this;

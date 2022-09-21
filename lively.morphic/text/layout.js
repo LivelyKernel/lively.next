@@ -78,7 +78,7 @@ export default class Layout {
     const paddingTop = padding ? padding.top() : 0;
     const paddingBottom = padding ? padding.bottom() : 0;
 
-    const textRenderer = morph.env.renderer || window.stage0Renderer;
+    const textRenderer = morph.env.renderer || window.renderer;
     if (!textRenderer) return; // we can not estimate anything...
     const directRenderTextLayerFn = textRenderer.textLayerNodeFunctionFor(morph);
     const textAttributes = line.textAndAttributes; const styles = []; let inlineMorph;
@@ -157,7 +157,7 @@ export default class Layout {
   defaultCharExtent (morph) {
     const { fontMetric, defaultTextStyle } = morph;
     const transform = morph.getGlobalTransform();
-    const directRenderTextLayerFn = window.stage0renderer.textLayerNodeFunctionFor(morph);
+    const directRenderTextLayerFn = window.renderer.textLayerNodeFunctionFor(morph);
     return fontMetric.newDefaultCharExtent(morph, directRenderTextLayerFn);
   }
 
@@ -251,11 +251,6 @@ export default class Layout {
       const nextColumn = range.end.column + 1;
       if (nextColumn >= lineLength) break;
       if (nextColumn <= column) {
-        // TODO - What the heck??
-        if (!window.stage0renderer.getNodeForMorph(morph)) {
-          column = nextColumn;
-          break;
-        }
         throw new Error(`should not happen ${range.end.column} vs ${column}`);
       }
       column = nextColumn;
