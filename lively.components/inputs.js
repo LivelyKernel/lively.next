@@ -235,7 +235,6 @@ export class SearchFieldModel extends ViewModel {
     if (this.ui.placeholderIcon) { this.ui.placeholderIcon.visible = !!this.input; }
     if (this.input.includes('\n')) {
       this.input = this.input.replace('\n', '');
-      this.owner.focus();
     }
     this.active && inputChange && signal(this, 'searchInput', this.parseInput());
   }
