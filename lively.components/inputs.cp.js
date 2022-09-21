@@ -60,16 +60,7 @@ const LabeledCheckBox = component({
 // part(SearchField).openInWorld()
 const SearchField = component({
   defaultViewModel: SearchFieldModel,
-  type: Text,
-  readOnly: false,
-  fill: Color.white,
-  name: 'search field',
-  fontFamily: 'IBM Plex Sans',
-  styleClasses: ['idle'],
-  borderRadius: 15,
-  borderWidth: 1,
-  clipMode: 'hidden',
-  dropShadow: new ShadowObject({ distance: 0, color: Color.rgb(52, 152, 219), blur: 0 }),
+  name: 'search field container',
   extent: pt(188, 21),
   fixedHeight: true,
   fontColor: Color.rgb(204, 204, 204),
@@ -80,27 +71,48 @@ const SearchField = component({
     orderByIndex: true,
     reactToSubmorphAnimations: false
   }),
-  padding: rect(6, 3, 0, 0),
-  submorphs: [{
-    type: Label,
-    name: 'placeholder',
-    visible: true,
-    isLayoutable: false,
-    opacity: 0.3,
-    padding: rect(6, 4, 0, 0),
-    reactsToPointer: false,
-    textAndAttributes: ['Search', null]
-  }, {
-    type: Label,
-    name: 'placeholder icon',
-    autofit: true,
-    fontColor: Color.rgb(204, 204, 204),
-    fontSize: 14,
-    nativeCursor: 'pointer',
-    padding: rect(2, 4, 3, 0),
-    textAndAttributes: Icon.textAttribute('times-circle'),
-    visible: false
-  }]
+  fill: Color.transparent,
+  reactsToPointer: false,
+  submorphs: [
+    {
+      type: Text,
+      readOnly: false,
+      fill: Color.white,
+      name: 'search field',
+      fontFamily: 'IBM Plex Sans',
+      styleClasses: ['idle'],
+      borderRadius: 15,
+      borderWidth: 1,
+      clipMode: 'hidden',
+      dropShadow: new ShadowObject({ distance: 0, color: Color.rgb(52, 152, 219), blur: 0 }),
+      extent: pt(188, 21),
+      fixedHeight: true,
+      fontColor: Color.rgb(204, 204, 204),
+      padding: rect(6, 3, 0, 0),
+      submorphs: [
+        {
+          type: Label,
+          name: 'placeholder',
+          visible: true,
+          opacity: 0.3,
+          padding: rect(6, 4, 0, 0),
+          reactsToPointer: false,
+          textAndAttributes: ['Search', null]
+        }
+      ]
+    }, {
+      type: Label,
+      name: 'placeholder icon',
+      autofit: false,
+      padding: 2,
+      position: pt(165, 0),
+      fontColor: Color.rgb(204, 204, 204),
+      fontSize: 14,
+      nativeCursor: 'pointer',
+      textAndAttributes: Icon.textAttribute('times-circle'),
+      visible: false
+    }
+  ]
 });
 
 export { LabeledCheckBox, SearchField, InputLineDefault, InputLineDark };

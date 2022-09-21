@@ -93,11 +93,11 @@ export class SearchFieldModel extends ViewModel {
       input: {
         derived: true,
         set (val) {
-          this.view.textString = val;
+          this.view.get('search field').textString = val;
         },
         get () {
           // hard binding on the root being a text morph
-          return this.view.textString;
+          return this.view.get('search field').textString || '';
         }
       },
       fuzzy: {
@@ -179,9 +179,9 @@ export class SearchFieldModel extends ViewModel {
         get () {
           return [
             { target: 'placeholder icon', signal: 'onMouseDown', handler: 'clearInput' },
-            { signal: 'onChange', handler: 'onInputChange' },
-            { signal: 'onBlur', handler: 'onInputBlur' },
-            { signal: 'onFocus', handler: 'onInputFocus' }
+            { target: 'search field', signal: 'onChange', handler: 'onInputChange' },
+            { target: 'search field', signal: 'onBlur', handler: 'onInputBlur' },
+            { target: 'search field', signal: 'onFocus', handler: 'onInputFocus' }
           ];
         }
       }
@@ -241,11 +241,12 @@ export class SearchFieldModel extends ViewModel {
 
   onInputBlur (evt) {
     this.active = false;
-    this.ui.placeholder.visible = !this.input;
+    this.view.get('placeholder').visible = !this.input;
   }
 
   onInputFocus (evt) {
     this.ui.placeholder.visible = false;
+    this.view.get('placeholder').visible = false;
     this.active = true;
   }
 }
