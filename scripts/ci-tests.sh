@@ -30,7 +30,6 @@ testfiles=(
 "lively.halos"
 "lively.user"
 "lively.2lively"
-"lively.sync"
 "lively.changesets"
 "lively.git"
 "lively.server"
@@ -40,7 +39,6 @@ testfiles=(
 "lively.freezer"
 "lively.headless"
 "lively.keyboard"
-"lively.mirror"
 )
 
 # For not entirely clear reasons, the lively.server dies due to a socket hangup
