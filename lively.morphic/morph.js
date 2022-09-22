@@ -54,18 +54,26 @@ export class Morph {
     return {
 
       renderingState: {
+        group: '_rendering',
         defaultValue: {},
         initialize () {
-          const state = {};
+          this.renderingState = this.defaultRenderingState;
+        }
+      },
 
-          state.renderedMorphs = [];
-          state.hasStructuralChanges = false;
-          state.needsRerender = true;
-          state.animationAdded = false;
-          state.hasCSSLayoutChange = false;
-          state.specialProps = {};
-
-          this.setProperty('renderingState', state);
+      defaultRenderingState: {
+        derived: true,
+        readOnly: true,
+        group: '_rendering',
+        get () {
+          return {
+            renderedMorphs: [],
+            hasStructuralChanges: false,
+            needsRerender: true,
+            animationAdded: false,
+            hasCSSLayoutChange: false,
+            specialProps: {}
+          };
         }
       },
 

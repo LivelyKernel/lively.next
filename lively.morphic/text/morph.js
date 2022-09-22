@@ -92,33 +92,26 @@ export class Text extends Morph {
 
   static get properties () {
     return {
+      defaultRenderingState: {
+        get() {
+          return {
+            ...super.prototype.defaultRenderingState,
+            textAndAttributesToDisplay: null,
+            renderedTextAndAttributes: [],
+            lineIds: {},
+            currLineId: 0,
+            renderedLines: [],
+            visibleLines: [],
+            _needsFit: true,
+            firstVisibleRow: 0,
+            lastVisibleRow: 0,
+            heightBefore: 0
+          }
+        }        
+      },
+
       renderingState: {
         before: ['textAndAttributes'],
-        group: '_rendering',
-        defaultValue: {},
-        initialize () {
-          const state = {};
-          state.renderedMorphs = [];
-          state.hasStructuralChanges = false;
-          state.needsRerender = false;
-          state.animationAdded = false;
-          state.hasCSSLayoutChange = false;
-          state.specialProps = {};
-          // TODO: only these are Text specific, the above are the same as for morph
-          // Would be nice to not have this kind of code duplication
-          state.textAndAttributesToDisplay;
-          state.renderedTextAndAttributes = [];
-          state.lineIds = {};
-          state.currLineId = 0;
-          state.renderedLines = [];
-          state.visibleLines = [];
-          state._needsFit = true;
-          state.firstVisibleRow = 0;
-          state.lastVisibleRow = 0;
-          state.heightBefore = 0;
-
-          this.setProperty('renderingState', state);
-        }
       },
 
       layout: {
