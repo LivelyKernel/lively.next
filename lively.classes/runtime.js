@@ -1,8 +1,10 @@
 import { prepareClassForManagedPropertiesAfterCreation } from './properties.js';
 import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from './util.js';
 import { setPrototypeOf } from 'lively.lang/object.js';
+import { isNativeFunction } from 'lively.lang/function.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
+const NEW_ONLY_CLASSES = [Proxy, Map, WeakMap];
 
 const defaultPropertyDescriptorForGetterSetter = {
   enumerable: false,
@@ -14,6 +16,80 @@ const defaultPropertyDescriptorForValue = {
   configurable: true,
   writable: true
 };
+
+function _isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+  try {
+    Boolean.prototype.valueOf.call(
+      Reflect.construct(Boolean, [], function () {})
+    );
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function _construct(Parent, args, Class) {
+  if (_isNativeReflectConstruct()) {
+    _construct = Reflect.construct.bind();
+  } else {
+    _construct = function _construct(Parent, args, Class) {
+      var a = [null];
+      a.push.apply(a, args);
+      var Constructor = Function.bind.apply(Parent, a);
+      var instance = new Constructor();
+      if (Class) setPrototypeOf(instance, Class.prototype);
+      return instance;
+    };
+  }
+  return _construct.apply(null, arguments);
+}
+
+function _wrapNativeSuper(Class) {
+  var _cache = typeof Map === "function" ? new Map() : undefined;
+  _wrapNativeSuper = function _wrapNativeSuper(Class) {
+    if (Class === null || !isNativeFunction(Class)) return Class;
+    if (typeof Class !== "function") {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+    if (typeof _cache !== "undefined") {
+      if (_cache.has(Class)) return _cache.get(Class);
+      _cache.set(Class, Wrapper);
+    }
+    function Wrapper() {
+      return _construct(Class, arguments, Object.getPrototypeOf(this).constructor);
+    }
+    Wrapper.prototype = Object.create(Class.prototype, {
+      constructor: {
+        value: Wrapper,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    return setPrototypeOf(Wrapper, Class);
+  };
+  return _wrapNativeSuper(Class);
+}
+
+function ensureInitializeStub (superclass) {
+  // when we inherit from "conventional classes" those don't have an
+  // initializer method. We install a stub that calls the superclass function
+  // itself
+  if (Object === superclass ||
+      superclass.prototype[initializeSymbol]) return;
+  let wrappedSuperclass;
+  if (NEW_ONLY_CLASSES.includes(superclass)) wrappedSuperclass = _wrapNativeSuper(superclass);
+  Object.defineProperty(superclass.prototype, initializeSymbol, {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: wrappedSuperclass ? function() { return wrappedSuperclass.apply(this, arguments) } : function (/* args */) { superclass.apply(this, arguments); }
+  });
+  superclass.prototype[initializeSymbol].displayName = 'lively-initialize-stub';
+}
 
 export function setSuperclass (klass, superclassOrSpec) {
   // define klass.prototype, klass.prototype[constructor], klass[superclassSymbol]
@@ -123,20 +199,6 @@ function installMethods (klass, instanceMethods, classMethods) {
   }
 }
 
-function ensureInitializeStub (superclass) {
-  // when we inherit from "conventional classes" those don't have an
-  // initializer method. We install a stub that calls the superclass function
-  // itself
-  if (superclass === Object || superclass.prototype[initializeSymbol]) return;
-  Object.defineProperty(superclass.prototype, initializeSymbol, {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value: function (/* args */) { superclass.apply(this, arguments); }
-  });
-  superclass.prototype[initializeSymbol].displayName = 'lively-initialize-stub';
-}
-
 export function initializeClass (
   constructorFunc, superclassSpec,
   instanceMethods = [],
@@ -165,7 +227,7 @@ export function initializeClass (
   if (!klass || typeof klass !== 'function' || !existingSuperclass) { klass = constructorFunc; }
 
   // 2. set the superclass if necessary and set prototype
-  let superclass = setSuperclass(klass, superclassSpec);
+  setSuperclass(klass, superclassSpec);
 
   // 3. Install methods
   installMethods(klass, instanceMethods, classMethods);
