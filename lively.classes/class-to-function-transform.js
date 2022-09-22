@@ -129,8 +129,7 @@ function replaceDirectSuperCall (node, state, path, options) {
   // like super()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.type === 'Super');
-
-  return funcCall(
+  const f = funcCall(
     member(
       funcCall(
         member(options.functionNode, '_get'),
@@ -138,7 +137,8 @@ function replaceDirectSuperCall (node, state, path, options) {
         funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
         id('this')),
       'call'),
-    id('this'), ...node.arguments);
+    id('this'), ...node.arguments)
+  return assign(id('_this'), f);
 }
 
 function replaceSuperGetter (node, state, path, options) {
