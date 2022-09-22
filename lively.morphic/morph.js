@@ -1304,7 +1304,7 @@ export class Morph {
 
   /**
    * Returns whether or not the horizontal scrollbar of this Morphs is visible.
-   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthongonal to each other.
+   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthogonal to each other.
    */
   get horizontalScrollbarVisible () {
     const extent = this.extent.x;
@@ -1314,7 +1314,7 @@ export class Morph {
 
   /**
    * Returns whether or not the vertical scrollbar of this Morphs is visible.
-   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthongonal to each other.
+   * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthogonal to each other.
    */
   get verticalScrollbarVisible () {
     const extent = this.extent.y;
@@ -2983,7 +2983,6 @@ export class PathPoint {
   set position ({ x, y }) {
     this.x = x;
     this.y = y;
-    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.path.makeDirty();
   }
 
@@ -3020,7 +3019,6 @@ export class PathPoint {
     // ensure points
     const { next, previous } = cps;
     this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0, 0), previous: previous ? Point.fromLiteral(previous) : pt(0, 0) };
-    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.path.makeDirty();
   }
 
@@ -3215,7 +3213,6 @@ export class Path extends Morph {
   get isPath () { return true; }
 
   onVertexChanged (vertex) {
-    // TODO: fixme - might be related to the fact that interactively changing a path is super slow?
     this.makeDirty();
     this.updateBounds(this.vertices);
   }
@@ -3352,10 +3349,12 @@ export class Path extends Morph {
     }
 
     if (!obj.equals(this.vertices, this.renderingState.specialProps.vertices) ||
-       this.isSmooth !== this.renderingState.specialProps.isSmooth) {
+       this.isSmooth !== this.renderingState.specialProps.isSmooth ||
+       this.renderingState.controlPointDragged) {
       renderer.renderPolygonDrawAttribute(this);
       renderer.renderControlPoints(this);
 
+      delete this.renderingState.controlPointDragged;
       this.renderingState.specialProps.vertices = this.vertices;
       this.renderingState.specialProps.isSmooth = this.isSmooth;
     }
@@ -3510,6 +3509,7 @@ export class Path extends Morph {
     const { domEvt: { target } } = evt;
     const cssClass = new PropertyPath('attributes.class.value').get(target);
     if (cssClass && cssClass.includes('path-point')) {
+      this.renderingState.controlPointDragged = true;
       const [_, n, ctrlN] = cssClass.match(/path-point-([0-9]+)(?:-control-([0-9]+))?$/);
       this._controlPointDrag = { marker: target, n: Number(n) };
       if (ctrlN !== undefined) this._controlPointDrag.ctrlN = Number(ctrlN);
@@ -3518,6 +3518,7 @@ export class Path extends Morph {
 
   onDrag (evt) {
     if (!this._controlPointDrag) return super.onDrag(evt);
+    this.renderingState.controlPointDragged = true;
     const { n, ctrlN } = this._controlPointDrag;
     const { vertices } = this;
     const v = vertices[n];
@@ -3543,6 +3544,7 @@ export class Path extends Morph {
   onDragEnd (evt) {
     const { vertices, _controlPointDrag } = this;
     if (_controlPointDrag) {
+      this.renderingState.controlPointDragged = true;
       const { maybeMerge } = _controlPointDrag;
       delete this._controlPointDrag;
       if (maybeMerge) {
