@@ -2147,7 +2147,7 @@ export default class Renderer {
         left_cp = n;
       }
 
-      for (let i = 1; i < vertices.length - 1; i++) {
+      for (i = 1; i < vertices.length - 1; i++) {
         const vertex = vertices[i];
         const { isSmooth, x, y, controlPoints: { previous: p, next: n } } = vertex;
         const merge = _controlPointDrag && _controlPointDrag.maybeMerge && _controlPointDrag.maybeMerge.includes(i);
