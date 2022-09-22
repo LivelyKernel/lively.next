@@ -484,13 +484,13 @@ export class CheckBox extends Morph {
   }
 
   patchSpecialProps (node) {
-    if (this.renderingState.specialProps.checked !== this.checked) {
+    if (this.renderingState.checked !== this.checked) {
       node.firstChild.checked = this.checked;
-      this.renderingState.specialProps.checked = this.checked;
+      this.renderingState.checked = this.checked;
     }
-    if (this.renderingState.specialProps.active !== this.active) {
+    if (this.renderingState.active !== this.active) {
       node.firstChild.disabled = !this.active;
-      this.renderingState.specialProps.active = this.active;
+      this.renderingState.active = this.active;
     }
   }
 
