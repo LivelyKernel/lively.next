@@ -71,8 +71,7 @@ export class Morph {
             hasStructuralChanges: false,
             needsRerender: true,
             animationAdded: false,
-            hasCSSLayoutChange: false,
-            specialProps: {}
+            hasCSSLayoutChange: false
           };
         }
       },
@@ -2752,13 +2751,13 @@ export class Image extends Morph {
   }
 
   patchSpecialProps (node) {
-    if (this.renderingState.specialProps.imageUrl !== this.imageUrl) {
+    if (this.renderingState.imageUrl !== this.imageUrl) {
       node.firstChild.src = this.getURLForImgNode();
-      this.renderingState.specialProps.imageUrl = this.imageUrl;
+      this.renderingState.imageUrl = this.imageUrl;
     }
-    if (this.renderingState.specialProps.tooltip !== this.tooltip) {
+    if (this.renderingState.tooltip !== this.tooltip) {
       node.firstChild.alt = this.tooltip;
-      this.renderingState.specialProps.tooltip = this.tooltip;
+      this.renderingState.tooltip = this.tooltip;
     }
   }
 
@@ -3328,71 +3327,71 @@ export class Path extends Morph {
   }
 
   patchSpecialProps (node, renderer) {
-    if (!obj.equals(this.borderColor, this.renderingState.specialProps.borderColor)) {
+    if (!obj.equals(this.borderColor, this.renderingState.borderColor)) {
       renderer.renderPolygonBorderColor(this);
-      this.renderingState.specialProps.borderColor = this.borderColor;
+      this.renderingState.borderColor = this.borderColor;
     }
 
-    if (!obj.equals(this.endMarker, this.renderingState.specialProps.endMarker)) {
+    if (!obj.equals(this.endMarker, this.renderingState.endMarker)) {
       renderer.renderPathMarker(this, 'end');
-      this.renderingState.specialProps.endMarker = this.endMarker;
+      this.renderingState.endMarker = this.endMarker;
     }
 
-    if (!obj.equals(this.startMarker, this.renderingState.specialProps.startMarker)) {
+    if (!obj.equals(this.startMarker, this.renderingState.startMarker)) {
       renderer.renderPathMarker(this, 'start');
-      this.renderingState.specialProps.startMarker = this.startMarker;
+      this.renderingState.startMarker = this.startMarker;
     }
 
-    if (!this.clipMode !== this.renderingState.specialProps.clipMode) {
+    if (!this.clipMode !== this.renderingState.clipMode) {
       renderer.renderPolygonClipMode(this);
-      this.renderingState.specialProps.clipMode = this.clipMode;
+      this.renderingState.clipMode = this.clipMode;
     }
 
-    if (!obj.equals(this.vertices, this.renderingState.specialProps.vertices) ||
-       this.isSmooth !== this.renderingState.specialProps.isSmooth ||
+    if (!obj.equals(this.vertices, this.renderingState.vertices) ||
+       this.isSmooth !== this.renderingState.isSmooth ||
        this.renderingState.controlPointDragged) {
       renderer.renderPolygonDrawAttribute(this);
       renderer.renderControlPoints(this);
 
       delete this.renderingState.controlPointDragged;
-      this.renderingState.specialProps.vertices = this.vertices;
-      this.renderingState.specialProps.isSmooth = this.isSmooth;
+      this.renderingState.vertices = this.vertices;
+      this.renderingState.isSmooth = this.isSmooth;
     }
 
-    if (this.showControlPoints !== this.renderingState.specialProps.showControlPoints) {
+    if (this.showControlPoints !== this.renderingState.showControlPoints) {
       renderer.renderControlPoints(this);
-      this.renderingState.specialProps.showControlPoints = this.showControlPoints;
+      this.renderingState.showControlPoints = this.showControlPoints;
     }
 
-    if (!obj.equals(this.fill, this.renderingState.specialProps.fill)) {
+    if (!obj.equals(this.fill, this.renderingState.fill)) {
       renderer.renderPolygonFill(this);
-      this.renderingState.specialProps.fill = this.fill;
+      this.renderingState.fill = this.fill;
     }
 
-    if (!obj.equals(this.cornerStyle, this.renderingState.specialProps.cornerStyle) ||
-       !obj.equals(this.endStyle, this.renderingState.specialProps.endStyle)) {
+    if (!obj.equals(this.cornerStyle, this.renderingState.cornerStyle) ||
+       !obj.equals(this.endStyle, this.renderingState.endStyle)) {
       renderer.renderPolygonStrokeStyle(this);
-      this.renderingState.specialProps.cornerStyle = this.cornerStyle;
-      this.renderingState.specialProps.endStyle = this.endStyle;
+      this.renderingState.cornerStyle = this.cornerStyle;
+      this.renderingState.endStyle = this.endStyle;
     }
 
-    if (!obj.equals(this.borderStyle, this.renderingState.specialProps.borderStyle) ||
-       !obj.equals(this.borderWidth, this.renderingState.specialProps.borderWidth)) {
+    if (!obj.equals(this.borderStyle, this.renderingState.borderStyle) ||
+       !obj.equals(this.borderWidth, this.renderingState.borderWidth)) {
       renderer.renderPolygonBorder(this);
-      this.renderingState.specialProps.borderWidth = this.borderWidth;
-      this.renderingState.specialProps.borderStyle = this.borderStyle;
+      this.renderingState.borderWidth = this.borderWidth;
+      this.renderingState.borderStyle = this.borderStyle;
     }
 
-    if (!obj.equals(this.width, this.renderingState.specialProps.width) ||
-       !obj.equals(this.height, this.renderingState.specialProps.height)) {
+    if (!obj.equals(this.width, this.renderingState.width) ||
+       !obj.equals(this.height, this.renderingState.height)) {
       renderer.renderPolygonSVGAttributes(this);
       renderer.renderPolygonDrawAttribute(this);
       renderer.renderControlPoints(this);
       if (this.drawnProportion) renderer.renderPolygonMask(this);
 
-      this.renderingState.specialProps.vertices = this.vertices;
-      this.renderingState.specialProps.width = this.width;
-      this.renderingState.specialProps.height = this.height;
+      this.renderingState.vertices = this.vertices;
+      this.renderingState.width = this.width;
+      this.renderingState.height = this.height;
     }
 
     if (this.drawnProportion !== this.renderingState.drawnProportion) {
