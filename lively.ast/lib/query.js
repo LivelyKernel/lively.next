@@ -1,10 +1,16 @@
 import { arr, num, tree, fun } from 'lively.lang';
+import _ASTQ from 'astq';
 import { BaseVisitor, ScopeVisitor } from './mozilla-ast-visitors.js';
 import { FindToplevelFuncDeclVisitor } from './visitors.js';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
 import { parse } from './parser.js';
 import { custom } from './acorn-extension.js';
 import stringify from './stringify.js';
+
+// Importing ASTQ in SystemJS 0.21 on node.js fails is it was not loaded natively before.
+// This causes issues with setups where we can not possible load astq, such as the install bundle.
+// To make these scripts work, we backtrack to import via native require instead.
+let ASTQ = _ASTQ || System._nodeRequire('astq');
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -625,6 +631,20 @@ function exports (scope, resolve = false) {
     a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
 }
 
+const astq = new ASTQ();
+astq.adapter('mozast');
+
+const queryCache = new Map();
+
+function queryNodes (node, query) {
+  let compiled = queryCache.get(query);
+  if (!compiled) {
+    compiled = astq.compile(query);
+    queryCache.set(query, compiled);
+  }
+  return astq.execute(node, compiled);
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export {
@@ -650,5 +670,6 @@ export {
   resolveReferences,
   refWithDeclAt,
   imports,
-  exports
+  exports,
+  queryNodes
 };

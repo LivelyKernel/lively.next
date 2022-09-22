@@ -1,10 +1,5 @@
 import Visitor from '../generated/estree-visitor.js';
-import _ASTQ from 'astq';
-
-// Importing ASTQ in SystemJS 0.21 on node.js fails is it was not loaded natively before.
-// This causes issues with setups where we can not possible load astq, such as the install bundle.
-// To make these scripts work, we backtrack to import via native require instead.
-let ASTQ = _ASTQ || System._nodeRequire('astq');
+import { queryNodes } from './query.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // simple ast traversing
@@ -106,12 +101,9 @@ class ReplaceVisitor extends Visitor {
   }
 }
 
-const astq = new ASTQ();
-astq.adapter('mozast');
-
 export class QueryReplaceManyVisitor extends ReplaceManyVisitor {
   static run (parsed, query, replacer) {
-    const matchingNodes = astq.query(parsed, query);
+    const matchingNodes = queryNodes(parsed, query);
     const filteredReplacer = (node) => {
       if (matchingNodes.includes(node)) return replacer(node);
       else return node;
