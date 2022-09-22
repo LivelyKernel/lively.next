@@ -62,7 +62,7 @@ const CommentGroup = component({
           type: Label,
           fontSize: 15,
           textString: '999',
-          padding: 10
+          padding: 10 
         }
       ]
     },
