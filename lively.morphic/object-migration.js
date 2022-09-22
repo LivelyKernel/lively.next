@@ -302,7 +302,7 @@ For now only a simple default theme...
         if (m.props.master && typeof m.props.master.value === 'string') {
           m.props.master.value = m.props.master.value.split('styleguide://style guide').join('styleguide://System');
         }
-        if (m.props.master && m.props.master.value.id) {
+        if (m.props.master?.value?.id) {
           const entry = snapshot[m.props.master.value.id];
           if (!entry.props.auto || typeof entry.props.auto.value !== 'string') return;
           entry.props.auto.value = entry.props.auto.value.split('styleguide://style guide').join('styleguide://System');
