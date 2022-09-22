@@ -21,6 +21,18 @@ function False () { /* `function() { return false; }` */ return function () { re
 function True () { /* `function() { return true; }` */ return function () { return true; }; }
 function notYetImplemented () { return function () { throw new Error('Not yet implemented'); }; }
 
+
+/**
+ * Returns wether or not a given function is a "built in".
+ * Built in functions are native to the runtime and their
+ * implementation can not be inspected from Javascript.
+ * @param { function } fn - The function to check for.
+ * @returns { boolean }
+ */
+function isNativeFunction(fn) {
+  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+}
+
 // -=-=-=-=-=-
 // accessing
 // -=-=-=-=-=-
@@ -1175,6 +1187,8 @@ function webkitStack () {
 }
 
 export {
+  isNativeFunction,
+
   Empty, K, Null, False, True, notYetImplemented, withNull,
 
   all, own,
