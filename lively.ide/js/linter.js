@@ -2,16 +2,8 @@
  * Methods for running eslint on JS code as well as the linter configuration used in lively.next.
  */
 
-import { importModuleViaNative } from 'lively.resources';
 import config from 'esm://cache/eslint-config-standard@16.0.3';
-
-let eslint;
-
-(async () => {
-  // fixme: this can become a normal import once we update babel to babel
-  // this might also allow using the custom esm:// cache
-  eslint = await importModuleViaNative('https://jspm.dev/eslint@7.32.0');
-})();
+import eslint from 'esm://cache/eslint@7.32.0';
 
 const rules = {
   // These are all rules from the default ruleset that are fixable
@@ -121,7 +113,7 @@ config.rules = rules;
  */
 
 /**
- * For given source code snippet, returns a linted version of the source code 
+ * For given source code snippet, returns a linted version of the source code
  * together with a set of generated warnings or violations of the linting rules.
  * We can further provide a custom set of rules that overrides the default
  * rule set for the analysis of the given source code.
