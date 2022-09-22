@@ -437,6 +437,15 @@ class ScopeVisitor extends Visitor {
     // // key is of types Expression
     // node["key"] = visitor.accept(node["key"], scope, path.concat(["key"]));
     // value is of types FunctionExpression
+
+    if (node.computed) {
+      let curr = node.key;
+      while (curr.type === 'MemberExpression') curr = curr.object;
+      if (curr.type === 'Identifier') {
+        scope.refs.push(node.key);
+      }
+    }
+   
     node.value = visitor.accept(node.value, scope, path.concat(['value']));
     return node;
   }
