@@ -1916,9 +1916,6 @@ export default class Renderer {
    */
   renderControlPoints (morph) {
     let controlPoints = [];
-    // TODO: This can and should be optimized, since live manipulation of a Path is super slow at the moment.
-    // It should be investigated whether this is only slowness, or whether we also have some kind of threshhold that stops the dragging of control points from being slow.
-    // An optimization would probably find a nice data structure for the control points, save that somewhere and then use that to patch the difference with the `keyed` method that `stage0` provides us with.
     if (morph.showControlPoints) {
       controlPoints = this.doc.createElementNS(svgNs, 'g');
       controlPoints.append(...this._renderPath_ControlPoints(morph));
