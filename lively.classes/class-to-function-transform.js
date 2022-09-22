@@ -1,11 +1,11 @@
 import { Path } from 'lively.lang';
 import { parse, stringify, query, nodes, BaseVisitor as Visitor } from 'lively.ast';
+import { queryNodes } from 'lively.ast/lib/query.js';
 
 let {
   assign,
   member,
   id,
-  exprStmt,
   funcCall,
   literal,
   objectLiteral,
@@ -137,7 +137,7 @@ function replaceDirectSuperCall (node, state, path, options) {
         funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
         id('this')),
       'call'),
-    id('this'), ...node.arguments)
+    id('this'), ...node.arguments);
   return assign(id('_this'), f);
 }
 
@@ -161,6 +161,25 @@ function replaceSuperSetter (node, state, path, options) {
     literal(node.left.property.value || node.left.property.name),
     node.right,
     id('this'));
+}
+
+function checkForDirectSuperCall (body) {
+  return queryNodes(body, '// CallExpression [ /:callee \'*\' [ type() ==  \'Super\']]').length > 0;
+}
+
+function insertThisReturn (functionBody) {
+  if (!checkForDirectSuperCall(functionBody)) {
+    return functionBody;
+  }
+  return {
+    // block
+    ...functionBody,
+    body: [
+      varDecl(id('_this')),
+      ...functionBody.body,
+      returnStmt(id('_this'))
+    ]
+  };
 }
 
 function replaceClass (node, state, path, options) {
@@ -190,10 +209,14 @@ function replaceClass (node, state, path, options) {
       // native debuggers. We have to be careful about it b/c it shadows
       // outer functions / vars, something that is totally not apparent for a user
       // of the class syntax. That's the reason for making it a little cryptic
+      const isMemberExpr = key.type === 'MemberExpression';
       let methodName = key.name || key.value || Path('property.name').get(key);
-      let methodId = id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
+      let methodId;
+      if (isMemberExpr) {
+        methodId = id(className + '_' + stringify(key.property).replaceAll('.', '_') + '_');
+      } else methodId = id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
       let props = [
-        'key', methodName ? literal(methodName) : key,
+        'key', !isMemberExpr && methodName ? literal(methodName) : key,
         'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }];
 
       decl = objectLiteral(props);
@@ -204,7 +227,12 @@ function replaceClass (node, state, path, options) {
     } else if (kind === 'constructor') {
       let props = [
         'key', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
-        'value', { ...value, id: id(className + '_initialize_'), [methodKindSymbol]: 'proto' }];
+        'value', {
+          ...value,
+          id: id(className + '_initialize_'),
+          [methodKindSymbol]: 'proto',
+          body: insertThisReturn(value.body)
+        }];
       decl = objectLiteral(props);
     } else if (type === 'PropertyDefinition') {
       // collect these for class field initializiation
@@ -349,7 +377,9 @@ class ClassReplaceVisitor extends Visitor {
 
     node = super.accept(node, state, path);
 
-    if (node.type === 'ExportDefaultDeclaration') { return splitExportDefaultWithClass(node, state, path, state.options); }
+    if (node.type === 'ExportDefaultDeclaration') {
+      return splitExportDefaultWithClass(node, state, path, state.options);
+    }
 
     return node;
   }
