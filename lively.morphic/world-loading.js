@@ -254,7 +254,6 @@ export async function interactivelySaveWorld (world, options) {
       .join(jsonStoragePath.replace('.json', '.br.json'))
       .withRelativePartsResolved()
       .brotli(JSON.stringify(snap));
-    resource(System.baseURL).join('/subserver/ComponentsBrowser/refresh').join(name).read();
     i.remove();
     world.setStatusMessage(`saved world ${name} to file: ${resourceHandle.url}`);
     return;
@@ -304,8 +303,6 @@ export async function interactivelySaveWorld (world, options) {
       const path = pathForBrowserHistory(name);
       window.history.pushState({}, 'lively.next', path);
     }
-
-    resource(System.baseURL).join('/subserver/ComponentsBrowser/refresh').join(name).read();
 
     world.setStatusMessage(`saved world ${name}`);
     world.get('world-list') && world.get('world-list').onWorldSaved(name);
