@@ -302,6 +302,22 @@ function replaceRefs (parsed, options) {
      refsToReplace.includes(node.key) &&
      node.shorthand) { return prop(id(node.key.name), node.value); }
 
+    if (node.type === 'MethodDefinition' && node.computed) {
+      const { key } = node;
+      if (refsToReplace.includes(key)) {
+        if (key.type === 'MemberExpression') {
+          const newNode = { ...node, key: { ...key } };
+          let curr = newNode.key;
+          while(curr.object?.type === 'MemberExpression') {
+            curr.object = { ...curr.object };
+            curr = curr.object;
+          }
+          curr.object = member(options.captureObj, curr.object);
+          return newNode;
+        }
+      }
+    }
+
     // don't replace var refs in expressions such as "export { x }" or "export var x;"
     // We make sure that those var references are defined in insertDeclarationsForExports()
     if (node.type === 'ExportNamedDeclaration') {
