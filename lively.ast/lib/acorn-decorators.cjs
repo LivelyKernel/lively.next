@@ -101,6 +101,8 @@ module.exports = function extendParser (Parser) {
         case acorn.tokTypes.star:
         case acorn.tokTypes.bracketL:
         case acorn.tokTypes.name:
+        case acorn.tokTypes._extends:
+        case acorn.tokTypes._break: // some people use this too
         case acorn.tokTypes._with: // this seems to get confused when we use javascript keywords
         case acorn.tokTypes._delete: // dito...
           let node = super.parseClassElement(constructorAllowsSuper);
