@@ -896,16 +896,8 @@ export class Morph {
     const propsToSerialize = [];
     if (this._tickingScripts.length > 0) propsToSerialize.push('_tickingScripts');
     if (this.attributeConnections) propsToSerialize.push('attributeConnections');
-    const master = [this, ...this.ownerChain()].map(m => m.__isBeingSerialized__ && m.master).find(Boolean);
     for (const key in properties) {
       const descr = properties[key];
-      if (master &&
-         master.managesMorph(this) &&
-         master._overriddenProps.get(this)[key] !== undefined) {
-        propsToSerialize.push(key); // always save away overridden props
-        if (key === 'master') this._masterOverridden = true;
-        continue;
-      }
       if (
         descr.readOnly ||
         descr.derived ||
