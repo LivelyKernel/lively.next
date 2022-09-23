@@ -340,7 +340,7 @@ export class StylePolicy {
             if (parentAttr?.__isSpec__) {
               return mergeInHierarchy({ ...parentAttr }, localAttr, mergeSpecs, true, handleRemove, handleAdd);
             }
-            return parentAttr;
+            return localAttr || parentAttr; // local takes precedence over the parent attr
           });
         }
         // ensure the presence of all nodes
