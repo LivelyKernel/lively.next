@@ -848,6 +848,7 @@ export class Morph {
   get __serialization_id_property__ () { return '_id'; }
 
   __deserialize__ (snapshot, objRef, serializedMap, pool) {
+    this._isDeserializing = true;
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
@@ -874,6 +875,7 @@ export class Morph {
   }
 
   __after_deserialize__ (snapshot, ref, pool) {
+    delete this._isDeserializing;
     this.resumeStepping();
     // too late, the master may have already applied itself here...
     if (typeof this.onLoad === 'function') {
@@ -2775,16 +2777,6 @@ export class Image extends Morph {
         defaultValue: 'auto'
       }
     };
-  }
-
-  __deserialize__ (snapshot, objRef, serializedMap, pool) {
-    this._isDeserializing = true;
-    super.__deserialize__(snapshot, objRef, serializedMap, pool);
-  }
-
-  __after_deserialize__ (snapshot, ref, pool) {
-    delete this._isDeserializing;
-    super.__after_deserialize__(snapshot, ref, pool);
   }
 
   get isImage () { return true; }

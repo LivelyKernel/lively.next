@@ -201,6 +201,12 @@ export class StylePolicy {
     });
   }
 
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    if (this.parent) {
+      addFn('parent', this.parent.__serialize__(pool));
+    }
+  }
+
   /**
    * Add meta info about module and retrieval to policy and its sub policies.
    * @param { object } metaInfo
@@ -217,8 +223,7 @@ export class StylePolicy {
     }
     for (let subSpec of spec.submorphs || []) {
       if (subSpec.COMMAND === 'add') subSpec = subSpec.props;
-      if (subSpec.isPolicy) path = [...path, subSpec.spec?.name]; // only scopes matter
-      this.addMetaInfo({ exportedName, moduleId, path }, subSpec);
+      this.addMetaInfo({ exportedName, moduleId, path: subSpec.isPolicy ? [...path, subSpec.spec?.name] : path }, subSpec);
     }
   }
 
@@ -809,6 +814,7 @@ export class PolicyApplicator extends StylePolicy {
    */
   onMorphChange (changedMorph, change) {
     if (change.meta?.metaInteraction || !this.targetMorph || this._animating) return;
+    if (changedMorph._isDeserializing) return;
     let subSpec = this.ensureSubSpecFor(changedMorph);
     if (subSpec?.isPolicyApplicator) {
       return subSpec.onMorphChange(changedMorph, change);
