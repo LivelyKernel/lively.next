@@ -124,6 +124,7 @@ class ComponentEditButtonMorph extends Morph {
     });
     componentMorph.position = pt(0, 0);
     wrapper.scale = 0;
+    this.fill = Color.transparent;
     await editor.withAnimationDo(() => {
       btnPlaceholder.opacity = 1;
       btnPlaceholder.scale = 1;
@@ -132,7 +133,6 @@ class ComponentEditButtonMorph extends Morph {
       this.extent = componentMorph.bounds().extent();
       this.center = this.world().visibleBounds().center();
       this.submorphs[0].center = this.extent.scaleBy(.5);
-      this.fill = Color.transparent;
       wrapper.opacity = 1;
       wrapper.scale = 1;
     }, { duration: 300, easing: easings.outQuint });
