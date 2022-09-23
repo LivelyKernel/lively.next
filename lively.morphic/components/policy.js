@@ -39,6 +39,7 @@ function mergeInHierarchy (
       addFn(root, cmd.props, beforeMorph);
     }
   }
+  return root;
 }
 
 /**
@@ -293,6 +294,12 @@ export class StylePolicy {
           return new klass(localMaster ? { master: localMaster } : {}, node);
         }
         node = obj.dissoc(node, ['master', 'submorphs', ...getStylePropertiesFor(node.type)]);
+        if (node.textAndAttributes) {
+          node.textAndAttributes = node.textAndAttributes.map(textOrAttr => {
+            if (textOrAttr?.isPolicy) return new klass({}, textOrAttr);
+            return textOrAttr;
+          });
+        }
         if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
         return node;
       }, node => node.submorphs || node.props?.submorphs || []); // get the fully collapsed spec
@@ -302,7 +309,40 @@ export class StylePolicy {
         toBeReplaced.set(node, replacement);
       }
 
-      mergeInHierarchy(baseSpec, spec, (parentSpec, localSpec) => {
+      const handleRemove = (parent, toBeRemoved) => {
+        // insert remove command directly into the baseSpec
+        replace(toBeRemoved, {
+          COMMAND: 'remove',
+          target: toBeRemoved.name
+        });
+      };
+
+      const handleAdd = (parent, toBeAdded, before) => {
+        // insert add command directly into the baseSpec
+        const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
+        if (!toBeAdded.isPolicyApplicator) {
+          toBeAdded = ensureStylePoliciesInStandalone(toBeAdded);
+        }
+        arr.pushAt(parent.submorphs, {
+          COMMAND: 'add',
+          props: toBeAdded
+        }, index);
+      };
+
+      const mergeSpecs = (parentSpec, localSpec) => {
+        if (localSpec.textAndAttributes && parentSpec.textAndAttributes) {
+          localSpec.textAndAttributes = arr.zip(
+            localSpec.textAndAttributes,
+            parentSpec.textAndAttributes).map(([localAttr, parentAttr]) => {
+            if (parentAttr?.isPolicy) {
+              return new klass(localAttr, parentAttr.parent);
+            }
+            if (parentAttr?.__isSpec__) {
+              return mergeInHierarchy({ ...parentAttr }, localAttr, mergeSpecs, true, handleRemove, handleAdd);
+            }
+            return parentAttr;
+          });
+        }
         // ensure the presence of all nodes
         if (localSpec === spec) {
           if (!localSpec.name) localSpec.name = parentSpec.name;
@@ -326,26 +366,11 @@ export class StylePolicy {
         if (parentSpec.isPolicy) {
           return replace(parentSpec, new klass(localSpec, parentSpec.parent)); // insert a different style policy that has the correct overrides
         }
+
         Object.assign(parentSpec, obj.dissoc(localSpec, ['submorphs'])); // just apply the current local spec
-      }, true,
-      (parent, toBeRemoved) => {
-        // insert remove command directly into the baseSpec
-        replace(toBeRemoved, {
-          COMMAND: 'remove',
-          target: toBeRemoved.name
-        });
-      },
-      (parent, toBeAdded, before) => {
-        // insert add command directly into the baseSpec
-        const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
-        if (!toBeAdded.isPolicyApplicator) {
-          toBeAdded = ensureStylePoliciesInStandalone(toBeAdded);
-        }
-        arr.pushAt(parent.submorphs, {
-          COMMAND: 'add',
-          props: toBeAdded
-        }, index);
-      });
+      };
+
+      mergeInHierarchy(baseSpec, spec, mergeSpecs, true, handleRemove, handleAdd);
 
       if (baseSpec.viewModel && spec.viewModel) {
         spec.viewModel = obj.deepMerge(baseSpec.viewModel, spec.viewModel);
