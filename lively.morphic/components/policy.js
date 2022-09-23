@@ -498,7 +498,7 @@ export class StylePolicy {
 
       return specOrPolicy;
     };
-    const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.submorphs);
+    const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
     if (this.parent || this.overriddenMaster) buildSpec.master = this;
     return buildSpec;
   }
