@@ -734,6 +734,7 @@ export class PolicyApplicator extends StylePolicy {
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
+      if (propValue?.onlyAtInstantiation) continue;
       if (propValue === undefined) {
         if (PROPS_TO_RESET.includes(propName)) {
           propValue = getDefaultValueFor(morphToBeStyled.constructor, propName);
