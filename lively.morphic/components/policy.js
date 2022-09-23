@@ -330,7 +330,8 @@ export class StylePolicy {
       };
 
       const mergeSpecs = (parentSpec, localSpec) => {
-        if (localSpec.textAndAttributes && parentSpec.textAndAttributes) {
+        if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
+            localSpec.textAndAttributes.length === parentSpec.textAndAttributes.length) {
           localSpec.textAndAttributes = arr.zip(
             localSpec.textAndAttributes,
             parentSpec.textAndAttributes).map(([localAttr, parentAttr]) => {
@@ -340,7 +341,7 @@ export class StylePolicy {
             if (parentAttr?.__isSpec__) {
               return mergeInHierarchy({ ...parentAttr }, localAttr, mergeSpecs, true, handleRemove, handleAdd);
             }
-            return localAttr || parentAttr; // local takes precedence over the parent attr
+            return localAttr;
           });
         }
         // ensure the presence of all nodes
