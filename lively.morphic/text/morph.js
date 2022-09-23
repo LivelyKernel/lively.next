@@ -2,7 +2,7 @@
 import { Rectangle, Point, rect, Color, pt } from 'lively.graphics';
 import { string, obj, fun, promise, arr } from 'lively.lang';
 import { signal, noUpdate, disconnect } from 'lively.bindings';
-
+import { num } from 'lively.lang';
 import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
 import { Morph } from '../morph.js';
@@ -28,7 +28,7 @@ import { ShadowObject } from '../rendering/morphic-default.js';
  * Most of the time, this will just work for you. To toggle between a state where editing is possible and impossible, use the `readOnly` property.
  * When interactive editing is supported, you can use all features of text in lively, such as markers (think: highlighting syntax highlighting).
  * When interactive editing is deactivated, you can enable native selection of text.
- * 
+ *
  * **SOME TECHNICAL NOTES**
  * You should refrain from manipulating the Document of a Text manually, if you are not exactly sure what you are doing.
  * `backWithDocument` and `removeDocument` are also not to be called directly in most use cases.
@@ -93,7 +93,7 @@ export class Text extends Morph {
   static get properties () {
     return {
       defaultRenderingState: {
-        get() {
+        get () {
           return {
             ...super.prototype.defaultRenderingState,
             textAndAttributesToDisplay: null,
@@ -106,12 +106,12 @@ export class Text extends Morph {
             firstVisibleRow: 0,
             lastVisibleRow: 0,
             heightBefore: 0
-          }
-        }        
+          };
+        }
       },
 
       renderingState: {
-        before: ['textAndAttributes'],
+        before: ['textAndAttributes']
       },
 
       layout: {
@@ -911,7 +911,6 @@ export class Text extends Morph {
   get __only_serialize__ () {
     return arr.withoutAll(super.__only_serialize__, [
       'document',
-      'textRenderer',
       'renderingState',
       'undoManager',
       'markers',
@@ -965,32 +964,34 @@ export class Text extends Morph {
       })
     };
 
-    // const cachedLineBounds = [];
-    // for (const line of this.document.lines) {
-    //   // line = this.document.lines[810]
-    //   const lineBounds = this.textLayout.lineCharBoundsCache.get(line);
-    //   if (!lineBounds) continue;
-    //   const compactBounds = [];
-    //   let prevRect;
-    //   let sameRectCount = 0;
-    //   if (lineBounds) {
-    //     for (const charBounds of lineBounds) {
-    //       if (prevRect) {
-    //         if (num.roundTo(prevRect.width, 0.001) === num.roundTo(charBounds.width || 0, 0.001) && charBounds.height === prevRect.height) {
-    //           sameRectCount++;
-    //           continue;
-    //         }
-    //         compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
-    //       }
-    //       sameRectCount = 1;
-    //       prevRect = charBounds;
-    //     }
-    //   }
-    //   if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
-    //   cachedLineBounds.push([line.row, compactBounds.flat()]);
-    // }
+    if (this.document) {
+      const cachedLineBounds = [];
+      for (const line of this.document.lines) {
+        // line = this.document.lines[810]
+        const lineBounds = this.textLayout.lineCharBoundsCache.get(line);
+        if (!lineBounds) continue;
+        const compactBounds = [];
+        let prevRect;
+        let sameRectCount = 0;
+        if (lineBounds) {
+          for (const charBounds of lineBounds) {
+            if (prevRect) {
+              if (num.roundTo(prevRect.width, 0.001) === num.roundTo(charBounds.width || 0, 0.001) && charBounds.height === prevRect.height) {
+                sameRectCount++;
+                continue;
+              }
+              compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
+            }
+            sameRectCount = 1;
+            prevRect = charBounds;
+          }
+        }
+        if (prevRect) compactBounds.push([sameRectCount, num.roundTo(prevRect.width || 0, 0.001), prevRect.height || 0]);
+        cachedLineBounds.push([line.row, compactBounds.flat()]);
+      }
 
-    // snapshot.cachedLineBounds = cachedLineBounds;
+      snapshot.cachedLineBounds = cachedLineBounds;
+    }
   }
 
   allFontsLoaded (fontFaceSet) {

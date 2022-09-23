@@ -42,7 +42,7 @@ export class Morph {
       defaultGetter (key) { return this.getProperty(key); },
       defaultSetter (key, value) {
         this.setProperty(key, value);
-        if (this.propertiesAndPropertySettings().properties[key].renderSynchronously) {
+        if (this.propertiesAndPropertySettings().properties[key].renderSynchronously && !this._isDeserializing && this.owner) {
           $world._renderer.renderStylingChanges(this);
         }
       },
