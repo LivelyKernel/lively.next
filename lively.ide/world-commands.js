@@ -88,15 +88,17 @@ const commands = [
         };
       });
 
-      const { prompt, selected: [cmd] } = await world.filterableListPrompt(
+      // FIXME: the caching of the prompt is nice in general
+      // however, it lead to rendering problems as the list was not updated correctly
+      const { /*prompt,*/ selected: [cmd] } = await world.filterableListPrompt(
         'Run command', items, {
           historyId: 'lively.morphic-run command',
           requester: target,
           extent: pt(700, 600),
-          prompt: world._cachedRunCommandPrompt
+         // prompt: world._cachedRunCommandPrompt
         });
 
-      world._cachedRunCommandPrompt = prompt;
+      // world._cachedRunCommandPrompt = prompt;
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
   },
