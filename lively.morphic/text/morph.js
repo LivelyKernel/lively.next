@@ -231,7 +231,7 @@ export class Text extends Morph {
           if (!this._textChange && this.renderingState &&
               this.renderingState._needsFit &&
               !this._measuringTextBox && !!initialExtent && this.owner) {
-            this._measuringTextBox = true;
+          this._measuringTextBox = true;
             noUpdate(() => {
               this.directRender();
             });
@@ -911,7 +911,6 @@ export class Text extends Morph {
   get __only_serialize__ () {
     return arr.withoutAll(super.__only_serialize__, [
       'document',
-      'renderingState',
       'undoManager',
       'markers',
       'textLayout',
