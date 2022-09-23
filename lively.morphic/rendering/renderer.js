@@ -546,7 +546,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to update the scroll of its node.
    */
   updateNodeScrollFromMorph (morph) {
-    if (morph.isText) return;
+    if (morph.isText && morph.document) return;
 
     const node = this.getNodeForMorph(morph);
     if (!node) {
