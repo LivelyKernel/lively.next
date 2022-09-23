@@ -17,10 +17,14 @@ const defaultPropertyDescriptorForValue = {
   writable: true
 };
 
-function _isNativeReflectConstruct() {
-  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+/**
+ * Wether or not the system supports the `Reflect` API.
+ * @returns { boolean }
+ */
+function supportsReflect () {
+  if (typeof Reflect === 'undefined' || !Reflect.construct) return false;
   if (Reflect.construct.sham) return false;
-  if (typeof Proxy === "function") return true;
+  if (typeof Proxy === 'function') return true;
   try {
     Boolean.prototype.valueOf.call(
       Reflect.construct(Boolean, [], function () {})
@@ -31,35 +35,51 @@ function _isNativeReflectConstruct() {
   }
 }
 
-function _construct(Parent, args, Class) {
-  if (_isNativeReflectConstruct()) {
-    _construct = Reflect.construct.bind();
+/**
+ * In JavaScript certain native classes (such as Map or Proxy)
+ * do not support to be created without the `new` keyword.
+ * This function instruments the constructor in such a way, that
+ * it does not require the `new` keyword any more.
+ * @param { function } Parent - The native superclass that does not support to be called without `new`.
+ * @param { *[] } args - Parameters passed to the constructor.
+ * @param { function } Class - The actual subclass of Parent.
+ * @returns { Class } The result of the constructor, usually an instance of `Class`.
+ */
+function constructNewOnly (Parent, args, Class) {
+  if (supportsReflect()) {
+    constructNewOnly = Reflect.construct.bind();
   } else {
-    _construct = function _construct(Parent, args, Class) {
-      var a = [null];
+    constructNewOnly = function constructNewOnly (Parent, args, Class) {
+      let a = [null];
       a.push.apply(a, args);
-      var Constructor = Function.bind.apply(Parent, a);
-      var instance = new Constructor();
+      let Constructor = Function.bind.apply(Parent, a);
+      let instance = new Constructor();
       if (Class) setPrototypeOf(instance, Class.prototype);
       return instance;
     };
   }
-  return _construct.apply(null, arguments);
+  return constructNewOnly.apply(null, arguments);
 }
 
-function _wrapNativeSuper(Class) {
-  var _cache = typeof Map === "function" ? new Map() : undefined;
-  _wrapNativeSuper = function _wrapNativeSuper(Class) {
-    if (Class === null || !isNativeFunction(Class)) return Class;
-    if (typeof Class !== "function") {
-      throw new TypeError("Super expression must either be null or a function");
+/**
+ * Wraps a given native class that such that it can be subclasses
+ * in the same manner as other classes derived from Object in the system.
+ * @param { function } Class - The class to wrap
+ * @returns { function } The wrapped class.
+ */
+function wrapNativeClassAsSuper (Class) {
+  let _cache = typeof Map === 'function' ? new Map() : undefined;
+  wrapNativeClassAsSuper = function wrapNativeClassAsSuper (Class) {
+    function Wrapper () {
+      return constructNewOnly(Class, arguments, Object.getPrototypeOf(this).constructor);
     }
-    if (typeof _cache !== "undefined") {
+    if (Class === null || !isNativeFunction(Class)) return Class;
+    if (typeof Class !== 'function') {
+      throw new TypeError('Super expression must either be null or a function');
+    }
+    if (typeof _cache !== 'undefined') {
       if (_cache.has(Class)) return _cache.get(Class);
       _cache.set(Class, Wrapper);
-    }
-    function Wrapper() {
-      return _construct(Class, arguments, Object.getPrototypeOf(this).constructor);
     }
     Wrapper.prototype = Object.create(Class.prototype, {
       constructor: {
@@ -71,7 +91,7 @@ function _wrapNativeSuper(Class) {
     });
     return setPrototypeOf(Wrapper, Class);
   };
-  return _wrapNativeSuper(Class);
+  return wrapNativeClassAsSuper(Class);
 }
 
 function ensureInitializeStub (superclass) {
@@ -81,12 +101,12 @@ function ensureInitializeStub (superclass) {
   if (Object === superclass ||
       superclass.prototype[initializeSymbol]) return;
   let wrappedSuperclass;
-  if (NEW_ONLY_CLASSES.includes(superclass)) wrappedSuperclass = _wrapNativeSuper(superclass);
+  if (NEW_ONLY_CLASSES.includes(superclass)) wrappedSuperclass = wrapNativeClassAsSuper(superclass);
   Object.defineProperty(superclass.prototype, initializeSymbol, {
     enumerable: false,
     configurable: true,
     writable: true,
-    value: wrappedSuperclass ? function() { return wrappedSuperclass.apply(this, arguments) } : function (/* args */) { superclass.apply(this, arguments); }
+    value: wrappedSuperclass ? function () { return wrappedSuperclass.apply(this, arguments); } : function (/* args */) { superclass.apply(this, arguments); }
   });
   superclass.prototype[initializeSymbol].displayName = 'lively-initialize-stub';
 }
@@ -160,7 +180,7 @@ function installMethods (klass, instanceMethods, classMethods) {
     klass.prototype[initializeSymbol].displayName = 'lively-initialize';
   } else {
     const hasInitializerInstalled = Object.getOwnPropertySymbols(klass.prototype).includes(initializeSymbol);
-    const hasInitializerDefined = instanceMethods.find(m => m.key == initializeSymbol);
+    const hasInitializerDefined = instanceMethods.find(m => m.key === initializeSymbol);
     if (hasInitializerInstalled) {
       // if the class already has an initializer installed we need to proceed with care...
       const isDefaultInitializer = klass.prototype[initializeSymbol].isDefaultInitializer;
