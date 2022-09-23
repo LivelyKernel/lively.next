@@ -903,6 +903,7 @@ export class PolicyApplicator extends StylePolicy {
   onMorphChange (changedMorph, change) {
     if (change.meta?.metaInteraction || !this.targetMorph || this._animating) return;
     if (changedMorph._isDeserializing) return;
+    if ([this.targetMorph, ...this.targetMorph.ownerChain()].find(m => m.isComponent)) return;
     let subSpec = this.ensureSubSpecFor(changedMorph);
     if (subSpec?.isPolicyApplicator) {
       return subSpec.onMorphChange(changedMorph, change);
