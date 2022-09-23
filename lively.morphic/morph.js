@@ -56,6 +56,7 @@ export class Morph {
       renderingState: {
         group: '_rendering',
         defaultValue: {},
+        serialize: false,
         initialize () {
           this.renderingState = this.defaultRenderingState;
         }
