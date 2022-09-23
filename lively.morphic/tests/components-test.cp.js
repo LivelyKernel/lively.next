@@ -200,6 +200,7 @@ const c4 = ComponentDescriptor.for(() => component(c3, {
 
 const c5 = ComponentDescriptor.for(() => component({
   type: 'text',
+  name: 'c5',
   submorphs: [
     part(c4, { name: 'lively', fill: Color.lively })
   ],
@@ -208,6 +209,26 @@ const c5 = ComponentDescriptor.for(() => component({
     part(c4, { name: 'holly' }), null,
     'or: ', null,
     morph({ name: 'wood', fill: Color.orange }), null
+  ]
+}));
+
+const c6 = ComponentDescriptor.for(() => component(c5, {
+  name: 'c6',
+  textAndAttributes: [
+    'Something: ', {},
+    {
+      name: 'holly',
+      fill: Color.red,
+      submorphs: [{
+        name: 'foo',
+        submorphs: [{
+          name: 'alice',
+          fill: Color.lively
+        }]
+      }]
+    }, null,
+    'or: ', null,
+    { name: 'wood', fill: Color.blue }, null
   ]
 }));
 
@@ -807,7 +828,7 @@ describe('components', () => {
 
   it('attaches the proper style policies to embedded morphs', () => {
     const m = part(c5);
-    expect(m.get('lively').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
+    expect(m.get('lively').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style policies');
     expect(m.get('holly').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
     expect(c5.stylePolicy.getSubSpecFor('holly')).to.be.instanceof(StylePolicy);
     expect(c5.stylePolicy.getSubSpecFor('wood')).to.be.instanceof(Object);
@@ -831,5 +852,12 @@ describe('components', () => {
     expect(m.get('wood').fill).to.eql(Color.orange);
     expect(m.get('lively').fill).to.eql(Color.lively);
     expect(m.get('holly').fill).to.eql(Color.orange);
+  });
+
+  it('properly merges submorphs embedded in text attributes', () => {
+    const m = part(c6);
+    expect(m.get('wood').fill).to.eql(Color.blue);
+    expect(m.get('holly').fill).to.eql(Color.red);
+    expect(m.get('holly').getSubmorphNamed('alice').fill).to.eql(Color.lively);
   });
 });
