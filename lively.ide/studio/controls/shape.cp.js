@@ -1,7 +1,7 @@
 import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';
-import { NumberInput, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
+import { NumberInputDark, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
 
 export class ShapeControlModel extends ViewModel {
@@ -222,7 +222,7 @@ const ShapeControl = component({
   fill: Color.transparent,
   extent: pt(250, 215.4),
   submorphs: [
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'x input',
       tooltip: 'X Position',
       min: -Infinity,
@@ -235,7 +235,7 @@ const ShapeControl = component({
         padding: rect(8, 0, -1, 0),
         textAndAttributes: ['X', null]
       }]
-    }), part(NumberInput, {
+    }), part(NumberInputDark, {
       name: 'y input',
       tooltip: 'Y Position',
       min: -Infinity,
@@ -249,7 +249,7 @@ const ShapeControl = component({
         textAndAttributes: ['Y', null]
       }]
     }), { opacity: 0, name: 'buffer', width: 25 },
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'width input',
       tooltip: 'Width',
       min: -Infinity,
@@ -265,7 +265,7 @@ const ShapeControl = component({
         }]
       }]
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'height input',
       min: -Infinity,
       max: Infinity,
@@ -285,7 +285,7 @@ const ShapeControl = component({
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['', { fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"', fontWeight: '900', textStyleClasses: ['fas'] }]
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'rotation input',
       tooltip: 'Rotation',
       position: pt(24.7, 29),
@@ -301,7 +301,7 @@ const ShapeControl = component({
         padding: rect(6, 0, -6, 0)
       }]
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'radius input',
       tooltip: 'Border Radius',
       min: 0,
@@ -346,7 +346,7 @@ const ShapeControl = component({
             textStyleClasses: ['material-icons']
           }]
         },
-        part(NumberInput, {
+        part(NumberInputDark, {
           name: 'radius input top left',
           min: 0,
           extent: pt(35, 22),
@@ -354,7 +354,7 @@ const ShapeControl = component({
           borderRadiusTopRight: 0,
           borderRadiusBottomRight: 0,
           submorphs: [without('interactive label')]
-        }), part(NumberInput, {
+        }), part(NumberInputDark, {
           name: 'radius input top right',
           min: 0,
           borderRadius: 0,
@@ -362,7 +362,7 @@ const ShapeControl = component({
           tooltip: 'Border Radius Top Right',
           submorphs: [without('interactive label')]
         }),
-        part(NumberInput, {
+        part(NumberInputDark, {
           name: 'radius input bottom right',
           min: 0,
           borderRadius: 0,
@@ -370,7 +370,7 @@ const ShapeControl = component({
           tooltip: 'Border Radius Bottom Right',
           submorphs: [without('interactive label')]
         }),
-        part(NumberInput, {
+        part(NumberInputDark, {
           name: 'radius input bottom left',
           min: 0,
           borderRadiusTopLeft: 0,

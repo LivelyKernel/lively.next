@@ -1,7 +1,7 @@
 import { component, ensureFont, part } from 'lively.morphic';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color, pt } from 'lively.graphics';
-import { EnumSelector, NumberInput, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
+import { EnumSelector, NumberInputDark, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
 // DarkColorPicker.openInWorld()
 
 ensureFont({
@@ -56,7 +56,7 @@ const DarkColorPicker = component(ColorPicker, {
             submorphs: [
               {
                 name: 'hex opacity control',
-                master: NumberInput,
+                master: NumberInputDark,
                 borderRadius: 0,
                 submorphs: [{
                   name: 'value',
@@ -74,7 +74,7 @@ const DarkColorPicker = component(ColorPicker, {
             name: '3 val encoding',
             submorphs: [{
               name: 'opacity control',
-              master: NumberInput,
+              master: NumberInputDark,
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
@@ -82,7 +82,7 @@ const DarkColorPicker = component(ColorPicker, {
               }]
             }, {
               name: 'first value',
-              master: NumberInput,
+              master: NumberInputDark,
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
@@ -91,7 +91,7 @@ const DarkColorPicker = component(ColorPicker, {
             },
             {
               name: 'second value',
-              master: NumberInput,
+              master: NumberInputDark,
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
@@ -99,7 +99,7 @@ const DarkColorPicker = component(ColorPicker, {
               }]
             }, {
               name: 'third value',
-              master: NumberInput,
+              master: NumberInputDark,
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
@@ -111,7 +111,7 @@ const DarkColorPicker = component(ColorPicker, {
             submorphs: [{
               name: 'css input',
               fontSize: 14,
-              master: NumberInput,
+              master: NumberInputDark,
               borderRadius: 0
             }]
           }]

@@ -1,6 +1,6 @@
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
 import { TilingLayout, Morph, Label, ViewModel, part, add, component } from 'lively.morphic';
-import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInput, PropertyLabelHovered } from '../shared.cp.js';
+import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInputDark, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
 import { arr, string } from 'lively.lang';
@@ -384,7 +384,7 @@ const BorderControlElements = component({
       spacing: 10,
       wrapSubmorphs: false
     }),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       type: NumberWidget,
       tooltip: 'Border Width',
       name: 'border width input',

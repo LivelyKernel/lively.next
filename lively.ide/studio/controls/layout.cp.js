@@ -4,7 +4,7 @@ import { arr } from 'lively.lang';
 import { connect, disconnect, once } from 'lively.bindings';
 import {
   AddButton, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
-  LabeledCheckbox, NumberInput, PropertyLabelHovered
+  LabeledCheckbox, NumberInputDark, PropertyLabelHovered
 } from '../shared.cp.js';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
 
@@ -325,7 +325,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
 }
 
 // PaddingInput.openInWorld()
-const PaddingInput = component(NumberInput, {
+const PaddingInput = component(NumberInputDark, {
   name: 'padding input',
   layout: new TilingLayout({
     axisAlign: 'center',
@@ -497,7 +497,7 @@ const LayoutControl = component(PropertySection, {
         textAndAttributes: ['', null],
         padding: rect(4, 4, 0, 0)
       }),
-      part(NumberInput, {
+      part(NumberInputDark, {
         name: 'spacing input',
         width: 60,
         min: 0,
@@ -507,7 +507,7 @@ const LayoutControl = component(PropertySection, {
           textAndAttributes: ['', null]
         }]
       }),
-      part(NumberInput, {
+      part(NumberInputDark, {
         name: 'total padding input',
         width: 60,
         min: 0,

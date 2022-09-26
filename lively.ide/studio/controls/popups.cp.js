@@ -1,6 +1,6 @@
 import { TilingLayout, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
-import { PropertyLabel, PropLabel, AddButton, NumberInput, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
+import { PropertyLabel, PropLabel, AddButton, NumberInputDark, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -366,7 +366,7 @@ const ShadowPopup = component(DarkPopupWindow, {
     extent: pt(241, 76.6),
     layout: new TilingLayout({ spacing: 10, justifySubmorphs: 'spaced', padding: Rectangle.inset(10, 10, 40) }),
     fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       name: 'x offset',
       width: 70,
       submorphs: [{
@@ -378,7 +378,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       }],
       tooltip: 'X offset'
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'blur input',
       min: 0,
       width: 70,
@@ -391,7 +391,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       }],
       tooltip: 'Shadow blur'
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'y offset',
       width: 70,
       submorphs: [{
@@ -403,7 +403,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       }],
       tooltip: 'Y offset'
     }),
-    part(NumberInput, {
+    part(NumberInputDark, {
       name: 'spread input',
       min: 0,
       width: 70,
@@ -503,7 +503,7 @@ const PositionPopupLight = component(PopupWindow, {
         spacing: 20
       }),
       submorphs: [
-        part(NumberInput, {
+        part(NumberInputDark, {
           name: 'position x input',
           master: NumberWidgetLight,
           submorphs: [{
@@ -515,7 +515,7 @@ const PositionPopupLight = component(PopupWindow, {
             fontColor: Color.rgba(101, 135, 139, .5)
           }]
         }),
-        part(NumberInput, {
+        part(NumberInputDark, {
           name: 'position y input',
           master: NumberWidgetLight,
           submorphs: [{
@@ -784,7 +784,7 @@ const BlurPopup = component(DarkPopupWindow, {
     borderWidth: 0,
     extent: pt(241, 50.3),
     fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       name: 'value input',
       min: 0,
       position: pt(11.3, 14),
@@ -816,7 +816,7 @@ const OpacityPopup = component(DarkPopupWindow, {
     borderWidth: 0,
     extent: pt(241, 50.3),
     fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       name: 'value input',
       position: pt(11.3, 14),
       min: 0,
@@ -894,7 +894,7 @@ const TiltPopup = component(DarkPopupWindow, {
     borderWidth: 0,
     extent: pt(241, 50.3),
     fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       name: 'value input',
       unit: '°',
       min: 0,
@@ -926,7 +926,7 @@ const FlipPopup = component(DarkPopupWindow, {
     borderWidth: 0,
     extent: pt(241, 50.3),
     fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [part(NumberInput, {
+    submorphs: [part(NumberInputDark, {
       name: 'value input',
       unit: '°',
       min: 0,

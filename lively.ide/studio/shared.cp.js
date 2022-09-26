@@ -125,8 +125,8 @@ const PropLabel = component(HeadlineLabel, {
   fontWeight: 'normal'
 });
 
-// NumberInput.openInWorld()
-const NumberInput = component(DarkNumberWidget, {
+// NumberInputDark.openInWorld()
+const NumberInputDark = component(DarkNumberWidget, {
   name: 'number input',
   borderRadius: 2,
   dropShadow: false,
@@ -386,4 +386,4 @@ const Spinner = component({
   scale: 0.3244543390629232
 });
 
-export { AddButton, RemoveButton, HeadlineLabel, PropLabel, NumberInput, TextInput, EnumSelector, PropertyLabel, PropertyLabelHovered, PropertyLabelActive, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner, CheckboxActive, CheckboxInactive };
+export { AddButton, RemoveButton, HeadlineLabel, PropLabel, NumberInputDark, TextInput, EnumSelector, PropertyLabel, PropertyLabelHovered, PropertyLabelActive, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner, CheckboxActive, CheckboxInactive };
