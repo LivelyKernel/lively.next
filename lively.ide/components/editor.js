@@ -52,7 +52,7 @@ function convertToSpec (aMorph, opts = {}) {
   if (!expr) return;
   return {
     bindings,
-    __expr__: `${expr.match(/morph\(([^]*)\)/)[1]}`
+    __expr__: `${expr.match(/^(morph|part)\(([^]*)\)/)[2] || ''}`
   };
 }
 // expr = await convertToSpec(this.get('default message morph'))
