@@ -1378,8 +1378,8 @@ export class BrowserModel extends ViewModel {
     this.editorPlugin._tokenizerValidBefore = { row: 0, column: 0 };
     this.editorPlugin.requestHighlight(true);
 
-    await this.updateTestUI(mod);
     await this.injectComponentEditControls(mod);
+    await this.updateTestUI(mod);
     this.ui.metaInfoText.setPath([
         `[${pack.name}]`,
         {
@@ -1547,11 +1547,13 @@ export class BrowserModel extends ViewModel {
         hasTests = false;
       }
     }
+    if (hasTests) sourceEditor.submorphs = [];
     metaInfoText.testModuleMode = hasTests;
   }
 
   async injectComponentEditControls (mod) {
     this.ui.sourceEditor.submorphs = [];
+
     if (!mod.name.endsWith('.cp.js')) return;
     mod = modules.module(mod.url);
     const { varDecls } = await mod.scope();
@@ -1765,8 +1767,8 @@ export class BrowserModel extends ViewModel {
       const cursorPosition = sourceEditor.cursorPosition;
       this.updateSource(content);
       await this.updateCodeEntities(module);
-      await this.updateTestUI(module);
       await this.injectComponentEditControls(module);
+      await this.updateTestUI(module);
       sourceEditor.focus();
       // This is to keep the editor from "jumping around" when saving and the source code gets replaced by **altered** output of the linter.
       // However, this is not a clean solutions. E.g. when empty lines are removed by the linter, the cursor position will be off afterwards.
