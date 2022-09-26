@@ -13,7 +13,6 @@ custom-npm-modules/
 favicon.ico
 localconfig.js
 robots.txt
-update.sh
 start.sh
 config.js
 user-server.sh
@@ -23,3 +22,5 @@ package-lock.json
 /lively-system-interface/.lively.next-eval-server-for-test.js
 /lively.server/.lively.next-eval-server-for-test.js
 components_cache/*
+lively.freezer/landing-page/
+lively.freezer/loading-screen/
