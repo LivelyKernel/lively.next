@@ -19,8 +19,8 @@
     "rollup-plugin-polyfill-node": "0.9.0"
   },
   "scripts": {
-    "build-loading-screen": ". ../scripts/lively-next-flatn-env.sh; lively_next_flatn_env $(dirname \"$(pwd)\"); export FLATN_DEV_PACKAGE_DIRS=$FLATN_DEV_PACKAGE_DIRS:$(pwd); node --inspect --no-warnings --experimental-import-meta-resolve --experimental-loader ../flatn/resolver.mjs tools/build.loading-screen.mjs",
-    "build-landing-page": ". ../scripts/lively-next-flatn-env.sh; lively_next_flatn_env $(dirname \"$(pwd)\"); export FLATN_DEV_PACKAGE_DIRS=$FLATN_DEV_PACKAGE_DIRS:$(pwd); node --inspect --no-warnings --experimental-import-meta-resolve --experimental-loader ../flatn/resolver.mjs tools/build.landing-page.mjs"
+    "build-loading-screen": "./tools/build-loading-screen.sh",
+    "build-landing-page": "./tools/build-landing-page.sh"
   },
   "systemjs": {
     "meta": {
