@@ -1164,7 +1164,7 @@ export class Text extends Morph {
 
     // if there is an animation in progress, we need to wait until that
     // is finished animating, so that our dom measurement is not fucked up.
-    if (meta.animation) { promise.delay(meta.animation.duration).then(updateTextEngine); } else {
+    if (meta?.animation) { promise.delay(meta.animation.duration).then(updateTextEngine); } else {
       this.ownerChain().every(m => m.visible) && updateTextEngine();
     }
   }
