@@ -1,5 +1,5 @@
 import { parseJsonLikeObj } from '../helpers.js';
-import { obj } from 'lively.lang';
+import { obj, Path } from 'lively.lang';
 
 import { transform } from 'lively.ast';
 import * as modules from 'lively.modules';
@@ -95,6 +95,47 @@ export class AbstractCoreInterface {
 
   moduleWrite (moduleName, newSource) {
     return this.moduleSourceChange(moduleName, newSource);
+  }
+
+  async getLoadedModules (ignoredPackages) {
+    const pkgs = await this.getPackages();
+    let items = [];
+
+    for (const p of pkgs) {
+      let excluded = Path('lively.ide.exclude').get(p) || [];
+      excluded = excluded.map(ea => ea.includes('*') ? new RegExp(ea.replace(/\*/g, '.*')) : ea);
+      for (const m of p.modules) {
+        if (excluded.some(ex => ex instanceof RegExp ? ex.test(m.name) : m.name.includes(ex))) continue;
+        items.push({ package: p, module: m });
+      }
+    }
+
+    return items;
+  }
+
+  async getResourcesOfLoadedPackages (ignoredPackages) {
+    const pkgs = await this.getPackages({ excluded: ignoredPackages });
+    const items = [];
+
+    for (const p of pkgs) {
+      const excluded = (Path('lively.ide.exclude').get(p) || []).map(ea =>
+        ea.includes('*') ? new RegExp(ea.replace(/\*/g, '.*')) : ea);
+      excluded.push('.git', 'node_modules', '.module_cache');
+      items.push(...(await this.resourcesOfPackage(p, excluded))
+        .filter(({ url }) => !url.endsWith('/') && !excluded.some(ex => ex instanceof RegExp ? ex.test(url) : url.includes(ex)))
+        .sort((a, b) => {
+          if (a.isLoaded && !b.isLoaded) return -1;
+          if (!a.isLoaded && b.isLoaded) return 1;
+          if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
+          if (a.nameInPackage.toLowerCase() === b.nameInPackage.toLowerCase()) return 0;
+          return 1;
+        })
+        .map(resource => {
+          return { package: p, resource };
+        }));
+    }
+
+    return items;
   }
 }
 
