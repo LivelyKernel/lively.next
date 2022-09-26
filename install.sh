@@ -13,3 +13,9 @@ mkdir esm_cache
 
 node --no-experimental-fetch --inspect --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
      lively.installer/bin/install.cjs $PWD \
+
+if [ ! "$CI" ];
+then
+  npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
+fi
+npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
