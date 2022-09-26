@@ -941,27 +941,11 @@ const commands = [
       const systemInterface = opts && opts.systemInterface
         ? opts.systemInterface
         : browser ? browser.systemInterface : localInterface;
-      const pkgs = await systemInterface.getPackages({ excluded: config.ide.js.ignoredPackages });
-      const items = [];
-
-      for (const p of pkgs) {
-        const excluded = (Path('lively.ide.exclude').get(p) || []).map(ea =>
-          ea.includes('*') ? new RegExp(ea.replace(/\*/g, '.*')) : ea);
-        excluded.push('.git', 'node_modules', '.module_cache');
-        items.push(...(await systemInterface.resourcesOfPackage(p, excluded))
-          .filter(({ url }) => !url.endsWith('/') && !excluded.some(ex => ex instanceof RegExp ? ex.test(url) : url.includes(ex)))
-          .sort((a, b) => {
-            if (a.isLoaded && !b.isLoaded) return -1;
-            if (!a.isLoaded && b.isLoaded) return 1;
-            if (a.nameInPackage.toLowerCase() < b.nameInPackage.toLowerCase()) return -1;
-            if (a.nameInPackage.toLowerCase() === b.nameInPackage.toLowerCase()) return 0;
-            return 1;
-          })
-          .map(resource => {
-            const string = `[${p.name}] ${resource.nameInPackage}${resource.isLoaded ? '' : ' [not loaded]'}`;
-            return { isListItem: true, string, value: resource };
-          }));
-      }
+      const items = (await systemInterface.coreInterface.getResourcesOfLoadedPackages(config.ide.js.ignoredPackages))
+        .map(({ package: p, resource: r }) => {
+          const string = `[${p.name}] ${r.nameInPackage}${r.isLoaded ? '' : ' [not loaded]'}`;
+          return { isListItem: true, string, value: r };
+        });
 
       const { selected } = await world.filterableListPrompt(
         'Choose module to open', items, {
@@ -1010,22 +994,15 @@ const commands = [
         : ` on [${
               string.truncate(systemInterface.name, 35, '...')
           }]`;
-      const pkgs = await systemInterface.getPackages();
-      let items = [];
-
-      for (const p of pkgs) {
-        let excluded = Path('lively.ide.exclude').get(p) || [];
-        excluded = excluded.map(ea => ea.includes('*') ? new RegExp(ea.replace(/\*/g, '.*')) : ea);
-        for (const m of p.modules) {
-          if (excluded.some(ex => ex instanceof RegExp ? ex.test(m.name) : m.name.includes(ex))) continue;
-          const shortName = systemInterface.shortModuleName(m.name, p);
-          items.push({
-            isListItem: true,
-            string: `[${p.name}] ${shortName}`,
-            value: { package: p, module: m, shortName }
-          });
+      let items = (await systemInterface.coreInterface.getLoadedModules((config.ide.js.ignoredPackages)))
+        .map(({ package: p, module: m }) => {
+        const shortName = systemInterface.shortModuleName(m.name, p);
+        return {
+          isListItem: true,
+          string: `[${p.name}] ${shortName}`,
+          value: { package: p, module: m, shortName }
         }
-      }
+       });
 
       items = arr.sortBy(items, ea => ea.string);
       (async () => {
