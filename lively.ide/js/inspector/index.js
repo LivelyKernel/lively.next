@@ -1,7 +1,7 @@
 import { InspectionTree, isMultiValue, RemoteInspectionTree, printValue } from './context.js';
 import { arr, num, promise, obj, Path } from 'lively.lang';
 import { pt, rect, Color } from 'lively.graphics';
-import { config, HorizontalLayout, Label, VerticalLayout, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
+import { config, HorizontalLayout, Label, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
 import { connect, disconnect, once } from 'lively.bindings';
 import { LoadingIndicator } from 'lively.components';
 import DarkTheme from '../../themes/dark.js';
@@ -9,10 +9,10 @@ import DefaultTheme from '../../themes/default.js';
 import { DropDownSelector } from 'lively.components/widgets.js';
 import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
 import { valueWidgets } from 'lively.ide';
-import { onNumberDragStart, ensureDefaultImports, generateReferenceExpression, onNumberDragEnd, onNumberDrag } from './helpers.js';
+import { ensureDefaultImports, generateReferenceExpression } from './helpers.js';
 import { InstructionWidget } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
-import { ShadowPopup, PositionPopupLight, PaddingPopup } from '../../studio/controls/popups.cp.js';
+import { ShadowPopup, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight } from '../../studio/controls/popups.cp.js';
 
 ensureDefaultImports();
 
@@ -410,90 +410,45 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderNumberControl (args) {
     const { value, spec, keyString, valueString, fastRender, node, target, tree } = args;
-    const { _numberControls = new NumberControls() } = node;
-
-    const [up, down] = _numberControls.submorphs;
-    _numberControls.fontColor = tree.fontColor;
-    const scrubState = node._numberControls = _numberControls;
-
+    const widgetState = {};
     if ('max' in spec && 'min' in spec &&
         spec.min !== -Infinity && spec.max !== Infinity) {
-      scrubState.baseFactor = (spec.max - spec.min) / 100;
-      scrubState.floatingPoint = spec.isFloat;
-      scrubState.max = spec.max;
-      scrubState.min = spec.min;
+      widgetState.baseFactor = (spec.max - spec.min) / 100;
+      widgetState.floatingPoint = spec.isFloat;
+      widgetState.max = spec.max;
+      widgetState.min = spec.min;
     } else {
-      scrubState.floatingPoint = spec.isFloat;
-      scrubState.baseFactor = 0.5;
+      widgetState.floatingPoint = spec.isFloat;
+      widgetState.baseFactor = 0.5;
 
-      scrubState.min = spec.min !== undefined ? spec.min : -Infinity;
-      scrubState.max = spec.max !== undefined ? spec.max : Infinity;
+      widgetState.min = spec.min !== undefined ? spec.min : -Infinity;
+      widgetState.max = spec.max !== undefined ? spec.max : Infinity;
     }
 
-    const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
+    const handler = async (evt) => {
+      const editor = part(parameterizedNumberPopupLight({
+        title: keyString,
+        tooltip: keyString,
+        value: target[keyString],
+        min: widgetState.min,
+        max: widgetState.max,
+        baseFactor: widgetState.baseFactor,
+        floatingPoint: widgetState.floatingPoint
+      }));
+      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      connect(editor.viewModel, 'value', (num) => {
+        target[keyString] = num;
+        node.rerender();
+      });
+    };
+    const attrs = { nativeCursor: 'pointer', onMouseDown: handler };
     return [
       ...this.renderGrabbableKey(args),
-      ...node._inputMorph ? [node._inputMorph, {}] : [
-        ` ${value !== undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? Math.max(4, num.precision(value)) : 0)} `,
-
-        {
-          fontColor: numberColor,
-          onMouseUp: (evt) => {
-            node._inputMorph = morph({
-              type: 'input',
-              fill: null,
-              fontColor: numberColor,
-              fontFamily: 'IBM Plex Mono',
-              fontSize: 14,
-              padding: rect(8, 2, -6, 2),
-              height: 23, // get line height?
-              cursorColor: Color.white,
-              value: value.valueOf ? value.valueOf() : valueString
-            });
-            target[keyString] = value; // trigger update. is there a better way?
-            node._inputMorph.focus();
-            once(node._inputMorph, 'inputAccepted', (v) => {
-              delete node._inputMorph;
-              target[keyString] = spec.isFloat ? Number.parseFloat(v) : Number.parseInt(v);
-              node.rerender();
-            });
-            once(node._inputMorph, 'onBlur', (v) => {
-              if (node._inputMorph) {
-                delete node._inputMorph;
-                target[keyString] = value;
-                node.rerender();
-              }
-            });
-            node.rerender();
-          },
-          onDragStart: (evt) => {
-            scrubState.scrubbedValue = value;
-            onNumberDragStart(evt, scrubState);
-          },
-          onDrag: (evt) => {
-            target[keyString] = onNumberDrag(evt, scrubState);
-            node.rerender();
-          },
-          onDragEnd: (evt) => onNumberDragEnd(evt, scrubState)
-        }, _numberControls, {
-          onMouseUp: () => {
-            up.fill = down.fill = null;
-          },
-          onMouseDown: (evt) => {
-            if (evt.targetMorph === up) {
-              up.fill = Color.white.withA(0.2);
-              if ('max' in spec && target[keyString] >= spec.max) return;
-              target[keyString] += 1;
-            }
-            if (evt.targetMorph === down) {
-              down.fill = Color.white.withA(0.2);
-              if ('min' in spec && target[keyString] <= spec.min) return;
-              target[keyString] -= 1;
-            }
-            node.rerender();
-          }
-        }]
-
+      ...node._inputMorph
+        ? [node._inputMorph, { ...attrs }]
+        : [
+        ` ${value !== undefined && (value.valueOf ? value.valueOf() : value).toFixed(spec.isFloat ? Math.max(4, num.precision(value)) : 0)} `, { ...attrs }
+          ]
     ];
   }
 
@@ -614,48 +569,6 @@ export class PropertyControl extends DraggableTreeLabel {
     hl.fontWeight = 'bold', hl.fontColor = Color.orange;
     hl.reactsToPointer = false;
     hl.fadeOut(2000);
-  }
-}
-
-class NumberControls extends Morph {
-  static get properties () {
-    return {
-      layout: {
-        initialize () {
-          this.layout = new VerticalLayout({ spacing: 0, orderByIndex: true });
-        }
-      },
-      fill: { defaultValue: Color.transparent },
-      width: { defaultValue: 15 },
-      fontColor: {
-        derived: true,
-        set (c) {
-          this.submorphs.map(m => m.fontColor = c);
-        }
-      },
-      submorphs: {
-        initialize () {
-          this.submorphs = [
-            Icon.makeLabel('sort-up', {
-              autofit: true,
-              opacity: 0.6,
-              nativeCursor: 'pointer',
-              padding: rect(5, 2, 0, -6),
-              fontSize: 12
-            }),
-            Icon.makeLabel('sort-up', {
-              top: 10,
-              rotation: Math.PI,
-              autofit: true,
-              padding: rect(5, 4, 0, -9),
-              opacity: 0.6,
-              nativeCursor: 'pointer',
-              fontSize: 12
-            })
-          ];
-        }
-      }
-    };
   }
 }
 
