@@ -2,7 +2,7 @@ import { TilingLayout, Icon, Morph, ShadowObject, Label, component, add, ViewMod
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
 import { PropertyLabel, PropLabel, AddButton, NumberInputDark, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
-import { num, arr } from 'lively.lang';
+import { num, string, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupWindow, CloseButton } from '../../styling/shared.cp.js';
@@ -131,7 +131,7 @@ export class SingleNumberModel extends ViewModel {
     return {
       value: {},
       isHaloItem: { defaultValue: true },
-      expose: { get () { return ['isHaloItem']; } },
+      expose: { get () { return ['isHaloItem', 'value']; } },
       bindings: {
         get () {
           return [
@@ -481,6 +481,64 @@ const NumberWidgetLight = component(DefaultNumberWidget, {
     { name: 'down', visible: false }
   ]
 });
+
+const NumberPopupLight = component(PopupWindow, {
+  defaultViewModel: SingleNumberModel,
+  name: 'number popup',
+  width: 150,
+  submorphs: [{
+    name: 'header menu',
+    submorphs: [{
+      name: 'title',
+      textAndAttributes: ['d', null]
+    }]
+  }, add({
+    name: 'footer',
+    borderColor: Color.rgb(97, 106, 107),
+    borderWidth: 0,
+    extent: pt(70, 50.3),
+    fill: Color.rgba(0, 0, 0, 0),
+    submorphs: [part(NumberWidgetLight, {
+      name: 'value input',
+      min: 0,
+      position: pt(11.3, 14),
+      submorphs: [{
+        name: 'interactive label',
+        textAndAttributes: ['', {
+          fontSize: 14,
+          textStyleClasses: ['material-icons']
+        }]
+      }],
+      tooltip: 'Object blur'
+    })]
+  })]
+});
+
+export function parameterizedNumberPopupLight (spec) {
+  let { title, tooltip, value, min, max, baseFactor, floatingPoint } = spec;
+  title = string.tokens(string.decamelize(title)).map(m => string.capitalize(m)).join(' ');
+  return component(NumberPopupLight, {
+    viewModel: { value },
+    hasFixedPosition: true,
+    submorphs: [{
+      name: 'header menu',
+      submorphs: [{
+        name: 'title',
+        textAndAttributes: [title, null]
+      }]
+    }, {
+      name: 'footer',
+      submorphs: [{
+        name: 'value input',
+        min,
+        max,
+        baseFactor,
+        floatingPoint
+      }],
+      tooltip: tooltip
+    }]
+  });
+}
 
 // PositionPopupLight.openInWorld()
 const PositionPopupLight = component(PopupWindow, {
@@ -944,4 +1002,4 @@ const FlipPopup = component(DarkPopupWindow, {
   })]
 });
 
-export { BlurPopup, ShadowPopup, ShadowPopupLight, InsetShadowPopup, OpacityPopup, CursorPopup, TiltPopup, NumberWidgetLight, PaddingPopup, PositionPopupLight, FlipPopup };
+export { BlurPopup, ShadowPopup, ShadowPopupLight, InsetShadowPopup, OpacityPopup, CursorPopup, TiltPopup, NumberWidgetLight, NumberPopupLight, PaddingPopup, PositionPopupLight, FlipPopup };
