@@ -21,7 +21,7 @@ import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import { interactivelyFreezePart } from 'lively.freezer';
-import { generateReferenceExpression } from '../inspector.js';
+import { generateReferenceExpression } from '../inspector/helpers.js';
 import { getClassName } from 'lively.serializer2';
 import { resource } from 'lively.resources';
 import lint from '../linter.js';
