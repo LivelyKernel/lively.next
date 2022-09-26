@@ -184,7 +184,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
             {path: "lively.installer/assets/config.js",      canBeLinked: false, overwrite: false},
             {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
             {path: "lively.installer/assets/start.sh",       canBeLinked: false, overwrite: false},
-            {path: "lively.installer/assets/update.sh",      canBeLinked: true, overwrite: true},
             {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
           ];
 
@@ -206,7 +205,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
         }
       }
 
-      await exec("chmod a+x start.sh update.sh", {cwd: resource(baseDir).path()});
+      await exec("chmod a+x start.sh", {cwd: resource(baseDir).path()});
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
