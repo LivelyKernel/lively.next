@@ -6,7 +6,7 @@ import {
   Text,
   GridLayout,
   morph,
-  Icon
+  Icon, config
 } from 'lively.morphic';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
@@ -1034,25 +1034,32 @@ class ComponentHaloItem extends HaloItem {
   async onMouseDown () {
     const target = this.halo.target;
     const toBeComponent = !target.isComponent;
-    const numDuplicates = $world.getAllNamed(target.name).length;
-    if (toBeComponent && numDuplicates > 1) {
-      const newName = await $world.prompt([
-        'Name Conflict\n', {},
-        `The morph\'s name you are about to turn into a component is already used by ${numDuplicates - 1} other morph${numDuplicates > 2 ? 's' : ''}. Please enter a `, {
-          fontWeight: 'normal'
-        }, 'unique identifier', { fontStyle: 'italic' },
-        ' for this component within this project.', {
-          fontWeight: 'normal', fontSize: 16
-        }], {
-        input: target.name,
-        lineWrapping: true,
-        width: 400,
-        errorMessage: 'Identifier not unique',
-        validate: (input) => $world.getAllNamed(input).length === 0
+    if (toBeComponent) {
+      const { localInterface } = await System.import('lively-system-interface');
+      const items = (await localInterface.coreInterface.getLoadedModules(config.ide.js.ignoredPackages))
+        .filter(({ module: m }) => m.name?.endsWith('.cp.js'))
+        .map(({ package: p, module: m }) => {
+          const shortName = localInterface.shortModuleName(m.name, p);
+          const string = `[${p.name}] ${shortName}`;
+          return { isListItem: true, string, value: m };
+        });
+
+      const res = await $world.filterableListPrompt('Select Home Module for Component', items, {
+        historyId: 'lively.morphic-choose and browse package resources',
+        width: 700,
+        multiSelect: false,
+        fuzzy: 'value.shortName'
       });
-      if (!newName) return;
-      target.name = newName;
+      const { selected: [selectedModule] } = res;
+      if (!selectedModule) return;
+      const variableName = await $world.prompt('Enter a name for this component', {
+        input: string.decamelize('HelloWorld')
+      });
+      if (!variableName) return;
+      const { insertComponentDefinition } = await System.import('lively.ide/components/editor.js');
+      insertComponentDefinition(target, string.camelCaseString(variableName), selectedModule.name);
     }
+
     target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
     if (toBeComponent) {
       arr.pushIfNotIncluded(target.world().localComponents, target);
