@@ -626,6 +626,10 @@ export class StylePolicy {
         if (skipInstantiationProps) delete synthesized[prop];
         else synthesized[prop] = synthesized[prop].value;
       }
+      if (prop === 'textString') {
+        synthesized.textAndAttributes = [synthesized[prop], null];
+        delete synthesized.textString;
+      }
     }
 
     return synthesized;
