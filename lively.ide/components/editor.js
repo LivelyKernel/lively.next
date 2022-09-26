@@ -2,7 +2,7 @@ import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { Icons } from 'lively.morphic/text/icons.js';
 import { arr, obj, fun, promise, string } from 'lively.lang';
 import ASTQ from 'esm://cache/astq@2.7.5';
-import { parse } from 'lively.ast';
+import { parse, stringify } from 'lively.ast';
 import { Range } from 'lively.morphic/text/range.js';
 import { module } from 'lively.modules/index.js';
 import { connect, signal } from 'lively.bindings';
@@ -11,6 +11,8 @@ import { ImportInjector } from 'lively.modules/src/import-modification.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
 import { ComponentDescriptor, morph } from 'lively.morphic';
+import { id } from 'lively.ast/lib/nodes.js';
+import * as Browser from '../js/browser/ui.cp.js';
 
 const astq = new ASTQ();
 astq.adapter('mozast');
@@ -58,10 +60,24 @@ function convertToSpec (aMorph, opts = {}) {
 // expr = await convertToSpec(this.get('default message morph'))
 // expr = await convertToSpec(that)
 
-export function createInitialComponentDefinition (aComponent) {
-  return 'component(' + convertToSpec(aComponent, {
+export function createInitialComponentDefinition (aComponent, asExprObject = false) {
+  let { __expr__, bindings } = convertToSpec(aComponent, {
     skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'treeData']
-  }).__expr__ + ')';
+  });
+  __expr__ = 'component(' + __expr__ + ')';
+
+  if (asExprObject) {
+    if (bindings['lively.morphic']) {
+      arr.pushIfNotIncluded(bindings['lively.morphic'], 'component');
+    } else {
+      bindings['lively.morphic'] = ['component'];
+    }
+    return {
+      __expr__, bindings
+    };
+  }
+
+  return __expr__;
 }
 
 // the cheap way is just to generate a new spec
@@ -239,6 +255,54 @@ function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sourceEdit
   return string.applyChanges(sourceCode, [
     { action: 'insert', start: insertPos, lines: [addedMorphExpr] }
   ]);
+}
+
+function fixUndeclaredVars (updatedSource, requiredBindings, mod) {
+  const knownGlobals = mod.dontTransform;
+  const undeclared = undeclaredVariables(updatedSource, knownGlobals).map(n => n.name);
+  if (undeclared.length === 0) return updatedSource;
+  for (let [importedModuleId, exportedIds] of requiredBindings) {
+    for (let exportedId of exportedIds) {
+      // check if binding already present and continue if that is the case
+      if (!undeclared.includes(exportedId)) continue;
+      arr.remove(undeclared, exportedId);
+      updatedSource = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
+        exported: exportedId,
+        moduleId: importedModuleId
+      }).newSource;
+    }
+  }
+  return updatedSource;
+}
+
+export async function insertComponentDefinition (protoMorph, variableName, modId) {
+  const mod = module(modId);
+  const scope = await mod.scope();
+  // in case there is already a component definition with such a name, raise an error
+  mod.changeSourceAction(oldSource => {
+    // insert the initial component definition into the back end of the module
+    const { __expr__: compCall, bindings: requiredBindings } = createInitialComponentDefinition(protoMorph, true);
+    const decl = `\n\const ${variableName} = ${compCall}`;
+
+    // if there is a bulk export, insert the export into that batch, and also do not put
+    // the declaration after these bulk exports.
+    const finalExports = arr.last(scope.exportDecls);
+    if (!finalExports) {
+      return fixUndeclaredVars(oldSource + decl, Object.entries(requiredBindings), mod) +
+      `\n\nexport { ${variableName} }`;
+    }
+    // insert before the exports
+    const updatedExports = {
+      ...finalExports,
+      specifiers: [...finalExports.specifiers, id(variableName)]
+    };
+
+    return lint(oldSource.slice(0, finalExports.start) + decl + stringify(updatedExports) + oldSource.slice(finalExports.end))[0];
+  });
+
+  const browser = Browser.browserForFile(modId) || $world.execCommand('open browser', null);
+  browser.getWindow().activate();
+  await browser.searchForModuleAndSelect(modId);
 }
 
 function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
@@ -491,24 +555,6 @@ export class ComponentChangeTracker {
     return this._finishPromise ? this._finishPromise.promise : Promise.resolve(true);
   }
 
-  fixUndeclaredVars (updatedSource, requiredBindings, mod) {
-    const knownGlobals = mod.dontTransform;
-    const undeclared = undeclaredVariables(updatedSource, knownGlobals).map(n => n.name);
-    if (undeclared.length === 0) return updatedSource;
-    for (let [importedModuleId, exportedIds] of requiredBindings) {
-      for (let exportedId of exportedIds) {
-        // check if binding already present and continue if that is the case
-        if (!undeclared.includes(exportedId)) continue;
-        arr.remove(undeclared, exportedId);
-        updatedSource = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
-          exported: exportedId,
-          moduleId: importedModuleId
-        }).newSource;
-      }
-    }
-    return updatedSource;
-  }
-
   isPositionedByLayout (aMorph) {
     const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
     return l && l.layoutableSubmorphs.includes(aMorph);
@@ -712,7 +758,7 @@ export class ComponentChangeTracker {
       // does not need linting, surprisingly
     }
     // update the bindings that come from the property
-    updatedSource = this.fixUndeclaredVars(updatedSource, requiredBindings, mod);
+    updatedSource = fixUndeclaredVars(updatedSource, requiredBindings, mod);
 
     // this is asynchronous and does take some time
     // it will cause troble when many successive updates to the module are triggered
