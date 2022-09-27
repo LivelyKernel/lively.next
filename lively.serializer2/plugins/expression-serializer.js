@@ -381,8 +381,10 @@ export function serializeSpec (morph, opts = {}) {
   if (skipUnchangedFromMaster &&
         masterInScope &&
         (masterInScope.managesMorph(morph.name) || morph === masterInScope.targetMorph)) {
-    styleProto = masterInScope.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
-    while (styleProto.isPolicyApplicator) {
+    let policy = masterInScope;
+    if (!policy.targetMorph.isComponent) policy = masterInScope.parent;
+    styleProto = policy?.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
+    while (styleProto?.isPolicyApplicator) {
       styleProto = styleProto.synthesizeSubSpec(null, null, false);
     }
   }
