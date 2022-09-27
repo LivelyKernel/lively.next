@@ -1,8 +1,14 @@
+/* global System */
 import { string, Closure, Path, obj, properties, arr } from 'lively.lang';
 import { getSerializableClassMeta, getClassName } from '../class-helper.js';
 import { connect } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
-/* global System */
+
+// 25.5.20 rms: this function requires the parameters to be unchanged when we run this through google closure. This is why we construct if from source.
+const __eval__ = Closure.fromSource(`function __eval__(__source__, __boundValues__) { 
+  return eval(__source__); 
+}`).getFunc();
+
 export default class ExpressionSerializer {
   constructor (opts) {
     const { prefix } = {
@@ -208,11 +214,34 @@ export default class ExpressionSerializer {
  generalized to become suitable for more general object trees.
 */
 
-// 25.5.20 rms: this function requires the parameters to be unchanged when we run this through google closure. This is why we construct if from source.
-const __eval__ = Closure.fromSource(`function __eval__(__source__, __boundValues__) { 
-  return eval(__source__); 
-}`).getFunc();
+function getExpression (name, val, ctx) {
+  const { exprSerializer, asExpression, nestedExpressions } = ctx;
+  try {
+    if (val[Symbol.for('__LivelyClassName__')]) {
+      val = exprSerializer.exprStringDecode(exprSerializer.getExpressionForFunction(val));
+    } else {
+      val = val.__serialize__({ expressionSerializer: exprSerializer });
+      if (exprSerializer.isSerializedExpression(val)) val = exprSerializer.exprStringDecode(val);
+      exprSerializer;
+    }
+    if (asExpression) {
+      const exprId = string.newUUID();
+      nestedExpressions[exprId] = val;
+      val = exprId;
+    } else val = val.__expr__ ? exprSerializer.exprStringEncode(val) : val;
+  } catch (e) {
+    console.log(`[export to JSON] failed converting ${name} to serialized expression`);
+  }
+  return val;
+}
 
+/**
+ * Turns a spec into a fully initialized morph hierarchy (or base object).
+ * @param { Object } serializedSpec - A proper spec object.
+ * @param { function } [subSpecHandler] - Optional function that allows us to convert/filter subspecs.
+ * @param { Morph|Object } [base] - Optional object or morph that is populated according to the spec.
+ * @returns { Morph|Object }
+ */
 export function deserializeSpec (serializedSpec, subSpecHandler = (spec) => spec, base = {}) {
   const exprSerializer = new ExpressionSerializer();
   const deserializedSpec = base;
@@ -263,10 +292,6 @@ export function deserializeSpec (serializedSpec, subSpecHandler = (spec) => spec
   return deserializedSpec;
 }
 
-// this.exportToJSON()
-// serializeSpec(this, { asExpression: true, keepFunctions: true, skipUnchangedFromDefault: true, skipAttributes: ['metadata', 'styleClasses'] }).__expr__
-// comp.openInWorld()
-
 export function serializeNestedProp (name, val, serializerContext, members = ['top', 'left', 'right', 'bottom']) {
   const { asExpression, exprSerializer, nestedExpressions } = serializerContext;
   let serializedVal = {};
@@ -281,31 +306,10 @@ export function serializeNestedProp (name, val, serializerContext, members = ['t
   return serializedVal;
 }
 
-function getExpression (name, val, ctx) {
-  const { exprSerializer, asExpression, nestedExpressions } = ctx;
-  try {
-    if (val[Symbol.for('__LivelyClassName__')]) {
-      val = exprSerializer.exprStringDecode(exprSerializer.getExpressionForFunction(val));
-    } else {
-      val = val.__serialize__({ expressionSerializer: exprSerializer });
-      if (exprSerializer.isSerializedExpression(val)) val = exprSerializer.exprStringDecode(val);
-      exprSerializer;
-    }
-    if (asExpression) {
-      const exprId = string.newUUID();
-      nestedExpressions[exprId] = val;
-      val = exprId;
-    } else val = val.__expr__ ? exprSerializer.exprStringEncode(val) : val;
-  } catch (e) {
-    console.log(`[export to JSON] failed converting ${name} to serialized expression`);
-  }
-  return val;
-}
-
 function getArrayExpression (name, list, path, subopts) {
   return list.map((v, i) => {
     if (v && v.isMorph) {
-      return serializeSpec(v, {
+      return serializeSpec(v, { // eslint-disable-line no-use-before-define
         ...subopts,
         path: path ? path + '.' + name + '.' + i : name + '.' + i
       });
@@ -590,12 +594,12 @@ export function serializeSpec (morph, opts = {}) {
             else return 0;
           }
         });
-        if (path.length == 0) {
+        if (path.length === 0) {
           __expr__ = `part(${masterComponentName}, ${__expr__})`;
         }
       }
       bindings = {
-        [modulePath]: masterComponentName,
+        [modulePath]: [masterComponentName],
         'lively.morphic': ['part']
       };
     }
