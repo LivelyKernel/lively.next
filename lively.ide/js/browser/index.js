@@ -968,10 +968,21 @@ export class BrowserModel extends ViewModel {
     return this.view;
   }
 
+  /**
+   * Opens a particular module of a package with an optional
+   * code entity selected. Also offers the scroll and text cursor position
+   * to be specified and set accordingly.
+   * @param { Object } browseSpec
+   * @param { string } browseSpec.packageName - The name of the package the module belongs to.
+   * @param { string } browseSpec.moduleName - The name of the module to be opened.
+   * @param { Object } [browseSpec.textPosition] - The position of the text cursor specified by row + col.
+   * @param { string } [browserSpec.codeEntity] - The name of the code entity to select.
+   * @param { Point }  [browseSpec.scroll] - The scroll position of the code editor.
+   * @param { Interface } [browseSpec.systemInterface] - The evaluation context for the code editor.
+   * @param { Interface } optSystemInterface - The evaluation context for the code editor
+   * @returns { Morph } The browser morph.
+   */
   async browse (browseSpec = {}, optSystemInterface) {
-    // browse spec:
-    // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
-
     let {
       packageName,
       moduleName,
@@ -1021,7 +1032,7 @@ export class BrowserModel extends ViewModel {
 
     this.historyRecord();
 
-    if (codeEntity) {
+    if (codeEntity && scroll) {
       await this.selectCodeEntityInColumnView(codeEntity, false);
     }
 
