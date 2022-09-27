@@ -387,7 +387,7 @@ export function serializeSpec (morph, opts = {}) {
     }
   }
 
-  if (morph.isText && morph.textString !== '') {
+  if ((morph.isText || morph.isLabel) && morph.textString !== '') {
     // text morphs usually do not return text and attributes so we add them by hand
     if (styleProto?.textString !== morph.textString) {
       exported.textAndAttributes = morph.textAndAttributes.map((ea, i) => {
@@ -555,13 +555,15 @@ export function serializeSpec (morph, opts = {}) {
       typeof morph[name] === 'function' && !morph[name].isConnectionWrapper && (exported[name] = morph[name]));
     if (asExpression) {
       exported.type = getExpression('type', morph.constructor, subopts);
-      // attach the dep!
     } else {
       exported.type = morph.constructor.name; // not JSON!
     }
   } else {
-    if (exported.styleSheets) exported.styleSheets = [];
     exported.type = getSerializableClassMeta(morph);
+  }
+
+  if (exposeMasterRefs) {
+    exported.type = getExpression('type', morph.constructor, subopts);
   }
 
   if (getClassName(morph) === 'Morph' || skipAttributes.includes('type')) {
