@@ -1091,7 +1091,7 @@ class ComponentHaloItem extends RoundHaloItem {
       const { selected: [selectedModule] } = res;
       if (!selectedModule) return;
       const variableName = await $world.prompt('Enter a name for this component', {
-        input: string.decamelize('HelloWorld')
+        input: string.decamelize(target.name)
       });
       if (!variableName) return;
       const { insertComponentDefinition } = await System.import('lively.ide/components/editor.js');
