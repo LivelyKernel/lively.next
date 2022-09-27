@@ -279,10 +279,10 @@ export async function insertComponentDefinition (protoMorph, variableName, modId
   const mod = module(modId);
   const scope = await mod.scope();
   // in case there is already a component definition with such a name, raise an error
-  mod.changeSourceAction(oldSource => {
+  await mod.changeSourceAction(oldSource => {
     // insert the initial component definition into the back end of the module
     const { __expr__: compCall, bindings: requiredBindings } = createInitialComponentDefinition(protoMorph, true);
-    const decl = `\n\const ${variableName} = ${compCall}`;
+    const decl = `\n\const ${variableName} = ${compCall};\n`;
 
     // if there is a bulk export, insert the export into that batch, and also do not put
     // the declaration after these bulk exports.
@@ -297,12 +297,16 @@ export async function insertComponentDefinition (protoMorph, variableName, modId
       specifiers: [...finalExports.specifiers, id(variableName)]
     };
 
-    return lint(oldSource.slice(0, finalExports.start) + decl + stringify(updatedExports) + oldSource.slice(finalExports.end))[0];
+    return lint(fixUndeclaredVars(oldSource.slice(0, finalExports.start) + decl + stringify(updatedExports) + oldSource.slice(finalExports.end), Object.entries(requiredBindings), mod))[0];
   });
 
-  const browser = Browser.browserForFile(modId) || $world.execCommand('open browser', null);
+  const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser', null);
   browser.getWindow().activate();
-  await browser.searchForModuleAndSelect(modId);
+  browser.browse({
+    packageName: mod.package().name,
+    moduleName: mod.pathInPackage(),
+    codeEntity: variableName
+  });
 }
 
 function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
