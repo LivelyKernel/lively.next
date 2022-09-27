@@ -752,7 +752,7 @@ export class PolicyApplicator extends StylePolicy {
    * to apply themselves to the remainder of the submorph hierarchy.
    * @param { Morph } targetMorph - The root morph of the hierarchy.
    */
-  apply (targetMorph, isRoot = false) {
+  apply (targetMorph) {
     targetMorph.withMetaDo({ metaInteraction: true }, () => {
       this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
         let submorphName = null;
@@ -766,7 +766,7 @@ export class PolicyApplicator extends StylePolicy {
           }
           morphInScope.setProperty('master', synthesizedSpec); // might be redundant
           synthesizedSpec.targetMorph = morphInScope;
-        } else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution
+        } else this.applySpecToMorph(morphInScope, synthesizedSpec); // this step enforces the master distribution
 
         if (morphInScope !== targetMorph && morphInScope.master) {
           morphInScope._requestMasterStyling = false;
@@ -821,7 +821,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { object } styleProps - The props to be applied as key,value pairs.
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
-  applySpecToMorph (morphToBeStyled, styleProps, isRoot) {
+  applySpecToMorph (morphToBeStyled, styleProps) {
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
@@ -856,7 +856,7 @@ export class PolicyApplicator extends StylePolicy {
         continue;
       }
 
-      if (isRoot) {
+      if (morphToBeStyled.isComponent) {
         if (propName === 'extent' &&
             !morphToBeStyled.extent.equals(pt(10, 10)) &&
             (!morphToBeStyled.owner ||
