@@ -24,7 +24,7 @@ const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 function convertToSpec (aMorph, opts = {}) {
   const { __expr__: expr, bindings } = serializeSpec(aMorph, {
     asExpression: true,
-    keepFunctions: true,
+    keepFunctions: false,
     exposeMasterRefs: true,
     dropMorphsWithNameOnly: true,
     skipUnchangedFromDefault: true,
