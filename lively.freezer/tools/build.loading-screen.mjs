@@ -6,13 +6,15 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
+const minify = !process.env.CI;
+
 const build = await rollup({
   input: './src/loading-screen.cp.js',
   shimMissingExports: true,  
   plugins: [
     lively({
       autoRun: { title: 'lively.next' },
-      minify: true,
+      minify,
       asBrowserModule: true,
       isResurrectionBuild: true,
       excludedModules: [
