@@ -402,10 +402,10 @@ export function serializeSpec (morph, opts = {}) {
       });
     }
     if (exposeMasterRefs && masterInScope?.managesMorph(morph.name)) {
-      const parentSpec = masterInScope.parent?.getSubSpecFor(morph.name);
-      // check for either textString or textAndAttributes
-      if (parentSpec.textString === exported.textString) delete exported.textString;
-      if (arr.equals(parentSpec.textAndAttributes, exported.textAndAttributes)) { delete exported.textAndAttributes; }
+      if (styleProto.textString === exported.textString) { delete exported.textString; }
+      if (styleProto.textAndAttributes && arr.equals(styleProto.textAndAttributes, exported.textAndAttributes)) {
+        delete exported.textAndAttributes;
+      }
     }
   }
 

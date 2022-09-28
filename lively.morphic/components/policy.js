@@ -1,9 +1,27 @@
 import { arr, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
+import { Text, Label } from 'lively.morphic';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
+
+function handleTextProps (props) {
+  if (!['text', 'label', Text, Label].includes(props.type)) return props;
+  if (props.textString) {
+    props.textAndAttributes = [props.textString, null];
+    delete props.textString;
+  }
+  if (props.value && obj.isArray(props.value)) {
+    props.textAndAttributes = props.value;
+    delete props.value;
+  }
+  if (props.value && obj.isString(props.value)) {
+    props.textAndAttributes = [props.value, null];
+    delete props.value;
+  }
+  return props;
+}
 
 /**
  * Merges two different specs.
@@ -577,7 +595,7 @@ export class StylePolicy {
           };
         }
       }
-      return rootSpec; // there are no parents, so we fill in the default values to be used optionally
+      return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
     }
 
     let nextLevelSpec = {};
@@ -626,13 +644,9 @@ export class StylePolicy {
         if (skipInstantiationProps) delete synthesized[prop];
         else synthesized[prop] = synthesized[prop].value;
       }
-      if (prop === 'textString') {
-        synthesized.textAndAttributes = [synthesized[prop], null];
-        delete synthesized.textString;
-      }
     }
 
-    return synthesized;
+    return handleTextProps(synthesized);
   }
 
   /**
