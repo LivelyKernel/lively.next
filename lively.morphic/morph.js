@@ -1812,12 +1812,12 @@ export class Morph {
       console.warn(`Cannot open morph ${this}, world morph not found;`);
       return this;
     }
+    world.addMorph(this);
     if (pos) this.position = pos;
     else {
       this.center = this.hasFixedPosition ? world.visibleBounds().extent().scaleBy(0.5, 0.5) : world.visibleBounds().center();
       this.snap();
     }
-    world.addMorph(this);
     return this;
   }
 
