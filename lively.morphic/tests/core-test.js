@@ -3,7 +3,7 @@ import { morph, Polygon } from '../index.js';
 import { expect } from 'mocha-es6';
 import { pt, rect, Color, Rectangle, Transform } from 'lively.graphics';
 import { num } from 'lively.lang';
-import { generateReferenceExpression } from 'lively.ide/js/inspector.js';
+import { generateReferenceExpression } from 'lively.ide/js/inspector/helpers.js';
 
 let world, submorph1, submorph2, submorph3, image, ellipse; // eslint-disable-line no-unused-vars
 function createDummyWorld () {
