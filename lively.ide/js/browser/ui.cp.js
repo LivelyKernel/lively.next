@@ -10,7 +10,7 @@ import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { once } from 'lively.bindings';
 
 async function positionInRange (context, range, label) {
-  if (!context.isText) return;
+  if (!context?.isText) return;
   await context.whenRendered();
   const pos = context.indexToPosition(range.start);
   const end = context.lineRange(pos.row).end;
@@ -35,6 +35,10 @@ class EditButtonPlaceholder extends Label {
 
   async onMouseUp (evt) {
     super.onMouseUp(evt);
+    await this.minifyComponentMorph();
+  }
+
+  async minifyComponentMorph () {
     if (this._active || this._initializing) return;
     this._active = true;
     const {
@@ -89,17 +93,70 @@ class EditButtonPlaceholder extends Label {
 class ComponentEditButtonMorph extends Morph {
   static get properties () {
     return {
+      editor: {
+        derived: true,
+        get () { return this.owner; }
+      },
       componentDescriptor: {
         // the component descriptor object pointing to the policy
       }
     };
   }
 
+  async animateSwapWithPlaceholder (placeholder, componentMorph) {
+    const {
+      editor,
+      leftCenter: anchorPoint
+    } = this;
+    this.openInWorld(this.globalPosition);
+    this.layout = null;
+    const wrapper = this.addMorph({
+      fill: Color.transparent,
+      opacity: 0,
+      epiMorph: true,
+      submorphs: [componentMorph]
+    });
+    componentMorph.position = pt(0, 0);
+    wrapper.scale = 0;
+    this.fill = Color.transparent;
+    await editor.withAnimationDo(() => {
+      placeholder.opacity = 1;
+      placeholder.scale = 1;
+      placeholder.leftCenter = anchorPoint;
+      this.submorphs[0].opacity = 0;
+      this.extent = componentMorph.bounds().extent();
+      this.center = this.world().visibleBounds().center();
+      this.submorphs[0].center = this.extent.scaleBy(.5);
+      wrapper.opacity = 1;
+      wrapper.scale = 1;
+    }, { duration: 300, easing: easings.outQuint });
+    await componentMorph.whenRendered();
+    componentMorph.openInWorld(componentMorph.globalPosition);
+    this.remove();
+  }
+
+  async replaceWithPlaceholder () {
+    const {
+      componentDescriptor,
+      editor
+    } = this;
+    const componentMorph = componentDescriptor.getComponentMorph();
+    const btnPlaceholder = editor.addMorph(part(CloseComponentButton, { // eslint-disable-line no-use-before-define
+      name: 'edit button placeholder',
+      componentMorph,
+      componentDescriptor,
+      opacity: 0
+    }));
+    await btnPlaceholder.positionInLine();
+    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
+    this.remove();
+    btnPlaceholder.opacity = 1;
+  }
+
   async expand () {
     const {
       componentDescriptor,
-      globalPosition: pos,
-      owner: editor,
+      editor,
       leftCenter: lineAnchorPoint
     } = this;
     const componentMorph = await componentDescriptor.edit();
@@ -112,39 +169,15 @@ class ComponentEditButtonMorph extends Morph {
     }));
     btnPlaceholder._initializing = true;
     btnPlaceholder.leftCenter = lineAnchorPoint;
-    this.openInWorld();
-    this.layout = null;
-    this.position = pos;
-    const wrapper = this.addMorph({
-      fill: Color.transparent,
-      opacity: 0,
-      epiMorph: true,
-      submorphs: [componentMorph]
-    });
-    componentMorph.position = pt(0, 0);
-    wrapper.scale = 0;
-    this.fill = Color.transparent;
-    await editor.withAnimationDo(() => {
-      btnPlaceholder.opacity = 1;
-      btnPlaceholder.scale = 1;
-      btnPlaceholder.leftCenter = lineAnchorPoint;
-      this.submorphs[0].opacity = 0;
-      this.extent = componentMorph.bounds().extent();
-      this.center = this.world().visibleBounds().center();
-      this.submorphs[0].center = this.extent.scaleBy(.5);
-      wrapper.opacity = 1;
-      wrapper.scale = 1;
-    }, { duration: 300, easing: easings.outQuint });
-    await componentMorph.whenRendered();
-    const p = componentMorph.globalPosition;
-    componentMorph.openInWorld();
-    componentMorph.position = p;
+    await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
     once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
-    this.remove();
     btnPlaceholder._initializing = false;
   }
 
   positionInLine () {
+    if (this.componentDescriptor._cachedComponent?.world()) {
+      return this.replaceWithPlaceholder();
+    }
     return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
   }
 

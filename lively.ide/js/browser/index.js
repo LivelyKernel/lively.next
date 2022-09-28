@@ -1560,8 +1560,8 @@ export class BrowserModel extends ViewModel {
   }
 
   async injectComponentEditControls (mod) {
-    this.ui.sourceEditor.submorphs = [];
-
+    const { sourceEditor: editor } = this.ui;
+    editor.submorphs = [];
     if (!mod.name.endsWith('.cp.js')) return;
     mod = modules.module(mod.url);
     const { varDecls } = await mod.scope();
@@ -1591,11 +1591,12 @@ export class BrowserModel extends ViewModel {
 
   async ensureComponentEditButtonFor (componentDescriptor) {
     const { ComponentEditButton } = await System.import('lively.ide/js/browser/ui.cp.js');
-    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor, epiMorph: true });
+    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor, epiMorph: true, opacity: 0 });
     const editor = this.ui.sourceEditor;
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);
-    btn.positionInLine();
+    await btn.positionInLine();
+    btn.opacity = 1;
   }
 
   async runOnServer (source) {
