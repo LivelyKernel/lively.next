@@ -130,6 +130,10 @@ export const cssForTexts = `
       width: fit-content;
     }
 
+    .newtext-text-layer.auto-height .line {
+      height: fit-content;
+    }
+
     .newtext-text-layer .line {
       -moz-border-radius: 0;
       -webkit-border-radius: 0;
