@@ -19,6 +19,7 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 
 import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
+import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -1070,8 +1071,17 @@ class ComponentHaloItem extends RoundHaloItem {
   }
 
   async onMouseDown () {
+    this.update();
+  }
+
+  async update () {
     const target = this.halo.target;
     const toBeComponent = !target.isComponent;
+    const {
+      insertComponentDefinition,
+      removeComponentDefinition,
+      InteractiveComponentDescriptor
+    } = await System.import('lively.ide/components/editor.js');
     if (toBeComponent) {
       const { localInterface } = await System.import('lively-system-interface');
       const items = (await localInterface.coreInterface.getLoadedModules(config.ide.js.ignoredPackages))
@@ -1090,21 +1100,34 @@ class ComponentHaloItem extends RoundHaloItem {
       });
       const { selected: [selectedModule] } = res;
       if (!selectedModule) return;
-      const variableName = await $world.prompt('Enter a name for this component', {
+      let variableName = await $world.prompt('Enter a name for this component', {
         input: string.decamelize(target.name)
       });
       if (!variableName) return;
-      const { insertComponentDefinition } = await System.import('lively.ide/components/editor.js');
-      insertComponentDefinition(target, string.camelCaseString(variableName), selectedModule.name);
+      variableName = string.camelCaseString(variableName);
+      await insertComponentDefinition(target, variableName, selectedModule.name);
+      // remove the target and replace with instrumented component morph
+      const mod = moduleManager.module(selectedModule.name);
+      const descr = await promise.waitFor(() => mod.recorder[variableName]);
+      const componentMorph = await descr.edit();
+      componentMorph.openInWorld(target.globalPosition);
+      target.remove();
+      $world.showHaloFor(componentMorph);
+    } else {
+      if (await $world.confirm([
+        'Caution\n', {},
+        'Do you really want to remove this component from the system?', { fontWeight: 'normal', fontSize: 16 }, target.master._dependants?.size > 0 ? ` ${target.master._dependants?.size} component${target.master._dependants?.size > 1 ? 's are' : ' is'} depening on this component.` : '', { fontWeight: 'normal', fontSize: 16 }])) {
+        const { moduleId, exportedName } = target.master[Symbol.for('lively-module-meta')];
+        const pos = target.position;
+        await removeComponentDefinition(exportedName, moduleId);
+        target.isComponent = false;
+        const master = new PolicyApplicator({}, target.master);
+        target.master = null;
+        target.master = master;
+        target.position = pos;
+        this.updateComponentIndicator();
+      }
     }
-
-    target.isComponent = toBeComponent && await this.checkForDuplicateNamesInHierarchy();
-    if (toBeComponent) {
-      arr.pushIfNotIncluded(target.world().localComponents, target);
-      arr.pushIfNotIncluded(target.world().hiddenComponents, target.name);
-    } else arr.remove(target.world().localComponents, target);
-    if (!this.world()) target.world().showHaloFor(target); // halo got disposed
-    else this.updateComponentIndicator();
   }
 }
 
