@@ -191,6 +191,7 @@ const SystemInspector = component({
     readOnly: false,
     fill: Color.white,
     name: 'code editor',
+    needsDocument: true,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
     clipMode: 'auto',

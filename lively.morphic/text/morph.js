@@ -102,7 +102,7 @@ export class Text extends Morph {
             currLineId: 0,
             renderedLines: [],
             visibleLines: [],
-            _needsFit: true,
+            needsFit: true,
             firstVisibleRow: 0,
             lastVisibleRow: 0,
             heightBefore: 0
@@ -227,15 +227,14 @@ export class Text extends Morph {
 
       extent: {
         get () {
-          const initialExtent = this.getProperty('extent');
-          if (!this._textChange && this.renderingState &&
-              this.renderingState._needsFit &&
-              !this._measuringTextBox && !!initialExtent && this.owner) {
-          this._measuringTextBox = true;
-            noUpdate(() => {
-              this.directRender();
-            });
-            this._measuringTextBox = false;
+          if (
+              !this._measuringTextBox &&
+              (!this.fixedWidth || !this.fixedHeight) && 
+              !this._initializing && this.renderingState.needsFit
+              ) {
+              this._measuringTextBox = true;
+              this.fit();
+              this._measuringTextBox = false;
           }
           return this.getProperty('extent');
         }
@@ -442,7 +441,7 @@ export class Text extends Morph {
           }
           return textAndAttributes;
         },
-        set (value) {
+      set (value) {
           typeof value === 'string'
             ? (this.textString = value)
             : (this.textAndAttributes = value);
@@ -472,9 +471,10 @@ export class Text extends Morph {
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
+            this.renderingState.needsFit = true;
           }
           this.setProperty('textAndAttributes', textAndAttributes);
-          this.whenFontLoaded().then(() => this.fit());
+          if (this.world()) Promise.all([this.whenRendered(),this.whenFontLoaded()]).then(() => this.fit());
         }
       },
 
@@ -849,6 +849,7 @@ export class Text extends Morph {
   }
 
   constructor (props = {}) {
+    this._initializing = true;
     const {
       position,
       rightCenter,
@@ -884,6 +885,7 @@ export class Text extends Morph {
     if (topRight !== undefined) this.topRight = topRight;
     if (topLeft !== undefined) this.topLeft = topLeft;
     if (center !== undefined) this.center = center;
+    this._initializing = false;
   }
 
   __deserialize__ (snapshot, objRef, serializedMap, pool) {
@@ -1046,6 +1048,7 @@ export class Text extends Morph {
 
   makeDirty () {
     if (this._positioningSubmorph) return;
+    this.renderingState.needsRemeasure = true;
     super.makeDirty();
   }
 
@@ -1255,7 +1258,7 @@ export class Text extends Morph {
       const pos = this.textLayout.textPositionFromPoint(this, bounds.leftCenter());
       m.setBounds(bounds);
       this.insertText([m, {}], pos);
-      this.renderingState._needsFit = false;
+      this.renderingState.needsFit = false;
       if (prevTop === m.top) {
         m.remove();
         continue;
@@ -1503,7 +1506,7 @@ export class Text extends Morph {
     // if (this._isDeserializing) return;
     const rs = this.renderingState;
     // if (!vs) return;
-    if (!this.fixedWidth || !this.fixedHeight) rs._needsFit = true;
+    if (!this.fixedWidth || !this.fixedHeight) rs.needsFit = true;
     const tl = this.textLayout;
     if (tl) {
       if (resetCharBoundsCache) tl.resetLineCharBoundsCache(this);
@@ -2595,18 +2598,14 @@ export class Text extends Morph {
         });
       });
     } else {
-      this.withMetaDo({ skipReconciliation: true }, () => {
-        let textBoundsExtent = this.textBounds().extent();
-        if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
-        if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
-        this.extent = textBoundsExtent.addXY(
-          this.borderWidthLeft + this.borderWidthRight,
-          this.borderWidthTop + this.borderWidthBottom
-        );
-      });
-      if (!this.visible) {
-        this._cachedTextBounds = null;
-      } else this.renderingState._needsFit = false;
+      let textBoundsExtent = this.textBounds().extent();
+      if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
+      if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
+      this.extent = textBoundsExtent.addXY(
+        this.borderWidthLeft + this.borderWidthRight,
+        this.borderWidthTop + this.borderWidthBottom
+      );
+      this.renderingState.needsFit = false;
       return this;
     }
 
@@ -2614,7 +2613,7 @@ export class Text extends Morph {
   }
 
   fitIfNeeded () {
-    if (this.renderingState._needsFit) this.fit();
+    if (this.renderingState.needsFit) this.fit();
   }
 
   get defaultLineHeight () {
@@ -3895,4 +3894,3 @@ export class Text extends Morph {
     topBar.showHaloFor(this);
   }
 }
-
