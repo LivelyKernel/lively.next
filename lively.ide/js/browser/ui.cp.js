@@ -735,6 +735,7 @@ const SystemBrowser = component({
   }), {
     type: Text,
     name: 'source editor',
+    needsDocument: true,
     lineHeight: 1.4,
     readOnly: false,
     acceptsDrops: false,

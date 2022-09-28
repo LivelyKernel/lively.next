@@ -1772,6 +1772,7 @@ export default class Renderer {
 
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
+    else this.renderStylingChanges(morph);
 
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
@@ -1854,7 +1855,7 @@ export default class Renderer {
          morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-        morph.renderingState._needsFit = true;
+        morph.renderingState.needsFit = true;
       }
 
       // positions embedded morphs
