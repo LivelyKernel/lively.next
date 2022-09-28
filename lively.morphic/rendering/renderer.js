@@ -1779,7 +1779,10 @@ export default class Renderer {
     this.placeholder.className = 'Text';
     this.placeholder.appendChild(textNode);
     textNode.style.width = 'max-content';
+    textNode.style.height = 'max-content';
     textNode.style.position = 'static';
+    if (morph.fixedWidth) textNode.style.width = morph.width + 'px';
+    if (morph.fixedHeight) textNode.style.height = morph.height + 'px';
     const domMeasure = this.placeholder.getBoundingClientRect();
     textNode.style.removeProperty('width');
     textNode.style.removeProperty('position');
