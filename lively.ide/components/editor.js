@@ -7,12 +7,13 @@ import { Range } from 'lively.morphic/text/range.js';
 import { module } from 'lively.modules/index.js';
 import { connect, signal } from 'lively.bindings';
 import lint from '../js/linter.js';
-import { ImportInjector } from 'lively.modules/src/import-modification.js';
+import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
 import { ComponentDescriptor, morph } from 'lively.morphic';
 import { id } from 'lively.ast/lib/nodes.js';
 import * as Browser from '../js/browser/ui.cp.js';
+import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 
 const astq = new ASTQ();
 astq.adapter('mozast');
@@ -275,6 +276,57 @@ function fixUndeclaredVars (updatedSource, requiredBindings, mod) {
   return updatedSource;
 }
 
+export async function removeComponentDefinition (entityName, modId) {
+  const mod = module(modId);
+  await mod.changeSourceAction(oldSource => {
+    let parsed = parse(oldSource);
+    parsed = QueryReplaceManyVisitor.run(parsed,
+      `// VariableDeclaration [
+          @kind == "const"
+          && /:declarations '*' [
+            VariableDeclarator [
+              /:id Identifier [ @name == "${entityName}"]
+            ]
+         ]
+      ]`,
+      (componentDef) => []);
+    parsed = QueryReplaceManyVisitor.run(
+      parsed,
+     `// ExportNamedDeclaration [ 
+         /:specifiers '*' [
+           ExportSpecifier [
+             /:local Identifier [@name == "${entityName}"]
+           ]
+         ]
+       ]`,
+     (exportDecl) => ({
+       ...exportDecl,
+       specifiers: exportDecl.specifiers.filter(spec => spec.local?.name !== entityName)
+     }));
+    return ImportRemover.removeUnusedImports(stringify(parsed)).source;
+  });
+}
+
+async function replaceComponentDefinition (defAsCode, entityName, modId) {
+  // FIXME: preserve the formatting of the other definitions
+  const mod = module(modId);
+  await mod.changeSourceAction(oldSource => {
+    let parsed = parse(oldSource);
+    parsed = QueryReplaceManyVisitor.run(parsed,
+      `// VariableDeclaration [
+          @kind == "const"
+          && /:declarations '*' [
+            VariableDeclarator [
+              /:id Identifier [ @name == "${entityName}"]
+            ]
+         ]
+      ]`,
+      (componentDef) => parse(`const ${entityName} = ${defAsCode};`));
+    // just find the range, and replace the string at that location
+    return stringify(parsed);
+  });
+}
+
 export async function insertComponentDefinition (protoMorph, variableName, modId) {
   const mod = module(modId);
   const scope = await mod.scope();
@@ -282,7 +334,7 @@ export async function insertComponentDefinition (protoMorph, variableName, modId
   await mod.changeSourceAction(oldSource => {
     // insert the initial component definition into the back end of the module
     const { __expr__: compCall, bindings: requiredBindings } = createInitialComponentDefinition(protoMorph, true);
-    const decl = `\n\const ${variableName} = ${compCall};\n`;
+    const decl = `\n\const ${variableName} = ${compCall};\n\n`;
 
     // if there is a bulk export, insert the export into that batch, and also do not put
     // the declaration after these bulk exports.
@@ -302,7 +354,7 @@ export async function insertComponentDefinition (protoMorph, variableName, modId
 
   const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser', null);
   browser.getWindow().activate();
-  browser.browse({
+  await browser.browse({
     packageName: mod.package().name,
     moduleName: mod.pathInPackage(),
     codeEntity: variableName
@@ -817,10 +869,20 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return await c._changeTracker.whenReady() && c;
   }
 
+  notifyParent () {
+    const { parent } = this.stylePolicy;
+    if (parent) {
+      const dependants = parent._dependants || new Set();
+      dependants.add(this.stylePolicy.__serialize__({ expressionSerializer: exprSerializer }));
+      parent._dependants = dependants;
+    }
+  }
+
   init (generatorFunctionOrInlinePolicy, meta = { moduleId: import.meta.url }) {
-    const descr = super.init(generatorFunctionOrInlinePolicy, meta);
+    super.init(generatorFunctionOrInlinePolicy, meta);
+    this.notifyParent();
     this.notifyDependents(); // get the derived components to notice!
-    return descr;
+    return this;
   }
 
   getSourceCode () {
