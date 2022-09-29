@@ -19,8 +19,10 @@ describeInBrowser('undo', function () {
   this.timeout(config.text.undoGroupDelay * 2);
 
   beforeEach(() => text = new Text({
+    readOnly: false,
     textString: 'hello\nworld',
-    cursorPosition: { row: 0, column: 0 }
+    cursorPosition: { row: 0, column: 0 },
+    readOnly: false
   }));
 
   it('can undo simple insert', () => {
@@ -38,7 +40,7 @@ describeInBrowser('undo', function () {
     expect(text.textString).equals('hello\nfooworld');
     expect(text.selection).selectionEquals('Selection(1/0 -> 1/3)');
   });
-  
+
   it('can undo and redo delete', () => {
     text.textString = 'foo bar';
     text.deleteText({ start: { row: 0, column: 4 }, end: { row: 0, column: 7 } });
@@ -71,8 +73,8 @@ describeInBrowser('undo', function () {
     text.textUndo();
     expect(text.textString).equals('hello\nworld');
     text.textRedo();
-    expect(text.textString).equals('abchello\nworld');
-    expect(text.selection).selectionEquals('Selection(0/0 -> 0/3)');
+    expect(text.textString).equals('hello\nworldabc');
+    expect(text.selection).selectionEquals('Selection(1/5 -> 1/8)');
   });
 
   it('groups debounced', async () => {

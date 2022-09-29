@@ -2,38 +2,30 @@
 import { expect } from 'mocha-es6';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { Text } from '../../text/morph.js';
-import { World, MorphicEnv } from '../../index.js';
-import { createDOMEnvironment } from '../../rendering/dom-helper.js';
-
-const describeInBrowser = System.get('@system-env').browser
-  ? describe
-  : (title) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xit(title); };
 
 const padding = Rectangle.inset(5);
 
 let w, h, t, tl, padl, padr, padt, padb; // eslint-disable-line no-unused-vars
 
 function text (string, props) {
-  env = env || MorphicEnv.default();
   t = new Text({
     name: 'text',
+    readOnly: false,
     textString: string,
-    fontFamily: 'Monaco, monospace',
     fontSize: 10,
+    fontFamily: 'IBM Plex Mono',
     extent: pt(100, 100),
     fixedWidth: true,
     fixedHeight: true,
     padding,
-    clipMode: 'auto',
-    padding,
     borderWidth: 0,
     fill: Color.limeGreen,
     lineWrapping: false,
-    env,
+    lineHeight: 1,
     ...props
-  });
+  }).openInWorld();
 
-  [{ height: h, width: w }] = t.env.fontMetric.charBoundsFor(t.defaultTextStyle, 'X');
+  [{ height: h, width: w }] = t.env.fontMetric.charBoundsFor(t.defaultTextStyle, 'w');
 
   tl = t.textLayout;
 
@@ -45,29 +37,12 @@ function text (string, props) {
   return t;
 }
 
-let env;
-async function createMorphicEnv () {
-  if (System.get('@system-env').browser) return;
-  env = new MorphicEnv(await createDOMEnvironment());
-  env.domEnv.document.body.style = 'margin: 0';
-  MorphicEnv.pushDefault(env);
-  await env.setWorld(new World({ name: 'world', extent: pt(300, 300) }));
-}
-
-async function destroyMorphicEnv () {
-  if (System.get('@system-env').browser) return;
-  MorphicEnv.popDefault().uninstall();
-}
-
-describeInBrowser('text layout', function () {
-  this.timeout(7 * 1000);
-
-  beforeEach(() => createMorphicEnv());
-  afterEach(() => destroyMorphicEnv());
+describe('text layout', function () {
+  afterEach(() => t.remove());
 
   describe('positions', () => {
     it('text pos -> pixel pos', () => {
-      text('hello\n lively\nworld');
+      text('hello\nlively\nworld');
       let pos;
 
       pos = tl.pixelPositionFor(t, { row: 0, column: 0 });
@@ -90,12 +65,12 @@ describeInBrowser('text layout', function () {
       expect(pos.x).closeTo(padl + 1 * w, 2);
       expect(pos.y).closeTo(padt + h, 2);
 
-      pos = tl.pixelPositionFor(t, { row: 3, column: 2 });
+      pos = tl.pixelPositionFor(t, { row: 2, column: 2 });
       expect(pos.x).closeTo(padl + 2 * w, 2);
       expect(pos.y).closeTo(padt + 2 * h, 2);
 
       pos = tl.pixelPositionFor(t, { row: 1, column: 100 });
-      expect(pos.x).closeTo(padl + 7 * w, 2);
+      expect(pos.x).closeTo(padl + 6 * w, 2);
       expect(pos.y).closeTo(padt + h, 2);
 
       pos = tl.pixelPositionFor(t, { row: 100, column: 100 });
@@ -104,7 +79,7 @@ describeInBrowser('text layout', function () {
     });
 
     it('pixel pos -> text pos', () => {
-      text('hello\n lively\nworld');
+      text('hello\nlively\nworld');
       expect(t.textPositionFromPoint(pt(padl + 0, padt + 0))).deep.equals({ row: 0, column: 0 }, '1');
       expect(t.textPositionFromPoint(pt(padl + w - 1, padt + h / 2))).deep.equals({ row: 0, column: 1 }, '2');
       expect(t.textPositionFromPoint(pt(padl + w + 1, padt + h + 1))).deep.equals({ row: 1, column: 1 }, '3');
@@ -146,62 +121,39 @@ describeInBrowser('text layout', function () {
       expect(extent).equals(pt(100, 100));
     });
 
-    it('still shrinks when forced', () => {
-      const t = text('hello', { clipMode: 'hidden', fixedWidth: false, fixedHeight: false });
-      const { extent: { x: width, y: height } } = t;
-      t.fit();
-      expect(height).closeTo(h + padding.top() + padding.bottom(), 2);
-      expect(width).closeTo(5 * w + padding.left() + padding.right(), 2);
-    });
-
     it('fits bounds synchronously if font size changed', async () => {
       const t = text('hello world', { clipMode: 'visible', fixedWidth: false, fixedHeight: false });
-      env.world.addMorph(t);
-      await t.whenRendered();
       const rightBefore = t.right;
       t.fontSize = 50;
       const rightAfter = t.right;
       expect(rightBefore).lessThan(rightAfter);
-      await t.whenRendered();
       expect(rightAfter).equals(t.right);
     });
 
-    it('fits bounds synchronously if padding changed', async () => {
+    it('fits bounds synchronously if padding changed', () => {
       const t = text('hello world', { name: 'trollo', clipMode: 'visible', fixedWidth: false, fixedHeight: false });
-      env.world.addMorph(t);
-      await t.whenRendered();
       const rightBefore = t.right;
-      t.padding = rect(50, 0, 50, 0);
+      t.padding = Rectangle.inset(50, 50, 0, 0);
       const rightAfter = t.right;
       expect(rightBefore).lessThan(rightAfter);
-      await t.whenRendered();
       expect(rightAfter).equals(t.right);
     });
 
-    it('fits bounds synchronously if border width changed', async () => {
+    it('fits bounds synchronously if border width changed', () => {
       const t = text('hello world', { clipMode: 'visible', fixedWidth: false, fixedHeight: false });
-      env.world.addMorph(t);
-      await t.whenRendered();
       const rightBefore = t.right;
-      t.fontSize = 50;
+      t.borderWidth = 5;
       const rightAfter = t.right;
       expect(rightBefore).lessThan(rightAfter);
-      await t.whenRendered();
       expect(rightAfter).equals(t.right);
     });
   });
 
   describe('line wrapping', () => {
     it('wraps single line and computes positions back and forth', () => {
-      // await createMorphicEnv()
-      // destroyMorphicEnv()
-      // MorphicEnv.popDefault()
-      // MorphicEnv.envs
+      text('abcdef\n1234567\n', { extent: pt(4 * w, 100) });
 
-      text('abcdef\n1234567', { width: 4 * w + padl + padr });
-      // t.openInWorld()
-
-      expect(t.lineCount()).equals(2);
+      expect(t.lineCount()).equals(3);
       expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt, w, h - 1), 'not wrapped: text pos => pixel pos');
       expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h + 1))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
 

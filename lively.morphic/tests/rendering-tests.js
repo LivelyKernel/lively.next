@@ -40,17 +40,9 @@ describe('rendering', function () {
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
   it('morph id is DOM node id', () => {
-    expect(world.id).equals(env.renderer.domNode.id);
+    expect(world.id).equals(env.renderer.rootNode.id);
   });
 
-  it('renderer associates domNode with morph', () => {
-    let node = env.renderer.getNodeForMorph(submorph2);
-    let morph = env.renderer.getMorphForNode(node);
-    expect(morph).equals(submorph2, morph && morph.name);
-    expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
-      .childNodes[0]).equals(node); // brittle, might change...
-  });
-  
   it('can be moved to the front', () => {
     submorph1.bringToFront();
     expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
@@ -119,14 +111,12 @@ describe('rendering', function () {
       expect(submorph1.scroll).equals(pt(0, 0), '2');
     });
 
-    it('clip morph can specify scroll', async () => {
+    it('clip morph can specify scroll', () => {
       submorph1.clipMode = 'auto';
-      await submorph1.whenRendered();
       submorph2.extent = pt(200, 200);
       submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
-      await promise.delay(1000);
       let node = env.renderer.getNodeForMorph(submorph1);
+      console.log(node);
       expect(node.style.overflow).equals('auto');
       expect(node.scrollLeft).equals(40);
       expect(node.scrollTop).equals(50);
@@ -176,7 +166,7 @@ describe('rendering', function () {
       let node2 = env.renderer.getNodeForMorph(m2);
       expect(node2.scrollLeft).equals(50, 'm2 scrollLeft after setup');
       expect(node2.scrollTop).equals(50, 'm2 scrollTop after setup');
-      
+
       m1.bringToFront();
       await promise.delay(500);
       node1 = env.renderer.getNodeForMorph(m1);
@@ -185,7 +175,7 @@ describe('rendering', function () {
       node2 = env.renderer.getNodeForMorph(m2);
       expect(node2.scrollLeft).equals(50, 'm2 scrollLeft 1');
       expect(node2.scrollTop).equals(50, 'm2 scrollTop 1');
-      
+
       m2.bringToFront();
       await promise.delay(50);
       node1 = env.renderer.getNodeForMorph(m1);

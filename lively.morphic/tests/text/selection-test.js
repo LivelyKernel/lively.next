@@ -22,6 +22,7 @@ let t;
 function text (string, props) {
   let t = new Text({
     name: 'text',
+    readOnly: false,
     textString: string,
     fontFamily: 'Monaco, monosonpace',
     fontSize: 10,
