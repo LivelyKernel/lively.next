@@ -189,6 +189,7 @@ const LivelyVersionChecker = component({
   position: pt(535, 438.4),
   submorphs: [{
     type: Label,
+    fill: Color.transparent,
     name: 'version status label',
     fontColor: Color.rgb(253, 254, 254),
     lineHeight: 1.4,
@@ -285,6 +286,7 @@ const LivelyVersionChecker = component({
     name: 'status icon label',
     fontSize: 14,
     fontColor: Color.rgb(231, 76, 60),
+    fill: Color.transparent,
     isLayoutable: false,
     textAndAttributes: Icon.textAttribute('exclamation-triangle'),
     visible: false

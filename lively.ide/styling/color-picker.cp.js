@@ -61,10 +61,12 @@ const ColorInput = component({
     })]
   }), part(TextInput, {
     type: InputLine,
+    fill: Color.transparent,
     value: 'DDDDDD',
     name: 'hex input',
     tooltip: 'HEX Color Value',
     extent: pt(72.1, 23),
+    fill: Color.rgb(66,73,73),
     fontSize: 14,
     padding: rect(4, 3, 6, 2)
   }), part(DarkNumberIconWidget, {
@@ -94,6 +96,7 @@ const DefaultInputLine = component({
   type: InputLine,
   name: 'default input line',
   borderColor: Color.rgb(204, 204, 204),
+  fill: Color.transparent,
   extent: pt(97, 23),
   fontFamily: 'IBM Plex Sans',
   fontSize: 14,

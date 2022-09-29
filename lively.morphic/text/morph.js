@@ -16,10 +16,11 @@ import { UndoManager } from '../undo.js';
 import { TextSearcher } from './search.js';
 import Layout from './layout.js';
 import commands from './commands.js';
-import { textAndAttributesWithSubRanges, splitTextAndAttributesIntoLines } from './attributes.js';
+import { textAndAttributesWithSubRanges } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
+import { Icon, Icons } from './icons.js';
 
 export class Text extends Morph {
   static makeLabel (value, props) {
@@ -59,6 +60,23 @@ export class Text extends Morph {
     return (this._defaultTextStyleProps = styleProps);
   }
 
+  async interactivelyChangeLabel () {
+    const newTextString = await this.world().prompt('edit label', {
+      input: this.textString,
+      historyId: 'lively.morphic-label-edit-hist',
+      selectInput: true
+    });
+    if (typeof newTextString === 'string') { this.textString = newTextString; }
+  }
+
+  async interactivelySetIcon () {
+    const res = await this.world().filterableListPrompt('Select Icon', Object.keys(Icons).map(iconName => {
+      return { isListItem: true, label: [...Icon.textAttribute(iconName, { paddingRight: '10px' }), iconName, {}], value: iconName };
+    }));
+    const [iconName] = res.selected;
+    if (iconName) { this.value = Icon.textAttribute(iconName); }
+  }
+
   static get properties () {
     return {
       renderingState: {
@@ -72,13 +90,23 @@ export class Text extends Morph {
           state.animationAdded = false;
           state.hasCSSLayoutChange = false;
           state.specialProps = {};
-
+          // TODO: only these are textmorph specific, the above are the same as for morph
+          // Would be nice to not have this kind of code duplication
           state.textAndAttributesToDisplay;
           state.renderedTextAndAttributes = [];
           state.lineIds = {};
           state.currLineId = 0;
           state.renderedLines = [];
           state.visibleLines = [];
+          state._needsFit = true;
+          state.scrollTop = 0; // TODO: could be removed?
+          state.scrollHeight = 0; // TODO: could be removed?
+          state.scrollBottom = 0; // TODO: could be removed? 
+          state.textHeight = 0; // TODO: could be removed?
+          state.textWidth = 0; // TODO: could be removed?
+          state.firstVisibleRow = 0;
+          state.lastVisibleRow = 0;
+          state.heightBefore = 0;
 
           this.setProperty('renderingState', state);
         }
@@ -126,47 +154,6 @@ export class Text extends Morph {
         }
       },
 
-      debug: {
-        group: '_debugging',
-        isStyleProp: true,
-        after: ['textLayout'],
-        defaultValue: false,
-        doc: 'For visualizing and debugging text layout and rendering'
-      },
-
-      defaultViewState: {
-        group: '_rendering',
-        derived: true,
-        readOnly: true,
-        get () {
-          return {
-            _needsFit: true,
-            text_layer_node: null,
-            fontmetric_text_layer_node: null,
-            dom_nodes: [],
-            dom_nodeFirstRow: [],
-            scrollTop: 0,
-            scrollHeight: 0,
-            scrollBottom: 0,
-            textHeight: 0,
-            textWidth: 0,
-            firstVisibleRow: 0,
-            lastVisibleRow: 0,
-            heightBefore: 0,
-            wasScrolled: false,
-            afterTextRenderHook: null,
-            fastScroll: true // for now because the vdom has issues
-          };
-        }
-      },
-
-      viewState: {
-        group: '_rendering',
-        initialize () {
-          this.viewState = this.defaultViewState;
-        }
-      },
-
       displacingMorphMap: {
         group: '_rendering',
         initialize () {
@@ -199,6 +186,12 @@ export class Text extends Morph {
         group: 'text'
       },
 
+      // TODO: implement this switch
+      keepDocument: {
+        group: 'text',
+        defaultValue: false
+      },
+
       draggable: { defaultValue: false },
 
       useSoftTabs: {
@@ -229,8 +222,8 @@ export class Text extends Morph {
       extent: {
         get () {
           const initialExtent = this.getProperty('extent');
-          if (!this._textChange && this.viewState &&
-              this.viewState._needsFit && !this._rendering &&
+          if (!this._textChange && this.renderingState &&
+              this.renderingState._needsFit &&
               !this._measuringTextBox && !!initialExtent && this.owner) {
             this._measuringTextBox = true;
             noUpdate(() => {
@@ -245,14 +238,14 @@ export class Text extends Morph {
       fixedWidth: {
         group: 'text',
         isStyleProp: true,
-        after: ['clipMode', 'viewState'],
+        after: ['clipMode', 'renderingState'],
         defaultValue: false
       },
 
       fixedHeight: {
         group: 'text',
         isStyleProp: true,
-        after: ['clipMode', 'viewState'],
+        after: ['clipMode', 'renderingState'],
         defaultValue: false
       },
 
@@ -260,32 +253,6 @@ export class Text extends Morph {
         derived: true,
         get () {
           return !this.fixedHeight && !this.fixedWidth;
-        }
-      },
-
-      /*
-      Changing this property is the **only** supported way of doing the up/downgrade.
-      Directly calling e.g., `makeUniteractive` will **not work**.
-      */
-      labelMode: {
-        group: 'text',
-        // isStyleProp: true,
-        // FIXME
-        defaultValue: false,
-        after: ['textAndAttributes'],
-        set (mode) {
-          if (mode) { // no editing
-            if (this.document) { // migrate document to text and attributes
-              this.makeUninteractive();
-            }
-            // nothing more to do, since we do not have a document
-          } else { // editing is activated
-            if (!this.document) { // migrate text and attributes to document
-              this.makeInteractive();
-            }
-            // nothing more to do, since we already have a document
-          }
-          this.setProperty('labelMode', mode);
         }
       },
 
@@ -311,7 +278,7 @@ export class Text extends Morph {
         group: 'styling',
         type: 'Rectangle',
         isStyleProp: true,
-        after: ['textLayout', 'viewState'],
+        after: ['textLayout', 'renderingState'],
         defaultValue: Rectangle.inset(0),
         set (value) {
           this.setProperty(
@@ -454,14 +421,16 @@ export class Text extends Morph {
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-      // default font styling
+      // This is the one and only best way to set and retrieve mighty text!
+      // textString and value are only derivatives of this!
       textAndAttributes: {
         group: 'text',
         after: ['document', 'submorphs'],
         renderSynchronously: true,
         get () {
+          // case in which we are backed by document
           if (this.document && !this._isUpgrading) return this.document.textAndAttributes;
-          // "label mode"
+          // case in which we are not backed by document
           else {
             let val = this.getProperty('textAndAttributes');
             if (!val || val.length < 1) val = ['', null];
@@ -475,19 +444,56 @@ export class Text extends Morph {
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
               textAndAttributes
             );
-            this.fit(); // exemption for fixed width/height is handled in fit method
-          } else { // "label mode"
-            if (!this.valueAndAnnotationMode) {
-              if (!Array.isArray(textAndAttributes)) textAndAttributes = String(textAndAttributes).split(/(?<=\n)/).map(line => [line, null]);
-              else if (textAndAttributes.length === 0) textAndAttributes = ['', {}];
-              else if (!this._isDowngrading) {
-                this.whenFontLoaded().then(() => this.fit()); // also needs fitting. But why only at downgrading?
-                textAndAttributes = splitTextAndAttributesIntoLines(textAndAttributes);
-              }
+          // case in which we are not backed by document
+          } else {
+              if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             }
             this.setProperty('textAndAttributes', textAndAttributes);
-            // signal(this, 'value', textAndAttributes);
+            this.whenFontLoaded().then(()=>this.fit());
           }
+      },
+
+      // valueAndAnnotation is a way to put rich text content followed by a right
+      // aligned annotation into a label. It simply is using textAndAttributes with
+      // the convention that the last string/attribue pair in textAndAttributes is the
+      // annotation (the attribute includes the textStyleClass "annotation")
+      valueAndAnnotation: {
+        derived: true,
+        after: ['textAndAttributes'],
+
+        // TODO: is this still working?
+        get () {
+          let value = this.textAndAttributes; let annotation = null;
+          if (value.length > 2) {
+            const [string, props] = value.slice(-2);
+            if (props && props.textStyleClasses && props.textStyleClasses.includes('annotation')) {
+              value = value.slice(0, -2);
+              annotation = [string, props];
+            }
+          }
+          return { value, annotation };
+        },
+
+        set (valueAndAnnotation) {
+          let { value, annotation } = valueAndAnnotation;
+
+          // Ensure value is in the right format for being the prefix in textAndAttributes
+          if (!value) value = '';
+          if (typeof value === 'string') value = [value, null];
+          if (!Array.isArray(value)) value = [String(value), null];
+
+          const textAndAttributes = value.slice();
+
+          // convert and add the annotation
+          if (annotation) {
+            if (typeof annotation === 'string') annotation = [annotation, null];
+            let annAttr = annotation[1];
+            if (!annAttr) annAttr = annotation[1] = {};
+            textAndAttributes.push(...annotation);
+            annAttr.textStyleClasses = (annAttr.textStyleClasses || []);
+            if (!annAttr.textStyleClasses.includes('annotation')) { annAttr.textStyleClasses.push('annotation'); }
+          }
+          this.textAndAttributes = textAndAttributes;
         }
       },
 
@@ -506,7 +512,7 @@ export class Text extends Morph {
 
       defaultTextStyle: {
         group: 'styling',
-        after: ['viewState'],
+        after: ['renderingState'],
         derived: true,
         get () {
           return obj.select(this, this.defaultTextStyleProps);
@@ -540,13 +546,13 @@ export class Text extends Morph {
         defaultValue: 'none',
         set (mode) {
           if (mode === 'native') {
-            if (!this.labelMode && !this.readOnly === true) $world.setStatusMessage('Only possible for non-editable texts.');
+            if (this.document && !this.readOnly === true) $world.setStatusMessage('Only possible for non-editable texts.');
             this.stealFocus = true;
             this._node.querySelector('.newtext-text-layer').classList.add('selectable');
             this._node.querySelector('.newtext-text-layer').style['pointer-events'] = 'all';
           }
           if (mode === 'lively') {
-            if (this.labelMode) $world.setStatusMessage('Only possible for interactive texts.');
+            if (!this.document) $world.setStatusMessage('Only possible for interactive texts.');
             this.stealFocus = false;
             this._node.querySelector('.newtext-text-layer').classList.remove('selectable');
           }
@@ -650,13 +656,14 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
       },
+      // TODO: This needs some work to work with and without Document 
       textAlign: {
         group: 'text styling',
         type: 'Enum',
         values: ['center', 'justify', 'left', 'right'],
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        after: ['document', 'defaultTextStyle', 'viewState']
+        after: ['document', 'defaultTextStyle', 'renderingState']
       },
       lineHeight: {
         group: 'text styling',
@@ -666,19 +673,19 @@ export class Text extends Morph {
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         defaultValue: 1.4,
-        after: ['document', 'defaultTextStyle', 'viewState']
+        after: ['document', 'defaultTextStyle', 'renderingState']
       },
       letterSpacing: {
         group: 'text styling',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        after: ['document', 'defaultTextStyle', 'viewState']
+        after: ['document', 'defaultTextStyle', 'renderingState']
       },
       wordSpacing: {
         group: 'text styling',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
-        after: ['document', 'defaultTextStyle', 'viewState']
+        after: ['document', 'defaultTextStyle', 'renderingState']
       },
 
       lineWrapping: {
@@ -693,7 +700,7 @@ export class Text extends Morph {
         values: [false, true, 'by-words', 'only-by-words', 'by-chars'],
         isStyleProp: true,
         defaultValue: false,
-        after: ['document', 'viewState']
+        after: ['document', 'renderingState']
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -813,7 +820,6 @@ export class Text extends Morph {
     super(props);
 
     this.undoManager.reset();
-    if (this.isSmartText) { this.makeInteractive(); }
 
     // TODO: why exactly was this needed?
     // Update position after fit
@@ -836,7 +842,6 @@ export class Text extends Morph {
   __deserialize__ (snapshot, objRef, serializedMap, pool) {
     super.__deserialize__(snapshot, objRef, serializedMap, pool);
 
-    this.viewState = this.defaultViewState;
     this.markers = [];
     this.textLayout = new Layout(this); // delayed
     this.changeDocument(Document.fromString(''));
@@ -860,7 +865,7 @@ export class Text extends Morph {
     return arr.withoutAll(super.__only_serialize__, [
       'document',
       'textRenderer',
-      'viewState',
+      'renderingState',
       'undoManager',
       'markers',
       'textLayout',
@@ -980,16 +985,12 @@ export class Text extends Morph {
     spec.textString = this.textString;
     return obj.dissoc(spec, [
       'anchors', 'embeddedMorphMap', 'plugins', 'savedMarks', 'textLayout', 'textRenderer',
-      'viewState', 'undoManager', 'metadata', 'document', 'displacingMorphMap'
+      'renderingState', 'undoManager', 'metadata', 'document', 'displacingMorphMap'
     ]);
   }
 
   get isText () {
     return true;
-  }
-
-  get isSmartText () {
-    return !this.labelMode;
   }
 
   makeDirty () {
@@ -1048,7 +1049,6 @@ export class Text extends Morph {
     const updateTextEngine = () => {
       this._textChange = true;
 
-      if (scrollChange) this.viewState.wasScrolled = true;
 
       if (this.document && (hardLayoutChange ||
           enforceFit ||
@@ -1202,7 +1202,7 @@ export class Text extends Morph {
       const pos = this.textLayout.textPositionFromPoint(this, bounds.leftCenter());
       m.setBounds(bounds);
       this.insertText([m, {}], pos);
-      this.viewState._needsFit = false;
+      this.renderingState._needsFit = false;
       if (prevTop === m.top) {
         m.remove();
         continue;
@@ -1450,9 +1450,9 @@ export class Text extends Morph {
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
     // if (this._isDeserializing) return;
-    const vs = this.viewState;
+    const rs = this.renderingState;
     // if (!vs) return;
-    if (!this.fixedWidth || !this.fixedHeight) vs._needsFit = true;
+    if (!this.fixedWidth || !this.fixedHeight) rs._needsFit = true;
     const tl = this.textLayout;
     if (tl) {
       if (resetCharBoundsCache) tl.resetLineCharBoundsCache(this);
@@ -2000,10 +2000,13 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  makeUninteractive () {
+
+  /**
+   * 
+   */
+  removeDocument () {
     this._isDowngrading = true;
-    let textAndAttributes = this.document.lines.map(l => l.textAndAttributes);
-    textAndAttributes = textAndAttributes.filter(ta => !(ta[0] === '' && ta[1] === null));
+    const textAndAttributes = this.document.textAndAttributes;
     this.document = null;
     this.textLayout = null;
     this.textAndAttributes = textAndAttributes;
@@ -2013,7 +2016,10 @@ export class Text extends Morph {
     this._isDowngrading = false;
   }
 
-  makeInteractive () {
+  /** 
+   * 
+   */
+  backWithDocument () {
     this._isUpgrading = true;
     this.document = Document.fromString('', {
       maxLeafSize: 50,
@@ -2021,18 +2027,9 @@ export class Text extends Morph {
       maxNodeSize: 35,
       minNodeSize: 7
     });
-    let textAndAttributesToInsert;
-    if (this.isMenuItem || this.isListItem) textAndAttributesToInsert = this.textAndAttributes;
-    else if (!arr.equals(this.textAndAttributes, ['', null])) {
-      textAndAttributesToInsert = this.textAndAttributes.flatMap(textAndAttributesPerLine => {
-        textAndAttributesPerLine[textAndAttributesPerLine.length - 2] += '\n';
-        return textAndAttributesPerLine;
-      });
-    } else textAndAttributesToInsert = ['', null];
 
-    this.document.insertTextAndAttributes(
-      textAndAttributesToInsert,
-      { row: 0, column: 0 });
+    this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+
     this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
     if (!this.fixedHeight) this.height = this.document.height;
@@ -2555,7 +2552,7 @@ export class Text extends Morph {
       });
       if (!this.visible) {
         this._cachedTextBounds = null;
-      } else this.viewState._needsFit = false;
+      } else this.renderingState._needsFit = false;
       return this;
     }
 
@@ -2563,7 +2560,7 @@ export class Text extends Morph {
   }
 
   fitIfNeeded () {
-    if (this.viewState._needsFit) this.fit();
+    if (this.renderingState._needsFit) this.fit();
   }
 
   get defaultLineHeight () {
@@ -2621,7 +2618,7 @@ export class Text extends Morph {
 
     // FIXME: this is not an adequate separation, read only should also support e.g. line height
     // take care of this when fixing the conceptual separation between both
-    if (!this.labelMode) {
+    if (this.document) {
       if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         this.invalidateTextLayout(true, true);
@@ -2705,7 +2702,7 @@ export class Text extends Morph {
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (this.labelMode) return; // allow for native selection
+    if (!this.document) return; // allow for native selection
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
 
@@ -2784,7 +2781,7 @@ export class Text extends Morph {
   }
 
   onMouseMove (evt) {
-    if (this.labelMode) return; // allow for native selection
+    if (!this.document) return; // allow for native selection
     if (!evt.leftMouseButtonPressed() || !this.selectable || evt.state.clickedOnMorph !== this) { return; }
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position));
   }
@@ -3013,6 +3010,8 @@ export class Text extends Morph {
   }
 
   onDropHoverUpdate (evt) {
+    if (!this.document) return;
+
     const grabbed = evt.hand.grabbedMorphs[0];
     if (!grabbed) return;
     const dropHoverCache = evt.state.dropHover;
@@ -3095,8 +3094,15 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async menuItems () {
-    const [items1, items2] = await Promise.all([super.menuItems(), this.menuItemsForContextMenu()]);
-    return items1.concat({ isDivider: true }).concat(items2);
+    const [items0, items1, items2] = await Promise.all([this.menuItemsFromLabel(), super.menuItems(), this.menuItemsForContextMenu()]);
+    return items0.concat({ isDivider: true }).concat(items1.concat({ isDivider: true }).concat(items2));
+  }
+
+  menuItemsFromLabel () {
+    const items = []; 
+    items.unshift(['change label', () => this.interactivelyChangeLabel()]);
+    items.unshift(['set Icon', () => this.interactivelySetIcon()]);
+    return items;
   }
 
   async menuItemsForContextMenu () {

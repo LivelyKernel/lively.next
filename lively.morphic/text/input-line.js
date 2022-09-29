@@ -95,6 +95,7 @@ export default class InputLine extends Text {
 
   static get properties () {
     return {
+      readOnly: { defaultValue: false},
       fixedWidth: { defaultValue: true },
       fixedHeight: { defaultValue: true },
       extent: { defaultValue: pt(100, 20) },

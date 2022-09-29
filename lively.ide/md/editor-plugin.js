@@ -175,7 +175,7 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
 
     textMorph.fill = theme.background;
 
-    let { firstVisibleRow, lastVisibleRow } = textMorph.viewState;
+    let { firstVisibleRow, lastVisibleRow } = textMorph.renderingState;
     let { lines, tokens } = tokenizeDocument(
       mode,
       textMorph.document,

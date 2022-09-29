@@ -1403,7 +1403,7 @@ export class BrowserModel extends ViewModel {
     }
     if (name && this.view.width > minWidthToDisplay) {
       metaInfoText.setPath([
-        ...metaInfoText.getPath()[0].slice(0, 6),
+        ...metaInfoText.getPath().slice(0, 6),
         ` - ${parents.join('>>')}${name}:${sourceEditor.cursorPosition.row}`, {
           fontSize: 12, paddingTop: '2px'
         }]);

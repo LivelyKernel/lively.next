@@ -159,7 +159,8 @@ const SystemInspector = component({
   }, {
     type: PropertyTree,
     name: 'property tree',
-    readOnly: true,
+    needsDocument: true,
+    fill: Color.white,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
     clipMode: 'hidden',
@@ -187,6 +188,8 @@ const SystemInspector = component({
     nativeCursor: 'ns-resize'
   }, {
     type: Text,
+    readOnly: false,
+    fill: Color.white,
     name: 'code editor',
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,

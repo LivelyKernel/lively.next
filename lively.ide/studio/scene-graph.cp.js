@@ -483,7 +483,6 @@ export class MorphNodeModel extends ViewModel {
   }
 }
 
-// MorphNode.openInWorld()
 const MorphNode = component({
   name: 'morph node',
   defaultViewModel: MorphNodeModel,

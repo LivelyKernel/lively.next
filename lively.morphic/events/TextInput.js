@@ -181,7 +181,7 @@ export default class TextInput {
     if (bowser.firefox) // FF needs an extra invitation...
     { Promise.resolve().then(() => node.getRootNode().activeElement !== node && node.focus()); }
 
-    if (morph && morph.isText && morph.focusable && !morph.labelMode) {
+    if (morph && morph.isText && morph.document && morph.focusable) {
       // need this even if node === activeElement
       // to bring up virtual keyboard on iPad
       if (touchInputDevice) node.focus();
@@ -347,7 +347,7 @@ export default class TextInput {
 
   ensureBeingAtCursorOfText (textMorph) {
     // move the textarea to the text cursor
-    if (textMorph.isSmartText && textMorph.readOnly) return;
+    if (textMorph.readOnly) return;
 
     const world = textMorph.world();
     if (!world) return;

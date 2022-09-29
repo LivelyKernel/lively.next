@@ -26,6 +26,7 @@ const CaretButton = component({
 const Scrubber = component({
   type: ValueScrubber,
   name: 'scrubber',
+  fill: Color.transparent,
   baseFactor: 0.5,
   extent: pt(53.6, 24),
   fixedWidth: true,

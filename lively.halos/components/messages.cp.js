@@ -81,6 +81,7 @@ const StatusMessageDefault = component({
       textAndAttributes: Icon.textAttribute('info-circle')
     }, {
       type: Text,
+      needsDocument: true,
       name: 'message title',
       extent: pt(597, 37),
       fill: Color.rgba(0, 0, 0, 0),
@@ -120,6 +121,7 @@ const StatusMessageDefault = component({
       })]
   }, {
     type: Text,
+    needsDocument: true,
     name: 'message text',
     clipMode: 'auto',
     extent: pt(669, 87.5),

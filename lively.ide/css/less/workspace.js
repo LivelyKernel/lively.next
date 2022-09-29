@@ -10,6 +10,8 @@ export default class LESSWorkspace extends CSSWorkspace {
         initialize () {
           this.targetMorph = new Text({
             name: 'editor',
+            lineHeight: 1.4,
+            readOnly: false,
             textString: '',
             editorModeName: 'less',
             lineWrapping: 'by-chars',

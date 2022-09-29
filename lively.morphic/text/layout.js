@@ -151,8 +151,6 @@ export default class Layout {
       this.estimateExtentOfLine(morph, line, transform);
     }
 
-    morph.viewState._textLayoutStale = false;
-
     debug && debug.log(`estimateLineHeights, ${nMeasured}/${lines.length} updated, force: ${force}`);
   }
 
@@ -180,31 +178,31 @@ export default class Layout {
   }
 
   isFirstLineVisible (morph) {
-    return morph.viewState.firstVisibleRow <= 0;
+    return morph.renderingState.firstVisibleRow <= 0;
   }
 
   isLastLineVisible (morph) {
-    return morph.viewState.lastVisibleRow >= morph.lineCount() - 1;
+    return morph.renderingState.lastVisibleRow >= morph.lineCount() - 1;
   }
 
   isLineVisible (morph, row) {
-    return row >= morph.viewState.firstVisibleRow && row <= morph.viewState.lastVisibleRow;
+    return row >= morph.renderingState.firstVisibleRow && row <= morph.renderingState.lastVisibleRow;
   }
 
   isLineFullyVisible (morph, row) {
-    return row >= morph.viewState.firstFullyVisibleRow && row <= morph.viewState.lastFullyVisibleRow;
+    return row >= morph.renderingState.firstFullyVisibleRow && row <= morph.renderingState.lastFullyVisibleRow;
   }
 
   whatsVisible (morph) { // fixme: will always fail for morphs that are in label mode
   // i.e. that do not have a document
-    const startRow = morph.viewState.firstVisibleRow;
-    const endRow = morph.viewState.lastVisibleRow;
+    const startRow = morph.renderingState.firstVisibleRow;
+    const endRow = morph.renderingState.lastVisibleRow;
     const lines = morph.document.lines.slice(startRow, endRow);
     return { lines, startRow, endRow };
   }
 
-  firstFullVisibleLine (morph) { return morph.viewState.firstFullyVisibleRow; }
-  lastFullVisibleLine (morph) { return morph.viewState.lastFullyVisibleRow; }
+  firstFullVisibleLine (morph) { return morph.renderingState.firstFullyVisibleRow; }
+  lastFullVisibleLine (morph) { return morph.renderingState.lastFullyVisibleRow; }
 
   screenLineRange (morph, textPos, ignoreLeadingWhitespace) {
     // find the range that includes textPos whose start and end chars are in a
