@@ -545,7 +545,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   }
 }
 
-component.DescriptorClass = ComponentDescriptor;
+if (!component.DescriptorClass) component.DescriptorClass = ComponentDescriptor;
 component.for = (generator, meta, prev) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
 /**
  * Function that will wrap a morph's name and declare
