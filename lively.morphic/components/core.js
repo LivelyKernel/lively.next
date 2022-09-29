@@ -577,7 +577,10 @@ export function without (removedSiblingName) {
 export function add (props, before = null) {
   return {
     COMMAND: 'add',
-    props,
+    props: {
+      __wasAddedToDerived__: true,
+      ...props
+    },
     before
   };
 }
