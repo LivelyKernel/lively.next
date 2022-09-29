@@ -47,7 +47,9 @@ export class FillControlModel extends ViewModel {
     if (!this.targetMorph) return;
     let color = this.ui.fillColorInput.colorValue;
     if (obj.equals(this.targetMorph.fill, color)) return;
-    this.targetMorph.fill = color;
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.fill = color;
+    });
   }
 
   async update () {

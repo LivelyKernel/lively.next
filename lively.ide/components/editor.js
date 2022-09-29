@@ -629,7 +629,7 @@ export class ComponentChangeTracker {
   }
 
   ignoreChange (change) {
-    if (change.meta && change.meta.skipReconciliation) return true;
+    if (!change.meta?.reconcileChanges) return true;
     if (change.prop === 'position' && (change.target === this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
     if (change.prop && change.prop !== 'textAndAttributes' && !change.target.styleProperties.includes(change.prop)) return true;
     if (change.target.epiMorph) return true;

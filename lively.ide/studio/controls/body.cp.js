@@ -308,7 +308,7 @@ export class DynamicPropertyModel extends ViewModel {
   /**
    * Update the current morph to reflect the changes.
    */
-  updateTarget (v) {
+  confirm (v) {
     this.targetMorph[this.accessor] = v;
   }
 
@@ -327,7 +327,7 @@ export class DynamicPropertyModel extends ViewModel {
     p.topRight = this.view.globalBounds().topLeft();
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     once(p, 'remove', this, 'closePopup');
-    connect(p.viewModel, 'value', this, 'updateTarget');
+    connect(p.viewModel, 'value', this, 'confirm');
   }
 
   /**
