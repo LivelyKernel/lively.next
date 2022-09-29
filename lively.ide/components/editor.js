@@ -2,7 +2,7 @@ import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { Icons } from 'lively.morphic/text/icons.js';
 import { arr, obj, fun, promise, string } from 'lively.lang';
 import ASTQ from 'esm://cache/astq@2.7.5';
-import { parse, stringify } from 'lively.ast';
+import { parse, query, stringify } from 'lively.ast';
 import { Range } from 'lively.morphic/text/range.js';
 import { module } from 'lively.modules/index.js';
 import { connect, signal } from 'lively.bindings';
@@ -307,23 +307,25 @@ export async function removeComponentDefinition (entityName, modId) {
   });
 }
 
-async function replaceComponentDefinition (defAsCode, entityName, modId) {
-  // FIXME: preserve the formatting of the other definitions
-  const mod = module(modId);
-  await mod.changeSourceAction(oldSource => {
-    let parsed = parse(oldSource);
-    parsed = QueryReplaceManyVisitor.run(parsed,
-      `// VariableDeclaration [
+function findComponentDef (parsed, entityName) {
+  return query.queryNodes(parsed, `// VariableDeclaration [
           @kind == "const"
           && /:declarations '*' [
             VariableDeclarator [
               /:id Identifier [ @name == "${entityName}"]
             ]
          ]
-      ]`,
-      (componentDef) => parse(`const ${entityName} = ${defAsCode};`));
-    // just find the range, and replace the string at that location
-    return stringify(parsed);
+      ]`);
+}
+
+async function replaceComponentDefinition (defAsCode, entityName, modId) {
+  // FIXME: preserve the formatting of the other definitions
+  const mod = module(modId);
+  await mod.changeSourceAction(oldSource => {
+    const [componentDef] = findComponentDef(parse(oldSource), entityName);
+    const before = oldSource.slice(0, componentDef.start);
+    const after = oldSource.slice(componentDef.end);
+    return ImportRemover.removeUnusedImports(before + defAsCode + after).source;
   });
 }
 
@@ -647,6 +649,7 @@ export class ComponentChangeTracker {
     if (this.ignoreChange(change)) return;
     this.processChangeInComponentPolicy(change);
     await this.processChangeInComponentSource(change);
+    this.componentDescriptor.makeDirty();
   }
 
   processChangeInComponentPolicy (change) {
@@ -851,20 +854,52 @@ export class ComponentChangeTracker {
 }
 
 export class InteractiveComponentDescriptor extends ComponentDescriptor {
+  static get properties () {
+    return {
+      moduleName: {
+        get () {
+          return this[Symbol.for('lively-module-meta')].moduleId;
+        }
+      },
+      componentName: {
+        get () {
+          return this[Symbol.for('lively-module-meta')].exportedName;
+        }
+      }
+    };
+  }
+
+  static for (generatorFunction, meta, prev) {
+    const c = prev?._cachedComponent;
+    const newDescr = super.for(generatorFunction, meta);
+    if (c) {
+      newDescr.ensureComponentMorphUpToDate(c);
+    }
+    return newDescr;
+  }
+
   getComponentMorph () {
     let c = this._cachedComponent;
-    const componentName = string.decamelize(this[Symbol.for('lively-module-meta')].exportedName);
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       c.isComponent = true,
-      c.name = componentName,
+      c.name = string.decamelize(this.componentName),
       this._cachedComponent = c
     );
   }
 
+  async ensureComponentDefBackup () {
+    if (this._backupComponentDef) return;
+    const { moduleId, exportedName } = this[Symbol.for('lively-module-meta')];
+    const source = await module(moduleId).source();
+    const [{ start, end }] = findComponentDef(await module(moduleId).ast(), exportedName);
+    this._backupComponentDef = source.slice(start, end);
+  }
+
   async edit () {
     const c = this.getComponentMorph();
+    this.ensureComponentDefBackup();
     if (!c._changeTracker) { new ComponentChangeTracker(c, this); }
     return await c._changeTracker.whenReady() && c;
   }
@@ -900,5 +935,27 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
         m.master.applyIfNeeded(true);
       }
     });
+  }
+
+  makeDirty () {
+    this.ensureComponentDefBackup();
+    this._dirty = true;
+  }
+
+  isDirty () {
+    return this._dirty;
+  }
+
+  ensureComponentMorphUpToDate (c) {
+    if (c?.world()) {
+      const pos = c.globalPosition;
+      const updatedComponentMorph = this.getComponentMorph().openInWorld(pos);
+      if (!updatedComponentMorph._changeTracker) { new ComponentChangeTracker(updatedComponentMorph, this); }
+      c.remove();
+    }
+  }
+
+  reset () {
+    replaceComponentDefinition(this._backupComponentDef, this.componentName, this.moduleName);
   }
 }

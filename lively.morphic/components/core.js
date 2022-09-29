@@ -39,11 +39,7 @@ export class ComponentDescriptor {
    * and style application.
    */
   static for (generatorFunction, meta, previousDescriptor) {
-    const spec = this.extractSpec(generatorFunction);
-    if (previousDescriptor && previousDescriptor.isComponentDescriptor) {
-      return previousDescriptor.init(spec, meta);
-    }
-    return new this(spec, meta);
+    return new this(this.extractSpec(generatorFunction), meta);
   }
 
   get isComponentDescriptor () { return true; }

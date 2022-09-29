@@ -7,7 +7,7 @@ import {
   easings,
   config,
   Icon,
-  ViewModel, part
+  ViewModel, part, component
 } from 'lively.morphic';
 
 import { TreeData } from 'lively.components/tree.js';
@@ -47,6 +47,8 @@ import HTMLEditorPlugin from '../../html/editor-plugin.js';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { adoptObject } from 'lively.lang/object.js';
 import { resource } from 'lively.resources';
+
+component.DescriptorClass = InteractiveComponentDescriptor;
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
@@ -1316,8 +1318,6 @@ export class BrowserModel extends ViewModel {
       this.ui.tabs.selectedTab.caption = `[${pack.name}] ${m.nameInPackage}`;
       const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
-      this.ui.sourceEditor.scroll = pt(0, 0);
-      this.ui.sourceEditor.undoManager.reset();
 
       await this.prepareCodeEditorForModule(m);
 
@@ -1372,6 +1372,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async prepareCodeEditorForModule (mod) {
+    const { sourceEditor } = this.ui;
     const system = this.systemInterface;
     const format = (await system.moduleFormat(mod.url)) || 'esm';
     const pack = this.selectedPackage;
@@ -1379,9 +1380,13 @@ export class BrowserModel extends ViewModel {
     // FIXME we already have such "mode" switching code in the text editor...
     // combine these?!
     this.switchMode(ext);
+    if (this.editorPlugin.evalEnvironment.targetModule !== mod.url) {
+      sourceEditor.scroll = pt(0, 0);
+      sourceEditor.undoManager.reset();
+    }
     Object.assign(this.editorPlugin.evalEnvironment, {
       targetModule: mod.url,
-      context: this.ui.sourceEditor,
+      context: sourceEditor,
       format
     });
     this.editorPlugin._tokenizerValidBefore = { row: 0, column: 0 };
