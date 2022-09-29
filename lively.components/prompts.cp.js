@@ -261,7 +261,6 @@ export class TextPromptModel extends ConfirmPromptModel {
     title.value = label;
 
     if (inputLine) {
-      if (inputLine.viewState) { inputLine.viewState.fastScroll = false; }
       inputLine.textString = input || '';
 
       if (historyId && useLastInput) {

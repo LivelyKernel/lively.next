@@ -3,6 +3,7 @@ import { arr, tree, num, obj } from 'lively.lang';
 import { getSvgVertices, canBePromotedToCompositionLayer, applyAttributesToNode, stylepropsToNode, lineWrappingToClass } from './property-dom-mapping.js';
 import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
+import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
 
 import { keyed, noOpUpdate } from './keyed.js';
 import promise from 'lively.lang/promise.js';
@@ -210,8 +211,7 @@ export default class Renderer {
   renderAsFixed (morph) {
     morph.withAllSubmorphsDo(sm => {
       // FIXME: There was a problem with renderedLines of fixedMorphs, for which the root cause could not be identified.
-      // This fixes that, by rerendering all lines of renderedLines. This is only problematic in the case a Text would be a fixed Morph.
-      // For Labels, the performance implication can be neglected.
+      // This fixes that, by rerendering all lines of renderedLines. This is only problematic in the case a large Text would be a fixed Morph.
       if (sm.renderingState.renderedLines) sm.renderingState.renderedLines = [];
     });
     const node = this.renderMorph(morph);
@@ -275,7 +275,7 @@ export default class Renderer {
 
     const wrapped = node.querySelector(`#submorphs-${morph.id}`);
     if (!wrapped) {
-      if (morph.isSmartText) {
+      if (morph.isText && morph.document) {
         let scrollWrapper = node.querySelector('.scrollWrapper');
         if (!scrollWrapper) {
           morph.renderingState.needsScrollLayerAdded = true;
@@ -334,8 +334,7 @@ export default class Renderer {
   renderLayoutChange (morph) {
     const node = this.getNodeForMorph(morph);
 
-    // FIXME: It might be, that this precaution is no longer necessary and we can remove this check.
-    // Second case is for erly returning unneeded wrapping, since we only want to install wrappers when they are needed.
+    // Second case is for early returning unneeded wrapping, since we only want to install wrappers when they are needed.
     if (!node || morph.submorphs.length === 0) return;
 
     let layoutAdded = morph.layout && morph.layout.renderViaCSS;
@@ -356,14 +355,15 @@ export default class Renderer {
    * @param { Morph } morph - The morph which has had changed to its submorph hierarchy.
    */
   renderStructuralChanges (morph) {
-    const node = this.getNodeForMorph(morph); // Invariant: Morph has been rendered previously.
-
+    let node = this.getNodeForMorph(morph);
+    if (!node) node = this.renderMorph(morph);
+ 
     let submorphsToRender = morph.submorphs; // the order of these is important to make sure that morphs overlap each other correctly
 
     if (morph.isWorld) {
       submorphsToRender = morph.submorphs.filter(sm => !sm.hasFixedPosition); // fixed morph are handed separately in `renderStep()`
     }
-    if (morph.isSmartText) {
+    if (morph.isText) {
       submorphsToRender = submorphsToRender.filter(subm => !morph.embeddedMorphMap.has(subm));
     }
     // Optimization for when a morph has no longer any submorphs
@@ -374,7 +374,7 @@ export default class Renderer {
         node.childNodes.forEach(n => {
           if (n.tagName !== 'svg') n.remove();
         });
-      } else if (morph.isSmartText) {
+      } else if (morph.isText && morph.document) {
         const scrollWrapper = node.querySelector('.scrollWrapper');
         // we need to keep markers, selections, syntax errors etc. around
         scrollWrapper.childNodes.forEach(n => {
@@ -420,12 +420,8 @@ export default class Renderer {
           item => this.renderMorph(item)
         );
       }
-    } else if (morph.isSmartText) {
-      if (skipWrapping) {
-        // TODO: This is not enough to enforce that the problematic aspect of this (i.e. adding a layout ONTO a text morph) does not occur!
-        // However, this should be tackled from a tooling viewpoint.
-        $world.setStatusMessage('Not supported for SmartText');
-      } else {
+    } else if (morph.isText) {
+      if (!skipWrapping) {
         this.installWrapperNodeFor(morph, node);
         keyed('id',
           node.querySelector(`#submorphs-${morph.id}`),
@@ -436,14 +432,6 @@ export default class Renderer {
       }
     } else { // morph is not path and not text
       if (skipWrapping) {
-        // FIXME: Hack solely for the MullerColumns!!!
-        // super bad, should not exists!!!!
-        // DANGER!
-        if (alreadyRenderedSubmorphs.length === 1) {
-          if (node.firstChild) node.firstChild.remove();
-          alreadyRenderedSubmorphs = [];
-        }
-
         keyed('id',
           node,
           alreadyRenderedSubmorphs,
@@ -469,7 +457,7 @@ export default class Renderer {
       this.updateNodeScrollFromMorph(morph);
     }
 
-    morph.renderingState.renderedMorphs = morph.submorphs.filter(sm => !(sm.hasFixedPosition && morph.isWorld) && !(morph.isSmartText && morph.embeddedMorphMap.has(sm)));
+    morph.renderingState.renderedMorphs = morph.submorphs.filter(sm => !(sm.hasFixedPosition && morph.isWorld) && !(morph.isText && morph.embeddedMorphMap.has(sm)));
     morph.renderingState.hasStructuralChanges = false;
   }
 
@@ -503,9 +491,8 @@ export default class Renderer {
 
     applyStylingToNode(morph, node);
 
-    // FIXME: when the text abstraction is done
-    if (morph.isSmartText && !morph.labelMode) node.style.overflow = 'hidden';
-    morph._dirty = false;
+    if (morph.isText && morph.document) node.style.overflow = 'hidden';
+
     morph.renderingState.needsRerender = false;
   }
 
@@ -560,10 +547,9 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to update the scroll of its node.
    */
   updateNodeScrollFromMorph (morph) {
-    if (morph.isSmartText) return;
+    if (morph.isText) return;
 
     const node = this.getNodeForMorph(morph);
-    // FIXME: this might be not needed and could be removed?
     if (!node) {
       return;
     }
@@ -697,30 +683,27 @@ export default class Renderer {
       With this trick, the scrollLayer is the node that actually gets scrolled, while we can exchange all line nodes as we like.
       Since for non-interactive text all lines are rendered once, this trick is not needed there.
     */
-    if (!morph.labelMode) {
-      // FIXME: This needs to be removed once the details of the new Text abstraction are worked out...
-      if (morph.document) {
-        scrollLayerNode = this.renderScrollLayer(morph);
-        node.appendChild(scrollLayerNode);
-      }
+    if (morph.document) {
+      scrollLayerNode = this.renderScrollLayer(morph);
+      node.appendChild(scrollLayerNode);
       const textLayerForFontMeasure = this.textLayerNodeFor(morph);
       textLayerForFontMeasure.id = morph.id + 'font-measure';
       textLayerForFontMeasure.classList.remove('actual');
       textLayerForFontMeasure.classList.add('font-measure');
       node.appendChild(textLayerForFontMeasure);
-    }
 
-    // FIXME: This needs to be removed once the details of the new Text abstraction are worked out...
-    if (!morph.labelMode && morph.document) {
       const scrollWrapper = this.scrollWrapperFor(morph);
       node.appendChild(scrollWrapper);
       scrollWrapper.appendChild(textLayer);
     } else node.appendChild(textLayer);
+    
     this.renderTextAndAttributes(node, morph);
+    
     if (morph.document) {
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
       this.updateExtentsOfLines(textLayerNode, morph);
     }
+
     return node;
   }
 
@@ -776,7 +759,6 @@ export default class Renderer {
    * @param {TextMorph} morph - The TextMorph which has changes that warrant the addition/removal of a ScrollLayer.
    */
   handleScrollLayer (node, morph) {
-    // FIXME: this might not be needed and could be removed?
     if (!node) return;
 
     if (morph.renderingState.needsScrollLayerAdded) {
@@ -787,6 +769,7 @@ export default class Renderer {
       const scrollLayer = this.renderScrollLayer(morph);
       const scrollWrapper = this.scrollWrapperFor(morph);
       node.childNodes.forEach(c => scrollWrapper.appendChild(c));
+      if (!scrollLayer) debugger;
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
       scrollLayer.scrollTop = this.scroll.y;
@@ -827,9 +810,6 @@ export default class Renderer {
     // This is something that should be thought of when developing the new Text abstraction
     textLayerClasses = textLayerClasses + ' ' + (fixedWidth ? lineWrappingToClass(lineWrapping) : lineWrappingToClass(false));
 
-    // FIXME: this is what fucks up the allignment of the annotations in e.g. the run command menu
-    if (!fixedWidth) textLayerClasses = textLayerClasses + ' auto-width';
-    if (!fixedHeight) textLayerClasses = textLayerClasses + ' auto-height';
     if (selectionMode === 'native') textLayerClasses = textLayerClasses + ' selectable';
 
     const node = this.doc.createElement('div');
@@ -862,10 +842,7 @@ export default class Renderer {
    */
   nodeForLine (lineObject, morph, isRealRender = false) {
     if (!lineObject) lineObject = '';
-    let line;
-    if (morph.isListItemMorph) {
-      line = morph.textAndAttributes.flat();
-    } else line = lineObject.isLine ? lineObject.textAndAttributes : lineObject;
+    let line = lineObject.isLine ? lineObject.textAndAttributes : lineObject;
     const size = line.length;
 
     const renderedChunks = [];
@@ -873,8 +850,7 @@ export default class Renderer {
     let content, attributes, fontSize, nativeCursor, textStyleClasses, link, tagname, chunkNodeStyle, paddingRight, paddingLeft, paddingTop, paddingBottom, lineHeight, textAlign, wordSpacing, letterSpacing, quote, textStroke, fontFamily, fontWeight, textDecoration, fontStyle, fontColor, backgroundColor, verticalAlign, chunkNodeAttributes;
     let minFontSize = morph.fontSize;
 
-    if (size > 0) {
-      // create chunks per line
+    if (line.length > 0) {
       for (let i = 0; i < line.length; i = i + 2) {
         content = line[i] || '\u00a0';
         attributes = line[i + 1];
@@ -943,14 +919,14 @@ export default class Renderer {
         if (attributes.doit) { chunkNodeStyle.pointerEvents = 'auto'; chunkNodeStyle.cursor = 'pointer'; }
 
         const chunkNode = this.doc.createElement(tagname);
-        chunkNode.textContent = content;
+        chunkNode.textContent = content || '&nbsp';
         if (chunkNodeAttributes.href) chunkNode.href = chunkNodeAttributes.href;
         if (chunkNodeAttributes.target) chunkNode.target = chunkNodeAttributes.target;
         if (textStyleClasses && textStyleClasses.length) { chunkNode.className = textStyleClasses.join(' '); }
         stylepropsToNode(chunkNodeStyle, chunkNode);
         renderedChunks.push(chunkNode);
-      }
-    } else renderedChunks.push(this.doc.createElement('br'));
+     }
+    } else renderedChunks.push(this.doc.createElement('br'))
 
     const lineStyle = {};
 
@@ -1015,25 +991,16 @@ export default class Renderer {
     return rendered;
   }
 
-  // TODO: This is seemingy only used for SmartTexts that are in Label-Mode. Thus, the naming is...not ideal :D
   /**
-   * Creates nodes for all lines present in a Text morph which is in label mode.
-   * Is based on the assumption, that in these cases `textAndAttributes` are already split into lines (i.e. the pairs for each line are in their own array).
-   * Example: [['text',{},'line1',{}],['text',{},'line2',{}],[...]]
-   * @param {Morph} morph - The morph for which to render the lines.
-   * @returns {Node[]} An array of nodes that represent lines.
+   * Creates nodes for all lines present in a Text morph which is not backed by a document.
+   * @param {Morph} morph - The morph for which to render its whole text.
+   * @returns {Node[]} An array of Nodes
    */
-  renderAllLines (morph) {
-    let renderedLines = [];
-    if (!morph.document) {
-    // when we have no doc, text and attributes are split into lines
-      for (let i = 0; i < morph.textAndAttributes.length; i++) {
-        const newLine = this.nodeForLine(morph.textAndAttributes[i], morph, true);
-        renderedLines.push(newLine);
-      }
-      // FIXME: This is necessary since those utilize "valueAndAnnotation", and this messes up the current (primitive) line-splitting.
-      // Can be removed once the working abstraction for Text is there!
-      if (morph.isListItemMorph) renderedLines = renderedLines.slice(0, 1);
+  renderWholeText (morph) {
+    const renderedLines = [];
+    const textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
+    for (let line of textAndAttributesByLine){
+      renderedLines.push(this.nodeForLine(line, morph, true));
     }
     return renderedLines;
   }
@@ -1047,7 +1014,7 @@ export default class Renderer {
   renderMarkerLayer (morph) {
     const {
       markers,
-      viewState: { firstVisibleRow, lastVisibleRow }
+      renderingState: { firstVisibleRow, lastVisibleRow }
     } = morph;
     const parts = [];
 
@@ -1185,13 +1152,13 @@ export default class Renderer {
     // extract the slices the selection is comprised of
     while (row <= selection.end.row) {
       line = document.getLine(row);
-      if (row < morph.viewState.firstVisibleRow - bufferOffset) { // selected lines before the visible ones
+      if (row < morph.renderingState.firstVisibleRow - bufferOffset) { // selected lines before the visible ones
         yOffset += line.height;
         row++;
         continue;
       }
 
-      if (row > morph.viewState.lastVisibleRow + bufferOffset) break; // selected lines after the visible ones
+      if (row > morph.renderingState.lastVisibleRow + bufferOffset) break; // selected lines after the visible ones
 
       // selected lines (rows) that are visible
       charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
@@ -1359,7 +1326,7 @@ export default class Renderer {
    * @return {Node[]} An array of DOM nodes that comprise the debug layer.
    */
   renderDebugLayer (morph) {
-    const vs = morph.viewState;
+    const vs = morph.renderingState;
     const debugHighlights = [];
     let { heightBefore: rowY, firstVisibleRow, lastVisibleRow, visibleLines } = vs;
     const { padding, scroll: { x: visibleLeft, y: visibleTop } } = morph;
@@ -1428,7 +1395,7 @@ export default class Renderer {
   // -=-=-=-=-=-
 
   /**
-   * Finds out how many and which lines can be dislpayed in `morph`, adapts the values in `morphs`'s viewState accordingly,
+   * Finds out how many and which lines can be dislpayed in `morph`, adapts the values in `morphs`'s renderingState accordingly,
    * and updates the fillerDiv that is used to push the lines inside of the visible are of `morph`'s node.
    * The last part is necessary since the scrolling layer and the content part of the `morph` are decoupled.
    * @param {TextMorph} morph - The morph for which we want to find out which lines are visible.
@@ -1486,7 +1453,7 @@ export default class Renderer {
 
     this.updateFillerDIV(morph, node, heightBefore);
 
-    Object.assign(morph.viewState, {
+    Object.assign(morph.renderingState, {
       scrollTop,
       scrollHeight,
       scrollBottom: scrollTop + scrollHeight,
@@ -1509,19 +1476,13 @@ export default class Renderer {
    * @param {TextMorph} morph - The TextMorph for which the text should be (re)rendered.
    */
   renderTextAndAttributes (node, morph) {
-    // FIXME:  Enforce label having labelMode = true,
-    // this should be done somewhere else, when the Label subclass is finally gone for good
-    if (morph.isLabel && !morph.labelMode) {
-      morph.setProperty('labelMode', true);
-    }
-    if (morph.labelMode && morph.document) morph.makeUninteractive();
     const textNode = node.querySelector(`#${morph.id}textLayer`);
 
-    if (morph.labelMode) textNode.replaceChildren(...this.renderAllLines(morph));
+    if (!morph.document) textNode.replaceChildren(...this.renderWholeText(morph));
     else {
       if (morph.debug) textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
       const linesToRender = this.collectVisibleLinesForRendering(morph, node);
-      morph.viewState.visibleLines = linesToRender;
+      morph.renderingState.visibleLines = linesToRender;
       // FIXME: hack that compensates for errornous content in renderingState.renderedLines
       // basically an optimization to reuse already rendered line nodes
       let renderedLinesFromDOM = [];
@@ -1549,12 +1510,12 @@ export default class Renderer {
         textNode.firstChild,
         null
       );
-      morph.renderingState.renderedLines = morph.viewState.visibleLines;
+      morph.renderingState.renderedLines = morph.renderingState.visibleLines;
       let i = 0; // the first child is always the filler, we can skip it
       for (const line of morph.renderingState.renderedLines) {
         i++;
         // FIXME: this basically ignores the needsRerender flag for now when embedding morphs inline into a text
-        if (!line.needsRerender && line.textAndAttributs && !line.textAndAttributes.some(ta => ta && ta.isMorph)) continue;
+        if (!line.needsRerender && line.textAndAttributes && !line.textAndAttributes.some(ta => ta && ta.isMorph)) continue;
         const oldLineNode = textNode.children[i];
         if (!oldLineNode) continue;
         const newLineNode = this.nodeForLine(line, morph, true);
@@ -1583,11 +1544,10 @@ export default class Renderer {
    * @param {TextMorph} morph - The TextMorph which selections were changed.
    */
   patchSelectionLayer (node, morph) {
-    // FIXME: This might not be needed and can savely be removed?
     if (!node) return;
     node.querySelectorAll('div.newtext-cursor').forEach(c => c.remove());
     node.querySelectorAll('svg.selection').forEach(s => s.remove());
-    const nodeToAppendTo = morph.labelMode ? node : node.querySelectorAll('.scrollWrapper')[0];
+    const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
     nodeToAppendTo.append(...this.renderSelectionLayer(morph));
     // FIXME: not yet working, the update mechanism for this has no flags, i.e., might running more often than necessary
     morph.renderingState.selection = morph.selection;
@@ -1599,10 +1559,9 @@ export default class Renderer {
    * @param {TextMorph} morph - The TextMorph which markers were changed.
    */
   patchMarkerLayer (node, morph) {
-    // FIXME: This might not be needed and can savely be removed?
     if (!node) return;
     node.querySelectorAll('div.newtext-marker-layer').forEach(s => s.remove());
-    const nodeToAppendTo = morph.labelMode ? node : node.querySelectorAll('.scrollWrapper')[0];
+    const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
     nodeToAppendTo.append(...this.renderMarkerLayer(morph));
     morph.renderingState.markers = morph.markers;
   }
@@ -1647,7 +1606,7 @@ export default class Renderer {
    * @param {Node} node - DOM node in which a text morph is rendered.
    * @param {TextMorph} morph
    */
-  // FIXME: Somehow, the size of the child is unbound, as the document continously grows when scrolling
+  // FIXME: Somehow, the size of the child is unbound, as the document continuously grows when scrolling
   adjustScrollLayerChildSize (node, morph) {
     const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
     if (!scrollLayer) return;
@@ -1695,7 +1654,7 @@ export default class Renderer {
     const textLayer = node.querySelector(`#${morph.id}textLayer`);
     const fontMeasureTextLayer = node.querySelector(`#${morph.id}font-measure`);
     stylepropsToNode(newStyle, textLayer);
-    stylepropsToNode(newStyle, fontMeasureTextLayer);
+    if (fontMeasureTextLayer) stylepropsToNode(newStyle, fontMeasureTextLayer);
     morph.renderingState.nodeStyleProps = newStyle;
     morph.invalidateTextLayout(true, false);
   }
@@ -1713,10 +1672,10 @@ export default class Renderer {
     const fontMeasureTextLayer = node.querySelector(`#${morph.id}font-measure`);
 
     textLayer.classList.remove(oldWrappingClass);
-    fontMeasureTextLayer.classList.remove(oldWrappingClass);
+    if (fontMeasureTextLayer) fontMeasureTextLayer.classList.remove(oldWrappingClass);
 
     textLayer.classList.add(newWrappingClass);
-    fontMeasureTextLayer.classList.add(newWrappingClass);
+    if (fontMeasureTextLayer) fontMeasureTextLayer.classList.add(newWrappingClass);
 
     morph.renderingState.lineWrapping = morph.lineWrapping;
     morph.renderingState.fixedWidth = morph.fixedWidth;
@@ -1764,8 +1723,9 @@ export default class Renderer {
   measureBoundsFor (morph) {
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
 
-    const node = this.getNodeForMorph(morph);
-    if (!node) return Rectangle.inset(0);
+    let node = this.getNodeForMorph(morph);
+    if (!node) node = this.renderMorph(morph);
+
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
     this.placeholder.className = morph.isLabel ? 'Label' : 'Text';
@@ -1792,11 +1752,7 @@ export default class Renderer {
   updateExtentsOfLines (textlayerNode, morph) {
     // figure out what lines are displayed in the text layer node and map those
     // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
-    const { viewState, fontMetric } = morph;
-
-    viewState.dom_nodes = [];
-    viewState.dom_nodeFirstRow = 0;
-    viewState.textWidth = textlayerNode.scrollWidth;
+    const { fontMetric } = morph;
 
     const lineNodes = textlayerNode.children;
     let i = 0;
@@ -1814,14 +1770,12 @@ export default class Renderer {
     const row = Number(ds ? ds.row : firstLineNode.getAttribute('data-row'));
     if (typeof row !== 'number' || isNaN(row)) return;
 
-    viewState.dom_nodeFirstRow = row;
     let actualTextHeight = 0;
     let line = morph.document.getLine(row);
 
     let foundEstimatedLine;
     for (; i < lineNodes.length; i++) {
       const node = lineNodes[i];
-      viewState.dom_nodes.push(node);
       if (line) {
         if (!foundEstimatedLine) { foundEstimatedLine = line.hasEstimatedExtent; }
         line.hasEstimatedExtent = foundEstimatedLine;
@@ -1853,7 +1807,7 @@ export default class Renderer {
          morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-        morph.viewState._needsFit = true; // FIXME: is this still needed? what did it do?
+        morph.renderingState._needsFit = true; // FIXME: is this still needed? what did it do?
       }
 
       // positions embedded morphs

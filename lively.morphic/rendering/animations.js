@@ -185,7 +185,7 @@ export class PropertyAnimation {
     }
     this.morph.renderingState.needsRerender = true;
     this.morph.makeDirty();
-    if (this.morph.owner && this.morph.owner.isSmartText) this.morph.owner.invalidateTextLayout(true, true);
+    if (this.morph.owner && this.morph.owner.isText) this.morph.owner.invalidateTextLayout(true, true);
   }
 
   convertBounds (config) {

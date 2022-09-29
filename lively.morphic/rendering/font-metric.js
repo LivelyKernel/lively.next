@@ -447,15 +447,11 @@ class DOMTextMeasure {
 
     if (!textNode) {
       this.textlayerNodeCacheCount++;
-      if (!morph.isSmartText) textNode = rendertTextLayerFn(styleOpts, []);
-      else textNode = rendertTextLayerFn();
+      textNode = rendertTextLayerFn();
       cache[styleKey] = textNode;
       textNode.id = styleKey;
 
-      let width, clipMode;
-
-      if (morph.isSmartText) ({ width, clipMode } = morph);
-      else ({ width, clipMode } = styleOpts);
+      const { width, clipMode } = morph;
 
       if (width || clipMode && clipMode !== 'visible') {
         const clipNode = document.createElement('div');
@@ -469,18 +465,10 @@ class DOMTextMeasure {
     }
 
     const tfm = morph.getGlobalTransform().inverse();
-    if (!morph.isSmartText) {
-      if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) &&
-        (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
-        tfm.e = tfm.f = 0;
-        textNode.style.transform = tfm.toString();
-      }
-    } else {
-      if (window.stage0renderer && window.stage0renderer.getNodeForMorph(morph) &&
-        (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
-        tfm.e = tfm.f = 0;
-        textNode.style.transform = tfm.toString();
-      }
+    if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) &&
+      (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
+      tfm.e = tfm.f = 0;
+      textNode.style.transform = tfm.toString();
     }
 
     const layerBounds = textNode.getBoundingClientRect();

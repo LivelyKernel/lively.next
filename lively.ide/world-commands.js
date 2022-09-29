@@ -681,6 +681,8 @@ const commands = [
       name = name || 'text workspace';
       const textAndAttributes = typeof content === 'string' ? [content, null] : content;
       const text = new Text({
+        fill: Color.white,
+        readOnly: false,
         padding: Rectangle.inset(3),
         ...obj.dissoc(opts, ['title', 'content']),
         textAndAttributes,

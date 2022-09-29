@@ -144,7 +144,7 @@ export default class EditorPlugin {
     textMorph.fill = theme.background;
     textMorph.cursorColor = theme.cursorColor || textMorph.fontColor;
 
-    let { firstVisibleRow, lastVisibleRow } = textMorph.viewState;
+    let { firstVisibleRow, lastVisibleRow } = textMorph.renderingState;
     let morphAttrs = {};
     let { lines, tokens } = tokenizeDocument(
       mode,

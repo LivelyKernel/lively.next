@@ -54,6 +54,7 @@ export class Tree extends Text {
       disableIndent: { defaultValue: false },
       activateOnHover: { defaultValue: true },
       readOnly: { defaultValue: true },
+      needsDocument: { defaultValue: true},
       lineHeight: {
         defaultValue: 1.5
       },
@@ -83,12 +84,6 @@ export class Tree extends Text {
         derived: true,
         after: ['treeData'],
         get () { return this.treeData.asList(); }
-      },
-
-      defaultViewState: {
-        get () {
-          return { ...super.prototype.defaultViewState, fastScroll: false };
-        }
       },
 
       selectedNode: {
@@ -145,6 +140,7 @@ export class Tree extends Text {
   constructor (props = {}) {
     if (!props.treeData) { throw new Error('Cannot create tree without TreeData!'); }
     super(props);
+    this.needsDocument = true; // force to trigger setter
     this.resetCache();
     this.update();
   }

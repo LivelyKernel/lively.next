@@ -42,7 +42,7 @@ import bowser from 'bowser';
 
   stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
 
-  if (morph.owner && morph.owner.isSmartText && morph.owner.embeddedMorphMap.has(morph)){
+  if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.has(morph)){
     node.style.position = 'sticky';
     node.style.transform = '';
     node.style.textAlign = 'initial';
@@ -313,13 +313,9 @@ div.text-layer span {
 }
 
 .Label .annotation {
-/*  vertical-align: middle;
-  height: 100%;*/
-  /*vertical align*/
   float: right;
   position: relative;
   top: 50%;
-  text-align: right;
 }
 
 .truncated-text {

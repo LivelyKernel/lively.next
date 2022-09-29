@@ -222,7 +222,7 @@ export class MullerColumnViewModel extends ViewModel {
     await this.refresh(false);
     const hoveredList = this.lists.find(list => list.fullContainsWorldPoint($world.firstHand.position));
     if (!hoveredList) return;
-    // reset the labels so that search does not need to worry abput previous runs altering labels
+    // reset the labels so that search does not need to worry about previous runs altering labels
     hoveredList.items.forEach((item) => {
       if (item.originalLabel) item.label = item.originalLabel.filter(elem => true); // get a new array object
     });
@@ -257,7 +257,6 @@ export class MullerColumnViewModel extends ViewModel {
     });
     // only keep items in the list that match the search
     const newItems = hoveredList.items.filter(item => {
-      lookUpIndex = item.label.length > 2 ? 2 : 0;
       return item.string.toLowerCase().includes(this.searchString);
     });
 

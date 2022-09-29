@@ -282,6 +282,8 @@ const ObjectEditorLight = component({
   }, {
     type: Text,
     name: 'source editor',
+    readOnly: false,
+    lineHeight: 1.4,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
     clipMode: 'auto',
@@ -298,6 +300,7 @@ const ObjectEditorLight = component({
     extent: pt(180, 442),
     fontFamily: '"IBM Plex Sans"',
     fontSize: 14,
+    fill: Color.white,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: {
       top: 1, bottom: 1, left: 0, right: 0

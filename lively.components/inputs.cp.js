@@ -61,6 +61,8 @@ const LabeledCheckBox = component({
 const SearchField = component({
   defaultViewModel: SearchFieldModel,
   type: Text,
+  readOnly: false,
+  fill: Color.white,
   name: 'search field',
   fontFamily: 'IBM Plex Sans',
   styleClasses: ['idle'],
