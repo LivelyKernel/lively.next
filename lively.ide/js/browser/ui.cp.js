@@ -69,7 +69,6 @@ class ComponentEditControlModel extends ViewModel {
 
   resetComponentDef () {
     this.componentDescriptor.reset();
-    // make the browser reload the module
   }
 
   async minifyComponentMorph () {
@@ -103,6 +102,7 @@ class ComponentEditControlModel extends ViewModel {
     editButton.reset();
     editButton.opacity = 0;
     editor.addMorph(editButton);
+    this.componentDescriptor._dirty = false;
     await editButton.positionInLine();
     await view.animate({
       opacity: 0,
@@ -115,13 +115,14 @@ class ComponentEditControlModel extends ViewModel {
     const { center } = editButton;
     editButton.scale = 1.2;
     editButton.center = center;
-    editButton.animate({
+    await editButton.animate({
       scale: 1,
       opacity: 1,
       center,
       duration: 300,
       easing: easings.outQuint
     });
+    editButton.scale = 1;
   }
 }
 
@@ -217,6 +218,7 @@ class ComponentEditButtonMorph extends Morph {
     if (this.componentDescriptor._cachedComponent?.world()) {
       return this.replaceWithPlaceholder();
     }
+    this.editor.readOnly = this.componentDescriptor.isDirty();
     return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
   }
 
