@@ -135,7 +135,7 @@ export class ChangeManager {
   // interface for adding changes, used by morphs
 
   doWithValueChangeMeta (meta, morph, doFn) {
-    this.defaultMeta = meta;
+    this.defaultMeta = { ...arr.last(this.metaStack), ...meta };
     this.metaStack.push(meta);
     let res;
     try {
