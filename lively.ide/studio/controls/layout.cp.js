@@ -131,9 +131,11 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   confirm () {
     const layout = this.targetMorph.layout;
     const { spacingInput, totalPaddingInput } = this.ui;
-    this.targetMorph.layout = layout.with({
-      padding: Rectangle.inset(totalPaddingInput.number),
-      spacing: spacingInput.number
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = layout.with({
+        padding: Rectangle.inset(totalPaddingInput.number),
+        spacing: spacingInput.number
+      });
     });
   }
 
@@ -238,11 +240,13 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
       paddingTop, paddingRight, paddingBottom, paddingLeft
     } = this.ui;
     const layout = this.targetMorph.layout;
-    this.targetMorph.layout = layout.with({
-      padding: Rectangle.inset(paddingLeft.number,
-        paddingTop.number,
-        paddingRight.number,
-        paddingBottom.number)
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = layout.with({
+        padding: Rectangle.inset(paddingLeft.number,
+          paddingTop.number,
+          paddingRight.number,
+          paddingBottom.number)
+      });
     });
   }
 
@@ -502,6 +506,7 @@ const LayoutControl = component(PropertySection, {
         submorphs: [{
           name: 'interactive label',
           fontSize: 14,
+          tooltip: 'Spacing between elements.',
           textAndAttributes: ['', null]
         }]
       }),
@@ -513,9 +518,10 @@ const LayoutControl = component(PropertySection, {
         submorphs: [{
           name: 'interactive label',
           fontSize: 14,
+          tooltip: 'Padding distance of elements to the container.',
           textAndAttributes: ['', null]
         }]
-      }), part(MiniLayoutPreview, { name: 'mini layout preview' })
+      }), part(MiniLayoutPreview, { name: 'mini layout preview', tooltip: 'Alignment controls.' })
 
     ]
   }), add(part(LabeledCheckbox, {
