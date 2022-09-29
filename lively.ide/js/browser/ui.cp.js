@@ -1,5 +1,5 @@
-import { Color, rect, LinearGradient, pt } from 'lively.graphics';D
-import { ShadowObject, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import { Color, rect, LinearGradient, pt } from 'lively.graphics';
+import { ShadowObject, ViewModel, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon,  component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -18,7 +18,7 @@ async function positionInRange (context, range, label) {
   label.leftCenter = context.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
 }
 
-class EditButtonPlaceholder extends Label {
+class ComponentEditControlModel extends ViewModel {
   static get properties () {
     return {
       componentDescriptor: {
@@ -26,17 +26,50 @@ class EditButtonPlaceholder extends Label {
       },
       componentMorph: {
         // reference to the morph that reifies the visual representation of the component definition
+      },
+      editor: {
+        derived: true,
+        get () {
+          return this.view.owner;
+        }
+      },
+      expose: {
+        get () {
+          return ['positionInLine', 'collapse'];
+        }
+      },
+      bindings: {
+        get () {
+          return [
+            { target: 'close button', signal: 'onMouseUp', handler: 'minifyComponentMorph' },
+            { target: 'revert button', signal: 'onMouseUp', handler: 'resetComponentDef' }
+          ];
+        }
       }
     };
   }
 
-  positionInLine () {
-    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+  viewDidLoad () {
+    super.viewDidLoad();
+    this.updateResetButton();
+    once(this.componentDescriptor, 'makeDirty', this, 'updateResetButton');
   }
 
-  async onMouseUp (evt) {
-    super.onMouseUp(evt);
-    await this.minifyComponentMorph();
+  updateResetButton () {
+    this.ui.revertButton.master = this.componentDescriptor.isDirty()
+      ? RevertComponentButton // eslint-disable-line no-use-before-define
+      : RevertComponentButtonDisabled; // eslint-disable-line no-use-before-define
+  }
+
+  positionInLine () {
+    const { view } = this;
+    this.editor.readOnly = this.componentDescriptor.isDirty();
+    return positionInRange(view.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, view);
+  }
+
+  resetComponentDef () {
+    this.componentDescriptor.reset();
+    // make the browser reload the module
   }
 
   async minifyComponentMorph () {
@@ -44,9 +77,10 @@ class EditButtonPlaceholder extends Label {
     this._active = true;
     const {
       componentMorph,
-      owner: editor,
-      position: placeholderPos
+      editor,
+      view
     } = this;
+    const placeholderPos = view.position;
     const pos = componentMorph.position;
     const wrapper = morph({
       fill: Color.transparent,
@@ -65,19 +99,19 @@ class EditButtonPlaceholder extends Label {
   }
 
   async collapse (editButton) {
-    const editor = this.owner;
+    const { editor, view } = this;
     editButton.reset();
     editButton.opacity = 0;
     editor.addMorph(editButton);
     await editButton.positionInLine();
-    await this.animate({
+    await view.animate({
       opacity: 0,
       scale: .2,
-      center: this.center, // to preserve tfm origin
+      center: view.center, // to preserve tfm origin
       duration: 300,
       easing: easings.outQuint
     });
-    this.remove();
+    view.remove();
     const { center } = editButton;
     editButton.scale = 1.2;
     editButton.center = center;
@@ -142,10 +176,12 @@ class ComponentEditButtonMorph extends Morph {
       editor
     } = this;
     const componentMorph = componentDescriptor.getComponentMorph();
-    const btnPlaceholder = editor.addMorph(part(CloseComponentButton, { // eslint-disable-line no-use-before-define
-      name: 'edit button placeholder',
-      componentMorph,
-      componentDescriptor,
+    const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
+      name: 'component edit control',
+      viewModel: {
+        componentMorph,
+        componentDescriptor
+      },
       opacity: 0
     }));
     await btnPlaceholder.positionInLine();
@@ -161,10 +197,12 @@ class ComponentEditButtonMorph extends Morph {
       leftCenter: lineAnchorPoint
     } = this;
     const componentMorph = await componentDescriptor.edit();
-    const btnPlaceholder = editor.addMorph(part(CloseComponentButton, { // eslint-disable-line no-use-before-define
+    const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
       name: 'edit button placeholder',
-      componentMorph,
-      componentDescriptor,
+      viewModel: {
+        componentMorph,
+        componentDescriptor
+      },
       opacity: 0,
       scale: .2
     }));
@@ -194,7 +232,6 @@ class ComponentEditButtonMorph extends Morph {
     this.expand();
   }
 }
-
 
 const ComponentEditButtonDefault = component({
   type: ComponentEditButtonMorph,
@@ -230,7 +267,7 @@ const ComponentEditButton = component(ComponentEditButtonDefault, {
 });
 
 const CloseComponentButtonDefault = component({
-  type: EditButtonPlaceholder,
+  type: Label,
   nativeCursor: 'pointer',
   borderRadius: 15,
   padding: rect(5, 1, 0, 0),
@@ -247,6 +284,47 @@ const CloseComponentButtonClicked = component(CloseComponentButtonDefault, {
 
 const CloseComponentButton = component(CloseComponentButtonDefault, {
   master: { click: CloseComponentButtonClicked }
+});
+
+const RevertComponentButtonDefault = component({
+  type: Label,
+  nativeCursor: 'pointer',
+  borderRadius: 15,
+  padding: rect(5, 1, 0, 0),
+  fill: Color.rgb(33, 150, 243),
+  fontColor: Color.white,
+  fontWeight: 'bold',
+  fontSize: 12,
+  textAndAttributes: ['Revert ', {}, ...Icon.textAttribute('rotate-left', { lineHeight: 1.4 })]
+});
+
+const RevertComponentButtonClicked = component(RevertComponentButtonDefault, {
+  fill: Color.rgb(0, 119, 189)
+});
+
+const RevertComponentButtonDisabled = component(RevertComponentButtonDefault, {
+  opacity: 0.5,
+  nativeCursor: 'not-allowed'
+});
+
+const RevertComponentButton = component(RevertComponentButtonDefault, {
+  master: { click: RevertComponentButtonClicked }
+});
+
+const ComponentEditControls = component({
+  viewModelClass: ComponentEditControlModel,
+  fill: Color.rgba(255, 255, 255, 0),
+  layout: new TilingLayout({
+    orderByIndex: true,
+    spacing: 5,
+    wrapSubmorphs: false,
+    hugContentsHorizontally: true,
+    hugContentsVertically: true
+  }),
+  submorphs: [
+    part(CloseComponentButton, { name: 'close button' }),
+    part(RevertComponentButton, { name: 'revert button' })
+  ]
 });
 
 const BrowserTabDefault = component(DefaultTab, {
@@ -1175,12 +1253,10 @@ const SystemBrowser = component({
 });
 
 async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface) {
-  // browse spec:
-  // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
   const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
   if (!browser.world()) browser.openInWindow();
   browser.env.forceUpdate();
-  return browser.browse(browseSpec, optSystemInterface);
+  return browser.browse({ systemInterface: optSystemInterface, ...browseSpec });
 }
 
 function browserForFile (fileName) {
