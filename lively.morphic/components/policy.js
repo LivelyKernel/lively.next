@@ -836,6 +836,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
   applySpecToMorph (morphToBeStyled, styleProps) {
+    if (styleProps.__wasAddedToDerived__) morphToBeStyled.__wasAddedToDerived__ = true;
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
