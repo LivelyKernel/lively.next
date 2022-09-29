@@ -616,8 +616,9 @@ export class BrowserModel extends ViewModel {
             { model: 'tabs', signal: 'becameInvisible', handler: 'relayout' },
 
             { signal: 'onWindowActivated', handler: 'allowKeyboardNavigation' },
-            { signal: 'onWindowDeactivated', handler: 'prohibitKeyboardNavigation' }
-          ];
+            { signal: 'onWindowDeactivated', handler: 'prohibitKeyboardNavigation' },
+            { signal: 'toggleFader', handler: 'updateKeyboardNavigation' }
+            ];
         }
       }
     };
@@ -805,6 +806,10 @@ export class BrowserModel extends ViewModel {
 
   updateUnsavedChangeIndicator () {
     this[this.hasUnsavedChanges() ? 'indicateUnsavedChanges' : 'indicateNoUnsavedChanges']();
+  }
+
+  updateKeyboardNavigation () {
+    this.view._faderTriggered ? this.prohibitKeyboardNavigation() : this.allowKeyboardNavigation();
   }
 
   prohibitKeyboardNavigation () {
