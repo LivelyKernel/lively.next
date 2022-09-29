@@ -7,6 +7,7 @@ let t;
 function text (string, props) {
   return new Text({
     name: 'text',
+    readOnly: false,
     textString: string,
     fontFamily: 'Monaco, monospace',
     fontSize: 10,

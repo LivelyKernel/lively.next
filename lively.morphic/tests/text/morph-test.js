@@ -22,6 +22,7 @@ let fontMetric; // eslint-disable-line no-unused-vars
 function text (string, props) {
   let t = new Text({
     name: 'text',
+    readOnly: false,
     textString: string,
     extent: pt(100, 100),
     padding: Rectangle.inset(3),
@@ -40,6 +41,7 @@ let sut, env;
 function createSut () {
   sut = text('text\nfor tests', {
     position: pt(10.10),
+    readOnly: false,
     fill: Color.gray.lighter(2),
     cursorPosition: { row: 0, column: 0 }
   }).openInWorld();
@@ -55,7 +57,7 @@ describe('text attributes', () => {
   it('addTextAttribute merges style ranges', () => {
     let style_a = { fontSize: 12, fontStyle: 'italic' };
     let style_b = { fontSize: 14, fontWeight: 'bold' };
-    
+
     sut.addTextAttribute(style_a, Range.create(0, 1, 0, 3));
     let textAttributes = sut.document.lines[0].textAttributes;
     expect(textAttributes).deep.equals([style_a]);
@@ -310,7 +312,7 @@ describe('text key events', () => {
       { type: 'input', data: 'o' },
       { type: 'input', data: 'l' },
       { type: 'keydown', key: 'Enter' });
-    expect(sut).property('textString').equals('lol\ntext\nfor tests');
+    expect(sut).property('textString').equals('text\nfor testslol\n');
   });
 
   it('backspace', async () => {
@@ -323,14 +325,14 @@ describe('text key events', () => {
       { type: 'input', data: 'u' },
       { type: 'input', data: 't' });
 
-    expect(sut).property('textString').equals('lolwuttext\nfor tests');
+    expect(sut).property('textString').equals('text\nfor testslolwut');
     env.eventDispatcher.simulateDOMEvents(
       { type: 'keydown', key: 'Backspace' },
       { type: 'keydown', key: 'Backspace' },
       { type: 'keydown', key: 'Backspace' },
       { type: 'input', data: ' ' });
 
-    expect(sut).property('textString').equals('lol text\nfor tests');
+    expect(sut).property('textString').equals('text\nfor testslol ');
   });
 
   it('entry clears selection', async () => {
@@ -346,7 +348,7 @@ describe('text key events', () => {
 
 describe('text mouse events', () => {
   let padLeft, padTop,
-    h, w; 
+    h, w;
   beforeEach(async () => {
     await createSut();
     padLeft = sut.padding.left();
