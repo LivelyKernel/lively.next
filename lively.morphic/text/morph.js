@@ -228,13 +228,13 @@ export class Text extends Morph {
       extent: {
         get () {
           if (
-              !this._measuringTextBox &&
-              (!this.fixedWidth || !this.fixedHeight) && 
+            !this._measuringTextBox &&
+              (!this.fixedWidth || !this.fixedHeight) &&
               !this._initializing && this.renderingState.needsFit
-              ) {
-              this._measuringTextBox = true;
-              this.fit();
-              this._measuringTextBox = false;
+          ) {
+            this._measuringTextBox = true;
+            this.fit();
+            this._measuringTextBox = false;
           }
           return this.getProperty('extent');
         }
@@ -441,7 +441,7 @@ export class Text extends Morph {
           }
           return textAndAttributes;
         },
-      set (value) {
+        set (value) {
           typeof value === 'string'
             ? (this.textString = value)
             : (this.textAndAttributes = value);
@@ -474,7 +474,7 @@ export class Text extends Morph {
             this.renderingState.needsFit = true;
           }
           this.setProperty('textAndAttributes', textAndAttributes);
-          if (this.world()) Promise.all([this.whenRendered(),this.whenFontLoaded()]).then(() => this.fit());
+          if (this.world()) Promise.all([this.whenRendered(), this.whenFontLoaded()]).then(() => this.fit());
         }
       },
 
@@ -2679,6 +2679,7 @@ export class Text extends Morph {
     const currentTextLayerStyleObject = this.styleObject();
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
+      renderer.renderTextAndAttributes(node, this);
     }
     if (this.renderingState.selectionMode !== this.selectionMode) {
       renderer.patchSelectionMode(node, this);
