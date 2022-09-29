@@ -395,7 +395,9 @@ class NameHolder extends Morph {
 
   updateName (newName) {
     if (!this.forceUniqueName || this.validName) {
-      this.target.name = newName;
+      this.withMetaDo({ reconcileChanges: true }, () => {
+        this.target.name = newName;
+      });
       signal(this, 'active', [false, this]);
       const commentBrowser = $world.getSubmorphNamed('Comment Browser');
       if (commentBrowser) commentBrowser.viewModel.updateName(this.target);
@@ -580,9 +582,11 @@ class CloseHaloItem extends HaloItem {
   update () {
     const { halo } = this; const o = halo.target.owner;
     o.undoStart('close-halo');
-    halo.target.selectedMorphs
-      ? halo.target.selectedMorphs.forEach(m => m.abandon())
-      : halo.target.abandon();
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      halo.target.selectedMorphs
+        ? halo.target.selectedMorphs.forEach(m => m.abandon())
+        : halo.target.abandon();
+    });
     o.undoStop('close-halo');
     const world = halo.world();
     if (world.propertiesPanel) { world.propertiesPanel.clearFocus(); }
@@ -636,7 +640,9 @@ class GrabHaloItem extends HaloItem {
     const undo = halo.target.undoStart('grab-halo');
     undo && undo.addTarget(halo.target.owner);
     this.hand = hand;
-    halo.target.onGrab({ halo, hand, isShiftDown: () => false });
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      halo.target.onGrab({ halo, hand, isShiftDown: () => false });
+    });
     halo.state.activeButton = this;
     this.opacity = 0.3;
     const c = connect(hand, 'update', this, 'update');
@@ -654,7 +660,9 @@ class GrabHaloItem extends HaloItem {
     disconnect(evt.hand, 'update', this, 'update');
     MorphHighlighter.interceptDrop(halo, dropTarget, halo.target);
     undo.addTarget(dropTarget);
-    dropTarget.onDrop(evt);
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      dropTarget.onDrop(evt);
+    });
     halo.state.activeButton = null;
     halo.toggleMorphHighlighter(false, prevDropTarget);
     MorphHighlighter.removeHighlighters(halo);
@@ -728,7 +736,9 @@ class DragHaloItem extends HaloItem {
     if (grid) {
       newPos = newPos.griddedBy(pt(10, 10));
     }
-    this.halo.target.position = newPos;
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      this.halo.target.position = newPos;
+    });
     this.updateAlignmentGuide(grid);
     const world = this.world();
     if (world.activeSideBars.includes('properties panel')) {
@@ -868,7 +878,9 @@ class RotateHaloItem extends HaloItem {
     this.scaleGauge = null;
     let newRotation = this.initRotation + (angleToTarget - this.angle);
     newRotation = num.toRadians(num.detent(num.toDegrees(newRotation), 10, 45));
-    this.halo.target.rotation = newRotation;
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      this.halo.target.rotation = newRotation;
+    });
     this.halo.toggleRotationIndicator(true, this);
   }
 
@@ -1286,7 +1298,9 @@ class OriginHaloItem extends HaloItem {
     const globalOrigin = halo.target.worldPoint(oldOrigin);
     const newOrigin = halo.target.localize(globalOrigin.addPt(delta)).subPt(halo.target.scroll);
     delta = newOrigin.subPt(oldOrigin);
-    halo.target.adjustOrigin(halo.target.origin.addPt(delta));
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      halo.target.adjustOrigin(halo.target.origin.addPt(delta));
+    });
   }
 
   onDragStart (evt) { this.init(); }
@@ -1451,10 +1465,12 @@ class ResizeHandle extends HaloItem {
     if (cl.includes('bottom')) sides.push('bottom');
     if (cl.includes('right')) sides.push('right');
 
-    showAndSnapToResizeGuides(
-      this.halo.target, sides,
-      true/* showGuides */, ctrlDown/* snap */,
-      5/* epsilon */, 200/* maxDist */);
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      showAndSnapToResizeGuides(
+        this.halo.target, sides,
+        true/* showGuides */, ctrlDown/* snap */,
+        5/* epsilon */, 200/* maxDist */);
+    });
   }
 
   stop (proportional) {
@@ -1901,15 +1917,17 @@ export default class Halo extends Morph {
       delta.y * height);
     this.active = true;
     // if the target is controlled by a layout, we have to ignore the position, and dispatch that to the layout
-    if (this.targetIsPositionedByLayout) {
-      this.target.extent = bounds.insetByRect(offsetRect).extent();
-    } else {
-      this.target.setBounds(bounds.insetByRect(offsetRect));
-      if (this.target.isPolygon || this.target.isPath) {
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      if (this.targetIsPositionedByLayout) {
+        this.target.extent = bounds.insetByRect(offsetRect).extent();
+      } else {
+        this.target.setBounds(bounds.insetByRect(offsetRect));
+        if (this.target.isPolygon || this.target.isPath) {
         // refrain from adjusting origin
-        this.target.moveBy(this.target.origin.negated());
+          this.target.moveBy(this.target.origin.negated());
+        }
       }
-    }
+    });
     this.active = false;
     this.alignWithTarget();
     const world = this.world();

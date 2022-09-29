@@ -272,9 +272,11 @@ export class ShapeControlModel extends ViewModel {
     radiusInputBottomLeft.number = borderRadiusBottomLeft;
   }
 
-  updateTarget (propName, val) {
+  confirm (propName, val) {
     this._updating = true;
-    this.targetMorph[propName] = val;
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph[propName] = val;
+    });
     this._updating = false;
   }
 
@@ -303,15 +305,15 @@ export class ShapeControlModel extends ViewModel {
     });
   }
 
-  changePosX (newX) { this.updateTarget('left', newX); }
-  changePosY (newY) { this.updateTarget('top', newY); }
+  changePosX (newX) { this.confirm('left', newX); }
+  changePosY (newY) { this.confirm('top', newY); }
   changeWidth (newWidth) {
     if (this.proportionalResize) {
       const scaledHeight = this.targetMorph.height * (newWidth / this.targetMorph.width);
       this.withoutBindingsDo(() => this.ui.heightInput.number = scaledHeight); // this is a nasty bug with the number widgets who get invoked just when the connections are removed
-      this.updateTarget('height', scaledHeight);
+      this.confirm('height', scaledHeight);
     }
-    this.updateTarget('width', newWidth);
+    this.confirm('width', newWidth);
   }
 
   changeWidthMode (newMode) {
@@ -361,9 +363,9 @@ export class ShapeControlModel extends ViewModel {
     if (this.proportionalResize) {
       const scaledWidth = this.targetMorph.width * (newHeight / this.targetMorph.height);
       this.withoutBindingsDo(() => this.ui.widthInput.number = scaledWidth);
-      this.updateTarget('width', scaledWidth);
+      this.confirm('width', scaledWidth);
     }
-    this.updateTarget('height', newHeight);
+    this.confirm('height', newHeight);
   }
 
   changeHeightMode (newMode) {
@@ -412,14 +414,14 @@ export class ShapeControlModel extends ViewModel {
   changeRotation (newRot) { this.updateTarget('rotation', num.toRadians(newRot)); }
   changeClipMode (newClipMode) { this.updateTarget('clipMode', newClipMode); }
   changeBorderRadius (rad) {
-    this.updateTarget('borderRadius', rad);
+    this.confirm('borderRadius', rad);
     this.withoutBindingsDo(() => this.refreshBorderRadiusSides());
   }
 
-  changeBorderRadiusTopLeft (rad) { this.updateTarget('borderRadiusTopLeft', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusTopRight (rad) { this.updateTarget('borderRadiusTopRight', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusBottomRight (rad) { this.updateTarget('borderRadiusBottomRight', rad); this.toggleMixedRadius(); }
-  changeBorderRadiusBottomLeft (rad) { this.updateTarget('borderRadiusBottomLeft', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusTopLeft (rad) { this.confirm('borderRadiusTopLeft', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusTopRight (rad) { this.confirm('borderRadiusTopRight', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusBottomRight (rad) { this.confirm('borderRadiusBottomRight', rad); this.toggleMixedRadius(); }
+  changeBorderRadiusBottomLeft (rad) { this.confirm('borderRadiusBottomLeft', rad); this.toggleMixedRadius(); }
 
   toggleMixedRadius () {
     this.ui.radiusInput.setMixed();

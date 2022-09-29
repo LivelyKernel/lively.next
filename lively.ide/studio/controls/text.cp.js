@@ -156,22 +156,24 @@ export class RichTextControlModel extends ViewModel {
    * @param { Function | Number | String } valueOrFn - The new value of the property or a function where
    *                                                   the return method will be used as the new property value.
    */
-  changeAttributeInSelectionOrMorph (name, valueOrFn) {
+  confirm (name, valueOrFn) {
     const { targetMorph } = this;
     if (!targetMorph) return;
-    const sel = targetMorph.selection;
-    if (targetMorph.isLabel || sel && sel.isEmpty() || this.globalMode) {
-      targetMorph[name] = typeof valueOrFn === 'function'
-        ? valueOrFn(targetMorph[name])
-        : valueOrFn;
-    } else {
-      targetMorph.undoManager.group();
-      targetMorph.changeStyleProperty(name,
-        oldVal => typeof valueOrFn === 'function'
-          ? valueOrFn(oldVal)
-          : valueOrFn);
-      targetMorph.undoManager.group();
-    }
+    targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      const sel = targetMorph.selection;
+      if (targetMorph.isLabel || sel && sel.isEmpty() || this.globalMode) {
+        targetMorph[name] = typeof valueOrFn === 'function'
+          ? valueOrFn(targetMorph[name])
+          : valueOrFn;
+      } else {
+        targetMorph.undoManager.group();
+        targetMorph.changeStyleProperty(name,
+          oldVal => typeof valueOrFn === 'function'
+            ? valueOrFn(oldVal)
+            : valueOrFn);
+        targetMorph.undoManager.group();
+      }
+    });
   }
 
   /*
@@ -201,7 +203,7 @@ export class RichTextControlModel extends ViewModel {
       'block align': 'justify'
     })[evt.targetMorph.name];
     if (align) {
-      this.changeAttributeInSelectionOrMorph('textAlign', align);
+      this.confirm('textAlign', align);
       this.update();
     }
   }
@@ -238,13 +240,13 @@ export class RichTextControlModel extends ViewModel {
   }
 
   toggleItalic () {
-    this.changeAttributeInSelectionOrMorph('fontStyle', style =>
+    this.confirm('fontStyle', style =>
       style === 'italic' ? 'normal' : 'italic');
     this.update();
   }
 
   toggleUnderline () {
-    this.changeAttributeInSelectionOrMorph('textDecoration', decoration =>
+    this.confirm('textDecoration', decoration =>
       decoration === 'underline' ? 'none' : 'underline');
     this.update();
   }
@@ -256,27 +258,27 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeFontWeight (weight) {
-    this.changeAttributeInSelectionOrMorph('fontWeight', weight);
+    this.confirm('fontWeight', weight);
   }
 
   changeFontColor (color) {
-    this.changeAttributeInSelectionOrMorph('fontColor', color);
+    this.confirm('fontColor', color);
   }
 
   changeFontSize (size) {
-    this.changeAttributeInSelectionOrMorph('fontSize', size);
+    this.confirm('fontSize', size);
   }
 
   changeFontFamily (fontFamily) {
-    this.changeAttributeInSelectionOrMorph('fontFamily', fontFamily);
+    this.confirm('fontFamily', fontFamily);
   }
 
   changeLineHeight (height) {
-    this.changeAttributeInSelectionOrMorph('lineHeight', height);
+    this.confirm('lineHeight', height);
   }
 
   changeLetterSpacing (spacing) {
-    this.changeAttributeInSelectionOrMorph('letterSpacing', spacing);
+    this.confirm('letterSpacing', spacing);
   }
 
   changePadding (padding) {
