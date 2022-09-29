@@ -42,9 +42,6 @@ export class Morph {
       defaultGetter (key) { return this.getProperty(key); },
       defaultSetter (key, value) {
         this.setProperty(key, value);
-        if (this.propertiesAndPropertySettings().properties[key].renderSynchronously && !this._isDeserializing && this.owner) {
-          $world._renderer.renderStylingChanges(this);
-        }
       },
       valueStoreProperty: '_morphicState'
     };
@@ -1152,6 +1149,10 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange (change) {
+    if (this.propertiesAndPropertySettings().properties[change.prop]?.renderSynchronously && !this._isDeserializing) {
+      $world._renderer.renderMorph(this);
+    }
+
     const anim = change.meta && change.meta.animation;
     const { prop, value } = change;
 
