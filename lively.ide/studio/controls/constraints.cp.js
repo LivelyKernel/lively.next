@@ -89,7 +89,7 @@ export class ConstraintsManagerModel extends ViewModel {
    * Update the current morph's resizing policy inside the ConstraintLayout
    * that controls the morph.
    */
-  updateConstraintPolicies () {
+  confirmConstraintPolicies () {
     const { constraints } = this.models;
     const { horizontalConstraint, verticalConstraint } = constraints;
     const layout = this.ensureLayout(horizontalConstraint, verticalConstraint);
@@ -97,6 +97,9 @@ export class ConstraintsManagerModel extends ViewModel {
     layout.changeSettingsFor(this.targetMorph, {
       x: horizontalConstraint,
       y: verticalConstraint
+    });
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.owner.layout = layout;
     });
   }
 }
