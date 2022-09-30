@@ -426,6 +426,7 @@ export class Hand extends Morph {
       morph.reactsToPointer = false;
       morph.dropShadow = true;
       this.addMorph(morph);
+      this.bringToFront();
     });
     signal(this, 'grab', morph);
   }
