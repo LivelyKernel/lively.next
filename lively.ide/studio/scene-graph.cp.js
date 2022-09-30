@@ -193,6 +193,11 @@ export class NewSceneGraphTree extends SceneGraphTree {
     });
   }
 
+  showDropPreviewFor (aMorph) {
+    super.showDropPreviewFor(aMorph);
+    this.removeMarker('hovered node');
+  }
+
   highlightLineAtCursor (evt, style) {
     const pos = this.textPositionFromPoint(evt.positionIn(this));
     this.removeMarker('hovered node');
@@ -411,9 +416,8 @@ export class MorphNodeModel extends ViewModel {
   }
 
   onDragOutside () {
-    // if (this._draggedOutside) return;
-    // this._draggedOutside = true;
     if (!this.queue) {
+      const { tree } = this;
       this.queue = fun.createQueue('container-hover-queue', async (self, thenDo) => {
         const {
           opacity: originalOpacity,
@@ -426,6 +430,8 @@ export class MorphNodeModel extends ViewModel {
         self.target._data = self._data;
         self.remove();
         self.target.position = pt(0, 0);
+        tree.treeData.remove(this.tree._previewNode);
+        tree.update(true);
         await self.target.animate({
           opacity: originalOpacity,
           scale: originalScale,
