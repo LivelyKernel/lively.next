@@ -419,6 +419,7 @@ const DynamicProperty = component({
   extent: pt(183.2, 30),
   submorphs: [part(PropertyLabel, {
     name: 'open popup',
+    tooltip: 'Open Property Popup',
     padding: rect(4, 4, 0, 0),
     master: {
       auto: PropertyLabel,
@@ -439,6 +440,7 @@ const DynamicProperty = component({
   }), part(RemoveButton, {
     master: { auto: RemoveButton, hover: PropertyLabelHovered },
     name: 'remove',
+    tooltip: 'Remove Property/Effect',
     padding: rect(4, 4, 0, 0)
   })]
 });

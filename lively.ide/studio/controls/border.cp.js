@@ -400,6 +400,7 @@ const BorderControlElements = component({
       }]
     }), part(EnumSelector, {
       name: 'border style selector',
+      tooltip: 'Select Border Style',
       clipMode: 'hidden',
       extent: pt(90, 22),
       viewModel: {
@@ -461,6 +462,7 @@ const BorderPopup = component(DarkPopupWindow, {
           part(AddButton, {
             master: { auto: AddButton, hover: PropertyLabelHovered },
             name: 'left border',
+            tooltip: 'Configure Left Border',
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue22e', {
               fontSize: 20,
@@ -469,6 +471,7 @@ const BorderPopup = component(DarkPopupWindow, {
           }),
           part(AddButton, {
             name: 'top border',
+            tooltip: 'Configure Top Border',
             master: { auto: AddButton, hover: PropertyLabelHovered },
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue232', {
@@ -479,6 +482,7 @@ const BorderPopup = component(DarkPopupWindow, {
           part(AddButton, {
             master: { auto: AddButton, hover: PropertyLabelHovered },
             name: 'right border',
+            tooltip: 'Configure Right Border',
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue230', {
               fontSize: 20,
@@ -488,6 +492,7 @@ const BorderPopup = component(DarkPopupWindow, {
           part(AddButton, {
             master: { auto: AddButton, hover: PropertyLabelHovered },
             name: 'bottom border',
+            tooltip: 'Configure Bottom Border',
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue229', {
               fontSize: 20,
@@ -555,6 +560,7 @@ const BorderControl = component(PropertySection, {
           click: PropertyLabelActive
         },
         name: 'more button',
+        tooltip: 'Open Advanced Settings',
         padding: rect(6, 4, 0, 0),
         textAndAttributes: ['', {
           fontSize: 18,

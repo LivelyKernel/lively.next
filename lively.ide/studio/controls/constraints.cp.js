@@ -660,13 +660,16 @@ const ConstraintsSimulator = component({
   submorphs: [
     part(ConstraintMarker, {
       name: 'top marker',
+      tooltip: 'Resize with Top Border',
       position: pt(32.9, 4.4)
     }), part(ConstraintMarker, {
       name: 'right marker',
+      tooltip: 'Resize with Right Border',
       rotation: Math.PI / 2,
       position: pt(71.6, 33.4)
     }), part(ConstraintMarker, {
       name: 'bottom marker',
+      tooltip: 'Resize with Bottom Border',
       position: pt(31.7, 57.5)
     }), part(ConstraintMarker, {
       name: 'left marker',
@@ -681,11 +684,13 @@ const ConstraintsSimulator = component({
       position: pt(20, 20),
       submorphs: [part(ConstraintMarker, {
         name: 'vertical marker',
+        tooltip: 'Proportionally Fix Center Vertically',
         height: 19,
         position: pt(13.3, 9.1),
         submorphs: [{ name: 'accent', height: 15 }]
       }), part(ConstraintMarker, {
         name: 'horizontal marker',
+        tooltip: 'Proportionally Fix Center Horizontally',
         rotation: -1.5707963267948966,
         height: 19,
         position: pt(7.9, 22.7),
@@ -714,6 +719,7 @@ const ConstraintsControl = component({
     part(ConstraintsSimulator, { name: 'constraints simulator' }),
     part(EnumSelector, {
       name: 'horizontal alignment selector',
+      tooltip: 'Choose Horizontal Alignment',
       viewModel: {
         listMaster: DarkThemeList,
         listAlign: 'selection',
@@ -743,6 +749,7 @@ const ConstraintsControl = component({
     }),
     part(EnumSelector, {
       name: 'vertical alignment selector',
+      tooltip: 'Choose Vertical Alignment',
       viewModel: {
         listMaster: DarkThemeList,
         listAlign: 'selection',
@@ -825,32 +832,40 @@ const ResizingSimulator = component({
   },
   part(ConstraintSizeSelector, {
     name: 'outer top selector',
+    tooltip: 'Fill Container',
     position: pt(17.9, 2)
   }), part(ConstraintSizeSelector, {
     name: 'inner bottom selector',
+    tooltip: 'Hug Contents',
     position: pt(18.4, 46.6)
   }), part(ConstraintSizeSelector, {
     name: 'outer bottom selector',
+    tooltip: 'Fill Container',
     rotation: -3.141592653589793,
     position: pt(57.4, 72.4)
   }), part(ConstraintSizeSelector, {
     name: 'inner top selector',
+    tooltip: 'Hug Contents',
     rotation: -3.141592653589793,
     position: pt(56.9, 26.8)
   }), part(ConstraintSizeSelector, {
     name: 'outer left selector',
+    tooltip: 'Fill Container',
     position: pt(2.8, 55.6),
     rotation: -1.5707963267948966
   }), part(ConstraintSizeSelector, {
     name: 'outer right selector',
+    tooltip: 'Fill Container',
     position: pt(72.5, 18.6),
     rotation: 1.570796326794897
   }), part(ConstraintSizeSelector, {
     name: 'inner left selector',
+    tooltip: 'Hug Contents',
     position: pt(27.5, 18.3),
     rotation: 1.570796326794897
   }), part(ConstraintSizeSelector, {
     name: 'inner right selector',
+    tooltip: 'Hug Contents',
     position: pt(47.7, 56.8),
     rotation: -1.5707963267948966
   })]
@@ -872,6 +887,7 @@ const ResizingControl = component(ConstraintsControl, {
         listMaster: DarkThemeList,
         openListInWorld: true,
         listAlign: 'selection',
+        tooltip: 'Choose Resizing Rule',
         items: [
           { string: 'Fixed width', value: 'fixed', isListItem: true },
           { string: 'Hug contents', value: 'hug', isListItem: true },
@@ -885,6 +901,7 @@ const ResizingControl = component(ConstraintsControl, {
         listMaster: DarkThemeList,
         openListInWorld: true,
         listAlign: 'selection',
+        tooltip: 'Choose Resizing Rule',
         items: [
           { string: 'Fixed height', value: 'fixed', isListItem: true },
           { string: 'Hug contents', value: 'hug', isListItem: true },

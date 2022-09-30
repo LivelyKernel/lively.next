@@ -279,6 +279,7 @@ const RichTextControl = component(PropertySection, {
     submorphs: [
       part(EnumSelector, {
         name: 'font family selector',
+        tooltip: 'Choose Font',
         layout: new TilingLayout({
           align: 'center',
           axisAlign: 'center',
@@ -302,6 +303,7 @@ const RichTextControl = component(PropertySection, {
         }]
       }), part(EnumSelector, {
         name: 'font weight selector',
+        tooltip: 'Choose Font Weight',
         extent: pt(119, 23.3),
         viewModel: {
           listMaster: DarkThemeList,
@@ -371,6 +373,7 @@ const RichTextControl = component(PropertySection, {
         }),
         submorphs: [add(part(PropertyLabel, {
           name: 'italic style',
+          tooltip: 'Italic',
           fontSize: 14,
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue23f', {
@@ -379,6 +382,7 @@ const RichTextControl = component(PropertySection, {
           }]
         })), add(part(PropertyLabel, {
           name: 'underline style',
+          tooltip: 'Underline',
           fontSize: 14,
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue249', {
@@ -387,6 +391,7 @@ const RichTextControl = component(PropertySection, {
           }]
         })), add(part(PropertyLabel, {
           name: 'inline link',
+          tooltip: 'Create Link',
           fontSize: 14,
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue157', {
@@ -484,21 +489,25 @@ const RichTextControl = component(PropertySection, {
       }),
       submorphs: [part(AddButton, {
         name: 'left align',
+        tooltip: 'Align Left',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-left')
       }), part(AddButton, {
         name: 'center align',
+        tooltip: 'Align Centered',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-center')
       }), part(AddButton, {
         name: 'right align',
+        tooltip: 'Align Right',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-right')
       }), part(AddButton, {
         name: 'block align',
+        tooltip: 'Justify Text',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-justify')
@@ -518,6 +527,7 @@ const RichTextControl = component(PropertySection, {
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
         rotation: -1.57,
+        tooltip: 'Fit Width',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
@@ -526,6 +536,7 @@ const RichTextControl = component(PropertySection, {
         name: 'auto height',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
+        tooltip: 'Fit Height',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
@@ -534,6 +545,7 @@ const RichTextControl = component(PropertySection, {
         name: 'fixed extent',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
+        tooltip: 'Fix Extent/Don\'t fit',
         textAndAttributes: ['\ue835', {
           fontSize: 18,
           textStyleClasses: ['material-icons']
@@ -542,6 +554,7 @@ const RichTextControl = component(PropertySection, {
     }, part(EnumSelector, {
       name: 'line wrapping selector',
       extent: pt(202.2, 23.3),
+      tooltip: 'Choose Line Wrapping',
       viewModel: {
         listAlign: 'selection',
         openListInWorld: true,

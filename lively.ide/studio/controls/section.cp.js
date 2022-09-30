@@ -76,10 +76,12 @@ const PropertySection = component({
       textAndAttributes: ['Property Section', null]
     }), part(AddButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
-      name: 'add button'
+      name: 'add button',
+      tooltip: 'Add Effect'
     }), part(RemoveButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
       name: 'remove button',
+      tooltip: 'Remove Effect',
       visible: false
     })]
   }]
