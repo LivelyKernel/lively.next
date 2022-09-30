@@ -740,6 +740,10 @@ export class PolicyApplicator extends StylePolicy {
         const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, false);
         if (obj.isEmpty(synthesizedSpec)) return;
         if (synthesizedSpec.isPolicy) {
+          if (morphInScope._skipMasterReplacement) {
+            delete morphInScope._skipMasterReplacement;
+            return;
+          }
           morphInScope.setProperty('master', synthesizedSpec); // might be redundant
           synthesizedSpec.targetMorph = morphInScope;
         } else this.applySpecToMorph(morphInScope, synthesizedSpec, isRoot); // this step enforces the master distribution

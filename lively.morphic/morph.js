@@ -85,6 +85,7 @@ export class Morph {
           if (this.master?.isPolicyApplicator && this.master?.parent[Symbol.for('lively-module-meta')]?.path.length) {
             // how about we only do this with inline policies?
             this.master.spec.master = policy;
+            this._skipMasterReplacement = true;
           } else {
             this.setProperty('master', policy);
             if (policy?.isPolicyApplicator) policy.attach(this); // FIXME: remove that
