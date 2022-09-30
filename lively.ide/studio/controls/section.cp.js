@@ -59,6 +59,7 @@ const PropertySection = component({
   extent: pt(195.1, 51),
   submorphs: [{
     name: 'h floater',
+    epiMorph: true,
     layout: new TilingLayout({
       padding: Rectangle.inset(10, 0, 10, 0),
       justifySubmorphs: 'spaced',

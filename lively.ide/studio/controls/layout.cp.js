@@ -544,6 +544,7 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
   submorphs: [
     add({
       name: 'padding and spacing',
+      epiMorph: true,
       reactsToPointer: false,
       fill: Color.rgba(255, 255, 255, 0),
       extent: pt(156, 136.5),
