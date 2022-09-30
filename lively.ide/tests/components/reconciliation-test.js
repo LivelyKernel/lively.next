@@ -298,4 +298,36 @@ describe('component -> source reconciliation', function () {
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('submorphs: [without(\'some submorph\')]');
   });
+
+  it('updates the source AND the spec in case a rename is detected', async () => {
+    ComponentB.get('some submorph').name = 'molly';
+    await ComponentB._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.include('name: \'molly\',');
+    expect(B.stylePolicy.spec.submorphs[0].name).to.eql('molly');
+  });
+
+  it('discards empty deeply nested nodes if they are no longer needed', async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('a deep morph').addMorph({
+        name: 'something superflous',
+        visible: false
+      });
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    let updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.includes('name: \'something superflous\',');
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('something superflous').remove();
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.includes(`{
+  name: 'B',
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.green
+  }]
+}`);
+  });
 });
