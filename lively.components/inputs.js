@@ -110,7 +110,7 @@ export class SearchFieldModel extends ViewModel {
             if (this.filterFunction === this.fuzzyFilterFunction) { this.filterFunction = this.defaultFilterFunction; }
           } else {
             if (!this.sortFunction) this.sortFunction = this.fuzzySortFunction;
-            if (this.filterFunction == this.defaultFilterFunction) { this.filterFunction = this.fuzzyFilterFunction; }
+            if (this.filterFunction === this.defaultFilterFunction) { this.filterFunction = this.fuzzyFilterFunction; }
           }
         }
       },
@@ -222,7 +222,7 @@ export class SearchFieldModel extends ViewModel {
   clearInput () {
     this.input = '';
     signal(this, 'searchInput', this.parseInput());
-    this.onBlur();
+    this.onInputBlur();
   }
 
   matches (string) {
@@ -232,7 +232,6 @@ export class SearchFieldModel extends ViewModel {
 
   onInputChange (change) {
     const inputChange = change.selector === 'replace';
-    const validInput = this.view.isFocused() && this.input;
     if (this.ui.placeholderIcon) { this.ui.placeholderIcon.visible = !!this.input; }
     if (this.input.includes('\n')) {
       this.input = this.input.replace('\n', '');
