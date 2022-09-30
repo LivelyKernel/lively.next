@@ -436,8 +436,10 @@ export class MorphNodeModel extends ViewModel {
     } else {
       this.target.addMorph(child.target);
     }
-    if (child._data.globalTargetPosition) {
-      child.target.position = this.target.localize(child._data.globalTargetPosition);
+    if (child._data.globalTargetPosition) child.target.position = this.target.localize(child._data.globalTargetPosition);
+    else {
+      child.target.center = $world.center;
+      child.target.show();
     }
   }
 
