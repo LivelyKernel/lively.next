@@ -18,6 +18,7 @@ const CloseButtonDefault = component({
   nativeCursor: 'pointer',
   padding: rect(4, 4, 0, 0),
   epiMorph: true,
+  tooltip: 'Close Window',
   textAndAttributes: ['', {
     textStyleClasses: ['material-icons']
   }]

@@ -282,6 +282,7 @@ const ShapeControl = component({
     }), part(AddButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
       name: 'proportional resize toggle',
+      tooltip: 'Proportional Resize',
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['', { fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"', fontWeight: '900', textStyleClasses: ['fas'] }]
     }),
@@ -316,6 +317,7 @@ const ShapeControl = component({
     }), part(AddButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
       name: 'independent corner toggle',
+      tooltip: 'Independent Border Radius per Corner',
       padding: rect(3, 3, 0, 0),
       textAndAttributes: ['\ue5d0', {
         fontSize: 18,
@@ -383,6 +385,7 @@ const ShapeControl = component({
     },
     part(EnumSelector, {
       name: 'clip mode selector',
+      tooltip: 'Clip Mode',
       extent: pt(165, 23.3),
       position: pt(10.2, 41.9),
       viewModel: {

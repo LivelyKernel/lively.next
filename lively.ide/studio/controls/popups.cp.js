@@ -509,7 +509,7 @@ const NumberPopupLight = component(PopupWindow, {
           textStyleClasses: ['material-icons']
         }]
       }],
-      tooltip: 'Object blur'
+      tooltip: 'Object Blur'
     })]
   })]
 });
@@ -853,7 +853,7 @@ const BlurPopup = component(DarkPopupWindow, {
           textStyleClasses: ['material-icons']
         }]
       }],
-      tooltip: 'Object blur'
+      tooltip: 'Object Blur'
     })]
   })]
 });
@@ -911,6 +911,7 @@ const CursorPopup = component(DarkPopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(EnumSelector, {
       name: 'selection input',
+      tooltip: 'Selector Cursor',
       viewModel: {
         openListInWorld: true,
         listAlign: 'selection',
@@ -959,7 +960,7 @@ const TiltPopup = component(DarkPopupWindow, {
       scaleFactor: 180,
       max: 1,
       position: pt(11.3, 14),
-      tooltip: 'Object tilt',
+      tooltip: 'Object Tilt',
       submorphs: [{
         name: 'interactive label',
         textAndAttributes: ['X ', { fontSize: 16, fontFamily: 'IBM Plex Mono' }, ...Icon.textAttribute('undo', { fontSize: 14, paddingTop: '3px' })]
@@ -991,7 +992,7 @@ const FlipPopup = component(DarkPopupWindow, {
       scaleFactor: 180,
       max: 1,
       position: pt(11.3, 14),
-      tooltip: 'Object flip',
+      tooltip: 'Object Flip',
       submorphs: [{
         name: 'interactive label',
         textAndAttributes: [

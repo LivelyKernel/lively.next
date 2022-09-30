@@ -34,6 +34,7 @@ const ColorInput = component({
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [part(ColorCell, {
     name: 'color cell',
+    tooltip: 'Open Color Picker',
     borderWidth: 0,
     nativeCursor: 'pointer',
     extent: pt(22, 22),
@@ -62,12 +63,14 @@ const ColorInput = component({
     type: InputLine,
     value: 'DDDDDD',
     name: 'hex input',
+    tooltip: 'HEX Color Value',
     extent: pt(72.1, 23),
     fontSize: 14,
     padding: rect(4, 3, 6, 2)
   }), part(NumberInputDark, {
     type: NumberWidget,
     name: 'opacity input',
+    tooltip: 'Opacity',
     extent: pt(78.8, 23),
     unit: '%',
     max: 1,
