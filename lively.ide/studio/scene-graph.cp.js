@@ -271,11 +271,9 @@ export class MorphNodeModel extends ViewModel {
             { signal: 'onContextMenu', handler: 'onContextMenu' },
             { signal: 'onBeingDroppedOn', handler: 'onBeingDroppedOn', override: true },
             { signal: 'wantsToBeDroppedOn', handler: 'wantsToBeDroppedOn', override: true },
-            { signal: 'onDoubleMouseDown', handler: 'startRenaming' },
             { signal: 'onGrab', handler: 'onGrab', override: true },
             { signal: 'onHoverIn', handler: 'showControls' },
             { signal: 'onHoverOut', handler: 'hideControls' },
-            { target: 'name input', signal: 'onBlur', handler: 'finishRenaming' },
             { target: 'visibility icon', signal: 'onMouseDown', handler: 'toggleVisibility' }
           ];
         }
@@ -301,21 +299,6 @@ export class MorphNodeModel extends ViewModel {
 
   hideControls () {
     this.ui.visibilityIcon.visible = !this.target.visible;
-  }
-
-  startRenaming () {
-    const { nameLabel, nameInput } = this.ui;
-    nameLabel.visible = false;
-    nameInput.visible = true;
-    nameInput.focus();
-  }
-
-  finishRenaming () {
-    const { nameLabel, nameInput } = this.ui;
-    nameLabel.visible = true;
-    nameInput.visible = false;
-    this.target.name = nameInput.textString;
-    this.refresh();
   }
 
   async refresh () {
