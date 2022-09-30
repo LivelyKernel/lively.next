@@ -664,6 +664,14 @@ describe('components', () => {
     expect(alice.fill).to.equal(Color.black);
   });
 
+  it('does not drop assigned master for nested components', () => {
+    const instC2 = part(c2);
+    instC2.master = d3;
+    instC2.get('alice').master = c4;
+    instC2.master.applyIfNeeded(true);
+    expect(instC2.get('alice').master.overriddenMaster.parent).eql(c4.stylePolicy);
+  });
+
   it('properly applies overridden masters', async () => {
     const inst4 = part(c4);
     const cp4 = edit(c4);
