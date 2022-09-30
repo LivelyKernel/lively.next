@@ -259,6 +259,7 @@ const PropertiesPanel = component({
   name: 'properties panel',
   width: defaultPropertiesPanelWidth,
   height: 1000,
+  hideScrollbars: true,
   fill: Color.rgb(30, 30, 30).withA(0.95),
   clipMode: 'auto',
   layout: new TilingLayout({
