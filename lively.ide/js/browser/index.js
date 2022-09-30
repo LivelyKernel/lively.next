@@ -972,18 +972,22 @@ export class BrowserModel extends ViewModel {
       await this.selectCodeEntityInColumnView(codeEntity, false);
     }
 
+    if (codeEntity && !scroll) {
+      await this.selectCodeEntity(codeEntity, false);
+    }
+
+    if (this.selectedModule) { await this.prepareCodeEditorForModule(this.selectedModule); }
+
     if (textPosition) {
-      if (this.world()) await promise.delay(10);
       sourceEditor.cursorPosition = textPosition;
       sourceEditor.centerRow(textPosition.row);
+      sourceEditor.selectLine(textPosition.row);
     }
 
     if (scroll) {
       if (this.world()) await promise.delay(10);
       sourceEditor.scroll = scroll;
     }
-
-    if (this.selectedModule) { await this.prepareCodeEditorForModule(this.selectedModule); }
 
     return this.view;
   }
