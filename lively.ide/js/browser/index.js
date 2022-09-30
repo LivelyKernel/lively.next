@@ -966,6 +966,8 @@ export class BrowserModel extends ViewModel {
       }
     }
 
+    this.historyRecord();
+
     if (codeEntity) {
       await this.selectCodeEntityInColumnView(codeEntity, false);
     }
