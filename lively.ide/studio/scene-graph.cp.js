@@ -479,7 +479,7 @@ export class MorphNodeModel extends ViewModel {
     if (recipient.isTree) {
       recipient.insertAtPlaceholder(this.view).then(after);
     } else if (recipient.isContainer) {
-      recipient.insertAsChild(this).then(after);
+      recipient.insertAsChild(this.view).then(after);
     } else {
       after();
     }
