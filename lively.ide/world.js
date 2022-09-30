@@ -1140,6 +1140,11 @@ export class LivelyWorld extends World {
     }]);
 
     items.push(['Remove Morph', () => self.abandon(true)]);
+    items.push(['Rename Morph', async () => {
+      const newName = await $world.prompt('Enter new Name for Morph', { input: self.name });
+      if (!newName) return;
+      self.name = newName;
+    }]);
     items.push(['Open Inspector', () => self.inspect()]);
 
     items.push({ isDivider: true });
