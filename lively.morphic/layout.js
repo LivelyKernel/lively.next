@@ -568,7 +568,7 @@ export class TilingLayout extends Layout {
     return this.getResizeWidthPolicyFor(aMorph) === 'fill';
   }
 
-  resizesMorphVertially (aMorph) {
+  resizesMorphVertically (aMorph) {
     return this.getResizeHeightPolicyFor(aMorph) === 'fill';
   }
 
