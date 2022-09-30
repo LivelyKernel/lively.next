@@ -773,8 +773,9 @@ export class ComponentChangeTracker {
       // maybe also cleanup unneeded imports here...
       const [removedMorph] = change.args;
       let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
+      let submorphsNode = getProp(getPropertiesNode(parsedComponent, change.target), 'submorphs');
       let insertedRemove = false;
-      if (this.withinDerivedComponent(change.target)) {
+      if (this.withinDerivedComponent(removedMorph)) {
         // insert a without("removed morph name") into the submorphs if it is not declared already
         // if there is a add() which we remove again, it suffices to just remove that add command
         // if it is declared already then replace the declared node but this is then done by the call
@@ -788,7 +789,20 @@ export class ComponentChangeTracker {
         updatedSource = this.addMorph(parsedComponent, sourceCode, change.target, removeMorphExpr, sourceEditor);
         insertedRemove = true;
       }
-      if (nodeToRemove && (change.target.submorphs.length > 0 || insertedRemove)) {
+
+      if (!insertedRemove && submorphsNode?.value.elements.length < 2) {
+        // remove the submorphs prop entirely
+        nodeToRemove = submorphsNode;
+        while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
+          nodeToRemove.start--;
+        }
+
+        // FIXME: check if the parent node is now also free of any props
+        // besides name. If so, escalate the removal to the entire parent node!
+        this.needsLinting = true; // not enough to clear the blank space...
+      }
+
+      if (nodeToRemove || insertedRemove) {
         if (insertedRemove) sourceCode = updatedSource;
         if (sourceCode[nodeToRemove.end] === ',') nodeToRemove.end++;
         if (sourceEditor) {
@@ -803,16 +817,6 @@ export class ComponentChangeTracker {
             { action: 'remove', ...nodeToRemove }
           ]);
         }
-      }
-
-      if (!insertedRemove && change.target.submorphs.length === 0) {
-        // remove the submorphs prop entirely
-        const ownerNode = getPropertiesNode(parsedComponent, change.target);
-        nodeToRemove = getProp(ownerNode, 'submorphs');
-        while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
-          nodeToRemove.start--;
-        }
-        this.needsLinting = true; // not enough to clear the blank space...
       }
       // does not need linting, surprisingly
     }
