@@ -53,8 +53,7 @@ export default class Renderer {
   }
 
   /**
-   * Placeholder currently used for measuring the bounds of Text that is not backed by a Document.
-   * @returns {Node} The node in which the nodes to be measured can be mounted.
+   * The Placeholder is currently used for measuring the bounds of Text that is not backed by a Document.
    */
   installPlaceholder () {
     this.placeholder = this.placeholder || this.doc.getElementById('placeholder');
@@ -128,7 +127,7 @@ export default class Renderer {
   /**
    * The heart of the rendering process.
    * The general logic is as follows: We traverse through all morphs in the world and fill different queues depending on some criteria.
-   * Fixed morphs are handled separately at the beginning fo the method.
+   * Fixed morphs are handled separately at the beginning of the method.
    * Afterwards, we take care of CSS Layouts, morphs for which we need to adjust properties and morphs for which we need to adjust structure, e.g., a submorph was added.
    */
   renderStep () {
