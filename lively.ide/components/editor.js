@@ -107,14 +107,14 @@ function getPropertiesNode (parsedComponent, aMorph) {
 
   if (aMorph.isComponent) {
     // then the name is more or less irrelevant
-    return astq.query(parsedComponent, `
+    return query.queryNodes(parsedComponent, `
   .//  ObjectExpression [
          /:properties "*"
        ]
   `)[0];
   }
 
-  const morphDefs = astq.query(parsedComponent, `
+  const morphDefs = query.queryNodes(parsedComponent, `
   .//  ObjectExpression [
          /:properties "*" [
            Property [
@@ -134,7 +134,7 @@ function getMorphNode (parsedComponent, aMorph) {
   // it is wrapped inside the part() call, which then needs to be returned
   // if (!aMorph.isComponent && aMorph.master) {
   // parsedComponent = parse(`part(Troller, { name: 'troller'});`)
-  const [partRef] = astq.query(parsedComponent, `
+  const [partRef] = query.queryNodes(parsedComponent, `
     //  CallExpression [
          /:arguments "*" [
            ObjectExpression [
@@ -158,7 +158,7 @@ function getProp (morphDef, prop) {
   // morphName itself can be ambiguous... work with relative paths instead?
   // the tooling should prevent users from adding morphs with the same name
   // like force a different name if a conflicting one is added to the hierarchy
-  const [propNode] = astq.query(morphDef, `
+  const [propNode] = query.queryNodes(morphDef, `
   / Property [
     /:key Identifier [ @name == '${prop}' ]
    ]
@@ -200,7 +200,7 @@ function getComponentScopeFor (parsedComponent, morphInScope) {
   }
   // 3. the master component itself was ambigous. Now we recursively call the function for the next scope
   //    and then repeat the query on the recursive result
-  const nestedComponentScope = getComponentScopeFor(parsedComponent, m);
+  const nestedComponentScope = getComponentScopeFor(parsedComponent, m.owner);
   return getPropertiesNode(nestedComponentScope, m);
 }
 
@@ -510,6 +510,7 @@ export class ComponentChangeTracker {
     const uncollapsedHierarchyExpr = convertToSpec(hiddenMorph, {
       onlyInclude: ownerChain,
       exposeMasterRefs: false,
+      dropMorphsWithNameOnly: false,
       masterInScope,
       skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type']
     });
@@ -535,8 +536,8 @@ export class ComponentChangeTracker {
           parsedComponent,
           newOwner,
           sourceEditor);
-        parsedComponent = getComponentScopeFor(parse(sourceCode), newOwner);
-        propertiesNode = getPropertiesNode(parsedComponent, newOwner);
+        parsedComponent = getComponentNode(parse(sourceCode), this.componentName); // updated parsed component
+        propertiesNode = getPropertiesNode(getComponentScopeFor(parsedComponent, newOwner), newOwner); // get the properties node for good
       }
       return insertProp(
         sourceCode,
@@ -760,6 +761,7 @@ export class ComponentChangeTracker {
         };
       }
       if (this.withinDerivedComponent(newOwner)) {
+        addedMorph.__wasAddedToDerived__ = true;
         addedMorphExpr.__expr__ = `add(${addedMorphExpr.__expr__})`;
         const b = addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] || [];
         b.push('add');
@@ -776,7 +778,7 @@ export class ComponentChangeTracker {
       let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
       let submorphsNode = getProp(getPropertiesNode(parsedComponent, change.target), 'submorphs');
       let insertedRemove = false;
-      if (this.withinDerivedComponent(removedMorph)) {
+      if (!removedMorph.__wasAddedToDerived__ && this.withinDerivedComponent(change.target)) {
         // insert a without("removed morph name") into the submorphs if it is not declared already
         // if there is a add() which we remove again, it suffices to just remove that add command
         // if it is declared already then replace the declared node but this is then done by the call
@@ -798,8 +800,27 @@ export class ComponentChangeTracker {
           nodeToRemove.start--;
         }
 
-        // FIXME: check if the parent node is now also free of any props
-        // besides name. If so, escalate the removal to the entire parent node!
+        // check if the enclosing propNodes are also remove worthy,
+        // if they get stripped of all props besides name
+
+        // this can also be done by regenerating the spec of the submorphs... but then we lose
+        // at least the entire formatting of the rest of the component definition...
+        let curr = change.target;
+        let propNode = getPropertiesNode(parsedComponent, curr);
+        submorphsNode = getProp(propNode, 'submorphs');
+        while (
+          query.queryNodes(propNode, `
+          / Property [
+            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
+           ]
+         `).length === 0 &&
+          submorphsNode?.value.elements.length < 2) {
+          nodeToRemove = propNode;
+          curr = curr.owner;
+          propNode = getPropertiesNode(parsedComponent, curr);
+          submorphsNode = getProp(propNode, 'submorphs');
+        }
+
         this.needsLinting = true; // not enough to clear the blank space...
       }
 
