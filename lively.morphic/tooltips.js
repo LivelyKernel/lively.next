@@ -39,6 +39,7 @@ export class Tooltip extends Morph {
 
   update (target) {
     this.position = target.globalBounds().bottomCenter().subPt(target.world().scroll).addPt(pt(0, 7));
+    this.setBounds(target.world().visibleBoundsExcludingTopBar().insetBy(10).translateForInclusion(this.bounds()));
   }
 
   async softRemove (cb) {
@@ -147,7 +148,7 @@ export class TooltipViewer {
     // setting the master in the tooltoip definition above directly leads to be tooltip.cs.js being imported on file-level
     // which causes circular imports and breaks the system
     System.import('lively.morphic/tooltips.cp.js').then(({ SystemTooltip }) => {
-      this.currentTooltip.master = SystemTooltip;            
+      this.currentTooltip.master = SystemTooltip;
       $world.addMorph(this.currentTooltip);
       this.currentTooltip.update(morph);
     });
