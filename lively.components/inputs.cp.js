@@ -92,7 +92,7 @@ const SearchField = component({
   }, {
     type: Label,
     name: 'placeholder icon',
-    autofit: false,
+    autofit: true,
     fontColor: Color.rgb(204, 204, 204),
     fontSize: 14,
     nativeCursor: 'pointer',
