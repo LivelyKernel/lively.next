@@ -663,7 +663,7 @@ class GrabHaloItem extends HaloItem {
     MorphHighlighter.removeHighlighters(halo);
     halo.target.undoStop('grab-halo');
     this.opacity = 1;
-    if (halo.target.owner.layout) {
+    if (halo.target.owner?.layout) {
       halo.opacity = 0; // hide the glitch
       halo.target.whenRendered().then(() => {
         halo.alignWithTarget();
