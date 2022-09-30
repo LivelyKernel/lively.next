@@ -17,6 +17,7 @@ const CloseButtonDefault = component({
   fontSize: 25,
   nativeCursor: 'pointer',
   padding: rect(4, 4, 0, 0),
+  epiMorph: true,
   textAndAttributes: ['', {
     textStyleClasses: ['material-icons']
   }]
@@ -68,6 +69,7 @@ const PopupWindow = component({
   nativeCursor: 'grab',
   submorphs: [{
     name: 'header menu',
+    epiMorph: true,
     borderWidth: { top: 0, left: 0, right: 0, bottom: 1 },
     borderColor: Color.rgb(215, 219, 221),
     extent: pt(241, 40.5),
@@ -85,6 +87,7 @@ const PopupWindow = component({
       {
         type: Label,
         name: 'title',
+        epiMorph: true,
         padding: rect(10, 0, -10, 0),
         fontWeight: 'bold',
         textString: 'Window title',
