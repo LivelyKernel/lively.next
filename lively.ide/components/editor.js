@@ -713,7 +713,7 @@ export class ComponentChangeTracker {
             deleteProp = true;
             updatedSource = this.deleteProp(sourceCode, morphDef, 'extent', sourceEditor);
           }
-          if (this.isResizedVertically(change.target)) {
+          if (this.isResizedHorizontally(change.target)) {
             change = { ...change, prop: 'height' };
             valueAsExpr.__expr__ = String(change.value.y);
             skipPatch = deleteProp;
