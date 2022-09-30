@@ -75,6 +75,7 @@ export class LivelyWorld extends World {
         }
       },
       activeSideBars: {
+        serialize: false,
         initialize () { this.activeSideBars = []; }
       },
       hiddenComponents: {
