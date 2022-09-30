@@ -590,7 +590,8 @@ export class ComponentChangeTracker {
     }
 
     const patchPos = propNode;
-    if (sourceCode[patchPos.end] === ',') patchPos.end++;
+    while ([',', ' '].includes(sourceCode[patchPos.end])) patchPos.end++; // also include the line break!
+    if (sourceCode[patchPos.end] === '\n') patchPos.end++;
     this.needsLinting = true;
 
     if (sourceEditor) {
