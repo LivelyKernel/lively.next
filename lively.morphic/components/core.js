@@ -575,12 +575,10 @@ export function without (removedSiblingName) {
  * @param { string } [before] - An optional parameter that denotes the name of the morph this new one should be placed in front of.
  */
 export function add (props, before = null) {
+  props.__wasAddedToDerived__ = true;
   return {
     COMMAND: 'add',
-    props: {
-      __wasAddedToDerived__: true,
-      ...props
-    },
+    props: props,
     before
   };
 }
