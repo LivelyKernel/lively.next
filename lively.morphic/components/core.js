@@ -580,6 +580,13 @@ export function add (props, before = null) {
   };
 }
 
+export function standard (value) {
+  return {
+    onlyAtInstantiation: true,
+    value
+  };
+}
+
 function insertFontCSS (name, fontUrl) {
   if (fontUrl.endsWith('.otf')) {
     addOrChangeCSSDeclaration(`${name}`,

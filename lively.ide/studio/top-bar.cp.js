@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
+import { standard, config, touchInputDevice, TilingLayout, Tooltip, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -1011,19 +1011,10 @@ const TopBarButton = component({
   type: Label,
   name: 'top bar button',
   lineHeight: 1,
-  fontColor: {
-    value: Color.rgb(102, 102, 102),
-    onlyAtInstantiation: true
-  },
-  fontSize: {
-    value: 23,
-    onlyAtInstantiation: true
-  },
+  fontColor: standard(Color.rgb(102, 102, 102)),
+  fontSize: standard(23),
   nativeCursor: 'pointer',
-  padding: {
-    value: rect(0, 1, 0, -1),
-    onlyAtInstantiation: true
-  }
+  padding: standard(rect(0, 1, 0, -1))
 });
 
 const TopBarButtonSelected = component(TopBarButton, {
@@ -1108,10 +1099,7 @@ const UserFlap = component({
     name: 'name label',
     draggable: true,
     fill: Color.rgba(255, 255, 255, 0),
-    fontColor: {
-      onlyAtInstantiation: true,
-      value: Color.rgb(102, 102, 102)
-    },
+    fontColor: standard(Color.rgb(102, 102, 102)),
     fontSize: 16,
     grabbable: true,
     nativeCursor: 'pointer',
