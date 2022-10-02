@@ -455,10 +455,11 @@ class NameHaloItem extends HaloItem {
         fontColor: Color.white,
         padding: Rectangle.inset(0, 0, 4, 0),
         name: 'master link',
-        tooltip: meta ? 'Located in ' + meta.module : false
+        tooltip: meta ? 'Located in ' + meta.moduleId : false
       }));
       meta && connect(masterLink, 'onMouseDown', () => {
-        $world.execCommand('open browser', { moduleName: meta.module, codeEntity: meta.export });
+        // FIXME: also take into account the path if present?
+        $world.execCommand('open browser', { moduleName: meta.moduleId, codeEntity: meta.exportedName });
       });
     }
   }
