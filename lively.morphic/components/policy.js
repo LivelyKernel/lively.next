@@ -140,6 +140,10 @@ export class StylePolicy {
     return this.spec.name;
   }
 
+  set name (v) {
+    this.spec.name = v;
+  }
+
   /**
    * The parent of the policy. If not overridden the `auto` master defaults to this policy.
    * We also inherit all the structure (submorphs) from this policy.
