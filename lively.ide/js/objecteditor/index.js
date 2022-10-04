@@ -13,7 +13,8 @@ import * as modules from 'lively.modules';
 import { parse, query } from 'lively.ast';
 import { interactivelySavePart } from 'lively.morphic/partsbin.js';
 
-import { adoptObject } from 'lively.classes/runtime.js';
+import { adoptObject } from 'lively.lang/object.js';
+
 import { InteractiveMorphSelector } from 'lively.halos';
 
 import ObjectEditorContext from './context.js';
