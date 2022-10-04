@@ -2313,12 +2313,21 @@ export class BrowserModel extends ViewModel {
   }
 
   menuItems () {
+    const td = this.ui.columnView.treeData;
+
+    const checked = Icon.textAttribute('check-square');
+    const unchecked = Icon.textAttribute('square');
+    Object.assign(checked[1], { float: 'none', display: 'inline' });
+
     const p = this.selectedPackage;
     const m = this.selectedModule;
 
     return [
       p && { command: 'open browse snippet', target: this, showKeyShortcuts: false },
-      m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false }
+      m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false },
+      (m || p) && { isDivider: true },
+      [[...(td.showDependencyPackages ? checked : unchecked), ' ' + 'Display Dependecy Packages', { float: 'none' }],
+        () => { this.showDependencyPackages(!td.showDependencyPackages); }]
     ].filter(Boolean);
   }
 }
