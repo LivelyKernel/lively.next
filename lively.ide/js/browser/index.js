@@ -126,6 +126,11 @@ export class DirectoryControls extends Morph {
 }
 
 export class PackageTreeData extends TreeData {
+  constructor (root) {
+    super(root);
+    this.showDependencyPackages = false;
+  }
+
   get columnView () {
     return this.root.browser.ui.columnView;
   }
@@ -368,9 +373,11 @@ export class PackageTreeData extends TreeData {
   }
 
   async listAllPackages () {
-    const pkgs = await this.systemInterface.getPackages();
-    return arr.sortBy(pkgs.map(pkg => {
+    let pkgs = await this.systemInterface.getPackages();
+
+    pkgs = arr.sortBy(pkgs.map(pkg => {
       let kind = 'git';
+      if (pkg.url.includes('node_modules')) kind = 'dependency';
       if (pkg.url.startsWith('local')) kind = 'local';
       if (pkg.name.startsWith('lively')) kind = 'core';
       pkg.kind = kind;
@@ -382,7 +389,11 @@ export class PackageTreeData extends TreeData {
         tooltip: pkg.name,
         pkg
       };
-    }), ({ pkg }) => ({ core: 1, local: 2, git: 3 }[pkg.kind]));
+    }), ({ pkg }) => ({ core: 1, local: 2, git: 3, dependency: 4 }[pkg.kind]));
+
+    if (!this.showDependencyPackages) pkgs = pkgs.filter(p => p.pkg.kind !== 'dependency' && p.name !== 'flatn' && p.name !== 'mocha-es6');
+
+    return pkgs;
   }
 
   async listEditableFilesInPackage (pkg) {
@@ -582,6 +593,7 @@ export class BrowserModel extends ViewModel {
             'onWindowClose',
             'onModuleLoaded',
             'onModuleChanged',
+            'showDependecyPackages',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
@@ -618,7 +630,7 @@ export class BrowserModel extends ViewModel {
             { signal: 'onWindowActivated', handler: 'allowKeyboardNavigation' },
             { signal: 'onWindowDeactivated', handler: 'prohibitKeyboardNavigation' },
             { signal: 'toggleFader', handler: 'updateKeyboardNavigation' }
-            ];
+          ];
         }
       }
     };
@@ -876,6 +888,14 @@ export class BrowserModel extends ViewModel {
                         !excluded.some(ex => ex instanceof RegExp ? ex.test(url) : url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.view.showError(e); return []; }
+  }
+
+  async showDependencyPackages (bool) {
+    const { columnView } = this.ui;
+    const treeData = columnView.treeData;
+    treeData.showDependencyPackages = bool;
+    treeData.root.subNodes = await columnView.treeData.listAllPackages();
+    await this.selectPackageNamed(null, true);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
