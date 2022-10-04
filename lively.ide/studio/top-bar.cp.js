@@ -389,7 +389,7 @@ export class TopBarModel extends ViewModel {
   handleShapeCreation (evt) {
     if (this._customDrag) {
       this._customDrag = false;
-      this.world().halos()[0].onDragEnd();
+      this.world().halos()[0]?.onDragEnd();
     }
 
     const target = this.primaryTarget || this.world();

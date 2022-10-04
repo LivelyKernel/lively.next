@@ -733,6 +733,7 @@ class DragHaloItem extends HaloItem {
   }
 
   update (delta, grid = false, snapToGuides = false) {
+    if (!this.actualPos) return;
     let newPos = this.actualPos.addPt(this.targetTransform.transformDirection(delta));
     this.actualPos = newPos;
     if (grid) {

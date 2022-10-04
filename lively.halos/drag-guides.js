@@ -226,7 +226,7 @@ function findAlignedMorphs (refMorph, submorphs, eps = 15, distCutoff = Infinity
  * @param { number } [maxDist=100] - The maximum distance of morphs to be considered guide worthy.
  */
 export function showAndSnapToGuides (target, showGuides = true, snap = true, eps = 10, maxDist = 100) {
-  if (!showGuides && !snap) return;
+  if ((!showGuides && !snap) || !target.owner) return;
 
   let owner = target.owner;
   let world = owner.world();
@@ -657,7 +657,7 @@ export function showAndSnapToResizeGuides (
       else { guide = morph(guideSpecs[i]); dragGuides.push(guide); }
       if (!guide.owner) world.addMorph(guide);
     }
-    
+
     dragGuides.slice(i).forEach(ea => ea.remove());
 
     fun.debounceNamed(target.id + '-drag-guides-cleanup', 1300, () => {
