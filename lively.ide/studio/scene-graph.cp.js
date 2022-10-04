@@ -25,6 +25,9 @@ export class MorphPanelModel extends ViewModel {
               target: 'scene graph', signal: 'selectedNode', handler: 'showHaloFor'
             },
             {
+              target: 'scene graph', signal: 'reselectedCurrentSelection', handler: 'showHaloFor'
+            },
+            {
               model: 'search field', signal: 'searchInput', handler: 'filterMorphs'
             },
             {

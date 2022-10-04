@@ -472,7 +472,7 @@ export class Tree extends Text {
         ? this.uncollapse(clickedNode)
         : this.collapse(clickedNode);
     } else {
-      if (this.selectedIndex != row + 1) { this.selectedIndex = row + 1; }
+      if (this.selectedIndex != row + 1) { this.selectedIndex = row + 1; } else signal(this, 'reselectedCurrentSelection', this.selectedNode);
     }
     // check for defined onMouseDown in attributes
     let { onMouseDown } = this.textAttributeAt({ row, column }) || {};
