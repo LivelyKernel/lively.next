@@ -140,8 +140,8 @@ export class StylePolicy {
     return this.spec.name;
   }
 
-  set name (s) {
-    this.spec.name = s;
+  set name (v) {
+    this.spec.name = v;
   }
 
   /**
