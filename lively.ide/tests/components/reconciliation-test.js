@@ -347,10 +347,12 @@ describe('component -> source reconciliation', function () {
   });
 
   it('updates the source AND the spec in case a rename is detected', async () => {
-    ComponentB.get('some submorph').name = 'molly';
-    await ComponentB._changeTracker.onceChangesProcessed();
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentA.get('some ref').name = 'molly';
+    });
+    await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource).to.include('name: \'molly\',');
-    expect(B.stylePolicy.spec.submorphs[0].name).to.eql('molly');
+    expect(updatedSource).to.include('name: \"molly\"');
+    expect(A.stylePolicy.spec.submorphs[1].name).to.eql('molly');
   });
 });
