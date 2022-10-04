@@ -101,12 +101,24 @@ function getComponentNode (parsedContent, componentName) {
   return parsedComponent;
 }
 
-function getPropertiesNode (parsedComponent, aMorph) {
-  // fixme: This does not take into account the name unique name path
-  //        and often incorrectly resolves the source code location
+/**
+ * Returns the ast node that containts the property attributes of a morph spec within a component definition.
+ * @param { object } parsedComponent - The parsed component.
+ * @param { Morph|string } aMorphOrName - A morph or name referencing the spec.
+ * @returns { object } The ast node of the parsed props object.
+ */
+function getPropertiesNode (parsedComponent, aMorphOrName) {
+  // FIXME: use a name path instead of just the name, since a name alone ignore master scopes
+  //        and can therefore easily resolve incorrectly
+  let name, aMorph;
+  if (obj.isString(aMorphOrName)) name = aMorphOrName;
+  else {
+    aMorph = aMorphOrName;
+    name = aMorph.name;
+  }
 
-  if (aMorph.isComponent) {
-    // then the name is more or less irrelevant
+  if (aMorph?.isComponent) {
+    // then the name is irrelevant
     return query.queryNodes(parsedComponent, `
   .//  ObjectExpression [
          /:properties "*"
@@ -119,12 +131,12 @@ function getPropertiesNode (parsedComponent, aMorph) {
          /:properties "*" [
            Property [
               /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${aMorph.name}']
+           && /:value Literal [ @value == '${name}']
            ]
          ]
        ]
   `);
-  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + aMorph.name);
+  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + name);
   return morphDefs[0];
 }
 
@@ -389,6 +401,19 @@ function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = 
   ]);
 }
 
+export function belongsToRootDef (aMorph, componentOfScope) {
+  const masterHolders = [aMorph, ...aMorph.ownerChain()].filter(m => !!m.master && !m.isWorld);
+  const isRootComponentDef = !componentOfScope.master;
+  let derivedFound = false;
+  while (isRootComponentDef && masterHolders.length > 0) {
+    if (masterHolders.pop().master.parent) {
+      if (derivedFound) return false;
+      else derivedFound = true;
+    }
+  }
+  return isRootComponentDef;
+}
+
 // m = morph()
 // tracker = new ComponentChangeTracker
 // connect(m, 'onSubmorphChange', tracker, 'update', { garbageCollect: true })
@@ -494,7 +519,7 @@ export class ComponentChangeTracker {
     }
   }
 
-  uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, sourceEditor = false) {
+  uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph) {
     this.needsLinting = true;
     // completely serialize the component and replace the properties obj
     let nextVisibleParent = hiddenMorph;
@@ -516,10 +541,10 @@ export class ComponentChangeTracker {
     });
     if (!uncollapsedHierarchyExpr) return sourceCode;
     // insert at the right position
-    return this.addMorph(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, sourceEditor);
+    return this.addMorph(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr);
   }
 
-  addMorph (parsedComponent, sourceCode, newOwner, addedMorphExpr, sourceEditor) {
+  addMorph (parsedComponent, sourceCode, newOwner, addedMorphExpr) {
     const submorphsArrayNode = getSubmorphsArrayNode(parsedComponent, newOwner);
     this.needsLinting = true;
     // check if the component is derived or not
@@ -534,8 +559,7 @@ export class ComponentChangeTracker {
         sourceCode = this.uncollapseSubmorphHierarchy(
           sourceCode,
           parsedComponent,
-          newOwner,
-          sourceEditor);
+          newOwner);
         parsedComponent = getComponentNode(parse(sourceCode), this.componentName); // updated parsed component
         propertiesNode = getPropertiesNode(getComponentScopeFor(parsedComponent, newOwner), newOwner); // get the properties node for good
       }
@@ -544,13 +568,13 @@ export class ComponentChangeTracker {
         propertiesNode,
         'submorphs',
           `[${addedMorphExpr.__expr__}]`,
-          sourceEditor);
+          this.sourceEditor);
     } else {
-      return insertMorph(sourceCode, submorphsArrayNode, addedMorphExpr.__expr__, sourceEditor);
+      return insertMorph(sourceCode, submorphsArrayNode, addedMorphExpr.__expr__, this.sourceEditor);
     }
   }
 
-  patchProp (sourceCode, morphDef, propName, valueExpr, sourceEditor = false) {
+  patchProp (sourceCode, morphDef, propName, valueExpr) {
     const propNode = getProp(morphDef, propName);
     if (!propNode) {
     // the property did not exist and needs to be added to the properties
@@ -560,22 +584,22 @@ export class ComponentChangeTracker {
         morphDef,
         propName,
         valueExpr,
-        sourceEditor
+        this.sourceEditor
       );
     }
 
     const patchPos = propNode.value;
 
-    if (sourceEditor) {
+    if (this.sourceEditor) {
       const patchableRange = Range.fromPositions(
-        sourceEditor.indexToPosition(patchPos.start),
-        sourceEditor.indexToPosition(patchPos.end)
+        this.sourceEditor.indexToPosition(patchPos.start),
+        this.sourceEditor.indexToPosition(patchPos.end)
       );
-      sourceEditor.replace(patchableRange, valueExpr);
-      return sourceEditor.textString;
+      this.sourceEditor.replace(patchableRange, valueExpr);
+      return this.sourceEditor.textString;
     }
 
-    if (!sourceEditor) {
+    if (!this.sourceEditor) {
       return string.applyChanges(sourceCode, [
         { action: 'remove', ...patchPos },
         { action: 'insert', start: patchPos.start, lines: [valueExpr] }
@@ -583,7 +607,7 @@ export class ComponentChangeTracker {
     }
   }
 
-  deleteProp (sourceCode, morphDef, propName, sourceEditor = false) {
+  deleteProp (sourceCode, morphDef, propName) {
     const propNode = getProp(morphDef, propName);
     if (!propNode) {
       // no prop node nothing needs to be done
@@ -595,16 +619,16 @@ export class ComponentChangeTracker {
     if (sourceCode[patchPos.end] === '\n') patchPos.end++;
     this.needsLinting = true;
 
-    if (sourceEditor) {
+    if (this.sourceEditor) {
       const patchableRange = Range.fromPositions(
-        sourceEditor.indexToPosition(patchPos.start),
-        sourceEditor.indexToPosition(patchPos.end)
+        this.sourceEditor.indexToPosition(patchPos.start),
+        this.sourceEditor.indexToPosition(patchPos.end)
       );
-      sourceEditor.replace(patchableRange, '');
-      return sourceEditor.textString;
+      this.sourceEditor.replace(patchableRange, '');
+      return this.sourceEditor.textString;
     }
 
-    if (!sourceEditor) {
+    if (!this.sourceEditor) {
       return string.applyChanges(sourceCode, [
         { action: 'remove', ...patchPos }
       ]);
@@ -632,6 +656,7 @@ export class ComponentChangeTracker {
 
   ignoreChange (change) {
     if (!change.meta?.reconcileChanges) return true;
+    if (change.prop === 'name') return false;
     if (change.prop === 'position' && (change.target === this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
     if (change.prop && change.prop !== 'textAndAttributes' && !change.target.styleProperties.includes(change.prop)) return true;
     if (change.target.epiMorph) return true;
@@ -669,12 +694,174 @@ export class ComponentChangeTracker {
     this.componentDescriptor?.refreshDependants();
   }
 
+  handleAddedMorph (change, parsedComponent, sourceCode, requiredBindings) {
+    const newOwner = change.target;
+    const [addedMorph] = change.args;
+    let addedMorphExpr = convertToSpec(addedMorph, { dropMorphsWithNameOnly: false });
+    requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
+    if (addedMorph.master) {
+      const metaInfo = addedMorph.master.parent[Symbol.for('lively-module-meta')];
+      addedMorphExpr = convertToSpec(addedMorph, {
+        exposeMasterRefs: false,
+        skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'type']
+      });
+      addedMorphExpr = {
+        // this fails when components are alias imported....
+        // we can not insert the model props right now
+        // this also serializes way too much
+        __expr__: `part(${metaInfo.exportedName}, ${addedMorphExpr.__expr__})`,
+        bindings: {
+          ...addedMorphExpr.bindings,
+          [COMPONENTS_CORE_MODULE]: ['part'],
+          [metaInfo.moduleId]: [metaInfo.exportedName]
+        }
+      };
+    }
+    if (this.withinDerivedComponent(newOwner)) {
+      addedMorph.__wasAddedToDerived__ = true;
+      addedMorphExpr.__expr__ = `add(${addedMorphExpr.__expr__})`;
+      const b = addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] || [];
+      b.push('add');
+      addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] = b;
+    }
+    requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
+    return this.addMorph(parsedComponent, sourceCode, newOwner, addedMorphExpr, this.sourceEditor);
+  }
+
+  handleRemovedMorph (change, parsedComponent, sourceCode, requiredBindings) {
+    // maybe also cleanup unneeded imports here...
+    const [removedMorph] = change.args;
+    let updatedSource = sourceCode;
+    let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
+    let submorphsNode = getProp(getPropertiesNode(parsedComponent, change.target), 'submorphs');
+    let insertedRemove = false;
+    if (!removedMorph.__wasAddedToDerived__ && this.withinDerivedComponent(change.target)) {
+      // insert a without("removed morph name") into the submorphs if it is not declared already
+      // if there is a add() which we remove again, it suffices to just remove that add command
+      // if it is declared already then replace the declared node but this is then done by the call
+      // after that normaly removes the declared expression
+      const removeMorphExpr = {
+        __expr__: `without('${removedMorph.name}')`,
+        bindings: { [COMPONENTS_CORE_MODULE]: ['without'] }
+      };
+      requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
+      // also update the source code if the following code leaps in
+      updatedSource = this.addMorph(parsedComponent, sourceCode, change.target, removeMorphExpr, this.sourceEditor);
+      insertedRemove = true;
+    }
+
+    if (!insertedRemove && submorphsNode?.value.elements.length < 2) {
+      // remove the submorphs prop entirely
+      nodeToRemove = submorphsNode;
+      while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
+        nodeToRemove.start--;
+      }
+
+      let curr = change.target;
+      let propNode = getPropertiesNode(parsedComponent, curr);
+      submorphsNode = getProp(propNode, 'submorphs');
+      while (
+        query.queryNodes(propNode, `
+          / Property [
+            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
+           ]
+         `).length === 0 &&
+          submorphsNode?.value.elements.length < 2) {
+        nodeToRemove = propNode;
+        curr = curr.owner;
+        propNode = getPropertiesNode(parsedComponent, curr);
+        submorphsNode = getProp(propNode, 'submorphs');
+      }
+
+      this.needsLinting = true; // not enough to clear the blank space...
+    }
+
+    if (nodeToRemove || insertedRemove) {
+      if (insertedRemove) sourceCode = updatedSource;
+      if (sourceCode[nodeToRemove.end] === ',') nodeToRemove.end++;
+      if (this.sourceEditor) {
+        const morphRange = Range.fromPositions(
+          this.sourceEditor.indexToPosition(nodeToRemove.start),
+          this.sourceEditor.indexToPosition(nodeToRemove.end)
+        );
+        this.sourceEditor.replace(morphRange, '');
+        updatedSource = this.sourceEditor.textString;
+      } else {
+        updatedSource = string.applyChanges(sourceCode, [
+          { action: 'remove', ...nodeToRemove }
+        ]);
+      }
+    }
+    // does not need linting, surprisingly
+    return updatedSource;
+  }
+
+  handleRenaming (change, parsedComponent, sourceCode, requiredBindings) {
+    const { target: renamedMorph, value: newName, prevValue: oldName } = change;
+
+    if (!renamedMorph.__wasAddedToComponent__ && !belongsToRootDef(renamedMorph, this.trackedComponent)) {
+      return; // there is not change we can rename this morph
+    }
+
+    const responsibleComponent = getComponentScopeFor(parsedComponent, renamedMorph);
+    const morphDef = getPropertiesNode(responsibleComponent, oldName);
+    // we can only change names for morphs that where NOT derived
+    this.componentDescriptor.stylePolicy.getSubSpecFor(oldName).name = newName;
+    return this.patchProp(sourceCode, morphDef, 'name', `"${change.value}"`);
+  }
+
+  handleChangedProp (change, parsedComponent, sourceCode, requiredBindings) {
+    if (change.prop === 'name') return this.handleRenaming(change, parsedComponent, sourceCode, requiredBindings);
+    let updatedSource = sourceCode;
+    const valueAsExpr = getValueExpr(change.prop, change.value);
+    requiredBindings.push(...Object.entries(valueAsExpr.bindings));
+    let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
+    const morphDef = getPropertiesNode(responsibleComponent, change.target);
+    if (change.prop === 'layout') {
+      this.needsLinting = true;
+    }
+    if (!morphDef) {
+      // the entire morph does not exist and needs to be added to the definition!
+      return this.uncollapseSubmorphHierarchy(
+        sourceCode,
+        responsibleComponent,
+        change.target);
+    } else {
+      // this little dance should be refactored
+      let deleteProp = false; let skipPatch = false;
+      if (change.prop === 'extent') {
+        if (this.isResizedVertically(change.target)) {
+          change = { ...change, prop: 'width' };
+          valueAsExpr.__expr__ = String(change.value.x);
+          deleteProp = true;
+          updatedSource = this.deleteProp(sourceCode, morphDef, 'extent');
+        }
+        if (this.isResizedHorizontally(change.target)) {
+          change = { ...change, prop: 'height' };
+          valueAsExpr.__expr__ = String(change.value.y);
+          skipPatch = deleteProp;
+          if (!deleteProp) {
+            updatedSource = this.deleteProp(sourceCode, morphDef, 'extent');
+          }
+        }
+      }
+      if (!skipPatch) {
+        updatedSource = this.patchProp(
+          updatedSource,
+          morphDef,
+          change.prop,
+          valueAsExpr.__expr__);
+      }
+      return updatedSource;
+    }
+  }
+
   processChangeInComponentSource (change) {
     const { componentModule: mod, componentName, sourceEditor } = this;
 
     if (!mod) return;
 
-    // if morph is amanged by tiling layout and the prop is extent, check if
+    // if morph is managed by tiling layout and the prop is extent, check if
     // that is actually already defined by layout
     // if resize policy is set to fixed for either width or height replace
     // extent property by width or height (clear the extent entirely if needed)
@@ -689,158 +876,17 @@ export class ComponentChangeTracker {
     let updatedSource = sourceCode;
     let requiredBindings = [];
 
-    // handle a prop change
     if (change.prop) {
-      const valueAsExpr = getValueExpr(change.prop, change.value);
-      requiredBindings.push(...Object.entries(valueAsExpr.bindings));
-      let responsibleComponent = getComponentScopeFor(parsedComponent, change.target);
-      const morphDef = getPropertiesNode(responsibleComponent, change.target);
-      if (change.prop === 'layout') {
-        this.needsLinting = true;
-      }
-      if (!morphDef) {
-        // the entire morph does not exist and needs to be added to the definition!
-        updatedSource = this.uncollapseSubmorphHierarchy(
-          sourceCode,
-          responsibleComponent,
-          change.target,
-          sourceEditor);
-      } else {
-        // this little dance should be refactored
-        let deleteProp = false; let skipPatch = false;
-        if (change.prop === 'extent') {
-          if (this.isResizedVertically(change.target)) {
-            change = { ...change, prop: 'width' };
-            valueAsExpr.__expr__ = String(change.value.x);
-            deleteProp = true;
-            updatedSource = this.deleteProp(sourceCode, morphDef, 'extent', sourceEditor);
-          }
-          if (this.isResizedHorizontally(change.target)) {
-            change = { ...change, prop: 'height' };
-            valueAsExpr.__expr__ = String(change.value.y);
-            skipPatch = deleteProp;
-            if (!deleteProp) {
-              updatedSource = this.deleteProp(sourceCode, morphDef, 'extent', sourceEditor);
-            }
-          }
-        }
-        if (!skipPatch) {
-          updatedSource = this.patchProp(
-            sourceCode,
-            morphDef,
-            change.prop,
-            valueAsExpr.__expr__,
-            sourceEditor);
-        }
-      }
+      updatedSource = this.handleChangedProp(change, parsedComponent, sourceCode, requiredBindings);
     }
 
-    // handle a morph added
     // if this happens inside overridden props, we need to use the command instead
     if (change.selector === 'addMorphAt') {
-      const newOwner = change.target;
-      const [addedMorph] = change.args;
-      let addedMorphExpr = convertToSpec(addedMorph, { dropMorphsWithNameOnly: false });
-      requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
-      if (addedMorph.master) {
-        const metaInfo = addedMorph.master.parent[Symbol.for('lively-module-meta')];
-        addedMorphExpr = convertToSpec(addedMorph, {
-          exposeMasterRefs: false,
-          skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'type']
-        });
-        addedMorphExpr = {
-          // this fails when components are alias imported....
-          // we can not insert the model props right now
-          // this also serializes way too much
-          __expr__: `part(${metaInfo.exportedName}, ${addedMorphExpr.__expr__})`,
-          bindings: {
-            ...addedMorphExpr.bindings,
-            [COMPONENTS_CORE_MODULE]: ['part'],
-            [metaInfo.moduleId]: [metaInfo.exportedName]
-          }
-        };
-      }
-      if (this.withinDerivedComponent(newOwner)) {
-        addedMorph.__wasAddedToDerived__ = true;
-        addedMorphExpr.__expr__ = `add(${addedMorphExpr.__expr__})`;
-        const b = addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] || [];
-        b.push('add');
-        addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] = b;
-      }
-      requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
-      updatedSource = this.addMorph(parsedComponent, sourceCode, newOwner, addedMorphExpr, sourceEditor);
+      updatedSource = this.handleAddedMorph(change, parsedComponent, sourceCode, requiredBindings);
     }
 
-    // handle a morph removal
     if (change.selector === 'removeMorph') {
-      // maybe also cleanup unneeded imports here...
-      const [removedMorph] = change.args;
-      let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
-      let submorphsNode = getProp(getPropertiesNode(parsedComponent, change.target), 'submorphs');
-      let insertedRemove = false;
-      if (!removedMorph.__wasAddedToDerived__ && this.withinDerivedComponent(change.target)) {
-        // insert a without("removed morph name") into the submorphs if it is not declared already
-        // if there is a add() which we remove again, it suffices to just remove that add command
-        // if it is declared already then replace the declared node but this is then done by the call
-        // after that normaly removes the declared expression
-        const removeMorphExpr = {
-          __expr__: `without('${removedMorph.name}')`,
-          bindings: { [COMPONENTS_CORE_MODULE]: ['without'] }
-        };
-        requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
-        // also update the source code if the following code leaps in
-        updatedSource = this.addMorph(parsedComponent, sourceCode, change.target, removeMorphExpr, sourceEditor);
-        insertedRemove = true;
-      }
-
-      if (!insertedRemove && submorphsNode?.value.elements.length < 2) {
-        // remove the submorphs prop entirely
-        nodeToRemove = submorphsNode;
-        while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
-          nodeToRemove.start--;
-        }
-
-        // check if the enclosing propNodes are also remove worthy,
-        // if they get stripped of all props besides name
-
-        // this can also be done by regenerating the spec of the submorphs... but then we lose
-        // at least the entire formatting of the rest of the component definition...
-        let curr = change.target;
-        let propNode = getPropertiesNode(parsedComponent, curr);
-        submorphsNode = getProp(propNode, 'submorphs');
-        while (
-          query.queryNodes(propNode, `
-          / Property [
-            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
-           ]
-         `).length === 0 &&
-          submorphsNode?.value.elements.length < 2) {
-          nodeToRemove = propNode;
-          curr = curr.owner;
-          propNode = getPropertiesNode(parsedComponent, curr);
-          submorphsNode = getProp(propNode, 'submorphs');
-        }
-
-        this.needsLinting = true; // not enough to clear the blank space...
-      }
-
-      if (nodeToRemove || insertedRemove) {
-        if (insertedRemove) sourceCode = updatedSource;
-        if (sourceCode[nodeToRemove.end] === ',') nodeToRemove.end++;
-        if (sourceEditor) {
-          const morphRange = Range.fromPositions(
-            sourceEditor.indexToPosition(nodeToRemove.start),
-            sourceEditor.indexToPosition(nodeToRemove.end)
-          );
-          sourceEditor.replace(morphRange, '');
-          updatedSource = sourceEditor.textString;
-        } else {
-          updatedSource = string.applyChanges(sourceCode, [
-            { action: 'remove', ...nodeToRemove }
-          ]);
-        }
-      }
-      // does not need linting, surprisingly
+      updatedSource = this.handleRemovedMorph(change, parsedComponent, sourceCode, requiredBindings);
     }
     // update the bindings that come from the property
     updatedSource = fixUndeclaredVars(updatedSource, requiredBindings, mod);
