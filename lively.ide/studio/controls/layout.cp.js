@@ -487,7 +487,7 @@ const LayoutControl = component(PropertySection, {
       part(AddButton, {
         master: { auto: AddButton, hover: PropertyLabelHovered },
         name: 'vertical',
-        tooltip: 'Position Submorphs Vertically',
+        tooltip: 'Position Items Vertically',
         textAndAttributes: ['', null],
         fontSize: 14,
         padding: rect(4, 4, 0, 0)
@@ -495,7 +495,7 @@ const LayoutControl = component(PropertySection, {
       part(AddButton, {
         master: { auto: AddButton, hover: PropertyLabelHovered },
         name: 'horizontal',
-        tooltip: 'Position Submorphs Horizontally',
+        tooltip: 'Position Items Horizontally',
         fontSize: 14,
         textAndAttributes: ['', null],
         padding: rect(4, 4, 0, 0)
@@ -504,7 +504,7 @@ const LayoutControl = component(PropertySection, {
         name: 'spacing input',
         width: 60,
         min: 0,
-        tooltip: 'Spacing between Submorphs',
+        tooltip: 'Spacing between Items',
         submorphs: [{
           name: 'interactive label',
           fontSize: 14,
@@ -515,7 +515,7 @@ const LayoutControl = component(PropertySection, {
         name: 'total padding input',
         width: 60,
         min: 0,
-        tooltip: 'Padding between Container and Submorphs',
+        tooltip: 'Padding between Container and Items',
         submorphs: [{
           name: 'interactive label',
           fontSize: 14,
@@ -528,7 +528,7 @@ const LayoutControl = component(PropertySection, {
     name: 'wrap submorphs checkbox',
     submorphs: [{
       name: 'prop label',
-      textAndAttributes: ['Wrap submorphs', null]
+      textAndAttributes: ['Wrap Items', null]
     }]
   }))]
 });
@@ -608,7 +608,7 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
     add(part(EnumSelector, {
       name: 'spacing selector',
       extent: pt(165, 23.3),
-      tooltip: 'Select Submorphs Spacing',
+      tooltip: 'Select Spacing of Items',
       viewModel: {
         openListInWorld: true,
         listMaster: DarkThemeList,
