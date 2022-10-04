@@ -443,7 +443,7 @@ export class MorphNodeModel extends ViewModel {
       child.target.globalPosition = posBackup;
     }
     if (child._data.globalTargetPosition) child.target.position = this.target.localize(child._data.globalTargetPosition);
-    else {
+    else if (this.target.isWorld) {
       child.target.center = $world.center;
       child.target.show();
     }
