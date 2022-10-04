@@ -432,12 +432,15 @@ export class MorphNodeModel extends ViewModel {
   onChildAdded (child) {
     const nextIndex = this.node.children.indexOf(child.node || child._data) + 1;
     const neighbor = this.node.children[nextIndex];
+    const posBackup = child.target.position;
     child.target.remove();
     if (neighbor) {
       const actualIndex = this.target.submorphs.indexOf(neighbor.container.target);
       this.target.addMorphAt(child.target, actualIndex);
+      child.target.globalPosition = posBackup;
     } else {
       this.target.addMorph(child.target);
+      child.target.globalPosition = posBackup;
     }
     if (child._data.globalTargetPosition) child.target.position = this.target.localize(child._data.globalTargetPosition);
     else {
