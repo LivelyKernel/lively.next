@@ -1171,6 +1171,7 @@ const commands = [
       if (browser && browser.isBrowser) {
         if (browser.associatedSearchPanel) {
           li.remove();
+          browser.associatedSearchPanel.browser = browser;
           return browser.associatedSearchPanel.getWindow().activate();
         }
       } else browser = null;
