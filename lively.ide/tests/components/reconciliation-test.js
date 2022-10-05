@@ -115,6 +115,35 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource.includes('name: \'some new morph\','), 'inserts a new morph').to.be.true;
   });
 
+  it('correctly respects the order a submorph is inserted at', async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.addMorph(morph({
+        name: 'some new morph',
+        fill: Color.blue
+      }), ComponentB.get('some submorph'));
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    let updatedSource = await testComponentModule.source();
+    expect(updatedSource.includes(`add({
+    name: 'some new morph',
+    fill: Color.blue
+  }, 'some submorph')`), 'inserts a new morph before another one').to.be.true;
+
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('some new morph').bringToFront();
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+    expect(updatedSource.includes(`add({
+    name: 'some new morph',
+    fill: Color.blue
+  }, 'some submorph')`), 'removes previous add call').not.to.be.true;
+    expect(updatedSource.includes(`add({
+    name: 'some new morph',
+    fill: Color.blue
+  })`), 'allows the added component to move to front').to.be.true;
+  });
+
   it('updates the source if a submorph is removed', async () => {
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.getSubmorphNamed('some submorph').remove();
@@ -354,5 +383,24 @@ describe('component -> source reconciliation', function () {
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('name: \"molly\"');
     expect(A.stylePolicy.spec.submorphs[1].name).to.eql('molly');
+  });
+
+  it('properly resolves names by path instead of name', async () => {
+    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
+      const alice = ComponentC.addMorph(part(D, { name: 'alice' }));
+      const bob = ComponentC.addMorph(part(D, { name: 'bob' }));
+      bob.submorphs[0].borderWidth = 40;
+      alice.submorphs[0].borderRadius = 100;
+    });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.include(`{
+      name: 'a deep morph',
+      borderWidth: 40
+    }`);
+    expect(updatedSource).to.include(`{
+      name: 'a deep morph',
+      borderRadius: 100
+    }`);
   });
 });
