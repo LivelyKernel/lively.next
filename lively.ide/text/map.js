@@ -7,9 +7,7 @@ import { addClassMappings } from 'lively.morphic/helpers.js';
 export default class TextMap extends Canvas {
   static openInside (textMorph) {
     let map = new TextMap();
-    map.attachTo(textMorph);
-    // map.remove()
-    // map.detachFromCurrentTextMorph()
+    map.attachTo(textMorph, true);
     return map;
   }
 
@@ -44,17 +42,22 @@ export default class TextMap extends Canvas {
 
   attachTo (textMorph, add = false) {
     if (this.textMorph) this.detachFrom(this.textMorph);
+
     this.textMorph = textMorph;
+    textMorph.textMap = this;
+
     connect(textMorph, 'viewChange', this, 'updateDebounced');
     connect(textMorph, 'textChange', this, 'updateDebounced');
     connect(textMorph, 'selectionChange', this, 'updateDebounced');
 
     if (add) {
       this.textMorph.addMorph(this);
-      this.height = this.textMorph.height - this.textMorph.padding.top();
+      this.height = this.textMorph.height - this.textMorph.padding.top() - 20;
     }
-    this.update();
     this.makeDirty();
+    // FIXME: One would think that this leads to the map being displayed correctly, but it is not
+    // Is it not clear why, since scrolling, clicking inside the text,... will always fix this
+    this.updateDebounced();
   }
 
   detachFromCurrentTextMorph () {
@@ -70,7 +73,14 @@ export default class TextMap extends Canvas {
 
   updateDebounced () {
     if (this.owner === this.textMorph) {
-      this.topRight = this.textMorph.innerBounds().topRight().addPt(this.textMorph.scroll);
+      // A bit hacky: Since a search gets canceled on blur, we can only have a search widget in the currently active text morph which will be the same as we update
+      if ($world.get('search widget')) {
+        this.height = this.textMorph.height - this.textMorph.padding.top() - 75;
+        this.position = pt(this.textMorph.width - this.width - 20, this.textMorph.padding.top() + 60 + this.textMorph.scroll.y);
+      } else {
+        this.height = this.textMorph.height - this.textMorph.padding.top() - 20;
+        this.position = pt(this.textMorph.width - this.width - 20, this.textMorph.padding.top() + 5 + this.textMorph.scroll.y);
+      }
     }
     fun.throttleNamed('update-' + this.id, 100, () => this.update())();
   }
@@ -91,10 +101,6 @@ export default class TextMap extends Canvas {
     } = this;
     let { document: doc, textLayout, markers, selections } = textMorph;
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
-
-    if (this.owner === textMorph) {
-      this.topRight = this.textMorph.innerBounds().topRight().addPt(this.textMorph.scroll).subXY(this.textMorph.padding.top());
-    }
 
     if (!ctx) return;
 

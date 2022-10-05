@@ -5,9 +5,7 @@ import { Path } from 'lively.lang';
 
 import config from 'lively.morphic/config.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
-import { morph } from 'lively.morphic/helpers.js';
-
-
+import { TextSearcher } from 'lively.morphic/text/search.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // widget for text search, maintains search state
@@ -47,11 +45,15 @@ export class SearchWidgetModel extends ViewModel {
         set (v) { this.ui.searchInput.textString = String(v); }
       },
 
-      textMap: {},
+      textMap: {
+        get () {
+          return this.target.textMap;
+        }
+      },
 
       expose: {
         get () {
-          return ['state', 'prepareForNewSearch', 'showTextMap', 'commands', 'keybindings', 'isEpiMorph'];
+          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isEpiMorph'];
         }
       },
 
@@ -129,7 +131,7 @@ export class SearchWidgetModel extends ViewModel {
         return;
       }
       if (searchInput !== focusedMorph &&
-          replaceInput !== focusedMorph) {
+        replaceInput !== focusedMorph) {
         searchInput.focus();
       }
     });
@@ -189,13 +191,13 @@ export class SearchWidgetModel extends ViewModel {
   addSearchMarkers (found, backwards = false, caseSensitive = false) {
     this.removeSearchMarkers();
 
-    const { target: text, textMap } = this;
+    const { target: text } = this;
     let { startRow, endRow } = text.whatsVisible;
     const lines = text.document.lineStrings;
     let i = 0;
     const { maxCharsPerLine, fastHighlightLineCount } = config.codeEditor.search;
 
-    if (textMap && found.match.length >= 3 && lines.length < fastHighlightLineCount) {
+    if (this.textMap && found.match.length >= 3 && lines.length < fastHighlightLineCount) {
       startRow = 0, endRow = lines.length - 1;
     }
 
@@ -245,7 +247,7 @@ export class SearchWidgetModel extends ViewModel {
       }
     });
 
-    textMap && textMap.update();
+    this.textMap && this.textMap.update();
   }
 
   addSearchMarkersForPreview (found, noCursor = true) {
@@ -320,28 +322,6 @@ export class SearchWidgetModel extends ViewModel {
       this.cleanup();
     }
     return result;
-  }
-
-  async showTextMap () {
-    await System.import('lively.ide/text/map.js');
-    const { view } = this;
-    const textMap = this.textMap = morph({ type: 'textmap' });
-    textMap.attachTo(this.target);
-    textMap.isLayoutable = false;
-    view.addMorph(textMap);
-    textMap.topRight = view.innerBounds().bottomRight().addXY(0, 5);
-    textMap.height = this.target.height - this.target.padding.top() - view.height - 15;
-    textMap.update();
-    view.renderOnGPU = true;
-    return textMap;
-  }
-
-  removeTextMap () {
-    if (this.textMap) {
-      this.textMap.remove();
-      this.textMap.detachFromCurrentTextMorph();
-      this.textMap = null;
-    }
   }
 
   get keybindings () {
