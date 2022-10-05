@@ -314,6 +314,28 @@ class NameHolder extends Morph {
       fill: { defaultValue: Color.transparent },
       forceUniqueName: { defaultValue: false },
       halo: {},
+      isEditable: {
+        derived: true,
+        get () {
+          const ownerChain = this.target.ownerChain();
+          let withinComponentContext = false; let derived = false;
+          for (const each of ownerChain) {
+            if (each.isComponent) withinComponentContext = true;
+            if (each.master) derived = true;
+          }
+          return withinComponentContext && !derived || !withinComponentContext;
+        }
+      },
+      layout: {
+        after: ['nameHolder'],
+        initialize () {
+          this.layout = new HorizontalLayout({
+            renderViaCSS: true,
+            resizeContainer: true,
+            spacing: 7
+          });
+        }
+      },
       nameHolder: {
         after: ['submorphs'],
         initialize () {
@@ -322,7 +344,8 @@ class NameHolder extends Morph {
             fontColor: Color.white,
             fontWeight: 'bold',
             nativeCursor: 'text',
-            active: true
+            readOnly: true,
+            active: false
           }));
           connect(this.nameHolder, 'onBlur', this, 'accept');
         }
@@ -345,6 +368,7 @@ class NameHolder extends Morph {
   }
 
   accept () {
+    if (!this.isEditable) return;
     if (this.target.name !== this.nameHolder.textString) {
       this.updateName(this.nameHolder.textString);
     }
@@ -361,15 +385,19 @@ class NameHolder extends Morph {
   }
 
   onMouseUp () {
+    if (!this.isEditable) return;
     signal(this, 'active', [true, this]);
   }
 
   onMouseDown (evt) {
+    super.onMouseDown(evt);
+    if (!this.isEditable) return;
     this.nameHolder.fontColor = Color.white;
     this.halo.toggleMorphHighlighter(false, this.target);
   }
 
   onKeyUp (evt) {
+    super.onKeyUp(evt);
     const newName = this.nameHolder.textString; const owner = this.target.owner;
     this.validName = !owner || !owner.getSubmorphNamed(newName) ||
       this.target.name === newName;
@@ -377,6 +405,11 @@ class NameHolder extends Morph {
   }
 
   update () {
+    this.nameHolder.nativeCursor = this.isEditable ? 'text' : 'not-allowed';
+    this.nameHolder.readOnly = !this.isEditable;
+    if (!this.isEditable) {
+      this.tooltip = 'Cannot change this items name, since it was derived from another component.';
+    } else this.tooltip = "Click to edit the item's name";
     if (this.nameHolder.textString === this.target.name) return;
     this.nameHolder.textString = this.target.name;
     this.nameHolder.fit();
@@ -1054,9 +1087,9 @@ class ComponentHaloItem extends HaloItem {
     const toBeComponent = !target.isComponent;
     const {
       insertComponentDefinition,
-      removeComponentDefinition,
-      InteractiveComponentDescriptor
+      removeComponentDefinition
     } = await System.import('lively.ide/components/editor.js');
+    const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     if (toBeComponent) {
       const { localInterface } = await System.import('lively-system-interface');
       const items = (await localInterface.coreInterface.getLoadedModules(config.ide.js.ignoredPackages))
@@ -1081,8 +1114,15 @@ class ComponentHaloItem extends HaloItem {
       if (!variableName) return;
       variableName = string.camelCaseString(variableName);
       await insertComponentDefinition(target, variableName, selectedModule.name);
-      // remove the target and replace with instrumented component morph
       const mod = moduleManager.module(selectedModule.name);
+
+      const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser', null);
+      browser.getWindow().activate();
+      await browser.browse({
+        packageName: mod.package().name,
+        moduleName: mod.pathInPackage(),
+        codeEntity: variableName
+      });
       const descr = await promise.waitFor(() => mod.recorder[variableName]);
       const componentMorph = await descr.edit();
       componentMorph.openInWorld(target.globalPosition);
