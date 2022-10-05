@@ -126,9 +126,11 @@ export class DirectoryControls extends Morph {
 }
 
 export class PackageTreeData extends TreeData {
-  constructor (root) {
+  constructor (root, opts = {}) {
+    const { showPkgVersion = false, showDependencyPackages = false } = opts;
     super(root);
-    this.showDependencyPackages = false;
+    this.showPkgVersion = showPkgVersion;
+    this.showDependencyPackages = showDependencyPackages;
   }
 
   get columnView () {
@@ -266,7 +268,7 @@ export class PackageTreeData extends TreeData {
   displayPackage (pkg) {
     return [
       ...Icon.textAttribute('cube'),
-      ' ' + string.truncate(pkg.name, 26, '…'), {
+      ' ' + string.truncate(this.showPkgVersion ? `${pkg.name}@${pkg.version}` : pkg.name, 26, '…'), {
         fontStyle: pkg.kind === 'git' ? 'italic' : 'normal'
       },
       `\t${pkg.kind}`, {
@@ -593,7 +595,8 @@ export class BrowserModel extends ViewModel {
             'onWindowClose',
             'onModuleLoaded',
             'onModuleChanged',
-            'showDependecyPackages',
+            'showDependencyPackages',
+            'showPackageVersionNumber',
             'menuItems',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
@@ -889,6 +892,13 @@ export class BrowserModel extends ViewModel {
                         !excluded.some(ex => ex instanceof RegExp ? ex.test(url) : url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.view.showError(e); return []; }
+  }
+
+  async showPackageVersionNumber (bool) {
+    const { columnView } = this.ui;
+    const treeData = columnView.treeData;
+    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showPkgVersion: bool, showDependencyPackages: treeData.showDependencyPackages }));
+    await this.selectPackageNamed(null, true);
   }
 
   async showDependencyPackages (bool) {
@@ -2326,8 +2336,10 @@ export class BrowserModel extends ViewModel {
       p && { command: 'open browse snippet', target: this, showKeyShortcuts: false },
       m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false },
       (m || p) && { isDivider: true },
-      [[...(td.showDependencyPackages ? checked : unchecked), ' ' + 'Display Dependecy Packages', { float: 'none' }],
-        () => { this.showDependencyPackages(!td.showDependencyPackages); }]
+      [[...(td.showDependencyPackages ? checked : unchecked), ' ' + 'Display Dependency Packages', { float: 'none' }],
+        () => { this.showDependencyPackages(!td.showDependencyPackages); }],
+      [[...(td.showPkgVersion ? checked : unchecked), ' ' + 'Display Packages Version Number', { float: 'none' }],
+        () => { this.showPackageVersionNumber(!td.showPkgVersion); }]
     ].filter(Boolean);
   }
 }
