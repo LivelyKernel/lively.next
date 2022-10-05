@@ -3251,6 +3251,23 @@ export class Text extends Morph {
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // code map
+
+  async showTextMap () {
+    const TextMap = await System.import('lively.ide/text/map.js');
+    const textMap = this.textMap = TextMap.default.openInside(this);
+    return textMap;
+  }
+
+  removeTextMap () {
+    if (this.textMap) {
+      this.textMap.remove();
+      this.textMap.detachFromCurrentTextMorph();
+      this.textMap = null;
+    }
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // editor support
 
   tokenAt (pos) {
