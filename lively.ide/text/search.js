@@ -146,7 +146,7 @@ export class SearchWidgetModel extends ViewModel {
   cancelSearch (resetEditor) {
     if (this.state.inProgress) { this.state.last = this.state.inProgress; }
     this.cleanup();
-    this.removeTextMap();
+    if (!this._reuseTextMap) this.target.removeTextMap();
     if (this.state.before && resetEditor) {
       const { scroll, selectionRange } = this.state.before;
       this.target.selection = selectionRange;
@@ -164,7 +164,7 @@ export class SearchWidgetModel extends ViewModel {
     }
     this.ui.searchInput.acceptInput(); // for history
     this.cleanup();
-    this.removeTextMap();
+    if (!this._reuseTextMap) this.target.removeTextMap();
     this.state.before = null;
     this.view.remove();
     this.target.focus();
@@ -455,8 +455,9 @@ export const searchCommands = [
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 
-      if (config.codeEditor.search.showTextMap) {
-        search.showTextMap();
+      search._reuseTextMap = !!morph.textMap;
+      if (config.codeEditor.search.showTextMap && !search._reuseTextMap) {
+        morph.showTextMap();
       }
       return true;
     }

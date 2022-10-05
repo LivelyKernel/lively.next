@@ -909,6 +909,14 @@ export class BrowserModel extends ViewModel {
     await this.selectPackageNamed(null, true);
   }
 
+  toggleTextMap (bool) {
+    const ed = this.ui.sourceEditor;
+    if (!bool) ed.removeTextMap();
+    else {
+      ed.showTextMap();
+    }
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // browser actions
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -2324,6 +2332,7 @@ export class BrowserModel extends ViewModel {
 
   menuItems () {
     const td = this.ui.columnView.treeData;
+    const ed = this.ui.sourceEditor;
 
     const checked = Icon.textAttribute('check-square');
     const unchecked = Icon.textAttribute('square');
@@ -2339,7 +2348,9 @@ export class BrowserModel extends ViewModel {
       [[...(td.showDependencyPackages ? checked : unchecked), ' ' + 'Display Dependency Packages', { float: 'none' }],
         () => { this.showDependencyPackages(!td.showDependencyPackages); }],
       [[...(td.showPkgVersion ? checked : unchecked), ' ' + 'Display Packages Version Number', { float: 'none' }],
-        () => { this.showPackageVersionNumber(!td.showPkgVersion); }]
+        () => { this.showPackageVersionNumber(!td.showPkgVersion); }],
+      [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
+        () => { this.toggleTextMap(!ed.textMap); }]
     ].filter(Boolean);
   }
 }
