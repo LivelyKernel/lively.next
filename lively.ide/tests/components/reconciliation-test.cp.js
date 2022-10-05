@@ -3,8 +3,6 @@ import { expect } from 'mocha-es6';
 import { ComponentDescriptor, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor, createInitialComponentDefinition } from '../../components/editor.js';
-import { obj, arr } from 'lively.lang';
-import lint from '../../js/linter.js';
 
 component.DescriptorClass = InteractiveComponentDescriptor;
 
@@ -56,8 +54,10 @@ describe('component definition reconciliation', () => {
     // define an ad hoc component
     const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
     c._changeTracker.componentModule = null; // prevents this file from being changed
-    c.get('alice').fill = Color.green;
-    c.fill = Color.purple;
+    c.withMetaDo({ reconcileChanges: true }, () => {
+      c.get('alice').fill = Color.green;
+      c.fill = Color.purple;
+    });
     await c._changeTracker.onceChangesProcessed();
     expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.green);
     expect(e2.stylePolicy.spec.fill).to.eql(Color.purple);
