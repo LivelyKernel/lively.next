@@ -594,6 +594,7 @@ export class BrowserModel extends ViewModel {
             'onModuleLoaded',
             'onModuleChanged',
             'showDependecyPackages',
+            'menuItems',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
@@ -2286,22 +2287,6 @@ export class BrowserModel extends ViewModel {
     this.updateModuleList();
   }
 
-  async onContextMenu (evt) {
-    evt.stop();
-
-    const target = evt.targetMorph;
-    const {
-      sourceEditor,
-      moduleList,
-      codeEntityTree
-    } = this.ui;
-
-    const items = [];
-    if ([sourceEditor, moduleList, codeEntityTree].includes(target)) { items.push(...await target.menuItems()); }
-
-    this.openMenu([...items, ...await this.menuItems()], evt);
-  }
-
   browseSnippetForSelection () {
     // produces a string that, when evaluated, will open the browser at the
     // same location it is at now
@@ -2332,9 +2317,8 @@ export class BrowserModel extends ViewModel {
     const m = this.selectedModule;
 
     return [
-      ...super.menuItems(),
-      p && { command: 'open browse snippet', target: this },
-      m && { command: 'open selected module in text editor', target: this }
+      p && { command: 'open browse snippet', target: this, showKeyShortcuts: false },
+      m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false }
     ].filter(Boolean);
   }
 }
