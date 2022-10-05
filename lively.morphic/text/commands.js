@@ -1353,8 +1353,7 @@ commands.push(...usefulEditorCommands);
 import { activate as iyGotoCharActivate } from './iy-goto-char.js';
 commands.push(iyGotoCharActivate);
 
-import { searchCommands } from './search.js';
-commands.push(...searchCommands);
+System.import('lively.ide/text/search.js').then(textSearch => commands.push(...textSearch.searchCommands));
 
 export default commands;
 

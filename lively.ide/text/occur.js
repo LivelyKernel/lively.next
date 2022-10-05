@@ -5,8 +5,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import { arr, obj } from 'lively.lang';
-import { TextSearcher } from './search.js';
-import KeyHandler from '../events/KeyHandler.js';
+import { TextSearcher } from 'lively.morphic/text/search.js';
+import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 
 const occurKeyHandler = Object.assign(
   KeyHandler.withBindings([

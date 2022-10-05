@@ -1,8 +1,8 @@
 import { pt, rect, Color } from 'lively.graphics';
-import { GridLayout } from '../layout.js';
-import { Icon } from './icons.js';
-import { part, component } from '../components/core.js';
-import { ShadowObject } from '../rendering/morphic-default.js';
+import { GridLayout } from 'lively.morphic/layout.js';
+import { Icon } from 'lively.morphic/text/icons.js';
+import { part, component } from 'lively.morphic/components/core.js';
+import { ShadowObject } from 'lively.morphic/rendering/morphic-default.js';
 import { SearchWidgetModel } from './search.js';
 
 const IconButtonDefault = component({
