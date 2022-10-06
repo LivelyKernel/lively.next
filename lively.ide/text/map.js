@@ -175,6 +175,7 @@ export default class TextMap extends Canvas {
   }
 
   onDrag (evt) {
+    if (!this.textMorph) return;
     this.onMouseDown(evt);
   }
 }
