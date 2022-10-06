@@ -81,7 +81,7 @@ export default class TextMap extends Canvas {
         this.position = pt(this.textMorph.width - this.width - 20, this.textMorph.padding.top() + 5 + this.textMorph.scroll.y);
       }
     }
-    fun.throttleNamed('update-' + this.id, 100, () => this.update())();
+    fun.throttleNamed('update-' + this.id, 100, () => this.whenRendered().then(() => this.update()))();
   }
 
   get measure () {

@@ -147,6 +147,9 @@ export class SearchWidgetModel extends ViewModel {
     if (this.state.inProgress) { this.state.last = this.state.inProgress; }
     this.cleanup();
     if (!this._reuseTextMap) this.target.removeTextMap();
+    else {
+      this.target.textMap.whenRendered().then(() => this.target.textMap.updateDebounced());
+    }
     if (this.state.before && resetEditor) {
       const { scroll, selectionRange } = this.state.before;
       this.target.selection = selectionRange;
@@ -459,6 +462,8 @@ export const searchCommands = [
       if (config.codeEditor.search.showTextMap && !search._reuseTextMap) {
         morph.showTextMap();
       }
+      await morph.textMap?.whenRendered();
+      morph.textMap?.updateDebounced();
       return true;
     }
   }
