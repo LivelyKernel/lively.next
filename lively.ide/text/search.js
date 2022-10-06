@@ -458,8 +458,8 @@ export const searchCommands = [
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 
-      search._reuseTextMap = !!morph.textMap;
-      if (config.codeEditor.search.showTextMap && !search._reuseTextMap) {
+      search.viewModel._reuseTextMap = !!morph.textMap;
+      if (config.codeEditor.search.showTextMap && !search.viewModel._reuseTextMap) {
         morph.showTextMap();
       }
       await morph.textMap?.whenRendered();
