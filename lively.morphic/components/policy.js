@@ -940,6 +940,9 @@ export class PolicyApplicator extends StylePolicy {
 
   adoptOverriddenPropsFrom (otherPolicy) {
     mergeInHierarchy(this.spec, otherPolicy.spec, (localSpec, otherSpec) => {
+      if (localSpec.isPolicy && otherSpec.isPolicy) {
+        localSpec.adoptOverriddenPropsFrom(otherSpec);
+      }
       for (let prop of arr.intersect(obj.keys(otherSpec), getStylePropertiesFor(otherSpec.type))) {
         localSpec[prop] = otherSpec[prop];
       }
