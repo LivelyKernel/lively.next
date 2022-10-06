@@ -129,12 +129,13 @@ export class ColorInputModel extends ViewModel {
     p.solidOnly = !this.gradientEnabled;
     p.hasFixedPosition = true;
     if (this.targetMorph) p.focusOnMorph(this.targetMorph, color);
+    else p.viewModel.withColor(color);
     p.toggleHalos(false);
     p.position = pt(0, -p.height / 2);
     p.viewModel.switchMode(color.isGradient ? color.type : 'Solid');
     connect(p.viewModel, 'value', this, 'setColor');
     connect(p.viewModel, 'close', this, 'onPickerClosed');
-    p.viewModel.withColor(color);
+
     this.view.fill = this.activeColor;
     this.picker = p.openInWorld();
     // this two step alignment is the simplest way to make the picker find its optimal position
