@@ -54,7 +54,6 @@ export default class TextMap extends Canvas {
       this.textMorph.addMorph(this);
       this.height = this.textMorph.height - this.textMorph.padding.top() - 20;
     }
-    this.makeDirty();
     // FIXME: One would think that this leads to the map being displayed correctly, but it is not
     // Is it not clear why, since scrolling, clicking inside the text,... will always fix this
     this.updateDebounced();
@@ -102,7 +101,7 @@ export default class TextMap extends Canvas {
     let { document: doc, textLayout, markers, selections } = textMorph;
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
 
-    if (!ctx) return;
+    if (!ctx) this.whenRendered().then(() => this.update());
 
     this.clear(null);
 
