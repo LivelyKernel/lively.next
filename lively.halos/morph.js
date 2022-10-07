@@ -1126,7 +1126,7 @@ class ComponentHaloItem extends RoundHaloItem {
     const {
       insertComponentDefinition,
       removeComponentDefinition
-    } = await System.import('lively.ide/components/editor.js');
+    } = await System.import('lively.ide/components/helpers.js');
     const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     if (toBeComponent) {
       const { localInterface } = await System.import('lively-system-interface');
