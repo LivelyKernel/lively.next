@@ -56,7 +56,7 @@ function getEventState (targetMorph, customBreakpoints) {
   const { world, eventDispatcher } = targetMorph.env;
   const mode = world && world.colorScheme; // "dark" | "light"
   const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(targetMorph); // bool
-  const isClicked = eventDispatcher && eventDispatcher.isMorphClicked(targetMorph); // bool
+  const isClicked = eventDispatcher && isHovered && eventDispatcher.isMorphClicked(targetMorph); // bool
   const matchingBreakpoint = customBreakpoints.find(bp => {
     if (bp.minWidth || bp.maxWidth) {
       const { minWidth = -Infinity, maxWidth = Infinity } = bp;
@@ -159,6 +159,7 @@ export class StylePolicy {
    */
   get respondsToClick () {
     if (this._clickMaster) return true;
+    if (this.spec.master?.click) return true;
     return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
   }
 
@@ -167,6 +168,7 @@ export class StylePolicy {
    */
   get respondsToHover () {
     if (this._hoverMaster) return true;
+    if (this.spec.master?.hover) return true;
     return !!this.parent?.respondsToHover || !!this.overriddenMaster?.respondsToHover;
   }
 

@@ -2382,7 +2382,7 @@ export class Morph {
   }
 
   onHoverOut (evt) {
-    if (this.master?.respondsToHover) { this.requestMasterStyling(); }
+    if (this.master?.respondsToHover || this.master?.respondsToClick) { this.requestMasterStyling(); }
   }
 
   onScroll (evt) {}
