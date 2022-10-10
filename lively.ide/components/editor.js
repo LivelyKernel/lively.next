@@ -5,6 +5,7 @@ import { module } from 'lively.modules/index.js';
 import lint from '../js/linter.js';
 import { replaceComponentDefinition, createInitialComponentDefinition, findComponentDef } from './helpers.js';
 import { ComponentChangeTracker } from './change-tracker.js';
+import { installViewModels } from 'lively.morphic/components/policy.js';
 
 const exprSerializer = new ExpressionSerializer();
 
@@ -52,12 +53,14 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * to adjust the component definition.
    * @returns { Morph } The component morph.
    */
-  getComponentMorph () {
+  getComponentMorph (alive = false) {
+    if (alive) $world.logError('requested active component');
     let c = this._cachedComponent;
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       c.isComponent = true,
+      alive && installViewModels(c),
       c.name = string.decamelize(this.componentName),
       this._cachedComponent = c
     );
@@ -101,8 +104,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * Initiates a direct manipulation editing session of the component definition.
    * @returns { Promise<Morph> } The component morph.
    */
-  async edit () {
-    const c = this.getComponentMorph();
+  async edit (alive = false) {
+    const c = this.getComponentMorph(alive);
     this.ensureComponentDefBackup();
     if (!c._changeTracker) { new ComponentChangeTracker(c, this); }
     return await c._changeTracker.whenReady() && c;
