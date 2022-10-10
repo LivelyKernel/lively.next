@@ -2382,12 +2382,23 @@ export class BrowserModel extends ViewModel {
     return codeSnip;
   }
 
+  enableComponentBehavior (active) {
+    this._initializeComponentsWithModels = active;
+    // ensure that all the open components are getting attached/detached to/from
+    // the thier view models
+    this.ui.sourceEditor.submorphs.forEach(elem => {
+      if (elem.isComponentControl) {
+        elem.enableViewModel(active);
+      }
+    });
+  }
+
   menuItems () {
     const td = this.ui.columnView.treeData;
     const ed = this.ui.sourceEditor;
 
-    const checked = Icon.textAttribute('check-square');
-    const unchecked = Icon.textAttribute('square');
+    const checked = Icon.textAttribute('check-square', { lineHeight: 1.4, paddingRight: '3px' });
+    const unchecked = Icon.textAttribute('square', { lineHeight: 1.4, paddingRight: '3px' });
     Object.assign(checked[1], { float: 'none', display: 'inline' });
 
     const p = this.selectedPackage;
@@ -2404,7 +2415,9 @@ export class BrowserModel extends ViewModel {
       [[...(td.showHiddenFolders ? checked : unchecked), ' ' + 'Show Hidden Folders', { float: 'none' }],
         () => { this.showHiddenFolders(!td.showHiddenFolders); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
-        () => { this.toggleTextMap(!ed.textMap); }]
+        () => { this.toggleTextMap(!ed.textMap); }],
+      [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Enable Component Behavior', { float: 'none' }],
+        () => { this.enableComponentBehavior(!this._initializeComponentsWithModels); }]
     ].filter(Boolean);
   }
 }

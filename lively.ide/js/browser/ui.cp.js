@@ -9,6 +9,7 @@ import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { BlackOnWhite } from '../../text/defaults.cp.js';
 import { once } from 'lively.bindings';
+import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 
 async function positionInRange (context, range, label) {
   if (!context?.isText) return;
@@ -33,9 +34,16 @@ class ComponentEditControlModel extends ViewModel {
           return this.view.owner;
         }
       },
+      behaviorEnabled: {
+        derived: true,
+        get () {
+          return this.editor?.owner.viewModel._initializeComponentsWithModels;
+        }
+      },
+      isComponentControl: { get () { return true; } },
       expose: {
         get () {
-          return ['positionInLine', 'collapse'];
+          return ['positionInLine', 'collapse', 'isComponentControl', 'enableViewModel'];
         }
       },
       bindings: {
@@ -69,6 +77,11 @@ class ComponentEditControlModel extends ViewModel {
 
   resetComponentDef () {
     this.componentDescriptor.reset();
+  }
+
+  enableViewModel (active) {
+    if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
+    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.onDeactivate());
   }
 
   async minifyComponentMorph () {
@@ -129,14 +142,27 @@ class ComponentEditControlModel extends ViewModel {
 class ComponentEditButtonMorph extends Morph {
   static get properties () {
     return {
+      isComponentControl: { get () { return true; } },
       editor: {
         derived: true,
         get () { return this.owner; }
+      },
+      behaviorEnabled: {
+        derived: true,
+        get () { return this.editor?.owner.viewModel._initializeComponentsWithModels; }
       },
       componentDescriptor: {
         // the component descriptor object pointing to the policy
       }
     };
+  }
+
+  enableViewModel () {
+    // for now do nothing
+    const c = this.componentDescriptor._cachedComponent;
+    if (c) {
+
+    }
   }
 
   async animateSwapWithPlaceholder (placeholder, componentMorph) {
@@ -174,9 +200,10 @@ class ComponentEditButtonMorph extends Morph {
   async replaceWithPlaceholder () {
     const {
       componentDescriptor,
-      editor
+      editor,
+      behaviorEnabled
     } = this;
-    const componentMorph = componentDescriptor.getComponentMorph();
+    const componentMorph = componentDescriptor.getComponentMorph(behaviorEnabled);
     const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
       name: 'component edit control',
       viewModel: {
@@ -195,9 +222,10 @@ class ComponentEditButtonMorph extends Morph {
     const {
       componentDescriptor,
       editor,
+      behaviorEnabled,
       leftCenter: lineAnchorPoint
     } = this;
-    const componentMorph = await componentDescriptor.edit();
+    const componentMorph = await componentDescriptor.edit(behaviorEnabled);
     const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
       name: 'edit button placeholder',
       viewModel: {

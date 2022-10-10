@@ -93,6 +93,15 @@ function getEventState (targetMorph, customBreakpoints) {
   };
 }
 
+export function withAllViewModelsDo (inst, cb) {
+  inst.master.applyIfNeeded(true);
+  const toAttach = [];
+  inst.withAllSubmorphsDo(m => {
+    if (m.viewModel) toAttach.unshift(m);
+  });
+  toAttach.forEach(cb);
+}
+
 /**
  * We use StylePolicies to implement 2 kinds of abstractions in the system:
  * 1. Component Definitions:
@@ -457,12 +466,7 @@ export class StylePolicy {
     // by moving that logic into the master setter at a later stage
     const inst = morph(new PolicyApplicator(props, this).asBuildSpec()); // eslint-disable-line no-use-before-define
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
-    inst.master.applyIfNeeded(true);
-    const toAttach = [];
-    inst.withAllSubmorphsDo(m => {
-      if (m.viewModel) toAttach.unshift(m);
-    });
-    toAttach.forEach(m => m.viewModel.attach(m));
+    withAllViewModelsDo(inst, m => m.viewModel.attach(m));
     return inst;
   }
 
