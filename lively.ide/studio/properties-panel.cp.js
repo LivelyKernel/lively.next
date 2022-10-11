@@ -304,7 +304,7 @@ const PropertiesPanel = component({
     part(AlignmentControl, { name: 'alignment control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
-    part(BodyControl, { name: 'effects control', visible: false })
+    part(BodyControl, { name: 'effects control', visible: false }),
     part(SVGControl, { name: 'svg control', visible: false })
   ]
 });

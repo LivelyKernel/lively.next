@@ -38,7 +38,7 @@ import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
 import { CommentData } from 'lively.collab';
-import { SVGMorph } from 'lively.morphic/svg-morph.js';
+import { SVGMorph } from 'lively.morphic/svg-morph/svg-morph.js';
 
 export class LivelyWorld extends World {
   static get properties () {
