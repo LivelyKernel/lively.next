@@ -8,7 +8,7 @@ import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { once } from 'lively.bindings';
-import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
+import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 async function positionInRange (context, range, label) {
   if (!context?.isText) return;
@@ -39,6 +39,16 @@ class ComponentEditControlModel extends ViewModel {
           return this.editor?.owner.viewModel._initializeComponentsWithModels;
         }
       },
+      isLively: {
+        get () {
+          let alive = false;
+          if (!this.componentMorph) return false;
+          withAllViewModelsDo(this.componentMorph, m => {
+            if (m.viewModel.view) alive = true;
+          });
+          return alive;
+        }
+      },
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
@@ -49,7 +59,14 @@ class ComponentEditControlModel extends ViewModel {
         get () {
           return [
             { target: 'close button', signal: 'onMouseUp', handler: 'minifyComponentMorph' },
-            { target: 'revert button', signal: 'onMouseUp', handler: 'resetComponentDef' }
+            { target: 'revert button', signal: 'onMouseUp', handler: 'resetComponentDef' },
+            {
+              target: 'lively button',
+              signal: 'onMouseUp',
+              handler: () => {
+                this.enableViewModel(!this.isLively);
+              }
+            }
           ];
         }
       }
@@ -63,7 +80,8 @@ class ComponentEditControlModel extends ViewModel {
   }
 
   updateResetButton () {
-    this.ui.revertButton.master = this.componentDescriptor.isDirty()
+    this.ui.livelyButton.master = this.isLively ? BehaviorToggleButton : BehaviorToggleButtonDisabled; // eslint-disable-line no-use-before-define
+    this.ui.revertButton.master = this.componentDescriptor?.isDirty()
       ? RevertComponentButton // eslint-disable-line no-use-before-define
       : RevertComponentButtonDisabled; // eslint-disable-line no-use-before-define
   }
@@ -80,7 +98,9 @@ class ComponentEditControlModel extends ViewModel {
 
   enableViewModel (active) {
     if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
-    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.onDeactivate());
+    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.detach());
+    // this.componentMorph.bringToFront();
+    this.updateResetButton();
   }
 
   async minifyComponentMorph () {
@@ -533,6 +553,57 @@ const RevertComponentButton = component(RevertComponentButtonDefault, {
   master: { click: RevertComponentButtonClicked }
 });
 
+const BehaviorToggleButton = component({
+  master: {
+    auto: new PolicyApplicator({ fill: Color.rgb(255, 111, 0) }),
+    click: new PolicyApplicator({ fill: Color.rgb(206, 89, 0) })
+  },
+  nativeCursor: 'pointer',
+  borderRadius: 20,
+  layout: new TilingLayout({
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true
+  }),
+  submorphs: [
+    {
+      type: 'label',
+      name: 'active',
+      visible: true,
+      reactsToPointer: false,
+      padding: rect(5, 1, 0, 0),
+      fontColor: Color.white,
+      fontWeight: 'bold',
+      fontSize: 12,
+      textAndAttributes: ['Turn Stale ', {}, ...Icon.textAttribute('heart-pulse', { lineHeight: 1.4 })]
+    },
+    {
+      type: 'label',
+      name: 'inactive',
+      visible: false,
+      reactsToPointer: false,
+      padding: rect(5, 1, 0, 0),
+      fontColor: Color.white,
+      fontWeight: 'bold',
+      fontSize: 12,
+      textAndAttributes: ['Turn Lively ', {}, ...Icon.textAttribute('heart-circle-xmark', { lineHeight: 1.4 })]
+    }
+  ]
+});
+
+const BehaviorToggleButtonDisabled = component(BehaviorToggleButton, {
+  name: 'behavior toggle button disabled',
+  fill: Color.rgb(121, 85, 72),
+  opacity: 0.6,
+  submorphs: [{
+    name: 'active',
+    visible: false
+  }, {
+    name: 'inactive',
+    visible: true
+  }]
+});
+
 const ComponentEditControls = component({
   viewModelClass: ComponentEditControlModel,
   fill: Color.rgba(255, 255, 255, 0),
@@ -545,7 +616,8 @@ const ComponentEditControls = component({
   }),
   submorphs: [
     part(CloseComponentButton, { name: 'close button' }),
-    part(RevertComponentButton, { name: 'revert button' })
+    part(RevertComponentButton, { name: 'revert button' }),
+    part(BehaviorToggleButton, { name: 'lively button' })
   ]
 });
 
@@ -1315,13 +1387,25 @@ async function open () {
 
 export {
   ComponentEditButton,
-  FileStatusDefault, FileStatusError, FileStatusSaved,
-  FileStatusFrozen, FileStatusInactive, FileStatusWarning,
-  BrowserTabDefault, BrowserTabClicked, BrowserTabSelected, BrowserTabHovered,
-  BackendButtonDefault, BackendButtonClicked,
+  FileStatusDefault,
+  FileStatusError,
+  FileStatusSaved,
+  FileStatusFrozen,
+  FileStatusInactive,
+  FileStatusWarning,
+  BrowserTabDefault,
+  BrowserTabClicked,
+  BrowserTabSelected,
+  BrowserTabHovered,
+  BackendButtonDefault,
+  BackendButtonClicked,
   DarkButton,
   BrowserDirectoryControls,
   BrowserPackageControls,
   SystemBrowser,
-  open, browse, browserForFile
+  open,
+  browse,
+  browserForFile,
+  BehaviorToggleButton,
+  BehaviorToggleButtonDisabled
 };
