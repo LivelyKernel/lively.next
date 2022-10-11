@@ -14,6 +14,7 @@ import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
 import { WorldBrowser } from './studio/world-browser.cp.js';
 import { Console } from './debug/console.cp.js';
+import { browserForFile } from './js/browser/ui.cp.js';
 
 const commands = [
 
@@ -946,7 +947,7 @@ const commands = [
   {
     name: 'open browser',
     progressIndicator: 'opening browser...',
-    exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) }, _, evt) => {
+    exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0), reuse: false }, _, evt) => {
       // in case there is another morph implementing open browser...
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
@@ -955,7 +956,7 @@ const commands = [
       let browser;
       if (args) {
         const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll']);
-        browser = await Browser.browse(loc, { extent: pt(700, 600) });
+        browser = args.reuse && browserForFile(args.packageName + args.moduleName) || await Browser.browse(loc, { extent: pt(700, 600) });
       } else {
         browser = await Browser.open();
       }
@@ -1035,13 +1036,13 @@ const commands = [
           }]`;
       let items = (await systemInterface.coreInterface.getLoadedModules((config.ide.js.ignoredPackages)))
         .map(({ package: p, module: m }) => {
-        const shortName = systemInterface.shortModuleName(m.name, p);
-        return {
-          isListItem: true,
-          string: `[${p.name}] ${shortName}`,
-          value: { package: p, module: m, shortName }
-        }
-       });
+          const shortName = systemInterface.shortModuleName(m.name, p);
+          return {
+            isListItem: true,
+            string: `[${p.name}] ${shortName}`,
+            value: { package: p, module: m, shortName }
+          };
+        });
 
       items = arr.sortBy(items, ea => ea.string);
       (async () => {
