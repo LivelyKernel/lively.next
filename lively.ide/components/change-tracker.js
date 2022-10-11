@@ -12,6 +12,7 @@ import {
   DEFAULT_SKIPPED_ATTRIBUTES,
   convertToExpression
 } from './helpers.js';
+import { getDefaultValueFor } from 'lively.morphic/helpers.js';
 
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
@@ -581,17 +582,29 @@ export class ComponentChangeTracker {
     requiredBindings.push(...Object.entries(valueAsExpr.bindings));
     let responsibleComponent = getComponentScopeFor(parsedComponent, target);
     const morphDef = getPropertiesNode(responsibleComponent, target);
+    if (!morphDef) {
+      return this.uncollapseSubmorphHierarchy(sourceCode, responsibleComponent, target);
+    }
     if (prop === 'layout') {
       this.needsLinting = true;
     }
-    if (!morphDef) {
-      return this.uncollapseSubmorphHierarchy(sourceCode, responsibleComponent, target);
-    } else {
-      if (prop === 'extent') {
-        return this.handleExtentChange(propChange, morphDef, updatedSource, valueAsExpr.__expr__);
-      }
+    if (prop === 'extent') {
+      return this.handleExtentChange(propChange, morphDef, updatedSource, valueAsExpr.__expr__);
+    }
+    if (this.differsFromNextLevel(prop, target, value)) {
       return this.patchProp(updatedSource, morphDef, prop, valueAsExpr.__expr__);
     }
+    return this.deleteProp(updatedSource, morphDef, prop);
+  }
+
+  differsFromNextLevel (prop, target, newVal) {
+    // FIXME: extract via path instead of name
+    const policy = this.componentDescriptor.stylePolicy;
+    const { parent } = policy;
+    let val;
+    if (parent) val = parent.synthesizeSubSpec(target.name)[prop];
+    else val = getDefaultValueFor(policy.getSubSpecFor(target.name).type, prop);
+    return !obj.equals(val, newVal);
   }
 
   /**
