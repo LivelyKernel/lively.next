@@ -484,7 +484,7 @@ class NameHaloItem extends HaloItem {
     const target = this.halo.target;
     if (!target || target.isMorphSelection) return;
     if (target.master) {
-      const appliedMaster = target.master.determineMaster(target);
+      const appliedMaster = target.isComponent ? target.master : target.master.determineMaster(target);
       const meta = appliedMaster ? appliedMaster[Symbol.for('lively-module-meta')] : false;
       const masterLink = this.addMorph(Icon.makeLabel(meta ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
@@ -495,7 +495,7 @@ class NameHaloItem extends HaloItem {
       }));
       meta && connect(masterLink, 'onMouseDown', () => {
         // FIXME: also take into account the path if present?
-        $world.execCommand('open browser', { moduleName: meta.moduleId, codeEntity: meta.exportedName });
+        $world.execCommand('open browser', { moduleName: meta.moduleId, codeEntity: meta.exportedName, reuse: true });
       });
     }
   }
