@@ -280,7 +280,9 @@ export class DynamicPropertyModel extends ViewModel {
    * in order to "leave no trace behind".
    */
   resetProperty () {
-    this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].resetValue; // eslint-disable-line no-use-before-define
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].resetValue; // eslint-disable-line no-use-before-define
+    });
   }
 
   /**
@@ -309,7 +311,9 @@ export class DynamicPropertyModel extends ViewModel {
    * Update the current morph to reflect the changes.
    */
   confirm (v) {
-    this.targetMorph[this.accessor] = v;
+    this.view.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph[this.accessor] = v;
+    });
   }
 
   /**

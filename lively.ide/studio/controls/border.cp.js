@@ -241,14 +241,14 @@ export class BorderControlModel extends PropertySectionModel {
     if (!this.targetMorph && this.updateDirectly) return;
     const { borderColorInput, borderWidthInput, borderStyleSelector } = this.ui;
     const border = this.targetMorph?.border || {};
-    if (!borderWidthInput.isMixed) border.width = borderWidthInput.number;
-    if (!borderColorInput.isMixed) border.color = borderColorInput.colorValue;
-    if (!borderStyleSelector.isMixed) border.style = borderStyleSelector.selection;
-    if (this.updateDirectly) {
-      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      if (!borderWidthInput.isMixed) border.width = borderWidthInput.number;
+      if (!borderColorInput.isMixed) border.color = borderColorInput.colorValue;
+      if (!borderStyleSelector.isMixed) border.style = borderStyleSelector.selection;
+      if (this.updateDirectly) {
         this.targetMorph.border = border;
-      });
-    } else signal(this, 'value', border);
+      } else signal(this, 'value', border);
+    });
   }
 }
 
