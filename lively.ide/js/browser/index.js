@@ -48,7 +48,7 @@ import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { adoptObject } from 'lively.lang/object.js';
 import { resource } from 'lively.resources';
 
-component.DescriptorClass = InteractiveComponentDescriptor;
+if (!lively.FreezerRuntime) { component.DescriptorClass = InteractiveComponentDescriptor; }
 
 export const COLORS = {
   js: Color.rgb(46, 204, 113),
