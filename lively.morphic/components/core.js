@@ -501,6 +501,14 @@ export class ViewModel {
     const rawKey = Object.keys(map).find(key => map[key].name === commandName);
     return rawKey && pretty ? map[rawKey].prettyKeys : rawKey;
   }
+ 
+  /**
+   * Allows to fullt disconnect the view model from its view.
+   */
+  detach () {
+    this.onDeactivate();
+    this.view = null;
+  }
 }
 
 /**
