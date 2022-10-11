@@ -953,12 +953,14 @@ const commands = [
       if (relayed) return relayed;
 
       const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
+      const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll']);
+      const fileName = args.packageName ? args.packageName + args.moduleName : args.moduleName;
       let browser;
-      if (args) {
-        const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll']);
-        browser = args.reuse && browserForFile(args.packageName + args.moduleName) || await Browser.browse(loc, { extent: pt(700, 600) });
+      if (args.reuse) {
+        browser = browserForFile(System.decanonicalize(fileName));
+        browser.browse(loc);
       } else {
-        browser = await Browser.open();
+        browser = await Browser.browse(loc, { extent: pt(700, 600) });
       }
       browser.getWindow().activate();
       return browser;
