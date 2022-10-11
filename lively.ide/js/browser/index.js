@@ -2400,7 +2400,7 @@ export class BrowserModel extends ViewModel {
         () => { this.showPackageVersionNumber(!td.showPkgVersion); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
         () => { this.toggleTextMap(!ed.textMap); }],
-      [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Enable Component Behavior', { float: 'none' }],
+      [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Lively Components', { float: 'none' }],
         () => { this.enableComponentBehavior(!this._initializeComponentsWithModels); }]
     ].filter(Boolean);
   }

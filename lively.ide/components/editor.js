@@ -5,7 +5,7 @@ import { module } from 'lively.modules/index.js';
 import lint from '../js/linter.js';
 import { replaceComponentDefinition, createInitialComponentDefinition, findComponentDef } from './helpers.js';
 import { ComponentChangeTracker } from './change-tracker.js';
-import { installViewModels } from 'lively.morphic/components/policy.js';
+import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 
 const exprSerializer = new ExpressionSerializer();
 
@@ -54,13 +54,12 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * @returns { Morph } The component morph.
    */
   getComponentMorph (alive = false) {
-    if (alive) $world.logError('requested active component');
     let c = this._cachedComponent;
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       c.isComponent = true,
-      alive && installViewModels(c),
+      alive && withAllViewModelsDo(c, m => m.viewModel.attach(m)),
       c.name = string.decamelize(this.componentName),
       this._cachedComponent = c
     );
