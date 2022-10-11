@@ -21,7 +21,13 @@ import { show } from './markers.js';
 import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
+const partAccent = Color.rgba(171, 71, 188, 1);
 const componentAccent = Color.magenta;
+
+function getColorForTarget (target) {
+  const baseColor = !!target.master || target.ownerChain().find(m => m.master?.managesMorph(target.name)) ? partAccent : haloBlue;
+  return target.isComponent ? componentAccent : baseColor;
+}
 
 // The orange thing that indicates a drop target when a grabbed morph is
 // hovered over another morph. For some reason it doubles as the container for
@@ -475,7 +481,7 @@ class NameHaloItem extends HaloItem {
       padding: Rectangle.inset(5, 0, 0, 0)
     });
 
-    this.fill = this.halo.target.isComponent ? componentAccent : haloBlue;
+    this.fill = getColorForTarget(this.halo.target);
 
     this.alignInHalo();
   }
@@ -483,9 +489,9 @@ class NameHaloItem extends HaloItem {
   initComponentLink () {
     const target = this.halo.target;
     if (!target || target.isMorphSelection) return;
-    if (target.master) {
-      const appliedMaster = target.isComponent ? target.master : target.master.determineMaster(target);
-      const meta = appliedMaster ? appliedMaster[Symbol.for('lively-module-meta')] : false;
+    if (target.master || target.isComponent) {
+      const appliedMaster = target.master;
+      const meta = appliedMaster ? appliedMaster[Symbol.for('lively-module-meta')] : target[Symbol.for('lively-module-meta')];
       const masterLink = this.addMorph(Icon.makeLabel(meta ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
@@ -1300,7 +1306,7 @@ class OriginHaloItem extends HaloItem {
       borderColor: {
         after: ['halo'],
         initialize () {
-          this.borderColor = this.halo.target.isComponent ? componentAccent : haloBlue;
+          this.borderColor = getColorForTarget(this.halo.target);
         }
       }
     };
@@ -1414,7 +1420,7 @@ class ResizeHandle extends HaloItem {
       extent: pt(resizerSize, resizerSize),
       borderWidth: 1,
       borderRadius: 0,
-      borderColor: halo.target.isComponent ? componentAccent : haloBlue,
+      borderColor: getColorForTarget(halo.target),
       fill: Color.white
     });
 
@@ -1798,7 +1804,7 @@ export default class Halo extends Morph {
       halosEnabled: false,
       reactsToPointer: false,
       fill: Color.transparent,
-      borderColor: this.target.isComponent ? componentAccent : haloBlue,
+      borderColor: getColorForTarget(this.target),
       borderWidth: 1
     }));
   }
