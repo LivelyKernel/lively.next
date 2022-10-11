@@ -285,7 +285,9 @@ export class MorphNodeModel extends ViewModel {
   }
 
   toggleVisibility () {
-    this.target.visible = !this.target.visible;
+    this.target.withMetaDo({ reconcileChanges: true }, () => {
+      this.target.visible = !this.target.visible;
+    });
     this.refresh();
   }
 
