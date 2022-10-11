@@ -94,7 +94,7 @@ function getEventState (targetMorph, customBreakpoints) {
 }
 
 export function withAllViewModelsDo (inst, cb) {
-  inst.master.applyIfNeeded(true);
+  inst.master?.applyIfNeeded(true);
   const toAttach = [];
   inst.withAllSubmorphsDo(m => {
     if (m.viewModel) toAttach.unshift(m);
@@ -923,6 +923,10 @@ export class PolicyApplicator extends StylePolicy {
     return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && (m.master || m.isComponent));
   }
 
+  get isStaleComponentContext () {
+    return [this.targetMorph, ...this.targetMorph.ownerChain()].find(m => m.isComponent && !m.viewModel?.view);
+  }
+
   /**
    * Callback that is invoked once a morph that is managed by the applicator changes.
    * In general this means that if the change is a style property, we override this style prop locally.
@@ -938,7 +942,7 @@ export class PolicyApplicator extends StylePolicy {
         ].find(m => m.master?._animating)
     ) return;
     if (changedMorph._isDeserializing) return;
-    if ([this.targetMorph, ...this.targetMorph.ownerChain()].find(m => m.isComponent)) return;
+    if (this.isStaleComponentContext) return;
     let subSpec = this.ensureSubSpecFor(changedMorph);
     if (subSpec?.isPolicyApplicator) {
       return subSpec.onMorphChange(changedMorph, change);
