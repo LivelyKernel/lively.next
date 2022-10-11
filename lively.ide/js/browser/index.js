@@ -1034,6 +1034,8 @@ export class BrowserModel extends ViewModel {
 
     this.historyRecord();
 
+    if (this.selectedModule) { await this.prepareCodeEditorForModule(this.selectedModule); }
+
     if (codeEntity && scroll) {
       await this.selectCodeEntityInColumnView(codeEntity, false);
     }
@@ -1041,8 +1043,6 @@ export class BrowserModel extends ViewModel {
     if (codeEntity && !scroll) {
       await this.selectCodeEntity(codeEntity, false);
     }
-
-    if (this.selectedModule) { await this.prepareCodeEditorForModule(this.selectedModule); }
 
     if (textPosition) {
       sourceEditor.cursorPosition = textPosition;
