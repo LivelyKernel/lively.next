@@ -918,7 +918,7 @@ const commands = [
       const fileName = args.packageName ? args.packageName + args.moduleName : args.moduleName;
       let browser;
       if (args.reuse) {
-        browser = browserForFile(System.decanonicalize(fileName));
+        browser = browserForFile(System.decanonicalize(fileName)) || await Browser.open();
         browser.browse(loc);
       } else {
         browser = await Browser.browse(loc, { extent: pt(700, 600) });
