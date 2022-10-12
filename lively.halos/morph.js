@@ -1796,6 +1796,7 @@ export default class Halo extends Morph {
 
   remove () {
     this.detachFromTarget();
+    signal($world, 'haloRemoved');
     super.remove();
   }
 
