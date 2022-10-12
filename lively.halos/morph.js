@@ -17,7 +17,7 @@ import * as moduleManager from 'lively.modules';
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 
 import { show } from './markers.js';
-import { PolicyApplicator } from 'lively.morphic/components/policy.js';
+import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const partAccent = Color.rgba(171, 71, 188, 1);
@@ -487,8 +487,13 @@ class NameHaloItem extends HaloItem {
     const target = this.halo.target;
     if (!target || target.isMorphSelection) return;
     if (target.master || target.isComponent) {
-      const appliedMaster = target.master;
-      const meta = appliedMaster ? appliedMaster[Symbol.for('lively-module-meta')] : target[Symbol.for('lively-module-meta')];
+      let appliedMaster = target.master || target;
+      let meta;
+      while (!meta) {
+        meta = appliedMaster[Symbol.for('lively-module-meta')];
+        appliedMaster = appliedMaster.parent;
+        if (!appliedMaster) break;
+      }
       const masterLink = this.addMorph(Icon.makeLabel(meta ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
@@ -868,6 +873,44 @@ class EditHaloItem extends HaloItem {
       world.execCommand('open object editor', { target: targetToEdit });
     }
     this.halo.remove();
+  }
+}
+
+function isAlive (target) {
+  let alive = false;
+  withAllViewModelsDo(target, m => {
+    if (m.viewModel.view) alive = true;
+  });
+  return alive;
+}
+
+class BehaviorHaloItem extends HaloItem {
+  static get morphName () { return 'behavior'; }
+
+  static get properties () {
+    return {
+      tooltip: {
+        initialize () {
+          this.tooltip = isAlive(this.halo.target) ? 'Disable this component\'s behavior' : 'Turn this component\'s behavior on';
+        }
+      },
+      draggable: { defaultValue: false },
+      styleClasses: {
+        initialize () {
+          this.styleClasses = !isAlive(this.halo.target) ? ['fas', 'fa-heart'] : ['fas', 'fa-skull'];
+        }
+      }
+    };
+  }
+
+  onMouseDown (evt) {
+    if (!isAlive(this.halo.target)) withAllViewModelsDo(this.halo.target, m => m.viewModel.attach(m));
+    else withAllViewModelsDo(this.halo.target, m => m.viewModel.detach());
+    const world = this.world();
+    const target = this.halo.target;
+    this.halo.remove();
+    world.showHaloFor(target);
+    signal(target, 'behaviorChanged');
   }
 }
 
@@ -1763,7 +1806,7 @@ export default class Halo extends Morph {
         [null, null, null, null, null, null, null],
         ['component', null, null, null, null, null, 'inspect'],
         [null, null, null, null, null, null, null],
-        ['rotate', null, null, null, null, null, 'resize'],
+        ['rotate', null, null, null, null, null, 'behavior'],
         [null, 'name', 'name', 'name', 'name', 'name', null]]
     });
 
@@ -1788,7 +1831,8 @@ export default class Halo extends Morph {
             this.rotateHalo(),
             this.nameHalo(),
             this.originHalo()
-          ]
+          ],
+      ...this.target.isComponent ? [this.behaviorHalo()] : []
     ];
   }
 
@@ -1907,6 +1951,7 @@ export default class Halo extends Morph {
   copyHalo () { return CopyHaloItem.for(this); }
   originHalo () { return OriginHaloItem.for(this); }
   componentHalo () { return ComponentHaloItem.for(this); }
+  behaviorHalo () { return BehaviorHaloItem.for(this); }
 
   get buttonControls () { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
