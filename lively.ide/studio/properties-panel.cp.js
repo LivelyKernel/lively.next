@@ -101,10 +101,16 @@ export class PropertiesPanelModel extends ViewModel {
    */
   attachToTarget (aMorph) {
     this.models.backgroundControl.focusOn(aMorph);
+    connect(aMorph, 'onHaloOpened', this, 'focusOn', {
+      garbageCollect: true
+    });
   }
 
   detachFromTarget (aMorph) {
     this.models.backgroundControl.clearFocus();
+    aMorph.attributeConnections.forEach(conn => {
+      if (conn.targetObj === this) conn.disconnect();
+    });
   }
 
   attachToWorld (aWorld) {
