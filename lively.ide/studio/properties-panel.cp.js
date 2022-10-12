@@ -118,6 +118,9 @@ export class PropertiesPanelModel extends ViewModel {
     connect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
     });
+    connect(aWorld, 'haloRemoved', this, 'clearFocus', {
+      garbageCollect: true
+    });
   }
 
   detachFromWorld (aWorld) {
