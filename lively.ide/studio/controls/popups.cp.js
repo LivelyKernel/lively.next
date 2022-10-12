@@ -20,7 +20,7 @@ export class ShadowPopupModel extends ViewModel {
           this.shadowValue = new ShadowObject({});
         }
       },
-      expose: { get () { return ['isHaloItem']; } },
+      expose: { get () { return ['isHaloItem', 'isPropertiesPanelPopup', 'close']; } },
       bindings: {
         get () {
           return [
@@ -35,6 +35,10 @@ export class ShadowPopupModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   close () {
@@ -131,7 +135,7 @@ export class SingleNumberModel extends ViewModel {
     return {
       value: {},
       isHaloItem: { defaultValue: true },
-      expose: { get () { return ['isHaloItem', 'value']; } },
+      expose: { get () { return ['isHaloItem', 'value', 'isPropertiesPanelPopup', 'close']; } },
       bindings: {
         get () {
           return [
@@ -141,6 +145,10 @@ export class SingleNumberModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   close () { this.view.remove(); }
@@ -164,7 +172,7 @@ export class SingleSelectionModel extends ViewModel {
     return {
       selection: {},
       isHaloItem: { defaultValue: true },
-      expose: { get () { return ['isHaloItem']; } },
+      expose: { get () { return ['isHaloItem', 'isPropertiesPanelPopup', 'close']; } },
       bindings: {
         get () {
           return [
@@ -174,6 +182,10 @@ export class SingleSelectionModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   close () { this.view.remove(); }
@@ -213,6 +225,11 @@ export class PaddingPopupModel extends ViewModel {
           return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
         }
       },
+      expose: {
+        get(){
+          return ['isPropertiesPanelPopup', 'close']
+        }
+      },
       bindings: {
         get () {
           return [
@@ -232,6 +249,10 @@ export class PaddingPopupModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   startPadding (pad) {
@@ -310,7 +331,7 @@ export class PositionPopupModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['setPoint'];
+          return ['setPoint', 'isPropertiesPanelPopup', 'close'];
         }
       },
       bindings: {
@@ -329,6 +350,10 @@ export class PositionPopupModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   close () {

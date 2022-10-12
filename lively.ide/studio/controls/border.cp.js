@@ -278,7 +278,7 @@ export class BorderPopupWindow extends ViewModel {
       },
       expose: {
         get () {
-          return ['close', 'isHaloItem'];
+          return ['close', 'isHaloItem', 'isPropertiesPanelPopup'];
         }
       },
       bindings: {
@@ -299,6 +299,10 @@ export class BorderPopupWindow extends ViewModel {
         }
       }
     };
+  }
+
+  get isPropertiesPanelPopup() {
+    return true;
   }
 
   attach (view) {

@@ -137,6 +137,7 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   clearFocus () {
+    $world.withAllSubmorphsDo(m => m.isPropertiesPanelPopup && m.close());
     this.ui.backgroundControl.visible = true;
     this.models.backgroundControl.onRefresh();
     this.toggleDefaultControls(false);
