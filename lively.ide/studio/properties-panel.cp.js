@@ -147,6 +147,7 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   focusOn (aMorph) {
+    $world.withAllSubmorphsDo(m => m.isPropertiesPanelPopup && m.close(true /* = discardHalo */));
     if (aMorph.isWorld) return;
     if (Array.isArray(aMorph) && aMorph.length === 1) aMorph = aMorph[0];
     // ignore multi selections of more than one morph for now.

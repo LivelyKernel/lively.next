@@ -316,7 +316,7 @@ export class ColorPickerModel extends ViewModel {
     this._target = aMorph;
     const { context } = this;
     if (context) {
-      context.halos().forEach(m => m.remove());
+      if (!color.isColor) noUpdate(() => context.halos().forEach(m => m.remove()));
       context.withTopBarDo(topBar => {
         topBar.setEditMode('Hand', true);
       });
@@ -348,6 +348,10 @@ export class ColorPickerModel extends ViewModel {
 
   switchMode (newMode) {
     const isGradient = ['linearGradient', 'radialGradient'].includes(newMode);
+	if (isGradient) noUpdate(() => this.context.halos().forEach(m => m.remove()));
+    else {
+      if (this._target) noUpdate(() => $world.showHaloFor(this._target));
+    }
     this.ui.gradientControl.toggle(isGradient, this);
     this.colorMode = newMode;
     this.update();
