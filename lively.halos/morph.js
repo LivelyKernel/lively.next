@@ -326,7 +326,7 @@ class NameHolder extends Morph {
           let withinComponentContext = false; let derived = false;
           for (const each of ownerChain) {
             if (each.isComponent) withinComponentContext = true;
-            if (each.master) derived = true;
+            if (each.master) derived = !!each.master.parent?.getSubSpecFor(this.target.name);
           }
           return withinComponentContext && !derived || !withinComponentContext;
         }
