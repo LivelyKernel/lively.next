@@ -20,7 +20,7 @@ export class FillControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'fill color input', signal: 'onPickerClosed', handler: 'ensureHalo' },
+            { model: 'fill color input', signal: 'onPickerClosedWithClick', handler: 'ensureHalo' },
             { model: 'fill color input', signal: 'color', handler: 'confirm' },
             { target: 'image cell', signal: 'onMouseDown', handler: 'changeImageUrl' }
           ];
@@ -39,13 +39,7 @@ export class FillControlModel extends ViewModel {
     if (prop === 'targetMorph') this.update();
   }
 
-  ensureHalo (discardHalo) {
-    if (discardHalo === true) {
-      noUpdate(() => $world.halos().forEach(h => {
-        if (h.target === this.targetMorph) h.remove();
-      }));
-      return;
-    }
+  ensureHalo () {
     if (this.targetMorph.world()) $world.showHaloFor(this.targetMorph);
   }
 
