@@ -8,15 +8,25 @@ import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { BlackOnWhite } from '../../text/defaults.cp.js';
-import { once } from 'lively.bindings';
+import { once, disconnect, connect } from 'lively.bindings';
 import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components/policy.js';
 
-async function positionInRange (context, range, label) {
+async function positionForAnchor (context, anchor) {
   if (!context?.isText) return;
   await context.whenRendered();
-  const pos = context.indexToPosition(range.start);
-  const end = context.lineRange(pos.row).end;
-  label.leftCenter = context.charBoundsFromTextPosition(end).rightCenter().addXY(5, 0);
+  const bounds = context.charBoundsFromTextPosition(anchor.position);
+  return bounds.rightCenter().addXY(5, 0);
+}
+
+function ensureAnchor (control) {
+  const { declaration, editor } = control;
+  const varName = declaration.declarations[0]?.id?.name;
+  const anchor = editor.addAnchor({
+    id: 'Component->' + varName,
+    ...editor.screenLineRange(editor.indexToPosition(declaration.start)).end
+  });
+  connect(anchor, 'position', control, 'positionInLine');
+  return anchor;
 }
 
 class ComponentEditControlModel extends ViewModel {
@@ -28,10 +38,19 @@ class ComponentEditControlModel extends ViewModel {
       componentMorph: {
         // reference to the morph that reifies the visual representation of the component definition
       },
+      anchor: {},
+      declaration: {
+        before: ['anchor'],
+        set (decl) {
+          this.setProperty('declaration', decl);
+          this.anchor = null;
+          this.positionInLine();
+        }
+      },
       editor: {
         derived: true,
         get () {
-          return this.view.owner;
+          return this.view?.owner;
         }
       },
       behaviorEnabled: {
@@ -53,7 +72,7 @@ class ComponentEditControlModel extends ViewModel {
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
-          return ['positionInLine', 'collapse', 'isComponentControl', 'enableViewModel'];
+          return ['positionInLine', 'collapse', 'isComponentControl', 'enableViewModel', 'componentDescriptor', 'declaration'];
         }
       },
       bindings: {
@@ -78,19 +97,31 @@ class ComponentEditControlModel extends ViewModel {
     super.viewDidLoad();
     this.updateResetButton();
     once(this.componentDescriptor, 'makeDirty', this, 'updateResetButton');
+    connect(this.componentMorph, 'behaviorChanged', this, 'updateResetButton');
+  }
+
+  hasViewModels () {
+    let found = false;
+    withAllViewModelsDo(this.componentMorph, m => {
+      if (m.viewModel) found = true;
+    });
+    return found;
   }
 
   updateResetButton () {
+    this.ui.livelyButton.visible = this.hasViewModels();
     this.ui.livelyButton.master = this.isLively ? BehaviorToggleButton : BehaviorToggleButtonDisabled; // eslint-disable-line no-use-before-define
     this.ui.revertButton.master = this.componentDescriptor?.isDirty()
       ? RevertComponentButton // eslint-disable-line no-use-before-define
       : RevertComponentButtonDisabled; // eslint-disable-line no-use-before-define
   }
 
-  positionInLine () {
-    const { view } = this;
-    this.editor.readOnly = this.componentDescriptor.isDirty();
-    return positionInRange(view.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, view);
+  async positionInLine () {
+    let { view, editor, anchor, componentDescriptor } = this;
+    if (!editor) return;
+    if (!anchor) anchor = this.anchor = ensureAnchor(this);
+    editor.readOnly = componentDescriptor.isDirty();
+    view.leftCenter = await positionForAnchor(editor, anchor);
   }
 
   resetComponentDef () {
@@ -100,7 +131,6 @@ class ComponentEditControlModel extends ViewModel {
   enableViewModel (active) {
     if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
     else withAllViewModelsDo(this.componentMorph, m => m.viewModel.detach());
-    // this.componentMorph.bringToFront();
     this.updateResetButton();
   }
 
@@ -132,6 +162,8 @@ class ComponentEditControlModel extends ViewModel {
 
   async collapse (editButton) {
     const { editor, view } = this;
+    disconnect(this.componentMorph, 'behaviorChanged', this, 'updateResetButton');
+    disconnect(this.anchor, 'position', this, 'positionInLine');
     editButton.reset();
     editButton.opacity = 0;
     editor.addMorph(editButton);
@@ -163,6 +195,18 @@ class ComponentEditButtonMorph extends Morph {
   static get properties () {
     return {
       isComponentControl: { get () { return true; } },
+      componentMorph: {
+        get () {
+          return this.componentDescriptor._cachedComponent;
+        }
+      },
+      declaration: {
+        set (decl) {
+          this.setProperty('declaration', decl);
+          this.anchor = null;
+          this.positionInLine();
+        }
+      },
       editor: {
         derived: true,
         get () { return this.owner; }
@@ -177,12 +221,10 @@ class ComponentEditButtonMorph extends Morph {
     };
   }
 
-  enableViewModel () {
-    // for now do nothing
-    const c = this.componentDescriptor._cachedComponent;
-    if (c) {
-
-    }
+  enableViewModel (active) {
+    if (!this.componentMorph) return;
+    if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
+    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.detach());
   }
 
   async animateSwapWithPlaceholder (placeholder, componentMorph) {
@@ -190,6 +232,9 @@ class ComponentEditButtonMorph extends Morph {
       editor,
       leftCenter: anchorPoint
     } = this;
+    placeholder._initializing = true;
+    placeholder.scale = .2;
+    placeholder.leftCenter = anchorPoint;
     this.openInWorld(this.globalPosition);
     this.layout = null;
     const wrapper = this.addMorph({
@@ -198,8 +243,8 @@ class ComponentEditButtonMorph extends Morph {
       epiMorph: true,
       submorphs: [componentMorph]
     });
-    componentMorph.position = pt(0, 0);
     wrapper.scale = 0;
+    componentMorph.position = pt(0, 0);
     this.fill = Color.transparent;
     await editor.withAnimationDo(() => {
       placeholder.opacity = 1;
@@ -215,59 +260,65 @@ class ComponentEditButtonMorph extends Morph {
     await componentMorph.whenRendered();
     componentMorph.openInWorld(componentMorph.globalPosition);
     this.remove();
+    placeholder._initializing = false;
+  }
+
+  async ensureEditControlsFor (componentMorph, editor = this.editor) {
+    const {
+      componentDescriptor,
+      anchor,
+      declaration
+    } = this;
+    const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
+      name: 'component edit control',
+      viewModel: {
+        componentMorph,
+        componentDescriptor,
+        declaration,
+        anchor
+      },
+      opacity: 0
+    }));
+    await btnPlaceholder.positionInLine();
+    return btnPlaceholder;
   }
 
   async replaceWithPlaceholder () {
     const {
       componentDescriptor,
-      editor,
-      behaviorEnabled
+      behaviorEnabled,
+      editor
     } = this;
-    const componentMorph = componentDescriptor.getComponentMorph(behaviorEnabled);
-    const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
-      name: 'component edit control',
-      viewModel: {
-        componentMorph,
-        componentDescriptor
-      },
-      opacity: 0
-    }));
-    await btnPlaceholder.positionInLine();
-    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
+    if (!editor) return;
     this.remove();
+    const componentMorph = componentDescriptor.getComponentMorph(behaviorEnabled);
+    const btnPlaceholder = await this.ensureEditControlsFor(componentMorph, editor);
+    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
     btnPlaceholder.opacity = 1;
   }
 
   async expand () {
     const {
       componentDescriptor,
-      editor,
-      behaviorEnabled,
-      leftCenter: lineAnchorPoint
+      behaviorEnabled
     } = this;
     const componentMorph = await componentDescriptor.edit(behaviorEnabled);
-    const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
-      name: 'edit button placeholder',
-      viewModel: {
-        componentMorph,
-        componentDescriptor
-      },
-      opacity: 0,
-      scale: .2
-    }));
-    btnPlaceholder._initializing = true;
-    btnPlaceholder.leftCenter = lineAnchorPoint;
+    const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
     once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
-    btnPlaceholder._initializing = false;
   }
 
-  positionInLine () {
+  async positionInLine () {
+    if (!this.editor) return;
+
     if (this.componentDescriptor._cachedComponent?.world()) {
       return this.replaceWithPlaceholder();
     }
+
+    if (!this.anchor) this.anchor = ensureAnchor(this);
+
     this.editor.readOnly = this.componentDescriptor.isDirty();
-    return positionInRange(this.owner, this.componentDescriptor[Symbol.for('lively-module-meta')].range, this);
+    this.leftCenter = await positionForAnchor(this.editor, this.anchor);
   }
 
   reset () {
