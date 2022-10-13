@@ -335,7 +335,7 @@ export class ComponentChangeTracker {
     if (change.target.epiMorph) return true;
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args.some(m => m.epiMorph)) return true;
-    if (change.selector !== 'addMorphAt' && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
+    if (!['addMorphAt', 'removeMorph'].includes(change.selector) && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
     if (!change.selector && obj.equals(change.prevValue, change.value)) return true;
     return false;
   }
@@ -500,6 +500,7 @@ export class ComponentChangeTracker {
    * @returns { string } The transformed source code.
    */
   handleRemovedMorph (removeChange, parsedComponent, sourceCode, requiredBindings) {
+    const { sourceEditor } = this;
     const [removedMorph] = removeChange.args;
     let updatedSource = sourceCode;
     let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
@@ -546,16 +547,20 @@ export class ComponentChangeTracker {
       this.needsLinting = true;
     }
 
-    if (nodeToRemove || insertedRemove) {
+    if (nodeToRemove) {
       if (insertedRemove) sourceCode = updatedSource;
-      if (sourceCode[nodeToRemove.end] === ',') nodeToRemove.end++;
-      if (this.sourceEditor) {
+      while (!sourceCode[nodeToRemove.start - 1].match(/\}|\[/) &&
+            !sourceCode[nodeToRemove.start].match(/\,|\n/)) {
+        nodeToRemove.start--;
+      }
+      while (sourceCode[nodeToRemove.end].match(/\,| /)) nodeToRemove.end++;
+      if (sourceEditor) {
         const morphRange = Range.fromPositions(
-          this.sourceEditor.indexToPosition(nodeToRemove.start),
-          this.sourceEditor.indexToPosition(nodeToRemove.end)
+          sourceEditor.indexToPosition(nodeToRemove.start),
+          sourceEditor.indexToPosition(nodeToRemove.end)
         );
-        this.sourceEditor.replace(morphRange, '');
-        updatedSource = this.sourceEditor.textString;
+        sourceEditor.replace(morphRange, '');
+        updatedSource = sourceEditor.textString;
       } else {
         updatedSource = string.applyChanges(sourceCode, [
           { action: 'remove', ...nodeToRemove }
