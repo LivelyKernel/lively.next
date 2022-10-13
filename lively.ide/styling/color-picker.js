@@ -135,12 +135,17 @@ export class ColorInputModel extends ViewModel {
     p.viewModel.switchMode(color.isGradient ? color.type : 'Solid');
     connect(p.viewModel, 'value', this, 'setColor');
     connect(p.viewModel, 'close', this, 'onPickerClosed');
+    connect(p.viewModel, 'closeWithClick', this, 'onPickerClosedWithClick')
 
     this.view.fill = this.activeColor;
     this.picker = p.openInWorld();
     // this two step alignment is the simplest way to make the picker find its optimal position
     this.picker.topRight = this.view.globalBounds().topLeft();
     this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
+  }
+
+  onPickerClosedWithClick(){
+    this.onPickerClosed();
   }
 
   onPickerClosed () {
@@ -281,7 +286,7 @@ export class ColorPickerModel extends ViewModel {
             { model: 'hue picker', signal: 'hueChanged', handler: 'adjustHue' },
             { model: 'opacity picker', signal: 'opacityChanged', handler: 'adjustOpacity' },
             { model: 'shade picker', signal: 'shadeChanged', handler: 'adjustShade' },
-            { target: 'close button', signal: 'onMouseUp', handler: 'close' }
+            { target: 'close button', signal: 'onMouseUp', handler: 'closeWithClick' }
           ];
         }
       }
@@ -331,6 +336,10 @@ export class ColorPickerModel extends ViewModel {
     this.ui.gradientControl.toggle(false, this);
   }
 
+  closeWithClick () {
+    noUpdate(()=>this.close());
+  }
+
   confirm () {
     switch (this.colorMode) {
       case 'linearGradient':
@@ -348,7 +357,7 @@ export class ColorPickerModel extends ViewModel {
 
   switchMode (newMode) {
     const isGradient = ['linearGradient', 'radialGradient'].includes(newMode);
-	if (isGradient) noUpdate(() => this.context.halos().forEach(m => m.remove()));
+    if (isGradient) noUpdate(() => this.context.halos().forEach(m => m.remove()));
     else {
       if (this._target) noUpdate(() => $world.showHaloFor(this._target));
     }
