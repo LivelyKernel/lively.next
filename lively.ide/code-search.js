@@ -88,29 +88,6 @@ export class CodeSearcher extends FilterableList {
 
       historyId: { defaultValue: 'lively.morphic-code searcher' },
 
-      submorphs: {
-        initialize () {
-          this.submorphs = [
-            {
-              type: 'input',
-              name: 'input',
-              placeholder: 'Search Source Files',
-              fontColor: Color.gray.darker(),
-              defaultTextStyle: { fontSize: 14 },
-              autofit: true,
-              fill: Color.white.withA(0.5)
-            },
-            {
-              name: 'list',
-              type: 'list',
-              items: [],
-              clipMode: 'auto',
-              borderTop: { width: 1, color: Color.gray }
-            }
-          ];
-        }
-      },
-
       input: {
         after: ['submorphs'],
         derived: true,
@@ -162,6 +139,8 @@ export class CodeSearcher extends FilterableList {
     this.reset();
   }
 
+  relayout () { }
+
   reset () {
     this.caseModeActive = false;
     this.regexModeActive = false;
@@ -185,6 +164,7 @@ export class CodeSearcher extends FilterableList {
     connect(this.get('regexMode').viewModel, 'fire', this, 'regexModeToggled', { converter: '() => target.searchModeToggled("regex")' });
     connect(this.get('search chooser').viewModel, 'selection', this, 'handleSpecialSearchModes');
     connect(this.get('search chooser').viewModel, 'selection', this, 'searchAgain');
+    connect(this.get('reload').viewModel, 'fire', this, 'searchAgain');
     connect(this.get('input'), 'inputChanged', this, 'updateFilter');
     connect(this.get('list'), 'selection', this, 'selectionChanged');
     connect(this.get('list'), 'onItemMorphDoubleClicked', this, 'acceptInput');
