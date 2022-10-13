@@ -24,7 +24,7 @@ import browserCommands from './commands.js';
 // Browser UI
 // -=-=-=-=-=-
 
-import { categorizer, fuzzyParse } from 'lively.ast';
+import { categorizer, parse, query, fuzzyParse } from 'lively.ast';
 import { testsFromSource } from '../../test-runner.js';
 import * as modules from 'lively.modules/index.js';
 import DarkTheme from '../../themes/dark.js';
@@ -621,6 +621,9 @@ export class BrowserModel extends ViewModel {
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
             { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' },
             { target: 'source editor', signal: 'onScroll', handler: 'repositionComponentEditButtons' },
+            { target: 'source editor', signal: 'addPlugin', handler: 'toggleComponentControlsOnOccur' },
+            { target: 'source editor', signal: 'removePlugin', handler: 'toggleComponentControlsOnOccur' },
+            { target: 'source editor', signal: 'textString', handler: 'resetComponentControls' },
             { model: 'tabs', signal: 'onSelectedTabChange', handler: 'browsedTabChanged' },
             { model: 'tabs', signal: 'oneTabRemaining', handler: 'makeTabsNotCloseable' },
             { model: 'tabs', signal: 'becameVisible', handler: 'relayout' },
@@ -1553,25 +1556,42 @@ export class BrowserModel extends ViewModel {
     metaInfoText.toggleTestButton(hasTests);
   }
 
-  async injectComponentEditControls (mod) {
-    const { sourceEditor: editor } = this.ui;
-    editor.submorphs = [];
-    if (!mod.name.endsWith('.cp.js')) return;
-    mod = modules.module(mod.url);
-    const { varDecls } = await mod.scope();
-    for (let decl of varDecls) {
-      const varName = decl.declarations[0]?.id?.name;
+  async getComponentDeclsFromScope (modId, scope) {
+    const mod = modules.module(modId);
+    if (!scope) scope = await mod.scope();
+    const componentDecls = [];
+    for (let decl of scope.varDecls) {
+      const varName = decl.declarations[0]?.id?.name; // better to use a source descriptor??
       if (!varName) continue;
       const val = mod.recorder[varName];
       if (val?.isComponentDescriptor) {
-        await this.ensureComponentEditButtonFor(val);
-        val.refreshDependants();
+        componentDecls.push([val, decl]);
       }
+    }
+    return componentDecls;
+  }
+
+  async injectComponentEditControls (mod) {
+    const { sourceEditor: editor } = this.ui;
+    editor.submorphs = [];
+    editor.anchors = editor.anchors.filter(anchor => !anchor.id?.startsWith('Component->'));
+    if (!mod.name.endsWith('.cp.js')) return;
+    for (let [val, decl] of await this.getComponentDeclsFromScope(mod.url)) {
+      await this.ensureComponentEditButtonFor(val, decl);
+    }
+  }
+
+  async resetComponentControls () {
+    const { sourceEditor: editor } = this.ui;
+    const { scope } = query.topLevelDeclsAndRefs(parse(editor.textString));
+    for (let [val, decl] of await this.getComponentDeclsFromScope(this.selectedModule.url, scope)) {
+      const matchingControl = editor.submorphs.find(m => m.componentDescriptor === val);
+      if (matchingControl) matchingControl.declaration = decl;
     }
   }
 
   repositionComponentEditButtons () {
-    this.ui.sourceEditor.submorphs.forEach(m => m.positionInLine());
+    this.ui.sourceEditor.submorphs.forEach(m => m.isComponentControl && m.positionInLine());
   }
 
   showComponentEditButtons () {
@@ -1579,18 +1599,31 @@ export class BrowserModel extends ViewModel {
     this.ui.sourceEditor.submorphs.forEach(m => m.visible = true);
   }
 
+  toggleComponentControlsOnOccur () {
+    if (this.ui.sourceEditor.pluginFind(plugin => plugin.isOccurPlugin)) {
+      this.hideComponentEditButtons();
+    } else this.showComponentEditButtons();
+  }
+
   hideComponentEditButtons () {
     this.ui.sourceEditor.submorphs.forEach(m => m.visible = false);
   }
 
-  async ensureComponentEditButtonFor (componentDescriptor) {
+  async ensureComponentEditButtonFor (componentDescriptor, declaration) {
     const { ComponentEditButton } = await System.import('lively.ide/js/browser/ui.cp.js');
-    const btn = part(ComponentEditButton, { name: 'edit component btn', componentDescriptor, epiMorph: true, opacity: 0 });
     const editor = this.ui.sourceEditor;
+    const btn = part(ComponentEditButton, {
+      name: 'edit component btn',
+      componentDescriptor,
+      epiMorph: true,
+      opacity: 0,
+      declaration
+    });
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);
     await btn.positionInLine();
     btn.opacity = 1;
+    return btn;
   }
 
   async runOnServer (source) {
