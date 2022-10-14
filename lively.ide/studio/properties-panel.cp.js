@@ -104,6 +104,9 @@ export class PropertiesPanelModel extends ViewModel {
     connect(aMorph, 'onHaloOpened', this, 'focusOn', {
       garbageCollect: true
     });
+    connect(aMorph, 'onHaloRemoved', this, 'clearFocus', {
+      garbageCollect: true
+    });
   }
 
   detachFromTarget (aMorph) {
@@ -118,7 +121,7 @@ export class PropertiesPanelModel extends ViewModel {
     connect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
     });
-    connect(aWorld, 'haloRemoved', this, 'clearFocus', {
+    connect(aWorld, 'onHaloRemoved', this, 'clearFocus', {
       garbageCollect: true
     });
   }
