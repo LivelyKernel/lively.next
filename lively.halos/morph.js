@@ -2051,10 +2051,15 @@ export default class Halo extends Morph {
   }
 
   customDrag (evt) {
-    if (!this.world()) return;
+    if (!this.world() || this._dragFromSidebar) return;
+    if (evt.type === 'pointermove' && evt.targetMorphs.find(m => m.name === 'properties panel')) {
+      this._dragFromSidebar = true;
+      return;
+    }
     this.dragHalo().update(evt.position.subPt(this._lastDragPos));
     this.dragHalo().visible = false;
     this._lastDragPos = evt.position;
+    this._dragFromSidebar = false;
   }
 
   onMouseDown (evt) {
