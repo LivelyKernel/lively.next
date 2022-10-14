@@ -12,7 +12,7 @@ import {
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
 import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
-import { connect, signal, disconnect, disconnectAll, once } from 'lively.bindings';
+import { connect, noUpdate, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 import * as moduleManager from 'lively.modules';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
@@ -2083,12 +2083,12 @@ export default class Halo extends Morph {
       const morphsBelowHaloMorph = morphsBelow.slice(morphsBelow.indexOf(this.target) + 1);
       const newTarget = morphsBelowHaloMorph[0] || morphsBelow[0] || evt.world;
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
-      this.remove();
+      noUpdate(() => this.remove());
     }
-    if (evtTarget === this && this.target.isWorld) { return this.remove(); }
+    if (evtTarget === this && (this.target.isWorld || this.target.owner.isWorld)) return this.remove();
 
     if (evtTarget === this || evtTarget && !evtTarget.isHaloItem && !this.nameHalo().nameHolders.includes(evtTarget.owner)) {
-      if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { return this.remove(); }
+      if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { return noUpdate(() => this.remove()); }
     }
     this.target.onHaloMouseDown(evt);
   }
