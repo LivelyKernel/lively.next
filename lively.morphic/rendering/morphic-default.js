@@ -148,6 +148,10 @@ div.text-layer span {
 
 /*-=- input elements -=-*/
 
+.Popups {
+  z-index: 3;
+}
+
 input::-webkit-input-placeholder {
   color: rgb(202, 202, 202);
 }

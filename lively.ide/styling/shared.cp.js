@@ -68,6 +68,7 @@ const PopupWindow = component({
     resizeSubmorphs: true
   }),
   nativeCursor: 'grab',
+  styleClasses: ['Popups'],
   submorphs: [{
     name: 'header menu',
     epiMorph: true,
