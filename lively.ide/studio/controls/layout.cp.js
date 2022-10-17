@@ -141,17 +141,23 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
   toggleWrapping () {
     const layout = this.targetMorph.layout;
-    this.targetMorph.layout = layout.with({ wrapSubmorphs: !layout.wrapSubmorphs });
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = layout.with({ wrapSubmorphs: !layout.wrapSubmorphs });
+    });
     this.update('wrapping');
   }
 
   setVerticalFlow () {
-    this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'column' });
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'column' });
+    });
     this.update();
   }
 
   setHorizontalFlow () {
-    this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'row' });
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'row' });
+    });
     this.update();
   }
 
@@ -167,7 +173,9 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     this.view.master = this.activeSectionComponent;
 
     const layout = this.targetMorph && this.targetMorph.layout;
-    if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
+    });
     this.update();
 
     signal(this, 'layout changed');
@@ -181,8 +189,10 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
     if (this.targetMorph && this.targetMorph.layout) {
       const layoutableSubmorphs = this.targetMorph.layout.layoutableSubmorphs;
-      this.targetMorph.layout = null;
-      layoutableSubmorphs.forEach(m => m.position = m.position);
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.layout = undefined;
+        layoutableSubmorphs.forEach(m => m.position = m.position);
+      });
     }
     this.popup = false;
 
@@ -225,10 +235,10 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
             ...['top', 'right', 'bottom', 'left'].map(side => ({
               target: 'padding ' + side, signal: 'number', handler: 'confirm'
             })),
-            { model: 'spacing selector', signal: 'selection', handler: 'changeMorphSpacing' },
+            { model: 'spacing selector', signal: 'selection', handler: 'confirm' },
             { target: 'spacing preview', signal: 'onMouseMove', handler: 'showLayoutPreview' },
             { target: 'spacing preview', signal: 'onHoverOut', handler: 'clearLayoutPreview' },
-            { target: 'spacing preview', signal: 'onMouseDown', handler: 'setAlignmentConfig' }
+            { target: 'spacing preview', signal: 'onMouseDown', handler: 'confirm' }
           ];
         }
       }
@@ -237,26 +247,20 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
 
   confirm () {
     const {
-      paddingTop, paddingRight, paddingBottom, paddingLeft
+      paddingTop, paddingRight, paddingBottom, paddingLeft,
+      spacingSelector, spacingPreview
     } = this.ui;
     const layout = this.targetMorph.layout;
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
       this.targetMorph.layout = layout.with({
+        justifySubmorphs: spacingSelector.selection,
+        align: spacingPreview.layout.align,
+        axisAlign: spacingPreview.layout.axisAlign,
         padding: Rectangle.inset(paddingLeft.number,
           paddingTop.number,
           paddingRight.number,
           paddingBottom.number)
       });
-    });
-  }
-
-  changeMorphSpacing () {
-    const {
-      spacingSelector
-    } = this.ui;
-    const layout = this.targetMorph.layout;
-    this.targetMorph.layout = layout.with({
-      justifySubmorphs: spacingSelector.selection
     });
     this.update();
   }
@@ -276,16 +280,6 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
       spacingSelector.selection = layout.justifySubmorphs;
       containerPlaceholder.previewLayout(layout);
     });
-  }
-
-  setAlignmentConfig (evt) {
-    const layout = this.targetMorph.layout;
-    const { spacingPreview } = this.ui;
-    this.targetMorph.layout = layout.with({
-      align: spacingPreview.layout.align,
-      axisAlign: spacingPreview.layout.axisAlign
-    });
-    this.update();
   }
 
   showLayoutPreview (evt) {
