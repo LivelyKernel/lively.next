@@ -44,11 +44,14 @@ export class ConstraintsManagerModel extends ViewModel {
     if (!this.targetMorph) return;
     const owner = this.targetMorph.owner;
     if (owner.isWorld) return;
-    if (!owner.layout && (x !== 'fixed' || y !== 'fixed')) {
-      owner.layout = new ConstraintLayout({
-        submorphSettings: owner.submorphs.map(m => [m.name, { x: 'fixed', y: 'fixed' }])
-      });
-    }
+    owner.withMetaDo({ reconcileChanges: true }, () => {
+      if (!owner.layout && (x !== 'fixed' || y !== 'fixed')) {
+        owner.layout = new ConstraintLayout({
+          submorphSettings: owner.submorphs.map(m => [m.name, { x: 'fixed', y: 'fixed' }])
+        });
+      }
+    });
+
     return owner.layout;
   }
 
@@ -99,7 +102,7 @@ export class ConstraintsManagerModel extends ViewModel {
       y: verticalConstraint
     });
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.owner.layout = layout;
+      this.targetMorph.owner.layout = layout.getSpec().submorphSettings.length > 0 ? layout : undefined;
     });
   }
 }
