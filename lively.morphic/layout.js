@@ -1236,7 +1236,7 @@ export class ConstraintLayout extends Layout {
   settingsFor (morph) {
     // move, resize, scale, fixed, center
     const settings = this.constraintLayoutSettingsForMorphs.get(morph);
-    return settings || { x: 'scale', y: 'scale' };
+    return settings || { x: 'fixed', y: 'fixed' };
   }
 
   changeSettingsFor (morph, mergin, save = false) {
