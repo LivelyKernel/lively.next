@@ -1191,8 +1191,14 @@ export class ConstraintLayout extends Layout {
 
   getSpec () {
     if (!this.container) return this.config;
+    const submorphSettings = [];
+    for (let m of this.layoutableSubmorphs) {
+      const settings = this.settingsFor(m);
+      if (settings.x === 'fixed' && settings.y === 'fixed') continue;
+      submorphSettings.push([m.name, settings]);
+    }
     return {
-      submorphSettings: this.submorphSettings,
+      submorphSettings,
       reactToSubmorphAnimations: this.reactToSubmorphAnimations,
       lastExtent: this.lastExtent
     };
