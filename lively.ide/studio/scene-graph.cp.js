@@ -394,7 +394,9 @@ export class MorphNodeModel extends ViewModel {
     tree.collapse(node); // collapse the node that is removed in case it is expanded
     tree.treeData.parentNode(node).container.onChildRemoved(this); // remove the node from the data
     this._data = tree.treeData.remove(node); // store the data in case it is needed again
-    node.container.target.remove(); // remove the morph from the world aready
+    view.withMetaDo({ reconcileChanges: true }, () => {
+      node.container.target.remove(); // remove the morph from the world aready
+    });
     tree.update(true); // refresh the tree to render the new tree
 
     this._data.globalTargetPosition = globalTargetPosition;
@@ -436,17 +438,20 @@ export class MorphNodeModel extends ViewModel {
     const nextIndex = this.node.children.indexOf(child.node || child._data) + 1;
     const neighbor = this.node.children[nextIndex];
     const posBackup = child.target.position;
-    child.target.remove();
-    if (neighbor) {
-      const actualIndex = this.target.submorphs.indexOf(neighbor.container.target);
-      this.target.addMorphAt(child.target, actualIndex);
-      child.target.globalPosition = posBackup;
-    } else {
-      this.target.addMorph(child.target);
-      child.target.globalPosition = posBackup;
-    }
-    if (child._data.globalTargetPosition) child.target.position = this.target.localize(child._data.globalTargetPosition);
-    else if (this.target.isWorld) {
+    this.target.withMetaDo({ reconcileChanges: true }, () => {
+      child.target.remove();
+      if (neighbor) {
+        const actualIndex = this.target.submorphs.indexOf(neighbor.container.target);
+        this.target.addMorphAt(child.target, actualIndex);
+        child.target.globalPosition = posBackup;
+      } else {
+        this.target.addMorph(child.target);
+        child.target.globalPosition = posBackup;
+      }
+    });
+    if (child._data.globalTargetPosition) {
+      child.target.position = this.target.localize(child._data.globalTargetPosition);
+    } else if (this.target.isWorld) {
       child.target.center = $world.center;
       child.target.show();
     }
