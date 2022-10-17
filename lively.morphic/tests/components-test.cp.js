@@ -291,11 +291,18 @@ describe('spec based components', () => {
         { name: 'bob', master: e1 },
         {
           COMMAND: 'add',
-          props: inline1 = new PolicyApplicator({
+          // ignore the meta prop...
+          props: (inline1 = new PolicyApplicator({
             name: 'foo',
             fill: Color.gray,
             submorphs: [{ name: 'bob', fill: Color.green }]
-          }, e1),
+          }, e1), inline1.__wasAddedToDerived__ = true,
+          inline1[Symbol.for('lively-module-meta')] = {
+            exportedName: 'e2',
+            moduleId: 'lively.morphic/tests/components-test.cp.js',
+            path: ['foo'],
+            range: false
+          }, inline1),
           before: null
         },
         {
@@ -304,12 +311,16 @@ describe('spec based components', () => {
             name: 'bar',
             borderRadius: 5,
             borderColor: Color.black,
-            borderWidth: 2
+            borderWidth: 2,
+            __wasAddedToDerived__: true
           },
           before: null
         }
       ]
     }, e1);
+
+    internalSpec._dependants = new Set();
+    internalSpec[Symbol.for('lively-module-meta')] = e2.stylePolicy[Symbol.for('lively-module-meta')];
 
     inline4 = new PolicyApplicator({ name: 'bob', master: e1.stylePolicy }, new PolicyApplicator({
       name: 'bob',
@@ -363,10 +374,9 @@ describe('spec based components', () => {
             }
           ]
         },
-        { name: 'bar' }
+        { name: 'bar', __wasAddedToDerived__: true }
       ]
     };
-
     expect(internalSpec.asBuildSpec()).to.eql(expectedBuildSpec, 'equals generated');
     expect(e2.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec, 'equals defined');
 
@@ -408,13 +418,16 @@ describe('spec based components', () => {
     expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
       borderRadius: 5,
       borderColor: Color.black,
-      borderWidth: 2
+      borderWidth: 2,
+      __wasAddedToDerived__: true
     });
-    expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(new PolicyApplicator({
+    const p2 = new PolicyApplicator({
       name: 'foo',
       fill: Color.gray,
       submorphs: [{ name: 'bob', fill: Color.green }]
-    }, e1));
+    }, e1);
+    p2.__wasAddedToDerived__ = true;
+    expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(p2);
     expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
       fill: Color.black,
       type: 'text',
@@ -547,6 +560,7 @@ describe('spec based components', () => {
           ]
         },
         {
+          __wasAddedToDerived__: true,
           name: 'bar'
         }
       ]
