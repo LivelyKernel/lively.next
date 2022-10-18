@@ -12,6 +12,17 @@ import { undeclaredVariables } from '../js/import-helper.js';
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
 const exprSerializer = new ExpressionSerializer();
 
+function getScopeMaster (m) {
+  while (m && !m.master && !m.isComponent) {
+    m = m.owner;
+  }
+  return m;
+}
+
+function getPathFromScopeMaster (m) {
+  return arr.takeWhile(m.ownerChain(), m => !m.master && !m.isComponent).map(m => m.name);
+}
+
 /*************************
  * EXPRESSION GENERATION *
  *************************/
@@ -124,6 +135,41 @@ export function createInitialComponentDefinition (aComponent, asExprObject = fal
  ******************/
 
 /**
+ * Retrieve a property declaration from a properties nodes.
+ * @param { object } propsNode - The AST node of the properties object (spec) for a particular morph in a component definition.
+ * @param { string } prop - The name of the prop to retrieve.
+ * @returns { object|null } If present, the node the prop def.
+ */
+export function getProp (propsNode, prop) {
+  if (!propsNode) return null;
+  const [propNode] = query.queryNodes(propsNode, `
+  / Property [
+    /:key Identifier [ @name == '${prop}' ]
+   ]
+ `);
+  return propNode;
+}
+
+function drillDownPath (startNode, path) {
+  // directly resolve step by step with a combo of a submorph/name prop resolution
+  let curr = startNode;
+  while (path.length > 0) {
+    const name = path.shift();
+    [curr] = query.queryNodes(curr, `./ ObjectExpression [
+         /:properties "*" [
+           Property [
+              /:key Identifier [ @name == 'name' ]
+           && /:value Literal [ @value == '${name}']
+           ]
+         ]
+       ]`);
+    if (path.length > 0 && curr) curr = getProp(curr, 'submorphs')?.value;
+    else break;
+  }
+  return curr;
+}
+
+/**
  * Returns the AST node of the component declarator inside the module;
  * @param { object } parsedContent - The AST of the module the component definition should be retrieved from.
  * @param { string } componentName - The name of the component.
@@ -174,9 +220,7 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
 
   if (aMorph?.isComponent) {
     return query.queryNodes(parsedComponent, `
-  .//  ObjectExpression [
-         /:properties "*"
-       ]
+  .//  ObjectExpression
   `)[0];
   }
 
@@ -190,8 +234,52 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
          ]
        ]
   `);
-  if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + name);
+  // always pick the one closest
+  // if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + name);
   return morphDefs[0];
+}
+
+function getNodeFromSubmorphs (submorphsNode, morphName) {
+  const [partOrAddRef] = query.queryNodes(submorphsNode, `
+    ./  CallExpression [
+         /:callee Identifier [ @name == 'part' || @name == 'add' ]
+      && /:arguments "*" [
+           CallExpression [
+             /:callee Identifier [ @name == 'part' ]
+          && /:arguments "*" [
+            ObjectExpression [
+               /:properties "*" [
+                   Property [
+                      /:key Identifier [ @name == 'name' ]
+                   && /:value Literal [ @value == '${morphName}']
+                   ]
+                 ]
+               ]
+             ]
+           ]
+           || ObjectExpression [
+               /:properties "*" [
+                 Property [
+                    /:key Identifier [ @name == 'name' ]
+                 && /:value Literal [ @value == '${morphName}']
+                 ]
+               ]
+             ]
+           ]
+         ]
+    `);
+  if (partOrAddRef) return partOrAddRef; // FIXME: how can we express this in a single query?
+  const [propNode] = query.queryNodes(submorphsNode, `
+  ./  ObjectExpression [
+         /:properties "*" [
+           Property [
+              /:key Identifier [ @name == 'name' ]
+           && /:value Literal [ @value == '${morphName}']
+           ]
+         ]
+       ]
+  `);
+  return propNode;
 }
 
 /**
@@ -205,44 +293,19 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
  * @param { Morph } aMorph - A morph object we use the name of to find the properties node in the definition.
  * @returns { object|null } The AST node comprising the `part()`/`add()` call, if nessecary.
  */
-export function getMorphNode (parsedComponent, aMorph) {
-  // FIXME: also accept a string as argument?
+export function getMorphNode (componentScope, aMorph) {
   // often the morph node is just the properties node itself
   // but when the morph is derived from another master component
   // it is wrapped inside the part() call, which then needs to be returned
-  const [partRef] = query.queryNodes(parsedComponent, `
-    //  CallExpression [
-         /:arguments "*" [
-           ObjectExpression [
-             /:properties "*" [
-               Property [
-                  /:key Identifier [ @name == 'name' ]
-               && /:value Literal [ @value == '${aMorph.name}']
-               ]
-             ]
-           ]
-         ]
-       ]
-    `);
-  if (partRef) { return partRef; } // covers part() and add() cases
-  // also catch the case where we are wrapped inside an add call,
-  // i.e. add(part(....))
-  return getPropertiesNode(parsedComponent, aMorph);
-}
-
-/**
- * Retrieve a property declaration from a properties nodes.
- * @param { object } propsNode - The AST node of the properties object (spec) for a particular morph in a component definition.
- * @param { string } prop - The name of the prop to retrieve.
- * @returns { object|null } If present, the node the prop def.
- */
-export function getProp (propsNode, prop) {
-  const [propNode] = query.queryNodes(propsNode, `
-  / Property [
-    /:key Identifier [ @name == '${prop}' ]
-   ]
- `);
-  return propNode;
+  // FIXME: This also resolves morphs outside of the scope controlled by the component
+  //        This never leads to intentional results. We avoid that by utilizing the
+  //        owner chain of the morph.
+  const path = getPathFromScopeMaster(aMorph).reverse();
+  const ownerNode = drillDownPath(componentScope, path);
+  if (!ownerNode) return null;
+  const submorphsNode = getProp(ownerNode, 'submorphs')?.value;
+  if (!submorphsNode) return null;
+  return getNodeFromSubmorphs(submorphsNode, aMorph.name);
 }
 
 /**
@@ -267,11 +330,8 @@ export function getProp (propsNode, prop) {
  * @returns { object } The properties node of the morph
  */
 export function getComponentScopeFor (parsedComponent, morphInScope) {
-  let m = morphInScope;
-  while (!m.master && !m.isComponent) {
-    m = m.owner;
-    if (!m) return parsedComponent;
-  }
+  let m = getScopeMaster(morphInScope);
+  if (!m) return parsedComponent;
   try {
     return getPropertiesNode(parsedComponent, m) || parsedComponent;
   } catch (err) {
@@ -286,16 +346,24 @@ export function getComponentScopeFor (parsedComponent, morphInScope) {
  ************************/
 
 /**
- * Insert the morph at the end of the submorphs array, operating on a source code string.
+ * Insert the morph into the submorphs array, operating on a source code string. By default, we append
+ * the morph to the submorphs array. If a sibling morph is provided we insert the morph before the corresponding expression.
  * @param { string } sourceCode - The source code to patch.
  * @param { object } submorphsArrayNode - The AST node the points to a submorphs array in the component definition.
  * @param { string } addedMorphExpr - The expression that is supposed to be placed into the component definition. i.e. part(), add() or just plain {...}
  * @param { Text } [sourceEditor] - An optional source code editor that serves as the store of the source code.
+  * @param { Morph } [nextSibling] - The morph we want to be inserted in front of instead of appending to the end.
  * @returns { string } The transformed source code.
  */
-export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sourceEditor = false) {
-  const insertPos = arr.last(submorphsArrayNode.elements).end;
-  addedMorphExpr = ',' + addedMorphExpr;
+export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sourceEditor = false, nextSibling = false) {
+  let insertPos = arr.last(submorphsArrayNode.elements).end;
+  if (nextSibling) {
+    const siblingNode = getNodeFromSubmorphs(submorphsArrayNode, nextSibling.name);
+    insertPos = siblingNode.start;
+    addedMorphExpr += ',';
+  } else {
+    addedMorphExpr = ',' + addedMorphExpr;
+  }
   if (sourceEditor) {
     sourceEditor.insertText(addedMorphExpr, sourceEditor.indexToPosition(insertPos));
     return sourceEditor.textString;
@@ -319,15 +387,47 @@ export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sou
 export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
   const nameProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'name');
   const typeProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'type');
+  const submorphsProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'submorphs');
   const modelProp = propertiesNode.properties.findIndex(prop => prop.key.name?.match(/viewModelClass|defaultViewModel/));
-  const afterProp = propertiesNode.properties[Math.max(typeProp, nameProp, modelProp)];
-  const keyValueExpr = ',\n' + key + ': ' + valueExpr;
+  const isVeryFirst = propertiesNode.properties.length === 0;
+  let afterPropNode = propertiesNode.properties[Math.max(typeProp, nameProp, modelProp)];
+  let keyValueExpr = '\n' + key + ': ' + valueExpr;
   let insertationPoint;
-  if (!afterProp || key === 'submorphs') {
-    insertationPoint = arr.last(propertiesNode.properties).end;
+  if (!afterPropNode || key === 'submorphs') {
+    if (isVeryFirst) insertationPoint = propertiesNode.start + 1;
+    else afterPropNode = arr.last(propertiesNode.properties);
   }
-  if (afterProp && !insertationPoint) {
-    insertationPoint = afterProp.end;
+  if (submorphsProp > -1) {
+    // ensure that we are inserted before
+    const ia = afterPropNode ? propertiesNode.properties.indexOf(afterPropNode) : 0;
+    afterPropNode = propertiesNode.properties[Math.min(ia, submorphsProp - 1)];
+    if (!afterPropNode) {
+      insertationPoint = propertiesNode.start + 1;
+      keyValueExpr = keyValueExpr + ','; // but still need to ensure the comma
+    }
+  }
+  if (afterPropNode) {
+    keyValueExpr = ',' + keyValueExpr;
+  }
+  if (afterPropNode && !insertationPoint) {
+    insertationPoint = afterPropNode.end;
+  }
+
+  // in this is the very first property we insert at all,
+  // we need to make sure no superflous newlines are kept around...
+  if (isVeryFirst) {
+    keyValueExpr = `{${keyValueExpr}\n}`;
+    if (sourceEditor) {
+      sourceEditor.replace({
+        start: sourceEditor.indexToPosition(propertiesNode.start),
+        end: sourceEditor.indexToPosition(propertiesNode.end)
+      }, keyValueExpr);
+      return sourceEditor.textString;
+    }
+    return string.applyChanges(sourceCode, [
+      { action: 'remove', ...propertiesNode },
+      { action: 'insert', start: insertationPoint, lines: [keyValueExpr] }
+    ]);
   }
 
   if (sourceEditor) {
