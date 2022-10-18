@@ -953,7 +953,7 @@ const commands = [
       if (relayed) return relayed;
 
       const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
-      const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll']);
+      const loc = obj.select(args, ['packageName', 'moduleName', 'textPosition', 'codeEntity', 'systemInterface', 'scroll', 'range']);
       const fileName = args.packageName ? args.packageName + args.moduleName : args.moduleName;
       let browser;
       if (args.reuse) {

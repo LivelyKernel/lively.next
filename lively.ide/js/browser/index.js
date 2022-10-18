@@ -992,7 +992,8 @@ export class BrowserModel extends ViewModel {
       textPosition,
       codeEntity,
       scroll,
-      systemInterface
+      systemInterface,
+      range
     } = browseSpec;
 
     const { sourceEditor } = this.ui;
@@ -1043,6 +1044,13 @@ export class BrowserModel extends ViewModel {
 
     if (codeEntity && !scroll) {
       await this.selectCodeEntity(codeEntity, false);
+    }
+
+    if (range) {
+      const startPos = sourceEditor.indexToPosition(range.start);
+      const endPos = sourceEditor.indexToPosition(range.end);
+      sourceEditor.selection = { start: startPos, end: endPos };
+      sourceEditor.scrollPositionIntoView(startPos, pt(0, sourceEditor.height / 3));
     }
 
     if (textPosition) {
