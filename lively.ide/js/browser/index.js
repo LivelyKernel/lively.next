@@ -1598,9 +1598,12 @@ export class BrowserModel extends ViewModel {
     editor.submorphs = [];
     editor.anchors = editor.anchors.filter(anchor => !anchor.id?.startsWith('Component->'));
     if (!mod.name.endsWith('.cp.js')) return;
-    for (let [val, decl] of await this.getComponentDeclsFromScope(mod.url)) {
-      await this.ensureComponentEditButtonFor(val, decl);
-    }
+    this.getComponentDeclsFromScope(mod.url)
+      .then(decls => Promise.all(
+        decls.map(([val, decl]) => {
+          return this.ensureComponentEditButtonFor(val, decl);
+        }))
+      ).then(btns => btns.forEach(btn => btn.opacity = 1));
   }
 
   async resetComponentControls () {
@@ -1644,7 +1647,6 @@ export class BrowserModel extends ViewModel {
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);
     await btn.positionInLine();
-    btn.opacity = 1;
     return btn;
   }
 
