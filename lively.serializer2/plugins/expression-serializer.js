@@ -235,6 +235,25 @@ function getExpression (name, val, ctx) {
   return val;
 }
 
+function handleOverriddenMaster (masterPolicy, ctx) {
+  const { asExpression, nestedExpressions } = ctx;
+  if (!asExpression) return; // ignore overridden master if not serializing as expression
+  let expr = ''; let masterComponentName; let modulePath; let bindings = {};
+  const { _autoMaster, _hoverMaster, _clickMaster } = masterPolicy;
+  for (let [name, policy] of [['auto', _autoMaster], ['hover', _hoverMaster], ['click', _clickMaster]]) {
+    if (!policy) continue;
+    if (name === 'auto' && _autoMaster === masterPolicy.parent) continue;
+    ({ exportedName: masterComponentName, moduleId: modulePath } = policy[Symbol.for('lively-module-meta')]);
+    if (expr) expr += ', ';
+    expr += name + ': ' + masterComponentName;
+    bindings[modulePath]?.push(masterComponentName) || (bindings[modulePath] = [masterComponentName]);
+  }
+  if (!expr) return;
+  const exprId = string.newUUID();
+  nestedExpressions[exprId] = { __expr__: `{ ${expr} }`, bindings };
+  return exprId;
+}
+
 /**
  * Turns a spec into a fully initialized morph hierarchy (or base object).
  * @param { Object } serializedSpec - A proper spec object.
@@ -433,7 +452,11 @@ export function serializeSpec (morph, opts = {}) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
     if (propsNotManagedByMaster && !propsNotManagedByMaster.includes(name)) continue;
-    if (name === 'master') continue;
+    if (name === 'master') {
+      const val = handleOverriddenMaster(morph.master, subopts);
+      if (val) exported.master = val;
+      continue;
+    }
     if (name === 'position' && masterInScope?.isPositionedByLayout(morph)) continue;
     if (name === 'extent') {
       // FIXME: This wont work with new Text morphs in label mode.
@@ -587,7 +610,7 @@ export function serializeSpec (morph, opts = {}) {
         'lively.morphic': ['morph']
       };
     } else if (exposeMasterRefs && morph.master) {
-      const { exportedName: masterComponentName, moduleId: modulePath, path } = morph.master.parent[Symbol.for('lively-module-meta')];
+      const { exportedName: masterComponentName, moduleId: modulePath } = morph.master.parent[Symbol.for('lively-module-meta')];
       // right now still no good way to reconcile the modelView props
       // awlays drop morphs with only names here, since those are copied over by
       // the part already
