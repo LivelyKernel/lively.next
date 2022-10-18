@@ -178,7 +178,7 @@ export class ComponentChangeTracker {
    * @param { object } addedMorphExpr - The expression to insert as expression object.
    * @returns { string } The transformed source code.
    */
-  insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr) {
+  insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
     const propsNode = getPropertiesNode(parsedComponent, newOwner);
     const submorphsArrayNode = propsNode && getProp(propsNode, 'submorphs')?.value;
     this.needsLinting = true;
@@ -199,7 +199,7 @@ export class ComponentChangeTracker {
           `[${addedMorphExpr.__expr__}]`,
           this.sourceEditor);
     } else {
-      return insertMorph(sourceCode, submorphsArrayNode, addedMorphExpr.__expr__, this.sourceEditor);
+      return insertMorph(sourceCode, submorphsArrayNode, addedMorphExpr.__expr__, this.sourceEditor, nextSibling);
     }
   }
 
@@ -479,8 +479,8 @@ export class ComponentChangeTracker {
         }
       };
     }
+    const nextSibling = newOwner.submorphs[newOwner.submorphs.indexOf(addedMorph) + 1];
     if (this.withinDerivedComponent(newOwner)) {
-      const nextSibling = newOwner.submorphs[newOwner.submorphs.indexOf(addedMorph) + 1];
       addedMorph.__wasAddedToDerived__ = true;
       addedMorphExpr.__expr__ = `add(${addedMorphExpr.__expr__}${nextSibling ? `, "${nextSibling.name}"` : ''})`;
       const b = addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] || [];
@@ -488,7 +488,7 @@ export class ComponentChangeTracker {
       addedMorphExpr.bindings[COMPONENTS_CORE_MODULE] = b;
     }
     requiredBindings.push(...Object.entries(addedMorphExpr.bindings));
-    return this.insertMorphExpression(parsedComponent, sourceCode, newOwner, addedMorphExpr);
+    return this.insertMorphExpression(parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling);
   }
 
   /**
@@ -503,7 +503,8 @@ export class ComponentChangeTracker {
     const { sourceEditor } = this;
     const [removedMorph] = removeChange.args;
     let updatedSource = sourceCode;
-    let nodeToRemove = getMorphNode(parsedComponent, removedMorph);
+    // FIXME: This may fetch the incorrect node, if there is a equally named submorph deeper down the spec
+    let nodeToRemove = getMorphNode(getComponentScopeFor(parsedComponent, removeChange.target), removedMorph);
     let submorphsNode = getProp(getPropertiesNode(parsedComponent, removeChange.target), 'submorphs');
     let insertedRemove = false;
     if (!removedMorph.__wasAddedToDerived__ && this.withinDerivedComponent(removeChange.target)) {
@@ -518,7 +519,16 @@ export class ComponentChangeTracker {
       requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
       // also update the source code if the following code leaps in
       updatedSource = this.insertMorphExpression(parsedComponent, sourceCode, removeChange.target, removeMorphExpr);
+      if (nodeToRemove) {
+        // FIXME: there may be other sub sub nodes with the same name, that have been falsely selected now and previously...
+        //        DO NOT REMOVE THOSE! It is a problem to resolve sub nodes that are not part of the component scope!
+        // this need to be readjusted
+        const parsedContent = parse(updatedSource);
+        parsedComponent = getComponentNode(parsedContent, this.componentName);
+        nodeToRemove = getMorphNode(getComponentScopeFor(parsedComponent, removeChange.target), removedMorph);
+      }
       insertedRemove = true;
+      sourceCode = updatedSource;
     }
 
     if (!insertedRemove && submorphsNode?.value.elements.length < 2) {
@@ -538,7 +548,8 @@ export class ComponentChangeTracker {
            ]
          `).length === 0 &&
           submorphsNode?.value.elements.length < 2) {
-        nodeToRemove = propNode;
+        // if we are wrapped by a part call we should use the submorphs node instead
+        nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
         curr = curr.owner;
         propNode = getPropertiesNode(parsedComponent, curr);
         submorphsNode = getProp(propNode, 'submorphs');
@@ -548,12 +559,12 @@ export class ComponentChangeTracker {
     }
 
     if (nodeToRemove) {
-      if (insertedRemove) sourceCode = updatedSource;
-      while (!sourceCode[nodeToRemove.start - 1].match(/\}|\[/) &&
-            !sourceCode[nodeToRemove.start].match(/\,|\n/)) {
+      while (sourceCode[nodeToRemove.start - 1].match(/\n| /)) {
         nodeToRemove.start--;
       }
-      while (sourceCode[nodeToRemove.end].match(/\,| /)) nodeToRemove.end++;
+      while (sourceCode[nodeToRemove.end].match(/\,/)) {
+        nodeToRemove.end++;
+      }
       if (sourceEditor) {
         const morphRange = Range.fromPositions(
           sourceEditor.indexToPosition(nodeToRemove.start),
@@ -608,7 +619,10 @@ export class ComponentChangeTracker {
     const { parent } = policy;
     let val;
     if (parent) val = parent.synthesizeSubSpec(target.name)[prop];
-    else val = getDefaultValueFor(policy.getSubSpecFor(target.name).type, prop);
+    else {
+      const { type } = policy.getSubSpecFor(this.trackedComponent === target ? null : target.name);
+      val = getDefaultValueFor(type, prop);
+    }
     return !obj.equals(val, newVal);
   }
 
