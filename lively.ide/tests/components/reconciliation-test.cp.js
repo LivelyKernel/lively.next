@@ -2,7 +2,8 @@
 import { expect } from 'mocha-es6';
 import { ComponentDescriptor, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
-import { InteractiveComponentDescriptor, createInitialComponentDefinition } from '../../components/editor.js';
+import { InteractiveComponentDescriptor } from '../../components/editor.js';
+import { createInitialComponentDefinition } from '../../components/helpers.js';
 
 component.DescriptorClass = InteractiveComponentDescriptor;
 
