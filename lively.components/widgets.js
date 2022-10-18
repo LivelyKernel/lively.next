@@ -422,18 +422,21 @@ export class ValueScrubber extends Text {
     this.value = this.getCurrentValue(offset, scale);
     this.factorLabel.softRemove();
     evt.hand.extent = pt(1, 1);
-    evt.hand.fill = Color.orange;
     evt.hand.reactsToPointer = false;
   }
 
   set value (v) {
     v = Math.max(this.min, Math.min(this.max, v));
-    this.scrubbedValue = v;
+    if (!this.isBeingDragged) { this.scrubbedValue = v; }
     let textString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
     if (this.unit) textString += ' ' + this.unit;
     else textString += '';
     this.replace(this.documentRange, textString, false, true);
     this.relayout();
+  }
+
+  get isBeingDragged () {
+    return this.env.eventDispatcher.eventState.draggedMorph === this;
   }
 
   setMixed () {
