@@ -736,7 +736,7 @@ export class StylePolicy {
  * Knows, how it can be applied to a morph hierarchy!
  */
 export class PolicyApplicator extends StylePolicy {
-  static for (derivedMorph, args) {
+  static for (derivedMorph, args, parent) {
     let newPolicy;
 
     if (args.constructor === PolicyApplicator) {
@@ -746,7 +746,7 @@ export class PolicyApplicator extends StylePolicy {
     } else if (args.constructor === StylePolicy) {
       newPolicy = new this({}, args);
     } else if (arr.isSubset(obj.keys(args), ['auto', 'hover', 'click'])) {
-      newPolicy = new this({}, args);
+      newPolicy = new this({}, { auto: parent, ...args });
     }
 
     if (derivedMorph.master) {
