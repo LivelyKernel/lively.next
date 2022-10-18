@@ -2459,7 +2459,7 @@ export class BrowserModel extends ViewModel {
         () => { this.showHiddenFolders(!td.showHiddenFolders); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
         () => { this.toggleTextMap(!ed.textMap); }],
-      [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Lively Components', { float: 'none' }],
+      m.name.endsWith('.cp.js') && [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Lively Components', { float: 'none' }],
         () => { this.enableComponentBehavior(!this._initializeComponentsWithModels); }]
     ].filter(Boolean);
   }
