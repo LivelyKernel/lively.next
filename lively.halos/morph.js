@@ -9,6 +9,7 @@ import {
   morph,
   Icon, config
 } from 'lively.morphic';
+import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
 import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
@@ -531,9 +532,22 @@ class NameHaloItem extends HaloItem {
         name: 'master link',
         tooltip: meta ? 'Located in ' + meta.moduleId : false
       }));
-      meta && connect(masterLink, 'onMouseDown', () => {
-        // FIXME: also take into account the path if present?
-        $world.execCommand('open browser', { moduleName: meta.moduleId, codeEntity: meta.exportedName, reuse: true });
+      meta && connect(masterLink, 'onMouseDown', async () => {
+        const { findComponentDef, getMorphNode, getComponentScopeFor, getProp } = await System.import('lively.ide/components/helpers.js');
+        // select the range instead
+        let range;
+        if (meta.path) {
+          const parsedModule = await moduleManager.module(meta.moduleId).ast();
+          debugger;
+          const scope = getComponentScopeFor(findComponentDef(parsedModule, meta.exportedName), target.owner);
+          const submorphsNode = getProp(scope, 'submorphs')?.value;
+          range = getMorphNode(submorphsNode, target);
+        }
+        $world.execCommand('open browser', {
+          moduleName: meta.moduleId,
+          reuse: true,
+          ...range ? { range } : { codeEntity: meta.exportedName }
+        });
       });
     }
   }
