@@ -39,7 +39,9 @@ export class Tooltip extends Morph {
 
   update (target) {
     this.position = target.globalBounds().bottomCenter().subPt(target.world().scroll).addPt(pt(0, 7));
-    this.setBounds(target.world().visibleBoundsExcludingTopBar().insetBy(10).translateForInclusion(this.bounds()));
+    const visibleWorldBounds = target.world().visibleBoundsExcludingTopBar().insetBy(10);
+    const adjustedLabelBounds = visibleWorldBounds.translateForInclusion(this.bounds());
+    this.setBounds(adjustedLabelBounds.translatedBy(target.world().scroll.negated()));
   }
 
   async softRemove (cb) {
