@@ -1,10 +1,9 @@
-import { obj, Path as PropertyPath, string, num, arr, properties } from 'lively.lang';
-import { pt, Color, Rectangle, rect } from 'lively.graphics';
+import { obj, num, arr, properties } from 'lively.lang';
+import { pt, Color, Rectangle } from 'lively.graphics';
 import { signal, connect, disconnect } from 'lively.bindings';
 import {
   Morph,
   ShadowObject,
-  morph,
   Text,
   HorizontalLayout,
   Path,
@@ -44,12 +43,12 @@ class LeashEndpoint extends Ellipse {
         [this.leash, this.leash.endPoint, this.leash.startPoint],
         m => this.canConnectTo(m)
       );
-      if (this.possibleTarget != m && this.highlighter) this.highlighter.deactivate();
+      if (this.possibleTarget !== m && this.highlighter) this.highlighter.deactivate();
       this.possibleTarget = m;
       if (this.possibleTarget) {
         this.closestSide = this.possibleTarget
           .globalBounds()
-          .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition);
+          .partNameNearest(obj.keys(Leash.connectionPoints), this.globalPosition); // eslint-disable-line no-use-before-define
         this.highlighter = $world.highlightMorph($world, this.possibleTarget, false, [this.closestSide]);
         this.highlighter.show();
         this.highlighter.get('name tag').value = this.leash.getLabelFor(this.possibleTarget);
@@ -69,7 +68,7 @@ class LeashEndpoint extends Ellipse {
   getConnectionPoint () {
     const { isPath, isPolygon, vertices, origin } = this.connectedMorph;
     const gb = this.connectedMorph.globalBounds();
-    if ((isPath || isPolygon) && this.attachedSide != 'center') {
+    if ((isPath || isPolygon) && this.attachedSide !== 'center') {
       const vs = vertices.map(({ x, y }) => pt(x, y).addPt(origin));
       const ib = Rectangle.unionPts(vs);
       const side = ib[this.attachedSide]();
@@ -86,7 +85,7 @@ class LeashEndpoint extends Ellipse {
   update (change) {
     if (change &&
         !['position', 'extent', 'rotation', 'scale'].includes(change.prop) &&
-        change.target != this.connectedMorph) return;
+        change.target !== this.connectedMorph) return;
     if (!this.connectedMorph) return;
     const globalPos = this.getConnectionPoint();
     const pos = this.leash.localize(globalPos);
@@ -227,7 +226,7 @@ export class Leash extends Path {
   getEndpointStyle (idx) {
     return {
       ...this.endpointStyle,
-      ...(idx == 0 ? this.endpointStyle.start : this.endpointStyle.end)
+      ...(idx === 0 ? this.endpointStyle.start : this.endpointStyle.end)
     };
   }
 
@@ -238,7 +237,7 @@ export class Leash extends Path {
 
   controlPointsFor (side, endpoint) {
     let next = Leash.connectionPoints[side];
-    next = (endpoint == this.startPoint ? next.negated() : next);
+    next = (endpoint === this.startPoint ? next.negated() : next);
     return { previous: next.scaleBy(100), next: next.negated().scaleBy(100) };
   }
 
@@ -261,8 +260,7 @@ export class Slider extends Morph {
       submorphs: {
         after: ['value', 'max', 'min'],
         initialize () {
-          const slide = this;
-          const handle = new SliderHandle({ slider: this, name: 'slideHandle' });
+          const handle = new SliderHandle({ slider: this, name: 'slideHandle' }); // eslint-disable-line no-use-before-define
           this.submorphs = [
             new Path({
               borderColor: Color.gray.darker(),
@@ -365,8 +363,8 @@ export class ValueScrubber extends Text {
 
   onKeyDown (evt) {
     super.onKeyDown(evt);
-    if (evt.keyCombo == 'Enter') {
-      const [v, unit] = this.textString.replace('\n', '').split(' ');
+    if (evt.keyCombo === 'Enter') {
+      const [v] = this.textString.replace('\n', '').split(' ');
       if (typeof v === 'string') {
         this.value = parseFloat(v);
         this.scrub(this.scrubbedValue);
@@ -488,8 +486,7 @@ export class CheckBox extends Morph {
 
 export class LabeledCheckBox extends Morph {
   static example () {
-    const cb = new LabeledCheckBox({ label: 'foo' }).openInWorld();
-    // cb.remove()
+    new LabeledCheckBox({ label: 'foo' }).openInWorld();
   }
 
   static get properties () {
@@ -501,7 +498,7 @@ export class LabeledCheckBox extends Morph {
         values: ['left', 'right'],
         set (v) {
           this.layout = new HorizontalLayout({
-            direction: v == 'left' ? 'leftToRight' : 'rightToLeft'
+            direction: v === 'left' ? 'leftToRight' : 'rightToLeft'
           });
           this.setProperty('alignCheckBox', v);
         }
@@ -509,7 +506,7 @@ export class LabeledCheckBox extends Morph {
       layout: {
         initialize () {
           this.layout = new HorizontalLayout({
-            direction: this.alignCheckBox == 'left' ? 'leftToRight' : 'rightToLeft'
+            direction: this.alignCheckBox === 'left' ? 'leftToRight' : 'rightToLeft'
           });
         }
       },
@@ -650,10 +647,10 @@ export class DropDownSelector extends Morph {
   getMenuEntries () {
     const currentValue = this.getNameFor(this.selectedValue);
     return [
-      ...(this.selectedValue != undefined ? [{ command: currentValue, target: this }] : []),
+      ...(this.selectedValue !== undefined ? [{ command: currentValue, target: this }] : []),
       ...arr.compact(
         this.commands.map(c => {
-          return c.name != currentValue && { command: c.name, target: this };
+          return c.name !== currentValue && { command: c.name, target: this };
         })
       )
     ];
@@ -695,7 +692,7 @@ export class DropDownSelector extends Morph {
   relayout () {
     const vPrinted = this.getNameFor(this.selectedValue);
     const valueLabel = this.get('currentValue');
-    if (vPrinted == 'undefined') {
+    if (vPrinted === 'undefined') {
       valueLabel.value = 'Not set';
       valueLabel.fontColor = Color.gray;
     } else {
