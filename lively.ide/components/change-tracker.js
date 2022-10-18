@@ -289,6 +289,7 @@ export class ComponentChangeTracker {
    */
   isPositionedByLayout (aMorph) {
     const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
+    if (l?.name?.call() === 'Proportional') return false;
     return l && l.layoutableSubmorphs.includes(aMorph);
   }
 
