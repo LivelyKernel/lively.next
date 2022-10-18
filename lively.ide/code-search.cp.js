@@ -5,6 +5,7 @@ import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { SystemList } from './styling/shared.cp.js';
 import { CodeSearcher } from './code-search.js';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { Label } from 'lively.morphic/text/label.js';
 
 const ModeButtonInactive = component(ButtonDefault, {
   extent: pt(27, 27),
@@ -37,130 +38,159 @@ const ModeButtonDisabled = component(ModeButtonInactive, {
   reactsToPointer: false
 });
 
-// part(CodeSearch).openInWorld()
 const CodeSearch = component({
   type: CodeSearcher,
   name: 'code search',
   acceptsDrops: false,
-  extent: pt(538, 306),
-  layout: new ProportionalLayout({
+  extent: pt(538, 421.5),
+  layout: new TilingLayout({
+    axis: 'column',
     orderByIndex: true,
-    lastExtent: {
-      x: 538,
-      y: 306
-    },
-    reactToSubmorphAnimations: false,
-    submorphSettings: [
-      ['reload', { x: 'fixed', y: 'fixed' }],
-      ['input', { x: 'resize', y: 'fixed' }],
-      ['holder', { x: 'move', y: 'fixed' }],
-      ['list', {
-        x: 'resize',
-        y: 'resize'
-      }], ['searchInUnloadedModulesCheckbox', {
-        x: 'move',
-        y: 'move'
-      }], ['search in parts checkbox', {
-        x: 'move',
-        y: 'move'
-      }], ['search in worlds checkbox', {
-        x: 'move',
-        y: 'move'
-      }], ['search chooser', {
-        x: 'move',
-        y: 'fixed'
-      }]]
+    resizePolicies: [['controls holder', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['list', {
+      height: 'fill',
+      width: 'fill'
+    }]],
+    spacing: 5,
+    wrapSubmorphs: false,
+    renderViaCSS: false
   }),
   selectedAction: 'default',
-  submorphs: [part(ModeButtonActive, {
-    name: 'reload',
-    height: 27,
-    position: pt(0, 0),
-    submorphs: [{
-      name: 'label',
-      textAndAttributes: Icon.textAttribute('rotate-right')
-    }],
-    master: { auto: ModeButtonInactive, hover: ModeButtonInactiveHover, click: ModeButtonInactiveClick },
-    tooltip: 'Refresh Search Results'
-  }),
-  part(InputLineDefault, {
-    name: 'input',
-    borderWidth: 1,
-    borderRadius: 6,
-    dropShadow: null,
-    fontSize: 14,
-    extent: pt(243, 27),
-    position: pt(27, 0),
-    historyId: 'lively.morphic-code searcher',
-    placeholder: 'Search Source Files'
-  }), {
-    name: 'holder',
-    extent: pt(207, 27),
-    position: pt(300, 0),
-    fill: Color.transparent,
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      spacing: 2,
-      align: 'center',
-      axis: 'column'
-    }),
-    submorphs: [
-      part(ModeButtonInactive, {
-        name: 'caseMode',
-        height: 22,
+  submorphs: [
+    {
+      name: 'controls holder',
+      height: 43.0921875,
+      layout: new TilingLayout({
+        axisAlign: 'right',
+        orderByIndex: true,
+        padding: rect(5, 0, -5, 0),
+        resizePolicies: [['input', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['holder', {
+          height: 'fixed'
+        }]],
+        spacing: 2,
+        wrapSubmorphs: false
+      }),
+      borderColor: Color.rgb(23, 160, 251),
+      fill: Color.transparent,
+      position: pt(17.3, 247.4),
+      submorphs: [part(ModeButtonInactive, {
+        master: { click: ModeButtonInactiveClick, hover: ModeButtonInactiveHover },
+        name: 'reload',
+        position: pt(-415.8, -407.5),
         submorphs: [{
           name: 'label',
-          textAndAttributes: Icon.textAttribute('circle-h')
+          fontColor: Color.rgb(60, 60, 60),
+          textAndAttributes: Icon.textAttribute('rotate-right')
         }],
-        master: { auto: ModeButtonInactive, hover: ModeButtonInactiveHover, click: ModeButtonInactiveClick },
-        tooltip: 'Search Case Sensitive'
-      }),
-      part(ModeButtonInactive, {
-        name: 'regexMode',
-        height: 22,
-        submorphs: [{
-          name: 'label',
-          textAndAttributes: Icon.textAttribute('circle-question')
-        }],
-        master: { auto: ModeButtonInactive, hover: ModeButtonInactiveHover, click: ModeButtonInactiveClick },
-        tooltip: 'Search based on regular expressions.\nRegular expression should be given without quotes or literal mode slashes.'
-      }),
-      part(DropDownList, {
-        name: 'search chooser',
-        master: { auto: ModeButtonActive, click: ModeButtonInactiveClick },
-        layout: new TilingLayout({
-            align: 'center',
-          axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(10, 0, 0, 0),
-          wrapSubmorphs: false,
-          hugContentsHorizontally: true
-        }),
-        height: 22,
-        borderColor: Color.gray,
-        viewModel: {
-          openListInWorld: true,
-          listMaster: SystemList,
-          items: [
-            'in loaded modules',
-            'in loaded and unloaded modules',
-            'in parts',
-            'in worlds'
-          ]
+        tooltip: 'Refresh Search Results'
+      }), part(InputLineDefault, {
+        name: 'input',
+        borderRadius: 6,
+        borderWidth: 1,
+        extent: pt(243, 27),
+        fontFamily: 'Monaco,monospace',
+        fontSize: 14,
+        haloShadow: {
+          blur: 6,
+          color: {
+            a: 1,
+            b: 0.8588,
+            g: 0.5961,
+            r: 0.2039
+          },
+          distance: 0,
+          rotation: 45
         },
+        historyId: 'lively.morphic-code searcher',
+        padding: rect(5, 5, 0, 0),
+        placeholder: 'Search Source Files',
         submorphs: [{
-          name: 'label',
-          fontSize: 12
+          name: 'placeholder',
+          extent: pt(134, 29),
+          fontSize: 14,
+          padding: rect(5, 5, 0, 0),
+          textAndAttributes: ['Search Source Files', null]
         }]
-      })]
-  }, part(DefaultList, {
-    name: 'list',
-    extent: pt(538.7, 279.6),
-    fontFamily: 'Monaco, monospace',
-    itemPadding: rect(4, 2, 0, 0),
-    padding: rect(2, 0, 0, 0),
-    position: pt(0, 27)
-  })
+      }), {
+        name: 'holder',
+        extent: pt(89.7, 27),
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'right',
+          axisAlign: 'center',
+          hugContentsHorizontally: true,
+          orderByIndex: true,
+          padding: rect(0, 0, 5, 0),
+          spacing: 2,
+          wrapSubmorphs: false
+        }),
+        position: pt(0, 33),
+        submorphs: [part(ModeButtonInactive, {
+          master: { click: ModeButtonInactiveClick, hover: ModeButtonInactiveHover },
+          tooltip: 'Search Case Sensitive',
+          name: 'caseMode',
+          extent: pt(27, 22),
+          submorphs: [{
+            type: Label,
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('circle-h')
+          }]
+        }), part(ModeButtonInactive, {
+          master: { click: ModeButtonInactiveClick, hover: ModeButtonInactiveHover },
+          tooltip: 'Search based on regular expressions.\n\
+Regular expression should be given without quotes or literal mode slashes.',
+          name: 'regexMode',
+          extent: pt(27, 22),
+          submorphs: [{
+            type: Label,
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('circle-question')
+          }]
+        }), part(DropDownList, {
+          name: 'search chooser',
+          master: { auto: ModeButtonActive, click: ModeButtonInactiveClick },
+          viewModel: {
+            openListInWorld: true,
+            listMaster: SystemList,
+            items: [
+              'in loaded modules',
+              'in loaded and unloaded modules',
+              'in parts',
+              'in worlds'
+            ]
+          },
+          borderColor: Color.gray,
+          borderStyle: 'none',
+          extent: pt(63, 22),
+          fill: Color.darkGray,
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center',
+            hugContentsHorizontally: true,
+            orderByIndex: true,
+            padding: rect(10, 0, 0, 0),
+            wrapSubmorphs: false
+          }),
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.white
+          }]
+        })]
+      }]
+    },
+    part(DefaultList, {
+      name: 'list',
+      extent: pt(538.7, 279.6),
+      fontFamily: 'Monaco, monospace',
+      itemPadding: rect(4, 2, 0, 0),
+      padding: rect(2, 0, 0, 0),
+      position: pt(0, 27)
+    })
   ]
 })
  ;

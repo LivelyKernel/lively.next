@@ -219,7 +219,7 @@ export class CodeSearcher extends FilterableList {
   ensureIndicator (label, progress) {
     if (!this.progressIndicator) {
       let win = this.getWindow();
-      this.progressIndicator = this.addMorph(LoadingIndicator.open());
+      this.progressIndicator = this.addMorph(LoadingIndicator.open('Searching Files', { isLayoutable: false }));
       if (win) this.progressIndicator.center = win.innerBounds().center();
     }
     this.progressIndicator.label = 'Searching Files';
@@ -254,7 +254,6 @@ export class CodeSearcher extends FilterableList {
   }
 
   async searchAndUpdate (searchInput) {
-    this.get('search chooser').right = this.width - 5;
     this.get('input').acceptInput(); // for history
     let filterTokens = searchInput.split(/\s+/).filter(ea => !!ea);
 
