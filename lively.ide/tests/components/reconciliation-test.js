@@ -403,4 +403,47 @@ describe('component -> source reconciliation', function () {
       borderRadius: 100
     }`);
   });
+
+  it('properly reconciles overridden masters', async () => {
+    const alice = part(D, { name: 'alice' });
+    alice.master = { hover: B };
+    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentC.addMorph(alice);
+    });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.include('master: { hover: B }');
+  });
+
+  it('inserts morphs at the correct position when altering a base def', async () => {
+    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
+      const alice = ComponentC.addMorph({
+        name: 'alice',
+        fill: Color.lively
+      });
+      const bob = ComponentC.addMorph({
+        name: 'bob',
+        fill: Color.brown
+      }, alice);
+      const foo = ComponentC.addMorph({
+        name: 'foo',
+        fill: Color.purple
+      }, alice);
+      foo.remove();
+      ComponentC.addMorph(foo, bob);
+    });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+    expect(ComponentC.submorphs.map(m => m.name)).eql(['foo', 'bob', 'alice']);
+    expect(updatedSource).to.include(`[{
+    name: 'foo',
+    fill: Color.purple
+  }, {
+    name: 'bob',
+    fill: Color.brown
+  }, {
+    name: 'alice',
+    fill: Color.lively
+  }]`);
+  });
 });
