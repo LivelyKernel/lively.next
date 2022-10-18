@@ -337,7 +337,7 @@ export class ComponentChangeTracker {
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args.some(m => m.epiMorph)) return true;
     if (!['addMorphAt', 'removeMorph'].includes(change.selector) && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
-    if (!change.selector && obj.equals(change.prevValue, change.value)) return true;
+    if (!change.selector && change.prop !== 'layout' && obj.equals(change.prevValue, change.value)) return true;
     return false;
   }
 
