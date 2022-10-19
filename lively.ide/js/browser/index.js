@@ -1581,7 +1581,7 @@ export class BrowserModel extends ViewModel {
 
   async injectComponentEditControls (mod) {
     const { sourceEditor: editor } = this.ui;
-    editor.submorphs = [];
+    editor.submorphs = arr.compact([editor.textMap]);
     editor.anchors = editor.anchors.filter(anchor => !anchor.id?.startsWith('Component->'));
     if (!mod.name.endsWith('.cp.js')) return;
     this.getComponentDeclsFromScope(mod.url)
@@ -1606,8 +1606,12 @@ export class BrowserModel extends ViewModel {
   }
 
   showComponentEditButtons () {
+    const { sourceEditor } = this.ui;
     this.repositionComponentEditButtons();
-    this.ui.sourceEditor.submorphs.forEach(m => m.visible = true);
+    sourceEditor.submorphs.forEach(m => {
+      if (sourceEditor.textMap === m) return;
+      m.visible = true;
+    });
   }
 
   toggleComponentControlsOnOccur () {
@@ -1617,7 +1621,11 @@ export class BrowserModel extends ViewModel {
   }
 
   hideComponentEditButtons () {
-    this.ui.sourceEditor.submorphs.forEach(m => m.visible = false);
+    const { sourceEditor } = this.ui;
+    sourceEditor.submorphs.forEach(m => {
+      if (sourceEditor.textMap === m) return;
+      m.visible = false;
+    });
   }
 
   async ensureComponentEditButtonFor (componentDescriptor, declaration) {
