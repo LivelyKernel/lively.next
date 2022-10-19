@@ -532,9 +532,7 @@ const LayoutControl = component(PropertySection, {
     }]
   }))]
 });
-// AutoLayoutAlignmentFlap.openInWorld()
-// m = AutoLayoutAlignmentFlap.get('padding top')
-// part(AutoLayoutAlignmentFlap, { viewModel: { targetMorph: this.get('test layout')}}).openInWorld()
+
 const AutoLayoutAlignmentFlap = component(DarkFlap, {
   defaultViewModel: AutoLayoutAlignmentFlapModel,
   name: 'auto layout alignment control',
@@ -567,7 +565,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
           tooltip: 'Padding Top',
           submorphs: [{
             name: 'value',
-            extent: pt(13, 21),
             padding: rect(0, 2, 0, -2)
           }]
         }),
@@ -578,7 +575,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
           tooltip: 'Padding Bottom',
           submorphs: [{
             name: 'value',
-            extent: pt(13, 21),
             padding: rect(0, 2, 0, -2)
           }]
         }),
@@ -589,7 +585,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
           tooltip: 'Padding Left',
           submorphs: [{
             name: 'value',
-            extent: pt(13, 21),
             padding: rect(0, 2, 0, -2)
           }]
         }),
@@ -600,7 +595,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
           tooltip: 'Padding Right',
           submorphs: [{
             name: 'value',
-            extent: pt(13, 21),
             padding: rect(0, 2, 0, -2)
           }]
         })]
@@ -622,7 +616,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
   ]
 });
 
-// GridLayoutControl.openInWorld()
 const GridLayoutControl = component(PropertySection, {
   name: 'grid layout control',
   submorphs: [{
