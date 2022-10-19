@@ -60,8 +60,6 @@ export default class TextMap extends Canvas {
       this.textMorph.addMorph(this);
       this.height = this.textMorph.height - this.textMorph.padding.top() - 20;
     }
-    // FIXME: One would think that this leads to the map being displayed correctly, but it is not
-    // Is it not clear why, since scrolling, clicking inside the text,... will always fix this
     this.updateDebounced();
   }
 
@@ -104,6 +102,12 @@ export default class TextMap extends Canvas {
       textMorph,
       measure: { width, height, heightPerLine, widthPerChar }
     } = this;
+    function highlightRange (range, color, fullLine = false) {
+      let { start, end } = range;
+      let selHeight = Math.max((end.row - start.row + 1) * heightPerLine, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(0, start.row * heightPerLine, width, selHeight);
+    }
     let { document: doc, textLayout, markers, selections } = textMorph;
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
 
@@ -145,17 +149,9 @@ export default class TextMap extends Canvas {
     ctx.lineTo(width, endRow * heightPerLine);
     ctx.stroke();
 
-    function highlighRange (range, color, fullLine = false) {
-      let { start, end } = range;
-      let selHeight = Math.max((end.row - start.row + 1) * heightPerLine, 1);
-      ctx.fillStyle = color;
-      ctx.fillRect(0, start.row * heightPerLine, width, selHeight);
-    }
-
-    // selections
     ctx.fillStyle = 'blue';
     for (let sel of selections) {
-      if (!sel.isEmpty()) { highlighRange(sel, 'blue', true); }
+      if (!sel.isEmpty()) { highlightRange(sel, 'rgba(3,169,244,0.56)', true); }
     }
 
     for (let marker of markers) {
@@ -164,14 +160,12 @@ export default class TextMap extends Canvas {
         let col = Color.fromString(color);
         if (col && col.a < 0.5) { col.a = 0.9; color = col.toRGBAString(); }
       }
-      highlighRange(marker.range, color, true);
+      highlightRange(marker.range, color, true);
     }
   }
 
   onMouseDown (evt) {
     let { textMorph, measure: { heightPerLine } } = this;
-    // evt = this.LastEvent;
-    // this.LastEvent = evt;
     let pos = evt.positionIn(this);
     let row = Math.round(pos.y / heightPerLine);
     textMorph.scrollPositionIntoView({ row, column: 0 });
