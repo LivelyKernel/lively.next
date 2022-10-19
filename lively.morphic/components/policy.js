@@ -271,7 +271,7 @@ export class StylePolicy {
     }
     for (let subSpec of spec.submorphs || []) {
       if (subSpec.COMMAND === 'add') subSpec = subSpec.props;
-      this.addMetaInfo({ exportedName, moduleId, path: subSpec.isPolicy ? [...path, subSpec.spec?.name] : path }, subSpec);
+      this.addMetaInfo({ exportedName, moduleId, path: subSpec.isPolicy ? [...path, subSpec.spec?.name] : path, range }, subSpec);
     }
   }
 
@@ -972,8 +972,7 @@ export class PolicyApplicator extends StylePolicy {
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
-    // ensure we are mentioned in the derivation chain
-    if (!this.mentionedInHierarchy(targetName)) return currSpec;
+    if (this.parent && !this.mentionedByParents(targetName)) return currSpec;
     const parentSpec = this.ensureSubSpecFor(submorph.owner);
     const { submorphs = [] } = parentSpec;
     submorphs.push(currSpec);
@@ -982,10 +981,11 @@ export class PolicyApplicator extends StylePolicy {
   }
 
   /**
+   * Checks if the submorph name was mentioned by any of the parent policies if present
    * @param { string } submorphNameInPolicyContext - The name of the submorph to be checked for being mentioned.
    * @returns { boolean } Wether or not the a sub spec for the given name could be found in the derivation chain.
    */
-  mentionedInHierarchy (submorphNameInPolicyContext) {
+  mentionedByParents (submorphNameInPolicyContext) {
     let mentioned = false; let parent = this;
     while (parent = parent.parent) {
       mentioned = !!parent.getSubSpecFor(submorphNameInPolicyContext);
@@ -999,7 +999,7 @@ export class PolicyApplicator extends StylePolicy {
    * @returns { object|null } If mentioned, the corresponding sub spec.
    */
   insertSpecIfMentioned (aMorph) {
-    if (this.mentionedInHierarchy(aMorph.name)) {
+    if (this.mentionedByParents(aMorph.name)) {
       return this.ensureSubSpecFor(aMorph);
     }
     return null;
