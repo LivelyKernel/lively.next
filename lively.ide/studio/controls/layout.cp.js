@@ -255,8 +255,8 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
       this.targetMorph.layout = layout.with({
         justifySubmorphs: spacingSelector.selection,
-        align: spacingPreview.layout.align,
-        axisAlign: spacingPreview.layout.axisAlign,
+        align: spacingPreview.layout?.align || layout.align,
+        axisAlign: spacingPreview.layout?.axisAlign || layout.axisAlign,
         padding: Rectangle.inset(paddingLeft.number,
           paddingTop.number,
           paddingRight.number,
@@ -284,6 +284,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
   }
 
   showLayoutPreview (evt) {
+    if (evt.state.draggedMorph) return;
     const { spacingPreview } = this.ui;
     const layout = this.targetMorph.layout;
     spacingPreview.opacity = 0.3;
@@ -305,6 +306,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
 
   clearLayoutPreview () {
     this.ui.spacingPreview.opacity = 0;
+    this.ui.spacingPreview.layout = null;
   }
 
   start () {
