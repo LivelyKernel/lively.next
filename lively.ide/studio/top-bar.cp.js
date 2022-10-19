@@ -569,7 +569,9 @@ export class TopBarModel extends ViewModel {
 
     const [halo] = this.world().halos();
 
-    if (halo && this._customDrag && evt.leftMouseButtonPressed()) {
+    if (halo &&
+        this._customDrag &&
+        evt.leftMouseButtonPressed()) {
       halo.customDrag(evt);
     }
 
@@ -578,7 +580,8 @@ export class TopBarModel extends ViewModel {
         !evt.state.draggedMorph &&
         evt.startPosition &&
         evt.startPosition.subPt(evt.position).r() > 25 &&
-        halo) {
+        halo &&
+        halo.fullContainsPoint(evt.position)) {
       halo.onDragStart(evt);
       this._customDrag = true;
     }
