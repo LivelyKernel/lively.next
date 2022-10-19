@@ -235,8 +235,8 @@ function getExpression (name, val, ctx) {
   return val;
 }
 
-function handleOverriddenMaster (masterPolicy, ctx) {
-  const { asExpression, nestedExpressions } = ctx;
+function handleOverriddenMaster (masterPolicy, opts) {
+  const { asExpression, nestedExpressions } = opts;
   if (!asExpression) return; // ignore overridden master if not serializing as expression
   let expr = ''; let masterComponentName; let modulePath; let bindings = {};
   const { _autoMaster, _hoverMaster, _clickMaster } = masterPolicy;
@@ -340,8 +340,353 @@ function getArrayExpression (name, list, path, subopts) {
   });
 }
 
+function getStyleProto (masterInScope, morph) {
+  let styleProto;
+  if (masterInScope?.managesMorph(morph.name) || morph === masterInScope?.targetMorph) {
+    let policy = masterInScope;
+    if (!policy.targetMorph.isComponent) policy = masterInScope.parent;
+    styleProto = policy?.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
+    while (styleProto?.isPolicyApplicator) {
+      styleProto = styleProto.synthesizeSubSpec(null, null, false);
+    }
+  }
+  return styleProto;
+}
+
+/**
+ * Text morphs usually do not return text and attributes as a style properties,
+ * so we process them separately in this routine.
+ * @param { Morph } aMorph - A label or text morph to synthesize the text and attributes for.
+ * @param { object } exported - The spec to be exported.
+ * @param { object } styleProto
+ * @param { string } path
+ * @param { StylePolicy } masterInScope
+ * @param { object } opts
+ */
+function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInScope, opts) {
+  const isText = aMorph.isText || aMorph.isLabel; // FIXME: remove once new text morph implementation live
+  const { exposeMasterRefs, asExpression } = opts;
+  if (isText && aMorph.textString !== '') {
+    if (styleProto?.textString !== aMorph.textString) {
+      exported.textAndAttributes = aMorph.textAndAttributes.map((ea, i) => {
+        return ea && ea.isMorph
+          ? serializeSpec(ea, { // eslint-disable-line no-use-before-define
+            ...opts,
+            path: path ? path + '.textAndAttributes.' + i : 'textAndAttributes.' + i
+          })
+          : ea;
+      });
+    }
+    if (exposeMasterRefs && masterInScope?.managesMorph(aMorph.name)) {
+      if (styleProto.textString === exported.textString) { delete exported.textString; }
+      if (styleProto.textAndAttributes && arr.equals(styleProto.textAndAttributes, exported.textAndAttributes)) {
+        delete exported.textAndAttributes;
+      }
+    }
+  }
+
+  if (aMorph.isText) {
+    delete exported.textString;
+
+    if (aMorph.fixedWidth && aMorph.fixedHeight) {
+      // do nothing
+    } else if (aMorph.fixedWidth) {
+      exported.width = exported.extent.x;
+      delete exported.extent;
+    } else if (aMorph.fixedHeight) {
+      exported.height = exported.extent.y;
+      delete exported.extent;
+    } else {
+      delete exported.extent; // just ignore the extent completely
+    }
+  }
+}
+
+function traverseSubmorphs (morph, exported, path, subopts) {
+  if (morph.submorphs && morph.submorphs.length > 0) {
+    exported.submorphs = morph.submorphs.map((ea, i) => serializeSpec(ea, { // eslint-disable-line no-use-before-define
+      ...subopts,
+      path: path ? path + '.submorphs.' + i : 'submorphs.' + i
+    })).filter(Boolean);
+    if (exported.submorphs.length === 0) delete exported.submorphs;
+  }
+}
+
+function isCustomObject (val) {
+  return val && !obj.isString(val) && !obj.isNumber(val) &&
+         properties.allOwnPropertiesOrFunctions(val).length > 0;
+}
+
+function handleCustomObject (name, val, path, subopts) {
+  for (const prop in val) {
+    if (val[prop] && val[prop].isMorph) {
+      val[prop] = serializeSpec(val[prop], { // eslint-disable-line no-use-before-define
+        ...subopts,
+        path: path ? path + '.' + name + '.' + prop : name + '.' + prop
+      });
+    }
+  }
+}
+
+/**
+ * Traverses the props returned by the spec() call of a morph and prepares them
+ * accordingly (e.g. in case we want to turn the spec into an expression).
+ * @param { Morph } morph - The morph we derive the spec from.
+ * @param { object } exported - The exported spec.
+ * @param { object } [styleProto] - If applicable, a object containing the synthesized style props from a policy for this morph.
+ * @param { string } path - The relative path from the root to this morph.
+ * @param { StylePolicy } [masterInScope] - If applicable a style policy controlling the scope this morph resides on.
+ * @param { object } opts - The options passed to the expression generation.
+ */
+function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts) {
+  const {
+    skipAttributes, skipUnchangedFromDefault,
+    valueTransform, keepConnections, objToPath
+  } = opts;
+  for (const name in morph.spec(skipUnchangedFromDefault)) {
+    let v = morph[name];
+    v = v?.valueOf ? v.valueOf() : v;
+    if (masterInScope && !morph.__only_serialize__.includes(name)) continue;
+
+    // store away just in case
+    const val = valueTransform(name, morph[name]);
+    if (keepConnections && val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
+      objToPath.set(val, path ? path + '.' + name : name);
+    }
+
+    if (name !== 'name' && styleProto && obj.equals(v, styleProto[name])) continue;
+    if (name === 'master') {
+      const val = handleOverriddenMaster(morph.master, opts);
+      if (val) exported.master = val;
+      continue;
+    }
+    if (name === 'position' && masterInScope?.isPositionedByLayout(morph)) continue;
+    if (name === 'extent') {
+      // FIXME: This wont work with new Text morphs in label mode.
+      if (morph.isLabel) continue;
+      if (masterInScope?.isResizedByLayout(morph)) continue;
+    }
+    if (name === 'submorphs' || name === 'type') continue;
+    if (skipAttributes.includes(name)) continue;
+    if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
+      exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit, opts) };
+      continue;
+    }
+    if (['borderColor', 'borderWidth', 'borderStyle'].includes(name)) {
+      exported[name] = serializeNestedProp(name, val, opts);
+      continue;
+    }
+    if (name === 'borderRadius') {
+      exported[name] = serializeNestedProp(name, val, opts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
+      continue;
+    }
+    if (val && val.isMorph) {
+      exported[name] = serializeSpec(val, { // eslint-disable-line no-use-before-define
+        ...opts,
+        path: path ? path + '.' + name : name
+      });
+      continue;
+    }
+    if (val && val.__serialize__) {
+      if (styleProto && styleProto[name] !== undefined &&
+          getExpression(name, val, { ...opts, asExpression: false }) ===
+          getExpression(name, valueTransform(name, styleProto[name]), { ...opts, asExpression: false })) continue;
+      exported[name] = getExpression(name, val, opts);
+      continue;
+    }
+    if (Array.isArray(val)) {
+      // check if each array member is seralizable
+      const serializedArray = getArrayExpression(name, val, path, opts);
+      if (styleProto) {
+        const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, opts));
+        if (JSON.stringify(serializedArray) === other) continue;
+      }
+      exported[name] = serializedArray;
+      continue;
+    }
+    if (isCustomObject(val)) {
+      handleCustomObject(name, val, path, opts);
+    }
+    exported[name] = val;
+  }
+}
+
+/**
+ * Given a morph, extract all the connection information related to the morph
+ * and populate the options with that info.
+ * @param { Morph } aMorph - The morph to extract the connection info from.
+ * @param { string } path - The relative path from the root to this morph.
+ * @param { object } opts - The spec generation options.
+ */
+function gatherConnectionInfo (aMorph, path, opts) {
+  const { keepConnections, objToPath, objRefs, connections } = opts;
+  if (keepConnections) {
+    if (objToPath.has(aMorph)) {
+      objRefs.push([path, /* => */ objToPath.get(aMorph)]); // store assignment
+      return null;
+    }
+
+    objToPath.set(aMorph, path);
+    if (aMorph.attributeConnections) {
+      connections.push(...aMorph.attributeConnections);
+    }
+  }
+}
+
+/**
+ * Attaches connection info to a spec, that can be used to reconstruct
+ * connections from a spec, if desired. Right now this approach is limited
+ * to non expression exports. Also we can only reconstruct connections which are between morphs
+ * or objects which are directly referenced by a morph. Other ones are skipped.
+ * @param { object } exported - The spec to add the connection info to.
+ * @param { object } opts - Options from the spec generation process.
+ */
+function insertConnections (exported, opts) {
+  const { connections, objToPath, asExpression } = opts;
+  const connectionExpressions = [];
+  for (const conn of connections) {
+    const {
+      sourceAttrName, targetMethodName, sourceObj, targetObj,
+      updaterString, converterString, garbageCollect
+    } = conn;
+    const pathToSource = objToPath.get(sourceObj);
+    const pathToTarget = objToPath.get(targetObj);
+    if (typeof pathToSource === 'string' && typeof pathToTarget === 'string') {
+      connectionExpressions.push({
+        pathToSource,
+        pathToTarget,
+        garbageCollect,
+        updaterString,
+        converterString,
+        sourceAttrName,
+        targetMethodName,
+        varMapping: {
+          properties
+        }
+      });
+      continue;
+    }
+  }
+  if (!asExpression) exported.__connections__ = connectionExpressions;
+}
+
+/**
+ * Carrys over any function members that are attached to the morph.
+ * @param { Morph } aMorph - The morph to extract function members from.
+ * @param { object } exported - The spec to populate with the function values.
+ */
+function handleFunctionMembers (aMorph, exported) {
+  Object.keys(aMorph).forEach(name => {
+    if (typeof aMorph[name] !== 'function') return;
+    if (aMorph[name].isConnectionWrapper) return;
+    exported[name] = aMorph[name];
+  });
+}
+
+/**
+ * Properly attaches the type information to the generated spec.
+ * @param { Morph } aMorph - The morph we derived the spec from.
+ * @param { object } exported - The spec to adjust the type info on.
+ * @param { object } opts - Options from the spec generation process.
+ */
+function handleTypeInfo (aMorph, exported, opts) {
+  const { keepFunctions, asExpression, exposeMasterRefs, skipAttributes } = opts;
+  if (keepFunctions) {
+    if (asExpression) {
+      exported.type = getExpression('type', aMorph.constructor, opts);
+    } else {
+      exported.type = aMorph.constructor.name;
+    }
+  } else {
+    exported.type = getSerializableClassMeta(aMorph);
+  }
+
+  if (exposeMasterRefs) {
+    exported.type = getExpression('type', aMorph.constructor, opts);
+  }
+
+  if (getClassName(aMorph) === 'Morph' || skipAttributes.includes('type')) {
+    delete exported.type;
+  }
+}
+
+/**
+ * Converts a morph's spec to a serializable expression.
+ * @param { Morph } aMorph - The morph we derived the spec from.
+ * @param { object } exported - The spec to convert to an expression.
+ * @param { boolean } isRoot - Wether or not we are the root of the entire spec.
+ * @param { string } path - The current path to this morph from the root.
+ * @param { object } opts - Options from the spec generation process.
+ * @returns { object } An expression object if successful.
+ */
+function asSerializableExpression (aMorph, exported, isRoot, path, opts) {
+  const { exposeMasterRefs, nestedExpressions } = opts;
+  let __expr__, bindings;
+  if (isRoot && (!exposeMasterRefs || !aMorph.master)) {
+    // replace the nestedExpressions after stringification
+    __expr__ = `morph(${obj.inspect(exported, {
+        keySorter: (a, b) => {
+          if (a === 'name' || a === 'type') return -1;
+          if (a === 'submorphs') return 1;
+          else return 0;
+        }
+      })})`;
+    bindings = {
+      'lively.morphic': ['morph']
+    };
+  } else if (exposeMasterRefs && aMorph.master) {
+    const { exportedName: masterComponentName, moduleId: modulePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
+    // right now still no good way to reconcile the modelView props
+    // awlays drop morphs with only names here, since those are copied over by
+    // the part already
+    if (exported) {
+      __expr__ = obj.inspect(obj.dissoc(exported, ['type']), {
+        keySorter: (a, b) => {
+          if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
+          else return 0;
+        }
+      });
+      if (path.length === 0) {
+        __expr__ = `part(${masterComponentName}, ${__expr__})`;
+      }
+    }
+    bindings = {
+      [modulePath]: [masterComponentName],
+      'lively.morphic': ['part']
+    };
+  }
+  if (__expr__) {
+    for (const exprId in nestedExpressions) {
+      __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
+      Object.entries(nestedExpressions[exprId].bindings || {}).forEach(([binding, imports]) => {
+        if (bindings[binding]) {
+          bindings[binding] = arr.uniq([...bindings[binding], ...imports]);
+        } else bindings[binding] = imports;
+      });
+    }
+    if (!isRoot && exposeMasterRefs && aMorph.master) {
+      const exprId = string.newUUID();
+      nestedExpressions[exprId] = { __expr__, bindings };
+      return exprId;
+    }
+    return { __expr__, bindings };
+  }
+}
+
+/**
+ * Converts a morph to a spec object, or serializable expression.
+ * @param { Morph } morph - The morph to convert to a spec.
+ * @param { object } opts - Config for the spec generation.
+ * @param { boolean } [opts.keepFunctions = true] - If set to true, this will keep any function objects in the spec. Note that this will make the resulting spec more difficult to serialize.
+ * @param { string[] } [opts.skipAttributes = []] - An optional list of attribute names to ommit in the spec.
+ * @param { string[] } [opts.onlyInclude] - An optional list of names to ONLY include in the spec. If ommitted this flag is ignored.
+ * @param { boolean } [opts.keepConnections = true] - Wether or not to carry over the connections inside the morph hierarchy. Note that this is not supported when serializing to an expression as of now.
+ * @param { boolean } [opts.skipUnchangedFromDefault = false] - If set to `true` we will skip the properties that are not differing from their respective default values.
+ * @param { function } [valueTransform] - A custom value transform that each property key/value pair can be processed by.
+ * @param { boolean } [asExpression = false] - If set to true, the resulting spec will be a serializable expression.
+ * @returns { object } A spec or object expression.
+ */
 export function serializeSpec (morph, opts = {}) {
-  // quick hack to "snapshot" into JSON or serialized expression
   let {
     keepFunctions = true,
     skipAttributes = [],
@@ -367,288 +712,63 @@ export function serializeSpec (morph, opts = {}) {
   const subopts = {
     keepFunctions,
     skipAttributes,
-    root: false,
+    onlyInclude,
+    keepConnections,
+    skipUnchangedFromDefault,
+    valueTransform,
     asExpression,
+    // component def specific... replace with one flag??
+    dropMorphsWithNameOnly,
+    exposeMasterRefs,
+    skipUnchangedFromMaster,
+    // internal
+    root: false,
     nestedExpressions,
     connections,
     objRefs,
     objToPath,
-    keepConnections,
-    valueTransform,
-    exposeMasterRefs,
     masterInScope: morph.master || masterInScope,
-    exprSerializer,
-    onlyInclude,
-    dropMorphsWithNameOnly,
-    skipUnchangedFromDefault,
-    skipUnchangedFromMaster
+    exprSerializer
   };
 
-  if (objToPath.has(morph)) {
-    // morph was already serialized, add ref and return
-    objRefs.push([path, /* => */ objToPath.get(morph)]); // store assignment
-    return null;
-  } else objToPath.set(morph, path);
-
-  let exported = {};
-
-  objToPath.set(morph, path);
-
-  if (keepConnections && morph.attributeConnections) { connections.push(...morph.attributeConnections); }
-
-  let styleProto;
-  if (skipUnchangedFromMaster &&
-        masterInScope &&
-        (masterInScope.managesMorph(morph.name) || morph === masterInScope.targetMorph)) {
-    let policy = masterInScope;
-    if (!policy.targetMorph.isComponent) policy = masterInScope.parent;
-    styleProto = policy?.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
-    while (styleProto?.isPolicyApplicator) {
-      styleProto = styleProto.synthesizeSubSpec(null, null, false);
-    }
-  }
-
-  if ((morph.isText || morph.isLabel) && morph.textString !== '') {
-    // text morphs usually do not return text and attributes so we add them by hand
-    if (styleProto?.textString !== morph.textString) {
-      exported.textAndAttributes = morph.textAndAttributes.map((ea, i) => {
-        return ea && ea.isMorph
-          ? serializeSpec(ea, {
-            ...subopts,
-            path: path ? path + '.textAndAttributes.' + i : 'textAndAttributes.' + i
-          })
-          : ea;
-      });
-    }
-    if (exposeMasterRefs && masterInScope?.managesMorph(morph.name)) {
-      if (styleProto.textString === exported.textString) { delete exported.textString; }
-      if (styleProto.textAndAttributes && arr.equals(styleProto.textAndAttributes, exported.textAndAttributes)) {
-        delete exported.textAndAttributes;
-      }
-    }
-  }
-
-  if (morph.submorphs && morph.submorphs.length > 0) {
-    // if one of the morphs is returned as expression also incorporate them properly
-    exported.submorphs = morph.submorphs.map((ea, i) => serializeSpec(ea, {
-      ...subopts,
-      path: path ? path + '.submorphs.' + i : 'submorphs.' + i
-    })).filter(Boolean);
-    if (exported.submorphs.length === 0) delete exported.submorphs;
-  }
-
-  let propsNotManagedByMaster;
-  if (masterInScope) {
-    propsNotManagedByMaster = morph.__only_serialize__;
-  }
-
-  for (const name in morph.spec(skipUnchangedFromDefault)) {
-    let v = morph[name];
-    v = v?.valueOf ? v.valueOf() : v;
-    if (name !== 'name' && styleProto &&
-        obj.equals(v, styleProto[name])) continue;
-    const val = valueTransform(name, morph[name]);
-    if (val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
-      objToPath.set(val, path ? path + '.' + name : name);
-    }
-    if (propsNotManagedByMaster && !propsNotManagedByMaster.includes(name)) continue;
-    if (name === 'master') {
-      const val = handleOverriddenMaster(morph.master, subopts);
-      if (val) exported.master = val;
-      continue;
-    }
-    if (name === 'position' && masterInScope?.isPositionedByLayout(morph)) continue;
-    if (name === 'extent') {
-      // FIXME: This wont work with new Text morphs in label mode.
-      if (morph.isLabel) continue;
-      if (masterInScope?.isResizedByLayout(morph)) continue;
-    }
-    if (name === 'submorphs' || name === 'type') continue;
-    if (skipAttributes.includes(name)) continue;
-    if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
-      exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit, subopts) };
-      continue;
-    }
-    if (['borderColor', 'borderWidth', 'borderStyle'].includes(name)) {
-      exported[name] = serializeNestedProp(name, val, subopts);
-      continue;
-    }
-    if (name === 'borderRadius') {
-      exported[name] = serializeNestedProp(name, val, subopts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
-      continue;
-    }
-    if (val && val.isMorph) {
-      exported[name] = serializeSpec(val, {
-        ...subopts,
-        path: path ? path + '.' + name : name
-      });
-      continue;
-    }
-    if (val && val.__serialize__) {
-      if (styleProto && styleProto[name] !== undefined &&
-          getExpression(name, val, { ...subopts, asExpression: false }) ===
-          getExpression(name, valueTransform(name, styleProto[name]), { ...subopts, asExpression: false })) continue;
-      exported[name] = getExpression(name, val, subopts);
-      continue;
-    }
-    if (Array.isArray(val)) {
-      // check if each array member is seralizable
-      const serializedArray = getArrayExpression(name, val, path, subopts);
-      if (styleProto) {
-        const r = (k, v) => k === '_rev' ? undefined : v;
-        const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, subopts), r);
-        if (JSON.stringify(serializedArray, r) === other) continue;
-      }
-      exported[name] = serializedArray;
-      continue;
-    }
-    if (val && !obj.isString(val) && !obj.isNumber(val) &&
-         properties.allOwnPropertiesOrFunctions(val).length > 0) {
-      for (const prop in val) {
-        if (val[prop] && val[prop].isMorph) {
-          val[prop] = serializeSpec(val[prop], {
-            ...subopts,
-            path: path ? path + '.' + name + '.' + prop : name + '.' + prop
-          });
-        }
-      }
-    }
-    exported[name] = val;
-  }
-
-  if (morph.isText) {
-    delete exported.textString;
-
-    if (morph.fixedWidth && morph.fixedHeight) {
-      // do nothing
-    } else if (morph.fixedWidth) {
-      exported.width = exported.extent.x;
-      delete exported.extent;
-    } else if (morph.fixedHeight) {
-      exported.height = exported.extent.y;
-      delete exported.extent;
-    } else {
-      delete exported.extent; // just ignore the extent completely
-    }
-  }
-
-  if (!asExpression) exported._id = morph._id;
-  // this.exportToJSON()
-  if (keepConnections && root) {
-    /*
-       Right now we can only reconstruct connections which are between morphs
-       or objects which are directly referenced by a morph. Other ones are skipped.
-     */
-    const connectionExpressions = [];
-    for (const conn of connections) {
-      const {
-        sourceAttrName, targetMethodName, sourceObj, targetObj,
-        updaterString, converterString, garbageCollect
-      } = conn;
-      const pathToSource = objToPath.get(sourceObj);
-      const pathToTarget = objToPath.get(targetObj);
-      if (typeof pathToSource === 'string' && typeof pathToTarget === 'string') {
-        connectionExpressions.push({
-          pathToSource,
-          pathToTarget,
-          garbageCollect,
-          updaterString,
-          converterString,
-          sourceAttrName,
-          targetMethodName,
-          varMapping: {
-            properties
-          }
-        });
-        continue;
-      }
-    }
-    if (!asExpression) exported.__connections__ = connectionExpressions;
-  }
-
-  if (dropMorphsWithNameOnly && !root &&
-      (exposeMasterRefs || morph.master !== masterInScope) &&
-      arr.isSubset(Object.keys(exported), ['type', 'name'])) {
-    return null;
-  }
   if (onlyInclude && !onlyInclude.includes(morph)) {
     return null;
   }
 
+  let exported = {};
+  const styleProto = skipUnchangedFromMaster && getStyleProto(masterInScope, morph);
+
+  gatherConnectionInfo(morph, path, subopts);
+  traverseSubmorphs(morph, exported, path, subopts); // needs to be done before we handle text attributes
+  handleSpecProps(morph, exported, styleProto, path, masterInScope, subopts);
+  handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
+
+  if (root && keepConnections) {
+    insertConnections(exported, subopts);
+  }
+
+  if (!root &&
+      dropMorphsWithNameOnly &&
+      (exposeMasterRefs || morph.master !== masterInScope) &&
+      arr.isSubset(Object.keys(exported), ['type', 'name'])) {
+    return null;
+  }
+
   if (keepFunctions) {
-    Object.keys(morph).forEach(name =>
-      typeof morph[name] === 'function' && !morph[name].isConnectionWrapper && (exported[name] = morph[name]));
-    if (asExpression) {
-      exported.type = getExpression('type', morph.constructor, subopts);
-    } else {
-      exported.type = morph.constructor.name; // not JSON!
-    }
-  } else {
-    exported.type = getSerializableClassMeta(morph);
+    handleFunctionMembers(morph, exported);
   }
 
-  if (exposeMasterRefs) {
-    exported.type = getExpression('type', morph.constructor, subopts);
-  }
-
-  if (getClassName(morph) === 'Morph' || skipAttributes.includes('type')) {
-    delete exported.type;
-  }
+  handleTypeInfo(morph, exported, subopts);
 
   if (asExpression) {
-    let __expr__, bindings;
-    if (root && (!exposeMasterRefs || !morph.master)) {
-      // replace the nestedExpressions after stringification
-      __expr__ = `morph(${obj.inspect(exported, {
-        keySorter: (a, b) => {
-          if (a === 'name' || a === 'type') return -1;
-          if (a === 'submorphs') return 1;
-          else return 0;
-        }
-      })})`;
-      bindings = {
-        'lively.morphic': ['morph']
-      };
-    } else if (exposeMasterRefs && morph.master) {
-      const { exportedName: masterComponentName, moduleId: modulePath } = morph.master.parent[Symbol.for('lively-module-meta')];
-      // right now still no good way to reconcile the modelView props
-      // awlays drop morphs with only names here, since those are copied over by
-      // the part already
-      if (exported) {
-        __expr__ = obj.inspect(obj.dissoc(exported, ['type']), {
-          keySorter: (a, b) => {
-            if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
-            else return 0;
-          }
-        });
-        if (path.length === 0) {
-          __expr__ = `part(${masterComponentName}, ${__expr__})`;
-        }
-      }
-      bindings = {
-        [modulePath]: [masterComponentName],
-        'lively.morphic': ['part']
-      };
-    }
-    if (__expr__) {
-      for (const exprId in nestedExpressions) {
-        __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
-        Object.entries(nestedExpressions[exprId].bindings || {}).forEach(([binding, imports]) => {
-          if (bindings[binding]) { bindings[binding] = arr.uniq([...bindings[binding], ...imports]); } else bindings[binding] = imports;
-        });
-      }
-      if (exposeMasterRefs && morph.master && !root) {
-        const exprId = string.newUUID();
-        nestedExpressions[exprId] = { __expr__, bindings };
-        return exprId;
-      }
-      return { __expr__, bindings };
-    }
+    const exprObj = asSerializableExpression(morph, exported, root, path, subopts);
+    if (exprObj) return exprObj;
   }
 
   if (obj.isEmpty(exported)) return null;
 
   if (root) exported.__refs__ = objRefs;
+  if (!asExpression) exported._id = morph._id;
 
   return exported;
 }
