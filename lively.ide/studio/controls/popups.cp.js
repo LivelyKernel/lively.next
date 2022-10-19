@@ -9,7 +9,17 @@ import { PopupWindow, CloseButton } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget } from '../../value-widgets.cp.js';
 
-export class ShadowPopupModel extends ViewModel {
+export class PopupModel extends ViewModel {
+  static get properties () {
+    return {
+      liveStyleClasses: {
+        defaultValues: ['Popup']
+      }
+    };
+  }
+}
+
+export class ShadowPopupModel extends PopupModel {
   static get properties () {
     return {
       fastShadow: { defaultValue: false },
@@ -37,7 +47,7 @@ export class ShadowPopupModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 
@@ -130,7 +140,7 @@ export class ShadowPopupModel extends ViewModel {
   General control for all properties that can be configured
   by a single number input such as opacity or blur.
 */
-export class SingleNumberModel extends ViewModel {
+export class SingleNumberModel extends PopupModel {
   static get properties () {
     return {
       value: {},
@@ -147,7 +157,7 @@ export class SingleNumberModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 
@@ -167,7 +177,7 @@ export class SingleNumberModel extends ViewModel {
   General control for all properties that can be configured
   by a single selection input such as the native cursor of a morph.
 */
-export class SingleSelectionModel extends ViewModel {
+export class SingleSelectionModel extends PopupModel {
   static get properties () {
     return {
       selection: {},
@@ -184,7 +194,7 @@ export class SingleSelectionModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 
@@ -201,7 +211,7 @@ export class SingleSelectionModel extends ViewModel {
   }
 }
 
-export class PaddingPopupModel extends ViewModel {
+export class PaddingPopupModel extends PopupModel {
   static get properties () {
     return {
       showAllSidesControl: {
@@ -226,8 +236,8 @@ export class PaddingPopupModel extends ViewModel {
         }
       },
       expose: {
-        get(){
-          return ['isPropertiesPanelPopup', 'close']
+        get () {
+          return ['isPropertiesPanelPopup', 'close'];
         }
       },
       bindings: {
@@ -251,7 +261,7 @@ export class PaddingPopupModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 
@@ -326,7 +336,7 @@ export class PaddingPopupModel extends ViewModel {
   }
 }
 
-export class PositionPopupModel extends ViewModel {
+export class PositionPopupModel extends PopupModel {
   static get properties () {
     return {
       expose: {
@@ -352,7 +362,7 @@ export class PositionPopupModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 

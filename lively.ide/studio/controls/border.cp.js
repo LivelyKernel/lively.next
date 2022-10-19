@@ -1,5 +1,5 @@
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
-import { TilingLayout, Morph, Label, ViewModel, part, add, component } from 'lively.morphic';
+import { TilingLayout, Morph, Label, part, add, component } from 'lively.morphic';
 import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, NumberInputDark, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
@@ -7,6 +7,7 @@ import { arr, string } from 'lively.lang';
 import { once, connect, signal } from 'lively.bindings';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
+import { PopupModel } from './popups.cp.js';
 
 /**
  * Implements the control elements for border values. This includes the color, width and style of the border.
@@ -252,7 +253,7 @@ export class BorderControlModel extends PropertySectionModel {
  * The popup window to control the separate border sides of a morph
  * individually.
  */
-export class BorderPopupWindow extends ViewModel {
+export class BorderPopupWindow extends PopupModel {
   static get properties () {
     return {
       targetMorph: {}, // this is fine because it only works in the context of a morph
@@ -301,7 +302,7 @@ export class BorderPopupWindow extends ViewModel {
     };
   }
 
-  get isPropertiesPanelPopup() {
+  get isPropertiesPanelPopup () {
     return true;
   }
 

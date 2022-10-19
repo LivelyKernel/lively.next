@@ -188,6 +188,11 @@ export class ViewModel {
           return styleProps;
         }
       },
+      liveStyleClasses: {
+        group: 'styling',
+        defaultValue: [],
+        doc: 'An array of style classes which are applied to `Components` that have the behavior of this `ViewModel` applied.'
+      },
       ui: {
         serialize: false,
         derived: true,
@@ -294,6 +299,7 @@ export class ViewModel {
    */
   onDeactivate () {
     this.getBindingConnections().forEach(conn => conn.disconnect());
+    this.liveStyleClasses.forEach(klass => this.view.removeStyleClass(klass));
     if (!this.view) return;
     for (let prop of (this.expose || [])) {
       if (obj.isArray(prop)) prop = prop[0];
@@ -316,7 +322,7 @@ export class ViewModel {
    * Called once the view is fully loaded and attached.
    */
   viewDidLoad () {
-
+    this.liveStyleClasses.forEach(klass => this.view.addStyleClass(klass));
   }
 
   /**
