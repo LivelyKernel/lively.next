@@ -1,6 +1,6 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-import { ComponentDescriptor, part, add, component } from 'lively.morphic';
+import { ComponentDescriptor, morph, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { createInitialComponentDefinition } from '../../components/helpers.js';
@@ -115,6 +115,27 @@ describe('component definition reconciliation', () => {
     const e3 = part(e1, { name: 'new component' });
     expect(createInitialComponentDefinition(e3)).to.eql(`component(e1, {
   name: "new component"
+})`);
+  });
+
+  it('allows to create a new component definition from a derived morph with added parts', () => {
+    const e3 = part(e1, { name: 'new component' });
+    e3.addMorph(part(e2, { name: 'added' }));
+    const e4 = morph({ name: 'other new', submorphs: [part(e2, { name: 'added' }), { name: 'foo', fill: Color.lively }] });
+    expect(createInitialComponentDefinition(e3)).to.eql(`component(e1, {
+  name: "new component",
+  submorphs: [add(part(e2, {
+  name: "added"
+}))]
+})`);
+    expect(createInitialComponentDefinition(e4)).to.eql(`component({
+  name: "other new",
+  submorphs: [part(e2, {
+  name: "added"
+}), {
+  name: "foo",
+  fill: Color.lively
+}]
 })`);
   });
 });

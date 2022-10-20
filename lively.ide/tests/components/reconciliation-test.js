@@ -446,4 +446,59 @@ describe('component -> source reconciliation', function () {
     fill: Color.lively
   }]`);
   });
+
+  it('properly reconciles embedded morphs', async () => {
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentA.get('some submorph').addMorph({
+        name: 'trolly',
+        type: 'text',
+        textAndAttributes: [
+          'Hello World', { fontSize: 20 },
+          morph({
+            name: 'foo',
+            fill: Color.blue
+          }), null,
+          'How about a component', { fontWeight: 'bold ' },
+          part(B, { name: 'bar' }), null
+        ]
+      });
+    });
+    await ComponentA._changeTracker.onceChangesProcessed();
+    let updatedSource = await testComponentModule.source();
+    expect(updatedSource).includes(`['Hello World', {
+        fontSize: 20
+      }, morph({
+        name: 'foo',
+        fill: Color.blue
+      }), null, 'How about a component', {
+        fontWeight: 'bold '
+      }, part(B, {
+        name: 'bar'
+      }), null]`, 'reconciles added plain morphs');
+  });
+
+  it('properly reconciles settings text and attributes with morphs', async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('some submorph').textAndAttributes = [
+        'Hello World', { fontSize: 20 },
+        morph({
+          name: 'charlie',
+          fill: Color.blue
+        }), null,
+        'How about a component', { fontWeight: 'bold ' },
+        part(C, { name: 'justin' }), null
+      ];
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    let updatedSource = await testComponentModule.source();
+    expect(updatedSource).includes(`[
+        'Hello World', { fontSize: 20 },
+        morph({
+          name: 'charlie',
+          fill: Color.blue
+        }), null,
+        'How about a component', { fontWeight: 'bold ' },
+        part(C, { name: 'justin' }), null
+      ]`, 'reconciles embedded morphs if assigned via text and attributes');
+  });
 });
