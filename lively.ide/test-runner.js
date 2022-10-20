@@ -14,6 +14,7 @@ import { resource } from 'lively.resources/index.js';
 import { packagesConfig } from 'lively.modules/src/packages/package.js';
 import { localInterface } from 'lively-system-interface';
 import jsDiff from 'esm://cache/diff@3.0.0';
+import { browserForFile } from './js/browser/ui.cp.js';
 
 export function testsFromSource (sourceOrAst) {
   // Traverses the ast and constructs the nested mocha suites and tests as a list like
@@ -308,19 +309,16 @@ export default class TestRunner extends HTMLMorph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   findBrowserForFile (file) {
-    const world = this.world();
-    const browsers = world.getWindows()
-      .map(win => win.targetMorph).filter(ea => ea.isBrowser);
-    const browserWithFile = browsers.find(({ selectedModule }) =>
-      selectedModule && selectedModule.url === file);
-    return browserWithFile || world.execCommand('open browser', null);
+    return browserForFile(file) || $world.execCommand('open browser');
   }
 
   async jumpToTest (test, file) {
     const li = LoadingIndicator.open('Scanning source code...');
     try {
       const browser = await this.findBrowserForFile(file);
-      browser.getWindow().activate();
+      const win = browser.getWindow();
+      if (win.minimized) win.minimized = false;
+      win.activate();
       await browser.searchForModuleAndSelect(file);
       let ed = browser.editorPlugin.textMorph;
       const tests = testsFromSource(ed.textString);
