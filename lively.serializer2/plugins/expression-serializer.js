@@ -326,12 +326,22 @@ export function serializeNestedProp (name, val, serializerContext, members = ['t
 }
 
 function getArrayExpression (name, list, path, subopts) {
+  const { nestedExpressions, root, dropMorphsWithNameOnly, exposeMasterRefs } = subopts;
   return list.map((v, i) => {
     if (v && v.isMorph) {
-      return serializeSpec(v, { // eslint-disable-line no-use-before-define
+      let val = serializeSpec(v, { // eslint-disable-line no-use-before-define
         ...subopts,
-        path: path ? path + '.' + name + '.' + i : name + '.' + i
+        dropMorphsWithNameOnly: !!v.master && exposeMasterRefs || dropMorphsWithNameOnly,
+        root: exposeMasterRefs || root,
+        path: v.master && exposeMasterRefs ? '' : (path ? path + '.' + name + '.' + i : name + '.' + i)
       });
+      if (val.__expr__) {
+        // insert the expression as nested
+        const exprId = string.newUUID();
+        nestedExpressions[exprId] = val;
+        val = exprId;
+      }
+      return val;
     }
     if (v && v.__serialize__) {
       return getExpression(name + '.' + i, v, subopts);
@@ -340,8 +350,9 @@ function getArrayExpression (name, list, path, subopts) {
   });
 }
 
-function getStyleProto (masterInScope, morph) {
+function getStyleProto (morph, opts) {
   let styleProto;
+  const { masterInScope } = opts;
   if (masterInScope?.managesMorph(morph.name) || morph === masterInScope?.targetMorph) {
     let policy = masterInScope;
     if (!policy.targetMorph.isComponent) policy = masterInScope.parent;
@@ -383,12 +394,16 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
         delete exported.textAndAttributes;
       }
     }
+    // all of the above work is then discarded basically...
+    if (asExpression && exported.textAndAttributes) {
+      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes, path, opts);
+    }
   }
 
   if (aMorph.isText) {
     delete exported.textString;
 
-    if (aMorph.fixedWidth && aMorph.fixedHeight) {
+    if (aMorph.fixedWidth && aMorph.fixedHeight || !exported.extent) {
       // do nothing
     } else if (aMorph.fixedWidth) {
       exported.width = exported.extent.x;
@@ -402,12 +417,24 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
   }
 }
 
-function traverseSubmorphs (morph, exported, path, subopts) {
+function traverseSubmorphs (morph, exported, path, masterInScope, subopts) {
   if (morph.submorphs && morph.submorphs.length > 0) {
-    exported.submorphs = morph.submorphs.map((ea, i) => serializeSpec(ea, { // eslint-disable-line no-use-before-define
-      ...subopts,
-      path: path ? path + '.submorphs.' + i : 'submorphs.' + i
-    })).filter(Boolean);
+    const { nestedExpressions, exposeMasterRefs, dropMorphsWithNameOnly, masterInScope, uncollapseHierarchy } = subopts;
+    const embeddedMorphs = morph.isText ? morph.textAndAttributes.filter(m => m?.isMorph) : [];
+    const listedSubmorphs = arr.withoutAll(morph.submorphs, embeddedMorphs);
+    exported.submorphs = arr.compact(listedSubmorphs.map((ea, i) => {
+      let val = serializeSpec(ea, { // eslint-disable-line no-use-before-define
+        ...subopts,
+        dropMorphsWithNameOnly: !uncollapseHierarchy && (!!ea.master && exposeMasterRefs || dropMorphsWithNameOnly || masterInScope?.managesMorph(ea.name)),
+        path: ea.master && exposeMasterRefs ? '' : (path ? path + '.submorphs.' + i : 'submorphs.' + i)
+      });
+      if (val?.__expr__) {
+        const exprId = string.newUUID();
+        nestedExpressions[exprId] = val;
+        val = exprId;
+      }
+      return val;
+    }));
     if (exported.submorphs.length === 0) delete exported.submorphs;
   }
 }
@@ -460,7 +487,12 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       if (val) exported.master = val;
       continue;
     }
-    if (name === 'position' && masterInScope?.isPositionedByLayout(morph)) continue;
+    if (name === 'position') {
+      if (masterInScope?.isPositionedByLayout(morph)) continue;
+      if (morph.owner?.isText && morph.owner.textAndAttributes.includes(morph)) {
+        continue;
+      }
+    }
     if (name === 'extent') {
       // FIXME: This wont work with new Text morphs in label mode.
       if (morph.isLabel) continue;
@@ -619,7 +651,7 @@ function handleTypeInfo (aMorph, exported, opts) {
  * @param { object } opts - Options from the spec generation process.
  * @returns { object } An expression object if successful.
  */
-function asSerializableExpression (aMorph, exported, isRoot, path, opts) {
+function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope, opts) {
   const { exposeMasterRefs, nestedExpressions } = opts;
   let __expr__, bindings;
   if (isRoot && (!exposeMasterRefs || !aMorph.master)) {
@@ -634,26 +666,35 @@ function asSerializableExpression (aMorph, exported, isRoot, path, opts) {
     bindings = {
       'lively.morphic': ['morph']
     };
-  } else if (exposeMasterRefs && aMorph.master) {
-    const { exportedName: masterComponentName, moduleId: modulePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
+  } else if (exposeMasterRefs) {
     // right now still no good way to reconcile the modelView props
     // awlays drop morphs with only names here, since those are copied over by
     // the part already
     if (exported) {
-      __expr__ = obj.inspect(obj.dissoc(exported, ['type']), {
+      bindings = {};
+      __expr__ = obj.inspect(obj.dissoc(exported, aMorph.master ? ['type'] : []), {
         keySorter: (a, b) => {
           if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
           else return 0;
         }
       });
-      if (path.length === 0) {
-        __expr__ = `part(${masterComponentName}, ${__expr__})`;
+      if (aMorph.master) {
+        const { exportedName: masterComponentName, moduleId: modulePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
+        if (path.length === 0) {
+          __expr__ = `part(${masterComponentName}, ${__expr__})`;
+        }
+        bindings = {
+          [modulePath]: [masterComponentName],
+          'lively.morphic': ['part']
+        };
+      }
+      if (!isRoot && masterInScope && !masterInScope.managesMorph(aMorph.name)) {
+        __expr__ = `add(${__expr__})`;
+        if (bindings['lively.morphic']) {
+          bindings['lively.morphic'].push('add');
+        } else bindings['lively.morphic'] = ['add'];
       }
     }
-    bindings = {
-      [modulePath]: [masterComponentName],
-      'lively.morphic': ['part']
-    };
   }
   if (__expr__) {
     for (const exprId in nestedExpressions) {
@@ -696,6 +737,7 @@ export function serializeSpec (morph, opts = {}) {
     valueTransform = (key, val) => val,
     asExpression = false,
     // this is needed in case we generate a component definition or part derivation
+    // FIXME: can we combine this into one single flag?
     dropMorphsWithNameOnly = false,
     exposeMasterRefs = false,
     skipUnchangedFromMaster = false,
@@ -707,7 +749,8 @@ export function serializeSpec (morph, opts = {}) {
     objRefs = [],
     connections = [],
     exprSerializer = new ExpressionSerializer(),
-    masterInScope = morph.master
+    masterInScope = morph.master,
+    uncollapseHierarchy = false
   } = opts;
   const subopts = {
     keepFunctions,
@@ -728,7 +771,8 @@ export function serializeSpec (morph, opts = {}) {
     objRefs,
     objToPath,
     masterInScope: morph.master || masterInScope,
-    exprSerializer
+    exprSerializer,
+    uncollapseHierarchy
   };
 
   if (onlyInclude && !onlyInclude.includes(morph)) {
@@ -736,10 +780,10 @@ export function serializeSpec (morph, opts = {}) {
   }
 
   let exported = {};
-  const styleProto = skipUnchangedFromMaster && getStyleProto(masterInScope, morph);
+  const styleProto = skipUnchangedFromMaster && getStyleProto(morph, subopts);
 
   gatherConnectionInfo(morph, path, subopts);
-  traverseSubmorphs(morph, exported, path, subopts); // needs to be done before we handle text attributes
+  traverseSubmorphs(morph, exported, path, masterInScope, subopts); // needs to be done before we handle text attributes
   handleSpecProps(morph, exported, styleProto, path, masterInScope, subopts);
   handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
 
@@ -749,7 +793,8 @@ export function serializeSpec (morph, opts = {}) {
 
   if (!root &&
       dropMorphsWithNameOnly &&
-      (exposeMasterRefs || morph.master !== masterInScope) &&
+      masterInScope?.managesMorph(morph.name) && // can not drop morphs not managed by master
+      morph.master !== masterInScope &&
       arr.isSubset(Object.keys(exported), ['type', 'name'])) {
     return null;
   }
@@ -761,7 +806,7 @@ export function serializeSpec (morph, opts = {}) {
   handleTypeInfo(morph, exported, subopts);
 
   if (asExpression) {
-    const exprObj = asSerializableExpression(morph, exported, root, path, subopts);
+    const exprObj = asSerializableExpression(morph, exported, root, path, masterInScope, subopts);
     if (exprObj) return exprObj;
   }
 
