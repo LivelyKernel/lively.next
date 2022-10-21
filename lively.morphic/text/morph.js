@@ -3049,7 +3049,9 @@ export class Text extends Morph {
   onDrop (evt) {
     this.backWithDocument();
     const morphs = evt.hand.grabbedMorphs.filter(ea => ea.isLayoutable);
-    super.onDrop(evt);
+    this.withMetaDo({ reconcileChanges: false }, () => {
+      super.onDrop(evt);
+    });
     if (morphs[0]) {
       const textPos = this.textPositionFromPoint(this.localize(evt.hand.globalPosition));
       this.insertText([morphs[0], null], textPos);

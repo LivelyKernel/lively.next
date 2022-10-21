@@ -164,18 +164,20 @@ const commands = [
     exec: function (morph) {
       if (morph.rejectsInput()) return false;
 
-      if (
-        morph.editorPlugin &&
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
+        if (
+          morph.editorPlugin &&
         typeof morph.editorPlugin.cmd_newline === 'function' &&
         morph.editorPlugin.cmd_delete_backwards()
-      ) return true;
+        ) return true;
 
-      const sel = morph.selection;
-      if (sel.isEmpty()) sel.growLeft(1);
-      sel.text = '';
-      sel.collapse();
-      if (morph.activeMark) morph.activeMark = null;
-      return true;
+        const sel = morph.selection;
+        if (sel.isEmpty()) sel.growLeft(1);
+        sel.text = '';
+        sel.collapse();
+        if (morph.activeMark) morph.activeMark = null;
+        return true;
+      });
     }
   },
 
@@ -971,28 +973,30 @@ const commands = [
       const pos = morph.cursorPosition;
       const currentLine = morph.getLine(pos.row);
       const indent = currentLine.match(/^\s*/)[0].length;
-      morph.undoManager.group();
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
+        morph.undoManager.group();
 
-      // remove trailing spaces of empty lines
-      if (!currentLine.trim() && indent) {
-        morph.deleteText({
-          start: { row: pos.row, column: 0 },
-          end: { row: pos.row, column: indent }
-        });
-        pos.column = 0;
-      }
+        // remove trailing spaces of empty lines
+        if (!currentLine.trim() && indent) {
+          morph.deleteText({
+            start: { row: pos.row, column: 0 },
+            end: { row: pos.row, column: indent }
+          });
+          pos.column = 0;
+        }
 
-      // allow modes to handle newline
-      if (
-        morph.editorPlugin &&
+        // allow modes to handle newline
+        if (
+          morph.editorPlugin &&
         typeof morph.editorPlugin.cmd_newline === 'function' &&
         morph.editorPlugin.cmd_newline(pos, currentLine, indent)
-      ) return true;
+        ) return true;
 
-      morph.selection.text = '\n' + ' '.repeat(indent);
-      morph.selection.collapseToEnd();
-      morph.undoManager.group();
-      return true;
+        morph.selection.text = '\n' + ' '.repeat(indent);
+        morph.selection.collapseToEnd();
+        morph.undoManager.group();
+        return true;
+      });
     }
   },
 
@@ -1012,8 +1016,9 @@ const commands = [
       const quickInsert = string.length === 1 && string !== '\n' && pos.column > 0;
       const consistencyCheck = !quickInsert;
       // .... test end!
-
-      sel.replace(string, true, true, true, consistencyCheck);
+      morph.withMetaDo({ reconcileChanges: true }, () => {
+        sel.replace(string, true, true, true, consistencyCheck);
+      });
       sel.collapseToEnd();
       if (isDelete) { morph.undoManager.group(); }
       if (undoGroup) {
