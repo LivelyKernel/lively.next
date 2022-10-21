@@ -353,9 +353,10 @@ export class ComponentChangeTracker {
    */
   adjournChange (change) {
     const isReplaceChange = change.selector === 'replace';
+    if (!isReplaceChange) return false;
     const insertsMorph = change.args[1].find(m => m?.isMorph);
     const removesMorph = change.undo.args[1].find(m => m?.isMorph);
-    return isReplaceChange && !insertsMorph && !removesMorph;
+    return !insertsMorph && !removesMorph;
   }
 
   /**
