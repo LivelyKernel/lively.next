@@ -491,14 +491,15 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentB._changeTracker.onceChangesProcessed();
     let updatedSource = await testComponentModule.source();
-    expect(updatedSource).includes(`[
-        'Hello World', { fontSize: 20 },
-        morph({
-          name: 'charlie',
-          fill: Color.blue
-        }), null,
-        'How about a component', { fontWeight: 'bold ' },
-        part(C, { name: 'justin' }), null
-      ]`, 'reconciles embedded morphs if assigned via text and attributes');
+    expect(updatedSource).includes(`['Hello World', {
+      fontSize: 20
+    }, morph({
+      name: 'charlie',
+      fill: Color.blue
+    }), null, 'How about a component', {
+      fontWeight: 'bold '
+    }, part(C, {
+      name: 'justin'
+    }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
   });
 });
