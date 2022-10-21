@@ -410,9 +410,9 @@ export class Hand extends Morph {
       // So that the morphs doesn't steal events
       morph.reactsToPointer = false;
       morph.dropShadow = true;
-      this.addMorph(morph);
       this.bringToFront();
     });
+    this.addMorph(morph);
     signal(this, 'grab', morph);
   }
 
