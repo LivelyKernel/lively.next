@@ -5,7 +5,7 @@ import { module } from 'lively.modules/index.js';
 import { connect } from 'lively.bindings';
 import lint from '../js/linter.js';
 import {
-  getPropertiesNode, getValueExpr,
+  getPropertiesNode, getTextAttributesExpr, getValueExpr,
   getMorphNode, fixUndeclaredVars,
   insertMorph, insertProp, getComponentScopeFor,
   getComponentNode, getProp,
@@ -160,7 +160,7 @@ export class ComponentChangeTracker {
     const uncollapsedHierarchyExpr = convertToExpression(hiddenMorph, {
       onlyInclude: ownerChain,
       exposeMasterRefs: false,
-      dropMorphsWithNameOnly: false,
+      uncollapseHierarchy: true,
       masterInScope,
       skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type']
     });
@@ -290,6 +290,7 @@ export class ComponentChangeTracker {
   isPositionedByLayout (aMorph) {
     const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
     if (l?.name?.call() === 'Proportional') return false;
+    if (aMorph.owner?.textAndAttributes?.includes(aMorph)) return true;
     return l && l.layoutableSubmorphs.includes(aMorph);
   }
 
@@ -337,8 +338,24 @@ export class ComponentChangeTracker {
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args.some(m => m.epiMorph)) return true;
     if (!['addMorphAt', 'removeMorph'].includes(change.selector) && change.meta && (change.meta.metaInteraction || change.meta.isLayoutAction)) return true;
+    if (change.selector === 'addMorphAt' && change.target.textAndAttributes?.includes(change.args[0])) return true;
     if (!change.selector && change.prop !== 'layout' && obj.equals(change.prevValue, change.value)) return true;
     return false;
+  }
+
+  /**
+   * Given a change, returns wether or not we can delay the reconciliation
+   * of that change to a later time. This can be beneficial, since we
+   * sometimes want to avoid degrading performance when properties that
+   * are expensive to reconcile are changed in quick succession.
+   * @param { object } change - The change to check.
+   * @returns { boolean }
+   */
+  adjournChange (change) {
+    const isReplaceChange = change.selector === 'replace';
+    const insertsMorph = change.args[1].find(m => m?.isMorph);
+    const removesMorph = change.undo.args[1].find(m => m?.isMorph);
+    return isReplaceChange && !insertsMorph && !removesMorph;
   }
 
   /**
@@ -349,6 +366,13 @@ export class ComponentChangeTracker {
   async processChangeInComponent (change) {
     if (this.ignoreChange(change)) return;
     this.processChangeInComponentPolicy(change);
+    if (this.adjournChange(change)) {
+      fun.debounceNamed('reconcile later', 200, () => {
+        this.processChangeInComponentSource(change);
+        this.componentDescriptor.makeDirty();
+      })();
+      return;
+    }
     await this.processChangeInComponentSource(change);
     this.componentDescriptor.makeDirty();
   }
@@ -368,6 +392,12 @@ export class ComponentChangeTracker {
       const subSpec = policy.ensureSubSpecFor(change.target);
       subSpec[change.prop] = change.value;
     }
+
+    // it does not do matter to real time adjust
+    // a component policy structurally, since
+    // the policies themselves do not propagate
+    // structural changes at all
+
     this.refreshDependants();
   }
 
@@ -418,6 +448,10 @@ export class ComponentChangeTracker {
       updatedSource = this.handleRemovedMorph(change, parsedComponent, sourceCode, requiredBindings);
     }
 
+    if (change.selector === 'replace') {
+      updatedSource = this.handleTextAttributes(change, parsedComponent, sourceCode, requiredBindings);
+    }
+
     updatedSource = fixUndeclaredVars(updatedSource, requiredBindings, mod);
 
     if (this.needsLinting) {
@@ -447,6 +481,30 @@ export class ComponentChangeTracker {
       }
       delete this._finishPromise;
     })();
+  }
+
+  /**
+   * Handle reconciliations in response to the textAndAttributes being changed.
+   * For now we follow simple strategy: just always replace the entire text and attributes
+   * regardless of of much was changes in the replace call...
+   * if that causes performance degregation, we reconsider
+   * @param { object } replaceChange - The replace change of the text morph.
+   * @param { object } parsedComponent - The AST for the component definition.
+   * @param { string } sourceCode - The source code to reconcile the change with.
+   * @param { object[] } requiredBindings - An array that is populated with dependencies that arise as a part of reconciliation.
+   * @returns { string } The transformed code.
+   */
+  handleTextAttributes (replaceChange, parsedComponent, sourceCode, requiredBindings) {
+    const { target: textMorph } = replaceChange;
+    const responsibleComponent = getComponentScopeFor(parsedComponent, textMorph);
+    const morphDef = getMorphNode(responsibleComponent, textMorph);
+    if (!morphDef) {
+      return this.uncollapseSubmorphHierarchy(sourceCode, responsibleComponent, textMorph);
+    }
+    const textAttrsAsExpr = getTextAttributesExpr(textMorph);
+    requiredBindings.push(...Object.entries(textAttrsAsExpr.bindings));
+    this.needsLinting = true;
+    return this.patchProp(sourceCode, morphDef, 'textAndAttributes', textAttrsAsExpr.__expr__);
   }
 
   /**
