@@ -385,9 +385,10 @@ function inspect (object, options, depth) {
         break;
       }
       const key = propsToPrint[i];
+      const isValidLiteral = !key.includes('-');
       if (isArray) inspect(object[key], options, depth + 1);
       const printedVal = inspect(object[key], options, depth + 1);
-      printedProps.push((options.escapeKeys
+      printedProps.push((options.escapeKeys || !isValidLiteral
         ? JSON.stringify(key)
         : key) + ': ' + printedVal);
     }
