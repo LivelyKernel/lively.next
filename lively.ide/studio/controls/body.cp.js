@@ -1,7 +1,7 @@
 import { TilingLayout, component, ViewModel, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { obj, arr } from 'lively.lang';
-import { once, connect } from 'lively.bindings';
+import { once, noUpdate, connect } from 'lively.bindings';
 
 import { ShadowPopup, OpacityPopup, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
 import { PropertySection, PropertySectionInactive, PropertySectionModel } from './section.cp.js';
@@ -122,12 +122,9 @@ export class BodyControlModel extends PropertySectionModel {
     const { targetMorph, propConfig } = this;
     const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
+    if (!selectedProp) selectedProp = this.availableItems[0];
+    control.choose(selectedProp, false);
     control.refreshItems(this.availableItems);
-    if (selectedProp) control.choose(selectedProp);
-    else {
-      control.chooseDefault();
-      if (refresh) this.refreshItemLists();
-    }
     if (this.availableItems.length === 0) {
       this.disableAddEffectButton();
     }
@@ -216,9 +213,11 @@ export class DynamicPropertyModel extends ViewModel {
   /**
    * Programatically sets the selected property of this dynamic property.
    */
-  choose (prop) {
-    this.ui.effectSelector.selection = prop;
-    this.selectProperty();
+  choose (prop, reset = true) {
+    noUpdate(() => {
+      this.ui.effectSelector.selection = prop;
+    });
+    this.selectProperty(reset);
   }
 
   /**
@@ -233,8 +232,8 @@ export class DynamicPropertyModel extends ViewModel {
    * Sets the selected property based on the selection in the UI
    * controlled by the user.
    */
-  selectProperty () {
-    if (this.selectedProp && this.selectedProp !== this.ui.effectSelector.selection) { this.resetToDefaultValue(); }
+  selectProperty (reset) {
+    if (this.selectedProp && this.selectedProp !== this.ui.effectSelector.selection && reset) { this.resetToDefaultValue(); }
     this.selectedProp = this.ui.effectSelector.selection;
   }
 
