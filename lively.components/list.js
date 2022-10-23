@@ -1976,6 +1976,7 @@ export class DropDownListModel extends ButtonModel {
         list.epiMorph = true;
         list.hasFixedPosition = true;
         list.setTransform(view.getGlobalTransform());
+        list.styleClasses = ['Popups'];
         bounds = view.globalBounds();
       } else {
         bounds = view.innerBounds();
