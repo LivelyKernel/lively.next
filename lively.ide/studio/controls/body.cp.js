@@ -202,7 +202,7 @@ export class DynamicPropertyModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'effect selector', signal: 'selection', handler: 'selectProperty' },
+            { model: 'effect selector', signal: 'selection', handler: 'selectProperty', converter: () => true },
             { target: 'open popup', signal: 'onMouseDown', handler: 'togglePopup' },
             { target: 'remove', signal: 'onMouseDown', handler: 'remove' }];
         }
@@ -213,11 +213,11 @@ export class DynamicPropertyModel extends ViewModel {
   /**
    * Programatically sets the selected property of this dynamic property.
    */
-  choose (prop, reset = true) {
+  choose (prop, resetValue = true) {
     noUpdate(() => {
       this.ui.effectSelector.selection = prop;
     });
-    this.selectProperty(reset);
+    this.selectProperty(resetValue);
   }
 
   /**
@@ -232,9 +232,14 @@ export class DynamicPropertyModel extends ViewModel {
    * Sets the selected property based on the selection in the UI
    * controlled by the user.
    */
-  selectProperty (reset) {
-    if (this.selectedProp && this.selectedProp !== this.ui.effectSelector.selection && reset) { this.resetToDefaultValue(); }
-    this.selectedProp = this.ui.effectSelector.selection;
+  selectProperty (resetValue) {
+    const { effectSelector } = this.ui;
+    if (resetValue &&
+        this.selectedProp &&
+        this.selectedProp !== effectSelector.selection) {
+      this.resetToDefaultValue(); // only when we do that interactively
+    }
+    this.selectedProp = effectSelector.selection;
   }
 
   /**
