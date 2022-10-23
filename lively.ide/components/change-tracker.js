@@ -12,7 +12,7 @@ import {
   DEFAULT_SKIPPED_ATTRIBUTES,
   convertToExpression
 } from './helpers.js';
-import { getDefaultValueFor } from 'lively.morphic/helpers.js';
+import { getDefaultValueFor, isFoldableProp } from 'lively.morphic/helpers.js';
 
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
@@ -642,6 +642,14 @@ export class ComponentChangeTracker {
     return updatedSource;
   }
 
+  handleFoldableProp (prop, foldableValue, members, depth) {
+    const withoutValueGetter = obj.extract(foldableValue, members);
+    if (new Set(obj.values(withoutValueGetter)).size > 1) {
+      return getValueExpr(prop, withoutValueGetter, depth);
+    }
+    return getValueExpr(prop, foldableValue.valueOf());
+  }
+
   /**
    * Reconcile a change of a morph property.
    * @param { object } propChange - The property change object.
@@ -651,10 +659,13 @@ export class ComponentChangeTracker {
    * @returns { string } The transformed source code.
    */
   handleChangedProp (propChange, parsedComponent, sourceCode, requiredBindings) {
-    const { prop, value, target } = propChange;
+    let { prop, value, target } = propChange; let members;
     if (prop === 'name') return this.handleRenaming(propChange, parsedComponent, sourceCode);
     let updatedSource = sourceCode;
-    const valueAsExpr = getValueExpr(prop, value);
+    let valueAsExpr;
+    if (members = isFoldableProp(target.constructor, prop)) {
+      valueAsExpr = this.handleFoldableProp(prop, value, members, target.ownerChain().length);
+    } else valueAsExpr = getValueExpr(prop, value);
     requiredBindings.push(...Object.entries(valueAsExpr.bindings));
     let responsibleComponent = getComponentScopeFor(parsedComponent, target);
     const morphDef = getPropertiesNode(responsibleComponent, target);

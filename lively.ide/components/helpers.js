@@ -86,20 +86,26 @@ export function getTextAttributesExpr (textMorph) {
  * @param { * } value - The value of the property to serialize.
  * @returns { object } Converted version of the property value as expression object.
  */
-export function getValueExpr (prop, value) {
-  let valueAsExpr;
-  if (value && value.isPoint) value = value.roundTo(0.1);
+export function getValueExpr (prop, value, depth = 0) {
+  let valueAsExpr; let bindings = {};
+  if (value && value.isPoint) value = JSON.stringify(value.roundTo(0.1));
   if (value && !value.isMorph && value.__serialize__) {
     return value.__serialize__();
   } else if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
-    const n = {};
+    const nested = {};
     value = serializeNestedProp(prop, value, {
-      exprSerializer, nestedExpressions: n, asExpression: true
+      exprSerializer, nestedExpressions: nested, asExpression: true
     }, prop === 'borderRadius' ? ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] : ['top', 'left', 'right', 'bottom']);
+    value = obj.inspect(value, {}, depth);
+    for (let uuid in nested) {
+      const subExpr = nested[uuid];
+      value = value.replace(JSON.stringify(uuid), subExpr.__expr__);
+      Object.assign(bindings, subExpr.bindings);
+    }
   }
   valueAsExpr = {
-    __expr__: JSON.stringify(value),
-    bindings: {}
+    __expr__: value,
+    bindings
   };
 
   return valueAsExpr;
