@@ -19,6 +19,8 @@ let CachedDefaultValues;
 CachedDefaultValues = CachedDefaultValues || new Map();
 let CachedStyleProperties;
 CachedStyleProperties = CachedStyleProperties || new Map();
+let CachedFoldableProperties;
+CachedFoldableProperties = CachedFoldableProperties || new Map();
 let nameToClassMapping;
 nameToClassMapping = nameToClassMapping || {}; // eslint-disable-line no-use-before-define
 
@@ -110,6 +112,19 @@ export function getDefaultValueFor (type, propName) {
   }
   CachedDefaultValues.set(type, defaultValues);
   return defaultValues[propName];
+}
+
+export function isFoldableProp (type, propName) {
+  if (CachedFoldableProperties.has(type)) return CachedFoldableProperties.get(type)[propName];
+  const { props } = getPropSettings(type);
+  const foldableProps = {};
+  for (let prop in props) {
+    if ('foldable' in props[prop]) {
+      foldableProps[prop] = props[prop].foldable;
+    }
+  }
+  CachedFoldableProperties.set(type, foldableProps);
+  return foldableProps[propName];
 }
 
 export function morph (props = {}, opts = { restore: false }) {
