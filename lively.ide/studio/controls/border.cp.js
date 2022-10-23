@@ -250,14 +250,20 @@ export class BorderControlModel extends PropertySectionModel {
     if (!this.targetMorph && this.updateDirectly) return;
     const { borderColorInput, borderWidthInput, borderStyleSelector } = this.ui;
     const border = this.targetMorph?.border || {};
-    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+    const updateBorder = () => {
       if (!borderWidthInput.isMixed) border.width = borderWidthInput.number;
       if (!borderColorInput.isMixed) border.color = borderColorInput.colorValue;
       if (!borderStyleSelector.isMixed) border.style = borderStyleSelector.selection;
-      if (this.updateDirectly) {
+    };
+    if (this.updateDirectly) {
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        updateBorder();
         this.targetMorph.border = border;
-      } else signal(this, 'value', border);
-    });
+      });
+    } else {
+      updateBorder();
+      signal(this, 'value', border);
+    }
   }
 }
 
@@ -370,7 +376,9 @@ export class BorderPopupWindow extends PopupModel {
   updateBorder (borderStyle) {
     if (!this.targetMorph) return;
     const { borderRadius } = this.targetMorph;
-    this.targetMorph['border' + string.capitalize(this.selectedBorder)] = { ...borderStyle, borderRadius };
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph['border' + string.capitalize(this.selectedBorder)] = { ...borderStyle, borderRadius };
+    });
     signal(this, 'target updated');
   }
 }
