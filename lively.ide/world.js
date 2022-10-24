@@ -222,13 +222,6 @@ export class LivelyWorld extends World {
         this.propertiesPanel.hasFixedPosition = true;
         this.propertiesPanel.respondsToVisibleWindow = true;
       }
-      // FIXME: This can be removed once we move away from the vdom renderer.
-      //        Since the properties panel is mounted into the world, the vdom
-      //        has to create a significant amount of new vdom nodes and also
-      //        visit a bunch of submorphs. This can be ignored, once we work
-      //        with the vanilla DOM api, where can just simply use the previously
-      //        rendered dom node for the properties panel.
-      await this.propertiesPanel.whenRendered();
       this.propertiesPanel.toggle(this.activeSideBars.includes('properties panel'));
     }
 
