@@ -1,10 +1,10 @@
-import { TilingLayout, component, ViewModel, part } from 'lively.morphic';
+import { TilingLayout, ShadowObject, component, ViewModel, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { obj, arr } from 'lively.lang';
 import { once, noUpdate, connect } from 'lively.bindings';
 
 import { ShadowPopup, OpacityPopup, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
-import { PropertySection, PropertySectionInactive, PropertySectionModel } from './section.cp.js';
+import { PropertySection, PropertySectionModel } from './section.cp.js';
 import { PropertyLabel, RemoveButton, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 
 /**
@@ -90,7 +90,7 @@ export class BodyControlModel extends PropertySectionModel {
       if (!obj.equals(resetValue, this.targetMorph[accessor])) {
         if (prop === 'Inner shadow' && !this.targetMorph[accessor].inset) continue;
         if (prop === 'Drop shadow' && this.targetMorph[accessor].inset) continue;
-        this.addDynamicProperty(prop, false);
+        this.addDynamicProperty(prop, false, false);
       }
     }
     this.refreshItemLists();
@@ -118,12 +118,12 @@ export class BodyControlModel extends PropertySectionModel {
    *                              properties should be updated. Skipping this can make sense
    *                              for bulk updates.
    */
-  addDynamicProperty (selectedProp, refresh = true) {
+  addDynamicProperty (selectedProp, reset = true, applyDefault = true) {
     const { targetMorph, propConfig } = this;
     const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
     if (!selectedProp) selectedProp = this.availableItems[0];
-    control.choose(selectedProp, false);
+    control.choose(selectedProp, reset, applyDefault);
     control.refreshItems(this.availableItems);
     if (this.availableItems.length === 0) {
       this.disableAddEffectButton();
@@ -140,7 +140,7 @@ export class BodyControlModel extends PropertySectionModel {
   activate () {
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
     this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
-    this.addDynamicProperty();
+    this.addDynamicProperty(false, false);
   }
 
   /**
@@ -197,12 +197,12 @@ export class DynamicPropertyModel extends ViewModel {
       },
       isControl: { get () { return true; } },
       expose: {
-        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose', 'closePopup']; }
+        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose', 'closePopup', 'applyDefault']; }
       },
       bindings: {
         get () {
           return [
-            { model: 'effect selector', signal: 'selection', handler: 'selectProperty', converter: () => true },
+            { model: 'effect selector', signal: 'selection', handler: 'selectProperty', updated: ($upd) => $upd(true, true) },
             { target: 'open popup', signal: 'onMouseDown', handler: 'togglePopup' },
             { target: 'remove', signal: 'onMouseDown', handler: 'remove' }];
         }
@@ -212,12 +212,15 @@ export class DynamicPropertyModel extends ViewModel {
 
   /**
    * Programatically sets the selected property of this dynamic property.
+   * @param { string } prop - The name of the dynamic property.
+   * @param { boolean } [resetValue = false] - Wether or not to reset the previously selected property on the target morph.
+   * @param { boolean } [applyDefault = false] - Wether or not to apply the default value of the chosen property right away.
    */
-  choose (prop, resetValue = true) {
+  choose (prop, resetValue = true, applyDefault = false) {
     noUpdate(() => {
       this.ui.effectSelector.selection = prop;
     });
-    this.selectProperty(resetValue);
+    this.selectProperty(resetValue, applyDefault);
   }
 
   /**
@@ -231,15 +234,29 @@ export class DynamicPropertyModel extends ViewModel {
   /**
    * Sets the selected property based on the selection in the UI
    * controlled by the user.
+   * @param { boolean } [resetValue = false] - Wether or not to reset the previously selected property on the target morph.
+   * @param { boolean } [applyDefault = false] - Wether or not to apply the default value of the chosen property right away.
    */
-  selectProperty (resetValue) {
+  selectProperty (resetValue = false, applyDefault = false) {
     const { effectSelector } = this.ui;
     if (resetValue &&
         this.selectedProp &&
         this.selectedProp !== effectSelector.selection) {
-      this.resetToDefaultValue(); // only when we do that interactively
+      this.resetProperty(); // only when we do that interactively
     }
     this.selectedProp = effectSelector.selection;
+    if (applyDefault) this.applyDefault();
+  }
+
+  /**
+   * Sets the currently selected property to the corresponding "default" value of that property.
+   * Note that this is not to be confused with the value we employ for resetting a property.
+   * Resetting a property will turn it into a neutral state.
+   * Default values on the other hand are decisively chosen to have a characteristic effect
+   * in order to illustrate what the property controls in the morph's appearance.
+   */
+  applyDefault () {
+    this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].defaultValue; // eslint-disable-line no-use-before-define
   }
 
   /**
@@ -253,13 +270,16 @@ export class DynamicPropertyModel extends ViewModel {
       availableItems = arr.uniq(['Drop shadow', 'Inner shadow'].concat(availableItems));
     }
     effectSelector.items = arr.compact(availableItems);
-    effectSelector.selection = this.selectedProp;
+    noUpdate(() => {
+      effectSelector.selection = this.selectedProp;
+    });
   }
 
   /**
-   * Resets the currently controlled effect property back to its default value.
+   * Resets the currently controlled effect property back to its default value
+   * in order to "leave no trace behind".
    */
-  resetToDefaultValue () {
+  resetProperty () {
     this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].resetValue; // eslint-disable-line no-use-before-define
   }
 
@@ -268,7 +288,7 @@ export class DynamicPropertyModel extends ViewModel {
    */
   remove () {
     this.view.remove();
-    this.resetToDefaultValue();
+    this.resetProperty();
   }
 
   /**
@@ -348,7 +368,8 @@ const PROP_CONFIG = {
       return opts;
     },
     popupComponent: ShadowPopup,
-    resetValue: null
+    resetValue: null,
+    defaultValue: new ShadowObject({ color: Color.black, blur: 15 })
   },
   'Inner shadow': {
     accessor: 'dropShadow',
@@ -359,7 +380,8 @@ const PROP_CONFIG = {
       return opts;
     },
     popupComponent: InsetShadowPopup,
-    resetValue: null
+    resetValue: null,
+    defaultValue: new ShadowObject({ color: Color.black, inset: true, blur: 15 })
   },
   Opacity: {
     accessor: 'opacity',
@@ -367,7 +389,8 @@ const PROP_CONFIG = {
       return { value: target.opacity };
     },
     popupComponent: OpacityPopup,
-    resetValue: 1
+    resetValue: 1,
+    defaultValue: 1
   },
   Blur: {
     accessor: 'blur',
@@ -375,7 +398,8 @@ const PROP_CONFIG = {
       return { value: target.blur };
     },
     popupComponent: BlurPopup,
-    resetValue: 0
+    resetValue: 0,
+    defaultValue: 1
   },
   Cursor: {
     accessor: 'nativeCursor',
@@ -383,7 +407,8 @@ const PROP_CONFIG = {
     resetValue: 'auto',
     defaultModelProps: target => {
       return { selection: target.nativeCursor };
-    }
+    },
+    defaultValue: 'pointer'
   },
   Tilted: {
     accessor: 'tilted',
@@ -391,7 +416,8 @@ const PROP_CONFIG = {
     resetValue: 0,
     defaultModelProps: target => {
       return { value: target.tilted };
-    }
+    },
+    defaultValue: 0.5
   },
   Flipped: {
     accessor: 'flipped',
@@ -399,7 +425,8 @@ const PROP_CONFIG = {
     resetValue: 0,
     defaultModelProps: target => {
       return { value: target.flipped };
-    }
+    },
+    defaultValue: 0.5
   }
 };
 
