@@ -143,7 +143,7 @@ export class ColorInputModel extends ViewModel {
     this.picker = p.openInWorld();
     // this two step alignment is the simplest way to make the picker find its optimal position
     this.picker.topRight = this.view.globalBounds().topLeft();
-    this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
+    this.picker.topLeft = this.world().visibleBounds().insetBy(10).translateForInclusion(this.picker.globalBounds()).topLeft();
   }
 
   onPickerClosedWithClick () {
