@@ -1,7 +1,7 @@
 import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
 import { Icons } from 'lively.morphic/text/icons.js';
-import { arr, obj, string } from 'lively.lang';
+import { arr, num, obj, string } from 'lively.lang';
 import { parse, query, stringify, nodes } from 'lively.ast';
 import { module } from 'lively.modules/index.js';
 import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
@@ -88,7 +88,11 @@ export function getTextAttributesExpr (textMorph) {
  */
 export function getValueExpr (prop, value, depth = 0) {
   let valueAsExpr; let bindings = {};
-  if (value && value.isPoint) value = JSON.stringify(value.roundTo(0.1));
+  if (value && value.isPoint) value = value.roundTo(0.1);
+  if (prop === 'rotation') {
+    value = `num.toRadians(${num.toDegrees(value).toFixed(1)})`;
+    bindings['lively.lang'] = ['num'];
+  }
   if (value && !value.isMorph && value.__serialize__) {
     return value.__serialize__();
   } else if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
