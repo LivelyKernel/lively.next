@@ -16,6 +16,7 @@ const InputLineDefault = component({
   fontSize: 20,
   padding: rect(10, 3, 0, 0),
   placeholder: 'Name',
+  fill: Color.white,
   submorphs: [{
     type: Label,
     name: 'placeholder',
