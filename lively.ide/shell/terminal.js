@@ -70,6 +70,7 @@ export default class Terminal extends Morph {
               needsDocument: true,
               lineWrapping: false,
               textString: '',
+              readOnly: false,
               ...this.defaultStyle
             },
 
