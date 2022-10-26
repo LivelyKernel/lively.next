@@ -432,6 +432,8 @@ class DOMTextMeasure {
         const nodeForRenderedLineInActualLayer = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
         if (nodeForRenderedLineInActualLayer) {
           actualTextNode.replaceChild(lineNode, nodeForRenderedLineInActualLayer);
+        } else {
+          lineNode.remove();
         }
         return result;
       });
