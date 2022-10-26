@@ -95,7 +95,7 @@ export default class InputLine extends Text {
 
   static get properties () {
     return {
-      readOnly: { defaultValue: false},
+      readOnly: { defaultValue: false },
       fixedWidth: { defaultValue: true },
       fixedHeight: { defaultValue: true },
       extent: { defaultValue: pt(100, 20) },
@@ -104,6 +104,7 @@ export default class InputLine extends Text {
       lineWrapping: { defaultValue: false },
       historyId: { defaultValue: null },
       clearOnInput: { defaultValue: false },
+      selectionMode: { defaultValue: 'lively' },
 
       label: {
         after: ['textAndAttributes', 'extent', 'padding', 'submorphs'],
@@ -258,7 +259,6 @@ export default class InputLine extends Text {
     placeholder.visible = true;
     placeholder.height = this.height;
     placeholder.padding = this.padding;
-    placeholder.lineHeight = this.height + 'px';
     if (placeholder.fit) placeholder.fit();
     placeholder.topLeft = this.label.length
       ? textB.topLeft().addXY(0, this.borderWidth)
