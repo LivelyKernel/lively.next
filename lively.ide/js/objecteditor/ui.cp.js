@@ -244,16 +244,7 @@ const ObjectEditorLight = component({
         spacing: 2
       }),
       position: pt(626, 0),
-      reactsToPointer: false,
-      submorphs: [part(SystemButton, {
-        name: 'show frozen parts button',
-        extent: pt(30, 24),
-        tooltip: 'show published parts',
-        submorphs: [{
-          name: 'label',
-          textAndAttributes: Icon.textAttribute('sellsy')
-        }]
-      })]
+      reactsToPointer: false
     }]
   }, {
     name: 'class and method controls',

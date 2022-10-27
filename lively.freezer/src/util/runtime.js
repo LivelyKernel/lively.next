@@ -219,18 +219,6 @@ export function runtimeDefinition () {
       }
       return localName;
     },
-    loadObjectFromPartsbinFolder (name) {
-      let location = this.location;
-      let r = G.lively.resources.resource(location);
-      if (!r.isDirectory()) r = r.parent();
-      return r.join(`dynamicParts/${name}.json`).readJson().then(snapshot => {
-        return G.lively.morphic.loadMorphFromSnapshot(
-          snapshot, {
-            onDeserializationStart: false,
-            migrations: []
-          });
-      });
-    },
     fetchStandaloneFor (name) {
       for (let glob in this.globalModules) {
         if (name.match(glob.replace('local://', '').replace(/\@.*\//, '/').replace('/index.js', ''))) { return this.globalModules[glob]; }
@@ -630,6 +618,4 @@ export function runtimeDefinition () {
     }
 
   };
-
-  G.loadCompiledFrozenPart = G.lively.FreezerRuntime.loadObjectFromPartsbinFolder.bind(G.lively.FreezerRuntime);
 }

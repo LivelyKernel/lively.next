@@ -7,7 +7,6 @@
 // import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
 // import { pt } from 'lively.graphics';
 // import MorphicDB from 'lively.morphic/morphicdb/db.js';
-// import { savePart, loadPart } from 'lively.morphic/partsbin.js';
 // import ObjectPackage, { addScript } from 'lively.classes/object-classes.js';
 // import { serialize, requiredModulesOfSnapshot, deserialize } from 'lively.serializer2';
 // import { obj, arr } from 'lively.lang';

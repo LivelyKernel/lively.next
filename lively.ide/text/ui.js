@@ -13,9 +13,6 @@ import { connect, disconnect, once, noUpdate } from 'lively.bindings';
 import { ColorPicker } from '../styling/color-picker.js';
 import { DropDownList } from 'lively.components';
 
-// FIXME: this is something that should be in its own package, probably
-import { loadObjectFromPartsbinFolder } from 'lively.morphic/partsbin.js';
-
 const cachedControls = new WeakMap();
 
 export class RichTextControl extends Morph {

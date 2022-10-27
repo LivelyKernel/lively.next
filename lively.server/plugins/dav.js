@@ -1,11 +1,9 @@
 /* global System, process */
 
-import { obj } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { string } from 'lively.lang';
 
 const COMPRESSABLE_URLS = [
-  'lively.morphic/styleguides',
   'components_cache'
 ];
 

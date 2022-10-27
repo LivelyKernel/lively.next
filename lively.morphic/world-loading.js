@@ -10,7 +10,6 @@ import { createMorphSnapshot } from './serialization.js';
 import { MorphicDB } from './morphicdb/index.js';
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
-import './partsbin.js';
 import { part } from './components/core.js';
 
 function reportWorldLoad (world, user) {

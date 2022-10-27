@@ -159,9 +159,7 @@ Regular expression should be given without quotes or literal mode slashes.',
             listMaster: SystemList,
             items: [
               'in loaded modules',
-              'in loaded and unloaded modules',
-              'in parts',
-              'in worlds'
+              'in loaded and unloaded modules'
             ]
           },
           borderColor: Color.gray,

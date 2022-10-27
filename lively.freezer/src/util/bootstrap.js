@@ -3,7 +3,6 @@ import { resource, unregisterExtension, registerExtension, loadViaScript } from 
 import { string, obj } from 'lively.lang';
 import * as modulePackage from 'lively.modules';
 import { easings } from 'lively.morphic';
-import { resourceExtension as partResourceExtension } from 'lively.morphic/partsbin.js';
 import { adoptObject } from 'lively.lang/object.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
@@ -324,10 +323,6 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
 
     li.label = 'Loading world...';
     window.onresize = null;
-    window.loadCompiledFrozenPart = lively.modules.module('lively.morphic/partsbin.js')._recorder.loadPart;
-    unregisterExtension('part');
-    registerExtension(partResourceExtension);
-    unregisterExtension('styleguide');
     lively.FreezerRuntime = false;
     const landingPageUrl = document.location;
     window.worldLoadingIndicator = li;

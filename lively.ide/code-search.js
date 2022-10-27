@@ -9,8 +9,6 @@ import {
   Window,
   FilterableList
 } from 'lively.components';
-import { MorphicDB } from 'lively.morphic/morphicdb/index.js';
-import { SnapshotEditor } from 'lively.morphic/partsbin.js';
 
 import { callService, ProgressMonitor } from './service-worker.js';
 import { show } from 'lively.halos';
@@ -150,9 +148,7 @@ export class CodeSearcher extends FilterableList {
     this.get('input').input = '';
     this.get('search chooser').items = [
       'in loaded modules',
-      'in loaded and unloaded modules',
-      'in parts',
-      'in worlds'
+      'in loaded and unloaded modules'
     ];
     noUpdate(() => {
       this.get('search chooser').selection = 'in loaded modules';
@@ -174,17 +170,11 @@ export class CodeSearcher extends FilterableList {
     this.caseModeActive = false;
     this.regexModeActive = false;
 
-    const searchTargetSelection = this.get('search chooser').selection;
-    if (searchTargetSelection === 'in worlds' || searchTargetSelection === 'in parts') {
-      this.get('caseMode').master = { auto: ModeButtonDisabled };
-      this.get('regexMode').master = { auto: ModeButtonDisabled };
-    } else {
-      [this.get('caseMode'), this.get('regexMode')].forEach(button => button.master = {
-        auto: ModeButtonInactive,
-        hover: ModeButtonInactiveHover,
-        click: ModeButtonInactiveClick
-      });
-    }
+    [this.get('caseMode'), this.get('regexMode')].forEach(button => button.master = {
+      auto: ModeButtonInactive,
+      hover: ModeButtonInactiveHover,
+      click: ModeButtonInactiveClick
+    });
   }
 
   searchModeToggled (type) {
@@ -269,8 +259,6 @@ export class CodeSearcher extends FilterableList {
       let searchType = this.get('search chooser').selection;
       let searchInModules = searchType === 'in loaded modules';
       let searchInAllModules = searchType === 'in loaded and unloaded modules';
-      let searchInParts = searchType === 'in parts';
-      let searchInWorlds = searchType === 'in worlds';
 
       this.ensureIndicator('searching...');
 
@@ -293,20 +281,6 @@ export class CodeSearcher extends FilterableList {
           this.regexModeActive,
           progressMonitor
         );
-      } else if (searchInParts || searchInWorlds) {
-        // FIXME lh 2022-07-05: When the new project management has landed, this should be made consistent with the new idea of parts/worlds
-        // When this is tackled, regex mode and case sensitivity should be introduced here as well.
-        let pbar = await $world.addProgressBar({ label: 'morphicdb search' });
-        let type = searchInWorlds ? 'world' : 'part';
-        let found = await MorphicDB.default.codeSearchInPackages(
-          searchTerm, type, (name, i, n) => Object.assign(pbar, { label: name, progress: i / n }));
-        pbar.remove();
-        this.items = found.map(ea => {
-          let inFile = ea.file.path.slice(1).reduce((url, ea) => string.joinPath(url, ea));
-          if (ea.lineString >= 300) ea.lineString = string.truncate(ea.lineString, 300);
-          ea.isMorphicDBFind = true;
-          return { isListItem: true, string: `[${ea.commit.type}/${ea.commit.name}] ${inFile}:${ea.line} ${ea.lineString}`, value: ea };
-        });
       }
 
       this.removeIndicator();
@@ -326,7 +300,6 @@ export class CodeSearcher extends FilterableList {
     let sel = this.selection;
     if (!sel) return;
 
-    if (sel.isMorphicDBFind) return new SnapshotEditor(sel.commit).interactivelyEditFileInSnapshotPackage(sel.file, () => {}, { row: sel.line, column: 0 });
     return this.openBrowserForSelection();
   }
 
@@ -362,14 +335,6 @@ export class CodeSearcher extends FilterableList {
             : 'in loaded modules';
           return true;
         }
-      },
-      {
-        name: 'toggle search in parts',
-        exec: () => { chooser.selection = 'in parts'; return true; }
-      },
-      {
-        name: 'toggle search in worlds',
-        exec: () => { chooser.selection = 'in worlds'; return true; }
       }
     ]);
   }
@@ -377,8 +342,6 @@ export class CodeSearcher extends FilterableList {
   get keybindings () {
     return [
       { keys: 'F1', command: 'toggle search in unloaded modules' },
-      { keys: 'F2', command: 'toggle search in parts' },
-      { keys: 'F3', command: 'toggle search in worlds' }
     ].concat(super.keybindings);
   }
 }
