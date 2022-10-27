@@ -1,6 +1,6 @@
 /* global  it, describe, beforeEach, before, after */
 import { expect } from 'mocha-es6';
-import { Morph, morph, VerticalLayout, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
+import { Morph, morph, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
 import { arr } from 'lively.lang';
 import { ProportionalLayout } from '../layout.js';
@@ -13,7 +13,6 @@ function createDummyWorld () {
     name: 'world',
     extent: pt(300, 300),
     submorphs: [new Morph({
-      layout: new VerticalLayout({ renderViaCSS: false }),
       center: pt(150, 150),
       extent: pt(200, 400),
       fill: Color.random(),
@@ -53,149 +52,6 @@ describe('layout', () => {
     // $world = this.env.world;
   });
   beforeEach(() => env.setWorld(createDummyWorld()));
-
-  describe('vertical layout', () => {
-    beforeEach(() => {
-      m.layout.renderViaCSS = false;
-    });
-
-    it('renders submorphs vertically', async () => {
-      const [item1, item2, item3] = m.submorphs;
-      await checkJSAndCSS(m, () => {
-        expect(item1.position).equals(pt(0, 0));
-        expect(item2.position).equals(item1.bottomLeft);
-        expect(item3.position).equals(item2.bottomLeft);
-      });
-    });
-
-    it('may render submorphs from bottom to top', async () => {
-      const [_, item3] = m.submorphs;
-      m.layout.direction = 'bottomToTop';
-      m.layout.autoResize = false;
-      m.height = 500;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(item3.bottom).equals(m.height);
-      });
-      m.layout.spacing = 5;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(item3.bottom).equals(m.height - 5);
-      });
-    });
-
-    it('may render submorph centered', async () => {
-      m.layout.align = 'center';
-      m.layout.direction = 'centered';
-      m.layout.spacing = 5;
-      m.layout.autoResize = false;
-      m.extent = pt(500, 500);
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        closeToPoint(m.submorphBounds().center(), m.innerBounds().center(), 0.5);
-      });
-    });
-
-    it('adjusts layout when submorph changes extent', async () => {
-      const [item1, item2, item3] = m.submorphs;
-      item2.extent = pt(100, 100);
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(item1.position).equals(pt(0, 0));
-        expect(item2.position).equals(item1.bottomLeft);
-        expect(item3.position).equals(item2.bottomLeft);
-      });
-    });
-
-    it('adjusts layout when submorph is removed', async () => {
-      const [item1, item2, item3] = m.submorphs;
-      item2.remove();
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(item3.position).equals(item1.bottomLeft);
-      });
-    });
-
-    it('adjusts layout when submorph is inserted', async () => {
-      const [item1, item2, _] = m.submorphs;
-      const item4 = new Morph({ extent: pt(200, 200) });
-      m.addMorphAt(item4, 1);
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(item4.position).equals(item1.bottomLeft);
-        expect(item2.position).equals(item4.bottomLeft);
-      });
-    });
-
-    it('can vary the spacing between submorphs', async () => {
-      const [item1, item2, item3] = m.submorphs;
-      m.layout = new VerticalLayout({ spacing: 10, renderViaCSS: false });
-      await checkJSAndCSS(m, () => {
-        expect(item2.position).equals(item1.bottomLeft.addPt(pt(0, 10)));
-        expect(item3.position).equals(item2.bottomLeft.addPt(pt(0, 10)));
-      });
-    });
-
-    it('adjusts width to widest item', async () => {
-      m.layout = new VerticalLayout({ resizeSubmorphs: false, autoResize: true, renderViaCSS: false });
-      const maxWidth = 1000;
-      m.submorphs[1].width = maxWidth;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.width).equals(maxWidth);
-      });
-    });
-
-    it('can resize width of submorphs', async () => {
-      m.layout.resizeSubmorphs = new VerticalLayout({ resizeSubmorphs: true, renderViaCSS: false });
-      m.width = 600;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.width).equals(m.submorphs[1].width);
-      });
-    });
-
-    it('can resize width of submorphs and adjust height', async () => {
-      m.layout.resizeSubmorphs = new VerticalLayout({ resizeSubmorphs: true, autoResize: true, renderViaCSS: false });
-      m.width = 600;
-      m.height = 1000;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.width).equals(m.submorphs[1].width);
-        expect(m.height).equals(m.submorphBounds().height);
-      });
-    });
-
-    it('adjusts height to number of items', async () => {
-      const totalHeight = m.submorphs.reduce((h, m) => h + m.height, 0);
-      await checkJSAndCSS(m, () => {
-        expect(m.height).equals(totalHeight);
-      });
-    });
-
-    it('can leave the container extent untouched', async () => {
-      const [item1, item2, _] = m.submorphs;
-      m.layout = new VerticalLayout({ autoResize: false, renderViaCSS: true });
-      let extentBefore = m.extent;
-      item1.width = 10;
-      item2.height = 10;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.extent).equals(extentBefore);
-      });
-    });
-
-    it('will not resize the container if no submorphs present', async () => {
-      let extentBefore = m.extent;
-      m.layout.autoResize = false;
-      m.submorphs = [];
-      m.layout.autoResize = true;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.extent).equals(extentBefore);
-      });
-    });
-  });
 
   describe('horizontal layout', () => {
     beforeEach(() => {
@@ -913,7 +769,7 @@ describe('layout', () => {
             submorphs: [
               morph({
                 name: 'C',
-                layout: new VerticalLayout({
+                layout: new HorizontalLayout({
                   renderViaCSS: false,
                   autoResize: true
                 }),
@@ -991,31 +847,6 @@ describe('layout', () => {
       a.applyLayoutIfNeeded();
       b.extent = pt(25, 25);
       expect(b.layout.noLayoutActionNeeded).is.false;
-    });
-
-    it('properly supports nesting in vertical layouts', () => {
-      let m = morph({
-        layout: new VerticalLayout({ resizeSubmorphs: true, autoResize: true, renderViaCSS: false }),
-        extent: pt(200, 200),
-        name: 'root',
-        fill: Color.blue,
-        submorphs: arr.range(1, 3).map(() => morph({
-          name: 'twig',
-          fill: Color.green,
-          layout: new TilingLayout({ renderViaCSS: false }),
-          submorphs: arr.range(1, 3).map(() => morph({
-            fill: Color.red,
-            name: 'leaf',
-            extent: pt(50, 50)
-          }))
-        }))
-      });
-      // m.openInWorld()
-      expect(m.height).equals(150);
-      m.width = 100;
-      m.applyLayoutIfNeeded();
-      expect(m.height).equals(300);
-      expect(m.submorphBounds().height).equals(300);
     });
 
     it('properly supports nesting in horizontal layouts', () => {
