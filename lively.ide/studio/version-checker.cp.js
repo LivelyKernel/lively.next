@@ -192,7 +192,7 @@ const LivelyVersionChecker = component({
     fill: Color.transparent,
     name: 'version status label',
     fontColor: Color.rgb(253, 254, 254),
-    lineHeight: 1.4,
+    lineHeight: 1.2,
     reactsToPointer: false,
     textAndAttributes: ['Checking version...', null]
   }, {
@@ -280,11 +280,12 @@ const LivelyVersionChecker = component({
     extent: pt(83.7, 68.1),
     fill: Color.rgba(255, 255, 255, 0),
     html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
-    scale: 0.2214986798373248
+    scale: 0.22
   }, {
     type: Label,
     name: 'status icon label',
     fontSize: 14,
+    lineHeight: 1.1,
     fontColor: Color.rgb(231, 76, 60),
     fill: Color.transparent,
     isLayoutable: false,
