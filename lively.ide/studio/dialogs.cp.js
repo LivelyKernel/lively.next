@@ -143,11 +143,18 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
   }
 }
 
-// SaveWorldDialog.openInWorld()
 const SaveWorldDialog = component(DarkPrompt, {
   defaultViewModel: SaveWorldDialogModel,
   name: 'save world dialog',
   extent: pt(470, 320),
+  layout: new VerticalLayout({
+    align: 'center',
+    autoResize: true,
+    direction: 'topToBottom',
+    renderViaCSS: true,
+    resizeSubmorphs: true,
+    spacing: 16
+  }),
   submorphs: [{
     name: 'prompt title',
     textString: 'Save world'
@@ -155,8 +162,7 @@ const SaveWorldDialog = component(DarkPrompt, {
   add({
     name: 'prompt controls',
     clipMode: 'hidden',
-    height: 210,
-    width: 450,
+    extent: pt(450, 210),
     fill: Color.transparent,
     layout: new ConstraintLayout({
       lastExtent: {
@@ -233,6 +239,7 @@ const SaveWorldDialog = component(DarkPrompt, {
     }), {
       type: Text,
       name: 'description',
+      readOnly: false,
       borderRadius: 5,
       clipMode: 'auto',
       dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
