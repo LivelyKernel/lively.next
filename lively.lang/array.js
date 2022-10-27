@@ -1,10 +1,11 @@
+/* global GLOB */
 /**
  * Methods to make working with arrays more convenient and collection-like.
  * @module lively.lang/array
  */
 
 import { equals as objectEquals } from './object.js';
-import { Null as NullFunction } from './function.js';
+import { Null as NullFunction, delay } from './function.js';
 import Group from './Group.js';
 
 /**
@@ -622,69 +623,65 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
   }, endFunc)();
 }
 
-// FIXME: progress bar would is to be loaded from the parts bin, which is retired a long time ago
-// Would need to fix the progress bar functionality of the world before fixing this
-// function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whenDoneFunc, context or spec */) {
-//
-//   const args = Array.from(arguments);
-//   const array = args.shift();
-//   const steps = array.length;
-//   let progressBar; let iterator; let labelFunc; let whenDoneFunc; let context;
-//   let progressBarAdded = false;
-//
-//   // init args
-//   if (args.length === 1) {
-//     progressBar = args[0].progressBar;
-//     iterator = args[0].iterator;
-//     labelFunc = args[0].labelFunction;
-//     whenDoneFunc = args[0].whenDone;
-//     context = args[0].context;
-//   } else {
-//     progressBar = args[0];
-//     iterator = args[1];
-//     labelFunc = args[2];
-//     whenDoneFunc = args[3];
-//     context = args[4];
-//   }
-//   if (!context) context = typeof window !== 'undefined' ? window : GLOB;
-//   if (!labelFunc) labelFunc = function (x) { return x; };
-//
-//   // init progressbar
-//   if (!progressBar) {
-//     progressBarAdded = true;
-//     const Global = typeof window !== 'undefined' ? window : GLOB;
-//     progressBar = $world
-//       ? $world.addProgressBar()
-//       : {
-//           value: null,
-//           label: null,
-//           remove: function () {}
-//         };
-//   }
-//   progressBar.value = 0;
-//
-//   // nest functions so that the iterator calls the next after a delay
-//   (array.reduceRight(function (nextFunc, item, idx) {
-//     return function () {
-//       try {
-//         progressBar.value = (idx / steps);
-//         if (labelFunc) progressBar.label = (labelFunc.call(context, item, idx));
-//         iterator.call(context, item, idx);
-//       } catch (e) {
-//         console.error(
-//           'Error in forEachShowingProgress at %s (%s)\n%s\n%s',
-//           idx, item, e, e.stack);
-//       }
-//       delay(nextFunc, 0);
-//     };
-//   }, function () {
-//     progressBar.value = 1;
-//     if (progressBarAdded) (function () { progressBar.remove(); }).delay(0);
-//     if (whenDoneFunc) whenDoneFunc.call(context);
-//   }))();
-//
-//   return array;
-// }
+function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whenDoneFunc, context or spec */) {
+  const args = Array.from(arguments);
+  const array = args.shift();
+  const steps = array.length;
+  let progressBar; let iterator; let labelFunc; let whenDoneFunc; let context;
+  let progressBarAdded = false;
+
+  // init args
+  if (args.length === 1) {
+    progressBar = args[0].progressBar;
+    iterator = args[0].iterator;
+    labelFunc = args[0].labelFunction;
+    whenDoneFunc = args[0].whenDone;
+    context = args[0].context;
+  } else {
+    progressBar = args[0];
+    iterator = args[1];
+    labelFunc = args[2];
+    whenDoneFunc = args[3];
+    context = args[4];
+  }
+  if (!context) context = typeof window !== 'undefined' ? window : GLOB;
+  if (!labelFunc) labelFunc = function (x) { return x; };
+
+  // init progressbar
+  if (!progressBar) {
+    progressBarAdded = true;
+    progressBar = $world
+      ? $world.showLoadingIndicatorFor($world)
+      : {
+          value: null,
+          label: null,
+          remove: function () {}
+        };
+  }
+  progressBar.progress = 0;
+
+  // nest functions so that the iterator calls the next after a delay
+  (array.reduceRight(function (nextFunc, item, idx) {
+    return function () {
+      try {
+        progressBar.progress = (idx / steps);
+        if (labelFunc) progressBar.label = (labelFunc.call(context, item, idx));
+        iterator.call(context, item, idx);
+      } catch (e) {
+        console.error(
+          'Error in forEachShowingProgress at %s (%s)\n%s\n%s',
+          idx, item, e, e.stack);
+      }
+      delay(nextFunc, 0);
+    };
+  }, function () {
+    progressBar.progress = 1;
+    if (progressBarAdded) (function () { progressBar.remove(); }).delay(0);
+    if (whenDoneFunc) whenDoneFunc.call(context);
+  }))();
+
+  return array;
+}
 
 /**
  * Swap the element at `array[index1]` with the one at `array[index2]`. Mutating.
@@ -1128,5 +1125,6 @@ export {
   find,
   map,
   flatMap,
-  slice
+  slice,
+  forEachShowingProgress
 };
