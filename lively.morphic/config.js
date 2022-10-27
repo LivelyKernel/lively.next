@@ -123,7 +123,6 @@ const config = {
     { keys: { win: 'Ctrl-K', mac: 'Meta-K' }, command: { command: 'open javascript workspace', onlyWhenFocused: false } },
     { keys: 'Alt-Shift-1', command: { command: 'open shell terminal', onlyWhenFocused: false } },
     { keys: { win: 'Ctrl-B', mac: 'Meta-B' }, command: { command: 'open browser', onlyWhenFocused: false } },
-    { keys: { win: 'Ctrl-P', mac: 'Meta-P' }, command: { command: 'open PartsBin', onlyWhenFocused: true } },
     { keys: 'Alt-T', command: { command: 'choose and browse module', onlyWhenFocused: false } },
     { keys: 'Alt-Shift-T', command: { command: 'choose and browse package resources', onlyWhenFocused: false } },
     { keys: { mac: 'Ctrl-X D' }, command: 'open file browser' },

@@ -30,7 +30,6 @@ import * as modules from 'lively.modules/index.js';
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
-import { loadPart } from 'lively.morphic/partsbin.js';
 import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
 
 import lint from '../linter.js';
@@ -1587,14 +1586,6 @@ export class BrowserModel extends ViewModel {
   }
 
   async installPackage (name, version, sourceIdx) {
-    const installIndicator = await loadPart('package install indicator');
-
-    if (installIndicator) {
-      const { sourceEditor } = this.ui;
-      sourceEditor.insertText([installIndicator, {}], sourceEditor.indexToPosition(sourceIdx - 1));
-      installIndicator.showInstallationProgress();
-    }
-
     try {
       const { pkgRegistry } = await this.runOnServer(`        
         async function installPackage(name, version) {
@@ -1637,15 +1628,7 @@ export class BrowserModel extends ViewModel {
         await installPackage("${name}", "${version}");   
     `);
       System.get('@lively-env').packageRegistry.updateFromJSON(pkgRegistry);
-      installIndicator && installIndicator.showInstallationComplete();
     } catch (err) {
-      installIndicator && installIndicator.showError();
-    } finally {
-      if (installIndicator) {
-        await promise.delay(2000);
-        await installIndicator.reset();
-        installIndicator.remove();
-      }
     }
   }
 

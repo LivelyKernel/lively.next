@@ -1,14 +1,8 @@
-import { summaryForPartsBin } from "./partsbin-status.js";
 import { summaryForPackages } from "./package-status.js"
 
 export async function openPackageSummary(baseDir) {
   // openPackageSummary("/Users/robert/Lively/lively-dev-2")
   return await openSummary("package status summary", () => summaryForPackages(baseDir));
-}
-
-export async function openPartsBinSummary(partSpaceName, fromURL, toURL) {
-  // openPartsBinSummary("PartsBin/lively.modules", "https://dev.lively-web.org/", URL.root)
-  return await openSummary("part status summary", () => summaryForPartsBin(partSpaceName, fromURL, toURL));
 }
 
 async function openSummary(title, contentFn) {

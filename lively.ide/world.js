@@ -22,7 +22,6 @@ import {
 } from 'lively.morphic';
 
 import { loadMorphFromSnapshot } from 'lively.morphic/serialization.js';
-import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { uploadFile } from 'lively.morphic/events/html-drop-handler.js';
 
 import { prompts } from 'lively.components';
@@ -216,7 +215,7 @@ export class LivelyWorld extends World {
   }
 
   async isNotUnique (worldName) {
-    return (await MorphicDB.default.exists('world', worldName)).exists || (await resource((await System.decanonicalize('lively.morphic/styleguides'))).join(worldName + '.json').exists());
+    return (await MorphicDB.default.exists('world', worldName)).exists;
   }
 
   async openSideBar (name) {
@@ -291,23 +290,6 @@ export class LivelyWorld extends World {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // html5 drag - drop
 
-  async nativeDrop_ensureUploadIndicator () {
-    if (!this._cachedDragIndicator) { this._cachedDragIndicator = loadObjectFromPartsbinFolder('upload-indicator'); }
-    const i = await this._cachedDragIndicator;
-    if (!i.world()) i.openInWorld();
-    fun.debounceNamed('remove-upload-indicator', 1000, () => {
-      this.nativeDrop_removeUploadIndicator();
-    })();
-  }
-
-  nativeDrop_removeUploadIndicator () {
-    if (this._cachedDragIndicator) { this._cachedDragIndicator.then(i => i.remove()); }
-  }
-
-  onNativeDragover (evt) {
-    if (evt.targetMorph === this) { this.nativeDrop_ensureUploadIndicator(); }
-  }
-
   async onNativeDrop (evt) {
     this.nativeDrop_removeUploadIndicator();
     if (evt.targetMorph !== this) return;
@@ -365,19 +347,10 @@ export class LivelyWorld extends World {
             name: res.name()
           };
         });
-        const images = []; const videos = []; const others = [];
+        const images = []; const others = [];
         for (const f of files) {
           if (f.type.startsWith('image/')) images.push(f);
-          else if (f.type.startsWith('video')) videos.push(f);
           else others.push(f);
-        }
-        if (videos.length) {
-          for (const v of videos) {
-            Object.assign(await loadObjectFromPartsbinFolder('video morph'), {
-              videoURL: v.url,
-              name: v.name
-            }).openInWorld();
-          }
         }
         if (images.length) {
           const openImages = true;
@@ -433,8 +406,7 @@ export class LivelyWorld extends World {
         });
         img.whenLoaded().then(() => img.openInWorld());
       } else {
-        Object.assign(await loadObjectFromPartsbinFolder('html-morph'), { html })
-          .openInWorld();
+        new HTMLMorph({ html }).openInWorld();
       }
       return;
     }
@@ -627,16 +599,7 @@ export class LivelyWorld extends World {
 
   get commands () {
     return worldCommands
-      .concat(super.commands)
-      .concat([
-        {
-          name: 'open in prototype box',
-          exec: async (world, opts) => {
-            const box = await loadPart('prototype box');
-            box.wrapProto(opts.target);
-          }
-        }
-      ]);
+      .concat(super.commands);
   }
 
   get keybindings () { return super.keybindings.concat(config.globalKeyBindings); }
@@ -797,20 +760,6 @@ export class LivelyWorld extends World {
     return statusMessage;
   }
 
-  async addProgressBar (opts = {}) {
-    const { location = 'center' } = opts;
-    const pBar = await loadObjectFromPartsbinFolder('progress bar');
-    Object.assign(pBar, { progress: 0 }, obj.dissoc(opts, ['location']));
-    this.addMorph(pBar);
-    pBar.align(pBar[location], this.visibleBounds()[location]());
-    return pBar;
-  }
-
-  async withProgressBarDo (doFn, opts) {
-    const pBar = await this.addProgressBar(opts);
-    try { return await doFn(pBar); } finally { pBar.remove(); }
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // dialogs
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -951,8 +900,19 @@ export class LivelyWorld extends World {
     return this.openPrompt(part(prompts.EditListPrompt, { viewModel: { label, multiSelect: true, items, padding: Rectangle.inset(3), ...opts } }), opts);
   }
 
+  /**
+   * Opens a Progress Bar / Loading Indicator centered with regard to the `requester`.
+   * @param {Morph} requester
+   * @param {String} label - The text displayed on the progress bar.
+   * @returns {Morph} The loading indicator morph.
+   */
   showLoadingIndicatorFor (requester, label) {
     return this.addMorph(LoadingIndicator.open(label, { center: requester.globalBounds().center() }));
+  }
+
+  async withLoadingIndicatorDo (doFn, requester, label) {
+    const pBar = await this.showLoadingIndicatorFor(requester, label);
+    try { return await doFn(pBar); } finally { pBar.remove(); }
   }
 
   // morph meta menu items

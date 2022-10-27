@@ -353,7 +353,6 @@ export default class Terminal extends Morph {
   }
 
   async diffModulesOfSnapshot (urlToSnapshot) {
-    // urlToSnapshot = 'lively.morphic/styleguides/SystemDialogs.json'
     let cmd = this.shellPlugin.runCommand('git diff ' + urlToSnapshot);
     await cmd.whenDone();
     const [snapOld, snapNew] = cmd.stdout.split('\n').filter(m => m.length > 1000).map(json => JSON.parse(json.slice(1)));
@@ -382,9 +381,6 @@ export default class Terminal extends Morph {
 
   runCommand (cmd, opts) {
     if (this.command && this.command.isRunning()) { throw new Error(`${this.command} still running`); }
-    if (cmd.includes('styleguides') && cmd.startsWith('git diff')) {
-      return this.diffModulesOfSnapshot(cmd.replace(/git diff\s*/, ''));
-    }
     return this.command = this.shellPlugin.runCommand(cmd, opts);
   }
 }

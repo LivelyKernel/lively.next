@@ -5,7 +5,7 @@ import { resource } from 'lively.resources';
 import { runEval } from 'lively.vm';
 import { scripting, ExportLookup } from 'lively.modules';
 const {
-  ensurePackage, registerPackage, importPackage,
+  ensurePackage, importPackage,
   lookupPackage, module, ImportInjector
 } = scripting;
 
@@ -14,7 +14,6 @@ import { toJsIdentifier, withSuperclasses } from './util.js';
 import { classToFunctionTransform } from './class-to-function-transform.js';
 
 const objectPackageSym = Symbol.for('lively-object-package-data');
-// defaultBaseURL = System.normalizeSync("lively.morphic/parts/packages/"),
 const defaultBaseURL = 'local://lively-object-modules';
 
 function globalClasses () {

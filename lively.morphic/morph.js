@@ -2452,19 +2452,6 @@ export class Morph {
   canBeCopied () { return true; }
   copy (realCopy = false) { return copyMorph(this, realCopy); }
 
-  async interactivelyPublish () {
-    const world = this.world() || this.env.world;
-    try {
-      const { interactivelySavePart } = await System.import('lively.morphic/partsbin.js');
-      const commit = await interactivelySavePart(this, { notifications: false, loadingIndicator: true });
-      world.setStatusMessage(
-        commit
-          ? `Published ${this} as ${commit.name}`
-          : `Failed to publish part ${this}`,
-        commit ? Color.green : Color.red);
-    } catch (e) { e !== 'canceled' && world.showError(e); }
-  }
-
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

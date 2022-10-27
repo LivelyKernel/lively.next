@@ -11,7 +11,6 @@ import ObjectPackage, { isObjectClass } from 'lively.classes/object-classes.js';
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from '../import-helper.js';
 import * as modules from 'lively.modules';
 import { parse, query } from 'lively.ast';
-import { interactivelySavePart } from 'lively.morphic/partsbin.js';
 
 import { adoptObject } from 'lively.lang/object.js';
 
@@ -317,24 +316,6 @@ export class ObjectEditorModel extends ViewModel {
           } catch (e) {
             if (e === 'canceled') this.view.setStatusMessage('canceled');
             else this.view.showError(e);
-          }
-        }
-      },
-
-      {
-        name: 'publish target to PartsBin',
-        exec: async () => {
-          const { view } = this;
-          try {
-            const commit = await interactivelySavePart(this.target, { notifications: false, loadingIndicator: true });
-            view.setStatusMessage(
-              commit
-                ? `Published ${this.target} as ${commit.name}`
-                : `Failed to publish part ${this.target}`,
-              commit ? StatusMessageConfirm : StatusMessageError, 5000);
-          } catch (e) {
-            if (e === 'canceled') view.setStatusMessage('canceled');
-            else view.showError(e);
           }
         }
       },

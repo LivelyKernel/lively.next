@@ -141,7 +141,6 @@ export default class LivelyRollup {
     this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
-    this.dynamicParts = {}; // parts loaded via loadPart/loadObjectsFromPartsbinFolder/resource("part://....") // deprecated
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
     this.hasDynamicImports = false; // Internal flag that indicates wether or not we need to perform code splitting or not.
     this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?

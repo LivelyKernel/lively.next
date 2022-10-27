@@ -142,9 +142,6 @@ export class MorphicEnv {
         clearStylePropertiesForClassesIn(evt.module);
         this.getTargetsFor('onModuleChanged').forEach(ea => ea.onModuleChanged(evt));
       })];
-    systemChangeHandlers['lively.partsbin/partpublished'] = [
-      subscribe('lively.partsbin/partpublished', (evt) =>
-        this.getTargetsFor('onPartPublished').forEach(ea => ea.onPartPublished(evt)))];
     systemChangeHandlers['lively.user/userchanged'] = [
       subscribe('lively.user/userchanged', (evt) =>
         this.getTargetsFor('onUserChanged').forEach(ea => ea.onUserChanged(evt)))];

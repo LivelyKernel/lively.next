@@ -3,7 +3,6 @@ import { Rectangle, rect, Color, pt } from 'lively.graphics';
 import { tree, date, Path, arr, string, obj } from 'lively.lang';
 import { inspect, morph, Text, config, part } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
-import { loadObjectFromPartsbinFolder, loadPart } from 'lively.morphic/partsbin.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
 import { show, showAndSnapToGuides, removeSnapToGuidesOf } from 'lively.halos';
 import { LoadingIndicator } from 'lively.components';
@@ -654,14 +653,6 @@ const commands = [
   },
 
   {
-    name: 'open console',
-    exec: async (world, opts = {}) => {
-      const console = await loadObjectFromPartsbinFolder('Console');
-      return console.openInWorldNearHand();
-    }
-  },
-
-  {
     name: 'open shell workspace',
     exec: (world, opts) => world.execCommand('open workspace', { ...opts, language: 'shell' })
   },
@@ -699,14 +690,6 @@ const commands = [
       if (rangesAndStyles) { text.setTextAttributesWithSortedRanges(rangesAndStyles); }
       if (mode) text.changeEditorMode(mode);
       return world.openInWindow(text, { title }).activate();
-    }
-  },
-
-  {
-    name: 'merge and open in window',
-    exec: async (world, opts = { a: '', b: '', format: null, extent: pt(500, 600) }) => {
-      const merger = await loadObjectFromPartsbinFolder('text merger');
-      return merger.targetMorph.open(opts.a, opts.b, opts);
     }
   },
 
@@ -775,16 +758,9 @@ const commands = [
   },
 
   {
-    name: 'merge workspaces',
-    exec: function (world, opts) {
-      return world.execCommand('diff workspace', { ...opts, merge: true });
-    }
-  },
-
-  {
     name: 'diff workspaces',
     exec: async function (world, opts = {}) {
-      let { editor1, editor2, merge } = opts;
+      let { editor1, editor2 } = opts;
 
       let editors = [];
       if (!editor1 || !editor2) {
@@ -796,7 +772,7 @@ const commands = [
       if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
       if (!editor2) return world.setStatusMessage('Canceled');
 
-      return merge ? doMerge(editor1, editor2) : doDiff(editor1, editor2);
+      return doDiff(editor1, editor2);
 
       function doDiff (ed1, ed2) {
         const p1 = ed1.pluginFind(ea => ea.evalEnvironment);
@@ -809,11 +785,6 @@ const commands = [
           filenameA: fn1,
           filenameB: fn2
         });
-      }
-
-      async function doMerge (ed1, ed2) {
-        const merger = await loadObjectFromPartsbinFolder('text merger');
-        return merger.targetMorph.open(ed1.textString, ed2.textString);
       }
 
       async function selectMorph (morphs, thenDo) {
@@ -896,21 +867,6 @@ const commands = [
   },
 
   {
-    name: 'open PartsBin',
-    exec: async function (world) {
-      const li = LoadingIndicator.open('Loading Partsbin...');
-      const { loadPart } = await System.import('lively.morphic/partsbin.js');
-      const pb = await loadPart('PartsBin');
-      pb.openInWorldNearHand();
-      pb.targetMorph.selectedCategory = '*basics*';
-      pb.focus();
-      li.remove();
-      pb.getWindow().activate();
-      return pb;
-    }
-  },
-
-  {
     name: 'browse and load component',
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
@@ -920,22 +876,6 @@ const commands = [
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
-    }
-  },
-
-  {
-    name: 'load object from PartsBin',
-    exec: async function (world, opts = {}) {
-      let part; const { name, open = true } = opts;
-      if (name) {
-        const { loadObjectFromPartsbinFolder } = await System.import('lively.morphic/partsbin.js');
-        part = await loadObjectFromPartsbinFolder(name);
-      } else {
-        const { interactivelyLoadObjectFromPartsBinFolder } = await System.import('lively.morphic/partsbin.js');
-        part = await interactivelyLoadObjectFromPartsBinFolder();
-      }
-      if (part && open) part.openInWorldNearHand();
-      return part;
     }
   },
 
@@ -996,15 +936,6 @@ const commands = [
            let server = LivelyServer.servers.values().next().value;
         `, evalEnvironment);
       Inspector.openInWindow({ remoteTarget: { code: 'server', evalEnvironment } });
-    }
-  },
-
-  {
-    name: 'open scene graph inspector',
-    exec: async (world, args = { target: null }) => {
-      const inspector = await loadObjectFromPartsbinFolder('scene graph inspector');
-      inspector.targetMorph = args.target || world;
-      return inspector.openInWindow({ title: 'morph graph' });
     }
   },
 
@@ -1203,15 +1134,6 @@ const commands = [
   },
 
   {
-    name: 'open grep search',
-    progressIndicator: 'opening code search...',
-    exec: async (world, opts) => {
-      const searcher = await loadObjectFromPartsbinFolder('grep search');
-      return searcher.openInWorldNearHand(world).activate();
-    }
-  },
-
-  {
     name: 'open test runner',
     progressIndicator: 'opening test runner...',
     exec: async world => {
@@ -1273,14 +1195,6 @@ const commands = [
       const { url } = opts;
       // "saved" || "aborted"
       return await TextEditor.openAsEDITOR(url, {});
-    }
-  },
-
-  {
-    name: 'open subserver controller',
-    exec: async (world, opts) => {
-      const controller = await loadPart('subserver controller');
-      return controller.openInWorld();
     }
   },
 
