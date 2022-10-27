@@ -15,6 +15,7 @@ const WindowButtonClose = component({
     fontSize: 14,
     position: pt(2, 1),
     reactsToPointer: false,
+    lineHeight: 1,
     textAndAttributes: Icon.textAttribute('times')
   }],
   tooltip: 'Close window'
@@ -58,6 +59,7 @@ const WindowButtonMenu = component({
     fontSize: 14,
     position: pt(2, 1),
     reactsToPointer: false,
+    lineHeight: 1,
     textAndAttributes: Icon.textAttribute('angle-down')
   }],
   tooltip: 'Open Window Menu'
@@ -84,6 +86,7 @@ const WindowButtonMinimize = component({
     fontColor: Color.rgb(243, 156, 18),
     fontSize: 14,
     position: pt(2, 1),
+    lineHeight: 1,
     reactsToPointer: false,
     textAndAttributes: Icon.textAttribute('minus')
   }],
