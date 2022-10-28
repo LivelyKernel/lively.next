@@ -1,5 +1,5 @@
 import { List, FilterableList, RadioButtonGroup } from 'lively.components';
-import { ShadowObject, TilingLayout, InputLine, PasswordInputLine, Ellipse, HorizontalLayout, Text, VerticalLayout, Icon, Label, component, ViewModel, add, part } from 'lively.morphic';
+import { ShadowObject, TilingLayout, InputLine, PasswordInputLine, Ellipse, Text, Icon, Label, component, ViewModel, add, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { ButtonDefault } from './buttons.cp.js';
 import { InputLineDefault } from './inputs.cp.js';
@@ -738,19 +738,18 @@ const LightPrompt = component({
   dropShadow: new ShadowObject({ distance: 5, rotation: 75, color: Color.rgba(0, 0, 0, 0.37), blur: 60, fast: false }),
   extent: pt(387, 60),
   fill: Color.rgb(251, 252, 252),
-  layout: new VerticalLayout({
+  layout: new TilingLayout({
     align: 'center',
-    autoResize: true,
-    direction: 'topToBottom',
+    axisAlign: 'center',
+    axis: 'column',
     orderByIndex: true,
-    resizeSubmorphs: true,
+    justifySubmorphs: 'packed',
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true,
     spacing: 16,
-    // TODO: Since we no longer instantiates from actual morphs but from specs, the CSS layout cannot kick in before we are rendered.
-    // This lead to e.g., the world naming prompt being off center.
-    // This solves the problem, but causes the layout to be managed by JS all the time, which has worse performance.
-    // What should be done is to implement some kind of "use JS layout until rendered" strategy, e.g.,
-    // by setting a flag that gets consumed by the renderer who will then change the layout from JS to CSS
-    renderViaCSS: false
+    padding: 15,
+    renderViaCSS: true
   }),
   submorphs: [{
     type: Text,
@@ -850,16 +849,16 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   name: 'multiple choice prompt',
   submorphs: [add({
     type: RadioButtonGroup,
+    layout: new TilingLayout({
+      autoResize: true,
+      hugContentsVertically: true,
+      hugContentsHorizontally: true,
+      align: 'center',
+      axisAlign: 'center'
+    }),
     name: 'choices',
     extent: pt(387, 118),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new VerticalLayout({
-      autoResize: true,
-      direction: 'topToBottom',
-      orderByIndex: true,
-      resizeSubmorphs: true,
-      spacing: 8
-    }),
     submorphs: [
       part(ChoiceButtonUnselected),
       part(ChoiceButtonSelected)

@@ -1,4 +1,4 @@
-import { HTMLMorph, TilingLayout, Label, VerticalLayout, ShadowObject, component, ensureFont, part } from 'lively.morphic';
+import { HTMLMorph, TilingLayout, Label, ShadowObject, component, ensureFont, part } from 'lively.morphic';
 import { Color, LinearGradient, pt, rect } from 'lively.graphics';
 import { DefaultList } from 'lively.components/list.cp.js';
 
@@ -61,11 +61,14 @@ const PopupWindow = component({
   extent: pt(241, 547),
   fill: Color.white,
   hasFixedPosition: true,
-  layout: new VerticalLayout({
-    autoResize: true,
-    direction: 'topToBottom',
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     orderByIndex: true,
-    resizeSubmorphs: true
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true,
+    autoResize: true
   }),
   nativeCursor: 'grab',
   styleClasses: ['Popups'],

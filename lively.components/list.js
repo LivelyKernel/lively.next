@@ -883,12 +883,6 @@ export class FilterableList extends Morph {
       borderWidth: { defaultValue: 1 },
       updateSelectionsAfterFilter: { defaultValue: false },
 
-      // layout: {
-      //   initialize () {
-      //     this.layout = new VerticalLayout({ renderViaCSS: true });
-      //   }
-      // },
-
       theme: {
         after: ['styleClasses', 'listMorph'],
         defaultValue: 'default',

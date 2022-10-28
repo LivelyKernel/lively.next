@@ -1,4 +1,4 @@
-import { VerticalLayout, TilingLayout, Label, Icon, Text, ShadowObject, component, part } from 'lively.morphic';
+import { TilingLayout, Label, Icon, Text, ShadowObject, component, part } from 'lively.morphic';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics';
 import { StatusMessage } from './messages.js';
@@ -44,13 +44,14 @@ const StatusMessageDefault = component({
   }),
   extent: pt(669, 128),
   fill: Color.rgba(209, 209, 209, 0.9),
-  layout: new VerticalLayout({
-    autoResize: true,
+  layout: new TilingLayout({
     axis: 'column',
-    direction: 'topToBottom',
     orderByIndex: true,
-    resizeSubmorphs: true,
-    wrapSubmorphs: false
+    hugContentsVertically: true,
+    wrapSubmorphs: false,
+    resizePolicies: [
+      ['horizontal float', { height: 'fixed', width: 'fill' }]
+    ]
   }),
   submorphs: [{
     name: 'horizontal float',

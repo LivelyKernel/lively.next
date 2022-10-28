@@ -1,4 +1,4 @@
-import { ShadowObject, easings, stringToEasing, Morph, Icon, Label, HTMLMorph, HorizontalLayout, VerticalLayout, component, ViewModel, part } from 'lively.morphic';
+import { ShadowObject, TilingLayout, easings, stringToEasing, Morph, Icon, Label, HTMLMorph, component, ViewModel, part } from 'lively.morphic';
 import { Color, Rectangle, rect, pt } from 'lively.graphics';
 import { promise, num } from 'lively.lang';
 import { ButtonDefault } from './buttons.cp.js';
@@ -245,7 +245,7 @@ function open (label = 'Loading...', props) {
   return li;
 }
 
-// LoadingIndicator.openInWorld()
+// part(LoadingIndicator).openInWorld()
 const LoadingIndicator = component({
   defaultViewModel: LoadingIndicatorModel,
   name: 'loading indicator',
@@ -256,11 +256,12 @@ const LoadingIndicator = component({
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
   extent: pt(225, 65),
   fill: Color.rgba(0, 0, 0, 0.65),
-  layout: new VerticalLayout({
+  layout: new TilingLayout({
     autoResize: true,
-    direction: 'topToBottom',
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
     orderByIndex: true,
-    resizeSubmorphs: false,
     spacing: 15
   }),
   position: pt(1035, 573),
@@ -268,17 +269,14 @@ const LoadingIndicator = component({
     name: 'wrapper',
     extent: pt(195, 35),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
+      axis: 'row',
       align: 'center',
+      axisAlign: 'center',
       autoResize: true,
       direction: 'leftToRight',
       orderByIndex: true,
-      padding: {
-        height: 0,
-        width: 0,
-        x: 0,
-        y: 0
-      },
+      padding: 0,
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
       resizeSubmorphs: false,
