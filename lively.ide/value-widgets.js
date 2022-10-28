@@ -379,99 +379,6 @@ export class NumberWidget extends Morph {
   }
 }
 
-export class PointWidget extends Label {
-  static get properties () {
-    return {
-      isSelected: {
-        defaultValue: 'false',
-        set (v) {
-          this.setProperty('isSelected', v);
-          this.fontColor = v ? this.selectionFontColor : this.nonSelectionFontColor;
-        }
-      },
-      selectionFontColor: {
-        isStyleProp: true,
-        defaultValue: Color.white
-      },
-      nonSelectionFontColor: {
-        isStyleProp: true,
-        defaultValue: Color.black
-      },
-      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
-      nativeCursor: { defaultValue: 'pointer' },
-      styleClasses: { defaultValue: ['TreeLabel'] }, // in order to be highlighted in tree
-      pointValue: {
-        after: ['textAndAttributes'],
-        set (p) {
-          const fontColor = Color.rgbHex('#0086b3');
-          this.setProperty('pointValue', p);
-          this.textAndAttributes = ['pt(', null,
-            p.x.toFixed(), { fontColor },
-            ',', {},
-            p.y.toFixed(), { fontColor }, ')', null];
-          this.fixedWidth = true;
-          this.fixedHeight = true;
-          this.height = 20;
-          this.width = this.textString.length * this.fontSize;
-        }
-      }
-    };
-  }
-
-  onMouseDown (evt) {
-    this.openPopover();
-  }
-
-  async openPopover () {
-    const editor = new popovers.PointPopover({
-      pointValue: this.pointValue,
-      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition)
-    });
-    await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, 'pointValue', this, 'pointValue');
-    signal(this, 'openWidget', editor);
-  }
-}
-
-export class PaddingWidget extends Label {
-  static get properties () {
-    return {
-      nativeCursor: { defaultValue: 'pointer' },
-      styleClasses: { defaultValue: ['TreeLabel'] },
-      fontFamily: { defaultValue: config.codeEditor.defaultStyle.fontFamily },
-      isSelected: {
-        defaultValue: 'false',
-        set (v) {
-          this.setProperty('isSelected', v);
-          this.fontColor = v ? Color.white : Color.black;
-        }
-      },
-      rectangle: {
-        defaultValue: rect(0),
-        set (r) {
-          this.setProperty('rectangle', r);
-          this.value = obj.safeToString(r);
-        }
-      }
-    };
-  }
-
-  onMouseDown (evt) {
-    this.openPopover();
-  }
-
-  async openPopover () {
-    const editor = new popovers.RectanglePopover({
-      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
-      rectangle: this.rectangle
-    });
-    editor.relayout();
-    await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, 'rectangle', this, 'rectangle');
-    signal(this, 'openWidget', editor);
-  }
-}
-
 export class IconWidget extends Label {
   static get properties () {
     return {
@@ -585,8 +492,6 @@ Object.assign(valueWidgets, {
   NumberWidget,
   StringWidget,
   IconWidget,
-  PaddingWidget,
-  PointWidget,
   BooleanWidget,
   LayoutWidget
 });
