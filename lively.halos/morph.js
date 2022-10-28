@@ -1,8 +1,8 @@
 /* global System */
 import {
   Morph,
+  TilingLayout,
   Label,
-  HorizontalLayout,
   Path,
   Text,
   GridLayout,
@@ -313,16 +313,6 @@ class NameHolder extends Morph {
       fill: { defaultValue: Color.transparent },
       forceUniqueName: { defaultValue: false },
       halo: {},
-      layout: {
-        after: ['nameHolder'],
-        initialize () {
-          this.layout = new HorizontalLayout({
-            renderViaCSS: true,
-            resizeContainer: true,
-            spacing: 7
-          });
-        }
-      },
       nameHolder: {
         after: ['submorphs'],
         initialize () {
@@ -421,8 +411,14 @@ class NameHaloItem extends HaloItem {
       borderColor: { defaultValue: Color.green },
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout({
-            resizeContainer: true, spacing: 0, align: 'center', orderByIndex: true
+          this.layout = new TilingLayout({
+            axis: 'row',
+            hugContentsHorizontally: true,
+            axisAlign: 'center',
+            autoResize: true,
+            wrapSubmorphs: false,
+            orderByIndex: true,
+            padding: 5
           });
         }
       }

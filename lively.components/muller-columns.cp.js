@@ -1,5 +1,5 @@
 import { Color, rect, pt } from 'lively.graphics';
-import { HorizontalLayout, ViewModel, part, component } from 'lively.morphic';
+import { TilingLayout, ViewModel, part, component } from 'lively.morphic';
 import { signal, noUpdate, connect } from 'lively.bindings';
 import { arr } from 'lively.lang';
 import { DefaultList } from './list.cp.js';
@@ -172,7 +172,7 @@ export class MullerColumnViewModel extends ViewModel {
       newLists = [...newLists, ...arr.genN(lenDiff, () => this.newList())];
       this.lists = newLists;
       await view.whenRendered(); // ensure layout has placed all morphs accordingly
-      if (view.layout.renderViaCSS) { newLists.map(m => view.layout.expressMeasure(m)); } // thank you virtual-dom....
+      if (view.layout.renderViaCSS) { newLists.map(m => view.layout.tryToMeasureNodeNow(m)); } // thank you virtual-dom....
       scroll = pt(view.scrollExtent.x - view.width);
       if (animated) {
         view.animate({
@@ -412,10 +412,10 @@ const MullerColumnView = component({
   borderColor: Color.rgb(23, 160, 251),
   clipMode: 'auto',
   extent: pt(565.1, 285.2),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
     align: 'top',
     autoResize: false,
-    direction: 'leftToRight',
     orderByIndex: true,
     padding: {
       height: 0,

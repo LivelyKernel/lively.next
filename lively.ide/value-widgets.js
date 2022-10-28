@@ -1,21 +1,17 @@
 import {
   Morph,
   TilingLayout,
-  morph,
   Label,
-  HorizontalLayout,
   Icon,
   InputLine,
   config
 } from 'lively.morphic';
 
 import { connect, signal } from 'lively.bindings';
-import { Color, LinearGradient, pt, rect } from 'lively.graphics';
+import { Color, pt, rect } from 'lively.graphics';
 import { num, obj } from 'lively.lang';
 
 import { popovers } from './index.js';
-import { ValueScrubber } from 'lively.components/widgets.js';
-import { Popover } from 'lively.components/popup.js';
 
 /*
 
@@ -62,7 +58,9 @@ class ContextSensitiveWidget extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout();
+          this.layout = new TilingLayout({
+            axis: 'column'
+          });
         }
       },
       context: {
@@ -159,220 +157,6 @@ export class LayoutWidget extends ShortcutWidget {
 }
 
 // these can exist outside of a certain morph context
-
-export class ColorWidget extends ContextSensitiveWidget {
-  static get properties () {
-    return {
-      layout: {
-        initialize () {
-          this.layout = new HorizontalLayout({ direction: 'centered' });
-        }
-      },
-      selectionFontColor: {
-        defaultValue: Color.white
-      },
-      nonSelectionFontColor: {
-        defaultValue: Color.black
-      },
-      color: { defaultValue: Color.blue },
-      gradientEnabled: { defaultValue: false },
-      fontSize: { defaultValue: 14 },
-      isSelected: {
-        after: ['submorphs'],
-        set (selected) {
-          if (this.getProperty('isSelected') != selected) {
-            this.getSubmorphNamed('valueString').fontColor = selected
-              ? this.selectionFontColor
-              : this.nonSelectionFontColor;
-            this.setProperty('isSelected', selected);
-          }
-        }
-      },
-      submorphs: {
-        after: ['nonSelectionFontColor', 'selectionFontColor'],
-        initialize () {
-          connect(this, 'color', this, 'relayout', {
-            converter: (next, prev) => {
-              return (prev && prev.isColor) != (next && next.isColor);
-            }
-          });
-          this.relayout(true);
-        }
-      }
-    };
-  }
-
-  relayout (reset) {
-    if (reset) {
-      if (!this.color) {
-        this.submorphs = this.renderNoColor();
-        return;
-      }
-      this.submorphs = this.color.isGradient
-        ? this.renderGradientValue()
-        : this.renderColorValue();
-    } else {
-      if (!this.color) return;
-      this.color.isGradient
-        ? this.updateGradientValue()
-        : this.updateColorValue();
-    }
-  }
-
-  updateGradientValue () {
-    const gradient = this.color;
-    if (gradient.stops.length * 2 == this.submorphs.length - 3) {
-      // patch the stops
-      let stopLabel;
-      for (const i in this.color.stops) {
-        const { color, offset } = gradient.stops[i];
-        const { submorphs: [stopColor] } = this.submorphs[2 + i * 2];
-        stopLabel = this.submorphs[3 + i * 2];
-        stopColor.fill = color;
-        stopLabel.value = (offset * 100).toFixed() + '%' + (i < gradient.stops.length - 1 ? ',' : '');
-      }
-    } else {
-      this.submorphs = this.renderGradientValue();
-    }
-  }
-
-  renderGradientValue () {
-    return [
-      {
-        type: 'label',
-        styleClasses: ['TreeLabel'],
-        value: this.color.type + '(',
-        name: 'valueString'
-      },
-      ...this.renderStops(),
-      {
-        type: 'label',
-        styleClasses: ['TreeLabel'],
-        value: ')'
-      }
-    ];
-  }
-
-  updateColorValue () {
-    this.getSubmorphNamed('color box').fill = this.color;
-    this.getSubmorphNamed('valueString').value = obj.safeToString(this.color);
-  }
-
-  renderNoColor () {
-    return [
-      {
-        extent: pt(15, 15),
-        fill: Color.transparent,
-        submorphs: [
-          {
-            styleClasses: ['colorValue'],
-            name: 'color box',
-            center: pt(5, 7.5),
-            fill: Color.white,
-            borderColor: Color.gray.darker(),
-            borderWidth: 1,
-            submorphs: [
-              {
-                type: 'path',
-                name: 'no fill',
-                vertices: [pt(0, 0), pt(10, 10)],
-                borderColor: Color.red
-              }
-            ]
-          }
-        ]
-      },
-      {
-        type: 'label',
-        value: 'No Color',
-        fontSize: 14,
-        name: 'valueString',
-        styleClasses: ['TreeLabel']
-      }
-    ];
-  }
-
-  renderColorValue () {
-    return [
-      {
-        extent: pt(15, 15),
-        fill: Color.transparent,
-        submorphs: [{
-          styleClasses: ['colorValue'],
-          name: 'color box',
-          center: pt(5, 7.5),
-          fill: this.color,
-          borderColor: Color.gray.darker(),
-          nativeCursor: 'pointer',
-          borderWidth: 1
-        }
-        ]
-      },
-      {
-        type: 'label',
-        value: obj.safeToString(this.color),
-        fontSize: 14,
-        name: 'valueString',
-        styleClasses: ['TreeLabel']
-      }
-    ];
-  }
-
-  renderStops () {
-    const gradient = this.color;
-    const stops = [
-      {
-        type: 'label',
-        padding: rect(0, 0, 5, 0),
-        value: gradient.type == 'linearGradient'
-          ? num.toDegrees(gradient.vectorAsAngle()).toFixed() + '°,'
-          : ''
-      }
-    ];
-    for (const i in gradient.stops) {
-      const { color, offset } = gradient.stops[i];
-      stops.push({
-        extent: pt(this.fontSize, this.fontSize),
-        fill: Color.transparent,
-        layout: new HorizontalLayout({ spacing: 3 }),
-        submorphs: [
-          {
-            styleClasses: ['colorValue'],
-            fill: color
-          }
-        ]
-      });
-      stops.push({
-        type: 'label',
-        padding: rect(0, 0, 5, 0),
-        value: (offset * 100).toFixed() + '%' + (i < gradient.stops.length - 1 ? ',' : '')
-      });
-    }
-    return stops;
-  }
-
-  onMouseDown (evt) {
-    this.openFillEditor();
-  }
-
-  update (color) {
-    this.color = color;
-  }
-
-  async openFillEditor () {
-    const editor = new popovers.FillPopover({
-      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
-      handleMorph: this.context,
-      fillValue: this.color,
-      title: 'Fill Control',
-      gradientEnabled: this.gradientEnabled
-    });
-    await editor.fadeIntoWorld(this.globalBounds().center());
-    connect(editor, 'fillValue', this, 'update');
-    signal(this, 'openWidget', editor);
-  }
-}
-
 export class BooleanWidget extends Label {
   static get properties () {
     return {
@@ -595,128 +379,6 @@ export class NumberWidget extends Morph {
   }
 }
 
-export class ShadowWidget extends Morph {
-  static get properties () {
-    return {
-      shadowValue: {
-        after: ['submorphs'],
-        defaultValue: null,
-        set (v) {
-          this.setProperty('shadowValue', v);
-          this.renderShadowDisplay();
-        }
-      },
-      fill: { defaultValue: Color.transparent },
-      nativeCursor: { defaultValue: 'pointer' },
-      fontSize: { defaultValue: 12 },
-      fontColor: {
-        derived: true,
-        set (c) {
-          this.submorphs.forEach(m => m.fontColor = c);
-        }
-      },
-      isSelected: {
-        defaultValue: false,
-        set (v) {
-          this.setProperty('isSelected', v);
-          this.fontColor = v ? Color.white : Color.black;
-        }
-      },
-      layout: {
-        initialize () {
-          this.layout = new HorizontalLayout();
-        }
-      },
-      submorphs: {
-        initialize () {
-          this.update();
-        }
-      }
-    };
-  }
-
-  onMouseDown (evt) {
-    this.openPopover();
-  }
-
-  async openPopover () {
-    const shadowEditor = new popovers.ShadowPopover({
-      hasFixedPosition: !!this.ownerChain().find(m => m.hasFixedPosition),
-      shadowValue: this.shadowValue
-    });
-    await shadowEditor.fadeIntoWorld(this.globalBounds().center());
-    connect(shadowEditor, 'shadowValue', this, 'shadowValue');
-    connect(this, 'shadowValue', this, 'update');
-    signal(this, 'openWidget', shadowEditor);
-  }
-
-  update () {
-    this.renderShadowDisplay();
-  }
-
-  renderShadowDisplay () {
-    if (!this.shadowValue) {
-      this.submorphs = [
-        {
-          opacity: 0.8,
-          reactsToPointer: false,
-          styleClasses: ['TreeLabel'],
-          name: 'valueString',
-          type: 'label',
-          value: 'No Shadow'
-        }
-      ];
-      return;
-    }
-    if (this.submorphs.length > 1) {
-      this.updateShadowDisplay();
-    } else {
-      this.initShadowDisplay();
-    }
-  }
-
-  updateShadowDisplay () {
-    const { inset, blur, spread, distance, color } = this.shadowValue;
-    const [nameLabel, { submorphs: [shadowColor] }, paramLabel] = this.submorphs;
-    nameLabel.value = `${this.shadowValue.inset ? 'inset' : 'drop'}-shadow(`;
-    shadowColor.fill = color;
-    paramLabel.value = `, ${blur}px, ${distance}px, ${spread}px)`;
-  }
-
-  initShadowDisplay () {
-    const { inset, blur, spread, distance, color } = this.shadowValue;
-    this.submorphs = [
-      {
-        name: 'valueString',
-        opacity: 0.7,
-        reactsToPointer: false,
-        type: 'label',
-        value: `${this.shadowValue.inset ? 'inset' : 'drop'}-shadow(`
-      },
-      morph({
-        fill: Color.transparent,
-        extent: pt(this.fontSize + 6, this.fontSize + 4),
-        submorphs: [
-          {
-            extent: pt(this.fontSize, this.fontSize),
-            position: pt(2, 2),
-            fill: color,
-            borderColor: Color.black,
-            borderWidth: 1
-          }
-        ]
-      }),
-      {
-        name: 'valueString',
-        type: 'label',
-        opacity: 0.7,
-        reactsToPointer: false,
-        value: `, ${blur}px, ${distance}px, ${spread}px)`
-      }
-    ];
-  }
-}
-
 export class PointWidget extends Label {
   static get properties () {
     return {
@@ -924,9 +586,7 @@ Object.assign(valueWidgets, {
   StringWidget,
   IconWidget,
   PaddingWidget,
-  ShadowWidget,
   PointWidget,
   BooleanWidget,
-  LayoutWidget,
-  ColorWidget
+  LayoutWidget
 });

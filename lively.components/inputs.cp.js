@@ -1,4 +1,4 @@
-import { Text, InputLine, Icon, ShadowObject, Label, HorizontalLayout, component } from 'lively.morphic';
+import { Text, TilingLayout, InputLine, Icon, ShadowObject, Label, component } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { LabeledCheckBoxModel, CheckBoxMorph, SearchFieldModel } from './inputs.js';
 
@@ -39,7 +39,9 @@ const LabeledCheckBox = component({
   name: 'labeled check box',
   extent: pt(66, 21),
   fill: Color.rgba(0, 0, 0, 0),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'row',
+    wrapSubmorphs: false,
     align: 'top',
     autoResize: true,
     direction: 'leftToRight',
@@ -71,10 +73,11 @@ const SearchField = component({
   extent: pt(188, 21),
   fixedHeight: true,
   fontColor: Color.rgb(204, 204, 204),
-  layout: new HorizontalLayout({
-    align: 'top',
+  layout: new TilingLayout({
+    axis: 'column',
+    align: 'right',
+    axisAlign: 'right',
     autoResize: false,
-    direction: 'rightToLeft',
     orderByIndex: true,
     reactToSubmorphAnimations: false,
     resizeSubmorphs: false

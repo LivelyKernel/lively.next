@@ -1,8 +1,8 @@
-import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, HorizontalLayout, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject, component, part } from 'lively.morphic';
+import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject, component, part } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import * as moduleManager from 'lively.modules';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
-import { arr, promise, fun, graph, date, string } from 'lively.lang/index.js';
+import { arr, fun, graph, date, string } from 'lively.lang/index.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
 import { DropDownList, MorphList } from 'lively.components/list.cp.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
@@ -38,7 +38,7 @@ class WorldVersion extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout({ align: 'center', spacing: 5 });
+          this.layout = new TilingLayout({ axis: 'column', align: 'center', spacing: 5 });
         }
       },
       submorphs: {
@@ -505,7 +505,8 @@ class WorldDashboard extends Morph {
         preview.displayPreview();
         preview.position = pt(0, 0);
         await placeholder.whenRendered();
-        placeholder.layout = new HorizontalLayout({
+        placeholder.layout = new TilingLayout({
+          axis: 'column',
           autoResize: true,
           reactToSubmorphAnimations: true
         });

@@ -1,4 +1,4 @@
-import { component, Morph, Icon, HTMLMorph, Label, HorizontalLayout } from 'lively.morphic';
+import { component, TilingLayout, Morph, Icon, HTMLMorph, Label } from 'lively.morphic';
 import { evalOnServer } from 'lively.freezer/src/util/helpers';
 import { Color, pt } from 'lively.graphics';
 
@@ -168,8 +168,9 @@ const LivelyVersionChecker = component({
   extent: pt(135.5, 25.1),
   fill: Color.rgba(0, 0, 0, 0.6),
   hasFixedPosition: true,
-  layout: new HorizontalLayout({
-    align: 'center',
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     autoResize: true,
     direction: 'leftToRight',
     orderByIndex: true,

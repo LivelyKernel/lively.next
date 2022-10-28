@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { HorizontalLayout, config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
+import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -994,10 +994,11 @@ const UserFlap = component({
   clipMode: 'visible',
   extent: pt(362.3, 52.3),
   fontColor: Color.rgb(102, 102, 102),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'right',
     align: 'center',
     autoResize: false,
-    direction: 'rightToLeft',
     orderByIndex: true,
     padding: {
       height: 0,
@@ -1017,7 +1018,9 @@ const UserFlap = component({
     extent: pt(115.3, 41.1),
     fill: Color.rgba(0, 0, 0, 0),
     tooltip: 'Toggle fast load',
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
+      axis: 'column',
+      axisAlign: 'center',
       align: 'center',
       autoResize: false,
       direction: 'rightToLeft',
@@ -1235,13 +1238,13 @@ const TopBar = component({
     vector: rect(0, 0, 0, 1)
   }),
   submorphs: [{
-    name: 'horizontal layout',
+    name: 'tiling layout',
     extent: pt(476.8, 51.1),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
+      axis: 'column',
       align: 'bottom',
       autoResize: false,
-      direction: 'leftToRight',
       orderByIndex: true,
       padding: {
         height: 0,
@@ -1290,7 +1293,9 @@ const TopBar = component({
         name: 'shape mode button',
         extent: pt(55.8, 24.7),
         fill: Color.rgba(46, 75, 223, 0),
-        layout: new HorizontalLayout({
+        layout: new TilingLayout({
+          axis: 'column',
+          axisAlign: 'center',
           align: 'center',
           autoResize: false,
           direction: 'leftToRight',
@@ -1335,7 +1340,7 @@ const TopBar = component({
       }),
       part(TopBarButton, {
         name: 'comment browser button',
-        padding: rect(3, 10, -3, -9),
+        padding: rect(3, 0, -3, 0),
         textAndAttributes: Icon.textAttribute('comment-alt'),
         tooltip: 'Toggle Comment Browser'
       })]
