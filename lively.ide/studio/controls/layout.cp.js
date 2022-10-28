@@ -1,4 +1,4 @@
-import { Morph, VerticalLayout, TilingLayout, component, without, ViewModel, part, add } from 'lively.morphic';
+import { Morph, TilingLayout, component, without, ViewModel, part, add } from 'lively.morphic';
 import { pt, rect, Rectangle, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
 import { connect, disconnect, once } from 'lively.bindings';
@@ -536,12 +536,13 @@ const LayoutControl = component(PropertySection, {
 const AutoLayoutAlignmentFlap = component(DarkFlap, {
   defaultViewModel: AutoLayoutAlignmentFlapModel,
   name: 'auto layout alignment control',
-  layout: new VerticalLayout({
+  layout: new TilingLayout({
     autoResize: true,
     direction: 'topToBottom',
     orderByIndex: true,
+    hugContentsVertically: true,
     resizeSubmorphs: true,
-    spacing: 10
+    padding: 10
   }),
   extent: pt(175.7, 201),
   submorphs: [

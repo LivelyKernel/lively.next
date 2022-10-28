@@ -1,8 +1,7 @@
 import { Color, pt } from 'lively.graphics';
-import { Polygon, Label, Icon, VerticalLayout, ShadowObject, component } from 'lively.morphic';
+import { Polygon, TilingLayout, Label, Icon, ShadowObject, component } from 'lively.morphic';
 import { Button } from 'lively.components';
 
-// PopupLight.openInWorld()
 const PopupLight = component({
   name: 'popup/light',
   borderRadius: 4,
@@ -27,9 +26,10 @@ const PopupLight = component({
     dropShadow: new ShadowObject({ distance: 18, color: Color.rgba(0, 0, 0, 0.2), blur: 30 }),
     extent: pt(153, 95),
     fill: Color.rgb(230, 230, 230),
-    layout: new VerticalLayout({
+    layout: new TilingLayout({
       autoResize: true,
-      direction: 'topToBottom',
+      align: 'left',
+      axis: 'column',
       orderByIndex: true,
       resizeSubmorphs: false
     }),

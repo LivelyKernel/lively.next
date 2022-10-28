@@ -1,10 +1,8 @@
 import {
-  Ellipse, Icon,
+  Ellipse, TilingLayout, Icon,
   Morph,
   Path,
   Text,
-  HorizontalLayout,
-  VerticalLayout,
   morph
 } from 'lively.morphic';
 import { Color, pt, rect, Rectangle } from 'lively.graphics';
