@@ -1,6 +1,6 @@
 /* global  it, describe, beforeEach, before, after */
 import { expect } from 'mocha-es6';
-import { Morph, morph, HorizontalLayout, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
+import { Morph, morph, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
 import { arr } from 'lively.lang';
 import { ProportionalLayout } from '../layout.js';
@@ -52,55 +52,6 @@ describe('layout', () => {
     // $world = this.env.world;
   });
   beforeEach(() => env.setWorld(createDummyWorld()));
-
-  describe('horizontal layout', () => {
-    beforeEach(() => {
-      m.layout = new HorizontalLayout({ renderViaCSS: false });
-      m.applyLayoutIfNeeded();
-    });
-
-    it('renders submorphs horizontally', async () => {
-      const [item1, item2, item3] = m.submorphs;
-      await checkJSAndCSS(m, () => {
-        expect(item1.position).equals(pt(0, 0));
-        expect(item2.position).equals(item1.topRight);
-        expect(item3.position).equals(item2.topRight);
-      });
-    });
-
-    it('adjusts width to number of items', async () => {
-      const totalWidth = m.submorphs.reduce((w, m) => w + m.width, 0);
-      await checkJSAndCSS(m, () => {
-        expect(m.width).equals(totalWidth);
-      });
-    });
-
-    it('adjusts height to highest item', async () => {
-      const maxHeight = arr.max(m.submorphs.map(m => m.height));
-      await checkJSAndCSS(m, () => {
-        expect(m.height).equals(maxHeight);
-      });
-    });
-
-    it('enforces minimum height and minimum width', async () => {
-      m.extent = pt(50, 50);
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.height).equals(75);
-        expect(m.width).equals(250);
-      });
-    });
-
-    it('enforces minimum height and minimum width when centered', async () => {
-      m.layout.direction = 'centered';
-      m.layout.autoResize = false;
-      m.width = 500;
-      m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
-        expect(m.submorphBounds().topCenter().x).equals(250);
-      });
-    });
-  });
 
   describe('tiling layout', () => {
     beforeEach(() => {
@@ -762,14 +713,14 @@ describe('layout', () => {
         submorphs: [
           morph({
             name: 'B',
-            layout: new HorizontalLayout({
+            layout: new TilingLayout({
               renderViaCSS: false,
               autoResize: true
             }),
             submorphs: [
               morph({
                 name: 'C',
-                layout: new HorizontalLayout({
+                layout: new TilingLayout({
                   renderViaCSS: false,
                   autoResize: true
                 }),
@@ -847,30 +798,6 @@ describe('layout', () => {
       a.applyLayoutIfNeeded();
       b.extent = pt(25, 25);
       expect(b.layout.noLayoutActionNeeded).is.false;
-    });
-
-    it('properly supports nesting in horizontal layouts', () => {
-      let m = morph({
-        layout: new HorizontalLayout({ resizeSubmorphs: true, autoResize: true, renderViaCSS: false }),
-        extent: pt(200, 200),
-        name: 'root',
-        fill: Color.blue,
-        submorphs: arr.range(1, 3).map(() => morph({
-          name: 'twig',
-          fill: Color.green,
-          layout: new TilingLayout({ axis: 'column', renderViaCSS: false }),
-          submorphs: arr.range(1, 3).map(() => morph({
-            fill: Color.red,
-            name: 'leaf',
-            extent: pt(50, 50)
-          }))
-        }))
-      });
-      expect(m.width).equals(150);
-      m.height = 100;
-      m.applyLayoutIfNeeded();
-      expect(m.width).equals(300);
-      expect(m.submorphBounds().width).equals(300);
     });
   });
 });
