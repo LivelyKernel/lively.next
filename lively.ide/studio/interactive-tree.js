@@ -1,7 +1,7 @@
 import { Tree, TreeData } from 'lively.components/tree.js';
-import { morph, Icon, HorizontalLayout, easings, Morph } from 'lively.morphic/index.js';
+import { morph, TilingLayout, Icon, easings, Morph } from 'lively.morphic/index.js';
 import { Color, Rectangle, rect, pt } from 'lively.graphics/index.js';
-import { noUpdate, signal } from 'lively.bindings/index.js';
+import { noUpdate } from 'lively.bindings/index.js';
 import { arr, obj, fun, tree } from 'lively.lang/index.js';
 
 import { getClassName } from 'lively.serializer2';
@@ -578,7 +578,7 @@ export class SceneGraphTree extends InteractiveTree {
       target: submorph,
       opacity: submorph.visible ? 1 : 0.5
     });
-    if (!embedded) container.layout = new HorizontalLayout({ spacing: 2, align: 'center' });
+    if (!embedded) container.layout = new TilingLayout({ spacing: 2, align: 'center' });
     if (submorph._data) {
       container._data = submorph._data;
       submorph._data.container = container;

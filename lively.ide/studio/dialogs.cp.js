@@ -2,7 +2,7 @@ import { DarkPrompt, ConfirmPromptModel, RedButton, GreenButton } from 'lively.c
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { component, add, part } from 'lively.morphic/components/core.js';
 import { pt, rect, Color } from 'lively.graphics';
-import { ProportionalLayout, TilingLayout, MorphicDB, HorizontalLayout, ShadowObject, Text, Label } from 'lively.morphic';
+import { ProportionalLayout, TilingLayout, MorphicDB, ShadowObject, Text, Label } from 'lively.morphic';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 
 import { interactivelyChooseMorphicDB, interactivelyChosenCurrentMorphicDB } from 'lively.morphic/morphicdb/tools.js';
@@ -28,14 +28,14 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
       description: {
         defaultValue: ''
       },
-      
+
       filePath: {
         derived: true,
         get () {
           return this.ui.filePathInput.input;
         }
       }
-      
+
     };
   }
 
@@ -70,7 +70,7 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
   setStorageMode (mode) {
     if (mode === 'json') {
       this.ui.filePathInput.visible = true;
-      this.ui.chooseDbButton.visible = false; 
+      this.ui.chooseDbButton.visible = false;
     }
     if (mode === 'db') {
       this.ui.filePathInput.visible = false;
@@ -151,7 +151,7 @@ const SaveWorldDialog = component(DarkPrompt, {
   submorphs: [{
     name: 'prompt title',
     textString: 'Save world'
-  }, 
+  },
   add({
     name: 'prompt controls',
     clipMode: 'hidden',
@@ -329,10 +329,11 @@ const SaveWorldDialog = component(DarkPrompt, {
     name: 'button wrapper',
     extent: pt(470.3, 61.1),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
+      axis: 'row',
       align: 'center',
+      axisAlign: 'center',
       autoResize: false,
-      direction: 'centered',
       orderByIndex: true,
       padding: {
         height: 0,

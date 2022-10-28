@@ -1,9 +1,9 @@
 import { component, part } from 'lively.morphic/components/core.js';
 import { ObjectEditorModel, ImportControllerModel } from './index.js';
 import { pt, rect, Color } from 'lively.graphics';
-import { GridLayout, TilingLayout, Text, Icon, HorizontalLayout } from 'lively.morphic';
+import { GridLayout, TilingLayout, Text, Icon } from 'lively.morphic';
 import { Tree } from 'lively.components';
-import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 import { DefaultList } from 'lively.components/list.cp.js';
 import { obj } from 'lively.lang';
 
@@ -175,11 +175,10 @@ const ObjectEditorLight = component({
       clipMode: 'hidden',
       extent: pt(181.3, 30),
       fill: Color.rgba(0, 0, 0, 0),
-      // fix: replace layout
-      layout: new HorizontalLayout({
-        align: 'top',
-        autoResize: false,
-        direction: 'centered',
+      layout: new TilingLayout({
+        axis: 'row',
+        axisAlign: 'center',
+        align: 'center',
         orderByIndex: true,
         padding: {
           height: 0,
@@ -227,22 +226,6 @@ const ObjectEditorLight = component({
       clipMode: 'hidden',
       extent: pt(35, 28),
       fill: Color.rgba(0, 0, 0, 0),
-      layout: new HorizontalLayout({
-        align: 'top',
-        autoResize: false,
-        direction: 'rightToLeft',
-        orderByIndex: true,
-        padding: {
-          height: 0,
-          width: 0,
-          x: 2,
-          y: 2
-        },
-        reactToSubmorphAnimations: false,
-        renderViaCSS: true,
-        resizeSubmorphs: false,
-        spacing: 2
-      }),
       position: pt(626, 0),
       reactsToPointer: false
     }]
@@ -250,10 +233,10 @@ const ObjectEditorLight = component({
     name: 'class and method controls',
     extent: pt(180, 30),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new HorizontalLayout({
-      align: 'top',
+    layout: new TilingLayout({
+      axis: 'column',
+      axisAlign: 'center',
       autoResize: false,
-      direction: 'centered',
       orderByIndex: true,
       padding: {
         height: 0,

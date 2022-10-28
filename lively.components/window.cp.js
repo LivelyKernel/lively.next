@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Icon, Label, HorizontalLayout, component, part } from 'lively.morphic';
+import { ShadowObject, TilingLayout, Icon, Label, component, part } from 'lively.morphic';
 
 const WindowButtonClose = component({
   name: 'window button close',
@@ -125,10 +125,9 @@ const DefaultWindow = component({
         name: 'window controls',
         extent: pt(69, 27),
         fill: Color.rgba(0, 0, 0, 0),
-        layout: new HorizontalLayout({
-          align: 'top',
+        layout: new TilingLayout({
+          axis: 'row',
           autoResize: true,
-          direction: 'leftToRight',
           orderByIndex: true,
           padding: {
             height: 0,

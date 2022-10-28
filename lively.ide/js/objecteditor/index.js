@@ -1,6 +1,6 @@
 /* global System, localStorage */
 import { arr, obj, Path, string, fun, promise } from 'lively.lang';
-import { Icon, Morph, HorizontalLayout, GridLayout, config } from 'lively.morphic';
+import { Icon, TilingLayout, Morph, GridLayout, config } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import { withSuperclasses, isClass } from 'lively.classes/util.js';
@@ -1917,7 +1917,15 @@ export class ImportController extends Morph {
       {
         name: 'buttons',
         fill: Color.transparent,
-        layout: new HorizontalLayout({ direction: 'centered', spacing: 2, autoResize: false }),
+        layout: new TilingLayout(
+          {
+            axis: 'row',
+            align: 'center',
+            axisAlign: 'center',
+            spacing: 2,
+            autoResize: false
+          }
+        ),
         submorphs: [
           { ...btnStyle, name: 'addImportButton', label: Icon.makeLabel('plus'), tooltip: 'add new import' },
           { ...btnStyle, name: 'removeImportButton', label: Icon.makeLabel('minus'), tooltip: 'remove selected import(s)' },

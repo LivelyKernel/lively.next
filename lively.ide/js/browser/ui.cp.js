@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, morph, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, HorizontalLayout, component, part } from 'lively.morphic';
+import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -186,10 +186,11 @@ const BrowserDirectoryControls = component({
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(83.2, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     align: 'center',
     autoResize: false,
-    direction: 'rightToLeft',
     orderByIndex: true,
     padding: {
       height: 0,
@@ -239,11 +240,11 @@ const BrowserPackageControls = component({
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(123.4, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     align: 'center',
     autoResize: false,
-    direction: 'rightToLeft',
-    orderByIndex: true,
     padding: {
       height: 0,
       width: 0,
@@ -689,11 +690,11 @@ const SystemBrowser = component({
         name: 'eval backend chooser wrapper',
         extent: pt(252.1, 39),
         fill: Color.rgba(0, 0, 0, 0),
-        layout: new HorizontalLayout({
-          align: 'center',
+        layout: new TilingLayout({
+          axis: 'row',
+          axisAlign: 'center',
+          align: 'right',
           autoResize: false,
-          direction: 'rightToLeft',
-          orderByIndex: true,
           padding: {
             height: 0,
             width: 0,

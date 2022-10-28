@@ -1,7 +1,7 @@
 import { InspectionTree, isMultiValue, RemoteInspectionTree, printValue } from './context.js';
 import { arr, num, promise, obj, Path } from 'lively.lang';
 import { pt, rect, Color } from 'lively.graphics';
-import { config, HorizontalLayout, Label, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
+import { config, TilingLayout, Label, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
 import { connect, disconnect } from 'lively.bindings';
 import { LoadingIndicator } from 'lively.components';
 import DarkTheme from '../../themes/dark.js';
@@ -288,7 +288,10 @@ export class PropertyControl extends DraggableTreeLabel {
   toggleMultiValuePlaceholder (active) {
     this.multiValuePlaceholder = this.multiValuePlaceholder || this.addMorph({
       fill: Color.transparent,
-      layout: new HorizontalLayout({ spacing: 3 }),
+      layout: new TilingLayout({
+        axis: 'column',
+        spacing: 3
+      }),
       name: 'multi value placeholder',
       nativeCursor: 'pointer',
       submorphs: arr.range(0, 2).map(i => ({

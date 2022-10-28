@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, HorizontalLayout, component, add, part } from 'lively.morphic';
+import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, component, add, part } from 'lively.morphic';
 import {
   ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
@@ -118,7 +118,9 @@ const HexEncoder = component({
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(150.5, 25),
   fill: Color.rgb(189, 195, 199),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     align: 'center',
     autoResize: true,
     spacing: 1
@@ -152,15 +154,15 @@ const HexEncoder = component({
     })]
 });
 
-// ThreeValEncoder.openInWorld()
-
 const ThreeValEncoder = component({
   name: 'three val encoder',
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(160, 23),
   fill: Color.rgb(189, 195, 199),
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
+    axis: 'column',
     align: 'center',
+    axisAlign: 'center',
     autoResize: true,
     spacing: 1
   }),
@@ -256,10 +258,9 @@ const CssEncoder = component({
   extent: pt(152.5, 25.2),
   fill: Color.rgb(189, 195, 199),
   isLayoutable: false,
-  layout: new HorizontalLayout({
+  layout: new TilingLayout({
     align: 'center',
     autoResize: true,
-    direction: 'leftToRight',
     orderByIndex: true,
     padding: {
       height: 0,
@@ -306,9 +307,9 @@ const ColorEncoder = component({
       encodingMode: 'HEX',
       extent: pt(162.5, 30.8),
       fill: Color.transparent,
-      layout: new HorizontalLayout({
-        align: 'right',
-        direction: 'rightToLeft'
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'right'
       }),
       submorphs: [
         part(HexEncoder, { name: 'hex encoding' }),

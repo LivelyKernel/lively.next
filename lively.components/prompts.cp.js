@@ -680,10 +680,11 @@ const ChoiceButtonSelected = component({
   borderRadius: 4,
   dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
   extent: pt(371.5, 47),
-  layout: new HorizontalLayout({
-    align: 'center',
+  layout: new TilingLayout({
+    axisAlign: 'center',
+    align: 'left',
+    axis: 'row',
     autoResize: false,
-    direction: 'leftToRight',
     orderByIndex: true,
     padding: {
       height: 0,
@@ -787,26 +788,14 @@ const InformPrompt = component(LightPrompt, {
     name: 'prompt title',
     lineWrapping: true,
     textAndAttributes: ['Inform message', null]
-  }, add({
-    name: 'button wrapper',
-    fill: Color.rgba(0, 0, 0, 0),
-    layout: new HorizontalLayout({
-      align: 'center',
-      autoResize: false,
-      direction: 'centered',
-      orderByIndex: true,
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      resizeSubmorphs: false
-    }),
-    submorphs: [part(GreenButton, {
-      name: 'ok button',
-      extent: pt(90, 38),
-      submorphs: [{ name: 'label', textString: 'OK' }]
-    })]
-  })]
+  }, add(part(GreenButton, {
+    name: 'ok button',
+    extent: pt(90, 38),
+    submorphs: [{ name: 'label', textString: 'OK' }]
+  }))]
 });
 
+// part(ConfirmPrompt).openInWorld()
 const ConfirmPrompt = component(LightPrompt, {
   defaultViewModel: ConfirmPromptModel,
   name: 'confirm prompt',
@@ -824,14 +813,11 @@ const ConfirmPrompt = component(LightPrompt, {
     name: 'button wrapper',
     extent: pt(331, 48.9),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
       align: 'center',
-      autoResize: false,
-      direction: 'centered',
       orderByIndex: true,
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 20
     }),
     submorphs: [part(GreenButton, {
