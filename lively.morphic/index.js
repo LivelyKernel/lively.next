@@ -11,7 +11,6 @@ export * from './components/core.js';
 export { StyleSheet } from './style-sheets.js';
 export { ShadowObject } from './rendering/morphic-default.js';
 export { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from './rendering/dom-helper.js';
-export * from './tooltips.js';
 export { easings, stringToEasing } from './rendering/animations.js';
 export { Icon } from './text/icons.js';
 export { loadMorphFromSnapshot } from './serialization.js';

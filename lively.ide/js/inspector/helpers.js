@@ -1,6 +1,6 @@
-import { Tooltip, config } from 'lively.morphic';
-import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
-import { num, arr } from 'lively.lang';
+import { config } from 'lively.morphic';
+
+import { arr } from 'lively.lang';
 import { syncEval } from 'lively.vm';
 import { module } from 'lively.modules';
 
@@ -21,39 +21,6 @@ export async function ensureDefaultImports () {
     });
   }
 }
-
-// number scrubbing
-export function onNumberDragStart (evt, scrubState) {
-  scrubState.initPos = evt.position;
-  scrubState.factorLabel = new Tooltip({ master: SystemTooltip, description: '1x' }).openInWorld(
-    evt.hand.position.addXY(10, 10)
-  );
-}
-
-export function getScaleAndOffset (evt, scrubState) {
-  const { x, y } = evt.position.subPt(scrubState.initPos);
-  const scale = num.roundTo(Math.exp(-y / $world.height * 6), 0.01) * scrubState.baseFactor;
-  return { offset: x, scale };
-}
-
-export function getCurrentValue (delta, s, scrubState) {
-  const v = scrubState.scrubbedValue + (scrubState.floatingPoint ? delta * s : Math.round(delta * s));
-  return Math.max(scrubState.min, Math.min(scrubState.max, v));
-}
-
-export function onNumberDragEnd (evt, scrubState) {
-  const { offset, scale } = getScaleAndOffset(evt, scrubState);
-  scrubState.factorLabel.softRemove();
-  return getCurrentValue(offset, scale, scrubState);
-}
-
-export function onNumberDrag (evt, scrubState) {
-  const { scale, offset } = getScaleAndOffset(evt, scrubState);
-  scrubState.factorLabel.position = evt.hand.position.addXY(10, 10);
-  scrubState.factorLabel.description = `${scale}x`;
-  return getCurrentValue(offset, scale, scrubState);
-}
-
 export function generateReferenceExpression (morph, opts = {}) {
   // creates a expr (string) that, when evaluated, looks up a morph starting
   // from another morph

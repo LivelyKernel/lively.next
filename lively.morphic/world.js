@@ -6,7 +6,7 @@ import { signal } from 'lively.bindings';
 import config from './config.js';
 import { MorphicEnv } from './env.js';
 import { Morph } from './morph.js';
-import { TooltipViewer } from './tooltips.js';
+import { TooltipViewer } from './tooltip-viewer.js';
 
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from './world-loading.js';
 

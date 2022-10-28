@@ -9,8 +9,8 @@ import {
   Path,
   Ellipse,
   Label,
-  Tooltip,
-  Icon
+  Icon,
+  part
 } from 'lively.morphic';
 
 import kld from 'kld-intersections';
@@ -310,7 +310,7 @@ class SliderHandle extends Ellipse {
   }
 
   onDragStart (evt) {
-    this.valueView = new Tooltip({ description: '' }).openInWorld(
+    this.valueView = part(SystemTooltip, { description: '' }).openInWorld(
       evt.hand.position.addXY(10, 10)
     );
   }
@@ -380,7 +380,7 @@ export class ValueScrubber extends Text {
   onDragStart (evt) {
     this.execCommand('toggle active mark');
     this.initPos = evt.position;
-    this.factorLabel = new Tooltip({ master: SystemTooltip, description: '1x' }).openInWorld(
+    this.factorLabel = part(SystemTooltip, { description: '1x' }).openInWorld(
       evt.hand.position.addXY(10, 10)
     );
     evt.hand.extent = pt(30, 30);

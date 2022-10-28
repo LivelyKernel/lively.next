@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { HorizontalLayout, config, touchInputDevice, TilingLayout, Tooltip, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
+import { HorizontalLayout, config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -458,9 +458,8 @@ export class TopBarModel extends ViewModel {
       ...type === Polygon ? this.getPolyDefaultAttrs() : {},
       ...type === Path ? this.getPathDefaultAttrs() : {}
     });
-    // we cannot import the master from tooltip.cs.js dirctly on file-level
-    // since this causes circular imports and breaks the system
-    target._sizeTooltip = new Tooltip({ master: SystemTooltip });
+
+    target._sizeTooltip = part(SystemTooltip);
     target._sizeTooltip.openInWorld();
     return true;
   }
