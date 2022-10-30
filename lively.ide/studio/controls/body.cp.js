@@ -140,7 +140,7 @@ export class BodyControlModel extends PropertySectionModel {
   activate () {
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
     this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
-    this.addDynamicProperty(false, false);
+    this.addDynamicProperty(null, false);
   }
 
   /**
