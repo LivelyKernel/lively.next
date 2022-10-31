@@ -87,10 +87,10 @@ describe('object', function () {
   });
 
   describe('equality', function () {
-    it('compares structures of objects', function () {
-      let a = { foo: { bar: { baz: 23, m: function () { return 23; } } } };
-      let b = { foo: { bar: { baz: 23, m: function () { return 23; } } } };
-      let c = { foo: { bar: { baz: 24, m: function () { return 23; } } } };
+    it('compares structures of objects while ignoring functions completely', function () {
+      let a = { foo: { bar: { baz: 23, n: function () { return 23; } } } };
+      let b = { foo: { bar: { baz: 23, m: function () { return 24; } } } };
+      let c = { foo: { bar: { baz: 24, m: function () { return 25; } } } };
       expect(equals(a, a)).to.equal(true);
       expect(equals(a, b)).to.equal(true);
       expect(equals(a, c)).to.equal(false);

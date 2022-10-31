@@ -98,6 +98,7 @@ function isEmpty (object) {
 
 /**
  * Is object `a` structurally equivalent to object `b`?. Performs a deep comparison.
+ * Functions are completely ignored, with regards to both their implementation and existence/name!
  * @param { object } a - The first object to compare.
  * @param { object } b - The second object to compare.
  * @returns { boolean }
