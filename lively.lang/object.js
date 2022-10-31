@@ -114,6 +114,7 @@ function equals (a, b) {
   }
   if (typeof a.isEqualNode === 'function') return a.isEqualNode(b);
   if (typeof a.equals === 'function') return a.equals(b);
+
   const seenInA = [];
   for (let name in a) {
     seenInA.push(name);
@@ -121,9 +122,9 @@ function equals (a, b) {
     if (!equals(a[name], b[name])) return false;
   }
   for (let name in b) {
-    if (seenInA.indexOf(name) !== -1) continue;
+    if (seenInA.indexOf(name) !== -1) continue; // key existed in A, we already compared successfully above
     if (typeof b[name] === 'function') continue;
-    if (!equals(b[name], a[name])) return false;
+    return false; // we have not seen key in A, thus objects **cannot** be equal
   }
   return true;
 }
