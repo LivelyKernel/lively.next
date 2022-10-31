@@ -191,6 +191,10 @@ export default class Window extends Morph {
   }
 
   relayoutWindowControls () {
+    if (!this.env.renderer) {
+      this.whenEnvReady().then(() => this.relayoutWindowControls());
+      return;
+    }
     const innerB = this.innerBounds();
     const title = this.ui.windowTitle;
     const resizer = this.ui.resizer;

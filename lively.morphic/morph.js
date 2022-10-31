@@ -2449,6 +2449,10 @@ export class Morph {
       .catch(() => false);
   }
 
+  whenEnvReady () {
+    return this.env.whenReady();
+  }
+
   getNodeForRenderer (renderer) {
     return renderer.nodeForMorph(this);
   }
