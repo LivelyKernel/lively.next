@@ -114,6 +114,7 @@ const CodeSearch = component({
           extent: pt(134, 29),
           fontSize: 14,
           padding: rect(5, 5, 0, 0),
+          lineHeight: 1,
           textAndAttributes: ['Search Source Files', null]
         }]
       }), {

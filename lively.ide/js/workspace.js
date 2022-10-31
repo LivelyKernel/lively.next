@@ -27,6 +27,7 @@ export default class Workspace extends Window {
             name: 'editor',
             lineHeight: 1.4,
             readOnly: false,
+            needsDocument: true,
             textString: '// Enter and evaluate JavaScript code here',
             lineWrapping: 'by-chars',
             ...config.codeEditor.defaultStyle,
