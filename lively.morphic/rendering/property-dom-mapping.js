@@ -6,23 +6,21 @@ import bowser from 'bowser';
 
 /**
  * Actually applies styles as defined in an Object to a DOM node.
- * @param {Object} styleProps - The styles to apply. 
- * @param {Node} node - The DOM node to which to apply `styleProps`. 
+ * @param {Object} styleProps - The styles to apply.
+ * @param {Node} node - The DOM node to which to apply `styleProps`.
  * @returns {Node} the DOM node with changed style properties.
  */
 export function stylepropsToNode (styleProps, node) {
   for (let prop in styleProps) {
-    let name = prop.replace(/([A-Z])/g, '-$1');
-    name = name.toLowerCase();
-    node.style.setProperty(name, styleProps[prop]);
+    node.style[prop] = styleProps[prop];
   }
   return node;
 }
 
 /**
  * @see applyStylingToNode
- * @param {Morph} morph 
- * @param {Node} node 
+ * @param {Morph} morph
+ * @param {Node} node
  */
 export function applyAttributesToNode (morph, node) {
   let attrs = defaultAttributes(morph);
