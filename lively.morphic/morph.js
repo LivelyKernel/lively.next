@@ -1719,7 +1719,14 @@ export class Morph {
   removeAllMorphs () { this.submorphs = []; }
 
   bringToFront () {
-    if (this.owner && arr.last(this.owner.submorphs) !== this) { this.owner.addMorph(this); }
+    const { owner } = this;
+    if (owner && arr.last(owner.submorphs) !== this) {
+      const i = owner.submorphs.indexOf(this);
+      owner.submorphs.slice(i).forEach(m => m.renderingState.hasStructuralChanges = true);
+      this.remove();
+      owner.addMorph(this);
+      this.renderingState.hasStructuralChanges = true;
+    }
     return this;
   }
 
