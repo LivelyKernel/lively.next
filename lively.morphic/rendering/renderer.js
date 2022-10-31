@@ -161,11 +161,15 @@ export default class Renderer {
     }
 
     for (let morph of this.morphsWithStructuralChanges) {
-      this.renderStructuralChanges(morph);
+      morph.withAllSubmorphsDo(m => !this.renderMap.has(m) && this.renderMorph(m));
     }
 
     for (let morph of this.renderedMorphsWithChanges) {
       this.renderStylingChanges(morph);
+    }
+
+    for (let morph of this.morphsWithStructuralChanges) {
+      this.renderStructuralChanges(morph);
     }
 
     for (let morph of this.renderedMorphsWithAnimations) {
@@ -359,6 +363,7 @@ export default class Renderer {
 
     let submorphsToRender = morph.submorphs; // the order of these is important to make sure that morphs overlap each other correctly
 
+    const remountedSubmorphs = morph.submorphs.filter(m => m.renderingState.hasStructuralChanges).concat(morph);
     if (morph.isWorld) {
       submorphsToRender = morph.submorphs.filter(sm => !sm.hasFixedPosition); // fixed morph are handed separately in `renderStep()`
     }
@@ -452,8 +457,15 @@ export default class Renderer {
 
     // When a node get removed/added to the DOM its scollTop/scrollLeft values are reset.
     // We fix those up here.
+    // FIXME: this does not seem to work with morphs that are moved to the front
     for (let morph of newlyRenderedSubmorphs) {
       this.updateNodeScrollFromMorph(morph);
+    }
+
+    for (let morph of remountedSubmorphs) {
+      morph.withAllSubmorphsDo(m => {
+        this.updateNodeScrollFromMorph(m);
+      });
     }
 
     morph.renderingState.renderedMorphs = morph.submorphs.filter(sm => !(sm.hasFixedPosition && morph.isWorld) && !(morph.isText && morph.embeddedMorphMap.has(sm)));
@@ -485,12 +497,14 @@ export default class Renderer {
     const node = this.getNodeForMorph(morph);
 
     if (morph.patchSpecialProps) {
-      morph.patchSpecialProps(node, this);
+      morph.patchSpecialProps(node, this); // super expensive for text
     }
 
+    const turnedVisible = node.style.display === 'none' && morph.visible;
     applyStylingToNode(morph, node);
+    if (turnedVisible) this.updateNodeScrollFromMorph(morph);
 
-    if (morph.isText && morph.document) node.style.overflow = 'hidden';
+    if (morph.isText && (morph.document || morph.needsDocument)) node.style.overflow = 'hidden';
     morph.renderingState.needsRerender = false;
   }
 
@@ -545,13 +559,20 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to update the scroll of its node.
    */
   updateNodeScrollFromMorph (morph) {
-    if (morph.isText && morph.document) return;
-
+    if (morph.clipMode !== 'auto' && morph.clipMode !== 'scroll') return;
     const node = this.getNodeForMorph(morph);
     if (!node) {
       return;
     }
     const { x, y } = morph.scroll;
+    if (morph.isText && morph.document) { // FIXME: maybe check if we are insisting for the document?
+      // update the scroll layer for text morphs
+      const scrollLayer = node.querySelector('.scrollLayer');
+      if (!scrollLayer) return;
+      scrollLayer.scrollTop = y;
+      scrollLayer.scrollLeft = x;
+      return;
+    }
     node.scrollTop = y;
     node.scrollLeft = x;
   }
@@ -744,7 +765,7 @@ export default class Renderer {
     scrollWrapper.style.position = 'absolute',
     scrollWrapper.style.width = '100%',
     scrollWrapper.style.height = '100%',
-    scrollWrapper.style.transform = `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`;
+    scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
     return scrollWrapper;
   }
 
@@ -767,7 +788,6 @@ export default class Renderer {
       const scrollLayer = this.renderScrollLayer(morph);
       const scrollWrapper = this.scrollWrapperFor(morph);
       node.childNodes.forEach(c => scrollWrapper.appendChild(c));
-      if (!scrollLayer) debugger;
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
       scrollLayer.scrollTop = morph.scroll.y;
@@ -1493,7 +1513,7 @@ export default class Renderer {
    */
   renderTextAndAttributes (node, morph) {
     const textNode = node.querySelector(`#${morph.id}textLayer`);
-
+    if (!textNode) return;
     if (!morph.document) textNode.replaceChildren(...this.renderWholeText(morph));
     else {
       if (morph.debug) textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
@@ -1682,7 +1702,7 @@ export default class Renderer {
       scrollLayer.scrollTop = morph.scroll.y;
       scrollLayer.scrollLeft = morph.scroll.x;
 
-      scrollWrapper.style.transform = `translate(-${morph.scroll.x}px, -${morph.scroll.y}px)`;
+      scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
       morph.renderingState.scroll = morph.scroll;
       this.renderTextAndAttributes(node, morph);
     }

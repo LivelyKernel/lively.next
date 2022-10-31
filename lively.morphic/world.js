@@ -204,7 +204,7 @@ export class World extends Morph {
 
   onMouseDown (evt) {
     if (evt.state.menu) evt.state.menu.remove();
-    this.onWindowScroll();
+    // this.onWindowScroll();
     this._tooltipViewer.mouseDown(evt);
   }
 
