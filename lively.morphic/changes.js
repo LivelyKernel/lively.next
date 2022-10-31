@@ -175,13 +175,18 @@ export class ChangeManager {
       return;
     }
 
+    // FIXME:
     // This is a hack since Scrubbers otherwise get caught up in a loop
     // when trying to compare their document properties
     // which is circular
-    if ( change.prevValue && change.prevValue.isDocument ||
+    if (change.prevValue && change.prevValue.isDocument ||
+        change.selector === 'replace' ||
       change.value && change.value.isDocument ||
-      !obj.equals(change.prevValue,change.value)
-      ) morph.makeDirty();
+      (obj.isArray(change.value) &&
+       obj.isArray(change.prevValue)
+        ? !arr.equals(change.prevValue, change.value)
+        : !obj.equals(change.prevValue, change.value)) // FIXME: this can also be circular, and crash
+    ) morph.makeDirty();
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {
