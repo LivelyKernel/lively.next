@@ -891,8 +891,6 @@ export class Text extends Morph {
     super.__deserialize__(snapshot, objRef, serializedMap, pool);
 
     this.markers = [];
-    this.textLayout = new Layout(this); // delayed
-    this.changeDocument(Document.fromString(''));
     this.ensureUndoManager();
     if (snapshot.cachedLineBounds) {
       this._initializedByCachedBounds = snapshot.cachedLineBounds;
