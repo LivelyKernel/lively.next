@@ -1,6 +1,6 @@
 /**
  * Methods to make working with arrays more convenient and collection-like.
- * @module lively.lang/array 
+ * @module lively.lang/array
  */
 
 import { equals as objectEquals } from './object.js';
@@ -9,7 +9,7 @@ import Group from './Group.js';
 
 /**
  * Creates an array containing elements from `begin` until `end` with `step`-sized steps.
- * @param {number} begin - First element 
+ * @param {number} begin - First element
  * @param {number} end  - Last element
  * @param {number} step - step size
  * @returns {number[]}
@@ -29,7 +29,7 @@ function range (begin, end, step) {
 
 /**
  * Returns an array filled with `obj` for `n` times.
- * @param {number} n - Length of the array to create 
+ * @param {number} n - Length of the array to create
  * @param {Object} obj - Object with which the array is to be filled
  * @returns {any[]}
  */
@@ -41,10 +41,10 @@ function withN (n, obj) {
 
 /**
  * Creates an array with the result of `generator` called `n` times.
- * 
+ *
  * `arr.genN(3, num.random) => [46,77,95]`
- * @param {number} n 
- * @param {function} generator  
+ * @param {number} n
+ * @param {function} generator
  * @returns {any[]}
 */
 function genN (n, generator) {
@@ -55,15 +55,15 @@ function genN (n, generator) {
 
 /**
  * Returns the element equal to the given search value or undefined.
- * 
+ *
  * If defined, a converter function will be applied to compare an
  * array element with the search value
- * 
+ *
  * If `returnClosestElement` is `true`, the element closest to the search value will be returned,
  * even if it is not equal.
- * 
+ *
  * If `false`, only an exact match will be returned, otherwise undefined will be returned.
- * @param {any[]} array - The array in which to search 
+ * @param {any[]} array - The array in which to search
  * @param {Object} searchValue - The value to search for in `array`
  * @param {function} converter - The function used to compare array elements with `searchValue`
  * @param {Boolean} returnClosestElement - Whether only exact matches should be returned
@@ -111,8 +111,8 @@ function binarySearchFor (array, searchValue, converter, returnClosestElement = 
  * Find the first occurence for which `iterator` returns a truthy value and
  * return *this* value, i.e. unlike `find` the iterator result and not the
  * element of the list is returned.
- * @param {any[]} arr 
- * @param {function} iterator 
+ * @param {any[]} arr
+ * @param {function} iterator
  * @returns {Object}
  */
 function findAndGet (arr, iterator) {
@@ -123,8 +123,8 @@ function findAndGet (arr, iterator) {
 
 /**
  * Returns only the Objects in `arr` that have `key` as property.
- * @param {any[]} arr 
- * @param {string} key 
+ * @param {any[]} arr
+ * @param {string} key
  * @returns {any[]}
  */
 function filterByKey (arr, key) {
@@ -134,8 +134,8 @@ function filterByKey (arr, key) {
 /**
  * Returns an array that contains all elements of `arr` that contain/satisfy `test`.
  * `grep` stringifies all elements in `arr`.
- * @param {any[]} arr 
- * @param {String|RegEx} test 
+ * @param {any[]} arr
+ * @param {String|RegEx} test
  * @returns {any[]}
  */
 function grep (arr, test) {
@@ -154,7 +154,7 @@ function mask (array, mask) {
 }
 
 /**
- * Returns an array of all elements of `array` for which `func` is falsy. 
+ * Returns an array of all elements of `array` for which `func` is falsy.
  * @param {Obejct[]} array - The array which should be subsetted.
  * @param {function} func - Function that is used for testing.
  * @param {Object} context - Acts as `this` when calling `func`.
@@ -167,9 +167,9 @@ function reject (array, func, context) {
 
 /**
  * Returns an array of all elements of `array` that do not have `key` as property.
- * @param {any[]} array 
- * @param {string} key 
- * @returns {any[]} 
+ * @param {any[]} array
+ * @param {string} key
+ * @returns {any[]}
  */
 function rejectByKey (array, key) {
   return array.filter(function (ea) { return !ea[key]; });
@@ -177,8 +177,8 @@ function rejectByKey (array, key) {
 
 /**
  * Returns a copy of `array` without `elem`.
- * @param {any[]} array 
- * @param {Object} elem 
+ * @param {any[]} array
+ * @param {Object} elem
  * @returns {any[]}
  */
 function without (array, elem) {
@@ -187,8 +187,8 @@ function without (array, elem) {
 
 /**
  * Returns a copy of `array` without all elements in `otherArr`.
- * @param {any[]} array 
- * @param {any[]} otherArr 
+ * @param {any[]} array
+ * @param {any[]} otherArr
  * @returns {any[]}
  */
 function withoutAll (array, otherArr) {
@@ -197,8 +197,8 @@ function withoutAll (array, otherArr) {
 
 /**
  * Returns `array` without duplicates.
- * @param {any[]} array 
- * @param {boolean} sorted - Wether `array` is sorted. Used for optimizations. 
+ * @param {any[]} array
+ * @param {boolean} sorted - Wether `array` is sorted. Used for optimizations.
  * @returns {any[]}
  */
 function uniq (array, sorted) {
@@ -221,7 +221,7 @@ function uniq (array, sorted) {
 
 /**
  * Like `arr.uniq` but with custom equality `comparator(a,b)`.
- * @param {any[]} array 
+ * @param {any[]} array
  * @param {function} comparator - Function used to determine if a equals b
  * @param {Object} context - Used as `this` when calling `comparator`.
  * @returns {any[]}
@@ -239,7 +239,7 @@ function uniqBy (array, comparator, context) {
 
 /**
  * Like `arr.uniq` but with equality based on `array[index].key`.
- * @param {any[]} array 
+ * @param {any[]} array
  * @param {string} key
  * @returns {any[]}
  */
@@ -257,7 +257,7 @@ function uniqByKey (array, key) {
 
 /**
  * Returns a copy of `array` with falsy values removed.
- * @param {any[]} array 
+ * @param {any[]} array
  * @returns {any[]}
  */
 function compact (array) {
@@ -266,7 +266,7 @@ function compact (array) {
 
 /**
  * Returns `array` with falsy values removed.
- * @param {any[]} array 
+ * @param {any[]} array
  * @returns {any[]}
  */
 function mutableCompact (array) {
@@ -304,8 +304,8 @@ function zip (/* arr, arr2, arr3 */) {
 
 /**
  * Returns a new array that contains an element of `arra` and `delim` alternating.
- * @param {any[]} array 
- * @param {any} delim 
+ * @param {any[]} array
+ * @param {any} delim
  * @returns {any[]}
  */
 function interpose (array, delim) {
@@ -318,14 +318,14 @@ function interpose (array, delim) {
 /**
  * Calls `method` on each element in `array`, passing all arguments.
  * Often a handy way to avoid verbose `map` calls.
- * @param {any[]} array 
+ * @param {any[]} array
  * @param {function} method - The method to invoke on all elements of `array`
  * @param {any} arg1
  * @param {any} arg2
  * @param {any} arg3
  * @param {any} arg4
  * @param {any} arg5
- * @param {any} arg6 
+ * @param {any} arg6
  */
 function invoke (array, method, arg1, arg2, arg3, arg4, arg5, arg6) {
   return array.map(function (ea) {
@@ -335,8 +335,8 @@ function invoke (array, method, arg1, arg2, arg3, arg4, arg5, arg6) {
 
 /**
  * Returns `property` or undefined from each element of array. For quick `map`s and similar to `invoke`.
- * @param {any[]} array 
- * @param {string} property - The property to return 
+ * @param {any[]} array
+ * @param {string} property - The property to return
  */
 function pluck (array, property) {
   return array.map(ea => ea[property]);
@@ -345,9 +345,9 @@ function pluck (array, property) {
 /**
  * Returns true if each element in `array` is equal (`==`) to its
  * corresponding element in `otherArray`.
- * @param {any[]} array 
+ * @param {any[]} array
  * @param {any[]} otherArray
- * @returns {boolean} 
+ * @returns {boolean}
  */
 function equals (array, otherArray) {
   const len = array.length;
@@ -368,8 +368,8 @@ function equals (array, otherArray) {
 /**
  * Returns true if each element in `array` is structurally equal
  * (`lang.obj.equals`) to its corresponding element in `otherArray`.
- * @param {any[]} array 
- * @param {any[]} otherArray 
+ * @param {any[]} array
+ * @param {any[]} otherArray
  * @returns {boolean}
  */
 function deepEquals (array, otherArray) {
@@ -383,8 +383,8 @@ function deepEquals (array, otherArray) {
 
 /**
  * Returns a boolean indicating whether or not `array` is sorted.
- * @param {any[]} array 
- * @param {boolean} descending - indicating if `array` should be checked for descending or ascending order 
+ * @param {any[]} array
+ * @param {boolean} descending - indicating if `array` should be checked for descending or ascending order
  * @returns {boolean} wether `array` is sorted or not
  */
 function isSorted (array, descending) {
@@ -473,9 +473,9 @@ function union (array1, array2) {
 
 /**
  * Inserts `item` at `index`. Mutating.
- * @param {any[]} array 
- * @param {any} item 
- * @param {number} index 
+ * @param {any[]} array
+ * @param {any} item
+ * @param {number} index
  */
 function pushAt (array, item, index) {
   array.splice(index, 0, item);
@@ -492,8 +492,8 @@ function removeAt (array, index) {
 
 /**
  * Removes the first occurrence of `item` in `array`. Mutating.
- * @param {any[]} array 
- * @param {any} item 
+ * @param {any[]} array
+ * @param {any} item
  * @returns {any} item
  */
 function remove (array, item) {
@@ -504,8 +504,8 @@ function remove (array, item) {
 
 /**
  * Appends all `items` to `array`. Mutating.
- * @param {any[]} array 
- * @param {any[]} items 
+ * @param {any[]} array
+ * @param {any[]} items
  * @returns {any[]} array
  */
 function pushAll (array, items) {
@@ -515,9 +515,9 @@ function pushAll (array, items) {
 
 /**
  * Inserts all `items` at `idx`. Mutating.
- * @param {any[]} array 
- * @param {anu[]} items 
- * @param {number} idx 
+ * @param {any[]} array
+ * @param {anu[]} items
+ * @param {number} idx
  */
 function pushAllAt (array, items, idx) {
   array.splice.apply(array, [idx, 0].concat(items));
@@ -525,8 +525,8 @@ function pushAllAt (array, items, idx) {
 
 /**
  * Only appends `item` if its not already in `array`. Mutating.
- * @param {any[]} array 
- * @param {any} item 
+ * @param {any[]} array
+ * @param {any} item
  */
 function pushIfNotIncluded (array, item) {
   if (!array.includes(item)) array.push(item);
@@ -534,9 +534,9 @@ function pushIfNotIncluded (array, item) {
 
 /**
  * Replace the element `array[index]` with `item`. Mutating.
- * @param {any[]} array 
- * @param {any} item 
- * @param {number} index 
+ * @param {any[]} array
+ * @param {any} item
+ * @param {number} index
  */
 function replaceAt (array, item, index) {
   array.splice(index, 1, item);
@@ -544,7 +544,7 @@ function replaceAt (array, item, index) {
 
 /**
  * Removes all items. Mutating.
- * @param {any[]} array 
+ * @param {any[]} array
  */
 function clear (array) {
   array.length = 0; return array;
@@ -552,8 +552,8 @@ function clear (array) {
 
 /**
  * Returns wether all elements in `list1` are in `list2`.
- * @param {any[]} list1 
- * @param {any[]} list2 
+ * @param {any[]} list1
+ * @param {any[]} list2
  * @returns {boolean}
  */
 function isSubset (list1, list2) {
@@ -579,8 +579,8 @@ function isSubset (list1, list2) {
  * arr.doAndContinue([
  *   function(next) { alert("At " + 1); next(); },
  *   function(next) { alert("At " + 2); next(); }
- * ], null, function() { alert("Done"); }); 
- ``` 
+ * ], null, function() { alert("Done"); });
+ ```
  * @param {any[]} array - The array to iterate over
  * @param {function} iterator - The function that is called for each element of `array`
  * @param {function} endFunc - A function called once after iterating over `array`
@@ -624,13 +624,13 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
 // FIXME: progress bar would is to be loaded from the parts bin, which is retired a long time ago
 // Would need to fix the progress bar functionality of the world before fixing this
 // function forEachShowingProgress (/* array, progressBar, iterator, labelFunc, whenDoneFunc, context or spec */) {
-// 
+//
 //   const args = Array.from(arguments);
 //   const array = args.shift();
 //   const steps = array.length;
 //   let progressBar; let iterator; let labelFunc; let whenDoneFunc; let context;
 //   let progressBarAdded = false;
-// 
+//
 //   // init args
 //   if (args.length === 1) {
 //     progressBar = args[0].progressBar;
@@ -647,7 +647,7 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
 //   }
 //   if (!context) context = typeof window !== 'undefined' ? window : GLOB;
 //   if (!labelFunc) labelFunc = function (x) { return x; };
-// 
+//
 //   // init progressbar
 //   if (!progressBar) {
 //     progressBarAdded = true;
@@ -661,7 +661,7 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
 //         };
 //   }
 //   progressBar.value = 0;
-// 
+//
 //   // nest functions so that the iterator calls the next after a delay
 //   (array.reduceRight(function (nextFunc, item, idx) {
 //     return function () {
@@ -681,7 +681,7 @@ function nestedDelay (array, iterator, waitSecs, endFunc, context, optSynchronCh
 //     if (progressBarAdded) (function () { progressBar.remove(); }).delay(0);
 //     if (whenDoneFunc) whenDoneFunc.call(context);
 //   }))();
-// 
+//
 //   return array;
 // }
 
@@ -837,7 +837,7 @@ const permutations = (function () {
  * `pickIndices` list with the size of the number of arrays which indicates what
  * values to pick from each of the arrays. Returns a list with two lists:
  * 1. values picked from each of the arrays, 2. the next pickIndices or null if at end (no more combinations possible).
- * Needs to be called recursively to enumerate alls combinations. 
+ * Needs to be called recursively to enumerate alls combinations.
  * ```
  * // Example:
  * var searchSpace = [["a", "b", "c"], [1,2]];
@@ -1056,7 +1056,6 @@ function flatMap (array, iterator, context) {
 function slice (array, start, end) {
   return array.slice(start, end);
 }
-
 
 export {
   range,
