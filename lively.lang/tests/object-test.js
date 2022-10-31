@@ -4,6 +4,7 @@ import { expect } from 'mocha-es6';
 import { isObject, newKeyIn, sortKeysWithBeforeAndAfterConstraints, select, extend, inspect, equals, keys, isRegExp, isFunction, extract, isEmpty, deepCopy, inherit, values, merge, clone, isBoolean, dissoc, isString, isElement, isArray, deepMerge, isNumber, isUndefined, typeStringOf, safeToString, isMutableType, shortPrintStringOf, mergePropertyInHierarchy } from '../object.js';
 import * as properties from '../properties.js';
 import Path from '../Path.js';
+import Document from 'lively.morphic/text/document.js';
 
 let isNodejs = System.get('@system-env').node;
 let GLOBAL = System.global;
@@ -97,6 +98,26 @@ describe('object', function () {
       expect(equals(b, c)).to.equal(false);
       expect(equals(c, c)).to.equal(true);
       expect(equals(GLOBAL, GLOBAL)).to.equal(true);
+    });
+
+    it('works with cyclic objects (in easy mode)', function () {
+      let b = {};
+      b.b = b;
+
+      let c = {};
+      c.b = c;
+
+      expect(equals(b, c)).to.equal(true);
+    });
+
+    // the above test case is green even with implementations that will fail with more complex objects
+    // like `Documents` with multiple lines
+    it('works with cyclic objects (in hard mode)', function () {
+      const textString = 'Lari Fari Loeffelstiel \nDies ist ein Text \nJetzt wird aber richtig reinverglichen\nJunge junge!\n';
+      const a = Document.fromString(textString);
+      const b = Document.fromString(textString);
+
+      expect(equals(a, b)).to.equal(true);
     });
 
     it('works with arrays', function () {

@@ -97,16 +97,60 @@ function isEmpty (object) {
 }
 
 /**
- * Is object `a` structurally equivalent to object `b`?. Performs a deep comparison.
+ * Helper Method of `equals` below. Idea and partial implementation taken from Chai.JS (MIT, Copyright (c) 2017 Chai.js Assertion Library)
+ * @param {object} a
+ * @param {object} b
+ * @param {array} m - Used for memorizing already compared parts of the objects. Does not need to be set explicitly. Enables comparisons of circular objects.
+ * @returns {bool} Whether `a` and `b` are equal.
+ */
+function objectEquals (a, b, m) {
+  if (m) {
+    for (let i = 0; i < m.length; i++) {
+      if ((m[i][0] === a && m[i][1] === b) ||
+      (m[i][0] === b && m[i][1] === a)) {
+        return true; // we have seen this pair already, if they are not equal the termination will happen elsewhere
+      }
+    }
+  } else {
+    m = [];
+  }
+
+  const keysA = Object.keys(a).filter(key => typeof a[key] !== 'function').sort();
+  const keysB = Object.keys(b).filter(key => typeof b[key] !== 'function').sort();
+
+  if (keysA.length !== keysB.length) return false; // different number of keys -> cannot be the same object
+
+  // any different key -> cannot be the same objects
+  for (let i = 0; i < keysA.length; i++) {
+    if (keysA[i] !== keysB[i]) return false;
+  }
+
+  m.push([a, b]);
+  // expensive deep comparison
+  const seenInA = [];
+  for (let name of keysA) {
+    seenInA.push(name);
+    if (!equals(a[name], b[name], m)) return false; // eslint-disable-line no-use-before-define
+  }
+  for (let name of keysB) {
+    if (seenInA.indexOf(name) !== -1) continue; // key existed in A, we already compared successfully above
+    return false; // we have not seen key in A, thus objects **cannot** be equal
+  }
+  return true;
+}
+
+/**
+ * Is object `a` structurally equivalent to object `b`?. Performs a **deep** comparison.
  * Functions are completely ignored, with regards to both their implementation and existence/name!
  * @param { object } a - The first object to compare.
  * @param { object } b - The second object to compare.
+ * @param { array } m - Used for memorizing already compared parts of the objects. Does not need to be set explicitly. Enables comparisons of circular objects.
  * @returns { boolean }
  */
-function equals (a, b) {
+function equals (a, b, m) {
   if (a === b) return true;
   if (!a || !b) return a === b;
-  if (Array.isArray(a)) return arrayDeepEquals(a, b);
+  if (Array.isArray(a)) return arrayDeepEquals(a, b, m);
   switch (a.constructor) {
     case String:
     case Date:
@@ -115,19 +159,7 @@ function equals (a, b) {
   }
   if (typeof a.isEqualNode === 'function') return a.isEqualNode(b);
   if (typeof a.equals === 'function') return a.equals(b);
-
-  const seenInA = [];
-  for (let name in a) {
-    seenInA.push(name);
-    if (typeof a[name] === 'function') continue;
-    if (!equals(a[name], b[name])) return false;
-  }
-  for (let name in b) {
-    if (seenInA.indexOf(name) !== -1) continue; // key existed in A, we already compared successfully above
-    if (typeof b[name] === 'function') continue;
-    return false; // we have not seen key in A, thus objects **cannot** be equal
-  }
-  return true;
+  return objectEquals(a, b, m);
 }
 
 // -=-=-=-=-=-
