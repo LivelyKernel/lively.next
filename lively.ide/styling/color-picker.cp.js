@@ -66,7 +66,7 @@ const ColorInput = component({
     name: 'hex input',
     tooltip: 'HEX Color Value',
     extent: pt(72.1, 23),
-    fill: Color.rgb(66,73,73),
+    fill: Color.rgb(66, 73, 73),
     fontSize: 14,
     padding: rect(4, 3, 6, 2)
   }), part(DarkNumberIconWidget, {
@@ -103,6 +103,7 @@ const DefaultInputLine = component({
   haloShadow: new ShadowObject({ distance: 0, color: Color.rgb(52, 152, 219) }),
   highlightWhenFocused: true,
   padding: rect(10, 3, -10, 0),
+  nativeCursor: 'text',
   submorphs: [{
     type: Label,
     name: 'placeholder',

@@ -105,6 +105,7 @@ export default class InputLine extends Text {
       historyId: { defaultValue: null },
       clearOnInput: { defaultValue: false },
       selectionMode: { defaultValue: 'lively' },
+      nativeCursor: { defaultValue: 'text' },
 
       label: {
         after: ['textAndAttributes', 'extent', 'padding', 'submorphs'],
