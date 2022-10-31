@@ -1,7 +1,7 @@
 /* global System,Map,WeakMap,Shapes,Intersection */
 import { Rectangle, Point, rect, Color, pt } from 'lively.graphics';
 import { string, obj, fun, promise, arr } from 'lively.lang';
-import { signal, noUpdate, disconnect } from 'lively.bindings';
+import { signal, disconnect } from 'lively.bindings';
 import { num } from 'lively.lang';
 import { morph, touchInputDevice, sanitizeFont } from '../helpers.js';
 import config from '../config.js';
@@ -372,7 +372,7 @@ export class Text extends Morph {
           return sel;
         },
         set (selOrRange) {
-          if (this._isDowngrading || this._isUpgrading || !selOrRange) {
+          if (this._isDeserializing || this._isDowngrading || this._isUpgrading || !selOrRange) {
             this.setProperty('selection', null);
             return;
           }
@@ -420,7 +420,6 @@ export class Text extends Morph {
         set (value) {
           if (this.document) {
             value = (value !== null) ? String(value) : '';
-            // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
             this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
             this.insertText(value, { column: 0, row: 0 });
           } else {
@@ -474,7 +473,7 @@ export class Text extends Morph {
             this.renderingState.needsFit = true;
           }
           this.setProperty('textAndAttributes', textAndAttributes);
-          if (this.world()) Promise.all([this.whenRendered(), this.whenFontLoaded()]).then(() => this.fit());
+          if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
       },
 
@@ -2100,7 +2099,11 @@ export class Text extends Morph {
     if (!this.fixedWidth) this.width = this.document.width;
     this.renderingState.needsScrollLayerAdded = true;
     this._isUpgrading = false;
-    this.env.renderer.renderStep();
+    if (this.env.renderer) { this.env.renderer.renderStep(); } else {
+      this.whenEnvReady().then(() => {
+        this.env.renderer.renderStep();
+      });
+    }
   }
 
   addTextAttribute (attr, range = this.selection) {
@@ -2582,11 +2585,16 @@ export class Text extends Morph {
   // text layout related
 
   fit () {
+    if (this._isDeserializing) {
+      return;
+    }
     if (this.document) {
       const { fixedWidth, fixedHeight } = this;
       if ((fixedHeight && fixedWidth) ||
         !this.textLayout /* not init'ed yet */ ||
-        this.master && !this.master._appliedMaster) return this;
+        this.master && !this.master._appliedMaster) {
+        return this;
+      }
 
       const textBounds = this.textBounds().outsetByRect(this.padding);
       this.withMetaDo({ metaInteraction: true }, () => {
@@ -2597,7 +2605,7 @@ export class Text extends Morph {
           if (a) a.updateEmbeddedMorph();
         });
       });
-    } else {
+    } else if (this.env.renderer) {
       let textBoundsExtent = this.textBounds().extent();
       if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
       if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
@@ -2606,7 +2614,10 @@ export class Text extends Morph {
         this.borderWidthTop + this.borderWidthBottom
       );
       this.renderingState.needsFit = false;
-      return this;
+    } else {
+      this.whenEnvReady().then(() => {
+        this.fit();
+      });
     }
 
     return this;
@@ -2659,7 +2670,7 @@ export class Text extends Morph {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
     }
-    if (!obj.equals(this.renderingState.extent, this.extent)) {
+    if (this.renderingState.extent !== undefined && !obj.equals(this.renderingState.extent, this.extent)) {
       this.invalidateTextLayout(true, true);
       renderer.renderTextAndAttributes(node, this);
     }
@@ -2686,8 +2697,8 @@ export class Text extends Morph {
     }
 
     if (this.document) {
-      if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
-         !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
+      if (this.renderingState.lineHeight !== undefined && !obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
+         this.renderingState.letterSpacing !== undefined && !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         this.invalidateTextLayout(true, true);
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }

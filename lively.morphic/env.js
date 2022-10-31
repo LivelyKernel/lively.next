@@ -7,6 +7,7 @@ import EventDispatcher from './events/EventDispatcher.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
 import { clearStylePropertiesForClassesIn } from './helpers.js';
 import promise from 'lively.lang/promise.js';
+import { once } from 'lively.bindings';
 
 let envs = envs || []; // eslint-disable-line no-use-before-define
 
@@ -124,7 +125,7 @@ export class MorphicEnv {
     if (this.onRenderStart) {
       // ensure the previous renderer is disabled before starting to render
       return Promise.resolve(this.onRenderStart()).then(() => {
-	world.makeDirty();
+        world.makeDirty();
         return this;
       });
     } else world.makeDirty();
@@ -217,7 +218,14 @@ export class MorphicEnv {
     else this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(() => this.updateWhenRenderedRequests());
   }
 
-
+  whenReady () {
+    if (this.renderer) return Promise.resolve(true);
+    if (this._whenReady) return this._whenReady;
+    let resolve;
+    ({ promise: this._whenReady, resolve } = promise.deferred());
+    once(this, 'setWorldRenderedOn', () => resolve(true));
+    return this._whenReady;
+  }
 
   whenRendered (morph, maxAttempts = 50) {
     const { whenRenderedRequesters, whenRenderedTickingProcess } = this;
@@ -234,5 +242,5 @@ export class MorphicEnv {
     }
     if (!whenRenderedTickingProcess) this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(() => this.updateWhenRenderedRequests());
     return requestState.promise;
-    }
+  }
 }
