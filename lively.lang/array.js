@@ -370,13 +370,14 @@ function equals (array, otherArray) {
  * (`lang.obj.equals`) to its corresponding element in `otherArray`.
  * @param {any[]} array
  * @param {any[]} otherArray
+ * @param {any[]} m - Gets populated with memorization when this function is called as part of `obj.equal`
  * @returns {boolean}
  */
-function deepEquals (array, otherArray) {
+function deepEquals (array, otherArray, m) {
   const len = array.length;
   if (!otherArray || len !== otherArray.length) return false;
   for (let i = 0; i < len; i++) {
-    if (!objectEquals(array[i], otherArray[i])) return false;
+    if (!objectEquals(array[i], otherArray[i], m)) return false;
   }
   return true;
 }
