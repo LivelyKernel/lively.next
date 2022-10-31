@@ -65,14 +65,13 @@ export class SidebarFlap extends ViewModel {
   onWorldResize () {
     if (this.target === 'scene graph') return;
     const propertiesPanelExists = $world.get(this.target);
-    if (propertiesPanelExists) this.view.position = pt($world.visibleBounds().width - defaultPropertiesPanelWidth - this.view.extent.x, this.view.position.y);
-    else this.view.position = pt($world.visibleBounds().width - this.view.width, this.view.position.y);
+    if (propertiesPanelExists) this.view.position = this.view.position.withX($world.visibleBounds().width - defaultPropertiesPanelWidth - this.view.width);
+    else this.view.position = this.view.position.withX($world.visibleBounds().width - this.view.width);
   }
 
   async openInWorld () {
     const world = this.world();
     const { view } = this;
-    const flapWidth = 28;
     world.clipMode = 'hidden';
     view.opacity = 0;
     view.hasFixedPosition = false;
@@ -80,8 +79,7 @@ export class SidebarFlap extends ViewModel {
     if (this.target === 'scene graph') {
       this.ui.label.textString = 'Scene Graph';
       view.borderRadius = { topLeft: 0, topRight: 5, bottomLeft: 0, bottomRight: 5 };
-      await view.whenRendered();
-      view.left = -flapWidth;
+      view.left = -view.width;
       await view.withAnimationDo(() => {
         view.opacity = 1;
         const scene_graph = world.get(this.target);
@@ -95,12 +93,11 @@ export class SidebarFlap extends ViewModel {
       view.left = world.visibleBounds().width;
       this.ui.label.textString = 'Properties Panel';
       view.borderRadius = { topLeft: 5, topRight: 0, bottomLeft: 5, bottomRight: 0 };
-      await view.whenRendered();
       await view.withAnimationDo(() => {
         view.opacity = 1;
         const properties_panel = world.get(this.target);
         if (properties_panel) view.left = world.visibleBounds().width - defaultPropertiesPanelWidth - view.width;
-        else view.position = pt(world.visibleBounds().width - flapWidth, view.top);
+        else view.position = pt(world.visibleBounds().width - view.width, view.top);
       });
       world.clipMode = 'visible';
       view.hasFixedPosition = true;
@@ -117,7 +114,7 @@ const Flap = component({
     align: 'center',
     axis: 'column',
     axisAlign: 'center',
-    hugContentsHorizontally: true,
+    hugContentsHorizontally: false,
     orderByIndex: true,
     wrapSubmorphs: false,
     padding: rect(5, 5, 0, 0)
