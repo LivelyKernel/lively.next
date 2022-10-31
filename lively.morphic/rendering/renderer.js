@@ -1796,13 +1796,14 @@ export default class Renderer {
 
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
+    textNode.remove();
     this.placeholder.className = 'Text';
-    this.placeholder.appendChild(textNode);
     textNode.style.width = 'max-content';
     textNode.style.height = 'max-content';
     textNode.style.position = 'static';
     if (morph.fixedWidth) textNode.style.width = morph.width + 'px';
     if (morph.fixedHeight) textNode.style.height = morph.height + 'px';
+    this.placeholder.appendChild(textNode);
     const domMeasure = this.placeholder.getBoundingClientRect();
     textNode.style.removeProperty('width');
     textNode.style.removeProperty('position');
