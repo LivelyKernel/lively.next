@@ -66,6 +66,7 @@ export default class Renderer {
     placeholder.style.width = 'fit-content';
     placeholder.style.visibility = 'hidden';
     placeholder.style.position = 'absolute';
+    placeholder.style.transform = 'translate(0px, 0px)'; // removes element from the flow
     this.placeholder = this.doc.body.appendChild(placeholder);
   }
 
@@ -1844,12 +1845,14 @@ export default class Renderer {
     let line = morph.document.getLine(row);
 
     let foundEstimatedLine;
+    const gtfm = morph.getGlobalTransform().inverse();
+    gtfm.e = gtfm.f = 0;
     for (; i < lineNodes.length; i++) {
       const node = lineNodes[i];
       if (line) {
         if (!foundEstimatedLine) { foundEstimatedLine = line.hasEstimatedExtent; }
         line.hasEstimatedExtent = foundEstimatedLine;
-        actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node);
+        actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node, gtfm);
         // if we measured but the font as not been loaded, this is also just an estimate
         line.hasEstimatedExtent = !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight);
         line = line.nextLine();
@@ -1863,11 +1866,8 @@ export default class Renderer {
    * @param {Node} lineNode - The Node in which `Line` is rendered.
    * @returns
    */
-  updateLineHeightOfNode (morph, docLine, lineNode) {
+  updateLineHeightOfNode (morph, docLine, lineNode, tfm) {
     if (docLine.height === 0 || docLine.hasEstimatedExtent) {
-      const tfm = morph.getGlobalTransform().inverse();
-      tfm.e = tfm.f = 0;
-
       const needsTransformAdjustment = tfm.getScale() !== 1 || tfm.getRotation() !== 0;
       if (needsTransformAdjustment) lineNode.style.transform = tfm.toString();
       const { height: nodeHeight, width: nodeWidth } = lineNode.getBoundingClientRect();
