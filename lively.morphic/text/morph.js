@@ -2492,10 +2492,6 @@ export class Text extends Morph {
       .insetBy(this.borderWidth);
     let charBounds = this.charBoundsFromTextPosition(pos);
 
-    // if no line wrapping is enabled we add a little horizontal offset so
-    // that characters at line end are better visible
-    if (!this.lineWrapping) charBounds = charBounds.insetByPt(pt(-20, 0));
-
     // if we are close to the bottom, make sure bottom of char is visible:
     const corner = viewBounds.bottom() - charBounds.bottom() > 20 ? 'bottomLeft' : 'topLeft';
     const delta = charBounds[corner]()
