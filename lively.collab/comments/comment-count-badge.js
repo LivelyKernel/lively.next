@@ -33,18 +33,16 @@ export class CommentCountBadgeModel extends ViewModel {
   }
 
   alignWithMorph () {
-    this.view.position = this.morph.innerBounds().topRight().addPt(pt(-this.width / 2, 0));
+    this.view.position = this.morph.globalPosition.addXY(this.morph.width, 0).addXY(-5, 5);
   }
 
   addToMorph (morph) {
     this.morph = morph;
-    morph.addMorph(this.view);
+    $world.addMorph(this.view);
     this.alignWithMorph();
-    connect(morph, 'onChange', this, 'alignWithMorph', { garbageCollect: true });
   }
 
   removeFromMorph () {
-    disconnect(this.morph, 'onChange', this, 'alignWithMorph');
     this.morph = undefined;
   }
 
