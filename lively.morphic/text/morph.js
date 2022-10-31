@@ -1077,7 +1077,7 @@ export class Text extends Morph {
           viewChange = true;
           const delta = change.prevValue.subPt(change.value);
           softLayoutChange = this.fixedWidth && !!this.lineWrapping && !!delta.x;
-          enforceFit = softLayoutChange && (!this.fixedWidth || !this.fixedHeight);
+          enforceFit = softLayoutChange && (!this.fixedWidth && !!delta.x || !this.fixedHeight && !!delta.y);
           break;
         case 'wordSpacing':
         case 'letterSpacing':
