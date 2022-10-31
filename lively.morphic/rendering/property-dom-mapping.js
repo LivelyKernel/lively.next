@@ -11,9 +11,14 @@ import bowser from 'bowser';
  * @returns {Node} the DOM node with changed style properties.
  */
 export function stylepropsToNode (styleProps, node) {
+  node.style.removeProperty('padding-left');
+  node.style.removeProperty('padding-right');
+  node.style.removeProperty('margin-bottom');
+  node.style.removeProperty('margin-top');
   for (let prop in styleProps) {
     node.style[prop] = styleProps[prop];
   }
+  // FIXME: remove the props NOT mentioned in styleProps but still mentioned in style?
   return node;
 }
 

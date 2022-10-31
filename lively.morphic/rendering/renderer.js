@@ -1680,8 +1680,9 @@ export default class Renderer {
     const horizontalScrollBarVisible = morph.document.width > morph.width;
     const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
     const verticalPaddingOffset = morph.padding.top() + morph.padding.bottom();
-    scrollLayer.firstChild.style.width = Math.max(morph.document.width, morph.width) + 'px';
-    scrollLayer.firstChild.style.height = Math.max(morph.document.height, morph.height) - scrollBarOffset.y + verticalPaddingOffset + 'px';
+    const horizontalPaddingOffset = morph.padding.left() + morph.padding.right();
+    scrollLayer.firstChild.style.width = morph.document.width + horizontalPaddingOffset + 'px';
+    scrollLayer.firstChild.style.height = morph.document.height - scrollBarOffset.y + verticalPaddingOffset + 'px';
   }
 
   /**
