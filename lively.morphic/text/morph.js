@@ -2702,6 +2702,7 @@ export class Text extends Morph {
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
          this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
+        renderer.patchSelectionLayer(node, this);
       }
       if (!obj.equals(this.renderingState.markers, this.markers)) {
         renderer.patchMarkerLayer(node, this);
