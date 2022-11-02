@@ -39,9 +39,45 @@ export default class ShellClientResource extends Resource {
     return this;
   }
 
-  exists () {
-    let cmd = runCommand(`test -d "${this.url}" || test -f "${this.url}"`, this.options);
-    return cmd.whenDone().then(() => cmd.exitCode === 0);
+  async isDirectory () {
+    let cmd = runCommand(`test -d "${this.url}"`, this.options);
+    await cmd.whenDone();
+    return cmd.exitCode === 0;
+  }
+
+  async isFile () {
+    let cmd = runCommand(`test -f "${this.url}"`, this.options);
+    await cmd.whenDone();
+    return cmd.exitCode === 0;
+  }
+
+  async exists () {
+    return (await this.isDirectory() || await this.isFile());
+  }
+
+  async isGitRepository (withRemote = false) {
+    const isDir = await this.isDirectory();
+    if (!isDir) return false;
+    let cmd = runCommand(`test -d "${this.url}/.git"`, this.options);
+    await cmd.whenDone();
+    if (!withRemote) return cmd.exitCode === 0;
+    cmd = runCommand(`cd "${this.url}" && git remote`, this.options);
+    await cmd.whenDone();
+    return cmd.exitCode === 0 && cmd.stdout !== '';
+  }
+
+  async addRemoteToGitRepository (token, repoName) {
+    let repoCreationCommand = `curl \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${token}" \
+              https://api.github.com/user/repos \
+              -d '{"name":"${repoName}"}'`;
+    let cmd = runCommand(repoCreationCommand, this.options);
+    await cmd.whenDone();
+    const url = JSON.parse(cmd.stdout).html_url;
+    let addingRemoteCommand = `git remote add origin ${url}`;
+    runCommand(addingRemoteCommand, this.options);
   }
 
   remove () {
