@@ -1,23 +1,29 @@
-import { component, TilingLayout, Ellipse, Image, ViewModel, Icon, part } from 'lively.morphic';
+import { component, InputLine, Label, TilingLayout, Ellipse, Image, ViewModel, Icon, part } from 'lively.morphic';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { pt, Color } from 'lively.graphics';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
+
+/**
+ * accessToken
+ * projectName
+ */
 class GithubAuthModel extends ViewModel {
   static get properties () {
     return {
       bindings: {
         get () {
           return [
-            { target: 'github login button', signal: 'onMouseDown', handler: 'onMouseDown' }
+            { target: 'github login button', signal: 'onMouseDown', handler: 'onLoginPressed' },
+            { target: 'project confirm button', signal: 'onMouseDown', handler: 'onProjectConfirmed' }
           ];
         }
       }
     };
   }
 
-  async onMouseDown () {
+  async onLoginPressed () {
     let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=repo' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
     const deviceCode = resOne.match(new RegExp('device_code=(.*)&e'))[1];
@@ -36,7 +42,13 @@ class GithubAuthModel extends ViewModel {
     userRes = JSON.parse(userRes);
     this.ui.loginIndicator.fill = Color.green;
     this.ui.avatarHolder.loadUrl(userRes.avatar_url, false);
+    this.ui.githubNameLabel.textString = userRes.login;
+    this.ui.accessTokenLabel.textString = this.accessToken;
     indicator.remove();
+  }
+
+  onProjectConfirmed () {
+    this.projectName = this.ui.projectName.textString;
   }
 }
 
@@ -47,30 +59,86 @@ export const GithubAuthPanel = component({
   extent: pt(300, 300),
   fill: Color.gray,
   layout: new TilingLayout({
-    axis: 'row'
+    axis: 'column'
   }),
   submorphs: [
     {
-      name: 'login indicator',
-      type: Ellipse,
-      extent: pt(10, 10),
-      fill: Color.red
-    },
-    part(ButtonDefault, {
-      name: 'github login button',
-      extent: pt(170, 35),
+      name: 'upper container',
+      layout: new TilingLayout({
+        axis: 'column',
+        align: 'center',
+        axisAlign: 'center'
+      }),
       submorphs: [
         {
-          name: 'label',
-          textAndAttributes: Icon.textAttribute('github').concat([' Login With GitHub', null])
+          name: 'login indicator',
+          type: Ellipse,
+          extent: pt(10, 10),
+          fill: Color.red
+        },
+        part(ButtonDefault, {
+          name: 'github login button',
+          extent: pt(170, 35),
+          submorphs: [
+            {
+              name: 'label',
+              textAndAttributes: Icon.textAttribute('github').concat([' Login With GitHub', null])
+            }
+          ]
+        }),
+        {
+          type: Image,
+          extent: pt(80, 80),
+          name: 'avatar holder',
+          imageUrl: 'https://www.absoluteanime.com/avatar_the_last_airbender/aang[2].jpg',
+          autoResize: true
+        }]
+    },
+    {
+      name: 'lower container',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        axis: 'row'
+      }),
+      submorphs: [
+        {
+          type: Label,
+          name: 'github name label',
+          textString: 'username'
+        }, {
+          type: Label,
+          name: 'access token label',
+          textString: 'token'
+        },
+        {
+          name: 'input container',
+          fill: Color.transparent,
+          layout: new TilingLayout({
+            axis: 'column'
+          }),
+          submorphs: [
+            {
+              type: Label,
+              textString: 'Project Name: '
+            },
+            {
+              type: InputLine,
+              name: 'project name'
+            },
+            part(ButtonDefault, {
+              name: 'project confirm button',
+              extent: pt(95, 25),
+              submorphs: [
+                {
+                  name: 'label',
+                  value: 'Confirm Name'
+                }
+              ]
+            })
+          ]
         }
       ]
-    }),
-    {
-      type: Image,
-      extent: pt(80, 80),
-      name: 'avatar holder',
-      autoResize: true
     }
+
   ]
 });
