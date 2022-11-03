@@ -84,6 +84,27 @@ export default class ShellClientResource extends Resource {
     await runCommand(addingRemoteCommand, this.options).whenDone();
   }
 
+  async commitRepo () {
+    this.options.cwd = this.url;
+    let cmdString = `git add * && git commit -m "Commited from withing lively.next at ${Date.now()}"`;
+    let cmd = runCommand(cmdString, this.options);
+    await cmd.whenDone();
+  }
+
+  async pushGitRepo () {
+    await this.pullGitRepo();
+    await this.commitRepo();
+    const cmd = runCommand('git push --set-upstream origin master', this.options);
+    await cmd.whenDone();
+  }
+
+  // TODO: functioning error handling, especially in the case of conflicts
+  async pullGitRepo () {
+    await runCommand('git stash', this.options).whenDone();
+    const pullCmd = runCommand('git pull', this.options);
+    await pullCmd.whenDone();
+    const cmd = runCommand('git stash pop', this.options);
+    await cmd.whenDone();
   }
 
   remove () {
