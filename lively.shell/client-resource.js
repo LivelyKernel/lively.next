@@ -66,7 +66,12 @@ export default class ShellClientResource extends Resource {
     return cmd.exitCode === 0 && cmd.stdout !== '';
   }
 
-  async addRemoteToGitRepository (token, repoName) {
+  async initializeGitRepository (repoName) {
+    const cmd = runCommand(`cd "${this.url}" && git init`, this.options);
+    await cmd.whenDone();
+  }
+
+  async addRemoteToGitRepository (token, repoName, repoUser) {
     let repoCreationCommand = `curl \
               -X POST \
               -H "Accept: application/vnd.github+json" \
@@ -75,9 +80,10 @@ export default class ShellClientResource extends Resource {
               -d '{"name":"${repoName}"}'`;
     let cmd = runCommand(repoCreationCommand, this.options);
     await cmd.whenDone();
-    const url = JSON.parse(cmd.stdout).html_url;
-    let addingRemoteCommand = `git remote add origin ${url}`;
-    runCommand(addingRemoteCommand, this.options);
+    let addingRemoteCommand = `cd "${this.url}" && git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
+    await runCommand(addingRemoteCommand, this.options).whenDone();
+  }
+
   }
 
   remove () {
