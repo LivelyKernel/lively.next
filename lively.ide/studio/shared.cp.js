@@ -51,9 +51,8 @@ const PropertyLabelActive = component(PropertyLabel, {
   fill: Color.rgb(178, 235, 242),
   fontColor: Color.rgb(65, 65, 65)
 });
-// this.env.fontMetric.reset()
-// AddButton.openInWorld()
-const AddButton = component({
+
+const AddButtonAuto = component({
   type: Label,
   name: 'add button',
   borderRadius: 3,
@@ -68,7 +67,14 @@ const AddButton = component({
   }]
 });
 
-// RemoveButton.openInWorld()
+const AddButtonHovered = component(AddButtonAuto, {
+  fill: Color.rgba(229, 231, 233, 0.35)
+});
+
+const AddButton = component(AddButtonAuto, {
+  master: { hover: AddButtonHovered }
+});
+
 const RemoveButton = component(AddButton, {
   name: 'remove button',
   textAndAttributes: ['\ue15b', {
