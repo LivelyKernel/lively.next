@@ -1,7 +1,9 @@
 import { component, InputLine, Label, TilingLayout, Ellipse, Image, ViewModel, Icon, part } from 'lively.morphic';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { pt, Color } from 'lively.graphics';
-import { runCommand } from 'lively.ide/shell/shell-interface.js';
+import { runCommand, defaultDirectory } from 'lively.ide/shell/shell-interface.js';
+import { resource } from 'lively.resources';
+import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -16,7 +18,11 @@ class GithubAuthModel extends ViewModel {
         get () {
           return [
             { target: 'github login button', signal: 'onMouseDown', handler: 'onLoginPressed' },
-            { target: 'project confirm button', signal: 'onMouseDown', handler: 'onProjectConfirmed' }
+            { target: 'project confirm button', signal: 'onMouseDown', handler: 'onProjectConfirmed' },
+            { target: 'repo status button', signal: 'onMouseDown', handler: 'onRepoStatusPressed' },
+            { target: 'remote status button', signal: 'onMouseDown', handler: 'onRemoteStatusPressed' },
+            { target: 'push button', signal: 'onMouseDown', handler: 'onPush' },
+            { target: 'pull button', signal: 'onMouseDown', handler: 'onPull' }
           ];
         }
       }
@@ -29,7 +35,7 @@ class GithubAuthModel extends ViewModel {
     const deviceCode = resOne.match(new RegExp('device_code=(.*)&e'))[1];
     const userCode = resOne.match(new RegExp('user_code=(.*)&'))[1];
     // TODO: gracefully fail when aborted
-    const confirmed = await $world.confirm(['Go to', null, 'GitHub', { link: 'https://github.com/login/device' }, `and enter ${userCode}`, null]);
+    const confirmed = await $world.confirm(['Go to', null, 'GitHub', { link: 'https://github.com/login/device' }, `and enter ${userCode}`, null]); // eslint-disable-line no-unused-vars
     const indicator = $world.showLoadingIndicatorFor($world, 'Waiting for GitHub.com ...');
     // TODO: actually poll for the token
     cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
@@ -43,12 +49,45 @@ class GithubAuthModel extends ViewModel {
     this.ui.loginIndicator.fill = Color.green;
     this.ui.avatarHolder.loadUrl(userRes.avatar_url, false);
     this.ui.githubNameLabel.textString = userRes.login;
+    this.user = userRes.login;
     this.ui.accessTokenLabel.textString = this.accessToken;
     indicator.remove();
   }
 
-  onProjectConfirmed () {
+  async onProjectConfirmed () {
     this.projectName = this.ui.projectName.textString;
+    this.resourceHandle = resource(await defaultDirectory()).join('..').join('projects').join(this.projectName).withRelativePartsResolved().asDirectory();
+  }
+
+  async onRepoStatusPressed () {
+    $world.setStatusMessage('start');
+    const isDir = await this.resourceHandle.isDirectory();
+    if (!isDir) {
+      $world.setStatusMessage('No Directory For Project found. :O');
+      return;
+    }
+    const isRepo = await this.resourceHandle.isGitRepository();
+    if (isRepo) $world.setStatusMessage('Yai!', StatusMessageConfirm);
+    else {
+      await this.resourceHandle.initializeGitRepository();
+      $world.setStatusMessage('Initialized Repository');
+    }
+    $world.setStatusMessage('stop');
+  }
+
+  async onRemoteStatusPressed () {
+    const hasRemote = await this.resourceHandle.isGitRepository(true);
+    if (hasRemote) $world.setStatusMessage('all set');
+    // FIXME: repository can also belong to another user or an organization
+    else await this.resourceHandle.addRemoteToGitRepository(this.accessToken, this.projectName, this.user);
+  }
+
+  async onPush () {
+    this.resourceHandle.pushGitRepo();
+  }
+
+  async onPull () {
+    this.resourceHandle.pullGitRepo();
   }
 }
 
@@ -138,6 +177,58 @@ export const GithubAuthPanel = component({
           ]
         }
       ]
+    },
+    {
+      name: 'lowest container',
+      fill: Color.transparent,
+      width: 300,
+      layout: new TilingLayout({
+        axis: 'row',
+        wrapSubmorphs: true
+      }),
+      submorphs: [
+        part(ButtonDefault, {
+          name: 'repo status button',
+          extent: pt(95, 25),
+          submorphs: [
+            {
+              name: 'label',
+              value: 'Repo Status'
+            }
+          ]
+        }),
+        part(ButtonDefault, {
+          name: 'remote status button',
+          extent: pt(95, 25),
+          submorphs: [
+            {
+              name: 'label',
+              value: 'remote status'
+            }
+          ]
+        }),
+        part(ButtonDefault, {
+          name: 'push button',
+          extent: pt(95, 25),
+          submorphs: [
+            {
+              name: 'label',
+              value: 'Push'
+            }
+          ]
+        }),
+        part(ButtonDefault, {
+          name: 'pull button',
+          extent: pt(95, 25),
+          submorphs: [
+            {
+              name: 'label',
+              value: 'Pull'
+            }
+          ]
+        })
+      ]
+
     }
 
   ]
