@@ -58,16 +58,19 @@ export default class ShellClientResource extends Resource {
   async isGitRepository (withRemote = false) {
     const isDir = await this.isDirectory();
     if (!isDir) return false;
-    let cmd = runCommand(`test -d "${this.url}/.git"`, this.options);
+    // FIXME: this dictates that this function gets executed before any other of the git operations can be performed
+    // would be nicer to make that transparent
+    this.options.cwd = this.url;
+    let cmd = runCommand('test -d ".git"', this.options);
     await cmd.whenDone();
     if (!withRemote) return cmd.exitCode === 0;
-    cmd = runCommand(`cd "${this.url}" && git remote`, this.options);
+    cmd = runCommand('git remote', this.options);
     await cmd.whenDone();
     return cmd.exitCode === 0 && cmd.stdout !== '';
   }
 
   async initializeGitRepository (repoName) {
-    const cmd = runCommand(`cd "${this.url}" && git init`, this.options);
+    const cmd = runCommand('git init', this.options);
     await cmd.whenDone();
   }
 
@@ -80,12 +83,11 @@ export default class ShellClientResource extends Resource {
               -d '{"name":"${repoName}"}'`;
     let cmd = runCommand(repoCreationCommand, this.options);
     await cmd.whenDone();
-    let addingRemoteCommand = `cd "${this.url}" && git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
+    let addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
     await runCommand(addingRemoteCommand, this.options).whenDone();
   }
 
   async commitRepo () {
-    this.options.cwd = this.url;
     let cmdString = `git add * && git commit -m "Commited from withing lively.next at ${Date.now()}"`;
     let cmd = runCommand(cmdString, this.options);
     await cmd.whenDone();
