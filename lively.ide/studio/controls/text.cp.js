@@ -47,6 +47,7 @@ export class RichTextControlModel extends ViewModel {
             { target: 'resizing controls', signal: 'onMouseDown', handler: 'selectBoundsResizing' },
             { target: 'inline link', signal: 'onMouseDown', handler: 'changeLink' },
             { target: 'italic style', signal: 'onMouseDown', handler: 'toggleItalic' },
+            { target: 'quote', signal: 'onMouseDown', handler: 'toggleQuote' },
             { target: 'underline style', signal: 'onMouseDown', handler: 'toggleUnderline' }
           ];
         }
@@ -86,7 +87,7 @@ export class RichTextControlModel extends ViewModel {
           lineHeightInput, letterSpacingInput, fontColorInput,
           leftAlign, centerAlign, rightAlign, blockAlign,
           autoWidth, autoHeight, fixedExtent,
-          italicStyle, underlineStyle,
+          italicStyle, underlineStyle, quote,
           lineWrappingSelector
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
@@ -104,6 +105,7 @@ export class RichTextControlModel extends ViewModel {
         blockAlign.master = text.textAlign === 'justify' ? hoveredButtonComponent : activeButtonComponent;
         italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
         underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
+        quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
         if (text.isMorph) {
           fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
           autoHeight.master = text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
@@ -224,6 +226,12 @@ export class RichTextControlModel extends ViewModel {
     this.update();
   }
 
+  toggleQuote () {
+    this.changeAttributeInSelectionOrMorph('quote', quoteActive =>
+      quoteActive === 1 ? 0 : 1);
+    this.update();
+  }
+
   changeFontWeight (weight) {
     this.changeAttributeInSelectionOrMorph('fontWeight', weight);
   }
@@ -304,7 +312,7 @@ const RichTextControl = component(PropertySection, {
       }), part(EnumSelector, {
         name: 'font weight selector',
         tooltip: 'Choose Font Weight',
-        extent: pt(119, 23.3),
+        extent: pt(100, 23.3),
         viewModel: {
           listMaster: DarkThemeList,
           items: [{
@@ -363,7 +371,7 @@ const RichTextControl = component(PropertySection, {
       }),
       part(BoundsContainerInactive, {
         name: 'styling controls',
-        extent: pt(70, 24),
+        extent: pt(88, 24),
         master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
         layout: new TilingLayout({
           hugContentsVertically: true,
@@ -395,6 +403,15 @@ const RichTextControl = component(PropertySection, {
           fontSize: 14,
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue157', {
+            fontSize: 18,
+            textStyleClasses: ['material-icons']
+          }]
+        })), add(part(PropertyLabel, {
+          name: 'quote',
+          tooltip: 'Quote',
+          fontSize: 14,
+          padding: rect(2, 2, 0, 0),
+          textAndAttributes: ['\ue244', {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
@@ -572,7 +589,8 @@ const RichTextControl = component(PropertySection, {
       }]
     })
     ]
-  })]
+  })
+  ]
 });
 
 export { RichTextControl };
