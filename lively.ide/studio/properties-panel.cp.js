@@ -312,7 +312,28 @@ const PropertiesPanel = component({
   submorphs: [
     part(BackgroundControl, { name: 'background control' }),
     part(ShapeControl, { name: 'shape control', visible: false }),
-    part(RichTextControl, { name: 'text control', visible: false, viewModel: { globalMode: true } }),
+    part(RichTextControl, {
+      name: 'text control',
+      visible: false,
+      viewModel: { globalMode: true },
+      submorphs: [{
+        name: 'text controls',
+        submorphs: [
+          without('morph embedding selector'),
+          {
+            name: 'styling controls',
+            // FIXME: this does not really look nice
+            // the width cannot be much smaller as the layout of the following controls rely on wrapping submorphs
+            width: 60,
+            submorphs: [
+              without('inline link'),
+              without('quote')
+            ]
+          }
+        ]
+      }
+      ]
+    }),
     part(LayoutControl, { name: 'layout control', visible: false }),
     part(ConstraintsManager, { name: 'constraints control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
