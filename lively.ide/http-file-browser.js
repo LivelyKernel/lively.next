@@ -5,7 +5,7 @@ import { arr, fun, promise, num, date, string } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
-import TextEditor from './text-editor.js';
+import TextEditor from './text/text-editor.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()
@@ -348,7 +348,6 @@ export class HTTPFileBrowserNode extends TreeData {
 
   isLeaf ({ resource }) { return resource ? !resource.isDirectory() : true; }
 }
-
 
 export default class HTTPFileBrowser extends Morph {
   static forLocation (urlOrResource, props) {
