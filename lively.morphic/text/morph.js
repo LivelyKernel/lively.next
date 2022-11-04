@@ -2404,6 +2404,7 @@ export class Text extends Morph {
   // mouse events
 
   onMouseDown (evt) {
+    const supportsFormattingPopUp = !!this.showFormattingPopUp;
     if (evt.rightMouseButtonPressed()) return;
     this.activeMark && (this.activeMark = null);
 
@@ -2430,16 +2431,25 @@ export class Text extends Morph {
 
     if (evt.isShiftDown()) {
       this.selection.lead = clickTextPos;
+      if (supportsFormattingPopUp) this.showFormattingPopUp();
     } else if (evt.isAltDown()) {
+      if (supportsFormattingPopUp) this.removeFormattingPopUp();
       this.selection.addRange(Range.at(clickTextPos));
     } else {
       this.selection.disableMultiSelect();
       if (normedClickCount === 1) {
+        if (supportsFormattingPopUp) this.removeFormattingPopUp();
         if (!evt.isShiftDown()) {
           this.selection = { start: clickTextPos, end: clickTextPos };
         } else this.selection.lead = clickTextPos;
-      } else if (normedClickCount === 2) this.execCommand('select word', null, 1, evt);
-      else if (normedClickCount === 3) this.execCommand('select line', null, 1, evt);
+      } else if (normedClickCount === 2) {
+        // FIXME: does not seem to work reliably?
+        if (supportsFormattingPopUp) this.showFormattingPopUp();
+        this.execCommand('select word', null, 1, evt);
+      } else if (normedClickCount === 3) {
+        if (supportsFormattingPopUp) this.showFormattingPopUp();
+        this.execCommand('select line', null, 1, evt);
+      }
     }
     if (this.isFocused()) this.ensureKeyInputHelperAtCursor();
   }
