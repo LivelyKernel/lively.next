@@ -358,7 +358,7 @@ export class ViewModel {
           updater
         });
       } catch (err) {
-        console.warn('Failed to reify biniding: ', target, model, signal, handler);
+        if (System.debug) console.warn('Failed to reify binding: ', target, model, signal, handler);
       }
     }
   }
