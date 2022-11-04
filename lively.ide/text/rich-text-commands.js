@@ -156,6 +156,7 @@ export var commands = [
     name: 'open text attribute controls',
     exec: async text => {
       const { module } = await System.import('lively.modules');
+      // FIXME: use new formatting panel here
       const { RichTextControl } = await module('lively.ide/text/ui.js').load();
       return RichTextControl.openFor(text);
     }
