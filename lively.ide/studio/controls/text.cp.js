@@ -385,7 +385,7 @@ const RichTextControl = component(PropertySection, {
         layout: new TilingLayout({
           hugContentsVertically: true,
           padding: Rectangle.inset(0, 1, 0, 1),
-          justifySubmorphs: 'spaced',
+          justifySubmorphs: 'packed',
           wrapSubmorphs: false
         }),
         submorphs: [add(part(PropertyLabel, {
