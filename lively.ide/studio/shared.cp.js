@@ -293,14 +293,12 @@ const DarkCloseButtonHovered = component(CloseButtonHovered, {
 
 const BoundsContainerInactive = component({
   fill: Color.transparent,
-  extent: pt(33.7, 22.7),
   borderColor: Color.transparent,
   borderWidth: 1
 });
 
 const BoundsContainerHovered = component({
   fill: Color.transparent,
-  extent: pt(33.7, 22.7),
   borderColor: Color.rgb(66, 73, 73),
   borderWidth: 1,
   borderRadius: 2,
