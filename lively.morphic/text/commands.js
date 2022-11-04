@@ -1268,7 +1268,7 @@ const usefulEditorCommands = [
       let url = parts[0].match(/^file|http/) ? `${parts.shift()}:${parts.shift()}` : parts.shift();
       if (parts[0].match(/^[0-9]+$/)) url += ':' + parts.shift();
 
-      const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
+      const { default: TextEditor } = await System.import('lively.ide/text/text-editor.js');
       const textEd = TextEditor.openInWindow();
       textEd.location = url;
       return textEd;

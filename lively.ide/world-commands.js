@@ -1187,7 +1187,7 @@ const commands = [
       }
 
       if (lineNumber) url += ':' + lineNumber;
-      const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
+      const { default: TextEditor } = await System.import('lively.ide/text/text-editor.js');
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ['url'])) : null;
     }
   },
@@ -1197,7 +1197,7 @@ const commands = [
     exec: async (world, opts = { url: null, lineNumber: null }) => {
       // for using from command line, see l2l default client actions and
       // lively.shell/bin/lively-as-editor.js
-      const { default: TextEditor } = await System.import('lively.ide/text-editor.js');
+      const { default: TextEditor } = await System.import('lively.ide/text/text-editor.js');
       const { url } = opts;
       // "saved" || "aborted"
       return await TextEditor.openAsEDITOR(url, {});

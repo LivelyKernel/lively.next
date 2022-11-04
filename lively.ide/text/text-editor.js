@@ -4,7 +4,7 @@ import { num, promise } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect, signal, once } from 'lively.bindings';
 import { resource } from 'lively.resources';
-import { guessTextModeName } from './editor-plugin.js';
+import { guessTextModeName } from '../editor-plugin.js';
 import { StatusMessageConfirm, StatusMessageWarning } from 'lively.halos/components/messages.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
