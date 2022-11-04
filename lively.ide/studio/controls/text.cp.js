@@ -11,9 +11,18 @@ import { disconnect, connect } from 'lively.bindings';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 
+/**
+ * This model provides functionality for rich-text-editing frontends.
+ * There are two distinct use cases for this: Changing the global defaults of a Text,
+ * or changing the textattributes of an selection. Those two modes are utilized by different frontends
+ * (side bar vs. formatting popup). The mode is controlled by the `globalMode` flag on the model.
+ */
 export class RichTextControlModel extends ViewModel {
   static get properties () {
     return {
+      globalMode: {
+        defaultValue: false
+      },
       targetMorph: {},
       hoveredButtonComponent: {
         isComponent: true,
@@ -69,7 +78,7 @@ export class RichTextControlModel extends ViewModel {
     });
 
     // also watch for changes in selection
-    if (target.isText) {
+    if (target.isText && !this.globalMode) {
       connect(target, 'selectionChange', this, 'update');
     }
   }
@@ -124,7 +133,7 @@ export class RichTextControlModel extends ViewModel {
     const { targetMorph } = this;
     if (!targetMorph) return;
     const sel = targetMorph.selection;
-    cb(sel && !sel.isEmpty() ? { ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel) } : targetMorph);
+    cb(sel && !sel.isEmpty() && !this.globalMode ? { ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel) } : targetMorph);
   }
 
   /*
@@ -137,7 +146,7 @@ export class RichTextControlModel extends ViewModel {
     const { targetMorph } = this;
     if (!targetMorph) return;
     const sel = targetMorph.selection;
-    if (targetMorph.isLabel || sel && sel.isEmpty()) {
+    if (targetMorph.isLabel || sel && sel.isEmpty() || this.globalMode) {
       targetMorph[name] = typeof valueOrFn === 'function'
         ? valueOrFn(targetMorph[name])
         : valueOrFn;

@@ -312,7 +312,7 @@ const PropertiesPanel = component({
   submorphs: [
     part(BackgroundControl, { name: 'background control' }),
     part(ShapeControl, { name: 'shape control', visible: false }),
-    part(RichTextControl, { name: 'text control', visible: false }),
+    part(RichTextControl, { name: 'text control', visible: false, viewModel: { globalMode: true } }),
     part(LayoutControl, { name: 'layout control', visible: false }),
     part(ConstraintsManager, { name: 'constraints control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
