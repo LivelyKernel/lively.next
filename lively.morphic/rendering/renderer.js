@@ -884,7 +884,7 @@ export default class Renderer {
 
     const renderedChunks = [];
 
-    let content, attributes, fontSize, nativeCursor, textStyleClasses, link, tagname, chunkNodeStyle, paddingRight, paddingLeft, paddingTop, paddingBottom, lineHeight, textAlign, wordSpacing, letterSpacing, quote, textStroke, fontFamily, fontWeight, textDecoration, fontStyle, fontColor, backgroundColor, verticalAlign, chunkNodeAttributes;
+    let content, attributes, fontSize, nativeCursor, textStyleClasses, link, tagname, chunkNodeStyle, paddingRight, paddingLeft, paddingTop, paddingBottom, lineHeight, textAlign, wordSpacing, letterSpacing, quote, textStroke, fontFamily, fontWeight, textDecoration, fontStyle, fontColor, backgroundColor, verticalAlign, chunkNodeAttributes, opacity;
 
     if (line.length > 0) {
       for (let i = 0; i < line.length; i = i + 2) {
@@ -930,6 +930,7 @@ export default class Renderer {
         verticalAlign = attributes.verticalAlign;
         textStroke = attributes.textStroke;
         quote = attributes.quote || quote;
+        opacity = attributes.opacity;
 
         tagname = 'span';
 
@@ -941,6 +942,7 @@ export default class Renderer {
 
         if (link || nativeCursor) chunkNodeStyle.pointerEvents = 'auto';
 
+        if (obj.isNumber(opacity)) chunkNodeStyle.opacity = opacity;
         if (fontSize) chunkNodeStyle.fontSize = fontSize;
         if (fontFamily) chunkNodeStyle.fontFamily = fontFamily;
         if (fontWeight) chunkNodeStyle.fontWeight = fontWeight;
