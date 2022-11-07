@@ -860,6 +860,7 @@ export const PaddingControlsLight = component({
       ]
     }, part(CloseButton, {
       name: 'independent padding toggle',
+      tooltip: 'Toggle indepentent Fields per Direction',
       padding: rect(3, 3, 0, 0),
       position: pt(192.8, 48.6),
       textAndAttributes: ['', {
