@@ -1008,8 +1008,8 @@ export class Text extends Morph {
     ].every(attr => {
       if (fontFaceSet) {
         const face = fontFaceSet.find(face =>
-          face.family == attr.fontFamily &&
-          face.weight == (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
+          face.family === attr.fontFamily &&
+          face.weight === (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
         return !!face;
         // document.fonts.check(`normal ${attr.fontWeight} 12px ${attr.fontFamily}`)
       } else return fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight);
@@ -1020,7 +1020,7 @@ export class Text extends Morph {
     // FIXME: remove busy wait, since it kills performance
     if (this.allFontsLoaded()) return true;
     const fonts = [...(await document.fonts.ready)];
-    if (this.allFontsLoaded(fonts.filter(face => face.status == 'loaded'))) return true;
+    if (this.allFontsLoaded(fonts.filter(face => face.status === 'loaded'))) return true;
     // as a last resort, do a busy wait...
     return promise.waitFor(5000, () => {
       return this.allFontsLoaded();
@@ -1061,7 +1061,6 @@ export class Text extends Morph {
     let viewChange = false;
     let softLayoutChange = false;
     let hardLayoutChange = false;
-    let scrollChange = false;
     let enforceFit = false;
 
     if (selector) {
@@ -1070,7 +1069,7 @@ export class Text extends Morph {
       this._displacementChange = !this._displacing && textChange;
     } else {
       switch (prop) {
-        case 'scroll': viewChange = true; scrollChange = true; break;
+        case 'scroll': viewChange = true; break;
         case 'extent':
           viewChange = true;
           const delta = change.prevValue.subPt(change.value);
@@ -2059,6 +2058,7 @@ export class Text extends Morph {
    * There are necessary for features like interactive editing, but are expensive.
    * Thus, we try to only keep them around when they are necessary.
    * This is an internal function and you should probably not call it yourself!
+   * FIXME: This method seems to be completely broken. Transitioning a document based text morph that has only a fraction of the lines visible seems to break.
    */
   removeDocument () {
     if (!this.document) return;
@@ -2066,11 +2066,11 @@ export class Text extends Morph {
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
     this.document = null;
+    this.renderingState.needsScrollLayerAdded = false; // just in case
+    this.renderingState.needsScrollLayerRemoved = true;
     this.textLayout = null;
     this.textAndAttributes = textAndAttributes;
     this.selection = null;
-    this.renderingState.needsScrollLayerAdded = false; // just in case
-    this.renderingState.needsScrollLayerRemoved = true;
     this._isDowngrading = false;
   }
 
@@ -2728,7 +2728,7 @@ export class Text extends Morph {
       renderer.updateDebugLayer(node, this);
     } else {
       if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
-         (this.renderingState.fixedWidth !== this.fixedWidth)) {
+          (this.renderingState.fixedWidth !== this.fixedWidth)) {
         renderer.patchLineWrapping(node, this);
       }
       if (!obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
