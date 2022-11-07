@@ -377,10 +377,12 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderRectangleControl (args) {
-    const { value, keyString, valueString, target, node } = args;
+    const { keyString, valueString, target, node, tree } = args;
+    const inspector = tree.owner.viewModel;
     const handler = async (evt) => {
       // fixme: add rectangle popup!
       const editor = part(PaddingPopup, { hasFixedPosition: true });
+      inspector.openWidget = editor;
       editor.viewModel.startPadding(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       connect(editor.viewModel, 'paddingChanged', (padding) => {
@@ -409,7 +411,8 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderNumberControl (args) {
-    const { value, spec, keyString, valueString, fastRender, node, target, tree } = args;
+    const { value, spec, keyString, node, target, tree } = args;
+    const inspector = tree.owner.viewModel;
     const widgetState = {};
     if ('max' in spec && 'min' in spec &&
         spec.min !== -Infinity && spec.max !== Infinity) {
@@ -435,6 +438,7 @@ export class PropertyControl extends DraggableTreeLabel {
         baseFactor: widgetState.baseFactor,
         floatingPoint: widgetState.floatingPoint
       }));
+      inspector.openWidget = editor;
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       connect(editor.viewModel, 'value', (num) => {
         target[keyString] = num;
@@ -453,10 +457,12 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderShadowControl (args) {
-    const { keyString, valueString, value, target, node } = args;
+    const { keyString, value, target, node, tree } = args;
+    const inspector = tree.owner.viewModel;
     const handler = async (evt) => {
       // if already open, return
       const editor = part(ShadowPopup, { hasFixedPosition: true });
+      inspector.openWidget = editor;
       editor.viewModel.shadowValue = target[keyString];
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       connect(editor.viewModel, 'value', (shadowValue) => {
@@ -471,10 +477,12 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderPointControl (args) {
-    let propertyControl; const { keyString, valueString, value, fontColor, target, node } = args;
+    const { keyString, value, target, node, tree } = args;
+    const inspector = tree.owner.viewModel;
     const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
     const handler = async (evt) => {
       const editor = part(PositionPopupLight, { hasFixedPosition: true });
+      inspector.openWidget = editor;
       editor.setPoint(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       connect(editor.viewModel, 'value', (pointValue) => {
@@ -497,7 +505,7 @@ export class PropertyControl extends DraggableTreeLabel {
       ...this.renderGrabbableKey(args),
       ` ${value ? valueString : 'No Layout'}`, {
         onMouseDown: (evt) => {
-
+          // TODO: add layout popup?!
         }
       }];
   }
@@ -505,12 +513,14 @@ export class PropertyControl extends DraggableTreeLabel {
   static renderColorControl (args) {
     let propertyControl; const {
       node, gradientEnabled, fastRender,
-      valueString, keyString, value, target
+      valueString, keyString, value, target, tree
     } = args;
+    const inspector = tree.owner;
     const handler = async (evt) => {
       const editor = part(ColorPicker, {
         hasFixedPosition: true
       });
+      inspector.openWidget = editor;
       editor.solidOnly = !gradientEnabled;
       editor.focusOnMorph(target, value);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
@@ -626,7 +636,7 @@ export class Inspector extends ViewModel {
 
       expose: {
         get () {
-          return ['isInspector', 'onWindowClose', 'commands', 'keybindings'];
+          return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget'];
         }
       },
 
@@ -882,6 +892,7 @@ export class Inspector extends ViewModel {
 
   closeOpenWidget () {
     this.openWidget.close();
+    this.openWidget = null;
   }
 
   onWidgetOpened ({ widget }) {
