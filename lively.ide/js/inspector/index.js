@@ -356,6 +356,7 @@ export class PropertyControl extends DraggableTreeLabel {
           node.rerender();
         }
       })));
+      tree.owner.openWidget = menu;
     };
     return [
       ...this.renderGrabbableKey(args),
