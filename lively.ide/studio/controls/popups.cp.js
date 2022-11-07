@@ -215,7 +215,7 @@ export class PaddingControlsModel extends ViewModel {
   static get properties () {
     return {
       showAllSidesControl: {
-        defaultValue: true
+        defaultValue: false
       },
       propertyLabelComponent: {
         isComponent: true,
@@ -775,10 +775,10 @@ export const PaddingControlsLight = component({
     axisAlign: 'center',
     orderByIndex: true,
     padding: rect(0, 0, 10, 0),
-    spacing: 5,
+    spacing: 2,
     wrapSubmorphs: false
   }),
-  height: 50,
+  extent: pt(230, 30),
   fill: Color.rgba(0, 0, 0, 0),
   submorphs: [
     part(NumberWidgetLight, {

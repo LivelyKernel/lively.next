@@ -43,7 +43,8 @@ const SelectionBasedRichTextControl = component(RichTextControl, {
       submorphs: [
         without('line wrapping selector')
       ]
-    }
+    },
+    without('padding controls')
   ]
 }
 );
