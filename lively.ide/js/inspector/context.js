@@ -562,7 +562,6 @@ class PropertyNode extends InspectionNode {
 
     if (!this.isInternalProperty && !spec.readOnly) {
       connect(w, 'propertyValue', this, 'refreshProperty', { updater: ($upd, val) => $upd(val, true) });
-      connect(w, 'openWidget', this.root, 'onWidgetOpened', { converter: widget => ({ widget, node: this.sourceObj }) });
     }
 
     return w;
