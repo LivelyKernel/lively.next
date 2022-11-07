@@ -388,7 +388,7 @@ export class PropertyControl extends DraggableTreeLabel {
       inspector.openWidget = editor;
       editor.viewModel.startPadding(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'paddingChanged', (padding) => {
+      connect(editor.viewModel.ui.paddingControls.viewModel, 'paddingChanged', (padding) => {
         target[keyString] = padding;
         node.rerender();
       });

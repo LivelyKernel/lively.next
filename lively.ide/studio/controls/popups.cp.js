@@ -211,7 +211,7 @@ export class SingleSelectionModel extends PopupModel {
   }
 }
 
-export class PaddingPopupModel extends PopupModel {
+export class PaddingControlsModel extends ViewModel {
   static get properties () {
     return {
       showAllSidesControl: {
@@ -237,13 +237,12 @@ export class PaddingPopupModel extends PopupModel {
       },
       expose: {
         get () {
-          return ['isPropertiesPanelPopup', 'close'];
+          return ['paddingChanged', 'startPadding'];
         }
       },
       bindings: {
         get () {
           return [
-            { target: 'close button', signal: 'onMouseDown', handler: 'close' },
             { target: 'independent padding toggle', signal: 'onMouseDown', handler: 'toggleAllSidesPadding' },
             { target: 'padding top', signal: 'onMouseDown', handler: 'focusField', converter: () => 'top' },
             { target: 'padding right', signal: 'onMouseDown', handler: 'focusField', converter: () => 'right' },
@@ -259,10 +258,6 @@ export class PaddingPopupModel extends PopupModel {
         }
       }
     };
-  }
-
-  get isPropertiesPanelPopup () {
-    return true;
   }
 
   startPadding (pad) {
@@ -327,12 +322,39 @@ export class PaddingPopupModel extends PopupModel {
     }
   }
 
-  close () {
-    this.view.remove();
-  }
-
   toggleAllSidesPadding () {
     this.showAllSidesControl = !this.showAllSidesControl;
+  }
+}
+
+export class PaddingPopupModel extends PopupModel {
+  static get properties () {
+    return {
+      expose: {
+        get () {
+          return ['isPropertiesPanelPopup', 'close', 'startPadding'];
+        }
+      },
+      bindings: {
+        get () {
+          return [
+            { target: 'close button', signal: 'onMouseDown', handler: 'close' }
+          ];
+        }
+      }
+    };
+  }
+
+  startPadding (pad) {
+    this.ui.paddingControls.startPadding(pad);
+  }
+
+  get isPropertiesPanelPopup () {
+    return true;
+  }
+
+  close () {
+    this.view.remove();
   }
 }
 
@@ -745,119 +767,122 @@ const InsetShadowPopup = component(ShadowPopup, {
   }]
 });
 
+export const PaddingControlsLight = component({
+  name: 'padding controls',
+  defaultViewModel: PaddingControlsModel,
+  layout: new TilingLayout({
+    align: 'right',
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(0, 0, 10, 0),
+    spacing: 5,
+    wrapSubmorphs: false
+  }),
+  height: 50,
+  fill: Color.rgba(0, 0, 0, 0),
+  submorphs: [
+    part(NumberWidgetLight, {
+      name: 'padding all',
+      min: 0,
+      number: 0,
+      extent: pt(70, 22),
+      position: pt(9.7, 6.6),
+      tooltip: 'Padding',
+      submorphs: [add({
+        type: Label,
+        name: 'interactive label',
+        fontFamily: 'Material Icons',
+        fontColor: Color.rgb(101, 135, 139),
+        padding: rect(8, 0, -1, 0),
+        textAndAttributes: ['\ue22f', {
+          fontSize: 16,
+          textStyleClasses: ['material-icons']
+        }]
+      }, 'value')]
+    }),
+    {
+      name: 'multi padding control',
+      position: pt(7.6, 33.4),
+      layout: new TilingLayout({
+        align: 'center',
+        axisAlign: 'center',
+        orderByIndex: true
+      }),
+      fill: Color.transparent,
+      extent: pt(202.8, 42.5),
+      clipMode: 'hidden',
+      submorphs: [
+        {
+          type: Label,
+          name: 'padding indicator',
+          borderRadius: 3,
+          fill: Color.rgba(229, 231, 233, 0),
+          fontColor: Color.rgb(101, 135, 139),
+          fontFamily: 'Material Icons',
+          padding: rect(5, 5, 0, 0),
+          textAndAttributes: ['\ue25a', {
+            fontSize: 16,
+            textStyleClasses: ['material-icons']
+          }]
+        },
+        part(NumberWidgetLight, {
+          name: 'padding left',
+          min: 0,
+          extent: pt(40, 22),
+          tooltip: 'Border Radius Top Left',
+          borderRadiusTopRight: 0,
+          borderRadiusBottomRight: 0
+        }),
+        part(NumberWidgetLight, {
+          name: 'padding top',
+          borderWidth: { top: 1, left: 0, right: 0, bottom: 1 },
+          min: 0,
+          borderRadius: 0,
+          extent: pt(40, 22),
+          tooltip: 'Border Radius Top Right'
+        }),
+        part(NumberWidgetLight, {
+          name: 'padding right',
+          borderWidth: { top: 1, left: 1, right: 0, bottom: 1 },
+          min: 0,
+          borderRadius: 0,
+          extent: pt(40, 22),
+          tooltip: 'Border Radius Bottom Right'
+        }),
+        part(NumberWidgetLight, {
+          name: 'padding bottom',
+          min: 0,
+          borderRadiusTopLeft: 0,
+          borderRadiusBottomLeft: 0,
+          extent: pt(40, 22),
+          tooltip: 'Border Radius Bottom Left'
+        })
+      ]
+    }, part(CloseButton, {
+      name: 'independent padding toggle',
+      padding: rect(3, 3, 0, 0),
+      position: pt(192.8, 48.6),
+      textAndAttributes: ['', {
+        fontSize: 18,
+        textStyleClasses: ['material-icons']
+      }]
+    })
+  ]
+}
+);
 // m = part(PaddingPopup).openInWorld()
 // m.viewModel.startPadding(rect(5,5,0,0))
 // m.openInWorld()
 const PaddingPopup = component(PopupWindow, {
   name: 'padding popup',
-  viewModelClass: PaddingPopupModel,
+  defaultViewModel: PaddingPopupModel,
   submorphs: [{
     name: 'header menu',
     submorphs: [{
       name: 'title',
       textAndAttributes: ['Padding', null]
     }]
-  }, add({
-    name: 'padding controls',
-    layout: new TilingLayout({
-      align: 'right',
-      axisAlign: 'center',
-      orderByIndex: true,
-      padding: rect(0, 0, 10, 0),
-      spacing: 5,
-      wrapSubmorphs: false
-    }),
-    height: 50,
-    fill: Color.rgba(0, 0, 0, 0),
-    submorphs: [
-      part(NumberWidgetLight, {
-        name: 'padding all',
-        min: 0,
-        number: 0,
-        extent: pt(70, 22),
-        position: pt(9.7, 6.6),
-        tooltip: 'Padding',
-        submorphs: [add({
-          type: Label,
-          name: 'interactive label',
-          fontFamily: 'Material Icons',
-          fontColor: Color.rgb(101, 135, 139),
-          padding: rect(8, 0, -1, 0),
-          textAndAttributes: ['\ue22f', {
-            fontSize: 16,
-            textStyleClasses: ['material-icons']
-          }]
-        }, 'value')]
-      }),
-      {
-        name: 'multi padding control',
-        position: pt(7.6, 33.4),
-        layout: new TilingLayout({
-          align: 'center',
-          axisAlign: 'center',
-          orderByIndex: true
-        }),
-        fill: Color.transparent,
-        extent: pt(202.8, 42.5),
-        clipMode: 'hidden',
-        submorphs: [
-          {
-            type: Label,
-            name: 'padding indicator',
-            borderRadius: 3,
-            fill: Color.rgba(229, 231, 233, 0),
-            fontColor: Color.rgb(101, 135, 139),
-            fontFamily: 'Material Icons',
-            padding: rect(5, 5, 0, 0),
-            textAndAttributes: ['\ue25a', {
-              fontSize: 16,
-              textStyleClasses: ['material-icons']
-            }]
-          },
-          part(NumberWidgetLight, {
-            name: 'padding left',
-            min: 0,
-            extent: pt(40, 22),
-            tooltip: 'Border Radius Top Left',
-            borderRadiusTopRight: 0,
-            borderRadiusBottomRight: 0
-          }),
-          part(NumberWidgetLight, {
-            name: 'padding top',
-            borderWidth: { top: 1, left: 0, right: 0, bottom: 1 },
-            min: 0,
-            borderRadius: 0,
-            extent: pt(40, 22),
-            tooltip: 'Border Radius Top Right'
-          }),
-          part(NumberWidgetLight, {
-            name: 'padding right',
-            borderWidth: { top: 1, left: 1, right: 0, bottom: 1 },
-            min: 0,
-            borderRadius: 0,
-            extent: pt(40, 22),
-            tooltip: 'Border Radius Bottom Right'
-          }),
-          part(NumberWidgetLight, {
-            name: 'padding bottom',
-            min: 0,
-            borderRadiusTopLeft: 0,
-            borderRadiusBottomLeft: 0,
-            extent: pt(40, 22),
-            tooltip: 'Border Radius Bottom Left'
-          })
-        ]
-      }, part(CloseButton, {
-        name: 'independent padding toggle',
-        padding: rect(3, 3, 0, 0),
-        position: pt(192.8, 48.6),
-        textAndAttributes: ['', {
-          fontSize: 18,
-          textStyleClasses: ['material-icons']
-        }]
-      })
-    ]
-  })]
+  }, add(part(PaddingControlsLight))]
 });
 
 // BlurPopup.openInWorld()
