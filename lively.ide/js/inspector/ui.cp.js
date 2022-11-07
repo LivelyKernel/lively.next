@@ -178,8 +178,9 @@ const SystemInspector = component({
     extent: pt(27, 19),
     fontColor: Color.white,
     nativeCursor: 'pointer',
+    lineHeight: 1,
     fontSize: 15,
-    padding: rect(5, 2, 0, 0),
+    padding: rect(5, 3, 0, 0),
     textAndAttributes: Icon.textAttribute('keyboard')
   }, {
     name: 'resizer',
