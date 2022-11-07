@@ -659,6 +659,13 @@ export class Inspector extends ViewModel {
         get () { return inspectorCommands; }
       },
 
+      openWidget: {
+        set (widget) {
+          this.openWidget?.close();
+          this.setProperty('openWidget', widget);
+        }
+      },
+
       bindings: {
         get () {
           return [
