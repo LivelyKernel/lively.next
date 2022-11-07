@@ -228,6 +228,10 @@ export class Menu extends Morph {
     super.onChange(change);
   }
 
+  close () {
+    this.remove();
+  }
+
   async remove () {
     await this.animate({ opacity: 0, duration: 300 });
     if (!this._waitingForFinish) this.completeFinish();
