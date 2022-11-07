@@ -2,7 +2,7 @@ import { InspectionTree, isMultiValue, RemoteInspectionTree, printValue } from '
 import { arr, num, promise, obj, Path } from 'lively.lang';
 import { pt, rect, Color } from 'lively.graphics';
 import { config, HorizontalLayout, Label, Morph, morph, Icon, ViewModel, part } from 'lively.morphic';
-import { connect, disconnect, once } from 'lively.bindings';
+import { connect, disconnect } from 'lively.bindings';
 import { LoadingIndicator } from 'lively.components';
 import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
@@ -178,7 +178,7 @@ export class PropertyControl extends DraggableTreeLabel {
     };
   }
 
-  static inferType ({ keyString, value }) {
+  static inferType ({ value }) {
     if (value && (value.isColor || value.isGradient)) {
       return 'Color';
     } else if (value && value.isPoint) {
@@ -237,7 +237,6 @@ export class PropertyControl extends DraggableTreeLabel {
     }
 
     if (propertyControl.control) {
-      connect(propertyControl.control, 'openWidget', propertyControl, 'openWidget');
       propertyControl.toggleFoldableValue(args.value);
       return propertyControl;
     }
@@ -347,7 +346,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderEnumControl (args) {
-    const { value, spec: { values }, valueString, keyString, target, node, tree } = args;
+    const { value, spec: { values }, keyString, target, node, tree } = args;
     const handler = async (evt, charPos) => {
       const menu = target.world().openWorldMenu(evt, values.map(v => ({
         string: v.toString(),
@@ -370,7 +369,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderStringControl (args) {
-    const { value, fastRender, keyString, valueString, node } = args;
+    const { value } = args;
     return [
       ...this.renderGrabbableKey(args),
       ` ${value.length > 200 ? value.slice(0, 20) + '...' : value}`, { fontColor: Color.blue, paddingTop: '0px' }
@@ -501,7 +500,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderLayoutControl (args) {
-    let propertyControl; const { target, fastRender, valueString, keyString, value } = args;
+    const { valueString, value } = args;
     return [
       ...this.renderGrabbableKey(args),
       ` ${value ? valueString : 'No Layout'}`, {
@@ -512,8 +511,8 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderColorControl (args) {
-    let propertyControl; const {
-      node, gradientEnabled, fastRender,
+    const {
+      node, gradientEnabled,
       valueString, keyString, value, target, tree
     } = args;
     const inspector = tree.owner;
@@ -548,7 +547,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderItSomehow (args) {
-    let propertyControl; const { fastRender, keyString, valueString, value } = args;
+    const { valueString } = args;
     return [
       ...this.renderGrabbableKey(args),
       ` ${valueString}`, {}
@@ -774,9 +773,7 @@ export class Inspector extends ViewModel {
     }
     const change = arr.last(this.targetObject.env.changeManager.changesFor(this.targetObject));
     if (change === this.lastChange && this.lastSubmorphs === printValue(this.targetObject && this.targetObject.submorphs)) { return; }
-    if (this.focusedNode && this.focusedNode.keyString === change.prop) {
-      this.repositionOpenWidget();
-    }
+
     this.lastChange = change;
     this.lastSubmorphs = printValue(this.targetObject && this.targetObject.submorphs);
     this.refreshTreeView();
@@ -803,7 +800,7 @@ export class Inspector extends ViewModel {
   async prepareForNewTargetObject (target, remote = false) {
     if (this.isUpdating()) await this.whenUpdated();
 
-    const { promise: p, resolve } = promise.deferred(); const animated = !!this.target;
+    const { promise: p } = promise.deferred(); const animated = !!this.target;
     this.updateInProgress = p;
     try {
       let li;
@@ -812,7 +809,6 @@ export class Inspector extends ViewModel {
         ? await RemoteInspectionTree.forObject(target, this)
         : InspectionTree.forObject(target, this);
       const tree = this.ui.propertyTree;
-      const prevTd = tree.treeData;
       await td.collapse(td.root, false);
       if (td.root.children) await td.collapse(td.root.children[0], false);
       const changedNodes = this.originalTreeData && this.originalTreeData.diff(td);
@@ -903,37 +899,6 @@ export class Inspector extends ViewModel {
     this.openWidget = null;
   }
 
-  onWidgetOpened ({ widget }) {
-    if (this.openWidget) {
-      this.openWidget.fadeOut();
-    }
-    this.focusedNode = this.ui.propertyTree.selectedNode;
-    widget.epiMorph = true;
-    this.openWidget = widget;
-    once(widget, 'close', this, 'closeOpenWidget');
-    once(this.ui.propertyTree, 'onMouseDown', this, 'closeOpenWidget');
-  }
-
-  getWidgetPosition () {
-    const { propertyTree } = this.ui;
-    const { height, x, y } = propertyTree.textLayout.boundsFor(propertyTree, { column: 0, row: propertyTree.selectedIndex - 1 });
-    let pos = propertyTree.worldPoint(pt(x, y + height / 2)).addPt(propertyTree.scroll.negated());
-    const treeBounds = propertyTree.globalBounds();
-    pos.x = this.globalBounds().center().x;
-    if (pos.y < treeBounds.top()) {
-      pos = treeBounds.topCenter();
-    } else if (treeBounds.bottom() - 20 < pos.y) {
-      pos = treeBounds.bottomCenter().addXY(0, -20);
-    }
-    return pos;
-  }
-
-  repositionOpenWidget () {
-    if (this.openWidget && this.focusedNode) {
-      this.openWidget.topCenter = this.getWidgetPosition();
-    }
-  }
-
   adjustProportions (evt) {
     const { layout } = this.view;
     layout.row(1).height += evt.state.dragDelta.y;
@@ -984,7 +949,6 @@ export class Inspector extends ViewModel {
     const searchField = this.ui.searchField;
     const tree = this.ui.propertyTree;
     if (!this.originalTreeData) { this.originalTreeData = tree.treeData; }
-    disconnect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
     await tree.treeData.filter({
       maxDepth: 2,
       showUnknown: this.ui.unknowns.checked,
@@ -992,7 +956,6 @@ export class Inspector extends ViewModel {
       iterator: (node) => searchField.matches(node.key)
     });
     tree.update();
-    connect(tree.treeData, 'onWidgetOpened', this, 'onWidgetOpened');
   }
 
   onViewResized (newExt) {
@@ -1007,8 +970,7 @@ export class Inspector extends ViewModel {
         fixImportButton,
         terminalToggler: toggler,
         propertyTree: tree,
-        thisBindingSelector,
-        codeEditor
+        thisBindingSelector
       }, view: { layout }
     } = this;
     layout && layout.forceLayout(); // removes "sluggish" button alignment
