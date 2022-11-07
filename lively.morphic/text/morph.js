@@ -236,6 +236,7 @@ export class Text extends Morph {
             this.fit();
             this._measuringTextBox = false;
           }
+          this.renderingState.cursorChange = true;
           return this.getProperty('extent');
         }
       },
@@ -1091,6 +1092,7 @@ export class Text extends Morph {
           break;
         case 'lineWrapping': hardLayoutChange = true; break;
         case 'borderWidth':
+          this.renderingState.cursorChange = true;
         case 'fixedHeight':
           softLayoutChange = change.prevValue !== change.value;
           break;
@@ -2716,7 +2718,9 @@ export class Text extends Morph {
         renderer.patchLineWrapping(node, this);
       }
       // We cannot just store away the whole selections, as they contain references on their containing `Text`.
-      if (!obj.equals(this.selection._selections.map(s => s.range), this.renderingState.selectionRanges)) {
+      if (!obj.equals(this.selection._selections.map(s => s.range), this.renderingState.selectionRanges) ||
+          this.renderingState.cursorChange) {
+        this.renderingState.cursorChange = false;
         renderer.patchSelectionLayer(node, this);
       }
       // FIXME: This should probably be wrapped in a trigger
