@@ -238,8 +238,11 @@ export class Selection {
     const timeout = config.text.cursorBlinkPeriod;
     if (timeout) {
       const m = this.textMorph;
+      m.renderingState.cursorChange = true;
+      m.makeDirty();
       let node = m.env.renderer.getNodeForMorph(m);
-      this.cursorBlinkProcess = setInterval(() => {
+      this._cursorVisible = false;
+      const cursorRefresh = () => {
         if (!node) node = m.env.renderer.getNodeForMorph(m);
         if (!node) return;
         this._cursorVisible = !this._cursorVisible;
@@ -252,21 +255,26 @@ export class Selection {
         if (!this._cursorVisible && hiddenCursorIndex === -1) {
           node.className = [...classNames, 'hidden-cursor'].join(' ');
         }
-      }, timeout * 1000);
+      };
+      cursorRefresh();
+      this.cursorBlinkProcess = setInterval(cursorRefresh, timeout * 1000);
     }
   }
 
   cursorBlinkStop () {
     if (this.cursorBlinkProcess) { clearInterval(this.cursorBlinkProcess); }
     this.cursorBlinkProcess = null;
-    this._cursorVisible = true;
-
     const m = this.textMorph;
+    m.renderingState.cursorChange = true;
     const node = m.env.renderer.getNodeForMorph(m);
     if (node) {
       const classNames = node.className.split(' ');
       const hiddenCursorIndex = classNames.indexOf('hidden-cursor');
-      if (hiddenCursorIndex > -1) {
+      if (!m.isFocused() && hiddenCursorIndex === -1) {
+        this._cursorVisible = true;
+        node.className = [...classNames, 'hidden-cursor'].join(' ');
+      } else if (m.isFocused() && hiddenCursorIndex > -1) {
+        this._cursorVisible = false;
         classNames.splice(hiddenCursorIndex, 1);
         node.className = classNames.join(' ');
       }
