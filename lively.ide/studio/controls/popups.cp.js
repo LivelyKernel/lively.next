@@ -315,10 +315,15 @@ export class PaddingControlsModel extends ViewModel {
     } = this.ui;
     if (paddingAll.visible) {
       signal(this, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
+
+      paddingLeft.number = paddingRight.number = paddingTop.number = paddingBottom.number = paddingAll.number;
     }
 
     if (multiPaddingControl.visible) {
       signal(this, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
+
+      if (paddingTop.number === paddingLeft.number && paddingTop.number === paddingRight.number && paddingTop.number === paddingBottom.number) paddingAll.number = paddingLeft.number;
+      else paddingAll.setMixed();
     }
   }
 
