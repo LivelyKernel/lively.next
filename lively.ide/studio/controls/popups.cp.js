@@ -7,7 +7,7 @@ import { signal } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupWindow, CloseButton } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
-import { DefaultNumberWidget } from '../../value-widgets.cp.js';
+import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
 
 export class PopupModel extends ViewModel {
   static get properties () {
@@ -871,6 +871,53 @@ export const PaddingControlsLight = component({
   ]
 }
 );
+
+export const PaddingControlsDark = component(PaddingControlsLight, {
+  submorphs: [
+    {
+      name: 'padding all',
+      master: DarkNumberWidget,
+      submorphs: [{
+        name: 'interactive label',
+        fontColor: Color.rgb(178, 235, 242)
+      }]
+    },
+    {
+      name: 'multi padding control',
+      submorphs: [
+        {
+          name: 'padding indicator',
+          fontColor: Color.rgb(178, 235, 242)
+        },
+        {
+          name: 'padding left',
+          master: DarkNumberWidget
+
+        },
+        {
+          name: 'padding top',
+          master: DarkNumberWidget,
+          borderRadius: 0
+        },
+        {
+          name: 'padding right',
+          master: DarkNumberWidget,
+          borderRadius: 0
+        },
+        {
+          name: 'padding bottom',
+          master: DarkNumberWidget
+        }
+      ]
+    },
+    {
+      name: 'independent padding toggle',
+      fontColor: Color.rgb(178, 235, 242)
+    }
+  ]
+}
+);
+
 // m = part(PaddingPopup).openInWorld()
 // m.viewModel.startPadding(rect(5,5,0,0))
 // m.openInWorld()
