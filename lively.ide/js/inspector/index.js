@@ -670,7 +670,7 @@ export class Inspector extends ViewModel {
         get () {
           return [
             { target: 'target picker', signal: 'onMouseUp', handler: 'selectTarget', override: false },
-            { target: 'property tree', signal: 'onScroll', handler: 'repositionOpenWidget', override: false },
+            { target: 'property tree', signal: 'onScroll', handler: 'closeOpenWidget' },
             { target: 'resizer', signal: 'onDrag', handler: 'adjustProportions', override: false },
             { target: 'terminal toggler', signal: 'onMouseDown', handler: 'toggleCodeEditor', override: false },
             { model: 'unknowns', signal: 'trigger', handler: 'filterProperties', override: false },
@@ -866,6 +866,7 @@ export class Inspector extends ViewModel {
   }
 
   async selectTarget () {
+    this.closeOpenWidget();
     let newTarget;
     if (this.view.env.eventDispatcher.isKeyPressed('Shift')) {
       [newTarget] = await $world.execCommand('select morph', { justReturn: true });
@@ -895,7 +896,7 @@ export class Inspector extends ViewModel {
   }
 
   closeOpenWidget () {
-    this.openWidget.close();
+    this.openWidget?.close();
     this.openWidget = null;
   }
 
