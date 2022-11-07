@@ -10,6 +10,7 @@ import { PropertySection } from './section.cp.js';
 import { disconnect, connect } from 'lively.bindings';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
+import { PaddingControlsDark } from './popups.cp.js';
 
 /**
  * This model provides functionality for rich-text-editing frontends.
@@ -57,7 +58,8 @@ export class RichTextControlModel extends ViewModel {
             { target: 'inline link', signal: 'onMouseDown', handler: 'changeLink' },
             { target: 'italic style', signal: 'onMouseDown', handler: 'toggleItalic' },
             { target: 'quote', signal: 'onMouseDown', handler: 'toggleQuote' },
-            { target: 'underline style', signal: 'onMouseDown', handler: 'toggleUnderline' }
+            { target: 'underline style', signal: 'onMouseDown', handler: 'toggleUnderline' },
+            { model: 'padding controls', signal: 'paddingChanged', handler: 'changePadding' }
           ];
         }
       }
@@ -97,7 +99,7 @@ export class RichTextControlModel extends ViewModel {
           leftAlign, centerAlign, rightAlign, blockAlign,
           autoWidth, autoHeight, fixedExtent,
           italicStyle, underlineStyle, quote,
-          lineWrappingSelector
+          lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
 
@@ -114,7 +116,8 @@ export class RichTextControlModel extends ViewModel {
         blockAlign.master = text.textAlign === 'justify' ? hoveredButtonComponent : activeButtonComponent;
         italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
         underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
-        quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
+        if (quote) quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
+        if (paddingControls) paddingControls.startPadding(text.padding);
         if (text.isMorph) {
           fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
           autoHeight.master = text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
@@ -263,6 +266,10 @@ export class RichTextControlModel extends ViewModel {
 
   changeLetterSpacing (spacing) {
     this.changeAttributeInSelectionOrMorph('letterSpacing', spacing);
+  }
+
+  changePadding (padding) {
+    this.targetMorph.padding = padding;
   }
 
   deactivate () {
@@ -596,9 +603,8 @@ const RichTextControl = component(PropertySection, {
         name: 'label',
         fontSize: 12
       }]
-    })
-    ]
-  })
+    })]
+  }), add(part(PaddingControlsDark))
   ]
 });
 
