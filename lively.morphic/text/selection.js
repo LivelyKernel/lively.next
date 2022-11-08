@@ -60,7 +60,7 @@ export class Selection {
     if (compared === 'separate' || compared === 'bordering') { return false; }
 
     this.range = this.range.merge(otherSel.range);
-    if (otherSel.isReverse() != this.isReverse()) { this.reverse(); }
+    if (otherSel.isReverse() !== this.isReverse()) { this.reverse(); }
     return true;
   }
 
@@ -365,10 +365,10 @@ export class MultiSelection extends Selection {
   selectUp (n, useScreenPosition) { this.defaultSelection.selectUp(n, useScreenPosition); return this; }
   selectDown (n, useScreenPosition) { this.defaultSelection.selectDown(n, useScreenPosition); return this; }
 
-  goUp (n, useScreenPosition) { return this.defaultSelection.goUp(n, useScreenPosition); return this; }
-  goDown (n, useScreenPosition) { return this.defaultSelection.goDown(n, useScreenPosition); return this; }
-  goLeft (n) { return this.defaultSelection.goLeft(n); return this; }
-  goRight (n) { return this.defaultSelection.goRight(n); return this; }
+  goUp (n, useScreenPosition) { return this.defaultSelection.goUp(n, useScreenPosition); }
+  goDown (n, useScreenPosition) { return this.defaultSelection.goDown(n, useScreenPosition); }
+  goLeft (n) { return this.defaultSelection.goLeft(n); }
+  goRight (n) { return this.defaultSelection.goRight(n); }
 
   get cursorVisible () { return this.defaultSelection.cursorVisible; }
 
@@ -384,7 +384,6 @@ export class MultiSelection extends Selection {
 
   mergeSelections () {
     const sels = this.selections.slice();
-    const removed = [];
     for (let i = sels.length - 1; i >= 0; i--) {
       for (let j = sels.length - 1; j >= 0; j--) {
         if (i === j) continue;
@@ -399,7 +398,7 @@ export class MultiSelection extends Selection {
 
   get ranges () { return this.selections.map(ea => ea.range); }
   set ranges (ranges) {
-    for (var i = 0; i < ranges.length; i++) {
+    for (let i = 0; i < ranges.length; i++) {
       const sel = this.selections[i];
       if (sel) sel.range = ranges[i];
       else this.addRange(ranges[i], false);
