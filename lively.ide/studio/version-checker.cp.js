@@ -170,10 +170,13 @@ const LivelyVersionChecker = component({
   hasFixedPosition: true,
   layout: new TilingLayout({
     axis: 'column',
-    axisAlign: 'center',
-    autoResize: true,
-    direction: 'leftToRight',
+    axisAlign: 'left',
+    align: 'left',
     orderByIndex: true,
+    autoResize: true,
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    wrapSubmorpsh: false,
     padding: {
       height: 0,
       width: 0,
@@ -181,7 +184,7 @@ const LivelyVersionChecker = component({
       y: 5
     },
     reactToSubmorphAnimations: false,
-    renderViaCSS: true,
+    renderViaCSS: false,
     resizeSubmorphs: false,
     spacing: 5
   }),
