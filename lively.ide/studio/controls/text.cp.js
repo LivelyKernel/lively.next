@@ -2,8 +2,13 @@ import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { TilingLayout, config, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
 import { obj, arr } from 'lively.lang';
 import {
-  EnumSelector, BoundsContainerHovered, BoundsContainerInactive, PropertyLabelHovered,
-  AddButton, DarkNumberIconWidget, PropertyLabel, DarkThemeList
+  EnumSelector,
+  BoundsContainerHovered,
+  BoundsContainerInactive,
+  PropertyLabelHovered,
+  DarkNumberIconWidget,
+  PropertyLabel,
+  DarkThemeList
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
@@ -28,13 +33,13 @@ export class RichTextControlModel extends ViewModel {
       hoveredButtonComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('hoveredButtonComponent') || PropertyLabelHovered;
+          return { auto: PropertyLabelHovered, hover: PropertyLabel };
         }
       },
       activeButtonComponent: {
         isComponent: true,
         get () {
-          return this.getProperty('activeButtonComponent') || PropertyLabel;
+          return { auto: PropertyLabel, hover: PropertyLabelHovered };
         }
       },
       styledProps: {
@@ -102,7 +107,7 @@ export class RichTextControlModel extends ViewModel {
           fontFamilySelector, fontWeightSelector, fontSizeInput,
           lineHeightInput, letterSpacingInput, fontColorInput,
           leftAlign, centerAlign, rightAlign, blockAlign,
-          autoWidth, autoHeight, fixedExtent,
+          autoWidth, autoHeight, fixedExtent, inlineLink,
           italicStyle, underlineStyle, quote,
           lineWrappingSelector, paddingControls
         } = this.ui;
@@ -122,6 +127,7 @@ export class RichTextControlModel extends ViewModel {
         italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
         underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
         if (quote) quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
+        if (inlineLink) inlineLink.master = text.link ? hoveredButtonComponent : activeButtonComponent;
         if (paddingControls) paddingControls.startPadding(text.padding);
         if (text.isMorph) {
           fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
@@ -411,7 +417,7 @@ const RichTextControl = component(PropertySection, {
           justifySubmorphs: 'packed',
           wrapSubmorphs: false
         }),
-        submorphs: [add(part(AddButton, {
+        submorphs: [add(part(PropertyLabel, {
           name: 'italic style',
           tooltip: 'Italic',
           fontSize: 14,
@@ -420,7 +426,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(AddButton, {
+        })), add(part(PropertyLabel, {
           name: 'underline style',
           tooltip: 'Underline',
           fontSize: 14,
@@ -429,7 +435,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(AddButton, {
+        })), add(part(PropertyLabel, {
           name: 'inline link',
           tooltip: 'Create Link',
           fontSize: 14,
@@ -438,7 +444,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(AddButton, {
+        })), add(part(PropertyLabel, {
           name: 'quote',
           tooltip: 'Quote',
           fontSize: 14,
@@ -536,25 +542,25 @@ const RichTextControl = component(PropertySection, {
         justifySubmorphs: 'spaced',
         spacing: 5
       }),
-      submorphs: [part(AddButton, {
+      submorphs: [part(PropertyLabel, {
         name: 'left align',
         tooltip: 'Align Left',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-left')
-      }), part(AddButton, {
+      }), part(PropertyLabel, {
         name: 'center align',
         tooltip: 'Align Centered',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-center')
-      }), part(AddButton, {
+      }), part(PropertyLabel, {
         name: 'right align',
         tooltip: 'Align Right',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-right')
-      }), part(AddButton, {
+      }), part(PropertyLabel, {
         name: 'block align',
         tooltip: 'Justify Text',
         fontSize: 14,
@@ -571,7 +577,7 @@ const RichTextControl = component(PropertySection, {
         justifySubmorphs: 'spaced',
         spacing: 5
       }),
-      submorphs: [part(AddButton, {
+      submorphs: [part(PropertyLabel, {
         name: 'auto width',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
@@ -581,7 +587,7 @@ const RichTextControl = component(PropertySection, {
           fontSize: 18,
           textStyleClasses: ['material-icons']
         }]
-      }), part(AddButton, {
+      }), part(PropertyLabel, {
         name: 'auto height',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
@@ -590,7 +596,7 @@ const RichTextControl = component(PropertySection, {
           fontSize: 18,
           textStyleClasses: ['material-icons']
         }]
-      }), part(AddButton, {
+      }), part(PropertyLabel, {
         name: 'fixed extent',
         fontSize: 14,
         padding: rect(2, 2, 0, 0),
