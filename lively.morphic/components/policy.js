@@ -812,11 +812,14 @@ export class PolicyApplicator extends StylePolicy {
       if (propName === 'layout') {
         if (morphToBeStyled.layout?.name() === propValue?.name() &&
             morphToBeStyled.layout?.equals(propValue)) { continue; }
-        const lv = propValue ? propValue.copy() : undefined;
+        let lv = propValue ? propValue.copy() : undefined;
         if (this._animating) {
           const origCSS = lv.renderViaCSS;
-          lv.renderViaCSS = false;
-          this._animating.then(() => lv.renderViaCSS = origCSS);
+          lv = lv.with({ renderViaCSS: false });
+          this._animating.then(() =>
+            morphToBeStyled.withMetaDo({ metaInteraction: true }, () => {
+              morphToBeStyled.layout = lv.with({ renderViaCSS: origCSS });
+            }));
         }
         morphToBeStyled.layout = lv;
         continue;
