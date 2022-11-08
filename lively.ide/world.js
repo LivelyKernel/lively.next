@@ -618,6 +618,7 @@ export class LivelyWorld extends World {
   showHaloFor (target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
     let halo;
     if (!Halo) return;
+    if (!target.halosEnabled) return;
     if (this.halos().filter(halo => halo.target === target).length > 0) return;
     if (typeof target.createHalo === 'function') {
       halo = target.createHalo(Halo, pointerId);

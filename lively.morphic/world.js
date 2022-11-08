@@ -19,6 +19,8 @@ export class World extends Morph {
   static get properties () {
     return {
 
+      halosEnabled: { defaultValue: false },
+
       resizePolicy: {
         doc: "how the world behaves on window size changes 'elastic': resizes to window extent, 'static': leaves its extent unchanged",
         defaultValue: 'elastic',
