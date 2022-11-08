@@ -135,7 +135,7 @@ export class ColorInputModel extends ViewModel {
     p.viewModel.switchMode(color.isGradient ? color.type : 'Solid');
     connect(p.viewModel, 'value', this, 'setColor');
     connect(p.viewModel, 'close', this, 'onPickerClosed');
-    connect(p.viewModel, 'closeWithClick', this, 'onPickerClosedWithClick')
+    connect(p.viewModel, 'closeWithClick', this, 'onPickerClosedWithClick');
 
     this.view.fill = this.activeColor;
     this.picker = p.openInWorld();
@@ -144,7 +144,7 @@ export class ColorInputModel extends ViewModel {
     this.picker.topLeft = this.world().visibleBounds().translateForInclusion(this.picker.globalBounds()).topLeft();
   }
 
-  onPickerClosedWithClick(){
+  onPickerClosedWithClick () {
     this.onPickerClosed();
   }
 
@@ -337,7 +337,7 @@ export class ColorPickerModel extends ViewModel {
   }
 
   closeWithClick () {
-    noUpdate(()=>this.close());
+    noUpdate(() => this.close());
   }
 
   confirm () {
@@ -359,7 +359,7 @@ export class ColorPickerModel extends ViewModel {
     const isGradient = ['linearGradient', 'radialGradient'].includes(newMode);
     if (isGradient) noUpdate(() => this.context.halos().forEach(m => m.remove()));
     else {
-      if (this._target) noUpdate(() => $world.showHaloFor(this._target));
+      if (this._target) { noUpdate(() => $world.showHaloFor(this._target)); }
     }
     this.ui.gradientControl.toggle(isGradient, this);
     this.colorMode = newMode;
