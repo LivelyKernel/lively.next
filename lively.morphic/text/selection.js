@@ -3,6 +3,7 @@ import { Range, defaultRange } from './range.js';
 import config from '../config.js';
 import { string, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
+import { containsMorph } from './attributes.js';
 
 export class Selection {
   constructor (textMorph, range) {
@@ -128,6 +129,9 @@ export class Selection {
 
   get text () { return this.textMorph.document.textInRange(this.range); }
   set text (val) { this.replace(val); }
+
+  get textAndAttributes () { return this.textMorph.document.textAndAttributesInRange(this.range); }
+  get containsMorph () { return containsMorph(this.textAndAttributes); }
 
   replace (text, extendTextAttributes, invalidateTextLayout, undoGroup) {
     const { range, textMorph } = this;
@@ -333,6 +337,7 @@ export class MultiSelection extends Selection {
   get text () { return this.selections.map(sel => sel.text).join('\n'); }
   set text (val) { this.selections.forEach(sel => sel.text = val); }
 
+  get containsMorph () { return this.defaultSelection.containsMorph; }
   get selectedRows () { return this.defaultSelection.selectedRows; }
 
   reverse () { this.defaultSelection.reverse(); }
