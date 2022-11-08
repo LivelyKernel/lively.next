@@ -417,7 +417,7 @@ export class ValueScrubber extends Text {
 
   onDragEnd (evt) {
     const { offset, scale } = this.getScaleAndOffset(evt);
-    this.value = this.getCurrentValue(offset, scale);
+    this.scrubbedValue = this.value = this.getCurrentValue(offset, scale);
     this.factorLabel.softRemove();
     evt.hand.extent = pt(1, 1);
     evt.hand.reactsToPointer = false;
