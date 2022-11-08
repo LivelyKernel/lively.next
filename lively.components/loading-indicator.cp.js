@@ -258,11 +258,15 @@ const LoadingIndicator = component({
   fill: Color.rgba(0, 0, 0, 0.65),
   layout: new TilingLayout({
     autoResize: true,
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true,
     align: 'center',
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    spacing: 15
+    spacing: 15,
+    padding: 10
   }),
   position: pt(1035, 573),
   submorphs: [{
@@ -274,9 +278,9 @@ const LoadingIndicator = component({
       align: 'center',
       axisAlign: 'center',
       autoResize: true,
+      wrapSubmorphs: false,
       direction: 'leftToRight',
       orderByIndex: true,
-      padding: 0,
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
       resizeSubmorphs: false,
