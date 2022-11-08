@@ -1,4 +1,5 @@
 import { arr } from 'lively.lang';
+import { TextSearcher } from 'lively.ide/text/search.js';
 
 export var multiSelectCommands = [
 
@@ -38,7 +39,7 @@ export var multiSelectCommands = [
       const idx = morph.selection.selections.length - 1;
       const last = morph.selection.selections[idx];
       if (last.isEmpty()) return true;
-      const found = morph.searchForAll(last.text, { start: { column: 0, row: 0 } });
+      const found = new TextSearcher(morph).searchForAll({ needle: last.text, start: { column: 0, row: 0 } });
       found.forEach(({ range }) => morph.selection.addRange(range, false));
       morph.selection.mergeSelections();
       arr.remove(morph.selection.selections, last);
