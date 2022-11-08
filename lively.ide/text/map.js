@@ -17,7 +17,9 @@ export default class TextMap extends Canvas {
       relativeBoundsInTextMorph: {},
       extent: { defaultValue: pt(60, 50) },
       markers: {},
-      draggable: { defaultValue: true }
+      draggable: { defaultValue: true },
+      // https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently
+      willReadFrequently: { defaultValue: true }
     };
   }
 
