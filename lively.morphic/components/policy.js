@@ -769,9 +769,14 @@ export class PolicyApplicator extends StylePolicy {
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     const needsApplication = needsUpdate && this.targetMorph;
     if (animationConfig && needsApplication) {
-      let resolve;
-      ({ promise: this._animating, resolve } = promise.deferred());
-      this.targetMorph.withAnimationDo(() => this.apply(this.targetMorph), animationConfig).then(() => {
+      let resolve, animationPromise;
+      ({ promise: animationPromise, resolve } = promise.deferred());
+      this._animating = animationPromise;
+      this.targetMorph.withAnimationDo(() => this.apply(this.targetMorph), animationConfig).then(async () => {
+        while (animationPromise !== this._animating) {
+          animationPromise = this._animating;
+          await this._animating;
+        }
         this._animating = false;
         resolve(true);
       });
