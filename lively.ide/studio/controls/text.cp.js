@@ -395,7 +395,7 @@ const RichTextControl = component(PropertySection, {
           justifySubmorphs: 'packed',
           wrapSubmorphs: false
         }),
-        submorphs: [add(part(PropertyLabel, {
+        submorphs: [add(part(AddButton, {
           name: 'italic style',
           tooltip: 'Italic',
           fontSize: 14,
@@ -404,7 +404,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(PropertyLabel, {
+        })), add(part(AddButton, {
           name: 'underline style',
           tooltip: 'Underline',
           fontSize: 14,
@@ -413,7 +413,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(PropertyLabel, {
+        })), add(part(AddButton, {
           name: 'inline link',
           tooltip: 'Create Link',
           fontSize: 14,
@@ -422,7 +422,7 @@ const RichTextControl = component(PropertySection, {
             fontSize: 18,
             textStyleClasses: ['material-icons']
           }]
-        })), add(part(PropertyLabel, {
+        })), add(part(AddButton, {
           name: 'quote',
           tooltip: 'Quote',
           fontSize: 14,
