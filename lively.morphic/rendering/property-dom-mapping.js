@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 import { Color } from 'lively.graphics';
-import { string, Path } from 'lively.lang';
+import { string, num, Path } from 'lively.lang';
 import { defaultAttributes } from './morphic-default';
 import bowser from 'bowser';
 
@@ -11,14 +11,34 @@ import bowser from 'bowser';
  * @returns {Node} the DOM node with changed style properties.
  */
 export function stylepropsToNode (styleProps, node) {
-  node.style.removeProperty('padding-left');
-  node.style.removeProperty('padding-right');
-  node.style.removeProperty('margin-bottom');
-  node.style.removeProperty('margin-top');
+  const propsToDelete = [
+    'padding-left',
+    'padding-right',
+    'margin-bottom',
+    'margin-top',
+    'margin',
+    'gap',
+    'place-content',
+    'flex-flow', 'flex-grow', 'flex-shrink',
+    'align-items', 'align-self',
+    'grid-column-start',
+    'grid-column-end',
+    'grid-row-start',
+    'grid-row-end',
+    'justify-self',
+    'display',
+    'order',
+    'width', 'height',
+    'top', 'left', 'position',
+    'margin-left',
+    'margin-right',
+    'grid-template-rows',
+    'grid-template-columns'
+  ];
+  for (let prop of propsToDelete) node.style.removeProperty(prop);
   for (let prop in styleProps) {
     node.style[prop] = styleProps[prop];
   }
-  // FIXME: remove the props NOT mentioned in styleProps but still mentioned in style?
   return node;
 }
 
@@ -80,8 +100,8 @@ export function addTransform (morph, style) {
   let x = (position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
   let y = (position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
   const promoteToCompositionLayer = canBePromotedToCompositionLayer(morph);
-  x = morph.renderOnGPU ? x : Math.round(x);
-  y = morph.renderOnGPU ? y : Math.round(y);
+  x = morph.renderOnGPU ? x : num.roundTo(x, 0.01);
+  y = morph.renderOnGPU ? y : num.roundTo(y, 0.01);
   if (promoteToCompositionLayer) {
     style.willChange = 'transform';
   }
