@@ -378,7 +378,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderRectangleControl (args) {
     const { keyString, valueString, target, node, tree } = args;
-    const inspector = tree.owner.viewModel;
+    const inspector = tree.owner;
     const handler = async (evt) => {
       // fixme: add rectangle popup!
       const editor = part(PaddingPopup, { hasFixedPosition: true });
@@ -412,7 +412,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderNumberControl (args) {
     const { value, spec, keyString, node, target, tree } = args;
-    const inspector = tree.owner.viewModel;
+    const inspector = tree.owner;
     const widgetState = {};
     if ('max' in spec && 'min' in spec &&
         spec.min !== -Infinity && spec.max !== Infinity) {
@@ -458,7 +458,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderShadowControl (args) {
     const { keyString, value, target, node, tree } = args;
-    const inspector = tree.owner.viewModel;
+    const inspector = tree.owner;
     const handler = async (evt) => {
       // if already open, return
       const editor = part(ShadowPopup, { hasFixedPosition: true });
@@ -478,7 +478,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderPointControl (args) {
     const { keyString, value, target, node, tree } = args;
-    const inspector = tree.owner.viewModel;
+    const inspector = tree.owner;
     const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
     const handler = async (evt) => {
       const editor = part(PositionPopupLight, { hasFixedPosition: true });
