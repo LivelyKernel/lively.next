@@ -103,7 +103,12 @@ export default class TextMap extends Canvas {
     let { document: doc, textLayout, markers, selections } = textMorph;
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
 
-    if (!ctx) this.whenRendered().then(() => this.update());
+    if (!ctx) {
+      this.whenRendered().then(() => this.update());
+      // waiting for `whenRendered` does not guarantee us to be actually rendered, as it is more of a waiting heuristic
+      // not returning in the case that we were not rendered lead to errors, when `fillStyle` of `undefined` was read
+      return;
+    }
 
     this.clear(null);
 
