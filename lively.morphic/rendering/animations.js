@@ -52,7 +52,8 @@ export class AnimationQueue {
   }
 
   get animationsActive () {
-    return true;
+    const node = this.morph.env.renderer.getNodeForMorph(this.morph);
+    return node?.getAnimations().length > 0;
   }
 
   registerAnimation (config) {
@@ -492,7 +493,7 @@ export class PropertyAnimation {
         });
         anim.onfinish = () => {
           onComplete();
-          setTimeout(() => anim.cancel(), 200);
+          anim.cancel();
         };
         removalScheduled = true;
       } catch (e) {
