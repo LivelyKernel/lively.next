@@ -295,8 +295,7 @@ export class TilingLayout extends Layout {
     if (this.renderViaCSS && !this._configChanged) {
       this._configChanged = true;
       this.layoutableSubmorphs.forEach(m => m.makeDirty());
-      if (this.container)
-        this.container.renderingState.hasCSSLayoutChange = true;
+      if (this.container) { this.container.renderingState.hasCSSLayoutChange = true; }
     }
   }
 
@@ -1930,7 +1929,7 @@ export class LayoutColumn extends LayoutAxis {
   get paddingRight () { return this.items[0].padding.width; }
 
   emptyAxis () {
-    const col = new LayoutColumn(new LayoutCell({
+    const col = new LayoutColumn(new LayoutCell({ // eslint-disable-line no-use-before-define
       column: arr.withN(this.items.length, null),
       layout: this.layout
     }));
@@ -1986,7 +1985,7 @@ export class LayoutRow extends LayoutAxis {
   get dimension () { return 'height'; }
 
   emptyAxis () {
-    const row = new LayoutRow(new LayoutCell({
+    const row = new LayoutRow(new LayoutCell({ // eslint-disable-line no-use-before-define
       row: arr.withN(this.items.length, null),
       layout: this.layout
     }));
@@ -2518,12 +2517,34 @@ export class GridLayout extends Layout {
   }
 
   _initRowsAndColumns () {
-    const { rows = [], columns = [] } = this.config;
-    for (let [idx, props] of arr.toTuples(rows, 2)) {
-      Object.assign(this.row(idx), props);
+    let { rows = false, columns = false } = this.config;
+    const ignore = ['height', 'width', 'fixed'];
+
+    rows = rows ? arr.toTuples(rows, 2) : [];
+    columns = columns ? arr.toTuples(columns, 2) : [];
+    for (let [idx, props] of rows) {
+      if (typeof props.fixed !== 'undefined') this.row(idx).fixed = true;
+      if (obj.isNumber(props.fixed)) props.length = props.fixed;
+      if (typeof props.height !== 'undefined') props.length = props.height;
     }
-    for (let [idx, props] of arr.toTuples(columns, 2)) {
-      Object.assign(this.col(idx), props);
+    for (let [idx, props] of columns) {
+      if (typeof props.fixed !== 'undefined') this.col(idx).fixed = true;
+      if (obj.isNumber(props.fixed)) props.length = props.fixed;
+      if (typeof props.width !== 'undefined') props.length = props.width;
+    }
+
+    for (let [idx, props] of rows) {
+      Object.assign(this.row(idx), obj.dissoc(props, ignore));
+    }
+    for (let [idx] of rows) {
+      this.row(idx).adjustProportion();
+    }
+
+    for (let [idx, props] of columns) {
+      Object.assign(this.col(idx), obj.dissoc(props, ignore));
+    }
+    for (let [idx] of columns) {
+      this.col(idx).adjustProportion();
     }
   }
 
