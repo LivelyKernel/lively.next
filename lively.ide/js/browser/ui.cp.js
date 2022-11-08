@@ -70,7 +70,7 @@ const FileStatusDefault = component({
   borderWidth: 1,
   dropShadow: new ShadowObject({ distance: 0, color: Color.rgba(0, 0, 0, 0.5) }),
   extent: pt(176.3, 35.3),
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) }),
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) })
 });
 
 const FileStatusError = component(FileStatusDefault, {
@@ -361,7 +361,6 @@ export class PathIndicator extends Morph {
       filePath.value = 'No file selected';
       this.master = FileStatusInactive;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         statusBox.isLayoutable = statusLabel.isLayoutable = false;
         statusLabel.opacity = 0;
@@ -369,8 +368,6 @@ export class PathIndicator extends Morph {
         clipboardControls.opacity = 0.5;
         this.adjustHeight();
       }, { duration });
-
-      pathContainer.layout.renderViaCSS = true;
     });
   }
 
@@ -379,13 +376,11 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
       this.master = FileStatusDefault;
       this.master.applyAnimated({ duration });
-      pathContainer.layout.renderViaCSS = false;
       await this.withAnimationDo(() => {
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
         statusBox.opacity = statusLabel.opacity = 0;
         this.adjustHeight();
       }, { duration });
-      pathContainer.layout.renderViaCSS = true;
     });
   }
 
@@ -434,7 +429,6 @@ export class PathIndicator extends Morph {
         statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
       }, { duration });
-      pathContainer.layout.renderViaCSS = true;
     });
   }
 
@@ -477,6 +471,8 @@ export class PathIndicator extends Morph {
     }
   }
 }
+
+
 
 // b = part(SystemBrowser)
 
