@@ -283,6 +283,17 @@ const RichTextControl = component(PropertySection, {
   defaultViewModel: RichTextControlModel,
   name: 'rich text control',
   extent: pt(250, 313),
+  layout: new TilingLayout({
+    spacing: 10,
+    padding: Rectangle.inset(0, 10, 0, 10),
+    wrapSubmorphs: false,
+    resizePolicies: [
+      ['h floater', { width: 'fill', height: 'fixed' }]
+    ],
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsVertically: true
+  }),
   submorphs: [{
     name: 'h floater',
     submorphs: [{
