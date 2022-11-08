@@ -12,8 +12,12 @@ Date.now() - t;
 
 */
 
+function textAndAttributesDo (textAndAttributes, doFn) {
+  for (let i = 0; i < textAndAttributes.length; i = i + 2) { doFn(textAndAttributes[i], textAndAttributes[i + 1]); }
+}
+
 export function shallowEquals (obj1, obj2) {
-  if (!obj1 || !obj2) return obj1 == obj2;
+  if (!obj1 || !obj2) return obj1 === obj2;
   let areEqual = true; const seen = {};
   for (const key1 in obj1) {
     seen[key1] = true;
@@ -38,7 +42,6 @@ export function concatAttributePair (text1, attr1, text2, attr2, seperator = '')
   // concatAttributePair({}, {foo: 23}, {}, {foo: 23}) =>  [{}, {foo: 23}, {}, {foo: 23}]
   const isObj1 = typeof text1 !== 'string';
   const isObj2 = typeof text2 !== 'string';
-  const hasObj = isObj1 || isObj2;
 
   if (isObj1 || isObj2) {
     const result = [];
@@ -52,7 +55,7 @@ export function concatAttributePair (text1, attr1, text2, attr2, seperator = '')
   }
 
   if (!attr1 && !attr2) return [text1 + seperator + text2, attr1];
-  if (attr1 == attr2) return [text1 + seperator + text2, attr1];
+  if (attr1 === attr2) return [text1 + seperator + text2, attr1];
   if (!attr1 || !attr2) return [text1 + seperator, attr1, text2, attr2];
   return shallowEquals(attr1, attr2)
     ? [text1 + seperator + text2, attr1]
@@ -101,7 +104,8 @@ export function splitTextAndAttributesAt (textAndAttributes, column) {
     const attr = textAndAttributes[i + 1];
     const sliceI = column - textPos;
     const before = [...textAndAttributes.slice(0, i), text.slice(0, sliceI), attr];
-    const after = text.length === sliceI ? textAndAttributes.slice(i + 2)
+    const after = text.length === sliceI
+      ? textAndAttributes.slice(i + 2)
       : [text.slice(column - textPos), attr, ...textAndAttributes.slice(i + 2)];
     return [before, after];
   }
@@ -129,8 +133,8 @@ export function splitTextAndAttributesAtColumns (textAndAttributes, columns) {
 
 export function concatTextAndAttributes (a, b, mutate = false) {
   // empty suffix?
-  if (!a.length || (a.length === 2 && a[0] == '')) { return mutate ? b : b.slice(); }
-  if (!b.length || (b.length === 2 && b[0] == '')) { return mutate ? a : a.slice(); }
+  if (!a.length || (a.length === 2 && a[0] === '')) { return mutate ? b : b.slice(); }
+  if (!b.length || (b.length === 2 && b[0] === '')) { return mutate ? a : a.slice(); }
 
   const result = mutate ? a : a.slice();
   for (let i = 0; i < b.length; i = i + 2) {
@@ -212,28 +216,6 @@ export function modifyAttributesInRange (doc, range, modifyFn) {
   }
 }
 
-export function textAndAttributesWithSubRanges (start, textAndAttributes) {
-  // textAndAttributesWithSubRanges(that.selection.start, that.textAndAttributesInRange())
-  let { column, row } = start;
-  const ranges = []; const textAndAttributesIntoLines = [];
-  for (const lineTextAndAttributes of splitTextAndAttributesIntoLines(textAndAttributes)) {
-    for (let i = 0; i < lineTextAndAttributes.length; i = i + 2) {
-      const part = lineTextAndAttributes[i];
-      const endColumn = column + (typeof part === 'string' ? part.length : 1);
-      ranges.push({ start: { row, column }, end: { row, column: endColumn } });
-      textAndAttributesIntoLines.push(lineTextAndAttributes[i], lineTextAndAttributes[i + 1]);
-      column = endColumn;
-    }
-    column = 0;
-    row++;
-  }
-  return { ranges, textAndAttributes: textAndAttributesIntoLines };
-}
-
-function textAndAttributesDo (textAndAttributes, doFn) {
-  for (let i = 0; i < textAndAttributes.length; i = i + 2) { doFn(textAndAttributes[i], textAndAttributes[i + 1]); }
-}
-
 export function splitTextAndAttributesIntoLines (textAndAttributes, nl = '\n') {
   // splitTextAndAttributesIntoLines(["fooo\nbar", {a: 1}, "ba\nz", {b: 1}])
   // => [["fooo", {a: 1}],
@@ -267,4 +249,22 @@ export function splitTextAndAttributesIntoLines (textAndAttributes, nl = '\n') {
   }
 
   return lines;
+}
+
+export function textAndAttributesWithSubRanges (start, textAndAttributes) {
+  // textAndAttributesWithSubRanges(that.selection.start, that.textAndAttributesInRange())
+  let { column, row } = start;
+  const ranges = []; const textAndAttributesIntoLines = [];
+  for (const lineTextAndAttributes of splitTextAndAttributesIntoLines(textAndAttributes)) {
+    for (let i = 0; i < lineTextAndAttributes.length; i = i + 2) {
+      const part = lineTextAndAttributes[i];
+      const endColumn = column + (typeof part === 'string' ? part.length : 1);
+      ranges.push({ start: { row, column }, end: { row, column: endColumn } });
+      textAndAttributesIntoLines.push(lineTextAndAttributes[i], lineTextAndAttributes[i + 1]);
+      column = endColumn;
+    }
+    column = 0;
+    row++;
+  }
+  return { ranges, textAndAttributes: textAndAttributesIntoLines };
 }
