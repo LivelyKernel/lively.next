@@ -268,3 +268,10 @@ export function textAndAttributesWithSubRanges (start, textAndAttributes) {
   }
   return { ranges, textAndAttributes: textAndAttributesIntoLines };
 }
+
+export function containsMorph (textAndAttributes) {
+  return textAndAttributes
+    .flat()
+    .map(element => element && element.isMorph)
+    .some(elem => elem === true);
+}
