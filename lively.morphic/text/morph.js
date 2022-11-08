@@ -13,7 +13,6 @@ import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
-import { TextSearcher } from './search.js';
 import TextLayout from './layout.js';
 import Renderer, { extractHTMLFromTextMorph } from './renderer.js';
 import commands from './commands.js';
@@ -3237,17 +3236,6 @@ export class Text extends Morph {
       } else if (char === openChar) counter++;
       return null;
     });
-  }
-
-  search (
-    needle,
-    options = { start: this.cursorPosition, backwards: false, caseSensitive: false }
-  ) {
-    return new TextSearcher(this).search({ needle, ...options });
-  }
-
-  searchForAll (needle, options = { caseSensitive: false }) {
-    return new TextSearcher(this).searchForAll({ needle, ...options });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
