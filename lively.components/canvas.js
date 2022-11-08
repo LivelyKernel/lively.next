@@ -12,6 +12,8 @@ export class Canvas extends Morph {
       extent: { defaultValue: pt(200, 200) },
       fill: { defaultValue: Color.transparent },
       contextType: { defaultValue: '2d' },
+      // https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently
+      willReadFrequently: { defaultValue: false },
 
       preserveContents: { defaultValue: true },
 
@@ -33,7 +35,7 @@ export class Canvas extends Morph {
 
   // get canvasBounds() { return this._canvas && this.canvasExtent.extentAsRectangle(); }
   get context () {
-    if (this._canvas) { return this._canvas.getContext(this.contextType); } else if (!this.world() || !this.env.renderer.getNodeForMorph(this)) {
+    if (this._canvas) { return this._canvas.getContext(this.contextType, { willReadFrequently: this.willReadFrequently }); } else if (!this.world() || !this.env.renderer.getNodeForMorph(this)) {
       console.warn('Context not yet rendered. Please ensure that the Canvas Morph has been rendered first before accessing the context. This can be achieved by waiting for the whenRendered() promise before you proceed accessing the context property.');
     }
     return null;
