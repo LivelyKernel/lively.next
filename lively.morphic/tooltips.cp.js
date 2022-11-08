@@ -1,7 +1,8 @@
 import { component } from './components/core.js';
 import { pt, Color } from 'lively.graphics';
 import { TilingLayout } from './layout.js';
-import { Label, ViewModel } from 'lively.morphic';
+import { ViewModel } from './components/core.js';
+import { Label } from './text/label.js';
 
 class Tooltip extends ViewModel {
   static get properties () {
