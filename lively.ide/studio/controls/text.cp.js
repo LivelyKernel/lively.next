@@ -43,6 +43,11 @@ export class RichTextControlModel extends ViewModel {
           return ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight'];
         }
       },
+      expose: {
+        get () {
+          return ['update', 'targetMorph'];
+        }
+      },
       bindings: {
         get () {
           return [
