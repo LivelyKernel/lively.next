@@ -24,7 +24,8 @@ class TextFormattingPopUpModel extends ViewModel {
   }
 
   viewDidLoad () {
-    this.ui.richTextControl.viewModel.targetMorph = this.targetMorph;
+    this.ui.richTextControl.targetMorph = this.targetMorph;
+    this.ui.richTextControl.update();
   }
 }
 
