@@ -47,6 +47,8 @@ export class MenuItem extends Label {
         }
       },
       label: {
+        derived: true,
+        after: ['borderWidth'],
         get () {
           const { value } = this.valueAndAnnotation;
           const label = value.map((string, i) => (i % 2 === 0 ? string : '')).join('\n');
@@ -57,6 +59,8 @@ export class MenuItem extends Label {
         }
       },
       annotation: {
+        derived: true,
+        after: ['borderWidth'],
         get () {
           return this.valueAndAnnotation.annotation;
         },
