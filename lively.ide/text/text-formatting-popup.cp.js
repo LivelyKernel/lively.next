@@ -41,7 +41,8 @@ const SelectionBasedRichTextControl = component(RichTextControl, {
       name: 'bottom wrapper',
       height: 22,
       submorphs: [
-        without('line wrapping selector')
+        without('line wrapping selector'),
+        without('resizing controls')
       ]
     },
     without('padding controls')
