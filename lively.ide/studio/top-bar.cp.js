@@ -529,7 +529,9 @@ export class TopBarModel extends ViewModel {
     if (obj.isArray(targets)) {
       if (targets.length === 0) return;
       halo = this.world().showHaloForSelection(targets);
-    } else halo = this.world().showHaloFor(targets);
+    } else {
+      halo = this.world().showHaloFor(targets);
+    }
     once(halo, 'remove', () => {
       if (halo.target !== this.world().focusedMorph) {
         signal(this.primaryTarget, 'onHaloRemoved', targets);
