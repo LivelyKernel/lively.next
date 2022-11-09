@@ -13,7 +13,6 @@ import { Range } from './range.js';
 import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
-import { TextSearcher } from './search.js';
 import Layout from './layout.js';
 import commands from './commands.js';
 import { textAndAttributesWithSubRanges } from './attributes.js';
