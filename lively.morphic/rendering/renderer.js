@@ -698,6 +698,7 @@ export default class Renderer {
     const node = this.doc.createElement('div');
 
     const textLayer = this.textLayerNodeFor(morph);
+    morph.renderingState.nodeStyleProps = morph.styleObject();
 
     /*
       The scrollLayer is mecessary for Text that can be interactively edited.
@@ -858,7 +859,6 @@ export default class Renderer {
     node.id = morph.id + 'textLayer';
     const style = morph.styleObject();
     stylepropsToNode(style, node);
-    morph.renderingState.nodeStyleProps = style;
     node.className = textLayerClasses;
 
     return node;
