@@ -10,6 +10,7 @@ import { Selection, SelectionElement } from '../world.js';
 import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
+import { RichTextFormattableText } from '../text/rich-text.js';
 
 export class FastLoadToggler extends Morph {
   static get properties () {
@@ -420,7 +421,7 @@ export class TopBarModel extends ViewModel {
         case Text:
           if (evt.targetMorph.isText) return;
           target.addMorph(morph({
-            type,
+            RichTextFormattableText,
             position,
             readOnly: true,
             textString: 'I am a text field!',
@@ -445,7 +446,7 @@ export class TopBarModel extends ViewModel {
     if (!type) return false;
     if (!this.canBeCreatedViaDrag(type)) return false;
     target._yieldedShape = morph({
-      type,
+      type: type === Text ? RichTextFormattableText : type,
       position: evt.positionIn(target),
       extent: pt(1, 1),
       fill: Color.transparent,
