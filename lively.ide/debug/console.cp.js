@@ -1,4 +1,4 @@
-import { ViewModel, part, Text, component } from 'lively.morphic';
+import { ViewModel, Text, component } from 'lively.morphic';
 import { obj, string } from 'lively.lang/index.js';
 import { pt, Color } from 'lively.graphics';
 
@@ -139,7 +139,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   reset () {
-    this.logLimit = 300;
+    this.logLimit = 1000;
     this.clear();
   }
 
