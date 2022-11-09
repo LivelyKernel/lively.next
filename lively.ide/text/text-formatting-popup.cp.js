@@ -7,7 +7,7 @@ import { Color } from 'lively.graphics';
 class TextFormattingPopUpModel extends ViewModel {
   static get properties () {
     return {
-      expose: { get () { return ['close', 'onHoverOut']; } },
+      expose: { get () { return ['close']; } },
       bindings: {
         get () {
           return [
@@ -17,12 +17,6 @@ class TextFormattingPopUpModel extends ViewModel {
       },
       targetMorph: {}
     };
-  }
-
-  onHoverOut (evt) {
-    if (this.targetMorph.bounds().containsPoint(evt.hand.position)) return;
-
-    this.targetMorph.removeFormattingPopUp();
   }
 
   close () {
