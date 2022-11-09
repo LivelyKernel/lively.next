@@ -58,6 +58,7 @@ const SystemTooltip = component({
   }),
   position: pt(715, 460),
   reactsToPointer: false,
+  styleClasses: ['Popups'],
   submorphs: [{
     type: Label,
     name: 'label',
