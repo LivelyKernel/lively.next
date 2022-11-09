@@ -429,10 +429,11 @@ export class TopBarModel extends ViewModel {
           break;
       }
     }
-    if (type === Text && target._yieldedShape) {
-      target._yieldedShape.focus();
-    } else if (target._yieldedShape && target._yieldedShape.owner) {
-      this.showHaloFor(target._yieldedShape);
+    if (target._yieldedShape && target._yieldedShape.owner) {
+      const halo = this.showHaloFor(target._yieldedShape);
+      if (type === Text && target._yieldedShape) {
+        halo.temporaryEditTextMorph();
+      }
     }
     target._yieldedShape = null;
     target._shapeRequest = false;
@@ -505,18 +506,10 @@ export class TopBarModel extends ViewModel {
   handleHaloSelection (evt) {
     const world = this.world();
     const target = this.primaryTarget || world;
-    const [currentHalo] = world.halos();
     if (this._showHaloPreview && this._currentlyHighlighted && world.halos().length === 0) {
       evt.stop();
       world.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
       this.showHaloFor(this._currentlyHighlighted);
-    }
-    if (currentHalo &&
-        currentHalo.target === evt.state.prevClick.clickedOnMorph &&
-        evt.targetMorph.name === 'border-box' &&
-        evt.state.timeOfLastActivity - evt.state.prevClick.clickedAtTime < 50) {
-      currentHalo.temporaryEditTextMorph(evt);
-      return;
     }
     if (evt.targetMorph !== target) return;
     target._shapeRequest = true;
@@ -541,6 +534,7 @@ export class TopBarModel extends ViewModel {
     }
     halo.topBar = this;
     signal(this.primaryTarget, 'onHaloOpened', targets);
+    return halo;
   }
 
   handleHaloPreview (evt) {

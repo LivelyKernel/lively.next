@@ -2004,7 +2004,7 @@ export default class Halo extends Morph {
     const prevReadOnly = this.target.readOnly;
     this.target.readOnly = false;
     this.target.focus();
-    this.target.cursorPosition = this.target.textPositionFromPoint(evt.positionIn(this.target));
+    this.target.cursorPosition = this.target.textPositionFromPoint(evt ? evt.positionIn(this.target) : pt(0, 0));
     const world = this.world();
     const t = this.target;
     const topBar = this.topBar;
@@ -2054,7 +2054,7 @@ export default class Halo extends Morph {
 
   onMouseDown (evt) {
     const evtTarget = evt.state.clickedOnMorph;
-    if (!evt.isCommandKey() && evtTarget === this.borderBox) {
+    if (!evt.isCommandKey()) {
       if (evt.state.clickCount === 2 &&
           this.target.isText) {
         this.temporaryEditTextMorph(evt);
