@@ -32,6 +32,12 @@ const SelectionBasedRichTextControl = component(RichTextControl, {
   submorphs: [
     without('h floater'),
     {
+      name: 'text controls',
+      submorphs: [
+        without('letter spacing input')
+      ]
+    },
+    {
       name: 'bottom wrapper',
       height: 22,
       submorphs: [
