@@ -242,6 +242,7 @@ const Stage = component({
     name: 'icon',
     fontSize: 30.108,
     opacity: 0.2,
+    lineHeight: 1,
     textAndAttributes: Icon.textAttribute('language')
   }, {
     type: Label,
@@ -263,8 +264,8 @@ const Stage = component({
       type: Label,
       name: 'checkmark',
       fontColor: Color.rgb(100, 221, 23),
-      fontSize: 26,
-      padding: rect(0.5, 0, 0, 0),
+      fontSize: 27,
+      lineHeight: 1,
       textAndAttributes: Icon.textAttribute('check-circle'),
       visible: true
     }, {
@@ -274,6 +275,7 @@ const Stage = component({
       fill: Color.rgb(0, 176, 255),
       fontColor: Color.rgb(255, 255, 255),
       fontSize: 20,
+      lineHeight: 1,
       padding: rect(4, 3, 0, 0),
       textAndAttributes: Icon.textAttribute('snowflake'),
       visible: true
