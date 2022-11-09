@@ -4,7 +4,9 @@ import { pt, Color } from 'lively.graphics';
 
 const defaultConsoleMethods = ['log', 'group', 'groupEnd', 'warn', 'assert', 'error'];
 
-function formatTemplateString (template, ...args) {
+// implements a subset of the string substitution patterns of `console`
+// See: https://developer.mozilla.org/en-US/docs/Web/API/Console#using_string_substitutions
+// Support `%s` only and simply converts everything into a string
 function formatTemplateString (template = '', ...args) {
   let string = template;
   for (let i = 0; i < args.length; i++) {
@@ -45,7 +47,15 @@ function removeErrorCapture (target, _window = window) {
   }
 }
 
+/**
+ * @param {console} platformConsole - The `console` object to instrument/prepare
+ * @param {string[]} consoleMethods - An array with the names of methods to instrument
+ * @param {Window} _window - The window to which `platformConsole` belongs
+ */
 export function prepareConsole (platformConsole, consoleMethods = defaultConsoleMethods, _window = window) {
+  // reset consumer to be notified when one of `consoleMethods` gets executed on `platformConsole`
+  // for `simpleConsumer`, wrapped `console` functions (their equivalents on the consumer) get invoked with a single string (returned from @see { formatTemplateString }) as argument
+  // for `consumers`, wrapped `console` functions (their equivalents on the consumer) get invoked with the same arguments as the original `console `function
   let consumers = platformConsole.consumers = [];
   let simpleConsumers = platformConsole.simpleConsumers = [];
 
@@ -56,20 +66,25 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
     platformConsole.wasWrapped = true;
 
     let exceptions = ['removeWrappers', 'addWrappers', 'addConsumer', 'removeConsumer'];
+    // find all methods on `platformConsole` which need to be instrumented
     let methods = Object.keys(platformConsole)
       .filter(name => typeof platformConsole[name] === 'function' &&
+                  // we back up the original function source of x() with $x() below
                   !name.startsWith('$') &&
                   !platformConsole.hasOwnProperty('$' + name) &&
                   !exceptions.includes(name));
     let activationState = {};
 
     methods.forEach(name => {
+      // backup original function source
       platformConsole['$' + name] = platformConsole[name];
       platformConsole[name] = function () {
         if (activationState[name]) return;
         activationState[name] = true;
         try {
+          // execute original method of `platformConsole`
           platformConsole['$' + name].apply(platformConsole, arguments);
+          // call all consumer which implement the function with the same name as well
           for (let i = 0; i < consumers.length; i++) {
             let consumerFunc = consumers[i][name];
             if (typeof consumerFunc === 'function') { consumerFunc.apply(consumers[i], arguments); }
@@ -83,6 +98,7 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
     });
   }
 
+  // find backed up methods on `console` (we prefixed with $) and remove them while restoring the original function
   function removeWrappers () {
     for (let name in platformConsole) {
       if (name[0] !== '$') continue;
@@ -96,6 +112,8 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
   if (platformConsole.wasPrepared) return;
   platformConsole.wasPrepared = true;
 
+  // in case one of `consoleMethods` is missing on `console`, stub with empty function
+  // this way we cannot run into undefined functions when wrapping above
   for (let i = 0; i < consoleMethods.length; i++) {
     if (!platformConsole[consoleMethods[i]]) {
       platformConsole[consoleMethods[i]] = emptyFunc;
@@ -104,15 +122,21 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
 
   platformConsole.wasWrapped = false;
 
+  // install wrapping functions on `console`
   platformConsole.removeWrappers = removeWrappers;
   platformConsole.addWrappers = addWrappers;
 
+  // install function to subscribe to method invocations on `console`
   platformConsole.addConsumer = function (c, simple = false) {
     let subscribers = simple ? simpleConsumers : consumers;
     if (!subscribers.includes(c)) {
       subscribers.push(c);
+      // in case we are the first consumer, install wrappers on `console`
+      // in case the wrappers are already installed, `addWrappers` will return early
       addWrappers();
     }
+    // add event listener that takes care of printing errors that are announced in `console`
+    // as those are not triggered by an explicit call to `console.XZY()`, we need to handle them separately
     installErrorCapture(c, _window);
   };
 
@@ -121,6 +145,7 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
     if (idx >= 0) consumers.splice(idx, 1);
     let idx2 = simpleConsumers.indexOf(c);
     if (idx2 >= 0) simpleConsumers.splice(idx2, 1);
+    // remove wrappers in case we are the last consumer
     if (!consumers.length && !simpleConsumers.length) { removeWrappers(); }
     removeErrorCapture(c, _window);
   };
@@ -148,6 +173,7 @@ class LocalJSConsoleModel extends ViewModel {
     this.install();
   }
 
+  // Make sure that we clean up after ourselves when closing
   onWindowClose () { this.uninstall(); }
 
   install () {
@@ -155,6 +181,7 @@ class LocalJSConsoleModel extends ViewModel {
     console.addConsumer(this);
   }
 
+  // Removes our patches from `console` if they are present
   uninstall () {
     if (console.removeConsumer) { console.removeConsumer(this); }
   }
@@ -173,6 +200,10 @@ class LocalJSConsoleModel extends ViewModel {
     this.view.textString = '';
   }
 
+  /*
+  We mirror the logging methods provided by `console` below.
+  Those are called by the `console` methods after they have been instrumented to log into our own console.
+  */
   log (/* args */) {
     this.addLog(this.maybeTemplateMessage.apply(this, arguments));
   }
@@ -199,6 +230,12 @@ class LocalJSConsoleModel extends ViewModel {
     if (!test) this.error('Assert failed: ' + msg);
   }
 
+  /**
+   * Appends `string` to the end of what is displayed in the console.
+   * Formatting will was already taken care of by @see { maybeTemplateMessage }.
+   * @param {String} string - The message to log into the console.
+   * @param {object} attr - TextAttributes to style `string` with.
+   */
   addLog (string, attr) {
     if (!string.endsWith('\n')) string += '\n';
     const t = this.view;
@@ -220,6 +257,7 @@ class LocalJSConsoleModel extends ViewModel {
 }
 
 class LocalJSConsole extends Text {
+  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` commands there
   get commands () {
     return [
       {
@@ -230,6 +268,7 @@ class LocalJSConsole extends Text {
     ];
   }
 
+  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` keybindings there
   get keybindings () {
     return [
       { keys: { mac: 'Meta-K', win: 'Ctrl-K' }, command: '[console] clear' },
@@ -237,6 +276,7 @@ class LocalJSConsole extends Text {
     ];
   }
 
+  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` menuItems there
   async menuItems () {
     return [
       { command: '[console] clear', target: this, alias: 'clear' },
