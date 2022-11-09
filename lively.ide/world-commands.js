@@ -14,6 +14,7 @@ import * as modules from 'lively.modules';
 import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
 import { WorldBrowser } from './studio/world-browser.cp.js';
+import { Console } from './debug/console.cp.js';
 
 const commands = [
 
@@ -877,6 +878,11 @@ const commands = [
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
     }
+  },
+
+  {
+    name: 'open console',
+    exec: () => { part(Console).openInWindow(); }
   },
 
   {
