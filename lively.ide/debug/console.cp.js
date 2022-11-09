@@ -5,6 +5,7 @@ import { pt, Color } from 'lively.graphics';
 const defaultConsoleMethods = ['log', 'group', 'groupEnd', 'warn', 'assert', 'error'];
 
 function formatTemplateString (template, ...args) {
+function formatTemplateString (template = '', ...args) {
   let string = template;
   for (let i = 0; i < args.length; i++) {
     let idx = string.indexOf('%s');
