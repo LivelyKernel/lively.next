@@ -19,6 +19,7 @@ const IconButtonDefault = component({
     fontColor: Color.rgb(255, 255, 255),
     fontSize: 18,
     position: pt(5, 2.5),
+    lineHeight: 1,
     reactsToPointer: false,
     textAndAttributes: Icon.textAttribute('check-circle')
   }]
@@ -166,6 +167,7 @@ const SearchWidget = component({
     borderWidth: 1,
     extent: pt(173, 20),
     fill: Color.rgba(204, 204, 204, 0.2),
+    cursorColor: Color.white,
     fontColor: Color.rgb(255, 255, 255),
     fontFamily: '"IBM Plex Mono"',
     historyId: 'lively.morphic-text search',
@@ -190,6 +192,7 @@ const SearchWidget = component({
     extent: pt(173, 20),
     fill: Color.rgba(204, 204, 204, 0.2),
     fontColor: Color.rgb(255, 255, 255),
+    cursorColor: Color.white,
     fontFamily: '"IBM Plex Mono"',
     historyId: 'lively.morphic-text replace',
     padding: rect(2, 2, 0, 0),

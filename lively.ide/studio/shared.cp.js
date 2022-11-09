@@ -61,6 +61,7 @@ const AddButtonAuto = component({
   fontFamily: 'Material Icons',
   nativeCursor: 'pointer',
   padding: rect(6, 6, 0, 0),
+  lineHeight: 1,
   textAndAttributes: ['', {
     fontSize: 18,
     textStyleClasses: ['material-icons']

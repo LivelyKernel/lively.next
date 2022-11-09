@@ -828,6 +828,7 @@ const SystemBrowser = component({
         fontColor: Color.rgb(253, 254, 254),
         fontFamily: 'IBM Plex Mono',
         fontSize: 14,
+        fixedWidth: true,
         fontWeight: 'bold',
         textAndAttributes: ['lively.sync/client.js:Client#toString', null]
       }, {
@@ -840,7 +841,8 @@ const SystemBrowser = component({
           axisAlign: 'center',
           orderByIndex: true,
           spacing: 5,
-          wrapSubmorphs: false
+          wrapSubmorphs: false,
+          hugContentsHorizontally: true
         }),
         submorphs: [
           part(EmbeddedIcon, {

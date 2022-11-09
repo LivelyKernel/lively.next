@@ -1150,15 +1150,13 @@ const ProfileItem = component({
   type: Text,
   name: 'profile item',
   borderColor: Color.rgb(204, 204, 204),
-  extent: pt(144, 28.8),
+  extent: pt(144, 28),
   fill: Color.rgba(0, 0, 0, 0),
-  fixedHeight: true,
   fixedWidth: true,
   fontFamily: 'IBM Plex Sans',
   fontSize: 16,
   nativeCursor: 'pointer',
   padding: rect(10, 3, -5, 0),
-  position: pt(19.9, 35.6),
   textString: 'Profile',
   readOnly: true,
   selectable: false
@@ -1179,7 +1177,6 @@ const UserMenu = component({
   fill: Color.rgb(253, 254, 254),
   isLayoutable: false,
   origin: pt(121.7, -4.7),
-  position: pt(330.1, 33.2),
   submorphs: [{
     type: Polygon,
     name: 'menu shape',
@@ -1209,7 +1206,11 @@ const UserMenu = component({
     layout: new TilingLayout({
       axis: 'column',
       orderByIndex: true,
-      wrapSubmorphs: false
+      wrapSubmorphs: false,
+      resizePolicies: [
+        ['profile item', { width: 'fill', height: 'fixed' }],
+        ['login item', { width: 'fill', height: 'fixed' }]
+      ]
     }),
     position: pt(-120.6, 10.9),
     clipMode: 'hidden',
@@ -1220,22 +1221,22 @@ const UserMenu = component({
     submorphs: [
       part(ProfileItem, {
         name: 'profile item',
-        master: { auto: ProfileItem, hover: ProfileItemSelected }
+        master: { hover: ProfileItemSelected }
       }),
       part(ProfileItem, {
         name: 'login item',
         textString: 'Sign in',
-        master: { auto: ProfileItem, hover: ProfileItemSelected }
+        master: { hover: ProfileItemSelected }
       }),
       part(ProfileItem, {
         name: 'logout item',
         textString: 'Sign out',
-        master: { auto: ProfileItem, hover: ProfileItemSelected }
+        master: { hover: ProfileItemSelected }
       }),
       part(ProfileItem, {
         name: 'register item',
         textString: 'Create Account',
-        master: { auto: ProfileItem, hover: ProfileItemSelected }
+        master: { hover: ProfileItemSelected }
       })
     ]
   }]

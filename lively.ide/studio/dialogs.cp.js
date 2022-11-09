@@ -242,6 +242,7 @@ const SaveWorldDialog = component(DarkPrompt, {
       readOnly: false,
       borderRadius: 5,
       clipMode: 'auto',
+      nativeCursor: 'text',
       dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
       extent: pt(336.5, 89.9),
       fill: Color.rgb(229, 231, 233),
@@ -252,7 +253,6 @@ const SaveWorldDialog = component(DarkPrompt, {
       haloShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
       highlightWhenFocused: true,
       lineWrapping: true,
-      nativeCursor: 'auto',
       padding: rect(4, 4, 0, 0),
       position: pt(97, 115)
     }, part(InputLineDark, {
