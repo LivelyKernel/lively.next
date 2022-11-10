@@ -265,13 +265,14 @@ export class PaddingControlsModel extends ViewModel {
     const right = pad.right();
     const bottom = pad.bottom();
     const top = pad.top();
-    this.showAllSidesControl = arr.uniq([left, right, top, bottom]).length === 0;
+    this.showAllSidesControl = !(arr.uniq([left, right, top, bottom]).length === 1);
     this.ui.paddingBottom.number = bottom;
     this.ui.paddingLeft.number = left;
     this.ui.paddingRight.number = right;
     this.ui.paddingTop.number = top;
 
-    this.ui.paddingAll.number = left;
+    if (!this.showAllSidesControl) this.ui.paddingAll.number = left;
+    else this.ui.paddingAll.setMixed();
   }
 
   viewDidLoad () {
