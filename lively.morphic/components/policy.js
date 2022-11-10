@@ -850,7 +850,10 @@ export class PolicyApplicator extends StylePolicy {
       }
 
       // FIXME: other special cases??
-      if (morphToBeStyled.isLabel && propName === 'extent') continue;
+      if (morphToBeStyled.isText &&
+          !morphToBeStyled.fixedWidth &&
+          !morphToBeStyled.fixedHeight &&
+          propName === 'extent') continue;
 
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
