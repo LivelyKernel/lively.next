@@ -4,6 +4,32 @@ import { string, num, Path } from 'lively.lang';
 import { defaultAttributes } from './morphic-default';
 import bowser from 'bowser';
 
+const propsToDelete = [
+  'padding-left',
+  'padding-right',
+  'margin-bottom',
+  'margin-top',
+  'margin',
+  'gap',
+  'place-content',
+  'flex-flow', 'flex-grow', 'flex-shrink',
+  'align-items', 'align-self',
+  'grid-column-start',
+  'grid-column-end',
+  'grid-row-start',
+  'grid-row-end',
+  'justify-self',
+  'display',
+  'order',
+  'overflow',
+  'width', 'height',
+  'top', 'left', 'position',
+  'margin-left',
+  'margin-right',
+  'grid-template-rows',
+  'grid-template-columns'
+];
+
 /**
  * Actually applies styles as defined in an Object to a DOM node.
  * @param {Object} styleProps - The styles to apply.
@@ -11,32 +37,12 @@ import bowser from 'bowser';
  * @returns {Node} the DOM node with changed style properties.
  */
 export function stylepropsToNode (styleProps, node) {
-  const propsToDelete = [
-    'padding-left',
-    'padding-right',
-    'margin-bottom',
-    'margin-top',
-    'margin',
-    'gap',
-    'place-content',
-    'flex-flow', 'flex-grow', 'flex-shrink',
-    'align-items', 'align-self',
-    'grid-column-start',
-    'grid-column-end',
-    'grid-row-start',
-    'grid-row-end',
-    'justify-self',
-    'display',
-    'order',
-    'width', 'height',
-    'top', 'left', 'position',
-    'margin-left',
-    'margin-right',
-    'grid-template-rows',
-    'grid-template-columns'
-  ];
-  for (let prop of propsToDelete) node.style.removeProperty(prop);
+  for (let prop of propsToDelete) {
+    if (prop in styleProps) continue; // not need to reset what we are patching afterwards anyways
+    node.style.removeProperty(prop);
+  }
   for (let prop in styleProps) {
+    // do not patch props that have not changed in the first place
     node.style[prop] = styleProps[prop];
   }
   return node;
