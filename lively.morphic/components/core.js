@@ -486,6 +486,12 @@ export class ViewModel {
     this.onRefresh();
     this.viewDidLoad();
   }
+
+  keysForCommand (commandName, pretty = true) {
+    const map = this.view.keyCommandMap;
+    const rawKey = Object.keys(map).find(key => map[key].name === commandName);
+    return rawKey && pretty ? map[rawKey].prettyKeys : rawKey;
+  }
 }
 
 /**
