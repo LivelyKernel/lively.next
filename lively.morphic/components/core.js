@@ -439,8 +439,8 @@ export class ViewModel {
     } catch (err) {
       console.error(err.message);
     }
-    if (res && res.then) return res.then(() => this.onActivate());
-    else this.onActivate();
+    if (res && res.then) { return res.then(() => { this.onActivate(); return res; }); } else this.onActivate();
+    return res;
   }
 
   /**
