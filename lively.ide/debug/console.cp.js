@@ -157,7 +157,7 @@ class LocalJSConsoleModel extends ViewModel {
       logLimit: { defaultValue: 1000 },
       expose: {
         get () {
-          return ['onWindowClose', 'clear'];
+          return ['onWindowClose', 'clear', 'commands', 'menuItems', 'keybindings'];
         }
       }
     };
@@ -230,6 +230,35 @@ class LocalJSConsoleModel extends ViewModel {
     if (!test) this.error('Assert failed: ' + msg);
   }
 
+  get keybindings () {
+    const viewKeybindings = this.withoutBindingsDo(() => { return this.view.keybindings; });
+    return [
+      { keys: { mac: 'Meta-K', win: 'Ctrl-Alt-K' }, command: '[console] clear' },
+      ...viewKeybindings
+    ];
+  }
+
+  get commands () {
+    const viewCommands = this.withoutBindingsDo(() => { return this.view.commands; });
+    return [
+      {
+        name: '[console] clear',
+        exec: () => { this.clear(); return true; }
+      },
+      ...viewCommands
+    ];
+  }
+
+  async menuItems () {
+    const viewItems = await this.withoutBindingsDo(async () => await this.view.menuItems());
+    debugger;
+    return [
+      { command: '[console] clear', target: this, alias: 'clear' },
+      { isDivider: true },
+      ...viewItems
+    ];
+  }
+
   /**
    * Appends `string` to the end of what is displayed in the console.
    * Formatting will was already taken care of by @see { maybeTemplateMessage }.
@@ -256,38 +285,8 @@ class LocalJSConsoleModel extends ViewModel {
   }
 }
 
-class LocalJSConsole extends Text {
-  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` commands there
-  get commands () {
-    return [
-      {
-        name: '[console] clear',
-        exec: () => { this.clear(); return true; }
-      },
-      ...super.commands
-    ];
-  }
-
-  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` keybindings there
-  get keybindings () {
-    return [
-      { keys: { mac: 'Meta-K', win: 'Ctrl-K' }, command: '[console] clear' },
-      ...super.keybindings
-    ];
-  }
-
-  // TODO: move into ViewModel once we have an architecture that allows for overriding `Text` menuItems there
-  async menuItems () {
-    return [
-      { command: '[console] clear', target: this, alias: 'clear' },
-      { isDivider: true },
-      ...await super.menuItems()
-    ];
-  }
-}
-
 const Console = component({
-  type: LocalJSConsole,
+  type: Text,
   name: 'debug console',
   defaultViewModel: LocalJSConsoleModel,
   extent: pt(300, 400),
