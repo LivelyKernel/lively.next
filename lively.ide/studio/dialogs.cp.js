@@ -147,14 +147,6 @@ const SaveWorldDialog = component(DarkPrompt, {
   defaultViewModel: SaveWorldDialogModel,
   name: 'save world dialog',
   extent: pt(470, 320),
-  layout: new VerticalLayout({
-    align: 'center',
-    autoResize: true,
-    direction: 'topToBottom',
-    renderViaCSS: true,
-    resizeSubmorphs: true,
-    spacing: 16
-  }),
   submorphs: [{
     name: 'prompt title',
     textString: 'Save world'
