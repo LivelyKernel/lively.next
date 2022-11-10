@@ -320,6 +320,7 @@ class NameHolder extends Morph {
             fill: Color.transparent,
             fontColor: Color.white,
             fontWeight: 'bold',
+            nativeCursor: 'text',
             active: true
           }));
           connect(this.nameHolder, 'onBlur', this, 'accept');
@@ -414,10 +415,11 @@ class NameHaloItem extends HaloItem {
           this.layout = new TilingLayout({
             axis: 'row',
             hugContentsHorizontally: true,
+            hugContentsVertically: true,
             axisAlign: 'center',
             wrapSubmorphs: false,
             orderByIndex: true,
-            padding: 5
+            padding: Rectangle.inset(7.5, 5, 7.5, 5)
           });
         }
       }
@@ -434,7 +436,7 @@ class NameHaloItem extends HaloItem {
     this.validityIndicator = Icon.makeLabel('check', {
       fontColor: Color.green,
       fontSize: 15,
-      padding: rect(4, 6, 4, 0)
+      padding: Rectangle.inset(5, 0, 0, 0)
     });
 
     this.fill = this.halo.target.isComponent ? componentAccent : haloBlue;
@@ -451,7 +453,7 @@ class NameHaloItem extends HaloItem {
       const masterLink = this.addMorph(Icon.makeLabel(meta ? 'external-link-alt' : 'exclamation-triangle', {
         nativeCursor: 'pointer',
         fontColor: Color.white,
-        padding: rect(8, 0, -8, 0),
+        padding: Rectangle.inset(0, 0, 4, 0),
         name: 'master link',
         tooltip: meta ? 'Located in ' + meta.module : false
       }));
@@ -502,13 +504,15 @@ class NameHaloItem extends HaloItem {
       this.borderWidth = 3;
       this.addMorph(this.validityIndicator);
       this.fill = Color.darkGray;
-      setTimeout(() => nameHolder.nameHolder.selectAll());
+      nameHolder.activate();
+      setTimeout(() => {
+        nameHolder.nameHolder.selectAll();
+      });
     } else {
       this.fill = haloBlue;
       this.nameHolders.forEach(nh => nh !== nameHolder && nh.activate());
       this.borderWidth = 0;
       this.validityIndicator.remove();
-      // this.halo.focus();
     }
     this.alignInHalo();
   }
