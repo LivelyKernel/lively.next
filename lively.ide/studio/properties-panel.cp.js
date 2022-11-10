@@ -13,6 +13,7 @@ import { ConstraintsManager } from './controls/constraints.cp.js';
 import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
+import { EmbeddingControl } from './controls/embedding.cp.js';
 
 ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
@@ -149,9 +150,10 @@ export class PropertiesPanelModel extends ViewModel {
     const {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, borderControl,
-      effectsControl
+      effectsControl, embeddingControl
     } = this.ui;
     [shapeControl, fillControl, textControl, layoutControl, constraintsControl, borderControl, effectsControl].forEach(m => m.visible = active);
+    embeddingControl.visible = false;
   }
 
   clearFocus () {
@@ -181,8 +183,8 @@ export class PropertiesPanelModel extends ViewModel {
     if (!aMorph.isMorph) return;
     const {
       shapeControl, fillControl, textControl,
-      layoutControl, constraintsControl, borderControl,
-      effectsControl, backgroundControl
+      layoutControl, constraintsControl, embeddingControl,
+      borderControl, effectsControl, backgroundControl
     } = this.models;
     if (this.targetMorph) disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
     this.targetMorph = aMorph;
@@ -200,6 +202,11 @@ export class PropertiesPanelModel extends ViewModel {
       layoutControl.view.visible = false;
     } else {
       textControl.view.visible = false;
+    }
+    if (aMorph.owner?.isText) {
+      alignmentControl.view.visible = false;
+      embeddingControl.view.visible = true;
+      embeddingControl.focusOn(aMorph);
     }
     fillControl.focusOn(aMorph);
     layoutControl.focusOn(aMorph);
@@ -306,7 +313,8 @@ const PropertiesPanel = component({
       ['layout control', { width: 'fill', height: 'fixed' }],
       ['constraints control', { width: 'fill', height: 'fixed' }],
       ['border control', { width: 'fill', height: 'fixed' }],
-      ['effects control', { width: 'fill', height: 'fixed' }]
+      ['effects control', { width: 'fill', height: 'fixed' }],
+      ['embedding control', { width: 'fill', height: 'fixed' }]
     ]
   }),
   submorphs: [
@@ -319,7 +327,6 @@ const PropertiesPanel = component({
       submorphs: [{
         name: 'text controls',
         submorphs: [
-          without('morph embedding selector'),
           {
             name: 'styling controls',
             // FIXME: this does not really look nice
@@ -335,6 +342,7 @@ const PropertiesPanel = component({
       ]
     }),
     part(LayoutControl, { name: 'layout control', visible: false }),
+    part(EmbeddingControl, { name: 'embedding control', visible: false }),
     part(ConstraintsManager, { name: 'constraints control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
