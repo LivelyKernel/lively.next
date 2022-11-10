@@ -1209,7 +1209,9 @@ const UserMenu = component({
       wrapSubmorphs: false,
       resizePolicies: [
         ['profile item', { width: 'fill', height: 'fixed' }],
-        ['login item', { width: 'fill', height: 'fixed' }]
+        ['login item', { width: 'fill', height: 'fixed' }],
+        ['logout item', { width: 'fill', height: 'fixed' }],
+        ['register item', { width: 'fill', height: 'fixed' }]
       ]
     }),
     position: pt(-120.6, 10.9),
