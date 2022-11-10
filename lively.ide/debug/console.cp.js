@@ -143,6 +143,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   viewDidLoad () {
+    console.wasWrapped = false;
     this.install();
   }
 
@@ -218,13 +219,6 @@ class LocalJSConsoleModel extends ViewModel {
 }
 
 class LocalJSConsole extends Text {
-  static open () {
-    console.wasWrapped = false;
-    const c = part(Console, { name: 'debug console' }).openInWindow(); // eslint-disable-line no-use-before-define
-    c.getSubmorphNamed('contents wrapper').fill = Color.transparent;
-    c.getSubmorphNamed('header').height = 25;
-  }
-
   get commands () {
     return [
       {
@@ -253,6 +247,7 @@ class LocalJSConsole extends Text {
 
 const Console = component({
   type: LocalJSConsole,
+  name: 'debug console',
   defaultViewModel: LocalJSConsoleModel,
   extent: pt(300, 400),
   fill: Color.black.withA(.9),
