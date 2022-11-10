@@ -26,6 +26,7 @@ class TextFormattingPopUpModel extends ViewModel {
   viewDidLoad () {
     this.ui.richTextControl.targetMorph = this.targetMorph;
     this.ui.richTextControl.update();
+    this.view.withAllSubmorphsDo(m => m.halosEnabled = false);
   }
 }
 
