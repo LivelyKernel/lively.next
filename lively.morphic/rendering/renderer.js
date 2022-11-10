@@ -1808,8 +1808,18 @@ export default class Renderer {
     textNode.style.width = 'max-content';
     textNode.style.height = 'max-content';
     textNode.style.position = 'static';
-    if (morph.fixedWidth) textNode.style.width = morph.width + 'px';
-    if (morph.fixedHeight) textNode.style.height = morph.height + 'px';
+
+    // if we are fixed width AND wrap the lines we can set
+    // the node to a fixed width
+    if (morph.fixedWidth && !!morph.lineWrapping) {
+      textNode.style.width = morph.width + 'px';
+    }
+    // if we are fixed height AND do not clip the contents
+    // with 'scroll' or 'auto' we can set the height to
+    // an absolute value
+    if (morph.fixedHeight &&
+        morph.clipMode !== 'auto' &&
+       morph.clipMode !== 'scroll') textNode.style.height = morph.height + 'px';
     this.placeholder.appendChild(textNode);
     const domMeasure = this.placeholder.getBoundingClientRect();
     textNode.style.removeProperty('width');
