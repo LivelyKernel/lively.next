@@ -232,7 +232,9 @@ export class Text extends Morph {
               !this._initializing && this.renderingState.needsFit
           ) {
             this._measuringTextBox = true;
-            this.fit();
+            this.withMetaDo({ metaInteraction: true }, () => {
+              this.fit();
+            });
             this._measuringTextBox = false;
           }
           this.renderingState.cursorChange = true;
