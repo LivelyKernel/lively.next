@@ -159,6 +159,7 @@ export default class Renderer {
       if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
       if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.push(morph);
       if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
+      if (morph.renderingState.needsCSSLayoutMeasure) this.renderedMorphsToBeMeasured.push(morph);
     }
 
     for (let morph of this.morphsWithStructuralChanges) {
@@ -175,6 +176,15 @@ export default class Renderer {
 
     for (let morph of this.renderedMorphsWithAnimations) {
       this.handleAddedAnimationChange(morph);
+    }
+
+    for (let morph of this.renderedMorphsToBeMeasured) {
+      if (morph.owner?.layout?.measureSubmorph) {
+        morph.owner.layout.measureSubmorph(morph);
+        // reapply the style here, but do not perform the measure again!
+        this.renderStylingChanges(morph);
+        morph.renderingState.needsCSSLayoutMeasure = false;
+      }
     }
   }
 
@@ -500,12 +510,10 @@ export default class Renderer {
 
     morph.renderingState.needsRemeasure = true;
     const node = this.getNodeForMorph(morph);
-
-    if (morph.patchSpecialProps) {
-      morph.patchSpecialProps(node, this); // super expensive for text
-    }
-
     const turnedVisible = node.style.display === 'none' && morph.visible;
+    if (morph.patchSpecialProps) {
+      morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
+    }
     applyStylingToNode(morph, node);
     if (turnedVisible) this.updateNodeScrollFromMorph(morph);
 
@@ -547,6 +555,7 @@ export default class Renderer {
     this.morphsWithStructuralChanges = [];
     this.renderedMorphsWithChanges = [];
     this.renderedMorphsWithAnimations = [];
+    this.renderedMorphsToBeMeasured = [];
   }
 
   /**
