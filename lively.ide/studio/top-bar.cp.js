@@ -666,7 +666,7 @@ export class TopBarModel extends ViewModel {
     const selectionBounds = Rectangle.fromAny(evt.position, this._selectionStartPos);
     this._morphSelection.setBounds(selectionBounds);
     target.submorphs.forEach(c => {
-      if (c.isSelectionElement || c.isHand) return;
+      if (c.isSelectionElement || c.isHand || c.isHalo || c.styleClasses.includes('HaloPreview') || c.isMorphSelection) return;
       const candidateBounds = c.globalBounds();
       const included = selectionBounds.containsRect(candidateBounds);
 
