@@ -903,10 +903,6 @@ export class Text extends Morph {
   __after_deserialize__ (snapshot, objRef, pool) {
     super.__after_deserialize__(snapshot, objRef, pool);
     this._isDeserializing = false;
-
-    this.whenRendered().then(() => {
-      this.embeddedMorphs.forEach(m => m.top = 0);
-    });
   }
 
   get __only_serialize__ () {
