@@ -2663,7 +2663,7 @@ export class Text extends Morph {
     return renderer.nodeForText(this);
   }
 
-  patchSpecialProps (node, renderer) {
+  patchSpecialProps (node, renderer, patchStyle) {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
     }
@@ -2686,6 +2686,7 @@ export class Text extends Morph {
 
     const currentTextLayerStyleObject = this.styleObject();
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
+      if (patchStyle) patchStyle();
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
       renderer.renderTextAndAttributes(node, this);
     }

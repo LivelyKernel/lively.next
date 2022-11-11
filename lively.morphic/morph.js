@@ -69,7 +69,8 @@ export class Morph {
             hasStructuralChanges: false,
             needsRerender: true,
             animationAdded: false,
-            hasCSSLayoutChange: false
+            hasCSSLayoutChange: false,
+            needsCSSLayoutMeasure: false
           };
         }
       },

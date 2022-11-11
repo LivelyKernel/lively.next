@@ -821,12 +821,13 @@ export class TilingLayout extends Layout {
     this.measureAfterRender(morph);
   }
 
-  measureAfterRender (submorph) {
-    // this introduces some lag. maybe fixed once we move to vanilla dom.
-    submorph.whenRendered().then(() => {
-      const target = this.getNodeFor(submorph);
-      target && this.ensureBoundsMonitor(target, submorph);
-    });
+  measureAfterRender (layoutableSubmorph) {
+    layoutableSubmorph.renderingState.needsCSSLayoutMeasure = true;
+  }
+
+  measureSubmorph (layoutableSubmorph) {
+    const target = this.getNodeFor(layoutableSubmorph);
+    target && this.ensureBoundsMonitor(target, layoutableSubmorph);
   }
 
   ensureBoundsMonitor (target, submorph) {
@@ -2825,10 +2826,11 @@ export class GridLayout extends Layout {
    * @param { Morph } layoutableSubmorph
    */
   measureAfterRender (layoutableSubmorph) {
-    // this introduces some lag. maybe fixed once we move to vanilla dom.
-    layoutableSubmorph.whenRendered().then(() => {
-      this.onDomResize();
-    });
+    layoutableSubmorph.renderingState.needsCSSLayoutMeasure = true;
+  }
+
+  measureSubmorph (layoutableSubmorph) {
+    this.onDomResize();
   }
 
   /**
