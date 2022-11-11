@@ -2582,7 +2582,9 @@ export class Text extends Morph {
       return;
     }
     if (this.document) {
+      this.renderingState.needsFit = false;
       const { fixedWidth, fixedHeight } = this;
+
       if ((fixedHeight && fixedWidth) ||
         !this.textLayout /* not init'ed yet */ ||
         this.master && !this.master._appliedMaster) {
@@ -2599,6 +2601,8 @@ export class Text extends Morph {
         });
       });
     } else if (this.env.renderer) {
+      this.renderingState.needsFit = false;
+      if (this.fixedHeight && this.fixedWidth) return;
       let textBoundsExtent = this.textBounds().extent();
       if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
       if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
@@ -2606,7 +2610,6 @@ export class Text extends Morph {
         this.borderWidthLeft + this.borderWidthRight,
         this.borderWidthTop + this.borderWidthBottom
       );
-      this.renderingState.needsFit = false;
     } else {
       this.whenEnvReady().then(() => {
         this.fit();
