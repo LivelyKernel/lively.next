@@ -2699,7 +2699,8 @@ export class Text extends Morph {
         this.invalidateTextLayout(true, true);
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }
-      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+      const scrollChanged = !obj.equals(this.renderingState.scroll, this.scroll);
+      if (scrollChanged) {
         renderer.scrollScrollLayerFor(node, this);
       }
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
@@ -2707,7 +2708,8 @@ export class Text extends Morph {
         renderer.renderTextAndAttributes(node, this);
         renderer.patchSelectionLayer(node, this);
       }
-      if (!obj.equals(this.renderingState.markers, this.markers)) {
+      if (!obj.equals(this.renderingState.markers, this.markers) ||
+          scrollChanged) {
         renderer.patchMarkerLayer(node, this);
       }
 

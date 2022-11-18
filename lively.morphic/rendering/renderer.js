@@ -1,5 +1,5 @@
 import { withoutAll } from 'lively.lang/array.js';
-import { arr, tree, num, obj } from 'lively.lang';
+import { arr, string, tree, num, obj } from 'lively.lang';
 import { getSvgVertices, canBePromotedToCompositionLayer, applyAttributesToNode, stylepropsToNode, lineWrappingToClass } from './property-dom-mapping.js';
 import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
@@ -92,8 +92,6 @@ export default class Renderer {
     } catch (err) {
     }
     if (domNode) {
-      const parent = domNode.parentNode;
-      const domNodeIndex = Array.from(parent.children).findIndex(n => n === domNode);
       const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
       for (let m of [this.worldMorph, ...fixedSubmorphs]) {
         this.renderMap.get(m).remove();
@@ -1063,7 +1061,7 @@ export default class Renderer {
    * @param {Text} morph - The Text owning the markers.
    * @returns {Node[]} An array of all marker nodes.
    */
-  renderMarkerLayer (morph) {
+  computeMarkerLayer (morph) {
     const {
       markers,
       renderingState: { firstVisibleRow, lastVisibleRow }
@@ -1073,26 +1071,34 @@ export default class Renderer {
     if (!markers) return parts;
 
     for (const m of markers) {
-      const { style, range: { start, end } } = m;
+      const { style, range: { start, end }, id } = m;
 
       if (end.row < firstVisibleRow || start.row > lastVisibleRow) continue;
 
       // single line
+      const rangeHash = string.md5(id + start.row + start.column + end.row + end.column);
       if (start.row === end.row) {
-        parts.push(this.renderMarkerPart(morph, start, end, style));
+        parts.push({ morph, id: rangeHash, start, end, style });
         continue;
       }
 
       // multiple lines
       // first line
-      parts.push(this.renderMarkerPart(morph, start, morph.lineRange(start.row).end, style));
+      parts.push({ morph, id: string.md5(rangeHash + 'start'), start, end: morph.lineRange(start.row).end, style });
       // lines in the middle
       for (let row = start.row + 1; row <= end.row - 1; row++) {
         const { start: lineStart, end: lineEnd } = morph.lineRange(row);
-        parts.push(this.renderMarkerPart(morph, lineStart, lineEnd, style, true));
+        parts.push({
+          morph,
+          id: string.md5(morph.id + lineStart.row + lineStart.column + lineEnd.row + lineEnd.column),
+          start: lineStart,
+          end: lineEnd,
+          style,
+          entireLine: true
+        });
       }
       // last line
-      parts.push(this.renderMarkerPart(morph, { row: end.row, column: 0 }, end, style));
+      parts.push({ morph, id: string.md5(rangeHash + 'end'), start: { row: end.row, column: 0 }, end, style });
     }
 
     return parts;
@@ -1107,7 +1113,7 @@ export default class Renderer {
    * @param {Boolean} entireLine - Flag to indicate wether or not the marker part covers the entire line.
    * @return {Node} A DOM node representing the respective part of the marker.
    */
-  renderMarkerPart (morph, start, end, style, entireLine = false) {
+  renderMarkerPart (morph, id, start, end, style, entireLine = false) {
     let startX = 0; let endX = 0; let y = 0; let height = 0;
     const { document: doc, textLayout } = morph;
     const line = doc.getLine(start.row);
@@ -1123,6 +1129,7 @@ export default class Renderer {
     }
     height = Math.ceil(height);
     const node = this.doc.createElement('div');
+    node.id = morph.id + id;
     node.classList.add('newtext-marker-layer');
     node.style.left = startX + 'px';
     node.style.top = y + 'px';
@@ -1599,7 +1606,7 @@ export default class Renderer {
     });
     if (inlineMorphUpdated) morph.invalidateTextLayout(true, false);
     morph.renderingState.renderedTextAndAttributes = morph.textAndAttributes;
-    morph.renderingState.extent = morph.extent;
+    morph.renderingState.extent = morph.getProperty('extent');
   }
 
   /**
@@ -1640,9 +1647,20 @@ export default class Renderer {
    */
   patchMarkerLayer (node, morph) {
     if (!node) return;
-    node.querySelectorAll('div.newtext-marker-layer').forEach(s => s.remove());
     const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
-    nodeToAppendTo.append(...this.renderMarkerLayer(morph));
+    if (!nodeToAppendTo) return;
+    const submorphsOrTextLayerNode = node.querySelector(`#submorphs-${morph.id}`) || node.querySelector(`#${morph.id}textLayer`);
+    const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
+    const markersToRender = this.computeMarkerLayer(morph);
+    keyed('id',
+      nodeToAppendTo,
+      alreadyRenderedMarkers,
+      markersToRender,
+      markerPart => this.renderMarkerPart(...Object.values(markerPart)),
+      noOpUpdate,
+      submorphsOrTextLayerNode
+    );
+    morph.renderingState.renderedMarkers = markersToRender;
     morph.renderingState.markers = morph.markers;
   }
 
