@@ -3,8 +3,8 @@
 NODE_VERSION=$(node -v)
 NODE_VERSION=$(echo "$NODE_VERSION" | sed -En 's/v([0-9]+)\..*/\1/p')
 
-if [[ $NODE_VERSION -lt 17 ]]; then
-  echo -n "Your node version is not supported. Please use at least node 17."
+if [[ $NODE_VERSION -lt 18 ]]; then
+  echo -n "Your node version is not supported. Please use at least node 18."
   exit 1;
 fi
 
