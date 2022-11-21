@@ -253,6 +253,7 @@ export class TopBarModel extends ViewModel {
 
   onKeyDown (evt) {
     if (evt.isCommandKey()) {
+      if (this.primaryTarget.isIDEWorld) return;
       // temporary toggle halo mode
       if (this._tmpEditMode === 'Hand') {
         this.setEditMode('Halo', true);
