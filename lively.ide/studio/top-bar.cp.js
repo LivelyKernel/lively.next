@@ -6,7 +6,6 @@ import { resource } from 'lively.resources';
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
 import { getClassName } from 'lively.serializer2';
-import { Selection, SelectionElement } from '../world.js';
 import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
@@ -64,6 +63,35 @@ export class FastLoadToggler extends Morph {
     for (let key in loadConfig) loadConfig[key] = active ? 'dynamic' : 'frozen';
     this.loadConfig = loadConfig;
     this.refresh();
+  }
+}
+
+class SelectionElement extends Morph {
+  static get properties () {
+    return {
+      borderColor: { defaultValue: Color.red },
+      borderWidth: { defaultValue: 1 },
+      fill: { defaultValue: Color.transparent },
+      epiMorph: { defaultValue: true },
+      isSelectionElement: {
+        readOnly: true,
+        get () { return true; }
+      }
+    };
+  }
+}
+
+export class Selection extends Morph {
+  static get properties () {
+    return {
+      fill: { defaultValue: Color.gray.withA(0.2) },
+      borderWidth: { defaultValue: 2 },
+      borderColor: { defaultValue: Color.gray },
+      isSelectionElement: {
+        readOnly: true,
+        get () { return true; }
+      }
+    };
   }
 }
 

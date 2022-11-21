@@ -657,6 +657,46 @@ export class LivelyWorld extends World {
     return overlay && this.addMorphAt(overlay, insertionIndex);
   }
 
+  //= ====== hover halo interface ========
+  handleHaloCycle (evt) {
+    const target = evt.state.clickedOnMorph;
+    const isCommandKey = evt.isCommandKey();
+    const isShiftKey = evt.isShiftDown();
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // halo activation + removal
+    // note that the logic for cycling halos from morph to underlying morph is
+    // implemented in Halo>>onMouseDown
+    let haloTarget;
+    if (isCommandKey && !target.isHalo) {
+      let morphsBelow = evt.world.morphsContainingPoint(evt.position);
+      let morphsBelowTarget = morphsBelow;
+      morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
+      morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
+      haloTarget = morphsBelowTarget[0] || morphsBelow[0];
+    }
+    if (isShiftKey && !target.isHaloItem && haloTarget &&
+         evt.halo && evt.halo.borderBox !== haloTarget) {
+      evt.halo.addMorphToSelection(haloTarget);
+      return;
+    }
+    const removeHalo = evt.halo && !evt.targetMorphs.find(morph =>
+      morph.isHaloItem || morph.keepHalo && morph.keepHalo(evt));
+    const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
+    const addHalo = (!evt.halo || removeHalo) && haloTarget;
+    if (removeLayoutHalo) evt.layoutHalo.remove();
+    if (removeHalo) {
+      evt.halo.remove();
+      this.withTopBarDo(tb => {
+        if (tb.stylingPalette) { tb.stylingPalette.clearFocus(); }
+        if (tb.sideBar) { tb.sideBar.clearFocus(); }
+      });
+    }
+    if (addHalo) {
+      evt.stop();
+      this.showHaloFor(haloTarget, evt.domEvt.pointerId);
+    }
+  }
+
   highlightMorph (highlightOwner, morph, showLayout = false, highlightedSides = []) {
     return MorphHighlighter.for(highlightOwner, morph, showLayout, highlightedSides);
   }
@@ -1231,75 +1271,5 @@ export class LivelyWorld extends World {
     this.halos().forEach(halo => {
       halo.maskBounds = this.visibleBounds();
     });
-  }
-
-  //= ====== hover halo interface ========
-
-  handleHaloCycle (evt) {
-    const target = evt.state.clickedOnMorph;
-    const isCommandKey = evt.isCommandKey();
-    const isShiftKey = evt.isShiftDown();
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // halo activation + removal
-    // note that the logic for cycling halos from morph to underlying morph is
-    // implemented in Halo>>onMouseDown
-    let haloTarget;
-    if (isCommandKey && !target.isHalo) {
-      let morphsBelow = evt.world.morphsContainingPoint(evt.position);
-      let morphsBelowTarget = morphsBelow;
-      morphsBelow = morphsBelow.filter(ea => ea.halosEnabled);
-      morphsBelowTarget = morphsBelowTarget.filter(ea => ea.halosEnabled);
-      haloTarget = morphsBelowTarget[0] || morphsBelow[0];
-    }
-    if (isShiftKey && !target.isHaloItem && haloTarget &&
-         evt.halo && evt.halo.borderBox !== haloTarget) {
-      evt.halo.addMorphToSelection(haloTarget);
-      return;
-    }
-    const removeHalo = evt.halo && !evt.targetMorphs.find(morph =>
-      morph.isHaloItem || morph.keepHalo && morph.keepHalo(evt));
-    const removeLayoutHalo = evt.layoutHalo && !evt.targetMorphs.find(morph => morph.isHaloItem);
-    const addHalo = (!evt.halo || removeHalo) && haloTarget;
-    if (removeLayoutHalo) evt.layoutHalo.remove();
-    if (removeHalo) {
-      evt.halo.remove();
-      this.withTopBarDo(tb => {
-        if (tb.stylingPalette) { tb.stylingPalette.clearFocus(); }
-        if (tb.sideBar) { tb.sideBar.clearFocus(); }
-      });
-    }
-    if (addHalo) {
-      evt.stop();
-      this.showHaloFor(haloTarget, evt.domEvt.pointerId);
-    }
-  }
-}
-
-export class SelectionElement extends Morph {
-  static get properties () {
-    return {
-      borderColor: { defaultValue: Color.red },
-      borderWidth: { defaultValue: 1 },
-      fill: { defaultValue: Color.transparent },
-      epiMorph: { defaultValue: true },
-      isSelectionElement: {
-        readOnly: true,
-        get () { return true; }
-      }
-    };
-  }
-}
-
-export class Selection extends Morph {
-  static get properties () {
-    return {
-      fill: { defaultValue: Color.gray.withA(0.2) },
-      borderWidth: { defaultValue: 2 },
-      borderColor: { defaultValue: Color.gray },
-      isSelectionElement: {
-        readOnly: true,
-        get () { return true; }
-      }
-    };
   }
 }
