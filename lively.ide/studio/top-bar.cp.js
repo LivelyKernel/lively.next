@@ -584,7 +584,6 @@ export class TopBarModel extends ViewModel {
       })[0];
       // when we are hovering a menu item or one of the sidebars, then we do not trigger the halo preview
       if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.propertiesPanel)) {
-        this._currentlyHighlighted = false;
         return;
       }
       this.showHaloPreviewFor(haloTarget);
@@ -672,6 +671,7 @@ export class TopBarModel extends ViewModel {
   }
 
   clearHaloPreviews () {
+    this._currentlyHighlighted = null;
     this.world().getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
   }
 
