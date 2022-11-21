@@ -567,6 +567,7 @@ export class TopBarModel extends ViewModel {
   }
 
   handleHaloPreview (evt) {
+    this.clearHaloPreviews();
     if (this._showHaloPreview) {
       const { haloFilterFn } = this;
       const target = this.primaryTarget || this.world();
@@ -583,7 +584,6 @@ export class TopBarModel extends ViewModel {
       // when we are hovering a menu item or one of the sidebars, then we do not trigger the halo preview
       if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.propertiesPanel)) {
         this._currentlyHighlighted = false;
-        this.clearHaloPreviews();
         return;
       }
       this.showHaloPreviewFor(haloTarget);
