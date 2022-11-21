@@ -14,8 +14,8 @@ Please note, that these instructions currently are are not recommended for openl
 Currently, the MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed.
 
-1. node.js version 17 or later
-2. git
+1. `node.js v18.12.1`
+2. `git`
 
 For some more advanced development operations (bulk testing from the command line), you will also need 
 
