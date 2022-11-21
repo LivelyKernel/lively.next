@@ -13,7 +13,7 @@ jobs:
     - name: Setup node
       uses: actions/setup-node@v2
       with:
-        node-version: '16.13.1'
+        node-version: '18.12.1'
     - name: Install jsdocs
       run: npm install -g jsdoc@3.6.7
     - name: Install jsodc theme
