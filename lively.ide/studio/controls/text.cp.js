@@ -112,8 +112,8 @@ export class RichTextControlModel extends ViewModel {
         fontWeightSelector.selection = text.fontWeight; // fixme
         fontSizeInput.number = text.fontSize;
         lineHeightInput.number = text.lineHeight; // fixme
-        letterSpacingInput.number = text.letterSpacing;
-        lineWrappingSelector.selection = text.lineWrapping;
+        if (letterSpacingInput) letterSpacingInput.number = text.letterSpacing;
+        if (lineWrappingSelector) lineWrappingSelector.selection = text.lineWrapping;
         fontColorInput.setColor(text.fontColor);
         leftAlign.master = text.textAlign === 'left' ? hoveredButtonComponent : activeButtonComponent;
         centerAlign.master = text.textAlign === 'center' ? hoveredButtonComponent : activeButtonComponent;
