@@ -15,7 +15,14 @@ export class RichTextFormattableText extends Text {
   onMouseMove (evt) {
     if (!evt.leftMouseButtonPressed() || !this.selectable || evt.state.clickedOnMorph !== this) { return; }
     this.selection.lead = this.textPositionFromPoint(this.localize(evt.position));
-    this.showFormattingPopUp();
+    this.wantsFormattingPopUp = true;
+  }
+
+  onMouseUp () {
+    if (this.wantsFormattingPopUp) {
+      this.showFormattingPopUp();
+      this.wantsFormattingPopUp = false;
+    }
   }
 
   showFormattingPopUp () {
