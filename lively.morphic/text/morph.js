@@ -1634,6 +1634,7 @@ export class Text extends Morph {
     if (this.document) defaultTextStyle = this.defaultTextStyle;
     else resetStyle = false;
     this.document = doc;
+    this.document.lines.forEach(line => line.lineNeedsRerender = true);
     this.textLayout.reset();
     if (resetStyle) this.defaultTextStyle = defaultTextStyle;
     this.makeDirty();
