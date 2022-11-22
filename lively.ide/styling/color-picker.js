@@ -271,7 +271,7 @@ export class ColorPickerModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup'];
+          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup', 'isColorPicker'];
         }
       },
       bindings: {
@@ -297,6 +297,9 @@ export class ColorPickerModel extends ViewModel {
     return true;
   }
 
+  get isColorPicker () {
+    return true;
+  }
   // no onRefresh needed? it is needed. When we switch the mode, we need to update the selector...
 
   toggleHalos (active) {

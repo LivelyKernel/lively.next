@@ -2016,7 +2016,7 @@ export default class Halo extends Morph {
     t.focus();
     t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
 
-    once(t, 'onBlur', t, 'cancelTemporaryEdit');
+    connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
 
     // switch to hand mode to stop halo from eating clicks for editing
     topBar.setEditMode('Hand', true);
