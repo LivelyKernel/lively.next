@@ -3493,4 +3493,15 @@ export class Text extends Morph {
       world ? world.logError(err) : console.error(err);
     }
   }
+
+  cancelTemporaryEdit () {
+    const topBar = $world.get('lively top bar');
+    if (!this.tmpEdit) return;
+    this.tmpEdit = false;
+    topBar.setEditMode('Halo', true);
+    this.readOnly = this.prevReadOnly;
+    this.collapseSelection();
+    this.removeFormattingPopUp(true);
+    topBar.showHaloFor(this);
+  }
 }
