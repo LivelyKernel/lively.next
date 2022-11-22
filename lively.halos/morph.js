@@ -2003,31 +2003,32 @@ export default class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   temporaryEditTextMorph (evt) {
-    if (!this.target.isText) return;
-    const prevReadOnly = this.target.readOnly;
-    this.target.readOnly = false;
-    this.target.focus();
-    this.target.cursorPosition = this.target.textPositionFromPoint(evt ? evt.positionIn(this.target) : pt(0, 0));
-    const world = this.world();
     const t = this.target;
     const topBar = this.topBar;
-    const retarget = (evt) => {
-      if (topBar.stylingPalette &&
-                topBar.stylingPalette.fullContainsWorldPoint(world.firstHand.position)) {
-        t.whenRendered().then(() => {
-          once(t, 'onBlur', retarget);
-        });
-        once(t, 'onBlur', retarget);
-        return;
-      }
+
+    if (!t.isText) return;
+
+    // this makes sense even if target is not readonly
+    // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
+    const prevReadOnly = t.readOnly;
+    t.tmpEdit = true;
+    t.readOnly = false;
+    t.focus();
+    t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
+
+    const cancelTemporaryEdit = (evt) => {
+      if (!t.tmpEdit) return;
+      t.tmpEdit = false;
       topBar.setEditMode('Halo', true);
       t.readOnly = prevReadOnly;
       t.collapseSelection();
+      t.removeFormattingPopUp(true);
       topBar.showHaloFor(t);
     };
-    this.target.whenRendered().then(() => {
-      once(t, 'onBlur', retarget);
-    });
+
+    once(t, 'onBlur', cancelTemporaryEdit);
+
+    // switch to hand mode to stop halo from eating clicks for editing
     topBar.setEditMode('Hand', true);
     this.remove();
   }
