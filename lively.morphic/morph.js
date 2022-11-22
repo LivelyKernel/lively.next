@@ -8,9 +8,8 @@ import {
   ShadowObject
 } from './rendering/morphic-default.js';
 import { AnimationQueue, easings } from './rendering/animations.js';
-import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import { Icon } from './text/icons.js';
-import { morph, newMorphId, sanitizeFont } from './helpers.js';
+import { morph, newMorphId } from './helpers.js';
 import { MorphicEnv } from './env.js';
 import config from './config.js';
 import CommandHandler from './CommandHandler.js';
@@ -800,20 +799,6 @@ export class Morph {
         defaultValue: false
       },
 
-      installedFonts: {
-        doc: "custom fonts can be installed from a respective morph, and are then kept as part of this morph's state in order to be loaded again the next time the it is cold loaded. (i.e. deserialization of a part)",
-        defaultValue: {},
-        set (fonts) {
-          const fontsBefore = arr.without(obj.keys(this.installedFonts || {}), '_rev');
-          const fontsAfter = arr.without(obj.keys(fonts || {}), '_rev');
-          this.setProperty('installedFonts', fonts);
-          this.ensureInstalledFonts(fontsBefore, fontsAfter);
-        },
-        get () {
-          return this.getProperty('installedFonts') || {};
-        }
-      },
-
       metadata: { group: 'core' }
     };
   }
@@ -1045,42 +1030,6 @@ export class Morph {
       }
     });
     this.metadata = metadata;
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // custom font/css management
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  installFont (name, fontUrl) {
-    this.installedFonts = { ...this.installedFonts, [name]: fontUrl };
-    this.insertFontCSS(name, fontUrl);
-  }
-
-  uninstallFont (name) {
-    delete this.installedFonts[name];
-    const node = document.getElementById(`${this.id}-${name}`);
-    if (node) node.remove();
-  }
-
-  ensureInstalledFonts (removedFonts, addedFonts) {
-    for (const name of removedFonts) {
-      const node = document.getElementById(`${this.id}-${name}`);
-      if (node) node.remove();
-    }
-    for (const name of addedFonts) {
-      if (!this.env.fontMetric.isFontSupported(sanitizeFont(name))) { this.insertFontCSS(name, this.installedFonts[name]); }
-    }
-  }
-
-  async insertFontCSS (name, fontUrl) {
-    await this.whenRendered();
-    if (fontUrl.endsWith('.otf')) {
-      addOrChangeCSSDeclaration(`${this.id}-${name}`,
-         `@font-face {
-             font-family: ${name};
-             src: url("${this.installedFonts[name]}") format("opentype");
-         }`);
-    } else addOrChangeCSSDeclaration(`${this.id}-${name}`, `@import url("${this.installedFonts[name]}");`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
