@@ -294,7 +294,8 @@ export default class Renderer {
           this.handleScrollLayer(node, morph);
           scrollWrapper = node.querySelector('.scrollWrapper');
         }
-        scrollWrapper.appendChild(wrapperNode);
+        const markerNode = scrollWrapper.querySelector('.newtext-marker-layer') || null;
+        scrollWrapper.insertBefore(wrapperNode, markerNode);
       } else if (!morph.isPath) node.appendChild(wrapperNode); // normal morphs
       else node.insertBefore(wrapperNode, node.lastChild); // path
       if (fixChildNodes) {
