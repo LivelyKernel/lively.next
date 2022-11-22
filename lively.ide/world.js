@@ -692,6 +692,7 @@ export class LivelyWorld extends World {
       });
     }
     if (addHalo) {
+      haloTarget.cancelTemporaryEdit && haloTarget.cancelTemporaryEdit();
       evt.stop();
       this.showHaloFor(haloTarget, evt.domEvt.pointerId);
     }
