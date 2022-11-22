@@ -19,7 +19,7 @@ export class RichTextFormattableText extends Text {
   }
 
   showFormattingPopUp () {
-    if (!this.useFormattingPopUp) return;
+    if (!this.useFormattingPopUp || this.readOnly) return;
 
     if (!this.selection.isEmpty() && !this.formattingPopUp?.world()) this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this } }).openInWorldNearHand();
   }
