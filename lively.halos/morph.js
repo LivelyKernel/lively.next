@@ -2010,23 +2010,13 @@ export default class Halo extends Morph {
 
     // this makes sense even if target is not readonly
     // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
-    const prevReadOnly = t.readOnly;
+    t.prevReadOnly = t.readOnly;
     t.tmpEdit = true;
     t.readOnly = false;
     t.focus();
     t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
 
-    const cancelTemporaryEdit = (evt) => {
-      if (!t.tmpEdit) return;
-      t.tmpEdit = false;
-      topBar.setEditMode('Halo', true);
-      t.readOnly = prevReadOnly;
-      t.collapseSelection();
-      t.removeFormattingPopUp(true);
-      topBar.showHaloFor(t);
-    };
-
-    once(t, 'onBlur', cancelTemporaryEdit);
+    once(t, 'onBlur', t, 'cancelTemporaryEdit');
 
     // switch to hand mode to stop halo from eating clicks for editing
     topBar.setEditMode('Hand', true);
