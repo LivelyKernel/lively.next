@@ -3494,7 +3494,20 @@ export class Text extends Morph {
     }
   }
 
-  cancelTemporaryEdit () {
+  cancelTemporaryEdit (evt, calledFromConnection = true) {
+    if (calledFromConnection) {
+      const targets = evt.targetMorphs;
+      // clicks inside of the text should not cancel editing
+      if (targets[0] === this) return;
+      // formatting options are legal
+      if (targets.map(m => m.name).includes('formatting pop up')) return;
+      // this is not 100% bullet proof, but should be good enough
+      // color pickers and dropdown lists that can be opened from the formatting pop up should be usable
+      if ((targets.some(m => m.isList) ||
+         targets.some(m => m.isColorPicker)) &&
+         $world.get('formatting pop up')) return;
+    }
+    disconnect($world, 'onMouseDown', this, 'cancelTemporaryEdit');
     const topBar = $world.get('lively top bar');
     if (!this.tmpEdit) return;
     this.tmpEdit = false;
