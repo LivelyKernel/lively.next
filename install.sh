@@ -4,6 +4,14 @@
 
 lv_next_dir=$PWD
 
+NODE_VERSION=$(node -v)
+NODE_VERSION=$(echo "$NODE_VERSION" | sed -En 's/v([0-9]+)\..*/\1/p')
+
+if [[ $NODE_VERSION -lt 18 ]]; then
+  echo -n 'Your node version is not supported. Please use at least node 18.'; echo;
+  exit 1;
+fi
+
 export PATH=$lv_next_dir/flatn/bin:$PATH
 export FLATN_PACKAGE_DIRS=
 export FLATN_PACKAGE_COLLECTION_DIRS=$lv_next_dir/lively.next-node_modules
