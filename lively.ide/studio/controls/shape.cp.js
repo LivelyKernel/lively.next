@@ -286,6 +286,60 @@ const ShapeControl = component({
       padding: rect(5, 5, 0, 0),
       textAndAttributes: ['', { fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"', fontWeight: '900', textStyleClasses: ['fas'] }]
     }),
+    part(EnumSelector, {
+      name: 'width mode selector',
+      tooltip: 'Horizontal Resizing',
+      extent: pt(72, 22),
+      layout: new TilingLayout(
+        {
+          align: 'center',
+          axisAlign: 'center',
+          justifySubmorphs: 'spaced',
+          orderByIndex: true,
+          padding: rect(5, 0, 5, 0),
+          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]],
+          wrapSubmorphs: false
+        }),
+      viewModel: {
+        listMaster: DarkThemeList,
+        openListInWorld: true,
+        listAlign: 'selection',
+        items: [
+          { string: '|-| Fixed', value: 'fixed', isListItem: true },
+          { string: '<> Fill', value: 'fill', isListItem: true },
+          { string: '>< Hug', value: 'hug', isListItem: true }
+        ]
+      },
+      submorphs: [
+        { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
+    }),
+    part(EnumSelector, {
+      name: 'height mode selector',
+      tooltip: 'Vertical Resizing',
+      extent: pt(72, 22),
+      layout: new TilingLayout(
+        {
+          align: 'center',
+          axisAlign: 'center',
+          justifySubmorphs: 'spaced',
+          orderByIndex: true,
+          padding: rect(5, 0, 5, 0),
+          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]],
+          wrapSubmorphs: false
+        }),
+      viewModel: {
+        listMaster: DarkThemeList,
+        openListInWorld: true,
+        listAlign: 'selection',
+        items: [
+          { string: 'I Fixed', value: 'fixed', isListItem: true },
+          { string: '⇳ Fill', value: 'fill', isListItem: true },
+          { string: '⑄ Hug', value: 'hug', isListItem: true }
+        ]
+      },
+      submorphs: [
+        { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
+    }), { opacity: 0, name: 'buffer', width: 25 },
     part(NumberInputDark, {
       name: 'rotation input',
       tooltip: 'Rotation',
