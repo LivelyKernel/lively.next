@@ -455,7 +455,7 @@ const ShapeControl = component({
         type: Label,
         name: 'interactive label',
         fill: Color.rgba(229, 231, 233, 0),
-        fontColor: Color.rgb(255, 255, 255),
+        fontColor: Color.rgba(178, 235, 242, 0.6),
         fontFamily: 'Material Icons',
         nativeCursor: 'pointer',
         padding: rect(6, 0, -6, 0),
@@ -464,7 +464,7 @@ const ShapeControl = component({
           fontSize: 16,
           textStyleClasses: ['material-icons']
         }]
-      }, 'label')]
+      }, 'label'), { name: 'label', fontColor: Color.rgb(178, 235, 242) }]
     })]
 });
 
