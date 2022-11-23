@@ -183,7 +183,12 @@ export class PropertiesPanelModel extends ViewModel {
     }
     fillControl.focusOn(aMorph);
     layoutControl.focusOn(aMorph);
-    alignmentControl.focusOn(aMorph);
+    if (aMorph.owner && aMorph.owner !== $world) {
+      alignmentControl.view.visible = true;
+      alignmentControl.focusOn(aMorph);
+    } else {
+      alignmentControl.view.visible = false;
+    }
     borderControl.focusOn(aMorph);
     effectsControl.focusOn(aMorph);
   }
