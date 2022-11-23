@@ -3501,6 +3501,8 @@ export class Text extends Morph {
       if (targets[0] === this) return;
       // formatting options are legal
       if (targets.map(m => m.name).includes('formatting pop up')) return;
+      // allows confirm prompt for link setting
+      if (targets[0].name === 'ok button' || targets[0].name === 'cancel button') return;
       // this is not 100% bullet proof, but should be good enough
       // color pickers and dropdown lists that can be opened from the formatting pop up should be usable
       if ((targets.some(m => m.isList) ||
