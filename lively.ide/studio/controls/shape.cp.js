@@ -343,7 +343,6 @@ const ShapeControl = component({
     part(NumberInputDark, {
       name: 'rotation input',
       tooltip: 'Rotation',
-      position: pt(24.7, 29),
       unit: '°',
       min: 0,
       max: 359,
@@ -441,7 +440,6 @@ const ShapeControl = component({
       name: 'clip mode selector',
       tooltip: 'Clip Mode',
       extent: pt(165, 23.3),
-      position: pt(10.2, 41.9),
       viewModel: {
         listMaster: DarkThemeList,
         openListInWorld: true,
