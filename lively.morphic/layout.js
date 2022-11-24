@@ -466,11 +466,12 @@ export class TilingLayout extends Layout {
 
   /**
    * If set to true, the container auto adjusts its height to fit the content.
-   * Warning: This property is inactive when wrapping is enabled AND the axis are columns.
+   * Warning: This property is inactive when wrapping is enabled AND the axis are columns. It also is inactive when none of the layoutable submorphs are set for their height to be fixed. The reason is that then there is no way for the layout to determine what height to hug to.
    * @type {Boolean}
    */
   get hugContentsVertically () {
     if (this.wrapSubmorphs && this.axis === 'column') return false;
+    if (!this.resizePolicies.some(([_, { height }]) => height === 'fixed')) return false;
     return this._hugContentsVertically;
   }
 
@@ -481,11 +482,12 @@ export class TilingLayout extends Layout {
 
   /**
    * If set to true, the container auto adjusts its width to fit the content.
-   * Warning: This property is inactive when wrapping is enabled AND the axis are rows.
+   * Warning: This property is inactive when wrapping is enabled AND the axis are rows. It also is inactive when none of the layoutable submorphs are set for their width to be fixed. The reason is that then there is no way for the layout to determine what width to hug to.
    * @type {Boolean}
    */
   get hugContentsHorizontally () {
     if (this.wrapSubmorphs && this.axis === 'row') return false;
+    if (!this.resizePolicies.some(([_, { width }]) => width === 'fixed')) return false;
     return this._hugContentsHorizontally;
   }
 
@@ -521,12 +523,12 @@ export class TilingLayout extends Layout {
    */
   getResizeHeightPolicyFor (aLayoutableSubmorph) {
     const policy = this._resizePolicies.get(aLayoutableSubmorph) || { width: 'fixed', height: 'fixed' };
-    return (this.wrapSubmorphs || this.hugContentsVertically) ? 'fixed' : policy.height;
+    return this.wrapSubmorphs ? 'fixed' : policy.height;
   }
 
   getResizeWidthPolicyFor (aLayoutableSubmorph) {
     const policy = this._resizePolicies.get(aLayoutableSubmorph) || { width: 'fixed', height: 'fixed' };
-    return (this.wrapSubmorphs || this.hugContentsHorizontally) ? 'fixed' : policy.width;
+    return this.wrapSubmorphs ? 'fixed' : policy.width;
   }
 
   setResizePolicyFor (aLayoutableSubmorph, policy) {
