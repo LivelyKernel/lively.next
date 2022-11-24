@@ -1815,7 +1815,7 @@ export class DropDownListModel extends ButtonModel {
 
       expose: {
         get () {
-          return ['keybindings', 'commands', 'items', 'selection', 'setMixed', 'isMixed'];
+          return ['keybindings', 'commands', 'items', 'selection', 'setMixed', 'isMixed', 'enable', 'disable'];
         }
       },
 
