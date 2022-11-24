@@ -960,6 +960,14 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
   return browser.browse(browseSpec, optSystemInterface);
 }
 
+function browserForFile (fileName) {
+  const browsers = $world.getWindows()
+    .map(win => win.targetMorph).filter(ea => ea.isBrowser);
+  const browserWithFile = browsers.find(({ selectedModule }) =>
+    selectedModule && selectedModule.url === fileName);
+  return browserWithFile;
+}
+
 async function open () {
   const browser = part(SystemBrowser);
   await browser.viewModel.toggleWindowStyle(false);
@@ -977,5 +985,5 @@ export {
   BrowserDirectoryControls,
   BrowserPackageControls,
   SystemBrowser,
-  open, browse
+  open, browse, browserForFile
 };
