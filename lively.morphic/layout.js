@@ -337,6 +337,10 @@ export class TilingLayout extends Layout {
     }
   }
 
+  get layoutableSubmorphs () {
+    return super.layoutableSubmorphs.filter(m => m.visible);
+  }
+
   get reactToSubmorphAnimations () {
     return this._reactToSubmorphAnimations;
   }
@@ -977,6 +981,15 @@ export class TilingLayout extends Layout {
       let fixedHeight = padding.top() + padding.bottom() - this.spacing;
       let fixedWidth = padding.left() + padding.right() - this.spacing;
       let numDynamic = 0;
+
+      if (hugContentsVertically) {
+        container.height = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeHeightPolicyFor(m) == 'fixed').height + padding.top() + padding.bottom();
+      }
+
+      if (hugContentsHorizontally) {
+        container.width = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeWidthPolicyFor(m) == 'fixed').width + padding.left() + padding.right();
+      }
+
       morphsOnAxis.forEach(m => {
         if (isHorizontal) {
           fixedWidth += this.spacing;
@@ -1086,14 +1099,6 @@ export class TilingLayout extends Layout {
         this.changePropertyAnimated(m, posAccessor, pos, animate);
       });
     });
-
-    if (hugContentsVertically) {
-      container.height = container.submorphBounds(m => layoutableSubmorphs.includes(m)).height + padding.top() + padding.bottom();
-    }
-
-    if (hugContentsHorizontally) {
-      container.width = container.submorphBounds(m => layoutableSubmorphs.includes(m)).width + +padding.left() + padding.right();
-    }
 
     this.active = false;
     this.forceLayoutsInNextLevel();
