@@ -89,7 +89,7 @@ class LoadingIndicatorModel extends ViewModel {
         defaultValue: false,
         set (val) {
           this.setProperty('status', val);
-          const { status, label } = this.ui;
+          const { status } = this.ui;
           if (val) {
             status.visible = true;
             status.value = val;
@@ -97,7 +97,6 @@ class LoadingIndicatorModel extends ViewModel {
             status.visible = false;
             status.value = '';
           }
-          this.relayout();
         }
       },
 
@@ -110,17 +109,9 @@ class LoadingIndicatorModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { signal: 'extent', handler: 'relayout' },
             { signal: 'onHoverIn', handler: 'onHoverIn' },
             { signal: 'onHoverOut', handler: 'onHoverOut' },
             { signal: 'openInWorld', handler: 'openInWorld' },
-
-            // rms: 10.1.22 all of these are for centering in response to label updates...
-            // ... isnt there a more elegant way to achieve this???
-            { target: 'label', signal: 'extent', handler: 'relayout' },
-            { target: 'label', signal: 'value', handler: 'updateLabel' },
-            { target: 'label', signal: 'fontSize', handler: 'updateLabel' },
-            { target: 'label', signal: 'fontFamily', handler: 'updateLabel' },
             { model: 'close button', signal: 'fire', handler: 'close' }
           ];
         }
@@ -128,21 +119,16 @@ class LoadingIndicatorModel extends ViewModel {
     };
   }
 
-  onHoverIn () { this.ui.closeButton.visible = true; }
-  onHoverOut () { this.ui.closeButton.visible = false; }
+  onHoverIn () { this.ui.closeButton.opacity = 1; }
+  onHoverOut () { this.ui.closeButton.opacity = 0; }
 
   close () {
     this.view.remove();
   }
 
   openInWorld () {
-    const { status, label, spinner } = this.ui;
-    label.whenRendered().then(() => {
-      if (spinner) spinner.visible = true;
-      label.fit();
-    });
+    const { status } = this.ui;
 
-    // somewhat redundant
     if (this.label) {
       status.visible = true;
       status.value = this.label;
@@ -150,93 +136,50 @@ class LoadingIndicatorModel extends ViewModel {
       status.visible = false;
       status.value = '';
     }
-
-    this.relayout();
   }
 
   viewDidLoad () {
-    const { label, closeButton, progressBar } = this.ui;
+    const { label, progressBar } = this.ui;
     if (progressBar) {
-      progressBar.opacity = 0;
-      progressBar.isLayoutable = false;
+      progressBar.visible = false;
     }
     label.value = this.label;
-    this.relayout();
   }
 
   async animateProgress (p) {
-    let { ui: { progressBar }, view } = this;
-    if (!progressBar) {
-      progressBar = view.addMorph(new ProgressBar({ name: 'progress bar' }));
-    }
-    const center = view.center;
-    if (p == false) {
-      progressBar.isLayoutable = false;
-      progressBar.opacity = 0;
+    let { ui: { progressBar } } = this;
+    if (p === false) {
+      progressBar.visible = false;
     } else {
-      progressBar.isLayoutable = true;
-      progressBar.opacity = 1;
+      progressBar.visible = true;
     }
     progressBar.progress = p;
-    await view.whenRendered();
-    view.center = center;
   }
 
   async hideSpinner () {
-    const { ui: { spinner }, view } = this;
+    const { ui: { spinner } } = this;
     if (!spinner) return;
     spinner.visible = false;
     spinner.width = 50;
     spinner.remove();
-    await view.whenRendered();
   }
-
-  updateLabel () {
-    const { view } = this;
-    const center = view.center;
-    this.relayout();
-    view.center = center;
-  }
-
-  relayout () {
-    const padding = Rectangle.inset(20, 12);
-    const { view, ui: { spinner, label, closeButton, progressBar, status } } = this;
-    closeButton.topRight = view.innerBounds().insetBy(2).topRight();
-    progressBar.extent = pt(label.owner.bounds().width, 5);
-    status[status.visible ? 'top' : 'bottom'] = label.height;
-  }
-}
-
-function forPromise (p, label, props) {
-  const i = open(label, props);
-  promise.finally(Promise.resolve(p), () => i.remove());
-  return i;
-}
-
-async function runFn (fn, label, props) {
-  const i = open(label, props);
-  await i.whenRendered();
-  try { return await fn(i); } finally { i.remove(); }
 }
 
 function open (label = 'Loading...', props) {
-  const li = part(LoadingIndicator, { viewModel: { label }, ...props });
+  const li = part(LoadingIndicator, { viewModel: { label }, ...props }); // eslint-disable-line no-use-before-define
   if (props && props.animated) {
     promise.delay(props.delay || 0).then(() => {
       const hoverOffset = 25;
       li.openInWorld();
       li.opacity = 0;
-      li.whenRendered().then(() => {
-        if (li.ui.spinner) li.ui.spinner.visible = true;
-        li.top += hoverOffset;
-        li.animate({
-          top: li.top - hoverOffset,
-          easing: easings.outExpo
-        });
-        li.animate({
-          opacity: 1,
-          easing: easings.outExpo
-        });
+      li.top += hoverOffset;
+      li.animate({
+        top: li.top - hoverOffset,
+        easing: easings.outExpo
+      });
+      li.animate({
+        opacity: 1,
+        easing: easings.outExpo
       });
     });
     return li;
@@ -245,51 +188,70 @@ function open (label = 'Loading...', props) {
   return li;
 }
 
-// part(LoadingIndicator).openInWorld()
+async function runFn (fn, label, props) {
+  const i = open(label, props);
+  i.env.renderer.renderStep();
+  try { return await fn(i); } finally { i.remove(); }
+}
+
+function forPromise (p, label, props) {
+  const i = open(label, props);
+  promise.finally(Promise.resolve(p), () => i.remove());
+  return i;
+}
+
 const LoadingIndicator = component({
   defaultViewModel: LoadingIndicatorModel,
+  fill: Color.transparent,
   name: 'loading indicator',
-  borderRadius: 10,
-  clipMode: 'hidden',
-  epiMorph: true,
-  hasFixedPosition: true,
-  dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
-  extent: pt(225, 65),
-  fill: Color.rgba(0, 0, 0, 0.65),
-  layout: new TilingLayout({
-    autoResize: true,
-    wrapSubmorphs: false,
-    hugContentsVertically: true,
-    hugContentsHorizontally: true,
-    align: 'center',
-    axis: 'column',
-    axisAlign: 'center',
-    orderByIndex: true,
-    spacing: 15,
-    padding: 10
-  }),
-  position: pt(1035, 573),
+  layout: new TilingLayout({ align: 'center', axisAlign: 'center' }),
+  extent: pt(225, 50),
   submorphs: [{
-    name: 'wrapper',
-    extent: pt(195, 35),
-    fill: Color.rgba(46, 75, 223, 0),
+    name: 'background',
+    borderRadius: 10,
+    clipMode: 'hidden',
+    epiMorph: true,
+    dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
+    extent: pt(225, 65),
+    fill: Color.rgba(0, 0, 0, 0.65),
     layout: new TilingLayout({
-      axis: 'row',
-      align: 'center',
-      axisAlign: 'center',
-      autoResize: true,
+      axis: 'column',
       wrapSubmorphs: false,
-      direction: 'leftToRight',
-      orderByIndex: true,
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      resizeSubmorphs: false,
-      spacing: 0
+      padding: 10,
+      hugContentsVertically: true,
+      hugContentsHorizontally: true,
+      resizePolicies: [
+        ['progress bar', { width: 'fill', height: 'fixed' }]
+      ]
     }),
     submorphs: [{
-      type: HTMLMorph,
-      name: 'spinner',
-      cssDeclaration: '\n\
+      name: 'top float',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        wrapSubmorphs: false,
+        hugContentsVertically: true,
+        hugContentsHorizontally: true,
+        align: 'center',
+        axis: 'row',
+        axisAlign: 'top'
+      }),
+      submorphs: [{
+        name: 'spinner wrapper',
+        fill: Color.transparent,
+        height: 45,
+        width: 40,
+        layout: new TilingLayout({
+          axis: 'row',
+          align: 'left',
+          axisAlign: 'center',
+          wrapSubmorphs: false,
+          reactToSubmorphAnimations: false
+        }),
+        submorphs: [
+          {
+            type: HTMLMorph,
+            name: 'spinner',
+            cssDeclaration: '\n\
            .lds-spinner {\n\
             color: official;\n\
             display: inline-block;\n\
@@ -368,58 +330,77 @@ const LoadingIndicator = component({
               opacity: 0;\n\
             }\n\
           }',
-      extent: pt(86.2, 70.2),
-      fill: Color.rgba(255, 255, 255, 0),
-      html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
-      scale: 0.5
+            extent: pt(65, 70),
+            fill: Color.rgba(255, 255, 255, 0),
+            html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
+            scale: 0.5
+          }
+        ]
+      }, {
+        name: 'wrapper',
+        extent: pt(195, 35),
+        fill: Color.rgba(46, 75, 223, 0),
+        layout: new TilingLayout({
+          axis: 'column',
+          align: 'center',
+          axisAlign: 'left',
+          wrapSubmorphs: false,
+          direction: 'leftToRight',
+          orderByIndex: true,
+          reactToSubmorphAnimations: false,
+          renderViaCSS: true,
+          hugContentsHorizontally: true,
+          hugContentsVertically: true
+        }),
+        submorphs: [{
+          type: Label,
+          name: 'label',
+          lineHeight: 1.4,
+          fill: Color.rgba(255, 255, 255, 0),
+          fontColor: Color.rgb(253, 254, 254),
+          fontSize: 16,
+          padding: rect(0, 0, 10, 0),
+          fontWeight: 'bold',
+          nativeCursor: 'pointer',
+          textAndAttributes: ['test test test test ', null]
+        }, {
+          type: Label,
+          name: 'status',
+          lineHeight: 1.4,
+          fill: Color.rgba(255, 255, 255, 0),
+          padding: Rectangle.inset(0, 0, 0, 7.5),
+          fontColor: Color.rgb(253, 254, 254),
+          fontWeight: 'bold',
+          nativeCursor: 'pointer',
+          opacity: 0.65,
+          textAndAttributes: ['', null],
+          visible: false
+        }]
+      }, part(ButtonDefault, {
+        name: 'close button',
+        borderWidth: 0,
+        opacity: 0,
+        extent: pt(23, 22),
+        fill: Color.transparent,
+        submorphs: [{
+          name: 'label',
+          fontColor: Color.rgb(253, 254, 254),
+          fontSize: 18,
+          fontWeight: 'bolder',
+          textAndAttributes: Icon.textAttribute('times')
+        }]
+      })]
     }, {
-      type: Label,
-      name: 'label',
-      fill: Color.rgba(255, 255, 255, 0),
-      fontColor: Color.rgb(253, 254, 254),
-      fontSize: 16,
-      fontWeight: 'bold',
-      nativeCursor: 'pointer',
-      padding: rect(0, 0, 20, 0),
+      type: ProgressBar,
+      name: 'progress bar',
+      extent: pt(195, 5),
+      visible: false,
+      progress: 0,
       submorphs: [{
-        type: Label,
-        name: 'status',
-        fill: Color.rgba(255, 255, 255, 0),
-        fontColor: Color.rgb(253, 254, 254),
-        fontWeight: 'bold',
-        nativeCursor: 'pointer',
-        opacity: 0.65,
-        position: pt(0, 20),
-        textAndAttributes: ['', null],
-        visible: false
-      }],
-      textAndAttributes: ['test test test test ', null]
-    }]
-  }, part(ButtonDefault, {
-    name: 'close button',
-    borderWidth: 0,
-    extent: pt(23, 22),
-    fill: Color.transparent,
-    isLayoutable: false,
-    visible: false,
-    submorphs: [{
-      name: 'label',
-      fontColor: Color.rgb(253, 254, 254),
-      fontSize: 18,
-      fontWeight: 'bolder',
-      textAndAttributes: Icon.textAttribute('times')
-    }]
-  }), {
-    type: ProgressBar,
-    name: 'progress bar',
-    extent: pt(195, 5),
-    isLayoutable: false,
-    opacity: 0,
-    progress: 0,
-    submorphs: [{
-      name: 'progress path',
-      extent: pt(1, 10),
-      fill: Color.rgb(255, 153, 0)
+        name: 'progress path',
+        extent: pt(1, 10),
+        fill: Color.rgb(255, 153, 0)
+      }]
     }]
   }]
 });
