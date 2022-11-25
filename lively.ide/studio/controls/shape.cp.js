@@ -1,7 +1,7 @@
 import { Color, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';
-import { NumberInputDark, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
+import { DarkNumberIconWidget, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
 
 export class ShapeControlModel extends ViewModel {
@@ -48,6 +48,8 @@ export class ShapeControlModel extends ViewModel {
               converter: `() => "${string.camelCaseString(d)}"`
             }]).flat(),
             { model: 'clip mode selector', signal: 'selection', handler: 'changeClipMode' },
+            { model: 'width mode selector', signal: 'selection', handler: 'changeHeightMode' },
+            { model: 'height mode selector', signal: 'selection', handler: 'changeWidthMode' },
             { target: 'proportional resize toggle', signal: 'onMouseDown', handler: 'changeResizeMode' },
             { target: 'independent corner toggle', signal: 'onMouseDown', handler: 'toggleBorderMultiVar' }
           ];
@@ -110,8 +112,29 @@ export class ShapeControlModel extends ViewModel {
       rotationInput.number = num.toDegrees(rotation) % 360;
       clipModeSelector.selection = clipMode;
       radiusInput.number = borderRadius.valueOf();
+      this.refreshExtentModes();
       this.refreshBorderRadiusSides();
     });
+  }
+
+  refreshExtentModes () {
+    const { widthModeSelector, heightModeSelector } = this.ui;
+    if (this.targetMorph.layout?.name() === 'Tiling' && this.targetMorph.submorphs.length > 0) {
+      widthModeSelector.enable();
+      heightModeSelector.enable();
+      widthModeSelector.items = [
+        { string: '|-| Fixed', value: 'fixed', isListItem: true },
+        { string: '>< Hug', value: 'hug', isListItem: true }];
+      heightModeSelector.items = [
+        { string: 'I Fixed', value: 'fixed', isListItem: true },
+        { string: '⑄ Hug', value: 'hug', isListItem: true }
+      ];
+      return;
+    }
+    widthModeSelector.disable();
+    heightModeSelector.disable();
+    widthModeSelector.selection = 'fixed';
+    heightModeSelector.selection = 'fixed';
   }
 
   refreshBorderRadiusSides () {
@@ -169,6 +192,15 @@ export class ShapeControlModel extends ViewModel {
     this.updateTarget('width', newWidth);
   }
 
+  changeWidthMode (newMode) {
+    switch (newMode) {
+      case ('fixed'):
+        break;
+      case ('hug'): break;
+      case ('fill'): break;
+    }
+  }
+
   changeHeight (newHeight) {
     if (this.proportionalResize) {
       const scaledWidth = this.targetMorph.width * (newHeight / this.targetMorph.height);
@@ -176,6 +208,10 @@ export class ShapeControlModel extends ViewModel {
       this.updateTarget('width', scaledWidth);
     }
     this.updateTarget('height', newHeight);
+  }
+
+  changeHeightMode (newMode) {
+
   }
 
   changeRotation (newRot) { this.updateTarget('rotation', num.toRadians(newRot)); }
@@ -222,7 +258,7 @@ const ShapeControl = component({
   fill: Color.transparent,
   extent: pt(250, 215.4),
   submorphs: [
-    part(NumberInputDark, {
+    part(DarkNumberIconWidget, {
       name: 'x input',
       tooltip: 'X Position',
       min: -Infinity,
@@ -235,7 +271,7 @@ const ShapeControl = component({
         padding: rect(8, 0, -1, 0),
         textAndAttributes: ['X', null]
       }]
-    }), part(NumberInputDark, {
+    }), part(DarkNumberIconWidget, {
       name: 'y input',
       tooltip: 'Y Position',
       min: -Infinity,
@@ -249,7 +285,7 @@ const ShapeControl = component({
         textAndAttributes: ['Y', null]
       }]
     }), { opacity: 0, name: 'buffer', width: 25 },
-    part(NumberInputDark, {
+    part(DarkNumberIconWidget, {
       name: 'width input',
       tooltip: 'Width',
       min: -Infinity,
@@ -265,7 +301,7 @@ const ShapeControl = component({
         }]
       }]
     }),
-    part(NumberInputDark, {
+    part(DarkNumberIconWidget, {
       name: 'height input',
       min: -Infinity,
       max: Infinity,
@@ -340,7 +376,7 @@ const ShapeControl = component({
       submorphs: [
         { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
     }), { opacity: 0, name: 'buffer', width: 25 },
-    part(NumberInputDark, {
+    part(DarkNumberIconWidget, {
       name: 'rotation input',
       tooltip: 'Rotation',
       unit: '°',
@@ -355,7 +391,7 @@ const ShapeControl = component({
         padding: rect(6, 0, -6, 0)
       }]
     }),
-    part(NumberInputDark, {
+    part(DarkNumberIconWidget, {
       name: 'radius input',
       tooltip: 'Border Radius',
       min: 0,
@@ -401,7 +437,7 @@ const ShapeControl = component({
             textStyleClasses: ['material-icons']
           }]
         },
-        part(NumberInputDark, {
+        part(DarkNumberIconWidget, {
           name: 'radius input top left',
           min: 0,
           extent: pt(35, 22),
@@ -409,7 +445,7 @@ const ShapeControl = component({
           borderRadiusTopRight: 0,
           borderRadiusBottomRight: 0,
           submorphs: [without('interactive label')]
-        }), part(NumberInputDark, {
+        }), part(DarkNumberIconWidget, {
           name: 'radius input top right',
           min: 0,
           borderRadius: 0,
@@ -417,7 +453,7 @@ const ShapeControl = component({
           tooltip: 'Border Radius Top Right',
           submorphs: [without('interactive label')]
         }),
-        part(NumberInputDark, {
+        part(DarkNumberIconWidget, {
           name: 'radius input bottom right',
           min: 0,
           borderRadius: 0,
@@ -425,7 +461,7 @@ const ShapeControl = component({
           tooltip: 'Border Radius Bottom Right',
           submorphs: [without('interactive label')]
         }),
-        part(NumberInputDark, {
+        part(DarkNumberIconWidget, {
           name: 'radius input bottom left',
           min: 0,
           borderRadiusTopLeft: 0,

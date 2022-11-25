@@ -3,7 +3,7 @@ import { TilingLayout, config, Icon, ViewModel, part, add, without, component } 
 import { obj, arr } from 'lively.lang';
 import {
   EnumSelector, BoundsContainerHovered, BoundsContainerInactive, PropertyLabelHovered,
-  AddButton, NumberInputDark, PropertyLabel, DarkThemeList
+  AddButton, DarkNumberIconWidget, PropertyLabel, DarkThemeList
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
@@ -400,7 +400,7 @@ const RichTextControl = component(PropertySection, {
           }]
         }))]
       }),
-      part(NumberInputDark, {
+      part(DarkNumberIconWidget, {
         name: 'font size input',
         width: 60,
         submorphs: [{
@@ -411,7 +411,7 @@ const RichTextControl = component(PropertySection, {
           }]
         }],
         tooltip: 'Font Size'
-      }), part(NumberInputDark, {
+      }), part(DarkNumberIconWidget, {
         name: 'line height input',
         width: 60,
         floatingPoint: true,
@@ -427,7 +427,7 @@ const RichTextControl = component(PropertySection, {
           precision: 1
         }],
         tooltip: 'Line Height'
-      }), part(NumberInputDark, {
+      }), part(DarkNumberIconWidget, {
         name: 'letter spacing input',
         width: 60,
         submorphs: [{

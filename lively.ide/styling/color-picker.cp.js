@@ -10,7 +10,7 @@ import { DropDownList } from 'lively.components/list.cp.js';
 import { CheckerPattern, PopupWindow, SystemList } from './shared.cp.js';
 import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
-import { TextInput, PropLabel, NumberInputDark } from '../studio/shared.cp.js'; // that should be revised...
+import { TextInput, PropLabel, DarkNumberIconWidget } from '../studio/shared.cp.js'; // that should be revised...
 
 // ColorInput.openInWorld()
 const ColorInput = component({
@@ -67,7 +67,7 @@ const ColorInput = component({
     extent: pt(72.1, 23),
     fontSize: 14,
     padding: rect(4, 3, 6, 2)
-  }), part(NumberInputDark, {
+  }), part(DarkNumberIconWidget, {
     type: NumberWidget,
     name: 'opacity input',
     tooltip: 'Opacity',
