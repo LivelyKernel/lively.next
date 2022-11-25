@@ -1193,7 +1193,7 @@ export class ProportionalLayout extends Layout {
   }
 
   settingsFor (morph) {
-    // move, resize, scale, fixed
+    // move, resize, scale, fixed, center
     const settings = this.proportionalLayoutSettingsForMorphs.get(morph);
     return settings || { x: 'scale', y: 'scale' };
   }
@@ -1249,10 +1249,10 @@ export class ProportionalLayout extends Layout {
     this.layoutableSubmorphBounds = this.layoutableSubmorphs.map(m => m.bounds());
   }
 
-  apply (animate = false) {
+  apply (animate = false, requireExtentChange = true) {
     const { container, active, extentDelta: { x: deltaX, y: deltaY } } = this;
     const { extent } = container || {};
-    if (active || !container || (deltaX === 0 && deltaY === 0)) { return; }
+    if (active || !container || (requireExtentChange && deltaX === 0 && deltaY === 0)) { return; }
 
     this.extentDelta = pt(0, 0);
     this.active = true;
@@ -1269,6 +1269,9 @@ export class ProportionalLayout extends Layout {
       if (y === 'move') moveY = deltaY;
       if (x === 'resize') resizeX = deltaX;
       if (y === 'resize') resizeY = deltaY;
+
+      if (x === 'center') moveX = m.center.x * scalePt.x - m.center.x;
+      if (y === 'center') moveY = m.center.y * scalePt.y - m.center.y;
 
       if (x === 'scale' || y === 'scale') {
         const morphScale = pt(
