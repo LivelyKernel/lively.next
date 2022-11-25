@@ -320,6 +320,7 @@ export class NumberWidget extends Morph {
   }
 
   update (v, fromScrubber = true) {
+    if (this.inactive) return;
     // allows us to selectively skip relayouting
     this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
     signal(this, 'number', this.number);
@@ -376,6 +377,17 @@ export class NumberWidget extends Morph {
   decrement () {
     if (this.min !== undefined && this.number <= this.min) return;
     this.update(this.number - (1 / this.scaleFactor), false);
+  }
+
+  disable () {
+    this.nativeCursorBackup = this.nativeCursor;
+    this.nativeCursor = 'not-allowed';
+    this.inactive = true;
+  }
+
+  enable () {
+    this.nativeCursor = this.nativeCursorBackup;
+    this.inactive = false;
   }
 }
 
