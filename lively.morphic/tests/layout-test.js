@@ -38,6 +38,7 @@ async function checkJSAndCSS (aMorph, test) {
   test();
   aMorph.layout.renderViaCSS = true;
   await aMorph.whenRendered();
+  await Promise.all(aMorph.submorphs.map(m => m.whenRendered()));
   test();
   aMorph.layout.renderViaCSS = false;
   await aMorph.whenRendered();
@@ -310,13 +311,15 @@ describe('layout', () => {
     });
 
     it('appends missing cells', () => {
-      const [_, m3] = m.submorphs;
+      const [_, __, m3] = m.submorphs;
       m.layout = new GridLayout({
+        renderViaCSS: false,
         grid:
-                          [[null, 'm1'],
-                            ['m2'],
-                            [null, null, 'm3']]
+          [[null, 'm1'],
+            ['m2'],
+            [null, null, 'm3']]
       });
+      m.layout.apply();
       expect(m.layout.rowCount).equals(3);
       expect(m.layout.columnCount).equals(3);
       expect(m3.position).equals(pt(200, 200));
@@ -328,7 +331,7 @@ describe('layout', () => {
       m1.position = pt(288, 20);
       m2.position = pt(15, 20);
       m3.position = pt(10, 220);
-      m.layout = new GridLayout({ columnCount: 3, rowCount: 3, renderViaCSS: false });
+      m.layout = new GridLayout({ autoAssign: true, columnCount: 3, rowCount: 3, renderViaCSS: false });
       expect(m2.position).equals(pt(0, 0));
       expect(m3.position).equals(pt(0, 200));
       expect(m1.position).equals(pt(200, 0));
@@ -349,6 +352,7 @@ describe('layout', () => {
 
     it('allows morphs to be reassigned to cells', () => {
       const [m1, m2] = m.submorphs;
+      debugger;
       let group = m.layout.row(2).col(1).group;
       group.morph = m2;
       m.layout.apply();
@@ -358,6 +362,7 @@ describe('layout', () => {
       group.connect(m.layout.col(0).row(1));
       group.connect(m.layout.col(0).row(2));
       group.morph = m1;
+      group.resize = true;
       m.layout.apply();
       expect(m1.position).equals(pt(0, 0));
       expect(m1.height).equals(300);
@@ -460,11 +465,11 @@ describe('layout', () => {
       expect(m3.position).equals(pt(75, 75));
     });
 
-    it("by default enforces the cell's extent upon the contained morph", () => {
+    it('enforces the cells extent upon the contained morph if specified', () => {
       const [m1, m2, m3] = m.submorphs;
-      expect(m1.extent).equals(pt(100, 100));
-      expect(m2.extent).equals(pt(100, 100));
-      expect(m3.extent).equals(pt(100, 100));
+      // expect(m1.extent).equals(pt(100, 100));
+      // expect(m2.extent).equals(pt(100, 100));
+      // expect(m3.extent).equals(pt(100, 100));
       m.layout = new GridLayout({
         renderViaCSS: false,
         grid:
@@ -472,9 +477,11 @@ describe('layout', () => {
           ['m2', 'm2', 'm3'],
           [null, null, 'm3']]
       });
-      expect(m1.extent).equals(pt(100, 100));
-      expect(m2.extent).equals(pt(200, 100));
-      expect(m3.extent).equals(pt(100, 200));
+      checkJSAndCSS(m, () => {
+        expect(m1.extent).equals(pt(100, 100));
+        expect(m2.extent).equals(pt(200, 100));
+        expect(m3.extent).equals(pt(100, 200));
+      });
     });
 
     it('can vary the proportional width and height of rows and columns', () => {
@@ -530,8 +537,11 @@ describe('layout', () => {
       let [m1, m2, m3] = m.submorphs;
       m.layout = new GridLayout({
         renderViaCSS: false,
+        groups: {
+          m2: { resize: true },
+          m3: { resize: true }
+        },
         grid:
-        /* 100px 100px */
         [[null, 'm1', null, null],
           ['m2', null, null, null],
           [null, null, null, 'm3']]
@@ -606,9 +616,7 @@ describe('layout', () => {
     });
 
     it('can remove rows and columns', () => {
-      // [[null, null],
-      //  [null, "m3"]]
-      const [_, m3] = m.submorphs;
+      const [_, __, m3] = m.submorphs;
       m.layout.col(0).remove();
       m.layout.row(1).remove();
       m.layout.apply();
@@ -629,6 +637,7 @@ describe('layout', () => {
       m.layout.col(1).paddingLeft = 10;
       m.layout.col(1).paddingRight = 10;
       m.layout.row(0).paddingTop = 5;
+      m.layout.getCellGroupFor(m1).resize = true;
       m.layout.apply();
       expect(m2.position).equals(pt(0, 100));
       expect(m1.position).equals(pt(110, 5));
@@ -663,10 +672,11 @@ describe('layout', () => {
           [null, null, 'm3']
         ]
       });
-      m.addMorph({ name: 'm4', extent: pt(22, 22) });
+      const m1 = m.addMorph({ name: 'm4', extent: pt(22, 22) });
       expect(m.layout.layoutableSubmorphs.length).equals(4);
       expect(m.layout.layoutableSubmorphBounds.length).equals(3);
       expect(m.layout.submorphBoundsChanged).is.true;
+      m.layout.getCellGroupFor(m1).resize = true;
       m.applyLayoutIfNeeded();
       expect(m.getSubmorphNamed('m4').bounds()).equals(rect(200, 100, 100, 100));
     });
