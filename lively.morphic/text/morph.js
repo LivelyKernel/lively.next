@@ -2443,9 +2443,8 @@ export class Text extends Morph {
           this.selection = { start: clickTextPos, end: clickTextPos };
         } else this.selection.lead = clickTextPos;
       } else if (normedClickCount === 2) {
-        // FIXME: does not seem to work reliably?
-        if (supportsFormattingPopUp) this.showFormattingPopUp();
         this.execCommand('select word', null, 1, evt);
+        if (supportsFormattingPopUp) this.showFormattingPopUp();
       } else if (normedClickCount === 3) {
         if (supportsFormattingPopUp) this.showFormattingPopUp();
         this.execCommand('select line', null, 1, evt);
