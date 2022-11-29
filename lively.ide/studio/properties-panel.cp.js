@@ -9,7 +9,7 @@ import { ShapeControl } from './controls/shape.cp.js';
 import { LayoutControl } from './controls/layout.cp.js';
 import { BorderControl } from './controls/border.cp.js';
 import { FillControl } from './controls/fill.cp.js';
-import { AlignmentControl } from './controls/constraints.cp.js';
+import { ConstraintsManager } from './controls/constraints.cp.js';
 import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
@@ -30,13 +30,6 @@ export class PropertiesPanelModel extends ViewModel {
       expose: {
         get () {
           return ['focusOn', 'relayout', 'isHaloItem', 'toggle', 'onHierarchyChange', 'clearFocus'];
-        }
-      },
-      bindings: {
-        get () {
-          return [
-            { model: 'alignment control', signal: 'updateResizingPolicies', handler: 'updateLayoutControl' }
-          ];
         }
       }
     };
@@ -136,10 +129,10 @@ export class PropertiesPanelModel extends ViewModel {
   toggleDefaultControls (active) {
     const {
       shapeControl, fillControl, textControl,
-      layoutControl, alignmentControl, borderControl,
+      layoutControl, constraintsControl, borderControl,
       effectsControl
     } = this.ui;
-    [shapeControl, fillControl, textControl, layoutControl, alignmentControl, borderControl, effectsControl].forEach(m => m.visible = active);
+    [shapeControl, fillControl, textControl, layoutControl, constraintsControl, borderControl, effectsControl].forEach(m => m.visible = active);
   }
 
   clearFocus () {
@@ -164,7 +157,7 @@ export class PropertiesPanelModel extends ViewModel {
     if (!aMorph.isMorph) return;
     const {
       shapeControl, fillControl, textControl,
-      layoutControl, alignmentControl, borderControl,
+      layoutControl, constraintsControl, borderControl,
       effectsControl, backgroundControl
     } = this.models;
 
@@ -184,10 +177,10 @@ export class PropertiesPanelModel extends ViewModel {
     fillControl.focusOn(aMorph);
     layoutControl.focusOn(aMorph);
     if (aMorph.owner && aMorph.owner !== $world) {
-      alignmentControl.view.visible = true;
-      alignmentControl.focusOn(aMorph);
+      constraintsControl.view.visible = true;
+      constraintsControl.focusOn(aMorph);
     } else {
-      alignmentControl.view.visible = false;
+      constraintsControl.view.visible = false;
     }
     borderControl.focusOn(aMorph);
     effectsControl.focusOn(aMorph);
@@ -284,7 +277,7 @@ const PropertiesPanel = component({
       ['fill control', { width: 'fill', height: 'fixed' }],
       ['text control', { width: 'fill', height: 'fixed' }],
       ['layout control', { width: 'fill', height: 'fixed' }],
-      ['alignment control', { width: 'fill', height: 'fixed' }],
+      ['constraints control', { width: 'fill', height: 'fixed' }],
       ['border control', { width: 'fill', height: 'fixed' }],
       ['effects control', { width: 'fill', height: 'fixed' }]
     ]
@@ -294,7 +287,7 @@ const PropertiesPanel = component({
     part(ShapeControl, { name: 'shape control', visible: false }),
     part(RichTextControl, { name: 'text control', visible: false }),
     part(LayoutControl, { name: 'layout control', visible: false }),
-    part(AlignmentControl, { name: 'alignment control', visible: false }),
+    part(ConstraintsManager, { name: 'constraints control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
     part(BodyControl, { name: 'effects control', visible: false })
