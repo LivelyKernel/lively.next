@@ -168,6 +168,9 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     const layout = this.targetMorph && this.targetMorph.layout;
     if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
     this.update();
+    
+    const propertiesPanel = this.view.ownerChain().find(m => m.isPropertiesPanel)
+    if (propertiesPanel) propertiesPanel.viewModel.ui.shapeControl.refreshFromTarget();
   }
 
   deactivate () {
@@ -182,6 +185,9 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       layoutableSubmorphs.forEach(m => m.position = m.position);
     }
     this.popup = false;
+    
+    const propertiesPanel = this.view.ownerChain().find(m => m.isPropertiesPanel)
+    if (propertiesPanel) propertiesPanel.viewModel.ui.shapeControl.refreshFromTarget();
   }
 
   async openLayoutPopup () {
