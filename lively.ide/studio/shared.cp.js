@@ -1,4 +1,4 @@
-import { Label, HTMLMorph, Morph, InputLine, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
+import { Label, ViewModel, HTMLMorph, Morph, InputLine, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
@@ -125,9 +125,39 @@ const PropLabel = component(HeadlineLabel, {
   fontWeight: 'normal'
 });
 
-// DarkNumberIconWidget.openInWorld()
+class DarkNumberIconWidgetModel extends ViewModel {
+  static get properties () {
+    return {
+      expose: {
+        get () {
+          return ['enable', 'disable'];
+        }
+      }
+    };
+  }
+
+  disable () {
+    this.view.nativeCursor = 'not-allowed';
+
+    this.ui.value.reactsToPointer = false;
+    this.ui.interactiveLabel.reactsToPointer = false;
+
+    this.ui.value.opacity = 0.3;
+  }
+
+  enable () {
+    this.view.nativeCursor = 'auto';
+
+    this.ui.value.reactsToPointer = true;
+    this.ui.interactiveLabel.reactsToPointer = true;
+
+    this.ui.value.opacity = 1;
+  }
+}
+
 const DarkNumberIconWidget = component(DarkNumberWidget, {
   name: 'number input',
+  defaultViewModel: DarkNumberIconWidgetModel,
   borderRadius: 2,
   dropShadow: false,
   extent: pt(72, 22),
