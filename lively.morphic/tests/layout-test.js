@@ -725,14 +725,12 @@ describe('layout', () => {
             name: 'B',
             layout: new TilingLayout({
               renderViaCSS: false,
-              autoResize: true
             }),
             submorphs: [
               morph({
                 name: 'C',
                 layout: new TilingLayout({
                   renderViaCSS: false,
-                  autoResize: true
                 }),
                 submorphs: [morph({ name: 'D' })]
               })
@@ -755,7 +753,6 @@ describe('layout', () => {
       expect(c.layout.boundsChanged(c)).is.true;
       expect(c.layout.submorphBoundsChanged).is.true;
       c.clipMode = 'hidden';
-      c.layout.autoResize = false;
       expect(c.layout.boundsChanged(c)).is.false;
       expect(c.layout.submorphBoundsChanged).is.true;
       expect(c.layout.noLayoutActionNeeded).is.false;
@@ -769,7 +766,6 @@ describe('layout', () => {
 
     it('ignores updates in response to changes that did not affect layout', () => {
       let b = m.get('B'); let c = m.get('C'); let d = m.get('D'); let a = m;
-      c.layout.autoResize = false;
       d.extent = pt(100, 100);
       expect(c.layout.boundsChanged(c)).is.true;
       expect(c.layout.submorphBoundsChanged).is.true;

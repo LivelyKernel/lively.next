@@ -360,7 +360,6 @@ export class LivelyWorld extends World {
             images.forEach(ea => {
               const img = new Image({
                 imageUrl: ea.url,
-                autoResize: true,
                 name: ea.name
               });
               img.whenLoaded().then(async () => {
@@ -399,7 +398,6 @@ export class LivelyWorld extends World {
         const url = imgs[0].src;
         const img = new Image({
           imageUrl: url,
-          autoResize: true,
           name: arr.last(url.split('/'))
         });
         img.whenLoaded().then(() => img.openInWorld());

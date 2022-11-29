@@ -333,7 +333,6 @@ const SaveWorldDialog = component(DarkPrompt, {
       axis: 'row',
       align: 'center',
       axisAlign: 'center',
-      autoResize: false,
       orderByIndex: true,
       padding: {
         height: 0,

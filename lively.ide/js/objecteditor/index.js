@@ -1923,7 +1923,6 @@ export class ImportController extends Morph {
             align: 'center',
             axisAlign: 'center',
             spacing: 2,
-            autoResize: false
           }
         ),
         submorphs: [

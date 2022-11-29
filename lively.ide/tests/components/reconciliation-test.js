@@ -231,7 +231,6 @@ describe('component -> source reconciliation', () => {
   name: 'C',
   extent: pt(40, 40),
   layout: new VerticalLayout({
-    autoResize: true,
     direction: 'topToBottom',
     orderByIndex: true,
     resizeSubmorphs: false

@@ -233,7 +233,6 @@ const Stage = component({
   extent: pt(58, 119),
   fill: Color.rgba(46, 75, 223, 0),
   layout: new TilingLayout({
-    direction: 'topToBottom',
     orderByIndex: true,
     align: 'center',
     spacing: 10
@@ -451,7 +450,6 @@ const LoadingScreen = component({
   name: 'loading screen',
   extent: pt(1000, 600),
   layout: new TilingLayout({
-    direction: 'topToBottom',
     orderByIndex: true,
     axisAlign: 'center',
     align: 'center',

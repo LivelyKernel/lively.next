@@ -122,7 +122,6 @@ const HexEncoder = component({
     axis: 'column',
     axisAlign: 'center',
     align: 'center',
-    autoResize: true,
     spacing: 1
   }),
   submorphs: [
@@ -163,7 +162,6 @@ const ThreeValEncoder = component({
     axis: 'column',
     align: 'center',
     axisAlign: 'center',
-    autoResize: true,
     spacing: 1
   }),
   submorphs: [
@@ -260,7 +258,6 @@ const CssEncoder = component({
   isLayoutable: false,
   layout: new TilingLayout({
     align: 'center',
-    autoResize: true,
     orderByIndex: true,
     padding: {
       height: 0,

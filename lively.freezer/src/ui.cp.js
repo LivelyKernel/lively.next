@@ -436,7 +436,6 @@ const FreezerPrompt = component(LightPrompt, {
       align: 'center',
       axis: 'row',
       axisAlign: 'center',
-      autoResize: false,
       orderByIndex: true,
       padding: {
         height: 0,

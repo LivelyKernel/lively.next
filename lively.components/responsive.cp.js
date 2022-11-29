@@ -23,7 +23,6 @@ const ResponsiveLayoutHalo = component({
     fill: Color.rgba(46, 75, 223, 0),
     layout: new VerticalLayout({
       align: 'center',
-      autoResize: false,
       direction: 'topToBottom',
       orderByIndex: true,
       resizeSubmorphs: false
@@ -106,7 +105,6 @@ const ResponsiveLayoutHalo = component({
     fill: Color.rgba(81, 90, 90, 0),
     layout: new HorizontalLayout({
       align: 'top',
-      autoResize: true,
       direction: 'leftToRight',
       orderByIndex: true,
       padding: {
@@ -137,7 +135,6 @@ const ResponsiveLayoutHalo = component({
       fill: Color.rgb(156, 39, 176),
       layout: new HorizontalLayout({
         align: 'center',
-        autoResize: false,
         direction: 'rightToLeft',
         orderByIndex: true,
         padding: {
@@ -168,7 +165,6 @@ const ResponsiveLayoutHalo = component({
     fill: Color.rgba(81, 90, 90, 0),
     layout: new HorizontalLayout({
       align: 'top',
-      autoResize: true,
       direction: 'leftToRight',
       orderByIndex: true,
       padding: {
@@ -197,7 +193,6 @@ const ResponsiveLayoutHalo = component({
       fill: Color.rgb(255, 152, 0),
       layout: new HorizontalLayout({
         align: 'center',
-        autoResize: false,
         direction: 'rightToLeft',
         orderByIndex: true,
         padding: {
@@ -228,7 +223,6 @@ const ResponsiveLayoutHalo = component({
     fill: Color.rgba(46, 75, 223, 0),
     layout: new VerticalLayout({
       align: 'center',
-      autoResize: false,
       direction: 'topToBottom',
       orderByIndex: true,
       resizeSubmorphs: false
@@ -291,7 +285,6 @@ const ResponsiveLayoutHalo = component({
     fill: Color.rgba(46, 75, 223, 0),
     layout: new VerticalLayout({
       align: 'center',
-      autoResize: false,
       direction: 'topToBottom',
       orderByIndex: true,
       resizeSubmorphs: false

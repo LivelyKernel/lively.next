@@ -236,7 +236,6 @@ const ObjectEditorLight = component({
     layout: new TilingLayout({
       axis: 'column',
       axisAlign: 'center',
-      autoResize: false,
       orderByIndex: true,
       padding: {
         height: 0,

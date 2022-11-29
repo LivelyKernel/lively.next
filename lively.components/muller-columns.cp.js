@@ -415,7 +415,6 @@ const MullerColumnView = component({
   layout: new TilingLayout({
     axis: 'column',
     align: 'top',
-    autoResize: false,
     orderByIndex: true,
     padding: {
       height: 0,

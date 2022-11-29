@@ -173,7 +173,6 @@ const LivelyVersionChecker = component({
     axisAlign: 'left',
     align: 'left',
     orderByIndex: true,
-    autoResize: true,
     hugContentsHorizontally: true,
     hugContentsVertically: true,
     wrapSubmorphs: false,

@@ -367,7 +367,7 @@ export class MorphicDBList extends Morph {
     let {
       layout, itemSettings, dbInfos, showAddButton, showCloseButton, showOKButton
     } = this;
-    if (!layout) { layout = this.layout = new VerticalLayout({ align: 'center', spacing: 4, autoResize: true }); }
+    if (!layout) { layout = this.layout = new VerticalLayout({ align: 'center', spacing: 4 }); }
     this.submorphs = dbInfos.map(info => new MorphicDBWidget({ ...itemSettings, selected: info.selected, dbInfo: info }));
     this.submorphs.forEach(ea => connect(ea, 'selected', this, 'onDBSelected'));
 
