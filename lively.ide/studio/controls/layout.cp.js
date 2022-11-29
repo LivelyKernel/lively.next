@@ -537,8 +537,6 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
   defaultViewModel: AutoLayoutAlignmentFlapModel,
   name: 'auto layout alignment control',
   layout: new TilingLayout({
-    autoResize: true,
-    direction: 'topToBottom',
     orderByIndex: true,
     hugContentsVertically: true,
     resizeSubmorphs: true,

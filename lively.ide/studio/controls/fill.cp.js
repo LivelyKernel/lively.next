@@ -105,7 +105,6 @@ const FillControl = component(PropertySection, {
         type: Image,
         name: 'image container',
         reactsToPointer: false,
-        autoResize: false,
         extent: pt(20, 20),
         imageUrl: placeholderImage,
         naturalExtent: pt(48, 48),

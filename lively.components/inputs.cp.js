@@ -43,7 +43,6 @@ const LabeledCheckBox = component({
     axis: 'row',
     wrapSubmorphs: false,
     align: 'top',
-    autoResize: true,
     direction: 'leftToRight',
     resizeSubmorphs: false
   }),
@@ -77,7 +76,6 @@ const SearchField = component({
     axis: 'column',
     align: 'right',
     axisAlign: 'right',
-    autoResize: false,
     orderByIndex: true,
     reactToSubmorphAnimations: false,
     resizeSubmorphs: false

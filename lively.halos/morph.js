@@ -415,7 +415,6 @@ class NameHaloItem extends HaloItem {
             axis: 'row',
             hugContentsHorizontally: true,
             axisAlign: 'center',
-            autoResize: true,
             wrapSubmorphs: false,
             orderByIndex: true,
             padding: 5

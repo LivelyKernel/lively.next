@@ -967,7 +967,6 @@ const ComponentPreview = component({
   draggable: true,
   layout: new VerticalLayout({
     align: 'center',
-    autoResize: true,
     direction: 'topToBottom',
     orderByIndex: true,
     resizeSubmorphs: false,
@@ -983,7 +982,6 @@ const ComponentPreview = component({
     fill: Color.rgba(0, 0, 0, 0),
     layout: new VerticalLayout({
       align: 'center',
-      autoResize: false,
       direction: 'centered',
       orderByIndex: true,
       resizeSubmorphs: false
@@ -1028,7 +1026,6 @@ const ProjectSection = component({
   extent: pt(488.6, 154.2),
   fill: Color.rgba(0, 0, 0, 0),
   layout: new VerticalLayout({
-    autoResize: false,
     direction: 'topToBottom',
     orderByIndex: true,
     resizeSubmorphs: true

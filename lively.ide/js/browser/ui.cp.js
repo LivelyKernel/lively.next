@@ -190,7 +190,6 @@ const BrowserDirectoryControls = component({
     axis: 'column',
     axisAlign: 'center',
     align: 'center',
-    autoResize: false,
     orderByIndex: true,
     padding: {
       height: 0,
@@ -244,7 +243,6 @@ const BrowserPackageControls = component({
     axis: 'column',
     axisAlign: 'center',
     align: 'center',
-    autoResize: false,
     padding: {
       height: 0,
       width: 0,
@@ -694,7 +692,6 @@ const SystemBrowser = component({
           axis: 'row',
           axisAlign: 'center',
           align: 'right',
-          autoResize: false,
           padding: {
             height: 0,
             width: 0,

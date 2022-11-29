@@ -998,7 +998,6 @@ const UserFlap = component({
     axis: 'column',
     axisAlign: 'right',
     align: 'center',
-    autoResize: false,
     orderByIndex: true,
     padding: {
       height: 0,
@@ -1022,7 +1021,6 @@ const UserFlap = component({
       axis: 'column',
       axisAlign: 'center',
       align: 'center',
-      autoResize: false,
       direction: 'rightToLeft',
       orderByIndex: true,
       padding: {
@@ -1244,8 +1242,6 @@ const TopBar = component({
     layout: new TilingLayout({
       axis: 'column',
       align: 'bottom',
-      autoResize: false,
-      orderByIndex: true,
       padding: {
         height: 0,
         width: 0,
@@ -1297,8 +1293,6 @@ const TopBar = component({
           axis: 'column',
           axisAlign: 'center',
           align: 'center',
-          autoResize: false,
-          direction: 'leftToRight',
           padding: {
             height: 0,
             width: 0,

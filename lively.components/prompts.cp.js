@@ -684,7 +684,6 @@ const ChoiceButtonSelected = component({
     axisAlign: 'center',
     align: 'left',
     axis: 'row',
-    autoResize: false,
     orderByIndex: true,
     padding: {
       height: 0,
@@ -836,7 +835,6 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   submorphs: [add({
     type: RadioButtonGroup,
     layout: new TilingLayout({
-      autoResize: true,
       hugContentsVertically: true,
       hugContentsHorizontally: true,
       align: 'center',

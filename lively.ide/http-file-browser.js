@@ -32,7 +32,7 @@ let browserCommands = [
       } else if (sel.isDirectory()) {
         browser.execCommand('set location to selection');
       } else if (sel.url.endsWith('.svg') || sel.url.endsWith('.png')) {
-        let image = new Image({ name: sel.url, imageUrl: sel.url, autoResize: true });
+        let image = new Image({ name: sel.url, imageUrl: sel.url });
         image.openInWorld();
       } else {
         let editor = TextEditor.openURL(sel.url, { extent: pt(600, 800) });

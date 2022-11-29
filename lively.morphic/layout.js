@@ -10,7 +10,7 @@ class Layout {
   constructor (config = {}) {
     const {
       spacing, padding, border, container, manualUpdate,
-      autoResize, ignore, onScheduleApply, layoutOrder,
+      ignore, onScheduleApply, layoutOrder,
       reactToSubmorphAnimations
     } = config;
     this.config = config;
@@ -21,7 +21,6 @@ class Layout {
     this.container = container;
     this.manualUpdate = manualUpdate;
     this.reactToSubmorphAnimations = reactToSubmorphAnimations || false;
-    this.autoResize = autoResize !== undefined ? autoResize : true;
     this.onScheduleApply = onScheduleApply || ((submorph, animation, change) => {});
     if (layoutOrder) {
       this.layoutOrder = layoutOrder;
@@ -1153,7 +1152,6 @@ export class ProportionalLayout extends Layout {
     this.submorphSettings = (props && props.submorphSettings) || [];
     this.lastExtent = props.lastExtent;
     delete this.spacing;
-    delete this.autoResize;
   }
 
   getSpec () {

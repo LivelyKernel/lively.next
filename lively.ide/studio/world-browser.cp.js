@@ -507,7 +507,6 @@ class WorldDashboard extends Morph {
         await placeholder.whenRendered();
         placeholder.layout = new TilingLayout({
           axis: 'column',
-          autoResize: true,
           reactToSubmorphAnimations: true
         });
       };

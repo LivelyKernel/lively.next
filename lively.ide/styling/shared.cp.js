@@ -68,7 +68,6 @@ const PopupWindow = component({
     wrapSubmorphs: false,
     hugContentsVertically: true,
     hugContentsHorizontally: true,
-    autoResize: true
   }),
   nativeCursor: 'grab',
   styleClasses: ['Popups'],
