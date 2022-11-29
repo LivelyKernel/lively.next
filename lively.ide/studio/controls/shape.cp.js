@@ -28,6 +28,11 @@ export class ShapeControlModel extends ViewModel {
           return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
         }
       },
+      expose: {
+        get () {
+          return ['refreshFromTarget'];
+        }
+      },
       bindings: {
         get () {
           return [

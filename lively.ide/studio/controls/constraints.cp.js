@@ -21,6 +21,11 @@ export class ConstraintsManagerModel extends ViewModel {
             { model: 'constraints', signal: 'changed', handler: 'updateConstraintPolicies' }
           ];
         }
+      },
+      expose: {
+        get () {
+          return ['focusOn'];
+        }
       }
     };
   }
@@ -54,8 +59,7 @@ export class ConstraintsManagerModel extends ViewModel {
     const target = this.targetMorph;
     const owner = target.owner;
     this.view.visible = false;
-    if ((!owner.layout || owner.layout.name() === 'Proportional') ||
-       (target.layout && target.layout.name() === 'Tiling')) {
+    if (owner && !owner.isWorld && !owner.isHand && (!owner.layout || owner.layout.name() === 'Constraint')) {
       this.view.visible = true;
     }
     if (this.view.visible) this.refreshConstraints();

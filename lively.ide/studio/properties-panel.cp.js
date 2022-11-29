@@ -2,7 +2,7 @@ import { TilingLayout, easings, touchInputDevice, component, without, add, ensur
 import { Color, Rectangle } from 'lively.graphics';
 import { pt, rect } from 'lively.graphics/geometry-2d.js';
 import { ColorInput } from 'lively.ide/styling/color-picker.cp.js';
-import { connect } from 'lively.bindings';
+import { connect, disconnect } from 'lively.bindings';
 
 import { RichTextControl } from './controls/text.cp.js';
 import { ShapeControl } from './controls/shape.cp.js';
@@ -29,10 +29,14 @@ export class PropertiesPanelModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['focusOn', 'relayout', 'isHaloItem', 'toggle', 'onHierarchyChange', 'clearFocus'];
+          return ['focusOn', 'relayout', 'isHaloItem', 'toggle', 'onHierarchyChange', 'clearFocus', 'isPropertiesPanel'];
         }
       }
     };
+  }
+
+  get isPropertiesPanel (){
+    return true;
   }
 
   updateLayoutControl () {
@@ -40,7 +44,11 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   onHierarchyChange () {
+  }
 
+  onTargetMovedInHierarchy () {
+    this.ui.shapeControl.refreshFromTarget();
+    this.ui.constraintsControl.focusOn(this.targetMorph);
   }
 
   relayout () {
@@ -137,6 +145,11 @@ export class PropertiesPanelModel extends ViewModel {
 
   clearFocus () {
     $world.withAllSubmorphsDo(m => m.isPropertiesPanelPopup && m.close());
+    if (this.targetMorph) {
+      disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+      this.targetMorph = null;
+    }
+
     this.ui.backgroundControl.visible = true;
     this.models.backgroundControl.onRefresh();
     this.toggleDefaultControls(false);
@@ -160,6 +173,9 @@ export class PropertiesPanelModel extends ViewModel {
       layoutControl, constraintsControl, borderControl,
       effectsControl, backgroundControl
     } = this.models;
+    if (this.targetMorph) disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+    this.targetMorph = aMorph;
+    connect(aMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
 
     this.toggleDefaultControls(true);
 
