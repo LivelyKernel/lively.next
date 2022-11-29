@@ -2,7 +2,7 @@ import { LightPrompt, AbstractPromptModel, RedButton, GreenButton } from 'lively
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, easings, ShadowObject, Icon, ProportionalLayout, Label, Text, component, add, part } from 'lively.morphic';
+import { TilingLayout, easings, ShadowObject, Icon, ConstraintLayout, Label, Text, component, add, part } from 'lively.morphic';
 import { PackageRegistry } from 'lively.modules/index.js';
 import EditorPlugin from 'lively.ide/editor-plugin.js';
 import { resource } from 'lively.resources';
@@ -363,7 +363,7 @@ const FreezerPrompt = component(LightPrompt, {
     name: 'layout wrapper',
     extent: pt(450, 155),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new ProportionalLayout({
+    layout: new ConstraintLayout({
       lastExtent: pt(450, 155),
       submorphSettings: [['package list', {
         x: 'resize',

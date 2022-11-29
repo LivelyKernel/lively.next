@@ -1,4 +1,4 @@
-import { ProportionalLayout, Icon, TilingLayout, component, part } from 'lively.morphic';
+import { ConstraintLayout, Icon, TilingLayout, component, part } from 'lively.morphic';
 import { pt, Color, rect } from 'lively.graphics';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DropDownList, DefaultList } from 'lively.components/list.cp.js';

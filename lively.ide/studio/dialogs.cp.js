@@ -2,7 +2,7 @@ import { DarkPrompt, ConfirmPromptModel, RedButton, GreenButton } from 'lively.c
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { component, add, part } from 'lively.morphic/components/core.js';
 import { pt, rect, Color } from 'lively.graphics';
-import { ProportionalLayout, TilingLayout, MorphicDB, ShadowObject, Text, Label } from 'lively.morphic';
+import { ConstraintLayout, TilingLayout, MorphicDB, ShadowObject, Text, Label } from 'lively.morphic';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 
 import { interactivelyChooseMorphicDB, interactivelyChosenCurrentMorphicDB } from 'lively.morphic/morphicdb/tools.js';
@@ -158,7 +158,7 @@ const SaveWorldDialog = component(DarkPrompt, {
     height: 210,
     width: 450,
     fill: Color.transparent,
-    layout: new ProportionalLayout({
+    layout: new ConstraintLayout({
       lastExtent: {
         x: 450,
         y: 210

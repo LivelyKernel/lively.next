@@ -12,7 +12,7 @@ import {
   touchInputDevice,
   Icon,
   Morph,
-  ProportionalLayout,
+  ConstraintLayout,
   Image,
   inspect,
   config,
@@ -26,7 +26,7 @@ import { prompts } from 'lively.components';
 import * as moduleManager from 'lively.modules';
 
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
-import { Halo, MorphHighlighter, ProportionalLayoutHalo, GridLayoutHalo } from 'lively.halos';
+import { Halo, MorphHighlighter, PorportionalLayoutHalo, GridLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
@@ -647,7 +647,7 @@ export class LivelyWorld extends World {
       : world.submorphs.length;
     let overlay;
     switch (morph.layout.constructor) {
-      case ProportionalLayout:
+      case ConstraintLayout:
         overlay = new ProportionalLayoutHalo({ container: morph, pointerId });
         break;
       case GridLayout:

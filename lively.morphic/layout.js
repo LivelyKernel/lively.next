@@ -666,7 +666,7 @@ export class TilingLayout extends Layout {
         morph._morphicState.extent = morph.extent.withX(newWidth);
         updateTransform = true;
         signal(morph, 'extent', morph.extent);
-        if (morph.layout && morph.layout.name() === 'Proportional') {
+        if (morph.layout && morph.layout.name() === 'Constraint') {
           morph.layout.applyRequests = true;
           morph.layout.forceLayout();
         }
@@ -1141,14 +1141,14 @@ export class TilingLayout extends Layout {
          once constraints are fully implemented in morphs.
 */
 
-export class ProportionalLayout extends Layout {
-  name () { return 'Proportional'; }
+export class ConstraintLayout extends Layout {
+  name () { return 'Constraint'; }
   description () { return 'Resizes, scales, and moves morphs according to their original position.'; }
 
   constructor (props) {
     super(props);
     this.extentDelta = pt(0, 0);
-    this.proportionalLayoutSettingsForMorphs = new WeakMap();
+    this.constraintLayoutSettingsForMorphs = new WeakMap();
     this.submorphSettings = (props && props.submorphSettings) || [];
     this.lastExtent = props.lastExtent;
     delete this.spacing;
@@ -1165,8 +1165,8 @@ export class ProportionalLayout extends Layout {
 
   __serialize__ () {
     return {
-      __expr__: `new ProportionalLayout(${obj.inspect(this.getSpec())})`,
-      bindings: { 'lively.morphic': ['ProportionalLayout'] }
+      __expr__: `new ConstraintLayout(${obj.inspect(this.getSpec())})`,
+      bindings: { 'lively.morphic': ['ConstraintLayout'] }
     };
   }
 
@@ -1174,19 +1174,19 @@ export class ProportionalLayout extends Layout {
 
   __after_deserialize__ (snapshot, ref) {
     const { _submorphSettings, container } = this;
-    const map = this.proportionalLayoutSettingsForMorphs || new WeakMap();
+    const map = this.constraintLayoutSettingsForMorphs || new WeakMap();
     this.extentDelta = pt(0, 0);
     if (!_submorphSettings || !container) return;
     for (const [ident, setting] of _submorphSettings) {
       const [morph] = this._morphsMatchingSelector(container, ident);
       morph && map.set(morph, setting);
     }
-    this.proportionalLayoutSettingsForMorphs = map;
+    this.constraintLayoutSettingsForMorphs = map;
   }
 
   onSubmorphChange (submorph, change, x, y) {
     if (change.prop === 'name') {
-      const settings = this.proportionalLayoutSettingsForMorphs.get(submorph);
+      const settings = this.constraintLayoutSettingsForMorphs.get(submorph);
       if (settings) this.changeSettingsFor(submorph, settings, true);
     }
     return super.onSubmorphChange(submorph, change);
@@ -1194,13 +1194,13 @@ export class ProportionalLayout extends Layout {
 
   settingsFor (morph) {
     // move, resize, scale, fixed, center
-    const settings = this.proportionalLayoutSettingsForMorphs.get(morph);
+    const settings = this.constraintLayoutSettingsForMorphs.get(morph);
     return settings || { x: 'scale', y: 'scale' };
   }
 
   changeSettingsFor (morph, mergin, save = false) {
     if (typeof mergin === 'string') mergin = { x: mergin, y: mergin };
-    this.proportionalLayoutSettingsForMorphs
+    this.constraintLayoutSettingsForMorphs
       .set(morph, { ...this.settingsFor(morph), ...mergin });
     if (save) {
       const settings = this.submorphSettings.filter(ea => ea[0] !== morph.name);

@@ -664,7 +664,7 @@ export class StylePolicy {
    */
   isPositionedByLayout (aSubmorph) {
     const layout = aSubmorph.owner?.layout;
-    return layout?.name() !== 'Proportional' && layout?.layoutableSubmorphs?.includes(aSubmorph);
+    return layout?.name() !== 'Constraint' && layout?.layoutableSubmorphs?.includes(aSubmorph);
   }
 
   /**
