@@ -2074,11 +2074,11 @@ export default class Halo extends Morph {
       newTarget && evt.world.showHaloFor(newTarget, evt.domEvt.pointerId);
       noUpdate(() => this.remove());
     }
-    if (evtTarget === this && (this.target.isWorld || this.target.owner?.isWorld)) return this.remove();
 
     if (evtTarget === this || evtTarget && !evtTarget.isHaloItem && !this.nameHalo().nameHolders.includes(evtTarget.owner)) {
       if (![this.target, ...this.target.ownerChain()].includes(this.morphBeneath(evt.position))) { return noUpdate(() => this.remove()); }
     }
+
     this.target.onHaloMouseDown(evt);
   }
 
