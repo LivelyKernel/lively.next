@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, Morph, TilingLayout, ProportionalLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import { ShadowObject, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -491,7 +491,7 @@ export class PathIndicator extends Morph {
 const SystemBrowser = component({
   name: 'system browser',
   defaultViewModel: BrowserModel,
-  layout: new ProportionalLayout({
+  layout: new ConstraintLayout({
     lastExtent: pt(605, 745),
     reactToSubmorphAnimations: false,
     submorphSettings: [
@@ -537,7 +537,7 @@ const SystemBrowser = component({
     name: 'header buttons',
     extent: pt(605, 49.8),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new ProportionalLayout({
+    layout: new ConstraintLayout({
       lastExtent: {
         x: 605,
         y: 49.79296875
@@ -902,7 +902,6 @@ const SystemBrowser = component({
       fill: Color.rgba(0, 0, 0, 0),
       layout: new TilingLayout({
         axis: 'row',
-        direction: 'leftToRight',
         wrapSubmorphs: false,
         orderByIndex: true,
         hugContentsVertically: true,

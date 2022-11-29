@@ -1,5 +1,5 @@
 import { PropertySection } from './section.cp.js';
-import { TilingLayout, ProportionalLayout, Label, component, ViewModel, part, add, without } from 'lively.morphic';
+import { TilingLayout, ConstraintLayout, Label, component, ViewModel, part, add, without } from 'lively.morphic';
 import { Rectangle, rect, pt, Color } from 'lively.graphics';
 import { EnumSelector, DarkThemeList } from '../shared.cp.js';
 import { signal } from 'lively.bindings';
@@ -10,7 +10,7 @@ const FIXED_ICON = '\uea16';
 
 /*
  * Depending on the morph provides controls to configure the resizing behavior of a morph
- * inside a TilingLayout or the constraints of a morph controlled by a ProportionalLayout
+ * inside a TilingLayout or the constraints of a morph controlled by a ConstraintLayout
  * or plain morph.
  */
 export class AlignmentManager extends ViewModel {
@@ -43,7 +43,7 @@ export class AlignmentManager extends ViewModel {
     const owner = this.targetMorph.owner;
     if (owner.isWorld) return;
     if (!owner.layout && (x !== 'fixed' || y !== 'fixed')) {
-      owner.layout = new ProportionalLayout({
+      owner.layout = new ConstraintLayout({
         submorphSettings: owner.submorphs.map(m => [m.name, { x: 'fixed', y: 'fixed' }])
       });
     }
@@ -115,7 +115,7 @@ export class AlignmentManager extends ViewModel {
       constraints.horizontalConstraint = 'fixed';
       return;
     }
-    if (layout.name() === 'Proportional') {
+    if (layout.name() === 'Constraint') {
       const policy = layout.settingsFor(this.targetMorph);
       constraints.verticalConstraint = policy.y;
       constraints.horizontalConstraint = policy.x;
@@ -159,7 +159,7 @@ export class AlignmentManager extends ViewModel {
   }
 
   /**
-   * Update the current morph's resizing policy inside the ProportionalLayout
+   * Update the current morph's resizing policy inside the ConstraintLayout
    * that controls the morph.
    */
   updateConstraintPolicies () {
@@ -176,10 +176,10 @@ export class AlignmentManager extends ViewModel {
 
 /**
  * Control the position/resize constraints of a morph inside a morph without any layout
- * or a morph with a ProportionalLayout.
+ * or a morph with a ConstraintLayout.
  * A constraint is a policy that dictates how the different sides of a morph relate to its
  * owner morph frame.
- * This controller automatically creates ProportionalLayouts as needed to reify the constraints.
+ * This controller automatically creates ConstraintLayouts as needed to reify the constraints.
  */
 export class ConstraintsControlModel extends ViewModel {
   static get properties () {
@@ -267,8 +267,8 @@ export class ConstraintsControlModel extends ViewModel {
 
   /**
    * Configures the vertical constraint behavior of a morph. This applies when
-   * the morph is controlled by a ProportionalLayout.
-   * The following constraint behaviors are supported (By the ProportionalLayout):
+   * the morph is controlled by a ConstraintLayout.
+   * The following constraint behaviors are supported (By the ConstraintLayout):
    *  scale: this scales the morph along the vertial direction when the container resizes.
    *  move: this moves the morph along the vertical direction when the container resizes. (Also known as Bottom)
    *  fixed: this leaves the morph at a fixed vertical offset when the container resizes. (Also known as Top)

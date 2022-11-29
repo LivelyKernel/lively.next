@@ -1,5 +1,5 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, ProportionalLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { GreenButton, RedButton, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Spinner } from './shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
@@ -1097,7 +1097,7 @@ const ComponentBrowser = component(LightPrompt, {
     textString: 'Browse Components'
   }, add(part(InputLineDefault, {
     name: 'search input',
-    layout: new ProportionalLayout({
+    layout: new ConstraintLayout({
       lastExtent: {
         x: 483,
         y: 34.3

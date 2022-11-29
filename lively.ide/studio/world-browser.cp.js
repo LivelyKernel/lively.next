@@ -1,4 +1,4 @@
-import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ProportionalLayout, ShadowObject, component, part } from 'lively.morphic';
+import { InputLine, easings, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import * as moduleManager from 'lively.modules';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
@@ -1056,7 +1056,7 @@ const WorldBrowser = component({
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.52), blur: 15 }),
   extent: pt(870, 570),
   fill: Color.rgb(112, 123, 124),
-  layout: new ProportionalLayout({
+  layout: new ConstraintLayout({
     lastExtent: {
       x: 870,
       y: 570

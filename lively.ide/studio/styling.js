@@ -611,7 +611,7 @@ export class ShapeLayoutControl extends Morph {
     let ui = this.ui;
     connect(ui.submorphSettingsControl, 'fire', this, 'chooseSubmorphToChangeLayoutSettings');
     connect(ui.dragmeControl, 'onDragStart', this, 'onSubmorphSettingsDragStart');
-    connect(ui.xAxisPolicyControl, 'selection', this, 'updateSubmorphProportionalLayoutSettings', {
+    connect(ui.xAxisPolicyControl, 'selection', this, 'updateSubmorphConstraintLayoutSettings', {
       converter: `policy => ({
         policy,
         axis: "x",
@@ -621,7 +621,7 @@ export class ShapeLayoutControl extends Morph {
         self: this
       }
     });
-    connect(ui.yAxisPolicyControl, 'selection', this, 'updateSubmorphProportionalLayoutSettings', {
+    connect(ui.yAxisPolicyControl, 'selection', this, 'updateSubmorphConstraintLayoutSettings', {
       converter: `policy => ({
         policy,
         axis: "y",
@@ -702,7 +702,7 @@ export class ShapeLayoutControl extends Morph {
 
   // proportional layout stuff
 
-  updateSubmorphProportionalLayoutSettings ({ policy, axis, submorph }) {
+  updateSubmorphConstraintLayoutSettings ({ policy, axis, submorph }) {
     this.target.layout.changeSettingsFor(submorph, {
       [axis]: policy
     }, true);
@@ -730,8 +730,8 @@ export class ShapeLayoutControl extends Morph {
         : evt.world.morphsContainingPoint(evt.hand.position).find(ea =>
           layout.layoutableSubmorphs.includes(ea));
       if (target) {
-        this.updateSubmorphProportionalLayoutSettings({ policy: settings.x, axis: 'x', submorph: target });
-        this.updateSubmorphProportionalLayoutSettings({ policy: settings.y, axis: 'y', submorph: target });
+        this.updateSubmorphConstraintLayoutSettings({ policy: settings.x, axis: 'x', submorph: target });
+        this.updateSubmorphConstraintLayoutSettings({ policy: settings.y, axis: 'y', submorph: target });
         target.show();
         $world.setStatusMessage('layout settings applied');
       }

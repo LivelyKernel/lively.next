@@ -1,6 +1,6 @@
 import { Rectangle, pt, rect, Color } from 'lively.graphics';
 import { connect, noUpdate, signal } from 'lively.bindings';
-import { ProportionalLayout, Icon, HorizontalLayout, VerticalLayout, Morph } from 'lively.morphic';
+import { ConstraintLayout, Icon, HorizontalLayout, VerticalLayout, Morph } from 'lively.morphic';
 
 import MorphicDB from './db.js';
 
@@ -192,7 +192,7 @@ export class MorphicDBPrompt extends Morph {
       relBounds.splice(7, 1);
     }
     this.submorphs.map((ea, i) => ea.setBounds(realBounds[i]));
-    this.layout = new ProportionalLayout({
+    this.layout = new ConstraintLayout({
       submorphSettings: [
         ['alias label', 'fixed'],
         ['server url label', 'fixed'],
