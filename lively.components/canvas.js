@@ -110,15 +110,25 @@ export class Canvas extends Morph {
     return renderer.nodeForCanvas(this);
   }
 
+  /**
+   * Adjusting the canvas size clears the contents of the canvas.
+   * We therefore need to copy over the contents of the canvas.
+   * @param { HTMLDomNode } node - The dom node of the canvas morph.
+   */
   patchSpecialProps (node) {
+    let contents;
+    const { width: w, height: h } = this._canvas;
     if (this.renderingState.width !== this.width) {
+      contents = this.context.getImageData(0, 0, w, h);
       node.firstChild.width = this.width;
       this.renderingState.width = this.width;
     }
     if (this.renderingState.height !== this.height) {
+      contents = this.context.getImageData(0, 0, w, h);
       node.firstChild.height = this.height;
       this.renderingState.height = this.height;
     }
+    if (contents) this.context.putImageData(contents, 0, 0);
   }
 
   withContextDo (func) {
