@@ -54,7 +54,7 @@ export class Tree extends Text {
       disableIndent: { defaultValue: false },
       activateOnHover: { defaultValue: true },
       readOnly: { defaultValue: true },
-      needsDocument: { defaultValue: true},
+      needsDocument: { defaultValue: true },
       lineHeight: {
         defaultValue: 1.5
       },
@@ -201,6 +201,14 @@ export class Tree extends Text {
       if (attrs[i]) { attrs[i].fontColor = this.selectionFontColor; } else { attrs[i] = { fontColor: this.selectionFontColor }; }
     }
     this.document.setTextAndAttributesOfLine(row, attrs);
+    /*
+      rms: 22.11.22: Since we are meddling around with internal
+      data structures of the text morph (document) these changes
+      are not automatically updated by the renderer. We therefore need
+      to update the renderingState manually to ensure the text attributes
+      are properly updated.
+    */
+    this.renderingState.renderedTextAndAttributes = null;
     this.selectLine(row, true);
     this._lastSelectedIndex = row + 1;
   }
@@ -307,9 +315,6 @@ export class Tree extends Text {
             this.computeTreeAttributes(nodes),
             false, false);
           this.invalidateTextLayout(true, false);
-          this.whenRendered().then(async () => {
-            this.makeDirty();
-          });
         } else if (this._lastSelectedIndex) {
           this.recoverOriginalLine(this._lastSelectedIndex - 1);
         }
