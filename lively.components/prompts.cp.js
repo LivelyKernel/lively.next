@@ -83,21 +83,10 @@ export class InformPromptModel extends AbstractPromptModel {
 
   viewDidLoad () {
     super.viewDidLoad();
-    const { view, ui: { promptTitle } } = this;
+    const { ui: { promptTitle } } = this;
     promptTitle.lineWrapping = this.lineWrapping;
+    promptTitle.fixedWidth = !!this.lineWrapping;
     promptTitle.textString = this.label;
-
-    if (!this.lineWrapping) {
-      view.opacity = 0;
-      view.whenRendered().then(() => {
-        if (promptTitle.document) {
-          const currentCenter = view.center;
-          view.width = Math.max(view.width, promptTitle.document.width + 100);
-          view.align(view.center, currentCenter);
-        }
-        view.opacity = 1;
-      });
-    }
   }
 
   get keybindings () {
@@ -140,8 +129,7 @@ export class ConfirmPromptModel extends AbstractPromptModel {
 
   viewDidLoad () {
     super.viewDidLoad();
-    const { ui: { promptTitle: title, okButton, cancelButton }, view } = this;
-    title.value = this.label;
+    const { ui: { promptTitle: title, okButton, cancelButton } } = this;
 
     okButton.label = this.confirmLabel;
     cancelButton.label = this.rejectLabel;
@@ -149,17 +137,8 @@ export class ConfirmPromptModel extends AbstractPromptModel {
     if (this.forceConfirm) cancelButton.disable();
 
     title.lineWrapping = this.lineWrapping;
-    if (!this.lineWrapping) {
-      view.opacity = 0;
-      view.whenRendered().then(() => {
-        title.lineWrapping = this.lineWrapping;
-        const center = view.center;
-        title.invalidateTextLayout(true, true);
-        view.width = Math.max(view.width, title.document.width + 100);
-        view.center = center;
-        view.opacity = 1;
-      });
-    }
+    title.fixedWidth = !!this.lineWrapping;
+    title.value = this.label;
   }
 
   resolve () { super.resolve(true); }
@@ -420,10 +399,11 @@ export class EditPromptModel extends TextPromptModel {
 export class PasswordPromptModel extends TextPromptModel {
   resolve () { return super.resolve(this.ui.input.acceptInput()); }
 
-  focus () {
-    const i = this.ui.input;
-    // this is nessecary because of the html implementation of the password input
-    i.whenRendered().then(() => i.focus());
+  async focus () {
+    // ensure that the password input is mounted in the dom
+    setTimeout(() => {
+      this.ui.input.focus();
+    });
   }
 }
 
@@ -489,11 +469,7 @@ export class ListPromptModel extends TextPromptModel {
       useLastInput
     });
 
-    list.whenRendered().then(() => {
-      // this is super strange
-      list.items = items;
-    });
-
+    list.items = items;
     input.visible = !!filterable;
 
     if (filterable && fuzzy) list.fuzzy = fuzzy;
