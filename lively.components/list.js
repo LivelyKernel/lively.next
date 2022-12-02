@@ -560,7 +560,7 @@ export class List extends Morph {
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
-    this.whenRendered().then(() => this.update());
+    this.whenEnvReady().then(() => this.update());
   }
 
   onLoad () {
@@ -912,11 +912,6 @@ export class FilterableList extends Morph {
             new morph({ name: 'padding', fill: Color.transparent }),
             new List({ name: 'list', items: [] })
           ];
-          // rms 24.5.17 in order to ensure that the list correctly conforms to
-          //   global style sheets that become active once list is opened in world
-          //   NOTE: this is a temporary fix, results in not so nice looking moving of
-          //         elements
-          this.get('list').whenRendered().then(() => this.get('list').update());
         }
       },
 
@@ -1481,8 +1476,6 @@ export class DropDownList extends Button {
       list.moveBy(this.listOffset || pt(0, 0));
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
-      await list.whenRendered();
-      await list.whenRendered();
       touchInputDevice ? list.scroller.focus() : list.focus();
       list.scrollSelectionIntoView();
     }
@@ -1556,7 +1549,6 @@ export class InteractiveItem extends ListItemMorph {
     if (this.item.isPreview) {
       const wrappedMorph = evt.hand.grabbedMorphs[0];
       super.onDrop(evt);
-      await this.list.whenRendered();
       this.list.addItemAt({
         morph: wrappedMorph,
         isListItem: true
@@ -1992,8 +1984,6 @@ export class DropDownListModel extends ButtonModel {
       }
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
-      await list.whenRendered();
-      await list.whenRendered();
       touchInputDevice ? list.scroller.focus() : list.focus();
       list.scrollSelectionIntoView();
     }
