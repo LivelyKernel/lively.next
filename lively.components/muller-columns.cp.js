@@ -53,6 +53,7 @@ export class MullerColumnViewModel extends ViewModel {
             l.epiMorph = true;
             return l;
           });
+          this.view.env.renderer.renderStep();
         }
       },
       expose: {
@@ -171,8 +172,6 @@ export class MullerColumnViewModel extends ViewModel {
     if (lenDiff > 0) {
       newLists = [...newLists, ...arr.genN(lenDiff, () => this.newList())];
       this.lists = newLists;
-      await view.whenRendered(); // ensure layout has placed all morphs accordingly
-      if (view.layout.renderViaCSS) { newLists.map(m => view.layout.tryToMeasureNodeNow(m)); } // thank you virtual-dom....
       scroll = pt(view.scrollExtent.x - view.width);
       if (animated) {
         view.animate({
