@@ -18,7 +18,7 @@ export class IFrameMorph extends HTMLMorph {
   static async printTextMorph (textMorph) {
     // textMorph.clipMode = "visible";
 
-    await textMorph.whenRendered();
+    textMorph.env.renderer.renderStep();
 
     let el = textMorph.env.renderer.getNodeForMorph(textMorph);
     let im = IFrameMorph.open({ srcdoc: el.outerHTML });
