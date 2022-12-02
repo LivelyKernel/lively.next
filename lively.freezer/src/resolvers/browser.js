@@ -64,7 +64,7 @@ function finish () {
 }
 
 function whenReady () {
-  return li.whenRendered();
+  return li.whenEnvReady();
 }
 
 function spawn ({ command, cwd }) {

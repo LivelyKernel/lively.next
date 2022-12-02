@@ -119,15 +119,6 @@ export default class FreezerPromptModel extends AbstractPromptModel {
     };
   }
 
-  async viewDidLoad () {
-    super.viewDidLoad();
-    const { layoutWrapper } = this.ui;
-    this.view.opacity = 0; // hide weird flicker interaction due to proportional and css layouts
-    await this.view.whenRendered();
-    layoutWrapper.layout.apply();
-    this.view.opacity = 1;
-  }
-
   cancel () {
     this.view.remove();
     this.reject();
@@ -237,7 +228,6 @@ export default class FreezerPromptModel extends AbstractPromptModel {
   }
 }
 
-// FreezerPrompt.openInWorld()
 const FreezerPrompt = component(LightPrompt, {
   defaultViewModel: FreezerPromptModel,
   name: 'freezer prompt',
@@ -321,6 +311,7 @@ const FreezerPrompt = component(LightPrompt, {
     nativeCursor: 'default',
     readOnly: true,
     textAlign: 'left',
+    needsDocument: true,
     textAndAttributes: [
       'Compression:', { textAlign: 'left', fontSize: 16, fontColor: Color.rgb(45, 45, 45) }, ' ', { textAlign: 'left', fontSize: 16 }, ' ', { textAlign: 'left' }, part(DropDownList, {
         name: 'compiler selector',
