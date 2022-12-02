@@ -378,7 +378,7 @@ class NameHolder extends Morph {
   update () {
     if (this.nameHolder.textString === this.target.name) return;
     this.nameHolder.textString = this.target.name;
-    this.whenRendered().then(() => this.nameHolder.fit());
+    this.nameHolder.fit();
   }
 
   activate () {
@@ -662,15 +662,7 @@ class GrabHaloItem extends HaloItem {
     MorphHighlighter.removeHighlighters(halo);
     halo.target.undoStop('grab-halo');
     this.opacity = 1;
-    if (halo.target.owner?.layout) {
-      halo.opacity = 0; // hide the glitch
-      halo.target.whenRendered().then(() => {
-        halo.alignWithTarget();
-        halo.opacity = 1;
-      });
-    } else {
-      halo.alignWithTarget();
-    }
+    halo.alignWithTarget();
   }
 
   update () { this.halo.alignWithTarget(); }
