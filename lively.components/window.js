@@ -67,7 +67,6 @@ export default class Window extends Morph {
             if (length >= maxLength) break;
           }
           this.ui.windowTitle.value = truncated;
-          await this.whenRendered();
           this.ui.windowTitle.reactsToPointer = false;
           this.relayoutWindowControls();
         }
@@ -175,7 +174,6 @@ export default class Window extends Morph {
         this._originalBounds = null;
       }
       this._faderTriggered = false;
-      await this.whenRendered();
       await promise.delay(100);
       this.borderColor = Color.gray;
       if (this._faderTriggered) return; // hacky way to allow other prompts to steal the prompt
@@ -668,6 +666,8 @@ export default class Window extends Morph {
 
     this.master.whenApplied().then(() => {
       this.master = { auto: DefaultWindow };
+      this.master.applyIfNeeded(true); // FIXME: can we do this inside the master setter without breaking other stuff?
+      this.relayoutWindowControls();
     });
 
     if (!this.world()) this.openInWorldNearHand();
