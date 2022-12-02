@@ -119,7 +119,7 @@ function clearWorldSnapshot (snap) {
 }
 
 /**
- * The prompts the user to configure and confirm the settings for 
+ * The prompts the user to configure and confirm the settings for
  * the bunding process,
  * @param { Morph|string } targetOrModule - The part/world to be frozen.
  * @param { Morph } requester - The tool that requested the prompt (usually the Object Editor)
@@ -149,8 +149,7 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
     freezerPrompt.excludedPackages = previouslyExcludedPackages;
     freezerPrompt.directory = previouslyPublishedDir;
     freezerPrompt.openInWorld();
-    await freezerPrompt.whenRendered();
-    freezerPrompt.center = pos; // wait for css layout...
+    freezerPrompt.center = pos;
     res = await freezerPrompt.activate();
   });
   return res;
