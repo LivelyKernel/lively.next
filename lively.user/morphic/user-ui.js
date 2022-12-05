@@ -12,7 +12,6 @@ import { ClientUser } from 'lively.user/index.js';
 
 // das kostet was??? 99 euro ey.
 // import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
-import { gapi } from 'https://apis.google.com/js/platform.js';
 import ObjectPackage from 'lively.classes/object-classes.js';
 
 // adoptObject(that, UserInfoWidget)
@@ -79,7 +78,6 @@ export var UserUI = {
     System.import('lively.2lively/client.js');
     (async () => {
       topBar.showCurrentUser();
-      await topBar.whenRendered();
       await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
       if (!world.metadata) {
         await world.animate({
@@ -401,7 +399,8 @@ export class LoginWidget extends UserWidget {
     };
   }
 
-  signInWithGoogle () {
+  async signInWithGoogle () {
+    const { gapi } = await System.import('https://apis.google.com/js/platform.js');
     gapi.load('auth2', async () => {
       gapi.auth2.init({
         client_id: 'CLIENT_ID.apps.googleusercontent.com'
@@ -721,8 +720,7 @@ export class UserFlap extends Morph {
   get isMaximized () { return this.submorphs.length > 3; }
 
   async onLoad () {
-    await this.whenRendered();
-    if ([this, ...this.ownerChain()].find(m => m.isComponent)) return;
+    await this.whenEnvReady();
     this.showUser(this.currentUser());
   }
 
@@ -785,8 +783,7 @@ export class UserFlap extends Morph {
 
   relayout () { this.alignInWorld(); }
 
-  async alignInWorld (animated) {
-    await this.whenRendered();
+  alignInWorld (animated) {
     if (this.hasFixedPosition && this.owner.isWorld) {
       this.topRight = pt(this.world().visibleBounds().width, 0);
     } else if (this.owner.isWorld) {
@@ -887,7 +884,6 @@ export class UserFlap extends Morph {
       await menu.master.whenApplied();
       menu.position = avatar.bottomCenter.addXY(0, 10);
     }
-    await this.whenRendered();
     this.alignInWorld();
   }
 
@@ -898,7 +894,6 @@ export class UserFlap extends Morph {
 
   async onBlur (evt) {
     this.minimize();
-    await this.whenRendered();
     if (this.world().focusedMorph.ownerChain().includes(this)) { this.focus(); }
   }
 
