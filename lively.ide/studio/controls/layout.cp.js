@@ -197,10 +197,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     p.openInWorld();
     p.topRight = this.ui.miniLayoutPreview.globalBounds().bottomRight().addXY(0, 2);
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
-    p.opacity = 0;
-    await p.whenRendered();
     p.start();
-    p.opacity = 1;
     p.viewModel.update();
   }
 
