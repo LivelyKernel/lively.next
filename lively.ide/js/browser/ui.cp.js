@@ -319,15 +319,6 @@ export class PathIndicator extends Morph {
       { title, content, language: 'text' });
   }
 
-  relayout () {
-    const { filePath, clipboardControls, statusBox, errorControls } = this.ui;
-    let pad = 10 + filePath.left;
-    filePath.width = this.width - clipboardControls.width - pad;
-    clipboardControls.right = this.width;
-    statusBox.width = this.width - 30;
-    errorControls.topRight = statusBox.bottomRight.withX(this.width);
-  }
-
   adjustHeight () {
     const { errorControls } = this.ui;
     if (this.ui.statusBox.opacity > 0) {
@@ -357,7 +348,7 @@ export class PathIndicator extends Morph {
 
   showInactive (duration = 300) {
     this.requestTransition(async () => {
-      const { filePath, statusBox, statusLabel, pathContainer, clipboardControls } = this.ui;
+      const { filePath, statusBox, statusLabel, clipboardControls } = this.ui;
       filePath.value = 'No file selected';
       this.master = FileStatusInactive;
       this.master.applyAnimated({ duration });
@@ -373,7 +364,7 @@ export class PathIndicator extends Morph {
 
   showDefault (duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      const { statusBox, statusLabel, errorControls } = this.ui;
       this.master = FileStatusDefault;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -386,10 +377,9 @@ export class PathIndicator extends Morph {
 
   async showError (err, duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = err;
       statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
       this.master = FileStatusError;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -402,10 +392,9 @@ export class PathIndicator extends Morph {
 
   async showWarning (warning, duration = 300) {
     await this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = warning;
       statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
       this.master = FileStatusWarning;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -418,10 +407,9 @@ export class PathIndicator extends Morph {
 
   async showFrozen (frozenMessage, duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer } = this.ui;
+      const { statusBox, statusLabel } = this.ui;
       statusBox.textString = frozenMessage;
       statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
       this.master = FileStatusFrozen;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -437,10 +425,9 @@ export class PathIndicator extends Morph {
     this._animating = true;
 
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, pathContainer, errorControls } = this.ui;
+      const { statusBox, statusLabel, errorControls } = this.ui;
       statusLabel.opacity = 0;
       statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
       this.master = FileStatusSaved;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -471,8 +458,6 @@ export class PathIndicator extends Morph {
     }
   }
 }
-
-
 
 // b = part(SystemBrowser)
 
@@ -951,6 +936,7 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
   // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
   const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
   if (!browser.world()) browser.openInWindow();
+  browser.env.renderer.renderStep();
   return browser.browse(browseSpec, optSystemInterface);
 }
 
