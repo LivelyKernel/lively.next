@@ -176,7 +176,7 @@ export class LivelyWorld extends World {
         if (oldWorld && oldWorld.env !== this.env) {
           li.withAllSubmorphsDo(m => m._env = this.env);
           this.addMorph(li);
-          await oldWorld.whenRendered();
+          // force the render loop?
           oldWorld.env.renderer.stopRenderWorldLoop();
         }
       }
@@ -233,7 +233,7 @@ export class LivelyWorld extends World {
   }
 
   async askForName () {
-    await this.whenRendered();
+    await this.whenEnvReady();
     let worldName;
     while (!worldName) {
       worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true });
@@ -336,7 +336,6 @@ export class LivelyWorld extends World {
               img.whenLoaded().then(async () => {
                 img.extent = img.naturalExtent.scaleBy(0.8 * this.visibleBounds().height / img.height);
                 img.openInWorld();
-                await img.whenRendered();
                 img.center = this.visibleBounds().center();
               });
             });
