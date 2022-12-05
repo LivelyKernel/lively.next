@@ -78,7 +78,10 @@ async function fetchResource (proceed, load) {
       status: load.name.replace(System.baseURL, '')
     });
     await promise.delay(500);
-    if (System._loadingIndicator) { await System._loadingIndicator.whenRendered(); }
+    // force the renderer
+    if (System._loadingIndicator) {
+      $world.env.renderer.renderStep();
+    }
   }
 
   return result;
