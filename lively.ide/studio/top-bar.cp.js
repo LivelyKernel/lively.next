@@ -818,7 +818,6 @@ export class UserFlapModel extends ViewModel {
 
   async collapse () {
     this.minimize();
-    await this.view.whenRendered();
     if (this.world().focusedMorph.ownerChain().includes(this.view)) { this.view.focus(); }
   }
 
@@ -869,7 +868,6 @@ export class UserFlapModel extends ViewModel {
   async alignInWorld (animated) {
     const { owner } = this.view;
     if (!owner) return;
-    await this.view.whenRendered();
 
     if (this.view.hasFixedPosition && owner.isWorld) {
       this.view.topRight = pt(this.world().visibleBounds().width, 0);
@@ -961,7 +959,6 @@ export class UserFlapModel extends ViewModel {
     if (userMenu) {
       userMenu.position = avatar.bottomCenter.addXY(0, 10);
     }
-    await this.view.whenRendered();
     this.alignInWorld();
   }
 
@@ -985,6 +982,7 @@ export class UserFlapModel extends ViewModel {
 const TopBarButton = component({
   type: Label,
   name: 'top bar button',
+  lineHeight: 1,
   fontColor: {
     value: Color.rgb(102, 102, 102),
     onlyAtInstantiation: true
