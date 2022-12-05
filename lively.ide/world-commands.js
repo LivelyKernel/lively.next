@@ -88,17 +88,13 @@ const commands = [
         };
       });
 
-      // FIXME: the caching of the prompt is nice in general
-      // however, it lead to rendering problems as the list was not updated correctly
-      const { /*prompt,*/ selected: [cmd] } = await world.filterableListPrompt(
+      const { selected: [cmd] } = await world.filterableListPrompt(
         'Run command', items, {
           historyId: 'lively.morphic-run command',
           requester: target,
-          extent: pt(700, 600),
-         // prompt: world._cachedRunCommandPrompt
+          extent: pt(700, 600)
         });
 
-      // world._cachedRunCommandPrompt = prompt;
       return cmd ? cmd.target.execCommand(cmd.command, args, count) : true;
     }
   },
@@ -875,7 +871,6 @@ const commands = [
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
       const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
-      if (!world._componentsBrowser) await li.whenRendered();
       const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = part(ComponentBrowser));
       li.remove();
       const loadedComponent = await componentsBrowser.activate();
@@ -1304,7 +1299,6 @@ const commands = [
       if (name) return World.loadFromDB(name, ref, oldWorld, { moduleManager: modules });
 
       const li = LoadingIndicator.open('loading project browser...');
-      await li.whenRendered();
 
       const fader = morph({ fill: Color.black.withA(0.5), extent: oldWorld.extent, name: 'dark overlay', opacity: 0, reactsToPointer: false, renderOnGPU: true, halosEnabled: false });
       fader.openInWorld(pt(0, 0));
