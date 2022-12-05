@@ -93,7 +93,6 @@ export class HTMLMorph extends Morph {
                 if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
               });
               addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed));
-            
             } catch (err) {
               console.error(`Error setting cssDeclaration of ${this}: ${err}`);
             }
@@ -121,7 +120,7 @@ export class HTMLMorph extends Morph {
     return renderer.nodeForHTMLMorph(this);
   }
 
-  abandon() {
+  abandon () {
     // clean up created style tag
     this.cssDeclaration = null;
     super.abandon();
@@ -195,7 +194,7 @@ export class IFrameMorph extends HTMLMorph {
         set (val) {
           this.iframe.removeAttribute('src');
           this.iframe.srcdoc = val;
-          this._whenLoaded = this.whenRendered().then(() => promise.delay(20));
+          this._whenLoaded = Promise.resolve(true);
         }
       },
 
