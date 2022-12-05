@@ -1,6 +1,6 @@
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect } from 'lively.bindings';
-import { arr, obj } from 'lively.lang';
+import { arr, fun, obj } from 'lively.lang';
 import { defaultDirectory } from './shell-interface.js';
 import { GridLayout } from 'lively.morphic/layout.js';
 import { Morph, Text, World, config, InputLine } from 'lively.morphic';
@@ -30,7 +30,7 @@ export default class Terminal extends Morph {
     let term = new this(options);
     let winOpts = { name: 'ShellTerminal window', title: options.title || 'Terminal' };
     let win = term.openInWindow(winOpts);
-    term.whenRendered().then(() => term.focus());
+    term.focus();
     return win;
   }
 
@@ -67,7 +67,6 @@ export default class Terminal extends Morph {
             {
               type: TerminalView,
               name: 'output',
-              needsDocument: true,
               lineWrapping: false,
               textString: '',
               readOnly: false,
@@ -93,6 +92,7 @@ export default class Terminal extends Morph {
               borderRadius: 3,
               fontSize: 12,
               master: DarkButton,
+              isLayoutable: false,
               padding: Rectangle.inset(4, 2)
             }
           ];
@@ -192,8 +192,8 @@ export default class Terminal extends Morph {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
 
     // remove unncessary state
-    var ref = pool.ref(this.ui.output);
-    var props = ref.currentSnapshot.props;
+    let ref = pool.ref(this.ui.output);
+    let props = ref.currentSnapshot.props;
     if (props.attributeConnections) props.attributeConnections.value = [];
     if (props.plugins) props.plugins.value = [];
     if (props.anchors) {
@@ -203,8 +203,8 @@ export default class Terminal extends Morph {
     }
     if (props.savedMarks) props.savedMarks.value = [];
 
-    var ref = pool.ref(this.ui.input);
-    var props = ref.currentSnapshot.props;
+    ref = pool.ref(this.ui.input);
+    props = ref.currentSnapshot.props;
     if (props.attributeConnections) props.attributeConnections.value = [];
     if (props.plugins) props.plugins.value = [];
     if (props.anchors) {
@@ -349,8 +349,10 @@ export default class Terminal extends Morph {
     ed.append(text);
 
     if (isAtFileEnd) {
-      ed.gotoDocumentEnd();
-      ed.scrollCursorIntoView();
+      fun.debounceNamed(ed.id, 50, () => {
+        ed.gotoDocumentEnd();
+        ed.scrollCursorIntoView();
+      })();
     }
   }
 
@@ -365,7 +367,7 @@ export default class Terminal extends Morph {
       arr.zip(oldPackages, newPackages).forEach(([oldPackage, newPackage]) => {
         if (oldPackage && newPackage) {
           arr.zip(Object.entries(oldPackage.files), Object.entries(newPackage.files)).forEach(([[fileName, oldFile], [_, newFile]]) => {
-            if (oldFile != newFile) {
+            if (oldFile !== newFile) {
               differentFiles.push([fileName, oldFile, newFile]);
             }
           });
