@@ -87,7 +87,7 @@ export default class TextMap extends Canvas {
         this.position = pt(this.textMorph.width - this.width - 20, this.textMorph.padding.top() + 5 + this.textMorph.scroll.y);
       }
     }
-    fun.throttleNamed('update-' + this.id, 100, () => this.whenRendered().then(() => this.update()))();
+    fun.throttleNamed('update-' + this.id, 100, () => this.update())();
   }
 
   get measure () {
@@ -108,9 +108,8 @@ export default class TextMap extends Canvas {
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
 
     if (!ctx) {
-      this.whenRendered().then(() => this.update());
-      // waiting for `whenRendered` does not guarantee us to be actually rendered, as it is more of a waiting heuristic
-      // not returning in the case that we were not rendered lead to errors, when `fillStyle` of `undefined` was read
+      this.env.renderer.renderStep();
+      this.update();
       return;
     }
 
@@ -123,7 +122,7 @@ export default class TextMap extends Canvas {
     ctx.fillRect(0, endRow * heightPerLine, width, height - endRow * heightPerLine);
 
     // draw the lines
-    let x = 0; let y = 0;
+    let y = 0;
     ctx.beginPath();
     ctx.lineWidth = Math.max(1, heightPerLine - 0.3);
     ctx.strokeStyle = 'gray';
@@ -134,9 +133,6 @@ export default class TextMap extends Canvas {
       let x = (length - lengthNoTrailingSpace);
       ctx.moveTo(x, y);
       ctx.lineTo(x + lengthNoTrailingSpace * widthPerChar, y);
-      // ctx.moveTo(x, y);
-      // ctx.lineTo(x + line.text.length*widthPerChar, y);
-      x = 0;
       y += heightPerLine;
     }
     ctx.stroke();
@@ -149,8 +145,12 @@ export default class TextMap extends Canvas {
     ctx.lineTo(width, endRow * heightPerLine);
     ctx.stroke();
 
-    // ctx.fillStyle = "rgba(255,255,255,0.6)";
-    // ctx.fillRect(0, startRow*heightPerLine, width, endRow*heightPerLine-startRow*heightPerLine);
+    function highlighRange (range, color, fullLine = false) {
+      let { start, end } = range;
+      let selHeight = Math.max((end.row - start.row + 1) * heightPerLine, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(0, start.row * heightPerLine, width, selHeight);
+    }
 
     // selections
     ctx.fillStyle = 'blue';
@@ -166,17 +166,10 @@ export default class TextMap extends Canvas {
       }
       highlighRange(marker.range, color, true);
     }
-
-    function highlighRange (range, color, fullLine = false) {
-      let { start, end } = range;
-      let selHeight = Math.max((end.row - start.row + 1) * heightPerLine, 1);
-      ctx.fillStyle = color;
-      ctx.fillRect(0, start.row * heightPerLine, width, selHeight);
-    }
   }
 
   onMouseDown (evt) {
-    let { textMorph, measure: { width, height, heightPerLine } } = this;
+    let { textMorph, measure: { heightPerLine } } = this;
     // evt = this.LastEvent;
     // this.LastEvent = evt;
     let pos = evt.positionIn(this);
