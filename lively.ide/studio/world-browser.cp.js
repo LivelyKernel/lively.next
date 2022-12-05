@@ -261,7 +261,6 @@ class TitleWrapper extends Morph {
     if (!this.title) return;
     const [title] = this.submorphs;
     title.textString = this.title;
-    await title.whenRendered();
     this._hoverDelta = 0;
     this.startStepping('updateTitle');
     if (title.right > this.width) { this.startMovingLeft(); }
@@ -496,7 +495,7 @@ class WorldDashboard extends Morph {
       const placeholder = part(Placeholder); // eslint-disable-line no-use-before-define
 
       placeholder._commit = commit;
-      placeholder.displayPreview = async () => {
+      placeholder.displayPreview = () => {
         const preview = part(WorldPreviewTile); // eslint-disable-line no-use-before-define
         preview.dropShadow = null;
         preview._commit = commit;
@@ -504,7 +503,6 @@ class WorldDashboard extends Morph {
         placeholder.addMorph(preview);
         preview.displayPreview();
         preview.position = pt(0, 0);
-        await placeholder.whenRendered();
         placeholder.layout = new TilingLayout({
           axis: 'column',
           reactToSubmorphAnimations: true
@@ -621,10 +619,8 @@ class GrowingWorldList extends Morph {
       item.top = newItemOffset;
       scrollContainer.addMorph(item);
       if (!item._initialized) {
-        item.whenRendered().then(async () => {
-          item._initialized = true;
-          await item.displayPreview();
-        });
+        item._initialized = true;
+        item.displayPreview();
       }
     }
     if (sort) {
@@ -687,8 +683,6 @@ export class WorldPreview extends Morph {
       previewContainer
     } = this.ui;
     this.opacity = 0.5;
-    previewContainer.opacity = 0;
-    await this.whenRendered();
     this._commit = commit;
     preview.imageUrl = commit.preview || missingSVG;
     let { name: authorName } = commit.author;
@@ -698,8 +692,6 @@ export class WorldPreview extends Morph {
     }];
     title.title = commit.name;
     description.value = commit.description;
-    await this.whenRendered();
-    previewContainer.opacity = 1;
     this.animate({ opacity: 1, duration: 300 });
   }
 
@@ -713,7 +705,6 @@ export class WorldPreview extends Morph {
     copy.hasFixedPosition = true;
     copy.globalPosition = this.globalPosition;
     copy.opacity = 0;
-    await copy.whenRendered();
     await copy.animate({ opacity: 1, duration: 300 });
     const duration = 500;
     copy.dropShadow = false;
