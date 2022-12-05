@@ -53,6 +53,7 @@ export class MullerColumnViewModel extends ViewModel {
             l.epiMorph = true;
             return l;
           });
+          this.relayout();
           this.view.env.renderer.renderStep();
         }
       },
@@ -169,7 +170,7 @@ export class MullerColumnViewModel extends ViewModel {
     let newLists = this.lists; let scroll;
     const { view } = this;
     const lenDiff = numberOfLists - newLists.length;
-    if (lenDiff > 0) {
+    if (lenDiff >= 0) {
       newLists = [...newLists, ...arr.genN(lenDiff, () => this.newList())];
       this.lists = newLists;
       scroll = pt(view.scrollExtent.x - view.width);
@@ -178,7 +179,10 @@ export class MullerColumnViewModel extends ViewModel {
           scroll,
           duration: 200
         });
-      } else view.scroll = scroll;
+      } else {
+        view.scroll = scroll;
+        view.env.renderer.renderStep();
+      }
     } else if (lenDiff < 0) {
       newLists = newLists.slice(0, lenDiff);
       scroll = pt(arr.last(newLists).right - view.width);
@@ -187,7 +191,10 @@ export class MullerColumnViewModel extends ViewModel {
           scroll,
           duration: 200
         });
-      } else view.scroll = scroll;
+      } else {
+        view.scroll = scroll;
+        view.env.renderer.renderStep();
+      }
       this.lists = newLists;
     }
     return newLists;
@@ -402,6 +409,7 @@ export class MullerColumnViewModel extends ViewModel {
     this.relayout();
   }
 }
+
 
 // MullerColumnView.openInWorld()
 const MullerColumnView = component({
