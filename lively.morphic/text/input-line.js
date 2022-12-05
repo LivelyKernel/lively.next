@@ -235,7 +235,6 @@ export default class InputLine extends Text {
       reactsToPointer: false,
       fill: Color.white.withA(0.9)
     }));
-    await this.whenRendered();
     this._errorIcon.opacity = 1;
     this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
   }
@@ -488,18 +487,21 @@ export class PasswordInputLine extends HTMLMorph {
       },
 
       fontSize: {
+        isStyleProp: true,
         defaultValue: 12,
         after: ['input'],
         set (value) { this.setProperty('fontSize', value); this.updateHtml(this.input); }
       },
 
       fontFamily: {
+        isStyleProp: true,
         defaultValue: 'sans-serif',
         after: ['input'],
         set (value) { this.setProperty('fontFamily', value); this.updateHtml(this.input); }
       },
 
       padding: {
+        isStyleProp: true,
         defaultValue: Rectangle.inset(2),
         after: ['input'],
         set (value) { this.setProperty('padding', value); this.updateHtml(this.input); }
@@ -520,8 +522,6 @@ export class PasswordInputLine extends HTMLMorph {
   }
 
   async onLoad () {
-    // hmm key events aren't dispatched by default...
-    await this.whenRendered();
     this.ensureInputNode().then(node => {
       this.updateHtml(this.input);
       node.onkeydown = evt => this.env.eventDispatcher.dispatchDOMEvent(evt, this, 'onKeyDown');
@@ -535,7 +535,7 @@ export class PasswordInputLine extends HTMLMorph {
   }
 
   ensureInputNode () {
-    return this.whenRendered().then(() => {
+    return this.whenEnvReady().then(() => {
       const n = this.domNode;
 
       if (n.parentNode && n.parentNode.tagName == 'INPUT') {
@@ -598,7 +598,6 @@ export class PasswordInputLine extends HTMLMorph {
       reactsToPointer: false,
       fill: Color.white.withA(0.9)
     }));
-    await this.whenRendered();
     this._errorIcon.opacity = 1;
     this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
   }
