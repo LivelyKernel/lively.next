@@ -276,9 +276,8 @@ export default class TestRunner extends HTMLMorph {
   async onLoad () {
     // on deserialization
     await System.import('mocha-es6');
-    await promise.waitFor(30000, () => !!$world);
+    await this.whenEnvReady();
     resource(document.URL).query().runAllTests && this.runAllTests();
-    await this.whenRendered();
     this.update();
   }
 
@@ -592,7 +591,6 @@ export default class TestRunner extends HTMLMorph {
        </div>
        <div class="suites">${renderedFiles.join('\n')}</div>
        <div>`;
-    await this.whenRendered();
     let [currentSuites] = this.domNode.getElementsByClassName('suites');
     currentSuites.onscroll = () => {
       this._currentScrollY = currentSuites.scrollTop;
