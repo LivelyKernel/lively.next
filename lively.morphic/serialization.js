@@ -415,13 +415,13 @@ export async function saveWorldToResource (world = MorphicEnv.default().world, t
     i = LoadingIndicator.open(typeof showIndicator === 'string'
       ? showIndicator
       : 'Snapshotting...');
-    await i.whenRendered(); await promise.delay(100);
+    await i.whenEnvReady();
   }
 
   try {
     const snap = await createMorphSnapshot(world, options);
     i.label = 'Uploading...';
-    await i.whenRendered();
+    await i.whenEnvReady();
     return toResource.writeJson(snap);
   } finally { i && i.remove(); }
 }
