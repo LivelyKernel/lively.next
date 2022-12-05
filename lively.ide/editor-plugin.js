@@ -97,7 +97,7 @@ export default class EditorPlugin {
     this.textMorph = editor;
     connect(editor, 'textChange', this, 'onTextChange');
     connect(editor, 'viewChange', this, 'onViewChange');
-    this.textMorph.whenRendered().then(() => this.highlight());
+    this.highlight();
   }
 
   detach (editor) {
