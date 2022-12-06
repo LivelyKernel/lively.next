@@ -1,7 +1,7 @@
 import { Morph, TilingLayout, component, without, ViewModel, part, add } from 'lively.morphic';
 import { pt, rect, Rectangle, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
-import { connect, disconnect, once } from 'lively.bindings';
+import { connect, signal, disconnect, once } from 'lively.bindings';
 import {
   AddButton, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
   LabeledCheckbox, DarkNumberIconWidget, PropertyLabelHovered
@@ -168,9 +168,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     const layout = this.targetMorph && this.targetMorph.layout;
     if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
     this.update();
-    
-    const propertiesPanel = this.view.ownerChain().find(m => m.isPropertiesPanel)
-    if (propertiesPanel) propertiesPanel.viewModel.ui.shapeControl.refreshFromTarget();
+
+    signal(this, 'layout changed');
   }
 
   deactivate () {
@@ -186,8 +185,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     }
     this.popup = false;
     
-    const propertiesPanel = this.view.ownerChain().find(m => m.isPropertiesPanel)
-    if (propertiesPanel) propertiesPanel.viewModel.ui.shapeControl.refreshFromTarget();
+    signal(this, 'layout changed');
   }
 
   async openLayoutPopup () {
