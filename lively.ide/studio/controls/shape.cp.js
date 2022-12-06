@@ -125,7 +125,7 @@ export class ShapeControlModel extends ViewModel {
   refreshExtentModes () {
     const target = this.targetMorph;
     const parent = target.owner;
-    const { widthModeSelector, heightModeSelector, widthInput, heightInput, xInput, yInput } = this.ui;
+    const { widthModeSelector, heightModeSelector, widthInput, heightInput, xInput, yInput, bufferAfterPosition } = this.ui;
 
     // helper function for generating the lists of valid modes
     function extentModeListItems (direction = 'width', fixed = true, fill = false, hug = false) {
@@ -150,13 +150,14 @@ export class ShapeControlModel extends ViewModel {
     widthModeSelector.enable();
     heightModeSelector.enable();
 
-    xInput.enable()
-    yInput.enable()
-
+    xInput.visible = true;
+    yInput.visible = true;
+    bufferAfterPosition.visible = true;
 
     if (targetIsTiling && parentIsTiling) {
-      xInput.disable()
-      yInput.disable()
+      xInput.visible = false;
+      yInput.visible = false;
+      bufferAfterPosition.visible = false;
 
       widthModeSelector.items = extentModeListItems('width', true, true, true);
       heightModeSelector.items = extentModeListItems('height', true, true, true);
@@ -222,8 +223,9 @@ export class ShapeControlModel extends ViewModel {
     }
 
     if (!targetIsTiling && parentIsTiling) {
-      xInput.disable()
-      yInput.disable()
+      xInput.visible = false;
+      yInput.visible = false;
+      bufferAfterPosition.visible = false;
       
       widthModeSelector.items = extentModeListItems('width', true, true, false);
       heightModeSelector.items = extentModeListItems('height', true, true, false);
@@ -463,7 +465,7 @@ const ShapeControl = component({
         fontSize: 13,
         textAndAttributes: ['Y', null]
       }]
-    }), { opacity: 0, name: 'buffer', width: 25 },
+    }), { opacity: 0, name: 'buffer after position', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'width input',
       tooltip: 'Width',
