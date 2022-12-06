@@ -2437,8 +2437,8 @@ export class Text extends Morph {
       this.selection.addRange(Range.at(clickTextPos));
     } else {
       this.selection.disableMultiSelect();
+      if (supportsFormattingPopUp) this.removeFormattingPopUp();
       if (normedClickCount === 1) {
-        if (supportsFormattingPopUp) this.removeFormattingPopUp();
         if (!evt.isShiftDown()) {
           this.selection = { start: clickTextPos, end: clickTextPos };
         } else this.selection.lead = clickTextPos;

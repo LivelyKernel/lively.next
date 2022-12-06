@@ -28,7 +28,10 @@ export class RichTextFormattableText extends Text {
   showFormattingPopUp () {
     if (!this.useFormattingPopUp || this.readOnly) return;
 
-    if (!this.selection.isEmpty() && !this.formattingPopUp?.world()) this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this } }).openInWorldNearHand();
+    if (!this.selection.isEmpty()) {
+      if (this.formattingPopUp) this.formattingPopUp.openInWorldNearHand();
+      else this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this } }).openInWorldNearHand();
+    }
   }
 
   /**
@@ -37,15 +40,16 @@ export class RichTextFormattableText extends Text {
    */
   async removeFormattingPopUp (imm = false) {
     if (!this.formattingPopUp) return;
+    const popup = this.formattingPopUp;
+    this.formattingPopUp = null;
     if (!imm) {
-      await this.formattingPopUp.animate({
+      await popup.animate({
         duration: 200,
         opacity: 0,
         easing: easings.inOutQuad
       });
     }
-    this.formattingPopUp.remove();
-    this.formattingPopUp = null;
+    popup.remove();
   }
 
   remove () {
