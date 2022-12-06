@@ -4,6 +4,10 @@ import { string, num } from 'lively.lang';
 import { DarkNumberIconWidget, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
 
+const FILL_ICON = '\ue5d7';
+const HUG_ICON = '\ue5d6';
+const FIXED_ICON = '\uea16';
+
 export class ShapeControlModel extends ViewModel {
   static get properties () {
     return {
@@ -132,14 +136,14 @@ export class ShapeControlModel extends ViewModel {
       const items = [];
       switch (direction) {
         case 'width':
-          if (fixed) items.push({ string: '|-| Fixed', value: 'fixed', isListItem: true });
-          if (fill) items.push({ string: '<> Fill', value: 'fill', isListItem: true });
-          if (hug) items.push({ string: '>< Hug', value: 'hug', isListItem: true });
+          if (fixed) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
+          if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
+          if (hug) items.push({ string: 'Hug', value: 'hug', isListItem: true });
           break;
         case 'height':
-          if (fixed) items.push({ string: 'I Fixed', value: 'fixed', isListItem: true });
-          if (fill) items.push({ string: '⇳ Fill', value: 'fill', isListItem: true });
-          if (hug) items.push({ string: '⑄ Hug', value: 'hug', isListItem: true });
+          if (fixed) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
+          if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
+          if (hug) items.push({ string: 'Hug', value: 'hug', isListItem: true });
       }
       return items;
     }
@@ -312,11 +316,13 @@ export class ShapeControlModel extends ViewModel {
   }
 
   changeWidthMode (newMode) {
+    const symbol = this.ui.widthModeSelector.get('interactive label');
     const target = this.targetMorph;
     let parent = target.owner;
     let heightMode;
     switch (newMode) {
       case ('fixed'):
+        symbol.textAndAttributes = [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         heightMode = parent.layout?.getResizeHeightPolicyFor(target);
         if (heightMode) {
           parent.layout.setResizePolicyFor(target, {
@@ -328,6 +334,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.widthInput.enable();
         break;
       case ('fill'):
+        symbol.textAndAttributes = [FILL_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         heightMode = parent.layout.getResizeHeightPolicyFor(target);
         parent.layout.wrapSubmorphs = false;
         parent.layout.setResizePolicyFor(target, {
@@ -337,6 +344,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.widthInput.disable();
         break;
       case ('hug'):
+        symbol.textAndAttributes = [HUG_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         if (parent && parent.layout?.name() === 'Tiling') {
           heightMode = parent.layout.getResizeHeightPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
@@ -360,11 +368,13 @@ export class ShapeControlModel extends ViewModel {
   }
 
   changeHeightMode (newMode) {
+    const symbol = this.ui.heightModeSelector.get('interactive label');
     const target = this.targetMorph;
     let parent = target.owner;
     let widthMode;
     switch (newMode) {
       case ('fixed'):
+        symbol.textAndAttributes = [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         widthMode = parent.layout?.getResizeWidthPolicyFor(target);
         if (widthMode) {
           parent.layout.setResizePolicyFor(target, {
@@ -376,6 +386,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.heightInput.enable();
         break;
       case ('fill'):
+        symbol.textAndAttributes = [FILL_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         widthMode = parent.layout.getResizeWidthPolicyFor(target);
         parent.layout.wrapSubmorphs = false;
         parent.layout.setResizePolicyFor(target, {
@@ -385,6 +396,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.heightInput.disable();
         break;
       case ('hug'):
+        symbol.textAndAttributes = [HUG_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
         if (parent && parent.layout?.name() === 'Tiling') {
           widthMode = parent.layout.getResizeWidthPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
@@ -494,10 +506,7 @@ const ShapeControl = component({
       submorphs: [{
         name: 'interactive label',
         padding: rect(3, 0, -3, 0),
-        textAndAttributes: ['\uea16', {
-          textStyleClasses: ['material-icons'],
-          fontSize: 18
-        }]
+        textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
       }]
     }), part(AddButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
@@ -525,12 +534,26 @@ const ShapeControl = component({
         openListInWorld: true,
         listAlign: 'selection',
         items: [
-          { string: '|-| Fixed', value: 'fixed', isListItem: true },
-          { string: '<> Fill', value: 'fill', isListItem: true },
-          { string: '>< Hug', value: 'hug', isListItem: true }
+          { string: 'Fixed', value: 'fixed', isListItem: true },
+          { string: 'Fill', value: 'fill', isListItem: true },
+          { string: 'Hug', value: 'hug', isListItem: true }
         ]
       },
       submorphs: [
+        add({
+          type: Label,
+          name: 'interactive label',
+          fill: Color.rgba(229, 231, 233, 0),
+          fontColor: Color.rgba(178, 235, 242, 0.6),
+          fontFamily: 'Material Icons',
+          nativeCursor: 'pointer',
+          rotation: -1.5707963267948966,
+          reactsToPointer: false,
+          textAndAttributes: [FIXED_ICON, {
+            fontSize: 16,
+            textStyleClasses: ['material-icons']
+          }]
+        }, 'label'),
         { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
     }),
     part(EnumSelector, {
@@ -552,13 +575,25 @@ const ShapeControl = component({
         openListInWorld: true,
         listAlign: 'selection',
         items: [
-          { string: 'I Fixed', value: 'fixed', isListItem: true },
-          { string: '⇳ Fill', value: 'fill', isListItem: true },
-          { string: '⑄ Hug', value: 'hug', isListItem: true }
+          { string: 'Fixed', value: 'fixed', isListItem: true },
+          { string: 'Fill', value: 'fill', isListItem: true },
+          { string: 'Hug', value: 'hug', isListItem: true }
         ]
       },
-      submorphs: [
-        { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
+      submorphs: [add({
+        type: Label,
+        name: 'interactive label',
+        fill: Color.rgba(229, 231, 233, 0),
+        fontColor: Color.rgba(178, 235, 242, 0.6),
+        fontFamily: 'Material Icons',
+        nativeCursor: 'pointer',
+        reactsToPointer: false,
+        textAndAttributes: [FIXED_ICON, {
+          fontSize: 16,
+          textStyleClasses: ['material-icons']
+        }]
+      }, 'label'),
+      { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
     }), { opacity: 0, name: 'buffer', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'rotation input',
