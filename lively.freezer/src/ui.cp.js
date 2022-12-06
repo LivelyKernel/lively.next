@@ -445,7 +445,6 @@ const FreezerPrompt = component(LightPrompt, {
       },
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 20
     }),
     submorphs: [part(GreenButton, {

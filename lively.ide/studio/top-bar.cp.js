@@ -1007,7 +1007,6 @@ const UserFlap = component({
     },
     reactToSubmorphAnimations: false,
     renderViaCSS: true,
-    resizeSubmorphs: false,
     spacing: 10
   }),
   submorphs: [{
@@ -1031,7 +1030,6 @@ const UserFlap = component({
       },
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 10
     }),
     submorphs: [
@@ -1250,7 +1248,6 @@ const TopBar = component({
       },
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 13
     }),
     submorphs: [
@@ -1299,7 +1296,6 @@ const TopBar = component({
             x: 5,
             y: 5
           },
-          resizeSubmorphs: false,
           spacing: 5
         }),
         nativeCursor: 'pointer',

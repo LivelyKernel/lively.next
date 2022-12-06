@@ -342,7 +342,6 @@ const SaveWorldDialog = component(DarkPrompt, {
       },
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 12
     }),
     position: pt(-0.5, 251),

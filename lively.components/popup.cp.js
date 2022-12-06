@@ -30,7 +30,6 @@ const PopupLight = component({
       align: 'left',
       axis: 'column',
       orderByIndex: true,
-      resizeSubmorphs: false
     }),
     position: pt(-76.5, 15)
   }, {
