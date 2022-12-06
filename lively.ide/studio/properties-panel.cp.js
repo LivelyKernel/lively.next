@@ -27,6 +27,13 @@ export class PropertiesPanelModel extends ViewModel {
           return true; // this trick allows us to keep halos while interacting with the side bar
         }
       },
+      bindings: {
+        get () {
+          return [
+            { model: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' }
+          ];
+        }
+      },
       expose: {
         get () {
           return ['focusOn', 'relayout', 'isHaloItem', 'toggle', 'onHierarchyChange', 'clearFocus', 'isPropertiesPanel'];
@@ -35,8 +42,12 @@ export class PropertiesPanelModel extends ViewModel {
     };
   }
 
-  get isPropertiesPanel (){
+  get isPropertiesPanel () {
     return true;
+  }
+
+  refreshShapeControl () {
+    this.models.shapeControl.refreshFromTarget();
   }
 
   updateLayoutControl () {
