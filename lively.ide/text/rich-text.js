@@ -2,6 +2,7 @@
 import { part, easings } from 'lively.morphic';
 import { Text } from 'lively.morphic';
 import { TextFormattingPopUp } from './text-formatting-popup.cp.js';
+import { Point } from 'lively.graphics';
 
 export class RichTextFormattableText extends Text {
   static get properties () {
@@ -29,8 +30,13 @@ export class RichTextFormattableText extends Text {
     if (!this.useFormattingPopUp || this.readOnly) return;
 
     if (!this.selection.isEmpty()) {
-      if (this.formattingPopUp) this.formattingPopUp.openInWorldNearHand();
-      else this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this } }).openInWorldNearHand();
+      const { start } = this.selection;
+      const startBounds = this.charBoundsFromTextPosition(start);
+      const startPoint = this.worldPoint({ x: startBounds.x, y: startBounds.y });
+      const pointForPopup = new Point(startPoint.x - 125, startPoint.y - 220 - 20);
+      
+      if (this.formattingPopUp) this.formattingPopUp.openInWorld(pointForPopup);
+      else this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this } }).openInWorld(pointForPopup);
     }
   }
 
