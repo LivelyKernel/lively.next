@@ -188,7 +188,6 @@ const ObjectEditorLight = component({
         },
         reactToSubmorphAnimations: false,
         renderViaCSS: true,
-        resizeSubmorphs: false,
         spacing: 2
       }),
       position: pt(271.9, 0),
@@ -245,7 +244,6 @@ const ObjectEditorLight = component({
       },
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
-      resizeSubmorphs: false,
       spacing: 2
     }),
     submorphs: [part(SystemButton, {

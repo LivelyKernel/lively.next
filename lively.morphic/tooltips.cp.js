@@ -54,8 +54,7 @@ const SystemTooltip = component({
     wrapSubmorphs: false,
     hugContentsVertically: true,
     hugContentsHorizontally: true,
-    padding: 5,
-    resizeSubmorphs: false
+    padding: 5
   }),
   position: pt(715, 460),
   reactsToPointer: false,

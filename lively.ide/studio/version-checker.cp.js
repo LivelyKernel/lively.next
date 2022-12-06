@@ -183,7 +183,6 @@ const LivelyVersionChecker = component({
       y: 5
     },
     reactToSubmorphAnimations: false,
-    resizeSubmorphs: false,
     spacing: 5
   }),
   nativeCursor: 'pointer',

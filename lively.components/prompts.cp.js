@@ -693,7 +693,6 @@ const ChoiceButtonSelected = component({
     },
     reactToSubmorphAnimations: false,
     renderViaCSS: true,
-    resizeSubmorphs: false,
     spacing: 12
   }),
   nativeCursor: 'pointer',

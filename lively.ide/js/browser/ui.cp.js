@@ -199,7 +199,6 @@ const BrowserDirectoryControls = component({
     },
     reactToSubmorphAnimations: false,
     renderViaCSS: true,
-    resizeSubmorphs: false,
     spacing: 5
   }),
   submorphs: [
@@ -251,7 +250,6 @@ const BrowserPackageControls = component({
     },
     reactToSubmorphAnimations: false,
     renderViaCSS: true,
-    resizeSubmorphs: false,
     spacing: 5
   }),
   position: pt(767.5, 1556.9),

@@ -424,7 +424,6 @@ const MullerColumnView = component({
     },
     reactToSubmorphAnimations: false,
     renderViaCSS: true,
-    resizeSubmorphs: false
   }),
   position: pt(875, 1268),
   renderOnGPU: true
