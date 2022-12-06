@@ -337,7 +337,9 @@ export class TilingLayout extends Layout {
   }
 
   get layoutableSubmorphs () {
-    return super.layoutableSubmorphs.filter(m => m.visible);
+    const layoutableSubmorphs = super.layoutableSubmorphs
+    if (this.renderViaCSS) return layoutableSubmorphs
+    else return layoutableSubmorphs.filter(m => m.visible);
   }
 
   get reactToSubmorphAnimations () {
