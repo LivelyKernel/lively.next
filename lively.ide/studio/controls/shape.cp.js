@@ -162,10 +162,10 @@ export class ShapeControlModel extends ViewModel {
       widthModeSelector.items = extentModeListItems('width', true, true, true);
       heightModeSelector.items = extentModeListItems('height', true, true, true);
 
-      if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')){
+      if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')) {
         widthModeSelector.items = extentModeListItems('width', true, true);
       }
-      if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')){
+      if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')) {
         heightModeSelector.items = extentModeListItems('height', true, true);
       }
 
@@ -176,7 +176,7 @@ export class ShapeControlModel extends ViewModel {
         heightModeSelector.selection = 'hug';
         heightInput.disable();
       } else heightInput.enable();
-      
+
       const widthMode = parent.layout.getResizeWidthPolicyFor(target);
       widthModeSelector.selection = widthMode;
       if (widthMode === 'fill') widthInput.disable();
@@ -190,21 +190,21 @@ export class ShapeControlModel extends ViewModel {
       widthModeSelector.items = extentModeListItems('width', true, false, true);
       heightModeSelector.items = extentModeListItems('height', true, false, true);
 
-      if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')){
+      if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')) {
         widthModeSelector.items = extentModeListItems('width', true);
         widthModeSelector.disable();
         widthInput.enable();
         widthModeSelector.selection = 'fixed';
-        return
+        return;
       }
-      if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')){
+      if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')) {
         heightModeSelector.items = extentModeListItems('height', true);
         heightModeSelector.disable();
         heightInput.enable();
         heightModeSelector.selection = 'fixed';
-        return
+        return;
       }
-      
+
       if (target.layout.hugContentsVertically) {
         heightModeSelector.selection = 'hug';
         heightInput.disable();
@@ -226,7 +226,7 @@ export class ShapeControlModel extends ViewModel {
       xInput.visible = false;
       yInput.visible = false;
       bufferAfterPosition.visible = false;
-      
+
       widthModeSelector.items = extentModeListItems('width', true, true, false);
       heightModeSelector.items = extentModeListItems('height', true, true, false);
 
@@ -234,7 +234,7 @@ export class ShapeControlModel extends ViewModel {
       heightModeSelector.selection = heightMode;
       if (heightMode === 'fill') heightInput.disable();
       else heightInput.enable();
-      
+
       const widthMode = parent.layout.getResizeWidthPolicyFor(target);
       widthModeSelector.selection = widthMode;
       if (widthMode === 'fill') widthInput.disable();
@@ -253,7 +253,6 @@ export class ShapeControlModel extends ViewModel {
 
       heightInput.enable();
       widthInput.enable();
-      return;
     }
   }
 
@@ -319,10 +318,12 @@ export class ShapeControlModel extends ViewModel {
     switch (newMode) {
       case ('fixed'):
         heightMode = parent.layout?.getResizeHeightPolicyFor(target);
-        if (heightMode) parent.layout.setResizePolicyFor(target, {
-          width: 'fixed',
-          height: heightMode
-        });
+        if (heightMode) {
+          parent.layout.setResizePolicyFor(target, {
+            width: 'fixed',
+            height: heightMode
+          });
+        }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
         this.ui.widthInput.enable();
         break;
@@ -365,10 +366,12 @@ export class ShapeControlModel extends ViewModel {
     switch (newMode) {
       case ('fixed'):
         widthMode = parent.layout?.getResizeWidthPolicyFor(target);
-        if (widthMode) parent.layout.setResizePolicyFor(target, {
-          width: widthMode,
-          height: 'fixed'
-        });
+        if (widthMode) {
+          parent.layout.setResizePolicyFor(target, {
+            width: widthMode,
+            height: 'fixed'
+          });
+        }
         if (target.layout?.hugContentsVertically) target.layout.hugContentsVertically = false;
         this.ui.heightInput.enable();
         break;

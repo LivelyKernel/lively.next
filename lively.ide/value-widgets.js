@@ -320,7 +320,6 @@ export class NumberWidget extends Morph {
   }
 
   update (v, fromScrubber = true) {
-    if (this.inactive) return;
     // allows us to selectively skip relayouting
     this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
     signal(this, 'number', this.number);
