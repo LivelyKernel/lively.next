@@ -310,7 +310,7 @@ export class MorphNodeModel extends ViewModel {
     const { morphIcon, layoutIndicator, nameLabel, visibilityIcon } = this.ui;
     morphIcon.value = this.getIcon(target);
     layoutIndicator.visible = false;
-    if (target.layout && target.layout.name() === 'TilingLayout') {
+    if (target.layout && target.layout.name() === 'Tiling') {
       layoutIndicator.visible = true;
       layoutIndicator.rotation = target.layout.axis === 'column' ? Math.PI / 2 : 0;
     }
@@ -522,22 +522,7 @@ const MorphNode = component({
     master: PropLabel,
     padding: rect(0),
     textAndAttributes: ['some text morph', null]
-  }),
-  {
-    type: Label,
-    name: 'layout indicator',
-    rotation: 1.5707963267948966,
-    fill: Color.rgba(229, 231, 233, 0),
-    fontColor: Color.rgb(208, 208, 208),
-    fontFamily: 'Material Icons',
-    fontSize: 16,
-    nativeCursor: 'pointer',
-    textAndAttributes: ['\ue8e9', {
-      fontSize: 16,
-      textStyleClasses: ['material-icons']
-    }]
-  },
-  {
+  }), {
     type: Label,
     name: 'visibility icon',
     visible: false,
@@ -550,7 +535,21 @@ const MorphNode = component({
       fontSize: 16,
       textStyleClasses: ['material-icons']
     }]
-  }]
+  }, {
+    type: Label,
+    name: 'layout indicator',
+    rotation: 1.5707963267948966,
+    fill: Color.rgba(229, 231, 233, 0),
+    fontColor: Color.rgb(208, 208, 208),
+    fontFamily: 'Material Icons',
+    fontSize: 16,
+    nativeCursor: 'pointer',
+    textAndAttributes: ['\ue8e9', {
+      fontSize: 16,
+      textStyleClasses: ['material-icons']
+    }]
+  }
+  ]
 });
 // MorphPanel.openInWorld()
 const MorphPanel = component({
