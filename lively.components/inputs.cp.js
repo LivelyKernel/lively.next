@@ -218,17 +218,19 @@ export class SearchFieldModel extends ViewModel {
   onInputBlur (evt) {
     this.active = false;
     this.ui.placeholder.visible = !this.input;
-    this.view.master = SearchField; // eslint-disable-line no-use-before-define
+    this.view.master = this._originalMaster || SearchField;
     this.view.master.applyAnimated({ duration: 300 });
   }
 
   onInputFocus (evt) {
     this.active = true;
     this.ui.placeholder.visible = false;
+    this._originalMaster = this.view.master.parent;
     this.view.master = SearchFieldFocused; // eslint-disable-line no-use-before-define
     this.view.master.applyAnimated({ duration: 300 });
   }
 }
+
 
 // part(SearchField, { name: 'hello'}).openInWorld()
 const SearchField = component({
@@ -290,7 +292,7 @@ const SearchField = component({
   ]
 });
 
-const SearchFieldFocused = component(SearchField, {
+const SearchFieldFocused = component({
   name: 'search field focused',
   dropShadow: new ShadowObject({ distance: 0, color: Color.rgb(52, 152, 219), blur: 5 }),
   submorphs: [
