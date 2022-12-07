@@ -202,6 +202,7 @@ function forPromise (p, label, props) {
 
 const LoadingIndicator = component({
   defaultViewModel: LoadingIndicatorModel,
+  epiMorph: true,
   fill: Color.transparent,
   name: 'loading indicator',
   layout: new TilingLayout({ align: 'center', axisAlign: 'center' }),
@@ -210,7 +211,6 @@ const LoadingIndicator = component({
     name: 'background',
     borderRadius: 10,
     clipMode: 'hidden',
-    epiMorph: true,
     dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
     extent: pt(225, 65),
     fill: Color.rgba(0, 0, 0, 0.65),
