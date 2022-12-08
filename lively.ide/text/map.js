@@ -23,6 +23,10 @@ export default class TextMap extends Canvas {
     };
   }
 
+  get isTextMap () {
+    return true;
+  }
+
   onChange (change) {
     if (change.prop === 'extent') this.update();
     return super.onChange(change);
