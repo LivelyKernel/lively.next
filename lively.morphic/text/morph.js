@@ -2097,9 +2097,9 @@ export class Text extends Morph {
     if (!this.fixedWidth) this.width = this.document.width;
     this.renderingState.needsScrollLayerAdded = true;
     this._isUpgrading = false;
-    if (this.env.renderer) { this.env.renderer.renderStep(); } else {
+    if (this.env.renderer) { this.env.forceUpdate(); } else {
       this.whenEnvReady().then(() => {
-        this.env.renderer.renderStep();
+        this.env.forceUpdate();
       });
     }
   }

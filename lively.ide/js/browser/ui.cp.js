@@ -936,7 +936,7 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
   // packageName, moduleName, codeEntity, scroll, textPosition like {row: 0, column: 0}
   const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
   if (!browser.world()) browser.openInWindow();
-  browser.env.renderer.renderStep();
+  browser.env.forceUpdate();
   return browser.browse(browseSpec, optSystemInterface);
 }
 

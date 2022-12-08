@@ -243,4 +243,8 @@ export class MorphicEnv {
     if (!whenRenderedTickingProcess) this.whenRenderedTickingProcess = this.domEnv.window.requestAnimationFrame(() => this.updateWhenRenderedRequests());
     return requestState.promise;
   }
+
+  forceUpdate () {
+    this.renderer.renderStep();
+  }
 }

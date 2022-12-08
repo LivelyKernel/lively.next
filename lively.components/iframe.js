@@ -16,9 +16,7 @@ import { HTMLMorph } from 'lively.morphic';
 
 export class IFrameMorph extends HTMLMorph {
   static async printTextMorph (textMorph) {
-    // textMorph.clipMode = "visible";
-
-    textMorph.env.renderer.renderStep();
+    textMorph.env.forceUpdate();
 
     let el = textMorph.env.renderer.getNodeForMorph(textMorph);
     let im = IFrameMorph.open({ srcdoc: el.outerHTML });
