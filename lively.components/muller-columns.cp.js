@@ -54,7 +54,7 @@ export class MullerColumnViewModel extends ViewModel {
             return l;
           });
           this.relayout();
-          this.view.env.renderer.renderStep();
+          this.view.env.forceUpdate();
         }
       },
       expose: {
@@ -181,7 +181,7 @@ export class MullerColumnViewModel extends ViewModel {
         });
       } else {
         view.scroll = scroll;
-        view.env.renderer.renderStep();
+        view.env.forceUpdate();
       }
     } else if (lenDiff < 0) {
       newLists = newLists.slice(0, lenDiff);
@@ -193,7 +193,7 @@ export class MullerColumnViewModel extends ViewModel {
         });
       } else {
         view.scroll = scroll;
-        view.env.renderer.renderStep();
+        view.env.forceUpdate();
       }
       this.lists = newLists;
     }

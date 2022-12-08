@@ -80,7 +80,7 @@ async function fetchResource (proceed, load) {
     await promise.delay(500);
     // force the renderer
     if (System._loadingIndicator) {
-      $world.env.renderer.renderStep();
+      $world.env.forceUpdate();
     }
   }
 

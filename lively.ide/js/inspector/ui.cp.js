@@ -89,7 +89,7 @@ const SystemInspector = component({
     }, 2, {
       fixed: 0
     }, 3, {
-      height: 0
+      fixed: 0
     }]
   }),
   submorphs: [{
@@ -227,7 +227,11 @@ const SystemInspector = component({
 });
 
 function openInWindow (modelAttributes) {
-  return part(SystemInspector, { viewModel: modelAttributes }).openInWindow();
+  const inspector = part(SystemInspector, { viewModel: modelAttributes });
+  inspector.openInWindow();
+  inspector.env.forceUpdate();
+  inspector.viewModel.relayout();
+  return inspector;
 }
 
 // SystemInspector.openInWorld()

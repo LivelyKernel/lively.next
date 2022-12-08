@@ -190,7 +190,7 @@ function open (label = 'Loading...', props) {
 
 async function runFn (fn, label, props) {
   const i = open(label, props);
-  i.env.renderer.renderStep();
+  i.env.forceUpdate();
   try { return await fn(i); } finally { i.remove(); }
 }
 

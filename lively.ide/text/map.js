@@ -108,7 +108,7 @@ export default class TextMap extends Canvas {
     let { startRow, endRow } = textLayout.whatsVisible(textMorph);
 
     if (!ctx) {
-      this.env.renderer.renderStep();
+      this.env.forceUpdate();
       this.update();
       return;
     }

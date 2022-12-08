@@ -963,7 +963,10 @@ export class Inspector extends ViewModel {
 
   onViewResized (newExt) {
     // if extent changed
-    if (!this._lastExtent || !this._lastExtent.equals(newExt)) { this.relayout(); }
+    if (!this._lastExtent || !this._lastExtent.equals(newExt)) {
+      this.view.env.forceUpdate();
+      this.relayout();
+    }
     if (this.world()) this._lastExtent = newExt;
   }
 
