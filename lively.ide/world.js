@@ -40,6 +40,8 @@ import './js/linter.js';
 export class LivelyWorld extends World {
   static get properties () {
     return {
+      clipMode: { defaultValue: 'hidden' },
+
       name: {
         set (name) {
           this.setProperty('name', name);
@@ -158,6 +160,18 @@ export class LivelyWorld extends World {
 
   onDrag (evt) {
     // prevent default dragging behavior
+  }
+
+  onMouseWheel (evt) {
+    const { domEvt } = evt;
+    if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
+    const morphsInWorld = this.submorphs
+      .filter(m => !m.isWindow)
+      .filter(m => !m.isTopBar)
+      .filter(m => !m.isSidebarFlap)
+      .filter(m => !m.isVersionChecker);
+
+    if (evt.isAltDown()) { debugger; morphsInWorld.forEach(m => m.scale = m.scale + domEvt.deltaY / 100); } else morphsInWorld.forEach(m => m.position = m.position.addXY(domEvt.deltaX, domEvt.deltaY));
   }
 
   async whenReady () {
