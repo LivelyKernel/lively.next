@@ -220,16 +220,18 @@ export class SearchWidgetModel extends ViewModel {
     searchInput.invalidateTextLayout(true, true);
   }
 
-  onBlur ($super, evt) {
+  onBlur (evt) {
     const world = this.world();
     const { view, ui: { searchInput, replaceInput } } = this;
     if (!world) return;
     setTimeout(() => {
       const focusedMorph = world.focusedMorph;
-      if (!view.withAllSubmorphsDetect(m => m.isFocused())) {
+      if (!view.withAllSubmorphsDetect(m => m.isFocused()) &&
+         !$world.focusedMorph.isTextMap) {
         this.cancelSearch(false);
         return;
       }
+      view.bringToFront();
       if (searchInput !== focusedMorph &&
         replaceInput !== focusedMorph) {
         searchInput.focus();
