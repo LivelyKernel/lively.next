@@ -7,6 +7,11 @@ import { runCommand } from '../shell/shell-interface.js';
 class VersionChecker extends Morph {
   static get properties () {
     return {
+      expose: {
+        get () {
+          return ['isVerionChecker'];
+        }
+      },
       isEpiMorph: {
         derived: true,
         get () {
@@ -30,6 +35,10 @@ class VersionChecker extends Morph {
         }
       }
     };
+  }
+
+  get isVersionChecker () {
+    return true;
   }
 
   onLoad () {

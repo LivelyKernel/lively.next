@@ -178,7 +178,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton', 'isTopBar']; } },
       bindings: {
         get () {
           return [
@@ -189,6 +189,10 @@ export class TopBarModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isTopBar () {
+    return true;
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
