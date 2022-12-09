@@ -152,9 +152,7 @@ function labelForExport (exportSpec) {
     exportName, {},
     `${type} ${reexportString || ''} ${annotationString}`, {
       fontSize: '70%',
-      lineHeight: '175%',
       textStyleClasses: ['truncated-text', 'annotation']
-      // maxWidth: 300
     }
   ];
 }
