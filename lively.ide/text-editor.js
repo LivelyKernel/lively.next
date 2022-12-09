@@ -1,11 +1,13 @@
 /* global TextDecoder */
-import { Morph, Text, config } from 'lively.morphic';
+import { Morph, Icon, TilingLayout, part, InputLine, Text, config } from 'lively.morphic';
 import { num, promise } from 'lively.lang';
-import { pt, Color } from 'lively.graphics';
+import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect, signal, once } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import { guessTextModeName } from './editor-plugin.js';
 import { StatusMessageConfirm, StatusMessageWarning } from 'lively.halos/components/messages.cp.js';
+import { InputLineDefault } from 'lively.components/inputs.cp.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 // this.world().openInWindow(new TextEditor).activate()
 
@@ -98,8 +100,9 @@ export default class TextEditor extends Morph {
   static get properties () {
     return {
       name: { defaultValue: 'text editor' },
-      fill: { defaultValue: Color.white },
-      border: { defaultValue: { width: 1, color: Color.black } },
+      fill: { defaultValue: Color.transparent },
+      reactsToPointer: { defaultValue: false },
+      border: { defaultValue: { width: 0, color: Color.black } },
       extent: { defaultValue: pt(700, 600) },
 
       historyId: { defaultValue: 'lively.morphic-text editor url' },
@@ -108,24 +111,76 @@ export default class TextEditor extends Morph {
         after: ['historyId'],
         initialize (existing) {
           if (existing.length) return;
+          const btnStyle = {
+            type: 'button',
+            master: SystemButton
+          };
           this.submorphs = [
-            Text.makeInputLine({ name: 'urlInput', historyId: this.historyId }),
-            { name: 'loadButton', type: 'button', label: 'reload' },
-            { name: 'saveButton', type: 'button', label: 'save' },
-            { name: 'removeButton', type: 'button', label: 'remove' },
+            {
+              name: 'h wrapper',
+              reactsToPointer: false,
+              fill: Color.transparent,
+              layout: new TilingLayout({
+                axis: 'row',
+                wrapSubmorphs: false,
+                hugContentsVertically: true,
+                spacing: 10,
+                padding: Rectangle.inset(10, 10, 10, 10)
+              }),
+              submorphs: [
+                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { fontColor: Color.rgb(72, 152, 243) }), ' Reload'], ...btnStyle },
+                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { fontColor: Color.rgb(40, 180, 99) }), ' Save'], ...btnStyle },
+                { name: 'removeButton', label: [...Icon.textAttribute('trash', { fontColor: Color.rgb(231, 76, 60) }), ' Remove'], ...btnStyle }
+              ]
+            },
+            {
+              name: 'url wrapper',
+              fill: Color.transparent,
+              layout: new TilingLayout({
+                axis: 'row',
+                wrapSubmorphs: false,
+                hugContentsVertically: true,
+                padding: Rectangle.inset(10, 0, 10, 10),
+                resizePolicies: [
+                  ['urlInput', { width: 'fill', height: 'fixed' }]
+                ]
+              }),
+              submorphs: [
+                part(InputLineDefault, { name: 'urlInput', historyId: this.historyId })
+              ]
+            },
             {
               ...config.codeEditor.defaultStyle,
               name: 'contentText',
               type: 'text',
-              lineWrapping: false
+              lineWrapping: false,
+              readOnly: false
             }
           ];
           let { urlInput, loadButton, saveButton, removeButton } = this.ui;
-          connect(this, 'extent', this, 'relayout');
+          console.log(loadButton.nativeCursor);
+          once(loadButton, 'nativeCursor', () => {
+            debugger;
+          });
           connect(urlInput, 'inputAccepted', this, 'location');
           connect(loadButton, 'fire', this, 'execCommand', { converter: () => 'load file' });
           connect(saveButton, 'fire', this, 'execCommand', { converter: () => 'save file' });
           connect(removeButton, 'fire', this, 'execCommand', { converter: () => 'remove file' });
+        }
+      },
+
+      layout: {
+        initialize () {
+          this.layout = new TilingLayout({
+            wrapSubmorphs: false,
+            axis: 'column',
+            renderViaCSS: true,
+            resizePolicies: [
+              ['url wrapper', { width: 'fill', height: 'fixed' }],
+              ['contentText', { width: 'fill', height: 'fill' }],
+              ['h wrapper', { width: 'fill', height: 'fixed' }]
+            ]
+          });
         }
       },
 
@@ -134,7 +189,9 @@ export default class TextEditor extends Morph {
         derived: true,
         after: ['submorphs'],
         get () {
-          let [urlInput, loadButton, saveButton, removeButton, contentText] = this.submorphs;
+          let [hWrapper, urlWrapper, contentText] = this.submorphs;
+          const [loadButton, saveButton, removeButton] = hWrapper.submorphs;
+          const [urlInput] = urlWrapper.submorphs;
           return { urlInput, loadButton, saveButton, removeButton, contentText };
         }
       },
@@ -173,8 +230,9 @@ export default class TextEditor extends Morph {
         set (val) {
           let row = Number(val);
           if (isNaN(row)) return;
+          let ed = this.ui.contentText;
+          if (ed.cursorPosition.row === row) return;
           this.whenLoaded().then(() => {
-            let ed = this.ui.contentText;
             ed.cursorPosition = { row, column: 0 };
             ed.centerRow(row);
           });
@@ -193,28 +251,12 @@ export default class TextEditor extends Morph {
 
   constructor (props) {
     super(props);
-    this.relayout();
     this._loadPromise = null;
   }
 
   get isTextEditor () { return true; }
 
   reload () { this.location = this.location; }
-
-  relayout () {
-    let { urlInput, loadButton, saveButton, removeButton, contentText } = this.ui;
-
-    urlInput.width = contentText.width = this.width;
-    urlInput.top = 0;
-    urlInput.height = 20;
-    let oneThird = this.width / 3;
-    loadButton.extent = saveButton.extent = removeButton.extent = pt(oneThird, 20);
-    loadButton.topLeft = urlInput.bottomLeft;
-    saveButton.topLeft = loadButton.topRight;
-    removeButton.topLeft = saveButton.topRight;
-    contentText.topLeft = loadButton.bottomLeft;
-    contentText.height = this.height - loadButton.bottom;
-  }
 
   async whenLoaded () {
     return this._loadPromise || Promise.resolve(this);
@@ -279,6 +321,7 @@ export default class TextEditor extends Morph {
     ed.textString = content;
     ed.gotoDocumentStart();
     ed.scroll = pt(0, 0);
+    ed.editorPlugin.highlight();
   }
 
   async defaultSaveAction (textEditor) {
