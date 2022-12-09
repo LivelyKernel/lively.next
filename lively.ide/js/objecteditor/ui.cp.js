@@ -406,7 +406,6 @@ async function open (options = {}) {
   const ed = part(ObjectEditorLight, { viewModel: obj.dissoc(options, 'title', 'class', 'method', 'target', 'evalEnvironment') });
   const winOpts = { name: 'ObjectEditor window', title: options.title || 'ObjectEditor' };
   const win = (await ed.openInWindow(winOpts)).activate();
-  await win.whenRendered();
   if (target) {
     if (loadingIndicator) loadingIndicator.label = 'Connecting to target';
     await ed.browse({
