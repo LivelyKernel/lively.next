@@ -157,7 +157,7 @@ export default class Renderer {
       if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
       if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.push(morph);
       if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
-      if (morph.renderingState.needsCSSLayoutMeasure) this.renderedMorphsToBeMeasured.push(morph);
+      if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.push(morph);
     }
 
     for (let morph of this.morphsWithStructuralChanges) {
@@ -177,11 +177,10 @@ export default class Renderer {
     }
 
     for (let morph of this.renderedMorphsToBeMeasured) {
-      if (morph.owner?.layout?.measureSubmorph) {
-        morph.owner.layout.measureSubmorph(morph);
-        // reapply the style here, but do not perform the measure again!
-        this.renderStylingChanges(morph);
-        morph.renderingState.needsCSSLayoutMeasure = false;
+      const affectedLayout = morph.renderingState.cssLayoutToMeasureWith;
+      morph.renderingState.cssLayoutToMeasureWith = false;
+      if (affectedLayout.measureSubmorph) {
+        affectedLayout.measureSubmorph(morph);
       }
     }
   }

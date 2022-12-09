@@ -822,7 +822,8 @@ export class TilingLayout extends Layout {
   }
 
   measureAfterRender (layoutableSubmorph) {
-    layoutableSubmorph.renderingState.needsCSSLayoutMeasure = true;
+    if (!this.renderViaCSS) return;
+    layoutableSubmorph.renderingState.cssLayoutToMeasureWith = this;
   }
 
   measureSubmorph (layoutableSubmorph) {
@@ -908,7 +909,9 @@ export class TilingLayout extends Layout {
     if (hugContentsVertically) {
       style.height = 'auto';
     }
-    this.measureAfterRender(containerMorph);
+    if (containerMorph.renderingState.cssLayoutToMeasureWith) {
+      this.measureAfterRender(containerMorph);
+    }
     this.delaySubmorphBounds();
   }
 
@@ -2826,7 +2829,8 @@ export class GridLayout extends Layout {
    * @param { Morph } layoutableSubmorph
    */
   measureAfterRender (layoutableSubmorph) {
-    layoutableSubmorph.renderingState.needsCSSLayoutMeasure = true;
+    if (!this.renderViaCSS || !this.getCellGroupFor(layoutableSubmorph)) return;
+    layoutableSubmorph.renderingState.cssLayoutToMeasureWith = this;
   }
 
   measureSubmorph (layoutableSubmorph) {
