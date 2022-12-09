@@ -535,6 +535,7 @@ export class Morph {
           x = Math.max(0, Math.min(maxScrollX, x));
           y = Math.max(0, Math.min(maxScrollY, y));
           this.setProperty('scroll', pt(x, y));
+          this.renderingState.scrollChanged = true;
           this.makeDirty();
         }
       },

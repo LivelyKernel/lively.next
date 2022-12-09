@@ -501,22 +501,25 @@ export default class Renderer {
    * @param { Morph } morph - The morph for which to update the DOM node.
    */
   renderStylingChanges (morph) {
+    const rs = morph.renderingState;
     if (morph._requestMasterStyling) {
       morph.master && morph.master.applyIfNeeded(true);
       morph._requestMasterStyling = false;
     }
 
-    morph.renderingState.needsRemeasure = true;
+    rs.needsRemeasure = true;
     const node = this.getNodeForMorph(morph);
+    const scrollChanged = !rs.animationAdded && rs.scrollChanged;
     const turnedVisible = node.style.display === 'none' && morph.visible;
     if (morph.patchSpecialProps) {
       morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
     }
     applyStylingToNode(morph, node);
-    if (turnedVisible) this.updateNodeScrollFromMorph(morph);
+    if (turnedVisible || scrollChanged) { this.updateNodeScrollFromMorph(morph); }
 
     if (morph.isText && (morph.document || morph.needsDocument)) node.style.overflow = 'hidden';
-    morph.renderingState.needsRerender = false;
+    rs.needsRerender = false;
+    rs.scrollChanged = false;
   }
 
   // -=-=-=-=-=-=-=-=-
