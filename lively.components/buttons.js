@@ -149,21 +149,6 @@ export class Button extends Morph {
         defaultValue: Rectangle.inset(5, 2)
       },
       draggable: { defaultValue: false },
-      extent: { defaultValue: pt(100, 20) },
-      borderColor: { defaultValue: Color.gray },
-      borderWidth: { defaultValue: 1 },
-      borderRadius: { defaultValue: 5 },
-      nativeCursor: { defaultValue: 'pointer' },
-
-      fill: {
-        defaultValue: new LinearGradient({
-          stops: [
-            { offset: 0, color: Color.white },
-            { offset: 1, color: Color.rgb(236, 240, 241) }
-          ],
-          vector: 0
-        })
-      },
 
       deactivated: {
         group: 'button',
@@ -252,7 +237,6 @@ export class Button extends Morph {
             this.labelMorph.value = stringOrAttributesOrMorph;
             if (this.labelMorph._parametrizedProps) { this.labelMorph._parametrizedProps.value = stringOrAttributesOrMorph; }
           }
-          this.fitLabelMorph();
         }
       },
 
@@ -299,13 +283,6 @@ export class Button extends Morph {
   onSubmorphChange (change, submorph) {
     if (submorph === this.labelMorph && change.prop === 'extent') this.relayout();
     return super.onSubmorphChange(change, submorph);
-  }
-
-  fitLabelMorph () {
-    this.labelMorph.whenFontLoaded().then(() => {
-      this.labelMorph.invalidateTextLayout();
-      this.labelMorph.fit();
-    });
   }
 
   relayout () {
