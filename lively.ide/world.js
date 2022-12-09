@@ -167,9 +167,13 @@ export class LivelyWorld extends World {
     if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
     const morphsInWorld = this.submorphs
       .filter(m => !m.isWindow)
+      .filter(m => !m.isHand)
       .filter(m => !m.isTopBar)
       .filter(m => !m.isSidebarFlap)
-      .filter(m => !m.isVersionChecker);
+      .filter(m => !m.isVersionChecker)
+      .filter(m => !m.isStatusMessage)
+      .filter(m => !m.isSceneGraphPanel)
+      .filter(m => !m.isPropertiesPanel);
 
     if (evt.isAltDown()) { debugger; morphsInWorld.forEach(m => m.scale = m.scale + domEvt.deltaY / 100); } else morphsInWorld.forEach(m => m.position = m.position.addXY(domEvt.deltaX, domEvt.deltaY));
   }

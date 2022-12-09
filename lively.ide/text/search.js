@@ -152,7 +152,7 @@ export class SearchWidgetModel extends ViewModel {
 
       expose: {
         get () {
-          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isEpiMorph'];
+          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isEpiMorph', 'isSearchWidget'];
         }
       },
 
@@ -176,6 +176,10 @@ export class SearchWidgetModel extends ViewModel {
       }
 
     };
+  }
+
+  get isSearchWidget () {
+    return true;
   }
 
   viewDidLoad () {

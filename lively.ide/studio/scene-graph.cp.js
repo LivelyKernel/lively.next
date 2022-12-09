@@ -15,7 +15,7 @@ export class MorphPanelModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset'];
+          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset', 'isSceneGraphPanel'];
         }
       },
       bindings: {
@@ -37,6 +37,10 @@ export class MorphPanelModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isSceneGraphPanel () {
+    return true;
   }
 
   showHaloFor (node) {
