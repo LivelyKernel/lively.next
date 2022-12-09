@@ -577,8 +577,7 @@ export default class Renderer {
       return;
     }
     const { x, y } = morph.scroll;
-    if (morph.isText && morph.document) { // FIXME: maybe check if we are insisting for the document?
-      // update the scroll layer for text morphs
+    if (morph.isText && morph.document) {
       const scrollLayer = node.querySelector('.scrollLayer');
       if (!scrollLayer) return;
       scrollLayer.scrollTop = y;
@@ -1736,12 +1735,13 @@ export default class Renderer {
       // There might be an opportunity to shove off a few cycles of redundant work here,
       // as changing the `scrollTop` value of the scrollLayer seems to update the displayed text as well?
       // However, why that updates the text as well is not entirely understood and thus it is unclear how robust it would be to abuse this.
-      scrollLayer.scrollTop = morph.scroll.y;
-      scrollLayer.scrollLeft = morph.scroll.x;
-
-      scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
-      morph.renderingState.scroll = morph.scroll;
-      this.renderTextAndAttributes(node, morph);
+      if (!morph.renderingState.animationAdded) {
+        scrollLayer.scrollTop = morph.scroll.y;
+        scrollLayer.scrollLeft = morph.scroll.x;
+        scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
+        morph.renderingState.scroll = morph.scroll;
+        this.renderTextAndAttributes(node, morph);
+      }
     }
   }
 

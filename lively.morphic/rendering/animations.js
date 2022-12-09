@@ -431,9 +431,11 @@ export class PropertyAnimation {
       let startTime;
       const scrollState = this.morph.env.eventDispatcher.eventState;
       const { promise: p, resolve } = promise.deferred();
-      const interpolateScrollX = this.interpolate('scrollLeft', node.scrollLeft, scroll.x);
-      const interpolateScrollY = this.interpolate('scrollTop', node.scrollTop, scroll.y);
+      const scrollNode = this.morph.isText && this.morph.document ? node.querySelectorAll('.scrollLayer')[0] : node;
+      const interpolateScrollX = this.interpolate('scrollLeft', scrollNode.scrollLeft, scroll.x);
+      const interpolateScrollY = this.interpolate('scrollTop', scrollNode.scrollTop, scroll.y);
       const easingFn = stringToEasing(this.easing);
+
       const draw = (time) => {
         let t, x;
         if (!startTime) {
@@ -442,8 +444,8 @@ export class PropertyAnimation {
         t = time - startTime;
         x = Math.min(1, t / this.duration);
         // Next iteration
-        node.scrollTop = interpolateScrollY(easingFn(x));
-        node.scrollLeft = interpolateScrollX(easingFn(x));
+        scrollNode.scrollTop = interpolateScrollY(easingFn(x));
+        scrollNode.scrollLeft = interpolateScrollX(easingFn(x));
         if (t / this.duration >= 1) {
           scrollState.scroll.interactiveScrollInProgress = null;
           resolve();
