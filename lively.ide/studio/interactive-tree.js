@@ -43,7 +43,7 @@ export class InteractiveTreeContainer extends Morph {
     if (!this.tree) return;
     const { selectionFontColor, nonSelectionFontColor } = this.tree;
     // FIXME: The "Label" Styleclass should no longer be applied, one would think
-    // However, no appearances seem to be broken? ¯\_(ツ)_/¯ 
+    // However, no appearances seem to be broken? ¯\_(ツ)_/¯
     this.submorphs.filter(m => !m._isControlElement && m.styleClasses.includes('Label')).forEach(m => {
       m.fontColor = active ? selectionFontColor : nonSelectionFontColor;
     });
@@ -86,7 +86,6 @@ export class InteractiveTreeContainer extends Morph {
     this.tree.treeData.add(node._data, this.node, this.node.children[0]); // add as child of node
     this.tree.uncollapse(this.node);
     this.tree.treeData.remove(this.tree._previewNode);
-    await this.tree.whenRendered();
     this.tree.update(true);
     this.onChildAdded(node);
   }
@@ -130,7 +129,7 @@ export class InteractiveTreeData extends TreeData {
       : (this.filterActive ? node.children.filter(n => n && n.visible) : node.children);
   }
 
-  isLeaf (node) { return (this.getChildren(node) || []).length == 0; }
+  isLeaf (node) { return (this.getChildren(node) || []).length === 0; }
 
   add (node, parent = this.root, before) {
     if (!parent.children) parent.children = [];
@@ -171,7 +170,7 @@ export class InteractiveTreeData extends TreeData {
     const parent = this.parentNode(node);
     if (!parent) return;
     arr.remove(parent.children, node);
-    if (parent.children == []) {
+    if (parent.children === []) {
       parent.children = null;
     }
     return node;
@@ -182,7 +181,7 @@ export class InteractiveTreeData extends TreeData {
     const active = this.filterActive;
     this.filterActive = false;
     this.asListWithIndexAndDepth(false).reverse().forEach(({ node, depth }) => {
-      if (depth == 0) return (node.visible = true);
+      if (depth === 0) return (node.visible = true);
       node.visible = iterator(node);
       if (!node.isCollapsed && node.children.find(n => n.visible)) {
         node.visible = true;
@@ -202,8 +201,8 @@ export class InteractiveTree extends Tree {
       this.embeddedMorphs.forEach(m => {
         if (m.isContainer) {
           if (!obj.equals(m.fill, Color.transparent)) { m.fill = Color.transparent; }
-          if (m.fontFamily != this.fontFamily) { m.fontFamily = this.fontFamily; }
-          if (m.fontSize != this.fontSize) { m.fontSize = this.fontSize; }
+          if (m.fontFamily !== this.fontFamily) { m.fontFamily = this.fontFamily; }
+          if (m.fontSize !== this.fontSize) { m.fontSize = this.fontSize; }
         }
       });
     }
@@ -240,7 +239,7 @@ export class InteractiveTree extends Tree {
     const newParent = this.treeData.parentNode(this._previewNode);
     this.treeData.replace(this._previewNode, node._data);
     this.treeData.remove(this._previewNode);
-    await this.whenRendered();
+    console.log('hello');
     this.update(true);
     if (newParent.container) newParent.container.onChildAdded(node);
   }
@@ -296,7 +295,7 @@ export class InteractiveTree extends Tree {
     const pos = this.localize(target.globalBounds().center());
     const docPos = this.textPositionFromPoint(pos);
     const nodes = this.treeData.asListWithIndexAndDepth(({ node }) =>
-      node != this._previewNode && node.container && node.container.world());
+      node !== this._previewNode && node.container && node.container.world());
     const { node } = nodes.find(node => node.i - 1 === docPos.row) || {};
     const hoveredContainer = node && node.container;
     const placeholder = this.ensurePlaceholder();
@@ -371,7 +370,7 @@ export class InteractiveTree extends Tree {
       if (!this.isLineVisible(i)) continue;
       node.container.nativeCursor = 'grab';
       const newWidth = this.width - node.container.left - 25;
-      if (node.container.width != newWidth) { node.container.width = newWidth; }
+      if (node.container.width !== newWidth) { node.container.width = newWidth; }
     }
   }
 }
@@ -407,7 +406,7 @@ export class SceneGraphTree extends InteractiveTree {
 
   selectMorphInTarget (morph) {
     let node = this.treeData.asList().find(n => n.container && n.container.target === morph);
-    if (node && this.selectedNode != node) {
+    if (node && this.selectedNode !== node) {
       this.selectPath(this.treeData.pathOf(node));
     }
 
@@ -415,7 +414,7 @@ export class SceneGraphTree extends InteractiveTree {
     this.refresh();
     this.treeData.followPath([morph, ...morph.ownerChain()].reverse(), (m, node) => {
       if (!node.container) node.container = node.getContainer();
-      if (node.container) return node.container.target == m;
+      if (node.container) return node.container.target === m;
     }).then(node => {
       if (node) this.selectedNode = node;
     });
@@ -423,7 +422,6 @@ export class SceneGraphTree extends InteractiveTree {
 
   async onLoad () {
     this.textLayout = new SceneGraphTreeLayout(this);
-    await this.whenRendered();
     if (this.ownerChain().find(m => m.isComponent)) return;
     this.submorphs = [];
   }
@@ -451,7 +449,7 @@ export class SceneGraphTree extends InteractiveTree {
     });
     this.get('inspector').targetObject = {};
     this.selectedNode = null;
-    this.anchors.filter(a => a.id == null).forEach(a => this.removeAnchor(a));
+    this.anchors.filter(a => a.id === null).forEach(a => this.removeAnchor(a));
   }
 
   // this.setTarget($world)
@@ -467,20 +465,20 @@ export class SceneGraphTree extends InteractiveTree {
 
   isNodeOutOfSync (node) {
     if (node === this._previewNode) return false; // preview does not represent a real morph
-    if (this.treeData.root == node) {
+    if (this.treeData.root === node) {
       return (
-        this.treeData.root.children.length !=
+        this.treeData.root.children.length !==
         this.target.submorphs.filter(m => !this.ignoreMorph(m)).length);
     }
     if (node.container.nameNeedsUpdate) return true;
     const actualSubmorphs = node.container.target.submorphs.filter(m => !this.ignoreMorph(m));
-    if (actualSubmorphs.length != node.children.length) return true;
-    if (actualSubmorphs.map(m => m.name).join('') != node.children.map(m => m.target ? m.target.name : '').join('')) return true;
+    if (actualSubmorphs.length !== node.children.length) return true;
+    if (actualSubmorphs.map(m => m.name).join('') !== node.children.map(m => m.target ? m.target.name : '').join('')) return true;
     return false;
   }
 
   getTarget (node) {
-    return node == this.treeData.root ? this.target : node.container.target;
+    return node === this.treeData.root ? this.target : node.container.target;
   }
 
   getNewChildren (node) {
@@ -491,7 +489,7 @@ export class SceneGraphTree extends InteractiveTree {
     for (const i in nodeSubmorphs) {
       const m = nodeSubmorphs[i];
       const children = arr.without(node.children, this._previewNode);
-      const existingChild = children.find(n => n.container && n.container.target.id == m.id);
+      const existingChild = children.find(n => n.container && n.container.target.id === m.id);
       if (existingChild) newChildren[i] = existingChild;
       else newChildren[i] = this.readMorphHierarchy(m);
     }
@@ -505,7 +503,7 @@ export class SceneGraphTree extends InteractiveTree {
     const { root } = this.treeData;
     // we ca not use the treeData.asList() since we are modifying the tree structure
     tree.prewalk(root, (node) => {
-      if (node == root && this.isNodeOutOfSync(node)) {
+      if (node === root && this.isNodeOutOfSync(node)) {
         node.children = this.getNewChildren(node);
       }
       if (node.container && this.isNodeOutOfSync(node)) {
@@ -571,34 +569,9 @@ export class SceneGraphTree extends InteractiveTree {
 
   // this.refresh()
 
-  renderContainerFor (submorph = morph({ name: 'root' }), embedded = true) {
-    const container = new MorphContainer({
-      tree: this,
-      fill: embedded ? Color.transparent : Color.gray.withA(0.5),
-      fontColor: this.nonSelectionFontColor,
-      fontFamily: this.fontFamily,
-      target: submorph,
-      opacity: submorph.visible ? 1 : 0.5
-    });
-    if (!embedded) container.layout = new TilingLayout({ spacing: 2, align: 'center' });
-    if (submorph._data) {
-      container._data = submorph._data;
-      submorph._data.container = container;
-    } else {
-      container._data = {
-        name: submorph.name,
-        isCollapsed: true,
-        container,
-        children: []
-      };
-    }
-    container.whenRendered().then(() => container.refresh());
-    return container;
-  }
-
   collapseAll () {
     this.treeData.asList().forEach(node =>
-      node != this.treeData.root ? (node.isCollapsed = true) : (node.isCollapsed = false));
+      node !== this.treeData.root ? (node.isCollapsed = true) : (node.isCollapsed = false));
   }
 
   async filterMorphs (term) {
@@ -629,291 +602,5 @@ export class SceneGraphTree extends InteractiveTree {
       this._collapseState = null;
     }
     this.refresh();
-  }
-
-  // this.setTarget(this.get('Rich Text Control'))
-}
-
-export class MorphContainer extends InteractiveTreeContainer {
-  static get properties () {
-    return {
-      fontFamily: {
-        after: ['submorphs'],
-        derived: true,
-        set (family) {
-          this.submorphs[0].fontFamily = family;
-        }
-      },
-      fontColor: {
-        after: ['submorphs'],
-        derived: true,
-        set (color) {
-          this.submorphs[0].fontColor = color;
-        }
-      },
-      fontSize: {
-        derived: true,
-        set (size) {
-          this.submorphs[0].fontSize = size;
-        }
-      },
-      target: {
-        serialize: false
-      },
-      dragTriggerDistance: {
-        defaultValue: 15
-      },
-      borderRadius: { defaultValue: 4 },
-      nameNeedsUpdate: {
-        derived: true,
-        get () {
-          if (this.target) {
-            if (this.submorphs[0].textString.slice(2, -1) != this.target.name) return true;
-            if (this.connectionCount != (this.target.attributeConnections || []).length) return true;
-          }
-          return false;
-        }
-      },
-      grabbable: { defaultValue: true },
-      draggable: { defaultValue: true },
-      submorphs: {
-        after: ['target', 'tree'],
-        initialize () {
-          this.refresh();
-        }
-      },
-      sideBar: {
-        derived: true,
-        get () {
-          return this.owner.owner;
-        }
-      }
-    };
-  }
-
-  async refresh () {
-    const target = this.target;
-    if (!target) return;
-    this.reactsToPointer = true;
-    this.dropShadow = false;
-    let last;
-    this.submorphs = [
-      this.getLabel(),
-      target.comments.length > 0 && this.getCommentControls(),
-      target.layout && this.getLayoutControls(),
-      this.getConnectionControls()
-    ].filter(Boolean).map((m, i) => {
-      m.fitIfNeeded();
-      m.left = last ? last.right + 5 : 0;
-      m.top = 2;
-      last = m;
-      return m;
-    });
-    this.height = 20;
-    this.opacity = target.visible ? 1 : 0.5;
-  }
-
-  applyLayoutIfNeeded () {
-    // only if visible
-  }
-
-  getLabel () {
-    const l = this.getSubmorphNamed('name label') || morph({
-      type: 'label',
-      name: 'name label',
-      reactsToPointer: false,
-      padding: rect(0, 0, 0, 0),
-      acceptsDrops: false,
-      fontSize: this.tree.fontSize
-    });
-
-    const displayedName = l.textString.slice(2, -1);
-
-    if (!displayedName || displayedName != this.target.name) { l.value = [...this.getIcon(this.target), ' ' + this.target.name + ' ']; }
-    return l;
-  }
-
-  getIcon (target) {
-    const klassIconMapping = {
-      Morph: 'square',
-      Ellipse: 'circle',
-      Text: 'font',
-      Label: 'tag',
-      Polygon: 'draw-polygon',
-      Path: 'bezier-curve',
-      Image: 'image',
-      Canvas: 'chess-board',
-      HTMLMorph: 'code'
-    };
-    return Icon.textAttribute(klassIconMapping[getClassName(target)] || 'codepen', {
-      paddingTop: '4px',
-      fontSize: this.tree.fontSize - 2,
-      opacity: 0.6
-    });
-  }
-
-  getLayoutControls () {
-    const layoutLabel = this.getSubmorphNamed('layout label') || morph({
-      type: 'label',
-      name: 'layout label',
-      borderRadius: 3,
-      acceptsDrops: false,
-      padding: Rectangle.inset(4, 2, 4, 2),
-      fill: Color.orange,
-      fontColor: Color.white
-    });
-
-    layoutLabel._isControlElement = true;
-    if (layoutLabel.textString != this.target.layout.name()) { layoutLabel.value = this.target.layout.name(); }
-    return layoutLabel;
-  }
-
-  getCommentControls () {
-    const commentLabel = this.getSubmorphNamed('comment label') || morph({
-      type: 'label',
-      name: 'comment label',
-      tooltip: 'Open comment browser to browse all comments',
-      borderRadius: 3,
-      acceptsDrops: false,
-      padding: Rectangle.inset(4, 2, 4, 2),
-      fill: Color.rgb(241, 196, 15),
-      fontColor: Color.black
-    });
-
-    commentLabel._isControlElement = true;
-    const commentCountString = `${this.target.comments.length} comment${(this.target.comments.length == 1 ? '' : 's')}`;
-
-    if (commentLabel.textString != commentCountString) { commentLabel.value = commentCountString; }
-    return commentLabel;
-  }
-
-  getConnectionControls () {
-    this.connectionCount = this.target.attributeConnections
-      ? this.target.attributeConnections.filter(m => !m.targetObj.isHalo).length
-      : 0;
-    const connectionsLabel = this.getSubmorphNamed('connections label') || morph({
-      acceptsDrops: false,
-      borderRadius: 3,
-      type: 'label',
-      name: 'connections label',
-      padding: Rectangle.inset(4, 2, 4, 2),
-      nativeCursor: 'pointer',
-      fill: Color.red,
-      fontColor: Color.white
-    });
-    connectionsLabel._isControlElement = true;
-    connectionsLabel.visible = !this.connectionHalo && !!this.connectionCount;
-    const connectionState = this.connectionCount
-      ? `${this.connectionCount} connection${this.connectionCount > 1 ? 's' : ''}`
-      : 'Manage Connections';
-    if (connectionsLabel.textString != connectionState) { connectionsLabel.value = connectionState; }
-    return connectionsLabel;
-  }
-
-  highlightTerm (term) {
-    const label = this.submorphs[0];
-    const iconPart = label.textAndAttributes.slice(0, 2);
-    const termToHighlight = label.textString.slice(1); // just remove the icon
-    const inBetween = termToHighlight.split(term);
-    if (inBetween.length === 1) {
-      label.textAndAttributes = [...iconPart, inBetween[0]];
-      return;
-    }
-
-    label.textAndAttributes = [...iconPart, ...arr.interpose(
-      inBetween.map(x => [x, {}]), [term, { fontWeight: '900' }]
-    ).flat()];
-    label.whenRendered().then(() => {
-      label.fitIfNeeded();
-    });
-  }
-
-  getClassControls () {
-
-  }
-
-  wantsToBeDroppedOn (target) {
-    const res = super.wantsToBeDroppedOn(target);
-    if (![target, ...target.ownerChain()].includes(this.tree)) this.onDragOutside();
-    return res;
-  }
-
-  async onGrab (evt) {
-    this.tree._dropInProgress = true;
-    const globalTargetPosition = this.target.globalPosition;
-    super.onGrab(evt);
-    this._data.globalTargetPosition = globalTargetPosition;
-    await this.whenRendered();
-    if (!this.tree.fullContainsWorldPoint(this.globalPosition)) { this.onDragOutside(); } else this.leftCenter = pt(-20, 0);
-    this.tree._dropInProgress = false;
-  }
-
-  // fixme: prevent concurrent calls of this method
-  onDragOutside () {
-    if (this._draggedOutside) return;
-    this._draggedOutside = true;
-    if (!this.queue) {
-      this.queue = fun.createQueue('container-hover-queue', async (self, thenDo) => {
-        const {
-          opacity: originalOpacity,
-          scale: originalScale
-        } = self.target;
-        self.target.opacity = 0;
-        self.target.scale = 0.5;
-        $world.halos().forEach(h => h.remove());
-        $world.firstHand.grab(self.target);
-        self.target._data = self._data;
-        self.remove();
-        self.target.position = pt(0, 0);
-        await self.target.animate({
-          opacity: originalOpacity,
-          scale: originalScale,
-          duration: 200
-        });
-        thenDo();
-      });
-    }
-    this.queue.push(this);
-  }
-
-  onChildAdded (child) {
-    const nextIndex = this.node.children.indexOf(child.node || child._data) + 1;
-    const neighbor = this.node.children[nextIndex];
-    child.target.remove();
-    if (neighbor) {
-      const actualIndex = this.target.submorphs.indexOf(neighbor.container.target);
-      this.target.addMorphAt(child.target, actualIndex);
-    } else { this.target.addMorph(child.target); }
-    if (child._data.globalTargetPosition) { child.target.position = this.target.localize(child._data.globalTargetPosition); }
-  }
-
-  onChildRemoved (child) {
-    // child.show()
-  }
-
-  toggleConnectionControl (active) {
-    this.getSubmorphNamed('connections label').visible = active;
-  }
-
-  async toggleSelected (active) {
-    if (this._active === active) return;
-    this._active = active;
-    super.toggleSelected(active);
-    if (active && this.target && this.target.isMorph && this.world()) {
-      await this.target.whenRendered();
-      this.get('inspector').targetObject = this.target;
-      this.get('connections tree').inspectConnectionsOf(this.target);
-      if (this.connectionHalo) return;
-      for (const halo of this.world().halos()) {
-        if (halo.target === this.target) return;
-        halo.remove();
-      }
-      noUpdate({
-        sourceObj: this.world(),
-        targetObj: this.sideBar,
-        sourceAttribute: 'showHaloFor',
-        targetAttribute: 'selectNode'
-      }, () => this.world().showHaloFor(this.target));
-    }
   }
 }

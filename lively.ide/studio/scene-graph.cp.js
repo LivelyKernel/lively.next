@@ -1,5 +1,5 @@
 import { component, ViewModel, part, easings, touchInputDevice, Icon, morph, TilingLayout } from 'lively.morphic';
-import { pt, Color } from 'lively.graphics';
+import { pt, Rectangle, Color } from 'lively.graphics';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { PropLabel } from 'lively.ide/studio/shared.cp.js';
@@ -157,7 +157,6 @@ export class NewSceneGraphTree extends SceneGraphTree {
   renderContainerFor (submorph = morph({ name: 'root' }), embedded = true) {
     const container = part(MorphNode, { // eslint-disable-line no-use-before-define
       width: this.width,
-      // opacity: 0,
       viewModel: {
         tree: this,
         target: submorph
@@ -175,10 +174,6 @@ export class NewSceneGraphTree extends SceneGraphTree {
       };
     }
     container.refresh();
-    // container.whenRendered().then(() => {
-    //   container.opacity = 1;
-    //   container.refresh();
-    // });
     return container;
   }
 
@@ -188,12 +183,7 @@ export class NewSceneGraphTree extends SceneGraphTree {
 
   onHoverOut (evt) {
     super.onHoverOut(evt);
-    this.highlightLineAtCursor(evt, {
-      background: Color.transparent,
-      borderColor: '#B2EBF2',
-      borderWidth: '0px',
-      borderStyle: 'solid'
-    });
+    this.removeMarker('hovered node');
   }
 
   showDropPreviewFor (aMorph) {
@@ -315,6 +305,7 @@ export class MorphNodeModel extends ViewModel {
       layoutIndicator.rotation = target.layout.axis === 'column' ? Math.PI / 2 : 0;
     }
     nameLabel.textString = target.name;
+    nameLabel.fit();
     visibilityIcon.value = [
       target.visible ? '\ue8f4' : '\ue8f5', {
         fontSize: 16,
@@ -394,7 +385,6 @@ export class MorphNodeModel extends ViewModel {
     tree.update(true); // refresh the tree to render the new tree
 
     this._data.globalTargetPosition = globalTargetPosition;
-    await view.whenRendered();
     if (!tree.fullContainsWorldPoint(view.globalPosition)) {
       this.onDragOutside();
     } else view.leftCenter = pt(-20, 0);
@@ -457,7 +447,6 @@ export class MorphNodeModel extends ViewModel {
     this.tree.treeData.add(node._data, this.node, this.node.children[0]); // add as child of node
     this.tree.uncollapse(this.node);
     this.tree.treeData.remove(this.tree._previewNode);
-    await this.tree.whenRendered();
     this.tree.update(true);
     this.onChildAdded(node);
   }
@@ -510,6 +499,7 @@ const MorphNode = component({
     fontColor: Color.rgb(208, 208, 208),
     fontFamily: 'Material Icons',
     reactsToPointer: false,
+    padding: Rectangle.inset(0, 0, 0, 5),
     textAndAttributes: ['', {
       fontSize: 16,
       textStyleClasses: ['material-icons']
@@ -549,7 +539,7 @@ const MorphNode = component({
   }
   ]
 });
-// MorphPanel.openInWorld()
+// part(MorphPanel).openInWorld()
 const MorphPanel = component({
   defaultViewModel: MorphPanelModel,
   name: 'morph panel',
