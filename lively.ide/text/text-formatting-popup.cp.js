@@ -1,4 +1,4 @@
-import { component, without, ViewModel, add, part } from 'lively.morphic';
+import { component, TilingLayout, without, ViewModel, add, part } from 'lively.morphic';
 
 import { DarkPopupWindow } from '../studio/shared.cp.js';
 import { RichTextControl } from '../studio/controls/text.cp.js';
@@ -52,17 +52,28 @@ const SelectionBasedRichTextControl = component(RichTextControl, {
 }
 );
 
-// part(TextFormattingPopUp).openInWorld();
 export const TextFormattingPopUp = component(DarkPopupWindow, {
   name: 'formatting pop up',
   defaultViewModel: TextFormattingPopUpModel,
   fill: Color.rgb(30, 30, 30),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    hugContentsHorizontally: true,
+    resizePolicies: [
+      ['header menu', { width: 'fill', height: 'fixed' }]
+    ]
+  }),
   submorphs: [
     {
       name: 'header menu',
       submorphs: [{ name: 'title', textAndAttributes: ['Format Selection', null] }]
     },
-    add(part(SelectionBasedRichTextControl))
+    add(part(SelectionBasedRichTextControl, {
+      name: 'rich text control'
+    }))
   ]
 
 });
