@@ -2667,7 +2667,10 @@ export class Text extends Morph {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
     }
-    if (this.renderingState.extent !== undefined && !obj.equals(this.renderingState.extent, this.extent)) {
+    const widthChanged = this.renderingState.extent.x !== this.extent.x;
+    const heightChanged = this.renderingState.extent.y !== this.extent.y;
+    if (this.renderingState.extent !== undefined &&
+        !!this.lineWrapping && widthChanged) {
       this.invalidateTextLayout(true, true);
       renderer.renderTextAndAttributes(node, this);
     }
