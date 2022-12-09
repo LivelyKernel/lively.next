@@ -32,7 +32,6 @@ const PropertyLabel = component({
     value: rect(6, 6, 0, 0),
     onlyAtInstantiation: true
   },
-  position: pt(0.8, 3.7),
   textAndAttributes: ['', {
     fontSize: 18,
     textStyleClasses: ['material-icons']
@@ -226,6 +225,7 @@ export class LabeledCheckboxMorph extends Morph {
   setChecked (active) {
     const checkbox = this.getSubmorphNamed('checkbox');
     checkbox.master = active ? this.activeCheckboxComponent : this.inactiveCheckboxComponent;
+    checkbox.fit();
   }
 }
 
