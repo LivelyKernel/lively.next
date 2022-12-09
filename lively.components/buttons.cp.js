@@ -12,6 +12,7 @@ const ButtonDefault = component({
   defaultViewModel: ButtonModel, // remove this once transition is done
   name: 'button/default',
   borderColor: Color.rgb(112, 123, 124),
+  nativeCursor: 'pointer',
   borderWidth: 1,
   borderRadius: 5,
   extent: pt(70, 25),
