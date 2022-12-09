@@ -233,7 +233,8 @@ const LoadingIndicator = component({
         hugContentsHorizontally: true,
         align: 'center',
         axis: 'row',
-        axisAlign: 'top'
+        axisAlign: 'top',
+        padding: Rectangle.inset(10, 0, 0, 0)
       }),
       submorphs: [{
         name: 'spinner wrapper',
