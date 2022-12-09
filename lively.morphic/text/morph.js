@@ -2698,15 +2698,21 @@ export class Text extends Morph {
     }
 
     if (this.document) {
-      if (this.renderingState.lineHeight !== undefined && !obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
-         this.renderingState.letterSpacing !== undefined && !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
+      if (this.renderingState.lineHeight !== undefined &&
+          !obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
+         this.renderingState.letterSpacing !== undefined &&
+          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         this.invalidateTextLayout(true, true);
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }
+
+      renderer.adjustScrollLayerChildSize(node, this);
+
       const scrollChanged = !obj.equals(this.renderingState.scroll, this.scroll);
       if (scrollChanged) {
         renderer.scrollScrollLayerFor(node, this);
       }
+
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
          this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
@@ -2731,7 +2737,6 @@ export class Text extends Morph {
         renderer.patchSelectionLayer(node, this);
       }
       // FIXME: This should probably be wrapped in a trigger
-      renderer.adjustScrollLayerChildSize(node, this);
       renderer.updateDebugLayer(node, this);
     } else {
       if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
@@ -3269,14 +3274,14 @@ export class Text extends Morph {
   onHoverIn (evt) {
     super.onHoverIn(evt);
     this.scrollActive = true;
-    if (!this.readOnly) this.makeDirty();
+    this.makeDirty();
   }
 
   onHoverOut (evt) {
     super.onHoverOut(evt);
     if (touchInputDevice) return;
     this.scrollActive = false;
-    if (!this.readOnly) this.makeDirty();
+    this.makeDirty();
   }
 
   onKeyDown (evt) {
