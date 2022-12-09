@@ -232,9 +232,9 @@ export class CompletionController {
           name: 'input',
           fontColor: m.fontColor,
           clipMode: 'visible',
-          fill: m.fill,
+          fill: Color.transparent,
           fixedHeight: true,
-          fixedWidth: false,
+          fixedWidth: true,
           padding: Rectangle.inset(0, 0, 0, 0)
         },
         {
@@ -316,11 +316,14 @@ export class CompletionController {
     menu.relayout();
 
     input.focus(); // get the focus already, to receive all text input while style is being applied
+    const textSize = input.textBounds().extent().addXY(2.5, 0);
     if (prefix.length) {
       input.gotoDocumentEnd();
-      menu.moveBy(pt(-input.textBounds().width, 0));
+      menu.moveBy(textSize.withY(0).negated());
     }
     world.addMorph(menu);
+    menu.addMorph({ extent: textSize, fill: this.textMorph.fill }, input);
+    input.fixedHeight = false;
     return menu;
   }
 
