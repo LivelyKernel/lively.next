@@ -82,12 +82,12 @@ const EmbeddingControl = component(PropertySection, {
           items: [
             {
               isListItem: true,
-              label: Icon.textAttribute('ghost').concat([' Floating Above Text', null]),
+              label: Icon.textAttribute('ghost', { lineHeight: 1.4, paddingRight: '3px' }).concat([' Floating Above Text', null]),
               value: 'plain'
             },
             {
               isListItem: true,
-              label: Icon.textAttribute('envelope').concat([' Treated as Character', null]),
+              label: Icon.textAttribute('envelope', { lineHeight: 1.4 }).concat([' Treated as Character', null]),
               value: 'no-wrap'
             }
             // TODO: activate this third entry when text wrapping around morphs is properly implemented
