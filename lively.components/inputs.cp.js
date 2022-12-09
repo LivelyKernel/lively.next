@@ -231,7 +231,6 @@ export class SearchFieldModel extends ViewModel {
   }
 }
 
-
 // part(SearchField, { name: 'hello'}).openInWorld()
 const SearchField = component({
   defaultViewModel: SearchFieldModel,
@@ -249,7 +248,7 @@ const SearchField = component({
     wrapSubmorphs: false,
     padding: Rectangle.inset(0, 0, 3, 0),
     resizePolicies: [
-      ['search input', { height: 'fixed', width: 'fill' }],
+      ['search input', { height: 'fill', width: 'fill' }],
       ['placeholder icon', { height: 'fixed', width: 'fixed' }]
     ]
   }),
@@ -262,7 +261,6 @@ const SearchField = component({
       fontFamily: 'IBM Plex Sans',
       styleClasses: ['idle'],
       clipMode: 'hidden',
-      extent: pt(188, 21),
       fixedHeight: true,
       fontColor: Color.black,
       padding: rect(6, 3, 0, 0),
