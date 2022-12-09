@@ -1652,13 +1652,15 @@ export default class Renderer {
     const submorphsOrTextLayerNode = node.querySelector(`#submorphs-${morph.id}`) || node.querySelector(`#${morph.id}textLayer`);
     const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
     const markersToRender = this.computeMarkerLayer(morph);
+    const cursorNode = nodeToAppendTo.querySelector('.newtext-cursor');
     keyed('id',
       nodeToAppendTo,
       alreadyRenderedMarkers,
       markersToRender,
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
       noOpUpdate,
-      submorphsOrTextLayerNode
+      submorphsOrTextLayerNode,
+      cursorNode
     );
     morph.renderingState.renderedMarkers = markersToRender;
     morph.renderingState.markers = morph.markers;
