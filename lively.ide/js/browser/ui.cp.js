@@ -367,7 +367,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       this.master = FileStatusDefault;
       this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
+      this.withAnimationDo(() => {
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
         statusBox.opacity = statusLabel.opacity = 0;
         this.adjustHeight();
@@ -751,6 +751,7 @@ const SystemBrowser = component({
       hugContentsVertically: true,
       orderByIndex: true,
       padding: rect(10, 10, 0, 0),
+      reactToSubmorphAnimations: true,
       resizePolicies: [['path container', {
         height: 'fixed',
         width: 'fill'
@@ -758,6 +759,7 @@ const SystemBrowser = component({
         height: 'fixed',
         width: 'fill'
       }], ['error controls', {
+        height: 'fixed',
         width: 'fixed'
       }]],
       wrapSubmorphs: false
@@ -774,7 +776,6 @@ const SystemBrowser = component({
         justifySubmorphs: 'spaced',
         orderByIndex: true,
         reactToSubmorphAnimations: true,
-        renderViaCSS: true,
         spacing: 5,
         resizePolicies: [['status label', {
           height: 'fixed',
