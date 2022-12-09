@@ -242,7 +242,7 @@ export class Tree extends Text {
         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';
         Object.assign(
           containerTextAndAttributes[j + 3], {
-            paddingRight: this.treeData.isCollapsed(nodes[i].node) ? `${this.fontSize / 4}px` : '0px',
+            paddingRight: this.treeData.isCollapsed(nodes[i].node) ? `${this.fontSize / 8}px` : '0px',
             paddingTop: '0px',
             nativeCursor: 'pointer',
             fontColor: this.fontColor
