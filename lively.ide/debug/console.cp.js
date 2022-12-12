@@ -251,7 +251,6 @@ class LocalJSConsoleModel extends ViewModel {
 
   async menuItems () {
     const viewItems = await this.withoutBindingsDo(async () => await this.view.menuItems());
-    debugger;
     return [
       { command: '[console] clear', target: this, alias: 'clear' },
       { isDivider: true },
@@ -289,7 +288,9 @@ const Console = component({
   type: Text,
   name: 'debug console',
   defaultViewModel: LocalJSConsoleModel,
-  extent: pt(300, 400),
+  lineWrapping: true,
+  fixedWidth: true,
+  extent: pt(500, 400),
   fill: Color.black.withA(.9),
   fontColor: Color.white,
   clipMode: 'auto'
