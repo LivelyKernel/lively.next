@@ -1,6 +1,6 @@
 /* global System,FormData,DOMParser */
 import { resource } from 'lively.resources';
-import { Rectangle, Color, pt } from 'lively.graphics';
+import { Rectangle, Point, Color, pt } from 'lively.graphics';
 import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
 import { once } from 'lively.bindings';
 import {
@@ -69,6 +69,15 @@ export class LivelyWorld extends World {
           this.morphCommentMap = new Map();
         },
         doc: 'Stores a mapping from Morphs to an Array with their comments (if they have any).'
+      },
+      scaleFactor: {
+        defaultValue: 1
+      },
+      offsetX: {
+        defaultValue: 0
+      },
+      offsetY: {
+        defaultValue: 0
       }
     };
   }
@@ -162,9 +171,26 @@ export class LivelyWorld extends World {
     // prevent default dragging behavior
   }
 
+  worldToScreen (worldPoint) {
+    const screenX = Number((worldPoint.x - this.offsetX) * this.scaleFactor);
+    const screenY = Number((worldPoint.y - this.offsetY) * this.scaleFactor);
+    return new Point(screenX, screenY);
+  }
+
+  screenToWorld (screenPoint) {
+    const worldX = Number((screenPoint.x / this.scaleFactor) + this.offsetX);
+    const worldY = Number((screenPoint.y / this.scaleFactor) + this.offsetY);
+    return new Point(worldX, worldY);
+  }
+
   onMouseWheel (evt) {
     const { domEvt } = evt;
+
+    // TODO: this is not good enough
+    // do not block scroll when we are on a non-scrollable element
+    // those can be nested indefinetly deep
     if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
+
     const morphsInWorld = this.submorphs
       .filter(m => !m.isWindow)
       .filter(m => !m.isHand)
@@ -173,9 +199,34 @@ export class LivelyWorld extends World {
       .filter(m => !m.isVersionChecker)
       .filter(m => !m.isStatusMessage)
       .filter(m => !m.isSceneGraphPanel)
-      .filter(m => !m.isPropertiesPanel);
+      .filter(m => !m.isPropertiesPanel)
+    if (evt.isAltDown()) {
+      const cursorPositionOnScreen = this.firstHand.position;
+      const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
 
-    if (evt.isAltDown()) { debugger; morphsInWorld.forEach(m => m.scale = m.scale + domEvt.deltaY / 100); } else morphsInWorld.forEach(m => m.position = m.position.addXY(domEvt.deltaX, domEvt.deltaY));
+      const scaleDirection = domEvt.deltaY > 0 ? 1 : 0;
+      if (scaleDirection) this.scaleFactor *= 1.01;
+      else this.scaleFactor *= 0.99;
+
+      const cursorPositionInZoomedSpaceAfterZoom = this.screenToWorld(cursorPositionOnScreen);
+      this.offsetX += (cursorPositionInSpaceBeforeZoom.x - cursorPositionInZoomedSpaceAfterZoom.x);
+		  this.offsetY += (cursorPositionInSpaceBeforeZoom.y - cursorPositionInZoomedSpaceAfterZoom.y);
+
+      morphsInWorld.forEach(m => m.scale = this.scaleFactor);
+      morphsInWorld.forEach(m => {
+        if (!m.worldPosition) m.worldPosition = m.position;
+        m.position = this.worldToScreen(m.worldPosition);
+      });
+      return;
+    }
+
+    this.offsetX += domEvt.deltaX;
+    this.offsetY += domEvt.deltaY;
+
+    morphsInWorld.forEach(m => {
+      if (!m.worldPosition) m.worldPosition = m.position;
+      m.position = this.worldToScreen(m.worldPosition);
+    });
   }
 
   async whenReady () {
