@@ -169,7 +169,7 @@ class Layout {
     if (typeof this.onScheduleApply === 'function') { this.onScheduleApply(submorph, animation, change); }
     if (this.active) return;
     if (animation) this.lastAnim = animation;
-    this.applyRequests = true;// {submorph, animation, change};
+    this.applyRequests = true;
   }
 
   onSubmorphResized (submorph, change) {
@@ -199,7 +199,9 @@ class Layout {
     }
     if (prop === 'borderWidth' && this.renderViaCSS) this.layoutableSubmorphs.forEach(m => m.makeDirty());
     if (prop === 'extent' && value && prevValue &&
-        (prevValue.x !== value.x || prevValue.y !== value.y)) { this.scheduleApply(submorph, anim); }
+        (prevValue.x !== value.x || prevValue.y !== value.y)) {
+      this.scheduleApply(submorph, anim, { prop: 'extent' });
+    }
   }
 
   affectsLayout (submorph, { prop, value, prevValue }) {
@@ -335,6 +337,16 @@ export class TilingLayout extends Layout {
         });
       });
     }
+  }
+
+  scheduleApply (submorph, animation, change = {}) {
+    if (change.prop === 'extent' &&
+        this.renderViaCSS &&
+        (this.hugContentsVertically || this.hugContentsHorizontally)) {
+      this.container._askLayoutForBounds = this;
+    }
+
+    super.scheduleApply(submorph, animation, change);
   }
 
   get layoutableSubmorphs () {
@@ -581,7 +593,7 @@ export class TilingLayout extends Layout {
   /**
    * In reaction to changes in the DOM that have happend due to a
    * render pass, we update the morphic model to align with the
-   * values in the DOM. Since we deleagte the placement of morphs
+   * values in the DOM. Since we delegate the placement of morphs
    * to the browser, we need to confirm the definite bounds of
    * the layoutable submorphs from there.
    */
@@ -719,13 +731,18 @@ export class TilingLayout extends Layout {
 
   /*
    * Called from position or extent getter inside a morph
-   * if _askLayoutForBounds is set to true
+   * if _askLayoutForBounds is set to true. This is in order
+   * to *defer* expensive measuring of the dom up to the point
+   * where the information is actually needed
+   * (which is when the getter is invoked)
    * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
    */
   updateBoundsFor (morph) {
     const node = this.getNodeFor(morph);
     if (node) {
-      this.updateSubmorphViaDom(morph, node);
+      if (morph === this.container) {
+        this.updateContainerViaDom(node);
+      } else { this.updateSubmorphViaDom(morph, node); }
     } else {
       // delay update to after render
       this.measureAfterRender(morph);
@@ -877,6 +894,7 @@ export class TilingLayout extends Layout {
     } = this;
     this._configChanged = false;
     if (containerMorph.visible) style.display = 'flex';
+    if (containerMorph.owner.embeddedMorphMap?.has(containerMorph)) { containerMorph.renderingState.inlineFlexImportant = true; }
     const spacingOffset = axis === 'row'
       ? container.borderWidthLeft + container.borderWidthRight
       : container.borderWidthTop + container.borderWidthBottom;
@@ -929,7 +947,7 @@ export class TilingLayout extends Layout {
         // fixme: There is still a rendering glitch which occurs due to the async nature of the virtual dom render  loop
         this.measureAfterRender(m);
       } else {
-        m._askLayoutForBounds = true; // only if this is confirmed by a resize observer
+        m._askLayoutForBounds = this; // only if this is confirmed by a resize observer
       }
 
       if (m.layout && m.layout.name() === 'Tiling') m.layout.delaySubmorphBounds();
@@ -989,11 +1007,13 @@ export class TilingLayout extends Layout {
       let numDynamic = 0;
 
       if (hugContentsVertically) {
-        container.height = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeHeightPolicyFor(m) == 'fixed').height + padding.top() + padding.bottom();
+        const huggedHeight = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeHeightPolicyFor(m) === 'fixed').height + padding.top() + padding.bottom();
+        this.changePropertyAnimated(container, 'height', huggedHeight, animate);
       }
 
       if (hugContentsHorizontally) {
-        container.width = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeWidthPolicyFor(m) == 'fixed').width + padding.left() + padding.right();
+        const huggedWidth = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeWidthPolicyFor(m) === 'fixed').width + padding.left() + padding.right();
+        this.changePropertyAnimated(container, 'width', huggedWidth, animate);
       }
 
       morphsOnAxis.forEach(m => {
@@ -2793,7 +2813,7 @@ export class GridLayout extends Layout {
   onChange (change) {
     super.onChange(change);
     if (change.prop === 'extent' && this.renderViaCSS) {
-      this.measureAfterRender(this.container);
+      this.cellGroups.forEach(g => g.morph && this.measureAfterRender(g.morph));
     }
   }
 
