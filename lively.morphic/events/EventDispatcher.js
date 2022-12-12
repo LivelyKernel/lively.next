@@ -38,7 +38,6 @@ const globalDomEventsWeListenTo = [
   { type: 'resize', capturing: false, morphMethod: 'onWindowResize' },
   { type: 'orientationchange', capturing: false, morphMethod: 'onWindowResize' },
   { type: 'scroll', capturing: false, passive: false, morphMethod: 'onWindowScroll' },
-  { type: 'wheel', capturing: false, passive: false, morphToMethod: 'onMouseWheel' },
   { type: 'beforeunload', capturing: false, passive: false, morphMethod: 'onBeforeUnload' }
 ];
 
