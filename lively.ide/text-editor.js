@@ -128,9 +128,9 @@ export default class TextEditor extends Morph {
                 padding: Rectangle.inset(10, 10, 10, 10)
               }),
               submorphs: [
-                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { fontColor: Color.rgb(72, 152, 243) }), ' Reload'], ...btnStyle },
-                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { fontColor: Color.rgb(40, 180, 99) }), ' Save'], ...btnStyle },
-                { name: 'removeButton', label: [...Icon.textAttribute('trash', { fontColor: Color.rgb(231, 76, 60) }), ' Remove'], ...btnStyle }
+                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { fontColor: Color.rgb(72, 152, 243), lineHeight: 1.4 }), ' Reload'], ...btnStyle },
+                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { fontColor: Color.rgb(40, 180, 99), lineHeight: 1.4 }), ' Save'], ...btnStyle },
+                { name: 'removeButton', label: [...Icon.textAttribute('trash', { fontColor: Color.rgb(231, 76, 60), lineHeight: 1.4 }), ' Remove'], ...btnStyle }
               ]
             },
             {
