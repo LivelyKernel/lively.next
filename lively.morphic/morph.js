@@ -269,9 +269,10 @@ export class Morph {
         isStyleProp: true,
         defaultValue: pt(0, 0),
         get () {
-          if (this._askLayoutForBounds && this.owner && this.owner.layout) {
+          let layout;
+          if (layout = this._askLayoutForBounds) {
             this._askLayoutForBounds = false;
-            this.owner.layout.updateBoundsFor(this);
+            layout.updateBoundsFor(this);
           }
           return this.getProperty('position');
         }
@@ -283,9 +284,10 @@ export class Morph {
         isStyleProp: true,
         defaultValue: pt(10, 10),
         get () {
-          if (this._askLayoutForBounds && this.owner && this.owner.layout) {
+          let layout;
+          if (layout = this._askLayoutForBounds) {
             this._askLayoutForBounds = false;
-            this.owner.layout.updateBoundsFor(this);
+            layout.updateBoundsFor(this);
           }
           return this.getProperty('extent');
         },
