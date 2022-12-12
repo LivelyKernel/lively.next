@@ -79,16 +79,16 @@ export function clearStylePropertiesForClassesIn (moduleId) {
 function getPropSettings (type) {
   const klass = (!type || obj.isString(type)) ? getClassForName(type || 'default') : type;
   const { package: pkg, pathInPackage } = klass[Symbol.for('lively-module-meta')];
-  const { properties: props } = klass[Symbol.for('lively.classes-properties-and-settings')];
-  return { props, moduleId: string.joinPath(pkg.name, pathInPackage) };
+  const { properties: props, order } = klass[Symbol.for('lively.classes-properties-and-settings')];
+  return { order, props, moduleId: string.joinPath(pkg.name, pathInPackage) };
 }
 
 export function getStylePropertiesFor (type) {
   if (CachedStyleProperties.has(type)) return CachedStyleProperties.get(type);
-  const { props, moduleId } = getPropSettings(type);
+  const { props, moduleId, order } = getPropSettings(type);
   const styleProps = [];
   styleProps.moduleId = moduleId;
-  for (let prop in props) {
+  for (let prop of order) {
     if (props[prop].isStyleProp) styleProps.push(prop);
     if (props[prop].foldable) {
       styleProps.push(...props[prop].foldable.map(sub => prop + string.capitalize(sub)));
