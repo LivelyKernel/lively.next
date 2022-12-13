@@ -9,7 +9,7 @@ import { getClassName } from 'lively.serializer2';
 import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
-import { RichTextFormattableText } from '../text/rich-text.js';
+import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 
 export class FastLoadToggler extends Morph {
   static get properties () {
@@ -449,13 +449,15 @@ export class TopBarModel extends ViewModel {
           break;
         case Text:
           if (evt.targetMorph.isText) return;
-          target.addMorph(morph({
-            RichTextFormattableText,
+          const textMorph = morph({
+            type,
             position,
             readOnly: true,
             textString: 'I am a text field!',
             fill: Color.transparent
-          }));
+          });
+          textMorph.addPlugin(new RichTextPlugin());
+          target.addMorph(textMorph);
           break;
       }
     }
@@ -475,7 +477,7 @@ export class TopBarModel extends ViewModel {
     if (!type) return false;
     if (!this.canBeCreatedViaDrag(type)) return false;
     target._yieldedShape = morph({
-      type: type === Text ? RichTextFormattableText : type,
+      type,
       position: evt.positionIn(target),
       extent: pt(1, 1),
       fill: Color.transparent,
@@ -489,7 +491,7 @@ export class TopBarModel extends ViewModel {
       ...type === Polygon ? this.getPolyDefaultAttrs() : {},
       ...type === Path ? this.getPathDefaultAttrs() : {}
     });
-
+    if (target._yieldedShape.isText) target._yieldedShape.addPlugin(new RichTextPlugin());
     target._sizeTooltip = part(SystemTooltip);
     target._sizeTooltip.openInWorld();
     return true;
