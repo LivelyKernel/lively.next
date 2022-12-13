@@ -199,10 +199,10 @@ export class LivelyWorld extends World {
   onMouseWheel (evt) {
     const { domEvt } = evt;
 
-    // TODO: this is not good enough
-    // do not block scroll when we are on a non-scrollable element
-    // those can be nested indefinetly deep
-    if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
+    if (evt.targetMorphs[0] !== this && evt.targetMorphs.some(m => {
+      if (m.isWorld) return false;
+      return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
+    })) return;
 
     const morphsInWorld = this.morphsInWorld;
 
