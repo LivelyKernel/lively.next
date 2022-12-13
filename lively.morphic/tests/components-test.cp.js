@@ -201,6 +201,7 @@ const c4 = ComponentDescriptor.for(() => component(c3, {
 const c5 = ComponentDescriptor.for(() => component({
   type: 'text',
   name: 'c5',
+  needsDocument: true,
   submorphs: [
     part(c4, { name: 'lively', fill: Color.lively })
   ],
@@ -214,6 +215,7 @@ const c5 = ComponentDescriptor.for(() => component({
 
 const c6 = ComponentDescriptor.for(() => component(c5, {
   name: 'c6',
+  needsDocument: true,
   textAndAttributes: [
     'Something: ', {},
     {
@@ -845,6 +847,7 @@ describe('components', () => {
   it('applies style policies correctly to embedded morphs', () => {
     const m = morph({
       type: 'text',
+      needsDocument: true,
       textAndAttributes: [
         'Something: ', {},
         morph({ name: 'holly', fill: Color.blue }), null,
