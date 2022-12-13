@@ -52,6 +52,7 @@ function createDummyWorld () {
 async function setup () {
   env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
   await env.setWorld(createDummyWorld());
+  env.forceUpdate();
   env.eventDispatcher.eventState.focusedMorph = null;
   eventLog.length = 0;
 }
@@ -99,35 +100,36 @@ describe('pointer event related', function () {
   });
 
   it('world has hand and moves it', () => {
-    env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(120, 130) });
-    // /expect(world.submorphs[0]).property('isHand', true);
+    env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(120, 130), isPrimary: true });
+    expect(world.submorphs[0]).property('isHand', true);
   });
 
   describe('drag', () => {
     it('morph', () => {
       submorph2.grabbable = false;
-      env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', target: submorph2, position: pt(20, 25) });
+      submorph2.draggable = true;
+      env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', target: submorph2, position: pt(20, 25), isPrimary: true });
       assertEventLogContains(['onFocus-submorph2', 'onMouseDown-world', 'onMouseDown-submorph1', 'onMouseDown-submorph2']);
 
       env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(30, 33) });
       assertEventLogContains(['onMouseMove-world', 'onDragStart-submorph2']);
 
-      env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(34, 36) });
+      env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(34, 36), isPrimary: true });
       assertEventLogContains(['onMouseMove-world', 'onDrag-submorph2']);
 
-      env.eventDispatcher.simulateDOMEvents({ type: 'pointerup', target: submorph2, position: pt(34, 36) });
-      assertEventLogContains(['onMouseUp-world', 'onDragEnd-submorph2']);
+      env.eventDispatcher.simulateDOMEvents({ type: 'pointerup', target: submorph2, position: pt(34, 36), isPrimary: true });
+      assertEventLogContains(['onMouseUp-world', 'onMouseUp-submorph1', 'onMouseUp-submorph2', 'onDragEnd-submorph2']);
     });
 
     it('computes drag delta', async () => {
-      let m = world.addMorph(morph({ extent: pt(50, 50), fill: Color.pink, grabbable: false }));
-      await m.whenRendered();
+      let m = world.addMorph(morph({ extent: pt(50, 50), fill: Color.pink, grabbable: false, draggable: true }));
+      env.forceUpdate();
       let dragStartEvent, dragEvent, dragEndEvent; // eslint-disable-line no-unused-vars
       m.onDragStart = evt => dragStartEvent = evt;
       m.onDrag = evt => dragEvent = evt;
       m.onDragEnd = evt => dragEndEvent = evt;
       env.eventDispatcher.simulateDOMEvents(
-        { type: 'pointerdown', position: pt(20, 25) },
+        { type: 'pointerdown', position: pt(20, 25), isPrimary: true },
         { type: 'pointermove', position: pt(20, 25) },
         { type: 'pointermove', position: pt(30, 35) },
         { type: 'pointermove', position: pt(40, 50) });
@@ -139,7 +141,7 @@ describe('pointer event related', function () {
 
   describe('click counting', () => {
     function click (type = 'pointerdown', position = pt(20, 25)) {
-      return env.eventDispatcher.simulateDOMEvents({ type, target: submorph2, position });
+      return env.eventDispatcher.simulateDOMEvents({ type, target: submorph2, position, isPrimary: true });
     }
 
     it('accumulates and is time based', async () => {
@@ -159,9 +161,9 @@ describe('pointer event related', function () {
       submorph2.grabbable = true;
       let morphPos = submorph2.globalPosition;
 
-      // grab 
+      // grab
       await env.eventDispatcher.simulateDOMEvents(
-        { type: 'pointerdown', target: submorph2, position: morphPos.addXY(5, 5) },
+        { type: 'pointerdown', target: submorph2, position: morphPos.addXY(5, 5), isPrimary: true },
         { type: 'pointermove', target: submorph2, position: morphPos.addXY(15, 15) });
 
       assertEventLogContains([
@@ -171,13 +173,13 @@ describe('pointer event related', function () {
         'onGrab-submorph2'
       ]);
       expect(world.hands[0].carriesMorphs()).equals(true);
- 
+
       // drop
       env.eventDispatcher.simulateDOMEvents(
         { type: 'pointermove', target: submorph2, position: morphPos.addXY(15, 15) },
         { type: 'pointermove', target: submorph2, position: morphPos.addXY(25, 25) },
         { type: 'pointerup', target: world, position: morphPos.addXY(20, 20) });
-      assertEventLogContains(['onMouseMove-world', 'onMouseMove-world', 
+      assertEventLogContains(['onMouseMove-world', 'onMouseMove-world',
         'onMouseUp-world', 'onDrop-submorph1']);
       expect(world.hands[0].carriesMorphs()).equals(false);
       expect(submorph2.owner).equals(submorph1);
@@ -197,9 +199,9 @@ describe('pointer event related', function () {
       let [m1, m2] = world.submorphs;
       let prevGlobalPos = m2.globalPosition;
 
-      world.renderAsRoot(env.renderer);
+      env.forceUpdate();
       env.eventDispatcher.simulateDOMEvents(
-        { type: 'pointerdown', target: m2, position: pt(60, 60) },
+        { type: 'pointerdown', target: m2, position: pt(60, 60), isPrimary: true },
         { type: 'pointermove', target: m2, position: pt(70, 70) });
       expect(m2.globalPosition).equals(prevGlobalPos);
       expect(m2.owner).not.equals(world);
@@ -372,6 +374,7 @@ describe('key events', () => {
       let submorph5 = world.addMorph({
         name: 'submorph5',
         type: 'text',
+        readOnly: false,
         extent: pt(50, 50),
         position: pt(300, 300),
         fill: Color.orange,
@@ -383,12 +386,12 @@ describe('key events', () => {
       world.addCommands([{ name: 'test', exec: () => { log += '!'; return true; } }]);
       world.addKeyBindings([{ keys: 'x y', command: 'test' }]);
       submorph5.focus();
-      let [e] = await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'x' });
-      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'x' });
+      let [e] = await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'x', isPrimary: true });
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'x', isPrimary: true });
       [e] = await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'y' });
-      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'y' });
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'y', isPrimary: true });
       [e] = await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'z' });
-      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'z' });
+      !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'z', isPrimary: true });
       expect(log).equals('!');
       expect(submorph5.textString).equals('ztext');
       expect(env).deep.property('eventDispatcher.eventState.keyInputState')
@@ -402,7 +405,7 @@ describe('event simulation', () => {
   afterEach(teardown);
 
   it('click', async () => {
-    await env.eventDispatcher.simulateDOMEvents({ type: 'click', position: pt(25, 25) });
+    await env.eventDispatcher.simulateDOMEvents({ type: 'click', position: pt(25, 25), isPrimary: true });
     assertEventLogContains([
       'onFocus-submorph2',
       'onMouseDown-world', 'onMouseDown-submorph1', 'onMouseDown-submorph2',
