@@ -206,15 +206,6 @@ export class World extends Morph {
     this._tooltipViewer.mouseDown(evt);
   }
 
-  onMouseWheel (evt) {
-    // When holding shift pressed you can scroll around in the world without
-    // scrolling an individual clipped morph that might be below the mouse cursor
-    if (evt.isShiftDown()) {
-      window.scrollBy(-evt.domEvt.wheelDeltaX, -evt.domEvt.wheelDeltaY);
-      evt.stop();
-    }
-  }
-
   onBeforeUnload (evt) {
     // called when browser window is closed
     return this.onUnload(evt);
