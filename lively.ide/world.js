@@ -40,7 +40,10 @@ import './js/linter.js';
 export class LivelyWorld extends World {
   static get properties () {
     return {
-      clipMode: { defaultValue: 'hidden' },
+      clipMode: {
+        defaultValue: 'hidden',
+        readOnly: true
+      },
 
       name: {
         set (name) {
