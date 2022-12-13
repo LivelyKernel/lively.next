@@ -278,7 +278,7 @@ describe('scroll events', () => {
     await setup();
     submorph1.clipMode = 'auto';
     submorph2.extent = pt(200, 200);
-    await submorph1.whenRendered();
+    env.forceUpdate();
   });
   afterEach(teardown);
 
