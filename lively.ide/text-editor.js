@@ -128,9 +128,9 @@ export default class TextEditor extends Morph {
                 padding: Rectangle.inset(10, 10, 10, 10)
               }),
               submorphs: [
-                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { fontColor: Color.rgb(72, 152, 243), lineHeight: 1.4 }), ' Reload'], ...btnStyle },
-                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { fontColor: Color.rgb(40, 180, 99), lineHeight: 1.4 }), ' Save'], ...btnStyle },
-                { name: 'removeButton', label: [...Icon.textAttribute('trash', { fontColor: Color.rgb(231, 76, 60), lineHeight: 1.4 }), ' Remove'], ...btnStyle }
+                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { lineHeight: 1.4 }), ' Reload', { lineHeight: 1.4 }], ...btnStyle },
+                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { lineHeight: 1.4 }), ' Save', { lineHeight: 1.4 }], ...btnStyle },
+                { name: 'removeButton', label: [...Icon.textAttribute('trash', { lineHeight: 1.4 }), ' Remove', { lineHeight: 1.4 }], ...btnStyle }
               ]
             },
             {
@@ -146,7 +146,7 @@ export default class TextEditor extends Morph {
                 ]
               }),
               submorphs: [
-                part(InputLineDefault, { name: 'urlInput', historyId: this.historyId })
+                part(InputLineDefault, { name: 'urlInput', historyId: this.historyId, fontSize: 14, height: 22 })
               ]
             },
             {
