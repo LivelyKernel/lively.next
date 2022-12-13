@@ -940,17 +940,20 @@ export class Text extends Morph {
         if (m.isMorph) return pool.ref(m).asRefForSerializedObjMap();
         if (obj.isObject(m)) {
           const bindings = {};
+          const exprs = {};
           let stringified = JSON.stringify(m, (k, v) => {
             if (v && v.__serialize__) {
               v = v.__serialize__();
+              const uuid = string.newUUID();
+              exprs[uuid] = v.__expr__;
               Object.assign(bindings, v.bindings);
-              return '->' + `[${v.__expr__}]`;
+              return uuid;
             }
             return v;
           });
-          stringified = stringified.replace(/\"->\[.*\]\"/g, (m) => {
-            return m.slice(4, -2);
-          });
+          for (let key in exprs) {
+            stringified = stringified.replace(JSON.stringify(key), exprs[key]);
+          }
           return pool.expressionSerializer.exprStringEncode({
             __expr__: `(${stringified})`, // incorporate the bindings of each of the sub expressions
             bindings
