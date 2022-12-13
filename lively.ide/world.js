@@ -209,7 +209,7 @@ export class LivelyWorld extends World {
 
     const morphsInWorld = this.morphsInWorld;
 
-    if (evt.isAltDown()) {
+    if (evt.isAltDown() || domEvt.buttons === 4) {
       const cursorPositionOnScreen = this.firstHand.position;
       const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
 
