@@ -3,7 +3,7 @@ import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
 import { PropertyLabel, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, string, arr } from 'lively.lang';
-import { signal } from 'lively.bindings';
+import { signal, connect } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupWindow, CloseButton } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
@@ -351,6 +351,10 @@ export class PaddingPopupModel extends PopupModel {
     };
   }
 
+  viewDidLoad () {
+    connect(this.ui.paddingControls.viewModel, 'paddingChanged', this, 'paddingChanged');
+  }
+
   startPadding (pad) {
     this.ui.paddingControls.startPadding(pad);
   }
@@ -362,6 +366,8 @@ export class PaddingPopupModel extends PopupModel {
   close () {
     this.view.remove();
   }
+
+  paddingChanged (padding) {}
 }
 
 export class PositionPopupModel extends PopupModel {

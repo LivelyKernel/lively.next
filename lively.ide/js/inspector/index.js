@@ -383,12 +383,11 @@ export class PropertyControl extends DraggableTreeLabel {
     const { keyString, valueString, target, node, tree } = args;
     const inspector = tree.owner;
     const handler = async (evt) => {
-      // fixme: add rectangle popup!
       const editor = part(PaddingPopup, { hasFixedPosition: true });
       inspector.openWidget = editor;
       editor.viewModel.startPadding(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel.ui.paddingControls.viewModel, 'paddingChanged', (padding) => {
+      connect(editor.viewModel, 'paddingChanged', (padding) => {
         target[keyString] = padding;
         node.rerender();
       });
