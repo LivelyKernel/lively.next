@@ -2814,11 +2814,6 @@ export class Text extends Morph {
         target: this,
         showKeyShortcuts: this.keysForCommand('clipboard paste')
       },
-      {
-        command: 'open text attribute controls',
-        alias: 'edit text attributes',
-        target: this
-      },
       { isDivider: true },
       {
         command: 'toggle line wrapping',
