@@ -1,5 +1,5 @@
 /* global TextDecoder */
-import { Morph, Icon, TilingLayout, part, InputLine, Text, config } from 'lively.morphic';
+import { Morph, Icon, TilingLayout, part, config } from 'lively.morphic';
 import { num, promise } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect, signal, once } from 'lively.bindings';
@@ -158,10 +158,6 @@ export default class TextEditor extends Morph {
             }
           ];
           let { urlInput, loadButton, saveButton, removeButton } = this.ui;
-          console.log(loadButton.nativeCursor);
-          once(loadButton, 'nativeCursor', () => {
-            debugger;
-          });
           connect(urlInput, 'inputAccepted', this, 'location');
           connect(loadButton, 'fire', this, 'execCommand', { converter: () => 'load file' });
           connect(saveButton, 'fire', this, 'execCommand', { converter: () => 'save file' });
