@@ -59,19 +59,19 @@ describe('rendering', function () {
   });
 
   describe('transforms', () => {
-    it('scale and rotation are rendered', async () => {
+    it('scale and rotation are rendered', () => {
       submorph1.rotateBy(num.toRadians(45));
       submorph1.renderOnGPU = true;
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property('style.transform')
         .match(/translate.*10px/)
         .match(/rotate\((0.8|0\.79+)rad\)/)
         .match(/scale\(1,\s*1\)/);
     });
 
-    it('origin rendered via origin transform', async () => {
+    it('origin rendered via origin transform', () => {
       submorph1.origin = pt(20, 10);
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1))
         .deep.property('style.transformOrigin').match(/20px 10px/);
     });
@@ -135,12 +135,12 @@ describe('rendering', function () {
       expect(node.scrollTop).equals(50);
     });
 
-    it('inner morphs have correct transform', async () => {
+    it('inner morphs have correct transform', () => {
       submorph1.clipMode = 'auto';
       submorph2.extent = pt(200, 200);
       let submorph2Bounds = submorph2.globalBounds();
       submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(submorph1.globalBounds()).equals(rect(10, 10, 100, 100));
       expect(submorph1.bounds()).equals(rect(10, 10, 100, 100));
       expect(submorph2.globalBounds()).equals(submorph2Bounds.translatedBy(submorph1.scroll.negated()));
