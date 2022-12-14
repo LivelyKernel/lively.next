@@ -36,21 +36,23 @@ describe('rendering', function () {
   // jsdom sometimes takes its time to initialize...
   if (System.get('@system-env').node) { this.timeout(10000); }
 
-  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
+  beforeEach(async () => {
+    env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld());
+    env.forceUpdate();
+    return env;
+  });
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
   it('morph id is DOM node id', () => {
-    expect(world.id).equals(env.renderer.domNode.id);
+    expect(world.id).equals(env.renderer.rootNode.id);
   });
 
   it('renderer associates domNode with morph', () => {
     let node = env.renderer.getNodeForMorph(submorph2);
-    let morph = env.renderer.getMorphForNode(node);
-    expect(morph).equals(submorph2, morph && morph.name);
-    expect(env.renderer.domNode.childNodes[0].childNodes[0].childNodes[0]
+    expect(env.renderer.rootNode.childNodes[0].childNodes[0].childNodes[0]
       .childNodes[0]).equals(node); // brittle, might change...
   });
-  
+
   it('can be moved to the front', () => {
     submorph1.bringToFront();
     expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
@@ -76,6 +78,9 @@ describe('rendering', function () {
   });
 
   describe('shapes', () => {
+    beforeEach(async () => {
+      env.forceUpdate();
+    });
     it('shape influences node style', () => {
       const style = env.renderer.getNodeForMorph(ellipse).style;
       expect(style.borderRadius).match(/50%/);
@@ -121,11 +126,9 @@ describe('rendering', function () {
 
     it('clip morph can specify scroll', async () => {
       submorph1.clipMode = 'auto';
-      await submorph1.whenRendered();
       submorph2.extent = pt(200, 200);
       submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
-      await promise.delay(1000);
+      env.forceUpdate();
       let node = env.renderer.getNodeForMorph(submorph1);
       expect(node.style.overflow).equals('auto');
       expect(node.scrollLeft).equals(40);
@@ -166,17 +169,15 @@ describe('rendering', function () {
           scroll: pt(50, 50)
         }];
       let [m1, m2] = world.submorphs;
-      await world.whenRendered();
       m1.scroll = m2.scroll = pt(50, 50); // this is wrong
-      await promise.delay(50);
-
+      env.forceUpdate();
       let node1 = env.renderer.getNodeForMorph(m1);
       expect(node1.scrollLeft).equals(50, 'm1 scrollLeft after setup');
       expect(node1.scrollTop).equals(50, 'm1 scrollTop after setup');
       let node2 = env.renderer.getNodeForMorph(m2);
       expect(node2.scrollLeft).equals(50, 'm2 scrollLeft after setup');
       expect(node2.scrollTop).equals(50, 'm2 scrollTop after setup');
-      
+
       m1.bringToFront();
       await promise.delay(500);
       node1 = env.renderer.getNodeForMorph(m1);
@@ -185,7 +186,7 @@ describe('rendering', function () {
       node2 = env.renderer.getNodeForMorph(m2);
       expect(node2.scrollLeft).equals(50, 'm2 scrollLeft 1');
       expect(node2.scrollTop).equals(50, 'm2 scrollTop 1');
-      
+
       m2.bringToFront();
       await promise.delay(50);
       node1 = env.renderer.getNodeForMorph(m1);
