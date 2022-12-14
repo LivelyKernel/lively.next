@@ -155,7 +155,7 @@ export default class Renderer {
 
     for (let morph of morphsToHandle) {
       if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
-      if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.push(morph);
+      if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.unshift(morph);
       if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
       if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.push(morph);
     }
