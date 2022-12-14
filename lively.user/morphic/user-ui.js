@@ -122,6 +122,7 @@ export var UserUI = {
       const sceneGraphFlap = part(Flap, { viewModel: { target: 'scene graph', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
       connect(sceneGraphFlap, 'position', versionChecker, 'relayout');
       const propertiesPanelFlap = part(Flap, { viewModel: { target: 'properties panel', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
+      connect(propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
     })();
     return topBar;
   },

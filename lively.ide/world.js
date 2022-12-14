@@ -183,15 +183,8 @@ export class LivelyWorld extends World {
     return new Point(worldX, worldY);
   }
 
-  onMouseWheel (evt) {
-    const { domEvt } = evt;
-
-    // TODO: this is not good enough
-    // do not block scroll when we are on a non-scrollable element
-    // those can be nested indefinetly deep
-    if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
-
-    const morphsInWorld = this.submorphs
+  get morphsInWorld () {
+    return this.submorphs
       .filter(m => !m.isWindow)
       .filter(m => !m.isHand)
       .filter(m => !m.isTopBar)
@@ -200,11 +193,24 @@ export class LivelyWorld extends World {
       .filter(m => !m.isStatusMessage)
       .filter(m => !m.isSceneGraphPanel)
       .filter(m => !m.isPropertiesPanel)
+      .filter(m => !m.isZoomIndicator);
+  }
+
+  onMouseWheel (evt) {
+    const { domEvt } = evt;
+
+    // TODO: this is not good enough
+    // do not block scroll when we are on a non-scrollable element
+    // those can be nested indefinetly deep
+    if (evt.targetMorphs.length !== 1 || evt.targetMorphs[0] !== this) return;
+
+    const morphsInWorld = this.morphsInWorld;
+
     if (evt.isAltDown()) {
       const cursorPositionOnScreen = this.firstHand.position;
       const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
 
-      const scaleDirection = domEvt.deltaY > 0 ? 1 : 0;
+      const scaleDirection = domEvt.deltaY < 0 ? 1 : 0;
       if (scaleDirection) this.scaleFactor *= 1.01;
       else this.scaleFactor *= 0.99;
 
@@ -217,6 +223,9 @@ export class LivelyWorld extends World {
         if (!m.worldPosition) m.worldPosition = m.position;
         m.position = this.worldToScreen(m.worldPosition);
       });
+
+      const percentage = Number.parseInt((this.scaleFactor * 100));
+      $world.get('world zoom indicator').updateZoomLevel(percentage);
       return;
     }
 
@@ -227,6 +236,18 @@ export class LivelyWorld extends World {
       if (!m.worldPosition) m.worldPosition = m.position;
       m.position = this.worldToScreen(m.worldPosition);
     });
+  }
+
+  resetScaleFactor () {
+    this.scaleFactor = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.morphsInWorld.forEach(m => m.scale = 1);
+    this.morphsInWorld.forEach(m => {
+      m.position = m.worldPosition || m.position;
+    });
+
+    $world.get('world zoom indicator').updateZoomLevel(100);
   }
 
   async whenReady () {
@@ -293,8 +314,11 @@ export class LivelyWorld extends World {
     }
 
     const checker = this.get('lively version checker');
-    if (checker && checker.owner === $world) {
-      checker.relayout();
+    const zoomIndicator = this.get('world zoom indicator');
+    if ((checker && checker.owner === $world) ||
+       (zoomIndicator && zoomIndicator.owner === $world)) {
+      checker?.relayout();
+      zoomIndicator?.relayout();
     }
     return name === 'properties panel' ? this.propertiesPanel : this.sceneGraph;
   }

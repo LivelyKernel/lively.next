@@ -83,6 +83,7 @@ export class PropertiesPanelModel extends ViewModel {
   async toggle (active) {
     const { view } = this;
     const bounds = $world.visibleBounds();
+    const zoomIndicator = $world.get('world zoom indicator');
     this.onWorldResize(false);
     if (active) {
       $world.withTopBarDo(topBar => {
@@ -90,20 +91,24 @@ export class PropertiesPanelModel extends ViewModel {
         $world.addMorph(view, topBar.view);
       });
       view.topLeft = bounds.topRight();
-      this.attachToWorld($world);
-      await view.animate({
-        opacity: 1,
-        topRight: bounds.topRight(),
+      view.withAnimationDo(() => {
+        view.opacity = 1,
+        view.topRight = bounds.topRight();
+        zoomIndicator?.relayout();
+      }, {
         easing: easings.outCirc,
         duration: 300
       });
+      this.attachToWorld($world);
     } else {
       this.detachFromWorld($world);
-      await view.animate({
-        opacity: 0,
-        topLeft: bounds.topRight(),
-        duration: 300
-      });
+      await view.withAnimationDo(() => {
+        view.opacity = 0,
+        view.topLeft = bounds.topRight();
+        zoomIndicator?.relayout();
+      }
+      , { duration: 300 }
+      );
       view.remove();
     }
   }
