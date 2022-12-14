@@ -559,11 +559,6 @@ export default class TestRunner extends HTMLMorph {
     return `System.get(System.normalizeSync('lively.morphic')).MorphicEnv.default().world.getMorphWithId('${this.id}')`;
   }
 
-  afterRenderHook () {
-    // when the vdom removes us temporarily from the dom we loose the scroll state
-    this.ensureScrollPosition();
-  }
-
   async renderTests (state) {
     const collapsed = Object.keys(state.collapsedSuites);
     const tests = state.loadedTests || [];

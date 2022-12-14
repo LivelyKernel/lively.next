@@ -126,6 +126,11 @@ export class HTMLMorph extends Morph {
     super.abandon();
   }
 
+  ensureScrollPosition () {
+  // custom code that can traverse the custom dom node
+  // and reconstruct scroll state if that is lost
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   menuItems () {

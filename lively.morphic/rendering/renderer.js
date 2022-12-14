@@ -574,6 +574,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to update the scroll of its node.
    */
   updateNodeScrollFromMorph (morph) {
+    if (morph.isHTMLMorph) morph.ensureScrollPosition();
     if (morph.clipMode !== 'auto' && morph.clipMode !== 'scroll') return;
     const node = this.getNodeForMorph(morph);
     if (!node) {
