@@ -904,8 +904,8 @@ export class Inspector extends ViewModel {
 
   adjustProportions (evt) {
     const { layout } = this.view;
-    layout.row(1).height += evt.state.dragDelta.y;
-    this.relayout();
+    layout.row(1).height = Math.max(50, layout.row(1).height + evt.state.dragDelta.y);
+    layout.row(3).height = Math.min(this.view.height - 50, layout.row(3).height - evt.state.dragDelta.y);
   }
 
   isEditorVisible () { return this.ui.codeEditor.height > 10; }
@@ -921,20 +921,23 @@ export class Inspector extends ViewModel {
     } = this;
     const duration = 200;
     layout.disable();
-    if (show) {
-      terminalToggler.fontColor = Color.rgbHex('00e0ff');
-      layout.row(3).height = this.codeEditorHeight || 180;
-      layout.row(2).height = 5;
-      fixImportButton.animate({ visible: true, duration });
-      thisBindingSelector.animate({ visible: true, duration });
-    } else {
-      this.codeEditorHeight = layout.row(3).height;
-      terminalToggler.fontColor = Color.white;
-      layout.row(3).height = layout.row(2).height = 0;
-      fixImportButton.animate({ visible: false, duration });
-      thisBindingSelector.animate({ visible: false, duration });
-    }
-    this.view.extent = prevExtent;
+    this.withoutBindingsDo(() => {
+      if (show) {
+        terminalToggler.fontColor = Color.rgbHex('00e0ff');
+        layout.row(3).height = this.codeEditorHeight || 180;
+        layout.row(2).height = 5;
+        fixImportButton.animate({ visible: true, duration });
+        thisBindingSelector.animate({ visible: true, duration });
+      } else {
+        this.codeEditorHeight = layout.row(3).height;
+        terminalToggler.fontColor = Color.white;
+        layout.row(3).height = layout.row(2).height = 0;
+        fixImportButton.animate({ visible: false, duration });
+        thisBindingSelector.animate({ visible: false, duration });
+      }
+      this.view.extent = prevExtent;
+    });
+
     layout.enable({ duration });
     this.relayout({ duration });
     codeEditor.focus();
