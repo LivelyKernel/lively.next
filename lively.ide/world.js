@@ -44,6 +44,9 @@ export class LivelyWorld extends World {
         defaultValue: 'hidden',
         readOnly: true
       },
+      hideScrollbars: {
+        defaultValue: true
+      },
 
       name: {
         set (name) {
@@ -201,6 +204,8 @@ export class LivelyWorld extends World {
 
   onMouseWheel (evt) {
     const { domEvt } = evt;
+
+    if (domEvt.ctrlKey) domEvt.preventDefault();
 
     if (evt.targetMorphs[0] !== this && evt.targetMorphs.some(m => {
       if (m.isWorld) return false;
