@@ -52,7 +52,7 @@ describe('rendering', function () {
     it('scale and rotation are rendered', async () => {
       submorph1.rotateBy(num.toRadians(45));
       submorph1.renderOnGPU = true;
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property('style.transform')
         .match(/translate.*10px/)
         .match(/rotate\((0.8|0\.79+)rad\)/)
@@ -61,13 +61,17 @@ describe('rendering', function () {
 
     it('origin rendered via origin transform', async () => {
       submorph1.origin = pt(20, 10);
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1))
         .deep.property('style.transformOrigin').match(/20px 10px/);
     });
   });
 
   describe('shapes', () => {
+    beforeEach(() => {
+      env.forceUpdate(); // ensure scene rendered
+    });
+
     it('shape influences node style', () => {
       const style = env.renderer.getNodeForMorph(ellipse).style;
       expect(style.borderRadius).match(/50%/);
@@ -115,8 +119,8 @@ describe('rendering', function () {
       submorph1.clipMode = 'auto';
       submorph2.extent = pt(200, 200);
       submorph1.scroll = pt(40, 50);
+      env.forceUpdate();
       let node = env.renderer.getNodeForMorph(submorph1);
-      console.log(node);
       expect(node.style.overflow).equals('auto');
       expect(node.scrollLeft).equals(40);
       expect(node.scrollTop).equals(50);
@@ -127,7 +131,7 @@ describe('rendering', function () {
       submorph2.extent = pt(200, 200);
       let submorph2Bounds = submorph2.globalBounds();
       submorph1.scroll = pt(40, 50);
-      await submorph1.whenRendered();
+      env.forceUpdate();
       expect(submorph1.globalBounds()).equals(rect(10, 10, 100, 100));
       expect(submorph1.bounds()).equals(rect(10, 10, 100, 100));
       expect(submorph2.globalBounds()).equals(submorph2Bounds.translatedBy(submorph1.scroll.negated()));
@@ -156,7 +160,7 @@ describe('rendering', function () {
           scroll: pt(50, 50)
         }];
       let [m1, m2] = world.submorphs;
-      await world.whenRendered();
+      env.forceUpdate();
       m1.scroll = m2.scroll = pt(50, 50); // this is wrong
       await promise.delay(50);
 
