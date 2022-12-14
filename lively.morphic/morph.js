@@ -1568,7 +1568,11 @@ export class Morph {
         submorph.remove();
       }
 
-      if (submorph._env !== this._env) submorph._env = this._env;
+      if (submorph._env !== this._env) {
+        submorph._env = this._env;
+        // reset the rendering state
+        submorph.renderingState.renderedMorphs = [];
+      }
 
       // modify the submorphs array
       index = Math.min(submorphs.length, Math.max(0, index));
