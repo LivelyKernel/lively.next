@@ -31,8 +31,8 @@ class Layout {
   }
 
   hasEmbeddedContainer () {
-    if (!Path('container.owner.isText').get(this)) return false;
-    return this.container.owner.embeddedMorphMap.has(this.container);
+    if (this.container?.owner?.isText) return false;
+    return this.container.owner?.embeddedMorphMap?.has(this.container);
   }
 
   attach () {
@@ -350,8 +350,8 @@ export class TilingLayout extends Layout {
   }
 
   get layoutableSubmorphs () {
-    const layoutableSubmorphs = super.layoutableSubmorphs
-    if (this.renderViaCSS) return layoutableSubmorphs
+    const layoutableSubmorphs = super.layoutableSubmorphs;
+    if (this.renderViaCSS) return layoutableSubmorphs;
     else return layoutableSubmorphs.filter(m => m.visible);
   }
 
@@ -894,7 +894,7 @@ export class TilingLayout extends Layout {
     } = this;
     this._configChanged = false;
     if (containerMorph.visible) style.display = 'flex';
-    if (containerMorph.owner.embeddedMorphMap?.has(containerMorph)) { containerMorph.renderingState.inlineFlexImportant = true; }
+    if (containerMorph.owner?.embeddedMorphMap?.has(containerMorph)) { containerMorph.renderingState.inlineFlexImportant = true; }
     const spacingOffset = axis === 'row'
       ? container.borderWidthLeft + container.borderWidthRight
       : container.borderWidthTop + container.borderWidthBottom;
