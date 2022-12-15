@@ -849,6 +849,13 @@ export class Text extends Morph {
     // This is just a shim so that everything boots nicely
   }
 
+  renderStyles (styleProps) {
+    if (this.document) {
+      styleProps.overflow = 'hidden';
+    }
+    return styleProps;
+  }
+
   constructor (props = {}) {
     this._initializing = true;
     const {
