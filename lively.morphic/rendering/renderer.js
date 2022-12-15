@@ -1872,15 +1872,15 @@ export default class Renderer {
   /**
    * Iterates over the visible lines of a Text, measures their bounds in the DOM and updates the data model in their Document.
    * @see updateLineHeightOfNode.
-   * @param {Node} textlayerNode - The textLayerNode of a Text.
-   * @param {Text} morph - The Text to which `textlayerNode` belongs.
+   * @param {Node} textLayerNode - The textLayerNode of a Text.
+   * @param {Text} morph - The Text to which `textLayerNode` belongs.
    */
-  updateExtentsOfLines (textlayerNode, morph) {
+  updateExtentsOfLines (textLayerNode, morph) {
     // figure out what lines are displayed in the text layer node and map those
     // back to document lines.  Those are then updated via lineNode.getBoundingClientRect
     const { fontMetric } = morph;
 
-    const lineNodes = textlayerNode.children;
+    const lineNodes = textLayerNode.children;
     let i = 0;
     let firstLineNode;
 
@@ -1910,6 +1910,7 @@ export default class Renderer {
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node, gtfm);
         // if we measured but the font as not been loaded, this is also just an estimate
         line.hasEstimatedExtent = !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight);
+        if (!textLayerNode.isConnected) line.hasEstimatedExtent = true;
         line = line.nextLine();
       }
     }
