@@ -1514,10 +1514,16 @@ export class Text extends Morph {
 
   textBounds () {
     if (this.document) {
-      return this.textLayout.textBounds(this);
+      return this.measureDynamicTextBounds();
     } else { // label mode
       return this.measureStaticTextBounds();
     }
+  }
+
+  measureDynamicTextBounds () {
+    if (!this.env.renderer.getNodeForMorph(this)) this.env.renderer.renderMorph(this)
+
+    return this.textLayout.textBounds(this);
   }
 
   measureStaticTextBounds () {
