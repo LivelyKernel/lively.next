@@ -1521,7 +1521,7 @@ export class Text extends Morph {
   }
 
   measureDynamicTextBounds () {
-    if (!this.env.renderer.getNodeForMorph(this)) this.env.renderer.renderMorph(this)
+    if (!this.env.renderer.getNodeForMorph(this)) this.env.renderer.renderMorph(this);
 
     return this.textLayout.textBounds(this);
   }
@@ -1888,7 +1888,10 @@ export class Text extends Morph {
         console.assert(morphsInAddedText.includes(morph), '????');
         const { start } = ranges[i];
 
-        if (morph.owner !== this) this.addMorph(morph);
+        if (morph.owner !== this) {
+          if (morph.owner) { arr.remove(morph.owner.renderingState.renderedMorphs, morph); } // since we are rendering text and attributes synchronously we need to prevent the
+          this.addMorph(morph);
+        }
         // anchor are not able to move correctly, if we replace text and attributes
         // with new positions of the morphs, which may be arbitrary (oftentimes not possible
         // to infer the movement). We therefore need to replace these anchor at all times
@@ -2072,12 +2075,14 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
+    this.textString = '';
     this.document = null;
     this.renderingState.needsScrollLayerAdded = false; // just in case
     this.renderingState.needsScrollLayerRemoved = true;
+    this.renderingState.renderedTextAndAttributes = null;
     this.textLayout = null;
-    this.textAndAttributes = textAndAttributes;
     this.selection = null;
+    this.textAndAttributes = textAndAttributes;
     this._isDowngrading = false;
   }
 
