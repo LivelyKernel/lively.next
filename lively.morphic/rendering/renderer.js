@@ -736,7 +736,11 @@ export default class Renderer {
 
     if (morph.document) {
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
+      const prevParent = textLayerNode.parentNode;
+      this.placeholder.className = 'Text';
+      this.placeholder.appendChild(textLayerNode);
       this.updateExtentsOfLines(textLayerNode, morph);
+      prevParent.appendChild(textLayerNode);
     }
 
     return node;
