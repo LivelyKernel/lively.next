@@ -65,6 +65,7 @@ describeInBrowser('undo', function () {
   });
 
   it('groups undos', () => {
+    text.cursorPosition = { row: 1, column: 5 };
     expect(text.undoManager.undos).have.length(0);
     text.undoManager.group();
     text.insertText('a'); text.insertText('b'); text.insertText('c');
