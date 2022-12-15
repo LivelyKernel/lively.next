@@ -344,15 +344,12 @@ export class PaddingPopupModel extends PopupModel {
       bindings: {
         get () {
           return [
+            { model: 'padding controls', signal: 'paddingChanged', handler: 'paddingChanged' },
             { target: 'close button', signal: 'onMouseDown', handler: 'close' }
           ];
         }
       }
     };
-  }
-
-  viewDidLoad () {
-    connect(this.ui.paddingControls.viewModel, 'paddingChanged', this, 'paddingChanged');
   }
 
   startPadding (pad) {
