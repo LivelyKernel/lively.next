@@ -23,10 +23,10 @@ let padding = Rectangle.inset(3);
 function text (string, props) {
   return new Text({
     name: 'text',
+    readOnly: false,
     textString: string,
     extent: pt(100, 100),
     padding,
-    // fontMetric,
     ...defaultStyle,
     ...props
   });
@@ -42,8 +42,10 @@ function getRenderedTextNodes (morph) {
 let sut;
 
 describe('text rendering', () => {
-  beforeEach(() =>
-    sut = text('hello', { position: pt(10.10), fill: Color.gray.lighter(2) }).openInWorld());
+  beforeEach(() => {
+    sut = text('hello', { position: pt(10.10), fill: Color.gray.lighter(2) }).openInWorld();
+    sut.env.forceUpdate();
+  });
 
   afterEach(() => sut && sut.remove());
 
@@ -60,20 +62,21 @@ describe('text rendering', () => {
       borderWidth: 0
     });
 
-    await sut.whenRendered();
+    sut.env.forceUpdate();
 
     let node = sut.env.renderer.getNodeForMorph(sut);
-    let b = node.querySelector('.newtext-text-layer').getBoundingClientRect();
+    let b = node.querySelector('.newtext-text-layer.actual').getBoundingClientRect();
     let textBounds = new Rectangle(b.left, b.top, b.width, b.height);
 
     expect(textBounds.top() - sut.top - sut.padding.top()).equals(-sut.scroll.y, 'text layer not scrolled correctly');
-    expect(textBounds.height).closeTo(lineHeight * 17 + (padTop + padBot), 30, 'text layer does not have size of all lines');
+    const scrolledLines = 10;
+    const visibleLines = 2;
+    const paddingLines = 1;
+    expect(textBounds.height).closeTo(lineHeight * (scrolledLines + visibleLines + paddingLines) + (padTop + padBot), 30, 'text layer does not have size of all lines');
     expect(node.querySelector('.newtext-text-layer.actual').textContent).lessThan(10111213, 'text  layer renders more than necessary');
   });
 
   it('can resize on content change', async () => {
-    await sut.whenRendered();
-
     sut.clipMode = 'visible';
     sut.lineWrapping = false;
     sut.fixedWidth = false;
@@ -82,14 +85,12 @@ describe('text rendering', () => {
     let { width: cWidth } = sut.textLayout.defaultCharExtent(sut);
     sut.textString = 'Hello hello';
 
-    await sut.whenRendered();
-    await promise.delay(100);
+    sut.env.forceUpdate();
     let expectedWidth = sut.textString.length * cWidth + padLeft + padRight;
     expect(sut.width).within(expectedWidth - 1, expectedWidth + 1);
 
     sut.textString = 'foo';
-    await sut.whenRendered();
-    await promise.delay(100);
+    sut.env.forceUpdate();
     expectedWidth = 3 * cWidth + padLeft + padRight;
     expect(sut.width).within(expectedWidth - 1, expectedWidth + 1);
   });
@@ -165,13 +166,13 @@ describe('text rendering', () => {
       });
 
       let l = sut.textLayout;
-      sut.render(sut.env.renderer);
+      sut.env.forceUpdate();
       expect(l.firstFullVisibleLine(sut)).equals(0);
       expect(l.lastFullVisibleLine(sut)).equals(2);
 
       sut.scroll = sut.scroll.addXY(0, padding.top() + h);
 
-      sut.render(sut.env.renderer);
+      sut.env.forceUpdate();
 
       expect(l.firstFullVisibleLine(sut)).equals(1);
       expect(l.lastFullVisibleLine(sut)).equals(3);
