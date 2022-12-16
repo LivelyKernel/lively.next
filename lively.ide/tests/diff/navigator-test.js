@@ -43,7 +43,8 @@ async function setup () {
   editor = new Text({
     textString: patchString,
     lineWrapping: false,
-    plugins: [new DiffEditorPlugin()]
+    plugins: [new DiffEditorPlugin()],
+    readOnly: false
   });
   editor.openInWorld();
   await editor.whenRendered();
