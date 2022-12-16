@@ -1041,17 +1041,14 @@ const UserFlap = component({
     fill: Color.rgba(0, 0, 0, 0),
     tooltip: 'Toggle fast load',
     layout: new TilingLayout({
-      axis: 'column',
+      axis: 'row',
       axisAlign: 'center',
       align: 'center',
       direction: 'rightToLeft',
+      wrapSubmorphs: false,
+      hugContentsHorizontally: true,
       orderByIndex: true,
-      padding: {
-        height: 0,
-        width: 0,
-        x: 10,
-        y: 10
-      },
+      padding: Rectangle.inset(5, 5, 0, 5),
       reactToSubmorphAnimations: false,
       renderViaCSS: true,
       spacing: 10
