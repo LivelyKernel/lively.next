@@ -347,7 +347,7 @@ export class Text extends Morph {
       cursorPosition: {
         group: 'selection',
         derived: true,
-        after: ['selection', 'selectable', 'readOnly'],
+        after: ['selection', 'selectionMode', 'readOnly', 'textString'],
         get () {
           return this.selection.lead;
         },
@@ -463,8 +463,7 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
-          // if (this._isDeserializing && this._initializedByCachedBounds) { this.textLayout.restore(this._initializedByCachedBounds, this); }
-          if (this.document && !this._isDowngrading) {
+          if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
               textAndAttributes
@@ -574,6 +573,7 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
+        after: ['document'],
         set (mode) {
           if (mode === 'native') {
             if (this.document && !this.readOnly === true) {
