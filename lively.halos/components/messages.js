@@ -191,26 +191,41 @@ export class StatusMessage extends ViewModel {
     this.stayOpen = true;
     this.isCompact = false;
     const text = this.ui.messageText;
-    text.lineWrapping = false;
-    Object.assign(text, { clipMode: 'auto', readOnly: true, reactsToPointer: true });
-    text.fixedWidth = false;
+    Object.assign(text, { lineWrapping: false, clipMode: 'auto', readOnly: true, reactsToPointer: true });
     if (this.expandedContent) text.value = this.expandedContent;
-    text.document.getLine(0).hasEstimatedExtent = true;
+    text.env.forceUpdate();
+    text.invalidateTextLayout(true, true);
     let ext = text.textBounds().extent();
     const visibleBounds = world.visibleBounds();
     if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 200;
     if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 200;
-    text.animate({
-      height: ext.y + 25,
-      duration: 200,
-      easing: easings.outExpo
-    });
-    this.view.animate({
-      width: ext.x + 50,
-      center: visibleBounds.center(),
+
+    // FIXME: this should not be needed to split apart
+    //        also no manual invocation of the layout should be needed
+
+    this.view.withAnimationDo(() => {
+      text.height = ext.y + 25;
+      this.view.layout.apply();
+    }, {
       easing: easings.outExpo,
       duration: 200
     });
+
+    this.view.withAnimationDo(() => {
+      this.view.width = ext.x + 50;
+      this.ui.horizontalFloat.layout.apply();
+    }, {
+      easing: easings.outExpo,
+      duration: 200
+    });
+
+    this.view.withAnimationDo(() => {
+      this.view.center = visibleBounds.center();
+    }, {
+      easing: easings.outExpo,
+      duration: 200
+    });
+
     this.focus();
   }
 
