@@ -36,6 +36,7 @@ export default class Renderer {
     this.morphsWithStructuralChanges = [];
     this.renderedMorphsWithChanges = [];
     this.renderedMorphsWithAnimations = [];
+    this.morphsToRevisit = [];
     this.doc = world.env.domEnv.document;
     this.bodyNode = rootNode;
     this.rootNode = this.doc.createElement('div');
@@ -164,7 +165,13 @@ export default class Renderer {
       morph.withAllSubmorphsDo(m => !this.renderMap.has(m) && this.renderMorph(m));
     }
 
+    this.morphsToRevisit = [];
+
     for (let morph of this.renderedMorphsWithChanges) {
+      this.renderStylingChanges(morph);
+    }
+
+    for (let morph of this.morphsToRevisit.reverse()) {
       this.renderStylingChanges(morph);
     }
 
@@ -515,7 +522,14 @@ export default class Renderer {
       morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
     }
     applyStylingToNode(morph, node);
-    if (turnedVisible || scrollChanged) { this.updateNodeScrollFromMorph(morph); }
+    if (turnedVisible || scrollChanged) {
+      if (turnedVisible) {
+        morph.withAllSubmorphsDo(m => {
+          arr.pushIfNotIncluded(this.morphsToRevisit, m);
+        });
+      }
+      this.updateNodeScrollFromMorph(morph);
+    }
 
     if (morph.isText && (morph.document || morph.needsDocument)) node.style.overflow = 'hidden';
     rs.needsRerender = false;
@@ -557,6 +571,7 @@ export default class Renderer {
     this.renderedMorphsWithChanges = [];
     this.renderedMorphsWithAnimations = [];
     this.renderedMorphsToBeMeasured = [];
+    this.morphsToRevisit = [];
   }
 
   /**
