@@ -61,7 +61,7 @@ describe('js code navigator definitions', () => {
   let editor, nav;
 
   beforeEach(() => {
-    editor = new Text({ plugins: [new JavaScriptEditorPlugin()] });
+    editor = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
     nav = editor.pluginInvokeFirst('getNavigator');
   });
 
@@ -113,7 +113,7 @@ let editor, nav;
 
 describe('js code navigator expand and contract', () => {
   beforeEach(() => {
-    editor = new Text({ plugins: [new JavaScriptEditorPlugin()] });
+    editor = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
     nav = editor.pluginInvokeFirst('getNavigator');
     editor.plugins[0].requestHighlight(true);
   });
