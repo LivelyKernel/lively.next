@@ -13,7 +13,7 @@ expectSelection(chai);
 
 let text;
 describeInBrowser('text plugins', () => {
-  beforeEach(() => text = new Text({ textString: 'Hello\n World' }));
+  beforeEach(() => text = new Text({ textString: 'Hello\n World', readOnly: false }));
 
   it('simple expansion', () => {
     new Snippet({ expansion: 'foo' }).expandAtCursor(text);
