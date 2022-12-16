@@ -22,7 +22,7 @@ describe('import helper - cleanup unused imports', function () {
   this.timeout(5000);
 
   it('runs command on text', async () => {
-    let ed = new Text({ plugins: [new JavaScriptEditorPlugin()] });
+    let ed = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
     let dummyWorld = { editListPrompt: (label, items) => ({ list: items.map(ea => ea.value) }) };
 
     ed.world = () => dummyWorld;
@@ -44,7 +44,7 @@ describe('import helper - injection command', function () {
 
   let ed, queryMatcher;
   beforeEach(() => {
-    ed = new Text({ plugins: [new JavaScriptEditorPlugin()] });
+    ed = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
     let targetModule = `lively://import-helper-test/${Date.now()}`;
     let dummyWorld = new World();
     dummyWorld.filterableListPrompt = (label, items) => {
