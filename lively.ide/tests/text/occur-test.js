@@ -1,5 +1,4 @@
 /* global System, it, describe, xdescribe, beforeEach */
-
 import { expect, chai } from 'mocha-es6';
 import { Occur, occurStartCommand } from '../../text/occur.js';
 import { expectSelection } from 'lively.morphic/tests/test-helpers.js';
@@ -21,6 +20,7 @@ function text (string, props) {
     fontSize: 10,
     extent: pt(100, 100),
     padding: Rectangle.inset(2),
+    readOnly: false,
     ...props
   });
 }
@@ -30,7 +30,8 @@ function range (startRow, startCol, endRow, endCol) {
 }
 
 describeInBrowser('occur', () => {
-  let t; beforeEach(() => t = text('abc\ndef\nxyz\nbcxbc'));
+  let t;
+  beforeEach(() => t = text('abc\ndef\nxyz\nbcxbc'));
 
   it('find lines matching', function () {
     let opts = { needle: 'bc' };
@@ -75,6 +76,7 @@ describeInBrowser('occur', () => {
   });
 
   it('occur navigation', function () {
+    t.textString = 'hel\nlo\n\nwo\nrld\n';
     t.addCommands([occurStartCommand]);
     t.cursorPosition = { row: 1, column: 1 };
 
