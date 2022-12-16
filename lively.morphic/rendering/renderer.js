@@ -1672,17 +1672,18 @@ export default class Renderer {
     if (!node) return;
     const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
     if (!nodeToAppendTo) return;
-    const submorphsOrTextLayerNode = node.querySelector(`#submorphs-${morph.id}`) || node.querySelector(`#${morph.id}textLayer`);
+    const submorphsNode = nodeToAppendTo.querySelector(`#submorphs-${morph.id}`);
+    const textLayerNode = nodeToAppendTo.querySelector(`#${morph.id}textLayer`);
     const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
     const markersToRender = this.computeMarkerLayer(morph);
-    const cursorNode = nodeToAppendTo.querySelector('.newtext-cursor');
+    const cursorNode = !submorphsNode ? nodeToAppendTo.querySelector('.newtext-cursor') : null;
     keyed('id',
       nodeToAppendTo,
       alreadyRenderedMarkers,
       markersToRender,
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
       noOpUpdate,
-      submorphsOrTextLayerNode,
+      submorphsNode || textLayerNode,
       cursorNode
     );
     morph.renderingState.renderedMarkers = markersToRender;
