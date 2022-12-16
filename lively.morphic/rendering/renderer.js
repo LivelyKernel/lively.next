@@ -1653,10 +1653,10 @@ export default class Renderer {
    */
   patchSelectionMode (node, morph) {
     if (morph.selectionMode === 'native') {
-      node.querySelector('.newtext-text-layer').classList.add('selectable');
+      node.querySelector('.newtext-text-layer.actual').classList.add('selectable');
     }
     if (morph.selectionMode === 'lively' || morph.selectionMode === 'none') {
-      node.querySelector('.newtext-text-layer').classList.remove('selectable');
+      node.querySelector('.newtext-text-layer.actual').classList.remove('selectable');
     }
 
     morph.renderingState.selectionMode = morph.selectionMode;
