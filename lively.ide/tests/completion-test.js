@@ -11,7 +11,8 @@ let text;
 
 describe('completion controller', () => {
   beforeEach(() =>
-    text = new Text({ textString: 'abc\nafg\n' }));
+    text = new Text({ textString: 'abc\nafg\n', readOnly: false })
+  );
 
   it('computes word completions', async () => {
     text.cursorPosition = { row: 2, column: 0 };
@@ -35,7 +36,7 @@ describe('completion controller', () => {
 
 describe('completion widget', () => {
   beforeEach(() => {
-    text = new Text({ textString: 'abc\nafg\n', extent: pt(400, 300), editorModeName: joinPath(System.baseURL, 'lively.ide/editor-plugin.js') }).openInWorld();
+    text = new Text({ readOnly: false, textString: 'abc\nafg\n', extent: pt(400, 300), editorModeName: joinPath(System.baseURL, 'lively.ide/editor-plugin.js') }).openInWorld();
   });
 
   afterEach(async () => {
