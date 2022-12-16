@@ -26,7 +26,7 @@ import { prompts } from 'lively.components';
 import * as moduleManager from 'lively.modules';
 
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
-import { Halo, MorphHighlighter, PorportionalLayoutHalo, GridLayoutHalo } from 'lively.halos';
+import { Halo, MorphHighlighter, ProportionalLayoutHalo, GridLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
@@ -35,6 +35,7 @@ import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
 import { CommentData } from 'lively.collab';
+import './js/linter.js';
 
 export class LivelyWorld extends World {
   static get properties () {
