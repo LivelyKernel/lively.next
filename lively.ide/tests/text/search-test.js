@@ -21,6 +21,7 @@ function text (string, props) {
     fontSize: 10,
     extent: pt(100, 100),
     padding: Rectangle.inset(2),
+    readOnly: false,
     ...props
   });
 }
