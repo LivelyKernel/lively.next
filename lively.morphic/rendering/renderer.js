@@ -822,7 +822,8 @@ export default class Renderer {
       }
       const scrollLayer = this.renderScrollLayer(morph);
       const scrollWrapper = this.scrollWrapperFor(morph);
-      node.childNodes.forEach(c => scrollWrapper.appendChild(c));
+      const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
+      scrollWrapper.appendChild(textLayerNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
       scrollLayer.scrollTop = morph.scroll.y;
