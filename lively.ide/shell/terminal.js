@@ -88,7 +88,6 @@ export default class Terminal extends Morph {
               type: 'button',
               name: 'changeCwdButton',
               label: 'cwd...',
-              extent: pt(60, 20),
               borderRadius: 3,
               fontSize: 12,
               master: DarkButton,
@@ -98,11 +97,18 @@ export default class Terminal extends Morph {
           ];
 
           let { input, changeCwdButton } = this.ui;
+          const self = this;
 
           connect(input, 'inputAccepted', this, 'execCommand',
             { updater: ($upd, command) => $upd('[shell terminal] run command or send input', { command }) });
 
-          connect(this, 'extent', changeCwdButton, 'topRight', { converter: ext => ext.withY(0).addXY(-5, 5) });
+          connect(this, 'extent', changeCwdButton, 'topRight', {
+            converter: ext => ext.withY(0).addXY(-5, 5)
+          });
+          connect(changeCwdButton, 'extent', changeCwdButton, 'topRight', {
+            converter: () => self.extent.withY(0).addXY(-5, 5),
+            varMapping: { self }
+          });
           connect(changeCwdButton, 'fire', this, 'execCommand', { converter: () => '[shell] change working directory' });
 
           this.layout = new GridLayout({
