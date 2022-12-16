@@ -49,8 +49,11 @@ const StatusMessageDefault = component({
     orderByIndex: true,
     hugContentsVertically: true,
     wrapSubmorphs: false,
+    renderViaCSS: false,
+    reactToSubmorphAnimations: true,
     resizePolicies: [
-      ['horizontal float', { height: 'fixed', width: 'fill' }]
+      ['horizontal float', { height: 'fixed', width: 'fill' }],
+      ['message text', { height: 'fixed', width: 'fill' }]
     ]
   }),
   submorphs: [{
@@ -64,6 +67,8 @@ const StatusMessageDefault = component({
       orderByIndex: true,
       padding: rect(10, 5, -5, 0),
       wrapSubmorphs: false,
+      renderViaCSS: false,
+      reactToSubmorphAnimations: true,
       resizePolicies: [
         ['message title', { height: 'fill', width: 'fill' }],
         ['close button', { height: 'fill', width: 'fixed' }]
@@ -80,13 +85,14 @@ const StatusMessageDefault = component({
       halosEnabled: false,
       textAndAttributes: Icon.textAttribute('info-circle')
     }, {
-      type: Text,
+      type: 'text',
       needsDocument: true,
       name: 'message title',
       extent: pt(597, 37),
       fill: Color.rgba(0, 0, 0, 0),
       fixedWidth: true,
       fixedHeight: true,
+      readOnly: true,
       fontColor: Color.rgb(66, 73, 73),
       fontFamily: '"IBM Plex Sans",Sans-Serif',
       fontSize: 15,
@@ -134,7 +140,6 @@ const StatusMessageDefault = component({
     fontSize: 15,
     lineWrapping: true,
     padding: rect(10, 10, 0, 0),
-    reactsToPointer: false,
     halosEnabled: false,
     textAndAttributes: ['The module "lively.morphic/morph.js" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "lively.morphic".', null]
   }]
