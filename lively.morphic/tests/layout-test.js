@@ -37,11 +37,11 @@ function closeToPoint (p1, p2, q = 0.1) {
 async function checkJSAndCSS (aMorph, test) {
   test();
   aMorph.layout.renderViaCSS = true;
-  await aMorph.whenRendered();
-  await Promise.all(aMorph.submorphs.map(m => m.whenRendered()));
+  env.forceUpdate();
+  env.forceUpdate(); // why do we have to render twice??
   test();
   aMorph.layout.renderViaCSS = false;
-  await aMorph.whenRendered();
+  env.forceUpdate();
 }
 
 describe('layout', () => {
@@ -50,7 +50,6 @@ describe('layout', () => {
     MorphicEnv.popDefault().uninstall();
     $world.hands.map(h => h.remove());
     $world = MorphicEnv.default().world;
-    // $world = this.env.world;
   });
   beforeEach(() => env.setWorld(createDummyWorld()));
 
@@ -352,7 +351,6 @@ describe('layout', () => {
 
     it('allows morphs to be reassigned to cells', () => {
       const [m1, m2] = m.submorphs;
-      debugger;
       let group = m.layout.row(2).col(1).group;
       group.morph = m2;
       m.layout.apply();
@@ -724,13 +722,13 @@ describe('layout', () => {
           morph({
             name: 'B',
             layout: new TilingLayout({
-              renderViaCSS: false,
+              renderViaCSS: false
             }),
             submorphs: [
               morph({
                 name: 'C',
                 layout: new TilingLayout({
-                  renderViaCSS: false,
+                  renderViaCSS: false
                 }),
                 submorphs: [morph({ name: 'D' })]
               })
