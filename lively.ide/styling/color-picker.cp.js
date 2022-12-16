@@ -153,6 +153,7 @@ const HexEncoder = component({
     }),
     part(DefaultInputLine, {
       placeholder: 'Hex Code',
+      fill: Color.white,
       name: 'hex input'
     })]
 });
@@ -444,11 +445,17 @@ const FieldPicker = component({
   }]
 });
 
-// ColorPicker.openInWorld()
-
 const ColorPicker = component(PopupWindow, {
   name: 'color picker',
   defaultViewModel: ColorPickerModel,
+  layout: new TilingLayout({
+    axis: 'column',
+    wrapSubmorphs: false,
+    hugContentsVertically: true,
+    resizePolicies: [
+      ['color controls', { height: 'fixed', width: 'fill' }]
+    ]
+  }),
   submorphs: [{
     name: 'header menu',
     submorphs: [
