@@ -551,7 +551,12 @@ const NumberWidgetLight = component(DefaultNumberWidget, {
 const NumberPopupLight = component(PopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'number popup',
-  width: 150,
+  layout: new TilingLayout({
+    wrapSubmorphs: false,
+    axis: 'column',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true
+  }),
   submorphs: [{
     name: 'header menu',
     submorphs: [{
