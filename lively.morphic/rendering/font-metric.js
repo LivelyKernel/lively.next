@@ -56,7 +56,7 @@ export default class FontMetric {
     this.element = doc.createElement('div');
     this.element.name = 'fontMetric';
     this.setMeasureNodeStyles(this.element.style, true);
-    parentEl.appendChild(this.element);
+    parentEl.insertBefore(this.element, parentEl.firstChild); // it is inserted in the front of the body
     this._domMeasure = new DOMTextMeasure().install(doc, parentEl, debug); // eslint-disable-line no-use-before-define
   }
 
