@@ -125,6 +125,9 @@ export class MorphicEnv {
     if (this.onRenderStart) {
       // ensure the previous renderer is disabled before starting to render
       return Promise.resolve(this.onRenderStart()).then(() => {
+        if (!this.renderer.rootNode.isConnected) {
+          this.renderer.bodyNode.appendChild(this.renderer.rootNode);
+        }
         world.makeDirty();
         return this;
       });
