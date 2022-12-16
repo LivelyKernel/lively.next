@@ -364,6 +364,7 @@ export class InteractiveTree extends Tree {
   }
 
   relayoutContainers () {
+    this.env.forceUpdate();
     const selectedIndex = this.selectedIndex;
     for (let { node, i } of this.treeData.asListWithIndexAndDepth()) {
       if (!node.container) continue;
