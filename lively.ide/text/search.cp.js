@@ -43,6 +43,7 @@ const WidgetButton = component({
   name: 'widget button',
   borderColor: Color.rgb(255, 255, 255),
   borderWidth: 2,
+  borderRadius: 5,
   extent: pt(57, 20),
   fill: Color.rgba(0, 0, 0, 0),
   submorphs: [{
