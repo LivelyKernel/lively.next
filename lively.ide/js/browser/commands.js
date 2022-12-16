@@ -1,4 +1,4 @@
-import { arr } from 'lively.lang';
+import { arr, obj } from 'lively.lang';
 import { Icon } from 'lively.morphic';
 import { interactivelyFreezeModule } from 'lively.freezer';
 
@@ -350,7 +350,8 @@ export default function browserCommands (browser) {
       name: 'open selected module in text editor',
       exec: (browser, opts = {/* module: null, codeEntity: null */}) => {
         const m = opts.module || browser.selectedModule;
-        const c = opts.hasOwnProperty('codeEntity') ? opts.codeEntity : browser.selectedCodeEntity;
+        let c = opts.hasOwnProperty('codeEntity') ? opts.codeEntity : browser.selectedCodeEntity;
+        if (obj.isArray(c)) c = c[0];
         if (!m) {
           browser.world().inform('No module selected / specified!', { requester: browser, autoWidth: true });
           return true;
