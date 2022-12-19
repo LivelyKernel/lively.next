@@ -1,4 +1,4 @@
-/* global System, it, describe, xdescribe, beforeEach */
+/* global System, it, describe, xdescribe, beforeEach, afterEach */
 import { Selection, MultiSelection } from '../../text/selection.js';
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
@@ -23,6 +23,7 @@ function text (string, props) {
   let t = new Text({
     name: 'text',
     readOnly: false,
+    needsDocument: true,
     textString: string,
     fontFamily: 'Monaco, monosonpace',
     fontSize: 10,
@@ -36,101 +37,119 @@ function text (string, props) {
 }
 
 describeInBrowser('text selection', () => {
-  beforeEach(() => t = new Text({ textString: 'hello\nworld' }));
+  describe('base', () => {
+    beforeEach(() => {
+      t = text('hello\nworld');
+    });
 
-  it('has a range', () => {
-    expect(new Selection(t).range.toString()).equals('Range(0/0 -> 0/0)');
-  });
+    afterEach(() => t.remove());
 
-  it('selection / line string', () => {
-    let t = text('hello\n world', {});
-    t.selection = range(1, 1, 1, 1);
-    expect(t.selectionOrLineString()).equals(' world');
-    t.selection = range(1, 1, 1, 3);
-    expect(t.selectionOrLineString()).equals('wo');
-  });
+    it('has a range', () => {
+      expect(new Selection(t).range.toString()).equals('Range(0/0 -> 0/0)');
+    });
 
-  it('gets text', () => {
-    let sel = new Selection(t);
-    expect(sel.text).equals('');
-    sel.range = range(0, 1, 1, 1);
-    expect(sel.text).equals('ello\nw');
-  });
+    it('selection / line string', () => {
+      t.textString = 'hello\n world';
+      // ensure that cursor moves with the inserted text
+      t.cursorPosition = { row: 1, column: 1 };
+      t.selection = range(1, 1, 1, 1);
+      expect(t.selectionOrLineString()).equals(' world');
+      t.selection = range(1, 1, 1, 3);
+      expect(t.selectionOrLineString()).equals('wo');
+    });
 
-  it('sets text', () => {
-    let sel = new Selection(t, range(0, 1, 1, 1));
-    sel.text = 'foo\nbar';
-    expect(sel.text).equals('foo\nbar');
-    expect(t.textString).equals('hfoo\nbarorld');
-    expect(t.document.textString).equals('hfoo\nbarorld');
-  });
+    it('gets text', () => {
+      let sel = new Selection(t);
+      expect(sel.text).equals('');
+      sel.range = range(0, 1, 1, 1);
+      expect(sel.text).equals('ello\nw');
+    });
 
-  it('growLeft', () => {
-    let sel = new Selection(t, range(0, 0, 1, 1));
-    sel.growLeft(10);
-    expect(sel.range).equals(range(0, 0, 1, 1), 'out of bounds 1');
-    sel.range = range(0, 4, 1, 1);
-    sel.growLeft(3);
-    expect(sel.range).equals(range(0, 1, 1, 1), '2');
-    sel.growLeft(3);
-    expect(sel.range).equals(range(0, 0, 1, 1), 'out of bounds 3');
-    sel.growLeft(-2);
-    expect(sel.range).equals(range(0, 2, 1, 1), 'negative 4');
-    sel.growLeft(-20);
-    expect(sel.range).equals(range(1, 1, 1, 1), 'negative 5');
-  });
+    it('sets text', () => {
+      let sel = new Selection(t, range(0, 1, 1, 1));
+      sel.text = 'foo\nbar';
+      expect(sel.text).equals('foo\nbar');
+      expect(t.textString).equals('hfoo\nbarorld');
+      expect(t.document.textString).equals('hfoo\nbarorld');
+    });
 
-  it('growRight', () => {
-    let sel = new Selection(t, range(0, 3, 0, 4));
-    sel.growRight(1);
-    expect(sel.range).equals(range(0, 3, 0, 5), '1');
-    sel.growRight(1);
-    expect(sel.range).equals(range(0, 3, 1, 0), '2');
-    sel.growRight(1);
-    expect(sel.range).equals(range(0, 3, 1, 1), '3');
-    sel.growRight(4);
-    expect(sel.range).equals(range(0, 3, 1, 5), '4');
-    sel.growRight(1);
-    expect(sel.range).equals(range(0, 3, 1, 5), '5');
-    sel.growRight(-2);
-    expect(sel.range).equals(range(0, 3, 1, 3), '6');
-    sel.growRight(-20);
-    expect(sel.range).equals(range(0, 3, 0, 3), '7');
-  });
+    it('growLeft', () => {
+      let sel = new Selection(t, range(0, 0, 1, 1));
+      sel.growLeft(10);
+      expect(sel.range).equals(range(0, 0, 1, 1), 'out of bounds 1');
+      sel.range = range(0, 4, 1, 1);
+      sel.growLeft(3);
+      expect(sel.range).equals(range(0, 1, 1, 1), '2');
+      sel.growLeft(3);
+      expect(sel.range).equals(range(0, 0, 1, 1), 'out of bounds 3');
+      sel.growLeft(-2);
+      expect(sel.range).equals(range(0, 2, 1, 1), 'negative 4');
+      sel.growLeft(-20);
+      expect(sel.range).equals(range(1, 1, 1, 1), 'negative 5');
+    });
 
-  it('directed selection', () => {
-    let sel = t.selection;
-    sel.range = { start: 3, end: 5 };
-    expect(sel.lead).deep.equals({ row: 0, column: 5 });
-    expect(sel.anchor).deep.equals({ row: 0, column: 3 });
-    expect(t.cursorPosition).deep.equals({ row: 0, column: 5 });
-    sel.reverse();
-    expect(sel.lead).deep.equals({ row: 0, column: 3 });
-    expect(sel.anchor).deep.equals({ row: 0, column: 5 });
-    expect(t.cursorPosition).deep.equals({ row: 0, column: 3 });
+    it('growRight', () => {
+      let sel = new Selection(t, range(0, 3, 0, 4));
+      sel.growRight(1);
+      expect(sel.range).equals(range(0, 3, 0, 5), '1');
+      sel.growRight(1);
+      expect(sel.range).equals(range(0, 3, 1, 0), '2');
+      sel.growRight(1);
+      expect(sel.range).equals(range(0, 3, 1, 1), '3');
+      sel.growRight(4);
+      expect(sel.range).equals(range(0, 3, 1, 5), '4');
+      sel.growRight(1);
+      expect(sel.range).equals(range(0, 3, 1, 5), '5');
+      sel.growRight(-2);
+      expect(sel.range).equals(range(0, 3, 1, 3), '6');
+      sel.growRight(-20);
+      expect(sel.range).equals(range(0, 3, 0, 3), '7');
+    });
+
+    it('directed selection', () => {
+      let sel = t.selection;
+      sel.range = { start: 3, end: 5 };
+      expect(sel.lead).deep.equals({ row: 0, column: 5 });
+      expect(sel.anchor).deep.equals({ row: 0, column: 3 });
+      expect(t.cursorPosition).deep.equals({ row: 0, column: 5 });
+      sel.reverse();
+      expect(sel.lead).deep.equals({ row: 0, column: 3 });
+      expect(sel.anchor).deep.equals({ row: 0, column: 5 });
+      expect(t.cursorPosition).deep.equals({ row: 0, column: 3 });
+    });
   });
 
   describe('goal column', () => {
     it('jumps to goal column on move', () => {
+      t.openInWorld();
+      t.env.forceUpdate();
       t.textString = '1234\n1\n1234';
       t.cursorPosition = { row: 0, column: 3 };
-      t.selection.goDown();
+      t.selection.goDown(); // not rendered so this is a problem
       expect(t.cursorPosition).deep.equals({ row: 1, column: 1 });
       t.selection.goDown();
       expect(t.cursorPosition).deep.equals({ row: 2, column: 3 });
+      t.remove();
     });
 
     it('jumps to goal column on select', () => {
+      t.openInWorld();
+      t.env.forceUpdate();
       t.textString = '1234\n1\n1234';
       t.cursorPosition = { row: 0, column: 3 };
       t.selection.selectDown();
       expect(t.selection).selectionEquals('Selection(0/3 -> 1/1)');
       t.selection.selectDown();
       expect(t.selection).selectionEquals('Selection(0/3 -> 2/3)');
+      t.remove();
     });
   });
 
   describe('select to', () => {
+    beforeEach(() => {
+      t = text('hello\nworld');
+    });
+
     it('set lead for reverse select', () => {
       let sel = t.selection;
       sel.range = range(0, 1, 0, 3);
@@ -182,10 +201,13 @@ describeInBrowser('text selection', () => {
 
 describeInBrowser('multi select', () => {
   beforeEach(async () => {
-    t = text('Hello World');
+    t = text('Hello World').openInWorld();
+    t.env.forceUpdate();
     t._selection = new MultiSelection(t);
     await promise.waitFor(() => t.editorPlugin);
   });
+
+  afterEach(() => t.remove());
 
   it('add range', function () {
     t.selection.addRange(range(0, 4, 0, 4));
@@ -223,8 +245,8 @@ describeInBrowser('multi select', () => {
   });
 
   it('select more like this', async function () {
-    let t = text('aa bb\n  aa cc');
-    await promise.waitFor(() => t.editorPlugin);
+    t.textString = 'aa bb\n  aa cc';
+    t.env.forceUpdate();
     t.selection.range = range(0, 0, 0, 2);
     t.execCommand('[multi select] more like this forward');
     expect(t.selection.selections).to.have.length(2);
