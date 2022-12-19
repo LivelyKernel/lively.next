@@ -42,7 +42,7 @@ export function stylepropsToNode (styleProps, node) {
     node.style.removeProperty(prop);
   }
   for (let prop in styleProps) {
-    // do not patch props that have not changed in the first place
+    // FIXME: do not patch props that have not changed in the first place
     node.style[prop] = styleProps[prop];
   }
   return node;
