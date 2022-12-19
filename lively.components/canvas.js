@@ -119,12 +119,12 @@ export class Canvas extends Morph {
     let contents;
     const { width: w, height: h } = this._canvas;
     if (this.renderingState.width !== this.width) {
-      contents = this.context.getImageData(0, 0, w, h);
+      if (this.context.getImageData) { contents = this.context.getImageData(0, 0, w, h); }
       node.firstChild.width = this.width;
       this.renderingState.width = this.width;
     }
     if (this.renderingState.height !== this.height) {
-      contents = this.context.getImageData(0, 0, w, h);
+      if (this.context.getImageData) { contents = this.context.getImageData(0, 0, w, h); }
       node.firstChild.height = this.height;
       this.renderingState.height = this.height;
     }
