@@ -46,6 +46,7 @@ function createSut () {
     cursorPosition: { row: 0, column: 0 }
   }).openInWorld();
   env = sut.env;
+  env.forceUpdate();
 }
 function removeSut () {
   sut && sut.remove();
@@ -312,7 +313,7 @@ describe('text key events', () => {
       { type: 'input', data: 'o' },
       { type: 'input', data: 'l' },
       { type: 'keydown', key: 'Enter' });
-    expect(sut).property('textString').equals('text\nfor testslol\n');
+    expect(sut).property('textString').equals('lol\ntext\nfor tests');
   });
 
   it('backspace', async () => {
@@ -325,14 +326,14 @@ describe('text key events', () => {
       { type: 'input', data: 'u' },
       { type: 'input', data: 't' });
 
-    expect(sut).property('textString').equals('text\nfor testslolwut');
+    expect(sut).property('textString').equals('lolwuttext\nfor tests');
     env.eventDispatcher.simulateDOMEvents(
       { type: 'keydown', key: 'Backspace' },
       { type: 'keydown', key: 'Backspace' },
       { type: 'keydown', key: 'Backspace' },
       { type: 'input', data: ' ' });
 
-    expect(sut).property('textString').equals('text\nfor testslol ');
+    expect(sut).property('textString').equals('lol text\nfor tests');
   });
 
   it('entry clears selection', async () => {
@@ -354,7 +355,7 @@ describe('text mouse events', () => {
     padLeft = sut.padding.left();
     padTop = sut.padding.top();
     ({ height: h, width: w } = sut.textLayout.defaultCharExtent(sut));
-    await sut.whenRendered();
+    sut.env.forceUpdate();
   });
   afterEach(() => removeSut());
 
@@ -403,11 +404,13 @@ describe('text mouse events', () => {
 
     expect(sut.selection).selectionEquals('Selection(0/0 -> 0/0)');
 
+    // FIXME: this somehow does not work when running the CI tests.
     env.eventDispatcher.simulateDOMEvents(
       { target: sut, type: 'click', position: clickPos },
       { target: sut, type: 'click', position: clickPos },
       { target: sut, type: 'click', position: clickPos },
-      { target: sut, type: 'click', position: clickPos });
+      { target: sut, type: 'click', position: clickPos }
+    );
 
     expect(sut.selection).selectionEquals('Selection(1/2 -> 1/2)');
   });
@@ -466,8 +469,9 @@ describe('text mouse events', () => {
 });
 
 describe('saved marks', () => {
-  let t; beforeEach(() => t = text('hello\n world', { cursorPosition: { row: 0, column: 0 } }));
-  // t.openInWorld(); t.focus();
+  let t; beforeEach(() => {
+    t = text('hello\n world', { cursorPosition: { row: 0, column: 0 } });
+  });
 
   it('activates mark to select', () => {
     t.cursorPosition = t.activeMark = { row: 0, column: 1 };
@@ -540,15 +544,20 @@ describe('clipboard buffer / kill ring', () => {
 describe('text movement and selection commands', () => {
   it('selection / line string', () => {
     let t = text('hello\n world', {});
+    t.openInWorld();
+    t.env.forceUpdate();
     t.selection = range(0, 2, 0, 4);
     t.withSelectedLinesDo((line, range) => t.insertText(' ', range.start));
     expect(t.textString).equals(' hello\n world');
     expect(t.selection.text).equals('ll');
+    t.remove();
   });
 
   describe('saveExcursion', () => {
     it('insert moves saved selections using anchors', async () => {
       let t = text('hello\n world', {});
+      t.openInWorld();
+      t.env.forceUpdate();
       t.selection = range(0, 2, 0, 4);
       let nAnchors = t.anchors.length;
       await t.saveExcursion(() => {
@@ -558,16 +567,20 @@ describe('text movement and selection commands', () => {
       expect(t.textString).equals('hfooello\n world');
       expect(t.selection.text).equals('ll');
       expect(nAnchors).equals(t.anchors.length, 'anchor cleanup failed');
+      t.remove();
     });
 
     it('textString change', async () => {
       let t = text('hello\n world', {});
+      t.openInWorld();
+      t.env.forceUpdate();
       t.selection = range(0, 2, 0, 4);
       await t.saveExcursion(() => {
         t.textString = 'hello\n world';
       });
       expect(t.textString).equals('hello\n world');
       expect(t.selection.text).equals('ll');
+      t.remove();
     });
   });
 
@@ -668,24 +681,27 @@ describe('morph inside textAndAttributes', () => {
 
   afterEach(() => { sut.remove(); m.remove(); });
 
-  it('new morph gets embedded', async () => {
+  it('new morph gets embedded', () => {
+    sut.env.forceUpdate();
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     expect(m.owner).equals(sut);
     expect(sut.embeddedMorphs).includes(m);
-    await m.whenRendered();
+    m.env.forceUpdate();
     expect(sut.env.domEnv.document.querySelectorAll('#' + m.id)).length(1);
   });
 
-  it('morph that already is submorph gets embedded', async () => {
+  it('morph that already is submorph gets embedded', () => {
+    sut.env.forceUpdate();
     sut.addMorph(m);
+    sut.env.forceUpdate();
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     expect(m.owner).equals(sut);
     expect(sut.embeddedMorphs).includes(m);
-    await m.whenRendered();
+    m.env.forceUpdate();
     expect(sut.env.domEnv.document.querySelectorAll('#' + m.id)).length(1);
   });
 
-  it('remove removes morph from text', async () => {
+  it('remove removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     expect(sut.textString).equals('text\n�\nfor tests');
     m.remove();
@@ -694,7 +710,7 @@ describe('morph inside textAndAttributes', () => {
     expect(sut.anchors.filter(ea => !ea.id.includes('selection-'))).length(0);
   });
 
-  it('text deletion removes morph from text', async () => {
+  it('text deletion removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     expect(sut.textString).equals('text\n�\nfor tests');
     sut.deleteText({ start: { row: 1, column: 0 }, end: { row: 1, column: 1 } });
@@ -703,8 +719,9 @@ describe('morph inside textAndAttributes', () => {
     expect(sut.submorphs).not.includes(m);
   });
 
-  it('position of embedded morph is correct', async () => {
+  it('position of embedded morph is correct', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
+    m.env.forceUpdate();
     expect(m.position).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).topLeft(), '1');
     sut.cursorPosition = { column: 0, row: 1 };
     sut.execCommand('insertstring', { string: '\n' });
@@ -722,14 +739,16 @@ describe('morph inside textAndAttributes', () => {
 
   it('position of embedded morph is enforced', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
+    m.env.forceUpdate();
     m.moveBy(pt(100, 100));
     expect(m.position).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).topLeft());
   });
 
   it('layout is updated on morph resize', async () => {
+    m.env.forceUpdate();
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     m.resizeBy(pt(100, 100));
-    await m.whenRendered(); // instead of having to wait for a render pass, make the text morph inject a synchronous forced render and remeasure in order to allow the code to continue with synchronously with the propert values
+    m.env.forceUpdate(); // can this be done without enforcing the render?
     expect(m.extent).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).extent());
   });
 });
