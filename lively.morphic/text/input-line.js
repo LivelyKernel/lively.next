@@ -1,8 +1,7 @@
-/* global System */
 // import config from "../config.js";
 import { obj, arr, num } from 'lively.lang';
-import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { connect, noUpdate, signal, disconnect } from 'lively.bindings'; // for makeInputLine
+import { Rectangle, Color, pt } from 'lively.graphics';
+import { connect, noUpdate, signal } from 'lively.bindings'; // for makeInputLine
 import { Text } from './morph.js';
 import { Range } from './range.js';
 import { HTMLMorph } from '../html-morph.js';
@@ -538,7 +537,7 @@ export class PasswordInputLine extends HTMLMorph {
     return this.whenEnvReady().then(() => {
       const n = this.domNode;
 
-      if (n.parentNode && n.parentNode.tagName == 'INPUT') {
+      if (n.parentNode && n.parentNode.tagName === 'INPUT') {
         n.parentNode.remove();
         const morphNode = this.env.renderer.getNodeForMorph(this);
         morphNode.insertBefore(this.domNode, morphNode.firstChild);
@@ -551,7 +550,7 @@ export class PasswordInputLine extends HTMLMorph {
   onKeyDown (evt) {
     super.onKeyDown(evt);
     // at that point in time the input has not changed to the most recent value yet
-    if (this.input != this.lastInput) {
+    if (this.input !== this.lastInput) {
       this.onInputChanged(this.input);
     }
     this.lastInput = this.input;
