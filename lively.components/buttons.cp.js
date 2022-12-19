@@ -33,7 +33,7 @@ const ButtonDefault = component({
     type: Label,
     name: 'label',
     extent: pt(53, 18),
-    fontColor: Color.rgb(52, 73, 94),
+    fontColor: Color.rgb(60, 60, 60),
     fontSize: 14,
     reactsToPointer: false,
     textAndAttributes: ['a button', null]
