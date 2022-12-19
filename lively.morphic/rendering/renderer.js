@@ -749,15 +749,6 @@ export default class Renderer {
 
     this.renderTextAndAttributes(node, morph);
 
-    if (morph.document) {
-      const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
-      const prevParent = textLayerNode.parentNode;
-      this.placeholder.className = 'Text';
-      this.placeholder.appendChild(textLayerNode);
-      this.updateExtentsOfLines(textLayerNode, morph);
-      prevParent.appendChild(textLayerNode);
-    }
-
     return node;
   }
 
@@ -1617,7 +1608,16 @@ export default class Renderer {
       }
     }
     if (morph.document) {
+      let moveTextNodeBack = false;
+      let prevParent = null;
+      if (!node.isConnected){
+        moveTextNodeBack = true; 
+        prevParent = textNode.parentNode;
+        this.placeholder.className = 'Text';
+        this.placeholder.appendChild(textNode);
+      }
       this.updateExtentsOfLines(textNode, morph);
+      if (moveTextNodeBack) prevParent.insertBefore(textNode, prevParent.firstChild);
     }
 
     let inlineMorphUpdated = false;
