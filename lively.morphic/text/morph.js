@@ -844,11 +844,6 @@ export class Text extends Morph {
     };
   }
 
-  directRender () {
-    // FIXME
-    // This is just a shim so that everything boots nicely
-  }
-
   renderStyles (styleProps) {
     if (this.document) {
       styleProps.overflow = 'hidden';
