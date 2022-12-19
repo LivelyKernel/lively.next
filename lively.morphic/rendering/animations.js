@@ -171,13 +171,6 @@ export class PropertyAnimation {
   }
 
   finish (type) {
-    if (this.config.scale) {
-      // when we have been performing a scale animation,
-      // there is a possibility that some of the text morphs
-      // inside the submorph hierarchy have been measuring their
-      // line heights incorrectly
-      this.morph.withAllSubmorphsDo(m => m.isText && m.invalidateTextLayout(true, true));
-    }
     this.needsAnimation[type] = false;
     if (!this.stillNeedsAnimations) {
       this.queue.removeAnimation(this);

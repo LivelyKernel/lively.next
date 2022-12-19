@@ -2683,13 +2683,6 @@ export class Text extends Morph {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
     }
-    const widthChanged = this.renderingState.extent.x !== this.extent.x;
-    const heightChanged = this.renderingState.extent.y !== this.extent.y;
-    if (this.renderingState.extent !== undefined &&
-        !!this.lineWrapping && widthChanged) {
-      this.invalidateTextLayout(true, true);
-      renderer.renderTextAndAttributes(node, this);
-    }
     if (this.renderingState.fixedWidth !== this.fixedWidth) {
       const textLayer = node.querySelector('.actual');
       if (this.fixedWidth) textLayer.classList.remove('auto-width');
