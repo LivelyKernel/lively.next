@@ -530,7 +530,8 @@ const RichTextControl = component(PropertySection, {
     fill: Color.transparent,
     layout: new TilingLayout({
       spacing: 10,
-      padding: Rectangle.inset(20, 0, 0, 0)
+      padding: Rectangle.inset(20, 0, 0, 0),
+      hugContentsVertically: true
     }),
     submorphs: [{
       name: 'alignment controls',

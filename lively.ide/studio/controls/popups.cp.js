@@ -1,11 +1,11 @@
-import { TilingLayout, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
+import { TilingLayout, without, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
 import { PropertyLabel, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, string, arr } from 'lively.lang';
-import { signal, connect } from 'lively.bindings';
+import { signal } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
-import { PopupWindow, CloseButton } from '../../styling/shared.cp.js';
+import { PopupWindow, DarkCloseButton, CloseButton } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
 
@@ -783,31 +783,35 @@ export const PaddingControlsLight = component({
     align: 'right',
     axisAlign: 'center',
     orderByIndex: true,
-    padding: rect(0, 0, 10, 0),
-    spacing: 2,
-    wrapSubmorphs: false
+    padding: rect(0, 0, 27, 0),
+    wrapSubmorphs: false,
+    spacing: 3
   }),
-  extent: pt(230, 30),
+  extent: pt(250, 30),
   fill: Color.rgba(0, 0, 0, 0),
   submorphs: [
     part(NumberWidgetLight, {
+      borderWidth: 0,
       name: 'padding all',
       min: 0,
       number: 0,
-      extent: pt(70, 22),
+      extent: pt(60, 22),
       position: pt(9.7, 6.6),
       tooltip: 'Padding',
-      submorphs: [add({
-        type: Label,
-        name: 'interactive label',
-        fontFamily: 'Material Icons',
-        fontColor: Color.rgb(101, 135, 139),
-        padding: rect(8, 0, -1, 0),
-        textAndAttributes: ['\ue22f', {
-          fontSize: 16,
-          textStyleClasses: ['material-icons']
-        }]
-      }, 'value')]
+      borderRadius: 2,
+      submorphs: [
+        add({
+          type: Label,
+          name: 'interactive label',
+          fontFamily: 'Material Icons',
+          fontColor: Color.rgba(101, 135, 139),
+          padding: rect(8, 0, -1, 0),
+          textAndAttributes: ['\ue22f', {
+            fontSize: 16,
+            textStyleClasses: ['material-icons']
+          }]
+        }, 'value'),
+        { name: 'value', fontSize: 14, width: 60 }]
     }),
     {
       name: 'multi padding control',
@@ -815,16 +819,16 @@ export const PaddingControlsLight = component({
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
-        orderByIndex: true
+        orderByIndex: true,
+        spacing: 1
       }),
       fill: Color.transparent,
-      extent: pt(202.8, 42.5),
+      extent: pt(175, 30),
       clipMode: 'hidden',
       submorphs: [
         {
           type: Label,
           name: 'padding indicator',
-          borderRadius: 3,
           fill: Color.rgba(229, 231, 233, 0),
           fontColor: Color.rgb(101, 135, 139),
           fontFamily: 'Material Icons',
@@ -837,41 +841,56 @@ export const PaddingControlsLight = component({
         part(NumberWidgetLight, {
           name: 'padding left',
           min: 0,
-          extent: pt(40, 22),
-          tooltip: 'Border Radius Top Left',
+          extent: pt(35, 22),
+          tooltip: 'Leftside Padding',
           borderRadiusTopRight: 0,
-          borderRadiusBottomRight: 0
+          borderRadiusBottomRight: 0,
+          borderRadiusTopleft: 2,
+          borderRadiusBottomLeft: 2,
+          submorphs: [
+            { name: 'value', fontSize: 14, width: 35 },
+            without('interactive label')
+          ]
         }),
         part(NumberWidgetLight, {
           name: 'padding top',
-          borderWidth: { top: 1, left: 0, right: 0, bottom: 1 },
           min: 0,
           borderRadius: 0,
-          extent: pt(40, 22),
-          tooltip: 'Border Radius Top Right'
+          extent: pt(35, 22),
+          tooltip: 'Topside Padding',
+          submorphs: [
+            { name: 'value', fontSize: 14, width: 35 },
+            without('interactive label')
+          ]
         }),
         part(NumberWidgetLight, {
           name: 'padding right',
-          borderWidth: { top: 1, left: 1, right: 0, bottom: 1 },
           min: 0,
           borderRadius: 0,
-          extent: pt(40, 22),
-          tooltip: 'Border Radius Bottom Right'
+          extent: pt(35, 22),
+          tooltip: 'Rightside Padding',
+          submorphs: [
+            { name: 'value', fontSize: 14, width: 35 },
+            without('interactive label')]
         }),
         part(NumberWidgetLight, {
           name: 'padding bottom',
           min: 0,
           borderRadiusTopLeft: 0,
           borderRadiusBottomLeft: 0,
-          extent: pt(40, 22),
-          tooltip: 'Border Radius Bottom Left'
+          borderRadiusTopRight: 2,
+          borderRadiusBottomRight: 2,
+          extent: pt(35, 22),
+          tooltip: 'Bottomside Padding',
+          submorphs: [
+            { name: 'value', fontSize: 14, width: 35 },
+            without('interactive label')]
         })
       ]
     }, part(CloseButton, {
       name: 'independent padding toggle',
       tooltip: 'Toggle indepentent Fields per Direction',
       padding: rect(3, 3, 0, 0),
-      position: pt(192.8, 48.6),
       textAndAttributes: ['', {
         fontSize: 18,
         textStyleClasses: ['material-icons']
@@ -886,9 +905,10 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
     {
       name: 'padding all',
       master: DarkNumberWidget,
+      dropShadow: null,
       submorphs: [{
         name: 'interactive label',
-        fontColor: Color.rgb(178, 235, 242)
+        fontColor: Color.rgba(178, 235, 242, 0.4976)
       }]
     },
     {
@@ -896,32 +916,41 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
       submorphs: [
         {
           name: 'padding indicator',
-          fontColor: Color.rgb(178, 235, 242)
+          fontColor: Color.rgb(178, 235, 242),
+          borderWidth: 0
         },
         {
           name: 'padding left',
-          master: DarkNumberWidget
-
+          master: DarkNumberWidget,
+          dropShadow: null,
+          borderWidth: 0
         },
         {
           name: 'padding top',
           master: DarkNumberWidget,
-          borderRadius: 0
+          borderRadius: 0,
+          dropShadow: null,
+          borderWidth: 0
         },
         {
           name: 'padding right',
           master: DarkNumberWidget,
-          borderRadius: 0
+          borderRadius: 0,
+          dropShadow: null,
+          borderWidth: 0
         },
         {
           name: 'padding bottom',
-          master: DarkNumberWidget
+          master: DarkNumberWidget,
+          dropShadow: null,
+          borderWidth: 0
         }
       ]
     },
     {
       name: 'independent padding toggle',
-      fontColor: Color.rgb(178, 235, 242)
+      fontColor: Color.rgb(178, 235, 242),
+      master: DarkCloseButton
     }
   ]
 }

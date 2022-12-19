@@ -31,6 +31,16 @@ const CloseButton = component(CloseButtonDefault, {
   master: { hover: CloseButtonHovered }
 });
 
+const DarkCloseButtonHovered = component(CloseButtonDefault, {
+  name: 'close button hovered',
+  fill: Color.rgb(66, 73, 73)
+});
+
+const DarkCloseButton = component(CloseButtonDefault, {
+  name: 'close button',
+  master: { hover: DarkCloseButtonHovered }
+});
+
 const CheckerPattern = component({
   type: HTMLMorph,
   name: 'checker pattern',
@@ -119,4 +129,4 @@ const SystemList = component(DefaultList, {
 // SystemList.openInWorld()
 // part(SystemList, { items: [1,2,3]}).openInWorld()
 
-export { CheckerPattern, SystemList, PopupWindow, CloseButton, CloseButtonDefault, CloseButtonHovered };
+export { CheckerPattern, SystemList, PopupWindow, CloseButton, DarkCloseButton, CloseButtonDefault, CloseButtonHovered };
