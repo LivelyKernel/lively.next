@@ -40,7 +40,7 @@ export class Icon {
     });
   }
 
-  static textAttribute(iconName, attrs = {}) {
+  static textAttribute(iconName, attrs = {lineHeight: 1}) {
     let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
