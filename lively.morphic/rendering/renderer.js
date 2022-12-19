@@ -1184,7 +1184,7 @@ export default class Renderer {
    * @param {Selection} selection - The selection to be rendered.
    * @param {Boolean} diminished - Wether or not to render the cursor diminished.
    * @param {Integer} cursorWidth - The width of the cursor.
-   * @returns {Node[]} An array of SVG Nodes that represent one selection to be displayed, including a cursor.}
+   * @returns {Node[]} An array of SVG Nodes that represent one selection to be displayed, including a cursor.
    */
   renderSelectionPart (morph, selection, diminished = false, cursorWidth = 2) {
     if (!selection) return [];
@@ -1556,28 +1556,6 @@ export default class Renderer {
       if (morph.debug) textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
       const linesToRender = this.collectVisibleLinesForRendering(morph, node);
       morph.renderingState.visibleLines = linesToRender;
-      // To make sure that we operate on the lines that are actually currently renderer, we pod the nodes out of the DOM
-      // This allows for reusing old nodes
-      let renderedLinesFromDOM = [];
-      textNode.childNodes.forEach(node => {
-        if (!node.classList.contains('line')) return;
-        const ds = node.dataset;
-        const row = Number(ds ? ds.row : node.getAttribute('data-row'));
-        const line = morph.document.lines[row];
-        renderedLinesFromDOM.push(line);
-      });
-      // In case we have deleted the last line of a Document the above optimization will fail.
-      // In this case we rerender all lines.
-      let patchLines = true;
-      if (renderedLinesFromDOM.some(e => e === undefined)) {
-        renderedLinesFromDOM = [];
-        // The selector needs to be this comples as we a) need to keep the filler around (see below) and b) need to make sure only to remove lines that are belonging directly to us.
-        // Otherwise, we might delete lines from `Text` that are embedded into our document as well.
-        const lineNodes = textNode.querySelectorAll(`#${morph.id}textLayer > .line`);
-        lineNodes.forEach(n => n.remove());
-        patchLines = false; // calling keyed once is enough, since all nodes are recreated from scratch
-      }
-      morph.renderingState.renderedLines = renderedLinesFromDOM;
       keyed('row',
         textNode,
         morph.renderingState.renderedLines,
@@ -1587,25 +1565,23 @@ export default class Renderer {
         textNode.firstChild,
         null
       );
-      morph.renderingState.renderedLines = morph.renderingState.visibleLines;
-      if (patchLines) {
-        let i = 0; // the first child is always the filler, we can skip it
-        let previousLineChanged = false;
-        for (const line of morph.renderingState.renderedLines) {
-          i++;
-          if (!line.lineNeedsRerender && !previousLineChanged) continue;
-          // It might be that we introduced a new line (by line breaking).
-          // The document is smart and changes the minimal amount of lines.
-          // We still need to update all following lines as the node contents need to be different now.
-          if (line.lineNeedsRerender) {
-            previousLineChanged = true;
-          }
-          const oldLineNode = textNode.children[i];
-          if (!oldLineNode) continue;
-          const newLineNode = this.nodeForLine(line, morph, true);
-          textNode.replaceChild(newLineNode, oldLineNode);
+      let i = 0; // the first child is always the filler, we can skip it
+      let previousLineChanged = false;
+      for (const line of linesToRender) {
+        i++;
+        if (!line.lineNeedsRerender && !previousLineChanged) continue;
+        // It might be that we introduced a new line (by line breaking).
+        // The document is smart and changes the minimal amount of lines.
+        // We still need to update all following lines as the node contents need to be different now.
+        if (line.lineNeedsRerender) {
+          previousLineChanged = true;
         }
+        const oldLineNode = textNode.children[i];
+        if (!oldLineNode) continue;
+        const newLineNode = this.nodeForLine(line, morph, true);
+        textNode.replaceChild(newLineNode, oldLineNode);
       }
+      morph.renderingState.renderedLines = linesToRender.map(l => ({ row: l.row }));
     }
     if (morph.document) {
       let moveTextNodeBack = false;
