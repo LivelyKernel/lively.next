@@ -361,7 +361,7 @@ export class EditPromptModel extends TextPromptModel {
 
     view.hasFixedPosition = true;
 
-    if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'Monaco, monospace';
+    if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'monospace';
 
     editor.value = input || '';
     Object.assign(editor, textStyle);
@@ -911,7 +911,7 @@ const ListPrompt = component(ConfirmPrompt, {
         dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
         extent: pt(410, 354),
         fill: Color.rgba(66, 73, 73, 0.85),
-        fontFamily: 'Monaco, monospace',
+        fontFamily: 'monospace',
         itemHeight: 16,
         itemPadding: undefined,
         manualItemHeight: true,

@@ -9,7 +9,7 @@ a, a:-webkit-any-link {
 }
 
 .content {
-  font-family: Helvetica Neue, Verdana, sans-serif;
+  font-family: sans-serif;
   margin-left: 20px;
   margin-right: 20px;
 /*  width: 70%;*/

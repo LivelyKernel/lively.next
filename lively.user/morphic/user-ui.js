@@ -645,7 +645,7 @@ export class UserFlap extends Morph {
               type: 'label',
               name: 'label',
               fontSize: 12,
-              fontFamliy: 'Helvetica Neue, Verdana, Sans Serif',
+              fontFamliy: 'sans-serif',
               fontWeight: 'bold',
               padding: Rectangle.inset(4),
               reactsToPointer: false
@@ -921,7 +921,7 @@ export class UserFlap extends Morph {
       opacity: animated ? 0 : 1,
       borderWidth: 0,
       fontSize: 12,
-      fontFamily: 'Helvetica Neue, Verdana, Sans Serif'
+      fontFamily: 'sans-serif'
     });
     avatar.visible = false;
     label.visible = false;

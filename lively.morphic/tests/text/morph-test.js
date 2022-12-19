@@ -8,7 +8,7 @@ import { Range } from '../../text/range.js';
 expectSelection(chai);
 
 const defaultStyle = {
-  fontFamily: 'Monaco, monospace',
+  fontFamily: 'monospace',
   fontSize: 10,
   fontWeight: 'normal',
   fontColor: 'black',
