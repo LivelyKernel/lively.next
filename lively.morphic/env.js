@@ -125,15 +125,22 @@ export class MorphicEnv {
     if (this.onRenderStart) {
       // ensure the previous renderer is disabled before starting to render
       return Promise.resolve(this.onRenderStart()).then(() => {
-        if (!this.renderer.rootNode.isConnected) {
-          this.renderer.bodyNode.appendChild(this.renderer.rootNode);
-        }
+        this.ensureDomNodes();
         world.makeDirty();
         return this;
       });
     } else world.makeDirty();
 
     return this;
+  }
+
+  ensureDomNodes () {
+    if (!this.renderer.rootNode.isConnected) {
+      this.renderer.bodyNode.appendChild(this.renderer.rootNode);
+    }
+    this.eventDispatcher.keyInputHelper.ensureInputNode();
+    this.renderer.ensurePlaceholder();
+    this.fontMetric.ensureElement();
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -84,6 +84,10 @@ export default class FontDetector {
   isFontSupported (font, weight = 'normal') {
     if (!this.possibleFontWeights.includes(weight)) { weight = this.namedToNumeric.get(weight) || 'normal'; }
     if (!this.prepared) this.prepare();
+    if (!this.span?.isConnected) {
+      this.span = null;
+      this.prepare();
+    }
 
     const {
       defaultWidth, defaultHeight,

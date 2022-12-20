@@ -371,4 +371,11 @@ export default class TextInput {
 
     this.setPosition(globalCursorPos);
   }
+
+  ensureInputNode () {
+    const { textareaNode, rootNode } = this.domState;
+    if (!textareaNode.isConnected) {
+      rootNode.insertBefore(textareaNode, rootNode.firstChild);
+    }
+  }
 }

@@ -68,7 +68,14 @@ export default class Renderer {
     placeholder.style.visibility = 'hidden';
     placeholder.style.position = 'absolute';
     placeholder.style.transform = 'translate(0px, 0px)'; // removes element from the flow
-    this.placeholder = this.doc.body.appendChild(placeholder);
+    this.placeholder = this.doc.body.insertBefore(placeholder, this.doc.body.firstChild);
+  }
+
+  ensurePlaceholder () {
+    if (!this.placeholder.isConnected) {
+      this.placeholder = null;
+      this.installPlaceholder();
+    }
   }
 
   installTextCSS () {
@@ -1584,6 +1591,7 @@ export default class Renderer {
       if (!node.isConnected) {
         moveTextNodeBack = true;
         prevParent = textNode.parentNode;
+        this.ensurePlaceholder();
         this.placeholder.className = 'Text';
         this.placeholder.appendChild(textNode);
       }
@@ -1829,6 +1837,7 @@ export default class Renderer {
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     const prevParent = textNode.parentNode;
     textNode.remove();
+    this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     textNode.style.width = 'max-content';
     textNode.style.height = 'max-content';
