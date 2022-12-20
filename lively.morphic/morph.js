@@ -1111,7 +1111,6 @@ export class Morph {
       '_transform',
       '_invTransform',
       '_styleSheetProps',
-      '_renderer',
       '_tooltipViewer',
       'layout'
     ];
@@ -1153,10 +1152,6 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   onChange (change) {
-    if (this.propertiesAndPropertySettings().properties[change.prop]?.renderSynchronously && !this._isDeserializing) {
-      $world._renderer.renderMorph(this);
-    }
-
     const anim = change.meta && change.meta.animation;
     const { prop, value } = change;
 
