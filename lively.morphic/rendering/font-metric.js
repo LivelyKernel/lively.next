@@ -377,7 +377,7 @@ class DOMTextMeasure {
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {
     let styleKey;
     if (styleOpts) styleKey = this.generateStyleKey(styleOpts);
-    else styleKey = this.generateStyleKey(morph); // new way of doing this
+    else styleKey = this.generateStyleKey(morph);
     const found = this.defaultCharWidthHeightCache[styleKey];
 
     if (typeof found !== 'undefined' &&
@@ -553,7 +553,6 @@ export function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
   // TEXT_NODE === 3, nodeType property of DOM Node
   const { ELEMENT_NODE, TEXT_NODE } = lineNode;
   const maxLength = Infinity;
-  // the DOM document
   const document = lineNode.ownerDocument;
   const result = [];
   let index = 0;
@@ -564,22 +563,22 @@ export function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
   else if (lineNode.className.includes('line')) {
     offsetX = offsetX - lineNode.offsetLeft;
     offsetY = offsetY - lineNode.offsetTop;
-    node = lineNode.childNodes[0]; // node becomes the first span of the line
+    node = lineNode.childNodes[0];
   } else {
-    const realLineNode = lineNode.getElementsByClassName('line')[0]; // TODO: why?? in this case someone fucked up
-    node = realLineNode.childNodes[0]; // node becomes the first span of the line
+    const realLineNode = lineNode.getElementsByClassName('line')[0];
+    node = realLineNode.childNodes[0];
 
     offsetX = offsetX - lineNode.offsetLeft + getComputedMarginLeft(lineNode);
     offsetY = offsetY - lineNode.offsetTop;
   }
 
   if (!node) {
-    emptyNodeFill = node = document.createElement('br'); // only to fixup that we do not have childnodes otherwise I believe? not sure
+    emptyNodeFill = node = document.createElement('br');
     lineNode.appendChild(emptyNodeFill);
   }
 
   while (node) {
-    if (index > maxLength) break; // fixme: I do not think that this ever happens
+    if (index > maxLength) break;
 
     textNode = (node.tagName !== 'BR' &&
             node.nodeType === ELEMENT_NODE &&
@@ -587,7 +586,8 @@ export function charBoundsOfLine (line, lineNode, offsetX = 0, offsetY = 0) {
 
     if (textNode.nodeType === TEXT_NODE) {
       const length = textNode.length;
-      for (let i = 0; i < length; i++) { // iterate over all characters in text
+      for (let i = 0; i < length; i++) {
+        // iterate over all characters in text
         // "right" bias for rect means that if we get multiple rects for a
         // single char (if it comes after a line break caused by wrapping, we
         // prefer the bounds on the next (the wrapped) line)
@@ -618,13 +618,11 @@ function measureCharInner (document, node, index, bias = 'left') {
     for (let i = 0; i < 4; i++) { // Retry a maximum of 4 times when nonsense rectangles are returned
       rect = getUsefulRect(range(document, node, start, end).getClientRects(), bias); // eslint-disable-line no-use-before-define
       if (rect.left || rect.right || start === 0) break;
-      end = start; // todo: what the fuck?
+      end = start;
       start = start - 1;
     }
   }
   return rect;
-  // let {bottom, height, left, right, top, width} = rect;
-  // return {bottom, height, left, right, top, width};
 }
 
 function range (document, node, start, end, endNode) {

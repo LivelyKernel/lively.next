@@ -25,7 +25,7 @@ import { ShadowObject } from '../rendering/morphic-default.js';
 /**
  * A Morph to display and edit text.
  * Most of the time, this will just work for you. To toggle between a state where editing is possible and impossible, use the `readOnly` property.
- * When interactive editing is supported, you can use all features of text in lively, such as markers (think: highlighting syntax highlighting).
+ * When interactive editing is activated, you can use all features of text in lively, such as markers (think: syntax highlighting).
  * When interactive editing is deactivated, you can enable native selection of text.
  *
  * **SOME TECHNICAL NOTES**
@@ -1513,9 +1513,7 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
-    // if (this._isDeserializing) return;
     const rs = this.renderingState;
-    // if (!vs) return;
     if (!this.fixedWidth || !this.fixedHeight) rs.needsFit = true;
     const tl = this.textLayout;
     if (tl) {
@@ -1857,8 +1855,6 @@ export class Text extends Morph {
           textAndAttributes,
           removedTextAndAttributes);
 
-        if (!this._isDeserializing || !this._initializedByCachedBounds) { /* this.textLayout.estimateLineHeights(this, false); */ }
-
         if (consistencyCheck) { this.consistencyCheck(); }
       });
 
@@ -1901,7 +1897,7 @@ export class Text extends Morph {
         const { start } = ranges[i];
 
         if (morph.owner !== this) {
-          if (morph.owner) { arr.remove(morph.owner.renderingState.renderedMorphs, morph); } // since we are rendering text and attributes synchronously we need to prevent the
+          if (morph.owner) { arr.remove(morph.owner.renderingState.renderedMorphs, morph); }
           this.addMorph(morph);
         }
         // anchor are not able to move correctly, if we replace text and attributes
@@ -2076,11 +2072,10 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   /**
-   * This removes a Document and a TextLayout to a Text.
-   * There are necessary for features like interactive editing, but are expensive.
+   * This removes a Document and a TextLayout from a Text.
+   * These are necessary for features like interactive editing, but are expensive.
    * Thus, we try to only keep them around when they are necessary.
    * This is an internal function and you should probably not call it yourself!
-   * FIXME: This method seems to be completely broken. Transitioning a document based text morph that has only a fraction of the lines visible seems to break.
    */
   removeDocument () {
     if (!this.document) return;
@@ -2218,10 +2213,6 @@ export class Text extends Morph {
         this.document.lines[i].lineNeedsRerender = true;
       }
     }
-    // const tl = this.textLayout;
-    // if (tl) {
-    //  tl.resetLineCharBoundsCacheOfRange(this, range);
-    // }
     this.makeDirty();
   }
 
@@ -2755,7 +2746,7 @@ export class Text extends Morph {
         this.renderingState.cursorChange = false;
         renderer.patchSelectionLayer(node, this);
       }
-      // FIXME: This should probably be wrapped in a trigger
+      // FIXME: This should probably be wrapped in a condition
       renderer.updateDebugLayer(node, this);
     } else {
       if ((this.renderingState.lineWrapping !== this.lineWrapping) ||
