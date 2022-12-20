@@ -449,7 +449,7 @@ export class ComponentChangeTracker {
       updatedSource = this.handleRemovedMorph(change, parsedComponent, sourceCode, requiredBindings);
     }
 
-    if (change.selector === 'replace') {
+    if (change.selector === 'replace' || change.prop === 'textAndAttributes') {
       updatedSource = this.handleTextAttributes(change, parsedComponent, sourceCode, requiredBindings);
     }
 
