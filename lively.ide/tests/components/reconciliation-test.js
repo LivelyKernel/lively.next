@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, VerticalLayout, Label } from 'lively.morphic';
+import { morph, Text, TilingLayout, Label } from 'lively.morphic';
 import { part } from 'lively.morphic/components/core.js';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
@@ -256,13 +256,13 @@ describe('component -> source reconciliation', function () {
     ComponentC.addMorph({
       type: Label, name: 'some label', extent: pt(42, 42)
     });
-    ComponentC.layout = new VerticalLayout({ spacing: 5, renderViaCSS: false });
+    ComponentC.layout = new TilingLayout({ spacing: 5, renderViaCSS: false });
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).not.to.include('extent: pt(42, 42)');
     expect(updatedSource).not.to.include('position: pt(5, 5)');
   });
-
+  // resetEnv()
   it('reconciles textAndAttributes', async () => {
     ComponentD.withMetaDo({ reconcileChanges: true }, () => {
       const l = ComponentD.addMorph({
@@ -273,7 +273,7 @@ describe('component -> source reconciliation', function () {
 
     await ComponentD._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    expect(updatedSource).to.include('textAndAttributes: [\"Hello World!\",null]');
+    expect(updatedSource).to.include("textAndAttributes: [\'Hello World!\', null]");
   });
 
   it('works properly with associated source editors', async () => {
@@ -293,7 +293,7 @@ describe('component -> source reconciliation', function () {
 
   it('inserts properties in proper order', async () => {
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentC.layout = new VerticalLayout({});
+      ComponentC.layout = new TilingLayout({});
       ComponentC.extent = pt(40, 40);
       ComponentC.addMorph({
         name: 'foo', fill: Color.red, type: Label, fontColor: Color.green
@@ -301,13 +301,12 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
+    updatedSource;
     expect(updatedSource).to.includes(`const C = component({
   name: 'C',
   extent: pt(40, 40),
-  layout: new VerticalLayout({
-    direction: 'topToBottom',
-    orderByIndex: true,
-    resizeSubmorphs: false
+  layout: new TilingLayout({
+    orderByIndex: true
   }),
   fill: Color.grey,
   submorphs: [{
