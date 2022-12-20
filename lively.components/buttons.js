@@ -123,20 +123,11 @@ export class ButtonModel extends ViewModel {
     else return this.view.innerBoundsContainsPoint(evt.positionIn(this.view));
   }
 
-  async interactivelyChangeLabel () {
-    const newLabel = await this.world().prompt('edit button label', {
-      input: this.labelMorph.textString,
-      historyId: 'lively.morphic-button-edit-label-hist'
-    });
-    if (typeof newLabel === 'string') { this.label = newLabel; }
-  }
-
   // makes sense if this is model specific. At least if view model is directly defined
   // this should override the native menuItems of a morph
-  menuItems (items) { // items from the view. we can discard or adjust.
-    items.unshift({ isDivider: true });
-    items.unshift(['change label', () => this.interactivelyChangeLabel()]);
-    return items;
+  // items from the view. we can discard or adjust.
+  menuItems (items) { 
+   return items;
   }
 }
 
@@ -367,18 +358,8 @@ export class Button extends Morph {
     if (!this.deactivated && evt.isClickTarget(this)) { this.pressed = { originalFill: this.fill }; }
   }
 
-  async interactivelyChangeLabel () {
-    const newLabel = await this.world().prompt('edit button label', {
-      input: this.labelMorph.textString,
-      historyId: 'lively.morphic-button-edit-label-hist'
-    });
-    if (typeof newLabel === 'string') { this.label = newLabel; }
-  }
-
   menuItems () {
     const items = super.menuItems();
-    items.unshift({ isDivider: true });
-    items.unshift(['change label', () => this.interactivelyChangeLabel()]);
     return items;
   }
 }
