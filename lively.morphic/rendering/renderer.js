@@ -227,11 +227,6 @@ export default class Renderer {
   }
 
   renderAsFixed (morph) {
-    morph.withAllSubmorphsDo(sm => {
-      // FIXME: There was a problem with renderedLines of fixedMorphs, for which the root cause could not be identified.
-      // This fixes that, by rerendering all lines of renderedLines. This is only problematic in the case a large Text would be a fixed Morph.
-      if (sm.renderingState.renderedLines) sm.renderingState.renderedLines = [];
-    });
     const node = this.renderMorph(morph);
     if (!morph.isHTMLMorph) { node.style.position = 'fixed'; }
     // in case this world is embedded, we need to add the offset of the world morph here
@@ -1586,8 +1581,8 @@ export default class Renderer {
     if (morph.document) {
       let moveTextNodeBack = false;
       let prevParent = null;
-      if (!node.isConnected){
-        moveTextNodeBack = true; 
+      if (!node.isConnected) {
+        moveTextNodeBack = true;
         prevParent = textNode.parentNode;
         this.placeholder.className = 'Text';
         this.placeholder.appendChild(textNode);
