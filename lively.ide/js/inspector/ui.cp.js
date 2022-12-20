@@ -1,6 +1,6 @@
 import { GridLayout, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
-import { ButtonDefault, DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
+import { DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
 import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';
 import { Inspector } from './index.js';
 import { DropDownListModel } from 'lively.components/list.js';
@@ -159,7 +159,6 @@ const SystemInspector = component({
   }, {
     type: PropertyTree,
     name: 'property tree',
-    needsDocument: true,
     fill: Color.white,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
@@ -192,7 +191,6 @@ const SystemInspector = component({
     readOnly: false,
     fill: Color.white,
     name: 'code editor',
-    needsDocument: true,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
     clipMode: 'auto',
