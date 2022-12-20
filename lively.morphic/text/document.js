@@ -99,7 +99,7 @@ class TreeNode {
     if (sumChildrenStringSize != stringSize) { report.push({ error: `Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}` }); }
 
     const sumChildrenHeight = arr.sum(arr.pluck(children, 'height'));
-    if (Number.parseInt(sumChildrenHeight) != Number.parseInt(height)) { report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}` }); }
+    if (num.roundTo(sumChildrenHeight, 1) != num.roundTo(height, 1)) { report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${num.roundTo(height, 1)}` }); }
 
     const maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, 'width')) : 0;
     const hasEstimatedLine = children.find(child => child.isLine && child.hasEstimatedExtent);
@@ -1390,7 +1390,7 @@ export default class Document {
 
   textAndAttributesInRange (range) {
     let start, end;
-    if (range.isRange){
+    if (range.isRange) {
       start = range.start;
       end = range.end;
     } else ({ start, end } = range);
