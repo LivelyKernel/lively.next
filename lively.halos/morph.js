@@ -334,9 +334,9 @@ class NameHolder extends Morph {
       layout: {
         after: ['nameHolder'],
         initialize () {
-          this.layout = new HorizontalLayout({
-            renderViaCSS: true,
-            resizeContainer: true,
+          this.layout = new TilingLayout({
+            hugContentsHorizontally: true,
+            hugContentsVertically: true,
             spacing: 7
           });
         }
