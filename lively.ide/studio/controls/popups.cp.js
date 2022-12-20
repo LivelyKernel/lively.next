@@ -1,11 +1,11 @@
 import { TilingLayout, without, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
-import { PropertyLabel, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
+import { PropertyLabel, PropertyLabelHoveredLight, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, string, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
-import { PopupWindow, DarkCloseButton, CloseButton } from '../../styling/shared.cp.js';
+import { PopupWindow } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
 
@@ -891,12 +891,13 @@ export const PaddingControlsLight = component({
             without('interactive label')]
         })
       ]
-    }, part(CloseButton, {
+    }, part(PropertyLabel, {
       name: 'independent padding toggle',
+      padding: 0,
+      fontColor: Color.rgb(101, 135, 139),
+      master: { auto: PropertyLabel, hover: PropertyLabelHoveredLight },
       tooltip: 'Toggle indepentent Fields per Direction',
-      padding: rect(3, 3, 0, 0),
       textAndAttributes: ['', {
-        fontSize: 18,
         textStyleClasses: ['material-icons']
       }]
     })
@@ -955,7 +956,7 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
     {
       name: 'independent padding toggle',
       fontColor: Color.rgb(178, 235, 242),
-      master: DarkCloseButton
+      master: { auto: PropertyLabel, hover: PropertyLabelHovered }
     }
   ]
 }
