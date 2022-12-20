@@ -71,17 +71,6 @@ export class Text extends Morph {
     return (this._defaultTextStyleProps = styleProps);
   }
 
-  // TODO: This should probably be renamed once we tackle a nice workflow/design for editing text.
-  // For now, this is a blunt migration from the old Label class.
-  async interactivelyChangeLabel () {
-    const newTextString = await this.world().prompt('edit label', {
-      input: this.textString,
-      historyId: 'lively.morphic-label-edit-hist',
-      selectInput: true
-    });
-    if (typeof newTextString === 'string') { this.textString = newTextString; }
-  }
-
   async interactivelySetIcon () {
     const res = await this.world().filterableListPrompt('Select Icon', Object.keys(Icons).map(iconName => {
       return { isListItem: true, label: [...Icon.textAttribute(iconName, { paddingRight: '10px' }), iconName, {}], value: iconName };
@@ -3206,7 +3195,6 @@ export class Text extends Morph {
 
   menuItemsFromLabel () {
     const items = [];
-    items.unshift(['change label', () => this.interactivelyChangeLabel()]);
     items.unshift(['set Icon', () => this.interactivelySetIcon()]);
     return items;
   }
