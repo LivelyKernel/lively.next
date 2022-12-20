@@ -36,8 +36,9 @@ import { ShadowObject } from '../rendering/morphic-default.js';
 export class Text extends Morph {
   static makeLabel (value, props) {
     return new morph({
+      type: 'text',
       value,
-      fontFamily: 'IBM Plex, Helvetica Neue, Arial, sans-serif',
+      fontFamily: 'IBM Plex, sans-serif',
       fontColor: Color.almostBlack,
       fontSize: 11,
       ...props
