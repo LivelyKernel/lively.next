@@ -492,7 +492,7 @@ export class TopBarModel extends ViewModel {
       ...type === Path ? this.getPathDefaultAttrs() : {}
     });
     if (target._yieldedShape.isText) target._yieldedShape.addPlugin(new RichTextPlugin());
-    target._sizeTooltip = part(SystemTooltip);
+    target._sizeTooltip = part(SystemTooltip, { opacity: 0 });
     target._sizeTooltip.openInWorld();
     return true;
   }
@@ -528,8 +528,12 @@ export class TopBarModel extends ViewModel {
     if (target._yieldedShape) {
       if (!target._yieldedShape.owner && evt.state.absDragDelta.r() > 10) target.addMorph(target._yieldedShape);
       target._yieldedShape.extent = evt.positionIn(target.world()).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1));
-      target._sizeTooltip.description = `${target._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${target._yieldedShape.width.toFixed(0)}x${target._yieldedShape.height.toFixed(0)}`;
-      target._sizeTooltip.topLeft = evt.positionIn(target.world()).addXY(15, 15);
+      Object.assign(
+        target._sizeTooltip, {
+          opacity: 1,
+          description: `${target._yieldShapeOnClick[Symbol.for('__LivelyClassName__')]}: ${target._yieldedShape.width.toFixed(0)}x${target._yieldedShape.height.toFixed(0)}`,
+          topLeft: evt.positionIn(target.world()).addXY(15, 15)
+        });
       return true;
     }
     return false;
