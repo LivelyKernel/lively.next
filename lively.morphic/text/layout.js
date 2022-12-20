@@ -70,9 +70,6 @@ export default class Layout {
     } = morph;
     let { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
 
-    // TODO: Is this the reason the list item morph is fucked up?
-    // In any case, it is not entirely clear why cases happen in which this is necessary.
-    // The scenario that lead to the introduction of this code was an undefined padding upon the creation of ListItemMorphs via `update()` of `List`
     const paddingLeft = padding ? padding.left() : 0;
     const paddingRight = padding ? padding.right() : 0;
     const paddingTop = padding ? padding.top() : 0;
@@ -193,8 +190,9 @@ export default class Layout {
     return row >= morph.renderingState.firstFullyVisibleRow && row <= morph.renderingState.lastFullyVisibleRow;
   }
 
-  whatsVisible (morph) { // fixme: will always fail for morphs that are in label mode
+  // FIXME: will always fail for morphs that are in label mode
   // i.e. that do not have a document
+  whatsVisible (morph) { 
     const startRow = morph.renderingState.firstVisibleRow;
     const endRow = morph.renderingState.lastVisibleRow;
     const lines = morph.document.lines.slice(startRow, endRow);
@@ -264,11 +262,6 @@ export default class Layout {
     if (!morph.owner) return [];
     const doc = morph.document;
     const line = doc.getLine(row);
-
-    // if (morph._initializedByCachedBounds && !this._restored) {
-    //   this.restore(morph._initializedByCachedBounds, morph);
-    //   this._restored = true;
-    // }
 
     const cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;

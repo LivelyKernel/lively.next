@@ -859,7 +859,7 @@ export class Line extends TreeNode {
     this.width = newWidth;
     this.height = newHeight;
     this.hasEstimatedExtent = isEstimated;
-    // if (!isEstimated) debugger;
+
     if (width !== newWidth || height !== newHeight) {
       const heightDelta = newHeight - height;
       while (parent) {

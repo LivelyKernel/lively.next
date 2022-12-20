@@ -54,7 +54,7 @@ export default class Renderer {
   }
 
   /**
-   * The Placeholder is currently used for measuring the bounds of Text that is not backed by a Document.
+   * The Placeholder is used for measuring the bounds of Text that is not backed by a Document.
    */
   installPlaceholder () {
     this.placeholder = this.placeholder || this.doc.getElementById('placeholder');
@@ -224,7 +224,7 @@ export default class Renderer {
       fixedSubmorphs,
       item => this.renderAsFixed(item),
       noOpUpdate,
-      beforeElem, // before elem
+      beforeElem,
       null
     );
     fixedSubmorphs.forEach(s => {
@@ -479,7 +479,6 @@ export default class Renderer {
 
     // When a node get removed/added to the DOM its scollTop/scrollLeft values are reset.
     // We fix those up here.
-    // FIXME: this does not seem to work with morphs that are moved to the front
     for (let morph of newlyRenderedSubmorphs) {
       this.updateNodeScrollFromMorph(morph);
     }
@@ -856,9 +855,9 @@ export default class Renderer {
   }
 
   /**
-   * The texlayer is a node that wraps text content (line node,...) of a Text.
+   * The textLayer is a node that wraps text content (line node,...) of a Text.
    * It sets styling properties that are applicable for the whole text (like a specific font set on the morph property).
-   * Those might be overriden by styes that are later rendered inline on line nodes.
+   * Those might be overridden by styes that are later rendered inline on line nodes.
    * @param {Text} morph - Text for which the text layer node is to be created.
    * @returns {Node} A DOM node for the text layer of `morph`.
    */
@@ -1048,7 +1047,7 @@ export default class Renderer {
     rendered.style.removeProperty('top');
     rendered.style.removeProperty('left');
 
-    // fixme:  this addition screws up the bounds computation of the embedded submorph
+    // FIXME:  this addition screws up the bounds computation of the embedded submorph
     if (attr.paddingTop) rendered.style.marginTop = attr.paddingTop;
     if (attr.paddingLeft) rendered.style.marginLeft = attr.paddingLeft;
     if (attr.paddingRight) rendered.style.marginRight = attr.paddingRight;
@@ -1470,12 +1469,12 @@ export default class Renderer {
   // -=-=-=-=-=-
 
   /**
-   * Finds out how many and which lines can be dislpayed in `morph`, adapts the values in `morphs`'s renderingState accordingly,
+   * Finds out how many and which lines can be displayed in `morph`, adapts the values in `morphs`'s renderingState accordingly,
    * and updates the fillerDiv that is used to push the lines inside of the visible are of `morph`'s node.
    * The last part is necessary since the scrolling layer and the content part of the `morph` are decoupled.
    * @param {Text} morph - The morph for which we want to find out which lines are visible.
    * @param {Node} node - `morph`'s node inside of the DOM.
-   * @returns {Line[]} An arry containing the `Line` objects of all visible lines.
+   * @returns {Line[]} An array containing the `Line` objects of all visible lines.
    */
   collectVisibleLinesForRendering (morph, node) {
     const {
@@ -2352,7 +2351,7 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
    * @returns
    */
   renderPreview (morph, opts) {
-    // FIXME doesn't work with scale yet...!
+    // FIXME: doesn't work with scale yet...!
 
     const {
       width = 100, height = 100, center = true, ignoreMorphs = [],

@@ -91,6 +91,7 @@ export class CommentBrowserModel extends ViewModel {
    * Takes care of cleaning up empty comment group visualization when necessary.
    * @param {CommentData} - The `Comment` to be deleted
    * @param {Morph} - The `Morph` this comment was made on
+   * @param {boolean} forResolve - Whether the comment gets removed due to being resolved or not (thus due to being deleted)
    */
   removeCommentForMorph (comment, morph, forResolve = false) {
     const groupOfCommentMorph = this.commentGroups[morph.id];
