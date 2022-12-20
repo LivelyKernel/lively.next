@@ -4,6 +4,13 @@ import FontDetector from './font-detector.js';
 
 const checkTimeout = 1000;
 
+function ensureElementMounted (element, parentEl) {
+  if (!element.isConnected) {
+    // we assume we are mounted in then body.
+    parentEl.insertBefore(element, parentEl.firstChild);
+  }
+}
+
 export default class FontMetric {
   static default () {
     if (!this._fontMetric) { throw new Error('FontMetric has not yet been initialized!'); }
@@ -55,6 +62,7 @@ export default class FontMetric {
   install (doc, parentEl, debug) {
     this.element = doc.createElement('div');
     this.element.name = 'fontMetric';
+    this.parentEl = parentEl;
     this.setMeasureNodeStyles(this.element.style, true);
     parentEl.insertBefore(this.element, parentEl.firstChild); // it is inserted in the front of the body
     this._domMeasure = new DOMTextMeasure().install(doc, parentEl, debug); // eslint-disable-line no-use-before-define
@@ -69,6 +77,11 @@ export default class FontMetric {
     this.element = null;
   }
 
+  ensureElement () {
+    ensureElementMounted(this.element, this.parentEl);
+    ensureElementMounted(this._domMeasure.element, this._domMeasure.parentEl);
+  }
+
   setMeasureNodeStyles (style, isRoot) {
     style.width = style.height = 'auto';
     style.left = style.top = '0px';
@@ -80,6 +93,7 @@ export default class FontMetric {
   }
 
   measure (style, text) {
+    ensureElementMounted(this.element, this.parentEl);
     let {
       fontFamily, fontSize, fontWeight,
       fontStyle, textDecoration,
@@ -280,6 +294,7 @@ class DOMTextMeasure {
 
     this.defaultCharWidthHeightCache = {};
     this.doc = doc;
+    this.parentEl = parentEl;
     const el = this.element = doc.createElement('div');
     el.className = 'dom-measure' + (debug ? ' debug' : '');
     this.setMeasureNodeStyles(el.style, true);
@@ -440,6 +455,7 @@ class DOMTextMeasure {
   }
 
   withTextLayerNodeDo (morph, rendertTextLayerFn, styleOpts, styleKey, doFn) {
+    ensureElementMounted(this.element, this.parentEl);
     const { doc: document, textlayerNodeCache: cache, element: root } = this;
     let textNodeOffsetLeft = 0; let textNodeOffsetTop = 0;
     // try to use the already rendered morph, it already has a layer node
