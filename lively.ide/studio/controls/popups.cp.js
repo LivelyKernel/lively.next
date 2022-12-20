@@ -791,7 +791,6 @@ export const PaddingControlsLight = component({
   fill: Color.rgba(0, 0, 0, 0),
   submorphs: [
     part(NumberWidgetLight, {
-      borderWidth: 0,
       name: 'padding all',
       min: 0,
       number: 0,
@@ -904,6 +903,7 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
   submorphs: [
     {
       name: 'padding all',
+      borderWidth: 0,
       master: DarkNumberWidget,
       dropShadow: null,
       submorphs: [{
