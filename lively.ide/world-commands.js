@@ -1268,14 +1268,6 @@ const commands = [
   },
 
   {
-    name: 'freeze world',
-    exec: async (world) => {
-      let freezer = await System.import('lively.freezer');
-      await freezer.interactivelyFreezeWorld(world);
-    }
-  },
-
-  {
     name: 'save this world',
     exec: (world, args, _, evt) => {
       return world.execCommand('save world', { confirmOverwrite: true, ...args, showSaveDialog: false });
