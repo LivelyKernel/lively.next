@@ -3911,7 +3911,7 @@ export class Text extends Morph {
     topBar.setEditMode('Halo', true);
     this.readOnly = this.prevReadOnly;
     this.collapseSelection();
-    this.editorPlugin.removeFormattingPopUp(true);
+    this.editorPlugin?.removeFormattingPopUp && this.editorPlugin.removeFormattingPopUp(true);
     topBar.showHaloFor(this);
   }
 }
