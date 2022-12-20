@@ -248,6 +248,6 @@ export class MorphicEnv {
   }
 
   forceUpdate () {
-    this.renderer.renderStep();
+    if (this.renderer) this.renderer.renderStep();
   }
 }
