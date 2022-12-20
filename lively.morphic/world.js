@@ -80,13 +80,11 @@ export class World extends Morph {
 
   constructor (props) {
     super(props);
-    this._renderer = null; // assigned in rendering/renderer.js
     this._tooltipViewer = new TooltipViewer(this);
   }
 
   __deserialize__ (snapshot, objRef, serializedMap, pool) {
     super.__deserialize__(snapshot, objRef, serializedMap, pool);
-    this._renderer = null;
     this._tooltipViewer = new TooltipViewer(this);
   }
 
