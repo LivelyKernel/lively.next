@@ -25,7 +25,6 @@ export default class Workspace extends Window {
         initialize () {
           this.targetMorph = new Text({
             name: 'editor',
-            lineHeight: 1.4,
             readOnly: false,
             textString: '// Enter and evaluate JavaScript code here',
             lineWrapping: 'by-chars',

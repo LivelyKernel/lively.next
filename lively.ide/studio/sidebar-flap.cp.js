@@ -130,8 +130,7 @@ const Flap = component({
       name: 'label',
       rotation: 1.5708,
       fontColor: '#B2EBF2',
-      fontSize: 14,
-      lineHeight: 1.4
+      fontSize: 14
     }
   ]
 });

@@ -21,7 +21,6 @@ export default class Workspace extends JSWorkspace {
         initialize () {
           this.targetMorph = new Text({
             name: 'editor',
-            lineHeight: 1.4,
             readOnly: false,
             textString: '<h1>test</h1>',
             editorModeName: 'html',

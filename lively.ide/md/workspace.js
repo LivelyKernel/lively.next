@@ -16,7 +16,6 @@ export default class Workspace extends Window {
           this.targetMorph = morph({
             type: 'text',
             name: 'editor',
-            lineHeight: 1.4,
             readOnly: false,
             lineWrapping: false,
             textString: '# Markdown code\n\n',
