@@ -476,6 +476,7 @@ const MorphNode = component({
   defaultViewModel: MorphNodeModel,
   fill: Color.rgba(255, 255, 255, 0),
   borderRadius: 5,
+  clipMode: 'hidden',
   layout: new TilingLayout({
     axisAlign: 'center',
     orderByIndex: true,
@@ -507,6 +508,7 @@ const MorphNode = component({
   }, part(PropLabel, {
     name: 'name label',
     reactsToPointer: false,
+    fixedWidth: true,
     master: PropLabel,
     padding: rect(0),
     textAndAttributes: ['some text morph', null]

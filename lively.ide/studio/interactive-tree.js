@@ -370,7 +370,7 @@ export class InteractiveTree extends Tree {
       if (!node.container) continue;
       if (!this.isLineVisible(i)) continue;
       node.container.nativeCursor = 'grab';
-      const newWidth = this.width - node.container.left - 25;
+      const newWidth = this.width - node.container.left - this.padding.right();
       if (node.container.width !== newWidth) { node.container.width = newWidth; }
     }
   }
