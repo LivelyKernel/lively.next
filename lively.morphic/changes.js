@@ -168,13 +168,6 @@ export class ChangeManager {
       morph._morphicState[change.prop] = change.value;
     }
 
-    // FIXME
-    // Hack for transitioning between the bundles loading screen and the live world with new rendering, morph creation, etc.
-    if (!morph.renderingState) {
-      morph.remove();
-      return;
-    }
-
     if (change.prevValue && change.prevValue.isDocument ||
         change.selector === 'replace' ||
       change.value && change.value.isDocument ||
