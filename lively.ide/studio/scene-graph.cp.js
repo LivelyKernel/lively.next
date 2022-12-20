@@ -6,7 +6,7 @@ import { PropLabel } from 'lively.ide/studio/shared.cp.js';
 import { SceneGraphTree, InteractiveTreeData } from './interactive-tree.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
 import { getClassName } from 'lively.serializer2';
-import { arr, fun } from 'lively.lang';
+import { arr, obj, fun } from 'lively.lang';
 import { connect } from 'lively.bindings';
 
 // part(MorphPanel).openInWorld();
@@ -298,14 +298,22 @@ export class MorphNodeModel extends ViewModel {
     const target = this.target;
     if (!target) return;
     const { morphIcon, layoutIndicator, nameLabel, visibilityIcon } = this.ui;
-    morphIcon.value = this.getIcon(target);
-    layoutIndicator.visible = false;
+    const icon = this.getIcon(target);
+    let indicatorVisibility = false;
+    let indicatorRot = 0;
     if (target.layout && target.layout.name() === 'Tiling') {
-      layoutIndicator.visible = true;
-      layoutIndicator.rotation = target.layout.axis === 'column' ? Math.PI / 2 : 0;
+      indicatorVisibility = true;
+      indicatorRot = target.layout.axis === 'column' ? Math.PI / 2 : 0;
     }
-    nameLabel.textString = target.name;
-    nameLabel.fit();
+    if (layoutIndicator.visible !== indicatorVisibility) { layoutIndicator.visible = indicatorVisibility; }
+    if (layoutIndicator.rotation !== indicatorRot) { layoutIndicator.rotation = indicatorRot; }
+    if (!obj.equals(icon, morphIcon.value)) {
+      morphIcon.value = icon;
+    }
+    if (nameLabel.textString !== target.name) {
+      nameLabel.textString = target.name;
+      nameLabel.fit();
+    }
     visibilityIcon.value = [
       target.visible ? '\ue8f4' : '\ue8f5', {
         fontSize: 16,
