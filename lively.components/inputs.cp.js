@@ -27,7 +27,6 @@ const InputLineDefault = component({
     fontFamily: 'IBM Plex Sans',
     fontSize: 20,
     padding: rect(10, 3, 0, 0),
-    lineHeight: 1.4,
     reactsToPointer: false,
     textAndAttributes: ['Name', null]
   }]

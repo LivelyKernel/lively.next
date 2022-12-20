@@ -356,7 +356,6 @@ const LoadingIndicator = component({
         submorphs: [{
           type: Label,
           name: 'label',
-          lineHeight: 1.4,
           fill: Color.rgba(255, 255, 255, 0),
           fontColor: Color.rgb(253, 254, 254),
           fontSize: 16,
@@ -367,7 +366,6 @@ const LoadingIndicator = component({
         }, {
           type: Label,
           name: 'status',
-          lineHeight: 1.4,
           fill: Color.rgba(255, 255, 255, 0),
           padding: Rectangle.inset(0, 0, 0, 7.5),
           fontColor: Color.rgb(253, 254, 254),

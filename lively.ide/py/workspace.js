@@ -14,7 +14,6 @@ export default class Workspace extends Window {
           this.targetMorph = {
             type: 'text',
             name: 'editor',
-            lineHeight: 1.4,
             readOnly: false,
             lineWrapping: false,
             // textMode: "python",

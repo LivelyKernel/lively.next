@@ -284,7 +284,6 @@ const ObjectEditorLight = component({
     name: 'source editor',
     needsDocument: true,
     readOnly: false,
-    lineHeight: 1.4,
     borderColor: Color.rgb(204, 204, 204),
     borderWidth: 1,
     clipMode: 'auto',
