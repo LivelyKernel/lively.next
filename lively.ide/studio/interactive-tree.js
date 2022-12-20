@@ -239,7 +239,6 @@ export class InteractiveTree extends Tree {
     const newParent = this.treeData.parentNode(this._previewNode);
     this.treeData.replace(this._previewNode, node._data);
     this.treeData.remove(this._previewNode);
-    console.log('hello');
     this.update(true);
     if (newParent.container) newParent.container.onChildAdded(node);
   }
