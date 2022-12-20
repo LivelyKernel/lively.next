@@ -1014,20 +1014,29 @@ export class Text extends Morph {
           face.family === attr.fontFamily &&
           face.weight === (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
         return !!face;
-        // document.fonts.check(`normal ${attr.fontWeight} 12px ${attr.fontFamily}`)
       } else return fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight);
     });
   }
 
   async whenFontLoaded () {
-    // FIXME: remove busy wait, since it kills performance
     if (this.allFontsLoaded()) return true;
     const fonts = [...(await document.fonts.ready)];
     if (this.allFontsLoaded(fonts.filter(face => face.status === 'loaded'))) return true;
+
     // as a last resort, do a busy wait...
-    return promise.waitFor(5000, () => {
-      return this.allFontsLoaded();
-    });
+    const ts = Date.now();
+    const p = promise.deferred();
+    const check = () => {
+      if (this.allFontsLoaded()) return p.resolve(true);
+      if (Date.now() - ts < 5000) {
+        console.log('checking', this.name);
+        setTimeout(check, 500);
+        return;
+      }
+      p.resolve(false);
+    };
+    check();
+    return p.promise;
   }
 
   spec () {
