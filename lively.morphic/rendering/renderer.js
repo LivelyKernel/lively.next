@@ -1932,23 +1932,6 @@ export default class Renderer {
         morph.renderingState.needsFit = true;
       }
 
-      // positions embedded morphs
-      if (docLine.textAndAttributes && docLine.textAndAttributes.length) {
-        let inlineMorph;
-        for (let j = 0, column = 0; j < docLine.textAndAttributes.length; j += 2) {
-          inlineMorph = docLine.textAndAttributes[j];
-          if (inlineMorph && inlineMorph.isMorph) {
-            morph._positioningSubmorph = inlineMorph;
-            inlineMorph.position = morph.textLayout.pixelPositionFor(morph, { row: docLine.row, column }).subPt(morph.origin);
-            inlineMorph.renderingState.needsRerender = false;
-            morph._positioningSubmorph = null;
-            column++;
-          } else if (inlineMorph) {
-            column += inlineMorph.length;
-          }
-        }
-      }
-
       return nodeHeight;
     }
     return docLine.height;
