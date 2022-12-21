@@ -808,6 +808,7 @@ export default class Renderer {
     if (!node) return;
 
     if (morph.renderingState.needsScrollLayerAdded) {
+      const goalScroll = node.scrollTop;
       if (node.querySelector('.scrollWrapper')) {
         delete morph.renderingState.needsScrollLayerAdded;
         return;
@@ -815,6 +816,10 @@ export default class Renderer {
       const scrollLayer = this.renderScrollLayer(morph);
       const scrollWrapper = this.scrollWrapperFor(morph);
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
+
+      node.style.overflow = 'hidden';
+      scrollLayer.style.overflow = 'auto';
+
       scrollWrapper.appendChild(textLayerNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
@@ -822,6 +827,16 @@ export default class Renderer {
       scrollLayer.scrollTop = morph.scroll.y;
       scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
+     
+      let lineFound = false
+      let currentOffset = 0, lineNumber = 0;
+      node.querySelectorAll('.line').forEach((line) => {
+        if (lineFound) return;
+        currentOffset += line.offsetHeight;
+        if (currentOffset >= goalScroll) lineFound = true;
+        lineNumber++;
+      })
+      morph.renderingState.adaptScrollAfterDocumentAddition = lineNumber;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
       this.removeTextSpecialsFromDOMFor(node, morph);
       if (!node.querySelector('.scrollWrapper')) {
@@ -834,6 +849,7 @@ export default class Renderer {
       Array.from(wrapper.children).forEach(c => node.append(c));
       wrapper.remove();
       delete morph.renderingState.needsScrollLayerRemoved;
+      morph.renderingState.adaptScrollAfterDocumentRemoval = morph.renderingState.firstVisibleRow;
     }
   }
 
@@ -1609,6 +1625,16 @@ export default class Renderer {
     if (inlineMorphUpdated) morph.invalidateTextLayout(true, false);
     morph.renderingState.renderedTextAndAttributes = morph.textAndAttributes;
     morph.renderingState.extent = morph.getProperty('extent');
+
+    setTimeout(() => {
+      const lineNumber = morph.renderingState.adaptScrollAfterDocumentRemoval;
+      if (lineNumber){
+        const scrollOffset = textNode.children[lineNumber].offsetTop;
+        node.scrollTop = scrollOffset + 120;
+        morph.scroll = pt(0, scrollOffset + 120)
+        delete morph.renderingState.adaptScrollAfterDocumentRemoval;
+      }
+    })
   }
 
   /**
