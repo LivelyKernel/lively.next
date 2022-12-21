@@ -2171,8 +2171,11 @@ export class Text extends Morph {
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
     this.consistencyCheck();
     let i = 0;
+    const invariantProps = ['fontColor'];
     while (i < textAttributesAndRanges.length) {
-      this.onAttributesChanged(textAttributesAndRanges[i]);
+      const attrs = textAttributesAndRanges[i + 1] || {};
+      const resetLayout = !arr.isSubset(obj.keys(attrs), invariantProps);
+      this.onAttributesChanged(textAttributesAndRanges[i], resetLayout);
       i += 2;
     }
   }
@@ -2196,8 +2199,8 @@ export class Text extends Morph {
     this.consistencyCheck();
   }
 
-  onAttributesChanged (range) {
-    this.invalidateTextLayout(false, false);
+  onAttributesChanged (range, resetLayout = true) {
+    if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
         this.document.lines[i].lineNeedsRerender = true;
