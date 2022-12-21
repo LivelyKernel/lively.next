@@ -272,6 +272,12 @@ export class Text extends Morph {
             this.nativeCursor = 'auto';
           }
           this.setProperty('readOnly', readOnly);
+          if (this.renderingState.adaptScrollAfterDocumentAddition){
+            setTimeout(() => {
+              this.alignRowAtTop(this.renderingState.adaptScrollAfterDocumentAddition);
+              delete this.renderingState.adaptScrollAfterDocumentAddition;  
+            })
+            }
         }
       },
 
