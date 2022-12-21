@@ -827,15 +827,15 @@ export default class Renderer {
       scrollLayer.scrollTop = morph.scroll.y;
       scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
-     
-      let lineFound = false
-      let currentOffset = 0, lineNumber = 0;
+
+      let lineFound = false;
+      let currentOffset = 0; let lineNumber = 0;
       node.querySelectorAll('.line').forEach((line) => {
         if (lineFound) return;
         currentOffset += line.offsetHeight;
         if (currentOffset >= goalScroll) lineFound = true;
         lineNumber++;
-      })
+      });
       morph.renderingState.adaptScrollAfterDocumentAddition = lineNumber;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
       this.removeTextSpecialsFromDOMFor(node, morph);
@@ -1080,7 +1080,11 @@ export default class Renderer {
    */
   renderWholeText (morph) {
     const renderedLines = [];
-    const textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
+    let textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
+    if (textAndAttributesByLine.length === 0) {
+      textAndAttributesByLine = [['', null]];
+      morph.renderingState.renderedLines = [{ row: 0 }];
+    }
     for (let line of textAndAttributesByLine) {
       renderedLines.push(this.nodeForLine(line, morph, true));
     }
@@ -1628,10 +1632,10 @@ export default class Renderer {
 
     setTimeout(() => {
       const lineNumber = morph.renderingState.adaptScrollAfterDocumentRemoval;
-      if (lineNumber){
+      if (lineNumber) {
         const scrollOffset = textNode.children[lineNumber].offsetTop;
         node.scrollTop = scrollOffset + 120;
-        morph.scroll = pt(0, scrollOffset + 120)
+        morph.scroll = pt(0, scrollOffset + 120);
         delete morph.renderingState.adaptScrollAfterDocumentRemoval;
       }
     })
