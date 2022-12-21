@@ -738,6 +738,7 @@ export class Text extends Morph {
         values: [false, true, 'by-words', 'only-by-words', 'by-chars'],
         isStyleProp: true,
         defaultValue: false,
+        before: ['extent'],
         after: ['document', 'renderingState']
       },
 
