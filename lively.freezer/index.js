@@ -149,6 +149,12 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
     freezerPrompt.excludedPackages = previouslyExcludedPackages;
     freezerPrompt.directory = previouslyPublishedDir;
     freezerPrompt.openInWorld();
+    freezerPrompt.env.forceUpdate();
+    // FIXME: The above flush, should not be needed.
+    //        layouts should implement a kind of "estimated bounds"
+    //        flag on their submorphs before they are mounted
+    //        in order to trigger a forced measure when we operate with
+    //        geometrical properties such as 'center'.
     freezerPrompt.center = pos;
     res = await freezerPrompt.activate();
   });
