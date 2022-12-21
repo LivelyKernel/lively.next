@@ -818,6 +818,7 @@ export default class Renderer {
       scrollWrapper.appendChild(textLayerNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
+      node.scrollTop = node.scrollLeft = 0;
       scrollLayer.scrollTop = morph.scroll.y;
       scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
