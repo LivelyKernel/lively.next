@@ -244,10 +244,10 @@ const FreezerPrompt = component(LightPrompt, {
     }], ['dir input', {
       height: 'fixed',
       width: 'fill'
-    }], ['compiler explaination', {
+    }], ['compiler explanation', {
       height: 'fixed',
       width: 'fill'
-    }], ['exclusion expaination', {
+    }], ['exclusion explanation', {
       height: 'fixed',
       width: 'fill'
     }], ['layout wrapper', {
@@ -299,7 +299,7 @@ const FreezerPrompt = component(LightPrompt, {
     visible: false
   }), add({
     type: Text,
-    name: 'compiler explaination',
+    name: 'compiler explanation',
     borderColor: Color.rgb(204, 204, 204),
     borderRadius: 3,
     extent: pt(449, 109),
@@ -311,7 +311,6 @@ const FreezerPrompt = component(LightPrompt, {
     nativeCursor: 'default',
     readOnly: true,
     textAlign: 'left',
-    needsDocument: true,
     textAndAttributes: [
       'Compression:', { textAlign: 'left', fontSize: 16, fontColor: Color.rgb(45, 45, 45) }, ' ', { textAlign: 'left', fontSize: 16 }, ' ', { textAlign: 'left' }, part(DropDownList, {
         name: 'compiler selector',
@@ -335,8 +334,8 @@ const FreezerPrompt = component(LightPrompt, {
     nativeCursor: 'pointer',
     textAndAttributes: ['Packages to exclude from bundle:', null]
   }), add({
-    type: Text,
-    name: 'exclusion expaination',
+    type: 'text',
+    name: 'exclusion explanation',
     borderColor: Color.rgb(204, 204, 204),
     borderRadius: 3,
     extent: pt(449, 67),
