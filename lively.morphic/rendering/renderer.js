@@ -1858,6 +1858,15 @@ export default class Renderer {
     textNode.style.removeProperty('width');
     textNode.style.removeProperty('position');
     const bounds = new Rectangle(domMeasure.x, domMeasure.y, domMeasure.width, domMeasure.height);
+
+    const embeddedMorphs = morph.textAndAttributes.filter(m => m?.isMorph);
+    for (let m of embeddedMorphs) {
+      const node = this.getNodeForMorph(m);
+      const domMeasure = node.getBoundingClientRect();
+      m._owner = morph;
+      m.setProperty('position', pt(domMeasure.x, domMeasure.y));
+    }
+
     prevParent.appendChild(textNode);
 
     morph._cachedBounds = bounds;

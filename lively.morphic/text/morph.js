@@ -1046,6 +1046,14 @@ export class Text extends Morph {
     return !this.document;
   }
 
+  get submorphs () {
+    if (!this.document) {
+      const embeddedMorphs = this.textAndAttributes.filter(m => m?.isMorph);
+      if (embeddedMorphs.length > 0) return [...super.submorphs, ...embeddedMorphs];
+    }
+    return super.submorphs;
+  }
+
   makeDirty () {
     if (this._positioningSubmorph) return;
     this.renderingState.needsRemeasure = true;
@@ -1191,9 +1199,17 @@ export class Text extends Morph {
   }
 
   removeMorph (morph, invalidateTextLayout = true) {
-    const { embeddedMorphMap, displacingMorphMap } = this;
+    const { embeddedMorphMap, displacingMorphMap, textAndAttributes } = this;
     if (displacingMorphMap && displacingMorphMap.has(morph)) {
       this.toggleTextWrappingAround(morph, false);
+    }
+    if (!this.document) {
+      const idx = textAndAttributes.findIndex(m => m === morph);
+      if (idx !== -1) {
+        const removeCount = idx !== textAndAttributes.length - 1 ? 2 : 1;
+        textAndAttributes.splice(idx, removeCount);
+        this.textAndAttributes = textAndAttributes;
+      }
     }
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
       const { anchor } = embeddedMorphMap.get(morph);
