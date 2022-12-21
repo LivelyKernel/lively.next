@@ -316,14 +316,17 @@ export class CompletionController {
     menu.relayout();
 
     input.focus(); // get the focus already, to receive all text input while style is being applied
-    const textSize = input.textBounds().extent().addXY(2.5, 0);
+    world.addMorph(menu);
+    const bg = menu.addMorph({ fill: this.textMorph.fill }, input);
+    input.fixedHeight = false;
+    menu.env.forceUpdate(); // FIXME: We need to force the render here, in order to get a proper measure of the text bounds. This should be handled automatically and not delayed until the morph is mounted into the DOM.
     if (prefix.length) {
       input.gotoDocumentEnd();
+      input.invalidateTextLayout();
+      const textSize = input.textBounds().extent().addXY(0, 0);
+      bg.extent = textSize;
       menu.moveBy(textSize.withY(0).negated());
     }
-    world.addMorph(menu);
-    menu.addMorph({ extent: textSize, fill: this.textMorph.fill }, input);
-    input.fixedHeight = false;
     return menu;
   }
 
