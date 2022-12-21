@@ -2677,6 +2677,7 @@ export class Text extends Morph {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
     }
+
     if (this.renderingState.fixedWidth !== this.fixedWidth) {
       const textLayer = node.querySelector('.actual');
       if (this.fixedWidth) textLayer.classList.remove('auto-width');
