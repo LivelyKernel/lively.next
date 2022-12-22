@@ -831,9 +831,9 @@ export default class Renderer {
       let lineFound = false;
       let currentOffset = 0; let lineNumber = 0;
       node.querySelectorAll('.line').forEach((line) => {
-        if (lineFound) return;
-        currentOffset += line.offsetHeight;
         if (currentOffset >= goalScroll) lineFound = true;
+        if (lineFound) return;
+        currentOffset = line.offsetTop + morph.padding.top(); // this does not respect the spacing between the lines...
         lineNumber++;
       });
       morph.renderingState.adaptScrollAfterDocumentAddition = lineNumber;
@@ -1573,8 +1573,14 @@ export default class Renderer {
   renderTextAndAttributes (node, morph) {
     const textNode = node.querySelector(`#${morph.id}textLayer`);
     if (!textNode) return;
-    if (!morph.document) textNode.replaceChildren(...this.renderWholeText(morph));
-    else {
+    if (!morph.document) {
+      textNode.replaceChildren(...this.renderWholeText(morph));
+    } else {
+      if (morph.renderingState.needsLinesToBeCleared) {
+        textNode.querySelectorAll('.line').forEach(l => l.remove());
+        morph.renderingState.renderedLines = [];
+        delete morph.renderingState.needsLinesToBeCleared;
+      }
       if (morph.debug) textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
       const linesToRender = this.collectVisibleLinesForRendering(morph, node);
       morph.renderingState.visibleLines = linesToRender;
@@ -1630,15 +1636,16 @@ export default class Renderer {
     morph.renderingState.renderedTextAndAttributes = morph.textAndAttributes;
     morph.renderingState.extent = morph.getProperty('extent');
 
-    setTimeout(() => {
-      const lineNumber = morph.renderingState.adaptScrollAfterDocumentRemoval;
-      if (lineNumber) {
-        const scrollOffset = textNode.children[lineNumber].offsetTop;
-        node.scrollTop = scrollOffset + 120;
-        morph.scroll = pt(0, scrollOffset + 120);
+    const lineNumber = morph.renderingState.adaptScrollAfterDocumentRemoval;
+    if (lineNumber) {
+      setTimeout(() => {
+        const lineNode = textNode.children[lineNumber];
+        const scrollOffset = lineNode.offsetTop + lineNode.offsetHeight;
+        node.scrollTop = scrollOffset + morph.padding.top();
+        morph.scroll = pt(0, scrollOffset + morph.padding.top());
         delete morph.renderingState.adaptScrollAfterDocumentRemoval;
-      }
-    })
+      });
+    }
   }
 
   /**
