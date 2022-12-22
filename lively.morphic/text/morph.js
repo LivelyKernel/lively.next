@@ -272,12 +272,12 @@ export class Text extends Morph {
             this.nativeCursor = 'auto';
           }
           this.setProperty('readOnly', readOnly);
-          if (this.renderingState.adaptScrollAfterDocumentAddition){
+          if (this.renderingState.adaptScrollAfterDocumentAddition) {
             setTimeout(() => {
-              this.alignRowAtTop(this.renderingState.adaptScrollAfterDocumentAddition);
-              delete this.renderingState.adaptScrollAfterDocumentAddition;  
-            })
-            }
+              this.alignRowAtTop(this.renderingState.adaptScrollAfterDocumentAddition - 1);
+              delete this.renderingState.adaptScrollAfterDocumentAddition;
+            });
+          }
         }
       },
 
@@ -2128,6 +2128,7 @@ export class Text extends Morph {
     if (!this.fixedHeight) this.height = this.document.height;
     if (!this.fixedWidth) this.width = this.document.width;
     this.renderingState.needsScrollLayerAdded = true;
+    this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
     if (this.env.renderer) { this.env.forceUpdate(); } else {
       this.whenEnvReady().then(() => {

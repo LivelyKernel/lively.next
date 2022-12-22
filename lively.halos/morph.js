@@ -2010,7 +2010,10 @@ export default class Halo extends Morph {
     t.tmpEdit = true;
     t.readOnly = false;
     t.focus();
-    t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
+    setTimeout(() => {
+      // ensure that the document is rendered and text layout measured
+      t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
+    });
 
     connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
 
