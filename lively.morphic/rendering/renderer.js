@@ -519,10 +519,11 @@ export default class Renderer {
     const node = this.getNodeForMorph(morph);
     const scrollChanged = !rs.animationAdded && rs.scrollChanged;
     const turnedVisible = node.style.display === 'none' && morph.visible;
+    applyStylingToNode(morph, node);
     if (morph.patchSpecialProps) {
       morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
     }
-    applyStylingToNode(morph, node);
+
     if (turnedVisible || scrollChanged) {
       if (turnedVisible) {
         morph.withAllSubmorphsDo(m => {

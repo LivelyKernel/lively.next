@@ -1,4 +1,4 @@
-/* global System, it, xit, describe, beforeEach, afterEach */
+/* global it, describe, afterEach */
 import { expect } from 'mocha-es6';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { Text } from '../../text/morph.js';
@@ -21,7 +21,7 @@ function text (string, props) {
     borderWidth: 0,
     fill: Color.limeGreen,
     lineWrapping: false,
-    lineHeight: 1,
+    lineHeight: 1.2,
     ...props
   }).openInWorld();
 
@@ -44,6 +44,8 @@ describe('text layout', function () {
     it('text pos -> pixel pos', () => {
       text('hello\nlively\nworld');
       let pos;
+
+      t.env.forceUpdate();
 
       pos = tl.pixelPositionFor(t, { row: 0, column: 0 });
       expect(pos.x).closeTo(padl + 0, 2);
@@ -80,6 +82,7 @@ describe('text layout', function () {
 
     it('pixel pos -> text pos', () => {
       text('hello\nlively\nworld');
+      t.env.forceUpdate();
       expect(t.textPositionFromPoint(pt(padl + 0, padt + 0))).deep.equals({ row: 0, column: 0 }, '1');
       expect(t.textPositionFromPoint(pt(padl + w - 1, padt + h / 2))).deep.equals({ row: 0, column: 1 }, '2');
       expect(t.textPositionFromPoint(pt(padl + w + 1, padt + h + 1))).deep.equals({ row: 1, column: 1 }, '3');
@@ -122,9 +125,14 @@ describe('text layout', function () {
     });
 
     it('fits bounds synchronously if font size changed', async () => {
-      const t = text('hello world', { clipMode: 'visible', fixedWidth: false, fixedHeight: false });
+      const t = text('hello world', {
+        clipMode: 'visible',
+        fixedWidth: false,
+        fixedHeight: false
+      });
       const rightBefore = t.right;
       t.fontSize = 50;
+      t.env.forceUpdate();
       const rightAfter = t.right;
       expect(rightBefore).lessThan(rightAfter);
       expect(rightAfter).equals(t.right);
@@ -151,40 +159,70 @@ describe('text layout', function () {
 
   describe('line wrapping', () => {
     it('wraps single line and computes positions back and forth', () => {
-      text('abcdef\n1234567\n', { extent: pt(4 * w, 100) });
-
+      text('abcdef\n1234567\n');
+      t.env.forceUpdate();
+      t.extent = pt(4 * w, 100);
       expect(t.lineCount()).equals(3);
-      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt, w, h - 1), 'not wrapped: text pos => pixel pos');
-      expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h + 1))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
+      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt - .5, w, h), 'not wrapped: text pos => pixel pos');
+      expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
 
-      t.lineWrapping = false;
       t.lineWrapping = 'by-chars';
+      t.env.forceUpdate();
 
       let height, width, x, y;
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 3 }));
-      expect(x).closeTo(padl + w * 3, 2);
-      expect(y).closeTo(padt + h * 0, 2);
+      expect(x).closeTo(padl + w, 2);
+      expect(y).closeTo(padt + h * 1, 2); // wrapped once
       expect(width).closeTo(6, 2);
-      expect(height).closeTo(h - 1, 2);
+      expect(height).closeTo(h, 2);
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 4 }));
       expect(x).closeTo(padl + w * 0, 2);
-      expect(y).closeTo(padt + h * 1, 2);
+      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
       expect(width).closeTo(6, 2);
-      expect(height).closeTo(h - 1, 2);
+      expect(height).closeTo(h, 2);
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 5 }));
       expect(x).closeTo(padl + w * 1, 2);
-      expect(y).closeTo(padt + h * 1, 2);
+      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
       expect(width).closeTo(6, 2);
-      expect(height).closeTo(h - 1, 2);
+      expect(height).closeTo(h, 2);
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 6 }));
       expect(x).closeTo(padl + w * 2, 2);
-      expect(y).closeTo(padt + h * 1, 2);
+      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
       expect(width).closeTo(0, 2);
-      expect(height).closeTo(h - 1, 2);
+      expect(height).closeTo(h, 2);
+
+      // now we change the width to fit more chars in one row:
+      t.width += w;
+      t.env.forceUpdate();
+
+      // and the text layout should take note:
+      ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 3 }));
+      expect(x).closeTo(padl + w * 0, 2);
+      expect(y).closeTo(padt + h * 1, 2); // wrapped once
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h, 2);
+
+      ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 4 }));
+      expect(x).closeTo(padl + w * 1, 2);
+      expect(y).closeTo(padt + h * 1, 2); // wrapped once
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h, 2);
+
+      ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 5 }));
+      expect(x).closeTo(padl + w * 2, 2);
+      expect(y).closeTo(padt + h * 1, 2); // wrapped once
+      expect(width).closeTo(6, 2);
+      expect(height).closeTo(h, 2);
+
+      ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 6 }));
+      expect(x).closeTo(padl + w * 3, 2);
+      expect(y).closeTo(padt + h * 1, 2); // wrapped twice
+      expect(width).closeTo(0, 2);
+      expect(height).closeTo(h, 2);
     });
 
     it('screenLineRange', () => {

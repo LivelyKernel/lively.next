@@ -1091,6 +1091,7 @@ export class Text extends Morph {
           const delta = change.prevValue.subPt(change.value);
           softLayoutChange = this.fixedWidth && !!this.lineWrapping && !!delta.x;
           enforceFit = softLayoutChange && (!this.fixedWidth && !!delta.x || !this.fixedHeight && !!delta.y);
+          if (softLayoutChange) { this.renderingState.renderedTextAndAttributes = null; }
           break;
         case 'wordSpacing':
         case 'letterSpacing':
@@ -1124,7 +1125,7 @@ export class Text extends Morph {
           enforceFit ||
           (softLayoutChange && !meta.styleSheetChange))) {
         this.invalidateTextLayout(
-          hardLayoutChange /* reset char bounds */,
+          hardLayoutChange || softLayoutChange /* reset char bounds */,
           hardLayoutChange /* reset line heights */);
       }
 
@@ -2634,9 +2635,9 @@ export class Text extends Morph {
         });
       });
     } else if (this.env.renderer) {
-      this.renderingState.needsFit = false;
       if (this.fixedHeight && this.fixedWidth) return;
       let textBoundsExtent = this.textBounds().extent();
+      this.renderingState.needsFit = this.renderingState.needsRemeasure;
       if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
       if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
       this.extent = textBoundsExtent.addXY(
