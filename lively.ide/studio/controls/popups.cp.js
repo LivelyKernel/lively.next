@@ -790,7 +790,7 @@ export const PaddingControlsLight = component({
     orderByIndex: true,
     padding: rect(0, 0, 27, 0),
     wrapSubmorphs: false,
-    spacing: 3
+    spacing: 5
   }),
   extent: pt(250, 30),
   fill: Color.rgba(0, 0, 0, 0),
@@ -831,16 +831,28 @@ export const PaddingControlsLight = component({
       clipMode: 'hidden',
       submorphs: [
         {
-          type: Label,
-          name: 'padding indicator',
-          fill: Color.rgba(229, 231, 233, 0),
-          fontColor: Color.rgb(101, 135, 139),
-          fontFamily: 'Material Icons',
-          padding: rect(5, 5, 0, 0),
-          textAndAttributes: ['\ue25a', {
-            fontSize: 16,
-            textStyleClasses: ['material-icons']
-          }]
+          name: 'centering wrapper',
+          fill: Color.transparent,
+          clipMode: 'hidden',
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center'
+          }),
+          extent: pt(30, 30),
+          submorphs: [
+            {
+              type: Label,
+              name: 'padding indicator',
+              fill: Color.rgba(229, 231, 233, 0),
+              fontColor: Color.rgb(101, 135, 139),
+              fontFamily: 'Material Icons',
+              padding: rect(7, 5, 0, 0),
+              textAndAttributes: ['\ue25a', {
+                fontSize: 16,
+                textStyleClasses: ['material-icons']
+              }]
+            }
+          ]
         },
         part(NumberWidgetLight, {
           name: 'padding left',
@@ -893,10 +905,12 @@ export const PaddingControlsLight = component({
       ]
     }, part(PropertyLabel, {
       name: 'independent padding toggle',
-      padding: 0,
+      padding: rect(0),
+      lineHeight: 1,
       fontColor: Color.rgb(101, 135, 139),
       master: { auto: PropertyLabel, hover: PropertyLabelHoveredLight },
-      tooltip: 'Toggle indepentent Fields per Direction',
+      tooltip: 'Toggle independent Fields per Direction',
+      fontFamily: 'Material Icons',
       textAndAttributes: ['', {
         textStyleClasses: ['material-icons']
       }]
@@ -915,41 +929,57 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
       submorphs: [{
         name: 'interactive label',
         fontColor: Color.rgba(178, 235, 242, 0.4976)
-      }]
+      },
+      { name: 'value', fontSize: 14 }]
     },
     {
       name: 'multi padding control',
       submorphs: [
         {
-          name: 'padding indicator',
-          fontColor: Color.rgb(178, 235, 242),
-          borderWidth: 0
+          name: 'centering wrapper',
+          submorphs: [{
+            name: 'padding indicator',
+            fontColor: Color.rgb(178, 235, 242),
+            borderWidth: 0
+          }]
         },
         {
           name: 'padding left',
           master: DarkNumberWidget,
           dropShadow: null,
-          borderWidth: 0
+          borderWidth: 0,
+          submorphs: [
+            { name: 'value', fontSize: 14 }
+          ]
         },
         {
           name: 'padding top',
           master: DarkNumberWidget,
           borderRadius: 0,
           dropShadow: null,
-          borderWidth: 0
+          borderWidth: 0,
+          submorphs: [
+            { name: 'value', fontSize: 14 }
+          ]
         },
         {
           name: 'padding right',
           master: DarkNumberWidget,
           borderRadius: 0,
           dropShadow: null,
-          borderWidth: 0
+          borderWidth: 0,
+          submorphs: [
+            { name: 'value', fontSize: 14 }
+          ]
         },
         {
           name: 'padding bottom',
           master: DarkNumberWidget,
           dropShadow: null,
-          borderWidth: 0
+          borderWidth: 0,
+          submorphs: [
+            { name: 'value', fontSize: 14 }
+          ]
         }
       ]
     },
