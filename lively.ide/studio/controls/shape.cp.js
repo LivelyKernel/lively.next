@@ -91,14 +91,13 @@ export class ShapeControlModel extends ViewModel {
 
   adjustCornerIndicator (cornerSide) {
     const sideToRotation = {
-      TopRight: [0, rect(2, 0, 0.5, 0)],
-      TopLeft: [Math.PI / 2 * 3, rect(0, 2, 0, 0.5)],
-      BottomRight: [Math.PI / 2, rect(0, 2.5, 0, 0)],
-      BottomLeft: [Math.PI, rect(3, 0, -1, 0)]
+      TopRight: 0,
+      TopLeft: Math.PI / 2 * 3,
+      BottomRight: Math.PI / 2,
+      BottomLeft: Math.PI
     };
 
-    const [rotation, padding] = sideToRotation[cornerSide] || [0, rect(0, 0, 5, 0)];
-    this.ui.borderIndicator.padding = padding;
+    const rotation = sideToRotation[cornerSide] || 0;
     this.ui.borderIndicator.rotation = rotation;
   }
 
@@ -466,7 +465,7 @@ const ShapeControl = component({
         fontFamily: 'IBM Plex Mono',
         padding: rect(8, 0, -1, 0),
         textAndAttributes: ['X', {
-          textStyleClasses: [''],
+          textStyleClasses: ['']
         }]
       }]
     }), part(DarkNumberIconWidget, {
@@ -481,7 +480,7 @@ const ShapeControl = component({
         fontFamily: 'IBM Plex Mono',
         fontSize: 13,
         textAndAttributes: ['Y', {
-          textStyleClasses: [''],
+          textStyleClasses: ['']
         }]
       }]
     }), { opacity: 0, name: 'buffer after position', width: 25 },
@@ -648,17 +647,29 @@ const ShapeControl = component({
       clipMode: 'hidden',
       submorphs: [
         {
-          type: Label,
-          name: 'border indicator',
-          borderRadius: 3,
-          fill: Color.rgba(229, 231, 233, 0),
-          fontColor: Color.rgb(178, 235, 242),
-          fontFamily: 'Material Icons',
-          padding: rect(2.5, 0, 0, 0),
-          textAndAttributes: ['', {
-            fontSize: 16,
-            textStyleClasses: ['material-icons']
-          }]
+          name: 'centering wrapper',
+          fill: Color.transparent,
+          clipMode: 'hidden',
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center'
+          }),
+          extent: pt(21, 25),
+          submorphs: [
+            {
+              type: Label,
+              name: 'border indicator',
+              borderRadius: 3,
+              fill: Color.rgba(229, 231, 233, 0),
+              fontColor: Color.rgb(178, 235, 242),
+              fontFamily: 'Material Icons',
+              padding: rect(2, 2, 0, -2),
+              textAndAttributes: ['', {
+                fontSize: 16,
+                textStyleClasses: ['material-icons']
+              }]
+            }
+          ]
         },
         part(DarkNumberIconWidget, {
           name: 'radius input top left',
