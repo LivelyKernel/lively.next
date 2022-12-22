@@ -1908,8 +1908,10 @@ export default class Renderer {
 
     prevParent.appendChild(textNode);
 
-    morph._cachedBounds = bounds;
-    morph.renderingState.needsRemeasure = false;
+    if (morph.allFontsLoaded()) {
+      morph._cachedBounds = bounds;
+      morph.renderingState.needsRemeasure = false;
+    }
     return bounds;
   }
 
