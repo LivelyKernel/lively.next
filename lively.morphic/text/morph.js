@@ -459,6 +459,7 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.isMorph)) { this.needsDocument = true; }
           if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
