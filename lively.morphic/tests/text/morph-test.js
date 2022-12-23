@@ -720,8 +720,8 @@ describe('morph inside textAndAttributes', () => {
   });
 
   it('position of embedded morph is correct', () => {
-    sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     m.env.forceUpdate();
+    sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
     expect(m.position).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).topLeft(), '1');
     sut.cursorPosition = { column: 0, row: 1 };
     sut.execCommand('insertstring', { string: '\n' });
@@ -742,6 +742,19 @@ describe('morph inside textAndAttributes', () => {
     m.env.forceUpdate();
     m.moveBy(pt(100, 100));
     expect(m.position).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).topLeft());
+  });
+
+  it('enforces document once morph is embedded', () => {
+    m.remove(), sut.remove();
+    const t = text('I am a read only text', { readOnly: true });
+    expect(t.document).to.be.undefined;
+    t.textAndAttributes = ['I am a read only text!', null, m, null, '\n', null];
+    expect(m.owner).to.equal(t);
+    expect(t.submorphs).to.include(m);
+    expect(t.document).not.to.be.undefined;
+    expect(t.needsDocument).to.be.true;
+    expect(t.embeddedMorphMap.has(m)).to.be.true;
+    expect(t.embeddedMorphs).to.include(m);
   });
 
   it('layout is updated on morph resize', async () => {
