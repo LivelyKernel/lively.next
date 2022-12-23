@@ -36,7 +36,12 @@ export class Anchor {
   updateEmbeddedMorph () {
     if (!this.embeddedMorph) return;
     const tm = this.embeddedMorph.owner;
-    if (tm && !tm.isLineVisible(this.position.row)) return;
+    if (tm && !tm.isLineVisible(this.position.row)) {
+      if (tm.renderingState.needsRerender) {
+        tm.env.forceUpdate();
+        if (!tm.isLineVisible(this.position.row)) return;
+      } else return;
+    }
     const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().subPt(tm.origin) : this.embeddedMorph.position;
     if (tm) tm._positioningSubmorph = this.embeddedMorph;
     this.embeddedMorph.position = pos;
