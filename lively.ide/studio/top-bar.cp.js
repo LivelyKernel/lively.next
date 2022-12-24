@@ -519,7 +519,9 @@ export class TopBarModel extends ViewModel {
 
   getDefaultTextAttrs () {
     return {
-      readOnly: true
+      readOnly: true,
+      padding: Rectangle.inset(1, 1, 1, 1),
+      cursorWidth: 1.5
     };
   }
 

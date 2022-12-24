@@ -1,4 +1,4 @@
-import { Color, pt, rect } from 'lively.graphics';
+import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';
 import { DarkNumberIconWidget, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
@@ -508,7 +508,7 @@ const ShapeControl = component({
       tooltip: 'Height',
       submorphs: [{
         name: 'interactive label',
-        padding: rect(3, 0, -3, 0),
+        padding: rect(3, 3, -3, -3),
         textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
       }]
     }), part(AddButton, {
@@ -591,6 +591,7 @@ const ShapeControl = component({
         fontFamily: 'Material Icons',
         nativeCursor: 'pointer',
         reactsToPointer: false,
+        lineHeight: 1,
         textAndAttributes: [FIXED_ICON, {
           fontSize: 16,
           textStyleClasses: ['material-icons']
@@ -605,12 +606,13 @@ const ShapeControl = component({
       min: 0,
       max: 359,
       submorphs: [{
+        name: 'interactive label',
+        lineHeight: 1,
+        padding: Rectangle.inset(6, 0, 0, 0)
+      }, {
         name: 'value',
         cursorColor: Color.rgba(178, 235, 242, 0.75),
         extent: pt(42.6, 21)
-      }, {
-        name: 'interactive label',
-        padding: rect(6, 0, -6, 0)
       }]
     }),
     part(DarkNumberIconWidget, {
@@ -620,6 +622,7 @@ const ShapeControl = component({
       submorphs: [{
         name: 'interactive label',
         fontFamily: 'Material Icons',
+        lineHeight: 1,
         textAndAttributes: ['\ue920', {
           fontSize: 16,
           textStyleClasses: ['material-icons']
@@ -728,6 +731,7 @@ const ShapeControl = component({
         fontColor: Color.rgba(178, 235, 242, 0.6),
         fontFamily: 'Material Icons',
         nativeCursor: 'pointer',
+        lineHeight: 1,
         padding: rect(6, 0, -6, 0),
         reactsToPointer: false,
         textAndAttributes: ['', {
