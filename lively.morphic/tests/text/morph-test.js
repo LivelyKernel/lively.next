@@ -1,7 +1,7 @@
 /* global it, describe, beforeEach, afterEach, before */
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
-import { pt, Color, Rectangle } from 'lively.graphics';
+import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { expectSelection } from '../test-helpers.js';
 import { Range } from '../../text/range.js';
 
@@ -763,5 +763,17 @@ describe('morph inside textAndAttributes', () => {
     m.resizeBy(pt(100, 100));
     m.env.forceUpdate(); // can this be done without enforcing the render?
     expect(m.extent).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).extent());
+  });
+
+  it('has the same text bounds regardless of being interactive or read only', () => {
+    const lineHeight = 14;
+    sut.fixedHeight = false;
+    sut.readOnly = true;
+    expect(sut.document).to.be.null;
+    expect(sut.height).to.equal(2 * lineHeight + sut.padding.top() + sut.padding.bottom(), 'text bounds match when read only');
+    sut.readOnly = false;
+    expect(sut.document).not.to.be.null;
+    sut.env.forceUpdate();
+    expect(sut.height).to.equal(2 * lineHeight + sut.padding.top() + sut.padding.bottom(), 'text bounds match when interactive');
   });
 });
