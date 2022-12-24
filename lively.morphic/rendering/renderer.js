@@ -1896,7 +1896,7 @@ export default class Renderer {
     const domMeasure = this.placeholder.getBoundingClientRect();
     textNode.style.removeProperty('width');
     textNode.style.removeProperty('position');
-    const bounds = new Rectangle(domMeasure.x, domMeasure.y, domMeasure.width, domMeasure.height);
+    const bounds = new Rectangle(domMeasure.x, domMeasure.y, Math.ceil(domMeasure.width), Math.ceil(domMeasure.height));
 
     const embeddedMorphs = morph.textAndAttributes.filter(m => m?.isMorph);
     for (let m of embeddedMorphs) {
