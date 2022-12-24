@@ -581,7 +581,7 @@ const RichTextControl = component(PropertySection, {
       submorphs: [part(PropertyLabel, {
         name: 'auto width',
         fontSize: 14,
-        padding: rect(2, 2, 0, 0),
+        padding: Rectangle.inset(3, 2, 3, 0),
         rotation: -1.57,
         tooltip: 'Fit Width',
         textAndAttributes: ['\ue94f', {
@@ -591,7 +591,7 @@ const RichTextControl = component(PropertySection, {
       }), part(PropertyLabel, {
         name: 'auto height',
         fontSize: 14,
-        padding: rect(2, 2, 0, 0),
+        padding: Rectangle.inset(2, 3, 2, 1),
         tooltip: 'Fit Height',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
@@ -600,7 +600,7 @@ const RichTextControl = component(PropertySection, {
       }), part(PropertyLabel, {
         name: 'fixed extent',
         fontSize: 14,
-        padding: rect(2, 2, 0, 0),
+        padding: Rectangle.inset(2, 3, 2, 1),
         tooltip: 'Fix Extent/Don\'t fit',
         textAndAttributes: ['\ue835', {
           fontSize: 18,

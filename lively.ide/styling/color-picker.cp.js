@@ -80,6 +80,7 @@ const ColorInput = component({
     scaleFactor: 100,
     submorphs: [{
       name: 'interactive label',
+      lineHeight: 1,
       textAndAttributes: ['', {
         fontSize: 14, textStyleClasses: ['material-icons']
       }]

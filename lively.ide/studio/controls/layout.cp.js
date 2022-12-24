@@ -601,7 +601,7 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
     }),
     add(part(EnumSelector, {
       name: 'spacing selector',
-      extent: pt(165, 23.3),
+      extent: pt(155, 23),
       tooltip: 'Select Spacing of Items',
       viewModel: {
         openListInWorld: true,

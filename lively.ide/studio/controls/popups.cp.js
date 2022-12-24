@@ -286,9 +286,12 @@ export class PaddingControlsModel extends ViewModel {
   }
 
   update () {
-    const { paddingAll, multiPaddingControl } = this.ui;
+    const { paddingAll, multiPaddingControl, independentPaddingToggle } = this.ui;
     paddingAll.visible = !this.showAllSidesControl;
     multiPaddingControl.visible = this.showAllSidesControl;
+    independentPaddingToggle.master = this.showAllSidesControl
+      ? PropertyLabelActive
+      : { auto: PropertyLabel, hover: this.propertyLabelComponentHover };
   }
 
   focusField (focusedField) {
@@ -810,6 +813,7 @@ export const PaddingControlsLight = component({
           fontFamily: 'Material Icons',
           fontColor: Color.rgba(101, 135, 139),
           padding: rect(8, 0, -1, 0),
+          lineHeight: 1,
           textAndAttributes: ['\ue22f', {
             fontSize: 16,
             textStyleClasses: ['material-icons']
@@ -905,14 +909,16 @@ export const PaddingControlsLight = component({
       ]
     }, part(PropertyLabel, {
       name: 'independent padding toggle',
-      padding: rect(0),
+      padding: rect(2, 2),
       lineHeight: 1,
       fontColor: Color.rgb(101, 135, 139),
+      fontSize: 14,
       master: { auto: PropertyLabel, hover: PropertyLabelHoveredLight },
       tooltip: 'Toggle independent Fields per Direction',
       fontFamily: 'Material Icons',
       textAndAttributes: ['', {
-        textStyleClasses: ['material-icons']
+        textStyleClasses: ['material-icons'],
+        fontSize: 18
       }]
     })
   ]
@@ -928,6 +934,7 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
       dropShadow: null,
       submorphs: [{
         name: 'interactive label',
+        lineHeight: 1,
         fontColor: Color.rgba(178, 235, 242, 0.4976)
       },
       { name: 'value', fontSize: 14 }]
