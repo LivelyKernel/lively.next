@@ -124,6 +124,23 @@ describe('text layout', function () {
       expect(extent).equals(pt(100, 100));
     });
 
+    it('fits bounds synchronously if text is inserted', () => {
+      const t = text('hello world', {
+        clipMode: 'visible',
+        fixedWidth: false,
+        fixedHeight: true,
+        padding: rect(1, 1, 1, 1)
+      });
+      t.env.forceUpdate();
+      const widthBefore = t.width;
+      t.insertText('h');
+      t.env.forceUpdate();
+      const widthAfter = t.width;
+      expect(widthBefore).lessThan(widthAfter);
+      expect(widthAfter).equals(t.width);
+      expect(t.env.renderer.getNodeForMorph(t).offsetWidth).equals(t.width);
+    });
+
     it('fits bounds synchronously if font size changed', async () => {
       const t = text('hello world', {
         clipMode: 'visible',
