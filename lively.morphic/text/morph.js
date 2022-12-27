@@ -1067,6 +1067,10 @@ export class Text extends Morph {
     super.makeDirty();
   }
 
+  requestTextLayoutMeasuring () {
+    this.renderingState.renderedTextAndAttributes = null;
+  }
+
   static icon (iconName, props = { prefix: '', suffix: '' }) {
     return Icon.makeLabel(iconName, props);
   }
@@ -1079,20 +1083,28 @@ export class Text extends Morph {
     let softLayoutChange = false;
     let hardLayoutChange = false;
     let enforceFit = false;
+    // let displacementChange = false;
 
     if (selector) {
       textChange = selector === 'replace';
+      if (textChange && (!this.fixedHeight || !this.fixedWidth)) { enforceFit = true; }
       hardLayoutChange = selector === 'addTextAttribute';
-      this._displacementChange = !this._displacing && textChange;
+      // displacementChange = !this._displacing && textChange;
     } else {
       switch (prop) {
         case 'scroll': viewChange = true; break;
         case 'extent':
-          viewChange = true;
           const delta = change.prevValue.subPt(change.value);
-          softLayoutChange = this.fixedWidth && !!this.lineWrapping && !!delta.x;
-          enforceFit = softLayoutChange && (!this.fixedWidth && !!delta.x || !this.fixedHeight && !!delta.y);
-          if (softLayoutChange) { this.renderingState.renderedTextAndAttributes = null; }
+          const resizedHorizontally = delta.x !== 0;
+          const resizedVertically = delta.y !== 0;
+          const horizontalRefitNeeded = !this.fixedWidth && resizedHorizontally;
+          const verticalRefitNeeded = !this.fixedHeight && resizedVertically;
+          softLayoutChange = this.fixedWidth && !!this.lineWrapping && resizedHorizontally;
+          enforceFit = softLayoutChange && (horizontalRefitNeeded || verticalRefitNeeded);
+          if (softLayoutChange) {
+            this.requestTextLayoutMeasuring();
+          }
+          viewChange = true;
           break;
         case 'wordSpacing':
         case 'letterSpacing':
@@ -1138,12 +1150,11 @@ export class Text extends Morph {
         if (this.document && this.world()) this.document.lines.forEach(l => l.hasEstimatedExtent = true);
       }
 
-      if (this._displacementChange) {
-        this._displacementChange = false;
-        // this.displacingMorphMap.forEach((_, m) => {
-        //   this.updateTextDisplacementFor(m);
-        // });
-      }
+      // if (displacementChange) {
+      //   this.displacingMorphMap.forEach((_, m) => {
+      //     this.updateTextDisplacementFor(m);
+      //   });
+      // }
 
       if (textChange) signal(this, 'textChange', change);
       if (viewChange) signal(this, 'viewChange', change);
@@ -2099,7 +2110,7 @@ export class Text extends Morph {
     this.textString = '';
     this.document = null;
     this.renderingState.needsScrollLayerRemoved = true;
-    this.renderingState.renderedTextAndAttributes = null;
+    this.requestTextLayoutMeasuring();
     this.textLayout = null;
     this.selection = null;
     this.textAndAttributes = textAndAttributes;
@@ -2620,10 +2631,11 @@ export class Text extends Morph {
       this.renderingState.needsFit = false;
       const { fixedWidth, fixedHeight } = this;
 
-      if ((fixedHeight && fixedWidth) ||
-        !this.textLayout /* not init'ed yet */ ||
-        this.master && !this.master._appliedMaster) {
-        return this;
+      if (fixedHeight && fixedWidth) return;
+      if (!this.textLayout) return; /* not init'ed yet */
+      let synth;
+      if (this.master && (synth = this.master.synthesizeSubSpec())) {
+        if (synth.extent?.isPoint) return;
       }
 
       const textBounds = this.textBounds().outsetByRect(this.padding);
@@ -2702,6 +2714,7 @@ export class Text extends Morph {
       renderer.handleScrollLayer(node, this);
     }
 
+    // adjust the style classes
     if (this.renderingState.fixedWidth !== this.fixedWidth) {
       const textLayer = node.querySelector('.actual');
       if (this.fixedWidth) textLayer.classList.remove('auto-width');
@@ -2710,14 +2723,13 @@ export class Text extends Morph {
     }
     if (this.renderingState.fixedHeight !== this.fixedHeight) {
       const textLayer = node.querySelector('.actual');
-      if (this.fixedWidth) textLayer.classList.remove('auto-width');
-      else textLayer.classList.add('auto-width');
+      if (this.fixedHeight) textLayer.classList.remove('auto-height');
+      else textLayer.classList.add('auto-height');
       this.renderingState.fixedHeight = this.fixedHeight;
     }
 
     const currentTextLayerStyleObject = this.styleObject();
     if (!obj.equals(this.renderingState.nodeStyleProps, currentTextLayerStyleObject)) {
-      if (patchStyle) patchStyle();
       renderer.patchTextLayerStyleObject(node, this, currentTextLayerStyleObject);
       renderer.renderTextAndAttributes(node, this);
     }
@@ -2745,6 +2757,7 @@ export class Text extends Morph {
          this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
         renderer.patchSelectionLayer(node, this);
+        if (patchStyle) patchStyle(); // the adjusted extent needs to be updated
       }
       if (!obj.equals(this.renderingState.markers, this.markers) ||
           scrollChanged) {
