@@ -162,7 +162,8 @@ export default class Renderer {
     }
 
     for (let morph of morphsToHandle) {
-      if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
+      if (morph.renderingState.hasMorphRemoved) this.morphsWithStructuralChanges.unshift(morph);
+      else if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
       if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.unshift(morph);
       if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
       if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.push(morph);
@@ -412,6 +413,7 @@ export default class Renderer {
       }
       morph.renderingState.renderedMorphs = [];
       morph.renderingState.hasStructuralChanges = false;
+      morph.renderingState.hasMorphRemoved = false;
       return;
     }
 
@@ -491,6 +493,7 @@ export default class Renderer {
 
     morph.renderingState.renderedMorphs = morph.submorphs.filter(sm => !(sm.hasFixedPosition && morph.isWorld) && !(morph.isText && morph.embeddedMorphMap.has(sm)));
     morph.renderingState.hasStructuralChanges = false;
+    morph.renderingState.hasMorphRemoved = false;
   }
 
   /**

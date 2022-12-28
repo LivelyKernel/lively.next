@@ -139,6 +139,20 @@ describe('rendering', function () {
       expect(submorph2.globalBounds()).equals(submorph2Bounds);
     });
 
+    it('removes all to be removed nodes first before appending them to the dom', () => {
+      submorph1.addMorph(submorph3);
+      env.forceUpdate();
+      submorph2.copy().openInWorld();
+      submorph2.openInWorld();
+      let failed = false;
+      try {
+        env.forceUpdate();
+      } catch (err) {
+        failed = !!err;
+      }
+      expect(failed).to.be.false;
+    });
+
     it('updates scroll of DOM nodes of morphs and their siblings when morph moves in scene graph', async () => {
       // ref: https://github.com/LivelyKernel/lively.morphic/issues/55
 
