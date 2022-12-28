@@ -47,7 +47,7 @@ export class ListItemMorph extends Label {
         }
       },
       list: {
-        drived: true,
+        derived: true,
         get () {
           return this.owner.owner;
         }
@@ -1525,7 +1525,7 @@ export class InteractiveItem extends ListItemMorph {
         }
       },
       list: {
-        drived: true,
+        derived: true,
         get () {
           return this.owner.owner;
         }
