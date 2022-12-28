@@ -405,7 +405,7 @@ export default class Renderer {
           if (n.classList.contains('morph')) n.remove();
         });
       } else {
-        if (!morph.isText) node.replaceChildren();
+        if (!this.isComposite(morph)) node.replaceChildren();
         else {
           const submorphsNode = node.querySelector(`#submorphs-${morph.id}`);
           submorphsNode?.replaceChildren();
