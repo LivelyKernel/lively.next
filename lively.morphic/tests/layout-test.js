@@ -34,11 +34,11 @@ function closeToPoint (p1, p2, q = 0.1) {
   expect(y).closeTo(p2.y, q, 'y');
 }
 
-async function checkJSAndCSS (aMorph, test) {
+function checkJSAndCSS (aMorph, test) {
+  env.forceUpdate();
   test();
   aMorph.layout.renderViaCSS = true;
   env.forceUpdate();
-  env.forceUpdate(); // why do we have to render twice??
   test();
   aMorph.layout.renderViaCSS = false;
   env.forceUpdate();
@@ -60,24 +60,62 @@ describe('layout', () => {
       m.applyLayoutIfNeeded();
     });
 
-    it('tiles submorphs to fit the bounds', async () => {
+    it('tiles submorphs to fit the bounds', () => {
       const [m1, m2, m3] = m.submorphs;
-      await checkJSAndCSS(m, () => {
+      checkJSAndCSS(m, () => {
         expect(m1.position).equals(pt(0, 0));
         expect(m2.position).equals(m1.topRight);
         expect(m3.position).equals(m1.bottomLeft);
       });
     });
 
-    it('updates layout on changed extent', async () => {
+    it('updates layout on changed extent', () => {
       const [m1, m2, m3] = m.submorphs;
       m.extent = pt(400, 100);
       m.applyLayoutIfNeeded();
-      await checkJSAndCSS(m, () => {
+      checkJSAndCSS(m, () => {
         expect(m1.position).equals(pt(0, 0));
         expect(m2.position).equals(m1.topRight);
         expect(m3.position).equals(m2.topRight);
       });
+    });
+
+    it('does not incorrectly assign margins to submorphs that are incorrect', () => {
+      env.forceUpdate();
+      const padDist = 5;
+      let m2; let m3; let m1 = morph({
+        fill: Color.lively,
+        name: 'm1',
+        layout: new TilingLayout({
+          padding: rect(padDist, padDist),
+          hugContentsVertically: true,
+          hugContentsHorizontally: true,
+          wrapSubmorphs: false
+        }),
+        submorphs: [
+          morph({
+            name: 'm2',
+            fill: Color.white.withA(.3),
+            layout: new TilingLayout({
+              padding: rect(padDist, padDist),
+              hugContentsVertically: false,
+              hugContentsHorizontally: false,
+              wrapSubmorphs: false
+            }),
+            submorphs: [
+              m2 = morph({ type: 'ellipse', extent: pt(40, 40) }),
+              m3 = morph({ extent: pt(150, 40) })
+            ]
+          })
+        ]
+      });
+      world.addMorph(m1);
+      expect(m1.renderingState.cssLayoutToMeasureWith).not.to.be.false;
+      env.forceUpdate();
+      expect(m1.renderingState.cssLayoutToMeasureWith, 'all layouts have finished measuring').to.be.false;
+      expect(m1.width).to.equal(m2.width + m3.width + 3 * padDist);
+      expect(m1.height).to.equal(m1.submorphBounds().height + m1.layout.padding.top() + m1.layout.padding.bottom());
+      expect(m1.width).to.equal(m1.submorphBounds().width + m1.layout.padding.left() + m1.layout.padding.right());
     });
 
     describe('variations', () => {
@@ -95,11 +133,11 @@ describe('layout', () => {
         expect(container.layout.getResizeWidthPolicyFor(container.submorphs[0])).equals('fill');
       });
 
-      it('axis: row', async () => {
+      it('axis: row', () => {
         container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, axis: 'row', renderViaCSS: false });
         let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
         rows.slice(0, -1).forEach(row => expect(row.length).gt(1));
-        await checkJSAndCSS(m, () => {
+        checkJSAndCSS(m, () => {
           expect(rows[0][0].position).deep.equals(pt(5, 5), 'first morph pos');
           for (let i = 0; i < rows.length; i++) {
             for (let j = 0; j < rows[i].length - 1; j++) {
@@ -110,7 +148,7 @@ describe('layout', () => {
         });
       });
 
-      it('axis: row, align: center', async () => {
+      it('axis: row, align: center', () => {
         container.layout = new TilingLayout({
           padding: Rectangle.inset(10),
           spacing: 10,
@@ -120,7 +158,7 @@ describe('layout', () => {
         });
 
         let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
-        await checkJSAndCSS(m, () => {
+        checkJSAndCSS(m, () => {
           rows.slice(0, -1).forEach(row => expect(row.length).gt(1));
           for (let i = 0; i < rows.length; i++) {
             expect(rows[i][0].left).closeTo(container.width - arr.last(rows[i]).right, 1, 'correctly centers row items');
