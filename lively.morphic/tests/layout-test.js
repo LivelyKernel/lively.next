@@ -465,11 +465,13 @@ describe('layout', () => {
 
     it('enforces the cells extent upon the contained morph if specified', () => {
       const [m1, m2, m3] = m.submorphs;
-      // expect(m1.extent).equals(pt(100, 100));
-      // expect(m2.extent).equals(pt(100, 100));
-      // expect(m3.extent).equals(pt(100, 100));
       m.layout = new GridLayout({
         renderViaCSS: false,
+        groups: {
+          m1: { resize: true },
+          m2: { resize: true },
+          m3: { resize: true }
+        },
         grid:
         [[null, 'm1', null],
           ['m2', 'm2', 'm3'],
