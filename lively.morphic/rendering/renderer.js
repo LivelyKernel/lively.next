@@ -166,7 +166,7 @@ export default class Renderer {
       else if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
       if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.unshift(morph);
       if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
-      if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.push(morph);
+      if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.unshift([morph, morph.renderingState.cssLayoutToMeasureWith]);
     }
 
     for (let morph of this.morphsWithStructuralChanges) {
@@ -179,10 +179,6 @@ export default class Renderer {
       this.renderStylingChanges(morph);
     }
 
-    for (let morph of this.morphsToRevisit.reverse()) {
-      this.renderStylingChanges(morph);
-    }
-
     for (let morph of this.morphsWithStructuralChanges) {
       this.renderStructuralChanges(morph);
     }
@@ -191,9 +187,22 @@ export default class Renderer {
       this.handleAddedAnimationChange(morph);
     }
 
-    for (let morph of this.renderedMorphsToBeMeasured) {
-      const affectedLayout = morph.renderingState.cssLayoutToMeasureWith;
+    for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
+      // the problem is that this remeasure will in turn lead to a next render
+      // CSS layouts should be able to make conclusive renders in ONE pass
       morph.renderingState.cssLayoutToMeasureWith = false;
+      if (affectedLayout.measureSubmorph) {
+        affectedLayout.measureSubmorph(morph);
+        this.morphsToRevisit.push(morph);
+      }
+    }
+
+    for (let morph of this.morphsToRevisit.reverse()) {
+      this.renderStylingChanges(morph);
+    }
+
+    for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
+      // the corrected layouts may now require a remeasure
       if (affectedLayout.measureSubmorph) {
         affectedLayout.measureSubmorph(morph);
       }

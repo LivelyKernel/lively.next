@@ -200,7 +200,7 @@ class Layout {
     if (prop === 'borderWidth' && this.renderViaCSS) this.layoutableSubmorphs.forEach(m => m.makeDirty());
     if (prop === 'extent' && value && prevValue &&
         (prevValue.x !== value.x || prevValue.y !== value.y)) {
-      this.scheduleApply(submorph, anim, { prop: 'extent' });
+      this.scheduleApply(submorph, anim, { prop: 'extent', meta });
     }
   }
 
@@ -252,6 +252,10 @@ class Layout {
 
   resizesMorphHorizontally (aMorph) {
     return false;
+  }
+
+  updateBoundsFor () {
+
   }
 }
 
@@ -317,6 +321,7 @@ export class TilingLayout extends Layout {
   attach () {
     this.initializeResizePolicies();
     super.attach();
+    this.measureAfterRender(this.container);
   }
 
   initializeResizePolicies () {
@@ -341,9 +346,10 @@ export class TilingLayout extends Layout {
 
   scheduleApply (submorph, animation, change = {}) {
     if (change.prop === 'extent' &&
+        !change.meta?.isLayoutAction &&
         this.renderViaCSS &&
         (this.hugContentsVertically || this.hugContentsHorizontally)) {
-      this.container._askLayoutForBounds = this;
+      this.container.renderingState.cssLayoutToMeasureWith = this;
     }
 
     super.scheduleApply(submorph, animation, change);
@@ -738,6 +744,7 @@ export class TilingLayout extends Layout {
    * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
    */
   updateBoundsFor (morph) {
+    morph.renderingState.cssLayoutToMeasureWith = false;
     const node = this.getNodeFor(morph);
     if (node) {
       if (morph === this.container) {
@@ -748,7 +755,6 @@ export class TilingLayout extends Layout {
       this.measureAfterRender(morph);
       morph.makeDirty();
     }
-    morph._askLayoutForBounds = false;
   }
 
   addSubmorphCSS (morph, style) {
@@ -771,6 +777,7 @@ export class TilingLayout extends Layout {
     if (clip) {
       bounds = rect(0, 0, morph.width, morph.height);
     } else {
+      // this can lead to false conclusions if we are configured to fit vertically or horizontally
       bounds = morph.submorphBounds().union(morph.innerBounds());
     }
 
@@ -791,6 +798,7 @@ export class TilingLayout extends Layout {
     const margin = { top: 0, left: 0, bottom: 0, right: 0 };
 
     if (node) {
+      // FIXME:
       // this is not doing the right thing if the resize policy asks the morph to
       // fill via height and is not yet rendered
       margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
@@ -927,7 +935,7 @@ export class TilingLayout extends Layout {
     if (hugContentsVertically) {
       style.height = 'auto';
     }
-    if (containerMorph.renderingState.cssLayoutToMeasureWith) {
+    if (!containerMorph.renderingState.cssLayoutToMeasureWith) {
       this.measureAfterRender(containerMorph);
     }
     this.delaySubmorphBounds();
@@ -947,7 +955,7 @@ export class TilingLayout extends Layout {
         // fixme: There is still a rendering glitch which occurs due to the async nature of the virtual dom render  loop
         this.measureAfterRender(m);
       } else {
-        m._askLayoutForBounds = this; // only if this is confirmed by a resize observer
+        m.renderingState.cssLayoutToMeasureWith = this; // only if this is confirmed by a resize observer
       }
 
       if (m.layout && m.layout.name() === 'Tiling') m.layout.delaySubmorphBounds();

@@ -270,8 +270,7 @@ export class Morph {
         defaultValue: pt(0, 0),
         get () {
           let layout;
-          if (layout = this._askLayoutForBounds) {
-            this._askLayoutForBounds = false;
+          if (layout = this.renderingState.cssLayoutToMeasureWith) {
             layout.updateBoundsFor(this);
           }
           return this.getProperty('position');
@@ -285,8 +284,7 @@ export class Morph {
         defaultValue: pt(10, 10),
         get () {
           let layout;
-          if (layout = this._askLayoutForBounds) {
-            this._askLayoutForBounds = false;
+          if (layout = this.renderingState.cssLayoutToMeasureWith) {
             layout.updateBoundsFor(this);
           }
           return this.getProperty('extent');
