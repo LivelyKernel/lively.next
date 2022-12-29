@@ -527,7 +527,6 @@ export default class Renderer {
       morph._requestMasterStyling = false;
     }
 
-    rs.needsRemeasure = true;
     const node = this.getNodeForMorph(morph);
     const scrollChanged = !rs.animationAdded && rs.scrollChanged;
     const turnedVisible = node.style.display === 'none' && morph.visible;
@@ -1276,15 +1275,16 @@ export default class Renderer {
       if (isWrapped) {
         // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
         // additional selection parts here
-        const rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection));
+        const rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection)).filter(r => !r.isEmpty());
         let isFirstSubLine = isFirstLine;
         let subLineMinY = 0;
         let subCharBounds;
         let subLineMaxBottom;
+        const isMultiline = rangesToRender.length > 1;
         for (const r of rangesToRender) {
           if (r.isEmpty()) continue;
 
-          subCharBounds = charBounds.slice(r.start.column, r.end.column);
+          subCharBounds = charBounds.slice(r.start.column, r.end.column + (isMultiline ? 1 : 0));
 
           subLineMinY = isFirstSubLine ? arr.min(subCharBounds.map(cb => cb.top())) : subLineMinY;
           subLineMaxBottom = arr.max(subCharBounds.map(cb => cb.bottom()));
