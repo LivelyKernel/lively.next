@@ -1937,8 +1937,8 @@ export class Text extends Morph {
             continue;
           }
           anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
-          anchor.embeddedMorph = morph;
           embeddedMorphMap.set(morph, { anchor });
+          anchor.embeddedMorph = morph;
         }
       }
 
