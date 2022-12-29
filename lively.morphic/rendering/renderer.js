@@ -512,7 +512,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to check if it results in multiple nodes.
    */
   isComposite (morph) {
-    return morph.isCanvas || morph.isHTMLMorph || morph.isImage || morph.isCheckbox;
+    return morph.isCanvas || morph.isHTMLMorph || morph.isImage || morph.isCheckbox || morph.isText;
   }
 
   /**
