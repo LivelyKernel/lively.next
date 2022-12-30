@@ -226,7 +226,7 @@ class MultiSelectionTarget extends Morph {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // The thing at the top left of the halo that indicates currently changing
 // properties such as the position of the halo target
-class HaloPropertyDisplay extends Label {
+class HaloPropertyDisplay extends Text {
   static get morphName () { return 'propertyDisplay'; }
   static get defaultPosition () { return pt(25, 0); }
 
@@ -236,7 +236,7 @@ class HaloPropertyDisplay extends Label {
 
   static get properties () {
     return {
-      name: { defaultValue: this.name },
+      name: { defaultValue: this.morphName },
       fill: { defaultValue: Color.black.withA(0.7) },
       borderRadius: { defaultValue: 7 },
       padding: { defaultValue: Rectangle.inset(5) },
