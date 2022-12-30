@@ -166,6 +166,7 @@ export default class Window extends Morph {
       this.borderColor = Color.gray.darker();
       this._faderTriggered = true;
       fader.opacity = 1;
+      await promise.delay(300);
     } else {
       if (this._originalBounds) {
         this.animate({
