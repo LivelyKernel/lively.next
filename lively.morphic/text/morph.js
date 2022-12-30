@@ -647,6 +647,7 @@ export class Text extends Morph {
         group: 'styling',
         after: ['document'],
         isStyleProp: true,
+        defaultValue: false,
         initialize () {
           this.acceptsDrops = !!this.document;
         }
