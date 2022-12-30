@@ -824,12 +824,20 @@ export class LivelyWorld extends World {
       pos = requester.globalBounds().center();
       if (requester.isWorld) pos = requester.visibleBounds().center();
       if (win = requester.getWindow()) {
-        await win.toggleFader(true);
+        fun.guardNamed('toggleFader-' + win.id, () => {
+          return win.toggleFader(true);
+        })();
         pos = win.globalBounds().center();
       }
     }
     const res = await doFn(pos);
-    if (win) win.toggleFader(false);
+    if (win) {
+      setTimeout(() => {
+        fun.guardNamed('toggleFader-' + win.id, () => {
+          return win.toggleFader(false);
+        })();
+      }, 300);
+    }
     return res;
   }
 
