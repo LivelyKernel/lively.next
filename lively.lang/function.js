@@ -4,7 +4,7 @@
  * Abstractions around first class functions like augmenting and inspecting
  * functions as well as to control function calls like dealing with asynchronous
  * control flows.
- * @module lively.lang/function 
+ * @module lively.lang/function
  */
 
 import { merge as objectMerge, safeToString } from './object.js';
@@ -21,7 +21,6 @@ function False () { /* `function() { return false; }` */ return function () { re
 function True () { /* `function() { return true; }` */ return function () { return true; }; }
 function notYetImplemented () { return function () { throw new Error('Not yet implemented'); }; }
 
-
 /**
  * Returns wether or not a given function is a "built in".
  * Built in functions are native to the runtime and their
@@ -29,8 +28,8 @@ function notYetImplemented () { return function () { throw new Error('Not yet im
  * @param { function } fn - The function to check for.
  * @returns { boolean }
  */
-function isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+function isNativeFunction (fn) {
+  return Function.toString.call(fn).indexOf('[native code]') !== -1;
 }
 
 // -=-=-=-=-=-
@@ -188,6 +187,54 @@ function delay (func, timeout/*, arg1...argN */) {
   return setTimeout(function delayed () {
     return __method.apply(__method, args);
   }, timeout);
+}
+
+/**
+ * Similar to `debounce` but instead of taking a custom time interval we
+ * instead wait until the execution of the wrapped function has finished.
+ * @param { function } func - The function to guard the execution for.
+ * @returns { function } The wrapped function.
+ */
+function guard (func) {
+  let active;
+  return function () {
+    if (!active) {
+      active = true;
+      const res = func();
+      if (res instanceof Promise) res.then(() => active = false);
+      else active = false;
+      return res;
+    }
+  };
+}
+
+const _guardByName = {};
+
+/**
+ * Like `guard` but remembers the last invocation via a `name`.
+ * Repeated calls to `guardNamed` with the same name will therefore be
+ * guarded as if we were calling the same guarded closure repeatedly.
+ * @param { string } name - The identifier to guard by.
+ * @param { function } func - The function to guard.
+ * @returns { function } The guarded function resolved via the identifier.
+ */
+function guardNamed (name, func) {
+  const store = _guardByName;
+  if (store[name]) return store[name];
+  function guardNamedWrapper () {
+    // ignore-in-doc, cleaning up
+    let res;
+    try {
+      res = func.apply(this, arguments);
+    } catch (err) {}
+    if (res instanceof Promise) {
+      res.finally(() => {
+        delete store[name];
+      });
+    } else delete store[name];
+    return res;
+  }
+  return store[name] = guard(guardNamedWrapper);
 }
 
 // these last two methods are Underscore.js 1.3.3 and are slightly adapted
@@ -769,9 +816,9 @@ function wrapperChain (method) {
 
 /**
  * Change an objects method for a single invocation.
- * @param { object } obj - 
- * @param { string } methodName - 
- * @param { function } replacement - 
+ * @param { object } obj -
+ * @param { string } methodName -
+ * @param { function } replacement -
  * @returns { object }
  * @example
  * var obj = {foo: function() { return "foo"}};
@@ -811,11 +858,11 @@ function once (func) {
  * Accepts multiple functions and returns an array of wrapped
  * functions. Those wrapped functions ensure that only one of the original
  * function is run (the first on to be invoked).
- * 
+ *
  * This is useful if you have multiple asynchronous choices of how the
  * control flow might continue but want to ensure that a continuation
  * is  only triggered once, like in a timeout situation:
- * 
+ *
  * ```js
  * function outerFunction(callback) {
  *   function timeoutAction() { callback(new Error('timeout!')); }
@@ -824,15 +871,15 @@ function once (func) {
  *   doSomethingAsync(otherAction);
  * }
  * ```
- * 
+ *
  * To ensure that `callback` only runs once you would normally have to write boilerplate like this:
- * 
+ *
  * ```js
  * var ran = false;
  * function timeoutAction() { if (ran) return; ran = true; callback(new Error('timeout!')); }
  * function otherAction() { if (ran) return; ran = true; callback(null, "All OK"); }
  * ```
- * 
+ *
  * Since this can get tedious an error prone, especially if more than two choices are involved, `either` can be used like this:
  * @example
  * function outerFunction(callback) {
@@ -860,9 +907,9 @@ const _eitherNameRegistry = {};
  * Works like [`either`](#) but usage does not require to wrap all
  * functions at once.
  * @see either
- * @param { string } name - 
+ * @param { string } name -
  * @param { function } func - The function to wrap.
- * @return { function } 
+ * @return { function }
  * @example
  * var log = "", name = "either-example-" + Date.now();
  * function a() { log += "aRun"; };
@@ -909,7 +956,7 @@ function fromString (funcOrString) {
  * Lifts `func` to become a `Closure`, that is that free variables referenced
  * in `func` will be bound to the values of an object that can be passed in as
  * the second parameter. Keys of this object are mapped to the free variables.
- * 
+ *
  * Please see [`Closure`](#) for a more detailed explanation and examples.
  * @param { function } func - The function to create a closure from.
  * @param { object } [optVarMapping] - The var mapping that defines how the free variables inside the closure are to be bound.
@@ -1197,7 +1244,7 @@ export {
 
   timeToRun, timeToRunN,
 
-  delay, throttle, debounce, throttleNamed, debounceNamed,
+  delay, throttle, debounce, throttleNamed, debounceNamed, guard, guardNamed,
 
   createQueue, workerWithCallbackQueue,
 

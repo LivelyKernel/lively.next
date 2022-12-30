@@ -2,6 +2,7 @@
 
 import { expect } from 'mocha-es6';
 import * as fun from '../function.js';
+import { promise } from 'lively.lang';
 
 describe('fun', function () {
   describe('accessing methods -- own and all', function () {
@@ -629,6 +630,18 @@ describe('fun', function () {
       expect(log).to.equal('bRun');
       // expect(fun).to.have.property("_eitherNameRegistry");
       // expect(fun._eitherNameRegistry).to.not.have.property(name);
+    });
+
+    it('can restrict that a function is only executed unless it has returned', async () => {
+      let log = '';
+      let name = 'guard-test-' + Date.now();
+      async function a () { await promise.delay(10), log += 'aRun'; }
+      async function b () { await promise.delay(10), log += 'bRun'; }
+      async function c () { await promise.delay(10), log += 'cRun'; }
+      (async () => fun.guardNamed(name, a)())();
+      (async () => fun.guardNamed(name, b)())();
+      await (async () => fun.guardNamed(name, c)())();
+      expect(log).to.equal('aRun');
     });
 
     it('can replace a function for one call', function () {
