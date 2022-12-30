@@ -566,9 +566,8 @@ export class Morph {
         set (value) {
           delete this.renderingState.inlineGridImportant;
           delete this.renderingState.inlineFlexImportant;
-          // TODO: rename this flag eventually
+          this.renderingState.hasCSSLayoutChange = true;
           if (value) {
-            this.renderingState.hasCSSLayoutChange = true;
             value.container = this;
           }
           this.setProperty('layout', value);
