@@ -7,7 +7,7 @@ import {
   LinearGradient
 } from 'lively.graphics';
 import { ViewModel, part } from 'lively.morphic';
-import { num, arr } from 'lively.lang';
+import { num, fun, arr } from 'lively.lang';
 import { connect, noUpdate, signal } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
 import { ColorStop } from './color-stops.cp.js';
@@ -174,7 +174,9 @@ export class GradientControlModel extends ViewModel {
       vector: rect(0),
       stops // do not share stops!!
     });
-    this.updateStopControls(this.gradientValue.stops);
+    fun.guardNamed('updateGradient', () => {
+      this.updateStopControls(this.gradientValue.stops);
+    })();
     this.gradientHalo.refresh(this);
   }
 
@@ -222,8 +224,6 @@ export class GradientControlModel extends ViewModel {
   }
 
   async updateStopControls (stops, haloOrEditor = this) {
-    if (haloOrEditor._active) return;
-    haloOrEditor._active = true;
     let stopControls = haloOrEditor.stopControls;
     // fixme: do not rely on the ordering of stop controls
     for (const stop of stops) {
@@ -239,7 +239,6 @@ export class GradientControlModel extends ViewModel {
     haloOrEditor.stopControls.forEach(stopControl => {
       stopControl.positionIn(haloOrEditor);
     });
-    haloOrEditor._active = false;
   }
 }
 
@@ -402,7 +401,9 @@ export class GradientHaloModel extends ViewModel {
   refresh (gradientControl, target) {
     const gradientValue = gradientControl.gradientValue;
     this.alignWithTarget();
-    gradientControl.updateStopControls(gradientValue.stops, this);
+    fun.guardNamed('updateGradient', () => {
+      gradientControl.updateStopControls(gradientValue.stops, this);
+    })();
   }
 
   placeStop (aStopControl) {
