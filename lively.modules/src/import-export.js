@@ -1,15 +1,22 @@
 import module from './module.js';
+import { obj } from 'lively.lang';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Changing exports of module
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function scheduleModuleExportsChange (System, moduleId, name, value, addNewExport) {
+export function scheduleModuleExportsChange (System, moduleId, nameOrValues, value, addNewExport) {
   let pendingExportChanges = System.get('@lively-env').pendingExportChanges;
   let rec = module(System, moduleId).record();
-  if (rec && (name in rec.exports || addNewExport)) {
+  if (rec && (nameOrValues in rec.exports || addNewExport)) {
     let pending = pendingExportChanges[moduleId] || (pendingExportChanges[moduleId] = {});
-    pending[name] = value;
+    if (obj.isString(nameOrValues)) {
+      pending[nameOrValues] = value;
+    } else {
+      for (let name in nameOrValues) {
+        pending[name] = nameOrValues[name];
+      }
+    }
   }
 }
 
