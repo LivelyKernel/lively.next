@@ -277,7 +277,7 @@ describe('component -> source reconciliation', function () {
   });
 
   it('works properly with associated source editors', async () => {
-    const sourceEditor = morph({ type: 'text', textString: initSource });
+    const sourceEditor = morph({ type: 'text', textString: initSource, readOnly: false });
     ComponentA._changeTracker.__defineGetter__('sourceEditor', function () { return sourceEditor; });
     ComponentB._changeTracker.__defineGetter__('sourceEditor', function () { return sourceEditor; });
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
@@ -301,7 +301,6 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    updatedSource;
     expect(updatedSource).to.includes(`const C = component({
   name: 'C',
   extent: pt(40, 40),
@@ -313,8 +312,7 @@ describe('component -> source reconciliation', function () {
     type: Label,
     name: 'foo',
     fill: Color.red,
-    fontColor: Color.green,
-    textAndAttributes: ['', null]
+    fontColor: Color.green
   }]
 });`);
   });
