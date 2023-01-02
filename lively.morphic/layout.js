@@ -744,7 +744,7 @@ export class TilingLayout extends Layout {
    * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
    */
   updateBoundsFor (morph) {
-    morph.renderingState.cssLayoutToMeasureWith = false;
+    morph.renderingState.cssLayoutToMeasureWith = null;
     const node = this.getNodeFor(morph);
     if (node) {
       if (morph === this.container) {

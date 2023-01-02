@@ -190,7 +190,7 @@ export default class Renderer {
     for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
       // the problem is that this remeasure will in turn lead to a next render
       // CSS layouts should be able to make conclusive renders in ONE pass
-      morph.renderingState.cssLayoutToMeasureWith = false;
+      morph.renderingState.cssLayoutToMeasureWith = null;
       if (affectedLayout.measureSubmorph) {
         affectedLayout.measureSubmorph(morph);
         this.morphsToRevisit.push(morph);
