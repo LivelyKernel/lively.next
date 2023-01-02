@@ -656,13 +656,6 @@ export default class Window extends Morph {
   activate () {
     if (this.isFaderActive()) return;
     this.targetMorph.onWindowActivated();
-    if (this.isActive()) {
-      this.bringToFront();
-      this.focus();
-      this.renderOnGPU = true;
-      this.relayoutWindowControls();
-      return this;
-    }
 
     this.master.whenApplied().then(() => {
       this.master = { auto: DefaultWindow };
