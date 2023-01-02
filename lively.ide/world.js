@@ -237,8 +237,8 @@ export class LivelyWorld extends World {
 
       morphsInWorld.forEach(m => m.scale = this.scaleFactor);
       morphsInWorld.forEach(m => {
-        if (!m.worldPosition) m.worldPosition = m.position;
-        m.position = this.worldToScreen(m.worldPosition);
+        if (!m.normalizedPosition) m.normalizedPosition = m.position;
+        m.position = this.worldToScreen(m.normalizedPosition);
       });
 
       const percentage = Number.parseInt((this.scaleFactor * 100));
@@ -250,8 +250,8 @@ export class LivelyWorld extends World {
     this.offsetY += domEvt.deltaY;
 
     morphsInWorld.forEach(m => {
-      if (!m.worldPosition) m.worldPosition = m.position;
-      m.position = this.worldToScreen(m.worldPosition);
+      if (!m.normalizedPosition) m.normalizedPosition = m.position;
+      m.position = this.worldToScreen(m.normalizedPosition);
     });
   }
 
@@ -261,7 +261,7 @@ export class LivelyWorld extends World {
     this.offsetY = 0;
     this.morphsInWorld.forEach(m => m.scale = 1);
     this.morphsInWorld.forEach(m => {
-      m.position = m.worldPosition || m.position;
+      m.position = m.normalizedPosition || m.position;
     });
 
     $world.get('world zoom indicator').updateZoomLevel(100);
