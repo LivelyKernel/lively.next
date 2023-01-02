@@ -1,3 +1,7 @@
+The renderer was partially developed in [this repository](https://github.com/linusha/lively-next-direct-renderer-dev), whose git history might provide helpful additional context.
+
+The first commit regarding the new renderer in this repository is 8069d4cf4edae59c51a4cc65995732d728615cc7.
+
 # High-level Concept
 
 When not using something like `vdom`, we need to execute DOM operations ourself. However, DOM operations are costly.
