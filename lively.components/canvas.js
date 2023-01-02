@@ -52,6 +52,7 @@ export class Canvas extends Morph {
 
   constructor (props = {}) {
     super(props);
+    this.env.renderer.renderMorph(this, false, true);
     connect(this, 'extent', this, 'onExtentChanged');
   }
 

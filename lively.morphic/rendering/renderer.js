@@ -267,8 +267,9 @@ export default class Renderer {
    * Returns a new DOM node for a morph.
    * @param {Morph} morph - The morph for which a DOM node should be generated.
    * @param {Boolean} force - If set to true will force a rerender of the morph, ignoring possibly cached nodes.
+   * @param {Boolean} immediatePatchSpecialProps - If set to true, will call patchSpecialProps on `node` for `morph` in this method. Some implementations of `patchSpecialProps` make assumptions that crash the renderer when they are called here.
    */
-  renderMorph (morph, force) {
+  renderMorph (morph, force, immediatePatchSpecialProps) {
     let node;
     node = this.renderMap.get(morph);
     if (force || !node) {
@@ -287,6 +288,7 @@ export default class Renderer {
       this.installWrapperNodeFor(morph, node);
     }
 
+    if (immediatePatchSpecialProps) morph.patchSpecialProps && morph.patchSpecialProps(node);
     morph.renderingState.hasStructuralChanges = true;
     return node;
   }
