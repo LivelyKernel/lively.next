@@ -1,4 +1,4 @@
-import { component, ViewModel, Icon, TilingLayout, Label } from 'lively.morphic';
+import { component, part, Morph, Text, ViewModel, Icon, TilingLayout } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 
 class WorldZoomIndicatorModel extends ViewModel {
@@ -44,8 +44,10 @@ class WorldZoomIndicatorModel extends ViewModel {
   }
 }
 
+// part(WorldZoomIndicator).openInWorld();
 export const WorldZoomIndicator = component({
-  type: Label,
+  type: Morph,
+  epiMorph: true,
   defaultViewModel: WorldZoomIndicatorModel,
   name: 'zoom indicator',
   borderColor: Color.rgb(23, 160, 251),
@@ -56,10 +58,9 @@ export const WorldZoomIndicator = component({
   halosEnabled: false,
   layout: new TilingLayout({
     axis: 'row',
-    axisAlign: 'left',
-    align: 'left',
+    axisAlign: 'center',
+    align: 'center',
     orderByIndex: true,
-    autoResize: true,
     hugContentsHorizontally: true,
     hugContentsVertically: true,
     wrapSubmorphs: false,
@@ -77,7 +78,7 @@ export const WorldZoomIndicator = component({
   position: pt(535, 438.4),
   submorphs: [
     {
-      type: Label,
+      type: Text,
       name: 'zoom icon label',
       fontSize: 14,
       fontColor: Color.white,
@@ -86,7 +87,7 @@ export const WorldZoomIndicator = component({
       textAndAttributes: Icon.textAttribute('magnifying-glass')
 
     }, {
-      type: Label,
+      type: Text,
       name: 'zoom factor label',
       fontColor: Color.rgb(253, 254, 254),
       nativeCursor: 'pointer',
