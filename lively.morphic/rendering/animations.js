@@ -177,7 +177,6 @@ export class PropertyAnimation {
       this.resolveCallback ? this.resolveCallback() : this.onFinish();
     }
     this.morph.makeDirty();
-    if (this.morph.owner && this.morph.owner.isText) this.morph.owner.invalidateTextLayout(true, true);
   }
 
   convertBounds (config) {
