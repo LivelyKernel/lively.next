@@ -422,8 +422,25 @@ class DOMTextMeasure {
       morph, renderTextLayerFn, styleOpts,
       styleOpts ? this.generateStyleKey(styleOpts) : this.generateStyleKey(morph),
       (textNode, textNodeOffsetLeft, textNodeOffsetTop) => {
-        const lineNode = renderLineFn(line);
-        const _ = textNode.appendChild(lineNode);
+        let lineNode, nodeForMorph, actualTextNode;
+
+        nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
+        actualTextNode = nodeForMorph && nodeForMorph.querySelector(`#${morph.id}textLayer`);
+        if (!line.lineNeedsRerender) {
+          const dataRowId = String(line.row);
+          lineNode = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
+        }
+
+        const needsToCreateNode = !lineNode || line.lineNeedsRerender;
+        let nodeToReplace;
+        if (needsToCreateNode) {
+          nodeToReplace = lineNode;
+          lineNode = renderLineFn(line);
+          textNode.appendChild(lineNode);
+        } else {
+          ({ top: textNodeOffsetTop, left: textNodeOffsetLeft } = actualTextNode.getBoundingClientRect());
+        }
+
         let result;
         if (line.stringSize > 10000) {
           result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
@@ -439,15 +456,9 @@ class DOMTextMeasure {
             offsetY - textNodeOffsetTop);
         }
 
-        const nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
-        if (!nodeForMorph) return result;
-
-        const actualTextNode = nodeForMorph.querySelector(`#${morph.id}textLayer`);
-        const dataRowId = lineNode.getAttribute('data-row');
-        const nodeForRenderedLineInActualLayer = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
-        if (nodeForRenderedLineInActualLayer) {
-          actualTextNode.replaceChild(lineNode, nodeForRenderedLineInActualLayer);
-        } else {
+        if (actualTextNode && nodeToReplace) {
+          actualTextNode.replaceChild(lineNode, nodeToReplace);
+        } else if (needsToCreateNode) {
           lineNode.remove();
         }
         return result;
