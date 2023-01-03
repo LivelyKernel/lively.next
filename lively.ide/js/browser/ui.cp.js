@@ -1,5 +1,5 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, ViewModel, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon,  component, part } from 'lively.morphic';
+import { ShadowObject, ViewModel, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -12,7 +12,7 @@ import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components
 
 async function positionForAnchor (context, anchor) {
   if (!context?.isText) return;
-  await context.whenRendered();
+  if (context.renderingState.needsRerender) context.env.forceUpdate();
   const bounds = context.charBoundsFromTextPosition(anchor.position);
   return bounds.rightCenter().addXY(5, 0);
 }
@@ -119,6 +119,8 @@ class ComponentEditControlModel extends ViewModel {
     let { view, editor, anchor, componentDescriptor } = this;
     if (!editor) return;
     if (!anchor) anchor = this.anchor = ensureAnchor(this);
+    if (anchor.position.row > editor.renderingState.lastVisibleRow ||
+        anchor.position.row < editor.renderingState.firstVisibleRow) return;
     editor.readOnly = componentDescriptor.isDirty();
     view.leftCenter = await positionForAnchor(editor, anchor);
   }
@@ -256,7 +258,7 @@ class ComponentEditButtonMorph extends Morph {
       wrapper.opacity = 1;
       wrapper.scale = 1;
     }, { duration: 300, easing: easings.outQuint });
-    await componentMorph.whenRendered();
+    // componentMorph.env.forceUpdate();
     componentMorph.openInWorld(componentMorph.globalPosition);
     this.remove();
     placeholder._initializing = false;
@@ -308,16 +310,23 @@ class ComponentEditButtonMorph extends Morph {
   }
 
   async positionInLine () {
-    if (!this.editor) return;
+    let { editor, anchor, componentDescriptor } = this;
+    if (!editor) return;
 
-    if (this.componentDescriptor._cachedComponent?.world()) {
+    if (componentDescriptor._cachedComponent?.world()) {
       return this.replaceWithPlaceholder();
     }
 
-    if (!this.anchor) this.anchor = ensureAnchor(this);
+    this.opacity = 0;
 
-    this.editor.readOnly = this.componentDescriptor.isDirty();
-    this.leftCenter = await positionForAnchor(this.editor, this.anchor);
+    if (!anchor) anchor = this.anchor = ensureAnchor(this);
+
+    if (anchor.position.row > editor.renderingState.lastVisibleRow ||
+        anchor.position.row < editor.renderingState.firstVisibleRow) return;
+
+    this.opacity = 1;
+    editor.readOnly = componentDescriptor.isDirty();
+    this.leftCenter = await positionForAnchor(editor, anchor);
   }
 
   reset () {
@@ -442,7 +451,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = err;
       statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
+      statusLabel.env.forceUpdate();
       this.master = FileStatusError; // eslint-disable-line no-use-before-define
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -458,7 +467,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = warning;
       statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
+      statusLabel.env.forceUpdate();
       this.master = FileStatusWarning; // eslint-disable-line no-use-before-define
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -474,7 +483,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, pathContainer } = this.ui;
       statusBox.textString = frozenMessage;
       statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
+      statusLabel.env.forceUpdate();
       this.master = FileStatusFrozen; // eslint-disable-line no-use-before-define
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
@@ -494,7 +503,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusLabel.opacity = 0;
       statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
-      await statusLabel.whenRendered();
+      statusLabel.env.forceUpdate();
       this.master = FileStatusSaved; // eslint-disable-line no-use-before-define
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
