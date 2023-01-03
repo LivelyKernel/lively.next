@@ -177,6 +177,27 @@ export class LivelyWorld extends World {
     // prevent default dragging behavior
   }
 
+  addMorphAt (submorph, index) {
+    const returnValue = super.addMorphAt(submorph, index);
+
+    if (!this.morphsInWorld.includes(submorph)) return returnValue;
+    submorph.positionOnCanvas = this.screenToWorld(submorph.position);
+    return returnValue;
+  }
+
+  onSubmorphChange (change, submorph) {
+    if (!this.morphsInWorld.includes(submorph)) return;
+
+    if (change.selector === 'addMorphAt') {
+      submorph.positionOnCanvas = this.screenToWorld(submorph.position);
+    }
+
+    if (change.meta && change.meta.metaInteraction) return;
+    if (change.type !== 'setter' || change.prop !== 'position') return;
+
+    submorph.positionOnCanvas = this.screenToWorld(change.value);
+  }
+
   worldToScreen (worldPoint) {
     const screenX = Number((worldPoint.x - this.offsetX) * this.scaleFactor);
     const screenY = Number((worldPoint.y - this.offsetY) * this.scaleFactor);
@@ -194,6 +215,7 @@ export class LivelyWorld extends World {
       .filter(m => !m.hasFixedPosition)
       .filter(m => !m.isWindow)
       .filter(m => !m.isHand)
+      .filter(m => !m.isHalo)
       .filter(m => !m.isTopBar)
       .filter(m => !m.isFlap)
       .filter(m => !m.isVersionChecker)
@@ -237,8 +259,9 @@ export class LivelyWorld extends World {
 
       morphsInWorld.forEach(m => m.scale = this.scaleFactor);
       morphsInWorld.forEach(m => {
-        if (!m.normalizedPosition) m.normalizedPosition = m.position;
-        m.position = this.worldToScreen(m.normalizedPosition);
+        m.withMetaDo({ metaInteraction: true }, () => {
+          m.position = this.worldToScreen(m.positionOnCanvas);
+        });
       });
 
       const percentage = Number.parseInt((this.scaleFactor * 100));
@@ -250,8 +273,9 @@ export class LivelyWorld extends World {
     this.offsetY += domEvt.deltaY;
 
     morphsInWorld.forEach(m => {
-      if (!m.normalizedPosition) m.normalizedPosition = m.position;
-      m.position = this.worldToScreen(m.normalizedPosition);
+      m.withMetaDo({ metaInteraction: true }, () => {
+        m.position = this.worldToScreen(m.positionOnCanvas);
+      });
     });
   }
 
@@ -261,9 +285,10 @@ export class LivelyWorld extends World {
     this.offsetY = 0;
     this.morphsInWorld.forEach(m => m.scale = 1);
     this.morphsInWorld.forEach(m => {
-      m.position = m.normalizedPosition || m.position;
+      m.withMetaDo({ metaInteraction: true }, () => {
+        m.position = m.positionOnCanvas;
+      });
     });
-
     $world.get('world zoom indicator').updateZoomLevel(100);
   }
 
