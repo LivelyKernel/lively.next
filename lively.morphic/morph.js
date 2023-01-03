@@ -277,6 +277,12 @@ export class Morph {
         }
       },
 
+      positionOnCanvas: {
+        group: 'geometry',
+        type: 'Point',
+        isStyleProp: true
+      },
+
       extent: {
         group: 'geometry',
         type: 'Point',
