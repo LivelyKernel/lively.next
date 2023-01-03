@@ -173,14 +173,7 @@ function drillDownPath (startNode, path) {
   let curr = startNode;
   while (path.length > 0) {
     const name = path.shift();
-    [curr] = query.queryNodes(curr, `./ ObjectExpression [
-         /:properties "*" [
-           Property [
-              /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${name}']
-           ]
-         ]
-       ]`);
+    curr = getNodeFromSubmorphs(curr, name);
     if (path.length > 0 && curr) curr = getProp(curr, 'submorphs')?.value;
     else break;
   }
@@ -230,16 +223,16 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
   // FIXME: use a name path instead of just the name, since a name alone ignore master scopes
   //        and can therefore easily resolve incorrectly
   let name, aMorph;
+  if (!aMorphOrName || aMorphOrName.isComponent) {
+    return query.queryNodes(parsedComponent, `
+  .//  ObjectExpression
+  `)[0];
+  }
+
   if (obj.isString(aMorphOrName)) name = aMorphOrName;
   else {
     aMorph = aMorphOrName;
     name = aMorph.name;
-  }
-
-  if (aMorph?.isComponent) {
-    return query.queryNodes(parsedComponent, `
-  .//  ObjectExpression
-  `)[0];
   }
 
   const morphDefs = query.queryNodes(parsedComponent, `
@@ -315,13 +308,12 @@ export function getMorphNode (componentScope, aMorph) {
   // often the morph node is just the properties node itself
   // but when the morph is derived from another master component
   // it is wrapped inside the part() call, which then needs to be returned
-  // FIXME: This also resolves morphs outside of the scope controlled by the component
-  //        This never leads to intentional results. We avoid that by utilizing the
-  //        owner chain of the morph.
   const path = getPathFromScopeMaster(aMorph).reverse();
   const ownerNode = drillDownPath(componentScope, path);
   if (!ownerNode) return null;
-  const submorphsNode = getProp(ownerNode, 'submorphs')?.value;
+  let submorphsNode;
+  if (ownerNode.type === 'ArrayExpression') submorphsNode = ownerNode;
+  else submorphsNode = getProp(ownerNode, 'submorphs')?.value;
   if (!submorphsNode) return null;
   return getNodeFromSubmorphs(submorphsNode, aMorph.name);
 }
