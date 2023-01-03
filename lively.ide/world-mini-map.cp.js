@@ -86,7 +86,7 @@ class MiniMapModel extends ViewModel {
       }
     }
 
-    const itemsToDraw = [...$world.morphsInWorld, new Morph({ position: pt(0, 0), extent: pt(1920, 1080), borderWidth: 5, borderColor: Color.back, positionOnCanvas: $world.screenToWorld(pt(0, 0)) })];
+    const itemsToDraw = [...$world.morphsInWorld, new Morph({ position: pt(0, 0), extent: pt(1920, 1080), borderWidth: 15, borderColor: Color.black, positionOnCanvas: $world.screenToWorld(pt(0, 0)), fill: Color.transparent })];
     itemsToDraw.forEach(m => {
       let xPos = ((m.positionOnCanvas.x + balanceNegativeLeft) / virtualWidth);
       xPos = 300 * xPos;
@@ -96,7 +96,7 @@ class MiniMapModel extends ViewModel {
       width = 300 * width;
       let height = m.extent.y / (virtualHeight + heightCorrection);
       height = this.view.height * height;
-      debugger;
+
       context.setTransform(1, 0, 0, 1, 0, 0); // reset context rotation
       if (m.rotation) {
         context.translate(xPos, yPos);
