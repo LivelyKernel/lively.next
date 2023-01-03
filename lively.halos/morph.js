@@ -19,6 +19,7 @@ import * as moduleManager from 'lively.modules';
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 
 import { show } from './markers.js';
+import { getPropertiesNode } from 'lively.ide/components/helpers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const partAccent = Color.rgba(171, 71, 188, 1);
@@ -509,11 +510,23 @@ class NameHaloItem extends HaloItem {
         // select the range instead
         let range;
         if (meta.path) {
-          const parsedModule = await moduleManager.module(meta.moduleId).ast();
-          debugger;
-          const scope = getComponentScopeFor(findComponentDef(parsedModule, meta.exportedName), target.owner);
-          const submorphsNode = getProp(scope, 'submorphs')?.value;
-          range = getMorphNode(submorphsNode, target);
+          let parsedModule = await moduleManager.module(meta.moduleId).ast();
+          let scope, submorphsNode;
+          while (true) {
+            scope = getPropertiesNode(findComponentDef(parsedModule, meta.exportedName));
+            submorphsNode = getProp(scope, 'submorphs')?.value;
+            range = submorphsNode ? getMorphNode(submorphsNode, target, true) : scope;
+            if (!range) {
+              // jump to the module where the next nested part is defined
+              // next possible policy:
+              if (!appliedMaster) break;
+              meta = appliedMaster[Symbol.for('lively-module-meta')];
+              parsedModule = await moduleManager.module(meta.moduleId).ast();
+              appliedMaster = appliedMaster.parent;
+              continue;
+            }
+            break;
+          }
         }
         $world.execCommand('open browser', {
           moduleName: meta.moduleId,
@@ -1178,7 +1191,7 @@ class ComponentHaloItem extends HaloItem {
       await insertComponentDefinition(target, variableName, selectedModule.name);
       const mod = moduleManager.module(selectedModule.name);
 
-      const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser', null);
+      const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser');
       browser.getWindow().activate();
       await browser.browse({
         packageName: mod.package().name,
