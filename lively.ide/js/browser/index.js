@@ -1039,7 +1039,7 @@ export class BrowserModel extends ViewModel {
       const startPos = sourceEditor.indexToPosition(range.start);
       const endPos = sourceEditor.indexToPosition(range.end);
       sourceEditor.selection = { start: startPos, end: endPos };
-      sourceEditor.scrollPositionIntoView(startPos, pt(0, sourceEditor.height / 3));
+      sourceEditor.centerRange();
     }
 
     if (textPosition) {
@@ -1064,6 +1064,7 @@ export class BrowserModel extends ViewModel {
 
   async selectPackageNamed (pName, selectPackageNode = false) {
     pName = pName || 'lively.morphic';
+    if (this.selectedPackage?.address === pName) return;
     const p = await this.systemInterface.getPackage(pName);
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
@@ -1133,6 +1134,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async selectModuleNamed (mName, animated = true) {
+    if (this.selectedModule?.url === mName) return;
     const columnView = this.ui.columnView;
     let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>
       mName === url || mName === nameInPackage);
