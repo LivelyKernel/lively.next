@@ -332,6 +332,9 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          target.layout = target.layout;
+        });
         this.ui.widthInput.enable();
         break;
       case ('fill'):
@@ -341,6 +344,9 @@ export class ShapeControlModel extends ViewModel {
         parent.layout.setResizePolicyFor(target, {
           width: 'fill',
           height: heightMode
+        });
+        parent.withMetaDo({ reconcileChanges: true }, () => {
+          parent.layout = parent.layout;
         });
         this.ui.widthInput.disable();
         break;
@@ -355,6 +361,9 @@ export class ShapeControlModel extends ViewModel {
         }
         target.layout.hugContentsHorizontally = true;
         target.layout.wrapSubmorphs = false;
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          target.layout = target.layout;
+        });
         this.ui.widthInput.disable();
     }
   }
