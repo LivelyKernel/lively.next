@@ -277,9 +277,9 @@ class ComponentEditButtonMorph extends Morph {
         componentDescriptor,
         declaration,
         anchor
-      },
-      opacity: 0
+      }
     }));
+    btnPlaceholder.bottom = -10;
     await btnPlaceholder.positionInLine();
     return btnPlaceholder;
   }
