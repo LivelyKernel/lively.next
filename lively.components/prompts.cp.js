@@ -823,7 +823,6 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
     ]
   }, 'button wrapper'), {
     name: 'prompt title',
-    extent: pt(355, 91.7),
     textAndAttributes: ['Confirm\n\
 ', {
       fontWeight: 'bold'
