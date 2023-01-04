@@ -180,6 +180,12 @@ export class PropertiesPanelModel extends ViewModel {
     this.models.textControl.deactivate();
   }
 
+  clearFocusIfRemoved () {
+    setTimeout(() => {
+      !this.targetMorph.owner && this.clearFocus();
+    });
+  }
+
   focusOn (aMorph) {
     $world.withAllSubmorphsDo(m => m.isPropertiesPanelPopup && m.close());
     if (aMorph.isWorld) return;
@@ -192,9 +198,13 @@ export class PropertiesPanelModel extends ViewModel {
       layoutControl, constraintsControl, embeddingControl,
       borderControl, effectsControl, backgroundControl, alignmentControl
     } = this.models;
-    if (this.targetMorph) disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+    if (this.targetMorph) {
+      disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+      disconnect(this.targetMorph, 'remove', this, 'clearFocusIfRemoved');
+    }
     this.targetMorph = aMorph;
     connect(aMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+    connect(aMorph, 'remove', this, 'clearFocusIfRemoved');
 
     this.toggleDefaultControls(true);
 
@@ -210,7 +220,6 @@ export class PropertiesPanelModel extends ViewModel {
       textControl.view.visible = false;
     }
     if (aMorph.owner?.isText) {
-      alignmentControl.view.visible = false;
       embeddingControl.view.visible = true;
       embeddingControl.focusOn(aMorph);
     }
