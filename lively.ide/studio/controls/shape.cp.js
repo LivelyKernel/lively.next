@@ -420,8 +420,8 @@ export class ShapeControlModel extends ViewModel {
     }
   }
 
-  changeRotation (newRot) { this.updateTarget('rotation', num.toRadians(newRot)); }
-  changeClipMode (newClipMode) { this.updateTarget('clipMode', newClipMode); }
+  changeRotation (newRot) { this.confirm('rotation', num.toRadians(newRot)); }
+  changeClipMode (newClipMode) { this.confirm('clipMode', newClipMode); }
   changeBorderRadius (rad) {
     this.confirm('borderRadius', rad);
     this.withoutBindingsDo(() => this.refreshBorderRadiusSides());
