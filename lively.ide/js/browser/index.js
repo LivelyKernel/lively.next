@@ -1651,11 +1651,11 @@ export class BrowserModel extends ViewModel {
       name: 'edit component btn',
       componentDescriptor,
       epiMorph: true,
-      opacity: 0,
       declaration
     });
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     editor.addMorph(btn);
+    btn.bottom = -10; // in order to hide it away from the visible area
     await btn.positionInLine();
     return btn;
   }
