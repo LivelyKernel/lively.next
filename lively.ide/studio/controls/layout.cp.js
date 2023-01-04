@@ -196,7 +196,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       });
     }
     this.popup = false;
-    
+
     signal(this, 'layout changed');
   }
 
@@ -263,7 +263,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
           paddingBottom.number)
       });
     });
-    this.update();
+    this.ui.containerPlaceholder.previewLayout(this.targetMorph.layout);
   }
 
   update () {
