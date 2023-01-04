@@ -809,10 +809,12 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   submorphs: [add({
     type: RadioButtonGroup,
     layout: new TilingLayout({
-      hugContentsVertically: true,
-      hugContentsHorizontally: true,
       align: 'center',
-      axisAlign: 'center'
+      axisAlign: 'center',
+      hugContentsHorizontally: true,
+      hugContentsVertically: true,
+      orderByIndex: true,
+      spacing: 9
     }),
     name: 'choices',
     extent: pt(387, 118),
@@ -821,7 +823,17 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
       part(ChoiceButtonUnselected),
       part(ChoiceButtonSelected)
     ]
-  }, 'button wrapper')]
+  }, 'button wrapper'), {
+    name: 'prompt title',
+    extent: pt(355,91.7),
+    textAndAttributes: ['Confirm\n\
+', {
+      fontWeight: 'bold'
+    }, 'An appropriate message for the user that helps them to understand the situation!', {
+      fontSize: 17,
+      fontWeight: 'normal'
+    }]
+  }]
 });
 
 const TextPrompt = component(ConfirmPrompt, {
