@@ -317,14 +317,13 @@ class ComponentEditButtonMorph extends Morph {
       return this.replaceWithPlaceholder();
     }
 
-    this.opacity = 0;
-
     if (!anchor) anchor = this.anchor = ensureAnchor(this);
 
     if (anchor.position.row > editor.renderingState.lastVisibleRow ||
-        anchor.position.row < editor.renderingState.firstVisibleRow) return;
+        anchor.position.row < editor.renderingState.firstVisibleRow) {
+      return;
+    }
 
-    this.opacity = 1;
     editor.readOnly = componentDescriptor.isDirty();
     this.leftCenter = await positionForAnchor(editor, anchor);
   }
