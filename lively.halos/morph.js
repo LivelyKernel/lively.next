@@ -650,13 +650,18 @@ class CloseHaloItem extends HaloItem {
     };
   }
 
+  discard (aMorph) {
+    if (aMorph.isComponent) aMorph.remove();
+    else aMorph.abandon();
+  }
+
   update () {
     const { halo } = this; const o = halo.target.owner;
     o.undoStart('close-halo');
     this.withMetaDo({ reconcileChanges: true }, () => {
       halo.target.selectedMorphs
-        ? halo.target.selectedMorphs.forEach(m => m.abandon())
-        : halo.target.abandon();
+        ? halo.target.selectedMorphs.forEach(m => this.discard(m))
+        : this.discard(halo.target);
     });
     o.undoStop('close-halo');
     const world = halo.world();
