@@ -45,13 +45,13 @@ class MiniMapModel extends ViewModel {
 
     const xPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.x);
     const xPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.x + m.width);
-    const maxX = max(xPositionsForMax);
-    const minX = min(xPositionsForMin);
+    const maxX = max(xPositionsForMax) || 0;
+    const minX = min(xPositionsForMin) || 0;
 
     const yPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.y);
     const yPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.y + m.height);
-    const maxY = max(yPositionsForMax);
-    const minY = min(yPositionsForMin);
+    const maxY = max(yPositionsForMax) || 0;
+    const minY = min(yPositionsForMin) || 0;
 
     const realCutoffs = {
       top: Math.min(defaultScreenCutoffs.top, minY),
