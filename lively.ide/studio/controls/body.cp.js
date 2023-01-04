@@ -85,6 +85,8 @@ export class BodyControlModel extends PropertySectionModel {
    */
   ensureDynamicControls () {
     this.dynamicControls.forEach(m => m.remove());
+    // FIXME: adjusting the resize policies should automatically cause an override
+    this.view.layout = this.view.layout; // ensure the layout is overridden
     for (const prop in this.propConfig) { // eslint-disable-line no-use-before-define
       const { resetValue, accessor } = this.propConfig[prop]; // eslint-disable-line no-use-before-define
       if (!obj.equals(resetValue, this.targetMorph[accessor])) {
