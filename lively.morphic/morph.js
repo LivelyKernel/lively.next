@@ -280,7 +280,24 @@ export class Morph {
       positionOnCanvas: {
         group: 'geometry',
         type: 'Point',
-        isStyleProp: true
+        isStyleProp: true,
+        get () {
+          let parentFound = false;
+          if (this._positionOnCanvas) return this._positionOnCanvas;
+          else {
+            this.ownerChain().forEach(parent => {
+              if (parentFound) return;
+              if (parent._positionOnCanvas) {
+                const posOnCanvasOfParent = parent._positionOnCanvas;
+                const globalPositionOfParent = parent.globalPosition;
+                const ownGlobalPosition = this.globalPosition;
+                const diff = pt(globalPositionOfParent.x - ownGlobalPosition.x, globalPositionOfParent.y - ownGlobalPosition.y);
+                parentFound = pt(posOnCanvasOfParent.x - diff.x, posOnCanvasOfParent.y - diff.y);
+              }
+            });
+          }
+          return parentFound;
+        }
       },
 
       extent: {
@@ -1604,6 +1621,8 @@ export class Morph {
   }
 
   addMorph (submorph, insertBeforeMorph) {
+    this.renderingState.hasStructuralChanges = true;
+    submorph._positionOnCanvas = null;
     // insert at right position in submorph list, according to insertBeforeMorph
     const submorphs = this.submorphs;
     const insertBeforeMorphIndex = insertBeforeMorph

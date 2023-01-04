@@ -181,7 +181,7 @@ export class LivelyWorld extends World {
     const returnValue = super.addMorphAt(submorph, index);
 
     if (!this.morphsInWorld.includes(submorph)) return returnValue;
-    submorph.positionOnCanvas = this.screenToWorld(submorph.position);
+    submorph._positionOnCanvas = this.screenToWorld(submorph.position);
     return returnValue;
   }
 
@@ -189,13 +189,13 @@ export class LivelyWorld extends World {
     if (!this.morphsInWorld.includes(submorph)) return;
 
     if (change.selector === 'addMorphAt') {
-      submorph.positionOnCanvas = this.screenToWorld(submorph.position);
+      submorph._positionOnCanvas = this.screenToWorld(submorph.position);
     }
 
     if (change.meta && change.meta.metaInteraction) return;
     if (change.type !== 'setter' || change.prop !== 'position') return;
 
-    submorph.positionOnCanvas = this.screenToWorld(change.value);
+    submorph._positionOnCanvas = this.screenToWorld(change.value);
   }
 
   worldToScreen (worldPoint) {
