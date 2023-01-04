@@ -32,10 +32,16 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   static for (generatorFunction, meta, prev) {
-    const c = prev?._cachedComponent;
     const newDescr = super.for(generatorFunction, meta);
-    if (c) {
-      newDescr.ensureComponentMorphUpToDate(c);
+    if (prev) {
+      prev.stylePolicy = newDescr.stylePolicy;
+      let c;
+      if (c = prev._cachedComponent) {
+        delete prev._cachedComponent;
+        prev.ensureComponentMorphUpToDate(c);
+      }
+      prev.refreshDependants();
+      return prev;
     }
     return newDescr;
   }
@@ -59,6 +65,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       c = morph(this.stylePolicy.asBuildSpec()),
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       c.isComponent = true,
+      c._context = $world,
       alive && withAllViewModelsDo(c, m => m.viewModel.attach(m)),
       c.name = string.decamelize(this.componentName),
       this._cachedComponent = c
