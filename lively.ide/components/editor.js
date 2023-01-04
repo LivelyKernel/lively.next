@@ -63,6 +63,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     let c = this._cachedComponent;
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
+      c.hasFixedPosition = false, // always ensure components are not rendered fixed (this fucks up the halo interface)
       c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
       c.isComponent = true,
       c._context = $world,
