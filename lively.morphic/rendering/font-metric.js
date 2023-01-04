@@ -426,10 +426,8 @@ class DOMTextMeasure {
 
         nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
         actualTextNode = nodeForMorph && nodeForMorph.querySelector(`#${morph.id}textLayer`);
-        if (!line.lineNeedsRerender) {
-          const dataRowId = String(line.row);
-          lineNode = Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
-        }
+        const dataRowId = String(line.row);
+        lineNode = actualTextNode && Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
 
         const needsToCreateNode = !lineNode || line.lineNeedsRerender;
         let nodeToReplace;
