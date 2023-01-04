@@ -725,6 +725,13 @@ export class Rectangle {
     return this.maxY();
   }
 
+  toPoints () {
+    const { x, y, width, height } = this;
+    const fromPoint = new Point(x, y);
+    const toPoint = new Point(width + x, height + y);
+    return [fromPoint, toPoint];
+  }
+
   toInsetTuple () {
     return [this.left(), this.top(), this.right(), this.bottom()];
   }
