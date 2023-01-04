@@ -132,10 +132,13 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     const layout = this.targetMorph.layout;
     const { spacingInput, totalPaddingInput } = this.ui;
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.layout = layout.with({
-        padding: Rectangle.inset(totalPaddingInput.number),
+      let changes = {
         spacing: spacingInput.number
-      });
+      };
+      if (!totalPaddingInput.isMixed) {
+        changes.padding = Rectangle.inset(totalPaddingInput.number);
+      }
+      this.targetMorph.layout = layout.with(changes);
     });
   }
 
