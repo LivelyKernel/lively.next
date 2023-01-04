@@ -577,7 +577,7 @@ export class NumberWidget extends Morph {
 
   onChange (change) {
     super.onChange(change);
-    if (change.prop === 'extent' && !this.autofit) this.relayout();
+    if (change.prop === 'extent' && !this.autofit) this.relayout(true);
   }
 
   relayout (fromScrubber) {
