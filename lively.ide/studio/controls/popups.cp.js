@@ -419,6 +419,21 @@ export class PositionPopupModel extends PopupModel {
 const ShadowPopup = component(DarkPopupWindow, {
   defaultViewModel: ShadowPopupModel,
   name: 'shadow popup',
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['header menu', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['footer', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    wrapSubmorphs: false
+  }),
   extent: pt(241.4, 191),
   submorphs: [{
     name: 'header menu',
@@ -663,15 +678,32 @@ const PositionPopupLight = component(PopupWindow, {
 
 const ShadowPopupLight = component(ShadowPopup, {
   name: 'shadow popup/light',
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['header menu', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['footer', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    wrapSubmorphs: false
+  }),
   master: PopupWindow,
   submorphs: [
     {
       name: 'shadow controls',
+      extent: pt(248.6, 76.6),
       layout: new TilingLayout({
+        align: 'right',
         justifySubmorphs: 'spaced',
         orderByIndex: true,
-        padding: rect(52, 10, -17, 0),
-        spacing: 10
+        padding: rect(52, 10, -10, 0),
+        spacing: 13
       }),
       submorphs: [
         {
