@@ -133,6 +133,24 @@ class MiniMapModel extends ViewModel {
       context.strokeStyle = m.borderColor.top; // this assumes that the border has the same color on all sides
       context.fillStyle = m.fill;
 
+      if (m.fill.isGradient) {
+        if (m.fill.type === 'linearGradient') {
+          const vec = m.fill.vector.toPoints();
+          const grad = context.createLinearGradient((vec[0].x * width) + xPos, (vec[0].y * height) + yPos, (width * vec[1].x) + xPos, (height * vec[1].y) + yPos);
+          m.fill.stops.forEach(stop => grad.addColorStop(stop.offset, stop.color));
+          context.fillStyle = grad;
+        }
+        if (m.fill.type === 'radialGradient') {
+          // Canvas2D does only support radial gradiants with two exact circles
+          // since we allow for arbitrary "circles", i.e., ellipsis, this does not map well
+          // since lossy translating the gradient would be a bit complicated for doubtful payoff
+          // we just display the same colors used in the radial gradiant as linear ¯\_(ツ)_/¯
+          const grad = context.createLinearGradient(xPos, yPos, width + xPos, height + yPos);
+          m.fill.stops.forEach(stop => grad.addColorStop(stop.offset, stop.color));
+          context.fillStyle = grad;
+        }
+      }
+
       if (m.isEllipse) {
         context.ellipse(xPos + (width / 2), yPos + (height / 2), width / 2, height / 2, 0, 0, 2 * Math.PI);
         context.fill();
