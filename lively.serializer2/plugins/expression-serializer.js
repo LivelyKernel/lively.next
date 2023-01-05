@@ -470,6 +470,8 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     skipAttributes, skipUnchangedFromDefault,
     valueTransform, keepConnections, objToPath
   } = opts;
+  const { properties } = morph.propertiesAndPropertySettings();
+
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
     if (masterInScope && !morph.__only_serialize__.includes(name)) continue;
@@ -481,6 +483,17 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       objToPath.set(val, path ? path + '.' + name : name);
     }
 
+    let folded;
+    if (styleProto && (folded = properties[name].foldable)) {
+      let unchanged = true;
+      for (let subProp of folded) {
+        if (!obj.equals(v[subProp], styleProto[name]?.[subProp] || styleProto[name])) {
+          unchanged = false;
+          break;
+        }
+      }
+      if (unchanged) continue;
+    }
     if (name !== 'name' && styleProto && obj.equals(v, styleProto[name])) continue;
     if (name === 'master') {
       const val = handleOverriddenMaster(morph.master, opts);
