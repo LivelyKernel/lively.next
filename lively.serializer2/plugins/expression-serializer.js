@@ -472,12 +472,11 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   } = opts;
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
-    v = v?.valueOf ? v.valueOf() : v;
     if (masterInScope && !morph.__only_serialize__.includes(name)) continue;
     if (name === 'textAndAttributes') continue;
 
     // store away just in case
-    const val = valueTransform(name, morph[name]);
+    const val = valueTransform(name, v);
     if (keepConnections && val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
