@@ -89,6 +89,7 @@ export function getTextAttributesExpr (textMorph) {
 export function getValueExpr (prop, value, depth = 0) {
   let valueAsExpr; let bindings = {};
   if (value && value.isPoint) value = value.roundTo(0.1);
+  if (obj.isString(value) || obj.isBoolean(value)) value = JSON.stringify(value);
   if (prop === 'rotation') {
     value = `num.toRadians(${num.toDegrees(value).toFixed(1)})`;
     bindings['lively.lang'] = ['num'];
