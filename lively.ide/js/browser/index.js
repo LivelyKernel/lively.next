@@ -1631,7 +1631,8 @@ export class BrowserModel extends ViewModel {
     });
   }
 
-  toggleComponentControlsOnOccur () {
+  toggleComponentControlsOnOccur (arg) {
+    if (arg?.isTextSnippet) return;
     if (this.ui.sourceEditor.pluginFind(plugin => plugin.isOccurPlugin)) {
       this.hideComponentEditButtons();
     } else this.showComponentEditButtons();
