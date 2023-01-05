@@ -1145,7 +1145,8 @@ export class BrowserModel extends ViewModel {
   }
 
   async selectModuleNamed (mName, animated = true) {
-    if (this.selectedModule?.url === mName) return;
+    if (this.state.selectedModule?.url === mName) return;
+    this.state.selectedModule = { url: mName };
     const columnView = this.ui.columnView;
     let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>
       mName === url || mName === nameInPackage);
