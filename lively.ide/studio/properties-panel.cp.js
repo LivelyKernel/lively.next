@@ -182,7 +182,7 @@ export class PropertiesPanelModel extends ViewModel {
 
   clearFocusIfRemoved () {
     setTimeout(() => {
-      !this.targetMorph.owner && this.clearFocus();
+      if (this.targetMorph && !this.targetMorph.owner) { this.clearFocus(); }
     });
   }
 
