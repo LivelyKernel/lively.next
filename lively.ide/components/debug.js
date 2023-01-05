@@ -34,7 +34,7 @@ function generateValueFor (propSpec) {
     case 'Boolean': return !!num.random(0, 1);
     case 'String': return string.newUUID();
     case 'Enum': return arr.shuffle(values)[0];
-    case 'Color': Color.random();
+    case 'Color': return Color.random();
     // ColorGradient,
     // Layout,
     case 'Rectangle': return Rectangle.fromAny(Point.random(pt(500, 500)), Point.random(pt(500, 500)));
