@@ -199,6 +199,10 @@ export const WorldMiniMap = component({
   defaultViewModel: MiniMapModel,
   extent: pt(100, 100),
   fill: Color.transparent,
-  borderWidth: 1,
-  borderColor: Color.black
+  borderWidth: 0,
+  dropShadow: {
+    blur: 10,
+    color: Color.black.withA(0.5)
+
+  }
 });
