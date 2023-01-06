@@ -9,7 +9,7 @@ class Tooltip extends ViewModel {
     return {
       expose: {
         get () {
-          return ['description', 'softRemove', 'update'];
+          return ['description', 'softRemove', 'update', 'isTooltip'];
         }
       },
       description: {
@@ -23,6 +23,10 @@ class Tooltip extends ViewModel {
         }
       }
     };
+  }
+
+  get isTooltip () {
+    return true;
   }
 
   update (target) {
