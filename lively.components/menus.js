@@ -209,6 +209,10 @@ export class Menu extends Morph {
     };
   }
 
+  get isMenu () {
+    return true;
+  }
+
   startFinish () {
     if (this.ownerMenu) this.ownerMenu.startFinish();
     this._waitingForFinish = true;

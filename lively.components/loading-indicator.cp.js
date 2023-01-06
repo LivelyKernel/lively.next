@@ -102,7 +102,7 @@ class LoadingIndicatorModel extends ViewModel {
 
       expose: {
         get () {
-          return ['status', 'label', 'progress'];
+          return ['status', 'label', 'progress', 'isLoadingIndicator'];
         }
       },
 
@@ -117,6 +117,10 @@ class LoadingIndicatorModel extends ViewModel {
         }
       }
     };
+  }
+
+  get isLoadingIndicator () {
+    return true;
   }
 
   onHoverIn () { this.ui.closeButton.opacity = 1; }

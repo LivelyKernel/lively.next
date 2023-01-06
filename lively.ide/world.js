@@ -191,15 +191,24 @@ export class LivelyWorld extends World {
 
   get morphsInWorld () {
     return this.submorphs
+      .filter(m => !m.hasFixedPosition)
       .filter(m => !m.isWindow)
       .filter(m => !m.isHand)
       .filter(m => !m.isTopBar)
-      .filter(m => !m.isSidebarFlap)
+      .filter(m => !m.isFlap)
       .filter(m => !m.isVersionChecker)
+      .filter(m => !m.isSearchWidget)
       .filter(m => !m.isStatusMessage)
       .filter(m => !m.isSceneGraphPanel)
+      .filter(m => !m.isLoadingIndicator)
       .filter(m => !m.isPropertiesPanel)
-      .filter(m => !m.isZoomIndicator);
+      .filter(m => !m.isZoomIndicator)
+      .filter(m => !m.isMiniMap)
+      .filter(m => !m.isMenu)
+      .filter(m => !m.isTooltip)
+      .filter(m => !m.isHaloItem)
+      .filter(m => !m.styleClasses.includes('HaloPreview'))
+      .filter(m => !m.isPrompt);
   }
 
   onMouseWheel (evt) {
