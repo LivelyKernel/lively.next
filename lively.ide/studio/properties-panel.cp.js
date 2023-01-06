@@ -191,7 +191,7 @@ export class PropertiesPanelModel extends ViewModel {
     const {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, embeddingControl,
-      borderControl, effectsControl, backgroundControl
+      borderControl, effectsControl, backgroundControl, alignmentControl
     } = this.models;
     if (this.targetMorph) disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
     this.targetMorph = aMorph;
