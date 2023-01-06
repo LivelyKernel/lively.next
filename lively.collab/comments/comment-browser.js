@@ -159,7 +159,7 @@ export class CommentBrowserModel extends ViewModel {
     });
     if (earlyReturn) return false;
     const topbar = $world.getSubmorphNamed('lively top bar');
-    if (topbar) topbar.uncolorCommentBrowserButton();
+    if (topbar) topbar.colorTopbarButton('comment browser button', false);
     let badge = $world.get('comment count badge');
     if (badge) badge.abandon();
     this.removeAllCommentIndicators();

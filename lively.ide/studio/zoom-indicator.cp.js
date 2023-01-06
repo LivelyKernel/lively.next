@@ -34,13 +34,9 @@ class WorldZoomIndicatorModel extends ViewModel {
   }
 
   relayout () {
-    if (this.world().propertiesPanel && this.world().propertiesPanel.owner) {
-      this.view.bottomLeft = this.world().visibleBoundsExcludingTopBar().bottomLeft()
-        .withX(this.world().propertiesPanel.left - 10 - this.view.width)
-        .subXY(0, 10);
-    } else {
-      this.view.bottomRight = this.world().visibleBounds().bottomRight().subXY(10, 10);
-    }
+    const { view } = this;
+    if ($world.activeSideBars.includes('properties panel')) view.position = pt($world.get('properties panel').left - 10 - view.width, $world.extent.y - 10 - view.height);
+    else this.view.position = pt($world.extent.x - view.width - 10, $world.extent.y - view.height - 10);
   }
 }
 
@@ -52,7 +48,7 @@ export const WorldZoomIndicator = component({
   name: 'zoom indicator',
   borderColor: Color.rgb(23, 160, 251),
   borderRadius: 5,
-  extent: pt(135.5, 25.1),
+  extent: pt(65, 27),
   fill: Color.rgba(0, 0, 0, 0.6),
   hasFixedPosition: true,
   halosEnabled: false,
