@@ -55,7 +55,7 @@ async function notify (target, msg) {
   notification.remove();
 }
 
-export var UserUI = {
+export const UserUI = {
 
   getCurrentUser () {
     return UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL);
@@ -129,7 +129,7 @@ export var UserUI = {
 
   hideUserFlap (world = $world) {
     world.submorphs
-      .filter(ea => ea.name === 'user flap' && ea.owner == world)
+      .filter(ea => ea.name === 'user flap' && ea.owner === world)
       .forEach(ea => ea.remove());
   },
 
@@ -171,7 +171,7 @@ class UserWidget extends Morph {
   run (withOverlay = true, world = $world, user) {
     // await this.copy().run()
     if (withOverlay) {
-      var overlay = world.addMorph({
+      const overlay = world.addMorph({ // eslint-disable-line no-unused-vars
         name: this.name + ' overlay',
         hasFixedPosition: true,
         grabbable: false,
@@ -326,7 +326,6 @@ export class UserInfoWidget extends UserWidget {
   async trySave () {
     const {
       user, ui: {
-        userNameInput,
         emailInput,
         passwordInput,
         passwordInput2
@@ -335,13 +334,12 @@ export class UserInfoWidget extends UserWidget {
 
     if (!user) return this.showError('no user object');
 
-    const username = userNameInput.input;
     const email = emailInput.input;
     const password = passwordInput.input;
     const password2 = passwordInput2.input;
 
     // if (!email && !password && !password2) return this.world().inform("Nothing changed", {requester: this});
-    if (user.email == email && !password && !password2) return signal(this, 'resolved', user);
+    if (user.email === email && !password && !password2) return signal(this, 'resolved', user);
 
     if (password || password2) {
       if (password !== password2) return this.world().inform('Passwords do not match!', { requester: this });
@@ -415,8 +413,8 @@ export class LoginWidget extends UserWidget {
       gapi.auth2.init({
         client_id: 'CLIENT_ID.apps.googleusercontent.com'
       });
-      const GoogleAuth = gapi.auth2.getAuthInstance();
-      const user = await GoogleAuth.signIn();
+      // const GoogleAuth = gapi.auth2.getAuthInstance();
+      // const user = await GoogleAuth.signIn();
     });
   }
 
@@ -876,9 +874,6 @@ export class UserFlap extends Morph {
     const label = this.getSubmorphNamed('label');
     const menu = this.getSubmorphNamed('user menu');
     const avatar = this.getSubmorphNamed('avatar');
-    const login = this.getSubmorphNamed('login item');
-    const logout = this.getSubmorphNamed('logout item');
-    const progile = this.getSubmorphNamed('profile item');
     let userName = String(user.name);
     const gravatar = resource('https://s.gravatar.com/avatar').join(string.md5(user.email || '')).withQuery({ s: 160 }).url;
     await this.ensureMenu();

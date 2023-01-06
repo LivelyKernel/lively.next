@@ -8,7 +8,7 @@ import { joinPath } from 'lively.lang/string.js';
 // This needs to be pulled apart.
 const baseURL = typeof window !== 'undefined' && window.SERVER_URL ||
                 typeof System !== 'undefined' && System.baseURL ||
-                typeof document !== 'undefined' && document.location.origin || 
+                typeof document !== 'undefined' && document.location.origin ||
                 typeof process !== 'undefined' && 'file://' + process.env.lv_next_dir;
 
 if (typeof $world !== 'undefined') {
