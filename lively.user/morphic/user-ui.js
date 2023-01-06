@@ -13,6 +13,8 @@ import { ClientUser } from 'lively.user/index.js';
 // das kostet was??? 99 euro ey.
 // import * as AppleID from "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
 import ObjectPackage from 'lively.classes/object-classes.js';
+import { defaultPropertiesPanelWidth } from 'lively.ide/studio/properties-panel.cp.js';
+import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } from 'lively.ide/studio/sidebar-flap.js';
 
 // adoptObject(that, UserInfoWidget)
 // adoptObject(that, LoginWidget)
@@ -109,10 +111,10 @@ export var UserUI = {
       versionChecker.openInWorld();
       versionChecker.relayout();
       versionChecker.checkVersion();
-      const { Flap } = await System.import('lively.ide/studio/sidebar-flap.cp.js');
-      const sceneGraphFlap = part(Flap, { viewModel: { target: 'scene graph' } }).openInWorld();
+      const { Flap } = await System.import('lively.ide/studio/flap.cp.js');
+      const sceneGraphFlap = part(Flap, { viewModel: { target: 'scene graph', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
       connect(sceneGraphFlap, 'position', versionChecker, 'relayout');
-      part(Flap, { viewModel: { target: 'properties panel' } }).openInWorld();
+      const propertiesPanelFlap = part(Flap, { viewModel: { target: 'properties panel', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
     })();
     return topBar;
   },
