@@ -10,6 +10,7 @@ import { UserRegistry } from 'lively.user';
 import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
+import { WorldMiniMap } from '../world-mini-map.cp.js';
 
 export class FastLoadToggler extends Morph {
   static get properties () {
@@ -178,7 +179,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorCommentBrowserButton', 'uncolorCommentBrowserButton', 'isTopBar']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorTopbarButton', 'isTopBar']; } },
       bindings: {
         get () {
           return [
@@ -246,6 +247,10 @@ export class TopBarModel extends ViewModel {
 
     if (evt.targetMorph.name === 'comment browser button') {
       this.toggleCommentBrowser();
+    }
+
+    if (evt.targetMorph.name === 'mini map button') {
+      this.toggleMiniMap();
     }
   }
 
@@ -336,24 +341,30 @@ export class TopBarModel extends ViewModel {
     });
   }
 
-  colorCommentBrowserButton () {
-    const label = this.ui.commentBrowserButton;
-    label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
-  }
-
-  uncolorCommentBrowserButton () {
-    const label = this.ui.commentBrowserButton;
-    label.master = TopBarButton; // eslint-disable-line no-use-before-define
+  colorTopbarButton (buttonName, active) {
+    this.view.get(buttonName).master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
   }
 
   toggleCommentBrowser () {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
     if (commentBrowser) {
-      this.uncolorCommentBrowserButton();
+      this.colorTopbarButton('comment browser button', false);
       commentBrowser.getWindow().close();
     } else {
-      this.colorCommentBrowserButton();
+      this.colorTopbarButton('comment browser button', true);
       part(CommentBrowser).openInWindow();
+    }
+  }
+
+  toggleMiniMap () {
+    const miniMap = $world.getSubmorphNamed('world mini map');
+    if (miniMap) {
+      this.colorTopbarButton('mini map button', false);
+      miniMap.remove();
+    } else {
+      this.colorTopbarButton('mini map button', true);
+      const miniMap = part(WorldMiniMap).openInWorld();
+      miniMap.relayout();
     }
   }
 
@@ -1371,6 +1382,12 @@ const TopBar = component({
         padding: rect(3, 0, -3, 0),
         textAndAttributes: Icon.textAttribute('comment-alt'),
         tooltip: 'Toggle Comment Browser'
+      }),
+      part(TopBarButton, {
+        name: 'mini map button',
+        padding: rect(3, 0, -3, 0),
+        textAndAttributes: Icon.textAttribute('map-location-dot'),
+        tooltip: 'Toggle Mini Map'
       })]
   },
   {

@@ -10,7 +10,7 @@ class MiniMapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isMiniMap', 'drawMorphs'];
+          return ['isMiniMap', 'drawMorphs', 'relayout'];
         }
       }
     };
@@ -24,13 +24,20 @@ class MiniMapModel extends ViewModel {
     return true;
   }
 
+  relayout () {
+    const { view } = this;
+    if ($world.activeSideBars.includes('properties panel')) view.position = pt($world.get('properties panel').left - 10 - view.width, $world.extent.y - 10 - view.height);
+    else view.position = pt($world.right - 10 - view.width, $world.extent.y - 10 - view.height);
+  }
+
   viewDidLoad () {
-    // TODO: maybe this should be definable through the config?
-    this.ratio = 16 / 9;
+    const worldBounds = $world.windowBounds();
+    this.ratio = worldBounds.width / worldBounds.height;
     this.view.width = 300;
 
     this.view.height = this.view.width / this.ratio;
     this.view.env.forceUpdate();
+    this.relayout();
     this.drawMorphs();
   }
 
@@ -203,6 +210,11 @@ export const WorldMiniMap = component({
   dropShadow: {
     blur: 10,
     color: Color.black.withA(0.5)
-
+  },
+  borderRadius: {
+    bottomLeft: 0,
+    bottomRight: 5,
+    topLeft: 0,
+    topRight: 0
   }
 });

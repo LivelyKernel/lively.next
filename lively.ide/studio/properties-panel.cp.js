@@ -95,6 +95,7 @@ export class PropertiesPanelModel extends ViewModel {
         view.opacity = 1,
         view.topRight = bounds.topRight();
         zoomIndicator?.relayout();
+        $world.get('world mini map')?.relayout();
       }, {
         easing: easings.outCirc,
         duration: 300
@@ -106,6 +107,7 @@ export class PropertiesPanelModel extends ViewModel {
         view.opacity = 0,
         view.topLeft = bounds.topRight();
         zoomIndicator?.relayout();
+        $world.get('world mini map')?.relayout();
       }
       , { duration: 300 }
       );
