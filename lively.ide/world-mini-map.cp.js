@@ -38,7 +38,7 @@ class MiniMapModel extends ViewModel {
     this.view.height = this.view.width / this.ratio;
     this.view.env.forceUpdate();
     this.relayout();
-    setTimeout(() => this.drawMorphs(), 10);
+    this.view.startStepping(100, 'drawMorphs');
   }
 
   async drawMorphs () {
