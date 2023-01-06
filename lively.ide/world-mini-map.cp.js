@@ -42,67 +42,105 @@ class MiniMapModel extends ViewModel {
   }
 
   async drawMorphs () {
+    const { context } = this;
+
+    // The width and height of the world which are visible when not zoomed/scrolled; due to the size of the browser window
     const defaultScreenCutoffs = {
       top: 0,
       left: 0,
-      right: 1980,
-      bottom: 1080
+      right: $world.windowBounds().width,
+      bottom: $world.windowBounds().height
     };
-    const { context } = this;
 
+    // find the highest left and right position that is taken up by a morph
     const xPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.x);
     const xPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.x + m.width);
     const maxX = max(xPositionsForMax) || 0;
     const minX = min(xPositionsForMin) || 0;
 
+    // find the highest position in top and bottom direction that a morph currently holds
     const yPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.y);
     const yPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.y + m.height);
     const maxY = max(yPositionsForMax) || 0;
     const minY = min(yPositionsForMin) || 0;
 
+    // the area covered by the minimap is spanned by:
+    // - morphs positioned on the world canvas
+    // - the current viewport
+    // - we always keep the "default world canvas"
     const realCutoffs = {
-      top: Math.min(defaultScreenCutoffs.top, minY),
-      left: Math.min(defaultScreenCutoffs.left, minX),
-      right: Math.max(defaultScreenCutoffs.right, maxX),
-      bottom: Math.max(defaultScreenCutoffs.bottom, maxY)
+      top: Math.min(minY, $world.screenToWorld(pt(0, 0)).y, defaultScreenCutoffs.top),
+      left: Math.min(minX, $world.screenToWorld(pt(0, 0)).x, defaultScreenCutoffs.left),
+      right: Math.max(maxX, $world.screenToWorld(pt(defaultScreenCutoffs.right, defaultScreenCutoffs.bottom)).x, defaultScreenCutoffs.right),
+      bottom: Math.max(maxY, $world.screenToWorld(pt(defaultScreenCutoffs.right, defaultScreenCutoffs.bottom)).y, defaultScreenCutoffs.bottom)
     };
 
+    // how large is the canvas currently?
     const virtualHeight = (realCutoffs.top * -1) + realCutoffs.bottom;
     const virtualWidth = (realCutoffs.left * -1) + realCutoffs.right;
 
+    // in case we grew to the top or to the left, elements there have negative corrdinates
+    // to move them in the positive quadrants when drawing on the canvas later, calculate how to compoensate for this if necessary
     let balanceNegativeTop = 0;
     let balanceNegativeLeft = 0;
     if (realCutoffs.top < 0) balanceNegativeTop = -1 * realCutoffs.top;
     if (realCutoffs.left < 0) balanceNegativeLeft = -1 * realCutoffs.left;
 
+    // the minimap has a fixed aspect ratio
+    // we pad the current size of the canvas until we reach this aspect ratio
+    // this requires corrections later on, e.g., if we pad the width for 40px in total we want to keep the canvas centered
+    // -> everything we draw on the minimap needs to be moved 20px to the right
     let widthCorrection = 0;
     let heightCorrection = 0;
     if (virtualWidth > virtualHeight) { // we are a rectangle with proper orientation
       const goalHeight = virtualWidth / this.ratio;
       if (virtualHeight > goalHeight) { // despite proper orientation we need to padd the width
-        widthCorrection = ((goalHeight * this.ratio) - virtualWidth);
+        widthCorrection = ((virtualHeight * this.ratio) - virtualWidth);
       } else { // virtualHeight < goalHeight
         heightCorrection = (goalHeight - virtualHeight);
       }
     } else { // we are not properly oriented, our height is larger than our width
       const goalWidth = virtualHeight * this.ratio;
       if (virtualWidth > goalWidth) {
-        heightCorrection = ((goalWidth / this.ratio) - virtualHeight);
+        heightCorrection = ((virtualWidth / this.ratio) - virtualHeight);
       } else { // virtualWidht < goalWidht
         widthCorrection = (goalWidth - virtualWidth);
       }
     }
 
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // Helper functions which take a number representing a width/height in current world space
+    // and scale it so that the correct width/height in virtual space (on minimap) is returned
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     const scaleHeight = (number) => {
       let height = number / (virtualHeight + heightCorrection);
       return this.view.height * height;
     };
+    const scaleWidth = (number) => {
+      let width = number / (virtualWidth + widthCorrection);
+      return 300 * width;
+    };
 
-    let itemsToDraw = [$world.morphsInWorld.map(morph => morph.withAllSubmorphsSelect(() => true)), new Morph({ name: 'viewport', extent: pt(1920, 1080), borderWidth: 15, borderColor: Color.lively, fill: Color.transparent })];
-    itemsToDraw = itemsToDraw.flat(1000);
+    const height = $world.screenToWorld($world.bottomRight).y - $world.screenToWorld($world.topLeft).y;
+    const width = $world.screenToWorld($world.bottomRight).x - $world.screenToWorld($world.topLeft).x;
 
-    for (let i = 0; i < itemsToDraw.length; i++) {
-      const currentItem = itemsToDraw[i];
+    const viewPort = new Morph({
+      name: 'viewport',
+      extent: pt(width, height),
+      borderWidth: 15,
+      borderColor: Color.lively,
+      fill: Color.transparent
+    });
+
+    let itemsToDraw = [$world.morphsInWorld.map(morph => morph.withAllSubmorphsSelect(() => true)), viewPort];
+    itemsToDraw = itemsToDraw.flat(1000); // make it really, really flat bro
+
+    // we need perform some tricks to render polygons on canvas
+    // unfortunately, those tricks are asynchronous
+    // since delays once the actual redrawing on the canvas start cause optical flickers
+    // do it here and store all necessary data
+    // this way, the actual drawing on the canvas can happen synchronously
+    for (let currentItem of itemsToDraw) {
       if (currentItem.isPath) {
         await this.prepareImageDataForPolygons(currentItem);
       }
@@ -110,20 +148,18 @@ class MiniMapModel extends ViewModel {
 
     this.view.clear(null);
     itemsToDraw.forEach((m) => {
+      // we need the udnerscore property to be present but cannot initialize it in constructor call above
       if (m.name === 'viewport') m._positionOnCanvas = $world.screenToWorld(pt(0, 0));
 
-      let xPos = ((m.positionOnCanvas.x + balanceNegativeLeft) / virtualWidth);
-      xPos = 300 * xPos;
-      let yPos = ((m.positionOnCanvas.y + balanceNegativeTop) / virtualHeight);
-      yPos = this.view.height * yPos;
+      const scaledWidthCorrection = scaleWidth(widthCorrection) / 2;
+      let xPos = ((m.positionOnCanvas.x + balanceNegativeLeft + (widthCorrection / 2)) / (virtualWidth + widthCorrection));
+      xPos = (300 * xPos);
+      const scaledHeightCorrection = scaleHeight(heightCorrection) / 2;
+      let yPos = ((m.positionOnCanvas.y + balanceNegativeTop + (heightCorrection / 2)) / (virtualHeight + heightCorrection));
+      yPos = (this.view.height * yPos);
       let width = scaleWidth(m.width);
       let height = scaleHeight(m.height);
       this.renderMorphPreviewOnCanvas(m, xPos, yPos, width, height, context);
-
-      function scaleWidth (number) {
-        let width = number / (virtualWidth + widthCorrection);
-        return 300 * width;
-      }
     });
   }
 
