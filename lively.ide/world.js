@@ -11,7 +11,6 @@ import {
   Text,
   touchInputDevice,
   Icon,
-  Morph,
   ConstraintLayout,
   Image,
   inspect,
@@ -233,50 +232,61 @@ export class LivelyWorld extends World {
       .filter(m => !m.isPrompt);
   }
 
+  zoomWorld (delta) {
+    const cursorPositionOnScreen = this.firstHand.position;
+    const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
+
+    const scaleDirection = delta < 0 ? 1 : 0;
+    if (scaleDirection) this.scaleFactor *= 1.01;
+    else this.scaleFactor *= 0.99;
+
+    const cursorPositionInZoomedSpaceAfterZoom = this.screenToWorld(cursorPositionOnScreen);
+    this.offsetX += (cursorPositionInSpaceBeforeZoom.x - cursorPositionInZoomedSpaceAfterZoom.x);
+		  this.offsetY += (cursorPositionInSpaceBeforeZoom.y - cursorPositionInZoomedSpaceAfterZoom.y);
+
+    this.morphsInWorld.forEach(m => m.scale = this.scaleFactor);
+    this.morphsInWorld.forEach(m => {
+      m.withMetaDo({ metaInteraction: true }, () => {
+        m.position = this.worldToScreen(m.positionOnCanvas);
+      });
+    });
+
+    const percentage = Number.parseInt((this.scaleFactor * 100));
+    $world.get('world zoom indicator').updateZoomLevel(percentage);
+  }
+
+  scrollWorld (dx, dy) {
+    this.offsetX += dx;
+    this.offsetY += dy;
+
+    this.morphsInWorld.forEach(m => {
+      m.withMetaDo({ metaInteraction: true }, () => {
+        m.position = this.worldToScreen(m.positionOnCanvas);
+      });
+    });
+  }
+
   onMouseWheel (evt) {
     const { domEvt } = evt;
 
     if (domEvt.ctrlKey) domEvt.preventDefault();
 
-    if (evt.targetMorphs[0] !== this && evt.targetMorphs.some(m => {
-      if (m.isWorld) return false;
-      return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
-    })) return;
+    if (
+      evt.targetMorphs[0] !== this &&
+        evt.targetMorphs.some(m => {
+          if (m.isWorld) return false;
+          return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
+        })
+    ) return;
 
-    const morphsInWorld = this.morphsInWorld;
+    const { deltaX, deltaY } = domEvt;
 
     if (evt.isAltDown() || domEvt.buttons === 4) {
-      const cursorPositionOnScreen = this.firstHand.position;
-      const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
-
-      const scaleDirection = domEvt.deltaY < 0 ? 1 : 0;
-      if (scaleDirection) this.scaleFactor *= 1.01;
-      else this.scaleFactor *= 0.99;
-
-      const cursorPositionInZoomedSpaceAfterZoom = this.screenToWorld(cursorPositionOnScreen);
-      this.offsetX += (cursorPositionInSpaceBeforeZoom.x - cursorPositionInZoomedSpaceAfterZoom.x);
-		  this.offsetY += (cursorPositionInSpaceBeforeZoom.y - cursorPositionInZoomedSpaceAfterZoom.y);
-
-      morphsInWorld.forEach(m => m.scale = this.scaleFactor);
-      morphsInWorld.forEach(m => {
-        m.withMetaDo({ metaInteraction: true }, () => {
-          m.position = this.worldToScreen(m.positionOnCanvas);
-        });
-      });
-
-      const percentage = Number.parseInt((this.scaleFactor * 100));
-      $world.get('world zoom indicator').updateZoomLevel(percentage);
+      this.zoomWorld(deltaY);
       return;
     }
 
-    this.offsetX += domEvt.deltaX;
-    this.offsetY += domEvt.deltaY;
-
-    morphsInWorld.forEach(m => {
-      m.withMetaDo({ metaInteraction: true }, () => {
-        m.position = this.worldToScreen(m.positionOnCanvas);
-      });
-    });
+    this.scrollWorld(deltaX, deltaY);
   }
 
   resetScaleFactor () {
