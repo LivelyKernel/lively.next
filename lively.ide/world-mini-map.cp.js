@@ -216,5 +216,6 @@ export const WorldMiniMap = component({
     bottomRight: 5,
     topLeft: 0,
     topRight: 0
-  }
+  },
+  epiMorph: true
 });
