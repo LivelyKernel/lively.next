@@ -279,6 +279,11 @@ export class LivelyWorld extends World {
         })
     ) return;
 
+    // scrolling/zooming needs to reset the cache,
+    // otherwise the preview will lag behind the morph, causing a visual artifact
+    $world.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
+    $world.withTopBarDo(tb => tb._previewCache = null);
+
     const { deltaX, deltaY } = domEvt;
 
     if (evt.isAltDown() || domEvt.buttons === 4) {
