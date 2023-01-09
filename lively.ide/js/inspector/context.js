@@ -92,17 +92,37 @@ export function isMultiValue (foldableValue, propNames) {
     v => obj.equals(v, foldableValue && foldableValue.valueOf()));
 }
 
+function safePrint (value) {
+  let result;
+  try {
+    result = string.print(value);
+  } catch (err) {
+  }
+
+  try {
+    if (!result) {
+      result = JSON.stringify(value);
+    }
+  } catch (err) {
+
+  }
+
+  if (!result) return '[CAN NOT BE DISPLAYED]';
+  return result;
+}
+
 export function printValue (value) {
   let result;
-  if (obj.isPrimitive(value)) result = string.print(value);
+
+  if (obj.isPrimitive(value)) result = safePrint(value);
   else if (Array.isArray(value)) {
     const tooLong = value.length > 3;
     if (tooLong) value = value.slice(0, 3);
-    let printed = string.print(value);
+    let printed = safePrint(value);
     if (tooLong) printed = printed.slice(0, -1) + ', ...]';
     result = printed;
   } else {
-    result = string.print(value);
+    result = safePrint(value);
   }
   result = result.replace(/\n/g, '');
   if (result.length > 500) result = result.slice(0, 20) + `...[${result.length - 20} CHARS]"`;
