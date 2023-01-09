@@ -418,7 +418,8 @@ export class Hand extends Morph {
 
   dropMorphsOn (dropTarget) {
     this.withMetaDo({
-      metaInteraction: true
+      metaInteraction: true,
+      reconcileChanges: !!dropTarget.ownerChain().find(m => m.isComponent)
     }, () => {
       this.grabbedMorphs.forEach(morph => {
         try {
