@@ -578,17 +578,6 @@ export class LivelyWorld extends World {
       { command: 'run command', target: this },
       { command: 'select morph', target: this },
       { command: 'window switcher', target: this },
-      ['Resize',
-        this.resizePolicy === 'static'
-          ? [
-              { command: 'resize to fit window', target: this },
-              { command: 'resize manually', target: this },
-              ['switch to automatic resizing of world', () => this.resizePolicy = 'elastic']
-            ]
-          : [
-              ['switch to manual resizing of world', () => this.resizePolicy = 'static']
-            ]
-      ],
       ['Troubleshooting', [
         { command: 'report a bug', target: this },
         { command: 'clear storage and reload', target: this }
