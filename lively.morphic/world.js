@@ -105,10 +105,7 @@ export class World extends Morph {
       ...super.commands, {
         name: 'resize to fit window',
         exec: async (world) => {
-          const adhereToWindow = !!lively.FreezerRuntime || world.submorphs.filter(m => !m.isEpiMorph && !m.isHand).length < 1;
-          world.extent = adhereToWindow
-            ? world.windowBounds().extent()
-            : world.windowBounds().union(world.submorphBounds(m => !m.isEpiMorph && !m.isHand)).extent();
+          world.extent = world.windowBounds().extent()
           world.relayout();
           return true;
         }
