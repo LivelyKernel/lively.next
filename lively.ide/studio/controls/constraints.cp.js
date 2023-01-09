@@ -18,7 +18,7 @@ export class ConstraintsManagerModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'constraints', signal: 'changed', handler: 'updateConstraintPolicies' }
+            { model: 'constraints', signal: 'changed', handler: 'confirmConstraintPolicies' }
           ];
         }
       },
