@@ -1537,6 +1537,8 @@ export class Morph {
     const existingIndex = this.submorphs.indexOf(submorph);
     if (existingIndex > -1 && existingIndex === index) return;
 
+    this.renderingState.hasStructuralChanges = true;
+
     this.requestMasterStyling();
 
     this.addMethodCallChangeDoing({
@@ -1596,7 +1598,6 @@ export class Morph {
   }
 
   addMorph (submorph, insertBeforeMorph) {
-    this.renderingState.hasStructuralChanges = true;
     // insert at right position in submorph list, according to insertBeforeMorph
     const submorphs = this.submorphs;
     const insertBeforeMorphIndex = insertBeforeMorph
