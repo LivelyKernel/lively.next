@@ -107,7 +107,7 @@ function safePrint (value) {
 
   }
 
-  if (!result) return '[CAN NOT BE DISPLAYED]';
+  if (!result) return '[CANNOT BE DISPLAYED]';
   return result;
 }
 
