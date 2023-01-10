@@ -13,6 +13,7 @@ import {
   convertToExpression
 } from './helpers.js';
 import { getDefaultValueFor, isFoldableProp } from 'lively.morphic/helpers.js';
+import { without } from 'lively.morphic';
 
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
@@ -387,18 +388,41 @@ export class ComponentChangeTracker {
    */
   processChangeInComponentPolicy (change) {
     this._lastChange = change;
+    const policy = this.componentPolicy || change.target.master;
     if (change.prop) {
-      const policy = this.componentPolicy || change.target.master;
       if (!policy) return;
-      const subSpec = policy.ensureSubSpecFor(change.target);
+      let subSpec = policy.ensureSubSpecFor(change.target);
+      if (subSpec.isPolicyApplicator) subSpec = subSpec.spec;
       subSpec[change.prop] = change.value;
     }
 
-    // it does not do matter to real time adjust
-    // a component policy structurally, since
-    // the policies themselves do not propagate
-    // structural changes at all
+    if (change.selector === 'addMorphAt') {
+      if (!policy) return;
+      const [addedMorph] = change.args;
+      policy.ensureSubSpecFor(addedMorph, true); // wrap this as added
+    }
 
+    if (change.selector === 'removeMorph') {
+      const [removedMorph] = change.args;
+      // at any rate, remove the sub spec if present
+      const prevOwner = change.target;
+      const ownerSpec = policy.ensureSubSpecFor(prevOwner);
+      const removedMorphSpec = policy.getSubSpecAt(
+        ...prevOwner.ownerChain().map(m => m.name).reverse(),
+        prevOwner.name,
+        removedMorph.name
+      );
+      if (removedMorphSpec) {
+        arr.remove(ownerSpec.submorphs, removedMorphSpec);
+      }
+      if (!removedMorph.__wasAddedToDerived__) {
+        // insert the without call
+        ownerSpec.submorphs.push(without(removedMorph.name));
+      }
+    }
+
+    // we still need to actually refresh the module to also propage
+    // the change across derived components effectively
     this.refreshDependants();
   }
 
@@ -564,8 +588,8 @@ export class ComponentChangeTracker {
     const [removedMorph] = removeChange.args;
     let updatedSource = sourceCode;
     // FIXME: This may fetch the incorrect node, if there is a equally named submorph deeper down the spec
-    let nodeToRemove = getMorphNode(getComponentScopeFor(parsedComponent, removeChange.target), removedMorph);
     let submorphsNode = getProp(getPropertiesNode(parsedComponent, removeChange.target), 'submorphs');
+    let nodeToRemove = submorphsNode && getMorphNode(submorphsNode.value, removedMorph);
     let insertedRemove = false;
     if (!removedMorph.__wasAddedToDerived__ && this.withinDerivedComponent(removeChange.target)) {
       // insert a without("removed morph name") into the submorphs if it is not declared already

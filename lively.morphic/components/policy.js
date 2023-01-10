@@ -6,6 +6,39 @@ import { Text, Label } from 'lively.morphic';
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 
+/**
+ * Function that will wrap a morph definition and declares
+ * that this morph is added to the submorph array it is placed in.
+ * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
+ * calls. It will not make sense on `morph({...})` or `component({...})` calls.
+ * If before is specified this will ensure that the morph is added before the morph
+ * named as before.
+ * @param { object } props - A nested properties object that specs out the submorph hierarchy to be added. (This can also be a `part()` call).
+ * @param { string } [before] - An optional parameter that denotes the name of the morph this new one should be placed in front of.
+ */
+export function add (props, before = null) {
+  props.__wasAddedToDerived__ = true;
+  return {
+    COMMAND: 'add',
+    props: props,
+    before
+  };
+}
+
+/**
+ * Function that will wrap a morph's name and declare
+ * that this morph is removed from the submorph array it is located in.
+ * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
+ * calls. It will not make sense on `morph({...})` or `component({...})` calls.
+ * @param { string } removedSiblingName - The name of the submorph that is to be removed from the hierarchy.
+ */
+export function without (removedSiblingName) {
+  return {
+    COMMAND: 'remove',
+    target: removedSiblingName
+  };
+}
+
 function handleTextProps (props) {
   if (!['text', 'label', Text, Label].includes(props.type)) return props;
   if (props.textString) {
@@ -967,15 +1000,17 @@ export class PolicyApplicator extends StylePolicy {
    * in the derivation chain, we return an empty object.
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
-  ensureSubSpecFor (submorph) {
+  ensureSubSpecFor (submorph, wrapAsAdded = false) {
     const targetName = (this.targetMorph === submorph || submorph.isComponent) ? null : submorph.name;
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
-    if (this.parent && !this.mentionedByParents(targetName)) return currSpec;
+    if (this.parent && !this.mentionedByParents(targetName)) {
+      if (!wrapAsAdded) return currSpec;
+    }
     const parentSpec = this.ensureSubSpecFor(submorph.owner);
     const { submorphs = [] } = parentSpec;
-    submorphs.push(currSpec);
+    submorphs.push(wrapAsAdded ? add(currSpec) : currSpec);
     parentSpec.submorphs = submorphs;
     return currSpec;
   }
