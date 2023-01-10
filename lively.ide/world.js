@@ -104,6 +104,13 @@ export class LivelyWorld extends World {
     }
   }
 
+  makeDirty () {
+    if (!this.renderingState.needsRerender && this.get('world mini map')) {
+      this.get('world mini map').drawMorphs();
+    }
+    super.makeDirty();
+  }
+
   getListedComponents () {
     const componentsInWorld = this.withAllSubmorphsSelect(m => m.isComponent && !this.hiddenComponents.includes(m.name));
     return arr.uniq([...componentsInWorld, ...this.localComponents]);

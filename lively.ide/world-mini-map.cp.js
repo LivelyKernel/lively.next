@@ -59,7 +59,6 @@ class MiniMapModel extends ViewModel {
     this.view.env.forceUpdate();
 
     this.relayout();
-    this.view.startStepping(100, 'drawMorphs');
   }
 
   updateMapSpace () {
