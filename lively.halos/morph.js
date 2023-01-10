@@ -904,9 +904,14 @@ class RotateHaloItem extends HaloItem {
   }
 
   // events
+  isInScaleMode (evt) {
+    return evt.isShiftDown() && !$world.morphsInWorld.includes(this.target);
+  }
+
   onDragStart (evt) {
-    this.adaptAppearance(evt.isShiftDown());
-    if (evt.isShiftDown()) {
+    const scaleMode = this.isInScaleMode(evt);
+    this.adaptAppearance(scaleMode);
+    if (scaleMode) {
       this.initScale(evt.position.subPt(this.halo.target.globalPosition));
     } else {
       this.init(evt.position.subPt(this.halo.target.globalPosition).theta());
@@ -914,9 +919,10 @@ class RotateHaloItem extends HaloItem {
   }
 
   onDrag (evt) {
+    const scaleMode = this.isInScaleMode(evt);
     this.globalPosition = evt.position.addPt(pt(-10, -10));
-    this.adaptAppearance(evt.isShiftDown());
-    if (evt.isShiftDown()) {
+    this.adaptAppearance(scaleMode);
+    if (scaleMode) {
       this.updateScale(evt.position.subPt(this.halo.target.globalPosition));
     } else {
       this.update(evt.position.subPt(this.halo.target.globalPosition).theta());
@@ -924,7 +930,7 @@ class RotateHaloItem extends HaloItem {
   }
 
   onDragEnd (evt) {
-    this.adaptAppearance(evt.isShiftDown());
+    this.adaptAppearance(this.isInScaleMode(evt));
     this.stop();
   }
 
