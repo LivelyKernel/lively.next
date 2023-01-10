@@ -295,6 +295,14 @@ export class LivelyWorld extends World {
     this.scrollWorld(deltaX, deltaY);
   }
 
+  onWindowResize () {
+    super.onWindowResize();
+    setTimeout(() => {
+      this.get('world mini map')?.relayout();
+      this.get('world zoom indicator').relayout();
+    });
+  }
+
   resetScaleFactor () {
     this.scaleFactor = 1;
     this.offsetX = 0;
