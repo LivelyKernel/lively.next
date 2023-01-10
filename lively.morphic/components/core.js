@@ -3,7 +3,7 @@ import { string, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
 import { epiConnect } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
-import { PolicyApplicator } from './policy.js';
+import { PolicyApplicator, without, add } from './policy.js';
 
 const expressionSerializer = new ExpressionSerializer();
 
@@ -502,7 +502,7 @@ export class ViewModel {
     const rawKey = Object.keys(map).find(key => map[key].name === commandName);
     return rawKey && pretty ? map[rawKey].prettyKeys : rawKey;
   }
- 
+
   /**
    * Allows to fullt disconnect the view model from its view.
    */
@@ -558,38 +558,8 @@ export function component (masterComponentOrProps, overriddenProps) {
 
 if (!component.DescriptorClass) component.DescriptorClass = ComponentDescriptor;
 component.for = (generator, meta, prev) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
-/**
- * Function that will wrap a morph's name and declare
- * that this morph is removed from the submorph array it is located in.
- * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
- * calls. It will not make sense on `morph({...})` or `component({...})` calls.
- * @param { string } removedSiblingName - The name of the submorph that is to be removed from the hierarchy.
- */
-export function without (removedSiblingName) {
-  return {
-    COMMAND: 'remove',
-    target: removedSiblingName
-  };
-}
 
-/**
- * Function that will wrap a morph definition and declares
- * that this morph is added to the submorph array it is placed in.
- * This is meant to be used inside overriden props of `part(C, {...})` or `component(C, {...})`
- * calls. It will not make sense on `morph({...})` or `component({...})` calls.
- * If before is specified this will ensure that the morph is added before the morph
- * named as before.
- * @param { object } props - A nested properties object that specs out the submorph hierarchy to be added. (This can also be a `part()` call).
- * @param { string } [before] - An optional parameter that denotes the name of the morph this new one should be placed in front of.
- */
-export function add (props, before = null) {
-  props.__wasAddedToDerived__ = true;
-  return {
-    COMMAND: 'add',
-    props: props,
-    before
-  };
-}
+export { add, without };
 
 export function standard (value) {
   return {

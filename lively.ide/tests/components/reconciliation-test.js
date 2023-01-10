@@ -2,8 +2,7 @@
 import { expect } from 'mocha-es6';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, Text, TilingLayout, Label } from 'lively.morphic';
-import { part } from 'lively.morphic/components/core.js';
+import { morph, without, Text, TilingLayout, Label, part } from 'lively.morphic';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
 let testComponentModule = module(testModuleId);
@@ -23,6 +22,7 @@ const C = component({
 const D = component({
   name: 'D',
   fill: Color.purple,
+  borderWidth: { top: 0,  left: 1,  bottom: 2, right: 4 },
   submorphs: [{
     name: 'a deep morph',
     fill: Color.orange
@@ -343,6 +343,7 @@ describe('component -> source reconciliation', function () {
     await ComponentB._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('submorphs: [without(\'some submorph\')]');
+    expect(B.stylePolicy.spec.submorphs[2]).to.eql(without('some submorph'), 'updated style policy object');
   });
 
   it('discards empty deeply nested nodes if they are no longer needed', async () => {
@@ -377,9 +378,19 @@ describe('component -> source reconciliation', function () {
       ComponentA.get('some ref').name = 'molly';
     });
     await ComponentA._changeTracker.onceChangesProcessed();
-    const updatedSource = await testComponentModule.source();
+    let updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('name: \"molly\"');
     expect(A.stylePolicy.spec.submorphs[1].name).to.eql('molly');
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.addMorph(part(C, { name: 'tbd' }));
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('tbd').name = 'final!';
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+    expect(updatedSource).to.include('name: \"final!\"');
   });
 
   it('properly resolves names by path instead of name', async () => {
