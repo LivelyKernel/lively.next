@@ -292,5 +292,6 @@ export const WorldMiniMap = component({
     topRight: 0
   },
   epiMorph: true,
-  draggable: true
+  draggable: true,
+  styleClasses: ['Popups']
 });
