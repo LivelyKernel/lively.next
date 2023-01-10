@@ -291,8 +291,8 @@ export class Morph {
                 const posOnCanvasOfParent = parent._positionOnCanvas;
                 const globalPositionOfParent = parent.globalPosition;
                 const ownGlobalPosition = this.globalPosition;
-                const diff = pt(globalPositionOfParent.x - ownGlobalPosition.x, globalPositionOfParent.y - ownGlobalPosition.y);
-                parentFound = pt(posOnCanvasOfParent.x - diff.x, posOnCanvasOfParent.y - diff.y);
+                const diff = pt(globalPositionOfParent.x - ownGlobalPosition.x, globalPositionOfParent.y - ownGlobalPosition.y).scaleBy(1 / $world.scaleFactor);
+                parentFound = pt(posOnCanvasOfParent.x - (diff.x), posOnCanvasOfParent.y - (diff.y));
               }
             });
           }
