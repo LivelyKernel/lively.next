@@ -909,8 +909,8 @@ export class PolicyApplicator extends StylePolicy {
       if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
       let resizePolicy;
       if (propName === 'extent' && (resizePolicy = this.isResizedByLayout(morphToBeStyled))) {
-        if (resizePolicy.widthPolicy === 'fixed') morphToBeStyled.width = propValue.x;
-        if (resizePolicy.heightPolicy === 'fixed') morphToBeStyled.height = propValue.y;
+        if (resizePolicy.widthPolicy === 'fixed' && morphToBeStyled.width !== propValue.x) morphToBeStyled.width = propValue.x;
+        if (resizePolicy.heightPolicy === 'fixed' && morphToBeStyled.height !== propValue.y) morphToBeStyled.height = propValue.y;
         continue;
       }
 
