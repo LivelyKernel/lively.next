@@ -39,6 +39,7 @@ export default class Renderer {
     this.morphsToRevisit = [];
     this.doc = world.env.domEnv.document;
     this.bodyNode = rootNode;
+    this.bodyNode.style.overflow = 'hidden';
     this.rootNode = this.doc.createElement('div');
     this.rootNode.setAttribute('id', this.worldMorph.id);
     this.rootNode.classList.add('LivelyWorld', 'World', 'Morph', 'morph');
