@@ -140,7 +140,7 @@ class MiniMapModel extends ViewModel {
   }
 
   yFromMapSpaceToCanvasSpace (number) {
-    return ((number / this.view.height) * (this.virtualHeight + this.heightCorrection)) - this.balanceNegativeTop + (this.heightCorrection / 2);
+    return ((number / this.view.height) * (this.virtualHeight + this.heightCorrection)) - (this.balanceNegativeTop + (this.heightCorrection / 2));
   }
 
   createCurrentViewPortMorph () {
