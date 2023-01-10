@@ -28,7 +28,7 @@ class MiniMapModel extends ViewModel {
     const clickedPositionOnMap = this.view.localize(evt.position);
 
     const clickedPositionInCanvasSpace = pt(this.xFromMapSpaceToCanvasSpace(clickedPositionOnMap.x), this.yFromMapSpaceToCanvasSpace(clickedPositionOnMap.y));
-    const currentViewportPosition = $world.screenToWorld(pt(0, 0));
+    const currentViewportPosition = $world.screenToWorld(pt($world.windowBounds().width / 2, $world.windowBounds().height / 2));
 
     const offsetShift = clickedPositionInCanvasSpace.subPt(currentViewportPosition);
 
