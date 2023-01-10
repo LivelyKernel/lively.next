@@ -27,7 +27,8 @@ const propsToDelete = [
   'margin-left',
   'margin-right',
   'grid-template-rows',
-  'grid-template-columns'
+  'grid-template-columns',
+  'will-change'
 ];
 
 /**
