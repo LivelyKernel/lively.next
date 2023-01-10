@@ -42,7 +42,7 @@ export function relayoutSidebarFlapInWorld (flapModel) {
   if (flapModel.target === 'scene graph') return;
   const propertiesPanelExists = $world.get(flapModel.target);
   if (propertiesPanelExists) flapModel.view.position = flapModel.view.position.withX($world.visibleBounds().width - defaultPropertiesPanelWidth - flapModel.view.width);
-  else flapModel.view.position = flapModel.view.position.withX($world.visibleBounds.width - flapModel.view.width);
+  else flapModel.view.position = flapModel.view.position.withX($world.visibleBounds().width - flapModel.view.width);
 }
 
 export async function openSidebarFlapInWorld (flapModel) {
