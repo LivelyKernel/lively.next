@@ -361,10 +361,12 @@ export class TopBarModel extends ViewModel {
     if (miniMap) {
       this.colorTopbarButton('mini map button', false);
       miniMap.remove();
+      $world.getSubmorphNamed('world zoom indicator').relayout();
     } else {
       this.colorTopbarButton('mini map button', true);
       const miniMap = part(WorldMiniMap).openInWorld();
       miniMap.relayout();
+      $world.getSubmorphNamed('world zoom indicator').relayout();
     }
   }
 

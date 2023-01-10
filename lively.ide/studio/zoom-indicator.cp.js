@@ -35,8 +35,12 @@ class WorldZoomIndicatorModel extends ViewModel {
 
   relayout () {
     const { view } = this;
-    if ($world.activeSideBars.includes('properties panel')) view.position = pt($world.get('properties panel').left - 10 - view.width, $world.extent.y - 10 - view.height);
-    else this.view.position = pt($world.extent.x - view.width - 10, $world.extent.y - view.height - 10);
+    const miniMap = $world.getSubmorphNamed('world mini map');
+    let miniMapOffset = 0;
+    if (miniMap) miniMapOffset = miniMap.width + 10;
+
+    if ($world.activeSideBars.includes('properties panel')) view.position = pt($world.get('properties panel').left - 10 - view.width - miniMapOffset, $world.extent.y - 10 - view.height);
+    else this.view.position = pt($world.extent.x - view.width - 10 - miniMapOffset, $world.extent.y - view.height - 10);
   }
 }
 
