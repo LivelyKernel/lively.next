@@ -287,7 +287,7 @@ export class LivelyWorld extends World {
 
     const { deltaX, deltaY } = domEvt;
 
-    if (evt.isAltDown() || domEvt.buttons === 4) {
+    if (evt.isAltDown() || domEvt.buttons === 4 || evt.isCommandKey()) {
       this.zoomWorld(deltaY);
       return;
     }
