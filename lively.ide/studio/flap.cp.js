@@ -32,15 +32,15 @@ export class FlapModel extends ViewModel {
   }
 
   async executeAction () {
-    this.action.bind(this)();
+    this.action(this);
   }
 
   onWorldResize () {
-    this.relayoutRoutine.bind(this)();
+    this.relayoutRoutine(this);
   }
 
   openInWorld () {
-    this.openingRoutine.bind(this)();
+    this.openingRoutine(this);
   }
 }
 
