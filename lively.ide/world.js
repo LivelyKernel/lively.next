@@ -41,7 +41,8 @@ export class LivelyWorld extends World {
     return {
       clipMode: {
         defaultValue: 'hidden',
-        readOnly: true
+        readOnly: true,
+        set () {}
       },
       hideScrollbars: {
         defaultValue: true
