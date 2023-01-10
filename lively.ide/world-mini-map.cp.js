@@ -40,6 +40,7 @@ class MiniMapModel extends ViewModel {
   }
 
   onDrag (evt) {
+    if (!this.view.bounds().containsPoint(evt.position)) return;
     this.repositionViewPort(evt);
   }
 
