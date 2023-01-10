@@ -10,7 +10,7 @@ class MiniMapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isMiniMap', 'drawMorphs', 'relayout', 'onDrag'];
+          return ['isMiniMap', 'drawMorphs', 'relayout', 'onDrag', 'onMouseDown'];
         }
       }
     };
@@ -33,6 +33,10 @@ class MiniMapModel extends ViewModel {
     const offsetShift = clickedPositionInCanvasSpace.subPt(currentViewportPosition);
 
     $world.scrollWorld(offsetShift.x, offsetShift.y);
+  }
+
+  onMouseDown (evt) {
+    this.repositionViewPort(evt);
   }
 
   onDrag (evt) {
