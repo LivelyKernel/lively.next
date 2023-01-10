@@ -1824,7 +1824,7 @@ export default class Document {
   wordsOfLine (row) {
     const line = this.getLineString(row);
     const words = []; let word;
-    const isWordDelimiter = char => /[^a-z0-9_]/i.test(char);
+    const isWordDelimiter = char => /[^a-z0-9_-]/i.test(char);
 
     for (var i = 0; i < line.length; i++) {
       if (isWordDelimiter(line[i])) {
