@@ -1703,7 +1703,7 @@ export default class Renderer {
     if (!nodeToAppendTo) return;
     const submorphsNode = nodeToAppendTo.querySelector(`#submorphs-${morph.id}`);
     const textLayerNode = nodeToAppendTo.querySelector(`#${morph.id}textLayer`);
-    const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
+    const alreadyRenderedMarkers = morph.renderingState.markers || [];
     const markersToRender = this.computeMarkerLayer(morph);
     const cursorNode = !submorphsNode ? nodeToAppendTo.querySelector('.newtext-cursor') : null;
     keyed('id',
@@ -1715,7 +1715,6 @@ export default class Renderer {
       submorphsNode || textLayerNode,
       cursorNode
     );
-    morph.renderingState.renderedMarkers = markersToRender;
     morph.renderingState.markers = morph.markers;
   }
 
