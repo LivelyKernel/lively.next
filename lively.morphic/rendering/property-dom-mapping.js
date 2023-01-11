@@ -28,7 +28,8 @@ const propsToDelete = [
   'margin-right',
   'grid-template-rows',
   'grid-template-columns',
-  'will-change'
+  'will-change',
+  'filter'
 ];
 
 /**
