@@ -241,6 +241,8 @@ export class MullerColumnViewModel extends ViewModel {
     } else if (evt.key === 'Backspace') {
       input = '';
       this.searchString = this.searchString.slice(0, -1);
+    } else if (evt.key === 'Enter') {
+      input = '';
     } else { // special keys cancel search
       this.lists.forEach(list => list.scrollSelectionIntoView());
       this.searchString = '';
@@ -293,6 +295,13 @@ export class MullerColumnViewModel extends ViewModel {
       item.label = array;
     }
     hoveredList.items = newItems; // triggers the visual update mechanism via list setter
+
+    if (evt.key === 'Enter') {
+      const fakeEvent = {
+        targetMorph: hoveredList.withAllSubmorphsSelect(m => m.isListItemMorph)[0]
+      };
+      this.clickOnItem(fakeEvent);
+    }
   }
 
   onMouseMove (evt) {
