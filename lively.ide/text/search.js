@@ -507,11 +507,19 @@ export class SearchWidgetModel extends ViewModel {
             const allMatches = new TextSearcher(this.target).searchForAll(search);
 
             this.target.undoManager.group();
+            let lineOfLastMatch = -1;
+            let offsetForCurrentLine = 0;
             allMatches.forEach(found => {
               const { range, match } = found;
+              const lineOfCurrentMatch = range.start.row;
+              if (lineOfCurrentMatch === lineOfLastMatch) offsetForCurrentLine += (replacement.length - match.length);
+              else offsetForCurrentLine = 0;
+              lineOfLastMatch = lineOfCurrentMatch;
               if (search.needle instanceof RegExp) {
                 replacement = match.replace(search.needle, replacement);
               }
+              range.start.column += offsetForCurrentLine;
+              range.end.column += offsetForCurrentLine;
               this.target.replace(range, replacement, true, true, false);
             });
             this.target.undoManager.group();
