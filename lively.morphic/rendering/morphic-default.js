@@ -66,7 +66,7 @@ export const cssForTexts = `
     /* selection / cursor */
 
     .newtext-cursor {
-      z-index: 5;
+      z-index: 100;
       pointer-events: none;
       position: absolute;
       background-color: black;
