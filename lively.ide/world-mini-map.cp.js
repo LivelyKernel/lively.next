@@ -272,24 +272,14 @@ class MiniMapModel extends ViewModel {
   }
 }
 
-// part(WorldMiniMap).openInWorld();
 export const WorldMiniMap = component({
-  name: 'world mini map',
   type: Canvas,
+  name: 'world mini map',
   defaultViewModel: MiniMapModel,
   extent: pt(100, 100),
-  fill: Color.transparent,
+  fill: Color.rgb(30, 30, 30).withA(0.95),
   borderWidth: 0,
-  dropShadow: {
-    blur: 10,
-    color: Color.black.withA(0.5)
-  },
-  borderRadius: {
-    bottomLeft: 0,
-    bottomRight: 5,
-    topLeft: 0,
-    topRight: 0
-  },
+  borderRadius: 5,
   epiMorph: true,
   draggable: true,
   styleClasses: ['Popups']
