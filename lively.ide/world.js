@@ -199,6 +199,12 @@ export class LivelyWorld extends World {
       submorph._positionOnCanvas = this.screenToWorld(submorph.position);
     }
 
+    if (change.prop === 'scale' && change.meta?.metaInteraction) {
+      fun.guardNamed('reset-scale-' + submorph.id, () => {
+        submorph.scale = this.scaleFactor;
+      })();
+    }
+
     if (change.meta && change.meta.metaInteraction) return;
     if (change.type !== 'setter' || change.prop !== 'position') return;
 
