@@ -34,13 +34,17 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   static for (generatorFunction, meta, prev) {
     const newDescr = super.for(generatorFunction, meta);
     if (prev) {
+      const dependants = prev.getDependants();
       prev.stylePolicy = newDescr.stylePolicy;
       let c;
       if (c = prev._cachedComponent) {
         delete prev._cachedComponent;
         prev.ensureComponentMorphUpToDate(c);
       }
-      prev.refreshDependants();
+      dependants.forEach(m => {
+        m.master._parent = newDescr.stylePolicy;
+      });
+      newDescr.refreshDependants(dependants);
       return prev;
     }
     return newDescr;
@@ -130,16 +134,18 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     }
   }
 
+  getDependants () {
+    return $world.withAllSubmorphsSelect(m =>
+      m.master?.uses(this.stylePolicy)
+    );
+  }
+
   /**
    * Traverses the world and manually applys each morph which is styled
    * via a policy derived from this one.
    */
-  refreshDependants () {
-    $world.withAllSubmorphsDo(m => {
-      if (m.master?.uses(this.stylePolicy)) {
-        m.master.applyIfNeeded(true);
-      }
-    });
+  refreshDependants (dependants = this.getDependants()) {
+    dependants.forEach(m => m.master.applyIfNeeded(true));
   }
 
   getSourceCode () {
