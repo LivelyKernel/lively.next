@@ -157,7 +157,7 @@ export class LivelyWorld extends World {
 
     if (activeWindow && target === this) activeWindow.deactivate();
 
-    this.handleHaloCycle(evt);
+    if (!target.isFlap) this.handleHaloCycle(evt);
 
     if (evt.state.menu) {
       evt.state.menu.remove();
