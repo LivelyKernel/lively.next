@@ -378,7 +378,8 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
   const isText = aMorph.isText || aMorph.isLabel; // FIXME: remove once new text morph implementation live
   const { exposeMasterRefs, asExpression } = opts;
   if (isText && aMorph.textString !== '') {
-    if (styleProto?.textString !== aMorph.textString) {
+    if (styleProto?.textString !== aMorph.textString &&
+        !obj.equals(styleProto?.textAndAttributes, aMorph.textAndAttributes)) {
       exported.textAndAttributes = aMorph.textAndAttributes.map((ea, i) => {
         return ea && ea.isMorph
           ? serializeSpec(ea, { // eslint-disable-line no-use-before-define
