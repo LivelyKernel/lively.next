@@ -277,14 +277,16 @@ export class LivelyWorld extends World {
   onMouseWheel (evt) {
     const { domEvt } = evt;
 
-    if (domEvt.ctrlKey) domEvt.preventDefault();
+    const zoomOperation = domEvt.ctrlKey;
+    if (zoomOperation) domEvt.preventDefault();
 
     if (
       evt.targetMorphs[0] !== this &&
         evt.targetMorphs.some(m => {
           if (m.isWorld) return false;
           return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
-        })
+        }) &&
+      !zoomOperation
     ) return;
 
     // scrolling/zooming needs to reset the cache,
