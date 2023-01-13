@@ -1329,7 +1329,7 @@ export class Morph {
   get horizontalScrollbarVisible () {
     const extent = this.extent.x;
     const scrollExtent = this.scrollExtent.x - this.scrollbarOffset.x;
-    return scrollExtent > extent || this.clipMode === 'scroll';
+    return (scrollExtent > extent && this.clipMode === 'auto') || this.clipMode === 'scroll';
   }
 
   /**
@@ -1339,7 +1339,7 @@ export class Morph {
   get verticalScrollbarVisible () {
     const extent = this.extent.y;
     const scrollExtent = this.scrollExtent.y - this.scrollbarOffset.y;
-    return scrollExtent > extent || this.clipMode === 'scroll';
+    return (scrollExtent > extent && this.clipMode === 'auto') || this.clipMode === 'scroll';
   }
 
   scrollBounds () {
