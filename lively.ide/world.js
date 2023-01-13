@@ -92,6 +92,13 @@ export class LivelyWorld extends World {
     return true;
   }
 
+  get topbarMode () {
+    // `withTopbarDo` does not return return-value of callback. Catch it instead.
+    let mode;
+    this.withTopBarDo((bar) => { mode = bar.mode; });
+    return mode;
+  }
+
   visibleBoundsExcludingTopBar () {
     // returns the visible rect of the world with respect to the topbar
     const bar = $world.getSubmorphNamed('lively top bar');
@@ -289,6 +296,7 @@ export class LivelyWorld extends World {
           if (m.isWorld) return false;
           return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
         }) &&
+      $world.topbarMode === 'Hand' &&
       !zoomOperation
     ) return;
 
