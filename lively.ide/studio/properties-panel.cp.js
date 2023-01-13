@@ -113,6 +113,9 @@ export class PropertiesPanelModel extends ViewModel {
       );
       view.remove();
     }
+
+    const openedHalos = $world.halos();
+    if (openedHalos.length > 0 && openedHalos[0].target.isMorph) this.focusOn(openedHalos[0].target);
   }
 
   /**
