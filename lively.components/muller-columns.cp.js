@@ -297,6 +297,7 @@ export class MullerColumnViewModel extends ViewModel {
     hoveredList.items = newItems; // triggers the visual update mechanism via list setter
 
     if (evt.key === 'Enter') {
+      if (hoveredList.items.length > 1) return;
       const fakeEvent = {
         targetMorph: hoveredList.withAllSubmorphsSelect(m => m.isListItemMorph)[0]
       };
@@ -419,7 +420,6 @@ export class MullerColumnViewModel extends ViewModel {
   }
 }
 
-
 // MullerColumnView.openInWorld()
 const MullerColumnView = component({
   defaultViewModel: MullerColumnViewModel,
@@ -438,7 +438,7 @@ const MullerColumnView = component({
       y: 0
     },
     reactToSubmorphAnimations: false,
-    renderViaCSS: true,
+    renderViaCSS: true
   }),
   position: pt(875, 1268),
   renderOnGPU: true
