@@ -161,8 +161,6 @@ export class SearchWidgetModel extends ViewModel {
           return [
             { target: 'searchInput', signal: 'onBlur', handler: 'onBlur' },
             { target: 'replaceInput', signal: 'onBlur', handler: 'onBlur' },
-            { target: 'acceptButton', signal: 'fire', handler: 'execCommand', converter: () => 'accept search' },
-            { target: 'cancelButton', signal: 'fire', handler: 'execCommand', converter: () => 'cancel search and reset cursor in text' },
             { target: 'nextButton', signal: 'fire', handler: 'execCommand', converter: () => 'search next' },
             { target: 'prevButton', signal: 'fire', handler: 'execCommand', converter: () => 'search prev' },
             { target: 'searchInput', signal: 'inputChanged', handler: 'search' },
