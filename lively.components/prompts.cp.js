@@ -719,8 +719,7 @@ const LightPrompt = component({
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     spacing: 16,
-    padding: 15,
-    renderViaCSS: true
+    padding: 15
   }),
   submorphs: [{
     type: Text,
@@ -825,7 +824,7 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
     ]
   }, 'button wrapper'), {
     name: 'prompt title',
-    extent: pt(355,91.7),
+    extent: pt(355, 91.7),
     textAndAttributes: ['Confirm\n\
 ', {
       fontWeight: 'bold'
