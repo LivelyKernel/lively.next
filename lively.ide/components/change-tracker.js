@@ -406,7 +406,8 @@ export class ComponentChangeTracker {
       const [removedMorph] = change.args;
       // at any rate, remove the sub spec if present
       const prevOwner = change.target;
-      const ownerSpec = policy.ensureSubSpecFor(prevOwner);
+      let ownerSpec = policy.ensureSubSpecFor(prevOwner);
+      if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
       const removedMorphSpec = policy.getSubSpecAt(
         ...prevOwner.ownerChain().map(m => m.name).reverse(),
         prevOwner.name,
