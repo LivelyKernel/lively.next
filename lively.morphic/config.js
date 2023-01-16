@@ -74,6 +74,10 @@ const config = {
 
     workerEnabled: false,
 
+    studio: {
+      zoom: { step: 0.07, min: 0.02 }
+    },
+
     js: {
       ignoredPackages: [
         'lively.web', 'no group',

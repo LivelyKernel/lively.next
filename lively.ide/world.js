@@ -245,8 +245,11 @@ export class LivelyWorld extends World {
     const cursorPositionInSpaceBeforeZoom = this.screenToWorld(cursorPositionOnScreen);
 
     const scaleDirection = delta < 0 ? 1 : 0;
-    if (scaleDirection) this.scaleFactor *= 1.01;
-    else this.scaleFactor *= 0.99;
+    const { step, min } = config.ide.studio.zoom;
+    if (scaleDirection) this.scaleFactor *= 1 + step;
+    else this.scaleFactor *= 1 - step;
+
+    if (this.scaleFactor < min) this.scaleFactor = min;
 
     const cursorPositionInZoomedSpaceAfterZoom = this.screenToWorld(cursorPositionOnScreen);
     this.offsetX += (cursorPositionInSpaceBeforeZoom.x - cursorPositionInZoomedSpaceAfterZoom.x);
