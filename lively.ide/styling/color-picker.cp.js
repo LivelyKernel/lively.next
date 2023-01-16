@@ -60,13 +60,13 @@ const ColorInput = component({
   }), part(TextInput, {
     type: InputLine,
     fill: Color.transparent,
-    value: 'DDDDDD',
     name: 'hex input',
     tooltip: 'HEX Color Value',
     extent: pt(72.1, 23),
     fill: Color.rgb(66, 73, 73),
     fontSize: 14,
-    padding: rect(4, 3, 6, 2)
+    padding: rect(4, 3, 6, 2),
+    textAndAttributes: ['DDDDDD', null]
   }), part(DarkNumberIconWidget, {
     type: NumberWidget,
     name: 'opacity input',
