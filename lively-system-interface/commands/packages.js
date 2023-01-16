@@ -93,7 +93,8 @@ export async function interactivelyLoadPackage (system, requester, relatedPackag
   });
   packageCandidates = packageCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent()).filter(p => !config.packages[p.asFile().url]);
   let [dir] = (await requester.world().filterableListPrompt('Select package directory', [{ isListItem: true, label: 'Enter custom package...', value: 'custom' }, ...packageCandidates.map(m => m.url)], {
-    multiSelect: false
+    multiSelect: false,
+    requester
   })).selected;
   if (dir === 'custom') {
     dir = await requester.world().prompt('What is the package directory?', {
