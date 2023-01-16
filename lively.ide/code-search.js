@@ -16,7 +16,7 @@ import { ModeButtonActive, ModeButtonDisabled, ModeButtonInactiveClick, ModeButt
 
 export async function doSearch (
   livelySystem, searchTerm,
-  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js|dashboard|loading-screen/],
+  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js|landing-page|loading-screen/],
   excludedPackages = [],
   includeUnloaded = true,
   caseSensitive = false,
@@ -341,7 +341,7 @@ export class CodeSearcher extends FilterableList {
 
   get keybindings () {
     return [
-      { keys: 'F1', command: 'toggle search in unloaded modules' },
+      { keys: 'F1', command: 'toggle search in unloaded modules' }
     ].concat(super.keybindings);
   }
 }
