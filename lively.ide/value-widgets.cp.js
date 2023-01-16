@@ -55,7 +55,9 @@ const DefaultNumberWidget = component({
   fontSize: 16,
   clipMode: 'hidden',
   layout: new TilingLayout({
-    axisAlign: 'center'
+    align: 'center',
+    axis: 'column',
+    orderByIndex: true
   }),
   padding: rect(6, 2, -6, -2),
   submorphs: [
