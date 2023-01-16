@@ -1,7 +1,8 @@
 import { arr, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
+import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { Text, Label } from 'lively.morphic';
+import { withSuperclasses } from 'lively.classes/util.js';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
@@ -40,7 +41,9 @@ export function without (removedSiblingName) {
 }
 
 function handleTextProps (props) {
-  if (!['text', 'label', Text, Label].includes(props.type)) return props;
+  // if (!['text', 'label', Text, Label].includes(props.type)) return props;
+  if (arr.intersect(
+    ['text', 'label', Text, Label], withSuperclasses(props.type)).length === 0) { return props; }
   if (props.textString) {
     props.textAndAttributes = [props.textString, null];
     delete props.textString;
@@ -52,6 +55,10 @@ function handleTextProps (props) {
   if (props.value && obj.isString(props.value)) {
     props.textAndAttributes = [props.value, null];
     delete props.value;
+  }
+  if (props.fontFamily) {
+    const ff = props.fontFamily;
+    if (ff !== skippedValue) { props.fontFamily = sanitizeFont(ff.onlyAtInstantiation ? ff.value : ff); }
   }
   return props;
 }

@@ -132,7 +132,7 @@ export default class InputLine extends Text {
 
       placeholder: {
         after: ['submorphs', 'label', 'defaultTextStyle'],
-        dervied: true,
+        derived: true,
         get () {
           const placeholder = this.getSubmorphNamed('placeholder');
           return placeholder ? placeholder.value : null;
