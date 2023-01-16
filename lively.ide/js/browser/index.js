@@ -1145,13 +1145,13 @@ export class BrowserModel extends ViewModel {
   }
 
   async selectModuleNamed (mName, animated = true) {
-    if (this.state.selectedModule?.url === mName) return;
-    this.state.selectedModule = { url: mName };
     const columnView = this.ui.columnView;
     let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>
       mName === url || mName === nameInPackage);
 
     if (m) {
+      if (this.state.selectedModule?.url === m.url) return;
+      this.state.selectedModule = { url: m.url };
       await columnView.selectNode(m, animated);
       columnView.submorphs.forEach(list => {
         list.scrollSelectionIntoView();
@@ -1172,6 +1172,8 @@ export class BrowserModel extends ViewModel {
       }
 
       if (url) {
+        if (this.state.selectedModule?.url === url) return;
+        this.state.selectedModule = { url };
         const td = columnView.treeData;
         await columnView.setExpandedPath(node => {
           return node === td.root || url.startsWith(node.url);
@@ -1239,6 +1241,7 @@ export class BrowserModel extends ViewModel {
     }
 
     if (['directory', 'package'].includes(selectedFile.type)) {
+      this.state.selectedModule = null;
       this.deactivateEditor();
     }
   }
@@ -1878,6 +1881,7 @@ export class BrowserModel extends ViewModel {
     try {
       await systemInterface.interactivelyReloadModule(
         null, m.url, reloadDeps, resetEnv);
+      this.state.selectedModule = null;
       await this.selectModuleNamed(m.nameInPackage);
       sourceEditor.scroll = scroll;
       sourceEditor.cursorPosition = cursorPosition;
