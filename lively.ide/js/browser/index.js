@@ -1621,9 +1621,9 @@ export class BrowserModel extends ViewModel {
 
   showComponentEditButtons () {
     const { sourceEditor } = this.ui;
-    this.repositionComponentEditButtons();
     sourceEditor.submorphs.forEach(m => {
       if (sourceEditor.textMap === m) return;
+      if (!m.visible && m.isComponentControl) m.positionInLine();
       m.visible = true;
     });
   }
