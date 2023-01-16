@@ -161,6 +161,9 @@ export function createInitialComponentDefinition (aComponent, asExprObject = fal
  */
 export function getProp (propsNode, prop) {
   if (!propsNode) return null;
+  if (propsNode.type === 'CallExpression') {
+    propsNode = propsNode.arguments[0];
+  }
   const [propNode] = query.queryNodes(propsNode, `
   / Property [
     /:key Identifier [ @name == '${prop}' ]
