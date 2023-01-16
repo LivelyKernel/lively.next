@@ -9,7 +9,7 @@ import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modific
 import lint from '../js/linter.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 
-export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark'];
+export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'selectionMode', 'acceptsDrops'];
 const exprSerializer = new ExpressionSerializer();
 
 function getScopeMaster (m) {
