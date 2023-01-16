@@ -137,7 +137,13 @@ export class Canvas extends Morph {
     else this.__canvas_init__ = () => func(this.context);
   }
 
-  toDataURI () { return this._canvas && this._canvas.toDataURL(); }
+  toDataURI () {
+    try {
+      return this._canvas && this._canvas.toDataURL();
+    } catch (err) {
+      return err.message;
+    }
+  }
 
   fromDataURI (uri) {
     const img = new Image();
