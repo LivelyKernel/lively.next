@@ -257,6 +257,7 @@ export class Text extends Morph {
             this.backedUpSelectionMode = this.selectionMode;
             this.backWithDocument();
             this.selectionMode = 'lively';
+            this.backedUpNativeCursor = this.nativeCursor;
             this.nativeCursor = 'text';
           } else {
             if (!this.needsDocument) {
@@ -264,7 +265,8 @@ export class Text extends Morph {
               if (this.backedUpSelectionMode) this.selectionMode = this.backedUpSelectionMode;
               else this.selectionMode = 'none';
             }
-            this.nativeCursor = 'auto';
+            if (this.backedUpNativeCursor) this.nativeCursor = this.backedUpNativeCursor;
+            else this.nativeCursor = 'auto';
           }
           this.setProperty('readOnly', readOnly);
           if (this.renderingState.adaptScrollAfterDocumentAddition) {
@@ -1036,9 +1038,27 @@ export class Text extends Morph {
     return p.promise;
   }
 
-  spec () {
-    const spec = super.spec();
+  spec (skipIfUnchangedFromDefault) {
+    const spec = super.spec(skipIfUnchangedFromDefault);
     spec.textString = this.textString;
+    if (this.tmpEdit) {
+      spec.readOnly = this.prevReadOnly;
+      if (skipIfUnchangedFromDefault && spec.readOnly === true) {
+        delete spec.readOnly;
+      }
+    }
+    if (this.backedUpSelectionMode && spec.selectionMode) {
+      spec.selectionMode = this.backedUpSelectionMode;
+      if (skipIfUnchangedFromDefault && spec.selectionMode === 'none') {
+        delete spec.selectionMode;
+      }
+    }
+    if (this.backedUpNativeCursor && spec.nativeCursor) {
+      spec.nativeCursor = this.backedUpNativeCursor;
+      if (skipIfUnchangedFromDefault && spec.nativeCursor === 'auto') {
+        delete spec.nativeCursor;
+      }
+    }
     return obj.dissoc(spec, [
       'anchors', 'embeddedMorphMap', 'plugins', 'savedMarks', 'textLayout', 'textRenderer',
       'renderingState', 'undoManager', 'metadata', 'document', 'displacingMorphMap'
