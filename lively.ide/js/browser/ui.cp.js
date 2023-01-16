@@ -120,7 +120,10 @@ class ComponentEditControlModel extends ViewModel {
     if (!editor) return;
     if (!anchor) anchor = this.anchor = ensureAnchor(this);
     if (anchor.position.row > editor.renderingState.lastVisibleRow ||
-        anchor.position.row < editor.renderingState.firstVisibleRow) return;
+        anchor.position.row < editor.renderingState.firstVisibleRow) {
+      view.bottom = -10;
+      return;
+    }
     editor.readOnly = componentDescriptor.isDirty();
     view.leftCenter = await positionForAnchor(editor, anchor);
   }
@@ -321,6 +324,7 @@ class ComponentEditButtonMorph extends Morph {
 
     if (anchor.position.row > editor.renderingState.lastVisibleRow ||
         anchor.position.row < editor.renderingState.firstVisibleRow) {
+      this.bottom = -10;
       return;
     }
 
