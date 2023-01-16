@@ -418,7 +418,7 @@ const TabContainer = component({
           borderWidth: 0,
           layout: new TilingLayout({
             wrapSubmorphs: true,
-            axis: 'column',
+            axis: 'column'
           })
         }
       ]
