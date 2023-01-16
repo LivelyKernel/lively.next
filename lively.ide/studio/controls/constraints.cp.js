@@ -330,7 +330,6 @@ const ConstraintsControl = component({
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
-    justifySubmorphs: false,
     orderByIndex: true,
     padding: Rectangle.inset(20, 0, 0, 10),
     spacing: 10

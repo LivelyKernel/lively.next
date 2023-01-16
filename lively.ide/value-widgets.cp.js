@@ -38,7 +38,7 @@ const Scrubber = component({
   min: 0,
   padding: rect(6, 2, -6, -2),
   scaleToBounds: true,
-  textAndAttributes: ['13', null]
+  textAndAttributes: ['0', null]
 });
 
 const DefaultNumberWidget = component({
@@ -57,7 +57,6 @@ const DefaultNumberWidget = component({
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
-    justifySubmorphs: false,
     orderByIndex: true
   }),
   padding: rect(6, 2, -6, -2),
