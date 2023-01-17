@@ -224,6 +224,10 @@ export class LivelyWorld extends World {
     return new Point(worldX, worldY);
   }
 
+  get morphsInWorldWithSubmorphs () {
+    return this.morphsInWorld.map(morph => morph.withAllSubmorphsSelect(() => true)).flat(1000);
+  }
+
   get morphsInWorld () {
     return this.submorphs
       .filter(m => !m.hasFixedPosition)
@@ -285,20 +289,23 @@ export class LivelyWorld extends World {
   }
 
   onMouseWheel (evt) {
-    const { domEvt } = evt;
+    const { domEvt, targetMorphs } = evt;
 
     const zoomOperation = domEvt.ctrlKey || domEvt.buttons === 4 || evt.isCommandKey();
     if (zoomOperation) domEvt.preventDefault();
 
-    if (
-      evt.targetMorphs[0] !== this &&
-        evt.targetMorphs.some(m => {
-          if (m.isWorld) return false;
-          return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
-        }) &&
-      $world.topbarMode === 'Hand' &&
-      !zoomOperation
-    ) return;
+    const openedMorphs = this.morphsInWorldWithSubmorphs;
+
+    if (targetMorphs[0] === this) {
+      // all scroll/zoom operations are legal directly over the world
+    } else if (!targetMorphs.some(t => openedMorphs.includes(t))) return; // no "opened" morph in targets -> we are over an illegal morph (like window)
+    // in hand mode, cancel scroll operations when we are over an element which can be scrolled itself
+    else if (targetMorphs.some(m => {
+      if (m.isWorld) return false;
+      return (m.horizontalScrollbarVisible || m.verticalScrollbarVisible);
+    }) &&
+       $world.topbarMode === 'Hand' &&
+       !zoomOperation) return;
 
     // scrolling/zooming needs to reset the cache,
     // otherwise the preview will lag behind the morph, causing a visual artifact
