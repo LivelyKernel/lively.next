@@ -167,8 +167,7 @@ class MiniMapModel extends ViewModel {
 
     this.updateMapSpace();
 
-    let itemsToDraw = [$world.morphsInWorld.map(morph => morph.withAllSubmorphsSelect(() => true)), this.createCurrentViewPortMorph()];
-    itemsToDraw = itemsToDraw.flat(1000); // make it really, really flat bro
+    let itemsToDraw = [...$world.morphsInWorldWithSubmorphs, this.createCurrentViewPortMorph()];
 
     // We need perform some tricks to render polygons on canvas.
     // Unfortunately, those tricks are asynchronous.
