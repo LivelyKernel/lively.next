@@ -66,6 +66,7 @@ const SearchWidget = component({
   borderRadius: 6,
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.4863477979397931) }),
   extent: pt(300, 55),
+  epiMorph: true,
   fill: Color.rgba(0, 0, 0, 0.7471867324206476),
   layout: new TilingLayout({ }),
   position: pt(395.3, 571.4),
