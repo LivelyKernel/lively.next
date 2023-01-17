@@ -1,12 +1,13 @@
 /* global System */
 
 import { once } from 'lively.bindings';
-import { Path } from 'lively.lang';
+import { arr } from 'lively.lang';
 
 import config from 'lively.morphic/config.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
 
 import { comparePosition, lessEqPosition } from 'lively.morphic/text/position.js';
+import { debounceNamed } from '../../lively.lang/function';
 
 export class TextSearcher {
   constructor (morph) {
@@ -125,25 +126,18 @@ export class TextSearcher {
   }
 }
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// widget for text search, maintains search state
-
 export class SearchWidgetModel extends ViewModel {
   static get properties () {
     return {
-      isEpiMorph: { defaultValue: true },
-
       target: {},
       state: {
         initialize () {
           this.state = {
             backwards: false,
-            before: null,
-            position: null,
-            inProgress: null,
-            last: null,
             caseMode: false,
-            regexMode: false
+            regexMode: false,
+            results: [],
+            currentResultIndex: 0
           };
         }
       },
@@ -153,7 +147,7 @@ export class SearchWidgetModel extends ViewModel {
           const text = this.ui.searchInput.textString;
           if (this.state.regexMode) {
             const reMatch = text.match(/^\/(.*)\/([a-z]*)$/);
-            if (reMatch) {
+            if (reMatch) { // are flags specified?
               return RegExp(reMatch[1], reMatch[2]);
             }
             return new RegExp(text);
@@ -161,6 +155,15 @@ export class SearchWidgetModel extends ViewModel {
           return text;
         },
         set (v) { this.ui.searchInput.textString = String(v); }
+      },
+
+      replaceInput: {
+        get () {
+          return this.ui.replaceInput.textString;
+        },
+        set (v) {
+          this.ui.replaceInput.textString = String(v);
+        }
       },
 
       textMap: {
@@ -171,7 +174,7 @@ export class SearchWidgetModel extends ViewModel {
 
       expose: {
         get () {
-          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isEpiMorph', 'isSearchWidget'];
+          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isSearchWidget'];
         }
       },
 
@@ -180,14 +183,14 @@ export class SearchWidgetModel extends ViewModel {
           return [
             { target: 'searchInput', signal: 'onBlur', handler: 'onBlur' },
             { target: 'replaceInput', signal: 'onBlur', handler: 'onBlur' },
-            { target: 'nextButton', signal: 'fire', handler: 'execCommand', converter: () => 'search next' },
-            { target: 'prevButton', signal: 'fire', handler: 'execCommand', converter: () => 'search prev' },
+            { signal: 'onBlur', handler: 'onBlur', override: true },
+            { target: 'nextButton', signal: 'fire', handler: 'execCommand', converter: () => 'goto next result' },
+            { target: 'prevButton', signal: 'fire', handler: 'execCommand', converter: () => 'goto previous result' },
             { target: 'searchInput', signal: 'inputChanged', handler: 'search' },
             { target: 'replaceButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace and go to next' },
             { target: 'replaceAllButton', signal: 'fire', handler: 'execCommand', converter: () => 'replace all' },
             { target: 'caseModeButton', signal: 'fire', handler: 'toggleCaseMode' },
-            { target: 'regexModeButton', signal: 'fire', handler: 'toggleRegexMode' },
-            { signal: 'onBlur', handler: 'onBlur', override: true }
+            { target: 'regexModeButton', signal: 'fire', handler: 'toggleRegexMode' }
           ];
         }
       }
@@ -202,19 +205,7 @@ export class SearchWidgetModel extends ViewModel {
   viewDidLoad () {
     if (this.targetText) this.target = this.targetText;
     if (!this.target) throw new Error('SearchWidget needs a target text morph!');
-
-    // override existing commands
-    this.ui.searchInput.addCommands([
-      {
-        name: 'realign top-bottom-center',
-        exec: async () => {
-          this.target.execCommand('realign top-bottom-center');
-          this.addSearchMarkersForPreview(
-            this.state.inProgress && this.state.inProgress.found, false, this.state.caseMode);
-          return true;
-        }
-      }
-    ]);
+    if (this.input) this.search();
   }
 
   toggleRegexMode () {
@@ -237,6 +228,11 @@ export class SearchWidgetModel extends ViewModel {
     this.ui.searchInput.focus();
   }
 
+  /**
+   * Keeps the search widget around when one just clicks a button in the widget or uses the text map.
+   * @param {Event} evt - The event causing the blur handler to be invoked.
+   * @returns
+   */
   onBlur (evt) {
     const world = this.world();
     const { view, ui: { searchInput, replaceInput } } = this;
@@ -245,7 +241,7 @@ export class SearchWidgetModel extends ViewModel {
       const focusedMorph = world.focusedMorph;
       if (!view.withAllSubmorphsDetect(m => m.isFocused()) &&
          !$world.focusedMorph.isTextMap) {
-        this.cancelSearch(false);
+        this.remove(false);
         return;
       }
       view.bringToFront();
@@ -258,48 +254,37 @@ export class SearchWidgetModel extends ViewModel {
 
   cleanup () {
     this.removeSearchMarkers();
-    this.state.inProgress = null;
     this.textMap && this.textMap.update();
   }
 
-  cancelSearch (resetEditor) {
-    if (this.state.inProgress) { this.state.last = this.state.inProgress; }
+  // This does not cause a name collision since we are on a `ViewModel` and this is not exposed!
+  remove () {
+    this.ui.searchInput.acceptInput();
     this.cleanup();
     if (!this._reuseTextMap) this.target.removeTextMap();
-    if (this.state.before && resetEditor) {
-      const { scroll, selectionRange } = this.state.before;
-      this.target.selection = selectionRange;
-      this.target.scroll = scroll;
-      this.state.before = null;
-    }
     this.view.remove();
     this.target.focus();
   }
 
-  acceptSearch () {
-    if (this.state.inProgress) { this.state.last = this.state.inProgress; }
-    if (this.applySearchResult(this.state.inProgress)) {
-      this.state.before && this.target.saveMark(this.state.before.position);
-    }
-    this.ui.searchInput.acceptInput(); // for history
-    this.cleanup();
-    if (!this._reuseTextMap) this.target.removeTextMap();
-    this.state.before = null;
-    this.view.remove();
-    this.target.focus();
-  }
+  moveCursorToNextResult (backwards = false) {
+    if (this.results.length === 0) return;
 
-  applySearchResult (searchResult) {
-    // searchResult = {found, backwards, ...}
-    if (!searchResult || !searchResult.found) return null;
+    this.state.backwards = backwards;
+
     const text = this.target;
     const sel = text.selection;
     const select = !!text.activeMark || !sel.isEmpty();
-    const { backwards, found: { range: { start, end } } } = searchResult;
-    const pos = backwards ? start : end;
+
+    if (backwards) this.currentResultIndex = this.currentResultIndex - 1 === -1 ? this.results.length - 1 : this.currentResultIndex - 1;
+    else this.currentResultIndex = this.currentResultIndex + 1 === this.results.length ? 0 : this.currentResultIndex + 1;
+
+    const { range: { start, end } } = this.results[this.currentResultIndex];
+
+    const pos = backwards ? end : start;
     select ? sel.lead = pos : text.cursorPosition = pos;
+
     if (!text.isLineFullyVisible(pos.row)) text.centerRow();
-    return searchResult;
+    this.updateCursorMarker();
   }
 
   removeSearchMarkers () {
@@ -307,152 +292,125 @@ export class SearchWidgetModel extends ViewModel {
       id.startsWith('search-highlight') && this.target.removeMarker(id));
   }
 
-  addSearchMarkers (found, backwards = false, caseSensitive = false) {
+  addSearchMarkers () {
     this.removeSearchMarkers();
-
     const { target: text } = this;
-    let { startRow, endRow } = text.whatsVisible;
-    const lines = text.document.lineStrings;
-    let i = 0;
-    const { maxCharsPerLine, fastHighlightLineCount } = config.codeEditor.search;
 
-    if (this.textMap && found.match.length >= 3 && lines.length < fastHighlightLineCount) {
-      startRow = 0, endRow = lines.length - 1;
-    }
-
-    let stop = false;
-    const ts = window.performance.now();
-
-    for (let row = startRow; row <= endRow; row++) {
-      if (stop) break;
-      const line = lines[row] || '';
-      for (let col = 0; col < Math.min(line.length, maxCharsPerLine); col++) {
-        if (window.performance.now() - ts > 300) { stop = true; break; }
-        const matched = caseSensitive
-          ? line.slice(col).indexOf(found.match) === 0
-          : line.slice(col).toLowerCase().indexOf(found.match.toLowerCase()) === 0;
-        if (matched) {
-          text.addMarker({
-            id: 'search-highlight-' + i++,
-            range: { start: { row, column: col }, end: { row, column: col + found.match.length } },
-            style: {
-              'border-radius': '4px',
-              'background-color': 'rgba(255, 200, 0, 0.3)',
-              'box-shadow': '0 0 4px rgba(255, 200, 0, 0.3)',
-              'pointer-events': 'none'
-            }
-          });
-          col += found.match.length;
+    this.results.forEach((searchResult, i) => {
+      text.addMarker({
+        id: 'search-highlight-' + i,
+        range: searchResult.range,
+        style: {
+          'border-radius': '4px',
+          'background-color': 'rgba(255, 200, 0, 0.3)',
+          'box-shadow': '0 0 4px rgba(255, 200, 0, 0.3)',
+          'pointer-events': 'none'
         }
-      }
-    }
+      });
+    });
 
+    this.updateCursorMarker();
+    this.textMap && this.textMap.update();
+  }
+
+  updateCursorMarker () {
+    this.target.removeMarker('search-highlight-cursor');
+
+    const resultAtCursor = this.results[this.currentResultIndex];
     let positionRange;
     if (this.state.backwards) {
-      const { row, column } = found.range.start;
+      const { row, column } = resultAtCursor.range.end;
       positionRange = { start: { row, column }, end: { row, column: column + 1 } };
     } else {
-      const { row, column } = found.range.end;
+      const { row, column } = resultAtCursor.range.start;
       positionRange = { start: { row, column: column - 1 }, end: { row, column } };
     }
 
-    text.addMarker({
+    this.createCursorMarker(positionRange);
+  }
+
+  createCursorMarker (range) {
+    this.target.addMarker({
       id: 'search-highlight-cursor',
-      range: positionRange,
+      range: range,
       style: {
         'pointer-events': 'none',
         'box-sizing': 'border-box',
         [this.state.backwards ? 'border-left' : 'border-right']: '3px red solid'
       }
     });
-
-    this.textMap && this.textMap.update();
-  }
-
-  addSearchMarkersForPreview (found, noCursor = true) {
-    if (!found) return;
-    this.addSearchMarkers(found, false, this.state.caseMode);
-    noCursor && this.target.removeMarker('search-highlight-cursor');
   }
 
   prepareForNewSearch () {
-    const { target: text, state, view, ui: { searchInput } } = this;
-    const world = text.world();
+    const { target: text, view, ui: { searchInput } } = this;
 
+    const world = text.world();
     if (!world) return;
+
     view.openInWorld(world.visibleBounds().center(), world);
     view.topRight = text.globalBounds().insetBy(5).topRight().addXY(0, text.padding.top());
     if (text.verticalScrollbarVisible) view.topRight = view.topRight.subXY(text.scrollbarOffset.x, 0);
 
     if (text.getWindow()) once(text.getWindow(), 'remove', view, 'remove');
 
-    const { scroll, selection: sel } = text;
-    state.position = sel.lead;
-    state.before = {
-      scroll,
-      position: sel.lead,
-      selectionRange: sel.range,
-      selectionReverse: sel.isReverse()
-    };
-
-    if (state.last && state.last.found) {
-      this.withoutBindingsDo(() => this.input = state.last.needle);
-      this.addSearchMarkersForPreview(state.last.found, false, state.caseMode);
-    }
-
     this.focus();
     if (!text.selection.isEmpty()) {
       searchInput.textString = text.selectionOrLineString();
       text.selection.collapse();
     } else searchInput.selectAll();
-  }
 
-  advance (backwards) {
-    const { inProgress } = this.state;
-    if (inProgress && inProgress.found) {
-      const dirChange = backwards !== this.state.backwards;
-      const { found: { range: { start, end } } } = inProgress;
-      this.state.position = dirChange
-        ? (backwards ? end : start)
-        : (backwards ? start : end);
+    if (this.input.length > 0) {
+      this.search();
     }
-    this.state.backwards = backwards;
-    return this.search();
   }
 
-  searchNext () { return this.advance(false); }
-  searchPrev () { return this.advance(true); }
-
+  // TODO: count results and incorporate in UI
   search () {
-    if (!this.input) {
-      this.cleanup();
-      return null;
-    }
+    debounceNamed('search', 10, () => {
+      if (!this.input) {
+        this.cleanup();
+        return;
+      }
 
-    const state = this.state; const { backwards, position, caseMode } = state;
-    const opts = { backwards, start: position, caseSensitive: this.state.caseMode };
-    const found = new TextSearcher(this.target).search({ needle: this.input, ...opts });
+      const opts = { start: { column: 0, row: 0 }, caseSensitive: this.state.caseMode };
+      let found = new TextSearcher(this.target).searchForAll({ needle: this.input, ...opts });
 
-    const result = this.state.inProgress = { ...opts, needle: this.input, found };
-    this.applySearchResult(result);
-    if (found) {
-      this.addSearchMarkers(found, backwards, caseMode);
-    } else {
-      this.cleanup();
-    }
-    return result;
+      found = found.sort((a, b) => comparePosition(a.range, b.range));
+
+      this.results = found;
+
+      if (found.length > 0) {
+        const currPos = this.target.cursorPosition;
+        const resultsBehindCursor = this.results.filter(resPos => lessEqPosition(resPos.range.start, currPos));
+        const firstResultBehindCursor = resultsBehindCursor[0];
+        const resultsBeforeCursor = this.results.filter(resPos => lessEqPosition(currPos, resPos.range.end));
+        const firstResultBeforeCursor = arr.last(resultsBeforeCursor);
+        if (!firstResultBehindCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBeforeCursor);
+        else if (!firstResultBeforeCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
+        else if (comparePosition(firstResultBehindCursor.range, firstResultBeforeCursor.range) === 0) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
+        else {
+          const distanceToBefore = { row: currPos.row - firstResultBeforeCursor.range.end.row, column: currPos.column - firstResultBeforeCursor.end.column };
+          const distanceToBehind = { row: currPos.row - firstResultBehindCursor.range.start.row, column: currPos.column - firstResultBehindCursor.range.start.column };
+          this.currentResultIndex = lessEqPosition(distanceToBefore, distanceToBehind) ? this.results.findIndex((res) => res === firstResultBeforeCursor) : this.results.findIndex((res) => res === firstResultBehindCursor);
+        }
+        this.addSearchMarkers();
+        const { range: { start, end } } = this.results[this.currentResultIndex];
+        let positionRange = { start: { row: start.row, column: start.column - 1 }, end: { row: end.row, column: end.column } };
+        this.createCursorMarker(positionRange);
+        this.target.centerRow(positionRange.start.row);
+      } else {
+        this.cleanup();
+      }
+    })();
   }
 
   get keybindings () {
     return [
       { keys: 'Enter', command: 'search next or replace and go to next' },
-      { keys: 'Alt-Enter', command: 'only search prev' },
+      { keys: 'Alt-Enter', command: { command: 'search next or replace and go to next', args: { direction: 'backwards' } } },
       { keys: 'Tab', command: 'change focus' },
       { keys: { mac: 'Ctrl-O', win: 'Alt-O' }, command: 'occur with search term' },
-      { keys: 'Ctrl-W', command: 'yank next word from text' },
-      { keys: 'Escape', command: 'cancel search' },
-      { keys: { win: 'Ctrl-F|Ctrl-S|Ctrl-G', mac: 'Meta-F|Ctrl-S|Meta-G' }, command: 'search next' },
-      { keys: { win: 'Ctrl-Shift-F|Ctrl-R|Ctrl-Shift-G', mac: 'Meta-Shift-F|Ctrl-R|Meta-Shift-G' }, command: 'search prev' }
+      { keys: 'Escape', command: 'remove search widget' }
     ];
   }
 
@@ -467,45 +425,43 @@ export class SearchWidgetModel extends ViewModel {
           return this.target.execCommand('occur', { needle: this.input });
         }
       },
-      { name: 'accept search', exec: () => { this.acceptSearch(); return true; } },
-      { name: 'cancel search and reset cursor in text', exec: () => { this.cancelSearch(true); return true; } },
-      { name: 'cancel search', exec: () => { this.cancelSearch(false); return true; } },
-      { name: 'search next', exec: () => { this.searchNext(); return true; } },
-      { name: 'search prev', exec: () => { this.searchPrev(); return true; } },
-      { name: 'only search prev', exec: () => { if (this.ui.searchInput.isFocused()) { this.searchPrev(); return true; } } },
+      { name: 'remove search widget', exec: () => { this.remove(); return true; } },
+      { name: 'goto next result', exec: () => { this.moveCursorToNextResult(); return true; } },
+      { name: 'goto previous result', exec: () => { this.moveCursorToNextResult(true); return true; } },
 
       {
         name: 'search next or replace and go to next',
-        exec: (_, args, count) => {
+        exec: (_, args) => {
+          if (args?.direction === 'backwards') this.state.backwards = true;
+          else this.state.backwards = false;
           this.ui.searchInput.acceptInput();
+          if (this.replaceInput) this.ui.replaceInput.acceptInput();
           return this.execCommand(
             this.ui.replaceInput.isFocused()
               ? 'replace and go to next'
-              : 'search next', args, count);
+              : (this.state.backwards ? 'goto previous result' : 'goto next result'));
         }
       },
 
       {
         name: 'replace current search location with replace input',
         exec: () => {
-          const search = Path('state.inProgress').get(this);
-          if (search.found) {
-            let replacement = this.ui.replaceInput.textString;
-            this.ui.replaceInput.acceptInput(); // for history
-            if (search.needle instanceof RegExp) {
-              replacement = search.found.match.replace(search.needle, replacement);
-            }
-            this.target.replace(search.found.range, replacement);
+          const { replaceInput } = this.ui;
+          if (this.replaceInput.length > 0) {
+            replaceInput.acceptInput();
+            let replacement = this.replaceInput;
+            this.target.replace(this.results[this.currentResultIndex].range, replacement);
           }
           return true;
         }
       },
-
       {
         name: 'replace and go to next',
         exec: () => {
+          if (this.state.backwards) this.execCommand('goto previous result');
           this.execCommand('replace current search location with replace input');
-          this.execCommand(this.state.backwards ? 'search prev' : 'search next');
+          if (!this.state.backwards) this.execCommand('goto next result');
+          this.search();
           return true;
         }
       },
@@ -513,35 +469,25 @@ export class SearchWidgetModel extends ViewModel {
       {
         name: 'replace all',
         exec: () => {
-          let search = Path('state.inProgress').get(this);
           const { replaceInput } = this.ui;
-          if (search.found) {
-            search = { ...search, start: { row: 0, column: 0 } };
+          let replacement = replaceInput.textString;
+          replaceInput.acceptInput();
 
-            let replacement = replaceInput.textString;
-            replaceInput.acceptInput(); // for history
-
-            const allMatches = new TextSearcher(this.target).searchForAll(search);
-
-            this.target.undoManager.group();
-            let lineOfLastMatch = -1;
-            let offsetForCurrentLine = 0;
-            allMatches.forEach(found => {
-              const { range, match } = found;
-              const lineOfCurrentMatch = range.start.row;
-              if (lineOfCurrentMatch === lineOfLastMatch) offsetForCurrentLine += (replacement.length - match.length);
-              else offsetForCurrentLine = 0;
-              lineOfLastMatch = lineOfCurrentMatch;
-              if (search.needle instanceof RegExp) {
-                replacement = match.replace(search.needle, replacement);
-              }
-              range.start.column += offsetForCurrentLine;
-              range.end.column += offsetForCurrentLine;
-              this.target.replace(range, replacement, true, true, false);
-            });
-            this.target.undoManager.group();
-            this.acceptSearch();
-          }
+          this.target.undoManager.group();
+          let lineOfLastMatch = -1;
+          let offsetForCurrentLine = 0;
+          this.results.forEach(found => {
+            const { range, match } = found;
+            const lineOfCurrentMatch = range.start.row;
+            if (lineOfCurrentMatch === lineOfLastMatch) offsetForCurrentLine += (replacement.length - match.length);
+            else offsetForCurrentLine = 0;
+            lineOfLastMatch = lineOfCurrentMatch;
+            range.start.column += offsetForCurrentLine;
+            range.end.column += offsetForCurrentLine;
+            this.target.replace(range, replacement, true, true, false);
+          });
+          this.target.undoManager.group();
+          this.search();
           return true;
         }
       },
@@ -553,19 +499,6 @@ export class SearchWidgetModel extends ViewModel {
           if (searchInput.isFocused()) { replaceInput.focus(); } else { searchInput.focus(); }
           return true;
         }
-      },
-
-      {
-        name: 'yank next word from text',
-        exec: () => {
-          const text = this.target;
-          const word = text.wordRight();
-          const input = this.ui.searchInput;
-          if (!input.selection.isEmpty()) input.selection.text = '';
-          const string = text.textInRange({ start: text.cursorPosition, end: word.range.end });
-          input.textString += string;
-          return true;
-        }
       }
     ];
   }
@@ -575,10 +508,9 @@ export const searchCommands = [
   {
     name: 'search in text',
     exec: async (morph, opts = { backwards: false }) => {
-      // update text/commands!
       const { SearchWidget } = await System.import('lively.ide/text/search.cp.js');
       const search = morph._searchWidget ||
-        (morph._searchWidget = part(SearchWidget, { viewModel: { target: morph }, extent: pt(300, 55) }));
+        (morph._searchWidget = part(SearchWidget, { viewModel: { target: morph } }));
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 

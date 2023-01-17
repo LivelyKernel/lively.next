@@ -3691,6 +3691,7 @@ export class Text extends Morph {
   async showTextMap () {
     const TextMap = await System.import('lively.ide/text/map.js');
     const textMap = this.textMap = TextMap.default.openInside(this);
+    textMap.updateDebounced(); // unfortunately necessary to get the map to display itself correctly
     return textMap;
   }
 

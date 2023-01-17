@@ -324,7 +324,6 @@ const config = {
       { keys: 'Alt-Q', command: 'fit text to column' },
 
       { keys: { win: 'Ctrl-F|Ctrl-G|F3', mac: 'Meta-F|Meta-G|Ctrl-S' }, command: 'search in text' },
-      { keys: { win: 'Ctrl-Shift-F|Ctrl-Shift-G', mac: 'Meta-Shift-F|Meta-Shift-G|Ctrl-R' }, command: { command: 'search in text', args: { backwards: true } } },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
       // multi select bindings
