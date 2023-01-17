@@ -287,7 +287,7 @@ export class LivelyWorld extends World {
   onMouseWheel (evt) {
     const { domEvt } = evt;
 
-    const zoomOperation = domEvt.ctrlKey;
+    const zoomOperation = domEvt.ctrlKey || domEvt.buttons === 4 || evt.isCommandKey();
     if (zoomOperation) domEvt.preventDefault();
 
     if (
@@ -307,7 +307,7 @@ export class LivelyWorld extends World {
 
     const { deltaX, deltaY } = domEvt;
 
-    if (evt.isAltDown() || domEvt.buttons === 4 || evt.isCommandKey()) {
+    if (zoomOperation) {
       this.zoomWorld(deltaY);
       return;
     }
