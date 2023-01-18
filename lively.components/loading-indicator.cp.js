@@ -204,59 +204,9 @@ function forPromise (p, label, props) {
   return i;
 }
 
-const LoadingIndicator = component({
-  defaultViewModel: LoadingIndicatorModel,
-  epiMorph: true,
-  fill: Color.transparent,
-  name: 'loading indicator',
-  layout: new TilingLayout({ align: 'center', axisAlign: 'center' }),
-  extent: pt(225, 50),
-  submorphs: [{
-    name: 'background',
-    borderRadius: 10,
-    clipMode: 'hidden',
-    dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
-    extent: pt(225, 65),
-    fill: Color.rgba(0, 0, 0, 0.65),
-    layout: new TilingLayout({
-      axis: 'column',
-      wrapSubmorphs: false,
-      padding: 10,
-      hugContentsVertically: true,
-      hugContentsHorizontally: true,
-      resizePolicies: [
-        ['progress bar', { width: 'fill', height: 'fixed' }]
-      ]
-    }),
-    submorphs: [{
-      name: 'top float',
-      fill: Color.transparent,
-      layout: new TilingLayout({
-        wrapSubmorphs: false,
-        hugContentsVertically: true,
-        hugContentsHorizontally: true,
-        align: 'center',
-        axis: 'row',
-        axisAlign: 'top',
-        padding: rect(22, 0, -22, 0)
-      }),
-      submorphs: [{
-        name: 'spinner wrapper',
-        fill: Color.transparent,
-        height: 45,
-        width: 40,
-        layout: new TilingLayout({
-          axis: 'row',
-          align: 'left',
-          axisAlign: 'center',
-          wrapSubmorphs: false,
-          reactToSubmorphAnimations: false
-        }),
-        submorphs: [
-          {
-            type: HTMLMorph,
-            name: 'spinner',
-            cssDeclaration: '\n\
+const LightSpinner = component({
+  type: HTMLMorph,
+  cssDeclaration: '\n\
            .lds-spinner {\n\
             color: official;\n\
             display: inline-block;\n\
@@ -335,11 +285,62 @@ const LoadingIndicator = component({
               opacity: 0;\n\
             }\n\
           }',
-            extent: pt(65, 70),
-            fill: Color.rgba(255, 255, 255, 0),
-            html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
-            scale: 0.5
-          }
+  extent: pt(65, 70),
+  fill: Color.rgba(255, 255, 255, 0),
+  html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
+  scale: 0.5
+});
+
+const LoadingIndicator = component({
+  defaultViewModel: LoadingIndicatorModel,
+  epiMorph: true,
+  fill: Color.transparent,
+  name: 'loading indicator',
+  layout: new TilingLayout({ align: 'center', axisAlign: 'center' }),
+  extent: pt(225, 50),
+  submorphs: [{
+    name: 'background',
+    borderRadius: 10,
+    clipMode: 'hidden',
+    dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.62), blur: 28 }),
+    extent: pt(225, 65),
+    fill: Color.rgba(0, 0, 0, 0.65),
+    layout: new TilingLayout({
+      axis: 'column',
+      wrapSubmorphs: false,
+      padding: 10,
+      hugContentsVertically: true,
+      hugContentsHorizontally: true,
+      resizePolicies: [
+        ['progress bar', { width: 'fill', height: 'fixed' }]
+      ]
+    }),
+    submorphs: [{
+      name: 'top float',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        wrapSubmorphs: false,
+        hugContentsVertically: true,
+        hugContentsHorizontally: true,
+        align: 'center',
+        axis: 'row',
+        axisAlign: 'top',
+        padding: rect(22, 0, -22, 0)
+      }),
+      submorphs: [{
+        name: 'spinner wrapper',
+        fill: Color.transparent,
+        height: 45,
+        width: 40,
+        layout: new TilingLayout({
+          axis: 'row',
+          align: 'left',
+          axisAlign: 'center',
+          wrapSubmorphs: false,
+          reactToSubmorphAnimations: false
+        }),
+        submorphs: [
+          part(LightSpinner, { name: 'spinner' })
         ]
       }, {
         name: 'wrapper',
@@ -408,4 +409,4 @@ const LoadingIndicator = component({
   }]
 });
 
-export { LoadingIndicator, open, forPromise, runFn, LoadingIndicatorModel };
+export { LoadingIndicator, open, forPromise, runFn, LoadingIndicatorModel, LightSpinner };

@@ -2,7 +2,7 @@ import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 
 import { Spinner, TextInput, DarkPopupWindow } from './shared.cp.js';
-import { InputLineDark } from 'lively.components/inputs.cp.js';
+import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
 import { arr, promise, num, date, string, fun } from 'lively.lang';
@@ -15,6 +15,7 @@ import { adoptObject } from 'lively.lang/object.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { PopupWindow } from '../styling/shared.cp.js';
+import { LightSpinner } from 'lively.components/loading-indicator.cp.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -331,9 +332,16 @@ export class ExportedComponent extends Morph {
           this.fitPreview();
         }
       },
-      master: {
+      defaultMaster: {
+        isComponent: true,
         initialize () {
-          this.master = ComponentPreview; // eslint-disable-line no-use-before-define
+          this.defaultMaster = ComponentPreview; // eslint-disable-line no-use-before-define
+        }
+      },
+      selectedMaster: {
+        isComponent: true,
+        initialize () {
+          this.selectedMaster = ComponentPreviewSelected; // eslint-disable-line no-use-before-define
         }
       },
       component: {
@@ -433,11 +441,11 @@ export class ExportedComponent extends Morph {
     this.isSelected = active;
     if (active) {
       this.master = {
-        auto: ComponentPreviewSelected // eslint-disable-line no-use-before-define
+        auto: this.selectedMaster
       };
     } else {
       this.master = {
-        auto: ComponentPreview // eslint-disable-line no-use-before-define
+        auto: this.defaultMaster
       };
     }
   }
@@ -455,6 +463,18 @@ export class ProjectEntry extends Morph {
         get () {
           const selectedPreview = this.getSubmorphNamed('component previews').submorphs.find(m => m.isSelected);
           return selectedPreview && selectedPreview.component;
+        }
+      },
+      previewMaster: {
+        isComponent: true,
+        initialize () {
+          this.previewMaster = ComponentPreview; // eslint-disable-line no-use-before-define
+        }
+      },
+      selectedPreviewMaster: {
+        isComponent: true,
+        initialize () {
+          this.selectedPreviewMaster = ComponentPreviewSelected; // eslint-disable-line no-use-before-define
         }
       },
       worldName: {
@@ -476,11 +496,6 @@ export class ProjectEntry extends Morph {
     if (projectTitle.textBounds().containsPoint(evt.positionIn(projectTitle))) { this.openComponentWorld(); }
   }
 
-  onMouseDown (evt) {
-    super.onMouseDown(evt);
-    const projectTitle = this.getSubmorphNamed('project title');
-  }
-
   async openComponentWorld () {
     const selectedComponent = this.selectedComponent || this.exportedComponents[0];
     const { moduleId: moduleName, exportedName: name } = selectedComponent[Symbol.for('lively-module-meta')];
@@ -494,11 +509,13 @@ export class ProjectEntry extends Morph {
 
   renderComponents (components) {
     const previewContainer = this.getSubmorphNamed('component previews');
-    const previewProto = part(ComponentPreview); /* eslint-disable-line no-use-before-define */
     previewContainer.submorphs = components.map(cp => {
       let preview = previewContainer.submorphs.find(p => p.component === cp);
       if (!preview) {
-        preview = previewProto.copy();
+        preview = part(this.previewMaster, {
+          defaultMaster: this.previewMaster,
+          selectedMaster: this.selectedPreviewMaster
+        });
         preview.project = this;
         preview.component = cp;
       }
@@ -757,7 +774,7 @@ export class ComponentBrowserModel extends ViewModel {
 
       if (n && n.componentObject === selectedComponent.component) return;
       // expand path until node selected
-      const url = System.decanonicalize(selectedComponent.component[Symbol.for('lively-module-meta')].module);
+      const url = System.decanonicalize(selectedComponent.component[Symbol.for('lively-module-meta')].moduleId);
       await this.withoutUpdates(() => this.models.componentFilesView.setExpandedPath(node => {
         if (node === td.root) return true;
         if (node.url) return url.startsWith(node.url);
@@ -918,11 +935,10 @@ export class ComponentBrowserModel extends ViewModel {
     // do some smart updating of the list
     const newList = [];
     const currentList = masterComponentList.submorphs;
-    const projectEntry = part(this.sectionMaster); // eslint-disable-line no-use-before-define
     // remove all empty lists
     const orderedWorlds = (componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project'));
     for (const worldName of orderedWorlds) {
-      const item = currentList.find(item => item.worldName === worldName) || projectEntry.copy();
+      const item = currentList.find(item => item.worldName === worldName) || part(this.sectionMaster);
       item.worldName = worldName;
       item.renderComponents(componentsByWorlds[worldName]);
       newList.push(item);
@@ -1029,9 +1045,9 @@ const ComponentPreviewSelected = component(ComponentPreview, {
 });
 
 const ComponentPreviewSelectedDark = component(ComponentPreview, {
-  borderColor: Color.rgb(118, 118, 118),
+  borderColor: Color.rgb(52, 138, 117),
   borderWidth: 2,
-  fill: Color.rgba(212, 212, 212, 0.75),
+  fill: Color.rgba(100, 255, 218, 0.6),
   submorphs: [{
     name: 'component name',
     fontColor: Color.rgb(255, 255, 255)
@@ -1093,6 +1109,8 @@ const ProjectSection = component({
 });
 
 const ProjectSectionDark = component(ProjectSection, {
+  previewMaster: ComponentPreviewDark,
+  selectedPreviewMaster: ComponentPreviewSelectedDark,
   submorphs: [{
     name: 'project title',
     fontColor: Color.rgb(204, 204, 204),
@@ -1142,8 +1160,10 @@ const ComponentBrowser = component(PopupWindow, {
         spacing: 16,
         wrapSubmorphs: false
       }),
-      submorphs: [part(TextInput, {
+      submorphs: [part(InputLineDefault, {
         name: 'search input',
+        dropShadow: null,
+        highlightWhenFocused: false,
         fill: Color.rgba(66, 73, 73, 0),
         borderRadius: 0,
         borderWidth: {
@@ -1286,6 +1306,26 @@ const ComponentBrowserDark = component(ComponentBrowser, {
   submorphs: [{
     name: 'controls',
     submorphs: [{
+      name: 'search input',
+      borderColor: Color.rgb(112, 123, 124),
+      borderWidth: {
+        bottom: 1,
+        left: 0,
+        right: 0,
+        top: 0
+      },
+      borderRadius: 0,
+      master: TextInput,
+      fontSize: 20,
+      highlightWhenFocused: false,
+      submorphs: [{
+        name: 'spinner',
+        master: LightSpinner,
+        visible: false,
+        position: pt(456.6, 4.4),
+        scale: 0.35
+      }]
+    }, {
       name: 'component files view',
       borderColor: Color.rgb(112, 123, 124),
       borderWidth: 1,
@@ -1306,4 +1346,4 @@ const ComponentBrowserDark = component(ComponentBrowser, {
   }]
 });
 
-export { ComponentBrowser, ComponentPreview, ComponentPreviewSelected, ProjectSection };
+export { ComponentBrowser, ComponentBrowserDark, ComponentPreview, ComponentPreviewSelected, ProjectSection };
