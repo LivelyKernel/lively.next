@@ -6,8 +6,11 @@ class WorldZoomIndicatorModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isZoomIndicator', 'onMouseDown', 'relayout', 'updateZoomLevel'];
+          return ['isZoomIndicator', 'onMouseDown', 'relayout', 'updateZoomLevel', 'isEpiMorph'];
         }
+      },
+      isEpiMorph: {
+        get () { return true; }
       },
       bindings: {
         get () {
@@ -44,10 +47,7 @@ class WorldZoomIndicatorModel extends ViewModel {
   }
 }
 
-// part(WorldZoomIndicator).openInWorld();
 export const WorldZoomIndicator = component({
-  type: Morph,
-  epiMorph: true,
   defaultViewModel: WorldZoomIndicatorModel,
   name: 'zoom indicator',
   borderColor: Color.rgb(23, 160, 251),
