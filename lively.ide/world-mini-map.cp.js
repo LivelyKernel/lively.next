@@ -10,7 +10,10 @@ class MiniMapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['isMiniMap', 'drawMorphs', 'relayout', 'onDrag', 'onMouseDown'];
+          return [
+            'isEpiMorph', 'isMiniMap', 'drawMorphs',
+            'relayout', 'onDrag', 'onMouseDown'
+          ];
         }
       }
     };
@@ -21,6 +24,10 @@ class MiniMapModel extends ViewModel {
   }
 
   get isMiniMap () {
+    return true;
+  }
+
+  get isEpiMorph () {
     return true;
   }
 
@@ -280,7 +287,6 @@ export const WorldMiniMap = component({
   fill: Color.rgb(30, 30, 30).withA(0.95),
   borderWidth: 0,
   borderRadius: 5,
-  epiMorph: true,
   draggable: true,
   styleClasses: ['Popups']
 });
