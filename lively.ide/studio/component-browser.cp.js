@@ -1,9 +1,9 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { GreenButton, RedButton, LightPrompt } from 'lively.components/prompts.cp.js';
-import { Spinner } from './shared.cp.js';
+import { Spinner, TextInput, DarkPopupWindow } from './shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
-import { MullerColumnView, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
+import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
 import { arr, promise, num, date, string, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -329,9 +329,16 @@ export class ExportedComponent extends Morph {
           this.fitPreview();
         }
       },
-      master: {
+      defaultMaster: {
+        isComponent: true,
         initialize () {
-          this.master = ComponentPreview; // eslint-disable-line no-use-before-define
+          this.defaultMaster = ComponentPreview; // eslint-disable-line no-use-before-define
+        }
+      },
+      selectedMaster: {
+        isComponent: true,
+        initialize () {
+          this.selectedMaster = ComponentPreviewSelected; // eslint-disable-line no-use-before-define
         }
       },
       component: {
@@ -430,11 +437,11 @@ export class ExportedComponent extends Morph {
     this.isSelected = active;
     if (active) {
       this.master = {
-        auto: ComponentPreviewSelected // eslint-disable-line no-use-before-define
+        auto: this.selectedMaster
       };
     } else {
       this.master = {
-        auto: ComponentPreview // eslint-disable-line no-use-before-define
+        auto: this.defaultMaster
       };
     }
   }
@@ -452,6 +459,18 @@ export class ProjectEntry extends Morph {
         get () {
           const selectedPreview = this.getSubmorphNamed('component previews').submorphs.find(m => m.isSelected);
           return selectedPreview && selectedPreview.component;
+        }
+      },
+      previewMaster: {
+        isComponent: true,
+        initialize () {
+          this.previewMaster = ComponentPreview; // eslint-disable-line no-use-before-define
+        }
+      },
+      selectedPreviewMaster: {
+        isComponent: true,
+        initialize () {
+          this.selectedPreviewMaster = ComponentPreviewSelected; // eslint-disable-line no-use-before-define
         }
       },
       worldName: {
@@ -495,11 +514,13 @@ export class ProjectEntry extends Morph {
 
   renderComponents (components) {
     const previewContainer = this.getSubmorphNamed('component previews');
-    const previewProto = part(ComponentPreview); /* eslint-disable-line no-use-before-define */
     previewContainer.submorphs = components.map(cp => {
       let preview = previewContainer.submorphs.find(p => p.component === cp);
       if (!preview) {
-        preview = previewProto.copy();
+        preview = part(this.previewMaster, {
+          defaultMaster: this.previewMaster,
+          selectedMaster: this.selectedPreviewMaster
+        });
         preview.project = this;
         preview.component = cp;
       }
@@ -750,7 +771,7 @@ export class ComponentBrowserModel extends ViewModel {
 
       if (n && n.componentObject === selectedComponent.component) return;
       // expand path until node selected
-      const url = System.decanonicalize(selectedComponent.component[Symbol.for('lively-module-meta')].module);
+      const url = System.decanonicalize(selectedComponent.component[Symbol.for('lively-module-meta')].moduleId);
       await this.withoutUpdates(() => this.models.componentFilesView.setExpandedPath(node => {
         if (node === td.root) return true;
         if (node.url) return url.startsWith(node.url);
@@ -915,7 +936,7 @@ export class ComponentBrowserModel extends ViewModel {
     // remove all empty lists
     const orderedWorlds = (componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project'));
     for (const worldName of orderedWorlds) {
-      const item = currentList.find(item => item.worldName === worldName) || projectEntry.copy();
+      const item = currentList.find(item => item.worldName === worldName) || part(this.sectionMaster);
       item.worldName = worldName;
       item.renderComponents(componentsByWorlds[worldName]);
       newList.push(item);
@@ -1012,6 +1033,16 @@ const ComponentPreviewSelected = component(ComponentPreview, {
   fill: Color.rgba(3, 169, 244, 0.75),
   submorphs: [{
     name: 'component name',
+    fontColor: Color.white
+  }]
+});
+
+const ComponentPreviewSelectedDark = component(ComponentPreview, {
+  borderColor: Color.rgb(52, 138, 117),
+  borderWidth: 2,
+  fill: Color.rgba(100, 255, 218, 0.6),
+  submorphs: [{
+    name: 'component name',
     fontColor: Color.rgb(255, 255, 255)
   }]
 });
@@ -1062,8 +1093,18 @@ const ProjectSection = component({
   }]
 });
 
-// ComponentBrowser.openInWorld()
-const ComponentBrowser = component(LightPrompt, {
+const ProjectSectionDark = component(ProjectSection, {
+  previewMaster: ComponentPreviewDark,
+  selectedPreviewMaster: ComponentPreviewSelectedDark,
+  submorphs: [{
+    name: 'project title',
+    fontColor: Color.rgb(204, 204, 204),
+    borderColor: Color.rgb(130, 130, 130)
+  }]
+});
+
+// part(ComponentBrowser).openInWorld()
+const ComponentBrowser = component(PopupWindow, {
   defaultViewModel: ComponentBrowserModel,
   name: 'component browser',
   epiMorph: false,
@@ -1073,16 +1114,176 @@ const ComponentBrowser = component(LightPrompt, {
     axisAlign: 'center',
     orderByIndex: true,
     padding: rect(16, 16, 0, 0),
-    resizePolicies: [['search input', {
+    resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
-    }], ['component files view', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['master component list', {
-      height: 'fill',
-      width: 'fill'
-    }], ['button wrapper', {
+    }]],
+    wrapSubmorphs: false
+  }),
+  submorphs: [
+    add({
+      name: 'controls',
+      fill: Color.rgba(255, 255, 255, 0),
+      extent: pt(515.1, 599.9),
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(16, 16, 0, 0),
+        resizePolicies: [['search input', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['component files view', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['master component list', {
+          height: 'fill',
+          width: 'fill'
+        }], ['button wrapper', {
+          height: 'fixed',
+          width: 'fill'
+        }]],
+        spacing: 16,
+        wrapSubmorphs: false
+      }),
+      submorphs: [part(InputLineDefault, {
+        name: 'search input',
+        dropShadow: null,
+        highlightWhenFocused: false,
+        fill: Color.rgba(66, 73, 73, 0),
+        borderRadius: 0,
+        borderWidth: {
+          bottom: 1,
+          left: 0,
+          right: 0,
+          top: 0
+        },
+        borderColor: Color.rgb(204, 204, 204),
+        layout: new ConstraintLayout({
+          lastExtent: {
+            x: 483,
+            y: 34.3
+          },
+          reactToSubmorphAnimations: false,
+          submorphSettings: [['placeholder', {
+            x: 'fixed',
+            y: 'fixed'
+          }], ['spinner', {
+            x: 'fixed',
+            y: 'fixed'
+          }]]
+        }),
+        extent: pt(640, 34.3),
+        fontSize: 20,
+        padding: rect(6, 4, -4, 2),
+        placeholder: 'Search for Components...',
+        submorphs: [add(part(Spinner, {
+          name: 'spinner',
+          position: pt(452.5, 5.2),
+          visible: false
+        })), {
+          name: 'placeholder',
+          opacity: 0.6,
+          padding: rect(6, 4, -4, 2),
+          textAndAttributes: ['Search for Components...', null]
+        }, {
+          name: 'controls',
+          extent: pt(515.1, 599.9),
+          fill: Color.rgba(255, 255, 255, 0),
+          layout: new TilingLayout({
+            axis: 'column',
+            axisAlign: 'center',
+            orderByIndex: true,
+            padding: rect(16, 16, 0, 0),
+            resizePolicies: [['search input', {
+              height: 'fixed',
+              width: 'fill'
+            }], ['component files view', {
+              height: 'fixed',
+              width: 'fill'
+            }], ['master component list', {
+              height: 'fill',
+              width: 'fill'
+            }], ['button wrapper', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 16,
+            wrapSubmorphs: false
+          }),
+          submorphs: [{
+            name: 'search input',
+            borderColor: Color.rgb(204, 204, 204),
+            borderWidth: 1,
+            fontSize: 20,
+            padding: rect(6, 4, -4, 2),
+            textAndAttributes: ['f', null]
+          }]
+        }]
+      }), part(MullerColumnView, {
+        name: 'component files view',
+        viewModel: { listMaster: ColumnListDefault },
+        borderColor: Color.rgb(149, 165, 166),
+        borderWidth: 1,
+        fill: Color.rgba(229, 231, 233, 0.05),
+        extent: pt(483, 150),
+        borderRadius: 2
+      }), {
+        name: 'master component list',
+        borderColor: Color.rgb(149, 165, 166),
+        borderWidth: 1,
+        borderRadius: 2,
+        fill: Color.rgba(229, 231, 233, 0.05),
+        clipMode: 'auto',
+        extent: pt(640, 304),
+        layout: new TilingLayout({
+          wrapSubmorphs: false,
+          axis: 'column'
+        })
+      }, {
+        name: 'button wrapper',
+        height: 33.92421875,
+        clipMode: 'visible',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'right',
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 15
+        }),
+        submorphs: [part(SystemButton, {
+          name: 'import button',
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Import', null]
+
+          }]
+        })]
+      }]
+    }), {
+      name: 'header menu',
+      submorphs: [{
+        name: 'title',
+        fontSize: 18,
+        textAndAttributes: ['Browse Components', null]
+      }]
+    }
+  ]
+});
+
+// part(ComponentBrowserDark).openInWorld()
+const ComponentBrowserDark = component(ComponentBrowser, {
+  master: DarkPopupWindow,
+  viewModel: {
+    sectionMaster: ProjectSectionDark
+  },
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
     }]],
@@ -1162,4 +1363,4 @@ const ComponentBrowser = component(LightPrompt, {
   })]
 });
 
-export { ComponentBrowser, ComponentPreview, ComponentPreviewSelected, ProjectSection };
+export { ComponentBrowser, ComponentBrowserDark, ComponentPreview, ComponentPreviewSelected, ProjectSection };
