@@ -418,6 +418,9 @@ export class ShapeControlModel extends ViewModel {
         target.layout.wrapSubmorphs = false;
         this.ui.heightInput.disable();
     }
+    target.withMetaDo({ reconcileChanges: true }, () => {
+      target.layout = target.layout;
+    });
   }
 
   changeRotation (newRot) { this.confirm('rotation', num.toRadians(newRot)); }
