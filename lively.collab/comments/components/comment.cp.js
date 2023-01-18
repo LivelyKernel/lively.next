@@ -59,7 +59,7 @@ const CommentGroup = component({
           type: Label,
           fontSize: 15,
           textString: '999',
-          padding: 10 
+          padding: 10
         }
       ]
     },
@@ -181,7 +181,7 @@ const CommentView = component({
           name: 'button container',
           halosEnbled: false,
           layout: new TilingLayout({
-            axis: 'column',
+            axis: 'row',
             spacing: 8,
             padding: 8,
             hugContents: true

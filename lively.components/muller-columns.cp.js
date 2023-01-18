@@ -428,7 +428,7 @@ const MullerColumnView = component({
   clipMode: 'auto',
   extent: pt(565.1, 285.2),
   layout: new TilingLayout({
-    axis: 'column',
+    axis: 'row',
     align: 'top',
     orderByIndex: true,
     padding: {
