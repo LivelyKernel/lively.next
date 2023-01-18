@@ -18,9 +18,10 @@ export class CommentCountBadgeModel extends ViewModel {
         }
       },
       morph: {},
+      isEpiMorph: { get () { return true; } },
       expose: {
         get () {
-          return ['text', 'addToMorph'];
+          return ['text', 'addToMorph', 'isEpiMorph'];
         }
       },
       bindings: {

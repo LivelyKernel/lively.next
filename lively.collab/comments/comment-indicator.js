@@ -22,9 +22,10 @@ export class CommentIndicatorModel extends ViewModel {
             { signal: 'abandon', handler: 'abandon' }];
         }
       },
+      isEpiMorph: { get () { return true; } },
       expose: {
         get () {
-          return ['isCommentIndicator'];
+          return ['isCommentIndicator', 'isEpiMorph'];
         }
       }
     };
