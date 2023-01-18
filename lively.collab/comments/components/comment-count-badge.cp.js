@@ -9,6 +9,7 @@ const CommentCountBadge = component({
   fill: Color.rgb(255, 23, 68),
   borderRadius: 50,
   hasFixedPosition: true,
+  tooltip: '10 unresolved comment',
   layout: new TilingLayout({
     hugContentsVertically: true,
     hugContentsHorizontally: true,
@@ -20,9 +21,7 @@ const CommentCountBadge = component({
     name: 'badge label',
     fontColor: Color.rgb(255, 255, 255),
     textAndAttributes: ['10', null]
-  }],
-  tooltip: '10 unresolved comment',
-  epiMorph: true
+  }]
 });
 
 export { CommentCountBadge };

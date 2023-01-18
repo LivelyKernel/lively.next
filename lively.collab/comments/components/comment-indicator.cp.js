@@ -12,8 +12,7 @@ const CommentIndicator = component({
   nativeCursor: 'pointer',
   padding: rect(0, 2, 4, 0),
   textAndAttributes: Icon.textAttribute('comment-alt'),
-  enableHalos: false,
-  epiMorph: true
+  enableHalos: false
 });
 
 const ResolvedIndicator = component({
