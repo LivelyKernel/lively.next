@@ -1,5 +1,5 @@
 import { pt, Rectangle, rect } from 'lively.graphics';
-import { arr, Path, promise, Closure, num, obj } from 'lively.lang';
+import { arr, promise, Closure, num, obj } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 
 function nyi (msg) { throw new Error(`Not yet implemented: ${msg}`); }
@@ -279,7 +279,7 @@ export class TilingLayout extends Layout {
     this._hugContentsVertically = props.hugContentsVertically || false;
     this._hugContentsHorizontally = props.hugContentsHorizontally || false;
     this._orderByIndex = props.orderByIndex || false;
-    this._wrapSubmorphs = true;
+    this._wrapSubmorphs = false;
     if (typeof props.wrapSubmorphs !== 'undefined') {
       this._wrapSubmorphs = props.wrapSubmorphs;
     }
