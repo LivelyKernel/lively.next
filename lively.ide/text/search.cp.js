@@ -4,7 +4,7 @@ import { Icon } from 'lively.morphic/text/icons.js';
 import { part, component } from 'lively.morphic/components/core.js';
 import { ShadowObject } from 'lively.morphic/rendering/morphic-default.js';
 
-import { TilingLayout } from 'lively.morphic';
+import { TilingLayout, Text } from 'lively.morphic';
 import { SearchWidgetModel } from './search.js';
 
 const IconButtonDefault = component({
@@ -59,16 +59,25 @@ const WidgetButton = component({
   }]
 });
 
+// part(SearchWidget).openInWorld()
 const SearchWidget = component({
   name: 'search widget',
   defaultViewModel: SearchWidgetModel,
   borderColor: Color.rgb(204, 204, 204),
   borderRadius: 6,
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.4863477979397931) }),
-  extent: pt(300, 55),
+  extent: pt(344, 55),
   epiMorph: true,
   fill: Color.rgba(0, 0, 0, 0.7471867324206476),
-  layout: new TilingLayout({ }),
+  layout: new TilingLayout({
+    spacing: 2,
+    padding: rect(2, 5, 0, -3),
+    axis: 'column',
+    resizePolicies: [
+      ['upper row', { height: 'fixed', width: 'fill' }],
+      ['lower row', { height: 'fixed', width: 'fill' }]
+    ]
+  }),
   position: pt(395.3, 571.4),
   renderOnGPU: true,
   submorphs: [
@@ -76,9 +85,12 @@ const SearchWidget = component({
       name: 'upper row',
       fill: Color.transparent,
       layout: new TilingLayout({
-        spacing: 5,
-        padding: rect(10, 6, -10, -6),
-        axis: 'column'
+        axis: 'row',
+        align: 'center',
+        axisAlign: 'center',
+        resizePolicies: [
+          ['label holder', { height: 'fixed', width: 'fixed' }]
+        ]
       }),
       submorphs: [
         {
@@ -105,7 +117,32 @@ const SearchWidget = component({
             reactsToPointer: false,
             textAndAttributes: ['search input', null]
           }]
-        }, part(IconButton, {
+        }, {
+          name: 'label holder',
+          extent: pt(74, 15),
+          layout: new TilingLayout({
+            axis: 'row'
+          }),
+          clipMode: 'hidden',
+          fill: Color.transparent,
+          submorphs: [{
+            type: Text,
+            fontColor: Color.lively,
+            fontFamily: 'IBM Plex Mono',
+            textString: 'no search',
+            padding: rect(7, 0, -7, 0),
+            name: 'result index label'
+          },
+          {
+            type: Text,
+            fontColor: Color.lively.withA(0),
+            fontFamily: 'IBM Plex Mono',
+            textString: '/1000',
+            padding: rect(0, 0, 4, 0),
+            name: 'result total label'
+          }]
+        },
+        part(IconButton, {
           name: 'nextButton',
           submorphs: [{
             name: 'label',
@@ -141,9 +178,10 @@ const SearchWidget = component({
       name: 'lower row',
       fill: Color.transparent,
       layout: new TilingLayout({
-        axis: 'column',
-        spacing: 5,
-        padding: rect(10, 0, -10, 0)
+        axis: 'row',
+        align: 'left',
+        spacing: 10,
+        padding: rect(2, 0, 0, 2)
       }),
       submorphs: [{
         type: 'input',
@@ -171,14 +209,14 @@ const SearchWidget = component({
         }]
       }, part(WidgetButton, {
         name: 'replaceButton',
-        width: 60,
+        width: 55,
         submorphs: [{
           name: 'label',
           textAndAttributes: ['replace', null]
         }]
       }), part(WidgetButton, {
         name: 'replaceAllButton',
-        width: 60,
+        width: 55,
         submorphs: [{
           name: 'label',
           textAndAttributes: ['replace all', null]

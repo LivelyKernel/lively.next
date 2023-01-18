@@ -8,6 +8,7 @@ import { ViewModel, part } from 'lively.morphic/components/core.js';
 
 import { comparePosition, lessEqPosition } from 'lively.morphic/text/position.js';
 import { debounceNamed } from '../../lively.lang/function';
+import { Color } from 'lively.graphics';
 
 export class TextSearcher {
   constructor (morph) {
@@ -136,9 +137,15 @@ export class SearchWidgetModel extends ViewModel {
             backwards: false,
             caseMode: false,
             regexMode: false,
-            results: [],
-            currentResultIndex: 0
+            results: []
           };
+        }
+      },
+
+      currentResultIndex: {
+        set (v) {
+          this.setProperty('currentResultIndex', v);
+          this.showResultNumberHint();
         }
       },
 
@@ -205,6 +212,7 @@ export class SearchWidgetModel extends ViewModel {
   viewDidLoad () {
     if (this.targetText) this.target = this.targetText;
     if (!this.target) throw new Error('SearchWidget needs a target text morph!');
+    this.setProperty('currentResultIndex', 0);
     if (this.input) this.search();
   }
 
@@ -254,6 +262,8 @@ export class SearchWidgetModel extends ViewModel {
 
   cleanup () {
     this.removeSearchMarkers();
+    this.results = [];
+    this.currentResultIndex = 0;
     this.textMap && this.textMap.update();
   }
 
@@ -361,14 +371,40 @@ export class SearchWidgetModel extends ViewModel {
 
     if (this.input.length > 0) {
       this.search();
+    } else this.showNoSearchHint();
+  }
+
+  showNoSearchHint () {
+    this.ui.resultIndexLabel.textString = 'no search';
+    this.ui.resultTotalLabel.fontColor = Color.lively.withA(0);
+    this.ui.nextButton.opacity = 0.5;
+    this.ui.prevButton.opacity = 0.5;
+  }
+
+  showResultNumberHint () {
+    if (this.results.length > 10000) {
+      this.ui.resultIndexLabel.textString = '> 10000';
+      this.ui.resultTotalLabel.fontColor = Color.lively.withA(0);
+    } else {
+      this.ui.resultTotalLabel.fontColor = Color.lively.withA(1);
+      this.ui.resultIndexLabel.textString = (this.results.length === 0 ? 0 : this.currentResultIndex + 1) + '/';
+      this.ui.resultTotalLabel.textString = this.results.length;
+    }
+
+    if (this.results.length > 0) {
+      this.ui.nextButton.opacity = 1;
+      this.ui.prevButton.opacity = 1;
+    } else {
+      this.ui.nextButton.opacity = 0.5;
+      this.ui.prevButton.opacity = 0.5;
     }
   }
 
-  // TODO: count results and incorporate in UI
   search () {
     debounceNamed('search', 10, () => {
       if (!this.input) {
         this.cleanup();
+        this.showNoSearchHint();
         return;
       }
 
