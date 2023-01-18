@@ -1199,8 +1199,7 @@ const WorldBrowser = component({
       hugContentsVertically: true,
       orderByIndex: true,
       padding: rect(10, 5, 0, 0),
-      spacing: 7,
-      wrapSubmorphs: false
+      spacing: 7
     }),
     borderRadius: 30,
     extent: pt(90.5, 10),

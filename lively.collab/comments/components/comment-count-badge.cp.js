@@ -13,7 +13,6 @@ const CommentCountBadge = component({
   layout: new TilingLayout({
     hugContentsVertically: true,
     hugContentsHorizontally: true,
-    wrapSubmorphs: false,
     padding: Rectangle.inset(5, 0, 5, 0)
   }),
   dropShadow: new ShadowObject({ distance: 0, blur: 2 }),

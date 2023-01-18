@@ -257,8 +257,7 @@ const FreezerPrompt = component(LightPrompt, {
       height: 'fixed',
       width: 'fill'
     }]],
-    spacing: 16,
-    wrapSubmorphs: false
+    spacing: 16
   }),
   position: pt(960.8, 161.4),
   submorphs: [{

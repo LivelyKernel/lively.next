@@ -220,7 +220,6 @@ const LoadingIndicator = component({
     fill: Color.rgba(0, 0, 0, 0.65),
     layout: new TilingLayout({
       axis: 'column',
-      wrapSubmorphs: false,
       padding: 10,
       hugContentsVertically: true,
       hugContentsHorizontally: true,
@@ -232,7 +231,6 @@ const LoadingIndicator = component({
       name: 'top float',
       fill: Color.transparent,
       layout: new TilingLayout({
-        wrapSubmorphs: false,
         hugContentsVertically: true,
         hugContentsHorizontally: true,
         align: 'center',
@@ -249,7 +247,6 @@ const LoadingIndicator = component({
           axis: 'row',
           align: 'left',
           axisAlign: 'center',
-          wrapSubmorphs: false,
           reactToSubmorphAnimations: false
         }),
         submorphs: [
@@ -349,7 +346,6 @@ const LoadingIndicator = component({
           axis: 'column',
           align: 'center',
           axisAlign: 'left',
-          wrapSubmorphs: false,
           direction: 'leftToRight',
           orderByIndex: true,
           reactToSubmorphAnimations: false,

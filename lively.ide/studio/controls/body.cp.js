@@ -443,8 +443,7 @@ const DynamicProperty = component({
       height: 'fixed',
       width: 'fill'
     }]],
-    spacing: 5,
-    wrapSubmorphs: false
+    spacing: 5
   }),
   fill: Color.rgba(255, 255, 255, 0),
   extent: pt(183.2, 30),

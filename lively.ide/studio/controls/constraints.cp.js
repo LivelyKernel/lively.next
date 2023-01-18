@@ -406,7 +406,7 @@ const ConstraintSizeSelectorDefault = component({
   clipMode: 'hidden',
   nativeCursor: 'pointer',
   fill: Color.transparent,
-  layout: new TilingLayout({ wrapSubmorphs: false, axis: 'row', align: 'center', axisAlign: 'center' }),
+  layout: new TilingLayout({  axis: 'row', align: 'center', axisAlign: 'center' }),
   submorphs: [{
     type: Label,
     name: 'caret',

@@ -54,7 +54,6 @@ const CodeSearch = component({
       width: 'fill'
     }]],
     spacing: 5,
-    wrapSubmorphs: false,
     renderViaCSS: false
   }),
   selectedAction: 'default',
@@ -72,8 +71,7 @@ const CodeSearch = component({
         }], ['holder', {
           height: 'fixed'
         }]],
-        spacing: 2,
-        wrapSubmorphs: false
+        spacing: 2
       }),
       borderColor: Color.rgb(23, 160, 251),
       fill: Color.transparent,
@@ -127,8 +125,7 @@ const CodeSearch = component({
           hugContentsHorizontally: true,
           orderByIndex: true,
           padding: rect(0, 0, 5, 0),
-          spacing: 2,
-          wrapSubmorphs: false
+          spacing: 2
         }),
         position: pt(0, 33),
         submorphs: [part(ModeButtonInactive, {
@@ -172,8 +169,7 @@ Regular expression should be given without quotes or literal mode slashes.',
             axisAlign: 'center',
             hugContentsHorizontally: true,
             orderByIndex: true,
-            padding: rect(10, 0, 0, 0),
-            wrapSubmorphs: false
+            padding: rect(10, 0, 0, 0)
           }),
           submorphs: [{
             name: 'label',

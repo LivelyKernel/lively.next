@@ -48,7 +48,6 @@ const StatusMessageDefault = component({
     axis: 'column',
     orderByIndex: true,
     hugContentsVertically: true,
-    wrapSubmorphs: false,
     renderViaCSS: false,
     reactToSubmorphAnimations: true,
     resizePolicies: [
@@ -66,7 +65,6 @@ const StatusMessageDefault = component({
       axisAlign: 'center',
       orderByIndex: true,
       padding: rect(10, 5, -5, 0),
-      wrapSubmorphs: false,
       renderViaCSS: false,
       reactToSubmorphAnimations: true,
       resizePolicies: [

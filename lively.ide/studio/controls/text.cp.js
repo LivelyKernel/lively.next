@@ -297,7 +297,6 @@ const RichTextControl = component(PropertySection, {
   layout: new TilingLayout({
     spacing: 10,
     padding: Rectangle.inset(0, 10, 0, 10),
-    wrapSubmorphs: false,
     resizePolicies: [
       ['h floater', { width: 'fill', height: 'fixed' }]
     ],
@@ -332,8 +331,7 @@ const RichTextControl = component(PropertySection, {
           justifySubmorphs: 'spaced',
           orderByIndex: true,
           padding: rect(10, 0, 5, 0),
-          spacing: 0,
-          wrapSubmorphs: false
+          spacing: 0
         }),
         extent: pt(198.6, 23.3),
         viewModel: {
@@ -399,8 +397,7 @@ const RichTextControl = component(PropertySection, {
           axisAlign: 'center',
           justifySubmorphs: 'spaced',
           orderByIndex: true,
-          padding: rect(10, 0, 5, 0),
-          wrapSubmorphs: false
+          padding: rect(10, 0, 5, 0)
         }),
         submorphs: [{
           name: 'label',
@@ -414,8 +411,7 @@ const RichTextControl = component(PropertySection, {
         layout: new TilingLayout({
           hugContentsVertically: true,
           padding: Rectangle.inset(0, 1, 0, 1),
-          justifySubmorphs: 'packed',
-          wrapSubmorphs: false
+          justifySubmorphs: 'packed'
         }),
         submorphs: [add(part(PropertyLabel, {
           name: 'italic style',
@@ -510,8 +506,7 @@ const RichTextControl = component(PropertySection, {
         height: 'fill',
         width: 'fixed'
       }]],
-      spacing: 10,
-      wrapSubmorphs: false
+      spacing: 10
     }),
     extent: pt(250.3, 25),
     submorphs: [{
@@ -538,7 +533,6 @@ const RichTextControl = component(PropertySection, {
       master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
       extent: pt(110.3, 22),
       layout: new TilingLayout({
-        wrapSubmorphs: false,
         hugContentsVertically: true,
         justifySubmorphs: 'spaced',
         spacing: 5
@@ -573,7 +567,6 @@ const RichTextControl = component(PropertySection, {
       extent: pt(80.4, 22),
       master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
       layout: new TilingLayout({
-        wrapSubmorphs: false,
         hugContentsVertically: true,
         justifySubmorphs: 'spaced',
         spacing: 5

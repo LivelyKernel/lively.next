@@ -278,8 +278,7 @@ const BackgroundControl = component(PropertySection, {
       height: 'fixed',
       width: 'fill'
     }]],
-    spacing: 10,
-    wrapSubmorphs: false
+    spacing: 10
   }),
   extent: pt(250, 88),
   submorphs: [{
@@ -314,7 +313,6 @@ const PropertiesPanel = component({
   clipMode: 'auto',
   layout: new TilingLayout({
     axis: 'column',
-    wrapSubmorphs: false,
     padding: Rectangle.inset(0, 50, 0, 0),
     resizePolicies: [
       ['shape control', { width: 'fill', height: 'fixed' }],

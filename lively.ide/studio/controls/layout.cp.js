@@ -32,8 +32,7 @@ export class LayoutPreview extends Morph {
       align: autoLayout.align,
       axisAlign: autoLayout.axisAlign,
       axis: autoLayout.axis,
-      justifySubmorphs: autoLayout.justifySubmorphs,
-      wrapSubmorphs: false
+      justifySubmorphs: autoLayout.justifySubmorphs
     });
     ['mini bar 1', 'mini bar 2', 'mini bar 3'].forEach(bar => {
       this.getSubmorphNamed(bar).rotation = autoLayout.axis === 'row' ? 0 : Math.PI / 2;
@@ -184,7 +183,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       layoutableSubmorphs.forEach(m => m.position = m.position);
     }
     this.popup = false;
-    
+
     signal(this, 'layout changed');
   }
 
@@ -481,8 +480,7 @@ const LayoutControl = component(PropertySection, {
       axisAlign: 'center',
       orderByIndex: true,
       spacing: 5,
-      padding: Rectangle.inset(20, 0, 0, 0),
-      wrapSubmorphs: false
+      padding: Rectangle.inset(20, 0, 0, 0)
     }),
     submorphs: [
       part(AddButton, {

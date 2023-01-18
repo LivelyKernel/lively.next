@@ -28,8 +28,7 @@ const ColorInput = component({
       height: 'fill',
       width: 'fixed'
     }]],
-    spacing: 10,
-    wrapSubmorphs: false
+    spacing: 10
   }),
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [part(ColorCell, {
@@ -290,7 +289,7 @@ const ColorEncoder = component({
   name: 'color encoder',
   extent: pt(219.6, 25),
   fill: Color.transparent,
-  layout: new TilingLayout({ justifySubmorphs: 'spaced', wrapSubmorphs: false }),
+  layout: new TilingLayout({ justifySubmorphs: 'spaced' }),
   submorphs: [
     part(DropDownList, {
       name: 'color code selector',
@@ -451,7 +450,6 @@ const ColorPicker = component(PopupWindow, {
   defaultViewModel: ColorPickerModel,
   layout: new TilingLayout({
     axis: 'column',
-    wrapSubmorphs: false,
     hugContentsVertically: true,
     resizePolicies: [
       ['color controls', { height: 'fixed', width: 'fill' }]
@@ -501,8 +499,7 @@ const ColorPicker = component(PopupWindow, {
       spacing: 10,
       axis: 'column',
       axisAlign: 'center',
-      justifySubmorphs: 'spaced',
-      wrapSubmorphs: false
+      justifySubmorphs: 'spaced'
     }),
     borderColor: Color.rgb(215, 219, 221),
     extent: pt(0, 113.7),

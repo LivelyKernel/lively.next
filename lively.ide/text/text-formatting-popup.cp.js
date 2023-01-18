@@ -59,7 +59,6 @@ export const TextFormattingPopUp = component(DarkPopupWindow, {
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
-    wrapSubmorphs: false,
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     resizePolicies: [

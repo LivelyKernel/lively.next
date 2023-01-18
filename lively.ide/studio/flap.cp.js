@@ -55,7 +55,6 @@ const Flap = component({
     axisAlign: 'center',
     hugContentsHorizontally: false,
     orderByIndex: true,
-    wrapSubmorphs: false,
     padding: rect(5, 5, 0, 0)
   }),
   extent: pt(30, 120),

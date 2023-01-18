@@ -76,9 +76,8 @@ const PopupWindow = component({
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    wrapSubmorphs: false,
     hugContentsVertically: true,
-    hugContentsHorizontally: true,
+    hugContentsHorizontally: true
   }),
   nativeCursor: 'grab',
   styleClasses: ['Popups'],
@@ -94,8 +93,7 @@ const PopupWindow = component({
       align: 'right',
       orderByIndex: true,
       padding: rect(5, 0, 0, 0),
-      justifySubmorphs: 'spaced',
-      wrapSubmorphs: false
+      justifySubmorphs: 'spaced'
     }),
     reactsToPointer: false,
     submorphs: [

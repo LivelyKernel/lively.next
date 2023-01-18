@@ -32,7 +32,6 @@ const InputLineDefault = component({
   }]
 });
 
-// InputLineDark.openInWorld()
 const InputLineDark = component(InputLineDefault, {
   name: 'input line dark',
   fill: Color.rgb(229, 231, 233)
@@ -45,7 +44,6 @@ const LabeledCheckBox = component({
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
     axis: 'row',
-    wrapSubmorphs: false,
     align: 'top',
     direction: 'leftToRight'
   }),
@@ -244,7 +242,6 @@ const SearchField = component({
     axisAlign: 'center',
     axis: 'row',
     orderByIndex: true,
-    wrapSubmorphs: false,
     padding: Rectangle.inset(0, 0, 3, 0),
     resizePolicies: [
       ['search input', { height: 'fill', width: 'fill' }],

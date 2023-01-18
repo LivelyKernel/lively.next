@@ -46,7 +46,6 @@ const PropertySection = component({
   layout: new TilingLayout({
     spacing: 10,
     padding: Rectangle.inset(0, 10, 0, 10),
-    wrapSubmorphs: false,
     resizePolicies: [
       ['h floater', { width: 'fill', height: 'fixed' }]
     ],
@@ -63,8 +62,7 @@ const PropertySection = component({
     layout: new TilingLayout({
       padding: Rectangle.inset(10, 0, 10, 0),
       justifySubmorphs: 'spaced',
-      axisAlign: 'center',
-      wrapSubmorphs: false
+      axisAlign: 'center'
     }),
     borderColor: Color.rgb(23, 160, 251),
     borderWidth: 0,
