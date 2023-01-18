@@ -264,7 +264,7 @@ textarea.lively-text-input.debug {
 }
 
 .Hand {
-  z-index: 1;
+  z-index: 5;
 }
 
 /*-=- halos -=-*/
