@@ -835,10 +835,11 @@ const commands = [
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
       const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
-      const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = part(ComponentBrowser));
+      const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
       li.remove();
-      componentsBrowser.hasFixedPosition = true;
-      const loadedComponent = await componentsBrowser.activate();
+      componentBrowser.hasFixedPosition = true;
+      const browserPos = !componentBrowser.position.equals(pt(0, 0)) && componentBrowser.position;
+      const loadedComponent = await componentBrowser.activate(browserPos);
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
     }
   },
