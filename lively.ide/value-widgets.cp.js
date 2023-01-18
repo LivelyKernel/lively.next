@@ -58,6 +58,7 @@ const DefaultNumberWidget = component({
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
+    wrapSubmorphs: true,
     justifySubmorphs: false,
     orderByIndex: true
   }),
