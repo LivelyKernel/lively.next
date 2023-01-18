@@ -837,6 +837,7 @@ const commands = [
       const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
       const componentsBrowser = world._componentsBrowser || (world._componentsBrowser = part(ComponentBrowser));
       li.remove();
+      componentsBrowser.hasFixedPosition = true;
       const loadedComponent = await componentsBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
     }
