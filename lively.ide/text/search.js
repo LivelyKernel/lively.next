@@ -1,38 +1,47 @@
 /* global System */
-import { pt } from 'lively.graphics';
+
 import { once } from 'lively.bindings';
 import { Path } from 'lively.lang';
 
 import config from 'lively.morphic/config.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
 
-import { lessPosition, minPosition, maxPosition } from 'lively.morphic/text/position.js';
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// finds string / regexp matches in text morphs
+import { comparePosition, lessEqPosition } from 'lively.morphic/text/position.js';
+
 export class TextSearcher {
   constructor (morph) {
     this.morph = morph;
-    this.STOP = {};
   }
 
-  get doc () { return this.morph.document; }
+  get document () { return this.morph.document; }
 
-  processFind (start, match) {
-    const i = this.doc.positionToIndex(start);
-    const end = this.doc.indexToPosition(i + match.length);
+  /**
+   * Helper function that is used to map starting positions and lengths of search results to valid text ranges.
+   * @param {number} start
+   * @param {string} match
+   * @returns An object containing a range beginning at `start` and ending after the length of `match`.
+   */
+  calculateRangeForFind (start, match) {
+    const i = this.document.positionToIndex(start);
+    const end = this.document.indexToPosition(i + match.length);
     return { range: { start, end }, match };
   }
 
-  stringSearch (lines, needle, caseSensitive, nLines, inRange, char, pos) {
-    if (inRange) {
-      if (lessPosition(pos, inRange.start) || lessPosition(inRange.end, pos)) { return this.STOP; }
-    }
-
+  /**
+   * Searches for the first occurrence of a given string `needle` inside of a text.
+   * @param {[string]} lines - The text which parts of should be searched.
+   * @param {string} needle - The string to search for.
+   * @param {boolean} caseSensitive - Whether or not the search is case sensitive.
+   * @param {number} nLines - The number of lines which need to be searched at once, i.e., the number of lines that `needle` spans.
+   * @param {char} char - The character at the current position of the text. Optimization.
+   * @param {range} pos - The text position inside of `lines` at which the search for `needle` begins for `nLines`.
+   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   */
+  stringSearch (lines, needle, caseSensitive, nLines, char, pos) {
     if (!caseSensitive) char = char.toLowerCase();
     if (char !== needle[0]) return null;
 
     const { row, column } = pos;
-    /* FIXME rk 2017-04-06 while transitioning to new text: */
     const lineString = lines[row];
     const followingText = nLines <= 1 ? '' : '\n' + lines.slice(row + 1, (row + 1) + (nLines - 1)).join('\n');
     const chunk = lineString.slice(column) + followingText;
@@ -40,59 +49,69 @@ export class TextSearcher {
 
     return chunkToTest.indexOf(needle) !== 0
       ? null
-      : this.processFind({ row, column }, chunk.slice(0, needle.length));
+      : this.calculateRangeForFind({ row, column }, chunk.slice(0, needle.length));
   }
 
-  reSearch (lines, needle, multiline, inRange, char, pos) {
-    if (inRange) {
-      if (lessPosition(pos, inRange.start) || lessPosition(inRange.end, pos)) { return this.STOP; }
-    }
-
+  /**
+   * Searches for the first hit of a given RegEx `needle` inside of a text.
+   * @param {[string]} lines - The text which parts of should be searched.
+   * @param {string} needle - The RegEx to apply for searching.
+   * @param {boolean} multiline - Whether more than one line should be searched.
+   * @param {boolean} char - unused placeholder to provide the same interface as `stringSearch`
+   * @param {range} pos - The text position inside of `lines` at which the search for `needle` begins for `nLines`.
+   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   */
+  reSearch (lines, needle, multiline, char, pos) {
     const { row, column } = pos;
     const chunk = lines[row].slice(column) + (multiline ? '\n' + lines.slice(row + 1).join('\n') : '');
     const reMatch = chunk.match(needle);
-    return reMatch ? this.processFind({ row, column }, reMatch[0]) : null;
+    return reMatch ? this.calculateRangeForFind({ row, column }, reMatch[0]) : null;
   }
 
+  /**
+   * Wrapper around reSearch and stringSearch, that choses the right method to search based on the `needle` to search for.
+   * @param {object} options - An Object that can contain `needle`, `start`, `backwards`, and `caseSensitive`. See `stringSearch` and `reSearch` above.
+   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   */
   search (options) {
-    let { start, needle, backwards, caseSensitive, inRange } = {
+    let { start, needle, backwards, caseSensitive } = {
       start: this.morph.cursorPosition,
       needle: '',
       backwards: false,
       caseSensitive: false,
-      inRange: null,
-      ...options
+      ...options // Basically makes the above values default values, that are overwritten with the provided values in options
     };
 
     if (!needle) return null;
 
-    if (inRange) {
-      start = backwards
-        ? minPosition(inRange.end, start)
-        : maxPosition(inRange.start, start);
-    }
-
     let search;
-    if (needle instanceof RegExp) {
+    if (needle instanceof RegExp) { // search for regular expression
       const flags = (needle.flags || '').split('');
-      const multiline = !!needle.multiline; flags.splice(flags.indexOf('m'), 1);
+      const multiline = !!needle.multiline;
+      flags.splice(flags.indexOf('m'), 1); // in place modification ಡ_ಡ
       if (!caseSensitive && !flags.includes('i')) flags.push('i');
+
       needle = new RegExp('^' + needle.source.replace(/^\^+/, ''), flags.join(''));
-      search = this.reSearch.bind(this, this.doc.lineStrings, needle, multiline, inRange);
-    } else {
+      search = this.reSearch.bind(this, this.document.lineStrings, needle, multiline); // basically converts reSearch into a function taking two arguments -> char, pos
+    } else { // string search
       needle = String(needle);
       if (!caseSensitive) needle = needle.toLowerCase();
-      const nLines = needle.split(this.doc.constructor.newline).length;
-      search = this.stringSearch.bind(this,
-        this.doc.lineStrings, needle, caseSensitive,
-        nLines, inRange);
+      const nLines = needle.split(this.document.constructor.newline).length;
+      search = this.stringSearch.bind(this, this.document.lineStrings, needle, caseSensitive, nLines); // basically converts stringSearch into a function taking two arguments -> char, pos
     }
 
-    const result = this.doc[backwards ? 'scanBackward' : 'scanForward'](start, search);
+    const result = this.document[backwards ? 'scanBackward' : 'scanForward'](start, search);
 
-    return result === this.STOP ? null : result;
+    return result === {} ? null : result;
   }
 
+  /**
+   * Loops around `search` and takes the position of the last match of the previous run as the start for the next one.
+   * Thus, collecting up to 10.000 matches.
+   * Will only search in one direction and begin from the specified starting position. Therefore, cases exist where not the whole document get searched.
+   * @param {object} options - An Object that can contain `needle`, `start`, `backwards`, and `caseSensitive`. See `stringSearch` and `reSearch` above.
+   * @returns An array of objects containing a range beginning at `start` and ending after the length of `match`, as well as `match`.
+   */
   searchForAll (options) {
     const results = [];
     let i = 0;
