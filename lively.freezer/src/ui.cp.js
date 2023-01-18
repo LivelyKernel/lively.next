@@ -83,7 +83,6 @@ export default class FreezerPromptModel extends AbstractPromptModel {
           return this.ui.dirInput.input;
         }
       },
-      epiMorph: { defaultValue: true },
       isModuleBundle: { defaultValue: true },
       excludedPackages: {
         derived: true,
