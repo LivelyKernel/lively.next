@@ -438,7 +438,10 @@ export class TopBarModel extends ViewModel {
   }
 
   async interactivelyLoadComponent () {
-    fun.notYetImplemented('component browser', true);
+    let currComponentBrowser = this.world()._componentBrowser;
+    if (currComponentBrowser && !!currComponentBrowser.world()) {
+      return currComponentBrowser.close();
+    }
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await $world.execCommand('browse and load component');
