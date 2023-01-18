@@ -134,7 +134,7 @@ function getEventState (targetMorph, customBreakpoints) {
 }
 
 export function withAllViewModelsDo (inst, cb) {
-  inst.master?.applyIfNeeded(true);
+  if (inst.master) inst.master.applyIfNeeded(true);
   const toAttach = [];
   inst.withAllSubmorphsDo(m => {
     if (m.viewModel) toAttach.unshift(m);
