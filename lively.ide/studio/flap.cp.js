@@ -19,9 +19,10 @@ export class FlapModel extends ViewModel {
           ];
         }
       },
+      isEpiMorph: { get () { return true; } },
       expose: {
         get () {
-          return ['onWorldResize', 'isFlap', 'executeAction'];
+          return ['onWorldResize', 'isFlap', 'executeAction', 'isEpiMorph'];
         }
       }
     };
@@ -44,7 +45,6 @@ export class FlapModel extends ViewModel {
   }
 }
 
-// part(Flap, {viewModel: {target: 'properties panel'} }).openInWorld();
 const Flap = component({
   name: 'flap',
   nativeCursor: 'pointer',
@@ -60,7 +60,6 @@ const Flap = component({
   extent: pt(30, 120),
   fill: Color.rgb(30, 30, 30).withA(0.95),
   halosEnabled: false,
-  epiMorph: true,
   submorphs: [
     {
       type: 'label',
