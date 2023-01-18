@@ -25,7 +25,7 @@ const partAccent = Color.rgba(171, 71, 188, 1);
 const componentAccent = Color.magenta;
 
 function getColorForTarget (target) {
-  const baseColor = !!target.master || target.ownerChain().find(m => m.master?.managesMorph(target.name)) ? partAccent : haloBlue;
+  const baseColor = !!target.master || target.ownerChain().find(m => (m.master && m.master.managesMorph(target.name))) ? partAccent : haloBlue;
   return target.isComponent ? componentAccent : baseColor;
 }
 
