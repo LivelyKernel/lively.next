@@ -175,6 +175,7 @@ export function getProp (propsNode, prop) {
 function drillDownPath (startNode, path) {
   // directly resolve step by step with a combo of a submorph/name prop resolution
   let curr = startNode;
+  if (curr.type !== 'ArrayExpression') curr = getProp(curr, 'submorphs')?.value;
   while (path.length > 0) {
     const name = path.shift();
     curr = getNodeFromSubmorphs(curr, name);
