@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { standard, config, touchInputDevice, TilingLayout, Tooltip, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
+import { standard, config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -371,6 +371,10 @@ export class TopBarModel extends ViewModel {
   }
 
   async interactivelyLoadComponent () {
+    let currComponentBrowser = this.world()._componentBrowser;
+    if (currComponentBrowser && !!currComponentBrowser.world()) {
+      return currComponentBrowser.close();
+    }
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');

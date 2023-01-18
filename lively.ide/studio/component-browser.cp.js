@@ -612,7 +612,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close'];
         }
       }
     };
@@ -673,17 +673,15 @@ export class ComponentBrowserModel extends ViewModel {
     this.ui.masterComponentList.submorphs = [];
   }
 
-  async activate () {
+  async activate (pos = false) {
     const { view } = this;
-    // this.toggleBusyState(true);
-    // await this.fetchInfo();
     view.doNotAcceptDropsForThisAndSubmorphs();
     this._promise = promise.deferred();
     view.openInWorld();
     view.clipMode = 'hidden';
-    view.center = $world.visibleBounds().center();
+    if (!pos) view.center = $world.visibleBounds().center();
+    else view.position = pos;
     this.ui.searchInput.focus();
-    // this.filterList();
     this.ensureImportButton();
     return this._promise.promise;
   }
