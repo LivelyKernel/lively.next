@@ -21,7 +21,9 @@ const CloseButtonDefault = component({
   textAndAttributes: ['', { }]
 });
 
-const CloseButtonHovered = component(CloseButtonDefault, { name: 'close button hovered', fill: Color.gray });
+const CloseButtonHovered = component(CloseButtonDefault, {
+  name: 'close button hovered', fill: Color.gray
+});
 
 const CloseButton = component(CloseButtonDefault, {
   name: 'close button',
@@ -78,7 +80,6 @@ const PopupWindow = component({
   styleClasses: ['Popups'],
   submorphs: [{
     name: 'header menu',
-    epiMorph: true,
     borderWidth: { top: 0, left: 0, right: 0, bottom: 1 },
     borderColor: Color.rgb(215, 219, 221),
     extent: pt(241, 40.5),
@@ -95,7 +96,6 @@ const PopupWindow = component({
       {
         type: Label,
         name: 'title',
-        epiMorph: true,
         padding: rect(10, 0, -10, 0),
         fontWeight: 'bold',
         textString: 'Window title'
