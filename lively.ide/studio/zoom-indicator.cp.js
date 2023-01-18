@@ -63,7 +63,6 @@ export const WorldZoomIndicator = component({
     orderByIndex: true,
     hugContentsHorizontally: true,
     hugContentsVertically: true,
-    wrapSubmorphs: false,
     padding: {
       height: 0,
       width: 0,

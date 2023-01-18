@@ -115,8 +115,7 @@ const ModeSelector = component({
     align: 'center',
     axisAlign: 'center',
     orderByIndex: true,
-    spacing: 5,
-    wrapSubmorphs: false
+    spacing: 5
   }),
   submorphs: [
     part(ModeSelectorLabel, { name: 'mode1', textString: 'demo' }),

@@ -27,7 +27,6 @@ const ButtonDefault = component({
     align: 'center',
     axisAlign: 'center',
     orderByIndex: true,
-    wrapSubmorphs: false
   }),
   submorphs: [{
     type: Label,

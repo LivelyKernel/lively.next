@@ -386,8 +386,7 @@ const BorderControlElements = component({
       justifySubmorphs: 'spaced',
       orderByIndex: true,
       padding: rect(15, 0, -10, 0),
-      spacing: 10,
-      wrapSubmorphs: false
+      spacing: 10
     }),
     submorphs: [part(DarkNumberIconWidget, {
       type: NumberWidget,
@@ -460,8 +459,7 @@ const BorderPopup = component(DarkPopupWindow, {
           justifySubmorphs: 'spaced',
           orderByIndex: true,
           spacing: 10,
-          padding: Rectangle.inset(20, 0, 0, 0),
-          wrapSubmorphs: false
+          padding: Rectangle.inset(20, 0, 0, 0)
         }),
         submorphs: [
           part(AddButton, {
@@ -546,8 +544,7 @@ const BorderControl = component(PropertySection, {
           justifySubmorphs: 'spaced',
           orderByIndex: true,
           padding: rect(20, 0, -10, 0),
-          spacing: 10,
-          wrapSubmorphs: false
+          spacing: 10
         }),
         submorphs: [{
           name: 'border width input',

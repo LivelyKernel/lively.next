@@ -529,8 +529,7 @@ const ShapeControl = component({
           justifySubmorphs: 'spaced',
           orderByIndex: true,
           padding: rect(5, 0, 5, 0),
-          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]],
-          wrapSubmorphs: false
+          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
         }),
       viewModel: {
         listMaster: DarkThemeList,
@@ -570,8 +569,7 @@ const ShapeControl = component({
           justifySubmorphs: 'spaced',
           orderByIndex: true,
           padding: rect(5, 0, 5, 0),
-          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]],
-          wrapSubmorphs: false
+          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
         }),
       viewModel: {
         listMaster: DarkThemeList,

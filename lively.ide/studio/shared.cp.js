@@ -97,8 +97,7 @@ const EnumSelectorDefault = component(DarkDropDownList, {
     axisAlign: 'center',
     orderByIndex: true,
     justifySubmorphs: 'spaced',
-    padding: Rectangle.inset(5, 0, 10),
-    wrapSubmorphs: false
+    padding: Rectangle.inset(5, 0, 10)
   }),
   fill: Color.rgb(66, 73, 73),
   borderWidth: 0,
@@ -274,8 +273,7 @@ const LabeledCheckbox = component({
     resizePolicies: [['checkbox', {
       height: 'fill',
       width: 'fixed'
-    }]],
-    wrapSubmorphs: false
+    }]]
   }),
   submorphs: [part(CheckboxActive, {
     name: 'checkbox'

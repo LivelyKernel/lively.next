@@ -55,7 +55,6 @@ const SystemTooltip = component({
     align: 'left',
     axis: 'row',
     axisAlign: 'left',
-    wrapSubmorphs: false,
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     padding: 5

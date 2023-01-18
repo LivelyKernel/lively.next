@@ -122,7 +122,6 @@ export default class TextEditor extends Morph {
               fill: Color.transparent,
               layout: new TilingLayout({
                 axis: 'row',
-                wrapSubmorphs: false,
                 hugContentsVertically: true,
                 spacing: 10,
                 padding: Rectangle.inset(10, 10, 10, 10)
@@ -138,7 +137,6 @@ export default class TextEditor extends Morph {
               fill: Color.transparent,
               layout: new TilingLayout({
                 axis: 'row',
-                wrapSubmorphs: false,
                 hugContentsVertically: true,
                 padding: Rectangle.inset(10, 0, 10, 10),
                 resizePolicies: [
@@ -168,7 +166,6 @@ export default class TextEditor extends Morph {
       layout: {
         initialize () {
           this.layout = new TilingLayout({
-            wrapSubmorphs: false,
             axis: 'column',
             renderViaCSS: true,
             resizePolicies: [

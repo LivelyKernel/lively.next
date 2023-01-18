@@ -1139,7 +1139,6 @@ const ComponentBrowser = component(LightPrompt, {
     dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
     extent: pt(640, 304),
     layout: new TilingLayout({
-      wrapSubmorphs: false,
       axis: 'column'
     })
   }), add({

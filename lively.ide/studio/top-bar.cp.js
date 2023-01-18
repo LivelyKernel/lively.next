@@ -1077,7 +1077,6 @@ const UserFlap = component({
       axisAlign: 'center',
       align: 'center',
       direction: 'rightToLeft',
-      wrapSubmorphs: false,
       hugContentsHorizontally: true,
       orderByIndex: true,
       padding: Rectangle.inset(5, 5, 0, 5),
@@ -1233,7 +1232,6 @@ const UserMenu = component({
     layout: new TilingLayout({
       axis: 'column',
       orderByIndex: true,
-      wrapSubmorphs: false,
       resizePolicies: [
         ['profile item', { width: 'fill', height: 'fixed' }],
         ['login item', { width: 'fill', height: 'fixed' }],
@@ -1276,7 +1274,6 @@ const TopBar = component({
   layout: new TilingLayout({
     justifySubmorphs: 'spaced',
     orderByIndex: true,
-    wrapSubmorphs: false,
     padding: Rectangle.inset(10, 0, 10, 0)
   }),
   defaultViewModel: TopBarModel,

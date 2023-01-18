@@ -91,7 +91,6 @@ const FillControl = component(PropertySection, {
     fill: Color.rgba(255, 255, 255, 0),
     layout: new TilingLayout({
       axisAlign: 'center',
-      wrapSubmorphs: false,
       padding: rect(20, 1, -10, 1)
     }),
     height: 25,

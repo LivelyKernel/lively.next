@@ -11,7 +11,6 @@ const CommentBrowser = component({
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    wrapSubmorphs: false,
     resizePolicies: [
       ['container', { height: 'fill', width: 'fill' }],
       ['mode selector', { height: 'fixed', width: 'fill' }]

@@ -718,7 +718,6 @@ const LightPrompt = component({
     axis: 'column',
     orderByIndex: true,
     justifySubmorphs: 'packed',
-    wrapSubmorphs: false,
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     spacing: 16,
@@ -884,8 +883,7 @@ const ListPrompt = component(ConfirmPrompt, {
           height: 'fill',
           width: 'fill'
         }]],
-        spacing: 5,
-        wrapSubmorphs: false
+        spacing: 5
       }),
       borderColor: Color.rgb(204, 204, 204),
       borderWidth: 0,

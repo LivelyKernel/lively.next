@@ -10,7 +10,6 @@ const CommentGroup = component({
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    wrapSubmorphs: false,
     hugContentsVertically: true,
     resizePolicies: [
       ['header', { height: 'fixed', width: 'fill' }],
@@ -29,7 +28,6 @@ const CommentGroup = component({
       layout: new TilingLayout({
         orderByIndex: true,
         justifySubmorphs: 'spaced',
-        wrapSubmorphs: false,
         resizingPolicies: [
           ['container spacer', { height: 'fill', width: 'fill' }]
         ]
@@ -51,7 +49,6 @@ const CommentGroup = component({
           textString: 'aGroupName',
           fontSize: 15,
           padding: rect(0, 10, 0, -4)
-
         },
         {
           name: 'container spacer',
@@ -73,7 +70,6 @@ const CommentGroup = component({
         axis: 'column',
         axisAlign: 'center',
         orderByIndex: true,
-        wrapSubmorphs: false,
         padding: 5,
         hugContentsVertically: true
       })
@@ -112,7 +108,6 @@ const CommentView = component({
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    wrapSubmorphs: false,
     padding: 5,
     hugContentsVertically: true,
     resizePolicies: [

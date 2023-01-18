@@ -417,7 +417,6 @@ class NameHaloItem extends HaloItem {
             hugContentsHorizontally: true,
             hugContentsVertically: true,
             axisAlign: 'center',
-            wrapSubmorphs: false,
             orderByIndex: true,
             padding: Rectangle.inset(7.5, 5, 7.5, 5)
           });

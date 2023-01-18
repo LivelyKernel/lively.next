@@ -24,8 +24,7 @@ const BrowserTabDefault = component(DefaultTab, {
       resizePolicies: [['tab caption', {
         height: 'fixed',
         width: 'fill'
-      }]],
-      wrapSubmorphs: false
+      }]]
     })
   }]
 });
@@ -760,8 +759,7 @@ const SystemBrowser = component({
       }], ['error controls', {
         height: 'fixed',
         width: 'fixed'
-      }]],
-      wrapSubmorphs: false
+      }]]
     }),
     submorphs: [{
       name: 'path container',
@@ -785,8 +783,7 @@ const SystemBrowser = component({
         }], ['clipboard controls', {
           height: 'fixed',
           width: 'fixed'
-        }]],
-        wrapSubmorphs: false
+        }]]
       }),
       position: pt(9.1, 11.7),
       submorphs: [{
@@ -826,7 +823,6 @@ const SystemBrowser = component({
           axisAlign: 'center',
           orderByIndex: true,
           spacing: 5,
-          wrapSubmorphs: false,
           hugContentsHorizontally: true
         }),
         submorphs: [
@@ -885,7 +881,6 @@ const SystemBrowser = component({
       fill: Color.rgba(0, 0, 0, 0),
       layout: new TilingLayout({
         axis: 'row',
-        wrapSubmorphs: false,
         orderByIndex: true,
         hugContentsVertically: true,
         padding: {

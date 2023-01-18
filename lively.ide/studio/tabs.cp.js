@@ -30,7 +30,6 @@ const DefaultTab = component({
     axis: 'row',
     axisAlign: 'center',
     justifySubmorphs: 'packed',
-    wrapSubmorphs: false,
     resizePolicies: [
       ['horizontal container', { height: 'fixed', width: 'fill' }]
     ]
@@ -45,7 +44,6 @@ const DefaultTab = component({
       padding: rect(6, 6, 0, 0),
       align: 'left',
       axis: 'row',
-      wrapSubmorphs: false,
       resizePolicies: [
         ['tab caption', { height: 'fixed', width: 'fill' }]
       ]
@@ -415,7 +413,6 @@ const TabContainer = component({
     axis: 'row',
     axisAlign: 'center',
     justifySubmorphs: 'packed',
-    wrapSubmorphs: false,
     resizePolicies: [
       ['tab flap scroll container', { height: 'fixed', width: 'fill' }]
     ]
@@ -717,7 +714,6 @@ const Tabs = component({
     align: 'left',
     axisAlign: 'left',
     justifySubmorphs: 'packed',
-    wrapSubmorphs: false,
     resizePolicies: [
       ['tab container', { height: 'fixed', width: 'fill' }]
     ]

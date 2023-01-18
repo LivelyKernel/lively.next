@@ -513,8 +513,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       layout: new TilingLayout({
         axisAlign: 'center',
         orderByIndex: true,
-        padding: rect(15, 0, -10, 0),
-        wrapSubmorphs: false
+        padding: rect(15, 0, -10, 0)
       }),
       position: pt(6.2, 9.5),
       submorphs: [part(AddButton, {
@@ -555,7 +554,6 @@ const NumberPopupLight = component(PopupWindow, {
   defaultViewModel: SingleNumberModel,
   name: 'number popup',
   layout: new TilingLayout({
-    wrapSubmorphs: false,
     axis: 'column',
     hugContentsHorizontally: true,
     hugContentsVertically: true
@@ -725,8 +723,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           height: 'fill',
           width: 'fixed'
         }]],
-        spacing: 15,
-        wrapSubmorphs: false
+        spacing: 15
       }),
       submorphs: [
         {
@@ -792,7 +789,6 @@ export const PaddingControlsLight = component({
     axisAlign: 'center',
     orderByIndex: true,
     padding: rect(0, 0, 27, 0),
-    wrapSubmorphs: false,
     spacing: 5
   }),
   extent: pt(250, 30),
