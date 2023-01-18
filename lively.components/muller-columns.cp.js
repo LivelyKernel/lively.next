@@ -21,7 +21,7 @@ const ColumnListDark = component(ColumnListDefault, {
   borderColor: Color.rgb(133, 146, 158),
   fill: Color.rgba(44, 62, 80, 0),
   nonSelectionFontColor: Color.rgb(252, 252, 252),
-  selectionColor: Color.rgb(133, 193, 233),
+  selectionColor: Color.rgbHex('64FFDA').withA(.6),
   selectionFontColor: Color.rgb(53, 53, 53)
 });
 
