@@ -185,7 +185,7 @@ const BrowserDirectoryControls = component({
   extent: pt(83.2, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
-    axis: 'column',
+    axis: 'row',
     axisAlign: 'center',
     align: 'center',
     orderByIndex: true,
@@ -237,7 +237,7 @@ const BrowserPackageControls = component({
   extent: pt(123.4, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
-    axis: 'column',
+    axis: 'row',
     axisAlign: 'center',
     align: 'center',
     padding: {
@@ -768,6 +768,7 @@ const SystemBrowser = component({
       extent: pt(568, 30),
       fill: Color.rgba(0, 0, 0, 0),
       layout: new TilingLayout({
+        axis: 'row',
         align: 'center',
         axisAlign: 'center',
         justifySubmorphs: 'spaced',
