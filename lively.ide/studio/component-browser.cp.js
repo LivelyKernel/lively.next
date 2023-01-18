@@ -1,9 +1,9 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, VerticalLayout, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
-import { GreenButton, RedButton, LightPrompt } from 'lively.components/prompts.cp.js';
-import { Spinner } from './shared.cp.js';
-import { InputLineDefault } from 'lively.components/inputs.cp.js';
-import { MullerColumnView, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
+import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+
+import { Spinner, TextInput, DarkPopupWindow } from './shared.cp.js';
+import { InputLineDark } from 'lively.components/inputs.cp.js';
+import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
 import { arr, promise, num, date, string, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -11,8 +11,10 @@ import { renderMorphToDataURI } from 'lively.morphic/rendering/morph-to-image.js
 import { COLORS } from '../js/browser/index.js';
 import { localInterface } from 'lively-system-interface';
 import { once } from 'lively.bindings/index.js';
-
-// ColumnListDefault.listItemContainer.reactsToPointer;
+import { adoptObject } from 'lively.lang/object.js';
+import { InteractiveComponentDescriptor } from '../components/editor.js';
+import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
+import { PopupWindow } from '../styling/shared.cp.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -126,7 +128,7 @@ class MasterComponentTreeData extends TreeData {
     if (isSelected && !this.root.browser._pauseUpdates) {
       this.root.browser.selectComponent(componentObj, true);
     }
-    return [...Icon.textAttribute('cube'), ' ' + string.truncate(componentObj.name || '[PARSE_ERROR]', 18, '…'), null];
+    return [...Icon.textAttribute('cube'), ' ' + string.truncate(componentObj.componentName || '[PARSE_ERROR]', 18, '…'), null];
   }
 
   /**
@@ -265,7 +267,7 @@ class MasterComponentTreeData extends TreeData {
     });
     if (selectedPkg.name !== 'Popular') {
       // ensure the package is present in the system
-      // so that we do not get any orphaned modules...     
+      // so that we do not get any orphaned modules...
       await this.systemInterface.getPackage(selectedPkg.url);
     }
     const loadedModules = {};
@@ -344,7 +346,7 @@ export class ExportedComponent extends Morph {
   }
 
   generatePreview () {
-    const preview = part(this.component);
+    const preview = part(this.component, { name: this.component.componentName });
     // disable view model
     // scale to fit
     // disable all mouse interaction
@@ -353,7 +355,7 @@ export class ExportedComponent extends Morph {
     preview.scale = 1;
     preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
     preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
-    this.get('component name').textString = this.component.name;
+    this.get('component name').textString = string.decamelize(this.component.componentName);
     container.submorphs = [preview];
   }
 
@@ -405,6 +407,7 @@ export class ExportedComponent extends Morph {
   }
 
   onDrag (evt) {
+    if (!this.component) return;
     const [{ scale }] = this.getSubmorphNamed('preview container').submorphs;
     const instance = part(this.component, { scale });
     // on drop scale to 1
@@ -470,21 +473,17 @@ export class ProjectEntry extends Morph {
   onMouseUp (evt) {
     super.onMouseUp(evt);
     const projectTitle = this.getSubmorphNamed('project title');
-    projectTitle.fontColor = Color.rgb(66, 73, 73);
     if (projectTitle.textBounds().containsPoint(evt.positionIn(projectTitle))) { this.openComponentWorld(); }
   }
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
     const projectTitle = this.getSubmorphNamed('project title');
-    if (projectTitle.textBounds().containsPoint(evt.positionIn(projectTitle))) {
-      projectTitle.fontColor = Color.black;
-    }
   }
 
   async openComponentWorld () {
     const selectedComponent = this.selectedComponent || this.exportedComponents[0];
-    const { module: moduleName, export: name } = selectedComponent[Symbol.for('lively-module-meta')];
+    const { moduleId: moduleName, exportedName: name } = selectedComponent[Symbol.for('lively-module-meta')];
     const browser = await $world.execCommand('open browser', { moduleName, codeEntity: [{ name }] });
     browser.getWindow().animate({
       right: browser.getWindow().right - browser.getWindow().width,
@@ -598,6 +597,11 @@ export class ComponentBrowserModel extends ViewModel {
       isComponentBrowser: {
         get () { return true; }
       },
+      sectionMaster: {
+        initialize () {
+          this.sectionMaster = ProjectSection; // eslint-disable-line no-use-before-define
+        }
+      },
       isEpiMorph: {
         get () { return true; }
       },
@@ -618,9 +622,9 @@ export class ComponentBrowserModel extends ViewModel {
   get bindings () {
     return [
       {
-        model: 'cancel button',
-        signal: 'fire',
-        handler: 'reject'
+        target: 'close button',
+        signal: 'onMouseUp',
+        handler: 'close'
       },
       {
         model: 'import button',
@@ -634,7 +638,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       {
         signal: 'onKeyDown',
-        handler: 'reject',
+        handler: 'close',
         updater: ($reject, evt) => {
           if (evt.key === 'Escape') $reject();
         }
@@ -684,10 +688,9 @@ export class ComponentBrowserModel extends ViewModel {
     return this._promise.promise;
   }
 
-  async reject () {
-    this._promise.resolve(false);
-    await this.view.fadeOut(300);
-    this.view.hasFixedPosition = false;
+  close () {
+    if (this._promise) this._promise.resolve();
+    this.view.remove();
   }
 
   async importSelectedComponent () {
@@ -695,7 +698,7 @@ export class ComponentBrowserModel extends ViewModel {
     const importedComponent = part(selectedComponent.component);
     importedComponent.openInWorld();
     this._promise.resolve(importedComponent);
-    if (!this.isComponent) this.view.fadeOut(300);
+    this.close();
   }
 
   toggleBusyState (active) {
@@ -724,7 +727,11 @@ export class ComponentBrowserModel extends ViewModel {
     }
     const mod = localInterface.getModule(moduleName);
     const exports = await mod.exports();
-    return exports.map(m => mod.recorder[m.exported]).filter(c => c && c.isComponent);
+    const componentDescriptors = exports
+      .map(m => mod.recorder[m.exported])
+      .filter(c => c && c.isComponentDescriptor);
+    componentDescriptors.forEach(descr => adoptObject(descr, InteractiveComponentDescriptor));
+    return componentDescriptors;
   }
 
   filterList () {
@@ -881,7 +888,7 @@ export class ComponentBrowserModel extends ViewModel {
 
       // via system interface
 
-      // hide the column view if search term 
+      // hide the column view if search term
       this.ui.componentFilesView.visible = term === '';
 
       if (term === '') {
@@ -895,7 +902,7 @@ export class ComponentBrowserModel extends ViewModel {
         let components = await this.getComponentsInModule(modUrl);// retrieve the components exported in that module
         // get the matching components in the module
         components = components.filter(c => {
-          return this.fuzzyMatch(parsedInput, c.name);
+          return this.fuzzyMatch(parsedInput, c.componentName);
         });
         // store them in the filtered index if there is a match or more
         if (components.length > 0) filteredIndex[modUrl.replace(System.baseURL, '')] = components;
@@ -913,7 +920,7 @@ export class ComponentBrowserModel extends ViewModel {
     // do some smart updating of the list
     const newList = [];
     const currentList = masterComponentList.submorphs;
-    const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
+    const projectEntry = part(this.sectionMaster); // eslint-disable-line no-use-before-define
     // remove all empty lists
     const orderedWorlds = (componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project'));
     for (const worldName of orderedWorlds) {
@@ -944,7 +951,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   showComponentsInFile (fileName, componentsInFile) {
     const { masterComponentList } = this.ui;
-    const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
+    const projectEntry = part(this.sectionMaster); // eslint-disable-line no-use-before-define
 
     projectEntry.worldName = fileName;
     projectEntry.renderComponents(componentsInFile);
@@ -955,37 +962,36 @@ export class ComponentBrowserModel extends ViewModel {
   }
 }
 
-// ComponentPreview.openInWorld()
 const ComponentPreview = component({
   type: ExportedComponent,
   name: 'component preview',
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(5, 5, 0, 0),
+    spacing: 5,
+    wrapSubmorphs: false
+  }),
   borderColor: Color.rgb(33, 150, 243),
   borderRadius: 5,
   borderWidth: 0,
-  extent: pt(129, 135),
+  extent: pt(129.5, 128.4),
   fill: Color.transparent,
   draggable: true,
-  layout: new VerticalLayout({
-    align: 'center',
-    direction: 'topToBottom',
-    orderByIndex: true,
-    resizeSubmorphs: false,
-    spacing: 6
-  }),
-  master: false,
   nativeCursor: 'grab',
-  position: pt(1186.4, 654.7),
   submorphs: [{
     name: 'preview container',
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      orderByIndex: true
+    }),
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(120, 100),
     fill: Color.rgba(0, 0, 0, 0),
-    layout: new VerticalLayout({
-      align: 'center',
-      direction: 'centered',
-      orderByIndex: true,
-      resizeSubmorphs: false
-    }),
     reactsToPointer: false,
     submorphs: [{
       name: 'preview holder',
@@ -1006,7 +1012,13 @@ const ComponentPreview = component({
   }]
 });
 
-// ComponentPreviewSelected.openInWorld()
+const ComponentPreviewDark = component(ComponentPreview, {
+  submorphs: [{
+    name: 'component name',
+    fontColor: Color.rgb(204, 204, 204)
+  }]
+});
+
 const ComponentPreviewSelected = component(ComponentPreview, {
   name: 'component preview selected',
   borderColor: Color.rgb(33, 150, 243),
@@ -1014,23 +1026,39 @@ const ComponentPreviewSelected = component(ComponentPreview, {
   fill: Color.rgba(3, 169, 244, 0.75),
   submorphs: [{
     name: 'component name',
+    fontColor: Color.white
+  }]
+});
+
+const ComponentPreviewSelectedDark = component(ComponentPreview, {
+  borderColor: Color.rgb(118, 118, 118),
+  borderWidth: 2,
+  fill: Color.rgba(212, 212, 212, 0.75),
+  submorphs: [{
+    name: 'component name',
     fontColor: Color.rgb(255, 255, 255)
   }]
 });
 
-// ProjectSection.openInWorld()
 const ProjectSection = component({
   type: ProjectEntry,
   name: 'project section',
+  layout: new TilingLayout({
+    axis: 'column',
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['project title', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['component previews', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    wrapSubmorphs: false
+  }),
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(488.6, 154.2),
   fill: Color.rgba(0, 0, 0, 0),
-  layout: new VerticalLayout({
-    direction: 'topToBottom',
-    orderByIndex: true,
-    resizeSubmorphs: true
-  }),
-  master: false,
   position: pt(647.1, 628.5),
   renderOnGPU: true,
   submorphs: [{
@@ -1059,110 +1087,225 @@ const ProjectSection = component({
     fill: Color.rgba(0, 0, 0, 0),
     layout: new TilingLayout({
       orderByIndex: true,
+      hugContentsVertically: true,
       padding: rect(10, 10, 0, 0),
       spacing: 10
     })
   }]
 });
 
-// ComponentBrowser.openInWorld()
-const ComponentBrowser = component(LightPrompt, {
+const ProjectSectionDark = component(ProjectSection, {
+  submorphs: [{
+    name: 'project title',
+    fontColor: Color.rgb(204, 204, 204),
+    borderColor: Color.rgb(130, 130, 130)
+  }]
+});
+
+// part(ComponentBrowser).openInWorld()
+const ComponentBrowser = component(PopupWindow, {
   defaultViewModel: ComponentBrowserModel,
-  name: 'component browser',
-  epiMorph: false,
-  extent: pt(515.1, 599.9),
+  extent: pt(515, 640),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
     orderByIndex: true,
-    padding: rect(16, 16, 0, 0),
-    resizePolicies: [['search input', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['component files view', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['master component list', {
-      height: 'fill',
-      width: 'fill'
-    }], ['button wrapper', {
+    resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
     }]],
-    spacing: 16,
+    wrapSubmorphs: false
+  }),
+  submorphs: [
+    add({
+      name: 'controls',
+      fill: Color.rgba(255, 255, 255, 0),
+      extent: pt(515.1, 599.9),
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(16, 16, 0, 0),
+        resizePolicies: [['search input', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['component files view', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['master component list', {
+          height: 'fill',
+          width: 'fill'
+        }], ['button wrapper', {
+          height: 'fixed',
+          width: 'fill'
+        }]],
+        spacing: 16,
+        wrapSubmorphs: false
+      }),
+      submorphs: [part(TextInput, {
+        name: 'search input',
+        fill: Color.rgba(66, 73, 73, 0),
+        borderRadius: 0,
+        borderWidth: {
+          bottom: 1,
+          left: 0,
+          right: 0,
+          top: 0
+        },
+        borderColor: Color.rgb(204, 204, 204),
+        layout: new ConstraintLayout({
+          lastExtent: {
+            x: 483,
+            y: 34.3
+          },
+          reactToSubmorphAnimations: false,
+          submorphSettings: [['placeholder', {
+            x: 'fixed',
+            y: 'fixed'
+          }], ['spinner', {
+            x: 'fixed',
+            y: 'fixed'
+          }]]
+        }),
+        extent: pt(640, 34.3),
+        fontSize: 20,
+        padding: rect(6, 4, -4, 2),
+        placeholder: 'Search for Components...',
+        submorphs: [add(part(Spinner, {
+          name: 'spinner',
+          position: pt(452.5, 5.2),
+          visible: false
+        })), {
+          name: 'placeholder',
+          opacity: 0.6,
+          padding: rect(6, 4, -4, 2),
+          textAndAttributes: ['Search for Components...', null]
+        }, {
+          name: 'controls',
+          extent: pt(515.1, 599.9),
+          fill: Color.rgba(255, 255, 255, 0),
+          layout: new TilingLayout({
+            axis: 'column',
+            axisAlign: 'center',
+            orderByIndex: true,
+            padding: rect(16, 16, 0, 0),
+            resizePolicies: [['search input', {
+              height: 'fixed',
+              width: 'fill'
+            }], ['component files view', {
+              height: 'fixed',
+              width: 'fill'
+            }], ['master component list', {
+              height: 'fill',
+              width: 'fill'
+            }], ['button wrapper', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 16,
+            wrapSubmorphs: false
+          }),
+          submorphs: [{
+            name: 'search input',
+            borderColor: Color.rgb(204, 204, 204),
+            borderWidth: 1,
+            fontSize: 20,
+            padding: rect(6, 4, -4, 2),
+            textAndAttributes: ['f', null]
+          }]
+        }]
+      }), part(MullerColumnView, {
+        name: 'component files view',
+        viewModel: { listMaster: ColumnListDefault },
+        borderColor: Color.rgb(149, 165, 166),
+        borderWidth: 1,
+        fill: Color.rgba(229, 231, 233, 0.05),
+        extent: pt(483, 150),
+        borderRadius: 2
+      }), {
+        name: 'master component list',
+        borderColor: Color.rgb(149, 165, 166),
+        borderWidth: 1,
+        borderRadius: 2,
+        fill: Color.rgba(229, 231, 233, 0.05),
+        clipMode: 'auto',
+        extent: pt(640, 304),
+        layout: new TilingLayout({
+          wrapSubmorphs: false,
+          axis: 'column'
+        })
+      }, {
+        name: 'button wrapper',
+        height: 33.92421875,
+        clipMode: 'visible',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'right',
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 15
+        }),
+        submorphs: [part(SystemButton, {
+          name: 'import button',
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Import', null]
+
+          }]
+        })]
+      }]
+    }), {
+      name: 'header menu',
+      submorphs: [{
+        name: 'title',
+        fontSize: 18,
+        textAndAttributes: ['Browse Components', null]
+      }]
+    }
+  ]
+});
+
+// part(ComponentBrowserDark).openInWorld()
+const ComponentBrowserDark = component(ComponentBrowser, {
+  master: DarkPopupWindow,
+  viewModel: {
+    sectionMaster: ProjectSectionDark
+  },
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['header menu', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
     wrapSubmorphs: false
   }),
   submorphs: [{
-    name: 'prompt title',
-    textString: 'Browse Components'
-  }, add(part(InputLineDefault, {
-    name: 'search input',
-    layout: new ConstraintLayout({
-      lastExtent: {
-        x: 483,
-        y: 34.3
-      },
-      reactToSubmorphAnimations: false,
-      submorphSettings: [['placeholder', {
-        x: 'fixed',
-        y: 'fixed'
-      }], ['spinner', {
-        x: 'fixed',
-        y: 'fixed'
-      }]]
-    }),
-    extent: pt(640, 34.3),
-    fontSize: 20,
-    padding: rect(6, 4, -4, 0),
-    placeholder: 'Search for Components...',
-    submorphs: [add(part(Spinner, {
-      name: 'spinner',
-      position: pt(448.2, 5.4),
-      visible: false
-    })), {
-      name: 'placeholder',
-      extent: pt(232, 34.3),
-      padding: rect(6, 4, -4, 0),
-      textAndAttributes: ['Search for Components...', null]
-    }]
-  })), add(part(MullerColumnView, {
-    viewModel: { listMaster: ColumnListDefault },
-    name: 'component files view',
-    extent: pt(483, 150),
-    borderRadius: 5,
-    dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) })
-  })), add({
-    name: 'master component list',
-    borderRadius: 5,
-    borderColor: Color.rgb(149, 165, 166),
-    clipMode: 'auto',
-    dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
-    extent: pt(640, 304),
-    layout: new TilingLayout({
-      axis: 'column'
-    })
-  }), add({
-    name: 'button wrapper',
-    clipMode: 'visible',
-    extent: pt(486, 52.6),
-    fill: Color.rgba(255, 255, 255, 0.01),
-    layout: new TilingLayout({
-      align: 'right',
-      axisAlign: 'center',
-      orderByIndex: true,
-      spacing: 15
-    }),
-    submorphs: [part(GreenButton, {
-      name: 'import button',
-      extent: pt(100, 38),
+    name: 'controls',
+    submorphs: [{
+      name: 'component files view',
+      borderColor: Color.rgb(112, 123, 124),
+      borderWidth: 1,
+      viewModel: { listMaster: ColumnListDark }
+    },
+    {
+      name: 'master component list',
+      borderColor: Color.rgb(112, 123, 124),
+      borderWidth: 1
+    },
+    {
+      name: 'button wrapper',
       submorphs: [{
-        name: 'label',
-        textAndAttributes: ['IMPORT', null]
+        name: 'import button',
+        master: ButtonDarkDefault
       }]
-    }), part(RedButton, {
-      name: 'cancel button'
-    })]
-  })]
+    }]
+  }]
 });
 
 export { ComponentBrowser, ComponentPreview, ComponentPreviewSelected, ProjectSection };
