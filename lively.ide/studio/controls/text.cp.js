@@ -313,6 +313,7 @@ const RichTextControl = component(PropertySection, {
   }, add({
     name: 'text controls',
     layout: new TilingLayout({
+      wrapSubmorphs: true,
       orderByIndex: true,
       spacing: 10,
       padding: Rectangle.inset(20, 0, 0, 0)

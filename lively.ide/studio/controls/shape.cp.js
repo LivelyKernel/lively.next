@@ -444,6 +444,7 @@ const ShapeControl = component({
   borderWidth: { top: 0, left: 0, right: 0, bottom: 1 },
   layout: new TilingLayout({
     axisAlign: 'center',
+    wrapSubmorphs: true,
     justifySubmorphs: 'spaced',
     hugContentsVertically: true,
     orderByIndex: true,
