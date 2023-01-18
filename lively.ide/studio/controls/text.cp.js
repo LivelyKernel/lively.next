@@ -282,7 +282,9 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changePadding (padding) {
-    this.targetMorph.padding = padding;
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.padding = padding;
+    });
   }
 
   deactivate () {
