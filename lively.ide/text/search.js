@@ -21,7 +21,7 @@ export class TextSearcher {
    * Helper function that is used to map starting positions and lengths of search results to valid text ranges.
    * @param {number} start
    * @param {string} match
-   * @returns An object containing a range beginning at `start` and ending after the length of `match`.
+   * @returns {object} An object containing a range beginning at `start` and ending after the length of `match`.
    */
   calculateRangeForFind (start, match) {
     const i = this.document.positionToIndex(start);
@@ -31,13 +31,13 @@ export class TextSearcher {
 
   /**
    * Searches for the first occurrence of a given string `needle` inside of a text.
-   * @param {[string]} lines - The text which parts of should be searched.
+   * @param {string[]} lines - The text which parts of should be searched.
    * @param {string} needle - The string to search for.
    * @param {boolean} caseSensitive - Whether or not the search is case sensitive.
    * @param {number} nLines - The number of lines which need to be searched at once, i.e., the number of lines that `needle` spans.
    * @param {char} char - The character at the current position of the text. Optimization.
    * @param {range} pos - The text position inside of `lines` at which the search for `needle` begins for `nLines`.
-   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   * @returns {?object} `null`, when nothing has been found or an Object containing the range of the result as well as the result.
    */
   stringSearch (lines, needle, caseSensitive, nLines, char, pos) {
     if (!caseSensitive) char = char.toLowerCase();
@@ -56,12 +56,12 @@ export class TextSearcher {
 
   /**
    * Searches for the first hit of a given RegEx `needle` inside of a text.
-   * @param {[string]} lines - The text which parts of should be searched.
+   * @param {string[]} lines - The text which parts of should be searched.
    * @param {string} needle - The RegEx to apply for searching.
    * @param {boolean} multiline - Whether more than one line should be searched.
    * @param {boolean} char - unused placeholder to provide the same interface as `stringSearch`
    * @param {range} pos - The text position inside of `lines` at which the search for `needle` begins for `nLines`.
-   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   * @returns {?object} `null`, when nothing has been found or an Object containing the range of the result as well as the result.
    */
   reSearch (lines, needle, multiline, char, pos) {
     const { row, column } = pos;
@@ -73,7 +73,7 @@ export class TextSearcher {
   /**
    * Wrapper around reSearch and stringSearch, that choses the right method to search based on the `needle` to search for.
    * @param {object} options - An Object that can contain `needle`, `start`, `backwards`, and `caseSensitive`. See `stringSearch` and `reSearch` above.
-   * @returns `null`, when nothing has been found or an Object containing the range of the result as well as the result.
+   * @returns {?object} `null`, when nothing has been found or an Object containing the range of the result as well as the result.
    */
   search (options) {
     let { start, needle, backwards, caseSensitive } = {
@@ -112,7 +112,7 @@ export class TextSearcher {
    * Thus, collecting up to 10.000 matches.
    * Will only search in one direction and begin from the specified starting position. Therefore, cases exist where not the whole document get searched.
    * @param {object} options - An Object that can contain `needle`, `start`, `backwards`, and `caseSensitive`. See `stringSearch` and `reSearch` above.
-   * @returns An array of objects containing a range beginning at `start` and ending after the length of `match`, as well as `match`.
+   * @returns {object[]} An array of objects containing a range beginning at `start` and ending after the length of `match`, as well as `match`.
    */
   searchForAll (options) {
     const results = [];
@@ -239,7 +239,6 @@ export class SearchWidgetModel extends ViewModel {
   /**
    * Keeps the search widget around when one just clicks a button in the widget or uses the text map.
    * @param {Event} evt - The event causing the blur handler to be invoked.
-   * @returns
    */
   onBlur (evt) {
     const world = this.world();
