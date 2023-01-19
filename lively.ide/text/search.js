@@ -1,7 +1,7 @@
 /* global System */
 
 import { once } from 'lively.bindings';
-import { arr } from 'lively.lang';
+import { arr, string } from 'lively.lang';
 
 import config from 'lively.morphic/config.js';
 import { ViewModel, part } from 'lively.morphic/components/core.js';
@@ -505,24 +505,32 @@ export class SearchWidgetModel extends ViewModel {
       {
         name: 'replace all',
         exec: () => {
+          const { target } = this;
           const { replaceInput } = this.ui;
+          let currentSourceString = target.textString;
           let replacement = replaceInput.textString;
           replaceInput.acceptInput();
 
-          this.target.undoManager.group();
           let lineOfLastMatch = -1;
           let offsetForCurrentLine = 0;
+          const replacements = [];
           this.results.forEach(found => {
             const { range, match } = found;
             const lineOfCurrentMatch = range.start.row;
-            if (lineOfCurrentMatch === lineOfLastMatch) offsetForCurrentLine += (replacement.length - match.length);
-            else offsetForCurrentLine = 0;
+            if (lineOfCurrentMatch === lineOfLastMatch) {
+              offsetForCurrentLine += (replacement.length - match.length);
+            } else offsetForCurrentLine = 0;
             lineOfLastMatch = lineOfCurrentMatch;
+            const start = target.positionToIndex(range.start);
+            const end = target.positionToIndex(range.end);
+            replacements.unshift(
+              { action: 'remove', start, end },
+              { action: 'insert', start, lines: [replacement] }
+            );
             range.start.column += offsetForCurrentLine;
             range.end.column += offsetForCurrentLine;
-            this.target.replace(range, replacement, true, true, false);
           });
-          this.target.undoManager.group();
+          target.textString = string.applyChanges(currentSourceString, replacements);
           this.search();
           return true;
         }
