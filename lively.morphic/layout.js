@@ -421,7 +421,7 @@ export class TilingLayout extends Layout {
     if (hugContentsVertically !== false) spec.hugContentsVertically = true;
     if (hugContentsHorizontally !== false) spec.hugContentsHorizontally = true;
     if (orderByIndex !== false) spec.orderByIndex = true;
-    if (wrapSubmorphs !== true) spec.wrapSubmorphs = false;
+    if (wrapSubmorphs !== false) spec.wrapSubmorphs = true;
     if (!rect(0).equals(padding)) spec.padding = padding;
     if (reactToSubmorphAnimations) spec.reactToSubmorphAnimations = true;
     return spec;
