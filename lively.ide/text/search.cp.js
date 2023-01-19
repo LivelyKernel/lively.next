@@ -1,4 +1,4 @@
-import { pt, rect, Color } from 'lively.graphics';
+import { pt, Rectangle, rect, Color } from 'lively.graphics';
 
 import { Icon } from 'lively.morphic/text/icons.js';
 import { part, component } from 'lively.morphic/components/core.js';
@@ -71,7 +71,8 @@ const SearchWidget = component({
   fill: Color.rgba(0, 0, 0, 0.7471867324206476),
   layout: new TilingLayout({
     spacing: 2,
-    padding: rect(2, 5, 0, -3),
+    padding: Rectangle.inset(2, 2, 2, 4),
+    hugContentsVertically: true,
     axis: 'column',
     resizePolicies: [
       ['upper row', { height: 'fixed', width: 'fill' }],
