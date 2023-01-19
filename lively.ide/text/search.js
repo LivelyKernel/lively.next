@@ -249,7 +249,7 @@ export class SearchWidgetModel extends ViewModel {
       const focusedMorph = world.focusedMorph;
       if (!view.withAllSubmorphsDetect(m => m.isFocused()) &&
          !$world.focusedMorph.isTextMap) {
-        this.remove(false);
+        this.close();
         return;
       }
       view.bringToFront();
@@ -267,8 +267,7 @@ export class SearchWidgetModel extends ViewModel {
     this.textMap && this.textMap.update();
   }
 
-  // This does not cause a name collision since we are on a `ViewModel` and this is not exposed!
-  remove () {
+  close () {
     this.ui.searchInput.acceptInput();
     this.cleanup();
     if (!this._reuseTextMap) this.target.removeTextMap();
@@ -461,7 +460,7 @@ export class SearchWidgetModel extends ViewModel {
           return this.target.execCommand('occur', { needle: this.input });
         }
       },
-      { name: 'remove search widget', exec: () => { this.remove(); return true; } },
+      { name: 'remove search widget', exec: () => { this.close(); return true; } },
       { name: 'goto next result', exec: () => { this.moveCursorToNextResult(); return true; } },
       { name: 'goto previous result', exec: () => { this.moveCursorToNextResult(true); return true; } },
 
