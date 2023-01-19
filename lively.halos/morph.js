@@ -2,7 +2,6 @@
 import {
   Morph,
   TilingLayout,
-  Label,
   Path,
   Text,
   GridLayout,
@@ -904,7 +903,7 @@ class RotateHaloItem extends HaloItem {
 
   // events
   isInScaleMode (evt) {
-    return evt.isShiftDown() && !$world.morphsInWorld.includes(this.target);
+    return evt.isShiftDown() && !$world.morphsInWorld.includes(this.halo.target);
   }
 
   onDragStart (evt) {
