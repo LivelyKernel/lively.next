@@ -41,7 +41,6 @@ const Scrubber = component({
   textAndAttributes: ['13', null]
 });
 
-// DefaultNumberWidget.openInWorld()
 const DefaultNumberWidget = component({
   type: NumberWidget,
   name: 'default number widget',
@@ -56,11 +55,7 @@ const DefaultNumberWidget = component({
   fontSize: 16,
   clipMode: 'hidden',
   layout: new TilingLayout({
-    align: 'center',
-    axis: 'column',
-    wrapSubmorphs: true,
-    justifySubmorphs: false,
-    orderByIndex: true
+    axisAlign: 'center'
   }),
   padding: rect(6, 2, -6, -2),
   submorphs: [
@@ -68,15 +63,21 @@ const DefaultNumberWidget = component({
       name: 'value',
       extent: pt(53.6, 24)
     }),
-    part(CaretButton, {
-      name: 'up',
-      submorphs: [{
-        name: 'icon',
-        padding: rect(6, 0, -2, -1),
-        textAndAttributes: Icon.textAttribute('sort-up')
-      }]
-    }),
-    part(CaretButton, { name: 'down', rotation: Math.PI })]
+    {
+      name: 'button holder',
+      fill: Color.transparent,
+      layout: new TilingLayout({ axis: 'column' }),
+      submorphs: [part(CaretButton, {
+        name: 'up',
+        submorphs: [{
+          name: 'icon',
+          padding: rect(6, 0, -2, -1),
+          textAndAttributes: Icon.textAttribute('sort-up')
+        }]
+      }),
+      part(CaretButton, { name: 'down', rotation: Math.PI })]
+    }
+  ]
 });
 
 const ScrubberLight = component(Scrubber, {
@@ -93,7 +94,5 @@ const DarkNumberWidget = component(DefaultNumberWidget, {
     master: ScrubberLight
   }]
 });
-
-// DarkNumberWidget.openInWorld()
 
 export { DefaultNumberWidget, DarkNumberWidget, Scrubber };

@@ -295,12 +295,12 @@ const RichTextControl = component(PropertySection, {
   name: 'rich text control',
   extent: pt(250, 313),
   layout: new TilingLayout({
+    wrapSubmorphs: true,
     spacing: 10,
     padding: Rectangle.inset(0, 10, 0, 10),
     resizePolicies: [
       ['h floater', { width: 'fill', height: 'fixed' }]
     ],
-    axis: 'column',
     axisAlign: 'center',
     hugContentsVertically: true
   }),
@@ -525,6 +525,8 @@ const RichTextControl = component(PropertySection, {
     extent: pt(251.4, 65.6),
     fill: Color.transparent,
     layout: new TilingLayout({
+      axis: 'row',
+      wrapSubmorphs: true,
       spacing: 10,
       padding: Rectangle.inset(20, 0, 0, 0),
       hugContentsVertically: true
