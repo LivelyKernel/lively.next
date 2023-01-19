@@ -1,6 +1,6 @@
 import { TilingLayout, without, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
-import { PropertyLabel, PropertyLabelHoveredLight, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
+import { PropertyLabel, PropertyLabelLight, PropertyLabelActiveLight, PropertyLabelHoveredLight, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, string, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -290,8 +290,8 @@ export class PaddingControlsModel extends ViewModel {
     paddingAll.visible = !this.showAllSidesControl;
     multiPaddingControl.visible = this.showAllSidesControl;
     independentPaddingToggle.master = this.showAllSidesControl
-      ? PropertyLabelActive
-      : { auto: PropertyLabel, hover: this.propertyLabelComponentHover };
+      ? this.propertyLabelComponentActive
+      : { auto: this.propertyLabelComponent, hover: this.propertyLabelComponentHover };
   }
 
   focusField (focusedField) {
@@ -417,7 +417,6 @@ export class PositionPopupModel extends PopupModel {
 }
 
 // part(ShadowPopup).openInWorld()
-
 const ShadowPopup = component(DarkPopupWindow, {
   defaultViewModel: ShadowPopupModel,
   name: 'shadow popup',
@@ -433,7 +432,12 @@ const ShadowPopup = component(DarkPopupWindow, {
     borderColor: Color.rgb(23, 160, 251),
     borderWidth: 0,
     extent: pt(241, 76.6),
-    layout: new TilingLayout({ spacing: 10, justifySubmorphs: 'spaced', padding: Rectangle.inset(10, 10, 40) }),
+    layout: new TilingLayout({
+      spacing: 10,
+      justifySubmorphs: 'spaced',
+      padding: Rectangle.inset(10, 10, 40),
+      wrapSubmorphs: true
+    }),
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(DarkNumberIconWidget, {
       name: 'x offset',
@@ -784,6 +788,11 @@ const InsetShadowPopup = component(ShadowPopup, {
 export const PaddingControlsLight = component({
   name: 'padding controls',
   defaultViewModel: PaddingControlsModel,
+  viewModel: {
+    propertyLabelComponent: PropertyLabelLight,
+    propertyLabelComponentActive: PropertyLabelActiveLight,
+    propertyLabelComponentHover: PropertyLabelHoveredLight
+  },
   layout: new TilingLayout({
     align: 'right',
     axisAlign: 'center',
@@ -909,7 +918,7 @@ export const PaddingControlsLight = component({
       lineHeight: 1,
       fontColor: Color.rgb(101, 135, 139),
       fontSize: 14,
-      master: { auto: PropertyLabel, hover: PropertyLabelHoveredLight },
+      master: { auto: PropertyLabelLight, hover: PropertyLabelHoveredLight },
       tooltip: 'Toggle independent Fields per Direction',
       fontFamily: 'Material Icons',
       textAndAttributes: ['', {
@@ -922,6 +931,11 @@ export const PaddingControlsLight = component({
 );
 
 export const PaddingControlsDark = component(PaddingControlsLight, {
+  viewModel: {
+    propertyLabelComponent: PropertyLabel,
+    propertyLabelComponentActive: PropertyLabelActive,
+    propertyLabelComponentHover: PropertyLabelHovered
+  },
   submorphs: [
     {
       name: 'padding all',
