@@ -12,7 +12,6 @@ import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
 import { TextInput, PropLabel, DarkNumberIconWidget } from '../studio/shared.cp.js'; // that should be revised...
 
-// ColorInput.openInWorld()
 const ColorInput = component({
   defaultViewModel: ColorInputModel,
   name: 'color input',
@@ -91,7 +90,6 @@ const ColorInput = component({
   })]
 });
 
-// DefaultInputLine.openInWorld()
 const DefaultInputLine = component({
   type: InputLine,
   name: 'default input line',
@@ -116,14 +114,13 @@ const DefaultInputLine = component({
   }]
 });
 
-// HexEncoder.openInWorld()
 const HexEncoder = component({
   name: 'hex encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(150.5, 25),
+  extent: pt(160, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
-    axis: 'column',
+    axis: 'row',
     axisAlign: 'center',
     align: 'center',
     spacing: 1
@@ -161,10 +158,10 @@ const HexEncoder = component({
 const ThreeValEncoder = component({
   name: 'three val encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(160, 23),
+  extent: pt(160, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
-    axis: 'column',
+    axis: 'row',
     align: 'center',
     axisAlign: 'center',
     spacing: 1
@@ -258,7 +255,7 @@ const ThreeValEncoder = component({
 const CssEncoder = component({
   name: 'css encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(152.5, 25.2),
+  extent: pt(160, 25),
   fill: Color.rgb(189, 195, 199),
   isLayoutable: false,
   layout: new TilingLayout({
@@ -278,7 +275,7 @@ const CssEncoder = component({
   submorphs: [part(DefaultInputLine, {
     name: 'css input',
     placeholder: 'CSS color string',
-    extent: pt(150.5, 23.2),
+    extent: pt(158, 23),
     padding: rect(5, 3, -5, -3)
   })],
   visible: false
@@ -347,8 +344,6 @@ const DefaultSlider = component({
   }]
 });
 
-// DefaultSlider.openInWorld()
-
 const OpacitySlider = component(DefaultSlider, {
   defaultViewModel: OpacityPickerModel,
   name: 'opacity slider',
@@ -377,8 +372,6 @@ const OpacitySlider = component(DefaultSlider, {
   ]
 });
 
-// part(DefaultSlider).openInWorld()
-
 const HueSlider = component(DefaultSlider, {
   defaultViewModel: HuePickerModel,
   name: 'hue slider',
@@ -393,8 +386,6 @@ const HueSlider = component(DefaultSlider, {
     vector: 'eastwest'
   })
 });
-
-// HueSlider.openInWorld()
 
 const FieldPicker = component({
   defaultViewModel: FieldPickerModel,
