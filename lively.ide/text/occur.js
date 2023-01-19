@@ -15,10 +15,11 @@ const occurKeyHandler = Object.assign(
   ]),
   { isOccurHandler: true });
 
-export var occurStartCommand = {
+export const occurStartCommand = {
   name: 'occur',
   exec: (textMorph, opts = {}) => {
-    if (opts.needle) { textMorph.addPlugin(new Occur(opts)); }
+    if (opts.needle) { textMorph.addPlugin(new Occur(opts)); } // eslint-disable-line no-use-before-define
+    textMorph.focus();
     return !!opts.needle;
   }
 };
