@@ -38,6 +38,10 @@ const PropertyLabel = component({
   }]
 });
 
+const PropertyLabelLight = component(PropertyLabel, {
+  fontColor: Color.darkGray
+});
+
 // PropertyLabelHovered.openInWorld()
 const PropertyLabelHovered = component(PropertyLabel, {
   name: 'property label hovered',
@@ -49,11 +53,15 @@ const PropertyLabelHoveredLight = component(PropertyLabel, {
   fill: Color.rgba(192, 192, 192, 0.7829)
 });
 
-// PropertyLabelActive.openInWorld()
 const PropertyLabelActive = component(PropertyLabel, {
   name: 'property label active',
   fill: Color.rgb(178, 235, 242),
   fontColor: Color.rgb(65, 65, 65)
+});
+
+const PropertyLabelActiveLight = component(PropertyLabel, {
+  fontColor: Color.white,
+  fill: Color.rgb(3, 169, 244)
 });
 
 const AddButtonAuto = component({
@@ -424,4 +432,4 @@ const Spinner = component({
   scale: 0.3244543390629232
 });
 
-export { AddButton, RemoveButton, HeadlineLabel, PropLabel, DarkNumberIconWidget, TextInput, EnumSelector, PropertyLabel, PropertyLabelHovered, PropertyLabelHoveredLight, PropertyLabelActive, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner, CheckboxActive, CheckboxInactive };
+export { AddButton, RemoveButton, HeadlineLabel, PropLabel, DarkNumberIconWidget, TextInput, EnumSelector, PropertyLabel, PropertyLabelLight, PropertyLabelHovered, PropertyLabelHoveredLight, PropertyLabelActive, PropertyLabelActiveLight, DarkThemeList, LabeledCheckbox, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner, CheckboxActive, CheckboxInactive };
