@@ -5,9 +5,9 @@ import { styleProps, stylepropsToNode } from './property-dom-mapping.js';
 import bowser from 'bowser';
 
 /**
-  * @param {Morph} morph - The Morph for which to generate the attributes. 
+  * @param {Morph} morph - The Morph for which to generate the attributes.
   */
- export function defaultAttributes (morph) {
+export function defaultAttributes (morph) {
   const attrs = {
     id: morph.id,
     class: (morph.hideScrollbars
@@ -27,13 +27,13 @@ import bowser from 'bowser';
 
 /**
  * Extract the styling information from `morph`'s morphic model and applies them to its DOM node.
- * Classes subclassing Morph can implement `renderStyles` that gets the Object with the styles to be applied passed before they are applied to the node. 
+ * Classes subclassing Morph can implement `renderStyles` that gets the Object with the styles to be applied passed before they are applied to the node.
  * @see defaultStyle.
  * @param {Morph} morph - The Morph to be rendered.
  * @param {Node} node - The node in which `morph` is rendered into the DOM.
  * @returns {Node} `morph`'s DOM node with applied styling attributes.
  */
- export function applyStylingToNode (morph, node) {
+export function applyStylingToNode (morph, node) {
   let styleProps = defaultStyle(morph);
 
   if (typeof morph.renderStyles === 'function') {
@@ -42,7 +42,7 @@ import bowser from 'bowser';
 
   stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
 
-  if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.has(morph)){
+  if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.has(morph)) {
     node.style.position = 'sticky';
     node.style.transform = '';
     node.style.textAlign = 'initial';
@@ -50,7 +50,7 @@ import bowser from 'bowser';
     node.style.removeProperty('left');
   }
   if (morph.renderingState.inlineGridImportant && node.style['display'] !== 'none') node.style.setProperty('display', 'inline-grid', 'important');
-  if (morph.renderingState.inlineFlexImportant && node.style['display'] !== 'none') node.style.setProperty('display','inline-flex','important');
+  if (morph.renderingState.inlineFlexImportant && node.style['display'] !== 'none') node.style.setProperty('display', 'inline-flex', 'important');
 
   return node;
 }
@@ -315,6 +315,20 @@ div.text-layer span {
   float: right;
   top: 50%;
   text-align: right;
+}
+
+.List.clipped .annotation {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.List.clipped .ListItemMorph .line {
+  display: flex;
+}
+
+.List.clipped .ListItemMorph .newtext-text-layer.actual {
+  width: 100%;
 }
 
 .truncated-text {
