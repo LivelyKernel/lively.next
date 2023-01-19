@@ -126,7 +126,7 @@ describe('layout', () => {
       });
 
       it('preserves policies on reassignement', () => {
-        container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, axis: 'row', renderViaCSS: false, wrapSubmorphs: false });
+        container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, renderViaCSS: false, wrapSubmorphs: false });
         container.layout.setResizePolicyFor(container.submorphs[0], { width: 'fill', height: 'fixed' });
         expect(container.layout.getResizeWidthPolicyFor(container.submorphs[0])).equals('fill');
         container.layout = container.layout;
@@ -134,7 +134,7 @@ describe('layout', () => {
       });
 
       it('axis: row', () => {
-        container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, axis: 'row', renderViaCSS: false });
+        container.layout = new TilingLayout({ padding: Rectangle.inset(5), spacing: 5, renderViaCSS: false });
         let rows = arr.groupBy(container.submorphs, m => m.position.y).toArray().map(row => arr.sortBy(row, ea => ea.position.x));
         rows.slice(0, -1).forEach(row => expect(row.length).gt(1));
         checkJSAndCSS(m, () => {
@@ -152,7 +152,6 @@ describe('layout', () => {
         container.layout = new TilingLayout({
           padding: Rectangle.inset(10),
           spacing: 10,
-          axis: 'row',
           align: 'center',
           renderViaCSS: false
         });

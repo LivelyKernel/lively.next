@@ -181,7 +181,6 @@ const CommentView = component({
           name: 'button container',
           halosEnbled: false,
           layout: new TilingLayout({
-            axis: 'row',
             spacing: 8,
             padding: 8,
             hugContents: true

@@ -121,7 +121,6 @@ export default class TextEditor extends Morph {
               reactsToPointer: false,
               fill: Color.transparent,
               layout: new TilingLayout({
-                axis: 'row',
                 hugContentsVertically: true,
                 spacing: 10,
                 padding: Rectangle.inset(10, 10, 10, 10)
@@ -136,7 +135,6 @@ export default class TextEditor extends Morph {
               name: 'url wrapper',
               fill: Color.transparent,
               layout: new TilingLayout({
-                axis: 'row',
                 hugContentsVertically: true,
                 padding: Rectangle.inset(10, 0, 10, 10),
                 resizePolicies: [

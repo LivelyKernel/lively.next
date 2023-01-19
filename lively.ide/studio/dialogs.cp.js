@@ -329,7 +329,6 @@ const SaveWorldDialog = component(DarkPrompt, {
     extent: pt(470.3, 61.1),
     fill: Color.rgba(0, 0, 0, 0),
     layout: new TilingLayout({
-      axis: 'row',
       align: 'center',
       axisAlign: 'center',
       orderByIndex: true,

@@ -52,9 +52,6 @@ const SystemTooltip = component({
   fill: Color.rgba(0, 0, 0, 0.68),
   hasFixedPosition: true,
   layout: new TilingLayout({
-    align: 'left',
-    axis: 'row',
-    axisAlign: 'left',
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     padding: 5

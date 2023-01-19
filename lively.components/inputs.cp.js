@@ -43,7 +43,6 @@ const LabeledCheckBox = component({
   extent: pt(66, 21),
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
-    axis: 'row',
     align: 'top',
     direction: 'leftToRight'
   }),
@@ -240,7 +239,6 @@ const SearchField = component({
   reactsToPointer: false,
   layout: new TilingLayout({
     axisAlign: 'center',
-    axis: 'row',
     orderByIndex: true,
     padding: Rectangle.inset(0, 0, 3, 0),
     resizePolicies: [

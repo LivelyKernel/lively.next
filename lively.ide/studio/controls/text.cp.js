@@ -412,7 +412,6 @@ const RichTextControl = component(PropertySection, {
         layout: new TilingLayout({
           hugContentsVertically: true,
           padding: Rectangle.inset(0, 1, 0, 1),
-          justifySubmorphs: 'packed'
         }),
         submorphs: [add(part(PropertyLabel, {
           name: 'italic style',
@@ -525,7 +524,6 @@ const RichTextControl = component(PropertySection, {
     extent: pt(251.4, 65.6),
     fill: Color.transparent,
     layout: new TilingLayout({
-      axis: 'row',
       wrapSubmorphs: true,
       spacing: 10,
       padding: Rectangle.inset(20, 0, 0, 0),

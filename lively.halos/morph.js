@@ -412,7 +412,6 @@ class NameHaloItem extends HaloItem {
       layout: {
         initialize () {
           this.layout = new TilingLayout({
-            axis: 'row',
             hugContentsHorizontally: true,
             hugContentsVertically: true,
             axisAlign: 'center',

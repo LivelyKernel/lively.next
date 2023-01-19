@@ -57,7 +57,6 @@ export const WorldZoomIndicator = component({
   hasFixedPosition: true,
   halosEnabled: false,
   layout: new TilingLayout({
-    axis: 'row',
     axisAlign: 'center',
     align: 'center',
     orderByIndex: true,
