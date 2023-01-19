@@ -196,6 +196,7 @@ export class LivelyWorld extends World {
 
     if (!this.morphsInWorld.includes(submorph)) return returnValue;
     submorph._positionOnCanvas = this.screenToWorld(submorph.position);
+    submorph.scale = this.scaleFactor;
     return returnValue;
   }
 
