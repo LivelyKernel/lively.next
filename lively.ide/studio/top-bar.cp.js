@@ -205,12 +205,19 @@ export class TopBarModel extends ViewModel {
   }
 
   onMouseDown (evt) {
-    const selector = this.ui.selectShapeType;
+    const shapeSelector = this.ui.selectShapeType;
+    const handHaloSelector = this.ui.selectHandOrHalo;
+    const handOrHaloModeButton = this.ui.handOrHaloModeButton;
     const shapeModeButton = this.ui.shapeModeButton;
     const target = this.primaryTarget || this.world();
-    if (evt.targetMorph === selector) {
+
+    if (evt.targetMorph === shapeSelector) {
       const menu = this.world().openWorldMenu(evt, this.getShapeMenuItems());
       menu.position = shapeModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
+    }
+    if (evt.targetMorph === handHaloSelector) {
+      const menu = this.world().openWorldMenu(evt, this.getHandAndHaloModeItems());
+      menu.position = handOrHaloModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
     }
 
     if (evt.targetMorph.name === 'undo button') {
@@ -231,14 +238,6 @@ export class TopBarModel extends ViewModel {
 
     if (evt.targetMorph.name === 'text mode button') {
       this.setEditMode('Text');
-    }
-
-    if (evt.targetMorph.name === 'hand mode button') {
-      this.setEditMode('Hand');
-    }
-
-    if (evt.targetMorph.name === 'halo mode button') {
-      this.setEditMode('Halo');
     }
 
     if (evt.targetMorph.name === 'open component browser') {
@@ -306,7 +305,7 @@ export class TopBarModel extends ViewModel {
   onUserChanged (evt) {
     try {
       this.ui.userFlap.onUserChanged(evt);
-    } finally {}
+    } finally { }
   }
 
   relayout () {
@@ -321,6 +320,36 @@ export class TopBarModel extends ViewModel {
       this.ui.userFlap.right = this.width - 10;
       this.ui.userFlap.visible = this.width > 750;
     }
+  }
+
+  getHandAndHaloModeItems () {
+    return [
+      [[
+        ...this.editMode === 'Halo'
+          ? [
+              ...Icon.textAttribute('check', {
+                fontSize: 11,
+                paddingTop: '2px'
+              }), '    ', {}
+            ]
+          : ['     ', {}],
+        ...Icon.textAttribute('arrow-pointer', { paddingLeft: '6px', paddingRight: '2px' }), '   Editing '
+      ], () => this.setEditMode('Halo')],
+      [
+        [
+          ...this.editMode === 'Hand'
+            ? [
+                ...Icon.textAttribute('check', {
+                  fontSize: 11,
+                  paddingTop: '2px'
+                }), '   ', {}
+              ]
+            : ['       ', {}],
+          ...Icon.textAttribute('hand'), '   Interaction '
+        ],
+        () => this.setEditMode('Hand')
+      ]
+    ];
   }
 
   getShapeMenuItems () {
@@ -382,6 +411,7 @@ export class TopBarModel extends ViewModel {
   }
 
   setEditMode (mode, shallow = false) {
+    debugger;
     this.editMode = mode;
     const target = this.primaryTarget || this.world();
     if (!target) return;
@@ -390,16 +420,17 @@ export class TopBarModel extends ViewModel {
     const {
       shapeModeButton,
       textModeButton,
-      handModeButton,
-      haloModeButton
+      handOrHaloModeButton
     } = this.ui;
 
     [
       ['Shape', shapeModeButton.submorphs],
       ['Text', [textModeButton]],
-      ['Hand', [handModeButton]],
-      ['Halo', [haloModeButton]]
+      ['Hand', handOrHaloModeButton.submorphs],
+      ['Halo', handOrHaloModeButton.submorphs]
     ].forEach(([modeName, morphsToUpdate]) => {
+      if (mode === 'Halo') this.ui.interactionModeStatusIcon.textAndAttributes = Icon.textAttribute('arrow-pointer', { paddingLeft: '7px' });
+      if (mode === 'Hand') this.ui.interactionModeStatusIcon.textAndAttributes = Icon.textAttribute('hand');
       if (mode === 'Shape') {
         this.toggleShapeMode(target, true, this.currentShapeMode);
       } else if (mode === 'Text') {
@@ -414,7 +445,9 @@ export class TopBarModel extends ViewModel {
         morphsToUpdate.forEach(m => {
           m.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
         });
-      } else {
+      }
+      // we need to take into account that hand and halo mode share the same button
+      else if (!((mode === 'Hand' || mode === 'Halo') && (modeName === 'Hand' || modeName === 'Halo'))) {
         morphsToUpdate.forEach(m => {
           m.master = null;
         });
@@ -608,13 +641,13 @@ export class TopBarModel extends ViewModel {
       }
       const haloTarget = morphsContainingPoint.filter(m => {
         return haloFilterFn(m) &&
-               m.halosEnabled &&
-               [m, ...m.ownerChain()].every(m => m.visible && m.opacity > 0 &&
-               !m.styleClasses.includes('HaloPreview'));
+          m.halosEnabled &&
+          [m, ...m.ownerChain()].every(m => m.visible && m.opacity > 0 &&
+            !m.styleClasses.includes('HaloPreview'));
       })[0];
       // when we are hovering a menu item or one of the sidebars, then we do not trigger the halo preview
       if (morphsContainingPoint.find(m => m.isMenuItem || m === this.sideBar || m === this.propertiesPanel) ||
-          obj.equals([target], morphsContainingPoint)
+        obj.equals([target], morphsContainingPoint)
       ) {
         this._currentlyHighlighted = false;
         this.clearHaloPreviews();
@@ -628,18 +661,18 @@ export class TopBarModel extends ViewModel {
     const [halo] = this.world().halos();
 
     if (halo &&
-        this._customDrag &&
-        evt.leftMouseButtonPressed()) {
+      this._customDrag &&
+      evt.leftMouseButtonPressed()) {
       halo.customDrag(evt);
     }
 
     if (evt.leftMouseButtonPressed() &&
-        !this._customDrag &&
-        !evt.state.draggedMorph &&
-        evt.startPosition &&
-        evt.startPosition.subPt(evt.position).r() > 25 &&
-        halo &&
-        halo.fullContainsPoint(evt.position)) {
+      !this._customDrag &&
+      !evt.state.draggedMorph &&
+      evt.startPosition &&
+      evt.startPosition.subPt(evt.position).r() > 25 &&
+      halo &&
+      halo.fullContainsPoint(evt.position)) {
       halo.onDragStart(evt);
       this._customDrag = true;
     }
@@ -1321,17 +1354,39 @@ const TopBar = component({
         textAndAttributes: Icon.textAttribute('save'),
         tooltip: 'Save World'
       }),
-      part(TopBarButton, {
-        name: 'halo mode button',
-        padding: rect(0, 0, 3, 0),
-        textAndAttributes: Icon.textAttribute('mouse-pointer'),
-        tooltip: 'Halo mode'
-      }),
-      part(TopBarButton, {
-        name: 'hand mode button',
-        textAndAttributes: Icon.textAttribute('hand-paper'),
-        tooltip: 'Interaction mode'
-      }),
+      {
+        name: 'hand or halo mode button',
+        extent: pt(55.8, 24.7),
+        fill: Color.rgba(46, 75, 223, 0),
+        layout: new TilingLayout({
+          axis: 'row',
+          axisAlign: 'center',
+          align: 'center',
+          padding: {
+            height: 0,
+            width: 0,
+            x: 5,
+            y: 5
+          },
+          spacing: 5
+        }),
+        nativeCursor: 'pointer',
+        submorphs: [
+          part(TopBarButton, {
+            name: 'interaction mode status icon',
+            reactsToPointer: false,
+            textAndAttributes: Icon.textAttribute('arrow-pointer'),
+            tooltip: 'Create basic shape mode'
+          }),
+          part(TopBarButton, {
+            name: 'select hand or halo',
+            fontSize: 23,
+            nativeCursor: 'pointer',
+            textAndAttributes: Icon.textAttribute('angle-down')
+          })
+        ],
+        tooltip: 'Choose between Hand and Halo mode'
+      },
       part(TopBarButton, {
         name: 'text mode button',
         textAndAttributes: Icon.textAttribute('font'),
