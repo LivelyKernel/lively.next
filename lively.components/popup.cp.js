@@ -27,7 +27,6 @@ const PopupLight = component({
     extent: pt(153, 95),
     fill: Color.rgb(230, 230, 230),
     layout: new TilingLayout({
-      align: 'left',
       axis: 'column',
       orderByIndex: true,
     }),

@@ -657,8 +657,6 @@ const ChoiceButtonSelected = component({
   extent: pt(371.5, 47),
   layout: new TilingLayout({
     axisAlign: 'center',
-    align: 'left',
-    axis: 'row',
     orderByIndex: true,
     padding: {
       height: 0,
@@ -717,7 +715,6 @@ const LightPrompt = component({
     axisAlign: 'center',
     axis: 'column',
     orderByIndex: true,
-    justifySubmorphs: 'packed',
     hugContentsVertically: true,
     hugContentsHorizontally: true,
     spacing: 16,

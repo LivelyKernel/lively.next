@@ -1919,7 +1919,6 @@ export class ImportController extends Morph {
         fill: Color.transparent,
         layout: new TilingLayout(
           {
-            axis: 'row',
             align: 'center',
             axisAlign: 'center',
             spacing: 2,

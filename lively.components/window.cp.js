@@ -129,7 +129,6 @@ const DefaultWindow = component({
         extent: pt(69, 27),
         fill: Color.rgba(0, 0, 0, 0),
         layout: new TilingLayout({
-          axis: 'row',
           autoResize: true,
           orderByIndex: true,
           padding: {

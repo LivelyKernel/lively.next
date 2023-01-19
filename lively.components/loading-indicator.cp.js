@@ -245,7 +245,6 @@ const LoadingIndicator = component({
         width: 40,
         layout: new TilingLayout({
           axis: 'row',
-          align: 'left',
           axisAlign: 'center',
           reactToSubmorphAnimations: false
         }),
@@ -345,7 +344,6 @@ const LoadingIndicator = component({
         layout: new TilingLayout({
           axis: 'column',
           align: 'center',
-          axisAlign: 'left',
           direction: 'leftToRight',
           orderByIndex: true,
           reactToSubmorphAnimations: false,

@@ -173,9 +173,6 @@ const LivelyVersionChecker = component({
   fill: Color.rgba(0, 0, 0, 0.6),
   hasFixedPosition: true,
   layout: new TilingLayout({
-    axis: 'row',
-    axisAlign: 'left',
-    align: 'left',
     orderByIndex: true,
     hugContentsHorizontally: true,
     hugContentsVertically: true,

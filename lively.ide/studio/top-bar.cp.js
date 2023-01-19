@@ -1084,7 +1084,6 @@ const UserFlap = component({
   extent: pt(362.3, 52.3),
   fontColor: Color.rgb(102, 102, 102),
   layout: new TilingLayout({
-    axis: 'row',
     axisAlign: 'center',
     align: 'right',
     orderByIndex: true,
@@ -1106,7 +1105,6 @@ const UserFlap = component({
     fill: Color.rgba(0, 0, 0, 0),
     tooltip: 'Toggle fast load',
     layout: new TilingLayout({
-      axis: 'row',
       axisAlign: 'center',
       align: 'center',
       direction: 'rightToLeft',
@@ -1305,7 +1303,6 @@ const UserMenu = component({
 const TopBar = component({
   name: 'top bar',
   layout: new TilingLayout({
-    axis: 'row',
     justifySubmorphs: 'spaced',
     orderByIndex: true,
     padding: Rectangle.inset(10, 0, 10, 0)
@@ -1325,7 +1322,6 @@ const TopBar = component({
     extent: pt(476.8, 51.1),
     fill: Color.rgba(46, 75, 223, 0),
     layout: new TilingLayout({
-      axis: 'row',
       align: 'bottom',
       padding: {
         height: 0,
@@ -1396,7 +1392,6 @@ const TopBar = component({
         extent: pt(55.8, 24.7),
         fill: Color.rgba(46, 75, 223, 0),
         layout: new TilingLayout({
-          axis: 'row',
           axisAlign: 'center',
           align: 'center',
           padding: {

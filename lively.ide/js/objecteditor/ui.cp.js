@@ -176,7 +176,6 @@ const ObjectEditorLight = component({
       extent: pt(181.3, 30),
       fill: Color.rgba(0, 0, 0, 0),
       layout: new TilingLayout({
-        axis: 'row',
         axisAlign: 'center',
         align: 'center',
         orderByIndex: true,

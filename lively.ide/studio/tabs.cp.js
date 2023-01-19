@@ -27,9 +27,7 @@ const DefaultTab = component({
     vector: 0
   }),
   layout: new TilingLayout({
-    axis: 'row',
     axisAlign: 'center',
-    justifySubmorphs: 'packed',
     resizePolicies: [
       ['horizontal container', { height: 'fixed', width: 'fill' }]
     ]
@@ -42,8 +40,6 @@ const DefaultTab = component({
     reactsToPointer: false,
     layout: new TilingLayout({
       padding: rect(6, 6, 0, 0),
-      align: 'left',
-      axis: 'row',
       resizePolicies: [
         ['tab caption', { height: 'fixed', width: 'fill' }]
       ]
@@ -358,7 +354,6 @@ const NewTabButtonDefault = component({
   layout: new TilingLayout({
     justifySubmorphs: 'center',
     align: 'center',
-    axis: 'row',
     axisAlign: 'center'
   }),
   submorphs: [{
@@ -410,9 +405,7 @@ const TabContainer = component({
   halosEnabled: false,
   fill: Color.transparent,
   layout: new TilingLayout({
-    axis: 'row',
     axisAlign: 'center',
-    justifySubmorphs: 'packed',
     resizePolicies: [
       ['tab flap scroll container', { height: 'fixed', width: 'fill' }]
     ]
@@ -432,9 +425,6 @@ const TabContainer = component({
           layout: new TilingLayout({
             wrapSubmorphs: true,
             axis: 'column',
-            axisAlign: 'left',
-            align: 'left',
-            justifySubmorphs: 'packed'
           })
         }
       ]
@@ -711,9 +701,6 @@ const Tabs = component({
   defaultViewModel: TabsModel,
   layout: new TilingLayout({
     axis: 'column',
-    align: 'left',
-    axisAlign: 'left',
-    justifySubmorphs: 'packed',
     resizePolicies: [
       ['tab container', { height: 'fixed', width: 'fill' }]
     ]

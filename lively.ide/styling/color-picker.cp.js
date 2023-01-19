@@ -120,7 +120,6 @@ const HexEncoder = component({
   extent: pt(160, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
-    axis: 'row',
     axisAlign: 'center',
     align: 'center',
     spacing: 1
@@ -161,7 +160,6 @@ const ThreeValEncoder = component({
   extent: pt(160, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
-    axis: 'row',
     align: 'center',
     axisAlign: 'center',
     spacing: 1

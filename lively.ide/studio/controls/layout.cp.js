@@ -330,7 +330,6 @@ const PaddingInput = component(DarkNumberIconWidget, {
   layout: new TilingLayout({
     axisAlign: 'center',
     align: 'center',
-    axis: 'row'
   }),
   unit: '',
   min: 0,
