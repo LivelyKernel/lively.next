@@ -345,7 +345,7 @@ export class TopBarModel extends ViewModel {
                 }), '   ', {}
               ]
             : ['       ', {}],
-          ...Icon.textAttribute('hand'), '   Interaction '
+          ...Icon.textAttribute('hand'), '   Interacting '
         ],
         () => this.setEditMode('Hand')
       ]
@@ -410,13 +410,13 @@ export class TopBarModel extends ViewModel {
     label.master = null;
   }
 
-  setEditMode (mode, shallow = false) {
-    debugger;
+  setEditMode (mode, shallow = false, isTemporary = false) {
     this.editMode = mode;
     const target = this.primaryTarget || this.world();
     if (!target) return;
     if (!shallow) this._tmpEditMode = mode;
 
+    if (!isTemporary && (mode === 'Halo' || mode === 'Hand')) this.view.recoverMode = mode;
     const {
       shapeModeButton,
       textModeButton,
@@ -445,7 +445,7 @@ export class TopBarModel extends ViewModel {
         morphsToUpdate.forEach(m => {
           m.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
         });
-      }
+      } // eslint-disable-line brace-style
       // we need to take into account that hand and halo mode share the same button
       else if (!((mode === 'Hand' || mode === 'Halo') && (modeName === 'Hand' || modeName === 'Halo'))) {
         morphsToUpdate.forEach(m => {

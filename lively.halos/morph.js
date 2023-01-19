@@ -2023,7 +2023,7 @@ export default class Halo extends Morph {
     connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
 
     // switch to hand mode to stop halo from eating clicks for editing
-    topBar.setEditMode('Hand', true);
+    topBar.setEditMode('Hand', true, true);
     this.remove();
   }
 
