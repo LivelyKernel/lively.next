@@ -234,7 +234,9 @@ const Stage = component({
   fill: Color.rgba(46, 75, 223, 0),
   layout: new TilingLayout({
     orderByIndex: true,
+    axis: 'column',
     align: 'center',
+    axisAlign: 'center',
     spacing: 10
   }),
   submorphs: [{
