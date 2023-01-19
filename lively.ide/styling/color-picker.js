@@ -326,7 +326,7 @@ export class ColorPickerModel extends ViewModel {
     if (context) {
       if (!color.isColor) noUpdate(() => context.halos().forEach(m => m.remove()));
       context.withTopBarDo(topBar => {
-        topBar.setEditMode('Hand', true);
+        topBar.setEditMode('Hand', true, true);
       });
     }
     this.withColor(color);
@@ -335,7 +335,7 @@ export class ColorPickerModel extends ViewModel {
   close () {
     this.view.remove();
     const { context } = this;
-    if (context) context.withTopBarDo(topBar => topBar.setEditMode('Halo', true));
+    if (context) context.withTopBarDo(topBar => topBar.setEditMode(topBar.view.recoverMode, true));
     this.ui.gradientControl.toggle(false, this);
   }
 

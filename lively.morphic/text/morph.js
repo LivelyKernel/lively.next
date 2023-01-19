@@ -3951,7 +3951,7 @@ export class Text extends Morph {
     const topBar = $world.get('lively top bar');
     if (!this.tmpEdit) return;
     this.tmpEdit = false;
-    topBar.setEditMode('Halo', true);
+    topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
     this.collapseSelection();
     this.editorPlugin?.removeFormattingPopUp && this.editorPlugin.removeFormattingPopUp(true);
