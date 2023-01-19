@@ -8,6 +8,7 @@ import { DefaultList } from './list.cp.js';
 // ColumnListDefault.openInWorld()
 const ColumnListDefault = component(DefaultList, {
   name: 'column list default',
+  styleClasses: ['clipped'],
   borderWidthRight: 1,
   borderColor: Color.rgb(213, 216, 220),
   extent: pt(230, 93.5),

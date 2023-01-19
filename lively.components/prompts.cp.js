@@ -906,6 +906,7 @@ const ListPrompt = component(ConfirmPrompt, {
         name: 'list',
         borderColor: Color.rgb(149, 165, 166),
         borderRadius: 4,
+        styleClasses: ['clipped'],
         dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2) }),
         extent: pt(410, 354),
         fill: Color.rgba(66, 73, 73, 0.85),
