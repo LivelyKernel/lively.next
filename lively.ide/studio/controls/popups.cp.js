@@ -952,7 +952,8 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
           dropShadow: null,
           borderWidth: 0,
           submorphs: [
-            { name: 'value', fontSize: 14 }
+            { name: 'value', fontSize: 14 },
+            without('button holder')
           ]
         },
         {
@@ -962,7 +963,8 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
           dropShadow: null,
           borderWidth: 0,
           submorphs: [
-            { name: 'value', fontSize: 14 }
+            { name: 'value', fontSize: 14 },
+            without('button holder')
           ]
         },
         {
@@ -972,7 +974,8 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
           dropShadow: null,
           borderWidth: 0,
           submorphs: [
-            { name: 'value', fontSize: 14 }
+            { name: 'value', fontSize: 14 },
+            without('button holder')
           ]
         },
         {
@@ -981,7 +984,8 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
           dropShadow: null,
           borderWidth: 0,
           submorphs: [
-            { name: 'value', fontSize: 14 }
+            { name: 'value', fontSize: 14 },
+            without('button holder')
           ]
         }
       ]

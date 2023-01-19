@@ -338,8 +338,7 @@ const PaddingInput = component(DarkNumberIconWidget, {
   extent: pt(33.7, 22.7),
   position: pt(57.3, 1.9),
   submorphs: [
-    without('up'),
-    without('down'),
+    without('button holder'),
     without('interactive label'), {
       name: 'value',
       textAlign: 'center',
@@ -536,6 +535,7 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
   defaultViewModel: AutoLayoutAlignmentFlapModel,
   name: 'auto layout alignment control',
   layout: new TilingLayout({
+    wrapSubmorphs: true,
     orderByIndex: true,
     hugContentsVertically: true,
     resizeSubmorphs: true,
