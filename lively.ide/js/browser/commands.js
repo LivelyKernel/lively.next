@@ -322,7 +322,7 @@ export default function browserCommands (browser) {
             isListItem: true,
             label: [
               `${ea.name}`, null,
-              `${ea.url}`, { fontSize: '70%', textStyleClasses: ['annotation'] }
+              `${ea.url}`, { paddingLeft: '5px', fontSize: '70%', textStyleClasses: ['annotation'] }
             ],
             value: ea
           };
