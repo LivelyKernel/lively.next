@@ -20,7 +20,7 @@
   "dependencies": {
     "lively.lang": "^1.0.0",
     "lively.resources": "^0.1.18",
-    "pouchdb": "7.3.0",
+    "pouchdb": "LivelyKernel/pouchdb",
     "pouchdb-adapter-memory": "7.3.0"
   },
   "devDependencies": {
