@@ -353,9 +353,11 @@ const ComponentEditButtonDefault = component({
   nativeCursor: 'pointer',
   borderRadius: 20,
   layout: new TilingLayout({
-    wrapSubmorphs: false,
+    align: 'right',
+    hugContentsHorizontally: true,
     hugContentsVertically: true,
-    hugContentsHorizontally: true
+    orderByIndex: true,
+    padding: rect(2, 0, 0, 2)
   }),
   submorphs: [
     {
@@ -383,7 +385,7 @@ const CloseComponentButtonDefault = component({
   type: Label,
   nativeCursor: 'pointer',
   borderRadius: 15,
-  padding: rect(5, 1, 0, 0),
+  padding: rect(5,1,0,2),
   fill: Color.rgb(221, 37, 37),
   fontColor: Color.white,
   fontWeight: 'bold',
