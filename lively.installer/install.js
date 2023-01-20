@@ -116,7 +116,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step5_runPackageInstallScripts) {
       console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
-
+      await exec('ln -s ' + require.resolve('node-gyp/bin/node-gyp.js') + ' node-gyp')
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         pBar && pBar.setLabel(`npm setup ${p.name}`);
@@ -124,6 +124,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
         await buildPackage(p.directory, packageMap, ["dependencies"]);
         pBar && pBar.setValue(++i / packages.length)
       }
+      await exec('rm node-gyp');
     }
 
     if (step8_runPackageBuildScripts) {

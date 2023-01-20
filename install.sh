@@ -12,7 +12,7 @@ if [[ $NODE_VERSION -lt 18 ]]; then
   exit 1;
 fi
 
-export PATH=$lv_next_dir/flatn/bin:$PATH
+export PATH=$lv_next_dir:$lv_next_dir/flatn/bin:$PATH
 export FLATN_PACKAGE_DIRS=
 export FLATN_PACKAGE_COLLECTION_DIRS=$lv_next_dir/lively.next-node_modules
 eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").readFileSync(PWD+"/lively.installer/packages-config.json")).map(ea => require("path").join(PWD, ea.name));`export FLATN_DEV_PACKAGE_DIRS=${packages.join(":")}`')                                                              
