@@ -116,7 +116,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step5_runPackageInstallScripts) {
       console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
-      await exec('ln -s ' + require.resolve('node-gyp/bin/node-gyp.js') + ' node-gyp')
+      // upon first install this is not yet inside the lookup
+      const nodeGyp = packageMap.lookup('node-gyp');
+      await exec('ln -s ' + join(nodeGyp.location, nodeGyp.bin['node-gyp']) + ' node-gyp')
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         pBar && pBar.setLabel(`npm setup ${p.name}`);
