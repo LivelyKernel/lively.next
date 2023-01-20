@@ -1,8 +1,16 @@
 # lively.next
-
+[![Join our Chat room on Matrix](https://img.shields.io/badge/matrix%20chat-JOIN-success)](https://matrix.to/#/!kpuVhfRqSrTVipJRJL:matrix.org?via=matrix.org&via=chat.ccc-p.org)
 [![Run Tests](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml/badge.svg?branch=master)](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml)
     
 This is the repository of the [lively.next project](https://lively-next.org).
+
+> **Warning**
+>
+> `lively.next` is pre-alpha software and under heavy development.
+>
+> **You are very welcome to play with it!** But please be aware, that there are no guarantees regarding the stability of APIs etc.
+>
+> In case you want to experiment with lively.next, please **feel free to join our [Matrix Chatroom](https://matrix.to/#/!kpuVhfRqSrTVipJRJL:matrix.org?via=matrix.org&via=chat.ccc-p.org) and ask all the questions you want!**
 
 ## Setup
 
