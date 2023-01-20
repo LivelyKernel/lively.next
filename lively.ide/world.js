@@ -327,7 +327,7 @@ export class LivelyWorld extends World {
     super.onWindowResize();
     setTimeout(() => {
       this.get('world mini map')?.relayout();
-      this.get('world zoom indicator').relayout();
+      this.get('world zoom indicator')?.relayout();
     });
   }
 
@@ -422,7 +422,7 @@ export class LivelyWorld extends World {
     let worldName;
     while (!worldName) {
       worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true });
-      if (await this.isNotUnique(worldName)) {
+      if (await this.isNotUnique(String(worldName))) {
         const override = await this.confirm('This Project name is already taken. Do you want to override it?', {
           hasFixedPosition: true, width: 400
         });
@@ -438,7 +438,7 @@ export class LivelyWorld extends World {
         worldName = false;
       }
     }
-    return worldName;
+    return String(worldName);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
