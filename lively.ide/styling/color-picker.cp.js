@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { Ellipse, ShadowObject, InputLine, Label, TilingLayout, component, add, part } from 'lively.morphic';
+import { Ellipse, without, ShadowObject, InputLine, Label, TilingLayout, component, add, part } from 'lively.morphic';
 import {
   ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
@@ -82,7 +82,7 @@ const ColorInput = component({
       textAndAttributes: ['', {
         fontSize: 14, textStyleClasses: ['material-icons']
       }]
-    }]
+    }, without('button holder')]
   }), part(PropLabel, {
     name: 'gradient name',
     visible: false,

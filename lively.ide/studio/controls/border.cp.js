@@ -1,5 +1,5 @@
 import { Color, rect, Rectangle, pt } from 'lively.graphics';
-import { TilingLayout, Morph, Label, part, add, component } from 'lively.morphic';
+import { TilingLayout, without, Morph, Label, part, add, component } from 'lively.morphic';
 import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, DarkNumberIconWidget, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { NumberWidget } from '../../value-widgets.js';
@@ -395,13 +395,12 @@ const BorderControlElements = component({
       extent: pt(90, 22),
       min: 0,
       submorphs: [{
-        type: Label,
         name: 'interactive label',
         textAndAttributes: ['', {
           fontSize: 16,
           textStyleClasses: ['material-icons']
         }]
-      }]
+      }, without('button holder')]
     }), part(EnumSelector, {
       name: 'border style selector',
       tooltip: 'Select Border Style',
@@ -431,7 +430,7 @@ const BorderControlElements = component({
   }]
 });
 
-// part(BorderPopup).viewModel.models
+// part(BorderPopup).openInWorld()
 const BorderPopup = component(DarkPopupWindow, {
   defaultViewModel: BorderPopupWindow,
   name: 'border popup',
@@ -447,7 +446,12 @@ const BorderPopup = component(DarkPopupWindow, {
     extent: pt(241, 115.1),
     fill: Color.rgba(0, 0, 0, 0),
     clipMode: 'hidden',
-    layout: new TilingLayout({ spacing: 10, hugContentsVertically: true, padding: Rectangle.inset(0, 10, 0, 10) }),
+    layout: new TilingLayout({
+      spacing: 10,
+      axis: 'column',
+      hugContentsVertically: true,
+      padding: Rectangle.inset(0, 10, 0, 10)
+    }),
     submorphs: [
       {
         fill: Color.transparent,
