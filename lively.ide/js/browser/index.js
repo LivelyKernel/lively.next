@@ -1,6 +1,6 @@
 /* global System */
 import { Color, Rectangle, pt } from 'lively.graphics';
-import { arr, tree, num, date, Path, obj, fun, promise, string } from 'lively.lang';
+import { arr, tree, Path, obj, fun, promise, string } from 'lively.lang';
 
 import {
   Morph,
@@ -145,17 +145,12 @@ export class PackageTreeData extends TreeData {
   }
 
   display (node) {
-    const { type, pkg, isCollapsed, isDeclaration, lastModified, size, name } = node;
+    const { type, pkg, isCollapsed, isDeclaration, name } = node;
     if (type === 'package') {
       return this.displayPackage(pkg);
     } else if (isDeclaration) {
       return this.displayDeclaration(node);
     } else {
-      let col1Size = 19;
-      let datePrinted = lastModified
-        ? date.format(lastModified, 'yyyy-mm-dd HH:MM:ss')
-        : ' '.repeat(col1Size);
-      let sizePrinted = size ? num.humanReadableByteSize(size) : '';
       let displayedName;
       const isSelected = this.columnView.isSelected(node);
       switch (type) {
@@ -185,13 +180,7 @@ export class PackageTreeData extends TreeData {
       }
 
       return [
-        ...displayedName,
-        `\t${sizePrinted} ${datePrinted}`, {
-          paddingTop: '3px',
-          opacity: 0.5,
-          fontSize: '70%',
-          textStyleClasses: ['annotation']
-        }
+        ...displayedName
       ];
     }
   }
