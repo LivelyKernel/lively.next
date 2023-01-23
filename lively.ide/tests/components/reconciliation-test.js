@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, without, Text, TilingLayout, Label, part } from 'lively.morphic';
+import { morph, without, TilingLayout, Label, part } from 'lively.morphic';
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
 let testComponentModule = module(testModuleId);
@@ -51,12 +51,16 @@ const B = component(A, {
   }]
 });
 
+const X = component(B, {
+  name: 'X'
+});
+
 component.DescriptorClass = ComponentDescriptor;
 
-export { A, B, C, D };
+export { A, B, C, D, X };
 `;
 
-let ComponentA, ComponentB, ComponentC, ComponentD, A, B, C, D;
+let ComponentA, ComponentB, ComponentC, ComponentD, ComponentX, A, B, C, D, X;
 
 async function resetEnv () {
   await testComponentModule.reset();
@@ -71,11 +75,12 @@ async function resetEnv () {
     await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
   }
   // reload the module
-  ({ A, B, C, D } = await testComponentModule.load());
+  ({ A, B, C, D, X } = await testComponentModule.load());
   ComponentA = await A.edit();
   ComponentB = await B.edit();
   ComponentC = await C.edit();
   ComponentD = await D.edit();
+  ComponentX = await X.edit();
 }
 
 describe('component -> source reconciliation', function () {
@@ -221,6 +226,26 @@ describe('component -> source reconciliation', function () {
   }]
 });`);
   });
+  // resetEnv()
+  it('uncollapses a submorph a the PROPER location', async () => {
+    ComponentX.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentX.getSubmorphNamed('some ref').fill = Color.lively;
+      ComponentX.getSubmorphNamed('some submorph').fill = Color.gray;
+    });
+    await ComponentX._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+
+    expect(updatedSource).to.include(`const X = component(B, {
+  name: 'X',
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.gray
+  }, {
+    name: 'some ref',
+    fill: Color.lively
+  }]
+});`);
+  });
 
   it('scopes submorphs properly by master components', async () => {
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
@@ -270,7 +295,6 @@ describe('component -> source reconciliation', function () {
       });
       l.textAndAttributes = ['Hello World!', null];
     });
-
     await ComponentD._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include("textAndAttributes: [\'Hello World!\', null]");

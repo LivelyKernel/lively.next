@@ -149,6 +149,7 @@ export class ComponentChangeTracker {
    */
   uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph) {
     let nextVisibleParent = hiddenMorph;
+    const nextSibling = hiddenMorph.owner.submorphs[hiddenMorph.owner.submorphs.indexOf(hiddenMorph) + 1];
     const ownerChain = [hiddenMorph];
     let propertiesNode;
     do {
@@ -166,7 +167,7 @@ export class ComponentChangeTracker {
       skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type']
     });
     if (!uncollapsedHierarchyExpr) return sourceCode;
-    return this.insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr);
+    return this.insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
   }
 
   /**
@@ -367,15 +368,19 @@ export class ComponentChangeTracker {
    */
   async processChangeInComponent (change) {
     if (this.ignoreChange(change)) return;
-    this.processChangeInComponentPolicy(change);
+    const isAddChange = change.selector === 'addMorphAt';
+    if (isAddChange) { this.processChangeInComponentPolicy(change); }
+
     if (this.adjournChange(change)) {
-      fun.debounceNamed('reconcile later', 200, () => {
-        this.processChangeInComponentSource(change);
+      fun.debounceNamed('reconcile later', 200, async () => {
+        await this.processChangeInComponentSource(change);
+        if (!isAddChange) this.processChangeInComponentPolicy(change);
         this.componentDescriptor.makeDirty();
       })();
       return;
     }
     await this.processChangeInComponentSource(change);
+    if (!isAddChange) this.processChangeInComponentPolicy(change);
     this.componentDescriptor.makeDirty();
   }
 
