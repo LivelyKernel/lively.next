@@ -4,7 +4,7 @@ import { subscribe, emit } from 'lively.notifications';
 import { Path, obj, date, promise, string } from 'lively.lang';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-
+import * as moduleManager from 'lively.modules';
 import { MorphicEnv } from './env.js';
 import { createMorphSnapshot } from './serialization.js';
 import { MorphicDB } from './morphicdb/index.js';
@@ -250,7 +250,7 @@ export async function interactivelySaveWorld (world, options) {
 
     world.changeMetaData('file', jsonStoragePath, false, false);
 
-    const snap = await createMorphSnapshot(world);
+    const snap = await createMorphSnapshot(world, { moduleManager });
     await resourceHandle.writeJson(snap);
     await resource((await defaultDirectory(ShellClientResource.defaultL2lClient)) + '/..')
       .join(jsonStoragePath.replace('.json', '.br.json'))
