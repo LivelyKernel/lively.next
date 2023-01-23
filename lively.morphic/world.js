@@ -75,7 +75,7 @@ export class World extends Morph {
   }
 
   static async loadFromResource (res, oldWorld = this.defaultWorld(), options = {}) {
-    return await loadWorld(await loadMorphFromSnapshot(await res.readJson()), oldWorld, options);
+    return await loadWorld(await loadMorphFromSnapshot(await res.readJson(), options), oldWorld, options);
   }
 
   constructor (props) {
@@ -105,7 +105,7 @@ export class World extends Morph {
       ...super.commands, {
         name: 'resize to fit window',
         exec: async (world) => {
-          world.extent = world.windowBounds().extent()
+          world.extent = world.windowBounds().extent();
           world.relayout();
           return true;
         }
