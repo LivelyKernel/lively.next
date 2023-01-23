@@ -805,6 +805,7 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   submorphs: [add({
     type: RadioButtonGroup,
     layout: new TilingLayout({
+      axis: 'column',
       hugContentsVertically: true,
       hugContentsHorizontally: true,
       align: 'center',
