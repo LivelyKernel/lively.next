@@ -312,7 +312,7 @@ export default class TextEditor extends Morph {
     ed.textString = content;
     ed.gotoDocumentStart();
     ed.scroll = pt(0, 0);
-    ed.editorPlugin.highlight();
+    ed.editorPlugin?.highlight();
   }
 
   async defaultSaveAction (textEditor) {
