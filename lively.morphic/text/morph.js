@@ -521,7 +521,7 @@ export class Text extends Morph {
         renderSynchronously: true,
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
-          this.setProperty('scroll', val.minPt(maxScroll));
+          this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
         }
       },
 
