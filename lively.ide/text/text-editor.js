@@ -149,6 +149,7 @@ export default class TextEditor extends Morph {
               ...config.codeEditor.defaultStyle,
               name: 'contentText',
               type: 'text',
+              fill: Color.white,
               lineWrapping: false,
               readOnly: false
             }
