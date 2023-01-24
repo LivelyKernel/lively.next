@@ -1664,7 +1664,7 @@ export class Text extends Morph {
         ? command.scrollCursorIntoView
         : true;
       if (scrollCursorIntoView) {
-        fun.debounceNamed('execCommand-scrollCursorIntoView-' + morph.id, 100, () =>
+        fun.debounceNamed('execCommand-scrollCursorIntoView-' + morph.id, 1, () =>
           morph.scrollCursorIntoView()
         )();
       }
