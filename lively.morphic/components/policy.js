@@ -238,10 +238,11 @@ export class StylePolicy {
    * Checks wether or not another policy is in the derivation chain of this
    * policy.
    */
-  uses (aPolicy) {
+  uses (aPolicy, immediate = false) {
     if (this.parent === aPolicy) {
       return true;
     }
+    if (immediate) return false;
     if (this.parent?.uses(aPolicy)) return true;
     return this.overriddenMaster?.uses(aPolicy) || false;
   }
