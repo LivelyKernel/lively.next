@@ -2441,17 +2441,6 @@ export class BrowserModel extends ViewModel {
     return codeSnip;
   }
 
-  enableComponentBehavior (active) {
-    this._initializeComponentsWithModels = active;
-    // ensure that all the open components are getting attached/detached to/from
-    // the thier view models
-    this.ui.sourceEditor.submorphs.forEach(elem => {
-      if (elem.isComponentControl) {
-        elem.enableViewModel(active);
-      }
-    });
-  }
-
   menuItems () {
     const td = this.ui.columnView.treeData;
     const ed = this.ui.sourceEditor;
@@ -2474,9 +2463,7 @@ export class BrowserModel extends ViewModel {
       [[...(td.showHiddenFolders ? checked : unchecked), ' ' + 'Show Hidden Folders', { float: 'none' }],
         () => { this.showHiddenFolders(!td.showHiddenFolders); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
-        () => { this.toggleTextMap(!ed.textMap); }],
-      m.name.endsWith('.cp.js') && [[...(this._initializeComponentsWithModels ? checked : unchecked), ' ' + 'Lively Components', { float: 'none' }],
-        () => { this.enableComponentBehavior(!this._initializeComponentsWithModels); }]
+        () => { this.toggleTextMap(!ed.textMap); }]
     ].filter(Boolean);
   }
 }
