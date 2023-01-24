@@ -34,7 +34,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   static for (generatorFunction, meta, prev) {
     const newDescr = super.for(generatorFunction, meta);
     if (prev) {
-      const dependants = prev.getDependants();
+      const dependants = prev.getDependants(true);
       prev.stylePolicy = newDescr.stylePolicy;
       let c;
       if (c = prev._cachedComponent) {
@@ -134,9 +134,10 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     }
   }
 
-  getDependants () {
+  getDependants (immediate = false) {
     return $world.withAllSubmorphsSelect(m =>
-      m.master?.uses(this.stylePolicy)
+      m.master?.uses(this.stylePolicy, immediate)
+
     );
   }
 
