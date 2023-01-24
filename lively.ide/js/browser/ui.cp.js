@@ -7,7 +7,7 @@ import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
-import { once, disconnect, connect } from 'lively.bindings';
+import { once, noUpdate, disconnect, connect } from 'lively.bindings';
 import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 async function positionForAnchor (context, anchor) {
@@ -60,18 +60,13 @@ class ComponentEditControlModel extends ViewModel {
       },
       isLively: {
         get () {
-          let alive = false;
-          if (!this.componentMorph) return false;
-          withAllViewModelsDo(this.componentMorph, m => {
-            if (m.viewModel.view) alive = true;
-          });
-          return alive;
+          return !!this.instanceMorph;
         }
       },
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
-          return ['positionInLine', 'collapse', 'isComponentControl', 'enableViewModel', 'componentDescriptor', 'declaration'];
+          return ['positionInLine', 'collapse', 'isComponentControl', 'componentDescriptor', 'declaration'];
         }
       },
       bindings: {
@@ -83,7 +78,7 @@ class ComponentEditControlModel extends ViewModel {
               target: 'lively button',
               signal: 'onMouseUp',
               handler: () => {
-                this.enableViewModel(!this.isLively);
+                this.toggleDerivedInstance(!this.isLively);
               }
             }
           ];
@@ -132,10 +127,33 @@ class ComponentEditControlModel extends ViewModel {
     this.componentDescriptor.reset();
   }
 
-  enableViewModel (active) {
-    if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
-    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.detach());
+  toggleDerivedInstance (active) {
+    if (active) {
+      try {
+        this.instanceMorph = part(this.componentDescriptor).openInWorld();
+        this.instanceMorph.position = this.componentMorph.position;
+        once(this.instanceMorph, 'remove', this, 'minifyComponentMorph');
+        setTimeout(() => { this.componentMorph.visible = false; });
+      } catch (err) {
+        this.view.getWindow().showError('Failed to load live version of component: ' + err.message);
+      }
+    }
+
+    if (!active && this.instanceMorph) {
+      this.componentMorph.visible = true;
+      this.componentMorph.position = this.instanceMorph.position;
+      noUpdate(() => this.componentMorph.bringToFront());
+      this.cleanupInstance();
+    }
     this.updateResetButton();
+  }
+
+  cleanupInstance () {
+    if (this.instanceMorph) {
+      disconnect(this.instanceMorph, 'remove', this, 'minifyComponentMorph');
+      this.instanceMorph.remove();
+      this.instanceMorph = null;
+    }
   }
 
   async minifyComponentMorph () {
@@ -166,6 +184,7 @@ class ComponentEditControlModel extends ViewModel {
 
   async collapse (editButton) {
     const { editor, view } = this;
+    this.cleanupInstance();
     disconnect(this.componentMorph, 'behaviorChanged', this, 'updateResetButton');
     disconnect(this.anchor, 'position', this, 'positionInLine');
     editButton.reset();
@@ -223,12 +242,6 @@ class ComponentEditButtonMorph extends Morph {
         // the component descriptor object pointing to the policy
       }
     };
-  }
-
-  enableViewModel (active) {
-    if (!this.componentMorph) return;
-    if (active) withAllViewModelsDo(this.componentMorph, m => m.viewModel.attach(m));
-    else withAllViewModelsDo(this.componentMorph, m => m.viewModel.detach());
   }
 
   async animateSwapWithPlaceholder (placeholder, componentMorph) {
@@ -577,7 +590,7 @@ const CloseComponentButtonDefault = component({
   type: Label,
   nativeCursor: 'pointer',
   borderRadius: 15,
-  padding: rect(5,1,0,2),
+  padding: rect(5, 1, 0, 2),
   fill: Color.rgb(221, 37, 37),
   fontColor: Color.white,
   fontWeight: 'bold',
