@@ -12,61 +12,6 @@ import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
 
-export class FastLoadToggler extends Morph {
-  static get properties () {
-    return {
-      loadConfig: {
-        derived: true,
-        get () {
-          return JSON.parse(localStorage.getItem('lively.load-config') || '{}');
-        },
-        set (data) {
-          localStorage.setItem('lively.load-config', JSON.stringify(data));
-        }
-      }
-    };
-  }
-
-  onLoad () {
-    // initialize on cold load
-    if (!localStorage.getItem('lively.load-config')) {
-      localStorage.setItem('lively.load-config', JSON.stringify({
-        'lively.lang': 'dynamic',
-        'lively.ast': 'dynamic',
-        'lively.source-transform': 'dynamic',
-        'lively.classes': 'dynamic',
-        'lively.vm': 'dynamic',
-        'lively.modules': 'dynamic',
-        'lively.user': 'dynamic',
-        'lively.storage': 'dynamic',
-        'lively.morphic': 'dynamic'
-      }));
-    }
-  }
-
-  onMouseDown (evt) {
-    super.onMouseDown(evt);
-    this.toggleFastLoad();
-  }
-
-  refresh () {
-    const toggleIndicator = this.getSubmorphNamed('toggle indicator');
-    const label = this.getSubmorphNamed('label');
-    const bolt = this.getSubmorphNamed('bolt');
-    let active = Object.values(this.loadConfig).every(v => v === 'frozen');
-    label.master = bolt.master = toggleIndicator.master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
-    toggleIndicator.textAndAttributes = Icon.textAttribute(active ? 'toggle-on' : 'toggle-off');
-  }
-
-  toggleFastLoad () {
-    const { loadConfig } = this;
-    let active = Object.values(loadConfig).every(v => v === 'frozen');
-    for (let key in loadConfig) loadConfig[key] = active ? 'dynamic' : 'frozen';
-    this.loadConfig = loadConfig;
-    this.refresh();
-  }
-}
-
 class SelectionElement extends Morph {
   static get properties () {
     return {
@@ -1103,40 +1048,6 @@ const UserFlap = component({
     spacing: 10
   }),
   submorphs: [{
-    type: FastLoadToggler,
-    name: 'fast load toggler',
-    borderColor: Color.rgb(23, 160, 251),
-    extent: pt(115.3, 41.1),
-    fill: Color.rgba(0, 0, 0, 0),
-    tooltip: 'Toggle fast load',
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      align: 'center',
-      direction: 'rightToLeft',
-      hugContentsHorizontally: true,
-      orderByIndex: true,
-      padding: Rectangle.inset(5, 5, 0, 5),
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      spacing: 10
-    }),
-    submorphs: [
-      part(TopBarButton, {
-        name: 'bolt',
-        fontSize: 17,
-        padding: rect(0, 4, 0, -4),
-        textAndAttributes: Icon.textAttribute('bolt')
-      }), part(TopBarButton, {
-        name: 'label',
-        fontSize: 16,
-        textAndAttributes: ['Fast Load', null]
-      }), part(TopBarButton, {
-        name: 'toggle indicator',
-        fontSize: 23,
-        nativeCursor: 'pointer',
-        textAndAttributes: Icon.textAttribute('toggle-off')
-      })]
-  }, {
     name: 'network-indicator',
     borderRadius: 5,
     extent: pt(5, 5),
@@ -1174,18 +1085,6 @@ const DarkUserFlap = component(UserFlap, {
   name: 'dark user flap',
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [{
-    name: 'fast load toggler',
-    submorphs: [{
-      name: 'bolt',
-      fontColor: Color.rgb(255, 255, 255)
-    }, {
-      name: 'label',
-      fontColor: Color.white
-    }, {
-      name: 'toggle indicator',
-      fontColor: Color.rgb(255, 255, 255)
-    }]
-  }, {
     name: 'name label',
     fontColor: Color.white
   }, {
