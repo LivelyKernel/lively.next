@@ -445,7 +445,6 @@ export class LivelyWorld extends World {
   // html5 drag - drop
 
   async onNativeDrop (evt) {
-    this.nativeDrop_removeUploadIndicator();
     if (evt.targetMorph !== this) return;
 
     const { domEvt } = evt;
