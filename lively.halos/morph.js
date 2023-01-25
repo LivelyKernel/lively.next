@@ -760,13 +760,16 @@ class InspectHaloItem extends HaloItem {
   onMouseDown (evt) {
     (async () => {
       const Inspector = await System.import('lively.ide/js/inspector/ui.cp.js');
-      const existing = this.world().getSubmorphsByStyleClassName('Inspector')
+
+      const existing = this.world().withAllSubmorphsSelect(m => m.isWindow && m.targetMorph?.isInspector)
+        .map(w => w.targetMorph)
         .find(i => i.targetObject === this.halo.target);
       let win;
       if (existing && (win = existing.getWindow())) {
         win.minimized = false;
         win.activate();
         win.animate({ center: this.world().visibleBounds().center(), duration: 200 });
+        win.show();
       } else {
         Inspector.openInWindow({ targetObject: this.halo.target });
       }
