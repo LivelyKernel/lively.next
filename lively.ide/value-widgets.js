@@ -424,8 +424,8 @@ export class NumberWidget extends Morph {
           }
           if (this.getSubmorphNamed('value')) {
             this.getSubmorphNamed('value').min = v;
-            this.setProperty('min', v);
           }
+          this.setProperty('min', v);
         }
       },
       max: {
@@ -436,8 +436,8 @@ export class NumberWidget extends Morph {
           }
           if (this.getSubmorphNamed('value')) {
             this.getSubmorphNamed('value').max = v;
-            this.setProperty('max', v);
           }
+          this.setProperty('max', v);
         }
       },
       floatingPoint: {
