@@ -508,10 +508,10 @@ const commands = [
       const thirdW = Math.min(thirdWMin, Math.max(1000, worldB.width / 3));
       const thirdColBounds = worldB.withWidth(thirdW);
 
-      if (!how) how = await askForHow();
+      if (!how) how = await askForHow(); // eslint-disable-line no-use-before-define
       if (!how) return;
 
-      win.setBounds(resizeBounds(how, worldB));
+      win.setBounds(resizeBounds(how, worldB)); // eslint-disable-line no-use-before-define
       if (how === 'reset') delete win._normalBounds;
 
       return true;
@@ -704,14 +704,14 @@ const commands = [
 
       let { a = '', b = '', format = null, extent = pt(500, 600) } = opts;
       if (!format) {
-        ({ a, b, format } = findFormat(a, b));
+        ({ a, b, format } = findFormat(a, b)); // eslint-disable-line no-use-before-define
       } else { a = String(a); b = String(b); }
 
       const diff = await System.import('esm://cache/diff@5.0.0');
 
       let diffed;
 
-      diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format });
+      diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format }); // eslint-disable-line no-use-before-define
 
       function findFormat (a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp ||
@@ -767,12 +767,12 @@ const commands = [
         editors = world.withAllSubmorphsSelect(ea =>
           ea.isText && !ea.isInputLine && !ea.isUsedAsEpiMorph()).reverse();
       }
-      if (!editor1) editor1 = await selectMorph(editors);
+      if (!editor1) editor1 = await selectMorph(editors); // eslint-disable-line no-use-before-define
       if (!editor1) return world.setStatusMessage('Canceled');
-      if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1));
+      if (!editor2) editor2 = await selectMorph(arr.without(editors, editor1)); // eslint-disable-line no-use-before-define
       if (!editor2) return world.setStatusMessage('Canceled');
 
-      return doDiff(editor1, editor2);
+      return doDiff(editor1, editor2); // eslint-disable-line no-use-before-define
 
       function doDiff (ed1, ed2) {
         const p1 = ed1.pluginFind(ea => ea.evalEnvironment);
@@ -810,8 +810,8 @@ const commands = [
           listPrompt.getSubmorphNamed('list').updateFilter = function () {
             const parsed = this.parseInput();
             if (parsed.input.length < 3) return;
-            const morphs = findWindowOrMorphWithStrings(parsed.lowercasedTokens);
-            this.listMorph.items = morphsToCandidates(morphs, parsed.lowercasedTokens);
+            const morphs = findWindowOrMorphWithStrings(parsed.lowercasedTokens); // eslint-disable-line no-use-before-define
+            this.listMorph.items = morphsToCandidates(morphs, parsed.lowercasedTokens); // eslint-disable-line no-use-before-define
           };
         }
       });
