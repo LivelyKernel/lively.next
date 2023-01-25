@@ -1,5 +1,5 @@
 import { arr, promise } from 'lively.lang';
-import { pt, Color, Rectangle } from 'lively.graphics';
+import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import {
   Label,
   morph,
@@ -337,47 +337,27 @@ export default class Window extends Morph {
     this.relayoutWindowControls();
   }
 
-  resizeAt ([corner, dist]) {
-    let x, y, height, width;
-    const b = this.position.extent(this.extent);
-    switch (corner) {
-      case 'right':
-        this.resizeBy(dist.withY(0)); break;
-      case 'bottom right':
-        this.resizeBy(dist); break;
-      case 'bottom':
-        this.resizeBy(dist.withX(0)); break;
-      case 'left':
-        this.resizeBy(dist.withY(0).negated());
-        this.position = pt(b.x + dist.x, b.y);
-        break; // more adjustment needed
-      case 'bottom left':
-        dist = dist.scaleByPt(pt(-1, 1));
-        this.resizeBy(dist);
-        this.position = pt(b.x - dist.x, b.y);
-        break; // adjustment needed
-      case 'top':
-        x = b.x;
-        y = b.y + dist.y;
-        width = b.width;
-        height = b.height - dist.y;
-        this.setBounds(new Rectangle(x, y, width, height));
-        break;
-      case 'top left':
-        x = b.x + dist.x;
-        y = b.y + dist.y;
-        width = b.width - dist.x;
-        height = b.height - dist.y;
-        this.setBounds(new Rectangle(x, y, width, height));
-        break;
-      case 'top right':
-        x = b.x;
-        y = b.y + dist.y;
-        width = b.width + dist.x;
-        height = b.height - dist.y;
-        this.setBounds(new Rectangle(x, y, width, height));
-        break;
-    }
+  resizeAt ([corner, currPos]) {
+    const dist = this.startPos.subPt(currPos);
+    let delta = this.resizingTfm.transformDirection(dist);
+    const proportionalMask = {
+      topLeft: rect(-1, -1, 1, 1),
+      top: rect(0, -1, 0, 1),
+      topRight: rect(0, -1, 1, 1),
+      right: rect(0, 0, 1, 0),
+      bottomRight: rect(0, 0, 1, 1),
+      bottom: rect(0, 0, 0, 1),
+      bottomLeft: rect(-1, 0, 1, 1),
+      left: rect(-1, 0, 1, 0)
+    };
+    const { x, y, width, height } = proportionalMask[corner];
+    const offsetRect = rect(
+      delta.x * x,
+      delta.y * y,
+      delta.x * width,
+      delta.y * height);
+    this.setBounds(this.startBounds.insetByRect(offsetRect));
+
     this.relayoutResizer();
   }
 
@@ -493,33 +473,56 @@ export default class Window extends Morph {
         })
       ]
     });
+
+    connect(topResizer, 'onDragStart', this, 'beginResizing');
     connect(topResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['top', evt.state.dragDelta]
+      converter: evt => ['top', evt.position]
     });
+
+    connect(topRightResizer, 'onDragStart', this, 'beginResizing');
     connect(topRightResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['top right', evt.state.dragDelta]
+      converter: evt => ['topRight', evt.position]
     });
+
+    connect(topLeftResizer, 'onDragStart', this, 'beginResizing');
     connect(topLeftResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['top left', evt.state.dragDelta]
+      converter: evt => ['topLeft', evt.position]
     });
+
+    connect(bottomRightResizer, 'onDragStart', this, 'beginResizing');
     connect(bottomRightResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['bottom right', evt.state.dragDelta]
+      converter: evt => ['bottomRight', evt.position]
     });
+
+    connect(rightResizer, 'onDragStart', this, 'beginResizing');
     connect(rightResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['right', evt.state.dragDelta]
+      converter: evt => ['right', evt.position]
     });
+
+    connect(bottomResizer, 'onDragStart', this, 'beginResizing');
     connect(bottomResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['bottom', evt.state.dragDelta]
+      converter: evt => ['bottom', evt.position]
     });
+
+    connect(leftResizer, 'onDragStart', this, 'beginResizing');
     connect(leftResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['left', evt.state.dragDelta]
+      converter: evt => ['left', evt.position]
     });
+
+    connect(bottomLeftResizer, 'onDragStart', this, 'beginResizing');
     connect(bottomLeftResizer, 'onDrag', win, 'resizeAt', {
-      converter: evt => ['bottom left', evt.state.dragDelta]
+      converter: evt => ['bottomLeft', evt.position]
     });
+
     this.addMorph(resizer);
     this.relayoutResizer();
     return resizer;
+  }
+
+  beginResizing (evt) {
+    this.startPos = evt.position;
+    this.startBounds = this.position.extent(this.extent);
+    this.resizingTfm = this.getGlobalTransform().inverse();
   }
 
   toggleMaximize () { if (!this.minimized) this.maximized = !this.maximized; }
