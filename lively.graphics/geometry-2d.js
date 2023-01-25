@@ -1,6 +1,19 @@
 import { num, string, grid } from 'lively.lang';
 import { cssLengthToPixels } from './convert-css-length.js';
 
+export function rect (arg1, arg2, arg3, arg4) {
+  // arg1 and arg2 can be location and corner or
+  // arg1/arg2 = location x/y and arg3/arg4 = extent x/y
+  let x, y, w, h;
+  if (typeof arg1 === 'number') {
+    x = arg1, y = arg2, w = arg3, h = arg4;
+  } else {
+    x = arg1.x; y = arg1.y;
+    w = arg2.x - x; h = arg2.y - y;
+  }
+  return new Rectangle(x, y, w, h); // eslint-disable-line no-use-before-define
+}
+
 export class Point {
   static ensure (duck) {
     return (duck && duck.isPoint)
@@ -19,10 +32,10 @@ export class Point {
   }
 
   static fromLiteral (literal) {
-    return pt(literal.x, literal.y);
+    return new Point(literal.x, literal.y);
   }
 
-  static fromTuple (tuple) { return pt(tuple[0], tuple[1]); }
+  static fromTuple (tuple) { return new Point(tuple[0], tuple[1]); }
 
   constructor (x, y) {
     this.x = x || 0;
@@ -99,20 +112,20 @@ export class Point {
   }
 
   eqPt (p) {
-    return this.x == p.x && this.y == p.y;
+    return this.x === p.x && this.y === p.y;
   }
 
   equals (p) {
-    return this.x == p.x && this.y == p.y;
+    return this.x === p.x && this.y === p.y;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // instance creation
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  withX (x) { return pt(x, this.y); }
+  withX (x) { return new Point(x, this.y); }
 
-  withY (y) { return pt(this.x, y); }
+  withY (y) { return new Point(this.x, y); }
 
   copy () { return new Point(this.x, this.y); }
 
@@ -137,12 +150,12 @@ export class Point {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   normalized () {
     const r = this.r();
-    return pt(this.x / r, this.y / r);
+    return new Point(this.x / r, this.y / r);
   }
 
   fastNormalized () {
     const r = this.fastR();
-    return pt(this.x / r, this.y / r);
+    return new Point(this.x / r, this.y / r);
   }
 
   dotProduct (p) {
@@ -153,18 +166,18 @@ export class Point {
     const x = mx.a * this.x + mx.c * this.y + mx.e;
     const y = mx.b * this.x + mx.d * this.y + mx.f;
     // if no accumulator passed, allocate a fresh one
-    return !acc ? pt(x, y) : Object.assign(acc, { x, y });
+    return !acc ? new Point(x, y) : Object.assign(acc, { x, y });
   }
 
   matrixTransformDirection (mx, acc) {
     const x = mx.a * this.x + mx.c * this.y;
     const y = mx.b * this.x + mx.d * this.y;
     // if no accumulator passed, allocate a fresh one
-    return !acc ? pt(x, y) : Object.assign(acc, { x, y });
+    return !acc ? new Point(x, y) : Object.assign(acc, { x, y });
   }
 
   griddedBy (grid) {
-    return pt(this.x - (this.x % grid.x), this.y - (this.y % grid.y));
+    return new Point(this.x - (this.x % grid.x), this.y - (this.y % grid.y));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -187,18 +200,18 @@ export class Point {
   }
 
   nearestPointOnLineBetween (p1, p2) {
-    if (p1.x == p2.x) return pt(p1.x, this.y);
-    if (p1.y == p2.y) return pt(this.x, p1.y);
+    if (p1.x === p2.x) return new Point(p1.x, this.y);
+    if (p1.y === p2.y) return new Point(this.x, p1.y);
     const x1 = p1.x;
     const y1 = p1.y;
     const x21 = p2.x - x1;
     const y21 = p2.y - y1;
     const t = (((this.y - y1) / x21) + ((this.x - x1) / y21)) / ((x21 / y21) + (y21 / x21));
-    return pt(x1 + (t * x21), y1 + (t * y21));
+    return new Point(x1 + (t * x21), y1 + (t * y21));
   }
 
   interpolate (i, p, transformLinear = true) {
-    if (transformLinear) return pt(num.interpolate(i, this.x, p.x), num.interpolate(i, this.y, p.y));
+    if (transformLinear) return new Point(num.interpolate(i, this.x, p.x), num.interpolate(i, this.y, p.y));
     return Point.polar(num.interpolate(i, this.r(), p.r()), num.interpolate(i, this.theta(), p.theta()));
   }
 
@@ -224,13 +237,13 @@ export class Point {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // converting
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  asRectangle () { return new Rectangle(this.x, this.y, 0, 0); }
+  asRectangle () { return new Rectangle(this.x, this.y, 0, 0); } // eslint-disable-line no-use-before-define
 
-  extent (ext) { return new Rectangle(this.x, this.y, ext.x, ext.y); }
+  extent (ext) { return new Rectangle(this.x, this.y, ext.x, ext.y); } // eslint-disable-line no-use-before-define
 
-  extentAsRectangle () { return new Rectangle(0, 0, this.x, this.y); }
+  extentAsRectangle () { return new Rectangle(0, 0, this.x, this.y); } // eslint-disable-line no-use-before-define
 
-  lineTo (end) { return new Line(this, end); }
+  lineTo (end) { return new Line(this, end); } // eslint-disable-line no-use-before-define
 
   toTuple () { return [this.x, this.y]; }
 
@@ -296,14 +309,14 @@ export class Rectangle {
     if (typeof element.getBoundingClientRect === 'function') {
       const b = element.getBoundingClientRect();
       return rect(b.left, b.top, b.width, b.height);
-    } else if (element.namespaceURI == 'http://www.w3.org/1999/xhtml') {
+    } else if (element.namespaceURI === 'http://www.w3.org/1999/xhtml') {
       const x = cssLengthToPixels(element.style.left || '0px');
       const y = cssLengthToPixels(element.style.top || '0px');
       const width = cssLengthToPixels(element.style.width || '0px');
       const height = cssLengthToPixels(element.style.hieght || '0px');
       return new Rectangle(x, y, width, height);
     }
-    if (element.namespaceURI == 'http://www.w3.org/2000/svg') {
+    if (element.namespaceURI === 'http://www.w3.org/2000/svg') {
       return new Rectangle(element.x.baseVal.value, element.y.baseVal.value,
         element.width.baseVal.value, element.height.baseVal.value);
     }
@@ -459,7 +472,7 @@ export class Rectangle {
     if (!other) {
       return false;
     }
-    return this.x == other.x && this.y == other.y && this.width == other.width && this.height == other.height;
+    return this.x === other.x && this.y === other.y && this.width === other.width && this.height === other.height;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -510,13 +523,13 @@ export class Rectangle {
     return new Point(this.x + (this.width / 2), this.y + (this.height / 2));
   }
 
-  topEdge () { return new Line(this.topLeft(), this.topRight()); }
+  topEdge () { return new Line(this.topLeft(), this.topRight()); } // eslint-disable-line no-use-before-define
 
-  bottomEdge () { return new Line(this.bottomLeft(), this.bottomRight()); }
+  bottomEdge () { return new Line(this.bottomLeft(), this.bottomRight()); } // eslint-disable-line no-use-before-define
 
-  leftEdge () { return new Line(this.topLeft(), this.bottomLeft()); }
+  leftEdge () { return new Line(this.topLeft(), this.bottomLeft()); } // eslint-disable-line no-use-before-define
 
-  rightEdge () { return new Line(this.topRight(), this.bottomRight()); }
+  rightEdge () { return new Line(this.topRight(), this.bottomRight()); } // eslint-disable-line no-use-before-define
 
   edges () {
     return [this.topEdge(),
@@ -527,12 +540,12 @@ export class Rectangle {
 
   allPoints () {
     // take rectangle as discrete grid and return all points in the grid
-    // rect(3,4,2,3).allPoints() == [pt(3,4),pt(4,4),pt(3,5),pt(4,5),pt(3,6),pt(4,6)]
+    // rect(3,4,2,3).allPoints() === [pt(3,4),pt(4,4),pt(3,5),pt(4,5),pt(3,6),pt(4,6)]
     // if you want to convert points to indices use
-    // var w = 5, h = 7; rect(3,4,2,3).allPoints().map(function(p) { return p.y * w + p.x; }) == [23,24,28,29,33,34]
+    // const w = 5, h = 7; rect(3,4,2,3).allPoints().map(function(p) { return p.y * w + p.x; }) === [23,24,28,29,33,34]
     const x = this.x; const y = this.y; const w = this.width; const h = this.height; const points = [];
     for (let j = y; j < y + h; j++) {
-      for (let i = x; i < x + w; i++) { points.push(pt(i, j)); }
+      for (let i = x; i < x + w; i++) { points.push(new Point(i, j)); }
     }
     return points;
   }
@@ -669,7 +682,7 @@ export class Rectangle {
 
   closestPointToPt (p) {
     // Assume p lies outside me; return a point on my perimeter
-    return pt(Math.min(Math.max(this.x, p.x), this.maxX()), Math.min(Math.max(this.y, p.y), this.maxY()));
+    return new Point(Math.min(Math.max(this.x, p.x), this.maxX()), Math.min(Math.max(this.y, p.y), this.maxY()));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -698,7 +711,7 @@ export class Rectangle {
   }
 
   randomPoint () {
-    return Point.random(pt(this.width, this.height)).addPt(this.topLeft());
+    return Point.random(new Point(this.width, this.height)).addPt(this.topLeft());
   }
 
   constrainPt (pt) {
@@ -737,7 +750,6 @@ export class Rectangle {
   }
 
   toAttributeValue (d) {
-    var d = 0.01;
     let result = [this.left()];
     if (this.top() === this.bottom() && this.left() === this.right()) {
       if (this.top() === this.left()) result.push(this.top());
@@ -771,12 +783,13 @@ export class Rectangle {
 
   partNameNearest (partNames, p) {
     let dist = 1.0e99;
-    var partName = partNames[0];
+    let partName = partNames[0];
 
+    let nearest;
     for (let i = 0; i < partNames.length; i++) {
-      var partName = partNames[i];
+      partName = partNames[i];
       const pDist = p.dist(this.partNamed(partName));
-      if (pDist < dist) { var nearest = partName; dist = pDist; }
+      if (pDist < dist) { nearest = partName; dist = pDist; }
     }
 
     return nearest;
@@ -814,8 +827,7 @@ export class Transform {
       if (translation.isPoint) {
         const delta = translation;
         const angleInRadians = rotation || 0.0;
-        var scale = scale;
-        if (scale === undefined) { scale = pt(1.0, 1.0); }
+        if (scale === undefined) { scale = new Point(1.0, 1.0); }
         this.a = this.ensureNumber(scale.x * Math.cos(angleInRadians));
         this.b = this.ensureNumber(scale.y * Math.sin(angleInRadians));
         this.c = this.ensureNumber(scale.x * -Math.sin(angleInRadians));
@@ -879,10 +891,10 @@ export class Transform {
     const r = Math.atan2(-c, a); // radians
     // avoid div by 0
     const sy = (Math.abs(b) > Math.abs(d)) ? b / Math.sin(r) : d / Math.cos(r);
-    return pt(sx, sy);
+    return new Point(sx, sy);
   }
 
-  getTranslation () { return pt(this.e, this.f); }
+  getTranslation () { return new Point(this.e, this.f); }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // testing
@@ -890,7 +902,7 @@ export class Transform {
   isTranslation () {
     // as specified in:
     // http://www.w3.org/TR/SVG11/coords.html#InterfaceSVGTransform
-    return (this.a == 1 && this.b == 0 && this.c == 0 && this.d == 1);
+    return (this.a === 1 && this.b === 0 && this.c === 0 && this.d === 1);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -902,8 +914,8 @@ export class Transform {
     const theta = this.getRotation();
     const sp = this.getScalePoint();
 
-    if (theta != 0.0) attr += ' rotate(' + this.getRotation() + ')'; // in degrees
-    if (sp.x != 1.0 || sp.y != 1.0) attr += ' scale(' + sp.x + ',' + sp.y + ')';
+    if (theta !== 0.0) attr += ' rotate(' + this.getRotation() + ')'; // in degrees
+    if (sp.x !== 1.0 || sp.y !== 1.0) attr += ' scale(' + sp.x + ',' + sp.y + ')';
 
     return attr;
   }
@@ -915,26 +927,26 @@ export class Transform {
 
     if (bounds) {
       // FIXME this is to fix the rotation...!
-      var offsetX = bounds.width / 2;
-      var offsetY = bounds.height / 2;
+      let offsetX = bounds.width / 2;
+      let offsetY = bounds.height / 2;
       attr += ' translate(' + offsetX.toFixed(2) + 'px,' + offsetY.toFixed(2) + 'px)';
     }
 
     const theta = this.getRotation();
-    if (theta != 0.0) {
+    if (theta !== 0.0) {
       attr += ' rotate(' +
         this.getRotation().toFixed(2) + 'deg)';
     }
 
     if (bounds) {
       // FIXME this is to fix the rotation...!
-      var offsetX = bounds.width / 2;
-      var offsetY = bounds.height / 2;
+      const offsetX = bounds.width / 2;
+      const offsetY = bounds.height / 2;
       attr += ' translate(' + (offsetX * -1).toFixed(2) + 'px,' + (offsetY * -1).toFixed(2) + 'px)';
     }
 
     const sp = this.getScalePoint();
-    if (sp.x != 1.0 || sp.y != 1.0) {
+    if (sp.x !== 1.0 || sp.y !== 1.0) {
       attr += ' scale(' + sp.x.toFixed(2) + ',' + sp.y.toFixed(2) + ')';
     }
 
@@ -969,8 +981,8 @@ export class Transform {
   }
 
   transformRectToRect (r) {
-    const minPt = pt(Infinity, Infinity);
-    const maxPt = pt(-Infinity, -Infinity);
+    const minPt = new Point(Infinity, Infinity);
+    const maxPt = new Point(-Infinity, -Infinity);
     this.matrixTransformForMinMax(r.topLeft(), minPt, maxPt);
     this.matrixTransformForMinMax(r.bottomRight(), minPt, maxPt);
     if (!this.isTranslation()) {
@@ -1042,7 +1054,7 @@ export class Transform {
 
 export class Line {
   static fromCoords (startX, startY, endX, endY) {
-    return new Line(pt(startX, startY), pt(endX, endY));
+    return new Line(new Point(startX, startY), new Point(endX, endY));
   }
 
   constructor (start, end) {
@@ -1159,7 +1171,7 @@ export class Line {
       !num.between(y, y3, y4, eps)) return null;
     }
 
-    return pt(x, y);
+    return new Point(x, y);
   }
 
   perpendicularLine (relPos = 0, magn = 1, rot = 'cc'/* c-clockwise, cc-counterclockwise */) {
@@ -1193,19 +1205,6 @@ export class Line {
       bindings: { 'lively.graphics/geometry-2d.js': ['Line'] }
     };
   }
-}
-
-export function rect (arg1, arg2, arg3, arg4) {
-  // arg1 and arg2 can be location and corner or
-  // arg1/arg2 = location x/y and arg3/arg4 = extent x/y
-  let x, y, w, h;
-  if (typeof arg1 === 'number') {
-    x = arg1, y = arg2, w = arg3, h = arg4;
-  } else {
-    x = arg1.x; y = arg1.y;
-    w = arg2.x - x; h = arg2.y - y;
-  }
-  return new Rectangle(x, y, w, h);
 }
 
 export function pt (x, y) { return new Point(x, y); }
