@@ -499,7 +499,7 @@ const commands = [
 
       if (!win) return;
 
-      const worldB = world.visibleBoundsExcludingTopBar().insetBy(15);
+      const worldB = world.visibleBoundsExcludingTopBar().insetBy(40);
       const winB = win.bounds();
       // FIXME!
       if (!win._normalBounds) win._normalBounds = winB;
