@@ -93,7 +93,8 @@ const rules = {
   'no-const-assign': 'warn',
   'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }],
   'no-use-before-define': ['error', { functions: true, classes: true, variables: true }],
-  'no-constructor-return': 'error'
+  'no-constructor-return': 'error',
+  'no-console': 'warn'
 };
 
 config.rules = rules;
