@@ -139,13 +139,7 @@ const HexEncoder = component({
         name: 'value',
         fontSize: 14
       },
-      {
-        name: 'up',
-        visible: false
-      }, {
-        name: 'down',
-        visible: false
-      }]
+      without('button holder')]
     }),
     part(DefaultInputLine, {
       placeholder: 'Hex Code',
@@ -178,13 +172,7 @@ const ThreeValEncoder = component({
       submorphs: [{
         name: 'value',
         fontSize: 14
-      }, {
-        name: 'up',
-        visible: false
-      }, {
-        name: 'down',
-        visible: false
-      }]
+      }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
       type: NumberWidget,
@@ -199,13 +187,7 @@ const ThreeValEncoder = component({
       submorphs: [{
         name: 'value',
         fontSize: 14
-      }, {
-        name: 'up',
-        visible: false
-      }, {
-        name: 'down',
-        visible: false
-      }]
+      }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
       type: NumberWidget,
@@ -220,13 +202,7 @@ const ThreeValEncoder = component({
       submorphs: [{
         name: 'value',
         fontSize: 14
-      }, {
-        name: 'up',
-        visible: false
-      }, {
-        name: 'down',
-        visible: false
-      }]
+      }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
       name: 'third value',
@@ -240,13 +216,7 @@ const ThreeValEncoder = component({
       submorphs: [{
         name: 'value',
         fontSize: 14
-      }, {
-        name: 'up',
-        visible: false
-      }, {
-        name: 'down',
-        visible: false
-      }]
+      }, without('button holder')]
     })]
 });
 
