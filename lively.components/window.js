@@ -539,9 +539,10 @@ export default class Window extends Morph {
 
   async applyMinimize () {
     if (!this.targetMorph) return;
-    let { nonMinimizedBounds, minimized, width } = this;
+
+    let { minimized, width } = this;
     const { windowTitle, resizer } = this.ui;
-    const bounds = this.bounds();
+    const bounds = this.position.extent(this.extent);
     const duration = 100;
     const collapseButton = this.getSubmorphNamed('minimize');
     const easing = easings.outQuad;
@@ -551,9 +552,9 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(nonMinimizedBounds || bounds);
+      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds || bounds);
       this.animate({
-        bounds: nonMinimizedBounds,
+        bounds: this.nonMinimizedBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
         duration,
         easing
@@ -565,12 +566,14 @@ export default class Window extends Morph {
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
       const labelBounds = windowTitle.textBounds();
       const buttonOffset = this.get('window controls').bounds().right() + 3;
-      if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width) { minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5); }
+      if (labelBounds.width + 2 * buttonOffset < minimizedBounds.width) {
+        minimizedBounds = minimizedBounds.withWidth(labelBounds.width + buttonOffset + 5);
+      }
       this.minimizedBounds = minimizedBounds;
       collapseButton.tooltip = 'uncollapse window';
       this.animate({
         styleClasses: ['minimized', 'active', ...arr.without(this.styleClasses, 'neutral')],
-        bounds: minimizedBounds,
+        bounds: this.minimizedBounds,
         duration,
         easing
       }).then(() => {
