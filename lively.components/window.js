@@ -1,4 +1,4 @@
-import { arr, promise } from 'lively.lang';
+import { arr, obj, promise } from 'lively.lang';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import {
   Label,
@@ -21,6 +21,7 @@ export default class Window extends Morph {
       position: {
         set (p) {
           this.setProperty('position', p.roundTo(1));
+          this.updateNonMinimizedBounds();
         }
       },
 
@@ -89,7 +90,6 @@ export default class Window extends Morph {
 
       minimizedBounds: { serialize: false },
       nonMinimizedBounds: {},
-      nonMaximizedBounds: {},
       minimized: {
         defaultValue: false,
         set (isMinimized) {
@@ -97,16 +97,16 @@ export default class Window extends Morph {
           this.setProperty('minimized', isMinimized);
           if (changed) this.applyMinimize();
         }
-      },
-      maximized: {
-        defaultValue: true,
-        set (isMaximized) {
-          const changed = !!isMaximized !== !!this.maximized;
-          this.setProperty('maximized', isMaximized);
-          if (changed) this.applyMaximize();
-        }
       }
     };
+  }
+
+  static maximizedBounds () {
+    return $world.visibleBoundsExcludingTopBar().insetBy(40).withWholeNumbers();
+  }
+
+  updateNonMinimizedBounds () {
+    if (!this.extent.roundTo(1).equals(Window.maximizedBounds().extent())) this.nonMinimizedBounds = this.position.extent(this.extent);
   }
 
   build () {
@@ -525,14 +525,22 @@ export default class Window extends Morph {
     this.resizingTfm = this.getGlobalTransform().inverse();
   }
 
-  toggleMaximize () { if (!this.minimized) this.maximized = !this.maximized; }
+  toggleMaximize () { if (!this.minimized) this.applyMaximize(); }
 
   applyMaximize () {
-    if (this.maximized) {
+    const maximized = obj.equals(this.position.extent(this.extent.roundTo(1)), Window.maximizedBounds());
+    if (!maximized) {
       $world.execCommand('resize active window', { window: this, how: 'full' });
     } else {
-      $world.execCommand('resize active window', { window: this, how: 'reset' });
+      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
+      this.animate({
+        bounds: this.nonMinimizedBounds,
+        duration: 100,
+        easing: easings.outQuadeasing
+      });
     }
+    this.relayoutResizer();
+    this.relayoutWindowControls();
   }
 
   async toggleMinimize () { this.minimized = !this.minimized; }
@@ -552,7 +560,7 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds || bounds);
+      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
       this.animate({
         bounds: this.nonMinimizedBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
@@ -562,7 +570,6 @@ export default class Window extends Morph {
       collapseButton.tooltip = 'collapse window';
     } else {
       this.clipMode = 'hidden';
-      this.nonMinimizedBounds = bounds;
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
       const labelBounds = windowTitle.textBounds();
       const buttonOffset = this.get('window controls').bounds().right() + 3;
@@ -595,6 +602,7 @@ export default class Window extends Morph {
     super.setBounds(bounds);
     this.relayoutResizer();
     this.relayoutWindowControls();
+    this.updateNonMinimizedBounds();
   }
 
   async close () {
