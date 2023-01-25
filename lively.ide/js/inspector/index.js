@@ -638,7 +638,7 @@ export class Inspector extends ViewModel {
 
       expose: {
         get () {
-          return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget'];
+          return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget', 'targetObject'];
         }
       },
 
