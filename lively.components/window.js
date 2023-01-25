@@ -91,15 +91,19 @@ export default class Window extends Morph {
       nonMinimizedBounds: {},
       nonMaximizedBounds: {},
       minimized: {
+        defaultValue: false,
         set (isMinimized) {
+          const changed = !!isMinimized !== !!this.minimized;
           this.setProperty('minimized', isMinimized);
-          this.applyMinimize();
+          if (changed) this.applyMinimize();
         }
       },
       maximized: {
+        defaultValue: true,
         set (isMaximized) {
+          const changed = !!isMaximized !== !!this.maximized;
           this.setProperty('maximized', isMaximized);
-          this.applyMaximize();
+          if (changed) this.applyMaximize();
         }
       }
     };
