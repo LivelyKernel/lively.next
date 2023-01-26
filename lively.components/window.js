@@ -541,6 +541,7 @@ export default class Window extends Morph {
     }
     this.relayoutResizer();
     this.relayoutWindowControls();
+    this.ui.resizer.visible = true;
   }
 
   async toggleMinimize () { this.minimized = !this.minimized; }
