@@ -237,12 +237,15 @@ class BackgroundControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'background fill input', signal: 'color', handler: 'changeBackgroundColor' }
+            { model: 'background fill input', signal: 'color', handler: 'changeBackgroundColor' },
+            { signal: 'onMouseDown', handler: 'onMouseDown' }
           ];
         }
       }
     };
   }
+
+  onMouseDown () { this.deactivate(); }
 
   focusOn (aMorph) {
     this.targetMorph = aMorph;

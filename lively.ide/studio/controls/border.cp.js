@@ -98,11 +98,20 @@ export class BorderControlModel extends PropertySectionModel {
               target: 'more button',
               signal: 'onMouseDown',
               handler: 'openPopup'
+            },
+            {
+              signal: 'onMouseDown',
+              handler: 'onMouseDown'
             }
           ];
         }
       }
     };
+  }
+
+  onMouseDown () {
+    this.closePopup();
+    this.models.borderColorInput.closeColorPicker();
   }
 
   onRefresh (prop) {
