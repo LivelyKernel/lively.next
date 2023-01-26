@@ -561,15 +561,20 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
+      let goalBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
+      if (this.wasFullscreen) {
+        goalBounds = Window.maximumBounds();
+        delete this.wasFullscreen;
+      }
       this.animate({
-        bounds: this.nonMinimizedBounds,
+        bounds: goalBounds,
         styleClasses: ['neutral', 'active', ...arr.without(this.styleClasses, 'minimzed')],
         duration,
         easing
       }).then(() => this.clipMode = 'visible');
       collapseButton.tooltip = 'collapse window';
     } else {
+      if (obj.equals(this.position.extent(this.extent).roundTo(1), Window.maximumBounds())) this.wasFullscreen = true;
       this.clipMode = 'hidden';
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
       const labelBounds = windowTitle.textBounds();
