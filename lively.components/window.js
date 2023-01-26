@@ -106,7 +106,12 @@ export default class Window extends Morph {
   }
 
   updateNonMinimizedBounds () {
-    if (!this.extent.roundTo(1).equals(Window.maximumBounds().extent())) this.nonMinimizedBounds = this.position.extent(this.extent);
+    if (this.minimized) return;
+    if (!this.extent.roundTo(1).equals(Window.maximumBounds().extent()) &&
+       (!this.minimizedBounds ||
+       !this.extent.roundTo(1).equals(this.minimizedBounds.extent().roundTo(1)))) {
+      this.nonMinimizedBounds = this.position.extent(this.extent).roundTo(1);
+    }
   }
 
   build () {
