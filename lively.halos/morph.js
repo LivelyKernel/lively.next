@@ -506,7 +506,7 @@ class NameHaloItem extends HaloItem {
         const { findComponentDef, getMorphNode, getComponentScopeFor, getProp } = await System.import('lively.ide/components/helpers.js');
         // select the range instead
         let range;
-        if (meta.path) {
+        if (meta.path?.length > 0) {
           let parsedModule = await moduleManager.module(meta.moduleId).ast();
           let scope, submorphsNode;
           while (true) {
