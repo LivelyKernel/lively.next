@@ -603,6 +603,12 @@ export class ComponentBrowserModel extends ViewModel {
       isComponentBrowser: {
         get () { return true; }
       },
+      sectionMaster: {
+        initialize () {
+          this.sectionMaster = ProjectSection; // eslint-disable-line no-use-before-define
+        }
+      },
+      isPrompt: { get () { return true; } },
       isEpiMorph: {
         get () { return true; }
       },
@@ -616,7 +622,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt'];
         }
       }
     };
