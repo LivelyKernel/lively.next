@@ -529,22 +529,6 @@ export class ProjectEntry extends Morph {
     return this;
   }
 
-  async withExportedComponents (components) {
-    const previewContainer = this.getSubmorphNamed('component previews');
-    const previewProto = await resource('part://SystemDialogs/exported component preview/deselected').read();
-    previewContainer.submorphs = arr.sortBy(components, info => info.identifier.length).map(info => {
-      let preview = previewContainer.submorphs.find(p => p.fetchUrl === info.identifier);
-      if (!preview) {
-        preview = previewProto.copy();
-        preview.project = this;
-        preview.fetchUrl = info.identifier;
-      }
-      preview.preview = info.preview;
-      return preview;
-    });
-    return this;
-  }
-
   selectComponent (component) {
     const importButton = this.get('import button');
     if (importButton) importButton.deactivated = false;
