@@ -76,7 +76,11 @@ export class Text extends Morph {
       return { isListItem: true, label: [...Icon.textAttribute(iconName, { paddingRight: '10px' }), iconName, {}], value: iconName };
     }));
     const [iconName] = res.selected;
-    if (iconName) { this.value = Icon.textAttribute(iconName); }
+    if (iconName) {
+      this.withMetaDo({ reconcileChanges: true }, () => {
+        this.textAndAttributes = Icon.textAttribute(iconName);
+      });
+    }
   }
 
   static get properties () {
