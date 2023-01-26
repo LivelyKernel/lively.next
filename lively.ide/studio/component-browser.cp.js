@@ -604,6 +604,7 @@ export class ComponentBrowserModel extends ViewModel {
           this.sectionMaster = ProjectSection; // eslint-disable-line no-use-before-define
         }
       },
+      isPrompt: { get () { return true; } },
       isEpiMorph: {
         get () { return true; }
       },
@@ -617,7 +618,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt'];
         }
       }
     };
@@ -1140,7 +1141,8 @@ const CheckboxInactiveLight = component(CheckboxInactive, {
 const ComponentBrowser = component(PopupWindow, {
   defaultViewModel: ComponentBrowserModel,
   styleClasses: [],
-  extent: pt(515, 640),
+  hasFixedPosition: false,
+  extent: pt(515, 658),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
