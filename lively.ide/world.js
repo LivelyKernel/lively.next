@@ -111,6 +111,21 @@ export class LivelyWorld extends World {
     }
   }
 
+  visibleBoundsExcludingStudioInterface () {
+    const boundsExcludingTopBar = this.visibleBoundsExcludingTopBar();
+    const sideBars = this.activeSideBars;
+    let bounds = boundsExcludingTopBar;
+    if (sideBars.includes('scene graph')) {
+      const sceneGraph = this.get('scene graph');
+      bounds = pt(bounds.x + sceneGraph.width, bounds.y).extent(pt(bounds.width - sceneGraph.width, bounds.height));
+    }
+    if (sideBars.includes('properties panel')) {
+      const propertiesPanel = this.get('properties panel');
+      bounds = pt(bounds.x, bounds.y).extent(pt(bounds.width - propertiesPanel.width, bounds.height));
+    }
+    return bounds;
+  }
+
   makeDirty () {
     if (!this.renderingState.needsRerender && this.get('world mini map')) {
       this.get('world mini map').drawMorphs();

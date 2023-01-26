@@ -102,7 +102,7 @@ export default class Window extends Morph {
   }
 
   static maximumBounds () {
-    return $world.visibleBoundsExcludingTopBar().insetBy(40).roundTo(1);
+    return $world.visibleBoundsExcludingStudioInterface().insetBy(40).roundTo(1);
   }
 
   updateNonMinimizedBounds () {
@@ -537,7 +537,7 @@ export default class Window extends Morph {
     if (!maximized) {
       $world.execCommand('resize active window', { window: this, how: 'full' });
     } else {
-      this.nonMinimizedBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
+      this.nonMinimizedBounds = this.world().visibleBoundsExcludingStudioInterface().translateForInclusion(this.nonMinimizedBounds);
       this.animate({
         bounds: this.nonMinimizedBounds,
         duration: 100,
@@ -566,7 +566,7 @@ export default class Window extends Morph {
       this.withMetaDo({ metaInteraction: true }, () => {
         this.targetMorph && (this.targetMorph.visible = true);
       });
-      let goalBounds = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.nonMinimizedBounds);
+      let goalBounds = this.world().visibleBoundsExcludingStudioInterface().translateForInclusion(this.nonMinimizedBounds);
       if (this.wasFullscreen) {
         goalBounds = Window.maximumBounds();
         delete this.wasFullscreen;
