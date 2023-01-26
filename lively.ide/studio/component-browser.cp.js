@@ -648,6 +648,7 @@ export class ComponentBrowserModel extends ViewModel {
           if (evt.key === 'Escape') $reject();
         }
       },
+      { signal: 'onMouseDown', handler: 'focus' },
       {
         signal: 'onMouseUp',
         handler: 'ensureImportButton'
@@ -663,6 +664,8 @@ export class ComponentBrowserModel extends ViewModel {
       }
     ];
   }
+
+  focus () { this.view.bringToFront(); }
 
   ensureImportButton () {
     const selectedComponent = this.getSelectedComponent();
@@ -1163,6 +1166,9 @@ const ComponentBrowser = component(PopupWindow, {
         resizePolicies: [['search input', {
           height: 'fixed',
           width: 'fill'
+        }], ['search input wrapper', {
+          height: 'fixed',
+          width: 'fill'
         }], ['component files view', {
           height: 'fixed',
           width: 'fill'
@@ -1173,87 +1179,62 @@ const ComponentBrowser = component(PopupWindow, {
           height: 'fixed',
           width: 'fill'
         }]],
-        spacing: 16,
-        wrapSubmorphs: false
+        spacing: 16
       }),
-      submorphs: [part(InputLineDefault, {
-        name: 'search input',
-        dropShadow: null,
-        highlightWhenFocused: false,
-        fill: Color.rgb(238, 238, 238),
-        borderRadius: 2,
-        borderWidth: 0,
-        borderColor: Color.rgb(224, 224, 224),
-        layout: new ConstraintLayout({
-          lastExtent: {
-            x: 483,
-            y: 34.3
-          },
-          reactToSubmorphAnimations: false,
-          submorphSettings: [['placeholder', {
-            x: 'fixed',
-            y: 'fixed'
-          }], ['spinner', {
-            x: 'fixed',
-            y: 'fixed'
+      submorphs: [{
+        name: 'search input wrapper',
+        layout: new TilingLayout({
+          axisAlign: 'center',
+          orderByIndex: true,
+          padding: rect(8, 0, -8, 0),
+          resizePolicies: [['search input', {
+            height: 'fixed',
+            width: 'fill'
           }]]
         }),
-        extent: pt(640, 34.3),
-        fontSize: 20,
-        padding: rect(6, 4, -4, 2),
-        placeholder: ['', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-          fontColor: Color.darkGray,
-          fontWeight: '900',
-          lineHeight: 1,
-          paddingTop: '3px',
-          textStyleClasses: ['fas']
-        }, '  Search for components...', null],
-        submorphs: [add(part(Spinner, {
+        fill: Color.rgb(238, 238, 238),
+        borderRadius: 3,
+        borderColor: Color.rgb(23, 160, 251),
+        extent: pt(388.4, 42.6),
+        position: pt(120, 541),
+        submorphs: [{
+          type: Text,
+          name: 'search icon',
+          lineHeight: 2,
+          extent: pt(17.5, 18),
+          fontSize: 14,
+          fontColor: Color.rgba(0, 0, 0, 0.5),
+          borderColor: Color.rgb(23, 160, 251),
+          borderWidth: 0,
+          cursorWidth: 1.5,
+          fixedWidth: true,
+          lineWrapping: true,
+          padding: rect(1, 1, 0, 0),
+          position: pt(-6.4, 27.1),
+          scale: 1.3258328251086384,
+          textAndAttributes: ['', {
+            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+            fontWeight: '900',
+            lineHeight: 1,
+            textStyleClasses: ['fas']
+          }]
+        }, part(InputLineDefault, {
+          name: 'search input',
+          dropShadow: null,
+          highlightWhenFocused: false,
+          borderColor: Color.rgb(224, 224, 224),
+          borderRadius: 2,
+          extent: pt(445.3, 34.3),
+          fill: Color.rgba(238, 238, 238, 0),
+          padding: rect(6, 4, -4, 2),
+          position: pt(11.9, 3.8),
+          placeholder: 'Search for components...'
+        }), part(Spinner, {
           name: 'spinner',
           position: pt(452.8, 6.3),
           visible: false
-        })), {
-          name: 'placeholder',
-          extent: pt(258, 32),
-          visible: true,
-          opacity: 0.6,
-          padding: rect(6, 4, -4, 2)
-        }, {
-          name: 'controls',
-          extent: pt(515.1, 599.9),
-          fill: Color.rgba(255, 255, 255, 0),
-          layout: new TilingLayout({
-            axis: 'column',
-            axisAlign: 'center',
-            orderByIndex: true,
-            padding: rect(16, 16, 0, 0),
-            resizePolicies: [['search input', {
-              height: 'fixed',
-              width: 'fill'
-            }], ['component files view', {
-              height: 'fixed',
-              width: 'fill'
-            }], ['master component list', {
-              height: 'fill',
-              width: 'fill'
-            }], ['button wrapper', {
-              height: 'fixed',
-              width: 'fill'
-            }]],
-            spacing: 16,
-            wrapSubmorphs: false
-          }),
-          submorphs: [{
-            name: 'search input',
-            borderColor: Color.rgb(204, 204, 204),
-            borderWidth: 1,
-            fontSize: 20,
-            padding: rect(6, 4, -4, 2),
-            textAndAttributes: ['f', null]
-          }]
-        }]
-      }), part(MullerColumnView, {
+        })]
+      }, part(MullerColumnView, {
         name: 'component files view',
         viewModel: { listMaster: ColumnListDefault },
         borderColor: Color.rgb(149, 165, 166),
@@ -1282,9 +1263,42 @@ const ComponentBrowser = component(PopupWindow, {
           align: 'right',
           axisAlign: 'center',
           orderByIndex: true,
+          resizePolicies: [['spacer', {
+            height: 'fixed',
+            width: 'fill'
+          }]],
           spacing: 15
         }),
-        submorphs: [part(LabeledCheckbox, {
+        submorphs: [part(DropDownList, {
+          name: 'sorting selector',
+          extent: pt(154.3, 25),
+          viewModel: {
+            openListInWorld: true,
+            listMaster: SystemList,
+            items: [
+              {
+                isListItem: true,
+                label: [...Icon.textAttribute('boxes'), ' Arrange by module', null],
+                value: 'by-module'
+              },
+              {
+                isListItem: true,
+                label: [...Icon.textAttribute('tag'), ' Arrange by name', null],
+                value: 'by-name'
+              }
+            ]
+          },
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Arrange by name', null]
+          }]
+        }), {
+          name: 'spacer',
+          height: 28.015625,
+          borderColor: Color.rgb(23, 160, 251),
+          borderWidth: 0,
+          fill: Color.transparent
+        }, part(LabeledCheckbox, {
           name: 'behavior toggle',
           activeCheckboxComponent: CheckboxActiveLight,
           inactiveCheckboxComponent: CheckboxInactiveLight,
@@ -1347,33 +1361,20 @@ const ComponentBrowserDark = component(ComponentBrowser, {
   submorphs: [{
     name: 'controls',
     submorphs: [{
-      name: 'search input',
-      fill: Color.rgb(112, 123, 124),
-      borderColor: Color.rgb(112, 123, 124),
-      borderWidth: 0,
-      borderRadius: 2,
-      master: TextInput,
-      padding: rect(6, 4, -4, 0),
-      fontSize: 20,
-      highlightWhenFocused: false,
-      placeholder: ['', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-        fontColor: Color.white,
-        fontWeight: '900',
-        lineHeight: 1,
-        paddingTop: '3px',
-        textStyleClasses: ['fas']
-      }, '  Search for components...', null],
+      name: 'search input wrapper',
+      fill: Color.rgb(122, 122, 122),
       submorphs: [{
-        name: 'placeholder',
-        fontFamily: '"IBM Plex Sans",Sans-Serif',
-        nativeCursor: 'text'
+        name: 'search icon',
+        fontColor: Color.rgba(255, 255, 255, 0.5)
       }, {
-        name: 'spinner',
-        master: LightSpinner,
-        visible: false,
-        position: pt(456.6, 4.4),
-        scale: 0.35
+        name: 'search input',
+        submorphs: [{
+          name: 'spinner',
+          master: LightSpinner,
+          visible: false,
+          position: pt(456.6, 4.4),
+          scale: 0.35
+        }]
       }]
     }, {
       name: 'component files view',
@@ -1388,27 +1389,32 @@ const ComponentBrowserDark = component(ComponentBrowser, {
     },
     {
       name: 'button wrapper',
-      submorphs: [{
-        name: 'behavior toggle',
-        master: LabeledCheckbox,
-        activeCheckboxComponent: CheckboxActive,
-        inactiveCheckboxComponent: CheckboxInactive
-      }, {
-        name: 'import button',
-        master: ButtonDarkDefault,
-        submorphs: [{
-          name: 'label',
-          textAndAttributes: ['', {
-            fontColor: Color.rgbHex('B2EBF2'),
-            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-            fontWeight: '900',
-            lineHeight: 1,
-            textStyleClasses: ['fas']
-          }, ' Import', {
-            fontFamily: 'IBM Plex Sans'
+      submorphs: [
+        {
+          name: 'sorting selector',
+          master: DarkDropDownList
+        },
+        {
+          name: 'behavior toggle',
+          master: LabeledCheckbox,
+          activeCheckboxComponent: CheckboxActive,
+          inactiveCheckboxComponent: CheckboxInactive
+        }, {
+          name: 'import button',
+          master: ButtonDarkDefault,
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['', {
+              fontColor: Color.rgbHex('B2EBF2'),
+              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontWeight: '900',
+              lineHeight: 1,
+              textStyleClasses: ['fas']
+            }, ' Import', {
+              fontFamily: 'IBM Plex Sans'
+            }]
           }]
         }]
-      }]
     }]
   }]
 });
