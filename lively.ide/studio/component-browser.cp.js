@@ -1,7 +1,7 @@
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 
-import { Spinner, TextInput, DarkPopupWindow } from './shared.cp.js';
+import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, TextInput, DarkPopupWindow } from './shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
@@ -16,6 +16,7 @@ import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { PopupWindow } from '../styling/shared.cp.js';
 import { LightSpinner } from 'lively.components/loading-indicator.cp.js';
+import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -622,6 +623,9 @@ export class ComponentBrowserModel extends ViewModel {
       isEpiMorph: {
         get () { return true; }
       },
+      importAlive: {
+        defaultValue: false
+      },
       db: {
         serialize: false,
         readOnly: true,
@@ -667,6 +671,11 @@ export class ComponentBrowserModel extends ViewModel {
       {
         signal: 'onMouseUp',
         handler: 'ensureComponentEntitySelected'
+      },
+      {
+        target: 'behavior toggle',
+        signal: 'clicked',
+        handler: 'toggleBehaviorImport'
       }
     ];
   }
@@ -682,6 +691,11 @@ export class ComponentBrowserModel extends ViewModel {
         this.ui.componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
       });
     }
+  }
+
+  onRefresh (change) {
+    super.onRefresh(change);
+    this.ui.behaviorToggle.setChecked(this.importAlive);
   }
 
   get systemInterface () { return localInterface; }
@@ -711,6 +725,10 @@ export class ComponentBrowserModel extends ViewModel {
   async importSelectedComponent () {
     const selectedComponent = this.getSelectedComponent();
     const importedComponent = part(selectedComponent.component);
+    if (!this.importAlive) {
+      // activate the behavior
+      withAllViewModelsDo(importedComponent, m => m.viewModel.detach());
+    }
     importedComponent.openInWorld();
     this._promise.resolve(importedComponent);
     this.close();
@@ -788,6 +806,10 @@ export class ComponentBrowserModel extends ViewModel {
 
   getSelectedComponent () {
     return this.view.getSubmorphsByStyleClassName('ExportedComponent').find(component => component.isSelected);
+  }
+
+  toggleBehaviorImport () {
+    this.importAlive = !this.importAlive;
   }
 
   parseInput () {
@@ -1100,10 +1122,11 @@ const ProjectSection = component({
     extent: pt(489, 101.2),
     fill: Color.rgba(0, 0, 0, 0),
     layout: new TilingLayout({
-      orderByIndex: true,
       hugContentsVertically: true,
+      orderByIndex: true,
       padding: rect(10, 10, 0, 0),
-      spacing: 10
+      spacing: 10,
+      wrapSubmorphs: true
     })
   }]
 });
@@ -1118,9 +1141,18 @@ const ProjectSectionDark = component(ProjectSection, {
   }]
 });
 
-// part(ComponentBrowser).openInWorld()
+const CheckboxActiveLight = component(CheckboxActive, {
+  fill: Color.rgb(66, 165, 245),
+  fontColor: Color.rgb(255, 255, 255)
+});
+
+const CheckboxInactiveLight = component(CheckboxInactive, {
+  borderColor: Color.rgb(66, 66, 66)
+});
+
 const ComponentBrowser = component(PopupWindow, {
   defaultViewModel: ComponentBrowserModel,
+  styleClasses: [],
   extent: pt(515, 640),
   layout: new TilingLayout({
     axis: 'column',
@@ -1164,15 +1196,10 @@ const ComponentBrowser = component(PopupWindow, {
         name: 'search input',
         dropShadow: null,
         highlightWhenFocused: false,
-        fill: Color.rgba(66, 73, 73, 0),
-        borderRadius: 0,
-        borderWidth: {
-          bottom: 1,
-          left: 0,
-          right: 0,
-          top: 0
-        },
-        borderColor: Color.rgb(204, 204, 204),
+        fill: Color.rgb(238, 238, 238),
+        borderRadius: 2,
+        borderWidth: 0,
+        borderColor: Color.rgb(224, 224, 224),
         layout: new ConstraintLayout({
           lastExtent: {
             x: 483,
@@ -1190,16 +1217,24 @@ const ComponentBrowser = component(PopupWindow, {
         extent: pt(640, 34.3),
         fontSize: 20,
         padding: rect(6, 4, -4, 2),
-        placeholder: 'Search for Components...',
+        placeholder: ['', {
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontColor: Color.darkGray,
+          fontWeight: '900',
+          lineHeight: 1,
+          paddingTop: '3px',
+          textStyleClasses: ['fas']
+        }, '  Search for components...', null],
         submorphs: [add(part(Spinner, {
           name: 'spinner',
-          position: pt(452.5, 5.2),
+          position: pt(452.8, 6.3),
           visible: false
         })), {
           name: 'placeholder',
+          extent: pt(258, 32),
+          visible: true,
           opacity: 0.6,
-          padding: rect(6, 4, -4, 2),
-          textAndAttributes: ['Search for Components...', null]
+          padding: rect(6, 4, -4, 2)
         }, {
           name: 'controls',
           extent: pt(515.1, 599.9),
@@ -1265,11 +1300,34 @@ const ComponentBrowser = component(PopupWindow, {
           orderByIndex: true,
           spacing: 15
         }),
-        submorphs: [part(SystemButton, {
+        submorphs: [part(LabeledCheckbox, {
+          name: 'behavior toggle',
+          activeCheckboxComponent: CheckboxActiveLight,
+          inactiveCheckboxComponent: CheckboxInactiveLight,
+          extent: pt(126.2, 32.5),
+          submorphs: [{
+            name: 'checkbox',
+            width: 15,
+            master: CheckboxActiveLight
+          }, {
+            name: 'prop label',
+            fontColor: Color.rgb(0, 0, 0),
+            textAndAttributes: ['Enable behavior', null]
+          }]
+        }), part(SystemButton, {
           name: 'import button',
+          extent: pt(80, 23.8),
           submorphs: [{
             name: 'label',
-            textAndAttributes: ['Import', null]
+            textAndAttributes: ['', {
+              fontColor: Color.rgb(74, 174, 79),
+              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontWeight: '900',
+              lineHeight: 1,
+              textStyleClasses: ['fas']
+            }, ' Import', {
+              fontFamily: 'IBM Plex Sans'
+            }]
 
           }]
         })]
@@ -1285,7 +1343,6 @@ const ComponentBrowser = component(PopupWindow, {
   ]
 });
 
-// part(ComponentBrowserDark).openInWorld()
 const ComponentBrowserDark = component(ComponentBrowser, {
   master: DarkPopupWindow,
   viewModel: {
@@ -1307,18 +1364,27 @@ const ComponentBrowserDark = component(ComponentBrowser, {
     name: 'controls',
     submorphs: [{
       name: 'search input',
+      fill: Color.rgb(112, 123, 124),
       borderColor: Color.rgb(112, 123, 124),
-      borderWidth: {
-        bottom: 1,
-        left: 0,
-        right: 0,
-        top: 0
-      },
-      borderRadius: 0,
+      borderWidth: 0,
+      borderRadius: 2,
       master: TextInput,
+      padding: rect(6, 4, -4, 0),
       fontSize: 20,
       highlightWhenFocused: false,
+      placeholder: ['', {
+        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontColor: Color.white,
+        fontWeight: '900',
+        lineHeight: 1,
+        paddingTop: '3px',
+        textStyleClasses: ['fas']
+      }, '  Search for components...', null],
       submorphs: [{
+        name: 'placeholder',
+        fontFamily: '"IBM Plex Sans",Sans-Serif',
+        nativeCursor: 'text'
+      }, {
         name: 'spinner',
         master: LightSpinner,
         visible: false,
@@ -1339,8 +1405,25 @@ const ComponentBrowserDark = component(ComponentBrowser, {
     {
       name: 'button wrapper',
       submorphs: [{
+        name: 'behavior toggle',
+        master: LabeledCheckbox,
+        activeCheckboxComponent: CheckboxActive,
+        inactiveCheckboxComponent: CheckboxInactive
+      }, {
         name: 'import button',
-        master: ButtonDarkDefault
+        master: ButtonDarkDefault,
+        submorphs: [{
+          name: 'label',
+          textAndAttributes: ['', {
+            fontColor: Color.rgbHex('B2EBF2'),
+            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+            fontWeight: '900',
+            lineHeight: 1,
+            textStyleClasses: ['fas']
+          }, ' Import', {
+            fontFamily: 'IBM Plex Sans'
+          }]
+        }]
       }]
     }]
   }]
