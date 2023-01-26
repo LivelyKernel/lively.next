@@ -415,16 +415,16 @@ export class SearchWidgetModel extends ViewModel {
 
       if (found.length > 0) {
         const currPos = this.target.cursorPosition;
-        const resultsBehindCursor = this.results.filter(resPos => lessEqPosition(resPos.range.start, currPos));
+        const resultsBehindCursor = this.results.filter(resPos => lessEqPosition(currPos, resPos.range.start));
         const firstResultBehindCursor = resultsBehindCursor[0];
-        const resultsBeforeCursor = this.results.filter(resPos => lessEqPosition(currPos, resPos.range.end));
+        const resultsBeforeCursor = this.results.filter(resPos => !lessEqPosition(currPos, resPos.range.end));
         const firstResultBeforeCursor = arr.last(resultsBeforeCursor);
         if (!firstResultBehindCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBeforeCursor);
         else if (!firstResultBeforeCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
-        else if (comparePosition(firstResultBehindCursor.range, firstResultBeforeCursor.range) === 0) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
+        else if (comparePosition(firstResultBehindCursor.range.start, firstResultBeforeCursor.range.start) === 0) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
         else {
-          const distanceToBefore = { row: currPos.row - firstResultBeforeCursor.range.end.row, column: currPos.column - firstResultBeforeCursor.end.column };
-          const distanceToBehind = { row: currPos.row - firstResultBehindCursor.range.start.row, column: currPos.column - firstResultBehindCursor.range.start.column };
+          const distanceToBefore = { row: Math.abs(currPos.row - firstResultBeforeCursor.range.end.row), column: Math.abs(currPos.column - firstResultBeforeCursor.range.end.column) };
+          const distanceToBehind = { row: Math.abs(currPos.row - firstResultBehindCursor.range.start.row), column: Math.abs(currPos.column - firstResultBehindCursor.range.start.column) };
           this.currentResultIndex = lessEqPosition(distanceToBefore, distanceToBehind) ? this.results.findIndex((res) => res === firstResultBeforeCursor) : this.results.findIndex((res) => res === firstResultBehindCursor);
         }
         this.addSearchMarkers();
