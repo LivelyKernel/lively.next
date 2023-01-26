@@ -55,9 +55,7 @@ const DefaultNumberWidget = component({
   fontSize: 16,
   clipMode: 'hidden',
   layout: new TilingLayout({
-    align: 'center',
-    axis: 'column',
-    orderByIndex: true
+    axisAlign: 'center'
   }),
   padding: rect(6, 2, -6, -2),
   submorphs: [
@@ -68,16 +66,19 @@ const DefaultNumberWidget = component({
     {
       name: 'button holder',
       fill: Color.transparent,
-      layout: new TilingLayout({ axis: 'column' }),
-      submorphs: [part(CaretButton, {
-        name: 'up',
-        submorphs: [{
-          name: 'icon',
-          padding: rect(6, 0, -2, -1),
-          textAndAttributes: Icon.textAttribute('sort-up')
-        }]
+      layout: new TilingLayout({
+        axis: 'column'
       }),
-      part(CaretButton, { name: 'down', rotation: Math.PI })]
+      submorphs: [
+        part(CaretButton, {
+          name: 'up',
+          submorphs: [{
+            name: 'icon',
+            padding: rect(6, 0, -2, -1),
+            textAndAttributes: Icon.textAttribute('sort-up')
+          }]
+        }),
+        part(CaretButton, { name: 'down', rotation: Math.PI })]
     }
   ]
 });
