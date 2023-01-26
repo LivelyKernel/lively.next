@@ -432,6 +432,7 @@ export class SearchWidgetModel extends ViewModel {
         let positionRange = { start: { row: start.row, column: start.column - 1 }, end: { row: end.row, column: end.column } };
         this.createCursorMarker(positionRange);
         this.target.centerRow(positionRange.start.row);
+        this.target.cursorPosition = positionRange.end;
       } else {
         this.cleanup();
       }
