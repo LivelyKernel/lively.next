@@ -1260,7 +1260,7 @@ const ComponentBrowser = component(PopupWindow, {
         }),
         submorphs: [part(DropDownList, {
           name: 'sorting selector',
-          extent: pt(154.3, 25),
+          extent: pt(149.6,25),
           viewModel: {
             openListInWorld: true,
             listMaster: SystemList,
@@ -1281,14 +1281,17 @@ const ComponentBrowser = component(PopupWindow, {
             name: 'label',
             textAndAttributes: ['Arrange by name', null]
           }]
-        }), {
-          name: 'spacer',
-          height: 28.015625,
-          borderColor: Color.rgb(23, 160, 251),
-          borderWidth: 0,
-          fill: Color.transparent
-        }, part(LabeledCheckbox, {
+        }), part(LabeledCheckbox, {
           name: 'behavior toggle',
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            orderByIndex: true,
+            padding: rect(10, 8, -10, 0),
+            resizePolicies: [['checkbox', {
+              height: 'fill',
+              width: 'fixed'
+            }]]
+          }),
           activeCheckboxComponent: CheckboxActiveLight,
           inactiveCheckboxComponent: CheckboxInactiveLight,
           extent: pt(126.2, 32.5),
@@ -1300,6 +1303,15 @@ const ComponentBrowser = component(PopupWindow, {
             name: 'prop label',
             fontColor: Color.rgb(0, 0, 0),
             textAndAttributes: ['Enable behavior', null]
+          }]
+        }), part(SystemButton, {
+          name: 'edit button',
+          extent: pt(80, 23.8),
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: [...Icon.textAttribute('edit', { fontColor: Color.rgbHex('D32F2F') }), ' Edit', {
+              fontFamily: 'IBM Plex Sans'
+            }]
           }]
         }), part(SystemButton, {
           name: 'import button',
@@ -1421,4 +1433,10 @@ const ComponentBrowserDark = component(ComponentBrowser, {
   })]
 });
 
-export { ComponentBrowser, ComponentBrowserDark, ComponentPreview, ComponentPreviewSelected, ProjectSection };
+export {
+  ComponentBrowser,
+  ComponentBrowserDark,
+  ComponentPreview,
+  ComponentPreviewSelected,
+  ProjectSection
+};
