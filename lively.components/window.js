@@ -101,12 +101,12 @@ export default class Window extends Morph {
     };
   }
 
-  static maximizedBounds () {
-    return $world.visibleBoundsExcludingTopBar().insetBy(40).withWholeNumbers();
+  static maximumBounds () {
+    return $world.visibleBoundsExcludingTopBar().insetBy(40).roundTo(1);
   }
 
   updateNonMinimizedBounds () {
-    if (!this.extent.roundTo(1).equals(Window.maximizedBounds().extent())) this.nonMinimizedBounds = this.position.extent(this.extent);
+    if (!this.extent.roundTo(1).equals(Window.maximumBounds().extent())) this.nonMinimizedBounds = this.position.extent(this.extent);
   }
 
   build () {
@@ -528,7 +528,7 @@ export default class Window extends Morph {
   toggleMaximize () { if (!this.minimized) this.applyMaximize(); }
 
   applyMaximize () {
-    const maximized = obj.equals(this.position.extent(this.extent.roundTo(1)), Window.maximizedBounds());
+    const maximized = obj.equals(this.position.extent(this.extent.roundTo(1)), Window.maximumBounds());
     if (!maximized) {
       $world.execCommand('resize active window', { window: this, how: 'full' });
     } else {

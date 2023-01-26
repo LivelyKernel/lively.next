@@ -795,9 +795,9 @@ export class Rectangle {
     return nearest;
   }
 
-  withWholeNumbers () {
-    const { x, y } = new Point(this.x, this.y).roundTo(1);
-    const { x: width, y: height } = new Point(this.width, this.height).roundTo(1);
+  roundTo (n) {
+    const { x, y } = new Point(this.x, this.y).roundTo(n);
+    const { x: width, y: height } = new Point(this.width, this.height).roundTo(n);
     return new Rectangle(x, y, width, height);
   }
 
