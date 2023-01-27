@@ -326,6 +326,13 @@ export class ExportedComponent extends Morph {
         }
       },
       isSelected: {},
+      isInLocalProject: {
+        derived: true,
+        readOnly: true,
+        get () {
+          return true; // FIXME: this should actually check if the component resides withing the CURRENT project once our project abstractions have landed
+        }
+      },
       preview: {
         derived: true,
         set (url) {
