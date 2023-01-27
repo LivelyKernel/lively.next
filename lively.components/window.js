@@ -579,6 +579,7 @@ export default class Window extends Morph {
       }).then(() => this.clipMode = 'visible');
       collapseButton.tooltip = 'collapse window';
     } else {
+      this._previewHTML = this.generatePreviewHTML();
       if (obj.equals(this.position.extent(this.extent).roundTo(1), Window.maximumBounds())) this.wasFullscreen = true;
       this.clipMode = 'hidden';
       let minimizedBounds = (this.minimizedBounds || bounds).withExtent(pt(width, 28));
@@ -716,6 +717,10 @@ export default class Window extends Morph {
     });
     this.relayoutWindowControls();
     this.renderOnGPU = false;
+  }
+
+  generatePreviewHTML () {
+    return $world.env.renderer.renderPreview(this, { ignorePosition: true });
   }
 
   get keybindings () {
