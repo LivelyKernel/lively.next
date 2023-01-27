@@ -2401,7 +2401,7 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
    * @param {*} opts
    * @returns
    */
-  renderPreview (morph, opts) {
+  renderPreview (morph, opts = {}) {
     // FIXME: doesn't work with scale yet...!
 
     const {
