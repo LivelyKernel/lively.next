@@ -1,3 +1,6 @@
+import { Icons } from 'lively.morphic/text/icons.js';
+import { Icon } from 'lively.morphic';
+import { obj } from 'lively.lang';
 /* global localStorage */
 
 function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
@@ -20,6 +23,28 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
 }
 
 export const commands = [
+
+  {
+    name: 'add icon at cursor position',
+    exec: async function (morph) {
+      morph.keepTmpEditMode = true;
+
+      const res = await $world.filterableListPrompt('Select Icon', Object.keys(Icons).map(iconName => {
+        return { isListItem: true, label: [...Icon.textAttribute(iconName, { paddingRight: '10px' }), iconName, {}], value: iconName };
+      }));
+      const [iconName] = res.selected;
+
+      let previousAttributes = morph.textAttributeAt(morph.cursorPosition);
+      morph.insertText(Icon.textAttribute(iconName));
+
+      if (previousAttributes) previousAttributes = obj.merge(morph.defaultTextStyle, previousAttributes);
+      else previousAttributes = morph.defaultTextStyle;
+      morph.insertText([' ', previousAttributes]);
+
+      morph.focus();
+      morph.keepTmpEditMode = false;
+    }
+  },
 
   {
     name: 'increase font size',
