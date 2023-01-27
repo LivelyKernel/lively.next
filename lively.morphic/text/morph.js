@@ -1579,6 +1579,7 @@ export class Text extends Morph {
   }
 
   get commands () {
+    if (!(this.document && this.textLayout)) return [];
     return this.pluginCollect('getCommands', (this._commands || []).concat(commands));
   }
 
