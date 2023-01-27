@@ -12,7 +12,10 @@ import { COLORS } from '../js/browser/index.js';
 import { localInterface } from 'lively-system-interface';
 import { once } from 'lively.bindings/index.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
-import { PopupWindow } from '../styling/shared.cp.js';
+import { DropDownList, DarkDropDownList } from 'lively.components/list.cp.js';
+import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
+import { Text } from 'lively.morphic/text/morph.js';
+import { PopupWindow, SystemList } from '../styling/shared.cp.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -458,11 +461,13 @@ export class ProjectEntry extends Morph {
   static get properties () {
     return {
       exportedComponents: {
+        derived: true,
         get () {
           return this.getSubmorphNamed('component previews').submorphs.map(m => m.component);
         }
       },
       selectedComponent: {
+        derived: true,
         get () {
           const selectedPreview = this.getSubmorphNamed('component previews').submorphs.find(m => m.isSelected);
           return selectedPreview && selectedPreview.component;
@@ -510,8 +515,8 @@ export class ProjectEntry extends Morph {
 
   async openComponentWorld () {
     const selectedComponent = this.selectedComponent || this.exportedComponents[0];
-    const { module: moduleName, export: name } = selectedComponent[Symbol.for('lively-module-meta')];
-    const browser = await $world.execCommand('open browser', { moduleName, codeEntity: [{ name }] });
+    const { moduleId: moduleName, exportedName: name } = selectedComponent[Symbol.for('lively-module-meta')];
+    await $world.execCommand('open browser', { moduleName, codeEntity: [{ name }] });
   }
 
   renderComponents (components) {
@@ -538,6 +543,22 @@ export class ProjectEntry extends Morph {
     if (editButton) editButton.deactivate = !!component.isInLocalProject;
     this.owner.getSubmorphsByStyleClassName('ExportedComponent').forEach(m => m.select(false));
     component.select(true);
+  }
+}
+
+export class NameSection extends ProjectEntry {
+  static get properties () {
+    return {
+      char: {
+        derived: true,
+        set (name) {
+          this.getSubmorphNamed('project title').value = [name, null];
+        },
+        get () {
+          return this.getSubmorphNamed('project title').value[0];
+        }
+      }
+    };
   }
 }
 
@@ -619,6 +640,11 @@ export class ComponentBrowserModel extends ViewModel {
       importAlive: {
         defaultValue: false
       },
+      groupBy: {
+        type: 'Enum',
+        values: ['name', 'module'],
+        defaultValue: 'module'
+      },
       db: {
         serialize: false,
         readOnly: true,
@@ -632,7 +658,6 @@ export class ComponentBrowserModel extends ViewModel {
     };
   }
 
-  // this.reifyBindings()
   get bindings () {
     return [
       {
@@ -671,6 +696,11 @@ export class ComponentBrowserModel extends ViewModel {
         target: 'behavior toggle',
         signal: 'clicked',
         handler: 'toggleBehaviorImport'
+      }, {
+        model: 'sorting selector',
+        signal: 'selection',
+        handler: 'changeComponentGrouping'
+      },
       {
         target: 'search clear button',
         signal: 'onMouseDown',
@@ -698,6 +728,15 @@ export class ComponentBrowserModel extends ViewModel {
   onRefresh (change) {
     super.onRefresh(change);
     this.ui.behaviorToggle.setChecked(this.importAlive);
+    this.handleColumnViewVisibility();
+  }
+
+  handleColumnViewVisibility () {
+    const { componentFilesView, searchInput } = this.ui;
+    componentFilesView.visible = false;
+    if (this.groupBy === 'name') {
+      // do nothing really
+    } else if (!searchInput.input) componentFilesView.visible = true;
   }
 
   get systemInterface () { return localInterface; }
@@ -770,17 +809,6 @@ export class ComponentBrowserModel extends ViewModel {
     const mod = localInterface.getModule(moduleName);
     const exports = await mod.exports();
     return exports.map(m => mod.recorder[m.exported]).filter(c => c && c.isComponent);
-  }
-
-  filterList () {
-    const { searchInput, importButton } = this.ui;
-    // this.toggleComponentList(!!searchInput.input);
-    this.toggleComponentList(true);
-    fun.debounceNamed('updateList', 100, async () => {
-      this.updateList(await this.filteredIndex(searchInput.input));
-      importButton.deactivated = !this.getSelectedComponent();
-      this.toggleBusyState(false);
-    })();
   }
 
   async withoutUpdates (cb) {
@@ -914,6 +942,12 @@ export class ComponentBrowserModel extends ViewModel {
 
   resetSearchInput () {
     this.ui.searchInput.clear();
+    this.reset();
+    if (this.groupBy === 'module') {
+      const fileView = this.models.componentFilesView;
+      const lastSelectedModule = fileView.getExpandedPath().find(m => m.type === 'cp.js');
+      if (lastSelectedModule) { fileView.treeData.display(lastSelectedModule); }
+    }
   }
 
   async filterAllComponents () {
@@ -934,8 +968,7 @@ export class ComponentBrowserModel extends ViewModel {
 
       // via system interface
 
-      // hide the column view if search term 
-      this.ui.componentFilesView.visible = term === '';
+      this.handleColumnViewVisibility();
 
       if (term === '') {
         searchClearButton.visible = false;
@@ -946,7 +979,7 @@ export class ComponentBrowserModel extends ViewModel {
       searchClearButton.visible = true;
 
       // filter the candidates and render the projects together with the matches
-      const filteredIndex = {};
+      let filteredIndex = {};
       await Promise.all(componentModules.map(async modUrl => {
         let components = await this.getComponentsInModule(modUrl);// retrieve the components exported in that module
         // get the matching components in the module
@@ -956,27 +989,32 @@ export class ComponentBrowserModel extends ViewModel {
         // store them in the filtered index if there is a match or more
         if (components.length > 0) filteredIndex[modUrl.replace(System.baseURL, '')] = components;
       }));
+
+      if (this.groupBy === 'name') {
+        const flattenedComponents = arr.flat(Object.values(filteredIndex));
+        filteredIndex = arr.groupBy(flattenedComponents, c => c.componentName[0]);
+      }
       // update the components list with the filtered projects
-      this.updateList(filteredIndex);
+      this.updateList(filteredIndex, this.groupBy === 'name');
       importButton.viewModel.deactivated = !this.getSelectedComponent();
       this.toggleBusyState(false);
     })();
   }
 
   // componentsByWorlds = filteredIndex
-  async updateList (componentsByWorlds) {
+  async updateList (componentsByWorlds, organizeByName) {
     const { masterComponentList } = this.ui;
     // do some smart updating of the list
     const newList = [];
     const currentList = masterComponentList.submorphs;
     const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
     // remove all empty lists
-    const orderedWorlds = (componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project'));
+    const orderedWorlds = arr.sortBy((componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project')), m => m);
+
     for (const worldName of orderedWorlds) {
-      const item = currentList.find(item => item.worldName === worldName) || part(this.sectionMaster);
-      item.worldName = worldName;
-      item.renderComponents(componentsByWorlds[worldName]);
-      newList.push(item);
+      newList.push(organizeByName
+        ? this.renderComponentsByChar(worldName, componentsByWorlds[worldName])
+        : this.renderComponentsInFile(worldName, componentsByWorlds[worldName]));
     }
 
     masterComponentList.submorphs = newList;
@@ -998,16 +1036,41 @@ export class ComponentBrowserModel extends ViewModel {
     }
   }
 
-  showComponentsInFile (fileName, componentsInFile) {
+  renderComponentsByChar (char, componentsByChar) {
     const { masterComponentList } = this.ui;
     const projectEntry = part(ProjectSection); // eslint-disable-line no-use-before-define
+    const currentList = masterComponentList.submorphs;
+
+    const charGroup = currentList.find(item => item.char === char) || part(this.sectionMaster, { type: NameSection });
+    charGroup.char = char;
+    charGroup.renderComponents(componentsByChar);
+
+    return charGroup;
+  }
+
+  renderComponentsInFile (fileName, componentsInFile) {
+    const { masterComponentList } = this.ui;
+    const currentList = masterComponentList.submorphs;
+    const projectEntry = currentList.find(item => item.worldName === fileName) || part(this.sectionMaster);
 
     projectEntry.worldName = fileName;
     projectEntry.renderComponents(componentsInFile);
+
+    return projectEntry;
+  }
+
+  showComponentsInFile (fileName, componentsInFile) {
+    const { masterComponentList } = this.ui;
+    const projectEntry = this.renderComponentsInFile(fileName, componentsInFile);
     masterComponentList.submorphs = [projectEntry];
     masterComponentList.layout.setResizePolicyFor(projectEntry, {
       width: 'fill', height: 'fixed'
     });
+  }
+
+  changeComponentGrouping (groupBy) {
+    this.groupBy = groupBy;
+    this.resetSearchInput();
   }
 }
 
@@ -1175,10 +1238,7 @@ const ComponentBrowser = component(PopupWindow, {
         axisAlign: 'center',
         orderByIndex: true,
         padding: rect(16, 16, 0, 0),
-        resizePolicies: [['search input', {
-          height: 'fixed',
-          width: 'fill'
-        }], ['search input wrapper', {
+        resizePolicies: [['search input wrapper', {
           height: 'fixed',
           width: 'fill'
         }], ['component files view', {
@@ -1285,28 +1345,26 @@ const ComponentBrowser = component(PopupWindow, {
           align: 'right',
           axisAlign: 'center',
           orderByIndex: true,
-          resizePolicies: [['spacer', {
-            height: 'fixed',
-            width: 'fill'
-          }]],
           spacing: 15
         }),
         submorphs: [part(DropDownList, {
           name: 'sorting selector',
-          extent: pt(149.6,25),
+          extent: pt(149.6, 25),
           viewModel: {
             openListInWorld: true,
             listMaster: SystemList,
             items: [
               {
                 isListItem: true,
-                label: [...Icon.textAttribute('boxes'), ' Arrange by module', null],
-                value: 'by-module'
+                label: [...Icon.textAttribute('boxes'), '  By module', null],
+                tooltip: 'Group the components by the modules they are defined in.',
+                value: 'module'
               },
               {
                 isListItem: true,
-                label: [...Icon.textAttribute('tag'), ' Arrange by name', null],
-                value: 'by-name'
+                label: [...Icon.textAttribute('tag', { paddingLeft: '2px', paddingTop: '2px' }), '  By name', null],
+                tooltip: 'Group the components by their names',
+                value: 'name'
               }
             ]
           },
@@ -1369,6 +1427,7 @@ const ComponentBrowser = component(PopupWindow, {
       submorphs: [{
         name: 'title',
         fontSize: 18,
+        reactsToPointer: false,
         textAndAttributes: ['Browse Components', null]
       }]
     }
