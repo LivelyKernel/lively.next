@@ -522,7 +522,9 @@ export class ProjectEntry extends Morph {
 
   selectComponent (component) {
     const importButton = this.get('import button');
+    const editButton = this.get('edit button');
     if (importButton) importButton.deactivated = false;
+    if (editButton) editButton.deactivate = !!component.isInLocalProject;
     this.owner.getSubmorphsByStyleClassName('ExportedComponent').forEach(m => m.select(false));
     component.select(true);
   }
@@ -632,6 +634,7 @@ export class ComponentBrowserModel extends ViewModel {
         signal: 'fire',
         handler: 'importSelectedComponent'
       },
+      { model: 'edit button', signal: 'fire', handler: 'editSelectedComponent' },
       {
         target: 'search input',
         signal: 'inputChanged',
@@ -647,7 +650,7 @@ export class ComponentBrowserModel extends ViewModel {
       { signal: 'onMouseDown', handler: 'focus' },
       {
         signal: 'onMouseUp',
-        handler: 'ensureImportButton'
+        handler: 'ensureButtonControls'
       },
       {
         signal: 'onMouseUp',
@@ -663,9 +666,10 @@ export class ComponentBrowserModel extends ViewModel {
 
   focus () { this.view.bringToFront(); }
 
-  ensureImportButton () {
+  ensureButtonControls () {
     const selectedComponent = this.getSelectedComponent();
     this.models.importButton.deactivated = !selectedComponent;
+    this.models.editButton.deactivated = !selectedComponent;
   }
 
   viewDidLoad () {
@@ -696,7 +700,7 @@ export class ComponentBrowserModel extends ViewModel {
     if (!pos) view.center = $world.visibleBounds().center();
     else view.position = pos;
     this.ui.searchInput.focus();
-    this.ensureImportButton();
+    this.ensureButtonControls();
     return this._promise.promise;
   }
 
@@ -715,6 +719,12 @@ export class ComponentBrowserModel extends ViewModel {
     importedComponent.openInWorld();
     this._promise.resolve(importedComponent);
     this.close();
+  }
+
+  async editSelectedComponent () {
+    const selectedComponent = this.getSelectedComponent();
+    const editableComponent = await selectedComponent.component.edit();
+    if (editableComponent) editableComponent.openInWorld();
   }
 
   toggleBusyState (active) {
@@ -1408,6 +1418,22 @@ const ComponentBrowserDark = component(ComponentBrowser, {
           master: LabeledCheckbox,
           activeCheckboxComponent: CheckboxActive,
           inactiveCheckboxComponent: CheckboxInactive
+        }, {
+          name: 'edit button',
+          master: ButtonDarkDefault,
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.rgb(255, 255, 255),
+            textAndAttributes: ['', {
+              fontColor: Color.rgbHex('B2EBF2'),
+              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontWeight: '900',
+              lineHeight: 1,
+              textStyleClasses: ['fas']
+            }, ' Edit', {
+              fontFamily: 'IBM Plex Sans'
+            }]
+          }]
         }, {
           name: 'import button',
           master: ButtonDarkDefault,
