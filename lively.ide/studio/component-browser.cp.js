@@ -1,7 +1,6 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, ConstraintLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
-
-import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, TextInput, DarkPopupWindow } from './shared.cp.js';
+import { TilingLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
@@ -667,6 +666,10 @@ export class ComponentBrowserModel extends ViewModel {
         target: 'behavior toggle',
         signal: 'clicked',
         handler: 'toggleBehaviorImport'
+      {
+        target: 'search clear button',
+        signal: 'onMouseDown',
+        handler: 'resetSearchInput'
       }
     ];
   }
@@ -907,10 +910,14 @@ export class ComponentBrowserModel extends ViewModel {
     this._componentIndex = arr.groupBy(index, m => m.worldName);
   }
 
+  resetSearchInput () {
+    this.ui.searchInput.clear();
+  }
+
   async filterAllComponents () {
     fun.debounceNamed('filterAllComponents', 200, async () => {
       this.toggleBusyState(true);
-      const { importButton, componentFilesView, searchInput } = this.ui;
+      const { importButton, componentFilesView, searchInput, searchClearButton } = this.ui;
       const term = searchInput.input;
       const parsedInput = this.parseInput();
       const rootUrls = componentFilesView.treeData.root.subNodes.map(m => m.url).slice(1); // ignore the popular stuff
@@ -929,9 +936,12 @@ export class ComponentBrowserModel extends ViewModel {
       this.ui.componentFilesView.visible = term === '';
 
       if (term === '') {
+        searchClearButton.visible = false;
         this.toggleBusyState(false);
         return;
       }
+
+      searchClearButton.visible = true;
 
       // filter the candidates and render the projects together with the matches
       const filteredIndex = {};
@@ -1218,14 +1228,10 @@ const ComponentBrowser = component(PopupWindow, {
           extent: pt(17.5, 18),
           fontSize: 14,
           fontColor: Color.rgba(0, 0, 0, 0.5),
-          borderColor: Color.rgb(23, 160, 251),
-          borderWidth: 0,
           cursorWidth: 1.5,
           fixedWidth: true,
-          lineWrapping: true,
           padding: rect(1, 1, 0, 0),
-          position: pt(-6.4, 27.1),
-          scale: 1.3258328251086384,
+          scale: 1.32,
           textAndAttributes: ['', {
             fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
             fontWeight: '900',
@@ -1245,9 +1251,23 @@ const ComponentBrowser = component(PopupWindow, {
           placeholder: 'Search for components...'
         }), part(Spinner, {
           name: 'spinner',
-          position: pt(452.8, 6.3),
           visible: false
-        })]
+        }), {
+          type: Text,
+          name: 'search clear button',
+          nativeCursor: 'pointer',
+          visible: false,
+          fontColor: Color.rgba(0, 0, 0, 0.5),
+          fontSize: 25,
+          lineHeight: 2,
+          padding: rect(1, 1, 9, 0),
+          textAndAttributes: ['', {
+            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+            fontWeight: '900',
+            lineHeight: 1,
+            textStyleClasses: ['fas']
+          }]
+        }]
       }, part(MullerColumnView, {
         name: 'component files view',
         viewModel: { listMaster: ColumnListDefault },
