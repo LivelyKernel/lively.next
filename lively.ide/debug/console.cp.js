@@ -292,6 +292,7 @@ const Console = component({
   needsDocument: true,
   fixedWidth: true,
   fixedHeight: true,
+  selectionMode: 'native',
   extent: pt(500, 400),
   fill: Color.black.withA(.9),
   fontColor: Color.white,
