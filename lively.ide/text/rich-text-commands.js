@@ -1,4 +1,4 @@
-/* global localStorage,System */
+/* global localStorage */
 
 function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
   const sel = target.selection;
@@ -19,7 +19,7 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
   });
 }
 
-export var commands = [
+export const commands = [
 
   {
     name: 'increase font size',
@@ -91,7 +91,7 @@ export var commands = [
     exec: async function (morph, args = {}) {
       let link;
       if (!args.hasOwnProperty('link')) {
-        var sel = morph.selection;
+        const sel = morph.selection;
         const { link: oldLink } = morph.getStyleInRange(sel);
         link = await morph.world().prompt('Set link', {
           input: oldLink || 'https://',
