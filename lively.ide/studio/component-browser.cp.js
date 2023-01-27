@@ -501,11 +501,6 @@ export class ProjectEntry extends Morph {
     const selectedComponent = this.selectedComponent || this.exportedComponents[0];
     const { moduleId: moduleName, exportedName: name } = selectedComponent[Symbol.for('lively-module-meta')];
     const browser = await $world.execCommand('open browser', { moduleName, codeEntity: [{ name }] });
-    browser.getWindow().animate({
-      right: browser.getWindow().right - browser.getWindow().width,
-      duration: 300,
-      easing: easings.outExpo
-    });
   }
 
   renderComponents (components) {
