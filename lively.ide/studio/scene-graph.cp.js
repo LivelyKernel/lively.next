@@ -14,7 +14,7 @@ export class MorphPanelModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset', 'isSceneGraphPanel'];
+          return ['toggle', 'onWorldResize', 'relayout', 'clearFocus', 'reset', 'isSceneGraphPanel', 'refresh'];
         }
       },
       bindings: {
@@ -90,7 +90,7 @@ export class MorphPanelModel extends ViewModel {
       if (change.target && sceneGraph.ignoreMorph(change.target)) return;
       if (change.args && !change.args[0].isHalo && sceneGraph.ignoreMorph(change.args[0])) return;
       if (change.target.ownerChain().find(m => sceneGraph.ignoreMorph(m))) return;
-      fun.debounceNamed('scene-graph-update', 50, () => sceneGraph.refresh())();
+      fun.debounceNamed('scene-graph-update', 50, () => this.refresh())();
     }
   }
 
@@ -144,6 +144,10 @@ export class MorphPanelModel extends ViewModel {
       });
       view.remove();
     }
+  }
+
+  refresh () {
+    this.ui.sceneGraph.refresh();
   }
 
   resize ($onDrag, evt) {
