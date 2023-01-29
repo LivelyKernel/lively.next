@@ -500,7 +500,7 @@ const MorphNode = component({
     orderByIndex: true,
     padding: rect(10, 0, 0, 0),
     resizePolicies: [['name label', {
-      height: 'fixed',
+      height: 'fill',
       width: 'fill'
     }]],
     spacing: 10,
@@ -508,7 +508,7 @@ const MorphNode = component({
   }),
   draggable: true,
   grabbable: true,
-  extent: pt(242.2, 30.8),
+  extent: pt(174.1, 30.8),
   submorphs: [{
     type: Label,
     name: 'morph icon',
@@ -525,15 +525,17 @@ const MorphNode = component({
     }]
   }, part(PropLabel, {
     name: 'name label',
-    reactsToPointer: false,
+    lineHeight: 2.5,
     fixedWidth: true,
+    fixedHeight: true,
+    clipMode: 'hidden',
+    reactsToPointer: false,
     master: PropLabel,
     padding: rect(0),
     textAndAttributes: ['some text morph', null]
   }), {
     type: Label,
     name: 'visibility icon',
-    visible: false,
     fill: Color.rgba(229, 231, 233, 0),
     fontColor: Color.rgb(208, 208, 208),
     fontFamily: 'Material Icons',
