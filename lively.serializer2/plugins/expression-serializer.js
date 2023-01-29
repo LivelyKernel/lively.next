@@ -328,12 +328,13 @@ export function serializeNestedProp (name, val, serializerContext, members = ['t
 function getArrayExpression (name, list, path, subopts) {
   const { nestedExpressions, root, dropMorphsWithNameOnly, exposeMasterRefs } = subopts;
   return list.map((v, i) => {
+    const subPath = (path ? path + '.' + name + '.' + i : name + '.' + i);
     if (v && v.isMorph) {
       let val = serializeSpec(v, { // eslint-disable-line no-use-before-define
         ...subopts,
         dropMorphsWithNameOnly: !!v.master && exposeMasterRefs || dropMorphsWithNameOnly,
         root: exposeMasterRefs || root,
-        path: v.master && exposeMasterRefs ? '' : (path ? path + '.' + name + '.' + i : name + '.' + i)
+        path: v.master && exposeMasterRefs ? '' : subPath
       });
       if (val.__expr__) {
         // insert the expression as nested
@@ -345,6 +346,9 @@ function getArrayExpression (name, list, path, subopts) {
     }
     if (v && v.__serialize__) {
       return getExpression(name + '.' + i, v, subopts);
+    }
+    if (v && isCustomObject(v)) {
+      return handleCustomObject(name + '.' + i, v, subPath, subopts);
     }
     return v;
   });
@@ -397,6 +401,7 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
     }
     // all of the above work is then discarded basically...
     if (asExpression && exported.textAndAttributes) {
+      // properly serialize some of the attributes such as fontColor
       exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes, path, opts);
     }
   }
@@ -446,6 +451,7 @@ function isCustomObject (val) {
 }
 
 function handleCustomObject (name, val, path, subopts) {
+  val = { ...val }; // prevent in place modification
   for (const prop in val) {
     if (val[prop] && val[prop].isMorph) {
       val[prop] = serializeSpec(val[prop], { // eslint-disable-line no-use-before-define
@@ -453,7 +459,11 @@ function handleCustomObject (name, val, path, subopts) {
         path: path ? path + '.' + name + '.' + prop : name + '.' + prop
       });
     }
+    if (val[prop] && val[prop].__serialize__) {
+      val[prop] = getExpression(name + '.' + prop, val[prop], subopts);
+    }
   }
+  return val;
 }
 
 /**
@@ -551,7 +561,8 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       continue;
     }
     if (isCustomObject(val)) {
-      handleCustomObject(name, val, path, opts);
+      exported[name] = handleCustomObject(name, val, path, opts);
+      continue;
     }
     exported[name] = val;
   }
