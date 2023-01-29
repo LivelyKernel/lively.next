@@ -479,7 +479,9 @@ export class ComponentChangeTracker {
       updatedSource = this.handleRemovedMorph(change, parsedComponent, sourceCode, requiredBindings);
     }
 
-    if (change.selector === 'replace' || change.prop === 'textAndAttributes') {
+    if (change.selector === 'replace' ||
+        change.prop === 'textAndAttributes' ||
+        change.selector === 'addTextAttribute') {
       updatedSource = this.handleTextAttributes(change, parsedComponent, sourceCode, requiredBindings);
     }
 
@@ -528,7 +530,7 @@ export class ComponentChangeTracker {
   handleTextAttributes (replaceChange, parsedComponent, sourceCode, requiredBindings) {
     const { target: textMorph } = replaceChange;
     const responsibleComponent = getComponentScopeFor(parsedComponent, textMorph);
-    const morphDef = getMorphNode(responsibleComponent, textMorph);
+    const morphDef = getPropertiesNode(responsibleComponent, textMorph);
     if (!morphDef) {
       return this.uncollapseSubmorphHierarchy(sourceCode, responsibleComponent, textMorph);
     }
