@@ -617,7 +617,7 @@ export default class Window extends Morph {
     this.updateNonMinimizedBounds();
   }
 
-  async close () {
+  async close (activateNextWindow = true) {
     let proceed;
     if (this.targetMorph && typeof this.targetMorph.onWindowClose === 'function') { proceed = await this.targetMorph.onWindowClose(); }
     if (proceed === false) return;
@@ -625,8 +625,10 @@ export default class Window extends Morph {
     this.deactivate();
     this.remove();
 
-    const next = world.activeWindow() || arr.last(world.getWindows());
-    next && next.activate();
+    if (activateNextWindow) {
+      const next = world.activeWindow() || arr.last(world.getWindows());
+      next && next.activate();
+    }
 
     signal(this, 'windowClosed', this);
   }
