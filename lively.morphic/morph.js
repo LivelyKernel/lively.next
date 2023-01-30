@@ -1298,7 +1298,9 @@ export class Morph {
         let target;
         changes.forEach(change => {
           target = change.target;
-          change.reverseApply();
+          this.withMetaDo({ metaInteraction: true }, () => {
+            change.reverseApply();
+          });
           animConfig[change.prop] = change.value;
         });
         return target && target.animate(animConfig);
