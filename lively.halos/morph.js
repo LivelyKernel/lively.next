@@ -2008,7 +2008,7 @@ export default class Halo extends Morph {
     const t = this.target;
     const topBar = this.topBar;
 
-    if (!t.isText) return;
+    if (!t.isText && !t.editorModeName === 'richText') return;
 
     // this makes sense even if target is not readonly
     // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
@@ -2022,9 +2022,9 @@ export default class Halo extends Morph {
     });
 
     connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
-    t.showIconButton();
     // switch to hand mode to stop halo from eating clicks for editing
     topBar.setEditMode('Hand', true, true);
+    t.editorPlugin.showIconButton(true);
     this.remove();
   }
 
