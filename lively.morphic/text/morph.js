@@ -22,7 +22,6 @@ import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
 import { Icon, Icons } from './icons.js';
 import { ShadowObject } from '../rendering/morphic-default.js';
-import { TilingLayout } from '../layout.js';
 
 /**
  * A Morph to display and edit text.
@@ -3942,32 +3941,6 @@ export class Text extends Morph {
     }
   }
 
-  showIconButton () {
-    System.import('lively.morphic').then(
-      async (morphic) => {
-        const { PropertyLabel, PropertyLabelHovered } = await System.import('lively.ide/studio/shared.cp.js');
-        const iconButton = morphic.part(PropertyLabel, {
-          tooltip: 'Insert Icon',
-          fontSize: 14,
-          textAndAttributes: Icon.textAttribute('heart-music-camera-bolt')
-        });
-        const iconButtonHolder = new Morph({
-          fill: Color.rgb(30, 30, 30).withA(0.95),
-          borderRadius: 3,
-          layout: new TilingLayout({
-            hugContentsVertically: true,
-            hugContentsHorizontally: true
-          }),
-          submorphs: [
-            iconButton]
-        });
-        iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
-        this.iconButton = iconButton;
-        this.iconButton.onMouseDown = () => this.execCommand('add icon at cursor position');
-        iconButtonHolder.openInWorld(this.topRight);
-      });
-  }
-
   cancelTemporaryEdit (evt, calledFromConnection = true) {
     if (this.keepTmpEditMode) return;
 
@@ -3993,9 +3966,10 @@ export class Text extends Morph {
     topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
     this.collapseSelection();
-    this.editorPlugin?.removeFormattingPopUp && this.editorPlugin.removeFormattingPopUp(true);
-    this.iconButton.owner.remove();
-    delete this.iconButton;
+    if (this.editorModeName === 'richText') {
+      this.editorPlugin.removeFormattingPopUp(true);
+      this.editorPlugin.removeIconButton();
+    }
     topBar.showHaloFor(this);
   }
 }

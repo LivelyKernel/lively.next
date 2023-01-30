@@ -1,9 +1,10 @@
 
-import { part, easings } from 'lively.morphic';
+import { part, TilingLayout, Morph, Icon, easings } from 'lively.morphic';
 import { TextFormattingPopUp } from './text-formatting-popup.cp.js';
-import { Point } from 'lively.graphics';
+import { Point, Color } from 'lively.graphics';
 import EditorPlugin from '../editor-plugin.js';
 import { connect, disconnect } from 'lively.bindings';
+import { PropertyLabel, PropertyLabelHovered } from '../studio/shared.cp.js';
 
 export class RichTextPlugin extends EditorPlugin {
   get shortName () { return 'richText'; }
@@ -32,6 +33,32 @@ export class RichTextPlugin extends EditorPlugin {
       this.showFormattingPopUp();
       this.textMorph.wantsFormattingPopUp = false;
     }
+  }
+
+  showIconButton () {
+    const iconButton = part(PropertyLabel, {
+      tooltip: 'Insert Icon',
+      fontSize: 14,
+      textAndAttributes: Icon.textAttribute('heart-music-camera-bolt')
+    });
+    const iconButtonHolder = new Morph({
+      fill: Color.rgb(30, 30, 30).withA(0.95),
+      borderRadius: 3,
+      layout: new TilingLayout({
+        hugContentsVertically: true,
+        hugContentsHorizontally: true
+      }),
+      submorphs: [
+        iconButton]
+    });
+    iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
+    this.textMorph.iconButton = iconButton;
+    this.textMorph.iconButton.onMouseDown = () => this.textMorph.execCommand('add icon at cursor position');
+    iconButtonHolder.openInWorld(this.textMorph.topRight);
+  }
+
+  removeIconButton () {
+    this.textMorph.iconButton.remove();
   }
 
   showFormattingPopUp () {
