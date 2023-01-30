@@ -685,8 +685,13 @@ export default class Window extends Morph {
     return arr.last(w.getWindows()) === this;
   }
 
-  activate () {
+  activate (fromWindowSwitcher = false) {
     if (this.isFaderActive()) return;
+
+    if (fromWindowSwitcher && this.minimized) {
+      this.toggleMinimize();
+    }
+
     this.targetMorph.onWindowActivated();
 
     this.master.whenApplied().then(() => {
