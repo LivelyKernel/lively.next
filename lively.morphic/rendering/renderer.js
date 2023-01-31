@@ -2406,7 +2406,7 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
 
     const {
       width = 100, height = 100, center = true, ignoreMorphs = [],
-      asNode = false
+      asNode = false, enforceGoalBounds = false
     } = opts;
     const {
       scale, position, origin, rotation
@@ -2417,7 +2417,8 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
     const invTfm = new Transform(position.negated(), 0, pt(safeScale, safeScale));
     const bbox = invTfm.transformRectToRect(morph.bounds());
     const w = bbox.width; const h = bbox.height;
-    const ratio = Math.max(0.1, Math.min(goalWidth / w, goalHeight / h));
+    let ratio = Math.min(goalWidth / w, goalHeight / h);
+    if (!enforceGoalBounds) ratio = Math.max(ratio, 0.1);
     let tfm = new Transform(
       bbox.topLeft().negated().scaleBy(ratio).subPt(origin),
       rotation, pt(ratio, ratio));
