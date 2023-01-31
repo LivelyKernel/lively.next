@@ -2109,7 +2109,11 @@ export class Text extends Morph {
     const textAndAttributes = this.document.textAndAttributes;
     this.textString = '';
     this.document = null;
-    this.renderingState.needsScrollLayerRemoved = true;
+    if (this.renderingState.needsScrollLayerAdded) {
+      this.renderingState.needsScrollLayerAdded = false;
+    } else {
+      this.renderingState.needsScrollLayerRemoved = true;
+    }
     this.requestTextLayoutMeasuring();
     this.textLayout = null;
     this.selection = null;
