@@ -727,7 +727,7 @@ export default class Window extends Morph {
   }
 
   generatePreviewHTML () {
-    return $world.env.renderer.renderPreview(this, { ignorePosition: true });
+    return $world.env.renderer.renderPreview(this, { ignorePosition: true, enforceGoalBounds: true });
   }
 
   get keybindings () {
