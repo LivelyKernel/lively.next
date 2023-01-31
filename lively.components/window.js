@@ -141,6 +141,8 @@ export default class Window extends Morph {
       ],
       [
         'Window Management', [
+          { alias: 'open window switcher', target: $world, command: 'window switcher' },
+          { isDivider: true },
           { alias: 'minimize all except this', target: w, command: 'toggle minimize all except active window' },
           { alias: 'close all except this', target: w, command: 'close all except active window' },
           { alias: 'close all like this', target: w, command: 'close all like this window' },
