@@ -226,9 +226,10 @@ const SystemInspector = component({
 
 function openInWindow (modelAttributes) {
   const inspector = part(SystemInspector, { viewModel: modelAttributes });
-  inspector.openInWindow();
+  const w = inspector.openInWindow();
   inspector.env.forceUpdate();
   inspector.viewModel.relayout();
+  w.title = `Inspector for ${inspector.targetObject.name}`;
   return inspector;
 }
 
