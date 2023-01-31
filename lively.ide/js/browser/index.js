@@ -1203,6 +1203,10 @@ export class BrowserModel extends ViewModel {
     sourceEditor.readOnly = true;
     this.updateSource('');
     metaInfoText.showInactive();
+    let selectedPathItems = this.ui.columnView.getExpandedPath();
+    selectedPathItems = selectedPathItems.slice(selectedPathItems.findIndex(i => i.type === 'package'));
+    selectedPathItems = selectedPathItems.map(i => i.name);
+    this.view.getWindow().title = `browser - [${selectedPathItems[0]}] ${selectedPathItems.slice(1).join('/')}`;
   }
 
   reactivateEditor () {
@@ -1214,7 +1218,6 @@ export class BrowserModel extends ViewModel {
 
   async onModuleSelected (m) {
     const pack = this.selectedPackage;
-    const win = this.view.getWindow();
 
     if (this._return) return;
     if (this.selectedModule && this.hasUnsavedChanges()) {
@@ -1232,7 +1235,6 @@ export class BrowserModel extends ViewModel {
 
     if (!m) {
       this.updateSource('');
-      if (win) win.title = 'browser - ' + (pack && pack.name || '');
       if (!this.ui.tabs.selectedTab.caption.includes(pack.name)) this.ui.tabs.selectedTab.caption = pack.name;
       this.updateCodeEntities(null);
       this.ui.metaInfoText.textString = '';
@@ -1252,7 +1254,6 @@ export class BrowserModel extends ViewModel {
 
     try {
       const system = this.systemInterface;
-      const win = this.view.getWindow();
 
       // fixme: actuall perform that in the conext of the module
       if (this.isTestModule(await system.moduleRead(m.url))) {
@@ -1281,7 +1282,6 @@ export class BrowserModel extends ViewModel {
         }
       }
 
-      if (win) win.title = `browser - [${pack.name}] ${m.nameInPackage}`;
       this.ui.tabs.selectedTab.caption = `[${pack.name}] ${m.nameInPackage}`;
       const source = await system.moduleRead(m.url);
       this.updateSource(source, { row: 0, column: 0 });
@@ -1369,6 +1369,7 @@ export class BrowserModel extends ViewModel {
       // ` (${await system.moduleFormat(mod.url)} format)`, {}
       // ' - ', {}
     ]);
+    this.view.getWindow().title = `browser - [${pack.name}] ${mod.nameInPackage || ''} `;
   }
 
   updateFocusedCodeEntityDebounced () {
@@ -1519,7 +1520,7 @@ export class BrowserModel extends ViewModel {
         const ast = this.editorPlugin.getNavigator().ensureAST(sourceEditor);
         hasTests = this.isTestModule(ast || sourceEditor.textString);
       } catch (err) {
-        console.warn(`sytem browser updateTestUI: ${err}`);
+        console.warn(`sytem browser updateTestUI: ${err}`); // eslint-disable-line no-console
         hasTests = false;
       }
     }
