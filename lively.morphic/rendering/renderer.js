@@ -2457,6 +2457,12 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
     },
     node => Array.from(node.childNodes));
 
+    if (opts.ignorePosition) {
+      node.style.left = null;
+      node.style.top = null;
+      node.style.transform = node.style.transform.replace(/translate\([^\)]*\)/, '');
+    }
+
     return asNode ? node : node.outerHTML;
   }
 }
