@@ -14,6 +14,7 @@ import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
 import { WorldBrowser } from './studio/world-browser.cp.js';
 import { Console } from './debug/console.cp.js';
+import { WindowSwitcher } from './window-switcher.cp.js';
 
 const commands = [
 
@@ -356,54 +357,10 @@ const commands = [
   {
     name: 'window switcher',
     exec: async (world) => {
-      const p = world.activePrompt();
-      if (p && p.historyId === 'lively.morphic-window switcher') {
-        p.focus();
-        return p.get('list').execCommand('select down');
-      }
-
-      const wins = world.submorphs.filter(({ isWindow }) => isWindow).reverse()
-        .map(win => ({ isListItem: true, string: win.title || String(win), value: win }));
-      wins.forEach(m => {
-        m.value.opacity = 0.5;
-        m.value.blur = 1;
-      });
-      let selectedWindow;
-      let prevMinimizedState;
-      const answer = await world.filterableListPrompt(
-        'Choose window', wins, {
-          preselect: 1,
-          requester: world,
-          historyId: 'lively.morphic-window switcher',
-          onSelection: sel => {
-            if (selectedWindow) {
-              selectedWindow.minimized = prevMinimizedState;
-              selectedWindow.blur = 1;
-              selectedWindow.animate({
-                opacity: 0.3, duration: 200
-              });
-            }
-            selectedWindow = sel;
-            if (sel) {
-              sel.animate({ opacity: 1, duration: 200 });
-              sel.blur = 0;
-              prevMinimizedState = sel.minimized;
-              sel.minimized = false;
-            }
-          },
-          width: world.visibleBounds().extent().x * 1 / 3,
-          itemPadding: Rectangle.inset(4)
-        });
-      const { selected: [win] } = answer;
-      wins.forEach(m => {
-        m.value.opacity = 1;
-        m.value.blur = 0;
-      });
-      if (win) {
-        win.activate();
-        win.minimized = false;
-      }
-      return true;
+      if ($world.get('window switcher')) return;
+      const switcher = $world.addMorph(part(WindowSwitcher));
+      if (switcher.windowsData.length === 0) switcher.close();
+      $world.setStatusMessage('No windows opened.');
     }
   },
 
