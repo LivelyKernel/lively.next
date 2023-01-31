@@ -358,9 +358,11 @@ const commands = [
     name: 'window switcher',
     exec: async (world) => {
       if ($world.get('window switcher')) return;
-      const switcher = $world.addMorph(part(WindowSwitcher));
-      if (switcher.windowsData.length === 0) switcher.close();
-      $world.setStatusMessage('No windows opened.');
+      if ($world.getWindows().length === 0) {
+        $world.setStatusMessage('No windows opened.');
+        return;
+      }
+      $world.addMorph(part(WindowSwitcher));
     }
   },
 
