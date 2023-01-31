@@ -21,7 +21,7 @@ export class FlapModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['onWorldResize', 'isFlap'];
+          return ['onWorldResize', 'isFlap', 'executeAction'];
         }
       }
     };
