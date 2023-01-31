@@ -48,6 +48,7 @@ export class ComponentChangeTracker {
    * @type { Text }
    */
   get sourceEditor () {
+    if (!this.componentModule) return;
     const openBrowsers = $world.withAllSubmorphsSelect(browser =>
       browser.isBrowser && browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') === this.componentModuleId);
     const qualifiedBrowser = openBrowsers.find(openBrowser => {
