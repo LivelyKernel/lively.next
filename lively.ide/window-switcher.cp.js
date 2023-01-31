@@ -154,7 +154,7 @@ class WindowSwitcherModel extends ViewModel {
     }
     this.ui.clearButton.visible = true;
     this.windowsData.forEach(winData => {
-      if (!winData.title.includes(input)) winData.preview.remove();
+      if (!winData.title.toLowerCase().includes(input.toLowerCase())) winData.preview.remove();
       else this.ui.previewHolder.addMorph(winData.preview);
     });
   }
