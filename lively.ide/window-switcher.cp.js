@@ -44,7 +44,7 @@ class WindowPreviewModel extends ViewModel {
   onMouseDown (evt) {
     if (evt.targetMorph === this.ui.closeButton) return;
     this.windowSwitcher.close();
-    this.window.activate(true);
+    this.window.activate(null, true);
   }
 
   onHoverIn () {
