@@ -687,7 +687,7 @@ export default class Window extends Morph {
     return arr.last(w.getWindows()) === this;
   }
 
-  activate (fromWindowSwitcher = false) {
+  activate (evt, fromWindowSwitcher = false) {
     if (this.isFaderActive()) return;
 
     if (fromWindowSwitcher && this.minimized) {
