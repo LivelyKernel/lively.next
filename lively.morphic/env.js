@@ -254,7 +254,12 @@ export class MorphicEnv {
     return requestState.promise;
   }
 
-  forceUpdate () {
-    if (this.renderer) this.renderer.renderStep();
+  forceUpdate (aMorph) {
+    if (!this.renderer) return;
+    if (aMorph && !this.renderer.renderMap.has(aMorph)) {
+      this.renderer.renderMorph(aMorph, true, true);
+      return;
+    }
+    this.renderer.renderStep();
   }
 }
