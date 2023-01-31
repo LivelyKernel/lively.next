@@ -281,7 +281,10 @@ export default class Renderer {
     applyAttributesToNode(morph, node);
     applyStylingToNode(morph, node);
 
-    if (morph.submorphs.length === 0) return node;
+    if (morph.submorphs.length === 0) {
+      if (immediatePatchSpecialProps) morph.patchSpecialProps && morph.patchSpecialProps(node, this);
+      return node;
+    }
 
     const skipWrapping = morph.layout && morph.layout.renderViaCSS;
 
@@ -289,7 +292,7 @@ export default class Renderer {
       this.installWrapperNodeFor(morph, node);
     }
 
-    if (immediatePatchSpecialProps) morph.patchSpecialProps && morph.patchSpecialProps(node);
+    if (immediatePatchSpecialProps) morph.patchSpecialProps && morph.patchSpecialProps(node, this);
     morph.renderingState.hasStructuralChanges = true;
     return node;
   }

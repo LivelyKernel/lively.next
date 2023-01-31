@@ -257,6 +257,7 @@ export class Text extends Morph {
         group: 'text',
         defaultValue: true,
         isStyleProp: true,
+        after: ['borderWidth', 'borderColor', 'borderRadius', 'borderStyle'],
         set (readOnly) {
           if (!readOnly) {
             this.backedUpSelectionMode = this.selectionMode;
@@ -283,6 +284,7 @@ export class Text extends Morph {
 
       needsDocument: {
         defaultValue: false,
+        after: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius'],
         set (needsDocument) {
           if (needsDocument) {
             this.backWithDocument();
@@ -2145,9 +2147,11 @@ export class Text extends Morph {
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
-    if (this.env.renderer) { this.env.forceUpdate(); } else {
+    if (this.env.renderer) {
+      this.env.forceUpdate(this);
+    } else {
       this.whenEnvReady().then(() => {
-        this.env.forceUpdate();
+        this.env.forceUpdate(this);
       });
     }
   }
