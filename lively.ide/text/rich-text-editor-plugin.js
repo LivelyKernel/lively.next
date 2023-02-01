@@ -53,7 +53,7 @@ export class RichTextPlugin extends EditorPlugin {
     });
     iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
     this.textMorph.iconButton = iconButton;
-    this.textMorph.iconButton.onMouseDown = () => this.textMorph.execCommand('add icon at cursor position');
+    connect(this.textMorph.iconButton, 'onMouseDown', () => this.textMorph.execCommand('add icon at cursor position'));
     iconButtonHolder.openInWorld(this.textMorph.topRight);
   }
 
