@@ -417,7 +417,7 @@ export class SearchWidgetModel extends ViewModel {
         const currPos = this.target.cursorPosition;
         const resultsBehindCursor = this.results.filter(resPos => lessEqPosition(currPos, resPos.range.start));
         const firstResultBehindCursor = resultsBehindCursor[0];
-        const resultsBeforeCursor = this.results.filter(resPos => !lessEqPosition(currPos, resPos.range.end));
+        const resultsBeforeCursor = this.results.filter(resPos => !lessEqPosition(currPos, resPos.range.start));
         const firstResultBeforeCursor = arr.last(resultsBeforeCursor);
         if (!firstResultBehindCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBeforeCursor);
         else if (!firstResultBeforeCursor) this.currentResultIndex = this.results.findIndex((res) => res === firstResultBehindCursor);
