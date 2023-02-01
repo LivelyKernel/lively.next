@@ -1,6 +1,9 @@
+/* global */
 import { Icons } from 'lively.morphic/text/icons.js';
 import { Icon } from 'lively.morphic';
 import { obj } from 'lively.lang';
+import { connect } from 'lively.bindings';
+import { pt } from 'lively.graphics';
 /* global localStorage */
 
 function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
@@ -23,6 +26,49 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
 }
 
 export const commands = [
+  {
+    name: 'clean up rich-text UI',
+    exec: (textMorph, immediate) => {
+      textMorph.editorPlugin.removeFormattingPopUp(immediate);
+      textMorph.editorPlugin.removeIconButton();
+    }
+  },
+
+  {
+    name: 'close formatting popup',
+    exec: (textMorph) => textMorph.editorPlugin.removeFormattingPopUp()
+  },
+
+  {
+    name: 'show formatting popup',
+    exec: (textMorph) => textMorph.editorPlugin.showFormattingPopUp()
+  },
+
+  {
+    name: 'temporary edit text',
+    exec: (textMorph, evt) => {
+      const t = textMorph;
+
+      // this makes sense even if target is not readonly
+      // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
+      t.prevReadOnly = t.readOnly;
+      t.tmpEdit = true;
+      t.readOnly = false;
+      t.focus();
+      setTimeout(() => {
+        // ensure that the document is rendered and text layout measured
+        t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
+      });
+
+      connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
+      // switch to hand mode to stop halo from eating clicks for editing
+      $world.get('lively top bar').setEditMode('Hand', true, true);
+      t.editorPlugin.showIconButton(true);
+      $world.halos().forEach(h => {
+        if (h.target === textMorph) h.remove();
+      });
+    }
+  },
 
   {
     name: 'add icon at cursor position',

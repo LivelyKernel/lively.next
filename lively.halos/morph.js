@@ -2004,30 +2004,6 @@ export default class Halo extends Morph {
   // ui events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  temporaryEditTextMorph (evt) {
-    const t = this.target;
-    const topBar = this.topBar;
-
-    if (!t.isText && !t.editorModeName === 'richText') return;
-
-    // this makes sense even if target is not readonly
-    // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
-    t.prevReadOnly = t.readOnly;
-    t.tmpEdit = true;
-    t.readOnly = false;
-    t.focus();
-    setTimeout(() => {
-      // ensure that the document is rendered and text layout measured
-      t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
-    });
-
-    connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
-    // switch to hand mode to stop halo from eating clicks for editing
-    topBar.setEditMode('Hand', true, true);
-    t.editorPlugin.showIconButton(true);
-    this.remove();
-  }
-
   onDragStart (evt) {
     this.dragHalo().init();
     this._lastDragPos = evt.startPosition;
@@ -2056,7 +2032,7 @@ export default class Halo extends Morph {
     if (!evt.isCommandKey()) {
       if (evt.state.clickCount === 2 &&
           this.target.isText) {
-        this.temporaryEditTextMorph(evt);
+        this.target.execCommand('temporary edit text', evt);
         return;
       }
     }
