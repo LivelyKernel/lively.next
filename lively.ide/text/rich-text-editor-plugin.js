@@ -10,6 +10,22 @@ export class RichTextPlugin extends EditorPlugin {
   get shortName () { return 'richText'; }
   get longName () { return this.shortName; }
 
+  commands () {
+    return [
+      {
+        name: 'clean up rich-text UI',
+        exec: (immediate) => {
+          this.removeFormattingPopUp(immediate);
+          this.removeIconButton();
+        }
+      },
+      {
+        name: 'show formatting popup',
+        exec: () => this.showFormattingPopUp()
+      }
+    ];
+  }
+
   attach (editor) {
     this.textMorph = editor;
     connect(this.textMorph, 'onMouseMove', this, 'onMouseMove');
@@ -97,4 +113,6 @@ export class RichTextPlugin extends EditorPlugin {
     this.removeFormattingPopUp(true);
     super.remove();
   }
+
+  getCommands (otherCommands) { return otherCommands.concat(this.commands()); }
 }
