@@ -2867,22 +2867,24 @@ export class Text extends Morph {
 
     if (evt.isShiftDown()) {
       this.selection.lead = clickTextPos;
-      if (this.editorModeName === 'richText') this.editorPlugin.showFormattingPopUp();
+      this.execCommand('show formatting popup');
     } else if (evt.isAltDown()) {
-      if (this.editorModeName === 'richText') this.editorPlugin.removeFormattingPopUp();
+      this.execCommand('clean up rich-text UI');
+
       this.selection.addRange(Range.at(clickTextPos));
     } else {
       this.selection.disableMultiSelect();
-      if (this.editorModeName === 'richText') this.editorPlugin.removeFormattingPopUp();
+      this.execCommand('clean up rich-text UI');
+
       if (normedClickCount === 1) {
         if (!evt.isShiftDown()) {
           this.selection = { start: clickTextPos, end: clickTextPos };
         } else this.selection.lead = clickTextPos;
       } else if (normedClickCount === 2) {
         this.execCommand('select word', null, 1, evt);
-        if (this.editorModeName === 'richText') this.editorPlugin.showFormattingPopUp();
+        this.execCommand('show formatting popup');
       } else if (normedClickCount === 3) {
-        if (this.editorModeName === 'richText') this.editorPlugin.showFormattingPopUp();
+        this.execCommand('show formatting popup');
         this.execCommand('select line', null, 1, evt);
       }
     }
@@ -3959,10 +3961,9 @@ export class Text extends Morph {
     topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
     this.collapseSelection();
-    if (this.editorModeName === 'richText') {
-      this.editorPlugin.removeFormattingPopUp(true);
-      this.editorPlugin.removeIconButton();
-    }
+
+    this.execCommand('clean up rich-text UI', true);
+
     topBar.showHaloFor(this);
   }
 }
