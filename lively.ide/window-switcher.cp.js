@@ -1,4 +1,4 @@
-import { component, Icon, Ellipse, Text, easings, part, TilingLayout, HTMLMorph, ViewModel } from 'lively.morphic';
+import { component, ShadowObject, Icon, Ellipse, Text, easings, part, TilingLayout, HTMLMorph, ViewModel } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 
@@ -251,10 +251,12 @@ export const WindowSwitcher = component({
     part(InputLineDark, {
       name: 'search field',
       placeholder: 'Search Windows...',
-      fontSize: 46,
+      fontSize: 40,
       borderRadius: 15,
       extent: pt(650, 65),
-      position: pt(650, 230)
+      position: pt(650, 230),
+      dropShadow: new ShadowObject({ distance: 3, rotation: 75, color: Color.rgba(0, 0, 0, 0.2), blur: 20 }),
+      haloShadow: new ShadowObject({ distance: 4, color: Color.rgb(52, 152, 219), blur: 20 })
     }),
     {
       name: 'clear button',
