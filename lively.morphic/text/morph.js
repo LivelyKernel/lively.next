@@ -329,12 +329,14 @@ export class Text extends Morph {
         set (val) {
           this.setProperty('highlightWhenFocused', val);
           if (val && !this.haloShadow) {
-            this.haloShadow = {
-              blur: 6,
-              color: Color.rgb(52, 152, 219),
-              distance: 0,
-              rotation: 45
-            };
+            this.withMetaDo({ metaInteraction: true }, () => {
+              this.haloShadow = {
+                blur: 6,
+                color: Color.rgb(52, 152, 219),
+                distance: 0,
+                rotation: 45
+              };
+            });
           }
         }
       },
