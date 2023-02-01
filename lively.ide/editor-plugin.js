@@ -15,7 +15,6 @@ import { multiSelectCommands } from './text/multi-select-commands.js';
 import { commands as navCommands } from './text/code-navigation-commands.js';
 import { commands as codeCommands } from './text/generic-code-commands.js';
 import { codeEvaluationCommands } from './text/code-evaluation-commands.js';
-import { commands as richTextCommands } from './text/rich-text-commands.js';
 
 import { Range } from 'lively.morphic/text/range.js';
 
@@ -236,8 +235,7 @@ export default class EditorPlugin {
       ...multiSelectCommands,
       ...navCommands,
       ...codeCommands,
-      ...codeEvaluationCommands,
-      ...richTextCommands
+      ...codeEvaluationCommands
     ];
   }
 

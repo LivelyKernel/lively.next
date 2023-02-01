@@ -468,7 +468,7 @@ export class TopBarModel extends ViewModel {
     if (target._yieldedShape && target._yieldedShape.owner) {
       const halo = this.showHaloFor(target._yieldedShape);
       if (type === Text && target._yieldedShape) {
-        halo.temporaryEditTextMorph();
+        target._yieldedShape.execCommand('temporary edit text');
       }
     }
     target._yieldedShape = null;

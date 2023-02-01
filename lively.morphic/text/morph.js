@@ -2876,12 +2876,12 @@ export class Text extends Morph {
       this.selection.lead = clickTextPos;
       this.execCommand('show formatting popup');
     } else if (evt.isAltDown()) {
-      this.execCommand('clean up rich-text UI');
+      this.execCommand('close formatting popup');
 
       this.selection.addRange(Range.at(clickTextPos));
     } else {
       this.selection.disableMultiSelect();
-      this.execCommand('clean up rich-text UI');
+      this.execCommand('close formatting popup');
 
       if (normedClickCount === 1) {
         if (!evt.isShiftDown()) {

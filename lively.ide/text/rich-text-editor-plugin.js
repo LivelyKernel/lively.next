@@ -5,26 +5,11 @@ import { Point, Color } from 'lively.graphics';
 import EditorPlugin from '../editor-plugin.js';
 import { connect, disconnect } from 'lively.bindings';
 import { PropertyLabel, PropertyLabelHovered } from '../studio/shared.cp.js';
+import { commands } from './rich-text-commands.js';
 
 export class RichTextPlugin extends EditorPlugin {
   get shortName () { return 'richText'; }
   get longName () { return this.shortName; }
-
-  commands () {
-    return [
-      {
-        name: 'clean up rich-text UI',
-        exec: (immediate) => {
-          this.removeFormattingPopUp(immediate);
-          this.removeIconButton();
-        }
-      },
-      {
-        name: 'show formatting popup',
-        exec: () => this.showFormattingPopUp()
-      }
-    ];
-  }
 
   attach (editor) {
     this.textMorph = editor;
@@ -53,6 +38,7 @@ export class RichTextPlugin extends EditorPlugin {
 
   showIconButton () {
     const iconButton = part(PropertyLabel, {
+      reactsToPointer: false,
       tooltip: 'Insert Icon',
       fontSize: 14,
       textAndAttributes: Icon.textAttribute('heart-music-camera-bolt')
@@ -60,21 +46,26 @@ export class RichTextPlugin extends EditorPlugin {
     const iconButtonHolder = new Morph({
       fill: Color.rgb(30, 30, 30).withA(0.95),
       borderRadius: 3,
+      nativeCursor: 'pointer',
       layout: new TilingLayout({
         hugContentsVertically: true,
         hugContentsHorizontally: true
       }),
-      submorphs: [
-        iconButton]
+      submorphs: [iconButton]
     });
     iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
-    this.textMorph.iconButton = iconButton;
-    connect(this.textMorph.iconButton, 'onMouseDown', () => this.textMorph.execCommand('add icon at cursor position'));
+    this.textMorph.iconButton = iconButtonHolder;
+    connect(iconButtonHolder, 'onMouseDown', this, 'startIconInsertion');
     iconButtonHolder.openInWorld(this.textMorph.topRight);
+  }
+
+  startIconInsertion () {
+    this.textMorph.execCommand('add icon at cursor position');
   }
 
   removeIconButton () {
     this.textMorph.iconButton.remove();
+    delete this.textMorph.iconButton;
   }
 
   showFormattingPopUp () {
@@ -114,5 +105,5 @@ export class RichTextPlugin extends EditorPlugin {
     super.remove();
   }
 
-  getCommands (otherCommands) { return otherCommands.concat(this.commands()); }
+  getCommands (otherCommands) { return otherCommands.concat(commands); }
 }
