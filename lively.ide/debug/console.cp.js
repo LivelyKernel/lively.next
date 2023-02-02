@@ -169,7 +169,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   viewDidLoad () {
-    console.wasWrapped = false;
+    console.wasWrapped = false; // eslint-disable-line no-console
     this.install();
   }
 
@@ -177,13 +177,13 @@ class LocalJSConsoleModel extends ViewModel {
   onWindowClose () { this.uninstall(); }
 
   install () {
-    if (!console.addConsumer) prepareConsole(console);
-    console.addConsumer(this);
+    if (!console.addConsumer) prepareConsole(console); // eslint-disable-line no-console
+    console.addConsumer(this); // eslint-disable-line no-console
   }
 
   // Removes our patches from `console` if they are present
   uninstall () {
-    if (console.removeConsumer) { console.removeConsumer(this); }
+    if (console.removeConsumer) { console.removeConsumer(this); } // eslint-disable-line no-console
   }
 
   maybeTemplateMessage (arg, ...args) {
