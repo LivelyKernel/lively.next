@@ -839,7 +839,16 @@ const commands = [
 
   {
     name: 'open console',
-    exec: () => { part(Console).openInWindow(); }
+    exec: () => {
+      const consoleMorph = part(Console);
+      // This is horrible, but a functioning workaround for the current state of the way that masters are applied.
+      // The problem arises from the fact, that the initial constructor call does not come with all specified properties, but some are applied later.
+      // This messes up our logic wrt how textmorph styling in `backdocument()` is working.
+      consoleMorph.fixedWidth = true;
+      consoleMorph.fixedHeight = true;
+      consoleMorph.extent = pt(600, 400);
+      consoleMorph.openInWindow();
+    }
   },
 
   {
