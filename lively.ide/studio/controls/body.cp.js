@@ -323,7 +323,7 @@ export class DynamicPropertyModel extends ViewModel {
       beacuse the vdom has not yet rendered the layout and we can not determine the
       total height via measuring. This will be gone once we move away from the vdom issue.
     */
-    p.height = 25;
+    p.env.forceUpdate(p);
     p.topRight = this.view.globalBounds().topLeft();
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     once(p, 'remove', this, 'closePopup');
