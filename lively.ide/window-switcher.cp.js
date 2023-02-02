@@ -55,6 +55,7 @@ class WindowPreviewModel extends ViewModel {
     });
     this.ui.htmlMorph.animate({
       scale: 1.2,
+      center: this.ui.htmlMorph.center,
       duration: 200,
       easing: easings.inOut
     });
@@ -71,6 +72,7 @@ class WindowPreviewModel extends ViewModel {
     });
     this.ui.htmlMorph.animate({
       scale: 1,
+      center: this.ui.htmlMorph.center,
       duration: 200,
       easing: easings.inOut
     });
@@ -294,7 +296,8 @@ export const WindowSwitcher = component({
       fill: Color.transparent,
       reactsToPointer: false,
       layout: new TilingLayout({
-        wrapSubmorphs: true
+        wrapSubmorphs: true,
+        padding: Rectangle.inset(10, 10, 10, 10)
       }),
       clipMode: 'auto',
       halosEnabled: false
