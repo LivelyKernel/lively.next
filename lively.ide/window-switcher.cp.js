@@ -92,7 +92,13 @@ const WindowPreview = component({
     extent: pt(100, 100),
     fill: Color.transparent
   },
-  { name: 'overlay', fill: Color.transparent, extent: pt(130, 130), nativeCursor: 'pointer' },
+  {
+    name: 'overlay',
+    fill: Color.transparent,
+    extent: pt(130, 130),
+    halosEnabled: false,
+    nativeCursor: 'pointer'
+  },
   {
     name: 'close button',
     type: Ellipse,
