@@ -746,7 +746,7 @@ export class TilingLayout extends Layout {
   updateBoundsFor (morph) {
     morph.renderingState.cssLayoutToMeasureWith = null;
     const node = this.getNodeFor(morph);
-    if (node) {
+    if (node && node.parentNode) {
       if (morph === this.container) {
         this.updateContainerViaDom(node);
       } else { this.updateSubmorphViaDom(morph, node); }

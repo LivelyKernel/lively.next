@@ -256,7 +256,7 @@ export class MorphicEnv {
 
   forceUpdate (aMorph) {
     if (!this.renderer) return;
-    if (aMorph && !this.renderer.renderMap.has(aMorph)) {
+    if (aMorph && !aMorph.owner && !this.renderer.renderMap.has(aMorph)) {
       this.renderer.renderMorph(aMorph, true, true);
       return;
     }
