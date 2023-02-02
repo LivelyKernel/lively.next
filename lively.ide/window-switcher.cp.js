@@ -106,6 +106,7 @@ const WindowPreview = component({
     extent: pt(20, 20),
     fill: Color.black.withA(0.6),
     halosEnabled: false,
+    nativeCursor: 'pointer',
     submorphs: [{
       type: 'text',
       reactsToPointer: false,
