@@ -234,6 +234,7 @@ class WindowSwitcherModel extends ViewModel {
     if (this.reopenPropertiesPanel) $world.propertiesPanelFlap.executeAction();
     this.view.remove();
     $world.blur = 0;
+    $world.focus();
   }
 
   get keybindings () {
