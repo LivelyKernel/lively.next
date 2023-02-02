@@ -1,5 +1,5 @@
 import { component, ShadowObject, Icon, Ellipse, Text, easings, part, TilingLayout, HTMLMorph, ViewModel } from 'lively.morphic';
-import { Color, rect, pt } from 'lively.graphics';
+import { Color, Rectangle, rect, pt } from 'lively.graphics';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 
 class WindowPreviewModel extends ViewModel {
@@ -45,6 +45,8 @@ class WindowPreviewModel extends ViewModel {
     if (evt.targetMorph === this.ui.closeButton) return;
     this.windowSwitcher.close();
     this.window.activate(null, true);
+    const translatedPos = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.window.bounds()).topLeft();
+    this.window.topLeft = translatedPos;
   }
 
   onHoverIn () {
