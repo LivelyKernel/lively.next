@@ -285,7 +285,7 @@ export class Text extends Morph {
 
       needsDocument: {
         defaultValue: false,
-        after: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius'],
+        after: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'fixedWidth', 'fixedHeight'],
         set (needsDocument) {
           if (needsDocument) {
             this.backWithDocument();
