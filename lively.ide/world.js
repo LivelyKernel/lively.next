@@ -198,7 +198,7 @@ export class LivelyWorld extends World {
       setTimeout(() => System.global.that = target, 100);
       target.show();
       evt.stop();
-      console.log(`Set global "that" to ${target}`);
+      console.log(`Set global "that" to ${target}`); // eslint-disable-line no-console
     }
   }
 
@@ -897,7 +897,7 @@ export class LivelyWorld extends World {
 
   setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
-    console[StatusMessageComponent === StatusMessageError ? 'error' : 'log'](message);
+    console[StatusMessageComponent === StatusMessageError ? 'error' : 'log'](message); // eslint-disable-line no-console
     return config.verboseLogging
       ? this.openStatusMessage(part(StatusMessageComponent, { epiMorph: true, viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
@@ -942,6 +942,9 @@ export class LivelyWorld extends World {
       promptMorph.openInWorld();
       promptMorph.center = pos;
       if (promptMorph.height > visBounds.height) { promptMorph.height = visBounds.height - 5; }
+
+      const translatedPromptBounds = $world.visibleBoundsExcludingTopBar().translateForInclusion(promptMorph.bounds());
+      promptMorph.setBounds(translatedPromptBounds);
 
       if (typeof opts.customize === 'function') { opts.customize(promptMorph); }
 
