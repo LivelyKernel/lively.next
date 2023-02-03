@@ -69,7 +69,7 @@ export default class ShellClientResource extends Resource {
     return cmd.exitCode === 0 && cmd.stdout !== '';
   }
 
-  async initializeGitRepository (repoName) {
+  async initializeGitRepository () {
     const cmd = runCommand('git init', this.options);
     await cmd.whenDone();
   }
