@@ -100,6 +100,7 @@ class VersionChecker extends Morph {
       return;
     }
     this.hash = hash;
+    if ($world.openedProject) $world.openedProject.currentLivelyVersion = hash;
     hash = hash.slice(0, 6);
     comparison = comparison.replace('\n', '').split('\t');
     const numberOfUniqueCommitsOnRemote = parseInt(comparison[0]);
