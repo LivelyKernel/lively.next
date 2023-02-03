@@ -24,3 +24,5 @@ package-lock.json
 components_cache/*
 lively.freezer/landing-page/
 lively.freezer/loading-screen/
+
+projects/
