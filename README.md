@@ -112,6 +112,7 @@ The packages are coded with emojis as follows:
 - modules: 🧩
 - morphic: 🎨
 - notifications: 🔔
+- project: 📂
 - resources: 🪨
 - README: 🗒️
 - serializer2: 📇
