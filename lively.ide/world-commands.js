@@ -852,14 +852,6 @@ const commands = [
   },
 
   {
-    name: 'open object drawer',
-    exec: async function (world) {
-      const { default: ObjectDrawer } = await System.import('lively.components/object-drawer.js');
-      return new ObjectDrawer().openInWorldNearHand();
-    }
-  },
-
-  {
     name: 'open object editor',
     exec: async function (world, args = {
       target: null,
