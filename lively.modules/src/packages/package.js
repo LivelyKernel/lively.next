@@ -24,7 +24,7 @@ function normalizePackageURL (System, packageURL, allPackageURLs = []) {
   else url = url.split('/').slice(0, -1).join('/');
 
   if (url.match(/\.js$/)) {
-    console.warn('packageURL is expected to point to a directory but seems to be a .js file: ' + url);
+    console.warn('packageURL is expected to point to a directory but seems to be a .js file: ' + url); // eslint-disable-line no-console
   }
 
   return String(url).replace(/\/$/, '');
@@ -316,7 +316,7 @@ class Package {
       packages: { [url]: { meta: { 'package.json': { format: 'json' } } } }
     });
 
-    System.debug && console.log('[lively.modules package reading config] %s', packageConfigURL);
+    System.debug && console.log('[lively.modules package reading config] %s', packageConfigURL); // eslint-disable-line no-console
 
     try {
       let config = System.get(packageConfigURL) || await System.import(packageConfigURL);
@@ -325,7 +325,7 @@ class Package {
       System.config({ packageConfigPaths });
       return config;
     } catch (err) {
-      console.log('[lively.modules package] Unable loading package config %s for package: ', packageConfigURL, err);
+      console.log('[lively.modules package] Unable loading package config %s for package: ', packageConfigURL, err); // eslint-disable-line no-console
       delete System.meta[packageConfigURL];
       let name = url.split('/').slice(-1)[0];
       return { name: name }; // "pseudo-config"
@@ -365,7 +365,7 @@ class Package {
     this.registerProcess = promise.deferred();
     let registerP = this.registerProcess.promise;
 
-    System.debug && console.log('[lively.modules package register] %s', url);
+    System.debug && console.log('[lively.modules package register] %s', url); // eslint-disable-line no-console
 
     try {
       let cfg = optPkgConfig || await this.tryToLoadPackageConfig();
@@ -385,7 +385,7 @@ class Package {
     let { name: newName, version: newVersion } = config;
     new PackageConfiguration(this).applyConfig(config);
     if (name !== config.name || version !== config.version) {
-      console.log(`[lively.modules] Updating registry ${name}@${version} => ${newName}@${newVersion}`);
+      console.log(`[lively.modules] Updating registry ${name}@${version} => ${newName}@${newVersion}`); // eslint-disable-line no-console
       let registry = classHolder.PackageRegistry.ofSystem(this.System);
       registry.updateNameAndVersionOf(this, name, version, newName, newVersion);
     }
@@ -547,7 +547,7 @@ class Package {
     return Promise.all(
       modules.map(m => m.search(needle, options)
         .catch(err => {
-          console.error(`Error searching module ${m.name}:\n${err.stack}`);
+          console.error(`Error searching module ${m.name}:\n${err.stack}`); // eslint-disable-line no-console
           return [];
         }))).then(res => res.flat());
   }
