@@ -68,7 +68,8 @@ export function es5Transpilation (source) {
     presets: [['es2015', { modules: false }]],
     plugins: [
       'transform-exponentiation-operator', 'transform-async-to-generator',
-      'syntax-object-rest-spread', 'transform-object-rest-spread'
+      'syntax-object-rest-spread', 'proposal-object-rest-spread',
+      'proposal-optional-chaining'
       // 'syntax-import-meta', 'optional-catch-binding',
       // ['transform-jsx', { "module": 'lively.ide/jsx/generator.js'}]
     ],
