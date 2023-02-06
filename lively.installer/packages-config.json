@@ -128,5 +128,9 @@
   {
     "name": "lively.collab",
     "repoURL": "https://github.com/LivelyKernel/lively.next"
+  },
+  {
+    "name": "lively.project",
+    "repoURL": "https://github.com/LivelyKernel/lively.next"
   }
 ]
