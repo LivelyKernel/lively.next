@@ -186,7 +186,7 @@ export async function bundlePart (partOrSnapshot, {
   const bundle = await rollup({
     plugins: [
       freezerPlugin,
-      jsonPlugin()
+      jsonPlugin({ exclude: /esm\:\/\/cache\/.*\.json/ })
     ]
   });
   return await bundle.generate({
@@ -223,7 +223,7 @@ export async function bundleModule (moduleId, {
         resolver: BrowserResolver,
         autoRun: htmlConfig
       }),
-      jsonPlugin()
+      jsonPlugin({ exclude: /esm\:\/\/cache\/.*\.json/ })
     ]
   });
   return await bundle.generate({
@@ -242,7 +242,7 @@ export async function jspmCompile (url, out, globalName, redirect = {}) {
     input: url,
     plugins: [
       freezerPlugin,
-      jsonPlugin()
+      jsonPlugin({ exclude: /esm\:\/\/cache\/.*\.json/ })
     ]
   });
   await bundle.generate({
@@ -261,7 +261,7 @@ export async function bootstrapLibrary (url, out, asBrowserModule = true, global
         resolver: BrowserResolver,
         excludedModules: ['babel-plugin-transform-jsx']
       }),
-      jsonPlugin()
+      jsonPlugin({ exclude: /esm\:\/\/cache\/.*\.json/ })
     ]
   });
   await bundle.generate({
