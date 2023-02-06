@@ -2,7 +2,7 @@
 import { arr } from 'lively.lang';
 import { resource } from 'lively.resources';
 
-async function loadPackage (system, spec) {
+export async function loadPackage (system, spec) {
   await system.importPackage(spec.address + '/');
   if (spec.main) await system.importModule(spec.main.toString());
   if (spec.test) {
