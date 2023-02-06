@@ -1,5 +1,4 @@
 /* global URL */
-import { parseJsonLikeObj } from '../helpers.js';
 import { arr } from 'lively.lang';
 import { resource } from 'lively.resources';
 
@@ -13,7 +12,7 @@ async function loadPackage (system, spec) {
       await mochaEs6.installSystemInstantiateHook();
       await system.importModule(spec.test.toString());
     } catch (e) {
-      console.warn(`Cannot load test of new package: ${e}`);
+      console.warn(`Cannot load test of new package: ${e}`); // eslint-disable-line no-console
     }
   }
 
@@ -78,12 +77,12 @@ export async function interactivelyCreatePackage (system, requester) {
 export async function interactivelyLoadPackage (system, requester, relatedPackageAddress = null) {
   // var vmEditor = that.owner;
   // var system = vmEditor.systemInterface()
-
+  let relatedPackage;
   let spec = { name: '', address: '', type: 'package' };
 
   let config = await system.getConfig();
   if (relatedPackageAddress) {
-    var relatedPackage = await system.getPackage(relatedPackageAddress) ||
+    relatedPackage = await system.getPackage(relatedPackageAddress) ||
                       await system.getPackageForModule(relatedPackageAddress);
   }
 
@@ -96,7 +95,7 @@ export async function interactivelyLoadPackage (system, requester, relatedPackag
   let [dir] = (await requester.world().filterableListPrompt('Select package directory', [{ isListItem: true, label: 'Enter custom package...', value: 'custom' }, ...packageCandidates.map(m => m.url)], {
     multiSelect: false
   })).selected;
-  if (dir == 'custom') {
+  if (dir === 'custom') {
     dir = await requester.world().prompt('What is the package directory?', {
       requester,
       input: relatedPackage ? relatedPackage.address : config.baseURL,
@@ -180,6 +179,7 @@ export async function interactivelyRemovePackage (system, requester, packageURL)
 // showExportsAndImportsOf("http://localhost:9001/packages/lively-system-interface/")
 export async function showExportsAndImportsOf (system, packageAddress, world = $world) {
   let p = await system.getPackage(packageAddress);
+  let importsExports;
 
   if (!p) { throw new Error('Cannot find package ' + packageAddress); }
 
@@ -188,7 +188,7 @@ export async function showExportsAndImportsOf (system, packageAddress, world = $
     if (!mod.name.match(/\.js$/)) continue;
 
     try {
-      var importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
+      importsExports = await system.importsAndExportsOf(mod.name, await system.moduleRead(mod.name));
     } catch (e) {
       world.logError(new Error(`Error when getting imports/exports from module ${mod.name}:\n${e.stack}`));
       continue;
