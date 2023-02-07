@@ -133,6 +133,7 @@ export default class FreezerPromptModel extends AbstractPromptModel {
     const { dirInput, packageList, compilerSelector } = this.ui;
     return super.resolve({
       location: this.directory,
+      minify: compilerSelector.selection !== 'None',
       useTerser: compilerSelector.selection == 'Terser + Babel',
       excludedPackages: this.excludedPackages
     });
@@ -317,7 +318,7 @@ const FreezerPrompt = component(LightPrompt, {
         position: pt(104.4, 0),
         viewModel: {
           selection: 'Google Closure',
-          items: ['Google Closure', 'Terser + Babel'],
+          items: ['Google Closure', 'Terser + Babel', 'None'],
           listAlign: 'selection',
           listMaster: SystemList,
           openListInWorld: true
