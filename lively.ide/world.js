@@ -482,8 +482,7 @@ export class LivelyWorld extends World {
     const baseURL = document.location.origin;
 
     if (files.length) {
-      const user = this.getCurrentUser();
-      let uploadPath = user.isGuestUser ? 'uploads/' : 'users/' + $world.getCurrentUser().name + '/uploads';
+      let uploadPath = $world.currentUser === 'guest' ? 'uploads/' : 'users/' + $world.currentUser + '/uploads';
       if (evt.isAltDown()) {
         uploadPath = await this.prompt('Choose upload location', {
           history: 'lively.morphic-html-drop-file-upload-location',
@@ -509,7 +508,6 @@ export class LivelyWorld extends World {
           ld.progress = p;
           ld.status = 'Uploaded ' + (100 * p).toFixed() + '%';
         };
-        if (!user.isGuestUser) headers.Authorization = `Bearer ${user.token}`;
         res = resource(System.baseURL, { headers, onProgress, onLoad: (res) => answer = res });
         res = res.join(`/upload?uploadPath=${encodeURIComponent(uploadPath)}`);
         await res.write(fd);

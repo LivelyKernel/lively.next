@@ -132,7 +132,7 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
       }
     ]
   });
-  const userName = $world.getCurrentUser().name;
+  const userName = $world.currentUser;
   const previouslyExcludedPackages = excludedModules || Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
   const previouslyPublishedDir = Path('metadata.publishedLocation').get(targetOrModule) ||
                                  resource(System.baseURL).join('users').join(userName).join('published').join(targetOrModule.name ||
@@ -281,7 +281,7 @@ export async function bootstrapLibrary (url, out, asBrowserModule = true, global
  * Data is uploaded to directory and then returns a link to the folder.
  */
 export async function interactivelyFreezeWorld (world) {
-  const userName = world.getCurrentUser().name;
+  const userName = world.currentUser;
   let publicAlias = world.metadata.commit.name;
   const frozenPartsDir = await resource(System.baseURL).join('users').join(userName).join('published/').ensureExistance();
   const publicationDirShell = resource(await defaultDirectory()).join('..').join('users').join(userName).join('published/').withRelativePartsResolved().asDirectory();
