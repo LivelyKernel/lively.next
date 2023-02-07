@@ -1,8 +1,8 @@
 /* global System,FormData,DOMParser */
 import { resource } from 'lively.resources';
 import { Rectangle, Point, Color, pt } from 'lively.graphics';
-import { arr, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
-import { once } from 'lively.bindings';
+import { arr, string, fun, obj, promise, Path as PropertyPath } from 'lively.lang';
+import { once, connect } from 'lively.bindings';
 import {
   GridLayout,
   MorphicDB,
@@ -35,6 +35,12 @@ import { part } from 'lively.morphic';
 import worldCommands from './world-commands.js';
 import { CommentData } from 'lively.collab';
 import './js/linter.js';
+import { TopBar } from './studio/top-bar.cp.js';
+import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
+import { Project } from 'lively.project';
+import ObjectPackage from 'lively.classes/object-classes.js';
+import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } from './studio/sidebar-flap.js';
+import { retrieveGithubUserData } from 'lively.user/github-login.js';
 import { localInterface } from 'lively-system-interface';
 
 export class LivelyWorld extends World {
@@ -55,6 +61,13 @@ export class LivelyWorld extends World {
           document.title = `lively.next - ${name}`;
         }
       },
+      currentUser: {
+        initialize () {
+          if (localStorage.getItem('gh_access_token')) retrieveGithubUserData();
+          else return 'guest';
+        }
+      },
+
       activeSideBars: {
         serialize: false,
         initialize () { this.activeSideBars = []; }
@@ -400,6 +413,71 @@ export class LivelyWorld extends World {
     await localInterface.exportsOfModules({
       excludedPackages: config.ide.js.ignoredPackages
     });
+    await this.initializeStudioUI();
+  }
+
+  async initializeStudioUI () {
+    const topBar = part(TopBar);
+    topBar.epiMorph = true;
+    topBar.name = 'lively top bar';
+    topBar.hasFixedPosition = true;
+    topBar.respondsToVisibleWindow = true;
+    this.addMorph(topBar);
+    topBar.relayout();
+    topBar.top = -topBar.height; // tell top bar to hide
+    const dropShadow = topBar.dropShadow;
+    topBar.dropShadow = null;
+    topBar.attachToTarget(this);
+    this.onTopBarLoaded();
+
+    await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
+    if (!this.metadata) {
+      await this.animate({
+        customTween: p => {
+          topBar.blur = this.blur = p * 3;
+        },
+        duration: 500
+      });
+      const worldName = await this.askForName();
+      this.name = worldName;
+      this.changeMetaData('commit', { name: worldName });
+      if (window.history) {
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
+      }
+      if (config.ide.projectsEnabled) {
+        // TODO: fix
+        this.openedProject = new Project(worldName);
+      } else {
+        // fixme: We do not want to subclass the world class. This is just a temporary solution
+        // to reliably load the package at all times the world is loaded
+        const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
+        await pkg.adoptObject(this);
+      }
+      await this.animate({
+        customTween: p => {
+          topBar.blur = this.blur = (1 - p) * 3;
+        },
+        duration: 500
+      });
+    }
+    const { LivelyVersionChecker } = await System.import('lively.ide/studio/version-checker.cp.js');
+    const versionChecker = part(LivelyVersionChecker);
+    versionChecker.name = 'lively version checker';
+    versionChecker.openInWorld();
+    versionChecker.relayout();
+    versionChecker.checkVersion();
+
+    const { WorldZoomIndicator } = await System.import('lively.ide/studio/zoom-indicator.cp.js');
+    const zoomIndicator = part(WorldZoomIndicator);
+    zoomIndicator.openInWorld();
+    zoomIndicator.name = 'world zoom indicator';
+    zoomIndicator.relayout();
+
+    const { Flap } = await System.import('lively.ide/studio/flap.cp.js');
+    $world.sceneGraphFlap = part(Flap, { viewModel: { target: 'scene graph', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
+    connect($world.sceneGraphFlap, 'position', versionChecker, 'relayout');
+    $world.propertiesPanelFlap = part(Flap, { viewModel: { target: 'properties panel', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
+    connect($world.propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
   }
 
   async isNotUnique (worldName) {
