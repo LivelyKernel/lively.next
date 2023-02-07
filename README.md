@@ -110,6 +110,7 @@ The packages are coded with emojis as follows:
 - morphic: 🎨
 - notifications: 🔔
 - resources: 🪨
+- README: 🗒️
 - serializer2: 📇
 - server: 👔
 - shell: 🐚
