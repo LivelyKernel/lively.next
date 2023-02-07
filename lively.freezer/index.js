@@ -206,6 +206,7 @@ export async function bundlePart (partOrSnapshot, {
 export async function bundleModule (moduleId, {
   exclude: excludedModules = [],
   compress = false,
+  minify = true,
   output = 'es2019',
   requester,
   mainFunction,
@@ -220,6 +221,8 @@ export async function bundleModule (moduleId, {
         excludedModules,
         mainFunction,
         useTerser,
+        compress,
+        minify,
         resolver: BrowserResolver,
         autoRun: htmlConfig
       }),
@@ -335,6 +338,7 @@ export async function interactivelyFreezePart (part, requester = false) {
   try {
     frozen = await bundlePart(worldSnap || part, {
       compress: true,
+      minify: options.minify,
       useTerser: options.useTerser,
       exclude: options.excludedPackages,
       requester: false
@@ -371,6 +375,7 @@ export async function interactivelyFreezeModule (moduleUrl, requester) {
   try {
     frozen = await bundleModule(moduleUrl, {
       compress: true,
+      minify: options.minify,
       useTerser: options.useTerser,
       exclude: options.excludedPackages,
       htmlConfig: { title }, // auto generate a index.html that does the absolute basics
