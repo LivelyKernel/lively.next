@@ -40,6 +40,10 @@ class FindToplevelFuncDeclVisitor extends Visitor {
   }
 }
 
+function topLevelFuncDecls (parsed) {
+  return FindToplevelFuncDeclVisitor.run(parsed);
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // replacement
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -148,5 +152,6 @@ n = QueryReplaceManyVisitor.run(parsed, `
 export {
   AllNodesVisitor,
   FindToplevelFuncDeclVisitor,
-  ReplaceVisitor, ReplaceManyVisitor
+  ReplaceVisitor, ReplaceManyVisitor,
+  topLevelFuncDecls
 };
