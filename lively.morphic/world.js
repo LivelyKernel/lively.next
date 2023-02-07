@@ -1,18 +1,15 @@
-/* global System,WeakMap */
+/* global WeakMap */
 import bowser from 'bowser';
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, Path, obj } from 'lively.lang';
 import { signal } from 'lively.bindings';
-import config from './config.js';
+
 import { MorphicEnv } from './env.js';
 import { Morph } from './morph.js';
 import { TooltipViewer } from './tooltip-viewer.js';
 
 import { loadWorldFromURL, loadWorldFromDB, loadWorldFromCommit, loadWorld } from './world-loading.js';
 
-import { UserRegistry } from 'lively.user';
-
-import { resource } from 'lively.resources/index.js';
 import { loadMorphFromSnapshot } from './serialization.js';
 
 export class World extends Morph {
@@ -297,7 +294,7 @@ export class World extends Morph {
     return this._cachedWindowBounds = new Rectangle(x, y, width, height);
   }
 
-  logError (msg) { console.log(msg); }
+  logError (msg) { console.log(msg); } // eslint-disable-line no-console
 
   relayout () { /* subclass responsibility */ }
 
@@ -420,7 +417,7 @@ export class Hand extends Morph {
           signal(this, 'drop', morph);
           morph.onBeingDroppedOn(this, dropTarget);
         } catch (err) {
-          console.error(err);
+          console.error(err); // eslint-disable-line no-console
           this.world().showError(`Error dropping ${morph} onto ${dropTarget}:\n${err.stack}`);
           if (morph.owner !== dropTarget) { this.world().addMorph(dropTarget); }
         }
