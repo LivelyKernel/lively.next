@@ -24,7 +24,7 @@ function reportWorldLoad (world, user) {
 }
 
 async function setupLively2Lively (world) {
-  const user = world.getCurrentUser();
+  const user = world.currentUser;
   const info = { world: world.name };
   if (user) {
     info.userToken = user.token;
@@ -291,7 +291,7 @@ export async function interactivelySaveWorld (world, options) {
     }
 
     const commitSpec = {
-      author: world.getCurrentUser(),
+      author: world.currentUser,
       message: 'world save',
       tags,
       description

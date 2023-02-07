@@ -6,7 +6,6 @@ import { arr, fun, graph, date, string } from 'lively.lang/index.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
 import { DropDownList, MorphList } from 'lively.components/list.cp.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
-import { UserUI } from 'lively.user/morphic/user-ui.js';
 
 import { Spinner } from './shared.cp.js';
 import { SystemList } from '../styling/shared.cp.js';
@@ -462,7 +461,8 @@ class WorldDashboard extends Morph {
   }
 
   sortAndFilterPreviews (previews) {
-    const user = UserUI.getCurrentUser();
+    // TODO: FIXUP User System
+    const user = {name: 'TODO'};
     previews = this.ui.searchField.fuzzyFilter(previews, p => p._commit.name + p._commit.description);
     switch (this.ui.sortSelector.selection) {
       case 'RECENT':

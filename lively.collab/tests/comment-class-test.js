@@ -1,8 +1,7 @@
 /* global it, describe,beforeEach, afterEach */
 import { expect } from 'mocha-es6';
 import { CommentData } from 'lively.collab';
-import { Morph, config } from 'lively.morphic';
-import { UserRegistry } from 'lively.user';
+import { Morph } from 'lively.morphic';
 
 function morphHasNumberOfComments (morph, number) {
   if (number === 0) {
@@ -42,7 +41,7 @@ describe('comment object', function () {
   });
 
   it('is saved with a user name', function () {
-    expect(comment.username).to.contain(UserRegistry.current.loadUserFromLocalStorage(config.users.authServerURL).name);
+    expect(comment.username).to.equal($world.currentUser);
   });
 });
 

@@ -159,15 +159,6 @@ export class World extends Morph {
   get firstHand () { return this.hands[0]; }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  // user related
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-  getCurrentUser () {
-    const reg = UserRegistry && UserRegistry.current;
-    return reg && reg.loadUserFromLocalStorage(window.AUTH_SERVER_URL || config.users.authServerURL);
-  }
-
-  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
