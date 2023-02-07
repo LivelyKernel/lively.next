@@ -1,7 +1,8 @@
 /* global process, global, exports */
 
 import { arr, obj, string, Path } from 'lively.lang';
-import { helpers, scopes, topLevelFuncDecls } from './query.js';
+import { helpers, scopes } from './query.js';
+import { topLevelFuncDecls } from './visitors.js';
 import { parse, fuzzyParse } from './parser.js';
 import objectSpreadTransform from './object-spread-transform.js';
 import {

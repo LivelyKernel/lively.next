@@ -1,7 +1,6 @@
 import { arr, num, tree, fun } from 'lively.lang';
 import _ASTQ from 'astq';
 import { BaseVisitor, ScopeVisitor } from './mozilla-ast-visitors.js';
-import { FindToplevelFuncDeclVisitor } from './visitors.js';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
 import { parse } from './parser.js';
 import { custom } from './acorn-extension.js';
@@ -14,7 +13,7 @@ let ASTQ = _ASTQ || System._nodeRequire('astq');
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-var helpers = {
+const helpers = {
 
   declIds (nodes, result = []) {
     for (let i = 0; i < nodes.length; i++) {
@@ -231,14 +230,14 @@ function declarationsOfScope (scope, includeOuter, result = []) {
   // returns Identifier nodes
   if (includeOuter && scope.node.id && scope.node.id.name) { result.push(scope.node.id); }
   helpers.declIds(scope.params, result);
-  for (var i = 0; i < scope.funcDecls.length; i++) {
-    var id = scope.funcDecls[i].id;
+  for (let i = 0; i < scope.funcDecls.length; i++) {
+    let id = scope.funcDecls[i].id;
     if (id) result.push(id);
   }
   helpers.varDeclIds(scope, result);
   result.push(...scope.catches);
-  for (var i = 0; i < scope.classDecls.length; i++) {
-    var id = scope.classDecls[i].id;
+  for (let i = 0; i < scope.classDecls.length; i++) {
+    let id = scope.classDecls[i].id;
     if (id) result.push(id);
   }
   result.push(...scope.importSpecifiers);
@@ -284,16 +283,12 @@ function _findJsLintGlobalDeclarations (node, result = []) {
   return result;
 }
 
-function topLevelFuncDecls (parsed) {
-  return FindToplevelFuncDeclVisitor.run(parsed);
-}
-
 function resolveReference (ref, scopePath) {
-  if (scopePath.length == 0) return [null, null];
+  if (scopePath.length === 0) return [null, null];
   const [scope, ...outer] = scopePath;
   const decls = scope.decls || declarationsWithIdsOfScope(scope);
   scope.decls = decls;
-  const decl = decls.find(([_, id]) => id.name == ref);
+  const decl = decls.find(([_, id]) => id.name === ref);
   return decl || resolveReference(ref, outer);
 }
 
@@ -628,7 +623,7 @@ function exports (scope, resolve = false) {
   }
 
   return arr.uniqBy(exports, (a, b) =>
-    a.local == b.local && a.exported == b.exported && a.fromModule == b.fromModule);
+    a.local === b.local && a.exported === b.exported && a.fromModule === b.fromModule);
 }
 
 const astq = new ASTQ();
@@ -660,7 +655,6 @@ export {
   _declaredVarNames,
   _findJsLintGlobalDeclarations,
   topLevelDeclsAndRefs,
-  topLevelFuncDecls,
   findGlobalVarRefs,
   findNodesIncludingLines,
   findReferencesAndDeclsInScope,
