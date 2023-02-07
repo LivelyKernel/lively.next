@@ -185,20 +185,15 @@ class UserFlapModel extends ViewModel {
   }
 }
 
-// part(UserFlap).openInWorld()
 export const UserFlap = component({
   name: 'user flap',
   defaultViewModel: UserFlapModel,
-  borderColor: {
-    bottom: Color.rgb(204, 204, 204),
-    left: Color.rgb(204, 204, 204),
-    right: Color.rgb(204, 204, 204),
-    top: Color.rgb(255, 255, 255)
-  },
+  borderWidth: 0,
   position: pt(580.2, 897.3),
   borderRadius: 7,
   clipMode: 'visible',
   extent: pt(362.3, 52.3),
+  fill: Color.transparent,
   fontColor: Color.rgb(102, 102, 102),
   layout: new TilingLayout({
     axisAlign: 'center',
@@ -224,7 +219,6 @@ export const UserFlap = component({
     type: Label,
     name: 'name label',
     draggable: true,
-    fill: Color.rgba(255, 255, 255, 0),
     fontColor: {
       onlyAtInstantiation: true,
       value: Color.rgb(102, 102, 102)
@@ -238,7 +232,6 @@ export const UserFlap = component({
     type: Label,
     name: 'name label',
     draggable: true,
-    fill: Color.rgba(255, 255, 255, 0),
     fontColor: {
       onlyAtInstantiation: true,
       value: Color.rgb(102, 102, 102)
@@ -259,119 +252,5 @@ export const UserFlap = component({
     imageUrl: 'https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160',
     nativeCursor: 'pointer',
     naturalExtent: pt(160, 160)
-  }]
-});
-// part(DarkUserFlap).openInWorld();
-export const DarkUserFlap = component(UserFlap, {
-  name: 'dark user flap',
-  fill: Color.rgba(255, 255, 255, 0),
-  submorphs: [{
-    name: 'name label',
-    fontColor: Color.white
-  }, {
-    name: 'user menu',
-    position: pt(15, 40),
-    scale: 0.8,
-    opacity: 0,
-    borderColor: Color.rgb(202, 207, 210),
-    borderRadius: 5,
-    borderWidth: 1,
-    dropShadow: new ShadowObject({ distance: 7, rotation: 75, color: Color.rgba(0, 0, 0, 0.11), blur: 20, fast: false }),
-    extent: pt(146.3, 70.9),
-    fill: Color.rgb(253, 254, 254),
-    isLayoutable: false,
-    origin: pt(121.7, -4.7),
-    visible: false
-  }, {
-    name: 'avatar',
-    imageUrl: 'https://s.gravatar.com/avatar/81fca83dcbbab5d52e990f7b76aa97ca?s=160'
-  }]
-});
-
-const ProfileItem = component({
-  type: Text,
-  name: 'profile item',
-  borderColor: Color.rgb(204, 204, 204),
-  extent: pt(144, 28),
-  fill: Color.rgba(0, 0, 0, 0),
-  fixedWidth: true,
-  fontFamily: 'IBM Plex Sans',
-  fontSize: 16,
-  nativeCursor: 'pointer',
-  padding: rect(10, 3, -5, 0),
-  textString: 'Profile',
-  readOnly: true,
-  selectable: false
-});
-
-const ProfileItemSelected = component(ProfileItem, {
-  name: 'profile item selected',
-  fill: Color.rgb(215, 219, 221)
-});
-// part(UserMenu).openInWorld()
-const UserMenu = component({
-  name: 'user menu',
-  borderColor: Color.rgb(202, 207, 210),
-  borderRadius: 5,
-  borderWidth: 1,
-  dropShadow: new ShadowObject({ distance: 7, rotation: 75, color: Color.rgba(0, 0, 0, 0.11), blur: 20, fast: false }),
-  extent: pt(146.3, 35),
-  fill: Color.rgb(253, 254, 254),
-  isLayoutable: false,
-  origin: pt(121.7, -4.7),
-  submorphs: [{
-    type: Polygon,
-    name: 'menu shape',
-    borderColor: Color.rgb(202, 207, 210),
-    borderWidth: 1,
-    extent: pt(20.2, 10.4),
-    fill: Color.rgb(253, 254, 254),
-    isLayoutable: false,
-    position: pt(-10.5, -5.4),
-    vertices: [{
-      position: pt(0, 10),
-      isSmooth: false,
-      controlPoints: {
-        next: pt(0, 0), previous: pt(0, 0)
-      }
-    }, {
-      position: pt(10, 0),
-      isSmooth: false,
-      controlPoints: { next: pt(0, 0), previous: pt(0, 0) }
-    }, {
-      position: pt(20, 10),
-      isSmooth: false,
-      controlPoints: { next: pt(0, 0), previous: pt(0, 0) }
-    }]
-  }, {
-    name: 'item container',
-    layout: new TilingLayout({
-      axis: 'column',
-      orderByIndex: true,
-      hugContentsVertically: true,
-      resizePolicies: [
-        ['login item', { width: 'fill', height: 'fixed' }],
-        ['logout item', { width: 'fill', height: 'fixed' }]
-      ]
-    }),
-    position: pt(-120.6, 10.9),
-    clipMode: 'hidden',
-    draggable: true,
-    extent: pt(144.2, 65),
-    fill: Color.rgba(46, 75, 223, 0),
-    grabbable: true,
-    submorphs: [
-      part(ProfileItem, {
-        name: 'login item',
-        textString: 'Sign in',
-        master: { hover: ProfileItemSelected }
-      }),
-      part(ProfileItem, {
-        name: 'logout item',
-        textString: 'Sign out',
-        visible: false,
-        master: { hover: ProfileItemSelected }
-      })
-    ]
   }]
 });
