@@ -37,18 +37,6 @@ export class World extends Morph {
           // place somewhere were it is called less often???
           return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-      },
-
-      showsUserFlap: {
-        defaultValue: true,
-        set (bool) {
-          // allow to override from URL
-          const { showsUserFlap } = resource(document.location.href).query();
-          if (typeof showsUserFlap !== 'undefined') bool = showsUserFlap;
-          this.setProperty('showsUserFlap', bool);
-          System.import('lively.user/morphic/user-ui.js')
-            .then(userUI => userUI.UserUI[bool ? 'showUserFlap' : 'hideUserFlap'](this));
-        }
       }
     };
   }
