@@ -176,12 +176,12 @@ export class TopBarModel extends ViewModel {
     const target = this.primaryTarget || this.world();
 
     if (evt.targetMorph === shapeSelector) {
-      const menu = this.world().openWorldMenu(evt, this.getShapeMenuItems());
-      menu.position = shapeModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
+      const menu = $world.openWorldMenu(evt, this.getShapeMenuItems());
+      menu.position = shapeModeButton.globalBounds().bottomLeft().subPt($world.scroll);
     }
     if (evt.targetMorph === handHaloSelector) {
-      const menu = this.world().openWorldMenu(evt, this.getHandAndHaloModeItems());
-      menu.position = handOrHaloModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
+      const menu = $world.openWorldMenu(evt, this.getHandAndHaloModeItems());
+      menu.position = handOrHaloModeButton.globalBounds().bottomLeft().subPt($world.scroll);
     }
 
     if (evt.targetMorph.name === 'undo button') {
@@ -214,7 +214,7 @@ export class TopBarModel extends ViewModel {
     }
 
     if (evt.targetMorph.name === 'load world button') {
-      this.world().execCommand('load world');
+      $world.execCommand('load world');
     }
 
     if (evt.targetMorph.name === 'comment browser button') {
@@ -283,7 +283,7 @@ export class TopBarModel extends ViewModel {
   }
 
   relayout () {
-    this.ui.ipadStatusBar.width = this.view.width = this.world().visibleBounds().width;
+    this.ui.ipadStatusBar.width = this.view.width = $world.visibleBounds().width;
     this.view.position = pt(0, 0);
   }
 
@@ -411,13 +411,13 @@ export class TopBarModel extends ViewModel {
     fun.notYetImplemented('component browser', true);
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
-    await this.world().execCommand('browse and load component');
+    await $world.execCommand('browse and load component');
     label.master = null;
   }
 
   setEditMode (mode, shallow = false, isTemporary = false) {
     this.editMode = mode;
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     if (!target) return;
     if (!shallow) this._tmpEditMode = mode;
 
@@ -444,7 +444,7 @@ export class TopBarModel extends ViewModel {
         this.toggleShapeMode(target, false);
       }
       this.showHaloPreviews(mode === 'Halo');
-      if (!shallow && mode !== 'Halo') this.world().halos().forEach(h => h.remove());
+      if (!shallow && mode !== 'Halo') $world.halos().forEach(h => h.remove());
 
       if (modeName === mode) {
         morphToUpdate.activateButton();
@@ -473,16 +473,16 @@ export class TopBarModel extends ViewModel {
   handleShapeCreation (evt) {
     if (this._customDrag) {
       this._customDrag = false;
-      this.world().halos()[0]?.onDragEnd();
+      $world.halos()[0]?.onDragEnd();
     }
 
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     const type = target._yieldShapeOnClick;
     if (!type) return false;
     if (target._sizeTooltip) target._sizeTooltip.remove();
     if (evt.targetMorph !== target) return false;
     if (target._shapeRequest && type && !target._yieldedShape) {
-      const position = target.localize(this.world().firstHand.position);
+      const position = target.localize($world.firstHand.position);
       switch (type) {
         case Image:
           target.addMorph(morph({
@@ -519,7 +519,7 @@ export class TopBarModel extends ViewModel {
   }
 
   prepareShapeCreation (evt) {
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     const type = target._yieldShapeOnClick;
     if (!type) return false;
     if (!this.canBeCreatedViaDrag(type)) return false;
@@ -576,7 +576,7 @@ export class TopBarModel extends ViewModel {
   }
 
   yieldShapeIfNeeded (evt) {
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     if (target._yieldedShape) {
       if (!target._yieldedShape.owner && evt.state.absDragDelta.r() > 10) target.addMorph(target._yieldedShape);
       target._yieldedShape.setBounds(Rectangle.fromAny(evt.position, this._shapeCreationStartPos).scaleBy(1 / $world.scaleFactor));
@@ -593,7 +593,7 @@ export class TopBarModel extends ViewModel {
   }
 
   handleHaloSelection (evt) {
-    const world = this.world();
+    const world = $world;
     const target = this.primaryTarget || world;
     if (this._showHaloPreview && this._currentlyHighlighted && world.halos().length === 0) {
       evt.stop();
@@ -609,12 +609,12 @@ export class TopBarModel extends ViewModel {
     if (!targets) return;
     if (obj.isArray(targets)) {
       if (targets.length === 0) return;
-      halo = this.world().showHaloForSelection(targets);
+      halo = $world.showHaloForSelection(targets);
     } else {
-      halo = this.world().showHaloFor(targets);
+      halo = $world.showHaloFor(targets);
     }
     once(halo, 'remove', () => {
-      if (halo.target !== this.world().focusedMorph) {
+      if (halo.target !== $world.focusedMorph) {
         signal(this.primaryTarget, 'onHaloRemoved', targets);
       }
     });
@@ -630,7 +630,7 @@ export class TopBarModel extends ViewModel {
     this.clearHaloPreviews();
     if (this._showHaloPreview) {
       const { haloFilterFn } = this;
-      const target = this.primaryTarget || this.world();
+      const target = this.primaryTarget || $world;
       let morphsContainingPoint = target.morphsContainingPoint(evt.positionIn(target.world()));
       if (evt.type === 'hoverout') {
         morphsContainingPoint = [target];
@@ -654,7 +654,7 @@ export class TopBarModel extends ViewModel {
 
     if (evt.state.draggedMorph) return;
 
-    const [halo] = this.world().halos();
+    const [halo] = $world.halos();
 
     if (halo &&
       this._customDrag &&
@@ -675,7 +675,7 @@ export class TopBarModel extends ViewModel {
   }
 
   showHaloPreviewFor (aMorph) {
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     if (!aMorph) return;
     if (![aMorph, ...aMorph.ownerChain()].find(m => m.isComponent) && aMorph.getWindow()) aMorph = null; // do not inspect windows
     else if ([aMorph, ...aMorph.ownerChain()].find(m => m.isEpiMorph)) aMorph = null; // do not inspect epi morphs
@@ -686,7 +686,7 @@ export class TopBarModel extends ViewModel {
       this._currentlyHighlighted = aMorph;
     }
 
-    if (this.world().halos().length > 0) return;
+    if ($world.halos().length > 0) return;
 
     if (!aMorph) return;
     if (!this._previewCache) this._previewCache = new WeakMap();
@@ -713,7 +713,7 @@ export class TopBarModel extends ViewModel {
       }
     });
 
-    if (!preview.owner) this.world().addMorph(preview);
+    if (!preview.owner) $world.addMorph(preview);
     preview.setBounds(aMorph.globalBounds());
     preview.borderColor = Color.rgb(23, 160, 251);
     preview.borderStyle = 'solid';
@@ -735,11 +735,11 @@ export class TopBarModel extends ViewModel {
 
   clearHaloPreviews () {
     this._currentlyHighlighted = null;
-    this.world().getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
+    $world.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
   }
 
   prepareDragSelection (evt) {
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     const world = target.world();
     this._selectionStartPos = evt.positionIn(world);
     this._morphSelection = world.addMorph({
@@ -753,7 +753,7 @@ export class TopBarModel extends ViewModel {
   }
 
   adjustDragSelection (evt) {
-    const target = this.primaryTarget || this.world();
+    const target = this.primaryTarget || $world;
     const world = target.world();
     const selectionBounds = Rectangle.fromAny(evt.position, this._selectionStartPos);
     this._morphSelection.setBounds(selectionBounds);
@@ -778,7 +778,7 @@ export class TopBarModel extends ViewModel {
   // called from onDragEnd
   finishDragSelectionIfNeeded (evt) {
     if (this._morphSelection) {
-      const world = this.world();
+      const world = $world;
       this._morphSelection.fadeOut(200);
       obj.values(this._selectedMorphs).map(m => m.remove());
       this.showHaloFor(
