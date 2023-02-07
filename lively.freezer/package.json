@@ -52,7 +52,7 @@
     "ide": {
       "exclude": [
         "loading-screen",
-        "dashboard"
+        "landing-page"
       ]
     }
   }
