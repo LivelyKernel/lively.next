@@ -121,7 +121,7 @@ export async function getConfig (resolver) {
     babelPath: await evalOnServer('require.resolve(\'@babel/cli/bin/babel.js\')'),
     tmp: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.js'))),
     min: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.min.js'))),
-    babelConfig: resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc')),
+    babelConfig: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc'))),
     pathToGoogleClosure: await evalOnServer(`require('lively.freezer/src/resolvers/node.cjs').decanonicalizeFileName(\"google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}\/compiler\")`)
   };
 }
@@ -147,6 +147,7 @@ export async function compileOnServer (code, resolver, useTerser) {
     // Terser fails to convert class definitions into functions, so we need to
     // preprocess with babel transform
     await babelConfig.writeJson({
+      plugins: ['@babel/plugin-proposal-optional-chaining'],
       presets: [[presetPath, { modules: false }]]
     });
     c = await resolver.spawn({ command: `${babelPath} -o tmp.es5.js tmp.js`, cwd });
@@ -158,6 +159,7 @@ export async function compileOnServer (code, resolver, useTerser) {
     }
     await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
     c = await resolver.spawn({ command: 'terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.es5.js', cwd });
+    babelConfig.remove();
   } else {
     c = await resolver.spawn({
       command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018`,
@@ -255,7 +257,7 @@ export function instrumentStaticSystemJS (system) {
 export async function generateLoadHtml (htmlConfig, importMap, resolver, modules) {
   const htmlTemplate = await resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/src/util/load-template.html'))).read();
   const entryPoint = modules.find(snippet => snippet.isEntry).fileName;
-  // fixme: this only makes sense for auto run builds 
+  // fixme: this only makes sense for auto run builds
   const loadCode = `
     window.frozenPart = {
       renderFrozenPart: (domNode, baseURL) => {
