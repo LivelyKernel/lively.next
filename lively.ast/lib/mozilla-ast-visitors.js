@@ -1,6 +1,4 @@
-/* global process, global, exports */
-
-import { obj, Path } from 'lively.lang';
+import { Path } from 'lively.lang';
 import Visitor from '../generated/estree-visitor.js';
 
 class PrinterVisitor extends Visitor {
@@ -230,16 +228,28 @@ class ScopeVisitor extends Visitor {
     return node;
   }
 
+  visitFunctionParameters (params, scope, path) {
+    params.forEach((param, i) => {
+      if (param.type === 'ObjectPattern') {
+        this.visitFunctionParameters(param.properties, scope, path.concat(i, 'properties'));
+      }
+      if (param.type === 'Property' && param.value.type === 'AssignmentPattern') {
+        this.accept(param.value.right, scope, path.concat(i, 'value', 'right'));
+      }
+      // AssignmentPattern = default params
+      // only visit the right side of a default param, we track the declarations
+      // in scope.params specificially
+      if (param.type === 'AssignmentPattern') {
+        this.accept(param.right, scope, path.concat(i, 'right'));
+      }
+    });
+  }
+
   visitFunction (node, scope, path) {
     const visitor = this;
     const newScope = this.newScope(node, scope);
 
-    // AssignmentPattern = default params
-    // only visit the right side of a default param, we track the declarations
-    // in newScope.params specificially
-    node.params.forEach((param, i) => {
-      if (param.type === 'AssignmentPattern') { visitor.accept(param.right, newScope, path.concat('params', i, 'right')); }
-    });
+    visitor.visitFunctionParameters(node.params, newScope, path.concat('params'));
 
     newScope.params = Array.prototype.slice.call(node.params);
     return newScope;
@@ -445,7 +455,7 @@ class ScopeVisitor extends Visitor {
         scope.refs.push(node.key);
       }
     }
-   
+
     node.value = visitor.accept(node.value, scope, path.concat(['value']));
     return node;
   }
