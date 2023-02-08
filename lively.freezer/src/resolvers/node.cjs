@@ -81,7 +81,13 @@ function detectFormat (moduleId) {
 }
 
 function setStatus ({ status, progress, label }) {
-
+  if (status) console.log(status);
+  if (label) console.log(label);
+  if (progress) {
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0);
+    process.stdout.write((progress * 100).toFixed() + '%');
+  }
 }
 
 function finish () {
