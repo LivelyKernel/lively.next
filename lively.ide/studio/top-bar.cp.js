@@ -12,6 +12,14 @@ import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
 
+function nyi (msg, strict = false) {
+  let error = new Error(`Not yet implemented ${msg}`);
+  $world.logError(error);
+  if (strict) {
+    throw error;
+  }
+}
+
 class SelectionElement extends Morph {
   static get properties () {
     return {
@@ -354,6 +362,7 @@ export class TopBarModel extends ViewModel {
   }
 
   async interactivelyLoadComponent () {
+    nyi('component browser', true);
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');
