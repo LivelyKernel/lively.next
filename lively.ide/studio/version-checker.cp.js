@@ -1,5 +1,5 @@
 import { component, TilingLayout, Morph, Icon, HTMLMorph, Label } from 'lively.morphic';
-import { evalOnServer } from 'lively.freezer/src/util/helpers';
+import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 import { Color, pt } from 'lively.graphics';
 
 import { runCommand } from '../shell/shell-interface.js';

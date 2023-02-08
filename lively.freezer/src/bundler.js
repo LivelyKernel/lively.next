@@ -148,7 +148,7 @@ export default class LivelyRollup {
     this.resolved = {};
     this.assetsToCopy = [];
 
-    this.resolver.setStatus({ label: 'Bundling...' });
+    this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
 
   /**

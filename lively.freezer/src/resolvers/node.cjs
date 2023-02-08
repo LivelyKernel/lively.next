@@ -10,6 +10,7 @@ const commonjs = require('@rollup/plugin-commonjs');
 const amdtoes6 = require('@buxlabs/amd-to-es6');
 const es6tocjs = require('@babel/plugin-transform-modules-commonjs');
 const nodePolyfills = require('rollup-plugin-polyfill-node');
+const chalk = require('chalk');
 
 // Problem: Just defering to rollup seems to bypass the flatn resolution mechanism
 // flatn 
@@ -81,8 +82,8 @@ function detectFormat (moduleId) {
 }
 
 function setStatus ({ status, progress, label }) {
-  if (status) console.log(status);
-  if (label) console.log(label);
+  if (status) console.log(chalk.cyan('[lively.freezer]:'), status);
+  if (label) console.log(chalk.cyan('[lively.freezer]:'), label);
   if (progress) {
     process.stdout.clearLine();
     process.stdout.cursorTo(0);
