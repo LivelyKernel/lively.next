@@ -392,7 +392,6 @@ export class PackageTreeData extends TreeData {
 
   async getLoadedModuleUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
-    // this is super slow. Fix me!
     const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git']);
     await this.systemInterface.getPackage(selectedPkg.url);
     const loadedModules = {};

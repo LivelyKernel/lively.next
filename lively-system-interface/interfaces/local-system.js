@@ -113,10 +113,11 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     try {
       const url = packageOrAddress.address ? packageOrAddress.address : packageOrAddress;
       const p = modules.getPackage(url);
-      return (await p.resources(undefined, exclude))
+
+      return (await p.resources(undefined, [...exclude, ...p.lively?.ide?.exclude || []]))
         .map(ea => Object.assign(ea, { package: ea.package.url }));
     } catch (e) {
-      console.warn(`resourcesOfPackage error for ${packageOrAddress}: ${e}`);
+      console.warn(`resourcesOfPackage error for ${packageOrAddress}: ${e}`); // eslint-disable-line no-console
       return [];
     }
   }
@@ -173,7 +174,6 @@ export class LocalCoreInterface extends AbstractCoreInterface {
       ? ast.parse(sourceOrAstOrNothing)
       : sourceOrAstOrNothing;
     const id = this.normalizeSync(moduleName);
-    const format = this.moduleFormat(id);
     const scope = modules.module(id).env().recorder;
     const importsExports = await this.importsAndExportsOf(id, parsed);
 
