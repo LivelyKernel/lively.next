@@ -308,7 +308,7 @@ function replaceRefs (parsed, options) {
         if (key.type === 'MemberExpression') {
           const newNode = { ...node, key: { ...key } };
           let curr = newNode.key;
-          while(curr.object?.type === 'MemberExpression') {
+          while (curr.object?.type === 'MemberExpression') {
             curr.object = { ...curr.object };
             curr = curr.object;
           }
@@ -354,6 +354,9 @@ function replaceRefs (parsed, options) {
       return nodes.sqncExpr(
         assign(member(options.captureObj, intermediate), node.right),
         ...node.left.properties.map(prop => {
+          if (prop.type === 'RestElement') {
+            return assign(prop.argument.name, member(options.captureObj, intermediate));
+          }
           const key = prop.value || prop.key;
           return assign(key, member(member(options.captureObj, intermediate), prop.key));
         }));
