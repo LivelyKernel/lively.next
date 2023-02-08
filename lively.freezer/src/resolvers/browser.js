@@ -98,6 +98,7 @@ const builtinModules = [];
 
 const BrowserResolver = {
   resolveModuleId,
+  isBrowserResolver: true,
   normalizeFileName,
   decanonicalizeFileName,
   resolvePackage,
