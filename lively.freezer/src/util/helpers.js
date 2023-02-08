@@ -122,6 +122,7 @@ export async function getConfig (resolver) {
     tmp: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.js'))),
     min: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.min.js'))),
     babelConfig: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc'))),
+    preprocessViaBabel: !!resolver.isBrowserResolver,
     pathToGoogleClosure: await evalOnServer(`require('lively.freezer/src/resolvers/node.cjs').decanonicalizeFileName(\"google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}\/compiler\")`)
   };
 }
@@ -129,7 +130,7 @@ export async function getConfig (resolver) {
 export async function compileOnServer (code, resolver, useTerser) {
   const transpilationSpeed = 100000;
   const compressionSpeed = 150000;
-  const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure } = await getConfig(resolver);
+  const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure, preprocessViaBabel } = await getConfig(resolver);
   tmp.onProgress = (evt) => {
     // set progress of loading indicator
     const p = evt.loaded / evt.total;
@@ -142,12 +143,11 @@ export async function compileOnServer (code, resolver, useTerser) {
   };
   await tmp.write(code); // write the file to the filesystem for working in the shell
   let c; const res = {};
-  resolver.setStatus({ status: 'Compressing source files...', progress: 0.01 });
-  if (useTerser) {
+  if (preprocessViaBabel || useTerser) {
     // Terser fails to convert class definitions into functions, so we need to
-    // preprocess with babel transform
+    // preprocess with babel transform even if there is no preprocessing requested
     await babelConfig.writeJson({
-      plugins: ['@babel/plugin-proposal-optional-chaining'],
+      plugins: [await evalOnServer('require.resolve(\'@babel/plugin-proposal-optional-chaining\')')],
       presets: [[presetPath, { modules: false }]]
     });
     c = await resolver.spawn({ command: `${babelPath} -o tmp.es5.js tmp.js`, cwd });
@@ -158,9 +158,20 @@ export async function compileOnServer (code, resolver, useTerser) {
       resolver.setStatus({ progress: (i + 1) / (code.length / transpilationSpeed) });
     }
     await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
-    c = await resolver.spawn({ command: 'terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.es5.js', cwd });
+    c = await resolver.spawn({ command: 'mv tmp.es5.js tmp.js', cwd });
+    await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
     babelConfig.remove();
+  }
+
+  resolver.setStatus({ status: 'Minifying source files...', progress: 0.01 });
+
+  if (useTerser) {
+    c = await resolver.spawn({
+      command: 'terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.js',
+      cwd
+    });
   } else {
+    // ensure that optional chaining has been removed beforehand
     c = await resolver.spawn({
       command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018`,
       cwd

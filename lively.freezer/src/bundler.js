@@ -24,7 +24,7 @@ const separator = `__${'Separator'}__`; // obscure formatting to prevent breakin
 
 const GLOBAL_FETCH = `var G = typeof window !== "undefined" ? window :
       typeof global!=="undefined" ? global :
-        typeof self!=="undefined" ? self : this;`
+        typeof self!=="undefined" ? self : this;`;
 const SYSTEMJS_STUB = `
 ${GLOBAL_FETCH}
 if (!G.System) G.System = G.lively.FreezerRuntime;`;
@@ -147,6 +147,8 @@ export default class LivelyRollup {
     this.importedModules = []; // Collection of all the required modules from the passed snapshot. This is not popuplated if we utilize rootModule.
     this.resolved = {};
     this.assetsToCopy = [];
+
+    this.resolver.setStatus({ label: 'Bundling...' });
   }
 
   /**
@@ -472,7 +474,7 @@ export default class LivelyRollup {
       this.globalMap = { ...this.globalMap, ...importingPackage.map };
       if (importingPackage.map[id] || this.globalMap[id]) {
         if (!importingPackage.map[id] && this.globalMap[id]) {
-          console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`);
+          console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`); // eslint-disable-line no-console
         }
         id = importingPackage.map[id] || this.globalMap[id];
         if (id['~node']) id = id['~node'];
@@ -535,7 +537,6 @@ export default class LivelyRollup {
    * @returns { string } The source code.
    */
   async load (id) {
-    // id = this.redirect[id] || id;
     if (this.excludedModules.includes(id)) {
       if (id === 'lively.ast') {
         return `
@@ -607,7 +608,7 @@ export default class LivelyRollup {
     } else {
       opts.classToFunction = false;
     }
-    
+
     let instrumented = parsed;
     if (this.isComponentModule(id)) {
       instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id));
@@ -818,20 +819,22 @@ export default class LivelyRollup {
       modules.forEach((chunk, i) => {
         chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
       });
-      const codeToMinify = modules.map(chunk => chunk.instrumentedCode).join('\n');
+      let codeToMinify = modules.map(chunk => chunk.instrumentedCode).join('\n');
       const { min: minfiedCode } = await compileOnServer(codeToMinify, this.resolver, this.useTerser);
       let compiledSnippets = minfiedCode.split(new RegExp(`"${separator}";\n?`));
       const adjustedSnippets = new Map(); // ensure order
       modules.forEach((snippet, i) => {
         adjustedSnippets.set(i, snippet.code); // populate with original source in case the transpiler kicked the chunk away
       });
-      compiledSnippets.forEach((compiledSnippet) => {
+      compiledSnippets.forEach((compiledSnippet, i) => {
         const hit = compiledSnippet.match(/^[0-9]+;\n?/);
         if (!hit) return; // fixme: google closure seems to add some weird polyfill stuff...
         const hint = Number(hit[0].replace(/;\n?/, ''));
         adjustedSnippets.set(hint, compiledSnippet.replace(/^[0-9]+;\n?/, ''));
       });
+      const polyfills = compiledSnippets[0];
       compiledSnippets = [...adjustedSnippets.values()];
+      compiledSnippets[0] = polyfills + compiledSnippets[0];
       for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) {
         snippet.code = compiled;
       } // override the code attribute

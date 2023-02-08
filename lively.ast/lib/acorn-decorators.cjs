@@ -97,14 +97,8 @@ module.exports = function extendParser (Parser) {
               this.type !== acorn.tokTypes.star) {
             this.raise(this.start, 'Inline decorators must be attached to a property declaration');
           }
-        case this.privateIdentifierToken:
-        case acorn.tokTypes.star:
-        case acorn.tokTypes.bracketL:
-        case acorn.tokTypes.name:
-        case acorn.tokTypes._extends:
-        case acorn.tokTypes._break: // some people use this too
-        case acorn.tokTypes._with: // this seems to get confused when we use javascript keywords
-        case acorn.tokTypes._delete: // dito...
+        default:
+          if (this.type !== this.privateIdentifierToken && !Object.values(acorn.tokTypes).includes(this.type)) break;
           let node = super.parseClassElement(constructorAllowsSuper);
           node.decorators = decorators;
           if (decorators.length) {
