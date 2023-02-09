@@ -9,7 +9,7 @@ export default class TestRunner {
     let results;
     try {
     this.headlessSession = new HeadlessSession();
-    await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&showsUserFlap=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld'`))
+    await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld'`))
     results = await this.headlessSession.runEval(`
     const { resource } = await System.import("lively.resources");
     const { promise } = await System.import('lively.lang')
