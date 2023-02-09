@@ -416,7 +416,7 @@ export class LivelyWorld extends World {
     await this.initializeStudioUI();
   }
 
-  async initializeStudioUI () {
+  async initializeTopBar () {
     const topBar = part(TopBar);
     topBar.epiMorph = true;
     topBar.name = 'lively top bar';
@@ -431,35 +431,11 @@ export class LivelyWorld extends World {
     this.onTopBarLoaded();
 
     await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
-    if (!this.metadata) {
-      await this.animate({
-        customTween: p => {
-          topBar.blur = this.blur = p * 3;
-        },
-        duration: 500
-      });
-      const worldName = await this.askForName();
-      this.name = worldName;
-      this.changeMetaData('commit', { name: worldName });
-      if (window.history) {
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
-      }
-      if (config.ide.projectsEnabled) {
-        // TODO: fix
-        this.openedProject = new Project(worldName);
-      } else {
-        // fixme: We do not want to subclass the world class. This is just a temporary solution
-        // to reliably load the package at all times the world is loaded
-        const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
-        await pkg.adoptObject(this);
-      }
-      await this.animate({
-        customTween: p => {
-          topBar.blur = this.blur = (1 - p) * 3;
-        },
-        duration: 500
-      });
-    }
+    
+    return topBar;
+  }
+
+  async initializeStudioUI () {
     const { LivelyVersionChecker } = await System.import('lively.ide/studio/version-checker.cp.js');
     const versionChecker = part(LivelyVersionChecker);
     versionChecker.name = 'lively version checker';
@@ -478,6 +454,54 @@ export class LivelyWorld extends World {
     connect($world.sceneGraphFlap, 'position', versionChecker, 'relayout');
     $world.propertiesPanelFlap = part(Flap, { viewModel: { target: 'properties panel', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
     connect($world.propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
+  }
+
+  async initializeStudio () {
+    const topBar = await this.initializeTopBar();
+
+    let { askForWorldName } = resource(document.location.href).query();
+    if (askForWorldName === undefined) askForWorldName = true;
+
+    if (!this.metadata) {
+      await this.animate({
+        customTween: p => {
+          topBar.blur = this.blur = p * 3;
+        },
+        duration: 500
+      });
+
+      let worldName;
+      if (askForWorldName) {
+        worldName = await this.askForName();
+        this.name = worldName;
+      }
+
+      worldName = worldName || 'new world';
+
+      if (window.history) {
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
+      }
+
+      if (config.ide.projectsEnabled) {
+        // TODO: fix
+        this.openedProject = new Project(worldName);
+      } else {
+        this.changeMetaData('commit', { name: worldName });
+        // fixme: We do not want to subclass the world class. This is just a temporary solution
+        // to reliably load the package at all times the world is loaded
+        const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
+        await pkg.adoptObject(this);
+      }
+
+      await this.animate({
+        customTween: p => {
+          topBar.blur = this.blur = (1 - p) * 3;
+        },
+        duration: 500
+      });
+    }
+
+    await this.initializeStudioUI();
   }
 
   async isNotUnique (worldName) {
