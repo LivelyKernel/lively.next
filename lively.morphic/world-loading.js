@@ -13,12 +13,11 @@ import { pathForBrowserHistory } from './helpers.js';
 import { part } from './components/core.js';
 
 function reportWorldLoad (world, user) {
-  const userId = user ? `${user.name} (${(user.token || '').slice(0, 5)})` : '---';
   fetch(string.joinPath(System.baseURL, '/report-world-load'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: `${userId} logged in at ${world.name} [${window._livelyLoadId}]`
+      message: `${world.currentUser} logged in at ${world.name} [${window._livelyLoadId}]`
     })
   }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
@@ -46,8 +45,6 @@ async function setupLively2Lively (world) {
           .then(() => console.log('re-registered after user change'));
       }
     };
-
-    subscribe('lively.user/userchanged', client._onUserChange, System);
 
     client.once('registered', () => {
       reportWorldLoad(world, user);

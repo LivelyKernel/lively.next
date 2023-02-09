@@ -61,7 +61,6 @@ const DEFAULT_EXCLUDED_MODULES = [
   'lively.freezer',
   'lively.modules',
   'lively.storage',
-  'lively.user'
 ];
 
 /**
@@ -81,7 +80,7 @@ function clearWorldSnapshot (snap) {
     delete snap.snapshot[id].props.metadata;
     delete snap.snapshot[id]._cachedLineCharBounds;
     if (id === snap.id) {
-      snap.snapshot[id].props.showsUserFlap = { value: false };
+      snap.snapshot[id].props.askForWorldName = { value: false };
     }
     const module = moduleOfId(snap.snapshot, id);
     if (!module.package) continue;

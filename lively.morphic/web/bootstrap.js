@@ -30,29 +30,6 @@ var loc = document.location,
     doBootstrap = !query.quickload && !isBenchmark,
     askBeforeQuit = 'askBeforeQuit' in query ? !!query.askBeforeQuit : true;
 
-promise.waitFor(function() { return !!lively.user; }).then(function() {
-  var userRegistry = lively.user.UserRegistry.current;
-  if (userRegistry.hasUserStored() && !query.login) {
-    loginDone = true;
-    return;
-  }
-  if (query.nologin || isBenchmark) {
-    return userRegistry.login(lively.user.ClientUser.guest).then(function(user) { loginDone = true; });
-  }
-  resource(`${origin}/lively.user/html/html-ui.fragment`).read()
-    .then(function(content) {
-      document.body.insertAdjacentHTML("beforeend", content);
-      loadingIndicator.style.display = "none";
-      return loadViaScript("/lively.user/html/html-ui.js")
-    })
-    .then(function() { return lively.user.html.openUserUI(); })
-    .then(function(user) {
-      loadingIndicator.style.display = "";
-      loginDone = true;
-    })
-    .catch(function(err) { console.error(err); });
-});
-
 Promise.resolve()
   .then(polyfills)
   .then(function() { return (doBootstrap) ? bootstrapLivelySystem() : fastPrepLivelySystem(); })
@@ -122,7 +99,6 @@ function fastPrepLivelySystem() {
       System["__lively.modules__packageRegistry"] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       return System;
     })
-    .then(function() { return loadViaScript("/lively.user/dist/lively.user-client.js"); });
 }
 
 function bootstrapLivelySystem() {
@@ -178,11 +154,6 @@ function bootstrapLivelySystem() {
           Object.assign(newRegistry, obj.select(oldRegistry, ["packageMap", "individualPackageDirs", "devPackageDirs", "packageBaseDirs"]))
           newRegistry.resetByURL();
         })})
-
-    .then(function() {
-      return importPackageAndDo(
-        "lively.user",
-        function(m) { lively.user = m; })})
 
     .then(function() {
       return importPackageAndDo(

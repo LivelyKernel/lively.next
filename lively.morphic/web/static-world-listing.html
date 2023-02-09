@@ -47,7 +47,6 @@
     <script src="/lively.next-node_modules/systemjs/dist/system.src.js"></script>
     <script src="/lively.modules/dist/lively.modules.js"></script>
     <script src="/lively.storage/dist/lively.storage_with-pouch.js"></script>
-    <script src="/lively.user/dist/lively.user-client.js"></script>
 
     <script src="/lively.2lively/dist/lively.2lively_client.js"></script>
     <script>
@@ -64,11 +63,7 @@
           loc = document.location,
           origin = loc.origin,
           query = res(loc.href).query(),
-          loginDone = false,
-          userRegistry = lively.user.UserRegistry.current,
-          userFlap = $(".user-flap"),
-          userFlapContent = $(".user-flap span"),
-          user = currentUser(), update;
+          update;
 
       if (loc.host !== "lively-next.org")
         document.title = `lively.next (${loc.host})`;
@@ -81,26 +76,6 @@
         userFlap.onclick = evt => {
           document.location = res(loc.href).withQuery({login: true}).url;
         }
-      }
-
-      if (userRegistry.hasUserStored() && !query.login) {
-        loginDone = true;
-      } else {
-        var login = query.nologin ?
-          userRegistry.login(lively.user.ClientUser.guest) :  
-          res(`${origin}/lively.user/html/html-ui.fragment`).read()
-            .then(function(content) {
-              document.body.insertAdjacentHTML("beforeend", content);
-              return lively.resources.loadViaScript("/lively.user/html/html-ui.js");
-            })
-            .then(function() { return lively.user.html.openUserUI(); })
-        login.then(function(_user) {
-          user = _user;
-          userFlapContent.textContent = user.name.startsWith("guest-") ? "guest" : user.name;
-          loginDone = true;
-          if (typeof update === "function") update(user);
-        })
-        .catch(function(err) { console.error(err); });
       }
 
       polyfills()

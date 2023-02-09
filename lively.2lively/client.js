@@ -478,12 +478,8 @@ export default class L2LClient extends L2LConnection {
       const peer = { ...obj.dissoc(record, ['info']), id, world, location, type };
       userToken = userToken || l2lUserToken;
       if (userToken && userToken !== 'null') {
-        if (lively.user) {
-          peer.user = lively.user.ClientUser.fromToken(userToken, userRealm);
-        } else {
           peer.userToken = userToken;
           peer.userRealm = userRealm;
-        }
       }
       return peer;
     });

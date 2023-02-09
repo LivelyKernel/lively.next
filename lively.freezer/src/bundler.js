@@ -34,7 +34,6 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'lively.components',
   'lively.ide',
   'lively.halos',
-  'lively.user',
   'lively.bindings',
   'lively-system-interface', // required to make inspector serializable
   'typeshift.components',
