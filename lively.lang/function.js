@@ -19,7 +19,22 @@ function K () { /* `function(arg) { return arg; }` */ return function (arg) { re
 function Null () { /* `function() { return null; }` */ return function () { return null; }; }
 function False () { /* `function() { return false; }` */ return function () { return false; }; }
 function True () { /* `function() { return true; }` */ return function () { return true; }; }
-function notYetImplemented () { return function () { throw new Error('Not yet implemented'); }; }
+
+/**
+* Throws a well behaved error on purpopse, when accessing unimplemented
+* functionality.
+* @param { string } what - The thing, which is not implemented.
+* @param { boolean } strict - Whether or not to throw an actual error.
+* @example
+* notYetImplemented('5D rendering', true)
+**/
+function notYetImplemented (what, strict = false) {
+  let error = new Error(`${what} is not yet implemented yet`);
+  $world.logError(error);
+  if (strict) {
+    throw error;
+  }
+}
 
 /**
  * Returns wether or not a given function is a "built in".
