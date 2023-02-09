@@ -463,6 +463,7 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.isMorph)) { this.needsDocument = true; }
           if (this.document) {
             this.replace(
