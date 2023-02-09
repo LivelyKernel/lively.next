@@ -1,7 +1,7 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
 import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
-import { Closure, string, obj, arr } from 'lively.lang';
+import { Closure, string, obj, arr, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
@@ -11,14 +11,6 @@ import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
-
-function nyi (msg, strict = false) {
-  let error = new Error(`Not yet implemented ${msg}`);
-  $world.logError(error);
-  if (strict) {
-    throw error;
-  }
-}
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -362,7 +354,7 @@ export class TopBarModel extends ViewModel {
   }
 
   async interactivelyLoadComponent () {
-    nyi('component browser', true);
+    fun.notYetImplemented('component browser', true);
     const label = this.ui.openComponentBrowser;
     label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
     await this.world().execCommand('browse and load component');
