@@ -1,5 +1,6 @@
 import { resource, parseQuery, withRelativePartsResolved, relativePathBetween, windowsPathPrefixRe, stringifyQuery } from './helpers.js';
 import { ensureFolder } from 'lively.lang/string.js';
+import { notYetImplemented } from 'lively.lang/function.js';
 
 const slashEndRe = /\/+$/;
 const slashStartRe = /^\/+/;
@@ -7,7 +8,7 @@ const protocolRe = /^[a-z0-9-_\.]+:/;
 const slashslashRe = /^\/\/[^\/]+/;
 
 function nyi (obj, name) {
-  throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
+  notYetImplemented(`${name} for ${obj.constructor.name} not yet implemented`);
 }
 
 export default class Resource {
