@@ -15,13 +15,14 @@ import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
-import commands from './commands.js';
+import interactiveCommands from './commands.js';
 import { textAndAttributesWithSubRanges } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
 import { Icon, Icons } from './icons.js';
 import { ShadowObject } from '../rendering/morphic-default.js';
+import { editingCommand } from 'lively.ide/text/rich-text-commands.js';
 
 /**
  * A Morph to display and edit text.
@@ -1584,8 +1585,8 @@ export class Text extends Morph {
   }
 
   get commands () {
-    if (!(this.document && this.textLayout)) return [];
-    return this.pluginCollect('getCommands', (this._commands || []).concat(commands));
+    if (!(this.document && this.textLayout)) return [editingCommand];
+    return this.pluginCollect('getCommands', (this._commands || []).concat(interactiveCommands));
   }
 
   execCommand (commandOrName, args, count, evt) {
@@ -3961,6 +3962,7 @@ export class Text extends Morph {
          targets.some(m => m.isColorPicker)) &&
          $world.get('formatting pop up')) return;
     }
+    this.execCommand('clean up rich-text UI', true);
     disconnect($world, 'onMouseDown', this, 'cancelTemporaryEdit');
     const topBar = $world.get('lively top bar');
     if (!this.tmpEdit) return;
@@ -3968,8 +3970,6 @@ export class Text extends Morph {
     topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
     this.collapseSelection();
-
-    this.execCommand('clean up rich-text UI', true);
 
     topBar.showHaloFor(this);
   }

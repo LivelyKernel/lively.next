@@ -25,7 +25,33 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
   });
 }
 
-export const commands = [
+export const editingCommand = {
+  name: 'temporary edit text',
+  exec: (textMorph, evt) => {
+    const t = textMorph;
+
+    // this makes sense even if target is not readonly
+    // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
+    t.prevReadOnly = t.readOnly;
+    t.tmpEdit = true;
+    t.readOnly = false;
+    t.focus();
+    setTimeout(() => {
+      // ensure that the document is rendered and text layout measured
+      t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
+    });
+
+    connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
+    // switch to hand mode to stop halo from eating clicks for editing
+    $world.get('lively top bar').setEditMode('Hand', true, true);
+    t.editorPlugin.showIconButton(true);
+    $world.halos().forEach(h => {
+      if (h.target === textMorph) h.remove();
+    });
+  }
+};
+
+export const interactiveCommands = [
   {
     name: 'clean up rich-text UI',
     exec: (textMorph, immediate) => {
@@ -42,32 +68,6 @@ export const commands = [
   {
     name: 'show formatting popup',
     exec: (textMorph) => textMorph.editorPlugin.showFormattingPopUp()
-  },
-
-  {
-    name: 'temporary edit text',
-    exec: (textMorph, evt) => {
-      const t = textMorph;
-
-      // this makes sense even if target is not readonly
-      // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
-      t.prevReadOnly = t.readOnly;
-      t.tmpEdit = true;
-      t.readOnly = false;
-      t.focus();
-      setTimeout(() => {
-        // ensure that the document is rendered and text layout measured
-        t.cursorPosition = t.textPositionFromPoint(evt ? evt.positionIn(t) : pt(0, 0));
-      });
-
-      connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
-      // switch to hand mode to stop halo from eating clicks for editing
-      $world.get('lively top bar').setEditMode('Hand', true, true);
-      t.editorPlugin.showIconButton(true);
-      $world.halos().forEach(h => {
-        if (h.target === textMorph) h.remove();
-      });
-    }
   },
 
   {
