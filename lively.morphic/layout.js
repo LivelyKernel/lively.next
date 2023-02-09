@@ -1,8 +1,6 @@
 import { pt, Rectangle, rect } from 'lively.graphics';
-import { arr, promise, Closure, num, obj } from 'lively.lang';
+import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
-
-function nyi (msg) { throw new Error(`Not yet implemented: ${msg}`); }
 
 // add my commento
 
@@ -1902,7 +1900,7 @@ class LayoutAxis {
    * @returns { LayoutAxis }
    */
   emptyAxis () {
-    nyi('emptyAxis');
+    fun.notYetImplemented('emptyAxis');
   }
 }
 
