@@ -467,7 +467,8 @@ export class Text extends Morph {
           if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
-              textAndAttributes
+              textAndAttributes,
+              false
             );
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
