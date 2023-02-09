@@ -20,9 +20,11 @@ class UserFlapModel extends ViewModel {
   viewDidLoad () {
     if (!localStorage.getItem('gh_user_data')) {
       connect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
+      this.ui.leftUserLabel.tooltip = 'Login with GitHub';
     } else {
       this.showUserData();
       connect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
+      this.ui.rightUserLabel.tooltip = 'Logout';
       this.ui.rightUserLabel.nativeCursor = 'pointer';
       this.ui.leftUserLabel.nativeCursor = 'auto';
     }
@@ -45,6 +47,7 @@ class UserFlapModel extends ViewModel {
 
     disconnect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
     connect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
+    this.ui.rightUserLabel.tooltip = 'Logout';
     this.ui.rightUserLabel.nativeCursor = 'pointer';
     this.ui.leftUserLabel.nativeCursor = 'auto';
   }
@@ -57,6 +60,7 @@ class UserFlapModel extends ViewModel {
 
   logout () {
     connect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
+    this.ui.leftUserLabel.tooltip = 'Login with GitHub';
     disconnect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
     this.ui.leftUserLabel.nativeCursor = 'pointer';
     this.ui.rightUserLabel.nativeCursor = 'auto';
