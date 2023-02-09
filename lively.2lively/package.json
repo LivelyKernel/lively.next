@@ -4,8 +4,7 @@
   "dependencies": {
     "lively.lang": "*",
     "lively.storage": "*",
-    "socket.io-client": "^4.4.1",
-    "lively.user": "git://github.com/LivelyKernel/lively.user.git"
+    "socket.io-client": "^4.4.1"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",

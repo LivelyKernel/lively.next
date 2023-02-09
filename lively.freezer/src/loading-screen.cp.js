@@ -153,7 +153,7 @@ export default class ModuleProgress extends Morph {
 
   async fastLoadTest () {
     this.reset();
-    const mods = ['lively.lang', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.modules', 'lively.user', 'lively.storage', 'lively.morphic'];
+    const mods = ['lively.lang', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.modules', 'lively.storage', 'lively.morphic'];
     for (const mod of mods) {
       this.finishPackage({ packageName: mod, loaded: true });
       await promise.delay(200);
@@ -364,16 +364,6 @@ const ProgressIndicator = component({
       textAndAttributes: ['modules', null]
     }]
   }), part(Stage, {
-    name: 'stage user',
-    extent: pt(54, 119),
-    submorphs: [{
-      name: 'icon',
-      textAndAttributes: Icon.textAttribute('user-circle')
-    }, {
-      name: 'label',
-      textAndAttributes: ['user', null]
-    }]
-  }), part(Stage, {
     name: 'stage storage',
     extent: pt(77, 119),
     submorphs: [{
@@ -485,7 +475,7 @@ const LoadingScreen = component({
   to { width: 100% }\n\
 }',
       extent: pt(940, 274.3),
-      html: '<div style="position: fixed; z-index: 1; height: 100%; width: 100%; background-color: transparent">\n\
+      html: '<div style=position: fixed; z-index: 1; height: 100%; width: 100%; background-color: transparent">\n\
   <div id="loading-bar">\n\
      <div id="progress" style="width: 100%;">\n\
   </div>\n\

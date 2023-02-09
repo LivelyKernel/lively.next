@@ -129,10 +129,6 @@ function init() {
               })})
       .then(function() {
         return importPackageAndDo(
-          "lively.user",
-          function(m) { lively.user = m; })})
-      .then(function() {
-        return importPackageAndDo(
           "lively.storage",
           function(m) { lively.storage = m; })})
   }

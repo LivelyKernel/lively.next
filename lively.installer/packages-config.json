@@ -92,11 +92,6 @@
     "wantsServerInterface": true
   },
   {
-    "name": "lively.user",
-    "repoURL": "https://github.com/LivelyKernel/lively.user",
-    "wantsServerInterface": true
-  },
-  {
     "name": "lively.git",
     "repoURL": "https://github.com/LivelyKernel/lively.js-git"
   },

@@ -158,9 +158,6 @@ export class MorphicEnv {
         clearStylePropertiesForClassesIn(evt.module);
         this.getTargetsFor('onModuleChanged').forEach(ea => ea.onModuleChanged(evt));
       })];
-    systemChangeHandlers['lively.user/userchanged'] = [
-      subscribe('lively.user/userchanged', (evt) =>
-        this.getTargetsFor('onUserChanged').forEach(ea => ea.onUserChanged(evt)))];
   }
 
   uninstallSystemChangeHandlers () {

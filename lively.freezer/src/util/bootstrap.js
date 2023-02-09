@@ -108,12 +108,6 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         extractModules('lively.modules');
         progress.finishPackage({ packageName: 'lively.modules', frozen: true });
       }
-      if (loadConfig['lively.user'] === 'frozen' || fastLoad) {
-        await System.import('lively.user');
-        await System.import('lively.user/morphic/user-ui.js');
-        extractModules('lively.user');
-        progress.finishPackage({ packageName: 'lively.user', frozen: true });
-      }
       if (loadConfig['lively.storage'] === 'frozen' || fastLoad) {
         await System.import('lively.storage');
         extractModules('lively.storage');
@@ -262,16 +256,6 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
       progress.finishPackage({ packageName: 'lively.modules', loaded: true });
     })
     .then(async function () {
-      if (loadConfig['lively.user'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
-          'lively.user',
-          function (m) {
-            progress.finishPackage({ packageName: 'lively.user', loaded: true });
-            lively.user = m;
-          },
-          li);
-      }
-    }).then(async function () {
       if (loadConfig['lively.storage'] === 'dynamic' && !fastLoad) {
         return importPackageAndDo(
           'lively.storage',
@@ -292,12 +276,11 @@ function fastPrepLivelySystem (li) {
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       return System;
     })
-    .then(function () { return loadViaScript(resource(System.baseURL).join('/lively.user/dist/lively.user-client.js').url); });
 }
 
 export async function bootstrap ({ filePath, worldName, snapshot, commit, loadingIndicator: li, progress, logError = (err) => console.log(err) }) {
   try {
-    const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.user":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
+    const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
     li.center = progress.bottomCenter;
     await polyfills();
     const oldEnv = $world.env;
@@ -356,7 +339,7 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
         ({ loadWorld } = await lively.modules.module('lively.morphic/world-loading.js').recorder);
         ({ loadMorphFromSnapshot } = await lively.modules.module('lively.morphic/serialization.js').recorder);
         const m = await loadMorphFromSnapshot(await resource(snapshot).readJson());
-        const w = await loadWorld(new World({ showsUserFlap: false, extent: $world.extent }), undefined, opts);
+        const w = await loadWorld(new World({ askForWorldName: false, extent: $world.extent }), undefined, opts);
         w.addMorph(m);
         w.onWindowResize();
       } else if (commit) {
