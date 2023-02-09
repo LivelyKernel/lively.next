@@ -1448,10 +1448,8 @@ export class BrowserModel extends ViewModel {
           textDecoration: 'underline',
           doit: { code: `$world.execCommand("open file browser", {location: "${pack.url}"})` }
         },
-        ' ', {},
-        mod.nameInPackage || '', {}
-      // ` (${await system.moduleFormat(mod.url)} format)`, {}
-      // ' - ', {}
+        ' ', null,
+        mod.nameInPackage || '', null
     ]);
     this.view.getWindow().title = `browser - [${pack.name}] ${mod.nameInPackage || ''} `;
   }
@@ -1477,7 +1475,7 @@ export class BrowserModel extends ViewModel {
     }
     if (name && this.view.width > minWidthToDisplay) {
       metaInfoText.setPath([
-        ...metaInfoText.getPath().slice(0, 6),
+        ...metaInfoText.getPath().slice(0, 4),
         ` - ${parents.join('>>')}${name}:${sourceEditor.cursorPosition.row}`, {
           fontSize: 12, paddingTop: '2px'
         }]);
