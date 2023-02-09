@@ -63,8 +63,10 @@ export class LivelyWorld extends World {
       },
       currentUser: {
         initialize () {
-          if (localStorage.getItem('gh_access_token')) retrieveGithubUserData();
-          else return 'guest';
+          const storedUserData = localStorage.getItem('gh_user_data');
+          if (storedUserData) {
+            this.currentUser = JSON.parse(storedUserData).login;
+          } else this.currentUser = 'guest';
         }
       },
 
@@ -431,7 +433,7 @@ export class LivelyWorld extends World {
     this.onTopBarLoaded();
 
     await topBar.animate({ position: pt(0, 0), dropShadow, duration: 500 }); // tell top bar to show in
-    
+
     return topBar;
   }
 
