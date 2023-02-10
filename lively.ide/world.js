@@ -61,12 +61,24 @@ export class LivelyWorld extends World {
           document.title = `lively.next - ${name}`;
         }
       },
+
       currentUser: {
-        initialize () {
+        before: ['currentUsername'],
+        get () {
           const storedUserData = localStorage.getItem('gh_user_data');
           if (storedUserData) {
-            this.currentUser = JSON.parse(storedUserData).login;
-          } else this.currentUser = 'guest';
+            return JSON.parse(storedUserData);
+          } else return { login: 'guest' };
+        }
+      },
+      currentUsername: {
+        get () {
+          return this.currentUser.login;
+        }
+      },
+      currentUsertoken: {
+        get () {
+          return localStorage.getItem('gh_access_token');
         }
       },
 
@@ -586,7 +598,7 @@ export class LivelyWorld extends World {
     const baseURL = document.location.origin;
 
     if (files.length) {
-      let uploadPath = $world.currentUser === 'guest' ? 'uploads/' : 'users/' + $world.currentUser + '/uploads';
+      let uploadPath = $world.currentUsername === 'guest' ? 'uploads/' : 'users/' + $world.currentUser + '/uploads';
       if (evt.isAltDown()) {
         uploadPath = await this.prompt('Choose upload location', {
           history: 'lively.morphic-html-drop-file-upload-location',
