@@ -1195,23 +1195,27 @@ const commands = [
   },
 
   {
-    name: 'save world',
+    // TODO: We also might want to save world snapshots **insid** of projects.
+    name: 'save world or project',
     exec: async (world, args, _, evt) => {
-      // in case there is another morph implementing save...
-      const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
-      if (relayed) return relayed;
-      args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
-      const focused = world.focusedMorph;
-      const saved = await interactivelySaveWorld(world, args);
-      if (focused && focused.focus());
-      return saved;
+      if (config.ide.projectsEnabled) {
+        await $world.openedProject.save();
+      } else { // in case there is another morph implementing save...
+        const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+        if (relayed) return relayed;
+        args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
+        const focused = world.focusedMorph;
+        const saved = await interactivelySaveWorld(world, args);
+        if (focused && focused.focus());
+        return saved;
+      }
     }
   },
 
   {
     name: 'save this world',
     exec: (world, args, _, evt) => {
-      return world.execCommand('save world', { confirmOverwrite: true, ...args, showSaveDialog: false });
+      return world.execCommand('save world or project', { confirmOverwrite: true, ...args, showSaveDialog: false });
     }
   },
 

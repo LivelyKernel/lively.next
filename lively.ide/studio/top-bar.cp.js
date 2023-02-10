@@ -193,7 +193,7 @@ export class TopBarModel extends ViewModel {
     }
 
     if (evt.targetMorph.name === 'save button') {
-      $world.execCommand('save world');
+      $world.execCommand('save world or project');
     }
 
     if (evt.targetMorph === shapeModeButton) {
