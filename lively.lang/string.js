@@ -1157,20 +1157,39 @@ function longestCommonSubstring (a, b) {
   };
 }
 
+/**
+ * Applys a change to a string.
+ * @param { string } string - The string to change.
+ * @param { Object } change - The change to apply
+ * @param { Number } change.start - The start positing to apply the change from.
+ * @param { Number } [change.end] - If applicable the position in the string up to which the change applies.
+ * @param { string[] } [change.lines] - If applicable the lines to insert or replace into the range.
+ * @param { "insert"|"remove"|"replace" } change.action - The type of change to be applied.
+ * @returns { string } The transformed string.
+ */
 function applyChange (string, change) {
-  // change is of the form
-  // `{start: Number, end: Number, lines: [String], action: "insert"|"remove"}`
-  if (change.action === 'insert') {
-    return string.slice(0, change.start) +
+  switch (change.action) {
+    case 'insert':
+      return string.slice(0, change.start) +
          change.lines.join('\n') +
          string.slice(change.start);
-  } else if (change.action === 'remove') {
-    return string.slice(0, change.start) +
-           string.slice(change.end);
+    case 'remove':
+      return string.slice(0, change.start) +
+         string.slice(change.end);
+    case 'replace':
+      return string.slice(0, change.start) +
+         change.lines.join('\n') +
+         string.slice(change.end);
   }
   return string;
 }
 
+/**
+ * Apply a set of changes to a given string.
+ * @param { string } s - The string to be changed.
+ * @param { Object[] } changes - The set of changes to be applied to the string.
+ * @returns { string } The transformed string.
+ */
 function applyChanges (s, changes) {
   return changes.reduce(function (result, change) {
     return applyChange(result, change);
