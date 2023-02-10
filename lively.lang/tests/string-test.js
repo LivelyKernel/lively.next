@@ -239,5 +239,9 @@ describe('string', function () {
       expect(applyChange(baseString, { action: 'remove', start: 3, end: 9 }))
         .equal('helorld');
     });
+
+    it('replaces lines', function () {
+      expect(applyChange(baseString, { action: 'replace', start: 7, end: 13, lines: ['linus'] })).equal('hello\n linus');
+    });
   });
 });
