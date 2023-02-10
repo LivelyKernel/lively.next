@@ -5,7 +5,7 @@ import { Point, Color } from 'lively.graphics';
 import EditorPlugin from '../editor-plugin.js';
 import { connect, disconnect } from 'lively.bindings';
 import { PropertyLabel, PropertyLabelHovered } from '../studio/shared.cp.js';
-import { commands } from './rich-text-commands.js';
+import { interactiveCommands } from './rich-text-commands.js';
 
 export class RichTextPlugin extends EditorPlugin {
   get shortName () { return 'richText'; }
@@ -105,5 +105,5 @@ export class RichTextPlugin extends EditorPlugin {
     super.remove();
   }
 
-  getCommands (otherCommands) { return otherCommands.concat(commands); }
+  getCommands (otherCommands) { return otherCommands.concat(interactiveCommands); }
 }
