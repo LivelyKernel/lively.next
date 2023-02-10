@@ -2747,6 +2747,21 @@ export class Text extends Morph {
       renderer.patchSelectionMode(node, this);
     }
 
+    if (!!this.renderingState.hideScrollbars !== this.hideScrollbars) {
+      const scrollWrapper = node.querySelector('.scrollWrapper');
+      const scrollLayer = node.querySelector('.scrollLayer');
+
+      if (this.hideScrollbars) {
+        scrollWrapper.classList.add('hiddenScrollbar');
+        scrollLayer.classList.add('hiddenScrollbar');
+      } else {
+        scrollWrapper.classList.remove('hiddenScrollbar');
+        scrollLayer.classList.remove('hiddenScrollbar');
+      }
+
+      this.renderingState.hideScrollbars = this.hideScrollbars;
+    }
+
     if (this.document) {
       if (this.renderingState.lineHeight !== undefined &&
           !obj.equals(this.renderingState.lineHeight, this.lineHeight) ||
