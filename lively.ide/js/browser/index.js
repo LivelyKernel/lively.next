@@ -262,7 +262,7 @@ export class PackageTreeData extends TreeData {
 
   displayPackage (pkg) {
     return [
-      ...Icon.textAttribute('cube'),
+      ...pkg.kind === 'project' ? Icon.textAttribute('paintbrush') : Icon.textAttribute('cube'),
       ' ' + string.truncate(this.showPkgVersion ? `${pkg.name}@${pkg.version}` : pkg.name, 26, '…'), {
         fontStyle: pkg.kind === 'git' ? 'italic' : 'normal'
       },
@@ -377,6 +377,7 @@ export class PackageTreeData extends TreeData {
       if (pkg.url.includes('node_modules')) kind = 'dependency';
       if (pkg.url.startsWith('local')) kind = 'local';
       if (pkg.name.startsWith('lively')) kind = 'core';
+      if (pkg.url.includes('projects')) kind = 'project';
       pkg.kind = kind;
       return {
         url: pkg.url + (pkg.url.endsWith('/') ? '' : '/'),

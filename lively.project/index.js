@@ -3,3 +3,5 @@ import { gitResourceExtension } from 'lively.shell/git-client-resource.js';
 'format esm';
 
 registerExtension(gitResourceExtension);
+
+export * from './project.js';
