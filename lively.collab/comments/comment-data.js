@@ -8,7 +8,7 @@ export class CommentData {
     this.timestamp = new Date().getTime();
     this.position = relativePosition;
     this.resolved = undefined;
-    this.username = $world.currentUser;
+    this.username = $world.currentUsername;
     this.viewCollapsed = false;
   }
 

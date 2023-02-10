@@ -17,13 +17,13 @@ function reportWorldLoad (world, user) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: `${world.currentUser} logged in at ${world.name} [${window._livelyLoadId}]`
+      message: `${world.currentUsername} logged in at ${world.name} [${window._livelyLoadId}]`
     })
   }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
 
 async function setupLively2Lively (world) {
-  const user = world.currentUser;
+  const user = world.currentUsername;
   const info = { world: world.name };
   if (user) {
     info.userToken = user.token;
@@ -283,7 +283,7 @@ export async function interactivelySaveWorld (world, options) {
     }
 
     const commitSpec = {
-      author: world.currentUser,
+      author: world.currentUsername,
       message: 'world save',
       tags,
       description
