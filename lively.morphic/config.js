@@ -72,6 +72,8 @@ const config = {
 
   ide: {
 
+    projectsEnabled: false,
+
     workerEnabled: false,
 
     studio: {
