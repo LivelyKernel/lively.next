@@ -15,7 +15,7 @@ import { eqPosition, lessPosition } from './position.js';
 import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
-import interactiveCommands from './commands.js';
+import textCommands from './commands.js';
 import { textAndAttributesWithSubRanges } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
@@ -1586,7 +1586,7 @@ export class Text extends Morph {
 
   get commands () {
     if (!(this.document && this.textLayout)) return [editingCommand];
-    return this.pluginCollect('getCommands', (this._commands || []).concat(interactiveCommands));
+    return this.pluginCollect('getCommands', (this._commands || []).concat(textCommands));
   }
 
   execCommand (commandOrName, args, count, evt) {
