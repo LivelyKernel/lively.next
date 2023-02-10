@@ -31,7 +31,7 @@ class UserFlapModel extends ViewModel {
   }
 
   async login () {
-    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=repo' https://github.com/login/device/code`;
+    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=repo,workflow' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
     const deviceCode = resOne.match(new RegExp('device_code=(.*)&e'))[1];
     const userCode = resOne.match(new RegExp('user_code=(.*)&'))[1];
@@ -41,7 +41,7 @@ class UserFlapModel extends ViewModel {
     const { stdout: resTwo } = await runCommand(cmdString).whenDone();
     const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
     if (!userToken) return;
-    localStorage.setItem('gh_access_token');
+    localStorage.setItem('gh_access_token', userToken);
     await this.retrieveGithubUserData();
     this.showUserData();
 

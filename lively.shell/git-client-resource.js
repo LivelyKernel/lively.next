@@ -25,7 +25,7 @@ export default class GitShellResource extends ShellClientResource {
 
   async initializeGitRepository () {
     if (this.options.cwd !== this.url) this.options.cwd = this.url;
-    const cmd = runCommand('git init', this.options);
+    const cmd = runCommand('git init -b main', this.options);
     await cmd.whenDone();
   }
 
@@ -43,7 +43,7 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async commitRepo () {
-    let cmdString = `git add * && git commit -m "Commited from withing lively.next at ${Date.now()}"`;
+    let cmdString = `git add . && git commit -m "Commited from withing lively.next at ${Date.now()}"`;
     let cmd = runCommand(cmdString, this.options);
     await cmd.whenDone();
   }
@@ -51,7 +51,7 @@ export default class GitShellResource extends ShellClientResource {
   async pushGitRepo () {
     await this.pullGitRepo();
     await this.commitRepo();
-    const cmd = runCommand('git push --set-upstream origin master', this.options);
+    const cmd = runCommand('git push --set-upstream origin main --force', this.options);
     await cmd.whenDone();
   }
 
