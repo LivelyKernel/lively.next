@@ -771,7 +771,7 @@ export class LivelyWorld extends World {
         ]
       ],
       { isDivider: true },
-      { command: 'save world', target: this },
+      { command: 'save world or project', target: this },
       { command: 'load world', target: this }
     ];
   }
