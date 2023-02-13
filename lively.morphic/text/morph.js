@@ -2724,7 +2724,8 @@ export class Text extends Morph {
       renderer.handleScrollLayer(node, this);
     }
 
-    // adjust the style classes
+    // Although there is a mechanism that patches styleClasses in general in the renderer,
+    // we need to apply this styleClass to multiple nodes, because of the decoupling of the content and scroll in our text implementation.
     if (this.renderingState.fixedWidth !== this.fixedWidth) {
       const textLayer = node.querySelector('.actual');
       if (this.fixedWidth) textLayer.classList.remove('auto-width');

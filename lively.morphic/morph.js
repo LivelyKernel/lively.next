@@ -544,7 +544,13 @@ export class Morph {
         group: 'styling',
         type: 'Boolean',
         isStyleProp: true,
-        defaultValue: false
+        defaultValue: false,
+        set (val) {
+          if (val) this.addStyleClass('hiddenScrollbar');
+          else this.removeStyleClass('hiddenScrollbar');
+
+          this.setProperty('hideScrollbars', val);
+        }
       },
 
       scroll: {
@@ -1374,9 +1380,14 @@ export class Morph {
     return this._styleClasses = classNames;
   }
 
-  addStyleClass (className) { this.styleClasses = arr.uniq(this.styleClasses.concat(className)); }
+  addStyleClass (className) {
+    this.styleClasses = arr.uniq(this.styleClasses.concat(className));
+    this.renderingState.needsRerender = true;
+  }
+
   removeStyleClass (className) {
     this.styleClasses = this.styleClasses.filter(ea => ea !== className);
+    this.renderingState.needsRerender = true;
   }
 
   adjustOrigin (newOrigin) {
