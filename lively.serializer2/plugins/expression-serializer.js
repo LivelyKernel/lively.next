@@ -214,6 +214,7 @@ export default class ExpressionSerializer {
  generalized to become suitable for more general object trees.
 */
 
+// name is basically just used for debugging
 function getExpression (name, val, ctx) {
   const { exprSerializer, asExpression, nestedExpressions } = ctx;
   try {
@@ -427,13 +428,16 @@ function traverseSubmorphs (morph, exported, path, masterInScope, subopts) {
   if (morph.submorphs && morph.submorphs.length > 0) {
     const { nestedExpressions, exposeMasterRefs, dropMorphsWithNameOnly, masterInScope, uncollapseHierarchy } = subopts;
     const embeddedMorphs = morph.isText ? morph.textAndAttributes.filter(m => m?.isMorph) : [];
-    const listedSubmorphs = arr.withoutAll(morph.submorphs, embeddedMorphs);
+    const listedSubmorphs = subopts.valueTransform('submorphs', arr.withoutAll(morph.submorphs, embeddedMorphs), morph);
     exported.submorphs = arr.compact(listedSubmorphs.map((ea, i) => {
-      let val = serializeSpec(ea, { // eslint-disable-line no-use-before-define
-        ...subopts,
-        dropMorphsWithNameOnly: !uncollapseHierarchy && (!!ea.master && exposeMasterRefs || dropMorphsWithNameOnly || masterInScope?.managesMorph(ea.name)),
-        path: ea.master && exposeMasterRefs ? '' : (path ? path + '.submorphs.' + i : 'submorphs.' + i)
-      });
+      let val = ea;
+      if (!ea.__expr__) {
+        val = serializeSpec(ea, { // eslint-disable-line no-use-before-define
+          ...subopts,
+          dropMorphsWithNameOnly: !uncollapseHierarchy && (!!ea.master && exposeMasterRefs || dropMorphsWithNameOnly || masterInScope?.managesMorph(ea.name)),
+          path: ea.master && exposeMasterRefs ? '' : (path ? path + '.submorphs.' + i : 'submorphs.' + i)
+        });
+      }
       if (val?.__expr__) {
         const exprId = string.newUUID();
         nestedExpressions[exprId] = val;
@@ -489,7 +493,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (name === 'textAndAttributes') continue;
 
     // store away just in case
-    const val = valueTransform(name, v);
+    const val = valueTransform(name, v, morph);
     if (keepConnections && val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
@@ -546,7 +550,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (val && val.__serialize__) {
       if (styleProto && styleProto[name] !== undefined &&
           getExpression(name, val, { ...opts, asExpression: false }) ===
-          getExpression(name, valueTransform(name, styleProto[name]), { ...opts, asExpression: false })) continue;
+          getExpression(name, valueTransform(name, styleProto[name], morph), { ...opts, asExpression: false })) continue;
       exported[name] = getExpression(name, val, opts);
       continue;
     }
@@ -759,7 +763,7 @@ export function serializeSpec (morph, opts = {}) {
     onlyInclude = false,
     keepConnections = true,
     skipUnchangedFromDefault = false,
-    valueTransform = (key, val) => val,
+    valueTransform = (key, val, target) => val,
     asExpression = false,
     // this is needed in case we generate a component definition or part derivation
     // FIXME: can we combine this into one single flag?
