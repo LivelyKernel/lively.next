@@ -11,7 +11,19 @@ export default class TestRunner {
     this.headlessSession = new HeadlessSession();
     await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&showsUserFlap=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld'`))
     results = await this.headlessSession.runEval(`
+    const { resource } = await System.import("lively.resources");
     const { promise } = await System.import('lively.lang')
+    const { localInterface } = await System.import("lively-system-interface");
+    const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
+
+    const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === \'${module_to_test}\');
+    if (!packageToTestLoaded){
+      await loadPackage(localInterface.coreInterface, {
+        name: \'${module_to_test}\',
+        address: 'http://localhost:9011/projects/${module_to_test}',
+        type: 'package'
+      });
+    }
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
