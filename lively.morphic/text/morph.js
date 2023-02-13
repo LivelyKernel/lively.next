@@ -2753,11 +2753,11 @@ export class Text extends Morph {
       const scrollLayer = node.querySelector('.scrollLayer');
 
       if (this.hideScrollbars) {
-        scrollWrapper.classList.add('hiddenScrollbar');
-        scrollLayer.classList.add('hiddenScrollbar');
+        scrollWrapper?.classList.add('hiddenScrollbar');
+        scrollLayer?.classList.add('hiddenScrollbar');
       } else {
-        scrollWrapper.classList.remove('hiddenScrollbar');
-        scrollLayer.classList.remove('hiddenScrollbar');
+        scrollWrapper?.classList.remove('hiddenScrollbar');
+        scrollLayer?.classList.remove('hiddenScrollbar');
       }
 
       this.renderingState.hideScrollbars = this.hideScrollbars;
