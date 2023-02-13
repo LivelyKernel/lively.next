@@ -424,11 +424,16 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async runTestsInPackage (packageName) {
-    const pkgsConf = await packagesConfig();
-    const pkg = pkgsConf.find(pkg => pkg.name === packageName);
+    // Necessary to access packages which are not default packages, aka are not in the packages-config.js
+    const pkgs = localInterface.coreInterface.getPackages();
+    const pkg = pkgs.find(pkg => pkg.name === packageName);
     if (!pkg) throw new Error('Cannot find package for name: ' + packageName);
-    const wantsServerInterface = pkg.wantsServerInterface;
+    
+    // Allows us to access the testing configurations stored in packages-config.js
+    const pkgsConf = await packagesConfig();
+    const wantsServerInterface = pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
     this.updateEvalBackendForPackage(wantsServerInterface);
+    
     const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);
     const results = [];
     for (const url of testModuleURLs) { results.push(await this.runTestFile(url)); }
