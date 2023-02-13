@@ -44,11 +44,11 @@ export class ComponentDescriptor {
 
   get isComponentDescriptor () { return true; }
 
-  __serialize__ (pool) {
+  __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
-    return pool.expressionSerializer.exprStringEncode({
-      __expr__: meta.export,
-      bindings: { [meta.module]: meta.export }
+    return expressionSerializer.exprStringEncode({
+      __expr__: meta.exportedName,
+      bindings: { [meta.moduleId]: meta.exportedName }
     });
   }
 
