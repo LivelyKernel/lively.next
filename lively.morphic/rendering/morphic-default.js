@@ -10,9 +10,7 @@ import bowser from 'bowser';
 export function defaultAttributes (morph) {
   const attrs = {
     id: morph.id,
-    class: (morph.hideScrollbars
-      ? morph.styleClasses.concat('hiddenScrollbar')
-      : morph.styleClasses).join(' '),
+    class: morph.styleClasses.join(' '),
     draggable: false
   };
   if (bowser.ios && morph.draggable && !morph.isWorld) {

@@ -541,6 +541,8 @@ export default class Renderer {
       morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
     }
 
+    this.applyStyleClasses(morph, node);
+
     if (turnedVisible || scrollChanged) {
       if (turnedVisible) {
         morph.withAllSubmorphsDo(m => {
@@ -553,6 +555,13 @@ export default class Renderer {
     if (morph.isText && (morph.document || morph.needsDocument)) node.style.overflow = 'hidden';
     rs.needsRerender = false;
     rs.scrollChanged = false;
+  }
+
+  applyStyleClasses (morph, node) {
+    if (obj.equals(morph.styleClasses, morph.renderingState.styleClasses)) return;
+
+    const styleClasses = morph.styleClasses.join(' ');
+    node.setAttribute('class', styleClasses);
   }
 
   // -=-=-=-=-=-=-=-=-
