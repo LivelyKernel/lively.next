@@ -27,6 +27,26 @@ function getPathFromScopeMaster (m) {
  * EXPRESSION GENERATION *
  *************************/
 
+export function standardValueTransform (key, val, aMorph) {
+  if (val && val.isPoint) return val.roundTo(0.1);
+  if (key === 'label' || key === 'textAndAttributes') {
+    let hit;
+    if (Array.isArray(val) && (hit = Object.entries(Icons).find(([iconName, iconValue]) => iconValue.code === val[0]))) {
+      return {
+        __serialize__ () {
+          return {
+            __expr__: `Icon.textAttribute("${hit[0]}")`,
+            bindings: {
+              'lively.morphic/text/icons.js': ['Icon']
+            }
+          };
+        }
+      };
+    }
+  }
+  return val;
+}
+
 /**
  * Converts a given morph to an expression object that preserves
  * the component definition.
@@ -43,25 +63,7 @@ export function convertToExpression (aMorph, opts = {}) {
     skipUnchangedFromDefault: true,
     skipUnchangedFromMaster: true,
     skipAttributes: DEFAULT_SKIPPED_ATTRIBUTES,
-    valueTransform: (key, val) => {
-      if (val && val.isPoint) return val.roundTo(0.1);
-      if (key === 'label' || key === 'textAndAttributes') {
-        let hit;
-        if (Array.isArray(val) && (hit = Object.entries(Icons).find(([iconName, iconValue]) => iconValue.code === val[0]))) {
-          return {
-            __serialize__ () {
-              return {
-                __expr__: `Icon.textAttribute("${hit[0]}")`,
-                bindings: {
-                  'lively.morphic/text/icons.js': ['Icon']
-                }
-              };
-            }
-          };
-        }
-      }
-      return val;
-    },
+    valueTransform: standardValueTransform,
     ...opts
   }) || { __expr__: false };
   if (!expr) return;
@@ -114,6 +116,14 @@ export function getValueExpr (prop, value, depth = 0) {
   };
 
   return valueAsExpr;
+}
+
+export function getFoldableValueExpr (prop, foldableValue, members, depth) {
+  const withoutValueGetter = obj.extract(foldableValue, members);
+  if (new Set(obj.values(withoutValueGetter)).size > 1) {
+    return getValueExpr(prop, withoutValueGetter, depth);
+  }
+  return getValueExpr(prop, foldableValue.valueOf());
 }
 
 /**
@@ -360,6 +370,42 @@ export function getComponentScopeFor (parsedComponent, morphInScope) {
  * SOURCE CODE PATCHING *
  ************************/
 
+export function applyChangesToTextMorph (aText, changes) {
+  for (let change of changes) {
+    switch (change.action) {
+      case 'insert':
+        let pos = change.start;
+        aText.insertText(change.lines.join('\n'), aText.indexToPosition(change.start));
+        break;
+      case 'remove':
+        aText.replace({
+          start: aText.indexToPosition(change.start),
+          end: aText.indexToPosition(change.end)
+        }, '');
+        break;
+      case 'replace':
+        aText.replace({
+          start: aText.indexToPosition(change.start),
+          end: aText.indexToPosition(change.end)
+        }, change.lines.join('\n'));
+        break;
+    }
+  }
+  return aText.textString;
+}
+
+export function insertMorphChange (submorphsArrayNode, addedMorphExpr, nextSibling = false) {
+  let insertPos = arr.last(submorphsArrayNode.elements).end;
+  if (nextSibling) {
+    const siblingNode = getNodeFromSubmorphs(submorphsArrayNode, nextSibling.name);
+    insertPos = siblingNode.start;
+    addedMorphExpr += ',';
+  } else {
+    addedMorphExpr = ',' + addedMorphExpr;
+  }
+  return { action: 'insert', start: insertPos, lines: [addedMorphExpr] };
+}
+
 /**
  * Insert the morph into the submorphs array, operating on a source code string. By default, we append
  * the morph to the submorphs array. If a sibling morph is provided we insert the morph before the corresponding expression.
@@ -371,22 +417,12 @@ export function getComponentScopeFor (parsedComponent, morphInScope) {
  * @returns { string } The transformed source code.
  */
 export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sourceEditor = false, nextSibling = false) {
-  let insertPos = arr.last(submorphsArrayNode.elements).end;
-  if (nextSibling) {
-    const siblingNode = getNodeFromSubmorphs(submorphsArrayNode, nextSibling.name);
-    insertPos = siblingNode.start;
-    addedMorphExpr += ',';
-  } else {
-    addedMorphExpr = ',' + addedMorphExpr;
-  }
-  if (sourceEditor) {
-    sourceEditor.insertText(addedMorphExpr, sourceEditor.indexToPosition(insertPos));
-    return sourceEditor.textString;
-  }
+  let change = insertMorphChange(submorphsArrayNode, addedMorphExpr, nextSibling);
 
-  return string.applyChanges(sourceCode, [
-    { action: 'insert', start: insertPos, lines: [addedMorphExpr] }
-  ]);
+  if (sourceEditor) {
+    return applyChangesToTextMorph(sourceEditor, [change]);
+  }
+  return string.applyChanges(sourceCode, [change]);
 }
 
 /**
@@ -399,7 +435,7 @@ export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sou
  * @param { Text } [sourceEditor = false] - An optional source code editor that serves as the store of the source code.
  * @returns { string } The transformed source code.
  */
-export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
+export function insertPropChange (sourceCode, propertiesNode, key, valueExpr) {
   const nameProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'name');
   const typeProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'type');
   const submorphsProp = propertiesNode.properties.findIndex(prop => prop.key.name === 'submorphs');
@@ -430,28 +466,25 @@ export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEd
 
   // in this is the very first property we insert at all,
   // we need to make sure no superflous newlines are kept around...
+  let changes = [];
   if (isVeryFirst) {
     keyValueExpr = `{${keyValueExpr}\n}`;
-    if (sourceEditor) {
-      sourceEditor.replace({
-        start: sourceEditor.indexToPosition(propertiesNode.start),
-        end: sourceEditor.indexToPosition(propertiesNode.end)
-      }, keyValueExpr);
-      return sourceEditor.textString;
-    }
-    return string.applyChanges(sourceCode, [
-      { action: 'remove', ...propertiesNode },
+    changes = [
+      { action: 'replace', ...propertiesNode, lines: [keyValueExpr] }
+    ];
+  } else {
+    changes = [
       { action: 'insert', start: insertationPoint, lines: [keyValueExpr] }
-    ]);
+    ];
   }
 
-  if (sourceEditor) {
-    sourceEditor.insertText(keyValueExpr, sourceEditor.indexToPosition(insertationPoint));
-    return sourceEditor.textString;
-  }
-  return string.applyChanges(sourceCode, [
-    { action: 'insert', start: insertationPoint, lines: [keyValueExpr] }
-  ]);
+  return changes;
+}
+
+export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
+  const changes = insertPropChange(sourceCode, propertiesNode, key, valueExpr);
+  if (sourceEditor) return applyChangesToTextMorph(sourceEditor, changes);
+  return string.applyChanges(sourceCode, changes);
 }
 
 /**
@@ -465,20 +498,24 @@ export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEd
 export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
   const knownGlobals = mod.dontTransform;
   const undeclared = undeclaredVariables(sourceCode, knownGlobals).map(n => n.name);
-  if (undeclared.length === 0) return sourceCode;
   let updatedSource = sourceCode;
+  const changes = [];
+  if (undeclared.length === 0) return { updatedSource: sourceCode, changes };
   for (let [importedModuleId, exportedIds] of requiredBindings) {
     for (let exportedId of exportedIds) {
       // check if binding already present and continue if that is the case
       if (!undeclared.includes(exportedId)) continue;
       arr.remove(undeclared, exportedId);
-      updatedSource = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
+      // any way to avoid the string modification?
+      let generated, from, to;
+      ({ generated, from, to, updatedSource } = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
         exported: exportedId,
         moduleId: importedModuleId
-      }).newSource;
+      }));
+      changes.push({ action: 'insert', start: from, lines: [generated] });
     }
   }
-  return updatedSource;
+  return { updatedSource, changes };
 }
 
 /*****************
@@ -530,8 +567,7 @@ export async function replaceComponentDefinition (defAsCode, entityName, modId) 
   await mod.changeSourceAction(oldSource => {
     const { start, end } = findComponentDef(parse(oldSource), entityName);
     return ImportRemover.removeUnusedImports(string.applyChanges(oldSource, [
-      { start, end, action: 'remove' },
-      { start, action: 'insert', lines: [defAsCode] }
+      { start, end, action: 'replace', lines: [defAsCode] }
     ])).source;
   });
 }
@@ -555,7 +591,7 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
     // the declaration after these bulk exports.
     const finalExports = arr.last(scope.exportDecls);
     if (!finalExports) {
-      return fixUndeclaredVars(oldSource + decl, Object.entries(requiredBindings), mod) +
+      return fixUndeclaredVars(oldSource + decl, Object.entries(requiredBindings), mod).updatedSource +
       `\n\nexport { ${entityName} }`;
     }
     // insert before the exports
@@ -566,10 +602,9 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
 
     return lint(fixUndeclaredVars(
       string.applyChanges(oldSource, [
-        { action: 'remove', ...finalExports },
-        { action: 'insert', start: finalExports.start, lines: [decl, stringify(updatedExports)] }
+        { action: 'replace', ...finalExports, lines: [decl, stringify(updatedExports)] }
       ]),
       Object.entries(requiredBindings),
-      mod))[0];
+      mod).updatedSource)[0];
   });
 }
