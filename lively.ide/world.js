@@ -416,8 +416,7 @@ export class LivelyWorld extends World {
           oldWorld.env.renderer.stopRenderWorldLoop();
         }
       }
-    });
-    this
+      this
       .animate({ blur: 0, duration: 1000, easing: easings.inOutExpo })
       .then(() => {
         document.body.style.background = 'black';
@@ -428,6 +427,7 @@ export class LivelyWorld extends World {
       excludedPackages: config.ide.js.ignoredPackages
     });
     await this.initializeStudioUI();
+    });
   }
 
   async initializeTopBar () {
