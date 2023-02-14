@@ -3,9 +3,11 @@ import { ExpressionSerializer } from 'lively.serializer2';
 import { string } from 'lively.lang';
 import { module } from 'lively.modules/index.js';
 import lint from '../js/linter.js';
-import { replaceComponentDefinition, createInitialComponentDefinition, findComponentDef } from './helpers.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
+import { adoptObject } from 'lively.lang/object.js';
+import { findComponentDef } from './helpers.js';
+import { replaceComponentDefinition, applyModuleChanges, createInitialComponentDefinition } from './reconciliation.js';
 
 const exprSerializer = new ExpressionSerializer();
 

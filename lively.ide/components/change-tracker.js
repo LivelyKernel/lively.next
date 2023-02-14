@@ -4,23 +4,9 @@ import { parse, query } from 'lively.ast';
 import { module } from 'lively.modules/index.js';
 import { connect } from 'lively.bindings';
 import lint from '../js/linter.js';
-import {
-  getPropertiesNode, getFoldableValueExpr,
-  insertMorphChange,
-  insertPropChange,
-  standardValueTransform,
-  applyChangesToTextMorph,
-  getTextAttributesExpr,
-  getValueExpr,
-  getMorphNode,
-  fixUndeclaredVars,
-  getComponentScopeFor,
-  getComponentNode,
-  getProp,
-  DEFAULT_SKIPPED_ATTRIBUTES,
-  convertToExpression
-} from './helpers.js';
 import { getDefaultValueFor, isFoldableProp } from 'lively.morphic/helpers.js';
+import { getPropertiesNode, getValueExpr, getFoldableValueExpr, getMorphNode, getTextAttributesExpr, getComponentScopeFor, applyChangesToTextMorph, getComponentNode, getProp, standardValueTransform, DEFAULT_SKIPPED_ATTRIBUTES, convertToExpression } from './helpers.js';
+import { insertPropChange, fixUndeclaredVars, insertMorphChange } from './reconciliation.js';
 
 const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 
