@@ -5,6 +5,7 @@ import { arr, num, obj } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'selectionMode', 'acceptsDrops'];
+export const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 const exprSerializer = new ExpressionSerializer();
 
 function getScopeMaster (m) {

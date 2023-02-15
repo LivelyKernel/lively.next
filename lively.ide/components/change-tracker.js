@@ -5,10 +5,8 @@ import { module } from 'lively.modules/index.js';
 import { connect } from 'lively.bindings';
 import lint from '../js/linter.js';
 import { getDefaultValueFor, isFoldableProp } from 'lively.morphic/helpers.js';
-import { getPropertiesNode, getValueExpr, getFoldableValueExpr, getMorphNode, getTextAttributesExpr, getComponentScopeFor, applyChangesToTextMorph, getComponentNode, getProp, standardValueTransform, DEFAULT_SKIPPED_ATTRIBUTES, convertToExpression } from './helpers.js';
-import { insertPropChange, fixUndeclaredVars, insertMorphChange } from './reconciliation.js';
-
-const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
+import { getPropertiesNode, COMPONENTS_CORE_MODULE, getValueExpr, getFoldableValueExpr, getMorphNode, getTextAttributesExpr, getComponentScopeFor, applyChangesToTextMorph, getComponentNode, getProp, standardValueTransform, DEFAULT_SKIPPED_ATTRIBUTES, convertToExpression } from './helpers.js';
+import { insertPropChange, deleteProp, insertMorphExpression, uncollapseSubmorphHierarchy, handleRemovedMorph, fixUndeclaredVars, insertMorphChange } from './reconciliation.js';
 
 /**
  * ComponentChangeTrackers listen for evals of the componet module
@@ -129,48 +127,10 @@ export class ComponentChangeTracker {
     return true;
   }
 
-  /**
-   * In case the change of a morph needs to be reconciled,
-   * but said morph does not appear inside the component def,
-   * that means it was not yet mentioned since no overriding changes
-   * where applied. In this case we need to uncollapse the morph
-   * structure such that the overridden change can be reconciled
-   * accordingly.
-   * @param { string } sourceCode - The source code of the module affected.
-   * @param { object } parsedComponent - The AST of the component definition affected.
-   * @param { Morph } hiddenMorph - The morph with the change we need to uncover in the component definition.
-   * @returns { string } The transformed source code.
-   */
-
   _generateChangesFor_uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false) {
-    let nextVisibleParent = hiddenMorph;
-    const nextSibling = hiddenMorph.owner.submorphs[hiddenMorph.owner.submorphs.indexOf(hiddenMorph) + 1];
-    const ownerChain = [hiddenMorph];
-    let propertiesNode, morphToExpand;
-    do {
-      morphToExpand = nextVisibleParent;
-      nextVisibleParent = nextVisibleParent.owner;
-      ownerChain.push(nextVisibleParent);
-      propertiesNode = getPropertiesNode(parsedComponent, nextVisibleParent);
-    } while (!propertiesNode);
-
-    const masterInScope = arr.findAndGet(morphToExpand.ownerChain(), m => m.master);
-    const uncollapsedHierarchyExpr = convertToExpression(morphToExpand, {
-      onlyInclude: ownerChain,
-      exposeMasterRefs: false,
-      uncollapseHierarchy: true,
-      masterInScope, // ensures no props are listed that are not overridden
-      skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type'],
-      valueTransform: (key, val, aMorph) => {
-        if (hiddenSubmorphExpr && aMorph === hiddenMorph && key === 'submorphs') {
-          return [hiddenSubmorphExpr];
-        }
-        return standardValueTransform(key, val, aMorph);
-      }
-    });
-    // also support this expression to be customized
-    if (!uncollapsedHierarchyExpr) return [];
-    return this._generateChangesFor_insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
+    let changes = [];
+    ({ changes, needsLinting: this.needsLinting } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false));
+    return changes;
   }
 
   /**
@@ -184,33 +144,9 @@ export class ComponentChangeTracker {
    * @returns { string } The transformed source code.
    */
   _generateChangesFor_insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
-    const propsNode = getPropertiesNode(parsedComponent, newOwner);
-    const submorphsArrayNode = propsNode && getProp(propsNode, 'submorphs')?.value;
-    this.needsLinting = true;
-
-    if (!submorphsArrayNode) {
-      let propertiesNode = getPropertiesNode(parsedComponent, newOwner);
-      if (!propertiesNode) {
-        // uncollapse till morph expression:
-        // inserts a submorph drill down up to the submorphs: [*expression*] is inserted (insert action)
-        return this._generateChangesFor_uncollapseSubmorphHierarchy(
-          sourceCode,
-          parsedComponent,
-          newOwner,
-          addedMorphExpr
-        );
-      }
-      // just generate an insert action that places the prop in the morph def
-      return insertPropChange(
-        sourceCode,
-        propertiesNode,
-        'submorphs',
-        `[${addedMorphExpr.__expr__}]`
-      );
-    } else {
-      // just generates an insert action that places the morph in the submorph array
-      return [insertMorphChange(submorphsArrayNode, addedMorphExpr.__expr__, nextSibling)];
-    }
+    let changes;
+    ({ changes, needsLinting: this.needsLinting } = insertMorphExpression(parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling));
+    return changes;
   }
 
   /**
@@ -249,16 +185,9 @@ export class ComponentChangeTracker {
    * @returns { string } The transformed source code.
    */
   _generateChangesFor_deleteProp (sourceCode, morphDef, propName) {
-    const propNode = getProp(morphDef, propName);
-    if (!propNode) {
-      return [];
-    }
-    const patchPos = propNode;
-    while (sourceCode[patchPos.end].match(/,| |\n/)) patchPos.end++;
-    this.needsLinting = true;
-    return [
-      { action: 'remove', ...patchPos }
-    ];
+    let changes;
+    ({ changes, needsLinting: this.needsLinting } = deleteProp(sourceCode, morphDef, propName));
+    return changes;
   }
 
   /**
@@ -389,6 +318,7 @@ export class ComponentChangeTracker {
     }
 
     if (change.selector === 'removeMorph') {
+      isStructuralChange = true;
       policy.removeSpecInResponseTo(change);
     }
 
@@ -404,7 +334,8 @@ export class ComponentChangeTracker {
    * derived style policies in the system.
    */
   refreshDependants (change) {
-    if (this.componentDescriptor) return;
+    if (!this.componentDescriptor) return;
+
     this.componentDescriptor.propagateChangeAmongDependants(change);
     this.componentDescriptor.refreshDependants();
   }
@@ -422,6 +353,7 @@ export class ComponentChangeTracker {
    * @param { object } change - The change object to reconcile.
    */
   processChangeInComponentSource (change) {
+    // FIXME: extract this source change processing function
     const { componentModule: mod, componentName, sourceEditor } = this;
 
     if (!mod) return;
@@ -485,6 +417,8 @@ export class ComponentChangeTracker {
         browser.viewModel.indicateNoUnsavedChanges();
       }
     }
+
+    // FIXME: extract this module updating mechanism
 
     // always updated the module source, but mostly without reloading the module.
     mod.setSource(updatedSource);
@@ -571,99 +505,11 @@ export class ComponentChangeTracker {
     return this._generateChangesFor_insertMorphExpression(parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling);
   }
 
-  /**
-   * Handle reconciliation in response to the removal of a morph.
-   * @param { object } removeChange - The change tracking the morph removal.
-   * @param { object } parsedComponent - The AST node of the component definition that needs to be reconciled.
-   * @param { srting } sourceCode - The source code to be transformed.
-   * @param { object[] } requiredBindings - An array that is populated with dependencies that are introduced as part of the transformation.
-   * @returns { string } The transformed source code.
-   */
   handleRemovedMorph (removeChange, parsedComponent, sourceCode, requiredBindings) {
     const { args: [removedMorph], target: prevOwner } = removeChange;
-
-    // let updatedSource = sourceCode;
-    // FIXME: This may fetch the incorrect node, if there is a equally named submorph deeper down the spec
-
-    function preserveFormatting (nodeToRemove) {
-      if (!nodeToRemove) return nodeToRemove;
-      while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
-        nodeToRemove.start--;
-      }
-      while (sourceCode[nodeToRemove.end].match(/\,/)) {
-        nodeToRemove.end++;
-      }
-      return nodeToRemove;
-    }
-
-    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, prevOwner), 'submorphs');
-    let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
-
     const isDerived = this.withinDerivedComponent(prevOwner);
-    const changes = [];
-
-    function determineNodeToRemoveSubmorphs (submorphsNode) {
-      let nodeToRemove = submorphsNode;
-      let curr = prevOwner;
-      let propNode = getPropertiesNode(parsedComponent, curr);
-      submorphsNode = getProp(propNode, 'submorphs');
-      while (
-        query.queryNodes(propNode, `
-          / Property [
-            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
-           ]
-         `).length === 0 &&
-          submorphsNode?.value.elements.length < 2) {
-        // if we are wrapped by a part call we should use the submorphs node instead
-        nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
-        curr = curr.owner;
-        propNode = getPropertiesNode(parsedComponent, curr);
-        submorphsNode = getProp(propNode, 'submorphs');
-      }
-
-      // ensure formatting is preserved
-      return preserveFormatting(nodeToRemove);
-    }
-
-    // 1. the morph removed is part of a root component definition. => just remove spec, possibly removing submorphs prop.
-    if (!removedMorph.__wasAddedToDerived__ && !isDerived) {
-      // add a remove node or a remove submorph props call
-      if (closestSubmorphsNode?.value.elements.length < 2) {
-        changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) });
-        this.needsLinting = true; // really?
-      } else {
-        changes.push({ action: 'remove', ...preserveFormatting(nodeToRemove) });
-      }
-    }
-
-    // 2. the morph removed was inherited from a component. => remove (if needed) and replace with without() call.
-    if (!removedMorph.__wasAddedToDerived__ && isDerived) {
-      // add a replace call
-      const removeMorphExpr = {
-        __expr__: `without('${removedMorph.name}')`,
-        bindings: { [COMPONENTS_CORE_MODULE]: ['without'] }
-      };
-      requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
-      if (nodeToRemove) {
-        changes.push({ action: 'replace', ...preserveFormatting(nodeToRemove), lines: [removeMorphExpr.__expr__] });
-      } else {
-        // gather the changes for an uncollapse (one insert)
-        // and this insert needs to be instrumented with the removedMorphExpr
-        return this._generateChangesFor_insertMorphExpression(parsedComponent, sourceCode, prevOwner, removeMorphExpr);
-      }
-    }
-
-    // 3. the morph removed as added and not inherited from a component. => just remove the add() call, possibly removing submorphs prop
-    if (removedMorph.__wasAddedToDerived__ && isDerived) {
-      // add a remove node or a remove submorph props call
-      if (closestSubmorphsNode?.value.elements.length < 2) {
-        changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) }); // this in turns needs to bubble up if this causes owners to further get empty
-        this.needsLinting = true;
-      } else {
-        changes.push({ action: 'remove', ...nodeToRemove });
-      }
-    }
-
+    let changes;
+    ({ changes, needsLinting: this.needsLinting } = handleRemovedMorph(removedMorph, prevOwner, parsedComponent, sourceCode, requiredBindings, isDerived));
     return changes;
   }
 
@@ -773,6 +619,7 @@ export class ComponentChangeTracker {
     const responsibleComponent = getComponentScopeFor(parsedComponent, renamedMorph);
     const morphDef = getPropertiesNode(responsibleComponent, oldName);
     this.componentDescriptor.stylePolicy.getSubSpecFor(oldName).name = newName;
+    if (!morphDef) return [];
     return this._generateChangesFor_patchProp(sourceCode, morphDef, 'name', `"${newName}"`);
   }
 }

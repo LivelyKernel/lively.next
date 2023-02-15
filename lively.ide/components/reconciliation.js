@@ -1,6 +1,6 @@
 import { arr, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, DEFAULT_SKIPPED_ATTRIBUTES,
+  getNodeFromSubmorphs, standardValueTransform, COMPONENTS_CORE_MODULE, getMorphNode, getPropertiesNode, getProp, DEFAULT_SKIPPED_ATTRIBUTES,
   convertToExpression, findComponentDef, applyChangesToTextMorph
 } from './helpers.js';
 import { undeclaredVariables } from '../js/import-helper.js';
@@ -135,6 +135,19 @@ export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEd
   return string.applyChanges(sourceCode, changes);
 }
 
+export function deleteProp (sourceCode, morphDef, propName) {
+  const propNode = getProp(morphDef, propName);
+  if (!propNode) {
+    return { needsLinting: false, changes: [] };
+  }
+  const patchPos = propNode;
+  while (sourceCode[patchPos.end].match(/,| |\n/)) patchPos.end++;
+  return {
+    needsLinting: true,
+    changes: [{ action: 'remove', ...patchPos }]
+  };
+}
+
 /**
  * Transforms a given source code string such that undefined required bindings are
  * resolved by imports.
@@ -172,6 +185,8 @@ export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
 
 /**
  * Removes a component definition together with its export(s) from a module.
+ * This function is only used in response to removing a component definition from a package
+ * and therefore does not need to be decoupled from the module + source changes it performs.
  * @param { string } entityName - The name of the component definition to remove.
  * @param { string } modId - The name of the module to remove the component definition from.
  */
@@ -206,6 +221,8 @@ export async function removeComponentDefinition (entityName, modId) {
 
 /**
  * Replaces a component definition within a module.
+ * This function is only used in response to retting a component definition
+ * and therefore does not need to be decoupled from the module + source changes it performs.
  * @param { string } defAsCode - The code snippet of the updated component definition.
  * @param { string } entityName - The name of the const referencing the component definition.
  * @param { string } modId - The id of the module to be updated.
@@ -223,6 +240,8 @@ export async function replaceComponentDefinition (defAsCode, entityName, modId) 
 /**
  * Inserts a new component definition into a module based on a morph that
  * will be used to generate the definition.
+ * This function is only used for initial creation of new components and therefore
+ * does not need to be decoupled from the module creation + source code changes it performs.
  * @param { Morph } protoMorph - The morph to be used to generate a component definition from.
  * @param { string } variableName - The name of the variable that should reference the component definition.
  * @param { string } modId - The id of the module to be changed.
@@ -257,7 +276,196 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
   });
 }
 
+export function insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
+  const propsNode = getPropertiesNode(parsedComponent, newOwner);
+  const submorphsArrayNode = propsNode && getProp(propsNode, 'submorphs')?.value;
+
+  if (!submorphsArrayNode) {
+    let propertiesNode = getPropertiesNode(parsedComponent, newOwner);
+    if (!propertiesNode) {
+      // uncollapse till morph expression:
+      // inserts a submorph drill down up to the submorphs: [*expression*] is inserted (insert action)
+      return uncollapseSubmorphHierarchy( // eslint-disable-line no-use-before-define
+        sourceCode,
+        parsedComponent,
+        newOwner,
+        addedMorphExpr
+      );
+    }
+    // just generate an insert action that places the prop in the morph def
+    return {
+      needsLinting: true, // really?
+      changes: insertPropChange(
+        sourceCode,
+        propertiesNode,
+        'submorphs',
+        `[${addedMorphExpr.__expr__}]`
+      )
+    };
+  } else {
+    // just generates an insert action that places the morph in the submorph array
+    return {
+      needsLinting: true, // obviously
+      changes: [insertMorphChange(submorphsArrayNode, addedMorphExpr.__expr__, nextSibling)]
+    };
+  }
+}
+
+/**
+ * In case the change of a morph needs to be reconciled,
+ * but said morph does not appear inside the component def,
+ * that means it was not yet mentioned since no overriding changes
+ * where applied. In this case we need to uncollapse the morph
+ * structure such that the overridden change can be reconciled
+ * accordingly.
+ * @param { string } sourceCode - The source code of the module affected.
+ * @param { object } parsedComponent - The AST of the component definition affected.
+ * @param { Morph } hiddenMorph - The morph with the change we need to uncover in the component definition.
+ * @returns { string } The transformed source code.
+ */
+export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false) {
+  let nextVisibleParent = hiddenMorph;
+  const nextSibling = hiddenMorph.owner.submorphs[hiddenMorph.owner.submorphs.indexOf(hiddenMorph) + 1];
+  const ownerChain = [hiddenMorph];
+  let propertiesNode, morphToExpand;
+  do {
+    morphToExpand = nextVisibleParent;
+    nextVisibleParent = nextVisibleParent.owner;
+    ownerChain.push(nextVisibleParent);
+    propertiesNode = getPropertiesNode(parsedComponent, nextVisibleParent);
+  } while (!propertiesNode);
+
+  const masterInScope = arr.findAndGet(morphToExpand.ownerChain(), m => m.master);
+  const uncollapsedHierarchyExpr = convertToExpression(morphToExpand, {
+    onlyInclude: ownerChain,
+    exposeMasterRefs: false,
+    uncollapseHierarchy: true,
+    masterInScope, // ensures no props are listed that are not overridden
+    skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type'],
+    valueTransform: (key, val, aMorph) => {
+      if (hiddenSubmorphExpr && aMorph === hiddenMorph && key === 'submorphs') {
+        return [hiddenSubmorphExpr];
+      }
+      return standardValueTransform(key, val, aMorph);
+    }
+  });
+    // also support this expression to be customized
+  if (!uncollapsedHierarchyExpr) return { changes: [], needsLinting: false };
+  return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
+}
+
+/**
+ * Handle reconciliation in response to the removal of a morph.
+ * @param { object } removeChange - The change tracking the morph removal.
+ * @param { object } parsedComponent - The AST node of the component definition that needs to be reconciled.
+ * @param { srting } sourceCode - The source code to be transformed.
+ * @param { object[] } requiredBindings - An array that is populated with dependencies that are introduced as part of the transformation.
+ * @returns { object } The changes and the linting flag.
+ */
+export function handleRemovedMorph (
+  removedMorph,
+  prevOwner,
+  parsedComponent,
+  sourceCode,
+  requiredBindings,
+  isDerived = false) {
+  let needsLinting = false;
+
+  function preserveFormatting (nodeToRemove) {
+    if (!nodeToRemove) return nodeToRemove;
+    while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
+      nodeToRemove.start--;
+    }
+    while (sourceCode[nodeToRemove.end].match(/\,/)) {
+      nodeToRemove.end++;
+    }
+    return nodeToRemove;
+  }
+
+  let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, prevOwner), 'submorphs');
+  let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
+
+  const changes = [];
+
+  function determineNodeToRemoveSubmorphs (submorphsNode) {
+    let nodeToRemove = submorphsNode;
+    let curr = prevOwner;
+    let propNode = getPropertiesNode(parsedComponent, curr);
+    submorphsNode = getProp(propNode, 'submorphs');
+    while (
+      query.queryNodes(propNode, `
+          / Property [
+            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
+           ]
+         `).length === 0 &&
+          submorphsNode?.value.elements.length < 2) {
+      // if we are wrapped by a part call we should use the submorphs node instead
+      if (!curr.owner) break;
+      nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
+      curr = curr.owner;
+      propNode = getPropertiesNode(parsedComponent, curr);
+      submorphsNode = getProp(propNode, 'submorphs');
+    }
+
+    // ensure formatting is preserved
+    return preserveFormatting(nodeToRemove);
+  }
+
+  // 1. the morph removed is part of a root component definition. => just remove spec, possibly removing submorphs prop.
+  if (!removedMorph.__wasAddedToDerived__ && !isDerived) {
+    // add a remove node or a remove submorph props call
+    if (closestSubmorphsNode?.value.elements.length < 2) {
+      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) });
+      needsLinting = true; // really?
+    } else if (nodeToRemove) {
+      changes.push({ action: 'remove', ...preserveFormatting(nodeToRemove) });
+    }
+  }
+
+  // 2. the morph removed was inherited from a component. => remove (if needed) and replace with without() call.
+  if (!removedMorph.__wasAddedToDerived__ && isDerived) {
+    // add a replace call
+    const removeMorphExpr = {
+      __expr__: `without('${removedMorph.name}')`,
+      bindings: { [COMPONENTS_CORE_MODULE]: ['without'] }
+    };
+    requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
+    if (nodeToRemove) {
+      changes.push({ action: 'replace', ...preserveFormatting(nodeToRemove), lines: [removeMorphExpr.__expr__] });
+    } else {
+      // gather the changes for an uncollapse (one insert)
+      // and this insert needs to be instrumented with the removedMorphExpr
+      return insertMorphExpression(parsedComponent, sourceCode, prevOwner, removeMorphExpr);
+    }
+  }
+
+  // 3. the morph removed as added and not inherited from a component. => just remove the add() call, possibly removing submorphs prop
+  if (removedMorph.__wasAddedToDerived__ && isDerived) {
+    // add a remove node or a remove submorph props call
+    if (closestSubmorphsNode?.value.elements.length < 2) {
+      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) }); // this in turns needs to bubble up if this causes owners to further get empty
+      needsLinting = true;
+    } else {
+      changes.push({ action: 'remove', ...nodeToRemove });
+    }
+  }
+
+  return { changes, needsLinting };
+}
+
 export function applyModuleChanges (changesByModule) {
   // order each group by module
   // apply bulk to each module
+  changesByModule = arr.groupBy(changesByModule, arr.first);
+  for (let moduleName in changesByModule) {
+    let sourceCode = module(moduleName)._source;
+    if (!sourceCode) continue;
+    let changes = changesByModule[moduleName].map(l => l[1]).flat();
+    changes = arr.sortBy(changes, change => change.start).reverse();
+    for (let change of changes) {
+      // apply the change to the module source
+      sourceCode = string.applyChange(sourceCode, change);
+    }
+    module(moduleName).setSource(sourceCode);
+  }
 }
