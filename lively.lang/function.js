@@ -29,7 +29,7 @@ function True () { /* `function() { return true; }` */ return function () { retu
 * notYetImplemented('5D rendering', true)
 **/
 function notYetImplemented (what, strict = false) {
-  let error = new Error(`${what} is not yet implemented yet`);
+  let error = new Error(`${what} is not yet implemented.`);
   $world.logError(error);
   if (strict) {
     throw error;
