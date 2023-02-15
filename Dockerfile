@@ -7,6 +7,8 @@ RUN apt install -y \
     aspell
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Skip minification of bundle code (loading screen...)
+ENV CI=true
 
 RUN apt install -y chromium
 
