@@ -2759,8 +2759,7 @@ export class Text extends Morph {
         scrollWrapper?.classList.remove('hiddenScrollbar');
         scrollLayer?.classList.remove('hiddenScrollbar');
       }
-
-      this.renderingState.hideScrollbars = this.hideScrollbars;
+      if (scrollWrapper && scrollLayer) this.renderingState.hideScrollbars = this.hideScrollbars;
     }
 
     if (this.document) {
