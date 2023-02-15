@@ -312,8 +312,16 @@ export class PathIndicator extends Morph {
   showInfoInWorkspace () {
     const content = this.ui.statusBox.textString;
     const title = content.split('\n')[0];
-    this.world().execCommand('open workspace',
-      { title, content, language: 'text' });
+    const text = new Text({
+      textString: content.split('\n').slice(1).join('\n'),
+      fixedWidth: true,
+      fixedHeight: true,
+      extent: pt(415, 300),
+      name: title,
+      fill: Color.white,
+      clipMode: 'auto'
+    });
+    text.openInWindow();
   }
 
   adjustHeight () {
