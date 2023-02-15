@@ -11,6 +11,7 @@ const amdtoes6 = require('@buxlabs/amd-to-es6');
 const es6tocjs = require('@babel/plugin-transform-modules-commonjs');
 const nodePolyfills = require('rollup-plugin-polyfill-node');
 const chalk = require('chalk');
+const readline = require('readline');
 
 // Problem: Just defering to rollup seems to bypass the flatn resolution mechanism
 // flatn 
@@ -85,8 +86,11 @@ function setStatus ({ status, progress, label }) {
   if (status) console.log(chalk.cyan('[lively.freezer]:'), status);
   if (label) console.log(chalk.cyan('[lively.freezer]:'), label);
   if (progress) {
-    process.stdout.clearLine();
-    process.stdout.cursorTo(0);
+    if (Boolean(process.stdout.isTTY)) {
+      process.stdout.clearLine();
+    } else {
+      readline.cursorTo(process.stdout, 0);
+    }
     process.stdout.write((progress * 100).toFixed() + '%');
   }
 }
