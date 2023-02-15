@@ -522,8 +522,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       }
     }
     if (name === 'extent') {
-      // FIXME: This wont work with new Text morphs in label mode.
-      if (morph.isLabel) continue;
+      if (morph.isText && !morph.fixedWidth && !morph.fixedWidth) continue;
       if (masterInScope?.isResizedByLayout(morph)) continue;
     }
     if (name === 'submorphs' || name === 'type') continue;
