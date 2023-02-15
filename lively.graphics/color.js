@@ -1,7 +1,9 @@
+/* eslint-disable no-use-before-define */
+
 import { num, obj, arr } from 'lively.lang';
 import { parse } from './color-parser.js';
-// import { parse as parseGradient } from './gradient-parser.js';
 import { Rectangle, rect, pt, Point } from './geometry-2d.js';
+import { notYetImplemented } from 'lively.lang/function.js';
 
 function floor (x) { return Math.floor(x * 255.99); }
 
@@ -80,7 +82,7 @@ export class Color {
     const s = sat;
     const b = brt;
     // zero saturation yields gray with the given brightness
-    if (sat == 0) return new Color(b, b, b);
+    if (sat === 0) return new Color(b, b, b);
     const h = hue % 360;
     const h60 = h / 60;
     const i = Math.floor(h60); // integer part of hue
@@ -177,16 +179,16 @@ export class Color {
     let rHex; let gHex; let bHex; let str = '';
     for (let i = 0; i < colStr.length; i++) {
       const c = colStr[i].toLowerCase();
-      if (c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f' || c == '0' || c == '1' ||
-        c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9') {
+      if (c === 'a' || c === 'b' || c === 'c' || c === 'd' || c === 'e' || c === 'f' || c === '0' || c === '1' ||
+        c === '2' || c === '3' || c === '4' || c === '5' || c === '6' || c === '7' || c === '8' || c === '9') {
         str += c;
       }
     }
-    if (str.length == 6) {
+    if (str.length === 6) {
       rHex = str.substring(0, 2);
       gHex = str.substring(2, 4);
       bHex = str.substring(4, 6);
-    } else if (str.length == 3) {
+    } else if (str.length === 3) {
       // short form like #C00
       rHex = str.substring(0, 1);
       rHex += rHex;
@@ -281,7 +283,7 @@ export class Color {
   }
 
   lighter (recursion) {
-    if (recursion == 0) { return this; }
+    if (recursion === 0) { return this; }
     const result = this.mixedWith(Color.white, 0.5);
     return recursion > 1 ? result.lighter(recursion - 1) : result;
   }
@@ -337,17 +339,17 @@ export class Color {
     const max = Math.max(this.r, this.g, this.b);
     const min = Math.min(this.r, this.g, this.b);
     let h; let s; const b = max;
-    if (max == min) {
+    if (max === min) {
       h = 0;
-    } else if (max == this.r) {
+    } else if (max === this.r) {
       h = 60 * (0 + ((this.g - this.b) / (max - min)));
-    } else if (max == this.g) {
+    } else if (max === this.g) {
       h = 60 * (2 + ((this.b - this.r) / (max - min)));
-    } else if (max == this.b) {
+    } else if (max === this.b) {
       h = 60 * (4 + ((this.r - this.g) / (max - min)));
     }
     h = (h + 360) % 360;
-    s = max == 0 ? 0 : (max - min) / max;
+    s = max === 0 ? 0 : (max - min) / max;
     return [h, s, b];
   }
 
@@ -427,7 +429,7 @@ class Gradient {
 
   equals (other) {
     if (other && other.isGradient) {
-      return this.toString() == other.toString();
+      return this.toString() === other.toString();
     }
     return false;
   }
@@ -475,7 +477,7 @@ class Gradient {
 
 export class LinearGradient extends Gradient {
   static parse (str) {
-    const params = str.match(/\((.*)\)/)[1].split(',');
+    notYetImplemented('Parsing `LinearGradient`');
   }
 
   constructor ({ stops, vector } = {}) {
@@ -529,7 +531,7 @@ export class LinearGradient extends Gradient {
       });
     }
 
-    if (other.type == 'radialGradient') {
+    if (other.type === 'radialGradient') {
       // fancy trans gradient interpolation
       if (i < 0.5) {
         return new LinearGradient({
@@ -573,7 +575,7 @@ export class LinearGradient extends Gradient {
 
 export class RadialGradient extends Gradient {
   static parse (str) {
-    const params = str.match(/\((.*)\)/)[1].split(',');
+    notYetImplemented('Parsing `RadialGradient`');
   }
 
   constructor ({ stops, focus, bounds } = {}) {
@@ -600,7 +602,7 @@ export class RadialGradient extends Gradient {
       });
     }
 
-    if (other.type == 'linearGradient') {
+    if (other.type === 'linearGradient') {
       return other.interpolate(1 - i, this, target);
     }
     // plain radial to radial tweening
