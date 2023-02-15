@@ -1277,7 +1277,7 @@ const TopBar = component({
             name: 'interaction mode status icon',
             reactsToPointer: false,
             textAndAttributes: Icon.textAttribute('arrow-pointer'),
-            tooltip: 'Create basic shape mode'
+            tooltip: 'Current mode of the cursor (Hand or Halo)'
           }),
           part(TopBarButton, {
             name: 'select hand or halo',
