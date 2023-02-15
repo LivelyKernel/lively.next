@@ -168,11 +168,19 @@ export class ChangeManager {
       morph._morphicState[change.prop] = change.value;
     }
 
-    if (change.prevValue && change.prevValue.isDocument ||
-        change.selector === 'replace' ||
-      change.value && change.value.isDocument ||
-      !obj.equals(change.prevValue, change.value)
-    ) morph.makeDirty();
+    const isDocumentChange = change.prevValue?.isDocument ||
+     change.value?.isDocument ||
+     change.selector === 'replace';
+    const isUpdatingChange = !obj.equals(change.prevValue, change.value);
+    // calling `makeDirty` on `Text` leads to a remeasure of the text.
+    // In the case that we are just scrolling a statically rendered text, we do not need this.
+    // Actually, it is harmful, since this will rehang our node, thus resetting the scroll position of the node
+    // and resulting in an endless loop which shows visible jiggle of text.
+    const isScrollChange = change.prop === 'scroll';
+    const isStaticText = !morph.document;
+    const scrollingStaticText = isStaticText && isScrollChange;
+
+    if ((isDocumentChange || isUpdatingChange) && !scrollingStaticText) morph.makeDirty();
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {
