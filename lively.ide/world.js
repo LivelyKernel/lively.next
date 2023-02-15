@@ -160,7 +160,9 @@ export class LivelyWorld extends World {
     if (topBar) cb(topBar.viewModel);
   }
 
-  onTopBarLoaded () {}
+  onTopBarLoaded () {
+    this.withTopBarDo((bar) => bar.setEditMode(config.ide.studio.defaultMode));
+  }
 
   onKeyUp (evt) {
     this.withTopBarDo(tb => tb.onKeyUp(evt));

@@ -75,7 +75,8 @@ const config = {
     workerEnabled: false,
 
     studio: {
-      zoom: { step: 0.07, min: 0.02 }
+      zoom: { step: 0.07, min: 0.02 },
+      defaultMode: 'Halo' // can either be 'Halo' or 'Hand'
     },
 
     js: {
