@@ -870,7 +870,7 @@ const SystemBrowser = component({
       padding: rect(5, 0, -5, 0),
       lineWrapping: true,
       opacity: 0,
-      reactsToPointer: false,
+      reactsToPointer: true,
       readOnly: true
     }, {
       name: 'error controls',
