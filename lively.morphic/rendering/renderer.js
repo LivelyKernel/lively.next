@@ -1936,6 +1936,7 @@ export default class Renderer {
     }
 
     prevParent.appendChild(textNode);
+    this.updateNodeScrollFromMorph(morph);
 
     if (morph.allFontsLoaded()) {
       morph._cachedBounds = bounds;

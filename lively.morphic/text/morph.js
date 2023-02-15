@@ -3338,17 +3338,23 @@ export class Text extends Morph {
     this.anchors = this.anchors.filter(a => !a.id.includes('snippet'));
   }
 
+  setScrollActive (active) {
+  // Only necessary for morphs which have a document since we need to take action here, due to our decoupled scroll implementation.
+    if (this.document) {
+      this.scrollActive = active;
+      this.makeDirty();
+    }
+  }
+
   onHoverIn (evt) {
     super.onHoverIn(evt);
-    this.scrollActive = true;
-    this.makeDirty();
+    this.setScrollActive(true);
   }
 
   onHoverOut (evt) {
     super.onHoverOut(evt);
     if (touchInputDevice) return;
-    this.scrollActive = false;
-    this.makeDirty();
+    this.setScrollActive(false);
   }
 
   onKeyDown (evt) {
