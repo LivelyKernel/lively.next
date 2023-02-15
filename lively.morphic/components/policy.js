@@ -1023,6 +1023,26 @@ export class PolicyApplicator extends StylePolicy {
     return currSpec;
   }
 
+  removeSpecInResponseTo (removeChange) {
+    const { target: prevOwner, args: [removedMorph] } = removeChange;
+    // at any rate, remove the sub spec if present
+    let ownerSpec = this.ensureSubSpecFor(prevOwner);
+    if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
+    const removedMorphSpec = this.getSubSpecAt(
+      ...prevOwner.ownerChain().map(m => m.name).reverse(),
+      prevOwner.name,
+      removedMorph.name
+    );
+    if (removedMorphSpec) {
+      arr.remove(ownerSpec.submorphs, removedMorphSpec);
+    }
+    if (!removedMorph.__wasAddedToDerived__) {
+      // insert the without call
+      ownerSpec.submorphs.push(without(removedMorph.name));
+    }
+    return removedMorphSpec;
+  }
+
   /**
    * Checks if the submorph name was mentioned by any of the parent policies if present
    * @param { string } submorphNameInPolicyContext - The name of the submorph to be checked for being mentioned.
