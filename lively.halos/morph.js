@@ -534,7 +534,7 @@ class NameHaloItem extends HaloItem {
         tooltip: meta ? 'Located in ' + meta.moduleId : false
       }));
       meta && connect(masterLink, 'onMouseDown', async () => {
-        const { findComponentDef, getMorphNode, getComponentScopeFor, getProp } = await System.import('lively.ide/components/helpers.js');
+        const { findComponentDef, getMorphNode, getProp } = await System.import('lively.ide/components/helpers.js');
         // select the range instead
         let range;
         if (meta.path?.length > 0) {
