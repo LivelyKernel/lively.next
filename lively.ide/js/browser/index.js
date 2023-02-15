@@ -1659,6 +1659,7 @@ export class BrowserModel extends ViewModel {
       declaration
     });
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
+    InteractiveComponentDescriptor.ensureInteractive(componentDescriptor);
     editor.addMorph(btn);
     btn.bottom = -10; // in order to hide it away from the visible area
     await btn.positionInLine();
