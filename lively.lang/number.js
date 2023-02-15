@@ -5,8 +5,8 @@
 
 /**
  * Returns a random number between (and including) `min` and `max`.
- * @param {number} min 
- * @param {number} max 
+ * @param {number} min
+ * @param {number} max
  * @returns {number}
  */
 function random (min, max) {
@@ -22,7 +22,7 @@ function random (min, max) {
  * @param {number} stdDev - Standard deviation of the distribution to use
  * @returns {number}
  */
-function normalRandom(mean, stdDev) {
+function normalRandom (mean, stdDev) {
   let spare; let isSpareReady = false;
   return function (mean, stdDev) {
     if (isSpareReady) {
@@ -41,11 +41,11 @@ function normalRandom(mean, stdDev) {
       return mean + stdDev * u * mul;
     }
   };
-};
+}
 
 /**
  * Returns a random, whole number smaller than `n`
- * @param {number} n - Exclkusive upper bound of the number to return  
+ * @param {number} n - Exclkusive upper bound of the number to return
  * @returns {number}
  */
 function randomSmallerInteger (n) { return Math.floor(Math.random() * n); }
@@ -53,7 +53,7 @@ function randomSmallerInteger (n) { return Math.floor(Math.random() * n); }
 /**
  * Interpret `n` as byte size and return a more readable version.
  * E.g. `num.humanReadableByteSize(Math.pow(2,32))` returns "4096MB"
- *  @param {number} n - The number of bytes 
+ *  @param {number} n - The number of bytes
  * @returns {string}
  */
 function humanReadableByteSize (n) {
@@ -67,7 +67,7 @@ function humanReadableByteSize (n) {
 
 /**
  * Returns the average of the numbers contained in the array `numbers`
- * @param {number[]} numbers 
+ * @param {number[]} numbers
  * @returns {number}
  */
 function average (numbers) {
@@ -76,9 +76,9 @@ function average (numbers) {
 
 /**
  * Returns the increase of the average of a (hypothetical) colletion when `newVal` would be added to the collection.
- * @param {number} newVal - The value to "add" to the collection  
+ * @param {number} newVal - The value to "add" to the collection
  * @param {number} oldAvg - Average of a collection
- * @param {number} n  - Number of elements in the collection 
+ * @param {number} n  - Number of elements in the collection
  * @returns {number}
  */
 function averageInc (newVal, oldAvg, n) {
@@ -100,7 +100,7 @@ function median (numbers) {
 
 /**
  * Returns wether `x` is between `a` and `b` and keeps `eps` distance from both of them.
- * @param {number} x - The number that should be between two bounds 
+ * @param {number} x - The number that should be between two bounds
  * @param {number} a - One bound (can be upper or lower)
  * @param {number} b - Another bound (can be upper or lower)
  * @param {number} eps - Epsilon value that indicates the distance that should be kept from the boundaries
@@ -127,7 +127,7 @@ function clamp (x, lower, upper) {
 /**
  * Numerically sort an array of numbers `arr`.
  * By default, JavaScripts `sort()` is lexically.
- * @param {number[]} arr 
+ * @param {number[]} arr
  * @returns {number[]}
  */
 function sort (arr) {
@@ -136,9 +136,9 @@ function sort (arr) {
 
 /**
  * This converts the length value `string` to pixels or the specified `toUnit`.
- * 
+ *
  * Supported units are: mm, cm, in, px, pt, pc.
- * @param {string} string - A string denoting a length (e.g. `'3cm'`) 
+ * @param {string} string - A string denoting a length (e.g. `'3cm'`)
  * @param {string} toUnit - A string denoting a supported unit (e.g. `'mm'`)
  * @returns {number}
  */
@@ -195,15 +195,15 @@ function roundTo (n, quantum) {
 
 /**
  * This function is useful to implement smooth transitions and snapping.
- * 
+ *
  * Map all values that are within `detent/2` of any multiple of `grid` to
  * that multiple. Otherwise, if `snap` is true, return self, meaning that
- * the values in the dead zone will never be returned. 
- * 
+ * the values in the dead zone will never be returned.
+ *
  * If `snap` is false, then expand the range between dead zone so that
  * it covers the range between multiples of the grid, and scale the value
  * by that factor.
- * 
+ *
  * Examples:
  * ```
  * // With snapping:
@@ -222,7 +222,7 @@ function roundTo (n, quantum) {
  * @param {number} n - The number to detent
  * @param {number} detent - The width of the 'dead zone' around the grid
  * @param {number} grid - The width of the grid
- * @param {boolean} snap - Wether snapping is active 
+ * @param {boolean} snap - Wether snapping is active
  * @returns {number}
  */
 function detent (n, detent, grid, snap) {
@@ -246,7 +246,7 @@ function toDegrees (n) {
 
 /**
  * Returns `n` degrees converted to radiants.
- * @param {number} n - A value in degrees 
+ * @param {number} n - A value in degrees
  * @returns {number}
  */
 function toRadians (n) {
