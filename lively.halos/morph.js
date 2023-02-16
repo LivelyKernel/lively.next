@@ -17,6 +17,7 @@ import * as moduleManager from 'lively.modules';
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
 
 import { show } from './markers.js';
+import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const componentAccent = Color.magenta;
@@ -2032,6 +2033,7 @@ export default class Halo extends Morph {
     if (!evt.isCommandKey()) {
       if (evt.state.clickCount === 2 &&
           this.target.isText) {
+        if (this.target.editorModeName === null) this.target.addPlugin(new RichTextPlugin());
         this.target.execCommand('temporary edit text', evt);
         return;
       }
