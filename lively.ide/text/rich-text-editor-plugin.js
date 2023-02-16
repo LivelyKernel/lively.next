@@ -68,7 +68,7 @@ export class RichTextPlugin extends EditorPlugin {
   }
 
   removeIconButton () {
-    this.textMorph.iconButton.remove();
+    this.textMorph.iconButton?.remove();
     delete this.textMorph.iconButton;
   }
 
