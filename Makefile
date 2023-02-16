@@ -13,7 +13,7 @@ start:
 hooks:
 	git config --local core.hooksPath $(shell pwd)/.githooks
 
-docker-build:
+docker-build-only:
 	# Builds the image our containers are based on, including all dependencies which are not installed via flatn
 	docker build -t lively:latest .
 	# Delete old lively.next container in case we previously had containers on this system
@@ -23,7 +23,11 @@ docker-build:
 	# Fot not entirely clear reasons it is important that the absolute path to lively is the same on the host and inside of containers
 	# Otherwise, DAV dirLists might produce nonsense 
 	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --user $(shell id -u):$(shell id -g) lively:latest ./install.sh
+	
+docker-build-start:
 	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start.sh
+
+docker-build: docker-build-only docker-build-start
 
 docker-start:
 	docker start lively.next
