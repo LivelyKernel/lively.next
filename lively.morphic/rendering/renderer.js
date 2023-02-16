@@ -127,7 +127,7 @@ export default class Renderer {
       this.renderWorldLoopLater = null;
       if (this.renderWorldLoopLaterCounter > 0) { this.renderLater(this.renderWorldLoopLaterCounter - 1); }
       try { this.renderStep(); } catch (err) {
-        console.error('Error rendering morphs:', err);
+        console.error('Error rendering morphs:', err); // eslint-disable-line no-console
       }
     });
   }
@@ -623,7 +623,9 @@ export default class Renderer {
     if (!node) {
       return;
     }
-    const { x, y } = morph.scroll;
+
+    let { x, y } = morph.scroll.roundTo(1);
+
     if (morph.isText && morph.document) {
       const scrollLayer = node.querySelector('.scrollLayer');
       if (!scrollLayer) return;
