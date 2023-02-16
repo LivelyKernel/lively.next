@@ -56,6 +56,10 @@ export class RichTextPlugin extends EditorPlugin {
     iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
     this.textMorph.iconButton = iconButtonHolder;
     connect(iconButtonHolder, 'onMouseDown', this, 'startIconInsertion');
+    connect(this.textMorph, 'extent', iconButtonHolder, 'position', {
+      converter:
+    '(extent) => ({x: source.position.x + extent.x, y: target.position.y})'
+    });
     iconButtonHolder.openInWorld(this.textMorph.topRight);
   }
 
