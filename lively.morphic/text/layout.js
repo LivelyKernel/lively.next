@@ -192,7 +192,7 @@ export default class Layout {
 
   // FIXME: will always fail for morphs that are in label mode
   // i.e. that do not have a document
-  whatsVisible (morph) { 
+  whatsVisible (morph) {
     const startRow = morph.renderingState.firstVisibleRow;
     const endRow = morph.renderingState.lastVisibleRow;
     const lines = morph.document.lines.slice(startRow, endRow);
@@ -322,7 +322,6 @@ export default class Layout {
     }
 
     if (!bounds) {
-      // throw new Error(`Cannot compute bounds for line ${row}/${column}`);
       console.warn(`Cannot compute bounds for line ${row}/${column}`);
       bounds = new Rectangle(0, 0, 0, 0);
     }

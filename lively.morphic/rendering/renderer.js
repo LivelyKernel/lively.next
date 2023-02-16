@@ -1682,7 +1682,7 @@ export default class Renderer {
    * @param {Text} morph - The Text which selections were changed.
    */
   patchSelectionLayer (node, morph) {
-    if (!node) return;
+    if (!node || !node.isConnected) return;
     node.querySelectorAll('div.newtext-cursor').forEach(c => c.remove());
     node.querySelectorAll('svg.selection').forEach(s => s.remove());
     const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
