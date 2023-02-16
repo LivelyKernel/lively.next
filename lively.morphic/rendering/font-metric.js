@@ -257,7 +257,7 @@ export default class FontMetric {
 
 function textlayerNodeForFontMeasure (morph) {
   let node = $world.env.renderer.getNodeForMorph(morph);
-  if (node) return node.querySelector(`#${morph.id}font-measure`);
+  if (node && node.isConnected) return node.querySelector(`#${morph.id}font-measure`);
   return null;
 }
 
