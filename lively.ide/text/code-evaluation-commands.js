@@ -1,6 +1,6 @@
 import * as Inspector from '../js/inspector/ui.cp.js';
 import { string } from 'lively.lang';
-import { Morph } from 'lively.morphic';
+import { Morph, Text } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { runCommand, defaultDirectory } from '../shell/shell-interface.js';
 
@@ -54,7 +54,16 @@ export const codeEvaluationCommands = [
       await cmd.whenDone();
       let result = cmd.output;
 
-      $world.execCommand('open workspace', { title: 'Blame Info', content: result, language: 'text' });
+      const text = new Text({
+        textString: result,
+        fixedWidth: true,
+        fixedHeight: true,
+        extent: pt(415, 300),
+        name: 'Blame Info',
+        fill: Color.white,
+        clipMode: 'auto'
+      });
+      text.openInWindow();
     }
   },
   {
@@ -207,7 +216,7 @@ export const codeEvaluationCommands = [
       if (evalEnvironment.systemInterface.name === 'local') {
         result = await morph.doEval(undefined, opts);
       }
-      console.log(result.value || result.error);
+      console.log(result.value || result.error); // eslint-disable-line no-console
       return result;
     }
   },
