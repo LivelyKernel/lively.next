@@ -246,7 +246,8 @@ export class ObjectPool {
     // add more / custom stuff to snapshot or modify it somehow
     const addFn = this.plugins.additionallySerialize.length
       ? __additionally_serialize__addObjectFunction(
-          ref, snapshot, serializedObjMap, this, path) : null;
+        ref, snapshot, serializedObjMap, this, path)
+      : null;
     for (let i = 0; i < this.plugins.additionallySerialize.length; i++) {
       const p = this.plugins.additionallySerialize[i];
       p.additionallySerialize(this, ref, snapshot, addFn);
@@ -288,7 +289,8 @@ function __additionally_serialize__addObjectFunction (objRef, snapshot, serializ
   // other objects to serialization
 
   return (key, value, verbatim = false) =>
-    snapshot.props[key] = verbatim ? { value, verbatim }
+    snapshot.props[key] = verbatim
+      ? { value, verbatim }
       : {
           value: objRef.snapshotProperty(
             objRef.id, value, path.concat([key]), serializedObjMap, pool)
@@ -348,7 +350,8 @@ export class ObjectRef {
 
   get currentRev () {
     return this.snapshotVersions.length
-      ? arr.last(this.snapshotVersions) : 0;
+      ? arr.last(this.snapshotVersions)
+      : 0;
   }
 
   asRefForSerializedObjMap (rev = '????') {
@@ -486,7 +489,12 @@ export class ObjectRef {
     }
 
     const idPropertyName = newObj.__serialization_id_property__ || this.idPropertyName;
-    if (pool.reinitializeIds && newObj.hasOwnProperty(idPropertyName)) { newObj[idPropertyName] = pool.reinitializeIds(this.id, this); }
+    const needsReinitialization = newObj[idPropertyName] === this.id;
+    if (pool.reinitializeIds &&
+        newObj.hasOwnProperty(idPropertyName) &&
+        needsReinitialization) {
+      newObj[idPropertyName] = pool.reinitializeIds(this.id, this);
+    }
 
     pool.plugin_additionallyDeserializeAfterProperties(
       this, newObj, snapshot, serializedObjMap, path);
@@ -497,7 +505,8 @@ export class ObjectRef {
   recreatePropertyAndSetProperty (newObj, props, key, serializedObjMap, pool, path) {
     try {
       var { verbatim, value } = props[key] || { value: 'NON EXISTING' };
-      newObj[key] = verbatim ? value
+      newObj[key] = verbatim
+        ? value
         : this.recreateProperty(key, value, serializedObjMap, pool, path.concat(key));
     } catch (e) {
       let objString;
