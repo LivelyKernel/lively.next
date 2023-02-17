@@ -890,8 +890,7 @@ export default class Renderer {
    * @param {Text} morph
    */
   removeTextSpecialsFromDOMFor (node, morph) {
-    const cursorNode = node.querySelector('.newtext-cursor');
-    cursorNode.remove();
+    node.querySelector('.newtext-cursor')?.remove();
 
     const selectionNodes = node.querySelectorAll('.selection');
     selectionNodes.forEach(n => n?.remove());
