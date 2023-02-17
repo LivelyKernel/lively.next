@@ -7,6 +7,7 @@ import { promise } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
+import { BlackOnWhite } from '../../text/defaults.cp.js';
 
 const BrowserTabDefault = component(DefaultTab, {
   name: 'browser/tab/default',
@@ -312,16 +313,10 @@ export class PathIndicator extends Morph {
   showInfoInWorkspace () {
     const content = this.ui.statusBox.textString;
     const title = content.split('\n')[0];
-    const text = new Text({
+    part(BlackOnWhite, {
       textString: content.split('\n').slice(1).join('\n'),
-      fixedWidth: true,
-      fixedHeight: true,
-      extent: pt(415, 300),
-      name: title,
-      fill: Color.white,
-      clipMode: 'auto'
-    });
-    text.openInWindow();
+      name: title
+    }).openInWindow();
   }
 
   adjustHeight () {
