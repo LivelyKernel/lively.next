@@ -152,8 +152,8 @@ export default class Renderer {
 
     for (let morph of morphsToHandle) {
       if (morph._requestMasterStyling && morph.master) {
-        morph.master.applyIfNeeded(true);
         morph._requestMasterStyling = false;
+        morph.master.applyIfNeeded(true);
       }
     }
 
