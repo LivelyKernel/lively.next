@@ -88,6 +88,7 @@ function setStatus ({ status, progress, label }) {
   if (progress) {
     if (Boolean(process.stdout.isTTY)) {
       process.stdout.clearLine();
+      process.stdout.cursorTo(0);
     } else {
       readline.cursorTo(process.stdout, 0);
     }
