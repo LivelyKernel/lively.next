@@ -22,10 +22,10 @@ docker-build-only:
 	# Using the host user and group id leads to correct permissions on files created inside of the container
 	# Fot not entirely clear reasons it is important that the absolute path to lively is the same on the host and inside of containers
 	# Otherwise, DAV dirLists might produce nonsense 
-	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --user $(shell id -u):$(shell id -g) lively:latest ./install.sh
+	docker run -it -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --user $(shell id -u):$(shell id -g) lively:latest ./install.sh
 	
 docker-build-start:
-	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start.sh
+	docker run -it -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start.sh
 
 docker-build: docker-build-only docker-build-start
 
