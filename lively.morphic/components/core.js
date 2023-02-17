@@ -586,6 +586,7 @@ function insertFontCSS (name, fontUrl) {
 export function ensureFont (addedFonts) {
   if (typeof $world === 'undefined') {
     // defer loading of fonts until world has been loaded
+    setTimeout(() => ensureFont(addedFonts), 100);
     return;
   }
   for (const name in addedFonts) {
