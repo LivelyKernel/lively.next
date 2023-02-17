@@ -896,7 +896,7 @@ export class Morph {
     this._env = MorphicEnv.default(); // FIXME!
     this._rev = snapshot.rev;
     this._owner = null;
-    this._id = objRef.id;
+    this._id = pool.reinitializeIds ? pool.reinitializeIds(objRef.id, objRef) : objRef.id;
     this._animationQueue = new AnimationQueue(this);
     this._cachedPaths = {};
     this._pathDependants = [];
@@ -909,7 +909,9 @@ export class Morph {
     const s = pool.expressionSerializer;
     for (const prop in this._parametrizedProps) {
       const v = this._parametrizedProps[prop].value;
-      if (v && obj.isString(v) && s.isSerializedExpression(v)) { this._parametrizedProps[prop] = s.deserializeExpr(v); }
+      if (v && obj.isString(v) && s.isSerializedExpression(v)) {
+        this._parametrizedProps[prop] = s.deserializeExpr(v);
+      }
     }
     this.initializeProperties();
     this._pool = pool;
