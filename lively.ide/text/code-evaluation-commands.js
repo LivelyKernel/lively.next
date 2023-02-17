@@ -1,8 +1,9 @@
 import * as Inspector from '../js/inspector/ui.cp.js';
 import { string } from 'lively.lang';
-import { Morph, Text } from 'lively.morphic';
+import { Morph, part } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { runCommand, defaultDirectory } from '../shell/shell-interface.js';
+import { BlackOnWhite } from './defaults.cp.js';
 
 export const codeEvaluationCommands = [
 
@@ -54,16 +55,10 @@ export const codeEvaluationCommands = [
       await cmd.whenDone();
       let result = cmd.output;
 
-      const text = new Text({
+      part(BlackOnWhite, {
         textString: result,
-        fixedWidth: true,
-        fixedHeight: true,
-        extent: pt(415, 300),
-        name: 'Blame Info',
-        fill: Color.white,
-        clipMode: 'auto'
-      });
-      text.openInWindow();
+        name: 'Blame Info'
+      }).openInWindow();
     }
   },
   {
