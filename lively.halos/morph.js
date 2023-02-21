@@ -20,7 +20,6 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 
 import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
-import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { getPropertiesNode } from 'lively.ide/components/helpers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
