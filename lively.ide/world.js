@@ -304,6 +304,7 @@ export class LivelyWorld extends World {
         m.position = this.worldToScreen(m.positionOnCanvas);
       });
     });
+    this.halos().forEach(h => h.alignWithTarget()); // also update the nested ones
   }
 
   onMouseWheel (evt) {
