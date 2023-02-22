@@ -1,4 +1,4 @@
-import { arr, tree, promise, obj } from 'lively.lang';
+import { arr, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 
@@ -120,6 +120,10 @@ export class StylePolicy {
    */
   get name () {
     return this.spec.name;
+  }
+
+  set name (s) {
+    this.spec.name = s;
   }
 
   /**
@@ -256,6 +260,8 @@ export class StylePolicy {
     };
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
+        if (!node.name) { node.name = string.newUUID(); }
+        morph.usedNames.add(node.name);
         if (node.isPolicy) return node;
         if (node.master && node !== spec) {
           return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
