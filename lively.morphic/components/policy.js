@@ -1018,7 +1018,9 @@ export class PolicyApplicator extends StylePolicy {
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
   ensureSubSpecFor (submorph, wrapAsAdded = false) {
-    const targetName = (this.targetMorph === submorph || submorph.isComponent) ? null : submorph.name;
+    const targetName = (this.targetMorph === submorph || submorph.isComponent)
+      ? null
+      : submorph.name;
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
     currSpec = { name: submorph.name };
@@ -1039,7 +1041,7 @@ export class PolicyApplicator extends StylePolicy {
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
     const removedMorphSpec = this.getSubSpecAt(
       ...prevOwner.ownerChain().map(m => m.name).reverse(),
-      prevOwner.name,
+      ...prevOwner.owner ? [prevOwner.name] : [], // if no owner, we dont need to mention the owner name
       removedMorph.name
     );
     if (removedMorphSpec) {
