@@ -190,7 +190,7 @@ const DarkNumberIconWidget = component(DarkNumberWidget, {
       fontFamily: 'Material Icons',
       fontSize: 16
     }]
-  }, 'value')]
+  }, 'value'), without('button holder')]
 });
 
 const TextInput = component({

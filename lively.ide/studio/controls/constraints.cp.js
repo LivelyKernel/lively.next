@@ -331,6 +331,7 @@ const ConstraintsControl = component({
     align: 'center',
     axis: 'column',
     orderByIndex: true,
+    wrapSubmorphs: true,
     padding: Rectangle.inset(20, 0, 0, 10),
     spacing: 10
   }),
@@ -407,7 +408,7 @@ const ConstraintSizeSelectorDefault = component({
   clipMode: 'hidden',
   nativeCursor: 'pointer',
   fill: Color.transparent,
-  layout: new TilingLayout({  axis: 'row', align: 'center', axisAlign: 'center' }),
+  layout: new TilingLayout({ axis: 'row', align: 'center', axisAlign: 'center' }),
   submorphs: [{
     type: Label,
     name: 'caret',
