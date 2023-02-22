@@ -234,7 +234,6 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentX._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-
     expect(updatedSource).to.include(`const X = component(B, {
   name: 'X',
   submorphs: [{
@@ -367,7 +366,7 @@ describe('component -> source reconciliation', function () {
     await ComponentB._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource).to.include('submorphs: [without(\'some submorph\')]');
-    expect(B.stylePolicy.spec.submorphs[2]).to.eql(without('some submorph'), 'updated style policy object');
+    expect(B.stylePolicy.spec.submorphs[1]).to.eql(without('some submorph'), 'updated style policy object');
   });
 
   it('discards empty deeply nested nodes if they are no longer needed', async () => {
@@ -533,5 +532,97 @@ describe('component -> source reconciliation', function () {
     }, part(C, {
       name: 'justin'
     }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
+  });
+
+  // resetEnv()
+  it('properly propagates structure among derived component definitions', async () => {
+    // removing a morph should alter the structure within the derived components accordingly
+    let removedMorph;
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      removedMorph = ComponentA.get('some submorph').remove();
+    });
+    await ComponentA._changeTracker.onceChangesProcessed();
+    let updatedSource = await testComponentModule.source();
+    expect(updatedSource).includes(`const A = component({
+  name: 'A',
+  fill: Color.red,
+  extent: pt(100,100),
+  submorphs: [part(D, { name: 'some ref'})]
+});`, 'removes morph from root def');
+
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+});`, 'removes morph from derived defs');
+    expect(B.stylePolicy.lookForMatchingSpec('some submorph')).to.be.null;
+
+    // adding the same morph back at another location in the component, should preserve the
+    // adjustments but at a different location
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentA.addMorph(removedMorph);
+    });
+
+    await ComponentA._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+
+    expect(updatedSource).includes(`const A = component({
+  name: 'A',
+  fill: Color.red,
+  extent: pt(100, 100),
+  submorphs: [part(D, { name: 'some ref' }), {
+    type: Text,
+    name: 'some submorph',
+    extent: pt(50, 50),
+    fill: Color.yellow,
+    fixedHeight: true,
+    fixedWidth: true
+  }]
+});`, 'add morph to root def');
+
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.green
+  }]
+});`, 'reintroduces the previously removed adjustments');
+
+    // name collisions (by adding a new morph with a name already existing in the derived components)
+    // should enforce a renaming of that dropped morph for now. If we run into issues,
+    // we will introduce a custom tag attribute that allows designers to refer to morphs
+    // with a fixed custom name that is not constrained by any
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.addMorph(morph({ name: 'linus', fill: Color.lively }));
+      ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.green
+  }, add({
+    name: 'linus',
+    fill: Color.lively
+  })]
+});`, 'insert the add() call for the new morph');
+
+    console.log(updatedSource);
+    expect(updatedSource).includes(`const A = component({
+  name: 'A',
+  fill: Color.red,
+  extent: pt(100, 100),
+  submorphs: [part(D, { name: 'some ref' }), {
+    type: Text,
+    name: 'some submorph',
+    extent: pt(50, 50),
+    fill: Color.yellow,
+    fixedHeight: true,
+    fixedWidth: true
+  }, {
+    name: 'linus 2',
+    fill: Color.green
+  }]
+});`, 'inserts a renamed morph to avoid name collision');
   });
 });
