@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { ComponentDescriptor, morph, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
-import { createInitialComponentDefinition } from '../../components/helpers.js';
+import { createInitialComponentDefinition } from '../../components/reconciliation.js';
 
 component.DescriptorClass = InteractiveComponentDescriptor;
 
