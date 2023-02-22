@@ -3,6 +3,7 @@ import { Color, pt } from 'lively.graphics';
 
 import { connect, disconnect } from 'lively.bindings';
 import { runCommand } from '../shell/shell-interface.js';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -33,14 +34,31 @@ class UserFlapModel extends ViewModel {
   async login () {
     let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=repo,workflow' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
-    const deviceCode = resOne.match(new RegExp('device_code=(.*)&e'))[1];
-    const userCode = resOne.match(new RegExp('user_code=(.*)&'))[1];
-    const confirm = await $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.blue }, ` and enter\n${userCode}\n Afterwards, confirm with OK.`, null]);
+    if (resOne === '') {
+      $world.setStatusMessage('You seem to be offline.', StatusMessageError);
+      return;
+    }
+    if (resOne === 'NOT FOUND') {
+      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+      return;
+    }
+    const deviceCodeMatch = resOne.match(new RegExp('device_code=(.*)&e'));
+    const userCodeMatch = resOne.match(new RegExp('user_code=(.*)&'));
+    if (!deviceCodeMatch || !userCodeMatch) {
+      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+      return;
+    }
+    const deviceCode = deviceCodeMatch[1];
+    const userCode = userCodeMatch[1];
+    const confirm = await $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}\n Afterwards, confirm with OK.`, null]);
     if (!confirm) return;
     cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
     const { stdout: resTwo } = await runCommand(cmdString).whenDone();
     const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
-    if (!userToken) return;
+    if (!userToken) {
+      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+      return;
+    }
     localStorage.setItem('gh_access_token', userToken);
     await this.retrieveGithubUserData();
     this.showUserData();
@@ -55,6 +73,10 @@ class UserFlapModel extends ViewModel {
   async retrieveGithubUserData () {
     const cmdString = `curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${localStorage.getItem('gh_access_token')}" https://api.github.com/user`;
     let { stdout: userRes } = await runCommand(cmdString).whenDone();
+    if (!userRes || userRes === '') {
+      $world.setStatusMessage('An unexpected error occured. Please check your connection.', StatusMessageError);
+      return;
+    }
     localStorage.setItem('gh_user_data', userRes);
   }
 
@@ -75,10 +97,14 @@ class UserFlapModel extends ViewModel {
   }
 
   showUserData () {
-    const userData = JSON.parse(localStorage.getItem('gh_user_data'));
-    this.ui.avatar.loadUrl(userData.avatar_url, false);
-    this.ui.leftUserLabel.textString = userData.login;
-    this.ui.rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
+    try {
+      const userData = JSON.parse(localStorage.getItem('gh_user_data'));
+      this.ui.avatar.loadUrl(userData.avatar_url, false);
+      this.ui.leftUserLabel.textString = userData.login;
+      this.ui.rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
+    } catch (err) {
+      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+    }
   }
 
   updateNetworkIndicator (l2lClient) {
