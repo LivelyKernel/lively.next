@@ -702,19 +702,8 @@ export class StylePolicy {
   getSubSpecFor (submorphName) {
     if (!submorphName) return this.spec; // assume we ask for root
     let embeddedRes;
-    const lookForMartchingSpec = (spec) => tree.find(spec, node => {
-      // handle added morphs
-      if (node.COMMAND === 'add') return node.props.name === submorphName;
-      // handle text and attributes (embedded morphs)
-      if (node.textAndAttributes?.find(textOrAttr => {
-        if (embeddedRes) return;
-        if (textOrAttr?.__isSpec__) embeddedRes = lookForMartchingSpec(textOrAttr);
-        if (textOrAttr?.isPolicy && textOrAttr?.name === submorphName) embeddedRes = textOrAttr;
-      })) return !!embeddedRes;
-      // handle "normal" case
-      return node.name === submorphName;
-    }, node => node.submorphs || node.props?.submorphs);
-    let matchingNode = lookForMartchingSpec(this.spec);
+
+    let matchingNode = this.lookForMatchingSpec(submorphName);
     if (embeddedRes) matchingNode = embeddedRes;
     return matchingNode ? matchingNode.props || matchingNode : null;
   }
@@ -764,6 +753,26 @@ export class StylePolicy {
       if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
     }
     return false;
+  }
+
+  /**
+   * Returns a spec inside the scope of the policy,
+   * that matches the given `specName`.
+   */
+  lookForMatchingSpec (specName, spec = this.spec) {
+    let embeddedRes;
+    return tree.find(spec, node => {
+      // handle added morphs
+      if (node.COMMAND === 'add') return node.props.name === specName;
+      // handle text and attributes (embedded morphs)
+      if (node.textAndAttributes?.find(textOrAttr => {
+        if (embeddedRes) return;
+        if (textOrAttr?.__isSpec__) embeddedRes = this.lookForMatchingSpec(specName, textOrAttr);
+        if (textOrAttr?.isPolicy && textOrAttr?.name === specName) embeddedRes = textOrAttr;
+      })) return !!embeddedRes;
+      // handle "normal" case
+      return node.name === specName;
+    }, node => node.submorphs || node.props?.submorphs) || null;
   }
 }
 
