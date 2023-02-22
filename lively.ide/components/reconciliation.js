@@ -169,7 +169,7 @@ export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
       arr.remove(undeclared, exportedId);
       // any way to avoid the string modification?
       let generated, from;
-      ({ generated, from, updatedSource } = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
+      ({ generated, from, newSource: updatedSource } = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
         exported: exportedId,
         moduleId: importedModuleId
       }));
