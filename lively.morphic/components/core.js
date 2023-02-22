@@ -62,6 +62,7 @@ export class ComponentDescriptor {
    */
   static extractSpec (generatorFunction) {
     morph.evaluateAsSpec = evaluateAsSpec = true;
+    morph.usedNames = new Set();
 
     let spec = {};
     try {
@@ -504,6 +505,8 @@ export class ViewModel {
  */
 export function part (componentDescriptor, overriddenProps = {}) {
   if (evaluateAsSpec) {
+    if (!overriddenProps.name && morph.usedNames.has(componentDescriptor.stylePolicy.name)) overriddenProps.name = string.newUUID();
+    morph.usedNames.add(componentDescriptor.stylePolicy.name);
     return componentDescriptor.extend(overriddenProps); // creates an abstract inline policy
   }
 
