@@ -37,6 +37,17 @@ class VersionChecker extends Morph {
     };
   }
 
+  static async currentLivelyVersion () {
+    const cwd = await VersionChecker.cwd();
+    const headHashCmd = 'git rev-parse @';
+    const result = await runCommand(headHashCmd, { cwd }).whenDone();
+    return result.stdout;
+  }
+
+  static async cwd () {
+    return await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
+  }
+
   get isVersionChecker () {
     return true;
   }
@@ -49,7 +60,7 @@ class VersionChecker extends Morph {
 
   checkVersion () {
     this.reset();
-    this.checkIfUpToDate();
+    this.displayLivelyVersionStatus();
   }
 
   onMouseDown (evt) {
@@ -85,30 +96,45 @@ class VersionChecker extends Morph {
     }
   }
 
-  async checkIfUpToDate () {
-    const headHashCmd = 'git rev-parse @';
+  static async checkVersionRelation (hashToCheckAgainst) {
     // See https://stackoverflow.com/a/27940027 for how this works
-    const comparingCmd = 'git rev-list --left-right --count origin/main...@';
-    const cwd = await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
-
+    if (!hashToCheckAgainst) hashToCheckAgainst = 'origin/main';
+    const comparingCmd = `git rev-list --left-right --count ${hashToCheckAgainst}...@`;
+    const cwd = await VersionChecker.cwd();
     let hash, comparison;
-    try {
-      ({ stdout: hash } = await runCommand(headHashCmd, { cwd }).whenDone());
-      ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
-    } catch (err) {
-      this.showError();
-      return;
-    }
-    this.hash = hash;
-    if ($world.openedProject) $world.openedProject.currentLivelyVersion = hash;
-    hash = hash.slice(0, 6);
+    hash = await VersionChecker.currentLivelyVersion();
+    ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
+    return { comparison, hash };
+  }
+
+  /**
+   * Returns 0 when both compared commits are equal, -1 when the current version is behind, 1 when one is ahead.
+   * Returns 2 when both compared versions are diverged.
+   */
+  static parseHashComparison (comparison) {
     comparison = comparison.replace('\n', '').split('\t');
     const numberOfUniqueCommitsOnRemote = parseInt(comparison[0]);
     const numberOfUniqueCommitsLocal = parseInt(comparison[1]);
-    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal === 0) return this.showEven(hash);
-    if (numberOfUniqueCommitsOnRemote !== 0 && numberOfUniqueCommitsLocal === 0) return this.showBehind(hash);
-    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal !== 0) return this.showAhead(hash);
-    return this.showDiverged(hash);
+    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal === 0) return 0;
+    if (numberOfUniqueCommitsOnRemote !== 0 && numberOfUniqueCommitsLocal === 0) return -1;
+    if (numberOfUniqueCommitsOnRemote === 0 && numberOfUniqueCommitsLocal !== 0) return 1;
+    return 2;
+  }
+
+  async displayLivelyVersionStatus () {
+    let { hash, comparison } = await VersionChecker.checkVersionRelation();
+    if (!(hash && comparison)) {
+      this.showError();
+      return;
+    }
+    hash = hash.slice(0, 6);
+    const comnparisonResult = VersionChecker.parseHashComparison(comparison);
+    switch (comnparisonResult) {
+      case (0): this.showEven(hash); break;
+      case (1): this.showAhead(hash); break;
+      case (-1): this.showBehind(hash); break;
+      case (2): this.showDiverged(hash);
+    }
   }
 
   showEven (version) {
