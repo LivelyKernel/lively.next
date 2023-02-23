@@ -534,7 +534,6 @@ describe('component -> source reconciliation', function () {
     }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
   });
 
-  // resetEnv()
   it('properly propagates structure among derived component definitions', async () => {
     // removing a morph should alter the structure within the derived components accordingly
     let removedMorph;
@@ -554,6 +553,15 @@ describe('component -> source reconciliation', function () {
   name: 'B',
 });`, 'removes morph from derived defs');
     expect(B.stylePolicy.lookForMatchingSpec('some submorph')).to.be.null;
+  });
+
+  it('preserves derived component alterations if they are reintroduced', async () => {
+    // removing a morph should alter the structure within the derived components accordingly
+    let removedMorph;
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      removedMorph = ComponentA.get('some submorph').remove();
+    });
+    await ComponentA._changeTracker.onceChangesProcessed();
 
     // adding the same morph back at another location in the component, should preserve the
     // adjustments but at a different location
@@ -562,7 +570,7 @@ describe('component -> source reconciliation', function () {
     });
 
     await ComponentA._changeTracker.onceChangesProcessed();
-    updatedSource = await testComponentModule.source();
+    let updatedSource = await testComponentModule.source();
 
     expect(updatedSource).includes(`const A = component({
   name: 'A',
@@ -585,7 +593,9 @@ describe('component -> source reconciliation', function () {
     fill: Color.green
   }]
 });`, 'reintroduces the previously removed adjustments');
+  });
 
+  it('resolves name conflicts for morphs that are added to a definition', async () => {
     // name collisions (by adding a new morph with a name already existing in the derived components)
     // should enforce a renaming of that dropped morph for now. If we run into issues,
     // we will introduce a custom tag attribute that allows designers to refer to morphs
@@ -595,7 +605,7 @@ describe('component -> source reconciliation', function () {
       ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
     });
     await ComponentB._changeTracker.onceChangesProcessed();
-    updatedSource = await testComponentModule.source();
+    let updatedSource = await testComponentModule.source();
     expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   submorphs: [{
@@ -607,22 +617,47 @@ describe('component -> source reconciliation', function () {
   })]
 });`, 'insert the add() call for the new morph');
 
-    console.log(updatedSource);
     expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
   extent: pt(100, 100),
-  submorphs: [part(D, { name: 'some ref' }), {
+  submorphs: [{
     type: Text,
     name: 'some submorph',
     extent: pt(50, 50),
-    fill: Color.yellow,
+    fixedWidth: true,
     fixedHeight: true,
-    fixedWidth: true
-  }, {
+    fill: Color.yellow
+  }, part(D, { name: 'some ref' }), {
     name: 'linus 2',
     fill: Color.green
   }]
 });`, 'inserts a renamed morph to avoid name collision');
+
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentA.addMorph(morph({ name: 'linus', fill: Color.purple }));
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await testComponentModule.source();
+
+    expect(updatedSource).includes(`const A = component({
+  name: 'A',
+  fill: Color.red,
+  extent: pt(100, 100),
+  submorphs: [{
+    type: Text,
+    name: 'some submorph',
+    extent: pt(50, 50),
+    fixedWidth: true,
+    fixedHeight: true,
+    fill: Color.yellow
+  }, part(D, { name: 'some ref' }), {
+    name: 'linus 2',
+    fill: Color.green
+  }, {
+    name: 'linus 3',
+    fill: Color.purple
+  }]
+});`, 'also renames a morph if collision with one of the derived specs is detected');
   });
 });
