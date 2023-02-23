@@ -376,7 +376,11 @@ export default class TestRunner extends HTMLMorph {
   runTest (testName) { return this.runSuite(testName); }
 
   async runTestFile (file, grep, options) {
+    if (System._testsRunning) return;
     System._testsRunning = true;
+    const win = this.getWindow();
+    const li = LoadingIndicator.open('Running tests...', { target: this });
+    win?.toggleFader(true);
     try {
       if (!this.state.loadedTests) this.state.loadedTests = [];
       if (!this.state.loadedTests.some(ea => ea.file === file)) { this.state.loadedTests.push({ file, tests: [] }); }
@@ -391,6 +395,8 @@ export default class TestRunner extends HTMLMorph {
 
       return this.state.loadedTests[recordIndex];
     } finally {
+      li.remove();
+      win?.toggleFader(false);
       System._testsRunning = false;
     }
   }
