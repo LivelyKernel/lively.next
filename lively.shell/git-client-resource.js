@@ -44,15 +44,15 @@ export default class GitShellResource extends ShellClientResource {
     await cmd.whenDone();
   }
 
-  async pushGitRepo () {
-    await this.pullGitRepo();
+  async pushRepo () {
+    await this.pullRepo();
     await this.commitRepo();
-    const cmd = this.runCommand('git push --set-upstream origin main --force');
+    const cmd = this.runCommand('git push --set-upstream origin main');
     await cmd.whenDone();
   }
 
   // TODO: functioning error handling, especially in the case of conflicts
-  async pullGitRepo () {
+  async pullRepo () {
     await this.runCommand('git stash').whenDone();
     const pullCmd = this.runCommand('git pull');
     await pullCmd.whenDone();
