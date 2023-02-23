@@ -871,4 +871,22 @@ describe('components', () => {
     expect(m.get('holly').fill).to.eql(Color.red);
     expect(m.get('holly').getSubmorphNamed('alice').fill).to.eql(Color.lively);
   });
+
+  it('properly assigns custom generated names in case of a conflict', () => {
+    const C = ComponentDescriptor.for(() => component(c6, {
+      submorphs: [
+        add(
+          part(c1, {
+            submorphs: [add(part(c2)), add(part(c2))]
+          }), 'lively'
+        ),
+        add(part(c1), 'lively')
+      ]
+    }));
+    const m = part(C);
+    expect(m.submorphs[0].name).to.eql('c1');
+    expect(m.submorphs[1].name).not.to.eql('c1');
+    expect(m.submorphs[0].submorphs[0].name).to.eql('c2');
+    expect(m.submorphs[0].submorphs[1].name).not.to.eql('c2');
+  });
 });
