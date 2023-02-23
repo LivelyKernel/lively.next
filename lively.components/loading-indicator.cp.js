@@ -170,11 +170,16 @@ class LoadingIndicatorModel extends ViewModel {
 }
 
 function open (label = 'Loading...', props) {
+  let pos;
+  if (props?.target) {
+    pos = props.target.globalBounds().center();
+  }
   const li = part(LoadingIndicator, { viewModel: { label }, ...props }); // eslint-disable-line no-use-before-define
   if (props && props.animated) {
     promise.delay(props.delay || 0).then(() => {
       const hoverOffset = 25;
       li.openInWorld();
+      if (pos) li.center = pos;
       li.opacity = 0;
       li.top += hoverOffset;
       li.animate({
@@ -189,6 +194,7 @@ function open (label = 'Loading...', props) {
     return li;
   }
   li.openInWorld();
+  if (pos) li.center = pos;
   return li;
 }
 
