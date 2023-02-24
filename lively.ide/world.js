@@ -35,6 +35,7 @@ import { part } from 'lively.morphic';
 import worldCommands from './world-commands.js';
 import { CommentData } from 'lively.collab';
 import './js/linter.js';
+import { localInterface } from 'lively-system-interface';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -388,6 +389,9 @@ export class LivelyWorld extends World {
       });
     document.body.style.overflowX = 'visible';
     document.body.style.overflowY = 'visible';
+    await localInterface.exportsOfModules({
+      excludedPackages: config.ide.js.ignoredPackages
+    });
   }
 
   async isNotUnique (worldName) {
