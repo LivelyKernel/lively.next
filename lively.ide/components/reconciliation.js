@@ -354,6 +354,24 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
   return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
 }
 
+function preserveFormatting (sourceCode, nodeToRemove) {
+  if (!nodeToRemove) return nodeToRemove;
+  let commaRemoved = false;
+
+  while (sourceCode[nodeToRemove.end].match(/\,/)) {
+    commaRemoved = true;
+    nodeToRemove.end++;
+  }
+
+  while (!sourceCode[nodeToRemove.start].match(/\,|\n/) &&
+         !sourceCode[nodeToRemove.start - 1].match(/\[/)) {
+    const aboutToRemoveCommaTwice = commaRemoved && sourceCode[nodeToRemove.start - 1].match(/\,/);
+    if (aboutToRemoveCommaTwice) break;
+    nodeToRemove.start--;
+  }
+  return nodeToRemove;
+}
+
 /**
  * Handle reconciliation in response to the removal of a morph.
  * @param { object } removeChange - The change tracking the morph removal.
@@ -370,17 +388,6 @@ export function handleRemovedMorph (
   requiredBindings,
   isDerived = false) {
   let needsLinting = false;
-
-  function preserveFormatting (nodeToRemove) {
-    if (!nodeToRemove) return nodeToRemove;
-    while (!sourceCode[nodeToRemove.start].match(/\,|\n|\{/)) {
-      nodeToRemove.start--;
-    }
-    while (sourceCode[nodeToRemove.end].match(/\,/)) {
-      nodeToRemove.end++;
-    }
-    return nodeToRemove;
-  }
 
   let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, prevOwner), 'submorphs');
   let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
@@ -408,7 +415,7 @@ export function handleRemovedMorph (
     }
 
     // ensure formatting is preserved
-    return preserveFormatting(nodeToRemove);
+    return nodeToRemove;
   }
 
   // 1. the morph removed is part of a root component definition. => just remove spec, possibly removing submorphs prop.
@@ -418,7 +425,10 @@ export function handleRemovedMorph (
       changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) });
       needsLinting = true; // really?
     } else if (nodeToRemove) {
-      changes.push({ action: 'remove', ...preserveFormatting(nodeToRemove) });
+      changes.push({
+        action: 'remove',
+        ...nodeToRemove
+      });
     }
   }
 
@@ -431,7 +441,11 @@ export function handleRemovedMorph (
     };
     requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
     if (nodeToRemove) {
-      changes.push({ action: 'replace', ...preserveFormatting(nodeToRemove), lines: [removeMorphExpr.__expr__] });
+      changes.push({
+        action: 'replace',
+        ...nodeToRemove,
+        lines: [removeMorphExpr.__expr__]
+      });
     } else {
       // gather the changes for an uncollapse (one insert)
       // and this insert needs to be instrumented with the removedMorphExpr
@@ -462,10 +476,17 @@ export function applyModuleChanges (changesByModule) {
     if (!sourceCode) continue;
     let changes = changesByModule[moduleName].map(l => l[1]).flat();
     changes = arr.sortBy(changes, change => change.start).reverse();
-    for (let change of changes) {
-      // apply the change to the module source
-      sourceCode = string.applyChange(sourceCode, change);
-    }
-    module(moduleName).setSource(sourceCode);
+    module(moduleName).setSource(applySourceChanges(sourceCode, changes));
   }
+}
+
+export function applySourceChanges (sourceCode, changes) {
+  for (let change of changes) {
+    // apply the change to the module source
+    if (change.action === 'remove') {
+      change = preserveFormatting(sourceCode, change);
+    }
+    sourceCode = string.applyChange(sourceCode, change);
+  }
+  return sourceCode;
 }
