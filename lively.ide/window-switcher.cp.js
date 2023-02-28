@@ -43,10 +43,14 @@ class WindowPreviewModel extends ViewModel {
 
   onMouseDown (evt) {
     if (evt.targetMorph === this.ui.closeButton) return;
-    this.windowSwitcher.close();
-    this.window.activate(null, true);
-    const translatedPos = this.world().visibleBoundsExcludingTopBar().translateForInclusion(this.window.bounds()).topLeft();
-    this.window.topLeft = translatedPos;
+    const { window, windowSwitcher } = this;
+    windowSwitcher.close();
+    window.activate(null, true);
+    const translatedPos = window.world()
+      .visibleBoundsExcludingTopBar()
+      .translateForInclusion(window.bounds())
+      .topLeft();
+    window.topLeft = translatedPos;
   }
 
   onHoverIn () {
