@@ -6,7 +6,7 @@ import { connect } from 'lively.bindings';
 import lint from '../js/linter.js';
 import { getDefaultValueFor, isFoldableProp } from 'lively.morphic/helpers.js';
 import { getPropertiesNode, COMPONENTS_CORE_MODULE, getValueExpr, getFoldableValueExpr, getMorphNode, getTextAttributesExpr, getComponentScopeFor, applyChangesToTextMorph, getComponentNode, getProp, standardValueTransform, DEFAULT_SKIPPED_ATTRIBUTES, convertToExpression } from './helpers.js';
-import { insertPropChange, deleteProp, insertMorphExpression, uncollapseSubmorphHierarchy, handleRemovedMorph, fixUndeclaredVars, insertMorphChange } from './reconciliation.js';
+import { insertPropChange, applySourceChanges, deleteProp, insertMorphExpression, uncollapseSubmorphHierarchy, handleRemovedMorph, fixUndeclaredVars, insertMorphChange } from './reconciliation.js';
 
 /**
  * ComponentChangeTrackers listen for evals of the componet module
@@ -353,7 +353,6 @@ export class ComponentChangeTracker {
    * @param { object } change - The change object to reconcile.
    */
   processChangeInComponentSource (change) {
-    // FIXME: extract this source change processing function
     const { componentModule: mod, componentName, sourceEditor } = this;
 
     if (!mod) return;
@@ -393,13 +392,13 @@ export class ComponentChangeTracker {
     let updatedSource;
     const transformString = this.needsLinting || !sourceEditor;
     updatedSource = transformString
-      ? string.applyChanges(sourceCode, changes)
+      ? applySourceChanges(sourceCode, changes)
       : applyChangesToTextMorph(sourceEditor, changes);
 
     ({ changes } = fixUndeclaredVars(updatedSource, requiredBindings, mod));
     // inject the imports
     updatedSource = transformString
-      ? string.applyChanges(updatedSource, changes)
+      ? applySourceChanges(updatedSource, changes)
       : applyChangesToTextMorph(sourceEditor, changes);
 
     // replace the entire string since we are linting the module
