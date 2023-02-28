@@ -1,13 +1,14 @@
 import { ComponentDescriptor, morph } from 'lively.morphic';
 import { ExpressionSerializer } from 'lively.serializer2';
-import { string, arr, obj } from 'lively.lang';
+import { string, obj } from 'lively.lang';
 import { module } from 'lively.modules/index.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import lint from '../js/linter.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { findComponentDef, getComponentNode } from './helpers.js';
-import { replaceComponentDefinition, handleRemovedMorph, applyModuleChanges, createInitialComponentDefinition } from './reconciliation.js';
+import { replaceComponentDefinition, insertMorphExpression, handleRemovedMorph, applyModuleChanges, createInitialComponentDefinition } from './reconciliation.js';
 import { parse } from 'lively.ast';
+import { once } from 'lively.bindings';
 
 const exprSerializer = new ExpressionSerializer();
 
@@ -165,29 +166,43 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * alter the name that they reference the `addedMorph` by if they are part
    * of a reintroduction.
    */
-  ensureNoNameCollisionInDerived (addedMorph) {
-    return addedMorph.name;
+  ensureNoNameCollisionInDerived (nameCandidate, skip = false) {
+    // check if there is a spec in the scope, that has the name of the addedMorph already
+    const generateAlternativeName = (conflictingName) => {
+      const match = conflictingName.match('\ ([0-9]+)$');
+      if (!match) return conflictingName + ' 2';
+      const v = Number.parseInt(match[1]);
+      return conflictingName.replace(match[1], String(v + 1));
+    };
+
+    const originalCandidate = nameCandidate;
+    let conflictingSpec = this.stylePolicy.lookForMatchingSpec(nameCandidate);
+    if (!skip && conflictingSpec) return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate));
+    this.withDerivedComponentsDo(descr => {
+      nameCandidate = descr.ensureNoNameCollisionInDerived(nameCandidate);
+    });
+    // after running through all of these ensure that we are still OK with the outcome
+    if (nameCandidate === originalCandidate) return nameCandidate;
+    conflictingSpec = this.stylePolicy.lookForMatchingSpec(nameCandidate);
+    if (conflictingSpec) {
+      return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate));
+    }
+    return nameCandidate;
   }
 
   propagateChangeAmongDependants (change) {
-    // FIXME: move the logic below into the component descriptor?
-    //        that would simplify the recursive propagation of changes, since
-    //        the tracker literally only exists for active editing sessions.
-
     if (change.selector === 'addMorphAt') {
       // propagate addMorph among dependants (only crucial for reintroduction of previously removed)
       const [addedMorph] = change.args;
       const policyToSpecAndSubExpression = this.previouslyRemovedMorphs.get(addedMorph);
       // FIXME: if the previously added morph was tinkered with structurally
       //        the reintroduction of cached expressions needs to be reconsidered
+      //        This includes to potential renaming of a reintroduced element
+      const safeName = this.ensureNoNameCollisionInDerived(addedMorph.name, true);
+      addedMorph.name = safeName;
       if (policyToSpecAndSubExpression) {
+        // the cached subexressions need to be adjusted!
         this.reintroduceSpec(addedMorph, policyToSpecAndSubExpression);
-      }
-      const safeName = this.ensureNoNameCollisionInDerived(addedMorph);
-      if (safeName !== addedMorph.name) {
-        addedMorph.withMetaDo({ reconcileChanges: true }, () => {
-          addedMorph.name = safeName; // reconcile this too
-        });
       }
     }
 
@@ -197,7 +212,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
     if (change.prop === 'name') {
       // propagate rename among dependants
-      const safeName = this.ensureNoNameCollisionInDerived(change.value);
+      const safeName = this.ensureNoNameCollisionInDerived(change.value, true);
       if (safeName !== change.value) return; // do not perform an adjustment to the rename
       this.renameDerivedSpecs(change.prevValue, safeName);
     }
