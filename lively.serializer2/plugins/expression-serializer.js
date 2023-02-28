@@ -109,7 +109,7 @@ export default class ExpressionSerializer {
 
   convert__expr__obj (obj) {
     // obj.__expr__ is encoded serialized expression *without* prefix
-    console.assert('__expr__' in obj, 'obj has no property __expr__');
+    console.assert('__expr__' in obj, 'obj has no property __expr__'); // eslint-disable-line no-console
     return this.prefix + obj.__expr__;
   }
 
@@ -231,7 +231,7 @@ function getExpression (name, val, ctx) {
       val = exprId;
     } else val = val.__expr__ ? exprSerializer.exprStringEncode(val) : val;
   } catch (e) {
-    console.log(`[export to JSON] failed converting ${name} to serialized expression`);
+    console.log(`[export to JSON] failed converting ${name} to serialized expression`); // eslint-disable-line no-console
   }
   return val;
 }
@@ -424,29 +424,44 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
   }
 }
 
-function traverseSubmorphs (morph, exported, path, masterInScope, subopts) {
+function traverseSubmorphs (morph, exported, path, styleProto, subopts) {
+  const { nestedExpressions, exposeMasterRefs, dropMorphsWithNameOnly, masterInScope, uncollapseHierarchy } = subopts;
   if (morph.submorphs && morph.submorphs.length > 0) {
-    const { nestedExpressions, exposeMasterRefs, dropMorphsWithNameOnly, masterInScope, uncollapseHierarchy } = subopts;
     const embeddedMorphs = morph.isText ? morph.textAndAttributes.filter(m => m?.isMorph) : [];
     const listedSubmorphs = subopts.valueTransform('submorphs', arr.withoutAll(morph.submorphs, embeddedMorphs), morph);
-    exported.submorphs = arr.compact(listedSubmorphs.map((ea, i) => {
-      let val = ea;
-      if (!ea.__expr__) {
-        val = serializeSpec(ea, { // eslint-disable-line no-use-before-define
-          ...subopts,
-          dropMorphsWithNameOnly: !uncollapseHierarchy && (!!ea.master && exposeMasterRefs || dropMorphsWithNameOnly || masterInScope?.managesMorph(ea.name)),
-          path: ea.master && exposeMasterRefs ? '' : (path ? path + '.submorphs.' + i : 'submorphs.' + i)
-        });
-      }
-      if (val?.__expr__) {
-        const exprId = string.newUUID();
-        nestedExpressions[exprId] = val;
-        val = exprId;
-      }
-      return val;
-    }));
-    if (exported.submorphs.length === 0) delete exported.submorphs;
+    exported.submorphs = arr.compact(listedSubmorphs.map(
+      (ea, i) => {
+        let val = ea;
+        if (!ea.__expr__) {
+          val = serializeSpec(ea, { // eslint-disable-line no-use-before-define
+            ...subopts,
+            dropMorphsWithNameOnly: !uncollapseHierarchy && (!!ea.master && exposeMasterRefs || dropMorphsWithNameOnly || masterInScope?.managesMorph(ea.name)),
+            path: ea.master && exposeMasterRefs ? '' : (path ? path + '.submorphs.' + i : 'submorphs.' + i)
+          });
+        }
+        if (val?.__expr__) {
+          const exprId = string.newUUID();
+          nestedExpressions[exprId] = val;
+          val = exprId;
+        }
+        return val;
+      })
+    );
   }
+  if (styleProto?.submorphs && subopts.asExpression) {
+    if (!exported.submorphs) exported.submorphs = [];
+    styleProto.submorphs.forEach(subSpec => {
+      if (!morph.submorphs.find(m => m.name === subSpec.name)) {
+        const exprId = string.newUUID();
+        exported.submorphs.push(exprId);
+        nestedExpressions[exprId] = {
+          __expr__: `without("${subSpec.name}")`,
+          bindings: { 'lively.morphic': ['without'] }
+        };
+      }
+    });
+  }
+  if (exported.submorphs?.length === 0) delete exported.submorphs;
 }
 
 function isCustomObject (val) {
@@ -811,7 +826,7 @@ export function serializeSpec (morph, opts = {}) {
   const styleProto = skipUnchangedFromMaster && getStyleProto(morph, subopts);
 
   gatherConnectionInfo(morph, path, subopts);
-  traverseSubmorphs(morph, exported, path, masterInScope, subopts); // needs to be done before we handle text attributes
+  traverseSubmorphs(morph, exported, path, styleProto, subopts); // needs to be done before we handle text attributes
   handleSpecProps(morph, exported, styleProto, path, masterInScope, subopts);
   handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
 
