@@ -160,6 +160,7 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentA._changeTracker.onceChangesProcessed();
     let updatedSource = await testComponentModule.source();
+
     expect(updatedSource.includes('type: Text,\n    name: \'some submorph\','), 'removes a morph from source').to.be.false;
     expect(updatedSource.includes('submorphs: [part(D, { name: \'some ref\'})]'), 'removes the submorph from array').to.be.true;
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
@@ -663,5 +664,59 @@ describe('component -> source reconciliation', function () {
     fill: Color.purple
   }]
 });`, 'also renames a morph if collision with one of the derived specs is detected');
+  });
+
+  // resetEnv()
+  it('reintroduces altered versions if the morph has been tempered with between removal and eintroduction', async () => {
+    // removing a morph should alter the structure within the derived components accordingly
+    let removedMorph;
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('a deep morph').fill = Color.lively;
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    let updatedSource = await getSource();
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      removedMorph = ComponentA.get('some ref').remove();
+    });
+    await ComponentA._changeTracker.onceChangesProcessed();
+    // clear the morph
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      removedMorph.submorphs[0].remove();
+    });
+    updatedSource = await getSource();
+
+    // adding the same morph back at another location in the component, should preserve the
+    // adjustments but *DROP* the ajustments that have been applied to the now removed morph
+    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentA.addMorph(removedMorph);
+    });
+
+    await ComponentA._changeTracker.onceChangesProcessed();
+    updatedSource = await getSource();
+
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.green
+  }]
+});`, 'does not mention the newly introduced submorph');
+
+    expect(updatedSource).includes(`const A = component({
+  name: 'A',
+  fill: Color.red,
+  extent: pt(100, 100),
+  submorphs: [{
+    type: Text,
+    name: 'some submorph',
+    extent: pt(50, 50),
+    fixedWidth: true,
+    fixedHeight: true,
+    fill: Color.yellow
+  }, part(D, {
+    name: 'some ref',
+    submorphs: [without('a deep morph')]
+  })]
+});`, 'inserts adjustments in the reintroduced code');
   });
 });
