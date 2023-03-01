@@ -1,7 +1,8 @@
-import { Morph, Range, Icon, morph, HTMLMorph, Text, ViewModel } from 'lively.morphic';
+import { Morph, part, Range, Icon, morph, HTMLMorph, Text, ViewModel } from 'lively.morphic';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { signal, connect, noUpdate } from 'lively.bindings';
 import { arr, obj, num } from 'lively.lang';
+import { InputLineError } from './helpers.cp.js';
 
 export class LabeledCheckBoxModel extends ViewModel {
   static get properties () {
@@ -366,22 +367,18 @@ export class InputLine extends Text {
     this.height = this.defaultLineHeight + this.padding.top() + this.padding.bottom();
   }
 
-  // this.indicateError('hello')
-  // this.clearError()
-
-  async indicateError (message) {
+  async indicateError (message, tooltip) {
     this.borderColor = Color.red;
-    this._errorIcon = this.addMorph(this._errorIcon || morph({
-      type: 'label',
-      value: [' ' + message, { fontSize: this.fontSize }, ' ', {}, ...Icon.textAttribute('exclamation-circle', { paddingTop: '2px' })],
-      fontSize: this.fontSize,
-      fontColor: Color.red,
-      opacity: 0,
-      reactsToPointer: false,
-      fill: Color.white.withA(0.9)
-    }));
+    this._errorIcon = this.addMorph(part(InputLineError, { viewModel: { information: message, tooltip: tooltip, height: this.height } }));
+
     this._errorIcon.opacity = 1;
-    this._errorIcon.rightCenter = this.innerBounds().insetBy(10).rightCenter();
+    /* FIXME: this is necessary for two reasons:
+    First, we prohibited layouts on Text morphs when migrating to the new renderer, and an InputLine is a Text.
+    Thus, we cannot just put a Layout on the InputLine itself.
+    Additionally, the width of the text morph seems to not be propagated correctly synchronously, which makes a bit of additional space necessary.
+    The additional space trie to mitigate clipping.
+    */
+    this._errorIcon.right = this.width - 30;
   }
 
   clearError () {
