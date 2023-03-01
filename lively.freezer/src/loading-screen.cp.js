@@ -31,7 +31,7 @@ export class WorldLoadingScreen extends Morph {
     return `<script> window.AUTH_SERVER_URL; </script>`;
   }
 
-  async onLoad () {
+  async activate () {
     if (lively.FreezerRuntime) {
       const progressBar = this.get('package loading indicator');
       const cssLoadingScreen = this.get('css loading screen');
@@ -519,6 +519,7 @@ export async function main () {
   await ls.get('icon').whenFontLoaded();
   ls.respondsToVisibleWindow = true;
   $world.addMorph(ls);
+  ls.activate();
   ls.relayout();
 }
 
