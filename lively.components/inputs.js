@@ -329,6 +329,25 @@ export class InputLine extends Text {
     this.historyId && this.constructor.setHistory(this.historyId, this._inputHistory);
   }
 
+  get placeholderMorph () {
+    return this.get('placeholder');
+  }
+
+  deactivate () {
+    this.clear();
+    this.readOnly = true;
+    this.disabled = true;
+    this.nativeCursor = 'not-allowed';
+    this.placeholderMorph.opacity = 0.4;
+  }
+
+  activate () {
+    this.disabled = false;
+    this.readOnly = false;
+    this.nativeCursor = 'text';
+    this.placeholderMorph.opacity = 1;
+  }
+
   clear () {
     this.input = '';
   }
