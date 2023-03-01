@@ -6,6 +6,7 @@ import { ShadowObject } from 'lively.morphic/rendering/morphic-default.js';
 
 import { TilingLayout, Text } from 'lively.morphic';
 import { SearchWidgetModel } from './search.js';
+import { InputLine } from 'lively.components/inputs.js';
 
 const IconButtonDefault = component({
   type: 'button',
@@ -95,7 +96,7 @@ const SearchWidget = component({
       }),
       submorphs: [
         {
-          type: 'input',
+          type: InputLine,
           name: 'searchInput',
           borderColor: Color.rgb(204, 204, 204),
           borderRadius: 2,
@@ -185,7 +186,7 @@ const SearchWidget = component({
         padding: rect(2, 0, 0, 2)
       }),
       submorphs: [{
-        type: 'input',
+        type: InputLine,
         name: 'replaceInput',
         borderColor: Color.rgb(204, 204, 204),
         borderRadius: 2,

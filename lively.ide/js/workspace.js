@@ -1,7 +1,7 @@
 /* global System */
 import { arr } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import { config, easings, Text, InputLine } from 'lively.morphic';
+import { config, easings, Text } from 'lively.morphic';
 import JavaScriptEditorPlugin from './editor-plugin.js';
 import EvalBackendChooser from './eval-backend-ui.js';
 import { resource } from 'lively.resources';
@@ -9,6 +9,7 @@ import { Window } from 'lively.components';
 import DefaultTheme from '../themes/default.js';
 import DarkTheme from '../themes/dark.js';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { InputLine } from 'lively.components/inputs.js';
 
 export default class Workspace extends Window {
   static get properties () {

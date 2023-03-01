@@ -1,6 +1,6 @@
-import { Text, ViewModel, TilingLayout, InputLine, Icon, ShadowObject, Label, component } from 'lively.morphic';
+import { Text, ViewModel, TilingLayout, Icon, ShadowObject, Label, component } from 'lively.morphic';
 import { pt, Rectangle, rect, Color } from 'lively.graphics';
-import { LabeledCheckBoxModel, CheckBoxMorph } from './inputs.js';
+import { InputLine, LabeledCheckBoxModel, CheckBoxMorph } from './inputs.js';
 import { arr, string, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
 

@@ -24,8 +24,6 @@ import { Morph, Image, Ellipse, Triangle, Path, Polygon, LineMorph } from './mor
 import { Text } from './text/morph.js';
 import { Label } from './text/label.js';
 import { HTMLMorph } from './html-morph.js';
-import InputLine, { PasswordInputLine } from './text/input-line.js';
-export { InputLine, PasswordInputLine };
 
 import { morph, addClassMappings, inspect, touchInputDevice } from './helpers.js';
 
@@ -38,7 +36,6 @@ addClassMappings({
   triangle: Triangle,
   path: Path,
   text: Text,
-  input: InputLine,
   label: Label,
   polygon: Polygon,
   line: LineMorph,

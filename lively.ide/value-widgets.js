@@ -4,10 +4,9 @@ import {
   TilingLayout,
   Label,
   Icon,
-  InputLine,
   config
 } from 'lively.morphic';
-
+import { InputLine } from 'lively.components/inputs.js';
 import { connect, signal } from 'lively.bindings';
 import { Color, pt, rect } from 'lively.graphics';
 import { num, obj } from 'lively.lang';

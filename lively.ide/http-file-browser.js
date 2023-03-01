@@ -1,11 +1,12 @@
 /* global System */
-import { Morph, Image, Label, InputLine } from 'lively.morphic';
+import { Morph, Image, Label } from 'lively.morphic';
 import { Tree, TreeData } from 'lively.components';
-import { arr, fun, promise, num, date, string } from 'lively.lang';
+import { arr, promise, num, date, string } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
 import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import TextEditor from './text/text-editor.js';
+import { InputLine } from 'lively.components/inputs.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()

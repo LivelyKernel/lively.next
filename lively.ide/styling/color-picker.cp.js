@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { Ellipse, without, ShadowObject, InputLine, Label, TilingLayout, component, add, part } from 'lively.morphic';
+import { Ellipse, without, ShadowObject, Label, TilingLayout, component, add, part } from 'lively.morphic';
 import {
   ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
@@ -11,6 +11,7 @@ import { CheckerPattern, PopupWindow, SystemList } from './shared.cp.js';
 import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
 import { TextInput, PropLabel, DarkNumberIconWidget } from '../studio/shared.cp.js'; // that should be revised...
+import { InputLine } from 'lively.components/inputs.js';
 
 const ColorInput = component({
   defaultViewModel: ColorInputModel,
