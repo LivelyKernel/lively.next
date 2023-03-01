@@ -1,9 +1,10 @@
-import { Label, ViewModel, HTMLMorph, Morph, InputLine, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
+import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { DarkNumberWidget } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
+import { InputLine } from 'lively.components/inputs.js';
 
 ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'

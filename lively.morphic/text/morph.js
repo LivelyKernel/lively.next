@@ -47,13 +47,6 @@ export class Text extends Morph {
     });
   }
 
-  static makeInputLine (props) {
-    // hack to break up the cyclic dependency for now  without having to
-    // update the imports all over the place
-    const InputLine = System.get(System.decanonicalize('lively.morphic')).InputLine;
-    return new InputLine(props);
-  }
-
   static get defaultTextStyle () {
     if (this._defaultTextStyle) return this._defaultTextStyle;
     const { properties } = this.prototype.propertiesAndPropertySettings();

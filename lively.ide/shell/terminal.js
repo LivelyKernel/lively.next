@@ -3,12 +3,13 @@ import { connect } from 'lively.bindings';
 import { arr, fun, obj } from 'lively.lang';
 import { defaultDirectory } from './shell-interface.js';
 import { GridLayout } from 'lively.morphic/layout.js';
-import { Morph, Text, World, config, InputLine } from 'lively.morphic';
+import { Morph, Text, World, config } from 'lively.morphic';
 import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
 import { packagesOfSnapshot } from 'lively.morphic/serialization.js';
 import { DarkButton } from '../js/browser/ui.cp.js';
+import { InputLine } from 'lively.components/inputs.js';
 
 // var t = Terminal.runCommand("ls")
 // var t = Terminal.open()

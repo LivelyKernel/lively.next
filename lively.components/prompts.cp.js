@@ -1,9 +1,10 @@
 import { List, FilterableList, RadioButtonGroup } from 'lively.components';
-import { ShadowObject, TilingLayout, InputLine, PasswordInputLine, Ellipse, Text, Icon, Label, component, ViewModel, add, part } from 'lively.morphic';
+import { ShadowObject, TilingLayout, Ellipse, Text, Icon, Label, component, ViewModel, add, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { ButtonDefault } from './buttons.cp.js';
 import { InputLineDefault } from './inputs.cp.js';
 import { arr, promise } from 'lively.lang';
+import {InputLine,  PasswordInputLine } from './inputs.js';
 
 export class AbstractPromptModel extends ViewModel {
   static get properties () {

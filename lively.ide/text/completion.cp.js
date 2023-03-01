@@ -1,6 +1,7 @@
 import { FilterableList, List } from 'lively.components';
 import { pt, rect, Color } from 'lively.graphics';
-import { InputLine, ShadowObject, component } from 'lively.morphic';
+import { ShadowObject, component } from 'lively.morphic';
+import { InputLine } from 'lively.components/inputs.js';
 
 // AutocompleteList.openInWorld()
 const AutocompleteList = component({
