@@ -244,7 +244,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * @param {type} policyToSpecAndSubExpression - Mapping from policies to cached specs and subexpressions.
    * @returns { Object[] } The changes that need to be applied to all affected modules.ription
    */
-  removeSpec (removeChange, policyToSpecAndSubExpression = new WeakMap(), changes) {
+  removeSpec (removeChange, policyToSpecAndSubExpression = new Map(), changes) {
     // remove the sub spec ( spec object )
     const { args: [removedMorph] } = removeChange;
     let applyChanges = false;
@@ -252,6 +252,12 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       changes = [];
       applyChanges = true;
       this.previouslyRemovedMorphs.set(removedMorph, policyToSpecAndSubExpression);
+      once(removedMorph, 'onSubmorphChange', () => {
+        this.previouslyRemovedMorphs.delete(removedMorph);
+      });
+      once(removedMorph, 'removeMorph', () => {
+        this.previouslyRemovedMorphs.delete(removedMorph);
+      });
     }
     const isRoot = applyChanges;
 
@@ -269,11 +275,22 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       const parsedComponent = getComponentNode(parsedMod, this.componentName);
       const { args: [removedMorph], target: prevOwner } = removeChange;
       const requiredBindings = [];
+      // FIXME: react to needsLinting flag
       const { changes: removeChanges, needsLinting } = handleRemovedMorph(removedMorph, prevOwner, parsedComponent, sourceCode, requiredBindings);
       // basically only replace or insert, remove only applies to root defs which this one is not
-      const replaceChange = removeChanges.find(change => change.action === 'replace');
-      if (replaceChange) {
-        subExpr = sourceCode.slice(replaceChange.start, replaceChange.end); // FIXME: what if this is a submorph prop removal??
+      const removeExprChange = removeChanges.find(change => change.action === 'replace' || change.action === 'remove');
+      if (removeExprChange) {
+        subExpr = sourceCode.slice(removeExprChange.start, removeExprChange.end);
+        try {
+          const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
+          if (exprBody.type === 'LabeledStatement') {
+          // extract the one element from the elements
+            const [removedSpec] = exprBody.body.expression.elements;
+            subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
+          }
+        } finally {
+
+        }
       }
       changes.push([this.moduleName, removeChanges]);
       // capture the spec + expression associated with this descr behind the removed Morph
@@ -315,22 +332,26 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     });
 
     const specAndSubExpression = policyToSpecAndSubExpression.get(this.__serialize__());
+
     if (specAndSubExpression) {
-      const [reintroducedSpec, reintroducedSubExpression] = specAndSubExpression;
+      // FIXME: move some of this stuff into the reconciliation
+      const [reintroducedSubExpression, reintroducedSpec] = specAndSubExpression;
       const { moduleName } = this;
-      // ensure the spec of the owner
-      // this.stylePolicy.ensureSpecFor(reintroducedMorph.owner);
-      // add the spec
-      // this.stylePolicy.insertSpec(reintroducedMorph, reintroducedSpec);
-      // add the sub expression to the source code
-      // changes.push([moduleId, insertMorphExpressionChanges(reintroducedMorph, reintroducedSubExpression)]);
-      // ops.push()
+      const { _source: sourceCode } = module(moduleName);
+      const parsedMod = parse(sourceCode);
+      const parsedComponent = getComponentNode(parsedMod, this.componentName);
+      const insertedSpec = this.stylePolicy.ensureSubSpecFor(reintroducedMorph);
+      Object.apply(insertedSpec, reintroducedSpec);
+      const { changes: insertChanges, needsLinting } = insertMorphExpression(parsedComponent, sourceCode, reintroducedMorph.owner, {
+        __expr__: reintroducedSubExpression
+      });
+      changes.push([moduleName, insertChanges]);
     }
 
     // review the way changes are generated, maybe they should already
     // come grouped by module they apply to? That way we do not have
     // to do more weird refactoring in the change tracker,
     // which itself is always bound to a single module anyways
-    if (applyChanges) applyModuleChanges(arr.groupBy(changes, ([modId]) => modId));
+    if (applyChanges) applyModuleChanges(changes);
   }
 }
