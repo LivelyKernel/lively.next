@@ -104,6 +104,17 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource.includes('extent: pt(100,50)'), 'updates width in code').to.be.true;
   });
 
+  it('updates the module if a component prop is set back to its parent value', async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentB.get('some submorph').fill = Color.yellow;
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    const updatedSource = await getSource();
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B'
+});`);
+  });
+
   it('updates the imports if we introduce undefined refs', async () => {
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.getSubmorphNamed('some submorph').padding = rect(5, 5, 5, 5);
