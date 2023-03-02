@@ -74,6 +74,44 @@ export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sou
 }
 
 /**
+ * Given a morph with a corresponding spec, determine wether it still
+ * includes enough properties to bepreserved. If there is no property(s)
+ * exceeding the set of ignored props, the spec is determined removable
+ * and we escalate the consideration of removal further to the parent.
+ * By doing this, we are able to cleanup unnessecary specs that clutter
+ * component definitions.
+ * @param { object } nodeToRemove - The node of the sopec we initially consider to remove.
+ * @param { object } parsedComponent - The node pointing to the entire component definition.
+ * @param { Morph } fromMorph - The morph that we traverse the owner chain from in case of escalation.
+ * @param { string[] } [ignoredProps= ['name', 'submorphs']] - The set of property names that are not considered enough for the node to be preserved.
+ * @returns { object } Returns the final node deemed to be removed.
+ */
+function determineNodeToRemoveSubmorphs (nodeToRemove, parsedComponent, fromMorph, ignoredProps = ['name', 'submorphs']) {
+  let curr = fromMorph;
+  let propNode = getPropertiesNode(parsedComponent, curr);
+  const ignoreQuery = `
+  / Property [
+    /:key Identifier [ ${ignoredProps.map(prop => `@name != '${prop}'`).join(' && ')} ]
+   ]`;
+  let submorphsNode = getProp(propNode, 'submorphs');
+  while (
+    query.queryNodes(propNode, ignoreQuery).length === 0 &&
+    (submorphsNode?.value.elements.length || 0) < 2
+  ) {
+    // if we are wrapped by a part call we should use the submorphs node instead
+    if (!curr.owner) break;
+    nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
+    curr = curr.owner;
+    propNode = getPropertiesNode(parsedComponent, curr);
+    submorphsNode = getProp(propNode, 'submorphs');
+    if (submorphsNode?.value.elements.length < 2) nodeToRemove = submorphsNode;
+  }
+
+  // ensure formatting is preserved
+  return nodeToRemove;
+}
+
+/**
  * Inserts a new property into a properties node of a component definition
  * located in a source string.
  * @param { string } sourceCode - The source code to adjust.
@@ -135,11 +173,26 @@ export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEd
   return string.applyChanges(sourceCode, changes);
 }
 
-export function deleteProp (sourceCode, morphDef, propName) {
+export function deleteProp (sourceCode, parsedComponent, morphDef, propName, target, isDerived) {
   const propNode = getProp(morphDef, propName);
   if (!propNode) {
     return { needsLinting: false, changes: [] };
   }
+  if (isDerived && morphDef.properties.length < 3) {
+    // since we are derived and only have the name prop left,
+    // we are eligible for removal
+    // since it is derived we only care about removing this morph entirely
+    const nodeToRemove = determineNodeToRemoveSubmorphs(morphDef, parsedComponent, target, [
+      'name',
+      'submorphs',
+      propName
+    ]);
+    return {
+      needsLinting: true,
+      changes: [{ action: 'remove', ...nodeToRemove }]
+    };
+  }
+
   const patchPos = propNode;
   while (sourceCode[patchPos.end].match(/,| |\n/)) patchPos.end++;
   return {
@@ -394,35 +447,11 @@ export function handleRemovedMorph (
 
   const changes = [];
 
-  function determineNodeToRemoveSubmorphs (submorphsNode) {
-    let nodeToRemove = submorphsNode;
-    let curr = prevOwner;
-    let propNode = getPropertiesNode(parsedComponent, curr);
-    submorphsNode = getProp(propNode, 'submorphs');
-    while (
-      query.queryNodes(propNode, `
-          / Property [
-            /:key Identifier [ @name != 'submorphs' && @name != 'name' ]
-           ]
-         `).length === 0 &&
-          submorphsNode?.value.elements.length < 2) {
-      // if we are wrapped by a part call we should use the submorphs node instead
-      if (!curr.owner) break;
-      nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
-      curr = curr.owner;
-      propNode = getPropertiesNode(parsedComponent, curr);
-      submorphsNode = getProp(propNode, 'submorphs');
-    }
-
-    // ensure formatting is preserved
-    return nodeToRemove;
-  }
-
   // 1. the morph removed is part of a root component definition. => just remove spec, possibly removing submorphs prop.
   if (!removedMorph.__wasAddedToDerived__ && !isDerived) {
     // add a remove node or a remove submorph props call
     if (closestSubmorphsNode?.value.elements.length < 2) {
-      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) });
+      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode, parsedComponent, prevOwner) });
       needsLinting = true; // really?
     } else if (nodeToRemove) {
       changes.push({
@@ -457,7 +486,7 @@ export function handleRemovedMorph (
   if (removedMorph.__wasAddedToDerived__ && isDerived) {
     // add a remove node or a remove submorph props call
     if (closestSubmorphsNode?.value.elements.length < 2) {
-      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode) }); // this in turns needs to bubble up if this causes owners to further get empty
+      changes.push({ action: 'remove', ...determineNodeToRemoveSubmorphs(closestSubmorphsNode, parsedComponent, prevOwner) }); // this in turns needs to bubble up if this causes owners to further get empty
       needsLinting = true;
     } else {
       changes.push({ action: 'remove', ...nodeToRemove });
@@ -465,6 +494,17 @@ export function handleRemovedMorph (
   }
 
   return { changes, needsLinting };
+}
+
+export function applySourceChanges (sourceCode, changes) {
+  for (let change of changes) {
+    // apply the change to the module source
+    if (change.action === 'remove') {
+      change = preserveFormatting(sourceCode, change);
+    }
+    sourceCode = string.applyChange(sourceCode, change);
+  }
+  return sourceCode;
 }
 
 export function applyModuleChanges (changesByModule) {
@@ -478,15 +518,4 @@ export function applyModuleChanges (changesByModule) {
     changes = arr.sortBy(changes, change => change.start).reverse();
     module(moduleName).setSource(applySourceChanges(sourceCode, changes));
   }
-}
-
-export function applySourceChanges (sourceCode, changes) {
-  for (let change of changes) {
-    // apply the change to the module source
-    if (change.action === 'remove') {
-      change = preserveFormatting(sourceCode, change);
-    }
-    sourceCode = string.applyChange(sourceCode, change);
-  }
-  return sourceCode;
 }

@@ -184,9 +184,11 @@ export class ComponentChangeTracker {
    * @param { string } propName - The name of the property to be delected.
    * @returns { string } The transformed source code.
    */
-  _generateChangesFor_deleteProp (sourceCode, morphDef, propName) {
+  _generateChangesFor_deleteProp (sourceCode, parsedComponent, morphDef, propName, target) {
     let changes;
-    ({ changes, needsLinting: this.needsLinting } = deleteProp(sourceCode, morphDef, propName));
+    const isDerived = target.owner && this.withinDerivedComponent(target.owner);
+    // handleRemovedMorph(target, target.owner, parsedComponent, sourceCode, requiredBindings, isDerived)
+    ({ changes, needsLinting: this.needsLinting } = deleteProp(sourceCode, parsedComponent, morphDef, propName, target, isDerived));
     return changes;
   }
 
@@ -523,7 +525,6 @@ export class ComponentChangeTracker {
   handleChangedProp (propChange, parsedComponent, sourceCode, requiredBindings) {
     let { prop, value, target } = propChange; let members;
     if (prop === 'name') { return this.handleRenaming(propChange, parsedComponent, sourceCode); }
-    let updatedSource = sourceCode;
     let valueAsExpr;
     if (members = isFoldableProp(target.constructor, prop)) {
       valueAsExpr = getFoldableValueExpr(prop, value, members, target.ownerChain().length);
@@ -540,12 +541,12 @@ export class ComponentChangeTracker {
       this.needsLinting = true;
     }
     if (prop === 'extent') {
-      return this._generateChangesFor_handleExtentChange(propChange, morphDef, updatedSource, valueAsExpr.__expr__);
+      return this._generateChangesFor_handleExtentChange(sourceCode, responsibleComponent, morphDef, propChange, valueAsExpr.__expr__);
     }
     if (this.differsFromNextLevel(prop, target, value)) {
-      return this._generateChangesFor_patchProp(updatedSource, morphDef, prop, valueAsExpr.__expr__);
+      return this._generateChangesFor_patchProp(sourceCode, morphDef, prop, valueAsExpr.__expr__);
     }
-    return this._generateChangesFor_deleteProp(updatedSource, morphDef, prop);
+    return this._generateChangesFor_deleteProp(sourceCode, responsibleComponent, morphDef, prop, target);
   }
 
   differsFromNextLevel (prop, target, newVal) {
@@ -573,7 +574,7 @@ export class ComponentChangeTracker {
    * @param { string } valueExpr - The value of the extent already stringified as an expression.
    * @returns { string } The transformed source code.
    */
-  _generateChangesFor_handleExtentChange (extentChange, morphDef, sourceCode, valueExpr) {
+  _generateChangesFor_handleExtentChange (sourceCode, responsibleComponent, morphDef, extentChange, valueExpr) {
     const { target, value } = extentChange;
     let updatedSource = sourceCode;
     let changedProp = 'extent';
@@ -591,7 +592,7 @@ export class ComponentChangeTracker {
     }
     const changes = [];
     if (deleteHeight || deleteWidth) {
-      changes.push(...this._generateChangesFor_deleteProp(sourceCode, morphDef, 'extent'));
+      changes.push(...this._generateChangesFor_deleteProp(sourceCode, responsibleComponent, morphDef, 'extent', target));
     }
     if (!deleteHeight || !deleteWidth) {
       changes.push(...this._generateChangesFor_patchProp(updatedSource, morphDef, changedProp, valueExpr));
