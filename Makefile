@@ -1,4 +1,4 @@
-.PHONY: clear-esm-cache clear-headless-cache start install hooks docker-build-prepare docker-start docker-watch docker-bash docker-stop
+.PHONY: clear-esm-cache clear-headless-cache start install hooks docker-build-prepare docker-start docker-watch docker-bash docker-stop loading-screen
 clear-esm-cache:
 	rm -rf esm_cache
 	mkdir esm_cache
@@ -9,6 +9,9 @@ clear-headless-cache:
 
 start:
 	./start.sh
+
+loading-screen:
+	env CI=true npm --prefix lively.freezer run build-loading-screen
 
 hooks:
 	git config --local core.hooksPath $(shell pwd)/.githooks
