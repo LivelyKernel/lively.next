@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  Tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,4 +20,4 @@ jobs:
           chmod a+x ./install.sh
           ./install.sh
       - name: Run CI Test Script 
-        run:  ./scripts/tests.sh
+        run:  ./scripts/test.sh
