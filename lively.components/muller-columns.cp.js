@@ -309,7 +309,8 @@ export class MullerColumnViewModel extends ViewModel {
   onMouseMove (evt) {
     const hoveredList = this.lists.find(list => list.fullContainsWorldPoint(evt.position));
     if (hoveredList) {
-      hoveredList.focus();
+      const win = this.view.getWindow();
+      if (!$world.focusedMorph.isText || win?.isActive()) hoveredList.focus();
       this.lists.forEach(list => {
         const control = list._managedNode && list._managedNode.listControl;
         if (control) {
