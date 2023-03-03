@@ -20,4 +20,4 @@ jobs:
           chmod a+x ./install.sh
           ./install.sh
       - name: Run CI Test Script 
-        run:  ./scripts/ci-tests.sh
+        run:  ./scripts/tests.sh

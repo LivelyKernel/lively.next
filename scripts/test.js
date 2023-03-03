@@ -2,9 +2,10 @@
 This script can be used to run the test in a selected package.
 Just pass the package as a parameter when executing this script (only one at a time).
 Example call of this script: `node test.js lively.morphic`.
-The script assumes that a lively server is running localy on port 9011.
-This script gets used by ci-tests.sh
+The script assumes that a lively server is running locally on port 9011.
+This script gets used by tests.sh.
 */
+
 const http = require('http')
 
 const targetPackage = process.argv[2]

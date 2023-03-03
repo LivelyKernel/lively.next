@@ -1,9 +1,10 @@
 #!/bin/bash
-# This script is used by the CI test running pipeline.
-# It executes all tests present in the test folders of the packages specified in `testfiles`.
-# It is not possible to run only some selected packages (only when modifying the below array).
+# This script can be used to run tests outside of a lively.next environment. It is used for the CI pipelines for lively.next and its projects.
+# It either executes all tests present in the test folders of the packages specified in `testfiles` (defaulting to all lively core packages),
+# or all tests in the single package given as a parameter when executing this script.
+# It is not possible to run multiple explicitly specified packages (except when modifying the below array).
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
-# On mac, make sure to habe `gsed` installed.
+# On mac, make sure to have `gsed` installed.
 
 TESTED_PACKAGES=0
 GREEN_TESTS=0
@@ -40,6 +41,11 @@ testfiles=(
 "lively.headless"
 "lively.keyboard"
 )
+
+if [ "$1" ];
+then
+  testfiles=("$1" )
+fi
 
 # For not entirely clear reasons, the lively.server dies due to a socket hangup
 # when testing multiple packages consecutively on a hosted GitHub Actions runner.
