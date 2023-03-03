@@ -181,6 +181,47 @@ describe('component -> source reconciliation', function () {
     updatedSource = await testComponentModule.source();
     expect(updatedSource.includes('submorphs: []'), 'removes the submorph array').to.be.false;
   });
+  // resetEnv()
+  it('updates the layouts definitions in response to a morph getting removed', async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, async () => {
+      ComponentB.layout = new TilingLayout({
+        resizePolicies: [
+          ['some submorph', { height: 'fill', width: 'fill' }]
+        ]
+      });
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    let updatedSource = await getSource();
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+  layout: new TilingLayout({
+    orderByIndex: true,
+    resizePolicies: [['some submorph', {
+      height: 'fill',
+      width: 'fill'
+    }]]
+  }),
+  submorphs: [{
+    name: 'some submorph',
+    fill: Color.green
+  }]
+});`);
+
+    let removedMorph;
+    ComponentB.withMetaDo({ reconcileChanges: true }, async () => {
+      removedMorph = ComponentB.getSubmorphNamed('some submorph').remove();
+    });
+    await ComponentB._changeTracker.onceChangesProcessed();
+    updatedSource = await getSource();
+    expect(ComponentB.layout._resizePolicies.has(removedMorph)).to.be.false;
+    expect(updatedSource).includes(`const B = component(A, {
+  name: 'B',
+  layout: new TilingLayout({
+    orderByIndex: true
+  }),
+  submorphs: [without('some submorph')]
+});`);
+  });
 
   it('updates the source if a part is added', async () => {
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {

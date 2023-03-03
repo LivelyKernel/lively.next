@@ -641,6 +641,15 @@ export class TilingLayout extends Layout {
   }
 
   /**
+   * Invoked once a morph in the container has changed their bounds.
+   * @override
+   */
+  onSubmorphRemoved (submorph) {
+    this._resizePolicies.delete(submorph);
+    this.container.layout = this.copy();
+  }
+
+  /**
    * Attempt an immediate measure of the morph's rendered node
    * to retrieve bounds from the DOM. If not possible, defer to
    * the next render pass.
