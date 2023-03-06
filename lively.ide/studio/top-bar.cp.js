@@ -149,6 +149,20 @@ export class TopBarModel extends ViewModel {
     addFn('haloFilterFn', this.getProperty('haloFilterFn'));
   }
 
+  viewDidLoad () {
+    if (config.ide.studio.worldMenuInTopBar) {
+      const worldMenuButton = part(TopBarButton, {
+        name: 'world menu button',
+        textAndAttributes: Icon.textAttribute('burger'),
+        tooltip: 'Open World Menu'
+      });
+      this.ui.tilingLayout.addMorphAt(worldMenuButton, 0);
+      connect(worldMenuButton, 'onMouseDown', () => {
+        $world.openMenu($world.menuItems());
+      });
+    }
+  }
+
   onMouseDown (evt) {
     const shapeSelector = this.ui.selectShapeType;
     const handHaloSelector = this.ui.selectHandOrHalo;
