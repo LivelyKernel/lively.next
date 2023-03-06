@@ -112,7 +112,7 @@ export class CheckBoxMorph extends Morph {
     } catch (err) {
       const w = this.world();
       if (w) w.logError(err);
-      else console.error(err);
+      else console.error(err); // eslint-disable-line no-console
     }
   }
 
@@ -198,7 +198,7 @@ export class InputLine extends Text {
     if (typeof localStorage === 'undefined') return;
     try {
       localStorage.setItem('lively.morphic-inputline-' + id, JSON.stringify(hist));
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); } // eslint-disable-line no-console
   }
 
   static get histories () {
