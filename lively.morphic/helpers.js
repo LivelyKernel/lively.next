@@ -84,6 +84,7 @@ function getPropSettings (type) {
 }
 
 export function getStylePropertiesFor (type) {
+  if (typeof type === 'undefined') type = 'default';
   if (CachedStyleProperties.has(type)) return CachedStyleProperties.get(type);
   const { props, moduleId, order } = getPropSettings(type);
   const styleProps = [];
