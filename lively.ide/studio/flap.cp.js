@@ -59,7 +59,7 @@ const Flap = component({
   }),
   extent: pt(30, 120),
   fill: Color.rgb(30, 30, 30).withA(0.95),
-  halosEnabled: true,
+  halosEnabled: false,
   epiMorph: true,
   submorphs: [
     {
