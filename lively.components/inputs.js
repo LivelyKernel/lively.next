@@ -39,7 +39,7 @@ export class LabeledCheckBoxModel extends ViewModel {
 
       expose: {
         get () {
-          return ['checked', 'active', 'label'];
+          return ['checked', 'active', 'label', 'enable', 'disable'];
         }
       },
 
