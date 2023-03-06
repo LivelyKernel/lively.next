@@ -1,8 +1,9 @@
 ---
-name: "📟 Support Inquiry"
-about: Ask specific questions regarding how to implement and get stuff to work within lively.next
+name: "\U0001F4DF Support Inquiry"
+about: Ask specific questions regarding how to implement and get stuff to work within
+  lively.next
 title: ''
-labels: ":pager: support inquiry"
+labels: "\U0001F4DF support inquiry"
 assignees: ''
 
 ---

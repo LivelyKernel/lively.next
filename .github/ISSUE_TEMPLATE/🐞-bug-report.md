@@ -1,5 +1,5 @@
 ---
-name: ":lady_beetle: Bug Report"
+name: "\U0001F41E Bug Report"
 about: Create a report to make lively.next better
 title: ''
 labels: ":lady_beetle:  bug"
