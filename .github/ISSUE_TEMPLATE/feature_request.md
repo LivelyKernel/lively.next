@@ -2,7 +2,7 @@
 name: "✨ Feature Request"
 about: Add your feature request or idea
 title: ''
-labels: ":sparkles: Feature Request"
+labels: "✨ enhancement"
 assignees: ''
 
 ---
