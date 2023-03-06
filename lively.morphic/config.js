@@ -76,7 +76,8 @@ const config = {
 
     studio: {
       zoom: { step: 0.07, min: 0.02 },
-      defaultMode: 'Halo' // can either be 'Halo' or 'Hand'
+      defaultMode: 'Halo', // can either be 'Halo' or 'Hand'
+      worldMenuInTopBar: false
     },
 
     js: {
