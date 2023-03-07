@@ -45,15 +45,18 @@ const req = http.request(options, res => {
       if (!Object.keys(data).length) {
         if (CI) {
           console.log(`::notice:: ${targetPackage} does not contain any tests`);
+          fs.appendFileSync('summary.txt', `🛈 ${targetPackage} does not contain any tests.\n`);
         } else {
           console.log(`🛈 ${targetPackage} does not contain any tests`);
-          fs.appendFileSync('summary.txt', `🛈 ${targetPackage} does not contain any tests.\n`);
         }
 
         return;
       }
       if (data.error) {
-        if (CI) console.log(`::error:: Running the tests produced the following error: ${JSON.stringify(data.error)}`);
+        if (CI) {
+          console.log(`::error:: Running the tests produced the following error: ${JSON.stringify(data.error)}`);
+          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error: ${JSON.stringify(data.error)}`);
+        }
         else console.log(`❌ Running the tests produced the following error: ${JSON.stringify(data.error)}`);
         return;
       }
@@ -124,6 +127,7 @@ const req = http.request(options, res => {
     } catch (err) {
       if (CI) {
         console.log(`::error:: Running the tests produced the following error: "${err}"`);
+        fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error: "${err}"\n`);
       } else {
         console.log(`❌ Running the tests produced the following error: "${err}"`);
       }
@@ -133,7 +137,10 @@ const req = http.request(options, res => {
 );
 
 req.on('error', err => {
-  if (CI) console.log(`::error:: Error while trying to get the results of tests for ${targetPackage}`);
+  if (CI) {
+    console.log(`::error:: Error while trying to get the results of tests for ${targetPackage}`);
+    fs.appendFileSync('summary.txt', `❌ Error while trying to get the results of tests for ${targetPackage}\n`);
+  }
   else console.log(`❌ Error while trying to get the results of tests for ${targetPackage}`);
   console.log(err);
   if (CI) {
