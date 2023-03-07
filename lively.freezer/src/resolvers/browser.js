@@ -71,15 +71,27 @@ function spawn ({ command, cwd }) {
   return runCommand(command, { cwd });
 }
 
-async function load (url) {
-  let s;
-  if (url === '@empty') return '';
-  try {
-    s = await resource(url).read();
-  } catch (err) {
-    s = await resource(url).makeProxied().read();
+async function fetchFile(url) {
+  while (true) {
+    let attempts = 0;
+    const maxAttempts = 3;
+    try {
+      try {
+        return await resource(url).read();
+      } catch (err) {
+        return await resource(url).makeProxied().read();
+      }
+    } catch (err) {
+      attempts++;
+      if (attempts < maxAttempts) continue;
+      throw err;
+    }
   }
-  return s;
+}
+
+async function load (url) {
+  if (url === '@empty') return '';
+  return await fetchFile(url);
 }
 
 function supportingPlugins () {
