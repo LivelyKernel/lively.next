@@ -114,13 +114,30 @@ function spawn ({ command, cwd }) {
   return res;
 }
 
+async function fetchFile (url) {  
+  const { resource } = await import('lively.resources');
+  let attempt = 0;
+  const maxAttempts = 3;
+  while (true) {
+    try {
+      return await resource(ensureFileFormat(url)).read();
+    } catch (err) {
+      attempt++;
+      if (attempt < maxAttempts) {
+        console.log(`[lively.freezer] Error fetching ${url}. Retrying...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 async function load(url) {
   if (url === '@empty') return '';
-  const { resource } = await import('lively.resources');
   // also transpile the source code if this is a js file...
   // in the future we should restrict it to cp.js or some
   // more general lv.js files...
-  const code = await resource(ensureFileFormat(url)).read();
+  const code = await fetchFile(url); 
   if (url.endsWith('.js') || url.endsWith('.cjs'))
     return babel.transform(code, {
       plugins: [
