@@ -2,7 +2,17 @@
 import Resource from './resource.js';
 import { applyExclude, windowsURLPrefixRe, windowsRootPathRe } from './helpers.js';
 
-import { createWriteStream, createReadStream, readFile, writeFile, exists, mkdir, rmdir, unlink, readdir, lstat, rename } from 'fs';
+import { createWriteStream, createReadStream, readFile, writeFile, stat, mkdir, rmdir, unlink, readdir, lstat, rename, constants, access } from 'fs';
+
+function exists (path, cb) {
+  return access(path, constants.F_OK, (err) => {
+    if (err) {
+      cb(false)
+    } else {
+      cb(true)
+    }
+  });
+}
 
 function wrapInPromise (func) {
   return (...args) =>
