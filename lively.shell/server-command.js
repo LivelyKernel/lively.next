@@ -6,6 +6,7 @@ import { signal } from 'lively.bindings';
 import { format } from 'util';
 import fs from 'fs';
 import path from 'path';
+import proc from 'child_process';
 
 let spawn, exec, isWindows, defaultEnv;
 let askPassScript = '';
@@ -262,7 +263,6 @@ const L2LServices = {
 };
 
 try {
-  const proc = require('child_process');
   spawn = proc.spawn;
   exec = proc.exec;
 
