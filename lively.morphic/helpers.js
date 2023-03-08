@@ -71,7 +71,7 @@ export function addClassMappings (mapping) {
 // possible solution: store the modules for each of the classes we cache the style props for and clear the cache when a change in the module is sent around from lively.notifications
 
 export function clearStylePropertiesForClassesIn (moduleId) {
-  CachedStyleProperties.forEach(([klass, props]) => {
+  CachedStyleProperties.forEach((props, klass) => {
     if (moduleId.endsWith(props.moduleId)) CachedStyleProperties.delete(klass); // clear from cache
   });
 }
