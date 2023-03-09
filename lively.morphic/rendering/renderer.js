@@ -222,6 +222,11 @@ export default class Renderer {
       morph._animationQueue.startSvgAnimationsFor(svgNode, 'path');
     }
 
+    if (morph.isText) {
+      const textLayerNode = node.querySelector('.actual');
+      morph._animationQueue.startTextAnimationsFor(textLayerNode);
+    }
+
     morph._animationQueue.startAnimationsFor(node);
     morph.renderingState.animationAdded = false;
   }
