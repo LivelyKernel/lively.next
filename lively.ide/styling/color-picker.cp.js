@@ -508,11 +508,12 @@ const ColorPicker = component(PopupWindow, {
         name: 'color palette view',
         cssDeclaration: `.palette-container {
   height: 100%;
-  width: 100%;
   display: flex;
+  padding-left: 6px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: left;
   overflow: auto;
+  margin-right: 1px;
 }
 
 .color-cell {
