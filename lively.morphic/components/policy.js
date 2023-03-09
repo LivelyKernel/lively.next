@@ -248,6 +248,18 @@ export class StylePolicy {
   }
 
   /**
+   * Registers itself as a derived style policy at its parent.
+   */
+  registerAtParent () {
+    const { parent } = this;
+    if (parent) {
+      const dependants = parent._dependants || new Set();
+      dependants.add(this.__serialize__());
+      parent._dependants = dependants;
+    }
+  }
+
+  /**
    * Evaluates to true, in case the policy changes its style in response to hover events.
    */
   get respondsToHover () {
@@ -308,6 +320,8 @@ export class StylePolicy {
       spec[Symbol.for('lively-module-meta')] = {
         exportedName, moduleId, path, range
       };
+
+      spec.registerAtParent();
       spec = spec.spec;
     }
     for (let subSpec of spec.submorphs || []) {
