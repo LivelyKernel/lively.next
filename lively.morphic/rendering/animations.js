@@ -86,6 +86,10 @@ export class AnimationQueue {
     this.animations.forEach(anim => anim.startSvg(svgNode, type));
   }
 
+  startTextAnimationsFor (textLayerNode) {
+    this.animations.forEach(anim => anim.startText(textLayerNode));
+  }
+
   removeAnimation (animation) {
     arr.remove(this.animations, animation);
   }
@@ -143,6 +147,7 @@ export class PropertyAnimation {
     }
     this.config = this.convertBounds(config);
     this.needsAnimation = {
+      text: morph.isText,
       svg: morph.isPath,
       path: morph.isPath
     };
@@ -289,11 +294,12 @@ export class PropertyAnimation {
 
   gatherAnimationProps () {
     const { morph } = this;
-    const { isPath, isPolygon } = morph;
+    const { isPath, isPolygon, isText } = morph;
     const props = {};
     props.css = styleProps(this.morph);
     if (isPath) props.path = addPathAttributes(morph, {});
     if (isPolygon) props.polygon = addPathAttributes(morph, {});
+    if (isText) props.text = morph.styleObject();
     return props;
   }
 
@@ -328,6 +334,14 @@ export class PropertyAnimation {
         v1 = Color.fromString(v1);
         v2 = Color.fromString(v2);
         return i => v1.interpolate(i, v2);
+    }
+  }
+
+  startText (textLayerNode) {
+    if (this.needsAnimation['text']) {
+      this.needsAnimation['text'] = false;
+      const [before, after] = this.getAnimationProps('text');
+      textLayerNode && this.tween(textLayerNode, before, after);
     }
   }
 
