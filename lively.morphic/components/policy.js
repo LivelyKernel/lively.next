@@ -3,9 +3,11 @@ import { pt } from 'lively.graphics';
 import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { Text, Label } from 'lively.morphic';
 import { withSuperclasses } from 'lively.classes/util.js';
+import { ExpressionSerializer } from 'lively.serializer2';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
+const expressionSerializer = new ExpressionSerializer();
 
 /**
  * Function that will wrap a morph definition and declares
@@ -291,12 +293,12 @@ export class StylePolicy {
     return inlineMaster;
   }
 
-  __serialize__ (pool) {
+  __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
     if (!meta) {
       return;
     }
-    return pool.expressionSerializer.exprStringEncode({
+    return expressionSerializer.exprStringEncode({
       __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt(${meta.path.map(name => JSON.stringify(name)).join(',')})` : ''),
       bindings: { [meta.moduleId]: meta.exportedName }
     });
