@@ -181,7 +181,7 @@ describe('component -> source reconciliation', function () {
     updatedSource = await testComponentModule.source();
     expect(updatedSource.includes('submorphs: []'), 'removes the submorph array').to.be.false;
   });
-  // resetEnv()
+
   it('updates the layouts definitions in response to a morph getting removed', async () => {
     ComponentB.withMetaDo({ reconcileChanges: true }, async () => {
       ComponentB.layout = new TilingLayout({
@@ -284,7 +284,7 @@ describe('component -> source reconciliation', function () {
   }]
 });`);
   });
-  // resetEnv()
+
   it('uncollapses a submorph a the PROPER location', async () => {
     ComponentX.withMetaDo({ reconcileChanges: true }, () => {
       ComponentX.getSubmorphNamed('some ref').fill = Color.lively;
@@ -344,7 +344,7 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource).not.to.include('extent: pt(42, 42)');
     expect(updatedSource).not.to.include('position: pt(5, 5)');
   });
-  // resetEnv()
+
   it('reconciles textAndAttributes', async () => {
     ComponentD.withMetaDo({ reconcileChanges: true }, () => {
       const l = ComponentD.addMorph({
@@ -592,9 +592,8 @@ describe('component -> source reconciliation', function () {
 
   it('properly propagates structure among derived component definitions', async () => {
     // removing a morph should alter the structure within the derived components accordingly
-    let removedMorph;
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      removedMorph = ComponentA.get('some submorph').remove();
+      ComponentA.get('some submorph').remove();
     });
     await ComponentA._changeTracker.onceChangesProcessed();
     let updatedSource = await testComponentModule.source();
@@ -718,7 +717,6 @@ describe('component -> source reconciliation', function () {
 });`, 'also renames a morph if collision with one of the derived specs is detected');
   });
 
-  // resetEnv()
   it('reintroduces altered versions if the morph has been tempered with between removal and eintroduction', async () => {
     // removing a morph should alter the structure within the derived components accordingly
     let removedMorph;
