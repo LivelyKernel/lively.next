@@ -1,4 +1,4 @@
-import { GridLayout, morph, Text, Icon, Label, component, part } from 'lively.morphic';
+import { GridLayout, config, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
 import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';
@@ -188,18 +188,17 @@ const SystemInspector = component({
     nativeCursor: 'ns-resize'
   }, {
     type: Text,
-    readOnly: false,
-    fill: Color.white,
     name: 'code editor',
-    borderColor: Color.rgb(204, 204, 204),
-    borderWidth: 1,
-    clipMode: 'auto',
-    fixedHeight: true,
-    fixedWidth: true,
-    fontFamily: 'IBM Plex Mono',
+    readOnly: false,
+    borderRadius: {
+      topLeft: 0,
+      topRight: 0,
+      bottomRight: 6,
+      bottomLeft: 6
+    },
     lineWrapping: 'by-chars',
-
-    padding: rect(4, 2, 0, 0)
+    padding: rect(4, 2, 0, 0),
+    ...config.codeEditor.defaultStyle
   }, part(DarkButton, {
     viewModel: {
       label: { value: 'fix undeclared vars', fontSize: 12 }
