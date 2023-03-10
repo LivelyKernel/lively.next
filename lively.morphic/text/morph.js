@@ -251,7 +251,6 @@ export class Text extends Morph {
       readOnly: {
         group: 'text',
         defaultValue: true,
-        isStyleProp: true,
         after: ['borderWidth', 'borderColor', 'borderRadius', 'borderStyle'],
         set (readOnly) {
           if (!readOnly) {
