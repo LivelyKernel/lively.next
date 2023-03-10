@@ -17,9 +17,11 @@ Steps to reproduce the behavior. Please make sure to let us know if your problem
 If applicable, add screenshots to help explain your problem.
 
 **Setup**
-Please check the applicable boxes:
-- [ ] macOS 
-- [ ] Linux
-- [ ] Docker
+Please delete non-applicable items!
+
+- macOS
+- Windows
+- Linux
+- Docker
 
 **Version**: Please paste the lively.next commit on which the problem occurred here (short version from the Version Checker in the bottom left corner is sufficient).
