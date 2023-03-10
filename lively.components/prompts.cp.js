@@ -87,7 +87,7 @@ export class InformPromptModel extends AbstractPromptModel {
     const { ui: { promptTitle } } = this;
     promptTitle.lineWrapping = this.lineWrapping;
     promptTitle.fixedWidth = !!this.lineWrapping;
-    promptTitle.textString = this.label;
+    promptTitle.value = this.label;
   }
 
   get keybindings () {
