@@ -5,6 +5,8 @@ import {
 } from 'lively.graphics';
 import { signal, noUpdate, connect } from 'lively.bindings';
 import { string, arr, num } from 'lively.lang';
+import { delay } from 'lively.lang/promise.js';
+import { guardNamed } from 'lively.lang/function.js';
 
 const WHEEL_URL = '/lively.ide/assets/color-wheel.png';
 
@@ -432,21 +434,42 @@ export class ColorEncoderModel extends ViewModel {
             'opacity control', 'first value', 'second value',
             'third value', 'hex opacity control'
           ];
-          return [{
-            model: 'color code selector', signal: 'selection', handler: 'selectEncoding'
-          },
-          {
-            target: 'hex input', signal: 'inputAccepted', handler: 'confirm'
-          },
-          {
-            target: 'css input', signal: 'inputAccepted', handler: 'confirm'
-          },
-          ...numberWidgets.map(target => ({
-            target, signal: 'number', handler: 'confirm'
-          }))];
+          return [
+            {
+              model: 'color code selector', signal: 'selection', handler: 'selectEncoding'
+            },
+            {
+              target: 'hex input', signal: 'inputAccepted', handler: 'confirm'
+            },
+            {
+              target: 'css input', signal: 'inputAccepted', handler: 'confirm'
+            },
+            ...numberWidgets.map(target => ({
+              target, signal: 'number', handler: 'confirm'
+            })),
+            {
+              target: 'color copier', signal: 'onMouseDown', handler: 'copyColor'
+            }];
         }
       }
     };
+  }
+
+  copyColor () {
+    guardNamed('copying', async () => {
+      const originalFontColor = this.ui.colorCopier.fontColor;
+      const currentColor = Color.hsb(this.currentColor[0], this.currentColor[1], this.currentColor[2]).withA(this.currentColor[3]);
+      navigator.clipboard.writeText(currentColor.__serialize__().__expr__);
+      await this.ui.colorCopier.animate({
+        fontColor: Color.green,
+        duration: 500
+      })
+        .then(() => delay(2000))
+        .then(() => this.ui.colorCopier.animate({
+          fontColor: originalFontColor,
+          duration: 500
+        }));
+    })();
   }
 
   update (colorPicker) {
