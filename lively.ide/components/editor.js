@@ -10,6 +10,7 @@ import { replaceComponentDefinition, insertMorphExpression, handleRemovedMorph, 
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
 
+const metaSymbol = Symbol.for('lively-module-meta');
 const exprSerializer = new ExpressionSerializer();
 
 /**
@@ -19,11 +20,13 @@ const exprSerializer = new ExpressionSerializer();
  * and handles all the bookkeeping in the background.
  */
 export class InteractiveComponentDescriptor extends ComponentDescriptor {
-  get moduleName () { return this[Symbol.for('lively-module-meta')].moduleId; }
+  get moduleName () { return this[metaSymbol].moduleId; }
 
-  get componentName () { return this[Symbol.for('lively-module-meta')].exportedName; }
+  get componentName () { return this[metaSymbol].exportedName; }
 
   get isInteractive () { return true; }
+
+  get isScoped () { return !!this[metaSymbol].path; }
 
   static for (generatorFunction, meta, prev) {
     const newDescr = super.for(generatorFunction, meta);
@@ -63,7 +66,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return c || (
       c = morph(this.stylePolicy.asBuildSpec()),
       c.hasFixedPosition = false, // always ensure components are not rendered fixed (this fucks up the halo interface)
-      c[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')],
+      c[metaSymbol] = this[metaSymbol],
       c.isComponent = true,
       c._context = $world,
       alive && withAllViewModelsDo(c, m => m.viewModel.attach(m)),
@@ -97,7 +100,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    */
   async ensureComponentDefBackup () {
     if (this._backupComponentDef) return;
-    const { moduleId, exportedName } = this[Symbol.for('lively-module-meta')];
+    const { moduleId, exportedName } = this[metaSymbol];
     const source = await module(moduleId).source();
     const { start, end } = findComponentDef(await module(moduleId).ast(), exportedName);
     this._backupComponentDef = source.slice(start, end);
