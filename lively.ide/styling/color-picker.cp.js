@@ -1,5 +1,5 @@
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { Ellipse, without, ShadowObject, Label, TilingLayout, component, add, part } from 'lively.morphic';
+import { Ellipse, Icon, without, ShadowObject, Label, TilingLayout, component, add, part } from 'lively.morphic';
 import {
   ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
@@ -118,7 +118,7 @@ const DefaultInputLine = component({
 const HexEncoder = component({
   name: 'hex encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(160, 25),
+  extent: pt(140, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
     axisAlign: 'center',
@@ -129,7 +129,7 @@ const HexEncoder = component({
     part(DefaultNumberWidget, {
       name: 'hex opacity control',
       dropShadow: false,
-      extent: pt(49.6, 23),
+      extent: pt(40, 23),
       floatingPoint: false,
       borderRadius: 0,
       max: 1,
@@ -152,8 +152,8 @@ const HexEncoder = component({
 const ThreeValEncoder = component({
   name: 'three val encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(160, 25),
-  fill: Color.rgb(189, 195, 199),
+  extent: pt(140, 25),
+  fill: Color.transparent,
   layout: new TilingLayout({
     align: 'center',
     axisAlign: 'center',
@@ -163,7 +163,7 @@ const ThreeValEncoder = component({
     part(DefaultNumberWidget, {
       name: 'opacity control',
       dropShadow: false,
-      extent: pt(49.6, 22),
+      extent: pt(40, 22),
       floatingPoint: false,
       max: 1,
       min: 0,
@@ -179,7 +179,7 @@ const ThreeValEncoder = component({
       type: NumberWidget,
       name: 'first value',
       dropShadow: false,
-      extent: pt(35, 22),
+      extent: pt(30, 22),
       floatingPoint: false,
       borderRadius: 0,
       max: 255,
@@ -195,7 +195,7 @@ const ThreeValEncoder = component({
       name: 'second value',
       borderRadius: 0,
       dropShadow: false,
-      extent: pt(35, 22),
+      extent: pt(30, 22),
       floatingPoint: false,
       max: 255,
       min: 0,
@@ -209,7 +209,7 @@ const ThreeValEncoder = component({
       name: 'third value',
       borderRadius: 0,
       dropShadow: false,
-      extent: pt(35, 22),
+      extent: pt(30, 22),
       floatingPoint: false,
       max: 255,
       min: 0,
@@ -224,7 +224,7 @@ const ThreeValEncoder = component({
 const CssEncoder = component({
   name: 'css encoder',
   borderColor: Color.rgb(23, 160, 251),
-  extent: pt(160, 25),
+  extent: pt(140, 25),
   fill: Color.rgb(189, 195, 199),
   isLayoutable: false,
   layout: new TilingLayout({
@@ -244,7 +244,7 @@ const CssEncoder = component({
   submorphs: [part(DefaultInputLine, {
     name: 'css input',
     placeholder: 'CSS color string',
-    extent: pt(158, 23),
+    extent: pt(140, 23),
     padding: rect(5, 3, -5, -3)
   })],
   visible: false
@@ -255,7 +255,10 @@ const ColorEncoder = component({
   name: 'color encoder',
   extent: pt(219.6, 25),
   fill: Color.transparent,
-  layout: new TilingLayout({ justifySubmorphs: 'spaced' }),
+  layout: new TilingLayout({
+    justifySubmorphs: 'spaced',
+    spacing: 5
+  }),
   submorphs: [
     part(DropDownList, {
       name: 'color code selector',
@@ -277,13 +280,26 @@ const ColorEncoder = component({
       fill: Color.transparent,
       layout: new TilingLayout({
         axis: 'column',
-        axisAlign: 'right'
+        hugContentsVertically: true,
+        hugContentsHorizontally: true,
+        wrapSubmorphs: true
       }),
       submorphs: [
         part(HexEncoder, { name: 'hex encoding' }),
         part(ThreeValEncoder, { name: '3 val encoding', visible: false }),
         part(CssEncoder, { name: 'css encoding', visible: false })
       ]
+    },
+    {
+      type: Label,
+      name: 'color copier',
+      nativeCursor: 'pointer',
+      fontSize: 20,
+      lineHeight: 1.1,
+      fontColor: Color.rgb(102, 102, 102),
+      fill: Color.transparent,
+      padding: 3,
+      textAndAttributes: Icon.textAttribute('copy')
     }
   ]
 });

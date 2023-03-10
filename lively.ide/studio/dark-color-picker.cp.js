@@ -35,8 +35,6 @@ const DarkColorPicker = component(ColorPicker, {
     borderColor: Color.rgb(112, 123, 124),
     submorphs: [{
       name: 'color encoding',
-      extent: pt(219.2, 25.3),
-      clipMode: 'hidden',
       submorphs: [
         {
           name: 'color code selector',
@@ -49,10 +47,8 @@ const DarkColorPicker = component(ColorPicker, {
         },
         {
           name: 'controls',
-          extent: pt(150, 25),
           submorphs: [{
             name: 'hex encoding',
-            extent: pt(150, 25),
             submorphs: [
               {
                 name: 'hex opacity control',
@@ -67,8 +63,7 @@ const DarkColorPicker = component(ColorPicker, {
                 name: 'hex input',
                 borderRadius: 0,
                 fill: Color.rgb(66, 73, 73),
-                fontColor: Color.rgbHex('B2EBF2'),
-                fontSize: 14
+                fontColor: Color.rgbHex('B2EBF2')
               }]
           }, {
             name: '3 val encoding',
@@ -110,18 +105,20 @@ const DarkColorPicker = component(ColorPicker, {
             name: 'css encoding',
             submorphs: [{
               name: 'css input',
-              fontSize: 14,
               master: DarkNumberIconWidget,
               borderRadius: 0
             }]
           }]
+        },
+        {
+          name: 'color copier',
+          fontColor: Color.white
         }]
     }]
   }, {
     name: 'color palettes',
     submorphs: [{
       name: 'color palette selector',
-      extent: pt(98.2, 25),
       master: EnumSelector,
       viewModel: {
         listMaster: DarkThemeList,
