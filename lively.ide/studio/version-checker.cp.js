@@ -4,6 +4,9 @@ import { Color, pt } from 'lively.graphics';
 
 import { runCommand } from '../shell/shell-interface.js';
 
+import { delay } from 'lively.lang/promise.js';
+import { guardNamed } from 'lively.lang/function.js';
+
 class VersionChecker extends Morph {
   static get properties () {
     return {
@@ -25,7 +28,8 @@ class VersionChecker extends Morph {
           return {
             status: this.get('version status label'),
             checking: this.get('loading indicator'),
-            statusIcon: this.get('status icon label')
+            statusIcon: this.get('status icon label'),
+            copyButton: this.get('commit id copier')
           };
         }
       }
@@ -49,6 +53,21 @@ class VersionChecker extends Morph {
 
   onMouseDown (evt) {
     super.onMouseDown(evt);
+    if (evt.targetMorph.name === 'commit id copier') {
+      guardNamed('copying', async () => {
+        navigator.clipboard.writeText(this.hash);
+        await this.ui.copyButton.animate({
+          duration: 500,
+          fontColor: Color.green
+        })
+          .then(() => delay(2000))
+          .then(() => this.ui.copyButton.animate({
+            duration: 500,
+            fontColor: Color.rgb(152, 152, 152)
+          }));
+      })();
+      return;
+    }
     if (!this.isComponent) { this.checkVersion(); }
   }
 
@@ -79,6 +98,7 @@ class VersionChecker extends Morph {
       this.showError();
       return;
     }
+    this.hash = hash;
     hash = hash.slice(0, 6);
     comparison = comparison.replace('\n', '').split('\t');
     const numberOfUniqueCommitsOnRemote = parseInt(comparison[0]);
@@ -291,6 +311,16 @@ const LivelyVersionChecker = component({
     isLayoutable: false,
     textAndAttributes: Icon.textAttribute('exclamation-triangle'),
     visible: false
+  },
+  {
+    type: Label,
+    name: 'commit id copier',
+    nativeCursor: 'pointer',
+    fontSize: 14,
+    lineHeight: 1.1,
+    fontColor: Color.rgb(148, 152, 166),
+    fill: Color.transparent,
+    textAndAttributes: Icon.textAttribute('copy')
   }]
 });
 
