@@ -459,7 +459,203 @@ export class PathIndicator extends Morph {
   }
 }
 
-// b = part(SystemBrowser)
+const MetaInfoContainerExpanded = component({
+  type: PathIndicator,
+  master: FileStatusDefault,
+  isLayoutable: true,
+  clipMode: 'hidden',
+  extent: pt(587.6, 60.4),
+  position: pt(9, 280.8),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'right',
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(10, 10, 0, 0),
+    reactToSubmorphAnimations: true,
+    resizePolicies: [['path container', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['status box', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['error controls', {
+      height: 'fixed',
+      width: 'fixed'
+    }]]
+  }),
+  submorphs: [{
+    name: 'path container',
+    clipMode: 'hidden',
+    borderColor: Color.rgb(23, 160, 251),
+    extent: pt(568, 30),
+    fill: Color.rgba(0, 0, 0, 0),
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      justifySubmorphs: 'spaced',
+      orderByIndex: true,
+      reactToSubmorphAnimations: true,
+      spacing: 5,
+      resizePolicies: [['status label', {
+        height: 'fixed',
+        width: 'fixed'
+      }], ['file path', {
+        height: 'fixed',
+        width: 'fill'
+      }], ['clipboard controls', {
+        height: 'fixed',
+        width: 'fixed'
+      }]]
+    }),
+    position: pt(9.1, 11.7),
+    submorphs: [{
+      type: Label,
+      name: 'status label',
+      borderRadius: 20,
+      fill: Color.rgba(0, 0, 0, 0.30302366762504984),
+      fontColor: Color.rgb(255, 255, 255),
+      fontSize: 14,
+      fontWeight: 'bold',
+      opacity: 0,
+      padding: rect(10, 4, 0, 0),
+      textAndAttributes: ['Error ', null, '', {
+        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontWeight: '900',
+        paddingTop: '3px',
+        textStyleClasses: ['fas']
+      }]
+    }, {
+      type: Label,
+      name: 'file path',
+      extent: pt(388.9, 18),
+      clipMode: 'hidden',
+      fontColor: Color.rgb(253, 254, 254),
+      fontFamily: 'IBM Plex Mono',
+      fontSize: 14,
+      fixedWidth: true,
+      fontWeight: 'bold',
+      textAndAttributes: ['lively.sync/client.js:Client#toString', null]
+    }, {
+      name: 'clipboard controls',
+      clipMode: 'hidden',
+      extent: pt(169.1, 27.7),
+      fill: Color.rgba(0, 0, 0, 0),
+      layout: new TilingLayout({
+        align: 'right',
+        axisAlign: 'center',
+        orderByIndex: true,
+        spacing: 5,
+        hugContentsHorizontally: true
+      }),
+      submorphs: [
+        part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Freeze this module',
+          name: 'freeze button',
+          textAndAttributes: Icon.textAttribute('snowflake')
+        }),
+        part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Open file in editor',
+          name: 'open in editor'
+        }), part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Open path in workspace',
+          name: 'copy to clipboard',
+          textAndAttributes: Icon.textAttribute('clipboard')
+        }), part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Jump to code entity',
+          name: 'jump to entity',
+          textAndAttributes: Icon.textAttribute('search')
+        }), part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Export markdown to HTML',
+          name: 'export to html',
+          textAndAttributes: Icon.textAttribute('file-export')
+        }), part(EmbeddedIcon, {
+          type: Label,
+          tooltip: 'Run tests in this module',
+          name: 'run tests in module',
+          visible: false,
+          textAndAttributes: Icon.textAttribute('tachometer-alt')
+        })]
+    }]
+  }, {
+    type: Text,
+    name: 'status box',
+    clipMode: 'auto',
+    extent: pt(560.7, 85.3),
+    fill: Color.rgba(0, 0, 0, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgb(255, 255, 255),
+    fontFamily: '"IBM Plex Sans",Sans-Serif',
+    fontSize: 16,
+    padding: rect(5, 0, -5, 0),
+    lineWrapping: true,
+    readOnly: true
+  }, {
+    name: 'error controls',
+    extent: pt(205, 41),
+    fill: Color.rgba(0, 0, 0, 0),
+    layout: new TilingLayout({
+      orderByIndex: true,
+      hugContentsVertically: true,
+      padding: {
+        height: -8,
+        width: 0,
+        x: 8,
+        y: 8
+      },
+      reactToSubmorphAnimations: false,
+      spacing: 8
+    }),
+    position: pt(385, 123.5),
+    submorphs: [
+      part(EmbeddedIcon, {
+        name: 'close button',
+        textAndAttributes: ['Close ', null, '', {
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontWeight: '900',
+          paddingTop: '1px',
+          textStyleClasses: ['fas']
+        }]
+      }),
+      part(EmbeddedIcon, {
+        name: 'open in workspace',
+        textAndAttributes: ['Open in workspace ', null, '', {
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontWeight: '900',
+          paddingTop: '2px',
+          textStyleClasses: ['fas']
+        }]
+      })]
+  }]
+});
+
+const MetaInfoContainerCollapsed = component(MetaInfoContainerExpanded, {
+  submorphs: [{
+    name: 'status box',
+    isLayoutable: false,
+    reactsToPointer: false,
+    opacity: 0
+  }, {
+    name: 'error controls',
+    reactsToPointer: false,
+    isLayoutable: false
+  }]
+});
+
+const MetaInfoContainer = component(MetaInfoContainerCollapsed, {
+  // master: {
+  //   states: {
+  //     expanded: MetaInfoContainerExpanded,
+  //     collapsed: MetaInfoContainerCollapsed
+  //   }
+  // }
+});
 
 // b.get('column view').width
 // b.openInWindow()
@@ -735,184 +931,7 @@ const SystemBrowser = component({
     padding: rect(4, 60, 0, -60),
     position: pt(0, 271.1),
     scroll: pt(0, 15)
-  }, {
-    type: PathIndicator,
-    master: FileStatusDefault,
-    name: 'meta info text',
-    isLayoutable: true,
-    clipMode: 'hidden',
-    extent: pt(587.6, 60.4),
-    position: pt(9, 280.8),
-    layout: new TilingLayout({
-      axis: 'column',
-      axisAlign: 'right',
-      hugContentsVertically: true,
-      orderByIndex: true,
-      padding: rect(10, 10, 0, 0),
-      reactToSubmorphAnimations: true,
-      resizePolicies: [['path container', {
-        height: 'fixed',
-        width: 'fill'
-      }], ['status box', {
-        height: 'fixed',
-        width: 'fill'
-      }], ['error controls', {
-        height: 'fixed',
-        width: 'fixed'
-      }]]
-    }),
-    submorphs: [{
-      name: 'path container',
-      clipMode: 'hidden',
-      borderColor: Color.rgb(23, 160, 251),
-      extent: pt(568, 30),
-      fill: Color.rgba(0, 0, 0, 0),
-      layout: new TilingLayout({
-        align: 'center',
-        axisAlign: 'center',
-        justifySubmorphs: 'spaced',
-        orderByIndex: true,
-        reactToSubmorphAnimations: true,
-        spacing: 5,
-        resizePolicies: [['status label', {
-          height: 'fixed',
-          width: 'fixed'
-        }], ['file path', {
-          height: 'fixed',
-          width: 'fill'
-        }], ['clipboard controls', {
-          height: 'fixed',
-          width: 'fixed'
-        }]]
-      }),
-      position: pt(9.1, 11.7),
-      submorphs: [{
-        type: Label,
-        name: 'status label',
-        borderRadius: 20,
-        fill: Color.rgba(0, 0, 0, 0.30302366762504984),
-        fontColor: Color.rgb(255, 255, 255),
-        fontSize: 14,
-        fontWeight: 'bold',
-        opacity: 0,
-        padding: rect(10, 4, 0, 0),
-        textAndAttributes: ['Error ', null, '', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-          fontWeight: '900',
-          paddingTop: '3px',
-          textStyleClasses: ['fas']
-        }]
-      }, {
-        type: Label,
-        name: 'file path',
-        extent: pt(388.9, 18),
-        clipMode: 'hidden',
-        fontColor: Color.rgb(253, 254, 254),
-        fontFamily: 'IBM Plex Mono',
-        fontSize: 14,
-        fixedWidth: true,
-        fontWeight: 'bold',
-        textAndAttributes: ['lively.sync/client.js:Client#toString', null]
-      }, {
-        name: 'clipboard controls',
-        clipMode: 'hidden',
-        extent: pt(169.1, 27.7),
-        fill: Color.rgba(0, 0, 0, 0),
-        layout: new TilingLayout({
-          align: 'right',
-          axisAlign: 'center',
-          orderByIndex: true,
-          spacing: 5,
-          hugContentsHorizontally: true
-        }),
-        submorphs: [
-          part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Freeze this module',
-            name: 'freeze button',
-            textAndAttributes: Icon.textAttribute('snowflake')
-          }),
-          part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Open file in editor',
-            name: 'open in editor'
-          }), part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Open path in workspace',
-            name: 'copy to clipboard',
-            textAndAttributes: Icon.textAttribute('clipboard')
-          }), part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Jump to code entity',
-            name: 'jump to entity',
-            textAndAttributes: Icon.textAttribute('search')
-          }), part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Export markdown to HTML',
-            name: 'export to html',
-            textAndAttributes: Icon.textAttribute('file-export')
-          }), part(EmbeddedIcon, {
-            type: Label,
-            tooltip: 'Run tests in this module',
-            name: 'run tests in module',
-            visible: false,
-            textAndAttributes: Icon.textAttribute('tachometer-alt')
-          })]
-      }]
-    }, {
-      type: Text,
-      name: 'status box',
-      clipMode: 'auto',
-      extent: pt(560.7, 85.3),
-      fill: Color.rgba(0, 0, 0, 0),
-      fixedHeight: true,
-      fixedWidth: true,
-      fontColor: Color.rgb(255, 255, 255),
-      fontFamily: '"IBM Plex Sans",Sans-Serif',
-      fontSize: 16,
-      padding: rect(5, 0, -5, 0),
-      lineWrapping: true,
-      opacity: 0,
-      reactsToPointer: true,
-      readOnly: true
-    }, {
-      name: 'error controls',
-      extent: pt(205, 41),
-      fill: Color.rgba(0, 0, 0, 0),
-      layout: new TilingLayout({
-        orderByIndex: true,
-        hugContentsVertically: true,
-        padding: {
-          height: -8,
-          width: 0,
-          x: 8,
-          y: 8
-        },
-        reactToSubmorphAnimations: false,
-        spacing: 8
-      }),
-      position: pt(385, 123.5),
-      submorphs: [
-        part(EmbeddedIcon, {
-          name: 'close button',
-          textAndAttributes: ['Close ', null, '', {
-            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-            fontWeight: '900',
-            paddingTop: '1px',
-            textStyleClasses: ['fas']
-          }]
-        }),
-        part(EmbeddedIcon, {
-          name: 'open in workspace',
-          textAndAttributes: ['Open in workspace ', null, '', {
-            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-            fontWeight: '900',
-            paddingTop: '2px',
-            textStyleClasses: ['fas']
-          }]
-        })]
-    }]
-  }, {
+  }, part(MetaInfoContainer, { name: 'meta info text' }), {
     // fixme: implement with view model...?
     type: HorizontalResizer,
     name: 'vertical resizer',
