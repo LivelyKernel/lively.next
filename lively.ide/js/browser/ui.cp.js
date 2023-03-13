@@ -369,6 +369,7 @@ export class PathIndicator extends Morph {
       this.master.applyAnimated({ duration });
       this.withAnimationDo(() => {
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
+        statusBox.reactsToPointer = false;
         statusBox.opacity = statusLabel.opacity = 0;
         this.adjustHeight();
       }, { duration });
@@ -383,6 +384,7 @@ export class PathIndicator extends Morph {
       this.master = FileStatusError;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
+        statusBox.reactsToPointer = true;
         statusLabel.opacity = statusBox.opacity = 1;
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
@@ -398,6 +400,7 @@ export class PathIndicator extends Morph {
       this.master = FileStatusWarning;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
+        statusBox.reactsToPointer = true;
         statusLabel.opacity = statusBox.opacity = 1;
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
@@ -413,6 +416,7 @@ export class PathIndicator extends Morph {
       this.master = FileStatusFrozen;
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
+        statusBox.reactsToPointer = true;
         statusLabel.opacity = statusBox.opacity = 1;
         statusBox.isLayoutable = statusLabel.isLayoutable = true;
         this.adjustHeight();
@@ -432,6 +436,7 @@ export class PathIndicator extends Morph {
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusBox.opacity = 0;
+        statusBox.reactsToPointer = false;
         errorControls.isLayoutable = statusBox.isLayoutable = false;
         statusLabel.isLayoutable = true;
         statusLabel.opacity = 1;
