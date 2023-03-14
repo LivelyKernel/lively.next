@@ -653,15 +653,6 @@ const MetaInfoContainerCollapsed = component(MetaInfoContainerExpanded, {
   }]
 });
 
-const MetaInfoContainer = component(MetaInfoContainerCollapsed, {
-  // master: {
-  //   states: {
-  //     expanded: MetaInfoContainerExpanded,
-  //     collapsed: MetaInfoContainerCollapsed
-  //   }
-  // }
-});
-
 // b.get('column view').width
 // b.openInWindow()
 // b.openInWorld()
@@ -936,7 +927,7 @@ const SystemBrowser = component({
     padding: rect(4, 60, 0, -60),
     position: pt(0, 271.1),
     scroll: pt(0, 15)
-  }, part(MetaInfoContainer, { name: 'meta info text' }), {
+  }, part(MetaInfoContainerCollapsed, { name: 'meta info text' }), {
     // fixme: implement with view model...?
     type: HorizontalResizer,
     name: 'vertical resizer',
