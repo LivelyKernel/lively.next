@@ -86,18 +86,7 @@ class LoadingIndicatorModel extends ViewModel {
         }
       },
       status: {
-        defaultValue: false,
-        set (val) {
-          this.setProperty('status', val);
-          const { status } = this.ui;
-          if (val) {
-            status.visible = true;
-            status.value = val;
-          } else {
-            status.visible = false;
-            status.value = '';
-          }
-        }
+        defaultValue: false
       },
 
       expose: {
@@ -130,12 +119,11 @@ class LoadingIndicatorModel extends ViewModel {
     this.view.remove();
   }
 
-  openInWorld () {
+  onRefresh (prop) {
     const { status } = this.ui;
-
-    if (this.label) {
+    if (this.status) {
       status.visible = true;
-      status.value = this.label;
+      status.value = this.status;
     } else {
       status.visible = false;
       status.value = '';
@@ -170,11 +158,12 @@ class LoadingIndicatorModel extends ViewModel {
 }
 
 function open (label = 'Loading...', props) {
-  let pos;
+  let pos; let status = props?.status;
   if (props?.target) {
     pos = props.target.globalBounds().center();
   }
-  const li = part(LoadingIndicator, { viewModel: { label }, ...props }); // eslint-disable-line no-use-before-define
+  const li = part(LoadingIndicator, { viewModel: { label, status }, ...props }); // eslint-disable-line no-use-before-define
+
   if (props && props.animated) {
     promise.delay(props.delay || 0).then(() => {
       const hoverOffset = 25;
@@ -193,6 +182,7 @@ function open (label = 'Loading...', props) {
     });
     return li;
   }
+
   li.openInWorld();
   if (pos) li.center = pos;
   return li;
@@ -376,7 +366,6 @@ const LoadingIndicator = component({
           fontWeight: 'bold',
           nativeCursor: 'pointer',
           opacity: 0.65,
-          textAndAttributes: ['', null],
           visible: false
         }]
       }, part(ButtonDefault, {
