@@ -130,7 +130,8 @@ defineMode('javascript', function crea (config, parserConfig) {
         state.tokenize = tokenComment;
         return ret('comment', 'comment');
       } else if (stream.eat('/')) {
-        state.tokenize = tokenLineComment;
+        stream.eatWhile(/\s/);
+        if (!stream.eol()) state.tokenize = tokenLineComment;
         return ret('comment', 'comment');
       } else if (expressionAllowed(stream, state, 1)) {
         readRegexp(stream);
