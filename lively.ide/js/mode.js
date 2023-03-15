@@ -230,6 +230,14 @@ defineMode('javascript', function crea (config, parserConfig) {
         return ret('commentHighlight', 'commentHighlight');
       }
     }
+
+    // Consume any whitespace characters before checking for the end of the line
+    stream.eatWhile(/\s/);
+
+    if (stream.eol()) {
+      state.tokenize = tokenBase;
+    }
+
     return ret('comment', 'comment');
   }
 
