@@ -298,7 +298,7 @@ class DOMTextMeasure {
     const el = this.element = doc.createElement('div');
     el.className = 'dom-measure' + (debug ? ' debug' : '');
     this.setMeasureNodeStyles(el.style, true);
-    parentEl.appendChild(el);
+    parentEl.insertBefore(el, parentEl.firstChild);
     return this;
   }
 
