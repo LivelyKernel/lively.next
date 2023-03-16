@@ -126,10 +126,11 @@ export class DirectoryControls extends Morph {
 
 export class PackageTreeData extends TreeData {
   constructor (root, opts = {}) {
-    const { showPkgVersion = false, showDependencyPackages = false } = opts;
+    const { showPkgVersion = false, showDependencyPackages = false, showHiddenFolders = false } = opts;
     super(root);
     this.showPkgVersion = showPkgVersion;
     this.showDependencyPackages = showDependencyPackages;
+    this.showHiddenFolders = showHiddenFolders;
   }
 
   get columnView () {
@@ -412,9 +413,10 @@ export class PackageTreeData extends TreeData {
     })).value;
     const loadedModules = await this.getLoadedModuleUrls();
     return files.map(file => {
+      if (!this.showHiddenFolders && file.type === 'directory' && file.name[0] === '.') return false;
       Object.assign(file, loadedModules[file.url] || {});
       return file;
-    });
+    }).filter(Boolean);
   }
 
   isCollapsed ({ isCollapsed }) { return isCollapsed; }
@@ -584,6 +586,7 @@ export class BrowserModel extends ViewModel {
             'onModuleChanged',
             'showDependencyPackages',
             'showPackageVersionNumber',
+            'showHiddenFolders',
             'menuItems',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
@@ -884,7 +887,7 @@ export class BrowserModel extends ViewModel {
   async showPackageVersionNumber (bool) {
     const { columnView } = this.ui;
     const treeData = columnView.treeData;
-    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showPkgVersion: bool, showDependencyPackages: treeData.showDependencyPackages }));
+    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showPkgVersion: bool, showDependencyPackages: treeData.showDependencyPackages, showHiddenFolders: treeData.showHiddenFolders }));
     await this.selectPackageNamed(null, true);
   }
 
@@ -894,6 +897,16 @@ export class BrowserModel extends ViewModel {
     treeData.showDependencyPackages = bool;
     treeData.root.subNodes = await columnView.treeData.listAllPackages();
     await this.selectPackageNamed(null, true);
+  }
+
+  async showHiddenFolders (bool) {
+    const { columnView } = this.ui;
+    const treeData = columnView.treeData;
+    treeData.showHiddenFolders = bool;
+    // save state to reconstruct after exchanging tree data
+    const browseState = this.browseSpec();
+    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showHiddenFolders: bool, showDependencyPackages: treeData.showDependencyPackages }));
+    await this.browse(browseState); // reconstruct state
   }
 
   toggleTextMap (bool) {
@@ -2319,6 +2332,8 @@ export class BrowserModel extends ViewModel {
         () => { this.showDependencyPackages(!td.showDependencyPackages); }],
       [[...(td.showPkgVersion ? checked : unchecked), ' ' + 'Display Packages Version Number', { float: 'none' }],
         () => { this.showPackageVersionNumber(!td.showPkgVersion); }],
+      [[...(td.showHiddenFolders ? checked : unchecked), ' ' + 'Show Hidden Folders', { float: 'none' }],
+        () => { this.showHiddenFolders(!td.showHiddenFolders); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
         () => { this.toggleTextMap(!ed.textMap); }]
     ].filter(Boolean);
