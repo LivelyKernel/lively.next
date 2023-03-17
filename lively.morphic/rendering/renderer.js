@@ -1738,7 +1738,7 @@ export default class Renderer {
       selectionNode || cursorNode
     );
     morph.renderingState.renderedMarkers = markersToRender;
-    morph.renderingState.markers = morph.markers;
+    morph.renderingState.markers = morph.markers.map(m => obj.deepCopy(m));
   }
 
   /**
