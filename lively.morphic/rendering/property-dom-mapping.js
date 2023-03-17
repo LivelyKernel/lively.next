@@ -172,8 +172,12 @@ function addFill (morph, style) {
     style.background = Color.transparent.toString();
     return;
   }
-  if (fill.isGradient) style.backgroundImage = fill.toString();
-  else style.background = fill.toString();
+  if (fill.isGradient) {
+    // we need to set the background color to something
+    // that does not interfere with the opaque fill.
+    style.background = Color.transparent.toString();
+    style.backgroundImage = fill.toString();
+  } else style.background = fill.toString();
 }
 
 function addExtentStyle (morph, style) {
