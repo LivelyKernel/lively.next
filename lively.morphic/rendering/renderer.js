@@ -1726,6 +1726,7 @@ export default class Renderer {
     const textLayerNode = nodeToAppendTo.querySelector(`#${morph.id}textLayer`);
     const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
     const markersToRender = this.computeMarkerLayer(morph);
+    const selectionNode = nodeToAppendTo.querySelector('.selection');
     const cursorNode = !submorphsNode ? nodeToAppendTo.querySelector('.newtext-cursor') : null;
     keyed('id',
       nodeToAppendTo,
@@ -1734,7 +1735,7 @@ export default class Renderer {
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
       noOpUpdate,
       submorphsNode || textLayerNode,
-      cursorNode
+      selectionNode || cursorNode
     );
     morph.renderingState.renderedMarkers = markersToRender;
     morph.renderingState.markers = morph.markers;
