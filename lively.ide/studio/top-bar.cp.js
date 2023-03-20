@@ -84,7 +84,6 @@ export class TopBarModel extends ViewModel {
             Image: { shortcut: 'I', args: ['image', { textStyleClasses: ['fas'], paddingTop: '1px' }] },
             Path: { shortcut: 'P', args: ['bezier-curve', { fontSize: 13, paddingTop: '3px' }] },
             Polygon: { shortcut: 'Q', args: ['draw-polygon', { fontSize: 17 }] },
-            Label: { shortcut: 'L', args: ['tag', { paddingTop: '1px' }] },
             Canvas: { shortcut: 'C', args: ['chess-board', { paddingTop: '1px' }] },
             HTML: { shortcut: 'H', args: ['code', { paddingTop: '1px' }] }
           };
@@ -98,7 +97,6 @@ export class TopBarModel extends ViewModel {
             I: 'Image',
             P: 'Path',
             Q: 'Polygon',
-            L: 'Label',
             C: 'Canvas',
             H: 'HTML'
           };
@@ -113,7 +111,6 @@ export class TopBarModel extends ViewModel {
           Canvas: Canvas,
           Image: Image,
           Path: Path,
-          Label: Label,
           Polygon: Polygon,
           Text: Text
         }
@@ -456,14 +453,6 @@ export class TopBarModel extends ViewModel {
             extent: pt(150, 150),
             fill: Color.transparent,
             imageUrl: 'https://i.imgur.com/uGRFZEs.jpg'
-          }));
-          break;
-        case Label:
-          target.addMorph(morph({
-            type,
-            position,
-            value: 'I am a label!',
-            fill: Color.transparent
           }));
           break;
         case Text:
@@ -1068,20 +1057,6 @@ const UserFlap = component({
     extent: pt(5, 5),
     fill: Color.rgb(0, 204, 0),
     reactsToPointer: false
-  }, {
-    type: Label,
-    name: 'name label',
-    draggable: true,
-    fill: Color.rgba(255, 255, 255, 0),
-    fontColor: {
-      onlyAtInstantiation: true,
-      value: Color.rgb(102, 102, 102)
-    },
-    fontSize: 16,
-    grabbable: true,
-    nativeCursor: 'pointer',
-    reactsToPointer: false,
-    textAndAttributes: ['guest', null]
   }, {
     type: Image,
     name: 'avatar',
