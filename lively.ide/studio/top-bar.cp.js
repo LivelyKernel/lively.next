@@ -463,7 +463,7 @@ export class TopBarModel extends ViewModel {
             position,
             readOnly: true,
             textString: 'I am a text field!',
-            fill: Color.transparent
+            fill: Color.white
           });
           textMorph.addPlugin(new RichTextPlugin());
           target.addMorph(textMorph);
@@ -490,7 +490,7 @@ export class TopBarModel extends ViewModel {
       scale: $world.scaleFactor,
       position: evt.positionIn(target),
       extent: pt(1, 1),
-      fill: Color.transparent,
+      fill: Color.white,
       borderWidth: 1,
       borderColor: Color.rgb(23, 160, 251),
       fixedHeight: true,
