@@ -2,6 +2,7 @@ import { ShadowObject, TilingLayout, easings, stringToEasing, Morph, Icon, Label
 import { Color, Rectangle, rect, pt } from 'lively.graphics';
 import { promise, num } from 'lively.lang';
 import { ButtonDefault } from './buttons.cp.js';
+import { Spinner } from 'lively.ide/studio/shared.cp.js';
 
 class ProgressBar extends Morph {
   static get properties () {
@@ -245,93 +246,12 @@ const LoadingIndicator = component({
           reactToSubmorphAnimations: false
         }),
         submorphs: [
-          {
-            type: HTMLMorph,
+          part(Spinner, {
             name: 'spinner',
-            cssDeclaration: '\n\
-           .lds-spinner {\n\
-            color: official;\n\
-            display: inline-block;\n\
-            position: relative;\n\
-            width: 64px;\n\
-            height: 64px;\n\
-          }\n\
-          .lds-spinner div {\n\
-            transform-origin: 32px 32px;\n\
-            animation: lds-spinner .6s linear infinite;\n\
-          }\n\
-          .white-spinner div:after {\n\
-            content: " ";\n\
-            display: block;\n\
-            position: absolute;\n\
-            top: 3px;\n\
-            left: 29px;\n\
-            width: 5px;\n\
-            height: 14px;\n\
-            border-radius: 20%;\n\
-            background: white;\n\
-          }\n\
-          .lds-spinner div:nth-child(1) {\n\
-            transform: rotate(0deg);\n\
-            animation-delay: -.55s;\n\
-          }\n\
-          .lds-spinner div:nth-child(2) {\n\
-            transform: rotate(30deg);\n\
-            animation-delay: -.5s;\n\
-          }\n\
-          .lds-spinner div:nth-child(3) {\n\
-            transform: rotate(60deg);\n\
-            animation-delay: -0.45s;\n\
-          }\n\
-          .lds-spinner div:nth-child(4) {\n\
-            transform: rotate(90deg);\n\
-            animation-delay: -0.4s;\n\
-          }\n\
-          .lds-spinner div:nth-child(5) {\n\
-            transform: rotate(120deg);\n\
-            animation-delay: -0.35s;\n\
-          }\n\
-          .lds-spinner div:nth-child(6) {\n\
-            transform: rotate(150deg);\n\
-            animation-delay: -0.3s;\n\
-          }\n\
-          .lds-spinner div:nth-child(7) {\n\
-            transform: rotate(180deg);\n\
-            animation-delay: -0.25s;\n\
-          }\n\
-          .lds-spinner div:nth-child(8) {\n\
-            transform: rotate(210deg);\n\
-            animation-delay: -0.2s;\n\
-          }\n\
-          .lds-spinner div:nth-child(9) {\n\
-            transform: rotate(240deg);\n\
-            animation-delay: -0.15s;\n\
-          }\n\
-          .lds-spinner div:nth-child(10) {\n\
-            transform: rotate(270deg);\n\
-            animation-delay: -0.1s;\n\
-          }\n\
-          .lds-spinner div:nth-child(11) {\n\
-            transform: rotate(300deg);\n\
-            animation-delay: -0.05s;\n\
-          }\n\
-          .lds-spinner div:nth-child(12) {\n\
-            transform: rotate(330deg);\n\
-            animation-delay: 0s;\n\
-          }\n\
-          @keyframes lds-spinner {\n\
-            0% {\n\
-              opacity: 1;\n\
-            }\n\
-            100% {\n\
-              opacity: 0;\n\
-            }\n\
-          }',
             extent: pt(65, 70),
             fill: Color.rgba(255, 255, 255, 0),
-            html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
             scale: 0.5
-          }
+          })
         ]
       }, {
         name: 'wrapper',
