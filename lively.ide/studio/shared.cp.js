@@ -350,7 +350,6 @@ const Spinner = component({
   name: 'spinner',
   cssDeclaration: '\n\
            .lds-spinner {\n\
-            color: official;\n\
             display: inline-block;\n\
             position: relative;\n\
             width: 64px;\n\
@@ -369,7 +368,7 @@ const Spinner = component({
             width: 5px;\n\
             height: 14px;\n\
             border-radius: 20%;\n\
-            background: black;\n\
+            background: white;\n\
           }\n\
           .lds-spinner div:nth-child(1) {\n\
             transform: rotate(0deg);\n\
