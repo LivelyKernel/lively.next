@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
 import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
@@ -470,7 +471,7 @@ export class TopBarModel extends ViewModel {
       }
     }
     if (target._yieldedShape && target._yieldedShape.owner) {
-      const halo = this.showHaloFor(target._yieldedShape);
+      this.showHaloFor(target._yieldedShape);
       if (type === Text && target._yieldedShape) {
         target._yieldedShape.execCommand('temporary edit text');
       }
