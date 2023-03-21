@@ -24,4 +24,4 @@ Please delete non-applicable items!
 - Linux
 - Docker
 
-**Version**: Please paste the lively.next commit on which the problem occurred here (short version from the Version Checker in the bottom left corner is sufficient).
+**Version**: Please paste the lively.next commit on which the problem occurred here (use the copy button of the Version Checker in the bottom left corner).
