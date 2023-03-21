@@ -24,7 +24,7 @@ let browserCommands = [
         browser.setStatusMessage('No file selected');
       } else if (opts.openInNewBrowser) {
         let viewState = browser.ui.fileTree.buildViewState(({ resource: { url } }) => url);
-        let newBrowser = HTTPFileBrowser.forFile(browser.selectedFile, browser.location);
+        let newBrowser = HTTPFileBrowser.forFile(browser.selectedFile, browser.location); // eslint-disable-line no-use-before-define
         let position = browser.getWindow().position.addXY(10, 10);
         browser.world().openInWindow(newBrowser, { position }).activate();
         return newBrowser.whenFinishedLoading()
@@ -304,7 +304,7 @@ let browserCommands = [
 
 export class HTTPFileBrowserNode extends TreeData {
   display ({ resource }) {
-    let col1Size = 19; let col2Size = 8;
+    let col1Size = 19;
     let browser = this.root.browser;
     let { lastModified, size } = resource;
     let datePrinted = lastModified
@@ -581,7 +581,7 @@ export default class HTTPFileBrowser extends Morph {
 
     topButtons.forEach(btn => btn.extent = pt(buttonHeight, buttonHeight));
     topButtons[0].topLeft = locationInput.topRight;
-    for (var i = 1; i < topButtons.length; i++) { topButtons[i].topLeft = topButtons[i - 1].topRight; }
+    for (let i = 1; i < topButtons.length; i++) { topButtons[i].topLeft = topButtons[i - 1].topRight; }
 
     fileTree.topLeft = locationInput.bottomLeft;
     fileTree.extent = pt(this.width, this.height - locationInputHeight - selectedFileNameHeight - buttonHeight);
@@ -590,7 +590,7 @@ export default class HTTPFileBrowser extends Morph {
 
     bottomButtons.forEach(btn => btn.extent = pt(this.width / nButtons, buttonHeight));
     bottomButtons[0].topLeft = selectedFileName.bottomLeft;
-    for (var i = 1; i < bottomButtons.length; i++) { bottomButtons[i].topLeft = bottomButtons[i - 1].topRight; }
+    for (let i = 1; i < bottomButtons.length; i++) { bottomButtons[i].topLeft = bottomButtons[i - 1].topRight; }
   }
 
   truncateNameIfNeeded (displayedName) {
