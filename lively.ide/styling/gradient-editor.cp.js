@@ -442,6 +442,10 @@ export class GradientControlModel extends ViewModel {
     });
   }
 
+  selectFirstStop () {
+    this.selectStop(this.stopControls[0]);
+  }
+
   async updateStopControls (stops, haloOrEditor = this) {
     let stopControls = haloOrEditor.stopControls;
     // fixme: do not rely on the ordering of stop controls
@@ -458,12 +462,15 @@ export class GradientControlModel extends ViewModel {
     haloOrEditor.stopControls.forEach(stopControl => {
       stopControl.positionIn(haloOrEditor);
     });
-    this.selectStop(haloOrEditor.stopControls[0]);
-    haloOrEditor.stopControls[0].viewModel.select();
+
+    if (this.hasNoSelectedStop(haloOrEditor)) this.selectFirstStop();
+  }
+
+  hasNoSelectedStop (haloOrEditor) {
+    return !haloOrEditor.stopControls.find(stop => stop.isSelected);
   }
 }
 
-// part(GradientControl)
 const GradientControl = component({
   viewModelClass: GradientControlModel,
   name: 'gradient control',
@@ -494,7 +501,5 @@ const GradientControl = component({
     }]
   }]
 });
-
-// GradientControl.openInWorld()
 
 export { GradientHalo, GradientControl };
