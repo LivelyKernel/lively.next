@@ -466,6 +466,7 @@ export default class HTTPFileBrowser extends Morph {
           connect(addDirectoryButton, 'fire', this, 'execCommand', { converter: () => 'add directory' });
           connect(selectedFileName, 'onMouseDown', this, 'execCommand', { converter: () => 'copy file path to clipboard' });
           connect(this, 'onMouseMove', this, 'hideBaseURL');
+          connect(this.ui.fileTree, 'onDoubleMouseDown', this, 'execCommand', { converter: () => 'open selected file' });
 
           this.onLocationChanged();
           this.relayout();

@@ -464,7 +464,7 @@ export class Tree extends Text {
   }
 
   async onMouseDown (evt) {
-    // super.onMouseDown(evt);
+    super.onMouseDown(evt);
     let { row, column } = this.textPositionFromPoint(evt.positionIn(this));
     let clickedNode = this.nodes[row + 1];
     if (!clickedNode) return;
