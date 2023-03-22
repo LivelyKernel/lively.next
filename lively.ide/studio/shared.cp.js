@@ -345,21 +345,40 @@ const DarkFlap = component(DarkPopupWindow, {
   ]
 });
 
+class SpinnerModel extends ViewModel {
+  static get properties () {
+    return {
+      color: {
+        defaultValue: 'white',
+        type: 'Enum',
+        values: ['white', 'black']
+      }
+    };
+  }
+
+  viewDidLoad () {
+    const node = this.view.domNode.querySelector('.spinner');
+    if (this.color === 'black') node.classList.add('black-spinner');
+  }
+}
+
+// part(Spinner, {viewModel: { color: 'black'}}).openInWorld();
 const Spinner = component({
   type: HTMLMorph,
+  defaultViewModel: SpinnerModel,
   name: 'spinner',
   cssDeclaration: '\n\
-           .lds-spinner {\n\
+           .spinner {\n\
             display: inline-block;\n\
             position: relative;\n\
             width: 64px;\n\
             height: 64px;\n\
           }\n\
-          .lds-spinner div {\n\
+          .spinner div {\n\
             transform-origin: 32px 32px;\n\
             animation: lds-spinner .6s linear infinite;\n\
           }\n\
-          .white-spinner div:after {\n\
+          .spinner div:after {\n\
             content: " ";\n\
             display: block;\n\
             position: absolute;\n\
@@ -368,57 +387,60 @@ const Spinner = component({
             width: 5px;\n\
             height: 14px;\n\
             border-radius: 20%;\n\
-            background: white;\n\
+            background: white\n\
           }\n\
-          .lds-spinner div:nth-child(1) {\n\
+          .black-spinner div:after {\n\
+            background: black;\n\
+           }\n\
+          .spinner div:nth-child(1) {\n\
             transform: rotate(0deg);\n\
             animation-delay: -.55s;\n\
           }\n\
-          .lds-spinner div:nth-child(2) {\n\
+          .spinner div:nth-child(2) {\n\
             transform: rotate(30deg);\n\
             animation-delay: -.5s;\n\
           }\n\
-          .lds-spinner div:nth-child(3) {\n\
+          .spinner div:nth-child(3) {\n\
             transform: rotate(60deg);\n\
             animation-delay: -0.45s;\n\
           }\n\
-          .lds-spinner div:nth-child(4) {\n\
+          .spinner div:nth-child(4) {\n\
             transform: rotate(90deg);\n\
             animation-delay: -0.4s;\n\
           }\n\
-          .lds-spinner div:nth-child(5) {\n\
+          .spinner div:nth-child(5) {\n\
             transform: rotate(120deg);\n\
             animation-delay: -0.35s;\n\
           }\n\
-          .lds-spinner div:nth-child(6) {\n\
+          .spinner div:nth-child(6) {\n\
             transform: rotate(150deg);\n\
             animation-delay: -0.3s;\n\
           }\n\
-          .lds-spinner div:nth-child(7) {\n\
+          .spinner div:nth-child(7) {\n\
             transform: rotate(180deg);\n\
             animation-delay: -0.25s;\n\
           }\n\
-          .lds-spinner div:nth-child(8) {\n\
+          .spinner div:nth-child(8) {\n\
             transform: rotate(210deg);\n\
             animation-delay: -0.2s;\n\
           }\n\
-          .lds-spinner div:nth-child(9) {\n\
+          .spinner div:nth-child(9) {\n\
             transform: rotate(240deg);\n\
             animation-delay: -0.15s;\n\
           }\n\
-          .lds-spinner div:nth-child(10) {\n\
+          .spinner div:nth-child(10) {\n\
             transform: rotate(270deg);\n\
             animation-delay: -0.1s;\n\
           }\n\
-          .lds-spinner div:nth-child(11) {\n\
+          .spinner div:nth-child(11) {\n\
             transform: rotate(300deg);\n\
             animation-delay: -0.05s;\n\
           }\n\
-          .lds-spinner div:nth-child(12) {\n\
+          .spinner div:nth-child(12) {\n\
             transform: rotate(330deg);\n\
             animation-delay: 0s;\n\
           }\n\
-          @keyframes lds-spinner {\n\
+          @keyframes spinner {\n\
             0% {\n\
               opacity: 1;\n\
             }\n\
@@ -428,7 +450,7 @@ const Spinner = component({
           }',
   extent: pt(86.2, 70.2),
   fill: Color.rgba(255, 255, 255, 0),
-  html: '<div class="white-spinner lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
+  html: '<div class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
   scale: 0.3244543390629232
 });
 
