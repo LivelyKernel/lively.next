@@ -70,7 +70,8 @@ export class Morph {
             needsRerender: true,
             animationAdded: false,
             hasCSSLayoutChange: false,
-            cssLayoutToMeasureWith: false
+            cssLayoutToMeasureWith: false,
+            nodes: {}
           };
         }
       },

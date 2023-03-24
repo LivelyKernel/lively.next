@@ -305,7 +305,7 @@ export default class Renderer {
   /**
    * In case the positioning of submorphs is not handled by a CSS layout, the nodes of submorphs are put into a wrapper node in which they
    * are positioned absolutely.
-   * This methood hangs such a wrapper node into the node of a morph, taking care of the correct positioning inside of the morph node.
+   * This method hangs such a wrapper node into the node of a morph, taking care of the correct positioning inside of the morph node.
    * @param {Morph} morph - The morph for which a submorph holding node is to be created.
    * @param {Node} node - The DOM node of `morph`.
    * @param {Boolean} fixChildNodes - Whether or not the nodes that are already children of `node` should be moved into the wrapper node.
@@ -314,7 +314,7 @@ export default class Renderer {
     const wrapperNode = this.submorphWrapperNodeFor(morph);
     if (morph.isPolygon) this.renderPolygonClipMode(morph, wrapperNode);
 
-    const wrapped = node.querySelector(`#submorphs-${morph.id}`);
+    const wrapped = morph.renderingState.nodes.submorphWrapper;
     if (!wrapped) {
       if (morph.isText && morph.document) {
         let scrollWrapper = node.querySelector('.scrollWrapper');
@@ -326,7 +326,7 @@ export default class Renderer {
         const markerNode = scrollWrapper.querySelector('.newtext-marker-layer') || null;
         scrollWrapper.insertBefore(wrapperNode, markerNode);
       } else if (!morph.isPath) node.appendChild(wrapperNode); // normal morphs
-      else node.insertBefore(wrapperNode, node.lastChild); // path
+      else node.insertBefore(wrapperNode, morph.renderingState.nodes.outerSvg); // polygon
       if (fixChildNodes) {
         const childNodes = Array.from(node.childNodes);
         if (morph.isPath) { childNodes.shift(); childNodes.pop(); } else if (morph.isImage || morph.isCanvas || morph.isHTMLMorph) childNodes.shift();
@@ -334,6 +334,7 @@ export default class Renderer {
           if (n !== wrapperNode) wrapperNode.appendChild(n);
         });
       }
+      morph.renderingState.nodes.submorphWrapper = wrapperNode;
       return wrapperNode;
     }
   }
@@ -349,21 +350,16 @@ export default class Renderer {
   unwrapSubmorphNodesIfNecessary (node, morph) {
     // do nothing if submorph nodes are not wrapped
     // e.g. in case we have had a css layout already, this can be skipped
-    let children = Array.from(node.children);
-    const wrapped = children.some(c => c.getAttribute('id') && c.getAttribute('id').includes('submorphs'));
-    if (wrapped) {
+    const wrapperNode = morph.renderingState.nodes.submorphWrapper;
+    if (wrapperNode) {
       if (!morph.isPath) {
         node.append(...node.lastChild.childNodes);
-        children = Array.from(node.children);
-        children.forEach((n) => {
-          if (n.getAttribute('id') && n.getAttribute('id').includes('submorphs')) n.remove();
-        });
       } else {
-        const wrapperNode = node.firstChild.nextSibling;
         let children = Array.from(wrapperNode.children);
-        children.forEach((n) => node.insertBefore(n, node.lastChild));
-        wrapperNode.remove();
+        children.forEach((n) => node.insertBefore(n, morph.renderingState.nodes.outerSvg));
       }
+      wrapperNode.remove();
+      delete morph.renderingState.nodes.submorphWrapper;
     }
   }
 
@@ -427,7 +423,7 @@ export default class Renderer {
       } else {
         if (!this.isComposite(morph)) node.replaceChildren();
         else {
-          const submorphsNode = node.querySelector(`#submorphs-${morph.id}`);
+          const submorphsNode = morph.renderingState.nodes.submorphWrapper;
           submorphsNode?.replaceChildren();
         }
       }
@@ -449,20 +445,19 @@ export default class Renderer {
     let skipWrapping = morph.layout && morph.layout.renderViaCSS;
     if (morph.isPath) {
       if (skipWrapping) {
-        const [firstSvg, secondSvg] = Array.from(node.children).filter(n => n.tagName === 'svg');
         keyed('id',
           node,
           alreadyRenderedSubmorphs,
           submorphsToRender,
           item => this.renderMorph(item),
           noOpUpdate,
-          firstSvg,
-          secondSvg
+          morph.renderingState.nodes.innerSvg,
+          morph.renderingState.nodes.outerSvg
         );
       } else {
         this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.firstChild.nextSibling,
+          morph.renderingState.nodes.submorphWrapper,
           alreadyRenderedSubmorphs,
           submorphsToRender,
           item => this.renderMorph(item)
@@ -472,7 +467,7 @@ export default class Renderer {
       if (!skipWrapping) {
         this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.querySelector(`#submorphs-${morph.id}`),
+          morph.renderingState.nodes.submorphWrapper,
           alreadyRenderedSubmorphs,
           submorphsToRender,
           item => this.renderMorph(item)
@@ -491,7 +486,7 @@ export default class Renderer {
       } else {
         this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.lastChild,
+          morph.renderingState.nodes.submorphWrapper,
           alreadyRenderedSubmorphs,
           submorphsToRender,
           item => this.renderMorph(item)
@@ -731,6 +726,14 @@ export default class Renderer {
 
     node.appendChild(innerSvg);
     node.appendChild(outerSvg);
+
+    morph.renderingState.nodes = {
+      innerSvg,
+      outerSvg,
+      path: pathElem,
+      defNode
+    };
+
     return node;
   }
 
@@ -2063,17 +2066,15 @@ export default class Renderer {
       controlPoints = this.doc.createElementNS(svgNs, 'g');
       controlPoints.append(...this._renderPath_ControlPoints(morph));
     }
-    const node = this.getNodeForMorph(morph);
 
-    node.lastChild.replaceChildren();
+    morph.renderingState.nodes.outerSvg.replaceChildren();
     if (!arr.equals(controlPoints, [])) {
-      node.lastChild.appendChild(controlPoints);
+      morph.renderingState.nodes.outerSvg.appendChild(controlPoints);
     }
   }
 
   renderPolygonBorderColor (morph) {
-    const node = this.getNodeForMorph(morph);
-    node.firstChild.firstChild.setAttribute('stroke', morph.borderColor.valueOf().toString());
+    morph.renderingState.nodes.innerSvg.setAttribute('stroke', morph.borderColor.valueOf().toString());
   }
 
   renderPolygonClippingPath (morph) {
@@ -2085,11 +2086,10 @@ export default class Renderer {
   }
 
   renderPolygonDrawAttribute (morph) {
-    const node = this.getNodeForMorph(morph);
     const d = getSvgVertices(morph.vertices);
     if (morph.vertices.length) {
-      node.firstChild.firstChild.setAttribute('d', d);
-      const defNode = Array.from(node.firstChild.children).find(n => n.tagName === 'defs');
+      morph.renderingState.nodes.path.setAttribute('d', d);
+      const defNode = morph.renderingState.nodes.defNode;
       let clipPath = Array.from(defNode.children).find(n => n.tagName === 'clipPath');
       if (!clipPath) {
         clipPath = this.renderPolygonClippingPath(morph);
@@ -2100,11 +2100,10 @@ export default class Renderer {
   }
 
   renderPolygonFill (morph) {
-    const node = this.getNodeForMorph(morph);
     let newGradient;
-    let defsNode = Array.from(node.firstChild.children).find(n => n.tagName === 'defs');
+    let defsNode = morph.renderingState.nodes.defNode;
     const def = Array.from(defsNode.children).find(n => n.getAttribute('id').includes('fill'));
-    node.firstChild.firstChild.setAttribute('fill', morph.fill ? morph.fill.isGradient ? 'url(#gradient-fill' + morph.id + ')' : morph.fill.toString() : 'transparent');
+    morph.renderingState.nodes.path.setAttribute('fill', morph.fill ? morph.fill.isGradient ? 'url(#gradient-fill' + morph.id + ')' : morph.fill.toString() : 'transparent');
     if (morph.fill && !morph.fill.isGradient) {
       if (def) def.remove();
       return;
@@ -2114,7 +2113,8 @@ export default class Renderer {
     if (!defsNode && newGradient) {
       defsNode = this.doc.createElementNS(svgNs, 'defs');
       defsNode.appendChild(newGradient);
-      node.firstChild.appendChild(defsNode);
+      morph.renderingState.nodes.innerSvg.appendChild(defsNode);
+      morph.renderingState.nodes.defNode = defsNode;
     } else {
       if (def) defsNode.replaceChild(newGradient, def);
       else defsNode.appendChild(newGradient);
@@ -2223,7 +2223,7 @@ export default class Renderer {
 
   renderPolygonClipMode (morph, submorphNode) {
     if (!submorphNode) {
-      submorphNode = Array.from(this.getNodeForMorph(morph).children).find(n => n.id && n.id.includes('submorphs'));
+      submorphNode = morph.renderingState.nodes.submorphWrapper;
     }
     if (submorphNode) {
       submorphNode.style.setProperty('overflow', `${morph.clipMode}`);
@@ -2324,8 +2324,8 @@ export default class Renderer {
 
   renderPathMarker (morph, mode) {
     const node = this.getNodeForMorph(morph);
-    const pathElem = node.firstChild.firstChild;
-    const defElem = node.firstChild.lastChild;
+    const pathElem = morph.renderingState.nodes.path;
+    const defElem = morph.renderingState.nodes.defNode;
 
     const specTo_h_svg = (spec) => {
       let { tagName, id, children } = spec;
