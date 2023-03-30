@@ -1,5 +1,6 @@
+/* global Image */
 import { pt, Point, rect, Color } from 'lively.graphics';
-import { Morph, Image } from 'lively.morphic';
+import { Morph } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 
 /*
@@ -37,7 +38,7 @@ export class Canvas extends Morph {
     if (this._canvas) {
       return this._canvas.getContext(this.contextType, { willReadFrequently: this.willReadFrequently });
     } else if (!this.world() || !this.env.renderer.getNodeForMorph(this)) {
-      console.warn('Context not yet rendered. Please ensure that the Canvas Morph has been rendered first before accessing the context. This can be achieved by waiting for the whenRendered() promise before you proceed accessing the context property.');
+      console.warn('Context not yet rendered. Please ensure that the Canvas Morph has been rendered first before accessing the context. This can be achieved by waiting for the whenRendered() promise before you proceed accessing the context property.'); // eslint-disable-line no-console
     }
     return null;
   }
