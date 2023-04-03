@@ -376,7 +376,7 @@ const Spinner = component({
           }\n\
           .spinner div {\n\
             transform-origin: 32px 32px;\n\
-            animation: lds-spinner .6s linear infinite;\n\
+            animation: spinner .6s linear infinite;\n\
           }\n\
           .spinner div:after {\n\
             content: " ";\n\
