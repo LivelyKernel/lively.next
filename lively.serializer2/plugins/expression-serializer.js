@@ -451,7 +451,7 @@ function traverseSubmorphs (morph, exported, path, styleProto, subopts) {
   if (styleProto?.submorphs && subopts.asExpression) {
     if (!exported.submorphs) exported.submorphs = [];
     styleProto.submorphs.forEach(subSpec => {
-      if (!morph.submorphs.find(m => m.name === subSpec.name)) {
+      if (!morph.submorphs.find(m => m.name === (subSpec.props?.name || subSpec.name))) {
         const exprId = string.newUUID();
         exported.submorphs.push(exprId);
         nestedExpressions[exprId] = {
