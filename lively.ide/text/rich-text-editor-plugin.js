@@ -56,11 +56,12 @@ export class RichTextPlugin extends EditorPlugin {
     iconButton.master = { auto: PropertyLabel, hover: PropertyLabelHovered };
     this.textMorph.iconButton = iconButtonHolder;
     connect(iconButtonHolder, 'onMouseDown', this, 'startIconInsertion');
-    connect(this.textMorph, 'extent', iconButtonHolder, 'position', {
+    // Repositions button in case that the text grows to the right due to input
+    connect(this.textMorph, 'extent', iconButtonHolder, 'globalPosition', {
       converter:
-    '(extent) => ({x: source.position.x + extent.x, y: target.position.y})'
+    '(extent) => ({x: source.globalPosition.x + extent.x, y: source.globalPosition.y})'
     });
-    iconButtonHolder.openInWorld(this.textMorph.topRight);
+    iconButtonHolder.openInWorld(this.textMorph.globalBounds().topRight());
   }
 
   startIconInsertion () {
