@@ -81,12 +81,13 @@ export const interactiveCommands = [
       const [iconName] = res.selected;
 
       let previousAttributes = morph.textAttributeAt(morph.cursorPosition);
-      morph.insertText(Icon.textAttribute(iconName));
+      if (iconName) {
+        morph.insertText(Icon.textAttribute(iconName));
 
-      if (previousAttributes) previousAttributes = obj.merge(morph.defaultTextStyle, previousAttributes);
-      else previousAttributes = morph.defaultTextStyle;
-      morph.insertText([' ', previousAttributes]);
-
+        if (previousAttributes) previousAttributes = obj.merge(morph.defaultTextStyle, previousAttributes);
+        else previousAttributes = morph.defaultTextStyle;
+        morph.insertText([' ', previousAttributes]);
+      }
       morph.focus();
       morph.keepTmpEditMode = false;
     }
