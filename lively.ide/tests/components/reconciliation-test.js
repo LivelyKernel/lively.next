@@ -1,11 +1,21 @@
-/* global it, describe, beforeEach */
-import { expect } from 'mocha-es6';
+/* global it, describe, beforeEach, afterEach */
+import { expect, chai } from 'mocha-es6';
+import sinonChai from 'esm://cache/sinon-chai';
+import sinon from 'esm://cache/sinon';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
 import { morph, without, TilingLayout, Label, part } from 'lively.morphic';
+import { GlobalInjector } from 'lively.modules/src/import-modification.js';
+import { Reconciliation } from '../../components/reconciliation.js';
+import { promise } from 'lively.lang';
+import { getPathFromMorphToMaster } from '../../components/helpers.js';
+
+chai.use(sinonChai);
 
 const testModuleId = 'local://lively-object-modules/TestPackage/component-model-test.cp.js';
 let testComponentModule = module(testModuleId);
+
+// testComponentModul.dontTransform.includes('rect')
 const initSource = `
 import { part, component, ComponentDescriptor } from 'lively.morphic/components/core.js';
 import { InteractiveComponentDescriptor } from 'lively.ide/components/editor.js';
@@ -63,7 +73,7 @@ export { A, B, C, D, X };
 let ComponentA, ComponentB, ComponentC, ComponentD, ComponentX, A, B, C, D, X;
 
 async function getSource () {
-  delete testComponentModule._source;
+  // delete testComponentModule._source;
   return await testComponentModule.source();
 }
 
@@ -81,6 +91,10 @@ async function resetEnv () {
   }
   // reload the module
   ({ A, B, C, D, X } = await testComponentModule.load());
+  A.previouslyRemovedMorphs = new WeakMap();
+  B.previouslyRemovedMorphs = new WeakMap();
+  C.previouslyRemovedMorphs = new WeakMap();
+  D.previouslyRemovedMorphs = new WeakMap();
   ComponentA = await A.edit();
   ComponentB = await B.edit();
   ComponentC = await C.edit();
@@ -104,6 +118,33 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource.includes('extent: pt(100,50)'), 'updates width in code').to.be.true;
   });
 
+  it('inserts properties in proper order', async () => {
+    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentC.layout = new TilingLayout({});
+      ComponentC.extent = pt(40, 40);
+      ComponentC.addMorph({
+        name: 'foo', fill: Color.red, type: Label, fontColor: Color.green
+      });
+    });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    const updatedSource = await getSource();
+    expect(C.stylePolicy.spec.extent).to.equal(pt(40, 40));
+    expect(updatedSource).to.includes(`const C = component({
+  name: 'C',
+  extent: pt(40, 40),
+  layout: new TilingLayout({
+    orderByIndex: true
+  }),
+  fill: Color.grey,
+  submorphs: [{
+    type: Label,
+    name: 'foo',
+    fill: Color.red,
+    fontColor: Color.green
+  }]
+});`);
+  });
+
   it('updates the module if a component prop is set back to its parent value', async () => {
     ComponentB.withMetaDo({ reconcileChanges: true }, () => {
       ComponentB.get('some submorph').fill = Color.yellow;
@@ -121,6 +162,7 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
+    updatedSource;
     expect(updatedSource.includes('import { rect } from \'lively.graphics/geometry-2d.js\';'), 'inserts the import').to.be.true;
   });
 
@@ -134,6 +176,23 @@ describe('component -> source reconciliation', function () {
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
     expect(updatedSource.includes('name: \'some new morph\','), 'inserts a new morph').to.be.true;
+  });
+
+  it('updates the source if a part is added', async () => {
+    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
+      ComponentC.addMorph(part(B, {
+        name: 'derived morph',
+        borderColor: Color.black,
+        borderWidth: 2
+      }));
+    });
+    await ComponentC._changeTracker.onceChangesProcessed();
+    const updatedSource = await testComponentModule.source();
+    expect(updatedSource.includes(`submorphs: [part(B, {
+    name: 'derived morph',
+    borderColor: Color.black,
+    borderWidth: 2
+  })]`), 'inserts part reference into source code').to.be.true;
   });
 
   it('correctly respects the order a submorph is inserted at', async () => {
@@ -155,6 +214,7 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentB._changeTracker.onceChangesProcessed();
     updatedSource = await testComponentModule.source();
+    updatedSource;
     expect(updatedSource.includes(`add({
     name: 'some new morph',
     fill: Color.blue
@@ -173,7 +233,7 @@ describe('component -> source reconciliation', function () {
     let updatedSource = await testComponentModule.source();
 
     expect(updatedSource.includes('type: Text,\n    name: \'some submorph\','), 'removes a morph from source').to.be.false;
-    expect(updatedSource.includes('submorphs: [part(D, { name: \'some ref\'})]'), 'removes the submorph from array').to.be.true;
+    expect(updatedSource.includes('submorphs: [part(D, { name: \'some ref\' })]'), 'removes the submorph from array').to.be.true;
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.getSubmorphNamed('some ref').remove();
     });
@@ -221,23 +281,6 @@ describe('component -> source reconciliation', function () {
   }),
   submorphs: [without('some submorph')]
 });`);
-  });
-
-  it('updates the source if a part is added', async () => {
-    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentC.addMorph(part(B, {
-        name: 'derived morph',
-        borderColor: Color.black,
-        borderWidth: 2
-      }));
-    });
-    await ComponentC._changeTracker.onceChangesProcessed();
-    const updatedSource = await testComponentModule.source();
-    expect(updatedSource.includes(`submorphs: [part(B, {
-    name: 'derived morph',
-    borderColor: Color.black,
-    borderWidth: 2
-  })]`), 'inserts part reference into source code').to.be.true;
   });
 
   it('updates a part ref if its overridden props change', async () => {
@@ -312,8 +355,6 @@ describe('component -> source reconciliation', function () {
     });
 
     await ComponentC._changeTracker.onceChangesProcessed();
-    await testComponentModule.reload();
-    ({ C, A } = await testComponentModule.load());
     ComponentA = await A.edit();
     const trap = part(C, { name: 'name trap' });
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
@@ -324,7 +365,7 @@ describe('component -> source reconciliation', function () {
       trap.getSubmorphNamed('some submorph').fill = Color.black;
     });
     await ComponentA._changeTracker.onceChangesProcessed();
-    const updatedSource = await testComponentModule.source();
+    const updatedSource = await getSource();
     expect(updatedSource).to.include(`part(C, {
     name: 'name trap',
     submorphs: [{
@@ -345,57 +386,33 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource).not.to.include('position: pt(5, 5)');
   });
 
-  it('reconciles textAndAttributes', async () => {
-    ComponentD.withMetaDo({ reconcileChanges: true }, () => {
-      const l = ComponentD.addMorph({
-        type: Label, name: 'some label'
-      });
-      l.textAndAttributes = ['Hello World!', null];
-    });
-    await ComponentD._changeTracker.onceChangesProcessed();
-    const updatedSource = await testComponentModule.source();
-    expect(updatedSource).to.include("textAndAttributes: [\'Hello World!\', null]");
-  });
+  describe('source editor integration', () => {
+    let sourceEditor;
 
-  it('works properly with associated source editors', async () => {
-    const sourceEditor = morph({ type: 'text', textString: initSource, readOnly: false });
-    ComponentA._changeTracker.__defineGetter__('sourceEditor', function () { return sourceEditor; });
-    ComponentB._changeTracker.__defineGetter__('sourceEditor', function () { return sourceEditor; });
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.borderWidth = 50;
-    });
-    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentB.borderRadius = 25;
-    });
-    // changes are immediately propagated to the sourceEditors
-    expect(sourceEditor.textString).to.include('borderWidth: 50,');
-    expect(sourceEditor.textString).to.include('borderRadius: 25,');
-  });
-
-  it('inserts properties in proper order', async () => {
-    ComponentC.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentC.layout = new TilingLayout({});
-      ComponentC.extent = pt(40, 40);
-      ComponentC.addMorph({
-        name: 'foo', fill: Color.red, type: Label, fontColor: Color.green
+    beforeEach(async () => {
+      sourceEditor = morph({ type: 'text', textString: initSource, readOnly: false, editorModeName: 'js' });
+      await promise.waitFor(1000, () => sourceEditor.editorPlugin);
+      sourceEditor.editorPlugin.evalEnvironment.targetModule = testModuleId;
+      sinon.stub(Reconciliation.prototype, 'getEligibleSourceEditor').callsFake((id) => {
+        if (id === testModuleId) return sourceEditor;
       });
     });
-    await ComponentC._changeTracker.onceChangesProcessed();
-    const updatedSource = await getSource();
-    expect(updatedSource).to.includes(`const C = component({
-  name: 'C',
-  extent: pt(40, 40),
-  layout: new TilingLayout({
-    orderByIndex: true
-  }),
-  fill: Color.grey,
-  submorphs: [{
-    type: Label,
-    name: 'foo',
-    fill: Color.red,
-    fontColor: Color.green
-  }]
-});`);
+
+    afterEach(() => {
+      Reconciliation.prototype.getEligibleSourceEditor.restore();
+    });
+
+    it('works properly with associated source editors', async () => {
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.borderWidth = 50;
+      });
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.borderRadius = 25;
+      });
+      // changes are immediately propagated to the sourceEditors
+      expect(sourceEditor.textString).to.include('borderWidth: 50,');
+      expect(sourceEditor.textString).to.include('borderRadius: 25,');
+    });
   });
 
   it('updates a part ref if we add a submorph to it', async () => {
@@ -452,6 +469,7 @@ describe('component -> source reconciliation', function () {
 }`);
   });
 
+  // resetEnv()
   it('updates the source AND the spec in case a rename is detected', async () => {
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.get('some ref').name = 'molly';
@@ -534,25 +552,38 @@ describe('component -> source reconciliation', function () {
   }]`);
   });
 
-  it('properly reconciles embedded morphs', async () => {
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.get('some submorph').addMorph({
-        name: 'trolly',
-        type: 'text',
-        textAndAttributes: [
-          'Hello World', { fontSize: 20 },
-          morph({
-            name: 'foo',
-            fill: Color.blue
-          }), null,
-          'How about a component', { fontWeight: 'bold ' },
-          part(B, { name: 'bar' }), null
-        ]
+  describe('text property reconciliation', () => {
+    it('reconciles textAndAttributes', async () => {
+      ComponentD.withMetaDo({ reconcileChanges: true }, () => {
+        const l = ComponentD.addMorph({
+          type: Label, name: 'some label'
+        });
+        l.textAndAttributes = ['Hello World!', null];
       });
+      await ComponentD._changeTracker.onceChangesProcessed();
+      const updatedSource = await testComponentModule.source();
+      expect(updatedSource).to.include("textAndAttributes: [\'Hello World!\', null]");
     });
-    await ComponentA._changeTracker.onceChangesProcessed();
-    let updatedSource = await testComponentModule.source();
-    expect(updatedSource).includes(`['Hello World', {
+
+    it('properly reconciles embedded morphs', async () => {
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.get('some submorph').addMorph({
+          name: 'trolly',
+          type: 'text',
+          textAndAttributes: [
+            'Hello World', { fontSize: 20 },
+            morph({
+              name: 'foo',
+              fill: Color.blue
+            }), null,
+            'How about a component', { fontWeight: 'bold ' },
+            part(B, { name: 'bar' }), null
+          ]
+        });
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      let updatedSource = await testComponentModule.source();
+      expect(updatedSource).includes(`['Hello World', {
         fontSize: 20
       }, morph({
         name: 'foo',
@@ -562,23 +593,23 @@ describe('component -> source reconciliation', function () {
       }, part(B, {
         name: 'bar'
       }), null]`, 'reconciles added plain morphs');
-  });
-
-  it('properly reconciles settings text and attributes with morphs', async () => {
-    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentB.get('some submorph').textAndAttributes = [
-        'Hello World', { fontSize: 20 },
-        morph({
-          name: 'charlie',
-          fill: Color.blue
-        }), null,
-        'How about a component', { fontWeight: 'bold ' },
-        part(C, { name: 'justin' }), null
-      ];
     });
-    await ComponentB._changeTracker.onceChangesProcessed();
-    let updatedSource = await getSource();
-    expect(updatedSource).includes(`['Hello World', {
+
+    it('properly reconciles settings text and attributes with morphs', async () => {
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.get('some submorph').textAndAttributes = [
+          'Hello World', { fontSize: 20 },
+          morph({
+            name: 'charlie',
+            fill: Color.blue
+          }), null,
+          'How about a component', { fontWeight: 'bold ' },
+          part(C, { name: 'justin' }), null
+        ];
+      });
+      await ComponentB._changeTracker.onceChangesProcessed();
+      let updatedSource = await getSource();
+      expect(updatedSource).includes(`['Hello World', {
       fontSize: 20
     }, morph({
       name: 'charlie',
@@ -588,46 +619,48 @@ describe('component -> source reconciliation', function () {
     }, part(C, {
       name: 'justin'
     }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
+    });
   });
 
-  it('properly propagates structure among derived component definitions', async () => {
+  describe('updating derived components', () => {
+    it('properly propagates structure among derived component definitions', async () => {
     // removing a morph should alter the structure within the derived components accordingly
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.get('some submorph').remove();
-    });
-    await ComponentA._changeTracker.onceChangesProcessed();
-    let updatedSource = await testComponentModule.source();
-    expect(updatedSource).includes(`const A = component({
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.get('some submorph').remove();
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      let updatedSource = await testComponentModule.source();
+      expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
-  extent: pt(100,100),
-  submorphs: [part(D, { name: 'some ref'})]
+  extent: pt(100, 100),
+  submorphs: [part(D, { name: 'some ref' })]
 });`, 'removes morph from root def');
 
-    expect(updatedSource).includes(`const B = component(A, {
-  name: 'B',
+      expect(updatedSource).includes(`const B = component(A, {
+  name: 'B'
 });`, 'removes morph from derived defs');
-    expect(B.stylePolicy.lookForMatchingSpec('some submorph')).to.be.null;
-  });
+      expect(B.stylePolicy.lookForMatchingSpec('some submorph')).to.be.null;
+    });
 
-  it('preserves derived component alterations if they are reintroduced', async () => {
+    it('preserves derived component alterations if they are reintroduced', async () => {
     // removing a morph should alter the structure within the derived components accordingly
-    let removedMorph;
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      removedMorph = ComponentA.get('some submorph').remove();
-    });
-    await ComponentA._changeTracker.onceChangesProcessed();
+      let removedMorph;
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        removedMorph = ComponentA.get('some submorph').remove();
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
 
-    // adding the same morph back at another location in the component, should preserve the
-    // adjustments but at a different location
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.addMorph(removedMorph);
-    });
+      // adding the same morph back at another location in the component, should preserve the
+      // adjustments but at a different location
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(removedMorph);
+      });
 
-    await ComponentA._changeTracker.onceChangesProcessed();
-    let updatedSource = await testComponentModule.source();
+      await ComponentA._changeTracker.onceChangesProcessed();
+      let updatedSource = await testComponentModule.source();
 
-    expect(updatedSource).includes(`const A = component({
+      expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
   extent: pt(100, 100),
@@ -635,33 +668,33 @@ describe('component -> source reconciliation', function () {
     type: Text,
     name: 'some submorph',
     extent: pt(50, 50),
-    fill: Color.yellow,
+    fixedWidth: true,
     fixedHeight: true,
-    fixedWidth: true
+    fill: Color.yellow
   }]
 });`, 'add morph to root def');
 
-    expect(updatedSource).includes(`const B = component(A, {
+      expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   submorphs: [{
     name: 'some submorph',
     fill: Color.green
   }]
 });`, 'reintroduces the previously removed adjustments');
-  });
+    });
 
-  it('resolves name conflicts for morphs that are added to a definition', async () => {
+    it('resolves name conflicts for morphs that are added to a definition', async () => {
     // name collisions (by adding a new morph with a name already existing in the derived components)
     // should enforce a renaming of that dropped morph for now. If we run into issues,
     // we will introduce a custom tag attribute that allows designers to refer to morphs
     // with a fixed custom name that is not constrained by any
-    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentB.addMorph(morph({ name: 'linus', fill: Color.lively }));
-      ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
-    });
-    await ComponentB._changeTracker.onceChangesProcessed();
-    let updatedSource = await getSource();
-    expect(updatedSource).includes(`const B = component(A, {
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.addMorph(morph({ name: 'linus', fill: Color.lively }));
+        ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
+      });
+      await ComponentB._changeTracker.onceChangesProcessed();
+      let updatedSource = await getSource();
+      expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   submorphs: [{
     name: 'some submorph',
@@ -672,7 +705,7 @@ describe('component -> source reconciliation', function () {
   })]
 });`, 'insert the add() call for the new morph');
 
-    expect(updatedSource).includes(`const A = component({
+      expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
   extent: pt(100, 100),
@@ -689,14 +722,14 @@ describe('component -> source reconciliation', function () {
   }]
 });`, 'inserts a renamed morph to avoid name collision');
 
-    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.addMorph(morph({ name: 'linus', fill: Color.purple }));
-    });
-    await ComponentA._changeTracker.onceChangesProcessed();
-    await ComponentB._changeTracker.onceChangesProcessed();
-    updatedSource = await getSource();
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(morph({ name: 'linus', fill: Color.purple }));
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      await ComponentB._changeTracker.onceChangesProcessed();
+      updatedSource = await getSource();
 
-    expect(updatedSource).includes(`const A = component({
+      expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
   extent: pt(100, 100),
@@ -715,36 +748,36 @@ describe('component -> source reconciliation', function () {
     fill: Color.purple
   }]
 });`, 'also renames a morph if collision with one of the derived specs is detected');
-  });
+    });
 
-  it('reintroduces altered versions if the morph has been tempered with between removal and eintroduction', async () => {
+    it('reintroduces altered versions if the morph has been tempered with between removal and eintroduction', async () => {
     // removing a morph should alter the structure within the derived components accordingly
-    let removedMorph;
-    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentB.get('a deep morph').fill = Color.lively;
-    });
-    await ComponentB._changeTracker.onceChangesProcessed();
-    let updatedSource = await getSource();
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      removedMorph = ComponentA.get('some ref').remove();
-    });
-    await ComponentA._changeTracker.onceChangesProcessed();
-    // clear the morph
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      removedMorph.submorphs[0].remove();
-    });
-    updatedSource = await getSource();
+      let removedMorph;
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.get('a deep morph').fill = Color.lively;
+      });
+      await ComponentB._changeTracker.onceChangesProcessed();
+      let updatedSource = await getSource();
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        removedMorph = ComponentA.get('some ref').remove();
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      // clear the morph
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        removedMorph.submorphs[0].remove();
+      });
+      updatedSource = await getSource();
 
-    // adding the same morph back at another location in the component, should preserve the
-    // adjustments but *DROP* the ajustments that have been applied to the now removed morph
-    ComponentA.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentA.addMorph(removedMorph);
-    });
+      // adding the same morph back at another location in the component, should preserve the
+      // adjustments but *DROP* the ajustments that have been applied to the now removed morph
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(removedMorph);
+      });
 
-    await ComponentA._changeTracker.onceChangesProcessed();
-    updatedSource = await getSource();
+      await ComponentA._changeTracker.onceChangesProcessed();
+      updatedSource = await getSource();
 
-    expect(updatedSource).includes(`const B = component(A, {
+      expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   submorphs: [{
     name: 'some submorph',
@@ -752,7 +785,7 @@ describe('component -> source reconciliation', function () {
   }]
 });`, 'does not mention the newly introduced submorph');
 
-    expect(updatedSource).includes(`const A = component({
+      expect(updatedSource).includes(`const A = component({
   name: 'A',
   fill: Color.red,
   extent: pt(100, 100),
@@ -768,5 +801,45 @@ describe('component -> source reconciliation', function () {
     submorphs: [without('a deep morph')]
   })]
 });`, 'inserts adjustments in the reintroduced code');
+    });
+
+    // resetEnv()
+    it('reflect the propagated changes in any of the open editable components', async () => {
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.get('some submorph').moveBy(pt(20, 20));
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      expect(ComponentB.get('some submorph').position).equals(ComponentA.get('some submorph').position);
+      expect(ComponentX.get('some submorph').position).equals(ComponentA.get('some submorph').position);
+
+      let removedMorph;
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        removedMorph = ComponentA.get('some submorph').remove();
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      expect(ComponentB.get('some submorph')).to.be.null;
+      expect(ComponentX.get('some submorph')).to.be.null;
+
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(removedMorph);
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      expect(ComponentB.get('some submorph')).not.to.be.null;
+      expect(ComponentB.get('some submorph').owner).to.equal(ComponentB);
+      expect(ComponentX.get('some submorph')).not.to.be.null;
+      expect(ComponentX.get('some submorph').owner).to.equal(ComponentX);
+
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(morph({ name: 'clippy', type: 'label', textString: 'It looks like your writing a letter!' }));
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      expect(ComponentB.get('clippy')).not.to.be.null;
+      expect(ComponentB.submorphs.length).to.equal(3);
+      expect(ComponentX.get('clippy')).not.to.be.null;
+      expect(ComponentX.submorphs.length).to.equal(3);
+      expect(A.stylePolicy.getSubSpecFor('clippy')).not.to.be.null;
+      expect(B.stylePolicy.getSubSpecFor('clippy')).not.to.be.null;
+      expect(X.stylePolicy.getSubSpecFor('clippy')).not.to.be.null;
+    });
   });
 });
