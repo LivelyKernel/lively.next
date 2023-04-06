@@ -1,7 +1,7 @@
 import { serializeSpec, ExpressionSerializer } from 'lively.serializer2';
 import { serializeNestedProp } from 'lively.serializer2/plugins/expression-serializer.js';
 import { Icons } from 'lively.morphic/text/icons.js';
-import { arr, num, obj } from 'lively.lang';
+import { arr, string, num, obj } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'selectionMode', 'acceptsDrops'];
@@ -15,8 +15,15 @@ function getScopeMaster (m) {
   return m;
 }
 
-function getPathFromScopeMaster (m) {
+export function getPathFromScopeMaster (m) {
   return arr.takeWhile(m.ownerChain(), m => !m.master && !m.isComponent).map(m => m.name);
+}
+
+export function getPathFromMorphToMaster (m) {
+  const path = [];
+  if (!m.isComponent) path.push(m.name);
+  path.push(...getPathFromScopeMaster(m));
+  return path;
 }
 
 /*************************
@@ -149,7 +156,7 @@ export function getProp (propsNode, prop) {
  * Returns the AST node of the component declarator inside the module;
  * @param { object } parsedContent - The AST of the module the component definition should be retrieved from.
  * @param { string } componentName - The name of the component.
- * @returns { object } The AST node of the component declarator*.
+ * @returns { object } The AST node of the component declarator.
  */
 export function getComponentNode (parsedModuleContent, componentName) {
   const [parsedComponent] = query.queryNodes(parsedModuleContent, `
@@ -258,8 +265,10 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
   return propNode;
 }
 
-function drillDownPath (startNode, path) {
+export function drillDownPath (startNode, path) {
   // directly resolve step by step with a combo of a submorph/name prop resolution
+  if (path.length === 0) return startNode;
+  path = [...path]; //  copy the path
   let curr = startNode;
   if (curr.type !== 'ArrayExpression') curr = getProp(curr, 'submorphs')?.value;
   while (path.length > 0) {
@@ -333,6 +342,35 @@ export function getComponentScopeFor (parsedComponent, morphInScope) {
  * SOURCE CODE PATCHING *
  ************************/
 
+export function preserveFormatting (sourceCode, nodeToRemove) {
+  if (!nodeToRemove) return nodeToRemove;
+  let commaRemoved = false;
+
+  while (sourceCode[nodeToRemove.end].match(/\,/)) {
+    commaRemoved = true;
+    nodeToRemove.end++;
+  }
+
+  while (!sourceCode[nodeToRemove.start].match(/\,|\n/) &&
+         !sourceCode[nodeToRemove.start - 1].match(/\[/)) {
+    const aboutToRemoveCommaTwice = commaRemoved && sourceCode[nodeToRemove.start - 1].match(/\,/);
+    if (aboutToRemoveCommaTwice) break;
+    nodeToRemove.start--;
+  }
+  return nodeToRemove;
+}
+
+export function applySourceChanges (sourceCode, changes) {
+  for (let change of changes) {
+    // apply the change to the module source
+    if (change.action === 'remove') {
+      change = preserveFormatting(sourceCode, change);
+    }
+    sourceCode = string.applyChange(sourceCode, change);
+  }
+  return sourceCode;
+}
+
 export function applyChangesToTextMorph (aText, changes) {
   for (let change of changes) {
     switch (change.action) {
@@ -340,6 +378,7 @@ export function applyChangesToTextMorph (aText, changes) {
         aText.insertText(change.lines.join('\n'), aText.indexToPosition(change.start));
         break;
       case 'remove':
+        change = preserveFormatting(aText.textString, change);
         aText.replace({
           start: aText.indexToPosition(change.start),
           end: aText.indexToPosition(change.end)
