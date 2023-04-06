@@ -20,9 +20,7 @@ const CloseButtonDefault = component({
   epiMorph: true,
   tooltip: 'Close Window',
   lineHeight: 1,
-  textAndAttributes: ['', {
-    textStyleClasses: ['material-icons']
-  }]
+  textAndAttributes: ['', { }]
 });
 
 const CloseButtonHovered = component(CloseButtonDefault, { name: 'close button hovered', fill: Color.gray });

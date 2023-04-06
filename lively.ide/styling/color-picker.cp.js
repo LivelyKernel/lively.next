@@ -81,7 +81,8 @@ const ColorInput = component({
       name: 'interactive label',
       lineHeight: 1,
       textAndAttributes: ['', {
-        fontSize: 14, textStyleClasses: ['material-icons']
+        fontFamily: 'Material Icons',
+        fontSize: 14
       }]
     }, without('button holder')]
   }), part(PropLabel, {

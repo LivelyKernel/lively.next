@@ -459,7 +459,7 @@ const ShadowPopup = component(DarkPopupWindow, {
         name: 'interactive label',
         textAndAttributes: ['\ue3a5', {
           fontSize: 14,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }],
       tooltip: 'Shadow blur'
@@ -484,7 +484,7 @@ const ShadowPopup = component(DarkPopupWindow, {
         name: 'interactive label',
         textAndAttributes: ['\ue3e0', {
           fontSize: 14,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }],
       tooltip: 'Shadow spread'
@@ -530,7 +530,7 @@ const ShadowPopup = component(DarkPopupWindow, {
         fontColor: Color.rgb(65, 65, 65),
         textAndAttributes: ['', {
           fontSize: 13,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }), part(PropLabel, {
         type: Label,
@@ -582,7 +582,7 @@ const NumberPopupLight = component(PopupWindow, {
         name: 'interactive label',
         textAndAttributes: ['', {
           fontSize: 14,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }],
       tooltip: 'Object Blur'
@@ -821,7 +821,7 @@ export const PaddingControlsLight = component({
           lineHeight: 1,
           textAndAttributes: ['\ue22f', {
             fontSize: 16,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         }, 'value'),
         { name: 'value', fontSize: 14, width: 60 }]
@@ -858,7 +858,7 @@ export const PaddingControlsLight = component({
               padding: rect(7, 5, 0, 0),
               textAndAttributes: ['\ue25a', {
                 fontSize: 16,
-                textStyleClasses: ['material-icons']
+                fontFamily: 'Material Icons'
               }]
             }
           ]
@@ -922,7 +922,7 @@ export const PaddingControlsLight = component({
       tooltip: 'Toggle independent Fields per Direction',
       fontFamily: 'Material Icons',
       textAndAttributes: ['', {
-        textStyleClasses: ['material-icons'],
+        fontFamily: 'Material Icons',
         fontSize: 18
       }]
     })
@@ -1053,7 +1053,7 @@ const BlurPopup = component(DarkPopupWindow, {
         name: 'interactive label',
         textAndAttributes: ['', {
           fontSize: 14,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }],
       tooltip: 'Object Blur'
@@ -1089,7 +1089,7 @@ const OpacityPopup = component(DarkPopupWindow, {
         name: 'interactive label',
         textAndAttributes: ['\ue91c', {
           fontSize: 14,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }]
     })]
