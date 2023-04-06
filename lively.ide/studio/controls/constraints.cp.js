@@ -362,7 +362,7 @@ const ConstraintsControl = component({
         padding: rect(0, 0, 0, 0),
         rotation: -1.5707963267948966,
         fontColor: Color.white,
-        textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
+        textAndAttributes: [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }]
       }, 'label'), {
         name: 'label',
         fontSize: 12
@@ -391,7 +391,7 @@ const ConstraintsControl = component({
         name: 'interactive label',
         padding: rect(0, 0, 0, 0),
         fontColor: Color.white,
-        textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
+        textAndAttributes: [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }]
       }, 'label'), {
         name: 'label',
         fontSize: 12
@@ -418,7 +418,7 @@ const ConstraintSizeSelectorDefault = component({
     borderRadius: 2,
     fontFamily: 'Material Icons',
     textAndAttributes: [
-      '\ue5ce', { textStyleClasses: ['material-icons'], fontSize: 14 }
+      '\ue5ce', { fontSize: 14 }
     ]
   }]
 });

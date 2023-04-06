@@ -420,7 +420,7 @@ const RichTextControl = component(PropertySection, {
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue23f', {
             fontSize: 18,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         })), add(part(PropertyLabel, {
           name: 'underline style',
@@ -429,7 +429,7 @@ const RichTextControl = component(PropertySection, {
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue249', {
             fontSize: 18,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         })), add(part(PropertyLabel, {
           name: 'inline link',
@@ -438,7 +438,7 @@ const RichTextControl = component(PropertySection, {
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue157', {
             fontSize: 18,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         })), add(part(PropertyLabel, {
           name: 'quote',
@@ -447,7 +447,7 @@ const RichTextControl = component(PropertySection, {
           padding: rect(2, 2, 0, 0),
           textAndAttributes: ['\ue244', {
             fontSize: 18,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         }))]
       }),
@@ -458,7 +458,7 @@ const RichTextControl = component(PropertySection, {
           name: 'interactive label',
           textAndAttributes: ['\ue245', {
             fontSize: 16,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         }],
         tooltip: 'Font Size'
@@ -470,7 +470,7 @@ const RichTextControl = component(PropertySection, {
           name: 'interactive label',
           textAndAttributes: ['\ue240', {
             fontSize: 16,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         }, {
           name: 'value',
@@ -485,7 +485,7 @@ const RichTextControl = component(PropertySection, {
           name: 'interactive label',
           textAndAttributes: ['\ue014', {
             fontSize: 16,
-            textStyleClasses: ['material-icons']
+            fontFamily: 'Material Icons'
           }]
         }],
         tooltip: 'Letter Spacing'
@@ -580,7 +580,7 @@ const RichTextControl = component(PropertySection, {
         tooltip: 'Fit Width',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }), part(PropertyLabel, {
         name: 'auto height',
@@ -589,7 +589,7 @@ const RichTextControl = component(PropertySection, {
         tooltip: 'Fit Height',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       }), part(PropertyLabel, {
         name: 'fixed extent',
@@ -598,7 +598,7 @@ const RichTextControl = component(PropertySection, {
         tooltip: 'Fix Extent/Don\'t fit',
         textAndAttributes: ['\ue835', {
           fontSize: 18,
-          textStyleClasses: ['material-icons']
+          fontFamily: 'Material Icons'
         }]
       })]
     }, part(EnumSelector, {

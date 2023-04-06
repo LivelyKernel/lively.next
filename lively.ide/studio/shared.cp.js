@@ -6,10 +6,6 @@ import { DarkNumberWidget } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
 
-ensureFont({
-  'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
-});
-
 // DarkThemeList.openInWorld()
 const DarkThemeList = component(DarkList, {
   name: 'sidebar list',
@@ -35,7 +31,7 @@ const PropertyLabel = component({
   },
   textAndAttributes: ['', {
     fontSize: 18,
-    textStyleClasses: ['material-icons']
+    fontFamily: 'Material Icons',
   }]
 });
 
@@ -77,7 +73,7 @@ const AddButtonAuto = component({
   lineHeight: 1,
   textAndAttributes: ['', {
     fontSize: 18,
-    textStyleClasses: ['material-icons']
+    fontFamily: 'Material Icons',
   }]
 });
 
@@ -93,7 +89,7 @@ const RemoveButton = component(AddButton, {
   name: 'remove button',
   textAndAttributes: ['\ue15b', {
     fontSize: 18,
-    textStyleClasses: ['material-icons']
+    fontFamily: 'Material Icons',
   }]
 });
 
@@ -200,7 +196,7 @@ const DarkNumberIconWidget = component(DarkNumberWidget, {
     fontFamily: 'Material Icons',
     nativeCursor: 'ew-resize',
     textAndAttributes: ['\ueaab', {
-      textStyleClasses: ['material-icons'],
+      fontFamily: 'Material Icons',
       fontSize: 16
     }]
   }, 'value')]
@@ -254,7 +250,7 @@ const CheckboxActive = component({
   nativeCursor: 'pointer',
   textAndAttributes: ['', {
     fontSize: 13,
-    textStyleClasses: ['material-icons']
+    fontFamily: 'Material Icons',
   }]
 });
 

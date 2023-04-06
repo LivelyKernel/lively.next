@@ -321,7 +321,7 @@ export class ShapeControlModel extends ViewModel {
     let heightMode;
     switch (newMode) {
       case ('fixed'):
-        symbol.textAndAttributes = [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         heightMode = parent.layout?.getResizeHeightPolicyFor(target);
         if (heightMode) {
           parent.layout.setResizePolicyFor(target, {
@@ -333,7 +333,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.widthInput.enable();
         break;
       case ('fill'):
-        symbol.textAndAttributes = [FILL_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [FILL_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         heightMode = parent.layout.getResizeHeightPolicyFor(target);
         parent.layout.wrapSubmorphs = false;
         parent.layout.setResizePolicyFor(target, {
@@ -343,7 +343,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.widthInput.disable();
         break;
       case ('hug'):
-        symbol.textAndAttributes = [HUG_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         if (parent && parent.layout?.name() === 'Tiling') {
           heightMode = parent.layout.getResizeHeightPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
@@ -373,7 +373,7 @@ export class ShapeControlModel extends ViewModel {
     let widthMode;
     switch (newMode) {
       case ('fixed'):
-        symbol.textAndAttributes = [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         widthMode = parent.layout?.getResizeWidthPolicyFor(target);
         if (widthMode) {
           parent.layout.setResizePolicyFor(target, {
@@ -385,7 +385,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.heightInput.enable();
         break;
       case ('fill'):
-        symbol.textAndAttributes = [FILL_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [FILL_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         widthMode = parent.layout.getResizeWidthPolicyFor(target);
         parent.layout.wrapSubmorphs = false;
         parent.layout.setResizePolicyFor(target, {
@@ -395,7 +395,7 @@ export class ShapeControlModel extends ViewModel {
         this.ui.heightInput.disable();
         break;
       case ('hug'):
-        symbol.textAndAttributes = [HUG_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }];
+        symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         if (parent && parent.layout?.name() === 'Tiling') {
           widthMode = parent.layout.getResizeWidthPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
@@ -495,9 +495,9 @@ const ShapeControl = component({
         name: 'interactive label',
         padding: rect(6, 5, 1, -5),
         rotation: -1.57,
+        fontFamily: 'Material Icons',
         textAndAttributes: ['', {
           fontSize: 18,
-          textStyleClasses: ['material-icons']
         }]
       }]
     }),
@@ -510,7 +510,8 @@ const ShapeControl = component({
       submorphs: [{
         name: 'interactive label',
         padding: rect(3, 3, -3, -3),
-        textAndAttributes: [FIXED_ICON, { textStyleClasses: ['material-icons'], fontSize: 18 }]
+        fontFamily: 'Material Icons',
+        textAndAttributes: [FIXED_ICON, { fontSize: 18 }]
       }]
     }), part(AddButton, {
       master: { auto: AddButton, hover: PropertyLabelHovered },
@@ -554,7 +555,6 @@ const ShapeControl = component({
           reactsToPointer: false,
           textAndAttributes: [FIXED_ICON, {
             fontSize: 16,
-            textStyleClasses: ['material-icons']
           }]
         }, 'label'),
         { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
@@ -593,7 +593,6 @@ const ShapeControl = component({
         lineHeight: 1,
         textAndAttributes: [FIXED_ICON, {
           fontSize: 16,
-          textStyleClasses: ['material-icons']
         }]
       }, 'label'),
       { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
@@ -624,7 +623,6 @@ const ShapeControl = component({
         lineHeight: 1,
         textAndAttributes: ['\ue920', {
           fontSize: 16,
-          textStyleClasses: ['material-icons']
         }]
       }]
     }), part(AddButton, {
@@ -634,7 +632,7 @@ const ShapeControl = component({
       padding: rect(3, 3, 0, 0),
       textAndAttributes: ['\ue5d0', {
         fontSize: 18,
-        textStyleClasses: ['material-icons']
+        fontFamily: 'Material Icons',
       }]
     }),
     {
@@ -667,8 +665,7 @@ const ShapeControl = component({
               fontFamily: 'Material Icons',
               padding: rect(2, 2, 0, -2),
               textAndAttributes: ['', {
-                fontSize: 16,
-                textStyleClasses: ['material-icons']
+                fontSize: 16
               }]
             }
           ]
@@ -734,8 +731,7 @@ const ShapeControl = component({
         padding: rect(6, 0, -6, 0),
         reactsToPointer: false,
         textAndAttributes: ['', {
-          fontSize: 16,
-          textStyleClasses: ['material-icons']
+          fontSize: 16
         }]
       }, 'label'), { name: 'label', fontColor: Color.rgb(178, 235, 242) }]
     })]

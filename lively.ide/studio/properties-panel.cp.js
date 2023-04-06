@@ -15,10 +15,6 @@ import { PropertySection } from './controls/section.cp.js';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
 import { EmbeddingControl } from './controls/embedding.cp.js';
 
-ensureFont({
-  'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
-});
-
 export class PropertiesPanelModel extends ViewModel {
   static get properties () {
     return {

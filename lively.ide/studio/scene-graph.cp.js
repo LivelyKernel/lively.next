@@ -321,7 +321,7 @@ export class MorphNodeModel extends ViewModel {
     visibilityIcon.value = [
       target.visible ? '\ue8f4' : '\ue8f5', {
         fontSize: 16,
-        textStyleClasses: ['material-icons']
+        fontFamily: 'Material Icons'
       }
     ];
   }
