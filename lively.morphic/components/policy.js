@@ -1050,21 +1050,21 @@ export class PolicyApplicator extends StylePolicy {
     return currSpec;
   }
 
-  removeSpecInResponseTo (removeChange) {
+  removeSpecInResponseTo (removeChange, insertRemoveIfNeeded = true) {
     const { target: prevOwner, args: [removedMorph] } = removeChange;
     // at any rate, remove the sub spec if present
     let ownerSpec = this.ensureSubSpecFor(prevOwner);
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
     const removedMorphSpec = this.getSubSpecAt(
-      ...prevOwner.ownerChain().map(m => m.name).reverse(),
-      ...prevOwner.owner ? [prevOwner.name] : [], // if no owner, we dont need to mention the owner name
+      ...prevOwner.ownerChain().filter(m => !m.isWorld && m.master).map(m => m.name).reverse(),
+      ...prevOwner.owner?.master ? [prevOwner.name] : [], // if no owner, we dont need to mention the owner name
       removedMorph.name
     );
     if (removedMorphSpec) {
       arr.remove(ownerSpec.submorphs, removedMorphSpec);
     }
-    if (!removedMorph.__wasAddedToDerived__) {
-      // insert the without call
+    if (insertRemoveIfNeeded && !removedMorph.__wasAddedToDerived__) {
+      // insert the without call, but only for non propagation changes
       ownerSpec.submorphs.push(without(removedMorph.name));
     }
     return removedMorphSpec;
