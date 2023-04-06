@@ -595,6 +595,7 @@ export class BrowserModel extends ViewModel {
             'showPackageVersionNumber',
             'showHiddenFolders',
             'menuItems',
+            'resetChangedContentIndicator',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
@@ -774,14 +775,18 @@ export class BrowserModel extends ViewModel {
   // source changes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  resetChangedContentIndicator () {
+    this.state.sourceHash = string.hashCode(this.ui.sourceEditor.textString);
+    this.indicateNoUnsavedChanges();
+  }
+
   updateSource (source, cursorPos) {
     const ed = this.ui.sourceEditor;
     if (ed.textString !== source) {
       ed.textString = source;
     }
     source = source.split(objectReplacementChar).join('');
-    this.state.sourceHash = string.hashCode(source);
-    this.indicateNoUnsavedChanges();
+    this.resetChangedContentIndicator();
     this.state.moduleChangeWarning = null;
     if (cursorPos) ed.cursorPosition = cursorPos;
   }
