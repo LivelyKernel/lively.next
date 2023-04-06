@@ -3,7 +3,6 @@ import { Color } from 'lively.graphics';
 import { styleProps, addPathAttributes } from './property-dom-mapping.js';
 import flubber from 'flubber';
 import Bezier from 'bezier-easing';
-import 'web-animations-js';
 import { ShadowObject } from './morphic-default.js';
 
 /* rms 27.11.17: Taken from https://css-tricks.com/snippets/sass/easing-map-get-function/ */
