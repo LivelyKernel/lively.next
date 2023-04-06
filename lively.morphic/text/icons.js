@@ -1,61 +1,48 @@
 /* eslint-disable */
 
 /*
-Currently only FontAwesome icons are supported
-  http://fontawesome.io/icons/
+Currently, we support three icon sets:
 
-Resources are here
-
-$world.execCommand("open file browser", {
-  file: "assets/font-awesome/",
-  location: lively.modules.getPackage("lively.morphic").url
-});
-
-Show all icons: (broken)
-
-$world.openInWindow(morph({
-  extent: pt(300,800), clipMode: "auto", type: "text", fontSize: 20, padding: Rectangle.inset(4),
-  textAndAttributes: Object.keys(Icons).flatMap(name =>
-    [`${Icons[name].code} ${name}\n`, {fontFamily: "", textStyleClasses: ["fa"]}])
-}), {title: "icons"}).activate();
-
+- FontAwesome 6 Free: https://fontawesome.com/search?o=r&m=free
+- Tabler Icons: https://tabler-icons.io/
+- Material Icons: https://fonts.google.com/icons?icon.set=Material+Icons
 */
 
 import { obj } from "lively.lang";
 import { morph } from '../helpers.js';
 
-export class Icon {
-  
-  static makeLabel(iconName, props = {prefix: "", suffix: ""}) {
-    // var l = Label.icon("users", {prefix: "??? ", suffix: " !!!", fontSize: 30}).openInWorld();
+export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}) {    // var l = Label.icon("users", {prefix: "??? ", suffix: " !!!", fontSize: 30}).openInWorld();
     var {prefix, suffix} = props;
     var textAndAttributes = [];
     if (prefix) textAndAttributes.push(...typeof prefix === "string" ? [prefix || "", {}] : prefix);
     textAndAttributes.push(...this.textAttribute(iconName, obj.dissoc(props, ['fontSize'])));
     if (suffix) textAndAttributes.push(...typeof suffix === "string" ? [suffix || "", {}] : suffix);
-    return morph({
-      type: 'text',
+    return morph({      type: 'text',
       value: textAndAttributes,
       ...obj.dissoc(props, ["prefix", "suffix"])
     });
   }
 
-  static textAttribute(iconName, attrs = {}) {
-    let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
-    const fontFamily = Icons[iconName].iconSet === 'font awesome' ?  `"Font Awesome 6 Free", "Font Awesome 6 Brands"` : 'tabler-icons';
-    delete attrs.textStyleClasses;
+  static textAttribute(iconName, attrs = {}) {    let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
+    const fontFamily = function () {      if (Icons[iconName].iconSet === 'font awesome')  return `"Font Awesome 6 Free", "Font Awesome 6 Brands"`;
+      if (Icons[iconName].iconSet === 'tabler icons') return 'tabler-icons';
+      if (Icons[iconName].iconSet === 'material icons') return 'Material Icons';
+    }();
+      delete attrs.textStyleClasses;
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
        {fontFamily, fontWeight: isFar ? '400' : '900', ...attrs}]
     }
 
-  static setIcon(label, iconName) {
-     label.textAndAttributes = this.textAttribute(iconName);
+  static setIcon(label, iconName) {     label.textAndAttributes = this.textAttribute(iconName);
   }
 
 }
 
 export var Icons = {
+  // **************************
+  // FONT AWESOME 6 FREE/BRANDS
+  // **************************
   "0": {iconSet: 'font awesome', code: "\u0030" },
   "1": {iconSet: 'font awesome', code: "\u0031" },
   "2": {iconSet: 'font awesome', code: "\u0032" },
@@ -2470,16326 +2457,6367 @@ export var Icons = {
   "youtube": {iconSet: 'font awesome', code: "\uf167" },
   "youtube-square": {iconSet: 'font awesome', code: "\uf431" },
   "zhihu": {iconSet: 'font awesome', code: "\uf63f" },
-
-
-  "ti-123" : {
-    iconSet: 'tabler icons', code: "\uf554"
-  },
-  
-  "ti-24-hours" : {
-    iconSet: 'tabler icons', code: "\uf5e7"
-  },
-  
-  "ti-2fa" : {
-    iconSet: 'tabler icons', code: "\ueca0"
-  },
-  
-  "ti-360" : {
-    iconSet: 'tabler icons', code: "\uf62f"
-  },
-  
-  "ti-360-view" : {
-    iconSet: 'tabler icons', code: "\uf566"
-  },
-  
-  "ti-3d-cube-sphere" : {
-    iconSet: 'tabler icons', code: "\uecd7"
-  },
-  
-  "ti-3d-cube-sphere-off" : {
-    iconSet: 'tabler icons', code: "\uf3b5"
-  },
-  
-  "ti-3d-rotate" : {
-    iconSet: 'tabler icons', code: "\uf020"
-  },
-  
-  "ti-a-b" : {
-    iconSet: 'tabler icons', code: "\uec36"
-  },
-  
-  "ti-a-b-2" : {
-    iconSet: 'tabler icons', code: "\uf25f"
-  },
-  
-  "ti-a-b-off" : {
-    iconSet: 'tabler icons', code: "\uf0a6"
-  },
-  
-  "ti-abacus" : {
-    iconSet: 'tabler icons', code: "\uf05c"
-  },
-  
-  "ti-abacus-off" : {
-    iconSet: 'tabler icons', code: "\uf3b6"
-  },
-  
-  "ti-abc" : {
-    iconSet: 'tabler icons', code: "\uf567"
-  },
-  
-  "ti-access-point" : {
-    iconSet: 'tabler icons', code: "\ued1b"
-  },
-  
-  "ti-access-point-off" : {
-    iconSet: 'tabler icons', code: "\ued1a"
-  },
-  
-  "ti-accessible" : {
-    iconSet: 'tabler icons', code: "\ueba9"
-  },
-  
-  "ti-accessible-off" : {
-    iconSet: 'tabler icons', code: "\uf0a7"
-  },
-  
-  "ti-accessible-off-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ea"
-  },
-  
-  "ti-activity" : {
-    iconSet: 'tabler icons', code: "\ued23"
-  },
-  
-  "ti-activity-heartbeat" : {
-    iconSet: 'tabler icons', code: "\uf0db"
-  },
-  
-  "ti-ad" : {
-    iconSet: 'tabler icons', code: "\uea02"
-  },
-  
-  "ti-ad-2" : {
-    iconSet: 'tabler icons', code: "\uef1f"
-  },
-  
-  "ti-ad-circle" : {
-    iconSet: 'tabler icons', code: "\uf79e"
-  },
-  
-  "ti-ad-circle-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d3"
-  },
-  
-  "ti-ad-circle-off" : {
-    iconSet: 'tabler icons', code: "\uf79d"
-  },
-  
-  "ti-ad-filled" : {
-    iconSet: 'tabler icons', code: "\uf6eb"
-  },
-  
-  "ti-ad-off" : {
-    iconSet: 'tabler icons', code: "\uf3b7"
-  },
-  
-  "ti-address-book" : {
-    iconSet: 'tabler icons', code: "\uf021"
-  },
-  
-  "ti-address-book-off" : {
-    iconSet: 'tabler icons', code: "\uf3b8"
-  },
-  
-  "ti-adjustments" : {
-    iconSet: 'tabler icons', code: "\uea03"
-  },
-  
-  "ti-adjustments-alt" : {
-    iconSet: 'tabler icons', code: "\uec37"
-  },
-  
-  "ti-adjustments-bolt" : {
-    iconSet: 'tabler icons', code: "\uf7fb"
-  },
-  
-  "ti-adjustments-cancel" : {
-    iconSet: 'tabler icons', code: "\uf7fc"
-  },
-  
-  "ti-adjustments-check" : {
-    iconSet: 'tabler icons', code: "\uf7fd"
-  },
-  
-  "ti-adjustments-code" : {
-    iconSet: 'tabler icons', code: "\uf7fe"
-  },
-  
-  "ti-adjustments-cog" : {
-    iconSet: 'tabler icons', code: "\uf7ff"
-  },
-  
-  "ti-adjustments-dollar" : {
-    iconSet: 'tabler icons', code: "\uf800"
-  },
-  
-  "ti-adjustments-down" : {
-    iconSet: 'tabler icons', code: "\uf801"
-  },
-  
-  "ti-adjustments-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf802"
-  },
-  
-  "ti-adjustments-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ec"
-  },
-  
-  "ti-adjustments-heart" : {
-    iconSet: 'tabler icons', code: "\uf803"
-  },
-  
-  "ti-adjustments-horizontal" : {
-    iconSet: 'tabler icons', code: "\uec38"
-  },
-  
-  "ti-adjustments-minus" : {
-    iconSet: 'tabler icons', code: "\uf804"
-  },
-  
-  "ti-adjustments-off" : {
-    iconSet: 'tabler icons', code: "\uf0a8"
-  },
-  
-  "ti-adjustments-pause" : {
-    iconSet: 'tabler icons', code: "\uf805"
-  },
-  
-  "ti-adjustments-pin" : {
-    iconSet: 'tabler icons', code: "\uf806"
-  },
-  
-  "ti-adjustments-plus" : {
-    iconSet: 'tabler icons', code: "\uf807"
-  },
-  
-  "ti-adjustments-question" : {
-    iconSet: 'tabler icons', code: "\uf808"
-  },
-  
-  "ti-adjustments-search" : {
-    iconSet: 'tabler icons', code: "\uf809"
-  },
-  
-  "ti-adjustments-share" : {
-    iconSet: 'tabler icons', code: "\uf80a"
-  },
-  
-  "ti-adjustments-star" : {
-    iconSet: 'tabler icons', code: "\uf80b"
-  },
-  
-  "ti-adjustments-up" : {
-    iconSet: 'tabler icons', code: "\uf80c"
-  },
-  
-  "ti-adjustments-x" : {
-    iconSet: 'tabler icons', code: "\uf80d"
-  },
-  
-  "ti-aerial-lift" : {
-    iconSet: 'tabler icons', code: "\uedfe"
-  },
-  
-  "ti-affiliate" : {
-    iconSet: 'tabler icons', code: "\uedff"
-  },
-  
-  "ti-affiliate-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ed"
-  },
-  
-  "ti-air-balloon" : {
-    iconSet: 'tabler icons', code: "\uf4a6"
-  },
-  
-  "ti-air-conditioning" : {
-    iconSet: 'tabler icons', code: "\uf3a2"
-  },
-  
-  "ti-air-conditioning-disabled" : {
-    iconSet: 'tabler icons', code: "\uf542"
-  },
-  
-  "ti-alarm" : {
-    iconSet: 'tabler icons', code: "\uea04"
-  },
-  
-  "ti-alarm-filled" : {
-    iconSet: 'tabler icons', code: "\uf709"
-  },
-  
-  "ti-alarm-minus" : {
-    iconSet: 'tabler icons', code: "\uf630"
-  },
-  
-  "ti-alarm-minus-filled" : {
-    iconSet: 'tabler icons', code: "\uf70a"
-  },
-  
-  "ti-alarm-off" : {
-    iconSet: 'tabler icons', code: "\uf0a9"
-  },
-  
-  "ti-alarm-plus" : {
-    iconSet: 'tabler icons', code: "\uf631"
-  },
-  
-  "ti-alarm-plus-filled" : {
-    iconSet: 'tabler icons', code: "\uf70b"
-  },
-  
-  "ti-alarm-snooze" : {
-    iconSet: 'tabler icons', code: "\uf632"
-  },
-  
-  "ti-alarm-snooze-filled" : {
-    iconSet: 'tabler icons', code: "\uf70c"
-  },
-  
-  "ti-album" : {
-    iconSet: 'tabler icons', code: "\uf022"
-  },
-  
-  "ti-album-off" : {
-    iconSet: 'tabler icons', code: "\uf3b9"
-  },
-  
-  "ti-alert-circle" : {
-    iconSet: 'tabler icons', code: "\uea05"
-  },
-  
-  "ti-alert-circle-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ee"
-  },
-  
-  "ti-alert-hexagon" : {
-    iconSet: 'tabler icons', code: "\uf80e"
-  },
-  
-  "ti-alert-octagon" : {
-    iconSet: 'tabler icons', code: "\uecc6"
-  },
-  
-  "ti-alert-octagon-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ef"
-  },
-  
-  "ti-alert-small" : {
-    iconSet: 'tabler icons', code: "\uf80f"
-  },
-  
-  "ti-alert-square" : {
-    iconSet: 'tabler icons', code: "\uf811"
-  },
-  
-  "ti-alert-square-rounded" : {
-    iconSet: 'tabler icons', code: "\uf810"
-  },
-  
-  "ti-alert-triangle" : {
-    iconSet: 'tabler icons', code: "\uea06"
-  },
-  
-  "ti-alert-triangle-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f0"
-  },
-  
-  "ti-alien" : {
-    iconSet: 'tabler icons', code: "\uebde"
-  },
-  
-  "ti-alien-filled" : {
-    iconSet: 'tabler icons', code: "\uf70d"
-  },
-  
-  "ti-align-box-bottom-center" : {
-    iconSet: 'tabler icons', code: "\uf530"
-  },
-  
-  "ti-align-box-bottom-center-filled" : {
-    iconSet: 'tabler icons', code: "\uf70e"
-  },
-  
-  "ti-align-box-bottom-left" : {
-    iconSet: 'tabler icons', code: "\uf531"
-  },
-  
-  "ti-align-box-bottom-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf70f"
-  },
-  
-  "ti-align-box-bottom-right" : {
-    iconSet: 'tabler icons', code: "\uf532"
-  },
-  
-  "ti-align-box-bottom-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf710"
-  },
-  
-  "ti-align-box-center-middle" : {
-    iconSet: 'tabler icons', code: "\uf79f"
-  },
-  
-  "ti-align-box-center-middle-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d4"
-  },
-  
-  "ti-align-box-left-bottom" : {
-    iconSet: 'tabler icons', code: "\uf533"
-  },
-  
-  "ti-align-box-left-bottom-filled" : {
-    iconSet: 'tabler icons', code: "\uf711"
-  },
-  
-  "ti-align-box-left-middle" : {
-    iconSet: 'tabler icons', code: "\uf534"
-  },
-  
-  "ti-align-box-left-middle-filled" : {
-    iconSet: 'tabler icons', code: "\uf712"
-  },
-  
-  "ti-align-box-left-top" : {
-    iconSet: 'tabler icons', code: "\uf535"
-  },
-  
-  "ti-align-box-left-top-filled" : {
-    iconSet: 'tabler icons', code: "\uf713"
-  },
-  
-  "ti-align-box-right-bottom" : {
-    iconSet: 'tabler icons', code: "\uf536"
-  },
-  
-  "ti-align-box-right-bottom-filled" : {
-    iconSet: 'tabler icons', code: "\uf714"
-  },
-  
-  "ti-align-box-right-middle" : {
-    iconSet: 'tabler icons', code: "\uf537"
-  },
-  
-  "ti-align-box-right-middle-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d5"
-  },
-  
-  "ti-align-box-right-top" : {
-    iconSet: 'tabler icons', code: "\uf538"
-  },
-  
-  "ti-align-box-right-top-filled" : {
-    iconSet: 'tabler icons', code: "\uf715"
-  },
-  
-  "ti-align-box-top-center" : {
-    iconSet: 'tabler icons', code: "\uf539"
-  },
-  
-  "ti-align-box-top-center-filled" : {
-    iconSet: 'tabler icons', code: "\uf716"
-  },
-  
-  "ti-align-box-top-left" : {
-    iconSet: 'tabler icons', code: "\uf53a"
-  },
-  
-  "ti-align-box-top-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf717"
-  },
-  
-  "ti-align-box-top-right" : {
-    iconSet: 'tabler icons', code: "\uf53b"
-  },
-  
-  "ti-align-box-top-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf718"
-  },
-  
-  "ti-align-center" : {
-    iconSet: 'tabler icons', code: "\uea07"
-  },
-  
-  "ti-align-justified" : {
-    iconSet: 'tabler icons', code: "\uea08"
-  },
-  
-  "ti-align-left" : {
-    iconSet: 'tabler icons', code: "\uea09"
-  },
-  
-  "ti-align-right" : {
-    iconSet: 'tabler icons', code: "\uea0a"
-  },
-  
-  "ti-alpha" : {
-    iconSet: 'tabler icons', code: "\uf543"
-  },
-  
-  "ti-alphabet-cyrillic" : {
-    iconSet: 'tabler icons', code: "\uf1df"
-  },
-  
-  "ti-alphabet-greek" : {
-    iconSet: 'tabler icons', code: "\uf1e0"
-  },
-  
-  "ti-alphabet-latin" : {
-    iconSet: 'tabler icons', code: "\uf1e1"
-  },
-  
-  "ti-ambulance" : {
-    iconSet: 'tabler icons', code: "\uebf5"
-  },
-  
-  "ti-ampersand" : {
-    iconSet: 'tabler icons', code: "\uf229"
-  },
-  
-  "ti-analyze" : {
-    iconSet: 'tabler icons', code: "\uf3a3"
-  },
-  
-  "ti-analyze-filled" : {
-    iconSet: 'tabler icons', code: "\uf719"
-  },
-  
-  "ti-analyze-off" : {
-    iconSet: 'tabler icons', code: "\uf3ba"
-  },
-  
-  "ti-anchor" : {
-    iconSet: 'tabler icons', code: "\ueb76"
-  },
-  
-  "ti-anchor-off" : {
-    iconSet: 'tabler icons', code: "\uf0f7"
-  },
-  
-  "ti-angle" : {
-    iconSet: 'tabler icons', code: "\uef20"
-  },
-  
-  "ti-ankh" : {
-    iconSet: 'tabler icons', code: "\uf1cd"
-  },
-  
-  "ti-antenna" : {
-    iconSet: 'tabler icons', code: "\uf094"
-  },
-  
-  "ti-antenna-bars-1" : {
-    iconSet: 'tabler icons', code: "\uecc7"
-  },
-  
-  "ti-antenna-bars-2" : {
-    iconSet: 'tabler icons', code: "\uecc8"
-  },
-  
-  "ti-antenna-bars-3" : {
-    iconSet: 'tabler icons', code: "\uecc9"
-  },
-  
-  "ti-antenna-bars-4" : {
-    iconSet: 'tabler icons', code: "\uecca"
-  },
-  
-  "ti-antenna-bars-5" : {
-    iconSet: 'tabler icons', code: "\ueccb"
-  },
-  
-  "ti-antenna-bars-off" : {
-    iconSet: 'tabler icons', code: "\uf0aa"
-  },
-  
-  "ti-antenna-off" : {
-    iconSet: 'tabler icons', code: "\uf3bb"
-  },
-  
-  "ti-aperture" : {
-    iconSet: 'tabler icons', code: "\ueb58"
-  },
-  
-  "ti-aperture-off" : {
-    iconSet: 'tabler icons', code: "\uf3bc"
-  },
-  
-  "ti-api" : {
-    iconSet: 'tabler icons', code: "\ueffd"
-  },
-  
-  "ti-api-app" : {
-    iconSet: 'tabler icons', code: "\ueffc"
-  },
-  
-  "ti-api-app-off" : {
-    iconSet: 'tabler icons', code: "\uf0ab"
-  },
-  
-  "ti-api-off" : {
-    iconSet: 'tabler icons', code: "\uf0f8"
-  },
-  
-  "ti-app-window" : {
-    iconSet: 'tabler icons', code: "\uefe6"
-  },
-  
-  "ti-app-window-filled" : {
-    iconSet: 'tabler icons', code: "\uf71a"
-  },
-  
-  "ti-apple" : {
-    iconSet: 'tabler icons', code: "\uef21"
-  },
-  
-  "ti-apps" : {
-    iconSet: 'tabler icons', code: "\uebb6"
-  },
-  
-  "ti-apps-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f1"
-  },
-  
-  "ti-apps-off" : {
-    iconSet: 'tabler icons', code: "\uf0ac"
-  },
-  
-  "ti-archive" : {
-    iconSet: 'tabler icons', code: "\uea0b"
-  },
-  
-  "ti-archive-off" : {
-    iconSet: 'tabler icons', code: "\uf0ad"
-  },
-  
-  "ti-armchair" : {
-    iconSet: 'tabler icons', code: "\uef9e"
-  },
-  
-  "ti-armchair-2" : {
-    iconSet: 'tabler icons', code: "\uefe7"
-  },
-  
-  "ti-armchair-2-off" : {
-    iconSet: 'tabler icons', code: "\uf3bd"
-  },
-  
-  "ti-armchair-off" : {
-    iconSet: 'tabler icons', code: "\uf3be"
-  },
-  
-  "ti-arrow-autofit-content" : {
-    iconSet: 'tabler icons', code: "\uef31"
-  },
-  
-  "ti-arrow-autofit-content-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f2"
-  },
-  
-  "ti-arrow-autofit-down" : {
-    iconSet: 'tabler icons', code: "\uef32"
-  },
-  
-  "ti-arrow-autofit-height" : {
-    iconSet: 'tabler icons', code: "\uef33"
-  },
-  
-  "ti-arrow-autofit-left" : {
-    iconSet: 'tabler icons', code: "\uef34"
-  },
-  
-  "ti-arrow-autofit-right" : {
-    iconSet: 'tabler icons', code: "\uef35"
-  },
-  
-  "ti-arrow-autofit-up" : {
-    iconSet: 'tabler icons', code: "\uef36"
-  },
-  
-  "ti-arrow-autofit-width" : {
-    iconSet: 'tabler icons', code: "\uef37"
-  },
-  
-  "ti-arrow-back" : {
-    iconSet: 'tabler icons', code: "\uea0c"
-  },
-  
-  "ti-arrow-back-up" : {
-    iconSet: 'tabler icons', code: "\ueb77"
-  },
-  
-  "ti-arrow-back-up-double" : {
-    iconSet: 'tabler icons', code: "\uf9ec"
-  },
-  
-  "ti-arrow-badge-down" : {
-    iconSet: 'tabler icons', code: "\uf60b"
-  },
-  
-  "ti-arrow-badge-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d6"
-  },
-  
-  "ti-arrow-badge-left" : {
-    iconSet: 'tabler icons', code: "\uf60c"
-  },
-  
-  "ti-arrow-badge-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d7"
-  },
-  
-  "ti-arrow-badge-right" : {
-    iconSet: 'tabler icons', code: "\uf60d"
-  },
-  
-  "ti-arrow-badge-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d8"
-  },
-  
-  "ti-arrow-badge-up" : {
-    iconSet: 'tabler icons', code: "\uf60e"
-  },
-  
-  "ti-arrow-badge-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf7d9"
-  },
-  
-  "ti-arrow-bar-down" : {
-    iconSet: 'tabler icons', code: "\uea0d"
-  },
-  
-  "ti-arrow-bar-left" : {
-    iconSet: 'tabler icons', code: "\uea0e"
-  },
-  
-  "ti-arrow-bar-right" : {
-    iconSet: 'tabler icons', code: "\uea0f"
-  },
-  
-  "ti-arrow-bar-to-down" : {
-    iconSet: 'tabler icons', code: "\uec88"
-  },
-  
-  "ti-arrow-bar-to-left" : {
-    iconSet: 'tabler icons', code: "\uec89"
-  },
-  
-  "ti-arrow-bar-to-right" : {
-    iconSet: 'tabler icons', code: "\uec8a"
-  },
-  
-  "ti-arrow-bar-to-up" : {
-    iconSet: 'tabler icons', code: "\uec8b"
-  },
-  
-  "ti-arrow-bar-up" : {
-    iconSet: 'tabler icons', code: "\uea10"
-  },
-  
-  "ti-arrow-bear-left" : {
-    iconSet: 'tabler icons', code: "\uf045"
-  },
-  
-  "ti-arrow-bear-left-2" : {
-    iconSet: 'tabler icons', code: "\uf044"
-  },
-  
-  "ti-arrow-bear-right" : {
-    iconSet: 'tabler icons', code: "\uf047"
-  },
-  
-  "ti-arrow-bear-right-2" : {
-    iconSet: 'tabler icons', code: "\uf046"
-  },
-  
-  "ti-arrow-big-down" : {
-    iconSet: 'tabler icons', code: "\uedda"
-  },
-  
-  "ti-arrow-big-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6c6"
-  },
-  
-  "ti-arrow-big-down-line" : {
-    iconSet: 'tabler icons', code: "\uefe8"
-  },
-  
-  "ti-arrow-big-down-line-filled" : {
-    iconSet: 'tabler icons', code: "\uf6c7"
-  },
-  
-  "ti-arrow-big-down-lines" : {
-    iconSet: 'tabler icons', code: "\uefe9"
-  },
-  
-  "ti-arrow-big-down-lines-filled" : {
-    iconSet: 'tabler icons', code: "\uf6c8"
-  },
-  
-  "ti-arrow-big-left" : {
-    iconSet: 'tabler icons', code: "\ueddb"
-  },
-  
-  "ti-arrow-big-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6c9"
-  },
-  
-  "ti-arrow-big-left-line" : {
-    iconSet: 'tabler icons', code: "\uefea"
-  },
-  
-  "ti-arrow-big-left-line-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ca"
-  },
-  
-  "ti-arrow-big-left-lines" : {
-    iconSet: 'tabler icons', code: "\uefeb"
-  },
-  
-  "ti-arrow-big-left-lines-filled" : {
-    iconSet: 'tabler icons', code: "\uf6cb"
-  },
-  
-  "ti-arrow-big-right" : {
-    iconSet: 'tabler icons', code: "\ueddc"
-  },
-  
-  "ti-arrow-big-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6cc"
-  },
-  
-  "ti-arrow-big-right-line" : {
-    iconSet: 'tabler icons', code: "\uefec"
-  },
-  
-  "ti-arrow-big-right-line-filled" : {
-    iconSet: 'tabler icons', code: "\uf6cd"
-  },
-  
-  "ti-arrow-big-right-lines" : {
-    iconSet: 'tabler icons', code: "\uefed"
-  },
-  
-  "ti-arrow-big-right-lines-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ce"
-  },
-  
-  "ti-arrow-big-up" : {
-    iconSet: 'tabler icons', code: "\ueddd"
-  },
-  
-  "ti-arrow-big-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6cf"
-  },
-  
-  "ti-arrow-big-up-line" : {
-    iconSet: 'tabler icons', code: "\uefee"
-  },
-  
-  "ti-arrow-big-up-line-filled" : {
-    iconSet: 'tabler icons', code: "\uf6d0"
-  },
-  
-  "ti-arrow-big-up-lines" : {
-    iconSet: 'tabler icons', code: "\uefef"
-  },
-  
-  "ti-arrow-big-up-lines-filled" : {
-    iconSet: 'tabler icons', code: "\uf6d1"
-  },
-  
-  "ti-arrow-bounce" : {
-    iconSet: 'tabler icons', code: "\uf3a4"
-  },
-  
-  "ti-arrow-curve-left" : {
-    iconSet: 'tabler icons', code: "\uf048"
-  },
-  
-  "ti-arrow-curve-right" : {
-    iconSet: 'tabler icons', code: "\uf049"
-  },
-  
-  "ti-arrow-down" : {
-    iconSet: 'tabler icons', code: "\uea16"
-  },
-  
-  "ti-arrow-down-bar" : {
-    iconSet: 'tabler icons', code: "\ued98"
-  },
-  
-  "ti-arrow-down-circle" : {
-    iconSet: 'tabler icons', code: "\uea11"
-  },
-  
-  "ti-arrow-down-left" : {
-    iconSet: 'tabler icons', code: "\uea13"
-  },
-  
-  "ti-arrow-down-left-circle" : {
-    iconSet: 'tabler icons', code: "\uea12"
-  },
-  
-  "ti-arrow-down-rhombus" : {
-    iconSet: 'tabler icons', code: "\uf61d"
-  },
-  
-  "ti-arrow-down-right" : {
-    iconSet: 'tabler icons', code: "\uea15"
-  },
-  
-  "ti-arrow-down-right-circle" : {
-    iconSet: 'tabler icons', code: "\uea14"
-  },
-  
-  "ti-arrow-down-square" : {
-    iconSet: 'tabler icons', code: "\ued9a"
-  },
-  
-  "ti-arrow-down-tail" : {
-    iconSet: 'tabler icons', code: "\ued9b"
-  },
-  
-  "ti-arrow-elbow-left" : {
-    iconSet: 'tabler icons', code: "\uf9ed"
-  },
-  
-  "ti-arrow-elbow-right" : {
-    iconSet: 'tabler icons', code: "\uf9ee"
-  },
-  
-  "ti-arrow-fork" : {
-    iconSet: 'tabler icons', code: "\uf04a"
-  },
-  
-  "ti-arrow-forward" : {
-    iconSet: 'tabler icons', code: "\uea17"
-  },
-  
-  "ti-arrow-forward-up" : {
-    iconSet: 'tabler icons', code: "\ueb78"
-  },
-  
-  "ti-arrow-forward-up-double" : {
-    iconSet: 'tabler icons', code: "\uf9ef"
-  },
-  
-  "ti-arrow-guide" : {
-    iconSet: 'tabler icons', code: "\uf22a"
-  },
-  
-  "ti-arrow-iteration" : {
-    iconSet: 'tabler icons', code: "\uf578"
-  },
-  
-  "ti-arrow-left" : {
-    iconSet: 'tabler icons', code: "\uea19"
-  },
-  
-  "ti-arrow-left-bar" : {
-    iconSet: 'tabler icons', code: "\ued9c"
-  },
-  
-  "ti-arrow-left-circle" : {
-    iconSet: 'tabler icons', code: "\uea18"
-  },
-  
-  "ti-arrow-left-rhombus" : {
-    iconSet: 'tabler icons', code: "\uf61e"
-  },
-  
-  "ti-arrow-left-right" : {
-    iconSet: 'tabler icons', code: "\uf04b"
-  },
-  
-  "ti-arrow-left-square" : {
-    iconSet: 'tabler icons', code: "\ued9d"
-  },
-  
-  "ti-arrow-left-tail" : {
-    iconSet: 'tabler icons', code: "\ued9e"
-  },
-  
-  "ti-arrow-loop-left" : {
-    iconSet: 'tabler icons', code: "\ued9f"
-  },
-  
-  "ti-arrow-loop-left-2" : {
-    iconSet: 'tabler icons', code: "\uf04c"
-  },
-  
-  "ti-arrow-loop-right" : {
-    iconSet: 'tabler icons', code: "\ueda0"
-  },
-  
-  "ti-arrow-loop-right-2" : {
-    iconSet: 'tabler icons', code: "\uf04d"
-  },
-  
-  "ti-arrow-merge" : {
-    iconSet: 'tabler icons', code: "\uf04e"
-  },
-  
-  "ti-arrow-merge-both" : {
-    iconSet: 'tabler icons', code: "\uf23b"
-  },
-  
-  "ti-arrow-merge-left" : {
-    iconSet: 'tabler icons', code: "\uf23c"
-  },
-  
-  "ti-arrow-merge-right" : {
-    iconSet: 'tabler icons', code: "\uf23d"
-  },
-  
-  "ti-arrow-move-down" : {
-    iconSet: 'tabler icons', code: "\uf2ba"
-  },
-  
-  "ti-arrow-move-left" : {
-    iconSet: 'tabler icons', code: "\uf2bb"
-  },
-  
-  "ti-arrow-move-right" : {
-    iconSet: 'tabler icons', code: "\uf2bc"
-  },
-  
-  "ti-arrow-move-up" : {
-    iconSet: 'tabler icons', code: "\uf2bd"
-  },
-  
-  "ti-arrow-narrow-down" : {
-    iconSet: 'tabler icons', code: "\uea1a"
-  },
-  
-  "ti-arrow-narrow-left" : {
-    iconSet: 'tabler icons', code: "\uea1b"
-  },
-  
-  "ti-arrow-narrow-right" : {
-    iconSet: 'tabler icons', code: "\uea1c"
-  },
-  
-  "ti-arrow-narrow-up" : {
-    iconSet: 'tabler icons', code: "\uea1d"
-  },
-  
-  "ti-arrow-ramp-left" : {
-    iconSet: 'tabler icons', code: "\ued3c"
-  },
-  
-  "ti-arrow-ramp-left-2" : {
-    iconSet: 'tabler icons', code: "\uf04f"
-  },
-  
-  "ti-arrow-ramp-left-3" : {
-    iconSet: 'tabler icons', code: "\uf050"
-  },
-  
-  "ti-arrow-ramp-right" : {
-    iconSet: 'tabler icons', code: "\ued3d"
-  },
-  
-  "ti-arrow-ramp-right-2" : {
-    iconSet: 'tabler icons', code: "\uf051"
-  },
-  
-  "ti-arrow-ramp-right-3" : {
-    iconSet: 'tabler icons', code: "\uf052"
-  },
-  
-  "ti-arrow-right" : {
-    iconSet: 'tabler icons', code: "\uea1f"
-  },
-  
-  "ti-arrow-right-bar" : {
-    iconSet: 'tabler icons', code: "\ueda1"
-  },
-  
-  "ti-arrow-right-circle" : {
-    iconSet: 'tabler icons', code: "\uea1e"
-  },
-  
-  "ti-arrow-right-rhombus" : {
-    iconSet: 'tabler icons', code: "\uf61f"
-  },
-  
-  "ti-arrow-right-square" : {
-    iconSet: 'tabler icons', code: "\ueda2"
-  },
-  
-  "ti-arrow-right-tail" : {
-    iconSet: 'tabler icons', code: "\ueda3"
-  },
-  
-  "ti-arrow-rotary-first-left" : {
-    iconSet: 'tabler icons', code: "\uf053"
-  },
-  
-  "ti-arrow-rotary-first-right" : {
-    iconSet: 'tabler icons', code: "\uf054"
-  },
-  
-  "ti-arrow-rotary-last-left" : {
-    iconSet: 'tabler icons', code: "\uf055"
-  },
-  
-  "ti-arrow-rotary-last-right" : {
-    iconSet: 'tabler icons', code: "\uf056"
-  },
-  
-  "ti-arrow-rotary-left" : {
-    iconSet: 'tabler icons', code: "\uf057"
-  },
-  
-  "ti-arrow-rotary-right" : {
-    iconSet: 'tabler icons', code: "\uf058"
-  },
-  
-  "ti-arrow-rotary-straight" : {
-    iconSet: 'tabler icons', code: "\uf059"
-  },
-  
-  "ti-arrow-roundabout-left" : {
-    iconSet: 'tabler icons', code: "\uf22b"
-  },
-  
-  "ti-arrow-roundabout-right" : {
-    iconSet: 'tabler icons', code: "\uf22c"
-  },
-  
-  "ti-arrow-sharp-turn-left" : {
-    iconSet: 'tabler icons', code: "\uf05a"
-  },
-  
-  "ti-arrow-sharp-turn-right" : {
-    iconSet: 'tabler icons', code: "\uf05b"
-  },
-  
-  "ti-arrow-up" : {
-    iconSet: 'tabler icons', code: "\uea25"
-  },
-  
-  "ti-arrow-up-bar" : {
-    iconSet: 'tabler icons', code: "\ueda4"
-  },
-  
-  "ti-arrow-up-circle" : {
-    iconSet: 'tabler icons', code: "\uea20"
-  },
-  
-  "ti-arrow-up-left" : {
-    iconSet: 'tabler icons', code: "\uea22"
-  },
-  
-  "ti-arrow-up-left-circle" : {
-    iconSet: 'tabler icons', code: "\uea21"
-  },
-  
-  "ti-arrow-up-rhombus" : {
-    iconSet: 'tabler icons', code: "\uf620"
-  },
-  
-  "ti-arrow-up-right" : {
-    iconSet: 'tabler icons', code: "\uea24"
-  },
-  
-  "ti-arrow-up-right-circle" : {
-    iconSet: 'tabler icons', code: "\uea23"
-  },
-  
-  "ti-arrow-up-square" : {
-    iconSet: 'tabler icons', code: "\ueda6"
-  },
-  
-  "ti-arrow-up-tail" : {
-    iconSet: 'tabler icons', code: "\ueda7"
-  },
-  
-  "ti-arrow-wave-left-down" : {
-    iconSet: 'tabler icons', code: "\ueda8"
-  },
-  
-  "ti-arrow-wave-left-up" : {
-    iconSet: 'tabler icons', code: "\ueda9"
-  },
-  
-  "ti-arrow-wave-right-down" : {
-    iconSet: 'tabler icons', code: "\uedaa"
-  },
-  
-  "ti-arrow-wave-right-up" : {
-    iconSet: 'tabler icons', code: "\uedab"
-  },
-  
-  "ti-arrow-zig-zag" : {
-    iconSet: 'tabler icons', code: "\uf4a7"
-  },
-  
-  "ti-arrows-cross" : {
-    iconSet: 'tabler icons', code: "\ueffe"
-  },
-  
-  "ti-arrows-diagonal" : {
-    iconSet: 'tabler icons', code: "\uea27"
-  },
-  
-  "ti-arrows-diagonal-2" : {
-    iconSet: 'tabler icons', code: "\uea26"
-  },
-  
-  "ti-arrows-diagonal-minimize" : {
-    iconSet: 'tabler icons', code: "\uef39"
-  },
-  
-  "ti-arrows-diagonal-minimize-2" : {
-    iconSet: 'tabler icons', code: "\uef38"
-  },
-  
-  "ti-arrows-diff" : {
-    iconSet: 'tabler icons', code: "\uf296"
-  },
-  
-  "ti-arrows-double-ne-sw" : {
-    iconSet: 'tabler icons', code: "\uedde"
-  },
-  
-  "ti-arrows-double-nw-se" : {
-    iconSet: 'tabler icons', code: "\ueddf"
-  },
-  
-  "ti-arrows-double-se-nw" : {
-    iconSet: 'tabler icons', code: "\uede0"
-  },
-  
-  "ti-arrows-double-sw-ne" : {
-    iconSet: 'tabler icons', code: "\uede1"
-  },
-  
-  "ti-arrows-down" : {
-    iconSet: 'tabler icons', code: "\uedad"
-  },
-  
-  "ti-arrows-down-up" : {
-    iconSet: 'tabler icons', code: "\uedac"
-  },
-  
-  "ti-arrows-exchange" : {
-    iconSet: 'tabler icons', code: "\uf1f4"
-  },
-  
-  "ti-arrows-exchange-2" : {
-    iconSet: 'tabler icons', code: "\uf1f3"
-  },
-  
-  "ti-arrows-horizontal" : {
-    iconSet: 'tabler icons', code: "\ueb59"
-  },
-  
-  "ti-arrows-join" : {
-    iconSet: 'tabler icons', code: "\uedaf"
-  },
-  
-  "ti-arrows-join-2" : {
-    iconSet: 'tabler icons', code: "\uedae"
-  },
-  
-  "ti-arrows-left" : {
-    iconSet: 'tabler icons', code: "\uedb1"
-  },
-  
-  "ti-arrows-left-down" : {
-    iconSet: 'tabler icons', code: "\uee00"
-  },
-  
-  "ti-arrows-left-right" : {
-    iconSet: 'tabler icons', code: "\uedb0"
-  },
-  
-  "ti-arrows-maximize" : {
-    iconSet: 'tabler icons', code: "\uea28"
-  },
-  
-  "ti-arrows-minimize" : {
-    iconSet: 'tabler icons', code: "\uea29"
-  },
-  
-  "ti-arrows-move" : {
-    iconSet: 'tabler icons', code: "\uf22f"
-  },
-  
-  "ti-arrows-move-horizontal" : {
-    iconSet: 'tabler icons', code: "\uf22d"
-  },
-  
-  "ti-arrows-move-vertical" : {
-    iconSet: 'tabler icons', code: "\uf22e"
-  },
-  
-  "ti-arrows-random" : {
-    iconSet: 'tabler icons', code: "\uf095"
-  },
-  
-  "ti-arrows-right" : {
-    iconSet: 'tabler icons', code: "\uedb3"
-  },
-  
-  "ti-arrows-right-down" : {
-    iconSet: 'tabler icons', code: "\uee01"
-  },
-  
-  "ti-arrows-right-left" : {
-    iconSet: 'tabler icons', code: "\uedb2"
-  },
-  
-  "ti-arrows-shuffle" : {
-    iconSet: 'tabler icons', code: "\uf000"
-  },
-  
-  "ti-arrows-shuffle-2" : {
-    iconSet: 'tabler icons', code: "\uefff"
-  },
-  
-  "ti-arrows-sort" : {
-    iconSet: 'tabler icons', code: "\ueb5a"
-  },
-  
-  "ti-arrows-split" : {
-    iconSet: 'tabler icons', code: "\uedb5"
-  },
-  
-  "ti-arrows-split-2" : {
-    iconSet: 'tabler icons', code: "\uedb4"
-  },
-  
-  "ti-arrows-transfer-down" : {
-    iconSet: 'tabler icons', code: "\uf2cc"
-  },
-  
-  "ti-arrows-transfer-up" : {
-    iconSet: 'tabler icons', code: "\uf2cd"
-  },
-  
-  "ti-arrows-up" : {
-    iconSet: 'tabler icons', code: "\uedb7"
-  },
-  
-  "ti-arrows-up-down" : {
-    iconSet: 'tabler icons', code: "\uedb6"
-  },
-  
-  "ti-arrows-up-left" : {
-    iconSet: 'tabler icons', code: "\uee02"
-  },
-  
-  "ti-arrows-up-right" : {
-    iconSet: 'tabler icons', code: "\uee03"
-  },
-  
-  "ti-arrows-vertical" : {
-    iconSet: 'tabler icons', code: "\ueb5b"
-  },
-  
-  "ti-artboard" : {
-    iconSet: 'tabler icons', code: "\uea2a"
-  },
-  
-  "ti-artboard-off" : {
-    iconSet: 'tabler icons', code: "\uf0ae"
-  },
-  
-  "ti-article" : {
-    iconSet: 'tabler icons', code: "\uf1e2"
-  },
-  
-  "ti-article-filled-filled" : {
-    iconSet: 'tabler icons', code: "\uf7da"
-  },
-  
-  "ti-article-off" : {
-    iconSet: 'tabler icons', code: "\uf3bf"
-  },
-  
-  "ti-aspect-ratio" : {
-    iconSet: 'tabler icons', code: "\ued30"
-  },
-  
-  "ti-aspect-ratio-filled" : {
-    iconSet: 'tabler icons', code: "\uf7db"
-  },
-  
-  "ti-aspect-ratio-off" : {
-    iconSet: 'tabler icons', code: "\uf0af"
-  },
-  
-  "ti-assembly" : {
-    iconSet: 'tabler icons', code: "\uf24d"
-  },
-  
-  "ti-assembly-off" : {
-    iconSet: 'tabler icons', code: "\uf3c0"
-  },
-  
-  "ti-asset" : {
-    iconSet: 'tabler icons', code: "\uf1ce"
-  },
-  
-  "ti-asterisk" : {
-    iconSet: 'tabler icons', code: "\uefd5"
-  },
-  
-  "ti-asterisk-simple" : {
-    iconSet: 'tabler icons', code: "\uefd4"
-  },
-  
-  "ti-at" : {
-    iconSet: 'tabler icons', code: "\uea2b"
-  },
-  
-  "ti-at-off" : {
-    iconSet: 'tabler icons', code: "\uf0b0"
-  },
-  
-  "ti-atom" : {
-    iconSet: 'tabler icons', code: "\ueb79"
-  },
-  
-  "ti-atom-2" : {
-    iconSet: 'tabler icons', code: "\uebdf"
-  },
-  
-  "ti-atom-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf71b"
-  },
-  
-  "ti-atom-off" : {
-    iconSet: 'tabler icons', code: "\uf0f9"
-  },
-  
-  "ti-augmented-reality" : {
-    iconSet: 'tabler icons', code: "\uf023"
-  },
-  
-  "ti-augmented-reality-2" : {
-    iconSet: 'tabler icons', code: "\uf37e"
-  },
-  
-  "ti-augmented-reality-off" : {
-    iconSet: 'tabler icons', code: "\uf3c1"
-  },
-  
-  "ti-award" : {
-    iconSet: 'tabler icons', code: "\uea2c"
-  },
-  
-  "ti-award-filled" : {
-    iconSet: 'tabler icons', code: "\uf71c"
-  },
-  
-  "ti-award-off" : {
-    iconSet: 'tabler icons', code: "\uf0fa"
-  },
-  
-  "ti-axe" : {
-    iconSet: 'tabler icons', code: "\uef9f"
-  },
-  
-  "ti-axis-x" : {
-    iconSet: 'tabler icons', code: "\uef45"
-  },
-  
-  "ti-axis-y" : {
-    iconSet: 'tabler icons', code: "\uef46"
-  },
-  
-  "ti-baby-bottle" : {
-    iconSet: 'tabler icons', code: "\uf5d2"
-  },
-  
-  "ti-baby-carriage" : {
-    iconSet: 'tabler icons', code: "\uf05d"
-  },
-  
-  "ti-backhoe" : {
-    iconSet: 'tabler icons', code: "\ued86"
-  },
-  
-  "ti-backpack" : {
-    iconSet: 'tabler icons', code: "\uef47"
-  },
-  
-  "ti-backpack-off" : {
-    iconSet: 'tabler icons', code: "\uf3c2"
-  },
-  
-  "ti-backspace" : {
-    iconSet: 'tabler icons', code: "\uea2d"
-  },
-  
-  "ti-backspace-filled" : {
-    iconSet: 'tabler icons', code: "\uf7dc"
-  },
-  
-  "ti-badge" : {
-    iconSet: 'tabler icons', code: "\uefc2"
-  },
-  
-  "ti-badge-3d" : {
-    iconSet: 'tabler icons', code: "\uf555"
-  },
-  
-  "ti-badge-4k" : {
-    iconSet: 'tabler icons', code: "\uf556"
-  },
-  
-  "ti-badge-8k" : {
-    iconSet: 'tabler icons', code: "\uf557"
-  },
-  
-  "ti-badge-ad" : {
-    iconSet: 'tabler icons', code: "\uf558"
-  },
-  
-  "ti-badge-ar" : {
-    iconSet: 'tabler icons', code: "\uf559"
-  },
-  
-  "ti-badge-cc" : {
-    iconSet: 'tabler icons', code: "\uf55a"
-  },
-  
-  "ti-badge-filled" : {
-    iconSet: 'tabler icons', code: "\uf667"
-  },
-  
-  "ti-badge-hd" : {
-    iconSet: 'tabler icons', code: "\uf55b"
-  },
-  
-  "ti-badge-off" : {
-    iconSet: 'tabler icons', code: "\uf0fb"
-  },
-  
-  "ti-badge-sd" : {
-    iconSet: 'tabler icons', code: "\uf55c"
-  },
-  
-  "ti-badge-tm" : {
-    iconSet: 'tabler icons', code: "\uf55d"
-  },
-  
-  "ti-badge-vo" : {
-    iconSet: 'tabler icons', code: "\uf55e"
-  },
-  
-  "ti-badge-vr" : {
-    iconSet: 'tabler icons', code: "\uf55f"
-  },
-  
-  "ti-badge-wc" : {
-    iconSet: 'tabler icons', code: "\uf560"
-  },
-  
-  "ti-badges" : {
-    iconSet: 'tabler icons', code: "\uefc3"
-  },
-  
-  "ti-badges-filled" : {
-    iconSet: 'tabler icons', code: "\uf7dd"
-  },
-  
-  "ti-badges-off" : {
-    iconSet: 'tabler icons', code: "\uf0fc"
-  },
-  
-  "ti-baguette" : {
-    iconSet: 'tabler icons', code: "\uf3a5"
-  },
-  
-  "ti-ball-american-football" : {
-    iconSet: 'tabler icons', code: "\uee04"
-  },
-  
-  "ti-ball-american-football-off" : {
-    iconSet: 'tabler icons', code: "\uf3c3"
-  },
-  
-  "ti-ball-baseball" : {
-    iconSet: 'tabler icons', code: "\uefa0"
-  },
-  
-  "ti-ball-basketball" : {
-    iconSet: 'tabler icons', code: "\uec28"
-  },
-  
-  "ti-ball-bowling" : {
-    iconSet: 'tabler icons', code: "\uec29"
-  },
-  
-  "ti-ball-football" : {
-    iconSet: 'tabler icons', code: "\uee06"
-  },
-  
-  "ti-ball-football-off" : {
-    iconSet: 'tabler icons', code: "\uee05"
-  },
-  
-  "ti-ball-tennis" : {
-    iconSet: 'tabler icons', code: "\uec2a"
-  },
-  
-  "ti-ball-volleyball" : {
-    iconSet: 'tabler icons', code: "\uec2b"
-  },
-  
-  "ti-balloon" : {
-    iconSet: 'tabler icons', code: "\uef3a"
-  },
-  
-  "ti-balloon-off" : {
-    iconSet: 'tabler icons', code: "\uf0fd"
-  },
-  
-  "ti-ballpen" : {
-    iconSet: 'tabler icons', code: "\uf06e"
-  },
-  
-  "ti-ballpen-off" : {
-    iconSet: 'tabler icons', code: "\uf0b1"
-  },
-  
-  "ti-ban" : {
-    iconSet: 'tabler icons', code: "\uea2e"
-  },
-  
-  "ti-bandage" : {
-    iconSet: 'tabler icons', code: "\ueb7a"
-  },
-  
-  "ti-bandage-filled" : {
-    iconSet: 'tabler icons', code: "\uf7de"
-  },
-  
-  "ti-bandage-off" : {
-    iconSet: 'tabler icons', code: "\uf3c4"
-  },
-  
-  "ti-barbell" : {
-    iconSet: 'tabler icons', code: "\ueff0"
-  },
-  
-  "ti-barbell-off" : {
-    iconSet: 'tabler icons', code: "\uf0b2"
-  },
-  
-  "ti-barcode" : {
-    iconSet: 'tabler icons', code: "\uebc6"
-  },
-  
-  "ti-barcode-off" : {
-    iconSet: 'tabler icons', code: "\uf0b3"
-  },
-  
-  "ti-barrel" : {
-    iconSet: 'tabler icons', code: "\uf0b4"
-  },
-  
-  "ti-barrel-off" : {
-    iconSet: 'tabler icons', code: "\uf0fe"
-  },
-  
-  "ti-barrier-block" : {
-    iconSet: 'tabler icons', code: "\uf00e"
-  },
-  
-  "ti-barrier-block-off" : {
-    iconSet: 'tabler icons', code: "\uf0b5"
-  },
-  
-  "ti-baseline" : {
-    iconSet: 'tabler icons', code: "\uf024"
-  },
-  
-  "ti-baseline-density-large" : {
-    iconSet: 'tabler icons', code: "\uf9f0"
-  },
-  
-  "ti-baseline-density-medium" : {
-    iconSet: 'tabler icons', code: "\uf9f1"
-  },
-  
-  "ti-baseline-density-small" : {
-    iconSet: 'tabler icons', code: "\uf9f2"
-  },
-  
-  "ti-basket" : {
-    iconSet: 'tabler icons', code: "\uebe1"
-  },
-  
-  "ti-basket-filled" : {
-    iconSet: 'tabler icons', code: "\uf7df"
-  },
-  
-  "ti-basket-off" : {
-    iconSet: 'tabler icons', code: "\uf0b6"
-  },
-  
-  "ti-bat" : {
-    iconSet: 'tabler icons', code: "\uf284"
-  },
-  
-  "ti-bath" : {
-    iconSet: 'tabler icons', code: "\uef48"
-  },
-  
-  "ti-bath-filled" : {
-    iconSet: 'tabler icons', code: "\uf71d"
-  },
-  
-  "ti-bath-off" : {
-    iconSet: 'tabler icons', code: "\uf0ff"
-  },
-  
-  "ti-battery" : {
-    iconSet: 'tabler icons', code: "\uea34"
-  },
-  
-  "ti-battery-1" : {
-    iconSet: 'tabler icons', code: "\uea2f"
-  },
-  
-  "ti-battery-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf71e"
-  },
-  
-  "ti-battery-2" : {
-    iconSet: 'tabler icons', code: "\uea30"
-  },
-  
-  "ti-battery-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf71f"
-  },
-  
-  "ti-battery-3" : {
-    iconSet: 'tabler icons', code: "\uea31"
-  },
-  
-  "ti-battery-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf720"
-  },
-  
-  "ti-battery-4" : {
-    iconSet: 'tabler icons', code: "\uea32"
-  },
-  
-  "ti-battery-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf721"
-  },
-  
-  "ti-battery-automotive" : {
-    iconSet: 'tabler icons', code: "\uee07"
-  },
-  
-  "ti-battery-charging" : {
-    iconSet: 'tabler icons', code: "\uea33"
-  },
-  
-  "ti-battery-charging-2" : {
-    iconSet: 'tabler icons', code: "\uef3b"
-  },
-  
-  "ti-battery-eco" : {
-    iconSet: 'tabler icons', code: "\uef3c"
-  },
-  
-  "ti-battery-filled" : {
-    iconSet: 'tabler icons', code: "\uf668"
-  },
-  
-  "ti-battery-off" : {
-    iconSet: 'tabler icons', code: "\ued1c"
-  },
-  
-  "ti-beach" : {
-    iconSet: 'tabler icons', code: "\uef3d"
-  },
-  
-  "ti-beach-off" : {
-    iconSet: 'tabler icons', code: "\uf0b7"
-  },
-  
-  "ti-bed" : {
-    iconSet: 'tabler icons', code: "\ueb5c"
-  },
-  
-  "ti-bed-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e0"
-  },
-  
-  "ti-bed-off" : {
-    iconSet: 'tabler icons', code: "\uf100"
-  },
-  
-  "ti-beer" : {
-    iconSet: 'tabler icons', code: "\uefa1"
-  },
-  
-  "ti-beer-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e1"
-  },
-  
-  "ti-beer-off" : {
-    iconSet: 'tabler icons', code: "\uf101"
-  },
-  
-  "ti-bell" : {
-    iconSet: 'tabler icons', code: "\uea35"
-  },
-  
-  "ti-bell-bolt" : {
-    iconSet: 'tabler icons', code: "\uf812"
-  },
-  
-  "ti-bell-cancel" : {
-    iconSet: 'tabler icons', code: "\uf813"
-  },
-  
-  "ti-bell-check" : {
-    iconSet: 'tabler icons', code: "\uf814"
-  },
-  
-  "ti-bell-code" : {
-    iconSet: 'tabler icons', code: "\uf815"
-  },
-  
-  "ti-bell-cog" : {
-    iconSet: 'tabler icons', code: "\uf816"
-  },
-  
-  "ti-bell-dollar" : {
-    iconSet: 'tabler icons', code: "\uf817"
-  },
-  
-  "ti-bell-down" : {
-    iconSet: 'tabler icons', code: "\uf818"
-  },
-  
-  "ti-bell-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf819"
-  },
-  
-  "ti-bell-filled" : {
-    iconSet: 'tabler icons', code: "\uf669"
-  },
-  
-  "ti-bell-heart" : {
-    iconSet: 'tabler icons', code: "\uf81a"
-  },
-  
-  "ti-bell-minus" : {
-    iconSet: 'tabler icons', code: "\uede2"
-  },
-  
-  "ti-bell-minus-filled" : {
-    iconSet: 'tabler icons', code: "\uf722"
-  },
-  
-  "ti-bell-off" : {
-    iconSet: 'tabler icons', code: "\uece9"
-  },
-  
-  "ti-bell-pause" : {
-    iconSet: 'tabler icons', code: "\uf81b"
-  },
-  
-  "ti-bell-pin" : {
-    iconSet: 'tabler icons', code: "\uf81c"
-  },
-  
-  "ti-bell-plus" : {
-    iconSet: 'tabler icons', code: "\uede3"
-  },
-  
-  "ti-bell-plus-filled" : {
-    iconSet: 'tabler icons', code: "\uf723"
-  },
-  
-  "ti-bell-question" : {
-    iconSet: 'tabler icons', code: "\uf81d"
-  },
-  
-  "ti-bell-ringing" : {
-    iconSet: 'tabler icons', code: "\ued07"
-  },
-  
-  "ti-bell-ringing-2" : {
-    iconSet: 'tabler icons', code: "\uede4"
-  },
-  
-  "ti-bell-ringing-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf724"
-  },
-  
-  "ti-bell-ringing-filled" : {
-    iconSet: 'tabler icons', code: "\uf725"
-  },
-  
-  "ti-bell-school" : {
-    iconSet: 'tabler icons', code: "\uf05e"
-  },
-  
-  "ti-bell-search" : {
-    iconSet: 'tabler icons', code: "\uf81e"
-  },
-  
-  "ti-bell-share" : {
-    iconSet: 'tabler icons', code: "\uf81f"
-  },
-  
-  "ti-bell-star" : {
-    iconSet: 'tabler icons', code: "\uf820"
-  },
-  
-  "ti-bell-up" : {
-    iconSet: 'tabler icons', code: "\uf821"
-  },
-  
-  "ti-bell-x" : {
-    iconSet: 'tabler icons', code: "\uede5"
-  },
-  
-  "ti-bell-x-filled" : {
-    iconSet: 'tabler icons', code: "\uf726"
-  },
-  
-  "ti-bell-z" : {
-    iconSet: 'tabler icons', code: "\ueff1"
-  },
-  
-  "ti-bell-z-filled" : {
-    iconSet: 'tabler icons', code: "\uf727"
-  },
-  
-  "ti-beta" : {
-    iconSet: 'tabler icons', code: "\uf544"
-  },
-  
-  "ti-bible" : {
-    iconSet: 'tabler icons', code: "\uefc4"
-  },
-  
-  "ti-bike" : {
-    iconSet: 'tabler icons', code: "\uea36"
-  },
-  
-  "ti-bike-off" : {
-    iconSet: 'tabler icons', code: "\uf0b8"
-  },
-  
-  "ti-binary" : {
-    iconSet: 'tabler icons', code: "\uee08"
-  },
-  
-  "ti-binary-off" : {
-    iconSet: 'tabler icons', code: "\uf3c5"
-  },
-  
-  "ti-binary-tree" : {
-    iconSet: 'tabler icons', code: "\uf5d4"
-  },
-  
-  "ti-binary-tree-2" : {
-    iconSet: 'tabler icons', code: "\uf5d3"
-  },
-  
-  "ti-biohazard" : {
-    iconSet: 'tabler icons', code: "\uecb8"
-  },
-  
-  "ti-biohazard-off" : {
-    iconSet: 'tabler icons', code: "\uf0b9"
-  },
-  
-  "ti-blade" : {
-    iconSet: 'tabler icons', code: "\uf4bd"
-  },
-  
-  "ti-blade-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e2"
-  },
-  
-  "ti-bleach" : {
-    iconSet: 'tabler icons', code: "\uf2f3"
-  },
-  
-  "ti-bleach-chlorine" : {
-    iconSet: 'tabler icons', code: "\uf2f0"
-  },
-  
-  "ti-bleach-no-chlorine" : {
-    iconSet: 'tabler icons', code: "\uf2f1"
-  },
-  
-  "ti-bleach-off" : {
-    iconSet: 'tabler icons', code: "\uf2f2"
-  },
-  
-  "ti-blockquote" : {
-    iconSet: 'tabler icons', code: "\uee09"
-  },
-  
-  "ti-bluetooth" : {
-    iconSet: 'tabler icons', code: "\uea37"
-  },
-  
-  "ti-bluetooth-connected" : {
-    iconSet: 'tabler icons', code: "\uecea"
-  },
-  
-  "ti-bluetooth-off" : {
-    iconSet: 'tabler icons', code: "\ueceb"
-  },
-  
-  "ti-bluetooth-x" : {
-    iconSet: 'tabler icons', code: "\uf081"
-  },
-  
-  "ti-blur" : {
-    iconSet: 'tabler icons', code: "\uef8c"
-  },
-  
-  "ti-blur-off" : {
-    iconSet: 'tabler icons', code: "\uf3c6"
-  },
-  
-  "ti-bmp" : {
-    iconSet: 'tabler icons', code: "\uf3a6"
-  },
-  
-  "ti-bold" : {
-    iconSet: 'tabler icons', code: "\ueb7b"
-  },
-  
-  "ti-bold-off" : {
-    iconSet: 'tabler icons', code: "\uf0ba"
-  },
-  
-  "ti-bolt" : {
-    iconSet: 'tabler icons', code: "\uea38"
-  },
-  
-  "ti-bolt-off" : {
-    iconSet: 'tabler icons', code: "\uecec"
-  },
-  
-  "ti-bomb" : {
-    iconSet: 'tabler icons', code: "\uf59c"
-  },
-  
-  "ti-bone" : {
-    iconSet: 'tabler icons', code: "\uedb8"
-  },
-  
-  "ti-bone-off" : {
-    iconSet: 'tabler icons', code: "\uf0bb"
-  },
-  
-  "ti-bong" : {
-    iconSet: 'tabler icons', code: "\uf3a7"
-  },
-  
-  "ti-bong-off" : {
-    iconSet: 'tabler icons', code: "\uf3c7"
-  },
-  
-  "ti-book" : {
-    iconSet: 'tabler icons', code: "\uea39"
-  },
-  
-  "ti-book-2" : {
-    iconSet: 'tabler icons', code: "\uefc5"
-  },
-  
-  "ti-book-download" : {
-    iconSet: 'tabler icons', code: "\uf070"
-  },
-  
-  "ti-book-off" : {
-    iconSet: 'tabler icons', code: "\uf0bc"
-  },
-  
-  "ti-book-upload" : {
-    iconSet: 'tabler icons', code: "\uf071"
-  },
-  
-  "ti-bookmark" : {
-    iconSet: 'tabler icons', code: "\uea3a"
-  },
-  
-  "ti-bookmark-off" : {
-    iconSet: 'tabler icons', code: "\ueced"
-  },
-  
-  "ti-bookmarks" : {
-    iconSet: 'tabler icons', code: "\ued08"
-  },
-  
-  "ti-bookmarks-off" : {
-    iconSet: 'tabler icons', code: "\uf0bd"
-  },
-  
-  "ti-books" : {
-    iconSet: 'tabler icons', code: "\ueff2"
-  },
-  
-  "ti-books-off" : {
-    iconSet: 'tabler icons', code: "\uf0be"
-  },
-  
-  "ti-border-all" : {
-    iconSet: 'tabler icons', code: "\uea3b"
-  },
-  
-  "ti-border-bottom" : {
-    iconSet: 'tabler icons', code: "\uea3c"
-  },
-  
-  "ti-border-corners" : {
-    iconSet: 'tabler icons', code: "\uf7a0"
-  },
-  
-  "ti-border-horizontal" : {
-    iconSet: 'tabler icons', code: "\uea3d"
-  },
-  
-  "ti-border-inner" : {
-    iconSet: 'tabler icons', code: "\uea3e"
-  },
-  
-  "ti-border-left" : {
-    iconSet: 'tabler icons', code: "\uea3f"
-  },
-  
-  "ti-border-none" : {
-    iconSet: 'tabler icons', code: "\uea40"
-  },
-  
-  "ti-border-outer" : {
-    iconSet: 'tabler icons', code: "\uea41"
-  },
-  
-  "ti-border-radius" : {
-    iconSet: 'tabler icons', code: "\ueb7c"
-  },
-  
-  "ti-border-right" : {
-    iconSet: 'tabler icons', code: "\uea42"
-  },
-  
-  "ti-border-sides" : {
-    iconSet: 'tabler icons', code: "\uf7a1"
-  },
-  
-  "ti-border-style" : {
-    iconSet: 'tabler icons', code: "\uee0a"
-  },
-  
-  "ti-border-style-2" : {
-    iconSet: 'tabler icons', code: "\uef22"
-  },
-  
-  "ti-border-top" : {
-    iconSet: 'tabler icons', code: "\uea43"
-  },
-  
-  "ti-border-vertical" : {
-    iconSet: 'tabler icons', code: "\uea44"
-  },
-  
-  "ti-bottle" : {
-    iconSet: 'tabler icons', code: "\uef0b"
-  },
-  
-  "ti-bottle-off" : {
-    iconSet: 'tabler icons', code: "\uf3c8"
-  },
-  
-  "ti-bounce-left" : {
-    iconSet: 'tabler icons', code: "\uf59d"
-  },
-  
-  "ti-bounce-right" : {
-    iconSet: 'tabler icons', code: "\uf59e"
-  },
-  
-  "ti-bow" : {
-    iconSet: 'tabler icons', code: "\uf096"
-  },
-  
-  "ti-bowl" : {
-    iconSet: 'tabler icons', code: "\uf4fa"
-  },
-  
-  "ti-box" : {
-    iconSet: 'tabler icons', code: "\uea45"
-  },
-  
-  "ti-box-align-bottom" : {
-    iconSet: 'tabler icons', code: "\uf2a8"
-  },
-  
-  "ti-box-align-bottom-left" : {
-    iconSet: 'tabler icons', code: "\uf2ce"
-  },
-  
-  "ti-box-align-bottom-right" : {
-    iconSet: 'tabler icons', code: "\uf2cf"
-  },
-  
-  "ti-box-align-left" : {
-    iconSet: 'tabler icons', code: "\uf2a9"
-  },
-  
-  "ti-box-align-right" : {
-    iconSet: 'tabler icons', code: "\uf2aa"
-  },
-  
-  "ti-box-align-top" : {
-    iconSet: 'tabler icons', code: "\uf2ab"
-  },
-  
-  "ti-box-align-top-left" : {
-    iconSet: 'tabler icons', code: "\uf2d0"
-  },
-  
-  "ti-box-align-top-right" : {
-    iconSet: 'tabler icons', code: "\uf2d1"
-  },
-  
-  "ti-box-margin" : {
-    iconSet: 'tabler icons', code: "\uee0b"
-  },
-  
-  "ti-box-model" : {
-    iconSet: 'tabler icons', code: "\uee0c"
-  },
-  
-  "ti-box-model-2" : {
-    iconSet: 'tabler icons', code: "\uef23"
-  },
-  
-  "ti-box-model-2-off" : {
-    iconSet: 'tabler icons', code: "\uf3c9"
-  },
-  
-  "ti-box-model-off" : {
-    iconSet: 'tabler icons', code: "\uf3ca"
-  },
-  
-  "ti-box-multiple" : {
-    iconSet: 'tabler icons', code: "\uee17"
-  },
-  
-  "ti-box-multiple-0" : {
-    iconSet: 'tabler icons', code: "\uee0d"
-  },
-  
-  "ti-box-multiple-1" : {
-    iconSet: 'tabler icons', code: "\uee0e"
-  },
-  
-  "ti-box-multiple-2" : {
-    iconSet: 'tabler icons', code: "\uee0f"
-  },
-  
-  "ti-box-multiple-3" : {
-    iconSet: 'tabler icons', code: "\uee10"
-  },
-  
-  "ti-box-multiple-4" : {
-    iconSet: 'tabler icons', code: "\uee11"
-  },
-  
-  "ti-box-multiple-5" : {
-    iconSet: 'tabler icons', code: "\uee12"
-  },
-  
-  "ti-box-multiple-6" : {
-    iconSet: 'tabler icons', code: "\uee13"
-  },
-  
-  "ti-box-multiple-7" : {
-    iconSet: 'tabler icons', code: "\uee14"
-  },
-  
-  "ti-box-multiple-8" : {
-    iconSet: 'tabler icons', code: "\uee15"
-  },
-  
-  "ti-box-multiple-9" : {
-    iconSet: 'tabler icons', code: "\uee16"
-  },
-  
-  "ti-box-off" : {
-    iconSet: 'tabler icons', code: "\uf102"
-  },
-  
-  "ti-box-padding" : {
-    iconSet: 'tabler icons', code: "\uee18"
-  },
-  
-  "ti-box-seam" : {
-    iconSet: 'tabler icons', code: "\uf561"
-  },
-  
-  "ti-braces" : {
-    iconSet: 'tabler icons', code: "\uebcc"
-  },
-  
-  "ti-braces-off" : {
-    iconSet: 'tabler icons', code: "\uf0bf"
-  },
-  
-  "ti-brackets" : {
-    iconSet: 'tabler icons', code: "\uebcd"
-  },
-  
-  "ti-brackets-contain" : {
-    iconSet: 'tabler icons', code: "\uf1e5"
-  },
-  
-  "ti-brackets-contain-end" : {
-    iconSet: 'tabler icons', code: "\uf1e3"
-  },
-  
-  "ti-brackets-contain-start" : {
-    iconSet: 'tabler icons', code: "\uf1e4"
-  },
-  
-  "ti-brackets-off" : {
-    iconSet: 'tabler icons', code: "\uf0c0"
-  },
-  
-  "ti-braille" : {
-    iconSet: 'tabler icons', code: "\uf545"
-  },
-  
-  "ti-brain" : {
-    iconSet: 'tabler icons', code: "\uf59f"
-  },
-  
-  "ti-brand-4chan" : {
-    iconSet: 'tabler icons', code: "\uf494"
-  },
-  
-  "ti-brand-abstract" : {
-    iconSet: 'tabler icons', code: "\uf495"
-  },
-  
-  "ti-brand-adobe" : {
-    iconSet: 'tabler icons', code: "\uf0dc"
-  },
-  
-  "ti-brand-adonis-js" : {
-    iconSet: 'tabler icons', code: "\uf496"
-  },
-  
-  "ti-brand-airbnb" : {
-    iconSet: 'tabler icons', code: "\ued68"
-  },
-  
-  "ti-brand-airtable" : {
-    iconSet: 'tabler icons', code: "\uef6a"
-  },
-  
-  "ti-brand-algolia" : {
-    iconSet: 'tabler icons', code: "\uf390"
-  },
-  
-  "ti-brand-alipay" : {
-    iconSet: 'tabler icons', code: "\uf7a2"
-  },
-  
-  "ti-brand-alpine-js" : {
-    iconSet: 'tabler icons', code: "\uf324"
-  },
-  
-  "ti-brand-amazon" : {
-    iconSet: 'tabler icons', code: "\uf230"
-  },
-  
-  "ti-brand-amd" : {
-    iconSet: 'tabler icons', code: "\uf653"
-  },
-  
-  "ti-brand-amigo" : {
-    iconSet: 'tabler icons', code: "\uf5f9"
-  },
-  
-  "ti-brand-among-us" : {
-    iconSet: 'tabler icons', code: "\uf205"
-  },
-  
-  "ti-brand-android" : {
-    iconSet: 'tabler icons', code: "\uec16"
-  },
-  
-  "ti-brand-angular" : {
-    iconSet: 'tabler icons', code: "\uef6b"
-  },
-  
-  "ti-brand-ao3" : {
-    iconSet: 'tabler icons', code: "\uf5e8"
-  },
-  
-  "ti-brand-appgallery" : {
-    iconSet: 'tabler icons', code: "\uf231"
-  },
-  
-  "ti-brand-apple" : {
-    iconSet: 'tabler icons', code: "\uec17"
-  },
-  
-  "ti-brand-apple-arcade" : {
-    iconSet: 'tabler icons', code: "\ued69"
-  },
-  
-  "ti-brand-apple-podcast" : {
-    iconSet: 'tabler icons', code: "\uf1e6"
-  },
-  
-  "ti-brand-appstore" : {
-    iconSet: 'tabler icons', code: "\ued24"
-  },
-  
-  "ti-brand-asana" : {
-    iconSet: 'tabler icons', code: "\uedc5"
-  },
-  
-  "ti-brand-backbone" : {
-    iconSet: 'tabler icons', code: "\uf325"
-  },
-  
-  "ti-brand-badoo" : {
-    iconSet: 'tabler icons', code: "\uf206"
-  },
-  
-  "ti-brand-baidu" : {
-    iconSet: 'tabler icons', code: "\uf5e9"
-  },
-  
-  "ti-brand-bandcamp" : {
-    iconSet: 'tabler icons', code: "\uf207"
-  },
-  
-  "ti-brand-bandlab" : {
-    iconSet: 'tabler icons', code: "\uf5fa"
-  },
-  
-  "ti-brand-beats" : {
-    iconSet: 'tabler icons', code: "\uf208"
-  },
-  
-  "ti-brand-behance" : {
-    iconSet: 'tabler icons', code: "\uec6e"
-  },
-  
-  "ti-brand-bilibili" : {
-    iconSet: 'tabler icons', code: "\uf6d2"
-  },
-  
-  "ti-brand-binance" : {
-    iconSet: 'tabler icons', code: "\uf5a0"
-  },
-  
-  "ti-brand-bing" : {
-    iconSet: 'tabler icons', code: "\uedc6"
-  },
-  
-  "ti-brand-bitbucket" : {
-    iconSet: 'tabler icons', code: "\uedc7"
-  },
-  
-  "ti-brand-blackberry" : {
-    iconSet: 'tabler icons', code: "\uf568"
-  },
-  
-  "ti-brand-blender" : {
-    iconSet: 'tabler icons', code: "\uf326"
-  },
-  
-  "ti-brand-blogger" : {
-    iconSet: 'tabler icons', code: "\uf35a"
-  },
-  
-  "ti-brand-booking" : {
-    iconSet: 'tabler icons', code: "\uedc8"
-  },
-  
-  "ti-brand-bootstrap" : {
-    iconSet: 'tabler icons', code: "\uef3e"
-  },
-  
-  "ti-brand-bulma" : {
-    iconSet: 'tabler icons', code: "\uf327"
-  },
-  
-  "ti-brand-bumble" : {
-    iconSet: 'tabler icons', code: "\uf5fb"
-  },
-  
-  "ti-brand-bunpo" : {
-    iconSet: 'tabler icons', code: "\uf4cf"
-  },
-  
-  "ti-brand-c-sharp" : {
-    iconSet: 'tabler icons', code: "\uf003"
-  },
-  
-  "ti-brand-cake" : {
-    iconSet: 'tabler icons', code: "\uf7a3"
-  },
-  
-  "ti-brand-cakephp" : {
-    iconSet: 'tabler icons', code: "\uf7af"
-  },
-  
-  "ti-brand-campaignmonitor" : {
-    iconSet: 'tabler icons', code: "\uf328"
-  },
-  
-  "ti-brand-carbon" : {
-    iconSet: 'tabler icons', code: "\uf348"
-  },
-  
-  "ti-brand-cashapp" : {
-    iconSet: 'tabler icons', code: "\uf391"
-  },
-  
-  "ti-brand-chrome" : {
-    iconSet: 'tabler icons', code: "\uec18"
-  },
-  
-  "ti-brand-citymapper" : {
-    iconSet: 'tabler icons', code: "\uf5fc"
-  },
-  
-  "ti-brand-codecov" : {
-    iconSet: 'tabler icons', code: "\uf329"
-  },
-  
-  "ti-brand-codepen" : {
-    iconSet: 'tabler icons', code: "\uec6f"
-  },
-  
-  "ti-brand-codesandbox" : {
-    iconSet: 'tabler icons', code: "\ued6a"
-  },
-  
-  "ti-brand-cohost" : {
-    iconSet: 'tabler icons', code: "\uf5d5"
-  },
-  
-  "ti-brand-coinbase" : {
-    iconSet: 'tabler icons', code: "\uf209"
-  },
-  
-  "ti-brand-comedy-central" : {
-    iconSet: 'tabler icons', code: "\uf217"
-  },
-  
-  "ti-brand-coreos" : {
-    iconSet: 'tabler icons', code: "\uf5fd"
-  },
-  
-  "ti-brand-couchdb" : {
-    iconSet: 'tabler icons', code: "\uf60f"
-  },
-  
-  "ti-brand-couchsurfing" : {
-    iconSet: 'tabler icons', code: "\uf392"
-  },
-  
-  "ti-brand-cpp" : {
-    iconSet: 'tabler icons', code: "\uf5fe"
-  },
-  
-  "ti-brand-crunchbase" : {
-    iconSet: 'tabler icons', code: "\uf7e3"
-  },
-  
-  "ti-brand-css3" : {
-    iconSet: 'tabler icons', code: "\ued6b"
-  },
-  
-  "ti-brand-ctemplar" : {
-    iconSet: 'tabler icons', code: "\uf4d0"
-  },
-  
-  "ti-brand-cucumber" : {
-    iconSet: 'tabler icons', code: "\uef6c"
-  },
-  
-  "ti-brand-cupra" : {
-    iconSet: 'tabler icons', code: "\uf4d1"
-  },
-  
-  "ti-brand-cypress" : {
-    iconSet: 'tabler icons', code: "\uf333"
-  },
-  
-  "ti-brand-d3" : {
-    iconSet: 'tabler icons', code: "\uf24e"
-  },
-  
-  "ti-brand-days-counter" : {
-    iconSet: 'tabler icons', code: "\uf4d2"
-  },
-  
-  "ti-brand-dcos" : {
-    iconSet: 'tabler icons', code: "\uf32a"
-  },
-  
-  "ti-brand-debian" : {
-    iconSet: 'tabler icons', code: "\uef57"
-  },
-  
-  "ti-brand-deezer" : {
-    iconSet: 'tabler icons', code: "\uf78b"
-  },
-  
-  "ti-brand-deliveroo" : {
-    iconSet: 'tabler icons', code: "\uf4d3"
-  },
-  
-  "ti-brand-deno" : {
-    iconSet: 'tabler icons', code: "\uf24f"
-  },
-  
-  "ti-brand-denodo" : {
-    iconSet: 'tabler icons', code: "\uf610"
-  },
-  
-  "ti-brand-deviantart" : {
-    iconSet: 'tabler icons', code: "\uecfb"
-  },
-  
-  "ti-brand-dingtalk" : {
-    iconSet: 'tabler icons', code: "\uf5ea"
-  },
-  
-  "ti-brand-discord" : {
-    iconSet: 'tabler icons', code: "\uece3"
-  },
-  
-  "ti-brand-discord-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e4"
-  },
-  
-  "ti-brand-disney" : {
-    iconSet: 'tabler icons', code: "\uf20a"
-  },
-  
-  "ti-brand-disqus" : {
-    iconSet: 'tabler icons', code: "\uedc9"
-  },
-  
-  "ti-brand-django" : {
-    iconSet: 'tabler icons', code: "\uf349"
-  },
-  
-  "ti-brand-docker" : {
-    iconSet: 'tabler icons', code: "\uedca"
-  },
-  
-  "ti-brand-doctrine" : {
-    iconSet: 'tabler icons', code: "\uef6d"
-  },
-  
-  "ti-brand-dolby-digital" : {
-    iconSet: 'tabler icons', code: "\uf4d4"
-  },
-  
-  "ti-brand-douban" : {
-    iconSet: 'tabler icons', code: "\uf5ff"
-  },
-  
-  "ti-brand-dribbble" : {
-    iconSet: 'tabler icons', code: "\uec19"
-  },
-  
-  "ti-brand-dribbble-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e5"
-  },
-  
-  "ti-brand-drops" : {
-    iconSet: 'tabler icons', code: "\uf4d5"
-  },
-  
-  "ti-brand-drupal" : {
-    iconSet: 'tabler icons', code: "\uf393"
-  },
-  
-  "ti-brand-edge" : {
-    iconSet: 'tabler icons', code: "\uecfc"
-  },
-  
-  "ti-brand-elastic" : {
-    iconSet: 'tabler icons', code: "\uf611"
-  },
-  
-  "ti-brand-ember" : {
-    iconSet: 'tabler icons', code: "\uf497"
-  },
-  
-  "ti-brand-envato" : {
-    iconSet: 'tabler icons', code: "\uf394"
-  },
-  
-  "ti-brand-etsy" : {
-    iconSet: 'tabler icons', code: "\uf654"
-  },
-  
-  "ti-brand-evernote" : {
-    iconSet: 'tabler icons', code: "\uf600"
-  },
-  
-  "ti-brand-facebook" : {
-    iconSet: 'tabler icons', code: "\uec1a"
-  },
-  
-  "ti-brand-facebook-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e6"
-  },
-  
-  "ti-brand-figma" : {
-    iconSet: 'tabler icons', code: "\uec93"
-  },
-  
-  "ti-brand-finder" : {
-    iconSet: 'tabler icons', code: "\uf218"
-  },
-  
-  "ti-brand-firebase" : {
-    iconSet: 'tabler icons', code: "\uef6e"
-  },
-  
-  "ti-brand-firefox" : {
-    iconSet: 'tabler icons', code: "\uecfd"
-  },
-  
-  "ti-brand-fiverr" : {
-    iconSet: 'tabler icons', code: "\uf7a4"
-  },
-  
-  "ti-brand-flickr" : {
-    iconSet: 'tabler icons', code: "\uecfe"
-  },
-  
-  "ti-brand-flightradar24" : {
-    iconSet: 'tabler icons', code: "\uf4d6"
-  },
-  
-  "ti-brand-flipboard" : {
-    iconSet: 'tabler icons', code: "\uf20b"
-  },
-  
-  "ti-brand-flutter" : {
-    iconSet: 'tabler icons', code: "\uf395"
-  },
-  
-  "ti-brand-fortnite" : {
-    iconSet: 'tabler icons', code: "\uf260"
-  },
-  
-  "ti-brand-foursquare" : {
-    iconSet: 'tabler icons', code: "\uecff"
-  },
-  
-  "ti-brand-framer" : {
-    iconSet: 'tabler icons', code: "\uec1b"
-  },
-  
-  "ti-brand-framer-motion" : {
-    iconSet: 'tabler icons', code: "\uf78c"
-  },
-  
-  "ti-brand-funimation" : {
-    iconSet: 'tabler icons', code: "\uf655"
-  },
-  
-  "ti-brand-gatsby" : {
-    iconSet: 'tabler icons', code: "\uf396"
-  },
-  
-  "ti-brand-git" : {
-    iconSet: 'tabler icons', code: "\uef6f"
-  },
-  
-  "ti-brand-github" : {
-    iconSet: 'tabler icons', code: "\uec1c"
-  },
-  
-  "ti-brand-github-copilot" : {
-    iconSet: 'tabler icons', code: "\uf4a8"
-  },
-  
-  "ti-brand-github-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e7"
-  },
-  
-  "ti-brand-gitlab" : {
-    iconSet: 'tabler icons', code: "\uec1d"
-  },
-  
-  "ti-brand-gmail" : {
-    iconSet: 'tabler icons', code: "\uefa2"
-  },
-  
-  "ti-brand-golang" : {
-    iconSet: 'tabler icons', code: "\uf78d"
-  },
-  
-  "ti-brand-google" : {
-    iconSet: 'tabler icons', code: "\uec1f"
-  },
-  
-  "ti-brand-google-analytics" : {
-    iconSet: 'tabler icons', code: "\uedcb"
-  },
-  
-  "ti-brand-google-big-query" : {
-    iconSet: 'tabler icons', code: "\uf612"
-  },
-  
-  "ti-brand-google-drive" : {
-    iconSet: 'tabler icons', code: "\uec1e"
-  },
-  
-  "ti-brand-google-fit" : {
-    iconSet: 'tabler icons', code: "\uf297"
-  },
-  
-  "ti-brand-google-home" : {
-    iconSet: 'tabler icons', code: "\uf601"
-  },
-  
-  "ti-brand-google-one" : {
-    iconSet: 'tabler icons', code: "\uf232"
-  },
-  
-  "ti-brand-google-photos" : {
-    iconSet: 'tabler icons', code: "\uf20c"
-  },
-  
-  "ti-brand-google-play" : {
-    iconSet: 'tabler icons', code: "\ued25"
-  },
-  
-  "ti-brand-google-podcasts" : {
-    iconSet: 'tabler icons', code: "\uf656"
-  },
-  
-  "ti-brand-grammarly" : {
-    iconSet: 'tabler icons', code: "\uf32b"
-  },
-  
-  "ti-brand-graphql" : {
-    iconSet: 'tabler icons', code: "\uf32c"
-  },
-  
-  "ti-brand-gravatar" : {
-    iconSet: 'tabler icons', code: "\uedcc"
-  },
-  
-  "ti-brand-grindr" : {
-    iconSet: 'tabler icons', code: "\uf20d"
-  },
-  
-  "ti-brand-guardian" : {
-    iconSet: 'tabler icons', code: "\uf4fb"
-  },
-  
-  "ti-brand-gumroad" : {
-    iconSet: 'tabler icons', code: "\uf5d6"
-  },
-  
-  "ti-brand-hbo" : {
-    iconSet: 'tabler icons', code: "\uf657"
-  },
-  
-  "ti-brand-headlessui" : {
-    iconSet: 'tabler icons', code: "\uf32d"
-  },
-  
-  "ti-brand-hipchat" : {
-    iconSet: 'tabler icons', code: "\uedcd"
-  },
-  
-  "ti-brand-html5" : {
-    iconSet: 'tabler icons', code: "\ued6c"
-  },
-  
-  "ti-brand-inertia" : {
-    iconSet: 'tabler icons', code: "\uf34a"
-  },
-  
-  "ti-brand-instagram" : {
-    iconSet: 'tabler icons', code: "\uec20"
-  },
-  
-  "ti-brand-intercom" : {
-    iconSet: 'tabler icons', code: "\uf1cf"
-  },
-  
-  "ti-brand-itch" : {
-    iconSet: 'tabler icons', code: "\ufa22"
-  },
-  
-  "ti-brand-javascript" : {
-    iconSet: 'tabler icons', code: "\uef0c"
-  },
-  
-  "ti-brand-juejin" : {
-    iconSet: 'tabler icons', code: "\uf7b0"
-  },
-  
-  "ti-brand-kick" : {
-    iconSet: 'tabler icons', code: "\ufa23"
-  },
-  
-  "ti-brand-kickstarter" : {
-    iconSet: 'tabler icons', code: "\uedce"
-  },
-  
-  "ti-brand-kotlin" : {
-    iconSet: 'tabler icons', code: "\ued6d"
-  },
-  
-  "ti-brand-laravel" : {
-    iconSet: 'tabler icons', code: "\uf34b"
-  },
-  
-  "ti-brand-lastfm" : {
-    iconSet: 'tabler icons', code: "\uf001"
-  },
-  
-  "ti-brand-letterboxd" : {
-    iconSet: 'tabler icons', code: "\ufa24"
-  },
-  
-  "ti-brand-line" : {
-    iconSet: 'tabler icons', code: "\uf7e8"
-  },
-  
-  "ti-brand-linkedin" : {
-    iconSet: 'tabler icons', code: "\uec8c"
-  },
-  
-  "ti-brand-linktree" : {
-    iconSet: 'tabler icons', code: "\uf1e7"
-  },
-  
-  "ti-brand-linqpad" : {
-    iconSet: 'tabler icons', code: "\uf562"
-  },
-  
-  "ti-brand-loom" : {
-    iconSet: 'tabler icons', code: "\uef70"
-  },
-  
-  "ti-brand-mailgun" : {
-    iconSet: 'tabler icons', code: "\uf32e"
-  },
-  
-  "ti-brand-mantine" : {
-    iconSet: 'tabler icons', code: "\uf32f"
-  },
-  
-  "ti-brand-mastercard" : {
-    iconSet: 'tabler icons', code: "\uef49"
-  },
-  
-  "ti-brand-mastodon" : {
-    iconSet: 'tabler icons', code: "\uf250"
-  },
-  
-  "ti-brand-matrix" : {
-    iconSet: 'tabler icons', code: "\uf5eb"
-  },
-  
-  "ti-brand-mcdonalds" : {
-    iconSet: 'tabler icons', code: "\uf251"
-  },
-  
-  "ti-brand-medium" : {
-    iconSet: 'tabler icons', code: "\uec70"
-  },
-  
-  "ti-brand-mercedes" : {
-    iconSet: 'tabler icons', code: "\uf072"
-  },
-  
-  "ti-brand-messenger" : {
-    iconSet: 'tabler icons', code: "\uec71"
-  },
-  
-  "ti-brand-meta" : {
-    iconSet: 'tabler icons', code: "\uefb0"
-  },
-  
-  "ti-brand-miniprogram" : {
-    iconSet: 'tabler icons', code: "\uf602"
-  },
-  
-  "ti-brand-mixpanel" : {
-    iconSet: 'tabler icons', code: "\uf397"
-  },
-  
-  "ti-brand-monday" : {
-    iconSet: 'tabler icons', code: "\uf219"
-  },
-  
-  "ti-brand-mongodb" : {
-    iconSet: 'tabler icons', code: "\uf613"
-  },
-  
-  "ti-brand-my-oppo" : {
-    iconSet: 'tabler icons', code: "\uf4d7"
-  },
-  
-  "ti-brand-mysql" : {
-    iconSet: 'tabler icons', code: "\uf614"
-  },
-  
-  "ti-brand-national-geographic" : {
-    iconSet: 'tabler icons', code: "\uf603"
-  },
-  
-  "ti-brand-nem" : {
-    iconSet: 'tabler icons', code: "\uf5a1"
-  },
-  
-  "ti-brand-netbeans" : {
-    iconSet: 'tabler icons', code: "\uef71"
-  },
-  
-  "ti-brand-netease-music" : {
-    iconSet: 'tabler icons', code: "\uf604"
-  },
-  
-  "ti-brand-netflix" : {
-    iconSet: 'tabler icons', code: "\uedcf"
-  },
-  
-  "ti-brand-nexo" : {
-    iconSet: 'tabler icons', code: "\uf5a2"
-  },
-  
-  "ti-brand-nextcloud" : {
-    iconSet: 'tabler icons', code: "\uf4d8"
-  },
-  
-  "ti-brand-nextjs" : {
-    iconSet: 'tabler icons', code: "\uf0dd"
-  },
-  
-  "ti-brand-nord-vpn" : {
-    iconSet: 'tabler icons', code: "\uf37f"
-  },
-  
-  "ti-brand-notion" : {
-    iconSet: 'tabler icons', code: "\uef7b"
-  },
-  
-  "ti-brand-npm" : {
-    iconSet: 'tabler icons', code: "\uf569"
-  },
-  
-  "ti-brand-nuxt" : {
-    iconSet: 'tabler icons', code: "\uf0de"
-  },
-  
-  "ti-brand-nytimes" : {
-    iconSet: 'tabler icons', code: "\uef8d"
-  },
-  
-  "ti-brand-office" : {
-    iconSet: 'tabler icons', code: "\uf398"
-  },
-  
-  "ti-brand-ok-ru" : {
-    iconSet: 'tabler icons', code: "\uf399"
-  },
-  
-  "ti-brand-onedrive" : {
-    iconSet: 'tabler icons', code: "\uf5d7"
-  },
-  
-  "ti-brand-onlyfans" : {
-    iconSet: 'tabler icons', code: "\uf605"
-  },
-  
-  "ti-brand-open-source" : {
-    iconSet: 'tabler icons', code: "\uedd0"
-  },
-  
-  "ti-brand-openai" : {
-    iconSet: 'tabler icons', code: "\uf78e"
-  },
-  
-  "ti-brand-openvpn" : {
-    iconSet: 'tabler icons', code: "\uf39a"
-  },
-  
-  "ti-brand-opera" : {
-    iconSet: 'tabler icons', code: "\uec21"
-  },
-  
-  "ti-brand-pagekit" : {
-    iconSet: 'tabler icons', code: "\uedd1"
-  },
-  
-  "ti-brand-patreon" : {
-    iconSet: 'tabler icons', code: "\uedd2"
-  },
-  
-  "ti-brand-paypal" : {
-    iconSet: 'tabler icons', code: "\uec22"
-  },
-  
-  "ti-brand-paypal-filled" : {
-    iconSet: 'tabler icons', code: "\uf7e9"
-  },
-  
-  "ti-brand-paypay" : {
-    iconSet: 'tabler icons', code: "\uf5ec"
-  },
-  
-  "ti-brand-peanut" : {
-    iconSet: 'tabler icons', code: "\uf39b"
-  },
-  
-  "ti-brand-pepsi" : {
-    iconSet: 'tabler icons', code: "\uf261"
-  },
-  
-  "ti-brand-php" : {
-    iconSet: 'tabler icons', code: "\uef72"
-  },
-  
-  "ti-brand-picsart" : {
-    iconSet: 'tabler icons', code: "\uf4d9"
-  },
-  
-  "ti-brand-pinterest" : {
-    iconSet: 'tabler icons', code: "\uec8d"
-  },
-  
-  "ti-brand-planetscale" : {
-    iconSet: 'tabler icons', code: "\uf78f"
-  },
-  
-  "ti-brand-pocket" : {
-    iconSet: 'tabler icons', code: "\ued00"
-  },
-  
-  "ti-brand-polymer" : {
-    iconSet: 'tabler icons', code: "\uf498"
-  },
-  
-  "ti-brand-powershell" : {
-    iconSet: 'tabler icons', code: "\uf5ed"
-  },
-  
-  "ti-brand-prisma" : {
-    iconSet: 'tabler icons', code: "\uf499"
-  },
-  
-  "ti-brand-producthunt" : {
-    iconSet: 'tabler icons', code: "\uedd3"
-  },
-  
-  "ti-brand-pushbullet" : {
-    iconSet: 'tabler icons', code: "\uf330"
-  },
-  
-  "ti-brand-pushover" : {
-    iconSet: 'tabler icons', code: "\uf20e"
-  },
-  
-  "ti-brand-python" : {
-    iconSet: 'tabler icons', code: "\ued01"
-  },
-  
-  "ti-brand-qq" : {
-    iconSet: 'tabler icons', code: "\uf606"
-  },
-  
-  "ti-brand-radix-ui" : {
-    iconSet: 'tabler icons', code: "\uf790"
-  },
-  
-  "ti-brand-react" : {
-    iconSet: 'tabler icons', code: "\uf34c"
-  },
-  
-  "ti-brand-react-native" : {
-    iconSet: 'tabler icons', code: "\uef73"
-  },
-  
-  "ti-brand-reason" : {
-    iconSet: 'tabler icons', code: "\uf49a"
-  },
-  
-  "ti-brand-reddit" : {
-    iconSet: 'tabler icons', code: "\uec8e"
-  },
-  
-  "ti-brand-redhat" : {
-    iconSet: 'tabler icons', code: "\uf331"
-  },
-  
-  "ti-brand-redux" : {
-    iconSet: 'tabler icons', code: "\uf3a8"
-  },
-  
-  "ti-brand-revolut" : {
-    iconSet: 'tabler icons', code: "\uf4da"
-  },
-  
-  "ti-brand-safari" : {
-    iconSet: 'tabler icons', code: "\uec23"
-  },
-  
-  "ti-brand-samsungpass" : {
-    iconSet: 'tabler icons', code: "\uf4db"
-  },
-  
-  "ti-brand-sass" : {
-    iconSet: 'tabler icons', code: "\uedd4"
-  },
-  
-  "ti-brand-sentry" : {
-    iconSet: 'tabler icons', code: "\uedd5"
-  },
-  
-  "ti-brand-sharik" : {
-    iconSet: 'tabler icons', code: "\uf4dc"
-  },
-  
-  "ti-brand-shazam" : {
-    iconSet: 'tabler icons', code: "\uedd6"
-  },
-  
-  "ti-brand-shopee" : {
-    iconSet: 'tabler icons', code: "\uf252"
-  },
-  
-  "ti-brand-sketch" : {
-    iconSet: 'tabler icons', code: "\uec24"
-  },
-  
-  "ti-brand-skype" : {
-    iconSet: 'tabler icons', code: "\ued02"
-  },
-  
-  "ti-brand-slack" : {
-    iconSet: 'tabler icons', code: "\uec72"
-  },
-  
-  "ti-brand-snapchat" : {
-    iconSet: 'tabler icons', code: "\uec25"
-  },
-  
-  "ti-brand-snapseed" : {
-    iconSet: 'tabler icons', code: "\uf253"
-  },
-  
-  "ti-brand-snowflake" : {
-    iconSet: 'tabler icons', code: "\uf615"
-  },
-  
-  "ti-brand-socket-io" : {
-    iconSet: 'tabler icons', code: "\uf49b"
-  },
-  
-  "ti-brand-solidjs" : {
-    iconSet: 'tabler icons', code: "\uf5ee"
-  },
-  
-  "ti-brand-soundcloud" : {
-    iconSet: 'tabler icons', code: "\ued6e"
-  },
-  
-  "ti-brand-spacehey" : {
-    iconSet: 'tabler icons', code: "\uf4fc"
-  },
-  
-  "ti-brand-spotify" : {
-    iconSet: 'tabler icons', code: "\ued03"
-  },
-  
-  "ti-brand-stackoverflow" : {
-    iconSet: 'tabler icons', code: "\uef58"
-  },
-  
-  "ti-brand-stackshare" : {
-    iconSet: 'tabler icons', code: "\uf607"
-  },
-  
-  "ti-brand-steam" : {
-    iconSet: 'tabler icons', code: "\ued6f"
-  },
-  
-  "ti-brand-storybook" : {
-    iconSet: 'tabler icons', code: "\uf332"
-  },
-  
-  "ti-brand-storytel" : {
-    iconSet: 'tabler icons', code: "\uf608"
-  },
-  
-  "ti-brand-strava" : {
-    iconSet: 'tabler icons', code: "\uf254"
-  },
-  
-  "ti-brand-stripe" : {
-    iconSet: 'tabler icons', code: "\uedd7"
-  },
-  
-  "ti-brand-sublime-text" : {
-    iconSet: 'tabler icons', code: "\uef74"
-  },
-  
-  "ti-brand-sugarizer" : {
-    iconSet: 'tabler icons', code: "\uf7a5"
-  },
-  
-  "ti-brand-supabase" : {
-    iconSet: 'tabler icons', code: "\uf6d3"
-  },
-  
-  "ti-brand-superhuman" : {
-    iconSet: 'tabler icons', code: "\uf50c"
-  },
-  
-  "ti-brand-supernova" : {
-    iconSet: 'tabler icons', code: "\uf49c"
-  },
-  
-  "ti-brand-surfshark" : {
-    iconSet: 'tabler icons', code: "\uf255"
-  },
-  
-  "ti-brand-svelte" : {
-    iconSet: 'tabler icons', code: "\uf0df"
-  },
-  
-  "ti-brand-symfony" : {
-    iconSet: 'tabler icons', code: "\uf616"
-  },
-  
-  "ti-brand-tabler" : {
-    iconSet: 'tabler icons', code: "\uec8f"
-  },
-  
-  "ti-brand-tailwind" : {
-    iconSet: 'tabler icons', code: "\ueca1"
-  },
-  
-  "ti-brand-taobao" : {
-    iconSet: 'tabler icons', code: "\uf5ef"
-  },
-  
-  "ti-brand-ted" : {
-    iconSet: 'tabler icons', code: "\uf658"
-  },
-  
-  "ti-brand-telegram" : {
-    iconSet: 'tabler icons', code: "\uec26"
-  },
-  
-  "ti-brand-tether" : {
-    iconSet: 'tabler icons', code: "\uf5a3"
-  },
-  
-  "ti-brand-threejs" : {
-    iconSet: 'tabler icons', code: "\uf5f0"
-  },
-  
-  "ti-brand-tidal" : {
-    iconSet: 'tabler icons', code: "\ued70"
-  },
-  
-  "ti-brand-tikto-filled" : {
-    iconSet: 'tabler icons', code: "\uf7ea"
-  },
-  
-  "ti-brand-tiktok" : {
-    iconSet: 'tabler icons', code: "\uec73"
-  },
-  
-  "ti-brand-tinder" : {
-    iconSet: 'tabler icons', code: "\ued71"
-  },
-  
-  "ti-brand-topbuzz" : {
-    iconSet: 'tabler icons', code: "\uf50d"
-  },
-  
-  "ti-brand-torchain" : {
-    iconSet: 'tabler icons', code: "\uf5a4"
-  },
-  
-  "ti-brand-toyota" : {
-    iconSet: 'tabler icons', code: "\uf262"
-  },
-  
-  "ti-brand-trello" : {
-    iconSet: 'tabler icons', code: "\uf39d"
-  },
-  
-  "ti-brand-tripadvisor" : {
-    iconSet: 'tabler icons', code: "\uf002"
-  },
-  
-  "ti-brand-tumblr" : {
-    iconSet: 'tabler icons', code: "\ued04"
-  },
-  
-  "ti-brand-twilio" : {
-    iconSet: 'tabler icons', code: "\uf617"
-  },
-  
-  "ti-brand-twitch" : {
-    iconSet: 'tabler icons', code: "\ued05"
-  },
-  
-  "ti-brand-twitter" : {
-    iconSet: 'tabler icons', code: "\uec27"
-  },
-  
-  "ti-brand-twitter-filled" : {
-    iconSet: 'tabler icons', code: "\uf7eb"
-  },
-  
-  "ti-brand-typescript" : {
-    iconSet: 'tabler icons', code: "\uf5f1"
-  },
-  
-  "ti-brand-uber" : {
-    iconSet: 'tabler icons', code: "\uef75"
-  },
-  
-  "ti-brand-ubuntu" : {
-    iconSet: 'tabler icons', code: "\uef59"
-  },
-  
-  "ti-brand-unity" : {
-    iconSet: 'tabler icons', code: "\uf49d"
-  },
-  
-  "ti-brand-unsplash" : {
-    iconSet: 'tabler icons', code: "\uedd8"
-  },
-  
-  "ti-brand-upwork" : {
-    iconSet: 'tabler icons', code: "\uf39e"
-  },
-  
-  "ti-brand-valorant" : {
-    iconSet: 'tabler icons', code: "\uf39f"
-  },
-  
-  "ti-brand-vercel" : {
-    iconSet: 'tabler icons', code: "\uef24"
-  },
-  
-  "ti-brand-vimeo" : {
-    iconSet: 'tabler icons', code: "\ued06"
-  },
-  
-  "ti-brand-vinted" : {
-    iconSet: 'tabler icons', code: "\uf20f"
-  },
-  
-  "ti-brand-visa" : {
-    iconSet: 'tabler icons', code: "\uf380"
-  },
-  
-  "ti-brand-visual-studio" : {
-    iconSet: 'tabler icons', code: "\uef76"
-  },
-  
-  "ti-brand-vite" : {
-    iconSet: 'tabler icons', code: "\uf5f2"
-  },
-  
-  "ti-brand-vivaldi" : {
-    iconSet: 'tabler icons', code: "\uf210"
-  },
-  
-  "ti-brand-vk" : {
-    iconSet: 'tabler icons', code: "\ued72"
-  },
-  
-  "ti-brand-volkswagen" : {
-    iconSet: 'tabler icons', code: "\uf50e"
-  },
-  
-  "ti-brand-vsco" : {
-    iconSet: 'tabler icons', code: "\uf334"
-  },
-  
-  "ti-brand-vscode" : {
-    iconSet: 'tabler icons', code: "\uf3a0"
-  },
-  
-  "ti-brand-vue" : {
-    iconSet: 'tabler icons', code: "\uf0e0"
-  },
-  
-  "ti-brand-walmart" : {
-    iconSet: 'tabler icons', code: "\uf211"
-  },
-  
-  "ti-brand-waze" : {
-    iconSet: 'tabler icons', code: "\uf5d8"
-  },
-  
-  "ti-brand-webflow" : {
-    iconSet: 'tabler icons', code: "\uf2d2"
-  },
-  
-  "ti-brand-wechat" : {
-    iconSet: 'tabler icons', code: "\uf5f3"
-  },
-  
-  "ti-brand-weibo" : {
-    iconSet: 'tabler icons', code: "\uf609"
-  },
-  
-  "ti-brand-whatsapp" : {
-    iconSet: 'tabler icons', code: "\uec74"
-  },
-  
-  "ti-brand-windows" : {
-    iconSet: 'tabler icons', code: "\uecd8"
-  },
-  
-  "ti-brand-windy" : {
-    iconSet: 'tabler icons', code: "\uf4dd"
-  },
-  
-  "ti-brand-wish" : {
-    iconSet: 'tabler icons', code: "\uf212"
-  },
-  
-  "ti-brand-wix" : {
-    iconSet: 'tabler icons', code: "\uf3a1"
-  },
-  
-  "ti-brand-wordpress" : {
-    iconSet: 'tabler icons', code: "\uf2d3"
-  },
-  
-  "ti-brand-xbox" : {
-    iconSet: 'tabler icons', code: "\uf298"
-  },
-  
-  "ti-brand-xing" : {
-    iconSet: 'tabler icons', code: "\uf21a"
-  },
-  
-  "ti-brand-yahoo" : {
-    iconSet: 'tabler icons', code: "\ued73"
-  },
-  
-  "ti-brand-yatse" : {
-    iconSet: 'tabler icons', code: "\uf213"
-  },
-  
-  "ti-brand-ycombinator" : {
-    iconSet: 'tabler icons', code: "\uedd9"
-  },
-  
-  "ti-brand-youtube" : {
-    iconSet: 'tabler icons', code: "\uec90"
-  },
-  
-  "ti-brand-youtube-kids" : {
-    iconSet: 'tabler icons', code: "\uf214"
-  },
-  
-  "ti-brand-zalando" : {
-    iconSet: 'tabler icons', code: "\uf49e"
-  },
-  
-  "ti-brand-zapier" : {
-    iconSet: 'tabler icons', code: "\uf49f"
-  },
-  
-  "ti-brand-zeit" : {
-    iconSet: 'tabler icons', code: "\uf335"
-  },
-  
-  "ti-brand-zhihu" : {
-    iconSet: 'tabler icons', code: "\uf60a"
-  },
-  
-  "ti-brand-zoom" : {
-    iconSet: 'tabler icons', code: "\uf215"
-  },
-  
-  "ti-brand-zulip" : {
-    iconSet: 'tabler icons', code: "\uf4de"
-  },
-  
-  "ti-brand-zwift" : {
-    iconSet: 'tabler icons', code: "\uf216"
-  },
-  
-  "ti-bread" : {
-    iconSet: 'tabler icons', code: "\uefa3"
-  },
-  
-  "ti-bread-off" : {
-    iconSet: 'tabler icons', code: "\uf3cb"
-  },
-  
-  "ti-briefcase" : {
-    iconSet: 'tabler icons', code: "\uea46"
-  },
-  
-  "ti-briefcase-off" : {
-    iconSet: 'tabler icons', code: "\uf3cc"
-  },
-  
-  "ti-brightness" : {
-    iconSet: 'tabler icons', code: "\ueb7f"
-  },
-  
-  "ti-brightness-2" : {
-    iconSet: 'tabler icons', code: "\uee19"
-  },
-  
-  "ti-brightness-down" : {
-    iconSet: 'tabler icons', code: "\ueb7d"
-  },
-  
-  "ti-brightness-half" : {
-    iconSet: 'tabler icons', code: "\uee1a"
-  },
-  
-  "ti-brightness-off" : {
-    iconSet: 'tabler icons', code: "\uf3cd"
-  },
-  
-  "ti-brightness-up" : {
-    iconSet: 'tabler icons', code: "\ueb7e"
-  },
-  
-  "ti-broadcast" : {
-    iconSet: 'tabler icons', code: "\uf1e9"
-  },
-  
-  "ti-broadcast-off" : {
-    iconSet: 'tabler icons', code: "\uf1e8"
-  },
-  
-  "ti-browser" : {
-    iconSet: 'tabler icons', code: "\uebb7"
-  },
-  
-  "ti-browser-check" : {
-    iconSet: 'tabler icons', code: "\uefd6"
-  },
-  
-  "ti-browser-off" : {
-    iconSet: 'tabler icons', code: "\uf0c1"
-  },
-  
-  "ti-browser-plus" : {
-    iconSet: 'tabler icons', code: "\uefd7"
-  },
-  
-  "ti-browser-x" : {
-    iconSet: 'tabler icons', code: "\uefd8"
-  },
-  
-  "ti-brush" : {
-    iconSet: 'tabler icons', code: "\uebb8"
-  },
-  
-  "ti-brush-off" : {
-    iconSet: 'tabler icons', code: "\uf0c2"
-  },
-  
-  "ti-bucket" : {
-    iconSet: 'tabler icons', code: "\uea47"
-  },
-  
-  "ti-bucket-droplet" : {
-    iconSet: 'tabler icons', code: "\uf56a"
-  },
-  
-  "ti-bucket-off" : {
-    iconSet: 'tabler icons', code: "\uf103"
-  },
-  
-  "ti-bug" : {
-    iconSet: 'tabler icons', code: "\uea48"
-  },
-  
-  "ti-bug-off" : {
-    iconSet: 'tabler icons', code: "\uf0c3"
-  },
-  
-  "ti-building" : {
-    iconSet: 'tabler icons', code: "\uea4f"
-  },
-  
-  "ti-building-arch" : {
-    iconSet: 'tabler icons', code: "\uea49"
-  },
-  
-  "ti-building-bank" : {
-    iconSet: 'tabler icons', code: "\uebe2"
-  },
-  
-  "ti-building-bridge" : {
-    iconSet: 'tabler icons', code: "\uea4b"
-  },
-  
-  "ti-building-bridge-2" : {
-    iconSet: 'tabler icons', code: "\uea4a"
-  },
-  
-  "ti-building-broadcast-tower" : {
-    iconSet: 'tabler icons', code: "\uf4be"
-  },
-  
-  "ti-building-carousel" : {
-    iconSet: 'tabler icons', code: "\ued87"
-  },
-  
-  "ti-building-castle" : {
-    iconSet: 'tabler icons', code: "\ued88"
-  },
-  
-  "ti-building-church" : {
-    iconSet: 'tabler icons', code: "\uea4c"
-  },
-  
-  "ti-building-circus" : {
-    iconSet: 'tabler icons', code: "\uf4bf"
-  },
-  
-  "ti-building-community" : {
-    iconSet: 'tabler icons', code: "\uebf6"
-  },
-  
-  "ti-building-cottage" : {
-    iconSet: 'tabler icons', code: "\uee1b"
-  },
-  
-  "ti-building-estate" : {
-    iconSet: 'tabler icons', code: "\uf5a5"
-  },
-  
-  "ti-building-factory" : {
-    iconSet: 'tabler icons', code: "\uee1c"
-  },
-  
-  "ti-building-factory-2" : {
-    iconSet: 'tabler icons', code: "\uf082"
-  },
-  
-  "ti-building-fortress" : {
-    iconSet: 'tabler icons', code: "\ued89"
-  },
-  
-  "ti-building-hospital" : {
-    iconSet: 'tabler icons', code: "\uea4d"
-  },
-  
-  "ti-building-lighthouse" : {
-    iconSet: 'tabler icons', code: "\ued8a"
-  },
-  
-  "ti-building-monument" : {
-    iconSet: 'tabler icons', code: "\ued26"
-  },
-  
-  "ti-building-pavilion" : {
-    iconSet: 'tabler icons', code: "\uebf7"
-  },
-  
-  "ti-building-skyscraper" : {
-    iconSet: 'tabler icons', code: "\uec39"
-  },
-  
-  "ti-building-stadium" : {
-    iconSet: 'tabler icons', code: "\uf641"
-  },
-  
-  "ti-building-store" : {
-    iconSet: 'tabler icons', code: "\uea4e"
-  },
-  
-  "ti-building-tunnel" : {
-    iconSet: 'tabler icons', code: "\uf5a6"
-  },
-  
-  "ti-building-warehouse" : {
-    iconSet: 'tabler icons', code: "\uebe3"
-  },
-  
-  "ti-building-wind-turbine" : {
-    iconSet: 'tabler icons', code: "\uf4c0"
-  },
-  
-  "ti-bulb" : {
-    iconSet: 'tabler icons', code: "\uea51"
-  },
-  
-  "ti-bulb-filled" : {
-    iconSet: 'tabler icons', code: "\uf66a"
-  },
-  
-  "ti-bulb-off" : {
-    iconSet: 'tabler icons', code: "\uea50"
-  },
-  
-  "ti-bulldozer" : {
-    iconSet: 'tabler icons', code: "\uee1d"
-  },
-  
-  "ti-bus" : {
-    iconSet: 'tabler icons', code: "\uebe4"
-  },
-  
-  "ti-bus-off" : {
-    iconSet: 'tabler icons', code: "\uf3ce"
-  },
-  
-  "ti-bus-stop" : {
-    iconSet: 'tabler icons', code: "\uf2d4"
-  },
-  
-  "ti-businessplan" : {
-    iconSet: 'tabler icons', code: "\uee1e"
-  },
-  
-  "ti-butterfly" : {
-    iconSet: 'tabler icons', code: "\uefd9"
-  },
-  
-  "ti-cactus" : {
-    iconSet: 'tabler icons', code: "\uf21b"
-  },
-  
-  "ti-cactus-off" : {
-    iconSet: 'tabler icons', code: "\uf3cf"
-  },
-  
-  "ti-cake" : {
-    iconSet: 'tabler icons', code: "\uf00f"
-  },
-  
-  "ti-cake-off" : {
-    iconSet: 'tabler icons', code: "\uf104"
-  },
-  
-  "ti-calculator" : {
-    iconSet: 'tabler icons', code: "\ueb80"
-  },
-  
-  "ti-calculator-off" : {
-    iconSet: 'tabler icons', code: "\uf0c4"
-  },
-  
-  "ti-calendar" : {
-    iconSet: 'tabler icons', code: "\uea53"
-  },
-  
-  "ti-calendar-bolt" : {
-    iconSet: 'tabler icons', code: "\uf822"
-  },
-  
-  "ti-calendar-cancel" : {
-    iconSet: 'tabler icons', code: "\uf823"
-  },
-  
-  "ti-calendar-check" : {
-    iconSet: 'tabler icons', code: "\uf824"
-  },
-  
-  "ti-calendar-code" : {
-    iconSet: 'tabler icons', code: "\uf825"
-  },
-  
-  "ti-calendar-cog" : {
-    iconSet: 'tabler icons', code: "\uf826"
-  },
-  
-  "ti-calendar-dollar" : {
-    iconSet: 'tabler icons', code: "\uf827"
-  },
-  
-  "ti-calendar-down" : {
-    iconSet: 'tabler icons', code: "\uf828"
-  },
-  
-  "ti-calendar-due" : {
-    iconSet: 'tabler icons', code: "\uf621"
-  },
-  
-  "ti-calendar-event" : {
-    iconSet: 'tabler icons', code: "\uea52"
-  },
-  
-  "ti-calendar-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf829"
-  },
-  
-  "ti-calendar-heart" : {
-    iconSet: 'tabler icons', code: "\uf82a"
-  },
-  
-  "ti-calendar-minus" : {
-    iconSet: 'tabler icons', code: "\uebb9"
-  },
-  
-  "ti-calendar-off" : {
-    iconSet: 'tabler icons', code: "\uee1f"
-  },
-  
-  "ti-calendar-pause" : {
-    iconSet: 'tabler icons', code: "\uf82b"
-  },
-  
-  "ti-calendar-pin" : {
-    iconSet: 'tabler icons', code: "\uf82c"
-  },
-  
-  "ti-calendar-plus" : {
-    iconSet: 'tabler icons', code: "\uebba"
-  },
-  
-  "ti-calendar-question" : {
-    iconSet: 'tabler icons', code: "\uf82d"
-  },
-  
-  "ti-calendar-search" : {
-    iconSet: 'tabler icons', code: "\uf82e"
-  },
-  
-  "ti-calendar-share" : {
-    iconSet: 'tabler icons', code: "\uf82f"
-  },
-  
-  "ti-calendar-star" : {
-    iconSet: 'tabler icons', code: "\uf830"
-  },
-  
-  "ti-calendar-stats" : {
-    iconSet: 'tabler icons', code: "\uee20"
-  },
-  
-  "ti-calendar-time" : {
-    iconSet: 'tabler icons', code: "\uee21"
-  },
-  
-  "ti-calendar-up" : {
-    iconSet: 'tabler icons', code: "\uf831"
-  },
-  
-  "ti-calendar-x" : {
-    iconSet: 'tabler icons', code: "\uf832"
-  },
-  
-  "ti-camera" : {
-    iconSet: 'tabler icons', code: "\uea54"
-  },
-  
-  "ti-camera-bolt" : {
-    iconSet: 'tabler icons', code: "\uf833"
-  },
-  
-  "ti-camera-cancel" : {
-    iconSet: 'tabler icons', code: "\uf834"
-  },
-  
-  "ti-camera-check" : {
-    iconSet: 'tabler icons', code: "\uf835"
-  },
-  
-  "ti-camera-code" : {
-    iconSet: 'tabler icons', code: "\uf836"
-  },
-  
-  "ti-camera-cog" : {
-    iconSet: 'tabler icons', code: "\uf837"
-  },
-  
-  "ti-camera-dollar" : {
-    iconSet: 'tabler icons', code: "\uf838"
-  },
-  
-  "ti-camera-down" : {
-    iconSet: 'tabler icons', code: "\uf839"
-  },
-  
-  "ti-camera-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf83a"
-  },
-  
-  "ti-camera-heart" : {
-    iconSet: 'tabler icons', code: "\uf83b"
-  },
-  
-  "ti-camera-minus" : {
-    iconSet: 'tabler icons', code: "\uec3a"
-  },
-  
-  "ti-camera-off" : {
-    iconSet: 'tabler icons', code: "\uecee"
-  },
-  
-  "ti-camera-pause" : {
-    iconSet: 'tabler icons', code: "\uf83c"
-  },
-  
-  "ti-camera-pin" : {
-    iconSet: 'tabler icons', code: "\uf83d"
-  },
-  
-  "ti-camera-plus" : {
-    iconSet: 'tabler icons', code: "\uec3b"
-  },
-  
-  "ti-camera-question" : {
-    iconSet: 'tabler icons', code: "\uf83e"
-  },
-  
-  "ti-camera-rotate" : {
-    iconSet: 'tabler icons', code: "\uee22"
-  },
-  
-  "ti-camera-search" : {
-    iconSet: 'tabler icons', code: "\uf83f"
-  },
-  
-  "ti-camera-selfie" : {
-    iconSet: 'tabler icons', code: "\uee23"
-  },
-  
-  "ti-camera-share" : {
-    iconSet: 'tabler icons', code: "\uf840"
-  },
-  
-  "ti-camera-star" : {
-    iconSet: 'tabler icons', code: "\uf841"
-  },
-  
-  "ti-camera-up" : {
-    iconSet: 'tabler icons', code: "\uf842"
-  },
-  
-  "ti-camera-x" : {
-    iconSet: 'tabler icons', code: "\uf843"
-  },
-  
-  "ti-camper" : {
-    iconSet: 'tabler icons', code: "\ufa25"
-  },
-  
-  "ti-campfire" : {
-    iconSet: 'tabler icons', code: "\uf5a7"
-  },
-  
-  "ti-candle" : {
-    iconSet: 'tabler icons', code: "\uefc6"
-  },
-  
-  "ti-candy" : {
-    iconSet: 'tabler icons', code: "\uef0d"
-  },
-  
-  "ti-candy-off" : {
-    iconSet: 'tabler icons', code: "\uf0c5"
-  },
-  
-  "ti-cane" : {
-    iconSet: 'tabler icons', code: "\uf50f"
-  },
-  
-  "ti-cannabis" : {
-    iconSet: 'tabler icons', code: "\uf4c1"
-  },
-  
-  "ti-capture" : {
-    iconSet: 'tabler icons', code: "\uec3c"
-  },
-  
-  "ti-capture-off" : {
-    iconSet: 'tabler icons', code: "\uf0c6"
-  },
-  
-  "ti-car" : {
-    iconSet: 'tabler icons', code: "\uebbb"
-  },
-  
-  "ti-car-crane" : {
-    iconSet: 'tabler icons', code: "\uef25"
-  },
-  
-  "ti-car-crash" : {
-    iconSet: 'tabler icons', code: "\uefa4"
-  },
-  
-  "ti-car-off" : {
-    iconSet: 'tabler icons', code: "\uf0c7"
-  },
-  
-  "ti-car-turbine" : {
-    iconSet: 'tabler icons', code: "\uf4fd"
-  },
-  
-  "ti-caravan" : {
-    iconSet: 'tabler icons', code: "\uec7c"
-  },
-  
-  "ti-cardboards" : {
-    iconSet: 'tabler icons', code: "\ued74"
-  },
-  
-  "ti-cardboards-off" : {
-    iconSet: 'tabler icons', code: "\uf0c8"
-  },
-  
-  "ti-cards" : {
-    iconSet: 'tabler icons', code: "\uf510"
-  },
-  
-  "ti-caret-down" : {
-    iconSet: 'tabler icons', code: "\ueb5d"
-  },
-  
-  "ti-caret-left" : {
-    iconSet: 'tabler icons', code: "\ueb5e"
-  },
-  
-  "ti-caret-right" : {
-    iconSet: 'tabler icons', code: "\ueb5f"
-  },
-  
-  "ti-caret-up" : {
-    iconSet: 'tabler icons', code: "\ueb60"
-  },
-  
-  "ti-carousel-horizontal" : {
-    iconSet: 'tabler icons', code: "\uf659"
-  },
-  
-  "ti-carousel-vertical" : {
-    iconSet: 'tabler icons', code: "\uf65a"
-  },
-  
-  "ti-carrot" : {
-    iconSet: 'tabler icons', code: "\uf21c"
-  },
-  
-  "ti-carrot-off" : {
-    iconSet: 'tabler icons', code: "\uf3d0"
-  },
-  
-  "ti-cash" : {
-    iconSet: 'tabler icons', code: "\uea55"
-  },
-  
-  "ti-cash-banknote" : {
-    iconSet: 'tabler icons', code: "\uee25"
-  },
-  
-  "ti-cash-banknote-off" : {
-    iconSet: 'tabler icons', code: "\uee24"
-  },
-  
-  "ti-cash-off" : {
-    iconSet: 'tabler icons', code: "\uf105"
-  },
-  
-  "ti-cast" : {
-    iconSet: 'tabler icons', code: "\uea56"
-  },
-  
-  "ti-cast-off" : {
-    iconSet: 'tabler icons', code: "\uf0c9"
-  },
-  
-  "ti-cat" : {
-    iconSet: 'tabler icons', code: "\uf65b"
-  },
-  
-  "ti-category" : {
-    iconSet: 'tabler icons', code: "\uf1f6"
-  },
-  
-  "ti-category-2" : {
-    iconSet: 'tabler icons', code: "\uf1f5"
-  },
-  
-  "ti-ce" : {
-    iconSet: 'tabler icons', code: "\ued75"
-  },
-  
-  "ti-ce-off" : {
-    iconSet: 'tabler icons', code: "\uf0ca"
-  },
-  
-  "ti-cell" : {
-    iconSet: 'tabler icons', code: "\uf05f"
-  },
-  
-  "ti-cell-signal-1" : {
-    iconSet: 'tabler icons', code: "\uf083"
-  },
-  
-  "ti-cell-signal-2" : {
-    iconSet: 'tabler icons', code: "\uf084"
-  },
-  
-  "ti-cell-signal-3" : {
-    iconSet: 'tabler icons', code: "\uf085"
-  },
-  
-  "ti-cell-signal-4" : {
-    iconSet: 'tabler icons', code: "\uf086"
-  },
-  
-  "ti-cell-signal-5" : {
-    iconSet: 'tabler icons', code: "\uf087"
-  },
-  
-  "ti-cell-signal-off" : {
-    iconSet: 'tabler icons', code: "\uf088"
-  },
-  
-  "ti-certificate" : {
-    iconSet: 'tabler icons', code: "\ued76"
-  },
-  
-  "ti-certificate-2" : {
-    iconSet: 'tabler icons', code: "\uf073"
-  },
-  
-  "ti-certificate-2-off" : {
-    iconSet: 'tabler icons', code: "\uf0cb"
-  },
-  
-  "ti-certificate-off" : {
-    iconSet: 'tabler icons', code: "\uf0cc"
-  },
-  
-  "ti-chair-director" : {
-    iconSet: 'tabler icons', code: "\uf2d5"
-  },
-  
-  "ti-chalkboard" : {
-    iconSet: 'tabler icons', code: "\uf34d"
-  },
-  
-  "ti-chalkboard-off" : {
-    iconSet: 'tabler icons', code: "\uf3d1"
-  },
-  
-  "ti-charging-pile" : {
-    iconSet: 'tabler icons', code: "\uee26"
-  },
-  
-  "ti-chart-arcs" : {
-    iconSet: 'tabler icons', code: "\uee28"
-  },
-  
-  "ti-chart-arcs-3" : {
-    iconSet: 'tabler icons', code: "\uee27"
-  },
-  
-  "ti-chart-area" : {
-    iconSet: 'tabler icons', code: "\uea58"
-  },
-  
-  "ti-chart-area-filled" : {
-    iconSet: 'tabler icons', code: "\uf66b"
-  },
-  
-  "ti-chart-area-line" : {
-    iconSet: 'tabler icons', code: "\uea57"
-  },
-  
-  "ti-chart-area-line-filled" : {
-    iconSet: 'tabler icons', code: "\uf66c"
-  },
-  
-  "ti-chart-arrows" : {
-    iconSet: 'tabler icons', code: "\uee2a"
-  },
-  
-  "ti-chart-arrows-vertical" : {
-    iconSet: 'tabler icons', code: "\uee29"
-  },
-  
-  "ti-chart-bar" : {
-    iconSet: 'tabler icons', code: "\uea59"
-  },
-  
-  "ti-chart-bar-off" : {
-    iconSet: 'tabler icons', code: "\uf3d2"
-  },
-  
-  "ti-chart-bubble" : {
-    iconSet: 'tabler icons', code: "\uec75"
-  },
-  
-  "ti-chart-bubble-filled" : {
-    iconSet: 'tabler icons', code: "\uf66d"
-  },
-  
-  "ti-chart-candle" : {
-    iconSet: 'tabler icons', code: "\uea5a"
-  },
-  
-  "ti-chart-candle-filled" : {
-    iconSet: 'tabler icons', code: "\uf66e"
-  },
-  
-  "ti-chart-circles" : {
-    iconSet: 'tabler icons', code: "\uee2b"
-  },
-  
-  "ti-chart-donut" : {
-    iconSet: 'tabler icons', code: "\uea5b"
-  },
-  
-  "ti-chart-donut-2" : {
-    iconSet: 'tabler icons', code: "\uee2c"
-  },
-  
-  "ti-chart-donut-3" : {
-    iconSet: 'tabler icons', code: "\uee2d"
-  },
-  
-  "ti-chart-donut-4" : {
-    iconSet: 'tabler icons', code: "\uee2e"
-  },
-  
-  "ti-chart-donut-filled" : {
-    iconSet: 'tabler icons', code: "\uf66f"
-  },
-  
-  "ti-chart-dots" : {
-    iconSet: 'tabler icons', code: "\uee2f"
-  },
-  
-  "ti-chart-dots-2" : {
-    iconSet: 'tabler icons', code: "\uf097"
-  },
-  
-  "ti-chart-dots-3" : {
-    iconSet: 'tabler icons', code: "\uf098"
-  },
-  
-  "ti-chart-grid-dots" : {
-    iconSet: 'tabler icons', code: "\uf4c2"
-  },
-  
-  "ti-chart-histogram" : {
-    iconSet: 'tabler icons', code: "\uf65c"
-  },
-  
-  "ti-chart-infographic" : {
-    iconSet: 'tabler icons', code: "\uee30"
-  },
-  
-  "ti-chart-line" : {
-    iconSet: 'tabler icons', code: "\uea5c"
-  },
-  
-  "ti-chart-pie" : {
-    iconSet: 'tabler icons', code: "\uea5d"
-  },
-  
-  "ti-chart-pie-2" : {
-    iconSet: 'tabler icons', code: "\uee31"
-  },
-  
-  "ti-chart-pie-3" : {
-    iconSet: 'tabler icons', code: "\uee32"
-  },
-  
-  "ti-chart-pie-4" : {
-    iconSet: 'tabler icons', code: "\uee33"
-  },
-  
-  "ti-chart-pie-filled" : {
-    iconSet: 'tabler icons', code: "\uf670"
-  },
-  
-  "ti-chart-pie-off" : {
-    iconSet: 'tabler icons', code: "\uf3d3"
-  },
-  
-  "ti-chart-ppf" : {
-    iconSet: 'tabler icons', code: "\uf618"
-  },
-  
-  "ti-chart-radar" : {
-    iconSet: 'tabler icons', code: "\ued77"
-  },
-  
-  "ti-chart-sankey" : {
-    iconSet: 'tabler icons', code: "\uf619"
-  },
-  
-  "ti-chart-treemap" : {
-    iconSet: 'tabler icons', code: "\uf381"
-  },
-  
-  "ti-check" : {
-    iconSet: 'tabler icons', code: "\uea5e"
-  },
-  
-  "ti-checkbox" : {
-    iconSet: 'tabler icons', code: "\ueba6"
-  },
-  
-  "ti-checklist" : {
-    iconSet: 'tabler icons', code: "\uf074"
-  },
-  
-  "ti-checks" : {
-    iconSet: 'tabler icons', code: "\uebaa"
-  },
-  
-  "ti-checkup-list" : {
-    iconSet: 'tabler icons', code: "\uef5a"
-  },
-  
-  "ti-cheese" : {
-    iconSet: 'tabler icons', code: "\uef26"
-  },
-  
-  "ti-chef-hat" : {
-    iconSet: 'tabler icons', code: "\uf21d"
-  },
-  
-  "ti-chef-hat-off" : {
-    iconSet: 'tabler icons', code: "\uf3d4"
-  },
-  
-  "ti-cherry" : {
-    iconSet: 'tabler icons', code: "\uf511"
-  },
-  
-  "ti-cherry-filled" : {
-    iconSet: 'tabler icons', code: "\uf728"
-  },
-  
-  "ti-chess" : {
-    iconSet: 'tabler icons', code: "\uf382"
-  },
-  
-  "ti-chess-bishop" : {
-    iconSet: 'tabler icons', code: "\uf56b"
-  },
-  
-  "ti-chess-bishop-filled" : {
-    iconSet: 'tabler icons', code: "\uf729"
-  },
-  
-  "ti-chess-filled" : {
-    iconSet: 'tabler icons', code: "\uf72a"
-  },
-  
-  "ti-chess-king" : {
-    iconSet: 'tabler icons', code: "\uf56c"
-  },
-  
-  "ti-chess-king-filled" : {
-    iconSet: 'tabler icons', code: "\uf72b"
-  },
-  
-  "ti-chess-knight" : {
-    iconSet: 'tabler icons', code: "\uf56d"
-  },
-  
-  "ti-chess-knight-filled" : {
-    iconSet: 'tabler icons', code: "\uf72c"
-  },
-  
-  "ti-chess-queen" : {
-    iconSet: 'tabler icons', code: "\uf56e"
-  },
-  
-  "ti-chess-queen-filled" : {
-    iconSet: 'tabler icons', code: "\uf72d"
-  },
-  
-  "ti-chess-rook" : {
-    iconSet: 'tabler icons', code: "\uf56f"
-  },
-  
-  "ti-chess-rook-filled" : {
-    iconSet: 'tabler icons', code: "\uf72e"
-  },
-  
-  "ti-chevron-down" : {
-    iconSet: 'tabler icons', code: "\uea5f"
-  },
-  
-  "ti-chevron-down-left" : {
-    iconSet: 'tabler icons', code: "\ued09"
-  },
-  
-  "ti-chevron-down-right" : {
-    iconSet: 'tabler icons', code: "\ued0a"
-  },
-  
-  "ti-chevron-left" : {
-    iconSet: 'tabler icons', code: "\uea60"
-  },
-  
-  "ti-chevron-right" : {
-    iconSet: 'tabler icons', code: "\uea61"
-  },
-  
-  "ti-chevron-up" : {
-    iconSet: 'tabler icons', code: "\uea62"
-  },
-  
-  "ti-chevron-up-left" : {
-    iconSet: 'tabler icons', code: "\ued0b"
-  },
-  
-  "ti-chevron-up-right" : {
-    iconSet: 'tabler icons', code: "\ued0c"
-  },
-  
-  "ti-chevrons-down" : {
-    iconSet: 'tabler icons', code: "\uea63"
-  },
-  
-  "ti-chevrons-down-left" : {
-    iconSet: 'tabler icons', code: "\ued0d"
-  },
-  
-  "ti-chevrons-down-right" : {
-    iconSet: 'tabler icons', code: "\ued0e"
-  },
-  
-  "ti-chevrons-left" : {
-    iconSet: 'tabler icons', code: "\uea64"
-  },
-  
-  "ti-chevrons-right" : {
-    iconSet: 'tabler icons', code: "\uea65"
-  },
-  
-  "ti-chevrons-up" : {
-    iconSet: 'tabler icons', code: "\uea66"
-  },
-  
-  "ti-chevrons-up-left" : {
-    iconSet: 'tabler icons', code: "\ued0f"
-  },
-  
-  "ti-chevrons-up-right" : {
-    iconSet: 'tabler icons', code: "\ued10"
-  },
-  
-  "ti-chisel" : {
-    iconSet: 'tabler icons', code: "\uf383"
-  },
-  
-  "ti-christmas-tree" : {
-    iconSet: 'tabler icons', code: "\ued78"
-  },
-  
-  "ti-christmas-tree-off" : {
-    iconSet: 'tabler icons', code: "\uf3d5"
-  },
-  
-  "ti-circle" : {
-    iconSet: 'tabler icons', code: "\uea6b"
-  },
-  
-  "ti-circle-0-filled" : {
-    iconSet: 'tabler icons', code: "\uf72f"
-  },
-  
-  "ti-circle-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf730"
-  },
-  
-  "ti-circle-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf731"
-  },
-  
-  "ti-circle-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf732"
-  },
-  
-  "ti-circle-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf733"
-  },
-  
-  "ti-circle-5-filled" : {
-    iconSet: 'tabler icons', code: "\uf734"
-  },
-  
-  "ti-circle-6-filled" : {
-    iconSet: 'tabler icons', code: "\uf735"
-  },
-  
-  "ti-circle-7-filled" : {
-    iconSet: 'tabler icons', code: "\uf736"
-  },
-  
-  "ti-circle-8-filled" : {
-    iconSet: 'tabler icons', code: "\uf737"
-  },
-  
-  "ti-circle-9-filled" : {
-    iconSet: 'tabler icons', code: "\uf738"
-  },
-  
-  "ti-circle-arrow-down" : {
-    iconSet: 'tabler icons', code: "\uf6f9"
-  },
-  
-  "ti-circle-arrow-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f4"
-  },
-  
-  "ti-circle-arrow-down-left" : {
-    iconSet: 'tabler icons', code: "\uf6f6"
-  },
-  
-  "ti-circle-arrow-down-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f5"
-  },
-  
-  "ti-circle-arrow-down-right" : {
-    iconSet: 'tabler icons', code: "\uf6f8"
-  },
-  
-  "ti-circle-arrow-down-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6f7"
-  },
-  
-  "ti-circle-arrow-left" : {
-    iconSet: 'tabler icons', code: "\uf6fb"
-  },
-  
-  "ti-circle-arrow-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6fa"
-  },
-  
-  "ti-circle-arrow-right" : {
-    iconSet: 'tabler icons', code: "\uf6fd"
-  },
-  
-  "ti-circle-arrow-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6fc"
-  },
-  
-  "ti-circle-arrow-up" : {
-    iconSet: 'tabler icons', code: "\uf703"
-  },
-  
-  "ti-circle-arrow-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6fe"
-  },
-  
-  "ti-circle-arrow-up-left" : {
-    iconSet: 'tabler icons', code: "\uf700"
-  },
-  
-  "ti-circle-arrow-up-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ff"
-  },
-  
-  "ti-circle-arrow-up-right" : {
-    iconSet: 'tabler icons', code: "\uf702"
-  },
-  
-  "ti-circle-arrow-up-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf701"
-  },
-  
-  "ti-circle-caret-down" : {
-    iconSet: 'tabler icons', code: "\uf4a9"
-  },
-  
-  "ti-circle-caret-left" : {
-    iconSet: 'tabler icons', code: "\uf4aa"
-  },
-  
-  "ti-circle-caret-right" : {
-    iconSet: 'tabler icons', code: "\uf4ab"
-  },
-  
-  "ti-circle-caret-up" : {
-    iconSet: 'tabler icons', code: "\uf4ac"
-  },
-  
-  "ti-circle-check" : {
-    iconSet: 'tabler icons', code: "\uea67"
-  },
-  
-  "ti-circle-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf704"
-  },
-  
-  "ti-circle-chevron-down" : {
-    iconSet: 'tabler icons', code: "\uf622"
-  },
-  
-  "ti-circle-chevron-left" : {
-    iconSet: 'tabler icons', code: "\uf623"
-  },
-  
-  "ti-circle-chevron-right" : {
-    iconSet: 'tabler icons', code: "\uf624"
-  },
-  
-  "ti-circle-chevron-up" : {
-    iconSet: 'tabler icons', code: "\uf625"
-  },
-  
-  "ti-circle-chevrons-down" : {
-    iconSet: 'tabler icons', code: "\uf642"
-  },
-  
-  "ti-circle-chevrons-left" : {
-    iconSet: 'tabler icons', code: "\uf643"
-  },
-  
-  "ti-circle-chevrons-right" : {
-    iconSet: 'tabler icons', code: "\uf644"
-  },
-  
-  "ti-circle-chevrons-up" : {
-    iconSet: 'tabler icons', code: "\uf645"
-  },
-  
-  "ti-circle-dashed" : {
-    iconSet: 'tabler icons', code: "\ued27"
-  },
-  
-  "ti-circle-dot" : {
-    iconSet: 'tabler icons', code: "\uefb1"
-  },
-  
-  "ti-circle-dot-filled" : {
-    iconSet: 'tabler icons', code: "\uf705"
-  },
-  
-  "ti-circle-dotted" : {
-    iconSet: 'tabler icons', code: "\ued28"
-  },
-  
-  "ti-circle-filled" : {
-    iconSet: 'tabler icons', code: "\uf671"
-  },
-  
-  "ti-circle-half" : {
-    iconSet: 'tabler icons', code: "\uee3f"
-  },
-  
-  "ti-circle-half-2" : {
-    iconSet: 'tabler icons', code: "\ueff3"
-  },
-  
-  "ti-circle-half-vertical" : {
-    iconSet: 'tabler icons', code: "\uee3e"
-  },
-  
-  "ti-circle-key" : {
-    iconSet: 'tabler icons', code: "\uf633"
-  },
-  
-  "ti-circle-key-filled" : {
-    iconSet: 'tabler icons', code: "\uf706"
-  },
-  
-  "ti-circle-letter-a" : {
-    iconSet: 'tabler icons', code: "\uf441"
-  },
-  
-  "ti-circle-letter-b" : {
-    iconSet: 'tabler icons', code: "\uf442"
-  },
-  
-  "ti-circle-letter-c" : {
-    iconSet: 'tabler icons', code: "\uf443"
-  },
-  
-  "ti-circle-letter-d" : {
-    iconSet: 'tabler icons', code: "\uf444"
-  },
-  
-  "ti-circle-letter-e" : {
-    iconSet: 'tabler icons', code: "\uf445"
-  },
-  
-  "ti-circle-letter-f" : {
-    iconSet: 'tabler icons', code: "\uf446"
-  },
-  
-  "ti-circle-letter-g" : {
-    iconSet: 'tabler icons', code: "\uf447"
-  },
-  
-  "ti-circle-letter-h" : {
-    iconSet: 'tabler icons', code: "\uf448"
-  },
-  
-  "ti-circle-letter-i" : {
-    iconSet: 'tabler icons', code: "\uf449"
-  },
-  
-  "ti-circle-letter-j" : {
-    iconSet: 'tabler icons', code: "\uf44a"
-  },
-  
-  "ti-circle-letter-k" : {
-    iconSet: 'tabler icons', code: "\uf44b"
-  },
-  
-  "ti-circle-letter-l" : {
-    iconSet: 'tabler icons', code: "\uf44c"
-  },
-  
-  "ti-circle-letter-m" : {
-    iconSet: 'tabler icons', code: "\uf44d"
-  },
-  
-  "ti-circle-letter-n" : {
-    iconSet: 'tabler icons', code: "\uf44e"
-  },
-  
-  "ti-circle-letter-o" : {
-    iconSet: 'tabler icons', code: "\uf44f"
-  },
-  
-  "ti-circle-letter-p" : {
-    iconSet: 'tabler icons', code: "\uf450"
-  },
-  
-  "ti-circle-letter-q" : {
-    iconSet: 'tabler icons', code: "\uf451"
-  },
-  
-  "ti-circle-letter-r" : {
-    iconSet: 'tabler icons', code: "\uf452"
-  },
-  
-  "ti-circle-letter-s" : {
-    iconSet: 'tabler icons', code: "\uf453"
-  },
-  
-  "ti-circle-letter-t" : {
-    iconSet: 'tabler icons', code: "\uf454"
-  },
-  
-  "ti-circle-letter-u" : {
-    iconSet: 'tabler icons', code: "\uf455"
-  },
-  
-  "ti-circle-letter-v" : {
-    iconSet: 'tabler icons', code: "\uf4ad"
-  },
-  
-  "ti-circle-letter-w" : {
-    iconSet: 'tabler icons', code: "\uf456"
-  },
-  
-  "ti-circle-letter-x" : {
-    iconSet: 'tabler icons', code: "\uf4ae"
-  },
-  
-  "ti-circle-letter-y" : {
-    iconSet: 'tabler icons', code: "\uf457"
-  },
-  
-  "ti-circle-letter-z" : {
-    iconSet: 'tabler icons', code: "\uf458"
-  },
-  
-  "ti-circle-minus" : {
-    iconSet: 'tabler icons', code: "\uea68"
-  },
-  
-  "ti-circle-number-0" : {
-    iconSet: 'tabler icons', code: "\uee34"
-  },
-  
-  "ti-circle-number-1" : {
-    iconSet: 'tabler icons', code: "\uee35"
-  },
-  
-  "ti-circle-number-2" : {
-    iconSet: 'tabler icons', code: "\uee36"
-  },
-  
-  "ti-circle-number-3" : {
-    iconSet: 'tabler icons', code: "\uee37"
-  },
-  
-  "ti-circle-number-4" : {
-    iconSet: 'tabler icons', code: "\uee38"
-  },
-  
-  "ti-circle-number-5" : {
-    iconSet: 'tabler icons', code: "\uee39"
-  },
-  
-  "ti-circle-number-6" : {
-    iconSet: 'tabler icons', code: "\uee3a"
-  },
-  
-  "ti-circle-number-7" : {
-    iconSet: 'tabler icons', code: "\uee3b"
-  },
-  
-  "ti-circle-number-8" : {
-    iconSet: 'tabler icons', code: "\uee3c"
-  },
-  
-  "ti-circle-number-9" : {
-    iconSet: 'tabler icons', code: "\uee3d"
-  },
-  
-  "ti-circle-off" : {
-    iconSet: 'tabler icons', code: "\uee40"
-  },
-  
-  "ti-circle-plus" : {
-    iconSet: 'tabler icons', code: "\uea69"
-  },
-  
-  "ti-circle-rectangle" : {
-    iconSet: 'tabler icons', code: "\uf010"
-  },
-  
-  "ti-circle-rectangle-off" : {
-    iconSet: 'tabler icons', code: "\uf0cd"
-  },
-  
-  "ti-circle-square" : {
-    iconSet: 'tabler icons', code: "\uece4"
-  },
-  
-  "ti-circle-triangle" : {
-    iconSet: 'tabler icons', code: "\uf011"
-  },
-  
-  "ti-circle-x" : {
-    iconSet: 'tabler icons', code: "\uea6a"
-  },
-  
-  "ti-circle-x-filled" : {
-    iconSet: 'tabler icons', code: "\uf739"
-  },
-  
-  "ti-circles" : {
-    iconSet: 'tabler icons', code: "\uece5"
-  },
-  
-  "ti-circles-filled" : {
-    iconSet: 'tabler icons', code: "\uf672"
-  },
-  
-  "ti-circles-relation" : {
-    iconSet: 'tabler icons', code: "\uf4c3"
-  },
-  
-  "ti-circuit-ammeter" : {
-    iconSet: 'tabler icons', code: "\uf271"
-  },
-  
-  "ti-circuit-battery" : {
-    iconSet: 'tabler icons', code: "\uf272"
-  },
-  
-  "ti-circuit-bulb" : {
-    iconSet: 'tabler icons', code: "\uf273"
-  },
-  
-  "ti-circuit-capacitor" : {
-    iconSet: 'tabler icons', code: "\uf275"
-  },
-  
-  "ti-circuit-capacitor-polarized" : {
-    iconSet: 'tabler icons', code: "\uf274"
-  },
-  
-  "ti-circuit-cell" : {
-    iconSet: 'tabler icons', code: "\uf277"
-  },
-  
-  "ti-circuit-cell-plus" : {
-    iconSet: 'tabler icons', code: "\uf276"
-  },
-  
-  "ti-circuit-changeover" : {
-    iconSet: 'tabler icons', code: "\uf278"
-  },
-  
-  "ti-circuit-diode" : {
-    iconSet: 'tabler icons', code: "\uf27a"
-  },
-  
-  "ti-circuit-diode-zener" : {
-    iconSet: 'tabler icons', code: "\uf279"
-  },
-  
-  "ti-circuit-ground" : {
-    iconSet: 'tabler icons', code: "\uf27c"
-  },
-  
-  "ti-circuit-ground-digital" : {
-    iconSet: 'tabler icons', code: "\uf27b"
-  },
-  
-  "ti-circuit-inductor" : {
-    iconSet: 'tabler icons', code: "\uf27d"
-  },
-  
-  "ti-circuit-motor" : {
-    iconSet: 'tabler icons', code: "\uf27e"
-  },
-  
-  "ti-circuit-pushbutton" : {
-    iconSet: 'tabler icons', code: "\uf27f"
-  },
-  
-  "ti-circuit-resistor" : {
-    iconSet: 'tabler icons', code: "\uf280"
-  },
-  
-  "ti-circuit-switch-closed" : {
-    iconSet: 'tabler icons', code: "\uf281"
-  },
-  
-  "ti-circuit-switch-open" : {
-    iconSet: 'tabler icons', code: "\uf282"
-  },
-  
-  "ti-circuit-voltmeter" : {
-    iconSet: 'tabler icons', code: "\uf283"
-  },
-  
-  "ti-clear-all" : {
-    iconSet: 'tabler icons', code: "\uee41"
-  },
-  
-  "ti-clear-formatting" : {
-    iconSet: 'tabler icons', code: "\uebe5"
-  },
-  
-  "ti-click" : {
-    iconSet: 'tabler icons', code: "\uebbc"
-  },
-  
-  "ti-clipboard" : {
-    iconSet: 'tabler icons', code: "\uea6f"
-  },
-  
-  "ti-clipboard-check" : {
-    iconSet: 'tabler icons', code: "\uea6c"
-  },
-  
-  "ti-clipboard-copy" : {
-    iconSet: 'tabler icons', code: "\uf299"
-  },
-  
-  "ti-clipboard-data" : {
-    iconSet: 'tabler icons', code: "\uf563"
-  },
-  
-  "ti-clipboard-heart" : {
-    iconSet: 'tabler icons', code: "\uf34e"
-  },
-  
-  "ti-clipboard-list" : {
-    iconSet: 'tabler icons', code: "\uea6d"
-  },
-  
-  "ti-clipboard-off" : {
-    iconSet: 'tabler icons', code: "\uf0ce"
-  },
-  
-  "ti-clipboard-plus" : {
-    iconSet: 'tabler icons', code: "\uefb2"
-  },
-  
-  "ti-clipboard-text" : {
-    iconSet: 'tabler icons', code: "\uf089"
-  },
-  
-  "ti-clipboard-typography" : {
-    iconSet: 'tabler icons', code: "\uf34f"
-  },
-  
-  "ti-clipboard-x" : {
-    iconSet: 'tabler icons', code: "\uea6e"
-  },
-  
-  "ti-clock" : {
-    iconSet: 'tabler icons', code: "\uea70"
-  },
-  
-  "ti-clock-2" : {
-    iconSet: 'tabler icons', code: "\uf099"
-  },
-  
-  "ti-clock-bolt" : {
-    iconSet: 'tabler icons', code: "\uf844"
-  },
-  
-  "ti-clock-cancel" : {
-    iconSet: 'tabler icons', code: "\uf546"
-  },
-  
-  "ti-clock-check" : {
-    iconSet: 'tabler icons', code: "\uf7c1"
-  },
-  
-  "ti-clock-code" : {
-    iconSet: 'tabler icons', code: "\uf845"
-  },
-  
-  "ti-clock-cog" : {
-    iconSet: 'tabler icons', code: "\uf7c2"
-  },
-  
-  "ti-clock-dollar" : {
-    iconSet: 'tabler icons', code: "\uf846"
-  },
-  
-  "ti-clock-down" : {
-    iconSet: 'tabler icons', code: "\uf7c3"
-  },
-  
-  "ti-clock-edit" : {
-    iconSet: 'tabler icons', code: "\uf547"
-  },
-  
-  "ti-clock-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf847"
-  },
-  
-  "ti-clock-filled" : {
-    iconSet: 'tabler icons', code: "\uf73a"
-  },
-  
-  "ti-clock-heart" : {
-    iconSet: 'tabler icons', code: "\uf7c4"
-  },
-  
-  "ti-clock-hour-1" : {
-    iconSet: 'tabler icons', code: "\uf313"
-  },
-  
-  "ti-clock-hour-10" : {
-    iconSet: 'tabler icons', code: "\uf314"
-  },
-  
-  "ti-clock-hour-11" : {
-    iconSet: 'tabler icons', code: "\uf315"
-  },
-  
-  "ti-clock-hour-12" : {
-    iconSet: 'tabler icons', code: "\uf316"
-  },
-  
-  "ti-clock-hour-2" : {
-    iconSet: 'tabler icons', code: "\uf317"
-  },
-  
-  "ti-clock-hour-3" : {
-    iconSet: 'tabler icons', code: "\uf318"
-  },
-  
-  "ti-clock-hour-4" : {
-    iconSet: 'tabler icons', code: "\uf319"
-  },
-  
-  "ti-clock-hour-5" : {
-    iconSet: 'tabler icons', code: "\uf31a"
-  },
-  
-  "ti-clock-hour-6" : {
-    iconSet: 'tabler icons', code: "\uf31b"
-  },
-  
-  "ti-clock-hour-7" : {
-    iconSet: 'tabler icons', code: "\uf31c"
-  },
-  
-  "ti-clock-hour-8" : {
-    iconSet: 'tabler icons', code: "\uf31d"
-  },
-  
-  "ti-clock-hour-9" : {
-    iconSet: 'tabler icons', code: "\uf31e"
-  },
-  
-  "ti-clock-minus" : {
-    iconSet: 'tabler icons', code: "\uf848"
-  },
-  
-  "ti-clock-off" : {
-    iconSet: 'tabler icons', code: "\uf0cf"
-  },
-  
-  "ti-clock-pause" : {
-    iconSet: 'tabler icons', code: "\uf548"
-  },
-  
-  "ti-clock-pin" : {
-    iconSet: 'tabler icons', code: "\uf849"
-  },
-  
-  "ti-clock-play" : {
-    iconSet: 'tabler icons', code: "\uf549"
-  },
-  
-  "ti-clock-plus" : {
-    iconSet: 'tabler icons', code: "\uf7c5"
-  },
-  
-  "ti-clock-question" : {
-    iconSet: 'tabler icons', code: "\uf7c6"
-  },
-  
-  "ti-clock-record" : {
-    iconSet: 'tabler icons', code: "\uf54a"
-  },
-  
-  "ti-clock-search" : {
-    iconSet: 'tabler icons', code: "\uf7c7"
-  },
-  
-  "ti-clock-share" : {
-    iconSet: 'tabler icons', code: "\uf84a"
-  },
-  
-  "ti-clock-shield" : {
-    iconSet: 'tabler icons', code: "\uf7c8"
-  },
-  
-  "ti-clock-star" : {
-    iconSet: 'tabler icons', code: "\uf7c9"
-  },
-  
-  "ti-clock-stop" : {
-    iconSet: 'tabler icons', code: "\uf54b"
-  },
-  
-  "ti-clock-up" : {
-    iconSet: 'tabler icons', code: "\uf7ca"
-  },
-  
-  "ti-clock-x" : {
-    iconSet: 'tabler icons', code: "\uf7cb"
-  },
-  
-  "ti-clothes-rack" : {
-    iconSet: 'tabler icons', code: "\uf285"
-  },
-  
-  "ti-clothes-rack-off" : {
-    iconSet: 'tabler icons', code: "\uf3d6"
-  },
-  
-  "ti-cloud" : {
-    iconSet: 'tabler icons', code: "\uea76"
-  },
-  
-  "ti-cloud-bolt" : {
-    iconSet: 'tabler icons', code: "\uf84b"
-  },
-  
-  "ti-cloud-cancel" : {
-    iconSet: 'tabler icons', code: "\uf84c"
-  },
-  
-  "ti-cloud-check" : {
-    iconSet: 'tabler icons', code: "\uf84d"
-  },
-  
-  "ti-cloud-code" : {
-    iconSet: 'tabler icons', code: "\uf84e"
-  },
-  
-  "ti-cloud-cog" : {
-    iconSet: 'tabler icons', code: "\uf84f"
-  },
-  
-  "ti-cloud-computing" : {
-    iconSet: 'tabler icons', code: "\uf1d0"
-  },
-  
-  "ti-cloud-data-connection" : {
-    iconSet: 'tabler icons', code: "\uf1d1"
-  },
-  
-  "ti-cloud-dollar" : {
-    iconSet: 'tabler icons', code: "\uf850"
-  },
-  
-  "ti-cloud-down" : {
-    iconSet: 'tabler icons', code: "\uf851"
-  },
-  
-  "ti-cloud-download" : {
-    iconSet: 'tabler icons', code: "\uea71"
-  },
-  
-  "ti-cloud-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf852"
-  },
-  
-  "ti-cloud-filled" : {
-    iconSet: 'tabler icons', code: "\uf673"
-  },
-  
-  "ti-cloud-fog" : {
-    iconSet: 'tabler icons', code: "\uecd9"
-  },
-  
-  "ti-cloud-heart" : {
-    iconSet: 'tabler icons', code: "\uf853"
-  },
-  
-  "ti-cloud-lock" : {
-    iconSet: 'tabler icons', code: "\uefdb"
-  },
-  
-  "ti-cloud-lock-open" : {
-    iconSet: 'tabler icons', code: "\uefda"
-  },
-  
-  "ti-cloud-minus" : {
-    iconSet: 'tabler icons', code: "\uf854"
-  },
-  
-  "ti-cloud-off" : {
-    iconSet: 'tabler icons', code: "\ued3e"
-  },
-  
-  "ti-cloud-pause" : {
-    iconSet: 'tabler icons', code: "\uf855"
-  },
-  
-  "ti-cloud-pin" : {
-    iconSet: 'tabler icons', code: "\uf856"
-  },
-  
-  "ti-cloud-plus" : {
-    iconSet: 'tabler icons', code: "\uf857"
-  },
-  
-  "ti-cloud-question" : {
-    iconSet: 'tabler icons', code: "\uf858"
-  },
-  
-  "ti-cloud-rain" : {
-    iconSet: 'tabler icons', code: "\uea72"
-  },
-  
-  "ti-cloud-search" : {
-    iconSet: 'tabler icons', code: "\uf859"
-  },
-  
-  "ti-cloud-share" : {
-    iconSet: 'tabler icons', code: "\uf85a"
-  },
-  
-  "ti-cloud-snow" : {
-    iconSet: 'tabler icons', code: "\uea73"
-  },
-  
-  "ti-cloud-star" : {
-    iconSet: 'tabler icons', code: "\uf85b"
-  },
-  
-  "ti-cloud-storm" : {
-    iconSet: 'tabler icons', code: "\uea74"
-  },
-  
-  "ti-cloud-up" : {
-    iconSet: 'tabler icons', code: "\uf85c"
-  },
-  
-  "ti-cloud-upload" : {
-    iconSet: 'tabler icons', code: "\uea75"
-  },
-  
-  "ti-cloud-x" : {
-    iconSet: 'tabler icons', code: "\uf85d"
-  },
-  
-  "ti-clover" : {
-    iconSet: 'tabler icons', code: "\uf1ea"
-  },
-  
-  "ti-clover-2" : {
-    iconSet: 'tabler icons', code: "\uf21e"
-  },
-  
-  "ti-clubs" : {
-    iconSet: 'tabler icons', code: "\ueff4"
-  },
-  
-  "ti-clubs-filled" : {
-    iconSet: 'tabler icons', code: "\uf674"
-  },
-  
-  "ti-code" : {
-    iconSet: 'tabler icons', code: "\uea77"
-  },
-  
-  "ti-code-asterix" : {
-    iconSet: 'tabler icons', code: "\uf312"
-  },
-  
-  "ti-code-circle" : {
-    iconSet: 'tabler icons', code: "\uf4ff"
-  },
-  
-  "ti-code-circle-2" : {
-    iconSet: 'tabler icons', code: "\uf4fe"
-  },
-  
-  "ti-code-dots" : {
-    iconSet: 'tabler icons', code: "\uf61a"
-  },
-  
-  "ti-code-minus" : {
-    iconSet: 'tabler icons', code: "\uee42"
-  },
-  
-  "ti-code-off" : {
-    iconSet: 'tabler icons', code: "\uf0d0"
-  },
-  
-  "ti-code-plus" : {
-    iconSet: 'tabler icons', code: "\uee43"
-  },
-  
-  "ti-coffee" : {
-    iconSet: 'tabler icons', code: "\uef0e"
-  },
-  
-  "ti-coffee-off" : {
-    iconSet: 'tabler icons', code: "\uf106"
-  },
-  
-  "ti-coffin" : {
-    iconSet: 'tabler icons', code: "\uf579"
-  },
-  
-  "ti-coin" : {
-    iconSet: 'tabler icons', code: "\ueb82"
-  },
-  
-  "ti-coin-bitcoin" : {
-    iconSet: 'tabler icons', code: "\uf2be"
-  },
-  
-  "ti-coin-euro" : {
-    iconSet: 'tabler icons', code: "\uf2bf"
-  },
-  
-  "ti-coin-monero" : {
-    iconSet: 'tabler icons', code: "\uf4a0"
-  },
-  
-  "ti-coin-off" : {
-    iconSet: 'tabler icons', code: "\uf0d1"
-  },
-  
-  "ti-coin-pound" : {
-    iconSet: 'tabler icons', code: "\uf2c0"
-  },
-  
-  "ti-coin-rupee" : {
-    iconSet: 'tabler icons', code: "\uf2c1"
-  },
-  
-  "ti-coin-yen" : {
-    iconSet: 'tabler icons', code: "\uf2c2"
-  },
-  
-  "ti-coin-yuan" : {
-    iconSet: 'tabler icons', code: "\uf2c3"
-  },
-  
-  "ti-coins" : {
-    iconSet: 'tabler icons', code: "\uf65d"
-  },
-  
-  "ti-color-filter" : {
-    iconSet: 'tabler icons', code: "\uf5a8"
-  },
-  
-  "ti-color-picker" : {
-    iconSet: 'tabler icons', code: "\uebe6"
-  },
-  
-  "ti-color-picker-off" : {
-    iconSet: 'tabler icons', code: "\uf0d2"
-  },
-  
-  "ti-color-swatch" : {
-    iconSet: 'tabler icons', code: "\ueb61"
-  },
-  
-  "ti-color-swatch-off" : {
-    iconSet: 'tabler icons', code: "\uf0d3"
-  },
-  
-  "ti-column-insert-left" : {
-    iconSet: 'tabler icons', code: "\uee44"
-  },
-  
-  "ti-column-insert-right" : {
-    iconSet: 'tabler icons', code: "\uee45"
-  },
-  
-  "ti-columns" : {
-    iconSet: 'tabler icons', code: "\ueb83"
-  },
-  
-  "ti-columns-1" : {
-    iconSet: 'tabler icons', code: "\uf6d4"
-  },
-  
-  "ti-columns-2" : {
-    iconSet: 'tabler icons', code: "\uf6d5"
-  },
-  
-  "ti-columns-3" : {
-    iconSet: 'tabler icons', code: "\uf6d6"
-  },
-  
-  "ti-columns-off" : {
-    iconSet: 'tabler icons', code: "\uf0d4"
-  },
-  
-  "ti-comet" : {
-    iconSet: 'tabler icons', code: "\uec76"
-  },
-  
-  "ti-command" : {
-    iconSet: 'tabler icons', code: "\uea78"
-  },
-  
-  "ti-command-off" : {
-    iconSet: 'tabler icons', code: "\uf3d7"
-  },
-  
-  "ti-compass" : {
-    iconSet: 'tabler icons', code: "\uea79"
-  },
-  
-  "ti-compass-off" : {
-    iconSet: 'tabler icons', code: "\uf0d5"
-  },
-  
-  "ti-components" : {
-    iconSet: 'tabler icons', code: "\uefa5"
-  },
-  
-  "ti-components-off" : {
-    iconSet: 'tabler icons', code: "\uf0d6"
-  },
-  
-  "ti-cone" : {
-    iconSet: 'tabler icons', code: "\uefdd"
-  },
-  
-  "ti-cone-2" : {
-    iconSet: 'tabler icons', code: "\uefdc"
-  },
-  
-  "ti-cone-off" : {
-    iconSet: 'tabler icons', code: "\uf3d8"
-  },
-  
-  "ti-confetti" : {
-    iconSet: 'tabler icons', code: "\uee46"
-  },
-  
-  "ti-confetti-off" : {
-    iconSet: 'tabler icons', code: "\uf3d9"
-  },
-  
-  "ti-confucius" : {
-    iconSet: 'tabler icons', code: "\uf58a"
-  },
-  
-  "ti-container" : {
-    iconSet: 'tabler icons', code: "\uee47"
-  },
-  
-  "ti-container-off" : {
-    iconSet: 'tabler icons', code: "\uf107"
-  },
-  
-  "ti-contrast" : {
-    iconSet: 'tabler icons', code: "\uec4e"
-  },
-  
-  "ti-contrast-2" : {
-    iconSet: 'tabler icons', code: "\uefc7"
-  },
-  
-  "ti-contrast-2-off" : {
-    iconSet: 'tabler icons', code: "\uf3da"
-  },
-  
-  "ti-contrast-off" : {
-    iconSet: 'tabler icons', code: "\uf3db"
-  },
-  
-  "ti-cooker" : {
-    iconSet: 'tabler icons', code: "\uf57a"
-  },
-  
-  "ti-cookie" : {
-    iconSet: 'tabler icons', code: "\uef0f"
-  },
-  
-  "ti-cookie-man" : {
-    iconSet: 'tabler icons', code: "\uf4c4"
-  },
-  
-  "ti-cookie-off" : {
-    iconSet: 'tabler icons', code: "\uf0d7"
-  },
-  
-  "ti-copy" : {
-    iconSet: 'tabler icons', code: "\uea7a"
-  },
-  
-  "ti-copy-off" : {
-    iconSet: 'tabler icons', code: "\uf0d8"
-  },
-  
-  "ti-copyleft" : {
-    iconSet: 'tabler icons', code: "\uec3d"
-  },
-  
-  "ti-copyleft-filled" : {
-    iconSet: 'tabler icons', code: "\uf73b"
-  },
-  
-  "ti-copyleft-off" : {
-    iconSet: 'tabler icons', code: "\uf0d9"
-  },
-  
-  "ti-copyright" : {
-    iconSet: 'tabler icons', code: "\uea7b"
-  },
-  
-  "ti-copyright-filled" : {
-    iconSet: 'tabler icons', code: "\uf73c"
-  },
-  
-  "ti-copyright-off" : {
-    iconSet: 'tabler icons', code: "\uf0da"
-  },
-  
-  "ti-corner-down-left" : {
-    iconSet: 'tabler icons', code: "\uea7c"
-  },
-  
-  "ti-corner-down-left-double" : {
-    iconSet: 'tabler icons', code: "\uee48"
-  },
-  
-  "ti-corner-down-right" : {
-    iconSet: 'tabler icons', code: "\uea7d"
-  },
-  
-  "ti-corner-down-right-double" : {
-    iconSet: 'tabler icons', code: "\uee49"
-  },
-  
-  "ti-corner-left-down" : {
-    iconSet: 'tabler icons', code: "\uea7e"
-  },
-  
-  "ti-corner-left-down-double" : {
-    iconSet: 'tabler icons', code: "\uee4a"
-  },
-  
-  "ti-corner-left-up" : {
-    iconSet: 'tabler icons', code: "\uea7f"
-  },
-  
-  "ti-corner-left-up-double" : {
-    iconSet: 'tabler icons', code: "\uee4b"
-  },
-  
-  "ti-corner-right-down" : {
-    iconSet: 'tabler icons', code: "\uea80"
-  },
-  
-  "ti-corner-right-down-double" : {
-    iconSet: 'tabler icons', code: "\uee4c"
-  },
-  
-  "ti-corner-right-up" : {
-    iconSet: 'tabler icons', code: "\uea81"
-  },
-  
-  "ti-corner-right-up-double" : {
-    iconSet: 'tabler icons', code: "\uee4d"
-  },
-  
-  "ti-corner-up-left" : {
-    iconSet: 'tabler icons', code: "\uea82"
-  },
-  
-  "ti-corner-up-left-double" : {
-    iconSet: 'tabler icons', code: "\uee4e"
-  },
-  
-  "ti-corner-up-right" : {
-    iconSet: 'tabler icons', code: "\uea83"
-  },
-  
-  "ti-corner-up-right-double" : {
-    iconSet: 'tabler icons', code: "\uee4f"
-  },
-  
-  "ti-cpu" : {
-    iconSet: 'tabler icons', code: "\uef8e"
-  },
-  
-  "ti-cpu-2" : {
-    iconSet: 'tabler icons', code: "\uf075"
-  },
-  
-  "ti-cpu-off" : {
-    iconSet: 'tabler icons', code: "\uf108"
-  },
-  
-  "ti-crane" : {
-    iconSet: 'tabler icons', code: "\uef27"
-  },
-  
-  "ti-crane-off" : {
-    iconSet: 'tabler icons', code: "\uf109"
-  },
-  
-  "ti-creative-commons" : {
-    iconSet: 'tabler icons', code: "\uefb3"
-  },
-  
-  "ti-creative-commons-by" : {
-    iconSet: 'tabler icons', code: "\uf21f"
-  },
-  
-  "ti-creative-commons-nc" : {
-    iconSet: 'tabler icons', code: "\uf220"
-  },
-  
-  "ti-creative-commons-nd" : {
-    iconSet: 'tabler icons', code: "\uf221"
-  },
-  
-  "ti-creative-commons-off" : {
-    iconSet: 'tabler icons', code: "\uf10a"
-  },
-  
-  "ti-creative-commons-sa" : {
-    iconSet: 'tabler icons', code: "\uf222"
-  },
-  
-  "ti-creative-commons-zero" : {
-    iconSet: 'tabler icons', code: "\uf223"
-  },
-  
-  "ti-credit-card" : {
-    iconSet: 'tabler icons', code: "\uea84"
-  },
-  
-  "ti-credit-card-off" : {
-    iconSet: 'tabler icons', code: "\ued11"
-  },
-  
-  "ti-cricket" : {
-    iconSet: 'tabler icons', code: "\uf09a"
-  },
-  
-  "ti-crop" : {
-    iconSet: 'tabler icons', code: "\uea85"
-  },
-  
-  "ti-cross" : {
-    iconSet: 'tabler icons', code: "\uef8f"
-  },
-  
-  "ti-cross-filled" : {
-    iconSet: 'tabler icons', code: "\uf675"
-  },
-  
-  "ti-cross-off" : {
-    iconSet: 'tabler icons', code: "\uf10b"
-  },
-  
-  "ti-crosshair" : {
-    iconSet: 'tabler icons', code: "\uec3e"
-  },
-  
-  "ti-crown" : {
-    iconSet: 'tabler icons', code: "\ued12"
-  },
-  
-  "ti-crown-off" : {
-    iconSet: 'tabler icons', code: "\uee50"
-  },
-  
-  "ti-crutches" : {
-    iconSet: 'tabler icons', code: "\uef5b"
-  },
-  
-  "ti-crutches-off" : {
-    iconSet: 'tabler icons', code: "\uf10c"
-  },
-  
-  "ti-crystal-ball" : {
-    iconSet: 'tabler icons', code: "\uf57b"
-  },
-  
-  "ti-csv" : {
-    iconSet: 'tabler icons', code: "\uf791"
-  },
-  
-  "ti-cube-send" : {
-    iconSet: 'tabler icons', code: "\uf61b"
-  },
-  
-  "ti-cube-unfolded" : {
-    iconSet: 'tabler icons', code: "\uf61c"
-  },
-  
-  "ti-cup" : {
-    iconSet: 'tabler icons', code: "\uef28"
-  },
-  
-  "ti-cup-off" : {
-    iconSet: 'tabler icons', code: "\uf10d"
-  },
-  
-  "ti-curling" : {
-    iconSet: 'tabler icons', code: "\uefc8"
-  },
-  
-  "ti-curly-loop" : {
-    iconSet: 'tabler icons', code: "\uecda"
-  },
-  
-  "ti-currency" : {
-    iconSet: 'tabler icons', code: "\uefa6"
-  },
-  
-  "ti-currency-afghani" : {
-    iconSet: 'tabler icons', code: "\uf65e"
-  },
-  
-  "ti-currency-bahraini" : {
-    iconSet: 'tabler icons', code: "\uee51"
-  },
-  
-  "ti-currency-baht" : {
-    iconSet: 'tabler icons', code: "\uf08a"
-  },
-  
-  "ti-currency-bitcoin" : {
-    iconSet: 'tabler icons', code: "\uebab"
-  },
-  
-  "ti-currency-cent" : {
-    iconSet: 'tabler icons', code: "\uee53"
-  },
-  
-  "ti-currency-dinar" : {
-    iconSet: 'tabler icons', code: "\uee54"
-  },
-  
-  "ti-currency-dirham" : {
-    iconSet: 'tabler icons', code: "\uee55"
-  },
-  
-  "ti-currency-dogecoin" : {
-    iconSet: 'tabler icons', code: "\uef4b"
-  },
-  
-  "ti-currency-dollar" : {
-    iconSet: 'tabler icons', code: "\ueb84"
-  },
-  
-  "ti-currency-dollar-australian" : {
-    iconSet: 'tabler icons', code: "\uee56"
-  },
-  
-  "ti-currency-dollar-brunei" : {
-    iconSet: 'tabler icons', code: "\uf36c"
-  },
-  
-  "ti-currency-dollar-canadian" : {
-    iconSet: 'tabler icons', code: "\uee57"
-  },
-  
-  "ti-currency-dollar-guyanese" : {
-    iconSet: 'tabler icons', code: "\uf36d"
-  },
-  
-  "ti-currency-dollar-off" : {
-    iconSet: 'tabler icons', code: "\uf3dc"
-  },
-  
-  "ti-currency-dollar-singapore" : {
-    iconSet: 'tabler icons', code: "\uee58"
-  },
-  
-  "ti-currency-dollar-zimbabwean" : {
-    iconSet: 'tabler icons', code: "\uf36e"
-  },
-  
-  "ti-currency-dong" : {
-    iconSet: 'tabler icons', code: "\uf36f"
-  },
-  
-  "ti-currency-dram" : {
-    iconSet: 'tabler icons', code: "\uf370"
-  },
-  
-  "ti-currency-ethereum" : {
-    iconSet: 'tabler icons', code: "\uee59"
-  },
-  
-  "ti-currency-euro" : {
-    iconSet: 'tabler icons', code: "\ueb85"
-  },
-  
-  "ti-currency-euro-off" : {
-    iconSet: 'tabler icons', code: "\uf3dd"
-  },
-  
-  "ti-currency-forint" : {
-    iconSet: 'tabler icons', code: "\uee5a"
-  },
-  
-  "ti-currency-frank" : {
-    iconSet: 'tabler icons', code: "\uee5b"
-  },
-  
-  "ti-currency-guarani" : {
-    iconSet: 'tabler icons', code: "\uf371"
-  },
-  
-  "ti-currency-hryvnia" : {
-    iconSet: 'tabler icons', code: "\uf372"
-  },
-  
-  "ti-currency-kip" : {
-    iconSet: 'tabler icons', code: "\uf373"
-  },
-  
-  "ti-currency-krone-czech" : {
-    iconSet: 'tabler icons', code: "\uee5c"
-  },
-  
-  "ti-currency-krone-danish" : {
-    iconSet: 'tabler icons', code: "\uee5d"
-  },
-  
-  "ti-currency-krone-swedish" : {
-    iconSet: 'tabler icons', code: "\uee5e"
-  },
-  
-  "ti-currency-lari" : {
-    iconSet: 'tabler icons', code: "\uf374"
-  },
-  
-  "ti-currency-leu" : {
-    iconSet: 'tabler icons', code: "\uee5f"
-  },
-  
-  "ti-currency-lira" : {
-    iconSet: 'tabler icons', code: "\uee60"
-  },
-  
-  "ti-currency-litecoin" : {
-    iconSet: 'tabler icons', code: "\uee61"
-  },
-  
-  "ti-currency-lyd" : {
-    iconSet: 'tabler icons', code: "\uf375"
-  },
-  
-  "ti-currency-manat" : {
-    iconSet: 'tabler icons', code: "\uf376"
-  },
-  
-  "ti-currency-monero" : {
-    iconSet: 'tabler icons', code: "\uf377"
-  },
-  
-  "ti-currency-naira" : {
-    iconSet: 'tabler icons', code: "\uee62"
-  },
-  
-  "ti-currency-nano" : {
-    iconSet: 'tabler icons', code: "\uf7a6"
-  },
-  
-  "ti-currency-off" : {
-    iconSet: 'tabler icons', code: "\uf3de"
-  },
-  
-  "ti-currency-paanga" : {
-    iconSet: 'tabler icons', code: "\uf378"
-  },
-  
-  "ti-currency-peso" : {
-    iconSet: 'tabler icons', code: "\uf65f"
-  },
-  
-  "ti-currency-pound" : {
-    iconSet: 'tabler icons', code: "\uebac"
-  },
-  
-  "ti-currency-pound-off" : {
-    iconSet: 'tabler icons', code: "\uf3df"
-  },
-  
-  "ti-currency-quetzal" : {
-    iconSet: 'tabler icons', code: "\uf379"
-  },
-  
-  "ti-currency-real" : {
-    iconSet: 'tabler icons', code: "\uee63"
-  },
-  
-  "ti-currency-renminbi" : {
-    iconSet: 'tabler icons', code: "\uee64"
-  },
-  
-  "ti-currency-ripple" : {
-    iconSet: 'tabler icons', code: "\uee65"
-  },
-  
-  "ti-currency-riyal" : {
-    iconSet: 'tabler icons', code: "\uee66"
-  },
-  
-  "ti-currency-rubel" : {
-    iconSet: 'tabler icons', code: "\uee67"
-  },
-  
-  "ti-currency-rufiyaa" : {
-    iconSet: 'tabler icons', code: "\uf37a"
-  },
-  
-  "ti-currency-rupee" : {
-    iconSet: 'tabler icons', code: "\uebad"
-  },
-  
-  "ti-currency-rupee-nepalese" : {
-    iconSet: 'tabler icons', code: "\uf37b"
-  },
-  
-  "ti-currency-shekel" : {
-    iconSet: 'tabler icons', code: "\uee68"
-  },
-  
-  "ti-currency-solana" : {
-    iconSet: 'tabler icons', code: "\uf4a1"
-  },
-  
-  "ti-currency-som" : {
-    iconSet: 'tabler icons', code: "\uf37c"
-  },
-  
-  "ti-currency-taka" : {
-    iconSet: 'tabler icons', code: "\uee69"
-  },
-  
-  "ti-currency-tenge" : {
-    iconSet: 'tabler icons', code: "\uf37d"
-  },
-  
-  "ti-currency-tugrik" : {
-    iconSet: 'tabler icons', code: "\uee6a"
-  },
-  
-  "ti-currency-won" : {
-    iconSet: 'tabler icons', code: "\uee6b"
-  },
-  
-  "ti-currency-yen" : {
-    iconSet: 'tabler icons', code: "\uebae"
-  },
-  
-  "ti-currency-yen-off" : {
-    iconSet: 'tabler icons', code: "\uf3e0"
-  },
-  
-  "ti-currency-yuan" : {
-    iconSet: 'tabler icons', code: "\uf29a"
-  },
-  
-  "ti-currency-zloty" : {
-    iconSet: 'tabler icons', code: "\uee6c"
-  },
-  
-  "ti-current-location" : {
-    iconSet: 'tabler icons', code: "\uecef"
-  },
-  
-  "ti-current-location-off" : {
-    iconSet: 'tabler icons', code: "\uf10e"
-  },
-  
-  "ti-cursor-off" : {
-    iconSet: 'tabler icons', code: "\uf10f"
-  },
-  
-  "ti-cursor-text" : {
-    iconSet: 'tabler icons', code: "\uee6d"
-  },
-  
-  "ti-cut" : {
-    iconSet: 'tabler icons', code: "\uea86"
-  },
-  
-  "ti-cylinder" : {
-    iconSet: 'tabler icons', code: "\uf54c"
-  },
-  
-  "ti-dashboard" : {
-    iconSet: 'tabler icons', code: "\uea87"
-  },
-  
-  "ti-dashboard-off" : {
-    iconSet: 'tabler icons', code: "\uf3e1"
-  },
-  
-  "ti-database" : {
-    iconSet: 'tabler icons', code: "\uea88"
-  },
-  
-  "ti-database-cog" : {
-    iconSet: 'tabler icons', code: "\ufa10"
-  },
-  
-  "ti-database-dollar" : {
-    iconSet: 'tabler icons', code: "\ufa11"
-  },
-  
-  "ti-database-edit" : {
-    iconSet: 'tabler icons', code: "\ufa12"
-  },
-  
-  "ti-database-exclamation" : {
-    iconSet: 'tabler icons', code: "\ufa13"
-  },
-  
-  "ti-database-export" : {
-    iconSet: 'tabler icons', code: "\uee6e"
-  },
-  
-  "ti-database-heart" : {
-    iconSet: 'tabler icons', code: "\ufa14"
-  },
-  
-  "ti-database-import" : {
-    iconSet: 'tabler icons', code: "\uee6f"
-  },
-  
-  "ti-database-leak" : {
-    iconSet: 'tabler icons', code: "\ufa15"
-  },
-  
-  "ti-database-minus" : {
-    iconSet: 'tabler icons', code: "\ufa16"
-  },
-  
-  "ti-database-off" : {
-    iconSet: 'tabler icons', code: "\uee70"
-  },
-  
-  "ti-database-plus" : {
-    iconSet: 'tabler icons', code: "\ufa17"
-  },
-  
-  "ti-database-search" : {
-    iconSet: 'tabler icons', code: "\ufa18"
-  },
-  
-  "ti-database-share" : {
-    iconSet: 'tabler icons', code: "\ufa19"
-  },
-  
-  "ti-database-star" : {
-    iconSet: 'tabler icons', code: "\ufa1a"
-  },
-  
-  "ti-database-x" : {
-    iconSet: 'tabler icons', code: "\ufa1b"
-  },
-  
-  "ti-decimal" : {
-    iconSet: 'tabler icons', code: "\ufa26"
-  },
-  
-  "ti-deer" : {
-    iconSet: 'tabler icons', code: "\uf4c5"
-  },
-  
-  "ti-delta" : {
-    iconSet: 'tabler icons', code: "\uf53c"
-  },
-  
-  "ti-dental" : {
-    iconSet: 'tabler icons', code: "\uf025"
-  },
-  
-  "ti-dental-broken" : {
-    iconSet: 'tabler icons', code: "\uf286"
-  },
-  
-  "ti-dental-off" : {
-    iconSet: 'tabler icons', code: "\uf110"
-  },
-  
-  "ti-deselect" : {
-    iconSet: 'tabler icons', code: "\uf9f3"
-  },
-  
-  "ti-details" : {
-    iconSet: 'tabler icons', code: "\uee71"
-  },
-  
-  "ti-details-off" : {
-    iconSet: 'tabler icons', code: "\uf3e2"
-  },
-  
-  "ti-device-airpods" : {
-    iconSet: 'tabler icons', code: "\uf5a9"
-  },
-  
-  "ti-device-airpods-case" : {
-    iconSet: 'tabler icons', code: "\uf646"
-  },
-  
-  "ti-device-analytics" : {
-    iconSet: 'tabler icons', code: "\uee72"
-  },
-  
-  "ti-device-audio-tape" : {
-    iconSet: 'tabler icons', code: "\uee73"
-  },
-  
-  "ti-device-camera-phone" : {
-    iconSet: 'tabler icons', code: "\uf233"
-  },
-  
-  "ti-device-cctv" : {
-    iconSet: 'tabler icons', code: "\uee74"
-  },
-  
-  "ti-device-cctv-off" : {
-    iconSet: 'tabler icons', code: "\uf3e3"
-  },
-  
-  "ti-device-computer-camera" : {
-    iconSet: 'tabler icons', code: "\uee76"
-  },
-  
-  "ti-device-computer-camera-off" : {
-    iconSet: 'tabler icons', code: "\uee75"
-  },
-  
-  "ti-device-desktop" : {
-    iconSet: 'tabler icons', code: "\uea89"
-  },
-  
-  "ti-device-desktop-analytics" : {
-    iconSet: 'tabler icons', code: "\uee77"
-  },
-  
-  "ti-device-desktop-bolt" : {
-    iconSet: 'tabler icons', code: "\uf85e"
-  },
-  
-  "ti-device-desktop-cancel" : {
-    iconSet: 'tabler icons', code: "\uf85f"
-  },
-  
-  "ti-device-desktop-check" : {
-    iconSet: 'tabler icons', code: "\uf860"
-  },
-  
-  "ti-device-desktop-code" : {
-    iconSet: 'tabler icons', code: "\uf861"
-  },
-  
-  "ti-device-desktop-cog" : {
-    iconSet: 'tabler icons', code: "\uf862"
-  },
-  
-  "ti-device-desktop-dollar" : {
-    iconSet: 'tabler icons', code: "\uf863"
-  },
-  
-  "ti-device-desktop-down" : {
-    iconSet: 'tabler icons', code: "\uf864"
-  },
-  
-  "ti-device-desktop-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf865"
-  },
-  
-  "ti-device-desktop-heart" : {
-    iconSet: 'tabler icons', code: "\uf866"
-  },
-  
-  "ti-device-desktop-minus" : {
-    iconSet: 'tabler icons', code: "\uf867"
-  },
-  
-  "ti-device-desktop-off" : {
-    iconSet: 'tabler icons', code: "\uee78"
-  },
-  
-  "ti-device-desktop-pause" : {
-    iconSet: 'tabler icons', code: "\uf868"
-  },
-  
-  "ti-device-desktop-pin" : {
-    iconSet: 'tabler icons', code: "\uf869"
-  },
-  
-  "ti-device-desktop-plus" : {
-    iconSet: 'tabler icons', code: "\uf86a"
-  },
-  
-  "ti-device-desktop-question" : {
-    iconSet: 'tabler icons', code: "\uf86b"
-  },
-  
-  "ti-device-desktop-search" : {
-    iconSet: 'tabler icons', code: "\uf86c"
-  },
-  
-  "ti-device-desktop-share" : {
-    iconSet: 'tabler icons', code: "\uf86d"
-  },
-  
-  "ti-device-desktop-star" : {
-    iconSet: 'tabler icons', code: "\uf86e"
-  },
-  
-  "ti-device-desktop-up" : {
-    iconSet: 'tabler icons', code: "\uf86f"
-  },
-  
-  "ti-device-desktop-x" : {
-    iconSet: 'tabler icons', code: "\uf870"
-  },
-  
-  "ti-device-floppy" : {
-    iconSet: 'tabler icons', code: "\ueb62"
-  },
-  
-  "ti-device-gamepad" : {
-    iconSet: 'tabler icons', code: "\ueb63"
-  },
-  
-  "ti-device-gamepad-2" : {
-    iconSet: 'tabler icons', code: "\uf1d2"
-  },
-  
-  "ti-device-heart-monitor" : {
-    iconSet: 'tabler icons', code: "\uf060"
-  },
-  
-  "ti-device-imac" : {
-    iconSet: 'tabler icons', code: "\uf7a7"
-  },
-  
-  "ti-device-imac-bolt" : {
-    iconSet: 'tabler icons', code: "\uf871"
-  },
-  
-  "ti-device-imac-cancel" : {
-    iconSet: 'tabler icons', code: "\uf872"
-  },
-  
-  "ti-device-imac-check" : {
-    iconSet: 'tabler icons', code: "\uf873"
-  },
-  
-  "ti-device-imac-code" : {
-    iconSet: 'tabler icons', code: "\uf874"
-  },
-  
-  "ti-device-imac-cog" : {
-    iconSet: 'tabler icons', code: "\uf875"
-  },
-  
-  "ti-device-imac-dollar" : {
-    iconSet: 'tabler icons', code: "\uf876"
-  },
-  
-  "ti-device-imac-down" : {
-    iconSet: 'tabler icons', code: "\uf877"
-  },
-  
-  "ti-device-imac-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf878"
-  },
-  
-  "ti-device-imac-heart" : {
-    iconSet: 'tabler icons', code: "\uf879"
-  },
-  
-  "ti-device-imac-minus" : {
-    iconSet: 'tabler icons', code: "\uf87a"
-  },
-  
-  "ti-device-imac-off" : {
-    iconSet: 'tabler icons', code: "\uf87b"
-  },
-  
-  "ti-device-imac-pause" : {
-    iconSet: 'tabler icons', code: "\uf87c"
-  },
-  
-  "ti-device-imac-pin" : {
-    iconSet: 'tabler icons', code: "\uf87d"
-  },
-  
-  "ti-device-imac-plus" : {
-    iconSet: 'tabler icons', code: "\uf87e"
-  },
-  
-  "ti-device-imac-question" : {
-    iconSet: 'tabler icons', code: "\uf87f"
-  },
-  
-  "ti-device-imac-search" : {
-    iconSet: 'tabler icons', code: "\uf880"
-  },
-  
-  "ti-device-imac-share" : {
-    iconSet: 'tabler icons', code: "\uf881"
-  },
-  
-  "ti-device-imac-star" : {
-    iconSet: 'tabler icons', code: "\uf882"
-  },
-  
-  "ti-device-imac-up" : {
-    iconSet: 'tabler icons', code: "\uf883"
-  },
-  
-  "ti-device-imac-x" : {
-    iconSet: 'tabler icons', code: "\uf884"
-  },
-  
-  "ti-device-ipad" : {
-    iconSet: 'tabler icons', code: "\uf648"
-  },
-  
-  "ti-device-ipad-bolt" : {
-    iconSet: 'tabler icons', code: "\uf885"
-  },
-  
-  "ti-device-ipad-cancel" : {
-    iconSet: 'tabler icons', code: "\uf886"
-  },
-  
-  "ti-device-ipad-check" : {
-    iconSet: 'tabler icons', code: "\uf887"
-  },
-  
-  "ti-device-ipad-code" : {
-    iconSet: 'tabler icons', code: "\uf888"
-  },
-  
-  "ti-device-ipad-cog" : {
-    iconSet: 'tabler icons', code: "\uf889"
-  },
-  
-  "ti-device-ipad-dollar" : {
-    iconSet: 'tabler icons', code: "\uf88a"
-  },
-  
-  "ti-device-ipad-down" : {
-    iconSet: 'tabler icons', code: "\uf88b"
-  },
-  
-  "ti-device-ipad-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf88c"
-  },
-  
-  "ti-device-ipad-heart" : {
-    iconSet: 'tabler icons', code: "\uf88d"
-  },
-  
-  "ti-device-ipad-horizontal" : {
-    iconSet: 'tabler icons', code: "\uf647"
-  },
-  
-  "ti-device-ipad-horizontal-bolt" : {
-    iconSet: 'tabler icons', code: "\uf88e"
-  },
-  
-  "ti-device-ipad-horizontal-cancel" : {
-    iconSet: 'tabler icons', code: "\uf88f"
-  },
-  
-  "ti-device-ipad-horizontal-check" : {
-    iconSet: 'tabler icons', code: "\uf890"
-  },
-  
-  "ti-device-ipad-horizontal-code" : {
-    iconSet: 'tabler icons', code: "\uf891"
-  },
-  
-  "ti-device-ipad-horizontal-cog" : {
-    iconSet: 'tabler icons', code: "\uf892"
-  },
-  
-  "ti-device-ipad-horizontal-dollar" : {
-    iconSet: 'tabler icons', code: "\uf893"
-  },
-  
-  "ti-device-ipad-horizontal-down" : {
-    iconSet: 'tabler icons', code: "\uf894"
-  },
-  
-  "ti-device-ipad-horizontal-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf895"
-  },
-  
-  "ti-device-ipad-horizontal-heart" : {
-    iconSet: 'tabler icons', code: "\uf896"
-  },
-  
-  "ti-device-ipad-horizontal-minus" : {
-    iconSet: 'tabler icons', code: "\uf897"
-  },
-  
-  "ti-device-ipad-horizontal-off" : {
-    iconSet: 'tabler icons', code: "\uf898"
-  },
-  
-  "ti-device-ipad-horizontal-pause" : {
-    iconSet: 'tabler icons', code: "\uf899"
-  },
-  
-  "ti-device-ipad-horizontal-pin" : {
-    iconSet: 'tabler icons', code: "\uf89a"
-  },
-  
-  "ti-device-ipad-horizontal-plus" : {
-    iconSet: 'tabler icons', code: "\uf89b"
-  },
-  
-  "ti-device-ipad-horizontal-question" : {
-    iconSet: 'tabler icons', code: "\uf89c"
-  },
-  
-  "ti-device-ipad-horizontal-search" : {
-    iconSet: 'tabler icons', code: "\uf89d"
-  },
-  
-  "ti-device-ipad-horizontal-share" : {
-    iconSet: 'tabler icons', code: "\uf89e"
-  },
-  
-  "ti-device-ipad-horizontal-star" : {
-    iconSet: 'tabler icons', code: "\uf89f"
-  },
-  
-  "ti-device-ipad-horizontal-up" : {
-    iconSet: 'tabler icons', code: "\uf8a0"
-  },
-  
-  "ti-device-ipad-horizontal-x" : {
-    iconSet: 'tabler icons', code: "\uf8a1"
-  },
-  
-  "ti-device-ipad-minus" : {
-    iconSet: 'tabler icons', code: "\uf8a2"
-  },
-  
-  "ti-device-ipad-off" : {
-    iconSet: 'tabler icons', code: "\uf8a3"
-  },
-  
-  "ti-device-ipad-pause" : {
-    iconSet: 'tabler icons', code: "\uf8a4"
-  },
-  
-  "ti-device-ipad-pin" : {
-    iconSet: 'tabler icons', code: "\uf8a5"
-  },
-  
-  "ti-device-ipad-plus" : {
-    iconSet: 'tabler icons', code: "\uf8a6"
-  },
-  
-  "ti-device-ipad-question" : {
-    iconSet: 'tabler icons', code: "\uf8a7"
-  },
-  
-  "ti-device-ipad-search" : {
-    iconSet: 'tabler icons', code: "\uf8a8"
-  },
-  
-  "ti-device-ipad-share" : {
-    iconSet: 'tabler icons', code: "\uf8a9"
-  },
-  
-  "ti-device-ipad-star" : {
-    iconSet: 'tabler icons', code: "\uf8aa"
-  },
-  
-  "ti-device-ipad-up" : {
-    iconSet: 'tabler icons', code: "\uf8ab"
-  },
-  
-  "ti-device-ipad-x" : {
-    iconSet: 'tabler icons', code: "\uf8ac"
-  },
-  
-  "ti-device-landline-phone" : {
-    iconSet: 'tabler icons', code: "\uf649"
-  },
-  
-  "ti-device-laptop" : {
-    iconSet: 'tabler icons', code: "\ueb64"
-  },
-  
-  "ti-device-laptop-off" : {
-    iconSet: 'tabler icons', code: "\uf061"
-  },
-  
-  "ti-device-mobile" : {
-    iconSet: 'tabler icons', code: "\uea8a"
-  },
-  
-  "ti-device-mobile-bolt" : {
-    iconSet: 'tabler icons', code: "\uf8ad"
-  },
-  
-  "ti-device-mobile-cancel" : {
-    iconSet: 'tabler icons', code: "\uf8ae"
-  },
-  
-  "ti-device-mobile-charging" : {
-    iconSet: 'tabler icons', code: "\uf224"
-  },
-  
-  "ti-device-mobile-check" : {
-    iconSet: 'tabler icons', code: "\uf8af"
-  },
-  
-  "ti-device-mobile-code" : {
-    iconSet: 'tabler icons', code: "\uf8b0"
-  },
-  
-  "ti-device-mobile-cog" : {
-    iconSet: 'tabler icons', code: "\uf8b1"
-  },
-  
-  "ti-device-mobile-dollar" : {
-    iconSet: 'tabler icons', code: "\uf8b2"
-  },
-  
-  "ti-device-mobile-down" : {
-    iconSet: 'tabler icons', code: "\uf8b3"
-  },
-  
-  "ti-device-mobile-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf8b4"
-  },
-  
-  "ti-device-mobile-heart" : {
-    iconSet: 'tabler icons', code: "\uf8b5"
-  },
-  
-  "ti-device-mobile-message" : {
-    iconSet: 'tabler icons', code: "\uee79"
-  },
-  
-  "ti-device-mobile-minus" : {
-    iconSet: 'tabler icons', code: "\uf8b6"
-  },
-  
-  "ti-device-mobile-off" : {
-    iconSet: 'tabler icons', code: "\uf062"
-  },
-  
-  "ti-device-mobile-pause" : {
-    iconSet: 'tabler icons', code: "\uf8b7"
-  },
-  
-  "ti-device-mobile-pin" : {
-    iconSet: 'tabler icons', code: "\uf8b8"
-  },
-  
-  "ti-device-mobile-plus" : {
-    iconSet: 'tabler icons', code: "\uf8b9"
-  },
-  
-  "ti-device-mobile-question" : {
-    iconSet: 'tabler icons', code: "\uf8ba"
-  },
-  
-  "ti-device-mobile-rotated" : {
-    iconSet: 'tabler icons', code: "\uecdb"
-  },
-  
-  "ti-device-mobile-search" : {
-    iconSet: 'tabler icons', code: "\uf8bb"
-  },
-  
-  "ti-device-mobile-share" : {
-    iconSet: 'tabler icons', code: "\uf8bc"
-  },
-  
-  "ti-device-mobile-star" : {
-    iconSet: 'tabler icons', code: "\uf8bd"
-  },
-  
-  "ti-device-mobile-up" : {
-    iconSet: 'tabler icons', code: "\uf8be"
-  },
-  
-  "ti-device-mobile-vibration" : {
-    iconSet: 'tabler icons', code: "\ueb86"
-  },
-  
-  "ti-device-mobile-x" : {
-    iconSet: 'tabler icons', code: "\uf8bf"
-  },
-  
-  "ti-device-nintendo" : {
-    iconSet: 'tabler icons', code: "\uf026"
-  },
-  
-  "ti-device-nintendo-off" : {
-    iconSet: 'tabler icons', code: "\uf111"
-  },
-  
-  "ti-device-remote" : {
-    iconSet: 'tabler icons', code: "\uf792"
-  },
-  
-  "ti-device-sd-card" : {
-    iconSet: 'tabler icons', code: "\uf384"
-  },
-  
-  "ti-device-sim" : {
-    iconSet: 'tabler icons', code: "\uf4b2"
-  },
-  
-  "ti-device-sim-1" : {
-    iconSet: 'tabler icons', code: "\uf4af"
-  },
-  
-  "ti-device-sim-2" : {
-    iconSet: 'tabler icons', code: "\uf4b0"
-  },
-  
-  "ti-device-sim-3" : {
-    iconSet: 'tabler icons', code: "\uf4b1"
-  },
-  
-  "ti-device-speaker" : {
-    iconSet: 'tabler icons', code: "\uea8b"
-  },
-  
-  "ti-device-speaker-off" : {
-    iconSet: 'tabler icons', code: "\uf112"
-  },
-  
-  "ti-device-tablet" : {
-    iconSet: 'tabler icons', code: "\uea8c"
-  },
-  
-  "ti-device-tablet-bolt" : {
-    iconSet: 'tabler icons', code: "\uf8c0"
-  },
-  
-  "ti-device-tablet-cancel" : {
-    iconSet: 'tabler icons', code: "\uf8c1"
-  },
-  
-  "ti-device-tablet-check" : {
-    iconSet: 'tabler icons', code: "\uf8c2"
-  },
-  
-  "ti-device-tablet-code" : {
-    iconSet: 'tabler icons', code: "\uf8c3"
-  },
-  
-  "ti-device-tablet-cog" : {
-    iconSet: 'tabler icons', code: "\uf8c4"
-  },
-  
-  "ti-device-tablet-dollar" : {
-    iconSet: 'tabler icons', code: "\uf8c5"
-  },
-  
-  "ti-device-tablet-down" : {
-    iconSet: 'tabler icons', code: "\uf8c6"
-  },
-  
-  "ti-device-tablet-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf8c7"
-  },
-  
-  "ti-device-tablet-heart" : {
-    iconSet: 'tabler icons', code: "\uf8c8"
-  },
-  
-  "ti-device-tablet-minus" : {
-    iconSet: 'tabler icons', code: "\uf8c9"
-  },
-  
-  "ti-device-tablet-off" : {
-    iconSet: 'tabler icons', code: "\uf063"
-  },
-  
-  "ti-device-tablet-pause" : {
-    iconSet: 'tabler icons', code: "\uf8ca"
-  },
-  
-  "ti-device-tablet-pin" : {
-    iconSet: 'tabler icons', code: "\uf8cb"
-  },
-  
-  "ti-device-tablet-plus" : {
-    iconSet: 'tabler icons', code: "\uf8cc"
-  },
-  
-  "ti-device-tablet-question" : {
-    iconSet: 'tabler icons', code: "\uf8cd"
-  },
-  
-  "ti-device-tablet-search" : {
-    iconSet: 'tabler icons', code: "\uf8ce"
-  },
-  
-  "ti-device-tablet-share" : {
-    iconSet: 'tabler icons', code: "\uf8cf"
-  },
-  
-  "ti-device-tablet-star" : {
-    iconSet: 'tabler icons', code: "\uf8d0"
-  },
-  
-  "ti-device-tablet-up" : {
-    iconSet: 'tabler icons', code: "\uf8d1"
-  },
-  
-  "ti-device-tablet-x" : {
-    iconSet: 'tabler icons', code: "\uf8d2"
-  },
-  
-  "ti-device-tv" : {
-    iconSet: 'tabler icons', code: "\uea8d"
-  },
-  
-  "ti-device-tv-off" : {
-    iconSet: 'tabler icons', code: "\uf064"
-  },
-  
-  "ti-device-tv-old" : {
-    iconSet: 'tabler icons', code: "\uf1d3"
-  },
-  
-  "ti-device-watch" : {
-    iconSet: 'tabler icons', code: "\uebf9"
-  },
-  
-  "ti-device-watch-bolt" : {
-    iconSet: 'tabler icons', code: "\uf8d3"
-  },
-  
-  "ti-device-watch-cancel" : {
-    iconSet: 'tabler icons', code: "\uf8d4"
-  },
-  
-  "ti-device-watch-check" : {
-    iconSet: 'tabler icons', code: "\uf8d5"
-  },
-  
-  "ti-device-watch-code" : {
-    iconSet: 'tabler icons', code: "\uf8d6"
-  },
-  
-  "ti-device-watch-cog" : {
-    iconSet: 'tabler icons', code: "\uf8d7"
-  },
-  
-  "ti-device-watch-dollar" : {
-    iconSet: 'tabler icons', code: "\uf8d8"
-  },
-  
-  "ti-device-watch-down" : {
-    iconSet: 'tabler icons', code: "\uf8d9"
-  },
-  
-  "ti-device-watch-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf8da"
-  },
-  
-  "ti-device-watch-heart" : {
-    iconSet: 'tabler icons', code: "\uf8db"
-  },
-  
-  "ti-device-watch-minus" : {
-    iconSet: 'tabler icons', code: "\uf8dc"
-  },
-  
-  "ti-device-watch-off" : {
-    iconSet: 'tabler icons', code: "\uf065"
-  },
-  
-  "ti-device-watch-pause" : {
-    iconSet: 'tabler icons', code: "\uf8dd"
-  },
-  
-  "ti-device-watch-pin" : {
-    iconSet: 'tabler icons', code: "\uf8de"
-  },
-  
-  "ti-device-watch-plus" : {
-    iconSet: 'tabler icons', code: "\uf8df"
-  },
-  
-  "ti-device-watch-question" : {
-    iconSet: 'tabler icons', code: "\uf8e0"
-  },
-  
-  "ti-device-watch-search" : {
-    iconSet: 'tabler icons', code: "\uf8e1"
-  },
-  
-  "ti-device-watch-share" : {
-    iconSet: 'tabler icons', code: "\uf8e2"
-  },
-  
-  "ti-device-watch-star" : {
-    iconSet: 'tabler icons', code: "\uf8e3"
-  },
-  
-  "ti-device-watch-stats" : {
-    iconSet: 'tabler icons', code: "\uef7d"
-  },
-  
-  "ti-device-watch-stats-2" : {
-    iconSet: 'tabler icons', code: "\uef7c"
-  },
-  
-  "ti-device-watch-up" : {
-    iconSet: 'tabler icons', code: "\uf8e4"
-  },
-  
-  "ti-device-watch-x" : {
-    iconSet: 'tabler icons', code: "\uf8e5"
-  },
-  
-  "ti-devices" : {
-    iconSet: 'tabler icons', code: "\ueb87"
-  },
-  
-  "ti-devices-2" : {
-    iconSet: 'tabler icons', code: "\ued29"
-  },
-  
-  "ti-devices-bolt" : {
-    iconSet: 'tabler icons', code: "\uf8e6"
-  },
-  
-  "ti-devices-cancel" : {
-    iconSet: 'tabler icons', code: "\uf8e7"
-  },
-  
-  "ti-devices-check" : {
-    iconSet: 'tabler icons', code: "\uf8e8"
-  },
-  
-  "ti-devices-code" : {
-    iconSet: 'tabler icons', code: "\uf8e9"
-  },
-  
-  "ti-devices-cog" : {
-    iconSet: 'tabler icons', code: "\uf8ea"
-  },
-  
-  "ti-devices-dollar" : {
-    iconSet: 'tabler icons', code: "\uf8eb"
-  },
-  
-  "ti-devices-down" : {
-    iconSet: 'tabler icons', code: "\uf8ec"
-  },
-  
-  "ti-devices-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf8ed"
-  },
-  
-  "ti-devices-heart" : {
-    iconSet: 'tabler icons', code: "\uf8ee"
-  },
-  
-  "ti-devices-minus" : {
-    iconSet: 'tabler icons', code: "\uf8ef"
-  },
-  
-  "ti-devices-off" : {
-    iconSet: 'tabler icons', code: "\uf3e4"
-  },
-  
-  "ti-devices-pause" : {
-    iconSet: 'tabler icons', code: "\uf8f0"
-  },
-  
-  "ti-devices-pc" : {
-    iconSet: 'tabler icons', code: "\uee7a"
-  },
-  
-  "ti-devices-pc-off" : {
-    iconSet: 'tabler icons', code: "\uf113"
-  },
-  
-  "ti-devices-pin" : {
-    iconSet: 'tabler icons', code: "\uf8f1"
-  },
-  
-  "ti-devices-plus" : {
-    iconSet: 'tabler icons', code: "\uf8f2"
-  },
-  
-  "ti-devices-question" : {
-    iconSet: 'tabler icons', code: "\uf8f3"
-  },
-  
-  "ti-devices-search" : {
-    iconSet: 'tabler icons', code: "\uf8f4"
-  },
-  
-  "ti-devices-share" : {
-    iconSet: 'tabler icons', code: "\uf8f5"
-  },
-  
-  "ti-devices-star" : {
-    iconSet: 'tabler icons', code: "\uf8f6"
-  },
-  
-  "ti-devices-up" : {
-    iconSet: 'tabler icons', code: "\uf8f7"
-  },
-  
-  "ti-devices-x" : {
-    iconSet: 'tabler icons', code: "\uf8f8"
-  },
-  
-  "ti-dialpad" : {
-    iconSet: 'tabler icons', code: "\uf067"
-  },
-  
-  "ti-dialpad-off" : {
-    iconSet: 'tabler icons', code: "\uf114"
-  },
-  
-  "ti-diamond" : {
-    iconSet: 'tabler icons', code: "\ueb65"
-  },
-  
-  "ti-diamond-filled" : {
-    iconSet: 'tabler icons', code: "\uf73d"
-  },
-  
-  "ti-diamond-off" : {
-    iconSet: 'tabler icons', code: "\uf115"
-  },
-  
-  "ti-diamonds" : {
-    iconSet: 'tabler icons', code: "\ueff5"
-  },
-  
-  "ti-diamonds-filled" : {
-    iconSet: 'tabler icons', code: "\uf676"
-  },
-  
-  "ti-dice" : {
-    iconSet: 'tabler icons', code: "\ueb66"
-  },
-  
-  "ti-dice-1" : {
-    iconSet: 'tabler icons', code: "\uf08b"
-  },
-  
-  "ti-dice-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf73e"
-  },
-  
-  "ti-dice-2" : {
-    iconSet: 'tabler icons', code: "\uf08c"
-  },
-  
-  "ti-dice-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf73f"
-  },
-  
-  "ti-dice-3" : {
-    iconSet: 'tabler icons', code: "\uf08d"
-  },
-  
-  "ti-dice-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf740"
-  },
-  
-  "ti-dice-4" : {
-    iconSet: 'tabler icons', code: "\uf08e"
-  },
-  
-  "ti-dice-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf741"
-  },
-  
-  "ti-dice-5" : {
-    iconSet: 'tabler icons', code: "\uf08f"
-  },
-  
-  "ti-dice-5-filled" : {
-    iconSet: 'tabler icons', code: "\uf742"
-  },
-  
-  "ti-dice-6" : {
-    iconSet: 'tabler icons', code: "\uf090"
-  },
-  
-  "ti-dice-6-filled" : {
-    iconSet: 'tabler icons', code: "\uf743"
-  },
-  
-  "ti-dice-filled" : {
-    iconSet: 'tabler icons', code: "\uf744"
-  },
-  
-  "ti-dimensions" : {
-    iconSet: 'tabler icons', code: "\uee7b"
-  },
-  
-  "ti-direction" : {
-    iconSet: 'tabler icons', code: "\uebfb"
-  },
-  
-  "ti-direction-horizontal" : {
-    iconSet: 'tabler icons', code: "\uebfa"
-  },
-  
-  "ti-direction-sign" : {
-    iconSet: 'tabler icons', code: "\uf1f7"
-  },
-  
-  "ti-direction-sign-filled" : {
-    iconSet: 'tabler icons', code: "\uf745"
-  },
-  
-  "ti-direction-sign-off" : {
-    iconSet: 'tabler icons', code: "\uf3e5"
-  },
-  
-  "ti-directions" : {
-    iconSet: 'tabler icons', code: "\uea8e"
-  },
-  
-  "ti-directions-off" : {
-    iconSet: 'tabler icons', code: "\uf116"
-  },
-  
-  "ti-disabled" : {
-    iconSet: 'tabler icons', code: "\uea8f"
-  },
-  
-  "ti-disabled-2" : {
-    iconSet: 'tabler icons', code: "\uebaf"
-  },
-  
-  "ti-disabled-off" : {
-    iconSet: 'tabler icons', code: "\uf117"
-  },
-  
-  "ti-disc" : {
-    iconSet: 'tabler icons', code: "\uea90"
-  },
-  
-  "ti-disc-golf" : {
-    iconSet: 'tabler icons', code: "\uf385"
-  },
-  
-  "ti-disc-off" : {
-    iconSet: 'tabler icons', code: "\uf118"
-  },
-  
-  "ti-discount" : {
-    iconSet: 'tabler icons', code: "\uebbd"
-  },
-  
-  "ti-discount-2" : {
-    iconSet: 'tabler icons', code: "\uee7c"
-  },
-  
-  "ti-discount-2-off" : {
-    iconSet: 'tabler icons', code: "\uf3e6"
-  },
-  
-  "ti-discount-check" : {
-    iconSet: 'tabler icons', code: "\uf1f8"
-  },
-  
-  "ti-discount-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf746"
-  },
-  
-  "ti-discount-off" : {
-    iconSet: 'tabler icons', code: "\uf3e7"
-  },
-  
-  "ti-divide" : {
-    iconSet: 'tabler icons', code: "\ued5c"
-  },
-  
-  "ti-dna" : {
-    iconSet: 'tabler icons', code: "\uee7d"
-  },
-  
-  "ti-dna-2" : {
-    iconSet: 'tabler icons', code: "\uef5c"
-  },
-  
-  "ti-dna-2-off" : {
-    iconSet: 'tabler icons', code: "\uf119"
-  },
-  
-  "ti-dna-off" : {
-    iconSet: 'tabler icons', code: "\uf11a"
-  },
-  
-  "ti-dog" : {
-    iconSet: 'tabler icons', code: "\uf660"
-  },
-  
-  "ti-dog-bowl" : {
-    iconSet: 'tabler icons', code: "\uef29"
-  },
-  
-  "ti-door" : {
-    iconSet: 'tabler icons', code: "\uef4e"
-  },
-  
-  "ti-door-enter" : {
-    iconSet: 'tabler icons', code: "\uef4c"
-  },
-  
-  "ti-door-exit" : {
-    iconSet: 'tabler icons', code: "\uef4d"
-  },
-  
-  "ti-door-off" : {
-    iconSet: 'tabler icons', code: "\uf11b"
-  },
-  
-  "ti-dots" : {
-    iconSet: 'tabler icons', code: "\uea95"
-  },
-  
-  "ti-dots-circle-horizontal" : {
-    iconSet: 'tabler icons', code: "\uea91"
-  },
-  
-  "ti-dots-diagonal" : {
-    iconSet: 'tabler icons', code: "\uea93"
-  },
-  
-  "ti-dots-diagonal-2" : {
-    iconSet: 'tabler icons', code: "\uea92"
-  },
-  
-  "ti-dots-vertical" : {
-    iconSet: 'tabler icons', code: "\uea94"
-  },
-  
-  "ti-download" : {
-    iconSet: 'tabler icons', code: "\uea96"
-  },
-  
-  "ti-download-off" : {
-    iconSet: 'tabler icons', code: "\uf11c"
-  },
-  
-  "ti-drag-drop" : {
-    iconSet: 'tabler icons', code: "\ueb89"
-  },
-  
-  "ti-drag-drop-2" : {
-    iconSet: 'tabler icons', code: "\ueb88"
-  },
-  
-  "ti-drone" : {
-    iconSet: 'tabler icons', code: "\ued79"
-  },
-  
-  "ti-drone-off" : {
-    iconSet: 'tabler icons', code: "\uee7e"
-  },
-  
-  "ti-drop-circle" : {
-    iconSet: 'tabler icons', code: "\uefde"
-  },
-  
-  "ti-droplet" : {
-    iconSet: 'tabler icons', code: "\uea97"
-  },
-  
-  "ti-droplet-bolt" : {
-    iconSet: 'tabler icons', code: "\uf8f9"
-  },
-  
-  "ti-droplet-cancel" : {
-    iconSet: 'tabler icons', code: "\uf8fa"
-  },
-  
-  "ti-droplet-check" : {
-    iconSet: 'tabler icons', code: "\uf8fb"
-  },
-  
-  "ti-droplet-code" : {
-    iconSet: 'tabler icons', code: "\uf8fc"
-  },
-  
-  "ti-droplet-cog" : {
-    iconSet: 'tabler icons', code: "\uf8fd"
-  },
-  
-  "ti-droplet-dollar" : {
-    iconSet: 'tabler icons', code: "\uf8fe"
-  },
-  
-  "ti-droplet-down" : {
-    iconSet: 'tabler icons', code: "\uf8ff"
-  },
-  
-  "ti-droplet-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf900"
-  },
-  
-  "ti-droplet-filled" : {
-    iconSet: 'tabler icons', code: "\uee80"
-  },
-  
-  "ti-droplet-filled-2" : {
-    iconSet: 'tabler icons', code: "\uee7f"
-  },
-  
-  "ti-droplet-half" : {
-    iconSet: 'tabler icons', code: "\uee82"
-  },
-  
-  "ti-droplet-half-2" : {
-    iconSet: 'tabler icons', code: "\uee81"
-  },
-  
-  "ti-droplet-half-filled" : {
-    iconSet: 'tabler icons', code: "\uf6c5"
-  },
-  
-  "ti-droplet-heart" : {
-    iconSet: 'tabler icons', code: "\uf901"
-  },
-  
-  "ti-droplet-minus" : {
-    iconSet: 'tabler icons', code: "\uf902"
-  },
-  
-  "ti-droplet-off" : {
-    iconSet: 'tabler icons', code: "\uee83"
-  },
-  
-  "ti-droplet-pause" : {
-    iconSet: 'tabler icons', code: "\uf903"
-  },
-  
-  "ti-droplet-pin" : {
-    iconSet: 'tabler icons', code: "\uf904"
-  },
-  
-  "ti-droplet-plus" : {
-    iconSet: 'tabler icons', code: "\uf905"
-  },
-  
-  "ti-droplet-question" : {
-    iconSet: 'tabler icons', code: "\uf906"
-  },
-  
-  "ti-droplet-search" : {
-    iconSet: 'tabler icons', code: "\uf907"
-  },
-  
-  "ti-droplet-share" : {
-    iconSet: 'tabler icons', code: "\uf908"
-  },
-  
-  "ti-droplet-star" : {
-    iconSet: 'tabler icons', code: "\uf909"
-  },
-  
-  "ti-droplet-up" : {
-    iconSet: 'tabler icons', code: "\uf90a"
-  },
-  
-  "ti-droplet-x" : {
-    iconSet: 'tabler icons', code: "\uf90b"
-  },
-  
-  "ti-e-passport" : {
-    iconSet: 'tabler icons', code: "\uf4df"
-  },
-  
-  "ti-ear" : {
-    iconSet: 'tabler icons', code: "\uebce"
-  },
-  
-  "ti-ear-off" : {
-    iconSet: 'tabler icons', code: "\uee84"
-  },
-  
-  "ti-ease-in" : {
-    iconSet: 'tabler icons', code: "\uf573"
-  },
-  
-  "ti-ease-in-control-point" : {
-    iconSet: 'tabler icons', code: "\uf570"
-  },
-  
-  "ti-ease-in-out" : {
-    iconSet: 'tabler icons', code: "\uf572"
-  },
-  
-  "ti-ease-in-out-control-points" : {
-    iconSet: 'tabler icons', code: "\uf571"
-  },
-  
-  "ti-ease-out" : {
-    iconSet: 'tabler icons', code: "\uf575"
-  },
-  
-  "ti-ease-out-control-point" : {
-    iconSet: 'tabler icons', code: "\uf574"
-  },
-  
-  "ti-edit" : {
-    iconSet: 'tabler icons', code: "\uea98"
-  },
-  
-  "ti-edit-circle" : {
-    iconSet: 'tabler icons', code: "\uee85"
-  },
-  
-  "ti-edit-circle-off" : {
-    iconSet: 'tabler icons', code: "\uf11d"
-  },
-  
-  "ti-edit-off" : {
-    iconSet: 'tabler icons', code: "\uf11e"
-  },
-  
-  "ti-egg" : {
-    iconSet: 'tabler icons', code: "\ueb8a"
-  },
-  
-  "ti-egg-cracked" : {
-    iconSet: 'tabler icons', code: "\uf2d6"
-  },
-  
-  "ti-egg-filled" : {
-    iconSet: 'tabler icons', code: "\uf678"
-  },
-  
-  "ti-egg-fried" : {
-    iconSet: 'tabler icons', code: "\uf386"
-  },
-  
-  "ti-egg-off" : {
-    iconSet: 'tabler icons', code: "\uf11f"
-  },
-  
-  "ti-eggs" : {
-    iconSet: 'tabler icons', code: "\uf500"
-  },
-  
-  "ti-elevator" : {
-    iconSet: 'tabler icons', code: "\uefdf"
-  },
-  
-  "ti-elevator-off" : {
-    iconSet: 'tabler icons', code: "\uf3e8"
-  },
-  
-  "ti-emergency-bed" : {
-    iconSet: 'tabler icons', code: "\uef5d"
-  },
-  
-  "ti-empathize" : {
-    iconSet: 'tabler icons', code: "\uf29b"
-  },
-  
-  "ti-empathize-off" : {
-    iconSet: 'tabler icons', code: "\uf3e9"
-  },
-  
-  "ti-emphasis" : {
-    iconSet: 'tabler icons', code: "\uebcf"
-  },
-  
-  "ti-engine" : {
-    iconSet: 'tabler icons', code: "\uef7e"
-  },
-  
-  "ti-engine-off" : {
-    iconSet: 'tabler icons', code: "\uf120"
-  },
-  
-  "ti-equal" : {
-    iconSet: 'tabler icons', code: "\uee87"
-  },
-  
-  "ti-equal-double" : {
-    iconSet: 'tabler icons', code: "\uf4e1"
-  },
-  
-  "ti-equal-not" : {
-    iconSet: 'tabler icons', code: "\uee86"
-  },
-  
-  "ti-eraser" : {
-    iconSet: 'tabler icons', code: "\ueb8b"
-  },
-  
-  "ti-eraser-off" : {
-    iconSet: 'tabler icons', code: "\uf121"
-  },
-  
-  "ti-error-404" : {
-    iconSet: 'tabler icons', code: "\uf027"
-  },
-  
-  "ti-error-404-off" : {
-    iconSet: 'tabler icons', code: "\uf122"
-  },
-  
-  "ti-exchange" : {
-    iconSet: 'tabler icons', code: "\uebe7"
-  },
-  
-  "ti-exchange-off" : {
-    iconSet: 'tabler icons', code: "\uf123"
-  },
-  
-  "ti-exclamation-circle" : {
-    iconSet: 'tabler icons', code: "\uf634"
-  },
-  
-  "ti-exclamation-mark" : {
-    iconSet: 'tabler icons', code: "\uefb4"
-  },
-  
-  "ti-exclamation-mark-off" : {
-    iconSet: 'tabler icons', code: "\uf124"
-  },
-  
-  "ti-explicit" : {
-    iconSet: 'tabler icons', code: "\uf256"
-  },
-  
-  "ti-explicit-off" : {
-    iconSet: 'tabler icons', code: "\uf3ea"
-  },
-  
-  "ti-exposure" : {
-    iconSet: 'tabler icons', code: "\ueb8c"
-  },
-  
-  "ti-exposure-0" : {
-    iconSet: 'tabler icons', code: "\uf29c"
-  },
-  
-  "ti-exposure-minus-1" : {
-    iconSet: 'tabler icons', code: "\uf29d"
-  },
-  
-  "ti-exposure-minus-2" : {
-    iconSet: 'tabler icons', code: "\uf29e"
-  },
-  
-  "ti-exposure-off" : {
-    iconSet: 'tabler icons', code: "\uf3eb"
-  },
-  
-  "ti-exposure-plus-1" : {
-    iconSet: 'tabler icons', code: "\uf29f"
-  },
-  
-  "ti-exposure-plus-2" : {
-    iconSet: 'tabler icons', code: "\uf2a0"
-  },
-  
-  "ti-external-link" : {
-    iconSet: 'tabler icons', code: "\uea99"
-  },
-  
-  "ti-external-link-off" : {
-    iconSet: 'tabler icons', code: "\uf125"
-  },
-  
-  "ti-eye" : {
-    iconSet: 'tabler icons', code: "\uea9a"
-  },
-  
-  "ti-eye-check" : {
-    iconSet: 'tabler icons', code: "\uee88"
-  },
-  
-  "ti-eye-closed" : {
-    iconSet: 'tabler icons', code: "\uf7ec"
-  },
-  
-  "ti-eye-cog" : {
-    iconSet: 'tabler icons', code: "\uf7ed"
-  },
-  
-  "ti-eye-edit" : {
-    iconSet: 'tabler icons', code: "\uf7ee"
-  },
-  
-  "ti-eye-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf7ef"
-  },
-  
-  "ti-eye-filled" : {
-    iconSet: 'tabler icons', code: "\uf679"
-  },
-  
-  "ti-eye-heart" : {
-    iconSet: 'tabler icons', code: "\uf7f0"
-  },
-  
-  "ti-eye-off" : {
-    iconSet: 'tabler icons', code: "\uecf0"
-  },
-  
-  "ti-eye-table" : {
-    iconSet: 'tabler icons', code: "\uef5e"
-  },
-  
-  "ti-eye-x" : {
-    iconSet: 'tabler icons', code: "\uf7f1"
-  },
-  
-  "ti-eyeglass" : {
-    iconSet: 'tabler icons', code: "\uee8a"
-  },
-  
-  "ti-eyeglass-2" : {
-    iconSet: 'tabler icons', code: "\uee89"
-  },
-  
-  "ti-eyeglass-off" : {
-    iconSet: 'tabler icons', code: "\uf126"
-  },
-  
-  "ti-face-id" : {
-    iconSet: 'tabler icons', code: "\uea9b"
-  },
-  
-  "ti-face-id-error" : {
-    iconSet: 'tabler icons', code: "\uefa7"
-  },
-  
-  "ti-face-mask" : {
-    iconSet: 'tabler icons', code: "\uefb5"
-  },
-  
-  "ti-face-mask-off" : {
-    iconSet: 'tabler icons', code: "\uf127"
-  },
-  
-  "ti-fall" : {
-    iconSet: 'tabler icons', code: "\uecb9"
-  },
-  
-  "ti-feather" : {
-    iconSet: 'tabler icons', code: "\uee8b"
-  },
-  
-  "ti-feather-off" : {
-    iconSet: 'tabler icons', code: "\uf128"
-  },
-  
-  "ti-fence" : {
-    iconSet: 'tabler icons', code: "\uef2a"
-  },
-  
-  "ti-fence-off" : {
-    iconSet: 'tabler icons', code: "\uf129"
-  },
-  
-  "ti-fidget-spinner" : {
-    iconSet: 'tabler icons', code: "\uf068"
-  },
-  
-  "ti-file" : {
-    iconSet: 'tabler icons', code: "\ueaa4"
-  },
-  
-  "ti-file-3d" : {
-    iconSet: 'tabler icons', code: "\uf032"
-  },
-  
-  "ti-file-alert" : {
-    iconSet: 'tabler icons', code: "\uede6"
-  },
-  
-  "ti-file-analytics" : {
-    iconSet: 'tabler icons', code: "\uede7"
-  },
-  
-  "ti-file-arrow-left" : {
-    iconSet: 'tabler icons', code: "\uf033"
-  },
-  
-  "ti-file-arrow-right" : {
-    iconSet: 'tabler icons', code: "\uf034"
-  },
-  
-  "ti-file-barcode" : {
-    iconSet: 'tabler icons', code: "\uf035"
-  },
-  
-  "ti-file-broken" : {
-    iconSet: 'tabler icons', code: "\uf501"
-  },
-  
-  "ti-file-certificate" : {
-    iconSet: 'tabler icons', code: "\ued4d"
-  },
-  
-  "ti-file-chart" : {
-    iconSet: 'tabler icons', code: "\uf036"
-  },
-  
-  "ti-file-check" : {
-    iconSet: 'tabler icons', code: "\uea9c"
-  },
-  
-  "ti-file-code" : {
-    iconSet: 'tabler icons', code: "\uebd0"
-  },
-  
-  "ti-file-code-2" : {
-    iconSet: 'tabler icons', code: "\uede8"
-  },
-  
-  "ti-file-database" : {
-    iconSet: 'tabler icons', code: "\uf037"
-  },
-  
-  "ti-file-delta" : {
-    iconSet: 'tabler icons', code: "\uf53d"
-  },
-  
-  "ti-file-description" : {
-    iconSet: 'tabler icons', code: "\uf028"
-  },
-  
-  "ti-file-diff" : {
-    iconSet: 'tabler icons', code: "\uecf1"
-  },
-  
-  "ti-file-digit" : {
-    iconSet: 'tabler icons', code: "\uefa8"
-  },
-  
-  "ti-file-dislike" : {
-    iconSet: 'tabler icons', code: "\ued2a"
-  },
-  
-  "ti-file-dollar" : {
-    iconSet: 'tabler icons', code: "\uefe0"
-  },
-  
-  "ti-file-dots" : {
-    iconSet: 'tabler icons', code: "\uf038"
-  },
-  
-  "ti-file-download" : {
-    iconSet: 'tabler icons', code: "\uea9d"
-  },
-  
-  "ti-file-euro" : {
-    iconSet: 'tabler icons', code: "\uefe1"
-  },
-  
-  "ti-file-export" : {
-    iconSet: 'tabler icons', code: "\uede9"
-  },
-  
-  "ti-file-filled" : {
-    iconSet: 'tabler icons', code: "\uf747"
-  },
-  
-  "ti-file-function" : {
-    iconSet: 'tabler icons', code: "\uf53e"
-  },
-  
-  "ti-file-horizontal" : {
-    iconSet: 'tabler icons', code: "\uebb0"
-  },
-  
-  "ti-file-import" : {
-    iconSet: 'tabler icons', code: "\uedea"
-  },
-  
-  "ti-file-infinity" : {
-    iconSet: 'tabler icons', code: "\uf502"
-  },
-  
-  "ti-file-info" : {
-    iconSet: 'tabler icons', code: "\uedec"
-  },
-  
-  "ti-file-invoice" : {
-    iconSet: 'tabler icons', code: "\ueb67"
-  },
-  
-  "ti-file-lambda" : {
-    iconSet: 'tabler icons', code: "\uf53f"
-  },
-  
-  "ti-file-like" : {
-    iconSet: 'tabler icons', code: "\ued2b"
-  },
-  
-  "ti-file-minus" : {
-    iconSet: 'tabler icons', code: "\uea9e"
-  },
-  
-  "ti-file-music" : {
-    iconSet: 'tabler icons', code: "\uea9f"
-  },
-  
-  "ti-file-off" : {
-    iconSet: 'tabler icons', code: "\uecf2"
-  },
-  
-  "ti-file-orientation" : {
-    iconSet: 'tabler icons', code: "\uf2a1"
-  },
-  
-  "ti-file-pencil" : {
-    iconSet: 'tabler icons', code: "\uf039"
-  },
-  
-  "ti-file-percent" : {
-    iconSet: 'tabler icons', code: "\uf540"
-  },
-  
-  "ti-file-phone" : {
-    iconSet: 'tabler icons', code: "\uecdc"
-  },
-  
-  "ti-file-plus" : {
-    iconSet: 'tabler icons', code: "\ueaa0"
-  },
-  
-  "ti-file-power" : {
-    iconSet: 'tabler icons', code: "\uf03a"
-  },
-  
-  "ti-file-report" : {
-    iconSet: 'tabler icons', code: "\ueded"
-  },
-  
-  "ti-file-rss" : {
-    iconSet: 'tabler icons', code: "\uf03b"
-  },
-  
-  "ti-file-scissors" : {
-    iconSet: 'tabler icons', code: "\uf03c"
-  },
-  
-  "ti-file-search" : {
-    iconSet: 'tabler icons', code: "\ued5d"
-  },
-  
-  "ti-file-settings" : {
-    iconSet: 'tabler icons', code: "\uf029"
-  },
-  
-  "ti-file-shredder" : {
-    iconSet: 'tabler icons', code: "\ueaa1"
-  },
-  
-  "ti-file-signal" : {
-    iconSet: 'tabler icons', code: "\uf03d"
-  },
-  
-  "ti-file-spreadsheet" : {
-    iconSet: 'tabler icons', code: "\uf03e"
-  },
-  
-  "ti-file-stack" : {
-    iconSet: 'tabler icons', code: "\uf503"
-  },
-  
-  "ti-file-star" : {
-    iconSet: 'tabler icons', code: "\uf03f"
-  },
-  
-  "ti-file-symlink" : {
-    iconSet: 'tabler icons', code: "\ued53"
-  },
-  
-  "ti-file-text" : {
-    iconSet: 'tabler icons', code: "\ueaa2"
-  },
-  
-  "ti-file-text-ai" : {
-    iconSet: 'tabler icons', code: "\ufa27"
-  },
-  
-  "ti-file-time" : {
-    iconSet: 'tabler icons', code: "\uf040"
-  },
-  
-  "ti-file-typography" : {
-    iconSet: 'tabler icons', code: "\uf041"
-  },
-  
-  "ti-file-unknown" : {
-    iconSet: 'tabler icons', code: "\uf042"
-  },
-  
-  "ti-file-upload" : {
-    iconSet: 'tabler icons', code: "\uec91"
-  },
-  
-  "ti-file-vector" : {
-    iconSet: 'tabler icons', code: "\uf043"
-  },
-  
-  "ti-file-x" : {
-    iconSet: 'tabler icons', code: "\ueaa3"
-  },
-  
-  "ti-file-x-filled" : {
-    iconSet: 'tabler icons', code: "\uf748"
-  },
-  
-  "ti-file-zip" : {
-    iconSet: 'tabler icons', code: "\ued4e"
-  },
-  
-  "ti-files" : {
-    iconSet: 'tabler icons', code: "\uedef"
-  },
-  
-  "ti-files-off" : {
-    iconSet: 'tabler icons', code: "\uedee"
-  },
-  
-  "ti-filter" : {
-    iconSet: 'tabler icons', code: "\ueaa5"
-  },
-  
-  "ti-filter-cog" : {
-    iconSet: 'tabler icons', code: "\uf9fe"
-  },
-  
-  "ti-filter-dollar" : {
-    iconSet: 'tabler icons', code: "\uf9ff"
-  },
-  
-  "ti-filter-edit" : {
-    iconSet: 'tabler icons', code: "\ufa00"
-  },
-  
-  "ti-filter-minus" : {
-    iconSet: 'tabler icons', code: "\ufa01"
-  },
-  
-  "ti-filter-off" : {
-    iconSet: 'tabler icons', code: "\ued2c"
-  },
-  
-  "ti-filter-plus" : {
-    iconSet: 'tabler icons', code: "\ufa02"
-  },
-  
-  "ti-filter-star" : {
-    iconSet: 'tabler icons', code: "\ufa03"
-  },
-  
-  "ti-filter-x" : {
-    iconSet: 'tabler icons', code: "\ufa04"
-  },
-  
-  "ti-filters" : {
-    iconSet: 'tabler icons', code: "\uf793"
-  },
-  
-  "ti-fingerprint" : {
-    iconSet: 'tabler icons', code: "\uebd1"
-  },
-  
-  "ti-fingerprint-off" : {
-    iconSet: 'tabler icons', code: "\uf12a"
-  },
-  
-  "ti-fire-hydrant" : {
-    iconSet: 'tabler icons', code: "\uf3a9"
-  },
-  
-  "ti-fire-hydrant-off" : {
-    iconSet: 'tabler icons', code: "\uf3ec"
-  },
-  
-  "ti-firetruck" : {
-    iconSet: 'tabler icons', code: "\uebe8"
-  },
-  
-  "ti-first-aid-kit" : {
-    iconSet: 'tabler icons', code: "\uef5f"
-  },
-  
-  "ti-first-aid-kit-off" : {
-    iconSet: 'tabler icons', code: "\uf3ed"
-  },
-  
-  "ti-fish" : {
-    iconSet: 'tabler icons', code: "\uef2b"
-  },
-  
-  "ti-fish-bone" : {
-    iconSet: 'tabler icons', code: "\uf287"
-  },
-  
-  "ti-fish-christianity" : {
-    iconSet: 'tabler icons', code: "\uf58b"
-  },
-  
-  "ti-fish-hook" : {
-    iconSet: 'tabler icons', code: "\uf1f9"
-  },
-  
-  "ti-fish-hook-off" : {
-    iconSet: 'tabler icons', code: "\uf3ee"
-  },
-  
-  "ti-fish-off" : {
-    iconSet: 'tabler icons', code: "\uf12b"
-  },
-  
-  "ti-flag" : {
-    iconSet: 'tabler icons', code: "\ueaa6"
-  },
-  
-  "ti-flag-2" : {
-    iconSet: 'tabler icons', code: "\uee8c"
-  },
-  
-  "ti-flag-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf707"
-  },
-  
-  "ti-flag-2-off" : {
-    iconSet: 'tabler icons', code: "\uf12c"
-  },
-  
-  "ti-flag-3" : {
-    iconSet: 'tabler icons', code: "\uee8d"
-  },
-  
-  "ti-flag-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf708"
-  },
-  
-  "ti-flag-filled" : {
-    iconSet: 'tabler icons', code: "\uf67a"
-  },
-  
-  "ti-flag-off" : {
-    iconSet: 'tabler icons', code: "\uf12d"
-  },
-  
-  "ti-flame" : {
-    iconSet: 'tabler icons', code: "\uec2c"
-  },
-  
-  "ti-flame-off" : {
-    iconSet: 'tabler icons', code: "\uf12e"
-  },
-  
-  "ti-flare" : {
-    iconSet: 'tabler icons', code: "\uee8e"
-  },
-  
-  "ti-flask" : {
-    iconSet: 'tabler icons', code: "\uebd2"
-  },
-  
-  "ti-flask-2" : {
-    iconSet: 'tabler icons', code: "\uef60"
-  },
-  
-  "ti-flask-2-off" : {
-    iconSet: 'tabler icons', code: "\uf12f"
-  },
-  
-  "ti-flask-off" : {
-    iconSet: 'tabler icons', code: "\uf130"
-  },
-  
-  "ti-flip-flops" : {
-    iconSet: 'tabler icons', code: "\uf564"
-  },
-  
-  "ti-flip-horizontal" : {
-    iconSet: 'tabler icons', code: "\ueaa7"
-  },
-  
-  "ti-flip-vertical" : {
-    iconSet: 'tabler icons', code: "\ueaa8"
-  },
-  
-  "ti-float-center" : {
-    iconSet: 'tabler icons', code: "\uebb1"
-  },
-  
-  "ti-float-left" : {
-    iconSet: 'tabler icons', code: "\uebb2"
-  },
-  
-  "ti-float-none" : {
-    iconSet: 'tabler icons', code: "\ued13"
-  },
-  
-  "ti-float-right" : {
-    iconSet: 'tabler icons', code: "\uebb3"
-  },
-  
-  "ti-flower" : {
-    iconSet: 'tabler icons', code: "\ueff6"
-  },
-  
-  "ti-flower-off" : {
-    iconSet: 'tabler icons', code: "\uf131"
-  },
-  
-  "ti-focus" : {
-    iconSet: 'tabler icons', code: "\ueb8d"
-  },
-  
-  "ti-focus-2" : {
-    iconSet: 'tabler icons', code: "\uebd3"
-  },
-  
-  "ti-focus-centered" : {
-    iconSet: 'tabler icons', code: "\uf02a"
-  },
-  
-  "ti-fold" : {
-    iconSet: 'tabler icons', code: "\ued56"
-  },
-  
-  "ti-fold-down" : {
-    iconSet: 'tabler icons', code: "\ued54"
-  },
-  
-  "ti-fold-up" : {
-    iconSet: 'tabler icons', code: "\ued55"
-  },
-  
-  "ti-folder" : {
-    iconSet: 'tabler icons', code: "\ueaad"
-  },
-  
-  "ti-folder-bolt" : {
-    iconSet: 'tabler icons', code: "\uf90c"
-  },
-  
-  "ti-folder-cancel" : {
-    iconSet: 'tabler icons', code: "\uf90d"
-  },
-  
-  "ti-folder-check" : {
-    iconSet: 'tabler icons', code: "\uf90e"
-  },
-  
-  "ti-folder-code" : {
-    iconSet: 'tabler icons', code: "\uf90f"
-  },
-  
-  "ti-folder-cog" : {
-    iconSet: 'tabler icons', code: "\uf910"
-  },
-  
-  "ti-folder-dollar" : {
-    iconSet: 'tabler icons', code: "\uf911"
-  },
-  
-  "ti-folder-down" : {
-    iconSet: 'tabler icons', code: "\uf912"
-  },
-  
-  "ti-folder-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf913"
-  },
-  
-  "ti-folder-filled" : {
-    iconSet: 'tabler icons', code: "\uf749"
-  },
-  
-  "ti-folder-heart" : {
-    iconSet: 'tabler icons', code: "\uf914"
-  },
-  
-  "ti-folder-minus" : {
-    iconSet: 'tabler icons', code: "\ueaaa"
-  },
-  
-  "ti-folder-off" : {
-    iconSet: 'tabler icons', code: "\ued14"
-  },
-  
-  "ti-folder-pause" : {
-    iconSet: 'tabler icons', code: "\uf915"
-  },
-  
-  "ti-folder-pin" : {
-    iconSet: 'tabler icons', code: "\uf916"
-  },
-  
-  "ti-folder-plus" : {
-    iconSet: 'tabler icons', code: "\ueaab"
-  },
-  
-  "ti-folder-question" : {
-    iconSet: 'tabler icons', code: "\uf917"
-  },
-  
-  "ti-folder-search" : {
-    iconSet: 'tabler icons', code: "\uf918"
-  },
-  
-  "ti-folder-share" : {
-    iconSet: 'tabler icons', code: "\uf919"
-  },
-  
-  "ti-folder-star" : {
-    iconSet: 'tabler icons', code: "\uf91a"
-  },
-  
-  "ti-folder-symlink" : {
-    iconSet: 'tabler icons', code: "\uf91b"
-  },
-  
-  "ti-folder-up" : {
-    iconSet: 'tabler icons', code: "\uf91c"
-  },
-  
-  "ti-folder-x" : {
-    iconSet: 'tabler icons', code: "\ueaac"
-  },
-  
-  "ti-folders" : {
-    iconSet: 'tabler icons', code: "\ueaae"
-  },
-  
-  "ti-folders-off" : {
-    iconSet: 'tabler icons', code: "\uf133"
-  },
-  
-  "ti-forbid" : {
-    iconSet: 'tabler icons', code: "\uebd5"
-  },
-  
-  "ti-forbid-2" : {
-    iconSet: 'tabler icons', code: "\uebd4"
-  },
-  
-  "ti-forklift" : {
-    iconSet: 'tabler icons', code: "\uebe9"
-  },
-  
-  "ti-forms" : {
-    iconSet: 'tabler icons', code: "\uee8f"
-  },
-  
-  "ti-fountain" : {
-    iconSet: 'tabler icons', code: "\uf09b"
-  },
-  
-  "ti-fountain-off" : {
-    iconSet: 'tabler icons', code: "\uf134"
-  },
-  
-  "ti-frame" : {
-    iconSet: 'tabler icons', code: "\ueaaf"
-  },
-  
-  "ti-frame-off" : {
-    iconSet: 'tabler icons', code: "\uf135"
-  },
-  
-  "ti-free-rights" : {
-    iconSet: 'tabler icons', code: "\uefb6"
-  },
-  
-  "ti-fridge" : {
-    iconSet: 'tabler icons', code: "\uf1fa"
-  },
-  
-  "ti-fridge-off" : {
-    iconSet: 'tabler icons', code: "\uf3ef"
-  },
-  
-  "ti-friends" : {
-    iconSet: 'tabler icons', code: "\ueab0"
-  },
-  
-  "ti-friends-off" : {
-    iconSet: 'tabler icons', code: "\uf136"
-  },
-  
-  "ti-function" : {
-    iconSet: 'tabler icons', code: "\uf225"
-  },
-  
-  "ti-function-off" : {
-    iconSet: 'tabler icons', code: "\uf3f0"
-  },
-  
-  "ti-garden-cart" : {
-    iconSet: 'tabler icons', code: "\uf23e"
-  },
-  
-  "ti-garden-cart-off" : {
-    iconSet: 'tabler icons', code: "\uf3f1"
-  },
-  
-  "ti-gas-station" : {
-    iconSet: 'tabler icons', code: "\uec7d"
-  },
-  
-  "ti-gas-station-off" : {
-    iconSet: 'tabler icons', code: "\uf137"
-  },
-  
-  "ti-gauge" : {
-    iconSet: 'tabler icons', code: "\ueab1"
-  },
-  
-  "ti-gauge-off" : {
-    iconSet: 'tabler icons', code: "\uf138"
-  },
-  
-  "ti-gavel" : {
-    iconSet: 'tabler icons', code: "\uef90"
-  },
-  
-  "ti-gender-agender" : {
-    iconSet: 'tabler icons', code: "\uf0e1"
-  },
-  
-  "ti-gender-androgyne" : {
-    iconSet: 'tabler icons', code: "\uf0e2"
-  },
-  
-  "ti-gender-bigender" : {
-    iconSet: 'tabler icons', code: "\uf0e3"
-  },
-  
-  "ti-gender-demiboy" : {
-    iconSet: 'tabler icons', code: "\uf0e4"
-  },
-  
-  "ti-gender-demigirl" : {
-    iconSet: 'tabler icons', code: "\uf0e5"
-  },
-  
-  "ti-gender-epicene" : {
-    iconSet: 'tabler icons', code: "\uf0e6"
-  },
-  
-  "ti-gender-female" : {
-    iconSet: 'tabler icons', code: "\uf0e7"
-  },
-  
-  "ti-gender-femme" : {
-    iconSet: 'tabler icons', code: "\uf0e8"
-  },
-  
-  "ti-gender-genderfluid" : {
-    iconSet: 'tabler icons', code: "\uf0e9"
-  },
-  
-  "ti-gender-genderless" : {
-    iconSet: 'tabler icons', code: "\uf0ea"
-  },
-  
-  "ti-gender-genderqueer" : {
-    iconSet: 'tabler icons', code: "\uf0eb"
-  },
-  
-  "ti-gender-hermaphrodite" : {
-    iconSet: 'tabler icons', code: "\uf0ec"
-  },
-  
-  "ti-gender-intergender" : {
-    iconSet: 'tabler icons', code: "\uf0ed"
-  },
-  
-  "ti-gender-male" : {
-    iconSet: 'tabler icons', code: "\uf0ee"
-  },
-  
-  "ti-gender-neutrois" : {
-    iconSet: 'tabler icons', code: "\uf0ef"
-  },
-  
-  "ti-gender-third" : {
-    iconSet: 'tabler icons', code: "\uf0f0"
-  },
-  
-  "ti-gender-transgender" : {
-    iconSet: 'tabler icons', code: "\uf0f1"
-  },
-  
-  "ti-gender-trasvesti" : {
-    iconSet: 'tabler icons', code: "\uf0f2"
-  },
-  
-  "ti-geometry" : {
-    iconSet: 'tabler icons', code: "\uee90"
-  },
-  
-  "ti-ghost" : {
-    iconSet: 'tabler icons', code: "\ueb8e"
-  },
-  
-  "ti-ghost-2" : {
-    iconSet: 'tabler icons', code: "\uf57c"
-  },
-  
-  "ti-ghost-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf74a"
-  },
-  
-  "ti-ghost-filled" : {
-    iconSet: 'tabler icons', code: "\uf74b"
-  },
-  
-  "ti-ghost-off" : {
-    iconSet: 'tabler icons', code: "\uf3f2"
-  },
-  
-  "ti-gif" : {
-    iconSet: 'tabler icons', code: "\uf257"
-  },
-  
-  "ti-gift" : {
-    iconSet: 'tabler icons', code: "\ueb68"
-  },
-  
-  "ti-gift-card" : {
-    iconSet: 'tabler icons', code: "\uf3aa"
-  },
-  
-  "ti-gift-off" : {
-    iconSet: 'tabler icons', code: "\uf3f3"
-  },
-  
-  "ti-git-branch" : {
-    iconSet: 'tabler icons', code: "\ueab2"
-  },
-  
-  "ti-git-branch-deleted" : {
-    iconSet: 'tabler icons', code: "\uf57d"
-  },
-  
-  "ti-git-cherry-pick" : {
-    iconSet: 'tabler icons', code: "\uf57e"
-  },
-  
-  "ti-git-commit" : {
-    iconSet: 'tabler icons', code: "\ueab3"
-  },
-  
-  "ti-git-compare" : {
-    iconSet: 'tabler icons', code: "\ueab4"
-  },
-  
-  "ti-git-fork" : {
-    iconSet: 'tabler icons', code: "\ueb8f"
-  },
-  
-  "ti-git-merge" : {
-    iconSet: 'tabler icons', code: "\ueab5"
-  },
-  
-  "ti-git-pull-request" : {
-    iconSet: 'tabler icons', code: "\ueab6"
-  },
-  
-  "ti-git-pull-request-closed" : {
-    iconSet: 'tabler icons', code: "\uef7f"
-  },
-  
-  "ti-git-pull-request-draft" : {
-    iconSet: 'tabler icons', code: "\uefb7"
-  },
-  
-  "ti-gizmo" : {
-    iconSet: 'tabler icons', code: "\uf02b"
-  },
-  
-  "ti-glass" : {
-    iconSet: 'tabler icons', code: "\ueab8"
-  },
-  
-  "ti-glass-full" : {
-    iconSet: 'tabler icons', code: "\ueab7"
-  },
-  
-  "ti-glass-off" : {
-    iconSet: 'tabler icons', code: "\uee91"
-  },
-  
-  "ti-globe" : {
-    iconSet: 'tabler icons', code: "\ueab9"
-  },
-  
-  "ti-globe-off" : {
-    iconSet: 'tabler icons', code: "\uf139"
-  },
-  
-  "ti-go-game" : {
-    iconSet: 'tabler icons', code: "\uf512"
-  },
-  
-  "ti-golf" : {
-    iconSet: 'tabler icons', code: "\ued8c"
-  },
-  
-  "ti-golf-off" : {
-    iconSet: 'tabler icons', code: "\uf13a"
-  },
-  
-  "ti-gps" : {
-    iconSet: 'tabler icons', code: "\ued7a"
-  },
-  
-  "ti-gradienter" : {
-    iconSet: 'tabler icons', code: "\uf3ab"
-  },
-  
-  "ti-grain" : {
-    iconSet: 'tabler icons', code: "\uee92"
-  },
-  
-  "ti-graph" : {
-    iconSet: 'tabler icons', code: "\uf288"
-  },
-  
-  "ti-graph-off" : {
-    iconSet: 'tabler icons', code: "\uf3f4"
-  },
-  
-  "ti-grave" : {
-    iconSet: 'tabler icons', code: "\uf580"
-  },
-  
-  "ti-grave-2" : {
-    iconSet: 'tabler icons', code: "\uf57f"
-  },
-  
-  "ti-grid-dots" : {
-    iconSet: 'tabler icons', code: "\ueaba"
-  },
-  
-  "ti-grid-pattern" : {
-    iconSet: 'tabler icons', code: "\uefc9"
-  },
-  
-  "ti-grill" : {
-    iconSet: 'tabler icons', code: "\uefa9"
-  },
-  
-  "ti-grill-fork" : {
-    iconSet: 'tabler icons', code: "\uf35b"
-  },
-  
-  "ti-grill-off" : {
-    iconSet: 'tabler icons', code: "\uf3f5"
-  },
-  
-  "ti-grill-spatula" : {
-    iconSet: 'tabler icons', code: "\uf35c"
-  },
-  
-  "ti-grip-horizontal" : {
-    iconSet: 'tabler icons', code: "\uec00"
-  },
-  
-  "ti-grip-vertical" : {
-    iconSet: 'tabler icons', code: "\uec01"
-  },
-  
-  "ti-growth" : {
-    iconSet: 'tabler icons', code: "\uee93"
-  },
-  
-  "ti-guitar-pick" : {
-    iconSet: 'tabler icons', code: "\uf4c6"
-  },
-  
-  "ti-guitar-pick-filled" : {
-    iconSet: 'tabler icons', code: "\uf67b"
-  },
-  
-  "ti-h-1" : {
-    iconSet: 'tabler icons', code: "\uec94"
-  },
-  
-  "ti-h-2" : {
-    iconSet: 'tabler icons', code: "\uec95"
-  },
-  
-  "ti-h-3" : {
-    iconSet: 'tabler icons', code: "\uec96"
-  },
-  
-  "ti-h-4" : {
-    iconSet: 'tabler icons', code: "\uec97"
-  },
-  
-  "ti-h-5" : {
-    iconSet: 'tabler icons', code: "\uec98"
-  },
-  
-  "ti-h-6" : {
-    iconSet: 'tabler icons', code: "\uec99"
-  },
-  
-  "ti-hammer" : {
-    iconSet: 'tabler icons', code: "\uef91"
-  },
-  
-  "ti-hammer-off" : {
-    iconSet: 'tabler icons', code: "\uf13c"
-  },
-  
-  "ti-hand-click" : {
-    iconSet: 'tabler icons', code: "\uef4f"
-  },
-  
-  "ti-hand-finger" : {
-    iconSet: 'tabler icons', code: "\uee94"
-  },
-  
-  "ti-hand-finger-off" : {
-    iconSet: 'tabler icons', code: "\uf13d"
-  },
-  
-  "ti-hand-grab" : {
-    iconSet: 'tabler icons', code: "\uf091"
-  },
-  
-  "ti-hand-little-finger" : {
-    iconSet: 'tabler icons', code: "\uee95"
-  },
-  
-  "ti-hand-middle-finger" : {
-    iconSet: 'tabler icons', code: "\uec2d"
-  },
-  
-  "ti-hand-move" : {
-    iconSet: 'tabler icons', code: "\uef50"
-  },
-  
-  "ti-hand-off" : {
-    iconSet: 'tabler icons', code: "\ued15"
-  },
-  
-  "ti-hand-ring-finger" : {
-    iconSet: 'tabler icons', code: "\uee96"
-  },
-  
-  "ti-hand-rock" : {
-    iconSet: 'tabler icons', code: "\uee97"
-  },
-  
-  "ti-hand-sanitizer" : {
-    iconSet: 'tabler icons', code: "\uf5f4"
-  },
-  
-  "ti-hand-stop" : {
-    iconSet: 'tabler icons', code: "\uec2e"
-  },
-  
-  "ti-hand-three-fingers" : {
-    iconSet: 'tabler icons', code: "\uee98"
-  },
-  
-  "ti-hand-two-fingers" : {
-    iconSet: 'tabler icons', code: "\uee99"
-  },
-  
-  "ti-hanger" : {
-    iconSet: 'tabler icons', code: "\uee9a"
-  },
-  
-  "ti-hanger-2" : {
-    iconSet: 'tabler icons', code: "\uf09c"
-  },
-  
-  "ti-hanger-off" : {
-    iconSet: 'tabler icons', code: "\uf13e"
-  },
-  
-  "ti-hash" : {
-    iconSet: 'tabler icons', code: "\ueabc"
-  },
-  
-  "ti-haze" : {
-    iconSet: 'tabler icons', code: "\uefaa"
-  },
-  
-  "ti-heading" : {
-    iconSet: 'tabler icons', code: "\uee9b"
-  },
-  
-  "ti-heading-off" : {
-    iconSet: 'tabler icons', code: "\uf13f"
-  },
-  
-  "ti-headphones" : {
-    iconSet: 'tabler icons', code: "\ueabd"
-  },
-  
-  "ti-headphones-off" : {
-    iconSet: 'tabler icons', code: "\ued1d"
-  },
-  
-  "ti-headset" : {
-    iconSet: 'tabler icons', code: "\ueb90"
-  },
-  
-  "ti-headset-off" : {
-    iconSet: 'tabler icons', code: "\uf3f6"
-  },
-  
-  "ti-health-recognition" : {
-    iconSet: 'tabler icons', code: "\uf1fb"
-  },
-  
-  "ti-heart" : {
-    iconSet: 'tabler icons', code: "\ueabe"
-  },
-  
-  "ti-heart-broken" : {
-    iconSet: 'tabler icons', code: "\uecba"
-  },
-  
-  "ti-heart-filled" : {
-    iconSet: 'tabler icons', code: "\uf67c"
-  },
-  
-  "ti-heart-handshake" : {
-    iconSet: 'tabler icons', code: "\uf0f3"
-  },
-  
-  "ti-heart-minus" : {
-    iconSet: 'tabler icons', code: "\uf140"
-  },
-  
-  "ti-heart-off" : {
-    iconSet: 'tabler icons', code: "\uf141"
-  },
-  
-  "ti-heart-plus" : {
-    iconSet: 'tabler icons', code: "\uf142"
-  },
-  
-  "ti-heart-rate-monitor" : {
-    iconSet: 'tabler icons', code: "\uef61"
-  },
-  
-  "ti-heartbeat" : {
-    iconSet: 'tabler icons', code: "\uef92"
-  },
-  
-  "ti-hearts" : {
-    iconSet: 'tabler icons', code: "\uf387"
-  },
-  
-  "ti-hearts-off" : {
-    iconSet: 'tabler icons', code: "\uf3f7"
-  },
-  
-  "ti-helicopter" : {
-    iconSet: 'tabler icons', code: "\ued8e"
-  },
-  
-  "ti-helicopter-landing" : {
-    iconSet: 'tabler icons', code: "\ued8d"
-  },
-  
-  "ti-helmet" : {
-    iconSet: 'tabler icons', code: "\uefca"
-  },
-  
-  "ti-helmet-off" : {
-    iconSet: 'tabler icons', code: "\uf143"
-  },
-  
-  "ti-help" : {
-    iconSet: 'tabler icons', code: "\ueabf"
-  },
-  
-  "ti-help-circle" : {
-    iconSet: 'tabler icons', code: "\uf91d"
-  },
-  
-  "ti-help-hexagon" : {
-    iconSet: 'tabler icons', code: "\uf7a8"
-  },
-  
-  "ti-help-octagon" : {
-    iconSet: 'tabler icons', code: "\uf7a9"
-  },
-  
-  "ti-help-off" : {
-    iconSet: 'tabler icons', code: "\uf3f8"
-  },
-  
-  "ti-help-small" : {
-    iconSet: 'tabler icons', code: "\uf91e"
-  },
-  
-  "ti-help-square" : {
-    iconSet: 'tabler icons', code: "\uf920"
-  },
-  
-  "ti-help-square-rounded" : {
-    iconSet: 'tabler icons', code: "\uf91f"
-  },
-  
-  "ti-help-triangle" : {
-    iconSet: 'tabler icons', code: "\uf921"
-  },
-  
-  "ti-hexagon" : {
-    iconSet: 'tabler icons', code: "\uec02"
-  },
-  
-  "ti-hexagon-0-filled" : {
-    iconSet: 'tabler icons', code: "\uf74c"
-  },
-  
-  "ti-hexagon-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf74d"
-  },
-  
-  "ti-hexagon-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf74e"
-  },
-  
-  "ti-hexagon-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf74f"
-  },
-  
-  "ti-hexagon-3d" : {
-    iconSet: 'tabler icons', code: "\uf4c7"
-  },
-  
-  "ti-hexagon-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf750"
-  },
-  
-  "ti-hexagon-5-filled" : {
-    iconSet: 'tabler icons', code: "\uf751"
-  },
-  
-  "ti-hexagon-6-filled" : {
-    iconSet: 'tabler icons', code: "\uf752"
-  },
-  
-  "ti-hexagon-7-filled" : {
-    iconSet: 'tabler icons', code: "\uf753"
-  },
-  
-  "ti-hexagon-8-filled" : {
-    iconSet: 'tabler icons', code: "\uf754"
-  },
-  
-  "ti-hexagon-9-filled" : {
-    iconSet: 'tabler icons', code: "\uf755"
-  },
-  
-  "ti-hexagon-filled" : {
-    iconSet: 'tabler icons', code: "\uf67d"
-  },
-  
-  "ti-hexagon-letter-a" : {
-    iconSet: 'tabler icons', code: "\uf463"
-  },
-  
-  "ti-hexagon-letter-b" : {
-    iconSet: 'tabler icons', code: "\uf464"
-  },
-  
-  "ti-hexagon-letter-c" : {
-    iconSet: 'tabler icons', code: "\uf465"
-  },
-  
-  "ti-hexagon-letter-d" : {
-    iconSet: 'tabler icons', code: "\uf466"
-  },
-  
-  "ti-hexagon-letter-e" : {
-    iconSet: 'tabler icons', code: "\uf467"
-  },
-  
-  "ti-hexagon-letter-f" : {
-    iconSet: 'tabler icons', code: "\uf468"
-  },
-  
-  "ti-hexagon-letter-g" : {
-    iconSet: 'tabler icons', code: "\uf469"
-  },
-  
-  "ti-hexagon-letter-h" : {
-    iconSet: 'tabler icons', code: "\uf46a"
-  },
-  
-  "ti-hexagon-letter-i" : {
-    iconSet: 'tabler icons', code: "\uf46b"
-  },
-  
-  "ti-hexagon-letter-j" : {
-    iconSet: 'tabler icons', code: "\uf46c"
-  },
-  
-  "ti-hexagon-letter-k" : {
-    iconSet: 'tabler icons', code: "\uf46d"
-  },
-  
-  "ti-hexagon-letter-l" : {
-    iconSet: 'tabler icons', code: "\uf46e"
-  },
-  
-  "ti-hexagon-letter-m" : {
-    iconSet: 'tabler icons', code: "\uf46f"
-  },
-  
-  "ti-hexagon-letter-n" : {
-    iconSet: 'tabler icons', code: "\uf470"
-  },
-  
-  "ti-hexagon-letter-o" : {
-    iconSet: 'tabler icons', code: "\uf471"
-  },
-  
-  "ti-hexagon-letter-p" : {
-    iconSet: 'tabler icons', code: "\uf472"
-  },
-  
-  "ti-hexagon-letter-q" : {
-    iconSet: 'tabler icons', code: "\uf473"
-  },
-  
-  "ti-hexagon-letter-r" : {
-    iconSet: 'tabler icons', code: "\uf474"
-  },
-  
-  "ti-hexagon-letter-s" : {
-    iconSet: 'tabler icons', code: "\uf475"
-  },
-  
-  "ti-hexagon-letter-t" : {
-    iconSet: 'tabler icons', code: "\uf476"
-  },
-  
-  "ti-hexagon-letter-u" : {
-    iconSet: 'tabler icons', code: "\uf477"
-  },
-  
-  "ti-hexagon-letter-v" : {
-    iconSet: 'tabler icons', code: "\uf4b3"
-  },
-  
-  "ti-hexagon-letter-w" : {
-    iconSet: 'tabler icons', code: "\uf478"
-  },
-  
-  "ti-hexagon-letter-x" : {
-    iconSet: 'tabler icons', code: "\uf479"
-  },
-  
-  "ti-hexagon-letter-y" : {
-    iconSet: 'tabler icons', code: "\uf47a"
-  },
-  
-  "ti-hexagon-letter-z" : {
-    iconSet: 'tabler icons', code: "\uf47b"
-  },
-  
-  "ti-hexagon-number-0" : {
-    iconSet: 'tabler icons', code: "\uf459"
-  },
-  
-  "ti-hexagon-number-1" : {
-    iconSet: 'tabler icons', code: "\uf45a"
-  },
-  
-  "ti-hexagon-number-2" : {
-    iconSet: 'tabler icons', code: "\uf45b"
-  },
-  
-  "ti-hexagon-number-3" : {
-    iconSet: 'tabler icons', code: "\uf45c"
-  },
-  
-  "ti-hexagon-number-4" : {
-    iconSet: 'tabler icons', code: "\uf45d"
-  },
-  
-  "ti-hexagon-number-5" : {
-    iconSet: 'tabler icons', code: "\uf45e"
-  },
-  
-  "ti-hexagon-number-6" : {
-    iconSet: 'tabler icons', code: "\uf45f"
-  },
-  
-  "ti-hexagon-number-7" : {
-    iconSet: 'tabler icons', code: "\uf460"
-  },
-  
-  "ti-hexagon-number-8" : {
-    iconSet: 'tabler icons', code: "\uf461"
-  },
-  
-  "ti-hexagon-number-9" : {
-    iconSet: 'tabler icons', code: "\uf462"
-  },
-  
-  "ti-hexagon-off" : {
-    iconSet: 'tabler icons', code: "\uee9c"
-  },
-  
-  "ti-hexagons" : {
-    iconSet: 'tabler icons', code: "\uf09d"
-  },
-  
-  "ti-hexagons-off" : {
-    iconSet: 'tabler icons', code: "\uf3f9"
-  },
-  
-  "ti-hierarchy" : {
-    iconSet: 'tabler icons', code: "\uee9e"
-  },
-  
-  "ti-hierarchy-2" : {
-    iconSet: 'tabler icons', code: "\uee9d"
-  },
-  
-  "ti-hierarchy-3" : {
-    iconSet: 'tabler icons', code: "\uf289"
-  },
-  
-  "ti-hierarchy-off" : {
-    iconSet: 'tabler icons', code: "\uf3fa"
-  },
-  
-  "ti-highlight" : {
-    iconSet: 'tabler icons', code: "\uef3f"
-  },
-  
-  "ti-highlight-off" : {
-    iconSet: 'tabler icons', code: "\uf144"
-  },
-  
-  "ti-history" : {
-    iconSet: 'tabler icons', code: "\uebea"
-  },
-  
-  "ti-history-off" : {
-    iconSet: 'tabler icons', code: "\uf3fb"
-  },
-  
-  "ti-history-toggle" : {
-    iconSet: 'tabler icons', code: "\uf1fc"
-  },
-  
-  "ti-home" : {
-    iconSet: 'tabler icons', code: "\ueac1"
-  },
-  
-  "ti-home-2" : {
-    iconSet: 'tabler icons', code: "\ueac0"
-  },
-  
-  "ti-home-bolt" : {
-    iconSet: 'tabler icons', code: "\uf336"
-  },
-  
-  "ti-home-cancel" : {
-    iconSet: 'tabler icons', code: "\uf350"
-  },
-  
-  "ti-home-check" : {
-    iconSet: 'tabler icons', code: "\uf337"
-  },
-  
-  "ti-home-cog" : {
-    iconSet: 'tabler icons', code: "\uf338"
-  },
-  
-  "ti-home-dollar" : {
-    iconSet: 'tabler icons', code: "\uf339"
-  },
-  
-  "ti-home-dot" : {
-    iconSet: 'tabler icons', code: "\uf33a"
-  },
-  
-  "ti-home-down" : {
-    iconSet: 'tabler icons', code: "\uf33b"
-  },
-  
-  "ti-home-eco" : {
-    iconSet: 'tabler icons', code: "\uf351"
-  },
-  
-  "ti-home-edit" : {
-    iconSet: 'tabler icons', code: "\uf352"
-  },
-  
-  "ti-home-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf33c"
-  },
-  
-  "ti-home-hand" : {
-    iconSet: 'tabler icons', code: "\uf504"
-  },
-  
-  "ti-home-heart" : {
-    iconSet: 'tabler icons', code: "\uf353"
-  },
-  
-  "ti-home-infinity" : {
-    iconSet: 'tabler icons', code: "\uf505"
-  },
-  
-  "ti-home-link" : {
-    iconSet: 'tabler icons', code: "\uf354"
-  },
-  
-  "ti-home-minus" : {
-    iconSet: 'tabler icons', code: "\uf33d"
-  },
-  
-  "ti-home-move" : {
-    iconSet: 'tabler icons', code: "\uf33e"
-  },
-  
-  "ti-home-off" : {
-    iconSet: 'tabler icons', code: "\uf145"
-  },
-  
-  "ti-home-plus" : {
-    iconSet: 'tabler icons', code: "\uf33f"
-  },
-  
-  "ti-home-question" : {
-    iconSet: 'tabler icons', code: "\uf340"
-  },
-  
-  "ti-home-ribbon" : {
-    iconSet: 'tabler icons', code: "\uf355"
-  },
-  
-  "ti-home-search" : {
-    iconSet: 'tabler icons', code: "\uf341"
-  },
-  
-  "ti-home-share" : {
-    iconSet: 'tabler icons', code: "\uf342"
-  },
-  
-  "ti-home-shield" : {
-    iconSet: 'tabler icons', code: "\uf343"
-  },
-  
-  "ti-home-signal" : {
-    iconSet: 'tabler icons', code: "\uf356"
-  },
-  
-  "ti-home-star" : {
-    iconSet: 'tabler icons', code: "\uf344"
-  },
-  
-  "ti-home-stats" : {
-    iconSet: 'tabler icons', code: "\uf345"
-  },
-  
-  "ti-home-up" : {
-    iconSet: 'tabler icons', code: "\uf346"
-  },
-  
-  "ti-home-x" : {
-    iconSet: 'tabler icons', code: "\uf347"
-  },
-  
-  "ti-horse-toy" : {
-    iconSet: 'tabler icons', code: "\uf28a"
-  },
-  
-  "ti-hotel-service" : {
-    iconSet: 'tabler icons', code: "\uef80"
-  },
-  
-  "ti-hourglass" : {
-    iconSet: 'tabler icons', code: "\uef93"
-  },
-  
-  "ti-hourglass-empty" : {
-    iconSet: 'tabler icons', code: "\uf146"
-  },
-  
-  "ti-hourglass-filled" : {
-    iconSet: 'tabler icons', code: "\uf756"
-  },
-  
-  "ti-hourglass-high" : {
-    iconSet: 'tabler icons', code: "\uf092"
-  },
-  
-  "ti-hourglass-low" : {
-    iconSet: 'tabler icons', code: "\uf093"
-  },
-  
-  "ti-hourglass-off" : {
-    iconSet: 'tabler icons', code: "\uf147"
-  },
-  
-  "ti-html" : {
-    iconSet: 'tabler icons', code: "\uf7b1"
-  },
-  
-  "ti-http-connect" : {
-    iconSet: 'tabler icons', code: "\ufa28"
-  },
-  
-  "ti-http-delete" : {
-    iconSet: 'tabler icons', code: "\ufa29"
-  },
-  
-  "ti-http-get" : {
-    iconSet: 'tabler icons', code: "\ufa2a"
-  },
-  
-  "ti-http-head" : {
-    iconSet: 'tabler icons', code: "\ufa2b"
-  },
-  
-  "ti-http-options" : {
-    iconSet: 'tabler icons', code: "\ufa2c"
-  },
-  
-  "ti-http-path" : {
-    iconSet: 'tabler icons', code: "\ufa2d"
-  },
-  
-  "ti-http-post" : {
-    iconSet: 'tabler icons', code: "\ufa2e"
-  },
-  
-  "ti-http-put" : {
-    iconSet: 'tabler icons', code: "\ufa2f"
-  },
-  
-  "ti-http-trace" : {
-    iconSet: 'tabler icons', code: "\ufa30"
-  },
-  
-  "ti-ice-cream" : {
-    iconSet: 'tabler icons', code: "\ueac2"
-  },
-  
-  "ti-ice-cream-2" : {
-    iconSet: 'tabler icons', code: "\uee9f"
-  },
-  
-  "ti-ice-cream-off" : {
-    iconSet: 'tabler icons', code: "\uf148"
-  },
-  
-  "ti-ice-skating" : {
-    iconSet: 'tabler icons', code: "\uefcb"
-  },
-  
-  "ti-icons" : {
-    iconSet: 'tabler icons', code: "\uf1d4"
-  },
-  
-  "ti-icons-off" : {
-    iconSet: 'tabler icons', code: "\uf3fc"
-  },
-  
-  "ti-id" : {
-    iconSet: 'tabler icons', code: "\ueac3"
-  },
-  
-  "ti-id-badge" : {
-    iconSet: 'tabler icons', code: "\ueff7"
-  },
-  
-  "ti-id-badge-2" : {
-    iconSet: 'tabler icons', code: "\uf076"
-  },
-  
-  "ti-id-badge-off" : {
-    iconSet: 'tabler icons', code: "\uf3fd"
-  },
-  
-  "ti-id-off" : {
-    iconSet: 'tabler icons', code: "\uf149"
-  },
-  
-  "ti-inbox" : {
-    iconSet: 'tabler icons', code: "\ueac4"
-  },
-  
-  "ti-inbox-off" : {
-    iconSet: 'tabler icons', code: "\uf14a"
-  },
-  
-  "ti-indent-decrease" : {
-    iconSet: 'tabler icons', code: "\ueb91"
-  },
-  
-  "ti-indent-increase" : {
-    iconSet: 'tabler icons', code: "\ueb92"
-  },
-  
-  "ti-infinity" : {
-    iconSet: 'tabler icons', code: "\ueb69"
-  },
-  
-  "ti-infinity-off" : {
-    iconSet: 'tabler icons', code: "\uf3fe"
-  },
-  
-  "ti-info-circle" : {
-    iconSet: 'tabler icons', code: "\ueac5"
-  },
-  
-  "ti-info-circle-filled" : {
-    iconSet: 'tabler icons', code: "\uf6d8"
-  },
-  
-  "ti-info-hexagon" : {
-    iconSet: 'tabler icons', code: "\uf7aa"
-  },
-  
-  "ti-info-octagon" : {
-    iconSet: 'tabler icons', code: "\uf7ab"
-  },
-  
-  "ti-info-small" : {
-    iconSet: 'tabler icons', code: "\uf922"
-  },
-  
-  "ti-info-square" : {
-    iconSet: 'tabler icons', code: "\ueac6"
-  },
-  
-  "ti-info-square-rounded" : {
-    iconSet: 'tabler icons', code: "\uf635"
-  },
-  
-  "ti-info-square-rounded-filled" : {
-    iconSet: 'tabler icons', code: "\uf6d9"
-  },
-  
-  "ti-info-triangle" : {
-    iconSet: 'tabler icons', code: "\uf923"
-  },
-  
-  "ti-inner-shadow-bottom" : {
-    iconSet: 'tabler icons', code: "\uf520"
-  },
-  
-  "ti-inner-shadow-bottom-filled" : {
-    iconSet: 'tabler icons', code: "\uf757"
-  },
-  
-  "ti-inner-shadow-bottom-left" : {
-    iconSet: 'tabler icons', code: "\uf51e"
-  },
-  
-  "ti-inner-shadow-bottom-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf758"
-  },
-  
-  "ti-inner-shadow-bottom-right" : {
-    iconSet: 'tabler icons', code: "\uf51f"
-  },
-  
-  "ti-inner-shadow-bottom-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf759"
-  },
-  
-  "ti-inner-shadow-left" : {
-    iconSet: 'tabler icons', code: "\uf521"
-  },
-  
-  "ti-inner-shadow-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf75a"
-  },
-  
-  "ti-inner-shadow-right" : {
-    iconSet: 'tabler icons', code: "\uf522"
-  },
-  
-  "ti-inner-shadow-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf75b"
-  },
-  
-  "ti-inner-shadow-top" : {
-    iconSet: 'tabler icons', code: "\uf525"
-  },
-  
-  "ti-inner-shadow-top-filled" : {
-    iconSet: 'tabler icons', code: "\uf75c"
-  },
-  
-  "ti-inner-shadow-top-left" : {
-    iconSet: 'tabler icons', code: "\uf523"
-  },
-  
-  "ti-inner-shadow-top-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf75d"
-  },
-  
-  "ti-inner-shadow-top-right" : {
-    iconSet: 'tabler icons', code: "\uf524"
-  },
-  
-  "ti-inner-shadow-top-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf75e"
-  },
-  
-  "ti-input-search" : {
-    iconSet: 'tabler icons', code: "\uf2a2"
-  },
-  
-  "ti-ironing-1" : {
-    iconSet: 'tabler icons', code: "\uf2f4"
-  },
-  
-  "ti-ironing-2" : {
-    iconSet: 'tabler icons', code: "\uf2f5"
-  },
-  
-  "ti-ironing-3" : {
-    iconSet: 'tabler icons', code: "\uf2f6"
-  },
-  
-  "ti-ironing-off" : {
-    iconSet: 'tabler icons', code: "\uf2f7"
-  },
-  
-  "ti-ironing-steam" : {
-    iconSet: 'tabler icons', code: "\uf2f9"
-  },
-  
-  "ti-ironing-steam-off" : {
-    iconSet: 'tabler icons', code: "\uf2f8"
-  },
-  
-  "ti-italic" : {
-    iconSet: 'tabler icons', code: "\ueb93"
-  },
-  
-  "ti-jacket" : {
-    iconSet: 'tabler icons', code: "\uf661"
-  },
-  
-  "ti-jetpack" : {
-    iconSet: 'tabler icons', code: "\uf581"
-  },
-  
-  "ti-jewish-star" : {
-    iconSet: 'tabler icons', code: "\uf3ff"
-  },
-  
-  "ti-jewish-star-filled" : {
-    iconSet: 'tabler icons', code: "\uf67e"
-  },
-  
-  "ti-jpg" : {
-    iconSet: 'tabler icons', code: "\uf3ac"
-  },
-  
-  "ti-json" : {
-    iconSet: 'tabler icons', code: "\uf7b2"
-  },
-  
-  "ti-jump-rope" : {
-    iconSet: 'tabler icons', code: "\ued8f"
-  },
-  
-  "ti-karate" : {
-    iconSet: 'tabler icons', code: "\ued32"
-  },
-  
-  "ti-kayak" : {
-    iconSet: 'tabler icons', code: "\uf1d6"
-  },
-  
-  "ti-kering" : {
-    iconSet: 'tabler icons', code: "\uefb8"
-  },
-  
-  "ti-key" : {
-    iconSet: 'tabler icons', code: "\ueac7"
-  },
-  
-  "ti-key-off" : {
-    iconSet: 'tabler icons', code: "\uf14b"
-  },
-  
-  "ti-keyboard" : {
-    iconSet: 'tabler icons', code: "\uebd6"
-  },
-  
-  "ti-keyboard-hide" : {
-    iconSet: 'tabler icons', code: "\uec7e"
-  },
-  
-  "ti-keyboard-off" : {
-    iconSet: 'tabler icons', code: "\ueea0"
-  },
-  
-  "ti-keyboard-show" : {
-    iconSet: 'tabler icons', code: "\uec7f"
-  },
-  
-  "ti-keyframe" : {
-    iconSet: 'tabler icons', code: "\uf576"
-  },
-  
-  "ti-keyframe-align-center" : {
-    iconSet: 'tabler icons', code: "\uf582"
-  },
-  
-  "ti-keyframe-align-horizontal" : {
-    iconSet: 'tabler icons', code: "\uf583"
-  },
-  
-  "ti-keyframe-align-vertical" : {
-    iconSet: 'tabler icons', code: "\uf584"
-  },
-  
-  "ti-keyframes" : {
-    iconSet: 'tabler icons', code: "\uf585"
-  },
-  
-  "ti-ladder" : {
-    iconSet: 'tabler icons', code: "\uefe2"
-  },
-  
-  "ti-ladder-off" : {
-    iconSet: 'tabler icons', code: "\uf14c"
-  },
-  
-  "ti-lambda" : {
-    iconSet: 'tabler icons', code: "\uf541"
-  },
-  
-  "ti-lamp" : {
-    iconSet: 'tabler icons', code: "\uefab"
-  },
-  
-  "ti-lamp-2" : {
-    iconSet: 'tabler icons', code: "\uf09e"
-  },
-  
-  "ti-lamp-off" : {
-    iconSet: 'tabler icons', code: "\uf14d"
-  },
-  
-  "ti-language" : {
-    iconSet: 'tabler icons', code: "\uebbe"
-  },
-  
-  "ti-language-hiragana" : {
-    iconSet: 'tabler icons', code: "\uef77"
-  },
-  
-  "ti-language-katakana" : {
-    iconSet: 'tabler icons', code: "\uef78"
-  },
-  
-  "ti-language-off" : {
-    iconSet: 'tabler icons', code: "\uf14e"
-  },
-  
-  "ti-lasso" : {
-    iconSet: 'tabler icons', code: "\uefac"
-  },
-  
-  "ti-lasso-off" : {
-    iconSet: 'tabler icons', code: "\uf14f"
-  },
-  
-  "ti-lasso-polygon" : {
-    iconSet: 'tabler icons', code: "\uf388"
-  },
-  
-  "ti-layers-difference" : {
-    iconSet: 'tabler icons', code: "\ueac8"
-  },
-  
-  "ti-layers-intersect" : {
-    iconSet: 'tabler icons', code: "\ueac9"
-  },
-  
-  "ti-layers-intersect-2" : {
-    iconSet: 'tabler icons', code: "\ueff8"
-  },
-  
-  "ti-layers-linked" : {
-    iconSet: 'tabler icons', code: "\ueea1"
-  },
-  
-  "ti-layers-off" : {
-    iconSet: 'tabler icons', code: "\uf150"
-  },
-  
-  "ti-layers-subtract" : {
-    iconSet: 'tabler icons', code: "\ueaca"
-  },
-  
-  "ti-layers-union" : {
-    iconSet: 'tabler icons', code: "\ueacb"
-  },
-  
-  "ti-layout" : {
-    iconSet: 'tabler icons', code: "\ueadb"
-  },
-  
-  "ti-layout-2" : {
-    iconSet: 'tabler icons', code: "\ueacc"
-  },
-  
-  "ti-layout-align-bottom" : {
-    iconSet: 'tabler icons', code: "\ueacd"
-  },
-  
-  "ti-layout-align-center" : {
-    iconSet: 'tabler icons', code: "\ueace"
-  },
-  
-  "ti-layout-align-left" : {
-    iconSet: 'tabler icons', code: "\ueacf"
-  },
-  
-  "ti-layout-align-middle" : {
-    iconSet: 'tabler icons', code: "\uead0"
-  },
-  
-  "ti-layout-align-right" : {
-    iconSet: 'tabler icons', code: "\uead1"
-  },
-  
-  "ti-layout-align-top" : {
-    iconSet: 'tabler icons', code: "\uead2"
-  },
-  
-  "ti-layout-board" : {
-    iconSet: 'tabler icons', code: "\uef95"
-  },
-  
-  "ti-layout-board-split" : {
-    iconSet: 'tabler icons', code: "\uef94"
-  },
-  
-  "ti-layout-bottombar" : {
-    iconSet: 'tabler icons', code: "\uead3"
-  },
-  
-  "ti-layout-bottombar-collapse" : {
-    iconSet: 'tabler icons', code: "\uf28b"
-  },
-  
-  "ti-layout-bottombar-expand" : {
-    iconSet: 'tabler icons', code: "\uf28c"
-  },
-  
-  "ti-layout-cards" : {
-    iconSet: 'tabler icons', code: "\uec13"
-  },
-  
-  "ti-layout-collage" : {
-    iconSet: 'tabler icons', code: "\uf389"
-  },
-  
-  "ti-layout-columns" : {
-    iconSet: 'tabler icons', code: "\uead4"
-  },
-  
-  "ti-layout-dashboard" : {
-    iconSet: 'tabler icons', code: "\uf02c"
-  },
-  
-  "ti-layout-distribute-horizontal" : {
-    iconSet: 'tabler icons', code: "\uead5"
-  },
-  
-  "ti-layout-distribute-vertical" : {
-    iconSet: 'tabler icons', code: "\uead6"
-  },
-  
-  "ti-layout-grid" : {
-    iconSet: 'tabler icons', code: "\uedba"
-  },
-  
-  "ti-layout-grid-add" : {
-    iconSet: 'tabler icons', code: "\uedb9"
-  },
-  
-  "ti-layout-kanban" : {
-    iconSet: 'tabler icons', code: "\uec3f"
-  },
-  
-  "ti-layout-list" : {
-    iconSet: 'tabler icons', code: "\uec14"
-  },
-  
-  "ti-layout-navbar" : {
-    iconSet: 'tabler icons', code: "\uead7"
-  },
-  
-  "ti-layout-navbar-collapse" : {
-    iconSet: 'tabler icons', code: "\uf28d"
-  },
-  
-  "ti-layout-navbar-expand" : {
-    iconSet: 'tabler icons', code: "\uf28e"
-  },
-  
-  "ti-layout-off" : {
-    iconSet: 'tabler icons', code: "\uf151"
-  },
-  
-  "ti-layout-rows" : {
-    iconSet: 'tabler icons', code: "\uead8"
-  },
-  
-  "ti-layout-sidebar" : {
-    iconSet: 'tabler icons', code: "\ueada"
-  },
-  
-  "ti-layout-sidebar-left-collapse" : {
-    iconSet: 'tabler icons', code: "\uf004"
-  },
-  
-  "ti-layout-sidebar-left-expand" : {
-    iconSet: 'tabler icons', code: "\uf005"
-  },
-  
-  "ti-layout-sidebar-right" : {
-    iconSet: 'tabler icons', code: "\uead9"
-  },
-  
-  "ti-layout-sidebar-right-collapse" : {
-    iconSet: 'tabler icons', code: "\uf006"
-  },
-  
-  "ti-layout-sidebar-right-expand" : {
-    iconSet: 'tabler icons', code: "\uf007"
-  },
-  
-  "ti-leaf" : {
-    iconSet: 'tabler icons', code: "\ued4f"
-  },
-  
-  "ti-leaf-off" : {
-    iconSet: 'tabler icons', code: "\uf400"
-  },
-  
-  "ti-lego" : {
-    iconSet: 'tabler icons', code: "\ueadc"
-  },
-  
-  "ti-lego-off" : {
-    iconSet: 'tabler icons', code: "\uf401"
-  },
-  
-  "ti-lemon" : {
-    iconSet: 'tabler icons', code: "\uef10"
-  },
-  
-  "ti-lemon-2" : {
-    iconSet: 'tabler icons', code: "\uef81"
-  },
-  
-  "ti-letter-a" : {
-    iconSet: 'tabler icons', code: "\uec50"
-  },
-  
-  "ti-letter-b" : {
-    iconSet: 'tabler icons', code: "\uec51"
-  },
-  
-  "ti-letter-c" : {
-    iconSet: 'tabler icons', code: "\uec52"
-  },
-  
-  "ti-letter-case" : {
-    iconSet: 'tabler icons', code: "\ueea5"
-  },
-  
-  "ti-letter-case-lower" : {
-    iconSet: 'tabler icons', code: "\ueea2"
-  },
-  
-  "ti-letter-case-toggle" : {
-    iconSet: 'tabler icons', code: "\ueea3"
-  },
-  
-  "ti-letter-case-upper" : {
-    iconSet: 'tabler icons', code: "\ueea4"
-  },
-  
-  "ti-letter-d" : {
-    iconSet: 'tabler icons', code: "\uec53"
-  },
-  
-  "ti-letter-e" : {
-    iconSet: 'tabler icons', code: "\uec54"
-  },
-  
-  "ti-letter-f" : {
-    iconSet: 'tabler icons', code: "\uec55"
-  },
-  
-  "ti-letter-g" : {
-    iconSet: 'tabler icons', code: "\uec56"
-  },
-  
-  "ti-letter-h" : {
-    iconSet: 'tabler icons', code: "\uec57"
-  },
-  
-  "ti-letter-i" : {
-    iconSet: 'tabler icons', code: "\uec58"
-  },
-  
-  "ti-letter-j" : {
-    iconSet: 'tabler icons', code: "\uec59"
-  },
-  
-  "ti-letter-k" : {
-    iconSet: 'tabler icons', code: "\uec5a"
-  },
-  
-  "ti-letter-l" : {
-    iconSet: 'tabler icons', code: "\uec5b"
-  },
-  
-  "ti-letter-m" : {
-    iconSet: 'tabler icons', code: "\uec5c"
-  },
-  
-  "ti-letter-n" : {
-    iconSet: 'tabler icons', code: "\uec5d"
-  },
-  
-  "ti-letter-o" : {
-    iconSet: 'tabler icons', code: "\uec5e"
-  },
-  
-  "ti-letter-p" : {
-    iconSet: 'tabler icons', code: "\uec5f"
-  },
-  
-  "ti-letter-q" : {
-    iconSet: 'tabler icons', code: "\uec60"
-  },
-  
-  "ti-letter-r" : {
-    iconSet: 'tabler icons', code: "\uec61"
-  },
-  
-  "ti-letter-s" : {
-    iconSet: 'tabler icons', code: "\uec62"
-  },
-  
-  "ti-letter-spacing" : {
-    iconSet: 'tabler icons', code: "\ueea6"
-  },
-  
-  "ti-letter-t" : {
-    iconSet: 'tabler icons', code: "\uec63"
-  },
-  
-  "ti-letter-u" : {
-    iconSet: 'tabler icons', code: "\uec64"
-  },
-  
-  "ti-letter-v" : {
-    iconSet: 'tabler icons', code: "\uec65"
-  },
-  
-  "ti-letter-w" : {
-    iconSet: 'tabler icons', code: "\uec66"
-  },
-  
-  "ti-letter-x" : {
-    iconSet: 'tabler icons', code: "\uec67"
-  },
-  
-  "ti-letter-y" : {
-    iconSet: 'tabler icons', code: "\uec68"
-  },
-  
-  "ti-letter-z" : {
-    iconSet: 'tabler icons', code: "\uec69"
-  },
-  
-  "ti-license" : {
-    iconSet: 'tabler icons', code: "\uebc0"
-  },
-  
-  "ti-license-off" : {
-    iconSet: 'tabler icons', code: "\uf153"
-  },
-  
-  "ti-lifebuoy" : {
-    iconSet: 'tabler icons', code: "\ueadd"
-  },
-  
-  "ti-lifebuoy-off" : {
-    iconSet: 'tabler icons', code: "\uf154"
-  },
-  
-  "ti-lighter" : {
-    iconSet: 'tabler icons', code: "\uf794"
-  },
-  
-  "ti-line" : {
-    iconSet: 'tabler icons', code: "\uec40"
-  },
-  
-  "ti-line-dashed" : {
-    iconSet: 'tabler icons', code: "\ueea7"
-  },
-  
-  "ti-line-dotted" : {
-    iconSet: 'tabler icons', code: "\ueea8"
-  },
-  
-  "ti-line-height" : {
-    iconSet: 'tabler icons', code: "\ueb94"
-  },
-  
-  "ti-link" : {
-    iconSet: 'tabler icons', code: "\ueade"
-  },
-  
-  "ti-link-off" : {
-    iconSet: 'tabler icons', code: "\uf402"
-  },
-  
-  "ti-list" : {
-    iconSet: 'tabler icons', code: "\ueb6b"
-  },
-  
-  "ti-list-check" : {
-    iconSet: 'tabler icons', code: "\ueb6a"
-  },
-  
-  "ti-list-details" : {
-    iconSet: 'tabler icons', code: "\uef40"
-  },
-  
-  "ti-list-numbers" : {
-    iconSet: 'tabler icons', code: "\uef11"
-  },
-  
-  "ti-list-search" : {
-    iconSet: 'tabler icons', code: "\ueea9"
-  },
-  
-  "ti-live-photo" : {
-    iconSet: 'tabler icons', code: "\ueadf"
-  },
-  
-  "ti-live-photo-off" : {
-    iconSet: 'tabler icons', code: "\uf403"
-  },
-  
-  "ti-live-view" : {
-    iconSet: 'tabler icons', code: "\uec6b"
-  },
-  
-  "ti-loader" : {
-    iconSet: 'tabler icons', code: "\ueca3"
-  },
-  
-  "ti-loader-2" : {
-    iconSet: 'tabler icons', code: "\uf226"
-  },
-  
-  "ti-loader-3" : {
-    iconSet: 'tabler icons', code: "\uf513"
-  },
-  
-  "ti-loader-quarter" : {
-    iconSet: 'tabler icons', code: "\ueca2"
-  },
-  
-  "ti-location" : {
-    iconSet: 'tabler icons', code: "\ueae0"
-  },
-  
-  "ti-location-broken" : {
-    iconSet: 'tabler icons', code: "\uf2c4"
-  },
-  
-  "ti-location-filled" : {
-    iconSet: 'tabler icons', code: "\uf67f"
-  },
-  
-  "ti-location-off" : {
-    iconSet: 'tabler icons', code: "\uf155"
-  },
-  
-  "ti-lock" : {
-    iconSet: 'tabler icons', code: "\ueae2"
-  },
-  
-  "ti-lock-access" : {
-    iconSet: 'tabler icons', code: "\ueeaa"
-  },
-  
-  "ti-lock-access-off" : {
-    iconSet: 'tabler icons', code: "\uf404"
-  },
-  
-  "ti-lock-bolt" : {
-    iconSet: 'tabler icons', code: "\uf924"
-  },
-  
-  "ti-lock-cancel" : {
-    iconSet: 'tabler icons', code: "\uf925"
-  },
-  
-  "ti-lock-check" : {
-    iconSet: 'tabler icons', code: "\uf926"
-  },
-  
-  "ti-lock-code" : {
-    iconSet: 'tabler icons', code: "\uf927"
-  },
-  
-  "ti-lock-cog" : {
-    iconSet: 'tabler icons', code: "\uf928"
-  },
-  
-  "ti-lock-dollar" : {
-    iconSet: 'tabler icons', code: "\uf929"
-  },
-  
-  "ti-lock-down" : {
-    iconSet: 'tabler icons', code: "\uf92a"
-  },
-  
-  "ti-lock-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf92b"
-  },
-  
-  "ti-lock-heart" : {
-    iconSet: 'tabler icons', code: "\uf92c"
-  },
-  
-  "ti-lock-minus" : {
-    iconSet: 'tabler icons', code: "\uf92d"
-  },
-  
-  "ti-lock-off" : {
-    iconSet: 'tabler icons', code: "\ued1e"
-  },
-  
-  "ti-lock-open" : {
-    iconSet: 'tabler icons', code: "\ueae1"
-  },
-  
-  "ti-lock-open-off" : {
-    iconSet: 'tabler icons', code: "\uf156"
-  },
-  
-  "ti-lock-pause" : {
-    iconSet: 'tabler icons', code: "\uf92e"
-  },
-  
-  "ti-lock-pin" : {
-    iconSet: 'tabler icons', code: "\uf92f"
-  },
-  
-  "ti-lock-plus" : {
-    iconSet: 'tabler icons', code: "\uf930"
-  },
-  
-  "ti-lock-question" : {
-    iconSet: 'tabler icons', code: "\uf931"
-  },
-  
-  "ti-lock-search" : {
-    iconSet: 'tabler icons', code: "\uf932"
-  },
-  
-  "ti-lock-share" : {
-    iconSet: 'tabler icons', code: "\uf933"
-  },
-  
-  "ti-lock-square" : {
-    iconSet: 'tabler icons', code: "\uef51"
-  },
-  
-  "ti-lock-square-rounded" : {
-    iconSet: 'tabler icons', code: "\uf636"
-  },
-  
-  "ti-lock-square-rounded-filled" : {
-    iconSet: 'tabler icons', code: "\uf6da"
-  },
-  
-  "ti-lock-star" : {
-    iconSet: 'tabler icons', code: "\uf934"
-  },
-  
-  "ti-lock-up" : {
-    iconSet: 'tabler icons', code: "\uf935"
-  },
-  
-  "ti-lock-x" : {
-    iconSet: 'tabler icons', code: "\uf936"
-  },
-  
-  "ti-logic-and" : {
-    iconSet: 'tabler icons', code: "\uf240"
-  },
-  
-  "ti-logic-buffer" : {
-    iconSet: 'tabler icons', code: "\uf241"
-  },
-  
-  "ti-logic-nand" : {
-    iconSet: 'tabler icons', code: "\uf242"
-  },
-  
-  "ti-logic-nor" : {
-    iconSet: 'tabler icons', code: "\uf243"
-  },
-  
-  "ti-logic-not" : {
-    iconSet: 'tabler icons', code: "\uf244"
-  },
-  
-  "ti-logic-or" : {
-    iconSet: 'tabler icons', code: "\uf245"
-  },
-  
-  "ti-logic-xnor" : {
-    iconSet: 'tabler icons', code: "\uf246"
-  },
-  
-  "ti-logic-xor" : {
-    iconSet: 'tabler icons', code: "\uf247"
-  },
-  
-  "ti-login" : {
-    iconSet: 'tabler icons', code: "\ueba7"
-  },
-  
-  "ti-logout" : {
-    iconSet: 'tabler icons', code: "\ueba8"
-  },
-  
-  "ti-lollipop" : {
-    iconSet: 'tabler icons', code: "\uefcc"
-  },
-  
-  "ti-lollipop-off" : {
-    iconSet: 'tabler icons', code: "\uf157"
-  },
-  
-  "ti-luggage" : {
-    iconSet: 'tabler icons', code: "\uefad"
-  },
-  
-  "ti-luggage-off" : {
-    iconSet: 'tabler icons', code: "\uf158"
-  },
-  
-  "ti-lungs" : {
-    iconSet: 'tabler icons', code: "\uef62"
-  },
-  
-  "ti-lungs-off" : {
-    iconSet: 'tabler icons', code: "\uf405"
-  },
-  
-  "ti-macro" : {
-    iconSet: 'tabler icons', code: "\ueeab"
-  },
-  
-  "ti-macro-off" : {
-    iconSet: 'tabler icons', code: "\uf406"
-  },
-  
-  "ti-magnet" : {
-    iconSet: 'tabler icons', code: "\ueae3"
-  },
-  
-  "ti-magnet-off" : {
-    iconSet: 'tabler icons', code: "\uf159"
-  },
-  
-  "ti-mail" : {
-    iconSet: 'tabler icons', code: "\ueae5"
-  },
-  
-  "ti-mail-ai" : {
-    iconSet: 'tabler icons', code: "\ufa31"
-  },
-  
-  "ti-mail-bolt" : {
-    iconSet: 'tabler icons', code: "\uf937"
-  },
-  
-  "ti-mail-cancel" : {
-    iconSet: 'tabler icons', code: "\uf938"
-  },
-  
-  "ti-mail-check" : {
-    iconSet: 'tabler icons', code: "\uf939"
-  },
-  
-  "ti-mail-code" : {
-    iconSet: 'tabler icons', code: "\uf93a"
-  },
-  
-  "ti-mail-cog" : {
-    iconSet: 'tabler icons', code: "\uf93b"
-  },
-  
-  "ti-mail-dollar" : {
-    iconSet: 'tabler icons', code: "\uf93c"
-  },
-  
-  "ti-mail-down" : {
-    iconSet: 'tabler icons', code: "\uf93d"
-  },
-  
-  "ti-mail-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf93e"
-  },
-  
-  "ti-mail-fast" : {
-    iconSet: 'tabler icons', code: "\uf069"
-  },
-  
-  "ti-mail-forward" : {
-    iconSet: 'tabler icons', code: "\ueeac"
-  },
-  
-  "ti-mail-heart" : {
-    iconSet: 'tabler icons', code: "\uf93f"
-  },
-  
-  "ti-mail-minus" : {
-    iconSet: 'tabler icons', code: "\uf940"
-  },
-  
-  "ti-mail-off" : {
-    iconSet: 'tabler icons', code: "\uf15a"
-  },
-  
-  "ti-mail-opened" : {
-    iconSet: 'tabler icons', code: "\ueae4"
-  },
-  
-  "ti-mail-pause" : {
-    iconSet: 'tabler icons', code: "\uf941"
-  },
-  
-  "ti-mail-pin" : {
-    iconSet: 'tabler icons', code: "\uf942"
-  },
-  
-  "ti-mail-plus" : {
-    iconSet: 'tabler icons', code: "\uf943"
-  },
-  
-  "ti-mail-question" : {
-    iconSet: 'tabler icons', code: "\uf944"
-  },
-  
-  "ti-mail-search" : {
-    iconSet: 'tabler icons', code: "\uf945"
-  },
-  
-  "ti-mail-share" : {
-    iconSet: 'tabler icons', code: "\uf946"
-  },
-  
-  "ti-mail-star" : {
-    iconSet: 'tabler icons', code: "\uf947"
-  },
-  
-  "ti-mail-up" : {
-    iconSet: 'tabler icons', code: "\uf948"
-  },
-  
-  "ti-mail-x" : {
-    iconSet: 'tabler icons', code: "\uf949"
-  },
-  
-  "ti-mailbox" : {
-    iconSet: 'tabler icons', code: "\ueead"
-  },
-  
-  "ti-mailbox-off" : {
-    iconSet: 'tabler icons', code: "\uf15b"
-  },
-  
-  "ti-man" : {
-    iconSet: 'tabler icons', code: "\ueae6"
-  },
-  
-  "ti-manual-gearbox" : {
-    iconSet: 'tabler icons', code: "\ued7b"
-  },
-  
-  "ti-map" : {
-    iconSet: 'tabler icons', code: "\ueae9"
-  },
-  
-  "ti-map-2" : {
-    iconSet: 'tabler icons', code: "\ueae7"
-  },
-  
-  "ti-map-off" : {
-    iconSet: 'tabler icons', code: "\uf15c"
-  },
-  
-  "ti-map-pin" : {
-    iconSet: 'tabler icons', code: "\ueae8"
-  },
-  
-  "ti-map-pin-bolt" : {
-    iconSet: 'tabler icons', code: "\uf94a"
-  },
-  
-  "ti-map-pin-cancel" : {
-    iconSet: 'tabler icons', code: "\uf94b"
-  },
-  
-  "ti-map-pin-check" : {
-    iconSet: 'tabler icons', code: "\uf94c"
-  },
-  
-  "ti-map-pin-code" : {
-    iconSet: 'tabler icons', code: "\uf94d"
-  },
-  
-  "ti-map-pin-cog" : {
-    iconSet: 'tabler icons', code: "\uf94e"
-  },
-  
-  "ti-map-pin-dollar" : {
-    iconSet: 'tabler icons', code: "\uf94f"
-  },
-  
-  "ti-map-pin-down" : {
-    iconSet: 'tabler icons', code: "\uf950"
-  },
-  
-  "ti-map-pin-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf951"
-  },
-  
-  "ti-map-pin-filled" : {
-    iconSet: 'tabler icons', code: "\uf680"
-  },
-  
-  "ti-map-pin-heart" : {
-    iconSet: 'tabler icons', code: "\uf952"
-  },
-  
-  "ti-map-pin-minus" : {
-    iconSet: 'tabler icons', code: "\uf953"
-  },
-  
-  "ti-map-pin-off" : {
-    iconSet: 'tabler icons', code: "\uecf3"
-  },
-  
-  "ti-map-pin-pause" : {
-    iconSet: 'tabler icons', code: "\uf954"
-  },
-  
-  "ti-map-pin-pin" : {
-    iconSet: 'tabler icons', code: "\uf955"
-  },
-  
-  "ti-map-pin-plus" : {
-    iconSet: 'tabler icons', code: "\uf956"
-  },
-  
-  "ti-map-pin-question" : {
-    iconSet: 'tabler icons', code: "\uf957"
-  },
-  
-  "ti-map-pin-search" : {
-    iconSet: 'tabler icons', code: "\uf958"
-  },
-  
-  "ti-map-pin-share" : {
-    iconSet: 'tabler icons', code: "\uf795"
-  },
-  
-  "ti-map-pin-star" : {
-    iconSet: 'tabler icons', code: "\uf959"
-  },
-  
-  "ti-map-pin-up" : {
-    iconSet: 'tabler icons', code: "\uf95a"
-  },
-  
-  "ti-map-pin-x" : {
-    iconSet: 'tabler icons', code: "\uf95b"
-  },
-  
-  "ti-map-pins" : {
-    iconSet: 'tabler icons', code: "\ued5e"
-  },
-  
-  "ti-map-search" : {
-    iconSet: 'tabler icons', code: "\uef82"
-  },
-  
-  "ti-markdown" : {
-    iconSet: 'tabler icons', code: "\uec41"
-  },
-  
-  "ti-markdown-off" : {
-    iconSet: 'tabler icons', code: "\uf407"
-  },
-  
-  "ti-marquee" : {
-    iconSet: 'tabler icons', code: "\uec77"
-  },
-  
-  "ti-marquee-2" : {
-    iconSet: 'tabler icons', code: "\ueeae"
-  },
-  
-  "ti-marquee-off" : {
-    iconSet: 'tabler icons', code: "\uf15d"
-  },
-  
-  "ti-mars" : {
-    iconSet: 'tabler icons', code: "\uec80"
-  },
-  
-  "ti-mask" : {
-    iconSet: 'tabler icons', code: "\ueeb0"
-  },
-  
-  "ti-mask-off" : {
-    iconSet: 'tabler icons', code: "\ueeaf"
-  },
-  
-  "ti-masks-theater" : {
-    iconSet: 'tabler icons', code: "\uf263"
-  },
-  
-  "ti-masks-theater-off" : {
-    iconSet: 'tabler icons', code: "\uf408"
-  },
-  
-  "ti-massage" : {
-    iconSet: 'tabler icons', code: "\ueeb1"
-  },
-  
-  "ti-matchstick" : {
-    iconSet: 'tabler icons', code: "\uf577"
-  },
-  
-  "ti-math" : {
-    iconSet: 'tabler icons', code: "\uebeb"
-  },
-  
-  "ti-math-1-divide-2" : {
-    iconSet: 'tabler icons', code: "\uf4e2"
-  },
-  
-  "ti-math-1-divide-3" : {
-    iconSet: 'tabler icons', code: "\uf4e3"
-  },
-  
-  "ti-math-avg" : {
-    iconSet: 'tabler icons', code: "\uf0f4"
-  },
-  
-  "ti-math-equal-greater" : {
-    iconSet: 'tabler icons', code: "\uf4e4"
-  },
-  
-  "ti-math-equal-lower" : {
-    iconSet: 'tabler icons', code: "\uf4e5"
-  },
-  
-  "ti-math-function" : {
-    iconSet: 'tabler icons', code: "\ueeb2"
-  },
-  
-  "ti-math-function-off" : {
-    iconSet: 'tabler icons', code: "\uf15e"
-  },
-  
-  "ti-math-function-y" : {
-    iconSet: 'tabler icons', code: "\uf4e6"
-  },
-  
-  "ti-math-greater" : {
-    iconSet: 'tabler icons', code: "\uf4e7"
-  },
-  
-  "ti-math-integral" : {
-    iconSet: 'tabler icons', code: "\uf4e9"
-  },
-  
-  "ti-math-integral-x" : {
-    iconSet: 'tabler icons', code: "\uf4e8"
-  },
-  
-  "ti-math-integrals" : {
-    iconSet: 'tabler icons', code: "\uf4ea"
-  },
-  
-  "ti-math-lower" : {
-    iconSet: 'tabler icons', code: "\uf4eb"
-  },
-  
-  "ti-math-max" : {
-    iconSet: 'tabler icons', code: "\uf0f5"
-  },
-  
-  "ti-math-min" : {
-    iconSet: 'tabler icons', code: "\uf0f6"
-  },
-  
-  "ti-math-not" : {
-    iconSet: 'tabler icons', code: "\uf4ec"
-  },
-  
-  "ti-math-off" : {
-    iconSet: 'tabler icons', code: "\uf409"
-  },
-  
-  "ti-math-pi" : {
-    iconSet: 'tabler icons', code: "\uf4ee"
-  },
-  
-  "ti-math-pi-divide-2" : {
-    iconSet: 'tabler icons', code: "\uf4ed"
-  },
-  
-  "ti-math-symbols" : {
-    iconSet: 'tabler icons', code: "\ueeb3"
-  },
-  
-  "ti-math-x-divide-2" : {
-    iconSet: 'tabler icons', code: "\uf4ef"
-  },
-  
-  "ti-math-x-divide-y" : {
-    iconSet: 'tabler icons', code: "\uf4f1"
-  },
-  
-  "ti-math-x-divide-y-2" : {
-    iconSet: 'tabler icons', code: "\uf4f0"
-  },
-  
-  "ti-math-x-minus-x" : {
-    iconSet: 'tabler icons', code: "\uf4f2"
-  },
-  
-  "ti-math-x-minus-y" : {
-    iconSet: 'tabler icons', code: "\uf4f3"
-  },
-  
-  "ti-math-x-plus-x" : {
-    iconSet: 'tabler icons', code: "\uf4f4"
-  },
-  
-  "ti-math-x-plus-y" : {
-    iconSet: 'tabler icons', code: "\uf4f5"
-  },
-  
-  "ti-math-xy" : {
-    iconSet: 'tabler icons', code: "\uf4f6"
-  },
-  
-  "ti-math-y-minus-y" : {
-    iconSet: 'tabler icons', code: "\uf4f7"
-  },
-  
-  "ti-math-y-plus-y" : {
-    iconSet: 'tabler icons', code: "\uf4f8"
-  },
-  
-  "ti-maximize" : {
-    iconSet: 'tabler icons', code: "\ueaea"
-  },
-  
-  "ti-maximize-off" : {
-    iconSet: 'tabler icons', code: "\uf15f"
-  },
-  
-  "ti-meat" : {
-    iconSet: 'tabler icons', code: "\uef12"
-  },
-  
-  "ti-meat-off" : {
-    iconSet: 'tabler icons', code: "\uf40a"
-  },
-  
-  "ti-medal" : {
-    iconSet: 'tabler icons', code: "\uec78"
-  },
-  
-  "ti-medal-2" : {
-    iconSet: 'tabler icons', code: "\uefcd"
-  },
-  
-  "ti-medical-cross" : {
-    iconSet: 'tabler icons', code: "\uec2f"
-  },
-  
-  "ti-medical-cross-filled" : {
-    iconSet: 'tabler icons', code: "\uf681"
-  },
-  
-  "ti-medical-cross-off" : {
-    iconSet: 'tabler icons', code: "\uf160"
-  },
-  
-  "ti-medicine-syrup" : {
-    iconSet: 'tabler icons', code: "\uef63"
-  },
-  
-  "ti-meeple" : {
-    iconSet: 'tabler icons', code: "\uf514"
-  },
-  
-  "ti-menorah" : {
-    iconSet: 'tabler icons', code: "\uf58c"
-  },
-  
-  "ti-menu" : {
-    iconSet: 'tabler icons', code: "\ueaeb"
-  },
-  
-  "ti-menu-2" : {
-    iconSet: 'tabler icons', code: "\uec42"
-  },
-  
-  "ti-menu-order" : {
-    iconSet: 'tabler icons', code: "\uf5f5"
-  },
-  
-  "ti-message" : {
-    iconSet: 'tabler icons', code: "\ueaef"
-  },
-  
-  "ti-message-2" : {
-    iconSet: 'tabler icons', code: "\ueaec"
-  },
-  
-  "ti-message-2-bolt" : {
-    iconSet: 'tabler icons', code: "\uf95c"
-  },
-  
-  "ti-message-2-cancel" : {
-    iconSet: 'tabler icons', code: "\uf95d"
-  },
-  
-  "ti-message-2-check" : {
-    iconSet: 'tabler icons', code: "\uf95e"
-  },
-  
-  "ti-message-2-code" : {
-    iconSet: 'tabler icons', code: "\uf012"
-  },
-  
-  "ti-message-2-cog" : {
-    iconSet: 'tabler icons', code: "\uf95f"
-  },
-  
-  "ti-message-2-dollar" : {
-    iconSet: 'tabler icons', code: "\uf960"
-  },
-  
-  "ti-message-2-down" : {
-    iconSet: 'tabler icons', code: "\uf961"
-  },
-  
-  "ti-message-2-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf962"
-  },
-  
-  "ti-message-2-heart" : {
-    iconSet: 'tabler icons', code: "\uf963"
-  },
-  
-  "ti-message-2-minus" : {
-    iconSet: 'tabler icons', code: "\uf964"
-  },
-  
-  "ti-message-2-off" : {
-    iconSet: 'tabler icons', code: "\uf40b"
-  },
-  
-  "ti-message-2-pause" : {
-    iconSet: 'tabler icons', code: "\uf965"
-  },
-  
-  "ti-message-2-pin" : {
-    iconSet: 'tabler icons', code: "\uf966"
-  },
-  
-  "ti-message-2-plus" : {
-    iconSet: 'tabler icons', code: "\uf967"
-  },
-  
-  "ti-message-2-question" : {
-    iconSet: 'tabler icons', code: "\uf968"
-  },
-  
-  "ti-message-2-search" : {
-    iconSet: 'tabler icons', code: "\uf969"
-  },
-  
-  "ti-message-2-share" : {
-    iconSet: 'tabler icons', code: "\uf077"
-  },
-  
-  "ti-message-2-star" : {
-    iconSet: 'tabler icons', code: "\uf96a"
-  },
-  
-  "ti-message-2-up" : {
-    iconSet: 'tabler icons', code: "\uf96b"
-  },
-  
-  "ti-message-2-x" : {
-    iconSet: 'tabler icons', code: "\uf96c"
-  },
-  
-  "ti-message-bolt" : {
-    iconSet: 'tabler icons', code: "\uf96d"
-  },
-  
-  "ti-message-cancel" : {
-    iconSet: 'tabler icons', code: "\uf96e"
-  },
-  
-  "ti-message-chatbot" : {
-    iconSet: 'tabler icons', code: "\uf38a"
-  },
-  
-  "ti-message-check" : {
-    iconSet: 'tabler icons', code: "\uf96f"
-  },
-  
-  "ti-message-circle" : {
-    iconSet: 'tabler icons', code: "\ueaed"
-  },
-  
-  "ti-message-circle-2" : {
-    iconSet: 'tabler icons', code: "\ued3f"
-  },
-  
-  "ti-message-circle-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf682"
-  },
-  
-  "ti-message-circle-bolt" : {
-    iconSet: 'tabler icons', code: "\uf970"
-  },
-  
-  "ti-message-circle-cancel" : {
-    iconSet: 'tabler icons', code: "\uf971"
-  },
-  
-  "ti-message-circle-check" : {
-    iconSet: 'tabler icons', code: "\uf972"
-  },
-  
-  "ti-message-circle-code" : {
-    iconSet: 'tabler icons', code: "\uf973"
-  },
-  
-  "ti-message-circle-cog" : {
-    iconSet: 'tabler icons', code: "\uf974"
-  },
-  
-  "ti-message-circle-dollar" : {
-    iconSet: 'tabler icons', code: "\uf975"
-  },
-  
-  "ti-message-circle-down" : {
-    iconSet: 'tabler icons', code: "\uf976"
-  },
-  
-  "ti-message-circle-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf977"
-  },
-  
-  "ti-message-circle-heart" : {
-    iconSet: 'tabler icons', code: "\uf978"
-  },
-  
-  "ti-message-circle-minus" : {
-    iconSet: 'tabler icons', code: "\uf979"
-  },
-  
-  "ti-message-circle-off" : {
-    iconSet: 'tabler icons', code: "\ued40"
-  },
-  
-  "ti-message-circle-pause" : {
-    iconSet: 'tabler icons', code: "\uf97a"
-  },
-  
-  "ti-message-circle-pin" : {
-    iconSet: 'tabler icons', code: "\uf97b"
-  },
-  
-  "ti-message-circle-plus" : {
-    iconSet: 'tabler icons', code: "\uf97c"
-  },
-  
-  "ti-message-circle-question" : {
-    iconSet: 'tabler icons', code: "\uf97d"
-  },
-  
-  "ti-message-circle-search" : {
-    iconSet: 'tabler icons', code: "\uf97e"
-  },
-  
-  "ti-message-circle-share" : {
-    iconSet: 'tabler icons', code: "\uf97f"
-  },
-  
-  "ti-message-circle-star" : {
-    iconSet: 'tabler icons', code: "\uf980"
-  },
-  
-  "ti-message-circle-up" : {
-    iconSet: 'tabler icons', code: "\uf981"
-  },
-  
-  "ti-message-circle-x" : {
-    iconSet: 'tabler icons', code: "\uf982"
-  },
-  
-  "ti-message-code" : {
-    iconSet: 'tabler icons', code: "\uf013"
-  },
-  
-  "ti-message-cog" : {
-    iconSet: 'tabler icons', code: "\uf983"
-  },
-  
-  "ti-message-dollar" : {
-    iconSet: 'tabler icons', code: "\uf984"
-  },
-  
-  "ti-message-dots" : {
-    iconSet: 'tabler icons', code: "\ueaee"
-  },
-  
-  "ti-message-down" : {
-    iconSet: 'tabler icons', code: "\uf985"
-  },
-  
-  "ti-message-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf986"
-  },
-  
-  "ti-message-forward" : {
-    iconSet: 'tabler icons', code: "\uf28f"
-  },
-  
-  "ti-message-heart" : {
-    iconSet: 'tabler icons', code: "\uf987"
-  },
-  
-  "ti-message-language" : {
-    iconSet: 'tabler icons', code: "\uefae"
-  },
-  
-  "ti-message-minus" : {
-    iconSet: 'tabler icons', code: "\uf988"
-  },
-  
-  "ti-message-off" : {
-    iconSet: 'tabler icons', code: "\ued41"
-  },
-  
-  "ti-message-pause" : {
-    iconSet: 'tabler icons', code: "\uf989"
-  },
-  
-  "ti-message-pin" : {
-    iconSet: 'tabler icons', code: "\uf98a"
-  },
-  
-  "ti-message-plus" : {
-    iconSet: 'tabler icons', code: "\uec9a"
-  },
-  
-  "ti-message-question" : {
-    iconSet: 'tabler icons', code: "\uf98b"
-  },
-  
-  "ti-message-report" : {
-    iconSet: 'tabler icons', code: "\uec9b"
-  },
-  
-  "ti-message-search" : {
-    iconSet: 'tabler icons', code: "\uf98c"
-  },
-  
-  "ti-message-share" : {
-    iconSet: 'tabler icons', code: "\uf078"
-  },
-  
-  "ti-message-star" : {
-    iconSet: 'tabler icons', code: "\uf98d"
-  },
-  
-  "ti-message-up" : {
-    iconSet: 'tabler icons', code: "\uf98e"
-  },
-  
-  "ti-message-x" : {
-    iconSet: 'tabler icons', code: "\uf98f"
-  },
-  
-  "ti-messages" : {
-    iconSet: 'tabler icons', code: "\ueb6c"
-  },
-  
-  "ti-messages-off" : {
-    iconSet: 'tabler icons', code: "\ued42"
-  },
-  
-  "ti-meteor" : {
-    iconSet: 'tabler icons', code: "\uf1fd"
-  },
-  
-  "ti-meteor-off" : {
-    iconSet: 'tabler icons', code: "\uf40c"
-  },
-  
-  "ti-mickey" : {
-    iconSet: 'tabler icons', code: "\uf2a3"
-  },
-  
-  "ti-mickey-filled" : {
-    iconSet: 'tabler icons', code: "\uf683"
-  },
-  
-  "ti-microphone" : {
-    iconSet: 'tabler icons', code: "\ueaf0"
-  },
-  
-  "ti-microphone-2" : {
-    iconSet: 'tabler icons', code: "\uef2c"
-  },
-  
-  "ti-microphone-2-off" : {
-    iconSet: 'tabler icons', code: "\uf40d"
-  },
-  
-  "ti-microphone-off" : {
-    iconSet: 'tabler icons', code: "\ued16"
-  },
-  
-  "ti-microscope" : {
-    iconSet: 'tabler icons', code: "\uef64"
-  },
-  
-  "ti-microscope-off" : {
-    iconSet: 'tabler icons', code: "\uf40e"
-  },
-  
-  "ti-microwave" : {
-    iconSet: 'tabler icons', code: "\uf248"
-  },
-  
-  "ti-microwave-off" : {
-    iconSet: 'tabler icons', code: "\uf264"
-  },
-  
-  "ti-military-award" : {
-    iconSet: 'tabler icons', code: "\uf079"
-  },
-  
-  "ti-military-rank" : {
-    iconSet: 'tabler icons', code: "\uefcf"
-  },
-  
-  "ti-milk" : {
-    iconSet: 'tabler icons', code: "\uef13"
-  },
-  
-  "ti-milk-off" : {
-    iconSet: 'tabler icons', code: "\uf40f"
-  },
-  
-  "ti-milkshake" : {
-    iconSet: 'tabler icons', code: "\uf4c8"
-  },
-  
-  "ti-minimize" : {
-    iconSet: 'tabler icons', code: "\ueaf1"
-  },
-  
-  "ti-minus" : {
-    iconSet: 'tabler icons', code: "\ueaf2"
-  },
-  
-  "ti-minus-vertical" : {
-    iconSet: 'tabler icons', code: "\ueeb4"
-  },
-  
-  "ti-mist" : {
-    iconSet: 'tabler icons', code: "\uec30"
-  },
-  
-  "ti-mist-off" : {
-    iconSet: 'tabler icons', code: "\uf410"
-  },
-  
-  "ti-mobiledata" : {
-    iconSet: 'tabler icons', code: "\uf9f5"
-  },
-  
-  "ti-mobiledata-off" : {
-    iconSet: 'tabler icons', code: "\uf9f4"
-  },
-  
-  "ti-moneybag" : {
-    iconSet: 'tabler icons', code: "\uf506"
-  },
-  
-  "ti-mood-angry" : {
-    iconSet: 'tabler icons', code: "\uf2de"
-  },
-  
-  "ti-mood-annoyed" : {
-    iconSet: 'tabler icons', code: "\uf2e0"
-  },
-  
-  "ti-mood-annoyed-2" : {
-    iconSet: 'tabler icons', code: "\uf2df"
-  },
-  
-  "ti-mood-boy" : {
-    iconSet: 'tabler icons', code: "\ued2d"
-  },
-  
-  "ti-mood-check" : {
-    iconSet: 'tabler icons', code: "\uf7b3"
-  },
-  
-  "ti-mood-cog" : {
-    iconSet: 'tabler icons', code: "\uf7b4"
-  },
-  
-  "ti-mood-confuzed" : {
-    iconSet: 'tabler icons', code: "\ueaf3"
-  },
-  
-  "ti-mood-confuzed-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f2"
-  },
-  
-  "ti-mood-crazy-happy" : {
-    iconSet: 'tabler icons', code: "\ued90"
-  },
-  
-  "ti-mood-cry" : {
-    iconSet: 'tabler icons', code: "\uecbb"
-  },
-  
-  "ti-mood-dollar" : {
-    iconSet: 'tabler icons', code: "\uf7b5"
-  },
-  
-  "ti-mood-edit" : {
-    iconSet: 'tabler icons', code: "\ufa05"
-  },
-  
-  "ti-mood-empty" : {
-    iconSet: 'tabler icons', code: "\ueeb5"
-  },
-  
-  "ti-mood-empty-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f3"
-  },
-  
-  "ti-mood-happy" : {
-    iconSet: 'tabler icons', code: "\ueaf4"
-  },
-  
-  "ti-mood-happy-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f4"
-  },
-  
-  "ti-mood-heart" : {
-    iconSet: 'tabler icons', code: "\uf7b6"
-  },
-  
-  "ti-mood-kid" : {
-    iconSet: 'tabler icons', code: "\uec03"
-  },
-  
-  "ti-mood-kid-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f5"
-  },
-  
-  "ti-mood-look-left" : {
-    iconSet: 'tabler icons', code: "\uf2c5"
-  },
-  
-  "ti-mood-look-right" : {
-    iconSet: 'tabler icons', code: "\uf2c6"
-  },
-  
-  "ti-mood-minus" : {
-    iconSet: 'tabler icons', code: "\uf7b7"
-  },
-  
-  "ti-mood-nerd" : {
-    iconSet: 'tabler icons', code: "\uf2e1"
-  },
-  
-  "ti-mood-nervous" : {
-    iconSet: 'tabler icons', code: "\uef96"
-  },
-  
-  "ti-mood-neutral" : {
-    iconSet: 'tabler icons', code: "\ueaf5"
-  },
-  
-  "ti-mood-neutral-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f6"
-  },
-  
-  "ti-mood-off" : {
-    iconSet: 'tabler icons', code: "\uf161"
-  },
-  
-  "ti-mood-pin" : {
-    iconSet: 'tabler icons', code: "\uf7b8"
-  },
-  
-  "ti-mood-plus" : {
-    iconSet: 'tabler icons', code: "\uf7b9"
-  },
-  
-  "ti-mood-sad" : {
-    iconSet: 'tabler icons', code: "\ueaf6"
-  },
-  
-  "ti-mood-sad-2" : {
-    iconSet: 'tabler icons', code: "\uf2e2"
-  },
-  
-  "ti-mood-sad-dizzy" : {
-    iconSet: 'tabler icons', code: "\uf2e3"
-  },
-  
-  "ti-mood-sad-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f7"
-  },
-  
-  "ti-mood-sad-squint" : {
-    iconSet: 'tabler icons', code: "\uf2e4"
-  },
-  
-  "ti-mood-search" : {
-    iconSet: 'tabler icons', code: "\uf7ba"
-  },
-  
-  "ti-mood-share" : {
-    iconSet: 'tabler icons', code: "\ufa06"
-  },
-  
-  "ti-mood-sick" : {
-    iconSet: 'tabler icons', code: "\uf2e5"
-  },
-  
-  "ti-mood-silence" : {
-    iconSet: 'tabler icons', code: "\uf2e6"
-  },
-  
-  "ti-mood-sing" : {
-    iconSet: 'tabler icons', code: "\uf2c7"
-  },
-  
-  "ti-mood-smile" : {
-    iconSet: 'tabler icons', code: "\ueaf7"
-  },
-  
-  "ti-mood-smile-beam" : {
-    iconSet: 'tabler icons', code: "\uf2e7"
-  },
-  
-  "ti-mood-smile-dizzy" : {
-    iconSet: 'tabler icons', code: "\uf2e8"
-  },
-  
-  "ti-mood-smile-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f8"
-  },
-  
-  "ti-mood-suprised" : {
-    iconSet: 'tabler icons', code: "\uec04"
-  },
-  
-  "ti-mood-tongue" : {
-    iconSet: 'tabler icons', code: "\ueb95"
-  },
-  
-  "ti-mood-tongue-wink" : {
-    iconSet: 'tabler icons', code: "\uf2ea"
-  },
-  
-  "ti-mood-tongue-wink-2" : {
-    iconSet: 'tabler icons', code: "\uf2e9"
-  },
-  
-  "ti-mood-unamused" : {
-    iconSet: 'tabler icons', code: "\uf2eb"
-  },
-  
-  "ti-mood-up" : {
-    iconSet: 'tabler icons', code: "\uf7bb"
-  },
-  
-  "ti-mood-wink" : {
-    iconSet: 'tabler icons', code: "\uf2ed"
-  },
-  
-  "ti-mood-wink-2" : {
-    iconSet: 'tabler icons', code: "\uf2ec"
-  },
-  
-  "ti-mood-wrrr" : {
-    iconSet: 'tabler icons', code: "\uf2ee"
-  },
-  
-  "ti-mood-x" : {
-    iconSet: 'tabler icons', code: "\uf7bc"
-  },
-  
-  "ti-mood-xd" : {
-    iconSet: 'tabler icons', code: "\uf2ef"
-  },
-  
-  "ti-moon" : {
-    iconSet: 'tabler icons', code: "\ueaf8"
-  },
-  
-  "ti-moon-2" : {
-    iconSet: 'tabler icons', code: "\uece6"
-  },
-  
-  "ti-moon-filled" : {
-    iconSet: 'tabler icons', code: "\uf684"
-  },
-  
-  "ti-moon-off" : {
-    iconSet: 'tabler icons', code: "\uf162"
-  },
-  
-  "ti-moon-stars" : {
-    iconSet: 'tabler icons', code: "\uece7"
-  },
-  
-  "ti-moped" : {
-    iconSet: 'tabler icons', code: "\uecbc"
-  },
-  
-  "ti-motorbike" : {
-    iconSet: 'tabler icons', code: "\ueeb6"
-  },
-  
-  "ti-mountain" : {
-    iconSet: 'tabler icons', code: "\uef97"
-  },
-  
-  "ti-mountain-off" : {
-    iconSet: 'tabler icons', code: "\uf411"
-  },
-  
-  "ti-mouse" : {
-    iconSet: 'tabler icons', code: "\ueaf9"
-  },
-  
-  "ti-mouse-2" : {
-    iconSet: 'tabler icons', code: "\uf1d7"
-  },
-  
-  "ti-mouse-off" : {
-    iconSet: 'tabler icons', code: "\uf163"
-  },
-  
-  "ti-moustache" : {
-    iconSet: 'tabler icons', code: "\uf4c9"
-  },
-  
-  "ti-movie" : {
-    iconSet: 'tabler icons', code: "\ueafa"
-  },
-  
-  "ti-movie-off" : {
-    iconSet: 'tabler icons', code: "\uf164"
-  },
-  
-  "ti-mug" : {
-    iconSet: 'tabler icons', code: "\ueafb"
-  },
-  
-  "ti-mug-off" : {
-    iconSet: 'tabler icons', code: "\uf165"
-  },
-  
-  "ti-multiplier-0-5x" : {
-    iconSet: 'tabler icons', code: "\uef41"
-  },
-  
-  "ti-multiplier-1-5x" : {
-    iconSet: 'tabler icons', code: "\uef42"
-  },
-  
-  "ti-multiplier-1x" : {
-    iconSet: 'tabler icons', code: "\uef43"
-  },
-  
-  "ti-multiplier-2x" : {
-    iconSet: 'tabler icons', code: "\uef44"
-  },
-  
-  "ti-mushroom" : {
-    iconSet: 'tabler icons', code: "\uef14"
-  },
-  
-  "ti-mushroom-filled" : {
-    iconSet: 'tabler icons', code: "\uf7f9"
-  },
-  
-  "ti-mushroom-off" : {
-    iconSet: 'tabler icons', code: "\uf412"
-  },
-  
-  "ti-music" : {
-    iconSet: 'tabler icons', code: "\ueafc"
-  },
-  
-  "ti-music-off" : {
-    iconSet: 'tabler icons', code: "\uf166"
-  },
-  
-  "ti-navigation" : {
-    iconSet: 'tabler icons', code: "\uf2c8"
-  },
-  
-  "ti-navigation-filled" : {
-    iconSet: 'tabler icons', code: "\uf685"
-  },
-  
-  "ti-navigation-off" : {
-    iconSet: 'tabler icons', code: "\uf413"
-  },
-  
-  "ti-needle" : {
-    iconSet: 'tabler icons', code: "\uf508"
-  },
-  
-  "ti-needle-thread" : {
-    iconSet: 'tabler icons', code: "\uf507"
-  },
-  
-  "ti-network" : {
-    iconSet: 'tabler icons', code: "\uf09f"
-  },
-  
-  "ti-network-off" : {
-    iconSet: 'tabler icons', code: "\uf414"
-  },
-  
-  "ti-new-section" : {
-    iconSet: 'tabler icons', code: "\uebc1"
-  },
-  
-  "ti-news" : {
-    iconSet: 'tabler icons', code: "\ueafd"
-  },
-  
-  "ti-news-off" : {
-    iconSet: 'tabler icons', code: "\uf167"
-  },
-  
-  "ti-nfc" : {
-    iconSet: 'tabler icons', code: "\ueeb7"
-  },
-  
-  "ti-nfc-off" : {
-    iconSet: 'tabler icons', code: "\uf168"
-  },
-  
-  "ti-no-copyright" : {
-    iconSet: 'tabler icons', code: "\uefb9"
-  },
-  
-  "ti-no-creative-commons" : {
-    iconSet: 'tabler icons', code: "\uefba"
-  },
-  
-  "ti-no-derivatives" : {
-    iconSet: 'tabler icons', code: "\uefbb"
-  },
-  
-  "ti-north-star" : {
-    iconSet: 'tabler icons', code: "\uf014"
-  },
-  
-  "ti-note" : {
-    iconSet: 'tabler icons', code: "\ueb6d"
-  },
-  
-  "ti-note-off" : {
-    iconSet: 'tabler icons', code: "\uf169"
-  },
-  
-  "ti-notebook" : {
-    iconSet: 'tabler icons', code: "\ueb96"
-  },
-  
-  "ti-notebook-off" : {
-    iconSet: 'tabler icons', code: "\uf415"
-  },
-  
-  "ti-notes" : {
-    iconSet: 'tabler icons', code: "\ueb6e"
-  },
-  
-  "ti-notes-off" : {
-    iconSet: 'tabler icons', code: "\uf16a"
-  },
-  
-  "ti-notification" : {
-    iconSet: 'tabler icons', code: "\ueafe"
-  },
-  
-  "ti-notification-off" : {
-    iconSet: 'tabler icons', code: "\uf16b"
-  },
-  
-  "ti-number" : {
-    iconSet: 'tabler icons', code: "\uf1fe"
-  },
-  
-  "ti-number-0" : {
-    iconSet: 'tabler icons', code: "\uedf0"
-  },
-  
-  "ti-number-1" : {
-    iconSet: 'tabler icons', code: "\uedf1"
-  },
-  
-  "ti-number-2" : {
-    iconSet: 'tabler icons', code: "\uedf2"
-  },
-  
-  "ti-number-3" : {
-    iconSet: 'tabler icons', code: "\uedf3"
-  },
-  
-  "ti-number-4" : {
-    iconSet: 'tabler icons', code: "\uedf4"
-  },
-  
-  "ti-number-5" : {
-    iconSet: 'tabler icons', code: "\uedf5"
-  },
-  
-  "ti-number-6" : {
-    iconSet: 'tabler icons', code: "\uedf6"
-  },
-  
-  "ti-number-7" : {
-    iconSet: 'tabler icons', code: "\uedf7"
-  },
-  
-  "ti-number-8" : {
-    iconSet: 'tabler icons', code: "\uedf8"
-  },
-  
-  "ti-number-9" : {
-    iconSet: 'tabler icons', code: "\uedf9"
-  },
-  
-  "ti-numbers" : {
-    iconSet: 'tabler icons', code: "\uf015"
-  },
-  
-  "ti-nurse" : {
-    iconSet: 'tabler icons', code: "\uef65"
-  },
-  
-  "ti-octagon" : {
-    iconSet: 'tabler icons', code: "\uecbd"
-  },
-  
-  "ti-octagon-filled" : {
-    iconSet: 'tabler icons', code: "\uf686"
-  },
-  
-  "ti-octagon-off" : {
-    iconSet: 'tabler icons', code: "\ueeb8"
-  },
-  
-  "ti-old" : {
-    iconSet: 'tabler icons', code: "\ueeb9"
-  },
-  
-  "ti-olympics" : {
-    iconSet: 'tabler icons', code: "\ueeba"
-  },
-  
-  "ti-olympics-off" : {
-    iconSet: 'tabler icons', code: "\uf416"
-  },
-  
-  "ti-om" : {
-    iconSet: 'tabler icons', code: "\uf58d"
-  },
-  
-  "ti-omega" : {
-    iconSet: 'tabler icons', code: "\ueb97"
-  },
-  
-  "ti-outbound" : {
-    iconSet: 'tabler icons', code: "\uf249"
-  },
-  
-  "ti-outlet" : {
-    iconSet: 'tabler icons', code: "\uebd7"
-  },
-  
-  "ti-oval" : {
-    iconSet: 'tabler icons', code: "\uf02e"
-  },
-  
-  "ti-oval-filled" : {
-    iconSet: 'tabler icons', code: "\uf687"
-  },
-  
-  "ti-oval-vertical" : {
-    iconSet: 'tabler icons', code: "\uf02d"
-  },
-  
-  "ti-oval-vertical-filled" : {
-    iconSet: 'tabler icons', code: "\uf688"
-  },
-  
-  "ti-overline" : {
-    iconSet: 'tabler icons', code: "\ueebb"
-  },
-  
-  "ti-package" : {
-    iconSet: 'tabler icons', code: "\ueaff"
-  },
-  
-  "ti-package-export" : {
-    iconSet: 'tabler icons', code: "\uf07a"
-  },
-  
-  "ti-package-import" : {
-    iconSet: 'tabler icons', code: "\uf07b"
-  },
-  
-  "ti-package-off" : {
-    iconSet: 'tabler icons', code: "\uf16c"
-  },
-  
-  "ti-packages" : {
-    iconSet: 'tabler icons', code: "\uf2c9"
-  },
-  
-  "ti-pacman" : {
-    iconSet: 'tabler icons', code: "\ueebc"
-  },
-  
-  "ti-page-break" : {
-    iconSet: 'tabler icons', code: "\uec81"
-  },
-  
-  "ti-paint" : {
-    iconSet: 'tabler icons', code: "\ueb00"
-  },
-  
-  "ti-paint-filled" : {
-    iconSet: 'tabler icons', code: "\uf75f"
-  },
-  
-  "ti-paint-off" : {
-    iconSet: 'tabler icons', code: "\uf16d"
-  },
-  
-  "ti-palette" : {
-    iconSet: 'tabler icons', code: "\ueb01"
-  },
-  
-  "ti-palette-off" : {
-    iconSet: 'tabler icons', code: "\uf16e"
-  },
-  
-  "ti-panorama-horizontal" : {
-    iconSet: 'tabler icons', code: "\ued33"
-  },
-  
-  "ti-panorama-horizontal-off" : {
-    iconSet: 'tabler icons', code: "\uf417"
-  },
-  
-  "ti-panorama-vertical" : {
-    iconSet: 'tabler icons', code: "\ued34"
-  },
-  
-  "ti-panorama-vertical-off" : {
-    iconSet: 'tabler icons', code: "\uf418"
-  },
-  
-  "ti-paper-bag" : {
-    iconSet: 'tabler icons', code: "\uf02f"
-  },
-  
-  "ti-paper-bag-off" : {
-    iconSet: 'tabler icons', code: "\uf16f"
-  },
-  
-  "ti-paperclip" : {
-    iconSet: 'tabler icons', code: "\ueb02"
-  },
-  
-  "ti-parachute" : {
-    iconSet: 'tabler icons', code: "\ued7c"
-  },
-  
-  "ti-parachute-off" : {
-    iconSet: 'tabler icons', code: "\uf170"
-  },
-  
-  "ti-parentheses" : {
-    iconSet: 'tabler icons', code: "\uebd8"
-  },
-  
-  "ti-parentheses-off" : {
-    iconSet: 'tabler icons', code: "\uf171"
-  },
-  
-  "ti-parking" : {
-    iconSet: 'tabler icons', code: "\ueb03"
-  },
-  
-  "ti-parking-off" : {
-    iconSet: 'tabler icons', code: "\uf172"
-  },
-  
-  "ti-password" : {
-    iconSet: 'tabler icons', code: "\uf4ca"
-  },
-  
-  "ti-paw" : {
-    iconSet: 'tabler icons', code: "\ueff9"
-  },
-  
-  "ti-paw-filled" : {
-    iconSet: 'tabler icons', code: "\uf689"
-  },
-  
-  "ti-paw-off" : {
-    iconSet: 'tabler icons', code: "\uf419"
-  },
-  
-  "ti-pdf" : {
-    iconSet: 'tabler icons', code: "\uf7ac"
-  },
-  
-  "ti-peace" : {
-    iconSet: 'tabler icons', code: "\uecbe"
-  },
-  
-  "ti-pencil" : {
-    iconSet: 'tabler icons', code: "\ueb04"
-  },
-  
-  "ti-pencil-minus" : {
-    iconSet: 'tabler icons', code: "\uf1eb"
-  },
-  
-  "ti-pencil-off" : {
-    iconSet: 'tabler icons', code: "\uf173"
-  },
-  
-  "ti-pencil-plus" : {
-    iconSet: 'tabler icons', code: "\uf1ec"
-  },
-  
-  "ti-pennant" : {
-    iconSet: 'tabler icons', code: "\ued7d"
-  },
-  
-  "ti-pennant-2" : {
-    iconSet: 'tabler icons', code: "\uf06a"
-  },
-  
-  "ti-pennant-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf68a"
-  },
-  
-  "ti-pennant-filled" : {
-    iconSet: 'tabler icons', code: "\uf68b"
-  },
-  
-  "ti-pennant-off" : {
-    iconSet: 'tabler icons', code: "\uf174"
-  },
-  
-  "ti-pentagon" : {
-    iconSet: 'tabler icons', code: "\uefe3"
-  },
-  
-  "ti-pentagon-filled" : {
-    iconSet: 'tabler icons', code: "\uf68c"
-  },
-  
-  "ti-pentagon-off" : {
-    iconSet: 'tabler icons', code: "\uf41a"
-  },
-  
-  "ti-pentagram" : {
-    iconSet: 'tabler icons', code: "\uf586"
-  },
-  
-  "ti-pepper" : {
-    iconSet: 'tabler icons', code: "\uef15"
-  },
-  
-  "ti-pepper-off" : {
-    iconSet: 'tabler icons', code: "\uf175"
-  },
-  
-  "ti-percentage" : {
-    iconSet: 'tabler icons', code: "\uecf4"
-  },
-  
-  "ti-perfume" : {
-    iconSet: 'tabler icons', code: "\uf509"
-  },
-  
-  "ti-perspective" : {
-    iconSet: 'tabler icons', code: "\ueebd"
-  },
-  
-  "ti-perspective-off" : {
-    iconSet: 'tabler icons', code: "\uf176"
-  },
-  
-  "ti-phone" : {
-    iconSet: 'tabler icons', code: "\ueb09"
-  },
-  
-  "ti-phone-call" : {
-    iconSet: 'tabler icons', code: "\ueb05"
-  },
-  
-  "ti-phone-calling" : {
-    iconSet: 'tabler icons', code: "\uec43"
-  },
-  
-  "ti-phone-check" : {
-    iconSet: 'tabler icons', code: "\uec05"
-  },
-  
-  "ti-phone-incoming" : {
-    iconSet: 'tabler icons', code: "\ueb06"
-  },
-  
-  "ti-phone-off" : {
-    iconSet: 'tabler icons', code: "\uecf5"
-  },
-  
-  "ti-phone-outgoing" : {
-    iconSet: 'tabler icons', code: "\ueb07"
-  },
-  
-  "ti-phone-pause" : {
-    iconSet: 'tabler icons', code: "\ueb08"
-  },
-  
-  "ti-phone-plus" : {
-    iconSet: 'tabler icons', code: "\uec06"
-  },
-  
-  "ti-phone-x" : {
-    iconSet: 'tabler icons', code: "\uec07"
-  },
-  
-  "ti-photo" : {
-    iconSet: 'tabler icons', code: "\ueb0a"
-  },
-  
-  "ti-photo-ai" : {
-    iconSet: 'tabler icons', code: "\ufa32"
-  },
-  
-  "ti-photo-bolt" : {
-    iconSet: 'tabler icons', code: "\uf990"
-  },
-  
-  "ti-photo-cancel" : {
-    iconSet: 'tabler icons', code: "\uf35d"
-  },
-  
-  "ti-photo-check" : {
-    iconSet: 'tabler icons', code: "\uf35e"
-  },
-  
-  "ti-photo-code" : {
-    iconSet: 'tabler icons', code: "\uf991"
-  },
-  
-  "ti-photo-cog" : {
-    iconSet: 'tabler icons', code: "\uf992"
-  },
-  
-  "ti-photo-dollar" : {
-    iconSet: 'tabler icons', code: "\uf993"
-  },
-  
-  "ti-photo-down" : {
-    iconSet: 'tabler icons', code: "\uf35f"
-  },
-  
-  "ti-photo-edit" : {
-    iconSet: 'tabler icons', code: "\uf360"
-  },
-  
-  "ti-photo-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf994"
-  },
-  
-  "ti-photo-heart" : {
-    iconSet: 'tabler icons', code: "\uf361"
-  },
-  
-  "ti-photo-minus" : {
-    iconSet: 'tabler icons', code: "\uf362"
-  },
-  
-  "ti-photo-off" : {
-    iconSet: 'tabler icons', code: "\uecf6"
-  },
-  
-  "ti-photo-pause" : {
-    iconSet: 'tabler icons', code: "\uf995"
-  },
-  
-  "ti-photo-pin" : {
-    iconSet: 'tabler icons', code: "\uf996"
-  },
-  
-  "ti-photo-plus" : {
-    iconSet: 'tabler icons', code: "\uf363"
-  },
-  
-  "ti-photo-question" : {
-    iconSet: 'tabler icons', code: "\uf997"
-  },
-  
-  "ti-photo-search" : {
-    iconSet: 'tabler icons', code: "\uf364"
-  },
-  
-  "ti-photo-sensor" : {
-    iconSet: 'tabler icons', code: "\uf798"
-  },
-  
-  "ti-photo-sensor-2" : {
-    iconSet: 'tabler icons', code: "\uf796"
-  },
-  
-  "ti-photo-sensor-3" : {
-    iconSet: 'tabler icons', code: "\uf797"
-  },
-  
-  "ti-photo-share" : {
-    iconSet: 'tabler icons', code: "\uf998"
-  },
-  
-  "ti-photo-shield" : {
-    iconSet: 'tabler icons', code: "\uf365"
-  },
-  
-  "ti-photo-star" : {
-    iconSet: 'tabler icons', code: "\uf366"
-  },
-  
-  "ti-photo-up" : {
-    iconSet: 'tabler icons', code: "\uf38b"
-  },
-  
-  "ti-photo-x" : {
-    iconSet: 'tabler icons', code: "\uf367"
-  },
-  
-  "ti-physotherapist" : {
-    iconSet: 'tabler icons', code: "\ueebe"
-  },
-  
-  "ti-picture-in-picture" : {
-    iconSet: 'tabler icons', code: "\ued35"
-  },
-  
-  "ti-picture-in-picture-off" : {
-    iconSet: 'tabler icons', code: "\ued43"
-  },
-  
-  "ti-picture-in-picture-on" : {
-    iconSet: 'tabler icons', code: "\ued44"
-  },
-  
-  "ti-picture-in-picture-top" : {
-    iconSet: 'tabler icons', code: "\uefe4"
-  },
-  
-  "ti-pig" : {
-    iconSet: 'tabler icons', code: "\uef52"
-  },
-  
-  "ti-pig-money" : {
-    iconSet: 'tabler icons', code: "\uf38c"
-  },
-  
-  "ti-pig-off" : {
-    iconSet: 'tabler icons', code: "\uf177"
-  },
-  
-  "ti-pilcrow" : {
-    iconSet: 'tabler icons', code: "\uf5f6"
-  },
-  
-  "ti-pill" : {
-    iconSet: 'tabler icons', code: "\uec44"
-  },
-  
-  "ti-pill-off" : {
-    iconSet: 'tabler icons', code: "\uf178"
-  },
-  
-  "ti-pills" : {
-    iconSet: 'tabler icons', code: "\uef66"
-  },
-  
-  "ti-pin" : {
-    iconSet: 'tabler icons', code: "\uec9c"
-  },
-  
-  "ti-pin-filled" : {
-    iconSet: 'tabler icons', code: "\uf68d"
-  },
-  
-  "ti-ping-pong" : {
-    iconSet: 'tabler icons', code: "\uf38d"
-  },
-  
-  "ti-pinned" : {
-    iconSet: 'tabler icons', code: "\ued60"
-  },
-  
-  "ti-pinned-filled" : {
-    iconSet: 'tabler icons', code: "\uf68e"
-  },
-  
-  "ti-pinned-off" : {
-    iconSet: 'tabler icons', code: "\ued5f"
-  },
-  
-  "ti-pizza" : {
-    iconSet: 'tabler icons', code: "\uedbb"
-  },
-  
-  "ti-pizza-off" : {
-    iconSet: 'tabler icons', code: "\uf179"
-  },
-  
-  "ti-placeholder" : {
-    iconSet: 'tabler icons', code: "\uf626"
-  },
-  
-  "ti-plane" : {
-    iconSet: 'tabler icons', code: "\ueb6f"
-  },
-  
-  "ti-plane-arrival" : {
-    iconSet: 'tabler icons', code: "\ueb99"
-  },
-  
-  "ti-plane-departure" : {
-    iconSet: 'tabler icons', code: "\ueb9a"
-  },
-  
-  "ti-plane-inflight" : {
-    iconSet: 'tabler icons', code: "\uef98"
-  },
-  
-  "ti-plane-off" : {
-    iconSet: 'tabler icons', code: "\uf17a"
-  },
-  
-  "ti-plane-tilt" : {
-    iconSet: 'tabler icons', code: "\uf1ed"
-  },
-  
-  "ti-planet" : {
-    iconSet: 'tabler icons', code: "\uec08"
-  },
-  
-  "ti-planet-off" : {
-    iconSet: 'tabler icons', code: "\uf17b"
-  },
-  
-  "ti-plant" : {
-    iconSet: 'tabler icons', code: "\ued50"
-  },
-  
-  "ti-plant-2" : {
-    iconSet: 'tabler icons', code: "\ued7e"
-  },
-  
-  "ti-plant-2-off" : {
-    iconSet: 'tabler icons', code: "\uf17c"
-  },
-  
-  "ti-plant-off" : {
-    iconSet: 'tabler icons', code: "\uf17d"
-  },
-  
-  "ti-play-card" : {
-    iconSet: 'tabler icons', code: "\ueebf"
-  },
-  
-  "ti-play-card-off" : {
-    iconSet: 'tabler icons', code: "\uf17e"
-  },
-  
-  "ti-player-eject" : {
-    iconSet: 'tabler icons', code: "\uefbc"
-  },
-  
-  "ti-player-eject-filled" : {
-    iconSet: 'tabler icons', code: "\uf68f"
-  },
-  
-  "ti-player-pause" : {
-    iconSet: 'tabler icons', code: "\ued45"
-  },
-  
-  "ti-player-pause-filled" : {
-    iconSet: 'tabler icons', code: "\uf690"
-  },
-  
-  "ti-player-play" : {
-    iconSet: 'tabler icons', code: "\ued46"
-  },
-  
-  "ti-player-play-filled" : {
-    iconSet: 'tabler icons', code: "\uf691"
-  },
-  
-  "ti-player-record" : {
-    iconSet: 'tabler icons', code: "\ued47"
-  },
-  
-  "ti-player-record-filled" : {
-    iconSet: 'tabler icons', code: "\uf692"
-  },
-  
-  "ti-player-skip-back" : {
-    iconSet: 'tabler icons', code: "\ued48"
-  },
-  
-  "ti-player-skip-back-filled" : {
-    iconSet: 'tabler icons', code: "\uf693"
-  },
-  
-  "ti-player-skip-forward" : {
-    iconSet: 'tabler icons', code: "\ued49"
-  },
-  
-  "ti-player-skip-forward-filled" : {
-    iconSet: 'tabler icons', code: "\uf694"
-  },
-  
-  "ti-player-stop" : {
-    iconSet: 'tabler icons', code: "\ued4a"
-  },
-  
-  "ti-player-stop-filled" : {
-    iconSet: 'tabler icons', code: "\uf695"
-  },
-  
-  "ti-player-track-next" : {
-    iconSet: 'tabler icons', code: "\ued4b"
-  },
-  
-  "ti-player-track-next-filled" : {
-    iconSet: 'tabler icons', code: "\uf696"
-  },
-  
-  "ti-player-track-prev" : {
-    iconSet: 'tabler icons', code: "\ued4c"
-  },
-  
-  "ti-player-track-prev-filled" : {
-    iconSet: 'tabler icons', code: "\uf697"
-  },
-  
-  "ti-playlist" : {
-    iconSet: 'tabler icons', code: "\ueec0"
-  },
-  
-  "ti-playlist-add" : {
-    iconSet: 'tabler icons', code: "\uf008"
-  },
-  
-  "ti-playlist-off" : {
-    iconSet: 'tabler icons', code: "\uf17f"
-  },
-  
-  "ti-playlist-x" : {
-    iconSet: 'tabler icons', code: "\uf009"
-  },
-  
-  "ti-playstation-circle" : {
-    iconSet: 'tabler icons', code: "\uf2ad"
-  },
-  
-  "ti-playstation-square" : {
-    iconSet: 'tabler icons', code: "\uf2ae"
-  },
-  
-  "ti-playstation-triangle" : {
-    iconSet: 'tabler icons', code: "\uf2af"
-  },
-  
-  "ti-playstation-x" : {
-    iconSet: 'tabler icons', code: "\uf2b0"
-  },
-  
-  "ti-plug" : {
-    iconSet: 'tabler icons', code: "\uebd9"
-  },
-  
-  "ti-plug-connected" : {
-    iconSet: 'tabler icons', code: "\uf00a"
-  },
-  
-  "ti-plug-connected-x" : {
-    iconSet: 'tabler icons', code: "\uf0a0"
-  },
-  
-  "ti-plug-off" : {
-    iconSet: 'tabler icons', code: "\uf180"
-  },
-  
-  "ti-plug-x" : {
-    iconSet: 'tabler icons', code: "\uf0a1"
-  },
-  
-  "ti-plus" : {
-    iconSet: 'tabler icons', code: "\ueb0b"
-  },
-  
-  "ti-plus-equal" : {
-    iconSet: 'tabler icons', code: "\uf7ad"
-  },
-  
-  "ti-plus-minus" : {
-    iconSet: 'tabler icons', code: "\uf7ae"
-  },
-  
-  "ti-png" : {
-    iconSet: 'tabler icons', code: "\uf3ad"
-  },
-  
-  "ti-podium" : {
-    iconSet: 'tabler icons', code: "\uf1d8"
-  },
-  
-  "ti-podium-off" : {
-    iconSet: 'tabler icons', code: "\uf41b"
-  },
-  
-  "ti-point" : {
-    iconSet: 'tabler icons', code: "\ueb0c"
-  },
-  
-  "ti-point-filled" : {
-    iconSet: 'tabler icons', code: "\uf698"
-  },
-  
-  "ti-point-off" : {
-    iconSet: 'tabler icons', code: "\uf181"
-  },
-  
-  "ti-pointer" : {
-    iconSet: 'tabler icons', code: "\uf265"
-  },
-  
-  "ti-pointer-bolt" : {
-    iconSet: 'tabler icons', code: "\uf999"
-  },
-  
-  "ti-pointer-cancel" : {
-    iconSet: 'tabler icons', code: "\uf99a"
-  },
-  
-  "ti-pointer-check" : {
-    iconSet: 'tabler icons', code: "\uf99b"
-  },
-  
-  "ti-pointer-code" : {
-    iconSet: 'tabler icons', code: "\uf99c"
-  },
-  
-  "ti-pointer-cog" : {
-    iconSet: 'tabler icons', code: "\uf99d"
-  },
-  
-  "ti-pointer-dollar" : {
-    iconSet: 'tabler icons', code: "\uf99e"
-  },
-  
-  "ti-pointer-down" : {
-    iconSet: 'tabler icons', code: "\uf99f"
-  },
-  
-  "ti-pointer-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf9a0"
-  },
-  
-  "ti-pointer-heart" : {
-    iconSet: 'tabler icons', code: "\uf9a1"
-  },
-  
-  "ti-pointer-minus" : {
-    iconSet: 'tabler icons', code: "\uf9a2"
-  },
-  
-  "ti-pointer-off" : {
-    iconSet: 'tabler icons', code: "\uf9a3"
-  },
-  
-  "ti-pointer-pause" : {
-    iconSet: 'tabler icons', code: "\uf9a4"
-  },
-  
-  "ti-pointer-pin" : {
-    iconSet: 'tabler icons', code: "\uf9a5"
-  },
-  
-  "ti-pointer-plus" : {
-    iconSet: 'tabler icons', code: "\uf9a6"
-  },
-  
-  "ti-pointer-question" : {
-    iconSet: 'tabler icons', code: "\uf9a7"
-  },
-  
-  "ti-pointer-search" : {
-    iconSet: 'tabler icons', code: "\uf9a8"
-  },
-  
-  "ti-pointer-share" : {
-    iconSet: 'tabler icons', code: "\uf9a9"
-  },
-  
-  "ti-pointer-star" : {
-    iconSet: 'tabler icons', code: "\uf9aa"
-  },
-  
-  "ti-pointer-up" : {
-    iconSet: 'tabler icons', code: "\uf9ab"
-  },
-  
-  "ti-pointer-x" : {
-    iconSet: 'tabler icons', code: "\uf9ac"
-  },
-  
-  "ti-pokeball" : {
-    iconSet: 'tabler icons', code: "\ueec1"
-  },
-  
-  "ti-pokeball-off" : {
-    iconSet: 'tabler icons', code: "\uf41c"
-  },
-  
-  "ti-poker-chip" : {
-    iconSet: 'tabler icons', code: "\uf515"
-  },
-  
-  "ti-polaroid" : {
-    iconSet: 'tabler icons', code: "\ueec2"
-  },
-  
-  "ti-polygon" : {
-    iconSet: 'tabler icons', code: "\uefd0"
-  },
-  
-  "ti-polygon-off" : {
-    iconSet: 'tabler icons', code: "\uf182"
-  },
-  
-  "ti-poo" : {
-    iconSet: 'tabler icons', code: "\uf258"
-  },
-  
-  "ti-pool" : {
-    iconSet: 'tabler icons', code: "\ued91"
-  },
-  
-  "ti-pool-off" : {
-    iconSet: 'tabler icons', code: "\uf41d"
-  },
-  
-  "ti-power" : {
-    iconSet: 'tabler icons', code: "\ueb0d"
-  },
-  
-  "ti-pray" : {
-    iconSet: 'tabler icons', code: "\uecbf"
-  },
-  
-  "ti-premium-rights" : {
-    iconSet: 'tabler icons', code: "\uefbd"
-  },
-  
-  "ti-prescription" : {
-    iconSet: 'tabler icons', code: "\uef99"
-  },
-  
-  "ti-presentation" : {
-    iconSet: 'tabler icons', code: "\ueb70"
-  },
-  
-  "ti-presentation-analytics" : {
-    iconSet: 'tabler icons', code: "\ueec3"
-  },
-  
-  "ti-presentation-off" : {
-    iconSet: 'tabler icons', code: "\uf183"
-  },
-  
-  "ti-printer" : {
-    iconSet: 'tabler icons', code: "\ueb0e"
-  },
-  
-  "ti-printer-off" : {
-    iconSet: 'tabler icons', code: "\uf184"
-  },
-  
-  "ti-prison" : {
-    iconSet: 'tabler icons', code: "\uef79"
-  },
-  
-  "ti-progress" : {
-    iconSet: 'tabler icons', code: "\ufa0d"
-  },
-  
-  "ti-progress-alert" : {
-    iconSet: 'tabler icons', code: "\ufa07"
-  },
-  
-  "ti-progress-bolt" : {
-    iconSet: 'tabler icons', code: "\ufa08"
-  },
-  
-  "ti-progress-check" : {
-    iconSet: 'tabler icons', code: "\ufa09"
-  },
-  
-  "ti-progress-down" : {
-    iconSet: 'tabler icons', code: "\ufa0a"
-  },
-  
-  "ti-progress-help" : {
-    iconSet: 'tabler icons', code: "\ufa0b"
-  },
-  
-  "ti-progress-x" : {
-    iconSet: 'tabler icons', code: "\ufa0c"
-  },
-  
-  "ti-prompt" : {
-    iconSet: 'tabler icons', code: "\ueb0f"
-  },
-  
-  "ti-propeller" : {
-    iconSet: 'tabler icons', code: "\ueec4"
-  },
-  
-  "ti-propeller-off" : {
-    iconSet: 'tabler icons', code: "\uf185"
-  },
-  
-  "ti-pumpkin-scary" : {
-    iconSet: 'tabler icons', code: "\uf587"
-  },
-  
-  "ti-puzzle" : {
-    iconSet: 'tabler icons', code: "\ueb10"
-  },
-  
-  "ti-puzzle-2" : {
-    iconSet: 'tabler icons', code: "\uef83"
-  },
-  
-  "ti-puzzle-filled" : {
-    iconSet: 'tabler icons', code: "\uf699"
-  },
-  
-  "ti-puzzle-off" : {
-    iconSet: 'tabler icons', code: "\uf186"
-  },
-  
-  "ti-pyramid" : {
-    iconSet: 'tabler icons', code: "\ueec5"
-  },
-  
-  "ti-pyramid-off" : {
-    iconSet: 'tabler icons', code: "\uf187"
-  },
-  
-  "ti-qrcode" : {
-    iconSet: 'tabler icons', code: "\ueb11"
-  },
-  
-  "ti-qrcode-off" : {
-    iconSet: 'tabler icons', code: "\uf41e"
-  },
-  
-  "ti-question-mark" : {
-    iconSet: 'tabler icons', code: "\uec9d"
-  },
-  
-  "ti-quote" : {
-    iconSet: 'tabler icons', code: "\uefbe"
-  },
-  
-  "ti-quote-off" : {
-    iconSet: 'tabler icons', code: "\uf188"
-  },
-  
-  "ti-radar" : {
-    iconSet: 'tabler icons', code: "\uf017"
-  },
-  
-  "ti-radar-2" : {
-    iconSet: 'tabler icons', code: "\uf016"
-  },
-  
-  "ti-radar-off" : {
-    iconSet: 'tabler icons', code: "\uf41f"
-  },
-  
-  "ti-radio" : {
-    iconSet: 'tabler icons', code: "\uef2d"
-  },
-  
-  "ti-radio-off" : {
-    iconSet: 'tabler icons', code: "\uf420"
-  },
-  
-  "ti-radioactive" : {
-    iconSet: 'tabler icons', code: "\uecc0"
-  },
-  
-  "ti-radioactive-filled" : {
-    iconSet: 'tabler icons', code: "\uf760"
-  },
-  
-  "ti-radioactive-off" : {
-    iconSet: 'tabler icons', code: "\uf189"
-  },
-  
-  "ti-radius-bottom-left" : {
-    iconSet: 'tabler icons', code: "\ueec6"
-  },
-  
-  "ti-radius-bottom-right" : {
-    iconSet: 'tabler icons', code: "\ueec7"
-  },
-  
-  "ti-radius-top-left" : {
-    iconSet: 'tabler icons', code: "\ueec8"
-  },
-  
-  "ti-radius-top-right" : {
-    iconSet: 'tabler icons', code: "\ueec9"
-  },
-  
-  "ti-rainbow" : {
-    iconSet: 'tabler icons', code: "\uedbc"
-  },
-  
-  "ti-rainbow-off" : {
-    iconSet: 'tabler icons', code: "\uf18a"
-  },
-  
-  "ti-rating-12-plus" : {
-    iconSet: 'tabler icons', code: "\uf266"
-  },
-  
-  "ti-rating-14-plus" : {
-    iconSet: 'tabler icons', code: "\uf267"
-  },
-  
-  "ti-rating-16-plus" : {
-    iconSet: 'tabler icons', code: "\uf268"
-  },
-  
-  "ti-rating-18-plus" : {
-    iconSet: 'tabler icons', code: "\uf269"
-  },
-  
-  "ti-rating-21-plus" : {
-    iconSet: 'tabler icons', code: "\uf26a"
-  },
-  
-  "ti-razor" : {
-    iconSet: 'tabler icons', code: "\uf4b5"
-  },
-  
-  "ti-razor-electric" : {
-    iconSet: 'tabler icons', code: "\uf4b4"
-  },
-  
-  "ti-receipt" : {
-    iconSet: 'tabler icons', code: "\uedfd"
-  },
-  
-  "ti-receipt-2" : {
-    iconSet: 'tabler icons', code: "\uedfa"
-  },
-  
-  "ti-receipt-off" : {
-    iconSet: 'tabler icons', code: "\uedfb"
-  },
-  
-  "ti-receipt-refund" : {
-    iconSet: 'tabler icons', code: "\uedfc"
-  },
-  
-  "ti-receipt-tax" : {
-    iconSet: 'tabler icons', code: "\uedbd"
-  },
-  
-  "ti-recharging" : {
-    iconSet: 'tabler icons', code: "\ueeca"
-  },
-  
-  "ti-record-mail" : {
-    iconSet: 'tabler icons', code: "\ueb12"
-  },
-  
-  "ti-record-mail-off" : {
-    iconSet: 'tabler icons', code: "\uf18b"
-  },
-  
-  "ti-rectangle" : {
-    iconSet: 'tabler icons', code: "\ued37"
-  },
-  
-  "ti-rectangle-filled" : {
-    iconSet: 'tabler icons', code: "\uf69a"
-  },
-  
-  "ti-rectangle-vertical" : {
-    iconSet: 'tabler icons', code: "\ued36"
-  },
-  
-  "ti-rectangle-vertical-filled" : {
-    iconSet: 'tabler icons', code: "\uf69b"
-  },
-  
-  "ti-recycle" : {
-    iconSet: 'tabler icons', code: "\ueb9b"
-  },
-  
-  "ti-recycle-off" : {
-    iconSet: 'tabler icons', code: "\uf18c"
-  },
-  
-  "ti-refresh" : {
-    iconSet: 'tabler icons', code: "\ueb13"
-  },
-  
-  "ti-refresh-alert" : {
-    iconSet: 'tabler icons', code: "\ued57"
-  },
-  
-  "ti-refresh-dot" : {
-    iconSet: 'tabler icons', code: "\uefbf"
-  },
-  
-  "ti-refresh-off" : {
-    iconSet: 'tabler icons', code: "\uf18d"
-  },
-  
-  "ti-regex" : {
-    iconSet: 'tabler icons', code: "\uf31f"
-  },
-  
-  "ti-regex-off" : {
-    iconSet: 'tabler icons', code: "\uf421"
-  },
-  
-  "ti-registered" : {
-    iconSet: 'tabler icons', code: "\ueb14"
-  },
-  
-  "ti-relation-many-to-many" : {
-    iconSet: 'tabler icons', code: "\ued7f"
-  },
-  
-  "ti-relation-one-to-many" : {
-    iconSet: 'tabler icons', code: "\ued80"
-  },
-  
-  "ti-relation-one-to-one" : {
-    iconSet: 'tabler icons', code: "\ued81"
-  },
-  
-  "ti-reload" : {
-    iconSet: 'tabler icons', code: "\uf3ae"
-  },
-  
-  "ti-repeat" : {
-    iconSet: 'tabler icons', code: "\ueb72"
-  },
-  
-  "ti-repeat-off" : {
-    iconSet: 'tabler icons', code: "\uf18e"
-  },
-  
-  "ti-repeat-once" : {
-    iconSet: 'tabler icons', code: "\ueb71"
-  },
-  
-  "ti-replace" : {
-    iconSet: 'tabler icons', code: "\uebc7"
-  },
-  
-  "ti-replace-filled" : {
-    iconSet: 'tabler icons', code: "\uf69c"
-  },
-  
-  "ti-replace-off" : {
-    iconSet: 'tabler icons', code: "\uf422"
-  },
-  
-  "ti-report" : {
-    iconSet: 'tabler icons', code: "\ueece"
-  },
-  
-  "ti-report-analytics" : {
-    iconSet: 'tabler icons', code: "\ueecb"
-  },
-  
-  "ti-report-medical" : {
-    iconSet: 'tabler icons', code: "\ueecc"
-  },
-  
-  "ti-report-money" : {
-    iconSet: 'tabler icons', code: "\ueecd"
-  },
-  
-  "ti-report-off" : {
-    iconSet: 'tabler icons', code: "\uf18f"
-  },
-  
-  "ti-report-search" : {
-    iconSet: 'tabler icons', code: "\uef84"
-  },
-  
-  "ti-reserved-line" : {
-    iconSet: 'tabler icons', code: "\uf9f6"
-  },
-  
-  "ti-resize" : {
-    iconSet: 'tabler icons', code: "\ueecf"
-  },
-  
-  "ti-ribbon-health" : {
-    iconSet: 'tabler icons', code: "\uf58e"
-  },
-  
-  "ti-ripple" : {
-    iconSet: 'tabler icons', code: "\ued82"
-  },
-  
-  "ti-ripple-off" : {
-    iconSet: 'tabler icons', code: "\uf190"
-  },
-  
-  "ti-road" : {
-    iconSet: 'tabler icons', code: "\uf018"
-  },
-  
-  "ti-road-off" : {
-    iconSet: 'tabler icons', code: "\uf191"
-  },
-  
-  "ti-road-sign" : {
-    iconSet: 'tabler icons', code: "\uecdd"
-  },
-  
-  "ti-robot" : {
-    iconSet: 'tabler icons', code: "\uf00b"
-  },
-  
-  "ti-robot-off" : {
-    iconSet: 'tabler icons', code: "\uf192"
-  },
-  
-  "ti-rocket" : {
-    iconSet: 'tabler icons', code: "\uec45"
-  },
-  
-  "ti-rocket-off" : {
-    iconSet: 'tabler icons', code: "\uf193"
-  },
-  
-  "ti-roller-skating" : {
-    iconSet: 'tabler icons', code: "\uefd1"
-  },
-  
-  "ti-rollercoaster" : {
-    iconSet: 'tabler icons', code: "\uf0a2"
-  },
-  
-  "ti-rollercoaster-off" : {
-    iconSet: 'tabler icons', code: "\uf423"
-  },
-  
-  "ti-rosette" : {
-    iconSet: 'tabler icons', code: "\uf599"
-  },
-  
-  "ti-rosette-filled" : {
-    iconSet: 'tabler icons', code: "\uf69d"
-  },
-  
-  "ti-rosette-number-0" : {
-    iconSet: 'tabler icons', code: "\uf58f"
-  },
-  
-  "ti-rosette-number-1" : {
-    iconSet: 'tabler icons', code: "\uf590"
-  },
-  
-  "ti-rosette-number-2" : {
-    iconSet: 'tabler icons', code: "\uf591"
-  },
-  
-  "ti-rosette-number-3" : {
-    iconSet: 'tabler icons', code: "\uf592"
-  },
-  
-  "ti-rosette-number-4" : {
-    iconSet: 'tabler icons', code: "\uf593"
-  },
-  
-  "ti-rosette-number-5" : {
-    iconSet: 'tabler icons', code: "\uf594"
-  },
-  
-  "ti-rosette-number-6" : {
-    iconSet: 'tabler icons', code: "\uf595"
-  },
-  
-  "ti-rosette-number-7" : {
-    iconSet: 'tabler icons', code: "\uf596"
-  },
-  
-  "ti-rosette-number-8" : {
-    iconSet: 'tabler icons', code: "\uf597"
-  },
-  
-  "ti-rosette-number-9" : {
-    iconSet: 'tabler icons', code: "\uf598"
-  },
-  
-  "ti-rotate" : {
-    iconSet: 'tabler icons', code: "\ueb16"
-  },
-  
-  "ti-rotate-2" : {
-    iconSet: 'tabler icons', code: "\uebb4"
-  },
-  
-  "ti-rotate-360" : {
-    iconSet: 'tabler icons', code: "\uef85"
-  },
-  
-  "ti-rotate-clockwise" : {
-    iconSet: 'tabler icons', code: "\ueb15"
-  },
-  
-  "ti-rotate-clockwise-2" : {
-    iconSet: 'tabler icons', code: "\uebb5"
-  },
-  
-  "ti-rotate-dot" : {
-    iconSet: 'tabler icons', code: "\uefe5"
-  },
-  
-  "ti-rotate-rectangle" : {
-    iconSet: 'tabler icons', code: "\uec15"
-  },
-  
-  "ti-route" : {
-    iconSet: 'tabler icons', code: "\ueb17"
-  },
-  
-  "ti-route-2" : {
-    iconSet: 'tabler icons', code: "\uf4b6"
-  },
-  
-  "ti-route-off" : {
-    iconSet: 'tabler icons', code: "\uf194"
-  },
-  
-  "ti-router" : {
-    iconSet: 'tabler icons', code: "\ueb18"
-  },
-  
-  "ti-router-off" : {
-    iconSet: 'tabler icons', code: "\uf424"
-  },
-  
-  "ti-row-insert-bottom" : {
-    iconSet: 'tabler icons', code: "\ueed0"
-  },
-  
-  "ti-row-insert-top" : {
-    iconSet: 'tabler icons', code: "\ueed1"
-  },
-  
-  "ti-rss" : {
-    iconSet: 'tabler icons', code: "\ueb19"
-  },
-  
-  "ti-rubber-stamp" : {
-    iconSet: 'tabler icons', code: "\uf5ab"
-  },
-  
-  "ti-rubber-stamp-off" : {
-    iconSet: 'tabler icons', code: "\uf5aa"
-  },
-  
-  "ti-ruler" : {
-    iconSet: 'tabler icons', code: "\ueb1a"
-  },
-  
-  "ti-ruler-2" : {
-    iconSet: 'tabler icons', code: "\ueed2"
-  },
-  
-  "ti-ruler-2-off" : {
-    iconSet: 'tabler icons', code: "\uf195"
-  },
-  
-  "ti-ruler-3" : {
-    iconSet: 'tabler icons', code: "\uf290"
-  },
-  
-  "ti-ruler-measure" : {
-    iconSet: 'tabler icons', code: "\uf291"
-  },
-  
-  "ti-ruler-off" : {
-    iconSet: 'tabler icons', code: "\uf196"
-  },
-  
-  "ti-run" : {
-    iconSet: 'tabler icons', code: "\uec82"
-  },
-  
-  "ti-s-turn-down" : {
-    iconSet: 'tabler icons', code: "\uf516"
-  },
-  
-  "ti-s-turn-left" : {
-    iconSet: 'tabler icons', code: "\uf517"
-  },
-  
-  "ti-s-turn-right" : {
-    iconSet: 'tabler icons', code: "\uf518"
-  },
-  
-  "ti-s-turn-up" : {
-    iconSet: 'tabler icons', code: "\uf519"
-  },
-  
-  "ti-sailboat" : {
-    iconSet: 'tabler icons', code: "\uec83"
-  },
-  
-  "ti-sailboat-2" : {
-    iconSet: 'tabler icons', code: "\uf5f7"
-  },
-  
-  "ti-sailboat-off" : {
-    iconSet: 'tabler icons', code: "\uf425"
-  },
-  
-  "ti-salad" : {
-    iconSet: 'tabler icons', code: "\uf50a"
-  },
-  
-  "ti-salt" : {
-    iconSet: 'tabler icons', code: "\uef16"
-  },
-  
-  "ti-satellite" : {
-    iconSet: 'tabler icons', code: "\ueed3"
-  },
-  
-  "ti-satellite-off" : {
-    iconSet: 'tabler icons', code: "\uf197"
-  },
-  
-  "ti-sausage" : {
-    iconSet: 'tabler icons', code: "\uef17"
-  },
-  
-  "ti-scale" : {
-    iconSet: 'tabler icons', code: "\uebc2"
-  },
-  
-  "ti-scale-off" : {
-    iconSet: 'tabler icons', code: "\uf198"
-  },
-  
-  "ti-scale-outline" : {
-    iconSet: 'tabler icons', code: "\uef53"
-  },
-  
-  "ti-scale-outline-off" : {
-    iconSet: 'tabler icons', code: "\uf199"
-  },
-  
-  "ti-scan" : {
-    iconSet: 'tabler icons', code: "\uebc8"
-  },
-  
-  "ti-scan-eye" : {
-    iconSet: 'tabler icons', code: "\uf1ff"
-  },
-  
-  "ti-schema" : {
-    iconSet: 'tabler icons', code: "\uf200"
-  },
-  
-  "ti-schema-off" : {
-    iconSet: 'tabler icons', code: "\uf426"
-  },
-  
-  "ti-school" : {
-    iconSet: 'tabler icons', code: "\uecf7"
-  },
-  
-  "ti-school-bell" : {
-    iconSet: 'tabler icons', code: "\uf64a"
-  },
-  
-  "ti-school-off" : {
-    iconSet: 'tabler icons', code: "\uf19a"
-  },
-  
-  "ti-scissors" : {
-    iconSet: 'tabler icons', code: "\ueb1b"
-  },
-  
-  "ti-scissors-off" : {
-    iconSet: 'tabler icons', code: "\uf19b"
-  },
-  
-  "ti-scooter" : {
-    iconSet: 'tabler icons', code: "\uec6c"
-  },
-  
-  "ti-scooter-electric" : {
-    iconSet: 'tabler icons', code: "\uecc1"
-  },
-  
-  "ti-screen-share" : {
-    iconSet: 'tabler icons', code: "\ued18"
-  },
-  
-  "ti-screen-share-off" : {
-    iconSet: 'tabler icons', code: "\ued17"
-  },
-  
-  "ti-screenshot" : {
-    iconSet: 'tabler icons', code: "\uf201"
-  },
-  
-  "ti-scribble" : {
-    iconSet: 'tabler icons', code: "\uf0a3"
-  },
-  
-  "ti-scribble-off" : {
-    iconSet: 'tabler icons', code: "\uf427"
-  },
-  
-  "ti-script" : {
-    iconSet: 'tabler icons', code: "\uf2da"
-  },
-  
-  "ti-script-minus" : {
-    iconSet: 'tabler icons', code: "\uf2d7"
-  },
-  
-  "ti-script-plus" : {
-    iconSet: 'tabler icons', code: "\uf2d8"
-  },
-  
-  "ti-script-x" : {
-    iconSet: 'tabler icons', code: "\uf2d9"
-  },
-  
-  "ti-scuba-mask" : {
-    iconSet: 'tabler icons', code: "\ueed4"
-  },
-  
-  "ti-scuba-mask-off" : {
-    iconSet: 'tabler icons', code: "\uf428"
-  },
-  
-  "ti-sdk" : {
-    iconSet: 'tabler icons', code: "\uf3af"
-  },
-  
-  "ti-search" : {
-    iconSet: 'tabler icons', code: "\ueb1c"
-  },
-  
-  "ti-search-off" : {
-    iconSet: 'tabler icons', code: "\uf19c"
-  },
-  
-  "ti-section" : {
-    iconSet: 'tabler icons', code: "\ueed5"
-  },
-  
-  "ti-section-sign" : {
-    iconSet: 'tabler icons', code: "\uf019"
-  },
-  
-  "ti-seeding" : {
-    iconSet: 'tabler icons', code: "\ued51"
-  },
-  
-  "ti-seeding-off" : {
-    iconSet: 'tabler icons', code: "\uf19d"
-  },
-  
-  "ti-select" : {
-    iconSet: 'tabler icons', code: "\uec9e"
-  },
-  
-  "ti-select-all" : {
-    iconSet: 'tabler icons', code: "\uf9f7"
-  },
-  
-  "ti-selector" : {
-    iconSet: 'tabler icons', code: "\ueb1d"
-  },
-  
-  "ti-send" : {
-    iconSet: 'tabler icons', code: "\ueb1e"
-  },
-  
-  "ti-send-off" : {
-    iconSet: 'tabler icons', code: "\uf429"
-  },
-  
-  "ti-seo" : {
-    iconSet: 'tabler icons', code: "\uf26b"
-  },
-  
-  "ti-separator" : {
-    iconSet: 'tabler icons', code: "\uebda"
-  },
-  
-  "ti-separator-horizontal" : {
-    iconSet: 'tabler icons', code: "\uec79"
-  },
-  
-  "ti-separator-vertical" : {
-    iconSet: 'tabler icons', code: "\uec7a"
-  },
-  
-  "ti-server" : {
-    iconSet: 'tabler icons', code: "\ueb1f"
-  },
-  
-  "ti-server-2" : {
-    iconSet: 'tabler icons', code: "\uf07c"
-  },
-  
-  "ti-server-bolt" : {
-    iconSet: 'tabler icons', code: "\uf320"
-  },
-  
-  "ti-server-cog" : {
-    iconSet: 'tabler icons', code: "\uf321"
-  },
-  
-  "ti-server-off" : {
-    iconSet: 'tabler icons', code: "\uf19e"
-  },
-  
-  "ti-servicemark" : {
-    iconSet: 'tabler icons', code: "\uec09"
-  },
-  
-  "ti-settings" : {
-    iconSet: 'tabler icons', code: "\ueb20"
-  },
-  
-  "ti-settings-2" : {
-    iconSet: 'tabler icons', code: "\uf5ac"
-  },
-  
-  "ti-settings-automation" : {
-    iconSet: 'tabler icons', code: "\ueed6"
-  },
-  
-  "ti-settings-bolt" : {
-    iconSet: 'tabler icons', code: "\uf9ad"
-  },
-  
-  "ti-settings-cancel" : {
-    iconSet: 'tabler icons', code: "\uf9ae"
-  },
-  
-  "ti-settings-check" : {
-    iconSet: 'tabler icons', code: "\uf9af"
-  },
-  
-  "ti-settings-code" : {
-    iconSet: 'tabler icons', code: "\uf9b0"
-  },
-  
-  "ti-settings-cog" : {
-    iconSet: 'tabler icons', code: "\uf9b1"
-  },
-  
-  "ti-settings-dollar" : {
-    iconSet: 'tabler icons', code: "\uf9b2"
-  },
-  
-  "ti-settings-down" : {
-    iconSet: 'tabler icons', code: "\uf9b3"
-  },
-  
-  "ti-settings-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf9b4"
-  },
-  
-  "ti-settings-filled" : {
-    iconSet: 'tabler icons', code: "\uf69e"
-  },
-  
-  "ti-settings-heart" : {
-    iconSet: 'tabler icons', code: "\uf9b5"
-  },
-  
-  "ti-settings-minus" : {
-    iconSet: 'tabler icons', code: "\uf9b6"
-  },
-  
-  "ti-settings-off" : {
-    iconSet: 'tabler icons', code: "\uf19f"
-  },
-  
-  "ti-settings-pause" : {
-    iconSet: 'tabler icons', code: "\uf9b7"
-  },
-  
-  "ti-settings-pin" : {
-    iconSet: 'tabler icons', code: "\uf9b8"
-  },
-  
-  "ti-settings-plus" : {
-    iconSet: 'tabler icons', code: "\uf9b9"
-  },
-  
-  "ti-settings-question" : {
-    iconSet: 'tabler icons', code: "\uf9ba"
-  },
-  
-  "ti-settings-search" : {
-    iconSet: 'tabler icons', code: "\uf9bb"
-  },
-  
-  "ti-settings-share" : {
-    iconSet: 'tabler icons', code: "\uf9bc"
-  },
-  
-  "ti-settings-star" : {
-    iconSet: 'tabler icons', code: "\uf9bd"
-  },
-  
-  "ti-settings-up" : {
-    iconSet: 'tabler icons', code: "\uf9be"
-  },
-  
-  "ti-settings-x" : {
-    iconSet: 'tabler icons', code: "\uf9bf"
-  },
-  
-  "ti-shadow" : {
-    iconSet: 'tabler icons', code: "\ueed8"
-  },
-  
-  "ti-shadow-off" : {
-    iconSet: 'tabler icons', code: "\ueed7"
-  },
-  
-  "ti-shape" : {
-    iconSet: 'tabler icons', code: "\ueb9c"
-  },
-  
-  "ti-shape-2" : {
-    iconSet: 'tabler icons', code: "\ueed9"
-  },
-  
-  "ti-shape-3" : {
-    iconSet: 'tabler icons', code: "\ueeda"
-  },
-  
-  "ti-shape-off" : {
-    iconSet: 'tabler icons', code: "\uf1a0"
-  },
-  
-  "ti-share" : {
-    iconSet: 'tabler icons', code: "\ueb21"
-  },
-  
-  "ti-share-2" : {
-    iconSet: 'tabler icons', code: "\uf799"
-  },
-  
-  "ti-share-3" : {
-    iconSet: 'tabler icons', code: "\uf7bd"
-  },
-  
-  "ti-share-off" : {
-    iconSet: 'tabler icons', code: "\uf1a1"
-  },
-  
-  "ti-shield" : {
-    iconSet: 'tabler icons', code: "\ueb24"
-  },
-  
-  "ti-shield-bolt" : {
-    iconSet: 'tabler icons', code: "\uf9c0"
-  },
-  
-  "ti-shield-cancel" : {
-    iconSet: 'tabler icons', code: "\uf9c1"
-  },
-  
-  "ti-shield-check" : {
-    iconSet: 'tabler icons', code: "\ueb22"
-  },
-  
-  "ti-shield-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf761"
-  },
-  
-  "ti-shield-checkered" : {
-    iconSet: 'tabler icons', code: "\uef9a"
-  },
-  
-  "ti-shield-checkered-filled" : {
-    iconSet: 'tabler icons', code: "\uf762"
-  },
-  
-  "ti-shield-chevron" : {
-    iconSet: 'tabler icons', code: "\uef9b"
-  },
-  
-  "ti-shield-code" : {
-    iconSet: 'tabler icons', code: "\uf9c2"
-  },
-  
-  "ti-shield-cog" : {
-    iconSet: 'tabler icons', code: "\uf9c3"
-  },
-  
-  "ti-shield-dollar" : {
-    iconSet: 'tabler icons', code: "\uf9c4"
-  },
-  
-  "ti-shield-down" : {
-    iconSet: 'tabler icons', code: "\uf9c5"
-  },
-  
-  "ti-shield-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf9c6"
-  },
-  
-  "ti-shield-filled" : {
-    iconSet: 'tabler icons', code: "\uf69f"
-  },
-  
-  "ti-shield-half" : {
-    iconSet: 'tabler icons', code: "\uf358"
-  },
-  
-  "ti-shield-half-filled" : {
-    iconSet: 'tabler icons', code: "\uf357"
-  },
-  
-  "ti-shield-heart" : {
-    iconSet: 'tabler icons', code: "\uf9c7"
-  },
-  
-  "ti-shield-lock" : {
-    iconSet: 'tabler icons', code: "\ued58"
-  },
-  
-  "ti-shield-lock-filled" : {
-    iconSet: 'tabler icons', code: "\uf763"
-  },
-  
-  "ti-shield-minus" : {
-    iconSet: 'tabler icons', code: "\uf9c8"
-  },
-  
-  "ti-shield-off" : {
-    iconSet: 'tabler icons', code: "\uecf8"
-  },
-  
-  "ti-shield-pause" : {
-    iconSet: 'tabler icons', code: "\uf9c9"
-  },
-  
-  "ti-shield-pin" : {
-    iconSet: 'tabler icons', code: "\uf9ca"
-  },
-  
-  "ti-shield-plus" : {
-    iconSet: 'tabler icons', code: "\uf9cb"
-  },
-  
-  "ti-shield-question" : {
-    iconSet: 'tabler icons', code: "\uf9cc"
-  },
-  
-  "ti-shield-search" : {
-    iconSet: 'tabler icons', code: "\uf9cd"
-  },
-  
-  "ti-shield-share" : {
-    iconSet: 'tabler icons', code: "\uf9ce"
-  },
-  
-  "ti-shield-star" : {
-    iconSet: 'tabler icons', code: "\uf9cf"
-  },
-  
-  "ti-shield-up" : {
-    iconSet: 'tabler icons', code: "\uf9d0"
-  },
-  
-  "ti-shield-x" : {
-    iconSet: 'tabler icons', code: "\ueb23"
-  },
-  
-  "ti-ship" : {
-    iconSet: 'tabler icons', code: "\uec84"
-  },
-  
-  "ti-ship-off" : {
-    iconSet: 'tabler icons', code: "\uf42a"
-  },
-  
-  "ti-shirt" : {
-    iconSet: 'tabler icons', code: "\uec0a"
-  },
-  
-  "ti-shirt-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a0"
-  },
-  
-  "ti-shirt-off" : {
-    iconSet: 'tabler icons', code: "\uf1a2"
-  },
-  
-  "ti-shirt-sport" : {
-    iconSet: 'tabler icons', code: "\uf26c"
-  },
-  
-  "ti-shoe" : {
-    iconSet: 'tabler icons', code: "\uefd2"
-  },
-  
-  "ti-shoe-off" : {
-    iconSet: 'tabler icons', code: "\uf1a4"
-  },
-  
-  "ti-shopping-bag" : {
-    iconSet: 'tabler icons', code: "\uf5f8"
-  },
-  
-  "ti-shopping-cart" : {
-    iconSet: 'tabler icons', code: "\ueb25"
-  },
-  
-  "ti-shopping-cart-discount" : {
-    iconSet: 'tabler icons', code: "\ueedb"
-  },
-  
-  "ti-shopping-cart-off" : {
-    iconSet: 'tabler icons', code: "\ueedc"
-  },
-  
-  "ti-shopping-cart-plus" : {
-    iconSet: 'tabler icons', code: "\ueedd"
-  },
-  
-  "ti-shopping-cart-x" : {
-    iconSet: 'tabler icons', code: "\ueede"
-  },
-  
-  "ti-shovel" : {
-    iconSet: 'tabler icons', code: "\uf1d9"
-  },
-  
-  "ti-shredder" : {
-    iconSet: 'tabler icons', code: "\ueedf"
-  },
-  
-  "ti-sign-left" : {
-    iconSet: 'tabler icons', code: "\uf06b"
-  },
-  
-  "ti-sign-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a1"
-  },
-  
-  "ti-sign-right" : {
-    iconSet: 'tabler icons', code: "\uf06c"
-  },
-  
-  "ti-sign-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a2"
-  },
-  
-  "ti-signal-2g" : {
-    iconSet: 'tabler icons', code: "\uf79a"
-  },
-  
-  "ti-signal-3g" : {
-    iconSet: 'tabler icons', code: "\uf1ee"
-  },
-  
-  "ti-signal-4g" : {
-    iconSet: 'tabler icons', code: "\uf1ef"
-  },
-  
-  "ti-signal-4g-plus" : {
-    iconSet: 'tabler icons', code: "\uf259"
-  },
-  
-  "ti-signal-5g" : {
-    iconSet: 'tabler icons', code: "\uf1f0"
-  },
-  
-  "ti-signal-6g" : {
-    iconSet: 'tabler icons', code: "\uf9f8"
-  },
-  
-  "ti-signal-e" : {
-    iconSet: 'tabler icons', code: "\uf9f9"
-  },
-  
-  "ti-signal-g" : {
-    iconSet: 'tabler icons', code: "\uf9fa"
-  },
-  
-  "ti-signal-h" : {
-    iconSet: 'tabler icons', code: "\uf9fc"
-  },
-  
-  "ti-signal-h-plus" : {
-    iconSet: 'tabler icons', code: "\uf9fb"
-  },
-  
-  "ti-signal-lte" : {
-    iconSet: 'tabler icons', code: "\uf9fd"
-  },
-  
-  "ti-signature" : {
-    iconSet: 'tabler icons', code: "\ueee0"
-  },
-  
-  "ti-signature-off" : {
-    iconSet: 'tabler icons', code: "\uf1a5"
-  },
-  
-  "ti-sitemap" : {
-    iconSet: 'tabler icons', code: "\ueb9d"
-  },
-  
-  "ti-sitemap-off" : {
-    iconSet: 'tabler icons', code: "\uf1a6"
-  },
-  
-  "ti-skateboard" : {
-    iconSet: 'tabler icons', code: "\uecc2"
-  },
-  
-  "ti-skateboard-off" : {
-    iconSet: 'tabler icons', code: "\uf42b"
-  },
-  
-  "ti-skull" : {
-    iconSet: 'tabler icons', code: "\uf292"
-  },
-  
-  "ti-slash" : {
-    iconSet: 'tabler icons', code: "\uf4f9"
-  },
-  
-  "ti-slashes" : {
-    iconSet: 'tabler icons', code: "\uf588"
-  },
-  
-  "ti-sleigh" : {
-    iconSet: 'tabler icons', code: "\uef9c"
-  },
-  
-  "ti-slice" : {
-    iconSet: 'tabler icons', code: "\uebdb"
-  },
-  
-  "ti-slideshow" : {
-    iconSet: 'tabler icons', code: "\uebc9"
-  },
-  
-  "ti-smart-home" : {
-    iconSet: 'tabler icons', code: "\uecde"
-  },
-  
-  "ti-smart-home-off" : {
-    iconSet: 'tabler icons', code: "\uf1a7"
-  },
-  
-  "ti-smoking" : {
-    iconSet: 'tabler icons', code: "\uecc4"
-  },
-  
-  "ti-smoking-no" : {
-    iconSet: 'tabler icons', code: "\uecc3"
-  },
-  
-  "ti-snowflake" : {
-    iconSet: 'tabler icons', code: "\uec0b"
-  },
-  
-  "ti-snowflake-off" : {
-    iconSet: 'tabler icons', code: "\uf1a8"
-  },
-  
-  "ti-snowman" : {
-    iconSet: 'tabler icons', code: "\uf26d"
-  },
-  
-  "ti-soccer-field" : {
-    iconSet: 'tabler icons', code: "\ued92"
-  },
-  
-  "ti-social" : {
-    iconSet: 'tabler icons', code: "\uebec"
-  },
-  
-  "ti-social-off" : {
-    iconSet: 'tabler icons', code: "\uf1a9"
-  },
-  
-  "ti-sock" : {
-    iconSet: 'tabler icons', code: "\ueee1"
-  },
-  
-  "ti-sofa" : {
-    iconSet: 'tabler icons', code: "\uefaf"
-  },
-  
-  "ti-sofa-off" : {
-    iconSet: 'tabler icons', code: "\uf42c"
-  },
-  
-  "ti-solar-panel" : {
-    iconSet: 'tabler icons', code: "\uf7bf"
-  },
-  
-  "ti-solar-panel-2" : {
-    iconSet: 'tabler icons', code: "\uf7be"
-  },
-  
-  "ti-sort-0-9" : {
-    iconSet: 'tabler icons', code: "\uf54d"
-  },
-  
-  "ti-sort-9-0" : {
-    iconSet: 'tabler icons', code: "\uf54e"
-  },
-  
-  "ti-sort-a-z" : {
-    iconSet: 'tabler icons', code: "\uf54f"
-  },
-  
-  "ti-sort-ascending" : {
-    iconSet: 'tabler icons', code: "\ueb26"
-  },
-  
-  "ti-sort-ascending-2" : {
-    iconSet: 'tabler icons', code: "\ueee2"
-  },
-  
-  "ti-sort-ascending-letters" : {
-    iconSet: 'tabler icons', code: "\uef18"
-  },
-  
-  "ti-sort-ascending-numbers" : {
-    iconSet: 'tabler icons', code: "\uef19"
-  },
-  
-  "ti-sort-descending" : {
-    iconSet: 'tabler icons', code: "\ueb27"
-  },
-  
-  "ti-sort-descending-2" : {
-    iconSet: 'tabler icons', code: "\ueee3"
-  },
-  
-  "ti-sort-descending-letters" : {
-    iconSet: 'tabler icons', code: "\uef1a"
-  },
-  
-  "ti-sort-descending-numbers" : {
-    iconSet: 'tabler icons', code: "\uef1b"
-  },
-  
-  "ti-sort-z-a" : {
-    iconSet: 'tabler icons', code: "\uf550"
-  },
-  
-  "ti-sos" : {
-    iconSet: 'tabler icons', code: "\uf24a"
-  },
-  
-  "ti-soup" : {
-    iconSet: 'tabler icons', code: "\uef2e"
-  },
-  
-  "ti-soup-off" : {
-    iconSet: 'tabler icons', code: "\uf42d"
-  },
-  
-  "ti-source-code" : {
-    iconSet: 'tabler icons', code: "\uf4a2"
-  },
-  
-  "ti-space" : {
-    iconSet: 'tabler icons', code: "\uec0c"
-  },
-  
-  "ti-space-off" : {
-    iconSet: 'tabler icons', code: "\uf1aa"
-  },
-  
-  "ti-spacing-horizontal" : {
-    iconSet: 'tabler icons', code: "\uef54"
-  },
-  
-  "ti-spacing-vertical" : {
-    iconSet: 'tabler icons', code: "\uef55"
-  },
-  
-  "ti-spade" : {
-    iconSet: 'tabler icons', code: "\ueffa"
-  },
-  
-  "ti-spade-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a3"
-  },
-  
-  "ti-sparkles" : {
-    iconSet: 'tabler icons', code: "\uf6d7"
-  },
-  
-  "ti-speakerphone" : {
-    iconSet: 'tabler icons', code: "\ued61"
-  },
-  
-  "ti-speedboat" : {
-    iconSet: 'tabler icons', code: "\ued93"
-  },
-  
-  "ti-spider" : {
-    iconSet: 'tabler icons', code: "\uf293"
-  },
-  
-  "ti-spiral" : {
-    iconSet: 'tabler icons', code: "\uf294"
-  },
-  
-  "ti-spiral-off" : {
-    iconSet: 'tabler icons', code: "\uf42e"
-  },
-  
-  "ti-sport-billard" : {
-    iconSet: 'tabler icons', code: "\ueee4"
-  },
-  
-  "ti-spray" : {
-    iconSet: 'tabler icons', code: "\uf50b"
-  },
-  
-  "ti-spy" : {
-    iconSet: 'tabler icons', code: "\uf227"
-  },
-  
-  "ti-spy-off" : {
-    iconSet: 'tabler icons', code: "\uf42f"
-  },
-  
-  "ti-sql" : {
-    iconSet: 'tabler icons', code: "\uf7c0"
-  },
-  
-  "ti-square" : {
-    iconSet: 'tabler icons', code: "\ueb2c"
-  },
-  
-  "ti-square-0-filled" : {
-    iconSet: 'tabler icons', code: "\uf764"
-  },
-  
-  "ti-square-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf765"
-  },
-  
-  "ti-square-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf7fa"
-  },
-  
-  "ti-square-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf766"
-  },
-  
-  "ti-square-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf767"
-  },
-  
-  "ti-square-5-filled" : {
-    iconSet: 'tabler icons', code: "\uf768"
-  },
-  
-  "ti-square-6-filled" : {
-    iconSet: 'tabler icons', code: "\uf769"
-  },
-  
-  "ti-square-7-filled" : {
-    iconSet: 'tabler icons', code: "\uf76a"
-  },
-  
-  "ti-square-8-filled" : {
-    iconSet: 'tabler icons', code: "\uf76b"
-  },
-  
-  "ti-square-9-filled" : {
-    iconSet: 'tabler icons', code: "\uf76c"
-  },
-  
-  "ti-square-arrow-down" : {
-    iconSet: 'tabler icons', code: "\uf4b7"
-  },
-  
-  "ti-square-arrow-left" : {
-    iconSet: 'tabler icons', code: "\uf4b8"
-  },
-  
-  "ti-square-arrow-right" : {
-    iconSet: 'tabler icons', code: "\uf4b9"
-  },
-  
-  "ti-square-arrow-up" : {
-    iconSet: 'tabler icons', code: "\uf4ba"
-  },
-  
-  "ti-square-asterisk" : {
-    iconSet: 'tabler icons', code: "\uf01a"
-  },
-  
-  "ti-square-check" : {
-    iconSet: 'tabler icons', code: "\ueb28"
-  },
-  
-  "ti-square-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf76d"
-  },
-  
-  "ti-square-chevron-down" : {
-    iconSet: 'tabler icons', code: "\uf627"
-  },
-  
-  "ti-square-chevron-left" : {
-    iconSet: 'tabler icons', code: "\uf628"
-  },
-  
-  "ti-square-chevron-right" : {
-    iconSet: 'tabler icons', code: "\uf629"
-  },
-  
-  "ti-square-chevron-up" : {
-    iconSet: 'tabler icons', code: "\uf62a"
-  },
-  
-  "ti-square-chevrons-down" : {
-    iconSet: 'tabler icons', code: "\uf64b"
-  },
-  
-  "ti-square-chevrons-left" : {
-    iconSet: 'tabler icons', code: "\uf64c"
-  },
-  
-  "ti-square-chevrons-right" : {
-    iconSet: 'tabler icons', code: "\uf64d"
-  },
-  
-  "ti-square-chevrons-up" : {
-    iconSet: 'tabler icons', code: "\uf64e"
-  },
-  
-  "ti-square-dot" : {
-    iconSet: 'tabler icons', code: "\ued59"
-  },
-  
-  "ti-square-f0" : {
-    iconSet: 'tabler icons', code: "\uf526"
-  },
-  
-  "ti-square-f0-filled" : {
-    iconSet: 'tabler icons', code: "\uf76e"
-  },
-  
-  "ti-square-f1" : {
-    iconSet: 'tabler icons', code: "\uf527"
-  },
-  
-  "ti-square-f1-filled" : {
-    iconSet: 'tabler icons', code: "\uf76f"
-  },
-  
-  "ti-square-f2" : {
-    iconSet: 'tabler icons', code: "\uf528"
-  },
-  
-  "ti-square-f2-filled" : {
-    iconSet: 'tabler icons', code: "\uf770"
-  },
-  
-  "ti-square-f3" : {
-    iconSet: 'tabler icons', code: "\uf529"
-  },
-  
-  "ti-square-f3-filled" : {
-    iconSet: 'tabler icons', code: "\uf771"
-  },
-  
-  "ti-square-f4" : {
-    iconSet: 'tabler icons', code: "\uf52a"
-  },
-  
-  "ti-square-f4-filled" : {
-    iconSet: 'tabler icons', code: "\uf772"
-  },
-  
-  "ti-square-f5" : {
-    iconSet: 'tabler icons', code: "\uf52b"
-  },
-  
-  "ti-square-f5-filled" : {
-    iconSet: 'tabler icons', code: "\uf773"
-  },
-  
-  "ti-square-f6" : {
-    iconSet: 'tabler icons', code: "\uf52c"
-  },
-  
-  "ti-square-f6-filled" : {
-    iconSet: 'tabler icons', code: "\uf774"
-  },
-  
-  "ti-square-f7" : {
-    iconSet: 'tabler icons', code: "\uf52d"
-  },
-  
-  "ti-square-f7-filled" : {
-    iconSet: 'tabler icons', code: "\uf775"
-  },
-  
-  "ti-square-f8" : {
-    iconSet: 'tabler icons', code: "\uf52e"
-  },
-  
-  "ti-square-f8-filled" : {
-    iconSet: 'tabler icons', code: "\uf776"
-  },
-  
-  "ti-square-f9" : {
-    iconSet: 'tabler icons', code: "\uf52f"
-  },
-  
-  "ti-square-f9-filled" : {
-    iconSet: 'tabler icons', code: "\uf777"
-  },
-  
-  "ti-square-forbid" : {
-    iconSet: 'tabler icons', code: "\ued5b"
-  },
-  
-  "ti-square-forbid-2" : {
-    iconSet: 'tabler icons', code: "\ued5a"
-  },
-  
-  "ti-square-half" : {
-    iconSet: 'tabler icons', code: "\ueffb"
-  },
-  
-  "ti-square-key" : {
-    iconSet: 'tabler icons', code: "\uf638"
-  },
-  
-  "ti-square-letter-a" : {
-    iconSet: 'tabler icons', code: "\uf47c"
-  },
-  
-  "ti-square-letter-b" : {
-    iconSet: 'tabler icons', code: "\uf47d"
-  },
-  
-  "ti-square-letter-c" : {
-    iconSet: 'tabler icons', code: "\uf47e"
-  },
-  
-  "ti-square-letter-d" : {
-    iconSet: 'tabler icons', code: "\uf47f"
-  },
-  
-  "ti-square-letter-e" : {
-    iconSet: 'tabler icons', code: "\uf480"
-  },
-  
-  "ti-square-letter-f" : {
-    iconSet: 'tabler icons', code: "\uf481"
-  },
-  
-  "ti-square-letter-g" : {
-    iconSet: 'tabler icons', code: "\uf482"
-  },
-  
-  "ti-square-letter-h" : {
-    iconSet: 'tabler icons', code: "\uf483"
-  },
-  
-  "ti-square-letter-i" : {
-    iconSet: 'tabler icons', code: "\uf484"
-  },
-  
-  "ti-square-letter-j" : {
-    iconSet: 'tabler icons', code: "\uf485"
-  },
-  
-  "ti-square-letter-k" : {
-    iconSet: 'tabler icons', code: "\uf486"
-  },
-  
-  "ti-square-letter-l" : {
-    iconSet: 'tabler icons', code: "\uf487"
-  },
-  
-  "ti-square-letter-m" : {
-    iconSet: 'tabler icons', code: "\uf488"
-  },
-  
-  "ti-square-letter-n" : {
-    iconSet: 'tabler icons', code: "\uf489"
-  },
-  
-  "ti-square-letter-o" : {
-    iconSet: 'tabler icons', code: "\uf48a"
-  },
-  
-  "ti-square-letter-p" : {
-    iconSet: 'tabler icons', code: "\uf48b"
-  },
-  
-  "ti-square-letter-q" : {
-    iconSet: 'tabler icons', code: "\uf48c"
-  },
-  
-  "ti-square-letter-r" : {
-    iconSet: 'tabler icons', code: "\uf48d"
-  },
-  
-  "ti-square-letter-s" : {
-    iconSet: 'tabler icons', code: "\uf48e"
-  },
-  
-  "ti-square-letter-t" : {
-    iconSet: 'tabler icons', code: "\uf48f"
-  },
-  
-  "ti-square-letter-u" : {
-    iconSet: 'tabler icons', code: "\uf490"
-  },
-  
-  "ti-square-letter-v" : {
-    iconSet: 'tabler icons', code: "\uf4bb"
-  },
-  
-  "ti-square-letter-w" : {
-    iconSet: 'tabler icons', code: "\uf491"
-  },
-  
-  "ti-square-letter-x" : {
-    iconSet: 'tabler icons', code: "\uf4bc"
-  },
-  
-  "ti-square-letter-y" : {
-    iconSet: 'tabler icons', code: "\uf492"
-  },
-  
-  "ti-square-letter-z" : {
-    iconSet: 'tabler icons', code: "\uf493"
-  },
-  
-  "ti-square-minus" : {
-    iconSet: 'tabler icons', code: "\ueb29"
-  },
-  
-  "ti-square-number-0" : {
-    iconSet: 'tabler icons', code: "\ueee5"
-  },
-  
-  "ti-square-number-1" : {
-    iconSet: 'tabler icons', code: "\ueee6"
-  },
-  
-  "ti-square-number-2" : {
-    iconSet: 'tabler icons', code: "\ueee7"
-  },
-  
-  "ti-square-number-3" : {
-    iconSet: 'tabler icons', code: "\ueee8"
-  },
-  
-  "ti-square-number-4" : {
-    iconSet: 'tabler icons', code: "\ueee9"
-  },
-  
-  "ti-square-number-5" : {
-    iconSet: 'tabler icons', code: "\ueeea"
-  },
-  
-  "ti-square-number-6" : {
-    iconSet: 'tabler icons', code: "\ueeeb"
-  },
-  
-  "ti-square-number-7" : {
-    iconSet: 'tabler icons', code: "\ueeec"
-  },
-  
-  "ti-square-number-8" : {
-    iconSet: 'tabler icons', code: "\ueeed"
-  },
-  
-  "ti-square-number-9" : {
-    iconSet: 'tabler icons', code: "\ueeee"
-  },
-  
-  "ti-square-off" : {
-    iconSet: 'tabler icons', code: "\ueeef"
-  },
-  
-  "ti-square-plus" : {
-    iconSet: 'tabler icons', code: "\ueb2a"
-  },
-  
-  "ti-square-root" : {
-    iconSet: 'tabler icons', code: "\ueef1"
-  },
-  
-  "ti-square-root-2" : {
-    iconSet: 'tabler icons', code: "\ueef0"
-  },
-  
-  "ti-square-rotated" : {
-    iconSet: 'tabler icons', code: "\uecdf"
-  },
-  
-  "ti-square-rotated-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a4"
-  },
-  
-  "ti-square-rotated-forbid" : {
-    iconSet: 'tabler icons', code: "\uf01c"
-  },
-  
-  "ti-square-rotated-forbid-2" : {
-    iconSet: 'tabler icons', code: "\uf01b"
-  },
-  
-  "ti-square-rotated-off" : {
-    iconSet: 'tabler icons', code: "\ueef2"
-  },
-  
-  "ti-square-rounded" : {
-    iconSet: 'tabler icons', code: "\uf59a"
-  },
-  
-  "ti-square-rounded-arrow-down" : {
-    iconSet: 'tabler icons', code: "\uf639"
-  },
-  
-  "ti-square-rounded-arrow-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6db"
-  },
-  
-  "ti-square-rounded-arrow-left" : {
-    iconSet: 'tabler icons', code: "\uf63a"
-  },
-  
-  "ti-square-rounded-arrow-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6dc"
-  },
-  
-  "ti-square-rounded-arrow-right" : {
-    iconSet: 'tabler icons', code: "\uf63b"
-  },
-  
-  "ti-square-rounded-arrow-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6dd"
-  },
-  
-  "ti-square-rounded-arrow-up" : {
-    iconSet: 'tabler icons', code: "\uf63c"
-  },
-  
-  "ti-square-rounded-arrow-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6de"
-  },
-  
-  "ti-square-rounded-check" : {
-    iconSet: 'tabler icons', code: "\uf63d"
-  },
-  
-  "ti-square-rounded-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf6df"
-  },
-  
-  "ti-square-rounded-chevron-down" : {
-    iconSet: 'tabler icons', code: "\uf62b"
-  },
-  
-  "ti-square-rounded-chevron-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e0"
-  },
-  
-  "ti-square-rounded-chevron-left" : {
-    iconSet: 'tabler icons', code: "\uf62c"
-  },
-  
-  "ti-square-rounded-chevron-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e1"
-  },
-  
-  "ti-square-rounded-chevron-right" : {
-    iconSet: 'tabler icons', code: "\uf62d"
-  },
-  
-  "ti-square-rounded-chevron-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e2"
-  },
-  
-  "ti-square-rounded-chevron-up" : {
-    iconSet: 'tabler icons', code: "\uf62e"
-  },
-  
-  "ti-square-rounded-chevron-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e3"
-  },
-  
-  "ti-square-rounded-chevrons-down" : {
-    iconSet: 'tabler icons', code: "\uf64f"
-  },
-  
-  "ti-square-rounded-chevrons-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e4"
-  },
-  
-  "ti-square-rounded-chevrons-left" : {
-    iconSet: 'tabler icons', code: "\uf650"
-  },
-  
-  "ti-square-rounded-chevrons-left-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e5"
-  },
-  
-  "ti-square-rounded-chevrons-right" : {
-    iconSet: 'tabler icons', code: "\uf651"
-  },
-  
-  "ti-square-rounded-chevrons-right-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e6"
-  },
-  
-  "ti-square-rounded-chevrons-up" : {
-    iconSet: 'tabler icons', code: "\uf652"
-  },
-  
-  "ti-square-rounded-chevrons-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e7"
-  },
-  
-  "ti-square-rounded-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a5"
-  },
-  
-  "ti-square-rounded-letter-a" : {
-    iconSet: 'tabler icons', code: "\uf5ae"
-  },
-  
-  "ti-square-rounded-letter-b" : {
-    iconSet: 'tabler icons', code: "\uf5af"
-  },
-  
-  "ti-square-rounded-letter-c" : {
-    iconSet: 'tabler icons', code: "\uf5b0"
-  },
-  
-  "ti-square-rounded-letter-d" : {
-    iconSet: 'tabler icons', code: "\uf5b1"
-  },
-  
-  "ti-square-rounded-letter-e" : {
-    iconSet: 'tabler icons', code: "\uf5b2"
-  },
-  
-  "ti-square-rounded-letter-f" : {
-    iconSet: 'tabler icons', code: "\uf5b3"
-  },
-  
-  "ti-square-rounded-letter-g" : {
-    iconSet: 'tabler icons', code: "\uf5b4"
-  },
-  
-  "ti-square-rounded-letter-h" : {
-    iconSet: 'tabler icons', code: "\uf5b5"
-  },
-  
-  "ti-square-rounded-letter-i" : {
-    iconSet: 'tabler icons', code: "\uf5b6"
-  },
-  
-  "ti-square-rounded-letter-j" : {
-    iconSet: 'tabler icons', code: "\uf5b7"
-  },
-  
-  "ti-square-rounded-letter-k" : {
-    iconSet: 'tabler icons', code: "\uf5b8"
-  },
-  
-  "ti-square-rounded-letter-l" : {
-    iconSet: 'tabler icons', code: "\uf5b9"
-  },
-  
-  "ti-square-rounded-letter-m" : {
-    iconSet: 'tabler icons', code: "\uf5ba"
-  },
-  
-  "ti-square-rounded-letter-n" : {
-    iconSet: 'tabler icons', code: "\uf5bb"
-  },
-  
-  "ti-square-rounded-letter-o" : {
-    iconSet: 'tabler icons', code: "\uf5bc"
-  },
-  
-  "ti-square-rounded-letter-p" : {
-    iconSet: 'tabler icons', code: "\uf5bd"
-  },
-  
-  "ti-square-rounded-letter-q" : {
-    iconSet: 'tabler icons', code: "\uf5be"
-  },
-  
-  "ti-square-rounded-letter-r" : {
-    iconSet: 'tabler icons', code: "\uf5bf"
-  },
-  
-  "ti-square-rounded-letter-s" : {
-    iconSet: 'tabler icons', code: "\uf5c0"
-  },
-  
-  "ti-square-rounded-letter-t" : {
-    iconSet: 'tabler icons', code: "\uf5c1"
-  },
-  
-  "ti-square-rounded-letter-u" : {
-    iconSet: 'tabler icons', code: "\uf5c2"
-  },
-  
-  "ti-square-rounded-letter-v" : {
-    iconSet: 'tabler icons', code: "\uf5c3"
-  },
-  
-  "ti-square-rounded-letter-w" : {
-    iconSet: 'tabler icons', code: "\uf5c4"
-  },
-  
-  "ti-square-rounded-letter-x" : {
-    iconSet: 'tabler icons', code: "\uf5c5"
-  },
-  
-  "ti-square-rounded-letter-y" : {
-    iconSet: 'tabler icons', code: "\uf5c6"
-  },
-  
-  "ti-square-rounded-letter-z" : {
-    iconSet: 'tabler icons', code: "\uf5c7"
-  },
-  
-  "ti-square-rounded-minus" : {
-    iconSet: 'tabler icons', code: "\uf63e"
-  },
-  
-  "ti-square-rounded-number-0" : {
-    iconSet: 'tabler icons', code: "\uf5c8"
-  },
-  
-  "ti-square-rounded-number-0-filled" : {
-    iconSet: 'tabler icons', code: "\uf778"
-  },
-  
-  "ti-square-rounded-number-1" : {
-    iconSet: 'tabler icons', code: "\uf5c9"
-  },
-  
-  "ti-square-rounded-number-1-filled" : {
-    iconSet: 'tabler icons', code: "\uf779"
-  },
-  
-  "ti-square-rounded-number-2" : {
-    iconSet: 'tabler icons', code: "\uf5ca"
-  },
-  
-  "ti-square-rounded-number-2-filled" : {
-    iconSet: 'tabler icons', code: "\uf77a"
-  },
-  
-  "ti-square-rounded-number-3" : {
-    iconSet: 'tabler icons', code: "\uf5cb"
-  },
-  
-  "ti-square-rounded-number-3-filled" : {
-    iconSet: 'tabler icons', code: "\uf77b"
-  },
-  
-  "ti-square-rounded-number-4" : {
-    iconSet: 'tabler icons', code: "\uf5cc"
-  },
-  
-  "ti-square-rounded-number-4-filled" : {
-    iconSet: 'tabler icons', code: "\uf77c"
-  },
-  
-  "ti-square-rounded-number-5" : {
-    iconSet: 'tabler icons', code: "\uf5cd"
-  },
-  
-  "ti-square-rounded-number-5-filled" : {
-    iconSet: 'tabler icons', code: "\uf77d"
-  },
-  
-  "ti-square-rounded-number-6" : {
-    iconSet: 'tabler icons', code: "\uf5ce"
-  },
-  
-  "ti-square-rounded-number-6-filled" : {
-    iconSet: 'tabler icons', code: "\uf77e"
-  },
-  
-  "ti-square-rounded-number-7" : {
-    iconSet: 'tabler icons', code: "\uf5cf"
-  },
-  
-  "ti-square-rounded-number-7-filled" : {
-    iconSet: 'tabler icons', code: "\uf77f"
-  },
-  
-  "ti-square-rounded-number-8" : {
-    iconSet: 'tabler icons', code: "\uf5d0"
-  },
-  
-  "ti-square-rounded-number-8-filled" : {
-    iconSet: 'tabler icons', code: "\uf780"
-  },
-  
-  "ti-square-rounded-number-9" : {
-    iconSet: 'tabler icons', code: "\uf5d1"
-  },
-  
-  "ti-square-rounded-number-9-filled" : {
-    iconSet: 'tabler icons', code: "\uf781"
-  },
-  
-  "ti-square-rounded-plus" : {
-    iconSet: 'tabler icons', code: "\uf63f"
-  },
-  
-  "ti-square-rounded-plus-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e8"
-  },
-  
-  "ti-square-rounded-x" : {
-    iconSet: 'tabler icons', code: "\uf640"
-  },
-  
-  "ti-square-rounded-x-filled" : {
-    iconSet: 'tabler icons', code: "\uf6e9"
-  },
-  
-  "ti-square-toggle" : {
-    iconSet: 'tabler icons', code: "\ueef4"
-  },
-  
-  "ti-square-toggle-horizontal" : {
-    iconSet: 'tabler icons', code: "\ueef3"
-  },
-  
-  "ti-square-x" : {
-    iconSet: 'tabler icons', code: "\ueb2b"
-  },
-  
-  "ti-squares-diagonal" : {
-    iconSet: 'tabler icons', code: "\ueef5"
-  },
-  
-  "ti-squares-filled" : {
-    iconSet: 'tabler icons', code: "\ueef6"
-  },
-  
-  "ti-stack" : {
-    iconSet: 'tabler icons', code: "\ueb2d"
-  },
-  
-  "ti-stack-2" : {
-    iconSet: 'tabler icons', code: "\ueef7"
-  },
-  
-  "ti-stack-3" : {
-    iconSet: 'tabler icons', code: "\uef9d"
-  },
-  
-  "ti-stack-pop" : {
-    iconSet: 'tabler icons', code: "\uf234"
-  },
-  
-  "ti-stack-push" : {
-    iconSet: 'tabler icons', code: "\uf235"
-  },
-  
-  "ti-stairs" : {
-    iconSet: 'tabler icons', code: "\ueca6"
-  },
-  
-  "ti-stairs-down" : {
-    iconSet: 'tabler icons', code: "\ueca4"
-  },
-  
-  "ti-stairs-up" : {
-    iconSet: 'tabler icons', code: "\ueca5"
-  },
-  
-  "ti-star" : {
-    iconSet: 'tabler icons', code: "\ueb2e"
-  },
-  
-  "ti-star-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a6"
-  },
-  
-  "ti-star-half" : {
-    iconSet: 'tabler icons', code: "\ued19"
-  },
-  
-  "ti-star-half-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a7"
-  },
-  
-  "ti-star-off" : {
-    iconSet: 'tabler icons', code: "\ued62"
-  },
-  
-  "ti-stars" : {
-    iconSet: 'tabler icons', code: "\ued38"
-  },
-  
-  "ti-stars-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a8"
-  },
-  
-  "ti-stars-off" : {
-    iconSet: 'tabler icons', code: "\uf430"
-  },
-  
-  "ti-status-change" : {
-    iconSet: 'tabler icons', code: "\uf3b0"
-  },
-  
-  "ti-steam" : {
-    iconSet: 'tabler icons', code: "\uf24b"
-  },
-  
-  "ti-steering-wheel" : {
-    iconSet: 'tabler icons', code: "\uec7b"
-  },
-  
-  "ti-steering-wheel-off" : {
-    iconSet: 'tabler icons', code: "\uf431"
-  },
-  
-  "ti-step-into" : {
-    iconSet: 'tabler icons', code: "\uece0"
-  },
-  
-  "ti-step-out" : {
-    iconSet: 'tabler icons', code: "\uece1"
-  },
-  
-  "ti-stereo-glasses" : {
-    iconSet: 'tabler icons', code: "\uf4cb"
-  },
-  
-  "ti-stethoscope" : {
-    iconSet: 'tabler icons', code: "\uedbe"
-  },
-  
-  "ti-stethoscope-off" : {
-    iconSet: 'tabler icons', code: "\uf432"
-  },
-  
-  "ti-sticker" : {
-    iconSet: 'tabler icons', code: "\ueb2f"
-  },
-  
-  "ti-storm" : {
-    iconSet: 'tabler icons', code: "\uf24c"
-  },
-  
-  "ti-storm-off" : {
-    iconSet: 'tabler icons', code: "\uf433"
-  },
-  
-  "ti-stretching" : {
-    iconSet: 'tabler icons', code: "\uf2db"
-  },
-  
-  "ti-strikethrough" : {
-    iconSet: 'tabler icons', code: "\ueb9e"
-  },
-  
-  "ti-submarine" : {
-    iconSet: 'tabler icons', code: "\ued94"
-  },
-  
-  "ti-subscript" : {
-    iconSet: 'tabler icons', code: "\ueb9f"
-  },
-  
-  "ti-subtask" : {
-    iconSet: 'tabler icons', code: "\uec9f"
-  },
-  
-  "ti-sum" : {
-    iconSet: 'tabler icons', code: "\ueb73"
-  },
-  
-  "ti-sum-off" : {
-    iconSet: 'tabler icons', code: "\uf1ab"
-  },
-  
-  "ti-sun" : {
-    iconSet: 'tabler icons', code: "\ueb30"
-  },
-  
-  "ti-sun-filled" : {
-    iconSet: 'tabler icons', code: "\uf6a9"
-  },
-  
-  "ti-sun-high" : {
-    iconSet: 'tabler icons', code: "\uf236"
-  },
-  
-  "ti-sun-low" : {
-    iconSet: 'tabler icons', code: "\uf237"
-  },
-  
-  "ti-sun-moon" : {
-    iconSet: 'tabler icons', code: "\uf4a3"
-  },
-  
-  "ti-sun-off" : {
-    iconSet: 'tabler icons', code: "\ued63"
-  },
-  
-  "ti-sun-wind" : {
-    iconSet: 'tabler icons', code: "\uf238"
-  },
-  
-  "ti-sunglasses" : {
-    iconSet: 'tabler icons', code: "\uf239"
-  },
-  
-  "ti-sunrise" : {
-    iconSet: 'tabler icons', code: "\uef1c"
-  },
-  
-  "ti-sunset" : {
-    iconSet: 'tabler icons', code: "\uec31"
-  },
-  
-  "ti-sunset-2" : {
-    iconSet: 'tabler icons', code: "\uf23a"
-  },
-  
-  "ti-superscript" : {
-    iconSet: 'tabler icons', code: "\ueba0"
-  },
-  
-  "ti-svg" : {
-    iconSet: 'tabler icons', code: "\uf25a"
-  },
-  
-  "ti-swimming" : {
-    iconSet: 'tabler icons', code: "\uec92"
-  },
-  
-  "ti-swipe" : {
-    iconSet: 'tabler icons', code: "\uf551"
-  },
-  
-  "ti-switch" : {
-    iconSet: 'tabler icons', code: "\ueb33"
-  },
-  
-  "ti-switch-2" : {
-    iconSet: 'tabler icons', code: "\uedbf"
-  },
-  
-  "ti-switch-3" : {
-    iconSet: 'tabler icons', code: "\uedc0"
-  },
-  
-  "ti-switch-horizontal" : {
-    iconSet: 'tabler icons', code: "\ueb31"
-  },
-  
-  "ti-switch-vertical" : {
-    iconSet: 'tabler icons', code: "\ueb32"
-  },
-  
-  "ti-sword" : {
-    iconSet: 'tabler icons', code: "\uf030"
-  },
-  
-  "ti-sword-off" : {
-    iconSet: 'tabler icons', code: "\uf434"
-  },
-  
-  "ti-swords" : {
-    iconSet: 'tabler icons', code: "\uf132"
-  },
-  
-  "ti-table" : {
-    iconSet: 'tabler icons', code: "\ueba1"
-  },
-  
-  "ti-table-alias" : {
-    iconSet: 'tabler icons', code: "\uf25b"
-  },
-  
-  "ti-table-down" : {
-    iconSet: 'tabler icons', code: "\ufa1c"
-  },
-  
-  "ti-table-export" : {
-    iconSet: 'tabler icons', code: "\ueef8"
-  },
-  
-  "ti-table-filled" : {
-    iconSet: 'tabler icons', code: "\uf782"
-  },
-  
-  "ti-table-heart" : {
-    iconSet: 'tabler icons', code: "\ufa1d"
-  },
-  
-  "ti-table-import" : {
-    iconSet: 'tabler icons', code: "\ueef9"
-  },
-  
-  "ti-table-minus" : {
-    iconSet: 'tabler icons', code: "\ufa1e"
-  },
-  
-  "ti-table-off" : {
-    iconSet: 'tabler icons', code: "\ueefa"
-  },
-  
-  "ti-table-options" : {
-    iconSet: 'tabler icons', code: "\uf25c"
-  },
-  
-  "ti-table-plus" : {
-    iconSet: 'tabler icons', code: "\ufa1f"
-  },
-  
-  "ti-table-share" : {
-    iconSet: 'tabler icons', code: "\ufa20"
-  },
-  
-  "ti-table-shortcut" : {
-    iconSet: 'tabler icons', code: "\uf25d"
-  },
-  
-  "ti-tag" : {
-    iconSet: 'tabler icons', code: "\ueb34"
-  },
-  
-  "ti-tag-off" : {
-    iconSet: 'tabler icons', code: "\uefc0"
-  },
-  
-  "ti-tags" : {
-    iconSet: 'tabler icons', code: "\uef86"
-  },
-  
-  "ti-tags-off" : {
-    iconSet: 'tabler icons', code: "\uefc1"
-  },
-  
-  "ti-tallymark-1" : {
-    iconSet: 'tabler icons', code: "\uec46"
-  },
-  
-  "ti-tallymark-2" : {
-    iconSet: 'tabler icons', code: "\uec47"
-  },
-  
-  "ti-tallymark-3" : {
-    iconSet: 'tabler icons', code: "\uec48"
-  },
-  
-  "ti-tallymark-4" : {
-    iconSet: 'tabler icons', code: "\uec49"
-  },
-  
-  "ti-tallymarks" : {
-    iconSet: 'tabler icons', code: "\uec4a"
-  },
-  
-  "ti-tank" : {
-    iconSet: 'tabler icons', code: "\ued95"
-  },
-  
-  "ti-target" : {
-    iconSet: 'tabler icons', code: "\ueb35"
-  },
-  
-  "ti-target-arrow" : {
-    iconSet: 'tabler icons', code: "\uf51a"
-  },
-  
-  "ti-target-off" : {
-    iconSet: 'tabler icons', code: "\uf1ad"
-  },
-  
-  "ti-teapot" : {
-    iconSet: 'tabler icons', code: "\uf552"
-  },
-  
-  "ti-telescope" : {
-    iconSet: 'tabler icons', code: "\uf07d"
-  },
-  
-  "ti-telescope-off" : {
-    iconSet: 'tabler icons', code: "\uf1ae"
-  },
-  
-  "ti-temperature" : {
-    iconSet: 'tabler icons', code: "\ueb38"
-  },
-  
-  "ti-temperature-celsius" : {
-    iconSet: 'tabler icons', code: "\ueb36"
-  },
-  
-  "ti-temperature-fahrenheit" : {
-    iconSet: 'tabler icons', code: "\ueb37"
-  },
-  
-  "ti-temperature-minus" : {
-    iconSet: 'tabler icons', code: "\uebed"
-  },
-  
-  "ti-temperature-off" : {
-    iconSet: 'tabler icons', code: "\uf1af"
-  },
-  
-  "ti-temperature-plus" : {
-    iconSet: 'tabler icons', code: "\uebee"
-  },
-  
-  "ti-template" : {
-    iconSet: 'tabler icons', code: "\ueb39"
-  },
-  
-  "ti-template-off" : {
-    iconSet: 'tabler icons', code: "\uf1b0"
-  },
-  
-  "ti-tent" : {
-    iconSet: 'tabler icons', code: "\ueefb"
-  },
-  
-  "ti-tent-off" : {
-    iconSet: 'tabler icons', code: "\uf435"
-  },
-  
-  "ti-terminal" : {
-    iconSet: 'tabler icons', code: "\uebdc"
-  },
-  
-  "ti-terminal-2" : {
-    iconSet: 'tabler icons', code: "\uebef"
-  },
-  
-  "ti-test-pipe" : {
-    iconSet: 'tabler icons', code: "\ueb3a"
-  },
-  
-  "ti-test-pipe-2" : {
-    iconSet: 'tabler icons', code: "\uf0a4"
-  },
-  
-  "ti-test-pipe-off" : {
-    iconSet: 'tabler icons', code: "\uf1b1"
-  },
-  
-  "ti-tex" : {
-    iconSet: 'tabler icons', code: "\uf4e0"
-  },
-  
-  "ti-text-caption" : {
-    iconSet: 'tabler icons', code: "\uf4a4"
-  },
-  
-  "ti-text-color" : {
-    iconSet: 'tabler icons', code: "\uf2dc"
-  },
-  
-  "ti-text-decrease" : {
-    iconSet: 'tabler icons', code: "\uf202"
-  },
-  
-  "ti-text-direction-ltr" : {
-    iconSet: 'tabler icons', code: "\ueefc"
-  },
-  
-  "ti-text-direction-rtl" : {
-    iconSet: 'tabler icons', code: "\ueefd"
-  },
-  
-  "ti-text-increase" : {
-    iconSet: 'tabler icons', code: "\uf203"
-  },
-  
-  "ti-text-orientation" : {
-    iconSet: 'tabler icons', code: "\uf2a4"
-  },
-  
-  "ti-text-plus" : {
-    iconSet: 'tabler icons', code: "\uf2a5"
-  },
-  
-  "ti-text-recognition" : {
-    iconSet: 'tabler icons', code: "\uf204"
-  },
-  
-  "ti-text-resize" : {
-    iconSet: 'tabler icons', code: "\uef87"
-  },
-  
-  "ti-text-size" : {
-    iconSet: 'tabler icons', code: "\uf2b1"
-  },
-  
-  "ti-text-spellcheck" : {
-    iconSet: 'tabler icons', code: "\uf2a6"
-  },
-  
-  "ti-text-wrap" : {
-    iconSet: 'tabler icons', code: "\uebdd"
-  },
-  
-  "ti-text-wrap-disabled" : {
-    iconSet: 'tabler icons', code: "\ueca7"
-  },
-  
-  "ti-texture" : {
-    iconSet: 'tabler icons', code: "\uf51b"
-  },
-  
-  "ti-theater" : {
-    iconSet: 'tabler icons', code: "\uf79b"
-  },
-  
-  "ti-thermometer" : {
-    iconSet: 'tabler icons', code: "\uef67"
-  },
-  
-  "ti-thumb-down" : {
-    iconSet: 'tabler icons', code: "\ueb3b"
-  },
-  
-  "ti-thumb-down-filled" : {
-    iconSet: 'tabler icons', code: "\uf6aa"
-  },
-  
-  "ti-thumb-down-off" : {
-    iconSet: 'tabler icons', code: "\uf436"
-  },
-  
-  "ti-thumb-up" : {
-    iconSet: 'tabler icons', code: "\ueb3c"
-  },
-  
-  "ti-thumb-up-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ab"
-  },
-  
-  "ti-thumb-up-off" : {
-    iconSet: 'tabler icons', code: "\uf437"
-  },
-  
-  "ti-tic-tac" : {
-    iconSet: 'tabler icons', code: "\uf51c"
-  },
-  
-  "ti-ticket" : {
-    iconSet: 'tabler icons', code: "\ueb3d"
-  },
-  
-  "ti-ticket-off" : {
-    iconSet: 'tabler icons', code: "\uf1b2"
-  },
-  
-  "ti-tie" : {
-    iconSet: 'tabler icons', code: "\uf07e"
-  },
-  
-  "ti-tilde" : {
-    iconSet: 'tabler icons', code: "\uf4a5"
-  },
-  
-  "ti-tilt-shift" : {
-    iconSet: 'tabler icons', code: "\ueefe"
-  },
-  
-  "ti-tilt-shift-off" : {
-    iconSet: 'tabler icons', code: "\uf1b3"
-  },
-  
-  "ti-timeline" : {
-    iconSet: 'tabler icons', code: "\uf031"
-  },
-  
-  "ti-timeline-event" : {
-    iconSet: 'tabler icons', code: "\uf553"
-  },
-  
-  "ti-timeline-event-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf662"
-  },
-  
-  "ti-timeline-event-minus" : {
-    iconSet: 'tabler icons', code: "\uf663"
-  },
-  
-  "ti-timeline-event-plus" : {
-    iconSet: 'tabler icons', code: "\uf664"
-  },
-  
-  "ti-timeline-event-text" : {
-    iconSet: 'tabler icons', code: "\uf665"
-  },
-  
-  "ti-timeline-event-x" : {
-    iconSet: 'tabler icons', code: "\uf666"
-  },
-  
-  "ti-tir" : {
-    iconSet: 'tabler icons', code: "\uebf0"
-  },
-  
-  "ti-toggle-left" : {
-    iconSet: 'tabler icons', code: "\ueb3e"
-  },
-  
-  "ti-toggle-right" : {
-    iconSet: 'tabler icons', code: "\ueb3f"
-  },
-  
-  "ti-toilet-paper" : {
-    iconSet: 'tabler icons', code: "\uefd3"
-  },
-  
-  "ti-toilet-paper-off" : {
-    iconSet: 'tabler icons', code: "\uf1b4"
-  },
-  
-  "ti-tool" : {
-    iconSet: 'tabler icons', code: "\ueb40"
-  },
-  
-  "ti-tools" : {
-    iconSet: 'tabler icons', code: "\uebca"
-  },
-  
-  "ti-tools-kitchen" : {
-    iconSet: 'tabler icons', code: "\ued64"
-  },
-  
-  "ti-tools-kitchen-2" : {
-    iconSet: 'tabler icons', code: "\ueeff"
-  },
-  
-  "ti-tools-kitchen-2-off" : {
-    iconSet: 'tabler icons', code: "\uf1b5"
-  },
-  
-  "ti-tools-kitchen-off" : {
-    iconSet: 'tabler icons', code: "\uf1b6"
-  },
-  
-  "ti-tools-off" : {
-    iconSet: 'tabler icons', code: "\uf1b7"
-  },
-  
-  "ti-tooltip" : {
-    iconSet: 'tabler icons', code: "\uf2dd"
-  },
-  
-  "ti-topology-bus" : {
-    iconSet: 'tabler icons', code: "\uf5d9"
-  },
-  
-  "ti-topology-complex" : {
-    iconSet: 'tabler icons', code: "\uf5da"
-  },
-  
-  "ti-topology-full" : {
-    iconSet: 'tabler icons', code: "\uf5dc"
-  },
-  
-  "ti-topology-full-hierarchy" : {
-    iconSet: 'tabler icons', code: "\uf5db"
-  },
-  
-  "ti-topology-ring" : {
-    iconSet: 'tabler icons', code: "\uf5df"
-  },
-  
-  "ti-topology-ring-2" : {
-    iconSet: 'tabler icons', code: "\uf5dd"
-  },
-  
-  "ti-topology-ring-3" : {
-    iconSet: 'tabler icons', code: "\uf5de"
-  },
-  
-  "ti-topology-star" : {
-    iconSet: 'tabler icons', code: "\uf5e5"
-  },
-  
-  "ti-topology-star-2" : {
-    iconSet: 'tabler icons', code: "\uf5e0"
-  },
-  
-  "ti-topology-star-3" : {
-    iconSet: 'tabler icons', code: "\uf5e1"
-  },
-  
-  "ti-topology-star-ring" : {
-    iconSet: 'tabler icons', code: "\uf5e4"
-  },
-  
-  "ti-topology-star-ring-2" : {
-    iconSet: 'tabler icons', code: "\uf5e2"
-  },
-  
-  "ti-topology-star-ring-3" : {
-    iconSet: 'tabler icons', code: "\uf5e3"
-  },
-  
-  "ti-torii" : {
-    iconSet: 'tabler icons', code: "\uf59b"
-  },
-  
-  "ti-tornado" : {
-    iconSet: 'tabler icons', code: "\uece2"
-  },
-  
-  "ti-tournament" : {
-    iconSet: 'tabler icons', code: "\uecd0"
-  },
-  
-  "ti-tower" : {
-    iconSet: 'tabler icons', code: "\uf2cb"
-  },
-  
-  "ti-tower-off" : {
-    iconSet: 'tabler icons', code: "\uf2ca"
-  },
-  
-  "ti-track" : {
-    iconSet: 'tabler icons', code: "\uef00"
-  },
-  
-  "ti-tractor" : {
-    iconSet: 'tabler icons', code: "\uec0d"
-  },
-  
-  "ti-trademark" : {
-    iconSet: 'tabler icons', code: "\uec0e"
-  },
-  
-  "ti-traffic-cone" : {
-    iconSet: 'tabler icons', code: "\uec0f"
-  },
-  
-  "ti-traffic-cone-off" : {
-    iconSet: 'tabler icons', code: "\uf1b8"
-  },
-  
-  "ti-traffic-lights" : {
-    iconSet: 'tabler icons', code: "\ued39"
-  },
-  
-  "ti-traffic-lights-off" : {
-    iconSet: 'tabler icons', code: "\uf1b9"
-  },
-  
-  "ti-train" : {
-    iconSet: 'tabler icons', code: "\ued96"
-  },
-  
-  "ti-transfer-in" : {
-    iconSet: 'tabler icons', code: "\uef2f"
-  },
-  
-  "ti-transfer-out" : {
-    iconSet: 'tabler icons', code: "\uef30"
-  },
-  
-  "ti-transform" : {
-    iconSet: 'tabler icons', code: "\uf38e"
-  },
-  
-  "ti-transform-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ac"
-  },
-  
-  "ti-transition-bottom" : {
-    iconSet: 'tabler icons', code: "\uf2b2"
-  },
-  
-  "ti-transition-left" : {
-    iconSet: 'tabler icons', code: "\uf2b3"
-  },
-  
-  "ti-transition-right" : {
-    iconSet: 'tabler icons', code: "\uf2b4"
-  },
-  
-  "ti-transition-top" : {
-    iconSet: 'tabler icons', code: "\uf2b5"
-  },
-  
-  "ti-trash" : {
-    iconSet: 'tabler icons', code: "\ueb41"
-  },
-  
-  "ti-trash-filled" : {
-    iconSet: 'tabler icons', code: "\uf783"
-  },
-  
-  "ti-trash-off" : {
-    iconSet: 'tabler icons', code: "\ued65"
-  },
-  
-  "ti-trash-x" : {
-    iconSet: 'tabler icons', code: "\uef88"
-  },
-  
-  "ti-trash-x-filled" : {
-    iconSet: 'tabler icons', code: "\uf784"
-  },
-  
-  "ti-tree" : {
-    iconSet: 'tabler icons', code: "\uef01"
-  },
-  
-  "ti-trees" : {
-    iconSet: 'tabler icons', code: "\uec10"
-  },
-  
-  "ti-trekking" : {
-    iconSet: 'tabler icons', code: "\uf5ad"
-  },
-  
-  "ti-trending-down" : {
-    iconSet: 'tabler icons', code: "\ueb42"
-  },
-  
-  "ti-trending-down-2" : {
-    iconSet: 'tabler icons', code: "\uedc1"
-  },
-  
-  "ti-trending-down-3" : {
-    iconSet: 'tabler icons', code: "\uedc2"
-  },
-  
-  "ti-trending-up" : {
-    iconSet: 'tabler icons', code: "\ueb43"
-  },
-  
-  "ti-trending-up-2" : {
-    iconSet: 'tabler icons', code: "\uedc3"
-  },
-  
-  "ti-trending-up-3" : {
-    iconSet: 'tabler icons', code: "\uedc4"
-  },
-  
-  "ti-triangle" : {
-    iconSet: 'tabler icons', code: "\ueb44"
-  },
-  
-  "ti-triangle-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ad"
-  },
-  
-  "ti-triangle-inverted" : {
-    iconSet: 'tabler icons', code: "\uf01d"
-  },
-  
-  "ti-triangle-inverted-filled" : {
-    iconSet: 'tabler icons', code: "\uf6ae"
-  },
-  
-  "ti-triangle-off" : {
-    iconSet: 'tabler icons', code: "\uef02"
-  },
-  
-  "ti-triangle-square-circle" : {
-    iconSet: 'tabler icons', code: "\uece8"
-  },
-  
-  "ti-triangles" : {
-    iconSet: 'tabler icons', code: "\uf0a5"
-  },
-  
-  "ti-trident" : {
-    iconSet: 'tabler icons', code: "\uecc5"
-  },
-  
-  "ti-trolley" : {
-    iconSet: 'tabler icons', code: "\uf4cc"
-  },
-  
-  "ti-trophy" : {
-    iconSet: 'tabler icons', code: "\ueb45"
-  },
-  
-  "ti-trophy-filled" : {
-    iconSet: 'tabler icons', code: "\uf6af"
-  },
-  
-  "ti-trophy-off" : {
-    iconSet: 'tabler icons', code: "\uf438"
-  },
-  
-  "ti-trowel" : {
-    iconSet: 'tabler icons', code: "\uf368"
-  },
-  
-  "ti-truck" : {
-    iconSet: 'tabler icons', code: "\uebc4"
-  },
-  
-  "ti-truck-delivery" : {
-    iconSet: 'tabler icons', code: "\uec4b"
-  },
-  
-  "ti-truck-loading" : {
-    iconSet: 'tabler icons', code: "\uf1da"
-  },
-  
-  "ti-truck-off" : {
-    iconSet: 'tabler icons', code: "\uef03"
-  },
-  
-  "ti-truck-return" : {
-    iconSet: 'tabler icons', code: "\uec4c"
-  },
-  
-  "ti-txt" : {
-    iconSet: 'tabler icons', code: "\uf3b1"
-  },
-  
-  "ti-typography" : {
-    iconSet: 'tabler icons', code: "\uebc5"
-  },
-  
-  "ti-typography-off" : {
-    iconSet: 'tabler icons', code: "\uf1ba"
-  },
-  
-  "ti-ufo" : {
-    iconSet: 'tabler icons', code: "\uf26f"
-  },
-  
-  "ti-ufo-off" : {
-    iconSet: 'tabler icons', code: "\uf26e"
-  },
-  
-  "ti-umbrella" : {
-    iconSet: 'tabler icons', code: "\uebf1"
-  },
-  
-  "ti-umbrella-filled" : {
-    iconSet: 'tabler icons', code: "\uf6b0"
-  },
-  
-  "ti-umbrella-off" : {
-    iconSet: 'tabler icons', code: "\uf1bb"
-  },
-  
-  "ti-underline" : {
-    iconSet: 'tabler icons', code: "\ueba2"
-  },
-  
-  "ti-unlink" : {
-    iconSet: 'tabler icons', code: "\ueb46"
-  },
-  
-  "ti-upload" : {
-    iconSet: 'tabler icons', code: "\ueb47"
-  },
-  
-  "ti-urgent" : {
-    iconSet: 'tabler icons', code: "\ueb48"
-  },
-  
-  "ti-usb" : {
-    iconSet: 'tabler icons', code: "\uf00c"
-  },
-  
-  "ti-user" : {
-    iconSet: 'tabler icons', code: "\ueb4d"
-  },
-  
-  "ti-user-bolt" : {
-    iconSet: 'tabler icons', code: "\uf9d1"
-  },
-  
-  "ti-user-cancel" : {
-    iconSet: 'tabler icons', code: "\uf9d2"
-  },
-  
-  "ti-user-check" : {
-    iconSet: 'tabler icons', code: "\ueb49"
-  },
-  
-  "ti-user-circle" : {
-    iconSet: 'tabler icons', code: "\uef68"
-  },
-  
-  "ti-user-code" : {
-    iconSet: 'tabler icons', code: "\uf9d3"
-  },
-  
-  "ti-user-cog" : {
-    iconSet: 'tabler icons', code: "\uf9d4"
-  },
-  
-  "ti-user-dollar" : {
-    iconSet: 'tabler icons', code: "\uf9d5"
-  },
-  
-  "ti-user-down" : {
-    iconSet: 'tabler icons', code: "\uf9d6"
-  },
-  
-  "ti-user-edit" : {
-    iconSet: 'tabler icons', code: "\uf7cc"
-  },
-  
-  "ti-user-exclamation" : {
-    iconSet: 'tabler icons', code: "\uec12"
-  },
-  
-  "ti-user-heart" : {
-    iconSet: 'tabler icons', code: "\uf7cd"
-  },
-  
-  "ti-user-minus" : {
-    iconSet: 'tabler icons', code: "\ueb4a"
-  },
-  
-  "ti-user-off" : {
-    iconSet: 'tabler icons', code: "\uecf9"
-  },
-  
-  "ti-user-pause" : {
-    iconSet: 'tabler icons', code: "\uf9d7"
-  },
-  
-  "ti-user-pin" : {
-    iconSet: 'tabler icons', code: "\uf7ce"
-  },
-  
-  "ti-user-plus" : {
-    iconSet: 'tabler icons', code: "\ueb4b"
-  },
-  
-  "ti-user-question" : {
-    iconSet: 'tabler icons', code: "\uf7cf"
-  },
-  
-  "ti-user-search" : {
-    iconSet: 'tabler icons', code: "\uef89"
-  },
-  
-  "ti-user-share" : {
-    iconSet: 'tabler icons', code: "\uf9d8"
-  },
-  
-  "ti-user-shield" : {
-    iconSet: 'tabler icons', code: "\uf7d0"
-  },
-  
-  "ti-user-star" : {
-    iconSet: 'tabler icons', code: "\uf7d1"
-  },
-  
-  "ti-user-up" : {
-    iconSet: 'tabler icons', code: "\uf7d2"
-  },
-  
-  "ti-user-x" : {
-    iconSet: 'tabler icons', code: "\ueb4c"
-  },
-  
-  "ti-users" : {
-    iconSet: 'tabler icons', code: "\uebf2"
-  },
-  
-  "ti-users-group" : {
-    iconSet: 'tabler icons', code: "\ufa21"
-  },
-  
-  "ti-users-minus" : {
-    iconSet: 'tabler icons', code: "\ufa0e"
-  },
-  
-  "ti-users-plus" : {
-    iconSet: 'tabler icons', code: "\ufa0f"
-  },
-  
-  "ti-uv-index" : {
-    iconSet: 'tabler icons', code: "\uf3b2"
-  },
-  
-  "ti-ux-circle" : {
-    iconSet: 'tabler icons', code: "\uf369"
-  },
-  
-  "ti-vaccine" : {
-    iconSet: 'tabler icons', code: "\uef04"
-  },
-  
-  "ti-vaccine-bottle" : {
-    iconSet: 'tabler icons', code: "\uef69"
-  },
-  
-  "ti-vaccine-bottle-off" : {
-    iconSet: 'tabler icons', code: "\uf439"
-  },
-  
-  "ti-vaccine-off" : {
-    iconSet: 'tabler icons', code: "\uf1bc"
-  },
-  
-  "ti-vacuum-cleaner" : {
-    iconSet: 'tabler icons', code: "\uf5e6"
-  },
-  
-  "ti-variable" : {
-    iconSet: 'tabler icons', code: "\uef05"
-  },
-  
-  "ti-variable-minus" : {
-    iconSet: 'tabler icons', code: "\uf36a"
-  },
-  
-  "ti-variable-off" : {
-    iconSet: 'tabler icons', code: "\uf1bd"
-  },
-  
-  "ti-variable-plus" : {
-    iconSet: 'tabler icons', code: "\uf36b"
-  },
-  
-  "ti-vector" : {
-    iconSet: 'tabler icons', code: "\ueca9"
-  },
-  
-  "ti-vector-bezier" : {
-    iconSet: 'tabler icons', code: "\uef1d"
-  },
-  
-  "ti-vector-bezier-2" : {
-    iconSet: 'tabler icons', code: "\uf1a3"
-  },
-  
-  "ti-vector-bezier-arc" : {
-    iconSet: 'tabler icons', code: "\uf4cd"
-  },
-  
-  "ti-vector-bezier-circle" : {
-    iconSet: 'tabler icons', code: "\uf4ce"
-  },
-  
-  "ti-vector-off" : {
-    iconSet: 'tabler icons', code: "\uf1be"
-  },
-  
-  "ti-vector-spline" : {
-    iconSet: 'tabler icons', code: "\uf565"
-  },
-  
-  "ti-vector-triangle" : {
-    iconSet: 'tabler icons', code: "\ueca8"
-  },
-  
-  "ti-vector-triangle-off" : {
-    iconSet: 'tabler icons', code: "\uf1bf"
-  },
-  
-  "ti-venus" : {
-    iconSet: 'tabler icons', code: "\uec86"
-  },
-  
-  "ti-versions" : {
-    iconSet: 'tabler icons', code: "\ued52"
-  },
-  
-  "ti-versions-filled" : {
-    iconSet: 'tabler icons', code: "\uf6b1"
-  },
-  
-  "ti-versions-off" : {
-    iconSet: 'tabler icons', code: "\uf1c0"
-  },
-  
-  "ti-video" : {
-    iconSet: 'tabler icons', code: "\ued22"
-  },
-  
-  "ti-video-minus" : {
-    iconSet: 'tabler icons', code: "\ued1f"
-  },
-  
-  "ti-video-off" : {
-    iconSet: 'tabler icons', code: "\ued20"
-  },
-  
-  "ti-video-plus" : {
-    iconSet: 'tabler icons', code: "\ued21"
-  },
-  
-  "ti-view-360" : {
-    iconSet: 'tabler icons', code: "\ued84"
-  },
-  
-  "ti-view-360-off" : {
-    iconSet: 'tabler icons', code: "\uf1c1"
-  },
-  
-  "ti-viewfinder" : {
-    iconSet: 'tabler icons', code: "\ueb4e"
-  },
-  
-  "ti-viewfinder-off" : {
-    iconSet: 'tabler icons', code: "\uf1c2"
-  },
-  
-  "ti-viewport-narrow" : {
-    iconSet: 'tabler icons', code: "\uebf3"
-  },
-  
-  "ti-viewport-wide" : {
-    iconSet: 'tabler icons', code: "\uebf4"
-  },
-  
-  "ti-vinyl" : {
-    iconSet: 'tabler icons', code: "\uf00d"
-  },
-  
-  "ti-vip" : {
-    iconSet: 'tabler icons', code: "\uf3b3"
-  },
-  
-  "ti-vip-off" : {
-    iconSet: 'tabler icons', code: "\uf43a"
-  },
-  
-  "ti-virus" : {
-    iconSet: 'tabler icons', code: "\ueb74"
-  },
-  
-  "ti-virus-off" : {
-    iconSet: 'tabler icons', code: "\ued66"
-  },
-  
-  "ti-virus-search" : {
-    iconSet: 'tabler icons', code: "\ued67"
-  },
-  
-  "ti-vocabulary" : {
-    iconSet: 'tabler icons', code: "\uef1e"
-  },
-  
-  "ti-vocabulary-off" : {
-    iconSet: 'tabler icons', code: "\uf43b"
-  },
-  
-  "ti-volcano" : {
-    iconSet: 'tabler icons', code: "\uf79c"
-  },
-  
-  "ti-volume" : {
-    iconSet: 'tabler icons', code: "\ueb51"
-  },
-  
-  "ti-volume-2" : {
-    iconSet: 'tabler icons', code: "\ueb4f"
-  },
-  
-  "ti-volume-3" : {
-    iconSet: 'tabler icons', code: "\ueb50"
-  },
-  
-  "ti-volume-off" : {
-    iconSet: 'tabler icons', code: "\uf1c3"
-  },
-  
-  "ti-walk" : {
-    iconSet: 'tabler icons', code: "\uec87"
-  },
-  
-  "ti-wall" : {
-    iconSet: 'tabler icons', code: "\uef7a"
-  },
-  
-  "ti-wall-off" : {
-    iconSet: 'tabler icons', code: "\uf43c"
-  },
-  
-  "ti-wallet" : {
-    iconSet: 'tabler icons', code: "\ueb75"
-  },
-  
-  "ti-wallet-off" : {
-    iconSet: 'tabler icons', code: "\uf1c4"
-  },
-  
-  "ti-wallpaper" : {
-    iconSet: 'tabler icons', code: "\uef56"
-  },
-  
-  "ti-wallpaper-off" : {
-    iconSet: 'tabler icons', code: "\uf1c5"
-  },
-  
-  "ti-wand" : {
-    iconSet: 'tabler icons', code: "\uebcb"
-  },
-  
-  "ti-wand-off" : {
-    iconSet: 'tabler icons', code: "\uf1c6"
-  },
-  
-  "ti-wash" : {
-    iconSet: 'tabler icons', code: "\uf311"
-  },
-  
-  "ti-wash-dry" : {
-    iconSet: 'tabler icons', code: "\uf304"
-  },
-  
-  "ti-wash-dry-1" : {
-    iconSet: 'tabler icons', code: "\uf2fa"
-  },
-  
-  "ti-wash-dry-2" : {
-    iconSet: 'tabler icons', code: "\uf2fb"
-  },
-  
-  "ti-wash-dry-3" : {
-    iconSet: 'tabler icons', code: "\uf2fc"
-  },
-  
-  "ti-wash-dry-a" : {
-    iconSet: 'tabler icons', code: "\uf2fd"
-  },
-  
-  "ti-wash-dry-dip" : {
-    iconSet: 'tabler icons', code: "\uf2fe"
-  },
-  
-  "ti-wash-dry-f" : {
-    iconSet: 'tabler icons', code: "\uf2ff"
-  },
-  
-  "ti-wash-dry-hang" : {
-    iconSet: 'tabler icons', code: "\uf300"
-  },
-  
-  "ti-wash-dry-off" : {
-    iconSet: 'tabler icons', code: "\uf301"
-  },
-  
-  "ti-wash-dry-p" : {
-    iconSet: 'tabler icons', code: "\uf302"
-  },
-  
-  "ti-wash-dry-shade" : {
-    iconSet: 'tabler icons', code: "\uf303"
-  },
-  
-  "ti-wash-dry-w" : {
-    iconSet: 'tabler icons', code: "\uf322"
-  },
-  
-  "ti-wash-dryclean" : {
-    iconSet: 'tabler icons', code: "\uf305"
-  },
-  
-  "ti-wash-dryclean-off" : {
-    iconSet: 'tabler icons', code: "\uf323"
-  },
-  
-  "ti-wash-gentle" : {
-    iconSet: 'tabler icons', code: "\uf306"
-  },
-  
-  "ti-wash-machine" : {
-    iconSet: 'tabler icons', code: "\uf25e"
-  },
-  
-  "ti-wash-off" : {
-    iconSet: 'tabler icons', code: "\uf307"
-  },
-  
-  "ti-wash-press" : {
-    iconSet: 'tabler icons', code: "\uf308"
-  },
-  
-  "ti-wash-temperature-1" : {
-    iconSet: 'tabler icons', code: "\uf309"
-  },
-  
-  "ti-wash-temperature-2" : {
-    iconSet: 'tabler icons', code: "\uf30a"
-  },
-  
-  "ti-wash-temperature-3" : {
-    iconSet: 'tabler icons', code: "\uf30b"
-  },
-  
-  "ti-wash-temperature-4" : {
-    iconSet: 'tabler icons', code: "\uf30c"
-  },
-  
-  "ti-wash-temperature-5" : {
-    iconSet: 'tabler icons', code: "\uf30d"
-  },
-  
-  "ti-wash-temperature-6" : {
-    iconSet: 'tabler icons', code: "\uf30e"
-  },
-  
-  "ti-wash-tumble-dry" : {
-    iconSet: 'tabler icons', code: "\uf30f"
-  },
-  
-  "ti-wash-tumble-off" : {
-    iconSet: 'tabler icons', code: "\uf310"
-  },
-  
-  "ti-wave-saw-tool" : {
-    iconSet: 'tabler icons', code: "\uecd3"
-  },
-  
-  "ti-wave-sine" : {
-    iconSet: 'tabler icons', code: "\uecd4"
-  },
-  
-  "ti-wave-square" : {
-    iconSet: 'tabler icons', code: "\uecd5"
-  },
-  
-  "ti-webhook" : {
-    iconSet: 'tabler icons', code: "\uf01e"
-  },
-  
-  "ti-webhook-off" : {
-    iconSet: 'tabler icons', code: "\uf43d"
-  },
-  
-  "ti-weight" : {
-    iconSet: 'tabler icons', code: "\uf589"
-  },
-  
-  "ti-wheelchair" : {
-    iconSet: 'tabler icons', code: "\uf1db"
-  },
-  
-  "ti-wheelchair-off" : {
-    iconSet: 'tabler icons', code: "\uf43e"
-  },
-  
-  "ti-whirl" : {
-    iconSet: 'tabler icons', code: "\uf51d"
-  },
-  
-  "ti-wifi" : {
-    iconSet: 'tabler icons', code: "\ueb52"
-  },
-  
-  "ti-wifi-0" : {
-    iconSet: 'tabler icons', code: "\ueba3"
-  },
-  
-  "ti-wifi-1" : {
-    iconSet: 'tabler icons', code: "\ueba4"
-  },
-  
-  "ti-wifi-2" : {
-    iconSet: 'tabler icons', code: "\ueba5"
-  },
-  
-  "ti-wifi-off" : {
-    iconSet: 'tabler icons', code: "\uecfa"
-  },
-  
-  "ti-wind" : {
-    iconSet: 'tabler icons', code: "\uec34"
-  },
-  
-  "ti-wind-off" : {
-    iconSet: 'tabler icons', code: "\uf1c7"
-  },
-  
-  "ti-windmill" : {
-    iconSet: 'tabler icons', code: "\ued85"
-  },
-  
-  "ti-windmill-filled" : {
-    iconSet: 'tabler icons', code: "\uf6b2"
-  },
-  
-  "ti-windmill-off" : {
-    iconSet: 'tabler icons', code: "\uf1c8"
-  },
-  
-  "ti-window" : {
-    iconSet: 'tabler icons', code: "\uef06"
-  },
-  
-  "ti-window-maximize" : {
-    iconSet: 'tabler icons', code: "\uf1f1"
-  },
-  
-  "ti-window-minimize" : {
-    iconSet: 'tabler icons', code: "\uf1f2"
-  },
-  
-  "ti-window-off" : {
-    iconSet: 'tabler icons', code: "\uf1c9"
-  },
-  
-  "ti-windsock" : {
-    iconSet: 'tabler icons', code: "\uf06d"
-  },
-  
-  "ti-wiper" : {
-    iconSet: 'tabler icons', code: "\uecab"
-  },
-  
-  "ti-wiper-wash" : {
-    iconSet: 'tabler icons', code: "\uecaa"
-  },
-  
-  "ti-woman" : {
-    iconSet: 'tabler icons', code: "\ueb53"
-  },
-  
-  "ti-wood" : {
-    iconSet: 'tabler icons', code: "\uf359"
-  },
-  
-  "ti-world" : {
-    iconSet: 'tabler icons', code: "\ueb54"
-  },
-  
-  "ti-world-bolt" : {
-    iconSet: 'tabler icons', code: "\uf9d9"
-  },
-  
-  "ti-world-cancel" : {
-    iconSet: 'tabler icons', code: "\uf9da"
-  },
-  
-  "ti-world-check" : {
-    iconSet: 'tabler icons', code: "\uf9db"
-  },
-  
-  "ti-world-code" : {
-    iconSet: 'tabler icons', code: "\uf9dc"
-  },
-  
-  "ti-world-cog" : {
-    iconSet: 'tabler icons', code: "\uf9dd"
-  },
-  
-  "ti-world-dollar" : {
-    iconSet: 'tabler icons', code: "\uf9de"
-  },
-  
-  "ti-world-down" : {
-    iconSet: 'tabler icons', code: "\uf9df"
-  },
-  
-  "ti-world-download" : {
-    iconSet: 'tabler icons', code: "\uef8a"
-  },
-  
-  "ti-world-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf9e0"
-  },
-  
-  "ti-world-heart" : {
-    iconSet: 'tabler icons', code: "\uf9e1"
-  },
-  
-  "ti-world-latitude" : {
-    iconSet: 'tabler icons', code: "\ued2e"
-  },
-  
-  "ti-world-longitude" : {
-    iconSet: 'tabler icons', code: "\ued2f"
-  },
-  
-  "ti-world-minus" : {
-    iconSet: 'tabler icons', code: "\uf9e2"
-  },
-  
-  "ti-world-off" : {
-    iconSet: 'tabler icons', code: "\uf1ca"
-  },
-  
-  "ti-world-pause" : {
-    iconSet: 'tabler icons', code: "\uf9e3"
-  },
-  
-  "ti-world-pin" : {
-    iconSet: 'tabler icons', code: "\uf9e4"
-  },
-  
-  "ti-world-plus" : {
-    iconSet: 'tabler icons', code: "\uf9e5"
-  },
-  
-  "ti-world-question" : {
-    iconSet: 'tabler icons', code: "\uf9e6"
-  },
-  
-  "ti-world-search" : {
-    iconSet: 'tabler icons', code: "\uf9e7"
-  },
-  
-  "ti-world-share" : {
-    iconSet: 'tabler icons', code: "\uf9e8"
-  },
-  
-  "ti-world-star" : {
-    iconSet: 'tabler icons', code: "\uf9e9"
-  },
-  
-  "ti-world-up" : {
-    iconSet: 'tabler icons', code: "\uf9ea"
-  },
-  
-  "ti-world-upload" : {
-    iconSet: 'tabler icons', code: "\uef8b"
-  },
-  
-  "ti-world-www" : {
-    iconSet: 'tabler icons', code: "\uf38f"
-  },
-  
-  "ti-world-x" : {
-    iconSet: 'tabler icons', code: "\uf9eb"
-  },
-  
-  "ti-wrecking-ball" : {
-    iconSet: 'tabler icons', code: "\ued97"
-  },
-  
-  "ti-writing" : {
-    iconSet: 'tabler icons', code: "\uef08"
-  },
-  
-  "ti-writing-off" : {
-    iconSet: 'tabler icons', code: "\uf1cb"
-  },
-  
-  "ti-writing-sign" : {
-    iconSet: 'tabler icons', code: "\uef07"
-  },
-  
-  "ti-writing-sign-off" : {
-    iconSet: 'tabler icons', code: "\uf1cc"
-  },
-  
-  "ti-x" : {
-    iconSet: 'tabler icons', code: "\ueb55"
-  },
-  
-  "ti-xbox-a" : {
-    iconSet: 'tabler icons', code: "\uf2b6"
-  },
-  
-  "ti-xbox-b" : {
-    iconSet: 'tabler icons', code: "\uf2b7"
-  },
-  
-  "ti-xbox-x" : {
-    iconSet: 'tabler icons', code: "\uf2b8"
-  },
-  
-  "ti-xbox-y" : {
-    iconSet: 'tabler icons', code: "\uf2b9"
-  },
-  
-  "ti-xd" : {
-    iconSet: 'tabler icons', code: "\ufa33"
-  },
-  
-  "ti-yin-yang" : {
-    iconSet: 'tabler icons', code: "\uec35"
-  },
-  
-  "ti-yin-yang-filled" : {
-    iconSet: 'tabler icons', code: "\uf785"
-  },
-  
-  "ti-yoga" : {
-    iconSet: 'tabler icons', code: "\uf01f"
-  },
-  
-  "ti-zeppelin" : {
-    iconSet: 'tabler icons', code: "\uf270"
-  },
-  
-  "ti-zeppelin-off" : {
-    iconSet: 'tabler icons', code: "\uf43f"
-  },
-  
-  "ti-zip" : {
-    iconSet: 'tabler icons', code: "\uf3b4"
-  },
-  
-  "ti-zodiac-aquarius" : {
-    iconSet: 'tabler icons', code: "\uecac"
-  },
-  
-  "ti-zodiac-aries" : {
-    iconSet: 'tabler icons', code: "\uecad"
-  },
-  
-  "ti-zodiac-cancer" : {
-    iconSet: 'tabler icons', code: "\uecae"
-  },
-  
-  "ti-zodiac-capricorn" : {
-    iconSet: 'tabler icons', code: "\uecaf"
-  },
-  
-  "ti-zodiac-gemini" : {
-    iconSet: 'tabler icons', code: "\uecb0"
-  },
-  
-  "ti-zodiac-leo" : {
-    iconSet: 'tabler icons', code: "\uecb1"
-  },
-  
-  "ti-zodiac-libra" : {
-    iconSet: 'tabler icons', code: "\uecb2"
-  },
-  
-  "ti-zodiac-pisces" : {
-    iconSet: 'tabler icons', code: "\uecb3"
-  },
-  
-  "ti-zodiac-sagittarius" : {
-    iconSet: 'tabler icons', code: "\uecb4"
-  },
-  
-  "ti-zodiac-scorpio" : {
-    iconSet: 'tabler icons', code: "\uecb5"
-  },
-  
-  "ti-zodiac-taurus" : {
-    iconSet: 'tabler icons', code: "\uecb6"
-  },
-  
-  "ti-zodiac-virgo" : {
-    iconSet: 'tabler icons', code: "\uecb7"
-  },
-  
-  "ti-zoom-cancel" : {
-    iconSet: 'tabler icons', code: "\uec4d"
-  },
-  
-  "ti-zoom-check" : {
-    iconSet: 'tabler icons', code: "\uef09"
-  },
-  
-  "ti-zoom-check-filled" : {
-    iconSet: 'tabler icons', code: "\uf786"
-  },
-  
-  "ti-zoom-code" : {
-    iconSet: 'tabler icons', code: "\uf07f"
-  },
-  
-  "ti-zoom-exclamation" : {
-    iconSet: 'tabler icons', code: "\uf080"
-  },
-  
-  "ti-zoom-filled" : {
-    iconSet: 'tabler icons', code: "\uf787"
-  },
-  
-  "ti-zoom-in" : {
-    iconSet: 'tabler icons', code: "\ueb56"
-  },
-  
-  "ti-zoom-in-area" : {
-    iconSet: 'tabler icons', code: "\uf1dc"
-  },
-  
-  "ti-zoom-in-area-filled" : {
-    iconSet: 'tabler icons', code: "\uf788"
-  },
-  
-  "ti-zoom-in-filled" : {
-    iconSet: 'tabler icons', code: "\uf789"
-  },
-  
-  "ti-zoom-money" : {
-    iconSet: 'tabler icons', code: "\uef0a"
-  },
-  
-  "ti-zoom-out" : {
-    iconSet: 'tabler icons', code: "\ueb57"
-  },
-  
-  "ti-zoom-out-area" : {
-    iconSet: 'tabler icons', code: "\uf1dd"
-  },
-  
-  "ti-zoom-out-filled" : {
-    iconSet: 'tabler icons', code: "\uf78a"
-  },
-  
-  "ti-zoom-pan" : {
-    iconSet: 'tabler icons', code: "\uf1de"
-  },
-  
-  "ti-zoom-question" : {
-    iconSet: 'tabler icons', code: "\uedeb"
-  },
-  
-  "ti-zoom-replace" : {
-    iconSet: 'tabler icons', code: "\uf2a7"
-  },
-  
-  "ti-zoom-reset" : {
-    iconSet: 'tabler icons', code: "\uf295"
-  },
-  
-  "ti-zzz" : {
-    iconSet: 'tabler icons', code: "\uf228"
-  },
-  
-  "ti-zzz-off" : {
-    iconSet: 'tabler icons', code: "\uf440"
-  }
+  // ************
+  // TABLER ICONS
+  // ************
+  "ti-123": {iconSet: 'tabler icons', code: "\uf554" },
+  "ti-24-hours": {iconSet: 'tabler icons', code: "\uf5e7" },
+  "ti-2fa": {iconSet: 'tabler icons', code: "\ueca0" },
+  "ti-360": {iconSet: 'tabler icons', code: "\uf62f" },
+  "ti-360-view": {iconSet: 'tabler icons', code: "\uf566" },
+  "ti-3d-cube-sphere": {iconSet: 'tabler icons', code: "\uecd7" },
+  "ti-3d-cube-sphere-off": {iconSet: 'tabler icons', code: "\uf3b5" },
+  "ti-3d-rotate": {iconSet: 'tabler icons', code: "\uf020" },
+  "ti-a-b": {iconSet: 'tabler icons', code: "\uec36" },
+  "ti-a-b-2": {iconSet: 'tabler icons', code: "\uf25f" },
+  "ti-a-b-off": {iconSet: 'tabler icons', code: "\uf0a6" },
+  "ti-abacus": {iconSet: 'tabler icons', code: "\uf05c" },
+  "ti-abacus-off": {iconSet: 'tabler icons', code: "\uf3b6" },
+  "ti-abc": {iconSet: 'tabler icons', code: "\uf567" },
+  "ti-access-point": {iconSet: 'tabler icons', code: "\ued1b" },
+  "ti-access-point-off": {iconSet: 'tabler icons', code: "\ued1a" },
+  "ti-accessible": {iconSet: 'tabler icons', code: "\ueba9" },
+  "ti-accessible-off": {iconSet: 'tabler icons', code: "\uf0a7" },
+  "ti-accessible-off-filled": {iconSet: 'tabler icons', code: "\uf6ea" },
+  "ti-activity": {iconSet: 'tabler icons', code: "\ued23" },
+  "ti-activity-heartbeat": {iconSet: 'tabler icons', code: "\uf0db" },
+  "ti-ad": {iconSet: 'tabler icons', code: "\uea02" },
+  "ti-ad-2": {iconSet: 'tabler icons', code: "\uef1f" },
+  "ti-ad-circle": {iconSet: 'tabler icons', code: "\uf79e" },
+  "ti-ad-circle-filled": {iconSet: 'tabler icons', code: "\uf7d3" },
+  "ti-ad-circle-off": {iconSet: 'tabler icons', code: "\uf79d" },
+  "ti-ad-filled": {iconSet: 'tabler icons', code: "\uf6eb" },
+  "ti-ad-off": {iconSet: 'tabler icons', code: "\uf3b7" },
+  "ti-address-book": {iconSet: 'tabler icons', code: "\uf021" },
+  "ti-address-book-off": {iconSet: 'tabler icons', code: "\uf3b8" },
+  "ti-adjustments": {iconSet: 'tabler icons', code: "\uea03" },
+  "ti-adjustments-alt": {iconSet: 'tabler icons', code: "\uec37" },
+  "ti-adjustments-bolt": {iconSet: 'tabler icons', code: "\uf7fb" },
+  "ti-adjustments-cancel": {iconSet: 'tabler icons', code: "\uf7fc" },
+  "ti-adjustments-check": {iconSet: 'tabler icons', code: "\uf7fd" },
+  "ti-adjustments-code": {iconSet: 'tabler icons', code: "\uf7fe" },
+  "ti-adjustments-cog": {iconSet: 'tabler icons', code: "\uf7ff" },
+  "ti-adjustments-dollar": {iconSet: 'tabler icons', code: "\uf800" },
+  "ti-adjustments-down": {iconSet: 'tabler icons', code: "\uf801" },
+  "ti-adjustments-exclamation": {iconSet: 'tabler icons', code: "\uf802" },
+  "ti-adjustments-filled": {iconSet: 'tabler icons', code: "\uf6ec" },
+  "ti-adjustments-heart": {iconSet: 'tabler icons', code: "\uf803" },
+  "ti-adjustments-horizontal": {iconSet: 'tabler icons', code: "\uec38" },
+  "ti-adjustments-minus": {iconSet: 'tabler icons', code: "\uf804" },
+  "ti-adjustments-off": {iconSet: 'tabler icons', code: "\uf0a8" },
+  "ti-adjustments-pause": {iconSet: 'tabler icons', code: "\uf805" },
+  "ti-adjustments-pin": {iconSet: 'tabler icons', code: "\uf806" },
+  "ti-adjustments-plus": {iconSet: 'tabler icons', code: "\uf807" },
+  "ti-adjustments-question": {iconSet: 'tabler icons', code: "\uf808" },
+  "ti-adjustments-search": {iconSet: 'tabler icons', code: "\uf809" },
+  "ti-adjustments-share": {iconSet: 'tabler icons', code: "\uf80a" },
+  "ti-adjustments-star": {iconSet: 'tabler icons', code: "\uf80b" },
+  "ti-adjustments-up": {iconSet: 'tabler icons', code: "\uf80c" },
+  "ti-adjustments-x": {iconSet: 'tabler icons', code: "\uf80d" },
+  "ti-aerial-lift": {iconSet: 'tabler icons', code: "\uedfe" },
+  "ti-affiliate": {iconSet: 'tabler icons', code: "\uedff" },
+  "ti-affiliate-filled": {iconSet: 'tabler icons', code: "\uf6ed" },
+  "ti-air-balloon": {iconSet: 'tabler icons', code: "\uf4a6" },
+  "ti-air-conditioning": {iconSet: 'tabler icons', code: "\uf3a2" },
+  "ti-air-conditioning-disabled": {iconSet: 'tabler icons', code: "\uf542" },
+  "ti-alarm": {iconSet: 'tabler icons', code: "\uea04" },
+  "ti-alarm-filled": {iconSet: 'tabler icons', code: "\uf709" },
+  "ti-alarm-minus": {iconSet: 'tabler icons', code: "\uf630" },
+  "ti-alarm-minus-filled": {iconSet: 'tabler icons', code: "\uf70a" },
+  "ti-alarm-off": {iconSet: 'tabler icons', code: "\uf0a9" },
+  "ti-alarm-plus": {iconSet: 'tabler icons', code: "\uf631" },
+  "ti-alarm-plus-filled": {iconSet: 'tabler icons', code: "\uf70b" },
+  "ti-alarm-snooze": {iconSet: 'tabler icons', code: "\uf632" },
+  "ti-alarm-snooze-filled": {iconSet: 'tabler icons', code: "\uf70c" },
+  "ti-album": {iconSet: 'tabler icons', code: "\uf022" },
+  "ti-album-off": {iconSet: 'tabler icons', code: "\uf3b9" },
+  "ti-alert-circle": {iconSet: 'tabler icons', code: "\uea05" },
+  "ti-alert-circle-filled": {iconSet: 'tabler icons', code: "\uf6ee" },
+  "ti-alert-hexagon": {iconSet: 'tabler icons', code: "\uf80e" },
+  "ti-alert-octagon": {iconSet: 'tabler icons', code: "\uecc6" },
+  "ti-alert-octagon-filled": {iconSet: 'tabler icons', code: "\uf6ef" },
+  "ti-alert-small": {iconSet: 'tabler icons', code: "\uf80f" },
+  "ti-alert-square": {iconSet: 'tabler icons', code: "\uf811" },
+  "ti-alert-square-rounded": {iconSet: 'tabler icons', code: "\uf810" },
+  "ti-alert-triangle": {iconSet: 'tabler icons', code: "\uea06" },
+  "ti-alert-triangle-filled": {iconSet: 'tabler icons', code: "\uf6f0" },
+  "ti-alien": {iconSet: 'tabler icons', code: "\uebde" },
+  "ti-alien-filled": {iconSet: 'tabler icons', code: "\uf70d" },
+  "ti-align-box-bottom-center": {iconSet: 'tabler icons', code: "\uf530" },
+  "ti-align-box-bottom-center-filled": {iconSet: 'tabler icons', code: "\uf70e" },
+  "ti-align-box-bottom-left": {iconSet: 'tabler icons', code: "\uf531" },
+  "ti-align-box-bottom-left-filled": {iconSet: 'tabler icons', code: "\uf70f" },
+  "ti-align-box-bottom-right": {iconSet: 'tabler icons', code: "\uf532" },
+  "ti-align-box-bottom-right-filled": {iconSet: 'tabler icons', code: "\uf710" },
+  "ti-align-box-center-middle": {iconSet: 'tabler icons', code: "\uf79f" },
+  "ti-align-box-center-middle-filled": {iconSet: 'tabler icons', code: "\uf7d4" },
+  "ti-align-box-left-bottom": {iconSet: 'tabler icons', code: "\uf533" },
+  "ti-align-box-left-bottom-filled": {iconSet: 'tabler icons', code: "\uf711" },
+  "ti-align-box-left-middle": {iconSet: 'tabler icons', code: "\uf534" },
+  "ti-align-box-left-middle-filled": {iconSet: 'tabler icons', code: "\uf712" },
+  "ti-align-box-left-top": {iconSet: 'tabler icons', code: "\uf535" },
+  "ti-align-box-left-top-filled": {iconSet: 'tabler icons', code: "\uf713" },
+  "ti-align-box-right-bottom": {iconSet: 'tabler icons', code: "\uf536" },
+  "ti-align-box-right-bottom-filled": {iconSet: 'tabler icons', code: "\uf714" },
+  "ti-align-box-right-middle": {iconSet: 'tabler icons', code: "\uf537" },
+  "ti-align-box-right-middle-filled": {iconSet: 'tabler icons', code: "\uf7d5" },
+  "ti-align-box-right-top": {iconSet: 'tabler icons', code: "\uf538" },
+  "ti-align-box-right-top-filled": {iconSet: 'tabler icons', code: "\uf715" },
+  "ti-align-box-top-center": {iconSet: 'tabler icons', code: "\uf539" },
+  "ti-align-box-top-center-filled": {iconSet: 'tabler icons', code: "\uf716" },
+  "ti-align-box-top-left": {iconSet: 'tabler icons', code: "\uf53a" },
+  "ti-align-box-top-left-filled": {iconSet: 'tabler icons', code: "\uf717" },
+  "ti-align-box-top-right": {iconSet: 'tabler icons', code: "\uf53b" },
+  "ti-align-box-top-right-filled": {iconSet: 'tabler icons', code: "\uf718" },
+  "ti-align-center": {iconSet: 'tabler icons', code: "\uea07" },
+  "ti-align-justified": {iconSet: 'tabler icons', code: "\uea08" },
+  "ti-align-left": {iconSet: 'tabler icons', code: "\uea09" },
+  "ti-align-right": {iconSet: 'tabler icons', code: "\uea0a" },
+  "ti-alpha": {iconSet: 'tabler icons', code: "\uf543" },
+  "ti-alphabet-cyrillic": {iconSet: 'tabler icons', code: "\uf1df" },
+  "ti-alphabet-greek": {iconSet: 'tabler icons', code: "\uf1e0" },
+  "ti-alphabet-latin": {iconSet: 'tabler icons', code: "\uf1e1" },
+  "ti-ambulance": {iconSet: 'tabler icons', code: "\uebf5" },
+  "ti-ampersand": {iconSet: 'tabler icons', code: "\uf229" },
+  "ti-analyze": {iconSet: 'tabler icons', code: "\uf3a3" },
+  "ti-analyze-filled": {iconSet: 'tabler icons', code: "\uf719" },
+  "ti-analyze-off": {iconSet: 'tabler icons', code: "\uf3ba" },
+  "ti-anchor": {iconSet: 'tabler icons', code: "\ueb76" },
+  "ti-anchor-off": {iconSet: 'tabler icons', code: "\uf0f7" },
+  "ti-angle": {iconSet: 'tabler icons', code: "\uef20" },
+  "ti-ankh": {iconSet: 'tabler icons', code: "\uf1cd" },
+  "ti-antenna": {iconSet: 'tabler icons', code: "\uf094" },
+  "ti-antenna-bars-1": {iconSet: 'tabler icons', code: "\uecc7" },
+  "ti-antenna-bars-2": {iconSet: 'tabler icons', code: "\uecc8" },
+  "ti-antenna-bars-3": {iconSet: 'tabler icons', code: "\uecc9" },
+  "ti-antenna-bars-4": {iconSet: 'tabler icons', code: "\uecca" },
+  "ti-antenna-bars-5": {iconSet: 'tabler icons', code: "\ueccb" },
+  "ti-antenna-bars-off": {iconSet: 'tabler icons', code: "\uf0aa" },
+  "ti-antenna-off": {iconSet: 'tabler icons', code: "\uf3bb" },
+  "ti-aperture": {iconSet: 'tabler icons', code: "\ueb58" },
+  "ti-aperture-off": {iconSet: 'tabler icons', code: "\uf3bc" },
+  "ti-api": {iconSet: 'tabler icons', code: "\ueffd" },
+  "ti-api-app": {iconSet: 'tabler icons', code: "\ueffc" },
+  "ti-api-app-off": {iconSet: 'tabler icons', code: "\uf0ab" },
+  "ti-api-off": {iconSet: 'tabler icons', code: "\uf0f8" },
+  "ti-app-window": {iconSet: 'tabler icons', code: "\uefe6" },
+  "ti-app-window-filled": {iconSet: 'tabler icons', code: "\uf71a" },
+  "ti-apple": {iconSet: 'tabler icons', code: "\uef21" },
+  "ti-apps": {iconSet: 'tabler icons', code: "\uebb6" },
+  "ti-apps-filled": {iconSet: 'tabler icons', code: "\uf6f1" },
+  "ti-apps-off": {iconSet: 'tabler icons', code: "\uf0ac" },
+  "ti-archive": {iconSet: 'tabler icons', code: "\uea0b" },
+  "ti-archive-off": {iconSet: 'tabler icons', code: "\uf0ad" },
+  "ti-armchair": {iconSet: 'tabler icons', code: "\uef9e" },
+  "ti-armchair-2": {iconSet: 'tabler icons', code: "\uefe7" },
+  "ti-armchair-2-off": {iconSet: 'tabler icons', code: "\uf3bd" },
+  "ti-armchair-off": {iconSet: 'tabler icons', code: "\uf3be" },
+  "ti-arrow-autofit-content": {iconSet: 'tabler icons', code: "\uef31" },
+  "ti-arrow-autofit-content-filled": {iconSet: 'tabler icons', code: "\uf6f2" },
+  "ti-arrow-autofit-down": {iconSet: 'tabler icons', code: "\uef32" },
+  "ti-arrow-autofit-height": {iconSet: 'tabler icons', code: "\uef33" },
+  "ti-arrow-autofit-left": {iconSet: 'tabler icons', code: "\uef34" },
+  "ti-arrow-autofit-right": {iconSet: 'tabler icons', code: "\uef35" },
+  "ti-arrow-autofit-up": {iconSet: 'tabler icons', code: "\uef36" },
+  "ti-arrow-autofit-width": {iconSet: 'tabler icons', code: "\uef37" },
+  "ti-arrow-back": {iconSet: 'tabler icons', code: "\uea0c" },
+  "ti-arrow-back-up": {iconSet: 'tabler icons', code: "\ueb77" },
+  "ti-arrow-back-up-double": {iconSet: 'tabler icons', code: "\uf9ec" },
+  "ti-arrow-badge-down": {iconSet: 'tabler icons', code: "\uf60b" },
+  "ti-arrow-badge-down-filled": {iconSet: 'tabler icons', code: "\uf7d6" },
+  "ti-arrow-badge-left": {iconSet: 'tabler icons', code: "\uf60c" },
+  "ti-arrow-badge-left-filled": {iconSet: 'tabler icons', code: "\uf7d7" },
+  "ti-arrow-badge-right": {iconSet: 'tabler icons', code: "\uf60d" },
+  "ti-arrow-badge-right-filled": {iconSet: 'tabler icons', code: "\uf7d8" },
+  "ti-arrow-badge-up": {iconSet: 'tabler icons', code: "\uf60e" },
+  "ti-arrow-badge-up-filled": {iconSet: 'tabler icons', code: "\uf7d9" },
+  "ti-arrow-bar-down": {iconSet: 'tabler icons', code: "\uea0d" },
+  "ti-arrow-bar-left": {iconSet: 'tabler icons', code: "\uea0e" },
+  "ti-arrow-bar-right": {iconSet: 'tabler icons', code: "\uea0f" },
+  "ti-arrow-bar-to-down": {iconSet: 'tabler icons', code: "\uec88" },
+  "ti-arrow-bar-to-left": {iconSet: 'tabler icons', code: "\uec89" },
+  "ti-arrow-bar-to-right": {iconSet: 'tabler icons', code: "\uec8a" },
+  "ti-arrow-bar-to-up": {iconSet: 'tabler icons', code: "\uec8b" },
+  "ti-arrow-bar-up": {iconSet: 'tabler icons', code: "\uea10" },
+  "ti-arrow-bear-left": {iconSet: 'tabler icons', code: "\uf045" },
+  "ti-arrow-bear-left-2": {iconSet: 'tabler icons', code: "\uf044" },
+  "ti-arrow-bear-right": {iconSet: 'tabler icons', code: "\uf047" },
+  "ti-arrow-bear-right-2": {iconSet: 'tabler icons', code: "\uf046" },
+  "ti-arrow-big-down": {iconSet: 'tabler icons', code: "\uedda" },
+  "ti-arrow-big-down-filled": {iconSet: 'tabler icons', code: "\uf6c6" },
+  "ti-arrow-big-down-line": {iconSet: 'tabler icons', code: "\uefe8" },
+  "ti-arrow-big-down-line-filled": {iconSet: 'tabler icons', code: "\uf6c7" },
+  "ti-arrow-big-down-lines": {iconSet: 'tabler icons', code: "\uefe9" },
+  "ti-arrow-big-down-lines-filled": {iconSet: 'tabler icons', code: "\uf6c8" },
+  "ti-arrow-big-left": {iconSet: 'tabler icons', code: "\ueddb" },
+  "ti-arrow-big-left-filled": {iconSet: 'tabler icons', code: "\uf6c9" },
+  "ti-arrow-big-left-line": {iconSet: 'tabler icons', code: "\uefea" },
+  "ti-arrow-big-left-line-filled": {iconSet: 'tabler icons', code: "\uf6ca" },
+  "ti-arrow-big-left-lines": {iconSet: 'tabler icons', code: "\uefeb" },
+  "ti-arrow-big-left-lines-filled": {iconSet: 'tabler icons', code: "\uf6cb" },
+  "ti-arrow-big-right": {iconSet: 'tabler icons', code: "\ueddc" },
+  "ti-arrow-big-right-filled": {iconSet: 'tabler icons', code: "\uf6cc" },
+  "ti-arrow-big-right-line": {iconSet: 'tabler icons', code: "\uefec" },
+  "ti-arrow-big-right-line-filled": {iconSet: 'tabler icons', code: "\uf6cd" },
+  "ti-arrow-big-right-lines": {iconSet: 'tabler icons', code: "\uefed" },
+  "ti-arrow-big-right-lines-filled": {iconSet: 'tabler icons', code: "\uf6ce" },
+  "ti-arrow-big-up": {iconSet: 'tabler icons', code: "\ueddd" },
+  "ti-arrow-big-up-filled": {iconSet: 'tabler icons', code: "\uf6cf" },
+  "ti-arrow-big-up-line": {iconSet: 'tabler icons', code: "\uefee" },
+  "ti-arrow-big-up-line-filled": {iconSet: 'tabler icons', code: "\uf6d0" },
+  "ti-arrow-big-up-lines": {iconSet: 'tabler icons', code: "\uefef" },
+  "ti-arrow-big-up-lines-filled": {iconSet: 'tabler icons', code: "\uf6d1" },
+  "ti-arrow-bounce": {iconSet: 'tabler icons', code: "\uf3a4" },
+  "ti-arrow-curve-left": {iconSet: 'tabler icons', code: "\uf048" },
+  "ti-arrow-curve-right": {iconSet: 'tabler icons', code: "\uf049" },
+  "ti-arrow-down": {iconSet: 'tabler icons', code: "\uea16" },
+  "ti-arrow-down-bar": {iconSet: 'tabler icons', code: "\ued98" },
+  "ti-arrow-down-circle": {iconSet: 'tabler icons', code: "\uea11" },
+  "ti-arrow-down-left": {iconSet: 'tabler icons', code: "\uea13" },
+  "ti-arrow-down-left-circle": {iconSet: 'tabler icons', code: "\uea12" },
+  "ti-arrow-down-rhombus": {iconSet: 'tabler icons', code: "\uf61d" },
+  "ti-arrow-down-right": {iconSet: 'tabler icons', code: "\uea15" },
+  "ti-arrow-down-right-circle": {iconSet: 'tabler icons', code: "\uea14" },
+  "ti-arrow-down-square": {iconSet: 'tabler icons', code: "\ued9a" },
+  "ti-arrow-down-tail": {iconSet: 'tabler icons', code: "\ued9b" },
+  "ti-arrow-elbow-left": {iconSet: 'tabler icons', code: "\uf9ed" },
+  "ti-arrow-elbow-right": {iconSet: 'tabler icons', code: "\uf9ee" },
+  "ti-arrow-fork": {iconSet: 'tabler icons', code: "\uf04a" },
+  "ti-arrow-forward": {iconSet: 'tabler icons', code: "\uea17" },
+  "ti-arrow-forward-up": {iconSet: 'tabler icons', code: "\ueb78" },
+  "ti-arrow-forward-up-double": {iconSet: 'tabler icons', code: "\uf9ef" },
+  "ti-arrow-guide": {iconSet: 'tabler icons', code: "\uf22a" },
+  "ti-arrow-iteration": {iconSet: 'tabler icons', code: "\uf578" },
+  "ti-arrow-left": {iconSet: 'tabler icons', code: "\uea19" },
+  "ti-arrow-left-bar": {iconSet: 'tabler icons', code: "\ued9c" },
+  "ti-arrow-left-circle": {iconSet: 'tabler icons', code: "\uea18" },
+  "ti-arrow-left-rhombus": {iconSet: 'tabler icons', code: "\uf61e" },
+  "ti-arrow-left-right": {iconSet: 'tabler icons', code: "\uf04b" },
+  "ti-arrow-left-square": {iconSet: 'tabler icons', code: "\ued9d" },
+  "ti-arrow-left-tail": {iconSet: 'tabler icons', code: "\ued9e" },
+  "ti-arrow-loop-left": {iconSet: 'tabler icons', code: "\ued9f" },
+  "ti-arrow-loop-left-2": {iconSet: 'tabler icons', code: "\uf04c" },
+  "ti-arrow-loop-right": {iconSet: 'tabler icons', code: "\ueda0" },
+  "ti-arrow-loop-right-2": {iconSet: 'tabler icons', code: "\uf04d" },
+  "ti-arrow-merge": {iconSet: 'tabler icons', code: "\uf04e" },
+  "ti-arrow-merge-both": {iconSet: 'tabler icons', code: "\uf23b" },
+  "ti-arrow-merge-left": {iconSet: 'tabler icons', code: "\uf23c" },
+  "ti-arrow-merge-right": {iconSet: 'tabler icons', code: "\uf23d" },
+  "ti-arrow-move-down": {iconSet: 'tabler icons', code: "\uf2ba" },
+  "ti-arrow-move-left": {iconSet: 'tabler icons', code: "\uf2bb" },
+  "ti-arrow-move-right": {iconSet: 'tabler icons', code: "\uf2bc" },
+  "ti-arrow-move-up": {iconSet: 'tabler icons', code: "\uf2bd" },
+  "ti-arrow-narrow-down": {iconSet: 'tabler icons', code: "\uea1a" },
+  "ti-arrow-narrow-left": {iconSet: 'tabler icons', code: "\uea1b" },
+  "ti-arrow-narrow-right": {iconSet: 'tabler icons', code: "\uea1c" },
+  "ti-arrow-narrow-up": {iconSet: 'tabler icons', code: "\uea1d" },
+  "ti-arrow-ramp-left": {iconSet: 'tabler icons', code: "\ued3c" },
+  "ti-arrow-ramp-left-2": {iconSet: 'tabler icons', code: "\uf04f" },
+  "ti-arrow-ramp-left-3": {iconSet: 'tabler icons', code: "\uf050" },
+  "ti-arrow-ramp-right": {iconSet: 'tabler icons', code: "\ued3d" },
+  "ti-arrow-ramp-right-2": {iconSet: 'tabler icons', code: "\uf051" },
+  "ti-arrow-ramp-right-3": {iconSet: 'tabler icons', code: "\uf052" },
+  "ti-arrow-right": {iconSet: 'tabler icons', code: "\uea1f" },
+  "ti-arrow-right-bar": {iconSet: 'tabler icons', code: "\ueda1" },
+  "ti-arrow-right-circle": {iconSet: 'tabler icons', code: "\uea1e" },
+  "ti-arrow-right-rhombus": {iconSet: 'tabler icons', code: "\uf61f" },
+  "ti-arrow-right-square": {iconSet: 'tabler icons', code: "\ueda2" },
+  "ti-arrow-right-tail": {iconSet: 'tabler icons', code: "\ueda3" },
+  "ti-arrow-rotary-first-left": {iconSet: 'tabler icons', code: "\uf053" },
+  "ti-arrow-rotary-first-right": {iconSet: 'tabler icons', code: "\uf054" },
+  "ti-arrow-rotary-last-left": {iconSet: 'tabler icons', code: "\uf055" },
+  "ti-arrow-rotary-last-right": {iconSet: 'tabler icons', code: "\uf056" },
+  "ti-arrow-rotary-left": {iconSet: 'tabler icons', code: "\uf057" },
+  "ti-arrow-rotary-right": {iconSet: 'tabler icons', code: "\uf058" },
+  "ti-arrow-rotary-straight": {iconSet: 'tabler icons', code: "\uf059" },
+  "ti-arrow-roundabout-left": {iconSet: 'tabler icons', code: "\uf22b" },
+  "ti-arrow-roundabout-right": {iconSet: 'tabler icons', code: "\uf22c" },
+  "ti-arrow-sharp-turn-left": {iconSet: 'tabler icons', code: "\uf05a" },
+  "ti-arrow-sharp-turn-right": {iconSet: 'tabler icons', code: "\uf05b" },
+  "ti-arrow-up": {iconSet: 'tabler icons', code: "\uea25" },
+  "ti-arrow-up-bar": {iconSet: 'tabler icons', code: "\ueda4" },
+  "ti-arrow-up-circle": {iconSet: 'tabler icons', code: "\uea20" },
+  "ti-arrow-up-left": {iconSet: 'tabler icons', code: "\uea22" },
+  "ti-arrow-up-left-circle": {iconSet: 'tabler icons', code: "\uea21" },
+  "ti-arrow-up-rhombus": {iconSet: 'tabler icons', code: "\uf620" },
+  "ti-arrow-up-right": {iconSet: 'tabler icons', code: "\uea24" },
+  "ti-arrow-up-right-circle": {iconSet: 'tabler icons', code: "\uea23" },
+  "ti-arrow-up-square": {iconSet: 'tabler icons', code: "\ueda6" },
+  "ti-arrow-up-tail": {iconSet: 'tabler icons', code: "\ueda7" },
+  "ti-arrow-wave-left-down": {iconSet: 'tabler icons', code: "\ueda8" },
+  "ti-arrow-wave-left-up": {iconSet: 'tabler icons', code: "\ueda9" },
+  "ti-arrow-wave-right-down": {iconSet: 'tabler icons', code: "\uedaa" },
+  "ti-arrow-wave-right-up": {iconSet: 'tabler icons', code: "\uedab" },
+  "ti-arrow-zig-zag": {iconSet: 'tabler icons', code: "\uf4a7" },
+  "ti-arrows-cross": {iconSet: 'tabler icons', code: "\ueffe" },
+  "ti-arrows-diagonal": {iconSet: 'tabler icons', code: "\uea27" },
+  "ti-arrows-diagonal-2": {iconSet: 'tabler icons', code: "\uea26" },
+  "ti-arrows-diagonal-minimize": {iconSet: 'tabler icons', code: "\uef39" },
+  "ti-arrows-diagonal-minimize-2": {iconSet: 'tabler icons', code: "\uef38" },
+  "ti-arrows-diff": {iconSet: 'tabler icons', code: "\uf296" },
+  "ti-arrows-double-ne-sw": {iconSet: 'tabler icons', code: "\uedde" },
+  "ti-arrows-double-nw-se": {iconSet: 'tabler icons', code: "\ueddf" },
+  "ti-arrows-double-se-nw": {iconSet: 'tabler icons', code: "\uede0" },
+  "ti-arrows-double-sw-ne": {iconSet: 'tabler icons', code: "\uede1" },
+  "ti-arrows-down": {iconSet: 'tabler icons', code: "\uedad" },
+  "ti-arrows-down-up": {iconSet: 'tabler icons', code: "\uedac" },
+  "ti-arrows-exchange": {iconSet: 'tabler icons', code: "\uf1f4" },
+  "ti-arrows-exchange-2": {iconSet: 'tabler icons', code: "\uf1f3" },
+  "ti-arrows-horizontal": {iconSet: 'tabler icons', code: "\ueb59" },
+  "ti-arrows-join": {iconSet: 'tabler icons', code: "\uedaf" },
+  "ti-arrows-join-2": {iconSet: 'tabler icons', code: "\uedae" },
+  "ti-arrows-left": {iconSet: 'tabler icons', code: "\uedb1" },
+  "ti-arrows-left-down": {iconSet: 'tabler icons', code: "\uee00" },
+  "ti-arrows-left-right": {iconSet: 'tabler icons', code: "\uedb0" },
+  "ti-arrows-maximize": {iconSet: 'tabler icons', code: "\uea28" },
+  "ti-arrows-minimize": {iconSet: 'tabler icons', code: "\uea29" },
+  "ti-arrows-move": {iconSet: 'tabler icons', code: "\uf22f" },
+  "ti-arrows-move-horizontal": {iconSet: 'tabler icons', code: "\uf22d" },
+  "ti-arrows-move-vertical": {iconSet: 'tabler icons', code: "\uf22e" },
+  "ti-arrows-random": {iconSet: 'tabler icons', code: "\uf095" },
+  "ti-arrows-right": {iconSet: 'tabler icons', code: "\uedb3" },
+  "ti-arrows-right-down": {iconSet: 'tabler icons', code: "\uee01" },
+  "ti-arrows-right-left": {iconSet: 'tabler icons', code: "\uedb2" },
+  "ti-arrows-shuffle": {iconSet: 'tabler icons', code: "\uf000" },
+  "ti-arrows-shuffle-2": {iconSet: 'tabler icons', code: "\uefff" },
+  "ti-arrows-sort": {iconSet: 'tabler icons', code: "\ueb5a" },
+  "ti-arrows-split": {iconSet: 'tabler icons', code: "\uedb5" },
+  "ti-arrows-split-2": {iconSet: 'tabler icons', code: "\uedb4" },
+  "ti-arrows-transfer-down": {iconSet: 'tabler icons', code: "\uf2cc" },
+  "ti-arrows-transfer-up": {iconSet: 'tabler icons', code: "\uf2cd" },
+  "ti-arrows-up": {iconSet: 'tabler icons', code: "\uedb7" },
+  "ti-arrows-up-down": {iconSet: 'tabler icons', code: "\uedb6" },
+  "ti-arrows-up-left": {iconSet: 'tabler icons', code: "\uee02" },
+  "ti-arrows-up-right": {iconSet: 'tabler icons', code: "\uee03" },
+  "ti-arrows-vertical": {iconSet: 'tabler icons', code: "\ueb5b" },
+  "ti-artboard": {iconSet: 'tabler icons', code: "\uea2a" },
+  "ti-artboard-off": {iconSet: 'tabler icons', code: "\uf0ae" },
+  "ti-article": {iconSet: 'tabler icons', code: "\uf1e2" },
+  "ti-article-filled-filled": {iconSet: 'tabler icons', code: "\uf7da" },
+  "ti-article-off": {iconSet: 'tabler icons', code: "\uf3bf" },
+  "ti-aspect-ratio": {iconSet: 'tabler icons', code: "\ued30" },
+  "ti-aspect-ratio-filled": {iconSet: 'tabler icons', code: "\uf7db" },
+  "ti-aspect-ratio-off": {iconSet: 'tabler icons', code: "\uf0af" },
+  "ti-assembly": {iconSet: 'tabler icons', code: "\uf24d" },
+  "ti-assembly-off": {iconSet: 'tabler icons', code: "\uf3c0" },
+  "ti-asset": {iconSet: 'tabler icons', code: "\uf1ce" },
+  "ti-asterisk": {iconSet: 'tabler icons', code: "\uefd5" },
+  "ti-asterisk-simple": {iconSet: 'tabler icons', code: "\uefd4" },
+  "ti-at": {iconSet: 'tabler icons', code: "\uea2b" },
+  "ti-at-off": {iconSet: 'tabler icons', code: "\uf0b0" },
+  "ti-atom": {iconSet: 'tabler icons', code: "\ueb79" },
+  "ti-atom-2": {iconSet: 'tabler icons', code: "\uebdf" },
+  "ti-atom-2-filled": {iconSet: 'tabler icons', code: "\uf71b" },
+  "ti-atom-off": {iconSet: 'tabler icons', code: "\uf0f9" },
+  "ti-augmented-reality": {iconSet: 'tabler icons', code: "\uf023" },
+  "ti-augmented-reality-2": {iconSet: 'tabler icons', code: "\uf37e" },
+  "ti-augmented-reality-off": {iconSet: 'tabler icons', code: "\uf3c1" },
+  "ti-award": {iconSet: 'tabler icons', code: "\uea2c" },
+  "ti-award-filled": {iconSet: 'tabler icons', code: "\uf71c" },
+  "ti-award-off": {iconSet: 'tabler icons', code: "\uf0fa" },
+  "ti-axe": {iconSet: 'tabler icons', code: "\uef9f" },
+  "ti-axis-x": {iconSet: 'tabler icons', code: "\uef45" },
+  "ti-axis-y": {iconSet: 'tabler icons', code: "\uef46" },
+  "ti-baby-bottle": {iconSet: 'tabler icons', code: "\uf5d2" },
+  "ti-baby-carriage": {iconSet: 'tabler icons', code: "\uf05d" },
+  "ti-backhoe": {iconSet: 'tabler icons', code: "\ued86" },
+  "ti-backpack": {iconSet: 'tabler icons', code: "\uef47" },
+  "ti-backpack-off": {iconSet: 'tabler icons', code: "\uf3c2" },
+  "ti-backspace": {iconSet: 'tabler icons', code: "\uea2d" },
+  "ti-backspace-filled": {iconSet: 'tabler icons', code: "\uf7dc" },
+  "ti-badge": {iconSet: 'tabler icons', code: "\uefc2" },
+  "ti-badge-3d": {iconSet: 'tabler icons', code: "\uf555" },
+  "ti-badge-4k": {iconSet: 'tabler icons', code: "\uf556" },
+  "ti-badge-8k": {iconSet: 'tabler icons', code: "\uf557" },
+  "ti-badge-ad": {iconSet: 'tabler icons', code: "\uf558" },
+  "ti-badge-ar": {iconSet: 'tabler icons', code: "\uf559" },
+  "ti-badge-cc": {iconSet: 'tabler icons', code: "\uf55a" },
+  "ti-badge-filled": {iconSet: 'tabler icons', code: "\uf667" },
+  "ti-badge-hd": {iconSet: 'tabler icons', code: "\uf55b" },
+  "ti-badge-off": {iconSet: 'tabler icons', code: "\uf0fb" },
+  "ti-badge-sd": {iconSet: 'tabler icons', code: "\uf55c" },
+  "ti-badge-tm": {iconSet: 'tabler icons', code: "\uf55d" },
+  "ti-badge-vo": {iconSet: 'tabler icons', code: "\uf55e" },
+  "ti-badge-vr": {iconSet: 'tabler icons', code: "\uf55f" },
+  "ti-badge-wc": {iconSet: 'tabler icons', code: "\uf560" },
+  "ti-badges": {iconSet: 'tabler icons', code: "\uefc3" },
+  "ti-badges-filled": {iconSet: 'tabler icons', code: "\uf7dd" },
+  "ti-badges-off": {iconSet: 'tabler icons', code: "\uf0fc" },
+  "ti-baguette": {iconSet: 'tabler icons', code: "\uf3a5" },
+  "ti-ball-american-football": {iconSet: 'tabler icons', code: "\uee04" },
+  "ti-ball-american-football-off": {iconSet: 'tabler icons', code: "\uf3c3" },
+  "ti-ball-baseball": {iconSet: 'tabler icons', code: "\uefa0" },
+  "ti-ball-basketball": {iconSet: 'tabler icons', code: "\uec28" },
+  "ti-ball-bowling": {iconSet: 'tabler icons', code: "\uec29" },
+  "ti-ball-football": {iconSet: 'tabler icons', code: "\uee06" },
+  "ti-ball-football-off": {iconSet: 'tabler icons', code: "\uee05" },
+  "ti-ball-tennis": {iconSet: 'tabler icons', code: "\uec2a" },
+  "ti-ball-volleyball": {iconSet: 'tabler icons', code: "\uec2b" },
+  "ti-balloon": {iconSet: 'tabler icons', code: "\uef3a" },
+  "ti-balloon-off": {iconSet: 'tabler icons', code: "\uf0fd" },
+  "ti-ballpen": {iconSet: 'tabler icons', code: "\uf06e" },
+  "ti-ballpen-off": {iconSet: 'tabler icons', code: "\uf0b1" },
+  "ti-ban": {iconSet: 'tabler icons', code: "\uea2e" },
+  "ti-bandage": {iconSet: 'tabler icons', code: "\ueb7a" },
+  "ti-bandage-filled": {iconSet: 'tabler icons', code: "\uf7de" },
+  "ti-bandage-off": {iconSet: 'tabler icons', code: "\uf3c4" },
+  "ti-barbell": {iconSet: 'tabler icons', code: "\ueff0" },
+  "ti-barbell-off": {iconSet: 'tabler icons', code: "\uf0b2" },
+  "ti-barcode": {iconSet: 'tabler icons', code: "\uebc6" },
+  "ti-barcode-off": {iconSet: 'tabler icons', code: "\uf0b3" },
+  "ti-barrel": {iconSet: 'tabler icons', code: "\uf0b4" },
+  "ti-barrel-off": {iconSet: 'tabler icons', code: "\uf0fe" },
+  "ti-barrier-block": {iconSet: 'tabler icons', code: "\uf00e" },
+  "ti-barrier-block-off": {iconSet: 'tabler icons', code: "\uf0b5" },
+  "ti-baseline": {iconSet: 'tabler icons', code: "\uf024" },
+  "ti-baseline-density-large": {iconSet: 'tabler icons', code: "\uf9f0" },
+  "ti-baseline-density-medium": {iconSet: 'tabler icons', code: "\uf9f1" },
+  "ti-baseline-density-small": {iconSet: 'tabler icons', code: "\uf9f2" },
+  "ti-basket": {iconSet: 'tabler icons', code: "\uebe1" },
+  "ti-basket-filled": {iconSet: 'tabler icons', code: "\uf7df" },
+  "ti-basket-off": {iconSet: 'tabler icons', code: "\uf0b6" },
+  "ti-bat": {iconSet: 'tabler icons', code: "\uf284" },
+  "ti-bath": {iconSet: 'tabler icons', code: "\uef48" },
+  "ti-bath-filled": {iconSet: 'tabler icons', code: "\uf71d" },
+  "ti-bath-off": {iconSet: 'tabler icons', code: "\uf0ff" },
+  "ti-battery": {iconSet: 'tabler icons', code: "\uea34" },
+  "ti-battery-1": {iconSet: 'tabler icons', code: "\uea2f" },
+  "ti-battery-1-filled": {iconSet: 'tabler icons', code: "\uf71e" },
+  "ti-battery-2": {iconSet: 'tabler icons', code: "\uea30" },
+  "ti-battery-2-filled": {iconSet: 'tabler icons', code: "\uf71f" },
+  "ti-battery-3": {iconSet: 'tabler icons', code: "\uea31" },
+  "ti-battery-3-filled": {iconSet: 'tabler icons', code: "\uf720" },
+  "ti-battery-4": {iconSet: 'tabler icons', code: "\uea32" },
+  "ti-battery-4-filled": {iconSet: 'tabler icons', code: "\uf721" },
+  "ti-battery-automotive": {iconSet: 'tabler icons', code: "\uee07" },
+  "ti-battery-charging": {iconSet: 'tabler icons', code: "\uea33" },
+  "ti-battery-charging-2": {iconSet: 'tabler icons', code: "\uef3b" },
+  "ti-battery-eco": {iconSet: 'tabler icons', code: "\uef3c" },
+  "ti-battery-filled": {iconSet: 'tabler icons', code: "\uf668" },
+  "ti-battery-off": {iconSet: 'tabler icons', code: "\ued1c" },
+  "ti-beach": {iconSet: 'tabler icons', code: "\uef3d" },
+  "ti-beach-off": {iconSet: 'tabler icons', code: "\uf0b7" },
+  "ti-bed": {iconSet: 'tabler icons', code: "\ueb5c" },
+  "ti-bed-filled": {iconSet: 'tabler icons', code: "\uf7e0" },
+  "ti-bed-off": {iconSet: 'tabler icons', code: "\uf100" },
+  "ti-beer": {iconSet: 'tabler icons', code: "\uefa1" },
+  "ti-beer-filled": {iconSet: 'tabler icons', code: "\uf7e1" },
+  "ti-beer-off": {iconSet: 'tabler icons', code: "\uf101" },
+  "ti-bell": {iconSet: 'tabler icons', code: "\uea35" },
+  "ti-bell-bolt": {iconSet: 'tabler icons', code: "\uf812" },
+  "ti-bell-cancel": {iconSet: 'tabler icons', code: "\uf813" },
+  "ti-bell-check": {iconSet: 'tabler icons', code: "\uf814" },
+  "ti-bell-code": {iconSet: 'tabler icons', code: "\uf815" },
+  "ti-bell-cog": {iconSet: 'tabler icons', code: "\uf816" },
+  "ti-bell-dollar": {iconSet: 'tabler icons', code: "\uf817" },
+  "ti-bell-down": {iconSet: 'tabler icons', code: "\uf818" },
+  "ti-bell-exclamation": {iconSet: 'tabler icons', code: "\uf819" },
+  "ti-bell-filled": {iconSet: 'tabler icons', code: "\uf669" },
+  "ti-bell-heart": {iconSet: 'tabler icons', code: "\uf81a" },
+  "ti-bell-minus": {iconSet: 'tabler icons', code: "\uede2" },
+  "ti-bell-minus-filled": {iconSet: 'tabler icons', code: "\uf722" },
+  "ti-bell-off": {iconSet: 'tabler icons', code: "\uece9" },
+  "ti-bell-pause": {iconSet: 'tabler icons', code: "\uf81b" },
+  "ti-bell-pin": {iconSet: 'tabler icons', code: "\uf81c" },
+  "ti-bell-plus": {iconSet: 'tabler icons', code: "\uede3" },
+  "ti-bell-plus-filled": {iconSet: 'tabler icons', code: "\uf723" },
+  "ti-bell-question": {iconSet: 'tabler icons', code: "\uf81d" },
+  "ti-bell-ringing": {iconSet: 'tabler icons', code: "\ued07" },
+  "ti-bell-ringing-2": {iconSet: 'tabler icons', code: "\uede4" },
+  "ti-bell-ringing-2-filled": {iconSet: 'tabler icons', code: "\uf724" },
+  "ti-bell-ringing-filled": {iconSet: 'tabler icons', code: "\uf725" },
+  "ti-bell-school": {iconSet: 'tabler icons', code: "\uf05e" },
+  "ti-bell-search": {iconSet: 'tabler icons', code: "\uf81e" },
+  "ti-bell-share": {iconSet: 'tabler icons', code: "\uf81f" },
+  "ti-bell-star": {iconSet: 'tabler icons', code: "\uf820" },
+  "ti-bell-up": {iconSet: 'tabler icons', code: "\uf821" },
+  "ti-bell-x": {iconSet: 'tabler icons', code: "\uede5" },
+  "ti-bell-x-filled": {iconSet: 'tabler icons', code: "\uf726" },
+  "ti-bell-z": {iconSet: 'tabler icons', code: "\ueff1" },
+  "ti-bell-z-filled": {iconSet: 'tabler icons', code: "\uf727" },
+  "ti-beta": {iconSet: 'tabler icons', code: "\uf544" },
+  "ti-bible": {iconSet: 'tabler icons', code: "\uefc4" },
+  "ti-bike": {iconSet: 'tabler icons', code: "\uea36" },
+  "ti-bike-off": {iconSet: 'tabler icons', code: "\uf0b8" },
+  "ti-binary": {iconSet: 'tabler icons', code: "\uee08" },
+  "ti-binary-off": {iconSet: 'tabler icons', code: "\uf3c5" },
+  "ti-binary-tree": {iconSet: 'tabler icons', code: "\uf5d4" },
+  "ti-binary-tree-2": {iconSet: 'tabler icons', code: "\uf5d3" },
+  "ti-biohazard": {iconSet: 'tabler icons', code: "\uecb8" },
+  "ti-biohazard-off": {iconSet: 'tabler icons', code: "\uf0b9" },
+  "ti-blade": {iconSet: 'tabler icons', code: "\uf4bd" },
+  "ti-blade-filled": {iconSet: 'tabler icons', code: "\uf7e2" },
+  "ti-bleach": {iconSet: 'tabler icons', code: "\uf2f3" },
+  "ti-bleach-chlorine": {iconSet: 'tabler icons', code: "\uf2f0" },
+  "ti-bleach-no-chlorine": {iconSet: 'tabler icons', code: "\uf2f1" },
+  "ti-bleach-off": {iconSet: 'tabler icons', code: "\uf2f2" },
+  "ti-blockquote": {iconSet: 'tabler icons', code: "\uee09" },
+  "ti-bluetooth": {iconSet: 'tabler icons', code: "\uea37" },
+  "ti-bluetooth-connected": {iconSet: 'tabler icons', code: "\uecea" },
+  "ti-bluetooth-off": {iconSet: 'tabler icons', code: "\ueceb" },
+  "ti-bluetooth-x": {iconSet: 'tabler icons', code: "\uf081" },
+  "ti-blur": {iconSet: 'tabler icons', code: "\uef8c" },
+  "ti-blur-off": {iconSet: 'tabler icons', code: "\uf3c6" },
+  "ti-bmp": {iconSet: 'tabler icons', code: "\uf3a6" },
+  "ti-bold": {iconSet: 'tabler icons', code: "\ueb7b" },
+  "ti-bold-off": {iconSet: 'tabler icons', code: "\uf0ba" },
+  "ti-bolt": {iconSet: 'tabler icons', code: "\uea38" },
+  "ti-bolt-off": {iconSet: 'tabler icons', code: "\uecec" },
+  "ti-bomb": {iconSet: 'tabler icons', code: "\uf59c" },
+  "ti-bone": {iconSet: 'tabler icons', code: "\uedb8" },
+  "ti-bone-off": {iconSet: 'tabler icons', code: "\uf0bb" },
+  "ti-bong": {iconSet: 'tabler icons', code: "\uf3a7" },
+  "ti-bong-off": {iconSet: 'tabler icons', code: "\uf3c7" },
+  "ti-book": {iconSet: 'tabler icons', code: "\uea39" },
+  "ti-book-2": {iconSet: 'tabler icons', code: "\uefc5" },
+  "ti-book-download": {iconSet: 'tabler icons', code: "\uf070" },
+  "ti-book-off": {iconSet: 'tabler icons', code: "\uf0bc" },
+  "ti-book-upload": {iconSet: 'tabler icons', code: "\uf071" },
+  "ti-bookmark": {iconSet: 'tabler icons', code: "\uea3a" },
+  "ti-bookmark-off": {iconSet: 'tabler icons', code: "\ueced" },
+  "ti-bookmarks": {iconSet: 'tabler icons', code: "\ued08" },
+  "ti-bookmarks-off": {iconSet: 'tabler icons', code: "\uf0bd" },
+  "ti-books": {iconSet: 'tabler icons', code: "\ueff2" },
+  "ti-books-off": {iconSet: 'tabler icons', code: "\uf0be" },
+  "ti-border-all": {iconSet: 'tabler icons', code: "\uea3b" },
+  "ti-border-bottom": {iconSet: 'tabler icons', code: "\uea3c" },
+  "ti-border-corners": {iconSet: 'tabler icons', code: "\uf7a0" },
+  "ti-border-horizontal": {iconSet: 'tabler icons', code: "\uea3d" },
+  "ti-border-inner": {iconSet: 'tabler icons', code: "\uea3e" },
+  "ti-border-left": {iconSet: 'tabler icons', code: "\uea3f" },
+  "ti-border-none": {iconSet: 'tabler icons', code: "\uea40" },
+  "ti-border-outer": {iconSet: 'tabler icons', code: "\uea41" },
+  "ti-border-radius": {iconSet: 'tabler icons', code: "\ueb7c" },
+  "ti-border-right": {iconSet: 'tabler icons', code: "\uea42" },
+  "ti-border-sides": {iconSet: 'tabler icons', code: "\uf7a1" },
+  "ti-border-style": {iconSet: 'tabler icons', code: "\uee0a" },
+  "ti-border-style-2": {iconSet: 'tabler icons', code: "\uef22" },
+  "ti-border-top": {iconSet: 'tabler icons', code: "\uea43" },
+  "ti-border-vertical": {iconSet: 'tabler icons', code: "\uea44" },
+  "ti-bottle": {iconSet: 'tabler icons', code: "\uef0b" },
+  "ti-bottle-off": {iconSet: 'tabler icons', code: "\uf3c8" },
+  "ti-bounce-left": {iconSet: 'tabler icons', code: "\uf59d" },
+  "ti-bounce-right": {iconSet: 'tabler icons', code: "\uf59e" },
+  "ti-bow": {iconSet: 'tabler icons', code: "\uf096" },
+  "ti-bowl": {iconSet: 'tabler icons', code: "\uf4fa" },
+  "ti-box": {iconSet: 'tabler icons', code: "\uea45" },
+  "ti-box-align-bottom": {iconSet: 'tabler icons', code: "\uf2a8" },
+  "ti-box-align-bottom-left": {iconSet: 'tabler icons', code: "\uf2ce" },
+  "ti-box-align-bottom-right": {iconSet: 'tabler icons', code: "\uf2cf" },
+  "ti-box-align-left": {iconSet: 'tabler icons', code: "\uf2a9" },
+  "ti-box-align-right": {iconSet: 'tabler icons', code: "\uf2aa" },
+  "ti-box-align-top": {iconSet: 'tabler icons', code: "\uf2ab" },
+  "ti-box-align-top-left": {iconSet: 'tabler icons', code: "\uf2d0" },
+  "ti-box-align-top-right": {iconSet: 'tabler icons', code: "\uf2d1" },
+  "ti-box-margin": {iconSet: 'tabler icons', code: "\uee0b" },
+  "ti-box-model": {iconSet: 'tabler icons', code: "\uee0c" },
+  "ti-box-model-2": {iconSet: 'tabler icons', code: "\uef23" },
+  "ti-box-model-2-off": {iconSet: 'tabler icons', code: "\uf3c9" },
+  "ti-box-model-off": {iconSet: 'tabler icons', code: "\uf3ca" },
+  "ti-box-multiple": {iconSet: 'tabler icons', code: "\uee17" },
+  "ti-box-multiple-0": {iconSet: 'tabler icons', code: "\uee0d" },
+  "ti-box-multiple-1": {iconSet: 'tabler icons', code: "\uee0e" },
+  "ti-box-multiple-2": {iconSet: 'tabler icons', code: "\uee0f" },
+  "ti-box-multiple-3": {iconSet: 'tabler icons', code: "\uee10" },
+  "ti-box-multiple-4": {iconSet: 'tabler icons', code: "\uee11" },
+  "ti-box-multiple-5": {iconSet: 'tabler icons', code: "\uee12" },
+  "ti-box-multiple-6": {iconSet: 'tabler icons', code: "\uee13" },
+  "ti-box-multiple-7": {iconSet: 'tabler icons', code: "\uee14" },
+  "ti-box-multiple-8": {iconSet: 'tabler icons', code: "\uee15" },
+  "ti-box-multiple-9": {iconSet: 'tabler icons', code: "\uee16" },
+  "ti-box-off": {iconSet: 'tabler icons', code: "\uf102" },
+  "ti-box-padding": {iconSet: 'tabler icons', code: "\uee18" },
+  "ti-box-seam": {iconSet: 'tabler icons', code: "\uf561" },
+  "ti-braces": {iconSet: 'tabler icons', code: "\uebcc" },
+  "ti-braces-off": {iconSet: 'tabler icons', code: "\uf0bf" },
+  "ti-brackets": {iconSet: 'tabler icons', code: "\uebcd" },
+  "ti-brackets-contain": {iconSet: 'tabler icons', code: "\uf1e5" },
+  "ti-brackets-contain-end": {iconSet: 'tabler icons', code: "\uf1e3" },
+  "ti-brackets-contain-start": {iconSet: 'tabler icons', code: "\uf1e4" },
+  "ti-brackets-off": {iconSet: 'tabler icons', code: "\uf0c0" },
+  "ti-braille": {iconSet: 'tabler icons', code: "\uf545" },
+  "ti-brain": {iconSet: 'tabler icons', code: "\uf59f" },
+  "ti-brand-4chan": {iconSet: 'tabler icons', code: "\uf494" },
+  "ti-brand-abstract": {iconSet: 'tabler icons', code: "\uf495" },
+  "ti-brand-adobe": {iconSet: 'tabler icons', code: "\uf0dc" },
+  "ti-brand-adonis-js": {iconSet: 'tabler icons', code: "\uf496" },
+  "ti-brand-airbnb": {iconSet: 'tabler icons', code: "\ued68" },
+  "ti-brand-airtable": {iconSet: 'tabler icons', code: "\uef6a" },
+  "ti-brand-algolia": {iconSet: 'tabler icons', code: "\uf390" },
+  "ti-brand-alipay": {iconSet: 'tabler icons', code: "\uf7a2" },
+  "ti-brand-alpine-js": {iconSet: 'tabler icons', code: "\uf324" },
+  "ti-brand-amazon": {iconSet: 'tabler icons', code: "\uf230" },
+  "ti-brand-amd": {iconSet: 'tabler icons', code: "\uf653" },
+  "ti-brand-amigo": {iconSet: 'tabler icons', code: "\uf5f9" },
+  "ti-brand-among-us": {iconSet: 'tabler icons', code: "\uf205" },
+  "ti-brand-android": {iconSet: 'tabler icons', code: "\uec16" },
+  "ti-brand-angular": {iconSet: 'tabler icons', code: "\uef6b" },
+  "ti-brand-ao3": {iconSet: 'tabler icons', code: "\uf5e8" },
+  "ti-brand-appgallery": {iconSet: 'tabler icons', code: "\uf231" },
+  "ti-brand-apple": {iconSet: 'tabler icons', code: "\uec17" },
+  "ti-brand-apple-arcade": {iconSet: 'tabler icons', code: "\ued69" },
+  "ti-brand-apple-podcast": {iconSet: 'tabler icons', code: "\uf1e6" },
+  "ti-brand-appstore": {iconSet: 'tabler icons', code: "\ued24" },
+  "ti-brand-asana": {iconSet: 'tabler icons', code: "\uedc5" },
+  "ti-brand-backbone": {iconSet: 'tabler icons', code: "\uf325" },
+  "ti-brand-badoo": {iconSet: 'tabler icons', code: "\uf206" },
+  "ti-brand-baidu": {iconSet: 'tabler icons', code: "\uf5e9" },
+  "ti-brand-bandcamp": {iconSet: 'tabler icons', code: "\uf207" },
+  "ti-brand-bandlab": {iconSet: 'tabler icons', code: "\uf5fa" },
+  "ti-brand-beats": {iconSet: 'tabler icons', code: "\uf208" },
+  "ti-brand-behance": {iconSet: 'tabler icons', code: "\uec6e" },
+  "ti-brand-bilibili": {iconSet: 'tabler icons', code: "\uf6d2" },
+  "ti-brand-binance": {iconSet: 'tabler icons', code: "\uf5a0" },
+  "ti-brand-bing": {iconSet: 'tabler icons', code: "\uedc6" },
+  "ti-brand-bitbucket": {iconSet: 'tabler icons', code: "\uedc7" },
+  "ti-brand-blackberry": {iconSet: 'tabler icons', code: "\uf568" },
+  "ti-brand-blender": {iconSet: 'tabler icons', code: "\uf326" },
+  "ti-brand-blogger": {iconSet: 'tabler icons', code: "\uf35a" },
+  "ti-brand-booking": {iconSet: 'tabler icons', code: "\uedc8" },
+  "ti-brand-bootstrap": {iconSet: 'tabler icons', code: "\uef3e" },
+  "ti-brand-bulma": {iconSet: 'tabler icons', code: "\uf327" },
+  "ti-brand-bumble": {iconSet: 'tabler icons', code: "\uf5fb" },
+  "ti-brand-bunpo": {iconSet: 'tabler icons', code: "\uf4cf" },
+  "ti-brand-c-sharp": {iconSet: 'tabler icons', code: "\uf003" },
+  "ti-brand-cake": {iconSet: 'tabler icons', code: "\uf7a3" },
+  "ti-brand-cakephp": {iconSet: 'tabler icons', code: "\uf7af" },
+  "ti-brand-campaignmonitor": {iconSet: 'tabler icons', code: "\uf328" },
+  "ti-brand-carbon": {iconSet: 'tabler icons', code: "\uf348" },
+  "ti-brand-cashapp": {iconSet: 'tabler icons', code: "\uf391" },
+  "ti-brand-chrome": {iconSet: 'tabler icons', code: "\uec18" },
+  "ti-brand-citymapper": {iconSet: 'tabler icons', code: "\uf5fc" },
+  "ti-brand-codecov": {iconSet: 'tabler icons', code: "\uf329" },
+  "ti-brand-codepen": {iconSet: 'tabler icons', code: "\uec6f" },
+  "ti-brand-codesandbox": {iconSet: 'tabler icons', code: "\ued6a" },
+  "ti-brand-cohost": {iconSet: 'tabler icons', code: "\uf5d5" },
+  "ti-brand-coinbase": {iconSet: 'tabler icons', code: "\uf209" },
+  "ti-brand-comedy-central": {iconSet: 'tabler icons', code: "\uf217" },
+  "ti-brand-coreos": {iconSet: 'tabler icons', code: "\uf5fd" },
+  "ti-brand-couchdb": {iconSet: 'tabler icons', code: "\uf60f" },
+  "ti-brand-couchsurfing": {iconSet: 'tabler icons', code: "\uf392" },
+  "ti-brand-cpp": {iconSet: 'tabler icons', code: "\uf5fe" },
+  "ti-brand-crunchbase": {iconSet: 'tabler icons', code: "\uf7e3" },
+  "ti-brand-css3": {iconSet: 'tabler icons', code: "\ued6b" },
+  "ti-brand-ctemplar": {iconSet: 'tabler icons', code: "\uf4d0" },
+  "ti-brand-cucumber": {iconSet: 'tabler icons', code: "\uef6c" },
+  "ti-brand-cupra": {iconSet: 'tabler icons', code: "\uf4d1" },
+  "ti-brand-cypress": {iconSet: 'tabler icons', code: "\uf333" },
+  "ti-brand-d3": {iconSet: 'tabler icons', code: "\uf24e" },
+  "ti-brand-days-counter": {iconSet: 'tabler icons', code: "\uf4d2" },
+  "ti-brand-dcos": {iconSet: 'tabler icons', code: "\uf32a" },
+  "ti-brand-debian": {iconSet: 'tabler icons', code: "\uef57" },
+  "ti-brand-deezer": {iconSet: 'tabler icons', code: "\uf78b" },
+  "ti-brand-deliveroo": {iconSet: 'tabler icons', code: "\uf4d3" },
+  "ti-brand-deno": {iconSet: 'tabler icons', code: "\uf24f" },
+  "ti-brand-denodo": {iconSet: 'tabler icons', code: "\uf610" },
+  "ti-brand-deviantart": {iconSet: 'tabler icons', code: "\uecfb" },
+  "ti-brand-dingtalk": {iconSet: 'tabler icons', code: "\uf5ea" },
+  "ti-brand-discord": {iconSet: 'tabler icons', code: "\uece3" },
+  "ti-brand-discord-filled": {iconSet: 'tabler icons', code: "\uf7e4" },
+  "ti-brand-disney": {iconSet: 'tabler icons', code: "\uf20a" },
+  "ti-brand-disqus": {iconSet: 'tabler icons', code: "\uedc9" },
+  "ti-brand-django": {iconSet: 'tabler icons', code: "\uf349" },
+  "ti-brand-docker": {iconSet: 'tabler icons', code: "\uedca" },
+  "ti-brand-doctrine": {iconSet: 'tabler icons', code: "\uef6d" },
+  "ti-brand-dolby-digital": {iconSet: 'tabler icons', code: "\uf4d4" },
+  "ti-brand-douban": {iconSet: 'tabler icons', code: "\uf5ff" },
+  "ti-brand-dribbble": {iconSet: 'tabler icons', code: "\uec19" },
+  "ti-brand-dribbble-filled": {iconSet: 'tabler icons', code: "\uf7e5" },
+  "ti-brand-drops": {iconSet: 'tabler icons', code: "\uf4d5" },
+  "ti-brand-drupal": {iconSet: 'tabler icons', code: "\uf393" },
+  "ti-brand-edge": {iconSet: 'tabler icons', code: "\uecfc" },
+  "ti-brand-elastic": {iconSet: 'tabler icons', code: "\uf611" },
+  "ti-brand-ember": {iconSet: 'tabler icons', code: "\uf497" },
+  "ti-brand-envato": {iconSet: 'tabler icons', code: "\uf394" },
+  "ti-brand-etsy": {iconSet: 'tabler icons', code: "\uf654" },
+  "ti-brand-evernote": {iconSet: 'tabler icons', code: "\uf600" },
+  "ti-brand-facebook": {iconSet: 'tabler icons', code: "\uec1a" },
+  "ti-brand-facebook-filled": {iconSet: 'tabler icons', code: "\uf7e6" },
+  "ti-brand-figma": {iconSet: 'tabler icons', code: "\uec93" },
+  "ti-brand-finder": {iconSet: 'tabler icons', code: "\uf218" },
+  "ti-brand-firebase": {iconSet: 'tabler icons', code: "\uef6e" },
+  "ti-brand-firefox": {iconSet: 'tabler icons', code: "\uecfd" },
+  "ti-brand-fiverr": {iconSet: 'tabler icons', code: "\uf7a4" },
+  "ti-brand-flickr": {iconSet: 'tabler icons', code: "\uecfe" },
+  "ti-brand-flightradar24": {iconSet: 'tabler icons', code: "\uf4d6" },
+  "ti-brand-flipboard": {iconSet: 'tabler icons', code: "\uf20b" },
+  "ti-brand-flutter": {iconSet: 'tabler icons', code: "\uf395" },
+  "ti-brand-fortnite": {iconSet: 'tabler icons', code: "\uf260" },
+  "ti-brand-foursquare": {iconSet: 'tabler icons', code: "\uecff" },
+  "ti-brand-framer": {iconSet: 'tabler icons', code: "\uec1b" },
+  "ti-brand-framer-motion": {iconSet: 'tabler icons', code: "\uf78c" },
+  "ti-brand-funimation": {iconSet: 'tabler icons', code: "\uf655" },
+  "ti-brand-gatsby": {iconSet: 'tabler icons', code: "\uf396" },
+  "ti-brand-git": {iconSet: 'tabler icons', code: "\uef6f" },
+  "ti-brand-github": {iconSet: 'tabler icons', code: "\uec1c" },
+  "ti-brand-github-copilot": {iconSet: 'tabler icons', code: "\uf4a8" },
+  "ti-brand-github-filled": {iconSet: 'tabler icons', code: "\uf7e7" },
+  "ti-brand-gitlab": {iconSet: 'tabler icons', code: "\uec1d" },
+  "ti-brand-gmail": {iconSet: 'tabler icons', code: "\uefa2" },
+  "ti-brand-golang": {iconSet: 'tabler icons', code: "\uf78d" },
+  "ti-brand-google": {iconSet: 'tabler icons', code: "\uec1f" },
+  "ti-brand-google-analytics": {iconSet: 'tabler icons', code: "\uedcb" },
+  "ti-brand-google-big-query": {iconSet: 'tabler icons', code: "\uf612" },
+  "ti-brand-google-drive": {iconSet: 'tabler icons', code: "\uec1e" },
+  "ti-brand-google-fit": {iconSet: 'tabler icons', code: "\uf297" },
+  "ti-brand-google-home": {iconSet: 'tabler icons', code: "\uf601" },
+  "ti-brand-google-one": {iconSet: 'tabler icons', code: "\uf232" },
+  "ti-brand-google-photos": {iconSet: 'tabler icons', code: "\uf20c" },
+  "ti-brand-google-play": {iconSet: 'tabler icons', code: "\ued25" },
+  "ti-brand-google-podcasts": {iconSet: 'tabler icons', code: "\uf656" },
+  "ti-brand-grammarly": {iconSet: 'tabler icons', code: "\uf32b" },
+  "ti-brand-graphql": {iconSet: 'tabler icons', code: "\uf32c" },
+  "ti-brand-gravatar": {iconSet: 'tabler icons', code: "\uedcc" },
+  "ti-brand-grindr": {iconSet: 'tabler icons', code: "\uf20d" },
+  "ti-brand-guardian": {iconSet: 'tabler icons', code: "\uf4fb" },
+  "ti-brand-gumroad": {iconSet: 'tabler icons', code: "\uf5d6" },
+  "ti-brand-hbo": {iconSet: 'tabler icons', code: "\uf657" },
+  "ti-brand-headlessui": {iconSet: 'tabler icons', code: "\uf32d" },
+  "ti-brand-hipchat": {iconSet: 'tabler icons', code: "\uedcd" },
+  "ti-brand-html5": {iconSet: 'tabler icons', code: "\ued6c" },
+  "ti-brand-inertia": {iconSet: 'tabler icons', code: "\uf34a" },
+  "ti-brand-instagram": {iconSet: 'tabler icons', code: "\uec20" },
+  "ti-brand-intercom": {iconSet: 'tabler icons', code: "\uf1cf" },
+  "ti-brand-itch": {iconSet: 'tabler icons', code: "\ufa22" },
+  "ti-brand-javascript": {iconSet: 'tabler icons', code: "\uef0c" },
+  "ti-brand-juejin": {iconSet: 'tabler icons', code: "\uf7b0" },
+  "ti-brand-kick": {iconSet: 'tabler icons', code: "\ufa23" },
+  "ti-brand-kickstarter": {iconSet: 'tabler icons', code: "\uedce" },
+  "ti-brand-kotlin": {iconSet: 'tabler icons', code: "\ued6d" },
+  "ti-brand-laravel": {iconSet: 'tabler icons', code: "\uf34b" },
+  "ti-brand-lastfm": {iconSet: 'tabler icons', code: "\uf001" },
+  "ti-brand-letterboxd": {iconSet: 'tabler icons', code: "\ufa24" },
+  "ti-brand-line": {iconSet: 'tabler icons', code: "\uf7e8" },
+  "ti-brand-linkedin": {iconSet: 'tabler icons', code: "\uec8c" },
+  "ti-brand-linktree": {iconSet: 'tabler icons', code: "\uf1e7" },
+  "ti-brand-linqpad": {iconSet: 'tabler icons', code: "\uf562" },
+  "ti-brand-loom": {iconSet: 'tabler icons', code: "\uef70" },
+  "ti-brand-mailgun": {iconSet: 'tabler icons', code: "\uf32e" },
+  "ti-brand-mantine": {iconSet: 'tabler icons', code: "\uf32f" },
+  "ti-brand-mastercard": {iconSet: 'tabler icons', code: "\uef49" },
+  "ti-brand-mastodon": {iconSet: 'tabler icons', code: "\uf250" },
+  "ti-brand-matrix": {iconSet: 'tabler icons', code: "\uf5eb" },
+  "ti-brand-mcdonalds": {iconSet: 'tabler icons', code: "\uf251" },
+  "ti-brand-medium": {iconSet: 'tabler icons', code: "\uec70" },
+  "ti-brand-mercedes": {iconSet: 'tabler icons', code: "\uf072" },
+  "ti-brand-messenger": {iconSet: 'tabler icons', code: "\uec71" },
+  "ti-brand-meta": {iconSet: 'tabler icons', code: "\uefb0" },
+  "ti-brand-miniprogram": {iconSet: 'tabler icons', code: "\uf602" },
+  "ti-brand-mixpanel": {iconSet: 'tabler icons', code: "\uf397" },
+  "ti-brand-monday": {iconSet: 'tabler icons', code: "\uf219" },
+  "ti-brand-mongodb": {iconSet: 'tabler icons', code: "\uf613" },
+  "ti-brand-my-oppo": {iconSet: 'tabler icons', code: "\uf4d7" },
+  "ti-brand-mysql": {iconSet: 'tabler icons', code: "\uf614" },
+  "ti-brand-national-geographic": {iconSet: 'tabler icons', code: "\uf603" },
+  "ti-brand-nem": {iconSet: 'tabler icons', code: "\uf5a1" },
+  "ti-brand-netbeans": {iconSet: 'tabler icons', code: "\uef71" },
+  "ti-brand-netease-music": {iconSet: 'tabler icons', code: "\uf604" },
+  "ti-brand-netflix": {iconSet: 'tabler icons', code: "\uedcf" },
+  "ti-brand-nexo": {iconSet: 'tabler icons', code: "\uf5a2" },
+  "ti-brand-nextcloud": {iconSet: 'tabler icons', code: "\uf4d8" },
+  "ti-brand-nextjs": {iconSet: 'tabler icons', code: "\uf0dd" },
+  "ti-brand-nord-vpn": {iconSet: 'tabler icons', code: "\uf37f" },
+  "ti-brand-notion": {iconSet: 'tabler icons', code: "\uef7b" },
+  "ti-brand-npm": {iconSet: 'tabler icons', code: "\uf569" },
+  "ti-brand-nuxt": {iconSet: 'tabler icons', code: "\uf0de" },
+  "ti-brand-nytimes": {iconSet: 'tabler icons', code: "\uef8d" },
+  "ti-brand-office": {iconSet: 'tabler icons', code: "\uf398" },
+  "ti-brand-ok-ru": {iconSet: 'tabler icons', code: "\uf399" },
+  "ti-brand-onedrive": {iconSet: 'tabler icons', code: "\uf5d7" },
+  "ti-brand-onlyfans": {iconSet: 'tabler icons', code: "\uf605" },
+  "ti-brand-open-source": {iconSet: 'tabler icons', code: "\uedd0" },
+  "ti-brand-openai": {iconSet: 'tabler icons', code: "\uf78e" },
+  "ti-brand-openvpn": {iconSet: 'tabler icons', code: "\uf39a" },
+  "ti-brand-opera": {iconSet: 'tabler icons', code: "\uec21" },
+  "ti-brand-pagekit": {iconSet: 'tabler icons', code: "\uedd1" },
+  "ti-brand-patreon": {iconSet: 'tabler icons', code: "\uedd2" },
+  "ti-brand-paypal": {iconSet: 'tabler icons', code: "\uec22" },
+  "ti-brand-paypal-filled": {iconSet: 'tabler icons', code: "\uf7e9" },
+  "ti-brand-paypay": {iconSet: 'tabler icons', code: "\uf5ec" },
+  "ti-brand-peanut": {iconSet: 'tabler icons', code: "\uf39b" },
+  "ti-brand-pepsi": {iconSet: 'tabler icons', code: "\uf261" },
+  "ti-brand-php": {iconSet: 'tabler icons', code: "\uef72" },
+  "ti-brand-picsart": {iconSet: 'tabler icons', code: "\uf4d9" },
+  "ti-brand-pinterest": {iconSet: 'tabler icons', code: "\uec8d" },
+  "ti-brand-planetscale": {iconSet: 'tabler icons', code: "\uf78f" },
+  "ti-brand-pocket": {iconSet: 'tabler icons', code: "\ued00" },
+  "ti-brand-polymer": {iconSet: 'tabler icons', code: "\uf498" },
+  "ti-brand-powershell": {iconSet: 'tabler icons', code: "\uf5ed" },
+  "ti-brand-prisma": {iconSet: 'tabler icons', code: "\uf499" },
+  "ti-brand-producthunt": {iconSet: 'tabler icons', code: "\uedd3" },
+  "ti-brand-pushbullet": {iconSet: 'tabler icons', code: "\uf330" },
+  "ti-brand-pushover": {iconSet: 'tabler icons', code: "\uf20e" },
+  "ti-brand-python": {iconSet: 'tabler icons', code: "\ued01" },
+  "ti-brand-qq": {iconSet: 'tabler icons', code: "\uf606" },
+  "ti-brand-radix-ui": {iconSet: 'tabler icons', code: "\uf790" },
+  "ti-brand-react": {iconSet: 'tabler icons', code: "\uf34c" },
+  "ti-brand-react-native": {iconSet: 'tabler icons', code: "\uef73" },
+  "ti-brand-reason": {iconSet: 'tabler icons', code: "\uf49a" },
+  "ti-brand-reddit": {iconSet: 'tabler icons', code: "\uec8e" },
+  "ti-brand-redhat": {iconSet: 'tabler icons', code: "\uf331" },
+  "ti-brand-redux": {iconSet: 'tabler icons', code: "\uf3a8" },
+  "ti-brand-revolut": {iconSet: 'tabler icons', code: "\uf4da" },
+  "ti-brand-safari": {iconSet: 'tabler icons', code: "\uec23" },
+  "ti-brand-samsungpass": {iconSet: 'tabler icons', code: "\uf4db" },
+  "ti-brand-sass": {iconSet: 'tabler icons', code: "\uedd4" },
+  "ti-brand-sentry": {iconSet: 'tabler icons', code: "\uedd5" },
+  "ti-brand-sharik": {iconSet: 'tabler icons', code: "\uf4dc" },
+  "ti-brand-shazam": {iconSet: 'tabler icons', code: "\uedd6" },
+  "ti-brand-shopee": {iconSet: 'tabler icons', code: "\uf252" },
+  "ti-brand-sketch": {iconSet: 'tabler icons', code: "\uec24" },
+  "ti-brand-skype": {iconSet: 'tabler icons', code: "\ued02" },
+  "ti-brand-slack": {iconSet: 'tabler icons', code: "\uec72" },
+  "ti-brand-snapchat": {iconSet: 'tabler icons', code: "\uec25" },
+  "ti-brand-snapseed": {iconSet: 'tabler icons', code: "\uf253" },
+  "ti-brand-snowflake": {iconSet: 'tabler icons', code: "\uf615" },
+  "ti-brand-socket-io": {iconSet: 'tabler icons', code: "\uf49b" },
+  "ti-brand-solidjs": {iconSet: 'tabler icons', code: "\uf5ee" },
+  "ti-brand-soundcloud": {iconSet: 'tabler icons', code: "\ued6e" },
+  "ti-brand-spacehey": {iconSet: 'tabler icons', code: "\uf4fc" },
+  "ti-brand-spotify": {iconSet: 'tabler icons', code: "\ued03" },
+  "ti-brand-stackoverflow": {iconSet: 'tabler icons', code: "\uef58" },
+  "ti-brand-stackshare": {iconSet: 'tabler icons', code: "\uf607" },
+  "ti-brand-steam": {iconSet: 'tabler icons', code: "\ued6f" },
+  "ti-brand-storybook": {iconSet: 'tabler icons', code: "\uf332" },
+  "ti-brand-storytel": {iconSet: 'tabler icons', code: "\uf608" },
+  "ti-brand-strava": {iconSet: 'tabler icons', code: "\uf254" },
+  "ti-brand-stripe": {iconSet: 'tabler icons', code: "\uedd7" },
+  "ti-brand-sublime-text": {iconSet: 'tabler icons', code: "\uef74" },
+  "ti-brand-sugarizer": {iconSet: 'tabler icons', code: "\uf7a5" },
+  "ti-brand-supabase": {iconSet: 'tabler icons', code: "\uf6d3" },
+  "ti-brand-superhuman": {iconSet: 'tabler icons', code: "\uf50c" },
+  "ti-brand-supernova": {iconSet: 'tabler icons', code: "\uf49c" },
+  "ti-brand-surfshark": {iconSet: 'tabler icons', code: "\uf255" },
+  "ti-brand-svelte": {iconSet: 'tabler icons', code: "\uf0df" },
+  "ti-brand-symfony": {iconSet: 'tabler icons', code: "\uf616" },
+  "ti-brand-tabler": {iconSet: 'tabler icons', code: "\uec8f" },
+  "ti-brand-tailwind": {iconSet: 'tabler icons', code: "\ueca1" },
+  "ti-brand-taobao": {iconSet: 'tabler icons', code: "\uf5ef" },
+  "ti-brand-ted": {iconSet: 'tabler icons', code: "\uf658" },
+  "ti-brand-telegram": {iconSet: 'tabler icons', code: "\uec26" },
+  "ti-brand-tether": {iconSet: 'tabler icons', code: "\uf5a3" },
+  "ti-brand-threejs": {iconSet: 'tabler icons', code: "\uf5f0" },
+  "ti-brand-tidal": {iconSet: 'tabler icons', code: "\ued70" },
+  "ti-brand-tikto-filled": {iconSet: 'tabler icons', code: "\uf7ea" },
+  "ti-brand-tiktok": {iconSet: 'tabler icons', code: "\uec73" },
+  "ti-brand-tinder": {iconSet: 'tabler icons', code: "\ued71" },
+  "ti-brand-topbuzz": {iconSet: 'tabler icons', code: "\uf50d" },
+  "ti-brand-torchain": {iconSet: 'tabler icons', code: "\uf5a4" },
+  "ti-brand-toyota": {iconSet: 'tabler icons', code: "\uf262" },
+  "ti-brand-trello": {iconSet: 'tabler icons', code: "\uf39d" },
+  "ti-brand-tripadvisor": {iconSet: 'tabler icons', code: "\uf002" },
+  "ti-brand-tumblr": {iconSet: 'tabler icons', code: "\ued04" },
+  "ti-brand-twilio": {iconSet: 'tabler icons', code: "\uf617" },
+  "ti-brand-twitch": {iconSet: 'tabler icons', code: "\ued05" },
+  "ti-brand-twitter": {iconSet: 'tabler icons', code: "\uec27" },
+  "ti-brand-twitter-filled": {iconSet: 'tabler icons', code: "\uf7eb" },
+  "ti-brand-typescript": {iconSet: 'tabler icons', code: "\uf5f1" },
+  "ti-brand-uber": {iconSet: 'tabler icons', code: "\uef75" },
+  "ti-brand-ubuntu": {iconSet: 'tabler icons', code: "\uef59" },
+  "ti-brand-unity": {iconSet: 'tabler icons', code: "\uf49d" },
+  "ti-brand-unsplash": {iconSet: 'tabler icons', code: "\uedd8" },
+  "ti-brand-upwork": {iconSet: 'tabler icons', code: "\uf39e" },
+  "ti-brand-valorant": {iconSet: 'tabler icons', code: "\uf39f" },
+  "ti-brand-vercel": {iconSet: 'tabler icons', code: "\uef24" },
+  "ti-brand-vimeo": {iconSet: 'tabler icons', code: "\ued06" },
+  "ti-brand-vinted": {iconSet: 'tabler icons', code: "\uf20f" },
+  "ti-brand-visa": {iconSet: 'tabler icons', code: "\uf380" },
+  "ti-brand-visual-studio": {iconSet: 'tabler icons', code: "\uef76" },
+  "ti-brand-vite": {iconSet: 'tabler icons', code: "\uf5f2" },
+  "ti-brand-vivaldi": {iconSet: 'tabler icons', code: "\uf210" },
+  "ti-brand-vk": {iconSet: 'tabler icons', code: "\ued72" },
+  "ti-brand-volkswagen": {iconSet: 'tabler icons', code: "\uf50e" },
+  "ti-brand-vsco": {iconSet: 'tabler icons', code: "\uf334" },
+  "ti-brand-vscode": {iconSet: 'tabler icons', code: "\uf3a0" },
+  "ti-brand-vue": {iconSet: 'tabler icons', code: "\uf0e0" },
+  "ti-brand-walmart": {iconSet: 'tabler icons', code: "\uf211" },
+  "ti-brand-waze": {iconSet: 'tabler icons', code: "\uf5d8" },
+  "ti-brand-webflow": {iconSet: 'tabler icons', code: "\uf2d2" },
+  "ti-brand-wechat": {iconSet: 'tabler icons', code: "\uf5f3" },
+  "ti-brand-weibo": {iconSet: 'tabler icons', code: "\uf609" },
+  "ti-brand-whatsapp": {iconSet: 'tabler icons', code: "\uec74" },
+  "ti-brand-windows": {iconSet: 'tabler icons', code: "\uecd8" },
+  "ti-brand-windy": {iconSet: 'tabler icons', code: "\uf4dd" },
+  "ti-brand-wish": {iconSet: 'tabler icons', code: "\uf212" },
+  "ti-brand-wix": {iconSet: 'tabler icons', code: "\uf3a1" },
+  "ti-brand-wordpress": {iconSet: 'tabler icons', code: "\uf2d3" },
+  "ti-brand-xbox": {iconSet: 'tabler icons', code: "\uf298" },
+  "ti-brand-xing": {iconSet: 'tabler icons', code: "\uf21a" },
+  "ti-brand-yahoo": {iconSet: 'tabler icons', code: "\ued73" },
+  "ti-brand-yatse": {iconSet: 'tabler icons', code: "\uf213" },
+  "ti-brand-ycombinator": {iconSet: 'tabler icons', code: "\uedd9" },
+  "ti-brand-youtube": {iconSet: 'tabler icons', code: "\uec90" },
+  "ti-brand-youtube-kids": {iconSet: 'tabler icons', code: "\uf214" },
+  "ti-brand-zalando": {iconSet: 'tabler icons', code: "\uf49e" },
+  "ti-brand-zapier": {iconSet: 'tabler icons', code: "\uf49f" },
+  "ti-brand-zeit": {iconSet: 'tabler icons', code: "\uf335" },
+  "ti-brand-zhihu": {iconSet: 'tabler icons', code: "\uf60a" },
+  "ti-brand-zoom": {iconSet: 'tabler icons', code: "\uf215" },
+  "ti-brand-zulip": {iconSet: 'tabler icons', code: "\uf4de" },
+  "ti-brand-zwift": {iconSet: 'tabler icons', code: "\uf216" },
+  "ti-bread": {iconSet: 'tabler icons', code: "\uefa3" },
+  "ti-bread-off": {iconSet: 'tabler icons', code: "\uf3cb" },
+  "ti-briefcase": {iconSet: 'tabler icons', code: "\uea46" },
+  "ti-briefcase-off": {iconSet: 'tabler icons', code: "\uf3cc" },
+  "ti-brightness": {iconSet: 'tabler icons', code: "\ueb7f" },
+  "ti-brightness-2": {iconSet: 'tabler icons', code: "\uee19" },
+  "ti-brightness-down": {iconSet: 'tabler icons', code: "\ueb7d" },
+  "ti-brightness-half": {iconSet: 'tabler icons', code: "\uee1a" },
+  "ti-brightness-off": {iconSet: 'tabler icons', code: "\uf3cd" },
+  "ti-brightness-up": {iconSet: 'tabler icons', code: "\ueb7e" },
+  "ti-broadcast": {iconSet: 'tabler icons', code: "\uf1e9" },
+  "ti-broadcast-off": {iconSet: 'tabler icons', code: "\uf1e8" },
+  "ti-browser": {iconSet: 'tabler icons', code: "\uebb7" },
+  "ti-browser-check": {iconSet: 'tabler icons', code: "\uefd6" },
+  "ti-browser-off": {iconSet: 'tabler icons', code: "\uf0c1" },
+  "ti-browser-plus": {iconSet: 'tabler icons', code: "\uefd7" },
+  "ti-browser-x": {iconSet: 'tabler icons', code: "\uefd8" },
+  "ti-brush": {iconSet: 'tabler icons', code: "\uebb8" },
+  "ti-brush-off": {iconSet: 'tabler icons', code: "\uf0c2" },
+  "ti-bucket": {iconSet: 'tabler icons', code: "\uea47" },
+  "ti-bucket-droplet": {iconSet: 'tabler icons', code: "\uf56a" },
+  "ti-bucket-off": {iconSet: 'tabler icons', code: "\uf103" },
+  "ti-bug": {iconSet: 'tabler icons', code: "\uea48" },
+  "ti-bug-off": {iconSet: 'tabler icons', code: "\uf0c3" },
+  "ti-building": {iconSet: 'tabler icons', code: "\uea4f" },
+  "ti-building-arch": {iconSet: 'tabler icons', code: "\uea49" },
+  "ti-building-bank": {iconSet: 'tabler icons', code: "\uebe2" },
+  "ti-building-bridge": {iconSet: 'tabler icons', code: "\uea4b" },
+  "ti-building-bridge-2": {iconSet: 'tabler icons', code: "\uea4a" },
+  "ti-building-broadcast-tower": {iconSet: 'tabler icons', code: "\uf4be" },
+  "ti-building-carousel": {iconSet: 'tabler icons', code: "\ued87" },
+  "ti-building-castle": {iconSet: 'tabler icons', code: "\ued88" },
+  "ti-building-church": {iconSet: 'tabler icons', code: "\uea4c" },
+  "ti-building-circus": {iconSet: 'tabler icons', code: "\uf4bf" },
+  "ti-building-community": {iconSet: 'tabler icons', code: "\uebf6" },
+  "ti-building-cottage": {iconSet: 'tabler icons', code: "\uee1b" },
+  "ti-building-estate": {iconSet: 'tabler icons', code: "\uf5a5" },
+  "ti-building-factory": {iconSet: 'tabler icons', code: "\uee1c" },
+  "ti-building-factory-2": {iconSet: 'tabler icons', code: "\uf082" },
+  "ti-building-fortress": {iconSet: 'tabler icons', code: "\ued89" },
+  "ti-building-hospital": {iconSet: 'tabler icons', code: "\uea4d" },
+  "ti-building-lighthouse": {iconSet: 'tabler icons', code: "\ued8a" },
+  "ti-building-monument": {iconSet: 'tabler icons', code: "\ued26" },
+  "ti-building-pavilion": {iconSet: 'tabler icons', code: "\uebf7" },
+  "ti-building-skyscraper": {iconSet: 'tabler icons', code: "\uec39" },
+  "ti-building-stadium": {iconSet: 'tabler icons', code: "\uf641" },
+  "ti-building-store": {iconSet: 'tabler icons', code: "\uea4e" },
+  "ti-building-tunnel": {iconSet: 'tabler icons', code: "\uf5a6" },
+  "ti-building-warehouse": {iconSet: 'tabler icons', code: "\uebe3" },
+  "ti-building-wind-turbine": {iconSet: 'tabler icons', code: "\uf4c0" },
+  "ti-bulb": {iconSet: 'tabler icons', code: "\uea51" },
+  "ti-bulb-filled": {iconSet: 'tabler icons', code: "\uf66a" },
+  "ti-bulb-off": {iconSet: 'tabler icons', code: "\uea50" },
+  "ti-bulldozer": {iconSet: 'tabler icons', code: "\uee1d" },
+  "ti-bus": {iconSet: 'tabler icons', code: "\uebe4" },
+  "ti-bus-off": {iconSet: 'tabler icons', code: "\uf3ce" },
+  "ti-bus-stop": {iconSet: 'tabler icons', code: "\uf2d4" },
+  "ti-businessplan": {iconSet: 'tabler icons', code: "\uee1e" },
+  "ti-butterfly": {iconSet: 'tabler icons', code: "\uefd9" },
+  "ti-cactus": {iconSet: 'tabler icons', code: "\uf21b" },
+  "ti-cactus-off": {iconSet: 'tabler icons', code: "\uf3cf" },
+  "ti-cake": {iconSet: 'tabler icons', code: "\uf00f" },
+  "ti-cake-off": {iconSet: 'tabler icons', code: "\uf104" },
+  "ti-calculator": {iconSet: 'tabler icons', code: "\ueb80" },
+  "ti-calculator-off": {iconSet: 'tabler icons', code: "\uf0c4" },
+  "ti-calendar": {iconSet: 'tabler icons', code: "\uea53" },
+  "ti-calendar-bolt": {iconSet: 'tabler icons', code: "\uf822" },
+  "ti-calendar-cancel": {iconSet: 'tabler icons', code: "\uf823" },
+  "ti-calendar-check": {iconSet: 'tabler icons', code: "\uf824" },
+  "ti-calendar-code": {iconSet: 'tabler icons', code: "\uf825" },
+  "ti-calendar-cog": {iconSet: 'tabler icons', code: "\uf826" },
+  "ti-calendar-dollar": {iconSet: 'tabler icons', code: "\uf827" },
+  "ti-calendar-down": {iconSet: 'tabler icons', code: "\uf828" },
+  "ti-calendar-due": {iconSet: 'tabler icons', code: "\uf621" },
+  "ti-calendar-event": {iconSet: 'tabler icons', code: "\uea52" },
+  "ti-calendar-exclamation": {iconSet: 'tabler icons', code: "\uf829" },
+  "ti-calendar-heart": {iconSet: 'tabler icons', code: "\uf82a" },
+  "ti-calendar-minus": {iconSet: 'tabler icons', code: "\uebb9" },
+  "ti-calendar-off": {iconSet: 'tabler icons', code: "\uee1f" },
+  "ti-calendar-pause": {iconSet: 'tabler icons', code: "\uf82b" },
+  "ti-calendar-pin": {iconSet: 'tabler icons', code: "\uf82c" },
+  "ti-calendar-plus": {iconSet: 'tabler icons', code: "\uebba" },
+  "ti-calendar-question": {iconSet: 'tabler icons', code: "\uf82d" },
+  "ti-calendar-search": {iconSet: 'tabler icons', code: "\uf82e" },
+  "ti-calendar-share": {iconSet: 'tabler icons', code: "\uf82f" },
+  "ti-calendar-star": {iconSet: 'tabler icons', code: "\uf830" },
+  "ti-calendar-stats": {iconSet: 'tabler icons', code: "\uee20" },
+  "ti-calendar-time": {iconSet: 'tabler icons', code: "\uee21" },
+  "ti-calendar-up": {iconSet: 'tabler icons', code: "\uf831" },
+  "ti-calendar-x": {iconSet: 'tabler icons', code: "\uf832" },
+  "ti-camera": {iconSet: 'tabler icons', code: "\uea54" },
+  "ti-camera-bolt": {iconSet: 'tabler icons', code: "\uf833" },
+  "ti-camera-cancel": {iconSet: 'tabler icons', code: "\uf834" },
+  "ti-camera-check": {iconSet: 'tabler icons', code: "\uf835" },
+  "ti-camera-code": {iconSet: 'tabler icons', code: "\uf836" },
+  "ti-camera-cog": {iconSet: 'tabler icons', code: "\uf837" },
+  "ti-camera-dollar": {iconSet: 'tabler icons', code: "\uf838" },
+  "ti-camera-down": {iconSet: 'tabler icons', code: "\uf839" },
+  "ti-camera-exclamation": {iconSet: 'tabler icons', code: "\uf83a" },
+  "ti-camera-heart": {iconSet: 'tabler icons', code: "\uf83b" },
+  "ti-camera-minus": {iconSet: 'tabler icons', code: "\uec3a" },
+  "ti-camera-off": {iconSet: 'tabler icons', code: "\uecee" },
+  "ti-camera-pause": {iconSet: 'tabler icons', code: "\uf83c" },
+  "ti-camera-pin": {iconSet: 'tabler icons', code: "\uf83d" },
+  "ti-camera-plus": {iconSet: 'tabler icons', code: "\uec3b" },
+  "ti-camera-question": {iconSet: 'tabler icons', code: "\uf83e" },
+  "ti-camera-rotate": {iconSet: 'tabler icons', code: "\uee22" },
+  "ti-camera-search": {iconSet: 'tabler icons', code: "\uf83f" },
+  "ti-camera-selfie": {iconSet: 'tabler icons', code: "\uee23" },
+  "ti-camera-share": {iconSet: 'tabler icons', code: "\uf840" },
+  "ti-camera-star": {iconSet: 'tabler icons', code: "\uf841" },
+  "ti-camera-up": {iconSet: 'tabler icons', code: "\uf842" },
+  "ti-camera-x": {iconSet: 'tabler icons', code: "\uf843" },
+  "ti-camper": {iconSet: 'tabler icons', code: "\ufa25" },
+  "ti-campfire": {iconSet: 'tabler icons', code: "\uf5a7" },
+  "ti-candle": {iconSet: 'tabler icons', code: "\uefc6" },
+  "ti-candy": {iconSet: 'tabler icons', code: "\uef0d" },
+  "ti-candy-off": {iconSet: 'tabler icons', code: "\uf0c5" },
+  "ti-cane": {iconSet: 'tabler icons', code: "\uf50f" },
+  "ti-cannabis": {iconSet: 'tabler icons', code: "\uf4c1" },
+  "ti-capture": {iconSet: 'tabler icons', code: "\uec3c" },
+  "ti-capture-off": {iconSet: 'tabler icons', code: "\uf0c6" },
+  "ti-car": {iconSet: 'tabler icons', code: "\uebbb" },
+  "ti-car-crane": {iconSet: 'tabler icons', code: "\uef25" },
+  "ti-car-crash": {iconSet: 'tabler icons', code: "\uefa4" },
+  "ti-car-off": {iconSet: 'tabler icons', code: "\uf0c7" },
+  "ti-car-turbine": {iconSet: 'tabler icons', code: "\uf4fd" },
+  "ti-caravan": {iconSet: 'tabler icons', code: "\uec7c" },
+  "ti-cardboards": {iconSet: 'tabler icons', code: "\ued74" },
+  "ti-cardboards-off": {iconSet: 'tabler icons', code: "\uf0c8" },
+  "ti-cards": {iconSet: 'tabler icons', code: "\uf510" },
+  "ti-caret-down": {iconSet: 'tabler icons', code: "\ueb5d" },
+  "ti-caret-left": {iconSet: 'tabler icons', code: "\ueb5e" },
+  "ti-caret-right": {iconSet: 'tabler icons', code: "\ueb5f" },
+  "ti-caret-up": {iconSet: 'tabler icons', code: "\ueb60" },
+  "ti-carousel-horizontal": {iconSet: 'tabler icons', code: "\uf659" },
+  "ti-carousel-vertical": {iconSet: 'tabler icons', code: "\uf65a" },
+  "ti-carrot": {iconSet: 'tabler icons', code: "\uf21c" },
+  "ti-carrot-off": {iconSet: 'tabler icons', code: "\uf3d0" },
+  "ti-cash": {iconSet: 'tabler icons', code: "\uea55" },
+  "ti-cash-banknote": {iconSet: 'tabler icons', code: "\uee25" },
+  "ti-cash-banknote-off": {iconSet: 'tabler icons', code: "\uee24" },
+  "ti-cash-off": {iconSet: 'tabler icons', code: "\uf105" },
+  "ti-cast": {iconSet: 'tabler icons', code: "\uea56" },
+  "ti-cast-off": {iconSet: 'tabler icons', code: "\uf0c9" },
+  "ti-cat": {iconSet: 'tabler icons', code: "\uf65b" },
+  "ti-category": {iconSet: 'tabler icons', code: "\uf1f6" },
+  "ti-category-2": {iconSet: 'tabler icons', code: "\uf1f5" },
+  "ti-ce": {iconSet: 'tabler icons', code: "\ued75" },
+  "ti-ce-off": {iconSet: 'tabler icons', code: "\uf0ca" },
+  "ti-cell": {iconSet: 'tabler icons', code: "\uf05f" },
+  "ti-cell-signal-1": {iconSet: 'tabler icons', code: "\uf083" },
+  "ti-cell-signal-2": {iconSet: 'tabler icons', code: "\uf084" },
+  "ti-cell-signal-3": {iconSet: 'tabler icons', code: "\uf085" },
+  "ti-cell-signal-4": {iconSet: 'tabler icons', code: "\uf086" },
+  "ti-cell-signal-5": {iconSet: 'tabler icons', code: "\uf087" },
+  "ti-cell-signal-off": {iconSet: 'tabler icons', code: "\uf088" },
+  "ti-certificate": {iconSet: 'tabler icons', code: "\ued76" },
+  "ti-certificate-2": {iconSet: 'tabler icons', code: "\uf073" },
+  "ti-certificate-2-off": {iconSet: 'tabler icons', code: "\uf0cb" },
+  "ti-certificate-off": {iconSet: 'tabler icons', code: "\uf0cc" },
+  "ti-chair-director": {iconSet: 'tabler icons', code: "\uf2d5" },
+  "ti-chalkboard": {iconSet: 'tabler icons', code: "\uf34d" },
+  "ti-chalkboard-off": {iconSet: 'tabler icons', code: "\uf3d1" },
+  "ti-charging-pile": {iconSet: 'tabler icons', code: "\uee26" },
+  "ti-chart-arcs": {iconSet: 'tabler icons', code: "\uee28" },
+  "ti-chart-arcs-3": {iconSet: 'tabler icons', code: "\uee27" },
+  "ti-chart-area": {iconSet: 'tabler icons', code: "\uea58" },
+  "ti-chart-area-filled": {iconSet: 'tabler icons', code: "\uf66b" },
+  "ti-chart-area-line": {iconSet: 'tabler icons', code: "\uea57" },
+  "ti-chart-area-line-filled": {iconSet: 'tabler icons', code: "\uf66c" },
+  "ti-chart-arrows": {iconSet: 'tabler icons', code: "\uee2a" },
+  "ti-chart-arrows-vertical": {iconSet: 'tabler icons', code: "\uee29" },
+  "ti-chart-bar": {iconSet: 'tabler icons', code: "\uea59" },
+  "ti-chart-bar-off": {iconSet: 'tabler icons', code: "\uf3d2" },
+  "ti-chart-bubble": {iconSet: 'tabler icons', code: "\uec75" },
+  "ti-chart-bubble-filled": {iconSet: 'tabler icons', code: "\uf66d" },
+  "ti-chart-candle": {iconSet: 'tabler icons', code: "\uea5a" },
+  "ti-chart-candle-filled": {iconSet: 'tabler icons', code: "\uf66e" },
+  "ti-chart-circles": {iconSet: 'tabler icons', code: "\uee2b" },
+  "ti-chart-donut": {iconSet: 'tabler icons', code: "\uea5b" },
+  "ti-chart-donut-2": {iconSet: 'tabler icons', code: "\uee2c" },
+  "ti-chart-donut-3": {iconSet: 'tabler icons', code: "\uee2d" },
+  "ti-chart-donut-4": {iconSet: 'tabler icons', code: "\uee2e" },
+  "ti-chart-donut-filled": {iconSet: 'tabler icons', code: "\uf66f" },
+  "ti-chart-dots": {iconSet: 'tabler icons', code: "\uee2f" },
+  "ti-chart-dots-2": {iconSet: 'tabler icons', code: "\uf097" },
+  "ti-chart-dots-3": {iconSet: 'tabler icons', code: "\uf098" },
+  "ti-chart-grid-dots": {iconSet: 'tabler icons', code: "\uf4c2" },
+  "ti-chart-histogram": {iconSet: 'tabler icons', code: "\uf65c" },
+  "ti-chart-infographic": {iconSet: 'tabler icons', code: "\uee30" },
+  "ti-chart-line": {iconSet: 'tabler icons', code: "\uea5c" },
+  "ti-chart-pie": {iconSet: 'tabler icons', code: "\uea5d" },
+  "ti-chart-pie-2": {iconSet: 'tabler icons', code: "\uee31" },
+  "ti-chart-pie-3": {iconSet: 'tabler icons', code: "\uee32" },
+  "ti-chart-pie-4": {iconSet: 'tabler icons', code: "\uee33" },
+  "ti-chart-pie-filled": {iconSet: 'tabler icons', code: "\uf670" },
+  "ti-chart-pie-off": {iconSet: 'tabler icons', code: "\uf3d3" },
+  "ti-chart-ppf": {iconSet: 'tabler icons', code: "\uf618" },
+  "ti-chart-radar": {iconSet: 'tabler icons', code: "\ued77" },
+  "ti-chart-sankey": {iconSet: 'tabler icons', code: "\uf619" },
+  "ti-chart-treemap": {iconSet: 'tabler icons', code: "\uf381" },
+  "ti-check": {iconSet: 'tabler icons', code: "\uea5e" },
+  "ti-checkbox": {iconSet: 'tabler icons', code: "\ueba6" },
+  "ti-checklist": {iconSet: 'tabler icons', code: "\uf074" },
+  "ti-checks": {iconSet: 'tabler icons', code: "\uebaa" },
+  "ti-checkup-list": {iconSet: 'tabler icons', code: "\uef5a" },
+  "ti-cheese": {iconSet: 'tabler icons', code: "\uef26" },
+  "ti-chef-hat": {iconSet: 'tabler icons', code: "\uf21d" },
+  "ti-chef-hat-off": {iconSet: 'tabler icons', code: "\uf3d4" },
+  "ti-cherry": {iconSet: 'tabler icons', code: "\uf511" },
+  "ti-cherry-filled": {iconSet: 'tabler icons', code: "\uf728" },
+  "ti-chess": {iconSet: 'tabler icons', code: "\uf382" },
+  "ti-chess-bishop": {iconSet: 'tabler icons', code: "\uf56b" },
+  "ti-chess-bishop-filled": {iconSet: 'tabler icons', code: "\uf729" },
+  "ti-chess-filled": {iconSet: 'tabler icons', code: "\uf72a" },
+  "ti-chess-king": {iconSet: 'tabler icons', code: "\uf56c" },
+  "ti-chess-king-filled": {iconSet: 'tabler icons', code: "\uf72b" },
+  "ti-chess-knight": {iconSet: 'tabler icons', code: "\uf56d" },
+  "ti-chess-knight-filled": {iconSet: 'tabler icons', code: "\uf72c" },
+  "ti-chess-queen": {iconSet: 'tabler icons', code: "\uf56e" },
+  "ti-chess-queen-filled": {iconSet: 'tabler icons', code: "\uf72d" },
+  "ti-chess-rook": {iconSet: 'tabler icons', code: "\uf56f" },
+  "ti-chess-rook-filled": {iconSet: 'tabler icons', code: "\uf72e" },
+  "ti-chevron-down": {iconSet: 'tabler icons', code: "\uea5f" },
+  "ti-chevron-down-left": {iconSet: 'tabler icons', code: "\ued09" },
+  "ti-chevron-down-right": {iconSet: 'tabler icons', code: "\ued0a" },
+  "ti-chevron-left": {iconSet: 'tabler icons', code: "\uea60" },
+  "ti-chevron-right": {iconSet: 'tabler icons', code: "\uea61" },
+  "ti-chevron-up": {iconSet: 'tabler icons', code: "\uea62" },
+  "ti-chevron-up-left": {iconSet: 'tabler icons', code: "\ued0b" },
+  "ti-chevron-up-right": {iconSet: 'tabler icons', code: "\ued0c" },
+  "ti-chevrons-down": {iconSet: 'tabler icons', code: "\uea63" },
+  "ti-chevrons-down-left": {iconSet: 'tabler icons', code: "\ued0d" },
+  "ti-chevrons-down-right": {iconSet: 'tabler icons', code: "\ued0e" },
+  "ti-chevrons-left": {iconSet: 'tabler icons', code: "\uea64" },
+  "ti-chevrons-right": {iconSet: 'tabler icons', code: "\uea65" },
+  "ti-chevrons-up": {iconSet: 'tabler icons', code: "\uea66" },
+  "ti-chevrons-up-left": {iconSet: 'tabler icons', code: "\ued0f" },
+  "ti-chevrons-up-right": {iconSet: 'tabler icons', code: "\ued10" },
+  "ti-chisel": {iconSet: 'tabler icons', code: "\uf383" },
+  "ti-christmas-tree": {iconSet: 'tabler icons', code: "\ued78" },
+  "ti-christmas-tree-off": {iconSet: 'tabler icons', code: "\uf3d5" },
+  "ti-circle": {iconSet: 'tabler icons', code: "\uea6b" },
+  "ti-circle-0-filled": {iconSet: 'tabler icons', code: "\uf72f" },
+  "ti-circle-1-filled": {iconSet: 'tabler icons', code: "\uf730" },
+  "ti-circle-2-filled": {iconSet: 'tabler icons', code: "\uf731" },
+  "ti-circle-3-filled": {iconSet: 'tabler icons', code: "\uf732" },
+  "ti-circle-4-filled": {iconSet: 'tabler icons', code: "\uf733" },
+  "ti-circle-5-filled": {iconSet: 'tabler icons', code: "\uf734" },
+  "ti-circle-6-filled": {iconSet: 'tabler icons', code: "\uf735" },
+  "ti-circle-7-filled": {iconSet: 'tabler icons', code: "\uf736" },
+  "ti-circle-8-filled": {iconSet: 'tabler icons', code: "\uf737" },
+  "ti-circle-9-filled": {iconSet: 'tabler icons', code: "\uf738" },
+  "ti-circle-arrow-down": {iconSet: 'tabler icons', code: "\uf6f9" },
+  "ti-circle-arrow-down-filled": {iconSet: 'tabler icons', code: "\uf6f4" },
+  "ti-circle-arrow-down-left": {iconSet: 'tabler icons', code: "\uf6f6" },
+  "ti-circle-arrow-down-left-filled": {iconSet: 'tabler icons', code: "\uf6f5" },
+  "ti-circle-arrow-down-right": {iconSet: 'tabler icons', code: "\uf6f8" },
+  "ti-circle-arrow-down-right-filled": {iconSet: 'tabler icons', code: "\uf6f7" },
+  "ti-circle-arrow-left": {iconSet: 'tabler icons', code: "\uf6fb" },
+  "ti-circle-arrow-left-filled": {iconSet: 'tabler icons', code: "\uf6fa" },
+  "ti-circle-arrow-right": {iconSet: 'tabler icons', code: "\uf6fd" },
+  "ti-circle-arrow-right-filled": {iconSet: 'tabler icons', code: "\uf6fc" },
+  "ti-circle-arrow-up": {iconSet: 'tabler icons', code: "\uf703" },
+  "ti-circle-arrow-up-filled": {iconSet: 'tabler icons', code: "\uf6fe" },
+  "ti-circle-arrow-up-left": {iconSet: 'tabler icons', code: "\uf700" },
+  "ti-circle-arrow-up-left-filled": {iconSet: 'tabler icons', code: "\uf6ff" },
+  "ti-circle-arrow-up-right": {iconSet: 'tabler icons', code: "\uf702" },
+  "ti-circle-arrow-up-right-filled": {iconSet: 'tabler icons', code: "\uf701" },
+  "ti-circle-caret-down": {iconSet: 'tabler icons', code: "\uf4a9" },
+  "ti-circle-caret-left": {iconSet: 'tabler icons', code: "\uf4aa" },
+  "ti-circle-caret-right": {iconSet: 'tabler icons', code: "\uf4ab" },
+  "ti-circle-caret-up": {iconSet: 'tabler icons', code: "\uf4ac" },
+  "ti-circle-check": {iconSet: 'tabler icons', code: "\uea67" },
+  "ti-circle-check-filled": {iconSet: 'tabler icons', code: "\uf704" },
+  "ti-circle-chevron-down": {iconSet: 'tabler icons', code: "\uf622" },
+  "ti-circle-chevron-left": {iconSet: 'tabler icons', code: "\uf623" },
+  "ti-circle-chevron-right": {iconSet: 'tabler icons', code: "\uf624" },
+  "ti-circle-chevron-up": {iconSet: 'tabler icons', code: "\uf625" },
+  "ti-circle-chevrons-down": {iconSet: 'tabler icons', code: "\uf642" },
+  "ti-circle-chevrons-left": {iconSet: 'tabler icons', code: "\uf643" },
+  "ti-circle-chevrons-right": {iconSet: 'tabler icons', code: "\uf644" },
+  "ti-circle-chevrons-up": {iconSet: 'tabler icons', code: "\uf645" },
+  "ti-circle-dashed": {iconSet: 'tabler icons', code: "\ued27" },
+  "ti-circle-dot": {iconSet: 'tabler icons', code: "\uefb1" },
+  "ti-circle-dot-filled": {iconSet: 'tabler icons', code: "\uf705" },
+  "ti-circle-dotted": {iconSet: 'tabler icons', code: "\ued28" },
+  "ti-circle-filled": {iconSet: 'tabler icons', code: "\uf671" },
+  "ti-circle-half": {iconSet: 'tabler icons', code: "\uee3f" },
+  "ti-circle-half-2": {iconSet: 'tabler icons', code: "\ueff3" },
+  "ti-circle-half-vertical": {iconSet: 'tabler icons', code: "\uee3e" },
+  "ti-circle-key": {iconSet: 'tabler icons', code: "\uf633" },
+  "ti-circle-key-filled": {iconSet: 'tabler icons', code: "\uf706" },
+  "ti-circle-letter-a": {iconSet: 'tabler icons', code: "\uf441" },
+  "ti-circle-letter-b": {iconSet: 'tabler icons', code: "\uf442" },
+  "ti-circle-letter-c": {iconSet: 'tabler icons', code: "\uf443" },
+  "ti-circle-letter-d": {iconSet: 'tabler icons', code: "\uf444" },
+  "ti-circle-letter-e": {iconSet: 'tabler icons', code: "\uf445" },
+  "ti-circle-letter-f": {iconSet: 'tabler icons', code: "\uf446" },
+  "ti-circle-letter-g": {iconSet: 'tabler icons', code: "\uf447" },
+  "ti-circle-letter-h": {iconSet: 'tabler icons', code: "\uf448" },
+  "ti-circle-letter-i": {iconSet: 'tabler icons', code: "\uf449" },
+  "ti-circle-letter-j": {iconSet: 'tabler icons', code: "\uf44a" },
+  "ti-circle-letter-k": {iconSet: 'tabler icons', code: "\uf44b" },
+  "ti-circle-letter-l": {iconSet: 'tabler icons', code: "\uf44c" },
+  "ti-circle-letter-m": {iconSet: 'tabler icons', code: "\uf44d" },
+  "ti-circle-letter-n": {iconSet: 'tabler icons', code: "\uf44e" },
+  "ti-circle-letter-o": {iconSet: 'tabler icons', code: "\uf44f" },
+  "ti-circle-letter-p": {iconSet: 'tabler icons', code: "\uf450" },
+  "ti-circle-letter-q": {iconSet: 'tabler icons', code: "\uf451" },
+  "ti-circle-letter-r": {iconSet: 'tabler icons', code: "\uf452" },
+  "ti-circle-letter-s": {iconSet: 'tabler icons', code: "\uf453" },
+  "ti-circle-letter-t": {iconSet: 'tabler icons', code: "\uf454" },
+  "ti-circle-letter-u": {iconSet: 'tabler icons', code: "\uf455" },
+  "ti-circle-letter-v": {iconSet: 'tabler icons', code: "\uf4ad" },
+  "ti-circle-letter-w": {iconSet: 'tabler icons', code: "\uf456" },
+  "ti-circle-letter-x": {iconSet: 'tabler icons', code: "\uf4ae" },
+  "ti-circle-letter-y": {iconSet: 'tabler icons', code: "\uf457" },
+  "ti-circle-letter-z": {iconSet: 'tabler icons', code: "\uf458" },
+  "ti-circle-minus": {iconSet: 'tabler icons', code: "\uea68" },
+  "ti-circle-number-0": {iconSet: 'tabler icons', code: "\uee34" },
+  "ti-circle-number-1": {iconSet: 'tabler icons', code: "\uee35" },
+  "ti-circle-number-2": {iconSet: 'tabler icons', code: "\uee36" },
+  "ti-circle-number-3": {iconSet: 'tabler icons', code: "\uee37" },
+  "ti-circle-number-4": {iconSet: 'tabler icons', code: "\uee38" },
+  "ti-circle-number-5": {iconSet: 'tabler icons', code: "\uee39" },
+  "ti-circle-number-6": {iconSet: 'tabler icons', code: "\uee3a" },
+  "ti-circle-number-7": {iconSet: 'tabler icons', code: "\uee3b" },
+  "ti-circle-number-8": {iconSet: 'tabler icons', code: "\uee3c" },
+  "ti-circle-number-9": {iconSet: 'tabler icons', code: "\uee3d" },
+  "ti-circle-off": {iconSet: 'tabler icons', code: "\uee40" },
+  "ti-circle-plus": {iconSet: 'tabler icons', code: "\uea69" },
+  "ti-circle-rectangle": {iconSet: 'tabler icons', code: "\uf010" },
+  "ti-circle-rectangle-off": {iconSet: 'tabler icons', code: "\uf0cd" },
+  "ti-circle-square": {iconSet: 'tabler icons', code: "\uece4" },
+  "ti-circle-triangle": {iconSet: 'tabler icons', code: "\uf011" },
+  "ti-circle-x": {iconSet: 'tabler icons', code: "\uea6a" },
+  "ti-circle-x-filled": {iconSet: 'tabler icons', code: "\uf739" },
+  "ti-circles": {iconSet: 'tabler icons', code: "\uece5" },
+  "ti-circles-filled": {iconSet: 'tabler icons', code: "\uf672" },
+  "ti-circles-relation": {iconSet: 'tabler icons', code: "\uf4c3" },
+  "ti-circuit-ammeter": {iconSet: 'tabler icons', code: "\uf271" },
+  "ti-circuit-battery": {iconSet: 'tabler icons', code: "\uf272" },
+  "ti-circuit-bulb": {iconSet: 'tabler icons', code: "\uf273" },
+  "ti-circuit-capacitor": {iconSet: 'tabler icons', code: "\uf275" },
+  "ti-circuit-capacitor-polarized": {iconSet: 'tabler icons', code: "\uf274" },
+  "ti-circuit-cell": {iconSet: 'tabler icons', code: "\uf277" },
+  "ti-circuit-cell-plus": {iconSet: 'tabler icons', code: "\uf276" },
+  "ti-circuit-changeover": {iconSet: 'tabler icons', code: "\uf278" },
+  "ti-circuit-diode": {iconSet: 'tabler icons', code: "\uf27a" },
+  "ti-circuit-diode-zener": {iconSet: 'tabler icons', code: "\uf279" },
+  "ti-circuit-ground": {iconSet: 'tabler icons', code: "\uf27c" },
+  "ti-circuit-ground-digital": {iconSet: 'tabler icons', code: "\uf27b" },
+  "ti-circuit-inductor": {iconSet: 'tabler icons', code: "\uf27d" },
+  "ti-circuit-motor": {iconSet: 'tabler icons', code: "\uf27e" },
+  "ti-circuit-pushbutton": {iconSet: 'tabler icons', code: "\uf27f" },
+  "ti-circuit-resistor": {iconSet: 'tabler icons', code: "\uf280" },
+  "ti-circuit-switch-closed": {iconSet: 'tabler icons', code: "\uf281" },
+  "ti-circuit-switch-open": {iconSet: 'tabler icons', code: "\uf282" },
+  "ti-circuit-voltmeter": {iconSet: 'tabler icons', code: "\uf283" },
+  "ti-clear-all": {iconSet: 'tabler icons', code: "\uee41" },
+  "ti-clear-formatting": {iconSet: 'tabler icons', code: "\uebe5" },
+  "ti-click": {iconSet: 'tabler icons', code: "\uebbc" },
+  "ti-clipboard": {iconSet: 'tabler icons', code: "\uea6f" },
+  "ti-clipboard-check": {iconSet: 'tabler icons', code: "\uea6c" },
+  "ti-clipboard-copy": {iconSet: 'tabler icons', code: "\uf299" },
+  "ti-clipboard-data": {iconSet: 'tabler icons', code: "\uf563" },
+  "ti-clipboard-heart": {iconSet: 'tabler icons', code: "\uf34e" },
+  "ti-clipboard-list": {iconSet: 'tabler icons', code: "\uea6d" },
+  "ti-clipboard-off": {iconSet: 'tabler icons', code: "\uf0ce" },
+  "ti-clipboard-plus": {iconSet: 'tabler icons', code: "\uefb2" },
+  "ti-clipboard-text": {iconSet: 'tabler icons', code: "\uf089" },
+  "ti-clipboard-typography": {iconSet: 'tabler icons', code: "\uf34f" },
+  "ti-clipboard-x": {iconSet: 'tabler icons', code: "\uea6e" },
+  "ti-clock": {iconSet: 'tabler icons', code: "\uea70" },
+  "ti-clock-2": {iconSet: 'tabler icons', code: "\uf099" },
+  "ti-clock-bolt": {iconSet: 'tabler icons', code: "\uf844" },
+  "ti-clock-cancel": {iconSet: 'tabler icons', code: "\uf546" },
+  "ti-clock-check": {iconSet: 'tabler icons', code: "\uf7c1" },
+  "ti-clock-code": {iconSet: 'tabler icons', code: "\uf845" },
+  "ti-clock-cog": {iconSet: 'tabler icons', code: "\uf7c2" },
+  "ti-clock-dollar": {iconSet: 'tabler icons', code: "\uf846" },
+  "ti-clock-down": {iconSet: 'tabler icons', code: "\uf7c3" },
+  "ti-clock-edit": {iconSet: 'tabler icons', code: "\uf547" },
+  "ti-clock-exclamation": {iconSet: 'tabler icons', code: "\uf847" },
+  "ti-clock-filled": {iconSet: 'tabler icons', code: "\uf73a" },
+  "ti-clock-heart": {iconSet: 'tabler icons', code: "\uf7c4" },
+  "ti-clock-hour-1": {iconSet: 'tabler icons', code: "\uf313" },
+  "ti-clock-hour-10": {iconSet: 'tabler icons', code: "\uf314" },
+  "ti-clock-hour-11": {iconSet: 'tabler icons', code: "\uf315" },
+  "ti-clock-hour-12": {iconSet: 'tabler icons', code: "\uf316" },
+  "ti-clock-hour-2": {iconSet: 'tabler icons', code: "\uf317" },
+  "ti-clock-hour-3": {iconSet: 'tabler icons', code: "\uf318" },
+  "ti-clock-hour-4": {iconSet: 'tabler icons', code: "\uf319" },
+  "ti-clock-hour-5": {iconSet: 'tabler icons', code: "\uf31a" },
+  "ti-clock-hour-6": {iconSet: 'tabler icons', code: "\uf31b" },
+  "ti-clock-hour-7": {iconSet: 'tabler icons', code: "\uf31c" },
+  "ti-clock-hour-8": {iconSet: 'tabler icons', code: "\uf31d" },
+  "ti-clock-hour-9": {iconSet: 'tabler icons', code: "\uf31e" },
+  "ti-clock-minus": {iconSet: 'tabler icons', code: "\uf848" },
+  "ti-clock-off": {iconSet: 'tabler icons', code: "\uf0cf" },
+  "ti-clock-pause": {iconSet: 'tabler icons', code: "\uf548" },
+  "ti-clock-pin": {iconSet: 'tabler icons', code: "\uf849" },
+  "ti-clock-play": {iconSet: 'tabler icons', code: "\uf549" },
+  "ti-clock-plus": {iconSet: 'tabler icons', code: "\uf7c5" },
+  "ti-clock-question": {iconSet: 'tabler icons', code: "\uf7c6" },
+  "ti-clock-record": {iconSet: 'tabler icons', code: "\uf54a" },
+  "ti-clock-search": {iconSet: 'tabler icons', code: "\uf7c7" },
+  "ti-clock-share": {iconSet: 'tabler icons', code: "\uf84a" },
+  "ti-clock-shield": {iconSet: 'tabler icons', code: "\uf7c8" },
+  "ti-clock-star": {iconSet: 'tabler icons', code: "\uf7c9" },
+  "ti-clock-stop": {iconSet: 'tabler icons', code: "\uf54b" },
+  "ti-clock-up": {iconSet: 'tabler icons', code: "\uf7ca" },
+  "ti-clock-x": {iconSet: 'tabler icons', code: "\uf7cb" },
+  "ti-clothes-rack": {iconSet: 'tabler icons', code: "\uf285" },
+  "ti-clothes-rack-off": {iconSet: 'tabler icons', code: "\uf3d6" },
+  "ti-cloud": {iconSet: 'tabler icons', code: "\uea76" },
+  "ti-cloud-bolt": {iconSet: 'tabler icons', code: "\uf84b" },
+  "ti-cloud-cancel": {iconSet: 'tabler icons', code: "\uf84c" },
+  "ti-cloud-check": {iconSet: 'tabler icons', code: "\uf84d" },
+  "ti-cloud-code": {iconSet: 'tabler icons', code: "\uf84e" },
+  "ti-cloud-cog": {iconSet: 'tabler icons', code: "\uf84f" },
+  "ti-cloud-computing": {iconSet: 'tabler icons', code: "\uf1d0" },
+  "ti-cloud-data-connection": {iconSet: 'tabler icons', code: "\uf1d1" },
+  "ti-cloud-dollar": {iconSet: 'tabler icons', code: "\uf850" },
+  "ti-cloud-down": {iconSet: 'tabler icons', code: "\uf851" },
+  "ti-cloud-download": {iconSet: 'tabler icons', code: "\uea71" },
+  "ti-cloud-exclamation": {iconSet: 'tabler icons', code: "\uf852" },
+  "ti-cloud-filled": {iconSet: 'tabler icons', code: "\uf673" },
+  "ti-cloud-fog": {iconSet: 'tabler icons', code: "\uecd9" },
+  "ti-cloud-heart": {iconSet: 'tabler icons', code: "\uf853" },
+  "ti-cloud-lock": {iconSet: 'tabler icons', code: "\uefdb" },
+  "ti-cloud-lock-open": {iconSet: 'tabler icons', code: "\uefda" },
+  "ti-cloud-minus": {iconSet: 'tabler icons', code: "\uf854" },
+  "ti-cloud-off": {iconSet: 'tabler icons', code: "\ued3e" },
+  "ti-cloud-pause": {iconSet: 'tabler icons', code: "\uf855" },
+  "ti-cloud-pin": {iconSet: 'tabler icons', code: "\uf856" },
+  "ti-cloud-plus": {iconSet: 'tabler icons', code: "\uf857" },
+  "ti-cloud-question": {iconSet: 'tabler icons', code: "\uf858" },
+  "ti-cloud-rain": {iconSet: 'tabler icons', code: "\uea72" },
+  "ti-cloud-search": {iconSet: 'tabler icons', code: "\uf859" },
+  "ti-cloud-share": {iconSet: 'tabler icons', code: "\uf85a" },
+  "ti-cloud-snow": {iconSet: 'tabler icons', code: "\uea73" },
+  "ti-cloud-star": {iconSet: 'tabler icons', code: "\uf85b" },
+  "ti-cloud-storm": {iconSet: 'tabler icons', code: "\uea74" },
+  "ti-cloud-up": {iconSet: 'tabler icons', code: "\uf85c" },
+  "ti-cloud-upload": {iconSet: 'tabler icons', code: "\uea75" },
+  "ti-cloud-x": {iconSet: 'tabler icons', code: "\uf85d" },
+  "ti-clover": {iconSet: 'tabler icons', code: "\uf1ea" },
+  "ti-clover-2": {iconSet: 'tabler icons', code: "\uf21e" },
+  "ti-clubs": {iconSet: 'tabler icons', code: "\ueff4" },
+  "ti-clubs-filled": {iconSet: 'tabler icons', code: "\uf674" },
+  "ti-code": {iconSet: 'tabler icons', code: "\uea77" },
+  "ti-code-asterix": {iconSet: 'tabler icons', code: "\uf312" },
+  "ti-code-circle": {iconSet: 'tabler icons', code: "\uf4ff" },
+  "ti-code-circle-2": {iconSet: 'tabler icons', code: "\uf4fe" },
+  "ti-code-dots": {iconSet: 'tabler icons', code: "\uf61a" },
+  "ti-code-minus": {iconSet: 'tabler icons', code: "\uee42" },
+  "ti-code-off": {iconSet: 'tabler icons', code: "\uf0d0" },
+  "ti-code-plus": {iconSet: 'tabler icons', code: "\uee43" },
+  "ti-coffee": {iconSet: 'tabler icons', code: "\uef0e" },
+  "ti-coffee-off": {iconSet: 'tabler icons', code: "\uf106" },
+  "ti-coffin": {iconSet: 'tabler icons', code: "\uf579" },
+  "ti-coin": {iconSet: 'tabler icons', code: "\ueb82" },
+  "ti-coin-bitcoin": {iconSet: 'tabler icons', code: "\uf2be" },
+  "ti-coin-euro": {iconSet: 'tabler icons', code: "\uf2bf" },
+  "ti-coin-monero": {iconSet: 'tabler icons', code: "\uf4a0" },
+  "ti-coin-off": {iconSet: 'tabler icons', code: "\uf0d1" },
+  "ti-coin-pound": {iconSet: 'tabler icons', code: "\uf2c0" },
+  "ti-coin-rupee": {iconSet: 'tabler icons', code: "\uf2c1" },
+  "ti-coin-yen": {iconSet: 'tabler icons', code: "\uf2c2" },
+  "ti-coin-yuan": {iconSet: 'tabler icons', code: "\uf2c3" },
+  "ti-coins": {iconSet: 'tabler icons', code: "\uf65d" },
+  "ti-color-filter": {iconSet: 'tabler icons', code: "\uf5a8" },
+  "ti-color-picker": {iconSet: 'tabler icons', code: "\uebe6" },
+  "ti-color-picker-off": {iconSet: 'tabler icons', code: "\uf0d2" },
+  "ti-color-swatch": {iconSet: 'tabler icons', code: "\ueb61" },
+  "ti-color-swatch-off": {iconSet: 'tabler icons', code: "\uf0d3" },
+  "ti-column-insert-left": {iconSet: 'tabler icons', code: "\uee44" },
+  "ti-column-insert-right": {iconSet: 'tabler icons', code: "\uee45" },
+  "ti-columns": {iconSet: 'tabler icons', code: "\ueb83" },
+  "ti-columns-1": {iconSet: 'tabler icons', code: "\uf6d4" },
+  "ti-columns-2": {iconSet: 'tabler icons', code: "\uf6d5" },
+  "ti-columns-3": {iconSet: 'tabler icons', code: "\uf6d6" },
+  "ti-columns-off": {iconSet: 'tabler icons', code: "\uf0d4" },
+  "ti-comet": {iconSet: 'tabler icons', code: "\uec76" },
+  "ti-command": {iconSet: 'tabler icons', code: "\uea78" },
+  "ti-command-off": {iconSet: 'tabler icons', code: "\uf3d7" },
+  "ti-compass": {iconSet: 'tabler icons', code: "\uea79" },
+  "ti-compass-off": {iconSet: 'tabler icons', code: "\uf0d5" },
+  "ti-components": {iconSet: 'tabler icons', code: "\uefa5" },
+  "ti-components-off": {iconSet: 'tabler icons', code: "\uf0d6" },
+  "ti-cone": {iconSet: 'tabler icons', code: "\uefdd" },
+  "ti-cone-2": {iconSet: 'tabler icons', code: "\uefdc" },
+  "ti-cone-off": {iconSet: 'tabler icons', code: "\uf3d8" },
+  "ti-confetti": {iconSet: 'tabler icons', code: "\uee46" },
+  "ti-confetti-off": {iconSet: 'tabler icons', code: "\uf3d9" },
+  "ti-confucius": {iconSet: 'tabler icons', code: "\uf58a" },
+  "ti-container": {iconSet: 'tabler icons', code: "\uee47" },
+  "ti-container-off": {iconSet: 'tabler icons', code: "\uf107" },
+  "ti-contrast": {iconSet: 'tabler icons', code: "\uec4e" },
+  "ti-contrast-2": {iconSet: 'tabler icons', code: "\uefc7" },
+  "ti-contrast-2-off": {iconSet: 'tabler icons', code: "\uf3da" },
+  "ti-contrast-off": {iconSet: 'tabler icons', code: "\uf3db" },
+  "ti-cooker": {iconSet: 'tabler icons', code: "\uf57a" },
+  "ti-cookie": {iconSet: 'tabler icons', code: "\uef0f" },
+  "ti-cookie-man": {iconSet: 'tabler icons', code: "\uf4c4" },
+  "ti-cookie-off": {iconSet: 'tabler icons', code: "\uf0d7" },
+  "ti-copy": {iconSet: 'tabler icons', code: "\uea7a" },
+  "ti-copy-off": {iconSet: 'tabler icons', code: "\uf0d8" },
+  "ti-copyleft": {iconSet: 'tabler icons', code: "\uec3d" },
+  "ti-copyleft-filled": {iconSet: 'tabler icons', code: "\uf73b" },
+  "ti-copyleft-off": {iconSet: 'tabler icons', code: "\uf0d9" },
+  "ti-copyright": {iconSet: 'tabler icons', code: "\uea7b" },
+  "ti-copyright-filled": {iconSet: 'tabler icons', code: "\uf73c" },
+  "ti-copyright-off": {iconSet: 'tabler icons', code: "\uf0da" },
+  "ti-corner-down-left": {iconSet: 'tabler icons', code: "\uea7c" },
+  "ti-corner-down-left-double": {iconSet: 'tabler icons', code: "\uee48" },
+  "ti-corner-down-right": {iconSet: 'tabler icons', code: "\uea7d" },
+  "ti-corner-down-right-double": {iconSet: 'tabler icons', code: "\uee49" },
+  "ti-corner-left-down": {iconSet: 'tabler icons', code: "\uea7e" },
+  "ti-corner-left-down-double": {iconSet: 'tabler icons', code: "\uee4a" },
+  "ti-corner-left-up": {iconSet: 'tabler icons', code: "\uea7f" },
+  "ti-corner-left-up-double": {iconSet: 'tabler icons', code: "\uee4b" },
+  "ti-corner-right-down": {iconSet: 'tabler icons', code: "\uea80" },
+  "ti-corner-right-down-double": {iconSet: 'tabler icons', code: "\uee4c" },
+  "ti-corner-right-up": {iconSet: 'tabler icons', code: "\uea81" },
+  "ti-corner-right-up-double": {iconSet: 'tabler icons', code: "\uee4d" },
+  "ti-corner-up-left": {iconSet: 'tabler icons', code: "\uea82" },
+  "ti-corner-up-left-double": {iconSet: 'tabler icons', code: "\uee4e" },
+  "ti-corner-up-right": {iconSet: 'tabler icons', code: "\uea83" },
+  "ti-corner-up-right-double": {iconSet: 'tabler icons', code: "\uee4f" },
+  "ti-cpu": {iconSet: 'tabler icons', code: "\uef8e" },
+  "ti-cpu-2": {iconSet: 'tabler icons', code: "\uf075" },
+  "ti-cpu-off": {iconSet: 'tabler icons', code: "\uf108" },
+  "ti-crane": {iconSet: 'tabler icons', code: "\uef27" },
+  "ti-crane-off": {iconSet: 'tabler icons', code: "\uf109" },
+  "ti-creative-commons": {iconSet: 'tabler icons', code: "\uefb3" },
+  "ti-creative-commons-by": {iconSet: 'tabler icons', code: "\uf21f" },
+  "ti-creative-commons-nc": {iconSet: 'tabler icons', code: "\uf220" },
+  "ti-creative-commons-nd": {iconSet: 'tabler icons', code: "\uf221" },
+  "ti-creative-commons-off": {iconSet: 'tabler icons', code: "\uf10a" },
+  "ti-creative-commons-sa": {iconSet: 'tabler icons', code: "\uf222" },
+  "ti-creative-commons-zero": {iconSet: 'tabler icons', code: "\uf223" },
+  "ti-credit-card": {iconSet: 'tabler icons', code: "\uea84" },
+  "ti-credit-card-off": {iconSet: 'tabler icons', code: "\ued11" },
+  "ti-cricket": {iconSet: 'tabler icons', code: "\uf09a" },
+  "ti-crop": {iconSet: 'tabler icons', code: "\uea85" },
+  "ti-cross": {iconSet: 'tabler icons', code: "\uef8f" },
+  "ti-cross-filled": {iconSet: 'tabler icons', code: "\uf675" },
+  "ti-cross-off": {iconSet: 'tabler icons', code: "\uf10b" },
+  "ti-crosshair": {iconSet: 'tabler icons', code: "\uec3e" },
+  "ti-crown": {iconSet: 'tabler icons', code: "\ued12" },
+  "ti-crown-off": {iconSet: 'tabler icons', code: "\uee50" },
+  "ti-crutches": {iconSet: 'tabler icons', code: "\uef5b" },
+  "ti-crutches-off": {iconSet: 'tabler icons', code: "\uf10c" },
+  "ti-crystal-ball": {iconSet: 'tabler icons', code: "\uf57b" },
+  "ti-csv": {iconSet: 'tabler icons', code: "\uf791" },
+  "ti-cube-send": {iconSet: 'tabler icons', code: "\uf61b" },
+  "ti-cube-unfolded": {iconSet: 'tabler icons', code: "\uf61c" },
+  "ti-cup": {iconSet: 'tabler icons', code: "\uef28" },
+  "ti-cup-off": {iconSet: 'tabler icons', code: "\uf10d" },
+  "ti-curling": {iconSet: 'tabler icons', code: "\uefc8" },
+  "ti-curly-loop": {iconSet: 'tabler icons', code: "\uecda" },
+  "ti-currency": {iconSet: 'tabler icons', code: "\uefa6" },
+  "ti-currency-afghani": {iconSet: 'tabler icons', code: "\uf65e" },
+  "ti-currency-bahraini": {iconSet: 'tabler icons', code: "\uee51" },
+  "ti-currency-baht": {iconSet: 'tabler icons', code: "\uf08a" },
+  "ti-currency-bitcoin": {iconSet: 'tabler icons', code: "\uebab" },
+  "ti-currency-cent": {iconSet: 'tabler icons', code: "\uee53" },
+  "ti-currency-dinar": {iconSet: 'tabler icons', code: "\uee54" },
+  "ti-currency-dirham": {iconSet: 'tabler icons', code: "\uee55" },
+  "ti-currency-dogecoin": {iconSet: 'tabler icons', code: "\uef4b" },
+  "ti-currency-dollar": {iconSet: 'tabler icons', code: "\ueb84" },
+  "ti-currency-dollar-australian": {iconSet: 'tabler icons', code: "\uee56" },
+  "ti-currency-dollar-brunei": {iconSet: 'tabler icons', code: "\uf36c" },
+  "ti-currency-dollar-canadian": {iconSet: 'tabler icons', code: "\uee57" },
+  "ti-currency-dollar-guyanese": {iconSet: 'tabler icons', code: "\uf36d" },
+  "ti-currency-dollar-off": {iconSet: 'tabler icons', code: "\uf3dc" },
+  "ti-currency-dollar-singapore": {iconSet: 'tabler icons', code: "\uee58" },
+  "ti-currency-dollar-zimbabwean": {iconSet: 'tabler icons', code: "\uf36e" },
+  "ti-currency-dong": {iconSet: 'tabler icons', code: "\uf36f" },
+  "ti-currency-dram": {iconSet: 'tabler icons', code: "\uf370" },
+  "ti-currency-ethereum": {iconSet: 'tabler icons', code: "\uee59" },
+  "ti-currency-euro": {iconSet: 'tabler icons', code: "\ueb85" },
+  "ti-currency-euro-off": {iconSet: 'tabler icons', code: "\uf3dd" },
+  "ti-currency-forint": {iconSet: 'tabler icons', code: "\uee5a" },
+  "ti-currency-frank": {iconSet: 'tabler icons', code: "\uee5b" },
+  "ti-currency-guarani": {iconSet: 'tabler icons', code: "\uf371" },
+  "ti-currency-hryvnia": {iconSet: 'tabler icons', code: "\uf372" },
+  "ti-currency-kip": {iconSet: 'tabler icons', code: "\uf373" },
+  "ti-currency-krone-czech": {iconSet: 'tabler icons', code: "\uee5c" },
+  "ti-currency-krone-danish": {iconSet: 'tabler icons', code: "\uee5d" },
+  "ti-currency-krone-swedish": {iconSet: 'tabler icons', code: "\uee5e" },
+  "ti-currency-lari": {iconSet: 'tabler icons', code: "\uf374" },
+  "ti-currency-leu": {iconSet: 'tabler icons', code: "\uee5f" },
+  "ti-currency-lira": {iconSet: 'tabler icons', code: "\uee60" },
+  "ti-currency-litecoin": {iconSet: 'tabler icons', code: "\uee61" },
+  "ti-currency-lyd": {iconSet: 'tabler icons', code: "\uf375" },
+  "ti-currency-manat": {iconSet: 'tabler icons', code: "\uf376" },
+  "ti-currency-monero": {iconSet: 'tabler icons', code: "\uf377" },
+  "ti-currency-naira": {iconSet: 'tabler icons', code: "\uee62" },
+  "ti-currency-nano": {iconSet: 'tabler icons', code: "\uf7a6" },
+  "ti-currency-off": {iconSet: 'tabler icons', code: "\uf3de" },
+  "ti-currency-paanga": {iconSet: 'tabler icons', code: "\uf378" },
+  "ti-currency-peso": {iconSet: 'tabler icons', code: "\uf65f" },
+  "ti-currency-pound": {iconSet: 'tabler icons', code: "\uebac" },
+  "ti-currency-pound-off": {iconSet: 'tabler icons', code: "\uf3df" },
+  "ti-currency-quetzal": {iconSet: 'tabler icons', code: "\uf379" },
+  "ti-currency-real": {iconSet: 'tabler icons', code: "\uee63" },
+  "ti-currency-renminbi": {iconSet: 'tabler icons', code: "\uee64" },
+  "ti-currency-ripple": {iconSet: 'tabler icons', code: "\uee65" },
+  "ti-currency-riyal": {iconSet: 'tabler icons', code: "\uee66" },
+  "ti-currency-rubel": {iconSet: 'tabler icons', code: "\uee67" },
+  "ti-currency-rufiyaa": {iconSet: 'tabler icons', code: "\uf37a" },
+  "ti-currency-rupee": {iconSet: 'tabler icons', code: "\uebad" },
+  "ti-currency-rupee-nepalese": {iconSet: 'tabler icons', code: "\uf37b" },
+  "ti-currency-shekel": {iconSet: 'tabler icons', code: "\uee68" },
+  "ti-currency-solana": {iconSet: 'tabler icons', code: "\uf4a1" },
+  "ti-currency-som": {iconSet: 'tabler icons', code: "\uf37c" },
+  "ti-currency-taka": {iconSet: 'tabler icons', code: "\uee69" },
+  "ti-currency-tenge": {iconSet: 'tabler icons', code: "\uf37d" },
+  "ti-currency-tugrik": {iconSet: 'tabler icons', code: "\uee6a" },
+  "ti-currency-won": {iconSet: 'tabler icons', code: "\uee6b" },
+  "ti-currency-yen": {iconSet: 'tabler icons', code: "\uebae" },
+  "ti-currency-yen-off": {iconSet: 'tabler icons', code: "\uf3e0" },
+  "ti-currency-yuan": {iconSet: 'tabler icons', code: "\uf29a" },
+  "ti-currency-zloty": {iconSet: 'tabler icons', code: "\uee6c" },
+  "ti-current-location": {iconSet: 'tabler icons', code: "\uecef" },
+  "ti-current-location-off": {iconSet: 'tabler icons', code: "\uf10e" },
+  "ti-cursor-off": {iconSet: 'tabler icons', code: "\uf10f" },
+  "ti-cursor-text": {iconSet: 'tabler icons', code: "\uee6d" },
+  "ti-cut": {iconSet: 'tabler icons', code: "\uea86" },
+  "ti-cylinder": {iconSet: 'tabler icons', code: "\uf54c" },
+  "ti-dashboard": {iconSet: 'tabler icons', code: "\uea87" },
+  "ti-dashboard-off": {iconSet: 'tabler icons', code: "\uf3e1" },
+  "ti-database": {iconSet: 'tabler icons', code: "\uea88" },
+  "ti-database-cog": {iconSet: 'tabler icons', code: "\ufa10" },
+  "ti-database-dollar": {iconSet: 'tabler icons', code: "\ufa11" },
+  "ti-database-edit": {iconSet: 'tabler icons', code: "\ufa12" },
+  "ti-database-exclamation": {iconSet: 'tabler icons', code: "\ufa13" },
+  "ti-database-export": {iconSet: 'tabler icons', code: "\uee6e" },
+  "ti-database-heart": {iconSet: 'tabler icons', code: "\ufa14" },
+  "ti-database-import": {iconSet: 'tabler icons', code: "\uee6f" },
+  "ti-database-leak": {iconSet: 'tabler icons', code: "\ufa15" },
+  "ti-database-minus": {iconSet: 'tabler icons', code: "\ufa16" },
+  "ti-database-off": {iconSet: 'tabler icons', code: "\uee70" },
+  "ti-database-plus": {iconSet: 'tabler icons', code: "\ufa17" },
+  "ti-database-search": {iconSet: 'tabler icons', code: "\ufa18" },
+  "ti-database-share": {iconSet: 'tabler icons', code: "\ufa19" },
+  "ti-database-star": {iconSet: 'tabler icons', code: "\ufa1a" },
+  "ti-database-x": {iconSet: 'tabler icons', code: "\ufa1b" },
+  "ti-decimal": {iconSet: 'tabler icons', code: "\ufa26" },
+  "ti-deer": {iconSet: 'tabler icons', code: "\uf4c5" },
+  "ti-delta": {iconSet: 'tabler icons', code: "\uf53c" },
+  "ti-dental": {iconSet: 'tabler icons', code: "\uf025" },
+  "ti-dental-broken": {iconSet: 'tabler icons', code: "\uf286" },
+  "ti-dental-off": {iconSet: 'tabler icons', code: "\uf110" },
+  "ti-deselect": {iconSet: 'tabler icons', code: "\uf9f3" },
+  "ti-details": {iconSet: 'tabler icons', code: "\uee71" },
+  "ti-details-off": {iconSet: 'tabler icons', code: "\uf3e2" },
+  "ti-device-airpods": {iconSet: 'tabler icons', code: "\uf5a9" },
+  "ti-device-airpods-case": {iconSet: 'tabler icons', code: "\uf646" },
+  "ti-device-analytics": {iconSet: 'tabler icons', code: "\uee72" },
+  "ti-device-audio-tape": {iconSet: 'tabler icons', code: "\uee73" },
+  "ti-device-camera-phone": {iconSet: 'tabler icons', code: "\uf233" },
+  "ti-device-cctv": {iconSet: 'tabler icons', code: "\uee74" },
+  "ti-device-cctv-off": {iconSet: 'tabler icons', code: "\uf3e3" },
+  "ti-device-computer-camera": {iconSet: 'tabler icons', code: "\uee76" },
+  "ti-device-computer-camera-off": {iconSet: 'tabler icons', code: "\uee75" },
+  "ti-device-desktop": {iconSet: 'tabler icons', code: "\uea89" },
+  "ti-device-desktop-analytics": {iconSet: 'tabler icons', code: "\uee77" },
+  "ti-device-desktop-bolt": {iconSet: 'tabler icons', code: "\uf85e" },
+  "ti-device-desktop-cancel": {iconSet: 'tabler icons', code: "\uf85f" },
+  "ti-device-desktop-check": {iconSet: 'tabler icons', code: "\uf860" },
+  "ti-device-desktop-code": {iconSet: 'tabler icons', code: "\uf861" },
+  "ti-device-desktop-cog": {iconSet: 'tabler icons', code: "\uf862" },
+  "ti-device-desktop-dollar": {iconSet: 'tabler icons', code: "\uf863" },
+  "ti-device-desktop-down": {iconSet: 'tabler icons', code: "\uf864" },
+  "ti-device-desktop-exclamation": {iconSet: 'tabler icons', code: "\uf865" },
+  "ti-device-desktop-heart": {iconSet: 'tabler icons', code: "\uf866" },
+  "ti-device-desktop-minus": {iconSet: 'tabler icons', code: "\uf867" },
+  "ti-device-desktop-off": {iconSet: 'tabler icons', code: "\uee78" },
+  "ti-device-desktop-pause": {iconSet: 'tabler icons', code: "\uf868" },
+  "ti-device-desktop-pin": {iconSet: 'tabler icons', code: "\uf869" },
+  "ti-device-desktop-plus": {iconSet: 'tabler icons', code: "\uf86a" },
+  "ti-device-desktop-question": {iconSet: 'tabler icons', code: "\uf86b" },
+  "ti-device-desktop-search": {iconSet: 'tabler icons', code: "\uf86c" },
+  "ti-device-desktop-share": {iconSet: 'tabler icons', code: "\uf86d" },
+  "ti-device-desktop-star": {iconSet: 'tabler icons', code: "\uf86e" },
+  "ti-device-desktop-up": {iconSet: 'tabler icons', code: "\uf86f" },
+  "ti-device-desktop-x": {iconSet: 'tabler icons', code: "\uf870" },
+  "ti-device-floppy": {iconSet: 'tabler icons', code: "\ueb62" },
+  "ti-device-gamepad": {iconSet: 'tabler icons', code: "\ueb63" },
+  "ti-device-gamepad-2": {iconSet: 'tabler icons', code: "\uf1d2" },
+  "ti-device-heart-monitor": {iconSet: 'tabler icons', code: "\uf060" },
+  "ti-device-imac": {iconSet: 'tabler icons', code: "\uf7a7" },
+  "ti-device-imac-bolt": {iconSet: 'tabler icons', code: "\uf871" },
+  "ti-device-imac-cancel": {iconSet: 'tabler icons', code: "\uf872" },
+  "ti-device-imac-check": {iconSet: 'tabler icons', code: "\uf873" },
+  "ti-device-imac-code": {iconSet: 'tabler icons', code: "\uf874" },
+  "ti-device-imac-cog": {iconSet: 'tabler icons', code: "\uf875" },
+  "ti-device-imac-dollar": {iconSet: 'tabler icons', code: "\uf876" },
+  "ti-device-imac-down": {iconSet: 'tabler icons', code: "\uf877" },
+  "ti-device-imac-exclamation": {iconSet: 'tabler icons', code: "\uf878" },
+  "ti-device-imac-heart": {iconSet: 'tabler icons', code: "\uf879" },
+  "ti-device-imac-minus": {iconSet: 'tabler icons', code: "\uf87a" },
+  "ti-device-imac-off": {iconSet: 'tabler icons', code: "\uf87b" },
+  "ti-device-imac-pause": {iconSet: 'tabler icons', code: "\uf87c" },
+  "ti-device-imac-pin": {iconSet: 'tabler icons', code: "\uf87d" },
+  "ti-device-imac-plus": {iconSet: 'tabler icons', code: "\uf87e" },
+  "ti-device-imac-question": {iconSet: 'tabler icons', code: "\uf87f" },
+  "ti-device-imac-search": {iconSet: 'tabler icons', code: "\uf880" },
+  "ti-device-imac-share": {iconSet: 'tabler icons', code: "\uf881" },
+  "ti-device-imac-star": {iconSet: 'tabler icons', code: "\uf882" },
+  "ti-device-imac-up": {iconSet: 'tabler icons', code: "\uf883" },
+  "ti-device-imac-x": {iconSet: 'tabler icons', code: "\uf884" },
+  "ti-device-ipad": {iconSet: 'tabler icons', code: "\uf648" },
+  "ti-device-ipad-bolt": {iconSet: 'tabler icons', code: "\uf885" },
+  "ti-device-ipad-cancel": {iconSet: 'tabler icons', code: "\uf886" },
+  "ti-device-ipad-check": {iconSet: 'tabler icons', code: "\uf887" },
+  "ti-device-ipad-code": {iconSet: 'tabler icons', code: "\uf888" },
+  "ti-device-ipad-cog": {iconSet: 'tabler icons', code: "\uf889" },
+  "ti-device-ipad-dollar": {iconSet: 'tabler icons', code: "\uf88a" },
+  "ti-device-ipad-down": {iconSet: 'tabler icons', code: "\uf88b" },
+  "ti-device-ipad-exclamation": {iconSet: 'tabler icons', code: "\uf88c" },
+  "ti-device-ipad-heart": {iconSet: 'tabler icons', code: "\uf88d" },
+  "ti-device-ipad-horizontal": {iconSet: 'tabler icons', code: "\uf647" },
+  "ti-device-ipad-horizontal-bolt": {iconSet: 'tabler icons', code: "\uf88e" },
+  "ti-device-ipad-horizontal-cancel": {iconSet: 'tabler icons', code: "\uf88f" },
+  "ti-device-ipad-horizontal-check": {iconSet: 'tabler icons', code: "\uf890" },
+  "ti-device-ipad-horizontal-code": {iconSet: 'tabler icons', code: "\uf891" },
+  "ti-device-ipad-horizontal-cog": {iconSet: 'tabler icons', code: "\uf892" },
+  "ti-device-ipad-horizontal-dollar": {iconSet: 'tabler icons', code: "\uf893" },
+  "ti-device-ipad-horizontal-down": {iconSet: 'tabler icons', code: "\uf894" },
+  "ti-device-ipad-horizontal-exclamation": {iconSet: 'tabler icons', code: "\uf895" },
+  "ti-device-ipad-horizontal-heart": {iconSet: 'tabler icons', code: "\uf896" },
+  "ti-device-ipad-horizontal-minus": {iconSet: 'tabler icons', code: "\uf897" },
+  "ti-device-ipad-horizontal-off": {iconSet: 'tabler icons', code: "\uf898" },
+  "ti-device-ipad-horizontal-pause": {iconSet: 'tabler icons', code: "\uf899" },
+  "ti-device-ipad-horizontal-pin": {iconSet: 'tabler icons', code: "\uf89a" },
+  "ti-device-ipad-horizontal-plus": {iconSet: 'tabler icons', code: "\uf89b" },
+  "ti-device-ipad-horizontal-question": {iconSet: 'tabler icons', code: "\uf89c" },
+  "ti-device-ipad-horizontal-search": {iconSet: 'tabler icons', code: "\uf89d" },
+  "ti-device-ipad-horizontal-share": {iconSet: 'tabler icons', code: "\uf89e" },
+  "ti-device-ipad-horizontal-star": {iconSet: 'tabler icons', code: "\uf89f" },
+  "ti-device-ipad-horizontal-up": {iconSet: 'tabler icons', code: "\uf8a0" },
+  "ti-device-ipad-horizontal-x": {iconSet: 'tabler icons', code: "\uf8a1" },
+  "ti-device-ipad-minus": {iconSet: 'tabler icons', code: "\uf8a2" },
+  "ti-device-ipad-off": {iconSet: 'tabler icons', code: "\uf8a3" },
+  "ti-device-ipad-pause": {iconSet: 'tabler icons', code: "\uf8a4" },
+  "ti-device-ipad-pin": {iconSet: 'tabler icons', code: "\uf8a5" },
+  "ti-device-ipad-plus": {iconSet: 'tabler icons', code: "\uf8a6" },
+  "ti-device-ipad-question": {iconSet: 'tabler icons', code: "\uf8a7" },
+  "ti-device-ipad-search": {iconSet: 'tabler icons', code: "\uf8a8" },
+  "ti-device-ipad-share": {iconSet: 'tabler icons', code: "\uf8a9" },
+  "ti-device-ipad-star": {iconSet: 'tabler icons', code: "\uf8aa" },
+  "ti-device-ipad-up": {iconSet: 'tabler icons', code: "\uf8ab" },
+  "ti-device-ipad-x": {iconSet: 'tabler icons', code: "\uf8ac" },
+  "ti-device-landline-phone": {iconSet: 'tabler icons', code: "\uf649" },
+  "ti-device-laptop": {iconSet: 'tabler icons', code: "\ueb64" },
+  "ti-device-laptop-off": {iconSet: 'tabler icons', code: "\uf061" },
+  "ti-device-mobile": {iconSet: 'tabler icons', code: "\uea8a" },
+  "ti-device-mobile-bolt": {iconSet: 'tabler icons', code: "\uf8ad" },
+  "ti-device-mobile-cancel": {iconSet: 'tabler icons', code: "\uf8ae" },
+  "ti-device-mobile-charging": {iconSet: 'tabler icons', code: "\uf224" },
+  "ti-device-mobile-check": {iconSet: 'tabler icons', code: "\uf8af" },
+  "ti-device-mobile-code": {iconSet: 'tabler icons', code: "\uf8b0" },
+  "ti-device-mobile-cog": {iconSet: 'tabler icons', code: "\uf8b1" },
+  "ti-device-mobile-dollar": {iconSet: 'tabler icons', code: "\uf8b2" },
+  "ti-device-mobile-down": {iconSet: 'tabler icons', code: "\uf8b3" },
+  "ti-device-mobile-exclamation": {iconSet: 'tabler icons', code: "\uf8b4" },
+  "ti-device-mobile-heart": {iconSet: 'tabler icons', code: "\uf8b5" },
+  "ti-device-mobile-message": {iconSet: 'tabler icons', code: "\uee79" },
+  "ti-device-mobile-minus": {iconSet: 'tabler icons', code: "\uf8b6" },
+  "ti-device-mobile-off": {iconSet: 'tabler icons', code: "\uf062" },
+  "ti-device-mobile-pause": {iconSet: 'tabler icons', code: "\uf8b7" },
+  "ti-device-mobile-pin": {iconSet: 'tabler icons', code: "\uf8b8" },
+  "ti-device-mobile-plus": {iconSet: 'tabler icons', code: "\uf8b9" },
+  "ti-device-mobile-question": {iconSet: 'tabler icons', code: "\uf8ba" },
+  "ti-device-mobile-rotated": {iconSet: 'tabler icons', code: "\uecdb" },
+  "ti-device-mobile-search": {iconSet: 'tabler icons', code: "\uf8bb" },
+  "ti-device-mobile-share": {iconSet: 'tabler icons', code: "\uf8bc" },
+  "ti-device-mobile-star": {iconSet: 'tabler icons', code: "\uf8bd" },
+  "ti-device-mobile-up": {iconSet: 'tabler icons', code: "\uf8be" },
+  "ti-device-mobile-vibration": {iconSet: 'tabler icons', code: "\ueb86" },
+  "ti-device-mobile-x": {iconSet: 'tabler icons', code: "\uf8bf" },
+  "ti-device-nintendo": {iconSet: 'tabler icons', code: "\uf026" },
+  "ti-device-nintendo-off": {iconSet: 'tabler icons', code: "\uf111" },
+  "ti-device-remote": {iconSet: 'tabler icons', code: "\uf792" },
+  "ti-device-sd-card": {iconSet: 'tabler icons', code: "\uf384" },
+  "ti-device-sim": {iconSet: 'tabler icons', code: "\uf4b2" },
+  "ti-device-sim-1": {iconSet: 'tabler icons', code: "\uf4af" },
+  "ti-device-sim-2": {iconSet: 'tabler icons', code: "\uf4b0" },
+  "ti-device-sim-3": {iconSet: 'tabler icons', code: "\uf4b1" },
+  "ti-device-speaker": {iconSet: 'tabler icons', code: "\uea8b" },
+  "ti-device-speaker-off": {iconSet: 'tabler icons', code: "\uf112" },
+  "ti-device-tablet": {iconSet: 'tabler icons', code: "\uea8c" },
+  "ti-device-tablet-bolt": {iconSet: 'tabler icons', code: "\uf8c0" },
+  "ti-device-tablet-cancel": {iconSet: 'tabler icons', code: "\uf8c1" },
+  "ti-device-tablet-check": {iconSet: 'tabler icons', code: "\uf8c2" },
+  "ti-device-tablet-code": {iconSet: 'tabler icons', code: "\uf8c3" },
+  "ti-device-tablet-cog": {iconSet: 'tabler icons', code: "\uf8c4" },
+  "ti-device-tablet-dollar": {iconSet: 'tabler icons', code: "\uf8c5" },
+  "ti-device-tablet-down": {iconSet: 'tabler icons', code: "\uf8c6" },
+  "ti-device-tablet-exclamation": {iconSet: 'tabler icons', code: "\uf8c7" },
+  "ti-device-tablet-heart": {iconSet: 'tabler icons', code: "\uf8c8" },
+  "ti-device-tablet-minus": {iconSet: 'tabler icons', code: "\uf8c9" },
+  "ti-device-tablet-off": {iconSet: 'tabler icons', code: "\uf063" },
+  "ti-device-tablet-pause": {iconSet: 'tabler icons', code: "\uf8ca" },
+  "ti-device-tablet-pin": {iconSet: 'tabler icons', code: "\uf8cb" },
+  "ti-device-tablet-plus": {iconSet: 'tabler icons', code: "\uf8cc" },
+  "ti-device-tablet-question": {iconSet: 'tabler icons', code: "\uf8cd" },
+  "ti-device-tablet-search": {iconSet: 'tabler icons', code: "\uf8ce" },
+  "ti-device-tablet-share": {iconSet: 'tabler icons', code: "\uf8cf" },
+  "ti-device-tablet-star": {iconSet: 'tabler icons', code: "\uf8d0" },
+  "ti-device-tablet-up": {iconSet: 'tabler icons', code: "\uf8d1" },
+  "ti-device-tablet-x": {iconSet: 'tabler icons', code: "\uf8d2" },
+  "ti-device-tv": {iconSet: 'tabler icons', code: "\uea8d" },
+  "ti-device-tv-off": {iconSet: 'tabler icons', code: "\uf064" },
+  "ti-device-tv-old": {iconSet: 'tabler icons', code: "\uf1d3" },
+  "ti-device-watch": {iconSet: 'tabler icons', code: "\uebf9" },
+  "ti-device-watch-bolt": {iconSet: 'tabler icons', code: "\uf8d3" },
+  "ti-device-watch-cancel": {iconSet: 'tabler icons', code: "\uf8d4" },
+  "ti-device-watch-check": {iconSet: 'tabler icons', code: "\uf8d5" },
+  "ti-device-watch-code": {iconSet: 'tabler icons', code: "\uf8d6" },
+  "ti-device-watch-cog": {iconSet: 'tabler icons', code: "\uf8d7" },
+  "ti-device-watch-dollar": {iconSet: 'tabler icons', code: "\uf8d8" },
+  "ti-device-watch-down": {iconSet: 'tabler icons', code: "\uf8d9" },
+  "ti-device-watch-exclamation": {iconSet: 'tabler icons', code: "\uf8da" },
+  "ti-device-watch-heart": {iconSet: 'tabler icons', code: "\uf8db" },
+  "ti-device-watch-minus": {iconSet: 'tabler icons', code: "\uf8dc" },
+  "ti-device-watch-off": {iconSet: 'tabler icons', code: "\uf065" },
+  "ti-device-watch-pause": {iconSet: 'tabler icons', code: "\uf8dd" },
+  "ti-device-watch-pin": {iconSet: 'tabler icons', code: "\uf8de" },
+  "ti-device-watch-plus": {iconSet: 'tabler icons', code: "\uf8df" },
+  "ti-device-watch-question": {iconSet: 'tabler icons', code: "\uf8e0" },
+  "ti-device-watch-search": {iconSet: 'tabler icons', code: "\uf8e1" },
+  "ti-device-watch-share": {iconSet: 'tabler icons', code: "\uf8e2" },
+  "ti-device-watch-star": {iconSet: 'tabler icons', code: "\uf8e3" },
+  "ti-device-watch-stats": {iconSet: 'tabler icons', code: "\uef7d" },
+  "ti-device-watch-stats-2": {iconSet: 'tabler icons', code: "\uef7c" },
+  "ti-device-watch-up": {iconSet: 'tabler icons', code: "\uf8e4" },
+  "ti-device-watch-x": {iconSet: 'tabler icons', code: "\uf8e5" },
+  "ti-devices": {iconSet: 'tabler icons', code: "\ueb87" },
+  "ti-devices-2": {iconSet: 'tabler icons', code: "\ued29" },
+  "ti-devices-bolt": {iconSet: 'tabler icons', code: "\uf8e6" },
+  "ti-devices-cancel": {iconSet: 'tabler icons', code: "\uf8e7" },
+  "ti-devices-check": {iconSet: 'tabler icons', code: "\uf8e8" },
+  "ti-devices-code": {iconSet: 'tabler icons', code: "\uf8e9" },
+  "ti-devices-cog": {iconSet: 'tabler icons', code: "\uf8ea" },
+  "ti-devices-dollar": {iconSet: 'tabler icons', code: "\uf8eb" },
+  "ti-devices-down": {iconSet: 'tabler icons', code: "\uf8ec" },
+  "ti-devices-exclamation": {iconSet: 'tabler icons', code: "\uf8ed" },
+  "ti-devices-heart": {iconSet: 'tabler icons', code: "\uf8ee" },
+  "ti-devices-minus": {iconSet: 'tabler icons', code: "\uf8ef" },
+  "ti-devices-off": {iconSet: 'tabler icons', code: "\uf3e4" },
+  "ti-devices-pause": {iconSet: 'tabler icons', code: "\uf8f0" },
+  "ti-devices-pc": {iconSet: 'tabler icons', code: "\uee7a" },
+  "ti-devices-pc-off": {iconSet: 'tabler icons', code: "\uf113" },
+  "ti-devices-pin": {iconSet: 'tabler icons', code: "\uf8f1" },
+  "ti-devices-plus": {iconSet: 'tabler icons', code: "\uf8f2" },
+  "ti-devices-question": {iconSet: 'tabler icons', code: "\uf8f3" },
+  "ti-devices-search": {iconSet: 'tabler icons', code: "\uf8f4" },
+  "ti-devices-share": {iconSet: 'tabler icons', code: "\uf8f5" },
+  "ti-devices-star": {iconSet: 'tabler icons', code: "\uf8f6" },
+  "ti-devices-up": {iconSet: 'tabler icons', code: "\uf8f7" },
+  "ti-devices-x": {iconSet: 'tabler icons', code: "\uf8f8" },
+  "ti-dialpad": {iconSet: 'tabler icons', code: "\uf067" },
+  "ti-dialpad-off": {iconSet: 'tabler icons', code: "\uf114" },
+  "ti-diamond": {iconSet: 'tabler icons', code: "\ueb65" },
+  "ti-diamond-filled": {iconSet: 'tabler icons', code: "\uf73d" },
+  "ti-diamond-off": {iconSet: 'tabler icons', code: "\uf115" },
+  "ti-diamonds": {iconSet: 'tabler icons', code: "\ueff5" },
+  "ti-diamonds-filled": {iconSet: 'tabler icons', code: "\uf676" },
+  "ti-dice": {iconSet: 'tabler icons', code: "\ueb66" },
+  "ti-dice-1": {iconSet: 'tabler icons', code: "\uf08b" },
+  "ti-dice-1-filled": {iconSet: 'tabler icons', code: "\uf73e" },
+  "ti-dice-2": {iconSet: 'tabler icons', code: "\uf08c" },
+  "ti-dice-2-filled": {iconSet: 'tabler icons', code: "\uf73f" },
+  "ti-dice-3": {iconSet: 'tabler icons', code: "\uf08d" },
+  "ti-dice-3-filled": {iconSet: 'tabler icons', code: "\uf740" },
+  "ti-dice-4": {iconSet: 'tabler icons', code: "\uf08e" },
+  "ti-dice-4-filled": {iconSet: 'tabler icons', code: "\uf741" },
+  "ti-dice-5": {iconSet: 'tabler icons', code: "\uf08f" },
+  "ti-dice-5-filled": {iconSet: 'tabler icons', code: "\uf742" },
+  "ti-dice-6": {iconSet: 'tabler icons', code: "\uf090" },
+  "ti-dice-6-filled": {iconSet: 'tabler icons', code: "\uf743" },
+  "ti-dice-filled": {iconSet: 'tabler icons', code: "\uf744" },
+  "ti-dimensions": {iconSet: 'tabler icons', code: "\uee7b" },
+  "ti-direction": {iconSet: 'tabler icons', code: "\uebfb" },
+  "ti-direction-horizontal": {iconSet: 'tabler icons', code: "\uebfa" },
+  "ti-direction-sign": {iconSet: 'tabler icons', code: "\uf1f7" },
+  "ti-direction-sign-filled": {iconSet: 'tabler icons', code: "\uf745" },
+  "ti-direction-sign-off": {iconSet: 'tabler icons', code: "\uf3e5" },
+  "ti-directions": {iconSet: 'tabler icons', code: "\uea8e" },
+  "ti-directions-off": {iconSet: 'tabler icons', code: "\uf116" },
+  "ti-disabled": {iconSet: 'tabler icons', code: "\uea8f" },
+  "ti-disabled-2": {iconSet: 'tabler icons', code: "\uebaf" },
+  "ti-disabled-off": {iconSet: 'tabler icons', code: "\uf117" },
+  "ti-disc": {iconSet: 'tabler icons', code: "\uea90" },
+  "ti-disc-golf": {iconSet: 'tabler icons', code: "\uf385" },
+  "ti-disc-off": {iconSet: 'tabler icons', code: "\uf118" },
+  "ti-discount": {iconSet: 'tabler icons', code: "\uebbd" },
+  "ti-discount-2": {iconSet: 'tabler icons', code: "\uee7c" },
+  "ti-discount-2-off": {iconSet: 'tabler icons', code: "\uf3e6" },
+  "ti-discount-check": {iconSet: 'tabler icons', code: "\uf1f8" },
+  "ti-discount-check-filled": {iconSet: 'tabler icons', code: "\uf746" },
+  "ti-discount-off": {iconSet: 'tabler icons', code: "\uf3e7" },
+  "ti-divide": {iconSet: 'tabler icons', code: "\ued5c" },
+  "ti-dna": {iconSet: 'tabler icons', code: "\uee7d" },
+  "ti-dna-2": {iconSet: 'tabler icons', code: "\uef5c" },
+  "ti-dna-2-off": {iconSet: 'tabler icons', code: "\uf119" },
+  "ti-dna-off": {iconSet: 'tabler icons', code: "\uf11a" },
+  "ti-dog": {iconSet: 'tabler icons', code: "\uf660" },
+  "ti-dog-bowl": {iconSet: 'tabler icons', code: "\uef29" },
+  "ti-door": {iconSet: 'tabler icons', code: "\uef4e" },
+  "ti-door-enter": {iconSet: 'tabler icons', code: "\uef4c" },
+  "ti-door-exit": {iconSet: 'tabler icons', code: "\uef4d" },
+  "ti-door-off": {iconSet: 'tabler icons', code: "\uf11b" },
+  "ti-dots": {iconSet: 'tabler icons', code: "\uea95" },
+  "ti-dots-circle-horizontal": {iconSet: 'tabler icons', code: "\uea91" },
+  "ti-dots-diagonal": {iconSet: 'tabler icons', code: "\uea93" },
+  "ti-dots-diagonal-2": {iconSet: 'tabler icons', code: "\uea92" },
+  "ti-dots-vertical": {iconSet: 'tabler icons', code: "\uea94" },
+  "ti-download": {iconSet: 'tabler icons', code: "\uea96" },
+  "ti-download-off": {iconSet: 'tabler icons', code: "\uf11c" },
+  "ti-drag-drop": {iconSet: 'tabler icons', code: "\ueb89" },
+  "ti-drag-drop-2": {iconSet: 'tabler icons', code: "\ueb88" },
+  "ti-drone": {iconSet: 'tabler icons', code: "\ued79" },
+  "ti-drone-off": {iconSet: 'tabler icons', code: "\uee7e" },
+  "ti-drop-circle": {iconSet: 'tabler icons', code: "\uefde" },
+  "ti-droplet": {iconSet: 'tabler icons', code: "\uea97" },
+  "ti-droplet-bolt": {iconSet: 'tabler icons', code: "\uf8f9" },
+  "ti-droplet-cancel": {iconSet: 'tabler icons', code: "\uf8fa" },
+  "ti-droplet-check": {iconSet: 'tabler icons', code: "\uf8fb" },
+  "ti-droplet-code": {iconSet: 'tabler icons', code: "\uf8fc" },
+  "ti-droplet-cog": {iconSet: 'tabler icons', code: "\uf8fd" },
+  "ti-droplet-dollar": {iconSet: 'tabler icons', code: "\uf8fe" },
+  "ti-droplet-down": {iconSet: 'tabler icons', code: "\uf8ff" },
+  "ti-droplet-exclamation": {iconSet: 'tabler icons', code: "\uf900" },
+  "ti-droplet-filled": {iconSet: 'tabler icons', code: "\uee80" },
+  "ti-droplet-filled-2": {iconSet: 'tabler icons', code: "\uee7f" },
+  "ti-droplet-half": {iconSet: 'tabler icons', code: "\uee82" },
+  "ti-droplet-half-2": {iconSet: 'tabler icons', code: "\uee81" },
+  "ti-droplet-half-filled": {iconSet: 'tabler icons', code: "\uf6c5" },
+  "ti-droplet-heart": {iconSet: 'tabler icons', code: "\uf901" },
+  "ti-droplet-minus": {iconSet: 'tabler icons', code: "\uf902" },
+  "ti-droplet-off": {iconSet: 'tabler icons', code: "\uee83" },
+  "ti-droplet-pause": {iconSet: 'tabler icons', code: "\uf903" },
+  "ti-droplet-pin": {iconSet: 'tabler icons', code: "\uf904" },
+  "ti-droplet-plus": {iconSet: 'tabler icons', code: "\uf905" },
+  "ti-droplet-question": {iconSet: 'tabler icons', code: "\uf906" },
+  "ti-droplet-search": {iconSet: 'tabler icons', code: "\uf907" },
+  "ti-droplet-share": {iconSet: 'tabler icons', code: "\uf908" },
+  "ti-droplet-star": {iconSet: 'tabler icons', code: "\uf909" },
+  "ti-droplet-up": {iconSet: 'tabler icons', code: "\uf90a" },
+  "ti-droplet-x": {iconSet: 'tabler icons', code: "\uf90b" },
+  "ti-e-passport": {iconSet: 'tabler icons', code: "\uf4df" },
+  "ti-ear": {iconSet: 'tabler icons', code: "\uebce" },
+  "ti-ear-off": {iconSet: 'tabler icons', code: "\uee84" },
+  "ti-ease-in": {iconSet: 'tabler icons', code: "\uf573" },
+  "ti-ease-in-control-point": {iconSet: 'tabler icons', code: "\uf570" },
+  "ti-ease-in-out": {iconSet: 'tabler icons', code: "\uf572" },
+  "ti-ease-in-out-control-points": {iconSet: 'tabler icons', code: "\uf571" },
+  "ti-ease-out": {iconSet: 'tabler icons', code: "\uf575" },
+  "ti-ease-out-control-point": {iconSet: 'tabler icons', code: "\uf574" },
+  "ti-edit": {iconSet: 'tabler icons', code: "\uea98" },
+  "ti-edit-circle": {iconSet: 'tabler icons', code: "\uee85" },
+  "ti-edit-circle-off": {iconSet: 'tabler icons', code: "\uf11d" },
+  "ti-edit-off": {iconSet: 'tabler icons', code: "\uf11e" },
+  "ti-egg": {iconSet: 'tabler icons', code: "\ueb8a" },
+  "ti-egg-cracked": {iconSet: 'tabler icons', code: "\uf2d6" },
+  "ti-egg-filled": {iconSet: 'tabler icons', code: "\uf678" },
+  "ti-egg-fried": {iconSet: 'tabler icons', code: "\uf386" },
+  "ti-egg-off": {iconSet: 'tabler icons', code: "\uf11f" },
+  "ti-eggs": {iconSet: 'tabler icons', code: "\uf500" },
+  "ti-elevator": {iconSet: 'tabler icons', code: "\uefdf" },
+  "ti-elevator-off": {iconSet: 'tabler icons', code: "\uf3e8" },
+  "ti-emergency-bed": {iconSet: 'tabler icons', code: "\uef5d" },
+  "ti-empathize": {iconSet: 'tabler icons', code: "\uf29b" },
+  "ti-empathize-off": {iconSet: 'tabler icons', code: "\uf3e9" },
+  "ti-emphasis": {iconSet: 'tabler icons', code: "\uebcf" },
+  "ti-engine": {iconSet: 'tabler icons', code: "\uef7e" },
+  "ti-engine-off": {iconSet: 'tabler icons', code: "\uf120" },
+  "ti-equal": {iconSet: 'tabler icons', code: "\uee87" },
+  "ti-equal-double": {iconSet: 'tabler icons', code: "\uf4e1" },
+  "ti-equal-not": {iconSet: 'tabler icons', code: "\uee86" },
+  "ti-eraser": {iconSet: 'tabler icons', code: "\ueb8b" },
+  "ti-eraser-off": {iconSet: 'tabler icons', code: "\uf121" },
+  "ti-error-404": {iconSet: 'tabler icons', code: "\uf027" },
+  "ti-error-404-off": {iconSet: 'tabler icons', code: "\uf122" },
+  "ti-exchange": {iconSet: 'tabler icons', code: "\uebe7" },
+  "ti-exchange-off": {iconSet: 'tabler icons', code: "\uf123" },
+  "ti-exclamation-circle": {iconSet: 'tabler icons', code: "\uf634" },
+  "ti-exclamation-mark": {iconSet: 'tabler icons', code: "\uefb4" },
+  "ti-exclamation-mark-off": {iconSet: 'tabler icons', code: "\uf124" },
+  "ti-explicit": {iconSet: 'tabler icons', code: "\uf256" },
+  "ti-explicit-off": {iconSet: 'tabler icons', code: "\uf3ea" },
+  "ti-exposure": {iconSet: 'tabler icons', code: "\ueb8c" },
+  "ti-exposure-0": {iconSet: 'tabler icons', code: "\uf29c" },
+  "ti-exposure-minus-1": {iconSet: 'tabler icons', code: "\uf29d" },
+  "ti-exposure-minus-2": {iconSet: 'tabler icons', code: "\uf29e" },
+  "ti-exposure-off": {iconSet: 'tabler icons', code: "\uf3eb" },
+  "ti-exposure-plus-1": {iconSet: 'tabler icons', code: "\uf29f" },
+  "ti-exposure-plus-2": {iconSet: 'tabler icons', code: "\uf2a0" },
+  "ti-external-link": {iconSet: 'tabler icons', code: "\uea99" },
+  "ti-external-link-off": {iconSet: 'tabler icons', code: "\uf125" },
+  "ti-eye": {iconSet: 'tabler icons', code: "\uea9a" },
+  "ti-eye-check": {iconSet: 'tabler icons', code: "\uee88" },
+  "ti-eye-closed": {iconSet: 'tabler icons', code: "\uf7ec" },
+  "ti-eye-cog": {iconSet: 'tabler icons', code: "\uf7ed" },
+  "ti-eye-edit": {iconSet: 'tabler icons', code: "\uf7ee" },
+  "ti-eye-exclamation": {iconSet: 'tabler icons', code: "\uf7ef" },
+  "ti-eye-filled": {iconSet: 'tabler icons', code: "\uf679" },
+  "ti-eye-heart": {iconSet: 'tabler icons', code: "\uf7f0" },
+  "ti-eye-off": {iconSet: 'tabler icons', code: "\uecf0" },
+  "ti-eye-table": {iconSet: 'tabler icons', code: "\uef5e" },
+  "ti-eye-x": {iconSet: 'tabler icons', code: "\uf7f1" },
+  "ti-eyeglass": {iconSet: 'tabler icons', code: "\uee8a" },
+  "ti-eyeglass-2": {iconSet: 'tabler icons', code: "\uee89" },
+  "ti-eyeglass-off": {iconSet: 'tabler icons', code: "\uf126" },
+  "ti-face-id": {iconSet: 'tabler icons', code: "\uea9b" },
+  "ti-face-id-error": {iconSet: 'tabler icons', code: "\uefa7" },
+  "ti-face-mask": {iconSet: 'tabler icons', code: "\uefb5" },
+  "ti-face-mask-off": {iconSet: 'tabler icons', code: "\uf127" },
+  "ti-fall": {iconSet: 'tabler icons', code: "\uecb9" },
+  "ti-feather": {iconSet: 'tabler icons', code: "\uee8b" },
+  "ti-feather-off": {iconSet: 'tabler icons', code: "\uf128" },
+  "ti-fence": {iconSet: 'tabler icons', code: "\uef2a" },
+  "ti-fence-off": {iconSet: 'tabler icons', code: "\uf129" },
+  "ti-fidget-spinner": {iconSet: 'tabler icons', code: "\uf068" },
+  "ti-file": {iconSet: 'tabler icons', code: "\ueaa4" },
+  "ti-file-3d": {iconSet: 'tabler icons', code: "\uf032" },
+  "ti-file-alert": {iconSet: 'tabler icons', code: "\uede6" },
+  "ti-file-analytics": {iconSet: 'tabler icons', code: "\uede7" },
+  "ti-file-arrow-left": {iconSet: 'tabler icons', code: "\uf033" },
+  "ti-file-arrow-right": {iconSet: 'tabler icons', code: "\uf034" },
+  "ti-file-barcode": {iconSet: 'tabler icons', code: "\uf035" },
+  "ti-file-broken": {iconSet: 'tabler icons', code: "\uf501" },
+  "ti-file-certificate": {iconSet: 'tabler icons', code: "\ued4d" },
+  "ti-file-chart": {iconSet: 'tabler icons', code: "\uf036" },
+  "ti-file-check": {iconSet: 'tabler icons', code: "\uea9c" },
+  "ti-file-code": {iconSet: 'tabler icons', code: "\uebd0" },
+  "ti-file-code-2": {iconSet: 'tabler icons', code: "\uede8" },
+  "ti-file-database": {iconSet: 'tabler icons', code: "\uf037" },
+  "ti-file-delta": {iconSet: 'tabler icons', code: "\uf53d" },
+  "ti-file-description": {iconSet: 'tabler icons', code: "\uf028" },
+  "ti-file-diff": {iconSet: 'tabler icons', code: "\uecf1" },
+  "ti-file-digit": {iconSet: 'tabler icons', code: "\uefa8" },
+  "ti-file-dislike": {iconSet: 'tabler icons', code: "\ued2a" },
+  "ti-file-dollar": {iconSet: 'tabler icons', code: "\uefe0" },
+  "ti-file-dots": {iconSet: 'tabler icons', code: "\uf038" },
+  "ti-file-download": {iconSet: 'tabler icons', code: "\uea9d" },
+  "ti-file-euro": {iconSet: 'tabler icons', code: "\uefe1" },
+  "ti-file-export": {iconSet: 'tabler icons', code: "\uede9" },
+  "ti-file-filled": {iconSet: 'tabler icons', code: "\uf747" },
+  "ti-file-function": {iconSet: 'tabler icons', code: "\uf53e" },
+  "ti-file-horizontal": {iconSet: 'tabler icons', code: "\uebb0" },
+  "ti-file-import": {iconSet: 'tabler icons', code: "\uedea" },
+  "ti-file-infinity": {iconSet: 'tabler icons', code: "\uf502" },
+  "ti-file-info": {iconSet: 'tabler icons', code: "\uedec" },
+  "ti-file-invoice": {iconSet: 'tabler icons', code: "\ueb67" },
+  "ti-file-lambda": {iconSet: 'tabler icons', code: "\uf53f" },
+  "ti-file-like": {iconSet: 'tabler icons', code: "\ued2b" },
+  "ti-file-minus": {iconSet: 'tabler icons', code: "\uea9e" },
+  "ti-file-music": {iconSet: 'tabler icons', code: "\uea9f" },
+  "ti-file-off": {iconSet: 'tabler icons', code: "\uecf2" },
+  "ti-file-orientation": {iconSet: 'tabler icons', code: "\uf2a1" },
+  "ti-file-pencil": {iconSet: 'tabler icons', code: "\uf039" },
+  "ti-file-percent": {iconSet: 'tabler icons', code: "\uf540" },
+  "ti-file-phone": {iconSet: 'tabler icons', code: "\uecdc" },
+  "ti-file-plus": {iconSet: 'tabler icons', code: "\ueaa0" },
+  "ti-file-power": {iconSet: 'tabler icons', code: "\uf03a" },
+  "ti-file-report": {iconSet: 'tabler icons', code: "\ueded" },
+  "ti-file-rss": {iconSet: 'tabler icons', code: "\uf03b" },
+  "ti-file-scissors": {iconSet: 'tabler icons', code: "\uf03c" },
+  "ti-file-search": {iconSet: 'tabler icons', code: "\ued5d" },
+  "ti-file-settings": {iconSet: 'tabler icons', code: "\uf029" },
+  "ti-file-shredder": {iconSet: 'tabler icons', code: "\ueaa1" },
+  "ti-file-signal": {iconSet: 'tabler icons', code: "\uf03d" },
+  "ti-file-spreadsheet": {iconSet: 'tabler icons', code: "\uf03e" },
+  "ti-file-stack": {iconSet: 'tabler icons', code: "\uf503" },
+  "ti-file-star": {iconSet: 'tabler icons', code: "\uf03f" },
+  "ti-file-symlink": {iconSet: 'tabler icons', code: "\ued53" },
+  "ti-file-text": {iconSet: 'tabler icons', code: "\ueaa2" },
+  "ti-file-text-ai": {iconSet: 'tabler icons', code: "\ufa27" },
+  "ti-file-time": {iconSet: 'tabler icons', code: "\uf040" },
+  "ti-file-typography": {iconSet: 'tabler icons', code: "\uf041" },
+  "ti-file-unknown": {iconSet: 'tabler icons', code: "\uf042" },
+  "ti-file-upload": {iconSet: 'tabler icons', code: "\uec91" },
+  "ti-file-vector": {iconSet: 'tabler icons', code: "\uf043" },
+  "ti-file-x": {iconSet: 'tabler icons', code: "\ueaa3" },
+  "ti-file-x-filled": {iconSet: 'tabler icons', code: "\uf748" },
+  "ti-file-zip": {iconSet: 'tabler icons', code: "\ued4e" },
+  "ti-files": {iconSet: 'tabler icons', code: "\uedef" },
+  "ti-files-off": {iconSet: 'tabler icons', code: "\uedee" },
+  "ti-filter": {iconSet: 'tabler icons', code: "\ueaa5" },
+  "ti-filter-cog": {iconSet: 'tabler icons', code: "\uf9fe" },
+  "ti-filter-dollar": {iconSet: 'tabler icons', code: "\uf9ff" },
+  "ti-filter-edit": {iconSet: 'tabler icons', code: "\ufa00" },
+  "ti-filter-minus": {iconSet: 'tabler icons', code: "\ufa01" },
+  "ti-filter-off": {iconSet: 'tabler icons', code: "\ued2c" },
+  "ti-filter-plus": {iconSet: 'tabler icons', code: "\ufa02" },
+  "ti-filter-star": {iconSet: 'tabler icons', code: "\ufa03" },
+  "ti-filter-x": {iconSet: 'tabler icons', code: "\ufa04" },
+  "ti-filters": {iconSet: 'tabler icons', code: "\uf793" },
+  "ti-fingerprint": {iconSet: 'tabler icons', code: "\uebd1" },
+  "ti-fingerprint-off": {iconSet: 'tabler icons', code: "\uf12a" },
+  "ti-fire-hydrant": {iconSet: 'tabler icons', code: "\uf3a9" },
+  "ti-fire-hydrant-off": {iconSet: 'tabler icons', code: "\uf3ec" },
+  "ti-firetruck": {iconSet: 'tabler icons', code: "\uebe8" },
+  "ti-first-aid-kit": {iconSet: 'tabler icons', code: "\uef5f" },
+  "ti-first-aid-kit-off": {iconSet: 'tabler icons', code: "\uf3ed" },
+  "ti-fish": {iconSet: 'tabler icons', code: "\uef2b" },
+  "ti-fish-bone": {iconSet: 'tabler icons', code: "\uf287" },
+  "ti-fish-christianity": {iconSet: 'tabler icons', code: "\uf58b" },
+  "ti-fish-hook": {iconSet: 'tabler icons', code: "\uf1f9" },
+  "ti-fish-hook-off": {iconSet: 'tabler icons', code: "\uf3ee" },
+  "ti-fish-off": {iconSet: 'tabler icons', code: "\uf12b" },
+  "ti-flag": {iconSet: 'tabler icons', code: "\ueaa6" },
+  "ti-flag-2": {iconSet: 'tabler icons', code: "\uee8c" },
+  "ti-flag-2-filled": {iconSet: 'tabler icons', code: "\uf707" },
+  "ti-flag-2-off": {iconSet: 'tabler icons', code: "\uf12c" },
+  "ti-flag-3": {iconSet: 'tabler icons', code: "\uee8d" },
+  "ti-flag-3-filled": {iconSet: 'tabler icons', code: "\uf708" },
+  "ti-flag-filled": {iconSet: 'tabler icons', code: "\uf67a" },
+  "ti-flag-off": {iconSet: 'tabler icons', code: "\uf12d" },
+  "ti-flame": {iconSet: 'tabler icons', code: "\uec2c" },
+  "ti-flame-off": {iconSet: 'tabler icons', code: "\uf12e" },
+  "ti-flare": {iconSet: 'tabler icons', code: "\uee8e" },
+  "ti-flask": {iconSet: 'tabler icons', code: "\uebd2" },
+  "ti-flask-2": {iconSet: 'tabler icons', code: "\uef60" },
+  "ti-flask-2-off": {iconSet: 'tabler icons', code: "\uf12f" },
+  "ti-flask-off": {iconSet: 'tabler icons', code: "\uf130" },
+  "ti-flip-flops": {iconSet: 'tabler icons', code: "\uf564" },
+  "ti-flip-horizontal": {iconSet: 'tabler icons', code: "\ueaa7" },
+  "ti-flip-vertical": {iconSet: 'tabler icons', code: "\ueaa8" },
+  "ti-float-center": {iconSet: 'tabler icons', code: "\uebb1" },
+  "ti-float-left": {iconSet: 'tabler icons', code: "\uebb2" },
+  "ti-float-none": {iconSet: 'tabler icons', code: "\ued13" },
+  "ti-float-right": {iconSet: 'tabler icons', code: "\uebb3" },
+  "ti-flower": {iconSet: 'tabler icons', code: "\ueff6" },
+  "ti-flower-off": {iconSet: 'tabler icons', code: "\uf131" },
+  "ti-focus": {iconSet: 'tabler icons', code: "\ueb8d" },
+  "ti-focus-2": {iconSet: 'tabler icons', code: "\uebd3" },
+  "ti-focus-centered": {iconSet: 'tabler icons', code: "\uf02a" },
+  "ti-fold": {iconSet: 'tabler icons', code: "\ued56" },
+  "ti-fold-down": {iconSet: 'tabler icons', code: "\ued54" },
+  "ti-fold-up": {iconSet: 'tabler icons', code: "\ued55" },
+  "ti-folder": {iconSet: 'tabler icons', code: "\ueaad" },
+  "ti-folder-bolt": {iconSet: 'tabler icons', code: "\uf90c" },
+  "ti-folder-cancel": {iconSet: 'tabler icons', code: "\uf90d" },
+  "ti-folder-check": {iconSet: 'tabler icons', code: "\uf90e" },
+  "ti-folder-code": {iconSet: 'tabler icons', code: "\uf90f" },
+  "ti-folder-cog": {iconSet: 'tabler icons', code: "\uf910" },
+  "ti-folder-dollar": {iconSet: 'tabler icons', code: "\uf911" },
+  "ti-folder-down": {iconSet: 'tabler icons', code: "\uf912" },
+  "ti-folder-exclamation": {iconSet: 'tabler icons', code: "\uf913" },
+  "ti-folder-filled": {iconSet: 'tabler icons', code: "\uf749" },
+  "ti-folder-heart": {iconSet: 'tabler icons', code: "\uf914" },
+  "ti-folder-minus": {iconSet: 'tabler icons', code: "\ueaaa" },
+  "ti-folder-off": {iconSet: 'tabler icons', code: "\ued14" },
+  "ti-folder-pause": {iconSet: 'tabler icons', code: "\uf915" },
+  "ti-folder-pin": {iconSet: 'tabler icons', code: "\uf916" },
+  "ti-folder-plus": {iconSet: 'tabler icons', code: "\ueaab" },
+  "ti-folder-question": {iconSet: 'tabler icons', code: "\uf917" },
+  "ti-folder-search": {iconSet: 'tabler icons', code: "\uf918" },
+  "ti-folder-share": {iconSet: 'tabler icons', code: "\uf919" },
+  "ti-folder-star": {iconSet: 'tabler icons', code: "\uf91a" },
+  "ti-folder-symlink": {iconSet: 'tabler icons', code: "\uf91b" },
+  "ti-folder-up": {iconSet: 'tabler icons', code: "\uf91c" },
+  "ti-folder-x": {iconSet: 'tabler icons', code: "\ueaac" },
+  "ti-folders": {iconSet: 'tabler icons', code: "\ueaae" },
+  "ti-folders-off": {iconSet: 'tabler icons', code: "\uf133" },
+  "ti-forbid": {iconSet: 'tabler icons', code: "\uebd5" },
+  "ti-forbid-2": {iconSet: 'tabler icons', code: "\uebd4" },
+  "ti-forklift": {iconSet: 'tabler icons', code: "\uebe9" },
+  "ti-forms": {iconSet: 'tabler icons', code: "\uee8f" },
+  "ti-fountain": {iconSet: 'tabler icons', code: "\uf09b" },
+  "ti-fountain-off": {iconSet: 'tabler icons', code: "\uf134" },
+  "ti-frame": {iconSet: 'tabler icons', code: "\ueaaf" },
+  "ti-frame-off": {iconSet: 'tabler icons', code: "\uf135" },
+  "ti-free-rights": {iconSet: 'tabler icons', code: "\uefb6" },
+  "ti-fridge": {iconSet: 'tabler icons', code: "\uf1fa" },
+  "ti-fridge-off": {iconSet: 'tabler icons', code: "\uf3ef" },
+  "ti-friends": {iconSet: 'tabler icons', code: "\ueab0" },
+  "ti-friends-off": {iconSet: 'tabler icons', code: "\uf136" },
+  "ti-function": {iconSet: 'tabler icons', code: "\uf225" },
+  "ti-function-off": {iconSet: 'tabler icons', code: "\uf3f0" },
+  "ti-garden-cart": {iconSet: 'tabler icons', code: "\uf23e" },
+  "ti-garden-cart-off": {iconSet: 'tabler icons', code: "\uf3f1" },
+  "ti-gas-station": {iconSet: 'tabler icons', code: "\uec7d" },
+  "ti-gas-station-off": {iconSet: 'tabler icons', code: "\uf137" },
+  "ti-gauge": {iconSet: 'tabler icons', code: "\ueab1" },
+  "ti-gauge-off": {iconSet: 'tabler icons', code: "\uf138" },
+  "ti-gavel": {iconSet: 'tabler icons', code: "\uef90" },
+  "ti-gender-agender": {iconSet: 'tabler icons', code: "\uf0e1" },
+  "ti-gender-androgyne": {iconSet: 'tabler icons', code: "\uf0e2" },
+  "ti-gender-bigender": {iconSet: 'tabler icons', code: "\uf0e3" },
+  "ti-gender-demiboy": {iconSet: 'tabler icons', code: "\uf0e4" },
+  "ti-gender-demigirl": {iconSet: 'tabler icons', code: "\uf0e5" },
+  "ti-gender-epicene": {iconSet: 'tabler icons', code: "\uf0e6" },
+  "ti-gender-female": {iconSet: 'tabler icons', code: "\uf0e7" },
+  "ti-gender-femme": {iconSet: 'tabler icons', code: "\uf0e8" },
+  "ti-gender-genderfluid": {iconSet: 'tabler icons', code: "\uf0e9" },
+  "ti-gender-genderless": {iconSet: 'tabler icons', code: "\uf0ea" },
+  "ti-gender-genderqueer": {iconSet: 'tabler icons', code: "\uf0eb" },
+  "ti-gender-hermaphrodite": {iconSet: 'tabler icons', code: "\uf0ec" },
+  "ti-gender-intergender": {iconSet: 'tabler icons', code: "\uf0ed" },
+  "ti-gender-male": {iconSet: 'tabler icons', code: "\uf0ee" },
+  "ti-gender-neutrois": {iconSet: 'tabler icons', code: "\uf0ef" },
+  "ti-gender-third": {iconSet: 'tabler icons', code: "\uf0f0" },
+  "ti-gender-transgender": {iconSet: 'tabler icons', code: "\uf0f1" },
+  "ti-gender-trasvesti": {iconSet: 'tabler icons', code: "\uf0f2" },
+  "ti-geometry": {iconSet: 'tabler icons', code: "\uee90" },
+  "ti-ghost": {iconSet: 'tabler icons', code: "\ueb8e" },
+  "ti-ghost-2": {iconSet: 'tabler icons', code: "\uf57c" },
+  "ti-ghost-2-filled": {iconSet: 'tabler icons', code: "\uf74a" },
+  "ti-ghost-filled": {iconSet: 'tabler icons', code: "\uf74b" },
+  "ti-ghost-off": {iconSet: 'tabler icons', code: "\uf3f2" },
+  "ti-gif": {iconSet: 'tabler icons', code: "\uf257" },
+  "ti-gift": {iconSet: 'tabler icons', code: "\ueb68" },
+  "ti-gift-card": {iconSet: 'tabler icons', code: "\uf3aa" },
+  "ti-gift-off": {iconSet: 'tabler icons', code: "\uf3f3" },
+  "ti-git-branch": {iconSet: 'tabler icons', code: "\ueab2" },
+  "ti-git-branch-deleted": {iconSet: 'tabler icons', code: "\uf57d" },
+  "ti-git-cherry-pick": {iconSet: 'tabler icons', code: "\uf57e" },
+  "ti-git-commit": {iconSet: 'tabler icons', code: "\ueab3" },
+  "ti-git-compare": {iconSet: 'tabler icons', code: "\ueab4" },
+  "ti-git-fork": {iconSet: 'tabler icons', code: "\ueb8f" },
+  "ti-git-merge": {iconSet: 'tabler icons', code: "\ueab5" },
+  "ti-git-pull-request": {iconSet: 'tabler icons', code: "\ueab6" },
+  "ti-git-pull-request-closed": {iconSet: 'tabler icons', code: "\uef7f" },
+  "ti-git-pull-request-draft": {iconSet: 'tabler icons', code: "\uefb7" },
+  "ti-gizmo": {iconSet: 'tabler icons', code: "\uf02b" },
+  "ti-glass": {iconSet: 'tabler icons', code: "\ueab8" },
+  "ti-glass-full": {iconSet: 'tabler icons', code: "\ueab7" },
+  "ti-glass-off": {iconSet: 'tabler icons', code: "\uee91" },
+  "ti-globe": {iconSet: 'tabler icons', code: "\ueab9" },
+  "ti-globe-off": {iconSet: 'tabler icons', code: "\uf139" },
+  "ti-go-game": {iconSet: 'tabler icons', code: "\uf512" },
+  "ti-golf": {iconSet: 'tabler icons', code: "\ued8c" },
+  "ti-golf-off": {iconSet: 'tabler icons', code: "\uf13a" },
+  "ti-gps": {iconSet: 'tabler icons', code: "\ued7a" },
+  "ti-gradienter": {iconSet: 'tabler icons', code: "\uf3ab" },
+  "ti-grain": {iconSet: 'tabler icons', code: "\uee92" },
+  "ti-graph": {iconSet: 'tabler icons', code: "\uf288" },
+  "ti-graph-off": {iconSet: 'tabler icons', code: "\uf3f4" },
+  "ti-grave": {iconSet: 'tabler icons', code: "\uf580" },
+  "ti-grave-2": {iconSet: 'tabler icons', code: "\uf57f" },
+  "ti-grid-dots": {iconSet: 'tabler icons', code: "\ueaba" },
+  "ti-grid-pattern": {iconSet: 'tabler icons', code: "\uefc9" },
+  "ti-grill": {iconSet: 'tabler icons', code: "\uefa9" },
+  "ti-grill-fork": {iconSet: 'tabler icons', code: "\uf35b" },
+  "ti-grill-off": {iconSet: 'tabler icons', code: "\uf3f5" },
+  "ti-grill-spatula": {iconSet: 'tabler icons', code: "\uf35c" },
+  "ti-grip-horizontal": {iconSet: 'tabler icons', code: "\uec00" },
+  "ti-grip-vertical": {iconSet: 'tabler icons', code: "\uec01" },
+  "ti-growth": {iconSet: 'tabler icons', code: "\uee93" },
+  "ti-guitar-pick": {iconSet: 'tabler icons', code: "\uf4c6" },
+  "ti-guitar-pick-filled": {iconSet: 'tabler icons', code: "\uf67b" },
+  "ti-h-1": {iconSet: 'tabler icons', code: "\uec94" },
+  "ti-h-2": {iconSet: 'tabler icons', code: "\uec95" },
+  "ti-h-3": {iconSet: 'tabler icons', code: "\uec96" },
+  "ti-h-4": {iconSet: 'tabler icons', code: "\uec97" },
+  "ti-h-5": {iconSet: 'tabler icons', code: "\uec98" },
+  "ti-h-6": {iconSet: 'tabler icons', code: "\uec99" },
+  "ti-hammer": {iconSet: 'tabler icons', code: "\uef91" },
+  "ti-hammer-off": {iconSet: 'tabler icons', code: "\uf13c" },
+  "ti-hand-click": {iconSet: 'tabler icons', code: "\uef4f" },
+  "ti-hand-finger": {iconSet: 'tabler icons', code: "\uee94" },
+  "ti-hand-finger-off": {iconSet: 'tabler icons', code: "\uf13d" },
+  "ti-hand-grab": {iconSet: 'tabler icons', code: "\uf091" },
+  "ti-hand-little-finger": {iconSet: 'tabler icons', code: "\uee95" },
+  "ti-hand-middle-finger": {iconSet: 'tabler icons', code: "\uec2d" },
+  "ti-hand-move": {iconSet: 'tabler icons', code: "\uef50" },
+  "ti-hand-off": {iconSet: 'tabler icons', code: "\ued15" },
+  "ti-hand-ring-finger": {iconSet: 'tabler icons', code: "\uee96" },
+  "ti-hand-rock": {iconSet: 'tabler icons', code: "\uee97" },
+  "ti-hand-sanitizer": {iconSet: 'tabler icons', code: "\uf5f4" },
+  "ti-hand-stop": {iconSet: 'tabler icons', code: "\uec2e" },
+  "ti-hand-three-fingers": {iconSet: 'tabler icons', code: "\uee98" },
+  "ti-hand-two-fingers": {iconSet: 'tabler icons', code: "\uee99" },
+  "ti-hanger": {iconSet: 'tabler icons', code: "\uee9a" },
+  "ti-hanger-2": {iconSet: 'tabler icons', code: "\uf09c" },
+  "ti-hanger-off": {iconSet: 'tabler icons', code: "\uf13e" },
+  "ti-hash": {iconSet: 'tabler icons', code: "\ueabc" },
+  "ti-haze": {iconSet: 'tabler icons', code: "\uefaa" },
+  "ti-heading": {iconSet: 'tabler icons', code: "\uee9b" },
+  "ti-heading-off": {iconSet: 'tabler icons', code: "\uf13f" },
+  "ti-headphones": {iconSet: 'tabler icons', code: "\ueabd" },
+  "ti-headphones-off": {iconSet: 'tabler icons', code: "\ued1d" },
+  "ti-headset": {iconSet: 'tabler icons', code: "\ueb90" },
+  "ti-headset-off": {iconSet: 'tabler icons', code: "\uf3f6" },
+  "ti-health-recognition": {iconSet: 'tabler icons', code: "\uf1fb" },
+  "ti-heart": {iconSet: 'tabler icons', code: "\ueabe" },
+  "ti-heart-broken": {iconSet: 'tabler icons', code: "\uecba" },
+  "ti-heart-filled": {iconSet: 'tabler icons', code: "\uf67c" },
+  "ti-heart-handshake": {iconSet: 'tabler icons', code: "\uf0f3" },
+  "ti-heart-minus": {iconSet: 'tabler icons', code: "\uf140" },
+  "ti-heart-off": {iconSet: 'tabler icons', code: "\uf141" },
+  "ti-heart-plus": {iconSet: 'tabler icons', code: "\uf142" },
+  "ti-heart-rate-monitor": {iconSet: 'tabler icons', code: "\uef61" },
+  "ti-heartbeat": {iconSet: 'tabler icons', code: "\uef92" },
+  "ti-hearts": {iconSet: 'tabler icons', code: "\uf387" },
+  "ti-hearts-off": {iconSet: 'tabler icons', code: "\uf3f7" },
+  "ti-helicopter": {iconSet: 'tabler icons', code: "\ued8e" },
+  "ti-helicopter-landing": {iconSet: 'tabler icons', code: "\ued8d" },
+  "ti-helmet": {iconSet: 'tabler icons', code: "\uefca" },
+  "ti-helmet-off": {iconSet: 'tabler icons', code: "\uf143" },
+  "ti-help": {iconSet: 'tabler icons', code: "\ueabf" },
+  "ti-help-circle": {iconSet: 'tabler icons', code: "\uf91d" },
+  "ti-help-hexagon": {iconSet: 'tabler icons', code: "\uf7a8" },
+  "ti-help-octagon": {iconSet: 'tabler icons', code: "\uf7a9" },
+  "ti-help-off": {iconSet: 'tabler icons', code: "\uf3f8" },
+  "ti-help-small": {iconSet: 'tabler icons', code: "\uf91e" },
+  "ti-help-square": {iconSet: 'tabler icons', code: "\uf920" },
+  "ti-help-square-rounded": {iconSet: 'tabler icons', code: "\uf91f" },
+  "ti-help-triangle": {iconSet: 'tabler icons', code: "\uf921" },
+  "ti-hexagon": {iconSet: 'tabler icons', code: "\uec02" },
+  "ti-hexagon-0-filled": {iconSet: 'tabler icons', code: "\uf74c" },
+  "ti-hexagon-1-filled": {iconSet: 'tabler icons', code: "\uf74d" },
+  "ti-hexagon-2-filled": {iconSet: 'tabler icons', code: "\uf74e" },
+  "ti-hexagon-3-filled": {iconSet: 'tabler icons', code: "\uf74f" },
+  "ti-hexagon-3d": {iconSet: 'tabler icons', code: "\uf4c7" },
+  "ti-hexagon-4-filled": {iconSet: 'tabler icons', code: "\uf750" },
+  "ti-hexagon-5-filled": {iconSet: 'tabler icons', code: "\uf751" },
+  "ti-hexagon-6-filled": {iconSet: 'tabler icons', code: "\uf752" },
+  "ti-hexagon-7-filled": {iconSet: 'tabler icons', code: "\uf753" },
+  "ti-hexagon-8-filled": {iconSet: 'tabler icons', code: "\uf754" },
+  "ti-hexagon-9-filled": {iconSet: 'tabler icons', code: "\uf755" },
+  "ti-hexagon-filled": {iconSet: 'tabler icons', code: "\uf67d" },
+  "ti-hexagon-letter-a": {iconSet: 'tabler icons', code: "\uf463" },
+  "ti-hexagon-letter-b": {iconSet: 'tabler icons', code: "\uf464" },
+  "ti-hexagon-letter-c": {iconSet: 'tabler icons', code: "\uf465" },
+  "ti-hexagon-letter-d": {iconSet: 'tabler icons', code: "\uf466" },
+  "ti-hexagon-letter-e": {iconSet: 'tabler icons', code: "\uf467" },
+  "ti-hexagon-letter-f": {iconSet: 'tabler icons', code: "\uf468" },
+  "ti-hexagon-letter-g": {iconSet: 'tabler icons', code: "\uf469" },
+  "ti-hexagon-letter-h": {iconSet: 'tabler icons', code: "\uf46a" },
+  "ti-hexagon-letter-i": {iconSet: 'tabler icons', code: "\uf46b" },
+  "ti-hexagon-letter-j": {iconSet: 'tabler icons', code: "\uf46c" },
+  "ti-hexagon-letter-k": {iconSet: 'tabler icons', code: "\uf46d" },
+  "ti-hexagon-letter-l": {iconSet: 'tabler icons', code: "\uf46e" },
+  "ti-hexagon-letter-m": {iconSet: 'tabler icons', code: "\uf46f" },
+  "ti-hexagon-letter-n": {iconSet: 'tabler icons', code: "\uf470" },
+  "ti-hexagon-letter-o": {iconSet: 'tabler icons', code: "\uf471" },
+  "ti-hexagon-letter-p": {iconSet: 'tabler icons', code: "\uf472" },
+  "ti-hexagon-letter-q": {iconSet: 'tabler icons', code: "\uf473" },
+  "ti-hexagon-letter-r": {iconSet: 'tabler icons', code: "\uf474" },
+  "ti-hexagon-letter-s": {iconSet: 'tabler icons', code: "\uf475" },
+  "ti-hexagon-letter-t": {iconSet: 'tabler icons', code: "\uf476" },
+  "ti-hexagon-letter-u": {iconSet: 'tabler icons', code: "\uf477" },
+  "ti-hexagon-letter-v": {iconSet: 'tabler icons', code: "\uf4b3" },
+  "ti-hexagon-letter-w": {iconSet: 'tabler icons', code: "\uf478" },
+  "ti-hexagon-letter-x": {iconSet: 'tabler icons', code: "\uf479" },
+  "ti-hexagon-letter-y": {iconSet: 'tabler icons', code: "\uf47a" },
+  "ti-hexagon-letter-z": {iconSet: 'tabler icons', code: "\uf47b" },
+  "ti-hexagon-number-0": {iconSet: 'tabler icons', code: "\uf459" },
+  "ti-hexagon-number-1": {iconSet: 'tabler icons', code: "\uf45a" },
+  "ti-hexagon-number-2": {iconSet: 'tabler icons', code: "\uf45b" },
+  "ti-hexagon-number-3": {iconSet: 'tabler icons', code: "\uf45c" },
+  "ti-hexagon-number-4": {iconSet: 'tabler icons', code: "\uf45d" },
+  "ti-hexagon-number-5": {iconSet: 'tabler icons', code: "\uf45e" },
+  "ti-hexagon-number-6": {iconSet: 'tabler icons', code: "\uf45f" },
+  "ti-hexagon-number-7": {iconSet: 'tabler icons', code: "\uf460" },
+  "ti-hexagon-number-8": {iconSet: 'tabler icons', code: "\uf461" },
+  "ti-hexagon-number-9": {iconSet: 'tabler icons', code: "\uf462" },
+  "ti-hexagon-off": {iconSet: 'tabler icons', code: "\uee9c" },
+  "ti-hexagons": {iconSet: 'tabler icons', code: "\uf09d" },
+  "ti-hexagons-off": {iconSet: 'tabler icons', code: "\uf3f9" },
+  "ti-hierarchy": {iconSet: 'tabler icons', code: "\uee9e" },
+  "ti-hierarchy-2": {iconSet: 'tabler icons', code: "\uee9d" },
+  "ti-hierarchy-3": {iconSet: 'tabler icons', code: "\uf289" },
+  "ti-hierarchy-off": {iconSet: 'tabler icons', code: "\uf3fa" },
+  "ti-highlight": {iconSet: 'tabler icons', code: "\uef3f" },
+  "ti-highlight-off": {iconSet: 'tabler icons', code: "\uf144" },
+  "ti-history": {iconSet: 'tabler icons', code: "\uebea" },
+  "ti-history-off": {iconSet: 'tabler icons', code: "\uf3fb" },
+  "ti-history-toggle": {iconSet: 'tabler icons', code: "\uf1fc" },
+  "ti-home": {iconSet: 'tabler icons', code: "\ueac1" },
+  "ti-home-2": {iconSet: 'tabler icons', code: "\ueac0" },
+  "ti-home-bolt": {iconSet: 'tabler icons', code: "\uf336" },
+  "ti-home-cancel": {iconSet: 'tabler icons', code: "\uf350" },
+  "ti-home-check": {iconSet: 'tabler icons', code: "\uf337" },
+  "ti-home-cog": {iconSet: 'tabler icons', code: "\uf338" },
+  "ti-home-dollar": {iconSet: 'tabler icons', code: "\uf339" },
+  "ti-home-dot": {iconSet: 'tabler icons', code: "\uf33a" },
+  "ti-home-down": {iconSet: 'tabler icons', code: "\uf33b" },
+  "ti-home-eco": {iconSet: 'tabler icons', code: "\uf351" },
+  "ti-home-edit": {iconSet: 'tabler icons', code: "\uf352" },
+  "ti-home-exclamation": {iconSet: 'tabler icons', code: "\uf33c" },
+  "ti-home-hand": {iconSet: 'tabler icons', code: "\uf504" },
+  "ti-home-heart": {iconSet: 'tabler icons', code: "\uf353" },
+  "ti-home-infinity": {iconSet: 'tabler icons', code: "\uf505" },
+  "ti-home-link": {iconSet: 'tabler icons', code: "\uf354" },
+  "ti-home-minus": {iconSet: 'tabler icons', code: "\uf33d" },
+  "ti-home-move": {iconSet: 'tabler icons', code: "\uf33e" },
+  "ti-home-off": {iconSet: 'tabler icons', code: "\uf145" },
+  "ti-home-plus": {iconSet: 'tabler icons', code: "\uf33f" },
+  "ti-home-question": {iconSet: 'tabler icons', code: "\uf340" },
+  "ti-home-ribbon": {iconSet: 'tabler icons', code: "\uf355" },
+  "ti-home-search": {iconSet: 'tabler icons', code: "\uf341" },
+  "ti-home-share": {iconSet: 'tabler icons', code: "\uf342" },
+  "ti-home-shield": {iconSet: 'tabler icons', code: "\uf343" },
+  "ti-home-signal": {iconSet: 'tabler icons', code: "\uf356" },
+  "ti-home-star": {iconSet: 'tabler icons', code: "\uf344" },
+  "ti-home-stats": {iconSet: 'tabler icons', code: "\uf345" },
+  "ti-home-up": {iconSet: 'tabler icons', code: "\uf346" },
+  "ti-home-x": {iconSet: 'tabler icons', code: "\uf347" },
+  "ti-horse-toy": {iconSet: 'tabler icons', code: "\uf28a" },
+  "ti-hotel-service": {iconSet: 'tabler icons', code: "\uef80" },
+  "ti-hourglass": {iconSet: 'tabler icons', code: "\uef93" },
+  "ti-hourglass-empty": {iconSet: 'tabler icons', code: "\uf146" },
+  "ti-hourglass-filled": {iconSet: 'tabler icons', code: "\uf756" },
+  "ti-hourglass-high": {iconSet: 'tabler icons', code: "\uf092" },
+  "ti-hourglass-low": {iconSet: 'tabler icons', code: "\uf093" },
+  "ti-hourglass-off": {iconSet: 'tabler icons', code: "\uf147" },
+  "ti-html": {iconSet: 'tabler icons', code: "\uf7b1" },
+  "ti-http-connect": {iconSet: 'tabler icons', code: "\ufa28" },
+  "ti-http-delete": {iconSet: 'tabler icons', code: "\ufa29" },
+  "ti-http-get": {iconSet: 'tabler icons', code: "\ufa2a" },
+  "ti-http-head": {iconSet: 'tabler icons', code: "\ufa2b" },
+  "ti-http-options": {iconSet: 'tabler icons', code: "\ufa2c" },
+  "ti-http-path": {iconSet: 'tabler icons', code: "\ufa2d" },
+  "ti-http-post": {iconSet: 'tabler icons', code: "\ufa2e" },
+  "ti-http-put": {iconSet: 'tabler icons', code: "\ufa2f" },
+  "ti-http-trace": {iconSet: 'tabler icons', code: "\ufa30" },
+  "ti-ice-cream": {iconSet: 'tabler icons', code: "\ueac2" },
+  "ti-ice-cream-2": {iconSet: 'tabler icons', code: "\uee9f" },
+  "ti-ice-cream-off": {iconSet: 'tabler icons', code: "\uf148" },
+  "ti-ice-skating": {iconSet: 'tabler icons', code: "\uefcb" },
+  "ti-icons": {iconSet: 'tabler icons', code: "\uf1d4" },
+  "ti-icons-off": {iconSet: 'tabler icons', code: "\uf3fc" },
+  "ti-id": {iconSet: 'tabler icons', code: "\ueac3" },
+  "ti-id-badge": {iconSet: 'tabler icons', code: "\ueff7" },
+  "ti-id-badge-2": {iconSet: 'tabler icons', code: "\uf076" },
+  "ti-id-badge-off": {iconSet: 'tabler icons', code: "\uf3fd" },
+  "ti-id-off": {iconSet: 'tabler icons', code: "\uf149" },
+  "ti-inbox": {iconSet: 'tabler icons', code: "\ueac4" },
+  "ti-inbox-off": {iconSet: 'tabler icons', code: "\uf14a" },
+  "ti-indent-decrease": {iconSet: 'tabler icons', code: "\ueb91" },
+  "ti-indent-increase": {iconSet: 'tabler icons', code: "\ueb92" },
+  "ti-infinity": {iconSet: 'tabler icons', code: "\ueb69" },
+  "ti-infinity-off": {iconSet: 'tabler icons', code: "\uf3fe" },
+  "ti-info-circle": {iconSet: 'tabler icons', code: "\ueac5" },
+  "ti-info-circle-filled": {iconSet: 'tabler icons', code: "\uf6d8" },
+  "ti-info-hexagon": {iconSet: 'tabler icons', code: "\uf7aa" },
+  "ti-info-octagon": {iconSet: 'tabler icons', code: "\uf7ab" },
+  "ti-info-small": {iconSet: 'tabler icons', code: "\uf922" },
+  "ti-info-square": {iconSet: 'tabler icons', code: "\ueac6" },
+  "ti-info-square-rounded": {iconSet: 'tabler icons', code: "\uf635" },
+  "ti-info-square-rounded-filled": {iconSet: 'tabler icons', code: "\uf6d9" },
+  "ti-info-triangle": {iconSet: 'tabler icons', code: "\uf923" },
+  "ti-inner-shadow-bottom": {iconSet: 'tabler icons', code: "\uf520" },
+  "ti-inner-shadow-bottom-filled": {iconSet: 'tabler icons', code: "\uf757" },
+  "ti-inner-shadow-bottom-left": {iconSet: 'tabler icons', code: "\uf51e" },
+  "ti-inner-shadow-bottom-left-filled": {iconSet: 'tabler icons', code: "\uf758" },
+  "ti-inner-shadow-bottom-right": {iconSet: 'tabler icons', code: "\uf51f" },
+  "ti-inner-shadow-bottom-right-filled": {iconSet: 'tabler icons', code: "\uf759" },
+  "ti-inner-shadow-left": {iconSet: 'tabler icons', code: "\uf521" },
+  "ti-inner-shadow-left-filled": {iconSet: 'tabler icons', code: "\uf75a" },
+  "ti-inner-shadow-right": {iconSet: 'tabler icons', code: "\uf522" },
+  "ti-inner-shadow-right-filled": {iconSet: 'tabler icons', code: "\uf75b" },
+  "ti-inner-shadow-top": {iconSet: 'tabler icons', code: "\uf525" },
+  "ti-inner-shadow-top-filled": {iconSet: 'tabler icons', code: "\uf75c" },
+  "ti-inner-shadow-top-left": {iconSet: 'tabler icons', code: "\uf523" },
+  "ti-inner-shadow-top-left-filled": {iconSet: 'tabler icons', code: "\uf75d" },
+  "ti-inner-shadow-top-right": {iconSet: 'tabler icons', code: "\uf524" },
+  "ti-inner-shadow-top-right-filled": {iconSet: 'tabler icons', code: "\uf75e" },
+  "ti-input-search": {iconSet: 'tabler icons', code: "\uf2a2" },
+  "ti-ironing-1": {iconSet: 'tabler icons', code: "\uf2f4" },
+  "ti-ironing-2": {iconSet: 'tabler icons', code: "\uf2f5" },
+  "ti-ironing-3": {iconSet: 'tabler icons', code: "\uf2f6" },
+  "ti-ironing-off": {iconSet: 'tabler icons', code: "\uf2f7" },
+  "ti-ironing-steam": {iconSet: 'tabler icons', code: "\uf2f9" },
+  "ti-ironing-steam-off": {iconSet: 'tabler icons', code: "\uf2f8" },
+  "ti-italic": {iconSet: 'tabler icons', code: "\ueb93" },
+  "ti-jacket": {iconSet: 'tabler icons', code: "\uf661" },
+  "ti-jetpack": {iconSet: 'tabler icons', code: "\uf581" },
+  "ti-jewish-star": {iconSet: 'tabler icons', code: "\uf3ff" },
+  "ti-jewish-star-filled": {iconSet: 'tabler icons', code: "\uf67e" },
+  "ti-jpg": {iconSet: 'tabler icons', code: "\uf3ac" },
+  "ti-json": {iconSet: 'tabler icons', code: "\uf7b2" },
+  "ti-jump-rope": {iconSet: 'tabler icons', code: "\ued8f" },
+  "ti-karate": {iconSet: 'tabler icons', code: "\ued32" },
+  "ti-kayak": {iconSet: 'tabler icons', code: "\uf1d6" },
+  "ti-kering": {iconSet: 'tabler icons', code: "\uefb8" },
+  "ti-key": {iconSet: 'tabler icons', code: "\ueac7" },
+  "ti-key-off": {iconSet: 'tabler icons', code: "\uf14b" },
+  "ti-keyboard": {iconSet: 'tabler icons', code: "\uebd6" },
+  "ti-keyboard-hide": {iconSet: 'tabler icons', code: "\uec7e" },
+  "ti-keyboard-off": {iconSet: 'tabler icons', code: "\ueea0" },
+  "ti-keyboard-show": {iconSet: 'tabler icons', code: "\uec7f" },
+  "ti-keyframe": {iconSet: 'tabler icons', code: "\uf576" },
+  "ti-keyframe-align-center": {iconSet: 'tabler icons', code: "\uf582" },
+  "ti-keyframe-align-horizontal": {iconSet: 'tabler icons', code: "\uf583" },
+  "ti-keyframe-align-vertical": {iconSet: 'tabler icons', code: "\uf584" },
+  "ti-keyframes": {iconSet: 'tabler icons', code: "\uf585" },
+  "ti-ladder": {iconSet: 'tabler icons', code: "\uefe2" },
+  "ti-ladder-off": {iconSet: 'tabler icons', code: "\uf14c" },
+  "ti-lambda": {iconSet: 'tabler icons', code: "\uf541" },
+  "ti-lamp": {iconSet: 'tabler icons', code: "\uefab" },
+  "ti-lamp-2": {iconSet: 'tabler icons', code: "\uf09e" },
+  "ti-lamp-off": {iconSet: 'tabler icons', code: "\uf14d" },
+  "ti-language": {iconSet: 'tabler icons', code: "\uebbe" },
+  "ti-language-hiragana": {iconSet: 'tabler icons', code: "\uef77" },
+  "ti-language-katakana": {iconSet: 'tabler icons', code: "\uef78" },
+  "ti-language-off": {iconSet: 'tabler icons', code: "\uf14e" },
+  "ti-lasso": {iconSet: 'tabler icons', code: "\uefac" },
+  "ti-lasso-off": {iconSet: 'tabler icons', code: "\uf14f" },
+  "ti-lasso-polygon": {iconSet: 'tabler icons', code: "\uf388" },
+  "ti-layers-difference": {iconSet: 'tabler icons', code: "\ueac8" },
+  "ti-layers-intersect": {iconSet: 'tabler icons', code: "\ueac9" },
+  "ti-layers-intersect-2": {iconSet: 'tabler icons', code: "\ueff8" },
+  "ti-layers-linked": {iconSet: 'tabler icons', code: "\ueea1" },
+  "ti-layers-off": {iconSet: 'tabler icons', code: "\uf150" },
+  "ti-layers-subtract": {iconSet: 'tabler icons', code: "\ueaca" },
+  "ti-layers-union": {iconSet: 'tabler icons', code: "\ueacb" },
+  "ti-layout": {iconSet: 'tabler icons', code: "\ueadb" },
+  "ti-layout-2": {iconSet: 'tabler icons', code: "\ueacc" },
+  "ti-layout-align-bottom": {iconSet: 'tabler icons', code: "\ueacd" },
+  "ti-layout-align-center": {iconSet: 'tabler icons', code: "\ueace" },
+  "ti-layout-align-left": {iconSet: 'tabler icons', code: "\ueacf" },
+  "ti-layout-align-middle": {iconSet: 'tabler icons', code: "\uead0" },
+  "ti-layout-align-right": {iconSet: 'tabler icons', code: "\uead1" },
+  "ti-layout-align-top": {iconSet: 'tabler icons', code: "\uead2" },
+  "ti-layout-board": {iconSet: 'tabler icons', code: "\uef95" },
+  "ti-layout-board-split": {iconSet: 'tabler icons', code: "\uef94" },
+  "ti-layout-bottombar": {iconSet: 'tabler icons', code: "\uead3" },
+  "ti-layout-bottombar-collapse": {iconSet: 'tabler icons', code: "\uf28b" },
+  "ti-layout-bottombar-expand": {iconSet: 'tabler icons', code: "\uf28c" },
+  "ti-layout-cards": {iconSet: 'tabler icons', code: "\uec13" },
+  "ti-layout-collage": {iconSet: 'tabler icons', code: "\uf389" },
+  "ti-layout-columns": {iconSet: 'tabler icons', code: "\uead4" },
+  "ti-layout-dashboard": {iconSet: 'tabler icons', code: "\uf02c" },
+  "ti-layout-distribute-horizontal": {iconSet: 'tabler icons', code: "\uead5" },
+  "ti-layout-distribute-vertical": {iconSet: 'tabler icons', code: "\uead6" },
+  "ti-layout-grid": {iconSet: 'tabler icons', code: "\uedba" },
+  "ti-layout-grid-add": {iconSet: 'tabler icons', code: "\uedb9" },
+  "ti-layout-kanban": {iconSet: 'tabler icons', code: "\uec3f" },
+  "ti-layout-list": {iconSet: 'tabler icons', code: "\uec14" },
+  "ti-layout-navbar": {iconSet: 'tabler icons', code: "\uead7" },
+  "ti-layout-navbar-collapse": {iconSet: 'tabler icons', code: "\uf28d" },
+  "ti-layout-navbar-expand": {iconSet: 'tabler icons', code: "\uf28e" },
+  "ti-layout-off": {iconSet: 'tabler icons', code: "\uf151" },
+  "ti-layout-rows": {iconSet: 'tabler icons', code: "\uead8" },
+  "ti-layout-sidebar": {iconSet: 'tabler icons', code: "\ueada" },
+  "ti-layout-sidebar-left-collapse": {iconSet: 'tabler icons', code: "\uf004" },
+  "ti-layout-sidebar-left-expand": {iconSet: 'tabler icons', code: "\uf005" },
+  "ti-layout-sidebar-right": {iconSet: 'tabler icons', code: "\uead9" },
+  "ti-layout-sidebar-right-collapse": {iconSet: 'tabler icons', code: "\uf006" },
+  "ti-layout-sidebar-right-expand": {iconSet: 'tabler icons', code: "\uf007" },
+  "ti-leaf": {iconSet: 'tabler icons', code: "\ued4f" },
+  "ti-leaf-off": {iconSet: 'tabler icons', code: "\uf400" },
+  "ti-lego": {iconSet: 'tabler icons', code: "\ueadc" },
+  "ti-lego-off": {iconSet: 'tabler icons', code: "\uf401" },
+  "ti-lemon": {iconSet: 'tabler icons', code: "\uef10" },
+  "ti-lemon-2": {iconSet: 'tabler icons', code: "\uef81" },
+  "ti-letter-a": {iconSet: 'tabler icons', code: "\uec50" },
+  "ti-letter-b": {iconSet: 'tabler icons', code: "\uec51" },
+  "ti-letter-c": {iconSet: 'tabler icons', code: "\uec52" },
+  "ti-letter-case": {iconSet: 'tabler icons', code: "\ueea5" },
+  "ti-letter-case-lower": {iconSet: 'tabler icons', code: "\ueea2" },
+  "ti-letter-case-toggle": {iconSet: 'tabler icons', code: "\ueea3" },
+  "ti-letter-case-upper": {iconSet: 'tabler icons', code: "\ueea4" },
+  "ti-letter-d": {iconSet: 'tabler icons', code: "\uec53" },
+  "ti-letter-e": {iconSet: 'tabler icons', code: "\uec54" },
+  "ti-letter-f": {iconSet: 'tabler icons', code: "\uec55" },
+  "ti-letter-g": {iconSet: 'tabler icons', code: "\uec56" },
+  "ti-letter-h": {iconSet: 'tabler icons', code: "\uec57" },
+  "ti-letter-i": {iconSet: 'tabler icons', code: "\uec58" },
+  "ti-letter-j": {iconSet: 'tabler icons', code: "\uec59" },
+  "ti-letter-k": {iconSet: 'tabler icons', code: "\uec5a" },
+  "ti-letter-l": {iconSet: 'tabler icons', code: "\uec5b" },
+  "ti-letter-m": {iconSet: 'tabler icons', code: "\uec5c" },
+  "ti-letter-n": {iconSet: 'tabler icons', code: "\uec5d" },
+  "ti-letter-o": {iconSet: 'tabler icons', code: "\uec5e" },
+  "ti-letter-p": {iconSet: 'tabler icons', code: "\uec5f" },
+  "ti-letter-q": {iconSet: 'tabler icons', code: "\uec60" },
+  "ti-letter-r": {iconSet: 'tabler icons', code: "\uec61" },
+  "ti-letter-s": {iconSet: 'tabler icons', code: "\uec62" },
+  "ti-letter-spacing": {iconSet: 'tabler icons', code: "\ueea6" },
+  "ti-letter-t": {iconSet: 'tabler icons', code: "\uec63" },
+  "ti-letter-u": {iconSet: 'tabler icons', code: "\uec64" },
+  "ti-letter-v": {iconSet: 'tabler icons', code: "\uec65" },
+  "ti-letter-w": {iconSet: 'tabler icons', code: "\uec66" },
+  "ti-letter-x": {iconSet: 'tabler icons', code: "\uec67" },
+  "ti-letter-y": {iconSet: 'tabler icons', code: "\uec68" },
+  "ti-letter-z": {iconSet: 'tabler icons', code: "\uec69" },
+  "ti-license": {iconSet: 'tabler icons', code: "\uebc0" },
+  "ti-license-off": {iconSet: 'tabler icons', code: "\uf153" },
+  "ti-lifebuoy": {iconSet: 'tabler icons', code: "\ueadd" },
+  "ti-lifebuoy-off": {iconSet: 'tabler icons', code: "\uf154" },
+  "ti-lighter": {iconSet: 'tabler icons', code: "\uf794" },
+  "ti-line": {iconSet: 'tabler icons', code: "\uec40" },
+  "ti-line-dashed": {iconSet: 'tabler icons', code: "\ueea7" },
+  "ti-line-dotted": {iconSet: 'tabler icons', code: "\ueea8" },
+  "ti-line-height": {iconSet: 'tabler icons', code: "\ueb94" },
+  "ti-link": {iconSet: 'tabler icons', code: "\ueade" },
+  "ti-link-off": {iconSet: 'tabler icons', code: "\uf402" },
+  "ti-list": {iconSet: 'tabler icons', code: "\ueb6b" },
+  "ti-list-check": {iconSet: 'tabler icons', code: "\ueb6a" },
+  "ti-list-details": {iconSet: 'tabler icons', code: "\uef40" },
+  "ti-list-numbers": {iconSet: 'tabler icons', code: "\uef11" },
+  "ti-list-search": {iconSet: 'tabler icons', code: "\ueea9" },
+  "ti-live-photo": {iconSet: 'tabler icons', code: "\ueadf" },
+  "ti-live-photo-off": {iconSet: 'tabler icons', code: "\uf403" },
+  "ti-live-view": {iconSet: 'tabler icons', code: "\uec6b" },
+  "ti-loader": {iconSet: 'tabler icons', code: "\ueca3" },
+  "ti-loader-2": {iconSet: 'tabler icons', code: "\uf226" },
+  "ti-loader-3": {iconSet: 'tabler icons', code: "\uf513" },
+  "ti-loader-quarter": {iconSet: 'tabler icons', code: "\ueca2" },
+  "ti-location": {iconSet: 'tabler icons', code: "\ueae0" },
+  "ti-location-broken": {iconSet: 'tabler icons', code: "\uf2c4" },
+  "ti-location-filled": {iconSet: 'tabler icons', code: "\uf67f" },
+  "ti-location-off": {iconSet: 'tabler icons', code: "\uf155" },
+  "ti-lock": {iconSet: 'tabler icons', code: "\ueae2" },
+  "ti-lock-access": {iconSet: 'tabler icons', code: "\ueeaa" },
+  "ti-lock-access-off": {iconSet: 'tabler icons', code: "\uf404" },
+  "ti-lock-bolt": {iconSet: 'tabler icons', code: "\uf924" },
+  "ti-lock-cancel": {iconSet: 'tabler icons', code: "\uf925" },
+  "ti-lock-check": {iconSet: 'tabler icons', code: "\uf926" },
+  "ti-lock-code": {iconSet: 'tabler icons', code: "\uf927" },
+  "ti-lock-cog": {iconSet: 'tabler icons', code: "\uf928" },
+  "ti-lock-dollar": {iconSet: 'tabler icons', code: "\uf929" },
+  "ti-lock-down": {iconSet: 'tabler icons', code: "\uf92a" },
+  "ti-lock-exclamation": {iconSet: 'tabler icons', code: "\uf92b" },
+  "ti-lock-heart": {iconSet: 'tabler icons', code: "\uf92c" },
+  "ti-lock-minus": {iconSet: 'tabler icons', code: "\uf92d" },
+  "ti-lock-off": {iconSet: 'tabler icons', code: "\ued1e" },
+  "ti-lock-open": {iconSet: 'tabler icons', code: "\ueae1" },
+  "ti-lock-open-off": {iconSet: 'tabler icons', code: "\uf156" },
+  "ti-lock-pause": {iconSet: 'tabler icons', code: "\uf92e" },
+  "ti-lock-pin": {iconSet: 'tabler icons', code: "\uf92f" },
+  "ti-lock-plus": {iconSet: 'tabler icons', code: "\uf930" },
+  "ti-lock-question": {iconSet: 'tabler icons', code: "\uf931" },
+  "ti-lock-search": {iconSet: 'tabler icons', code: "\uf932" },
+  "ti-lock-share": {iconSet: 'tabler icons', code: "\uf933" },
+  "ti-lock-square": {iconSet: 'tabler icons', code: "\uef51" },
+  "ti-lock-square-rounded": {iconSet: 'tabler icons', code: "\uf636" },
+  "ti-lock-square-rounded-filled": {iconSet: 'tabler icons', code: "\uf6da" },
+  "ti-lock-star": {iconSet: 'tabler icons', code: "\uf934" },
+  "ti-lock-up": {iconSet: 'tabler icons', code: "\uf935" },
+  "ti-lock-x": {iconSet: 'tabler icons', code: "\uf936" },
+  "ti-logic-and": {iconSet: 'tabler icons', code: "\uf240" },
+  "ti-logic-buffer": {iconSet: 'tabler icons', code: "\uf241" },
+  "ti-logic-nand": {iconSet: 'tabler icons', code: "\uf242" },
+  "ti-logic-nor": {iconSet: 'tabler icons', code: "\uf243" },
+  "ti-logic-not": {iconSet: 'tabler icons', code: "\uf244" },
+  "ti-logic-or": {iconSet: 'tabler icons', code: "\uf245" },
+  "ti-logic-xnor": {iconSet: 'tabler icons', code: "\uf246" },
+  "ti-logic-xor": {iconSet: 'tabler icons', code: "\uf247" },
+  "ti-login": {iconSet: 'tabler icons', code: "\ueba7" },
+  "ti-logout": {iconSet: 'tabler icons', code: "\ueba8" },
+  "ti-lollipop": {iconSet: 'tabler icons', code: "\uefcc" },
+  "ti-lollipop-off": {iconSet: 'tabler icons', code: "\uf157" },
+  "ti-luggage": {iconSet: 'tabler icons', code: "\uefad" },
+  "ti-luggage-off": {iconSet: 'tabler icons', code: "\uf158" },
+  "ti-lungs": {iconSet: 'tabler icons', code: "\uef62" },
+  "ti-lungs-off": {iconSet: 'tabler icons', code: "\uf405" },
+  "ti-macro": {iconSet: 'tabler icons', code: "\ueeab" },
+  "ti-macro-off": {iconSet: 'tabler icons', code: "\uf406" },
+  "ti-magnet": {iconSet: 'tabler icons', code: "\ueae3" },
+  "ti-magnet-off": {iconSet: 'tabler icons', code: "\uf159" },
+  "ti-mail": {iconSet: 'tabler icons', code: "\ueae5" },
+  "ti-mail-ai": {iconSet: 'tabler icons', code: "\ufa31" },
+  "ti-mail-bolt": {iconSet: 'tabler icons', code: "\uf937" },
+  "ti-mail-cancel": {iconSet: 'tabler icons', code: "\uf938" },
+  "ti-mail-check": {iconSet: 'tabler icons', code: "\uf939" },
+  "ti-mail-code": {iconSet: 'tabler icons', code: "\uf93a" },
+  "ti-mail-cog": {iconSet: 'tabler icons', code: "\uf93b" },
+  "ti-mail-dollar": {iconSet: 'tabler icons', code: "\uf93c" },
+  "ti-mail-down": {iconSet: 'tabler icons', code: "\uf93d" },
+  "ti-mail-exclamation": {iconSet: 'tabler icons', code: "\uf93e" },
+  "ti-mail-fast": {iconSet: 'tabler icons', code: "\uf069" },
+  "ti-mail-forward": {iconSet: 'tabler icons', code: "\ueeac" },
+  "ti-mail-heart": {iconSet: 'tabler icons', code: "\uf93f" },
+  "ti-mail-minus": {iconSet: 'tabler icons', code: "\uf940" },
+  "ti-mail-off": {iconSet: 'tabler icons', code: "\uf15a" },
+  "ti-mail-opened": {iconSet: 'tabler icons', code: "\ueae4" },
+  "ti-mail-pause": {iconSet: 'tabler icons', code: "\uf941" },
+  "ti-mail-pin": {iconSet: 'tabler icons', code: "\uf942" },
+  "ti-mail-plus": {iconSet: 'tabler icons', code: "\uf943" },
+  "ti-mail-question": {iconSet: 'tabler icons', code: "\uf944" },
+  "ti-mail-search": {iconSet: 'tabler icons', code: "\uf945" },
+  "ti-mail-share": {iconSet: 'tabler icons', code: "\uf946" },
+  "ti-mail-star": {iconSet: 'tabler icons', code: "\uf947" },
+  "ti-mail-up": {iconSet: 'tabler icons', code: "\uf948" },
+  "ti-mail-x": {iconSet: 'tabler icons', code: "\uf949" },
+  "ti-mailbox": {iconSet: 'tabler icons', code: "\ueead" },
+  "ti-mailbox-off": {iconSet: 'tabler icons', code: "\uf15b" },
+  "ti-man": {iconSet: 'tabler icons', code: "\ueae6" },
+  "ti-manual-gearbox": {iconSet: 'tabler icons', code: "\ued7b" },
+  "ti-map": {iconSet: 'tabler icons', code: "\ueae9" },
+  "ti-map-2": {iconSet: 'tabler icons', code: "\ueae7" },
+  "ti-map-off": {iconSet: 'tabler icons', code: "\uf15c" },
+  "ti-map-pin": {iconSet: 'tabler icons', code: "\ueae8" },
+  "ti-map-pin-bolt": {iconSet: 'tabler icons', code: "\uf94a" },
+  "ti-map-pin-cancel": {iconSet: 'tabler icons', code: "\uf94b" },
+  "ti-map-pin-check": {iconSet: 'tabler icons', code: "\uf94c" },
+  "ti-map-pin-code": {iconSet: 'tabler icons', code: "\uf94d" },
+  "ti-map-pin-cog": {iconSet: 'tabler icons', code: "\uf94e" },
+  "ti-map-pin-dollar": {iconSet: 'tabler icons', code: "\uf94f" },
+  "ti-map-pin-down": {iconSet: 'tabler icons', code: "\uf950" },
+  "ti-map-pin-exclamation": {iconSet: 'tabler icons', code: "\uf951" },
+  "ti-map-pin-filled": {iconSet: 'tabler icons', code: "\uf680" },
+  "ti-map-pin-heart": {iconSet: 'tabler icons', code: "\uf952" },
+  "ti-map-pin-minus": {iconSet: 'tabler icons', code: "\uf953" },
+  "ti-map-pin-off": {iconSet: 'tabler icons', code: "\uecf3" },
+  "ti-map-pin-pause": {iconSet: 'tabler icons', code: "\uf954" },
+  "ti-map-pin-pin": {iconSet: 'tabler icons', code: "\uf955" },
+  "ti-map-pin-plus": {iconSet: 'tabler icons', code: "\uf956" },
+  "ti-map-pin-question": {iconSet: 'tabler icons', code: "\uf957" },
+  "ti-map-pin-search": {iconSet: 'tabler icons', code: "\uf958" },
+  "ti-map-pin-share": {iconSet: 'tabler icons', code: "\uf795" },
+  "ti-map-pin-star": {iconSet: 'tabler icons', code: "\uf959" },
+  "ti-map-pin-up": {iconSet: 'tabler icons', code: "\uf95a" },
+  "ti-map-pin-x": {iconSet: 'tabler icons', code: "\uf95b" },
+  "ti-map-pins": {iconSet: 'tabler icons', code: "\ued5e" },
+  "ti-map-search": {iconSet: 'tabler icons', code: "\uef82" },
+  "ti-markdown": {iconSet: 'tabler icons', code: "\uec41" },
+  "ti-markdown-off": {iconSet: 'tabler icons', code: "\uf407" },
+  "ti-marquee": {iconSet: 'tabler icons', code: "\uec77" },
+  "ti-marquee-2": {iconSet: 'tabler icons', code: "\ueeae" },
+  "ti-marquee-off": {iconSet: 'tabler icons', code: "\uf15d" },
+  "ti-mars": {iconSet: 'tabler icons', code: "\uec80" },
+  "ti-mask": {iconSet: 'tabler icons', code: "\ueeb0" },
+  "ti-mask-off": {iconSet: 'tabler icons', code: "\ueeaf" },
+  "ti-masks-theater": {iconSet: 'tabler icons', code: "\uf263" },
+  "ti-masks-theater-off": {iconSet: 'tabler icons', code: "\uf408" },
+  "ti-massage": {iconSet: 'tabler icons', code: "\ueeb1" },
+  "ti-matchstick": {iconSet: 'tabler icons', code: "\uf577" },
+  "ti-math": {iconSet: 'tabler icons', code: "\uebeb" },
+  "ti-math-1-divide-2": {iconSet: 'tabler icons', code: "\uf4e2" },
+  "ti-math-1-divide-3": {iconSet: 'tabler icons', code: "\uf4e3" },
+  "ti-math-avg": {iconSet: 'tabler icons', code: "\uf0f4" },
+  "ti-math-equal-greater": {iconSet: 'tabler icons', code: "\uf4e4" },
+  "ti-math-equal-lower": {iconSet: 'tabler icons', code: "\uf4e5" },
+  "ti-math-function": {iconSet: 'tabler icons', code: "\ueeb2" },
+  "ti-math-function-off": {iconSet: 'tabler icons', code: "\uf15e" },
+  "ti-math-function-y": {iconSet: 'tabler icons', code: "\uf4e6" },
+  "ti-math-greater": {iconSet: 'tabler icons', code: "\uf4e7" },
+  "ti-math-integral": {iconSet: 'tabler icons', code: "\uf4e9" },
+  "ti-math-integral-x": {iconSet: 'tabler icons', code: "\uf4e8" },
+  "ti-math-integrals": {iconSet: 'tabler icons', code: "\uf4ea" },
+  "ti-math-lower": {iconSet: 'tabler icons', code: "\uf4eb" },
+  "ti-math-max": {iconSet: 'tabler icons', code: "\uf0f5" },
+  "ti-math-min": {iconSet: 'tabler icons', code: "\uf0f6" },
+  "ti-math-not": {iconSet: 'tabler icons', code: "\uf4ec" },
+  "ti-math-off": {iconSet: 'tabler icons', code: "\uf409" },
+  "ti-math-pi": {iconSet: 'tabler icons', code: "\uf4ee" },
+  "ti-math-pi-divide-2": {iconSet: 'tabler icons', code: "\uf4ed" },
+  "ti-math-symbols": {iconSet: 'tabler icons', code: "\ueeb3" },
+  "ti-math-x-divide-2": {iconSet: 'tabler icons', code: "\uf4ef" },
+  "ti-math-x-divide-y": {iconSet: 'tabler icons', code: "\uf4f1" },
+  "ti-math-x-divide-y-2": {iconSet: 'tabler icons', code: "\uf4f0" },
+  "ti-math-x-minus-x": {iconSet: 'tabler icons', code: "\uf4f2" },
+  "ti-math-x-minus-y": {iconSet: 'tabler icons', code: "\uf4f3" },
+  "ti-math-x-plus-x": {iconSet: 'tabler icons', code: "\uf4f4" },
+  "ti-math-x-plus-y": {iconSet: 'tabler icons', code: "\uf4f5" },
+  "ti-math-xy": {iconSet: 'tabler icons', code: "\uf4f6" },
+  "ti-math-y-minus-y": {iconSet: 'tabler icons', code: "\uf4f7" },
+  "ti-math-y-plus-y": {iconSet: 'tabler icons', code: "\uf4f8" },
+  "ti-maximize": {iconSet: 'tabler icons', code: "\ueaea" },
+  "ti-maximize-off": {iconSet: 'tabler icons', code: "\uf15f" },
+  "ti-meat": {iconSet: 'tabler icons', code: "\uef12" },
+  "ti-meat-off": {iconSet: 'tabler icons', code: "\uf40a" },
+  "ti-medal": {iconSet: 'tabler icons', code: "\uec78" },
+  "ti-medal-2": {iconSet: 'tabler icons', code: "\uefcd" },
+  "ti-medical-cross": {iconSet: 'tabler icons', code: "\uec2f" },
+  "ti-medical-cross-filled": {iconSet: 'tabler icons', code: "\uf681" },
+  "ti-medical-cross-off": {iconSet: 'tabler icons', code: "\uf160" },
+  "ti-medicine-syrup": {iconSet: 'tabler icons', code: "\uef63" },
+  "ti-meeple": {iconSet: 'tabler icons', code: "\uf514" },
+  "ti-menorah": {iconSet: 'tabler icons', code: "\uf58c" },
+  "ti-menu": {iconSet: 'tabler icons', code: "\ueaeb" },
+  "ti-menu-2": {iconSet: 'tabler icons', code: "\uec42" },
+  "ti-menu-order": {iconSet: 'tabler icons', code: "\uf5f5" },
+  "ti-message": {iconSet: 'tabler icons', code: "\ueaef" },
+  "ti-message-2": {iconSet: 'tabler icons', code: "\ueaec" },
+  "ti-message-2-bolt": {iconSet: 'tabler icons', code: "\uf95c" },
+  "ti-message-2-cancel": {iconSet: 'tabler icons', code: "\uf95d" },
+  "ti-message-2-check": {iconSet: 'tabler icons', code: "\uf95e" },
+  "ti-message-2-code": {iconSet: 'tabler icons', code: "\uf012" },
+  "ti-message-2-cog": {iconSet: 'tabler icons', code: "\uf95f" },
+  "ti-message-2-dollar": {iconSet: 'tabler icons', code: "\uf960" },
+  "ti-message-2-down": {iconSet: 'tabler icons', code: "\uf961" },
+  "ti-message-2-exclamation": {iconSet: 'tabler icons', code: "\uf962" },
+  "ti-message-2-heart": {iconSet: 'tabler icons', code: "\uf963" },
+  "ti-message-2-minus": {iconSet: 'tabler icons', code: "\uf964" },
+  "ti-message-2-off": {iconSet: 'tabler icons', code: "\uf40b" },
+  "ti-message-2-pause": {iconSet: 'tabler icons', code: "\uf965" },
+  "ti-message-2-pin": {iconSet: 'tabler icons', code: "\uf966" },
+  "ti-message-2-plus": {iconSet: 'tabler icons', code: "\uf967" },
+  "ti-message-2-question": {iconSet: 'tabler icons', code: "\uf968" },
+  "ti-message-2-search": {iconSet: 'tabler icons', code: "\uf969" },
+  "ti-message-2-share": {iconSet: 'tabler icons', code: "\uf077" },
+  "ti-message-2-star": {iconSet: 'tabler icons', code: "\uf96a" },
+  "ti-message-2-up": {iconSet: 'tabler icons', code: "\uf96b" },
+  "ti-message-2-x": {iconSet: 'tabler icons', code: "\uf96c" },
+  "ti-message-bolt": {iconSet: 'tabler icons', code: "\uf96d" },
+  "ti-message-cancel": {iconSet: 'tabler icons', code: "\uf96e" },
+  "ti-message-chatbot": {iconSet: 'tabler icons', code: "\uf38a" },
+  "ti-message-check": {iconSet: 'tabler icons', code: "\uf96f" },
+  "ti-message-circle": {iconSet: 'tabler icons', code: "\ueaed" },
+  "ti-message-circle-2": {iconSet: 'tabler icons', code: "\ued3f" },
+  "ti-message-circle-2-filled": {iconSet: 'tabler icons', code: "\uf682" },
+  "ti-message-circle-bolt": {iconSet: 'tabler icons', code: "\uf970" },
+  "ti-message-circle-cancel": {iconSet: 'tabler icons', code: "\uf971" },
+  "ti-message-circle-check": {iconSet: 'tabler icons', code: "\uf972" },
+  "ti-message-circle-code": {iconSet: 'tabler icons', code: "\uf973" },
+  "ti-message-circle-cog": {iconSet: 'tabler icons', code: "\uf974" },
+  "ti-message-circle-dollar": {iconSet: 'tabler icons', code: "\uf975" },
+  "ti-message-circle-down": {iconSet: 'tabler icons', code: "\uf976" },
+  "ti-message-circle-exclamation": {iconSet: 'tabler icons', code: "\uf977" },
+  "ti-message-circle-heart": {iconSet: 'tabler icons', code: "\uf978" },
+  "ti-message-circle-minus": {iconSet: 'tabler icons', code: "\uf979" },
+  "ti-message-circle-off": {iconSet: 'tabler icons', code: "\ued40" },
+  "ti-message-circle-pause": {iconSet: 'tabler icons', code: "\uf97a" },
+  "ti-message-circle-pin": {iconSet: 'tabler icons', code: "\uf97b" },
+  "ti-message-circle-plus": {iconSet: 'tabler icons', code: "\uf97c" },
+  "ti-message-circle-question": {iconSet: 'tabler icons', code: "\uf97d" },
+  "ti-message-circle-search": {iconSet: 'tabler icons', code: "\uf97e" },
+  "ti-message-circle-share": {iconSet: 'tabler icons', code: "\uf97f" },
+  "ti-message-circle-star": {iconSet: 'tabler icons', code: "\uf980" },
+  "ti-message-circle-up": {iconSet: 'tabler icons', code: "\uf981" },
+  "ti-message-circle-x": {iconSet: 'tabler icons', code: "\uf982" },
+  "ti-message-code": {iconSet: 'tabler icons', code: "\uf013" },
+  "ti-message-cog": {iconSet: 'tabler icons', code: "\uf983" },
+  "ti-message-dollar": {iconSet: 'tabler icons', code: "\uf984" },
+  "ti-message-dots": {iconSet: 'tabler icons', code: "\ueaee" },
+  "ti-message-down": {iconSet: 'tabler icons', code: "\uf985" },
+  "ti-message-exclamation": {iconSet: 'tabler icons', code: "\uf986" },
+  "ti-message-forward": {iconSet: 'tabler icons', code: "\uf28f" },
+  "ti-message-heart": {iconSet: 'tabler icons', code: "\uf987" },
+  "ti-message-language": {iconSet: 'tabler icons', code: "\uefae" },
+  "ti-message-minus": {iconSet: 'tabler icons', code: "\uf988" },
+  "ti-message-off": {iconSet: 'tabler icons', code: "\ued41" },
+  "ti-message-pause": {iconSet: 'tabler icons', code: "\uf989" },
+  "ti-message-pin": {iconSet: 'tabler icons', code: "\uf98a" },
+  "ti-message-plus": {iconSet: 'tabler icons', code: "\uec9a" },
+  "ti-message-question": {iconSet: 'tabler icons', code: "\uf98b" },
+  "ti-message-report": {iconSet: 'tabler icons', code: "\uec9b" },
+  "ti-message-search": {iconSet: 'tabler icons', code: "\uf98c" },
+  "ti-message-share": {iconSet: 'tabler icons', code: "\uf078" },
+  "ti-message-star": {iconSet: 'tabler icons', code: "\uf98d" },
+  "ti-message-up": {iconSet: 'tabler icons', code: "\uf98e" },
+  "ti-message-x": {iconSet: 'tabler icons', code: "\uf98f" },
+  "ti-messages": {iconSet: 'tabler icons', code: "\ueb6c" },
+  "ti-messages-off": {iconSet: 'tabler icons', code: "\ued42" },
+  "ti-meteor": {iconSet: 'tabler icons', code: "\uf1fd" },
+  "ti-meteor-off": {iconSet: 'tabler icons', code: "\uf40c" },
+  "ti-mickey": {iconSet: 'tabler icons', code: "\uf2a3" },
+  "ti-mickey-filled": {iconSet: 'tabler icons', code: "\uf683" },
+  "ti-microphone": {iconSet: 'tabler icons', code: "\ueaf0" },
+  "ti-microphone-2": {iconSet: 'tabler icons', code: "\uef2c" },
+  "ti-microphone-2-off": {iconSet: 'tabler icons', code: "\uf40d" },
+  "ti-microphone-off": {iconSet: 'tabler icons', code: "\ued16" },
+  "ti-microscope": {iconSet: 'tabler icons', code: "\uef64" },
+  "ti-microscope-off": {iconSet: 'tabler icons', code: "\uf40e" },
+  "ti-microwave": {iconSet: 'tabler icons', code: "\uf248" },
+  "ti-microwave-off": {iconSet: 'tabler icons', code: "\uf264" },
+  "ti-military-award": {iconSet: 'tabler icons', code: "\uf079" },
+  "ti-military-rank": {iconSet: 'tabler icons', code: "\uefcf" },
+  "ti-milk": {iconSet: 'tabler icons', code: "\uef13" },
+  "ti-milk-off": {iconSet: 'tabler icons', code: "\uf40f" },
+  "ti-milkshake": {iconSet: 'tabler icons', code: "\uf4c8" },
+  "ti-minimize": {iconSet: 'tabler icons', code: "\ueaf1" },
+  "ti-minus": {iconSet: 'tabler icons', code: "\ueaf2" },
+  "ti-minus-vertical": {iconSet: 'tabler icons', code: "\ueeb4" },
+  "ti-mist": {iconSet: 'tabler icons', code: "\uec30" },
+  "ti-mist-off": {iconSet: 'tabler icons', code: "\uf410" },
+  "ti-mobiledata": {iconSet: 'tabler icons', code: "\uf9f5" },
+  "ti-mobiledata-off": {iconSet: 'tabler icons', code: "\uf9f4" },
+  "ti-moneybag": {iconSet: 'tabler icons', code: "\uf506" },
+  "ti-mood-angry": {iconSet: 'tabler icons', code: "\uf2de" },
+  "ti-mood-annoyed": {iconSet: 'tabler icons', code: "\uf2e0" },
+  "ti-mood-annoyed-2": {iconSet: 'tabler icons', code: "\uf2df" },
+  "ti-mood-boy": {iconSet: 'tabler icons', code: "\ued2d" },
+  "ti-mood-check": {iconSet: 'tabler icons', code: "\uf7b3" },
+  "ti-mood-cog": {iconSet: 'tabler icons', code: "\uf7b4" },
+  "ti-mood-confuzed": {iconSet: 'tabler icons', code: "\ueaf3" },
+  "ti-mood-confuzed-filled": {iconSet: 'tabler icons', code: "\uf7f2" },
+  "ti-mood-crazy-happy": {iconSet: 'tabler icons', code: "\ued90" },
+  "ti-mood-cry": {iconSet: 'tabler icons', code: "\uecbb" },
+  "ti-mood-dollar": {iconSet: 'tabler icons', code: "\uf7b5" },
+  "ti-mood-edit": {iconSet: 'tabler icons', code: "\ufa05" },
+  "ti-mood-empty": {iconSet: 'tabler icons', code: "\ueeb5" },
+  "ti-mood-empty-filled": {iconSet: 'tabler icons', code: "\uf7f3" },
+  "ti-mood-happy": {iconSet: 'tabler icons', code: "\ueaf4" },
+  "ti-mood-happy-filled": {iconSet: 'tabler icons', code: "\uf7f4" },
+  "ti-mood-heart": {iconSet: 'tabler icons', code: "\uf7b6" },
+  "ti-mood-kid": {iconSet: 'tabler icons', code: "\uec03" },
+  "ti-mood-kid-filled": {iconSet: 'tabler icons', code: "\uf7f5" },
+  "ti-mood-look-left": {iconSet: 'tabler icons', code: "\uf2c5" },
+  "ti-mood-look-right": {iconSet: 'tabler icons', code: "\uf2c6" },
+  "ti-mood-minus": {iconSet: 'tabler icons', code: "\uf7b7" },
+  "ti-mood-nerd": {iconSet: 'tabler icons', code: "\uf2e1" },
+  "ti-mood-nervous": {iconSet: 'tabler icons', code: "\uef96" },
+  "ti-mood-neutral": {iconSet: 'tabler icons', code: "\ueaf5" },
+  "ti-mood-neutral-filled": {iconSet: 'tabler icons', code: "\uf7f6" },
+  "ti-mood-off": {iconSet: 'tabler icons', code: "\uf161" },
+  "ti-mood-pin": {iconSet: 'tabler icons', code: "\uf7b8" },
+  "ti-mood-plus": {iconSet: 'tabler icons', code: "\uf7b9" },
+  "ti-mood-sad": {iconSet: 'tabler icons', code: "\ueaf6" },
+  "ti-mood-sad-2": {iconSet: 'tabler icons', code: "\uf2e2" },
+  "ti-mood-sad-dizzy": {iconSet: 'tabler icons', code: "\uf2e3" },
+  "ti-mood-sad-filled": {iconSet: 'tabler icons', code: "\uf7f7" },
+  "ti-mood-sad-squint": {iconSet: 'tabler icons', code: "\uf2e4" },
+  "ti-mood-search": {iconSet: 'tabler icons', code: "\uf7ba" },
+  "ti-mood-share": {iconSet: 'tabler icons', code: "\ufa06" },
+  "ti-mood-sick": {iconSet: 'tabler icons', code: "\uf2e5" },
+  "ti-mood-silence": {iconSet: 'tabler icons', code: "\uf2e6" },
+  "ti-mood-sing": {iconSet: 'tabler icons', code: "\uf2c7" },
+  "ti-mood-smile": {iconSet: 'tabler icons', code: "\ueaf7" },
+  "ti-mood-smile-beam": {iconSet: 'tabler icons', code: "\uf2e7" },
+  "ti-mood-smile-dizzy": {iconSet: 'tabler icons', code: "\uf2e8" },
+  "ti-mood-smile-filled": {iconSet: 'tabler icons', code: "\uf7f8" },
+  "ti-mood-suprised": {iconSet: 'tabler icons', code: "\uec04" },
+  "ti-mood-tongue": {iconSet: 'tabler icons', code: "\ueb95" },
+  "ti-mood-tongue-wink": {iconSet: 'tabler icons', code: "\uf2ea" },
+  "ti-mood-tongue-wink-2": {iconSet: 'tabler icons', code: "\uf2e9" },
+  "ti-mood-unamused": {iconSet: 'tabler icons', code: "\uf2eb" },
+  "ti-mood-up": {iconSet: 'tabler icons', code: "\uf7bb" },
+  "ti-mood-wink": {iconSet: 'tabler icons', code: "\uf2ed" },
+  "ti-mood-wink-2": {iconSet: 'tabler icons', code: "\uf2ec" },
+  "ti-mood-wrrr": {iconSet: 'tabler icons', code: "\uf2ee" },
+  "ti-mood-x": {iconSet: 'tabler icons', code: "\uf7bc" },
+  "ti-mood-xd": {iconSet: 'tabler icons', code: "\uf2ef" },
+  "ti-moon": {iconSet: 'tabler icons', code: "\ueaf8" },
+  "ti-moon-2": {iconSet: 'tabler icons', code: "\uece6" },
+  "ti-moon-filled": {iconSet: 'tabler icons', code: "\uf684" },
+  "ti-moon-off": {iconSet: 'tabler icons', code: "\uf162" },
+  "ti-moon-stars": {iconSet: 'tabler icons', code: "\uece7" },
+  "ti-moped": {iconSet: 'tabler icons', code: "\uecbc" },
+  "ti-motorbike": {iconSet: 'tabler icons', code: "\ueeb6" },
+  "ti-mountain": {iconSet: 'tabler icons', code: "\uef97" },
+  "ti-mountain-off": {iconSet: 'tabler icons', code: "\uf411" },
+  "ti-mouse": {iconSet: 'tabler icons', code: "\ueaf9" },
+  "ti-mouse-2": {iconSet: 'tabler icons', code: "\uf1d7" },
+  "ti-mouse-off": {iconSet: 'tabler icons', code: "\uf163" },
+  "ti-moustache": {iconSet: 'tabler icons', code: "\uf4c9" },
+  "ti-movie": {iconSet: 'tabler icons', code: "\ueafa" },
+  "ti-movie-off": {iconSet: 'tabler icons', code: "\uf164" },
+  "ti-mug": {iconSet: 'tabler icons', code: "\ueafb" },
+  "ti-mug-off": {iconSet: 'tabler icons', code: "\uf165" },
+  "ti-multiplier-0-5x": {iconSet: 'tabler icons', code: "\uef41" },
+  "ti-multiplier-1-5x": {iconSet: 'tabler icons', code: "\uef42" },
+  "ti-multiplier-1x": {iconSet: 'tabler icons', code: "\uef43" },
+  "ti-multiplier-2x": {iconSet: 'tabler icons', code: "\uef44" },
+  "ti-mushroom": {iconSet: 'tabler icons', code: "\uef14" },
+  "ti-mushroom-filled": {iconSet: 'tabler icons', code: "\uf7f9" },
+  "ti-mushroom-off": {iconSet: 'tabler icons', code: "\uf412" },
+  "ti-music": {iconSet: 'tabler icons', code: "\ueafc" },
+  "ti-music-off": {iconSet: 'tabler icons', code: "\uf166" },
+  "ti-navigation": {iconSet: 'tabler icons', code: "\uf2c8" },
+  "ti-navigation-filled": {iconSet: 'tabler icons', code: "\uf685" },
+  "ti-navigation-off": {iconSet: 'tabler icons', code: "\uf413" },
+  "ti-needle": {iconSet: 'tabler icons', code: "\uf508" },
+  "ti-needle-thread": {iconSet: 'tabler icons', code: "\uf507" },
+  "ti-network": {iconSet: 'tabler icons', code: "\uf09f" },
+  "ti-network-off": {iconSet: 'tabler icons', code: "\uf414" },
+  "ti-new-section": {iconSet: 'tabler icons', code: "\uebc1" },
+  "ti-news": {iconSet: 'tabler icons', code: "\ueafd" },
+  "ti-news-off": {iconSet: 'tabler icons', code: "\uf167" },
+  "ti-nfc": {iconSet: 'tabler icons', code: "\ueeb7" },
+  "ti-nfc-off": {iconSet: 'tabler icons', code: "\uf168" },
+  "ti-no-copyright": {iconSet: 'tabler icons', code: "\uefb9" },
+  "ti-no-creative-commons": {iconSet: 'tabler icons', code: "\uefba" },
+  "ti-no-derivatives": {iconSet: 'tabler icons', code: "\uefbb" },
+  "ti-north-star": {iconSet: 'tabler icons', code: "\uf014" },
+  "ti-note": {iconSet: 'tabler icons', code: "\ueb6d" },
+  "ti-note-off": {iconSet: 'tabler icons', code: "\uf169" },
+  "ti-notebook": {iconSet: 'tabler icons', code: "\ueb96" },
+  "ti-notebook-off": {iconSet: 'tabler icons', code: "\uf415" },
+  "ti-notes": {iconSet: 'tabler icons', code: "\ueb6e" },
+  "ti-notes-off": {iconSet: 'tabler icons', code: "\uf16a" },
+  "ti-notification": {iconSet: 'tabler icons', code: "\ueafe" },
+  "ti-notification-off": {iconSet: 'tabler icons', code: "\uf16b" },
+  "ti-number": {iconSet: 'tabler icons', code: "\uf1fe" },
+  "ti-number-0": {iconSet: 'tabler icons', code: "\uedf0" },
+  "ti-number-1": {iconSet: 'tabler icons', code: "\uedf1" },
+  "ti-number-2": {iconSet: 'tabler icons', code: "\uedf2" },
+  "ti-number-3": {iconSet: 'tabler icons', code: "\uedf3" },
+  "ti-number-4": {iconSet: 'tabler icons', code: "\uedf4" },
+  "ti-number-5": {iconSet: 'tabler icons', code: "\uedf5" },
+  "ti-number-6": {iconSet: 'tabler icons', code: "\uedf6" },
+  "ti-number-7": {iconSet: 'tabler icons', code: "\uedf7" },
+  "ti-number-8": {iconSet: 'tabler icons', code: "\uedf8" },
+  "ti-number-9": {iconSet: 'tabler icons', code: "\uedf9" },
+  "ti-numbers": {iconSet: 'tabler icons', code: "\uf015" },
+  "ti-nurse": {iconSet: 'tabler icons', code: "\uef65" },
+  "ti-octagon": {iconSet: 'tabler icons', code: "\uecbd" },
+  "ti-octagon-filled": {iconSet: 'tabler icons', code: "\uf686" },
+  "ti-octagon-off": {iconSet: 'tabler icons', code: "\ueeb8" },
+  "ti-old": {iconSet: 'tabler icons', code: "\ueeb9" },
+  "ti-olympics": {iconSet: 'tabler icons', code: "\ueeba" },
+  "ti-olympics-off": {iconSet: 'tabler icons', code: "\uf416" },
+  "ti-om": {iconSet: 'tabler icons', code: "\uf58d" },
+  "ti-omega": {iconSet: 'tabler icons', code: "\ueb97" },
+  "ti-outbound": {iconSet: 'tabler icons', code: "\uf249" },
+  "ti-outlet": {iconSet: 'tabler icons', code: "\uebd7" },
+  "ti-oval": {iconSet: 'tabler icons', code: "\uf02e" },
+  "ti-oval-filled": {iconSet: 'tabler icons', code: "\uf687" },
+  "ti-oval-vertical": {iconSet: 'tabler icons', code: "\uf02d" },
+  "ti-oval-vertical-filled": {iconSet: 'tabler icons', code: "\uf688" },
+  "ti-overline": {iconSet: 'tabler icons', code: "\ueebb" },
+  "ti-package": {iconSet: 'tabler icons', code: "\ueaff" },
+  "ti-package-export": {iconSet: 'tabler icons', code: "\uf07a" },
+  "ti-package-import": {iconSet: 'tabler icons', code: "\uf07b" },
+  "ti-package-off": {iconSet: 'tabler icons', code: "\uf16c" },
+  "ti-packages": {iconSet: 'tabler icons', code: "\uf2c9" },
+  "ti-pacman": {iconSet: 'tabler icons', code: "\ueebc" },
+  "ti-page-break": {iconSet: 'tabler icons', code: "\uec81" },
+  "ti-paint": {iconSet: 'tabler icons', code: "\ueb00" },
+  "ti-paint-filled": {iconSet: 'tabler icons', code: "\uf75f" },
+  "ti-paint-off": {iconSet: 'tabler icons', code: "\uf16d" },
+  "ti-palette": {iconSet: 'tabler icons', code: "\ueb01" },
+  "ti-palette-off": {iconSet: 'tabler icons', code: "\uf16e" },
+  "ti-panorama-horizontal": {iconSet: 'tabler icons', code: "\ued33" },
+  "ti-panorama-horizontal-off": {iconSet: 'tabler icons', code: "\uf417" },
+  "ti-panorama-vertical": {iconSet: 'tabler icons', code: "\ued34" },
+  "ti-panorama-vertical-off": {iconSet: 'tabler icons', code: "\uf418" },
+  "ti-paper-bag": {iconSet: 'tabler icons', code: "\uf02f" },
+  "ti-paper-bag-off": {iconSet: 'tabler icons', code: "\uf16f" },
+  "ti-paperclip": {iconSet: 'tabler icons', code: "\ueb02" },
+  "ti-parachute": {iconSet: 'tabler icons', code: "\ued7c" },
+  "ti-parachute-off": {iconSet: 'tabler icons', code: "\uf170" },
+  "ti-parentheses": {iconSet: 'tabler icons', code: "\uebd8" },
+  "ti-parentheses-off": {iconSet: 'tabler icons', code: "\uf171" },
+  "ti-parking": {iconSet: 'tabler icons', code: "\ueb03" },
+  "ti-parking-off": {iconSet: 'tabler icons', code: "\uf172" },
+  "ti-password": {iconSet: 'tabler icons', code: "\uf4ca" },
+  "ti-paw": {iconSet: 'tabler icons', code: "\ueff9" },
+  "ti-paw-filled": {iconSet: 'tabler icons', code: "\uf689" },
+  "ti-paw-off": {iconSet: 'tabler icons', code: "\uf419" },
+  "ti-pdf": {iconSet: 'tabler icons', code: "\uf7ac" },
+  "ti-peace": {iconSet: 'tabler icons', code: "\uecbe" },
+  "ti-pencil": {iconSet: 'tabler icons', code: "\ueb04" },
+  "ti-pencil-minus": {iconSet: 'tabler icons', code: "\uf1eb" },
+  "ti-pencil-off": {iconSet: 'tabler icons', code: "\uf173" },
+  "ti-pencil-plus": {iconSet: 'tabler icons', code: "\uf1ec" },
+  "ti-pennant": {iconSet: 'tabler icons', code: "\ued7d" },
+  "ti-pennant-2": {iconSet: 'tabler icons', code: "\uf06a" },
+  "ti-pennant-2-filled": {iconSet: 'tabler icons', code: "\uf68a" },
+  "ti-pennant-filled": {iconSet: 'tabler icons', code: "\uf68b" },
+  "ti-pennant-off": {iconSet: 'tabler icons', code: "\uf174" },
+  "ti-pentagon": {iconSet: 'tabler icons', code: "\uefe3" },
+  "ti-pentagon-filled": {iconSet: 'tabler icons', code: "\uf68c" },
+  "ti-pentagon-off": {iconSet: 'tabler icons', code: "\uf41a" },
+  "ti-pentagram": {iconSet: 'tabler icons', code: "\uf586" },
+  "ti-pepper": {iconSet: 'tabler icons', code: "\uef15" },
+  "ti-pepper-off": {iconSet: 'tabler icons', code: "\uf175" },
+  "ti-percentage": {iconSet: 'tabler icons', code: "\uecf4" },
+  "ti-perfume": {iconSet: 'tabler icons', code: "\uf509" },
+  "ti-perspective": {iconSet: 'tabler icons', code: "\ueebd" },
+  "ti-perspective-off": {iconSet: 'tabler icons', code: "\uf176" },
+  "ti-phone": {iconSet: 'tabler icons', code: "\ueb09" },
+  "ti-phone-call": {iconSet: 'tabler icons', code: "\ueb05" },
+  "ti-phone-calling": {iconSet: 'tabler icons', code: "\uec43" },
+  "ti-phone-check": {iconSet: 'tabler icons', code: "\uec05" },
+  "ti-phone-incoming": {iconSet: 'tabler icons', code: "\ueb06" },
+  "ti-phone-off": {iconSet: 'tabler icons', code: "\uecf5" },
+  "ti-phone-outgoing": {iconSet: 'tabler icons', code: "\ueb07" },
+  "ti-phone-pause": {iconSet: 'tabler icons', code: "\ueb08" },
+  "ti-phone-plus": {iconSet: 'tabler icons', code: "\uec06" },
+  "ti-phone-x": {iconSet: 'tabler icons', code: "\uec07" },
+  "ti-photo": {iconSet: 'tabler icons', code: "\ueb0a" },
+  "ti-photo-ai": {iconSet: 'tabler icons', code: "\ufa32" },
+  "ti-photo-bolt": {iconSet: 'tabler icons', code: "\uf990" },
+  "ti-photo-cancel": {iconSet: 'tabler icons', code: "\uf35d" },
+  "ti-photo-check": {iconSet: 'tabler icons', code: "\uf35e" },
+  "ti-photo-code": {iconSet: 'tabler icons', code: "\uf991" },
+  "ti-photo-cog": {iconSet: 'tabler icons', code: "\uf992" },
+  "ti-photo-dollar": {iconSet: 'tabler icons', code: "\uf993" },
+  "ti-photo-down": {iconSet: 'tabler icons', code: "\uf35f" },
+  "ti-photo-edit": {iconSet: 'tabler icons', code: "\uf360" },
+  "ti-photo-exclamation": {iconSet: 'tabler icons', code: "\uf994" },
+  "ti-photo-heart": {iconSet: 'tabler icons', code: "\uf361" },
+  "ti-photo-minus": {iconSet: 'tabler icons', code: "\uf362" },
+  "ti-photo-off": {iconSet: 'tabler icons', code: "\uecf6" },
+  "ti-photo-pause": {iconSet: 'tabler icons', code: "\uf995" },
+  "ti-photo-pin": {iconSet: 'tabler icons', code: "\uf996" },
+  "ti-photo-plus": {iconSet: 'tabler icons', code: "\uf363" },
+  "ti-photo-question": {iconSet: 'tabler icons', code: "\uf997" },
+  "ti-photo-search": {iconSet: 'tabler icons', code: "\uf364" },
+  "ti-photo-sensor": {iconSet: 'tabler icons', code: "\uf798" },
+  "ti-photo-sensor-2": {iconSet: 'tabler icons', code: "\uf796" },
+  "ti-photo-sensor-3": {iconSet: 'tabler icons', code: "\uf797" },
+  "ti-photo-share": {iconSet: 'tabler icons', code: "\uf998" },
+  "ti-photo-shield": {iconSet: 'tabler icons', code: "\uf365" },
+  "ti-photo-star": {iconSet: 'tabler icons', code: "\uf366" },
+  "ti-photo-up": {iconSet: 'tabler icons', code: "\uf38b" },
+  "ti-photo-x": {iconSet: 'tabler icons', code: "\uf367" },
+  "ti-physotherapist": {iconSet: 'tabler icons', code: "\ueebe" },
+  "ti-picture-in-picture": {iconSet: 'tabler icons', code: "\ued35" },
+  "ti-picture-in-picture-off": {iconSet: 'tabler icons', code: "\ued43" },
+  "ti-picture-in-picture-on": {iconSet: 'tabler icons', code: "\ued44" },
+  "ti-picture-in-picture-top": {iconSet: 'tabler icons', code: "\uefe4" },
+  "ti-pig": {iconSet: 'tabler icons', code: "\uef52" },
+  "ti-pig-money": {iconSet: 'tabler icons', code: "\uf38c" },
+  "ti-pig-off": {iconSet: 'tabler icons', code: "\uf177" },
+  "ti-pilcrow": {iconSet: 'tabler icons', code: "\uf5f6" },
+  "ti-pill": {iconSet: 'tabler icons', code: "\uec44" },
+  "ti-pill-off": {iconSet: 'tabler icons', code: "\uf178" },
+  "ti-pills": {iconSet: 'tabler icons', code: "\uef66" },
+  "ti-pin": {iconSet: 'tabler icons', code: "\uec9c" },
+  "ti-pin-filled": {iconSet: 'tabler icons', code: "\uf68d" },
+  "ti-ping-pong": {iconSet: 'tabler icons', code: "\uf38d" },
+  "ti-pinned": {iconSet: 'tabler icons', code: "\ued60" },
+  "ti-pinned-filled": {iconSet: 'tabler icons', code: "\uf68e" },
+  "ti-pinned-off": {iconSet: 'tabler icons', code: "\ued5f" },
+  "ti-pizza": {iconSet: 'tabler icons', code: "\uedbb" },
+  "ti-pizza-off": {iconSet: 'tabler icons', code: "\uf179" },
+  "ti-placeholder": {iconSet: 'tabler icons', code: "\uf626" },
+  "ti-plane": {iconSet: 'tabler icons', code: "\ueb6f" },
+  "ti-plane-arrival": {iconSet: 'tabler icons', code: "\ueb99" },
+  "ti-plane-departure": {iconSet: 'tabler icons', code: "\ueb9a" },
+  "ti-plane-inflight": {iconSet: 'tabler icons', code: "\uef98" },
+  "ti-plane-off": {iconSet: 'tabler icons', code: "\uf17a" },
+  "ti-plane-tilt": {iconSet: 'tabler icons', code: "\uf1ed" },
+  "ti-planet": {iconSet: 'tabler icons', code: "\uec08" },
+  "ti-planet-off": {iconSet: 'tabler icons', code: "\uf17b" },
+  "ti-plant": {iconSet: 'tabler icons', code: "\ued50" },
+  "ti-plant-2": {iconSet: 'tabler icons', code: "\ued7e" },
+  "ti-plant-2-off": {iconSet: 'tabler icons', code: "\uf17c" },
+  "ti-plant-off": {iconSet: 'tabler icons', code: "\uf17d" },
+  "ti-play-card": {iconSet: 'tabler icons', code: "\ueebf" },
+  "ti-play-card-off": {iconSet: 'tabler icons', code: "\uf17e" },
+  "ti-player-eject": {iconSet: 'tabler icons', code: "\uefbc" },
+  "ti-player-eject-filled": {iconSet: 'tabler icons', code: "\uf68f" },
+  "ti-player-pause": {iconSet: 'tabler icons', code: "\ued45" },
+  "ti-player-pause-filled": {iconSet: 'tabler icons', code: "\uf690" },
+  "ti-player-play": {iconSet: 'tabler icons', code: "\ued46" },
+  "ti-player-play-filled": {iconSet: 'tabler icons', code: "\uf691" },
+  "ti-player-record": {iconSet: 'tabler icons', code: "\ued47" },
+  "ti-player-record-filled": {iconSet: 'tabler icons', code: "\uf692" },
+  "ti-player-skip-back": {iconSet: 'tabler icons', code: "\ued48" },
+  "ti-player-skip-back-filled": {iconSet: 'tabler icons', code: "\uf693" },
+  "ti-player-skip-forward": {iconSet: 'tabler icons', code: "\ued49" },
+  "ti-player-skip-forward-filled": {iconSet: 'tabler icons', code: "\uf694" },
+  "ti-player-stop": {iconSet: 'tabler icons', code: "\ued4a" },
+  "ti-player-stop-filled": {iconSet: 'tabler icons', code: "\uf695" },
+  "ti-player-track-next": {iconSet: 'tabler icons', code: "\ued4b" },
+  "ti-player-track-next-filled": {iconSet: 'tabler icons', code: "\uf696" },
+  "ti-player-track-prev": {iconSet: 'tabler icons', code: "\ued4c" },
+  "ti-player-track-prev-filled": {iconSet: 'tabler icons', code: "\uf697" },
+  "ti-playlist": {iconSet: 'tabler icons', code: "\ueec0" },
+  "ti-playlist-add": {iconSet: 'tabler icons', code: "\uf008" },
+  "ti-playlist-off": {iconSet: 'tabler icons', code: "\uf17f" },
+  "ti-playlist-x": {iconSet: 'tabler icons', code: "\uf009" },
+  "ti-playstation-circle": {iconSet: 'tabler icons', code: "\uf2ad" },
+  "ti-playstation-square": {iconSet: 'tabler icons', code: "\uf2ae" },
+  "ti-playstation-triangle": {iconSet: 'tabler icons', code: "\uf2af" },
+  "ti-playstation-x": {iconSet: 'tabler icons', code: "\uf2b0" },
+  "ti-plug": {iconSet: 'tabler icons', code: "\uebd9" },
+  "ti-plug-connected": {iconSet: 'tabler icons', code: "\uf00a" },
+  "ti-plug-connected-x": {iconSet: 'tabler icons', code: "\uf0a0" },
+  "ti-plug-off": {iconSet: 'tabler icons', code: "\uf180" },
+  "ti-plug-x": {iconSet: 'tabler icons', code: "\uf0a1" },
+  "ti-plus": {iconSet: 'tabler icons', code: "\ueb0b" },
+  "ti-plus-equal": {iconSet: 'tabler icons', code: "\uf7ad" },
+  "ti-plus-minus": {iconSet: 'tabler icons', code: "\uf7ae" },
+  "ti-png": {iconSet: 'tabler icons', code: "\uf3ad" },
+  "ti-podium": {iconSet: 'tabler icons', code: "\uf1d8" },
+  "ti-podium-off": {iconSet: 'tabler icons', code: "\uf41b" },
+  "ti-point": {iconSet: 'tabler icons', code: "\ueb0c" },
+  "ti-point-filled": {iconSet: 'tabler icons', code: "\uf698" },
+  "ti-point-off": {iconSet: 'tabler icons', code: "\uf181" },
+  "ti-pointer": {iconSet: 'tabler icons', code: "\uf265" },
+  "ti-pointer-bolt": {iconSet: 'tabler icons', code: "\uf999" },
+  "ti-pointer-cancel": {iconSet: 'tabler icons', code: "\uf99a" },
+  "ti-pointer-check": {iconSet: 'tabler icons', code: "\uf99b" },
+  "ti-pointer-code": {iconSet: 'tabler icons', code: "\uf99c" },
+  "ti-pointer-cog": {iconSet: 'tabler icons', code: "\uf99d" },
+  "ti-pointer-dollar": {iconSet: 'tabler icons', code: "\uf99e" },
+  "ti-pointer-down": {iconSet: 'tabler icons', code: "\uf99f" },
+  "ti-pointer-exclamation": {iconSet: 'tabler icons', code: "\uf9a0" },
+  "ti-pointer-heart": {iconSet: 'tabler icons', code: "\uf9a1" },
+  "ti-pointer-minus": {iconSet: 'tabler icons', code: "\uf9a2" },
+  "ti-pointer-off": {iconSet: 'tabler icons', code: "\uf9a3" },
+  "ti-pointer-pause": {iconSet: 'tabler icons', code: "\uf9a4" },
+  "ti-pointer-pin": {iconSet: 'tabler icons', code: "\uf9a5" },
+  "ti-pointer-plus": {iconSet: 'tabler icons', code: "\uf9a6" },
+  "ti-pointer-question": {iconSet: 'tabler icons', code: "\uf9a7" },
+  "ti-pointer-search": {iconSet: 'tabler icons', code: "\uf9a8" },
+  "ti-pointer-share": {iconSet: 'tabler icons', code: "\uf9a9" },
+  "ti-pointer-star": {iconSet: 'tabler icons', code: "\uf9aa" },
+  "ti-pointer-up": {iconSet: 'tabler icons', code: "\uf9ab" },
+  "ti-pointer-x": {iconSet: 'tabler icons', code: "\uf9ac" },
+  "ti-pokeball": {iconSet: 'tabler icons', code: "\ueec1" },
+  "ti-pokeball-off": {iconSet: 'tabler icons', code: "\uf41c" },
+  "ti-poker-chip": {iconSet: 'tabler icons', code: "\uf515" },
+  "ti-polaroid": {iconSet: 'tabler icons', code: "\ueec2" },
+  "ti-polygon": {iconSet: 'tabler icons', code: "\uefd0" },
+  "ti-polygon-off": {iconSet: 'tabler icons', code: "\uf182" },
+  "ti-poo": {iconSet: 'tabler icons', code: "\uf258" },
+  "ti-pool": {iconSet: 'tabler icons', code: "\ued91" },
+  "ti-pool-off": {iconSet: 'tabler icons', code: "\uf41d" },
+  "ti-power": {iconSet: 'tabler icons', code: "\ueb0d" },
+  "ti-pray": {iconSet: 'tabler icons', code: "\uecbf" },
+  "ti-premium-rights": {iconSet: 'tabler icons', code: "\uefbd" },
+  "ti-prescription": {iconSet: 'tabler icons', code: "\uef99" },
+  "ti-presentation": {iconSet: 'tabler icons', code: "\ueb70" },
+  "ti-presentation-analytics": {iconSet: 'tabler icons', code: "\ueec3" },
+  "ti-presentation-off": {iconSet: 'tabler icons', code: "\uf183" },
+  "ti-printer": {iconSet: 'tabler icons', code: "\ueb0e" },
+  "ti-printer-off": {iconSet: 'tabler icons', code: "\uf184" },
+  "ti-prison": {iconSet: 'tabler icons', code: "\uef79" },
+  "ti-progress": {iconSet: 'tabler icons', code: "\ufa0d" },
+  "ti-progress-alert": {iconSet: 'tabler icons', code: "\ufa07" },
+  "ti-progress-bolt": {iconSet: 'tabler icons', code: "\ufa08" },
+  "ti-progress-check": {iconSet: 'tabler icons', code: "\ufa09" },
+  "ti-progress-down": {iconSet: 'tabler icons', code: "\ufa0a" },
+  "ti-progress-help": {iconSet: 'tabler icons', code: "\ufa0b" },
+  "ti-progress-x": {iconSet: 'tabler icons', code: "\ufa0c" },
+  "ti-prompt": {iconSet: 'tabler icons', code: "\ueb0f" },
+  "ti-propeller": {iconSet: 'tabler icons', code: "\ueec4" },
+  "ti-propeller-off": {iconSet: 'tabler icons', code: "\uf185" },
+  "ti-pumpkin-scary": {iconSet: 'tabler icons', code: "\uf587" },
+  "ti-puzzle": {iconSet: 'tabler icons', code: "\ueb10" },
+  "ti-puzzle-2": {iconSet: 'tabler icons', code: "\uef83" },
+  "ti-puzzle-filled": {iconSet: 'tabler icons', code: "\uf699" },
+  "ti-puzzle-off": {iconSet: 'tabler icons', code: "\uf186" },
+  "ti-pyramid": {iconSet: 'tabler icons', code: "\ueec5" },
+  "ti-pyramid-off": {iconSet: 'tabler icons', code: "\uf187" },
+  "ti-qrcode": {iconSet: 'tabler icons', code: "\ueb11" },
+  "ti-qrcode-off": {iconSet: 'tabler icons', code: "\uf41e" },
+  "ti-question-mark": {iconSet: 'tabler icons', code: "\uec9d" },
+  "ti-quote": {iconSet: 'tabler icons', code: "\uefbe" },
+  "ti-quote-off": {iconSet: 'tabler icons', code: "\uf188" },
+  "ti-radar": {iconSet: 'tabler icons', code: "\uf017" },
+  "ti-radar-2": {iconSet: 'tabler icons', code: "\uf016" },
+  "ti-radar-off": {iconSet: 'tabler icons', code: "\uf41f" },
+  "ti-radio": {iconSet: 'tabler icons', code: "\uef2d" },
+  "ti-radio-off": {iconSet: 'tabler icons', code: "\uf420" },
+  "ti-radioactive": {iconSet: 'tabler icons', code: "\uecc0" },
+  "ti-radioactive-filled": {iconSet: 'tabler icons', code: "\uf760" },
+  "ti-radioactive-off": {iconSet: 'tabler icons', code: "\uf189" },
+  "ti-radius-bottom-left": {iconSet: 'tabler icons', code: "\ueec6" },
+  "ti-radius-bottom-right": {iconSet: 'tabler icons', code: "\ueec7" },
+  "ti-radius-top-left": {iconSet: 'tabler icons', code: "\ueec8" },
+  "ti-radius-top-right": {iconSet: 'tabler icons', code: "\ueec9" },
+  "ti-rainbow": {iconSet: 'tabler icons', code: "\uedbc" },
+  "ti-rainbow-off": {iconSet: 'tabler icons', code: "\uf18a" },
+  "ti-rating-12-plus": {iconSet: 'tabler icons', code: "\uf266" },
+  "ti-rating-14-plus": {iconSet: 'tabler icons', code: "\uf267" },
+  "ti-rating-16-plus": {iconSet: 'tabler icons', code: "\uf268" },
+  "ti-rating-18-plus": {iconSet: 'tabler icons', code: "\uf269" },
+  "ti-rating-21-plus": {iconSet: 'tabler icons', code: "\uf26a" },
+  "ti-razor": {iconSet: 'tabler icons', code: "\uf4b5" },
+  "ti-razor-electric": {iconSet: 'tabler icons', code: "\uf4b4" },
+  "ti-receipt": {iconSet: 'tabler icons', code: "\uedfd" },
+  "ti-receipt-2": {iconSet: 'tabler icons', code: "\uedfa" },
+  "ti-receipt-off": {iconSet: 'tabler icons', code: "\uedfb" },
+  "ti-receipt-refund": {iconSet: 'tabler icons', code: "\uedfc" },
+  "ti-receipt-tax": {iconSet: 'tabler icons', code: "\uedbd" },
+  "ti-recharging": {iconSet: 'tabler icons', code: "\ueeca" },
+  "ti-record-mail": {iconSet: 'tabler icons', code: "\ueb12" },
+  "ti-record-mail-off": {iconSet: 'tabler icons', code: "\uf18b" },
+  "ti-rectangle": {iconSet: 'tabler icons', code: "\ued37" },
+  "ti-rectangle-filled": {iconSet: 'tabler icons', code: "\uf69a" },
+  "ti-rectangle-vertical": {iconSet: 'tabler icons', code: "\ued36" },
+  "ti-rectangle-vertical-filled": {iconSet: 'tabler icons', code: "\uf69b" },
+  "ti-recycle": {iconSet: 'tabler icons', code: "\ueb9b" },
+  "ti-recycle-off": {iconSet: 'tabler icons', code: "\uf18c" },
+  "ti-refresh": {iconSet: 'tabler icons', code: "\ueb13" },
+  "ti-refresh-alert": {iconSet: 'tabler icons', code: "\ued57" },
+  "ti-refresh-dot": {iconSet: 'tabler icons', code: "\uefbf" },
+  "ti-refresh-off": {iconSet: 'tabler icons', code: "\uf18d" },
+  "ti-regex": {iconSet: 'tabler icons', code: "\uf31f" },
+  "ti-regex-off": {iconSet: 'tabler icons', code: "\uf421" },
+  "ti-registered": {iconSet: 'tabler icons', code: "\ueb14" },
+  "ti-relation-many-to-many": {iconSet: 'tabler icons', code: "\ued7f" },
+  "ti-relation-one-to-many": {iconSet: 'tabler icons', code: "\ued80" },
+  "ti-relation-one-to-one": {iconSet: 'tabler icons', code: "\ued81" },
+  "ti-reload": {iconSet: 'tabler icons', code: "\uf3ae" },
+  "ti-repeat": {iconSet: 'tabler icons', code: "\ueb72" },
+  "ti-repeat-off": {iconSet: 'tabler icons', code: "\uf18e" },
+  "ti-repeat-once": {iconSet: 'tabler icons', code: "\ueb71" },
+  "ti-replace": {iconSet: 'tabler icons', code: "\uebc7" },
+  "ti-replace-filled": {iconSet: 'tabler icons', code: "\uf69c" },
+  "ti-replace-off": {iconSet: 'tabler icons', code: "\uf422" },
+  "ti-report": {iconSet: 'tabler icons', code: "\ueece" },
+  "ti-report-analytics": {iconSet: 'tabler icons', code: "\ueecb" },
+  "ti-report-medical": {iconSet: 'tabler icons', code: "\ueecc" },
+  "ti-report-money": {iconSet: 'tabler icons', code: "\ueecd" },
+  "ti-report-off": {iconSet: 'tabler icons', code: "\uf18f" },
+  "ti-report-search": {iconSet: 'tabler icons', code: "\uef84" },
+  "ti-reserved-line": {iconSet: 'tabler icons', code: "\uf9f6" },
+  "ti-resize": {iconSet: 'tabler icons', code: "\ueecf" },
+  "ti-ribbon-health": {iconSet: 'tabler icons', code: "\uf58e" },
+  "ti-ripple": {iconSet: 'tabler icons', code: "\ued82" },
+  "ti-ripple-off": {iconSet: 'tabler icons', code: "\uf190" },
+  "ti-road": {iconSet: 'tabler icons', code: "\uf018" },
+  "ti-road-off": {iconSet: 'tabler icons', code: "\uf191" },
+  "ti-road-sign": {iconSet: 'tabler icons', code: "\uecdd" },
+  "ti-robot": {iconSet: 'tabler icons', code: "\uf00b" },
+  "ti-robot-off": {iconSet: 'tabler icons', code: "\uf192" },
+  "ti-rocket": {iconSet: 'tabler icons', code: "\uec45" },
+  "ti-rocket-off": {iconSet: 'tabler icons', code: "\uf193" },
+  "ti-roller-skating": {iconSet: 'tabler icons', code: "\uefd1" },
+  "ti-rollercoaster": {iconSet: 'tabler icons', code: "\uf0a2" },
+  "ti-rollercoaster-off": {iconSet: 'tabler icons', code: "\uf423" },
+  "ti-rosette": {iconSet: 'tabler icons', code: "\uf599" },
+  "ti-rosette-filled": {iconSet: 'tabler icons', code: "\uf69d" },
+  "ti-rosette-number-0": {iconSet: 'tabler icons', code: "\uf58f" },
+  "ti-rosette-number-1": {iconSet: 'tabler icons', code: "\uf590" },
+  "ti-rosette-number-2": {iconSet: 'tabler icons', code: "\uf591" },
+  "ti-rosette-number-3": {iconSet: 'tabler icons', code: "\uf592" },
+  "ti-rosette-number-4": {iconSet: 'tabler icons', code: "\uf593" },
+  "ti-rosette-number-5": {iconSet: 'tabler icons', code: "\uf594" },
+  "ti-rosette-number-6": {iconSet: 'tabler icons', code: "\uf595" },
+  "ti-rosette-number-7": {iconSet: 'tabler icons', code: "\uf596" },
+  "ti-rosette-number-8": {iconSet: 'tabler icons', code: "\uf597" },
+  "ti-rosette-number-9": {iconSet: 'tabler icons', code: "\uf598" },
+  "ti-rotate": {iconSet: 'tabler icons', code: "\ueb16" },
+  "ti-rotate-2": {iconSet: 'tabler icons', code: "\uebb4" },
+  "ti-rotate-360": {iconSet: 'tabler icons', code: "\uef85" },
+  "ti-rotate-clockwise": {iconSet: 'tabler icons', code: "\ueb15" },
+  "ti-rotate-clockwise-2": {iconSet: 'tabler icons', code: "\uebb5" },
+  "ti-rotate-dot": {iconSet: 'tabler icons', code: "\uefe5" },
+  "ti-rotate-rectangle": {iconSet: 'tabler icons', code: "\uec15" },
+  "ti-route": {iconSet: 'tabler icons', code: "\ueb17" },
+  "ti-route-2": {iconSet: 'tabler icons', code: "\uf4b6" },
+  "ti-route-off": {iconSet: 'tabler icons', code: "\uf194" },
+  "ti-router": {iconSet: 'tabler icons', code: "\ueb18" },
+  "ti-router-off": {iconSet: 'tabler icons', code: "\uf424" },
+  "ti-row-insert-bottom": {iconSet: 'tabler icons', code: "\ueed0" },
+  "ti-row-insert-top": {iconSet: 'tabler icons', code: "\ueed1" },
+  "ti-rss": {iconSet: 'tabler icons', code: "\ueb19" },
+  "ti-rubber-stamp": {iconSet: 'tabler icons', code: "\uf5ab" },
+  "ti-rubber-stamp-off": {iconSet: 'tabler icons', code: "\uf5aa" },
+  "ti-ruler": {iconSet: 'tabler icons', code: "\ueb1a" },
+  "ti-ruler-2": {iconSet: 'tabler icons', code: "\ueed2" },
+  "ti-ruler-2-off": {iconSet: 'tabler icons', code: "\uf195" },
+  "ti-ruler-3": {iconSet: 'tabler icons', code: "\uf290" },
+  "ti-ruler-measure": {iconSet: 'tabler icons', code: "\uf291" },
+  "ti-ruler-off": {iconSet: 'tabler icons', code: "\uf196" },
+  "ti-run": {iconSet: 'tabler icons', code: "\uec82" },
+  "ti-s-turn-down": {iconSet: 'tabler icons', code: "\uf516" },
+  "ti-s-turn-left": {iconSet: 'tabler icons', code: "\uf517" },
+  "ti-s-turn-right": {iconSet: 'tabler icons', code: "\uf518" },
+  "ti-s-turn-up": {iconSet: 'tabler icons', code: "\uf519" },
+  "ti-sailboat": {iconSet: 'tabler icons', code: "\uec83" },
+  "ti-sailboat-2": {iconSet: 'tabler icons', code: "\uf5f7" },
+  "ti-sailboat-off": {iconSet: 'tabler icons', code: "\uf425" },
+  "ti-salad": {iconSet: 'tabler icons', code: "\uf50a" },
+  "ti-salt": {iconSet: 'tabler icons', code: "\uef16" },
+  "ti-satellite": {iconSet: 'tabler icons', code: "\ueed3" },
+  "ti-satellite-off": {iconSet: 'tabler icons', code: "\uf197" },
+  "ti-sausage": {iconSet: 'tabler icons', code: "\uef17" },
+  "ti-scale": {iconSet: 'tabler icons', code: "\uebc2" },
+  "ti-scale-off": {iconSet: 'tabler icons', code: "\uf198" },
+  "ti-scale-outline": {iconSet: 'tabler icons', code: "\uef53" },
+  "ti-scale-outline-off": {iconSet: 'tabler icons', code: "\uf199" },
+  "ti-scan": {iconSet: 'tabler icons', code: "\uebc8" },
+  "ti-scan-eye": {iconSet: 'tabler icons', code: "\uf1ff" },
+  "ti-schema": {iconSet: 'tabler icons', code: "\uf200" },
+  "ti-schema-off": {iconSet: 'tabler icons', code: "\uf426" },
+  "ti-school": {iconSet: 'tabler icons', code: "\uecf7" },
+  "ti-school-bell": {iconSet: 'tabler icons', code: "\uf64a" },
+  "ti-school-off": {iconSet: 'tabler icons', code: "\uf19a" },
+  "ti-scissors": {iconSet: 'tabler icons', code: "\ueb1b" },
+  "ti-scissors-off": {iconSet: 'tabler icons', code: "\uf19b" },
+  "ti-scooter": {iconSet: 'tabler icons', code: "\uec6c" },
+  "ti-scooter-electric": {iconSet: 'tabler icons', code: "\uecc1" },
+  "ti-screen-share": {iconSet: 'tabler icons', code: "\ued18" },
+  "ti-screen-share-off": {iconSet: 'tabler icons', code: "\ued17" },
+  "ti-screenshot": {iconSet: 'tabler icons', code: "\uf201" },
+  "ti-scribble": {iconSet: 'tabler icons', code: "\uf0a3" },
+  "ti-scribble-off": {iconSet: 'tabler icons', code: "\uf427" },
+  "ti-script": {iconSet: 'tabler icons', code: "\uf2da" },
+  "ti-script-minus": {iconSet: 'tabler icons', code: "\uf2d7" },
+  "ti-script-plus": {iconSet: 'tabler icons', code: "\uf2d8" },
+  "ti-script-x": {iconSet: 'tabler icons', code: "\uf2d9" },
+  "ti-scuba-mask": {iconSet: 'tabler icons', code: "\ueed4" },
+  "ti-scuba-mask-off": {iconSet: 'tabler icons', code: "\uf428" },
+  "ti-sdk": {iconSet: 'tabler icons', code: "\uf3af" },
+  "ti-search": {iconSet: 'tabler icons', code: "\ueb1c" },
+  "ti-search-off": {iconSet: 'tabler icons', code: "\uf19c" },
+  "ti-section": {iconSet: 'tabler icons', code: "\ueed5" },
+  "ti-section-sign": {iconSet: 'tabler icons', code: "\uf019" },
+  "ti-seeding": {iconSet: 'tabler icons', code: "\ued51" },
+  "ti-seeding-off": {iconSet: 'tabler icons', code: "\uf19d" },
+  "ti-select": {iconSet: 'tabler icons', code: "\uec9e" },
+  "ti-select-all": {iconSet: 'tabler icons', code: "\uf9f7" },
+  "ti-selector": {iconSet: 'tabler icons', code: "\ueb1d" },
+  "ti-send": {iconSet: 'tabler icons', code: "\ueb1e" },
+  "ti-send-off": {iconSet: 'tabler icons', code: "\uf429" },
+  "ti-seo": {iconSet: 'tabler icons', code: "\uf26b" },
+  "ti-separator": {iconSet: 'tabler icons', code: "\uebda" },
+  "ti-separator-horizontal": {iconSet: 'tabler icons', code: "\uec79" },
+  "ti-separator-vertical": {iconSet: 'tabler icons', code: "\uec7a" },
+  "ti-server": {iconSet: 'tabler icons', code: "\ueb1f" },
+  "ti-server-2": {iconSet: 'tabler icons', code: "\uf07c" },
+  "ti-server-bolt": {iconSet: 'tabler icons', code: "\uf320" },
+  "ti-server-cog": {iconSet: 'tabler icons', code: "\uf321" },
+  "ti-server-off": {iconSet: 'tabler icons', code: "\uf19e" },
+  "ti-servicemark": {iconSet: 'tabler icons', code: "\uec09" },
+  "ti-settings": {iconSet: 'tabler icons', code: "\ueb20" },
+  "ti-settings-2": {iconSet: 'tabler icons', code: "\uf5ac" },
+  "ti-settings-automation": {iconSet: 'tabler icons', code: "\ueed6" },
+  "ti-settings-bolt": {iconSet: 'tabler icons', code: "\uf9ad" },
+  "ti-settings-cancel": {iconSet: 'tabler icons', code: "\uf9ae" },
+  "ti-settings-check": {iconSet: 'tabler icons', code: "\uf9af" },
+  "ti-settings-code": {iconSet: 'tabler icons', code: "\uf9b0" },
+  "ti-settings-cog": {iconSet: 'tabler icons', code: "\uf9b1" },
+  "ti-settings-dollar": {iconSet: 'tabler icons', code: "\uf9b2" },
+  "ti-settings-down": {iconSet: 'tabler icons', code: "\uf9b3" },
+  "ti-settings-exclamation": {iconSet: 'tabler icons', code: "\uf9b4" },
+  "ti-settings-filled": {iconSet: 'tabler icons', code: "\uf69e" },
+  "ti-settings-heart": {iconSet: 'tabler icons', code: "\uf9b5" },
+  "ti-settings-minus": {iconSet: 'tabler icons', code: "\uf9b6" },
+  "ti-settings-off": {iconSet: 'tabler icons', code: "\uf19f" },
+  "ti-settings-pause": {iconSet: 'tabler icons', code: "\uf9b7" },
+  "ti-settings-pin": {iconSet: 'tabler icons', code: "\uf9b8" },
+  "ti-settings-plus": {iconSet: 'tabler icons', code: "\uf9b9" },
+  "ti-settings-question": {iconSet: 'tabler icons', code: "\uf9ba" },
+  "ti-settings-search": {iconSet: 'tabler icons', code: "\uf9bb" },
+  "ti-settings-share": {iconSet: 'tabler icons', code: "\uf9bc" },
+  "ti-settings-star": {iconSet: 'tabler icons', code: "\uf9bd" },
+  "ti-settings-up": {iconSet: 'tabler icons', code: "\uf9be" },
+  "ti-settings-x": {iconSet: 'tabler icons', code: "\uf9bf" },
+  "ti-shadow": {iconSet: 'tabler icons', code: "\ueed8" },
+  "ti-shadow-off": {iconSet: 'tabler icons', code: "\ueed7" },
+  "ti-shape": {iconSet: 'tabler icons', code: "\ueb9c" },
+  "ti-shape-2": {iconSet: 'tabler icons', code: "\ueed9" },
+  "ti-shape-3": {iconSet: 'tabler icons', code: "\ueeda" },
+  "ti-shape-off": {iconSet: 'tabler icons', code: "\uf1a0" },
+  "ti-share": {iconSet: 'tabler icons', code: "\ueb21" },
+  "ti-share-2": {iconSet: 'tabler icons', code: "\uf799" },
+  "ti-share-3": {iconSet: 'tabler icons', code: "\uf7bd" },
+  "ti-share-off": {iconSet: 'tabler icons', code: "\uf1a1" },
+  "ti-shield": {iconSet: 'tabler icons', code: "\ueb24" },
+  "ti-shield-bolt": {iconSet: 'tabler icons', code: "\uf9c0" },
+  "ti-shield-cancel": {iconSet: 'tabler icons', code: "\uf9c1" },
+  "ti-shield-check": {iconSet: 'tabler icons', code: "\ueb22" },
+  "ti-shield-check-filled": {iconSet: 'tabler icons', code: "\uf761" },
+  "ti-shield-checkered": {iconSet: 'tabler icons', code: "\uef9a" },
+  "ti-shield-checkered-filled": {iconSet: 'tabler icons', code: "\uf762" },
+  "ti-shield-chevron": {iconSet: 'tabler icons', code: "\uef9b" },
+  "ti-shield-code": {iconSet: 'tabler icons', code: "\uf9c2" },
+  "ti-shield-cog": {iconSet: 'tabler icons', code: "\uf9c3" },
+  "ti-shield-dollar": {iconSet: 'tabler icons', code: "\uf9c4" },
+  "ti-shield-down": {iconSet: 'tabler icons', code: "\uf9c5" },
+  "ti-shield-exclamation": {iconSet: 'tabler icons', code: "\uf9c6" },
+  "ti-shield-filled": {iconSet: 'tabler icons', code: "\uf69f" },
+  "ti-shield-half": {iconSet: 'tabler icons', code: "\uf358" },
+  "ti-shield-half-filled": {iconSet: 'tabler icons', code: "\uf357" },
+  "ti-shield-heart": {iconSet: 'tabler icons', code: "\uf9c7" },
+  "ti-shield-lock": {iconSet: 'tabler icons', code: "\ued58" },
+  "ti-shield-lock-filled": {iconSet: 'tabler icons', code: "\uf763" },
+  "ti-shield-minus": {iconSet: 'tabler icons', code: "\uf9c8" },
+  "ti-shield-off": {iconSet: 'tabler icons', code: "\uecf8" },
+  "ti-shield-pause": {iconSet: 'tabler icons', code: "\uf9c9" },
+  "ti-shield-pin": {iconSet: 'tabler icons', code: "\uf9ca" },
+  "ti-shield-plus": {iconSet: 'tabler icons', code: "\uf9cb" },
+  "ti-shield-question": {iconSet: 'tabler icons', code: "\uf9cc" },
+  "ti-shield-search": {iconSet: 'tabler icons', code: "\uf9cd" },
+  "ti-shield-share": {iconSet: 'tabler icons', code: "\uf9ce" },
+  "ti-shield-star": {iconSet: 'tabler icons', code: "\uf9cf" },
+  "ti-shield-up": {iconSet: 'tabler icons', code: "\uf9d0" },
+  "ti-shield-x": {iconSet: 'tabler icons', code: "\ueb23" },
+  "ti-ship": {iconSet: 'tabler icons', code: "\uec84" },
+  "ti-ship-off": {iconSet: 'tabler icons', code: "\uf42a" },
+  "ti-shirt": {iconSet: 'tabler icons', code: "\uec0a" },
+  "ti-shirt-filled": {iconSet: 'tabler icons', code: "\uf6a0" },
+  "ti-shirt-off": {iconSet: 'tabler icons', code: "\uf1a2" },
+  "ti-shirt-sport": {iconSet: 'tabler icons', code: "\uf26c" },
+  "ti-shoe": {iconSet: 'tabler icons', code: "\uefd2" },
+  "ti-shoe-off": {iconSet: 'tabler icons', code: "\uf1a4" },
+  "ti-shopping-bag": {iconSet: 'tabler icons', code: "\uf5f8" },
+  "ti-shopping-cart": {iconSet: 'tabler icons', code: "\ueb25" },
+  "ti-shopping-cart-discount": {iconSet: 'tabler icons', code: "\ueedb" },
+  "ti-shopping-cart-off": {iconSet: 'tabler icons', code: "\ueedc" },
+  "ti-shopping-cart-plus": {iconSet: 'tabler icons', code: "\ueedd" },
+  "ti-shopping-cart-x": {iconSet: 'tabler icons', code: "\ueede" },
+  "ti-shovel": {iconSet: 'tabler icons', code: "\uf1d9" },
+  "ti-shredder": {iconSet: 'tabler icons', code: "\ueedf" },
+  "ti-sign-left": {iconSet: 'tabler icons', code: "\uf06b" },
+  "ti-sign-left-filled": {iconSet: 'tabler icons', code: "\uf6a1" },
+  "ti-sign-right": {iconSet: 'tabler icons', code: "\uf06c" },
+  "ti-sign-right-filled": {iconSet: 'tabler icons', code: "\uf6a2" },
+  "ti-signal-2g": {iconSet: 'tabler icons', code: "\uf79a" },
+  "ti-signal-3g": {iconSet: 'tabler icons', code: "\uf1ee" },
+  "ti-signal-4g": {iconSet: 'tabler icons', code: "\uf1ef" },
+  "ti-signal-4g-plus": {iconSet: 'tabler icons', code: "\uf259" },
+  "ti-signal-5g": {iconSet: 'tabler icons', code: "\uf1f0" },
+  "ti-signal-6g": {iconSet: 'tabler icons', code: "\uf9f8" },
+  "ti-signal-e": {iconSet: 'tabler icons', code: "\uf9f9" },
+  "ti-signal-g": {iconSet: 'tabler icons', code: "\uf9fa" },
+  "ti-signal-h": {iconSet: 'tabler icons', code: "\uf9fc" },
+  "ti-signal-h-plus": {iconSet: 'tabler icons', code: "\uf9fb" },
+  "ti-signal-lte": {iconSet: 'tabler icons', code: "\uf9fd" },
+  "ti-signature": {iconSet: 'tabler icons', code: "\ueee0" },
+  "ti-signature-off": {iconSet: 'tabler icons', code: "\uf1a5" },
+  "ti-sitemap": {iconSet: 'tabler icons', code: "\ueb9d" },
+  "ti-sitemap-off": {iconSet: 'tabler icons', code: "\uf1a6" },
+  "ti-skateboard": {iconSet: 'tabler icons', code: "\uecc2" },
+  "ti-skateboard-off": {iconSet: 'tabler icons', code: "\uf42b" },
+  "ti-skull": {iconSet: 'tabler icons', code: "\uf292" },
+  "ti-slash": {iconSet: 'tabler icons', code: "\uf4f9" },
+  "ti-slashes": {iconSet: 'tabler icons', code: "\uf588" },
+  "ti-sleigh": {iconSet: 'tabler icons', code: "\uef9c" },
+  "ti-slice": {iconSet: 'tabler icons', code: "\uebdb" },
+  "ti-slideshow": {iconSet: 'tabler icons', code: "\uebc9" },
+  "ti-smart-home": {iconSet: 'tabler icons', code: "\uecde" },
+  "ti-smart-home-off": {iconSet: 'tabler icons', code: "\uf1a7" },
+  "ti-smoking": {iconSet: 'tabler icons', code: "\uecc4" },
+  "ti-smoking-no": {iconSet: 'tabler icons', code: "\uecc3" },
+  "ti-snowflake": {iconSet: 'tabler icons', code: "\uec0b" },
+  "ti-snowflake-off": {iconSet: 'tabler icons', code: "\uf1a8" },
+  "ti-snowman": {iconSet: 'tabler icons', code: "\uf26d" },
+  "ti-soccer-field": {iconSet: 'tabler icons', code: "\ued92" },
+  "ti-social": {iconSet: 'tabler icons', code: "\uebec" },
+  "ti-social-off": {iconSet: 'tabler icons', code: "\uf1a9" },
+  "ti-sock": {iconSet: 'tabler icons', code: "\ueee1" },
+  "ti-sofa": {iconSet: 'tabler icons', code: "\uefaf" },
+  "ti-sofa-off": {iconSet: 'tabler icons', code: "\uf42c" },
+  "ti-solar-panel": {iconSet: 'tabler icons', code: "\uf7bf" },
+  "ti-solar-panel-2": {iconSet: 'tabler icons', code: "\uf7be" },
+  "ti-sort-0-9": {iconSet: 'tabler icons', code: "\uf54d" },
+  "ti-sort-9-0": {iconSet: 'tabler icons', code: "\uf54e" },
+  "ti-sort-a-z": {iconSet: 'tabler icons', code: "\uf54f" },
+  "ti-sort-ascending": {iconSet: 'tabler icons', code: "\ueb26" },
+  "ti-sort-ascending-2": {iconSet: 'tabler icons', code: "\ueee2" },
+  "ti-sort-ascending-letters": {iconSet: 'tabler icons', code: "\uef18" },
+  "ti-sort-ascending-numbers": {iconSet: 'tabler icons', code: "\uef19" },
+  "ti-sort-descending": {iconSet: 'tabler icons', code: "\ueb27" },
+  "ti-sort-descending-2": {iconSet: 'tabler icons', code: "\ueee3" },
+  "ti-sort-descending-letters": {iconSet: 'tabler icons', code: "\uef1a" },
+  "ti-sort-descending-numbers": {iconSet: 'tabler icons', code: "\uef1b" },
+  "ti-sort-z-a": {iconSet: 'tabler icons', code: "\uf550" },
+  "ti-sos": {iconSet: 'tabler icons', code: "\uf24a" },
+  "ti-soup": {iconSet: 'tabler icons', code: "\uef2e" },
+  "ti-soup-off": {iconSet: 'tabler icons', code: "\uf42d" },
+  "ti-source-code": {iconSet: 'tabler icons', code: "\uf4a2" },
+  "ti-space": {iconSet: 'tabler icons', code: "\uec0c" },
+  "ti-space-off": {iconSet: 'tabler icons', code: "\uf1aa" },
+  "ti-spacing-horizontal": {iconSet: 'tabler icons', code: "\uef54" },
+  "ti-spacing-vertical": {iconSet: 'tabler icons', code: "\uef55" },
+  "ti-spade": {iconSet: 'tabler icons', code: "\ueffa" },
+  "ti-spade-filled": {iconSet: 'tabler icons', code: "\uf6a3" },
+  "ti-sparkles": {iconSet: 'tabler icons', code: "\uf6d7" },
+  "ti-speakerphone": {iconSet: 'tabler icons', code: "\ued61" },
+  "ti-speedboat": {iconSet: 'tabler icons', code: "\ued93" },
+  "ti-spider": {iconSet: 'tabler icons', code: "\uf293" },
+  "ti-spiral": {iconSet: 'tabler icons', code: "\uf294" },
+  "ti-spiral-off": {iconSet: 'tabler icons', code: "\uf42e" },
+  "ti-sport-billard": {iconSet: 'tabler icons', code: "\ueee4" },
+  "ti-spray": {iconSet: 'tabler icons', code: "\uf50b" },
+  "ti-spy": {iconSet: 'tabler icons', code: "\uf227" },
+  "ti-spy-off": {iconSet: 'tabler icons', code: "\uf42f" },
+  "ti-sql": {iconSet: 'tabler icons', code: "\uf7c0" },
+  "ti-square": {iconSet: 'tabler icons', code: "\ueb2c" },
+  "ti-square-0-filled": {iconSet: 'tabler icons', code: "\uf764" },
+  "ti-square-1-filled": {iconSet: 'tabler icons', code: "\uf765" },
+  "ti-square-2-filled": {iconSet: 'tabler icons', code: "\uf7fa" },
+  "ti-square-3-filled": {iconSet: 'tabler icons', code: "\uf766" },
+  "ti-square-4-filled": {iconSet: 'tabler icons', code: "\uf767" },
+  "ti-square-5-filled": {iconSet: 'tabler icons', code: "\uf768" },
+  "ti-square-6-filled": {iconSet: 'tabler icons', code: "\uf769" },
+  "ti-square-7-filled": {iconSet: 'tabler icons', code: "\uf76a" },
+  "ti-square-8-filled": {iconSet: 'tabler icons', code: "\uf76b" },
+  "ti-square-9-filled": {iconSet: 'tabler icons', code: "\uf76c" },
+  "ti-square-arrow-down": {iconSet: 'tabler icons', code: "\uf4b7" },
+  "ti-square-arrow-left": {iconSet: 'tabler icons', code: "\uf4b8" },
+  "ti-square-arrow-right": {iconSet: 'tabler icons', code: "\uf4b9" },
+  "ti-square-arrow-up": {iconSet: 'tabler icons', code: "\uf4ba" },
+  "ti-square-asterisk": {iconSet: 'tabler icons', code: "\uf01a" },
+  "ti-square-check": {iconSet: 'tabler icons', code: "\ueb28" },
+  "ti-square-check-filled": {iconSet: 'tabler icons', code: "\uf76d" },
+  "ti-square-chevron-down": {iconSet: 'tabler icons', code: "\uf627" },
+  "ti-square-chevron-left": {iconSet: 'tabler icons', code: "\uf628" },
+  "ti-square-chevron-right": {iconSet: 'tabler icons', code: "\uf629" },
+  "ti-square-chevron-up": {iconSet: 'tabler icons', code: "\uf62a" },
+  "ti-square-chevrons-down": {iconSet: 'tabler icons', code: "\uf64b" },
+  "ti-square-chevrons-left": {iconSet: 'tabler icons', code: "\uf64c" },
+  "ti-square-chevrons-right": {iconSet: 'tabler icons', code: "\uf64d" },
+  "ti-square-chevrons-up": {iconSet: 'tabler icons', code: "\uf64e" },
+  "ti-square-dot": {iconSet: 'tabler icons', code: "\ued59" },
+  "ti-square-f0": {iconSet: 'tabler icons', code: "\uf526" },
+  "ti-square-f0-filled": {iconSet: 'tabler icons', code: "\uf76e" },
+  "ti-square-f1": {iconSet: 'tabler icons', code: "\uf527" },
+  "ti-square-f1-filled": {iconSet: 'tabler icons', code: "\uf76f" },
+  "ti-square-f2": {iconSet: 'tabler icons', code: "\uf528" },
+  "ti-square-f2-filled": {iconSet: 'tabler icons', code: "\uf770" },
+  "ti-square-f3": {iconSet: 'tabler icons', code: "\uf529" },
+  "ti-square-f3-filled": {iconSet: 'tabler icons', code: "\uf771" },
+  "ti-square-f4": {iconSet: 'tabler icons', code: "\uf52a" },
+  "ti-square-f4-filled": {iconSet: 'tabler icons', code: "\uf772" },
+  "ti-square-f5": {iconSet: 'tabler icons', code: "\uf52b" },
+  "ti-square-f5-filled": {iconSet: 'tabler icons', code: "\uf773" },
+  "ti-square-f6": {iconSet: 'tabler icons', code: "\uf52c" },
+  "ti-square-f6-filled": {iconSet: 'tabler icons', code: "\uf774" },
+  "ti-square-f7": {iconSet: 'tabler icons', code: "\uf52d" },
+  "ti-square-f7-filled": {iconSet: 'tabler icons', code: "\uf775" },
+  "ti-square-f8": {iconSet: 'tabler icons', code: "\uf52e" },
+  "ti-square-f8-filled": {iconSet: 'tabler icons', code: "\uf776" },
+  "ti-square-f9": {iconSet: 'tabler icons', code: "\uf52f" },
+  "ti-square-f9-filled": {iconSet: 'tabler icons', code: "\uf777" },
+  "ti-square-forbid": {iconSet: 'tabler icons', code: "\ued5b" },
+  "ti-square-forbid-2": {iconSet: 'tabler icons', code: "\ued5a" },
+  "ti-square-half": {iconSet: 'tabler icons', code: "\ueffb" },
+  "ti-square-key": {iconSet: 'tabler icons', code: "\uf638" },
+  "ti-square-letter-a": {iconSet: 'tabler icons', code: "\uf47c" },
+  "ti-square-letter-b": {iconSet: 'tabler icons', code: "\uf47d" },
+  "ti-square-letter-c": {iconSet: 'tabler icons', code: "\uf47e" },
+  "ti-square-letter-d": {iconSet: 'tabler icons', code: "\uf47f" },
+  "ti-square-letter-e": {iconSet: 'tabler icons', code: "\uf480" },
+  "ti-square-letter-f": {iconSet: 'tabler icons', code: "\uf481" },
+  "ti-square-letter-g": {iconSet: 'tabler icons', code: "\uf482" },
+  "ti-square-letter-h": {iconSet: 'tabler icons', code: "\uf483" },
+  "ti-square-letter-i": {iconSet: 'tabler icons', code: "\uf484" },
+  "ti-square-letter-j": {iconSet: 'tabler icons', code: "\uf485" },
+  "ti-square-letter-k": {iconSet: 'tabler icons', code: "\uf486" },
+  "ti-square-letter-l": {iconSet: 'tabler icons', code: "\uf487" },
+  "ti-square-letter-m": {iconSet: 'tabler icons', code: "\uf488" },
+  "ti-square-letter-n": {iconSet: 'tabler icons', code: "\uf489" },
+  "ti-square-letter-o": {iconSet: 'tabler icons', code: "\uf48a" },
+  "ti-square-letter-p": {iconSet: 'tabler icons', code: "\uf48b" },
+  "ti-square-letter-q": {iconSet: 'tabler icons', code: "\uf48c" },
+  "ti-square-letter-r": {iconSet: 'tabler icons', code: "\uf48d" },
+  "ti-square-letter-s": {iconSet: 'tabler icons', code: "\uf48e" },
+  "ti-square-letter-t": {iconSet: 'tabler icons', code: "\uf48f" },
+  "ti-square-letter-u": {iconSet: 'tabler icons', code: "\uf490" },
+  "ti-square-letter-v": {iconSet: 'tabler icons', code: "\uf4bb" },
+  "ti-square-letter-w": {iconSet: 'tabler icons', code: "\uf491" },
+  "ti-square-letter-x": {iconSet: 'tabler icons', code: "\uf4bc" },
+  "ti-square-letter-y": {iconSet: 'tabler icons', code: "\uf492" },
+  "ti-square-letter-z": {iconSet: 'tabler icons', code: "\uf493" },
+  "ti-square-minus": {iconSet: 'tabler icons', code: "\ueb29" },
+  "ti-square-number-0": {iconSet: 'tabler icons', code: "\ueee5" },
+  "ti-square-number-1": {iconSet: 'tabler icons', code: "\ueee6" },
+  "ti-square-number-2": {iconSet: 'tabler icons', code: "\ueee7" },
+  "ti-square-number-3": {iconSet: 'tabler icons', code: "\ueee8" },
+  "ti-square-number-4": {iconSet: 'tabler icons', code: "\ueee9" },
+  "ti-square-number-5": {iconSet: 'tabler icons', code: "\ueeea" },
+  "ti-square-number-6": {iconSet: 'tabler icons', code: "\ueeeb" },
+  "ti-square-number-7": {iconSet: 'tabler icons', code: "\ueeec" },
+  "ti-square-number-8": {iconSet: 'tabler icons', code: "\ueeed" },
+  "ti-square-number-9": {iconSet: 'tabler icons', code: "\ueeee" },
+  "ti-square-off": {iconSet: 'tabler icons', code: "\ueeef" },
+  "ti-square-plus": {iconSet: 'tabler icons', code: "\ueb2a" },
+  "ti-square-root": {iconSet: 'tabler icons', code: "\ueef1" },
+  "ti-square-root-2": {iconSet: 'tabler icons', code: "\ueef0" },
+  "ti-square-rotated": {iconSet: 'tabler icons', code: "\uecdf" },
+  "ti-square-rotated-filled": {iconSet: 'tabler icons', code: "\uf6a4" },
+  "ti-square-rotated-forbid": {iconSet: 'tabler icons', code: "\uf01c" },
+  "ti-square-rotated-forbid-2": {iconSet: 'tabler icons', code: "\uf01b" },
+  "ti-square-rotated-off": {iconSet: 'tabler icons', code: "\ueef2" },
+  "ti-square-rounded": {iconSet: 'tabler icons', code: "\uf59a" },
+  "ti-square-rounded-arrow-down": {iconSet: 'tabler icons', code: "\uf639" },
+  "ti-square-rounded-arrow-down-filled": {iconSet: 'tabler icons', code: "\uf6db" },
+  "ti-square-rounded-arrow-left": {iconSet: 'tabler icons', code: "\uf63a" },
+  "ti-square-rounded-arrow-left-filled": {iconSet: 'tabler icons', code: "\uf6dc" },
+  "ti-square-rounded-arrow-right": {iconSet: 'tabler icons', code: "\uf63b" },
+  "ti-square-rounded-arrow-right-filled": {iconSet: 'tabler icons', code: "\uf6dd" },
+  "ti-square-rounded-arrow-up": {iconSet: 'tabler icons', code: "\uf63c" },
+  "ti-square-rounded-arrow-up-filled": {iconSet: 'tabler icons', code: "\uf6de" },
+  "ti-square-rounded-check": {iconSet: 'tabler icons', code: "\uf63d" },
+  "ti-square-rounded-check-filled": {iconSet: 'tabler icons', code: "\uf6df" },
+  "ti-square-rounded-chevron-down": {iconSet: 'tabler icons', code: "\uf62b" },
+  "ti-square-rounded-chevron-down-filled": {iconSet: 'tabler icons', code: "\uf6e0" },
+  "ti-square-rounded-chevron-left": {iconSet: 'tabler icons', code: "\uf62c" },
+  "ti-square-rounded-chevron-left-filled": {iconSet: 'tabler icons', code: "\uf6e1" },
+  "ti-square-rounded-chevron-right": {iconSet: 'tabler icons', code: "\uf62d" },
+  "ti-square-rounded-chevron-right-filled": {iconSet: 'tabler icons', code: "\uf6e2" },
+  "ti-square-rounded-chevron-up": {iconSet: 'tabler icons', code: "\uf62e" },
+  "ti-square-rounded-chevron-up-filled": {iconSet: 'tabler icons', code: "\uf6e3" },
+  "ti-square-rounded-chevrons-down": {iconSet: 'tabler icons', code: "\uf64f" },
+  "ti-square-rounded-chevrons-down-filled": {iconSet: 'tabler icons', code: "\uf6e4" },
+  "ti-square-rounded-chevrons-left": {iconSet: 'tabler icons', code: "\uf650" },
+  "ti-square-rounded-chevrons-left-filled": {iconSet: 'tabler icons', code: "\uf6e5" },
+  "ti-square-rounded-chevrons-right": {iconSet: 'tabler icons', code: "\uf651" },
+  "ti-square-rounded-chevrons-right-filled": {iconSet: 'tabler icons', code: "\uf6e6" },
+  "ti-square-rounded-chevrons-up": {iconSet: 'tabler icons', code: "\uf652" },
+  "ti-square-rounded-chevrons-up-filled": {iconSet: 'tabler icons', code: "\uf6e7" },
+  "ti-square-rounded-filled": {iconSet: 'tabler icons', code: "\uf6a5" },
+  "ti-square-rounded-letter-a": {iconSet: 'tabler icons', code: "\uf5ae" },
+  "ti-square-rounded-letter-b": {iconSet: 'tabler icons', code: "\uf5af" },
+  "ti-square-rounded-letter-c": {iconSet: 'tabler icons', code: "\uf5b0" },
+  "ti-square-rounded-letter-d": {iconSet: 'tabler icons', code: "\uf5b1" },
+  "ti-square-rounded-letter-e": {iconSet: 'tabler icons', code: "\uf5b2" },
+  "ti-square-rounded-letter-f": {iconSet: 'tabler icons', code: "\uf5b3" },
+  "ti-square-rounded-letter-g": {iconSet: 'tabler icons', code: "\uf5b4" },
+  "ti-square-rounded-letter-h": {iconSet: 'tabler icons', code: "\uf5b5" },
+  "ti-square-rounded-letter-i": {iconSet: 'tabler icons', code: "\uf5b6" },
+  "ti-square-rounded-letter-j": {iconSet: 'tabler icons', code: "\uf5b7" },
+  "ti-square-rounded-letter-k": {iconSet: 'tabler icons', code: "\uf5b8" },
+  "ti-square-rounded-letter-l": {iconSet: 'tabler icons', code: "\uf5b9" },
+  "ti-square-rounded-letter-m": {iconSet: 'tabler icons', code: "\uf5ba" },
+  "ti-square-rounded-letter-n": {iconSet: 'tabler icons', code: "\uf5bb" },
+  "ti-square-rounded-letter-o": {iconSet: 'tabler icons', code: "\uf5bc" },
+  "ti-square-rounded-letter-p": {iconSet: 'tabler icons', code: "\uf5bd" },
+  "ti-square-rounded-letter-q": {iconSet: 'tabler icons', code: "\uf5be" },
+  "ti-square-rounded-letter-r": {iconSet: 'tabler icons', code: "\uf5bf" },
+  "ti-square-rounded-letter-s": {iconSet: 'tabler icons', code: "\uf5c0" },
+  "ti-square-rounded-letter-t": {iconSet: 'tabler icons', code: "\uf5c1" },
+  "ti-square-rounded-letter-u": {iconSet: 'tabler icons', code: "\uf5c2" },
+  "ti-square-rounded-letter-v": {iconSet: 'tabler icons', code: "\uf5c3" },
+  "ti-square-rounded-letter-w": {iconSet: 'tabler icons', code: "\uf5c4" },
+  "ti-square-rounded-letter-x": {iconSet: 'tabler icons', code: "\uf5c5" },
+  "ti-square-rounded-letter-y": {iconSet: 'tabler icons', code: "\uf5c6" },
+  "ti-square-rounded-letter-z": {iconSet: 'tabler icons', code: "\uf5c7" },
+  "ti-square-rounded-minus": {iconSet: 'tabler icons', code: "\uf63e" },
+  "ti-square-rounded-number-0": {iconSet: 'tabler icons', code: "\uf5c8" },
+  "ti-square-rounded-number-0-filled": {iconSet: 'tabler icons', code: "\uf778" },
+  "ti-square-rounded-number-1": {iconSet: 'tabler icons', code: "\uf5c9" },
+  "ti-square-rounded-number-1-filled": {iconSet: 'tabler icons', code: "\uf779" },
+  "ti-square-rounded-number-2": {iconSet: 'tabler icons', code: "\uf5ca" },
+  "ti-square-rounded-number-2-filled": {iconSet: 'tabler icons', code: "\uf77a" },
+  "ti-square-rounded-number-3": {iconSet: 'tabler icons', code: "\uf5cb" },
+  "ti-square-rounded-number-3-filled": {iconSet: 'tabler icons', code: "\uf77b" },
+  "ti-square-rounded-number-4": {iconSet: 'tabler icons', code: "\uf5cc" },
+  "ti-square-rounded-number-4-filled": {iconSet: 'tabler icons', code: "\uf77c" },
+  "ti-square-rounded-number-5": {iconSet: 'tabler icons', code: "\uf5cd" },
+  "ti-square-rounded-number-5-filled": {iconSet: 'tabler icons', code: "\uf77d" },
+  "ti-square-rounded-number-6": {iconSet: 'tabler icons', code: "\uf5ce" },
+  "ti-square-rounded-number-6-filled": {iconSet: 'tabler icons', code: "\uf77e" },
+  "ti-square-rounded-number-7": {iconSet: 'tabler icons', code: "\uf5cf" },
+  "ti-square-rounded-number-7-filled": {iconSet: 'tabler icons', code: "\uf77f" },
+  "ti-square-rounded-number-8": {iconSet: 'tabler icons', code: "\uf5d0" },
+  "ti-square-rounded-number-8-filled": {iconSet: 'tabler icons', code: "\uf780" },
+  "ti-square-rounded-number-9": {iconSet: 'tabler icons', code: "\uf5d1" },
+  "ti-square-rounded-number-9-filled": {iconSet: 'tabler icons', code: "\uf781" },
+  "ti-square-rounded-plus": {iconSet: 'tabler icons', code: "\uf63f" },
+  "ti-square-rounded-plus-filled": {iconSet: 'tabler icons', code: "\uf6e8" },
+  "ti-square-rounded-x": {iconSet: 'tabler icons', code: "\uf640" },
+  "ti-square-rounded-x-filled": {iconSet: 'tabler icons', code: "\uf6e9" },
+  "ti-square-toggle": {iconSet: 'tabler icons', code: "\ueef4" },
+  "ti-square-toggle-horizontal": {iconSet: 'tabler icons', code: "\ueef3" },
+  "ti-square-x": {iconSet: 'tabler icons', code: "\ueb2b" },
+  "ti-squares-diagonal": {iconSet: 'tabler icons', code: "\ueef5" },
+  "ti-squares-filled": {iconSet: 'tabler icons', code: "\ueef6" },
+  "ti-stack": {iconSet: 'tabler icons', code: "\ueb2d" },
+  "ti-stack-2": {iconSet: 'tabler icons', code: "\ueef7" },
+  "ti-stack-3": {iconSet: 'tabler icons', code: "\uef9d" },
+  "ti-stack-pop": {iconSet: 'tabler icons', code: "\uf234" },
+  "ti-stack-push": {iconSet: 'tabler icons', code: "\uf235" },
+  "ti-stairs": {iconSet: 'tabler icons', code: "\ueca6" },
+  "ti-stairs-down": {iconSet: 'tabler icons', code: "\ueca4" },
+  "ti-stairs-up": {iconSet: 'tabler icons', code: "\ueca5" },
+  "ti-star": {iconSet: 'tabler icons', code: "\ueb2e" },
+  "ti-star-filled": {iconSet: 'tabler icons', code: "\uf6a6" },
+  "ti-star-half": {iconSet: 'tabler icons', code: "\ued19" },
+  "ti-star-half-filled": {iconSet: 'tabler icons', code: "\uf6a7" },
+  "ti-star-off": {iconSet: 'tabler icons', code: "\ued62" },
+  "ti-stars": {iconSet: 'tabler icons', code: "\ued38" },
+  "ti-stars-filled": {iconSet: 'tabler icons', code: "\uf6a8" },
+  "ti-stars-off": {iconSet: 'tabler icons', code: "\uf430" },
+  "ti-status-change": {iconSet: 'tabler icons', code: "\uf3b0" },
+  "ti-steam": {iconSet: 'tabler icons', code: "\uf24b" },
+  "ti-steering-wheel": {iconSet: 'tabler icons', code: "\uec7b" },
+  "ti-steering-wheel-off": {iconSet: 'tabler icons', code: "\uf431" },
+  "ti-step-into": {iconSet: 'tabler icons', code: "\uece0" },
+  "ti-step-out": {iconSet: 'tabler icons', code: "\uece1" },
+  "ti-stereo-glasses": {iconSet: 'tabler icons', code: "\uf4cb" },
+  "ti-stethoscope": {iconSet: 'tabler icons', code: "\uedbe" },
+  "ti-stethoscope-off": {iconSet: 'tabler icons', code: "\uf432" },
+  "ti-sticker": {iconSet: 'tabler icons', code: "\ueb2f" },
+  "ti-storm": {iconSet: 'tabler icons', code: "\uf24c" },
+  "ti-storm-off": {iconSet: 'tabler icons', code: "\uf433" },
+  "ti-stretching": {iconSet: 'tabler icons', code: "\uf2db" },
+  "ti-strikethrough": {iconSet: 'tabler icons', code: "\ueb9e" },
+  "ti-submarine": {iconSet: 'tabler icons', code: "\ued94" },
+  "ti-subscript": {iconSet: 'tabler icons', code: "\ueb9f" },
+  "ti-subtask": {iconSet: 'tabler icons', code: "\uec9f" },
+  "ti-sum": {iconSet: 'tabler icons', code: "\ueb73" },
+  "ti-sum-off": {iconSet: 'tabler icons', code: "\uf1ab" },
+  "ti-sun": {iconSet: 'tabler icons', code: "\ueb30" },
+  "ti-sun-filled": {iconSet: 'tabler icons', code: "\uf6a9" },
+  "ti-sun-high": {iconSet: 'tabler icons', code: "\uf236" },
+  "ti-sun-low": {iconSet: 'tabler icons', code: "\uf237" },
+  "ti-sun-moon": {iconSet: 'tabler icons', code: "\uf4a3" },
+  "ti-sun-off": {iconSet: 'tabler icons', code: "\ued63" },
+  "ti-sun-wind": {iconSet: 'tabler icons', code: "\uf238" },
+  "ti-sunglasses": {iconSet: 'tabler icons', code: "\uf239" },
+  "ti-sunrise": {iconSet: 'tabler icons', code: "\uef1c" },
+  "ti-sunset": {iconSet: 'tabler icons', code: "\uec31" },
+  "ti-sunset-2": {iconSet: 'tabler icons', code: "\uf23a" },
+  "ti-superscript": {iconSet: 'tabler icons', code: "\ueba0" },
+  "ti-svg": {iconSet: 'tabler icons', code: "\uf25a" },
+  "ti-swimming": {iconSet: 'tabler icons', code: "\uec92" },
+  "ti-swipe": {iconSet: 'tabler icons', code: "\uf551" },
+  "ti-switch": {iconSet: 'tabler icons', code: "\ueb33" },
+  "ti-switch-2": {iconSet: 'tabler icons', code: "\uedbf" },
+  "ti-switch-3": {iconSet: 'tabler icons', code: "\uedc0" },
+  "ti-switch-horizontal": {iconSet: 'tabler icons', code: "\ueb31" },
+  "ti-switch-vertical": {iconSet: 'tabler icons', code: "\ueb32" },
+  "ti-sword": {iconSet: 'tabler icons', code: "\uf030" },
+  "ti-sword-off": {iconSet: 'tabler icons', code: "\uf434" },
+  "ti-swords": {iconSet: 'tabler icons', code: "\uf132" },
+  "ti-table": {iconSet: 'tabler icons', code: "\ueba1" },
+  "ti-table-alias": {iconSet: 'tabler icons', code: "\uf25b" },
+  "ti-table-down": {iconSet: 'tabler icons', code: "\ufa1c" },
+  "ti-table-export": {iconSet: 'tabler icons', code: "\ueef8" },
+  "ti-table-filled": {iconSet: 'tabler icons', code: "\uf782" },
+  "ti-table-heart": {iconSet: 'tabler icons', code: "\ufa1d" },
+  "ti-table-import": {iconSet: 'tabler icons', code: "\ueef9" },
+  "ti-table-minus": {iconSet: 'tabler icons', code: "\ufa1e" },
+  "ti-table-off": {iconSet: 'tabler icons', code: "\ueefa" },
+  "ti-table-options": {iconSet: 'tabler icons', code: "\uf25c" },
+  "ti-table-plus": {iconSet: 'tabler icons', code: "\ufa1f" },
+  "ti-table-share": {iconSet: 'tabler icons', code: "\ufa20" },
+  "ti-table-shortcut": {iconSet: 'tabler icons', code: "\uf25d" },
+  "ti-tag": {iconSet: 'tabler icons', code: "\ueb34" },
+  "ti-tag-off": {iconSet: 'tabler icons', code: "\uefc0" },
+  "ti-tags": {iconSet: 'tabler icons', code: "\uef86" },
+  "ti-tags-off": {iconSet: 'tabler icons', code: "\uefc1" },
+  "ti-tallymark-1": {iconSet: 'tabler icons', code: "\uec46" },
+  "ti-tallymark-2": {iconSet: 'tabler icons', code: "\uec47" },
+  "ti-tallymark-3": {iconSet: 'tabler icons', code: "\uec48" },
+  "ti-tallymark-4": {iconSet: 'tabler icons', code: "\uec49" },
+  "ti-tallymarks": {iconSet: 'tabler icons', code: "\uec4a" },
+  "ti-tank": {iconSet: 'tabler icons', code: "\ued95" },
+  "ti-target": {iconSet: 'tabler icons', code: "\ueb35" },
+  "ti-target-arrow": {iconSet: 'tabler icons', code: "\uf51a" },
+  "ti-target-off": {iconSet: 'tabler icons', code: "\uf1ad" },
+  "ti-teapot": {iconSet: 'tabler icons', code: "\uf552" },
+  "ti-telescope": {iconSet: 'tabler icons', code: "\uf07d" },
+  "ti-telescope-off": {iconSet: 'tabler icons', code: "\uf1ae" },
+  "ti-temperature": {iconSet: 'tabler icons', code: "\ueb38" },
+  "ti-temperature-celsius": {iconSet: 'tabler icons', code: "\ueb36" },
+  "ti-temperature-fahrenheit": {iconSet: 'tabler icons', code: "\ueb37" },
+  "ti-temperature-minus": {iconSet: 'tabler icons', code: "\uebed" },
+  "ti-temperature-off": {iconSet: 'tabler icons', code: "\uf1af" },
+  "ti-temperature-plus": {iconSet: 'tabler icons', code: "\uebee" },
+  "ti-template": {iconSet: 'tabler icons', code: "\ueb39" },
+  "ti-template-off": {iconSet: 'tabler icons', code: "\uf1b0" },
+  "ti-tent": {iconSet: 'tabler icons', code: "\ueefb" },
+  "ti-tent-off": {iconSet: 'tabler icons', code: "\uf435" },
+  "ti-terminal": {iconSet: 'tabler icons', code: "\uebdc" },
+  "ti-terminal-2": {iconSet: 'tabler icons', code: "\uebef" },
+  "ti-test-pipe": {iconSet: 'tabler icons', code: "\ueb3a" },
+  "ti-test-pipe-2": {iconSet: 'tabler icons', code: "\uf0a4" },
+  "ti-test-pipe-off": {iconSet: 'tabler icons', code: "\uf1b1" },
+  "ti-tex": {iconSet: 'tabler icons', code: "\uf4e0" },
+  "ti-text-caption": {iconSet: 'tabler icons', code: "\uf4a4" },
+  "ti-text-color": {iconSet: 'tabler icons', code: "\uf2dc" },
+  "ti-text-decrease": {iconSet: 'tabler icons', code: "\uf202" },
+  "ti-text-direction-ltr": {iconSet: 'tabler icons', code: "\ueefc" },
+  "ti-text-direction-rtl": {iconSet: 'tabler icons', code: "\ueefd" },
+  "ti-text-increase": {iconSet: 'tabler icons', code: "\uf203" },
+  "ti-text-orientation": {iconSet: 'tabler icons', code: "\uf2a4" },
+  "ti-text-plus": {iconSet: 'tabler icons', code: "\uf2a5" },
+  "ti-text-recognition": {iconSet: 'tabler icons', code: "\uf204" },
+  "ti-text-resize": {iconSet: 'tabler icons', code: "\uef87" },
+  "ti-text-size": {iconSet: 'tabler icons', code: "\uf2b1" },
+  "ti-text-spellcheck": {iconSet: 'tabler icons', code: "\uf2a6" },
+  "ti-text-wrap": {iconSet: 'tabler icons', code: "\uebdd" },
+  "ti-text-wrap-disabled": {iconSet: 'tabler icons', code: "\ueca7" },
+  "ti-texture": {iconSet: 'tabler icons', code: "\uf51b" },
+  "ti-theater": {iconSet: 'tabler icons', code: "\uf79b" },
+  "ti-thermometer": {iconSet: 'tabler icons', code: "\uef67" },
+  "ti-thumb-down": {iconSet: 'tabler icons', code: "\ueb3b" },
+  "ti-thumb-down-filled": {iconSet: 'tabler icons', code: "\uf6aa" },
+  "ti-thumb-down-off": {iconSet: 'tabler icons', code: "\uf436" },
+  "ti-thumb-up": {iconSet: 'tabler icons', code: "\ueb3c" },
+  "ti-thumb-up-filled": {iconSet: 'tabler icons', code: "\uf6ab" },
+  "ti-thumb-up-off": {iconSet: 'tabler icons', code: "\uf437" },
+  "ti-tic-tac": {iconSet: 'tabler icons', code: "\uf51c" },
+  "ti-ticket": {iconSet: 'tabler icons', code: "\ueb3d" },
+  "ti-ticket-off": {iconSet: 'tabler icons', code: "\uf1b2" },
+  "ti-tie": {iconSet: 'tabler icons', code: "\uf07e" },
+  "ti-tilde": {iconSet: 'tabler icons', code: "\uf4a5" },
+  "ti-tilt-shift": {iconSet: 'tabler icons', code: "\ueefe" },
+  "ti-tilt-shift-off": {iconSet: 'tabler icons', code: "\uf1b3" },
+  "ti-timeline": {iconSet: 'tabler icons', code: "\uf031" },
+  "ti-timeline-event": {iconSet: 'tabler icons', code: "\uf553" },
+  "ti-timeline-event-exclamation": {iconSet: 'tabler icons', code: "\uf662" },
+  "ti-timeline-event-minus": {iconSet: 'tabler icons', code: "\uf663" },
+  "ti-timeline-event-plus": {iconSet: 'tabler icons', code: "\uf664" },
+  "ti-timeline-event-text": {iconSet: 'tabler icons', code: "\uf665" },
+  "ti-timeline-event-x": {iconSet: 'tabler icons', code: "\uf666" },
+  "ti-tir": {iconSet: 'tabler icons', code: "\uebf0" },
+  "ti-toggle-left": {iconSet: 'tabler icons', code: "\ueb3e" },
+  "ti-toggle-right": {iconSet: 'tabler icons', code: "\ueb3f" },
+  "ti-toilet-paper": {iconSet: 'tabler icons', code: "\uefd3" },
+  "ti-toilet-paper-off": {iconSet: 'tabler icons', code: "\uf1b4" },
+  "ti-tool": {iconSet: 'tabler icons', code: "\ueb40" },
+  "ti-tools": {iconSet: 'tabler icons', code: "\uebca" },
+  "ti-tools-kitchen": {iconSet: 'tabler icons', code: "\ued64" },
+  "ti-tools-kitchen-2": {iconSet: 'tabler icons', code: "\ueeff" },
+  "ti-tools-kitchen-2-off": {iconSet: 'tabler icons', code: "\uf1b5" },
+  "ti-tools-kitchen-off": {iconSet: 'tabler icons', code: "\uf1b6" },
+  "ti-tools-off": {iconSet: 'tabler icons', code: "\uf1b7" },
+  "ti-tooltip": {iconSet: 'tabler icons', code: "\uf2dd" },
+  "ti-topology-bus": {iconSet: 'tabler icons', code: "\uf5d9" },
+  "ti-topology-complex": {iconSet: 'tabler icons', code: "\uf5da" },
+  "ti-topology-full": {iconSet: 'tabler icons', code: "\uf5dc" },
+  "ti-topology-full-hierarchy": {iconSet: 'tabler icons', code: "\uf5db" },
+  "ti-topology-ring": {iconSet: 'tabler icons', code: "\uf5df" },
+  "ti-topology-ring-2": {iconSet: 'tabler icons', code: "\uf5dd" },
+  "ti-topology-ring-3": {iconSet: 'tabler icons', code: "\uf5de" },
+  "ti-topology-star": {iconSet: 'tabler icons', code: "\uf5e5" },
+  "ti-topology-star-2": {iconSet: 'tabler icons', code: "\uf5e0" },
+  "ti-topology-star-3": {iconSet: 'tabler icons', code: "\uf5e1" },
+  "ti-topology-star-ring": {iconSet: 'tabler icons', code: "\uf5e4" },
+  "ti-topology-star-ring-2": {iconSet: 'tabler icons', code: "\uf5e2" },
+  "ti-topology-star-ring-3": {iconSet: 'tabler icons', code: "\uf5e3" },
+  "ti-torii": {iconSet: 'tabler icons', code: "\uf59b" },
+  "ti-tornado": {iconSet: 'tabler icons', code: "\uece2" },
+  "ti-tournament": {iconSet: 'tabler icons', code: "\uecd0" },
+  "ti-tower": {iconSet: 'tabler icons', code: "\uf2cb" },
+  "ti-tower-off": {iconSet: 'tabler icons', code: "\uf2ca" },
+  "ti-track": {iconSet: 'tabler icons', code: "\uef00" },
+  "ti-tractor": {iconSet: 'tabler icons', code: "\uec0d" },
+  "ti-trademark": {iconSet: 'tabler icons', code: "\uec0e" },
+  "ti-traffic-cone": {iconSet: 'tabler icons', code: "\uec0f" },
+  "ti-traffic-cone-off": {iconSet: 'tabler icons', code: "\uf1b8" },
+  "ti-traffic-lights": {iconSet: 'tabler icons', code: "\ued39" },
+  "ti-traffic-lights-off": {iconSet: 'tabler icons', code: "\uf1b9" },
+  "ti-train": {iconSet: 'tabler icons', code: "\ued96" },
+  "ti-transfer-in": {iconSet: 'tabler icons', code: "\uef2f" },
+  "ti-transfer-out": {iconSet: 'tabler icons', code: "\uef30" },
+  "ti-transform": {iconSet: 'tabler icons', code: "\uf38e" },
+  "ti-transform-filled": {iconSet: 'tabler icons', code: "\uf6ac" },
+  "ti-transition-bottom": {iconSet: 'tabler icons', code: "\uf2b2" },
+  "ti-transition-left": {iconSet: 'tabler icons', code: "\uf2b3" },
+  "ti-transition-right": {iconSet: 'tabler icons', code: "\uf2b4" },
+  "ti-transition-top": {iconSet: 'tabler icons', code: "\uf2b5" },
+  "ti-trash": {iconSet: 'tabler icons', code: "\ueb41" },
+  "ti-trash-filled": {iconSet: 'tabler icons', code: "\uf783" },
+  "ti-trash-off": {iconSet: 'tabler icons', code: "\ued65" },
+  "ti-trash-x": {iconSet: 'tabler icons', code: "\uef88" },
+  "ti-trash-x-filled": {iconSet: 'tabler icons', code: "\uf784" },
+  "ti-tree": {iconSet: 'tabler icons', code: "\uef01" },
+  "ti-trees": {iconSet: 'tabler icons', code: "\uec10" },
+  "ti-trekking": {iconSet: 'tabler icons', code: "\uf5ad" },
+  "ti-trending-down": {iconSet: 'tabler icons', code: "\ueb42" },
+  "ti-trending-down-2": {iconSet: 'tabler icons', code: "\uedc1" },
+  "ti-trending-down-3": {iconSet: 'tabler icons', code: "\uedc2" },
+  "ti-trending-up": {iconSet: 'tabler icons', code: "\ueb43" },
+  "ti-trending-up-2": {iconSet: 'tabler icons', code: "\uedc3" },
+  "ti-trending-up-3": {iconSet: 'tabler icons', code: "\uedc4" },
+  "ti-triangle": {iconSet: 'tabler icons', code: "\ueb44" },
+  "ti-triangle-filled": {iconSet: 'tabler icons', code: "\uf6ad" },
+  "ti-triangle-inverted": {iconSet: 'tabler icons', code: "\uf01d" },
+  "ti-triangle-inverted-filled": {iconSet: 'tabler icons', code: "\uf6ae" },
+  "ti-triangle-off": {iconSet: 'tabler icons', code: "\uef02" },
+  "ti-triangle-square-circle": {iconSet: 'tabler icons', code: "\uece8" },
+  "ti-triangles": {iconSet: 'tabler icons', code: "\uf0a5" },
+  "ti-trident": {iconSet: 'tabler icons', code: "\uecc5" },
+  "ti-trolley": {iconSet: 'tabler icons', code: "\uf4cc" },
+  "ti-trophy": {iconSet: 'tabler icons', code: "\ueb45" },
+  "ti-trophy-filled": {iconSet: 'tabler icons', code: "\uf6af" },
+  "ti-trophy-off": {iconSet: 'tabler icons', code: "\uf438" },
+  "ti-trowel": {iconSet: 'tabler icons', code: "\uf368" },
+  "ti-truck": {iconSet: 'tabler icons', code: "\uebc4" },
+  "ti-truck-delivery": {iconSet: 'tabler icons', code: "\uec4b" },
+  "ti-truck-loading": {iconSet: 'tabler icons', code: "\uf1da" },
+  "ti-truck-off": {iconSet: 'tabler icons', code: "\uef03" },
+  "ti-truck-return": {iconSet: 'tabler icons', code: "\uec4c" },
+  "ti-txt": {iconSet: 'tabler icons', code: "\uf3b1" },
+  "ti-typography": {iconSet: 'tabler icons', code: "\uebc5" },
+  "ti-typography-off": {iconSet: 'tabler icons', code: "\uf1ba" },
+  "ti-ufo": {iconSet: 'tabler icons', code: "\uf26f" },
+  "ti-ufo-off": {iconSet: 'tabler icons', code: "\uf26e" },
+  "ti-umbrella": {iconSet: 'tabler icons', code: "\uebf1" },
+  "ti-umbrella-filled": {iconSet: 'tabler icons', code: "\uf6b0" },
+  "ti-umbrella-off": {iconSet: 'tabler icons', code: "\uf1bb" },
+  "ti-underline": {iconSet: 'tabler icons', code: "\ueba2" },
+  "ti-unlink": {iconSet: 'tabler icons', code: "\ueb46" },
+  "ti-upload": {iconSet: 'tabler icons', code: "\ueb47" },
+  "ti-urgent": {iconSet: 'tabler icons', code: "\ueb48" },
+  "ti-usb": {iconSet: 'tabler icons', code: "\uf00c" },
+  "ti-user": {iconSet: 'tabler icons', code: "\ueb4d" },
+  "ti-user-bolt": {iconSet: 'tabler icons', code: "\uf9d1" },
+  "ti-user-cancel": {iconSet: 'tabler icons', code: "\uf9d2" },
+  "ti-user-check": {iconSet: 'tabler icons', code: "\ueb49" },
+  "ti-user-circle": {iconSet: 'tabler icons', code: "\uef68" },
+  "ti-user-code": {iconSet: 'tabler icons', code: "\uf9d3" },
+  "ti-user-cog": {iconSet: 'tabler icons', code: "\uf9d4" },
+  "ti-user-dollar": {iconSet: 'tabler icons', code: "\uf9d5" },
+  "ti-user-down": {iconSet: 'tabler icons', code: "\uf9d6" },
+  "ti-user-edit": {iconSet: 'tabler icons', code: "\uf7cc" },
+  "ti-user-exclamation": {iconSet: 'tabler icons', code: "\uec12" },
+  "ti-user-heart": {iconSet: 'tabler icons', code: "\uf7cd" },
+  "ti-user-minus": {iconSet: 'tabler icons', code: "\ueb4a" },
+  "ti-user-off": {iconSet: 'tabler icons', code: "\uecf9" },
+  "ti-user-pause": {iconSet: 'tabler icons', code: "\uf9d7" },
+  "ti-user-pin": {iconSet: 'tabler icons', code: "\uf7ce" },
+  "ti-user-plus": {iconSet: 'tabler icons', code: "\ueb4b" },
+  "ti-user-question": {iconSet: 'tabler icons', code: "\uf7cf" },
+  "ti-user-search": {iconSet: 'tabler icons', code: "\uef89" },
+  "ti-user-share": {iconSet: 'tabler icons', code: "\uf9d8" },
+  "ti-user-shield": {iconSet: 'tabler icons', code: "\uf7d0" },
+  "ti-user-star": {iconSet: 'tabler icons', code: "\uf7d1" },
+  "ti-user-up": {iconSet: 'tabler icons', code: "\uf7d2" },
+  "ti-user-x": {iconSet: 'tabler icons', code: "\ueb4c" },
+  "ti-users": {iconSet: 'tabler icons', code: "\uebf2" },
+  "ti-users-group": {iconSet: 'tabler icons', code: "\ufa21" },
+  "ti-users-minus": {iconSet: 'tabler icons', code: "\ufa0e" },
+  "ti-users-plus": {iconSet: 'tabler icons', code: "\ufa0f" },
+  "ti-uv-index": {iconSet: 'tabler icons', code: "\uf3b2" },
+  "ti-ux-circle": {iconSet: 'tabler icons', code: "\uf369" },
+  "ti-vaccine": {iconSet: 'tabler icons', code: "\uef04" },
+  "ti-vaccine-bottle": {iconSet: 'tabler icons', code: "\uef69" },
+  "ti-vaccine-bottle-off": {iconSet: 'tabler icons', code: "\uf439" },
+  "ti-vaccine-off": {iconSet: 'tabler icons', code: "\uf1bc" },
+  "ti-vacuum-cleaner": {iconSet: 'tabler icons', code: "\uf5e6" },
+  "ti-variable": {iconSet: 'tabler icons', code: "\uef05" },
+  "ti-variable-minus": {iconSet: 'tabler icons', code: "\uf36a" },
+  "ti-variable-off": {iconSet: 'tabler icons', code: "\uf1bd" },
+  "ti-variable-plus": {iconSet: 'tabler icons', code: "\uf36b" },
+  "ti-vector": {iconSet: 'tabler icons', code: "\ueca9" },
+  "ti-vector-bezier": {iconSet: 'tabler icons', code: "\uef1d" },
+  "ti-vector-bezier-2": {iconSet: 'tabler icons', code: "\uf1a3" },
+  "ti-vector-bezier-arc": {iconSet: 'tabler icons', code: "\uf4cd" },
+  "ti-vector-bezier-circle": {iconSet: 'tabler icons', code: "\uf4ce" },
+  "ti-vector-off": {iconSet: 'tabler icons', code: "\uf1be" },
+  "ti-vector-spline": {iconSet: 'tabler icons', code: "\uf565" },
+  "ti-vector-triangle": {iconSet: 'tabler icons', code: "\ueca8" },
+  "ti-vector-triangle-off": {iconSet: 'tabler icons', code: "\uf1bf" },
+  "ti-venus": {iconSet: 'tabler icons', code: "\uec86" },
+  "ti-versions": {iconSet: 'tabler icons', code: "\ued52" },
+  "ti-versions-filled": {iconSet: 'tabler icons', code: "\uf6b1" },
+  "ti-versions-off": {iconSet: 'tabler icons', code: "\uf1c0" },
+  "ti-video": {iconSet: 'tabler icons', code: "\ued22" },
+  "ti-video-minus": {iconSet: 'tabler icons', code: "\ued1f" },
+  "ti-video-off": {iconSet: 'tabler icons', code: "\ued20" },
+  "ti-video-plus": {iconSet: 'tabler icons', code: "\ued21" },
+  "ti-view-360": {iconSet: 'tabler icons', code: "\ued84" },
+  "ti-view-360-off": {iconSet: 'tabler icons', code: "\uf1c1" },
+  "ti-viewfinder": {iconSet: 'tabler icons', code: "\ueb4e" },
+  "ti-viewfinder-off": {iconSet: 'tabler icons', code: "\uf1c2" },
+  "ti-viewport-narrow": {iconSet: 'tabler icons', code: "\uebf3" },
+  "ti-viewport-wide": {iconSet: 'tabler icons', code: "\uebf4" },
+  "ti-vinyl": {iconSet: 'tabler icons', code: "\uf00d" },
+  "ti-vip": {iconSet: 'tabler icons', code: "\uf3b3" },
+  "ti-vip-off": {iconSet: 'tabler icons', code: "\uf43a" },
+  "ti-virus": {iconSet: 'tabler icons', code: "\ueb74" },
+  "ti-virus-off": {iconSet: 'tabler icons', code: "\ued66" },
+  "ti-virus-search": {iconSet: 'tabler icons', code: "\ued67" },
+  "ti-vocabulary": {iconSet: 'tabler icons', code: "\uef1e" },
+  "ti-vocabulary-off": {iconSet: 'tabler icons', code: "\uf43b" },
+  "ti-volcano": {iconSet: 'tabler icons', code: "\uf79c" },
+  "ti-volume": {iconSet: 'tabler icons', code: "\ueb51" },
+  "ti-volume-2": {iconSet: 'tabler icons', code: "\ueb4f" },
+  "ti-volume-3": {iconSet: 'tabler icons', code: "\ueb50" },
+  "ti-volume-off": {iconSet: 'tabler icons', code: "\uf1c3" },
+  "ti-walk": {iconSet: 'tabler icons', code: "\uec87" },
+  "ti-wall": {iconSet: 'tabler icons', code: "\uef7a" },
+  "ti-wall-off": {iconSet: 'tabler icons', code: "\uf43c" },
+  "ti-wallet": {iconSet: 'tabler icons', code: "\ueb75" },
+  "ti-wallet-off": {iconSet: 'tabler icons', code: "\uf1c4" },
+  "ti-wallpaper": {iconSet: 'tabler icons', code: "\uef56" },
+  "ti-wallpaper-off": {iconSet: 'tabler icons', code: "\uf1c5" },
+  "ti-wand": {iconSet: 'tabler icons', code: "\uebcb" },
+  "ti-wand-off": {iconSet: 'tabler icons', code: "\uf1c6" },
+  "ti-wash": {iconSet: 'tabler icons', code: "\uf311" },
+  "ti-wash-dry": {iconSet: 'tabler icons', code: "\uf304" },
+  "ti-wash-dry-1": {iconSet: 'tabler icons', code: "\uf2fa" },
+  "ti-wash-dry-2": {iconSet: 'tabler icons', code: "\uf2fb" },
+  "ti-wash-dry-3": {iconSet: 'tabler icons', code: "\uf2fc" },
+  "ti-wash-dry-a": {iconSet: 'tabler icons', code: "\uf2fd" },
+  "ti-wash-dry-dip": {iconSet: 'tabler icons', code: "\uf2fe" },
+  "ti-wash-dry-f": {iconSet: 'tabler icons', code: "\uf2ff" },
+  "ti-wash-dry-hang": {iconSet: 'tabler icons', code: "\uf300" },
+  "ti-wash-dry-off": {iconSet: 'tabler icons', code: "\uf301" },
+  "ti-wash-dry-p": {iconSet: 'tabler icons', code: "\uf302" },
+  "ti-wash-dry-shade": {iconSet: 'tabler icons', code: "\uf303" },
+  "ti-wash-dry-w": {iconSet: 'tabler icons', code: "\uf322" },
+  "ti-wash-dryclean": {iconSet: 'tabler icons', code: "\uf305" },
+  "ti-wash-dryclean-off": {iconSet: 'tabler icons', code: "\uf323" },
+  "ti-wash-gentle": {iconSet: 'tabler icons', code: "\uf306" },
+  "ti-wash-machine": {iconSet: 'tabler icons', code: "\uf25e" },
+  "ti-wash-off": {iconSet: 'tabler icons', code: "\uf307" },
+  "ti-wash-press": {iconSet: 'tabler icons', code: "\uf308" },
+  "ti-wash-temperature-1": {iconSet: 'tabler icons', code: "\uf309" },
+  "ti-wash-temperature-2": {iconSet: 'tabler icons', code: "\uf30a" },
+  "ti-wash-temperature-3": {iconSet: 'tabler icons', code: "\uf30b" },
+  "ti-wash-temperature-4": {iconSet: 'tabler icons', code: "\uf30c" },
+  "ti-wash-temperature-5": {iconSet: 'tabler icons', code: "\uf30d" },
+  "ti-wash-temperature-6": {iconSet: 'tabler icons', code: "\uf30e" },
+  "ti-wash-tumble-dry": {iconSet: 'tabler icons', code: "\uf30f" },
+  "ti-wash-tumble-off": {iconSet: 'tabler icons', code: "\uf310" },
+  "ti-wave-saw-tool": {iconSet: 'tabler icons', code: "\uecd3" },
+  "ti-wave-sine": {iconSet: 'tabler icons', code: "\uecd4" },
+  "ti-wave-square": {iconSet: 'tabler icons', code: "\uecd5" },
+  "ti-webhook": {iconSet: 'tabler icons', code: "\uf01e" },
+  "ti-webhook-off": {iconSet: 'tabler icons', code: "\uf43d" },
+  "ti-weight": {iconSet: 'tabler icons', code: "\uf589" },
+  "ti-wheelchair": {iconSet: 'tabler icons', code: "\uf1db" },
+  "ti-wheelchair-off": {iconSet: 'tabler icons', code: "\uf43e" },
+  "ti-whirl": {iconSet: 'tabler icons', code: "\uf51d" },
+  "ti-wifi": {iconSet: 'tabler icons', code: "\ueb52" },
+  "ti-wifi-0": {iconSet: 'tabler icons', code: "\ueba3" },
+  "ti-wifi-1": {iconSet: 'tabler icons', code: "\ueba4" },
+  "ti-wifi-2": {iconSet: 'tabler icons', code: "\ueba5" },
+  "ti-wifi-off": {iconSet: 'tabler icons', code: "\uecfa" },
+  "ti-wind": {iconSet: 'tabler icons', code: "\uec34" },
+  "ti-wind-off": {iconSet: 'tabler icons', code: "\uf1c7" },
+  "ti-windmill": {iconSet: 'tabler icons', code: "\ued85" },
+  "ti-windmill-filled": {iconSet: 'tabler icons', code: "\uf6b2" },
+  "ti-windmill-off": {iconSet: 'tabler icons', code: "\uf1c8" },
+  "ti-window": {iconSet: 'tabler icons', code: "\uef06" },
+  "ti-window-maximize": {iconSet: 'tabler icons', code: "\uf1f1" },
+  "ti-window-minimize": {iconSet: 'tabler icons', code: "\uf1f2" },
+  "ti-window-off": {iconSet: 'tabler icons', code: "\uf1c9" },
+  "ti-windsock": {iconSet: 'tabler icons', code: "\uf06d" },
+  "ti-wiper": {iconSet: 'tabler icons', code: "\uecab" },
+  "ti-wiper-wash": {iconSet: 'tabler icons', code: "\uecaa" },
+  "ti-woman": {iconSet: 'tabler icons', code: "\ueb53" },
+  "ti-wood": {iconSet: 'tabler icons', code: "\uf359" },
+  "ti-world": {iconSet: 'tabler icons', code: "\ueb54" },
+  "ti-world-bolt": {iconSet: 'tabler icons', code: "\uf9d9" },
+  "ti-world-cancel": {iconSet: 'tabler icons', code: "\uf9da" },
+  "ti-world-check": {iconSet: 'tabler icons', code: "\uf9db" },
+  "ti-world-code": {iconSet: 'tabler icons', code: "\uf9dc" },
+  "ti-world-cog": {iconSet: 'tabler icons', code: "\uf9dd" },
+  "ti-world-dollar": {iconSet: 'tabler icons', code: "\uf9de" },
+  "ti-world-down": {iconSet: 'tabler icons', code: "\uf9df" },
+  "ti-world-download": {iconSet: 'tabler icons', code: "\uef8a" },
+  "ti-world-exclamation": {iconSet: 'tabler icons', code: "\uf9e0" },
+  "ti-world-heart": {iconSet: 'tabler icons', code: "\uf9e1" },
+  "ti-world-latitude": {iconSet: 'tabler icons', code: "\ued2e" },
+  "ti-world-longitude": {iconSet: 'tabler icons', code: "\ued2f" },
+  "ti-world-minus": {iconSet: 'tabler icons', code: "\uf9e2" },
+  "ti-world-off": {iconSet: 'tabler icons', code: "\uf1ca" },
+  "ti-world-pause": {iconSet: 'tabler icons', code: "\uf9e3" },
+  "ti-world-pin": {iconSet: 'tabler icons', code: "\uf9e4" },
+  "ti-world-plus": {iconSet: 'tabler icons', code: "\uf9e5" },
+  "ti-world-question": {iconSet: 'tabler icons', code: "\uf9e6" },
+  "ti-world-search": {iconSet: 'tabler icons', code: "\uf9e7" },
+  "ti-world-share": {iconSet: 'tabler icons', code: "\uf9e8" },
+  "ti-world-star": {iconSet: 'tabler icons', code: "\uf9e9" },
+  "ti-world-up": {iconSet: 'tabler icons', code: "\uf9ea" },
+  "ti-world-upload": {iconSet: 'tabler icons', code: "\uef8b" },
+  "ti-world-www": {iconSet: 'tabler icons', code: "\uf38f" },
+  "ti-world-x": {iconSet: 'tabler icons', code: "\uf9eb" },
+  "ti-wrecking-ball": {iconSet: 'tabler icons', code: "\ued97" },
+  "ti-writing": {iconSet: 'tabler icons', code: "\uef08" },
+  "ti-writing-off": {iconSet: 'tabler icons', code: "\uf1cb" },
+  "ti-writing-sign": {iconSet: 'tabler icons', code: "\uef07" },
+  "ti-writing-sign-off": {iconSet: 'tabler icons', code: "\uf1cc" },
+  "ti-x": {iconSet: 'tabler icons', code: "\ueb55" },
+  "ti-xbox-a": {iconSet: 'tabler icons', code: "\uf2b6" },
+  "ti-xbox-b": {iconSet: 'tabler icons', code: "\uf2b7" },
+  "ti-xbox-x": {iconSet: 'tabler icons', code: "\uf2b8" },
+  "ti-xbox-y": {iconSet: 'tabler icons', code: "\uf2b9" },
+  "ti-xd": {iconSet: 'tabler icons', code: "\ufa33" },
+  "ti-yin-yang": {iconSet: 'tabler icons', code: "\uec35" },
+  "ti-yin-yang-filled": {iconSet: 'tabler icons', code: "\uf785" },
+  "ti-yoga": {iconSet: 'tabler icons', code: "\uf01f" },
+  "ti-zeppelin": {iconSet: 'tabler icons', code: "\uf270" },
+  "ti-zeppelin-off": {iconSet: 'tabler icons', code: "\uf43f" },
+  "ti-zip": {iconSet: 'tabler icons', code: "\uf3b4" },
+  "ti-zodiac-aquarius": {iconSet: 'tabler icons', code: "\uecac" },
+  "ti-zodiac-aries": {iconSet: 'tabler icons', code: "\uecad" },
+  "ti-zodiac-cancer": {iconSet: 'tabler icons', code: "\uecae" },
+  "ti-zodiac-capricorn": {iconSet: 'tabler icons', code: "\uecaf" },
+  "ti-zodiac-gemini": {iconSet: 'tabler icons', code: "\uecb0" },
+  "ti-zodiac-leo": {iconSet: 'tabler icons', code: "\uecb1" },
+  "ti-zodiac-libra": {iconSet: 'tabler icons', code: "\uecb2" },
+  "ti-zodiac-pisces": {iconSet: 'tabler icons', code: "\uecb3" },
+  "ti-zodiac-sagittarius": {iconSet: 'tabler icons', code: "\uecb4" },
+  "ti-zodiac-scorpio": {iconSet: 'tabler icons', code: "\uecb5" },
+  "ti-zodiac-taurus": {iconSet: 'tabler icons', code: "\uecb6" },
+  "ti-zodiac-virgo": {iconSet: 'tabler icons', code: "\uecb7" },
+  "ti-zoom-cancel": {iconSet: 'tabler icons', code: "\uec4d" },
+  "ti-zoom-check": {iconSet: 'tabler icons', code: "\uef09" },
+  "ti-zoom-check-filled": {iconSet: 'tabler icons', code: "\uf786" },
+  "ti-zoom-code": {iconSet: 'tabler icons', code: "\uf07f" },
+  "ti-zoom-exclamation": {iconSet: 'tabler icons', code: "\uf080" },
+  "ti-zoom-filled": {iconSet: 'tabler icons', code: "\uf787" },
+  "ti-zoom-in": {iconSet: 'tabler icons', code: "\ueb56" },
+  "ti-zoom-in-area": {iconSet: 'tabler icons', code: "\uf1dc" },
+  "ti-zoom-in-area-filled": {iconSet: 'tabler icons', code: "\uf788" },
+  "ti-zoom-in-filled": {iconSet: 'tabler icons', code: "\uf789" },
+  "ti-zoom-money": {iconSet: 'tabler icons', code: "\uef0a" },
+  "ti-zoom-out": {iconSet: 'tabler icons', code: "\ueb57" },
+  "ti-zoom-out-area": {iconSet: 'tabler icons', code: "\uf1dd" },
+  "ti-zoom-out-filled": {iconSet: 'tabler icons', code: "\uf78a" },
+  "ti-zoom-pan": {iconSet: 'tabler icons', code: "\uf1de" },
+  "ti-zoom-question": {iconSet: 'tabler icons', code: "\uedeb" },
+  "ti-zoom-replace": {iconSet: 'tabler icons', code: "\uf2a7" },
+  "ti-zoom-reset": {iconSet: 'tabler icons', code: "\uf295" },
+  "ti-zzz": {iconSet: 'tabler icons', code: "\uf228" },
+  // *********************
+  // MATERIAL DESIGN ICONS
+  // *********************
+  "ti-zzz-off": {iconSet: 'tabler icons', code: "\uf440" },
+  "mi-123": {iconSet: 'material icons', code: "\ueb8d"},
+  "mi-360": {iconSet: 'material icons', code: "\ue577"},
+  "mi-10k": {iconSet: 'material icons', code: "\ue951"},
+  "mi-10mp": {iconSet: 'material icons', code: "\ue952"},
+  "mi-11mp": {iconSet: 'material icons', code: "\ue953"},
+  "mi-12mp": {iconSet: 'material icons', code: "\ue954"},
+  "mi-13mp": {iconSet: 'material icons', code: "\ue955"},
+  "mi-14mp": {iconSet: 'material icons', code: "\ue956"},
+  "mi-15mp": {iconSet: 'material icons', code: "\ue957"},
+  "mi-16mp": {iconSet: 'material icons', code: "\ue958"},
+  "mi-17mp": {iconSet: 'material icons', code: "\ue959"},
+  "mi-18_up_rating": {iconSet: 'material icons', code: "\uf8fd"},
+  "mi-18mp": {iconSet: 'material icons', code: "\ue95a"},
+  "mi-19mp": {iconSet: 'material icons', code: "\ue95b"},
+  "mi-1k": {iconSet: 'material icons', code: "\ue95c"},
+  "mi-1k_plus": {iconSet: 'material icons', code: "\ue95d"},
+  "mi-1x_mobiledata": {iconSet: 'material icons', code: "\uefcd"},
+  "mi-20mp": {iconSet: 'material icons', code: "\ue95e"},
+  "mi-21mp": {iconSet: 'material icons', code: "\ue95f"},
+  "mi-22mp": {iconSet: 'material icons', code: "\ue960"},
+  "mi-23mp": {iconSet: 'material icons', code: "\ue961"},
+  "mi-24mp": {iconSet: 'material icons', code: "\ue962"},
+  "mi-2k": {iconSet: 'material icons', code: "\ue963"},
+  "mi-2k_plus": {iconSet: 'material icons', code: "\ue964"},
+  "mi-2mp": {iconSet: 'material icons', code: "\ue965"},
+  "mi-30fps": {iconSet: 'material icons', code: "\uefce"},
+  "mi-30fps_select": {iconSet: 'material icons', code: "\uefcf"},
+  "mi-3d_rotation": {iconSet: 'material icons', code: "\ue84d"},
+  "mi-3g_mobiledata": {iconSet: 'material icons', code: "\uefd0"},
+  "mi-3k": {iconSet: 'material icons', code: "\ue966"},
+  "mi-3k_plus": {iconSet: 'material icons', code: "\ue967"},
+  "mi-3mp": {iconSet: 'material icons', code: "\ue968"},
+  "mi-3p": {iconSet: 'material icons', code: "\uefd1"},
+  "mi-4g_mobiledata": {iconSet: 'material icons', code: "\uefd2"},
+  "mi-4g_plus_mobiledata": {iconSet: 'material icons', code: "\uefd3"},
+  "mi-4k": {iconSet: 'material icons', code: "\ue072"},
+  "mi-4k_plus": {iconSet: 'material icons', code: "\ue969"},
+  "mi-4mp": {iconSet: 'material icons', code: "\ue96a"},
+  "mi-5g": {iconSet: 'material icons', code: "\uef38"},
+  "mi-5k": {iconSet: 'material icons', code: "\ue96b"},
+  "mi-5k_plus": {iconSet: 'material icons', code: "\ue96c"},
+  "mi-5mp": {iconSet: 'material icons', code: "\ue96d"},
+  "mi-60fps": {iconSet: 'material icons', code: "\uefd4"},
+  "mi-60fps_select": {iconSet: 'material icons', code: "\uefd5"},
+  "mi-6_ft_apart": {iconSet: 'material icons', code: "\uf21e"},
+  "mi-6k": {iconSet: 'material icons', code: "\ue96e"},
+  "mi-6k_plus": {iconSet: 'material icons', code: "\ue96f"},
+  "mi-6mp": {iconSet: 'material icons', code: "\ue970"},
+  "mi-7k": {iconSet: 'material icons', code: "\ue971"},
+  "mi-7k_plus": {iconSet: 'material icons', code: "\ue972"},
+  "mi-7mp": {iconSet: 'material icons', code: "\ue973"},
+  "mi-8k": {iconSet: 'material icons', code: "\ue974"},
+  "mi-8k_plus": {iconSet: 'material icons', code: "\ue975"},
+  "mi-8mp": {iconSet: 'material icons', code: "\ue976"},
+  "mi-9k": {iconSet: 'material icons', code: "\ue977"},
+  "mi-9k_plus": {iconSet: 'material icons', code: "\ue978"},
+  "mi-9mp": {iconSet: 'material icons', code: "\ue979"},
+  "mi-abc": {iconSet: 'material icons', code: "\ueb94"},
+  "mi-ac_unit": {iconSet: 'material icons', code: "\ueb3b"},
+  "mi-access_alarm": {iconSet: 'material icons', code: "\ue190"},
+  "mi-access_alarms": {iconSet: 'material icons', code: "\ue191"},
+  "mi-access_time": {iconSet: 'material icons', code: "\ue192"},
+  "mi-access_time_filled": {iconSet: 'material icons', code: "\uefd6"},
+  "mi-accessibility": {iconSet: 'material icons', code: "\ue84e"},
+  "mi-accessibility_new": {iconSet: 'material icons', code: "\ue92c"},
+  "mi-accessible": {iconSet: 'material icons', code: "\ue914"},
+  "mi-accessible_forward": {iconSet: 'material icons', code: "\ue934"},
+  "mi-account_balance": {iconSet: 'material icons', code: "\ue84f"},
+  "mi-account_balance_wallet": {iconSet: 'material icons', code: "\ue850"},
+  "mi-account_box": {iconSet: 'material icons', code: "\ue851"},
+  "mi-account_circle": {iconSet: 'material icons', code: "\ue853"},
+  "mi-account_tree": {iconSet: 'material icons', code: "\ue97a"},
+  "mi-ad_units": {iconSet: 'material icons', code: "\uef39"},
+  "mi-adb": {iconSet: 'material icons', code: "\ue60e"},
+  "mi-add": {iconSet: 'material icons', code: "\ue145"},
+  "mi-add_a_photo": {iconSet: 'material icons', code: "\ue439"},
+  "mi-add_alarm": {iconSet: 'material icons', code: "\ue193"},
+  "mi-add_alert": {iconSet: 'material icons', code: "\ue003"},
+  "mi-add_box": {iconSet: 'material icons', code: "\ue146"},
+  "mi-add_business": {iconSet: 'material icons', code: "\ue729"},
+  "mi-add_call": {iconSet: 'material icons', code: "\ue0e8"},
+  "mi-add_card": {iconSet: 'material icons', code: "\ueb86"},
+  "mi-add_chart": {iconSet: 'material icons', code: "\ue97b"},
+  "mi-add_circle": {iconSet: 'material icons', code: "\ue147"},
+  "mi-add_circle_outline": {iconSet: 'material icons', code: "\ue148"},
+  "mi-add_comment": {iconSet: 'material icons', code: "\ue266"},
+  "mi-add_home": {iconSet: 'material icons', code: "\uf8eb"},
+  "mi-add_home_work": {iconSet: 'material icons', code: "\uf8ed"},
+  "mi-add_ic_call": {iconSet: 'material icons', code: "\ue97c"},
+  "mi-add_link": {iconSet: 'material icons', code: "\ue178"},
+  "mi-add_location": {iconSet: 'material icons', code: "\ue567"},
+  "mi-add_location_alt": {iconSet: 'material icons', code: "\uef3a"},
+  "mi-add_moderator": {iconSet: 'material icons', code: "\ue97d"},
+  "mi-add_photo_alternate": {iconSet: 'material icons', code: "\ue43e"},
+  "mi-add_reaction": {iconSet: 'material icons', code: "\ue1d3"},
+  "mi-add_road": {iconSet: 'material icons', code: "\uef3b"},
+  "mi-add_shopping_cart": {iconSet: 'material icons', code: "\ue854"},
+  "mi-add_task": {iconSet: 'material icons', code: "\uf23a"},
+  "mi-add_to_drive": {iconSet: 'material icons', code: "\ue65c"},
+  "mi-add_to_home_screen": {iconSet: 'material icons', code: "\ue1fe"},
+  "mi-add_to_photos": {iconSet: 'material icons', code: "\ue39d"},
+  "mi-add_to_queue": {iconSet: 'material icons', code: "\ue05c"},
+  "mi-addchart": {iconSet: 'material icons', code: "\uef3c"},
+  "mi-adf_scanner": {iconSet: 'material icons', code: "\ueada"},
+  "mi-adjust": {iconSet: 'material icons', code: "\ue39e"},
+  "mi-admin_panel_settings": {iconSet: 'material icons', code: "\uef3d"},
+  "mi-adobe": {iconSet: 'material icons', code: "\uea96"},
+  "mi-ads_click": {iconSet: 'material icons', code: "\ue762"},
+  "mi-agriculture": {iconSet: 'material icons', code: "\uea79"},
+  "mi-air": {iconSet: 'material icons', code: "\uefd8"},
+  "mi-airline_seat_flat": {iconSet: 'material icons', code: "\ue630"},
+  "mi-airline_seat_flat_angled": {iconSet: 'material icons', code: "\ue631"},
+  "mi-airline_seat_individual_suite": {iconSet: 'material icons', code: "\ue632"},
+  "mi-airline_seat_legroom_extra": {iconSet: 'material icons', code: "\ue633"},
+  "mi-airline_seat_legroom_normal": {iconSet: 'material icons', code: "\ue634"},
+  "mi-airline_seat_legroom_reduced": {iconSet: 'material icons', code: "\ue635"},
+  "mi-airline_seat_recline_extra": {iconSet: 'material icons', code: "\ue636"},
+  "mi-airline_seat_recline_normal": {iconSet: 'material icons', code: "\ue637"},
+  "mi-airline_stops": {iconSet: 'material icons', code: "\ue7d0"},
+  "mi-airlines": {iconSet: 'material icons', code: "\ue7ca"},
+  "mi-airplane_ticket": {iconSet: 'material icons', code: "\uefd9"},
+  "mi-airplanemode_active": {iconSet: 'material icons', code: "\ue195"},
+  "mi-airplanemode_inactive": {iconSet: 'material icons', code: "\ue194"},
+  "mi-airplanemode_off": {iconSet: 'material icons', code: "\ue194"},
+  "mi-airplanemode_on": {iconSet: 'material icons', code: "\ue195"},
+  "mi-airplay": {iconSet: 'material icons', code: "\ue055"},
+  "mi-airport_shuttle": {iconSet: 'material icons', code: "\ueb3c"},
+  "mi-alarm": {iconSet: 'material icons', code: "\ue855"},
+  "mi-alarm_add": {iconSet: 'material icons', code: "\ue856"},
+  "mi-alarm_off": {iconSet: 'material icons', code: "\ue857"},
+  "mi-alarm_on": {iconSet: 'material icons', code: "\ue858"},
+  "mi-album": {iconSet: 'material icons', code: "\ue019"},
+  "mi-align_horizontal_center": {iconSet: 'material icons', code: "\ue00f"},
+  "mi-align_horizontal_left": {iconSet: 'material icons', code: "\ue00d"},
+  "mi-align_horizontal_right": {iconSet: 'material icons', code: "\ue010"},
+  "mi-align_vertical_bottom": {iconSet: 'material icons', code: "\ue015"},
+  "mi-align_vertical_center": {iconSet: 'material icons', code: "\ue011"},
+  "mi-align_vertical_top": {iconSet: 'material icons', code: "\ue00c"},
+  "mi-all_inbox": {iconSet: 'material icons', code: "\ue97f"},
+  "mi-all_inclusive": {iconSet: 'material icons', code: "\ueb3d"},
+  "mi-all_out": {iconSet: 'material icons', code: "\ue90b"},
+  "mi-alt_route": {iconSet: 'material icons', code: "\uf184"},
+  "mi-alternate_email": {iconSet: 'material icons', code: "\ue0e6"},
+  "mi-amp_stories": {iconSet: 'material icons', code: "\uea13"},
+  "mi-analytics": {iconSet: 'material icons', code: "\uef3e"},
+  "mi-anchor": {iconSet: 'material icons', code: "\uf1cd"},
+  "mi-android": {iconSet: 'material icons', code: "\ue859"},
+  "mi-animation": {iconSet: 'material icons', code: "\ue71c"},
+  "mi-announcement": {iconSet: 'material icons', code: "\ue85a"},
+  "mi-aod": {iconSet: 'material icons', code: "\uefda"},
+  "mi-apartment": {iconSet: 'material icons', code: "\uea40"},
+  "mi-api": {iconSet: 'material icons', code: "\uf1b7"},
+  "mi-app_blocking": {iconSet: 'material icons', code: "\uef3f"},
+  "mi-app_registration": {iconSet: 'material icons', code: "\uef40"},
+  "mi-app_settings_alt": {iconSet: 'material icons', code: "\uef41"},
+  "mi-app_shortcut": {iconSet: 'material icons', code: "\ueae4"},
+  "mi-apple": {iconSet: 'material icons', code: "\uea80"},
+  "mi-approval": {iconSet: 'material icons', code: "\ue982"},
+  "mi-apps": {iconSet: 'material icons', code: "\ue5c3"},
+  "mi-apps_outage": {iconSet: 'material icons', code: "\ue7cc"},
+  "mi-architecture": {iconSet: 'material icons', code: "\uea3b"},
+  "mi-archive": {iconSet: 'material icons', code: "\ue149"},
+  "mi-area_chart": {iconSet: 'material icons', code: "\ue770"},
+  "mi-arrow_back": {iconSet: 'material icons', code: "\ue5c4"},
+  "mi-arrow_back_ios": {iconSet: 'material icons', code: "\ue5e0"},
+  "mi-arrow_back_ios_new": {iconSet: 'material icons', code: "\ue2ea"},
+  "mi-arrow_circle_down": {iconSet: 'material icons', code: "\uf181"},
+  "mi-arrow_circle_left": {iconSet: 'material icons', code: "\ueaa7"},
+  "mi-arrow_circle_right": {iconSet: 'material icons', code: "\ueaaa"},
+  "mi-arrow_circle_up": {iconSet: 'material icons', code: "\uf182"},
+  "mi-arrow_downward": {iconSet: 'material icons', code: "\ue5db"},
+  "mi-arrow_drop_down": {iconSet: 'material icons', code: "\ue5c5"},
+  "mi-arrow_drop_down_circle": {iconSet: 'material icons', code: "\ue5c6"},
+  "mi-arrow_drop_up": {iconSet: 'material icons', code: "\ue5c7"},
+  "mi-arrow_forward": {iconSet: 'material icons', code: "\ue5c8"},
+  "mi-arrow_forward_ios": {iconSet: 'material icons', code: "\ue5e1"},
+  "mi-arrow_left": {iconSet: 'material icons', code: "\ue5de"},
+  "mi-arrow_outward": {iconSet: 'material icons', code: "\uf8ce"},
+  "mi-arrow_right": {iconSet: 'material icons', code: "\ue5df"},
+  "mi-arrow_right_alt": {iconSet: 'material icons', code: "\ue941"},
+  "mi-arrow_upward": {iconSet: 'material icons', code: "\ue5d8"},
+  "mi-art_track": {iconSet: 'material icons', code: "\ue060"},
+  "mi-article": {iconSet: 'material icons', code: "\uef42"},
+  "mi-aspect_ratio": {iconSet: 'material icons', code: "\ue85b"},
+  "mi-assessment": {iconSet: 'material icons', code: "\ue85c"},
+  "mi-assignment": {iconSet: 'material icons', code: "\ue85d"},
+  "mi-assignment_add": {iconSet: 'material icons', code: "\uf848"},
+  "mi-assignment_ind": {iconSet: 'material icons', code: "\ue85e"},
+  "mi-assignment_late": {iconSet: 'material icons', code: "\ue85f"},
+  "mi-assignment_return": {iconSet: 'material icons', code: "\ue860"},
+  "mi-assignment_returned": {iconSet: 'material icons', code: "\ue861"},
+  "mi-assignment_turned_in": {iconSet: 'material icons', code: "\ue862"},
+  "mi-assist_walker": {iconSet: 'material icons', code: "\uf8d5"},
+  "mi-assistant": {iconSet: 'material icons', code: "\ue39f"},
+  "mi-assistant_direction": {iconSet: 'material icons', code: "\ue988"},
+  "mi-assistant_navigation": {iconSet: 'material icons', code: "\ue989"},
+  "mi-assistant_photo": {iconSet: 'material icons', code: "\ue3a0"},
+  "mi-assured_workload": {iconSet: 'material icons', code: "\ueb6f"},
+  "mi-atm": {iconSet: 'material icons', code: "\ue573"},
+  "mi-attach_email": {iconSet: 'material icons', code: "\uea5e"},
+  "mi-attach_file": {iconSet: 'material icons', code: "\ue226"},
+  "mi-attach_money": {iconSet: 'material icons', code: "\ue227"},
+  "mi-attachment": {iconSet: 'material icons', code: "\ue2bc"},
+  "mi-attractions": {iconSet: 'material icons', code: "\uea52"},
+  "mi-attribution": {iconSet: 'material icons', code: "\uefdb"},
+  "mi-audio_file": {iconSet: 'material icons', code: "\ueb82"},
+  "mi-audiotrack": {iconSet: 'material icons', code: "\ue3a1"},
+  "mi-auto_awesome": {iconSet: 'material icons', code: "\ue65f"},
+  "mi-auto_awesome_mosaic": {iconSet: 'material icons', code: "\ue660"},
+  "mi-auto_awesome_motion": {iconSet: 'material icons', code: "\ue661"},
+  "mi-auto_delete": {iconSet: 'material icons', code: "\uea4c"},
+  "mi-auto_fix_high": {iconSet: 'material icons', code: "\ue663"},
+  "mi-auto_fix_normal": {iconSet: 'material icons', code: "\ue664"},
+  "mi-auto_fix_off": {iconSet: 'material icons', code: "\ue665"},
+  "mi-auto_graph": {iconSet: 'material icons', code: "\ue4fb"},
+  "mi-auto_mode": {iconSet: 'material icons', code: "\uec20"},
+  "mi-auto_stories": {iconSet: 'material icons', code: "\ue666"},
+  "mi-autofps_select": {iconSet: 'material icons', code: "\uefdc"},
+  "mi-autorenew": {iconSet: 'material icons', code: "\ue863"},
+  "mi-av_timer": {iconSet: 'material icons', code: "\ue01b"},
+  "mi-baby_changing_station": {iconSet: 'material icons', code: "\uf19b"},
+  "mi-back_hand": {iconSet: 'material icons', code: "\ue764"},
+  "mi-backpack": {iconSet: 'material icons', code: "\uf19c"},
+  "mi-backspace": {iconSet: 'material icons', code: "\ue14a"},
+  "mi-backup": {iconSet: 'material icons', code: "\ue864"},
+  "mi-backup_table": {iconSet: 'material icons', code: "\uef43"},
+  "mi-badge": {iconSet: 'material icons', code: "\uea67"},
+  "mi-bakery_dining": {iconSet: 'material icons', code: "\uea53"},
+  "mi-balance": {iconSet: 'material icons', code: "\ueaf6"},
+  "mi-balcony": {iconSet: 'material icons', code: "\ue58f"},
+  "mi-ballot": {iconSet: 'material icons', code: "\ue172"},
+  "mi-bar_chart": {iconSet: 'material icons', code: "\ue26b"},
+  "mi-barcode_reader": {iconSet: 'material icons', code: "\uf85c"},
+  "mi-batch_prediction": {iconSet: 'material icons', code: "\uf0f5"},
+  "mi-bathroom": {iconSet: 'material icons', code: "\uefdd"},
+  "mi-bathtub": {iconSet: 'material icons', code: "\uea41"},
+  "mi-battery_0_bar": {iconSet: 'material icons', code: "\uebdc"},
+  "mi-battery_1_bar": {iconSet: 'material icons', code: "\uebd9"},
+  "mi-battery_20": {iconSet: 'material icons', code: "\uf09c"},
+  "mi-battery_2_bar": {iconSet: 'material icons', code: "\uebe0"},
+  "mi-battery_30": {iconSet: 'material icons', code: "\uf09d"},
+  "mi-battery_3_bar": {iconSet: 'material icons', code: "\uebdd"},
+  "mi-battery_4_bar": {iconSet: 'material icons', code: "\uebe2"},
+  "mi-battery_50": {iconSet: 'material icons', code: "\uf09e"},
+  "mi-battery_5_bar": {iconSet: 'material icons', code: "\uebd4"},
+  "mi-battery_60": {iconSet: 'material icons', code: "\uf09f"},
+  "mi-battery_6_bar": {iconSet: 'material icons', code: "\uebd2"},
+  "mi-battery_80": {iconSet: 'material icons', code: "\uf0a0"},
+  "mi-battery_90": {iconSet: 'material icons', code: "\uf0a1"},
+  "mi-battery_alert": {iconSet: 'material icons', code: "\ue19c"},
+  "mi-battery_charging_20": {iconSet: 'material icons', code: "\uf0a2"},
+  "mi-battery_charging_30": {iconSet: 'material icons', code: "\uf0a3"},
+  "mi-battery_charging_50": {iconSet: 'material icons', code: "\uf0a4"},
+  "mi-battery_charging_60": {iconSet: 'material icons', code: "\uf0a5"},
+  "mi-battery_charging_80": {iconSet: 'material icons', code: "\uf0a6"},
+  "mi-battery_charging_90": {iconSet: 'material icons', code: "\uf0a7"},
+  "mi-battery_charging_full": {iconSet: 'material icons', code: "\ue1a3"},
+  "mi-battery_full": {iconSet: 'material icons', code: "\ue1a4"},
+  "mi-battery_saver": {iconSet: 'material icons', code: "\uefde"},
+  "mi-battery_std": {iconSet: 'material icons', code: "\ue1a5"},
+  "mi-battery_unknown": {iconSet: 'material icons', code: "\ue1a6"},
+  "mi-beach_access": {iconSet: 'material icons', code: "\ueb3e"},
+  "mi-bed": {iconSet: 'material icons', code: "\uefdf"},
+  "mi-bedroom_baby": {iconSet: 'material icons', code: "\uefe0"},
+  "mi-bedroom_child": {iconSet: 'material icons', code: "\uefe1"},
+  "mi-bedroom_parent": {iconSet: 'material icons', code: "\uefe2"},
+  "mi-bedtime": {iconSet: 'material icons', code: "\uef44"},
+  "mi-bedtime_off": {iconSet: 'material icons', code: "\ueb76"},
+  "mi-beenhere": {iconSet: 'material icons', code: "\ue52d"},
+  "mi-bento": {iconSet: 'material icons', code: "\uf1f4"},
+  "mi-bike_scooter": {iconSet: 'material icons', code: "\uef45"},
+  "mi-biotech": {iconSet: 'material icons', code: "\uea3a"},
+  "mi-blender": {iconSet: 'material icons', code: "\uefe3"},
+  "mi-blind": {iconSet: 'material icons', code: "\uf8d6"},
+  "mi-blinds": {iconSet: 'material icons', code: "\ue286"},
+  "mi-blinds_closed": {iconSet: 'material icons', code: "\uec1f"},
+  "mi-block": {iconSet: 'material icons', code: "\ue14b"},
+  "mi-block_flipped": {iconSet: 'material icons', code: "\uef46"},
+  "mi-bloodtype": {iconSet: 'material icons', code: "\uefe4"},
+  "mi-bluetooth": {iconSet: 'material icons', code: "\ue1a7"},
+  "mi-bluetooth_audio": {iconSet: 'material icons', code: "\ue60f"},
+  "mi-bluetooth_connected": {iconSet: 'material icons', code: "\ue1a8"},
+  "mi-bluetooth_disabled": {iconSet: 'material icons', code: "\ue1a9"},
+  "mi-bluetooth_drive": {iconSet: 'material icons', code: "\uefe5"},
+  "mi-bluetooth_searching": {iconSet: 'material icons', code: "\ue1aa"},
+  "mi-blur_circular": {iconSet: 'material icons', code: "\ue3a2"},
+  "mi-blur_linear": {iconSet: 'material icons', code: "\ue3a3"},
+  "mi-blur_off": {iconSet: 'material icons', code: "\ue3a4"},
+  "mi-blur_on": {iconSet: 'material icons', code: "\ue3a5"},
+  "mi-bolt": {iconSet: 'material icons', code: "\uea0b"},
+  "mi-book": {iconSet: 'material icons', code: "\ue865"},
+  "mi-book_online": {iconSet: 'material icons', code: "\uf217"},
+  "mi-bookmark": {iconSet: 'material icons', code: "\ue866"},
+  "mi-bookmark_add": {iconSet: 'material icons', code: "\ue598"},
+  "mi-bookmark_added": {iconSet: 'material icons', code: "\ue599"},
+  "mi-bookmark_border": {iconSet: 'material icons', code: "\ue867"},
+  "mi-bookmark_outline": {iconSet: 'material icons', code: "\ue867"},
+  "mi-bookmark_remove": {iconSet: 'material icons', code: "\ue59a"},
+  "mi-bookmarks": {iconSet: 'material icons', code: "\ue98b"},
+  "mi-border_all": {iconSet: 'material icons', code: "\ue228"},
+  "mi-border_bottom": {iconSet: 'material icons', code: "\ue229"},
+  "mi-border_clear": {iconSet: 'material icons', code: "\ue22a"},
+  "mi-border_color": {iconSet: 'material icons', code: "\ue22b"},
+  "mi-border_horizontal": {iconSet: 'material icons', code: "\ue22c"},
+  "mi-border_inner": {iconSet: 'material icons', code: "\ue22d"},
+  "mi-border_left": {iconSet: 'material icons', code: "\ue22e"},
+  "mi-border_outer": {iconSet: 'material icons', code: "\ue22f"},
+  "mi-border_right": {iconSet: 'material icons', code: "\ue230"},
+  "mi-border_style": {iconSet: 'material icons', code: "\ue231"},
+  "mi-border_top": {iconSet: 'material icons', code: "\ue232"},
+  "mi-border_vertical": {iconSet: 'material icons', code: "\ue233"},
+  "mi-boy": {iconSet: 'material icons', code: "\ueb67"},
+  "mi-branding_watermark": {iconSet: 'material icons', code: "\ue06b"},
+  "mi-breakfast_dining": {iconSet: 'material icons', code: "\uea54"},
+  "mi-brightness_1": {iconSet: 'material icons', code: "\ue3a6"},
+  "mi-brightness_2": {iconSet: 'material icons', code: "\ue3a7"},
+  "mi-brightness_3": {iconSet: 'material icons', code: "\ue3a8"},
+  "mi-brightness_4": {iconSet: 'material icons', code: "\ue3a9"},
+  "mi-brightness_5": {iconSet: 'material icons', code: "\ue3aa"},
+  "mi-brightness_6": {iconSet: 'material icons', code: "\ue3ab"},
+  "mi-brightness_7": {iconSet: 'material icons', code: "\ue3ac"},
+  "mi-brightness_auto": {iconSet: 'material icons', code: "\ue1ab"},
+  "mi-brightness_high": {iconSet: 'material icons', code: "\ue1ac"},
+  "mi-brightness_low": {iconSet: 'material icons', code: "\ue1ad"},
+  "mi-brightness_medium": {iconSet: 'material icons', code: "\ue1ae"},
+  "mi-broadcast_on_home": {iconSet: 'material icons', code: "\uf8f8"},
+  "mi-broadcast_on_personal": {iconSet: 'material icons', code: "\uf8f9"},
+  "mi-broken_image": {iconSet: 'material icons', code: "\ue3ad"},
+  "mi-browse_gallery": {iconSet: 'material icons', code: "\uebd1"},
+  "mi-browser_not_supported": {iconSet: 'material icons', code: "\uef47"},
+  "mi-browser_updated": {iconSet: 'material icons', code: "\ue7cf"},
+  "mi-brunch_dining": {iconSet: 'material icons', code: "\uea73"},
+  "mi-brush": {iconSet: 'material icons', code: "\ue3ae"},
+  "mi-bubble_chart": {iconSet: 'material icons', code: "\ue6dd"},
+  "mi-bug_report": {iconSet: 'material icons', code: "\ue868"},
+  "mi-build": {iconSet: 'material icons', code: "\ue869"},
+  "mi-build_circle": {iconSet: 'material icons', code: "\uef48"},
+  "mi-bungalow": {iconSet: 'material icons', code: "\ue591"},
+  "mi-burst_mode": {iconSet: 'material icons', code: "\ue43c"},
+  "mi-bus_alert": {iconSet: 'material icons', code: "\ue98f"},
+  "mi-business": {iconSet: 'material icons', code: "\ue0af"},
+  "mi-business_center": {iconSet: 'material icons', code: "\ueb3f"},
+  "mi-cabin": {iconSet: 'material icons', code: "\ue589"},
+  "mi-cable": {iconSet: 'material icons', code: "\uefe6"},
+  "mi-cached": {iconSet: 'material icons', code: "\ue86a"},
+  "mi-cake": {iconSet: 'material icons', code: "\ue7e9"},
+  "mi-calculate": {iconSet: 'material icons', code: "\uea5f"},
+  "mi-calendar_month": {iconSet: 'material icons', code: "\uebcc"},
+  "mi-calendar_today": {iconSet: 'material icons', code: "\ue935"},
+  "mi-calendar_view_day": {iconSet: 'material icons', code: "\ue936"},
+  "mi-calendar_view_month": {iconSet: 'material icons', code: "\uefe7"},
+  "mi-calendar_view_week": {iconSet: 'material icons', code: "\uefe8"},
+  "mi-call": {iconSet: 'material icons', code: "\ue0b0"},
+  "mi-call_end": {iconSet: 'material icons', code: "\ue0b1"},
+  "mi-call_made": {iconSet: 'material icons', code: "\ue0b2"},
+  "mi-call_merge": {iconSet: 'material icons', code: "\ue0b3"},
+  "mi-call_missed": {iconSet: 'material icons', code: "\ue0b4"},
+  "mi-call_missed_outgoing": {iconSet: 'material icons', code: "\ue0e4"},
+  "mi-call_received": {iconSet: 'material icons', code: "\ue0b5"},
+  "mi-call_split": {iconSet: 'material icons', code: "\ue0b6"},
+  "mi-call_to_action": {iconSet: 'material icons', code: "\ue06c"},
+  "mi-camera": {iconSet: 'material icons', code: "\ue3af"},
+  "mi-camera_alt": {iconSet: 'material icons', code: "\ue3b0"},
+  "mi-camera_enhance": {iconSet: 'material icons', code: "\ue8fc"},
+  "mi-camera_front": {iconSet: 'material icons', code: "\ue3b1"},
+  "mi-camera_indoor": {iconSet: 'material icons', code: "\uefe9"},
+  "mi-camera_outdoor": {iconSet: 'material icons', code: "\uefea"},
+  "mi-camera_rear": {iconSet: 'material icons', code: "\ue3b2"},
+  "mi-camera_roll": {iconSet: 'material icons', code: "\ue3b3"},
+  "mi-cameraswitch": {iconSet: 'material icons', code: "\uefeb"},
+  "mi-campaign": {iconSet: 'material icons', code: "\uef49"},
+  "mi-cancel": {iconSet: 'material icons', code: "\ue5c9"},
+  "mi-cancel_presentation": {iconSet: 'material icons', code: "\ue0e9"},
+  "mi-cancel_schedule_send": {iconSet: 'material icons', code: "\uea39"},
+  "mi-candlestick_chart": {iconSet: 'material icons', code: "\uead4"},
+  "mi-car_crash": {iconSet: 'material icons', code: "\uebf2"},
+  "mi-car_rental": {iconSet: 'material icons', code: "\uea55"},
+  "mi-car_repair": {iconSet: 'material icons', code: "\uea56"},
+  "mi-card_giftcard": {iconSet: 'material icons', code: "\ue8f6"},
+  "mi-card_membership": {iconSet: 'material icons', code: "\ue8f7"},
+  "mi-card_travel": {iconSet: 'material icons', code: "\ue8f8"},
+  "mi-carpenter": {iconSet: 'material icons', code: "\uf1f8"},
+  "mi-cases": {iconSet: 'material icons', code: "\ue992"},
+  "mi-casino": {iconSet: 'material icons', code: "\ueb40"},
+  "mi-cast": {iconSet: 'material icons', code: "\ue307"},
+  "mi-cast_connected": {iconSet: 'material icons', code: "\ue308"},
+  "mi-cast_for_education": {iconSet: 'material icons', code: "\uefec"},
+  "mi-castle": {iconSet: 'material icons', code: "\ueab1"},
+  "mi-catching_pokemon": {iconSet: 'material icons', code: "\ue508"},
+  "mi-category": {iconSet: 'material icons', code: "\ue574"},
+  "mi-celebration": {iconSet: 'material icons', code: "\uea65"},
+  "mi-cell_tower": {iconSet: 'material icons', code: "\uebba"},
+  "mi-cell_wifi": {iconSet: 'material icons', code: "\ue0ec"},
+  "mi-center_focus_strong": {iconSet: 'material icons', code: "\ue3b4"},
+  "mi-center_focus_weak": {iconSet: 'material icons', code: "\ue3b5"},
+  "mi-chair": {iconSet: 'material icons', code: "\uefed"},
+  "mi-chair_alt": {iconSet: 'material icons', code: "\uefee"},
+  "mi-chalet": {iconSet: 'material icons', code: "\ue585"},
+  "mi-change_circle": {iconSet: 'material icons', code: "\ue2e7"},
+  "mi-change_history": {iconSet: 'material icons', code: "\ue86b"},
+  "mi-charging_station": {iconSet: 'material icons', code: "\uf19d"},
+  "mi-chat": {iconSet: 'material icons', code: "\ue0b7"},
+  "mi-chat_bubble": {iconSet: 'material icons', code: "\ue0ca"},
+  "mi-chat_bubble_outline": {iconSet: 'material icons', code: "\ue0cb"},
+  "mi-check": {iconSet: 'material icons', code: "\ue5ca"},
+  "mi-check_box": {iconSet: 'material icons', code: "\ue834"},
+  "mi-check_box_outline_blank": {iconSet: 'material icons', code: "\ue835"},
+  "mi-check_circle": {iconSet: 'material icons', code: "\ue86c"},
+  "mi-check_circle_outline": {iconSet: 'material icons', code: "\ue92d"},
+  "mi-checklist": {iconSet: 'material icons', code: "\ue6b1"},
+  "mi-checklist_rtl": {iconSet: 'material icons', code: "\ue6b3"},
+  "mi-checkroom": {iconSet: 'material icons', code: "\uf19e"},
+  "mi-chevron_left": {iconSet: 'material icons', code: "\ue5cb"},
+  "mi-chevron_right": {iconSet: 'material icons', code: "\ue5cc"},
+  "mi-child_care": {iconSet: 'material icons', code: "\ueb41"},
+  "mi-child_friendly": {iconSet: 'material icons', code: "\ueb42"},
+  "mi-chrome_reader_mode": {iconSet: 'material icons', code: "\ue86d"},
+  "mi-church": {iconSet: 'material icons', code: "\ueaae"},
+  "mi-circle": {iconSet: 'material icons', code: "\uef4a"},
+  "mi-circle_notifications": {iconSet: 'material icons', code: "\ue994"},
+  "mi-class": {iconSet: 'material icons', code: "\ue86e"},
+  "mi-clean_hands": {iconSet: 'material icons', code: "\uf21f"},
+  "mi-cleaning_services": {iconSet: 'material icons', code: "\uf0ff"},
+  "mi-clear": {iconSet: 'material icons', code: "\ue14c"},
+  "mi-clear_all": {iconSet: 'material icons', code: "\ue0b8"},
+  "mi-close": {iconSet: 'material icons', code: "\ue5cd"},
+  "mi-close_fullscreen": {iconSet: 'material icons', code: "\uf1cf"},
+  "mi-closed_caption": {iconSet: 'material icons', code: "\ue01c"},
+  "mi-closed_caption_disabled": {iconSet: 'material icons', code: "\uf1dc"},
+  "mi-closed_caption_off": {iconSet: 'material icons', code: "\ue996"},
+  "mi-cloud": {iconSet: 'material icons', code: "\ue2bd"},
+  "mi-cloud_circle": {iconSet: 'material icons', code: "\ue2be"},
+  "mi-cloud_done": {iconSet: 'material icons', code: "\ue2bf"},
+  "mi-cloud_download": {iconSet: 'material icons', code: "\ue2c0"},
+  "mi-cloud_off": {iconSet: 'material icons', code: "\ue2c1"},
+  "mi-cloud_queue": {iconSet: 'material icons', code: "\ue2c2"},
+  "mi-cloud_sync": {iconSet: 'material icons', code: "\ueb5a"},
+  "mi-cloud_upload": {iconSet: 'material icons', code: "\ue2c3"},
+  "mi-cloudy_snowing": {iconSet: 'material icons', code: "\ue810"},
+  "mi-co2": {iconSet: 'material icons', code: "\ue7b0"},
+  "mi-co_present": {iconSet: 'material icons', code: "\ueaf0"},
+  "mi-code": {iconSet: 'material icons', code: "\ue86f"},
+  "mi-code_off": {iconSet: 'material icons', code: "\ue4f3"},
+  "mi-coffee": {iconSet: 'material icons', code: "\uefef"},
+  "mi-coffee_maker": {iconSet: 'material icons', code: "\ueff0"},
+  "mi-collections": {iconSet: 'material icons', code: "\ue3b6"},
+  "mi-collections_bookmark": {iconSet: 'material icons', code: "\ue431"},
+  "mi-color_lens": {iconSet: 'material icons', code: "\ue3b7"},
+  "mi-colorize": {iconSet: 'material icons', code: "\ue3b8"},
+  "mi-comment": {iconSet: 'material icons', code: "\ue0b9"},
+  "mi-comment_bank": {iconSet: 'material icons', code: "\uea4e"},
+  "mi-comments_disabled": {iconSet: 'material icons', code: "\ue7a2"},
+  "mi-commit": {iconSet: 'material icons', code: "\ueaf5"},
+  "mi-commute": {iconSet: 'material icons', code: "\ue940"},
+  "mi-compare": {iconSet: 'material icons', code: "\ue3b9"},
+  "mi-compare_arrows": {iconSet: 'material icons', code: "\ue915"},
+  "mi-compass_calibration": {iconSet: 'material icons', code: "\ue57c"},
+  "mi-compost": {iconSet: 'material icons', code: "\ue761"},
+  "mi-compress": {iconSet: 'material icons', code: "\ue94d"},
+  "mi-computer": {iconSet: 'material icons', code: "\ue30a"},
+  "mi-confirmation_num": {iconSet: 'material icons', code: "\ue638"},
+  "mi-confirmation_number": {iconSet: 'material icons', code: "\ue638"},
+  "mi-connect_without_contact": {iconSet: 'material icons', code: "\uf223"},
+  "mi-connected_tv": {iconSet: 'material icons', code: "\ue998"},
+  "mi-connecting_airports": {iconSet: 'material icons', code: "\ue7c9"},
+  "mi-construction": {iconSet: 'material icons', code: "\uea3c"},
+  "mi-contact_emergency": {iconSet: 'material icons', code: "\uf8d1"},
+  "mi-contact_mail": {iconSet: 'material icons', code: "\ue0d0"},
+  "mi-contact_page": {iconSet: 'material icons', code: "\uf22e"},
+  "mi-contact_phone": {iconSet: 'material icons', code: "\ue0cf"},
+  "mi-contact_support": {iconSet: 'material icons', code: "\ue94c"},
+  "mi-contactless": {iconSet: 'material icons', code: "\uea71"},
+  "mi-contacts": {iconSet: 'material icons', code: "\ue0ba"},
+  "mi-content_copy": {iconSet: 'material icons', code: "\ue14d"},
+  "mi-content_cut": {iconSet: 'material icons', code: "\ue14e"},
+  "mi-content_paste": {iconSet: 'material icons', code: "\ue14f"},
+  "mi-content_paste_go": {iconSet: 'material icons', code: "\uea8e"},
+  "mi-content_paste_off": {iconSet: 'material icons', code: "\ue4f8"},
+  "mi-content_paste_search": {iconSet: 'material icons', code: "\uea9b"},
+  "mi-contrast": {iconSet: 'material icons', code: "\ueb37"},
+  "mi-control_camera": {iconSet: 'material icons', code: "\ue074"},
+  "mi-control_point": {iconSet: 'material icons', code: "\ue3ba"},
+  "mi-control_point_duplicate": {iconSet: 'material icons', code: "\ue3bb"},
+  "mi-conveyor_belt": {iconSet: 'material icons', code: "\uf867"},
+  "mi-cookie": {iconSet: 'material icons', code: "\ueaac"},
+  "mi-copy": {iconSet: 'material icons', code: "\uf08a"},
+  "mi-copy_all": {iconSet: 'material icons', code: "\ue2ec"},
+  "mi-copyright": {iconSet: 'material icons', code: "\ue90c"},
+  "mi-coronavirus": {iconSet: 'material icons', code: "\uf221"},
+  "mi-corporate_fare": {iconSet: 'material icons', code: "\uf1d0"},
+  "mi-cottage": {iconSet: 'material icons', code: "\ue587"},
+  "mi-countertops": {iconSet: 'material icons', code: "\uf1f7"},
+  "mi-create": {iconSet: 'material icons', code: "\ue150"},
+  "mi-create_new_folder": {iconSet: 'material icons', code: "\ue2cc"},
+  "mi-credit_card": {iconSet: 'material icons', code: "\ue870"},
+  "mi-credit_card_off": {iconSet: 'material icons', code: "\ue4f4"},
+  "mi-credit_score": {iconSet: 'material icons', code: "\ueff1"},
+  "mi-crib": {iconSet: 'material icons', code: "\ue588"},
+  "mi-crisis_alert": {iconSet: 'material icons', code: "\uebe9"},
+  "mi-crop": {iconSet: 'material icons', code: "\ue3be"},
+  "mi-crop_16_9": {iconSet: 'material icons', code: "\ue3bc"},
+  "mi-crop_3_2": {iconSet: 'material icons', code: "\ue3bd"},
+  "mi-crop_5_4": {iconSet: 'material icons', code: "\ue3bf"},
+  "mi-crop_7_5": {iconSet: 'material icons', code: "\ue3c0"},
+  "mi-crop_din": {iconSet: 'material icons', code: "\ue3c1"},
+  "mi-crop_free": {iconSet: 'material icons', code: "\ue3c2"},
+  "mi-crop_landscape": {iconSet: 'material icons', code: "\ue3c3"},
+  "mi-crop_original": {iconSet: 'material icons', code: "\ue3c4"},
+  "mi-crop_portrait": {iconSet: 'material icons', code: "\ue3c5"},
+  "mi-crop_rotate": {iconSet: 'material icons', code: "\ue437"},
+  "mi-crop_square": {iconSet: 'material icons', code: "\ue3c6"},
+  "mi-cruelty_free": {iconSet: 'material icons', code: "\ue799"},
+  "mi-css": {iconSet: 'material icons', code: "\ueb93"},
+  "mi-currency_bitcoin": {iconSet: 'material icons', code: "\uebc5"},
+  "mi-currency_exchange": {iconSet: 'material icons', code: "\ueb70"},
+  "mi-currency_franc": {iconSet: 'material icons', code: "\ueafa"},
+  "mi-currency_lira": {iconSet: 'material icons', code: "\ueaef"},
+  "mi-currency_pound": {iconSet: 'material icons', code: "\ueaf1"},
+  "mi-currency_ruble": {iconSet: 'material icons', code: "\ueaec"},
+  "mi-currency_rupee": {iconSet: 'material icons', code: "\ueaf7"},
+  "mi-currency_yen": {iconSet: 'material icons', code: "\ueafb"},
+  "mi-currency_yuan": {iconSet: 'material icons', code: "\ueaf9"},
+  "mi-curtains": {iconSet: 'material icons', code: "\uec1e"},
+  "mi-curtains_closed": {iconSet: 'material icons', code: "\uec1d"},
+  "mi-cut": {iconSet: 'material icons', code: "\uf08b"},
+  "mi-cyclone": {iconSet: 'material icons', code: "\uebd5"},
+  "mi-dangerous": {iconSet: 'material icons', code: "\ue99a"},
+  "mi-dark_mode": {iconSet: 'material icons', code: "\ue51c"},
+  "mi-dashboard": {iconSet: 'material icons', code: "\ue871"},
+  "mi-dashboard_customize": {iconSet: 'material icons', code: "\ue99b"},
+  "mi-data_array": {iconSet: 'material icons', code: "\uead1"},
+  "mi-data_exploration": {iconSet: 'material icons', code: "\ue76f"},
+  "mi-data_object": {iconSet: 'material icons', code: "\uead3"},
+  "mi-data_saver_off": {iconSet: 'material icons', code: "\ueff2"},
+  "mi-data_saver_on": {iconSet: 'material icons', code: "\ueff3"},
+  "mi-data_thresholding": {iconSet: 'material icons', code: "\ueb9f"},
+  "mi-data_usage": {iconSet: 'material icons', code: "\ue1af"},
+  "mi-dataset": {iconSet: 'material icons', code: "\uf8ee"},
+  "mi-dataset_linked": {iconSet: 'material icons', code: "\uf8ef"},
+  "mi-date_range": {iconSet: 'material icons', code: "\ue916"},
+  "mi-deblur": {iconSet: 'material icons', code: "\ueb77"},
+  "mi-deck": {iconSet: 'material icons', code: "\uea42"},
+  "mi-dehaze": {iconSet: 'material icons', code: "\ue3c7"},
+  "mi-delete": {iconSet: 'material icons', code: "\ue872"},
+  "mi-delete_forever": {iconSet: 'material icons', code: "\ue92b"},
+  "mi-delete_outline": {iconSet: 'material icons', code: "\ue92e"},
+  "mi-delete_sweep": {iconSet: 'material icons', code: "\ue16c"},
+  "mi-delivery_dining": {iconSet: 'material icons', code: "\uea72"},
+  "mi-density_large": {iconSet: 'material icons', code: "\ueba9"},
+  "mi-density_medium": {iconSet: 'material icons', code: "\ueb9e"},
+  "mi-density_small": {iconSet: 'material icons', code: "\ueba8"},
+  "mi-departure_board": {iconSet: 'material icons', code: "\ue576"},
+  "mi-description": {iconSet: 'material icons', code: "\ue873"},
+  "mi-deselect": {iconSet: 'material icons', code: "\uebb6"},
+  "mi-design_services": {iconSet: 'material icons', code: "\uf10a"},
+  "mi-desk": {iconSet: 'material icons', code: "\uf8f4"},
+  "mi-desktop_access_disabled": {iconSet: 'material icons', code: "\ue99d"},
+  "mi-desktop_mac": {iconSet: 'material icons', code: "\ue30b"},
+  "mi-desktop_windows": {iconSet: 'material icons', code: "\ue30c"},
+  "mi-details": {iconSet: 'material icons', code: "\ue3c8"},
+  "mi-developer_board": {iconSet: 'material icons', code: "\ue30d"},
+  "mi-developer_board_off": {iconSet: 'material icons', code: "\ue4ff"},
+  "mi-developer_mode": {iconSet: 'material icons', code: "\ue1b0"},
+  "mi-device_hub": {iconSet: 'material icons', code: "\ue335"},
+  "mi-device_thermostat": {iconSet: 'material icons', code: "\ue1ff"},
+  "mi-device_unknown": {iconSet: 'material icons', code: "\ue339"},
+  "mi-devices": {iconSet: 'material icons', code: "\ue1b1"},
+  "mi-devices_fold": {iconSet: 'material icons', code: "\uebde"},
+  "mi-devices_other": {iconSet: 'material icons', code: "\ue337"},
+  "mi-dew_point": {iconSet: 'material icons', code: "\uf879"},
+  "mi-dialer_sip": {iconSet: 'material icons', code: "\ue0bb"},
+  "mi-dialpad": {iconSet: 'material icons', code: "\ue0bc"},
+  "mi-diamond": {iconSet: 'material icons', code: "\uead5"},
+  "mi-difference": {iconSet: 'material icons', code: "\ueb7d"},
+  "mi-dining": {iconSet: 'material icons', code: "\ueff4"},
+  "mi-dinner_dining": {iconSet: 'material icons', code: "\uea57"},
+  "mi-directions": {iconSet: 'material icons', code: "\ue52e"},
+  "mi-directions_bike": {iconSet: 'material icons', code: "\ue52f"},
+  "mi-directions_boat": {iconSet: 'material icons', code: "\ue532"},
+  "mi-directions_boat_filled": {iconSet: 'material icons', code: "\ueff5"},
+  "mi-directions_bus": {iconSet: 'material icons', code: "\ue530"},
+  "mi-directions_bus_filled": {iconSet: 'material icons', code: "\ueff6"},
+  "mi-directions_car": {iconSet: 'material icons', code: "\ue531"},
+  "mi-directions_car_filled": {iconSet: 'material icons', code: "\ueff7"},
+  "mi-directions_ferry": {iconSet: 'material icons', code: "\ue532"},
+  "mi-directions_off": {iconSet: 'material icons', code: "\uf10f"},
+  "mi-directions_railway": {iconSet: 'material icons', code: "\ue534"},
+  "mi-directions_railway_filled": {iconSet: 'material icons', code: "\ueff8"},
+  "mi-directions_run": {iconSet: 'material icons', code: "\ue566"},
+  "mi-directions_subway": {iconSet: 'material icons', code: "\ue533"},
+  "mi-directions_subway_filled": {iconSet: 'material icons', code: "\ueff9"},
+  "mi-directions_train": {iconSet: 'material icons', code: "\ue534"},
+  "mi-directions_transit": {iconSet: 'material icons', code: "\ue535"},
+  "mi-directions_transit_filled": {iconSet: 'material icons', code: "\ueffa"},
+  "mi-directions_walk": {iconSet: 'material icons', code: "\ue536"},
+  "mi-dirty_lens": {iconSet: 'material icons', code: "\uef4b"},
+  "mi-disabled_by_default": {iconSet: 'material icons', code: "\uf230"},
+  "mi-disabled_visible": {iconSet: 'material icons', code: "\ue76e"},
+  "mi-disc_full": {iconSet: 'material icons', code: "\ue610"},
+  "mi-discord": {iconSet: 'material icons', code: "\uea6c"},
+  "mi-discount": {iconSet: 'material icons', code: "\uebc9"},
+  "mi-display_settings": {iconSet: 'material icons', code: "\ueb97"},
+  "mi-diversity_1": {iconSet: 'material icons', code: "\uf8d7"},
+  "mi-diversity_2": {iconSet: 'material icons', code: "\uf8d8"},
+  "mi-diversity_3": {iconSet: 'material icons', code: "\uf8d9"},
+  "mi-dnd_forwardslash": {iconSet: 'material icons', code: "\ue611"},
+  "mi-dns": {iconSet: 'material icons', code: "\ue875"},
+  "mi-do_disturb": {iconSet: 'material icons', code: "\uf08c"},
+  "mi-do_disturb_alt": {iconSet: 'material icons', code: "\uf08d"},
+  "mi-do_disturb_off": {iconSet: 'material icons', code: "\uf08e"},
+  "mi-do_disturb_on": {iconSet: 'material icons', code: "\uf08f"},
+  "mi-do_not_disturb": {iconSet: 'material icons', code: "\ue612"},
+  "mi-do_not_disturb_alt": {iconSet: 'material icons', code: "\ue611"},
+  "mi-do_not_disturb_off": {iconSet: 'material icons', code: "\ue643"},
+  "mi-do_not_disturb_on": {iconSet: 'material icons', code: "\ue644"},
+  "mi-do_not_disturb_on_total_silence": {iconSet: 'material icons', code: "\ueffb"},
+  "mi-do_not_step": {iconSet: 'material icons', code: "\uf19f"},
+  "mi-do_not_touch": {iconSet: 'material icons', code: "\uf1b0"},
+  "mi-dock": {iconSet: 'material icons', code: "\ue30e"},
+  "mi-document_scanner": {iconSet: 'material icons', code: "\ue5fa"},
+  "mi-domain": {iconSet: 'material icons', code: "\ue7ee"},
+  "mi-domain_add": {iconSet: 'material icons', code: "\ueb62"},
+  "mi-domain_disabled": {iconSet: 'material icons', code: "\ue0ef"},
+  "mi-domain_verification": {iconSet: 'material icons', code: "\uef4c"},
+  "mi-done": {iconSet: 'material icons', code: "\ue876"},
+  "mi-done_all": {iconSet: 'material icons', code: "\ue877"},
+  "mi-done_outline": {iconSet: 'material icons', code: "\ue92f"},
+  "mi-donut_large": {iconSet: 'material icons', code: "\ue917"},
+  "mi-donut_small": {iconSet: 'material icons', code: "\ue918"},
+  "mi-door_back": {iconSet: 'material icons', code: "\ueffc"},
+  "mi-door_front": {iconSet: 'material icons', code: "\ueffd"},
+  "mi-door_sliding": {iconSet: 'material icons', code: "\ueffe"},
+  "mi-doorbell": {iconSet: 'material icons', code: "\uefff"},
+  "mi-double_arrow": {iconSet: 'material icons', code: "\uea50"},
+  "mi-downhill_skiing": {iconSet: 'material icons', code: "\ue509"},
+  "mi-download": {iconSet: 'material icons', code: "\uf090"},
+  "mi-download_done": {iconSet: 'material icons', code: "\uf091"},
+  "mi-download_for_offline": {iconSet: 'material icons', code: "\uf000"},
+  "mi-downloading": {iconSet: 'material icons', code: "\uf001"},
+  "mi-drafts": {iconSet: 'material icons', code: "\ue151"},
+  "mi-drag_handle": {iconSet: 'material icons', code: "\ue25d"},
+  "mi-drag_indicator": {iconSet: 'material icons', code: "\ue945"},
+  "mi-draw": {iconSet: 'material icons', code: "\ue746"},
+  "mi-drive_eta": {iconSet: 'material icons', code: "\ue613"},
+  "mi-drive_file_move": {iconSet: 'material icons', code: "\ue675"},
+  "mi-drive_file_move_outline": {iconSet: 'material icons', code: "\ue9a1"},
+  "mi-drive_file_move_rtl": {iconSet: 'material icons', code: "\ue76d"},
+  "mi-drive_file_rename_outline": {iconSet: 'material icons', code: "\ue9a2"},
+  "mi-drive_folder_upload": {iconSet: 'material icons', code: "\ue9a3"},
+  "mi-dry": {iconSet: 'material icons', code: "\uf1b3"},
+  "mi-dry_cleaning": {iconSet: 'material icons', code: "\uea58"},
+  "mi-duo": {iconSet: 'material icons', code: "\ue9a5"},
+  "mi-dvr": {iconSet: 'material icons', code: "\ue1b2"},
+  "mi-dynamic_feed": {iconSet: 'material icons', code: "\uea14"},
+  "mi-dynamic_form": {iconSet: 'material icons', code: "\uf1bf"},
+  "mi-e_mobiledata": {iconSet: 'material icons', code: "\uf002"},
+  "mi-earbuds": {iconSet: 'material icons', code: "\uf003"},
+  "mi-earbuds_battery": {iconSet: 'material icons', code: "\uf004"},
+  "mi-east": {iconSet: 'material icons', code: "\uf1df"},
+  "mi-eco": {iconSet: 'material icons', code: "\uea35"},
+  "mi-edgesensor_high": {iconSet: 'material icons', code: "\uf005"},
+  "mi-edgesensor_low": {iconSet: 'material icons', code: "\uf006"},
+  "mi-edit": {iconSet: 'material icons', code: "\ue3c9"},
+  "mi-edit_attributes": {iconSet: 'material icons', code: "\ue578"},
+  "mi-edit_calendar": {iconSet: 'material icons', code: "\ue742"},
+  "mi-edit_document": {iconSet: 'material icons', code: "\uf88c"},
+  "mi-edit_location": {iconSet: 'material icons', code: "\ue568"},
+  "mi-edit_location_alt": {iconSet: 'material icons', code: "\ue1c5"},
+  "mi-edit_note": {iconSet: 'material icons', code: "\ue745"},
+  "mi-edit_notifications": {iconSet: 'material icons', code: "\ue525"},
+  "mi-edit_off": {iconSet: 'material icons', code: "\ue950"},
+  "mi-edit_road": {iconSet: 'material icons', code: "\uef4d"},
+  "mi-edit_square": {iconSet: 'material icons', code: "\uf88d"},
+  "mi-egg": {iconSet: 'material icons', code: "\ueacc"},
+  "mi-egg_alt": {iconSet: 'material icons', code: "\ueac8"},
+  "mi-eject": {iconSet: 'material icons', code: "\ue8fb"},
+  "mi-elderly": {iconSet: 'material icons', code: "\uf21a"},
+  "mi-elderly_woman": {iconSet: 'material icons', code: "\ueb69"},
+  "mi-electric_bike": {iconSet: 'material icons', code: "\ueb1b"},
+  "mi-electric_bolt": {iconSet: 'material icons', code: "\uec1c"},
+  "mi-electric_car": {iconSet: 'material icons', code: "\ueb1c"},
+  "mi-electric_meter": {iconSet: 'material icons', code: "\uec1b"},
+  "mi-electric_moped": {iconSet: 'material icons', code: "\ueb1d"},
+  "mi-electric_rickshaw": {iconSet: 'material icons', code: "\ueb1e"},
+  "mi-electric_scooter": {iconSet: 'material icons', code: "\ueb1f"},
+  "mi-electrical_services": {iconSet: 'material icons', code: "\uf102"},
+  "mi-elevator": {iconSet: 'material icons', code: "\uf1a0"},
+  "mi-email": {iconSet: 'material icons', code: "\ue0be"},
+  "mi-emergency": {iconSet: 'material icons', code: "\ue1eb"},
+  "mi-emergency_recording": {iconSet: 'material icons', code: "\uebf4"},
+  "mi-emergency_share": {iconSet: 'material icons', code: "\uebf6"},
+  "mi-emoji_emotions": {iconSet: 'material icons', code: "\uea22"},
+  "mi-emoji_events": {iconSet: 'material icons', code: "\uea23"},
+  "mi-emoji_flags": {iconSet: 'material icons', code: "\uea1a"},
+  "mi-emoji_food_beverage": {iconSet: 'material icons', code: "\uea1b"},
+  "mi-emoji_nature": {iconSet: 'material icons', code: "\uea1c"},
+  "mi-emoji_objects": {iconSet: 'material icons', code: "\uea24"},
+  "mi-emoji_people": {iconSet: 'material icons', code: "\uea1d"},
+  "mi-emoji_symbols": {iconSet: 'material icons', code: "\uea1e"},
+  "mi-emoji_transportation": {iconSet: 'material icons', code: "\uea1f"},
+  "mi-energy_savings_leaf": {iconSet: 'material icons', code: "\uec1a"},
+  "mi-engineering": {iconSet: 'material icons', code: "\uea3d"},
+  "mi-enhance_photo_translate": {iconSet: 'material icons', code: "\ue8fc"},
+  "mi-enhanced_encryption": {iconSet: 'material icons', code: "\ue63f"},
+  "mi-equalizer": {iconSet: 'material icons', code: "\ue01d"},
+  "mi-error": {iconSet: 'material icons', code: "\ue000"},
+  "mi-error_outline": {iconSet: 'material icons', code: "\ue001"},
+  "mi-escalator": {iconSet: 'material icons', code: "\uf1a1"},
+  "mi-escalator_warning": {iconSet: 'material icons', code: "\uf1ac"},
+  "mi-euro": {iconSet: 'material icons', code: "\uea15"},
+  "mi-euro_symbol": {iconSet: 'material icons', code: "\ue926"},
+  "mi-ev_station": {iconSet: 'material icons', code: "\ue56d"},
+  "mi-event": {iconSet: 'material icons', code: "\ue878"},
+  "mi-event_available": {iconSet: 'material icons', code: "\ue614"},
+  "mi-event_busy": {iconSet: 'material icons', code: "\ue615"},
+  "mi-event_note": {iconSet: 'material icons', code: "\ue616"},
+  "mi-event_repeat": {iconSet: 'material icons', code: "\ueb7b"},
+  "mi-event_seat": {iconSet: 'material icons', code: "\ue903"},
+  "mi-exit_to_app": {iconSet: 'material icons', code: "\ue879"},
+  "mi-expand": {iconSet: 'material icons', code: "\ue94f"},
+  "mi-expand_circle_down": {iconSet: 'material icons', code: "\ue7cd"},
+  "mi-expand_less": {iconSet: 'material icons', code: "\ue5ce"},
+  "mi-expand_more": {iconSet: 'material icons', code: "\ue5cf"},
+  "mi-explicit": {iconSet: 'material icons', code: "\ue01e"},
+  "mi-explore": {iconSet: 'material icons', code: "\ue87a"},
+  "mi-explore_off": {iconSet: 'material icons', code: "\ue9a8"},
+  "mi-exposure": {iconSet: 'material icons', code: "\ue3ca"},
+  "mi-exposure_minus_1": {iconSet: 'material icons', code: "\ue3cb"},
+  "mi-exposure_minus_2": {iconSet: 'material icons', code: "\ue3cc"},
+  "mi-exposure_neg_1": {iconSet: 'material icons', code: "\ue3cb"},
+  "mi-exposure_neg_2": {iconSet: 'material icons', code: "\ue3cc"},
+  "mi-exposure_plus_1": {iconSet: 'material icons', code: "\ue3cd"},
+  "mi-exposure_plus_2": {iconSet: 'material icons', code: "\ue3ce"},
+  "mi-exposure_zero": {iconSet: 'material icons', code: "\ue3cf"},
+  "mi-extension": {iconSet: 'material icons', code: "\ue87b"},
+  "mi-extension_off": {iconSet: 'material icons', code: "\ue4f5"},
+  "mi-face": {iconSet: 'material icons', code: "\ue87c"},
+  "mi-face_2": {iconSet: 'material icons', code: "\uf8da"},
+  "mi-face_3": {iconSet: 'material icons', code: "\uf8db"},
+  "mi-face_4": {iconSet: 'material icons', code: "\uf8dc"},
+  "mi-face_5": {iconSet: 'material icons', code: "\uf8dd"},
+  "mi-face_6": {iconSet: 'material icons', code: "\uf8de"},
+  "mi-face_retouching_natural": {iconSet: 'material icons', code: "\uef4e"},
+  "mi-face_retouching_off": {iconSet: 'material icons', code: "\uf007"},
+  "mi-face_unlock": {iconSet: 'material icons', code: "\uf008"},
+  "mi-facebook": {iconSet: 'material icons', code: "\uf234"},
+  "mi-fact_check": {iconSet: 'material icons', code: "\uf0c5"},
+  "mi-factory": {iconSet: 'material icons', code: "\uebbc"},
+  "mi-family_restroom": {iconSet: 'material icons', code: "\uf1a2"},
+  "mi-fast_forward": {iconSet: 'material icons', code: "\ue01f"},
+  "mi-fast_rewind": {iconSet: 'material icons', code: "\ue020"},
+  "mi-fastfood": {iconSet: 'material icons', code: "\ue57a"},
+  "mi-favorite": {iconSet: 'material icons', code: "\ue87d"},
+  "mi-favorite_border": {iconSet: 'material icons', code: "\ue87e"},
+  "mi-favorite_outline": {iconSet: 'material icons', code: "\ue87e"},
+  "mi-fax": {iconSet: 'material icons', code: "\uead8"},
+  "mi-featured_play_list": {iconSet: 'material icons', code: "\ue06d"},
+  "mi-featured_video": {iconSet: 'material icons', code: "\ue06e"},
+  "mi-feed": {iconSet: 'material icons', code: "\uf009"},
+  "mi-feedback": {iconSet: 'material icons', code: "\ue87f"},
+  "mi-female": {iconSet: 'material icons', code: "\ue590"},
+  "mi-fence": {iconSet: 'material icons', code: "\uf1f6"},
+  "mi-festival": {iconSet: 'material icons', code: "\uea68"},
+  "mi-fiber_dvr": {iconSet: 'material icons', code: "\ue05d"},
+  "mi-fiber_manual_record": {iconSet: 'material icons', code: "\ue061"},
+  "mi-fiber_new": {iconSet: 'material icons', code: "\ue05e"},
+  "mi-fiber_pin": {iconSet: 'material icons', code: "\ue06a"},
+  "mi-fiber_smart_record": {iconSet: 'material icons', code: "\ue062"},
+  "mi-file_copy": {iconSet: 'material icons', code: "\ue173"},
+  "mi-file_download": {iconSet: 'material icons', code: "\ue2c4"},
+  "mi-file_download_done": {iconSet: 'material icons', code: "\ue9aa"},
+  "mi-file_download_off": {iconSet: 'material icons', code: "\ue4fe"},
+  "mi-file_open": {iconSet: 'material icons', code: "\ueaf3"},
+  "mi-file_present": {iconSet: 'material icons', code: "\uea0e"},
+  "mi-file_upload": {iconSet: 'material icons', code: "\ue2c6"},
+  "mi-file_upload_off": {iconSet: 'material icons', code: "\uf886"},
+  "mi-filter": {iconSet: 'material icons', code: "\ue3d3"},
+  "mi-filter_1": {iconSet: 'material icons', code: "\ue3d0"},
+  "mi-filter_2": {iconSet: 'material icons', code: "\ue3d1"},
+  "mi-filter_3": {iconSet: 'material icons', code: "\ue3d2"},
+  "mi-filter_4": {iconSet: 'material icons', code: "\ue3d4"},
+  "mi-filter_5": {iconSet: 'material icons', code: "\ue3d5"},
+  "mi-filter_6": {iconSet: 'material icons', code: "\ue3d6"},
+  "mi-filter_7": {iconSet: 'material icons', code: "\ue3d7"},
+  "mi-filter_8": {iconSet: 'material icons', code: "\ue3d8"},
+  "mi-filter_9": {iconSet: 'material icons', code: "\ue3d9"},
+  "mi-filter_9_plus": {iconSet: 'material icons', code: "\ue3da"},
+  "mi-filter_alt": {iconSet: 'material icons', code: "\uef4f"},
+  "mi-filter_alt_off": {iconSet: 'material icons', code: "\ueb32"},
+  "mi-filter_b_and_w": {iconSet: 'material icons', code: "\ue3db"},
+  "mi-filter_center_focus": {iconSet: 'material icons', code: "\ue3dc"},
+  "mi-filter_drama": {iconSet: 'material icons', code: "\ue3dd"},
+  "mi-filter_frames": {iconSet: 'material icons', code: "\ue3de"},
+  "mi-filter_hdr": {iconSet: 'material icons', code: "\ue3df"},
+  "mi-filter_list": {iconSet: 'material icons', code: "\ue152"},
+  "mi-filter_list_alt": {iconSet: 'material icons', code: "\ue94e"},
+  "mi-filter_list_off": {iconSet: 'material icons', code: "\ueb57"},
+  "mi-filter_none": {iconSet: 'material icons', code: "\ue3e0"},
+  "mi-filter_tilt_shift": {iconSet: 'material icons', code: "\ue3e2"},
+  "mi-filter_vintage": {iconSet: 'material icons', code: "\ue3e3"},
+  "mi-find_in_page": {iconSet: 'material icons', code: "\ue880"},
+  "mi-find_replace": {iconSet: 'material icons', code: "\ue881"},
+  "mi-fingerprint": {iconSet: 'material icons', code: "\ue90d"},
+  "mi-fire_extinguisher": {iconSet: 'material icons', code: "\uf1d8"},
+  "mi-fire_hydrant": {iconSet: 'material icons', code: "\uf1a3"},
+  "mi-fire_hydrant_alt": {iconSet: 'material icons', code: "\uf8f1"},
+  "mi-fire_truck": {iconSet: 'material icons', code: "\uf8f2"},
+  "mi-fireplace": {iconSet: 'material icons', code: "\uea43"},
+  "mi-first_page": {iconSet: 'material icons', code: "\ue5dc"},
+  "mi-fit_screen": {iconSet: 'material icons', code: "\uea10"},
+  "mi-fitbit": {iconSet: 'material icons', code: "\ue82b"},
+  "mi-fitness_center": {iconSet: 'material icons', code: "\ueb43"},
+  "mi-flag": {iconSet: 'material icons', code: "\ue153"},
+  "mi-flag_circle": {iconSet: 'material icons', code: "\ueaf8"},
+  "mi-flaky": {iconSet: 'material icons', code: "\uef50"},
+  "mi-flare": {iconSet: 'material icons', code: "\ue3e4"},
+  "mi-flash_auto": {iconSet: 'material icons', code: "\ue3e5"},
+  "mi-flash_off": {iconSet: 'material icons', code: "\ue3e6"},
+  "mi-flash_on": {iconSet: 'material icons', code: "\ue3e7"},
+  "mi-flashlight_off": {iconSet: 'material icons', code: "\uf00a"},
+  "mi-flashlight_on": {iconSet: 'material icons', code: "\uf00b"},
+  "mi-flatware": {iconSet: 'material icons', code: "\uf00c"},
+  "mi-flight": {iconSet: 'material icons', code: "\ue539"},
+  "mi-flight_class": {iconSet: 'material icons', code: "\ue7cb"},
+  "mi-flight_land": {iconSet: 'material icons', code: "\ue904"},
+  "mi-flight_takeoff": {iconSet: 'material icons', code: "\ue905"},
+  "mi-flip": {iconSet: 'material icons', code: "\ue3e8"},
+  "mi-flip_camera_android": {iconSet: 'material icons', code: "\uea37"},
+  "mi-flip_camera_ios": {iconSet: 'material icons', code: "\uea38"},
+  "mi-flip_to_back": {iconSet: 'material icons', code: "\ue882"},
+  "mi-flip_to_front": {iconSet: 'material icons', code: "\ue883"},
+  "mi-flood": {iconSet: 'material icons', code: "\uebe6"},
+  "mi-flourescent": {iconSet: 'material icons', code: "\uec31"},
+  "mi-fluorescent": {iconSet: 'material icons', code: "\uec31"},
+  "mi-flutter_dash": {iconSet: 'material icons', code: "\ue00b"},
+  "mi-fmd_bad": {iconSet: 'material icons', code: "\uf00e"},
+  "mi-fmd_good": {iconSet: 'material icons', code: "\uf00f"},
+  "mi-foggy": {iconSet: 'material icons', code: "\ue818"},
+  "mi-folder": {iconSet: 'material icons', code: "\ue2c7"},
+  "mi-folder_copy": {iconSet: 'material icons', code: "\uebbd"},
+  "mi-folder_delete": {iconSet: 'material icons', code: "\ueb34"},
+  "mi-folder_off": {iconSet: 'material icons', code: "\ueb83"},
+  "mi-folder_open": {iconSet: 'material icons', code: "\ue2c8"},
+  "mi-folder_shared": {iconSet: 'material icons', code: "\ue2c9"},
+  "mi-folder_special": {iconSet: 'material icons', code: "\ue617"},
+  "mi-folder_zip": {iconSet: 'material icons', code: "\ueb2c"},
+  "mi-follow_the_signs": {iconSet: 'material icons', code: "\uf222"},
+  "mi-font_download": {iconSet: 'material icons', code: "\ue167"},
+  "mi-font_download_off": {iconSet: 'material icons', code: "\ue4f9"},
+  "mi-food_bank": {iconSet: 'material icons', code: "\uf1f2"},
+  "mi-forest": {iconSet: 'material icons', code: "\uea99"},
+  "mi-fork_left": {iconSet: 'material icons', code: "\ueba0"},
+  "mi-fork_right": {iconSet: 'material icons', code: "\uebac"},
+  "mi-forklift": {iconSet: 'material icons', code: "\uf868"},
+  "mi-format_align_center": {iconSet: 'material icons', code: "\ue234"},
+  "mi-format_align_justify": {iconSet: 'material icons', code: "\ue235"},
+  "mi-format_align_left": {iconSet: 'material icons', code: "\ue236"},
+  "mi-format_align_right": {iconSet: 'material icons', code: "\ue237"},
+  "mi-format_bold": {iconSet: 'material icons', code: "\ue238"},
+  "mi-format_clear": {iconSet: 'material icons', code: "\ue239"},
+  "mi-format_color_fill": {iconSet: 'material icons', code: "\ue23a"},
+  "mi-format_color_reset": {iconSet: 'material icons', code: "\ue23b"},
+  "mi-format_color_text": {iconSet: 'material icons', code: "\ue23c"},
+  "mi-format_indent_decrease": {iconSet: 'material icons', code: "\ue23d"},
+  "mi-format_indent_increase": {iconSet: 'material icons', code: "\ue23e"},
+  "mi-format_italic": {iconSet: 'material icons', code: "\ue23f"},
+  "mi-format_line_spacing": {iconSet: 'material icons', code: "\ue240"},
+  "mi-format_list_bulleted": {iconSet: 'material icons', code: "\ue241"},
+  "mi-format_list_bulleted_add": {iconSet: 'material icons', code: "\uf849"},
+  "mi-format_list_numbered": {iconSet: 'material icons', code: "\ue242"},
+  "mi-format_list_numbered_rtl": {iconSet: 'material icons', code: "\ue267"},
+  "mi-format_overline": {iconSet: 'material icons', code: "\ueb65"},
+  "mi-format_paint": {iconSet: 'material icons', code: "\ue243"},
+  "mi-format_quote": {iconSet: 'material icons', code: "\ue244"},
+  "mi-format_shapes": {iconSet: 'material icons', code: "\ue25e"},
+  "mi-format_size": {iconSet: 'material icons', code: "\ue245"},
+  "mi-format_strikethrough": {iconSet: 'material icons', code: "\ue246"},
+  "mi-format_textdirection_l_to_r": {iconSet: 'material icons', code: "\ue247"},
+  "mi-format_textdirection_r_to_l": {iconSet: 'material icons', code: "\ue248"},
+  "mi-format_underline": {iconSet: 'material icons', code: "\ue249"},
+  "mi-format_underlined": {iconSet: 'material icons', code: "\ue249"},
+  "mi-fort": {iconSet: 'material icons', code: "\ueaad"},
+  "mi-forum": {iconSet: 'material icons', code: "\ue0bf"},
+  "mi-forward": {iconSet: 'material icons', code: "\ue154"},
+  "mi-forward_10": {iconSet: 'material icons', code: "\ue056"},
+  "mi-forward_30": {iconSet: 'material icons', code: "\ue057"},
+  "mi-forward_5": {iconSet: 'material icons', code: "\ue058"},
+  "mi-forward_to_inbox": {iconSet: 'material icons', code: "\uf187"},
+  "mi-foundation": {iconSet: 'material icons', code: "\uf200"},
+  "mi-free_breakfast": {iconSet: 'material icons', code: "\ueb44"},
+  "mi-free_cancellation": {iconSet: 'material icons', code: "\ue748"},
+  "mi-front_hand": {iconSet: 'material icons', code: "\ue769"},
+  "mi-front_loader": {iconSet: 'material icons', code: "\uf869"},
+  "mi-fullscreen": {iconSet: 'material icons', code: "\ue5d0"},
+  "mi-fullscreen_exit": {iconSet: 'material icons', code: "\ue5d1"},
+  "mi-functions": {iconSet: 'material icons', code: "\ue24a"},
+  "mi-g_mobiledata": {iconSet: 'material icons', code: "\uf010"},
+  "mi-g_translate": {iconSet: 'material icons', code: "\ue927"},
+  "mi-gamepad": {iconSet: 'material icons', code: "\ue30f"},
+  "mi-games": {iconSet: 'material icons', code: "\ue021"},
+  "mi-garage": {iconSet: 'material icons', code: "\uf011"},
+  "mi-gas_meter": {iconSet: 'material icons', code: "\uec19"},
+  "mi-gavel": {iconSet: 'material icons', code: "\ue90e"},
+  "mi-generating_tokens": {iconSet: 'material icons', code: "\ue749"},
+  "mi-gesture": {iconSet: 'material icons', code: "\ue155"},
+  "mi-get_app": {iconSet: 'material icons', code: "\ue884"},
+  "mi-gif": {iconSet: 'material icons', code: "\ue908"},
+  "mi-gif_box": {iconSet: 'material icons', code: "\ue7a3"},
+  "mi-girl": {iconSet: 'material icons', code: "\ueb68"},
+  "mi-gite": {iconSet: 'material icons', code: "\ue58b"},
+  "mi-goat": {iconSet: 'material icons', code: "\u10fffd"},
+  "mi-golf_course": {iconSet: 'material icons', code: "\ueb45"},
+  "mi-gpp_bad": {iconSet: 'material icons', code: "\uf012"},
+  "mi-gpp_good": {iconSet: 'material icons', code: "\uf013"},
+  "mi-gpp_maybe": {iconSet: 'material icons', code: "\uf014"},
+  "mi-gps_fixed": {iconSet: 'material icons', code: "\ue1b3"},
+  "mi-gps_not_fixed": {iconSet: 'material icons', code: "\ue1b4"},
+  "mi-gps_off": {iconSet: 'material icons', code: "\ue1b5"},
+  "mi-grade": {iconSet: 'material icons', code: "\ue885"},
+  "mi-gradient": {iconSet: 'material icons', code: "\ue3e9"},
+  "mi-grading": {iconSet: 'material icons', code: "\uea4f"},
+  "mi-grain": {iconSet: 'material icons', code: "\ue3ea"},
+  "mi-graphic_eq": {iconSet: 'material icons', code: "\ue1b8"},
+  "mi-grass": {iconSet: 'material icons', code: "\uf205"},
+  "mi-grid_3x3": {iconSet: 'material icons', code: "\uf015"},
+  "mi-grid_4x4": {iconSet: 'material icons', code: "\uf016"},
+  "mi-grid_goldenratio": {iconSet: 'material icons', code: "\uf017"},
+  "mi-grid_off": {iconSet: 'material icons', code: "\ue3eb"},
+  "mi-grid_on": {iconSet: 'material icons', code: "\ue3ec"},
+  "mi-grid_view": {iconSet: 'material icons', code: "\ue9b0"},
+  "mi-group": {iconSet: 'material icons', code: "\ue7ef"},
+  "mi-group_add": {iconSet: 'material icons', code: "\ue7f0"},
+  "mi-group_off": {iconSet: 'material icons', code: "\ue747"},
+  "mi-group_remove": {iconSet: 'material icons', code: "\ue7ad"},
+  "mi-group_work": {iconSet: 'material icons', code: "\ue886"},
+  "mi-groups": {iconSet: 'material icons', code: "\uf233"},
+  "mi-groups_2": {iconSet: 'material icons', code: "\uf8df"},
+  "mi-groups_3": {iconSet: 'material icons', code: "\uf8e0"},
+  "mi-h_mobiledata": {iconSet: 'material icons', code: "\uf018"},
+  "mi-h_plus_mobiledata": {iconSet: 'material icons', code: "\uf019"},
+  "mi-hail": {iconSet: 'material icons', code: "\ue9b1"},
+  "mi-handshake": {iconSet: 'material icons', code: "\uebcb"},
+  "mi-handyman": {iconSet: 'material icons', code: "\uf10b"},
+  "mi-hardware": {iconSet: 'material icons', code: "\uea59"},
+  "mi-hd": {iconSet: 'material icons', code: "\ue052"},
+  "mi-hdr_auto": {iconSet: 'material icons', code: "\uf01a"},
+  "mi-hdr_auto_select": {iconSet: 'material icons', code: "\uf01b"},
+  "mi-hdr_enhanced_select": {iconSet: 'material icons', code: "\uef51"},
+  "mi-hdr_off": {iconSet: 'material icons', code: "\ue3ed"},
+  "mi-hdr_off_select": {iconSet: 'material icons', code: "\uf01c"},
+  "mi-hdr_on": {iconSet: 'material icons', code: "\ue3ee"},
+  "mi-hdr_on_select": {iconSet: 'material icons', code: "\uf01d"},
+  "mi-hdr_plus": {iconSet: 'material icons', code: "\uf01e"},
+  "mi-hdr_strong": {iconSet: 'material icons', code: "\ue3f1"},
+  "mi-hdr_weak": {iconSet: 'material icons', code: "\ue3f2"},
+  "mi-headphones": {iconSet: 'material icons', code: "\uf01f"},
+  "mi-headphones_battery": {iconSet: 'material icons', code: "\uf020"},
+  "mi-headset": {iconSet: 'material icons', code: "\ue310"},
+  "mi-headset_mic": {iconSet: 'material icons', code: "\ue311"},
+  "mi-headset_off": {iconSet: 'material icons', code: "\ue33a"},
+  "mi-healing": {iconSet: 'material icons', code: "\ue3f3"},
+  "mi-health_and_safety": {iconSet: 'material icons', code: "\ue1d5"},
+  "mi-hearing": {iconSet: 'material icons', code: "\ue023"},
+  "mi-hearing_disabled": {iconSet: 'material icons', code: "\uf104"},
+  "mi-heart_broken": {iconSet: 'material icons', code: "\ueac2"},
+  "mi-heat_pump": {iconSet: 'material icons', code: "\uec18"},
+  "mi-height": {iconSet: 'material icons', code: "\uea16"},
+  "mi-help": {iconSet: 'material icons', code: "\ue887"},
+  "mi-help_center": {iconSet: 'material icons', code: "\uf1c0"},
+  "mi-help_outline": {iconSet: 'material icons', code: "\ue8fd"},
+  "mi-hevc": {iconSet: 'material icons', code: "\uf021"},
+  "mi-hexagon": {iconSet: 'material icons', code: "\ueb39"},
+  "mi-hide_image": {iconSet: 'material icons', code: "\uf022"},
+  "mi-hide_source": {iconSet: 'material icons', code: "\uf023"},
+  "mi-high_quality": {iconSet: 'material icons', code: "\ue024"},
+  "mi-highlight": {iconSet: 'material icons', code: "\ue25f"},
+  "mi-highlight_alt": {iconSet: 'material icons', code: "\uef52"},
+  "mi-highlight_off": {iconSet: 'material icons', code: "\ue888"},
+  "mi-highlight_remove": {iconSet: 'material icons', code: "\ue888"},
+  "mi-hiking": {iconSet: 'material icons', code: "\ue50a"},
+  "mi-history": {iconSet: 'material icons', code: "\ue889"},
+  "mi-history_edu": {iconSet: 'material icons', code: "\uea3e"},
+  "mi-history_toggle_off": {iconSet: 'material icons', code: "\uf17d"},
+  "mi-hive": {iconSet: 'material icons', code: "\ueaa6"},
+  "mi-hls": {iconSet: 'material icons', code: "\ueb8a"},
+  "mi-hls_off": {iconSet: 'material icons', code: "\ueb8c"},
+  "mi-holiday_village": {iconSet: 'material icons', code: "\ue58a"},
+  "mi-home": {iconSet: 'material icons', code: "\ue88a"},
+  "mi-home_filled": {iconSet: 'material icons', code: "\ue9b2"},
+  "mi-home_max": {iconSet: 'material icons', code: "\uf024"},
+  "mi-home_mini": {iconSet: 'material icons', code: "\uf025"},
+  "mi-home_repair_service": {iconSet: 'material icons', code: "\uf100"},
+  "mi-home_work": {iconSet: 'material icons', code: "\uea09"},
+  "mi-horizontal_distribute": {iconSet: 'material icons', code: "\ue014"},
+  "mi-horizontal_rule": {iconSet: 'material icons', code: "\uf108"},
+  "mi-horizontal_split": {iconSet: 'material icons', code: "\ue947"},
+  "mi-hot_tub": {iconSet: 'material icons', code: "\ueb46"},
+  "mi-hotel": {iconSet: 'material icons', code: "\ue53a"},
+  "mi-hotel_class": {iconSet: 'material icons', code: "\ue743"},
+  "mi-hourglass_bottom": {iconSet: 'material icons', code: "\uea5c"},
+  "mi-hourglass_disabled": {iconSet: 'material icons', code: "\uef53"},
+  "mi-hourglass_empty": {iconSet: 'material icons', code: "\ue88b"},
+  "mi-hourglass_full": {iconSet: 'material icons', code: "\ue88c"},
+  "mi-hourglass_top": {iconSet: 'material icons', code: "\uea5b"},
+  "mi-house": {iconSet: 'material icons', code: "\uea44"},
+  "mi-house_siding": {iconSet: 'material icons', code: "\uf202"},
+  "mi-houseboat": {iconSet: 'material icons', code: "\ue584"},
+  "mi-how_to_reg": {iconSet: 'material icons', code: "\ue174"},
+  "mi-how_to_vote": {iconSet: 'material icons', code: "\ue175"},
+  "mi-html": {iconSet: 'material icons', code: "\ueb7e"},
+  "mi-http": {iconSet: 'material icons', code: "\ue902"},
+  "mi-https": {iconSet: 'material icons', code: "\ue88d"},
+  "mi-hub": {iconSet: 'material icons', code: "\ue9f4"},
+  "mi-hvac": {iconSet: 'material icons', code: "\uf10e"},
+  "mi-ice_skating": {iconSet: 'material icons', code: "\ue50b"},
+  "mi-icecream": {iconSet: 'material icons', code: "\uea69"},
+  "mi-image": {iconSet: 'material icons', code: "\ue3f4"},
+  "mi-image_aspect_ratio": {iconSet: 'material icons', code: "\ue3f5"},
+  "mi-image_not_supported": {iconSet: 'material icons', code: "\uf116"},
+  "mi-image_search": {iconSet: 'material icons', code: "\ue43f"},
+  "mi-imagesearch_roller": {iconSet: 'material icons', code: "\ue9b4"},
+  "mi-import_contacts": {iconSet: 'material icons', code: "\ue0e0"},
+  "mi-import_export": {iconSet: 'material icons', code: "\ue0c3"},
+  "mi-important_devices": {iconSet: 'material icons', code: "\ue912"},
+  "mi-inbox": {iconSet: 'material icons', code: "\ue156"},
+  "mi-incomplete_circle": {iconSet: 'material icons', code: "\ue79b"},
+  "mi-indeterminate_check_box": {iconSet: 'material icons', code: "\ue909"},
+  "mi-info": {iconSet: 'material icons', code: "\ue88e"},
+  "mi-info_outline": {iconSet: 'material icons', code: "\ue88f"},
+  "mi-input": {iconSet: 'material icons', code: "\ue890"},
+  "mi-insert_chart": {iconSet: 'material icons', code: "\ue24b"},
+  "mi-insert_chart_outlined": {iconSet: 'material icons', code: "\ue26a"},
+  "mi-insert_comment": {iconSet: 'material icons', code: "\ue24c"},
+  "mi-insert_drive_file": {iconSet: 'material icons', code: "\ue24d"},
+  "mi-insert_emoticon": {iconSet: 'material icons', code: "\ue24e"},
+  "mi-insert_invitation": {iconSet: 'material icons', code: "\ue24f"},
+  "mi-insert_link": {iconSet: 'material icons', code: "\ue250"},
+  "mi-insert_page_break": {iconSet: 'material icons', code: "\ueaca"},
+  "mi-insert_photo": {iconSet: 'material icons', code: "\ue251"},
+  "mi-insights": {iconSet: 'material icons', code: "\uf092"},
+  "mi-install_desktop": {iconSet: 'material icons', code: "\ueb71"},
+  "mi-install_mobile": {iconSet: 'material icons', code: "\ueb72"},
+  "mi-integration_instructions": {iconSet: 'material icons', code: "\uef54"},
+  "mi-interests": {iconSet: 'material icons', code: "\ue7c8"},
+  "mi-interpreter_mode": {iconSet: 'material icons', code: "\ue83b"},
+  "mi-inventory": {iconSet: 'material icons', code: "\ue179"},
+  "mi-inventory_2": {iconSet: 'material icons', code: "\ue1a1"},
+  "mi-invert_colors": {iconSet: 'material icons', code: "\ue891"},
+  "mi-invert_colors_off": {iconSet: 'material icons', code: "\ue0c4"},
+  "mi-invert_colors_on": {iconSet: 'material icons', code: "\ue891"},
+  "mi-ios_share": {iconSet: 'material icons', code: "\ue6b8"},
+  "mi-iron": {iconSet: 'material icons', code: "\ue583"},
+  "mi-iso": {iconSet: 'material icons', code: "\ue3f6"},
+  "mi-javascript": {iconSet: 'material icons', code: "\ueb7c"},
+  "mi-join_full": {iconSet: 'material icons', code: "\ueaeb"},
+  "mi-join_inner": {iconSet: 'material icons', code: "\ueaf4"},
+  "mi-join_left": {iconSet: 'material icons', code: "\ueaf2"},
+  "mi-join_right": {iconSet: 'material icons', code: "\ueaea"},
+  "mi-kayaking": {iconSet: 'material icons', code: "\ue50c"},
+  "mi-kebab_dining": {iconSet: 'material icons', code: "\ue842"},
+  "mi-key": {iconSet: 'material icons', code: "\ue73c"},
+  "mi-key_off": {iconSet: 'material icons', code: "\ueb84"},
+  "mi-keyboard": {iconSet: 'material icons', code: "\ue312"},
+  "mi-keyboard_alt": {iconSet: 'material icons', code: "\uf028"},
+  "mi-keyboard_arrow_down": {iconSet: 'material icons', code: "\ue313"},
+  "mi-keyboard_arrow_left": {iconSet: 'material icons', code: "\ue314"},
+  "mi-keyboard_arrow_right": {iconSet: 'material icons', code: "\ue315"},
+  "mi-keyboard_arrow_up": {iconSet: 'material icons', code: "\ue316"},
+  "mi-keyboard_backspace": {iconSet: 'material icons', code: "\ue317"},
+  "mi-keyboard_capslock": {iconSet: 'material icons', code: "\ue318"},
+  "mi-keyboard_command": {iconSet: 'material icons', code: "\ueae0"},
+  "mi-keyboard_command_key": {iconSet: 'material icons', code: "\ueae7"},
+  "mi-keyboard_control": {iconSet: 'material icons', code: "\ue5d3"},
+  "mi-keyboard_control_key": {iconSet: 'material icons', code: "\ueae6"},
+  "mi-keyboard_double_arrow_down": {iconSet: 'material icons', code: "\uead0"},
+  "mi-keyboard_double_arrow_left": {iconSet: 'material icons', code: "\ueac3"},
+  "mi-keyboard_double_arrow_right": {iconSet: 'material icons', code: "\ueac9"},
+  "mi-keyboard_double_arrow_up": {iconSet: 'material icons', code: "\ueacf"},
+  "mi-keyboard_hide": {iconSet: 'material icons', code: "\ue31a"},
+  "mi-keyboard_option": {iconSet: 'material icons', code: "\ueadf"},
+  "mi-keyboard_option_key": {iconSet: 'material icons', code: "\ueae8"},
+  "mi-keyboard_return": {iconSet: 'material icons', code: "\ue31b"},
+  "mi-keyboard_tab": {iconSet: 'material icons', code: "\ue31c"},
+  "mi-keyboard_voice": {iconSet: 'material icons', code: "\ue31d"},
+  "mi-king_bed": {iconSet: 'material icons', code: "\uea45"},
+  "mi-kitchen": {iconSet: 'material icons', code: "\ueb47"},
+  "mi-kitesurfing": {iconSet: 'material icons', code: "\ue50d"},
+  "mi-label": {iconSet: 'material icons', code: "\ue892"},
+  "mi-label_important": {iconSet: 'material icons', code: "\ue937"},
+  "mi-label_important_outline": {iconSet: 'material icons', code: "\ue948"},
+  "mi-label_off": {iconSet: 'material icons', code: "\ue9b6"},
+  "mi-label_outline": {iconSet: 'material icons', code: "\ue893"},
+  "mi-lan": {iconSet: 'material icons', code: "\ueb2f"},
+  "mi-landscape": {iconSet: 'material icons', code: "\ue3f7"},
+  "mi-landslide": {iconSet: 'material icons', code: "\uebd7"},
+  "mi-language": {iconSet: 'material icons', code: "\ue894"},
+  "mi-laptop": {iconSet: 'material icons', code: "\ue31e"},
+  "mi-laptop_chromebook": {iconSet: 'material icons', code: "\ue31f"},
+  "mi-laptop_mac": {iconSet: 'material icons', code: "\ue320"},
+  "mi-laptop_windows": {iconSet: 'material icons', code: "\ue321"},
+  "mi-last_page": {iconSet: 'material icons', code: "\ue5dd"},
+  "mi-launch": {iconSet: 'material icons', code: "\ue895"},
+  "mi-layers": {iconSet: 'material icons', code: "\ue53b"},
+  "mi-layers_clear": {iconSet: 'material icons', code: "\ue53c"},
+  "mi-leaderboard": {iconSet: 'material icons', code: "\uf20c"},
+  "mi-leak_add": {iconSet: 'material icons', code: "\ue3f8"},
+  "mi-leak_remove": {iconSet: 'material icons', code: "\ue3f9"},
+  "mi-leave_bags_at_home": {iconSet: 'material icons', code: "\uf21b"},
+  "mi-legend_toggle": {iconSet: 'material icons', code: "\uf11b"},
+  "mi-lens": {iconSet: 'material icons', code: "\ue3fa"},
+  "mi-lens_blur": {iconSet: 'material icons', code: "\uf029"},
+  "mi-library_add": {iconSet: 'material icons', code: "\ue02e"},
+  "mi-library_add_check": {iconSet: 'material icons', code: "\ue9b7"},
+  "mi-library_books": {iconSet: 'material icons', code: "\ue02f"},
+  "mi-library_music": {iconSet: 'material icons', code: "\ue030"},
+  "mi-light": {iconSet: 'material icons', code: "\uf02a"},
+  "mi-light_mode": {iconSet: 'material icons', code: "\ue518"},
+  "mi-lightbulb": {iconSet: 'material icons', code: "\ue0f0"},
+  "mi-lightbulb_circle": {iconSet: 'material icons', code: "\uebfe"},
+  "mi-lightbulb_outline": {iconSet: 'material icons', code: "\ue90f"},
+  "mi-line_axis": {iconSet: 'material icons', code: "\uea9a"},
+  "mi-line_style": {iconSet: 'material icons', code: "\ue919"},
+  "mi-line_weight": {iconSet: 'material icons', code: "\ue91a"},
+  "mi-linear_scale": {iconSet: 'material icons', code: "\ue260"},
+  "mi-link": {iconSet: 'material icons', code: "\ue157"},
+  "mi-link_off": {iconSet: 'material icons', code: "\ue16f"},
+  "mi-linked_camera": {iconSet: 'material icons', code: "\ue438"},
+  "mi-liquor": {iconSet: 'material icons', code: "\uea60"},
+  "mi-list": {iconSet: 'material icons', code: "\ue896"},
+  "mi-list_alt": {iconSet: 'material icons', code: "\ue0ee"},
+  "mi-live_help": {iconSet: 'material icons', code: "\ue0c6"},
+  "mi-live_tv": {iconSet: 'material icons', code: "\ue639"},
+  "mi-living": {iconSet: 'material icons', code: "\uf02b"},
+  "mi-local_activity": {iconSet: 'material icons', code: "\ue53f"},
+  "mi-local_airport": {iconSet: 'material icons', code: "\ue53d"},
+  "mi-local_atm": {iconSet: 'material icons', code: "\ue53e"},
+  "mi-local_attraction": {iconSet: 'material icons', code: "\ue53f"},
+  "mi-local_bar": {iconSet: 'material icons', code: "\ue540"},
+  "mi-local_cafe": {iconSet: 'material icons', code: "\ue541"},
+  "mi-local_car_wash": {iconSet: 'material icons', code: "\ue542"},
+  "mi-local_convenience_store": {iconSet: 'material icons', code: "\ue543"},
+  "mi-local_dining": {iconSet: 'material icons', code: "\ue556"},
+  "mi-local_drink": {iconSet: 'material icons', code: "\ue544"},
+  "mi-local_fire_department": {iconSet: 'material icons', code: "\uef55"},
+  "mi-local_florist": {iconSet: 'material icons', code: "\ue545"},
+  "mi-local_gas_station": {iconSet: 'material icons', code: "\ue546"},
+  "mi-local_grocery_store": {iconSet: 'material icons', code: "\ue547"},
+  "mi-local_hospital": {iconSet: 'material icons', code: "\ue548"},
+  "mi-local_hotel": {iconSet: 'material icons', code: "\ue549"},
+  "mi-local_laundry_service": {iconSet: 'material icons', code: "\ue54a"},
+  "mi-local_library": {iconSet: 'material icons', code: "\ue54b"},
+  "mi-local_mall": {iconSet: 'material icons', code: "\ue54c"},
+  "mi-local_movies": {iconSet: 'material icons', code: "\ue54d"},
+  "mi-local_offer": {iconSet: 'material icons', code: "\ue54e"},
+  "mi-local_parking": {iconSet: 'material icons', code: "\ue54f"},
+  "mi-local_pharmacy": {iconSet: 'material icons', code: "\ue550"},
+  "mi-local_phone": {iconSet: 'material icons', code: "\ue551"},
+  "mi-local_pizza": {iconSet: 'material icons', code: "\ue552"},
+  "mi-local_play": {iconSet: 'material icons', code: "\ue553"},
+  "mi-local_police": {iconSet: 'material icons', code: "\uef56"},
+  "mi-local_post_office": {iconSet: 'material icons', code: "\ue554"},
+  "mi-local_print_shop": {iconSet: 'material icons', code: "\ue555"},
+  "mi-local_printshop": {iconSet: 'material icons', code: "\ue555"},
+  "mi-local_restaurant": {iconSet: 'material icons', code: "\ue556"},
+  "mi-local_see": {iconSet: 'material icons', code: "\ue557"},
+  "mi-local_shipping": {iconSet: 'material icons', code: "\ue558"},
+  "mi-local_taxi": {iconSet: 'material icons', code: "\ue559"},
+  "mi-location_city": {iconSet: 'material icons', code: "\ue7f1"},
+  "mi-location_disabled": {iconSet: 'material icons', code: "\ue1b6"},
+  "mi-location_history": {iconSet: 'material icons', code: "\ue55a"},
+  "mi-location_off": {iconSet: 'material icons', code: "\ue0c7"},
+  "mi-location_on": {iconSet: 'material icons', code: "\ue0c8"},
+  "mi-location_pin": {iconSet: 'material icons', code: "\uf1db"},
+  "mi-location_searching": {iconSet: 'material icons', code: "\ue1b7"},
+  "mi-lock": {iconSet: 'material icons', code: "\ue897"},
+  "mi-lock_clock": {iconSet: 'material icons', code: "\uef57"},
+  "mi-lock_open": {iconSet: 'material icons', code: "\ue898"},
+  "mi-lock_outline": {iconSet: 'material icons', code: "\ue899"},
+  "mi-lock_person": {iconSet: 'material icons', code: "\uf8f3"},
+  "mi-lock_reset": {iconSet: 'material icons', code: "\ueade"},
+  "mi-login": {iconSet: 'material icons', code: "\uea77"},
+  "mi-logo_dev": {iconSet: 'material icons', code: "\uead6"},
+  "mi-logout": {iconSet: 'material icons', code: "\ue9ba"},
+  "mi-looks": {iconSet: 'material icons', code: "\ue3fc"},
+  "mi-looks_3": {iconSet: 'material icons', code: "\ue3fb"},
+  "mi-looks_4": {iconSet: 'material icons', code: "\ue3fd"},
+  "mi-looks_5": {iconSet: 'material icons', code: "\ue3fe"},
+  "mi-looks_6": {iconSet: 'material icons', code: "\ue3ff"},
+  "mi-looks_one": {iconSet: 'material icons', code: "\ue400"},
+  "mi-looks_two": {iconSet: 'material icons', code: "\ue401"},
+  "mi-loop": {iconSet: 'material icons', code: "\ue028"},
+  "mi-loupe": {iconSet: 'material icons', code: "\ue402"},
+  "mi-low_priority": {iconSet: 'material icons', code: "\ue16d"},
+  "mi-loyalty": {iconSet: 'material icons', code: "\ue89a"},
+  "mi-lte_mobiledata": {iconSet: 'material icons', code: "\uf02c"},
+  "mi-lte_plus_mobiledata": {iconSet: 'material icons', code: "\uf02d"},
+  "mi-luggage": {iconSet: 'material icons', code: "\uf235"},
+  "mi-lunch_dining": {iconSet: 'material icons', code: "\uea61"},
+  "mi-lyrics": {iconSet: 'material icons', code: "\uec0b"},
+  "mi-macro_off": {iconSet: 'material icons', code: "\uf8d2"},
+  "mi-mail": {iconSet: 'material icons', code: "\ue158"},
+  "mi-mail_lock": {iconSet: 'material icons', code: "\uec0a"},
+  "mi-mail_outline": {iconSet: 'material icons', code: "\ue0e1"},
+  "mi-male": {iconSet: 'material icons', code: "\ue58e"},
+  "mi-man": {iconSet: 'material icons', code: "\ue4eb"},
+  "mi-man_2": {iconSet: 'material icons', code: "\uf8e1"},
+  "mi-man_3": {iconSet: 'material icons', code: "\uf8e2"},
+  "mi-man_4": {iconSet: 'material icons', code: "\uf8e3"},
+  "mi-manage_accounts": {iconSet: 'material icons', code: "\uf02e"},
+  "mi-manage_history": {iconSet: 'material icons', code: "\uebe7"},
+  "mi-manage_search": {iconSet: 'material icons', code: "\uf02f"},
+  "mi-map": {iconSet: 'material icons', code: "\ue55b"},
+  "mi-maps_home_work": {iconSet: 'material icons', code: "\uf030"},
+  "mi-maps_ugc": {iconSet: 'material icons', code: "\uef58"},
+  "mi-margin": {iconSet: 'material icons', code: "\ue9bb"},
+  "mi-mark_as_unread": {iconSet: 'material icons', code: "\ue9bc"},
+  "mi-mark_chat_read": {iconSet: 'material icons', code: "\uf18b"},
+  "mi-mark_chat_unread": {iconSet: 'material icons', code: "\uf189"},
+  "mi-mark_email_read": {iconSet: 'material icons', code: "\uf18c"},
+  "mi-mark_email_unread": {iconSet: 'material icons', code: "\uf18a"},
+  "mi-mark_unread_chat_alt": {iconSet: 'material icons', code: "\ueb9d"},
+  "mi-markunread": {iconSet: 'material icons', code: "\ue159"},
+  "mi-markunread_mailbox": {iconSet: 'material icons', code: "\ue89b"},
+  "mi-masks": {iconSet: 'material icons', code: "\uf218"},
+  "mi-maximize": {iconSet: 'material icons', code: "\ue930"},
+  "mi-media_bluetooth_off": {iconSet: 'material icons', code: "\uf031"},
+  "mi-media_bluetooth_on": {iconSet: 'material icons', code: "\uf032"},
+  "mi-mediation": {iconSet: 'material icons', code: "\uefa7"},
+  "mi-medical_information": {iconSet: 'material icons', code: "\uebed"},
+  "mi-medical_services": {iconSet: 'material icons', code: "\uf109"},
+  "mi-medication": {iconSet: 'material icons', code: "\uf033"},
+  "mi-medication_liquid": {iconSet: 'material icons', code: "\uea87"},
+  "mi-meeting_room": {iconSet: 'material icons', code: "\ueb4f"},
+  "mi-memory": {iconSet: 'material icons', code: "\ue322"},
+  "mi-menu": {iconSet: 'material icons', code: "\ue5d2"},
+  "mi-menu_book": {iconSet: 'material icons', code: "\uea19"},
+  "mi-menu_open": {iconSet: 'material icons', code: "\ue9bd"},
+  "mi-merge": {iconSet: 'material icons', code: "\ueb98"},
+  "mi-merge_type": {iconSet: 'material icons', code: "\ue252"},
+  "mi-message": {iconSet: 'material icons', code: "\ue0c9"},
+  "mi-messenger": {iconSet: 'material icons', code: "\ue0ca"},
+  "mi-messenger_outline": {iconSet: 'material icons', code: "\ue0cb"},
+  "mi-mic": {iconSet: 'material icons', code: "\ue029"},
+  "mi-mic_external_off": {iconSet: 'material icons', code: "\uef59"},
+  "mi-mic_external_on": {iconSet: 'material icons', code: "\uef5a"},
+  "mi-mic_none": {iconSet: 'material icons', code: "\ue02a"},
+  "mi-mic_off": {iconSet: 'material icons', code: "\ue02b"},
+  "mi-microwave": {iconSet: 'material icons', code: "\uf204"},
+  "mi-military_tech": {iconSet: 'material icons', code: "\uea3f"},
+  "mi-minimize": {iconSet: 'material icons', code: "\ue931"},
+  "mi-minor_crash": {iconSet: 'material icons', code: "\uebf1"},
+  "mi-miscellaneous_services": {iconSet: 'material icons', code: "\uf10c"},
+  "mi-missed_video_call": {iconSet: 'material icons', code: "\ue073"},
+  "mi-mms": {iconSet: 'material icons', code: "\ue618"},
+  "mi-mobile_friendly": {iconSet: 'material icons', code: "\ue200"},
+  "mi-mobile_off": {iconSet: 'material icons', code: "\ue201"},
+  "mi-mobile_screen_share": {iconSet: 'material icons', code: "\ue0e7"},
+  "mi-mobiledata_off": {iconSet: 'material icons', code: "\uf034"},
+  "mi-mode": {iconSet: 'material icons', code: "\uf097"},
+  "mi-mode_comment": {iconSet: 'material icons', code: "\ue253"},
+  "mi-mode_edit": {iconSet: 'material icons', code: "\ue254"},
+  "mi-mode_edit_outline": {iconSet: 'material icons', code: "\uf035"},
+  "mi-mode_fan_off": {iconSet: 'material icons', code: "\uec17"},
+  "mi-mode_night": {iconSet: 'material icons', code: "\uf036"},
+  "mi-mode_of_travel": {iconSet: 'material icons', code: "\ue7ce"},
+  "mi-mode_standby": {iconSet: 'material icons', code: "\uf037"},
+  "mi-model_training": {iconSet: 'material icons', code: "\uf0cf"},
+  "mi-monetization_on": {iconSet: 'material icons', code: "\ue263"},
+  "mi-money": {iconSet: 'material icons', code: "\ue57d"},
+  "mi-money_off": {iconSet: 'material icons', code: "\ue25c"},
+  "mi-money_off_csred": {iconSet: 'material icons', code: "\uf038"},
+  "mi-monitor": {iconSet: 'material icons', code: "\uef5b"},
+  "mi-monitor_heart": {iconSet: 'material icons', code: "\ueaa2"},
+  "mi-monitor_weight": {iconSet: 'material icons', code: "\uf039"},
+  "mi-monochrome_photos": {iconSet: 'material icons', code: "\ue403"},
+  "mi-mood": {iconSet: 'material icons', code: "\ue7f2"},
+  "mi-mood_bad": {iconSet: 'material icons', code: "\ue7f3"},
+  "mi-moped": {iconSet: 'material icons', code: "\ueb28"},
+  "mi-more": {iconSet: 'material icons', code: "\ue619"},
+  "mi-more_horiz": {iconSet: 'material icons', code: "\ue5d3"},
+  "mi-more_time": {iconSet: 'material icons', code: "\uea5d"},
+  "mi-more_vert": {iconSet: 'material icons', code: "\ue5d4"},
+  "mi-mosque": {iconSet: 'material icons', code: "\ueab2"},
+  "mi-motion_photos_auto": {iconSet: 'material icons', code: "\uf03a"},
+  "mi-motion_photos_off": {iconSet: 'material icons', code: "\ue9c0"},
+  "mi-motion_photos_on": {iconSet: 'material icons', code: "\ue9c1"},
+  "mi-motion_photos_pause": {iconSet: 'material icons', code: "\uf227"},
+  "mi-motion_photos_paused": {iconSet: 'material icons', code: "\ue9c2"},
+  "mi-motorcycle": {iconSet: 'material icons', code: "\ue91b"},
+  "mi-mouse": {iconSet: 'material icons', code: "\ue323"},
+  "mi-move_down": {iconSet: 'material icons', code: "\ueb61"},
+  "mi-move_to_inbox": {iconSet: 'material icons', code: "\ue168"},
+  "mi-move_up": {iconSet: 'material icons', code: "\ueb64"},
+  "mi-movie": {iconSet: 'material icons', code: "\ue02c"},
+  "mi-movie_creation": {iconSet: 'material icons', code: "\ue404"},
+  "mi-movie_edit": {iconSet: 'material icons', code: "\uf840"},
+  "mi-movie_filter": {iconSet: 'material icons', code: "\ue43a"},
+  "mi-moving": {iconSet: 'material icons', code: "\ue501"},
+  "mi-mp": {iconSet: 'material icons', code: "\ue9c3"},
+  "mi-multiline_chart": {iconSet: 'material icons', code: "\ue6df"},
+  "mi-multiple_stop": {iconSet: 'material icons', code: "\uf1b9"},
+  "mi-multitrack_audio": {iconSet: 'material icons', code: "\ue1b8"},
+  "mi-museum": {iconSet: 'material icons', code: "\uea36"},
+  "mi-music_note": {iconSet: 'material icons', code: "\ue405"},
+  "mi-music_off": {iconSet: 'material icons', code: "\ue440"},
+  "mi-music_video": {iconSet: 'material icons', code: "\ue063"},
+  "mi-my_library_add": {iconSet: 'material icons', code: "\ue02e"},
+  "mi-my_library_books": {iconSet: 'material icons', code: "\ue02f"},
+  "mi-my_library_music": {iconSet: 'material icons', code: "\ue030"},
+  "mi-my_location": {iconSet: 'material icons', code: "\ue55c"},
+  "mi-nat": {iconSet: 'material icons', code: "\uef5c"},
+  "mi-nature": {iconSet: 'material icons', code: "\ue406"},
+  "mi-nature_people": {iconSet: 'material icons', code: "\ue407"},
+  "mi-navigate_before": {iconSet: 'material icons', code: "\ue408"},
+  "mi-navigate_next": {iconSet: 'material icons', code: "\ue409"},
+  "mi-navigation": {iconSet: 'material icons', code: "\ue55d"},
+  "mi-near_me": {iconSet: 'material icons', code: "\ue569"},
+  "mi-near_me_disabled": {iconSet: 'material icons', code: "\uf1ef"},
+  "mi-nearby_error": {iconSet: 'material icons', code: "\uf03b"},
+  "mi-nearby_off": {iconSet: 'material icons', code: "\uf03c"},
+  "mi-nest_cam_wired_stand": {iconSet: 'material icons', code: "\uec16"},
+  "mi-network_cell": {iconSet: 'material icons', code: "\ue1b9"},
+  "mi-network_check": {iconSet: 'material icons', code: "\ue640"},
+  "mi-network_locked": {iconSet: 'material icons', code: "\ue61a"},
+  "mi-network_ping": {iconSet: 'material icons', code: "\uebca"},
+  "mi-network_wifi": {iconSet: 'material icons', code: "\ue1ba"},
+  "mi-network_wifi_1_bar": {iconSet: 'material icons', code: "\uebe4"},
+  "mi-network_wifi_2_bar": {iconSet: 'material icons', code: "\uebd6"},
+  "mi-network_wifi_3_bar": {iconSet: 'material icons', code: "\uebe1"},
+  "mi-new_label": {iconSet: 'material icons', code: "\ue609"},
+  "mi-new_releases": {iconSet: 'material icons', code: "\ue031"},
+  "mi-newspaper": {iconSet: 'material icons', code: "\ueb81"},
+  "mi-next_plan": {iconSet: 'material icons', code: "\uef5d"},
+  "mi-next_week": {iconSet: 'material icons', code: "\ue16a"},
+  "mi-nfc": {iconSet: 'material icons', code: "\ue1bb"},
+  "mi-night_shelter": {iconSet: 'material icons', code: "\uf1f1"},
+  "mi-nightlife": {iconSet: 'material icons', code: "\uea62"},
+  "mi-nightlight": {iconSet: 'material icons', code: "\uf03d"},
+  "mi-nightlight_round": {iconSet: 'material icons', code: "\uef5e"},
+  "mi-nights_stay": {iconSet: 'material icons', code: "\uea46"},
+  "mi-no_accounts": {iconSet: 'material icons', code: "\uf03e"},
+  "mi-no_adult_content": {iconSet: 'material icons', code: "\uf8fe"},
+  "mi-no_backpack": {iconSet: 'material icons', code: "\uf237"},
+  "mi-no_cell": {iconSet: 'material icons', code: "\uf1a4"},
+  "mi-no_crash": {iconSet: 'material icons', code: "\uebf0"},
+  "mi-no_drinks": {iconSet: 'material icons', code: "\uf1a5"},
+  "mi-no_encryption": {iconSet: 'material icons', code: "\ue641"},
+  "mi-no_encryption_gmailerrorred": {iconSet: 'material icons', code: "\uf03f"},
+  "mi-no_flash": {iconSet: 'material icons', code: "\uf1a6"},
+  "mi-no_food": {iconSet: 'material icons', code: "\uf1a7"},
+  "mi-no_luggage": {iconSet: 'material icons', code: "\uf23b"},
+  "mi-no_meals": {iconSet: 'material icons', code: "\uf1d6"},
+  "mi-no_meals_ouline": {iconSet: 'material icons', code: "\uf229"},
+  "mi-no_meeting_room": {iconSet: 'material icons', code: "\ueb4e"},
+  "mi-no_photography": {iconSet: 'material icons', code: "\uf1a8"},
+  "mi-no_sim": {iconSet: 'material icons', code: "\ue0cc"},
+  "mi-no_stroller": {iconSet: 'material icons', code: "\uf1af"},
+  "mi-no_transfer": {iconSet: 'material icons', code: "\uf1d5"},
+  "mi-noise_aware": {iconSet: 'material icons', code: "\uebec"},
+  "mi-noise_control_off": {iconSet: 'material icons', code: "\uebf3"},
+  "mi-nordic_walking": {iconSet: 'material icons', code: "\ue50e"},
+  "mi-north": {iconSet: 'material icons', code: "\uf1e0"},
+  "mi-north_east": {iconSet: 'material icons', code: "\uf1e1"},
+  "mi-north_west": {iconSet: 'material icons', code: "\uf1e2"},
+  "mi-not_accessible": {iconSet: 'material icons', code: "\uf0fe"},
+  "mi-not_interested": {iconSet: 'material icons', code: "\ue033"},
+  "mi-not_listed_location": {iconSet: 'material icons', code: "\ue575"},
+  "mi-not_started": {iconSet: 'material icons', code: "\uf0d1"},
+  "mi-note": {iconSet: 'material icons', code: "\ue06f"},
+  "mi-note_add": {iconSet: 'material icons', code: "\ue89c"},
+  "mi-note_alt": {iconSet: 'material icons', code: "\uf040"},
+  "mi-notes": {iconSet: 'material icons', code: "\ue26c"},
+  "mi-notification_add": {iconSet: 'material icons', code: "\ue399"},
+  "mi-notification_important": {iconSet: 'material icons', code: "\ue004"},
+  "mi-notifications": {iconSet: 'material icons', code: "\ue7f4"},
+  "mi-notifications_active": {iconSet: 'material icons', code: "\ue7f7"},
+  "mi-notifications_none": {iconSet: 'material icons', code: "\ue7f5"},
+  "mi-notifications_off": {iconSet: 'material icons', code: "\ue7f6"},
+  "mi-notifications_on": {iconSet: 'material icons', code: "\ue7f7"},
+  "mi-notifications_paused": {iconSet: 'material icons', code: "\ue7f8"},
+  "mi-now_wallpaper": {iconSet: 'material icons', code: "\ue1bc"},
+  "mi-now_widgets": {iconSet: 'material icons', code: "\ue1bd"},
+  "mi-numbers": {iconSet: 'material icons', code: "\ueac7"},
+  "mi-offline_bolt": {iconSet: 'material icons', code: "\ue932"},
+  "mi-offline_pin": {iconSet: 'material icons', code: "\ue90a"},
+  "mi-offline_share": {iconSet: 'material icons', code: "\ue9c5"},
+  "mi-oil_barrel": {iconSet: 'material icons', code: "\uec15"},
+  "mi-on_device_training": {iconSet: 'material icons', code: "\uebfd"},
+  "mi-ondemand_video": {iconSet: 'material icons', code: "\ue63a"},
+  "mi-online_prediction": {iconSet: 'material icons', code: "\uf0eb"},
+  "mi-opacity": {iconSet: 'material icons', code: "\ue91c"},
+  "mi-open_in_browser": {iconSet: 'material icons', code: "\ue89d"},
+  "mi-open_in_full": {iconSet: 'material icons', code: "\uf1ce"},
+  "mi-open_in_new": {iconSet: 'material icons', code: "\ue89e"},
+  "mi-open_in_new_off": {iconSet: 'material icons', code: "\ue4f6"},
+  "mi-open_with": {iconSet: 'material icons', code: "\ue89f"},
+  "mi-other_houses": {iconSet: 'material icons', code: "\ue58c"},
+  "mi-outbond": {iconSet: 'material icons', code: "\uf228"},
+  "mi-outbound": {iconSet: 'material icons', code: "\ue1ca"},
+  "mi-outbox": {iconSet: 'material icons', code: "\uef5f"},
+  "mi-outdoor_grill": {iconSet: 'material icons', code: "\uea47"},
+  "mi-outgoing_mail": {iconSet: 'material icons', code: "\uf0d2"},
+  "mi-outlet": {iconSet: 'material icons', code: "\uf1d4"},
+  "mi-outlined_flag": {iconSet: 'material icons', code: "\ue16e"},
+  "mi-output": {iconSet: 'material icons', code: "\uebbe"},
+  "mi-padding": {iconSet: 'material icons', code: "\ue9c8"},
+  "mi-pages": {iconSet: 'material icons', code: "\ue7f9"},
+  "mi-pageview": {iconSet: 'material icons', code: "\ue8a0"},
+  "mi-paid": {iconSet: 'material icons', code: "\uf041"},
+  "mi-palette": {iconSet: 'material icons', code: "\ue40a"},
+  "mi-pallet": {iconSet: 'material icons', code: "\uf86a"},
+  "mi-pan_tool": {iconSet: 'material icons', code: "\ue925"},
+  "mi-pan_tool_alt": {iconSet: 'material icons', code: "\uebb9"},
+  "mi-panorama": {iconSet: 'material icons', code: "\ue40b"},
+  "mi-panorama_fish_eye": {iconSet: 'material icons', code: "\ue40c"},
+  "mi-panorama_fisheye": {iconSet: 'material icons', code: "\ue40c"},
+  "mi-panorama_horizontal": {iconSet: 'material icons', code: "\ue40d"},
+  "mi-panorama_horizontal_select": {iconSet: 'material icons', code: "\uef60"},
+  "mi-panorama_photosphere": {iconSet: 'material icons', code: "\ue9c9"},
+  "mi-panorama_photosphere_select": {iconSet: 'material icons', code: "\ue9ca"},
+  "mi-panorama_vertical": {iconSet: 'material icons', code: "\ue40e"},
+  "mi-panorama_vertical_select": {iconSet: 'material icons', code: "\uef61"},
+  "mi-panorama_wide_angle": {iconSet: 'material icons', code: "\ue40f"},
+  "mi-panorama_wide_angle_select": {iconSet: 'material icons', code: "\uef62"},
+  "mi-paragliding": {iconSet: 'material icons', code: "\ue50f"},
+  "mi-park": {iconSet: 'material icons', code: "\uea63"},
+  "mi-party_mode": {iconSet: 'material icons', code: "\ue7fa"},
+  "mi-password": {iconSet: 'material icons', code: "\uf042"},
+  "mi-paste": {iconSet: 'material icons', code: "\uf098"},
+  "mi-pattern": {iconSet: 'material icons', code: "\uf043"},
+  "mi-pause": {iconSet: 'material icons', code: "\ue034"},
+  "mi-pause_circle": {iconSet: 'material icons', code: "\ue1a2"},
+  "mi-pause_circle_filled": {iconSet: 'material icons', code: "\ue035"},
+  "mi-pause_circle_outline": {iconSet: 'material icons', code: "\ue036"},
+  "mi-pause_presentation": {iconSet: 'material icons', code: "\ue0ea"},
+  "mi-payment": {iconSet: 'material icons', code: "\ue8a1"},
+  "mi-payments": {iconSet: 'material icons', code: "\uef63"},
+  "mi-paypal": {iconSet: 'material icons', code: "\uea8d"},
+  "mi-pedal_bike": {iconSet: 'material icons', code: "\ueb29"},
+  "mi-pending": {iconSet: 'material icons', code: "\uef64"},
+  "mi-pending_actions": {iconSet: 'material icons', code: "\uf1bb"},
+  "mi-pentagon": {iconSet: 'material icons', code: "\ueb50"},
+  "mi-people": {iconSet: 'material icons', code: "\ue7fb"},
+  "mi-people_alt": {iconSet: 'material icons', code: "\uea21"},
+  "mi-people_outline": {iconSet: 'material icons', code: "\ue7fc"},
+  "mi-percent": {iconSet: 'material icons', code: "\ueb58"},
+  "mi-perm_camera_mic": {iconSet: 'material icons', code: "\ue8a2"},
+  "mi-perm_contact_cal": {iconSet: 'material icons', code: "\ue8a3"},
+  "mi-perm_contact_calendar": {iconSet: 'material icons', code: "\ue8a3"},
+  "mi-perm_data_setting": {iconSet: 'material icons', code: "\ue8a4"},
+  "mi-perm_device_info": {iconSet: 'material icons', code: "\ue8a5"},
+  "mi-perm_device_information": {iconSet: 'material icons', code: "\ue8a5"},
+  "mi-perm_identity": {iconSet: 'material icons', code: "\ue8a6"},
+  "mi-perm_media": {iconSet: 'material icons', code: "\ue8a7"},
+  "mi-perm_phone_msg": {iconSet: 'material icons', code: "\ue8a8"},
+  "mi-perm_scan_wifi": {iconSet: 'material icons', code: "\ue8a9"},
+  "mi-person": {iconSet: 'material icons', code: "\ue7fd"},
+  "mi-person_2": {iconSet: 'material icons', code: "\uf8e4"},
+  "mi-person_3": {iconSet: 'material icons', code: "\uf8e5"},
+  "mi-person_4": {iconSet: 'material icons', code: "\uf8e6"},
+  "mi-person_add": {iconSet: 'material icons', code: "\ue7fe"},
+  "mi-person_add_alt": {iconSet: 'material icons', code: "\uea4d"},
+  "mi-person_add_alt_1": {iconSet: 'material icons', code: "\uef65"},
+  "mi-person_add_disabled": {iconSet: 'material icons', code: "\ue9cb"},
+  "mi-person_off": {iconSet: 'material icons', code: "\ue510"},
+  "mi-person_outline": {iconSet: 'material icons', code: "\ue7ff"},
+  "mi-person_pin": {iconSet: 'material icons', code: "\ue55a"},
+  "mi-person_pin_circle": {iconSet: 'material icons', code: "\ue56a"},
+  "mi-person_remove": {iconSet: 'material icons', code: "\uef66"},
+  "mi-person_remove_alt_1": {iconSet: 'material icons', code: "\uef67"},
+  "mi-person_search": {iconSet: 'material icons', code: "\uf106"},
+  "mi-personal_injury": {iconSet: 'material icons', code: "\ue6da"},
+  "mi-personal_video": {iconSet: 'material icons', code: "\ue63b"},
+  "mi-pest_control": {iconSet: 'material icons', code: "\uf0fa"},
+  "mi-pest_control_rodent": {iconSet: 'material icons', code: "\uf0fd"},
+  "mi-pets": {iconSet: 'material icons', code: "\ue91d"},
+  "mi-phishing": {iconSet: 'material icons', code: "\uead7"},
+  "mi-phone": {iconSet: 'material icons', code: "\ue0cd"},
+  "mi-phone_android": {iconSet: 'material icons', code: "\ue324"},
+  "mi-phone_bluetooth_speaker": {iconSet: 'material icons', code: "\ue61b"},
+  "mi-phone_callback": {iconSet: 'material icons', code: "\ue649"},
+  "mi-phone_disabled": {iconSet: 'material icons', code: "\ue9cc"},
+  "mi-phone_enabled": {iconSet: 'material icons', code: "\ue9cd"},
+  "mi-phone_forwarded": {iconSet: 'material icons', code: "\ue61c"},
+  "mi-phone_in_talk": {iconSet: 'material icons', code: "\ue61d"},
+  "mi-phone_iphone": {iconSet: 'material icons', code: "\ue325"},
+  "mi-phone_locked": {iconSet: 'material icons', code: "\ue61e"},
+  "mi-phone_missed": {iconSet: 'material icons', code: "\ue61f"},
+  "mi-phone_paused": {iconSet: 'material icons', code: "\ue620"},
+  "mi-phonelink": {iconSet: 'material icons', code: "\ue326"},
+  "mi-phonelink_erase": {iconSet: 'material icons', code: "\ue0db"},
+  "mi-phonelink_lock": {iconSet: 'material icons', code: "\ue0dc"},
+  "mi-phonelink_off": {iconSet: 'material icons', code: "\ue327"},
+  "mi-phonelink_ring": {iconSet: 'material icons', code: "\ue0dd"},
+  "mi-phonelink_setup": {iconSet: 'material icons', code: "\ue0de"},
+  "mi-photo": {iconSet: 'material icons', code: "\ue410"},
+  "mi-photo_album": {iconSet: 'material icons', code: "\ue411"},
+  "mi-photo_camera": {iconSet: 'material icons', code: "\ue412"},
+  "mi-photo_camera_back": {iconSet: 'material icons', code: "\uef68"},
+  "mi-photo_camera_front": {iconSet: 'material icons', code: "\uef69"},
+  "mi-photo_filter": {iconSet: 'material icons', code: "\ue43b"},
+  "mi-photo_library": {iconSet: 'material icons', code: "\ue413"},
+  "mi-photo_size_select_actual": {iconSet: 'material icons', code: "\ue432"},
+  "mi-photo_size_select_large": {iconSet: 'material icons', code: "\ue433"},
+  "mi-photo_size_select_small": {iconSet: 'material icons', code: "\ue434"},
+  "mi-php": {iconSet: 'material icons', code: "\ueb8f"},
+  "mi-piano": {iconSet: 'material icons', code: "\ue521"},
+  "mi-piano_off": {iconSet: 'material icons', code: "\ue520"},
+  "mi-picture_as_pdf": {iconSet: 'material icons', code: "\ue415"},
+  "mi-picture_in_picture": {iconSet: 'material icons', code: "\ue8aa"},
+  "mi-picture_in_picture_alt": {iconSet: 'material icons', code: "\ue911"},
+  "mi-pie_chart": {iconSet: 'material icons', code: "\ue6c4"},
+  "mi-pie_chart_outline": {iconSet: 'material icons', code: "\uf044"},
+  "mi-pie_chart_outlined": {iconSet: 'material icons', code: "\ue6c5"},
+  "mi-pin": {iconSet: 'material icons', code: "\uf045"},
+  "mi-pin_drop": {iconSet: 'material icons', code: "\ue55e"},
+  "mi-pin_end": {iconSet: 'material icons', code: "\ue767"},
+  "mi-pin_invoke": {iconSet: 'material icons', code: "\ue763"},
+  "mi-pinch": {iconSet: 'material icons', code: "\ueb38"},
+  "mi-pivot_table_chart": {iconSet: 'material icons', code: "\ue9ce"},
+  "mi-pix": {iconSet: 'material icons', code: "\ueaa3"},
+  "mi-place": {iconSet: 'material icons', code: "\ue55f"},
+  "mi-plagiarism": {iconSet: 'material icons', code: "\uea5a"},
+  "mi-play_arrow": {iconSet: 'material icons', code: "\ue037"},
+  "mi-play_circle": {iconSet: 'material icons', code: "\ue1c4"},
+  "mi-play_circle_fill": {iconSet: 'material icons', code: "\ue038"},
+  "mi-play_circle_filled": {iconSet: 'material icons', code: "\ue038"},
+  "mi-play_circle_outline": {iconSet: 'material icons', code: "\ue039"},
+  "mi-play_disabled": {iconSet: 'material icons', code: "\uef6a"},
+  "mi-play_for_work": {iconSet: 'material icons', code: "\ue906"},
+  "mi-play_lesson": {iconSet: 'material icons', code: "\uf047"},
+  "mi-playlist_add": {iconSet: 'material icons', code: "\ue03b"},
+  "mi-playlist_add_check": {iconSet: 'material icons', code: "\ue065"},
+  "mi-playlist_add_check_circle": {iconSet: 'material icons', code: "\ue7e6"},
+  "mi-playlist_add_circle": {iconSet: 'material icons', code: "\ue7e5"},
+  "mi-playlist_play": {iconSet: 'material icons', code: "\ue05f"},
+  "mi-playlist_remove": {iconSet: 'material icons', code: "\ueb80"},
+  "mi-plumbing": {iconSet: 'material icons', code: "\uf107"},
+  "mi-plus_one": {iconSet: 'material icons', code: "\ue800"},
+  "mi-podcasts": {iconSet: 'material icons', code: "\uf048"},
+  "mi-point_of_sale": {iconSet: 'material icons', code: "\uf17e"},
+  "mi-policy": {iconSet: 'material icons', code: "\uea17"},
+  "mi-poll": {iconSet: 'material icons', code: "\ue801"},
+  "mi-polyline": {iconSet: 'material icons', code: "\uebbb"},
+  "mi-polymer": {iconSet: 'material icons', code: "\ue8ab"},
+  "mi-pool": {iconSet: 'material icons', code: "\ueb48"},
+  "mi-portable_wifi_off": {iconSet: 'material icons', code: "\ue0ce"},
+  "mi-portrait": {iconSet: 'material icons', code: "\ue416"},
+  "mi-post_add": {iconSet: 'material icons', code: "\uea20"},
+  "mi-power": {iconSet: 'material icons', code: "\ue63c"},
+  "mi-power_input": {iconSet: 'material icons', code: "\ue336"},
+  "mi-power_off": {iconSet: 'material icons', code: "\ue646"},
+  "mi-power_settings_new": {iconSet: 'material icons', code: "\ue8ac"},
+  "mi-precision_manufacturing": {iconSet: 'material icons', code: "\uf049"},
+  "mi-pregnant_woman": {iconSet: 'material icons', code: "\ue91e"},
+  "mi-present_to_all": {iconSet: 'material icons', code: "\ue0df"},
+  "mi-preview": {iconSet: 'material icons', code: "\uf1c5"},
+  "mi-price_change": {iconSet: 'material icons', code: "\uf04a"},
+  "mi-price_check": {iconSet: 'material icons', code: "\uf04b"},
+  "mi-print": {iconSet: 'material icons', code: "\ue8ad"},
+  "mi-print_disabled": {iconSet: 'material icons', code: "\ue9cf"},
+  "mi-priority_high": {iconSet: 'material icons', code: "\ue645"},
+  "mi-privacy_tip": {iconSet: 'material icons', code: "\uf0dc"},
+  "mi-private_connectivity": {iconSet: 'material icons', code: "\ue744"},
+  "mi-production_quantity_limits": {iconSet: 'material icons', code: "\ue1d1"},
+  "mi-propane": {iconSet: 'material icons', code: "\uec14"},
+  "mi-propane_tank": {iconSet: 'material icons', code: "\uec13"},
+  "mi-psychology": {iconSet: 'material icons', code: "\uea4a"},
+  "mi-psychology_alt": {iconSet: 'material icons', code: "\uf8ea"},
+  "mi-public": {iconSet: 'material icons', code: "\ue80b"},
+  "mi-public_off": {iconSet: 'material icons', code: "\uf1ca"},
+  "mi-publish": {iconSet: 'material icons', code: "\ue255"},
+  "mi-published_with_changes": {iconSet: 'material icons', code: "\uf232"},
+  "mi-punch_clock": {iconSet: 'material icons', code: "\ueaa8"},
+  "mi-push_pin": {iconSet: 'material icons', code: "\uf10d"},
+  "mi-qr_code": {iconSet: 'material icons', code: "\uef6b"},
+  "mi-qr_code_2": {iconSet: 'material icons', code: "\ue00a"},
+  "mi-qr_code_scanner": {iconSet: 'material icons', code: "\uf206"},
+  "mi-query_builder": {iconSet: 'material icons', code: "\ue8ae"},
+  "mi-query_stats": {iconSet: 'material icons', code: "\ue4fc"},
+  "mi-question_answer": {iconSet: 'material icons', code: "\ue8af"},
+  "mi-question_mark": {iconSet: 'material icons', code: "\ueb8b"},
+  "mi-queue": {iconSet: 'material icons', code: "\ue03c"},
+  "mi-queue_music": {iconSet: 'material icons', code: "\ue03d"},
+  "mi-queue_play_next": {iconSet: 'material icons', code: "\ue066"},
+  "mi-quick_contacts_dialer": {iconSet: 'material icons', code: "\ue0cf"},
+  "mi-quick_contacts_mail": {iconSet: 'material icons', code: "\ue0d0"},
+  "mi-quickreply": {iconSet: 'material icons', code: "\uef6c"},
+  "mi-quiz": {iconSet: 'material icons', code: "\uf04c"},
+  "mi-quora": {iconSet: 'material icons', code: "\uea98"},
+  "mi-r_mobiledata": {iconSet: 'material icons', code: "\uf04d"},
+  "mi-radar": {iconSet: 'material icons', code: "\uf04e"},
+  "mi-radio": {iconSet: 'material icons', code: "\ue03e"},
+  "mi-radio_button_checked": {iconSet: 'material icons', code: "\ue837"},
+  "mi-radio_button_off": {iconSet: 'material icons', code: "\ue836"},
+  "mi-radio_button_on": {iconSet: 'material icons', code: "\ue837"},
+  "mi-radio_button_unchecked": {iconSet: 'material icons', code: "\ue836"},
+  "mi-railway_alert": {iconSet: 'material icons', code: "\ue9d1"},
+  "mi-ramen_dining": {iconSet: 'material icons', code: "\uea64"},
+  "mi-ramp_left": {iconSet: 'material icons', code: "\ueb9c"},
+  "mi-ramp_right": {iconSet: 'material icons', code: "\ueb96"},
+  "mi-rate_review": {iconSet: 'material icons', code: "\ue560"},
+  "mi-raw_off": {iconSet: 'material icons', code: "\uf04f"},
+  "mi-raw_on": {iconSet: 'material icons', code: "\uf050"},
+  "mi-read_more": {iconSet: 'material icons', code: "\uef6d"},
+  "mi-real_estate_agent": {iconSet: 'material icons', code: "\ue73a"},
+  "mi-rebase_edit": {iconSet: 'material icons', code: "\uf846"},
+  "mi-receipt": {iconSet: 'material icons', code: "\ue8b0"},
+  "mi-receipt_long": {iconSet: 'material icons', code: "\uef6e"},
+  "mi-recent_actors": {iconSet: 'material icons', code: "\ue03f"},
+  "mi-recommend": {iconSet: 'material icons', code: "\ue9d2"},
+  "mi-record_voice_over": {iconSet: 'material icons', code: "\ue91f"},
+  "mi-rectangle": {iconSet: 'material icons', code: "\ueb54"},
+  "mi-recycling": {iconSet: 'material icons', code: "\ue760"},
+  "mi-reddit": {iconSet: 'material icons', code: "\ueaa0"},
+  "mi-redeem": {iconSet: 'material icons', code: "\ue8b1"},
+  "mi-redo": {iconSet: 'material icons', code: "\ue15a"},
+  "mi-reduce_capacity": {iconSet: 'material icons', code: "\uf21c"},
+  "mi-refresh": {iconSet: 'material icons', code: "\ue5d5"},
+  "mi-remember_me": {iconSet: 'material icons', code: "\uf051"},
+  "mi-remove": {iconSet: 'material icons', code: "\ue15b"},
+  "mi-remove_circle": {iconSet: 'material icons', code: "\ue15c"},
+  "mi-remove_circle_outline": {iconSet: 'material icons', code: "\ue15d"},
+  "mi-remove_done": {iconSet: 'material icons', code: "\ue9d3"},
+  "mi-remove_from_queue": {iconSet: 'material icons', code: "\ue067"},
+  "mi-remove_moderator": {iconSet: 'material icons', code: "\ue9d4"},
+  "mi-remove_red_eye": {iconSet: 'material icons', code: "\ue417"},
+  "mi-remove_road": {iconSet: 'material icons', code: "\uebfc"},
+  "mi-remove_shopping_cart": {iconSet: 'material icons', code: "\ue928"},
+  "mi-reorder": {iconSet: 'material icons', code: "\ue8fe"},
+  "mi-repartition": {iconSet: 'material icons', code: "\uf8e8"},
+  "mi-repeat": {iconSet: 'material icons', code: "\ue040"},
+  "mi-repeat_on": {iconSet: 'material icons', code: "\ue9d6"},
+  "mi-repeat_one": {iconSet: 'material icons', code: "\ue041"},
+  "mi-repeat_one_on": {iconSet: 'material icons', code: "\ue9d7"},
+  "mi-replay": {iconSet: 'material icons', code: "\ue042"},
+  "mi-replay_10": {iconSet: 'material icons', code: "\ue059"},
+  "mi-replay_30": {iconSet: 'material icons', code: "\ue05a"},
+  "mi-replay_5": {iconSet: 'material icons', code: "\ue05b"},
+  "mi-replay_circle_filled": {iconSet: 'material icons', code: "\ue9d8"},
+  "mi-reply": {iconSet: 'material icons', code: "\ue15e"},
+  "mi-reply_all": {iconSet: 'material icons', code: "\ue15f"},
+  "mi-report": {iconSet: 'material icons', code: "\ue160"},
+  "mi-report_gmailerrorred": {iconSet: 'material icons', code: "\uf052"},
+  "mi-report_off": {iconSet: 'material icons', code: "\ue170"},
+  "mi-report_problem": {iconSet: 'material icons', code: "\ue8b2"},
+  "mi-request_page": {iconSet: 'material icons', code: "\uf22c"},
+  "mi-request_quote": {iconSet: 'material icons', code: "\uf1b6"},
+  "mi-reset_tv": {iconSet: 'material icons', code: "\ue9d9"},
+  "mi-restart_alt": {iconSet: 'material icons', code: "\uf053"},
+  "mi-restaurant": {iconSet: 'material icons', code: "\ue56c"},
+  "mi-restaurant_menu": {iconSet: 'material icons', code: "\ue561"},
+  "mi-restore": {iconSet: 'material icons', code: "\ue8b3"},
+  "mi-restore_from_trash": {iconSet: 'material icons', code: "\ue938"},
+  "mi-restore_page": {iconSet: 'material icons', code: "\ue929"},
+  "mi-reviews": {iconSet: 'material icons', code: "\uf054"},
+  "mi-rice_bowl": {iconSet: 'material icons', code: "\uf1f5"},
+  "mi-ring_volume": {iconSet: 'material icons', code: "\ue0d1"},
+  "mi-rocket": {iconSet: 'material icons', code: "\ueba5"},
+  "mi-rocket_launch": {iconSet: 'material icons', code: "\ueb9b"},
+  "mi-roller_shades": {iconSet: 'material icons', code: "\uec12"},
+  "mi-roller_shades_closed": {iconSet: 'material icons', code: "\uec11"},
+  "mi-roller_skating": {iconSet: 'material icons', code: "\uebcd"},
+  "mi-roofing": {iconSet: 'material icons', code: "\uf201"},
+  "mi-room": {iconSet: 'material icons', code: "\ue8b4"},
+  "mi-room_preferences": {iconSet: 'material icons', code: "\uf1b8"},
+  "mi-room_service": {iconSet: 'material icons', code: "\ueb49"},
+  "mi-rotate_90_degrees_ccw": {iconSet: 'material icons', code: "\ue418"},
+  "mi-rotate_90_degrees_cw": {iconSet: 'material icons', code: "\ueaab"},
+  "mi-rotate_left": {iconSet: 'material icons', code: "\ue419"},
+  "mi-rotate_right": {iconSet: 'material icons', code: "\ue41a"},
+  "mi-roundabout_left": {iconSet: 'material icons', code: "\ueb99"},
+  "mi-roundabout_right": {iconSet: 'material icons', code: "\ueba3"},
+  "mi-rounded_corner": {iconSet: 'material icons', code: "\ue920"},
+  "mi-route": {iconSet: 'material icons', code: "\ueacd"},
+  "mi-router": {iconSet: 'material icons', code: "\ue328"},
+  "mi-rowing": {iconSet: 'material icons', code: "\ue921"},
+  "mi-rss_feed": {iconSet: 'material icons', code: "\ue0e5"},
+  "mi-rsvp": {iconSet: 'material icons', code: "\uf055"},
+  "mi-rtt": {iconSet: 'material icons', code: "\ue9ad"},
+  "mi-rule": {iconSet: 'material icons', code: "\uf1c2"},
+  "mi-rule_folder": {iconSet: 'material icons', code: "\uf1c9"},
+  "mi-run_circle": {iconSet: 'material icons', code: "\uef6f"},
+  "mi-running_with_errors": {iconSet: 'material icons', code: "\ue51d"},
+  "mi-rv_hookup": {iconSet: 'material icons', code: "\ue642"},
+  "mi-safety_check": {iconSet: 'material icons', code: "\uebef"},
+  "mi-safety_divider": {iconSet: 'material icons', code: "\ue1cc"},
+  "mi-sailing": {iconSet: 'material icons', code: "\ue502"},
+  "mi-sanitizer": {iconSet: 'material icons', code: "\uf21d"},
+  "mi-satellite": {iconSet: 'material icons', code: "\ue562"},
+  "mi-satellite_alt": {iconSet: 'material icons', code: "\ueb3a"},
+  "mi-save": {iconSet: 'material icons', code: "\ue161"},
+  "mi-save_alt": {iconSet: 'material icons', code: "\ue171"},
+  "mi-save_as": {iconSet: 'material icons', code: "\ueb60"},
+  "mi-saved_search": {iconSet: 'material icons', code: "\uea11"},
+  "mi-savings": {iconSet: 'material icons', code: "\ue2eb"},
+  "mi-scale": {iconSet: 'material icons', code: "\ueb5f"},
+  "mi-scanner": {iconSet: 'material icons', code: "\ue329"},
+  "mi-scatter_plot": {iconSet: 'material icons', code: "\ue268"},
+  "mi-schedule": {iconSet: 'material icons', code: "\ue8b5"},
+  "mi-schedule_send": {iconSet: 'material icons', code: "\uea0a"},
+  "mi-schema": {iconSet: 'material icons', code: "\ue4fd"},
+  "mi-school": {iconSet: 'material icons', code: "\ue80c"},
+  "mi-science": {iconSet: 'material icons', code: "\uea4b"},
+  "mi-score": {iconSet: 'material icons', code: "\ue269"},
+  "mi-scoreboard": {iconSet: 'material icons', code: "\uebd0"},
+  "mi-screen_lock_landscape": {iconSet: 'material icons', code: "\ue1be"},
+  "mi-screen_lock_portrait": {iconSet: 'material icons', code: "\ue1bf"},
+  "mi-screen_lock_rotation": {iconSet: 'material icons', code: "\ue1c0"},
+  "mi-screen_rotation": {iconSet: 'material icons', code: "\ue1c1"},
+  "mi-screen_rotation_alt": {iconSet: 'material icons', code: "\uebee"},
+  "mi-screen_search_desktop": {iconSet: 'material icons', code: "\uef70"},
+  "mi-screen_share": {iconSet: 'material icons', code: "\ue0e2"},
+  "mi-screenshot": {iconSet: 'material icons', code: "\uf056"},
+  "mi-screenshot_monitor": {iconSet: 'material icons', code: "\uec08"},
+  "mi-scuba_diving": {iconSet: 'material icons', code: "\uebce"},
+  "mi-sd": {iconSet: 'material icons', code: "\ue9dd"},
+  "mi-sd_card": {iconSet: 'material icons', code: "\ue623"},
+  "mi-sd_card_alert": {iconSet: 'material icons', code: "\uf057"},
+  "mi-sd_storage": {iconSet: 'material icons', code: "\ue1c2"},
+  "mi-search": {iconSet: 'material icons', code: "\ue8b6"},
+  "mi-search_off": {iconSet: 'material icons', code: "\uea76"},
+  "mi-security": {iconSet: 'material icons', code: "\ue32a"},
+  "mi-security_update": {iconSet: 'material icons', code: "\uf058"},
+  "mi-security_update_good": {iconSet: 'material icons', code: "\uf059"},
+  "mi-security_update_warning": {iconSet: 'material icons', code: "\uf05a"},
+  "mi-segment": {iconSet: 'material icons', code: "\ue94b"},
+  "mi-select_all": {iconSet: 'material icons', code: "\ue162"},
+  "mi-self_improvement": {iconSet: 'material icons', code: "\uea78"},
+  "mi-sell": {iconSet: 'material icons', code: "\uf05b"},
+  "mi-send": {iconSet: 'material icons', code: "\ue163"},
+  "mi-send_and_archive": {iconSet: 'material icons', code: "\uea0c"},
+  "mi-send_time_extension": {iconSet: 'material icons', code: "\ueadb"},
+  "mi-send_to_mobile": {iconSet: 'material icons', code: "\uf05c"},
+  "mi-sensor_door": {iconSet: 'material icons', code: "\uf1b5"},
+  "mi-sensor_occupied": {iconSet: 'material icons', code: "\uec10"},
+  "mi-sensor_window": {iconSet: 'material icons', code: "\uf1b4"},
+  "mi-sensors": {iconSet: 'material icons', code: "\ue51e"},
+  "mi-sensors_off": {iconSet: 'material icons', code: "\ue51f"},
+  "mi-sentiment_dissatisfied": {iconSet: 'material icons', code: "\ue811"},
+  "mi-sentiment_neutral": {iconSet: 'material icons', code: "\ue812"},
+  "mi-sentiment_satisfied": {iconSet: 'material icons', code: "\ue813"},
+  "mi-sentiment_satisfied_alt": {iconSet: 'material icons', code: "\ue0ed"},
+  "mi-sentiment_very_dissatisfied": {iconSet: 'material icons', code: "\ue814"},
+  "mi-sentiment_very_satisfied": {iconSet: 'material icons', code: "\ue815"},
+  "mi-set_meal": {iconSet: 'material icons', code: "\uf1ea"},
+  "mi-settings": {iconSet: 'material icons', code: "\ue8b8"},
+  "mi-settings_accessibility": {iconSet: 'material icons', code: "\uf05d"},
+  "mi-settings_applications": {iconSet: 'material icons', code: "\ue8b9"},
+  "mi-settings_backup_restore": {iconSet: 'material icons', code: "\ue8ba"},
+  "mi-settings_bluetooth": {iconSet: 'material icons', code: "\ue8bb"},
+  "mi-settings_brightness": {iconSet: 'material icons', code: "\ue8bd"},
+  "mi-settings_cell": {iconSet: 'material icons', code: "\ue8bc"},
+  "mi-settings_display": {iconSet: 'material icons', code: "\ue8bd"},
+  "mi-settings_ethernet": {iconSet: 'material icons', code: "\ue8be"},
+  "mi-settings_input_antenna": {iconSet: 'material icons', code: "\ue8bf"},
+  "mi-settings_input_component": {iconSet: 'material icons', code: "\ue8c0"},
+  "mi-settings_input_composite": {iconSet: 'material icons', code: "\ue8c1"},
+  "mi-settings_input_hdmi": {iconSet: 'material icons', code: "\ue8c2"},
+  "mi-settings_input_svideo": {iconSet: 'material icons', code: "\ue8c3"},
+  "mi-settings_overscan": {iconSet: 'material icons', code: "\ue8c4"},
+  "mi-settings_phone": {iconSet: 'material icons', code: "\ue8c5"},
+  "mi-settings_power": {iconSet: 'material icons', code: "\ue8c6"},
+  "mi-settings_remote": {iconSet: 'material icons', code: "\ue8c7"},
+  "mi-settings_suggest": {iconSet: 'material icons', code: "\uf05e"},
+  "mi-settings_system_daydream": {iconSet: 'material icons', code: "\ue1c3"},
+  "mi-settings_voice": {iconSet: 'material icons', code: "\ue8c8"},
+  "mi-severe_cold": {iconSet: 'material icons', code: "\uebd3"},
+  "mi-shape_line": {iconSet: 'material icons', code: "\uf8d3"},
+  "mi-share": {iconSet: 'material icons', code: "\ue80d"},
+  "mi-share_arrival_time": {iconSet: 'material icons', code: "\ue524"},
+  "mi-share_location": {iconSet: 'material icons', code: "\uf05f"},
+  "mi-shelves": {iconSet: 'material icons', code: "\uf86e"},
+  "mi-shield": {iconSet: 'material icons', code: "\ue9e0"},
+  "mi-shield_moon": {iconSet: 'material icons', code: "\ueaa9"},
+  "mi-shop": {iconSet: 'material icons', code: "\ue8c9"},
+  "mi-shop_2": {iconSet: 'material icons', code: "\ue19e"},
+  "mi-shop_two": {iconSet: 'material icons', code: "\ue8ca"},
+  "mi-shopify": {iconSet: 'material icons', code: "\uea9d"},
+  "mi-shopping_bag": {iconSet: 'material icons', code: "\uf1cc"},
+  "mi-shopping_basket": {iconSet: 'material icons', code: "\ue8cb"},
+  "mi-shopping_cart": {iconSet: 'material icons', code: "\ue8cc"},
+  "mi-shopping_cart_checkout": {iconSet: 'material icons', code: "\ueb88"},
+  "mi-short_text": {iconSet: 'material icons', code: "\ue261"},
+  "mi-shortcut": {iconSet: 'material icons', code: "\uf060"},
+  "mi-show_chart": {iconSet: 'material icons', code: "\ue6e1"},
+  "mi-shower": {iconSet: 'material icons', code: "\uf061"},
+  "mi-shuffle": {iconSet: 'material icons', code: "\ue043"},
+  "mi-shuffle_on": {iconSet: 'material icons', code: "\ue9e1"},
+  "mi-shutter_speed": {iconSet: 'material icons', code: "\ue43d"},
+  "mi-sick": {iconSet: 'material icons', code: "\uf220"},
+  "mi-sign_language": {iconSet: 'material icons', code: "\uebe5"},
+  "mi-signal_cellular_0_bar": {iconSet: 'material icons', code: "\uf0a8"},
+  "mi-signal_cellular_1_bar": {iconSet: 'material icons', code: "\uf0a9"},
+  "mi-signal_cellular_2_bar": {iconSet: 'material icons', code: "\uf0aa"},
+  "mi-signal_cellular_3_bar": {iconSet: 'material icons', code: "\uf0ab"},
+  "mi-signal_cellular_4_bar": {iconSet: 'material icons', code: "\ue1c8"},
+  "mi-signal_cellular_alt": {iconSet: 'material icons', code: "\ue202"},
+  "mi-signal_cellular_alt_1_bar": {iconSet: 'material icons', code: "\uebdf"},
+  "mi-signal_cellular_alt_2_bar": {iconSet: 'material icons', code: "\uebe3"},
+  "mi-signal_cellular_connected_no_internet_0_bar": {iconSet: 'material icons', code: "\uf0ac"},
+  "mi-signal_cellular_connected_no_internet_1_bar": {iconSet: 'material icons', code: "\uf0ad"},
+  "mi-signal_cellular_connected_no_internet_2_bar": {iconSet: 'material icons', code: "\uf0ae"},
+  "mi-signal_cellular_connected_no_internet_3_bar": {iconSet: 'material icons', code: "\uf0af"},
+  "mi-signal_cellular_connected_no_internet_4_bar": {iconSet: 'material icons', code: "\ue1cd"},
+  "mi-signal_cellular_no_sim": {iconSet: 'material icons', code: "\ue1ce"},
+  "mi-signal_cellular_nodata": {iconSet: 'material icons', code: "\uf062"},
+  "mi-signal_cellular_null": {iconSet: 'material icons', code: "\ue1cf"},
+  "mi-signal_cellular_off": {iconSet: 'material icons', code: "\ue1d0"},
+  "mi-signal_wifi_0_bar": {iconSet: 'material icons', code: "\uf0b0"},
+  "mi-signal_wifi_1_bar": {iconSet: 'material icons', code: "\uf0b1"},
+  "mi-signal_wifi_1_bar_lock": {iconSet: 'material icons', code: "\uf0b2"},
+  "mi-signal_wifi_2_bar": {iconSet: 'material icons', code: "\uf0b3"},
+  "mi-signal_wifi_2_bar_lock": {iconSet: 'material icons', code: "\uf0b4"},
+  "mi-signal_wifi_3_bar": {iconSet: 'material icons', code: "\uf0b5"},
+  "mi-signal_wifi_3_bar_lock": {iconSet: 'material icons', code: "\uf0b6"},
+  "mi-signal_wifi_4_bar": {iconSet: 'material icons', code: "\ue1d8"},
+  "mi-signal_wifi_4_bar_lock": {iconSet: 'material icons', code: "\ue1d9"},
+  "mi-signal_wifi_bad": {iconSet: 'material icons', code: "\uf063"},
+  "mi-signal_wifi_connected_no_internet_0": {iconSet: 'material icons', code: "\uf0f2"},
+  "mi-signal_wifi_connected_no_internet_1": {iconSet: 'material icons', code: "\uf0ee"},
+  "mi-signal_wifi_connected_no_internet_2": {iconSet: 'material icons', code: "\uf0f1"},
+  "mi-signal_wifi_connected_no_internet_3": {iconSet: 'material icons', code: "\uf0ed"},
+  "mi-signal_wifi_connected_no_internet_4": {iconSet: 'material icons', code: "\uf064"},
+  "mi-signal_wifi_off": {iconSet: 'material icons', code: "\ue1da"},
+  "mi-signal_wifi_statusbar_1_bar": {iconSet: 'material icons', code: "\uf0e6"},
+  "mi-signal_wifi_statusbar_2_bar": {iconSet: 'material icons', code: "\uf0f0"},
+  "mi-signal_wifi_statusbar_3_bar": {iconSet: 'material icons', code: "\uf0ea"},
+  "mi-signal_wifi_statusbar_4_bar": {iconSet: 'material icons', code: "\uf065"},
+  "mi-signal_wifi_statusbar_connected_no_internet": {iconSet: 'material icons', code: "\uf0f8"},
+  "mi-signal_wifi_statusbar_connected_no_internet_1": {iconSet: 'material icons', code: "\uf0e9"},
+  "mi-signal_wifi_statusbar_connected_no_internet_2": {iconSet: 'material icons', code: "\uf0f7"},
+  "mi-signal_wifi_statusbar_connected_no_internet_3": {iconSet: 'material icons', code: "\uf0e8"},
+  "mi-signal_wifi_statusbar_connected_no_internet_4": {iconSet: 'material icons', code: "\uf066"},
+  "mi-signal_wifi_statusbar_not_connected": {iconSet: 'material icons', code: "\uf0ef"},
+  "mi-signal_wifi_statusbar_null": {iconSet: 'material icons', code: "\uf067"},
+  "mi-signpost": {iconSet: 'material icons', code: "\ueb91"},
+  "mi-sim_card": {iconSet: 'material icons', code: "\ue32b"},
+  "mi-sim_card_alert": {iconSet: 'material icons', code: "\ue624"},
+  "mi-sim_card_download": {iconSet: 'material icons', code: "\uf068"},
+  "mi-single_bed": {iconSet: 'material icons', code: "\uea48"},
+  "mi-sip": {iconSet: 'material icons', code: "\uf069"},
+  "mi-skateboarding": {iconSet: 'material icons', code: "\ue511"},
+  "mi-skip_next": {iconSet: 'material icons', code: "\ue044"},
+  "mi-skip_previous": {iconSet: 'material icons', code: "\ue045"},
+  "mi-sledding": {iconSet: 'material icons', code: "\ue512"},
+  "mi-slideshow": {iconSet: 'material icons', code: "\ue41b"},
+  "mi-slow_motion_video": {iconSet: 'material icons', code: "\ue068"},
+  "mi-smart_button": {iconSet: 'material icons', code: "\uf1c1"},
+  "mi-smart_display": {iconSet: 'material icons', code: "\uf06a"},
+  "mi-smart_screen": {iconSet: 'material icons', code: "\uf06b"},
+  "mi-smart_toy": {iconSet: 'material icons', code: "\uf06c"},
+  "mi-smartphone": {iconSet: 'material icons', code: "\ue32c"},
+  "mi-smoke_free": {iconSet: 'material icons', code: "\ueb4a"},
+  "mi-smoking_rooms": {iconSet: 'material icons', code: "\ueb4b"},
+  "mi-sms": {iconSet: 'material icons', code: "\ue625"},
+  "mi-sms_failed": {iconSet: 'material icons', code: "\ue626"},
+  "mi-snapchat": {iconSet: 'material icons', code: "\uea6e"},
+  "mi-snippet_folder": {iconSet: 'material icons', code: "\uf1c7"},
+  "mi-snooze": {iconSet: 'material icons', code: "\ue046"},
+  "mi-snowboarding": {iconSet: 'material icons', code: "\ue513"},
+  "mi-snowing": {iconSet: 'material icons', code: "\ue80f"},
+  "mi-snowmobile": {iconSet: 'material icons', code: "\ue503"},
+  "mi-snowshoeing": {iconSet: 'material icons', code: "\ue514"},
+  "mi-soap": {iconSet: 'material icons', code: "\uf1b2"},
+  "mi-social_distance": {iconSet: 'material icons', code: "\ue1cb"},
+  "mi-solar_power": {iconSet: 'material icons', code: "\uec0f"},
+  "mi-sort": {iconSet: 'material icons', code: "\ue164"},
+  "mi-sort_by_alpha": {iconSet: 'material icons', code: "\ue053"},
+  "mi-sos": {iconSet: 'material icons', code: "\uebf7"},
+  "mi-soup_kitchen": {iconSet: 'material icons', code: "\ue7d3"},
+  "mi-source": {iconSet: 'material icons', code: "\uf1c4"},
+  "mi-south": {iconSet: 'material icons', code: "\uf1e3"},
+  "mi-south_america": {iconSet: 'material icons', code: "\ue7e4"},
+  "mi-south_east": {iconSet: 'material icons', code: "\uf1e4"},
+  "mi-south_west": {iconSet: 'material icons', code: "\uf1e5"},
+  "mi-spa": {iconSet: 'material icons', code: "\ueb4c"},
+  "mi-space_bar": {iconSet: 'material icons', code: "\ue256"},
+  "mi-space_dashboard": {iconSet: 'material icons', code: "\ue66b"},
+  "mi-spatial_audio": {iconSet: 'material icons', code: "\uebeb"},
+  "mi-spatial_audio_off": {iconSet: 'material icons', code: "\uebe8"},
+  "mi-spatial_tracking": {iconSet: 'material icons', code: "\uebea"},
+  "mi-speaker": {iconSet: 'material icons', code: "\ue32d"},
+  "mi-speaker_group": {iconSet: 'material icons', code: "\ue32e"},
+  "mi-speaker_notes": {iconSet: 'material icons', code: "\ue8cd"},
+  "mi-speaker_notes_off": {iconSet: 'material icons', code: "\ue92a"},
+  "mi-speaker_phone": {iconSet: 'material icons', code: "\ue0d2"},
+  "mi-speed": {iconSet: 'material icons', code: "\ue9e4"},
+  "mi-spellcheck": {iconSet: 'material icons', code: "\ue8ce"},
+  "mi-splitscreen": {iconSet: 'material icons', code: "\uf06d"},
+  "mi-spoke": {iconSet: 'material icons', code: "\ue9a7"},
+  "mi-sports": {iconSet: 'material icons', code: "\uea30"},
+  "mi-sports_bar": {iconSet: 'material icons', code: "\uf1f3"},
+  "mi-sports_baseball": {iconSet: 'material icons', code: "\uea51"},
+  "mi-sports_basketball": {iconSet: 'material icons', code: "\uea26"},
+  "mi-sports_cricket": {iconSet: 'material icons', code: "\uea27"},
+  "mi-sports_esports": {iconSet: 'material icons', code: "\uea28"},
+  "mi-sports_football": {iconSet: 'material icons', code: "\uea29"},
+  "mi-sports_golf": {iconSet: 'material icons', code: "\uea2a"},
+  "mi-sports_gymnastics": {iconSet: 'material icons', code: "\uebc4"},
+  "mi-sports_handball": {iconSet: 'material icons', code: "\uea33"},
+  "mi-sports_hockey": {iconSet: 'material icons', code: "\uea2b"},
+  "mi-sports_kabaddi": {iconSet: 'material icons', code: "\uea34"},
+  "mi-sports_martial_arts": {iconSet: 'material icons', code: "\ueae9"},
+  "mi-sports_mma": {iconSet: 'material icons', code: "\uea2c"},
+  "mi-sports_motorsports": {iconSet: 'material icons', code: "\uea2d"},
+  "mi-sports_rugby": {iconSet: 'material icons', code: "\uea2e"},
+  "mi-sports_score": {iconSet: 'material icons', code: "\uf06e"},
+  "mi-sports_soccer": {iconSet: 'material icons', code: "\uea2f"},
+  "mi-sports_tennis": {iconSet: 'material icons', code: "\uea32"},
+  "mi-sports_volleyball": {iconSet: 'material icons', code: "\uea31"},
+  "mi-square": {iconSet: 'material icons', code: "\ueb36"},
+  "mi-square_foot": {iconSet: 'material icons', code: "\uea49"},
+  "mi-ssid_chart": {iconSet: 'material icons', code: "\ueb66"},
+  "mi-stacked_bar_chart": {iconSet: 'material icons', code: "\ue9e6"},
+  "mi-stacked_line_chart": {iconSet: 'material icons', code: "\uf22b"},
+  "mi-stadium": {iconSet: 'material icons', code: "\ueb90"},
+  "mi-stairs": {iconSet: 'material icons', code: "\uf1a9"},
+  "mi-star": {iconSet: 'material icons', code: "\ue838"},
+  "mi-star_border": {iconSet: 'material icons', code: "\ue83a"},
+  "mi-star_border_purple500": {iconSet: 'material icons', code: "\uf099"},
+  "mi-star_half": {iconSet: 'material icons', code: "\ue839"},
+  "mi-star_outline": {iconSet: 'material icons', code: "\uf06f"},
+  "mi-star_purple500": {iconSet: 'material icons', code: "\uf09a"},
+  "mi-star_rate": {iconSet: 'material icons', code: "\uf0ec"},
+  "mi-stars": {iconSet: 'material icons', code: "\ue8d0"},
+  "mi-start": {iconSet: 'material icons', code: "\ue089"},
+  "mi-stay_current_landscape": {iconSet: 'material icons', code: "\ue0d3"},
+  "mi-stay_current_portrait": {iconSet: 'material icons', code: "\ue0d4"},
+  "mi-stay_primary_landscape": {iconSet: 'material icons', code: "\ue0d5"},
+  "mi-stay_primary_portrait": {iconSet: 'material icons', code: "\ue0d6"},
+  "mi-sticky_note_2": {iconSet: 'material icons', code: "\uf1fc"},
+  "mi-stop": {iconSet: 'material icons', code: "\ue047"},
+  "mi-stop_circle": {iconSet: 'material icons', code: "\uef71"},
+  "mi-stop_screen_share": {iconSet: 'material icons', code: "\ue0e3"},
+  "mi-storage": {iconSet: 'material icons', code: "\ue1db"},
+  "mi-store": {iconSet: 'material icons', code: "\ue8d1"},
+  "mi-store_mall_directory": {iconSet: 'material icons', code: "\ue563"},
+  "mi-storefront": {iconSet: 'material icons', code: "\uea12"},
+  "mi-storm": {iconSet: 'material icons', code: "\uf070"},
+  "mi-straight": {iconSet: 'material icons', code: "\ueb95"},
+  "mi-straighten": {iconSet: 'material icons', code: "\ue41c"},
+  "mi-stream": {iconSet: 'material icons', code: "\ue9e9"},
+  "mi-streetview": {iconSet: 'material icons', code: "\ue56e"},
+  "mi-strikethrough_s": {iconSet: 'material icons', code: "\ue257"},
+  "mi-stroller": {iconSet: 'material icons', code: "\uf1ae"},
+  "mi-style": {iconSet: 'material icons', code: "\ue41d"},
+  "mi-subdirectory_arrow_left": {iconSet: 'material icons', code: "\ue5d9"},
+  "mi-subdirectory_arrow_right": {iconSet: 'material icons', code: "\ue5da"},
+  "mi-subject": {iconSet: 'material icons', code: "\ue8d2"},
+  "mi-subscript": {iconSet: 'material icons', code: "\uf111"},
+  "mi-subscriptions": {iconSet: 'material icons', code: "\ue064"},
+  "mi-subtitles": {iconSet: 'material icons', code: "\ue048"},
+  "mi-subtitles_off": {iconSet: 'material icons', code: "\uef72"},
+  "mi-subway": {iconSet: 'material icons', code: "\ue56f"},
+  "mi-summarize": {iconSet: 'material icons', code: "\uf071"},
+  "mi-sunny": {iconSet: 'material icons', code: "\ue81a"},
+  "mi-sunny_snowing": {iconSet: 'material icons', code: "\ue819"},
+  "mi-superscript": {iconSet: 'material icons', code: "\uf112"},
+  "mi-supervised_user_circle": {iconSet: 'material icons', code: "\ue939"},
+  "mi-supervisor_account": {iconSet: 'material icons', code: "\ue8d3"},
+  "mi-support": {iconSet: 'material icons', code: "\uef73"},
+  "mi-support_agent": {iconSet: 'material icons', code: "\uf0e2"},
+  "mi-surfing": {iconSet: 'material icons', code: "\ue515"},
+  "mi-surround_sound": {iconSet: 'material icons', code: "\ue049"},
+  "mi-swap_calls": {iconSet: 'material icons', code: "\ue0d7"},
+  "mi-swap_horiz": {iconSet: 'material icons', code: "\ue8d4"},
+  "mi-swap_horizontal_circle": {iconSet: 'material icons', code: "\ue933"},
+  "mi-swap_vert": {iconSet: 'material icons', code: "\ue8d5"},
+  "mi-swap_vert_circle": {iconSet: 'material icons', code: "\ue8d6"},
+  "mi-swap_vertical_circle": {iconSet: 'material icons', code: "\ue8d6"},
+  "mi-swipe": {iconSet: 'material icons', code: "\ue9ec"},
+  "mi-swipe_down": {iconSet: 'material icons', code: "\ueb53"},
+  "mi-swipe_down_alt": {iconSet: 'material icons', code: "\ueb30"},
+  "mi-swipe_left": {iconSet: 'material icons', code: "\ueb59"},
+  "mi-swipe_left_alt": {iconSet: 'material icons', code: "\ueb33"},
+  "mi-swipe_right": {iconSet: 'material icons', code: "\ueb52"},
+  "mi-swipe_right_alt": {iconSet: 'material icons', code: "\ueb56"},
+  "mi-swipe_up": {iconSet: 'material icons', code: "\ueb2e"},
+  "mi-swipe_up_alt": {iconSet: 'material icons', code: "\ueb35"},
+  "mi-swipe_vertical": {iconSet: 'material icons', code: "\ueb51"},
+  "mi-switch_access_shortcut": {iconSet: 'material icons', code: "\ue7e1"},
+  "mi-switch_access_shortcut_add": {iconSet: 'material icons', code: "\ue7e2"},
+  "mi-switch_account": {iconSet: 'material icons', code: "\ue9ed"},
+  "mi-switch_camera": {iconSet: 'material icons', code: "\ue41e"},
+  "mi-switch_left": {iconSet: 'material icons', code: "\uf1d1"},
+  "mi-switch_right": {iconSet: 'material icons', code: "\uf1d2"},
+  "mi-switch_video": {iconSet: 'material icons', code: "\ue41f"},
+  "mi-synagogue": {iconSet: 'material icons', code: "\ueab0"},
+  "mi-sync": {iconSet: 'material icons', code: "\ue627"},
+  "mi-sync_alt": {iconSet: 'material icons', code: "\uea18"},
+  "mi-sync_disabled": {iconSet: 'material icons', code: "\ue628"},
+  "mi-sync_lock": {iconSet: 'material icons', code: "\ueaee"},
+  "mi-sync_problem": {iconSet: 'material icons', code: "\ue629"},
+  "mi-system_security_update": {iconSet: 'material icons', code: "\uf072"},
+  "mi-system_security_update_good": {iconSet: 'material icons', code: "\uf073"},
+  "mi-system_security_update_warning": {iconSet: 'material icons', code: "\uf074"},
+  "mi-system_update": {iconSet: 'material icons', code: "\ue62a"},
+  "mi-system_update_alt": {iconSet: 'material icons', code: "\ue8d7"},
+  "mi-system_update_tv": {iconSet: 'material icons', code: "\ue8d7"},
+  "mi-tab": {iconSet: 'material icons', code: "\ue8d8"},
+  "mi-tab_unselected": {iconSet: 'material icons', code: "\ue8d9"},
+  "mi-table_bar": {iconSet: 'material icons', code: "\uead2"},
+  "mi-table_chart": {iconSet: 'material icons', code: "\ue265"},
+  "mi-table_restaurant": {iconSet: 'material icons', code: "\ueac6"},
+  "mi-table_rows": {iconSet: 'material icons', code: "\uf101"},
+  "mi-table_view": {iconSet: 'material icons', code: "\uf1be"},
+  "mi-tablet": {iconSet: 'material icons', code: "\ue32f"},
+  "mi-tablet_android": {iconSet: 'material icons', code: "\ue330"},
+  "mi-tablet_mac": {iconSet: 'material icons', code: "\ue331"},
+  "mi-tag": {iconSet: 'material icons', code: "\ue9ef"},
+  "mi-tag_faces": {iconSet: 'material icons', code: "\ue420"},
+  "mi-takeout_dining": {iconSet: 'material icons', code: "\uea74"},
+  "mi-tap_and_play": {iconSet: 'material icons', code: "\ue62b"},
+  "mi-tapas": {iconSet: 'material icons', code: "\uf1e9"},
+  "mi-task": {iconSet: 'material icons', code: "\uf075"},
+  "mi-task_alt": {iconSet: 'material icons', code: "\ue2e6"},
+  "mi-taxi_alert": {iconSet: 'material icons', code: "\uef74"},
+  "mi-telegram": {iconSet: 'material icons', code: "\uea6b"},
+  "mi-temple_buddhist": {iconSet: 'material icons', code: "\ueab3"},
+  "mi-temple_hindu": {iconSet: 'material icons', code: "\ueaaf"},
+  "mi-terminal": {iconSet: 'material icons', code: "\ueb8e"},
+  "mi-terrain": {iconSet: 'material icons', code: "\ue564"},
+  "mi-text_decrease": {iconSet: 'material icons', code: "\ueadd"},
+  "mi-text_fields": {iconSet: 'material icons', code: "\ue262"},
+  "mi-text_format": {iconSet: 'material icons', code: "\ue165"},
+  "mi-text_increase": {iconSet: 'material icons', code: "\ueae2"},
+  "mi-text_rotate_up": {iconSet: 'material icons', code: "\ue93a"},
+  "mi-text_rotate_vertical": {iconSet: 'material icons', code: "\ue93b"},
+  "mi-text_rotation_angledown": {iconSet: 'material icons', code: "\ue93c"},
+  "mi-text_rotation_angleup": {iconSet: 'material icons', code: "\ue93d"},
+  "mi-text_rotation_down": {iconSet: 'material icons', code: "\ue93e"},
+  "mi-text_rotation_none": {iconSet: 'material icons', code: "\ue93f"},
+  "mi-text_snippet": {iconSet: 'material icons', code: "\uf1c6"},
+  "mi-textsms": {iconSet: 'material icons', code: "\ue0d8"},
+  "mi-texture": {iconSet: 'material icons', code: "\ue421"},
+  "mi-theater_comedy": {iconSet: 'material icons', code: "\uea66"},
+  "mi-theaters": {iconSet: 'material icons', code: "\ue8da"},
+  "mi-thermostat": {iconSet: 'material icons', code: "\uf076"},
+  "mi-thermostat_auto": {iconSet: 'material icons', code: "\uf077"},
+  "mi-thumb_down": {iconSet: 'material icons', code: "\ue8db"},
+  "mi-thumb_down_alt": {iconSet: 'material icons', code: "\ue816"},
+  "mi-thumb_down_off_alt": {iconSet: 'material icons', code: "\ue9f2"},
+  "mi-thumb_up": {iconSet: 'material icons', code: "\ue8dc"},
+  "mi-thumb_up_alt": {iconSet: 'material icons', code: "\ue817"},
+  "mi-thumb_up_off_alt": {iconSet: 'material icons', code: "\ue9f3"},
+  "mi-thumbs_up_down": {iconSet: 'material icons', code: "\ue8dd"},
+  "mi-thunderstorm": {iconSet: 'material icons', code: "\uebdb"},
+  "mi-tiktok": {iconSet: 'material icons', code: "\uea7e"},
+  "mi-time_to_leave": {iconSet: 'material icons', code: "\ue62c"},
+  "mi-timelapse": {iconSet: 'material icons', code: "\ue422"},
+  "mi-timeline": {iconSet: 'material icons', code: "\ue922"},
+  "mi-timer": {iconSet: 'material icons', code: "\ue425"},
+  "mi-timer_10": {iconSet: 'material icons', code: "\ue423"},
+  "mi-timer_10_select": {iconSet: 'material icons', code: "\uf07a"},
+  "mi-timer_3": {iconSet: 'material icons', code: "\ue424"},
+  "mi-timer_3_select": {iconSet: 'material icons', code: "\uf07b"},
+  "mi-timer_off": {iconSet: 'material icons', code: "\ue426"},
+  "mi-tips_and_updates": {iconSet: 'material icons', code: "\ue79a"},
+  "mi-tire_repair": {iconSet: 'material icons', code: "\uebc8"},
+  "mi-title": {iconSet: 'material icons', code: "\ue264"},
+  "mi-toc": {iconSet: 'material icons', code: "\ue8de"},
+  "mi-today": {iconSet: 'material icons', code: "\ue8df"},
+  "mi-toggle_off": {iconSet: 'material icons', code: "\ue9f5"},
+  "mi-toggle_on": {iconSet: 'material icons', code: "\ue9f6"},
+  "mi-token": {iconSet: 'material icons', code: "\uea25"},
+  "mi-toll": {iconSet: 'material icons', code: "\ue8e0"},
+  "mi-tonality": {iconSet: 'material icons', code: "\ue427"},
+  "mi-topic": {iconSet: 'material icons', code: "\uf1c8"},
+  "mi-tornado": {iconSet: 'material icons', code: "\ue199"},
+  "mi-touch_app": {iconSet: 'material icons', code: "\ue913"},
+  "mi-tour": {iconSet: 'material icons', code: "\uef75"},
+  "mi-toys": {iconSet: 'material icons', code: "\ue332"},
+  "mi-track_changes": {iconSet: 'material icons', code: "\ue8e1"},
+  "mi-traffic": {iconSet: 'material icons', code: "\ue565"},
+  "mi-train": {iconSet: 'material icons', code: "\ue570"},
+  "mi-tram": {iconSet: 'material icons', code: "\ue571"},
+  "mi-transcribe": {iconSet: 'material icons', code: "\uf8ec"},
+  "mi-transfer_within_a_station": {iconSet: 'material icons', code: "\ue572"},
+  "mi-transform": {iconSet: 'material icons', code: "\ue428"},
+  "mi-transgender": {iconSet: 'material icons', code: "\ue58d"},
+  "mi-transit_enterexit": {iconSet: 'material icons', code: "\ue579"},
+  "mi-translate": {iconSet: 'material icons', code: "\ue8e2"},
+  "mi-travel_explore": {iconSet: 'material icons', code: "\ue2db"},
+  "mi-trending_down": {iconSet: 'material icons', code: "\ue8e3"},
+  "mi-trending_flat": {iconSet: 'material icons', code: "\ue8e4"},
+  "mi-trending_neutral": {iconSet: 'material icons', code: "\ue8e4"},
+  "mi-trending_up": {iconSet: 'material icons', code: "\ue8e5"},
+  "mi-trip_origin": {iconSet: 'material icons', code: "\ue57b"},
+  "mi-trolley": {iconSet: 'material icons', code: "\uf86b"},
+  "mi-troubleshoot": {iconSet: 'material icons', code: "\ue1d2"},
+  "mi-try": {iconSet: 'material icons', code: "\uf07c"},
+  "mi-tsunami": {iconSet: 'material icons', code: "\uebd8"},
+  "mi-tty": {iconSet: 'material icons', code: "\uf1aa"},
+  "mi-tune": {iconSet: 'material icons', code: "\ue429"},
+  "mi-tungsten": {iconSet: 'material icons', code: "\uf07d"},
+  "mi-turn_left": {iconSet: 'material icons', code: "\ueba6"},
+  "mi-turn_right": {iconSet: 'material icons', code: "\uebab"},
+  "mi-turn_sharp_left": {iconSet: 'material icons', code: "\ueba7"},
+  "mi-turn_sharp_right": {iconSet: 'material icons', code: "\uebaa"},
+  "mi-turn_slight_left": {iconSet: 'material icons', code: "\ueba4"},
+  "mi-turn_slight_right": {iconSet: 'material icons', code: "\ueb9a"},
+  "mi-turned_in": {iconSet: 'material icons', code: "\ue8e6"},
+  "mi-turned_in_not": {iconSet: 'material icons', code: "\ue8e7"},
+  "mi-tv": {iconSet: 'material icons', code: "\ue333"},
+  "mi-tv_off": {iconSet: 'material icons', code: "\ue647"},
+  "mi-two_wheeler": {iconSet: 'material icons', code: "\ue9f9"},
+  "mi-type_specimen": {iconSet: 'material icons', code: "\uf8f0"},
+  "mi-u_turn_left": {iconSet: 'material icons', code: "\ueba1"},
+  "mi-u_turn_right": {iconSet: 'material icons', code: "\ueba2"},
+  "mi-umbrella": {iconSet: 'material icons', code: "\uf1ad"},
+  "mi-unarchive": {iconSet: 'material icons', code: "\ue169"},
+  "mi-undo": {iconSet: 'material icons', code: "\ue166"},
+  "mi-unfold_less": {iconSet: 'material icons', code: "\ue5d6"},
+  "mi-unfold_less_double": {iconSet: 'material icons', code: "\uf8cf"},
+  "mi-unfold_more": {iconSet: 'material icons', code: "\ue5d7"},
+  "mi-unfold_more_double": {iconSet: 'material icons', code: "\uf8d0"},
+  "mi-unpublished": {iconSet: 'material icons', code: "\uf236"},
+  "mi-unsubscribe": {iconSet: 'material icons', code: "\ue0eb"},
+  "mi-upcoming": {iconSet: 'material icons', code: "\uf07e"},
+  "mi-update": {iconSet: 'material icons', code: "\ue923"},
+  "mi-update_disabled": {iconSet: 'material icons', code: "\ue075"},
+  "mi-upgrade": {iconSet: 'material icons', code: "\uf0fb"},
+  "mi-upload": {iconSet: 'material icons', code: "\uf09b"},
+  "mi-upload_file": {iconSet: 'material icons', code: "\ue9fc"},
+  "mi-usb": {iconSet: 'material icons', code: "\ue1e0"},
+  "mi-usb_off": {iconSet: 'material icons', code: "\ue4fa"},
+  "mi-vaccines": {iconSet: 'material icons', code: "\ue138"},
+  "mi-vape_free": {iconSet: 'material icons', code: "\uebc6"},
+  "mi-vaping_rooms": {iconSet: 'material icons', code: "\uebcf"},
+  "mi-verified": {iconSet: 'material icons', code: "\uef76"},
+  "mi-verified_user": {iconSet: 'material icons', code: "\ue8e8"},
+  "mi-vertical_align_bottom": {iconSet: 'material icons', code: "\ue258"},
+  "mi-vertical_align_center": {iconSet: 'material icons', code: "\ue259"},
+  "mi-vertical_align_top": {iconSet: 'material icons', code: "\ue25a"},
+  "mi-vertical_distribute": {iconSet: 'material icons', code: "\ue076"},
+  "mi-vertical_shades": {iconSet: 'material icons', code: "\uec0e"},
+  "mi-vertical_shades_closed": {iconSet: 'material icons', code: "\uec0d"},
+  "mi-vertical_split": {iconSet: 'material icons', code: "\ue949"},
+  "mi-vibration": {iconSet: 'material icons', code: "\ue62d"},
+  "mi-video_call": {iconSet: 'material icons', code: "\ue070"},
+  "mi-video_camera_back": {iconSet: 'material icons', code: "\uf07f"},
+  "mi-video_camera_front": {iconSet: 'material icons', code: "\uf080"},
+  "mi-video_chat": {iconSet: 'material icons', code: "\uf8a0"},
+  "mi-video_collection": {iconSet: 'material icons', code: "\ue04a"},
+  "mi-video_file": {iconSet: 'material icons', code: "\ueb87"},
+  "mi-video_label": {iconSet: 'material icons', code: "\ue071"},
+  "mi-video_library": {iconSet: 'material icons', code: "\ue04a"},
+  "mi-video_settings": {iconSet: 'material icons', code: "\uea75"},
+  "mi-video_stable": {iconSet: 'material icons', code: "\uf081"},
+  "mi-videocam": {iconSet: 'material icons', code: "\ue04b"},
+  "mi-videocam_off": {iconSet: 'material icons', code: "\ue04c"},
+  "mi-videogame_asset": {iconSet: 'material icons', code: "\ue338"},
+  "mi-videogame_asset_off": {iconSet: 'material icons', code: "\ue500"},
+  "mi-view_agenda": {iconSet: 'material icons', code: "\ue8e9"},
+  "mi-view_array": {iconSet: 'material icons', code: "\ue8ea"},
+  "mi-view_carousel": {iconSet: 'material icons', code: "\ue8eb"},
+  "mi-view_column": {iconSet: 'material icons', code: "\ue8ec"},
+  "mi-view_comfortable": {iconSet: 'material icons', code: "\ue42a"},
+  "mi-view_comfy": {iconSet: 'material icons', code: "\ue42a"},
+  "mi-view_comfy_alt": {iconSet: 'material icons', code: "\ueb73"},
+  "mi-view_compact": {iconSet: 'material icons', code: "\ue42b"},
+  "mi-view_compact_alt": {iconSet: 'material icons', code: "\ueb74"},
+  "mi-view_cozy": {iconSet: 'material icons', code: "\ueb75"},
+  "mi-view_day": {iconSet: 'material icons', code: "\ue8ed"},
+  "mi-view_headline": {iconSet: 'material icons', code: "\ue8ee"},
+  "mi-view_in_ar": {iconSet: 'material icons', code: "\ue9fe"},
+  "mi-view_kanban": {iconSet: 'material icons', code: "\ueb7f"},
+  "mi-view_list": {iconSet: 'material icons', code: "\ue8ef"},
+  "mi-view_module": {iconSet: 'material icons', code: "\ue8f0"},
+  "mi-view_quilt": {iconSet: 'material icons', code: "\ue8f1"},
+  "mi-view_sidebar": {iconSet: 'material icons', code: "\uf114"},
+  "mi-view_stream": {iconSet: 'material icons', code: "\ue8f2"},
+  "mi-view_timeline": {iconSet: 'material icons', code: "\ueb85"},
+  "mi-view_week": {iconSet: 'material icons', code: "\ue8f3"},
+  "mi-vignette": {iconSet: 'material icons', code: "\ue435"},
+  "mi-villa": {iconSet: 'material icons', code: "\ue586"},
+  "mi-visibility": {iconSet: 'material icons', code: "\ue8f4"},
+  "mi-visibility_off": {iconSet: 'material icons', code: "\ue8f5"},
+  "mi-voice_chat": {iconSet: 'material icons', code: "\ue62e"},
+  "mi-voice_over_off": {iconSet: 'material icons', code: "\ue94a"},
+  "mi-voicemail": {iconSet: 'material icons', code: "\ue0d9"},
+  "mi-volcano": {iconSet: 'material icons', code: "\uebda"},
+  "mi-volume_down": {iconSet: 'material icons', code: "\ue04d"},
+  "mi-volume_down_alt": {iconSet: 'material icons', code: "\ue79c"},
+  "mi-volume_mute": {iconSet: 'material icons', code: "\ue04e"},
+  "mi-volume_off": {iconSet: 'material icons', code: "\ue04f"},
+  "mi-volume_up": {iconSet: 'material icons', code: "\ue050"},
+  "mi-volunteer_activism": {iconSet: 'material icons', code: "\uea70"},
+  "mi-vpn_key": {iconSet: 'material icons', code: "\ue0da"},
+  "mi-vpn_key_off": {iconSet: 'material icons', code: "\ueb7a"},
+  "mi-vpn_lock": {iconSet: 'material icons', code: "\ue62f"},
+  "mi-vrpano": {iconSet: 'material icons', code: "\uf082"},
+  "mi-wallet": {iconSet: 'material icons', code: "\uf8ff"},
+  "mi-wallet_giftcard": {iconSet: 'material icons', code: "\ue8f6"},
+  "mi-wallet_membership": {iconSet: 'material icons', code: "\ue8f7"},
+  "mi-wallet_travel": {iconSet: 'material icons', code: "\ue8f8"},
+  "mi-wallpaper": {iconSet: 'material icons', code: "\ue1bc"},
+  "mi-warehouse": {iconSet: 'material icons', code: "\uebb8"},
+  "mi-warning": {iconSet: 'material icons', code: "\ue002"},
+  "mi-warning_amber": {iconSet: 'material icons', code: "\uf083"},
+  "mi-wash": {iconSet: 'material icons', code: "\uf1b1"},
+  "mi-watch": {iconSet: 'material icons', code: "\ue334"},
+  "mi-watch_later": {iconSet: 'material icons', code: "\ue924"},
+  "mi-watch_off": {iconSet: 'material icons', code: "\ueae3"},
+  "mi-water": {iconSet: 'material icons', code: "\uf084"},
+  "mi-water_damage": {iconSet: 'material icons', code: "\uf203"},
+  "mi-water_drop": {iconSet: 'material icons', code: "\ue798"},
+  "mi-waterfall_chart": {iconSet: 'material icons', code: "\uea00"},
+  "mi-waves": {iconSet: 'material icons', code: "\ue176"},
+  "mi-waving_hand": {iconSet: 'material icons', code: "\ue766"},
+  "mi-wb_auto": {iconSet: 'material icons', code: "\ue42c"},
+  "mi-wb_cloudy": {iconSet: 'material icons', code: "\ue42d"},
+  "mi-wb_incandescent": {iconSet: 'material icons', code: "\ue42e"},
+  "mi-wb_iridescent": {iconSet: 'material icons', code: "\ue436"},
+  "mi-wb_shade": {iconSet: 'material icons', code: "\uea01"},
+  "mi-wb_sunny": {iconSet: 'material icons', code: "\ue430"},
+  "mi-wb_twighlight": {iconSet: 'material icons', code: "\uea02"},
+  "mi-wb_twilight": {iconSet: 'material icons', code: "\ue1c6"},
+  "mi-wc": {iconSet: 'material icons', code: "\ue63d"},
+  "mi-web": {iconSet: 'material icons', code: "\ue051"},
+  "mi-web_asset": {iconSet: 'material icons', code: "\ue069"},
+  "mi-web_asset_off": {iconSet: 'material icons', code: "\ue4f7"},
+  "mi-web_stories": {iconSet: 'material icons', code: "\ue595"},
+  "mi-webhook": {iconSet: 'material icons', code: "\ueb92"},
+  "mi-wechat": {iconSet: 'material icons', code: "\uea81"},
+  "mi-weekend": {iconSet: 'material icons', code: "\ue16b"},
+  "mi-west": {iconSet: 'material icons', code: "\uf1e6"},
+  "mi-whatshot": {iconSet: 'material icons', code: "\ue80e"},
+  "mi-wheelchair_pickup": {iconSet: 'material icons', code: "\uf1ab"},
+  "mi-where_to_vote": {iconSet: 'material icons', code: "\ue177"},
+  "mi-widgets": {iconSet: 'material icons', code: "\ue1bd"},
+  "mi-width_full": {iconSet: 'material icons', code: "\uf8f5"},
+  "mi-width_normal": {iconSet: 'material icons', code: "\uf8f6"},
+  "mi-width_wide": {iconSet: 'material icons', code: "\uf8f7"},
+  "mi-wifi": {iconSet: 'material icons', code: "\ue63e"},
+  "mi-wifi_1_bar": {iconSet: 'material icons', code: "\ue4ca"},
+  "mi-wifi_2_bar": {iconSet: 'material icons', code: "\ue4d9"},
+  "mi-wifi_calling": {iconSet: 'material icons', code: "\uef77"},
+  "mi-wifi_calling_1": {iconSet: 'material icons', code: "\uf0e7"},
+  "mi-wifi_calling_2": {iconSet: 'material icons', code: "\uf0f6"},
+  "mi-wifi_calling_3": {iconSet: 'material icons', code: "\uf085"},
+  "mi-wifi_channel": {iconSet: 'material icons', code: "\ueb6a"},
+  "mi-wifi_find": {iconSet: 'material icons', code: "\ueb31"},
+  "mi-wifi_lock": {iconSet: 'material icons', code: "\ue1e1"},
+  "mi-wifi_off": {iconSet: 'material icons', code: "\ue648"},
+  "mi-wifi_password": {iconSet: 'material icons', code: "\ueb6b"},
+  "mi-wifi_protected_setup": {iconSet: 'material icons', code: "\uf0fc"},
+  "mi-wifi_tethering": {iconSet: 'material icons', code: "\ue1e2"},
+  "mi-wifi_tethering_error": {iconSet: 'material icons', code: "\uead9"},
+  "mi-wifi_tethering_error_rounded": {iconSet: 'material icons', code: "\uf086"},
+  "mi-wifi_tethering_off": {iconSet: 'material icons', code: "\uf087"},
+  "mi-wind_power": {iconSet: 'material icons', code: "\uec0c"},
+  "mi-window": {iconSet: 'material icons', code: "\uf088"},
+  "mi-wine_bar": {iconSet: 'material icons', code: "\uf1e8"},
+  "mi-woman": {iconSet: 'material icons', code: "\ue13e"},
+  "mi-woman_2": {iconSet: 'material icons', code: "\uf8e7"},
+  "mi-woo_commerce": {iconSet: 'material icons', code: "\uea6d"},
+  "mi-wordpress": {iconSet: 'material icons', code: "\uea9f"},
+  "mi-work": {iconSet: 'material icons', code: "\ue8f9"},
+  "mi-work_history": {iconSet: 'material icons', code: "\uec09"},
+  "mi-work_off": {iconSet: 'material icons', code: "\ue942"},
+  "mi-work_outline": {iconSet: 'material icons', code: "\ue943"},
+  "mi-workspace_premium": {iconSet: 'material icons', code: "\ue7af"},
+  "mi-workspaces": {iconSet: 'material icons', code: "\ue1a0"},
+  "mi-workspaces_filled": {iconSet: 'material icons', code: "\uea0d"},
+  "mi-workspaces_outline": {iconSet: 'material icons', code: "\uea0f"},
+  "mi-wrap_text": {iconSet: 'material icons', code: "\ue25b"},
+  "mi-wrong_location": {iconSet: 'material icons', code: "\uef78"},
+  "mi-wysiwyg": {iconSet: 'material icons', code: "\uf1c3"},
+  "mi-yard": {iconSet: 'material icons', code: "\uf089"},
+  "mi-youtube_searched_for": {iconSet: 'material icons', code: "\ue8fa"},
+  "mi-zoom_in": {iconSet: 'material icons', code: "\ue8ff"},
+  "mi-zoom_in_map": {iconSet: 'material icons', code: "\ueb2d"},
+  "mi-zoom_out": {iconSet: 'material icons', code: "\ue900"},
+  "mi-zoom_out_map": {iconSet: 'material icons', code: "\ue56b"}
   }
   
