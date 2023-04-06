@@ -6,7 +6,7 @@ import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import lint from '../js/linter.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { findComponentDef, getComponentNode } from './helpers.js';
-import { replaceComponentDefinition, insertMorphExpression, handleRemovedMorph, applyModuleChanges, createInitialComponentDefinition } from './reconciliation.js';
+import { replaceComponentDefinition, createInitialComponentDefinition } from './reconciliation.js';
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
 
@@ -53,6 +53,25 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     this.refreshDependants();
     this.previouslyRemovedMorphs = new WeakMap();
     return this;
+  }
+
+  getModuleSource () {
+    return module(this.moduleName)._source;
+  }
+
+  getASTNode (sourceCode = this.moduleSource) {
+    return getComponentNode(parse(sourceCode), this.componentName);
+  }
+
+  recordRemovedMorph (removedMorph, meta) {
+    this.previouslyRemovedMorphs.set(removedMorph, meta);
+
+    once(removedMorph, 'onSubmorphChange', () => {
+      this.previouslyRemovedMorphs.delete(removedMorph);
+    });
+    once(removedMorph, 'removeMorph', () => {
+      this.previouslyRemovedMorphs.delete(removedMorph);
+    });
   }
 
   /**
@@ -193,34 +212,6 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return nameCandidate;
   }
 
-  propagateChangeAmongDependants (change) {
-    if (change.selector === 'addMorphAt') {
-      // propagate addMorph among dependants (only crucial for reintroduction of previously removed)
-      const [addedMorph] = change.args;
-      const policyToSpecAndSubExpression = this.previouslyRemovedMorphs.get(addedMorph);
-      // FIXME: if the previously added morph was tinkered with structurally
-      //        the reintroduction of cached expressions needs to be reconsidered
-      //        This includes to potential renaming of a reintroduced element
-      const safeName = this.ensureNoNameCollisionInDerived(addedMorph.name, true);
-      addedMorph.name = safeName;
-      if (policyToSpecAndSubExpression) {
-        // the cached subexressions need to be adjusted!
-        this.reintroduceSpec(addedMorph, policyToSpecAndSubExpression);
-      }
-    }
-
-    if (change.selector === 'removeMorph') {
-      this.removeSpec(change);
-    }
-
-    if (change.prop === 'name') {
-      // propagate rename among dependants
-      const safeName = this.ensureNoNameCollisionInDerived(change.value, true);
-      if (safeName !== change.value) return; // do not perform an adjustment to the rename
-      this.renameDerivedSpecs(change.prevValue, safeName);
-    }
-  }
-
   getSourceCode () {
     this._cachedComponent = null; // ensure to recreate the component morph
     return lint(createInitialComponentDefinition(this.getComponentMorph()))[0];
@@ -236,125 +227,15 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   static ensureInteractive (descr) {
+    if (!this._descriptorCache) { this._descriptorCache = new WeakMap(); }
+    if (descr.isPolicy) {
+      return this._descriptorCache.get(descr) ||
+        this._descriptorCache
+          .set(descr, new InteractiveComponentDescriptor(descr, descr[metaSymbol]))
+          .get(descr);
+    }
     obj.adoptObject(descr, InteractiveComponentDescriptor);
     if (!descr.previouslyRemovedMorphs) descr.previouslyRemovedMorphs = new WeakMap();
     return descr;
-  }
-
-  /**
-   * description
-   * @param {type} removedMorph - The morph that is being removed from the policy.
-   * @param {type} policyToSpecAndSubExpression - Mapping from policies to cached specs and subexpressions.
-   * @returns { Object[] } The changes that need to be applied to all affected modules.ription
-   */
-  removeSpec (removeChange, policyToSpecAndSubExpression = new Map(), changes) {
-    // remove the sub spec ( spec object )
-    const { args: [removedMorph] } = removeChange;
-    let applyChanges = false;
-    if (!changes) {
-      changes = [];
-      applyChanges = true;
-      this.previouslyRemovedMorphs.set(removedMorph, policyToSpecAndSubExpression);
-      once(removedMorph, 'onSubmorphChange', () => {
-        this.previouslyRemovedMorphs.delete(removedMorph);
-      });
-      once(removedMorph, 'removeMorph', () => {
-        this.previouslyRemovedMorphs.delete(removedMorph);
-      });
-    }
-    const isRoot = applyChanges;
-
-    if (!isRoot) {
-      // remove sub spec
-      let subSpec = this.stylePolicy.removeSpecInResponseTo(removeChange);
-      // remove the sub expression ( source code )
-      // TODO:
-      // Instead of using a string we get store the sub expression as a AST so that it can be easily adjusted
-      // if parts of the removed morph corresponding to this spec have been modified between the reintroduction
-      let subExpr;
-      // FIXME: move this stuff over to reconciler.js
-      const sourceCode = module(this.moduleName)._source; // assuming we already have the source code
-      const parsedMod = parse(sourceCode);
-      const parsedComponent = getComponentNode(parsedMod, this.componentName);
-      const { args: [removedMorph], target: prevOwner } = removeChange;
-      const requiredBindings = [];
-      // FIXME: react to needsLinting flag
-      const { changes: removeChanges, needsLinting } = handleRemovedMorph(removedMorph, prevOwner, parsedComponent, sourceCode, requiredBindings);
-      // basically only replace or insert, remove only applies to root defs which this one is not
-      const removeExprChange = removeChanges.find(change => change.action === 'replace' || change.action === 'remove');
-      if (removeExprChange) {
-        subExpr = sourceCode.slice(removeExprChange.start, removeExprChange.end);
-        try {
-          const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
-          if (exprBody.type === 'LabeledStatement') {
-          // extract the one element from the elements
-            const [removedSpec] = exprBody.body.expression.elements;
-            subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
-          }
-        } finally {
-
-        }
-      }
-      changes.push([this.moduleName, removeChanges]);
-      // capture the spec + expression associated with this descr behind the removed Morph
-      // FIXME: what if the descriptor also has an active reconciliation session?
-      //        in that case, we also need to remember the instantiated submorph?
-      //        Maybe its easier just to trigger a hard reset for these sessions. We may loose intermittend changes
-      //        but it is a cheap and easy way out.
-      if (subSpec && subExpr) {
-        policyToSpecAndSubExpression.set(this.__serialize__(), [subExpr, subSpec]);
-      }
-    }
-
-    this.withDerivedComponentsDo((descr) => {
-      descr.removeSpec(removeChange, policyToSpecAndSubExpression, changes);
-    });
-
-    if (applyChanges) applyModuleChanges(changes);
-  }
-
-  /**
-   * For morphs that were previously present inside the component definition,
-   * we reintroduce that spec at a certain insertion point.
-   * This method collects all the source code changes that need to be applied
-   * @param {type} reintroducedMorph - The morph that is reintroduced to the policy.
-   * @param { WeakMap } policyToSpecAndSubExpression - Mapping from policies to cached specs and subexpressions.
-   * @returns { Object[] } The changes that need to be applied to all affected modules.
-   */
-  reintroduceSpec (reintroducedMorph, policyToSpecAndSubExpression, changes) {
-    // FIXME: reconciliation already has taken place locally, so renaming may fail!
-    let applyChanges = false;
-    if (!changes) {
-      applyChanges = true;
-      changes = [];
-    }
-
-    this.withDerivedComponentsDo((descr) => {
-      // reintroduce the cached specs in each of the derived policies
-      descr.reintroduceSpec(reintroducedMorph, policyToSpecAndSubExpression, changes);
-    });
-
-    const specAndSubExpression = policyToSpecAndSubExpression.get(this.__serialize__());
-
-    if (specAndSubExpression) {
-      // FIXME: move some of this stuff into the reconciliation
-      const [reintroducedSubExpression, reintroducedSpec] = specAndSubExpression;
-      const { moduleName } = this;
-      const { _source: sourceCode } = module(moduleName);
-      const parsedMod = parse(sourceCode);
-      const parsedComponent = getComponentNode(parsedMod, this.componentName);
-      const insertedSpec = this.stylePolicy.ensureSubSpecFor(reintroducedMorph);
-      Object.apply(insertedSpec, reintroducedSpec);
-      const { changes: insertChanges, needsLinting } = insertMorphExpression(parsedComponent, sourceCode, reintroducedMorph.owner, {
-        __expr__: reintroducedSubExpression
-      });
-      changes.push([moduleName, insertChanges]);
-    }
-
-    // review the way changes are generated, maybe they should already
-    // come grouped by module they apply to? That way we do not have
-    // to do more weird refactoring in the change tracker,
-    // which itself is always bound to a single module anyways
-    if (applyChanges) applyModuleChanges(changes);
   }
 }

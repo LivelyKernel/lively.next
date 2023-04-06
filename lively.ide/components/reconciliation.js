@@ -1,13 +1,29 @@
-import { arr, string } from 'lively.lang';
+import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, standardValueTransform, COMPONENTS_CORE_MODULE, getMorphNode, getPropertiesNode, getProp, DEFAULT_SKIPPED_ATTRIBUTES,
-  convertToExpression, findComponentDef, applyChangesToTextMorph
+  getNodeFromSubmorphs, applySourceChanges,
+  getPathFromMorphToMaster,
+  getTextAttributesExpr,
+  getComponentScopeFor,
+  getValueExpr,
+  getFoldableValueExpr,
+  preserveFormatting,
+  standardValueTransform,
+  COMPONENTS_CORE_MODULE,
+  getMorphNode,
+  getPropertiesNode,
+  getProp,
+  DEFAULT_SKIPPED_ATTRIBUTES,
+  convertToExpression,
+  findComponentDef,
+  applyChangesToTextMorph
 } from './helpers.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
 import { module } from 'lively.modules/index.js';
 import { parse, stringify, nodes, query } from 'lively.ast';
 import lint from '../js/linter.js';
+import { notYetImplemented } from 'lively.lang/function.js';
+import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
 
 /**
  * The cheap way is just to generate a new spec from a component morph.
@@ -44,33 +60,14 @@ export function createInitialComponentDefinition (aComponent, asExprObject = fal
 
 export function insertMorphChange (submorphsArrayNode, addedMorphExpr, nextSibling = false) {
   let insertPos = arr.last(submorphsArrayNode.elements).end;
+  const action = { action: 'insert', start: insertPos, lines: [',' + addedMorphExpr] };
   if (nextSibling) {
     const siblingNode = getNodeFromSubmorphs(submorphsArrayNode, nextSibling.name);
-    insertPos = siblingNode.start;
-    addedMorphExpr += ',';
-  } else {
-    addedMorphExpr = ',' + addedMorphExpr;
+    if (!siblingNode) return action;
+    action.start = siblingNode.start;
+    action.lines = [addedMorphExpr + ','];
   }
-  return { action: 'insert', start: insertPos, lines: [addedMorphExpr] };
-}
-
-/**
- * Insert the morph into the submorphs array, operating on a source code string. By default, we append
- * the morph to the submorphs array. If a sibling morph is provided we insert the morph before the corresponding expression.
- * @param { string } sourceCode - The source code to patch.
- * @param { object } submorphsArrayNode - The AST node the points to a submorphs array in the component definition.
- * @param { string } addedMorphExpr - The expression that is supposed to be placed into the component definition. i.e. part(), add() or just plain {...}
- * @param { Text } [sourceEditor] - An optional source code editor that serves as the store of the source code.
-  * @param { Morph } [nextSibling] - The morph we want to be inserted in front of instead of appending to the end.
- * @returns { string } The transformed source code.
- */
-export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sourceEditor = false, nextSibling = false) {
-  let change = insertMorphChange(submorphsArrayNode, addedMorphExpr, nextSibling);
-
-  if (sourceEditor) {
-    return applyChangesToTextMorph(sourceEditor, [change]);
-  }
-  return string.applyChanges(sourceCode, [change]);
+  return action;
 }
 
 /**
@@ -86,6 +83,9 @@ export function insertMorph (sourceCode, submorphsArrayNode, addedMorphExpr, sou
  * @param { string[] } [ignoredProps= ['name', 'submorphs']] - The set of property names that are not considered enough for the node to be preserved.
  * @returns { object } Returns the final node deemed to be removed.
  */
+
+// FIXME: add toMorph param in order to flexibily stop and support inline policies?
+
 function determineNodeToRemoveSubmorphs (nodeToRemove, parsedComponent, fromMorph, ignoredProps = ['name', 'submorphs']) {
   let curr = fromMorph;
   let propNode = getPropertiesNode(parsedComponent, curr);
@@ -165,12 +165,6 @@ export function insertPropChange (sourceCode, propertiesNode, key, valueExpr) {
   }
 
   return changes;
-}
-
-export function insertProp (sourceCode, propertiesNode, key, valueExpr, sourceEditor = false) {
-  const changes = insertPropChange(sourceCode, propertiesNode, key, valueExpr);
-  if (sourceEditor) return applyChangesToTextMorph(sourceEditor, changes);
-  return string.applyChanges(sourceCode, changes);
 }
 
 export function deleteProp (sourceCode, parsedComponent, morphDef, propName, target, isDerived) {
@@ -331,11 +325,11 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
 
 export function insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
   const propsNode = getPropertiesNode(parsedComponent, newOwner);
+  // FIXME: replace parsedComponent
   const submorphsArrayNode = propsNode && getProp(propsNode, 'submorphs')?.value;
 
   if (!submorphsArrayNode) {
-    let propertiesNode = getPropertiesNode(parsedComponent, newOwner);
-    if (!propertiesNode) {
+    if (!propsNode) {
       // uncollapse till morph expression:
       // inserts a submorph drill down up to the submorphs: [*expression*] is inserted (insert action)
       return uncollapseSubmorphHierarchy( // eslint-disable-line no-use-before-define
@@ -350,7 +344,7 @@ export function insertMorphExpression (parsedComponent, sourceCode, newOwner, ad
       needsLinting: true, // really?
       changes: insertPropChange(
         sourceCode,
-        propertiesNode,
+        propsNode,
         'submorphs',
         `[${addedMorphExpr.__expr__}]`
       )
@@ -378,7 +372,8 @@ export function insertMorphExpression (parsedComponent, sourceCode, newOwner, ad
  */
 export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false) {
   let nextVisibleParent = hiddenMorph;
-  const nextSibling = hiddenMorph.owner.submorphs[hiddenMorph.owner.submorphs.indexOf(hiddenMorph) + 1];
+  const idx = hiddenMorph.owner.submorphs.indexOf(hiddenMorph);
+  const nextSibling = idx !== -1 && hiddenMorph.owner.submorphs[idx + 1];
   const ownerChain = [hiddenMorph];
   let propertiesNode, morphToExpand;
   do {
@@ -405,24 +400,6 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
     // also support this expression to be customized
   if (!uncollapsedHierarchyExpr) return { changes: [], needsLinting: false };
   return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
-}
-
-function preserveFormatting (sourceCode, nodeToRemove) {
-  if (!nodeToRemove) return nodeToRemove;
-  let commaRemoved = false;
-
-  while (sourceCode[nodeToRemove.end].match(/\,/)) {
-    commaRemoved = true;
-    nodeToRemove.end++;
-  }
-
-  while (!sourceCode[nodeToRemove.start].match(/\,|\n/) &&
-         !sourceCode[nodeToRemove.start - 1].match(/\[/)) {
-    const aboutToRemoveCommaTwice = commaRemoved && sourceCode[nodeToRemove.start - 1].match(/\,/);
-    if (aboutToRemoveCommaTwice) break;
-    nodeToRemove.start--;
-  }
-  return nodeToRemove;
 }
 
 /**
@@ -496,26 +473,738 @@ export function handleRemovedMorph (
   return { changes, needsLinting };
 }
 
-export function applySourceChanges (sourceCode, changes) {
-  for (let change of changes) {
-    // apply the change to the module source
-    if (change.action === 'remove') {
-      change = preserveFormatting(sourceCode, change);
-    }
-    sourceCode = string.applyChange(sourceCode, change);
-  }
-  return sourceCode;
-}
-
-export function applyModuleChanges (changesByModule) {
+export function applyModuleChanges (reconciliation, sourceEditor = false) {
   // order each group by module
   // apply bulk to each module
+  let { changesByModule, modulesToLint, requiredBindingsByModule } = reconciliation;
+  const focusedModuleId = sourceEditor?.editorPlugin?.evalEnvironment.targetModule;
   changesByModule = arr.groupBy(changesByModule, arr.first);
   for (let moduleName in changesByModule) {
-    let sourceCode = module(moduleName)._source;
+    const mod = module(moduleName);
+    let { _source: sourceCode, id } = mod;
     if (!sourceCode) continue;
+    const requiredBindingsForChanges = requiredBindingsByModule.get(id);
+    const runLint = modulesToLint.has(mod.fullName());
+    const patchTextMorph = id === focusedModuleId;
+    if (patchTextMorph && !runLint) sourceCode = sourceEditor.textString;
     let changes = changesByModule[moduleName].map(l => l[1]).flat();
     changes = arr.sortBy(changes, change => change.start).reverse();
-    module(moduleName).setSource(applySourceChanges(sourceCode, changes));
+    let updatedSource = patchTextMorph && !runLint
+      ? applyChangesToTextMorph(sourceEditor, changes)
+      : applySourceChanges(sourceCode, changes);
+    // ensure we fix all undeclared vars
+    ({ changes } = fixUndeclaredVars(updatedSource, requiredBindingsForChanges, mod));
+
+    updatedSource = patchTextMorph && !runLint
+      ? applyChangesToTextMorph(sourceEditor, changes)
+      : applySourceChanges(updatedSource, changes);
+
+    if (runLint) {
+      [updatedSource] = lint(updatedSource);
+      if (patchTextMorph) {
+        sourceEditor.textString = updatedSource;
+      }
+    }
+
+    if (patchTextMorph) {
+      const browser = sourceEditor.owner;
+      if (browser) browser.resetChangedContentIndicator();
+    }
+    module(moduleName).setSource(updatedSource);
+  }
+}
+
+/**
+ * Abstract class of reconciliation change that happens in response to a direct manipulation by the user.
+ * A reconciliation ensures that after it terminates, the component definitions are consistent with the
+ * state of the UI. A reconciliation is often covering several definitions and even modules at the same time,
+ * since components can be derived various times from different modules.
+ */
+export class Reconciliation {
+  static perform (componentDescriptor, change) {
+    let klass;
+
+    if (change.prop) {
+      klass = change.prop === 'name' ? RenameReconciliation : PropChangeReconciliation; // eslint-disable-line no-use-before-define
+    }
+
+    if (change.selector === 'addMorphAt') {
+      klass = MorphIntroductionReconciliation; // eslint-disable-line no-use-before-define
+    }
+
+    if (change.selector === 'removeMorph') {
+      klass = MorphRemovalReconciliation; // eslint-disable-line no-use-before-define
+    }
+
+    if (change.prop === 'textAndAttributes' ||
+        change.selector === 'replace' ||
+        change.selector === 'addTextAttribute') {
+      klass = TextChangeReconciliation; // eslint-disable-line no-use-before-define
+      // handle both things in the same class?
+    }
+
+    new klass(componentDescriptor, change).reconcile().applyChanges();
+  }
+
+  constructor (componentDescriptor, change) {
+    this.changesByModule = [];
+    this.requiredBindingsByModule = new Map(); // for any of the changes the accumulated bindings that are required to fullfill the reconciliation
+    this.descriptor = componentDescriptor; // the descriptor of the component definition
+    this.modulesToLint = new Set(); // wether or not the changes in the source code require the linter in a final pass
+    this.change = change;
+  }
+
+  // wether or not we are the definition the change originated from (in case of propagation)
+  isOrigin (descriptor) { return this.descriptor === descriptor; }
+
+  get target () { return this.change.target; }
+
+  get isDerived () { return this.withinDerivedComponent(this.target); }
+
+  /**
+   * If present, returns the first browser that has unsaved changes and
+   * the module openend that the component we are tracking is defined in.
+   * @type { Text }
+   */
+  getEligibleSourceEditor (modId, modSource) {
+    const openBrowsers = $world.withAllSubmorphsSelect(browser =>
+      browser.isBrowser && browser.selectedModule && browser.selectedModule.url === modId);
+    const qualifiedBrowser = openBrowsers.find(openBrowser => {
+      if (modSource && openBrowser.hasUnsavedChanges(modSource)) {
+        return false;
+      }
+      return true;
+    });
+    if (qualifiedBrowser) return qualifiedBrowser.viewModel.ui.sourceEditor;
+  }
+
+  getDescriptorContext (descr = this.descriptor) {
+    const modId = System.decanonicalize(descr.moduleName);
+
+    let sourceCode = descr.getModuleSource();
+    const openEditor = this.getEligibleSourceEditor(modId, sourceCode);
+    if (openEditor) sourceCode = openEditor.textString;
+
+    // FIXME: cache the AST node and transform them with a source mods library that understands how to patch the ast
+    const parsedComponent = descr.getASTNode(sourceCode);
+    const requiredBindings = this.requiredBindingsByModule.get(modId) || [];
+    if (!this.requiredBindingsByModule.has(modId)) this.requiredBindingsByModule.set(modId, requiredBindings);
+    return { modId, parsedComponent, sourceCode, requiredBindings, openEditor };
+  }
+
+  withinDerivedComponent (aMorph) {
+    for (const each of [aMorph, ...aMorph.ownerChain()]) {
+      if (each.master) return true;
+    }
+    return false;
+  }
+
+  addChangesToModule (moduleName, newChanges) {
+    this.changesByModule.push([moduleName, newChanges]);
+  }
+
+  uncollapseSubmorphHierarchy (hiddenSubmorphExpr = false) {
+    const hiddenMorph = this.target;
+    const { modId, sourceCode, parsedComponent } = this.getDescriptorContext();
+    const { changes, needsLinting } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr);
+    if (needsLinting) this.modulesToLint.add(modId);
+    this.addChangesToModule(modId, changes);
+    return this;
+  }
+
+  /**
+   * Apply the recorded changes to the source code of the affected modules.
+   * @param { Text } [editor] - Text morph that stores the source code of the module, which can be altered instead of talking to the module object.
+   * @returns { Reconciliation }
+   */
+  applyChanges () {
+    const { openEditor } = this.getDescriptorContext();
+    applyModuleChanges(this, openEditor);
+    return this;
+  }
+
+  reconcile () {
+    notYetImplemented(this.constructor.name + '.reconcile()');
+    return this;
+  }
+}
+
+/**
+ * Reconciliation that handles the case where the a morph is removed from a component definition.
+ * This usual entails removing the spec that corresponds to that morph, and also removing the mentions
+ * of the morph or any of its submorphs in the derived component definitions.
+ */
+class MorphRemovalReconciliation extends Reconciliation {
+  constructor (componentDescriptor, change) {
+    super(componentDescriptor, change);
+    this.policyToSpecAndSubExpression = new Map(); // maps (inline) policies to spec objects and sub expressions
+  }
+
+  reconcile () {
+    this.descriptor.recordRemovedMorph(this.removedMorph, this.policyToSpecAndSubExpression);
+    this.removeSpec(this.descriptor);
+    return this;
+  }
+
+  get removedMorph () { return this.change.args[0]; }
+  get previousOwner () { return this.target; }
+
+  /**
+   * Reconciles the removal of a morph with the replacement or insertation of a without() call that denotes
+   * the structural change in the structure inherited from the parent component.
+   * @param { InteractiveDescriptor } interactiveDescriptor - The component descriptor of the definition getting reconciled.
+   */
+  insertWithoutCall (interactiveDescriptor) {
+    const { previousOwner, removedMorph } = this;
+
+    const { modId, sourceCode, parsedComponent, requiredBindings } = this.getDescriptorContext(interactiveDescriptor);
+
+    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
+    let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
+
+    const removeMorphExpr = {
+      __expr__: `without('${ removedMorph.name }')`,
+      bindings: { [COMPONENTS_CORE_MODULE]: ['without'] }
+    };
+    requiredBindings.push(...Object.entries(removeMorphExpr.bindings));
+    let changes = [];
+    let needsLinting = false;
+    if (nodeToRemove) {
+      changes.push(Object.assign({ action: 'replace' }, nodeToRemove, { lines: [removeMorphExpr.__expr__] }));
+    } else {
+      ({ needsLinting, changes } = insertMorphExpression(parsedComponent, sourceCode, previousOwner, removeMorphExpr));
+    }
+
+    if (needsLinting) this.modulesToLint.add(modId);
+
+    return changes;
+  }
+
+  /**
+   * Removes a morph from the 'submorphs' property of a component definition.
+   * If there's only one morph left in the 'submorphs' array, the entire 'submorphs' property will be removed.
+   * The method updates the changes array with the appropriate
+   * removal actions and marks the associated module for linting.
+   * @param {type} interactiveDescriptor - The descriptor pointing to the affected component definition.
+   */
+  dropSpec (interactiveDescriptor) {
+    const { previousOwner, removedMorph } = this;
+    const { modId, parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
+
+    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
+    let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
+
+    const changes = [];
+    if (closestSubmorphsNode?.value.elements.length < 2) {
+      this.modulesToLint.add(modId);
+      changes.push(Object.assign({ action: 'remove' }, determineNodeToRemoveSubmorphs(closestSubmorphsNode, parsedComponent, previousOwner)));
+    } else if (nodeToRemove) {
+      changes.push(Object.assign({ action: 'remove' }, nodeToRemove));
+    }
+    return changes;
+  }
+
+  /**
+   * Applies the source code transformation to the definition of the component
+   * where the change originated from. We need to differentiate between alteration
+   * of an interhited structure via `without()` or the simple removal of a spec (add() or part() or {})
+   * from the submorphs array in the component definition.
+   * @param { InteractiveDescriptor } interactiveDescriptor - The descriptor of the component definition the change originated from.
+   */
+  applyRemovalToOrigin (interactiveDescriptor) {
+    if (this.removedMorphWasInherited) return this.insertWithoutCall(interactiveDescriptor);
+    else return this.dropSpec(interactiveDescriptor);
+  }
+
+  get removedMorphWasInherited () {
+    return this.isDerived && !this.removedMorph.__wasAddedToDerived__;
+  }
+
+  /**
+   * Apply the source code transformation to the definition of a component
+   * *derived* from the component where the change originated from.
+   * Unlike in the case of origin, we here only drop the specs if they are mentioned.
+   * @param {type} interactiveDescriptor - description
+   */
+  applyRemovalToDependant (interactiveDescriptor) {
+    // we ALWAYS just drop the spec, regardless of the circumstances
+    return this.dropSpec(interactiveDescriptor);
+  }
+
+  getRemovedExpression (changes) {
+    const removeExprChange = changes.find(change => change.action === 'replace' || change.action === 'remove');
+    let subExpr;
+    if (removeExprChange) {
+      subExpr = this.descriptor.getModuleSource().slice(removeExprChange.start, removeExprChange.end);
+      try {
+        const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
+        if (exprBody.type === 'LabeledStatement') {
+          // extract the one element from the elements
+          const [removedSpec] = exprBody.body.expression.elements;
+          subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
+        }
+      } finally {
+        return { __expr__: subExpr, bindings: [] };
+      }
+    }
+  }
+
+  removeSpec (interactiveDescriptor) {
+    let changes;
+    const isChangeOrigin = this.isOrigin(interactiveDescriptor);
+    const insertWithoutCall = isChangeOrigin && this.removedMorphWasInherited;
+    if (isChangeOrigin) changes = this.applyRemovalToOrigin(interactiveDescriptor);
+    else changes = this.applyRemovalToDependant(interactiveDescriptor);
+
+    const subExpr = this.getRemovedExpression(changes);
+    const subSpec = interactiveDescriptor.stylePolicy.removeSpecInResponseTo(this.change, insertWithoutCall);
+    let activeInstance = interactiveDescriptor._cachedComponent;
+
+    // cache the meta information about the removed morph/spec/expression (the trinity)
+    let meta = {};
+
+    if (activeInstance) {
+      activeInstance.withMetaDo({ reconcileChanges: false }, () => {
+        interactiveDescriptor.stylePolicy.withSubmorphsInScopeDo(activeInstance, (m) => {
+          if (m.name === this.removedMorph.name) {
+            m.remove();
+            meta.removedMorph = m;
+          }
+        });
+      });
+    }
+
+    if (subSpec) meta.subSpec = subSpec;
+
+    if (subExpr) meta.subExpr = subExpr;
+
+    if (!obj.isEmpty(meta)) this.policyToSpecAndSubExpression.set(interactiveDescriptor.__serialize__(), meta);
+
+    this.addChangesToModule(interactiveDescriptor.moduleName, changes);
+
+    interactiveDescriptor.withDerivedComponentsDo(derivedDescr => {
+      this.removeSpec(derivedDescr);
+    });
+  }
+}
+
+/**
+ * Reconciliation that handles the case where a morph is introduced into a component definition.
+ * This can be a copletely new morph or one that was previously removed from the component in question
+ */
+class MorphIntroductionReconciliation extends Reconciliation {
+  reconcile () {
+    const { descriptor } = this;
+
+    const safeName = descriptor.ensureNoNameCollisionInDerived(this.addedMorph.name, true);
+    if (safeName !== this.addedMorph.name) this.addedMorph.name = safeName;
+
+    if (this.isReintroduction) {
+      this.reintroduceMorph(descriptor);
+    } else {
+      this.addNewMorph(descriptor);
+      descriptor.withDerivedComponentsDo(derivedDescr => {
+        this.updateActiveSessionsFor(derivedDescr);
+      });
+    }
+    return this;
+  }
+
+  get addedMorph () { return this.change.args[0]; }
+  get newOwner () { return this.target; }
+  get nextSibling () { return this.newOwner.submorphs[this.newOwner.submorphs.indexOf(this.addedMorph) + 1]; }
+
+  /**
+   * Wether or not the morph added to the definition
+   * had been there previously.
+   */
+  get isReintroduction () {
+    // store the info of previously removed morphs in a history object?
+    return !!this.policyToSpecAndSubExpressions;
+  }
+
+  get policyToSpecAndSubExpressions () {
+    return this.descriptor.previouslyRemovedMorphs.get(this.addedMorph);
+  }
+
+  generateAddedMorphExpression (addedMorph, nextSibling, requiredBindings) {
+    let expr = convertToExpression(addedMorph, { dropMorphsWithNameOnly: false });
+
+    if (addedMorph.master) {
+      const metaInfo = addedMorph.master.parent[Symbol.for('lively-module-meta')];
+      expr = convertToExpression(addedMorph, {
+        exposeMasterRefs: false,
+        skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'type']
+      });
+      expr = {
+        // this fails when components are alias imported....
+        // we can not insert the model props right now
+        // this also serializes way too much
+        __expr__: `part(${metaInfo.exportedName}, ${expr.__expr__})`,
+        bindings: {
+          ...expr.bindings,
+          [COMPONENTS_CORE_MODULE]: ['part'],
+          [metaInfo.moduleId]: [metaInfo.exportedName]
+        }
+      };
+    }
+
+    if (this.isDerived) {
+      addedMorph.__wasAddedToDerived__ = true;
+      expr.__expr__ = `add(${expr.__expr__}${nextSibling ? `, "${nextSibling.name}"` : ''})`;
+      const b = expr.bindings[COMPONENTS_CORE_MODULE] || [];
+      b.push('add');
+      expr.bindings[COMPONENTS_CORE_MODULE] = b;
+    }
+
+    requiredBindings.push(...Object.entries(expr.bindings));
+    return expr;
+  }
+
+  recoverRemovedMorphMetaIn (interactiveDescriptor) {
+    return this.policyToSpecAndSubExpressions.get(interactiveDescriptor.__serialize__());
+  }
+
+  reintroduceSpec (interactiveDescriptor, spec) {
+    const insertedSpec = interactiveDescriptor.stylePolicy.ensureSubSpecFor(this.addedMorph);
+    Object.apply(insertedSpec, spec);
+  }
+
+  reintroduceExpression (interactiveDescriptor, expr) {
+    this.addNewMorph(interactiveDescriptor, expr); // basically the same as just adding the morph but with a fixed expression
+  }
+
+  insertMorphInOpenSession (interactiveDescriptor, morphToAdd) {
+    const activeInstance = interactiveDescriptor._cachedComponent;
+    if (!activeInstance) return;
+    activeInstance.withMetaDo({ reconcileChanges: false }, () => {
+      interactiveDescriptor.stylePolicy.withSubmorphsInScopeDo(activeInstance, (m) => {
+        if (obj.equals(getPathFromMorphToMaster(m), getPathFromMorphToMaster(this.newOwner))) {
+          m.addMorph(morphToAdd, this.nextSibling ? m.getSubmorphNamed(this.nextSibling.name) : null);
+        }
+      });
+    });
+  }
+
+  reintroduceMorph (interactiveDescriptor) {
+    // recover the source code from the removed morph and reinsert it at the new position
+    const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
+    if (meta) {
+      let { subSpec: removedSpec, subExpr: removedExpr, removedMorph } = meta;
+      if (removedSpec?.__wasAddedToDerived__) {
+        removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
+      }
+      // add the spec that was discarded previously into the policy
+      this.reintroduceSpec(interactiveDescriptor, removedSpec);
+      // add the expr that was discarded previously into the policy
+      if (removedExpr) this.reintroduceExpression(interactiveDescriptor, removedExpr);
+
+      if (removedMorph) {
+        this.insertMorphInOpenSession(interactiveDescriptor, removedMorph);
+      }
+    }
+    // also propagate among dependants, since that means we reintroduce the old specs alongside their custom code
+    interactiveDescriptor.withDerivedComponentsDo(derivedDescr => {
+      this.reintroduceMorph(derivedDescr);
+    });
+  }
+
+  addNewMorph (interactiveDescriptor, addedMorphExpr) {
+    const { newOwner, addedMorph, nextSibling } = this;
+
+    const { modId, parsedComponent, sourceCode, requiredBindings } = this.getDescriptorContext(interactiveDescriptor);
+
+    if (!addedMorphExpr) {
+      addedMorphExpr = this.generateAddedMorphExpression(addedMorph, nextSibling, requiredBindings);
+    }
+
+    const { changes, needsLinting } = insertMorphExpression(parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling);
+    if (needsLinting) this.modulesToLint.add(modId);
+
+    this.addChangesToModule(modId, changes);
+
+    interactiveDescriptor.stylePolicy.ensureSubSpecFor(addedMorph, this.isDerived);
+  }
+
+  updateActiveSessionsFor (interactiveDescriptor) {
+    this.insertMorphInOpenSession(interactiveDescriptor, this.addedMorph.copy());
+    interactiveDescriptor.stylePolicy.ensureSubSpecFor(this.addedMorph);
+    interactiveDescriptor.withDerivedComponentsDo(derivedDescr => {
+      this.updateActiveSessionsFor(derivedDescr);
+    });
+  }
+}
+
+/**
+ * Reconciles the code in response to a change in one of the properties
+ * in the component definition.
+ */
+class PropChangeReconciliation extends Reconciliation {
+  get newValue () {
+    return this.change.value;
+  }
+
+  /**
+   * Checks if a given morph's height is dictated
+   * by a layout. In those cases, reconciling the entire
+   * extent is skipped and we resort to reconciling the
+   * `width` property if applicable.
+   * @param { Morph } aMorph - The morph to check for
+   * @returns { boolean }
+   */
+  isResizedVertically (aMorph) {
+    const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
+    return l && l.resizesMorphVertically(aMorph);
+  }
+
+  /**
+   * Checks if a given morph's width is dictated
+   * by a layout. In those cases, reconciling the entire
+   * extent is skipped and we resort to reconciling the
+   * `height` property if applicable.
+   * @param { Morph } aMorph - The morph to check for
+   * @returns { boolean }
+   */
+  isResizedHorizontally (aMorph) {
+    const l = aMorph.isLayoutable && aMorph.owner && aMorph.owner.layout;
+    return l && l.resizesMorphHorizontally(aMorph);
+  }
+
+  handleExtentChange (specNode) {
+    const { newValue, target } = this;
+    let changedProp = 'extent';
+    let deleteWidth = false;
+    let deleteHeight = false;
+    let valueExpr = this.getExpressionOfValue();
+    if (this.isResizedVertically(target)) {
+      changedProp = 'width';
+      valueExpr = String(newValue.x);
+      deleteHeight = true;
+    }
+    if (this.isResizedHorizontally(target)) {
+      changedProp = 'height';
+      valueExpr = String(newValue.y);
+      deleteWidth = true;
+    }
+    if (deleteHeight) {
+      this.deletePropIn(specNode, 'height');
+    }
+    if (deleteWidth) {
+      this.deletePropIn(specNode, 'width');
+    }
+    if (deleteWidth || deleteHeight) {
+      this.deletePropIn(specNode, 'extent');
+    }
+    // if (!deleteHeight || !deleteWidth) {
+    //   this.patchPropIn(specNode, changedProp, valueExpr);
+    // }
+    this.patchPropIn(specNode, changedProp, valueExpr);
+    return this;
+  }
+
+  getSubSpecForTarget () {
+    const policy = this.descriptor.stylePolicy;
+    if (this.target.master === policy || this.target.isComponent) return policy.spec;
+    // what if this is a root component? Then it does not have any master.
+    return this.descriptor.stylePolicy.getSubSpecFor(this.target.name);
+  }
+
+  getNodeForTargetInSource (interactiveDescriptor = this.descriptor) {
+    const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
+    const affectedPolicy = getComponentScopeFor(parsedComponent, this.target);
+    return getPropertiesNode(affectedPolicy, this.target);
+  }
+
+  patchPropIn (specNode, prop, valueAsExpr) {
+    const { modId, sourceCode } = this.getDescriptorContext();
+    if (valueAsExpr.__expr__) valueAsExpr = valueAsExpr.__expr__;
+
+    if (prop === 'layout') {
+      this.modulesToLint.add(modId);
+    }
+
+    const propNode = getProp(specNode, prop);
+
+    if (!propNode) {
+      this.modulesToLint.add(modId);
+      this.addChangesToModule(modId, insertPropChange(
+        sourceCode,
+        specNode,
+        prop,
+        valueAsExpr
+      ));
+      return this;
+    }
+
+    const patchPos = propNode.value;
+    this.addChangesToModule(modId, [
+      { action: 'replace', ...patchPos, lines: [valueAsExpr] }
+    ]);
+
+    return this;
+  }
+
+  deletePropIn (subSpec, prop) {
+    const { modId, sourceCode, parsedComponent } = this.getDescriptorContext();
+    const { changes, needsLinting } = deleteProp(sourceCode, parsedComponent, subSpec, prop, this.target, this.isDerived);
+    if (needsLinting) this.modulesToLint.add(modId);
+    this.addChangesToModule(modId, changes);
+    return this;
+  }
+
+  get propValueDiffersFromParent () {
+    let { target, prop } = this.change;
+    // FIXME: extract via path instead of name
+    const policy = this.descriptor.stylePolicy;
+    const { parent } = policy;
+    let val;
+    if (parent) val = parent.synthesizeSubSpec(target.name)[prop];
+    else {
+      const { type } = this.getSubSpecForTarget();
+      val = getDefaultValueFor(type, prop);
+    }
+    return !obj.equals(val, this.newValue);
+  }
+
+  getExpressionOfValue () {
+    const { target, prop, value } = this.change;
+    const { requiredBindings } = this.getDescriptorContext();
+    let valueAsExpr, members;
+    if (members = isFoldableProp(target.constructor, prop)) {
+      valueAsExpr = getFoldableValueExpr(prop, value, members, target.ownerChain().length);
+    } else {
+      valueAsExpr = getValueExpr(prop, value);
+    }
+    requiredBindings.push(...Object.entries(valueAsExpr.bindings));
+    return valueAsExpr;
+  }
+
+  reconcile () {
+    let { prop } = this.change;
+
+    const specNode = this.getNodeForTargetInSource();
+
+    if (prop === 'name') {
+      throw new Error('Cannot handle renaming in a policy reconciliation, since it consitutes a structural change. Use the RenameReconcilation instead.');
+    }
+
+    if (!specNode) {
+      // what if we have not yet processed the add call?
+      if (!this.isDerived) return this;
+      return this.uncollapseSubmorphHierarchy();
+    }
+
+    this.getSubSpecForTarget()[prop] = this.change.value;
+    this.propagateChangeAmongActiveEditSessions(this.descriptor);
+
+    if (prop === 'extent') {
+      return this.handleExtentChange(specNode);
+    }
+
+    if (this.propValueDiffersFromParent) {
+      return this.patchPropIn(specNode, prop, this.getExpressionOfValue());
+    }
+    delete this.getSubSpecForTarget()[prop];
+    return this.deletePropIn(specNode, prop);
+  }
+
+  propagateChangeAmongActiveEditSessions (interactiveDescriptor) {
+    let activeInstance;
+    interactiveDescriptor.withDerivedComponentsDo(descr => {
+      if (activeInstance = descr._cachedComponent) {
+        activeInstance.withMetaDo({ reconcileChanges: false }, () => {
+          activeInstance.master.applyIfNeeded(true);
+        });
+      }
+      this.propagateChangeAmongActiveEditSessions(descr);
+    });
+  }
+}
+
+/**
+ * In case a morph is getting renamed, this constitues a structural change since all of the references
+ * in the derived components need to be updated in turn in order to still be consistent.
+ * The reconciliation also makes sure, that the new name itself does not collide with other morphs in any of the derived policies.
+ */
+class RenameReconciliation extends PropChangeReconciliation {
+  get oldName () { return this.change.prevValue; }
+  get newName () { return this.newValue; }
+  get renamedMorph () { return this.change.target; }
+
+  withinDerivedComponent (aMorph) {
+    if (aMorph.__wasAddedToDerived__) return false;
+    for (const each of aMorph.ownerChain()) {
+      if (each.master) return true;
+    }
+    return false;
+  }
+
+  getSubSpecForTarget (interactiveDescriptor) {
+    return interactiveDescriptor.stylePolicy.getSubSpecFor(this.oldName);
+  }
+
+  getNodeForTargetInSource (interactiveDescriptor) {
+    const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
+    const affectedPolicy = getComponentScopeFor(parsedComponent, this.target);
+    return getPropertiesNode(affectedPolicy, this.oldName);
+  }
+
+  /**
+   * Reconciles the definition of a component in response to a renaming of a morph in the visual instance of the component.
+   * Renaming derived morphs currently has *no* effect on the source, since it is prohibited by the halo.
+   * @param { StylePolicy } affectedPolicy - The affected policy where we need to adjust the spec.
+   * @param { Object } subSpec - The spec to adjust.
+   * @returns { PropChangeReconciliation } The reconciliator object.
+   */
+  handleRenaming (interactiveDescriptor, local = true) {
+    let subSpec = this.getSubSpecForTarget(interactiveDescriptor);
+    if (!local) {
+      // only proceed to patch the subSpec, if we are really derived!
+      if (subSpec?.__wasAddedToDerived__) subSpec = false;
+    }
+    if (subSpec) {
+      subSpec.name = this.newName; // rename the spec object, since it is present
+      const specNode = this.getNodeForTargetInSource(interactiveDescriptor);
+      if (specNode) this.patchPropIn(specNode, 'name', this.getExpressionOfValue());
+    }
+
+    // renaming is a structural change and requires propagation of the changes
+    interactiveDescriptor.withDerivedComponentsDo(derivedDescr => {
+      this.handleRenaming(derivedDescr, false);
+    });
+
+    return this;
+  }
+
+  reconcile () {
+    if (this.withinDerivedComponent(this.renamedMorph)) {
+      throw new Error('Cannot rename a morph that has not been introduced in this component! Please rename the morph in the component it originated from.');
+    }
+    if (this.target.master === this.descriptor.stylePolicy) return this; // renaming of the root has not effect
+
+    this.handleRenaming(this.descriptor);
+    return this;
+  }
+}
+
+/**
+ * In case the textAndAttributes, textString, value or input property of a text morph
+ * changes, this requires a specialized handling, since the text property itself can also
+ * include morphs. The text therefore constitutes a structural property, similar to the submorphs property.
+ */
+class TextChangeReconciliation extends PropChangeReconciliation {
+  reconcile () {
+    const { target: textMorph } = this.change;
+    const { requiredBindings, modId } = this.getDescriptorContext();
+    const specNode = this.getNodeForTargetInSource();
+    if (!specNode) {
+      this.uncollapseSubmorphHierarchy();
+      return this;
+    }
+    const textAttrsAsExpr = getTextAttributesExpr(textMorph);
+    requiredBindings.push(...Object.entries(textAttrsAsExpr.bindings));
+    this.modulesToLint.add(modId); // laways lint after text and attributes are added
+    this.patchPropIn(specNode, 'textAndAttributes', textAttrsAsExpr);
+    return this;
   }
 }
