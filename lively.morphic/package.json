@@ -42,15 +42,13 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "bezier-easing": "https://jspm.dev/bezier-easing",
-      "flubber": "https://jspm.dev/flubber",
-      "jsdiff": "https://jspm.dev/jsdiff",
-      "dom-to-image": "https://jspm.dev/dom-to-image",
-      "virtual-dom": "https://jspm.dev/virtual-dom",
-      "bowser": "https://jspm.dev/bowser@1.4.1",
-      "webfontloader": "https://jspm.dev/webfontloader",
-      "vdom-parser": "https://jspm.dev/vdom-parser",
-      "web-animations-js": "https://jspm.dev/web-animations-js"
+      "bezier-easing": "esm://cache/bezier-easing",
+      "flubber": "esm://cache/flubber",
+      "jsdiff": "esm://cache/jsdiff",
+      "dom-to-image": "esm://cache/dom-to-image",
+      "bowser": "esm://cache/bowser@1.4.1",
+      "webfontloader": "esm://cache/webfontloader",
+      "web-animations-js": "esm://cache/web-animations-js"
     }
   },
   "scripts": {
