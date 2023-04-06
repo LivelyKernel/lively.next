@@ -411,7 +411,7 @@ const RichTextControl = component(PropertySection, {
         master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
         layout: new TilingLayout({
           hugContentsVertically: true,
-          padding: Rectangle.inset(0, 1, 0, 1),
+          padding: Rectangle.inset(0, 1, 0, 1)
         }),
         submorphs: [add(part(PropertyLabel, {
           name: 'italic style',
@@ -574,9 +574,7 @@ const RichTextControl = component(PropertySection, {
       }),
       submorphs: [part(PropertyLabel, {
         name: 'auto width',
-        fontSize: 14,
         padding: Rectangle.inset(3, 2, 3, 0),
-        rotation: -1.57,
         tooltip: 'Fit Width',
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
@@ -584,7 +582,6 @@ const RichTextControl = component(PropertySection, {
         }]
       }), part(PropertyLabel, {
         name: 'auto height',
-        fontSize: 14,
         padding: Rectangle.inset(2, 3, 2, 1),
         tooltip: 'Fit Height',
         textAndAttributes: ['\ue94f', {
