@@ -13,7 +13,7 @@ import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
 import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
-import { connect, noUpdate, signal, disconnect, disconnectAll, once } from 'lively.bindings';
+import { connect, epiConnect, noUpdate, signal, disconnect, disconnectAll, once } from 'lively.bindings';
 import * as moduleManager from 'lively.modules';
 
 import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } from './drag-guides.js';
@@ -1829,8 +1829,8 @@ export default class Halo extends Morph {
           this.state.target = t;
           isUpdate && this.alignWithTarget();
           // this.hasFixedPosition = [t, ...t.ownerChain()].find(m => m.hasFixedPosition);
-          connect(t, 'onChange', this, 'alignWithTarget');
-          connect(t, 'onOwnerChanged', this, 'removeIfDetached');
+          epiConnect(t, 'onChange', this, 'alignWithTarget');
+          epiConnect(t, 'onOwnerChanged', this, 'removeIfDetached');
         }
       }
     };
