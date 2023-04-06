@@ -1,0 +1,10 @@
+/* https://github.com/google/material-design-icons/blob/master/LICENSE */
+
+@font-face {
+    font-family: 'Material Icons';
+    src: url('MaterialIcons-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
