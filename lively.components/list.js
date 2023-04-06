@@ -1923,7 +1923,7 @@ export class DropDownListModel extends ButtonModel {
 
   adjustLableFor (item) {
     let label = item.label || [item.string, null];
-    let caret = Icon.textAttribute('angle-down', { paddingTop: '2px' });
+    let caret = Icon.textAttribute('angle-down', { });
     if (this.listAlign !== 'selection') {
       caret = Icon.textAttribute(
         'caret-' + (this.listAlign === 'bottom'
