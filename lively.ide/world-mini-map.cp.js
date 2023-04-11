@@ -1,5 +1,5 @@
 /* global XMLSerializer */
-import { ViewModel, part, Morph, component } from 'lively.morphic';
+import { ViewModel, config, Morph, component } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { pt, Color } from 'lively.graphics';
 import { max, min } from 'lively.lang/array.js';
@@ -25,6 +25,8 @@ class MiniMapModel extends ViewModel {
   }
 
   repositionViewPort (evt) {
+    if (!config.ide.studio.canvasModeEnabled) return;
+
     const clickedPositionOnMap = this.view.localize(evt.position);
 
     const clickedPositionInCanvasSpace = pt(this.xFromMapSpaceToCanvasSpace(clickedPositionOnMap.x), this.yFromMapSpaceToCanvasSpace(clickedPositionOnMap.y));

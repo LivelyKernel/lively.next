@@ -309,6 +309,8 @@ export class LivelyWorld extends World {
   }
 
   onMouseWheel (evt) {
+    if (!config.ide.studio.canvasModeEnabled) return;
+
     const { domEvt, targetMorphs } = evt;
 
     const zoomOperation = domEvt.ctrlKey || domEvt.buttons === 4 || evt.isCommandKey();
