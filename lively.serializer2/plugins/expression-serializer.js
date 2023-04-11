@@ -572,8 +572,12 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       // check if each array member is seralizable
       const serializedArray = getArrayExpression(name, val, path, opts);
       if (styleProto && Array.isArray(styleProto[name])) {
-        const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, opts));
-        if (JSON.stringify(serializedArray) === other) continue;
+        try {
+          const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, opts));
+          if (JSON.stringify(serializedArray) === other) continue;
+        } catch {
+          console.warn(`[lively.serializer] Failed to optimize property "${name}"`); // eslint-disable-line no-console
+        }
       }
       exported[name] = serializedArray;
       continue;
