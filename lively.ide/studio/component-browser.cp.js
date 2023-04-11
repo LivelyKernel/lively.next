@@ -16,6 +16,7 @@ import { DropDownList, DarkDropDownList } from 'lively.components/list.cp.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
+import { LinearGradient } from 'lively.graphics/color.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -361,17 +362,27 @@ export class ExportedComponent extends Morph {
   }
 
   generatePreview () {
-    const preview = part(this.component);
-    // disable view model
-    // scale to fit
-    // disable all mouse interaction
-    const container = this.get('preview container');
-    const maxExtent = pt(100, 70);
-    preview.scale = 1;
-    preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
-    preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
-    this.get('component name').textString = this.component.name;
-    container.submorphs = [preview];
+    try {
+      const preview = part(this.component, { name: this.component.componentName });
+      // disable view model
+      // scale to fit
+      // disable all mouse interaction
+      const container = this.get('preview container');
+      const maxExtent = pt(100, 70);
+      preview.scale = 1;
+      preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
+      preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
+      container.submorphs = [preview];
+    } catch (err) {
+      this.displayError(err);
+    }
+    this.get('component name').textString = string.decamelize(this.component.componentName);
+  }
+
+  displayError (err) {
+    this.get('preview container').submorphs = [
+      part(ComponentError, { submorphs: [{ name: 'error message', textString: err.message }] })
+    ];
   }
 
   async initExportIndicatorIfNeeded () {
@@ -1527,10 +1538,78 @@ const ComponentBrowserDark = component(ComponentBrowser, {
   })]
 });
 
+const ComponentError = component({
+  name: 'component error',
+  nativeCursor: 'not-allowed',
+  borderStyle: 'none',
+  borderColor: Color.rgb(189, 189, 189),
+  dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.52), blur: 15 }),
+  borderWidth: 2,
+  borderRadius: 10,
+  extent: pt(159.8, 159),
+  fill: Color.rgba(0, 0, 0, 0.6719),
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(10, 10, 0, 0),
+    resizePolicies: [['error message', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10
+  }),
+  position: pt(693.4, 588.2),
+  submorphs: [{
+    name: 'backdrop',
+    borderColor: Color.rgb(23, 160, 251),
+    borderWidth: 1,
+    extent: pt(10.6, 31.4),
+    position: pt(7, 43),
+    reactsToPointer: false,
+    submorphs: [{
+      type: Text,
+      name: 'warning sign',
+      cursorWidth: 1.5,
+      fill: Color.rgba(255, 255, 255, 0),
+      fontColor: Color.rgb(255, 171, 64),
+      fontSize: 48,
+      reactsToPointer: false,
+      lineWrapping: true,
+      padding: rect(1, 1, 0, 0),
+      position: pt(-19.7, -13.6),
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontWeight: '900',
+        lineHeight: 1,
+        textStyleClasses: ['fas']
+      }]
+    }]
+  }, {
+    type: Text,
+    name: 'error message',
+    height: 70.91015625,
+    fontWeight: 700,
+    cursorWidth: 1.5,
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgb(255, 255, 255),
+    lineWrapping: true,
+    reactsToPointer: false,
+    padding: rect(1, 1, 0, 0),
+    position: pt(10, 81),
+    textAlign: 'center',
+    textString: 'This is not an error I would display explaining what went wrong.'
+  }]
+});
+
 export {
   ComponentBrowser,
   ComponentBrowserDark,
   ComponentPreview,
   ComponentPreviewSelected,
-  ProjectSection
+  ProjectSection,
+  ComponentError
 };
