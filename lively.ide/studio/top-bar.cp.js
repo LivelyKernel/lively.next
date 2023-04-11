@@ -358,7 +358,13 @@ export class TopBarModel extends ViewModel {
               ]
             : ['     ', {}],
           '   Enabled '
-        ], () => {
+        ], async () => {
+          const currentMode = config.ide.studio.canvasModeEnabled;
+          let changeMode = true;
+          if (!currentMode) {
+            changeMode = await $world.confirm('Confirm to activate Canvas Mode. This will reset the scale of all open Morphs to 1!');
+          }
+          if (!changeMode) return;
           config.ide.studio.canvasModeEnabled = !config.ide.studio.canvasModeEnabled;
           $world.resetScaleFactor();
           !config.ide.studio.canvasModeEnabled ? this.toggleMiniMap(false) : this.toggleMiniMap();
