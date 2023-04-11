@@ -3,7 +3,8 @@ import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
 import {
   config, touchInputDevice, TilingLayout, morph, Text, Polygon,
   Path, HTMLMorph, Ellipse, Morph, Image, ShadowObject, Icon,
-  component, ViewModel, part } from 'lively.morphic';
+  component, ViewModel, part
+} from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -1035,25 +1036,6 @@ export class UserFlapModel extends ViewModel {
   }
 }
 
-<<<<<<< HEAD
-=======
-const TopBarButton = component({
-  type: Label,
-  name: 'top bar button',
-  lineHeight: 1,
-  fontColor: standard(Color.rgb(102, 102, 102)),
-  fontSize: standard(23),
-  nativeCursor: 'pointer',
-  padding: standard(rect(0, 1, 0, -1))
-});
-
-const TopBarButtonSelected = component(TopBarButton, {
-  name: 'top bar button selected',
-  dropShadow: new ShadowObject({ color: Color.rgba(64, 196, 255, 0.4), fast: false }),
-  fontColor: Color.rgb(0, 176, 255)
-});
-
->>>>>>> f5b464284 (🧰🎨: replace onlyAtInstantiation props with standard())
 const UserFlap = component({
   name: 'user flap',
   defaultViewModel: UserFlapModel,
