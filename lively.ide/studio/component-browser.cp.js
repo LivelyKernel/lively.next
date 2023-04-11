@@ -1299,6 +1299,8 @@ const ComponentBrowser = component(PopupWindow, {
           placeholder: 'Search for components...'
         }), part(Spinner, {
           name: 'spinner',
+          opacity: .7,
+          viewModel: { color: 'black' },
           visible: false
         }), {
           type: Text,
