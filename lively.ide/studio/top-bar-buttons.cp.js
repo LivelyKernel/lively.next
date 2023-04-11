@@ -61,13 +61,11 @@ class TopBarButtonDropDownModel extends ViewModel {
   }
 
   activateButton () {
-    this.symbol.master = TopBarButtonSelected;
-    this.dropdown.master = TopBarButtonSelected;
+    this.symbol.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
   }
 
   deactivateButton () {
     this.symbol.master = null;
-    this.dropdown.master = null;
   }
 
   get dropdown () {
