@@ -44,7 +44,7 @@ const req = http.request(options, res => {
       data = JSON.parse(data);
       if (!Object.keys(data).length) {
         if (CI) {
-          console.log(`::notice:: ${targetPackage} does not contain any tests`);
+          console.log(`::notice:: ${targetPackage} does not contain any tests\n`);
           fs.appendFileSync('summary.txt', `🛈 ${targetPackage} does not contain any tests.\n`);
         } else {
           console.log(`🛈 ${targetPackage} does not contain any tests`);
