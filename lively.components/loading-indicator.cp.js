@@ -80,6 +80,7 @@ class LoadingIndicatorModel extends ViewModel {
         }
       },
       label: {
+        defaultValue: 'status message',
         set (val) {
           this.setProperty('label', val);
           if (!this.view) return;
@@ -243,7 +244,6 @@ const LoadingIndicator = component({
         width: 40,
         layout: new TilingLayout({
           axis: 'row',
-          align: 'left',
           axisAlign: 'center',
           reactToSubmorphAnimations: false
         }),
