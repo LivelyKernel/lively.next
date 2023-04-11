@@ -525,10 +525,9 @@ const MetaInfoContainerExpanded = component({
       opacity: 0,
       padding: rect(10, 4, 0, 0),
       textAndAttributes: ['Error ', null, '', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
         fontWeight: '900',
-        paddingTop: '3px',
-        textStyleClasses: ['fas']
+        paddingTop: '3px'
       }]
     }, {
       type: Label,
@@ -622,19 +621,17 @@ const MetaInfoContainerExpanded = component({
       part(EmbeddedIcon, {
         name: 'close button',
         textAndAttributes: ['Close ', null, '', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
           fontWeight: '900',
-          paddingTop: '1px',
-          textStyleClasses: ['fas']
+          paddingTop: '1px'
         }]
       }),
       part(EmbeddedIcon, {
         name: 'open in workspace',
         textAndAttributes: ['Open in workspace ', null, '', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
           fontWeight: '900',
           paddingTop: '2px',
-          textStyleClasses: ['fas']
         }]
       })]
   }]

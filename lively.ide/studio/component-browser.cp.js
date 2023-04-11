@@ -1046,11 +1046,10 @@ const ProjectSection = component({
     textAndAttributes: ['Project Name', {
     }, '  ', {
     }, '', {
-      fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
       fontWeight: '900',
       nativeCursor: 'pointer',
       paddingTop: '3px',
-      textStyleClasses: ['fas']
     }]
   }, {
     name: 'component previews',

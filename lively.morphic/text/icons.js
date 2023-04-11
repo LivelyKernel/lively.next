@@ -41,12 +41,12 @@ export class Icon {
   }
 
   static textAttribute(iconName, attrs = {}) {
-    if (!attrs.lineHeight) attrs.lineHeight = 1;
     let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
+    delete attrs.textStyleClasses;
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
-       {fontFamily: `"Font Awesome 5 Free", "Font Awesome 5 Brands"`, fontWeight: isFar ? '400' : '900', textStyleClasses: ["fas"], ...attrs}]
-  }
+       {fontFamily: `"Font Awesome 6 Free", "Font Awesome 6 Brands"`, fontWeight: isFar ? '400' : '900', ...attrs}]
+    }
 
   static setIcon(label, iconName) {
      label.textAndAttributes = this.textAttribute(iconName);
