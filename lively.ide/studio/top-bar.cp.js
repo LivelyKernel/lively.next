@@ -167,6 +167,8 @@ export class TopBarModel extends ViewModel {
     const handHaloSelector = this.ui.handOrHaloModeButton.dropdown;
     const handOrHaloModeButton = this.ui.handOrHaloModeButton;
     const shapeModeButton = this.ui.shapeModeButton;
+    const canvasModeButton = this.ui.canvasModeButton;
+    const canvasModeSelector = this.ui.canvasModeButton.dropdown;
     const target = this.primaryTarget || this.world();
 
     if (evt.targetMorph === shapeSelector) {
@@ -215,8 +217,13 @@ export class TopBarModel extends ViewModel {
       this.toggleCommentBrowser();
     }
 
-    if (evt.targetMorph.name === 'mini map button') {
+    if (evt.targetMorph === canvasModeButton) {
       this.toggleMiniMap();
+    }
+
+    if (evt.targetMorph === canvasModeSelector) {
+      const menu = this.world().openWorldMenu(evt, this.getCanvasModeItems());
+      menu.position = canvasModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
     }
   }
 
@@ -335,6 +342,25 @@ export class TopBarModel extends ViewModel {
         }
       ];
     });
+  }
+
+  // When we have a control panel this should be moved there with a toggle as would be appropriate.
+  getCanvasModeItems () {
+    return [
+      [
+        [
+          ...config.ide.studio.canvasModeEnabled
+            ? [
+                ...Icon.textAttribute('check', {
+                  fontSize: 11,
+                  paddingTop: '2px'
+                }), '    ', {}
+              ]
+            : ['     ', {}],
+          '   Enabled '
+        ], () => config.ide.studio.canvasModeEnabled = !config.ide.studio.canvasModeEnabled
+      ]
+    ];
   }
 
   colorTopbarButton (buttonName, active) {
@@ -1271,11 +1297,21 @@ const TopBar = component({
         textAndAttributes: Icon.textAttribute('comment-alt'),
         tooltip: 'Toggle Comment Browser'
       }),
-      part(TopBarButton, {
-        name: 'mini map button',
-        padding: rect(3, 0, -3, 0),
-        textAndAttributes: Icon.textAttribute('map-location-dot'),
-        tooltip: 'Toggle Mini Map'
+      part(TopBarButtonDropDown, {
+        viewModel: {
+          opts: {
+            name: 'canvas mode button',
+            tooltip: 'Enable/Disable Canvas mode',
+            symbol: {
+              name: 'mini map button',
+              textAndAttributes: Icon.textAttribute('map-location-dot'),
+              tooltip: 'Open/Close the Minimap'
+            },
+            dropdown: {
+              name: 'canvas mode dropdown'
+            }
+          }
+        }
       })]
   },
   {
