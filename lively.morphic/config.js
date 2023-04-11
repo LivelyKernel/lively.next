@@ -409,7 +409,7 @@ const config = {
 
   css: {
     ibmPlex: joinPath(baseURL, 'lively.morphic/assets/ibm-plex/css/ibm-plex.css'),
-    fontAwesome: joinPath(baseURL, '/lively.morphic/assets/fontawesome-free-6.1.1-web/css/all.css'),
+    fontAwesome: joinPath(baseURL, '/lively.morphic/assets/fontawesome-free-6.1.1-web/css/all.min.css'),
     inconsolata: joinPath(baseURL, '/lively.morphic/assets/inconsolata/inconsolata.css')
   },
 

@@ -515,7 +515,7 @@ const MorphNode = component({
     padding: Rectangle.inset(0, 0, 0, 5),
     textAndAttributes: ['', {
       fontSize: 16,
-      textStyleClasses: ['material-icons']
+      fontFamily: 'Material Icons'
     }]
   }, part(PropLabel, {
     name: 'name label',
@@ -535,7 +535,7 @@ const MorphNode = component({
     nativeCursor: 'pointer',
     textAndAttributes: ['\ue8f4', {
       fontSize: 16,
-      textStyleClasses: ['material-icons']
+      fontFamily: 'Material Icons'
     }]
   }, {
     type: Label,
@@ -548,7 +548,7 @@ const MorphNode = component({
     nativeCursor: 'pointer',
     textAndAttributes: ['\ue8e9', {
       fontSize: 16,
-      textStyleClasses: ['material-icons']
+      fontFamily: 'Material Icons'
     }]
   }
   ]

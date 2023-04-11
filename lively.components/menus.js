@@ -1,6 +1,7 @@
 import { Label, config, Morph } from 'lively.morphic';
 import { obj, promise, fun } from 'lively.lang';
 import { pt, Color, Rectangle } from 'lively.graphics';
+import { Icon } from '../lively.morphic/text/icons';
 
 export class MenuDivider extends Morph {
   static get properties () {
@@ -274,7 +275,7 @@ export class Menu extends Morph {
         return {
           label: name,
           submenu: actionOrList.getItems,
-          annotation: [' ', { textStyleClasses: ['fa', 'fa-caret-right'] }]
+          annotation: Icon.textAttribute('caret-right')
         };
       }
 
@@ -282,7 +283,7 @@ export class Menu extends Morph {
         return {
           label: name,
           submenu: actionOrList,
-          annotation: [' ', { textStyleClasses: ['fa', 'fa-caret-right'] }]
+          annotation: Icon.textAttribute('caret-right')
         };
       }
 

@@ -228,15 +228,14 @@ export class Tree extends Text {
       containerTextAndAttributes[j + 1] = {
         fontSize: toggleWidth,
         fontColor: Color.transparent,
-        textStyleClasses: ['fas'],
         paddingRight: (toggleWidth * (nodes[i].depth - 1)) + 'px'
       };
       // toggle
       containerTextAndAttributes[j + 3] = {
         fontColor: Color.transparent,
-        textStyleClasses: ['fas'],
         paddingTop: (this.fontSize / 10) + 'px',
-        paddingRight: (this.fontSize / 8) + 'px'
+        paddingRight: (this.fontSize / 8) + 'px',
+        fontFamily: 'FONTAWESOME',
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';

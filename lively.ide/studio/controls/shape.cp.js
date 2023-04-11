@@ -517,7 +517,7 @@ const ShapeControl = component({
       name: 'proportional resize toggle',
       tooltip: 'Proportional Resize',
       padding: rect(5, 5, 0, 0),
-      textAndAttributes: ['', { fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"', fontWeight: '900', textStyleClasses: ['fas'] }]
+      textAndAttributes: ['', { fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"', fontWeight: '900' }]
     }),
     part(EnumSelector, {
       name: 'width mode selector',
