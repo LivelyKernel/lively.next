@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
-import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, Label, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
+import { config, touchInputDevice, TilingLayout, morph, Text, Polygon, Path, HTMLMorph, Ellipse, Morph, Image, ShadowObject, Icon, component, ViewModel, part } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, string, obj, arr, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
@@ -12,6 +12,7 @@ import { UserUI } from 'lively.user/morphic/user-ui.js';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
+import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -74,7 +75,7 @@ export class TopBarModel extends ViewModel {
         defaultValue: 'Rectangle',
         set (shapeName) {
           this.setProperty('currentShapeMode', shapeName);
-          this.ui.shapeStatusIcon.textAndAttributes = Icon.textAttribute(this.shapeToIcon[shapeName].args[0]);
+          this.ui.shapeModeButton.symbol.textAndAttributes = Icon.textAttribute(this.shapeToIcon[shapeName].args[0]);
         }
       },
       shapeToIcon: {
@@ -162,8 +163,8 @@ export class TopBarModel extends ViewModel {
   }
 
   onMouseDown (evt) {
-    const shapeSelector = this.ui.selectShapeType;
-    const handHaloSelector = this.ui.selectHandOrHalo;
+    const shapeSelector = this.ui.shapeModeButton.dropdown;
+    const handHaloSelector = this.ui.handOrHaloModeButton.dropdown;
     const handOrHaloModeButton = this.ui.handOrHaloModeButton;
     const shapeModeButton = this.ui.shapeModeButton;
     const target = this.primaryTarget || this.world();
@@ -387,13 +388,13 @@ export class TopBarModel extends ViewModel {
     } = this.ui;
 
     [
-      ['Shape', shapeModeButton.submorphs],
-      ['Text', [textModeButton]],
-      ['Hand', handOrHaloModeButton.submorphs],
-      ['Halo', handOrHaloModeButton.submorphs]
-    ].forEach(([modeName, morphsToUpdate]) => {
-      if (mode === 'Halo') this.ui.interactionModeStatusIcon.textAndAttributes = Icon.textAttribute('arrow-pointer', { paddingLeft: '7px' });
-      if (mode === 'Hand') this.ui.interactionModeStatusIcon.textAndAttributes = Icon.textAttribute('hand');
+      ['Shape', shapeModeButton],
+      ['Text', textModeButton],
+      ['Hand', handOrHaloModeButton],
+      ['Halo', handOrHaloModeButton]
+    ].forEach(([modeName, morphToUpdate]) => {
+      if (mode === 'Halo') this.ui.handOrHaloModeButton.symbol.textAndAttributes = Icon.textAttribute('arrow-pointer', { paddingLeft: '7px' });
+      if (mode === 'Hand') this.ui.handOrHaloModeButton.symbol.textAndAttributes = Icon.textAttribute('hand');
       if (mode === 'Shape') {
         this.toggleShapeMode(target, true, this.currentShapeMode);
       } else if (mode === 'Text') {
@@ -405,15 +406,10 @@ export class TopBarModel extends ViewModel {
       if (!shallow && mode !== 'Halo') this.world().halos().forEach(h => h.remove());
 
       if (modeName === mode) {
-        morphsToUpdate.forEach(m => {
-          m.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
-        });
-      } // eslint-disable-line brace-style
-      // we need to take into account that hand and halo mode share the same button
-      else if (!((mode === 'Hand' || mode === 'Halo') && (modeName === 'Hand' || modeName === 'Halo'))) {
-        morphsToUpdate.forEach(m => {
-          m.master = null;
-        });
+        morphToUpdate.activateButton();
+        // we need to take into account that hand and halo mode share the same button
+      } else if (!((mode === 'Hand' || mode === 'Halo') && (modeName === 'Hand' || modeName === 'Halo'))) {
+        morphToUpdate.deactivateButton();
       }
     });
   }
@@ -999,31 +995,6 @@ export class UserFlapModel extends ViewModel {
   }
 }
 
-const TopBarButton = component({
-  type: Label,
-  name: 'top bar button',
-  lineHeight: 1,
-  fontColor: {
-    value: Color.rgb(102, 102, 102),
-    onlyAtInstantiation: true
-  },
-  fontSize: {
-    value: 23,
-    onlyAtInstantiation: true
-  },
-  nativeCursor: 'pointer',
-  padding: {
-    value: rect(0, 1, 0, -1),
-    onlyAtInstantiation: true
-  }
-});
-
-const TopBarButtonSelected = component(TopBarButton, {
-  name: 'top bar button selected',
-  dropShadow: new ShadowObject({ color: Color.rgba(64, 196, 255, 0.4), fast: false }),
-  fontColor: Color.rgb(0, 176, 255)
-});
-
 const UserFlap = component({
   name: 'user flap',
   defaultViewModel: UserFlapModel,
@@ -1245,75 +1216,42 @@ const TopBar = component({
         textAndAttributes: Icon.textAttribute('save'),
         tooltip: 'Save World'
       }),
-      {
-        name: 'hand or halo mode button',
-        extent: pt(55.8, 24.7),
-        fill: Color.rgba(46, 75, 223, 0),
-        layout: new TilingLayout({
-          axis: 'row',
-          axisAlign: 'center',
-          align: 'center',
-          padding: {
-            height: 0,
-            width: 0,
-            x: 5,
-            y: 5
-          },
-          spacing: 5
-        }),
-        nativeCursor: 'pointer',
-        submorphs: [
-          part(TopBarButton, {
-            name: 'interaction mode status icon',
-            reactsToPointer: false,
-            textAndAttributes: Icon.textAttribute('arrow-pointer'),
-            tooltip: 'Current mode of the cursor (Hand or Halo)'
-          }),
-          part(TopBarButton, {
-            name: 'select hand or halo',
-            fontSize: 23,
-            nativeCursor: 'pointer',
-            textAndAttributes: Icon.textAttribute('angle-down')
-          })
-        ],
-        tooltip: 'Choose between Hand and Halo mode'
-      },
+      part(TopBarButtonDropDown, {
+        viewModel: {
+          opts: {
+            name: 'hand or halo mode button',
+            tooltip: 'Choose between Hand and Halo mode',
+            symbol: {
+              name: 'interaction mode status icon',
+              textAndAttributes: Icon.textAttribute('arrow-pointer'),
+              tooltip: 'Current mode of the cursor (Hand or Halo)'
+            },
+            dropdown: {
+              name: 'select hand or halo'
+            }
+          }
+        }
+      }),
       part(TopBarButton, {
         name: 'text mode button',
         textAndAttributes: Icon.textAttribute('font'),
         tooltip: 'Create textbox mode'
-      }), {
-        name: 'shape mode button',
-        extent: pt(55.8, 24.7),
-        fill: Color.rgba(46, 75, 223, 0),
-        layout: new TilingLayout({
-          axisAlign: 'center',
-          align: 'center',
-          padding: {
-            height: 0,
-            width: 0,
-            x: 5,
-            y: 5
-          },
-          spacing: 5
-        }),
-        nativeCursor: 'pointer',
-        submorphs: [
-          part(TopBarButton, {
-            name: 'shape status icon',
-            reactsToPointer: false,
-            textAndAttributes: Icon.textAttribute('square'),
-            tooltip: 'Create basic shape mode'
-          }),
-          part(TopBarButton, {
-            name: 'select shape type',
-            fontSize: 23,
-            nativeCursor: 'pointer',
-            textAndAttributes: Icon.textAttribute('angle-down')
-          })
-        ],
-        tooltip: 'Select different shape'
-      },
+      }), part(TopBarButtonDropDown, {
+        viewModel: {
+          opts: {
+            name: 'shape mode button',
+            tooltip: 'Select different shape',
+            symbol: {
+              name: 'shape status icon',
+              textAndAttributes: Icon.textAttribute('square'),
+              tooltip: 'Create basic shape mode'
+            },
+            dropdown: {
+              name: 'select shape type'
+            }
+          }
+        }
+      }),
       part(TopBarButton, {
         name: 'open component browser',
         fontSize: 25,
