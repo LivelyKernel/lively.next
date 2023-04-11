@@ -1,4 +1,4 @@
-import { component, ViewModel, Icon, part, TilingLayout, ShadowObject, Label } from 'lively.morphic';
+import { component, standard, ViewModel, Icon, part, TilingLayout, ShadowObject, Label } from 'lively.morphic';
 import { Color, pt, rect } from 'lively.graphics';
 
 class TopBarButtonModel extends ViewModel {
@@ -27,19 +27,10 @@ export const TopBarButton = component({
   defaultViewModel: TopBarButtonModel,
   name: 'top bar button',
   lineHeight: 1,
-  fontColor: {
-    value: Color.rgb(102, 102, 102),
-    onlyAtInstantiation: true
-  },
-  fontSize: {
-    value: 23,
-    onlyAtInstantiation: true
-  },
+  fontColor: standard(Color.rgb(102, 102, 102)),
+  fontSize: standard(23),
   nativeCursor: 'pointer',
-  padding: {
-    value: rect(0, 1, 0, -1),
-    onlyAtInstantiation: true
-  }
+  padding: standard(rect(0, 1, 0, -1))
 });
 
 export const TopBarButtonSelected = component(TopBarButton, {
