@@ -218,7 +218,7 @@ export class TopBarModel extends ViewModel {
     }
 
     if (evt.targetMorph === canvasModeButton) {
-      this.toggleMiniMap();
+      this.toggleMiniMap(null);
     }
 
     if (evt.targetMorph === canvasModeSelector) {
@@ -358,7 +358,11 @@ export class TopBarModel extends ViewModel {
               ]
             : ['     ', {}],
           '   Enabled '
-        ], () => config.ide.studio.canvasModeEnabled = !config.ide.studio.canvasModeEnabled
+        ], () => {
+          config.ide.studio.canvasModeEnabled = !config.ide.studio.canvasModeEnabled;
+          $world.resetScaleFactor();
+          !config.ide.studio.canvasModeEnabled ? this.toggleMiniMap(false) : this.toggleMiniMap();
+        }
       ]
     ];
   }
@@ -378,13 +382,14 @@ export class TopBarModel extends ViewModel {
     }
   }
 
-  toggleMiniMap () {
-    const miniMap = $world.getSubmorphNamed('world mini map');
-    if (miniMap) {
+  toggleMiniMap (forceState) {
+    let miniMap = $world.getSubmorphNamed('world mini map');
+
+    if (miniMap && forceState !== true && forceState !== undefined) {
       this.colorTopbarButton('mini map button', false);
       miniMap.remove();
       $world.getSubmorphNamed('world zoom indicator').relayout();
-    } else {
+    } else if (!miniMap && forceState !== false && forceState !== undefined) {
       this.colorTopbarButton('mini map button', true);
       const miniMap = part(WorldMiniMap).openInWorld();
       miniMap.relayout();
