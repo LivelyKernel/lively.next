@@ -50,11 +50,11 @@
     "map": {
       "pouchdb": {
         "node": "pouchdb/lib/index.js",
-        "~node": "https://jspm.dev/pouchdb@7.2.1"
+        "~node": "esm://cache/pouchdb@7.2.1"
       },
       "pouchdb-adapter-memory": {
-	      "node": "./dist/pouchdb-adapter-mem.js",
- 	      "~node": "https://jspm.dev/pouchdb-adapter-memory@7.2.1"
+        "node": "./dist/pouchdb-adapter-mem.js",
+        "~node": "esm://cache/pouchdb-adapter-memory@7.2.1"
       }
     }
   }
