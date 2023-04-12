@@ -1716,7 +1716,7 @@ export class Morph {
   }
 
   /**
-   * Called whenever this morph has moved in our out of another morph hierarchy.
+   * Called whenever this morph has moved in or out of the morph hierarchy.
    * If `newOwner` is `null`, the morph was removed from a morph.
    * In case it was attached to a new parent, that morph is referenced by `newOwner`.
    * @param { Morph|null } newOwner - If applicable, the new owner the morph is assigned to.
