@@ -9,7 +9,7 @@
     "map": {
       "fs": {
         "node": "@node/fs",
-        "~node": "https://jspm.dev/fs@0.0.2"
+        "~node": "esm://cache/fs@0.0.2"
       },
       "fetch-ponyfill": {
         "node": "https://jspm.dev/fetch-ponyfill",

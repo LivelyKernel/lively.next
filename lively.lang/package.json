@@ -31,7 +31,7 @@
         "node": "@node/child_process",
         "~node": "@empty"
       },
-      "articles": "https://jspm.dev/npm:articles@0.2.2"
+      "articles": "esm://cache/articles@0.2.2"
     }
   },
   "dependencies": {

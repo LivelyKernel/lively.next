@@ -9,7 +9,7 @@
   },
   "systemjs": {
     "map": {
-      "semver": "https://jspm.dev/semver"
+      "semver": "esm://cache/semver@7.3.7"
     }
   },
   "devDependencies": {
