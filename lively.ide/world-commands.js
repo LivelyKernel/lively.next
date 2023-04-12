@@ -639,6 +639,7 @@ const commands = [
       const text = new Text({
         fill: Color.white,
         readOnly: false,
+        readOnly: true,
         padding: Rectangle.inset(3),
         ...obj.dissoc(opts, ['title', 'content']),
         textAndAttributes,
