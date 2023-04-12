@@ -470,13 +470,14 @@ export default class LivelyRollup {
 
     const importingPackage = this.resolver.resolvePackage(importer);
     // honor the systemjs options within the package config
-    if (importingPackage && importingPackage.map) {
-      this.globalMap = { ...this.globalMap, ...importingPackage.map };
-      if (importingPackage.map[id] || this.globalMap[id]) {
-        if (!importingPackage.map[id] && this.globalMap[id]) {
+    const mapping = importingPackage?.systemjs?.map
+    if (mapping) {
+      this.globalMap = { ...this.globalMap, ...mapping };
+      if (mapping[id] || this.globalMap[id]) {
+        if (!mapping[id] && this.globalMap[id]) {
           console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`); // eslint-disable-line no-console
         }
-        id = importingPackage.map[id] || this.globalMap[id];
+        id = mapping[id] || this.globalMap[id];
         if (id['~node']) id = id['~node'];
         importer = importingPackage.url;
       }
