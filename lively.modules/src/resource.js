@@ -1,4 +1,5 @@
 import { resource, Resource } from 'lively.resources';
+import { ESMResource } from 'lively.resources/src/esm-resource.js';
 import { promise } from 'lively.lang';
 import {
   install as installHook,
@@ -35,14 +36,18 @@ async function fetchResource (proceed, load) {
   // first check if this file is present inside the js file hash map
   // an wether our locally stored and translated one already matches that
   // criteria
-  if (!jsFileHashMap && !System.get('@system-env').node) jsFileHashMap = await System.resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+  if (!jsFileHashMap && !System.get('@system-env').node) {
+    jsFileHashMap = await System.resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+  }
 
   const useCache = System.useModuleTranslationCache;
   const indexdb = System.global.indexedDB;
   const cache = System._livelyModulesTranslationCache;
   if (!System.get('@system-env').node && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
-    if (stored && (jsFileHashMap[load.name.replace(System.baseURL, '/')] === stored.hash || load.name.includes('jspm'))) {
+    let normalizedName = load.name.replace(System.baseURL, '/');
+    if (normalizedName.startsWith('esm://cache')) normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/');
+    if (stored && (jsFileHashMap[normalizedName] === Number.parseInt(stored.hash))) {
       load.metadata.instrument = false; // skip instrumentation
       return stored.source;
     }
