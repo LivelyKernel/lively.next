@@ -81,21 +81,12 @@ export class HTMLMorph extends Morph {
         isStyleProp: true,
         set (val) {
           this.setProperty('cssDeclaration', val);
-          const doc = this.env.domEnv.document;
+          const doc = this.document;
           if (!val) {
             const style = doc.getElementById('css-for-' + this.id);
             if (style) style.remove();
           } else {
-            try {
-              const parsed = css.parse(this.cssDeclaration);
-              // prepend morph id to each rule so that css is scoped to morph
-              parsed.stylesheet.rules.forEach(r => {
-                if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-              });
-              addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed));
-            } catch (err) {
-              console.error(`Error setting cssDeclaration of ${this}: ${err}`);
-            }
+            this.installCssDeclaration(doc);
             this.makeDirty();
           }
         }
@@ -120,10 +111,23 @@ export class HTMLMorph extends Morph {
     return renderer.nodeForHTMLMorph(this);
   }
 
-  abandon () {
-    // clean up created style tag
-    this.cssDeclaration = null;
-    super.abandon();
+  installCssDeclaration (doc) {
+    if (!this.cssDeclaration) return;
+    try {
+      const parsed = css.parse(this.cssDeclaration);
+      // prepend morph id to each rule so that css is scoped to morph
+      parsed.stylesheet.rules.forEach(r => {
+        if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
+      });
+      addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed), this.document);
+    } catch (err) {
+      console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
+    }
+  }
+
+  onOwnerChanged (newOwner) {
+    if (newOwner === null) this.document.getElementById('css-for-' + this.id)?.remove();
+    else this.installCssDeclaration(this.document);
   }
 
   ensureScrollPosition () {
