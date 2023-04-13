@@ -13,7 +13,7 @@
 // node askpass.js "Someone there"
 
 import { join } from "path";
-import cmd from './commandline2lively';
+import cmd from './commandline2lively.js';
 
 // control stdout/err output, silence the node process:
 let stdoutWrite = process.stdout.write;

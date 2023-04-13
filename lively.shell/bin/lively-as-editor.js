@@ -1,7 +1,7 @@
 /*
  * For usage as EDITOR env variable.
  */
-import cmd from "./commandline2lively"
+import cmd from "./commandline2lively.js"
 
 cmd({
   action: 'open editor',
