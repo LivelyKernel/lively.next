@@ -273,7 +273,7 @@ const SearchField = component({
       type: Label,
       name: 'placeholder icon',
       autofit: false,
-      padding: 2,
+      padding: Rectangle.inset(2, 0, 2, 0),
       position: pt(165, 0),
       fontColor: Color.rgb(204, 204, 204),
       fontSize: 14,
