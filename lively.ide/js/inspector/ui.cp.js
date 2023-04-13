@@ -179,7 +179,7 @@ const SystemInspector = component({
     nativeCursor: 'pointer',
     lineHeight: 1,
     fontSize: 15,
-    padding: rect(5, 3, 0, 0),
+    padding: rect(4, 2, 0, 0),
     textAndAttributes: Icon.textAttribute('keyboard')
   }, {
     name: 'resizer',

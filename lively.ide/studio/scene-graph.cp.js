@@ -611,7 +611,7 @@ const MorphPanel = component({
         selectionColor: Color.rgbHex('B2EBF2').withA(0.25),
         fill: Color.rgba(255, 255, 255, 0),
         clipMode: 'hidden',
-        lineHeight: 2.5,
+        lineHeight: 2,
         fontColor: Color.white
       }
     ]
