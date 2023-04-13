@@ -56,7 +56,7 @@ export class Tree extends Text {
       readOnly: { defaultValue: true },
       needsDocument: { defaultValue: true },
       lineHeight: {
-        defaultValue: 1.5
+        defaultValue: 1.3
       },
       clipMode: {
         defaultValue: 'auto'
@@ -235,7 +235,7 @@ export class Tree extends Text {
         fontColor: Color.transparent,
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px',
-        fontFamily: 'FONTAWESOME',
+        fontFamily: 'FONTAWESOME'
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';
