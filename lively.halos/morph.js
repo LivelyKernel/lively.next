@@ -304,6 +304,34 @@ class HaloItem extends Morph {
   valueForPropertyDisplay () { return undefined; }
 }
 
+class RoundHaloItem extends HaloItem {
+  static makeLabel (iconName, attributes = {}) {
+    return Icon.makeLabel(iconName, { fontSize: 15, reactsToPointer: false, ...attributes });
+  }
+
+  static get properties () {
+    return {
+      layout: {
+        initialize () {
+          this.layout = new TilingLayout({
+            axisAlign: 'center',
+            align: 'center'
+          });
+        }
+      }
+    };
+  }
+
+  static for (halo) {
+    return halo.getSubmorphNamed(this.morphName) ||
+        halo.addMorph(new this({ halo, name: this.morphName, submorphs: [this.label(halo)] }));
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('circle-question');
+  }
+}
+
 // name label + input of a morph
 class NameHolder extends Morph {
   static get properties () {
@@ -550,7 +578,7 @@ class NameHaloItem extends HaloItem {
   }
 }
 
-class CloseHaloItem extends HaloItem {
+class CloseHaloItem extends RoundHaloItem {
   static get morphName () { return 'close'; }
 
   static get properties () {
@@ -561,12 +589,6 @@ class CloseHaloItem extends HaloItem {
           return this.halo.target.isComponent;
         }
       },
-      styleClasses: {
-        after: ['halo'],
-        initialize () {
-          this.styleClasses = ['fas', this.targetIsComponent ? 'fa-eye-slash' : 'fa-trash'];
-        }
-      },
       draggable: { defaultValue: false },
       tooltip: {
         after: ['halo'],
@@ -575,6 +597,10 @@ class CloseHaloItem extends HaloItem {
         }
       }
     };
+  }
+
+  static label (halo) {
+    return halo.target.isComponent ? RoundHaloItem.makeLabel('eye-slash') : RoundHaloItem.makeLabel('trash');
   }
 
   update () {
@@ -594,13 +620,15 @@ class CloseHaloItem extends HaloItem {
 }
 
 // new NameHaloItem({ halo: window.__halo__ }).openInWorld()
-
-class GrabHaloItem extends HaloItem {
+class GrabHaloItem extends RoundHaloItem {
   static get morphName () { return 'grab'; }
+
+  static label () {
+    return RoundHaloItem.makeLabel('hand-back-fist');
+  }
 
   static get properties () {
     return {
-      styleClasses: { defaultValue: ['fa-solid', 'fa-hand-back-fist'] },
       tooltip: { defaultValue: 'Grab the morph' },
       draggable: { defaultValue: true }
     };
@@ -668,15 +696,18 @@ class GrabHaloItem extends HaloItem {
   onDragEnd (evt) { this.stop(evt); }
 }
 
-class DragHaloItem extends HaloItem {
+class DragHaloItem extends RoundHaloItem {
   static get morphName () { return 'drag'; }
 
   static get properties () {
     return {
       draggable: { defaultValue: true },
-      styleClasses: { defaultValue: ['fas', 'fa-arrows-alt'] },
       tooltip: { defaultValue: "Change the morph's position. Press (alt) while dragging to align the morph's position along a grid." }
     };
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('arrows-alt');
   }
 
   valueForPropertyDisplay () { return this._dontShowPosition ? undefined : this.halo.target.position; }
@@ -747,15 +778,18 @@ class DragHaloItem extends HaloItem {
   onKeyUp (evt) { this.updateAlignmentGuide(false); }
 }
 
-class InspectHaloItem extends HaloItem {
+class InspectHaloItem extends RoundHaloItem {
   static get morphName () { return 'inspect'; }
 
   static get properties () {
     return {
       tooltip: { defaultValue: "Inspect the morph's local state" },
-      draggable: { defaultValue: false },
-      styleClasses: { defaultValue: ['fas', 'fa-magnifying-glass-chart'] }
+      draggable: { defaultValue: false }
     };
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('magnifying-glass-chart');
   }
 
   onMouseDown (evt) {
@@ -779,15 +813,18 @@ class InspectHaloItem extends HaloItem {
   }
 }
 
-class EditHaloItem extends HaloItem {
+class EditHaloItem extends RoundHaloItem {
   static get morphName () { return 'edit'; }
 
   static get properties () {
     return {
       tooltip: { defaultValue: "Edit the morph's definition" },
-      draggable: { defaultValue: false },
-      styleClasses: { defaultValue: ['fas', 'fa-wrench'] }
+      draggable: { defaultValue: false }
     };
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('wrench');
   }
 
   async onMouseDown (evt) {
@@ -821,7 +858,7 @@ class EditHaloItem extends HaloItem {
   }
 }
 
-class RotateHaloItem extends HaloItem {
+class RotateHaloItem extends RoundHaloItem {
   static get morphName () { return 'rotate'; }
 
   static get properties () {
@@ -892,7 +929,7 @@ class RotateHaloItem extends HaloItem {
   }
 
   adaptAppearance (scaling) {
-    this.styleClasses = ['fas', scaling ? 'fa-search-plus' : 'fa-redo'];
+    this.submorphs[0].textAndAttributes = scaling ? Icon.textAttribute('search-plus', { fontSize: 15 }) : Icon.textAttribute('redo', { fontSize: 15 });
     this.tooltip = scaling ? 'Scale morph' : 'Rotate morph';
   }
 
@@ -941,7 +978,7 @@ class RotateHaloItem extends HaloItem {
 
 const nameNumberRe = /(.+)([0-9]+)$/;
 
-class ComponentHaloItem extends HaloItem {
+class ComponentHaloItem extends RoundHaloItem {
   static get morphName () { return 'component'; }
 
   static get properties () {
@@ -950,13 +987,12 @@ class ComponentHaloItem extends HaloItem {
         get () {
           return this.halo.target.isComponent ? 'Retract Component' : 'Turn into Component';
         }
-      },
-      styleClasses: {
-        initialize () {
-          this.styleClasses = this.halo.target.isComponent ? ['fas', 'fa-eraser'] : ['fas', 'fa-cube'];
-        }
       }
     };
+  }
+
+  static label (halo) {
+    return halo.target.isComponent ? RoundHaloItem.makeLabel('eraser') : RoundHaloItem.makeLabel('cube');
   }
 
   updateComponentIndicator () {
@@ -1064,15 +1100,18 @@ class ComponentHaloItem extends HaloItem {
   }
 }
 
-class CopyHaloItem extends HaloItem {
+class CopyHaloItem extends RoundHaloItem {
   static get morphName () { return 'copy'; }
 
   static get properties () {
     return {
       draggable: { defaultValue: true },
-      tooltip: { defaultValue: 'Copy morph' },
-      styleClasses: { defaultValue: ['far', 'fa-clone'] }
+      tooltip: { defaultValue: 'Copy morph' }
     };
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('clone', { fontWeight: 400 });
   }
 
   init (hand) {
@@ -1451,15 +1490,18 @@ class ResizeHandle extends HaloItem {
   }
 }
 
-class MenuHaloItem extends HaloItem {
+class MenuHaloItem extends RoundHaloItem {
   static get morphName () { return 'menu'; }
 
   static get properties () {
     return {
       draggable: { defaultValue: false },
-      tooltip: { defaultValue: 'Opens the morph menu' },
-      styleClasses: { defaultValue: ['fas', 'fa-bars'] }
+      tooltip: { defaultValue: 'Opens the morph menu' }
     };
+  }
+
+  static label () {
+    return RoundHaloItem.makeLabel('bars');
   }
 
   async onMouseDown (evt) {
