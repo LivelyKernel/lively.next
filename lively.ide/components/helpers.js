@@ -78,7 +78,7 @@ export function convertToExpression (aMorph, opts = {}) {
 
 export function getTextAttributesExpr (textMorph) {
   const expr = convertToExpression(textMorph);
-  const rootPropNode = parse('(' + expr.__expr__ + ')').body[0].expression;
+  const rootPropNode = getPropertiesNode(parse('(' + expr.__expr__ + ')'));
   const { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define
   expr.__expr__ = expr.__expr__.slice(start - 1, end);
   return expr;
