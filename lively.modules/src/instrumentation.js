@@ -2,7 +2,7 @@
 import { parse, nodes, isValidIdentifier } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
-import { string, properties } from 'lively.lang';
+import { string, obj, properties } from 'lively.lang';
 import { classToFunctionTransform } from 'lively.classes';
 
 import {
@@ -194,6 +194,9 @@ async function customTranslate (proceed, load) {
     if (useCache && indexdb && isEsm) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
+      if (cache.constructor !== BrowserModuleTranslationCache) {
+        obj.adoptObject(cache, BrowserModuleTranslationCache);
+      }
       let stored = await cache.fetchStoredModuleSource(load.name);
       if (stored && stored.hash === hashForCache && stored.timestamp >= BrowserModuleTranslationCache.earliestDate) {
         if (stored.source) {
@@ -277,7 +280,7 @@ async function customTranslate (proceed, load) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
       try {
-        await cache.cacheModuleSource(load.name, hashForCache, translated);
+        await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
         debug && console.log('[lively.modules customTranslate] stored cached version in filesystem for %s', load.name);
       } catch (e) {
         console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
@@ -286,7 +289,7 @@ async function customTranslate (proceed, load) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
       try {
-        await cache.cacheModuleSource(load.name, hashForCache, translated);
+        await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
         debug && console.log('[lively.modules customTranslate] stored cached version for %s', load.name);
       } catch (e) {
         console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);

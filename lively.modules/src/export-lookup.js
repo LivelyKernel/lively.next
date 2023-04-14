@@ -151,7 +151,9 @@ export default class ExportLookup {
     try {
       let format = mod.format();
       if (['register', 'es6', 'esm'].includes(format)) {
-        result.exports = await mod.exports();
+        const cached = await System._livelyModulesTranslationCache.fetchStoredModuleSource(mod.id);
+        if (cached && cached.exports) result.exports = JSON.parse(cached.exports);
+        else result.exports = await mod.exports();
       } else {
         let values = await mod.load();
         result.exports = [];
