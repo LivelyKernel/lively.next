@@ -954,23 +954,22 @@ function isAlive (target) {
   return alive;
 }
 
-class BehaviorHaloItem extends HaloItem {
+class BehaviorHaloItem extends RoundHaloItem {
   static get morphName () { return 'behavior'; }
 
   static get properties () {
     return {
       tooltip: {
-        initialize () {
-          this.tooltip = isAlive(this.halo.target) ? 'Disable this component\'s behavior' : 'Turn this component\'s behavior on';
+        get () {
+          return isAlive(this.halo.target) ? 'Disable this component\'s behavior' : 'Turn this component\'s behavior on';
         }
       },
-      draggable: { defaultValue: false },
-      styleClasses: {
-        initialize () {
-          this.styleClasses = !isAlive(this.halo.target) ? ['fas', 'fa-heart'] : ['fas', 'fa-skull'];
-        }
-      }
+      draggable: { defaultValue: false }
     };
+  }
+
+  static label (halo) {
+    return !isAlive(halo.target) ? RoundHaloItem.makeLabel('heart') : RoundHaloItem.makeLabel('skull');
   }
 
   onMouseDown (evt) {
