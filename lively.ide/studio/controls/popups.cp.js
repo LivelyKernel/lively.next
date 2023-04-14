@@ -563,8 +563,7 @@ const NumberWidgetLight = component(DefaultNumberWidget, {
   dropShadow: null,
   submorphs: [
     { name: 'value', fontColor: Color.black, cursorColor: Color.gray, fontSize: 14 },
-    { name: 'up', visible: false },
-    { name: 'down', visible: false }
+    { name: 'button holder', visible: false }
   ]
 });
 
