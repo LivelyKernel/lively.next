@@ -43,7 +43,6 @@ export class WorldLoadingScreen extends Morph {
         progressBar.isLayoutable = progressBar.visible = false;
         cssLoadingScreen.isLayoutable = cssLoadingScreen.visible = true;
       } else {
-        progressBar.startStepping('updateProgressBar');
         document.body.style.backgroundColor = 'black';
       }
 
@@ -68,12 +67,7 @@ export class WorldLoadingScreen extends Morph {
 
     if (filePath && !await resource(document.location.origin).join(filePath).exists()) { return this.indicateMissingWorld(true); }
 
-    const loadingIndicator = LoadingIndicator.open('...starting bootstrap process...', {
-      animated: true, delay: 1000
-    });
-    if (snapshot) loadingIndicator.visible = false;
-
-    await bootstrap({ worldName, filePath, loadingIndicator, progress, snapshot });
+    await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot });
   }
 
   getWorldName () {
@@ -193,17 +187,11 @@ export default class ModuleProgress extends Morph {
         stop = checkmark;
         if (state === 'loaded') {
           if (checkmark.visible) return;
-          checkmark.animate({
-            duration: 300,
-            visible: true
-          });
+          checkmark.visible = true;
         }
         if (state === 'frozen') {
           if (frozenIndicator.visible) return;
-          frozenIndicator.animate({
-            duration: 300,
-            visible: true
-          });
+          frozenIndicator.visible = true;
         }
         icon.opacity = 1;
       } else {
@@ -215,12 +203,6 @@ export default class ModuleProgress extends Morph {
 
     const progress = this.localizePointFrom(pt(-10, 0), stop).x;
     const dist = Math.max(20, progress - progressPath.left);
-
-    if (dist === 20) {
-      progressPath.visible = false;
-    } else {
-      progressPath.visible = true;
-    }
 
     this._lastWidth = progressPath.width;
     this._timeStamp = Date.now();

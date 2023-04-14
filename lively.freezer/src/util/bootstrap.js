@@ -175,7 +175,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         );
       }
     }).then(async function () {
-      progress.animate({ opacity: 1, easing: easings.outExpo });
+      progress.opacity = 1;
       if (loadConfig['lively.ast'] === 'dynamic' && !fastLoad) {
         return importPackageAndDo(
           'lively.ast',
@@ -338,7 +338,7 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
           if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
             document.body.style.background = 'white';
             progress.finishPackage({ packageName: 'world', loaded: true });
-            progress.animate({ opacity: 0 });
+            progress.opacity = 0;
             li.animate({ opacity: 0, top: li.top + 15 });
             await oldEnv.renderer.worldMorph.animate({ opacity: 0 });
             oldEnv.renderer.renderStep();
@@ -397,7 +397,6 @@ export async function bootstrap ({ filePath, worldName, snapshot, commit, loadin
     window.addEventListener('popstate', (event) => {
       if (document.location === landingPageUrl) { document.location.reload(); }
     });
-    // lively.modules.removeHook('fetch', 'logFetch');
   } catch (err) {
     if (err.originalErr) err = err.originalErr; // do not hide vital information!
     let printed = err.message;
