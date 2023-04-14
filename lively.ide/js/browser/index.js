@@ -2451,8 +2451,8 @@ export class BrowserModel extends ViewModel {
     const td = this.ui.columnView.treeData;
     const ed = this.ui.sourceEditor;
 
-    const checked = Icon.textAttribute('check-square', { lineHeight: 1.4, paddingRight: '3px' });
-    const unchecked = Icon.textAttribute('square', { lineHeight: 1.4, paddingRight: '3px' });
+    const checked = Icon.textAttribute('check-square', { paddingRight: '3px' });
+    const unchecked = Icon.textAttribute('square', { paddingRight: '3px' });
     Object.assign(checked[1], { float: 'none', display: 'inline' });
 
     const p = this.selectedPackage;
