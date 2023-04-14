@@ -218,7 +218,6 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
        ]
   `);
   // always pick the one closest
-  // if (morphDefs.length > 1) throw new Error('ambigous name reference: ' + name);
   return morphDefs[0];
 }
 

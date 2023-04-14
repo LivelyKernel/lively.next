@@ -268,7 +268,7 @@ export async function removeComponentDefinition (entityName, modId) {
 
 /**
  * Replaces a component definition within a module.
- * This function is only used in response to retting a component definition
+ * This function is only used in response to resetting a component definition
  * and therefore does not need to be decoupled from the module + source changes it performs.
  * @param { string } defAsCode - The code snippet of the updated component definition.
  * @param { string } entityName - The name of the const referencing the component definition.
@@ -723,7 +723,6 @@ class MorphRemovalReconciliation extends Reconciliation {
   /**
    * Apply the source code transformation to the definition of a component
    * *derived* from the component where the change originated from.
-   * Unlike in the case of origin, we here only drop the specs if they are mentioned.
    * @param {type} interactiveDescriptor - description
    */
   applyRemovalToDependant (interactiveDescriptor) {
@@ -995,9 +994,6 @@ class PropChangeReconciliation extends Reconciliation {
     if (deleteWidth || deleteHeight) {
       this.deletePropIn(specNode, 'extent');
     }
-    // if (!deleteHeight || !deleteWidth) {
-    //   this.patchPropIn(specNode, changedProp, valueExpr);
-    // }
     this.patchPropIn(specNode, changedProp, valueExpr);
     return this;
   }

@@ -426,7 +426,6 @@ class NameHolder extends Morph {
   }
 
   onMouseDown (evt) {
-    super.onMouseDown(evt);
     if (!this.isEditable) return;
     this.nameHolder.fontColor = Color.white;
     this.halo.toggleMorphHighlighter(false, this.target);
@@ -534,7 +533,6 @@ class NameHaloItem extends HaloItem {
       }));
       meta && connect(masterLink, 'onMouseDown', async () => {
         const { findComponentDef, getMorphNode, getProp } = await System.import('lively.ide/components/helpers.js');
-        // select the range instead
         let range;
         if (meta.path?.length > 0) {
           let parsedModule = await moduleManager.module(meta.moduleId).ast();

@@ -181,9 +181,7 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   clearFocusIfRemoved () {
-    setTimeout(() => {
-      if (this.targetMorph && !this.targetMorph.owner) { this.clearFocus(); }
-    });
+    if (this.targetMorph && !this.targetMorph.owner) { this.clearFocus(); }
   }
 
   focusOn (aMorph) {
