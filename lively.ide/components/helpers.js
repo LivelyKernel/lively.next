@@ -217,7 +217,6 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
          ]
        ]
   `);
-  // always pick the one closest
   return morphDefs[0];
 }
 
