@@ -16,7 +16,6 @@ const CloseButtonDefault = component({
   fontSize: 25,
   nativeCursor: 'pointer',
   padding: rect(4, 4, 0, 0),
-  epiMorph: true,
   tooltip: 'Close Window',
   lineHeight: 1,
   textAndAttributes: ['', { }]
