@@ -133,13 +133,21 @@ export class BrowserModuleTranslationCache extends ModuleTranslationCache {
     });
   }
 
-  async cacheModuleSource (moduleId, hash, source) {
+  async cacheModuleSource (moduleId, hash, source, exports = []) {
     const db = await this.db;
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([this.sourceCodeCacheStoreName], 'readwrite');
       const store = transaction.objectStore(this.sourceCodeCacheStoreName);
       const timestamp = Date.now();
-      store.put({ moduleId, hash, source, timestamp });
+      store.put({
+        moduleId,
+        hash,
+        source,
+        timestamp,
+        exports: JSON.stringify(exports.map(({
+          type, exported, local, fromModule
+        }) => ({ type, exported, local, fromModule })))
+      });
       transaction.oncomplete = resolve;
       transaction.onerror = reject;
     });
