@@ -640,12 +640,9 @@ export class TilingLayout extends Layout {
     } else super.onSubmorphResized(submorph, change);
   }
 
-  /**
-   * Invoked once a morph in the container has changed their bounds.
-   * @override
-   */
   onSubmorphRemoved (submorph) {
     this._resizePolicies.delete(submorph);
+    // Ensure correct propagation of layout propert and adaption of resizePolicies.
     this.container.layout = this.copy();
   }
 

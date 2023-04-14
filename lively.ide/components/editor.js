@@ -182,11 +182,12 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * derived components. If there is a conflict, the default resolution
    * is to adjust the addedMorph's name in such a way that it no longer
    * causes a name collision.
-   * Note that it does not matter wether or not the `addedMorph` is a entirely
+   * Note, that it does not matter wether or not the `addedMorph` is a entirely
    * new morph or one that was reintroduced. At all times the renaming is applied
    * to the `addedMorph`. This also means that derived adjustments will have to
-   * alter the name that they reference the `addedMorph` by if they are part
-   * of a reintroduction.
+   * alter the name that they reference `addedMorph` by, if they are part
+   * of a **reintroduction**. This concerns cases in which we remove a morph 'bob' from a component,
+   * rename another morph in the component to 'bob' and then reintroduce the removed 'bob' once again.
    */
   ensureNoNameCollisionInDerived (nameCandidate, skip = false) {
     // check if there is a spec in the scope, that has the name of the addedMorph already
