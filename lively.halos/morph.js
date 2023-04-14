@@ -1040,8 +1040,9 @@ class RotateHaloItem extends RoundHaloItem {
     let { scaleGauge: scaleG, halo } = this;
     if (!scaleG) scaleG = this.scaleGauge = gauge.scaleBy(1 / halo.target.scale);
     this.angle = gauge.theta();
-    this.initRotation = halo.target.rotation;
-    halo.target.scale = num.detent(gauge.dist(pt(0, 0)) / scaleG.dist(pt(0, 0)), 0.1, 0.5);
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      halo.target.scale = num.detent(gauge.dist(pt(0, 0)) / scaleG.dist(pt(0, 0)), 0.1, 0.5);
+    });
     halo.toggleRotationIndicator(true, this);
   }
 
