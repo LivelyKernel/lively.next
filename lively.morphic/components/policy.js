@@ -731,6 +731,7 @@ export class StylePolicy {
    * @returns { StylePolicy|object }
    */
   getSubSpecAt (...path) {
+    if (path.length === 0) return this;
     let curr = this.getSubSpecFor(path.shift());
     if (curr && path.length > 0) return curr.getSubSpecAt(path);
     return curr;

@@ -1002,7 +1002,9 @@ class PropChangeReconciliation extends Reconciliation {
     const policy = this.descriptor.stylePolicy;
     if (this.target.master === policy || this.target.isComponent) return policy.spec;
     // what if this is a root component? Then it does not have any master.
-    return this.descriptor.stylePolicy.getSubSpecFor(this.target.name);
+    // this does not work if the target is not part of the component scope.
+    // instead we need to get the path to the target
+    return this.getResponsiblePolicyFor(this.target).getSubSpecFor(this.target.name);
   }
 
   getNodeForTargetInSource (interactiveDescriptor = this.descriptor) {
@@ -1048,14 +1050,24 @@ class PropChangeReconciliation extends Reconciliation {
     return this;
   }
 
+  getResponsiblePolicyFor (target) {
+    const pathToResponsiblePolicy = this.target.ownerChain().filter(m => m.master && !m.isComponent).map(m => m.name);
+    return this.descriptor.stylePolicy.getSubSpecAt(...pathToResponsiblePolicy);
+  }
+
   get propValueDiffersFromParent () {
     let { target, prop } = this.change;
     // FIXME: extract via path instead of name
-    const policy = this.descriptor.stylePolicy;
+    const policy = this.getResponsiblePolicyFor(target);
+    if (prop === 'rotation') debugger;
     const { parent } = policy;
     let val;
-    if (parent) val = parent.synthesizeSubSpec(target.name)[prop];
-    else {
+    if (parent) {
+      let synthesized = parent.synthesizeSubSpec(target.name);
+      if (synthesized.isPolicy) synthesized = synthesized.synthesizeSubSpec();
+      val = synthesized[prop];
+    }
+    if (typeof val === 'undefined') {
       const { type } = this.getSubSpecForTarget();
       val = getDefaultValueFor(type, prop);
     }
