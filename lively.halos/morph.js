@@ -1249,7 +1249,7 @@ class ComponentHaloItem extends RoundHaloItem {
     } else {
       if (await $world.confirm([
         'Caution\n', {},
-        'Do you really want to remove this component from the system?', { fontWeight: 'normal', fontSize: 16 }, target.master._dependants?.size > 0 ? ` ${target.master._dependants?.size} component${target.master._dependants?.size > 1 ? 's are' : ' is'} depening on this component.` : '', { fontWeight: 'normal', fontSize: 16 }])) {
+        'Do you really want to remove this component from the system?', { fontWeight: 'normal', fontSize: 16 }, target.master._dependants?.size > 0 ? ` ${target.master._dependants?.size} component${target.master._dependants?.size > 1 ? 's are' : ' is'} depending on this component.` : '', { fontWeight: 'normal', fontSize: 16 }])) {
         const { moduleId, exportedName } = target.master[Symbol.for('lively-module-meta')];
         const pos = target.position;
         await removeComponentDefinition(exportedName, moduleId);
