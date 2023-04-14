@@ -1,4 +1,4 @@
-import { HTMLMorph, standard, TilingLayout, Label, ShadowObject, component, ensureFont, part } from 'lively.morphic';
+import { HTMLMorph, TilingLayout, Label, ShadowObject, component, ensureFont, part } from 'lively.morphic';
 import { Color, LinearGradient, pt, rect } from 'lively.graphics';
 import { DefaultList } from 'lively.components/list.cp.js';
 
@@ -99,8 +99,7 @@ const PopupWindow = component({
         epiMorph: true,
         padding: rect(10, 0, -10, 0),
         fontWeight: 'bold',
-        textString: 'Window title',
-        fontColor: standard(Color.black)
+        textString: 'Window title'
       },
       part(CloseButton, { name: 'close button' })
     ]
