@@ -550,13 +550,6 @@ component.for = (generator, meta, prev) => component.DescriptorClass.for(generat
 
 export { add, without };
 
-export function standard (value) {
-  return {
-    onlyAtInstantiation: true,
-    value
-  };
-}
-
 function insertFontCSS (name, fontUrl) {
   if (fontUrl.endsWith('.otf')) {
     addOrChangeCSSDeclaration(`${name}`,

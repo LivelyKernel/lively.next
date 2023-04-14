@@ -1308,7 +1308,6 @@ const TopBar = component({
       }),
       part(TopBarButton, {
         name: 'comment browser button',
-        padding: rect(3, 0, -3, 0),
         textAndAttributes: Icon.textAttribute('comment-alt'),
         tooltip: 'Toggle Comment Browser'
       }),
