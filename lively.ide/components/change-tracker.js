@@ -103,8 +103,8 @@ export class ComponentChangeTracker {
   /**
    * Filter function that allows us to check if we need
    * to reconcile a particular change or not.
-   * ChangeTrackers work on a whitelisting policy. That is, any
-   * change to even be considered needs have set the meta property
+   * ChangeTrackers work on a whitelisting policy. That is, for a
+   * change to even be considered, it needs have set the meta property
    * `reconcileChanges` to `true`.
    * @param { object } change - The change object to check
    * @returns { boolean }

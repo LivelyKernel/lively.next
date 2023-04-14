@@ -16,7 +16,7 @@ const exprSerializer = new ExpressionSerializer();
 /**
  * We implement our editor by means of a relatively simple
  * ComponentDescriptor subclass. This InteractiveComponentDescriptor
- * alloqs us to open and close direct manipulation editing sessions
+ * allows us to open and close direct manipulation editing sessions
  * and handles all the bookkeeping in the background.
  */
 export class InteractiveComponentDescriptor extends ComponentDescriptor {

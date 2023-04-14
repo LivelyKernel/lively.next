@@ -493,7 +493,7 @@ export class ViewModel {
   }
 
   /**
-   * Allows to fullt disconnect the view model from its view.
+   * Allows to fully disconnect the view model from its view.
    */
   detach () {
     this.onDeactivate();
