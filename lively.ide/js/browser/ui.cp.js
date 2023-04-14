@@ -90,9 +90,9 @@ class ComponentEditControlModel extends ViewModel {
 
   viewDidLoad () {
     super.viewDidLoad();
-    this.updateResetButton();
-    once(this.componentDescriptor, 'makeDirty', this, 'updateResetButton');
-    connect(this.componentMorph, 'behaviorChanged', this, 'updateResetButton');
+    this.updateControlButtons();
+    once(this.componentDescriptor, 'makeDirty', this, 'updateControlButtons');
+    connect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
   }
 
   hasViewModels () {
@@ -103,7 +103,7 @@ class ComponentEditControlModel extends ViewModel {
     return found;
   }
 
-  updateResetButton () {
+  updateControlButtons () {
     this.ui.livelyButton.visible = this.hasViewModels();
     this.ui.livelyButton.master = this.isLively ? BehaviorToggleButton : BehaviorToggleButtonDisabled; // eslint-disable-line no-use-before-define
     this.ui.revertButton.master = this.componentDescriptor?.isDirty()
@@ -146,7 +146,7 @@ class ComponentEditControlModel extends ViewModel {
       noUpdate(() => this.componentMorph.bringToFront());
       this.cleanupInstance();
     }
-    this.updateResetButton();
+    this.updateControlButtons();
   }
 
   cleanupInstance () {
@@ -186,7 +186,7 @@ class ComponentEditControlModel extends ViewModel {
   async collapse (editButton) {
     const { editor, view } = this;
     this.cleanupInstance();
-    disconnect(this.componentMorph, 'behaviorChanged', this, 'updateResetButton');
+    disconnect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
     disconnect(this.anchor, 'position', this, 'positionInLine');
     editButton.reset();
     editButton.opacity = 0;
