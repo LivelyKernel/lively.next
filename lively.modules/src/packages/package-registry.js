@@ -50,6 +50,7 @@ export class PackageRegistry {
     this.individualPackageDirs = opts.individualPackageDirs || [];
     this._readyPromise = null;
     this.packageMap = {};
+    this.moduleUrlToPkg = new Map();
     this._byURL = null;
   }
 
@@ -272,7 +273,9 @@ export class PackageRegistry {
   findPackageHavingURL (url) {
     // does url identify a resource inside pkg, maybe pkg.url === url?
     if (url.isResource) url = url.url;
+    if (url.startsWith('esm://')) return null;
     if (url.endsWith('/')) url = url.slice(0, -1);
+    if (this.moduleUrlToPkg.has(url)) return this.moduleUrlToPkg.get(url);
     let penaltySoFar = Infinity; let found = null; let { byURL } = this;
     for (let pkgURL in byURL) {
       if (url.indexOf(pkgURL) !== 0) continue;
@@ -280,6 +283,9 @@ export class PackageRegistry {
       if (penalty >= penaltySoFar) continue;
       penaltySoFar = penalty;
       found = byURL[pkgURL];
+    }
+    if (found) {
+      this.moduleUrlToPkg.set(url, found);
     }
     return found;
   }
