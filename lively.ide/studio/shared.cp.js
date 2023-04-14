@@ -168,16 +168,7 @@ const DarkNumberIconWidget = component(DarkNumberWidget, {
   dropShadow: false,
   extent: pt(72, 22),
   floatingPoint: false,
-  submorphs: [{
-    name: 'value',
-    fontSize: 14
-  }, {
-    name: 'up',
-    visible: false
-  }, {
-    name: 'down',
-    visible: false
-  }, add({
+  submorphs: [add({
     type: Label,
     name: 'interactive label',
     padding: rect(6, 0, -6, 0),
