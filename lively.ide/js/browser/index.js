@@ -47,6 +47,7 @@ import HTMLEditorPlugin from '../../html/editor-plugin.js';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { adoptObject } from 'lively.lang/object.js';
 import { resource } from 'lively.resources';
+import { findComponentDef, getComponentNode } from '../../components/helpers.js';
 
 if (!lively.FreezerRuntime) { component.DescriptorClass = InteractiveComponentDescriptor; }
 
@@ -1612,9 +1613,9 @@ export class BrowserModel extends ViewModel {
     this.getComponentDeclsFromScope(mod.url)
       .then(decls => Promise.all(
         decls.map(([val, decl]) => {
-          return this.ensureComponentEditButtonFor(val, decl);
+          if (query.queryNodes(decl, '.// CallExpression [ /:callee Identifier [ @name == \'component\']]').length > 0) { return this.ensureComponentEditButtonFor(val, decl); }
         }))
-      ).then(btns => btns.forEach(btn => btn.opacity = 1));
+      ).then(btns => arr.compact(btns).forEach(btn => btn.opacity = 1));
   }
 
   async resetComponentControls () {
