@@ -370,18 +370,23 @@ const ComponentEditButtonDefault = component({
     hugContentsHorizontally: true,
     hugContentsVertically: true,
     orderByIndex: true,
-    padding: rect(2, 0, 0, 2)
+    padding: rect(2, 1, -1, 0)
   }),
   submorphs: [
     {
       type: 'label',
       name: 'label',
       reactsToPointer: false,
-      padding: rect(5, 1, 0, 0),
+      padding: rect(5, 1, 0, -1),
       fontColor: Color.white,
       fontWeight: 'bold',
       fontSize: 12,
-      textAndAttributes: ['Edit Component ', {}, ...Icon.textAttribute('play', { paddingTop: '2px' })]
+      textAndAttributes: ['Edit Component  ', {}, '', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontWeight: '900',
+        paddingTop: '2px'
+      }]
+
     }
   ]
 });
@@ -398,7 +403,7 @@ const CloseComponentButtonDefault = component({
   type: Label,
   nativeCursor: 'pointer',
   borderRadius: 15,
-  padding: rect(5, 1, 0, 2),
+  padding: rect(5, 1, 0, 0),
   fill: Color.rgb(221, 37, 37),
   fontColor: Color.white,
   fontWeight: 'bold',
