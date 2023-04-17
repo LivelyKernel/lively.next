@@ -1,5 +1,8 @@
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
-import { ShadowObject, ViewModel, morph, easings, Morph, TilingLayout, ConstraintLayout, Text, Label, Icon, component, part } from 'lively.morphic';
+import {
+  ShadowObject, ViewModel, morph, easings, Morph,
+  TilingLayout, ConstraintLayout, Text, Label, Icon, component, part
+} from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
@@ -10,6 +13,7 @@ import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { BlackOnWhite } from '../../text/defaults.cp.js';
 import { once, noUpdate, disconnect, connect } from 'lively.bindings';
 import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components/policy.js';
+import { module } from 'lively.modules/index.js';
 
 async function positionForAnchor (context, anchor) {
   if (!context?.isText) return;
@@ -67,7 +71,7 @@ class ComponentEditControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { target: 'close button', signal: 'onMouseUp', handler: 'minifyComponentMorph' },
+            { target: 'close button', signal: 'onMouseUp', handler: 'terminateEditSession' },
             { target: 'revert button', signal: 'onMouseUp', handler: 'resetComponentDef' },
             {
               target: 'lively button',
@@ -127,7 +131,7 @@ class ComponentEditControlModel extends ViewModel {
       try {
         this.instanceMorph = part(this.componentDescriptor).openInWorld();
         this.instanceMorph.position = this.componentMorph.position;
-        once(this.instanceMorph, 'remove', this, 'minifyComponentMorph');
+        once(this.instanceMorph, 'remove', this, 'terminateEditSession');
         setTimeout(() => { this.componentMorph.visible = false; });
       } catch (err) {
         this.view.getWindow().showError('Failed to load live version of component: ' + err.message);
@@ -145,10 +149,18 @@ class ComponentEditControlModel extends ViewModel {
 
   cleanupInstance () {
     if (this.instanceMorph) {
-      disconnect(this.instanceMorph, 'remove', this, 'minifyComponentMorph');
+      disconnect(this.instanceMorph, 'remove', this, 'terminateEditSession');
       this.instanceMorph.remove();
       this.instanceMorph = null;
     }
+  }
+
+  terminateEditSession () {
+    const mod = module(this.componentDescriptor.moduleName);
+    mod.changeSource(mod._source, {
+      doSave: true, doEval: false
+    });
+    this.minifyComponentMorph();
   }
 
   async minifyComponentMorph () {
@@ -265,7 +277,6 @@ class ComponentEditButtonMorph extends Morph {
       wrapper.opacity = 1;
       wrapper.scale = 1;
     }, { duration: 300, easing: easings.outQuint });
-    // componentMorph.env.forceUpdate();
     componentMorph.openInWorld(componentMorph.globalPosition);
     this.remove();
     placeholder._initializing = false;
