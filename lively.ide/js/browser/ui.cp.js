@@ -53,12 +53,6 @@ class ComponentEditControlModel extends ViewModel {
           return this.view?.owner;
         }
       },
-      behaviorEnabled: {
-        derived: true,
-        get () {
-          return this.editor?.owner.viewModel._initializeComponentsWithModels;
-        }
-      },
       isLively: {
         get () {
           return !!this.instanceMorph;
@@ -125,7 +119,7 @@ class ComponentEditControlModel extends ViewModel {
   }
 
   resetComponentDef () {
-    this.componentDescriptor.reset();
+    if (this.componentDescriptor?.isDirty()) this.componentDescriptor.reset();
   }
 
   toggleDerivedInstance (active) {
@@ -235,10 +229,6 @@ class ComponentEditButtonMorph extends Morph {
         derived: true,
         get () { return this.owner; }
       },
-      behaviorEnabled: {
-        derived: true,
-        get () { return this.editor?.owner.viewModel._initializeComponentsWithModels; }
-      },
       componentDescriptor: {
         // the component descriptor object pointing to the policy
       }
@@ -304,12 +294,11 @@ class ComponentEditButtonMorph extends Morph {
   async replaceWithPlaceholder () {
     const {
       componentDescriptor,
-      behaviorEnabled,
       editor
     } = this;
     if (!editor) return;
     this.remove();
-    const componentMorph = componentDescriptor.getComponentMorph(behaviorEnabled);
+    const componentMorph = componentDescriptor.getComponentMorph();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph, editor);
     once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
     btnPlaceholder.opacity = 1;
@@ -317,10 +306,9 @@ class ComponentEditButtonMorph extends Morph {
 
   async expand () {
     const {
-      componentDescriptor,
-      behaviorEnabled
+      componentDescriptor
     } = this;
-    const componentMorph = await componentDescriptor.edit(behaviorEnabled);
+    const componentMorph = await componentDescriptor.edit();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
     once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
