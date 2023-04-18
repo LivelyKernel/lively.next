@@ -29,24 +29,6 @@ export class ComponentChangeTracker {
   get componentPolicy () { return this.componentDescriptor.stylePolicy; }
 
   /**
-   * If present, returns the first browser that has unsaved changes and
-   * the module openend that the component we are tracking is defined in.
-   * @type { Text }
-   */
-  get sourceEditor () {
-    if (!this.componentModule) return;
-    const openBrowsers = $world.withAllSubmorphsSelect(browser =>
-      browser.isBrowser && browser.selectedModule && browser.selectedModule.url.replace(System.baseURL, '') === this.componentModuleId);
-    const qualifiedBrowser = openBrowsers.find(openBrowser => {
-      if (this.currentModuleSource && openBrowser.hasUnsavedChanges(this.currentModuleSource)) {
-        return false;
-      }
-      return true;
-    });
-    if (qualifiedBrowser) return qualifiedBrowser.viewModel.ui.sourceEditor;
-  }
-
-  /**
    * The current source of the module object that manages
    * the source code this component is defined in.
    * @type { string }

@@ -1,6 +1,6 @@
 import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, applySourceChanges,
+  getNodeFromSubmorphs, getEligibleSourceEditorsFor, applySourceChanges,
   getPathFromMorphToMaster,
   getTextAttributesExpr,
   getComponentScopeFor,
@@ -566,30 +566,23 @@ export class Reconciliation {
    * the module openend that the component we are tracking is defined in.
    * @type { Text }
    */
-  getEligibleSourceEditor (modId, modSource) {
-    const openBrowsers = $world.withAllSubmorphsSelect(browser =>
-      browser.isBrowser && browser.selectedModule && browser.selectedModule.url === modId);
-    const qualifiedBrowser = openBrowsers.find(openBrowser => {
-      if (modSource && openBrowser.hasUnsavedChanges(modSource)) {
-        return false;
-      }
-      return true;
-    });
-    if (qualifiedBrowser) return qualifiedBrowser.viewModel.ui.sourceEditor;
+  getEligibleSourceEditors (modId, modSource) {
+    return getEligibleSourceEditorsFor(modId, modSource);
   }
 
   getDescriptorContext (descr = this.descriptor) {
     const modId = System.decanonicalize(descr.moduleName);
 
     let sourceCode = descr.getModuleSource();
-    const openEditor = this.getEligibleSourceEditor(modId, sourceCode);
+    let openEditors;
+    const [openEditor] = openEditors = this.getEligibleSourceEditors(modId, sourceCode);
     if (openEditor) sourceCode = openEditor.textString;
 
     // FIXME: cache the AST node and transform them with a source mods library that understands how to patch the ast
     const parsedComponent = descr.getASTNode(sourceCode);
     const requiredBindings = this.requiredBindingsByModule.get(modId) || [];
     if (!this.requiredBindingsByModule.has(modId)) this.requiredBindingsByModule.set(modId, requiredBindings);
-    return { modId, parsedComponent, sourceCode, requiredBindings, openEditor };
+    return { modId, parsedComponent, sourceCode, requiredBindings, openEditor, openEditors };
   }
 
   withinDerivedComponent (aMorph) {
@@ -618,8 +611,8 @@ export class Reconciliation {
    * @returns { Reconciliation }
    */
   applyChanges () {
-    const { openEditor } = this.getDescriptorContext();
-    applyModuleChanges(this, openEditor);
+    const { openEditors } = this.getDescriptorContext();
+    openEditors.map(ed => applyModuleChanges(this, ed));
     return this;
   }
 
