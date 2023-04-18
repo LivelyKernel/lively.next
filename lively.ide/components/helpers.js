@@ -15,6 +15,18 @@ function getScopeMaster (m) {
   return m;
 }
 
+export function getEligibleSourceEditorsFor (modId, modSource) {
+  const openBrowsers = $world.withAllSubmorphsSelect(browser =>
+    browser.isBrowser && browser.selectedModule && browser.selectedModule.url === modId);
+  const qualifiedBrowsers = openBrowsers.filter(openBrowser => {
+    if (modSource && openBrowser.hasUnsavedChanges(modSource)) {
+      return false;
+    }
+    return true;
+  });
+  return qualifiedBrowsers.map(browser => browser.viewModel.ui.sourceEditor);
+}
+
 export function getPathFromScopeMaster (m) {
   return arr.takeWhile(m.ownerChain(), m => !m.master && !m.isComponent).map(m => m.name);
 }

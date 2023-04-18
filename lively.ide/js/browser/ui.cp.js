@@ -14,6 +14,7 @@ import { BlackOnWhite } from '../../text/defaults.cp.js';
 import { once, noUpdate, disconnect, connect } from 'lively.bindings';
 import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components/policy.js';
 import { module } from 'lively.modules/index.js';
+import { getEligibleSourceEditorsFor } from '../../components/helpers.js';
 
 async function positionForAnchor (context, anchor) {
   if (!context?.isText) return;
@@ -157,9 +158,11 @@ class ComponentEditControlModel extends ViewModel {
 
   terminateEditSession () {
     const mod = module(this.componentDescriptor.moduleName);
-    mod.changeSource(mod._source, {
-      doSave: true, doEval: false
-    });
+    if (mod._source) {
+      mod.changeSource(mod._source, {
+        doSave: true, doEval: false
+      });
+    }
     this.minifyComponentMorph();
   }
 
@@ -282,6 +285,13 @@ class ComponentEditButtonMorph extends Morph {
     placeholder._initializing = false;
   }
 
+  getAllOtherEqualBrowsers () {
+    const browsers = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor.textString);
+    return browsers
+      .filter(m => m !== this.editor)
+      .map(ed => ed.owner);
+  }
+
   async ensureEditControlsFor (componentMorph, editor = this.editor) {
     const {
       componentDescriptor,
@@ -311,7 +321,9 @@ class ComponentEditButtonMorph extends Morph {
     this.remove();
     const componentMorph = componentDescriptor.getComponentMorph();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph, editor);
-    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
+    if (componentMorph.owner.isWorld) {
+      once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
+    }
     btnPlaceholder.opacity = 1;
   }
 
@@ -319,9 +331,11 @@ class ComponentEditButtonMorph extends Morph {
     const {
       componentDescriptor
     } = this;
+    const otherBrowsers = this.getAllOtherEqualBrowsers();
     const componentMorph = await componentDescriptor.edit();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
+    otherBrowsers.forEach(b => b.viewModel.relayout());
     once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
   }
 
