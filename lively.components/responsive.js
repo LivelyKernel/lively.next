@@ -93,7 +93,7 @@ export class BreakpointSlider extends Morph {
         this.height = 60;
         break;
     }
-    this.layout.forceLayout();
+    // this.layout.forceLayout();
   }
 
   onDrag (evt) {
@@ -294,7 +294,7 @@ export class ResponsiveLayoutMorphHalo extends Morph {
     this.position = this.target.globalPosition.subPt(pt(35, 35));
 
     for (let slider of sliders) {
-      slider.layout.forceLayout();
+      // slider.layout.forceLayout();
       slider.alignInHalo(this);
     }
 
@@ -305,8 +305,8 @@ export class ResponsiveLayoutMorphHalo extends Morph {
     lastH.width = Math.max(200, this.target.width - (arr.last(horizontalBreakPoints) || 0) + 10);
 
     // avoid sluggish relayouting
-    verticalBreakpointControl.layout.forceLayout();
-    horizontalBreakpointControl.layout.forceLayout();
+    // verticalBreakpointControl.layout.forceLayout();
+    // horizontalBreakpointControl.layout.forceLayout();
 
     verticalBreakpointControl.submorphs.forEach((v, i) => {
       if (num.between(this.target.height, verticalBreakPoints[i - 1] || 0, verticalBreakPoints[i] || this.target.height + 10)) { v.opacity = 1; } else v.opacity = 0.5;

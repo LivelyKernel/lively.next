@@ -1,9 +1,7 @@
 import { component } from 'lively.morphic/components/core.js';
 import { ResponsiveLayoutMorphHalo, BreakpointSlider, Arrow } from './responsive.js';
 import { Color, rect, pt } from 'lively.graphics';
-import { VerticalLayout, HorizontalLayout, Icon, Label } from 'lively.morphic';
-
-// ResponsiveLayoutHalo.openInWorld()
+import { Icon, part, TilingLayout, Label } from 'lively.morphic';
 
 const ResponsiveLayoutHalo = component({
   type: ResponsiveLayoutMorphHalo,
@@ -21,7 +19,7 @@ const ResponsiveLayoutHalo = component({
     draggable: true,
     extent: pt(63.7, 80),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new VerticalLayout({
+    layout: new TilingLayout({
       align: 'center',
       direction: 'topToBottom',
       orderByIndex: true,
@@ -103,7 +101,7 @@ const ResponsiveLayoutHalo = component({
     dropShadow: false,
     extent: pt(691, 20),
     fill: Color.rgba(81, 90, 90, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
       align: 'top',
       direction: 'leftToRight',
       orderByIndex: true,
@@ -126,14 +124,13 @@ const ResponsiveLayoutHalo = component({
       clipMode: 'hidden',
       extent: pt(295.6, 20),
       fill: Color.rgb(76, 175, 80),
-      layout: false,
       opacity: 0.5
     }, {
       name: 'v1',
       clipMode: 'hidden',
       extent: pt(194.9, 20),
       fill: Color.rgb(156, 39, 176),
-      layout: new HorizontalLayout({
+      layout: new TilingLayout({
         align: 'center',
         direction: 'rightToLeft',
         orderByIndex: true,
@@ -163,7 +160,7 @@ const ResponsiveLayoutHalo = component({
     borderRadius: 5,
     extent: pt(545, 20),
     fill: Color.rgba(81, 90, 90, 0),
-    layout: new HorizontalLayout({
+    layout: new TilingLayout({
       align: 'top',
       direction: 'leftToRight',
       orderByIndex: true,
@@ -184,14 +181,13 @@ const ResponsiveLayoutHalo = component({
       clipMode: 'hidden',
       extent: pt(345.4, 20),
       fill: Color.rgb(244, 67, 54),
-      layout: false,
       opacity: 0.5
     }, {
       name: 'h1',
       clipMode: 'hidden',
       extent: pt(200, 20),
       fill: Color.rgb(255, 152, 0),
-      layout: new HorizontalLayout({
+      layout: new TilingLayout({
         align: 'center',
         direction: 'rightToLeft',
         orderByIndex: true,
@@ -221,7 +217,7 @@ const ResponsiveLayoutHalo = component({
     draggable: true,
     extent: pt(63.7, 80),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new VerticalLayout({
+    layout: new TilingLayout({
       align: 'center',
       direction: 'topToBottom',
       orderByIndex: true,
@@ -257,7 +253,7 @@ const ResponsiveLayoutHalo = component({
       borderColor: Color.rgb(0, 0, 0),
       borderWidth: 2,
       extent: pt(16.9, 16.6),
-      fill: null,
+      fill: Color.transparent,
       reactsToPointer: false,
       rotation: 0.7853981633974483,
       startMarker: {
@@ -283,7 +279,7 @@ const ResponsiveLayoutHalo = component({
     draggable: true,
     extent: pt(63.7, 60),
     fill: Color.rgba(46, 75, 223, 0),
-    layout: new VerticalLayout({
+    layout: new TilingLayout({
       align: 'center',
       direction: 'topToBottom',
       orderByIndex: true,
