@@ -1,6 +1,6 @@
 /* global System */
 import {
-  Morph,
+  Morph, config,
   TilingLayout,
   Path,
   Text,
@@ -929,21 +929,21 @@ class RotateHaloItem extends RoundHaloItem {
   }
 
   adaptAppearance (scaling) {
+    // Regardless of anyone elses opinion - if the canvas mode is enabled and we change child of world, we do not change our appearance!
+    if (scaling && config.ide.studio.canvasModeEnabled && $world.morphsInWorld.includes(this.halo.target)) scaling = false;
     this.submorphs[0].textAndAttributes = scaling ? Icon.textAttribute('search-plus', { fontSize: 15 }) : Icon.textAttribute('redo', { fontSize: 15 });
     this.tooltip = scaling ? 'Scale morph' : 'Rotate morph';
   }
 
-  detachFromLayout () {
+  detachFromLayout () { }
 
-  }
-
-  attachToLayout () {
-
-  }
+  attachToLayout () { }
 
   // events
   isInScaleMode (evt) {
-    return evt.isShiftDown() && !$world.morphsInWorld.includes(this.halo.target);
+    if (config.ide.studio.canvasModeEnabled) return evt.isShiftDown() && !$world.morphsInWorld.includes(this.halo.target);
+    // we do not need to respect the scale-overwriting of the worlds scaleFactor here
+    return evt.isShiftDown();
   }
 
   onDragStart (evt) {
