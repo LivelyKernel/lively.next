@@ -543,12 +543,15 @@ export default class Renderer {
     const node = this.getNodeForMorph(morph);
     const scrollChanged = !rs.animationAdded && rs.scrollChanged;
     const turnedVisible = node.style.display === 'none' && morph.visible;
+
     applyStylingToNode(morph, node);
     if (morph.patchSpecialProps) {
       morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
     }
 
+    // FIXME: order of these two is important, in an ideal case the styleClass application should not kill other CSS classes
     this.applyStyleClasses(morph, node);
+    morph.hideScrollbars ? node.classList.add('hiddenScrollbar') : node.classList.remove('hiddenScrollbar');
 
     if (turnedVisible || scrollChanged) {
       if (turnedVisible) {
