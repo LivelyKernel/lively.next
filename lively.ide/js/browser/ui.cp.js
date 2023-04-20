@@ -6,7 +6,7 @@ import {
 import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
-import { promise } from 'lively.lang';
+import { promise, fun } from 'lively.lang';
 import { EvalBackendButton } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
@@ -30,7 +30,9 @@ function ensureAnchor (control) {
     id: 'Component->' + varName,
     ...editor.screenLineRange(editor.indexToPosition(declaration.start)).end
   });
-  connect(anchor, 'position', control, 'positionInLine');
+  connect(anchor, 'position', control, 'positionInLine', {
+    updater: ($upd) => $upd()
+  });
   return anchor;
 }
 
@@ -44,6 +46,9 @@ class ComponentEditControlModel extends ViewModel {
         // reference to the morph that reifies the visual representation of the component definition
       },
       anchor: {},
+      editButton: {
+        // reference to the button that allows to enter the editing session
+      },
       declaration: {
         before: ['anchor'],
         set (decl) {
@@ -90,6 +95,7 @@ class ComponentEditControlModel extends ViewModel {
   viewDidLoad () {
     super.viewDidLoad();
     this.updateControlButtons();
+    once(this.componentMorph, 'stop editing', this, 'terminateEditSession');
     once(this.componentDescriptor, 'makeDirty', this, 'updateControlButtons');
     connect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
   }
@@ -110,10 +116,13 @@ class ComponentEditControlModel extends ViewModel {
       : RevertComponentButtonDisabled; // eslint-disable-line no-use-before-define
   }
 
-  async positionInLine () {
+  async positionInLine (transition = !this.componentDescriptor?._cachedComponent) {
     let { view, editor, anchor, componentDescriptor } = this;
     if (!editor) return;
     if (!anchor) anchor = this.anchor = ensureAnchor(this);
+    if (transition) {
+      return this.replaceWithEditButton();
+    }
     if (anchor.position.row > editor.renderingState.lastVisibleRow ||
         anchor.position.row < editor.renderingState.firstVisibleRow) {
       view.bottom = -10;
@@ -132,7 +141,7 @@ class ComponentEditControlModel extends ViewModel {
       try {
         this.instanceMorph = part(this.componentDescriptor).openInWorld();
         this.instanceMorph.position = this.componentMorph.position;
-        once(this.instanceMorph, 'remove', this, 'terminateEditSession');
+        once(this.instanceMorph, 'abandon', this, 'terminateEditSession');
         setTimeout(() => { this.componentMorph.visible = false; });
       } catch (err) {
         this.view.getWindow().showError('Failed to load live version of component: ' + err.message);
@@ -150,50 +159,81 @@ class ComponentEditControlModel extends ViewModel {
 
   cleanupInstance () {
     if (this.instanceMorph) {
-      disconnect(this.instanceMorph, 'remove', this, 'terminateEditSession');
+      disconnect(this.instanceMorph, 'abandon', this, 'terminateEditSession');
       this.instanceMorph.remove();
       this.instanceMorph = null;
     }
   }
 
-  terminateEditSession () {
+  async terminateEditSession () {
     const mod = module(this.componentDescriptor.moduleName);
     if (mod._source) {
       mod.changeSource(mod._source, {
         doSave: true, doEval: false
       });
     }
-    this.minifyComponentMorph();
+
+    await this.minifyComponentMorph();
+    this.componentDescriptor.stopEditSession();
   }
 
+  /**
+   * Removes the morph representing the component definition by fading
+   * it out of the world via animation.
+   */
   async minifyComponentMorph () {
-    if (this._active || this._initializing) return;
-    this._active = true;
+    if (this._initializing) return;
     const {
       componentMorph,
       editor,
-      view
+      view,
+      editButton
     } = this;
-    const placeholderPos = view.position;
-    const pos = componentMorph.position;
-    const wrapper = morph({
-      fill: Color.transparent,
-      submorphs: [componentMorph]
-    }).openInWorld();
-    componentMorph.position = pt(0);
-    wrapper.position = pos;
-    await wrapper.withAnimationDo(() => {
-      wrapper.scale = 0;
-      wrapper.opacity = 0;
-      wrapper.center = editor.worldPoint(placeholderPos.subPt(editor.scroll));
-    }, { duration: 300, easing: easings.outQuint });
-    componentMorph.remove();
-    wrapper.remove();
-    this._active = false;
+    await fun.guardNamed('collapse-' + componentMorph.id, async () => {
+      const placeholderPos = view.position;
+      const pos = componentMorph.position;
+      const wrapper = morph({
+        epiMorph: true,
+        fill: Color.transparent,
+        submorphs: [componentMorph]
+      }).openInWorld();
+      componentMorph.position = pt(0);
+      wrapper.position = pos;
+      await wrapper.withAnimationDo(() => {
+        wrapper.scale = 0;
+        wrapper.opacity = 0;
+        wrapper.center = editor.worldPoint(placeholderPos.subPt(editor.scroll));
+      }, { duration: 300, easing: easings.outQuint });
+      this.collapse(editor);
+      componentMorph.remove();
+      wrapper.remove();
+    })();
   }
 
-  async collapse (editButton) {
-    const { editor, view } = this;
+  async replaceWithEditButton () {
+    const {
+      componentDescriptor,
+      editor,
+      editButton
+    } = this;
+    if (!editor) return;
+    this.view.remove();
+    editButton.reset();
+    editor.addMorph(editButton);
+    editButton.positionInLine();
+  }
+
+  getAllOtherEqualBrowsers () {
+    const browsers = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor.textString);
+    return browsers
+      .filter(m => m !== this.editor)
+      .map(ed => ed.owner);
+  }
+
+  async collapse (editor = this.editor) {
+    const animated = true;
+    const { view, editButton } = this;
+    const otherBrowsers = this.getAllOtherEqualBrowsers();
     this.cleanupInstance();
     disconnect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
     disconnect(this.anchor, 'position', this, 'positionInLine');
@@ -201,26 +241,32 @@ class ComponentEditControlModel extends ViewModel {
     editButton.opacity = 0;
     editor.addMorph(editButton);
     this.componentDescriptor._dirty = false;
-    await editButton.positionInLine();
-    await view.animate({
-      opacity: 0,
-      scale: .2,
-      center: view.center, // to preserve tfm origin
-      duration: 300,
-      easing: easings.outQuint
-    });
+    await editButton.positionInLine(false);
+    if (animated) {
+      await view.animate({
+        opacity: 0,
+        scale: .2,
+        center: view.center, // to preserve tfm origin
+        duration: 300,
+        easing: easings.outQuint
+      });
+    }
     view.remove();
-    const { center } = editButton;
-    editButton.scale = 1.2;
-    editButton.center = center;
-    await editButton.animate({
-      scale: 1,
-      opacity: 1,
-      center,
-      duration: 300,
-      easing: easings.outQuint
-    });
+    if (animated) {
+      const { center } = editButton;
+      editButton.scale = 1.2;
+      editButton.center = center;
+      await editButton.animate({
+        scale: 1,
+        opacity: 1,
+        center,
+        duration: 300,
+        easing: easings.outQuint
+      });
+    }
     editButton.scale = 1;
+    editButton.opacity = 1;
+    otherBrowsers.forEach(b => b.viewModel.relayout());
   }
 }
 
@@ -304,7 +350,8 @@ class ComponentEditButtonMorph extends Morph {
         componentMorph,
         componentDescriptor,
         declaration,
-        anchor
+        anchor,
+        editButton: this
       }
     }));
     btnPlaceholder.bottom = -10;
@@ -312,7 +359,7 @@ class ComponentEditButtonMorph extends Morph {
     return btnPlaceholder;
   }
 
-  async replaceWithPlaceholder () {
+  async replaceWithControls () {
     const {
       componentDescriptor,
       editor
@@ -321,9 +368,6 @@ class ComponentEditButtonMorph extends Morph {
     this.remove();
     const componentMorph = componentDescriptor.getComponentMorph();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph, editor);
-    if (componentMorph.owner.isWorld) {
-      once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
-    }
     btnPlaceholder.opacity = 1;
   }
 
@@ -336,15 +380,14 @@ class ComponentEditButtonMorph extends Morph {
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
     otherBrowsers.forEach(b => b.viewModel.relayout());
-    once(componentMorph, 'remove', () => btnPlaceholder.collapse(this));
   }
 
-  async positionInLine () {
+  async positionInLine (transition = !!this.componentDescriptor?._cachedComponent) {
     let { editor, anchor, componentDescriptor } = this;
     if (!editor) return;
 
-    if (componentDescriptor._cachedComponent?.world()) {
-      return this.replaceWithPlaceholder();
+    if (transition) {
+      return this.replaceWithControls();
     }
 
     if (!anchor) anchor = this.anchor = ensureAnchor(this);

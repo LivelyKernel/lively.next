@@ -7,7 +7,7 @@ import {
   Text,
   GridLayout,
   morph,
-  Icon, config
+  Icon
 } from 'lively.morphic';
 import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
@@ -677,8 +677,10 @@ class CloseHaloItem extends RoundHaloItem {
   }
 
   discard (aMorph) {
-    if (aMorph.isComponent) aMorph.remove();
-    else aMorph.abandon();
+    if (aMorph.isComponent) {
+      aMorph.remove();
+      signal(aMorph, 'stop editing');
+    } else aMorph.abandon();
   }
 
   update () {
