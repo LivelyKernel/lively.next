@@ -544,13 +544,7 @@ export class Morph {
         group: 'styling',
         type: 'Boolean',
         isStyleProp: true,
-        defaultValue: false,
-        set (val) {
-          if (val) this.addStyleClass('hiddenScrollbar');
-          else this.removeStyleClass('hiddenScrollbar');
-
-          this.setProperty('hideScrollbars', val);
-        }
+        defaultValue: false
       },
 
       scroll: {
