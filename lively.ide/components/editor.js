@@ -143,6 +143,10 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return await c._changeTracker.whenReady() && c;
   }
 
+  stopEditSession () {
+    this._cachedComponent = null;
+  }
+
   /**
    * Subscribe to any changes that happen to the parent policy if present.
    */
