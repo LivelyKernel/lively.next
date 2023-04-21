@@ -68,10 +68,11 @@ class ComponentEditControlModel extends ViewModel {
           return !!this.instanceMorph;
         }
       },
+      isActiveEditSession: { get () { return true; } },
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
-          return ['positionInLine', 'collapse', 'isComponentControl', 'componentDescriptor', 'declaration'];
+          return ['positionInLine', 'collapse', 'isComponentControl', 'componentDescriptor', 'declaration', 'isActiveEditSession', 'terminateEditSession'];
         }
       },
       bindings: {
@@ -1497,6 +1498,7 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
   const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
   if (!browser.world()) browser.openInWindow();
   browser.env.forceUpdate();
+  delete browser.viewModel.state.selectedModule;
   return browser.browse({ systemInterface: optSystemInterface, ...browseSpec });
 }
 

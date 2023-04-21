@@ -792,8 +792,26 @@ export class BrowserModel extends ViewModel {
     if (cursorPos) ed.cursorPosition = cursorPos;
   }
 
-  indicateUnsavedChanges () {
+  async ensureNoEditSessionActive () {
+    const openSessions = this.activeComponentEditSessions();
+    if (openSessions.length > 0) {
+      const plural = openSessions.length > 1;
+      const proceed = await $world.confirm([
+        'Active Component Edit Sessions', { fontWeight: 'bold' },
+        '\nThere' + (plural ? ' are ' : ' is ') + openSessions.length + ` active edit session${plural ? 's' : ''} that need${plural ? '' : 's'} to be closed before you can proceed with entering custom code.`, { fontWeight: 'normal', fontSize: 18 }], { requester: this.view });
+      if (!proceed) return false;
+      await Promise.all(openSessions.map(m => m.terminateEditSession()));
+    }
+    return true;
+  }
+
+  async indicateUnsavedChanges () {
     this.prohibitKeyboardNavigation();
+    if (!await this.ensureNoEditSessionActive()) {
+      this.ui.sourceEditor.textString = await this.systemInterface.moduleRead(this.state.selectedModule.url);
+      this.relayout();
+      return;
+    }
     this.hideComponentEditButtons();
     Object.assign(this.ui.sourceEditor,
       {
@@ -1532,6 +1550,7 @@ export class BrowserModel extends ViewModel {
         parents.push(parent);
       }
     }
+
     await this.ui.columnView.setExpandedPath((n) => {
       return n.name === def.name || !!parents.find(p => p.type === n.type && p.name === n.name);
     }, this.selectedModule, animated);
@@ -1645,6 +1664,13 @@ export class BrowserModel extends ViewModel {
     if (this.ui.sourceEditor.pluginFind(plugin => plugin.isOccurPlugin)) {
       this.hideComponentEditButtons();
     } else this.showComponentEditButtons();
+  }
+
+  activeComponentEditSessions () {
+    const { sourceEditor } = this.ui;
+    return sourceEditor.submorphs.filter(m => {
+      return m.isActiveEditSession;
+    });
   }
 
   hideComponentEditButtons () {
@@ -2474,3 +2500,4 @@ export class BrowserModel extends ViewModel {
     ].filter(Boolean);
   }
 }
+
