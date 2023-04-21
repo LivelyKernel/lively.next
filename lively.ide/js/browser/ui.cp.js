@@ -308,6 +308,7 @@ export class PathIndicator extends Morph {
     errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
     statusBox.opacity = statusLabel.opacity = 0;
     this.adjustHeight();
+    this.setPath();
   }
 
   showInfoInWorkspace () {
@@ -332,19 +333,14 @@ export class PathIndicator extends Morph {
     return this.ui.filePath.textAndAttributes;
   }
 
-  setPath (path) {
-    const { filePath, clipboardControls, exportToHtml, freezeButton } = this.ui;
+  setPath (path = this.getPath()) {
+    const { filePath, clipboardControls, exportToHtml, freezeButton, runTestsButton } = this.ui;
     clipboardControls.opacity = 1;
     filePath.value = path;
-    freezeButton.isLayoutable = freezeButton.visible = filePath.textString.includes('.js');
+    freezeButton.isLayoutable = freezeButton.visible = !this.testModuleMode && filePath.textString.includes('.js');
     exportToHtml.isLayoutable = exportToHtml.visible = filePath.textString.includes('.md');
+    runTestsButton.isLayoutable = runTestsButton.visible = this.testModuleMode;
   }
-
-  toggleTestButton (active) {
-    this.ui.runTestsButton.visible = this.ui.runTestsButton.isLayoutable = active;
-  }
-
-  // this.showInactive(300)
 
   showInactive (duration = 300) {
     this.requestTransition(async () => {
@@ -360,6 +356,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
   }
 
   showDefault (duration = 300) {
@@ -374,6 +371,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
   }
 
   async showError (err, duration = 300) {
@@ -390,6 +388,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
   }
 
   async showWarning (warning, duration = 300) {
@@ -406,6 +405,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
   }
 
   async showFrozen (frozenMessage, duration = 300) {
@@ -422,6 +422,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
   }
 
   async showSaved (duration = 300, timeout = 5000) {
@@ -443,6 +444,7 @@ export class PathIndicator extends Morph {
         this.adjustHeight();
       }, { duration });
     });
+    this.setPath();
 
     await promise.delay(timeout);
     this._animating = false;
@@ -631,7 +633,7 @@ const MetaInfoContainerExpanded = component({
         textAndAttributes: ['Open in workspace ', null, '', {
           fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
           fontWeight: '900',
-          paddingTop: '2px',
+          paddingTop: '2px'
         }]
       })]
   }]
