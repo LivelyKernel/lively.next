@@ -1536,7 +1536,7 @@ export class BrowserModel extends ViewModel {
         hasTests = false;
       }
     }
-    metaInfoText.toggleTestButton(hasTests);
+    metaInfoText.testModuleMode = hasTests;
   }
 
   async runOnServer (source) {
