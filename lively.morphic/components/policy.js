@@ -117,18 +117,14 @@ function getEventState (targetMorph, customBreakpoints) {
   const mode = world && world.colorScheme; // "dark" | "light"
   const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(targetMorph); // bool
   const isClicked = eventDispatcher && isHovered && eventDispatcher.isMorphClicked(targetMorph); // bool
-  const matchingBreakpoint = customBreakpoints.find(bp => {
-    if (bp.minWidth || bp.maxWidth) {
-      const { minWidth = -Infinity, maxWidth = Infinity } = bp;
-      return minWidth <= targetMorph.width && targetMorph.width < maxWidth;
-    }
-    if (bp.minHeight || bp.maxHeight) {
-      const { minHeight = -Infinity, maxHeight = Infinity } = bp;
-      return minHeight <= targetMorph.height && targetMorph.height < maxHeight;
-    }
-  });
+  const [matchingBreakpoint, breakpointComponent] = customBreakpoints.filter(([bp, _]) => {
+    return bp.x <= targetMorph.width;
+  }).find(([bp, _]) => {
+    return bp.y <= targetMorph.height;
+  }) || [];
   return {
-    matchingBreakpoint: matchingBreakpoint && matchingBreakpoint.master,
+    matchingBreakpoint,
+    breakpointMaster: breakpointComponent?.stylePolicy,
     mode,
     isHovered,
     isClicked
@@ -216,7 +212,12 @@ export class StylePolicy {
       if (light) this._lightModeMaster = light;
       if (dark) this._darkModeMaster = dark;
       // breakpoint component dispatch
-      if (breakpoints) this._breakpointMasters = breakpoints;
+      // sort them
+      if (breakpoints) {
+        this._breakpointMasters = arr.sortBy(breakpoints, ([bp]) => {
+          return bp.x === bp.x ? bp.y - bp.y : bp.x - bp.x;
+        }).reverse();
+      }
     }
   }
 
@@ -226,14 +227,37 @@ export class StylePolicy {
 
   get isLightDarkModePolicy () { return this._lightModeMaster || this._darkModeMaster; }
 
-  get isBreakpointPolicy () { return !!this._breakpointMasters; }
+  get isBreakpointPolicy () {
+    return !!this.getBreakpoints();
+  }
+
+  getBreakpoints () {
+    if (this._breakpointMasters) return this._breakpointMasters.map(arr.first);
+    return this.parent?.getBreakpoints() || this.overriddenMaster?.getBreakpoints();
+  }
+
+  getMatchingBreakpoint (targetMorph) {
+    return this.getBreakpoints()?.filter((bp) => {
+      return bp.x <= targetMorph.width;
+    }).find((bp) => {
+      return bp.y <= targetMorph.height;
+    });
+  }
+
+  needsBreakpointUpdate (target) {
+    const matchingBreakpoint = this.getMatchingBreakpoint(target);
+    if (!matchingBreakpoint) return false;
+    if (matchingBreakpoint?.equals(target._lastBreakpoint || pt(0, 0))) return false;
+    target._lastBreakpoint = matchingBreakpoint;
+    return true;
+  }
 
   /**
    * Evaluates to true, in case the policy changes its style in response to click states.
    */
   get respondsToClick () {
     if (this._clickMaster) return true;
-    if (this.spec.master?.click) return true;
+    if (this.spec.master?.click) return true; // FIXME: Can we drop this? Wo dont care for precedence so this is redundant to the line below...
     return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
   }
 
@@ -652,8 +676,11 @@ export class StylePolicy {
       isHovered,
       isClicked,
       mode,
-      breakpointMaster
+      breakpointMaster,
+      matchingBreakpoint
     } = getEventState(targetMorph, this._breakpointMasters);
+
+    if (matchingBreakpoint) targetMorph._lastBreakpoint = matchingBreakpoint;
 
     if (this.isEventPolicy) {
       if (isClicked) return this._clickMaster || this._autoMaster;
@@ -672,8 +699,8 @@ export class StylePolicy {
       }
     }
 
-    if (this.isBreakpointPolicy) {
-      return breakpointMaster || this._autoMaster;
+    if (breakpointMaster) {
+      return breakpointMaster;
     }
 
     return this._parent; // default to the parent if we are neither of the above
