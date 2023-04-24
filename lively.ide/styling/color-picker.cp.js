@@ -12,6 +12,7 @@ import { GradientControl } from './gradient-editor.cp.js';
 import { ColorCell } from './color-stops.cp.js';
 import { TextInput, PropLabel, DarkNumberIconWidget } from '../studio/shared.cp.js'; // that should be revised...
 import { InputLine } from 'lively.components/inputs.js';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
 
 const ColorInput = component({
   defaultViewModel: ColorInputModel,
@@ -479,13 +480,22 @@ const ColorPicker = component(PopupWindow, {
       justifySubmorphs: 'spaced'
     }),
     borderColor: Color.rgb(215, 219, 221),
-    extent: pt(0, 113.7),
+    extent: pt(0, 140),
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [
       part(HueSlider, { name: 'hue picker' }),
       part(OpacitySlider, { name: 'opacity picker' }),
       part(ColorEncoder, {
         name: 'color encoding'
+      }),
+      part(ButtonDefault, {
+        name: 'eye dropper button',
+        width: 225,
+        submorphs: [
+          {
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('ti-color-picker').concat([' Pick a Color', null])
+          }]
       })
     ]
   }), add({
