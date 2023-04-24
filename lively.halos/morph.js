@@ -954,35 +954,6 @@ function isAlive (target) {
   return alive;
 }
 
-class BehaviorHaloItem extends RoundHaloItem {
-  static get morphName () { return 'behavior'; }
-
-  static get properties () {
-    return {
-      tooltip: {
-        get () {
-          return isAlive(this.halo.target) ? 'Disable this component\'s behavior' : 'Turn this component\'s behavior on';
-        }
-      },
-      draggable: { defaultValue: false }
-    };
-  }
-
-  static label (halo) {
-    return !isAlive(halo.target) ? RoundHaloItem.makeLabel('heart') : RoundHaloItem.makeLabel('skull');
-  }
-
-  onMouseDown (evt) {
-    if (!isAlive(this.halo.target)) withAllViewModelsDo(this.halo.target, m => m.viewModel.attach(m));
-    else withAllViewModelsDo(this.halo.target, m => m.viewModel.detach());
-    const world = this.world();
-    const target = this.halo.target;
-    this.halo.remove();
-    world.showHaloFor(target);
-    signal(target, 'behaviorChanged');
-  }
-}
-
 class RotateHaloItem extends RoundHaloItem {
   static get morphName () { return 'rotate'; }
 
@@ -1906,8 +1877,7 @@ export default class Halo extends Morph {
             this.rotateHalo(),
             this.nameHalo(),
             this.originHalo()
-          ],
-      ...this.target.isComponent ? [this.behaviorHalo()] : []
+          ]
     ];
   }
 
@@ -2026,7 +1996,6 @@ export default class Halo extends Morph {
   copyHalo () { return CopyHaloItem.for(this); }
   originHalo () { return OriginHaloItem.for(this); }
   componentHalo () { return ComponentHaloItem.for(this); }
-  behaviorHalo () { return BehaviorHaloItem.for(this); }
 
   get buttonControls () { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 
