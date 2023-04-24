@@ -306,7 +306,7 @@ export class ColorPickerModel extends ViewModel {
   // no onRefresh needed? it is needed. When we switch the mode, we need to update the selector...
 
   async triggerEyeDropper () {
-    const chosenColor = await new EyeDropper().open();
+    const chosenColor = await new window.EyeDropper().open();
     this.withColor(Color.fromString(chosenColor.sRGBHex));
   }
 
@@ -420,6 +420,12 @@ export class ColorPickerModel extends ViewModel {
 
   update (...toSkip) {
     arr.withoutAll(this.allControls, [...toSkip]).forEach(m => m.update(this));
+  }
+
+  viewDidLoad () {
+    const { eyeDropperButton } = this.ui;
+    // EyeDropper API is currently not supported in all browsers (missing in FF)
+    if (!window.EyeDropper) eyeDropperButton.visible = eyeDropperButton.isLayoutable = false;
   }
 }
 
