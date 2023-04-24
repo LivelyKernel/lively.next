@@ -9,9 +9,10 @@ export const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 const exprSerializer = new ExpressionSerializer();
 
 function getScopeMaster (m) {
-  while (m && !m.master && !m.isComponent) {
+  if (m.owner?.isWorld) return m;
+  do {
     m = m.owner;
-  }
+  } while (m && !m.master && !m.isComponent);
   return m;
 }
 
