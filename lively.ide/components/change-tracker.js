@@ -117,6 +117,7 @@ export class ComponentChangeTracker {
    * @param { object } change - The change to check.
    * @returns { boolean }
    */
+  // FIXME: should be investigated again when we look at performance optimizations!
   adjournChange (change) {
     const isReplaceChange = change.selector === 'replace';
     if (!isReplaceChange) return false;
