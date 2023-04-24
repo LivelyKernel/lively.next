@@ -612,7 +612,8 @@ export class Reconciliation {
    */
   applyChanges () {
     const { openEditors } = this.getDescriptorContext();
-    openEditors.map(ed => applyModuleChanges(this, ed));
+    if (openEditors.length > 0) { openEditors.map(ed => applyModuleChanges(this, ed)); } else { applyModuleChanges(this); } // no open editors
+
     return this;
   }
 
