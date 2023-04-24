@@ -393,13 +393,14 @@ describe('component -> source reconciliation', function () {
       sourceEditor = morph({ type: 'text', textString: initSource, readOnly: false, editorModeName: 'js' });
       await promise.waitFor(1000, () => sourceEditor.editorPlugin);
       sourceEditor.editorPlugin.evalEnvironment.targetModule = testModuleId;
-      sinon.stub(Reconciliation.prototype, 'getEligibleSourceEditor').callsFake((id) => {
-        if (id === testModuleId) return sourceEditor;
+      sinon.stub(Reconciliation.prototype, 'getEligibleSourceEditors').callsFake((id) => {
+        if (id === testModuleId) return [sourceEditor];
+        else return [];
       });
     });
 
     afterEach(() => {
-      Reconciliation.prototype.getEligibleSourceEditor.restore();
+      Reconciliation.prototype.getEligibleSourceEditors.restore();
     });
 
     it('works properly with associated source editors', async () => {
