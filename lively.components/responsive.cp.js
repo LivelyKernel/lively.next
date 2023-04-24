@@ -1,7 +1,148 @@
-import { component } from 'lively.morphic/components/core.js';
+import { component, without } from 'lively.morphic/components/core.js';
 import { ResponsiveLayoutMorphHalo, BreakpointSlider, Arrow } from './responsive.js';
 import { Color, rect, pt } from 'lively.graphics';
-import { Icon, part, TilingLayout, Label } from 'lively.morphic';
+import { Icon, part, ShadowObject, TilingLayout, Label } from 'lively.morphic';
+import { num } from 'lively.lang';
+
+const BreakpointHorizontal = component({
+  rotation: num.toRadians(0.0),
+  breakPointIndex: 0,
+  draggable: true,
+  extent: pt(73.9, 110.2),
+  fill: Color.rgba(46, 75, 223, 0),
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true,
+    spacing: 7
+  }),
+  nativeCursor: 'grab',
+  orientation: 'vertical',
+  position: pt(-86.5, 387.2),
+  submorphs: [{
+    type: Label,
+    name: 'user agent icon',
+    fontSize: 30.108,
+
+    reactsToPointer: false,
+    textAndAttributes: Icon.textAttribute('mobile')
+  }, {
+    type: Label,
+    name: 'pixel view',
+    draggable: true,
+    fill: Color.rgba(255, 255, 255, 0),
+    fontColor: Color.rgb(64, 64, 64),
+    fontSize: 16,
+    grabbable: true,
+
+    nativeCursor: 'pointer',
+    padding: rect(10, 0, 3, 0),
+    reactsToPointer: false,
+    textAndAttributes: ['320 px', null]
+  }, {
+    name: 'pin wrapper',
+    fill: Color.rgba(255, 255, 255, 0),
+    borderStyle: 'none',
+    borderColor: Color.rgb(23, 160, 251),
+    borderWidth: 1,
+    extent: pt(30.2, 20.7),
+    position: pt(-8, 27),
+    reactsToPointer: false,
+    submorphs: [{
+      type: Arrow,
+      name: 'breakpoint pin',
+      borderColor: Color.rgb(0, 0, 0),
+      borderWidth: 2,
+      extent: pt(16.9, 16.6),
+      fill: Color.transparent,
+      position: pt(15.3, 5.2),
+      reactsToPointer: false,
+      rotation: 0.7853981633974483,
+      startMarker: {
+        children: [{
+          d: 'M0,0 L10,5 L0,10 z',
+          tagName: 'path'
+        }],
+        id: 'start-marker',
+        markerHeight: '5',
+        markerWidth: '5',
+        orient: 'auto',
+        refX: '5',
+        refY: '5',
+        tagName: 'marker',
+        viewBox: '0 0 10 10'
+      },
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.9, 16.6), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    }]
+  }]
+});
+
+const BreakpointVertical = component(BreakpointHorizontal, {
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center',
+    orderByIndex: true,
+    spacing: 7
+  }),
+  extent: pt(135, 40),
+  submorphs: [{
+    name: 'pixel view',
+    padding: rect(10, 0, 0, 0)
+  }, {
+    name: 'pin wrapper',
+    extent: pt(31.9, 30.1),
+    rotation: num.toRadians(-90.0),
+    submorphs: [{
+      name: 'breakpoint pin',
+      position: pt(16.7, 6),
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.9, 16.6), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    }]
+  }]
+});
+
+const BreakpointRange = component({
+  clipMode: 'hidden',
+  extent: pt(200, 20),
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(2, 2, 0, 0),
+    spacing: 2
+  }),
+  submorphs: [{
+    type: Label,
+    name: 'remove breakpoint',
+    nativeCursor: 'pointer',
+    fontSize: 17,
+    textAndAttributes: Icon.textAttribute('times'),
+    tooltip: 'remove breakpoint'
+  }]
+});
+
+const BreakpointControl = component({
+  name: 'breakpoint control',
+  clipMode: 'hidden',
+  borderRadius: 5,
+  extent: pt(545, 20),
+  fill: Color.rgba(81, 90, 90, 0),
+  layout: new TilingLayout({
+    align: 'top',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true
+  }),
+  position: pt(34.4, 1.2),
+  submorphs: [
+    part(BreakpointRange, {
+      name: 'base breakpoint',
+      extent: pt(345.4, 20),
+      fill: Color.rgb(244, 67, 54),
+      opacity: 0.5,
+      submorphs: [without('remove breakpoint')]
+    }), part(BreakpointRange, { name: 'next breakpoint', fill: Color.rgb(255, 152, 0) })]
+});
 
 const ResponsiveLayoutHalo = component({
   type: ResponsiveLayoutMorphHalo,
@@ -12,327 +153,80 @@ const ResponsiveLayoutHalo = component({
   fill: Color.rgba(46, 75, 223, 0),
   grabbable: true,
   position: pt(1272.9, 345.2),
-  sliderProto: {
-    type: BreakpointSlider,
-    name: 'vertical breakpoint slider',
-    breakPointIndex: 0,
-    draggable: true,
-    extent: pt(63.7, 80),
-    fill: Color.rgba(46, 75, 223, 0),
+  submorphs: [part(BreakpointVertical, {
+    name: 'vertical slider',
+    position: pt(-134.5, 355.1)
+  }), part(BreakpointHorizontal, {
+    name: 'horizontal slider',
+    position: pt(334.5,-107.2)
+  }), {
+    name: 'horizontal control wrapper',
+    borderStyle: 'none',
+    fill: Color.rgba(255, 255, 255, 0),
     layout: new TilingLayout({
-      align: 'center',
-      direction: 'topToBottom',
+      axisAlign: 'center',
+      hugContentsHorizontally: true,
+      hugContentsVertically: true,
       orderByIndex: true,
-      resizeSubmorphs: false
+      spacing: 7
     }),
-    nativeCursor: 'grab',
-    orientation: 'vertical',
-    position: pt(-86.5, 387.2),
-    rotation: -1.5707963267948966,
-    submorphs: [{
+    borderColor: Color.rgb(23, 160, 251),
+    borderWidth: 1,
+    extent: pt(605.9, 38.7),
+    position: pt(26.8, -8.2),
+    submorphs: [part(BreakpointControl, {
+      name: 'horizontal breakpoint control',
+      position: pt(9.2, 14.7),
+      reactsToPointer: false
+    }), {
       type: Label,
-      name: 'pixel view',
-      draggable: true,
-      fill: Color.rgba(255, 255, 255, 0),
-      fontColor: Color.rgb(64, 64, 64),
-      fontSize: 16,
-      grabbable: true,
-
-      nativeCursor: 'pointer',
-      padding: rect(10, 0, 3, 0),
+      name: 'add horizontal breakpoint',
       reactsToPointer: false,
-      rotation: 1.5707963267948966,
-      textAndAttributes: ['320 px', null]
-    }, {
-      type: Label,
-      name: 'user agent icon',
       fontSize: 30.108,
-
-      reactsToPointer: false,
-      rotation: 1.5707963267948966,
-      textAndAttributes: Icon.textAttribute('mobile')
-    }, {
-      type: Arrow,
-      name: 'breakpoint pin',
-      borderColor: Color.rgb(0, 0, 0),
-      borderWidth: 2,
-      extent: pt(16.9, 16.6),
-      fill: Color.transparent,
-
-      reactsToPointer: false,
-      rotation: 0.7853981633974483,
-      startMarker: {
-        children: [{
-          d: 'M0,0 L10,5 L0,10 z',
-          tagName: 'path'
-        }],
-        id: null,
-        markerHeight: '5',
-        markerWidth: '5',
-        orient: 'auto',
-        refX: '5',
-        refY: '5',
-        tagName: 'marker',
-        viewBox: '0 0 10 10'
-      },
-      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.894463049589064, 16.64704706326576), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+      nativeCursor: 'pointer',
+      position: pt(565.2, 11.2),
+      textAndAttributes: Icon.textAttribute('plus-circle'),
+      tooltip: 'Add horizontal breakpoint'
     }]
-  },
-  submorphs: [{
-    type: Label,
-    name: 'add horizontal breakpoint',
-    fontSize: 30.108,
-    nativeCursor: 'pointer',
-    position: pt(589.4, -4.1),
-    textAndAttributes: Icon.textAttribute('plus-circle'),
-    tooltip: 'Add horizontal breakpoint'
   }, {
-    type: Label,
-    name: 'add vertical breakpoint',
-    fontSize: 30.108,
-    nativeCursor: 'pointer',
-    position: pt(-0.2, 736),
-    textAndAttributes: Icon.textAttribute('plus-circle'),
-    tooltip: 'Add vertical breakpoint'
-  }, {
-    name: 'vertical breakpoint control',
-    clipMode: 'hidden',
-    borderRadius: 5,
-    dropShadow: false,
-    extent: pt(691, 20),
-    fill: Color.rgba(81, 90, 90, 0),
+    name: 'vertical control wrapper',
+    borderStyle: 'none',
+    fill: Color.rgba(255, 255, 255, 0),
     layout: new TilingLayout({
-      align: 'top',
-      direction: 'leftToRight',
-      orderByIndex: true,
-      padding: {
-        height: 0,
-        width: 0,
-        x: 0,
-        y: 0
-      },
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      resizeSubmorphs: false,
-      spacing: 0
+      axis: 'column',
+      axisAlign: 'center',
+      hugContentsHorizontally: true,
+      hugContentsVertically: true,
+      orderByIndex: true
     }),
-    position: pt(22.2, 35),
-    reactsToPointer: false,
-    rotation: 1.570796326794897,
-    submorphs: [{
-      name: 'v0',
-      clipMode: 'hidden',
-      extent: pt(295.6, 20),
-      fill: Color.rgb(76, 175, 80),
-      opacity: 0.5
-    }, {
-      name: 'v1',
-      clipMode: 'hidden',
-      extent: pt(194.9, 20),
-      fill: Color.rgb(156, 39, 176),
-      layout: new TilingLayout({
-        align: 'center',
-        direction: 'rightToLeft',
-        orderByIndex: true,
-        padding: {
-          height: 0,
-          width: 0,
-          x: 2,
-          y: 2
-        },
-        reactToSubmorphAnimations: false,
-        renderViaCSS: true,
-        resizeSubmorphs: false,
-        spacing: 2
-      }),
-      opacity: 0.5,
+    borderColor: Color.rgb(23, 160, 251),
+    borderWidth: 1,
+    extent: pt(137.2, 537.8),
+    position: pt(-2.6, 32.8),
+    submorphs: [part(BreakpointControl, {
+      name: 'vertical breakpoint control',
+      extent: pt(548, 20),
+      position: pt(78.8, 5.3),
+      rotation: 1.570796326794897,
       submorphs: [{
-        type: Label,
-        name: 'remove breakpoint',
-        fontSize: 17,
-        textAndAttributes: Icon.textAttribute('times'),
-        tooltip: 'remove breakpoint'
+        name: 'base breakpoint',
+        extent: pt(331.2, 20),
+        fill: Color.rgb(76, 175, 80)
+      }, {
+        name: 'next breakpoint',
+        extent: pt(194.9, 20),
+        fill: Color.rgb(156, 39, 176),
+        opacity: 0.5
       }]
-    }]
-  }, {
-    name: 'horizontal breakpoint control',
-    clipMode: 'hidden',
-    borderRadius: 5,
-    extent: pt(545, 20),
-    fill: Color.rgba(81, 90, 90, 0),
-    layout: new TilingLayout({
-      align: 'top',
-      direction: 'leftToRight',
-      orderByIndex: true,
-      padding: {
-        height: 0,
-        width: 0,
-        x: 0,
-        y: 0
-      },
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      resizeSubmorphs: false,
-      spacing: 0
-    }),
-    position: pt(34.4, 1.2),
-    submorphs: [{
-      name: 'h0',
-      clipMode: 'hidden',
-      extent: pt(345.4, 20),
-      fill: Color.rgb(244, 67, 54),
-      opacity: 0.5
-    }, {
-      name: 'h1',
-      clipMode: 'hidden',
-      extent: pt(200, 20),
-      fill: Color.rgb(255, 152, 0),
-      layout: new TilingLayout({
-        align: 'center',
-        direction: 'rightToLeft',
-        orderByIndex: true,
-        padding: {
-          height: 0,
-          width: 0,
-          x: 2,
-          y: 2
-        },
-        reactToSubmorphAnimations: false,
-        renderViaCSS: true,
-        resizeSubmorphs: false,
-        spacing: 2
-      }),
-      submorphs: [{
-        type: Label,
-        name: 'remove breakpoint',
-        fontSize: 17,
-        textAndAttributes: Icon.textAttribute('times'),
-        tooltip: 'remove breakpoint'
-      }]
-    }]
-  }, {
-    type: BreakpointSlider,
-    name: 'vertical breakpoint slider',
-    breakPointIndex: 0,
-    draggable: true,
-    extent: pt(63.7, 80),
-    fill: Color.rgba(46, 75, 223, 0),
-    layout: new TilingLayout({
-      align: 'center',
-      direction: 'topToBottom',
-      orderByIndex: true,
-      resizeSubmorphs: false
-    }),
-    nativeCursor: 'grab',
-    orientation: 'vertical',
-    position: pt(-93.7, 362.4),
-    rotation: -1.5707963267948966,
-    submorphs: [{
+    }), {
       type: Label,
-      name: 'pixel view',
-      draggable: true,
-      fill: Color.rgba(255, 255, 255, 0),
-      fontColor: Color.rgb(64, 64, 64),
-      fontSize: 16,
-      grabbable: true,
-      nativeCursor: 'pointer',
-      padding: rect(10, 0, 3, 0),
+      name: 'add vertical breakpoint',
       reactsToPointer: false,
-      rotation: 1.5707963267948966,
-      textAndAttributes: ['296 px', null]
-    }, {
-      type: Label,
-      name: 'user agent icon',
       fontSize: 30.108,
-      reactsToPointer: false,
-      rotation: 1.5707963267948966,
-      textAndAttributes: Icon.textAttribute('mobile')
-    }, {
-      type: Arrow,
-      name: 'breakpoint pin',
-      borderColor: Color.rgb(0, 0, 0),
-      borderWidth: 2,
-      extent: pt(16.9, 16.6),
-      fill: Color.transparent,
-      reactsToPointer: false,
-      rotation: 0.7853981633974483,
-      startMarker: {
-        children: [{
-          d: 'M0,0 L10,5 L0,10 z',
-          tagName: 'path'
-        }],
-        id: 'start-marker',
-        markerHeight: '5',
-        markerWidth: '5',
-        orient: 'auto',
-        refX: '5',
-        refY: '5',
-        tagName: 'marker',
-        viewBox: '0 0 10 10'
-      },
-      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.894463049589064, 16.64704706326576), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
-    }]
-  }, {
-    type: BreakpointSlider,
-    name: 'vertical breakpoint slider',
-    breakPointIndex: 0,
-    draggable: true,
-    extent: pt(63.7, 60),
-    fill: Color.rgba(46, 75, 223, 0),
-    layout: new TilingLayout({
-      align: 'center',
-      direction: 'topToBottom',
-      orderByIndex: true,
-      resizeSubmorphs: false
-    }),
-    nativeCursor: 'grab',
-    orientation: 'horizontal',
-    position: pt(347.9, -60.7),
-    submorphs: [{
-      type: Label,
-      name: 'pixel view',
-      draggable: true,
-      fill: Color.rgba(255, 255, 255, 0),
-      fontColor: Color.rgb(64, 64, 64),
-      fontSize: 16,
-      grabbable: true,
       nativeCursor: 'pointer',
-      padding: rect(0, 0, 0, 9),
-      reactsToPointer: false,
-      textAndAttributes: ['345 px', null]
-    }, {
-      type: Label,
-      name: 'user agent icon',
-      fontSize: 30.108,
-      reactsToPointer: false,
-      textAndAttributes: Icon.textAttribute('mobile')
-    }, {
-      type: Arrow,
-      name: 'breakpoint pin',
-      borderColor: Color.rgb(0, 0, 0),
-      borderWidth: 2,
-      extent: pt(16.9, 16.6),
-      fill: Color.transparent,
-      reactsToPointer: false,
-      rotation: 0.7853981633974483,
-      startMarker: {
-        children: [{
-          d: 'M0,0 L10,5 L0,10 z',
-          tagName: 'path'
-        }],
-        id: 'start-marker',
-        markerHeight: '5',
-        markerWidth: '5',
-        orient: 'auto',
-        refX: '5',
-        refY: '5',
-        tagName: 'marker',
-        viewBox: '0 0 10 10'
-      },
-      vertices: [
-        { position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } },
-        { position: pt(16.894463049589064, 16.64704706326576), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }
-      ]
+      position: pt(-3.2, 527.4),
+      textAndAttributes: Icon.textAttribute('plus-circle'),
+      tooltip: 'Add vertical breakpoint'
     }]
   }]
 });
