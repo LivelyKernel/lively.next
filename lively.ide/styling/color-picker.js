@@ -288,7 +288,8 @@ export class ColorPickerModel extends ViewModel {
             { model: 'hue picker', signal: 'hueChanged', handler: 'adjustHue' },
             { model: 'opacity picker', signal: 'opacityChanged', handler: 'adjustOpacity' },
             { model: 'shade picker', signal: 'shadeChanged', handler: 'adjustShade' },
-            { target: 'close button', signal: 'onMouseUp', handler: 'closeWithClick' }
+            { target: 'close button', signal: 'onMouseUp', handler: 'closeWithClick' },
+            { target: 'eye dropper button', signal: 'onMouseDown', handler: 'triggerEyeDropper' }
           ];
         }
       }
@@ -303,6 +304,11 @@ export class ColorPickerModel extends ViewModel {
     return true;
   }
   // no onRefresh needed? it is needed. When we switch the mode, we need to update the selector...
+
+  async triggerEyeDropper () {
+    const chosenColor = await new EyeDropper().open();
+    this.withColor(Color.fromString(chosenColor.sRGBHex));
+  }
 
   toggleHalos (active) {
     this.view.withAllSubmorphsDo(m => m.halosEnabled = active);

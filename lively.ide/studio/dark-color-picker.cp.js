@@ -2,7 +2,7 @@ import { component, ensureFont, part } from 'lively.morphic';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { EnumSelector, DarkNumberIconWidget, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
-// DarkColorPicker.openInWorld()
+import { BackendButtonDefault } from '../js/browser/ui.cp.js';
 
 ensureFont({
   'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
@@ -114,6 +114,13 @@ const DarkColorPicker = component(ColorPicker, {
           name: 'color copier',
           fontColor: Color.white
         }]
+    },
+    {
+      name: 'eye dropper button',
+      master: BackendButtonDefault,
+      borderColor: Color.fromString('95A5A6'),
+      fill: Color.transparent
+
     }]
   }, {
     name: 'color palettes',
