@@ -163,6 +163,7 @@ export class StylePolicy {
    */
   constructor (spec, parent, inheritStructure = true) {
     if (parent) this.parent = parent;
+    this._dependants = new Set();
     this.inheritStructure = inheritStructure;
     this.spec = this.ensureStylePoliciesInSpec(spec);
     if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
