@@ -1229,6 +1229,9 @@ export class Morph {
     for (let c of bounds.sides) {
       signal(this, c, bounds.partNamed(c));
     }
+    if (this.master?.needsBreakpointUpdate(this)) {
+      this.requestMasterStyling();
+    }
   }
 
   onSubmorphChange (change, submorph) {
