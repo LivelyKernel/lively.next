@@ -24,7 +24,7 @@ export class CommentBrowserModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'mode selector', signal: 'selectionChanged', handler: 'toggleArchive' },
+            { target: 'mode selector', signal: 'selectionChanged', handler: 'toggleArchive' },
             { signal: 'openInWindow', handler: 'openInWindow' }
           ];
         }
