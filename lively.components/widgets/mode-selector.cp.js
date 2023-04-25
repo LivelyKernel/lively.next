@@ -30,7 +30,7 @@ class ModeSelectorModel extends ViewModel {
         init: 1
       }
     }).openInWorld();
-    connect(example.viewModel, 'selectionChanged', $world, 'setStatusMessage');
+    connect(example, 'selectionChanged', $world, 'setStatusMessage');
   }
 
   viewDidLoad () {
@@ -60,7 +60,7 @@ class ModeSelectorModel extends ViewModel {
     this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection();
     this.selectedItem = item;
     this.ui.labels.find((label) => label.name === item + 'Label').viewModel.toggleSelection();
-    signal(this, 'selectionChanged', this.selectedItem);
+    signal(this.view, 'selectionChanged', this.selectedItem);
   }
 }
 
