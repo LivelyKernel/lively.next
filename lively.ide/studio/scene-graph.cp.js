@@ -27,7 +27,7 @@ export class MorphPanelModel extends ViewModel {
               target: 'scene graph', signal: 'reselectedCurrentSelection', handler: 'showHaloFor'
             },
             {
-              model: 'search field', signal: 'searchInput', handler: 'filterMorphs'
+              target: 'search field', signal: 'searchInput', handler: 'filterMorphs'
             },
             {
               signal: 'onDrag', handler: 'resize', override: true

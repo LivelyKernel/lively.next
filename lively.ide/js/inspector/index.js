@@ -677,7 +677,7 @@ export class Inspector extends ViewModel {
             { target: 'terminal toggler', signal: 'onMouseDown', handler: 'toggleCodeEditor', override: false },
             { model: 'unknowns', signal: 'trigger', handler: 'filterProperties', override: false },
             { model: 'internals', signal: 'trigger', handler: 'filterProperties', override: false },
-            { model: 'search field', signal: 'searchInput', handler: 'filterProperties', override: false },
+            { target: 'search field', signal: 'searchInput', handler: 'filterProperties', override: false },
             { model: 'property tree', signal: 'nodeCollapseChanged', handler: 'filterProperties', override: false },
             // { model: 'this binding selector', signal: 'selection', handler: 'bindCodeEditorThis', override: false },
             { model: 'fix import button', signal: 'fire', handler: 'fixUndeclaredVariables', override: false },
