@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import { Text, ViewModel, TilingLayout, Icon, ShadowObject, Label, component } from 'lively.morphic';
 import { pt, Rectangle, rect, Color } from 'lively.graphics';
 import { InputLine, LabeledCheckBoxModel, CheckBoxMorph } from './inputs.js';
@@ -192,7 +193,7 @@ export class SearchFieldModel extends ViewModel {
 
   clearInput () {
     this.input = '';
-    signal(this, 'searchInput', this.parseInput());
+    signal(this.view, 'searchInput', this.parseInput());
     this.onInputBlur();
   }
 
@@ -207,7 +208,7 @@ export class SearchFieldModel extends ViewModel {
     if (this.input.includes('\n')) {
       this.input = this.input.replace('\n', '');
     }
-    this.active && inputChange && signal(this, 'searchInput', this.parseInput());
+    this.active && inputChange && signal(this.view, 'searchInput', this.parseInput());
   }
 
   onInputBlur (evt) {
