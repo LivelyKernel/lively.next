@@ -159,7 +159,11 @@ function makeRequest (resource, method = 'GET', body, headers = {}, onProgress =
   fetchOpts.redirect = 'follow';
   fetchOpts.headers = { ...headers, ...moreHeaders };
 
-  return fetch(url, fetchOpts);
+  try {
+    return fetch(url, fetchOpts);
+  } catch (e) {
+    return e;
+  }
 }
 
 export function upload (resource, body) {
