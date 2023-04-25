@@ -442,10 +442,10 @@ export class TopBarModel extends ViewModel {
     if (currComponentBrowser && !!currComponentBrowser.world()) {
       return currComponentBrowser.close();
     }
-    const label = this.ui.openComponentBrowser;
-    label.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
-    await $world.execCommand('browse and load component');
-    label.master = null;
+    this.colorTopbarButton('open component browser', true);
+    await this.world().execCommand('browse and load component');
+
+    this.colorTopbarButton('open component browser', false);
   }
 
   setEditMode (mode, shallow = false, isTemporary = false) {
