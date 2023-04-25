@@ -522,10 +522,11 @@ export class TopBarModel extends ViewModel {
     const type = target._yieldShapeOnClick;
     if (!type) return false;
     if (!this.canBeCreatedViaDrag(type)) return false;
+    this._shapeCreationStartPos = evt.positionIn(target);
     target._yieldedShape = morph({
       type,
       scale: $world.scaleFactor,
-      position: evt.positionIn(target),
+      position: this._shapeCreationStartPos,
       extent: pt(1, 1),
       fill: Color.white,
       borderWidth: 1,
@@ -576,7 +577,8 @@ export class TopBarModel extends ViewModel {
     const target = this.primaryTarget || this.world();
     if (target._yieldedShape) {
       if (!target._yieldedShape.owner && evt.state.absDragDelta.r() > 10) target.addMorph(target._yieldedShape);
-      target._yieldedShape.extent = evt.positionIn(target.world()).subPt(evt.state.dragStartPosition).subPt(pt(1, 1)).maxPt(pt(1, 1)).scaleBy(1 / $world.scaleFactor);
+      target._yieldedShape.setBounds(Rectangle.fromAny(evt.position, this._shapeCreationStartPos).scaleBy(1 / $world.scaleFactor));
+
       Object.assign(
         target._sizeTooltip, {
           opacity: 1,
