@@ -582,6 +582,10 @@ export class Rectangle {
       this.x + (r.x * this.width), this.y + (r.y * this.height), r.width * this.width, r.height * this.height);
   }
 
+  scaleBy (scaleX, scaleYOrUndefined) {
+    return new Rectangle(this.x, this.y, this.width * scaleX, this.height * (scaleYOrUndefined || scaleX));
+  }
+
   scaleRectIn (fullRect) {
     // return a relative rect for this as a part of fullRect
     return new Rectangle((this.x - fullRect.x) / fullRect.width, (this.y - fullRect.y) / fullRect.height, this.width / fullRect.width, this.height / fullRect.height);
