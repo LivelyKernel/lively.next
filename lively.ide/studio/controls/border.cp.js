@@ -417,7 +417,7 @@ const BorderControlElements = component({
         name: 'interactive label',
         textAndAttributes: ['', {
           fontSize: 16,
-          fontFamily: 'Material Icons',
+          fontFamily: 'Material Icons'
         }]
       }, without('button holder')]
     }), part(EnumSelector, {
@@ -439,7 +439,7 @@ const BorderControlElements = component({
         padding: rect(0, 4, 7, -4),
         textAndAttributes: ['', {
           fontSize: 18,
-          fontFamily: 'Material Icons',
+          fontFamily: 'Material Icons'
         }]
       }, 'label'), {
         name: 'label',
@@ -491,7 +491,7 @@ const BorderPopup = component(DarkPopupWindow, {
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue22e', {
               fontSize: 20,
-              fontFamily: 'Material Icons',
+              fontFamily: 'Material Icons'
             }]
           }),
           part(AddButton, {
@@ -501,7 +501,7 @@ const BorderPopup = component(DarkPopupWindow, {
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue232', {
               fontSize: 20,
-              fontFamily: 'Material Icons',
+              fontFamily: 'Material Icons'
             }]
           }),
           part(AddButton, {
@@ -511,7 +511,7 @@ const BorderPopup = component(DarkPopupWindow, {
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue230', {
               fontSize: 20,
-              fontFamily: 'Material Icons',
+              fontFamily: 'Material Icons'
             }]
           }),
           part(AddButton, {
@@ -521,7 +521,7 @@ const BorderPopup = component(DarkPopupWindow, {
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue229', {
               fontSize: 20,
-              fontFamily: 'Material Icons',
+              fontFamily: 'Material Icons'
             }]
           })
         ]
@@ -583,7 +583,7 @@ const BorderControl = component(PropertySection, {
         padding: rect(6, 4, 0, 0),
         textAndAttributes: ['', {
           fontSize: 18,
-          fontFamily: 'Material Icons',
+          fontFamily: 'Material Icons'
         }]
       }))
     ]
