@@ -1474,7 +1474,8 @@ export default class Renderer {
     debugInfo.style.width = (morph.width - rightP) + 'px';
 
     const visibleRowsSpan = this.doc.createElement('span');
-    visibleRowsSpan.innerHTML = `visible rows: ${firstVisibleRow} - ${lastVisibleRow}`;
+    visibleRowsSpan.innerHTML = `visible rows: ${firstVisibleRow} - ${lastVisibleRow}\n` +
+      `current cursor position: row ${morph.cursorPosition.row} col ${morph.cursorPosition.column}`;
     debugInfo.appendChild(visibleRowsSpan);
     debugHighlights.push(debugInfo);
 
