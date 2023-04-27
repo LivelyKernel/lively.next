@@ -189,7 +189,7 @@ export const cssForTexts = `
       text-align: center;
       font-family: monospace;
       color: green;
-      background-color: white;
+      background-color: rgb(255 255 255 / 80%);
       font-size: small;
       vertical-align: baseline;
     }
