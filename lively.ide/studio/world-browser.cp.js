@@ -336,7 +336,7 @@ export class WorldBrowserModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['alignInWorld', 'keybindings', 'commands'];
+          return ['alignInWorld', 'keybindings', 'commands', 'displayItems'];
         }
       },
       bindings: {
@@ -366,18 +366,49 @@ export class WorldBrowserModel extends ViewModel {
     };
   }
 
+  async toggleFader (onlyOff) {
+    if (this.fader) {
+      await this.fader.animate({
+        duration: 500,
+        easing: easings.inOutSine,
+        opacity: 0
+      });
+      this.fader.remove();
+      this.fader = null;
+      return false;
+    } else {
+      if (onlyOff) return false;
+      this.fader = new Morph({
+        name: 'world browser fader',
+        extent: this.view.extent,
+        position: this.view.position,
+        hasFixedPosition: true,
+        fill: Color.black,
+        borderRadius: this.view.borderRadius,
+        opacity: 0
+      }).openInWorld();
+      this.fader.bringToFront();
+      await this.fader.animate({
+        duration: 200,
+        easing: easings.inOutSine,
+        opacity: 0.6
+      });
+      return true;
+    }
+  }
+
   updateCloseButtonVisibility () {
     this.ui.closeButton.visible = this.showCloseButton;
   }
 
   close () {
+    this.toggleFader(true);
     this.view.remove();
   }
 
   viewDidLoad () {
     this.updateCloseButtonVisibility();
     this.displayItems();
-    this.view.focus();
   }
 
   modeChanged (mode) {
@@ -385,10 +416,6 @@ export class WorldBrowserModel extends ViewModel {
     if (mode === 'Projects') this.playgroundsMode = false;
 
     this.displayItems();
-  }
-
-  focus () {
-    this.ui.searchField.focus();
   }
 
   beforePublish () {
@@ -435,8 +462,8 @@ export class WorldBrowserModel extends ViewModel {
       else placeholder._project = entity;
       placeholder.displayPreview = () => {
         const preview = this.playgroundsMode
-          ? part(WorldOrProjectPreviewTile, { defaultViewModel: WorldPreviewModel, viewModel: { _commit: entity } })
-          : part(WorldOrProjectPreviewTile, { viewModel: { _project: entity } });
+          ? part(WorldOrProjectPreviewTile, { defaultViewModel: WorldPreviewModel, viewModel: { _commit: entity, _worldBrowser: this } })
+          : part(WorldOrProjectPreviewTile, { viewModel: { _project: entity, _worldBrowser: this } });
         preview.dropShadow = null;
         preview.opacity = 0;
         preview.clipMode = 'hidden';
@@ -465,9 +492,12 @@ export class WorldBrowserModel extends ViewModel {
     }
   }
 
-  createNewProject () {
+  async createNewProject () {
     if (this.playgroundsMode) document.location = '/worlds/load?name=__newWorld__';
-    else part(ProjectCreationPrompt).openInWorld().bringToFront();
+    else {
+      await this.toggleFader();
+      part(ProjectCreationPrompt, { viewModel: { projectBrowser: this } }).openInWorld().bringToFront();
+    }
   }
 
   allFontsLoaded () {
@@ -612,6 +642,7 @@ export class WorldPreviewModel extends ViewModel {
         }
       },
       _commit: {},
+      _worldBrowser: {},
       expose: {
         get () {
           return ['relayout', 'displayPreview', '_commit'];
@@ -752,8 +783,7 @@ export class WorldPreviewModel extends ViewModel {
 
   async confirmDelete () {
     await MorphicDB.default.commit({ ...this._commit, content: undefined, snapshot: null });
-    // TODO: ask robin why that was introduced
-    if (!this.view.isComponent && !this.view.owner.isWorld) this.view.owner.remove();
+    this._worldBrowser.displayItems();
   }
 }
 
