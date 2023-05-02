@@ -1,28 +1,154 @@
+/* global URL */
+/* eslint-disable no-console */
 import { localInterface } from 'lively-system-interface';
 import { resource } from 'lively.resources';
 
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPackage } from 'lively-system-interface/commands/packages.js';
 import { workflowDefinition } from './templates/test-action.js';
-import { lookupPackage } from 'lively.modules/index.js';
+
+import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
+import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { join } from 'lively.modules/src/url-helpers.js';
+import { runCommand } from 'lively.shell/client-command.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
+import { packageJSON } from './templates/package-json.js';
+import { semver } from 'lively.modules/index.js';
 
 export class Project {
-  // TODO: bind lively version
-  // this.currentLivelyVersion
-  constructor (name, repoURL) {
-    this.name = name || 'new world';
-    this.repoURL = repoURL;
-    if (!this.repoURL) this.repoURL = 'https://github.com/LivelyKernel/lively.next-Project-Testing';
+  constructor (name, load = false) {
+    this.config = {};
+    const { config } = this;
+    config.name = name || 'new world';
     this.saved = false;
+    if (!load) VersionChecker.currentLivelyVersion().then(version => config.lively.boundLivelyVersion = version);
   }
 
-  get system () {
+  static async listAvailableProjects () {
+    const baseURL = await Project.system.getConfig().baseURL;
+    const projectsDir = resource(baseURL).join('projects').asDirectory();
+
+    let projectsCandidates = await resource(projectsDir).dirList(2, {
+      exclude: dir => {
+        return dir.isFile() && !dir.name().endsWith('package.json');
+      }
+    });
+    projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
+    const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
+    const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
+    return packageJSONObjects;
+  }
+
+  /**
+   * Takes the URL for a GitHub Repository at which a lively project resides and clones the repository in the projects folder of the local lively installation.
+   * Afterwards, the cloned project gets loaded.
+   * @param {string} remote - The URL at which to find the GitHub Repository.
+   */
+  static async fromRemote (remote) {
+    const remoteUrl = new URL(remote);
+
+    const userToken = $world.currentUsertoken;
+    // FIXME: This relies on the assumption, that the default directory the shell command gets placed in is `lively.server
+    const cmd = runCommand(`cd ../projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    await cmd.whenDone(); // TODO: this needs error handling
+    // CAUTION: This makes it so that repo name = project name for now!
+    const projectName = remoteUrl.pathname.match(/\/.+\/(.*)/)[1];
+    const loadedProject = await Project.loadProject(projectName);
+    return loadedProject;
+  }
+
+  static async loadProject (name) {
+    // create Project object and do not bind to the current version
+    const loadedProject = new Project(name, true);
+
+    let address, url;
+    let baseURL = (await Project.system.getConfig()).baseURL;
+    address = resource(baseURL).join('projects').join(name).asDirectory();
+    url = address.url;
+
+    // FIXME: might not be necessary after all?
+    // await Project.system.removePackage(url); // precaution to prevent funky behavior when loading the same package twice inside of lively
+
+    // gitResource can now be used to execute git operations in the location of the project in the file system
+    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('projects').join(name).withRelativePartsResolved().asDirectory();
+
+    // await this.gitResource.pullRepo();
+    // laod package into lively
+    const pkg = await loadPackage(Project.system, {
+      name: name,
+      address: url,
+      configFile: address.join('package.json').url,
+      main: address.join('index.js').url,
+      test: address.join('tests/test.js').url,
+      type: 'package'
+    });
+
+    loadedProject.configFile = await resource(address.join('package.json').url);
+    const configContent = await loadedProject.configFile.read();
+    loadedProject.config = JSON.parse(configContent);
+
+    loadedProject.package = pkg;
+    $world.openedProject = loadedProject;
+    return loadedProject;
+  }
+
+  /**
+   * Method to be used to store package.json data away.
+   * Other changes will be stored on a per module basis anyways.
+   * Called when a project gets saved and otherwise can be called optionally.
+   */
+  async saveConfigData () {
+    if (!this.configFile) {
+      console.error('This should never happen.');
+      return;
+    }
+    try {
+      await this.configFile.write(JSON.stringify(this.config, null, 2));
+    } catch (e) {
+      console.warn(`Error when reading package config for ${this.directory}: ${e}`);
+    }
+  }
+
+  /**
+   * Increases the version number of the project in its config data.
+   * Works solely on the Project data structure, does not write anything to disk.
+   * @param {String} 'major', 'minor', or 'patch', depending on what should be increased
+   */
+  increaseVersion (increaseLevel = 'patch') {
+    const version = semver.coerce(this.config.version);
+    this.config.version = semver.inc(version, increaseLevel);
+  }
+
+  static get system () {
     return localInterface.coreInterface;
   }
 
-  async create () {
+  // TODO: store the actual version lol
+  async bindAgainstCurrentLivelyVersion () {
+    const currentCommit = await VersionChecker.currentLivelyVersion();
+    const { comparison, hash } = await VersionChecker.checkVersionRelation(currentCommit);
+    const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
+    switch (comparisonBetweenVersions) {
+      case (0): $world.setStatusMessage('Already using the latest version. All good! ✅'); break;
+      case (1): {
+        const confirmed = await $world.confirm('This changes the required version of lively.next for this project.\n Are you sure you want to proceed?');
+        if (!confirmed) $world.setStatusMessage('Changing the required version of lively.next has been canceled.');
+        else {
+          $world.setStatusMessage(`Updated the required version of lively.next for ${this.config.name}.`, StatusMessageConfirm);
+          await this.regenerateTestPipeline();
+        }
+
+        break;
+      }
+      case (-1):
+      case (2) :
+        $world.setStatusMessage(`You do not have the version of lively.next necessary to open this project. Please get version ${hash} of lively.next`);
+    }
+  }
+
+  async create (withRemote = false) {
     this.gitResource = null;
-    const system = this.system;
+    const system = Project.system;
     let res, guessedAddress;
     try {
       res = resource(this.name);
@@ -36,11 +162,13 @@ export class Project {
     let url = resource(guessedAddress).asDirectory();
     let address = url.asFile().url;
 
-    await system.removePackage(address);
+    // FIXME: might not be necessary after all?
+    // Precaution to rule out any funky behavior when loading a Package twice inside of lively.
+    // await system.removePackage(address);
 
     await system.resourceCreateFiles(address, {
       'index.js': "'format esm';\n",
-      'package.json': `{\n  "name": "${this.name}",\n  "version": "0.1.0"\n}`,
+      'package.json': packageJSON,
       '.gitignore': 'node_modules/',
       'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
       '.github': {
@@ -49,7 +177,7 @@ export class Project {
         }
       },
       tests: {
-        'test.js': `import { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
+        'test.js': `/* global describe,it */\nimport { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
       },
       ui: {
         'components.cp.js': ''
@@ -58,14 +186,15 @@ export class Project {
         'default.workspace.js': ''
       },
       assets: { },
-      'index.css': '',
-      'comments.json': '{}'
+      'index.css': ''
     });
+
     this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('projects').join(this.name).withRelativePartsResolved().asDirectory();
+    this.configFile = await resource(address.join('package.json').url);
 
-    await this.gitResource.initializeGitRepository($world.currentUsertoken, 'lively.next-Project-Testing', 'LivelyKernel');
+    await this.gitResource.initializeGitRepository($world.currentUsertoken, this.name, this.owner);
 
-    await loadPackage(system, {
+    const pkg = await loadPackage(system, {
       name: this.name,
       address: address,
       configFile: url.join('package.json').url,
@@ -74,16 +203,40 @@ export class Project {
       type: 'package'
     });
 
-    this.package = lookupPackage(url.url).pkg;
-    await this.gitResource.addRemoteToGitRepository($world.currentUsertoken, 'lively.next-Project-Testing', 'LivelyKernel');
+    this.url = address;
+
+    this.package = pkg;
+    if (withRemote) {
+      await this.regenerateTestPipeline();
+      await this.gitResource.addRemoteToGitRepository($world.currentUsertoken, this.config.name, this.owner);
+    }
   }
 
-  async save () {
+  async regenerateTestPipeline () {
+    const pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
+    if (!await resource(pipelineFile).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    let content = workflowDefinition;
+    content = this.fillPipelineTemplate(workflowDefinition);
+    await resource(pipelineFile).write(content);
+  }
+
+  fillPipelineTemplate (workflowDefinition) {
+    let definiton = workflowDefinition.replace('%LIVELY_VERSION%', this.boundLivelyVersion);
+    return definiton.replaceAll('%PROJECT_NAME%', this.name);
+  }
+
+  async save (opts = {}) {
     if ($world.currentUsername === 'guest') {
       $world.setStatusMessage('Please log in.');
       return;
     }
-    await $world.openedProject.gitResource.commitRepo();
-    await $world.openedProject.gitResource.pushGitRepo();
+    let { message, increaseLevel } = opts;
+    message = message + '\n Commited from within lively.next.';
+
+    this.increaseVersion(increaseLevel);
+    await this.saveConfigData();
+    await this.gitResource.commitRepo(message);
+    await this.gitResource.pullRepo();
+    await this.gitResource.pushRepo();
   }
 }
