@@ -640,6 +640,13 @@ export class Text extends Morph {
         defaultValue: Color.black
       },
 
+      dynamicCursorColoring: {
+        group: 'text styling',
+        type: 'Boolean',
+        isStyleProp: true,
+        defaultValue: false
+      },
+
       fill: {
         group: 'styling',
         after: ['document'],
