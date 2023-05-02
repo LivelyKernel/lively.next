@@ -41,7 +41,7 @@ class VersionChecker extends Morph {
     const cwd = await VersionChecker.cwd();
     const headHashCmd = 'git rev-parse @';
     const result = await runCommand(headHashCmd, { cwd }).whenDone();
-    return result.stdout;
+    return result.stdout.trim();
   }
 
   static async cwd () {
@@ -123,6 +123,8 @@ class VersionChecker extends Morph {
 
   async displayLivelyVersionStatus () {
     let { hash, comparison } = await VersionChecker.checkVersionRelation();
+    // we need to do this here, since the other possible places are static
+    this.hash = hash;
     if (!(hash && comparison)) {
       this.showError();
       return;
