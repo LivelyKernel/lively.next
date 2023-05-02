@@ -1,5 +1,6 @@
 import { withN as arrayWithN } from './array.js';
 import { timeToRunN } from './function.js';
+import { arr } from 'lively.lang';
 
 // show-in-doc
 // A grid is a two-dimaensional array, representing a table-like data
@@ -23,6 +24,14 @@ function setRow (grid, nRow, newRow) {
   return grid[nRow] = newRow;
 }
 
+function addRow (grid, newRow) {
+  grid.push(newRow); return newRow;
+}
+
+function removeRow (grid, nRow) {
+  arr.removeAt(grid, nRow); return nRow;
+}
+
 function getCol (grid, nCol) {
   return grid.reduce(function (col, row) {
     col.push(row[nCol]); return col;
@@ -32,6 +41,18 @@ function getCol (grid, nCol) {
 function setCol (grid, nCol, newCol) {
   return grid.map(function (row, i) {
     return row[nCol] ? row[nCol] = newCol[i] : undefined;
+  });
+}
+
+function addCol (grid, newCol) {
+  return grid.map(function (row, i) {
+    row.push(newCol[i]);
+  });
+}
+
+function removeCol (grid, nCol) {
+  return grid.forEach(function (row, i) {
+    arr.removeAt(row, nCol);
   });
 }
 
@@ -164,8 +185,12 @@ export {
   set,
   getRow,
   setRow,
+  addRow,
+  removeRow,
   getCol,
   setCol,
+  addCol,
+  removeCol,
   create,
   mapCreate,
   forEach,
