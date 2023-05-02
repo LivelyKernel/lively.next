@@ -500,6 +500,7 @@ export class TopBarModel extends ViewModel {
             position,
             readOnly: true,
             textString: 'I am a text field!',
+            dynamicCursorColoring: true,
             fill: Color.white
           });
           textMorph.addPlugin(new RichTextPlugin());
@@ -569,7 +570,8 @@ export class TopBarModel extends ViewModel {
     return {
       readOnly: true,
       padding: Rectangle.inset(1, 1, 1, 1),
-      cursorWidth: 1.5
+      cursorWidth: 1.5,
+      dynamicCursorColoring: true
     };
   }
 
