@@ -1,7 +1,7 @@
 /* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
 
 import { expect } from 'mocha-es6';
-import { tableFromObjects, getRow, getCol, get, create, set, setCol, setRow, map, forEach, toObjects, mapCreate } from '../grid.js';
+import { tableFromObjects, getRow, getCol, get, create, set, setCol, setRow, map, forEach, toObjects, mapCreate, addRow, addCol, removeRow, removeCol } from '../grid.js';
 
 describe('grid', function () {
   it('creates a grid', function () {
@@ -93,5 +93,38 @@ describe('grid', function () {
       [[0, 0], 1, [0, 2]],
       [[1, 0], 2, [1, 2]],
       [[2, 0], 3, [2, 2]]]);
+  });
+
+  it('adds and removes columns', function () {
+    let g = create(3, 3, 'foo');
+    addRow(g, ['bar', 'bar', 'bar']);
+    expect(g).eql([
+      ['foo', 'foo', 'foo'],
+      ['foo', 'foo', 'foo'],
+      ['foo', 'foo', 'foo'],
+      ['bar', 'bar', 'bar']
+    ]);
+    removeRow(g, 1);
+    expect(g).eql([
+      ['foo', 'foo', 'foo'],
+      ['foo', 'foo', 'foo'],
+      ['bar', 'bar', 'bar']
+    ]);
+  });
+
+  it('adds and removes rows', function () {
+    let g = create(3, 3, 'foo');
+    addCol(g, ['bar', 'bar', 'bar']);
+    expect(g).eql([
+      ['foo', 'foo', 'foo', 'bar'],
+      ['foo', 'foo', 'foo', 'bar'],
+      ['foo', 'foo', 'foo', 'bar']
+    ]);
+    removeCol(g, 1);
+    expect(g).eql([
+      ['foo', 'foo', 'bar'],
+      ['foo', 'foo', 'bar'],
+      ['foo', 'foo', 'bar']
+    ]);
   });
 });
