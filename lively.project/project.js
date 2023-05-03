@@ -26,7 +26,8 @@ export class Project {
 
   static async listAvailableProjects () {
     const baseURL = await Project.system.getConfig().baseURL;
-    const projectsDir = resource(baseURL).join('projects').asDirectory();
+    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../projects').withRelativePartsResolved().asDirectory() : resource(baseURL).join('projects').asDirectory();
+
 
     let projectsCandidates = await resource(projectsDir).dirList(2, {
       exclude: dir => {
