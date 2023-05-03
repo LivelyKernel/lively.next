@@ -1,7 +1,7 @@
 import { ViewModel, Image, Icon, Label, TilingLayout, ShadowObject, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 
-import { connect, disconnect } from 'lively.bindings';
+import { connect, signal, disconnect } from 'lively.bindings';
 import { runCommand } from '../shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
@@ -12,7 +12,7 @@ class UserFlapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser'];
         }
       }
     };
@@ -61,10 +61,15 @@ class UserFlapModel extends ViewModel {
     }
     localStorage.setItem('gh_access_token', userToken);
     await this.retrieveGithubUserData();
+    this.showLoggedInUser();
+  }
+
+  showLoggedInUser () {
     this.showUserData();
 
     disconnect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
     connect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
+    signal(this.view, 'onLogin');
     this.ui.rightUserLabel.tooltip = 'Logout';
     this.ui.rightUserLabel.nativeCursor = 'pointer';
     this.ui.leftUserLabel.nativeCursor = 'auto';
@@ -133,6 +138,7 @@ export const UserFlap = component({
     axisAlign: 'center',
     align: 'right',
     orderByIndex: true,
+    hugContentsHorizontally: true,
     padding: {
       height: 0,
       width: 0,
