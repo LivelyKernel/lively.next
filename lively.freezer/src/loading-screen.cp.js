@@ -27,10 +27,6 @@ export class WorldLoadingScreen extends Morph {
     ];
   }
 
-  get __head_html__ () {
-    return `<script> window.AUTH_SERVER_URL; </script>`;
-  }
-
   async activate () {
     if (lively.FreezerRuntime) {
       const progressBar = this.get('package loading indicator');

@@ -4,7 +4,6 @@
     <title>lively.next worlds</title>
     <link href="/lively.morphic/web/dom-loading-indicator.css" rel="stylesheet">
     <link href="/lively.morphic/web/static-world-listing.css" rel="stylesheet">
-    <!--AUTH_SERVER_URL-->
   </head>
 
   <body style="margin: 0;">
@@ -98,9 +97,6 @@
         })
         .catch(function(err) { console.error(err); });
 
-      function currentUser() {
-        return userRegistry.loadUserFromLocalStorage(window.__AUTH_SERVER_URL__);
-      }
 
       function polyfills() {
         var loads = [];
