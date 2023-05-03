@@ -1252,7 +1252,7 @@ export default class Renderer {
     const { textLayout } = morph;
 
     const { start, end, cursorVisible, selectionColor } = selection;
-    let { document, cursorColor } = morph;
+    let { document, cursorColor, cursorPosition } = morph;
     const isReverse = selection.isReverse();
 
     const startBounds = textLayout.boundsFor(morph, start);
@@ -1264,7 +1264,9 @@ export default class Renderer {
     const endPos = pt(endBounds.x, endBounds.y);
 
     const cursorPos = isReverse ? pt(startBounds.x, startBounds.y) : endPos;
-    if (morph.dynamicCursorColoring) cursorColor = morph.textAttributeAt({ row: start.row, column: start.column - 1 })?.fontColor || morph.fontColor || cursorColor;
+
+    if (morph.dynamicCursorColoring) cursorColor = morph.textAttributeAt({ row: cursorPosition.row, column: cursorPosition.column - 1 })?.fontColor || morph.fontColor || cursorColor;
+
     const cursorHeight = isReverse ? leadLineHeight : endLineHeight;
     const renderedCursor = this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor);
 
