@@ -5,7 +5,6 @@ import { parse as parseUrl } from 'url';
 import { readBody } from '../util.js';
 
 const minute = 1000 * 60;
-const useCache = true;
 
 /*
 
@@ -157,7 +156,7 @@ export default class WorldLoadingPlugin {
       if (req.url.endsWith('/lively.freezer/loading-screen/index.html')) {
         const s = await resource(System.baseURL).join('lively.freezer/loading-screen/index.html').read();
         res.writeHead(200);
-        res.end(s.replace('AUTH_SERVER_URL', `AUTH_SERVER_URL = "${this.authServerURL}"; window.SERVER_URL = location.origin;`));
+        res.end(s);
         return;
       }
       // redirect to world loading screen. set SERVER_URL ?
@@ -176,7 +175,7 @@ export default class WorldLoadingPlugin {
         req.url += '/index.html';
         const s = await resource(System.baseURL).join('lively.freezer/landing-page/index.html').read();
         res.writeHead(200);
-        res.end(s.replace('AUTH_SERVER_URL', `AUTH_SERVER_URL = "${this.authServerURL}"; window.SERVER_URL = location.origin;`));
+        res.end(s);
         return;
       }
       // return html but inject the auth server url

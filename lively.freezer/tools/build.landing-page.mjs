@@ -13,7 +13,6 @@ const build = await rollup({
     lively({
       autoRun: {
         title: 'lively.next',
-        head: `<script> window.AUTH_SERVER_URL; </script>`
       },
       minify: true,
       asBrowserModule: true,
