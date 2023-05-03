@@ -336,7 +336,7 @@ export class WorldBrowserModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['alignInWorld', 'keybindings', 'commands', 'displayItems'];
+          return ['alignInWorld', 'keybindings', 'commands', 'displayItems', 'allFontsLoaded'];
         }
       },
       bindings: {
