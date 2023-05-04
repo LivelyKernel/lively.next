@@ -14,8 +14,14 @@ lively_next_flatn_env $lv_next_dir
 
 cd lively.server;
 
-node --no-warnings --dns-result-order ipv4first \
-  --experimental-loader $lv_next_dir/flatn/resolver.mjs \
-  bin/start-server.js \
-  --root-directory $lv_next_dir \
-  --config $lv_next_dir/config.js \
+options="--no-warnings --dns-result-order ipv4first \
+         --experimental-loader $lv_next_dir/flatn/resolver.mjs \
+         bin/start-server.js \
+         --root-directory $lv_next_dir \
+         --config $lv_next_dir/config.js"
+
+if [ "$1" = "--debug" ]; then
+  options="--inspect $options"
+fi
+
+node $options
