@@ -93,9 +93,10 @@ export class WorldLoadingScreen extends Morph {
     this.get('json target indicator').topRight = this.innerBounds().insetBy(25).topRight();
   }
 
-  indicateMissingWorld (active) {
-    this.get('package loading indicator').visible = !active;
-    this.get('broken heart').visible = this.get('broken heart').isLayoutable = active;
+  indicateMissing (project) {
+    this.get('package loading indicator').visible = this.get('package loading indicator').isLayoutable = false;
+    this.get('broken heart').visible = this.get('broken heart').isLayoutable = true;
+    this.get('error text').textString = project ? 'Sorry, the project you requested cannot be found on this machine' : 'Sorry, the world you requested cannot be found on this machine';
   }
 }
 
@@ -402,7 +403,7 @@ const ErrorIndicator = component({
     name: 'error text',
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(345.1, 104.8),
-    position: pt(-67, 206),
+    position: pt(-64.5, 242.5),
     fill: Color.rgba(0, 0, 0, 0),
     fixedHeight: true,
     fixedWidth: true,
@@ -412,7 +413,7 @@ const ErrorIndicator = component({
     nativeCursor: 'default',
     readOnly: true,
     textAlign: 'center',
-    textAndAttributes: ['Sorry, the world you requested can not be found on the server.', null]
+    textAndAttributes: ['Sorry, the world you requested cannot be found on this machine.', null]
   }],
   textAndAttributes: Icon.textAttribute('heart-broken')
 });
@@ -422,9 +423,9 @@ const LoadingScreen = component({
   name: 'loading screen',
   extent: pt(1000, 600),
   layout: new TilingLayout({
-    orderByIndex: true,
-    axisAlign: 'center',
     align: 'center',
+    axisAlign: 'center',
+    orderByIndex: true,
     spacing: 10
   }),
   submorphs: [
@@ -441,7 +442,10 @@ const LoadingScreen = component({
       padding: rect(5, 2, 5, 2),
       textAndAttributes: ['JSON', null]
     },
-    part(ErrorIndicator, { name: 'broken heart', visible: false }),
+    part(ErrorIndicator, {
+      name: 'broken heart',
+      visible: false
+    }),
     part(ProgressIndicator, { name: 'package loading indicator', opacity: 0 }), {
       type: 'html',
       name: 'css loading screen',
