@@ -6,6 +6,8 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
+const minify = !process.env.CI;
+
 const build = await rollup({
   input: './src/landing-page.cp.js',
   shimMissingExports: true,  
@@ -14,7 +16,7 @@ const build = await rollup({
       autoRun: {
         title: 'lively.next',
       },
-      minify: true,
+      minify,
       asBrowserModule: true,
       excludedModules: [
 	'lively.collab',
