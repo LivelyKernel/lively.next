@@ -644,6 +644,7 @@ export class TilingLayout extends Layout {
     this._resizePolicies.delete(submorph);
     // Ensure correct propagation of layout propert and adaption of resizePolicies.
     this.container.layout = this.copy();
+    this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
   }
 
   /**
@@ -748,6 +749,10 @@ export class TilingLayout extends Layout {
    * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
    */
   updateBoundsFor (morph) {
+    // In case the morph in question has structural changes to be applied
+    // in can very well lead to incorrect bounds if we measure prematurely.
+    // In those scenarios, we can not perform this optimization.
+    if (morph.renderingState.hasStructuralChanges) return;
     morph.renderingState.cssLayoutToMeasureWith = null;
     const node = this.getNodeFor(morph);
     if (node && node.parentNode) {
@@ -792,8 +797,8 @@ export class TilingLayout extends Layout {
     if (morph.rotation !== 0) {
       // we also need to adjust the bounds themselves...
       const rotatedBounds = morph.getInverseTransform().transformRectToRect(bounds);
-      bounds.width = rotatedBounds.width;
-      bounds.height = rotatedBounds.height;
+      bounds.width = num.roundTo(rotatedBounds.width, 1);
+      bounds.height = num.roundTo(rotatedBounds.height, 1);
       originOffset = morph.bounds().topLeft().subPt(morph.position).negated();
     }
 
