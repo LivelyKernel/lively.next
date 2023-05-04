@@ -135,8 +135,22 @@ export default class WorldLoadingPlugin {
                 req.connection.socket.remoteAddress;
       console.log(`[report-world-load] ${message} ${ip}`);
       res.end();
-    } else if (url.startsWith('/worlds')) {
-      if (['/worlds', '/worlds/'].includes(url) && req.method.toUpperCase() === 'GET') {
+    } else if (url.startsWith('/projects') && req.method.toUpperCase() === 'GET') {
+      const parsedUrl = parseUrl(url, true);
+      const [_, sub] = parsedUrl.pathname.match(/^\/projects\/?(.*)/);
+      req.url = sub == 'load'
+        ? url.replace('/projects/load', '/lively.freezer/loading-screen/index.html') // "redirect" to the loading screen which handles loading in bootstrap method
+        : url.replace('/projects', '/lively.freezer/loading-screen'); // "redirect" for resources required by the loading screen so that they get loaded from the bundled version
+
+      if (req.url.endsWith('/lively.freezer/loading-screen/index.html')) {
+        const s = await resource(System.baseURL).join('lively.freezer/loading-screen/index.html').read();
+        res.writeHead(200);
+        res.end(s);
+        return;
+      }
+      next();
+    } else if (url.startsWith('/worlds') || url.startsWith('/projects') ) {
+      if (['/worlds', '/worlds/', '/projects', '/projects/'].includes(url) && req.method.toUpperCase() === 'GET') {
         res.writeHead(301, { location: '/dashboard/' });
         res.end();
         return;

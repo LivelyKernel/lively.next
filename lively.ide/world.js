@@ -46,6 +46,9 @@ import { localInterface } from 'lively-system-interface';
 export class LivelyWorld extends World {
   static get properties () {
     return {
+      openNewProjectPrompt: { },
+      openNewWorldPrompt: { },
+      projectToBeOpened: { },
       clipMode: {
         defaultValue: 'hidden',
         readOnly: true,
