@@ -8,8 +8,8 @@ import {
 import { Canvas } from 'lively.components/canvas.js';
 import { World } from 'lively.morphic/world.js';
 import { connect } from 'lively.bindings';
-// these 2 imports pull in a bunch of code
-import { DarkUserFlap } from 'lively.ide/studio/top-bar.cp.js';
+
+// this pulls in a bunch of code
 import { WorldBrowser } from 'lively.ide/studio/world-browser.cp.js';
 
 class WebGLCanvas extends Canvas {
@@ -258,27 +258,10 @@ class WorldLandingPage extends Morph {
     document.body.style.overflowY = 'hidden';
     this.setBounds($world.windowBounds());
     this.getSubmorphNamed('globe').extent = this.extent;
-    this.ensureUserFlap();
     const worldList = this.getSubmorphNamed('a project browser');
     if (worldList) worldList.center = this.extent.scaleBy(0.5);
   }
 
-  async ensureUserFlap () {
-    let flap;
-    if (flap = $world.get('user flap')) {
-      return flap.alignInWorld();
-    }
-    flap = part(DarkUserFlap);
-    flap.name = 'user flap';
-    flap.showMorphControls = false;
-    flap.hasFixedPosition = true;
-    flap.openInWorld();
-    flap.opacity = 0;
-    flap.alignInWorld();
-    flap.get('fast load toggler').refresh();
-    await promise.delay(1000);
-    flap.animate({ opacity: 1 });
-  }
 
   beforePublish () {
     const worldList = this.getSubmorphNamed('a project browser');
@@ -294,7 +277,7 @@ class WorldLandingPage extends Morph {
   }
 
   async showWorldList () {
-    const dashboard = this.getSubmorphNamed('a poject browser') || this.addMorph(part(WorldBrowser, { name: 'a project browser' }));
+    const dashboard = this.getSubmorphNamed('a poject browser') || this.addMorph(part(WorldBrowser, { name: 'a project browser', viewModel: { showCloseButton: false } }));
     this.reset();
     dashboard.showCloseButton = false;
     dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150)));
@@ -303,7 +286,6 @@ class WorldLandingPage extends Morph {
     dashboard.animate({
       opacity: 1, duration: 300
     });
-    dashboard.displayWorlds();
     dashboard.hasFixedPosition = false;
   }
 
