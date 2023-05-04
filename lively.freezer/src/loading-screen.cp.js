@@ -2,7 +2,8 @@ import { Morph, World, MorphicDB, TilingLayout, Path, part, Ellipse, Icon, Label
 import { pt, rect, Color } from 'lively.graphics';
 import { num, promise, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
-import { LoadingIndicator } from 'lively.components';
+
+import { Project } from 'lively.project';
 
 export class WorldLoadingScreen extends Morph {
   static get properties () {
@@ -31,10 +32,10 @@ export class WorldLoadingScreen extends Morph {
     if (lively.FreezerRuntime) {
       const progressBar = this.get('package loading indicator');
       const cssLoadingScreen = this.get('css loading screen');
+      const projectName = this.getProjectName();
       const worldName = this.getWorldName();
       const filePath = this.getFilePath();
       const snapshot = this.getSnapshot();
-
       if (snapshot) {
         progressBar.isLayoutable = progressBar.visible = false;
         cssLoadingScreen.isLayoutable = cssLoadingScreen.visible = true;
@@ -47,27 +48,42 @@ export class WorldLoadingScreen extends Morph {
           opacity: 1, duration: 300
         });
       }
-      await this.transitionToLivelyWorld({ worldName, filePath, snapshot }, progressBar);
+      await this.transitionToLivelyWorld({ worldName, filePath, snapshot, projectName }, progressBar);
       progressBar.stopStepping();
     }
   }
 
-  async transitionToLivelyWorld ({ worldName, filePath, snapshot }, progress) {
+  async transitionToLivelyWorld ({ worldName, filePath, snapshot, projectName }, progress) {
     const serverURL = resource(window.SYSTEM_BASE_URL || document.location.origin).join('objectdb/').url;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
 
-    if (worldName && worldName !== '__newWorld__' &&
-        !(await MorphicDB.named('lively.morphic/objectdb/morphicdb', { serverURL }).exists('world', worldName)).exists) {
-      return this.indicateMissingWorld(true);
+    if (projectName) {
+      const existingProjects = await Project.listAvailableProjects();
+      const foundProject = existingProjects.filter(p => p.name === projectName);
+      if (projectName !== '__newProject__' && !foundProject.length > 0) return this.indicateMissing(true);
     }
 
-    if (filePath && !await resource(document.location.origin).join(filePath).exists()) { return this.indicateMissingWorld(true); }
+    if (worldName && worldName !== '__newWorld__' &&
+        !(await MorphicDB.named('lively.morphic/objectdb/morphicdb', { serverURL }).exists('world', worldName)).exists) {
+      return this.indicateMissing(false);
+    }
 
-    await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot });
+    if (filePath && !await resource(document.location.origin).join(filePath).exists()) { return this.indicateMissing(false); }
+
+    await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot, projectName });
+  }
+
+  getProjectName () {
+    if (!document.location.href.includes('projects')) return false;
+    const loc = document.location;
+    const query = resource(loc.href).query();
+    const projectNameMatch = query.name || window.PROJECT_NAME;
+    const projectName = projectNameMatch || false;
+    return projectName;
   }
 
   getWorldName () {
-    if (document.location.href.endsWith('worlds/new')) return '__newWorld__';
+    if (!document.location.href.includes('worlds/')) return false;
     const loc = document.location;
     const query = resource(loc.href).query();
     const worldNameMatch = query.name || window.WORLD_NAME;

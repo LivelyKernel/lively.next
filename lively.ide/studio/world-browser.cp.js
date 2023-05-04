@@ -495,10 +495,7 @@ export class WorldBrowserModel extends ViewModel {
 
   async createNewProject () {
     if (this.playgroundsMode) document.location = '/worlds/load?name=__newWorld__';
-    else {
-      await this.toggleFader();
-      part(ProjectCreationPrompt, { viewModel: { projectBrowser: this } }).openInWorld().bringToFront();
-    }
+    else document.location = '/projects/load?name=__newProject__';
   }
 
   allFontsLoaded () {
