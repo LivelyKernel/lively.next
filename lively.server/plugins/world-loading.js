@@ -45,6 +45,7 @@ export default class WorldLoadingPlugin {
   addMeta (html, worldName, parsedUrl) {
     const encodedName = encodeURIComponent(worldName);
     const tags = [
+      // TODO: Fix this up, we can probably at least provide better defaults/customizability!
       { property: 'og:title', content: `lively.next - ${worldName}` },
       { property: 'og:description', content: 'lively.next is a personal programming kit. It emphasizes liveness, directness and interactivity.' },
       { property: 'og:image', content: `https://lively-next.org/object-preview-by-name/world/${encodedName}` },
@@ -66,11 +67,12 @@ export default class WorldLoadingPlugin {
     query = query ? '?' + query : '';
 
     if ((url === '/' || url === '/index.html') && req.method.toUpperCase() === 'GET') {
-      res.writeHead(301, { location: '/worlds/' + query });
+      res.writeHead(301, { location: '/worlds/' + query }); // might get redirected further below
       res.end();
       return;
     }
 
+    // TODO: is this still used? 
     if (url.startsWith('/object-preview-by-name/')) {
       let [_, type, name] = url.match(/^\/object-preview-by-name\/([^\/]+)\/([^\/]+)$/) || [];
       let err;
@@ -150,8 +152,8 @@ export default class WorldLoadingPlugin {
       const parsedUrl = parseUrl(url, true);
       const [_, sub] = parsedUrl.pathname.match(/^\/worlds\/?(.*)/);
       req.url = sub == 'load'
-        ? url.replace('/worlds/load', '/lively.freezer/loading-screen/index.html')
-        : url.replace('/worlds', '/lively.freezer/loading-screen');
+        ? url.replace('/worlds/load', '/lively.freezer/loading-screen/index.html') // "redirect" to the loading screen which handles loading in bootstrap method
+        : url.replace('/worlds', '/lively.freezer/loading-screen'); // "redirect" for resources required by the loading screen so that they get loaded from the bundled version
 
       if (req.url.endsWith('/lively.freezer/loading-screen/index.html')) {
         const s = await resource(System.baseURL).join('lively.freezer/loading-screen/index.html').read();
