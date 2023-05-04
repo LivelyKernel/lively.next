@@ -1,5 +1,5 @@
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
-import { string, properties, obj } from 'lively.lang';
+import { string, fun, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
 import { epiConnect } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
@@ -297,12 +297,23 @@ export class ViewModel {
    * exposed props are removed, effectively removing all custom behavior from the view.
    */
   onDeactivate () {
-    this.getBindingConnections().forEach(conn => conn.disconnect());
+    this.clearBindings();
     this.liveStyleClasses.forEach(klass => this.view.removeStyleClass(klass));
     if (!this.view) return;
     for (let prop of (this.expose || [])) {
       if (obj.isArray(prop)) prop = prop[0];
       delete this.view[prop];
+    }
+  }
+
+  onViewChange (change) {
+    const { selector, target } = change;
+    if (selector === 'addMorphAt' &&
+        (target.viewModel === this || target.ownerChain().find(m => m.viewModel).viewModel === this)) {
+      fun.guardNamed('onViewChange-' + this.view.id, () => {
+        // update the bindings
+        this.reifyBindings();
+      })();
     }
   }
 
@@ -333,6 +344,10 @@ export class ViewModel {
    */
   onRefresh (change) {}
 
+  clearBindings () {
+    this.getBindingConnections().forEach(conn => conn.disconnect());
+  }
+
   /**
    * Instantiate all the bindings within the view as defined.
    */
@@ -343,19 +358,29 @@ export class ViewModel {
       override = false, converter = false, updater = false
     } of this.bindings) {
       try {
+        const initConnection = (target) => {
+          if (!target) return;
+          if (obj.isFunction(handler)) {
+            epiConnect(target, signal, handler);
+            return;
+          }
+          epiConnect(target, signal, this, handler, {
+            override,
+            converter,
+            updater
+          });
+        };
         if (model) target = this.view.getSubmorphNamed(model).viewModel;
         if (!target) target = this.view;
-        if (typeof target === 'string') { target = this.view.getSubmorphNamed(target); }
-        if (!target) continue;
-        if (obj.isFunction(handler)) {
-          epiConnect(target, signal, handler);
+        if (obj.isString(target)) { target = this.view.getSubmorphNamed(target); }
+        if (obj.isRegExp(target)) {
+          const targets = this.view.getAllNamed(target);
+          targets.forEach(t => {
+            initConnection(t);
+          });
           continue;
         }
-        epiConnect(target, signal, this, handler, {
-          override,
-          converter,
-          updater
-        });
+        initConnection(target);
       } catch (err) {
         if (System.debug) console.warn('Failed to reify binding: ', target, model, signal, handler);
       }

@@ -1,6 +1,6 @@
 /* global System,Uint8Array,Blob */
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from 'lively.graphics';
-import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
+import { fun, string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import { deserializeSpec, ExpressionSerializer, serializeSpec, getClassName } from 'lively.serializer2';
 import {
@@ -1193,11 +1193,9 @@ export class Morph {
       }
     }
 
-    this.layout && this.layout.onChange(change);
-
-    if (this.master) {
-      this.master.onMorphChange(this, change);
-    }
+    this.viewModel?.onViewChange(change);
+    this.layout?.onChange(change);
+    this.master?.onMorphChange(this, change);
   }
 
   onBoundsChanged (bounds) {
@@ -1211,6 +1209,7 @@ export class Morph {
   }
 
   onSubmorphChange (change, submorph) {
+    this.viewModel?.onViewChange(change);
     this.master?.onMorphChange(submorph, change);
     this.layout?.onSubmorphChange(submorph, change);
   }
