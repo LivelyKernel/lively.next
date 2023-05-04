@@ -1,12 +1,6 @@
 #!/bin/bash
 
-NODE_VERSION=$(node -v)
-NODE_VERSION=$(echo "$NODE_VERSION" | sed -En 's/v([0-9]+)\..*/\1/p')
-
-if [[ $NODE_VERSION -lt 18 ]]; then
-  echo -n "Your node version is not supported. Please use at least node 18."; echo;
-  exit 1;
-fi
+./scripts/node_version_checker.sh || exit 1
 
 if [[ ! -d lively.server ]]; then
   echo -n "lively.next packages doesn't seem to be properly installed yet. Please run ./update.sh"; echo;
