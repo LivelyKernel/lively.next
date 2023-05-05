@@ -11,7 +11,7 @@ import { SystemList } from '../styling/shared.cp.js';
 import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
 import { Project } from 'lively.project';
-import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
+import { LivelyWorld } from '../world.js';
 
 export const missingSVG = `data:image/svg+xml;utf8,
 <svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
@@ -413,9 +413,15 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   modeChanged (mode) {
-    if (mode === 'Playgrounds') this.playgroundsMode = true;
-    if (mode === 'Projects') this.playgroundsMode = false;
-
+    const label = this.ui.newProjectButton.submorphs[0];
+    if (mode === 'Playgrounds') {
+      this.playgroundsMode = true;
+      label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW WORLD');
+    }
+    if (mode === 'Projects') {
+      this.playgroundsMode = false;
+      label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PROJECT');
+    }
     this.displayItems();
   }
 
@@ -463,8 +469,8 @@ export class WorldBrowserModel extends ViewModel {
       else placeholder._project = entity;
       placeholder.displayPreview = () => {
         const preview = this.playgroundsMode
-          ? part(WorldOrProjectPreviewTile, { defaultViewModel: WorldPreviewModel, viewModel: { _commit: entity, _worldBrowser: this } })
-          : part(WorldOrProjectPreviewTile, { viewModel: { _project: entity, _worldBrowser: this } });
+          ? part(WorldPreviewTile, { defaultViewModel: WorldPreviewModel, viewModel: { _commit: entity, _worldBrowser: this } })
+          : part(ProjectPreviewTile, { viewModel: { _project: entity, _worldBrowser: this } });
         preview.dropShadow = null;
         preview.opacity = 0;
         preview.clipMode = 'hidden';
@@ -623,7 +629,7 @@ export class WorldPreviewModel extends ViewModel {
       bindingsToInherit: {
         defaultValue: [
           { target: 'delete button', signal: 'onMouseDown', handler: 'tryToDelete' },
-          { target: 'open button', signal: 'onMouseDown', handler: 'openWorld' },
+          { target: 'open button', signal: 'onMouseDown', handler: 'openEntity' },
           { signal: 'onHoverIn', handler: 'toggleDeleteButton', converter: () => true },
           { signal: 'onHoverOut', handler: 'toggleDeleteButton', converter: () => false }
         ]
@@ -701,14 +707,14 @@ export class WorldPreviewModel extends ViewModel {
     return copy;
   }
 
-  async openWorld () {
+  async openEntity () {
     await this.openAnimated();
-    this.loadWorld();
+    this.loadEntity();
   }
 
-  // TODO: fixme, this is broken
-  async loadWorld () {
+  async loadEntity () {
     const { _id, name } = this._commit;
+    // from dashboard
     if (lively.FreezerRuntime) {
       // open the world via url redirect
       // rms: instead of redirect load within world
@@ -720,21 +726,22 @@ export class WorldPreviewModel extends ViewModel {
         this._commit,
         li
       );
-    } else {
+    } else { // from within lively
       const li = LoadingIndicator.open('loading ' + name);
       await World.loadFromCommit(_id, undefined, { morphicDB: MorphicDB.default, moduleManager });
       li.remove();
     }
   }
 
-  async transitionToLivelyWorld (baseURL, commit, loadingIndicator) {
+  async transitionToLivelyWorld (baseURL, commit, loadingIndicator, projectName) {
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
     const { ProgressIndicator } = await System.import('lively.freezer/src/loading-screen.cp.js');
     const progress = part(ProgressIndicator, {
       opacity: 0, hasFixedPosition: true
     }).openInWorld();
     progress.startStepping('updateProgressBar');
-    await bootstrap({ commit, loadingIndicator, progress });
+    if (projectName) await bootstrap({ projectName, loadingIndicator, progress });
+    else await bootstrap({ commit, loadingIndicator, progress });
   }
 
   async showVersions () {
@@ -818,6 +825,29 @@ class ProjectPreviewModel extends WorldPreviewModel {
     description.value = project.description;
     this.view.animate({ opacity: 1, duration: 300 });
   }
+
+  // TODO: can we do this with less code duplication?
+  async loadEntity () {
+    const { name } = this._project;
+    // from dashboard
+    if (lively.FreezerRuntime) {
+      // open the world via url redirect
+      // rms: instead of redirect load within world
+      LoadingIndicator.open('...starting bootstrap process...', {
+        animated: true, delay: 1000
+      });
+      this.transitionToLivelyWorld(
+        document.location.origin,
+        null,
+        null,
+        name
+      );
+    } else { // from within lively
+      const li = LoadingIndicator.open('loading ' + name);
+      await World.loadWorld(new LivelyWorld({ projectToBeOpened: name }), $world);
+      li.remove();
+    }
+  }
 }
 
 const Placeholder = component({
@@ -827,7 +857,7 @@ const Placeholder = component({
   extent: pt(245, 368.2)
 });
 
-const WorldOrProjectPreviewTile = component({
+const WorldPreviewTile = component({
   name: 'world preview',
   defaultViewModel: ProjectPreviewModel,
   borderRadius: 5,
@@ -1000,6 +1030,21 @@ const WorldOrProjectPreviewTile = component({
         textAndAttributes: ['VISIT', null]
       }]
     })]
+  }]
+});
+
+const ProjectPreviewTile = component(WorldPreviewTile, {
+  defaultViewModel: ProjectPreviewModel,
+  submorphs: [{
+    name: 'preview container',
+    submorphs: [{
+      name: 'open button',
+      submorphs: [{
+        name: 'label',
+        textAndAttributes: ['OPEN PROJECT', null]
+
+      }]
+    }]
   }]
 });
 
@@ -1182,4 +1227,4 @@ const WorldBrowser = component({
   }]
 });
 
-export { WorldBrowser, WorldOrProjectPreviewTile };
+export { WorldBrowser };
