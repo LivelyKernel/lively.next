@@ -1,4 +1,4 @@
-import { arr, string, tree, promise, obj } from 'lively.lang';
+import { arr, grid, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { Text, Label } from 'lively.morphic';
@@ -140,6 +140,72 @@ export function withAllViewModelsDo (inst, cb) {
   toAttach.forEach(cb);
 }
 
+export class BreakpointStore {
+  constructor () {
+    this._horizontalBreakpoints = [0];
+    this._verticalBreakpoints = [0];
+    this._breakpointMasters = [[null]];
+  }
+
+  static from (breakpointSpec) {
+    const store = new this();
+    breakpointSpec.forEach(([bp, componentDescriptor]) => {
+      store.addHorizontalBreakpoint(bp.x, componentDescriptor);
+      store.addVerticalBreakpoint(bp.y, componentDescriptor);
+    });
+    return store;
+  }
+
+  setBreakpointMaster (vi, hi, componentDescriptor) {
+    grid.set(this._breakpointMasters, hi, vi, componentDescriptor);
+  }
+
+  setVerticalBreakpointMaster (idx, componentDescriptor) {
+    const n = grid.getRow(this._breakpointMasters, 0)?.length || 1;
+    grid.setRow(this._breakpointMasters, idx, arr.genN(n, () => componentDescriptor));
+  }
+
+  setHorizontalBreakpointMaster (idx, componentDescriptor) {
+    const n = grid.getCol(this._breakpointMasters, 0)?.length || 1;
+    grid.setCol(this._breakpointMasters, idx, arr.genN(n, () => componentDescriptor));
+  }
+
+  addVerticalBreakpoint (bp, componentDescriptor = null) {
+    if (this._verticalBreakpoints.includes(bp)) return;
+    const n = grid.getRow(this._breakpointMasters, 0)?.length || 1;
+    this._verticalBreakpoints.push(bp);
+    grid.addRow(this._breakpointMasters, arr.genN(n, () => componentDescriptor));
+  }
+
+  addHorizontalBreakpoint (bp, componentDescriptor = null) {
+    if (this._horizontalBreakpoints.includes(bp)) return;
+    const n = grid.getCol(this._breakpointMasters, 0)?.length || 1;
+    this._horizontalBreakpoints.push(bp);
+    grid.addCol(this._breakpointMasters, arr.genN(n, () => componentDescriptor));
+  }
+
+  removeVerticalBreakpoint (idx) {
+    arr.removeAt(this._verticalBreakpoints, idx);
+    grid.removeRow(this._breakpointMasters, idx);
+  }
+
+  removeHorizontalBreakpoint (idx) {
+    arr.removeAt(this._horizontalBreakpoints, idx);
+    grid.removeCol(this._breakpointMasters, idx);
+  }
+
+  getMatchingBreakpoint (targetMorph) {
+    // FIXME: this is called often, so we may wanna refrain from reversing manually every time
+    const hbp = this._horizontalBreakpoints.toReversed().findIndex((x) => {
+      return x <= targetMorph.width;
+    });
+    const vbp = this._verticalBreakpoints.toReversed().find((y) => {
+      return y <= targetMorph.height;
+    });
+    return grid.get(this._breakpointMasters, vbp, hbp);
+  }
+}
+
 /**
  * We use StylePolicies to implement 2 kinds of abstractions in the system:
  * 1. Component Definitions:
@@ -160,6 +226,8 @@ export class StylePolicy {
   constructor (spec, parent, inheritStructure = true) {
     if (parent) this.parent = parent;
     this._dependants = new Set();
+    this._verticalBreakpoints = [];
+    this._horizontalBreakpoints = [];
     this.inheritStructure = inheritStructure;
     this.spec = this.ensureStylePoliciesInSpec(spec);
     if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
@@ -214,9 +282,7 @@ export class StylePolicy {
       // breakpoint component dispatch
       // sort them
       if (breakpoints) {
-        this._breakpointMasters = arr.sortBy(breakpoints, ([bp]) => {
-          return bp.x === bp.x ? bp.y - bp.y : bp.x - bp.x;
-        }).reverse();
+        this.setBreakpoints(breakpoints);
       }
     }
   }
@@ -228,20 +294,25 @@ export class StylePolicy {
   get isLightDarkModePolicy () { return this._lightModeMaster || this._darkModeMaster; }
 
   get isBreakpointPolicy () {
-    return !!this.getBreakpoints();
+    return !!this.getBreakpointStore();
   }
 
-  getBreakpoints () {
-    if (this._breakpointMasters) return this._breakpointMasters.map(arr.first);
-    return this.parent?.getBreakpoints() || this.overriddenMaster?.getBreakpoints();
+  getBreakpointStore () {
+    if (this._breakpointStore) return this._breakpointStore;
+    return this.parent?.getBreakpointStore() || this.overriddenMaster?.getBreakpointStore();
+  }
+
+  /**
+   * Allows to set the breakpoints by means of pt(x,y) -> componentDescriptor
+   * which allows for convenient definition of breakpoints
+   * @param {type} breakpoints - Nested array of [Point, ComponentDescriptor]
+   */
+  setBreakpoints (breakpointSpec) {
+    this._breakpointStore = BreakpointStore.from(breakpointSpec);
   }
 
   getMatchingBreakpoint (targetMorph) {
-    return this.getBreakpoints()?.filter((bp) => {
-      return bp.x <= targetMorph.width;
-    }).find((bp) => {
-      return bp.y <= targetMorph.height;
-    });
+    return this.getBreakpointStore()?.getMatchingBreakpoint(targetMorph);
   }
 
   needsBreakpointUpdate (target) {
