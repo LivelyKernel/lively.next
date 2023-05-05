@@ -42,7 +42,7 @@ export function sanitizeFont (font) {
   }).join(',');
 }
 
-export function pathForBrowserHistory (worldName, queryString) {
+export function pathForBrowserHistory (worldName, queryString, project = false) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
   if (!queryString) { queryString = typeof document !== 'undefined' ? document.location.search : ''; }
@@ -51,7 +51,7 @@ export function pathForBrowserHistory (worldName, queryString) {
   if (!queryString || queryString === '?') query = {};
   else query = parseQuery(queryString);
 
-  const basePath = '/worlds/load';
+  const basePath = project ? '/projects/load' : '/worlds/load' ;
   if (worldName.endsWith('.json')) {
     query.file = worldName;
     delete query.name;
