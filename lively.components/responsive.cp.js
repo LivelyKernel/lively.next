@@ -1,38 +1,106 @@
 import { component, without } from 'lively.morphic/components/core.js';
-import { ResponsiveLayoutMorphHalo, BreakpointSlider, Arrow } from './responsive.js';
-import { Color, rect, pt } from 'lively.graphics';
-import { Icon, part, ShadowObject, TilingLayout, Label } from 'lively.morphic';
-import { num } from 'lively.lang';
+import { Color, materialDesignColors, rect, pt } from 'lively.graphics';
+import { Icon, Path, easings, ViewModel, part, TilingLayout, Label } from 'lively.morphic';
+import { num, arr } from 'lively.lang';
+import { signal, epiConnect } from 'lively.bindings';
+import { PolicyApplicator, BreakpointStore } from 'lively.morphic/components/policy.js';
+
+export class Arrow extends Path {
+  onHoverIn (evt) {
+    this.showControlPoints = true;
+  }
+
+  onHoverOut (evt) {
+    this.showControlPoints = false;
+  }
+}
+
+export class BreakpointSliderModel extends ViewModel {
+  static get properties () {
+    return {
+      orientation: {
+        type: 'Enum',
+        values: ['vertical', 'horizontal'],
+        after: ['submorphs', 'layout'],
+        set (direction) {
+          this.setProperty('orientation', direction);
+        }
+      },
+      breakpointIndex: {},
+      expose: {
+        get () {
+          return ['onDrag', 'breakpointIndex', 'alignInHalo', 'orientation'];
+        }
+      }
+    };
+  }
+
+  alignInHalo (offset, halo) {
+    const offsetControl = this.view.owner;
+    // ensure we are rendered
+    if (this.orientation === 'vertical') {
+      this.view.rightCenter = pt(halo.width - 12, offset + 33);
+    }
+    if (this.orientation === 'horizontal') {
+      this.view.bottomCenter = pt(offset + 27, halo.height - 12);
+    }
+    this.ui.userAgentIcon.value = this.getIconForOffset(offset);
+    this.ui.pixelView.value = `${offset.toFixed()} px`;
+  }
+
+  getIconForOffset (offset) {
+    let sections = {
+      horizontal: [
+        0, 'mobile-screen',
+        768, 'tablet-screen-button',
+        1024, 'desktop'
+      ],
+      vertical: [
+        0, 'mobile-screen',
+        1024, 'tablet-screen-button',
+        1440, 'desktop'
+      ]
+    };
+    let ranges = arr.toTuples(sections[this.orientation], 2).toReversed();
+    return Icon.textAttribute(ranges.find(t => offset > t[0])[1]);
+  }
+
+  onDrag (evt) {
+    signal(this.view, 'sliderDrag', evt.state.dragDelta);
+  }
+}
 
 const BreakpointHorizontal = component({
+  defaultViewModel: BreakpointSliderModel,
+  clipMode: 'hidden',
   rotation: num.toRadians(0.0),
-  breakPointIndex: 0,
   draggable: true,
-  extent: pt(73.9, 110.2),
+  extent: pt(72, 97.1),
   fill: Color.rgba(46, 75, 223, 0),
   layout: new TilingLayout({
-    align: 'center',
+    align: 'right',
     axis: 'column',
     axisAlign: 'center',
     orderByIndex: true,
-    spacing: 7
+    spacing: 5
   }),
   nativeCursor: 'grab',
-  orientation: 'vertical',
   position: pt(-86.5, 387.2),
   submorphs: [{
     type: Label,
     name: 'user agent icon',
+    fixedHeight: true,
+    extent: pt(21.7, 36.4),
     fontSize: 30.108,
-
     reactsToPointer: false,
     textAndAttributes: Icon.textAttribute('mobile')
   }, {
     type: Label,
     name: 'pixel view',
+    borderRadius: 7,
     draggable: true,
-    fill: Color.rgba(255, 255, 255, 0),
-    fontColor: Color.rgb(64, 64, 64),
+    fill: Color.rgba(0, 0, 0, 0.381),
+    fontColor: Color.rgb(255, 255, 255),
     fontSize: 16,
     grabbable: true,
 
@@ -80,13 +148,15 @@ const BreakpointHorizontal = component({
 
 const BreakpointVertical = component(BreakpointHorizontal, {
   layout: new TilingLayout({
-    align: 'center',
+    align: 'right',
     axisAlign: 'center',
     orderByIndex: true,
-    spacing: 7
+    spacing: 5
   }),
   extent: pt(135, 40),
   submorphs: [{
+    name: 'user agent icon'
+  }, {
     name: 'pixel view',
     padding: rect(10, 0, 0, 0)
   }, {
@@ -101,7 +171,30 @@ const BreakpointVertical = component(BreakpointHorizontal, {
   }]
 });
 
+class BreakpointRangeModel extends ViewModel {
+  static get properties () {
+    return {
+      breakpointIndex: {
+        // ref to the breakpoint we are representing
+      },
+      expose: { get () { return ['breakpointIndex']; } },
+      bindings: {
+        get () {
+          return [
+            { target: 'remove breakpoint', signal: 'onMouseDown', handler: 'onRemoveClicked' }
+          ];
+        }
+      }
+    };
+  }
+
+  onRemoveClicked () {
+    signal(this.view, 'requestRemove', this.breakpointIndex);
+  }
+}
+
 const BreakpointRange = component({
+  defaultViewModel: BreakpointRangeModel,
   clipMode: 'hidden',
   extent: pt(200, 20),
   layout: new TilingLayout({
@@ -144,8 +237,224 @@ const BreakpointControl = component({
     }), part(BreakpointRange, { name: 'next breakpoint', fill: Color.rgb(255, 152, 0) })]
 });
 
+export class ResponsiveLayoutHaloModel extends ViewModel {
+  static get properties () {
+    return {
+      horizontalBreakpoints: {
+        get () { return this.store?._horizontalBreakpoints || [0]; }
+      },
+      verticalBreakpoints: {
+        get () { return this.store?._verticalBreakpoints || [0]; }
+      },
+      store: {
+        get () { return this.target.master?._breakpointStore; }
+      },
+      sliders: { get () { return this.view.getAllNamed(/slider/); } },
+      verticalSliders: { get () { return this.sliders.filter(slider => slider.orientation === 'vertical'); } },
+      horizontalSliders: { get () { return this.sliders.filter(slider => slider.orientation === 'horizontal'); } },
+      target: {},
+      expose: {
+        get () {
+          return ['focusOn'];
+        }
+      },
+      bindings: {
+        get () {
+          return [
+            { target: 'add vertical breakpoint btn', signal: 'onMouseDown', handler: 'addVerticalBreakpoint' },
+            { target: 'add horizontal breakpoint btn', signal: 'onMouseDown', handler: 'addHorizontalBreakpoint' },
+            // it would be nice to have support for something like this...
+            { target: /horizontal breakpoint/, signal: 'onMouseDown', handler: 'jumpToHorizontalBreakpoint', converter: '() => source' },
+            { target: /vertical breakpoint/, signal: 'onMouseDown', handler: 'jumpToVerticalBreakpoint', converter: '() => source' },
+            { target: /vertical breakpoint/, signal: 'requestRemove', handler: 'removeVerticalBreakpoint' },
+            { target: /horizontal breakpoint/, signal: 'requestRemove', handler: 'removeHorizontalBreakpoint' },
+            { target: /slider/, signal: 'sliderDrag', handler: 'onSliderDrag', updater: '($upd, dragDelta) => { $upd(source, dragDelta)}' }
+          ];
+        }
+      }
+    };
+  }
+
+  ensureStore () {
+    if (!this.target.master) this.target.master = new PolicyApplicator({ breakpoints: [] });
+    if (!this.store) this.target.master._breakpointStore = new BreakpointStore();
+  }
+
+  focusOn (target) {
+    this.target = target;
+    epiConnect(target, 'onChange', this, 'relayout');
+    this.update();
+  }
+
+  getColorForBreakpoint (idx, align) {
+    // generate from different color cycles
+    let colorCycles = {
+      horizontal: [0, 14, 12, 13].map(i => Color.rgbHex(materialDesignColors[i * 15])),
+      vertical: [9, 2, 5, 2].map(i => Color.rgbHex(materialDesignColors[i * 15]))
+    };
+    return colorCycles[align][idx % 4];
+  }
+
+  jumpToHorizontalBreakpoint (elem) {
+    const bps = this.horizontalBreakpoints;
+    const maxLength = this.ui.horizontalBreakpointControl.width;
+    const idx = this.ui.horizontalBreakpointControl.submorphs.indexOf(elem);
+
+    this.target.animate({
+      width: num.interpolate(.9, bps[idx], bps[idx + 1] || maxLength),
+      easing: easings.outExpo,
+      duration: 200
+    });
+  }
+
+  jumpToVerticalBreakpoint (elem) {
+    const bps = this.verticalBreakpoints;
+    const maxLength = this.ui.verticalBreakpointControl.width;
+    const idx = this.ui.verticalBreakpointControl.submorphs.indexOf(elem);
+    this.target.animate({
+      height: num.interpolate(.9, bps[idx], bps[idx + 1] || maxLength),
+      easing: easings.outExpo,
+      duration: 200
+    });
+  }
+
+  /**
+   * Updates the size and position of control elements in response
+   * to changes in the target's breakpoints.
+   */
+  relayout () {
+    let {
+      horizontalBreakpointControl,
+      verticalBreakpointControl,
+      addHorizontalBreakpointBtn,
+      addVerticalBreakpointBtn
+    } = this.ui;
+    let {
+      verticalBreakpoints, horizontalBreakpoints,
+      verticalSliders, horizontalSliders, view
+    } = this;
+
+    const padding = 10;
+
+    view.position = this.target.globalPosition.subPt(pt(27, 33));
+    for (let slider of horizontalSliders) {
+      slider.alignInHalo(horizontalBreakpoints[slider.breakpointIndex], this.view);
+    }
+    for (let slider of verticalSliders) {
+      slider.alignInHalo(verticalBreakpoints[slider.breakpointIndex], this.view);
+    }
+
+    verticalBreakpointControl.submorphs.forEach((v, i) => {
+      const vOffset = (verticalBreakpoints[v.breakpointIndex + 1] || 0) - verticalBreakpoints[v.breakpointIndex];
+      v.width = vOffset;
+      if (num.between(this.target.height, verticalBreakpoints[i] || 0, verticalBreakpoints[i + 1] || this.target.height + padding)) {
+        v.opacity = 1;
+      } else v.opacity = 0.5;
+    });
+
+    horizontalBreakpointControl.submorphs.forEach((h, i) => {
+      const hOffset = (horizontalBreakpoints[h.breakpointIndex + 1] || 0) - horizontalBreakpoints[h.breakpointIndex];
+      h.width = hOffset;
+      if (num.between(this.target.width, horizontalBreakpoints[i], horizontalBreakpoints[i + 1] || this.target.width + padding)) {
+        h.opacity = 1;
+      } else h.opacity = 0.5;
+    });
+
+    // adjust the last breakpoint marker
+    let lastV = arr.last(verticalBreakpointControl.submorphs);
+    lastV.width = Math.max(200, this.target.height - (arr.last(verticalBreakpoints) || 0) + padding);
+    let lastH = arr.last(horizontalBreakpointControl.submorphs);
+    lastH.width = Math.max(200, this.target.width - (arr.last(horizontalBreakpoints) || 0) + padding);
+
+    addVerticalBreakpointBtn.top = verticalBreakpointControl.bottom + 10;
+    addHorizontalBreakpointBtn.left = horizontalBreakpointControl.right + 10;
+  }
+
+  updateBreakpoints (control, breakpoints, align) {
+    const newElems = arr.range(0, Math.max(0, breakpoints.length - 1)).map(i => {
+      if (i > 0) {
+        this.view.addMorph(part(align === 'horizontal' ? BreakpointHorizontal : BreakpointVertical, {
+          name: align + ' slider ' + (i - 1),
+          position: pt(0, 0),
+          tooltip: 'Drag to change the breakpoint position.',
+          viewModel: {
+            orientation: align,
+            breakpointIndex: i
+          }
+        }));
+      }
+      return part(BreakpointRange, {
+        name: align + ' breakpoint ' + i,
+        position: pt(0, 0),
+        fill: this.getColorForBreakpoint(i, align),
+        viewModel: { breakpointIndex: i },
+        submorphs: i == 0 ? [without('remove breakpoint')] : []
+      });
+    });
+    // control.addMorph(newElems[1])
+    control.submorphs = newElems;
+  }
+
+  /**
+   * Updates the structure of the UI in response to
+   * changes in the target's breakpoints.
+   */
+  update () {
+    let { verticalBreakpointControl, horizontalBreakpointControl } = this.ui;
+    let { verticalBreakpoints, horizontalBreakpoints, sliders } = this;
+
+    sliders.forEach(slider => slider.remove());
+
+    this.updateBreakpoints(verticalBreakpointControl, verticalBreakpoints, 'vertical');
+    this.updateBreakpoints(horizontalBreakpointControl, horizontalBreakpoints, 'horizontal');
+
+    this.relayout();
+  }
+
+  addHorizontalBreakpoint () {
+    let { horizontalBreakpointControl } = this.ui;
+    this.ensureStore();
+    this.store.addHorizontalBreakpoint(horizontalBreakpointControl.width);
+    this.update();
+  }
+
+  addVerticalBreakpoint () {
+    let { verticalBreakpointControl } = this.ui;
+    this.ensureStore();
+    this.store.addVerticalBreakpoint(verticalBreakpointControl.width);
+    this.update();
+  }
+
+  removeHorizontalBreakpoint (idx) {
+    this.store.removeHorizontalBreakpoint(idx);
+    this.update();
+  }
+
+  removeVerticalBreakpoint (idx) {
+    this.store.removeVerticalBreakpoint(idx);
+    this.update();
+  }
+
+  onSliderDrag (slider, dragDelta) {
+    const { orientation } = slider;
+    const breakpointAccessor = orientation + 'Breakpoints';
+    const axis = orientation === 'horizontal' ? 'x' : 'y';
+    const delta = dragDelta[axis];
+    const idx = slider.breakpointIndex;
+    const bps = this.store['_' + breakpointAccessor];
+    const lowerBound = bps[idx - 1] || 0;
+    const upperBound = bps[idx + 1] || Infinity;
+    bps[idx] += delta;
+    if (bps[idx] < lowerBound) bps[idx] = lowerBound + 1;
+    if (bps[idx] > upperBound) bps[idx] = upperBound - 1;
+    this.relayout();
+  }
+}
+
+// part(ResponsiveLayoutHalo).openInWorld().focusOn(this.get('test target'))
+
 const ResponsiveLayoutHalo = component({
-  type: ResponsiveLayoutMorphHalo,
+  defaultViewModel: ResponsiveLayoutHaloModel,
   name: 'responsive layout halo',
   borderColor: Color.rgb(230, 126, 34),
   draggable: true,
@@ -153,82 +462,82 @@ const ResponsiveLayoutHalo = component({
   fill: Color.rgba(46, 75, 223, 0),
   grabbable: true,
   position: pt(1272.9, 345.2),
-  submorphs: [part(BreakpointVertical, {
-    name: 'vertical slider',
-    position: pt(-134.5, 355.1)
-  }), part(BreakpointHorizontal, {
-    name: 'horizontal slider',
-    position: pt(334.5,-107.2)
-  }), {
-    name: 'horizontal control wrapper',
-    borderStyle: 'none',
-    fill: Color.rgba(255, 255, 255, 0),
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      hugContentsHorizontally: true,
-      hugContentsVertically: true,
-      orderByIndex: true,
-      spacing: 7
+  submorphs: [
+    part(BreakpointVertical, {
+      name: 'vertical slider',
+      viewModel: { orientation: 'vertical' },
+      position: pt(-120.4, 343)
     }),
-    borderColor: Color.rgb(23, 160, 251),
-    borderWidth: 1,
-    extent: pt(605.9, 38.7),
-    position: pt(26.8, -8.2),
-    submorphs: [part(BreakpointControl, {
-      name: 'horizontal breakpoint control',
-      position: pt(9.2, 14.7),
-      reactsToPointer: false
+    part(BreakpointHorizontal, {
+      name: 'horizontal slider',
+      viewModel: { orientation: 'horizontal' },
+      position: pt(336.1, -92.5)
     }), {
-      type: Label,
-      name: 'add horizontal breakpoint',
-      reactsToPointer: false,
-      fontSize: 30.108,
-      nativeCursor: 'pointer',
-      position: pt(565.2, 11.2),
-      textAndAttributes: Icon.textAttribute('plus-circle'),
-      tooltip: 'Add horizontal breakpoint'
-    }]
-  }, {
-    name: 'vertical control wrapper',
-    borderStyle: 'none',
-    fill: Color.rgba(255, 255, 255, 0),
-    layout: new TilingLayout({
-      axis: 'column',
-      axisAlign: 'center',
-      hugContentsHorizontally: true,
-      hugContentsVertically: true,
-      orderByIndex: true
-    }),
-    borderColor: Color.rgb(23, 160, 251),
-    borderWidth: 1,
-    extent: pt(137.2, 537.8),
-    position: pt(-2.6, 32.8),
-    submorphs: [part(BreakpointControl, {
-      name: 'vertical breakpoint control',
-      extent: pt(548, 20),
-      position: pt(78.8, 5.3),
-      rotation: 1.570796326794897,
-      submorphs: [{
-        name: 'base breakpoint',
-        extent: pt(331.2, 20),
-        fill: Color.rgb(76, 175, 80)
-      }, {
-        name: 'next breakpoint',
-        extent: pt(194.9, 20),
-        fill: Color.rgb(156, 39, 176),
-        opacity: 0.5
+      name: 'horizontal control wrapper',
+      borderStyle: 'none',
+      fill: Color.rgba(255, 255, 255, 0),
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        hugContentsHorizontally: true,
+        hugContentsVertically: true,
+        orderByIndex: true,
+        spacing: 7
+      }),
+      borderColor: Color.rgb(23, 160, 251),
+      borderWidth: 1,
+      extent: pt(605.9, 38.7),
+      position: pt(26.8, -8.2),
+      submorphs: [part(BreakpointControl, {
+        name: 'horizontal breakpoint control',
+        position: pt(9.2, 14.7),
+        reactsToPointer: false
+      }), {
+        type: Label,
+        name: 'add horizontal breakpoint btn',
+        fontSize: 30.108,
+        nativeCursor: 'pointer',
+        position: pt(565.2, 11.2),
+        textAndAttributes: Icon.textAttribute('plus-circle'),
+        tooltip: 'Add a horizontal breakpoint'
       }]
-    }), {
-      type: Label,
-      name: 'add vertical breakpoint',
-      reactsToPointer: false,
-      fontSize: 30.108,
-      nativeCursor: 'pointer',
-      position: pt(-3.2, 527.4),
-      textAndAttributes: Icon.textAttribute('plus-circle'),
-      tooltip: 'Add vertical breakpoint'
+    }, {
+      name: 'vertical control wrapper',
+      borderStyle: 'none',
+      fill: Color.rgba(255, 255, 255, 0),
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'center',
+        hugContentsHorizontally: true,
+        hugContentsVertically: true,
+        orderByIndex: true
+      }),
+      borderColor: Color.rgb(23, 160, 251),
+      borderWidth: 1,
+      extent: pt(137.2, 537.8),
+      position: pt(-2.6, 32.8),
+      submorphs: [part(BreakpointControl, {
+        name: 'vertical breakpoint control',
+        extent: pt(548, 20),
+        position: pt(78.8, 5.3),
+        rotation: 1.570796326794897,
+        submorphs: [{
+          name: 'base breakpoint',
+          extent: pt(331.2, 20),
+          fill: Color.rgb(76, 175, 80)
+        }, {
+          name: 'next breakpoint',
+          extent: pt(194.9, 20),
+          fill: Color.rgb(156, 39, 176),
+          opacity: 0.5
+        }]
+      }), {
+        type: Label,
+        name: 'add vertical breakpoint btn',
+        fontSize: 30.108,
+        nativeCursor: 'pointer',
+        position: pt(-3.2, 527.4),
+        textAndAttributes: Icon.textAttribute('plus-circle'),
+        tooltip: 'Add a vertical breakpoint'
+      }]
     }]
-  }]
 });
-
-export { ResponsiveLayoutMorphHalo };
