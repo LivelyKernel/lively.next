@@ -307,6 +307,7 @@ export class ViewModel {
   }
 
   onViewChange (change) {
+    if (!this.view) return;
     const { selector, target } = change;
     if (selector === 'addMorphAt' &&
         (target.viewModel === this || target.ownerChain().find(m => m.viewModel).viewModel === this)) {
