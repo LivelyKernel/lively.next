@@ -69,11 +69,13 @@ export class LabeledCheckBoxModel extends ViewModel {
 
   disable () {
     this.active = false;
-    this.labelMorph.opacity = 0.5;
+    this.checkboxMorph.opacity = 0.3;
+    this.labelMorph.opacity = 0.3;
   }
 
   enable () {
     this.active = true;
+    this.checkboxMorph.opacity = 1;
     this.labelMorph.opacity = 1;
   }
 
