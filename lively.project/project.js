@@ -17,12 +17,19 @@ import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 
 export class Project {
-  constructor (name, load = false) {
+  get name () {
+    return this.config.name;
+  }
+
+  // TODO: fix load param
+  constructor (name, author, description, load = false) {
     this.config = {};
     const { config } = this;
     config.name = name || 'new world';
+    config.maintainer = author;
+    config.description = description;
     this.saved = false;
-    if (!load) VersionChecker.currentLivelyVersion().then(version => config.lively.boundLivelyVersion = version);
+    // if (!load) VersionChecker.currentLivelyVersion().then(version => config.lively.boundLivelyVersion = version);
   }
 
   static async listAvailableProjects () {
@@ -148,6 +155,7 @@ export class Project {
   }
 
   async create (withRemote = false) {
+    debugger;
     this.gitResource = null;
     const system = Project.system;
     let res, guessedAddress;
@@ -161,13 +169,11 @@ export class Project {
     }
 
     let url = resource(guessedAddress).asDirectory();
-    let address = url.asFile().url;
 
     // FIXME: might not be necessary after all?
     // Precaution to rule out any funky behavior when loading a Package twice inside of lively.
-    // await system.removePackage(address);
 
-    await system.resourceCreateFiles(address, {
+    await system.resourceCreateFiles(url, {
       'index.js': "'format esm';\n",
       'package.json': packageJSON,
       '.gitignore': 'node_modules/',
@@ -191,25 +197,26 @@ export class Project {
     });
 
     this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.name).withRelativePartsResolved().asDirectory();
-    this.configFile = await resource(address.join('package.json').url);
+    this.configFile = await resource(url.join('package.json').url);
 
-    await this.gitResource.initializeGitRepository(currentUsertoken(), this.name, this.owner);
+    await this.gitResource.initializeGitRepository(currentUsertoken(), this.name, this.config.maintainer);
 
     const pkg = await loadPackage(system, {
       name: this.name,
-      address: address,
+      address: url.url,
       configFile: url.join('package.json').url,
       main: url.join('index.js').url,
       test: url.join('tests/test.js').url,
       type: 'package'
     });
 
-    this.url = address;
+    this.url = url.url;
 
     this.package = pkg;
+    this.saveConfigData();
     if (withRemote) {
       await this.regenerateTestPipeline();
-      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, this.owner);
+      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, this.config.maintainer, this.config.description);
     }
   }
 
