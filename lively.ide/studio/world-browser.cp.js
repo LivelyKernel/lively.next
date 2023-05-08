@@ -1,15 +1,17 @@
-import { easings, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
-import { connect } from 'lively.bindings';
+/* eslint-disable no-use-before-define */
+import { easings, ViewModel, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
 import * as moduleManager from 'lively.modules';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
 import { arr, fun, graph, date, string } from 'lively.lang/index.js';
 import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
-import { DropDownList, MorphList } from 'lively.components/list.cp.js';
+import { MorphList } from 'lively.components/list.cp.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
-
 import { Spinner } from './shared.cp.js';
 import { SystemList } from '../styling/shared.cp.js';
-import { InputLine } from 'lively.components/inputs.js';
+import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
+import { SearchField } from 'lively.components/inputs.cp.js';
+import { Project } from 'lively.project';
+import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
 
 export const missingSVG = `data:image/svg+xml;utf8,
 <svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
@@ -38,7 +40,7 @@ class WorldVersion extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new TilingLayout({ axis: 'column', align: 'center', spacing: 5 });
+          this.layout = new TilingLayout({ axis: 'column', align: 'left', wrapSubmorphs: true, spacing: 5 });
         }
       },
       submorphs: {
@@ -76,6 +78,8 @@ export default class WorldVersionViewer extends Morph {
   reset () {
     this.getSubmorphNamed('version list').items = [];
     this.getSubmorphNamed('version list spinner').visible = false;
+    this.visible = false;
+    this.layoutable = false;
   }
 
   onMouseDown (evt) {
@@ -108,7 +112,7 @@ export default class WorldVersionViewer extends Morph {
 
       return newWorld;
     } catch (err) {
-      console.error(err);
+      console.error(err); // eslint-disable-line no-console
       oldWorld.showError('Error loading world:' + err);
     } finally { i.remove(); }
   }
@@ -194,7 +198,7 @@ export default class WorldVersionViewer extends Morph {
   }
 }
 
-class TitleWrapper extends Morph {
+export class TitleWrapper extends Morph {
   static get properties () {
     return {
       title: {
@@ -286,7 +290,7 @@ class TitleWrapper extends Morph {
   }
 }
 
-class StaticText extends HTMLMorph {
+export class StaticText extends HTMLMorph {
   static get properties () {
     return {
       html: {
@@ -327,119 +331,64 @@ class StaticText extends HTMLMorph {
   }
 }
 
-class SearchInputLine extends InputLine {
-  fuzzyMatch (s, parsedInput = this.parseInput()) {
-    let tokens = parsedInput.lowercasedTokens;
-    if (tokens.every(token => s.toLowerCase().includes(token))) return true;
-    let fuzzyValue = s.toLowerCase();
-    return arr.sum(parsedInput.lowercasedTokens.map(token =>
-      string.levenshtein(fuzzyValue, token))) <= 3;
-  }
-
-  fuzzyFilter (items, toString = item => item) {
-    let parsedInput = this.parseInput();
-    return items.filter(item => this.fuzzyMatch(toString(item), parsedInput));
-  }
-
-  parseInput () {
-    let filterText = this.textString;
-    // parser that allows escapes
-    let parsed = Array.from(filterText).reduce(
-      (state, char) => {
-        // filterText = "foo bar\\ x"
-        if (char === '\\' && !state.escaped) {
-          state.escaped = true;
-          return state;
-        }
-
-        if (char === ' ' && !state.escaped) {
-          if (!state.spaceSeen && state.current) {
-            state.tokens.push(state.current);
-            state.current = '';
-          }
-          state.spaceSeen = true;
-        } else {
-          state.spaceSeen = false;
-          state.current += char;
-        }
-        state.escaped = false;
-        return state;
-      },
-      { tokens: [], current: '', escaped: false, spaceSeen: false }
-    );
-    parsed.current && parsed.tokens.push(parsed.current);
-    let lowercasedTokens = parsed.tokens.map(ea => ea.toLowerCase());
-    return { tokens: parsed.tokens, lowercasedTokens };
-  }
-}
-
-class WorldDashboard extends Morph {
+export class WorldBrowserModel extends ViewModel {
   static get properties () {
     return {
-      showCloseButton: {
-        derived: true,
+      expose: {
         get () {
-          return this.ui.closeButton.visible;
-        },
+          return ['alignInWorld', 'keybindings', 'commands'];
+        }
+      },
+      bindings: {
+        get () {
+          return [
+            { target: 'close button', signal: 'onMouseDown', handler: 'close' },
+            { target: 'search field', signal: 'searchInput', handler: 'displayItems' },
+            { target: 'new project button', signal: 'onMouseDown', handler: 'createNewProject' },
+            { target: 'mode selector', signal: 'selectionChanged', handler: 'modeChanged' }
+          ];
+        }
+      },
+      playgroundsMode: {
+        defaultValue: false
+      },
+      showCloseButton: {
         set (v) {
-          this.ui.closeButton.visible = v;
+          this.setProperty('showCloseButton', v);
+          if (this.ui.closeButton) this.updateCloseButtonVisibility();
         }
       },
       db: {
         serialize: false,
         get () { return MorphicDB.default; }
-      },
-      ui: {
-        derived: true,
-        get () {
-          return {
-            worldList: this.getSubmorphNamed('world list'),
-            sortSelector: this.getSubmorphNamed('search selector'),
-            searchField: this.getSubmorphNamed('search field'),
-            closeButton: this.getSubmorphNamed('close button'),
-            loadingIndicator: this.getSubmorphNamed('loading indicator'),
-            noWorldWarning: this.getSubmorphNamed('no world warning'),
-            newProjectButton: this.getSubmorphNamed('new project button')
-          };
-        }
       }
+
     };
   }
 
-  onLoad () {
-    if (this.isComponent) return;
-    if (typeof localStorage === 'undefined') return;
-    const storedFilter = localStorage.getItem('lively.morphic-projects-filter');
-    if (storedFilter && this.ui.sortSelector.selection !== storedFilter) {
-      this.ui.sortSelector.selection = storedFilter;
-    }
-    this.initConnections();
+  updateCloseButtonVisibility () {
+    this.ui.closeButton.visible = this.showCloseButton;
   }
 
-  initConnections () {
-    const { sortSelector, searchField, newProjectButton } = this.ui;
-    connect(sortSelector.viewModel, 'selection', this, 'update');
-    connect(searchField, 'inputChanged', this, 'updateList');
-    connect(newProjectButton, 'onMouseDown', this, 'createNewProject');
+  close () {
+    this.view.remove();
   }
 
-  onMouseDown (evt) {
-    super.onMouseDown(evt);
-    if (evt.targetMorph === this.ui.closeButton) {
-      this.remove();
-    }
+  viewDidLoad () {
+    this.updateCloseButtonVisibility();
+    this.displayItems();
+    this.view.focus();
+  }
+
+  modeChanged (mode) {
+    if (mode === 'Playgrounds') this.playgroundsMode = true;
+    if (mode === 'Projects') this.playgroundsMode = false;
+
+    this.displayItems();
   }
 
   focus () {
     this.ui.searchField.focus();
-  }
-
-  update () {
-    this.displayWorlds();
-    if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem('lively.morphic-projects-filter', this.ui.sortSelector.selection);
-    } catch (e) { console.error(e); }
   }
 
   beforePublish () {
@@ -449,6 +398,7 @@ class WorldDashboard extends Morph {
   reset () {
     this.ui.worldList.items = [];
     this.ui.noWorldWarning.visible = false;
+    this.previews = [];
   }
 
   relayout () {
@@ -456,51 +406,40 @@ class WorldDashboard extends Morph {
   }
 
   alignInWorld (world = $world) {
-    if (this.owner !== world) world.addMorph(this);
-    this.center = world.visibleBounds().center();
+    const { view } = this;
+    if (view.owner !== world) world.addMorph(view);
+    view.center = world.visibleBounds().center();
   }
 
   sortAndFilterPreviews (previews) {
-    // TODO: FIXUP User System
-    const user = {name: 'TODO'};
-    previews = this.ui.searchField.fuzzyFilter(previews, p => p._commit.name + p._commit.description);
-    switch (this.ui.sortSelector.selection) {
-      case 'RECENT':
-        return arr.sortBy(previews, p => -p._commit.timestamp);
-      case 'TEMPLATES':
-        // what defines a template ?
-        return previews;
-      case 'MY PROJECTS':
-        return previews.filter(p => p._commit.author.name === user.name);
-      case 'PUBLISHED':
-        return previews;
-          // determine if the worlds are frozen or not
-    }
+    return previews.filter(p => this.ui.searchField.matches(p._project?.name || (p._commit.name + p._commit.description)));
   }
 
   updateList () {
     if (!this.previews) return;
-    fun.debounceNamed('update world list', 150, () => {
+    fun.debounceNamed('update item list', 150, () => {
       this.ui.worldList.items = this.sortAndFilterPreviews(this.previews);
     })();
   }
 
-  async displayWorlds () {
+  async displayItems () {
     this.reset();
     const { loadingIndicator } = this.ui;
     loadingIndicator.animate({
       opacity: 1, duration: 300
     });
-    const worldCommits = await this.db.latestCommits('world');
-    this.previews = worldCommits.map(commit => {
-      const placeholder = part(Placeholder); // eslint-disable-line no-use-before-define
-
-      placeholder._commit = commit;
+    const entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
+    this.previews = entities.map(entity => {
+      const placeholder = part(Placeholder);
+      if (this.playgroundsMode) placeholder._commit = entity;
+      else placeholder._project = entity;
       placeholder.displayPreview = () => {
-        const preview = part(WorldPreviewTile); // eslint-disable-line no-use-before-define
+        const preview = this.playgroundsMode
+          ? part(WorldOrProjectPreviewTile, { defaultViewModel: WorldPreviewModel, viewModel: { _commit: entity } })
+          : part(WorldOrProjectPreviewTile, { viewModel: { _project: entity } });
         preview.dropShadow = null;
-        preview._commit = commit;
         preview.opacity = 0;
+        preview.clipMode = 'hidden';
         placeholder.addMorph(preview);
         preview.displayPreview();
         preview.position = pt(0, 0);
@@ -518,8 +457,8 @@ class WorldDashboard extends Morph {
     });
     this.updateList();
 
-    if (worldCommits.length === 0) {
-      this.ui.noWorldWarning.center = this.innerBounds().center();
+    if (this.previews.length === 0) {
+      this.ui.noWorldWarning.center = this.view.innerBounds().center();
       this.ui.noWorldWarning.animate({
         visible: true, duration: 300
       });
@@ -527,16 +466,29 @@ class WorldDashboard extends Morph {
   }
 
   createNewProject () {
-    // navigate to worlds/new
-    document.location = '/worlds/load?name=__newWorld__';
+    if (this.playgroundsMode) document.location = '/worlds/load?name=__newWorld__';
+    else part(ProjectCreationPrompt).openInWorld().bringToFront();
   }
 
   allFontsLoaded () {
     return this.ui.newProjectButton.submorphs[0].whenFontLoaded();
   }
+
+  get keybindings () {
+    return [{ keys: 'Escape', command: 'close' }];
+  }
+
+  get commands () {
+    return [
+      {
+        name: 'close',
+        exec: () => this.close()
+      }
+    ];
+  }
 }
 
-class GrowingWorldList extends Morph {
+export class GrowingWorldList extends Morph {
   static get properties () {
     return {
       scrollContainer: {
@@ -604,7 +556,7 @@ class GrowingWorldList extends Morph {
     let layoutSpacing = scrollContainer.layout.spacing;
     scrollContainer.extent = this.extent;
     let { bufferTop, bufferBottom } = this.ui;
-    bufferTop = bufferTop || scrollContainer.addMorph({ fill: null, name: 'buffer top', height: 10 });
+    bufferTop = bufferTop || scrollContainer.addMorph({ fill: null, name: 'buffer top', height: 34 });
     bufferBottom = bufferBottom || scrollContainer.addMorph({ fill: null, name: 'buffer bottom', height: 10 });
     bufferTop.width = bufferBottom.width = this.width - 100;
     scrollContainer.layout.disable();
@@ -618,7 +570,7 @@ class GrowingWorldList extends Morph {
     for (let item of itemsToBeAdded) {
       newItemOffset++;
       item.top = newItemOffset;
-      scrollContainer.addMorph(item);
+      scrollContainer.addMorph(item, scrollContainer.get('buffer bottom'));
       if (!item._initialized) {
         item._initialized = true;
         item.displayPreview();
@@ -637,41 +589,39 @@ class GrowingWorldList extends Morph {
   }
 }
 
-export class WorldPreview extends Morph {
+export class WorldPreviewModel extends ViewModel {
   static get properties () {
     return {
-      ui: {
-        readOnly: true,
+      bindingsToInherit: {
+        defaultValue: [
+          { target: 'delete button', signal: 'onMouseDown', handler: 'tryToDelete' },
+          { target: 'open button', signal: 'onMouseDown', handler: 'openWorld' },
+          { signal: 'onHoverIn', handler: 'toggleDeleteButton', converter: () => true },
+          { signal: 'onHoverOut', handler: 'toggleDeleteButton', converter: () => false }
+        ]
+      },
+      bindings: {
         get () {
-          return {
-            previewContainer: this.getSubmorphNamed('preview container'),
-            versionContainer: this.getSubmorphNamed('version container'),
-            preview: this.getSubmorphNamed('preview'),
-            timestamp: this.getSubmorphNamed('timestamp'),
-            title: this.getSubmorphNamed('title wrapper'),
-            description: this.getSubmorphNamed('description'),
-            openButton: this.getSubmorphNamed('open button'),
-            versionButton: this.getSubmorphNamed('version button'),
-            spinner: this.getSubmorphNamed('spinner'),
-            deleteButton: this.getSubmorphNamed('delete button'),
-            closeVersionsButton: this.getSubmorphNamed('close versions button'),
-            versionList: this.getSubmorphNamed('version list'),
-            deleteWorldPrompt: this.getSubmorphNamed('delete world prompt'),
-            cancelDeleteButton: this.getSubmorphNamed('cancel delete button'),
-            confirmDeleteButton: this.getSubmorphNamed('confirm delete button')
-          };
+          return [
+            ...this.bindingsToInherit,
+            // TODO: this cannot work, this is not actually on this component but gets added later.
+            // previosly this only worked since we had a dynamic lookup based on morph name
+            { target: 'close versions button', signal: 'onMouseDown', handler: 'hideVersions' },
+            { target: 'version button', signal: 'onMouseDown', handler: 'showVersions' }
+          ];
+        }
+      },
+      _commit: {},
+      expose: {
+        get () {
+          return ['relayout', 'displayPreview', '_commit'];
         }
       }
     };
   }
 
   relayout () {
-    // fit to world
-    this.setBounds(this.world().visibleBounds());
-  }
-
-  onLoad () {
-    this.ui.spinner.visible = false; // this causes the fan to spin
+    this.view.setBounds(this.world().visibleBounds());
   }
 
   async displayPreview () {
@@ -680,31 +630,29 @@ export class WorldPreview extends Morph {
 
   async initWithCommit (commit) {
     const {
-      preview, timestamp, title, description,
-      previewContainer
+      preview, timestamp, title, description
     } = this.ui;
     this.opacity = 0.5;
-    this._commit = commit;
     preview.imageUrl = commit.preview || missingSVG;
     let { name: authorName } = commit.author;
     authorName = authorName.startsWith('guest-') ? 'guest' : authorName;
     timestamp.value = [authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }, date.format(commit.timestamp, ' - d.m.yy HH:MM'), {
       fontWeight: 'bold', fontSize: 12, paddingTop: '2px'
     }];
-    title.title = commit.name;
+    title.value = commit.name;
     description.value = commit.description;
-    this.animate({ opacity: 1, duration: 300 });
+    this.view.animate({ opacity: 1, duration: 300 });
   }
 
   async openAnimated (targetBounds = $world.visibleBounds()) {
     const copy = morph({
-      ...this.spec(),
+      ...this.view.spec(),
       reactsToPointer: false,
       renderOnGPU: true,
       submorphs: [this.ui.spinner.spec()]
     }).openInWorld();
     copy.hasFixedPosition = true;
-    copy.globalPosition = this.globalPosition;
+    copy.globalPosition = this.view.globalPosition;
     copy.opacity = 0;
     await copy.animate({ opacity: 1, duration: 300 });
     const duration = 500;
@@ -716,7 +664,7 @@ export class WorldPreview extends Morph {
       easing: easings.inOutQuint
     });
     copy.respondsToVisibleWindow = true;
-    await copy.ui.spinner.animate({
+    await copy.viewModel.ui.spinner.animate({
       center: copy.innerBounds().center(),
       easing: easings.inOutQuint,
       duration
@@ -729,6 +677,7 @@ export class WorldPreview extends Morph {
     this.loadWorld();
   }
 
+  // TODO: fixme, this is broken
   async loadWorld () {
     const { _id, name } = this._commit;
     if (lively.FreezerRuntime) {
@@ -761,12 +710,10 @@ export class WorldPreview extends Morph {
 
   async showVersions () {
     const duration = 200; const easing = easings.inOutExpo;
-    const { previewContainer } = this.ui;
-    const versionContainer = part(VersionContainer, { name: 'version container', position: pt(0, 0) }); // eslint-disable-line no-use-before-define
-    this.addMorph(versionContainer);
+    const { previewContainer, versionContainer } = this.ui;
     versionContainer.reactsToPointer = versionContainer.visible = true;
     versionContainer.initializeFromStartCommit(this._commit);
-    this.animate({
+    this.view.animate({
       width: 515, duration, easing
     });
     previewContainer.animate({
@@ -782,7 +729,7 @@ export class WorldPreview extends Morph {
     const duration = 200; const easing = easings.inOutExpo;
     const { previewContainer, versionContainer } = this.ui;
     previewContainer.reactsToPointer = previewContainer.visible = true;
-    this.animate({
+    this.view.animate({
       width: 245, duration, easing
     });
     previewContainer.animate({
@@ -792,19 +739,10 @@ export class WorldPreview extends Morph {
       opacity: 0, duration
     });
     versionContainer.reset();
-    versionContainer.remove();
   }
 
   toggleDeleteButton (active) {
     this.ui.deleteButton.visible = active;
-  }
-
-  onHoverIn (evt) {
-    this.toggleDeleteButton(true);
-  }
-
-  onHoverOut (evt) {
-    this.toggleDeleteButton(false);
   }
 
   async tryToDelete () {
@@ -814,116 +752,61 @@ export class WorldPreview extends Morph {
 
   async confirmDelete () {
     await MorphicDB.default.commit({ ...this._commit, content: undefined, snapshot: null });
-    if (!this.isComponent && !this.owner.isWorld) this.owner.remove();
+    // TODO: ask robin why that was introduced
+    if (!this.view.isComponent && !this.view.owner.isWorld) this.view.owner.remove();
+  }
+}
+
+class ProjectPreviewModel extends WorldPreviewModel {
+  static get properties () {
+    return {
+      bindings: {
+        get () {
+          return [
+            ...this.bindingsToInherit
+          ];
+        }
+      },
+      _project: { }
+    };
   }
 
-  onMouseUp (evt) {
+  async displayPreview () {
+    await this.initWithProject(this._project);
+  }
+
+  initWithProject (project) {
     const {
-      openButton, versionButton, deleteButton,
-      closeVersionsButton, cancelDeleteButton,
-      confirmDeleteButton
+      preview, timestamp, title, description
     } = this.ui;
-    // we want to initialize this from the spec, so we dont use connections
-    switch (evt.targetMorph) {
-      case openButton:
-        this.openWorld();
-        break;
-      case versionButton:
-        this.showVersions();
-        break;
-      case deleteButton:
-        this.tryToDelete();
-        break;
-      case closeVersionsButton:
-        this.hideVersions();
-        break;
-      case confirmDeleteButton:
-        this.confirmDelete();
-        break;
-      case cancelDeleteButton:
-        this.cancelDelete();
-        break;
-    }
+    this.opacity = 0.5;
+    // TODO: what image to show here?
+    preview.imageUrl = missingSVG;
+
+    let authorName = project.maintainer;
+    authorName = authorName.startsWith('guest-') ? 'guest' : authorName;
+    timestamp.value = [authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
+    title.value = project.name;
+    description.value = project.description;
+    this.view.animate({ opacity: 1, duration: 300 });
   }
 }
 
 const Placeholder = component({
   reactsToPointer: false,
   fill: Color.transparent,
-  clipMode: 'hidden',
   dropShadow: new ShadowObject({ distance: 20, rotation: 75, color: Color.rgba(0, 0, 0, 0.11), blur: 50 }),
   extent: pt(245, 368.2)
 });
 
-const VersionContainer = component({
-  type: WorldVersionViewer,
-  name: 'version container',
-  draggable: true,
-  extent: pt(515.7, 365.6),
-  fill: Color.rgb(253, 254, 254),
-  grabbable: true,
-  position: pt(1472.2, 114.6),
-  submorphs: [{
-    type: MorphList,
-    name: 'version list',
-    clipMode: 'hidden',
-    master: SystemList,
-    extent: pt(475.6, 285),
-    itemHeight: 45,
-    padding: rect(1, 1, 0, -1),
-    position: pt(20.1, 16.8),
-    touchInput: false
-  }, part(Spinner, {
-    name: 'version list spinner',
-    extent: pt(55.3, 66.9),
-    position: pt(244, 166.1),
-    scale: 0.5,
-    visible: false
-  }), part(PlainButton, {
-    name: 'close versions button',
-    dropShadow: new ShadowObject({ distance: 3, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
-    extent: pt(84, 31),
-    fill: Color.rgb(81, 90, 90),
-    position: pt(20.7, 317.2),
-    submorphs: [{
-      name: 'label',
-      fontFamily: '"IBM Plex Sans"',
-      fontWeight: 600,
-      textAndAttributes: ['CLOSE', null]
-    }]
-  }), part(RedButton, {
-    name: 'revert button',
-    extent: pt(84, 31),
-    position: pt(312.4, 316.2),
-    submorphs: [{
-      name: 'label',
-      fontWeight: 600,
-      textAndAttributes: ['REVERT', null]
-    }]
-  }), part(GreenButton, {
-    name: 'visit button',
-    dropShadow: new ShadowObject({ distance: 3, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
-    extent: pt(84, 31),
-    label: 'VISIT',
-    position: pt(413, 315.6),
-    submorphs: [{
-      name: 'label',
-      fontWeight: 600,
-      textAndAttributes: ['VISIT', null]
-    }]
-  })]
-});
-
-const WorldPreviewTile = component({
-  type: WorldPreview,
+const WorldOrProjectPreviewTile = component({
   name: 'world preview',
+  defaultViewModel: ProjectPreviewModel,
   borderRadius: 5,
-  clipMode: 'hidden',
   dropShadow: new ShadowObject({ distance: 20, rotation: 75, color: Color.rgba(0, 0, 0, 0.11), blur: 50 }),
   extent: pt(245, 368.2),
   fill: Color.rgb(253, 254, 254),
   position: pt(1109.2, 43.8),
-  reactsToPointer: false,
   submorphs: [{
     name: 'preview container',
     extent: pt(244.5, 130),
@@ -946,7 +829,7 @@ const WorldPreviewTile = component({
       submorphs: [{
         name: 'label',
         fontWeight: 600,
-        textAndAttributes: ['OPEN PROJECT', null]
+        textAndAttributes: ['OPEN WORLD', null]
       }]
     }), part(Spinner, {
       name: 'spinner',
@@ -965,8 +848,7 @@ const WorldPreviewTile = component({
         name: 'preview',
         extent: pt(210, 216.6),
         imageUrl: '',
-        naturalExtent: pt(200, 200),
-        reactsToPointer: false
+        naturalExtent: pt(200, 200)
       }]
     }, {
       type: Label,
@@ -988,7 +870,6 @@ const WorldPreviewTile = component({
       nativeCursor: 'pointer',
       padding: rect(10, 3, 0, 2),
       position: pt(16.7, 167.8),
-      reactsToPointer: false,
       textAndAttributes: ['robin.schreiber', {
         fontSize: 13,
         fontWeight: 'bold',
@@ -1009,7 +890,6 @@ const WorldPreviewTile = component({
       fontSize: 17,
       html: '<span style="line-height: 1.3; font-size: 17px; color: rgb(97,106,107); font-family: IBM Plex Sans, Sans-Serif">An interactive essay abouy eyesight.</span>',
       position: pt(18.9, 238.9),
-      reactsToPointer: false,
       renderOnGPU: true,
       value: 'An interactive essay abouy eyesight.'
     }, {
@@ -1029,15 +909,74 @@ const WorldPreviewTile = component({
         fontWeight: 'bold',
         nativeCursor: 'pointer',
         padding: rect(4, 3, 1, 0),
-        reactsToPointer: false,
         textAndAttributes: ['Title', null]
       }]
     }]
+  }, {
+    type: WorldVersionViewer,
+    name: 'version container',
+    draggable: true,
+    extent: pt(515.7, 365.6),
+    fill: Color.rgb(253, 254, 254),
+    grabbable: true,
+    position: pt(0, 0),
+    visible: false,
+    layoutable: false,
+    submorphs: [{
+      type: MorphList,
+      name: 'version list',
+      clipMode: 'hidden',
+      master: SystemList,
+      extent: pt(475.6, 285),
+      itemHeight: 45,
+      padding: rect(1, 1, 0, -1),
+      position: pt(20.1, 16.8),
+      touchInput: false
+    }, part(Spinner, {
+      name: 'version list spinner',
+      extent: pt(55.3, 66.9),
+      position: pt(244, 166.1),
+      scale: 0.5,
+      visible: false,
+      reactsToPointer: false
+    }), part(PlainButton, {
+      name: 'close versions button',
+      dropShadow: new ShadowObject({ distance: 3, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
+      extent: pt(84, 31),
+      fill: Color.rgb(81, 90, 90),
+      position: pt(20.7, 317.2),
+      submorphs: [{
+        name: 'label',
+        fontFamily: '"IBM Plex Sans"',
+        fontWeight: 600,
+        textAndAttributes: ['CLOSE', null]
+      }]
+    }), part(RedButton, {
+      name: 'revert button',
+      extent: pt(84, 31),
+      position: pt(312.4, 316.2),
+      submorphs: [{
+        name: 'label',
+        fontWeight: 600,
+        textAndAttributes: ['REVERT', null]
+      }]
+    }), part(GreenButton, {
+      name: 'visit button',
+      dropShadow: new ShadowObject({ distance: 3, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
+      extent: pt(84, 31),
+      label: 'VISIT',
+      position: pt(413, 315.6),
+      submorphs: [{
+        name: 'label',
+        fontWeight: 600,
+        textAndAttributes: ['VISIT', null]
+      }]
+    })]
   }]
 });
 
 const WorldBrowser = component({
-  type: WorldDashboard,
+  defaultViewModel: WorldBrowserModel,
   name: 'world browser',
   borderRadius: 10,
   clipMode: 'hidden',
@@ -1054,13 +993,7 @@ const WorldBrowser = component({
     submorphSettings: [['fader bottom', {
       x: 'resize',
       y: 'move'
-    }], ['go back button', {
-      x: 'fixed',
-      y: 'move'
     }], ['dropdown list', {
-      x: 'move',
-      y: 'fixed'
-    }], ['search-input', {
       x: 'move',
       y: 'fixed'
     }], ['fader top', {
@@ -1069,18 +1002,12 @@ const WorldBrowser = component({
     }], ['world list', {
       x: 'resize',
       y: 'resize'
-    }], ['world search', {
-      x: 'move',
-      y: 'fixed'
     }], ['search field', {
       x: 'move',
       y: 'fixed'
     }], ['close button', {
       x: 'fixed',
       y: 'move'
-    }], ['search selector', {
-      x: 'move',
-      y: 'fixed'
     }]]
   }),
   position: pt(1182.2, 536.7),
@@ -1118,7 +1045,7 @@ const WorldBrowser = component({
       reactsToPointer: false,
       submorphs: [{
         name: 'buffer top',
-        extent: pt(768.9, 10),
+        extent: pt(768.9, 34),
         fill: Color.transparent
       }, {
         name: 'buffer bottom',
@@ -1142,23 +1069,38 @@ const WorldBrowser = component({
         fontWeight: 600,
         textAndAttributes: [...Icon.textAttribute('plus-circle', { paddingTop: '2px', paddingRight: '5px' }), ' NEW PROJECT']
       }]
+    }), part(ModeSelector, {
+      name: 'mode selector',
+      extent: pt(150, 30),
+      position: pt(168, 17),
+      borderColor: Color.white,
+      fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(114, 123, 124) }, { offset: 1, color: Color.rgba(82, 90, 91, 0.622) }], vector: rect(0.46889505279101873, 0.0009684556472141503, 0.06220989441796249, 0.9980630887055717) }),
+      borderRadius: 5,
+      viewModel: {
+        items: ['Projects', 'Playgrounds'],
+        tooltips: ['Create or Open a Project', 'Create or Open a Playground (Legacy/Prototyping Mode)']
+      }
     })]
-  }, {
-    type: SearchInputLine,
+  },
+  part(SearchField, {
     name: 'search field',
-    borderColor: Color.rgb(189, 195, 199),
-    borderRadius: 30,
-    dropShadow: new ShadowObject({ distance: 1, color: Color.rgba(0, 0, 0, 0.26) }),
+    viewModel: { fuzzy: true },
     extent: pt(285.1, 34),
     fill: Color.rgb(234, 237, 237),
-    fixedHeight: false,
-    fontColor: Color.rgb(64, 64, 64),
-    fontSize: 17,
-    padding: rect(12, 5, -4, 0),
-    placeholder: 'Search Projects',
     position: pt(574.3, 13.6),
-    selectionColor: Color.rgba(52, 152, 219, 0.25)
-  }, {
+    submorphs: [
+      {
+        name: 'search input',
+        fontSize: 22,
+        submorphs: [
+          {
+            name: 'placeholder',
+            textAndAttributes: ['Search Projects', { fontSize: 22 }]
+          }
+        ]
+      }
+    ]
+  }), {
     name: 'fader bottom',
     extent: pt(871.9, 63.9),
     fill: new LinearGradient({
@@ -1169,27 +1111,16 @@ const WorldBrowser = component({
       vector: rect(0.498247508317511, 0.9999969287634702, 0.003504983364977972, -0.9999938575269406)
     }),
     position: pt(0, 506)
-  }, {
+  }, part(RedButton, {
     name: 'close button',
-    nativeCursor: 'pointer',
-    borderColor: Color.rgb(66, 73, 73),
-    dropShadow: new ShadowObject({ distance: 3, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
     extent: pt(94.6, 30),
-    fill: Color.rgb(81, 90, 90),
     label: 'CLOSE',
     position: pt(14.9, 531),
-    borderRadius: 5,
-    borderWidth: 1,
     submorphs: [{
-      type: Label,
       name: 'label',
-      fontColor: Color.rgb(215, 219, 221),
-      fontWeight: 'bold',
-      position: pt(28.8, 7.5),
-      reactsToPointer: false,
       textAndAttributes: ['CLOSE', null]
     }]
-  }, {
+  }), {
     name: 'loading indicator',
     layout: new TilingLayout({
       align: 'center',
@@ -1217,37 +1148,10 @@ const WorldBrowser = component({
         fontFamily: '"IBM Plex Sans"',
         fontSize: 23,
         fontWeight: '500',
-        reactsToPointer: false,
         textString: 'Loading...'
       }
     ]
-  }, part(DropDownList, {
-    name: 'search selector',
-    position: pt(432.9, 17),
-    borderColor: Color.rgb(66, 73, 73),
-    dropShadow: new ShadowObject({ distance: 1, color: Color.rgba(0, 0, 0, 0.26) }),
-    extent: pt(125.6, 29.6),
-    fill: Color.rgb(81, 90, 90),
-    viewModel: {
-      items: ['MY PROJECTS', 'TEMPLATES', 'PUBLISHED', 'RECENT'],
-      openListInWorld: true,
-      selection: 'MY PROJECTS',
-      listMaster: SystemList
-    },
-    submorphs: [{
-      name: 'label',
-      fontSize: 12,
-      fontWeight: 600,
-      fontColor: Color.rgb(215, 219, 221),
-      textAndAttributes: ['MY PROJECTS', null, ' ', null, '', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-        fontWeight: '900',
-        paddingRight: '0px',
-        paddingTop: '0px',
-        textStyleClasses: ['fa', 'annotation']
-      }]
-    }]
-  })]
+  }]
 });
 
-export { WorldBrowser, WorldPreviewTile, VersionContainer };
+export { WorldBrowser, WorldOrProjectPreviewTile };

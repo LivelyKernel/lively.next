@@ -12,7 +12,7 @@ import { BrowserModuleTranslationCache } from 'lively.modules/src/cache.js';
 import * as modules from 'lively.modules';
 import { once } from 'lively.bindings';
 import { CodeSearch } from './code-search.cp.js';
-import { WorldBrowser } from './studio/world-browser.cp.js';
+import { WorldBrowser, WorldBrowserModel } from './studio/world-browser.cp.js';
 import { Console } from './debug/console.cp.js';
 import { WindowSwitcher } from './window-switcher.cp.js';
 import { browserForFile } from './js/browser/ui.cp.js';
@@ -1241,12 +1241,11 @@ const commands = [
       fader.openInWorld(pt(0, 0));
       fader.animate({ opacity: 1, duration: 300 });
 
-      const worldList = oldWorld.get('a project browser') || part(WorldBrowser, { name: 'a project browser' });
+      const worldList = oldWorld.get('a project browser') || part(WorldBrowser, { name: 'a project browser', viewModel: new WorldBrowserModel({ showCloseButton: true }) });
       worldList.name = 'a project browser';
       worldList.hasFixedPosition = true;
       worldList.epiMorph = true;
       worldList.bringToFront().alignInWorld(oldWorld);
-      worldList.update();
       worldList.focus();
       once(worldList, 'remove', () => fader.animate({ opacity: 0 }).then(() => fader.remove()));
       li.remove();
