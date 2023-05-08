@@ -420,16 +420,16 @@ export class LivelyWorld extends World {
         }
       }
       this
-      .animate({ blur: 0, duration: 1000, easing: easings.inOutExpo })
-      .then(() => {
-        document.body.style.background = 'black';
+        .animate({ blur: 0, duration: 1000, easing: easings.inOutExpo })
+        .then(() => {
+          document.body.style.background = 'black';
+        });
+      document.body.style.overflowX = 'visible';
+      document.body.style.overflowY = 'visible';
+      await localInterface.exportsOfModules({
+        excludedPackages: config.ide.js.ignoredPackages
       });
-    document.body.style.overflowX = 'visible';
-    document.body.style.overflowY = 'visible';
-    await localInterface.exportsOfModules({
-      excludedPackages: config.ide.js.ignoredPackages
-    });
-    await this.initializeStudioUI();
+      await this.initializeStudio();
     });
   }
 
