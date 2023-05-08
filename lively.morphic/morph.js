@@ -1599,7 +1599,7 @@ export class Morph {
       // set new owner
       submorph._owner = this;
       submorph._cachedPaths = {};
-      if (tfm) submorph.setTransform(tfm);
+      if (tfm) this.withMetaDo({ reconcileChanges: false }, () => submorph.setTransform(tfm));
       this._morphicState.submorphs = submorphs;
 
       this.makeDirty();
