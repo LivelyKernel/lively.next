@@ -339,7 +339,7 @@ export async function bootstrap ({ filePath, worldName, projectName, snapshot, c
         ({ loadWorld } = await lively.modules.module('lively.morphic/world-loading.js').recorder);
         ({ loadMorphFromSnapshot } = await lively.modules.module('lively.morphic/serialization.js').recorder);
         const m = await loadMorphFromSnapshot(await resource(snapshot).readJson());
-        const w = await loadWorld(new World({ askForWorldName: false, extent: $world.extent }), undefined, opts);
+        const w = await loadWorld(new World({ askForName: false, extent: $world.extent }), undefined, opts);
         w.addMorph(m);
         w.onWindowResize();
       } else if (commit) {
@@ -358,7 +358,7 @@ export async function bootstrap ({ filePath, worldName, projectName, snapshot, c
             ({ loadWorld } = await lively.modules.System.import('lively.morphic/world-loading.js'));
           }
           if (worldName) await loadWorld(new LivelyWorld({ openNewWorldPrompt: true }), undefined, opts);
-          else if (projectName === '__newProject') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts)
+          else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts)
           else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName }), undefined, opts)
         } else {
           await morphic.World.loadFromDB(worldName, undefined, undefined, {
