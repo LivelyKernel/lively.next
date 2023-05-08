@@ -40,8 +40,8 @@ import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import { Project } from 'lively.project';
 import ObjectPackage from 'lively.classes/object-classes.js';
 import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } from './studio/sidebar-flap.js';
-import { retrieveGithubUserData } from 'lively.user/github-login.js';
 import { localInterface } from 'lively-system-interface';
+import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -476,6 +476,8 @@ export class LivelyWorld extends World {
   async initializeStudio () {
     const topBar = await this.initializeTopBar();
 
+    const { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
+
     let { askForWorldName } = resource(document.location.href).query();
     if (askForWorldName === undefined) askForWorldName = true;
 
@@ -488,26 +490,36 @@ export class LivelyWorld extends World {
       });
 
       let worldName;
-      if (askForWorldName) {
+      if (askForWorldName && openNewWorldPrompt) {
         worldName = await this.askForName();
-        this.name = worldName;
+      } else if (openNewProjectPrompt) {
+        // This path is only to be used by CI and for temporary excursions.
+        // Correct behavior is not ensured.
+        if (!askForWorldName) {
+          worldName = 'new unnamed project';
+          this.openedProject = new Project(worldName);
+        } else {
+          const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
+          worldName = project.name;
+        }
+      } else if (projectToBeOpened) {
+        worldName = projectToBeOpened;
+        Project.loadProject(projectToBeOpened);
+        this.projectToBeOpened = null;
       }
 
-      worldName = worldName || 'new world';
-
-      if (window.history) {
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName));
-      }
-
-      if (config.ide.projectsEnabled) {
-        // TODO: fix
-        this.openedProject = new Project(worldName);
-      } else {
+      this.name = worldName;
+      if (askForWorldName && openNewWorldPrompt) {
         this.changeMetaData('commit', { name: worldName });
         // fixme: We do not want to subclass the world class. This is just a temporary solution
         // to reliably load the package at all times the world is loaded
         const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
         await pkg.adoptObject(this);
+      }
+      worldName = worldName || 'new world';
+
+      if (window.history) {
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!projectToBeOpened || !!openNewProjectPrompt));
       }
 
       await this.animate({

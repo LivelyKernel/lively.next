@@ -80,7 +80,7 @@ function clearWorldSnapshot (snap) {
     delete snap.snapshot[id].props.metadata;
     delete snap.snapshot[id]._cachedLineCharBounds;
     if (id === snap.id) {
-      snap.snapshot[id].props.askForWorldName = { value: false };
+      snap.snapshot[id].props.askForName = { value: false };
     }
     const module = moduleOfId(snap.snapshot, id);
     if (!module.package) continue;
