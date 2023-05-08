@@ -11,19 +11,20 @@ import { MorphicDB } from './morphicdb/index.js';
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
 import { part } from './components/core.js';
+import { currentUsername } from 'lively.user';
 
 function reportWorldLoad (world, user) {
   fetch(string.joinPath(System.baseURL, '/report-world-load'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      message: `${world.currentUsername} logged in at ${world.name} [${window._livelyLoadId}]`
+      message: `${currentUsername()} logged in at ${world.name} [${window._livelyLoadId}]`
     })
   }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
 
 async function setupLively2Lively (world) {
-  const user = world.currentUsername;
+  const user = currentUsername();
   const info = { world: world.name };
   if (user) {
     info.userToken = user.token;
@@ -283,7 +284,7 @@ export async function interactivelySaveWorld (world, options) {
     }
 
     const commitSpec = {
-      author: world.currentUsername,
+      author: currentUsername(),
       message: 'world save',
       tags,
       description

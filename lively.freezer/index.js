@@ -15,6 +15,8 @@ import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
 import { parse, stringify } from 'lively.ast';
 import BrowserResolver from './src/resolvers/browser.js';
 import { lively } from './src/plugins/rollup.js'; // for rollup
+import { currentUsername } from 'lively.user';
+
 
 /*
 
@@ -131,7 +133,7 @@ async function promptForFreezing (targetOrModule, requester, title = 'Freeze Par
       }
     ]
   });
-  const userName = $world.currentUsername;
+  const userName = currentUsername();
   const previouslyExcludedPackages = excludedModules || Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
   const previouslyPublishedDir = Path('metadata.publishedLocation').get(targetOrModule) ||
                                  resource(System.baseURL).join('users').join(userName).join('published').join(targetOrModule.name ||

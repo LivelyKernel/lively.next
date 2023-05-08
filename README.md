@@ -122,6 +122,7 @@ The packages are coded with emojis as follows:
 - storage: 💾
 - system-interface: 📠
 - traits: ⚙️
+- user: 👤
 - vm: 🖥️
 
 ## License

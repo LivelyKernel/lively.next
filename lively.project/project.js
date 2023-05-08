@@ -14,6 +14,7 @@ import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { packageJSON } from './templates/package-json.js';
 import { semver } from 'lively.modules/index.js';
+import { currentUsertoken, currentUsername } from 'lively.user';
 
 export class Project {
   constructor (name, load = false) {
@@ -27,7 +28,6 @@ export class Project {
   static async listAvailableProjects () {
     const baseURL = await Project.system.getConfig().baseURL;
     const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : resource(baseURL).join('local_projects').asDirectory();
-
 
     let projectsCandidates = await resource(projectsDir).dirList(2, {
       exclude: dir => {
@@ -48,7 +48,7 @@ export class Project {
   static async fromRemote (remote) {
     const remoteUrl = new URL(remote);
 
-    const userToken = $world.currentUsertoken;
+    const userToken = currentUsertoken();
     // FIXME: This relies on the assumption, that the default directory the shell command gets placed in is `lively.server
     const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone(); // TODO: this needs error handling
@@ -193,7 +193,7 @@ export class Project {
     this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.name).withRelativePartsResolved().asDirectory();
     this.configFile = await resource(address.join('package.json').url);
 
-    await this.gitResource.initializeGitRepository($world.currentUsertoken, this.name, this.owner);
+    await this.gitResource.initializeGitRepository(currentUsertoken(), this.name, this.owner);
 
     const pkg = await loadPackage(system, {
       name: this.name,
@@ -209,7 +209,7 @@ export class Project {
     this.package = pkg;
     if (withRemote) {
       await this.regenerateTestPipeline();
-      await this.gitResource.addRemoteToGitRepository($world.currentUsertoken, this.config.name, this.owner);
+      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, this.owner);
     }
   }
 
@@ -227,7 +227,7 @@ export class Project {
   }
 
   async save (opts = {}) {
-    if ($world.currentUsername === 'guest') {
+    if (currentUsername() === 'guest') {
       $world.setStatusMessage('Please log in.');
       return;
     }

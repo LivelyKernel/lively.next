@@ -1,0 +1,10 @@
+{
+  "name": "lively.user",
+  "version": "2.0.0",
+  "lively": {
+    "isObjectPackage": false
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "main": "index.js"
+}

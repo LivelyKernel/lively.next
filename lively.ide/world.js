@@ -42,6 +42,7 @@ import ObjectPackage from 'lively.classes/object-classes.js';
 import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } from './studio/sidebar-flap.js';
 import { localInterface } from 'lively-system-interface';
 import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
+import { currentUsername, currentUser } from 'lively.user';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -62,26 +63,6 @@ export class LivelyWorld extends World {
         set (name) {
           this.setProperty('name', name);
           document.title = `lively.next - ${name}`;
-        }
-      },
-
-      currentUser: {
-        before: ['currentUsername'],
-        get () {
-          const storedUserData = localStorage.getItem('gh_user_data');
-          if (storedUserData) {
-            return JSON.parse(storedUserData);
-          } else return { login: 'guest' };
-        }
-      },
-      currentUsername: {
-        get () {
-          return this.currentUser.login;
-        }
-      },
-      currentUsertoken: {
-        get () {
-          return localStorage.getItem('gh_access_token');
         }
       },
 
@@ -613,7 +594,7 @@ export class LivelyWorld extends World {
     const baseURL = document.location.origin;
 
     if (files.length) {
-      let uploadPath = $world.currentUsername === 'guest' ? 'uploads/' : 'users/' + $world.currentUser + '/uploads';
+      let uploadPath = currentUsername() === 'guest' ? 'uploads/' : 'users/' + currentUser() + '/uploads';
       if (evt.isAltDown()) {
         uploadPath = await this.prompt('Choose upload location', {
           history: 'lively.morphic-html-drop-file-upload-location',
