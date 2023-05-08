@@ -1,5 +1,5 @@
 /* global URL */
-import { component, ShadowObject, Text, TilingLayout, add, part } from 'lively.morphic';
+import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
 import { AbstractPromptModel, RedButton, GreenButton, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
@@ -20,6 +20,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       projectBrowser: {},
+      canBeCancelled: {
+        defaultValue: true
+      },
       bindings: {
         get () {
           return [
@@ -34,13 +37,15 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   close () {
-    this.projectBrowser.toggleFader(true);
+    this.projectBrowser?.toggleFader(true);
     this.view.remove();
   }
 
-  resolve () {
+  async resolve () {
+    let createdProject;
     const inputElement = this.fromRemote ? this.ui.remoteUrl : this.ui.projectName;
     const inputString = inputElement.textString;
+    const createNewRemote = this.ui.createRemoteCheckbox.checked;
     if (this.fromRemote) {
       try {
         const url = new URL(inputString);
@@ -52,17 +57,30 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       } catch (err) {
         inputElement.indicateError('enter valid url');
       }
+      // we got a valid github URL
+      try {
+        createdProject = await Project.fromRemote(inputString);
+        super.resolve(createdProject);
+      } catch (err) {
+        this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
+      }
     } else {
-      if (!inputString.match(/^[a-zA-Z-]*$/)) {
+      if (!inputString || !inputString.match(/^[a-zA-Z-]*$/)) {
         inputElement.clear();
         inputElement.indicateError('enter valid name');
-        return;
       }
-      super.resolve(inputString);
+      createdProject = new Project(inputString, this.ui.projectOwner, this.ui.description.textString, true);
+      try {
+        createdProject.create(createNewRemote);
+        super.resolve(createdProject);
+      } catch (err) {
+        this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
+      }
     }
   }
 
   viewDidLoad () {
+    if (!this.canBeCancelled) this.ui.cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
     } else this.projectNameMode();
@@ -73,6 +91,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   waitForLogin () {
     this.ui.projectName.deactivate();
     this.ui.remoteUrl.deactivate();
+    this.ui.description.deactivate();
 
     this.ui.userFlapContainer.visible = true;
     this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red })
@@ -106,6 +125,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     this.fromRemote = false;
     this.ui.projectName.activate();
     this.ui.projectOwner.activate();
+    this.ui.description.activate();
+    this.ui.createRemoteCheckbox.enable();
     this.ui.remoteUrl.deactivate();
     this.ui.projectOwner.indicateError('required', 'github user name of the project owner');
     this.ui.projectName.indicateError('required', 'only - and letters are allowed');
@@ -113,8 +134,11 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
 
   remoteUrlMode () {
     this.fromRemote = true;
+    this.ui.createRemoteCheckbox.disable();
+    this.ui.createRemoteCheckbox.checked = false;
     this.ui.projectName.deactivate();
     this.ui.projectOwner.deactivate();
+    this.ui.description.deactivate();
     this.ui.remoteUrl.activate();
     this.ui.remoteUrl.indicateError('required', 'must be the url to a github repository');
   }
@@ -182,73 +206,79 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         axis: 'column',
         hugContentsHorizontally: true,
         orderByIndex: true,
-        resizePolicies: [['description', {
-          height: 'fill',
-          width: 'fill'
-        }]],
         spacing: 5
       }),
-      submorphs: [
-        {
-          name: 'user flap container',
-          visible: false,
-          clipMode: 'hidden',
-          borderRadius: 20,
-          borderWidth: 2,
-          layout: new TilingLayout({
-            align: 'center',
-            orderByIndex: true
-          }),
-          extent: pt(318, 48.9),
-          fill: Color.transparent,
-          submorphs: [
-            part(UserFlap)
-          ]
-
-        },
-        {
-          fill: Color.transparent,
-          layout: new TilingLayout({
-            align: 'center',
-            axisAlign: 'center'
-          }),
-          submorphs: [
-            part(LabeledCheckBox, { name: 'from remote checkbox', viewModel: { label: 'Initialize from Remote?' } }),
-            part(InformIconOnLight, { viewModel: { information: 'Should the project be initialized from an existing remote repository?' } })
-          ]
-        },
-        part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
-        part(InputLineDefault, {
-          name: 'project name',
-          placeholder: 'Project Name',
-          submorphs: [{
-            name: 'placeholder',
-            extent: pt(142, 34),
-            fontFamily: '"IBM Plex Sans",Sans-Serif',
-            nativeCursor: 'text',
-            textAndAttributes: ['Project Name', null]
-          }]
-        }), part(InputLineDefault, {
-          name: 'project owner',
-          placeholder: 'Project Owner',
-          submorphs: [{
-            name: 'placeholder',
-            extent: pt(142, 34),
-            fontFamily: '"IBM Plex Sans",Sans-Serif',
-            nativeCursor: 'text',
-            textAndAttributes: ['Project Owner', null]
-          }]
+      submorphs: [{
+        name: 'user flap container',
+        visible: false,
+        clipMode: 'hidden',
+        borderRadius: 20,
+        borderWidth: 2,
+        layout: new TilingLayout({
+          align: 'center',
+          orderByIndex: true
         }),
-        {
-          name: 'description',
-          type: Text,
-          master: InputLineDefault,
-          textAndAttributes: ['Description of the Project', null],
-          lineWrapping: 'by-words',
-          readOnly: false,
-          fixedHeight: true,
-          fixedWidth: true
-        }
+        extent: pt(318, 48.9),
+        fill: Color.transparent,
+        submorphs: [
+          part(UserFlap)
+        ]
+      },
+      {
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center'
+        }),
+        submorphs: [
+          part(LabeledCheckBox, { name: 'from remote checkbox', viewModel: { label: 'Initialize from Remote?' } }),
+          part(InformIconOnLight, { viewModel: { information: 'Should the project be initialized from an existing remote repository?' } })
+        ]
+      }, part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
+      part(InputLineDefault, {
+        name: 'project name',
+        placeholder: 'Project Name',
+        submorphs: [{
+          name: 'placeholder',
+          extent: pt(142, 34),
+          fontFamily: '"IBM Plex Sans",Sans-Serif',
+          nativeCursor: 'text',
+          textAndAttributes: ['Project Name', null]
+        }]
+      }), part(InputLineDefault, {
+        name: 'project owner',
+        placeholder: 'Project Owner',
+        submorphs: [{
+          name: 'placeholder',
+          extent: pt(142, 34),
+          fontFamily: '"IBM Plex Sans",Sans-Serif',
+          nativeCursor: 'text'
+        }]
+      }),
+      {
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center'
+        }),
+        submorphs: [
+          part(LabeledCheckBox, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
+          part(InformIconOnLight, { viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' } })
+        ]
+      },
+      part(InputLineDefault, {
+        name: 'description',
+        extent: pt(318.1, 106.3),
+        placeholder: 'Project Description',
+        lineWrapping: 'by-words',
+        submorphs: [{
+          name: 'placeholder',
+          visible: false,
+          extent: pt(148, 34),
+          fontFamily: '"IBM Plex Sans",Sans-Serif',
+          nativeCursor: 'text'
+        }]
+      })
       ]
     }), add({
       name: 'button wrapper',
@@ -261,14 +291,15 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         renderViaCSS: true,
         spacing: 20
       }),
-      submorphs: [part(GreenButton, {
-        name: 'ok  button',
-        submorphs: [{ name: 'label', textString: 'Confirm' }]
-      }),
-      part(RedButton, {
-        name: 'cancel button',
-        submorphs: [{ name: 'label', textString: 'Cancel' }]
-      })
+      submorphs: [
+        part(GreenButton, {
+          name: 'ok button',
+          submorphs: [{ name: 'label', textString: 'Confirm' }]
+        }),
+        part(RedButton, {
+          name: 'cancel button',
+          submorphs: [{ name: 'label', textString: 'Cancel' }]
+        })
       ]
     })]
 });

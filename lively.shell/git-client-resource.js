@@ -25,13 +25,13 @@ export default class GitShellResource extends ShellClientResource {
     await cmd.whenDone();
   }
 
-  async addRemoteToGitRepository (token, repoName, repoUser) {
+  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription) {
     let repoCreationCommand = `curl \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${token}" \
               https://api.github.com/user/repos \
-              -d '{"name":"${repoName}"}'`;
+              -d '{"name":"${repoName}", "description": "${repoDescription}"}'`;
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
     let addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
