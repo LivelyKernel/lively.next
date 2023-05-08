@@ -12,6 +12,7 @@ import { without } from 'lively.morphic/components/core.js';
 
 import { Label } from 'lively.morphic/text/label.js';
 import { CheckBox } from 'lively.components/widgets.js';
+import { currentUsertoken } from 'lively.user';
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -60,7 +61,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
-    if (!$world.currentUsertoken) {
+    if (!currentUsertoken()) {
       this.waitForLogin();
     } else this.projectNameMode();
     this.ui.promptTitle.textString = 'Configure new Project:';

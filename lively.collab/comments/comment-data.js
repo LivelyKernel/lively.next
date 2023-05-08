@@ -1,5 +1,6 @@
 import { newUUID } from 'lively.lang/string.js';
 import { pt } from 'lively.graphics';
+import { currentUsername } from 'lively.user';
 
 export class CommentData {
   constructor (text, relativePosition = pt(0, 0)) {
@@ -8,7 +9,7 @@ export class CommentData {
     this.timestamp = new Date().getTime();
     this.position = relativePosition;
     this.resolved = undefined;
-    this.username = $world.currentUsername;
+    this.username = currentUsername();
     this.viewCollapsed = false;
   }
 

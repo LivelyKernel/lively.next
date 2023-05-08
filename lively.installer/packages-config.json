@@ -127,5 +127,9 @@
   {
     "name": "lively.project",
     "repoURL": "https://github.com/LivelyKernel/lively.next"
+  },
+  {
+    "name": "lively.user",
+    "repoURL": "https://github.com/LivelyKernel/lively.next"
   }
 ]
