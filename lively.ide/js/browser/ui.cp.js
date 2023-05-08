@@ -143,7 +143,6 @@ class ComponentEditControlModel extends ViewModel {
       view.bottom = -10;
       return;
     }
-    editor.readOnly = componentDescriptor.isDirty();
     view.leftCenter = await positionForAnchor(editor, anchor);
   }
 
@@ -413,7 +412,6 @@ class ComponentEditButtonMorph extends Morph {
       return;
     }
 
-    editor.readOnly = componentDescriptor.isDirty();
     this.leftCenter = await positionForAnchor(editor, anchor);
   }
 
