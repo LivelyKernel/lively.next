@@ -454,7 +454,7 @@ const DynamicProperty = component({
   submorphs: [part(PropertyLabel, {
     name: 'open popup',
     tooltip: 'Open Property Popup',
-    padding: rect(4, 4, 0, 0),
+    padding: rect(4, 0, 0, 0),
     master: {
       auto: PropertyLabel,
       hover: PropertyLabelHovered,

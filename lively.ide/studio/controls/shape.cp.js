@@ -332,9 +332,6 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
-        target.withMetaDo({ reconcileChanges: true }, () => {
-          target.layout = target.layout;
-        });
         this.ui.widthInput.enable();
         break;
       case ('fill'):
@@ -344,9 +341,6 @@ export class ShapeControlModel extends ViewModel {
         parent.layout.setResizePolicyFor(target, {
           width: 'fill',
           height: heightMode
-        });
-        parent.withMetaDo({ reconcileChanges: true }, () => {
-          parent.layout = parent.layout;
         });
         this.ui.widthInput.disable();
         break;
@@ -361,11 +355,14 @@ export class ShapeControlModel extends ViewModel {
         }
         target.layout.hugContentsHorizontally = true;
         target.layout.wrapSubmorphs = false;
-        target.withMetaDo({ reconcileChanges: true }, () => {
-          target.layout = target.layout;
-        });
         this.ui.widthInput.disable();
     }
+    target.layout && target.withMetaDo({ reconcileChanges: true }, () => {
+      target.layout = target.layout;
+    });
+    parent.withMetaDo({ reconcileChanges: true }, () => {
+      parent.layout = parent.layout;
+    });
   }
 
   changeHeight (newHeight) {
@@ -418,8 +415,11 @@ export class ShapeControlModel extends ViewModel {
         target.layout.wrapSubmorphs = false;
         this.ui.heightInput.disable();
     }
-    target.withMetaDo({ reconcileChanges: true }, () => {
+    target.layout && target.withMetaDo({ reconcileChanges: true }, () => {
       target.layout = target.layout;
+    });
+    parent.layout && parent.withMetaDo({ reconcileChanges: true }, () => {
+      parent.layout = parent.layout;
     });
   }
 
@@ -509,7 +509,7 @@ const ShapeControl = component({
         rotation: -1.57,
         fontFamily: 'Material Icons',
         textAndAttributes: ['', {
-          fontSize: 18,
+          fontSize: 18
         }]
       }]
     }),
@@ -566,7 +566,7 @@ const ShapeControl = component({
           rotation: -1.5707963267948966,
           reactsToPointer: false,
           textAndAttributes: [FIXED_ICON, {
-            fontSize: 16,
+            fontSize: 16
           }]
         }, 'label'),
         { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
@@ -604,7 +604,7 @@ const ShapeControl = component({
         reactsToPointer: false,
         lineHeight: 1,
         textAndAttributes: [FIXED_ICON, {
-          fontSize: 16,
+          fontSize: 16
         }]
       }, 'label'),
       { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
@@ -634,7 +634,7 @@ const ShapeControl = component({
         fontFamily: 'Material Icons',
         lineHeight: 1,
         textAndAttributes: ['\ue920', {
-          fontSize: 16,
+          fontSize: 16
         }]
       }]
     }), part(AddButton, {
@@ -644,7 +644,7 @@ const ShapeControl = component({
       padding: rect(3, 3, 0, 0),
       textAndAttributes: ['\ue5d0', {
         fontSize: 18,
-        fontFamily: 'Material Icons',
+        fontFamily: 'Material Icons'
       }]
     }),
     {
