@@ -402,7 +402,7 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   close () {
-    if (!this.showCloseButton) return;
+    if (this.showCloseButton === false) return;
     this.toggleFader(true);
     this.view.remove();
   }
