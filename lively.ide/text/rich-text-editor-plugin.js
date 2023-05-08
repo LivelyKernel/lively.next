@@ -39,6 +39,7 @@ export class RichTextPlugin extends EditorPlugin {
   showIconButton () {
     const iconButton = part(PropertyLabel, {
       reactsToPointer: false,
+      name: 'insert icon button',
       tooltip: 'Insert Icon',
       fontSize: 14,
       textAndAttributes: Icon.textAttribute('heart-music-camera-bolt')
