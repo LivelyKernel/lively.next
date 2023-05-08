@@ -1,11 +1,16 @@
 
 import ShellClientResource from './client-resource.js';
+import { runCommand } from 'lively.ide/shell/shell-interface.js';
 
 export default class GitShellResource extends ShellClientResource {
   constructor (url, l2lClient, options = {}) {
     url = url.replace('git\/', '');
     super(url);
     this.options.cwd = this.url;
+  }
+
+  runCommand (cmd) {
+    return runCommand(cmd, this.options);
   }
 
   async isGitRepository (withRemote = false) {
