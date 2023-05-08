@@ -1053,7 +1053,6 @@ class PropChangeReconciliation extends Reconciliation {
     let { target, prop } = this.change;
     // FIXME: extract via path instead of name
     const policy = this.getResponsiblePolicyFor(target);
-    if (prop === 'rotation') debugger;
     const { parent } = policy;
     let val;
     if (parent) {
