@@ -1058,8 +1058,10 @@ export class PolicyApplicator extends StylePolicy {
     let ownerSpec = this.ensureSubSpecFor(prevOwner);
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
     const removedMorphSpec = this.getSubSpecAt(
-      ...prevOwner.ownerChain().filter(m => !m.isWorld && m.master && !m.owner?.isWorld).map(m => m.name).reverse(),
-      ...prevOwner.owner?.master ? [prevOwner.name] : [], // if no owner, we dont need to mention the owner name
+      ...prevOwner.ownerChain()
+        .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
+        .map(m => m.name).reverse(),
+      ...(prevOwner.owner !== this.targetMorph && prevOwner.owner?.master) ? [prevOwner.owner.name] : [], // if no owner, we dont need to mention the owner name
       removedMorph.name
     );
     if (removedMorphSpec) {
