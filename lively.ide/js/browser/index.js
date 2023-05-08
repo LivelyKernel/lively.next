@@ -1296,15 +1296,19 @@ export class BrowserModel extends ViewModel {
     const pack = this.selectedPackage;
 
     if (this._return) return;
+    let proceed = true;
     if (this.selectedModule && this.hasUnsavedChanges()) {
-      const proceed = await this.warnForUnsavedChanges();
-      if (!proceed) {
-        this._return = true;
-        await this.state.history.navigationInProgress;
-        await this.selectModuleNamed(arr.last(this.state.history.left).module.url);
-        this._return = false;
-        return;
-      }
+      proceed = await this.warnForUnsavedChanges();
+    }
+
+    if (proceed) proceed = await this.cleanupActiveEditSessions();
+
+    if (!proceed) {
+      this._return = true;
+      await this.state.history.navigationInProgress;
+      await this.selectModuleNamed(arr.last(this.state.history.left).module.url);
+      this._return = false;
+      return;
     }
 
     this.state.moduleChangeWarning = null;
@@ -2176,7 +2180,17 @@ export class BrowserModel extends ViewModel {
   async onWindowClose () {
     let proceed = true;
     if (this.hasUnsavedChanges()) proceed = await this.warnForUnsavedChanges();
+    if (proceed) proceed = await this.cleanupActiveEditSessions();
     return proceed;
+  }
+
+  async cleanupActiveEditSessions () {
+    const activeSessions = this.activeComponentEditSessions();
+    for (let session of activeSessions) {
+      if (!await session.terminateIfNoEditorExcept()) return false;
+    }
+    delete this.ui.sourceEditor._confirmedProceed;
+    return true;
   }
 
   focus (evt) {
@@ -2500,4 +2514,3 @@ export class BrowserModel extends ViewModel {
     ].filter(Boolean);
   }
 }
-

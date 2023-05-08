@@ -72,7 +72,11 @@ class ComponentEditControlModel extends ViewModel {
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
-          return ['positionInLine', 'collapse', 'isComponentControl', 'componentDescriptor', 'declaration', 'isActiveEditSession', 'terminateEditSession'];
+          return [
+            'positionInLine', 'collapse', 'isComponentControl', 'componentDescriptor',
+            'declaration', 'isActiveEditSession', 'terminateEditSession',
+            'terminateIfNoEditorExcept'
+          ];
         }
       },
       bindings: {
@@ -91,6 +95,16 @@ class ComponentEditControlModel extends ViewModel {
         }
       }
     };
+  }
+
+  async terminateIfNoEditorExcept () {
+    const browsers = this.getAllOtherEqualBrowsers();
+    if (browsers.length > 0) return true;
+    const proceed = this.editor._confirmedProceed || await this.world().confirm(['Pending Edit Sessions', {}, '\nYou still have some active component edit sessions that are about to be closed. Are you sure you want to proceed?', { fontWeight: 'normal', fontSize: 18 }], { requester: this.editor.owner });
+    if (!proceed) return false;
+    this.editor._confirmedProceed = true;
+    this.terminateEditSession();
+    return true;
   }
 
   viewDidLoad () {
@@ -225,8 +239,8 @@ class ComponentEditControlModel extends ViewModel {
   }
 
   getAllOtherEqualBrowsers () {
-    const browsers = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor.textString);
-    return browsers
+    const editors = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor.textString);
+    return editors
       .filter(m => m !== this.editor)
       .map(ed => ed.owner);
   }
@@ -333,8 +347,8 @@ class ComponentEditButtonMorph extends Morph {
   }
 
   getAllOtherEqualBrowsers () {
-    const browsers = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor.textString);
-    return browsers
+    const editors = getEligibleSourceEditorsFor(System.decanonicalize(this.componentDescriptor.moduleName), this.editor?.textString);
+    return editors
       .filter(m => m !== this.editor)
       .map(ed => ed.owner);
   }
