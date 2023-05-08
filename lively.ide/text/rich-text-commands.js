@@ -80,13 +80,12 @@ export const interactiveCommands = [
       }));
       const [iconName] = res.selected;
 
-      let previousAttributes = morph.textAttributeAt(morph.cursorPosition);
+      let previousAttributes = { ...morph.textAttributeAt(morph.cursorPosition) };
       if (iconName) {
-        morph.insertText(Icon.textAttribute(iconName));
-
-        if (previousAttributes) previousAttributes = obj.merge(morph.defaultTextStyle, previousAttributes);
-        else previousAttributes = morph.defaultTextStyle;
-        morph.insertText([' ', previousAttributes]);
+        morph.withMetaDo({ reconcileChanges: true }, () => {
+          morph.insertText(Icon.textAttribute(iconName));
+          morph.insertText([' ', previousAttributes], morph.cursorPosition, false);
+        });
       }
       morph.focus();
       morph.keepTmpEditMode = false;
