@@ -6,7 +6,7 @@ import {
   component, ViewModel, part
 } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
-import { Closure, obj } from 'lively.lang';
+import { Closure, fun, obj } from 'lively.lang';
 
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
@@ -14,9 +14,8 @@ import { getClassName } from 'lively.serializer2';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
-import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
-
 import { UserFlap } from './user-flap.cp.js';
+import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -850,31 +849,6 @@ export class TopBarModel extends ViewModel {
     }
   }
 }
-
-const TopBarButton = component({
-  type: Label,
-  name: 'top bar button',
-  lineHeight: 1,
-  fontColor: {
-    value: Color.rgb(102, 102, 102),
-    onlyAtInstantiation: true
-  },
-  fontSize: {
-    value: 23,
-    onlyAtInstantiation: true
-  },
-  nativeCursor: 'pointer',
-  padding: {
-    value: rect(0, 1, 0, -1),
-    onlyAtInstantiation: true
-  }
-});
-
-const TopBarButtonSelected = component(TopBarButton, {
-  name: 'top bar button selected',
-  dropShadow: new ShadowObject({ color: Color.rgba(64, 196, 255, 0.4), fast: false }),
-  fontColor: Color.rgb(0, 176, 255)
-});
 
 const TopBar = component({
   name: 'top bar',
