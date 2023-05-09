@@ -13,6 +13,8 @@ import { without } from 'lively.morphic/components/core.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { CheckBox } from 'lively.components/widgets.js';
 import { currentUsertoken } from 'lively.user';
+import { Project } from 'lively.project';
+import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -121,6 +123,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
 class ProjectSavePrompt extends AbstractPromptModel {
   static get properties () {
     return {
+      project: { },
       bindings: {
         get () {
           return [
@@ -143,7 +146,10 @@ class ProjectSavePrompt extends AbstractPromptModel {
     else if (this.increaseMinor) increaseLevel = 'minor';
     else increaseLevel = 'patch';
 
-    await $world.openedProject.save({ increaseLevel, message });
+    const success = await this.project.save({ increaseLevel, message });
+    this.view.remove();
+    if (success) $world.setStatusMessage('✅ Project saved!', StatusMessageConfirm);
+    else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
   }
 }
 
