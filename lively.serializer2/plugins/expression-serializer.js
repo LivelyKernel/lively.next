@@ -571,7 +571,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (Array.isArray(val)) {
       // check if each array member is seralizable
       const serializedArray = getArrayExpression(name, val, path, opts);
-      if (styleProto) {
+      if (styleProto && Array.isArray(styleProto[name])) {
         const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, opts));
         if (JSON.stringify(serializedArray) === other) continue;
       }
