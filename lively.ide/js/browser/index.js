@@ -1292,7 +1292,7 @@ export class BrowserModel extends ViewModel {
     metaInfoText.showDefault();
   }
 
-  async onModuleSelected (m) {
+  async onModuleSelected (m, cleanupComponents = true) {
     const pack = this.selectedPackage;
 
     if (this._return) return;
@@ -1301,7 +1301,7 @@ export class BrowserModel extends ViewModel {
       proceed = await this.warnForUnsavedChanges();
     }
 
-    if (proceed) proceed = await this.cleanupActiveEditSessions();
+    if (cleanupComponents && proceed) proceed = await this.cleanupActiveEditSessions();
 
     if (!proceed) {
       this._return = true;
@@ -2137,7 +2137,11 @@ export class BrowserModel extends ViewModel {
       if (this.hasUnsavedChanges()) {
         this.addModuleChangeWarning(m.id);
         this.state.sourceHash = string.hashCode(await m.source());
-      } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(selectedModule));
+      } else {
+        await this.ui.sourceEditor.saveExcursion(() => {
+          this.onModuleSelected(selectedModule, false);
+        });
+      }
     }
   }
 
