@@ -50,6 +50,11 @@ export class LivelyWorld extends World {
       openNewProjectPrompt: { },
       openNewWorldPrompt: { },
       projectToBeOpened: { },
+      playgroundsMode: {
+        get () {
+          return !(this.openNewProjectPrompt || this.projectToBeOpened || this.openedProject);
+        }
+      },
       clipMode: {
         defaultValue: 'hidden',
         readOnly: true,

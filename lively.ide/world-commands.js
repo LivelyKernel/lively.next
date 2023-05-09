@@ -1,6 +1,6 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, date, Path, arr, string, obj } from 'lively.lang';
+import { tree, date, arr, string, obj } from 'lively.lang';
 import { inspect, morph, Text, config, part } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -16,6 +16,7 @@ import { WorldBrowser, WorldBrowserModel } from './studio/world-browser.cp.js';
 import { Console } from './debug/console.cp.js';
 import { WindowSwitcher } from './window-switcher.cp.js';
 import { browserForFile } from './js/browser/ui.cp.js';
+import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
 
 const commands = [
 
@@ -624,7 +625,9 @@ const commands = [
     name: 'open shell terminal',
     exec: async (world, opts) => {
       const { default: Terminal } = await System.import('lively.ide/shell/terminal.js');
-      return Terminal.open(opts).openInWorldNearHand();
+      const term = Terminal.open(opts).openInWorldNearHand();
+      if (opts.position) term.position = opts.position;
+      return term;
     }
   },
 
@@ -1195,20 +1198,20 @@ const commands = [
   },
 
   {
-    // TODO: We also might want to save world snapshots **insid** of projects.
     name: 'save world or project',
     exec: async (world, args, _, evt) => {
-      if (config.ide.projectsEnabled) {
-        await $world.openedProject.save();
+      let saved;
+      if ($world.openedProject) {
+        saved = await $world.openPrompt(part(SaveProjectDialog, { viewModel: { project: $world.openedProject } }));
       } else { // in case there is another morph implementing save...
         const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
         if (relayed) return relayed;
         args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
         const focused = world.focusedMorph;
-        const saved = await interactivelySaveWorld(world, args);
+        saved = await interactivelySaveWorld(world, args);
         if (focused && focused.focus());
-        return saved;
       }
+      return saved;
     }
   },
 

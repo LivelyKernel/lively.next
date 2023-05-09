@@ -14,7 +14,7 @@ class TopBarButtonModel extends ViewModel {
   }
 
   activateButton () {
-    this.view.master = TopBarButtonSelected;
+    this.view.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
   }
 
   deactivateButton () {
@@ -44,7 +44,7 @@ class TopBarButtonDropDownModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['dropdown', 'symbol', 'activateButton', 'deactivateButton'];
+          return ['dropdown', 'symbol', 'activateButton', 'deactivateButton', 'removeDropdown'];
         }
       },
       opts: {}
@@ -77,8 +77,18 @@ class TopBarButtonDropDownModel extends ViewModel {
     symbolButton.tooltip = opts.symbol.tooltip;
     symbolButton.textAndAttributes = opts.symbol.textAndAttributes;
     dropdownButton.name = opts.dropdown.name;
-
+    // what the fuck?
     delete this.view.owner.owner.viewModel._ui;
+  }
+
+  /**
+   * This might seem non-sensical, but for the moment it allows us to "downgrade" a dropdown-equipped button if necessary
+   * The more proper solution might be to unify the two types of buttons more,
+   * or actually dealing with exchanging the button where we want to downgrade
+   */
+  removeDropdown () {
+    const dropdown = this.view.get(this.opts.dropdown.name);
+    dropdown.remove();
   }
 }
 
@@ -89,6 +99,7 @@ export const TopBarButtonDropDown = component({
   fill: Color.rgba(46, 75, 223, 0),
   layout: new TilingLayout({
     axisAlign: 'center',
+    hugContentsHorizontally: true,
     align: 'center',
     padding: {
       height: 0,

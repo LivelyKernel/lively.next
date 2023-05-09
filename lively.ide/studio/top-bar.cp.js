@@ -16,6 +16,7 @@ import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
 import { UserFlap } from './user-flap.cp.js';
 import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
+import { notYetImplemented } from 'lively.lang/function.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -163,6 +164,10 @@ export class TopBarModel extends ViewModel {
         $world.openMenu($world.menuItems());
       });
     }
+
+    if ($world.playgroundsMode) {
+      this.ui.saveButton.removeDropdown();
+    }
   }
 
   onMouseDown (evt) {
@@ -172,7 +177,16 @@ export class TopBarModel extends ViewModel {
     const shapeModeButton = this.ui.shapeModeButton;
     const canvasModeButton = this.ui.canvasModeButton;
     const canvasModeSelector = this.ui.canvasModeButton.dropdown;
+    const saveButton = this.ui.saveButton;
+    const saveMenu = this.ui.saveButton.dropdown;
     const target = this.primaryTarget || this.world();
+
+    if (evt.targetMorph === saveButton) $world.execCommand('save world or project');
+
+    if (evt.targetMorph === saveMenu) {
+      const menu = $world.openWorldMenu(evt, this.getSaveMenuItems());
+      menu.position = saveButton.globalBounds().bottomLeft().subPt($world.scroll);
+    }
 
     if (evt.targetMorph === shapeSelector) {
       const menu = $world.openWorldMenu(evt, this.getShapeMenuItems());
@@ -189,10 +203,6 @@ export class TopBarModel extends ViewModel {
 
     if (evt.targetMorph.name === 'redo button') {
       target.execCommand('redo');
-    }
-
-    if (evt.targetMorph.name === 'save button') {
-      $world.execCommand('save world or project');
     }
 
     if (evt.targetMorph === shapeModeButton) {
@@ -293,6 +303,14 @@ export class TopBarModel extends ViewModel {
       this.ui.userFlap.right = this.width - 10;
       this.ui.userFlap.visible = this.width > 750;
     }
+  }
+
+  getSaveMenuItems () {
+    return [
+      ['Save this workspace', () => { notYetImplemented('Saving workspaces'); }],
+      ['Save this workspace under different name ', () => { notYetImplemented('Saving workspaces'); }],
+      ['Open a Terminal (advanced operation)', () => { $world.execCommand('open shell terminal', { position: $world.center.subXY(300, 150) }); }]
+    ];
   }
 
   getHandAndHaloModeItems () {
@@ -894,11 +912,21 @@ const TopBar = component({
         textAndAttributes: Icon.textAttribute('share'),
         tooltip: 'Redo'
       }),
-      part(TopBarButton, {
-        name: 'save button',
-        padding: rect(0, 1, 16, -1),
-        textAndAttributes: Icon.textAttribute('save'),
-        tooltip: 'Save World'
+      part(TopBarButtonDropDown, {
+        viewModel: {
+          opts: {
+            name: 'save button',
+            tooltip: 'Choose advanced saving options for Projects.',
+            symbol: {
+              name: 'save symbol',
+              textAndAttributes: Icon.textAttribute('save'),
+              tooltip: 'Save Project or World'
+            },
+            dropdown: {
+              name: 'open save menu'
+            }
+          }
+        }
       }),
       part(TopBarButtonDropDown, {
         viewModel: {
