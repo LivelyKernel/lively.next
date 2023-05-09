@@ -2,17 +2,14 @@
 /* eslint-disable no-console */
 import { localInterface } from 'lively-system-interface';
 import { resource } from 'lively.resources';
-
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPackage } from 'lively-system-interface/commands/packages.js';
 import { workflowDefinition } from './templates/test-action.js';
-
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import { packageJSON } from './templates/package-json.js';
 import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 
@@ -21,15 +18,24 @@ export class Project {
     return this.config.name;
   }
 
-  // TODO: fix load param
-  constructor (name, author, description, load = false) {
-    this.config = {};
-    const { config } = this;
-    config.name = name || 'new world';
-    config.maintainer = author;
-    config.description = description;
+  constructor (name, author, description) {
+    this.config = {
+      name: name || 'new world',
+      author: {
+        // TODO: we might beef that up later on with a more fully fledged lively.user implementation
+        name: author
+      },
+      description: description,
+      repository: {
+        type: 'git',
+        url: `https://github.com/${author}/${name}`
+      },
+      lively: {
+      }
+    };
+
     this.saved = false;
-    // if (!load) VersionChecker.currentLivelyVersion().then(version => config.lively.boundLivelyVersion = version);
+    VersionChecker.currentLivelyVersion().then(version => this.config.lively.boundLivelyVersion = version);
   }
 
   static async listAvailableProjects () {
@@ -131,7 +137,6 @@ export class Project {
     return localInterface.coreInterface;
   }
 
-  // TODO: store the actual version lol
   async bindAgainstCurrentLivelyVersion () {
     const currentCommit = await VersionChecker.currentLivelyVersion();
     const { comparison, hash } = await VersionChecker.checkVersionRelation(currentCommit);
@@ -143,6 +148,8 @@ export class Project {
         if (!confirmed) $world.setStatusMessage('Changing the required version of lively.next has been canceled.');
         else {
           $world.setStatusMessage(`Updated the required version of lively.next for ${this.config.name}.`, StatusMessageConfirm);
+          this.config.lively.boundLivelyVersion = currentCommit;
+          await this.saveConfigData();
           await this.regenerateTestPipeline();
         }
 
@@ -155,7 +162,6 @@ export class Project {
   }
 
   async create (withRemote = false) {
-    debugger;
     this.gitResource = null;
     const system = Project.system;
     let res, guessedAddress;
@@ -175,7 +181,7 @@ export class Project {
 
     await system.resourceCreateFiles(url, {
       'index.js': "'format esm';\n",
-      'package.json': packageJSON,
+      'package.json': '',
       '.gitignore': 'node_modules/',
       'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
       '.github': {
@@ -229,7 +235,7 @@ export class Project {
   }
 
   fillPipelineTemplate (workflowDefinition) {
-    let definiton = workflowDefinition.replace('%LIVELY_VERSION%', this.boundLivelyVersion);
+    let definiton = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
     return definiton.replaceAll('%PROJECT_NAME%', this.name);
   }
 
