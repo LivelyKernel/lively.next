@@ -130,6 +130,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    */
   async reset () {
     await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.moduleName);
+    this._dirty = false;
   }
 
   /**
@@ -144,6 +145,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   stopEditSession () {
+    this._backupComponentDef = null;
     this._cachedComponent = null;
   }
 
