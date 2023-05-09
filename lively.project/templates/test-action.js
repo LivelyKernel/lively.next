@@ -27,7 +27,7 @@ jobs:
       - name: Checkout Project Repository
         uses: actions/checkout@v3
         with:
-          path: projects/%PROJECT_NAME%
+          path: local_projects/%PROJECT_NAME%
       - name: Start lively.next
         run: |
           chmod a+x ./start.sh

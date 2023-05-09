@@ -26,7 +26,7 @@ export class Project {
 
   static async listAvailableProjects () {
     const baseURL = await Project.system.getConfig().baseURL;
-    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../projects').withRelativePartsResolved().asDirectory() : resource(baseURL).join('projects').asDirectory();
+    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : resource(baseURL).join('local_projects').asDirectory();
 
 
     let projectsCandidates = await resource(projectsDir).dirList(2, {
@@ -50,7 +50,7 @@ export class Project {
 
     const userToken = $world.currentUsertoken;
     // FIXME: This relies on the assumption, that the default directory the shell command gets placed in is `lively.server
-    const cmd = runCommand(`cd ../projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone(); // TODO: this needs error handling
     // CAUTION: This makes it so that repo name = project name for now!
     const projectName = remoteUrl.pathname.match(/\/.+\/(.*)/)[1];
@@ -64,14 +64,14 @@ export class Project {
 
     let address, url;
     let baseURL = (await Project.system.getConfig()).baseURL;
-    address = resource(baseURL).join('projects').join(name).asDirectory();
+    address = resource(baseURL).join('local_projects').join(name).asDirectory();
     url = address.url;
 
     // FIXME: might not be necessary after all?
     // await Project.system.removePackage(url); // precaution to prevent funky behavior when loading the same package twice inside of lively
 
     // gitResource can now be used to execute git operations in the location of the project in the file system
-    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('projects').join(name).withRelativePartsResolved().asDirectory();
+    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(name).withRelativePartsResolved().asDirectory();
 
     // await this.gitResource.pullRepo();
     // laod package into lively
@@ -156,7 +156,7 @@ export class Project {
       guessedAddress = res.url;
     } catch (e) {
       let baseURL = (await system.getConfig()).baseURL;
-      let maybePackageDir = resource(baseURL).join('projects').join(this.name).asDirectory().url;
+      let maybePackageDir = resource(baseURL).join('local_projects').join(this.name).asDirectory().url;
       guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, '/');
     }
 
@@ -190,7 +190,7 @@ export class Project {
       'index.css': ''
     });
 
-    this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('projects').join(this.name).withRelativePartsResolved().asDirectory();
+    this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.name).withRelativePartsResolved().asDirectory();
     this.configFile = await resource(address.join('package.json').url);
 
     await this.gitResource.initializeGitRepository($world.currentUsertoken, this.name, this.owner);
