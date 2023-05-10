@@ -84,21 +84,20 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
-    const { promptTitle, userSelector, cancelButton } = this.ui;
+    const { promptTitle, cancelButton } = this.ui;
     if (!this.canBeCancelled) cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
     } else this.projectNameMode();
     promptTitle.textString = 'Configure new Project:';
-    const ownerOptions = currentUsersOrganizations().map(orgName => { return { string: orgName, value: { name: orgName, isOrg: true }, isListItem: true }; });
-    userSelector.items = [{ string: currentUsername(), value: { name: currentUsername(), isOrg: false }, isListItem: true }].concat(ownerOptions);
-    userSelector.selection = userSelector.items[0];
   }
 
   waitForLogin () {
     this.ui.projectName.deactivate();
     this.ui.remoteUrl.deactivate();
     this.ui.description.deactivate();
+    this.ui.createRemoteCheckbox.disable();
+    this.ui.userSelector.disable();
 
     this.ui.userFlapContainer.visible = true;
     this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red })
@@ -136,6 +135,10 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     createRemoteCheckbox.enable();
     remoteUrl.deactivate();
     projectName.indicateError('required', 'only - and letters are allowed');
+    // we do this here since we are sure that we are logged in when we reach this method!
+    const ownerOptions = currentUsersOrganizations().map(orgName => { return { string: orgName, value: { name: orgName, isOrg: true }, isListItem: true }; });
+    userSelector.items = [{ string: currentUsername(), value: { name: currentUsername(), isOrg: false }, isListItem: true }].concat(ownerOptions);
+    userSelector.selection = userSelector.items[0];
   }
 
   remoteUrlMode () {
@@ -269,7 +272,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           openListInWorld: true,
           listAlign: 'selection',
           items: [
-            { string: 'Fixed', value: 'fixed', isListItem: true }
+            { string: '---', value: '---', isListItem: true }
           ]
         }
       }),
