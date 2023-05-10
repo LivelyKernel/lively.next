@@ -4,7 +4,7 @@ import { AbstractPromptModel, RedButton, GreenButton, LightPrompt } from 'lively
 import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
-import { UserFlap } from 'lively.user/user-flap.cp.js'
+import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { connect } from 'lively.bindings';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
@@ -15,6 +15,9 @@ import { CheckBox } from 'lively.components/widgets.js';
 import { currentUsertoken, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
+import { SystemList } from 'lively.ide/styling/shared.cp.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -42,36 +45,37 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async resolve () {
+    const { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
     let createdProject;
-    const inputElement = this.fromRemote ? this.ui.remoteUrl : this.ui.projectName;
-    const inputString = inputElement.textString;
-    const createNewRemote = this.ui.createRemoteCheckbox.checked;
+
     if (this.fromRemote) {
       try {
-        const url = new URL(inputString);
+        const url = new URL(remoteUrl.textString);
         if (url.host !== 'github.com') {
-          inputElement.clear();
-          inputElement.indicateError('enter github url');
+          remoteUrl.clear();
+          remoteUrl.indicateError('enter github url');
           return;
         }
       } catch (err) {
-        inputElement.indicateError('enter valid url');
+        remoteUrl.indicateError('enter valid url');
       }
       // we got a valid github URL
       try {
-        createdProject = await Project.fromRemote(inputString);
+        createdProject = await Project.fromRemote(remoteUrl.textString);
         super.resolve(createdProject);
       } catch (err) {
         this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
       }
     } else {
-      if (!inputString || !inputString.match(/^[a-zA-Z-]*$/)) {
-        inputElement.clear();
-        inputElement.indicateError('enter valid name');
+      const createNewRemote = createRemoteCheckbox.checked;
+      if (!projectName.textString || !projectName.textString.match(/^[a-zA-Z-]*$/)) {
+        projectName.clear();
+        projectName.indicateError('enter valid name');
       }
-      createdProject = new Project(inputString, this.ui.projectOwner, this.ui.description.textString, true);
+      const { name: repoOwner, isOrg } = userSelector.selection;
+      createdProject = new Project(projectName.textString, true, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
       try {
-        createdProject.create(createNewRemote);
+        createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
         super.resolve(createdProject);
       } catch (err) {
         this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
@@ -80,12 +84,15 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
-    if (!this.canBeCancelled) this.ui.cancelButton.disable();
+    const { promptTitle, userSelector, cancelButton } = this.ui;
+    if (!this.canBeCancelled) cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
     } else this.projectNameMode();
-    this.ui.promptTitle.textString = 'Configure new Project:';
-    this.ui.okButton.submorphs[0].textString = 'Confirm';
+    promptTitle.textString = 'Configure new Project:';
+    const ownerOptions = currentUsersOrganizations().map(orgName => { return { string: orgName, value: { name: orgName, isOrg: true }, isListItem: true }; });
+    userSelector.items = [{ string: currentUsername(), value: { name: currentUsername(), isOrg: false }, isListItem: true }].concat(ownerOptions);
+    userSelector.selection = userSelector.items[0];
   }
 
   waitForLogin () {
@@ -113,7 +120,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   onCheckbox (fromRemote) {
     this.ui.remoteUrl.clearError();
     this.ui.projectName.clearError();
-    this.ui.projectOwner.clearError();
     if (fromRemote) {
       this.remoteUrlMode();
     } else {
@@ -122,25 +128,26 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   projectNameMode () {
+    const { projectName, userSelector, description, createRemoteCheckbox, remoteUrl } = this.ui;
     this.fromRemote = false;
-    this.ui.projectName.activate();
-    this.ui.projectOwner.activate();
-    this.ui.description.activate();
-    this.ui.createRemoteCheckbox.enable();
-    this.ui.remoteUrl.deactivate();
-    this.ui.projectOwner.indicateError('required', 'github user name of the project owner');
-    this.ui.projectName.indicateError('required', 'only - and letters are allowed');
+    projectName.activate();
+    userSelector.enable();
+    description.activate();
+    createRemoteCheckbox.enable();
+    remoteUrl.deactivate();
+    projectName.indicateError('required', 'only - and letters are allowed');
   }
 
   remoteUrlMode () {
+    const { projectName, userSelector, description, createRemoteCheckbox, remoteUrl } = this.ui;
     this.fromRemote = true;
-    this.ui.createRemoteCheckbox.disable();
-    this.ui.createRemoteCheckbox.checked = false;
-    this.ui.projectName.deactivate();
-    this.ui.projectOwner.deactivate();
-    this.ui.description.deactivate();
-    this.ui.remoteUrl.activate();
-    this.ui.remoteUrl.indicateError('required', 'must be the url to a github repository');
+    createRemoteCheckbox.disable();
+    createRemoteCheckbox.checked = false;
+    projectName.deactivate();
+    userSelector.disable();
+    description.deactivate();
+    remoteUrl.activate();
+    remoteUrl.indicateError('required', 'must be the url to a github repository');
   }
 }
 
@@ -172,7 +179,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
 
     const success = await this.project.save({ increaseLevel, message });
     this.view.remove();
-    if (success) $world.setStatusMessage('✅ Project saved!', StatusMessageConfirm);
+    if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
     else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
   }
 }
@@ -245,15 +252,26 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           nativeCursor: 'text',
           textAndAttributes: ['Project Name', null]
         }]
-      }), part(InputLineDefault, {
-        name: 'project owner',
-        placeholder: 'Project Owner',
-        submorphs: [{
-          name: 'placeholder',
-          extent: pt(142, 34),
-          fontFamily: '"IBM Plex Sans",Sans-Serif',
-          nativeCursor: 'text'
-        }]
+      }), part(EnumSelector, {
+        name: 'user selector',
+        master: SystemButton,
+        layout: new TilingLayout(
+          {
+            align: 'center',
+            axisAlign: 'center',
+            justifySubmorphs: 'spaced',
+            orderByIndex: true,
+            padding: rect(5, 0, 5, 0),
+            resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
+          }),
+        viewModel: {
+          listMaster: SystemList,
+          openListInWorld: true,
+          listAlign: 'selection',
+          items: [
+            { string: 'Fixed', value: 'fixed', isListItem: true }
+          ]
+        }
       }),
       {
         fill: Color.transparent,
@@ -293,12 +311,10 @@ export const ProjectCreationPrompt = component(LightPrompt, {
       }),
       submorphs: [
         part(GreenButton, {
-          name: 'ok button',
-          submorphs: [{ name: 'label', textString: 'Confirm' }]
+          name: 'ok button'
         }),
         part(RedButton, {
-          name: 'cancel button',
-          submorphs: [{ name: 'label', textString: 'Cancel' }]
+          name: 'cancel button'
         })
       ]
     })]
