@@ -20,7 +20,7 @@ class UserFlapModel extends ViewModel {
 
   viewDidLoad () {
     const { leftUserLabel, rightUserLabel } = this.ui;
-    if (!currentUser().login === 'guest') {
+    if (currentUser().login === 'guest') {
       connect(leftUserLabel, 'onMouseDown', this, 'login');
       leftUserLabel.tooltip = 'Login with GitHub';
     } else {
@@ -122,6 +122,7 @@ class UserFlapModel extends ViewModel {
     const { avatar, leftUserLabel, rightUserLabel } = this.ui;
     try {
       const userData = currentUser();
+      if (userData.login === 'guest') return;
       avatar.loadUrl(userData.avatar_url, false);
       leftUserLabel.textString = userData.login;
       rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
