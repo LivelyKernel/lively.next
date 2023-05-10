@@ -31,7 +31,8 @@ export class Project {
         url: `https://github.com/${author}/${name}`
       },
       lively: {
-      }
+      },
+      version: '0.1.0'
     };
 
     this.saved = false;
