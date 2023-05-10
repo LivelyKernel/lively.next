@@ -14,7 +14,7 @@ import { getClassName } from 'lively.serializer2';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
-import { UserFlap } from './user-flap.cp.js';
+import { UserFlap } from 'lively.user/user-flap.cp.js'
 import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 

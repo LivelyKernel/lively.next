@@ -4,7 +4,7 @@ import { AbstractPromptModel, RedButton, GreenButton, LightPrompt } from 'lively
 import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
-import { UserFlap } from 'lively.ide/studio/user-flap.cp.js';
+import { UserFlap } from 'lively.user/user-flap.cp.js'
 import { connect } from 'lively.bindings';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
@@ -12,7 +12,7 @@ import { without } from 'lively.morphic/components/core.js';
 
 import { Label } from 'lively.morphic/text/label.js';
 import { CheckBox } from 'lively.components/widgets.js';
-import { currentUsertoken } from 'lively.user';
+import { currentUsertoken, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
@@ -104,7 +104,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   onLogin () {
-    $world.get('user flap').showLoggedInUser();
+    $world.get('user flap')?.showLoggedInUser();
     this.ui.userFlapContainer.visible = false;
     this.withoutBindingsDo(() => this.ui.fromRemoteCheckbox.enable());
     this.projectNameMode();
