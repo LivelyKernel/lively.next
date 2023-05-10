@@ -14,6 +14,11 @@ import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 
 export class Project {
+  static async projectDirectory () {
+    const baseURL = await Project.system.getConfig().baseURL;
+    return resource(baseURL).join('local_projects').asDirectory();
+  }
+
   get name () {
     return this.config.name;
   }
@@ -42,8 +47,8 @@ export class Project {
   }
 
   static async listAvailableProjects () {
-    const baseURL = await Project.system.getConfig().baseURL;
-    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : resource(baseURL).join('local_projects').asDirectory();
+    const baseURL = (await Project.system.getConfig()).baseURL;
+    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : Project.projectDirectory();
 
     let projectsCandidates = await resource(projectsDir).dirList(2, {
       exclude: dir => {
@@ -65,7 +70,7 @@ export class Project {
     const remoteUrl = new URL(remote);
 
     const userToken = currentUsertoken();
-    // FIXME: This relies on the assumption, that the default directory the shell command gets placed in is `lively.server
+    // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
     const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone(); // TODO: this needs error handling
     // CAUTION: This makes it so that repo name = project name for now!
@@ -75,22 +80,18 @@ export class Project {
   }
 
   static async loadProject (name) {
-    // create Project object and do not bind to the current version
-    const loadedProject = new Project(name, {}, false);
+    // Create Project object and do not bind to the current version.
+    // It acts merely as a container until we fill in the correct contents below.
+    const loadedProject = new Project(name, false);
 
     let address, url;
-    let baseURL = (await Project.system.getConfig()).baseURL;
-    address = resource(baseURL).join('local_projects').join(name).asDirectory();
+    address = (await Project.projectDirectory()).join('name');
     url = address.url;
 
-    // FIXME: might not be necessary after all?
-    // await Project.system.removePackage(url); // precaution to prevent funky behavior when loading the same package twice inside of lively
-
-    // gitResource can now be used to execute git operations in the location of the project in the file system
     loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(name).withRelativePartsResolved().asDirectory();
 
     // await this.gitResource.pullRepo();
-    // laod package into lively
+    // load package into lively
     const pkg = await loadPackage(Project.system, {
       name: name,
       address: url,
@@ -167,22 +168,10 @@ export class Project {
   async create (withRemote = false, gitHubUser) {
     this.gitResource = null;
     const system = Project.system;
-    let res, guessedAddress;
-    try {
-      res = resource(this.name);
-      guessedAddress = res.url;
-    } catch (e) {
-      let baseURL = (await system.getConfig()).baseURL;
-      let maybePackageDir = resource(baseURL).join('local_projects').join(gitHubUser + '-' + this.name).asDirectory().url;
-      guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, '/');
-    }
+    const projectDir = (await Project.projectDirectory()).join(gitHubUser + '-' + this.name);
+    this.url = projectDir.url;
 
-    let url = resource(guessedAddress).asDirectory();
-
-    // FIXME: might not be necessary after all?
-    // Precaution to rule out any funky behavior when loading a Package twice inside of lively.
-
-    await system.resourceCreateFiles(url, {
+    await system.resourceCreateFiles(projectDir, {
       'index.js': "'format esm';\n",
       'package.json': '',
       '.gitignore': 'node_modules/',
@@ -206,20 +195,18 @@ export class Project {
     });
 
     this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
-    this.configFile = await resource(url.join('package.json').url);
+    this.configFile = await resource(projectDir.join('package.json').url);
 
     await this.gitResource.initializeGitRepository();
     this.saveConfigData();
     const pkg = await loadPackage(system, {
       name: this.name,
-      address: url.url,
-      configFile: url.join('package.json').url,
-      main: url.join('index.js').url,
-      test: url.join('tests/test.js').url,
+      address: this.url,
+      configFile: projectDir.join('package.json').url,
+      main: projectDir.join('index.js').url,
+      test: projectDir.join('tests/test.js').url,
       type: 'package'
     });
-
-    this.url = url.url;
 
     this.package = pkg;
     if (withRemote) {
