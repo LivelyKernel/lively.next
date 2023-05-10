@@ -30,8 +30,16 @@ export default class GitShellResource extends ShellClientResource {
     await cmd.whenDone();
   }
 
-  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription) {
-    let repoCreationCommand = `curl \
+  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope = false) {
+    let repoCreationCommand = orgScope
+      ? `curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${token}"\
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://api.github.com/orgs/${repoUser}/repos \
+              -d '{"name":"${repoName}","description":"${repoDescription}"}'`
+      : `curl -L \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${token}" \
@@ -39,12 +47,16 @@ export default class GitShellResource extends ShellClientResource {
               -d '{"name":"${repoName}", "description": "${repoDescription}"}'`;
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
-    let addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
+    const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
     await this.runCommand(addingRemoteCommand).whenDone();
+    // TODO: We could improve by providing a way to configure this.
+    const trackingCommand = 'git branch --track origin';
+    await this.runCommand(trackingCommand).whenDone();
   }
 
-  async commitRepo () {
-    let cmdString = `git add . && git commit -m "Commited from withing lively.next at ${Date.now()}"`;
+  // TODO: throw errors
+  async commitRepo (message) {
+    let cmdString = `git add . && git commit -m "${message}"`;
     let cmd = this.runCommand(cmdString);
     await cmd.whenDone();
   }

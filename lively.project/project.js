@@ -18,17 +18,19 @@ export class Project {
     return this.config.name;
   }
 
-  constructor (name, author, description) {
+  constructor (name, bindVersion = true, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
+    const { author, description, repoOwner } = opts;
     this.config = {
       name: name || 'new world',
       author: {
-        // TODO: we might beef that up later on with a more fully fledged lively.user implementation
+        // TODO: We could enhance this by utilizing more of the user data GitHub provides for us
+        // See: https://docs.npmjs.com/cli/v6/configuring-npm/package-json#people-fields-author-contributors
         name: author
       },
       description: description,
       repository: {
         type: 'git',
-        url: `https://github.com/${author}/${name}`
+        url: `https://github.com/${repoOwner}/${name}`
       },
       lively: {
       },
@@ -36,7 +38,7 @@ export class Project {
     };
 
     this.saved = false;
-    VersionChecker.currentLivelyVersion().then(version => this.config.lively.boundLivelyVersion = version);
+    if (bindVersion) VersionChecker.currentLivelyVersion().then(version => this.config.lively.boundLivelyVersion = version);
   }
 
   static async listAvailableProjects () {
@@ -74,7 +76,7 @@ export class Project {
 
   static async loadProject (name) {
     // create Project object and do not bind to the current version
-    const loadedProject = new Project(name, true);
+    const loadedProject = new Project(name, {}, false);
 
     let address, url;
     let baseURL = (await Project.system.getConfig()).baseURL;
@@ -162,7 +164,7 @@ export class Project {
     }
   }
 
-  async create (withRemote = false) {
+  async create (withRemote = false, gitHubUser) {
     this.gitResource = null;
     const system = Project.system;
     let res, guessedAddress;
@@ -171,7 +173,7 @@ export class Project {
       guessedAddress = res.url;
     } catch (e) {
       let baseURL = (await system.getConfig()).baseURL;
-      let maybePackageDir = resource(baseURL).join('local_projects').join(this.name).asDirectory().url;
+      let maybePackageDir = resource(baseURL).join('local_projects').join(gitHubUser + '-' + this.name).asDirectory().url;
       guessedAddress = (await system.normalize(maybePackageDir)).replace(/\/\.js$/, '/');
     }
 
@@ -203,11 +205,11 @@ export class Project {
       'index.css': ''
     });
 
-    this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.name).withRelativePartsResolved().asDirectory();
+    this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
     this.configFile = await resource(url.join('package.json').url);
 
-    await this.gitResource.initializeGitRepository(currentUsertoken(), this.name, this.config.maintainer);
-
+    await this.gitResource.initializeGitRepository();
+    this.saveConfigData();
     const pkg = await loadPackage(system, {
       name: this.name,
       address: url.url,
@@ -220,11 +222,12 @@ export class Project {
     this.url = url.url;
 
     this.package = pkg;
-    this.saveConfigData();
     if (withRemote) {
       await this.regenerateTestPipeline();
-      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, this.config.maintainer, this.config.description);
+      const createForOrg = gitHubUser !== currentUsername();
+      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
     }
+    return this;
   }
 
   async regenerateTestPipeline () {
