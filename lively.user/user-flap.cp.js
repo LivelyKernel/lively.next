@@ -1,8 +1,8 @@
-import { ViewModel, Image, Icon, Label, TilingLayout, ShadowObject, component } from 'lively.morphic';
-import { Color, pt } from 'lively.graphics';
-
+import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
+import { pt, Color } from 'lively.graphics';
+import { currentUser, clearUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUsertoken, storeCurrentUsertoken } from 'lively.user';
 import { connect, signal, disconnect } from 'lively.bindings';
-import { runCommand } from '../shell/shell-interface.js';
+import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
@@ -19,20 +19,21 @@ class UserFlapModel extends ViewModel {
   }
 
   viewDidLoad () {
-    if (!localStorage.getItem('gh_user_data')) {
-      connect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
-      this.ui.leftUserLabel.tooltip = 'Login with GitHub';
+    const { leftUserLabel, rightUserLabel } = this.ui;
+    if (!currentUser().login === 'guest') {
+      connect(leftUserLabel, 'onMouseDown', this, 'login');
+      leftUserLabel.tooltip = 'Login with GitHub';
     } else {
       this.showUserData();
-      connect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
-      this.ui.rightUserLabel.tooltip = 'Logout';
-      this.ui.rightUserLabel.nativeCursor = 'pointer';
-      this.ui.leftUserLabel.nativeCursor = 'auto';
+      connect(rightUserLabel, 'onMouseDown', this, 'logout');
+      rightUserLabel.tooltip = 'Logout';
+      rightUserLabel.nativeCursor = 'pointer';
+      leftUserLabel.nativeCursor = 'auto';
     }
   }
 
   async login () {
-    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=repo,workflow' https://github.com/login/device/code`;
+    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,workflow' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
     if (resOne === '') {
       $world.setStatusMessage('You seem to be offline.', StatusMessageError);
@@ -59,54 +60,71 @@ class UserFlapModel extends ViewModel {
       $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
       return;
     }
-    localStorage.setItem('gh_access_token', userToken);
+    storeCurrentUsertoken(userToken);
     await this.retrieveGithubUserData();
     this.showLoggedInUser();
   }
 
   showLoggedInUser () {
+    const { leftUserLabel, rightUserLabel } = this.ui;
     this.showUserData();
 
-    disconnect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
-    connect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
+    disconnect(leftUserLabel, 'onMouseDown', this, 'login');
+    connect(rightUserLabel, 'onMouseDown', this, 'logout');
     signal(this.view, 'onLogin');
-    this.ui.rightUserLabel.tooltip = 'Logout';
-    this.ui.rightUserLabel.nativeCursor = 'pointer';
-    this.ui.leftUserLabel.nativeCursor = 'auto';
+    rightUserLabel.tooltip = 'Logout';
+    rightUserLabel.nativeCursor = 'pointer';
+    leftUserLabel.nativeCursor = 'auto';
   }
 
   async retrieveGithubUserData () {
-    const cmdString = `curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${localStorage.getItem('gh_access_token')}" https://api.github.com/user`;
+    const token = currentUsertoken();
+    // retrieve general data about the authenticated user
+    const cmdString = `curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${token}" https://api.github.com/user`;
     let { stdout: userRes } = await runCommand(cmdString).whenDone();
     if (!userRes || userRes === '') {
       $world.setStatusMessage('An unexpected error occured. Please check your connection.', StatusMessageError);
       return;
     }
-    localStorage.setItem('gh_user_data', userRes);
+    // retrieve the organizations in which the authenticated user is a member
+    const organizationCmdString = `curl -L \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: Bearer ${token}"\
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      https://api.github.com/user/orgs`;
+    let { stdout: orgsResForUser } = await runCommand(organizationCmdString).whenDone();
+    if (!userRes || userRes === '') {
+      $world.setStatusMessage('An unexpected error occured. Please check your connection.', StatusMessageError);
+      return;
+    }
+    const orgNames = JSON.parse(orgsResForUser).map(org => org.login);
+    storeCurrentUsersOrganizations(orgNames);
+    storeCurrentUser(userRes);
   }
 
   logout () {
-    connect(this.ui.leftUserLabel, 'onMouseDown', this, 'login');
-    this.ui.leftUserLabel.tooltip = 'Login with GitHub';
-    disconnect(this.ui.rightUserLabel, 'onMouseDown', this, 'logout');
-    this.ui.leftUserLabel.nativeCursor = 'pointer';
-    this.ui.rightUserLabel.nativeCursor = 'auto';
+    const { leftUserLabel, rightUserLabel, avatar } = this.ui;
+    connect(leftUserLabel, 'onMouseDown', this, 'login');
+    leftUserLabel.tooltip = 'Login with GitHub';
+    disconnect(rightUserLabel, 'onMouseDown', this, 'logout');
+    leftUserLabel.nativeCursor = 'pointer';
+    rightUserLabel.nativeCursor = 'auto';
 
-    localStorage.removeItem('gh_access_token');
-    localStorage.removeItem('gh_user_data');
+    clearUserData();
 
     $world.setStatusMessage('Logged out. No git operations possible.');
-    this.ui.leftUserLabel.textAndAttributes = Icon.textAttribute('github');
-    this.ui.rightUserLabel.textString = 'guest';
-    this.ui.avatar.loadUrl('https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160', false);
+    leftUserLabel.textAndAttributes = Icon.textAttribute('github');
+    rightUserLabel.textString = 'guest';
+    avatar.loadUrl('https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160', false);
   }
 
   showUserData () {
+    const { avatar, leftUserLabel, rightUserLabel } = this.ui;
     try {
-      const userData = JSON.parse(localStorage.getItem('gh_user_data'));
-      this.ui.avatar.loadUrl(userData.avatar_url, false);
-      this.ui.leftUserLabel.textString = userData.login;
-      this.ui.rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
+      const userData = currentUser();
+      avatar.loadUrl(userData.avatar_url, false);
+      leftUserLabel.textString = userData.login;
+      rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
     } catch (err) {
       $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
     }
