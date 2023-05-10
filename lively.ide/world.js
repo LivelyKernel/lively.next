@@ -486,6 +486,7 @@ export class LivelyWorld extends World {
           this.openedProject = new Project(worldName);
         } else {
           const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
+          $world.openedProject = project;
           worldName = project.name;
         }
       } else if (projectToBeOpened) {
