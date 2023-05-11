@@ -5,7 +5,7 @@ import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
-import { connect } from 'lively.bindings';
+
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 import { without } from 'lively.morphic/components/core.js';
@@ -33,12 +33,40 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             { target: 'user flap', signal: 'onLogout', handler: 'waitForLogin' },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             { model: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
-            { model: 'cancel button', signal: 'fire', handler: 'close' }
+            { model: 'cancel button', signal: 'fire', handler: 'close' },
+            { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity' },
+            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity' }
           ];
         }
       },
       label: 'Create new Project'
     };
+  }
+
+  checkValidity () {
+    const { okButton, remoteUrl, projectName } = this.ui;
+    if (this.fromRemote) {
+      try {
+        const url = new URL(remoteUrl.textString);
+        if (url.host !== 'github.com') {
+          remoteUrl.indicateError('enter github url');
+          okButton.disable();
+          return false;
+        }
+      } catch (err) {
+        remoteUrl.indicateError('enter valid url');
+        okButton.disable();
+        return false;
+      }
+    } else {
+      if (!projectName.textString || !projectName.textString.match(/^[a-zA-Z-]*$/)) {
+        projectName.indicateError('enter valid name');
+        okButton.disable();
+        return false;
+      }
+    }
+    okButton.enable();
+    return true;
   }
 
   close () {
@@ -47,46 +75,39 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async resolve () {
+    let li;
     const { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
     let createdProject;
-
+    if (!this.checkValidity()) return;
     if (this.fromRemote) {
       try {
-        const url = new URL(remoteUrl.textString);
-        if (url.host !== 'github.com') {
-          remoteUrl.clear();
-          remoteUrl.indicateError('enter github url');
-          return;
-        }
-      } catch (err) {
-        remoteUrl.indicateError('enter valid url');
-      }
-      // we got a valid github URL
-      try {
+        li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
         createdProject = await Project.fromRemote(remoteUrl.textString);
+        li.remove();
         super.resolve(createdProject);
       } catch (err) {
+        li.remove();
         this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
       }
     } else {
       const createNewRemote = createRemoteCheckbox.checked;
-      if (!projectName.textString || !projectName.textString.match(/^[a-zA-Z-]*$/)) {
-        projectName.clear();
-        projectName.indicateError('enter valid name');
-      }
       const { name: repoOwner, isOrg } = userSelector.selection;
       createdProject = new Project(projectName.textString, true, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
       try {
+        li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
         createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
+        li.remove();
         super.resolve(createdProject);
       } catch (err) {
+        li.remove();
         this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
       }
     }
   }
 
   viewDidLoad () {
-    const { promptTitle, cancelButton } = this.ui;
+    const { promptTitle, cancelButton, okButton } = this.ui;
+    okButton.disable();
     if (!this.canBeCancelled) cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
@@ -140,7 +161,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     // we do this here since we are sure that we are logged in when we reach this method!
     const ownerOptions = currentUsersOrganizations().map(orgName => { return { string: orgName, value: { name: orgName, isOrg: true }, isListItem: true }; });
     userSelector.items = [{ string: currentUsername(), value: { name: currentUsername(), isOrg: false }, isListItem: true }].concat(ownerOptions);
-    userSelector.selection = userSelector.items[0];
+    userSelector.selection = userSelector.items[0].value;
   }
 
   remoteUrlMode () {
