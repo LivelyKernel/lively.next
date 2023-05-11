@@ -1221,7 +1221,7 @@ export class LivelyWorld extends World {
    * @returns {Morph} The loading indicator morph.
    */
   showLoadingIndicatorFor (requester, label) {
-    return this.addMorph(LoadingIndicator.open(label, { center: requester.globalBounds().center() }));
+    return LoadingIndicator.open(label, { target: requester });
   }
 
   async withLoadingIndicatorDo (doFn, requester, label) {
