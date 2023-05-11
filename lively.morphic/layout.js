@@ -386,6 +386,57 @@ export class TilingLayout extends Layout {
     return new this.constructor(this.getSpec());
   }
 
+  sanitizeConfig (config) {
+    const spec = {};
+    for (let prop of obj.keys(config)) {
+      switch (prop) {
+        case 'resizePolicies':
+          spec.resizePolicies = config.resizePolicies;
+          break;
+        case 'spacing':
+          if (config.spacing !== 0) spec.spacing = config.spacing;
+          break;
+        case 'renderViaCSS':
+          if (config.renderViaCSS !== true) spec.renderViaCSS = config.renderViaCSS;
+          break;
+        case 'axis':
+          if (config.axis !== 'row') spec.axis = config.axis;
+          break;
+        case 'align':
+          if (config.align !== 'left') spec.align = config.align;
+          break;
+        case 'axisAlign':
+          if (config.axisAlign !== 'left') spec.axisAlign = config.axisAlign;
+          break;
+        case 'justifySubmorphs':
+          if (config.justifySubmorphs !== 'packed') spec.justifySubmorphs = config.justifySubmorphs;
+          break;
+        case 'hugContentsVertically':
+          if (config.hugContentsVertically !== false) spec.hugContentsVertically = true;
+          break;
+        case 'hugContentsHorizontally':
+          if (config.hugContentsHorizontally !== false) spec.hugContentsHorizontally = true;
+          break;
+        case 'orderByIndex':
+          if (config.orderByIndex !== false) spec.orderByIndex = true;
+          break;
+        case 'wrapSubmorphs':
+          if (config.wrapSubmorphs !== false) spec.wrapSubmorphs = true;
+          break;
+        case 'padding':
+          if (rect(0).equals(config.padding)) break;
+          if (obj.isNumber(config.padding)) { spec.padding = rect(config.padding, config.padding); break; }
+          if (!config.padding.isRectangle) { spec.padding = Rectangle.fromLiteral(config.padding); break; }
+          spec.padding = config.padding;
+          break;
+        case 'reactToSubmorphAnimations':
+          if (config.reactToSubmorphAnimations) spec.reactToSubmorphAnimations = true;
+          break;
+      }
+    }
+    return spec;
+  }
+
   /**
    * Returns the current values of the layout's parameters as key-values.
    * Useful for safely copying layout objects.
@@ -393,7 +444,7 @@ export class TilingLayout extends Layout {
    * @returns {TileLayoutSpec}
    */
   getSpec () {
-    if (!this.container) return this.config;
+    if (!this.container) return this.sanitizeConfig(this.config);
     if (Array.isArray(this._resizePolicies)) { this.initializeResizePolicies(); }
     let {
       axis, align, axisAlign, spacing, orderByIndex, resizePolicies,
@@ -402,7 +453,20 @@ export class TilingLayout extends Layout {
       _hugContentsVertically: hugContentsVertically,
       _hugContentsHorizontally: hugContentsHorizontally
     } = this;
-    const spec = {}; // filter those guys
+    const spec = this.sanitizeConfig({
+      axis,
+      align,
+      axisAlign,
+      spacing,
+      orderByIndex,
+      reactToSubmorphAnimations,
+      renderViaCSS,
+      padding,
+      wrapSubmorphs,
+      justifySubmorphs,
+      hugContentsVertically,
+      hugContentsHorizontally
+    });
     // only set the ones different to the default value
     for (let [morphName, policy] of resizePolicies) {
       if (policy.width !== 'fixed' || policy.height !== 'fixed') {
@@ -410,18 +474,6 @@ export class TilingLayout extends Layout {
         spec.resizePolicies.push([morphName, { ...policy }]);
       }
     }
-    if (spacing !== 0) spec.spacing = spacing;
-    if (renderViaCSS !== true) spec.renderViaCSS = renderViaCSS;
-    if (axis !== 'row') spec.axis = axis;
-    if (align !== 'left') spec.align = align;
-    if (axisAlign !== 'left') spec.axisAlign = axisAlign;
-    if (justifySubmorphs !== 'packed') spec.justifySubmorphs = justifySubmorphs;
-    if (hugContentsVertically !== false) spec.hugContentsVertically = true;
-    if (hugContentsHorizontally !== false) spec.hugContentsHorizontally = true;
-    if (orderByIndex !== false) spec.orderByIndex = true;
-    if (wrapSubmorphs !== false) spec.wrapSubmorphs = true;
-    if (!rect(0).equals(padding)) spec.padding = padding;
-    if (reactToSubmorphAnimations) spec.reactToSubmorphAnimations = true;
     return spec;
   }
 
