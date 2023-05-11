@@ -12,7 +12,7 @@ class UserFlapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser'];
         }
       }
     };
@@ -23,8 +23,10 @@ class UserFlapModel extends ViewModel {
     if (currentUser().login === 'guest') {
       connect(leftUserLabel, 'onMouseDown', this, 'login');
       leftUserLabel.tooltip = 'Login with GitHub';
+      rightUserLabel.tooltip = '';
     } else {
       this.showUserData();
+      leftUserLabel.tooltip = '';
       connect(rightUserLabel, 'onMouseDown', this, 'logout');
       rightUserLabel.tooltip = 'Logout';
       rightUserLabel.nativeCursor = 'pointer';
@@ -73,6 +75,7 @@ class UserFlapModel extends ViewModel {
     connect(rightUserLabel, 'onMouseDown', this, 'logout');
     signal(this.view, 'onLogin');
     rightUserLabel.tooltip = 'Logout';
+    leftUserLabel.tooltip = '';
     rightUserLabel.nativeCursor = 'pointer';
     leftUserLabel.nativeCursor = 'auto';
   }
@@ -103,16 +106,20 @@ class UserFlapModel extends ViewModel {
   }
 
   logout () {
+    clearUserData();
+    this.showGuestUser();
+    signal(this.view, 'onLogout');
+    $world.setStatusMessage('Logged out. No git operations possible.');
+  }
+
+  showGuestUser () {
     const { leftUserLabel, rightUserLabel, avatar } = this.ui;
     connect(leftUserLabel, 'onMouseDown', this, 'login');
     leftUserLabel.tooltip = 'Login with GitHub';
+    rightUserLabel.tooltip = '';
     disconnect(rightUserLabel, 'onMouseDown', this, 'logout');
     leftUserLabel.nativeCursor = 'pointer';
     rightUserLabel.nativeCursor = 'auto';
-
-    clearUserData();
-
-    $world.setStatusMessage('Logged out. No git operations possible.');
     leftUserLabel.textAndAttributes = Icon.textAttribute('github');
     rightUserLabel.textString = 'guest';
     avatar.loadUrl('https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160', false);

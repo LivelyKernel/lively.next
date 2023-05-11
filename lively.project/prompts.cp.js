@@ -29,6 +29,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       bindings: {
         get () {
           return [
+            { target: 'user flap', signal: 'onLogin', handler: 'onLogin' },
+            { target: 'user flap', signal: 'onLogout', handler: 'waitForLogin' },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             { model: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
             { model: 'cancel button', signal: 'fire', handler: 'close' }
@@ -93,25 +95,25 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   waitForLogin () {
+    $world.get('lively top bar').get('user flap').showGuestUser();
+    this.ui.remoteUrl.clearError();
+    this.ui.projectName.clearError();
     this.ui.projectName.deactivate();
     this.ui.remoteUrl.deactivate();
     this.ui.description.deactivate();
     this.ui.createRemoteCheckbox.disable();
     this.ui.userSelector.disable();
 
-    this.ui.userFlapContainer.visible = true;
     this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red })
       .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }))
       .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red }))
       .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }));
 
     this.withoutBindingsDo(() => this.ui.fromRemoteCheckbox.disable());
-    connect(this.ui.userFlap, 'onLogin', this, 'onLogin');
   }
 
   onLogin () {
-    $world.get('user flap')?.showLoggedInUser();
-    this.ui.userFlapContainer.visible = false;
+    $world.get('user flap').showLoggedInUser();
     this.withoutBindingsDo(() => this.ui.fromRemoteCheckbox.enable());
     this.projectNameMode();
   }
@@ -220,7 +222,6 @@ export const ProjectCreationPrompt = component(LightPrompt, {
       }),
       submorphs: [{
         name: 'user flap container',
-        visible: false,
         clipMode: 'hidden',
         borderRadius: 20,
         borderWidth: 2,
