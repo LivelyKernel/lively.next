@@ -1,6 +1,6 @@
 import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, getEligibleSourceEditorsFor, applySourceChanges,
+  getNodeFromSubmorphs, getWithoutCall, getEligibleSourceEditorsFor, applySourceChanges,
   getPathFromMorphToMaster,
   getTextAttributesExpr,
   getComponentScopeFor,
@@ -101,12 +101,13 @@ function determineNodeToRemoveSubmorphs (nodeToRemove, parsedComponent, fromMorp
     // if we are wrapped by a part call we should use the submorphs node instead
     if (!curr.owner) break;
     nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
+    if (query.queryNodes(propNode, ignoreQuery).length === 0) nodeToRemove = propNode;
     curr = curr.owner;
-    propNode = getPropertiesNode(parsedComponent, curr);
+    propNode = getPropertiesNode(parsedComponent, curr?.isComponent ? null : curr);
     submorphsNode = getProp(propNode, 'submorphs');
     if (submorphsNode?.value.elements.length < 2) nodeToRemove = submorphsNode;
+    if (curr.isWorld) break;
   }
-
   // ensure formatting is preserved
   return nodeToRemove;
 }
@@ -570,6 +571,10 @@ export class Reconciliation {
     return getEligibleSourceEditorsFor(modId, modSource);
   }
 
+  recoverRemovedMorphMetaIn (interactiveDescriptor) {
+    return this.policyToSpecAndSubExpressions?.get(interactiveDescriptor.__serialize__());
+  }
+
   getDescriptorContext (descr = this.descriptor) {
     const modId = System.decanonicalize(descr.moduleName);
 
@@ -631,11 +636,11 @@ export class Reconciliation {
 class MorphRemovalReconciliation extends Reconciliation {
   constructor (componentDescriptor, change) {
     super(componentDescriptor, change);
-    this.policyToSpecAndSubExpression = new Map(); // maps (inline) policies to spec objects and sub expressions
+    this.policyToSpecAndSubExpressions = this.descriptor.previouslyRemovedMorphs?.get(this.removedMorph) || new Map();
   }
 
   reconcile () {
-    this.descriptor.recordRemovedMorph(this.removedMorph, this.policyToSpecAndSubExpression);
+    this.descriptor.recordRemovedMorph(this.removedMorph, this.policyToSpecAndSubExpressions);
     this.removeSpec(this.descriptor);
     return this;
   }
@@ -688,6 +693,8 @@ class MorphRemovalReconciliation extends Reconciliation {
     let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
     let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
 
+    const removedExpr = this.getRemovedExpression(nodeToRemove);
+
     const changes = [];
     if (closestSubmorphsNode?.value.elements.length < 2) {
       this.modulesToLint.add(modId);
@@ -695,7 +702,7 @@ class MorphRemovalReconciliation extends Reconciliation {
     } else if (nodeToRemove) {
       changes.push(Object.assign({ action: 'remove' }, nodeToRemove));
     }
-    return changes;
+    return [changes, removedExpr];
   }
 
   /**
@@ -706,12 +713,20 @@ class MorphRemovalReconciliation extends Reconciliation {
    * @param { InteractiveDescriptor } interactiveDescriptor - The descriptor of the component definition the change originated from.
    */
   applyRemovalToOrigin (interactiveDescriptor) {
-    if (this.removedMorphWasInherited) return this.insertWithoutCall(interactiveDescriptor);
+    if (this.removedMorphWasInherited) return [this.insertWithoutCall(interactiveDescriptor)];
     else return this.dropSpec(interactiveDescriptor);
   }
 
+  get removedFromOriginalContext () {
+    const meta = this.recoverRemovedMorphMetaIn(this.descriptor);
+    return meta?.wasInherited && this.previousOwner === meta.previousOwner;
+  }
+
   get removedMorphWasInherited () {
-    return this.isDerived && !this.removedMorph.__wasAddedToDerived__;
+    return this.isDerived && (
+      !this.removedMorph.__wasAddedToDerived__ ||
+      this.removedFromOriginalContext
+    );
   }
 
   /**
@@ -724,37 +739,33 @@ class MorphRemovalReconciliation extends Reconciliation {
     return this.dropSpec(interactiveDescriptor);
   }
 
-  getRemovedExpression (changes) {
-    const removeExprChange = changes.find(change => change.action === 'replace' || change.action === 'remove');
-    let subExpr;
-    if (removeExprChange) {
-      subExpr = this.descriptor.getModuleSource().slice(removeExprChange.start, removeExprChange.end);
-      try {
-        const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
-        if (exprBody.type === 'LabeledStatement') {
-          // extract the one element from the elements
-          const [removedSpec] = exprBody.body.expression.elements;
-          subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
-        }
-      } finally {
-        return { __expr__: subExpr, bindings: [] };
+  getRemovedExpression (removeExprChange) {
+    let subExpr = this.descriptor.getModuleSource().slice(removeExprChange.start, removeExprChange.end);
+    try {
+      const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
+      if (exprBody.type === 'LabeledStatement') {
+        // extract the one element from the elements
+        const [removedSpec] = exprBody.body.expression.elements;
+        subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
       }
+    } finally {
+      return { __expr__: subExpr, bindings: [] };
     }
   }
 
   removeSpec (interactiveDescriptor) {
-    let changes;
+    let changes, subExpr;
     const isChangeOrigin = this.isOrigin(interactiveDescriptor);
     const insertWithoutCall = isChangeOrigin && this.removedMorphWasInherited;
-    if (isChangeOrigin) changes = this.applyRemovalToOrigin(interactiveDescriptor);
-    else changes = this.applyRemovalToDependant(interactiveDescriptor);
 
-    const subExpr = this.getRemovedExpression(changes);
+    if (isChangeOrigin) [changes, subExpr] = this.applyRemovalToOrigin(interactiveDescriptor);
+    else [changes, subExpr] = this.applyRemovalToDependant(interactiveDescriptor);
+
     const subSpec = interactiveDescriptor.stylePolicy.removeSpecInResponseTo(this.change, insertWithoutCall);
     let activeInstance = interactiveDescriptor._cachedComponent;
 
     // cache the meta information about the removed morph/spec/expression (the trinity)
-    let meta = {};
+    let meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor) || { wasInherited: this.removedMorphWasInherited };
 
     if (activeInstance) {
       activeInstance.withMetaDo({ reconcileChanges: false }, () => {
@@ -767,11 +778,13 @@ class MorphRemovalReconciliation extends Reconciliation {
       });
     }
 
+    if (!this.removedMorph.__wasAddedToDerived__) meta.previousOwner = this.previousOwner;
+
     if (subSpec) meta.subSpec = subSpec;
 
     if (subExpr) meta.subExpr = subExpr;
 
-    if (!obj.isEmpty(meta)) this.policyToSpecAndSubExpression.set(interactiveDescriptor.__serialize__(), meta);
+    if (!obj.isEmpty(meta)) this.policyToSpecAndSubExpressions.set(interactiveDescriptor.__serialize__(), meta);
 
     this.addChangesToModule(interactiveDescriptor.moduleName, changes);
 
@@ -792,7 +805,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
     const safeName = descriptor.ensureNoNameCollisionInDerived(this.addedMorph.name, true);
     if (safeName !== this.addedMorph.name) this.addedMorph.name = safeName;
 
-    if (this.isReintroduction) {
+    if (this.isReintroduction(descriptor)) {
       this.reintroduceMorph(descriptor);
     } else {
       this.addNewMorph(descriptor);
@@ -807,17 +820,20 @@ class MorphIntroductionReconciliation extends Reconciliation {
   get newOwner () { return this.target; }
   get nextSibling () { return this.newOwner.submorphs[this.newOwner.submorphs.indexOf(this.addedMorph) + 1]; }
 
+  get policyToSpecAndSubExpressions () {
+    return this.descriptor.previouslyRemovedMorphs?.get(this.addedMorph);
+  }
+
   /**
    * Wether or not the morph added to the definition
    * had been there previously.
    */
-  get isReintroduction () {
+  isReintroduction (interactiveDescriptor) {
     // store the info of previously removed morphs in a history object?
-    return !!this.policyToSpecAndSubExpressions;
-  }
-
-  get policyToSpecAndSubExpressions () {
-    return this.descriptor.previouslyRemovedMorphs.get(this.addedMorph);
+    if (!this.policyToSpecAndSubExpressions) return false;
+    const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
+    if (!meta.subExpr) return meta.previousOwner === this.newOwner;
+    return true;
   }
 
   generateAddedMorphExpression (addedMorph, nextSibling, requiredBindings) {
@@ -854,13 +870,9 @@ class MorphIntroductionReconciliation extends Reconciliation {
     return expr;
   }
 
-  recoverRemovedMorphMetaIn (interactiveDescriptor) {
-    return this.policyToSpecAndSubExpressions.get(interactiveDescriptor.__serialize__());
-  }
-
   reintroduceSpec (interactiveDescriptor, spec) {
     const insertedSpec = interactiveDescriptor.stylePolicy.ensureSubSpecFor(this.addedMorph);
-    Object.apply(insertedSpec, spec);
+    Object.assign(insertedSpec, spec);
   }
 
   reintroduceExpression (interactiveDescriptor, expr) {
@@ -879,19 +891,54 @@ class MorphIntroductionReconciliation extends Reconciliation {
     });
   }
 
+  /**
+   * If a morph is reintroduced that was previously reified via a
+   * without() call in the same owner it was removed from, we need
+   * to simply remove the without() call instead of adding the spec
+   * to the source code.
+   * @param {type} interactiveDescriptor - description
+   */
+  clearWithoutCallIfNeeded (interactiveDescriptor, previousOwner) {
+    if (this.newOwner !== previousOwner) return;
+    const { modId, parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
+    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, this.newOwner), 'submorphs');
+    let nodeToRemove;
+    if (closestSubmorphsNode?.value.elements.length < 2) {
+      this.modulesToLint.add(modId);
+      nodeToRemove = determineNodeToRemoveSubmorphs(closestSubmorphsNode, parsedComponent, this.newOwner.isComponent ? null : this.newOwner);
+    } else {
+      nodeToRemove = closestSubmorphsNode && getWithoutCall(closestSubmorphsNode.value, this.addedMorph);
+    }
+
+    interactiveDescriptor.stylePolicy.removeWithoutCall(this.addedMorph);
+    // we also need to reintroduce the removed spec
+
+    if (nodeToRemove) {
+      if (nodeToRemove === getPropertiesNode(parsedComponent)) {
+        this.addChangesToModule(modId, Object.assign({ action: 'replace', ...nodeToRemove, lines: ['{}'] }));
+      } else {
+        this.addChangesToModule(modId, Object.assign({ action: 'remove' }, nodeToRemove));
+      }
+    }
+  }
+
   reintroduceMorph (interactiveDescriptor) {
     // recover the source code from the removed morph and reinsert it at the new position
     const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
     if (meta) {
-      let { subSpec: removedSpec, subExpr: removedExpr, removedMorph } = meta;
-      if (removedSpec?.__wasAddedToDerived__) {
+      let { subSpec: removedSpec, subExpr: removedExpr, removedMorph, previousOwner } = meta;
+      if (removedSpec?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
         removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
       }
+      // if (removedSpec && previousOwner === this.newOwner) delete removedSpec.__wasAddedToDerived__;
+      // if (this.addedMorph && previousOwner === this.newOwner) delete this.addedMorph.__wasAddedToDerived__;
+      this.clearWithoutCallIfNeeded(interactiveDescriptor, previousOwner);
       // add the spec that was discarded previously into the policy
       this.reintroduceSpec(interactiveDescriptor, removedSpec);
       // add the expr that was discarded previously into the policy
-      if (removedExpr) this.reintroduceExpression(interactiveDescriptor, removedExpr);
-
+      if (previousOwner !== this.newOwner && removedExpr) {
+        this.reintroduceExpression(interactiveDescriptor, removedExpr);
+      }
       if (removedMorph) {
         this.insertMorphInOpenSession(interactiveDescriptor, removedMorph);
       }
@@ -1046,7 +1093,7 @@ class PropChangeReconciliation extends Reconciliation {
 
   getResponsiblePolicyFor (target) {
     const pathToResponsiblePolicy = this.target.ownerChain().filter(m => m.master && !m.isComponent).map(m => m.name);
-    return this.descriptor.stylePolicy.getSubSpecAt(...pathToResponsiblePolicy);
+    return this.descriptor.stylePolicy.getSubSpecAt(pathToResponsiblePolicy);
   }
 
   get propValueDiffersFromParent () {
