@@ -399,7 +399,8 @@ export class Hand extends Morph {
   grab (morph) {
     if (obj.isArray(morph)) return morph.forEach(m => this.grab(m));
     this.withMetaDo({
-      metaInteraction: true
+      metaInteraction: true,
+      reconcileChanges: false
     }, () => {
       this._grabbedMorphProperties.set(morph, {
         prevOwner: morph.owner,

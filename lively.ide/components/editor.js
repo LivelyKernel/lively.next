@@ -66,9 +66,6 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   recordRemovedMorph (removedMorph, meta) {
     this.previouslyRemovedMorphs.set(removedMorph, meta);
 
-    once(removedMorph, 'onSubmorphChange', () => {
-      this.previouslyRemovedMorphs.delete(removedMorph);
-    });
     once(removedMorph, 'removeMorph', () => {
       this.previouslyRemovedMorphs.delete(removedMorph);
     });
