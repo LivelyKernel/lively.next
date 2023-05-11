@@ -370,6 +370,7 @@ export class InputLine extends Text {
   }
 
   async indicateError (message, tooltip) {
+    this.clearError();
     this.borderColor = Color.red;
     this._errorIcon = this.addMorph(part(InputLineError, { viewModel: { information: message, tooltip: tooltip, height: this.height } }));
 
@@ -731,6 +732,7 @@ export class PasswordInputLine extends HTMLMorph {
   // this.clearError()
 
   async indicateError (message) {
+    this.clearError();
     this.borderWidth = 3;
     this.borderColor = Color.red;
     this._errorIcon = this.addMorph(this._errorIcon || morph({
