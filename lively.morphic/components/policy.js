@@ -716,11 +716,11 @@ export class StylePolicy {
    * @param { string | null } submorphName - The submorph name for which to find the corresponding sub spec. If null, assume we ask for root.
    * @returns { object } The sub spec corresponding to that name.
    */
-  getSubSpecFor (submorphName) {
+  getSubSpecFor (submorphName, includeWithoutCalls = false) {
     if (!submorphName) return this.spec; // assume we ask for root
     let embeddedRes;
 
-    let matchingNode = this.lookForMatchingSpec(submorphName);
+    let matchingNode = this.lookForMatchingSpec(submorphName, this.spec, includeWithoutCalls);
     if (embeddedRes) matchingNode = embeddedRes;
     return matchingNode ? matchingNode.props || matchingNode : null;
   }
@@ -731,10 +731,10 @@ export class StylePolicy {
    * @param { string[] } path - The names of the parents to ending with the final sub spec or policy to be retrieved.
    * @returns { StylePolicy|object }
    */
-  getSubSpecAt (...path) {
+  getSubSpecAt (path, includeWithoutCalls) {
     if (path.length === 0) return this;
-    let curr = this.getSubSpecFor(path.shift());
-    if (curr && path.length > 0) return curr.getSubSpecAt(path);
+    let curr = this.getSubSpecFor(path.shift(), includeWithoutCalls);
+    if (curr && path.length > 0) return curr.getSubSpecAt(path, includeWithoutCalls);
     return curr;
   }
 
@@ -777,10 +777,11 @@ export class StylePolicy {
    * Returns a spec inside the scope of the policy,
    * that matches the given `specName`.
    */
-  lookForMatchingSpec (specName, spec = this.spec) {
+  lookForMatchingSpec (specName, spec = this.spec, includeWithoutCall = false) {
     let embeddedRes;
     return tree.find(spec, node => {
       // handle added morphs
+      if (includeWithoutCall && node.COMMAND === 'remove') return node.target === specName;
       if (node.COMMAND === 'add') return node.props.name === specName;
       // handle text and attributes (embedded morphs)
       if (node.textAndAttributes?.find(textOrAttr => {
@@ -1052,17 +1053,28 @@ export class PolicyApplicator extends StylePolicy {
     return currSpec;
   }
 
+  removeWithoutCall (addedMorph) {
+    const pathToOwner = [...addedMorph.ownerChain()
+      .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
+      .map(m => m.name).reverse()];
+    const parentSpec = this.getSubSpecAt(pathToOwner.length > 0 ? pathToOwner : [addedMorph.owner.name]);
+    const withoutCallSpec = this.getSubSpecAt([...pathToOwner, addedMorph.name], true);
+    if (withoutCallSpec && withoutCallSpec) {
+      arr.remove(parentSpec.submorphs, withoutCallSpec);
+    }
+  }
+
   removeSpecInResponseTo (removeChange, insertRemoveIfNeeded = true) {
     const { target: prevOwner, args: [removedMorph] } = removeChange;
     // at any rate, remove the sub spec if present
     let ownerSpec = this.ensureSubSpecFor(prevOwner);
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
     const removedMorphSpec = this.getSubSpecAt(
-      ...prevOwner.ownerChain()
+      [...prevOwner.ownerChain()
         .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
         .map(m => m.name).reverse(),
       ...(prevOwner.owner !== this.targetMorph && prevOwner.owner?.master) ? [prevOwner.owner.name] : [], // if no owner, we dont need to mention the owner name
-      removedMorph.name
+      removedMorph.name]
     );
     if (removedMorphSpec) {
       arr.remove(ownerSpec.submorphs, removedMorphSpec);
@@ -1081,7 +1093,7 @@ export class PolicyApplicator extends StylePolicy {
    */
   mentionedByParents (submorphNameInPolicyContext) {
     let mentioned = false; let parent = this;
-    while (parent = parent.parent) {
+    while ((parent = parent.parent) && !mentioned) {
       mentioned = !!parent.getSubSpecFor(submorphNameInPolicyContext);
     }
     return mentioned;
