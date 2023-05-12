@@ -1057,9 +1057,11 @@ export class PolicyApplicator extends StylePolicy {
     const pathToOwner = [...addedMorph.ownerChain()
       .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
       .map(m => m.name).reverse()];
-    const parentSpec = this.getSubSpecAt(pathToOwner.length > 0 ? pathToOwner : [addedMorph.owner.name]);
+    let parentSpec = pathToOwner.length > 0
+      ? this.getSubSpecAt(pathToOwner)
+      : this.getSubSpecFor(addedMorph.owner.name);
     const withoutCallSpec = this.getSubSpecAt([...pathToOwner, addedMorph.name], true);
-    if (withoutCallSpec && withoutCallSpec) {
+    if (parentSpec && withoutCallSpec) {
       arr.remove(parentSpec.submorphs, withoutCallSpec);
     }
   }
