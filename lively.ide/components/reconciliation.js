@@ -1044,7 +1044,9 @@ class PropChangeReconciliation extends Reconciliation {
     // what if this is a root component? Then it does not have any master.
     // this does not work if the target is not part of the component scope.
     // instead we need to get the path to the target
-    return this.getResponsiblePolicyFor(this.target).getSubSpecFor(this.target.name);
+    const spec = this.getResponsiblePolicyFor(this.target).getSubSpecFor(this.target.name);
+    if (spec.isPolicy) return spec.spec;
+    return spec;
   }
 
   getNodeForTargetInSource (interactiveDescriptor = this.descriptor) {
