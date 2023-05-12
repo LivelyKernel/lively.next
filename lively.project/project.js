@@ -12,10 +12,11 @@ import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
+import { reloadPackage } from 'lively.modules/src/packages/package.js';
 
 export class Project {
   static async projectDirectory () {
-    const baseURL = await Project.system.getConfig().baseURL;
+    const baseURL = await Project.systemInterface.getConfig().baseURL;
     return resource(baseURL).join('local_projects').asDirectory();
   }
 
@@ -47,7 +48,7 @@ export class Project {
   }
 
   static async listAvailableProjects () {
-    const baseURL = (await Project.system.getConfig()).baseURL;
+    const baseURL = (await Project.systemInterface.getConfig()).baseURL;
     const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : Project.projectDirectory();
 
     let projectsCandidates = await resource(projectsDir).dirList(2, {
@@ -92,7 +93,7 @@ export class Project {
 
     // await this.gitResource.pullRepo();
     // load package into lively
-    const pkg = await loadPackage(Project.system, {
+    const pkg = await loadPackage(Project.systemInterface, {
       name: name,
       address: url,
       configFile: address.join('package.json').url,
@@ -137,7 +138,7 @@ export class Project {
     this.config.version = semver.inc(version, increaseLevel);
   }
 
-  static get system () {
+  static get systemInterface () {
     return localInterface.coreInterface;
   }
 
@@ -167,7 +168,7 @@ export class Project {
 
   async create (withRemote = false, gitHubUser) {
     this.gitResource = null;
-    const system = Project.system;
+    const system = Project.systemInterface;
     const projectDir = (await Project.projectDirectory()).join(gitHubUser + '-' + this.name);
     this.url = projectDir.url;
 
@@ -215,6 +216,10 @@ export class Project {
       await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
     }
     return this;
+  }
+
+  reloadPackage () {
+    reloadPackage(System, this.package.url);
   }
 
   async regenerateTestPipeline () {
