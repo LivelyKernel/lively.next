@@ -693,7 +693,7 @@ class MorphRemovalReconciliation extends Reconciliation {
     let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
     let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
 
-    const removedExpr = this.getRemovedExpression(nodeToRemove);
+    const removedExpr = nodeToRemove && this.getRemovedExpression(nodeToRemove);
 
     const changes = [];
     if (closestSubmorphsNode?.value.elements.length < 2) {
@@ -926,17 +926,16 @@ class MorphIntroductionReconciliation extends Reconciliation {
     // recover the source code from the removed morph and reinsert it at the new position
     const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
     if (meta) {
-      let { subSpec: removedSpec, subExpr: removedExpr, removedMorph, previousOwner } = meta;
+      let { subSpec: removedSpec, subExpr: removedExpr, removedMorph, previousOwner, wasInherited } = meta;
       if (removedSpec?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
         removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
       }
-      // if (removedSpec && previousOwner === this.newOwner) delete removedSpec.__wasAddedToDerived__;
-      // if (this.addedMorph && previousOwner === this.newOwner) delete this.addedMorph.__wasAddedToDerived__;
-      this.clearWithoutCallIfNeeded(interactiveDescriptor, previousOwner);
+
+      if (wasInherited) this.clearWithoutCallIfNeeded(interactiveDescriptor, previousOwner);
       // add the spec that was discarded previously into the policy
       this.reintroduceSpec(interactiveDescriptor, removedSpec);
       // add the expr that was discarded previously into the policy
-      if (previousOwner !== this.newOwner && removedExpr) {
+      if ((previousOwner !== this.newOwner || !wasInherited) && removedExpr) {
         this.reintroduceExpression(interactiveDescriptor, removedExpr);
       }
       if (removedMorph) {

@@ -162,7 +162,6 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await testComponentModule.source();
-    updatedSource;
     expect(updatedSource.includes('import { rect } from \'lively.graphics/geometry-2d.js\';'), 'inserts the import').to.be.true;
   });
 
