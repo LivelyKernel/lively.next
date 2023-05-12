@@ -74,6 +74,11 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     this.view.remove();
   }
 
+  reject() {
+    if (!this.canBeCancelled) return;
+    else super.reject(); 
+  }
+
   async resolve () {
     let li;
     const { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
