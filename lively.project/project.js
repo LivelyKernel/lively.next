@@ -83,6 +83,13 @@ export class Project {
     return loadedProject;
   }
 
+  static async deleteProject (name, repoOwner) {
+    const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}-${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const res = (await cmd.whenDone()).stdout;
+    if (res === 0) return true;
+    else return false;
+  }
+
   static async loadProject (name, repoOwner) {
     // Create Project object and do not automatically update the referenced lively version.
     // It acts merely as a container until we fill in the correct contents below.
