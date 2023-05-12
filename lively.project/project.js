@@ -45,7 +45,6 @@ export class Project {
       version: '0.1.0'
     };
 
-    this.saved = false;
     if (bindVersion) VersionChecker.currentLivelyVersion().then(version => this.config.lively.boundLivelyVersion = version);
   }
 
@@ -79,7 +78,7 @@ export class Project {
     const projectRepoOwner = remoteUrl.pathname.match(repositoryOwnerRegex)[1];
     const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}-${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone(); // TODO: this needs error handling
-    
+
     const loadedProject = await Project.loadProject(projectName, projectRepoOwner);
     return loadedProject;
   }
@@ -95,8 +94,8 @@ export class Project {
 
     loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '-' + name).withRelativePartsResolved().asDirectory();
 
-    // await this.gitResource.pullRepo();
-    // load package into lively
+    if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
+
     const pkg = await loadPackage(Project.systemInterface, {
       name: name,
       address: url,
@@ -110,7 +109,7 @@ export class Project {
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
-   
+
     switch (checkLivelyCompatability) {
       case 'CANCELED':
       case 'OUTDATED': {
@@ -233,6 +232,8 @@ export class Project {
       const createForOrg = gitHubUser !== currentUsername();
       await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
     }
+    const saveSuccess = await this.save({ message: 'Initial Commit' });
+    if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
     return this;
   }
 
@@ -256,15 +257,24 @@ export class Project {
   async save (opts = {}) {
     if (currentUsername() === 'guest') {
       $world.setStatusMessage('Please log in.');
-      return;
+      return false;
     }
     let { message, increaseLevel } = opts;
-    message = message + '\n Commited from within lively.next.';
+    message = message.trim();
+    message = message + '\nCommited from within lively.next.';
 
     this.increaseVersion(increaseLevel);
-    await this.saveConfigData();
-    await this.gitResource.commitRepo(message);
-    await this.gitResource.pullRepo();
-    await this.gitResource.pushRepo();
+    try {
+      await this.saveConfigData();
+      if (await this.gitResource.hasRemote()) {
+        await this.gitResource.pullRepo();
+        await this.gitResource.commitRepo(message);
+        await this.gitResource.pushRepo();
+        await this.reloadPackage();
+      } else await this.gitResource.commitRepor(message);
+    } catch (err) {
+      return false;
+    }
+    return true;
   }
 }
