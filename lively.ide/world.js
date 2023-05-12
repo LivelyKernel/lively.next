@@ -1223,7 +1223,9 @@ export class LivelyWorld extends World {
    * @returns {Morph} The loading indicator morph.
    */
   showLoadingIndicatorFor (requester, label) {
-    return LoadingIndicator.open(label, { target: requester });
+    const li = LoadingIndicator.open(label, { target: requester });
+    if (requester.hasFixedPosition) li.hasFixedPosition = true;
+    return li;
   }
 
   async withLoadingIndicatorDo (doFn, requester, label) {
