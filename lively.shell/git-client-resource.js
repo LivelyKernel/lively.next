@@ -30,6 +30,13 @@ export default class GitShellResource extends ShellClientResource {
     await cmd.whenDone();
   }
 
+  async hasRemote () {
+    const checkRemoteCommand = 'git remote -v';
+    const res = await this.runCommand(checkRemoteCommand).whenDone();
+    if (res.stdout === '') return false;
+    else return true;
+  }
+
   async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope = false) {
     let repoCreationCommand = orgScope
       ? `curl -L \
