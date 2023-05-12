@@ -299,7 +299,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     const bps = this.horizontalBreakpoints;
     const maxLength = this.ui.horizontalBreakpointControl.width;
     const idx = this.ui.horizontalBreakpointControl.submorphs.indexOf(elem);
-
+    if (idx < 0) return;
     this.target.animate({
       width: num.interpolate(.9, bps[idx], bps[idx + 1] || maxLength),
       easing: easings.outExpo,
@@ -311,6 +311,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     const bps = this.verticalBreakpoints;
     const maxLength = this.ui.verticalBreakpointControl.width;
     const idx = this.ui.verticalBreakpointControl.submorphs.indexOf(elem);
+    if (idx < 0) return;
     this.target.animate({
       height: num.interpolate(.9, bps[idx], bps[idx + 1] || maxLength),
       easing: easings.outExpo,
