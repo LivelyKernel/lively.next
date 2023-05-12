@@ -42,7 +42,7 @@ export function sanitizeFont (font) {
   }).join(',');
 }
 
-export function pathForBrowserHistory (worldName, queryString, project = false) {
+export function pathForBrowserHistory (worldName, queryString, project = false, projectOwner) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
   if (!queryString) { queryString = typeof document !== 'undefined' ? document.location.search : ''; }
@@ -58,8 +58,8 @@ export function pathForBrowserHistory (worldName, queryString, project = false) 
   } else {
     delete query.file;
     query.name = worldName;
+    if (projectOwner) query.owner = projectOwner;
   }
-
   // ensure the name param in the query string matches worldName
 
   return `${basePath}?${stringifyQuery(query)}`;

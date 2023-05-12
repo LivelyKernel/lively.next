@@ -50,6 +50,7 @@ export class LivelyWorld extends World {
       openNewProjectPrompt: { },
       openNewWorldPrompt: { },
       projectToBeOpened: { },
+      projectRepoOwner: { },
       playgroundsMode: {
         get () {
           return !(this.openNewProjectPrompt || this.projectToBeOpened || this.openedProject);
@@ -462,7 +463,7 @@ export class LivelyWorld extends World {
   async initializeStudio () {
     const topBar = await this.initializeTopBar();
 
-    const { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
+    const { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
 
     let { askForWorldName } = resource(document.location.href).query();
     if (askForWorldName === undefined) askForWorldName = true;
@@ -491,8 +492,9 @@ export class LivelyWorld extends World {
         }
       } else if (projectToBeOpened) {
         worldName = projectToBeOpened;
-        Project.loadProject(projectToBeOpened);
+        await Project.loadProject(projectToBeOpened, projectRepoOwner);
         this.projectToBeOpened = null;
+        this.projectRepoOwner = null;
       }
 
       this.name = worldName;
@@ -506,7 +508,7 @@ export class LivelyWorld extends World {
       worldName = worldName || 'new world';
 
       if (window.history) {
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!projectToBeOpened || !!openNewProjectPrompt));
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!projectToBeOpened || !!openNewProjectPrompt, $world.openedProject ? projectRepoOwner : null));
       }
 
       await this.animate({

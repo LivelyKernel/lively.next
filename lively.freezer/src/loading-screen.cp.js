@@ -33,6 +33,7 @@ export class WorldLoadingScreen extends Morph {
       const progressBar = this.get('package loading indicator');
       const cssLoadingScreen = this.get('css loading screen');
       const projectName = this.getProjectName();
+      const projectRepoOwner = this.getProjectRepoOwner();
       const worldName = this.getWorldName();
       const filePath = this.getFilePath();
       const snapshot = this.getSnapshot();
@@ -48,18 +49,18 @@ export class WorldLoadingScreen extends Morph {
           opacity: 1, duration: 300
         });
       }
-      await this.transitionToLivelyWorld({ worldName, filePath, snapshot, projectName }, progressBar);
+      await this.transitionToLivelyWorld({ worldName, filePath, snapshot, projectName, projectRepoOwner }, progressBar);
       progressBar.stopStepping();
     }
   }
 
-  async transitionToLivelyWorld ({ worldName, filePath, snapshot, projectName }, progress) {
+  async transitionToLivelyWorld ({ worldName, filePath, snapshot, projectName, projectRepoOwner }, progress) {
     const serverURL = resource(window.SYSTEM_BASE_URL || document.location.origin).join('objectdb/').url;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
 
     if (projectName) {
       const existingProjects = await Project.listAvailableProjects();
-      const foundProject = existingProjects.filter(p => p.name === projectName);
+      const foundProject = existingProjects.filter(p => p.name === projectName && p.projectRepoOwner === projectRepoOwner);
       if (projectName !== '__newProject__' && !foundProject.length > 0) return this.indicateMissing(true);
     }
 
@@ -70,7 +71,7 @@ export class WorldLoadingScreen extends Morph {
 
     if (filePath && !await resource(document.location.origin).join(filePath).exists()) { return this.indicateMissing(false); }
 
-    await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot, projectName });
+    await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot, projectName, projectRepoOwner });
   }
 
   getProjectName () {
@@ -80,6 +81,15 @@ export class WorldLoadingScreen extends Morph {
     const projectNameMatch = query.name || window.PROJECT_NAME;
     const projectName = projectNameMatch || false;
     return projectName;
+  }
+
+  getProjectRepoOwner () {
+    if (!document.location.href.includes('projects')) return false;
+    const loc = document.location;
+    const query = resource(loc.href).query();
+    const projectRepoOwnerMatch = query.owner || window.OWNER;
+    const projectRepoOwner = projectRepoOwnerMatch || false;
+    return projectRepoOwner;
   }
 
   getWorldName () {
