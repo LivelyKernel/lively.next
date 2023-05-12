@@ -1,6 +1,6 @@
 import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, getWithoutCall, getEligibleSourceEditorsFor, applySourceChanges,
+  getNodeFromSubmorphs, getAddCallReferencing, getWithoutCall, getEligibleSourceEditorsFor, applySourceChanges,
   getPathFromMorphToMaster,
   getTextAttributesExpr,
   getComponentScopeFor,
@@ -655,7 +655,6 @@ class MorphRemovalReconciliation extends Reconciliation {
    */
   insertWithoutCall (interactiveDescriptor) {
     const { previousOwner, removedMorph } = this;
-
     const { modId, sourceCode, parsedComponent, requiredBindings } = this.getDescriptorContext(interactiveDescriptor);
 
     let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
@@ -672,6 +671,15 @@ class MorphRemovalReconciliation extends Reconciliation {
       changes.push(Object.assign({ action: 'replace' }, nodeToRemove, { lines: [removeMorphExpr.__expr__] }));
     } else {
       ({ needsLinting, changes } = insertMorphExpression(parsedComponent, sourceCode, previousOwner, removeMorphExpr));
+    }
+
+    const addCallToAdjust = closestSubmorphsNode && getAddCallReferencing(closestSubmorphsNode.value, removedMorph);
+    if (addCallToAdjust) {
+      // remove the before string including the comma
+      const nameToRemove = addCallToAdjust.arguments[1];
+      let start = nameToRemove.start;
+      while (sourceCode[start] !== ',') start--;
+      changes.push({ action: 'remove', start, end: nameToRemove.end });
     }
 
     if (needsLinting) this.modulesToLint.add(modId);
@@ -898,8 +906,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
    * to the source code.
    * @param {type} interactiveDescriptor - description
    */
-  clearWithoutCallIfNeeded (interactiveDescriptor, previousOwner) {
-    if (this.newOwner !== previousOwner) return;
+  clearWithoutCallIfNeeded (interactiveDescriptor) {
     const { modId, parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
     let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, this.newOwner), 'submorphs');
     let nodeToRemove;
@@ -931,7 +938,9 @@ class MorphIntroductionReconciliation extends Reconciliation {
         removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
       }
 
-      if (wasInherited) this.clearWithoutCallIfNeeded(interactiveDescriptor, previousOwner);
+      if (wasInherited && this.newOwner === previousOwner) {
+        this.clearWithoutCallIfNeeded(interactiveDescriptor);
+      }
       // add the spec that was discarded previously into the policy
       this.reintroduceSpec(interactiveDescriptor, removedSpec);
       // add the expr that was discarded previously into the policy
