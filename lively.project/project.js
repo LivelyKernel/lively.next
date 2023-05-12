@@ -14,6 +14,8 @@ import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 
+const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
+const repositoryNameRegex = /\/.+\/(.*)/;
 export class Project {
   static async projectDirectory () {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
@@ -59,6 +61,7 @@ export class Project {
     projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
     const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
     const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
+    packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
     return packageJSONObjects;
   }
 
@@ -72,24 +75,25 @@ export class Project {
 
     const userToken = currentUsertoken();
     // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const projectName = remoteUrl.pathname.match(repositoryNameRegex)[1];
+    const projectRepoOwner = remoteUrl.pathname.match(repositoryOwnerRegex)[1];
+    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}-${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone(); // TODO: this needs error handling
-    // CAUTION: This makes it so that repo name = project name for now!
-    const projectName = remoteUrl.pathname.match(/\/.+\/(.*)/)[1];
-    const loadedProject = await Project.loadProject(projectName);
+    
+    const loadedProject = await Project.loadProject(projectName, projectRepoOwner);
     return loadedProject;
   }
 
-  static async loadProject (name) {
-    // Create Project object and do not bind to the current version.
+  static async loadProject (name, repoOwner) {
+    // Create Project object and do not automatically update the referenced lively version.
     // It acts merely as a container until we fill in the correct contents below.
     const loadedProject = new Project(name, false);
 
     let address, url;
-    address = (await Project.projectDirectory()).join('name');
+    address = (await Project.projectDirectory()).join(repoOwner + '-' + name);
     url = address.url;
 
-    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(name).withRelativePartsResolved().asDirectory();
+    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '-' + name).withRelativePartsResolved().asDirectory();
 
     // await this.gitResource.pullRepo();
     // load package into lively

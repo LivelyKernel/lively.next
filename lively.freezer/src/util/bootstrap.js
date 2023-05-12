@@ -278,7 +278,7 @@ function fastPrepLivelySystem (li) {
     })
 }
 
-export async function bootstrap ({ filePath, worldName, projectName, snapshot, commit, loadingIndicator: li, progress, logError = (err) => console.log(err) }) {
+export async function bootstrap ({ filePath, worldName, projectName, projectRepoOwner, snapshot, commit, loadingIndicator: li, progress, logError = (err) => console.log(err) }) {
   try {
     const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
     li.center = progress.bottomCenter;
@@ -359,7 +359,7 @@ export async function bootstrap ({ filePath, worldName, projectName, snapshot, c
           }
           if (worldName) await loadWorld(new LivelyWorld({ openNewWorldPrompt: true }), undefined, opts);
           else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts)
-          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName }), undefined, opts)
+          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName, projectRepoOwner }), undefined, opts)
         } else {
           await morphic.World.loadFromDB(worldName, undefined, undefined, {
               ...opts,
