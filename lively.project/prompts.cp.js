@@ -59,7 +59,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         return false;
       }
     } else {
-      if (!projectName.textString || !projectName.textString.match(/^[a-zA-Z-]*$/)) {
+      if (!projectName.textString || !projectName.textString.match(/^[\da-zA-Z-_]*$/)) {
         projectName.indicateError('enter valid name');
         okButton.disable();
         return false;
