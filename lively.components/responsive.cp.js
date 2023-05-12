@@ -486,7 +486,7 @@ const ResponsiveLayoutHalo = component({
       }),
       borderColor: Color.rgb(23, 160, 251),
       borderWidth: 1,
-      extent: pt(605.9, 38.7),
+      extent: pt(581, 41),
       position: pt(26.8, -8.2),
       submorphs: [part(BreakpointControl, {
         name: 'horizontal breakpoint control',
@@ -515,7 +515,7 @@ const ResponsiveLayoutHalo = component({
       borderColor: Color.rgb(23, 160, 251),
       borderWidth: 1,
       extent: pt(137.2, 537.8),
-      position: pt(-2.6, 32.8),
+      position: pt(-14.2, 32.6),
       submorphs: [part(BreakpointControl, {
         name: 'vertical breakpoint control',
         extent: pt(548, 20),
@@ -534,6 +534,7 @@ const ResponsiveLayoutHalo = component({
       }), {
         type: Label,
         name: 'add vertical breakpoint btn',
+        padding: rect(5, 0, 0, 0),
         fontSize: 30.108,
         nativeCursor: 'pointer',
         position: pt(-3.2, 527.4),
