@@ -853,6 +853,17 @@ class ProjectPreviewModel extends WorldPreviewModel {
       li.remove();
     }
   }
+
+  async tryToDelete () {
+    const proceed = await $world.confirm(['Delete Project\n', {}, 'Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
+    if (proceed) await this.confirmDelete();
+  }
+
+  async confirmDelete () {
+    const { projectRepoOwner, name } = this._project;
+    await Project.deleteProject(name, projectRepoOwner);
+    this._worldBrowser.displayItems();
+  }
 }
 
 const Placeholder = component({
