@@ -13,6 +13,8 @@ import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
+import { buildScriptShell } from './templates/build-shell.js';
+import { buildScript } from './templates/build.js';
 
 const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
 const repositoryNameRegex = /\/.+\/(.*)/;
@@ -39,6 +41,17 @@ export class Project {
       repository: {
         type: 'git',
         url: `https://github.com/${repoOwner}/${name}`
+      },
+      scripts: {
+        build: "rm -rf build/* && export MINIFY='' && ./tools/build.sh",
+        "build-minified": "rm -rf build/* && export MINIFY=true && ./tools/build.sh"
+      },
+      // TODO: How do we manage the necessity to upgrade this nicely?
+      "dependencies": {
+        "@rollup/plugin-json": "4.1.0",
+        "rollup": "^2.70.2",
+        "rollup-plugin-export-default": "1.4.0",
+        "rollup-plugin-polyfill-node": "0.9.0"
       },
       lively: {
       },
@@ -206,6 +219,11 @@ export class Project {
           'ci-tests.yml': workflowDefinition
         }
       },
+      tools: {
+        'build.sh': '',
+        'build.mjs': ''
+      },
+      build: { },
       tests: {
         'test.js': `/* global describe,it */\nimport { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
       },
@@ -218,7 +236,7 @@ export class Project {
       assets: { },
       'index.css': ''
     });
-
+    await this.generateBuildScripts();
     this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
     this.configFile = await resource(projectDir.join('package.json').url);
 
@@ -257,8 +275,24 @@ export class Project {
   }
 
   fillPipelineTemplate (workflowDefinition) {
-    let definiton = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
-    return definiton.replaceAll('%PROJECT_NAME%', this.name);
+    let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
+    return definition.replaceAll('%PROJECT_NAME%', this.name);
+  }
+
+  async generateBuildScripts () {
+    const shellBuildScript = join(this.url, 'tools/build.sh');
+    if (!await resource(shellBuildScript).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    await resource(shellBuildScript).write(buildScriptShell);
+
+    const mjsBuildScript = join(this.url, 'tools/build.mjs');
+    if (!await resource(mjsBuildScript).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    let content = buildScript;
+    content = content.replaceAll('%PROJECT_NAME%', this.name);
+    await resource(mjsBuildScript).write(content);
+    debugger;
+    const scriptDir = shellBuildScript.replace('http://localhost:9011/', '').replace('/build.sh', '')
+    const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
+    await cmd.whenDone()
   }
 
   async save (opts = {}) {
@@ -278,7 +312,7 @@ export class Project {
         await this.gitResource.commitRepo(message);
         await this.gitResource.pushRepo();
         await this.reloadPackage();
-      } else await this.gitResource.commitRepor(message);
+      } else await this.gitResource.commitRepo(message);
     } catch (err) {
       return false;
     }
