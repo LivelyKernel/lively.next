@@ -74,9 +74,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     this.view.remove();
   }
 
-  reject() {
+  reject () {
     if (!this.canBeCancelled) return;
-    else super.reject(); 
+    else super.reject();
   }
 
   async resolve () {
@@ -427,8 +427,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
       submorphs: [{
         name: 'description',
         dropShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
-        textAndAttributes: ['\n\
-', null]
+        textAndAttributes: ['', null]
 
       }]
     }]
