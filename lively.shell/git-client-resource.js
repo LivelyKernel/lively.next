@@ -13,26 +13,25 @@ export default class GitShellResource extends ShellClientResource {
     return runCommand(cmd, this.options);
   }
 
-  async isGitRepository (withRemote = false) {
+  async isGitRepository () {
     const isDir = await this.isDirectory();
     if (!isDir) return false;
 
     let cmd = this.runCommand('test -d ".git"');
     await cmd.whenDone();
-    if (!withRemote) return cmd.exitCode === 0;
-    cmd = this.runCommand('git remote');
-    await cmd.whenDone();
-    return cmd.exitCode === 0 && cmd.stdout !== '';
+    return cmd.exitCode === 0;
   }
 
   async initializeGitRepository () {
     const cmd = this.runCommand('git init -b main');
     await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error initializing git repository');
   }
 
   async hasRemote () {
-    const checkRemoteCommand = 'git remote -v';
+    const checkRemoteCommand = 'git remote';
     const res = await this.runCommand(checkRemoteCommand).whenDone();
+    if (res.exitCode !== 0) throw Error('Error while executing git remote.');
     if (res.stdout === '') return false;
     else return true;
   }
@@ -54,18 +53,24 @@ export default class GitShellResource extends ShellClientResource {
               -d '{"name":"${repoName}", "description": "${repoDescription}"}'`;
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error executing curl call to create GitHub repository');
     const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
-    await this.runCommand(addingRemoteCommand).whenDone();
+    cmd = this.runCommand(addingRemoteCommand);
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
     // TODO: We could improve by providing a way to configure this.
     const trackingCommand = 'git branch --track origin';
-    await this.runCommand(trackingCommand).whenDone();
+    cmd = this.runCommand(trackingCommand);
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error tracking main with origin');
   }
 
-  // TODO: throw errors
   async commitRepo (message) {
     let cmdString = `git add . && git commit -m "${message}"`;
     let cmd = this.runCommand(cmdString);
     await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error committing');
+    else return true;
   }
 
   async pushRepo () {
@@ -73,15 +78,19 @@ export default class GitShellResource extends ShellClientResource {
     await this.commitRepo();
     const cmd = this.runCommand('git push --set-upstream origin main');
     await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error pushing to remote');
+    else return true;
   }
 
-  // TODO: functioning error handling, especially in the case of conflicts
   async pullRepo () {
     await this.runCommand('git stash').whenDone();
     const pullCmd = this.runCommand('git pull');
     await pullCmd.whenDone();
+    if (pullCmd.exitCode !== 0) throw Error('Error pulling. Might be due to a conflict!');
     const cmd = this.runCommand('git stash pop');
     await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error applying stash. Might be due to a conflict!');
+    else return true;
   }
 }
 
