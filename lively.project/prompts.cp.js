@@ -117,7 +117,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (!currentUsertoken()) {
       this.waitForLogin();
     } else this.projectNameMode();
-    promptTitle.textString = 'Configure new Project:';
+    promptTitle.textString = 'Configure new Project';
   }
 
   waitForLogin () {
