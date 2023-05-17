@@ -80,11 +80,13 @@ export class RichTextPlugin extends EditorPlugin {
     if (!this.textMorph.selection.isEmpty()) {
       const { start } = this.textMorph.selection;
       const startBounds = this.textMorph.charBoundsFromTextPosition(start);
-      const startPoint = this.textMorph.worldPoint({ x: startBounds.x, y: startBounds.y });
-      const pointForPopup = new Point(startPoint.x - 125, startPoint.y - 220 - 20);
-
-      if (this.formattingPopUp) this.formattingPopUp.openInWorld(pointForPopup);
-      else this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this.textMorph } }).openInWorld(pointForPopup);
+      const startPoint = this.textMorph.worldPoint(startBounds.topLeft());
+      const worldBounds = this.textMorph.world().bounds();
+      if (this.formattingPopUp) this.formattingPopUp.openInWorld();
+      else this.formattingPopUp = part(TextFormattingPopUp, { viewModel: { targetMorph: this.textMorph } }).openInWorld();
+      $world.env.forceUpdate(); // FIXME: can we automatize this?
+      this.formattingPopUp.bottomRight = startPoint;
+      this.formattingPopUp.position = worldBounds.translateForInclusion(this.formattingPopUp.bounds()).topLeft();
     }
   }
 
