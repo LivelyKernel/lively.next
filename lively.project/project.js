@@ -59,6 +59,7 @@ export class Project {
         'rollup-plugin-polyfill-node': '0.9.0'
       },
       lively: {
+        projectDependencies: []
       },
       version: '0.1.0'
     };
@@ -154,6 +155,8 @@ export class Project {
     }
     loadedProject.package = pkg;
     $world.openedProject = loadedProject;
+    loadedProject.ensureDependenciesExist();
+    loadedProject.loadProjectDependencies();
     return loadedProject;
   }
 
@@ -164,7 +167,7 @@ export class Project {
    */
   async saveConfigData () {
     if (!this.configFile) {
-      throw ('No config file found. Should never happen.');
+      throw Error('No config file found. Should never happen.');
     }
     try {
       await this.configFile.write(JSON.stringify(this.config, null, 2));
@@ -340,5 +343,87 @@ export class Project {
       $world.setStatusMessage(err);
       return false;
     }
+  }
+
+  async ensureDependenciesExist () {
+    const availableProjects = Project.retrieveAvailableProjectsCache();
+    this.config.lively.projectDependencies.forEach(async (dep) => {
+      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
+      if (!depExists) {
+        const depName = dep.name.match(/.*-(.*)/)[1];
+        const depRepoOwner = dep.name.match(/(.*)-/)[1];
+        const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}-${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
+        await cmd.whenDone();
+        if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
+      }
+    });
+    // refresh the cache of available projects and their version
+    await Project.listAvailableProjects();
+  }
+
+  async loadProjectDependencies () {
+    let dependencyStatusReport = [];
+    const availableProjects = Project.retrieveAvailableProjectsCache();
+    let configWarning = false;
+    this.config.lively.projectDependencies.forEach(async (dep) => {
+      const depName = dep.name.match(/.*-(.*)/)[1];
+      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
+      const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(dep.version));
+      if (versionStatus === true) dependencyStatusReport.concat([`✔️ loaded ${dep.name}\n`, null]);
+      else {
+        configWarning = true;
+        dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
+      }
+      let address;
+      address = (await Project.projectDirectory()).join(dep.name);
+      try {
+        await loadPackage(Project.systemInterface, {
+          name: depName,
+          address: address.url,
+          configFile: address.join('package.json').url,
+          main: address.join('index.js').url,
+          test: address.join('tests/test.js').url,
+          type: 'package'
+        });
+      } catch (err) {
+        throw Error('Error loading dependency package', { cause: err });
+      }
+    });
+    if (configWarning) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+  }
+
+  async addDependencyToProject (ownerAndNameString) {
+    const depName = ownerAndNameString.match(/.*-(.*)/)[1];
+    const depRepoOwner = ownerAndNameString.match(/(.*)-/)[1];
+    const dep = Project.retrieveAvailableProjectsCache().find(proj => `${depRepoOwner}-${depName}` === `${proj.projectRepoOwner}-${proj.name}`);
+    if (!dep) throw Error('Dependency is not available!');
+    const version = dep.version;
+    const addedSemver = semver.coerce(version);
+    const newDepVersion = `${addedSemver.major}.${addedSemver.minor}.x`;
+    const deps = this.config.lively.projectDependencies;
+    const alreadyDependent = deps.find(dep => dep.name === ownerAndNameString);
+    if (alreadyDependent) {
+      alreadyDependent.version = newDepVersion;
+    } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, newDepVersion });
+
+    let address;
+    address = (await Project.projectDirectory()).join(ownerAndNameString);
+    try {
+      await loadPackage(Project.systemInterface, {
+        name: depName,
+        address: address.url,
+        configFile: address.join('package.json').url,
+        main: address.join('index.js').url,
+        test: address.join('tests/test.js').url,
+        type: 'package'
+      });
+    } catch (err) {
+      throw Error('Error loading dependency package', { cause: err });
+    }
+  }
+
+  removeDependencyFromProject (ownerAndNameString) {
+    const deps = this.config.lively.projectDependencies;
+    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== ownerAndNameString);
   }
 }
