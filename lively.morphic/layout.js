@@ -458,7 +458,7 @@ export class TilingLayout extends Layout {
       align,
       axisAlign,
       spacing,
-      orderByIndex,
+      orderByIndex: !renderViaCSS && orderByIndex,
       reactToSubmorphAnimations,
       renderViaCSS,
       padding,

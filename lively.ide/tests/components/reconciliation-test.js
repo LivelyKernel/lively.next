@@ -139,7 +139,7 @@ describe('component -> source reconciliation', function () {
 
   it('inserts properties in proper order', async () => {
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
-      ComponentC.layout = new TilingLayout({});
+      ComponentC.layout = new TilingLayout();
       ComponentC.extent = pt(40, 40);
       ComponentC.addMorph({
         name: 'foo', fill: Color.red, type: Label, fontColor: Color.green
@@ -151,9 +151,7 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource).to.includes(`const C = component({
   name: 'C',
   extent: pt(40, 40),
-  layout: new TilingLayout({
-    orderByIndex: true
-  }),
+  layout: new TilingLayout({}),
   fill: Color.grey,
   submorphs: [{
     type: Label,
@@ -272,7 +270,6 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   layout: new TilingLayout({
-    orderByIndex: true,
     resizePolicies: [['some submorph', {
       height: 'fill',
       width: 'fill'
@@ -293,9 +290,7 @@ describe('component -> source reconciliation', function () {
     expect(ComponentB.layout._resizePolicies.has(removedMorph)).to.be.false;
     expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
-  layout: new TilingLayout({
-    orderByIndex: true
-  }),
+  layout: new TilingLayout({}),
   submorphs: [without('some submorph')]
 });`);
   });
