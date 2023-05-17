@@ -111,8 +111,9 @@ function mergeInHierarchy (
  * @param { object[] } customBreakpoints - A list of custom breakpoints in response to the width/height of the `targetMorph`.
  * @returns { object } The event state corresponding to the morph.
  */
-function getEventState (targetMorph, customBreakpoints) {
+function getEventState (targetMorph, customBreakpoints, localComponentStates) {
   if (!customBreakpoints) customBreakpoints = [];
+  const stateMaster = localComponentStates?.[targetMorph.master?._componentState];
   const { world, eventDispatcher } = targetMorph.env;
   const mode = world && world.colorScheme; // "dark" | "light"
   const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(targetMorph); // bool
@@ -127,7 +128,8 @@ function getEventState (targetMorph, customBreakpoints) {
     breakpointMaster: breakpointComponent?.stylePolicy,
     mode,
     isHovered,
-    isClicked
+    isClicked,
+    stateMaster
   };
 }
 
@@ -269,20 +271,30 @@ export class StylePolicy {
     if (policyOrDescriptor.isPolicy || policyOrDescriptor.isComponentDescriptor) {
       this._parent = policyOrDescriptor;
     } else {
-      const { click, hover, light, dark, breakpoints, auto = this._parent } = policyOrDescriptor;
-      this._parent = auto;
-      this._autoMaster = auto;
+      const {
+        click, hover, light, dark, breakpoints, states,
+        auto = this._parent, isSplitInline = false
+      } = policyOrDescriptor;
+      this._isSplitInline = isSplitInline;
+      this._parent = auto?.isComponentDescriptor ? auto.stylePolicy : auto;
+      this._autoMaster = this._parent;
 
       // mouse event component dispatch
-      if (click) this._clickMaster = click;
-      if (hover) this._hoverMaster = hover;
+      if (click) this._clickMaster = click.isComponentDescriptor ? click.stylePolicy : click;
+      if (hover) this._hoverMaster = hover.isComponentDescriptor ? hover.stylePolicy : hover;
       // light/dark component dispatch
-      if (light) this._lightModeMaster = light;
-      if (dark) this._darkModeMaster = dark;
+      if (light) this._lightModeMaster = light.isComponentDescriptor ? light.stylePolicy : light;
+      if (dark) this._darkModeMaster = dark.isComponentDescriptor ? dark.stylePolicy : dark;
       // breakpoint component dispatch
       // sort them
       if (breakpoints) {
         this.setBreakpoints(breakpoints);
+      }
+      if (states) {
+        this._localComponentStates = {};
+        for (let state in states) {
+          this._localComponentStates[state] = states[state].isComponentDescriptor ? states[state].stylePolicy : states[state];
+        }
       }
     }
   }
@@ -330,6 +342,17 @@ export class StylePolicy {
     if (this._clickMaster) return true;
     if (this.spec.master?.click) return true; // FIXME: Can we drop this? Wo dont care for precedence so this is redundant to the line below...
     return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
+  }
+
+  /**
+   * Sets the policy to a given component state, that takes precedence over all other
+   * dispatched components (i.e. click, hover, auto ...). If we pass null,
+   * we reset the component state, reverting to the normal dispatch.
+   * @param { null|string} componentState - The string encoding a component state known to the policy.
+   */
+  setState (componentState) {
+    this._componentState = componentState;
+    this.targetMorph?.requestMasterStyling();
   }
 
   /**
@@ -382,7 +405,7 @@ export class StylePolicy {
 
   _getOverriddenMaster (spec, localMaster) {
     let inlineMaster = spec.master?.stylePolicy || spec.master;
-    if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover']) && !inlineMaster.auto) {
+    if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover', 'states', 'breakpoints']) && !inlineMaster.auto) {
       inlineMaster.auto = localMaster.parent; // ensure auto is present
     }
     if (inlineMaster && !inlineMaster.isPolicy) return new PolicyApplicator({}, inlineMaster); // eslint-disable-line no-use-before-define
@@ -748,8 +771,11 @@ export class StylePolicy {
       isClicked,
       mode,
       breakpointMaster,
-      matchingBreakpoint
-    } = getEventState(targetMorph, this._breakpointMasters);
+      matchingBreakpoint,
+      stateMaster
+    } = getEventState(targetMorph, this._breakpointMasters, this._localComponentStates);
+
+    if (stateMaster) return stateMaster;
 
     if (matchingBreakpoint) targetMorph._lastBreakpoint = matchingBreakpoint;
 
