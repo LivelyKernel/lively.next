@@ -75,7 +75,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   reject () {
-    if (!this.canBeCancelled) return;
+    if (!this.canBeCancelled) false;
     else super.reject();
   }
 
@@ -208,7 +208,9 @@ class ProjectSavePrompt extends AbstractPromptModel {
     else if (this.increaseMinor) increaseLevel = 'minor';
     else increaseLevel = 'patch';
 
+    const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
     const success = await this.project.save({ increaseLevel, message });
+    li.remove();
     this.view.remove();
     if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
     else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
