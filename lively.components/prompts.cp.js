@@ -4,7 +4,7 @@ import { Color, rect, pt } from 'lively.graphics';
 import { ButtonDefault } from './buttons.cp.js';
 import { InputLineDefault } from './inputs.cp.js';
 import { arr, promise } from 'lively.lang';
-import {InputLine,  PasswordInputLine } from './inputs.js';
+import { InputLine, PasswordInputLine } from './inputs.js';
 
 export class AbstractPromptModel extends ViewModel {
   static get properties () {
@@ -77,6 +77,7 @@ export class InformPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       lineWrapping: { defaultValue: true },
+      additionalText: { },
       bindings: {
         get () {
           return [
@@ -93,6 +94,11 @@ export class InformPromptModel extends AbstractPromptModel {
     promptTitle.lineWrapping = this.lineWrapping;
     promptTitle.fixedWidth = !!this.lineWrapping;
     promptTitle.value = this.label;
+    if (this.additionalText) {
+      const additionalText = new Text();
+      additionalText.value = this.additionalText;
+      this.view.addMorph(additionalText, this.ui.okButton);
+    }
   }
 
   get keybindings () {
