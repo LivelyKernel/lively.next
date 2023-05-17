@@ -18,6 +18,7 @@ import { buildScript } from './templates/build.js';
 
 const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
 const repositoryNameRegex = /\/.+\/(.*)/;
+
 export class Project {
   static async projectDirectory () {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
@@ -44,14 +45,14 @@ export class Project {
       },
       scripts: {
         build: "rm -rf build/* && export MINIFY='' && ./tools/build.sh",
-        "build-minified": "rm -rf build/* && export MINIFY=true && ./tools/build.sh"
+        'build-minified': 'rm -rf build/* && export MINIFY=true && ./tools/build.sh'
       },
       // TODO: How do we manage the necessity to upgrade this nicely?
-      "dependencies": {
-        "@rollup/plugin-json": "4.1.0",
-        "rollup": "^2.70.2",
-        "rollup-plugin-export-default": "1.4.0",
-        "rollup-plugin-polyfill-node": "0.9.0"
+      dependencies: {
+        '@rollup/plugin-json': '4.1.0',
+        rollup: '^2.70.2',
+        'rollup-plugin-export-default': '1.4.0',
+        'rollup-plugin-polyfill-node': '0.9.0'
       },
       lively: {
       },
@@ -70,11 +71,17 @@ export class Project {
         return dir.isFile() && !dir.name().endsWith('package.json');
       }
     });
-    projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
-    const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
-    const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
-    packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
-    return packageJSONObjects;
+    try {
+      projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
+      const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
+      const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
+      packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
+      return packageJSONObjects;
+    } catch (err) {
+      throw Error('Error listing local projects', { cause: err });
+    } finally {
+      return [];
+    }
   }
 
   /**
@@ -90,7 +97,8 @@ export class Project {
     const projectName = remoteUrl.pathname.match(repositoryNameRegex)[1];
     const projectRepoOwner = remoteUrl.pathname.match(repositoryOwnerRegex)[1];
     const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}-${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
-    await cmd.whenDone(); // TODO: this needs error handling
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error cloning repository');
 
     const loadedProject = await Project.loadProject(projectName, projectRepoOwner);
     return loadedProject;
@@ -98,14 +106,14 @@ export class Project {
 
   static async deleteProject (name, repoOwner) {
     const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}-${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
-    const res = (await cmd.whenDone()).stdout;
+    const res = (await cmd.whenDone()).exitCode;
     if (res === 0) return true;
-    else return false;
+    else throw Error('Error deleting project');
   }
 
   static async loadProject (name, repoOwner) {
     // Create Project object and do not automatically update the referenced lively version.
-    // It acts merely as a container until we fill in the correct contents below.
+    // The project acts merely as a container until we fill in the correct contents below.
     const loadedProject = new Project(name, false);
 
     let address, url;
@@ -149,13 +157,12 @@ export class Project {
    */
   async saveConfigData () {
     if (!this.configFile) {
-      console.error('This should never happen.');
-      return;
+      throw ('No config file found. Should never happen.');
     }
     try {
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
-      console.warn(`Error when reading package config for ${this.directory}: ${e}`);
+      throw Error('Error writing config file', { cause: e });
     }
   }
 
@@ -208,54 +215,62 @@ export class Project {
     const system = Project.systemInterface;
     const projectDir = (await Project.projectDirectory()).join(gitHubUser + '-' + this.name);
     this.url = projectDir.url;
+    try {
+      await system.resourceCreateFiles(projectDir, {
+        'index.js': "'format esm';\n",
+        'package.json': '',
+        '.gitignore': 'node_modules/',
+        'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
+        '.github': {
+          workflows: {
+            'ci-tests.yml': workflowDefinition
+          }
+        },
+        tools: {
+          'build.sh': '',
+          'build.mjs': ''
+        },
+        build: { },
+        tests: {
+          'test.js': `/* global describe,it */\nimport { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
+        },
+        ui: {
+          'components.cp.js': ''
+        },
+        workspaces: {
+          'default.workspace.js': ''
+        },
+        assets: { },
+        'index.css': ''
+      });
+      await this.generateBuildScripts();
+      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
+      this.configFile = await resource(projectDir.join('package.json').url);
 
-    await system.resourceCreateFiles(projectDir, {
-      'index.js': "'format esm';\n",
-      'package.json': '',
-      '.gitignore': 'node_modules/',
-      'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
-      '.github': {
-        workflows: {
-          'ci-tests.yml': workflowDefinition
-        }
-      },
-      tools: {
-        'build.sh': '',
-        'build.mjs': ''
-      },
-      build: { },
-      tests: {
-        'test.js': `/* global describe,it */\nimport { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
-      },
-      ui: {
-        'components.cp.js': ''
-      },
-      workspaces: {
-        'default.workspace.js': ''
-      },
-      assets: { },
-      'index.css': ''
-    });
-    await this.generateBuildScripts();
-    this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
-    this.configFile = await resource(projectDir.join('package.json').url);
+      await this.gitResource.initializeGitRepository();
+      this.saveConfigData();
+      const pkg = await loadPackage(system, {
+        name: this.name,
+        address: this.url,
+        configFile: projectDir.join('package.json').url,
+        main: projectDir.join('index.js').url,
+        test: projectDir.join('tests/test.js').url,
+        type: 'package'
+      });
 
-    await this.gitResource.initializeGitRepository();
-    this.saveConfigData();
-    const pkg = await loadPackage(system, {
-      name: this.name,
-      address: this.url,
-      configFile: projectDir.join('package.json').url,
-      main: projectDir.join('index.js').url,
-      test: projectDir.join('tests/test.js').url,
-      type: 'package'
-    });
+      this.package = pkg;
+    } catch (error) {
+      throw Error('Error creating project files', { cause: error });
+    }
 
-    this.package = pkg;
     if (withRemote) {
-      await this.regenerateTestPipeline();
-      const createForOrg = gitHubUser !== currentUsername();
-      await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
+      try {
+        await this.regenerateTestPipeline();
+        const createForOrg = gitHubUser !== currentUsername();
+        await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
+      } catch (e) {
+        throw Error('Error setting up remote', { cause: e });
+      }
     }
     const saveSuccess = await this.save({ message: 'Initial Commit' });
     if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
@@ -268,7 +283,7 @@ export class Project {
 
   async regenerateTestPipeline () {
     const pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    if (!await resource(pipelineFile).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    if (!await resource(pipelineFile).exists()) throw Error('No pipelinefile found');
     let content = workflowDefinition;
     content = this.fillPipelineTemplate(workflowDefinition);
     await resource(pipelineFile).write(content);
@@ -281,18 +296,18 @@ export class Project {
 
   async generateBuildScripts () {
     const shellBuildScript = join(this.url, 'tools/build.sh');
-    if (!await resource(shellBuildScript).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    if (!await resource(shellBuildScript).exists()) throw Error('build.sh not found');
     await resource(shellBuildScript).write(buildScriptShell);
 
     const mjsBuildScript = join(this.url, 'tools/build.mjs');
-    if (!await resource(mjsBuildScript).exists()) $world.setStatusMessage(StatusMessageError, 'This should never happen.');
+    if (!await resource(mjsBuildScript).exists()) throw Error('build.mjs not found');
     let content = buildScript;
     content = content.replaceAll('%PROJECT_NAME%', this.name);
     await resource(mjsBuildScript).write(content);
-    debugger;
-    const scriptDir = shellBuildScript.replace('http://localhost:9011/', '').replace('/build.sh', '')
+    const scriptDir = shellBuildScript.replace('http://localhost:9011/', '').replace('/build.sh', '');
     const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
-    await cmd.whenDone()
+    await cmd.whenDone();
+    return cmd.exitCode;
   }
 
   async save (opts = {}) {
@@ -313,9 +328,10 @@ export class Project {
         await this.gitResource.pushRepo();
         await this.reloadPackage();
       } else await this.gitResource.commitRepo(message);
+      return true;
     } catch (err) {
+      $world.setStatusMessage(err);
       return false;
     }
-    return true;
   }
 }
