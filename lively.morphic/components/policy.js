@@ -380,6 +380,10 @@ export class StylePolicy {
     }
   }
 
+  get isSplitInline () {
+    return this._isSplitInline || this.parent?.isSplitInline || this.spec.master?.isSplitInline;
+  }
+
   /**
    * Evaluates to true, in case the policy changes its style in response to hover events.
    */
@@ -515,10 +519,12 @@ export class StylePolicy {
   ensureStylePoliciesInSpec (spec) {
     const klass = this.constructor;
     const overriddenMaster = this._getOverriddenMaster(spec, this);
-    const getLocalMaster = (name) => {
-      const localMaster = overriddenMaster && overriddenMaster.getSubSpecFor(name);
-      if (localMaster && !localMaster.isPolicy && !localMaster.isComponentDescriptor) return false;
-      return localMaster;
+    const getInlinePolicy = (name) => {
+      // we need to provide a local master that actually branches off into click, hover, breakpoints or states
+      // for EACH of the sub local policies
+      const inlinePolicy = overriddenMaster && overriddenMaster.getSplitInlinePolicyFor(name);
+      if (inlinePolicy && !inlinePolicy.isPolicy && !inlinePolicy.isComponentDescriptor) return false;
+      return inlinePolicy;
     };
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
@@ -562,8 +568,8 @@ export class StylePolicy {
         }
         if (node.COMMAND === 'remove') return null;
 
-        let localMaster = getLocalMaster(node.name || node.spec?.name);
         if (node.isPolicy) {
+          let localMaster = getInlinePolicy(node.name || node.spec?.name);
           // create new empty policy, which in turn handles the futher traversal internally
           return new klass(localMaster ? { master: localMaster } : {}, node);
         }
@@ -628,18 +634,18 @@ export class StylePolicy {
           return;
         } // do not tweak root
 
-        let localMaster = localSpec.master || getLocalMaster(parentSpec.name);
+        let localMaster = localSpec.master || getInlinePolicy(parentSpec.name);
         if (localMaster && parentSpec.isPolicy) {
           // rms 13.7.22 OK to get rid of the descriptor here,
           // since we are "inside" of a def which is reevaluated on change anyways.
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec.parent));
         }
-        if (localMaster) {
+        if (localMaster) { // parent spec is not a policy, and we introduced a master here
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)));
         }
-        if (parentSpec.isPolicy) {
+        if (parentSpec.isPolicy) { // we did not introduce a master and just adjusted stuff
           return replace(parentSpec, new klass(localSpec, parentSpec.parent)); // insert a different style policy that has the correct overrides
         }
 
@@ -764,6 +770,15 @@ export class StylePolicy {
    * @returns { StylePolicy } The appropriate policy for the dispatch.
    */
   determineMaster (targetMorph) {
+    let qualifyingMaster = this.dispatchMaster(targetMorph);
+
+    if (qualifyingMaster?.isComponentDescriptor) { // top level component definition referenced
+      qualifyingMaster = qualifyingMaster.stylePolicy;
+    }
+    return qualifyingMaster;
+  }
+
+  dispatchMaster (targetMorph) {
     if (!targetMorph) return this._autoMaster || this._parent; // best guess
 
     const {
@@ -803,6 +818,21 @@ export class StylePolicy {
     return this._parent; // default to the parent if we are neither of the above
   }
 
+  getTopLevelSpec (submorphNameInPolicyContext, subSpec) {
+    const rootSpec = { ...subSpec };
+    for (let prop of !submorphNameInPolicyContext ? getStylePropertiesFor(rootSpec.type) : []) {
+      if (typeof rootSpec[prop] === 'undefined') {
+        const defaultVal = getDefaultValueFor(subSpec.type, prop);
+        if (typeof defaultVal === 'undefined') continue;
+        rootSpec[prop] = {
+          value: defaultVal,
+          onlyAtInstantiation: true
+        };
+      }
+    }
+    return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
+  }
+
   /**
    * Synthesizes the sub spec corresponding to a particular name
    * of a morph in the submorph hierarchy.
@@ -811,28 +841,17 @@ export class StylePolicy {
    * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps = true) {
+  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps = true) {
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     if (subSpec.isPolicy) {
       return subSpec;
     }
 
-    let qualifyingMaster = this.determineMaster(ownerOfScope); // taking into account the target morph's event state
+    let qualifyingMaster = this.determineMaster(this.isSplitInline ? previousTarget : ownerOfScope);
 
     if (!qualifyingMaster) {
-      const rootSpec = { ...subSpec };
-      for (let prop of !submorphNameInPolicyContext ? getStylePropertiesFor(rootSpec.type) : []) {
-        if (typeof rootSpec[prop] === 'undefined') {
-          const defaultVal = getDefaultValueFor(subSpec.type, prop);
-          if (typeof defaultVal === 'undefined') continue;
-          rootSpec[prop] = {
-            value: defaultVal,
-            onlyAtInstantiation: true
-          };
-        }
-      }
-      return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
+      return this.getTopLevelSpec(submorphNameInPolicyContext, subSpec);
     }
 
     let nextLevelSpec = {};
@@ -840,13 +859,13 @@ export class StylePolicy {
       qualifyingMaster = qualifyingMaster.stylePolicy;
     }
 
-    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps);
+    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps);
     if (nextLevelSpec.isPolicy) return nextLevelSpec;
 
     let synthesized = {}; let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
-      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope);
+      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget);
       for (let prop in overriddenMasterSynthesizedSpec) {
         if (overriddenMasterSynthesizedSpec[prop]?.onlyAtInstantiation) {
           if (skipInstantiationProps) delete overriddenMasterSynthesizedSpec[prop];
@@ -898,6 +917,32 @@ export class StylePolicy {
     let matchingNode = this.lookForMatchingSpec(submorphName, this.spec, includeWithoutCalls);
     if (embeddedRes) matchingNode = embeddedRes;
     return matchingNode ? (unwrapAddCalls && matchingNode.props) || matchingNode : null;
+  }
+
+  splitBy (partitioningPolicy, submorphName) {
+    const {
+      _autoMaster, parent, _clickMaster, _hoverMaster,
+      breakpoints, _localComponentStates
+    } = partitioningPolicy;
+    const auto = (_autoMaster || parent)?.getSubSpecFor(submorphName);
+    const click = _clickMaster?.getSubSpecFor(submorphName);
+    const hover = _hoverMaster?.getSubSpecFor(submorphName);
+    let states;
+    for (let state in _localComponentStates) {
+      if (!states) states = {};
+      states[state] = _localComponentStates[state].getSubSpecFor(submorphName);
+    }
+    const isSplitInline = !!(click || hover || states);
+    if (!isSplitInline) return this;
+    return new this.constructor(this.spec, {
+      auto, click, hover, states, isSplitInline
+    });
+  }
+
+  getSplitInlinePolicyFor (submorphName) {
+    const localSpec = this.getSubSpecFor(submorphName) || {};
+    if (!localSpec?.isPolicy) return false;
+    return localSpec.splitBy(this, submorphName);
   }
 
   /**
@@ -1037,12 +1082,12 @@ export class PolicyApplicator extends StylePolicy {
    * to apply themselves to the remainder of the submorph hierarchy.
    * @param { Morph } targetMorph - The root morph of the hierarchy.
    */
-  apply (targetMorph) {
+  apply (targetMorph, previousTarget) {
     targetMorph.withMetaDo({ metaInteraction: true }, () => {
       this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
         let submorphName = null;
         if (morphInScope !== targetMorph) submorphName = morphInScope.name;
-        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, false);
+        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, previousTarget, false);
         if (obj.isEmpty(synthesizedSpec)) return;
         if (synthesizedSpec.isPolicy) {
           if (morphInScope._skipMasterReplacement) {
@@ -1055,14 +1100,14 @@ export class PolicyApplicator extends StylePolicy {
 
         if (morphInScope !== targetMorph && morphInScope.master) {
           morphInScope._requestMasterStyling = false;
-          return morphInScope.master.apply(morphInScope); // let the policy handle the traversal
+          return morphInScope.master.apply(morphInScope, targetMorph); // let the policy handle the traversal
         }
       });
     });
   }
 
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, skipInstantiationProps = true) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, skipInstantiationProps);
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, previousTarget, skipInstantiationProps = true) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget, skipInstantiationProps);
     if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
       return new PolicyApplicator({}, subSpec);
     }
