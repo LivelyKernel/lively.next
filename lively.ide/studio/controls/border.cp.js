@@ -134,8 +134,8 @@ export class BorderControlModel extends PropertySectionModel {
     this.targetMorph = aMorph;
     if (
       Color.white.equals(this.targetMorph.borderColor.valueOf()) &&
-      this.targetMorph.borderWidth === 0 &&
-      this.targetMorph.borderStyle === 'solid') {
+      this.targetMorph.borderWidth == 0 &&
+      this.targetMorph.borderStyle == 'solid') {
       this.deactivate();
     } else {
       this.activate(false);
