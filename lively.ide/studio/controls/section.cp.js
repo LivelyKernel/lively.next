@@ -5,18 +5,6 @@ import { HeadlineLabel, RemoveButton, PropertyLabelHovered, AddButton } from '..
 export class PropertySectionModel extends ViewModel {
   static get properties () {
     return {
-      inactiveSectionComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('inactiveSectionComponent') || PropertySectionInactive; // eslint-disable-line no-use-before-define
-        }
-      },
-      hoverSectionComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('hoverSectionComponent') || PropertySection; // eslint-disable-line no-use-before-define
-        }
-      },
       bindings: {
         get () {
           return [
@@ -31,15 +19,17 @@ export class PropertySectionModel extends ViewModel {
   activate () {
     this.ui.removeButton.visible = true;
     this.ui.addButton.visible = false;
+    this.view.master.setState(null);
   }
 
   deactivate () {
     this.ui.addButton.visible = true;
     this.ui.removeButton.visible = false;
+    this.view.master.setState('inactive');
   }
 }
 
-const PropertySection = component({
+const PropertySectionActive = component({
   name: 'property section',
   borderColor: Color.rgba(97, 106, 107, 1),
   layout: new TilingLayout({
@@ -57,7 +47,7 @@ const PropertySection = component({
   extent: pt(195.1, 51),
   submorphs: [{
     name: 'h floater',
-    epiMorph: true,
+    opacity: 1,
     layout: new TilingLayout({
       padding: Rectangle.inset(10, 0, 10, 0),
       justifySubmorphs: 'spaced',
@@ -84,12 +74,20 @@ const PropertySection = component({
   }]
 });
 
-const PropertySectionInactive = component(PropertySection, {
+const PropertySectionInactive = component(PropertySectionActive, {
   name: 'property section inactive',
   submorphs: [{
     name: 'h floater',
     opacity: 0.5
   }]
+});
+
+const PropertySectionDisabled = component(PropertySectionInactive, {
+  master: { hover: PropertySectionActive }
+});
+
+const PropertySection = component(PropertySectionActive, {
+  master: { states: { inactive: PropertySectionDisabled } }
 });
 
 export { PropertySection, PropertySectionInactive };

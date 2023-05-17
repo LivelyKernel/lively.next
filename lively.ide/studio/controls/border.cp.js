@@ -194,7 +194,6 @@ export class BorderControlModel extends PropertySectionModel {
     const { elementsWrapper } = this.ui;
     elementsWrapper.visible = true;
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
     if (initBorder) {
       this.targetMorph.border = { color: Color.white, width: 1, style: 'solid' };
       this.update();
@@ -207,7 +206,6 @@ export class BorderControlModel extends PropertySectionModel {
    */
   deactivate () {
     super.deactivate();
-    this.view.master = { auto: this.activeSectionComponent, hover: this.hoverSectionComponent };
     this.closePopup();
     this.models.borderColorInput.closeColorPicker();
     if (!this.targetMorph) return;
