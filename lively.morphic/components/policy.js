@@ -340,7 +340,7 @@ export class StylePolicy {
    */
   get respondsToClick () {
     if (this._clickMaster) return true;
-    if (this.spec.master?.click) return true; // FIXME: Can we drop this? Wo dont care for precedence so this is redundant to the line below...
+    if (this._localComponentStates && Object.values(this._localComponentStates).find(policy => policy.respondsToClick)) return true;
     return !!this.parent?.respondsToClick || !!this.overriddenMaster?.respondsToHover;
   }
 
@@ -389,7 +389,7 @@ export class StylePolicy {
    */
   get respondsToHover () {
     if (this._hoverMaster) return true;
-    if (this.spec.master?.hover) return true;
+    if (this._localComponentStates && Object.values(this._localComponentStates).find(policy => policy.respondsToHover)) return true;
     return !!this.parent?.respondsToHover || !!this.overriddenMaster?.respondsToHover;
   }
 
