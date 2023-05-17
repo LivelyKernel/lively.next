@@ -62,10 +62,6 @@ export class ShadowPopupModel extends PopupModel {
     return true;
   }
 
-  close () {
-    this.view.remove();
-  }
-
   attach (view) {
     super.attach(view);
     this.update();
@@ -168,8 +164,6 @@ export class SingleNumberModel extends PopupModel {
     return true;
   }
 
-  close () { this.view.remove(); }
-
   attach (view) {
     super.attach(view);
     this.ui.valueInput.number = this.value;
@@ -204,8 +198,6 @@ export class SingleSelectionModel extends PopupModel {
   get isPropertiesPanelPopup () {
     return true;
   }
-
-  close () { this.view.remove(); }
 
   attach (view) {
     super.attach(view);
@@ -370,10 +362,6 @@ export class PaddingPopupModel extends PopupModel {
     return true;
   }
 
-  close () {
-    this.view.remove();
-  }
-
   paddingChanged (padding) {}
 }
 
@@ -405,10 +393,6 @@ export class PositionPopupModel extends PopupModel {
 
   get isPropertiesPanelPopup () {
     return true;
-  }
-
-  close () {
-    this.view.remove();
   }
 
   setPoint (point) {
