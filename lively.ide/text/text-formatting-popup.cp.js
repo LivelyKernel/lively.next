@@ -1,5 +1,4 @@
 import { component, TilingLayout, without, ViewModel, add, part } from 'lively.morphic';
-
 import { DarkPopupWindow } from '../studio/shared.cp.js';
 import { RichTextControl } from '../studio/controls/text.cp.js';
 import { Color } from 'lively.graphics';
@@ -55,7 +54,6 @@ const SelectionBasedRichTextControl = component(RichTextControl, {
 export const TextFormattingPopUp = component(DarkPopupWindow, {
   name: 'formatting pop up',
   defaultViewModel: TextFormattingPopUpModel,
-  fill: Color.rgb(30, 30, 30),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
