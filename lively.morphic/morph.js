@@ -191,6 +191,7 @@ export class Morph {
 
       tooltip: {
         group: 'core',
+        isStyleProp: true,
         defaultValue: null
       },
 
