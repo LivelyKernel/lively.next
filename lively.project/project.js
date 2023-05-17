@@ -127,7 +127,7 @@ export class Project {
     let address, url;
     address = (await Project.projectDirectory()).join(repoOwner + '-' + name);
     url = address.url;
-
+    loadedProject.url = url;
     loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '-' + name).withRelativePartsResolved().asDirectory();
 
     if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
