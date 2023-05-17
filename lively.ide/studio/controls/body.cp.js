@@ -142,7 +142,7 @@ export class BodyControlModel extends PropertySectionModel {
    */
   activate () {
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
-    this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
+    this.view.master.setState(null);
     this.addDynamicProperty(null, false);
   }
 
@@ -160,7 +160,7 @@ export class BodyControlModel extends PropertySectionModel {
       return;
     }
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
-    this.view.master = { auto: this.inactiveSectionComponent, hover: this.hoverSectionComponent };
+    this.view.master.setState('inactive');
   }
 }
 
