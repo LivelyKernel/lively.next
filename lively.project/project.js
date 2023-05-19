@@ -20,6 +20,10 @@ const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
 const repositoryNameRegex = /\/.+\/(.*)/;
 
 export class Project {
+  static retrieveAvailableProjectsCache () {
+    return JSON.parse(localStorage.getItem('available_lively_projects'));
+  }
+
   static async projectDirectory () {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
     return resource(baseURL).join('local_projects').asDirectory();
@@ -71,16 +75,19 @@ export class Project {
         return dir.isFile() && !dir.name().endsWith('package.json');
       }
     });
+    let returnEmpty = false;
     try {
       projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
       packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
+      localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
       return packageJSONObjects;
     } catch (err) {
+      returnEmpty = true;
       throw Error('Error listing local projects', { cause: err });
     } finally {
-      return [];
+      if (returnEmpty) return [];
     }
   }
 
