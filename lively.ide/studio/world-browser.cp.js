@@ -781,7 +781,9 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   toggleDeleteButton (active) {
-    this.ui.deleteButton.visible = active;
+    if (!$world.isIDEWorld) return;
+    const { deleteButton } = this.ui;
+    deleteButton.visible = deleteButton.reactsToPointer = active;
   }
 
   async tryToDelete () {
