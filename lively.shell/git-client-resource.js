@@ -42,7 +42,7 @@ export default class GitShellResource extends ShellClientResource {
     if (res.exitCode !== 0) throw Error('Error while executing git remote.');
     const remoteOutput = res.stdout;
     if (remoteOutput === '') throw ('Remote unconfigured. This should be impossible!');
-    const remoteURL = remoteOutput.match(/(https:.*\.git)/)[0];
+    const remoteURL = remoteOutput.match(/(https:.*)\s\(/)[1];
     const checkRemoteBranchCommand = `git ls-remote --heads ${remoteURL} main`;
     res = await this.runCommand(checkRemoteBranchCommand).whenDone();
     if (res.exitCode !== 0) throw Error('Error while checking remote branches.');
