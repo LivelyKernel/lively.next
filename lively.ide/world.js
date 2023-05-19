@@ -463,7 +463,7 @@ export class LivelyWorld extends World {
   async initializeStudio () {
     const topBar = await this.initializeTopBar();
 
-    const { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
+    let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
 
     let { askForWorldName } = resource(document.location.href).query();
     if (askForWorldName === undefined) askForWorldName = true;
@@ -508,7 +508,8 @@ export class LivelyWorld extends World {
       worldName = worldName || 'new world';
 
       if (window.history) {
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!projectToBeOpened || !!openNewProjectPrompt, $world.openedProject ? projectRepoOwner : null));
+        if (!projectRepoOwner && $world.openedProject) projectRepoOwner = $world.openedProject.url.match(/.*local_projects\/(.*)-/)[1];
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!$world.openedProject, $world.openedProject ? projectRepoOwner : null));
       }
 
       await this.animate({

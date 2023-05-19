@@ -58,7 +58,7 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
   } else {
     delete query.file;
     query.name = worldName;
-    if (projectOwner) query.owner = projectOwner;
+    if (project && projectOwner) query.owner = projectOwner;
   }
   // ensure the name param in the query string matches worldName
 
