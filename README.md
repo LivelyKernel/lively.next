@@ -17,6 +17,9 @@ This is the repository of the [lively.next project](https://lively-next.org).
 You can install lively.next "natively" on your system or use Docker for your development environment.
 Please note, that these instructions currently are are not recommended for openly deploying lively.next in the web!
 
+> **Warning**
+> If there are no technically constraining reasons that prevent you from using the native installation, we highly advise to do so!
+
 ### Native Installation
 
 Currently, the MacOS, Linux, and the Linux Subsystem for Windows are supported.

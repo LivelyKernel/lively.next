@@ -16,7 +16,9 @@ mkdir esm_cache
 node --no-experimental-fetch --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
      lively.installer/bin/install.cjs $PWD \
 
-if [ ! "$CI" ];
+# Inside of docker, we have CI set to never minify the code
+# but we still want the loading page to be built! 
+if [[ -z "${CI}" || "${CONTAINERIZED}" == "true" ]];
 then
   npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
 fi
