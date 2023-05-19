@@ -146,18 +146,22 @@ export class Project {
     loadedProject.config = JSON.parse(configContent);
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
 
+    let loadingCanceled = false;
     switch (checkLivelyCompatability) {
       case 'CANCELED':
       case 'OUTDATED': {
+        loadingCanceled = true;
         await $world.inform('Due to incompatible lively versions, you cannot open this project. This session will now close. This probably means that your version is older than the one the project requires.');
         window.location.href = (await Project.systemInterface.getConfig().baseURL);
       }
     }
-    loadedProject.package = pkg;
-    $world.openedProject = loadedProject;
-    loadedProject.ensureDependenciesExist();
-    loadedProject.loadProjectDependencies();
-    return loadedProject;
+    if (!loadingCanceled) {
+      loadedProject.package = pkg;
+      $world.openedProject = loadedProject;
+      await loadedProject.ensureDependenciesExist();
+      await loadedProject.loadProjectDependencies();
+      return loadedProject;
+    }
   }
 
   /**
@@ -347,7 +351,7 @@ export class Project {
 
   async ensureDependenciesExist () {
     const availableProjects = Project.retrieveAvailableProjectsCache();
-    this.config.lively.projectDependencies.forEach(async (dep) => {
+    for (const dep of this.config.lively.projectDependencies) {
       const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
       if (!depExists) {
         const depName = dep.name.match(/.*-(.*)/)[1];
@@ -356,7 +360,7 @@ export class Project {
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
       }
-    });
+    }
     // refresh the cache of available projects and their version
     await Project.listAvailableProjects();
   }
@@ -369,10 +373,10 @@ export class Project {
       const depName = dep.name.match(/.*-(.*)/)[1];
       const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
       const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(dep.version));
-      if (versionStatus === true) dependencyStatusReport.concat([`✔️ loaded ${dep.name}\n`, null]);
+      if (versionStatus === true) dependencyStatusReport = dependencyStatusReport.concat([`✔️ loaded ${dep.name}\n`, null]);
       else {
         configWarning = true;
-        dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
+        dependencyStatusReport = dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
       }
       let address;
       address = (await Project.projectDirectory()).join(dep.name);
