@@ -36,6 +36,20 @@ export default class GitShellResource extends ShellClientResource {
     else return true;
   }
 
+  async hasRemoteMainConfigured () {
+    const getRemoteURLCommand = 'git remote -v';
+    let res = await this.runCommand(getRemoteURLCommand).whenDone();
+    if (res.exitCode !== 0) throw Error('Error while executing git remote.');
+    const remoteOutput = res.stdout;
+    if (remoteOutput === '') throw ('Remote unconfigured. This should be impossible!');
+    const remoteURL = remoteOutput.match(/(https:.*\.git)/)[0];
+    const checkRemoteBranchCommand = `git ls-remote --heads ${remoteURL} main`;
+    res = await this.runCommand(checkRemoteBranchCommand).whenDone();
+    if (res.exitCode !== 0) throw Error('Error while checking remote branches.');
+    if (res.stdout === '') return false;
+    return true;
+  }
+
   async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope = false) {
     let repoCreationCommand = orgScope
       ? `curl -L \
@@ -58,24 +72,17 @@ export default class GitShellResource extends ShellClientResource {
     cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
-    // TODO: We could improve by providing a way to configure this.
-    const trackingCommand = 'git branch --track origin';
-    cmd = this.runCommand(trackingCommand);
-    await cmd.whenDone();
-    if (cmd.exitCode !== 0) throw Error('Error tracking main with origin');
   }
 
   async commitRepo (message) {
     let cmdString = `git add . && git commit -m "${message}"`;
     let cmd = this.runCommand(cmdString);
     await cmd.whenDone();
-    if (cmd.exitCode !== 0) throw Error('Error committing');
+    if (cmd.exitCode !== 0 && !cmd.stdout.includes('nothing to commit')) throw Error('Error committing');
     else return true;
   }
 
   async pushRepo () {
-    await this.pullRepo();
-    await this.commitRepo();
     const cmd = this.runCommand('git push --set-upstream origin main');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error pushing to remote');
@@ -83,6 +90,8 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async pullRepo () {
+    const hasRemoteBranch = await this.hasRemoteMainConfigured();
+    if (!hasRemoteBranch) return false;
     await this.runCommand('git stash').whenDone();
     const pullCmd = this.runCommand('git pull');
     await pullCmd.whenDone();
