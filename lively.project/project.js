@@ -158,8 +158,13 @@ export class Project {
     if (!loadingCanceled) {
       loadedProject.package = pkg;
       $world.openedProject = loadedProject;
-      await loadedProject.ensureDependenciesExist();
-      await loadedProject.loadProjectDependencies();
+      try {
+        await loadedProject.ensureDependenciesExist();
+        await loadedProject.loadProjectDependencies();
+      } catch (err) {
+        await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
+        window.location.href = (await Project.systemInterface.getConfig().baseURL);
+      }
       return loadedProject;
     }
   }
