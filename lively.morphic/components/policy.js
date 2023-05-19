@@ -300,7 +300,7 @@ export class StylePolicy {
       return;
     }
     return expressionSerializer.exprStringEncode({
-      __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt(${meta.path.map(name => JSON.stringify(name)).join(',')})` : ''),
+      __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt([${meta.path.map(name => JSON.stringify(name)).join(',')}])` : ''),
       bindings: { [meta.moduleId]: meta.exportedName }
     });
   }
