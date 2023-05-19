@@ -98,7 +98,7 @@ export default class GitShellResource extends ShellClientResource {
     if (pullCmd.exitCode !== 0) throw Error('Error pulling. Might be due to a conflict!');
     const cmd = this.runCommand('git stash pop');
     await cmd.whenDone();
-    if (cmd.exitCode !== 0) throw Error('Error applying stash. Might be due to a conflict!');
+    if (cmd.exitCode !== 0 && cmd.stderr !== 'No stash entries found.\n') throw Error('Error applying stash. Might be due to a conflict!');
     else return true;
   }
 }
