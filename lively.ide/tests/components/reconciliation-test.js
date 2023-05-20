@@ -65,12 +65,26 @@ const X = component(B, {
   name: 'X'
 });
 
+const T = component({
+  name: 'T',
+  submorphs: [{
+    name: 'a greeter',
+    type: 'text',
+    value: 'hello world'
+  }, {
+    name: 'another greeter',
+    type: 'text',
+    textString: 'yo bro!'
+  }]
+});
+
 component.DescriptorClass = ComponentDescriptor;
 
-export { A, B, C, D, X };
+export { A, B, C, D, X, T };
 `;
 
-let ComponentA, ComponentB, ComponentC, ComponentD, ComponentX, A, B, C, D, X;
+let ComponentA, ComponentB, ComponentC, ComponentD, ComponentX, ComponentT,
+  A, B, C, D, X, T;
 
 async function getSource () {
   // delete testComponentModule._source;
@@ -90,16 +104,18 @@ async function resetEnv () {
     await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
   }
   // reload the module
-  ({ A, B, C, D, X } = await testComponentModule.load());
+  ({ A, B, C, D, X, T } = await testComponentModule.load());
   A.previouslyRemovedMorphs = new WeakMap();
   B.previouslyRemovedMorphs = new WeakMap();
   C.previouslyRemovedMorphs = new WeakMap();
   D.previouslyRemovedMorphs = new WeakMap();
+  T.previouslyRemovedMorphs = new WeakMap();
   ComponentA = await A.edit();
   ComponentB = await B.edit();
   ComponentC = await C.edit();
   ComponentD = await D.edit();
   ComponentX = await X.edit();
+  ComponentT = await T.edit();
 }
 
 describe('component -> source reconciliation', function () {
@@ -563,6 +579,19 @@ describe('component -> source reconciliation', function () {
       await ComponentD._changeTracker.onceChangesProcessed();
       const updatedSource = await testComponentModule.source();
       expect(updatedSource).to.include("textAndAttributes: [\'Hello World!\', null]");
+    });
+
+    it('correctly replaces other text attributes, in case they are previously present', async () => {
+      ComponentT.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentT.submorphs[0].textString += 'lol';
+        ComponentT.submorphs[1].textString += 'blubber';
+      });
+      await ComponentD._changeTracker.onceChangesProcessed();
+      const updatedSource = await getSource();
+      expect(updatedSource).not.to.include('textString: \'yo bro!blubber\'');
+      expect(updatedSource).not.to.include('value: \'hello worldlol\'');
+      expect(updatedSource).to.include('textAndAttributes: [\'hello worldlol\', null]');
+      expect(updatedSource).to.include('textAndAttributes: [\'yo bro!blubber\', null]');
     });
 
     it('properly reconciles embedded morphs', async () => {
