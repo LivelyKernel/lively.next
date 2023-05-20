@@ -92,11 +92,11 @@ export function convertToExpression (aMorph, opts = {}) {
 export function getTextAttributesExpr (textMorph) {
   const expr = convertToExpression(textMorph);
   const rootPropNode = getPropertiesNode(parse('(' + expr.__expr__ + ')'));
-  const { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define
+  let { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define
+  if (expr.__expr__[end - 1] === ',') end--;
   expr.__expr__ = expr.__expr__.slice(start - 1, end);
   return expr;
 }
-
 /**
  * Converts a certain value to a serializable expression. Requires a name of the property
  * it belongs to, in order to properly convert nested properties.
