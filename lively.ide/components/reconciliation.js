@@ -33,7 +33,7 @@ import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
  *
  * instead we want to rather patch the source as needed to reconcile changes
  * that happen in direct manipulation. This function should only be used
- * in cases we do NOT have a preexisting definition residing in source.
+ * in cases we do NOT have a preexisting definition residing in source.f
  * @param { Morph } aComponent - The component morph we use to create the component definition from.
  * @param { boolean } asExprObject - Wether or not to return an expression object (with binding info) instead of just a string.
  * @returns { string|object } The component definition as stringified expression or expression object.
@@ -1093,9 +1093,9 @@ class PropChangeReconciliation extends Reconciliation {
     return this;
   }
 
-  deletePropIn (subSpec, prop) {
+  deletePropIn (subSpec, prop, eraseIfEmpty = this.isDerived) {
     const { modId, sourceCode, parsedComponent } = this.getDescriptorContext();
-    const { changes, needsLinting } = deleteProp(sourceCode, parsedComponent, subSpec, prop, this.target, this.isDerived);
+    const { changes, needsLinting } = deleteProp(sourceCode, parsedComponent, subSpec, prop, this.target, eraseIfEmpty);
     if (needsLinting) this.modulesToLint.add(modId);
     this.addChangesToModule(modId, changes);
     return this;
@@ -1259,9 +1259,14 @@ class TextChangeReconciliation extends PropChangeReconciliation {
       this.uncollapseSubmorphHierarchy();
       return this;
     }
+    // if textString/value are present, clear them and use textAndAttributes instead
     const textAttrsAsExpr = getTextAttributesExpr(textMorph);
     requiredBindings.push(...Object.entries(textAttrsAsExpr.bindings));
     this.modulesToLint.add(modId); // laways lint after text and attributes are added
+    const textStringProp = getProp(specNode, 'textString');
+    const valueProp = getProp(specNode, 'value');
+    if (textStringProp) this.deletePropIn(specNode, 'textString', false); // do not remove the entire node even if eligible for now
+    if (valueProp) this.deletePropIn(specNode, 'value', false);
     this.patchPropIn(specNode, 'textAndAttributes', textAttrsAsExpr);
     return this;
   }
