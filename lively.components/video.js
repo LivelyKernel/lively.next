@@ -137,19 +137,22 @@ export class VideoMorph extends HTMLMorph {
   }
 
   get domElementExtent () {
-    return pt(this.videoDomElement.width, this.videoDomElement.height);
-  }
+    return this.videoDomElement ? pt(this.videoDomElement.width, this.videoDomElement.height) : null;  }
 
   onBoundsChanged (bounds) {
     super.onBoundsChanged(bounds);
-    if (!this.autorelayout) {
-      // Once a user has resized, this turns off autosizing to accomodate the video.
-      // The autorelayout flag is set by the resize methods to ensure that this
-      // won't happen when we are resizing to accomodate a video.
-      this.videoLayout = 'none';
-    }
+    try {
+      if (!this.autorelayout) {
+      // once a user has resized, this turns off auto-resizing to accommodate the video
+      // the autorelayout flag is set by the resize methods to ensure that this
+      // won't happen when we are resizing to accommodate a video
+        this.videoLayout = 'none';
+      }
 
-    if (this.bounds().extent().eqPt(this.domElementExtent)) {
+      if (this.bounds().extent().eqPt(this.domElementExtent)) {
+        return;
+      }
+    } catch (error) {
       return;
     }
     this.resetHTML();
