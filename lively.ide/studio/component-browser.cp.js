@@ -1,13 +1,13 @@
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
-import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
+import { Project } from 'lively.project';
+import { PackageRegistry, importPackage } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
 import { arr, promise, num, date, string, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { renderMorphToDataURI } from 'lively.morphic/rendering/morph-to-image.js';
-import { COLORS } from '../js/browser/index.js';
 import { localInterface } from 'lively-system-interface';
 import { once } from 'lively.bindings/index.js';
 import { adoptObject } from 'lively.lang/object.js';
@@ -15,9 +15,11 @@ import { DropDownList, DarkDropDownList } from 'lively.components/list.cp.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { Text } from 'lively.morphic/text/morph.js';
+
+import { COLORS } from '../js/browser/index.js';
+import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
-import { LinearGradient } from 'lively.graphics/color.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -41,6 +43,10 @@ class MasterComponentTreeData extends TreeData {
     node.isDirty = true;
     if (!bool) {
       if (node.type === 'package') {
+        if (!PackageRegistry.ofSystem(System).lookup(node.name)) {
+          // if this is a project, load the project
+          await importPackage(node.url);
+        }
         node.subNodes = await this.listComponentFilesInPackage(node.url);
       }
 
@@ -142,10 +148,12 @@ class MasterComponentTreeData extends TreeData {
     if (isSelected && !this.root.browser._pauseUpdates) {
       this.root.browser.reset();
     }
+    const isOpenedProject = pkg.url === $world.openedProject.package.url;
     return [
       ...Icon.textAttribute('cubes'),
       ' ' + string.truncate(pkg.name, 26, '…'), {
-        fontStyle: pkg.kind === 'git' ? 'italic' : 'normal'
+        fontWeight: isOpenedProject ? 'bold' : 'normal',
+        fontStyle: pkg.kind === 'git' && !isOpenedProject ? 'italic' : 'normal'
       },
       `\t${pkg.kind}`, {
         paddingTop: '3px',
@@ -214,7 +222,7 @@ class MasterComponentTreeData extends TreeData {
    * @todo Implement this feature.
    */
   async getCustomLocalProjects () {
-    return [];
+    return await Project.listAvailableProjects();
   }
 
   /**
@@ -243,7 +251,7 @@ class MasterComponentTreeData extends TreeData {
     const coll = await this.getComponentCollections();
     return arr.sortBy(coll.map(pkg => {
       let kind = 'git';
-      if (pkg.url.startsWith('local')) kind = 'local';
+      if (pkg.url?.startsWith('local')) kind = 'local';
       if (pkg.name.startsWith('lively')) kind = 'core';
       pkg.kind = kind;
       return {
@@ -282,7 +290,9 @@ class MasterComponentTreeData extends TreeData {
 
   async listComponentFilesInDir (folderLocation) {
     const resources = (await resource(folderLocation).dirList())
-      .filter(res => res.isDirectory() || res.url.endsWith('.cp.js'));
+      .filter(res => (res.isDirectory() || res.url.endsWith('.cp.js')) && !res.name().startsWith('.'));
+    // ensure that the package is loaded at this point
+    // ensure that we only list folders who will in turn have anything to show
     const files = resources.map(res => {
       let type;
       if (res.isDirectory()) type = 'directory';
@@ -382,7 +392,7 @@ export class ExportedComponent extends Morph {
 
   displayError (err) {
     this.get('preview container').submorphs = [
-      part(ComponentError, { submorphs: [{ name: 'error message', textString: err.message }] })
+      part(ComponentError, { submorphs: [{ name: 'error message', textString: err.message }] }) // eslint-disable-line no-use-before-define
     ];
   }
 
@@ -810,6 +820,9 @@ export class ComponentBrowserModel extends ViewModel {
       moduleName = source.replace('redirect -> ', '');
     }
     const mod = localInterface.getModule(moduleName);
+    if (!mod.isLoaded()) {
+      await mod.load();
+    }
     const exports = await mod.exports();
     const componentDescriptors = exports
       .map(m => mod.recorder[m.exported])
