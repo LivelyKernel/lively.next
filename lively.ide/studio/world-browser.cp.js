@@ -419,7 +419,7 @@ export class WorldBrowserModel extends ViewModel {
     const label = this.ui.newProjectButton.submorphs[0];
     if (mode === 'Playgrounds') {
       this.playgroundsMode = true;
-      label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW WORLD');
+      label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PLAYGROUND');
     }
     if (mode === 'Projects') {
       this.playgroundsMode = false;
@@ -1171,7 +1171,7 @@ const WorldBrowser = component({
     }),
     submorphs: [part(GreenButton, {
       name: 'new project button',
-      extent: pt(145, 30),
+      extent: pt(163, 30),
       position: pt(19.8, 17),
       submorphs: [{
         name: 'label',
@@ -1181,7 +1181,7 @@ const WorldBrowser = component({
     }), part(ModeSelector, {
       name: 'mode selector',
       extent: pt(150, 30),
-      position: pt(168, 17),
+      position: pt(195, 17.5),
       borderColor: Color.white,
       fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(114, 123, 124) }, { offset: 1, color: Color.rgba(82, 90, 91, 0.622) }], vector: rect(0.46889505279101873, 0.0009684556472141503, 0.06220989441796249, 0.9980630887055717) }),
       borderRadius: 5,
