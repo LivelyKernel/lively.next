@@ -458,37 +458,24 @@ export class LivelyWorld extends World {
     connect($world.propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
   }
 
-  async initializeStudio () {
-    const topBar = await this.initializeTopBar();
-
+  async initializeStudio () {  
     let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
 
-    let { askForWorldName } = resource(document.location.href).query();
-    if (askForWorldName === undefined) askForWorldName = true;
+    let anonymousMode;
+    const { askForWorldName } = resource(document.location.href).query();
+    if (askForWorldName === undefined) anonymousMode = false;
+    else anonymousMode = !askForWorldName;
 
-    if (!this.metadata) {
-      await this.animate({
-        customTween: p => {
-          topBar.blur = this.blur = p * 3;
-        },
-        duration: 500
-      });
-
+    if (!this.metadata) { //not entered when loading an existing world snapshot
       let worldName;
-      if (askForWorldName && openNewWorldPrompt) {
-        worldName = await this.askForName();
-      } else if (openNewProjectPrompt) {
-        // This path is only to be used by CI and for temporary excursions.
-        // Correct behavior is not ensured.
-        if (!askForWorldName) {
-          worldName = 'new unnamed project';
-          this.openedProject = new Project(worldName);
-        } else {
+      if (openNewWorldPrompt) { // We open a non-existing world without being anonymous
+        if (!anonymousMode) worldName = await this.askForName();
+        else if (anonymousMode) worldName = 'aLivelyWorld';
+      } else if (openNewProjectPrompt) { // We open a **new** Project
           const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
           $world.openedProject = project;
           worldName = project.name;
-        }
-      } else if (projectToBeOpened) {
+      } else if (projectToBeOpened) { // We open an existing Project
         worldName = projectToBeOpened;
         await Project.loadProject(projectToBeOpened, projectRepoOwner);
         this.projectToBeOpened = null;
@@ -496,28 +483,22 @@ export class LivelyWorld extends World {
       }
 
       this.name = worldName;
-      if (askForWorldName && openNewWorldPrompt) {
-        this.changeMetaData('commit', { name: worldName });
+
+      if (!anonymousMode && openNewWorldPrompt) {
+        this.changeMetaData('commit', { name: this.name });
         // fixme: We do not want to subclass the world class. This is just a temporary solution
         // to reliably load the package at all times the world is loaded
-        const pkg = ObjectPackage.withId(string.camelCaseString(worldName));
+        const pkg = ObjectPackage.withId(string.camelCaseString(this.name));
         await pkg.adoptObject(this);
       }
-      worldName = worldName || 'new world';
 
       if (window.history) {
         if (!projectRepoOwner && $world.openedProject) projectRepoOwner = $world.openedProject.url.match(/.*local_projects\/(.*)-/)[1];
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(worldName, null, !!$world.openedProject, $world.openedProject ? projectRepoOwner : null));
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(this.name, null, !!$world.openedProject, $world.openedProject ? projectRepoOwner : null));
       }
-
-      await this.animate({
-        customTween: p => {
-          topBar.blur = this.blur = (1 - p) * 3;
-        },
-        duration: 500
-      });
     }
 
+    await this.initializeTopBar();
     await this.initializeStudioUI();
   }
 
