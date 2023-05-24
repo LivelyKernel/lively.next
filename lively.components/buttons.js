@@ -108,6 +108,7 @@ export class ButtonModel extends ViewModel {
 
   trigger () {
     try {
+      signal(this.view, 'fire');
       signal(this, 'fire');
       typeof this.action === 'function' && this.action();
     } catch (err) {
@@ -126,8 +127,8 @@ export class ButtonModel extends ViewModel {
   // makes sense if this is model specific. At least if view model is directly defined
   // this should override the native menuItems of a morph
   // items from the view. we can discard or adjust.
-  menuItems (items) { 
-   return items;
+  menuItems (items) {
+    return items;
   }
 }
 
