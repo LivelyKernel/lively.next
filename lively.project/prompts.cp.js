@@ -251,6 +251,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
       }),
       submorphs: [{
         name: 'user flap container',
+        borderColor: Color.rgba(255, 255, 255, 0),
         clipMode: 'hidden',
         borderRadius: 20,
         borderWidth: 2,
