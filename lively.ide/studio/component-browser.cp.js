@@ -551,10 +551,6 @@ export class ProjectEntry extends Morph {
   }
 
   selectComponent (component) {
-    const importButton = this.get('import button');
-    const editButton = this.get('edit button');
-    if (importButton) importButton.deactivated = false;
-    if (editButton) editButton.deactivate = !!component.isInLocalProject;
     this.owner.getSubmorphsByStyleClassName('ExportedComponent').forEach(m => m.select(false));
     component.select(true);
   }
@@ -654,6 +650,9 @@ export class ComponentBrowserModel extends ViewModel {
       importAlive: {
         defaultValue: false
       },
+      selectionMode: {
+        defaultValue: false
+      },
       groupBy: {
         type: 'Enum',
         values: ['name', 'module'],
@@ -680,11 +679,16 @@ export class ComponentBrowserModel extends ViewModel {
         handler: 'close'
       },
       {
-        model: 'import button',
+        target: 'import button',
         signal: 'fire',
         handler: 'importSelectedComponent'
       },
-      { model: 'edit button', signal: 'fire', handler: 'editSelectedComponent' },
+      {
+        target: 'selection button',
+        signal: 'fire',
+        handler: 'chooseComponent'
+      },
+      { target: 'edit button', signal: 'fire', handler: 'editSelectedComponent' },
       {
         target: 'search input',
         signal: 'inputChanged',
@@ -728,7 +732,8 @@ export class ComponentBrowserModel extends ViewModel {
   ensureButtonControls () {
     const selectedComponent = this.getSelectedComponent();
     this.models.importButton.deactivated = !selectedComponent;
-    this.models.editButton.deactivated = !selectedComponent;
+    this.models.editButton.deactivated = !selectedComponent || !selectedComponent.isInLocalProject;
+    this.models.selectionButton.deactivated = !selectedComponent;
   }
 
   viewDidLoad () {
@@ -743,6 +748,10 @@ export class ComponentBrowserModel extends ViewModel {
     super.onRefresh(change);
     this.ui.behaviorToggle.setChecked(this.importAlive);
     this.handleColumnViewVisibility();
+    this.ui.editButton.visible = !this.selectionMode;
+    this.ui.behaviorToggle.visible = !this.selectionMode;
+    this.ui.importButton.visible = !this.selectionMode;
+    this.ui.selectionButton.visible = this.selectionMode;
   }
 
   handleColumnViewVisibility () {
@@ -773,7 +782,7 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   close () {
-    if (this._promise) this._promise.resolve();
+    if (this._promise) this._promise.resolve(null);
     this.view.remove();
   }
 
@@ -786,6 +795,11 @@ export class ComponentBrowserModel extends ViewModel {
     }
     importedComponent.openInWorld();
     this._promise.resolve(importedComponent);
+    this.close();
+  }
+
+  chooseComponent () {
+    this._promise.resolve(this.getSelectedComponent().component);
     this.close();
   }
 
@@ -1253,12 +1267,10 @@ const ComponentBrowser = component(PopupWindow, {
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
-    orderByIndex: true,
     resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
-    }]],
-    wrapSubmorphs: false
+    }]]
   }),
   submorphs: [
     add({
@@ -1378,7 +1390,7 @@ const ComponentBrowser = component(PopupWindow, {
         layout: new TilingLayout({
           align: 'right',
           axisAlign: 'center',
-          orderByIndex: true,
+          justifySubmorphs: 'spaced',
           spacing: 15
         }),
         submorphs: [part(DropDownList, {
@@ -1454,7 +1466,19 @@ const ComponentBrowser = component(PopupWindow, {
             }]
 
           }]
-        })]
+        }), add(part(SystemButton, {
+          name: 'selection button',
+          visible: false,
+          extent: pt(80, 23.8),
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center'
+          }),
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Select', null]
+          }]
+        }))]
       }]
     }), {
       name: 'header menu',
@@ -1478,7 +1502,6 @@ const ComponentBrowserDark = component(ComponentBrowser, {
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
-    orderByIndex: true,
     resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
@@ -1494,7 +1517,7 @@ const ComponentBrowserDark = component(ComponentBrowser, {
         fontColor: Color.rgba(255, 255, 255, 0.5)
       }, {
         name: 'search input',
-        fontColor: Color.rgb(231, 30, 30)
+        fontColor: Color.rgbHex('B2EBF2')
       }, {
         name: 'spinner',
         viewModel: { color: 'white' },
@@ -1559,6 +1582,8 @@ const ComponentBrowserDark = component(ComponentBrowser, {
               fontFamily: 'IBM Plex Sans'
             }]
           }]
+        }, {
+          name: 'selection button', master: ButtonDarkDefault
         }]
     }]
   }]
