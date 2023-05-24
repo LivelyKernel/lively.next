@@ -2443,10 +2443,17 @@ export class BrowserModel extends ViewModel {
           'Really remove file?\n', {}, 'You are about to remove the file:\n', textStyle, selectedNodeInDir.url, { ...textStyle, fontStyle: 'italic' }
         ], { lineWrapping: false, requester: this.view })) {
           await coreInterface.resourceRemove(selectedNodeInDir.url);
-        } else return;
+        }
       } else {
-        return this.execCommand('remove module', { mod: selectedNodeInDir });
+        await this.execCommand('remove module', { mod: selectedNodeInDir });
       }
+      // clear the module
+      this.deactivateEditor();
+      this.world()
+        .withAllSubmorphsSelect(m =>
+          m.isBrowser && m.selectedModule?.url === selectedNodeInDir.url)
+        .forEach(m => m.getWindow().close(false));
+      return;
     }
     if (selectedNodeInDir.type === 'directory') {
       const proceed = await this.world().confirm([
