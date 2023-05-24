@@ -411,8 +411,6 @@ export class LivelyWorld extends World {
         .then(() => {
           document.body.style.background = 'black';
         });
-      document.body.style.overflowX = 'visible';
-      document.body.style.overflowY = 'visible';
       await localInterface.exportsOfModules({
         excludedPackages: config.ide.js.ignoredPackages
       });
