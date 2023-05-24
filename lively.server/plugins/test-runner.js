@@ -15,19 +15,19 @@ export default class TestRunner {
     const { promise } = await System.import('lively.lang')
     const { localInterface } = await System.import("lively-system-interface");
     const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
-
     const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === \'${module_to_test}\');
+    const projectRepoName = \'${module_to_test}\'.match(/^[^-]*-(.*)/)[1];
     if (!packageToTestLoaded){
       await loadPackage(localInterface.coreInterface, {
-        name: \'${module_to_test}\',
-        address: 'http://localhost:9011/projects/${module_to_test}',
+        name: projectRepoName,
+        address: 'http://localhost:9011/local_projects/${module_to_test}',
         type: 'package'
       });
     }
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
-    const results = await runner.runTestsInPackage(\'${module_to_test}\');
+    const results = await runner.runTestsInPackage(projectRepoName);
     JSON.stringify(results)
     `)
     } catch (err) {

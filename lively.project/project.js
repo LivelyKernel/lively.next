@@ -307,7 +307,7 @@ export class Project {
 
   async regenerateTestPipeline () {
     const pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    if (!await resource(pipelineFile).exists()) throw Error('No pipelinefile found');
+    if (!await resource(pipelineFile).exists()) throw Error('No pipeline file found');
     let content = workflowDefinition;
     content = this.fillPipelineTemplate(workflowDefinition);
     await resource(pipelineFile).write(content);
@@ -315,7 +315,7 @@ export class Project {
 
   fillPipelineTemplate (workflowDefinition) {
     let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
-    return definition.replaceAll('%PROJECT_NAME%', this.name);
+    return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}-${this.name}`);
   }
 
   async generateBuildScripts () {
