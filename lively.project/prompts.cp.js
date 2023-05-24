@@ -124,7 +124,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
 
   waitForLogin () {
     const { remoteUrl, projectName, description, createRemoteCheckbox, userSelector, userFlapContainer } = this.ui;
-    $world.get('lively top bar').get('user flap').showGuestUser();
+    $world.get('lively top bar')?.get('user flap').showGuestUser();
     remoteUrl.clearError();
     projectName.clearError();
     projectName.deactivate();
