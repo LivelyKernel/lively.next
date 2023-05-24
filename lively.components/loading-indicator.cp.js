@@ -1,4 +1,4 @@
-import { ShadowObject, TilingLayout, easings, stringToEasing, Morph, Icon, Label, HTMLMorph, component, ViewModel, part } from 'lively.morphic';
+import { ShadowObject, TilingLayout, easings, stringToEasing, Morph, Icon, Label, component, ViewModel, part } from 'lively.morphic';
 import { Color, Rectangle, rect, pt } from 'lively.graphics';
 import { promise, num } from 'lively.lang';
 import { ButtonDefault } from './buttons.cp.js';
@@ -204,6 +204,7 @@ function forPromise (p, label, props) {
 const LoadingIndicator = component({
   defaultViewModel: LoadingIndicatorModel,
   epiMorph: true,
+  hasFixedPosition: true,
   fill: Color.transparent,
   name: 'loading indicator',
   layout: new TilingLayout({ align: 'center', axisAlign: 'center' }),
