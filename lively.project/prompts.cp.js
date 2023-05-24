@@ -86,7 +86,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (!this.checkValidity()) return;
     if (this.fromRemote) {
       try {
-        li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
+        li = $world.showLoadingIndicatorFor(this.view, 'Fetching Project...');
         createdProject = await Project.fromRemote(remoteUrl.textString);
         li.remove();
         super.resolve(createdProject);
