@@ -77,8 +77,6 @@ class TopBarButtonDropDownModel extends ViewModel {
     symbolButton.tooltip = opts.symbol.tooltip;
     symbolButton.textAndAttributes = opts.symbol.textAndAttributes;
     dropdownButton.name = opts.dropdown.name;
-    // what the fuck?
-    delete this.view.owner.owner.viewModel._ui;
   }
 
   /**
