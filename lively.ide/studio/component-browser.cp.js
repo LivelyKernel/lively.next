@@ -1,7 +1,7 @@
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { Project } from 'lively.project';
-import { PackageRegistry, importPackage } from 'lively.modules';
+import { PackageRegistry, module, importPackage } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
@@ -20,6 +20,7 @@ import { COLORS } from '../js/browser/index.js';
 import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
+import { GreenButton } from 'lively.components/prompts.cp.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -148,7 +149,7 @@ class MasterComponentTreeData extends TreeData {
     if (isSelected && !this.root.browser._pauseUpdates) {
       this.root.browser.reset();
     }
-    const isOpenedProject = pkg.url === $world.openedProject.package.url;
+    const isOpenedProject = pkg.url === $world.openedProject?.package.url;
     return [
       ...Icon.textAttribute('cubes'),
       ' ' + string.truncate(pkg.name, 26, '…'), {
@@ -341,7 +342,12 @@ export class ExportedComponent extends Morph {
         derived: true,
         readOnly: true,
         get () {
-          return true; // FIXME: this should actually check if the component resides withing the CURRENT project once our project abstractions have landed
+          return $world.openedProject?.pkg.url === this.package.url;
+        }
+      },
+      package: {
+        get () {
+          return module(this.component[Symbol.for('lively-module-meta')].moduleId).package();
         }
       },
       preview: {
