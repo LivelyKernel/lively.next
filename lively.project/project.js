@@ -328,7 +328,8 @@ export class Project {
     let content = buildScript;
     content = content.replaceAll('%PROJECT_NAME%', this.name);
     await resource(mjsBuildScript).write(content);
-    const scriptDir = shellBuildScript.replace('http://localhost:9011/', '').replace('/build.sh', '');
+    const shellBuildScriptOrigin = new URL(shellBuildScript).origin;
+    const scriptDir = shellBuildScript.replace(shellBuildScriptOrigin + '/', '').replace('/build.sh', '');
     const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     return cmd.exitCode;
