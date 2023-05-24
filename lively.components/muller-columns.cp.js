@@ -264,7 +264,9 @@ export class MullerColumnViewModel extends ViewModel {
     });
     // only keep items in the list that match the search
     const newItems = hoveredList.items.filter(item => {
-      return item.string.toLowerCase().includes(this.searchString);
+      // the annotation (project,core,dependency) comes after a tab and is irrelevant to us
+      const itemStringToSearch = item.string.toLowerCase().split('\t')[0];
+      return itemStringToSearch.includes(this.searchString);
     });
 
     // this highlights the matching part of an items string
