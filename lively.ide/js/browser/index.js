@@ -2384,7 +2384,8 @@ export class BrowserModel extends ViewModel {
     }
     if (!name) return;
     let dirPath = joinPath(dir, name);
-    await coreInterface.resourceEnsureExistance(dirPath);
+    await coreInterface.resourceEnsureExistance(dirPath, '\'format esm\';');
+
     // uncollapse the parent node of the dir
     const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     if (parentNode) await td.collapse(parentNode, false);
