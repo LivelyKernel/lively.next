@@ -1071,6 +1071,7 @@ export class LivelyWorld extends World {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async openPrompt (promptMorph, opts = { requester: null, animated: false }) {
     const focused = this.focusedMorph; const visBounds = this.visibleBounds();
+    if (opts.name) promptMorph.name = opts.name;
 
     return this.withRequesterDo(opts.requester, async (pos) => {
       promptMorph.openInWorld();
