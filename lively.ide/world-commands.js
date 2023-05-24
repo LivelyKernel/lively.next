@@ -626,7 +626,7 @@ const commands = [
     exec: async (world, opts) => {
       const { default: Terminal } = await System.import('lively.ide/shell/terminal.js');
       const term = Terminal.open(opts).openInWorldNearHand();
-      if (opts.position) term.position = opts.position;
+      if (opts?.position) term.position = opts.position;
       return term;
     }
   },
