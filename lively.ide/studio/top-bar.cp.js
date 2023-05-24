@@ -1,7 +1,7 @@
 /* eslint-disable no-use-before-define */
 import { Color, Rectangle, LinearGradient, rect, pt } from 'lively.graphics';
 import {
-  config, touchInputDevice, TilingLayout, morph, Text, Polygon,
+  config, TilingLayout, morph, Text, Polygon,
   Path, HTMLMorph, Ellipse, Morph, Image, ShadowObject, Icon,
   component, ViewModel, part
 } from 'lively.morphic';
@@ -14,9 +14,10 @@ import { getClassName } from 'lively.serializer2';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
-import { UserFlap } from 'lively.user/user-flap.cp.js'
+import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 import { notYetImplemented } from 'lively.lang/function.js';
+import { defaultDirectory } from '../shell/shell-interface.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -309,7 +310,14 @@ export class TopBarModel extends ViewModel {
     return [
       ['Save this workspace', () => { notYetImplemented('Saving workspaces'); }],
       ['Save this workspace under different name ', () => { notYetImplemented('Saving workspaces'); }],
-      ['Open a Terminal (advanced operation)', () => { $world.execCommand('open shell terminal', { position: $world.center.subXY(300, 150) }); }]
+      ['Open a Terminal (advanced operation)', async () => {
+        // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
+        const serverDir = await defaultDirectory();
+        const projectsDir = serverDir.replace('lively.server', '') + 'local_projects/';
+        const projectDir = projectsDir + `${$world.openedProject.repoOwner}-${$world.openedProject.name}`;
+        $world.execCommand('open shell terminal', { cwd: projectDir, position: $world.center.subXY(300, 150) });
+      }
+      ]
     ];
   }
 

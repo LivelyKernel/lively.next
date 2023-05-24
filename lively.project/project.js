@@ -24,6 +24,7 @@ export class Project {
     return JSON.parse(localStorage.getItem('available_lively_projects'));
   }
 
+  // As a URL to be used from inside of lively.
   static async projectDirectory () {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
     return resource(baseURL).join('local_projects').asDirectory();
@@ -31,6 +32,10 @@ export class Project {
 
   get name () {
     return this.config.name;
+  }
+
+  get repoOwner () {
+    return this.config.repository.url.match(repositoryOwnerRegex)[1];
   }
 
   constructor (name, bindVersion = true, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
