@@ -34,6 +34,7 @@ const MessageButtonClick = component(MessageButton, {
 const StatusMessageDefault = component({
   name: 'status message default',
   defaultViewModel: StatusMessage,
+  hasFixedPosition: true,
   borderRadius: 5,
   clipMode: 'hidden',
   dropShadow: new ShadowObject({
