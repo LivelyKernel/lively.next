@@ -35,6 +35,7 @@ class UserFlapModel extends ViewModel {
   }
 
   async login () {
+    if ($world.get('github login prompt')) return;
     let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,workflow' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
     if (resOne === '') {
@@ -53,7 +54,7 @@ class UserFlapModel extends ViewModel {
     }
     const deviceCode = deviceCodeMatch[1];
     const userCode = userCodeMatch[1];
-    const confirm = await $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}\n Afterwards, confirm with OK.`, null]);
+    const confirm = await $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}\n Afterwards, confirm with OK.`, null], { name: 'github login prompt' });
     if (!confirm) return;
     cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
     const { stdout: resTwo } = await runCommand(cmdString).whenDone();
