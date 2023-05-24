@@ -462,6 +462,7 @@ export class WorldBrowserModel extends ViewModel {
   async displayItems () {
     this.reset();
     const { loadingIndicator } = this.ui;
+    loadingIndicator.position = pt(this.view.width / 2 - loadingIndicator.width / 2, this.view.height / 2 - loadingIndicator.height / 2);
     loadingIndicator.animate({
       opacity: 1, duration: 300
     });
@@ -641,8 +642,6 @@ export class WorldPreviewModel extends ViewModel {
         get () {
           return [
             ...this.bindingsToInherit,
-            // TODO: this cannot work, this is not actually on this component but gets added later.
-            // previosly this only worked since we had a dynamic lookup based on morph name
             { target: 'close versions button', signal: 'onMouseDown', handler: 'hideVersions' },
             { target: 'version button', signal: 'onMouseDown', handler: 'showVersions' }
           ];
@@ -702,7 +701,7 @@ export class WorldPreviewModel extends ViewModel {
       easing: easings.inOutQuint
     });
     copy.respondsToVisibleWindow = true;
-    await copy.viewModel.ui.spinner.animate({
+    await copy.get('spinner').animate({
       center: copy.innerBounds().center(),
       easing: easings.inOutQuint,
       duration
