@@ -74,19 +74,30 @@ export default class GitShellResource extends ShellClientResource {
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
   }
 
-  async commitRepo (message) {
+  async commitRepo (message, tag = false, tagName) {
     let cmdString = `git add . && git commit -m "${message}"`;
     let cmd = this.runCommand(cmdString);
     await cmd.whenDone();
     if (cmd.exitCode !== 0 && !cmd.stdout.includes('nothing to commit')) throw Error('Error committing');
-    else return true;
+    else if (tag) {
+      // TODO: We currently only support Lightweight Tags
+      // https://git-scm.com/book/en/v2/Git-Basics-Tagging
+      cmdString = `git tag v${tagName}`;
+      cmd = this.runCommand(cmdString);
+      await cmd.whenDone();
+      if (cmd.exitCode !== 0) throw Error('Error tagging release');
+    }
+    return true;
   }
 
   async pushRepo () {
-    const cmd = this.runCommand('git push --set-upstream origin main');
+    let cmd = this.runCommand('git push --set-upstream origin main');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error pushing to remote');
-    else return true;
+    cmd = this.runCommand('git push origin --tags');
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error pushing tags to remote');
+    return true;
   }
 
   async pullRepo () {

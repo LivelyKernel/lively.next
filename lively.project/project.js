@@ -334,7 +334,7 @@ export class Project {
       $world.setStatusMessage('Please log in.');
       return false;
     }
-    let { message, increaseLevel } = opts;
+    let { message, increaseLevel, tag } = opts;
     message = message.trim();
     message = message + '\nCommited from within lively.next.';
 
@@ -343,10 +343,10 @@ export class Project {
       await this.saveConfigData();
       if (await this.gitResource.hasRemote()) {
         await this.gitResource.pullRepo();
-        await this.gitResource.commitRepo(message);
+        await this.gitResource.commitRepo(message, tag, this.config.version);
         await this.gitResource.pushRepo();
         await this.reloadPackage();
-      } else await this.gitResource.commitRepo(message);
+      } else await this.gitResource.commitRepo(message, tag, this.config.version);
       return true;
     } catch (err) {
       $world.setStatusMessage(err);
