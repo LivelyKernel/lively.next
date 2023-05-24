@@ -90,14 +90,13 @@ export class InformPromptModel extends AbstractPromptModel {
 
   viewDidLoad () {
     super.viewDidLoad();
-    const { ui: { promptTitle } } = this;
+    const { ui: { promptTitle, additionalText } } = this;
     promptTitle.lineWrapping = this.lineWrapping;
     promptTitle.fixedWidth = !!this.lineWrapping;
     promptTitle.value = this.label;
     if (this.additionalText) {
-      const additionalText = new Text();
       additionalText.value = this.additionalText;
-      this.view.addMorph(additionalText, this.ui.okButton);
+      additionalText.visible = true;
     }
   }
 
@@ -767,14 +766,18 @@ const InformPrompt = component(LightPrompt, {
     name: 'prompt title',
     lineWrapping: true,
     textAndAttributes: ['Inform message', null]
-  }, add(part(GreenButton, {
+  }, add({
+    type: Text,
+    name: 'additional text',
+    visible: false
+  }),
+  add(part(GreenButton, {
     name: 'ok button',
     extent: pt(90, 38),
     submorphs: [{ name: 'label', textString: 'OK' }]
   }))]
 });
 
-// part(ConfirmPrompt).openInWorld()
 const ConfirmPrompt = component(LightPrompt, {
   defaultViewModel: ConfirmPromptModel,
   name: 'confirm prompt',
