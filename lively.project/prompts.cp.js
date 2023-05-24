@@ -192,7 +192,8 @@ class ProjectSavePrompt extends AbstractPromptModel {
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             { model: 'cancel button', signal: 'fire', handler: () => this.view.remove() },
             { target: 'minor check', signal: 'toggle', handler: (status) => this.increaseMinor = status },
-            { target: 'major check', signal: 'toggle', handler: (status) => this.increaseMajor = status }
+            { target: 'major check', signal: 'toggle', handler: (status) => this.increaseMajor = status },
+            { target: 'tag check', signal: 'toggle', handler: (status) => this.tag = status }
           ];
         }
       }
@@ -209,7 +210,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
     else increaseLevel = 'patch';
 
     const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
-    const success = await this.project.save({ increaseLevel, message });
+    const success = await this.project.save({ increaseLevel, message, tag: this.tag });
     li.remove();
     this.view.remove();
     if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
@@ -354,16 +355,17 @@ export const ProjectCreationPrompt = component(LightPrompt, {
 
 export const SaveProjectDialog = component(SaveWorldDialog, {
   defaultViewModel: ProjectSavePrompt,
+  extent: pt(500, 332),
   submorphs: [{
     name: 'prompt title',
     nativeCursor: 'text',
     textAndAttributes: ['Save Project', null]
   }, {
     name: 'prompt controls',
-    extent: pt(455.5, 180.5),
+    extent: pt(455.5, 216),
     submorphs: [without('third row'), without('second row'), without('first row'), add({
       name: 'second row',
-      extent: pt(450, 70.3),
+      extent: pt(450, 65.3),
       fill: Color.transparent,
       layout: new TilingLayout({
         align: 'right',
@@ -422,6 +424,30 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           name: 'major check',
           borderWidth: 0,
           position: pt(139, 0)
+        }]
+      }, {
+        name: 'tag row',
+        fill: Color.rgba(255, 255, 255, 0),
+        borderColor: Color.rgba(23, 160, 251, 0),
+        extent: pt(256.5, 29.5),
+        layout: new TilingLayout({
+          orderByIndex: true
+        }),
+        position: pt(-82, 26),
+        submorphs: [{
+          type: Label,
+          name: 'tag label',
+          fill: Color.rgba(255, 255, 255, 0),
+          fontColor: Color.rgb(255, 255, 255),
+          fontFamily: '"IBM Plex Sans"',
+          fontSize: 15,
+          nativeCursor: 'pointer',
+          textAndAttributes: ['tag this version as release:', null]
+        }, {
+          type: CheckBox,
+          name: 'tag check',
+          borderWidth: 0,
+          position: pt(179, 0)
         }]
       }]
     }), {
