@@ -407,10 +407,9 @@ export class Project {
     if (configWarning) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
   }
 
-  async addDependencyToProject (ownerAndNameString) {
-    const depName = ownerAndNameString.match(/.*-(.*)/)[1];
-    const depRepoOwner = ownerAndNameString.match(/(.*)-/)[1];
-    const dep = Project.retrieveAvailableProjectsCache().find(proj => `${depRepoOwner}-${depName}` === `${proj.projectRepoOwner}-${proj.name}`);
+  async addDependencyToProject (owner, name) {
+    const ownerAndNameString = `${owner}-${name}`;
+    const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}-${proj.name}`);
     if (!dep) throw Error('Dependency is not available!');
     const version = dep.version;
     const addedSemver = semver.coerce(version);
@@ -425,7 +424,7 @@ export class Project {
     address = (await Project.projectDirectory()).join(ownerAndNameString);
     try {
       await loadPackage(Project.systemInterface, {
-        name: depName,
+        name: name,
         address: address.url,
         configFile: address.join('package.json').url,
         main: address.join('index.js').url,
@@ -437,8 +436,8 @@ export class Project {
     }
   }
 
-  removeDependencyFromProject (ownerAndNameString) {
+  removeDependencyFromProject (owner, name) {
     const deps = this.config.lively.projectDependencies;
-    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== ownerAndNameString);
+    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}-${name}`);
   }
 }
