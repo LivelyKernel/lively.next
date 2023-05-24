@@ -72,62 +72,7 @@ export default class WorldLoadingPlugin {
       return;
     }
 
-    // TODO: is this still used? 
-    if (url.startsWith('/object-preview-by-name/')) {
-      let [_, type, name] = url.match(/^\/object-preview-by-name\/([^\/]+)\/([^\/]+)$/) || [];
-      let err;
-      if (!type || !name) {
-        err = { code: 404, message: `Cannot find thumbnail for ${url.split('/').slice(2).join('/')}` };
-      } else {
-        name = decodeURIComponent(name);
-
-        {
-          // FIXME, support multiple DBs
-          // FIXME, move somewhere else
-          try {
-            const db = await ObjectDB.find('lively.morphic/objectdb/morphicdb');
-            const previewLoc = db.snapshotLocation.join(`../preview-cache/by-name/${type}/`).withRelativePartsResolved();
-            const defaultImageFile = previewLoc.join(`${name}.png`).beBinary();
-
-            // exists and is recent?
-            if (await defaultImageFile.exists()) {
-              if (Date.now() - (await defaultImageFile.readProperties()).lastModified < minute * 10) {
-                const buf = await defaultImageFile.read();
-                res.writeHead(200); res.end(buf);
-                return;
-              } else {
-                await defaultImageFile.remove();
-              }
-            }
-
-            // otherwise read from snapshot.preview
-            const commit = await db.getLatestCommit(type, name);
-            const snapshotResource = db.snapshotResourceFor(commit);
-            const { preview } = await snapshotResource.readJson();
-            const [_, ext, data] = preview.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/) || [];
-            const imgFile = previewLoc.join(`${name}.${ext}`).beBinary();
-            const buf = new Buffer(data, 'base64');
-
-            // answer...
-            res.writeHead(200); res.end(buf);
-
-            // ...and cache
-            Promise.resolve().then(async () => {
-              await previewLoc.ensureExistance();
-              await imgFile.write(buf);
-            }).catch(err => console.error(`Error writing cached preview image for ${type}/${name}:\n${err}`));
-            return;
-          } catch (e) {
-            err = { code: 500, message: String(e) };
-          }
-        }
-
-        if (err) {
-          res.writeHead(err.code, {});
-          res.end(err.message);
-        }
-      }
-    } else if (url === '/report-world-load' && req.method.toUpperCase() === 'POST') {
+    if (url === '/report-world-load' && req.method.toUpperCase() === 'POST') {
       const { message } = await readBody(req);
       const ip = req.headers['x-forwarded-for'] ||
                 req.connection.remoteAddress ||

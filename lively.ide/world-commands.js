@@ -1207,9 +1207,7 @@ const commands = [
         const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
         if (relayed) return relayed;
         args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
-        const focused = world.focusedMorph;
         saved = await interactivelySaveWorld(world, args);
-        if (focused && focused.focus());
       }
       return saved;
     }
