@@ -81,13 +81,15 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
 
   async resolve () {
     let li;
-    const { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
-    let createdProject;
+    let { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
+    let createdProject, urlString;
     if (!this.checkValidity()) return;
     if (this.fromRemote) {
       try {
+        urlString = remoteUrl.textString;
+        if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
         li = $world.showLoadingIndicatorFor(this.view, 'Fetching Project...');
-        createdProject = await Project.fromRemote(remoteUrl.textString);
+        createdProject = await Project.fromRemote(urlString);
         li.remove();
         super.resolve(createdProject);
       } catch (err) {
@@ -121,19 +123,20 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   waitForLogin () {
+    const { remoteUrl, projectName, description, createRemoteCheckbox, userSelector, userFlapContainer } = this.ui;
     $world.get('lively top bar').get('user flap').showGuestUser();
-    this.ui.remoteUrl.clearError();
-    this.ui.projectName.clearError();
-    this.ui.projectName.deactivate();
-    this.ui.remoteUrl.deactivate();
-    this.ui.description.deactivate();
-    this.ui.createRemoteCheckbox.disable();
-    this.ui.userSelector.disable();
+    remoteUrl.clearError();
+    projectName.clearError();
+    projectName.deactivate();
+    remoteUrl.deactivate();
+    description.deactivate();
+    createRemoteCheckbox.disable();
+    userSelector.disable();
 
     this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red })
-      .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }))
-      .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.red }))
-      .then(() => this.ui.userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }));
+      .then(() => userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }))
+      .then(() => userFlapContainer.animate({ duration: 500, borderColor: Color.red }))
+      .then(() => userFlapContainer.animate({ duration: 500, borderColor: Color.transparent }));
 
     this.withoutBindingsDo(() => this.ui.fromRemoteCheckbox.disable());
   }
