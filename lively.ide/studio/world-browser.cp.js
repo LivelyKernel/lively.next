@@ -1162,7 +1162,7 @@ const WorldBrowser = component({
       extent: pt(150, 30),
       position: pt(195, 17.5),
       borderColor: Color.white,
-      fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(114, 123, 124) }, { offset: 1, color: Color.rgba(82, 90, 91, 0.622) }], vector: rect(0.46889505279101873, 0.0009684556472141503, 0.06220989441796249, 0.9980630887055717) }),
+      fill: Color.rgba(114, 123, 124, 0),
       borderRadius: 5,
       viewModel: {
         items: ['Projects', 'Playgrounds'],
