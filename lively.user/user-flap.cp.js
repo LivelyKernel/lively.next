@@ -4,6 +4,10 @@ import { currentUser, clearUserData, storeCurrentUser, storeCurrentUsersOrganiza
 import { connect, signal, disconnect } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { part } from 'lively.morphic/components/core.js';
+import { Spinner } from 'lively.ide/studio/shared.cp.js';
+import { rect } from 'lively.graphics/geometry-2d.js';
+import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -12,10 +16,16 @@ class UserFlapModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation'];
         }
       }
     };
+  }
+
+  toggleLoadingAnimation () {
+    const { spinner, avatar } = this.ui;
+    spinner.visible = !spinner.visible;
+    avatar.visible = !avatar.visible;
   }
 
   viewDidLoad () {
@@ -54,17 +64,53 @@ class UserFlapModel extends ViewModel {
     }
     const deviceCode = deviceCodeMatch[1];
     const userCode = userCodeMatch[1];
-    const confirm = await $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}\n Afterwards, confirm with OK.`, null], { name: 'github login prompt' });
-    if (!confirm) return;
+    // GitHub sends us an Interval (in s) that we need to wait between polling for login status, otherwise we get timeouted
+    const interval = resOne.match(/interval=(\d*)&/)[1];
+    this.toggleLoadingAnimation();
+    let confirm;
+    $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}`, null], { name: 'github login prompt' }).then(conf => {
+      confirm = conf;
+    });
     cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
-    const { stdout: resTwo } = await runCommand(cmdString).whenDone();
+    let curlCmd;
+    let loginSuccessful = false;
+    for (let i = 0; i < 20; i++) {
+      let elapsedTimeWaitingForGitHub = await timeToRun(waitFor(interval * 1000, () => confirm !== undefined, false));
+      if (confirm === true) {
+        // Assumes that one logged in successfuly when pressing OK, we still need to wait in case GitHub wants us to
+        if (elapsedTimeWaitingForGitHub < interval * 1000) {
+          await delay((interval * 1000) - elapsedTimeWaitingForGitHub);
+        }
+      }
+      if (confirm === false) {
+        this.toggleLoadingAnimation();
+        $world.setStatusMessage('Login aborted by user.');
+        return;
+      }
+      curlCmd = await runCommand(cmdString).whenDone();
+      if (curlCmd.exitCode === 0 && !curlCmd.stdout.includes('error')) {
+        loginSuccessful = true;
+        $world.get('github login prompt')?.remove();
+        break;
+      }
+    }
+
+    if (!loginSuccessful) {
+      this.toggleLoadingAnimation();
+      $world.setStatusMessage('Login failed.', StatusMessageError);
+      return;
+    }
+
+    const { stdout: resTwo } = curlCmd;
     const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
     if (!userToken) {
+      this.toggleLoadingAnimation();
       $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
       return;
     }
     storeCurrentUsertoken(userToken);
     await this.retrieveGithubUserData();
+    this.toggleLoadingAnimation();
     this.showLoggedInUser();
   }
 
@@ -162,18 +208,11 @@ export const UserFlap = component({
   fill: Color.transparent,
   fontColor: Color.rgb(102, 102, 102),
   layout: new TilingLayout({
-    axisAlign: 'center',
     align: 'right',
-    orderByIndex: true,
+    axisAlign: 'center',
     hugContentsHorizontally: true,
-    padding: {
-      height: 0,
-      width: 0,
-      x: 10,
-      y: 10
-    },
-    reactToSubmorphAnimations: false,
-    renderViaCSS: true,
+    orderByIndex: true,
+    padding: rect(10, 10, 0, 0),
     spacing: 10
   }),
   submorphs: [{
@@ -209,5 +248,12 @@ export const UserFlap = component({
     fill: Color.transparent,
     imageUrl: 'https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160',
     naturalExtent: pt(160, 160)
-  }]
+  }, part(Spinner, {
+    viewModel: { color: 'black' },
+    name: 'spinner',
+    visible: false,
+    position: pt(5.3, 4.2),
+    scale: 0.3
+  })
+  ]
 });
