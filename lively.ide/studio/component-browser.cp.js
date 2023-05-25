@@ -727,6 +727,7 @@ export class ComponentBrowserModel extends ViewModel {
       isEpiMorph: {
         get () { return true; }
       },
+      isHaloItem: { get () { return true; } },
       importAlive: {
         defaultValue: false
       },
