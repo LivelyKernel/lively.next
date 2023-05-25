@@ -137,18 +137,19 @@ export class Project {
 
     if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
 
-    const pkg = await loadPackage(Project.systemInterface, {
-      name: name,
-      address: url,
-      configFile: address.join('package.json').url,
-      main: address.join('index.js').url,
-      test: address.join('tests/test.js').url,
-      type: 'package'
-    });
-
     loadedProject.configFile = await resource(address.join('package.json').url);
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
+
+    const pkg = await loadPackage(Project.systemInterface, {
+      name: name,
+      url: url,
+      address: url,
+      configFile: address.join('package.json').url,
+      main: loadedProject.config.main ? address.join(loadedProject.config.main).url : address.join('index.js').url,
+      type: 'package'
+    });
+
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
 
     let loadingCanceled = false;
@@ -275,6 +276,7 @@ export class Project {
       this.saveConfigData();
       const pkg = await loadPackage(system, {
         name: this.name,
+        url: this.url,
         address: this.url,
         configFile: projectDir.join('package.json').url,
         main: projectDir.join('index.js').url,
@@ -389,15 +391,14 @@ export class Project {
         configWarning = true;
         dependencyStatusReport = dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
       }
-      let address;
-      address = (await Project.projectDirectory()).join(dep.name);
       try {
+        const address = (await Project.projectDirectory()).join(dep.name);
         await loadPackage(Project.systemInterface, {
           name: depName,
+          url: address.url,
           address: address.url,
           configFile: address.join('package.json').url,
-          main: address.join('index.js').url,
-          test: address.join('tests/test.js').url,
+          main: installedDep.main ? address.join(installedDep.main).url : address.join('index.js').url,
           type: 'package'
         });
       } catch (err) {
@@ -420,15 +421,14 @@ export class Project {
       alreadyDependent.version = newDepVersion;
     } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, newDepVersion });
 
-    let address;
-    address = (await Project.projectDirectory()).join(ownerAndNameString);
+    const address = (await Project.projectDirectory()).join(ownerAndNameString);
     try {
       await loadPackage(Project.systemInterface, {
         name: name,
+        url: address.url,
         address: address.url,
         configFile: address.join('package.json').url,
-        main: address.join('index.js').url,
-        test: address.join('tests/test.js').url,
+        main: dep.main ? address.join(dep.main).url : address.join('index.js').url,
         type: 'package'
       });
     } catch (err) {
