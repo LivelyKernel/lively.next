@@ -97,6 +97,7 @@ class ModeSelectorLabelModel extends ViewModel {
 
 const ModeSelectorLabel = component({
   type: Label,
+  nativeCursor: 'pointer',
   defaultViewModel: ModeSelectorLabelModel,
   name: 'mode selector label',
   fontWeight: 'bold',
@@ -109,6 +110,7 @@ const ModeSelector = component({
   defaultViewModel: ModeSelectorModel,
   name: 'mode selector',
   extent: pt(234.7, 36.7),
+  nativeCursor: 'pointer',
   height: 30,
   fill: Color.transparent,
   layout: new TilingLayout({
