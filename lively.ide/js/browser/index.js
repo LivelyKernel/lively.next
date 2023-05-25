@@ -1643,10 +1643,14 @@ export class BrowserModel extends ViewModel {
 
   async resetComponentControls () {
     const { sourceEditor: editor } = this.ui;
-    const { scope } = query.topLevelDeclsAndRefs(parse(editor.textString));
-    for (let [val, decl] of await this.getComponentDeclsFromScope(this.selectedModule.url, scope)) {
-      const matchingControl = editor.submorphs.find(m => m.componentDescriptor === val);
-      if (matchingControl) matchingControl.declaration = decl;
+    try {
+      const { scope } = query.topLevelDeclsAndRefs(parse(editor.textString));
+      for (let [val, decl] of await this.getComponentDeclsFromScope(this.selectedModule.url, scope)) {
+        const matchingControl = editor.submorphs.find(m => m.componentDescriptor === val);
+        if (matchingControl) matchingControl.declaration = decl;
+      }
+    } catch (err) {
+
     }
   }
 

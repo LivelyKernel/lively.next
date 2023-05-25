@@ -4,7 +4,10 @@ import { obj, promise, arr } from 'lively.lang';
 import { resource } from 'lively.resources';
 
 export function isTestModule (source) {
-  return source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
+  try {
+    const isTest = source.match(/import.*['"]mocha(-es6)?['"]/) && source.match(/it\(['"]/);
+    return isTest;
+  } catch (err) { return false; }
 }
 
 export function shortModuleName (system, moduleId, itsPackage) {
