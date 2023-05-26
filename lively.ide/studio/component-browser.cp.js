@@ -1021,7 +1021,12 @@ export class ComponentBrowserModel extends ViewModel {
       // filter the candidates and render the projects together with the matches
       let filteredIndex = {};
       await Promise.all(componentModules.map(async modUrl => {
-        let components = await this.getComponentsInModule(modUrl);// retrieve the components exported in that module
+        let components;
+        try {
+          components = await this.getComponentsInModule(modUrl);// retrieve the components exported in that module
+        } catch (err) {
+          return;
+        }
         // get the matching components in the module
         components = components.filter(c => {
           return this.fuzzyMatch(parsedInput, c.componentName);
