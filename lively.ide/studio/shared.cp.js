@@ -197,8 +197,6 @@ const TextInput = component({
   fontFamily: "IBM Plex Sans"
 });
 
-
-
 const DarkCloseButton = component(CloseButton, {
   name: 'dark close button',
   fontColor: Color.rgb(255, 255, 255)
