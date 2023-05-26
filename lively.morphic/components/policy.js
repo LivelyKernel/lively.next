@@ -323,6 +323,8 @@ export class StylePolicy {
     this._breakpointStore = BreakpointStore.from(breakpointSpec);
   }
 
+  clearBreakpoints () { delete this._breakpointStore; }
+
   getMatchingBreakpoint (targetMorph) {
     return this.getBreakpointStore()?.getMatchingBreakpoint(targetMorph);
   }
