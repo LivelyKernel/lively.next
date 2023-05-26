@@ -104,7 +104,7 @@ export default class GitShellResource extends ShellClientResource {
     const hasRemoteBranch = await this.hasRemoteMainConfigured();
     if (!hasRemoteBranch) return false;
     await this.runCommand('git stash').whenDone();
-    const pullCmd = this.runCommand('git pull');
+    const pullCmd = this.runCommand('git pull --rebase');
     await pullCmd.whenDone();
     if (pullCmd.exitCode !== 0) throw Error('Error pulling. Might be due to a conflict!');
     const cmd = this.runCommand('git stash pop');
