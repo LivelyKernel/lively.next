@@ -720,30 +720,24 @@ export class WorldPreviewModel extends ViewModel {
     if (lively.FreezerRuntime) {
       // open the world via url redirect
       // rms: instead of redirect load within world
-      const li = LoadingIndicator.open('...starting bootstrap process...', {
-        animated: true, delay: 1000
-      });
       this.transitionToLivelyWorld(
         document.location.origin,
-        this._commit,
-        li
+        this._commit
       );
     } else { // from within lively
-      const li = LoadingIndicator.open('loading ' + name);
       await World.loadFromCommit(_id, undefined, { morphicDB: MorphicDB.default, moduleManager });
-      li.remove();
     }
   }
 
-  async transitionToLivelyWorld (baseURL, commit, loadingIndicator, projectName, projectRepoOwner) {
+  async transitionToLivelyWorld (baseURL, commit, projectName, projectRepoOwner) {
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
     const { ProgressIndicator } = await System.import('lively.freezer/src/loading-screen.cp.js');
     const progress = part(ProgressIndicator, {
       opacity: 0, hasFixedPosition: true
     }).openInWorld();
     progress.startStepping('updateProgressBar');
-    if (projectName) await bootstrap({ projectName, projectRepoOwner, loadingIndicator, progress });
-    else await bootstrap({ commit, loadingIndicator, progress });
+    if (projectName) await bootstrap({ projectName, projectRepoOwner, progress });
+    else await bootstrap({ commit, progress });
   }
 
   async showVersions () {
@@ -837,13 +831,9 @@ class ProjectPreviewModel extends WorldPreviewModel {
     if (lively.FreezerRuntime) {
       // open the world via url redirect
       // rms: instead of redirect load within world
-      const li = LoadingIndicator.open('...starting bootstrap process...', {
-        animated: true, delay: 1000
-      });
       this.transitionToLivelyWorld(
         document.location.origin,
         null,
-        li,
         name,
         projectRepoOwner
       );
