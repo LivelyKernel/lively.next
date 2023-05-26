@@ -93,10 +93,13 @@ export class Project {
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
       // TODO: 🍴 Support
-      packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1]);
+      packageJSONObjects.forEach(pkg => {
+         pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
+         pkg.url = projectsDir.url + `${pkg.projectRepoOwner}-${pkg.name}`;
+         pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
+      });
       // To allow correct resolution of projects via `flatn`, we need the name attribute in `package.json` to match the folder of the package.
       // To make working with the project names easier at runtime, we remove the owner-- here, so that the name attribut equals the project name again.
-      packageJSONObjects.forEach(pkg => pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, ''));
       localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
       return packageJSONObjects;
     } catch (err) {
