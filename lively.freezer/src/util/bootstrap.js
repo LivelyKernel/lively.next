@@ -21,9 +21,9 @@ function polyfills () {
   return Promise.all(loads);
 }
 
-function importPackageAndDo (packageURL, doFunc, li) {
+function importPackageAndDo (packageURL, doFunc, li = null) {
   const name = packageURL.split('/').slice(-1)[0];
-  li.label = `loading ${name}`;
+  if (li) li.label = `loading ${name}`;
   return lively.modules.importPackage(packageURL)
     .then(doFunc || function () {});
 }
@@ -53,22 +53,18 @@ async function loadComponents () {
 }
 
 let loads = 0;
-function installFetchHook (li) {
+function installFetchHook () {
   function logFetch (proceed, load) {
     loads++;
-    li.status = `loading ${string.truncateLeft(load.name.replace(window.System.baseURL, ''), 25, '...')}`;
-    li.progress = loads / (800 - 4 * Object.keys(extractedModules).length);
-    li.center = $world.innerBounds().center();
     return proceed(load);
   }
   window.__logFetch = logFetch;
   lively.modules.installHook('fetch', logFetch);
 }
 
-function bootstrapLivelySystem (li, progress, loadConfig) {
+function bootstrapLivelySystem (progress, loadConfig) {
   // for loading an instrumented version of the packages comprising the lively.system
   return Promise.resolve()
-    .then(function () { li.status = 'starting bootstrap process...'; })
     .then(async function () {
       // fixme: still expensive fetching of index.js files when registering each package on deserialization
       // fixme: freeze halos, components and lively.ide stuff to further speed up performance
@@ -155,7 +151,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         m._frozenModule = true;
       }
       oldSystem.config({ baseURL }); // this system keeps lurking around inside lively.modules somehow, so this fixes that issue for the time being
-      installFetchHook(li);
+      installFetchHook();
     })
     .then(async function () {
       if (loadConfig['lively.lang'] === 'dynamic' && !fastLoad) {
@@ -165,7 +161,6 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
             progress.finishPackage({ packageName: 'lively.lang', loaded: true });
             delete m._prevLivelyGlobal;
           },
-          li
         );
       }
     }).then(async function () {
@@ -176,8 +171,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.ast', loaded: true });
             lively.ast = m;
-          },
-          li);
+          });
       }
     }).then(async function () {
       if (loadConfig['lively.source-transform'] === 'dynamic' && !fastLoad) {
@@ -186,7 +180,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.source-transform', loaded: true });
             lively.sourceTransform = m;
-          }, li);
+          });
       }
     }).then(async function () {
       if (loadConfig['lively.classes'] === 'dynamic' && !fastLoad) {
@@ -195,7 +189,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.classes', loaded: true });
             lively.classes = m;
-          }, li);
+          });
       }
     }).then(async function () {
       if (loadConfig['lively.vm'] === 'dynamic' && !fastLoad) {
@@ -204,7 +198,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.vm', loaded: true });
             lively.vm = m;
-          }, li);
+          });
       }
     }).then(async function () {
       function afterImport (m) {
@@ -213,7 +207,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
         lively.modules.unwrapModuleResolution();
         lively.modules.wrapModuleLoad();
         lively.modules.wrapModuleResolution();
-        installFetchHook(li);
+        installFetchHook();
         const oldRegistry = System['__lively.modules__packageRegistry'];
         delete System['__lively.modules__packageRegistry'];
         const newRegistry = System['__lively.modules__packageRegistry'] = m.PackageRegistry.ofSystem(System);
@@ -251,7 +245,7 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
       if (loadConfig['lively.modules'] === 'frozen' || fastLoad) {
         System._scripting = lively.modules.scripting;
       } else {
-        await importPackageAndDo('lively.modules', afterImport, li);
+        await importPackageAndDo('lively.modules', afterImport);
       }
       progress.finishPackage({ packageName: 'lively.modules', loaded: true });
     })
@@ -262,15 +256,13 @@ function bootstrapLivelySystem (li, progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.storage', loaded: true });
             lively.storage = m;
-          },
-          li);
+          });
       }
     });
 }
 
-function fastPrepLivelySystem (li) {
+function fastPrepLivelySystem () {
   return Promise.resolve()
-    .then(function () { li.status = 'starting fast system preparation...'; })
     .then(function () { return resource(System.baseURL).join('package-registry.json').readJson(); })
     .then(function (packageCached) {
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
@@ -278,14 +270,12 @@ function fastPrepLivelySystem (li) {
     })
 }
 
-export async function bootstrap ({ filePath, worldName, projectName, projectRepoOwner, snapshot, commit, loadingIndicator: li, progress, logError = (err) => console.log(err) }) {
+export async function bootstrap ({ filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress, logError = (err) => console.log(err) }) {
   try {
     const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
-    li.center = progress.bottomCenter;
     await polyfills();
     const oldEnv = $world.env;
-    doBootstrap ? await bootstrapLivelySystem(li, progress, loadConfig) : await fastPrepLivelySystem(li);
-    li.label = 'Loading lively.2lively...';
+    doBootstrap ? await bootstrapLivelySystem(progress, loadConfig) : await fastPrepLivelySystem();
     await lively.modules.registerPackage('lively.2lively');
     if (askBeforeQuit) {
       window.addEventListener('beforeunload', function (evt) {
@@ -297,18 +287,15 @@ export async function bootstrap ({ filePath, worldName, projectName, projectRepo
 
     let morphic;
     if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
-      li.label = 'Loading lively.morphic...';
       morphic = await lively.modules.importPackage('lively.morphic');
       progress.finishPackage({ packageName: 'lively.morphic', loaded: true });
     } else {
       morphic = lively.morphic;
     }
 
-    li.label = 'Loading world...';
     window.onresize = null;
     lively.FreezerRuntime = false;
     const landingPageUrl = document.location;
-    window.worldLoadingIndicator = li;
     try {
       const opts = {
         root: $world.env.renderer.bodyNode,
@@ -322,13 +309,11 @@ export async function bootstrap ({ filePath, worldName, projectName, projectRepo
             document.body.style.background = 'white';
             progress.finishPackage({ packageName: 'world', loaded: true });
             progress.opacity = 0;
-            li.animate({ opacity: 0, top: li.top + 15 });
             await oldEnv.renderer.worldMorph.animate({ opacity: 0 });
             oldEnv.renderer.renderStep();
             await oldEnv.renderer.clear();
             oldEnv.fontMetric.uninstall();
             oldEnv.eventDispatcher.uninstall();
-            li.remove();
           }
         }
       };
