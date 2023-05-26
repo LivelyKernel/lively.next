@@ -458,7 +458,7 @@ export class LivelyWorld extends World {
     connect($world.propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
   }
 
-  async initializeStudio () {  
+  async initializeStudio () {
     let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
 
     let anonymousMode;
@@ -466,15 +466,15 @@ export class LivelyWorld extends World {
     if (askForWorldName === undefined) anonymousMode = false;
     else anonymousMode = !askForWorldName;
 
-    if (!this.metadata) { //not entered when loading an existing world snapshot
+    if (!this.metadata) { // not entered when loading an existing world snapshot
       let worldName;
       if (openNewWorldPrompt) { // We open a non-existing world without being anonymous
         if (!anonymousMode) worldName = await this.askForName();
         else if (anonymousMode) worldName = 'aLivelyWorld';
       } else if (openNewProjectPrompt) { // We open a **new** Project
-          const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
-          $world.openedProject = project;
-          worldName = project.name;
+        const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
+        $world.openedProject = project;
+        worldName = project.name;
       } else if (projectToBeOpened) { // We open an existing Project
         worldName = projectToBeOpened;
         await Project.loadProject(projectToBeOpened, projectRepoOwner);

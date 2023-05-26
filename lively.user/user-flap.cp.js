@@ -8,8 +8,31 @@ import { part } from 'lively.morphic/components/core.js';
 import { Spinner } from 'lively.ide/studio/shared.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
+import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
+
+const CompactConfirmPrompt = component(ConfirmPrompt, {
+  master: DarkPrompt,
+  extent: pt(300, 123),
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(15, 15, 0, 0),
+    resizePolicies: [['prompt title', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['button wrapper', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 16
+  })
+});
 
 class UserFlapModel extends ViewModel {
   static get properties () {
@@ -68,7 +91,14 @@ class UserFlapModel extends ViewModel {
     const interval = resOne.match(/interval=(\d*)&/)[1];
     this.toggleLoadingAnimation();
     let confirm;
-    $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.link }, ` and enter\n${userCode}`, null], { name: 'github login prompt' }).then(conf => {
+    $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.rgbHex('80CBC4') }, ` and enter\n${userCode}`, null], {
+      name: 'github login prompt',
+      customize: (prompt) => {
+        prompt.master = CompactConfirmPrompt;
+        prompt.width = 300;
+        prompt.position = $world.visibleBounds().center().subXY(150, prompt.height / 2);
+      }
+    }).then(conf => {
       confirm = conf;
     });
     cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
