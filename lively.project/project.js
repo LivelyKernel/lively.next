@@ -244,7 +244,7 @@ export class Project {
       await system.resourceCreateFiles(projectDir, {
         'index.js': "'format esm';\n",
         'package.json': '',
-        '.gitignore': 'node_modules/',
+        '.gitignore': 'node_modules/\nbuild/',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
         '.github': {
           workflows: {
