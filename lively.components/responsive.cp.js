@@ -15,6 +15,15 @@ export class Arrow extends Path {
   }
 }
 
+export function getColorForBreakpoint (idx, align) {
+  // generate from different color cycles
+  let colorCycles = {
+    horizontal: [0, 14, 12, 13].map(i => Color.rgbHex(materialDesignColors[i * 15])),
+    vertical: [9, 2, 5, 2].map(i => Color.rgbHex(materialDesignColors[i * 15]))
+  };
+  return colorCycles[align][idx % 4];
+}
+
 export class BreakpointSliderModel extends ViewModel {
   static get properties () {
     return {
@@ -286,13 +295,9 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.update();
   }
 
-  getColorForBreakpoint (idx, align) {
-    // generate from different color cycles
-    let colorCycles = {
-      horizontal: [0, 14, 12, 13].map(i => Color.rgbHex(materialDesignColors[i * 15])),
-      vertical: [9, 2, 5, 2].map(i => Color.rgbHex(materialDesignColors[i * 15]))
-    };
-    return colorCycles[align][idx % 4];
+  close () {
+    this.view.remove();
+    delete this.target._responsiveHalo;
   }
 
   jumpToHorizontalBreakpoint (elem) {
@@ -387,7 +392,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
       return part(BreakpointRange, {
         name: align + ' breakpoint ' + i,
         position: pt(0, 0),
-        fill: this.getColorForBreakpoint(i, align),
+        fill: getColorForBreakpoint(i, align),
         viewModel: { breakpointIndex: i },
         submorphs: i == 0 ? [without('remove breakpoint')] : []
       });
