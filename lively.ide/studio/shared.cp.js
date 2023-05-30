@@ -33,6 +33,11 @@ const PropertyLabel = component({
   }]
 });
 
+export const PropertyLabelDisabled = component(PropertyLabel, {
+  nativeCursor: 'not-allowed',
+  opacity: 0.5
+});
+
 const PropertyLabelLight = component(PropertyLabel, {
   fontColor: Color.darkGray
 });
