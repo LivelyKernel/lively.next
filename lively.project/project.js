@@ -260,7 +260,7 @@ export class Project {
           'test.js': `/* global describe,it */\nimport { expect } from "mocha-es6";\ndescribe("${this.name}", () => {\n  it("works", () => {\n    expect(1 + 2).equals(3);\n  });\n});`
         },
         ui: {
-          'components.cp.js': ''
+          'components.cp.js': "'format esm';\n"
         },
         workspaces: {
           'default.workspace.js': ''
