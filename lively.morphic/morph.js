@@ -2787,7 +2787,7 @@ export class Image extends Morph {
       node.firstChild.src = this.getURLForImgNode();
       this.renderingState.imageUrl = this.imageUrl;
     }
-    if (this.renderingState.tooltip !== this.tooltip) {
+    if (this.tooltip && this.renderingState.tooltip !== this.tooltip) {
       node.firstChild.alt = this.tooltip;
       this.renderingState.tooltip = this.tooltip;
     }
