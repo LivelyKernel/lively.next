@@ -71,7 +71,7 @@ export class BreakpointSliderModel extends ViewModel {
       ]
     };
     let ranges = arr.toTuples(sections[this.orientation], 2).toReversed();
-    return Icon.textAttribute(ranges.find(t => offset > t[0])[1]);
+    return Icon.textAttribute(ranges.find(t => offset >= t[0])[1]);
   }
 
   onDrag (evt) {
@@ -345,10 +345,10 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
     view.position = this.target.globalPosition.subPt(pt(27, 33));
     for (let slider of horizontalSliders) {
-      slider.alignInHalo(horizontalBreakpoints[slider.breakpointIndex], this.view);
+      slider.alignInHalo(horizontalBreakpoints[slider.breakpointIndex] || 0, this.view);
     }
     for (let slider of verticalSliders) {
-      slider.alignInHalo(verticalBreakpoints[slider.breakpointIndex], this.view);
+      slider.alignInHalo(verticalBreakpoints[slider.breakpointIndex] || 0, this.view);
     }
 
     verticalBreakpointControl.submorphs.forEach((v, i) => {
