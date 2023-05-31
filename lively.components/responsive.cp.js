@@ -292,6 +292,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   focusOn (target) {
     this.target = target;
+    target._responsiveHalo = this.view;
     epiConnect(target, 'onChange', this, 'relayout');
     this.update();
   }
