@@ -262,9 +262,10 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
       verticalSliders: { get () { return this.sliders.filter(slider => slider.orientation === 'vertical'); } },
       horizontalSliders: { get () { return this.sliders.filter(slider => slider.orientation === 'horizontal'); } },
       target: {},
+      isHaloItem: { get () { return true; } },
       expose: {
         get () {
-          return ['focusOn'];
+          return ['focusOn', 'close', 'isHaloItem'];
         }
       },
       bindings: {
@@ -459,9 +460,11 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
 // part(ResponsiveLayoutHalo).openInWorld().focusOn(this.get('test target'))
 
-const ResponsiveLayoutHalo = component({
+export const ResponsiveLayoutHalo = component({
   defaultViewModel: ResponsiveLayoutHaloModel,
   name: 'responsive layout halo',
+  hasFixedPosition: true,
+  styleClasses: ['Halo'],
   borderColor: Color.rgb(230, 126, 34),
   draggable: true,
   extent: pt(35.1, 35),
