@@ -955,6 +955,44 @@ class EditHaloItem extends RoundHaloItem {
   }
 }
 
+class ResponsiveHaloItem extends RoundHaloItem {
+  static get morphName () { return 'responsive'; }
+  static label () {
+    return RoundHaloItem.makeLabel('ti-columns-3');
+  }
+
+  static get properties () {
+    return {
+      tooltip: { defaultValue: 'Activate the responsive design mode for this morph.' }
+    };
+  }
+
+  onMouseDown (evt) {
+    this.start();
+  }
+
+  start () {
+    this.halo.activeItems = [];
+    this.halo.alignWithTarget();
+    const halo = this.world().execCommand('show responsive halo for', { target: this.halo.target });
+    once(halo, 'close', this, 'stop');
+    once(this.halo, 'remove', halo, 'close');
+  }
+
+  stop () {
+    this.halo.activeItems = ['*'];
+    this.halo.alignWithTarget();
+  }
+}
+
+function isAlive (target) {
+  let alive = false;
+  withAllViewModelsDo(target, m => {
+    if (m.viewModel.view) alive = true;
+  });
+  return alive;
+}
+
 class RotateHaloItem extends RoundHaloItem {
   static get morphName () { return 'rotate'; }
 
@@ -1567,6 +1605,7 @@ class ResizeHandle extends HaloItem {
   }
 
   valueForPropertyDisplay () {
+    if (this.halo.target._responsiveHalo) return;
     const { x: width, y: height } = this.halo.target.extent;
     return `${width.toFixed(1)}x${height.toFixed(1)}`;
   }
@@ -1895,7 +1934,7 @@ export default class Halo extends Morph {
         [null, null, null, null, null, null, null],
         ['component', null, null, null, null, null, 'inspect'],
         [null, null, null, null, null, null, null],
-        ['rotate', null, null, null, null, null, 'behavior'],
+        ['rotate', null, null, null, null, null, 'responsive'],
         [null, 'name', 'name', 'name', 'name', 'name', null]]
     });
 
@@ -1917,6 +1956,7 @@ export default class Halo extends Morph {
             this.editHalo(),
             this.copyHalo(),
             this.componentHalo(),
+            this.responsiveHalo(),
             this.rotateHalo(),
             this.nameHalo(),
             this.originHalo()
@@ -1996,6 +2036,8 @@ export default class Halo extends Morph {
       this.propertyDisplay.disable();
     }
 
+    this.responsiveHalo().visible = !!this.target.master && this.responsiveHalo().visible;
+
     this.ensureResizeHandles().forEach(h => h.alignInHalo());
     return this;
   }
@@ -2039,6 +2081,7 @@ export default class Halo extends Morph {
   copyHalo () { return CopyHaloItem.for(this); }
   originHalo () { return OriginHaloItem.for(this); }
   componentHalo () { return ComponentHaloItem.for(this); }
+  responsiveHalo () { return ResponsiveHaloItem.for(this); }
 
   get buttonControls () { return this.submorphs.filter(m => m.isHaloItem && !m.isResizeHandle); }
 

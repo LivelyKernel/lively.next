@@ -19,6 +19,7 @@ import { browserForFile } from './js/browser/ui.cp.js';
 import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
 import { Project } from 'lively.project';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { ResponsiveLayoutHalo } from 'lively.components/responsive.cp.js';
 
 const commands = [
 
@@ -566,6 +567,15 @@ const commands = [
         message = props.label;
       }
       return LoadingIndicator.open(message, props);
+    }
+  },
+
+  {
+    name: 'show responsive halo for',
+    exec: (world, { target }) => {
+      const halo = part(ResponsiveLayoutHalo).openInWorld();
+      halo.focusOn(target);
+      return halo;
     }
   },
 
