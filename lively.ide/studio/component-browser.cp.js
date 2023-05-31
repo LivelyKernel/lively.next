@@ -342,7 +342,7 @@ export class ExportedComponent extends Morph {
         derived: true,
         readOnly: true,
         get () {
-          return $world.openedProject?.pkg.url === this.package.url;
+          return $world.openedProject?.package.url === this.package.url;
         }
       },
       package: {
