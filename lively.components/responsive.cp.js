@@ -398,7 +398,6 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
         submorphs: i == 0 ? [without('remove breakpoint')] : []
       });
     });
-    // control.addMorph(newElems[1])
     control.submorphs = newElems;
   }
 
@@ -423,6 +422,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.ensureStore();
     this.store.addHorizontalBreakpoint(horizontalBreakpointControl.width);
     this.update();
+    signal(this.target, 'breakpoint added');
   }
 
   addVerticalBreakpoint () {
@@ -430,16 +430,19 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.ensureStore();
     this.store.addVerticalBreakpoint(verticalBreakpointControl.width);
     this.update();
+    signal(this.target, 'breakpoint added');
   }
 
   removeHorizontalBreakpoint (idx) {
     this.store.removeHorizontalBreakpoint(idx);
     this.update();
+    signal(this.target, 'breakpoint removed');
   }
 
   removeVerticalBreakpoint (idx) {
     this.store.removeVerticalBreakpoint(idx);
     this.update();
+    signal(this.target, 'breakpoint removed');
   }
 
   onSliderDrag (slider, dragDelta) {
@@ -455,6 +458,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     if (bps[idx] < lowerBound) bps[idx] = lowerBound + 1;
     if (bps[idx] > upperBound) bps[idx] = upperBound - 1;
     this.relayout();
+    signal(this.target, 'breakpoint changed');
   }
 }
 
