@@ -25,6 +25,12 @@ export class PopupModel extends ViewModel {
     };
   }
 
+  alignAtButton (btn) {
+    this.view.height = 25; // hack
+    this.view.topRight = btn.globalBounds().bottomRight().addXY(0, 5);
+    this.view.topLeft = this.world().visibleBounds().translateForInclusion(this.view.globalBounds()).topLeft();
+  }
+
   close () {
     this.view.remove();
   }
