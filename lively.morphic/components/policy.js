@@ -111,20 +111,14 @@ function mergeInHierarchy (
  * @param { object[] } customBreakpoints - A list of custom breakpoints in response to the width/height of the `targetMorph`.
  * @returns { object } The event state corresponding to the morph.
  */
-function getEventState (targetMorph, customBreakpoints, localComponentStates) {
-  if (!customBreakpoints) customBreakpoints = [];
+function getEventState (targetMorph, breakpointStore, localComponentStates) {
   const stateMaster = localComponentStates?.[targetMorph.master?._componentState];
   const { world, eventDispatcher } = targetMorph.env;
   const mode = world && world.colorScheme; // "dark" | "light"
   const isHovered = eventDispatcher && eventDispatcher.isMorphHovered(targetMorph); // bool
   const isClicked = eventDispatcher && isHovered && eventDispatcher.isMorphClicked(targetMorph); // bool
-  const [matchingBreakpoint, breakpointComponent] = customBreakpoints.filter(([bp, _]) => {
-    return bp.x <= targetMorph.width;
-  }).find(([bp, _]) => {
-    return bp.y <= targetMorph.height;
-  }) || [];
+  const breakpointComponent = breakpointStore?.getMatchingBreakpointMaster(targetMorph);
   return {
-    matchingBreakpoint,
     breakpointMaster: breakpointComponent?.stylePolicy,
     mode,
     isHovered,
@@ -196,15 +190,19 @@ export class BreakpointStore {
     grid.removeCol(this._breakpointMasters, idx);
   }
 
+  getMatchingBreakpointMaster (targetMorph) {
+    const [vbp, hbp] = this.getMatchingBreakpoint(targetMorph);
+    return grid.get(this._breakpointMasters, vbp, hbp);
+  }
+
   getMatchingBreakpoint (targetMorph) {
-    // FIXME: this is called often, so we may wanna refrain from reversing manually every time
-    const hbp = this._horizontalBreakpoints.toReversed().findIndex((x) => {
+    const hbp = this._horizontalBreakpoints.length - 1 - this._horizontalBreakpoints.toReversed().findIndex((x) => {
       return x <= targetMorph.width;
     });
-    const vbp = this._verticalBreakpoints.toReversed().find((y) => {
+    const vbp = this._verticalBreakpoints.length - 1 - this._verticalBreakpoints.toReversed().findIndex((y) => {
       return y <= targetMorph.height;
     });
-    return grid.get(this._breakpointMasters, vbp, hbp);
+    return [vbp, hbp];
   }
 }
 
@@ -325,14 +323,14 @@ export class StylePolicy {
 
   clearBreakpoints () { delete this._breakpointStore; }
 
-  getMatchingBreakpoint (targetMorph) {
-    return this.getBreakpointStore()?.getMatchingBreakpoint(targetMorph);
+  getMatchingBreakpointMaster (targetMorph) {
+    return this.getBreakpointStore()?.getMatchingBreakpointMaster(targetMorph);
   }
 
   needsBreakpointUpdate (target) {
-    const matchingBreakpoint = this.getMatchingBreakpoint(target);
-    if (!matchingBreakpoint) return false;
-    if (matchingBreakpoint?.equals(target._lastBreakpoint || pt(0, 0))) return false;
+    const matchingBreakpoint = this.getMatchingBreakpointMaster(target);
+    // if (!matchingBreakpoint) return false;
+    if (matchingBreakpoint === (target._lastBreakpoint || null)) { return false; }
     target._lastBreakpoint = matchingBreakpoint;
     return true;
   }
@@ -788,13 +786,12 @@ export class StylePolicy {
       isClicked,
       mode,
       breakpointMaster,
-      matchingBreakpoint,
       stateMaster
-    } = getEventState(targetMorph, this._breakpointMasters, this._localComponentStates);
+    } = getEventState(targetMorph, this.getBreakpointStore(), this._localComponentStates);
 
     if (stateMaster) return stateMaster;
 
-    if (matchingBreakpoint) targetMorph._lastBreakpoint = matchingBreakpoint;
+    if (breakpointMaster) targetMorph._lastBreakpoint = breakpointMaster;
 
     if (this.isEventPolicy) {
       if (isClicked) return this._clickMaster || this._autoMaster;
