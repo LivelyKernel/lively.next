@@ -19,8 +19,10 @@ node --no-experimental-fetch --no-warnings --experimental-loader $lv_next_dir/fl
 
 # Inside of docker, we have CI set to never minify the code
 # but we still want the loading page to be built! 
+# Note, that for the actual building step, we set $CI explicitly again.
+# This forces minification to be skipped on non-docker setups as well.
 if [[ -z "${CI}" || "${CONTAINERIZED}" == "true" ]];
 then
-  npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
+  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
 fi
-npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
+env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
