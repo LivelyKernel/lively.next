@@ -224,9 +224,7 @@ export class BorderControlModel extends PropertySectionModel {
     const p = this.popup = this.popup || part(this.borderPopupComponent);
     p.viewModel.targetMorph = this.targetMorph;
     p.openInWorld();
-    p.height = 25;
-    p.topRight = this.ui.moreButton.globalBounds().bottomRight().addXY(0, 5);
-    p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
+    p.alignAtButton(this.ui.moreButton);
     once(p.viewModel, 'close', this, 'closePopup');
     epiConnect(p.viewModel, 'target updated', this, 'update');
   }
@@ -295,7 +293,7 @@ export class BorderPopupWindow extends PopupModel {
       },
       expose: {
         get () {
-          return ['close', 'isHaloItem', 'isPropertiesPanelPopup'];
+          return ['close', 'isHaloItem', 'isPropertiesPanelPopup', 'alignAtButton'];
         }
       },
       bindings: {
