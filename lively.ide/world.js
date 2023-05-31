@@ -582,8 +582,12 @@ export class LivelyWorld extends World {
     const baseURL = document.location.origin;
 
     if (files.length) {
-      let uploadPath = currentUsername() === 'guest' ? 'uploads/' : 'users/' + currentUser() + '/uploads';
-      if (evt.isAltDown()) {
+      let uploadPath;
+      const proj = this.openedProject;
+      if (proj) {
+        uploadPath = `local_projects/${proj.repoOwner}-${proj.name}/assets`;
+      } else uploadPath = currentUsername() === 'guest' ? 'uploads/' : 'users/' + currentUser() + '/uploads';
+      if (evt.isAltDown() && !proj) {
         uploadPath = await this.prompt('Choose upload location', {
           history: 'lively.morphic-html-drop-file-upload-location',
           input: uploadPath
@@ -634,11 +638,10 @@ export class LivelyWorld extends World {
           else others.push(f);
         }
         if (images.length) {
-          const openImages = true;
-          // let openImages = await this.confirm(
-          //   images.length > 1 ?
-          //     `There were ${images.length} images uploaded. Open them?` :
-          //     `There was 1 image uploaded. Open it?`);
+          let openImages = await this.confirm(
+            images.length > 1
+              ? `There were ${images.length} images uploaded. Open them?`
+              : 'There was 1 image uploaded. Open it?');
           if (openImages) {
             images.forEach(ea => {
               const img = new Image({
@@ -663,13 +666,6 @@ export class LivelyWorld extends World {
       return;
     }
 
-    // show(`
-    //   ${domEvt.dataTransfer.files.length}
-    //   ${domEvt.dataTransfer.items.length}
-    //   ${domEvt.target}
-    //   ${domEvt.dataTransfer.types}
-    // `)
-
     const types = domEvt.dataTransfer.types;
     if (types.includes('text/html')) {
       const html = domEvt.dataTransfer.getData('text/html');
@@ -691,7 +687,6 @@ export class LivelyWorld extends World {
 
     for (let i = 0; i < domEvt.dataTransfer.items.length; i++) {
       const item = domEvt.dataTransfer.items[i];
-      // console.log(`${item.kind} - ${item.type}`)
       if (item.kind === 'file') {
         const f = item.getAsFile();
         const upload = await this.confirm(`Upload ${f.name}?`);
@@ -701,7 +696,6 @@ export class LivelyWorld extends World {
           uploadedMorph.center = this.visibleBounds().center();
         }
       } else if (item.kind === 'string') {
-        // show({kind: item.kind, type: item.type})
         item.getAsString((s) => inspect(s));
       }
     }
