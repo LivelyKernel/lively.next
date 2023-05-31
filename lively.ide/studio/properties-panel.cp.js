@@ -14,6 +14,8 @@ import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
 import { EmbeddingControl } from './controls/embedding.cp.js';
+import { ComponentControl } from './controls/component.cp.js';
+import { ResponsiveControl } from './controls/responsive.cp.js';
 
 export class PropertiesPanelModel extends ViewModel {
   static get properties () {
@@ -27,7 +29,9 @@ export class PropertiesPanelModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' }
+            { model: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' },
+            { target: 'component control', signal: 'component changed', handler: 'refreshResponsiveControl' },
+            { target: 'component control', signal: 'deactivate', handler: 'refreshResponsiveControl' }
           ];
         }
       },
@@ -44,7 +48,11 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   refreshShapeControl () {
-    this.models.shapeControl.refreshFromTarget();
+    this.ui.shapeControl.refreshFromTarget();
+  }
+
+  refreshResponsiveControl () {
+    this.ui.responsiveControl.visible = !!this.targetMorph.master?.parent;
   }
 
   updateLayoutControl () {
@@ -156,9 +164,12 @@ export class PropertiesPanelModel extends ViewModel {
     const {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, borderControl,
-      effectsControl, embeddingControl
+      effectsControl, embeddingControl, componentControl,
+      responsiveControl
     } = this.ui;
-    [shapeControl, fillControl, textControl, layoutControl, constraintsControl, borderControl, effectsControl].forEach(m => m.visible = active);
+    [shapeControl, fillControl, textControl, layoutControl,
+      constraintsControl, borderControl, effectsControl,
+      embeddingControl, componentControl, responsiveControl].forEach(m => m.visible = active);
     embeddingControl.visible = false;
   }
 
@@ -178,6 +189,7 @@ export class PropertiesPanelModel extends ViewModel {
     this.models.borderControl.targetMorph = null;
     this.models.borderControl.deactivate();
     this.models.textControl.deactivate();
+    this.models.responsiveControl.clearHalo();
   }
 
   clearFocusIfRemoved () {
@@ -194,7 +206,8 @@ export class PropertiesPanelModel extends ViewModel {
     const {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, embeddingControl,
-      borderControl, effectsControl, backgroundControl, alignmentControl
+      borderControl, effectsControl, backgroundControl, alignmentControl,
+      componentControl, responsiveControl
     } = this.models;
     if (this.targetMorph) {
       disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
@@ -229,8 +242,11 @@ export class PropertiesPanelModel extends ViewModel {
     } else {
       constraintsControl.view.visible = false;
     }
+    responsiveControl.view.visible = !!aMorph.master;
     borderControl.focusOn(aMorph);
     effectsControl.focusOn(aMorph);
+    componentControl.focusOn(aMorph);
+    responsiveControl.focusOn(aMorph);
   }
 }
 
@@ -302,6 +318,7 @@ const BackgroundControl = component(PropertySection, {
 });
 
 export const defaultPropertiesPanelWidth = 250;
+
 const PropertiesPanel = component({
   defaultViewModel: PropertiesPanelModel,
   name: 'properties panel',
@@ -312,17 +329,38 @@ const PropertiesPanel = component({
   clipMode: 'auto',
   layout: new TilingLayout({
     axis: 'column',
-    padding: Rectangle.inset(0, 50, 0, 0),
-    resizePolicies: [
-      ['shape control', { width: 'fill', height: 'fixed' }],
-      ['fill control', { width: 'fill', height: 'fixed' }],
-      ['text control', { width: 'fill', height: 'fixed' }],
-      ['layout control', { width: 'fill', height: 'fixed' }],
-      ['constraints control', { width: 'fill', height: 'fixed' }],
-      ['border control', { width: 'fill', height: 'fixed' }],
-      ['effects control', { width: 'fill', height: 'fixed' }],
-      ['embedding control', { width: 'fill', height: 'fixed' }]
-    ]
+    padding: rect(0, 50, 0, -50),
+    resizePolicies: [['shape control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['text control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['component control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['responsive control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['layout control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['embedding control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['constraints control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['fill control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['border control', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['effects control', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
   }),
   submorphs: [
     part(BackgroundControl, { name: 'background control' }),
@@ -356,6 +394,8 @@ const PropertiesPanel = component({
     part(ConstraintsManager, { name: 'constraints control', visible: false }),
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
+    part(ComponentControl, { name: 'component control', visible: false }),
+    part(ResponsiveControl, { name: 'responsive control', visible: false }),
     part(BodyControl, { name: 'effects control', visible: false })
   ]
 });
