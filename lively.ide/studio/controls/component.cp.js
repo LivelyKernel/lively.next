@@ -15,7 +15,6 @@ export class ComponentSelectionControl extends ViewModel {
         set (componentDescriptor) {
           this.setProperty('component', componentDescriptor);
           componentDescriptor ? this.activate() : this.deactivate();
-          signal(this.view, 'componentChanged');
           this.ui.policyTypePin.fit(); // FIXME: why do we need to trigger this manually?
         }
       },
@@ -38,7 +37,10 @@ export class ComponentSelectionControl extends ViewModel {
 
   async selectComponent () {
     const selectedComponent = await part(ComponentBrowserDark, { viewModel: { selectionMode: true } }).activate();
-    if (selectedComponent) { this.component = selectedComponent; }
+    if (selectedComponent) {
+      this.component = selectedComponent;
+      signal(this.view, 'componentChanged');
+    }
   }
 
   deactivate () {
@@ -171,9 +173,11 @@ export class ComponentControlModel extends PropertySectionModel {
     let stylePolicy = this.targetMorph.master;
     if (stylePolicy.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
-    autoComponentSelection.component = stylePolicy?._parent;
-    hoverComponentSelection.component = stylePolicy?._hoverMaster;
-    clickComponentSelection.component = stylePolicy?._clickMaster;
+    this.withoutBindingsDo(() => {
+      autoComponentSelection.component = stylePolicy?._parent;
+      hoverComponentSelection.component = stylePolicy?._hoverMaster;
+      clickComponentSelection.component = stylePolicy?._clickMaster;
+    });
   }
 
   focusOn (aMorph) {
