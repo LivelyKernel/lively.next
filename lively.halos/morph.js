@@ -21,10 +21,19 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
 import { getPropertiesNode } from 'lively.ide/components/helpers.js';
+import { resource } from 'lively.resources';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const derivedAccent = Color.rgba(171, 71, 188, 1);
 const componentAccent = Color.magenta;
+
+export function isUUID (str) {
+  return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(str);
+}
+
+export function incName (name) {
+  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
+}
 
 function getColorForTarget (target) {
   const baseColor = !!target.master || target.ownerChain().find(m => (m.master && m.master.managesMorph(target.name))) ? derivedAccent : haloBlue;
@@ -946,14 +955,6 @@ class EditHaloItem extends RoundHaloItem {
   }
 }
 
-function isAlive (target) {
-  let alive = false;
-  withAllViewModelsDo(target, m => {
-    if (m.viewModel.view) alive = true;
-  });
-  return alive;
-}
-
 class RotateHaloItem extends RoundHaloItem {
   static get morphName () { return 'rotate'; }
 
@@ -1174,45 +1175,84 @@ class ComponentHaloItem extends RoundHaloItem {
   async update () {
     const target = this.halo.target;
     const toBeComponent = !target.isComponent;
+    const openBrowser = false;
+    const autoSelectModule = true;
     const {
       insertComponentDefinition,
       removeComponentDefinition
+
     } = await System.import('lively.ide/components/reconciliation.js');
+    const { InteractiveComponentDescriptor } = await System.import('lively.ide/components/editor.js');
     const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     if (toBeComponent) {
       const { localInterface } = await System.import('lively-system-interface');
       const items = (await localInterface.coreInterface.getLoadedModules(config.ide.js.ignoredPackages))
-        .filter(({ module: m }) => m.name?.endsWith('.cp.js'))
+        .filter(({ module: m, package: p }) => p.url === $world.openedProject?.url && m.name?.endsWith('.cp.js'))
         .map(({ package: p, module: m }) => {
           const shortName = localInterface.shortModuleName(m.name, p);
           const string = `[${p.name}] ${shortName}`;
           return { isListItem: true, string, value: m };
         });
 
-      const res = await $world.filterableListPrompt('Select Home Module for Component', items, {
-        historyId: 'lively.morphic-choose and browse package resources',
-        width: 700,
-        multiSelect: false,
-        fuzzy: 'value.shortName'
-      });
-      const { selected: [selectedModule] } = res;
-      if (!selectedModule) return;
-      let variableName = await $world.prompt('Enter a name for this component', {
-        input: string.decamelize(target.name)
-      });
-      if (!variableName) return;
-      variableName = string.camelCaseString(variableName);
-      await insertComponentDefinition(target, variableName, selectedModule.name);
-      const mod = moduleManager.module(selectedModule.name);
+      // FIXME: this is a pretty messy step for a designer to get into
+      let variableName;
+      if (!isUUID(target.name)) {
+        variableName = string.decamelize(target.name);
+      } else if (target.master?.[Symbol.for('lively-module-meta')]?.exportedName) {
+        variableName = incName(target.master?.[Symbol.for('lively-module-meta')].exportedName);
+      } else {
+        variableName = await $world.prompt('Enter a name for this component', {
+          input: string.decamelize(target.name)
+        });
+      }
 
-      const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser');
-      browser.getWindow().activate();
-      await browser.browse({
-        packageName: mod.package().name,
-        moduleName: mod.pathInPackage(),
-        codeEntity: variableName
-      });
+      if (!variableName) return; // something went wrong
+
+      variableName = string.camelCaseString(variableName);
+
+      let selectedModule;
+
+      if (!autoSelectModule) {
+        // determine the module to place the component in
+        const res = await $world.filterableListPrompt('Select Home Module for Component', items, {
+          historyId: 'lively.morphic-choose and browse package resources',
+          width: 700,
+          multiSelect: false,
+          fuzzy: 'value.shortName'
+        });
+        ({ selected: [selectedModule] } = res);
+        if (!selectedModule) return;
+      } else {
+        if (selectedModule = target.master?.[Symbol.for('lively-module-meta')]?.moduleId) {
+          selectedModule = { name: selectedModule };
+        } else {
+          // create a new empty module
+          const r = resource($world.openedProject.package.url)
+            .join('ui')
+            .join(string.decamelize(variableName).split(' ').join('-') + '.cp.js');
+          await r.ensureExistance('"format esm";');
+
+          selectedModule = { name: r.url };
+        }
+      }
+
+      target.name = undefined;
+      const mod = moduleManager.module(selectedModule.name);
+      // ensure that the name can enter the module without a conflict
+      while (mod.recorder[variableName]) variableName = incName(variableName);
+      await insertComponentDefinition(target, variableName, selectedModule.name);
+
+      if (openBrowser) {
+        const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser');
+        browser.getWindow().activate();
+        await browser.browse({
+          packageName: mod.package().name,
+          moduleName: mod.pathInPackage(),
+          codeEntity: variableName
+        });
+      }
       const descr = await promise.waitFor(() => mod.recorder[variableName]);
+      obj.adoptObject(descr, InteractiveComponentDescriptor);
       const componentMorph = await descr.edit();
       componentMorph.openInWorld(target.globalPosition);
       target.remove();
