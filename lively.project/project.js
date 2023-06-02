@@ -15,6 +15,8 @@ import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
+import Terminal from 'lively.ide/shell/terminal.js';
+import { pt } from 'lively.graphics';
 
 const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
 const repositoryNameRegex = /\/.+\/(.*)/;
@@ -168,6 +170,12 @@ export class Project {
       window.location.href = (await Project.systemInterface.getConfig().baseURL);
     }
     return loadedProject;
+  }
+
+  showDiffSummary () {
+    const term = Terminal.runCommand('git diff-files --stat', { cwd: this.gitResource.url, position: pt(100, 100) });
+    term.position = pt(100, 100);
+    return term;
   }
 
   /**

@@ -17,7 +17,7 @@ import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
-import { SystemButton } from 'lively.components/buttons.cp.js';
+import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -193,10 +193,18 @@ class ProjectSavePrompt extends AbstractPromptModel {
         get () {
           return [
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'cancel button', signal: 'fire', handler: () => this.view.remove() },
+            {
+              model: 'cancel button',
+              signal: 'fire',
+              handler: () => {
+                this.view.remove();
+                this.terminalWindow?.close();
+              }
+            },
             { target: 'minor check', signal: 'toggle', handler: (status) => this.increaseMinor = status },
             { target: 'major check', signal: 'toggle', handler: (status) => this.increaseMajor = status },
-            { target: 'tag check', signal: 'toggle', handler: (status) => this.tag = status }
+            { target: 'tag check', signal: 'toggle', handler: (status) => this.tag = status },
+            { target: 'diff button', signal: 'onMouseDown', handler: () => { this.terminalWindow = this.project.showDiffSummary(); } }
           ];
         }
       }
@@ -216,6 +224,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
     const success = await this.project.save({ increaseLevel, message, tag: this.tag });
     li.remove();
     this.view.remove();
+    this.terminalWindow?.close();
     if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
     else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
   }
@@ -359,17 +368,17 @@ export const ProjectCreationPrompt = component(LightPrompt, {
 
 export const SaveProjectDialog = component(SaveWorldDialog, {
   defaultViewModel: ProjectSavePrompt,
-  extent: pt(500, 332),
+  extent: pt(500, 367),
   submorphs: [{
     name: 'prompt title',
     nativeCursor: 'text',
     textAndAttributes: ['Save Project', null]
   }, {
     name: 'prompt controls',
-    extent: pt(455.5, 216),
+    extent: pt(455.5, 285),
     submorphs: [without('third row'), without('second row'), without('first row'), add({
       name: 'second row',
-      extent: pt(450, 65.3),
+      extent: pt(450, 76.8),
       fill: Color.transparent,
       layout: new TilingLayout({
         align: 'right',
@@ -453,7 +462,17 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           borderWidth: 0,
           position: pt(179, 0)
         }]
-      }]
+      }, part(SystemButtonDark, {
+        name: 'diff button',
+        extent: pt(449.5, 27),
+        submorphs: [{
+          name: 'label',
+          textAndAttributes: ['Show Summary of Changes (Advanced Operation)', null, '', {
+            fontFamily: 'tabler-icons',
+            fontWeight: '900'
+          }, ' ', {}]
+        }]
+      })]
     }), {
       name: 'fourth row',
       submorphs: [{
