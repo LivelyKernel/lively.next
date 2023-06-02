@@ -9,12 +9,12 @@ import { Spinner } from 'lively.ide/studio/shared.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
 const CompactConfirmPrompt = component(ConfirmPrompt, {
   master: DarkPrompt,
-  extent: pt(300, 123),
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
@@ -31,15 +31,31 @@ const CompactConfirmPrompt = component(ConfirmPrompt, {
       width: 'fill'
     }]],
     spacing: 16
-  })
+  }),
+  submorphs: [{
+    name: 'prompt title',
+    fixedWidth: true,
+    fixedHeight: true,
+    height: 90
+  }]
 });
 
 class UserFlapModel extends ViewModel {
   static get properties () {
     return {
+      withLoginButton: {
+        defaultValue: false
+      },
+      bindings: {
+        get () {
+          return [
+            { target: 'login button', signal: 'onMouseDown', handler: 'login' }
+          ];
+        }
+      },
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login'];
         }
       }
     };
@@ -48,15 +64,21 @@ class UserFlapModel extends ViewModel {
   toggleLoadingAnimation () {
     const { spinner, avatar } = this.ui;
     spinner.visible = !spinner.visible;
-    avatar.visible = !avatar.visible;
+    avatar.visible = this.withLoginButton ? false : !avatar.visible;
   }
 
   viewDidLoad () {
-    const { leftUserLabel, rightUserLabel } = this.ui;
+    const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
     if (currentUser().login === 'guest') {
-      connect(leftUserLabel, 'onMouseDown', this, 'login');
-      leftUserLabel.tooltip = 'Login with GitHub';
-      rightUserLabel.tooltip = '';
+      if (this.withLoginButton) {
+        avatar.visible = false;
+        loginButton.visible = loginButton.isLayoutable = true;
+        leftUserLabel.visible = rightUserLabel.visible = false;
+      } else {
+        connect(leftUserLabel, 'onMouseDown', this, 'login');
+        leftUserLabel.tooltip = 'Login with GitHub';
+        rightUserLabel.tooltip = '';
+      }
     } else {
       this.showUserData();
       leftUserLabel.tooltip = '';
@@ -91,7 +113,8 @@ class UserFlapModel extends ViewModel {
     const interval = resOne.match(/interval=(\d*)&/)[1];
     this.toggleLoadingAnimation();
     let confirm;
-    $world.confirm(['Go to ', null, 'GitHub', { doit: { code: 'window.open(\'https://github.com/login/device\',\'Github Authentification\',\'width=500,height=600,top=100,left=500\')' }, fontColor: Color.rgbHex('80CBC4') }, ` and enter\n${userCode}`, null], {
+    window.open('https://github.com/login/device', 'Github Authentification', 'width=500,height=600,top=100,left=100');
+    $world.confirm(['Enter \n', null, `${userCode}`, { fontColor: Color.lively }, '\nin the popup to login!', null], {
       name: 'github login prompt',
       customize: (prompt) => {
         prompt.master = CompactConfirmPrompt;
@@ -145,7 +168,11 @@ class UserFlapModel extends ViewModel {
   }
 
   showLoggedInUser () {
-    const { leftUserLabel, rightUserLabel } = this.ui;
+    const { leftUserLabel, rightUserLabel, avatar, loginButton } = this.ui;
+
+    leftUserLabel.visible = rightUserLabel.visible = avatar.visible = true;
+    loginButton.visible = loginButton.isLayoutable = false;
+
     this.showUserData();
 
     disconnect(leftUserLabel, 'onMouseDown', this, 'login');
@@ -190,16 +217,21 @@ class UserFlapModel extends ViewModel {
   }
 
   showGuestUser () {
-    const { leftUserLabel, rightUserLabel, avatar } = this.ui;
-    connect(leftUserLabel, 'onMouseDown', this, 'login');
-    leftUserLabel.tooltip = 'Login with GitHub';
-    rightUserLabel.tooltip = '';
-    disconnect(rightUserLabel, 'onMouseDown', this, 'logout');
-    leftUserLabel.nativeCursor = 'pointer';
-    rightUserLabel.nativeCursor = 'auto';
-    leftUserLabel.textAndAttributes = Icon.textAttribute('github');
-    rightUserLabel.textString = 'guest';
-    avatar.loadUrl('https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160', false);
+    const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
+    if (this.withLoginButton) {
+      leftUserLabel.visible = rightUserLabel.visible = avatar.visible = false;
+      loginButton.visible = loginButton.isLayoutable = true;
+    } else {
+      connect(leftUserLabel, 'onMouseDown', this, 'login');
+      leftUserLabel.tooltip = 'Login with GitHub';
+      rightUserLabel.tooltip = '';
+      disconnect(rightUserLabel, 'onMouseDown', this, 'logout');
+      leftUserLabel.nativeCursor = 'pointer';
+      rightUserLabel.nativeCursor = 'auto';
+      leftUserLabel.textAndAttributes = Icon.textAttribute('github');
+      rightUserLabel.textString = 'guest';
+      avatar.loadUrl('https://s.gravatar.com/avatar/d41d8cd98f00b204e9800998ecf8427e?s=160', false);
+    }
   }
 
   showUserData () {
@@ -233,7 +265,7 @@ export const UserFlap = component({
   borderWidth: 0,
   position: pt(580.2, 897.3),
   borderRadius: 7,
-  clipMode: 'visible',
+  clipMode: 'hidden',
   extent: pt(362.3, 52.3),
   fill: Color.transparent,
   fontColor: Color.rgb(102, 102, 102),
@@ -284,6 +316,19 @@ export const UserFlap = component({
     visible: false,
     position: pt(5.3, 4.2),
     scale: 0.3
+  }), part(ButtonDefault, {
+    name: 'login button',
+    extent: pt(220, 40),
+    isLayoutable: false,
+    visible: false,
+    submorphs: [{
+      name: 'label',
+      fontSize: 18,
+      fontWeight: 900,
+      textAndAttributes: ['To proceed, login with', null, ' ', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"'
+      }]
+    }]
   })
   ]
 });
