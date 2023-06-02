@@ -146,6 +146,7 @@ export default class LivelyRollup {
     this.importedModules = []; // Collection of all the required modules from the passed snapshot. This is not popuplated if we utilize rootModule.
     this.resolved = {};
     this.assetsToCopy = [];
+    this.projectAssets = [];
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -434,6 +435,22 @@ export default class LivelyRollup {
       return source;
     }
 
+    const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
+    const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
+
+    const assetNameRewriter =  (match, assetName) => {
+      const newName = currentlyTransformedProject + '__' + assetName;
+
+      this.projectAssets.push({
+          oldName: assetName,
+          newName,
+          project: currentlyTransformedProject
+        }) 
+        return `projectAsset(\'${newName}\')`;
+      }
+
+    source = source.replaceAll(projectAssetRegex, assetNameRewriter);
+
     if (this.needsDynamicLoadTransform(source)) {
       source = await this.instrumentDynamicLoads(source, id);
     }
@@ -469,7 +486,7 @@ export default class LivelyRollup {
 
     const importingPackage = this.resolver.resolvePackage(importer);
     // honor the systemjs options within the package config
-    const mapping = importingPackage?.systemjs?.map
+    const mapping = importingPackage?.systemjs?.map;
     if (mapping) {
       this.globalMap = { ...this.globalMap, ...mapping };
       if (mapping[id] || this.globalMap[id]) {
@@ -901,6 +918,20 @@ export default class LivelyRollup {
           source
         });
       }
+    }
+
+    const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
+    const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
+    for (let asset of this.projectAssets) {
+      const file = resource(livelyDir).join('local_projects').join(asset.project).join('assets').join(`${asset.oldName}`);
+      file.beBinary();
+        let source = await file.read();
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        plugin.emitFile({
+          type: 'asset',
+          fileName: joinPath('assets', `${asset.newName}`),
+          source
+        });
     }
 
     // add the blank import file to make systemjs happy
