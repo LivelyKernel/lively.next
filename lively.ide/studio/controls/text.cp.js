@@ -1,6 +1,6 @@
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { TilingLayout, config, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
-import { obj, arr } from 'lively.lang';
+import { obj, num, arr } from 'lively.lang';
 import {
   EnumSelector,
   BoundsContainerHovered,
@@ -297,14 +297,16 @@ const RichTextControl = component(PropertySection, {
   name: 'rich text control',
   extent: pt(250, 313),
   layout: new TilingLayout({
-    wrapSubmorphs: true,
-    spacing: 10,
-    padding: Rectangle.inset(0, 10, 0, 10),
-    resizePolicies: [
-      ['h floater', { width: 'fill', height: 'fixed' }]
-    ],
     axisAlign: 'center',
-    hugContentsVertically: true
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(0, 10, 0, 0),
+    resizePolicies: [['h floater', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10,
+    wrapSubmorphs: true
   }),
   submorphs: [{
     name: 'h floater',
@@ -576,8 +578,9 @@ const RichTextControl = component(PropertySection, {
       }),
       submorphs: [part(PropertyLabel, {
         name: 'auto width',
-        padding: Rectangle.inset(3, 2, 3, 0),
+        padding: rect(6, 2, -3, -2),
         tooltip: 'Fit Width',
+        rotation: num.toRadians(90.0),
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
           fontFamily: 'Material Icons'
