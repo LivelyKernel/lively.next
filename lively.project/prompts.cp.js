@@ -265,7 +265,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         extent: pt(318, 48.9),
         fill: Color.transparent,
         submorphs: [
-          part(UserFlap)
+          part(UserFlap, { viewModel: { withLoginButton: true } })
         ]
       },
       {
