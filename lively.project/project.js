@@ -69,7 +69,7 @@ export class Project {
       version: '0.1.0'
     };
 
-    if (bindVersion) VersionChecker.currentLivelyVersion().then(version => this.config.lively.boundLivelyVersion = version);
+    if (bindVersion) VersionChecker.currentLivelyVersion(true).then(version => this.config.lively.boundLivelyVersion = version);
   }
 
   static async listAvailableProjects () {
@@ -152,27 +152,22 @@ export class Project {
 
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
 
-    let loadingCanceled = false;
     switch (checkLivelyCompatability) {
       case 'CANCELED':
       case 'OUTDATED': {
-        loadingCanceled = true;
-        await $world.inform('Due to incompatible lively versions, you cannot open this project. This session will now close. This probably means that your version is older than the one the project requires.');
-        window.location.href = (await Project.systemInterface.getConfig().baseURL);
+        await $world.inform('The required lively version of this project conflicts with the running one.', { additionalText: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
       }
     }
-    if (!loadingCanceled) {
-      loadedProject.package = pkg;
-      $world.openedProject = loadedProject;
-      try {
-        await loadedProject.ensureDependenciesExist();
-        await loadedProject.loadProjectDependencies();
-      } catch (err) {
-        await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
-        window.location.href = (await Project.systemInterface.getConfig().baseURL);
-      }
-      return loadedProject;
+    loadedProject.package = pkg;
+    $world.openedProject = loadedProject;
+    try {
+      await loadedProject.ensureDependenciesExist();
+      await loadedProject.loadProjectDependencies();
+    } catch (err) {
+      await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
+      window.location.href = (await Project.systemInterface.getConfig().baseURL);
     }
+    return loadedProject;
   }
 
   /**
@@ -205,8 +200,8 @@ export class Project {
     return localInterface.coreInterface;
   }
 
-  async bindAgainstCurrentLivelyVersion (compatibleVersion) {
-    const { comparison } = await VersionChecker.checkVersionRelation(compatibleVersion);
+  async bindAgainstCurrentLivelyVersion (knownCompatibleVersion) {
+    const { comparison } = await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
     const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
     switch (comparisonBetweenVersions) {
       case (0): {
@@ -220,7 +215,7 @@ export class Project {
           return 'CANCELED';
         } else {
           $world.setStatusMessage(`Updated the required version of lively.next for ${this.config.name}.`, StatusMessageConfirm);
-          const currentCommit = await VersionChecker.currentLivelyVersion();
+          const currentCommit = await VersionChecker.currentLivelyVersion(true);
           this.config.lively.boundLivelyVersion = currentCommit;
           await this.saveConfigData();
           await this.regenerateTestPipeline();
@@ -229,7 +224,7 @@ export class Project {
       }
       case (-1):
       case (2) : {
-        $world.setStatusMessage(`You do not have the version of lively.next necessary to open this project. Please get version ${compatibleVersion} of lively.next`, StatusMessageError);
+        $world.setStatusMessage(`You do not have the version of lively.next necessary to open this project. Please get version ${knownCompatibleVersion} of lively.next`, StatusMessageError);
         return 'OUTDATED';
       }
     }

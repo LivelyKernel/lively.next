@@ -37,10 +37,10 @@ class VersionChecker extends Morph {
     };
   }
 
-  static async currentLivelyVersion () {
+  static async currentLivelyVersion (main) {
     const cwd = await VersionChecker.cwd();
-    const headHashCmd = 'git rev-parse @';
-    const result = await runCommand(headHashCmd, { cwd }).whenDone();
+    const hashCmd = main ? 'git merge-base origin/main HEAD' : 'git rev-parse @';
+    const result = await runCommand(hashCmd, { cwd }).whenDone();
     return result.stdout.trim();
   }
 
@@ -96,15 +96,29 @@ class VersionChecker extends Morph {
     }
   }
 
-  static async checkVersionRelation (hashToCheckAgainst) {
+  /**
+   * If no parameters are given, checks the relation between the current commit and the main of the official lively.next repository.
+   * If only the first parameter is given, checks the relation between the current commit and the given one.
+   * If the second parameter ist set to true, we compare the newest commit that is shared between main and the currently checked out branch with the first parameter.
+   * This option is meant to make working with Projects on feature branches easier.
+   * @param {string} hashToCheckAgainst
+   * @param {boolean} compareLatestAncestor
+   */
+  static async checkVersionRelation (hashToCheckAgainst, compareLatestAncestor) {
+    const cwd = await VersionChecker.cwd();
+    let currentLivelyVersion, comparison;
+    currentLivelyVersion = await VersionChecker.currentLivelyVersion();
+    let commonAncestor;
+    if (compareLatestAncestor) {
+      const findLatestMainAncestorCmd = 'git merge-base origin/main HEAD';
+      ({ stdout: commonAncestor } = await runCommand(findLatestMainAncestorCmd, { cwd }).whenDone());
+      commonAncestor = commonAncestor.trim();
+    }
     // See https://stackoverflow.com/a/27940027 for how this works
     if (!hashToCheckAgainst) hashToCheckAgainst = 'origin/main';
-    const comparingCmd = `git rev-list --left-right --count ${hashToCheckAgainst}...@`;
-    const cwd = await VersionChecker.cwd();
-    let hash, comparison;
-    hash = await VersionChecker.currentLivelyVersion();
+    const comparingCmd = `git rev-list --left-right --count ${hashToCheckAgainst}...${compareLatestAncestor ? commonAncestor : '@'}`;
     ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
-    return { comparison, hash };
+    return { comparison, hash: currentLivelyVersion };
   }
 
   /**
