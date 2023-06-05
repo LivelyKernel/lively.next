@@ -9,7 +9,7 @@ import { Spinner } from 'lively.ide/studio/shared.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -316,9 +316,9 @@ export const UserFlap = component({
     visible: false,
     position: pt(5.3, 4.2),
     scale: 0.3
-  }), part(ButtonDefault, {
+  }), part(SystemButton, {
     name: 'login button',
-    extent: pt(220, 40),
+    extent: pt(230, 40),
     isLayoutable: false,
     visible: false,
     submorphs: [{
