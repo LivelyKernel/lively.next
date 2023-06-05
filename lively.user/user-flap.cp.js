@@ -1,7 +1,7 @@
 import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { currentUser, clearUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUsertoken, storeCurrentUsertoken } from 'lively.user';
-import { connect, signal, disconnect } from 'lively.bindings';
+import { signal } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { part } from 'lively.morphic/components/core.js';
@@ -49,7 +49,9 @@ class UserFlapModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { target: 'login button', signal: 'onMouseDown', handler: 'login' }
+            { target: 'login button', signal: 'onMouseDown', handler: 'login' },
+            { target: 'left user label', signal: 'onMouseDown', handler: 'leftUserLabelClicked' },
+            { target: 'right user label', signal: 'onMouseDown', handler: 'rightUserLabelClicked' }
           ];
         }
       },
@@ -59,6 +61,14 @@ class UserFlapModel extends ViewModel {
         }
       }
     };
+  }
+
+  leftUserLabelClicked () {
+    if (currentUser().login === 'guest') this.login();
+  }
+
+  rightUserLabelClicked () {
+    if (currentUser().login !== 'guest') this.logout();
   }
 
   toggleLoadingAnimation () {
@@ -75,14 +85,12 @@ class UserFlapModel extends ViewModel {
         loginButton.visible = loginButton.isLayoutable = true;
         leftUserLabel.visible = rightUserLabel.visible = false;
       } else {
-        connect(leftUserLabel, 'onMouseDown', this, 'login');
         leftUserLabel.tooltip = 'Login with GitHub';
         rightUserLabel.tooltip = '';
       }
     } else {
       this.showUserData();
       leftUserLabel.tooltip = '';
-      connect(rightUserLabel, 'onMouseDown', this, 'logout');
       rightUserLabel.tooltip = 'Logout';
       rightUserLabel.nativeCursor = 'pointer';
       leftUserLabel.nativeCursor = 'auto';
@@ -175,8 +183,6 @@ class UserFlapModel extends ViewModel {
 
     this.showUserData();
 
-    disconnect(leftUserLabel, 'onMouseDown', this, 'login');
-    connect(rightUserLabel, 'onMouseDown', this, 'logout');
     signal(this.view, 'onLogin');
     rightUserLabel.tooltip = 'Logout';
     leftUserLabel.tooltip = '';
@@ -222,10 +228,8 @@ class UserFlapModel extends ViewModel {
       leftUserLabel.visible = rightUserLabel.visible = avatar.visible = false;
       loginButton.visible = loginButton.isLayoutable = true;
     } else {
-      connect(leftUserLabel, 'onMouseDown', this, 'login');
       leftUserLabel.tooltip = 'Login with GitHub';
       rightUserLabel.tooltip = '';
-      disconnect(rightUserLabel, 'onMouseDown', this, 'logout');
       leftUserLabel.nativeCursor = 'pointer';
       rightUserLabel.nativeCursor = 'auto';
       leftUserLabel.textAndAttributes = Icon.textAttribute('github');
