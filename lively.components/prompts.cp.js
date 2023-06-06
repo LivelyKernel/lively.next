@@ -769,6 +769,8 @@ const InformPrompt = component(LightPrompt, {
   }, add({
     type: Text,
     name: 'additional text',
+    fontFamily: '"IBM Plex Sans"',
+    fontSize: 16,
     visible: false
   }),
   add(part(GreenButton, {
