@@ -514,8 +514,7 @@ export class TopBarModel extends ViewModel {
             type,
             position,
             extent: pt(150, 150),
-            fill: Color.transparent,
-            imageUrl: 'https://i.imgur.com/uGRFZEs.jpg'
+            fill: Color.transparent
           }));
           break;
         case Text:
@@ -587,7 +586,6 @@ export class TopBarModel extends ViewModel {
 
   getImageDefaultAttrs () {
     return {
-      imageUrl: 'https://i.imgur.com/uGRFZEs.jpg' // everyone's favorite
     };
   }
 
