@@ -39,6 +39,8 @@ class VersionChecker extends Morph {
 
   static async currentLivelyVersion (main) {
     const cwd = await VersionChecker.cwd();
+    const fetchCmd = `git fetch`
+    await runCommand(fetchCmd, { cwd }).whenDone();
     const hashCmd = main ? 'git merge-base origin/main HEAD' : 'git rev-parse @';
     const result = await runCommand(hashCmd, { cwd }).whenDone();
     return result.stdout.trim();
