@@ -2716,7 +2716,14 @@ export class Image extends Morph {
         defaultValue: Color.transparent
       },
 
-      naturalExtent: { defaultValue: null },
+      naturalExtent: {
+        defaultValue: null,
+        get () {
+          const ext = this.getProperty('naturalExtent');
+          if (!ext) throw Error('Natural extent of image could not yet be determined. Please consider waiting for img.determineNaturalExtent() to finish, until requesting the value of this property.');
+          return ext;
+        }
+      },
       isLoaded: { defaultValue: false, serialize: false },
       autoResize: {
         isStyleProp: true,
