@@ -260,7 +260,11 @@ export class Morph {
         group: 'geometry',
         type: 'Point',
         isStyleProp: true,
-        defaultValue: pt(0, 0)
+        defaultValue: pt(0, 0),
+        set (pos) {
+          if (!pos?.isPoint) throw new Error('Invalid value passed to origin: ' + pos);
+          this.setProperty('origin', pos);
+        }
       },
 
       position: {
@@ -268,6 +272,10 @@ export class Morph {
         type: 'Point',
         isStyleProp: true,
         defaultValue: pt(0, 0),
+        set (pos) {
+          if (!pos?.isPoint) throw new Error('Invalid value passed to position: ' + pos);
+          this.setProperty('position', pos);
+        },
         get () {
           let layout;
           if (layout = this.renderingState.cssLayoutToMeasureWith) {
@@ -313,6 +321,7 @@ export class Morph {
           return this.getProperty('extent');
         },
         set (ext) {
+          if (!ext?.isPoint) throw new Error('Invalid value passed to extent: ' + ext);
           const priorExtent = this.extent;
           this.setProperty('extent', ext);
           if (!this.origin.equals(pt(0, 0))) { // Adjust origin, especially for ellipses
@@ -438,7 +447,11 @@ export class Morph {
         type: 'Number',
         isFloat: true,
         isStyleProp: true,
-        defaultValue: 0
+        defaultValue: 0,
+        set (rad) {
+          if (!obj.isNumber(rad)) throw new Error('Invalid value passed to rotation: ' + rad);
+          this.setProperty('rotation', rad);
+        }
       },
 
       flipped: {
@@ -475,7 +488,11 @@ export class Morph {
         min: 0,
         isFloat: true,
         isStyleProp: true,
-        defaultValue: 1
+        defaultValue: 1,
+        set (s) {
+          if (!obj.isNumber(s)) throw new Error('Invalid value passed to scale: ' + s);
+          this.setProperty('scale', s);
+        }
       },
 
       hasFixedPosition: {
