@@ -131,22 +131,23 @@ export class ShapeControlModel extends ViewModel {
     const { widthModeSelector, heightModeSelector, widthInput, heightInput, xInput, yInput, bufferAfterPosition } = this.ui;
 
     // helper function for generating the lists of valid modes
-    function extentModeListItems (direction = 'width', fixed = true, fill = false, hug = false) {
+    function extentModeListItems (direction = 'width', fixed = true, fill = false, hug = false, text = false) {
       const items = [];
       switch (direction) {
         case 'width':
-          if (fixed) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
+          if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
           if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
-          if (hug) items.push({ string: 'Hug', value: 'hug', isListItem: true });
+          if (hug || text) items.push({ string: 'Hug', value: 'hug', isListItem: true });
           break;
         case 'height':
-          if (fixed) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
+          if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
           if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
-          if (hug) items.push({ string: 'Hug', value: 'hug', isListItem: true });
+          if (hug || text) items.push({ string: 'Hug', value: 'hug', isListItem: true });
       }
       return items;
     }
 
+    const targetIsText = target.isText;
     const targetIsTiling = target.layout?.name() === 'Tiling' && target.submorphs.length > 0;
     const parentIsTiling = parent && parent.layout?.name() === 'Tiling'; // implicitly submorphs.length > 0 is guaranteed, target is child
 
@@ -162,14 +163,14 @@ export class ShapeControlModel extends ViewModel {
       yInput.visible = false;
       bufferAfterPosition.visible = false;
 
-      widthModeSelector.items = extentModeListItems('width', true, true, true);
-      heightModeSelector.items = extentModeListItems('height', true, true, true);
+      widthModeSelector.items = extentModeListItems('width', true, true, true, targetIsText);
+      heightModeSelector.items = extentModeListItems('height', true, true, true, targetIsText);
 
       if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')) {
-        widthModeSelector.items = extentModeListItems('width', true, true);
+        widthModeSelector.items = extentModeListItems('width', true, true, false, targetIsText);
       }
       if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')) {
-        heightModeSelector.items = extentModeListItems('height', true, true);
+        heightModeSelector.items = extentModeListItems('height', true, true, false, targetIsText);
       }
 
       const heightMode = parent.layout.getResizeHeightPolicyFor(target);
@@ -190,18 +191,18 @@ export class ShapeControlModel extends ViewModel {
     }
 
     if (targetIsTiling && !parentIsTiling) {
-      widthModeSelector.items = extentModeListItems('width', true, false, true);
-      heightModeSelector.items = extentModeListItems('height', true, false, true);
+      widthModeSelector.items = extentModeListItems('width', true, false, true, targetIsText);
+      heightModeSelector.items = extentModeListItems('height', true, false, true, targetIsText);
 
       if (!target.layout.resizePolicies.some(([_, { width }]) => width === 'fixed')) {
-        widthModeSelector.items = extentModeListItems('width', true);
+        widthModeSelector.items = extentModeListItems('width', true, false, false, targetIsText);
         widthModeSelector.disable();
         widthInput.enable();
         widthModeSelector.selection = 'fixed';
         return;
       }
       if (!target.layout.resizePolicies.some(([_, { height }]) => height === 'fixed')) {
-        heightModeSelector.items = extentModeListItems('height', true);
+        heightModeSelector.items = extentModeListItems('height', true, false, false, targetIsText);
         heightModeSelector.disable();
         heightInput.enable();
         heightModeSelector.selection = 'fixed';
@@ -230,32 +231,52 @@ export class ShapeControlModel extends ViewModel {
       yInput.visible = false;
       bufferAfterPosition.visible = false;
 
-      widthModeSelector.items = extentModeListItems('width', true, true, false);
-      heightModeSelector.items = extentModeListItems('height', true, true, false);
+      widthModeSelector.items = extentModeListItems('width', true, true, false, targetIsText);
+      heightModeSelector.items = extentModeListItems('height', true, true, false, targetIsText);
 
-      const heightMode = parent.layout.getResizeHeightPolicyFor(target);
+      let heightMode = parent.layout.getResizeHeightPolicyFor(target);
+      if (targetIsText && !target.fixedHeight) heightMode = 'hug';
       heightModeSelector.selection = heightMode;
-      if (heightMode === 'fill') heightInput.disable();
+      if (heightMode === 'fill' || heightMode === 'hug') heightInput.disable();
       else heightInput.enable();
 
-      const widthMode = parent.layout.getResizeWidthPolicyFor(target);
+      let widthMode = parent.layout.getResizeWidthPolicyFor(target);
+      if (targetIsText && !target.fixedWidth) widthMode = 'hug';
       widthModeSelector.selection = widthMode;
-      if (widthMode === 'fill') widthInput.disable();
+      if (widthMode === 'fill' || widthMode === 'hug') widthInput.disable();
       else widthInput.enable();
     }
 
     if (!targetIsTiling && !parentIsTiling) {
-      widthModeSelector.items = extentModeListItems('width');
-      heightModeSelector.items = extentModeListItems('height');
+      widthModeSelector.items = extentModeListItems('width', false, false, false, targetIsText);
+      heightModeSelector.items = extentModeListItems('height', false, false, false, targetIsText);
 
-      widthModeSelector.disable();
-      heightModeSelector.disable();
+      if (!targetIsText) {
+        widthModeSelector.disable();
+        heightModeSelector.disable();
 
-      widthModeSelector.selection = 'fixed';
-      heightModeSelector.selection = 'fixed';
+        widthModeSelector.selection = 'fixed';
+        heightModeSelector.selection = 'fixed';
 
-      heightInput.enable();
-      widthInput.enable();
+        heightInput.enable();
+        widthInput.enable();
+      } else {
+        if (target.fixedWidth) {
+          widthModeSelector.selection = 'fixed';
+          widthInput.enable();
+        } else {
+          widthModeSelector.selection = 'hug';
+          widthInput.disable();
+        }
+
+        if (target.fixedHeight) {
+          heightModeSelector.selection = 'fixed';
+          heightInput.enable();
+        } else {
+          heightModeSelector.selection = 'hug';
+          heightInput.disable();
+        }
+      }
     }
   }
 
@@ -332,6 +353,8 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
+        if (target.isText) target.fixedWith = true;
+
         this.ui.widthInput.enable();
         break;
       case ('fill'):
@@ -353,8 +376,14 @@ export class ShapeControlModel extends ViewModel {
             height: heightMode
           });
         }
-        target.layout.hugContentsHorizontally = true;
-        target.layout.wrapSubmorphs = false;
+        if (target.isText) {
+          target.withMetaDo({ reconcileChanges: true }, () => {
+            target.fixedWidth = false;
+          });
+        } else {
+          target.layout.hugContentsHorizontally = true;
+          target.layout.wrapSubmorphs = false;
+        }
         this.ui.widthInput.disable();
     }
     target.layout && target.withMetaDo({ reconcileChanges: true }, () => {
@@ -390,6 +419,7 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsVertically) target.layout.hugContentsVertically = false;
+        if (target.isText) target.fixedHeight = true;
         this.ui.heightInput.enable();
         break;
       case ('fill'):
@@ -411,8 +441,14 @@ export class ShapeControlModel extends ViewModel {
             height: 'fixed'
           });
         }
-        target.layout.hugContentsVertically = true;
-        target.layout.wrapSubmorphs = false;
+        if (target.isText) {
+          target.withMetaDo({ reconcileChanges: true }, () => {
+            target.fixedHeight = false;
+          });
+        } else {
+          target.layout.hugContentsVertically = true;
+          target.layout.wrapSubmorphs = false;
+        }
         this.ui.heightInput.disable();
     }
     target.layout && target.withMetaDo({ reconcileChanges: true }, () => {
