@@ -787,6 +787,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   reset () {
     this.ui.masterComponentList.submorphs = [];
+    this.ui.componentFilesView.scroll = pt(0, 0);
   }
 
   async activate (pos = false) {
