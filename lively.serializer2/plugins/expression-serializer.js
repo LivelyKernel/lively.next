@@ -695,6 +695,7 @@ function handleTypeInfo (aMorph, exported, opts) {
  * @param { object } exported - The spec to convert to an expression.
  * @param { boolean } isRoot - Wether or not we are the root of the entire spec.
  * @param { string } path - The current path to this morph from the root.
+ * @param { StylePolicy } [masterInScope] - The current policy controlling this part of the submorph hierarchy.
  * @param { object } opts - Options from the spec generation process.
  * @returns { object } An expression object if successful.
  */
@@ -715,19 +716,20 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
     };
   } else if (exposeMasterRefs) {
     // right now still no good way to reconcile the modelView props
-    // awlays drop morphs with only names here, since those are copied over by
+    // always drop morphs with only names here, since those are copied over by
     // the part already
     if (exported) {
       bindings = {};
-      __expr__ = obj.inspect(obj.dissoc(exported, aMorph.master ? ['type'] : []), {
+      const typeSpecifiedViaMaster = aMorph.master || masterInScope?.managesMorph(aMorph.name);
+      __expr__ = obj.inspect(obj.dissoc(exported, typeSpecifiedViaMaster ? ['type'] : []), {
         keySorter: (a, b) => {
           if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
           else return 0;
         }
       });
       if (aMorph.master) {
-        const { exportedName: masterComponentName, moduleId: modulePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
-        if (path.length === 0) {
+        const { exportedName: masterComponentName, moduleId: modulePath, path: relativePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
+        if (relativePath.length === 0) {
           __expr__ = `part(${masterComponentName}, ${__expr__})`;
         }
         bindings = {
