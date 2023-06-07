@@ -236,11 +236,7 @@ class WorldLandingPage extends Morph {
     `;
   }
 
-  get __head_html__ () {
-    return `
-<link type="text/css" rel="stylesheet" id="lively-font-awesome" href="/lively.morphic/assets/fontawesome-free-6.1.1-web/css/all.css">
-<link type="text/css" rel="stylesheet" id="lively-font-inconsolata" href="/lively.morphic/assets/inconsolata/inconsolata.css">`;
-  }
+  get __head_html__ () { }
 
   get commands () {
     return [
