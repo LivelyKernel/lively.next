@@ -1,12 +1,15 @@
 import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, getAddCallReferencing, getWithoutCall, getEligibleSourceEditorsFor, applySourceChanges,
+  getNodeFromSubmorphs,
+  getAddCallReferencing,
+  getWithoutCall,
+  getEligibleSourceEditorsFor,
+  applySourceChanges,
   getPathFromMorphToMaster,
   getTextAttributesExpr,
   getComponentScopeFor,
   getValueExpr,
   getFoldableValueExpr,
-  preserveFormatting,
   standardValueTransform,
   COMPONENTS_CORE_MODULE,
   getMorphNode,
@@ -24,6 +27,7 @@ import { parse, stringify, nodes, query } from 'lively.ast';
 import lint from '../js/linter.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
+import { resource } from 'lively.resources';
 
 /**
  * The cheap way is just to generate a new spec from a component morph.
@@ -42,7 +46,7 @@ export function createInitialComponentDefinition (aComponent, asExprObject = fal
   let { __expr__, bindings } = convertToExpression(aComponent, {
     skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'treeData']
   });
-  __expr__ = 'component(' + __expr__ + ')';
+  __expr__ = 'component(' + __expr__ + ')'; // remove name attr
 
   if (asExprObject) {
     if (bindings['lively.morphic']) {
@@ -322,6 +326,85 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
       Object.entries(requiredBindings),
       mod).updatedSource)[0];
   });
+}
+
+export function canBeRenamed (moduleId, oldName, newName) {
+  // if (oldName === newName) return false;
+  if (string.camelCaseString(newName) in module(moduleId).recorder) return false;
+  return true;
+}
+
+/**
+ * Given a proto morph, rename the corresponding component definition
+ * inside of the module it is defined in. In case the component is the
+ * top level component that determines the module's name, then we perform
+ * a renaming of the module.
+ * @param {type} protoMorph - description
+ */
+
+export async function renameComponent (protoMorph, newName) {
+  const meta = protoMorph[Symbol.for('lively-module-meta')];
+  if (!meta?.moduleId || !meta?.exportedName) return;
+  let mod = module(meta.moduleId);
+  const exports = await mod.exports();
+  const oldName = meta.exportedName;
+  const parsedModule = await mod.ast();
+  const descr = mod.recorder[oldName];
+  const moduleNeedsRename = !descr.stylePolicy.parent; // works only for auto generated component files and this if fine
+
+  const { declarations: [{ id: decl }] } = findComponentDef(parsedModule, meta.exportedName);
+  const { local: exportedEntity } = exports.find(exp => exp.local === oldName)?.node || {};
+
+  let newModuleName;
+  if (moduleNeedsRename) {
+    newModuleName = string.decamelize(newName).split(' ').join('-') + '.cp.js';
+    const newId = resource(mod.id).parent().join(newModuleName).url;
+    mod = await mod.renameTo(newId, {
+      unload: true,
+      removeFile: true,
+      updateDependants: true // implement this one
+    });
+  }
+
+  await mod.changeSourceAction(oldSource => {
+    // also replace the export, if exported separately
+    if (exportedEntity) {
+      oldSource = string.applyChange(oldSource, {
+        action: 'replace', ...exportedEntity, lines: [newName]
+      });
+    }
+    return string.applyChange(oldSource, { action: 'replace', ...decl, lines: [newName] });
+  });
+
+  // proceed and rename all of the derived ones
+  await mod.recorder[meta.exportedName].withDerivedComponentsDo(async descr => {
+    const meta = descr[Symbol.for('lively-module-meta')];
+    if (meta.exportedName) {
+      const mod = module(meta.moduleId);
+      const parsedModule = await mod.ast();
+      const imports = await mod.imports();
+      const { declarations: [{ init: { arguments: [ref] } }] } = findComponentDef(parsedModule, meta.exportedName);
+      const importedEntity = imports.find(imp => imp.imported === oldName)?.node || {};
+      await mod.changeSourceAction(oldSource => {
+        oldSource = string.applyChange(oldSource, { action: 'replace', ...ref, lines: [newName] });
+        if (importedEntity) {
+          if (moduleNeedsRename) {
+            const { source } = importedEntity;
+            oldSource = string.applyChange(oldSource, {
+              action: 'replace',
+              ...source,
+              lines: [`'${source.value.split('/').slice(0, -1).concat(newModuleName).join('/')}'`]
+            });
+          }
+          const imp = importedEntity.specifiers.find(spec => spec.imported.name === oldName);
+          oldSource = string.applyChange(oldSource, { action: 'replace', ...imp, lines: [newName] });
+        }
+        return oldSource;
+      });
+    }
+  });
+
+  return await mod.recorder[newName].edit();
 }
 
 export function insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
@@ -1243,7 +1326,16 @@ class RenameReconciliation extends PropChangeReconciliation {
     if (this.withinDerivedComponent(this.renamedMorph)) {
       throw new Error('Cannot rename a morph that has not been introduced in this component! Please rename the morph in the component it originated from.');
     }
-    if (this.target.master === this.descriptor.stylePolicy) return this; // renaming of the root has not effect
+    if (this.target.master === this.descriptor.stylePolicy) {
+      // this will not rename the spec, but instead the component itself,
+      return renameComponent(this.renamedMorph, this.newName).then((newMorph) => {
+        if (!this.renamedMorph.world()) return;
+        newMorph.openInWorld();
+        newMorph.position = this.renamedMorph.position;
+        if ($world.halos().find(h => h.target === this.renamedMorph)) $world.showHaloFor(newMorph);
+        this.renamedMorph.remove();
+      });
+    }
 
     this.handleRenaming(this.descriptor);
     return this;
