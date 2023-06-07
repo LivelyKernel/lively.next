@@ -170,11 +170,11 @@ export class KeyEvent extends Event {
 
   /**
    * Returns `true` when an arrow key press triggered this event and `false` otherwise.
-   * @returns {Boolean} 
+   * @returns {Boolean}
    */
   get hasArrowPressed () {
     const keyCode = this.domEvt.keyCode;
-    if (keyCode >= 37 || keyCode <= 40) return true;
+    if (keyCode >= 37 && keyCode <= 40) return true;
     return false;
   }
 
