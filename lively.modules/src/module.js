@@ -246,6 +246,16 @@ class ModuleInterface {
   }
 
   async copyTo (newId) {
+    const moduleRecord = this.System.get(this.id);
+    const state = obj.select(this, [
+      '_observersOfTopLevelState',
+      '_scope',
+      '_ast',
+      '_source',
+      '_recorder',
+      'sourceAccessorName',
+      'recorderName'
+    ]);
     await this.System.resource(newId).write(await this.source());
     const {
       System,
@@ -256,18 +266,9 @@ class ModuleInterface {
       _observersOfTopLevelState
     } = this;
     const newM = module(System, newId);
-    const state = obj.select(this, [
-      '_observersOfTopLevelState',
-      '_scope',
-      '_ast',
-      '_source',
-      '_recorder',
-      'sourceAccessorName',
-      'recorderName'
-    ]);
-
+    state._recorder[newM.varDefinitionCallbackName] = state._recorder[this.varDefinitionCallbackName];
     Object.assign(newM, state);
-    System.set(newId, System.newModule(System.get(this.id)));
+    System.set(newId, System.newModule(moduleRecord));
     return newM;
   }
 
