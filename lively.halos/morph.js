@@ -442,9 +442,17 @@ class NameHolder extends Morph {
 
   onKeyUp (evt) {
     super.onKeyUp(evt);
+    const oldName = this.target.name;
     const newName = this.nameHolder.textString; const owner = this.target.owner;
-    this.validName = !owner || !owner.getSubmorphNamed(newName) ||
-      this.target.name === newName;
+    this.validName = !owner || !owner.getSubmorphNamed(newName) || oldName === newName;
+    if (this.target.isComponent && !evt.hasArrowPressed) {
+      // also confirm we are not in conflict with other stuff in the module scope
+      System.import('lively.ide/components/reconciliation.js').then(({ canBeRenamed }) => {
+        this.validName = this.validName && canBeRenamed(this.target[Symbol.for('lively-module-meta')].moduleId, oldName, newName);
+        signal(this, 'valid', [this.validName, newName]);
+      });
+      return;
+    }
     signal(this, 'valid', [this.validName, newName]);
   }
 
@@ -591,7 +599,7 @@ class NameHaloItem extends HaloItem {
 
   initNameHolders () {
     this.nameHolders = this.targets().map(({ target, highlightOnHover }) => {
-      const nh = new NameHolder({ halo: this.halo, highlightOnHover, target });
+      const nh = new NameHolder({ halo: this.halo, highlightOnHover, target, forceUniqueName: target.isComponent });
       connect(nh, 'active', this, 'toggleActive');
       connect(nh, 'valid', this, 'toggleNameValid');
       return nh;
@@ -1180,7 +1188,6 @@ class ComponentHaloItem extends RoundHaloItem {
     const {
       insertComponentDefinition,
       removeComponentDefinition
-
     } = await System.import('lively.ide/components/reconciliation.js');
     const { InteractiveComponentDescriptor } = await System.import('lively.ide/components/editor.js');
     const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
@@ -1223,7 +1230,7 @@ class ComponentHaloItem extends RoundHaloItem {
         ({ selected: [selectedModule] } = res);
         if (!selectedModule) return;
       } else {
-        if (selectedModule = target.master?.[Symbol.for('lively-module-meta')]?.moduleId) {
+        if (selectedModule = target.master?.parent?.[Symbol.for('lively-module-meta')]?.moduleId) {
           selectedModule = { name: selectedModule };
         } else {
           // create a new empty module
