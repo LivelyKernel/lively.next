@@ -632,20 +632,3 @@ function insertFontCSS (name, fontUrl) {
          }`);
   } else addOrChangeCSSDeclaration(`${name}`, `@import url("${fontUrl}");`);
 }
-
-/**
- * Ensures that a set of added fonts is loaded in the system.
- * @params { object } addedFonts - A map of custom fonts that are to be loaded.
- */
-export function ensureFont (addedFonts) {
-  if (typeof $world === 'undefined') {
-    // defer loading of fonts until world has been loaded
-    setTimeout(() => ensureFont(addedFonts), 100);
-    return;
-  }
-  for (const name in addedFonts) {
-    if (!$world.env.fontMetric.isFontSupported(sanitizeFont(name))) {
-      insertFontCSS(name, addedFonts[name]);
-    }
-  }
-}
