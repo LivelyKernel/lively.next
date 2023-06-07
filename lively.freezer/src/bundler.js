@@ -872,55 +872,34 @@ export default class LivelyRollup {
       }
     }
 
+    const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
     if (this.includeLivelyAssets) {
-      const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
-      const fontAwesomeDir = resource(config.css.fontAwesome).parent().parent();
-      const cssFiles = await fontAwesomeDir.join('css').dirList();
-      const webFonts = await fontAwesomeDir.join('webfonts').dirList();
-      const inconsolata = await resource(config.css.inconsolata).parent().dirList();
-      for (let file of cssFiles) {
-        plugin.emitFile({
-          type: 'asset',
-          fileName: joinPath(fontAwesomeDir.url.replace(morphicUrl, ''), 'css', file.name()),
-          source: await file.read()
-        });
-      }
-
-      for (let file of webFonts) {
+      const fontBundleDir = resource(config.css.fontBundle).parent();
+      const fontFiles = await fontBundleDir.dirList();
+      
+      for (let file of fontFiles) {
         file.beBinary();
         let source = await file.read();
         if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
         plugin.emitFile({
           type: 'asset',
-          fileName: joinPath(fontAwesomeDir.url.replace(morphicUrl, ''), 'webfonts', file.name()),
+          fileName: joinPath(fontBundleDir.url.replace(morphicUrl, ''), file.name()),
           source
         });
       }
 
-      for (let file of inconsolata) {
-        file.beBinary();
-        let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+      const assetDir = resource(config.css.fontBundle).parent().parent();
+      const morphicCSS = assetDir.join('morphic.css');
+      morphicCSS.beBinary();
+        let source = await morphicCSS.read();
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
         plugin.emitFile({
           type: 'asset',
-          fileName: joinPath('assets/inconsolata/', file.name()),
+          fileName: joinPath(assetDir.url.replace(morphicUrl, ''), 'morphic.css'),
           source
-        });
-      }
-
-      for (let file of this.assetsToCopy) {
-        file.beBinary();
-        let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
-        plugin.emitFile({
-          type: 'asset',
-          fileName: joinPath('assets', file.name()),
-          source
-        });
-      }
+        });  
     }
 
-    const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
     const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
     for (let asset of this.projectAssets) {
       const file = resource(livelyDir).join('local_projects').join(asset.project).join('assets').join(`${asset.oldName}`);

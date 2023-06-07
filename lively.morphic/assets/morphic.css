@@ -1,0 +1,309 @@
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* GENERAL MORPHIC CSS */
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/*-=- html fixes -=-*/
+html {
+  overflow: visible;
+}
+
+textarea.lively-text-input.debug {
+  z-index: 20 !important;
+  opacity: 1 !important;
+  background: rgba(0,255,0,0.5) !important;
+}
+
+.hiddenScrollbar::-webkit-scrollbar {
+  /* This is the magic bit */
+  display: none;
+}
+
+.hiddenScrollbar {
+  scrollbar-width: none;
+}
+
+/*-=- generic morphic -=-*/
+.Morph {
+  outline: none;
+  /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
+  /* -webkit-backface-visibility: hidden; */
+
+  /*include border size in extent of element*/
+  box-sizing: border-box;
+
+  /*don't use dom selection on morphs*/
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.Morph img {
+  -moz-user-select: none;
+}
+
+.Tooltip {
+  z-index: 3;
+}
+
+.Hand {
+  z-index: 1;
+}
+
+/*-=- halos -=-*/
+
+.Halo {
+  z-index: 2;
+}
+
+.ProportionalLayoutHalo, .FlexLayoutHalo, .GridLayoutHalo, .TilingLayoutHalo {
+  z-index: auto;
+}
+
+.HaloItem:not(.NameHaloItem) {
+  /*FIXME: we shouldn't need to hardcode the size...*/
+  line-height: 24px !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.halo-mesh {
+  background-color:transparent;
+  background-image: linear-gradient(rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 2px, transparent 2px),
+  linear-gradient(rgba(0,0,0,.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size:100px 100px, 100px 100px, 10px 10px, 10px 10px;
+  background-position:-2px -2px, -2px -2px, -1px -1px, -1px -1px;
+}
+
+/*-=- text -=-*/
+.center-text {
+  text-align: center;
+}
+
+.v-center-text {
+  position: relative;
+  top: 50%;
+}
+
+div.text-layer span {
+  line-height: normal;
+}
+
+.Text .annotation {
+  position: relative;
+  float: right;
+  top: 50%;
+  text-align: right;
+}
+
+.List.clipped .annotation {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.List.clipped .ListItemMorph .line {
+  display: flex;
+}
+
+.List.clipped .ListItemMorph .newtext-text-layer.actual {
+  width: 100%;
+}
+
+.truncated-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*-=- input elements -=-*/
+
+.Popups {
+  z-index: 3;
+}
+
+input::-webkit-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input::-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:-ms-input-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:-moz-placeholder {
+  color: rgb(202, 202, 202);
+}
+input:placeholder {
+  color: rgb(202, 202, 202);
+}
+
+/*-=- input elements -=-*/
+.Morph svg .path-point {
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  fill: red;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* TEXT CSS */
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+
+/* markers */
+
+.newtext-marker-layer {
+  position: absolute;
+}
+
+/* selection / cursor */
+
+.newtext-cursor {
+  z-index: 100;
+  pointer-events: none;
+  position: absolute;
+  background-color: black;
+}
+
+.hidden-cursor .newtext-cursor {
+  background-color: transparent !important;
+}
+
+.newtext-cursor.diminished {
+  background-color: gray;
+}
+
+.newtext-selection-layer {
+  position: absolute;
+}
+
+/*-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* text layer / content */
+.font-measure {
+  visibility: hidden;
+}
+
+.newtext-text-layer {
+  box-sizing: border-box;
+  position: absolute;
+  white-space: pre;
+  z-index: 10; /* fixme: hackz */
+  min-width: 100%;
+  pointer-events: none;
+}
+
+.newtext-text-layer.wrap-by-words {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.newtext-text-layer.only-wrap-by-words {
+  white-space: pre-wrap;
+  overflow-wrap: break-all;
+  max-width: 100%;
+}
+
+.newtext-text-layer.wrap-by-chars {
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+
+.newtext-text-layer a {
+   pointer-events: auto;
+}
+
+.newtext-text-layer.auto-width .line {
+  width: fit-content;
+}
+
+.newtext-text-layer.auto-height .line {
+  height: fit-content;
+}
+
+.newtext-text-layer .line {
+  -moz-border-radius: 0;
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  border-width: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+  word-wrap: normal;
+  line-height: inherit;
+  color: inherit;
+  position: relative;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-variant-ligatures: contextual;
+  font-variant-ligatures: contextual;
+}
+
+.line > .Morph {
+  display: inline-block !important;
+  vertical-align: top !important;
+}
+
+blockquote {
+  margin: 0;
+  -webkit-margin-start: 0;
+  -webkit-margin-end: 0;
+}
+
+.newtext-text-layer blockquote {
+  margin-left: 2em;
+  margin-right: 2em;
+  border-left: 2px lightgray solid;
+  padding-left: 2%;
+}
+
+.selectable {
+  user-select: text;
+  pointer-events: all;
+}
+
+::selection  {
+  background: rgba(212,230,241,0.8);
+}
+
+/* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-*/
+/* debug styling */
+
+.debug-info {
+  position: absolute;
+  outline: 1px solid green;
+  pointer-events: none;
+  z-index: 4;
+  text-align: center;
+  font-family: monospace;
+  color: green;
+  background-color: rgb(255 255 255 / 80%);
+  font-size: small;
+  vertical-align: baseline;
+}
+
+.debug-line {
+  position: absolute;
+  outline: 1px solid red;
+  pointer-events: none;
+  z-index: 4;
+  text-align: right;
+  font-family: monospace;
+  font-size: small;
+  vertical-align: baseline;
+  color: red;
+}
+
+.debug-char {
+  position: absolute;
+  outline: 1px solid orange;
+  pointer-events: none;
+  z-index: 3
+}

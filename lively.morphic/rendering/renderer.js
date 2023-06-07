@@ -7,8 +7,7 @@ import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.
 
 import { keyed, noOpUpdate } from './keyed.js';
 import promise from 'lively.lang/promise.js';
-import { defaultCSS, applyStylingToNode, cssForTexts } from './morphic-default.js';
-import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS, config } from 'lively.morphic';
+import { applyStylingToNode } from './morphic-default.js';
 
 const svgNs = 'http://www.w3.org/2000/svg';
 const MAX_CHUNK_LENGTH = 10000;
@@ -48,9 +47,7 @@ export default class Renderer {
     this.fixedMorphNode.setAttribute('id', 'fixed-morph-wrapper');
     this.fixedMorphNode.style.position = 'fixed';
     this.renderMap.set(this.worldMorph, this.rootNode);
-    this.installTextCSS();
     this.installPlaceholder();
-    this.ensureDefaultCSS();
     window.renderer = this;
     this.domEnvironment = domEnvironment;
     this.bodyNode.appendChild(this.rootNode);
@@ -82,18 +79,6 @@ export default class Renderer {
       this.placeholder = null;
       this.installPlaceholder();
     }
-  }
-
-  installTextCSS () {
-    addOrChangeCSSDeclaration('styles-for-text', cssForTexts, this.doc);
-  }
-
-  ensureDefaultCSS () {
-    const fm = $world.env.fontMetric;
-    return promise.waitFor(3000, () => this.bodyNode.getRootNode())
-      .then(doc => Promise.all([
-        addOrChangeCSSDeclaration('lively-morphic-css', defaultCSS, doc),
-        addOrChangeLinkedCSS('lively-font-bundle', config.css.fontBundle)]));
   }
 
   async clear () {
