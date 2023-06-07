@@ -1,12 +1,8 @@
-import { component, ensureFont, part } from 'lively.morphic';
+import { component, part } from 'lively.morphic';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { EnumSelector, DarkNumberIconWidget, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
 import { BackendButtonDefault } from '../js/browser/ui.cp.js';
-
-ensureFont({
-  'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
-});
 
 const DarkColorPicker = component(ColorPicker, {
   name: 'dark color picker',

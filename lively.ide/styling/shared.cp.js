@@ -1,10 +1,6 @@
-import { HTMLMorph, TilingLayout, Label, ShadowObject, component, ensureFont, part } from 'lively.morphic';
+import { HTMLMorph, TilingLayout, Label, ShadowObject, component, part } from 'lively.morphic';
 import { Color, LinearGradient, pt, rect } from 'lively.graphics';
 import { DefaultList } from 'lively.components/list.cp.js';
-
-ensureFont({
-  'Material Icons': 'https://fonts.googleapis.com/icon?family=Material+Icons'
-});
 
 const CloseButtonDefault = component({
   type: Label,

@@ -1,4 +1,4 @@
-import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, ensureFont, without, part, add } from 'lively.morphic';
+import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, without, part, add } from 'lively.morphic';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
