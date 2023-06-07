@@ -581,7 +581,7 @@ function exports (scope, resolve = false) {
           imported: from && exportSpec.local ? exportSpec.local.name : null,
           fromModule: from || null,
           type: 'id',
-          node,
+          node: exportSpec,
           decl,
           declId
         };
@@ -596,7 +596,7 @@ function exports (scope, resolve = false) {
           exported: decl.id ? decl.id.name : 'default',
           type: exportsStmt.declaration.kind,
           fromModule: null,
-          node: node,
+          node,
           decl: decl,
           declId: decl.id
         };
