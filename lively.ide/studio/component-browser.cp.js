@@ -712,6 +712,7 @@ export class ComponentBrowserModel extends ViewModel {
         signal: 'onMouseUp',
         handler: 'ensureButtonControls'
       },
+      { signal: 'onHoverIn', handler: 'refresh' },
       {
         signal: 'onMouseUp',
         handler: 'ensureComponentEntitySelected'
@@ -747,6 +748,20 @@ export class ComponentBrowserModel extends ViewModel {
       this.view.withMetaDo({ metaInteraction: true }, () => {
         this.ui.componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
       });
+    }
+  }
+
+  refresh () {
+    const selectedModule = this.getSelectedModule();
+    const { componentFilesView, searchInput } = this.ui;
+    if (!selectedModule && searchInput.input) {
+      componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
+      this.filterAllComponents();
+    }
+    if (selectedModule) {
+      delete selectedModule.subNodes;
+      componentFilesView.treeData.collapse(selectedModule, false);
+      componentFilesView.treeData.display(selectedModule);
     }
   }
 
@@ -858,8 +873,8 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async ensureComponentEntitySelected (evt) {
-    const selectedComponent = this.getSelectedComponent();
     if (!evt.isClickTarget(this.ui.masterComponentList)) return;
+    const selectedComponent = this.getSelectedComponent();
     if (selectedComponent) {
       const { _selectedNode: n, treeData: td } = this.models.componentFilesView;
 
@@ -879,6 +894,12 @@ export class ComponentBrowserModel extends ViewModel {
 
   getSelectedComponent () {
     return this.view.getSubmorphsByStyleClassName('ExportedComponent').find(component => component.isSelected);
+  }
+
+  getSelectedModule () {
+    if (!this.ui.componentFilesView.visible) return false;
+    const fileView = this.models.componentFilesView;
+    return fileView.getExpandedPath().find(m => m.type === 'cp.js');
   }
 
   toggleBehaviorImport () {
@@ -956,28 +977,6 @@ export class ComponentBrowserModel extends ViewModel {
       if (matches.length > 0) filteredIndex[worldName] = matches;
     }
     return filteredIndex;
-  }
-
-  // this.toggleComponentList(true)
-  // this.ui.masterComponentList.submorphs = []
-  // await this.fetchInfo()
-
-  async fetchInfo () {
-    if (this._componentIndex) return;
-    this.reset();
-    const maxSubCategories = 10;
-    const componentsCache = resource(System.baseURL).join('components_cache/');
-    const index = (await componentsCache.dirList(maxSubCategories))
-      .filter(res => res.isFile() && res.ext() === 'png')
-      .map(res => {
-        const url = decodeURIComponent(res.url.replace(componentsCache.url, '').replace('.png', ''));
-        return {
-          worldName: url.split('/')[0],
-          preview: res.url,
-          identifier: `part://${url}`
-        };
-      });
-    this._componentIndex = arr.groupBy(index, m => m.worldName);
   }
 
   resetSearchInput () {
@@ -1115,6 +1114,7 @@ export class ComponentBrowserModel extends ViewModel {
     this.resetSearchInput();
   }
 }
+
 
 const ComponentPreview = component({
   type: ExportedComponent,
