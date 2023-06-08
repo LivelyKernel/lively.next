@@ -1,7 +1,7 @@
 
 import { part, TilingLayout, Morph, Icon, easings } from 'lively.morphic';
 import { TextFormattingPopUp } from './text-formatting-popup.cp.js';
-import { Point, Color } from 'lively.graphics';
+import { pt, Color } from 'lively.graphics';
 import EditorPlugin from '../editor-plugin.js';
 import { connect, disconnect } from 'lively.bindings';
 import { PropertyLabel, PropertyLabelHovered } from '../studio/shared.cp.js';
@@ -59,8 +59,10 @@ export class RichTextPlugin extends EditorPlugin {
     connect(iconButtonHolder, 'onMouseDown', this, 'startIconInsertion');
     // Repositions button in case that the text grows to the right due to input
     connect(this.textMorph, 'extent', iconButtonHolder, 'globalPosition', {
-      converter:
-    '(extent) => ({x: source.globalPosition.x + extent.x, y: source.globalPosition.y})'
+      converter: '(extent) => (pt(source.globalPosition.x + extent.x, source.globalPosition.y))',
+      varMapping: {
+        pt: pt
+      }
     });
     iconButtonHolder.openInWorld(this.textMorph.globalBounds().topRight());
   }
