@@ -704,7 +704,7 @@ class MorphRemovalReconciliation extends Reconciliation {
     const removedExpr = nodeToRemove && this.getRemovedExpression(nodeToRemove);
 
     const changes = [];
-    if (closestSubmorphsNode?.value.elements.length < 2) {
+    if (nodeToRemove && closestSubmorphsNode?.value.elements.length < 2) {
       this.modulesToLint.add(modId);
       changes.push(Object.assign({ action: 'remove' }, determineNodeToRemoveSubmorphs(closestSubmorphsNode, parsedComponent, previousOwner)));
     } else if (nodeToRemove) {
@@ -808,10 +808,13 @@ class MorphRemovalReconciliation extends Reconciliation {
  */
 class MorphIntroductionReconciliation extends Reconciliation {
   reconcile () {
-    const { descriptor } = this;
-
-    const safeName = descriptor.ensureNoNameCollisionInDerived(this.addedMorph.name, true);
-    if (safeName !== this.addedMorph.name) this.addedMorph.name = safeName;
+    const { descriptor, addedMorph } = this;
+    const safeName = descriptor.ensureNoNameCollisionInDerived(addedMorph.name);
+    if (safeName !== addedMorph.name) {
+      addedMorph.withMetaDo({ reconcileChanges: false }, () => {
+        addedMorph.name = safeName; // do not reconcile this
+      });
+    }
 
     if (this.isReintroduction(descriptor)) {
       this.reintroduceMorph(descriptor);
@@ -934,7 +937,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
     const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
     if (meta) {
       let { subSpec: removedSpec, subExpr: removedExpr, removedMorph, previousOwner, wasInherited } = meta;
-      if (removedSpec?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
+      if (removedSpec?.props?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
         removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
       }
 
@@ -971,7 +974,8 @@ class MorphIntroductionReconciliation extends Reconciliation {
 
     this.addChangesToModule(modId, changes);
 
-    interactiveDescriptor.stylePolicy.ensureSubSpecFor(addedMorph, this.isDerived);
+    const subSpec = interactiveDescriptor.stylePolicy.ensureSubSpecFor(addedMorph, this.isDerived);
+    if (nextSibling) subSpec.before = nextSibling.name;
   }
 
   updateActiveSessionsFor (interactiveDescriptor) {

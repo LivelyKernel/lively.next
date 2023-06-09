@@ -716,13 +716,13 @@ export class StylePolicy {
    * @param { string | null } submorphName - The submorph name for which to find the corresponding sub spec. If null, assume we ask for root.
    * @returns { object } The sub spec corresponding to that name.
    */
-  getSubSpecFor (submorphName, includeWithoutCalls = false) {
+  getSubSpecFor (submorphName, includeWithoutCalls = false, unwrapAddCalls = true) {
     if (!submorphName) return this.spec; // assume we ask for root
     let embeddedRes;
 
     let matchingNode = this.lookForMatchingSpec(submorphName, this.spec, includeWithoutCalls);
     if (embeddedRes) matchingNode = embeddedRes;
-    return matchingNode ? matchingNode.props || matchingNode : null;
+    return matchingNode ? (unwrapAddCalls && matchingNode.props) || matchingNode : null;
   }
 
   /**
@@ -731,10 +731,10 @@ export class StylePolicy {
    * @param { string[] } path - The names of the parents to ending with the final sub spec or policy to be retrieved.
    * @returns { StylePolicy|object }
    */
-  getSubSpecAt (path, includeWithoutCalls) {
+  getSubSpecAt (path, includeWithoutCalls = false, unwrapAddCalls = true) {
     if (path.length === 0) return this;
-    let curr = this.getSubSpecFor(path.shift(), includeWithoutCalls);
-    if (curr && path.length > 0) return curr.getSubSpecAt(path, includeWithoutCalls);
+    let curr = this.getSubSpecFor(path.shift(), includeWithoutCalls, unwrapAddCalls);
+    if (curr && path.length > 0) return curr.getSubSpecAt(path, includeWithoutCalls, unwrapAddCalls);
     return curr;
   }
 
@@ -1048,7 +1048,8 @@ export class PolicyApplicator extends StylePolicy {
     }
     const parentSpec = this.ensureSubSpecFor(submorph.owner);
     const { submorphs = [] } = parentSpec;
-    submorphs.push(wrapAsAdded ? add(currSpec) : currSpec);
+    if (wrapAsAdded) currSpec = add(currSpec);
+    submorphs.push(currSpec);
     parentSpec.submorphs = submorphs;
     return currSpec;
   }
@@ -1071,13 +1072,12 @@ export class PolicyApplicator extends StylePolicy {
     // at any rate, remove the sub spec if present
     let ownerSpec = this.ensureSubSpecFor(prevOwner);
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
-    const removedMorphSpec = this.getSubSpecAt(
-      [...prevOwner.ownerChain()
-        .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
-        .map(m => m.name).reverse(),
-      ...(prevOwner.owner !== this.targetMorph && prevOwner.owner?.master) ? [prevOwner.owner.name] : [], // if no owner, we dont need to mention the owner name
-      removedMorph.name]
-    );
+    const pathToSpec = [...prevOwner.ownerChain()
+      .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
+      .map(m => m.name).reverse(),
+    ...(prevOwner.owner !== this.targetMorph && prevOwner.owner?.master) ? [prevOwner.owner.name] : [], // if no owner, we dont need to mention the owner name
+    removedMorph.name];
+    const removedMorphSpec = this.getSubSpecAt(pathToSpec, false, false);
     if (removedMorphSpec) {
       arr.remove(ownerSpec.submorphs, removedMorphSpec);
     }

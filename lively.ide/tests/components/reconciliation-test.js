@@ -713,16 +713,43 @@ describe('component -> source reconciliation', function () {
     });
 
     it('resolves name conflicts for morphs that are added to a definition', async () => {
-    // name collisions (by adding a new morph with a name already existing in the derived components)
-    // should enforce a renaming of that dropped morph for now. If we run into issues,
-    // we will introduce a custom tag attribute that allows designers to refer to morphs
-    // with a fixed custom name that is not constrained by any
+      let updatedSource;
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.addMorph(morph({ name: 'robin', fill: Color.cyan }));
+        ComponentA.addMorph(morph({ name: 'robin', fill: Color.brown }));
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
+      updatedSource = await getSource();
+      expect(updatedSource).includes('name: \'robin 2\'');
+      expect(updatedSource).includes('name: \'robin\'');
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentA.get('robin').remove();
+        ComponentA.get('robin 2').remove();
+      });
+      await ComponentA._changeTracker.onceChangesProcessed();
       ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.addMorph(morph({ name: 'robin', fill: Color.cyan }));
+      });
+      await ComponentB._changeTracker.onceChangesProcessed();
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.addMorph(morph({ name: 'robin', fill: Color.brown }));
+      });
+      await ComponentB._changeTracker.onceChangesProcessed();
+      updatedSource = await getSource();
+      expect(updatedSource).includes('name: \'robin 2\'');
+      expect(updatedSource).includes('name: \'robin\'');
+      // name collisions (by adding a new morph with a name already existing in the derived components)
+      // should enforce a renaming of that dropped morph for now. If we run into issues,
+      // we will introduce a custom tag attribute that allows designers to refer to morphs
+      // with a fixed custom name that is not constrained by any
+      ComponentB.withMetaDo({ reconcileChanges: true }, () => {
+        ComponentB.get('robin').remove();
+        ComponentB.get('robin 2').remove();
         ComponentB.addMorph(morph({ name: 'linus', fill: Color.lively }));
         ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
       });
       await ComponentB._changeTracker.onceChangesProcessed();
-      let updatedSource = await getSource();
+      updatedSource = await getSource();
       expect(updatedSource).includes(`const B = component(A, {
   name: 'B',
   submorphs: [{
