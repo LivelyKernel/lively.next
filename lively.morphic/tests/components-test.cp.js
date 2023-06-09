@@ -824,7 +824,7 @@ describe('components', () => {
   it('serializes inline properties to symbolic expressions', () => {
     const inst = part(TLB);
     const snap = serialize(inst);
-    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props._parent.value).to.include('TLB.stylePolicy.getSubSpecAt("alice")');
+    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props._parent.value).to.include('TLB.stylePolicy.getSubSpecAt(["alice"])');
   });
 
   it('does not accidentally create overridden masters when serializing', () => {
