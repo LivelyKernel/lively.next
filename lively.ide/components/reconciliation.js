@@ -1196,6 +1196,7 @@ class RenameReconciliation extends PropChangeReconciliation {
   withinDerivedComponent (aMorph) {
     if (aMorph.__wasAddedToDerived__) return false;
     for (const each of aMorph.ownerChain()) {
+      if (each.__wasAddedToDerived__) return false;
       if (each.master) return true;
     }
     return false;
