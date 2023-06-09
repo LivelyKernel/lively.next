@@ -386,10 +386,12 @@ export class ExportedComponent extends Morph {
       // disable all mouse interaction
       const container = this.get('preview container');
       const maxExtent = pt(100, 70);
+      container.clipMode = 'hidden';
       preview.scale = 1;
       preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
       preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
       container.submorphs = [preview];
+      preview.center = container.innerBounds().center();
     } catch (err) {
       this.displayError(err);
     }
@@ -421,8 +423,8 @@ export class ExportedComponent extends Morph {
     await this.master.whenApplied();
     const naturalExtent = await img.determineNaturalExtent();
     // scale the preview down to fit into width and height;
-    const maxWidth = img.owner.width;
-    const maxHeight = img.owner.height;
+    const maxWidth = 130;
+    const maxHeight = 130;
     const scaleFactor = Math.min(maxWidth / naturalExtent.x, maxHeight / naturalExtent.y);
     img.extent = naturalExtent.scaleBy(scaleFactor);
     img.opacity = 1;
@@ -1116,23 +1118,24 @@ export class ComponentBrowserModel extends ViewModel {
   }
 }
 
-
 const ComponentPreview = component({
   type: ExportedComponent,
   name: 'component preview',
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
-    hugContentsHorizontally: true,
     hugContentsVertically: true,
     orderByIndex: true,
     padding: rect(5, 5, 0, 0),
-    spacing: 5,
-    wrapSubmorphs: false
+    resizePolicies: [['component name', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 5
   }),
-  borderColor: Color.rgb(33, 150, 243),
+  borderColor: Color.transparent,
   borderRadius: 5,
-  borderWidth: 0,
+  borderWidth: 2,
   extent: pt(129.5, 128.4),
   fill: Color.transparent,
   draggable: true,
@@ -1157,11 +1160,16 @@ const ComponentPreview = component({
       reactsToPointer: false
     }]
   }, {
-    type: Label,
+    type: 'text',
     name: 'component name',
+    textAlign: 'center',
     fontColor: Color.darkGray,
+    fixedWidth: true,
+    fixedHeight: false,
+    lineWrapping: true,
     fontSize: 14,
     fontWeight: 'bold',
+    clipMode: 'hidden',
     reactsToPointer: false,
     textAndAttributes: ['Button', null]
   }]
@@ -1279,6 +1287,7 @@ const ComponentBrowser = component(PopupWindow, {
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
+    orderByIndex: true,
     resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
@@ -1387,7 +1396,7 @@ const ComponentBrowser = component(PopupWindow, {
         borderColor: Color.rgb(149, 165, 166),
         borderWidth: 1,
         borderRadius: 2,
-        fill: Color.rgba(229, 231, 233, 0.05),
+        fill: Color.rgb(238, 238, 238),
         clipMode: 'auto',
         extent: pt(640, 304),
         layout: new TilingLayout({
