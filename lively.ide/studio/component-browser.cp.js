@@ -299,10 +299,13 @@ class MasterComponentTreeData extends TreeData {
     // ensure that we only list folders who will in turn have anything to show
     const files = arr.compact(await Promise.all(resources.map(async res => {
       let type;
-      if (res.isDirectory()) type = 'directory';
-      else type = 'cp.js';
-      // check if is meant to be skipped
-      if ((await res.read()).match(/['"]skip listing['"];/)) return;
+      if (res.isDirectory()) {
+        type = 'directory';
+        if ((await this.listComponentFilesInDir(res.url)).length === 0) return;
+      } else {
+        type = 'cp.js';
+        if ((await res.read()).match(/['"]skip listing['"];/)) return;
+      }
       return {
         isCollapsed: true,
         name: res.name(),
