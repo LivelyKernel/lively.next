@@ -1,7 +1,7 @@
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { Project } from 'lively.project';
-import { PackageRegistry, module, importPackage } from 'lively.modules';
+import { PackageRegistry, isModuleLoaded, module, importPackage } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
@@ -21,6 +21,7 @@ import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWi
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
 import { GreenButton } from 'lively.components/prompts.cp.js';
+import { joinPath } from 'lively.lang/string.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -223,7 +224,9 @@ class MasterComponentTreeData extends TreeData {
    * @todo Implement this feature.
    */
   async getCustomLocalProjects () {
-    return await Project.listAvailableProjects();
+    return (await Project.listAvailableProjects()).filter(({ main = 'index.js', url }) => {
+      return isModuleLoaded(joinPath(url, main));
+    });
   }
 
   /**
@@ -1252,7 +1255,7 @@ const ProjectSection = component({
       hugContentsVertically: true,
       orderByIndex: true,
       padding: rect(10, 10, 0, 0),
-      spacing: 10,
+      spacing: 15,
       wrapSubmorphs: true
     })
   }]
