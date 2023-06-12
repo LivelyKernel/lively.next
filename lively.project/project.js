@@ -189,6 +189,7 @@ export class Project {
    * Called when a project gets saved and otherwise can be called optionally.
    */
   async saveConfigData () {
+    this.removeUnusedProjectDependencies();
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
@@ -438,5 +439,21 @@ export class Project {
   removeDependencyFromProject (owner, name) {
     const deps = this.config.lively.projectDependencies;
     this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}-${name}`);
+  }
+
+  async removeUnusedProjectDependencies () {
+    let usedDeps = [];
+    const currentDeps = this.config.lively.projectDependencies;
+
+    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
+    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js'));
+    for (let jsFile of jsFilesInPackage) {
+      const content = await jsFile.read();
+      currentDeps.forEach(dep => {
+        if (content.includes(dep.name)) usedDeps.push(dep);
+      });
+    }
+    this.config.lively.projectDependencies = usedDeps;
+    return usedDeps;
   }
 }
