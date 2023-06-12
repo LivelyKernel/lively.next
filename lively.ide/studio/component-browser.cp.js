@@ -384,7 +384,7 @@ export class ExportedComponent extends Morph {
 
   generatePreview () {
     try {
-      const preview = part(this.component, { name: this.component.componentName });
+      const preview = part(this.component, { defaultViewModel: null, name: this.component.componentName });
       // disable view model
       // scale to fit
       // disable all mouse interaction
