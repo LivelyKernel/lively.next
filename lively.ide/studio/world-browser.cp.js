@@ -667,7 +667,7 @@ export class WorldPreviewModel extends ViewModel {
 
   async initWithCommit (commit) {
     const {
-      preview, timestamp, title, description
+      preview, timestamp, title, description, titleWrapper
     } = this.ui;
     this.opacity = 0.5;
     preview.imageUrl = commit.preview || missingSVG;
@@ -676,7 +676,7 @@ export class WorldPreviewModel extends ViewModel {
     timestamp.value = [authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }, date.format(commit.timestamp, ' - d.m.yy HH:MM'), {
       fontWeight: 'bold', fontSize: 12, paddingTop: '2px'
     }];
-    title.value = commit.name;
+    title.value = titleWrapper.title = commit.name;
     description.value = commit.description;
     this.view.animate({ opacity: 1, duration: 300 });
   }
@@ -810,7 +810,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
 
   initWithProject (project) {
     const {
-      preview, timestamp, title, description
+      preview, timestamp, title, description, titleWrapper
     } = this.ui;
     this.opacity = 0.5;
     // TODO: Can we do this better? We should at least server this locally. In the best case we can generate a meaningful preview.
@@ -819,7 +819,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     authorName = authorName.startsWith('guest') ? 'guest' : authorName;
     timestamp.value = [project.projectRepoOwner + ' - ' + authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
     timestamp.tooltip = `Project ${project.name} was created by ${authorName}.\nIts repository belongs to ${project.projectRepoOwner}.`;
-    title.value = project.name;
+    title.value = titleWrapper.title = project.name;
     description.value = project.description;
     this.view.animate({ opacity: 1, duration: 300 });
   }
