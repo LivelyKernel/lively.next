@@ -211,6 +211,10 @@ class ProjectSavePrompt extends AbstractPromptModel {
     };
   }
 
+  async viewDidLoad () {
+    await this.project.saveConfigData();
+  }
+
   async resolve () {
     const { description } = this.ui;
     const message = description.textString;
