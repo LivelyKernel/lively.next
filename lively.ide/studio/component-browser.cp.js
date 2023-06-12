@@ -297,10 +297,12 @@ class MasterComponentTreeData extends TreeData {
       .filter(res => (res.isDirectory() || res.url.endsWith('.cp.js')) && !res.name().startsWith('.'));
     // ensure that the package is loaded at this point
     // ensure that we only list folders who will in turn have anything to show
-    const files = resources.map(res => {
+    const files = arr.compact(await Promise.all(resources.map(async res => {
       let type;
       if (res.isDirectory()) type = 'directory';
       else type = 'cp.js';
+      // check if is meant to be skipped
+      if ((await res.read()).match(/['"]skip listing['"];/)) return;
       return {
         isCollapsed: true,
         name: res.name(),
@@ -309,12 +311,11 @@ class MasterComponentTreeData extends TreeData {
         url: res.url,
         type
       };
-    });
+    })));
 
     const loadedFiles = await this.getLoadedComponentFileUrls();
     return files.map(file => {
       file.isLoaded = !!loadedFiles[file.url];
-      // Object.assign(file, loadedFiles[file.url] || {});
       return file;
     });
   }
