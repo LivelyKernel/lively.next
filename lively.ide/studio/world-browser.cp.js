@@ -818,6 +818,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     let authorName = project.author.name;
     authorName = authorName.startsWith('guest') ? 'guest' : authorName;
     timestamp.value = [project.projectRepoOwner + ' - ' + authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
+    if (project.projectRepoOwner === authorName) timestamp.value = [authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
     timestamp.tooltip = `Project ${project.name} was created by ${authorName}.\nIts repository belongs to ${project.projectRepoOwner}.`;
     title.value = titleWrapper.title = project.name;
     description.value = project.description;
