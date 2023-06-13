@@ -275,6 +275,7 @@ class MasterComponentTreeData extends TreeData {
 
   async getLoadedComponentFileUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
+    if (!selectedPkg) return {};
     const files = await resource(selectedPkg.url).dirList(1, {
       exclude: (res) => {
         return !(res.url.endsWith('.cp.js') || res.isDirectory());
@@ -472,9 +473,8 @@ export class ExportedComponent extends Morph {
       duration: 300
     });
     once(instance, 'onBeingDroppedOn', async (hand) => {
-      if (this.componentBrowser.fullContainsPoint(hand.position)) {
-        await instance.whenRendered();
-        instance.openInWorld(instance.position);
+      if (this.componentBrowser.globalBounds().containsPoint(hand.position)) {
+        instance.openInWorld(hand.position);
         await instance.animate({ center: this.globalBounds().center(), opacity: 0, duration: 300 });
         instance.remove();
       }
@@ -680,7 +680,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt', 'onWindowClose'];
         }
       }
     };
@@ -689,8 +689,7 @@ export class ComponentBrowserModel extends ViewModel {
   get bindings () {
     return [
       {
-        target: 'close button',
-        signal: 'onMouseUp',
+        signal: 'onWindowClose',
         handler: 'close'
       },
       {
@@ -718,6 +717,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       { signal: 'onMouseDown', handler: 'focus' },
       {
+        target: /component files view|master component list/,
         signal: 'onMouseUp',
         handler: 'ensureButtonControls'
       },
@@ -749,7 +749,11 @@ export class ComponentBrowserModel extends ViewModel {
     const selectedComponent = this.getSelectedComponent();
     this.models.importButton.deactivated = !selectedComponent;
     this.models.editButton.deactivated = !selectedComponent || !selectedComponent.isInLocalProject;
-    this.models.selectionButton.deactivated = !selectedComponent;
+    if (this.models.editButton.deactivated) this.ui.editButton.tooltip = 'You can not edit this component, since it is outside of your current project.';
+    else {
+      this.ui.editButton.tooltip = 'Click to start editing this component.\nNote that changes to this component will\npropagate throughout your project.';
+      this.models.selectionButton.deactivated = !selectedComponent;
+    }
   }
 
   viewDidLoad () {
@@ -760,12 +764,13 @@ export class ComponentBrowserModel extends ViewModel {
     }
   }
 
-  refresh () {
+  async refresh () {
     const selectedModule = this.getSelectedModule();
     const { componentFilesView, searchInput } = this.ui;
     if (!selectedModule && searchInput.input) {
-      componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
+      await componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
       this.filterAllComponents();
+      return;
     }
     if (selectedModule) {
       delete selectedModule.subNodes;
@@ -800,21 +805,16 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async activate (pos = false) {
-    const { view } = this;
-    view.doNotAcceptDropsForThisAndSubmorphs();
     this._promise = promise.deferred();
-    view.openInWorld();
-    view.clipMode = 'hidden';
-    if (!pos) view.center = $world.visibleBounds().center();
-    else view.position = pos;
     this.ui.searchInput.focus();
     this.ensureButtonControls();
     return this._promise.promise;
   }
 
+  onWindowClose () { this.close(); }
+
   close () {
     if (this._promise) this._promise.resolve(null);
-    this.view.remove();
   }
 
   async importSelectedComponent () {
@@ -825,8 +825,6 @@ export class ComponentBrowserModel extends ViewModel {
       withAllViewModelsDo(importedComponent, m => m.viewModel.detach());
     }
     importedComponent.openInWorld();
-    this._promise.resolve(importedComponent);
-    this.close();
   }
 
   chooseComponent () {
@@ -884,6 +882,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   async ensureComponentEntitySelected (evt) {
     if (!evt.isClickTarget(this.ui.masterComponentList)) return;
+
     const selectedComponent = this.getSelectedComponent();
     if (selectedComponent) {
       const { _selectedNode: n, treeData: td } = this.models.componentFilesView;
@@ -995,7 +994,7 @@ export class ComponentBrowserModel extends ViewModel {
     if (this.groupBy === 'module') {
       const fileView = this.models.componentFilesView;
       const lastSelectedModule = fileView.getExpandedPath().find(m => m.type === 'cp.js');
-      if (lastSelectedModule) { fileView.treeData.display(lastSelectedModule); }
+      if (lastSelectedModule) { fileView.treeData.display(lastSelectedModule); } else this.ui.masterComponentList.submorphs = [];
     }
   }
 
@@ -1005,7 +1004,10 @@ export class ComponentBrowserModel extends ViewModel {
       const { importButton, componentFilesView, searchInput, searchClearButton } = this.ui;
       const term = searchInput.input;
       const parsedInput = this.parseInput();
-      const rootUrls = componentFilesView.treeData.root.subNodes.map(m => m.url).slice(1); // ignore the popular stuff
+
+      const rootUrls = arr.compact(componentFilesView.treeData.root.subNodes?.map(m => m.url).slice(1)); // ignore the popular stuff
+
+      if (!rootUrls) return setTimeout(() => this.filterAllComponents(), 200);
       const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
         return resource(url).dirList(10, {
           exclude: (file) => {
@@ -1064,12 +1066,15 @@ export class ComponentBrowserModel extends ViewModel {
     const orderedWorlds = arr.sortBy((componentsByWorlds['This Project'] ? ['This Project'] : []).concat(arr.without(Object.keys(componentsByWorlds), 'This Project')), m => m);
 
     for (const worldName of orderedWorlds) {
+      const mod = module(worldName);
       newList.push(organizeByName
         ? this.renderComponentsByChar(worldName, componentsByWorlds[worldName])
-        : this.renderComponentsInFile(worldName, componentsByWorlds[worldName]));
+        : this.renderComponentsInFile(joinPath(mod.package().name, mod.pathInPackage()), componentsByWorlds[worldName]));
     }
 
     masterComponentList.submorphs = newList;
+    // ensure that all of the sections are fitted
+    for (let section of newList) { masterComponentList.layout.setResizePolicyFor(section, { width: 'fill', height: 'fixed' }); }
     this.view.doNotAcceptDropsForThisAndSubmorphs();
   }
 
@@ -1122,6 +1127,37 @@ export class ComponentBrowserModel extends ViewModel {
   changeComponentGrouping (groupBy) {
     this.groupBy = groupBy;
     this.resetSearchInput();
+  }
+}
+
+
+class ComponentBrowserPopupModel extends ComponentBrowserModel {
+  get bindings () {
+    return [
+      ...super.bindings,
+      {
+        target: 'close button',
+        signal: 'onMouseUp',
+        handler: 'close'
+      }
+    ];
+  }
+
+  async activate (pos) {
+    // popup specific
+    const { view } = this;
+    view.doNotAcceptDropsForThisAndSubmorphs();
+    view.openInWorld();
+    view.clipMode = 'hidden';
+    if (!pos) view.center = $world.visibleBounds().center();
+    else view.position = pos;
+
+    return await super.activate();
+  }
+
+  close () {
+    super.close();
+    this.view.remove();
   }
 }
 
@@ -1259,7 +1295,7 @@ const ProjectSection = component({
       hugContentsVertically: true,
       orderByIndex: true,
       padding: rect(10, 10, 0, 0),
-      spacing: 15,
+      spacing: 30,
       wrapSubmorphs: true
     })
   }]
@@ -1277,15 +1313,233 @@ const ProjectSectionDark = component(ProjectSection, {
 
 const CheckboxActiveLight = component(CheckboxActive, {
   fill: Color.rgb(66, 165, 245),
-  fontColor: Color.rgb(255, 255, 255)
+  fontColor: Color.rgb(255, 255, 255),
+  lineHeight: 1
 });
 
 const CheckboxInactiveLight = component(CheckboxInactive, {
-  borderColor: Color.rgb(66, 66, 66)
+  borderColor: Color.rgb(66, 66, 66),
+  fill: Color.rgb(255, 255, 255)
 });
 
-const ComponentBrowser = component(PopupWindow, {
+const ComponentBrowser = component({
   defaultViewModel: ComponentBrowserModel,
+  reactsToPointer: false,
+  fill: Color.rgba(255, 255, 255, 0),
+  extent: pt(515.1, 599.9),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(16, 16, 0, 0),
+    resizePolicies: [['search input wrapper', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['component files view', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['master component list', {
+      height: 'fill',
+      width: 'fill'
+    }], ['button wrapper', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 16
+  }),
+  submorphs: [{
+    name: 'search input wrapper',
+    layout: new TilingLayout({
+      axisAlign: 'center',
+      orderByIndex: true,
+      padding: rect(8, 0, -8, 0),
+      resizePolicies: [['search input', {
+        height: 'fixed',
+        width: 'fill'
+      }]]
+    }),
+    fill: Color.rgb(238, 238, 238),
+    borderRadius: 3,
+    borderColor: Color.rgb(23, 160, 251),
+    extent: pt(388.4, 42.6),
+    position: pt(120, 541),
+    submorphs: [{
+      type: Text,
+      name: 'search icon',
+      lineHeight: 2,
+      extent: pt(17.5, 18),
+      fontSize: 14,
+      fontColor: Color.rgba(0, 0, 0, 0.5),
+      cursorWidth: 1.5,
+      fixedWidth: true,
+      padding: rect(1, 1, 0, 0),
+      scale: 1.32,
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontWeight: '900',
+        lineHeight: 1,
+        textStyleClasses: ['fas']
+      }]
+    }, part(InputLineDefault, {
+      name: 'search input',
+      dropShadow: null,
+      highlightWhenFocused: false,
+      borderColor: Color.rgb(224, 224, 224),
+      borderRadius: 2,
+      extent: pt(445.3, 34.3),
+      fill: Color.rgba(238, 238, 238, 0),
+      padding: rect(6, 4, -4, 2),
+      position: pt(11.9, 3.8),
+      placeholder: 'Search for components...'
+    }), part(Spinner, {
+      name: 'spinner',
+      opacity: .7,
+      viewModel: { color: 'black' },
+      visible: false
+    }), {
+      type: Text,
+      name: 'search clear button',
+      nativeCursor: 'pointer',
+      visible: false,
+      fontColor: Color.rgba(0, 0, 0, 0.5),
+      fontSize: 25,
+      lineHeight: 2,
+      padding: rect(1, 1, 9, 0),
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontWeight: '900',
+        lineHeight: 1,
+        textStyleClasses: ['fas']
+      }]
+    }]
+  }, part(MullerColumnView, {
+    name: 'component files view',
+    viewModel: { listMaster: ColumnListDefault },
+    borderColor: Color.rgb(149, 165, 166),
+    borderWidth: 1,
+    extent: pt(483, 150),
+    borderRadius: 2
+  }), {
+    name: 'master component list',
+    borderColor: Color.rgb(149, 165, 166),
+    borderWidth: 1,
+    borderRadius: 2,
+    fill: Color.rgb(238, 238, 238),
+    clipMode: 'auto',
+    extent: pt(640, 304),
+    layout: new TilingLayout({
+      wrapSubmorphs: false,
+      axis: 'column'
+    })
+  }, {
+    name: 'button wrapper',
+    height: 33.92421875,
+    clipMode: 'visible',
+    fill: Color.transparent,
+    layout: new TilingLayout({
+      align: 'right',
+      axisAlign: 'center',
+      justifySubmorphs: 'spaced',
+      orderByIndex: true,
+      resizePolicies: [['behavior toggle', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
+      spacing: 15
+    }),
+    submorphs: [part(DropDownList, {
+      name: 'sorting selector',
+      extent: pt(149.6, 25),
+      viewModel: {
+        openListInWorld: true,
+        listMaster: SystemList,
+        items: [
+          {
+            isListItem: true,
+            label: [...Icon.textAttribute('boxes'), '  By module', null],
+            tooltip: 'Group the components by the modules they are defined in.',
+            value: 'module'
+          },
+          {
+            isListItem: true,
+            label: [...Icon.textAttribute('tag', { paddingLeft: '2px', paddingTop: '2px' }), '  By name', null],
+            tooltip: 'Group the components by their names',
+            value: 'name'
+          }
+        ]
+      },
+      submorphs: [{
+        name: 'label',
+        textAndAttributes: ['Arrange by name', null]
+      }]
+
+    }), part(LabeledCheckbox, {
+      name: 'behavior toggle',
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(10, 8, -10, 0),
+        resizePolicies: [['checkbox', {
+          height: 'fill',
+          width: 'fixed'
+        }]]
+      }),
+      activeCheckboxComponent: CheckboxActiveLight,
+      inactiveCheckboxComponent: CheckboxInactiveLight,
+      extent: pt(126.2, 32.5),
+      submorphs: [{
+        name: 'checkbox',
+        width: 15,
+        master: CheckboxActiveLight,
+        fill: Color.white
+      }, {
+        name: 'prop label',
+        fontColor: Color.rgb(0, 0, 0),
+        textAndAttributes: ['Enable behavior', null]
+      }]
+    }), part(SystemButton, {
+      name: 'edit button',
+      extent: pt(80, 23.8),
+      submorphs: [{
+        name: 'label',
+        textAndAttributes: [...Icon.textAttribute('edit', { fontColor: Color.rgbHex('D32F2F') }), ' Edit', {
+          fontFamily: 'IBM Plex Sans'
+        }]
+      }]
+    }), part(SystemButton, {
+      name: 'import button',
+      extent: pt(80, 23.8),
+      submorphs: [{
+        name: 'label',
+        textAndAttributes: ['', {
+          fontColor: Color.rgb(74, 174, 79),
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontWeight: '900',
+          lineHeight: 1,
+          textStyleClasses: ['fas']
+        }, ' Import', {
+          fontFamily: 'IBM Plex Sans'
+        }]
+
+      }]
+    }), add(part(SystemButton, {
+      name: 'selection button',
+      visible: false,
+      extent: pt(80, 23.8),
+      layout: new TilingLayout({
+        align: 'center',
+        axisAlign: 'center'
+      }),
+      submorphs: [{
+        name: 'label',
+        textAndAttributes: ['Select', null]
+      }]
+    }))]
+  }]
+});
+
+const ComponentBrowserPopup = component(PopupWindow, {
+  defaultViewModel: ComponentBrowserPopupModel,
   styleClasses: [],
   hasFixedPosition: false,
   extent: pt(515, 658),
@@ -1301,214 +1555,8 @@ const ComponentBrowser = component(PopupWindow, {
     }]]
   }),
   submorphs: [
-    add({
-      name: 'controls',
-      fill: Color.rgba(255, 255, 255, 0),
-      extent: pt(515.1, 599.9),
-      layout: new TilingLayout({
-        axis: 'column',
-        axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(16, 16, 0, 0),
-        resizePolicies: [['search input wrapper', {
-          height: 'fixed',
-          width: 'fill'
-        }], ['component files view', {
-          height: 'fixed',
-          width: 'fill'
-        }], ['master component list', {
-          height: 'fill',
-          width: 'fill'
-        }], ['button wrapper', {
-          height: 'fixed',
-          width: 'fill'
-        }]],
-        spacing: 16
-      }),
-      submorphs: [{
-        name: 'search input wrapper',
-        layout: new TilingLayout({
-          axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(8, 0, -8, 0),
-          resizePolicies: [['search input', {
-            height: 'fixed',
-            width: 'fill'
-          }]]
-        }),
-        fill: Color.rgb(238, 238, 238),
-        borderRadius: 3,
-        borderColor: Color.rgb(23, 160, 251),
-        extent: pt(388.4, 42.6),
-        position: pt(120, 541),
-        submorphs: [{
-          type: Text,
-          name: 'search icon',
-          lineHeight: 2,
-          extent: pt(17.5, 18),
-          fontSize: 14,
-          fontColor: Color.rgba(0, 0, 0, 0.5),
-          cursorWidth: 1.5,
-          fixedWidth: true,
-          padding: rect(1, 1, 0, 0),
-          scale: 1.32,
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-            fontWeight: '900',
-            lineHeight: 1,
-            textStyleClasses: ['fas']
-          }]
-        }, part(InputLineDefault, {
-          name: 'search input',
-          dropShadow: null,
-          highlightWhenFocused: false,
-          borderColor: Color.rgb(224, 224, 224),
-          borderRadius: 2,
-          extent: pt(445.3, 34.3),
-          fill: Color.rgba(238, 238, 238, 0),
-          padding: rect(6, 4, -4, 2),
-          position: pt(11.9, 3.8),
-          placeholder: 'Search for components...'
-        }), part(Spinner, {
-          name: 'spinner',
-          opacity: .7,
-          viewModel: { color: 'black' },
-          visible: false
-        }), {
-          type: Text,
-          name: 'search clear button',
-          nativeCursor: 'pointer',
-          visible: false,
-          fontColor: Color.rgba(0, 0, 0, 0.5),
-          fontSize: 25,
-          lineHeight: 2,
-          padding: rect(1, 1, 9, 0),
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-            fontWeight: '900',
-            lineHeight: 1,
-            textStyleClasses: ['fas']
-          }]
-        }]
-      }, part(MullerColumnView, {
-        name: 'component files view',
-        viewModel: { listMaster: ColumnListDefault },
-        borderColor: Color.rgb(149, 165, 166),
-        borderWidth: 1,
-        fill: Color.rgba(229, 231, 233, 0.05),
-        extent: pt(483, 150),
-        borderRadius: 2
-      }), {
-        name: 'master component list',
-        borderColor: Color.rgb(149, 165, 166),
-        borderWidth: 1,
-        borderRadius: 2,
-        fill: Color.rgb(238, 238, 238),
-        clipMode: 'auto',
-        extent: pt(640, 304),
-        layout: new TilingLayout({
-          wrapSubmorphs: false,
-          axis: 'column'
-        })
-      }, {
-        name: 'button wrapper',
-        height: 33.92421875,
-        clipMode: 'visible',
-        fill: Color.transparent,
-        layout: new TilingLayout({
-          align: 'right',
-          axisAlign: 'center',
-          justifySubmorphs: 'spaced',
-          spacing: 15
-        }),
-        submorphs: [part(DropDownList, {
-          name: 'sorting selector',
-          extent: pt(149.6, 25),
-          viewModel: {
-            openListInWorld: true,
-            listMaster: SystemList,
-            items: [
-              {
-                isListItem: true,
-                label: [...Icon.textAttribute('boxes'), '  By module', null],
-                tooltip: 'Group the components by the modules they are defined in.',
-                value: 'module'
-              },
-              {
-                isListItem: true,
-                label: [...Icon.textAttribute('tag', { paddingLeft: '2px', paddingTop: '2px' }), '  By name', null],
-                tooltip: 'Group the components by their names',
-                value: 'name'
-              }
-            ]
-          },
-          submorphs: [{
-            name: 'label',
-            textAndAttributes: ['Arrange by name', null]
-          }]
-        }), part(LabeledCheckbox, {
-          name: 'behavior toggle',
-          layout: new TilingLayout({
-            axisAlign: 'center',
-            orderByIndex: true,
-            padding: rect(10, 8, -10, 0),
-            resizePolicies: [['checkbox', {
-              height: 'fill',
-              width: 'fixed'
-            }]]
-          }),
-          activeCheckboxComponent: CheckboxActiveLight,
-          inactiveCheckboxComponent: CheckboxInactiveLight,
-          extent: pt(126.2, 32.5),
-          submorphs: [{
-            name: 'checkbox',
-            width: 15,
-            master: CheckboxActiveLight
-          }, {
-            name: 'prop label',
-            fontColor: Color.rgb(0, 0, 0),
-            textAndAttributes: ['Enable behavior', null]
-          }]
-        }), part(SystemButton, {
-          name: 'edit button',
-          extent: pt(80, 23.8),
-          submorphs: [{
-            name: 'label',
-            textAndAttributes: [...Icon.textAttribute('edit', { fontColor: Color.rgbHex('D32F2F') }), ' Edit', {
-              fontFamily: 'IBM Plex Sans'
-            }]
-          }]
-        }), part(SystemButton, {
-          name: 'import button',
-          extent: pt(80, 23.8),
-          submorphs: [{
-            name: 'label',
-            textAndAttributes: ['', {
-              fontColor: Color.rgb(74, 174, 79),
-              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
-              fontWeight: '900',
-              lineHeight: 1,
-              textStyleClasses: ['fas']
-            }, ' Import', {
-              fontFamily: 'IBM Plex Sans'
-            }]
-
-          }]
-        }), add(part(SystemButton, {
-          name: 'selection button',
-          visible: false,
-          extent: pt(80, 23.8),
-          layout: new TilingLayout({
-            align: 'center',
-            axisAlign: 'center'
-          }),
-          submorphs: [{
-            name: 'label',
-            textAndAttributes: ['Select', null]
-          }]
-        }))]
-      }]
-    }), {
+    add(part(ComponentBrowser, { defaultViewModel: null, name: 'controls' })),
+    {
       name: 'header menu',
       submorphs: [{
         name: 'title',
@@ -1520,7 +1568,7 @@ const ComponentBrowser = component(PopupWindow, {
   ]
 });
 
-const ComponentBrowserDark = component(ComponentBrowser, {
+const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
   master: DarkPopupWindow,
   viewModel: {
     sectionMaster: ProjectSectionDark
@@ -1686,7 +1734,8 @@ const ComponentError = component({
 
 export {
   ComponentBrowser,
-  ComponentBrowserDark,
+  ComponentBrowserPopup,
+  ComponentBrowserPopupDark,
   ComponentPreview,
   ComponentPreviewSelected,
   ProjectSection,
