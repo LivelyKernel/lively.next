@@ -288,12 +288,14 @@ const commands = [
       let { direction, offset, what } = opts;
       const t = halo.target;
       offset = offset || 1;
-      switch (direction) {
-        case 'left': t[what === 'move' ? 'left' : 'width'] -= offset; break;
-        case 'right': t[what === 'move' ? 'left' : 'width'] += offset; break;
-        case 'up': t[what === 'move' ? 'top' : 'height'] -= offset; break;
-        case 'down': t[what === 'move' ? 'top' : 'height'] += offset; break;
-      }
+      t.withMetaDo({ reconcileChanges: true }, () => {
+        switch (direction) {
+          case 'left': t[what === 'move' ? 'left' : 'width'] -= offset; break;
+          case 'right': t[what === 'move' ? 'left' : 'width'] += offset; break;
+          case 'up': t[what === 'move' ? 'top' : 'height'] -= offset; break;
+          case 'down': t[what === 'move' ? 'top' : 'height'] += offset; break;
+        }
+      });
       halo.alignWithTarget();
       return true;
     }
