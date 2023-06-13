@@ -9,7 +9,7 @@ import { arr, promise, num, date, string, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { renderMorphToDataURI } from 'lively.morphic/rendering/morph-to-image.js';
 import { localInterface } from 'lively-system-interface';
-import { once } from 'lively.bindings/index.js';
+import { once, noUpdate } from 'lively.bindings/index.js';
 import { adoptObject } from 'lively.lang/object.js';
 import { DropDownList, DarkDropDownList } from 'lively.components/list.cp.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
@@ -731,10 +731,25 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt', 'onWindowClose'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt', 'onWindowClose', 'menuItems'];
         }
       }
     };
+  }
+
+  menuItems () {
+    const checked = Icon.textAttribute('check-square', { paddingRight: '3px' });
+    const unchecked = Icon.textAttribute('square', { paddingRight: '3px' });
+    return [
+      ['Import project...', () => {
+        this.ui.componentFilesView.treeData.interactivelyImportProject();
+      }],
+      [[...this.importAlive ? checked : unchecked, ' Enable behavior'], () => this.importAlive = !this.importAlive],
+      ['Group Components by ', [
+        [[...this.groupBy == 'module' ? checked : unchecked, ' Modules'], () => { this.groupBy = 'module'; }],
+        [[...this.groupBy == 'name' ? checked : unchecked, ' Names'], () => { this.groupBy = 'name'; }]
+      ]]
+    ];
   }
 
   get bindings () {
@@ -838,6 +853,7 @@ export class ComponentBrowserModel extends ViewModel {
     this.ui.behaviorToggle.visible = !this.selectionMode;
     this.ui.importButton.visible = !this.selectionMode;
     this.ui.selectionButton.visible = this.selectionMode;
+    noUpdate(() => this.ui.sortingSelector.selection = this.groupBy);
   }
 
   handleColumnViewVisibility () {
@@ -1180,7 +1196,6 @@ export class ComponentBrowserModel extends ViewModel {
     this.resetSearchInput();
   }
 }
-
 
 class ComponentBrowserPopupModel extends ComponentBrowserModel {
   get bindings () {
