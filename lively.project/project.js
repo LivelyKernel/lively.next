@@ -192,7 +192,7 @@ export class Project {
    * Called when a project gets saved and otherwise can be called optionally.
    */
   async saveConfigData () {
-    this.removeUnusedProjectDependencies();
+    await this.removeUnusedProjectDependencies();
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
