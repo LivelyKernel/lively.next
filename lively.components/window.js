@@ -5,7 +5,7 @@ import {
   morph,
   Morph
 } from 'lively.morphic';
-import { connect, signal } from 'lively.bindings';
+import { connect, once, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
 import { DefaultWindow, DefaultWindowInactive } from './window.cp.js';
 
@@ -90,6 +90,14 @@ export default class Window extends Morph {
 
       minimizedBounds: { serialize: false },
       nonMinimizedBounds: {},
+      minimizable: {
+        defaultValue: true,
+        after: ['submorphs', 'master'],
+        set (bool) {
+          this.setProperty('minimizable', bool);
+          this.toggleMinimizeButton();
+        }
+      },
       minimized: {
         defaultValue: false,
         set (isMinimized) {
@@ -116,6 +124,14 @@ export default class Window extends Morph {
 
   build () {
     this.submorphs = [{ name: 'contents wrapper', submorphs: [this.buildHeader()] }, this.buildResizer()];
+  }
+
+  toggleMinimizeButton () {
+    // FIXME: this is a big problem due to the implementation via pure morphs.
+    //        In a view model setup, this would not happen, since the model kicks
+    //        in at a time, when the master is fully applied.
+    this.master.applyIfNeeded(true);
+    this.getSubmorphNamed('minimize').visible = !!this.minimizable;
   }
 
   async openWindowMenu () {
