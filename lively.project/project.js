@@ -422,7 +422,7 @@ export class Project {
     const alreadyDependent = deps.find(dep => dep.name === ownerAndNameString);
     if (alreadyDependent) {
       alreadyDependent.version = newDepVersion;
-    } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, newDepVersion });
+    } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, version: newDepVersion });
 
     const address = (await Project.projectDirectory()).join(ownerAndNameString);
     try {
