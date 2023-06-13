@@ -9,7 +9,7 @@ import {
   morph,
   Icon
 } from 'lively.morphic';
-import { PolicyApplicator, withAllViewModelsDo } from 'lively.morphic/components/policy.js';
+import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 import { createMorphSnapshot } from 'lively.morphic/serialization.js';
 import { Color, pt, rect, Rectangle, LinearGradient } from 'lively.graphics';
 import { obj, string, Path as PropertyPath, promise, properties, num, arr } from 'lively.lang';
@@ -1215,6 +1215,7 @@ class ComponentHaloItem extends RoundHaloItem {
 
       if (!variableName) return; // something went wrong
 
+      variableName = variableName.replace(/[^a-zA-Z0-9 ]/g, '').replace(/^\d+/, '');
       variableName = string.camelCaseString(variableName);
 
       let selectedModule;
