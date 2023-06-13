@@ -127,7 +127,7 @@ export class Project {
     else throw Error('Error deleting project');
   }
 
-  static async loadProject (name, repoOwner) {
+  static async loadProject (name, repoOwner, onlyLoadNotOpen = false) {
     // Create Project object and do not automatically update the referenced lively version.
     // The project acts merely as a container until we fill in the correct contents below.
     const loadedProject = new Project(name, false);
@@ -158,8 +158,11 @@ export class Project {
       await loadedProject.ensureDependenciesExist();
       await loadedProject.checkVersionCompatabilityOfProjectDependencies();
     } catch (err) {
-      await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
-      window.location.href = (await Project.systemInterface.getConfig().baseURL);
+      if (!onlyLoadNotOpen) {
+        await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
+        window.location.href = (await Project.systemInterface.getConfig().baseURL);
+      }
+      throw new Error({ cause: err });
     }
 
     const pkg = await loadPackage(Project.systemInterface, {
@@ -172,7 +175,7 @@ export class Project {
     });
     loadedProject.package = pkg;
 
-    $world.openedProject = loadedProject;
+    if (!onlyLoadNotOpen) $world.openedProject = loadedProject;
 
     return loadedProject;
   }
