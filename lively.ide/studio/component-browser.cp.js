@@ -41,6 +41,12 @@ class MasterComponentTreeData extends TreeData {
       bool = false; // never collapse root
       node.subNodes = await this.listAllComponentCollections();
     }
+    if (!bool && node.type === 'package loader') {
+      // clear the selection
+      this.columnView.reset();
+      this.interactivelyImportProject();
+      return;
+    }
     node.isCollapsed = bool;
     node.isDirty = true;
     if (!bool) {
@@ -88,6 +94,8 @@ class MasterComponentTreeData extends TreeData {
     const isSelected = this.columnView.isSelected(node);
     if (type === 'package') {
       return this.displayPackage(pkg, isSelected);
+    } else if (type === 'package loader') {
+      return this.renderPackageLoader();
     } else if (componentObject) {
       return this.displayComponent(componentObject, isSelected);
     } else {
@@ -118,6 +126,15 @@ class MasterComponentTreeData extends TreeData {
         }
       ];
     }
+  }
+
+  renderPackageLoader () {
+    return [...Icon.textAttribute('ti-square-rounded-arrow-right', { fontColor: Color.darkGray }), ' Import project...', {
+      fontColor: Color.darkGray,
+      fontWeight: 'bold',
+      fontStyle: 'italic',
+      nativeCursor: 'pointer'
+    }];
   }
 
   /**
@@ -187,10 +204,12 @@ class MasterComponentTreeData extends TreeData {
   /**
    * Returns the text attributes needed to display an entry that represents a component file.
    */
-  displayComponentFile (mod, isSelected, isLoaded, url) {
+  displayComponentFile (modUrl, isSelected, isLoaded, url) {
     if (isSelected && !this.root.browser._pauseUpdates) {
+      const mod = module(modUrl);
+      const pkg = mod.package();
       this.getComponentsInModule(url).then(components => {
-        this.root.browser.showComponentsInFile(mod.replace('.cp.js', ''), components);
+        this.root.browser.showComponentsInFile(modUrl, components);
       });
     }
 
@@ -199,7 +218,7 @@ class MasterComponentTreeData extends TreeData {
         fontColor: isSelected ? Color.white : COLORS.cp,
         opacity: isLoaded ? 1 : 0.5
       }),
-      ' ' + string.truncate(mod.replace('.cp.js', ''), 24, '…'), null
+      ' ' + string.truncate(modUrl.replace('.cp.js', ''), 24, '…'), null
     ];
   }
 
@@ -216,6 +235,34 @@ class MasterComponentTreeData extends TreeData {
         componentObject
       };
     });
+  }
+
+  async interactivelyImportProject () {
+    const availableProjects = await Project.listAvailableProjects();
+    const notLoaded = availableProjects
+      .filter(proj => !isModuleLoaded(joinPath(proj.url, proj.main || 'index.js')))
+      .map(proj => ({
+        isListItem: true,
+        value: proj,
+        tooltip: `${proj.name} by ${proj.projectRepoOwner} at version ${proj.version}`,
+        label: [
+          proj.name, {},
+          proj.version, {
+            paddingLeft: '5px',
+            fontSize: '70%',
+            textStyleClasses: ['truncated-text', 'annotation']
+          }
+        ]
+      }));
+    const { selected: [projectToLoad] } = await $world.filterableListPrompt('Select project to import', notLoaded, {
+      requester: this.root.browser.view.getWindow(),
+      multiSelect: false
+    });
+    if (projectToLoad) {
+      await $world.openedProject.addDependencyToProject(projectToLoad.projectRepoOwner, projectToLoad.name);
+      this.root.subNodes = await this.listAllComponentCollections();
+      this.columnView.refresh();
+    }
   }
 
   /**
@@ -266,7 +313,11 @@ class MasterComponentTreeData extends TreeData {
         tooltip: pkg.name,
         pkg
       };
-    }), ({ pkg }) => ({ core: 2, local: 1, git: 3 }[pkg.kind]));
+    }), ({ pkg }) => ({ core: 2, local: 1, git: 3 }[pkg.kind])).concat({
+      type: 'package loader',
+      isCollapsed: true,
+      tooltip: 'Import additional project'
+    });
   }
 
   async listComponentFilesInPackage (pkg) {
