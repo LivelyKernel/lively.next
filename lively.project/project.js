@@ -379,36 +379,80 @@ export class Project {
   }
 
   async ensureDependenciesExist () {
-    const availableProjects = Project.retrieveAvailableProjectsCache();
-    for (const dep of this.config.lively.projectDependencies) {
-      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
+    const dependencyMap = {};
+
+    let availableProjects = Project.retrieveAvailableProjectsCache();
+    let depsToEnsure = this.config.lively.projectDependencies.slice();
+    depsToEnsure.forEach(dep => dep.requester = this.name);
+
+    // Check until all (transitive) deps are ensured to exist.
+    // The same dependencie with different versions needs to be counted as a separate dependency.
+    while (depsToEnsure.length > 0) {
+      const depToEnsure = depsToEnsure[0];
+      // We have already ensured a dep with this name previously.
+      if (dependencyMap[depToEnsure.name]) {
+        // Same version has already been requested, we only need to add to requester list.
+        if (dependencyMap[depToEnsure.name][depToEnsure.version]) {
+          const dependerArray = dependencyMap[depToEnsure.name][depToEnsure.version];
+          if (!dependerArray.includes(depToEnsure.requester)) dependencyMap[depToEnsure.name][depToEnsure.version] = dependerArray.push(depToEnsure.requester);
+          // Same name has been requested, but not the same version.
+        } else dependencyMap[depToEnsure.name][depToEnsure.version] = [depToEnsure.requester];
+        depsToEnsure.shift();
+        continue;
+      }
+      // No dependency with this name has been requested.
+      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}-${proj.name}` === depToEnsure.name);
       if (!depExists) {
-        const depName = dep.name.match(/.*-(.*)/)[1];
-        const depRepoOwner = dep.name.match(/(.*)-/)[1];
+        const depName = depToEnsure.name.match(/.*-(.*)/)[1];
+        const depRepoOwner = depToEnsure.name.match(/(.*)-/)[1];
         const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}-${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
         PackageRegistry.ofSystem(System).addPackageAt(`${(await Project.systemInterface.getConfig().baseURL)}local_projects/${depRepoOwner}-${depName}`, 'devPackageDirs');
+        // Refresh the cache of available projects and their version.
+        availableProjects = await Project.listAvailableProjects();
       }
+      // Add all transitive dependencies from the current dependency to the list.
+      // **Note:** Actually, the transitive dependencies of a project could be different in different versions of this project.
+      // Since we do not **actually** resolve the correct versions of projects currently, but only use the version number to *report* to users that something might be amiss, we do not deal with this here.
+      // In case we could actually resolve different versions of the same project at the same time, transitive dependencies would also need to be handled in the case same name but different version above!
+      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === depToEnsure.name).lively.projectDependencies;
+      transitiveDepsOfDepToEnsure.forEach(dep => dep.requester = depToEnsure.name);
+      depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
+
+      // Last step: mark dependency with name and version as ensured and remove it from the list.
+      dependencyMap[depToEnsure.name] = {
+        [String(depToEnsure.version)]: [depToEnsure.requester]
+      };
+      depsToEnsure.shift();
     }
-    // refresh the cache of available projects and their version
-    await Project.listAvailableProjects();
+    // Is used for semver checking below in `checkVersionCompatabilityOfProjectDependencies`.
+    this.dependencyMap = dependencyMap;
   }
 
   async checkVersionCompatabilityOfProjectDependencies () {
+    const { dependencyMap } = this;
     let dependencyStatusReport = [];
     const availableProjects = Project.retrieveAvailableProjectsCache();
-    let configWarning = false;
-    this.config.lively.projectDependencies.forEach(async (dep) => {
-      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
-      const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(dep.version));
-      if (versionStatus === true) dependencyStatusReport = dependencyStatusReport.concat([`✔️ loaded ${dep.name}\n`, null]);
-      else {
-        configWarning = true;
-        dependencyStatusReport = dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
+    let showStatusReport = false;
+    for (let dep in dependencyMap) {
+      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep);
+      for (let depVersion in dependencyMap[dep]) {
+        const requesterOfDepVersion = dependencyMap[dep][depVersion].join(' ');
+        // FIXME: We could determine if it would in theory be possible to find a version that satisfies all required ranges for a given dependency.
+        // However, since `semver` only allows us to check this for exactly two ranges at a time, we would need to loop over all pairs of required versions.
+        // Since we cannot really do anything with this information as of yet, I ommited that code here.
+        const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(depVersion));
+        if (versionStatus === true) dependencyStatusReport = dependencyStatusReport.concat([`✔️ Loaded ${dep} with version ${installedDep.version} (${depVersion} required by [${requesterOfDepVersion}]).\n`, null]);
+        else {
+          showStatusReport = true;
+          dependencyStatusReport = dependencyStatusReport.concat([`⚠️ Loaded ${dep} with version ${installedDep.version}, but ${depVersion} required by [${requesterOfDepVersion}].\n`, null]);
+        }
       }
-    });
-    if (configWarning) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    }
+    if (showStatusReport) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    // Reset this, so that nobody gets tempted to (ab)use this hot mess of a half-working feature...
+    this.dependencyMap = null;
   }
 
   async addDependencyToProject (owner, name) {
