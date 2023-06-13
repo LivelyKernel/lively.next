@@ -201,7 +201,8 @@ export class ViewModel {
           if (lively.FreezerRuntime && this._ui) return this._ui;
           this.doWithScope(m => {
             // if a morph blocks its scope, ignore!
-            nameMorphMap[string.camelize(m.name.split(' ').join('-'))] = m;
+            const accessor = string.camelize(m.name.split(' ').join('-'));
+            if (!nameMorphMap[accessor]) nameMorphMap[accessor] = m;
             const name = getClassName(m);
             const categoryName = name.charAt(0).toLowerCase() + name.slice(1) + 's';
             const category = (klassCollectionMap[categoryName] || []);
