@@ -105,6 +105,7 @@ export class MullerColumnViewModel extends ViewModel {
     this.treeData = treeData;
     await treeData.collapse(treeData.root, false);
     await this.refresh(false);
+    if (this.lists[0].selection) this.lists[0].selection = null;
   }
 
   reset () {
