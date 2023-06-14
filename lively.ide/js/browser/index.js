@@ -393,7 +393,13 @@ export class PackageTreeData extends TreeData {
 
     // To allow correct resolution of projects we list all available projects in the package registry.
     // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
-    pkgs = pkgs.filter(p => p.pkg.kind !== 'project' || modules.PackageRegistry.ofSystem(System).lookup(p.name).modules().length > 0);
+    pkgs = pkgs.filter(p => {
+      const modulesOfPkg =  modules.PackageRegistry.ofSystem(System).lookup(p.name).modules();
+      return (p.pkg.kind !== 'project' 
+      || modulesOfPkg.length > 1 
+      // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
+      || modulesOfPkg.length == 1 && !modulesOfPkg[0].id.endsWith('package.json'))
+    });
     return pkgs;
   }
 
