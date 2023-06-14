@@ -466,7 +466,9 @@ export class WorldBrowserModel extends ViewModel {
     loadingIndicator.animate({
       opacity: 1, duration: 300
     });
-    const entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
+    let entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
+    // Filter out the project that is opened anyways.
+    if ($world && $world.openedProject) entities = entities.filter(availableProject => availableProject.name !== $world.openedProject.config.name);
     this.previews = entities.map(entity => {
       const placeholder = part(Placeholder);
       if (this.playgroundsMode) placeholder._commit = entity;
