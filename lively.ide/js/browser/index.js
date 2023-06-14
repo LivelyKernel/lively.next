@@ -391,6 +391,9 @@ export class PackageTreeData extends TreeData {
 
     if (!this.showDependencyPackages) pkgs = pkgs.filter(p => p.pkg.kind !== 'dependency' && p.name !== 'flatn' && p.name !== 'mocha-es6');
 
+    // To allow correct resolution of projects we list all available projects in the package registry.
+    // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
+    pkgs = pkgs.filter(p => p.pkg.kind !== 'project' || modules.PackageRegistry.ofSystem(System).lookup(p.name).modules().length > 0);
     return pkgs;
   }
 

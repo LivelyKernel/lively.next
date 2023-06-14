@@ -9,7 +9,10 @@ function lively_next_flatn_env {
     read -r -d '' SETUP_FLATN_DEV_PACKAGE_DIRS <<- EOM
         const packageConfig = require("fs").readFileSync("$lv_next_dir/lively.installer/packages-config.json");
         const packageDirs = JSON.parse(packageConfig).map(ea => "$lv_next_dir/" + ea.name);
-        packageDirs.join(":")
+        const localProjects = require("fs").readdirSync("$lv_next_dir/local_projects", { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => "$lv_next_dir/local_projects/" + dirent.name);
+        packageDirs.concat(localProjects).join(":");
 EOM
     export FLATN_DEV_PACKAGE_DIRS=$(node -p "${SETUP_FLATN_DEV_PACKAGE_DIRS}")
     export lv_next_dir=$lv_next_dir

@@ -10,7 +10,7 @@ import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/component
 import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import { semver } from 'lively.modules/index.js';
+import { semver, PackageRegistry } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
@@ -89,6 +89,7 @@ export class Project {
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
       packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
+      packageJSONObjects.forEach(pkg => pkg.name = pkg.name.replace(/(.*?-)/, ''));
       localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
       return packageJSONObjects;
     } catch (err) {
@@ -142,15 +143,7 @@ export class Project {
     loadedProject.configFile = await resource(address.join('package.json').url);
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
-
-    const pkg = await loadPackage(Project.systemInterface, {
-      name: name,
-      url: url,
-      address: url,
-      configFile: address.join('package.json').url,
-      main: loadedProject.config.main ? address.join(loadedProject.config.main).url : address.join('index.js').url,
-      type: 'package'
-    });
+    loadedProject.config.name = name;
 
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
 
@@ -160,15 +153,27 @@ export class Project {
         await $world.inform('The required lively version of this project conflicts with the running one.', { additionalText: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
       }
     }
-    loadedProject.package = pkg;
-    $world.openedProject = loadedProject;
+
     try {
       await loadedProject.ensureDependenciesExist();
-      await loadedProject.loadProjectDependencies();
+      await loadedProject.checkVersionCompatabilityOfProjectDependencies();
     } catch (err) {
       await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
       window.location.href = (await Project.systemInterface.getConfig().baseURL);
     }
+
+    const pkg = await loadPackage(Project.systemInterface, {
+      name: name,
+      url: url,
+      address: url,
+      configFile: address.join('package.json').url,
+      main: loadedProject.config.main ? address.join(loadedProject.config.main).url : address.join('index.js').url,
+      type: 'package'
+    });
+    loadedProject.package = pkg;
+
+    $world.openedProject = loadedProject;
+
     return loadedProject;
   }
 
@@ -187,10 +192,14 @@ export class Project {
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
+    const nameToRecover = this.config.name;
     try {
+      this.config.name = `${this.repoOwner}-${nameToRecover}`;
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
       throw Error('Error writing config file', { cause: e });
+    } finally {
+      this.config.name = nameToRecover;
     }
   }
 
@@ -375,37 +384,24 @@ export class Project {
         const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}-${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
+        PackageRegistry.ofSystem(System).addPackageAt(`${(await Project.systemInterface.getConfig().baseURL)}local_projects/${depRepoOwner}-${depName}`, 'devPackageDirs');
       }
     }
     // refresh the cache of available projects and their version
     await Project.listAvailableProjects();
   }
 
-  async loadProjectDependencies () {
+  async checkVersionCompatabilityOfProjectDependencies () {
     let dependencyStatusReport = [];
     const availableProjects = Project.retrieveAvailableProjectsCache();
     let configWarning = false;
     this.config.lively.projectDependencies.forEach(async (dep) => {
-      const depName = dep.name.match(/.*-(.*)/)[1];
       const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep.name);
       const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(dep.version));
       if (versionStatus === true) dependencyStatusReport = dependencyStatusReport.concat([`✔️ loaded ${dep.name}\n`, null]);
       else {
         configWarning = true;
         dependencyStatusReport = dependencyStatusReport.concat([`⚠️ loaded ${dep.name} with version ${installedDep.version}, but ${dep.version} required\n`, null]);
-      }
-      try {
-        const address = (await Project.projectDirectory()).join(dep.name);
-        await loadPackage(Project.systemInterface, {
-          name: depName,
-          url: address.url,
-          address: address.url,
-          configFile: address.join('package.json').url,
-          main: installedDep.main ? address.join(installedDep.main).url : address.join('index.js').url,
-          type: 'package'
-        });
-      } catch (err) {
-        throw Error('Error loading dependency package', { cause: err });
       }
     });
     if (configWarning) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
