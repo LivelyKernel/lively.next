@@ -1727,12 +1727,14 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
       }]
     }, {
       name: 'component files view',
+      fill: Color.rgba(255, 255, 255, 0.1),
       borderColor: Color.rgb(112, 123, 124),
       borderWidth: 1,
       viewModel: { listMaster: ColumnListDark }
     },
     {
       name: 'master component list',
+      fill: Color.rgba(238, 238, 238, 0.1),
       borderColor: Color.rgb(112, 123, 124),
       borderWidth: 1
     },
