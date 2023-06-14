@@ -33,6 +33,7 @@ export class ComponentSelectionControl extends ViewModel {
 
   clearComponent () {
     this.component = null;
+    signal(this.view, 'componentChanged');
   }
 
   async selectComponent () {
