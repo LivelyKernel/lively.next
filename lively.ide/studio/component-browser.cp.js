@@ -301,8 +301,8 @@ class MasterComponentTreeData extends TreeData {
   }
 
   async listAllComponentCollections () {
-    const coll = await this.getComponentCollections();
-    return arr.sortBy(coll.map(pkg => {
+    let coll = await this.getComponentCollections();
+    coll = arr.sortBy(coll.map(pkg => {
       let kind = 'git';
       if (pkg.url?.startsWith('local')) kind = 'local';
       if (pkg.name.startsWith('lively')) kind = 'core';
@@ -315,11 +315,15 @@ class MasterComponentTreeData extends TreeData {
         tooltip: pkg.name,
         pkg
       };
-    }), ({ pkg }) => ({ core: 2, local: 1, git: 3 }[pkg.kind])).concat({
-      type: 'package loader',
-      isCollapsed: true,
-      tooltip: 'Import additional project'
-    });
+    }), ({ pkg }) => ({ core: 2, local: 1, git: 3 }[pkg.kind]));
+    if (!this.root.browser.selectionMode) {
+      coll.push({
+        type: 'package loader',
+        isCollapsed: true,
+        tooltip: 'Import additional project'
+      });
+    }
+    return coll;
   }
 
   async listComponentFilesInPackage (pkg) {
