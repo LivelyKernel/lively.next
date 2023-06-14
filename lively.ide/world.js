@@ -443,7 +443,7 @@ export class LivelyWorld extends World {
     versionChecker.name = 'lively version checker';
     versionChecker.openInWorld();
     versionChecker.relayout();
-    versionChecker.checkVersion();
+    await versionChecker.checkVersion();
 
     const { WorldZoomIndicator } = await System.import('lively.ide/studio/zoom-indicator.cp.js');
     const zoomIndicator = part(WorldZoomIndicator);
@@ -456,6 +456,7 @@ export class LivelyWorld extends World {
     connect($world.sceneGraphFlap, 'position', versionChecker, 'relayout');
     $world.propertiesPanelFlap = part(Flap, { viewModel: { target: 'properties panel', action: toggleSidebar, openingRoutine: openSidebarFlapInWorld, relayoutRoutine: relayoutSidebarFlapInWorld } }).openInWorld();
     connect($world.propertiesPanelFlap, 'position', zoomIndicator, 'relayout');
+    this._uiInitialized = true;
   }
 
   async initializeStudio () {

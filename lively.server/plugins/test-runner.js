@@ -9,17 +9,16 @@ export default class TestRunner {
     let results;
     try {
     this.headlessSession = new HeadlessSession();
-    await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld'`))
+    await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false',  (sess) => sess.runEval(`$world.name == 'aLivelyWorld' && $world._uiInitialized`))
     results = await this.headlessSession.runEval(`
     const { resource } = await System.import("lively.resources");
     const { promise } = await System.import('lively.lang')
     const { localInterface } = await System.import("lively-system-interface");
     const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
-    const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === \'${module_to_test}\');
-    const projectRepoName = \'${module_to_test}\'.match(/^[^-]*-(.*)/)[1];
+    const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === '${module_to_test}');
     if (!packageToTestLoaded){
       await loadPackage(localInterface.coreInterface, {
-        name: projectRepoName,
+        name: '${module_to_test}',
         address: 'http://localhost:9011/local_projects/${module_to_test}',
         type: 'package'
       });
@@ -27,7 +26,7 @@ export default class TestRunner {
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
-    const results = await runner.runTestsInPackage(projectRepoName);
+    const results = await runner.runTestsInPackage('${module_to_test}');
     JSON.stringify(results)
     `)
     } catch (err) {

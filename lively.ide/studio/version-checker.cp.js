@@ -60,9 +60,9 @@ class VersionChecker extends Morph {
     }
   }
 
-  checkVersion () {
+  async checkVersion () {
     this.reset();
-    this.displayLivelyVersionStatus();
+    await this.displayLivelyVersionStatus();
   }
 
   onMouseDown (evt) {
@@ -146,8 +146,8 @@ class VersionChecker extends Morph {
       return;
     }
     hash = hash.slice(0, 6);
-    const comnparisonResult = VersionChecker.parseHashComparison(comparison);
-    switch (comnparisonResult) {
+    const comparisonResult = VersionChecker.parseHashComparison(comparison);
+    switch (comparisonResult) {
       case (0): this.showEven(hash); break;
       case (1): this.showAhead(hash); break;
       case (-1): this.showBehind(hash); break;

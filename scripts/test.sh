@@ -78,7 +78,7 @@ then
   if grep -E '(:9011|.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
     echo "Found a running lively server that will be used for testing."
   else
-    echo "No local lively server was found. Start one to run tests on."
+    echo "No local lively server was found. Starting a server to run tests on."
     # start a new lively.next server
     ./start.sh > /dev/null 2>&1 &
     # wait until server is guaranteed to be running
