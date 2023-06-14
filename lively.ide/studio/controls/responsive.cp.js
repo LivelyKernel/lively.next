@@ -289,6 +289,8 @@ export class ResponsiveControlModel extends PropertySectionModel {
     if (!policy._breakpointStore) {
       policy.setBreakpoints([[pt(0, 0), policy.parent]]);
     }
+    // display the responsive layout halo
+    this.world().execCommand('show responsive halo for', { target: this.targetMorph });
     this.update();
   }
 
@@ -296,6 +298,8 @@ export class ResponsiveControlModel extends PropertySectionModel {
     super.deactivate();
     this.ui.controls.visible = false;
     this.targetMorph.master?.clearBreakpoints();
+    // also remove the responsive halo if present
+    this.targetMorph._responsiveHalo?.close();
     this.update();
   }
 
