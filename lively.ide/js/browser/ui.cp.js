@@ -877,7 +877,7 @@ export class PathIndicator extends Morph {
 
   reset () {
     const { statusBox, statusLabel, errorControls } = this.ui;
-    this.master = FileStatusDefault;
+    this.master.setState(null);
     errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
     statusBox.opacity = statusLabel.opacity = 0;
     this.adjustHeight();
@@ -919,7 +919,7 @@ export class PathIndicator extends Morph {
     this.requestTransition(async () => {
       const { filePath, statusBox, statusLabel, clipboardControls } = this.ui;
       filePath.value = 'No file selected';
-      this.master = FileStatusInactive;
+      this.master.setState('inactive');
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusBox.isLayoutable = statusLabel.isLayoutable = false;
@@ -935,7 +935,7 @@ export class PathIndicator extends Morph {
   showDefault (duration = 300) {
     this.requestTransition(async () => {
       const { statusBox, statusLabel, errorControls } = this.ui;
-      this.master = FileStatusDefault;
+      this.master.setState(null);
       this.master.applyAnimated({ duration });
       this.withAnimationDo(() => {
         errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
@@ -952,7 +952,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = err;
       statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
-      this.master = FileStatusError;
+      this.master.setState('error');
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusLabel.opacity = statusBox.opacity = 1;
@@ -969,7 +969,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusBox.textString = warning;
       statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
-      this.master = FileStatusWarning;
+      this.master.setState('warning');
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusLabel.opacity = statusBox.opacity = 1;
@@ -986,7 +986,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel } = this.ui;
       statusBox.textString = frozenMessage;
       statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
-      this.master = FileStatusFrozen;
+      this.master.setState('frozen');
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusLabel.opacity = statusBox.opacity = 1;
@@ -1006,7 +1006,7 @@ export class PathIndicator extends Morph {
       const { statusBox, statusLabel, errorControls } = this.ui;
       statusLabel.opacity = 0;
       statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
-      this.master = FileStatusSaved;
+      this.master.setState('saved');
       this.master.applyAnimated({ duration });
       await this.withAnimationDo(() => {
         statusBox.opacity = 0;
@@ -1041,7 +1041,16 @@ export class PathIndicator extends Morph {
 
 const MetaInfoContainerExpanded = component({
   type: PathIndicator,
-  master: FileStatusDefault,
+  master: {
+    auto: FileStatusDefault,
+    states: {
+      warning: FileStatusWarning,
+      error: FileStatusError,
+      saved: FileStatusSaved,
+      frozen: FileStatusFrozen,
+      inactive: FileStatusInactive
+    }
+  },
   isLayoutable: true,
   clipMode: 'hidden',
   extent: pt(587.6, 60.4),
@@ -1494,7 +1503,9 @@ const SystemBrowser = component({
     padding: rect(4, 60, 0, -60),
     position: pt(0, 271.1),
     scroll: pt(0, 15)
-  }, part(MetaInfoContainerCollapsed, { name: 'meta info text' }), {
+  }, part(MetaInfoContainerCollapsed, {
+    name: 'meta info text'
+  }), {
     // fixme: implement with view model...?
     type: HorizontalResizer,
     name: 'vertical resizer',
