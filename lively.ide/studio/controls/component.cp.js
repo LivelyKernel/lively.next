@@ -5,7 +5,7 @@ import { rect, Color } from 'lively.graphics';
 import { TextInput, AddButton } from '../shared.cp.js';
 import { pt } from 'lively.graphics/geometry-2d.js';
 import { Text } from 'lively.morphic/text/morph.js';
-import { ComponentBrowserDark } from '../component-browser.cp.js';
+import { ComponentBrowserPopupDark } from '../component-browser.cp.js';
 import { signal } from 'lively.bindings';
 
 export class ComponentSelectionControl extends ViewModel {
@@ -36,7 +36,7 @@ export class ComponentSelectionControl extends ViewModel {
   }
 
   async selectComponent () {
-    const selectedComponent = await part(ComponentBrowserDark, { viewModel: { selectionMode: true } }).activate();
+    const selectedComponent = await part(ComponentBrowserPopupDark, { viewModel: { selectionMode: true } }).activate();
     if (selectedComponent) {
       this.component = selectedComponent;
       signal(this.view, 'componentChanged');
