@@ -1313,6 +1313,7 @@ export class Morph {
         const animConfig = { ...config };
         let target;
         changes.forEach(change => {
+          if (change.prop === 'master') return;
           target = change.target;
           this.withMetaDo({ metaInteraction: true }, () => {
             change.reverseApply();
