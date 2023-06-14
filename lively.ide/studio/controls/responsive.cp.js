@@ -308,6 +308,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
 
   confirm () {
     this.targetMorph.master.setBreakpoints(this.getBreakpointSpec());
+    this.targetMorph.master.applyIfNeeded(true);
   }
 }
 
