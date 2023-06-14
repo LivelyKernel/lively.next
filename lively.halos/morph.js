@@ -972,25 +972,13 @@ class ResponsiveHaloItem extends RoundHaloItem {
   }
 
   start () {
-    this.halo.activeItems = [];
-    this.halo.alignWithTarget();
-    const halo = this.world().execCommand('show responsive halo for', { target: this.halo.target });
-    once(halo, 'close', this, 'stop');
-    once(this.halo, 'remove', halo, 'close');
+    this.world().execCommand('show responsive halo for', { target: this.halo.target });
   }
 
   stop () {
     this.halo.activeItems = ['*'];
     this.halo.alignWithTarget();
   }
-}
-
-function isAlive (target) {
-  let alive = false;
-  withAllViewModelsDo(target, m => {
-    if (m.viewModel.view) alive = true;
-  });
-  return alive;
 }
 
 class RotateHaloItem extends RoundHaloItem {

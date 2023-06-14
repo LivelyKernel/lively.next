@@ -573,9 +573,17 @@ const commands = [
   {
     name: 'show responsive halo for',
     exec: (world, { target }) => {
-      const halo = part(ResponsiveLayoutHalo).openInWorld();
-      halo.focusOn(target);
-      return halo;
+      const halo = world.halos().find(h => h.target === target);
+      if (!halo) throw Error('Cannot display responsive halo without preexisting morphic halo.');
+      const responsiveHalo = part(ResponsiveLayoutHalo).openInWorld();
+      responsiveHalo.focusOn(target);
+
+      halo.activeItems = [];
+      halo.alignWithTarget();
+      once(responsiveHalo, 'close', halo.responsiveHalo(), 'stop');
+      once(halo, 'remove', responsiveHalo, 'close');
+
+      return responsiveHalo;
     }
   },
 
