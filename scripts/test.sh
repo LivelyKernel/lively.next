@@ -16,6 +16,7 @@ TESTED_PACKAGES=0
 GREEN_TESTS=0
 RED_TESTS=0
 SKIPPED_TESTS=0
+STARTED_SERVER=0
 
 testfiles=(
 "lively.lang"
@@ -78,6 +79,7 @@ then
   if grep -E '(:9011|.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
     echo "Found a running lively server that will be used for testing."
   else
+    STARTED_SERVER=1
     echo "No local lively server was found. Starting a server to run tests on."
     # start a new lively.next server
     ./start.sh > /dev/null 2>&1 &
@@ -116,10 +118,10 @@ for package in "${testfiles[@]}"; do
   ((RED_TESTS+=red))
   ((SKIPPED_TESTS+=skipped))
 
-  if [ "$CI" ]; 
+  if [ "$CI" ] || [ "$STARTED_SERVER" = "1" ]; 
   then
-    # kill the running server
-    killall node
+    pkill start.sh
+    pkill -f lively
   fi
 done
 
