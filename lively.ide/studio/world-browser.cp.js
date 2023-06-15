@@ -2,8 +2,8 @@
 import { easings, ViewModel, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
 import * as moduleManager from 'lively.modules';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
-import { arr, fun, graph, date, string } from 'lively.lang/index.js';
-import { GreenButton, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
+import { arr, promise, fun, graph, date, string } from 'lively.lang/index.js';
+import { GreenButton, ConfirmPrompt, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
 import { MorphList } from 'lively.components/list.cp.js';
 import * as LoadingIndicator from 'lively.components/loading-indicator.cp.js';
 import { Spinner } from './shared.cp.js';
@@ -367,6 +367,12 @@ export class WorldBrowserModel extends ViewModel {
       }
 
     };
+  }
+
+  async confirm (label) {
+    const prompt = part(ConfirmPrompt, { viewModel: { label } }).openInWorld();
+    prompt.center = this.view.center;
+    return promise(prompt.activate());
   }
 
   async toggleFader (onlyOff) {
@@ -776,13 +782,12 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   toggleDeleteButton (active) {
-    if (!$world.isIDEWorld) return;
     const { deleteButton } = this.ui;
     deleteButton.visible = deleteButton.reactsToPointer = active;
   }
 
   async tryToDelete () {
-    const proceed = await $world.confirm(['Delete World\n', {}, 'Do you really want to remove this world from the database? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
+    const proceed = await this._worldBrowser.confirm(['Delete World\n', {}, 'Do you really want to remove this world from the database? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
     if (proceed) await this.confirmDelete();
   }
 
@@ -848,7 +853,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
   }
 
   async tryToDelete () {
-    const proceed = await $world.confirm(['Delete Project\n', {}, 'Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
+    const proceed = await this._worldBrowser.confirm(['Delete Project\n', {}, 'Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
     if (proceed) await this.confirmDelete();
   }
 
