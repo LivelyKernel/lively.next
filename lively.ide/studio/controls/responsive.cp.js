@@ -21,7 +21,15 @@ class BreakpointEntryModel extends ViewModel {
       },
       componentSelectionEnabled: { defaultValue: true },
       component: {},
+      targetMorph: {},
       expose: { get () { return ['update', 'getBreakpointSpec']; } },
+      targetStylePolicy: {
+        get () {
+          let stylePolicy = this.targetMorph.master;
+          if (stylePolicy.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
+          return stylePolicy;
+        }
+      },
       bindings: {
         get () {
           return [{
@@ -35,13 +43,16 @@ class BreakpointEntryModel extends ViewModel {
   }
 
   getBreakpointSpec () {
-    const store = this._targetMorph.master?.getBreakpointStore();
-    if (!store) return;
+    const store = this.targetStylePolicy?.getBreakpointStore();
+    if (!store) {
+      return;
+    }
     return [pt(store._horizontalBreakpoints[this.breakpoint.h], store._verticalBreakpoints[this.breakpoint.v]), this.component];
   }
 
   update (targetMorph) {
-    const store = targetMorph.master?.getBreakpointStore();
+    this.targetMorph = targetMorph;
+    const store = this.targetStylePolicy?.getBreakpointStore();
     if (!store) return;
     const { horizontalPin, verticalPin, configureComponentButton } = this.ui;
     const {
@@ -52,7 +63,6 @@ class BreakpointEntryModel extends ViewModel {
     const vOffset = _verticalBreakpoints[v];
     const hOffset = _horizontalBreakpoints[h];
     this.component = grid.get(_breakpointMasters, v, h);
-    this._targetMorph = targetMorph;
     const isSelected = obj.equals([v, h], store.getMatchingBreakpoint(targetMorph));
     horizontalPin.textString = `w: ${hOffset && hOffset.toFixed() || '*'} px`;
     horizontalPin.fill = getColorForBreakpoint(h, 'horizontal');
@@ -75,13 +85,12 @@ class BreakpointEntryModel extends ViewModel {
     connect(this._popup, 'component changed', this, 'confirm');
     connect(this._popup, 'remove', () => {
       this._popup = null;
-      this.update(this._targetMorph);
+      this.update(this.targetMorph);
     });
-    this.update(this._targetMorph);
+    this.update(this.targetMorph);
   }
 
   confirm (selectedComponent) {
-    console.log(selectedComponent);
     this.component = selectedComponent;
     signal(this.view, 'component changed', selectedComponent);
   }
@@ -218,6 +227,13 @@ export class ResponsiveControlModel extends PropertySectionModel {
   static get properties () {
     return {
       targetMorph: {},
+      targetStylePolicy: {
+        get () {
+          let stylePolicy = this.targetMorph?.master;
+          if (stylePolicy?.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
+          return stylePolicy;
+        }
+      },
       expose: {
         get () { return ['focusOn']; }
       },
@@ -233,8 +249,11 @@ export class ResponsiveControlModel extends PropertySectionModel {
   }
 
   update () {
-    const bpStore = this.targetMorph.master?.getBreakpointStore();
-    if (!bpStore) return;
+    const bpStore = this.targetStylePolicy?.getBreakpointStore();
+    if (!bpStore) {
+      this.ui.controls.submorphs = [];
+      return;
+    }
     this.ui.controls.submorphs = [
       ...grid.map(bpStore._breakpointMasters, (master, v, h) => {
         return part(BreakpointEntry, {
@@ -266,7 +285,6 @@ export class ResponsiveControlModel extends PropertySectionModel {
   }
 
   focusOn (aMorph) {
-    // FIXME: also listen to changes in the breakpoints
     if (this.targetMorph) {
       disconnect(this.targetMorph, 'breakpoint removed', this, 'update');
       disconnect(this.targetMorph, 'breakpoint added', this, 'update');
@@ -278,29 +296,42 @@ export class ResponsiveControlModel extends PropertySectionModel {
     epiConnect(this.targetMorph, 'breakpoint added', this, 'update');
     epiConnect(this.targetMorph, 'breakpoint changed', this, 'refreshFromTarget');
     epiConnect(this.targetMorph, 'extent', this, 'refreshFromTarget');
-    if (aMorph.master?.getBreakpointStore()) this.activate();
+    if (aMorph.master?._breakpointStore) this.activate();
     else this.deactivate();
   }
 
   activate () {
     super.activate();
     this.ui.controls.visible = true;
-    const policy = this.targetMorph.master;
+    const policy = this.targetStylePolicy;
     if (!policy._breakpointStore) {
       policy.setBreakpoints([[pt(0, 0), policy.parent]]);
+      this.refreshChangeTrackers();
+      this.world().execCommand('show responsive halo for', { target: this.targetMorph });
     }
     // display the responsive layout halo
-    this.world().execCommand('show responsive halo for', { target: this.targetMorph });
     this.update();
   }
 
   deactivate () {
     super.deactivate();
     this.ui.controls.visible = false;
-    this.targetMorph.master?.clearBreakpoints();
-    // also remove the responsive halo if present
+    this.targetStylePolicy?.clearBreakpoints();
+    this.targetMorph.master?.applyIfNeeded(true);
+    this.refreshChangeTrackers();
     this.targetMorph._responsiveHalo?.close();
     this.update();
+  }
+
+  // FIXME: this is code duplication to lively.components/responsive.cp.js
+  refreshChangeTrackers () {
+    if (!this.targetMorph._changeTracker) return;
+    this.targetMorph._changeTracker.processChangeInComponent({
+      prop: 'master',
+      meta: { reconcileChanges: true },
+      target: this.targetMorph,
+      value: this.targetStylePolicy
+    });
   }
 
   getBreakpointSpec () {
@@ -311,7 +342,8 @@ export class ResponsiveControlModel extends PropertySectionModel {
   }
 
   confirm () {
-    this.targetMorph.master.setBreakpoints(this.getBreakpointSpec());
+    this.targetStylePolicy.setBreakpoints(this.getBreakpointSpec());
+    this.refreshChangeTrackers();
     this.targetMorph.master.applyIfNeeded(true);
   }
 }

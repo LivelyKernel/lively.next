@@ -37,7 +37,7 @@ export class ComponentSelectionControl extends ViewModel {
   }
 
   async selectComponent () {
-    const selectedComponent = await part(ComponentBrowserPopupDark, { viewModel: { selectionMode: true } }).activate();
+    const selectedComponent = await part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } }).activate();
     if (selectedComponent) {
       this.component = selectedComponent;
       signal(this.view, 'componentChanged');
@@ -194,7 +194,9 @@ export class ComponentControlModel extends PropertySectionModel {
     hoverComponentSelection.visible = false;
     clickComponentSelection.visible = false;
     if (this.targetMorph.master) {
-      this.targetMorph.master = null;
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.master = null;
+      });
       signal(this.view, 'component changed');
     }
   }

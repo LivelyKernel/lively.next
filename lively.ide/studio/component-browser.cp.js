@@ -1658,7 +1658,6 @@ const ComponentBrowser = component({
 
 const ComponentBrowserPopup = component(PopupWindow, {
   defaultViewModel: ComponentBrowserPopupModel,
-  styleClasses: [],
   hasFixedPosition: false,
   extent: pt(515, 658),
   layout: new TilingLayout({
