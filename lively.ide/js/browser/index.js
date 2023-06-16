@@ -261,9 +261,15 @@ export class PackageTreeData extends TreeData {
   }
 
   displayPackage (pkg) {
+    let pkgNameString = pkg.name;
+    if (pkg.kind === 'project') {
+      const ownerAndNameExtraction = pkg.name.match(/([a-zA-Z\d]*)--(.*)/);
+      pkgNameString = `${ownerAndNameExtraction[2]} by ${ownerAndNameExtraction[1]}`;
+    }
+
     return [
       ...pkg.kind === 'project' ? Icon.textAttribute('paintbrush') : Icon.textAttribute('cube'),
-      ' ' + string.truncate(this.showPkgVersion ? `${pkg.name}@${pkg.version}` : pkg.name, 26, '…'), {
+      ' ' + string.truncate(this.showPkgVersion ? `${pkgNameString}@${pkg.version}` : pkgNameString, 26, '…'), {
         fontStyle: pkg.kind === 'git' ? 'italic' : 'normal'
       },
       `\t${pkg.kind}`, {
@@ -394,11 +400,11 @@ export class PackageTreeData extends TreeData {
     // To allow correct resolution of projects we list all available projects in the package registry.
     // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
     pkgs = pkgs.filter(p => {
-      const modulesOfPkg =  modules.PackageRegistry.ofSystem(System).lookup(p.name).modules();
-      return (p.pkg.kind !== 'project' 
-      || modulesOfPkg.length > 1 
+      const modulesOfPkg = modules.PackageRegistry.ofSystem(System).lookup(p.name).modules();
+      return (p.pkg.kind !== 'project' ||
+      modulesOfPkg.length > 1 ||
       // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
-      || modulesOfPkg.length == 1 && !modulesOfPkg[0].id.endsWith('package.json'))
+      modulesOfPkg.length == 1 && !modulesOfPkg[0].id.endsWith('package.json'));
     });
     return pkgs;
   }
