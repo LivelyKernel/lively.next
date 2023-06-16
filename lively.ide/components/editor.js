@@ -172,7 +172,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     const { parent } = this.stylePolicy;
     if (parent) {
       const dependants = parent._dependants || new Set();
-      dependants.add(this.stylePolicy.__serialize__({ expressionSerializer: exprSerializer }));
+      dependants.add(exprSerializer.exprStringEncode(this.stylePolicy.__serialize__({ expressionSerializer: exprSerializer })));
       parent._dependants = dependants;
     }
   }

@@ -157,6 +157,22 @@ export class BreakpointStore {
     return store;
   }
 
+  __serialize__ () {
+    if (!arr.compact(this._breakpointMasters.flat()).every(descr => descr[Symbol.for('lively-module-meta')])) return;
+    const bindings = { 'lively.graphics': ['pt'] };
+    const masterStrings = arr.compact(grid.map(this._breakpointMasters, (componentDescriptor, row, col) => {
+      if (!componentDescriptor) return null;
+      const expr = componentDescriptor.__serialize__();
+      Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
+      const y = this._verticalBreakpoints[row];
+      const x = this._horizontalBreakpoints[col];
+      return `[pt(${x.toFixed()},${y.toFixed()}), ${expr.__expr__}]`;
+    }).flat());
+    if (masterStrings.length === 0) return;
+    const __expr__ = `[${masterStrings.join(',\n')}]`;
+    return { __expr__, bindings };
+  }
+
   setBreakpointMaster (vi, hi, componentDescriptor) {
     grid.set(this._breakpointMasters, vi, hi, componentDescriptor);
   }
@@ -423,15 +439,20 @@ export class StylePolicy {
 
   _generateInlineExpression () {
     const {
-      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover
+      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
+      _localComponentStates: states
     } = this;
-    if (!arr.compact([auto, click, hover]).every(c => c[Symbol.for('lively-module-meta')])) return;
+    const bpStore = this.getBreakpointStore();
+    if (!arr.compact([auto, click, hover, ...obj.values(states)]).every(c => c[Symbol.for('lively-module-meta')])) return;
     const masters = [];
     const bindings = {};
     if (auto) masters.push(['auto', auto.__serialize__()]);
     if (click) masters.push(['click', click.__serialize__()]);
     if (hover) masters.push(['hover', hover.__serialize__()]);
+    if (states) masters.push(['states', Object.entries(states).map(([state, master]) => [state, master.__serialize__()])]);
 
+    let bps;
+    if (bpStore && (bps = bpStore.__serialize__())) masters.push(['breakpoints', bps]);
     if (masters.length == 0) return;
     if (masters.length == 1 && auto) {
       return auto.__serialize__();
@@ -463,15 +484,15 @@ export class StylePolicy {
     if (!meta || this.targetMorph?.isComponent) {
       return this._generateInlineExpression();
     }
-    return expressionSerializer.exprStringEncode({
+    return {
       __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt([${meta.path.map(name => JSON.stringify(name)).join(',')}])` : ''),
       bindings: { [meta.moduleId]: meta.exportedName }
-    });
+    };
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     if (this.parent) {
-      addFn('parent', this.parent.__serialize__(pool));
+      addFn('parent', expressionSerializer.exprStringEncode(this.parent.__serialize__(pool)));
     }
   }
 

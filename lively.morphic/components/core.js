@@ -48,7 +48,7 @@ export class ComponentDescriptor {
     const meta = this[Symbol.for('lively-module-meta')];
     return {
       __expr__: meta.exportedName,
-      bindings: { [meta.moduleId]: meta.exportedName }
+      bindings: { [meta.moduleId]: [meta.exportedName] }
     };
   }
 
