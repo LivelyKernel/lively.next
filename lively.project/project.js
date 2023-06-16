@@ -141,9 +141,15 @@ export class Project {
     if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
 
     loadedProject.configFile = await resource(address.join('package.json').url);
+
+    // Ensure that we do not run into conflicts wrt the bound lively version.
+    await loadedProject.gitResource.resetFile('package.json');
+    await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
+
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
     loadedProject.config.name = name;
+    loadedProject.addMissingProjectDependencies();
 
     const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
 
@@ -193,6 +199,7 @@ export class Project {
    */
   async saveConfigData () {
     await this.removeUnusedProjectDependencies();
+    await this.addMissingProjectDependencies();
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
@@ -382,8 +389,11 @@ export class Project {
     const dependencyMap = {};
 
     let availableProjects = Project.retrieveAvailableProjectsCache();
-    let depsToEnsure = this.config.lively.projectDependencies.slice();
-    depsToEnsure.forEach(dep => dep.requester = this.name);
+    let depsToEnsure = this.config.lively.projectDependencies.map(dep => ({
+      name: dep.name,
+      version: dep.version,
+      requester: this.name
+    }));
 
     // Check until all (transitive) deps are ensured to exist.
     // The same dependencie with different versions needs to be counted as a separate dependency.
@@ -416,7 +426,11 @@ export class Project {
       // **Note:** Actually, the transitive dependencies of a project could be different in different versions of this project.
       // Since we do not **actually** resolve the correct versions of projects currently, but only use the version number to *report* to users that something might be amiss, we do not deal with this here.
       // In case we could actually resolve different versions of the same project at the same time, transitive dependencies would also need to be handled in the case same name but different version above!
-      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === depToEnsure.name).lively.projectDependencies;
+      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => `${proj.projectRepoOwner}--${proj.name}` === depToEnsure.name).lively.projectDependencies.map(dep => ({
+        name: dep.name,
+        version: dep.version,
+        requester: depToEnsure.name
+      }));
       transitiveDepsOfDepToEnsure.forEach(dep => dep.requester = depToEnsure.name);
       depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
 
@@ -486,6 +500,22 @@ export class Project {
   removeDependencyFromProject (owner, name) {
     const deps = this.config.lively.projectDependencies;
     this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}-${name}`);
+
+  async addMissingProjectDependencies () {
+    const availableDeps = Project.retrieveAvailableProjectsCache().map(proj => ({ name: `${proj.projectRepoOwner}--${proj.name}`, version: proj.version }));
+    let currentDeps = this.config.lively.projectDependencies.slice();
+
+    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
+    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js'));
+    for (let jsFile of jsFilesInPackage) {
+      const content = await jsFile.read();
+      availableDeps.forEach(dep => {
+        if (content.includes(dep.name) && !currentDeps.some(alreadyPresentDeps => dep.name === alreadyPresentDeps.name)) currentDeps.push(dep);
+      });
+    }
+    currentDeps = arr.uniqBy(currentDeps, obj.equals);
+    this.config.lively.projectDependencies = currentDeps;
+    return currentDeps;
   }
 
   async removeUnusedProjectDependencies () {
