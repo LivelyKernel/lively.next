@@ -545,7 +545,12 @@ export class TilingLayout extends Layout {
    */
   get hugContentsVertically () {
     if (this.wrapSubmorphs && this.axis === 'column') return false;
-    if (!this.resizePolicies.some(([_, { height }]) => height === 'fixed')) return false;
+    for (let m of this.layoutableSubmorphs) {
+      const h = this._resizePolicies.get(m)?.height;
+      if (!h) continue;
+      if (h === 'fill') return false;
+    }
+    // if (!this.resizePolicies.some(([_, { height }]) => height === 'fixed')) return false;
     return this._hugContentsVertically;
   }
 
@@ -561,7 +566,11 @@ export class TilingLayout extends Layout {
    */
   get hugContentsHorizontally () {
     if (this.wrapSubmorphs && this.axis === 'row') return false;
-    if (!this.resizePolicies.some(([_, { width }]) => width === 'fixed')) return false;
+    for (let m of this.layoutableSubmorphs) {
+      const w = this._resizePolicies.get(m)?.width;
+      if (!w) continue;
+      if (w === 'fill') return false;
+    }
     return this._hugContentsHorizontally;
   }
 
