@@ -12,13 +12,13 @@ import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
 import { Project } from 'lively.project';
 import { LivelyWorld } from '../world.js';
-import { without } from 'lively.morphic/components/core.js';
+import { without, add } from 'lively.morphic/components/core.js';
+import { Text } from 'lively.morphic/text/morph.js';
+import { Path } from 'lively.morphic/morph.js';
 
 export const missingSVG = `data:image/svg+xml;utf8,
 <svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
 `;
-
-const projectIconURL = 'https://cdn4.iconfinder.com/data/icons/ikooni-outline-project-planning/128/planning-12-512.png';
 
 class WorldVersion extends Morph {
   static get properties () {
@@ -723,7 +723,7 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   async loadEntity () {
-    const { _id, name } = this._commit;
+    const { _id } = this._commit;
     // from dashboard
     if (lively.FreezerRuntime) {
       // open the world via url redirect
@@ -817,11 +817,9 @@ class ProjectPreviewModel extends WorldPreviewModel {
 
   initWithProject (project) {
     const {
-      preview, timestamp, title, description, titleWrapper
+      timestamp, title, description, titleWrapper
     } = this.ui;
     this.opacity = 0.5;
-    // TODO: Can we do this better? We should at least server this locally. In the best case we can generate a meaningful preview.
-    preview.imageUrl = projectIconURL;
     let authorName = project.author.name;
     authorName = authorName.startsWith('guest') ? 'guest' : authorName;
     timestamp.value = [project.projectRepoOwner + ' - ' + authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
@@ -1047,6 +1045,132 @@ const WorldPreviewTile = component({
   }]
 });
 
+// TODO: This can be build much smoother by relying on more advanced components/layout features.
+// As of writing this, those are however not yet available (via the sidebar).
+const ProjectIcon = component({
+  name: 'aMorph',
+  borderColor: Color.rgb(56, 175, 249),
+  borderRadius: 5,
+  borderWidth: 6,
+  extent: pt(155, 155),
+  position: pt(26.5, 5.4),
+  submorphs: [{
+    type: Path,
+    name: 'aPath2',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(6, 132),
+    position: pt(25, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 131.99999999999991), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    type: Path,
+    name: 'aPath3',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(1, 132),
+    position: pt(46, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 132), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    type: Path,
+    name: 'aPath4',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(1, 132),
+    position: pt(67, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 132), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    type: Path,
+    name: 'aPath5',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(1, 132),
+    position: pt(88, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 132), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    type: Path,
+    name: 'aPath6',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(1, 132),
+    position: pt(108, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 132), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    type: Path,
+    name: 'aPath1',
+    borderColor: Color.rgba(4, 28, 43, 0.5),
+    borderWidth: 4,
+    extent: pt(1, 132),
+    position: pt(130, 10),
+    vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 132), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+  }, {
+    name: 'aMorph3',
+    borderColor: Color.rgb(23, 160, 251),
+    borderRadius: 8,
+    extent: pt(91, 6),
+    fill: Color.rgb(77, 175, 243),
+    position: pt(9.5, 20)
+  }, {
+    name: 'aMorph1',
+    borderColor: Color.rgb(23, 160, 251),
+    borderRadius: 8,
+    extent: pt(61, 6),
+    fill: Color.rgb(77, 175, 243),
+    position: pt(33.5, 60)
+  }, {
+    name: 'aMorph2',
+    borderColor: Color.rgb(23, 160, 251),
+    borderRadius: 8,
+    extent: pt(61, 6),
+    fill: Color.rgb(77, 175, 243),
+    position: pt(73, 89)
+  }, add({
+    name: 'background remover',
+    borderColor: Color.rgb(23, 160, 251),
+    extent: pt(30.5, 33.5),
+    position: pt(20.5, 104.5)
+  }, 'aText'), {
+    type: Text,
+    name: 'aText',
+    fontWeight: 700,
+    borderColor: Color.rgb(23, 160, 251),
+    cursorWidth: 1.5,
+    dynamicCursorColoring: true,
+    extent: pt(48, 49),
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgb(92, 175, 238),
+    fontSize: 42,
+    lineWrapping: true,
+    padding: rect(1, 1, 0, 0),
+    position: pt(98.5, 21),
+    textAndAttributes: ['', {
+      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+      fontWeight: '900'
+    }, ' ', {}]
+  }, add({
+    type: Text,
+    name: 'aText2',
+    lineHeight: 1,
+    borderColor: Color.rgb(23, 160, 251),
+    cursorWidth: 1.5,
+    dynamicCursorColoring: true,
+    extent: pt(61.5, 55),
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgb(77, 175, 243),
+    fontSize: 62,
+    lineWrapping: true,
+    padding: rect(0, 0, 1, 0),
+    position: pt(3.5, 89),
+    textAndAttributes: ['', {
+      fontFamily: 'tabler-icons',
+      fontWeight: '900'
+    }, ' ', {}]
+  })]
+});
+
 const ProjectPreviewTile = component(WorldPreviewTile, {
   defaultViewModel: ProjectPreviewModel,
   submorphs: [{
@@ -1057,8 +1181,13 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
         name: 'label',
         textAndAttributes: ['OPEN PROJECT', null]
       }]
-    }, without('version button')]
-  }, without('version container')]
+    }, without('version button'), {
+      name: 'preview frame',
+      clipMode: 'visible',
+      // TODO: We can still think about some kind of generated preview for Projects.
+      submorphs: [without('preview'), add(part(ProjectIcon)), without('version container')]
+    }]
+  }]
 });
 
 const WorldBrowser = component({
