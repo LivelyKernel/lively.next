@@ -582,6 +582,7 @@ const commands = [
       halo.alignWithTarget();
       once(responsiveHalo, 'close', halo.responsiveHalo(), 'stop');
       once(halo, 'remove', responsiveHalo, 'close');
+      world.propertiesPanel?.get('responsive control').viewModel.activate();
 
       return responsiveHalo;
     }

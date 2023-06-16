@@ -256,7 +256,14 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
         get () { return this.store?._verticalBreakpoints || [0]; }
       },
       store: {
-        get () { return this.target.master?._breakpointStore; }
+        get () { return this.targetStylePolicy?._breakpointStore; }
+      },
+      targetStylePolicy: {
+        get () {
+          let stylePolicy = this.target.master;
+          if (stylePolicy.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
+          return stylePolicy;
+        }
       },
       sliders: { get () { return this.view.getAllNamed(/slider/); } },
       verticalSliders: { get () { return this.sliders.filter(slider => slider.orientation === 'vertical'); } },
@@ -287,7 +294,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   ensureStore () {
     if (!this.target.master) this.target.master = new PolicyApplicator({ breakpoints: [] });
-    if (!this.store) this.target.master._breakpointStore = new BreakpointStore();
+    if (!this.store) this.targetStylePolicy._breakpointStore = new BreakpointStore();
   }
 
   focusOn (target) {
@@ -424,6 +431,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.addHorizontalBreakpoint(horizontalBreakpointControl.width);
     this.update();
     signal(this.target, 'breakpoint added');
+    this.refreshChangeTrackers();
   }
 
   addVerticalBreakpoint () {
@@ -432,18 +440,21 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.addVerticalBreakpoint(verticalBreakpointControl.width);
     this.update();
     signal(this.target, 'breakpoint added');
+    this.refreshChangeTrackers();
   }
 
   removeHorizontalBreakpoint (idx) {
     this.store.removeHorizontalBreakpoint(idx);
     this.update();
     signal(this.target, 'breakpoint removed');
+    this.refreshChangeTrackers();
   }
 
   removeVerticalBreakpoint (idx) {
     this.store.removeVerticalBreakpoint(idx);
     this.update();
     signal(this.target, 'breakpoint removed');
+    this.refreshChangeTrackers();
   }
 
   onSliderDrag (slider, dragDelta) {
@@ -460,6 +471,17 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     if (bps[idx] > upperBound) bps[idx] = upperBound - 1;
     this.relayout();
     signal(this.target, 'breakpoint changed');
+    this.refreshChangeTrackers();
+  }
+
+  refreshChangeTrackers () {
+    if (!this.target._changeTracker) return;
+    this.target._changeTracker.processChangeInComponent({
+      prop: 'master',
+      meta: { reconcileChanges: true },
+      target: this.target,
+      value: this.targetStylePolicy
+    });
   }
 }
 

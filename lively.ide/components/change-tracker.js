@@ -99,6 +99,7 @@ export class ComponentChangeTracker {
     if (change.prop &&
         change.prop !== 'textAndAttributes' &&
         change.prop !== 'vertices' &&
+        change.prop !== 'master' &&
         !change.target.styleProperties.includes(change.prop)) return true;
     if (change.target.epiMorph) return true;
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
