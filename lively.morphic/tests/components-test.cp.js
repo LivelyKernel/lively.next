@@ -2,12 +2,12 @@
 /* global describe, it , afterEach */
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
-import { tree } from 'lively.lang';
+import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, morph } from 'lively.morphic';
 
 import { component, ViewModel, without, part, add } from '../components/core.js';
-import { StylePolicy, PolicyApplicator } from '../components/policy.js';
+import { StylePolicy, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 
 const moduleId = import.meta.url.replace(System.baseURL, '');
 
@@ -903,5 +903,20 @@ describe('components', () => {
     expect(m.submorphs[1].name).not.to.eql('c1');
     expect(m.submorphs[0].submorphs[0].name).to.eql('c2');
     expect(m.submorphs[0].submorphs[1].name).not.to.eql('c2');
+  });
+});
+
+describe('breakpoints', () => {
+  it('propertly initializes breakpoints from spec', () => {
+    const bpStore = BreakpointStore.from([
+      [pt(100, 0), d2],
+      [pt(0, 100), d3],
+      [pt(200, 100), null]
+    ]);
+    expect(bpStore._horizontalBreakpoints).equals([0, 100, 200]);
+    expect(bpStore._verticalBreakpoints).equals([0, 100]);
+    expect(grid.get(bpStore._breakpointMasters, 0, 1)).equals(d2);
+    expect(grid.get(bpStore._breakpointMasters, 1, 0)).equals(d3);
+    expect(grid.get(bpStore._breakpointMasters, 1, 2)).equals(null);
   });
 });

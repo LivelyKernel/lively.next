@@ -145,15 +145,20 @@ export class BreakpointStore {
 
   static from (breakpointSpec) {
     const store = new this();
+    const vbps = store._verticalBreakpoints;
+    const hbps = store._horizontalBreakpoints;
     breakpointSpec.forEach(([bp, componentDescriptor]) => {
-      store.addHorizontalBreakpoint(bp.x, componentDescriptor);
-      store.addVerticalBreakpoint(bp.y, componentDescriptor);
+      store.addHorizontalBreakpoint(bp.x);
+      store.addVerticalBreakpoint(bp.y);
+    });
+    breakpointSpec.forEach(([bp, componentDescriptor]) => {
+      store.setBreakpointMaster(vbps.indexOf(bp.y), hbps.indexOf(bp.x), componentDescriptor);
     });
     return store;
   }
 
   setBreakpointMaster (vi, hi, componentDescriptor) {
-    grid.set(this._breakpointMasters, hi, vi, componentDescriptor);
+    grid.set(this._breakpointMasters, vi, hi, componentDescriptor);
   }
 
   setVerticalBreakpointMaster (idx, componentDescriptor) {
