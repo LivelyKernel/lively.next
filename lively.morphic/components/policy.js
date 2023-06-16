@@ -1141,9 +1141,10 @@ export class PolicyApplicator extends StylePolicy {
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
     const needsApplication = needsUpdate && !!this.targetMorph;
+    if (!needsApplication) return;
     const superMaster = arr.findAndGet(this.targetMorph.ownerChain(), m => m.master);
     const previousTarget = superMaster?.managesMorph(this.targetMorph.name) && superMaster.targetMorph;
-    if (animationConfig && needsApplication) {
+    if (animationConfig) {
       let resolve, animationPromise;
       ({ promise: animationPromise, resolve } = promise.deferred());
       this._animating = animationPromise;
@@ -1157,7 +1158,7 @@ export class PolicyApplicator extends StylePolicy {
       });
       return this._animating;
     }
-    if (!this._animating && needsApplication) {
+    if (!this._animating) {
       this.apply(this.targetMorph, previousTarget);
     }
   }
