@@ -112,6 +112,11 @@ export default class GitShellResource extends ShellClientResource {
     if (cmd.exitCode !== 0 && cmd.stderr !== 'No stash entries found.\n') throw Error('Error applying stash. Might be due to a conflict!');
     else return true;
   }
+
+  async resetFile (fileName) {
+    const resetCmd = `git checkout ${fileName}`;
+    await this.runCommand(resetCmd).whenDone();
+  }
 }
 
 let _defaultL2LClient;
