@@ -919,6 +919,7 @@ const TopBar = component({
         tooltip: 'Redo'
       }),
       part(TopBarButtonDropDown, {
+        name: 'save button',
         viewModel: {
           opts: {
             name: 'save button',
@@ -935,6 +936,7 @@ const TopBar = component({
         }
       }),
       part(TopBarButtonDropDown, {
+        name: 'hand or halo mode button',
         viewModel: {
           opts: {
             name: 'hand or halo mode button',
@@ -955,6 +957,7 @@ const TopBar = component({
         textAndAttributes: Icon.textAttribute('font'),
         tooltip: 'Create textbox mode'
       }), part(TopBarButtonDropDown, {
+        name: 'shape mode button',
         viewModel: {
           opts: {
             name: 'shape mode button',
@@ -989,6 +992,7 @@ const TopBar = component({
         tooltip: 'Toggle Comment Browser'
       }),
       part(TopBarButtonDropDown, {
+        name: 'canvas mode button',
         viewModel: {
           opts: {
             name: 'canvas mode button',
