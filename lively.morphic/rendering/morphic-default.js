@@ -1,4 +1,4 @@
-import { num, Path, obj, arr } from 'lively.lang';
+import { num, obj, arr } from 'lively.lang';
 import { Color, Point } from 'lively.graphics';
 import config from '../config.js';
 import { styleProps, stylepropsToNode } from './property-dom-mapping.js';
@@ -38,17 +38,17 @@ export function applyStylingToNode (morph, node) {
     styleProps = morph.renderStyles(styleProps);
   }
 
-  stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
-
   if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.has(morph)) {
-    node.style.position = 'sticky';
-    node.style.transform = '';
-    node.style.textAlign = 'initial';
-    node.style.removeProperty('top');
-    node.style.removeProperty('left');
+    styleProps.position = 'sticky';
+    styleProps.transform = '';
+    styleProps.textAlign = 'initial';
+    delete styleProps.top;
+    delete styleProps.left;
   }
-  if (morph.renderingState.inlineGridImportant && node.style['display'] !== 'none') node.style.setProperty('display', 'inline-grid', 'important');
-  if (morph.renderingState.inlineFlexImportant && node.style['display'] !== 'none') node.style.setProperty('display', 'inline-flex', 'important');
+
+  stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
+  if (morph.renderingState.inlineGridImportant && styleProps.display !== 'none') node.style.setProperty('display', 'inline-grid', 'important');
+  if (morph.renderingState.inlineFlexImportant && styleProps.display !== 'none') node.style.setProperty('display', 'inline-flex', 'important');
 
   return node;
 }
@@ -494,11 +494,11 @@ function defaultStyle (morph) {
   const { reactsToPointer, nativeCursor, clipMode } = morph;
   const layoutStyle = {};
   // this also performs measure of the actual morphs height, so do that before rendering the style props
-  if (Path('owner.layout.renderViaCSS').get(morph)) {
-    morph.owner.layout.addSubmorphCSS(morph, layoutStyle);
+  if (morph.owner?.layout?.renderViaCSS) {
+    morph.owner.layout.addSubmorphCSS(morph, layoutStyle); // FIXME: expensive
   }
-  if (Path('layout.renderViaCSS').get(morph)) {
-    morph.layout.addContainerCSS(morph, layoutStyle);
+  if (morph.layout?.renderViaCSS) {
+    morph.layout.addContainerCSS(morph, layoutStyle); // FIXME: expensive
   }
   // problem: If we resize the parent, the submorphs have not yet taken the adjusted height/width
   //          this means measuring the contentRect for these updates is not the correct ground truth but

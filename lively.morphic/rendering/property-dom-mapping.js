@@ -1,6 +1,6 @@
 /* eslint-disable no-use-before-define */
 import { Color } from 'lively.graphics';
-import { string, num, Path } from 'lively.lang';
+import { string, num } from 'lively.lang';
 import { defaultAttributes } from './morphic-default';
 import bowser from 'bowser';
 
@@ -39,14 +39,17 @@ const propsToDelete = [
  * @returns {Node} the DOM node with changed style properties.
  */
 export function stylepropsToNode (styleProps, node) {
+  const previousStyleProps = node._previousStyleProps || {};
   for (let prop of propsToDelete) {
+    if (previousStyleProps[prop] === styleProps[prop]) continue;
     if (prop in styleProps) continue; // not need to reset what we are patching afterwards anyways
     node.style.removeProperty(prop);
   }
   for (let prop in styleProps) {
-    // FIXME: do not patch props that have not changed in the first place
+    if (previousStyleProps[prop] === styleProps[prop]) continue;
     node.style[prop] = styleProps[prop];
   }
+  node._previousStyleProps = styleProps;
   return node;
 }
 
@@ -100,7 +103,7 @@ export function styleProps (morph) {
 }
 
 export function canBePromotedToCompositionLayer (morph) {
-  return (morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0) && !Path('owner.layout.renderViaCSS').get(morph);
+  return (morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0) && !morph.owner?.layout?.renderViaCSS;
 }
 
 export function addTransform (morph, style) {
@@ -113,7 +116,7 @@ export function addTransform (morph, style) {
   if (promoteToCompositionLayer) {
     style.willChange = 'transform';
   }
-  if ((owner && owner.isText && !Path('layout.renderViaCSS').get(owner)) || promoteToCompositionLayer) {
+  if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
     style.top = '';
     style.left = '';
