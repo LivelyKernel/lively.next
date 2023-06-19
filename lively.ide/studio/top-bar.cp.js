@@ -80,7 +80,7 @@ export class TopBarModel extends ViewModel {
         defaultValue: 'Rectangle',
         set (shapeName) {
           this.setProperty('currentShapeMode', shapeName);
-          this.ui.shapeModeButton.symbol.textAndAttributes = Icon.textAttribute(this.shapeToIcon[shapeName].args[0]);
+          this.ui.shapeModeButton.changeIcon(Icon.textAttribute(this.shapeToIcon[shapeName].args[0]));
         }
       },
       shapeToIcon: {
@@ -172,14 +172,14 @@ export class TopBarModel extends ViewModel {
   }
 
   onMouseDown (evt) {
-    const shapeSelector = this.ui.shapeModeButton.dropdown;
-    const handHaloSelector = this.ui.handOrHaloModeButton.dropdown;
+    const shapeSelector = this.ui.shapeModeButton.get('dropdown');
+    const handHaloSelector = this.ui.handOrHaloModeButton.get('dropdown');
     const handOrHaloModeButton = this.ui.handOrHaloModeButton;
     const shapeModeButton = this.ui.shapeModeButton;
     const canvasModeButton = this.ui.canvasModeButton;
-    const canvasModeSelector = this.ui.canvasModeButton.dropdown;
+    const canvasModeSelector = this.ui.canvasModeButton.get('dropdown');
     const saveButton = this.ui.saveButton;
-    const saveMenu = this.ui.saveButton.dropdown;
+    const saveMenu = this.ui.saveButton.get('dropdown');
     const target = this.primaryTarget || this.world();
 
     if (evt.targetMorph === saveButton) $world.execCommand('save world or project');
@@ -402,30 +402,33 @@ export class TopBarModel extends ViewModel {
     ];
   }
 
-  colorTopbarButton (buttonName, active) {
-    this.view.get(buttonName).master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
+  colorTopbarButton (button, active) {
+    button.master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
   }
 
   toggleCommentBrowser () {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
+    const commentBrowserButton = this.ui.commentBrowserButton;
     if (commentBrowser) {
-      this.colorTopbarButton('comment browser button', false);
+      this.colorTopbarButton(commentBrowserButton, false);
       commentBrowser.getWindow().close();
     } else {
-      this.colorTopbarButton('comment browser button', true);
-      part(CommentBrowser).openInWindow();
+      this.colorTopbarButton(commentBrowserButton, true);
+      const win = part(CommentBrowser).openInWindow();
+      once(win, 'remove', () => {
+        this.colorTopbarButton(commentBrowserButton, false);
+      });
     }
   }
 
   toggleMiniMap (forceState) {
     let miniMap = $world.getSubmorphNamed('world mini map');
-
     if (miniMap && forceState !== true && forceState !== undefined) {
-      this.colorTopbarButton('mini map button', false);
+      this.ui.canvasModeButton.deactivateButton();
       miniMap.remove();
       $world.getSubmorphNamed('world zoom indicator').relayout();
     } else if (!miniMap && forceState !== false && forceState !== undefined) {
-      this.colorTopbarButton('mini map button', true);
+      this.ui.canvasModeButton.activateButton();
       const miniMap = part(WorldMiniMap).openInWorld();
       miniMap.relayout();
       $world.getSubmorphNamed('world zoom indicator').relayout();
@@ -459,8 +462,8 @@ export class TopBarModel extends ViewModel {
       ['Hand', handOrHaloModeButton],
       ['Halo', handOrHaloModeButton]
     ].forEach(([modeName, morphToUpdate]) => {
-      if (mode === 'Halo') this.ui.handOrHaloModeButton.symbol.textAndAttributes = Icon.textAttribute('arrow-pointer', { paddingLeft: '7px' });
-      if (mode === 'Hand') this.ui.handOrHaloModeButton.symbol.textAndAttributes = Icon.textAttribute('hand');
+      if (mode === 'Halo') { this.ui.handOrHaloModeButton.changeIcon(Icon.textAttribute('arrow-pointer', { paddingLeft: '7px' })); }
+      if (mode === 'Hand') { this.ui.handOrHaloModeButton.changeIcon(Icon.textAttribute('hand')); }
       if (mode === 'Shape') {
         this.toggleShapeMode(target, true, this.currentShapeMode);
       } else if (mode === 'Text') {
@@ -922,15 +925,10 @@ const TopBar = component({
         name: 'save button',
         viewModel: {
           opts: {
-            name: 'save button',
             tooltip: 'Choose advanced saving options for Projects.',
             symbol: {
-              name: 'save symbol',
               textAndAttributes: Icon.textAttribute('save'),
               tooltip: 'Save Project or World'
-            },
-            dropdown: {
-              name: 'open save menu'
             }
           }
         }
@@ -939,15 +937,10 @@ const TopBar = component({
         name: 'hand or halo mode button',
         viewModel: {
           opts: {
-            name: 'hand or halo mode button',
             tooltip: 'Choose between Hand and Halo mode',
             symbol: {
-              name: 'interaction mode status icon',
               textAndAttributes: Icon.textAttribute('arrow-pointer'),
               tooltip: 'Current mode of the cursor (Hand or Halo)'
-            },
-            dropdown: {
-              name: 'select hand or halo'
             }
           }
         }
@@ -956,19 +949,15 @@ const TopBar = component({
         name: 'text mode button',
         textAndAttributes: Icon.textAttribute('font'),
         tooltip: 'Create textbox mode'
-      }), part(TopBarButtonDropDown, {
+      }),
+      part(TopBarButtonDropDown, {
         name: 'shape mode button',
         viewModel: {
           opts: {
-            name: 'shape mode button',
             tooltip: 'Select different shape',
             symbol: {
-              name: 'shape status icon',
               textAndAttributes: Icon.textAttribute('square'),
               tooltip: 'Create basic shape mode'
-            },
-            dropdown: {
-              name: 'select shape type'
             }
           }
         }
@@ -995,15 +984,10 @@ const TopBar = component({
         name: 'canvas mode button',
         viewModel: {
           opts: {
-            name: 'canvas mode button',
             tooltip: 'Enable/Disable Canvas mode',
             symbol: {
-              name: 'mini map button',
               textAndAttributes: Icon.textAttribute('map-location-dot'),
               tooltip: 'Open/Close the Minimap'
-            },
-            dropdown: {
-              name: 'canvas mode dropdown'
             }
           }
         }
