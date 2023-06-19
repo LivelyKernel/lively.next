@@ -2,7 +2,7 @@ import { Color, rect, Rectangle, pt } from 'lively.graphics';
 import { TilingLayout, without, Morph, Label, part, add, component } from 'lively.morphic';
 import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabelActive, EnumSelector, DarkNumberIconWidget, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
-import { NumberWidget } from '../../value-widgets.js';
+
 import { arr, string } from 'lively.lang';
 import { once, connect, signal } from 'lively.bindings';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
@@ -408,7 +408,6 @@ const BorderControlElements = component({
       spacing: 10
     }),
     submorphs: [part(DarkNumberIconWidget, {
-      type: NumberWidget,
       tooltip: 'Border Width',
       name: 'border width input',
       extent: pt(90, 22),

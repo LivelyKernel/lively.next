@@ -4,7 +4,7 @@ import {
   ColorEncoderModel, ColorInputModel, ColorPickerModel,
   ColorPaletteView, FieldPickerModel, HuePickerModel, OpacityPickerModel
 } from './color-picker.js';
-import { NumberWidget } from '../value-widgets.js';
+
 import { DefaultNumberWidget } from '../value-widgets.cp.js';
 import { DropDownList } from 'lively.components/list.cp.js';
 import { CheckerPattern, PopupWindow, SystemList } from './shared.cp.js';
@@ -70,14 +70,15 @@ const ColorInput = component({
     padding: rect(4, 3, 6, 2),
     textAndAttributes: ['DDDDDD', null]
   }), part(DarkNumberIconWidget, {
-    type: NumberWidget,
     name: 'opacity input',
     tooltip: 'Opacity',
     extent: pt(78.8, 23),
-    unit: '%',
-    max: 1,
-    min: 0,
-    scaleFactor: 100,
+    viewModel: {
+      unit: '%',
+      max: 1,
+      min: 0,
+      scaleFactor: 100
+    },
     submorphs: [{
       name: 'interactive label',
       lineHeight: 1,
@@ -134,10 +135,13 @@ const HexEncoder = component({
       extent: pt(40, 23),
       floatingPoint: false,
       borderRadius: 0,
-      max: 1,
-      min: 0,
-      scaleFactor: 100,
-      unit: '%',
+      viewModel: {
+        max: 1,
+        min: 0,
+        scaleFactor: 100,
+        unit: '%',
+        autofit: true
+      },
       submorphs: [{
         name: 'value',
         fontSize: 14
@@ -178,7 +182,6 @@ const ThreeValEncoder = component({
       }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
-      type: NumberWidget,
       name: 'first value',
       dropShadow: false,
       extent: pt(30, 22),
@@ -193,7 +196,6 @@ const ThreeValEncoder = component({
       }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
-      type: NumberWidget,
       name: 'second value',
       borderRadius: 0,
       dropShadow: false,

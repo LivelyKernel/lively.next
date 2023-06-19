@@ -1,5 +1,5 @@
 import {
-  Morph,
+  Morph, ViewModel,
   morph,
   TilingLayout,
   Label,
@@ -163,7 +163,7 @@ export class ColorWidget extends ContextSensitiveWidget {
     return {
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout({ direction: 'centered' });
+          this.layout = new TilingLayout({ direction: 'centered' });
         }
       },
       selectionFontColor: {
@@ -332,7 +332,7 @@ export class ColorWidget extends ContextSensitiveWidget {
       stops.push({
         extent: pt(this.fontSize, this.fontSize),
         fill: Color.transparent,
-        layout: new HorizontalLayout({ spacing: 3 }),
+        layout: new TilingLayout({ spacing: 3 }),
         submorphs: [
           {
             styleClasses: ['colorValue'],
@@ -391,232 +391,6 @@ export class BooleanWidget extends Label {
   }
 }
 
-export class NumberWidget extends Morph {
-  static get properties () {
-    return {
-      unit: {
-        type: 'Enum',
-        isStyleProp: true,
-        values: ['px', '%', 'pt', '']
-      },
-      autofit: {
-        defaultValue: true,
-        after: ['submorphs', 'extent'],
-        set (active) {
-          this.setProperty('autofit', active);
-          this.getSubmorphNamed('value').scaleToBounds = !active;
-        }
-      },
-      number: {
-        defaultValue: 0,
-        after: ['unit', 'autofit'],
-        set (v) {
-          this.setProperty('number', v);
-          this.relayout(false);
-        }
-      },
-      min: {
-        defaultValue: -Infinity,
-        set (v) {
-          if (isNaN(v)) {
-            return;
-          }
-          if (this.getSubmorphNamed('value')) {
-            this.getSubmorphNamed('value').min = v;
-          }
-          this.setProperty('min', v);
-        }
-      },
-      max: {
-        defaultValue: Infinity,
-        set (v) {
-          if (isNaN(v)) {
-            return;
-          }
-          if (this.getSubmorphNamed('value')) {
-            this.getSubmorphNamed('value').max = v;
-          }
-          this.setProperty('max', v);
-        }
-      },
-      floatingPoint: {
-        after: ['number', 'submorphs'],
-        set (isFloat) {
-          this.setProperty('floatingPoint', isFloat);
-          this.get('value').floatingPoint = isFloat;
-        },
-        get () {
-          if (typeof this.getProperty('floatingPoint') !== 'undefined') {
-            return this.getProperty('floatingPoint');
-          }
-          const m = /[+-]?([0-9]*[.])?[0-9]+/.exec(this.number);
-          return this.scaleFactor === 1 && m && !!m[1];
-        }
-      },
-      extent: { defaultValue: pt(70, 25) },
-      scaleFactor: {
-        defaultValue: 1,
-        get () {
-          return this.getProperty('scaleFactor') || 1;
-        }
-      },
-      baseFactor: {
-        after: ['submorphs'],
-        derived: true,
-        get () {
-          return this.get('value').baseFactor;
-        },
-        set (v) {
-          this.get('value').baseFactor = v;
-        }
-      },
-      styleClasses: { defaultValue: ['unfocused'] },
-      fontColor: {
-        isStyleProp: true,
-        defaultValue: Color.rgbHex('#0086b3'),
-        set (v) {
-          this.setProperty('fontColor', v);
-        }
-      },
-      isSelected: {
-        set (selected) {
-          if (this.getProperty('isSelected') !== selected) {
-            // fixme: style sheets should restore the initial value, once a rule no longer applies
-            if (selected) {
-              this.addStyleClass('selected');
-              this.removeStyleClass('unselected');
-            } else {
-              this.removeStyleClass('selected');
-              this.addStyleClass('unselected');
-            }
-            this.setProperty('isSelected', selected);
-          }
-        }
-      },
-      fontFamily: {
-        defaultValue: 'Sans-Serif',
-        isStyleProp: true,
-        set (v) {
-          this.setProperty('fontFamily', v);
-        }
-      },
-      fontSize: {
-        defaultValue: 15,
-        isStyleProp: true,
-        set (v) {
-          this.setProperty('fontSize', v);
-        }
-      },
-
-      showStepControls: {
-        derived: true,
-        get () {
-          const up = this.getSubmorphNamed('up');
-          const down = this.getSubmorphNamed('down');
-          return up && up.visible && down && down.visible;
-        },
-        set (active) {
-          this.getSubmorphNamed('up').visible = this.getSubmorphNamed('down').visible = active;
-          this.clipMode = active ? 'visible' : 'hidden';
-        }
-      }
-    };
-  }
-
-  get isNumberWidget () {
-    return true;
-  }
-
-  get isMixed () {
-    return this.getSubmorphNamed('value').isMixed;
-  }
-
-  setMixed () {
-    this.getSubmorphNamed('value').setMixed();
-  }
-
-  onMouseDown (evt) {
-    super.onMouseDown(evt);
-    if (evt.targetMorph.name === 'up') { this.increment(); }
-    if (evt.targetMorph.name === 'down') { this.decrement(); }
-  }
-
-  onMouseUp (evt) {
-    super.onMouseUp(evt);
-    if (evt.targetMorph.name === 'value') { this.interactivelyEdit(); }
-  }
-
-  interactivelyEdit () {
-    this.getSubmorphNamed('value').readOnly = false;
-    this.getSubmorphNamed('value').focus();
-  }
-
-  spec () {
-    return obj.dissoc(super.spec(), ['submorphs']);
-  }
-
-  update (v, fromScrubber = true) {
-    // allows us to selectively skip relayouting
-    this.setProperty('number', fromScrubber ? v / this.scaleFactor : v);
-    signal(this, 'number', this.number);
-    signal(this, 'numberChanged', this.number);
-    this.relayout(fromScrubber);
-  }
-
-  relayoutButtons () {
-    if (!this.showStepControls) return;
-    const upButton = this.getSubmorphNamed('up');
-    const downButton = this.getSubmorphNamed('down');
-
-    if (upButton && downButton) {
-      upButton.height = downButton.height = Math.floor(this.height / 2);
-      upButton.width = downButton.width = 20;
-    }
-  }
-
-  onChange (change) {
-    super.onChange(change);
-    if (change.prop === 'extent' && !this.autofit) this.relayout(true);
-  }
-
-  relayout (fromScrubber) {
-    this.withMetaDo({ metaInteraction: true }, () => {
-      const valueContainer = this.getSubmorphNamed('value');
-      const buttonOffset = this.showStepControls ? 20 : 0;
-
-      if (!valueContainer) return;
-      valueContainer.readOnly = true;
-
-      if (this.autofit) {
-        if (!fromScrubber) valueContainer.value = this.number * this.scaleFactor;
-        valueContainer.fit();
-        this.height = valueContainer.height;
-        this.width = valueContainer.width + buttonOffset;
-        this.relayoutButtons();
-      } else {
-        if (!fromScrubber) valueContainer.width = this.width - buttonOffset;
-        this.relayoutButtons();
-      }
-      if (!fromScrubber) {
-        valueContainer.value = valueContainer.scrubbedValue = this.floatingPoint ? this.number * this.scaleFactor : num.roundTo(this.number * this.scaleFactor, 1);
-        valueContainer.min = this.min !== -Infinity ? this.min * this.scaleFactor : this.min;
-        valueContainer.max = this.max !== Infinity ? this.max * this.scaleFactor : this.max;
-        valueContainer.unit = this.unit;
-      }
-    });
-  }
-
-  increment () {
-    if (this.max !== undefined && this.number >= this.max) return;
-    this.update(this.number + (1 / this.scaleFactor), false);
-  }
-
-  decrement () {
-    if (this.min !== undefined && this.number <= this.min) return;
-    this.update(this.number - (1 / this.scaleFactor), false);
-  }
-}
-
 export class ShadowWidget extends Morph {
   static get properties () {
     return {
@@ -646,7 +420,7 @@ export class ShadowWidget extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout();
+          this.layout = new TilingLayout();
         }
       },
       submorphs: {
@@ -942,7 +716,6 @@ export class StringWidget extends InputLine {
 
 import { valueWidgets } from './index.js';
 Object.assign(valueWidgets, {
-  NumberWidget,
   StringWidget,
   IconWidget,
   BooleanWidget,
