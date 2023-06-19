@@ -1,6 +1,6 @@
 import { Morph, Label, Icon, morph, touchInputDevice, part } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
-import { arr, Path, string } from 'lively.lang';
+import { arr, obj, Path, string } from 'lively.lang';
 import { signal, noUpdate, once, connect } from 'lively.bindings';
 import { Button, ButtonModel } from './buttons.js';
 import { InputLine } from './inputs.js';
@@ -1808,6 +1808,9 @@ export class DropDownListModel extends ButtonModel {
       },
       selection: {
         // value or string referencing the selected item
+        set (sel) {
+          if (this.selection !== sel) this.setProperty('selection', sel);
+        }
       },
 
       expose: {
@@ -1851,7 +1854,7 @@ export class DropDownListModel extends ButtonModel {
   }
 
   initListMorph () {
-    this.listMorph = this.listMaster ? part(this.listMaster, { isLayoutable: false, name: 'dropDownList', viewModel: { items: [] } }) : new List({ items: [] });
+    this.listMorph = this.listMaster ? part(this.listMaster, { isLayoutable: false, name: 'dropDownList', viewModel: { items: this.items } }) : new List({ items: this.items });
   }
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
@@ -1870,29 +1873,36 @@ export class DropDownListModel extends ButtonModel {
     this.onRefresh('selection');
   }
 
+  updateListMorphIfNeeded () {
+    const { listMorph: { items: itemsInList }, items } = this;
+    const itemsChanged = !obj.equals(itemsInList.map(m => m.value), items.map(m => m.value));
+    if (itemsChanged) { this.listMorph.items = items; return true; }
+  }
+
   onRefresh (prop) {
     const { listMorph } = this;
-    const sel = this.selection;
 
     if (!listMorph) return super.onRefresh(prop);
 
-    listMorph.items = this.items;
+    if (this.updateListMorphIfNeeded() || prop === 'selection' || prop === 'items') {
+      const sel = this.selection;
+      if (!sel) {
+        listMorph.selection = null;
+        this.label = { value: '' };
+      } else {
+        const { items } = listMorph;
+        let item = listMorph.find(sel);
+        if (!item && typeof sel === 'string') {
+          item = items.find(ea => ea.string === sel);
+        }
+        if (!item) return super.onRefresh(prop);
 
-    if (!sel) {
-      listMorph.selection = null;
-      this.label = { value: '' };
-    } else {
-      const { items } = listMorph;
-      let item = listMorph.find(sel);
-      if (!item && typeof sel === 'string') {
-        item = items.find(ea => ea.string === sel);
+        this.adjustLableFor(item);
+
+        listMorph.selectedIndex = items.indexOf(item);
       }
-      if (!item) return super.onRefresh(prop);
-
-      if (prop === 'selection') this.adjustLableFor(item);
-
-      listMorph.selectedIndex = items.indexOf(item);
     }
+
     super.onRefresh(prop); // handles the label update
   }
 
