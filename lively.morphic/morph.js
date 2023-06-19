@@ -1,6 +1,6 @@
 /* global System,Uint8Array,Blob */
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from 'lively.graphics';
-import { fun, string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
+import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
 import { deserializeSpec, ExpressionSerializer, serializeSpec, getClassName } from 'lively.serializer2';
 import {
@@ -951,15 +951,19 @@ export class Morph {
     if (this._tickingScripts.length > 0) propsToSerialize.push('_tickingScripts');
     if (this.attributeConnections) propsToSerialize.push('attributeConnections');
     for (const key in properties) {
-      const descr = properties[key];
-      if (
-        descr.readOnly ||
+      try {
+        const descr = properties[key];
+        if (
+          descr.readOnly ||
         descr.derived ||
         descr.isComponent ||
         (descr.hasOwnProperty('serialize') && !descr.serialize) ||
         obj.equals(this[key], defaults[key])
-      ) continue;
-      propsToSerialize.push(key);
+        ) continue;
+        propsToSerialize.push(key);
+      } catch (err) {
+
+      }
     }
 
     return propsToSerialize;
@@ -3457,7 +3461,7 @@ export class Path extends Morph {
   }
 
   get _pathNode () {
-    const renderer = PropertyPath('env.renderer').get(this);
+    const renderer = this.env?.renderer;
     const node = renderer && renderer.getNodeForMorph(this);
     return node && node.querySelector('#svg' + string.regExpEscape(this.id));
   }
@@ -3562,7 +3566,7 @@ export class Path extends Morph {
 
   onDragStart (evt) {
     const { domEvt: { target } } = evt;
-    const cssClass = new PropertyPath('attributes.class.value').get(target);
+    const cssClass = target.attributes?.class?.value;
     if (cssClass && cssClass.includes('path-point')) {
       this.renderingState.controlPointDragged = true;
       const [_, n, ctrlN] = cssClass.match(/path-point-([0-9]+)(?:-control-([0-9]+))?$/);
