@@ -26,6 +26,10 @@ class WindowPreviewModel extends ViewModel {
     };
   }
 
+  viewDidLoad () {
+    this.view.withAllSubmorphsDo(m => m.halosEnabled = false);
+  }
+
   closeWindow (evt) {
     this.view.remove();
     this.windowSwitcher.windowsData = this.windowSwitcher.windowsData.filter(wD => wD.window !== this.window);
@@ -92,10 +96,8 @@ const WindowPreview = component({
   defaultViewModel: WindowPreviewModel,
   extent: pt(130, 130),
   fill: Color.transparent,
-  halosEnabled: false,
   submorphs: [{
     type: HTMLMorph,
-    halosEnabled: false,
     name: 'html morph',
     extent: pt(100, 100),
     fill: Color.transparent
@@ -104,7 +106,6 @@ const WindowPreview = component({
     name: 'overlay',
     fill: Color.transparent,
     extent: pt(130, 130),
-    halosEnabled: false,
     nativeCursor: 'pointer'
   },
   {
@@ -113,17 +114,16 @@ const WindowPreview = component({
     position: pt(-15, -15),
     extent: pt(20, 20),
     fill: Color.black.withA(0.6),
-    halosEnabled: false,
     nativeCursor: 'pointer',
     submorphs: [{
       type: 'text',
       reactsToPointer: false,
       name: 'label',
+      lineHeight: 1,
       fontColor: Color.white,
       fill: Color.transparent,
       fontSize: 15,
-      halosEnabled: false,
-      padding: rect(5, 2, -2.5, 1),
+      padding: rect(5, 3, -2.5, 0),
       textAndAttributes: Icon.textAttribute('times')
     }
     ]
