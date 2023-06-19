@@ -6,11 +6,15 @@ class TopBarButtonModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['activateButton', 'deactivateButton'];
+          return ['activateButton', 'deactivateButton', 'changeIcon'];
         }
       },
       opts: {}
     };
+  }
+
+  changeIcon (iconAttributes) {
+    this.ui.symbol.textAndAttributes = iconAttributes;
   }
 
   activateButton () {
@@ -44,7 +48,7 @@ class TopBarButtonDropDownModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['dropdown', 'symbol', 'activateButton', 'deactivateButton', 'removeDropdown'];
+          return ['activateButton', 'deactivateButton', 'removeDropdown'];
         }
       },
       opts: {}
@@ -52,31 +56,19 @@ class TopBarButtonDropDownModel extends ViewModel {
   }
 
   activateButton () {
-    this.symbol.master = TopBarButtonSelected;
+    this.ui.symbol.master = TopBarButtonSelected;
   }
 
   deactivateButton () {
-    this.symbol.master = null;
-  }
-
-  get dropdown () {
-    return this.view.get(this.opts.dropdown.name);
-  }
-
-  get symbol () {
-    return this.view.get(this.opts.symbol.name);
+    this.ui.symbol.master = null;
   }
 
   viewDidLoad () {
     const { view, opts } = this;
-    view.name = opts.name;
     view.tooltip = opts.tooltip;
-    const symbolButton = view.get('symbol');
-    const dropdownButton = view.get('dropdown');
-    symbolButton.name = opts.symbol.name;
+    const symbolButton = this.ui.symbol;
     symbolButton.tooltip = opts.symbol.tooltip;
     symbolButton.textAndAttributes = opts.symbol.textAndAttributes;
-    dropdownButton.name = opts.dropdown.name;
   }
 
   /**
@@ -85,8 +77,7 @@ class TopBarButtonDropDownModel extends ViewModel {
    * or actually dealing with exchanging the button where we want to downgrade
    */
   removeDropdown () {
-    const dropdown = this.view.get(this.opts.dropdown.name);
-    dropdown.remove();
+    this.ui.dropdown.remove();
   }
 }
 
