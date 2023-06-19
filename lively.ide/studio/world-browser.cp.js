@@ -1068,21 +1068,18 @@ const WorldBrowser = component({
       y: 570
     },
     reactToSubmorphAnimations: false,
-    submorphSettings: [['fader bottom', {
+    submorphSettings: [['world list', {
       x: 'resize',
-      y: 'move'
-    }], ['dropdown list', {
-      x: 'move',
-      y: 'fixed'
+      y: 'resize'
     }], ['fader top', {
       x: 'resize',
       y: 'fixed'
-    }], ['world list', {
-      x: 'resize',
-      y: 'resize'
     }], ['search field', {
       x: 'move',
       y: 'fixed'
+    }], ['fader bottom', {
+      x: 'resize',
+      y: 'move'
     }], ['close button', {
       x: 'fixed',
       y: 'move'
@@ -1162,6 +1159,18 @@ const WorldBrowser = component({
   },
   part(SearchField, {
     name: 'search field',
+    borderStyle: 'hidden',
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      orderByIndex: true,
+      padding: rect(6, 0, 4, 0),
+      resizePolicies: [['search input', {
+        height: 'fill',
+        width: 'fill'
+      }]]
+    }),
+    borderRadius: 30,
     viewModel: { fuzzy: true },
     extent: pt(285.1, 34),
     fill: Color.rgb(234, 237, 237),
@@ -1169,13 +1178,26 @@ const WorldBrowser = component({
     submorphs: [
       {
         name: 'search input',
-        fontSize: 22,
+        layout: new ConstraintLayout({
+          lastExtent: {
+            x: 271,
+            y: 36
+          },
+          reactToSubmorphAnimations: false,
+          submorphSettings: []
+        }),
+        selectionColor: Color.rgba(64, 196, 255, .4),
+        fontSize: 20,
         submorphs: [
           {
             name: 'placeholder',
             textAndAttributes: ['Search Projects', { fontSize: 22 }]
           }
         ]
+      }, {
+        name: 'placeholder icon',
+        padding: rect(2, 2, -2, -2),
+        fontSize: 18
       }
     ]
   }), {
