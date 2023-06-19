@@ -469,9 +469,12 @@ const ShapeControl = component({
     part(DarkNumberIconWidget, {
       name: 'x input',
       tooltip: 'X Position',
-      min: -Infinity,
-      max: Infinity,
-      scaleFactor: 1,
+      viewModel: {
+        min: -Infinity,
+        max: Infinity,
+        scaleFactor: 1,
+        precision: 0
+      },
       submorphs: [{
         name: 'interactive label',
         fontSize: 13,
@@ -484,9 +487,12 @@ const ShapeControl = component({
     }), part(DarkNumberIconWidget, {
       name: 'y input',
       tooltip: 'Y Position',
-      min: -Infinity,
-      max: Infinity,
-      scaleFactor: 1,
+      viewModel: {
+        min: -Infinity,
+        max: Infinity,
+        scaleFactor: 1,
+        precision: 0
+      },
       submorphs: [{
         name: 'interactive label',
         padding: rect(7, 0, 0, 0),
@@ -500,12 +506,15 @@ const ShapeControl = component({
     part(DarkNumberIconWidget, {
       name: 'width input',
       tooltip: 'Width',
-      min: -Infinity,
-      max: Infinity,
-      scaleFactor: 1,
+      viewModel: {
+        min: -Infinity,
+        max: Infinity,
+        scaleFactor: 1
+      },
       submorphs: [{
         name: 'interactive label',
-        padding: rect(6, 5, 1, -5),
+        lineHeight: 1,
+        padding: rect(0, 4, 0, -4),
         rotation: -1.57,
         fontFamily: 'Material Icons',
         textAndAttributes: ['', {
@@ -515,9 +524,11 @@ const ShapeControl = component({
     }),
     part(DarkNumberIconWidget, {
       name: 'height input',
-      min: -Infinity,
-      max: Infinity,
-      scaleFactor: 1,
+      viewModel: {
+        min: -Infinity,
+        max: Infinity,
+        scaleFactor: 1
+      },
       tooltip: 'Height',
       submorphs: [{
         name: 'interactive label',

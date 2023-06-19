@@ -2,7 +2,7 @@ import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, ensureFont
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
-import { DarkNumberWidget } from '../value-widgets.cp.js';
+import { DarkNumberWidget, NumberWidgetModel } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
 
@@ -29,7 +29,7 @@ const PropertyLabel = component({
   },
   textAndAttributes: ['', {
     fontSize: 18,
-    fontFamily: 'Material Icons',
+    fontFamily: 'Material Icons'
   }]
 });
 
@@ -70,7 +70,7 @@ const AddButtonAuto = component({
   lineHeight: 1,
   textAndAttributes: ['', {
     fontSize: 18,
-    fontFamily: 'Material Icons',
+    fontFamily: 'Material Icons'
   }]
 });
 
@@ -86,7 +86,7 @@ const RemoveButton = component(AddButton, {
   name: 'remove button',
   textAndAttributes: ['\ue15b', {
     fontSize: 18,
-    fontFamily: 'Material Icons',
+    fontFamily: 'Material Icons'
   }]
 });
 
@@ -131,15 +131,19 @@ const PropLabel = component(HeadlineLabel, {
   fontWeight: 'normal'
 });
 
-class DarkNumberIconWidgetModel extends ViewModel {
+class DarkNumberIconWidgetModel extends NumberWidgetModel {
   static get properties () {
     return {
-      expose: {
+      spaceToDisplay: {
         get () {
-          return ['enable', 'disable'];
+          return this.view.width - (this.ui.interactiveLabel?.right || 0);
         }
       }
     };
+  }
+
+  get expose () {
+    return ['enable', 'disable'].concat(super.expose);
   }
 
   disable () {

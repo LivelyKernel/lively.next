@@ -4,7 +4,6 @@ import { signal, connect, disconnect } from 'lively.bindings';
 import {
   Morph,
   ShadowObject,
-  Text,
   HorizontalLayout,
   Path,
   Ellipse,
@@ -323,131 +322,6 @@ class SliderHandle extends Ellipse {
 
   onDragEnd (evt) {
     this.valueView.remove();
-  }
-}
-
-export class ValueScrubber extends Label {
-  static get properties () {
-    return {
-      scaleToBounds: {
-        defaultValue: false,
-        set (active) {
-          this.fixedWidth = true;
-          this.setProperty('scaleToBounds', active);
-        }
-      },
-      field: {
-        derived: true,
-        get () {
-          return this.owner;
-        }
-      },
-      value: { defaultValue: 0 },
-      fill: { defaultValue: Color.transparent },
-      draggable: { defaultValue: true },
-      min: { defaultValue: -Infinity },
-      max: { defaultValue: Infinity },
-      baseFactor: { defaultValue: 1 },
-      floatingPoint: { defaultValue: false },
-      precision: { defaultValue: 3 }
-    };
-  }
-
-  relayout () {
-    this.withMetaDo({ metaInteraction: true }, () => {
-      const d = 0;
-      if (!this.scaleToBounds) return;
-      this.scale = Math.min(1, this.width / (this.textBounds().width + d));
-    });
-  }
-
-  onKeyDown (evt) {
-    super.onKeyDown(evt);
-    if (evt.keyCombo === 'Enter') {
-      const [v] = this.textString.replace('\n', '').split(' ');
-      if (typeof v === 'string') {
-        this.value = parseFloat(v);
-        this.scrub(this.scrubbedValue);
-      }
-      evt.stop();
-    }
-  }
-
-  scrub (val) {
-    this.field.update(val);
-  }
-
-  onDragStart (evt) {
-    this.execCommand('toggle active mark');
-    this.initPos = evt.position;
-    this.factorLabel = part(SystemTooltip, { description: '1x' }).openInWorld(
-      evt.hand.position.addXY(10, 10)
-    );
-    evt.hand.extent = pt(30, 30);
-    evt.hand.nativeCursor = 'ew-resize';
-    evt.hand.fill = Color.transparent;
-    evt.hand.reactsToPointer = true;
-  }
-
-  getScaleAndOffset (evt) {
-    const { x, y } = evt.position.subPt(this.initPos);
-    const scale = num.roundTo(Math.exp(-y / $world.height * 4), 0.01) * this.baseFactor;
-    return { offset: x, scale };
-  }
-
-  onDrag (evt) {
-    // x delta is the offset to the original value
-    // y is the scale
-    const { scale, offset } = this.getScaleAndOffset(evt);
-    const v = this.getCurrentValue(offset, scale);
-    this.scrub(v);
-    let valueString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
-    if (this.unit) valueString += ' ' + this.unit;
-    this.textString = valueString;  
-    this.factorLabel.description = scale.toFixed(this.precision) + 'x';
-    this.factorLabel.position = evt.hand.position.addXY(10, 10);
-    evt.hand.moveBy(pt(-5, -5));
-    this.relayout();
-  }
-
-  getCurrentValue (delta, s) {
-    const v = this.scrubbedValue + (this.floatingPoint ? delta * s : Math.round(delta * s));
-    return Math.max(this.min, Math.min(this.max, v));
-  }
-
-  onDragEnd (evt) {
-    const { offset, scale } = this.getScaleAndOffset(evt);
-    this.scrubbedValue = this.value = this.getCurrentValue(offset, scale);
-    this.factorLabel.softRemove();
-    evt.hand.extent = pt(1, 1);
-    evt.hand.reactsToPointer = false;
-  }
-
-  set value (v) {
-    v = Math.max(this.min, Math.min(this.max, v));
-    if (!this.isBeingDragged) { this.scrubbedValue = v; }
-    let textString = this.floatingPoint ? v.toFixed(this.precision) : obj.safeToString(v);
-    if (this.unit) textString += ' ' + this.unit;
-    else textString += '';
-    this.textString = textString;
-    this.relayout();
-  }
-
-  get isBeingDragged () {
-    return this.env.eventDispatcher.eventState.draggedMorph === this;
-  }
-
-  setMixed () {
-    this.textString = 'Mix';
-  }
-
-  get isMixed () {
-    return this.textString === 'Mix';
-  }
-
-  onBlur (evt) {
-    super.onBlur(evt);
-    this.collapseSelection();
   }
 }
 
