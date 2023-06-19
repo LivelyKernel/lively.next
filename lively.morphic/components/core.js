@@ -1,7 +1,7 @@
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, fun, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
-import { epiConnect } from 'lively.bindings';
+import { epiConnect, noUpdate } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
 import { PolicyApplicator, without, add } from './policy.js';
 
@@ -346,7 +346,9 @@ export class ViewModel {
   onRefresh (change) {}
 
   clearBindings () {
-    this.getBindingConnections().forEach(conn => conn.disconnect());
+    noUpdate(() => {
+      this.getBindingConnections().forEach(conn => conn.disconnect());
+    });
   }
 
   /**
@@ -449,6 +451,14 @@ export class ViewModel {
     }
   }
 
+  disableBindings () {
+    this.getBindingConnections().forEach(conn => conn.activate());
+  }
+
+  enableBindings () {
+    this.getBindingConnections().forEach(conn => conn.deactivate());
+  }
+
   /**
    * Invoke the given callback function without the bindings in the view being active.
    * This allows us to perform changes in the view without accidentally triggering any
@@ -457,14 +467,14 @@ export class ViewModel {
    * @param { function } cb - The function to invoke while the bindings are disabled.
    */
   withoutBindingsDo (cb) {
-    this.onDeactivate();
+    this.disableBindings();
     let res;
     try {
       res = cb();
     } catch (err) {
       console.error(err.message);
     }
-    if (res && res.then) { return res.then(() => { this.onActivate(); return res; }); } else this.onActivate();
+    if (res && res.then) { return res.then(() => { this.onActivate(); return res; }); } else this.enableBindings();
     return res;
   }
 
