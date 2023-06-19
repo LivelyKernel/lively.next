@@ -76,9 +76,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
         get () {
           return [
             ...super.prototype.bindings,
-            {
-              target: 'mini layout preview', signal: 'onMouseDown', handler: 'openLayoutPopup'
-            },
+            { target: 'mini layout preview', signal: 'onMouseDown', handler: 'openLayoutPopup' },
             { target: 'vertical', signal: 'onMouseDown', handler: 'setVerticalFlow' },
             { target: 'horizontal', signal: 'onMouseDown', handler: 'setHorizontalFlow' },
             { target: 'wrap submorphs checkbox', signal: 'clicked', handler: 'toggleWrapping' },
@@ -120,7 +118,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       horizontal.master = layout.axis === 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
       spacingInput.number = layout.spacing;
       if (this.hasMixedPadding()) {
-        totalPaddingInput.getSubmorphNamed('value').textString = 'Mix';
+        totalPaddingInput.setMixed();
       } else {
         totalPaddingInput.number = layout.padding.top();
       }
@@ -332,11 +330,13 @@ const PaddingInput = component(DarkNumberIconWidget, {
   name: 'padding input',
   layout: new TilingLayout({
     axisAlign: 'center',
-    align: 'center',
+    align: 'center'
   }),
-  unit: '',
-  min: 0,
-  autofit: false,
+  viewModel: {
+    unit: '',
+    min: 0,
+    autofit: true
+  },
   extent: pt(33.7, 22.7),
   position: pt(57.3, 1.9),
   submorphs: [

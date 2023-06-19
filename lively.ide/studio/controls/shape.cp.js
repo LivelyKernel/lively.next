@@ -473,7 +473,7 @@ const ShapeControl = component({
         min: -Infinity,
         max: Infinity,
         scaleFactor: 1,
-        precision: 0
+        autofit: true
       },
       submorphs: [{
         name: 'interactive label',
@@ -491,7 +491,7 @@ const ShapeControl = component({
         min: -Infinity,
         max: Infinity,
         scaleFactor: 1,
-        precision: 0
+        autofit: true
       },
       submorphs: [{
         name: 'interactive label',
@@ -509,7 +509,8 @@ const ShapeControl = component({
       viewModel: {
         min: -Infinity,
         max: Infinity,
-        scaleFactor: 1
+        scaleFactor: 1,
+        autofit: true
       },
       submorphs: [{
         name: 'interactive label',
@@ -527,7 +528,8 @@ const ShapeControl = component({
       viewModel: {
         min: -Infinity,
         max: Infinity,
-        scaleFactor: 1
+        scaleFactor: 1,
+        autofit: true
       },
       tooltip: 'Height',
       submorphs: [{
@@ -623,9 +625,12 @@ const ShapeControl = component({
     part(DarkNumberIconWidget, {
       name: 'rotation input',
       tooltip: 'Rotation',
-      unit: '°',
-      min: 0,
-      max: 359,
+      viewModel: {
+        unit: '°',
+        min: 0,
+        max: 359,
+        autofit: true
+      },
       submorphs: [{
         name: 'interactive label',
         lineHeight: 1,
@@ -639,7 +644,10 @@ const ShapeControl = component({
     part(DarkNumberIconWidget, {
       name: 'radius input',
       tooltip: 'Border Radius',
-      min: 0,
+      viewModel: {
+        min: 0,
+        autofit: true
+      },
       submorphs: [{
         name: 'interactive label',
         fontFamily: 'Material Icons',
@@ -695,7 +703,10 @@ const ShapeControl = component({
         },
         part(DarkNumberIconWidget, {
           name: 'radius input top left',
-          min: 0,
+          viewModel: {
+            min: 0,
+            autofit: true
+          },
           extent: pt(35, 22),
           tooltip: 'Border Radius Top Left',
           borderRadiusTopRight: 0,
@@ -703,7 +714,10 @@ const ShapeControl = component({
           submorphs: [without('interactive label')]
         }), part(DarkNumberIconWidget, {
           name: 'radius input top right',
-          min: 0,
+          viewModel: {
+            min: 0,
+            autofit: true
+          },
           borderRadius: 0,
           extent: pt(35, 22),
           tooltip: 'Border Radius Top Right',
@@ -711,7 +725,10 @@ const ShapeControl = component({
         }),
         part(DarkNumberIconWidget, {
           name: 'radius input bottom right',
-          min: 0,
+          viewModel: {
+            min: 0,
+            autofit: true
+          },
           borderRadius: 0,
           extent: pt(35, 22),
           tooltip: 'Border Radius Bottom Right',
@@ -719,7 +736,10 @@ const ShapeControl = component({
         }),
         part(DarkNumberIconWidget, {
           name: 'radius input bottom left',
-          min: 0,
+          viewModel: {
+            min: 0,
+            autofit: true
+          },
           borderRadiusTopLeft: 0,
           borderRadiusBottomLeft: 0,
           extent: pt(35, 22),
