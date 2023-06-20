@@ -8,7 +8,7 @@ export function projectAsset (fileName) {
   // Afterwards, we find out from within which project we were called.
   // This is the project of which we need to construct the asset path!
   const callStack = (new Error()).stack;
-  const callingProject = callStack.match(/\(.*\/local_projects\/(?<callingProject>[a-zA-Z_-]+)\/.*\.js/m)?.groups.callingProject;
-  
+  const callingProject = callStack.match(/\(.*\/local_projects\/(?<callingProject>[a-zA-Z_\-\d]+)\/.*\.js/m)?.groups.callingProject;
+
   return '/local_projects/' + callingProject + '/assets/' + fileName;
 }

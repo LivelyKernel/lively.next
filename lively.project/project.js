@@ -17,9 +17,9 @@ import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
 import Terminal from 'lively.ide/shell/terminal.js';
 import { pt } from 'lively.graphics';
+import { arr, obj } from 'lively.lang';
 
-const repositoryOwnerRegex = /\/([\dA-za-z]+)\//;
-const repositoryNameRegex = /\/.+\/(.*)/;
+const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 
 export class Project {
   static retrieveAvailableProjectsCache () {
@@ -36,8 +36,11 @@ export class Project {
     return this.config.name;
   }
 
+  // TODO: fix this for fork support
+  // **Note** since this is a getter on an instance, we can retrieve whatever we want from the config object
+  // We just need to make sure that we populate it in the correct way!
   get repoOwner () {
-    return this.config.repository.url.match(repositoryOwnerRegex)[1];
+    return this.config.repository.url.match(repositoryOwnerAndNameRegex)[1];
   }
 
   constructor (name, bindVersion = true, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
@@ -88,8 +91,8 @@ export class Project {
       projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
-      packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerRegex)[1]);
-      packageJSONObjects.forEach(pkg => pkg.name = pkg.name.replace(/(.*?-)/, ''));
+      packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1]);
+      packageJSONObjects.forEach(pkg => pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, ''));
       localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
       return packageJSONObjects;
     } catch (err) {
@@ -106,13 +109,16 @@ export class Project {
    * @param {string} remote - The URL at which to find the GitHub Repository.
    */
   static async fromRemote (remote) {
+    if (remote.endsWith('/')) remote = remote.slice(0, -1); ;
     const remoteUrl = new URL(remote);
 
     const userToken = currentUsertoken();
+    // TODO: 🍴 Support!
+    // Check here if the repo to clone is a fork (GitHub API) and create hidden metadata files if necessary.
+    const projectName = remote.match(repositoryOwnerAndNameRegex)[2];
+    const projectRepoOwner = remote.match(repositoryOwnerAndNameRegex)[1];
     // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-    const projectName = remoteUrl.pathname.match(repositoryNameRegex)[1];
-    const projectRepoOwner = remoteUrl.pathname.match(repositoryOwnerRegex)[1];
-    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}-${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error cloning repository');
 
@@ -121,8 +127,9 @@ export class Project {
   }
 
   static async deleteProject (name, repoOwner) {
-    const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}-${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
-    const res = (await cmd.whenDone()).exitCode;
+    const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}--${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const executedCmd = await cmd.whenDone();
+    const res = executedCmd.exitCode;
     if (res === 0) return true;
     else throw Error('Error deleting project');
   }
@@ -133,10 +140,11 @@ export class Project {
     const loadedProject = new Project(name, false);
 
     let address, url;
-    address = (await Project.projectDirectory()).join(repoOwner + '-' + name);
+    // FIXME: the path thingy reeks of code duplication
+    address = (await Project.projectDirectory()).join(repoOwner + '--' + name);
     url = address.url;
     loadedProject.url = url;
-    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '-' + name).withRelativePartsResolved().asDirectory();
+    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '--' + name).withRelativePartsResolved().asDirectory();
 
     if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
 
@@ -205,7 +213,7 @@ export class Project {
     }
     const nameToRecover = this.config.name;
     try {
-      this.config.name = `${this.repoOwner}-${nameToRecover}`;
+      this.config.name = `${this.repoOwner}--${nameToRecover}`;
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
       throw Error('Error writing config file', { cause: e });
@@ -261,7 +269,7 @@ export class Project {
   async create (withRemote = false, gitHubUser) {
     this.gitResource = null;
     const system = Project.systemInterface;
-    const projectDir = (await Project.projectDirectory()).join(gitHubUser + '-' + this.name);
+    const projectDir = (await Project.projectDirectory()).join(gitHubUser + '--' + this.name);
     this.url = projectDir.url;
     try {
       await system.resourceCreateFiles(projectDir, {
@@ -292,7 +300,8 @@ export class Project {
         'index.css': ''
       });
       await this.generateBuildScripts();
-      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '-' + this.name).withRelativePartsResolved().asDirectory();
+      // FIXME: again, code duplication much with the path?
+      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
@@ -340,7 +349,7 @@ export class Project {
 
   fillPipelineTemplate (workflowDefinition) {
     let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
-    return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}-${this.name}`);
+    return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
 
   async generateBuildScripts () {
@@ -411,14 +420,15 @@ export class Project {
         continue;
       }
       // No dependency with this name has been requested.
-      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}-${proj.name}` === depToEnsure.name);
+      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}--${proj.name}` === depToEnsure.name);
       if (!depExists) {
-        const depName = depToEnsure.name.match(/.*-(.*)/)[1];
-        const depRepoOwner = depToEnsure.name.match(/(.*)-/)[1];
-        const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}-${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
+        // FIXME: can we extract this?
+        const depName = depToEnsure.name.match(/[a-zA-Z\d]*--(.*)/)[1];
+        const depRepoOwner = depToEnsure.name.match(/([a-zA-Z\d]*)--/)[1];
+        const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}--${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
-        PackageRegistry.ofSystem(System).addPackageAt(`${(await Project.systemInterface.getConfig().baseURL)}local_projects/${depRepoOwner}-${depName}`, 'devPackageDirs');
+        PackageRegistry.ofSystem(System).addPackageAt(`${(await Project.systemInterface.getConfig().baseURL)}local_projects/${depRepoOwner}--${depName}`, 'devPackageDirs');
         // Refresh the cache of available projects and their version.
         availableProjects = await Project.listAvailableProjects();
       }
@@ -450,7 +460,7 @@ export class Project {
     const availableProjects = Project.retrieveAvailableProjectsCache();
     let showStatusReport = false;
     for (let dep in dependencyMap) {
-      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}-${proj.name}` === dep);
+      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}--${proj.name}` === dep);
       for (let depVersion in dependencyMap[dep]) {
         const requesterOfDepVersion = dependencyMap[dep][depVersion].join(' ');
         // FIXME: We could determine if it would in theory be possible to find a version that satisfies all required ranges for a given dependency.
@@ -470,8 +480,8 @@ export class Project {
   }
 
   async addDependencyToProject (owner, name) {
-    const ownerAndNameString = `${owner}-${name}`;
-    const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}-${proj.name}`);
+    const ownerAndNameString = `${owner}--${name}`;
+    const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
     if (!dep) throw Error('Dependency is not available!');
     const version = dep.version;
     const addedSemver = semver.coerce(version);
@@ -499,7 +509,8 @@ export class Project {
 
   removeDependencyFromProject (owner, name) {
     const deps = this.config.lively.projectDependencies;
-    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}-${name}`);
+    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}--${name}`);
+  }
 
   async addMissingProjectDependencies () {
     const availableDeps = Project.retrieveAvailableProjectsCache().map(proj => ({ name: `${proj.projectRepoOwner}--${proj.name}`, version: proj.version }));

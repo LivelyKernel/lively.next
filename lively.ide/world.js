@@ -494,7 +494,7 @@ export class LivelyWorld extends World {
       }
 
       if (window.history) {
-        if (!projectRepoOwner && $world.openedProject) projectRepoOwner = $world.openedProject.url.match(/.*local_projects\/(.*)-/)[1];
+        if (!projectRepoOwner && $world.openedProject) projectRepoOwner = $world.openedProject.repoOwner;
         window.history.pushState({}, 'lively.next', pathForBrowserHistory(this.name, null, !!$world.openedProject, $world.openedProject ? projectRepoOwner : null));
       }
     }
@@ -586,7 +586,7 @@ export class LivelyWorld extends World {
       let uploadPath;
       const proj = this.openedProject;
       if (proj) {
-        uploadPath = `local_projects/${proj.repoOwner}-${proj.name}/assets`;
+        uploadPath = `local_projects/${proj.repoOwner}--${proj.name}/assets`;
       } else uploadPath = currentUsername() === 'guest' ? 'uploads/' : 'users/' + currentUser() + '/uploads';
       if (evt.isAltDown() && !proj) {
         uploadPath = await this.prompt('Choose upload location', {

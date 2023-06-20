@@ -314,7 +314,7 @@ export class TopBarModel extends ViewModel {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const serverDir = await defaultDirectory();
         const projectsDir = serverDir.replace('lively.server', '') + 'local_projects/';
-        const projectDir = projectsDir + `${$world.openedProject.repoOwner}-${$world.openedProject.name}`;
+        const projectDir = projectsDir + `${$world.openedProject.repoOwner}--${$world.openedProject.name}`;
         $world.execCommand('open shell terminal', { cwd: projectDir, position: $world.center.subXY(300, 150) });
       }
       ]
