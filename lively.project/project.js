@@ -308,7 +308,6 @@ export class Project {
         'index.css': ''
       });
       await this.generateBuildScripts();
-      // FIXME: again, code duplication much with the path?
       this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
       this.configFile = await resource(projectDir.join('package.json').url);
 
@@ -355,6 +354,7 @@ export class Project {
 
   fillPipelineTemplate (workflowDefinition) {
     let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
+    // `flatn` resolves the package to test to be its directory name!
     return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
 
@@ -504,6 +504,7 @@ export class Project {
   async addDependencyToProject (owner, name) {
     const ownerAndNameString = `${owner}--${name}`;
     const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
+    // TODO: We could think about adding clone support here as well, so that dependencies can be added directly from GitHub.
     if (!dep) throw Error('Dependency is not available!');
 
     // Order is important here, as we do not want to change the config object when loading of the Project fails!
