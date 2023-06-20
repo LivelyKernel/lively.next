@@ -140,6 +140,8 @@ export class Project {
   }
 
   static async loadProject (name, repoOwner, onlyLoadNotOpen = false) {
+    let li;
+    if (!onlyLoadNotOpen && $world) li = $world.showLoadingIndicatorFor($world, 'Loading Project...');
     // Create Project object and do not automatically update the referenced lively version.
     // The project acts merely as a container until we fill in the correct contents below!
     const loadedProject = new Project(name, false);
@@ -196,7 +198,7 @@ export class Project {
     loadedProject.package = pkg;
 
     if (!onlyLoadNotOpen) $world.openedProject = loadedProject;
-
+    if (li) li.remove();
     return loadedProject;
   }
 
