@@ -5,3 +5,4 @@ import { gitResourceExtension } from 'lively.shell/git-client-resource.js';
 registerExtension(gitResourceExtension);
 
 export * from './project.js';
+export * from './helpers.js';
