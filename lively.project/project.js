@@ -130,12 +130,13 @@ export class Project {
   }
 
   static async deleteProject (name, repoOwner) {
-    // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-    const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}--${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
-    const executedCmd = await cmd.whenDone();
-    const res = executedCmd.exitCode;
-    if (res === 0) return true;
-    else throw Error('Error deleting project');
+    const baseURL = (await Project.systemInterface.getConfig()).baseURL;
+    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : ((await Project.projectDirectory()).join(`/${repoOwner}--${name}`).asDirectory());
+    try {
+      await projectsDir.remove();
+    } catch (err) {
+      throw Error('Error deleting project', { cause: err });
+    }
   }
 
   static async loadProject (name, repoOwner, onlyLoadNotOpen = false) {
