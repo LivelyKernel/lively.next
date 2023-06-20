@@ -10,7 +10,7 @@ import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/component
 import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import { semver, PackageRegistry } from 'lively.modules/index.js';
+import { semver } from 'lively.modules/index.js';
 import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
@@ -26,6 +26,10 @@ export class Project {
     return JSON.parse(localStorage.getItem('available_lively_projects'));
   }
 
+  static get systemInterface () {
+    return localInterface.coreInterface;
+  }
+
   // As a URL to be used from inside of lively.
   static async projectDirectory () {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
@@ -36,7 +40,7 @@ export class Project {
     return this.config.name;
   }
 
-  // TODO: fix this for fork support
+  // TODO: 🍴 Support
   // **Note** since this is a getter on an instance, we can retrieve whatever we want from the config object
   // We just need to make sure that we populate it in the correct way!
   get repoOwner () {
@@ -86,27 +90,26 @@ export class Project {
         return dir.isFile() && !dir.name().endsWith('package.json');
       }
     });
-    let returnEmpty = false;
     try {
       projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
+      // TODO: 🍴 Support
       packageJSONObjects.forEach(pkg => pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1]);
+      // To allow correct resolution of projects via `flatn`, we need the name attribute in `package.json` to match the folder of the package.
+      // To make working with the project names easier at runtime, we remove the owner-- here, so that the name attribut equals the project name again.
       packageJSONObjects.forEach(pkg => pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, ''));
       localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
       return packageJSONObjects;
     } catch (err) {
-      returnEmpty = true;
       throw Error('Error listing local projects', { cause: err });
-    } finally {
-      if (returnEmpty) return [];
     }
   }
 
   /**
    * Takes the URL for a GitHub Repository at which a lively project resides and clones the repository in the projects folder of the local lively installation.
    * Afterwards, the cloned project gets loaded.
-   * @param {string} remote - The URL at which to find the GitHub Repository.
+   * @param {string} remote - The URL of the GitHub Repository.
    */
   static async fromRemote (remote) {
     if (remote.endsWith('/')) remote = remote.slice(0, -1); ;
@@ -127,6 +130,7 @@ export class Project {
   }
 
   static async deleteProject (name, repoOwner) {
+    // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
     const cmd = runCommand(`cd ../local_projects/ && rm -rf ${repoOwner}--${name}`, { l2lClient: ShellClientResource.defaultL2lClient });
     const executedCmd = await cmd.whenDone();
     const res = executedCmd.exitCode;
@@ -136,46 +140,47 @@ export class Project {
 
   static async loadProject (name, repoOwner, onlyLoadNotOpen = false) {
     // Create Project object and do not automatically update the referenced lively version.
-    // The project acts merely as a container until we fill in the correct contents below.
+    // The project acts merely as a container until we fill in the correct contents below!
     const loadedProject = new Project(name, false);
 
     let address, url;
-    // FIXME: the path thingy reeks of code duplication
+    // Operates on the "patched" name property, thus we need to glue owner and name together with dashes, to get the folder of the project.
     address = (await Project.projectDirectory()).join(repoOwner + '--' + name);
     url = address.url;
     loadedProject.url = url;
-    loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '--' + name).withRelativePartsResolved().asDirectory();
-
-    if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
-
     loadedProject.configFile = await resource(address.join('package.json').url);
-
-    // Ensure that we do not run into conflicts wrt the bound lively version.
-    await loadedProject.gitResource.resetFile('package.json');
-    await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
+    if (!onlyLoadNotOpen) {
+      loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '--' + name).withRelativePartsResolved().asDirectory();
+      // Ensure that we do not run into conflicts regarding the bound lively version.
+      await loadedProject.gitResource.resetFile('package.json');
+      await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
+      if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
+    }
 
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
+    // `package.json` contains the `flatn`-friendly version, exchange that here for more comfortable runtime behavior.
     loadedProject.config.name = name;
-    loadedProject.addMissingProjectDependencies();
-
-    const checkLivelyCompatability = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion);
-
-    switch (checkLivelyCompatability) {
-      case 'CANCELED':
-      case 'OUTDATED': {
-        await $world.inform('The required lively version of this project conflicts with the running one.', { additionalText: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
+    // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies. We reintroduce those changes here, if necessary.
+    const checkLivelyCompatibility = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion, onlyLoadNotOpen);
+    if (!onlyLoadNotOpen) {
+      loadedProject.addMissingProjectDependencies(); // Add dependencies which are directly imported by JS files inside of this project.
+      switch (checkLivelyCompatibility) {
+        case 'CANCELED':
+        case 'OUTDATED': {
+          await $world.inform('The required lively version of this project conflicts with the running one.', { additionalText: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
+        }
       }
     }
 
     try {
       await loadedProject.ensureDependenciesExist();
-      await loadedProject.checkVersionCompatabilityOfProjectDependencies();
+      await loadedProject.checkVersionCompatibilityOfProjectDependencies(onlyLoadNotOpen);
     } catch (err) {
       if (!onlyLoadNotOpen) {
         await $world.inform('The projects dependencies cannot be found.\n This session will now close.');
         window.location.href = (await Project.systemInterface.getConfig().baseURL);
-      }
+      } else $world.setStatusMessage('Project could not be loaded due to missing dependencies!', StatusMessageError);
       throw new Error({ cause: err });
     }
 
@@ -201,9 +206,9 @@ export class Project {
   }
 
   /**
-   * Method to be used to store package.json data away.
+   * Method to be used to store package.json data on disk.
    * Other changes will be stored on a per module basis anyways.
-   * Called when a project gets saved and otherwise can be called optionally.
+   * Called when a project gets saved..
    */
   async saveConfigData () {
     await this.removeUnusedProjectDependencies();
@@ -232,16 +237,16 @@ export class Project {
     this.config.version = semver.inc(version, increaseLevel);
   }
 
-  static get systemInterface () {
-    return localInterface.coreInterface;
-  }
-
-  async bindAgainstCurrentLivelyVersion (knownCompatibleVersion) {
+  async bindAgainstCurrentLivelyVersion (knownCompatibleVersion, onlyLoadNotOpen = false) {
     const { comparison } = await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
     const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
+    if (comparisonBetweenVersions > 0 && onlyLoadNotOpen) {
+      console.warn('A loaded project expects a different lively version than the one currently running.');
+      return;
+    }
     switch (comparisonBetweenVersions) {
       case (0): {
-        $world.setStatusMessage('Already using the latest version. All good!', StatusMessageConfirm);
+        if (!onlyLoadNotOpen) $world.setStatusMessage('Already using the latest lively version. All good!', StatusMessageConfirm);
         return 'SUCCESS';
       }
       case (1): {
@@ -300,12 +305,11 @@ export class Project {
         'index.css': ''
       });
       await this.generateBuildScripts();
-      // FIXME: again, code duplication much with the path?
       this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
-      this.saveConfigData();
+      await this.saveConfigData();
       const pkg = await loadPackage(system, {
         name: this.name,
         url: this.url,
@@ -349,6 +353,7 @@ export class Project {
 
   fillPipelineTemplate (workflowDefinition) {
     let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
+    // `flatn` resolves the package to test to be its directory name!
     return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
 
@@ -385,6 +390,7 @@ export class Project {
         await this.gitResource.pullRepo();
         await this.gitResource.commitRepo(message, tag, this.config.version);
         await this.gitResource.pushRepo();
+        // In case we have pulled new changes, reload the package so that lively knows of them!
         await this.reloadPackage();
       } else await this.gitResource.commitRepo(message, tag, this.config.version);
       return true;
@@ -405,7 +411,7 @@ export class Project {
     }));
 
     // Check until all (transitive) deps are ensured to exist.
-    // The same dependencie with different versions needs to be counted as a separate dependency.
+    // The same dependency with different versions needs to be counted as a separate dependency.
     while (depsToEnsure.length > 0) {
       const depToEnsure = depsToEnsure[0];
       // We have already ensured a dep with this name previously.
@@ -421,14 +427,13 @@ export class Project {
       }
       // No dependency with this name has been requested.
       const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}--${proj.name}` === depToEnsure.name);
-      if (!depExists) {
-        // FIXME: can we extract this?
+      if (!depExists) { // Dependency is not yet installed locally. Try to retrieve it from GitHub.
         const depName = depToEnsure.name.match(/[a-zA-Z\d]*--(.*)/)[1];
         const depRepoOwner = depToEnsure.name.match(/([a-zA-Z\d]*)--/)[1];
+        // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}--${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
-        PackageRegistry.ofSystem(System).addPackageAt(`${(await Project.systemInterface.getConfig().baseURL)}local_projects/${depRepoOwner}--${depName}`, 'devPackageDirs');
         // Refresh the cache of available projects and their version.
         availableProjects = await Project.listAvailableProjects();
       }
@@ -444,17 +449,29 @@ export class Project {
       transitiveDepsOfDepToEnsure.forEach(dep => dep.requester = depToEnsure.name);
       depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
 
+      // Load the dependency.
+      // The use to do this explicitly is debatable. Usually it is safe to assume that one actually uses all dependencies in which case `flatn` has our back.
+      // However, when one manually adds a dependency to `package.json`, commits that and does not use that dependency in the code,
+      // the explicit loading is necessary to get to the expected outcome.
+      // Will only be entered once per dependency!
+      const adr = (await Project.projectDirectory()).join(depToEnsure.name);
+      await loadPackage(Project.systemInterface, {
+        name: depToEnsure.name,
+        url: adr.url,
+        address: adr.url,
+        type: 'package'
+      });
       // Last step: mark dependency with name and version as ensured and remove it from the list.
       dependencyMap[depToEnsure.name] = {
         [String(depToEnsure.version)]: [depToEnsure.requester]
       };
       depsToEnsure.shift();
     }
-    // Is used for semver checking below in `checkVersionCompatabilityOfProjectDependencies`.
+    // Is used for semver checking below in `checkVersionCompatibilityOfProjectDependencies`.
     this.dependencyMap = dependencyMap;
   }
 
-  async checkVersionCompatabilityOfProjectDependencies () {
+  async checkVersionCompatibilityOfProjectDependencies (onlyLoadNotOpen = false) {
     const { dependencyMap } = this;
     let dependencyStatusReport = [];
     const availableProjects = Project.retrieveAvailableProjectsCache();
@@ -465,7 +482,7 @@ export class Project {
         const requesterOfDepVersion = dependencyMap[dep][depVersion].join(' ');
         // FIXME: We could determine if it would in theory be possible to find a version that satisfies all required ranges for a given dependency.
         // However, since `semver` only allows us to check this for exactly two ranges at a time, we would need to loop over all pairs of required versions.
-        // Since we cannot really do anything with this information as of yet, I ommited that code here.
+        // Since we cannot really do anything with this information as of yet, I omitted that code here.
         const versionStatus = semver.satisfies(semver.coerce(installedDep.version), semver.validRange(depVersion));
         if (versionStatus === true) dependencyStatusReport = dependencyStatusReport.concat([`✔️ Loaded ${dep} with version ${installedDep.version} (${depVersion} required by [${requesterOfDepVersion}]).\n`, null]);
         else {
@@ -474,39 +491,46 @@ export class Project {
         }
       }
     }
-    if (showStatusReport) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    if (showStatusReport && !onlyLoadNotOpen) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    if (showStatusReport && onlyLoadNotOpen) console.warn('A loaded project introduced a dependency version conflict.');
     // Reset this, so that nobody gets tempted to (ab)use this hot mess of a half-working feature...
     this.dependencyMap = null;
   }
 
+  /**
+   * Tries to load the project and adds it to the config of the currently opened project if loading was successful.
+   * Also ensures and loads all dependencies that the project to be loaded might have.
+   * @param {string} owner
+   * @param {string} name
+   */
   async addDependencyToProject (owner, name) {
     const ownerAndNameString = `${owner}--${name}`;
     const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
+    // TODO: We could think about adding clone support here as well, so that dependencies can be added directly from GitHub.
     if (!dep) throw Error('Dependency is not available!');
+
+    // Order is important here, as we do not want to change the config object when loading of the Project fails!
+    try {
+      await Project.loadProject(name, owner, true);
+    } catch (err) {
+      throw Error('Error loading and adding dependency package', { cause: err });
+    }
+
     const version = dep.version;
     const addedSemver = semver.coerce(version);
+    // **Note**: Since each save operation in lively increases the patch version, we bind against arbitrary patch ranges.
+    // This assumes, that projects developer actually utilize minor/major increases in a meaningful way.
+    // We decided against denoting a concrete patch version here, since then one would basically always load "outdated" dependencies.
     const newDepVersion = `${addedSemver.major}.${addedSemver.minor}.x`;
     const deps = this.config.lively.projectDependencies;
     const alreadyDependent = deps.find(dep => dep.name === ownerAndNameString);
     if (alreadyDependent) {
       alreadyDependent.version = newDepVersion;
     } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, version: newDepVersion });
-
-    const address = (await Project.projectDirectory()).join(ownerAndNameString);
-    try {
-      await loadPackage(Project.systemInterface, {
-        name: name,
-        url: address.url,
-        address: address.url,
-        configFile: address.join('package.json').url,
-        main: dep.main ? address.join(dep.main).url : address.join('index.js').url,
-        type: 'package'
-      });
-    } catch (err) {
-      throw Error('Error loading dependency package', { cause: err });
-    }
   }
 
+  // Caution: This only removes the dependency from the runtime config information.
+  // Config data needs to be explicitly written to disk!
   removeDependencyFromProject (owner, name) {
     const deps = this.config.lively.projectDependencies;
     this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}--${name}`);
@@ -517,7 +541,7 @@ export class Project {
     let currentDeps = this.config.lively.projectDependencies.slice();
 
     const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
-    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js'));
+    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
       availableDeps.forEach(dep => {
@@ -534,7 +558,7 @@ export class Project {
     const currentDeps = this.config.lively.projectDependencies;
 
     const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
-    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js'));
+    const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
       currentDeps.forEach(dep => {
