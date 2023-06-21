@@ -567,6 +567,7 @@ export class StylePolicy {
           return textOrAttr;
         });
       }
+      if (specOrPolicy.layout) specOrPolicy.layout = specOrPolicy.layout.copy();
       if (submorphs.length > 0) {
         let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
         for (let spec of submorphs) {
