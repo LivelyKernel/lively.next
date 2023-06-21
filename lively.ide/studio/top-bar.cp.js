@@ -442,10 +442,10 @@ export class TopBarModel extends ViewModel {
     if (currComponentBrowser && !!currComponentBrowser.world()) {
       return currComponentBrowser.getWindow().close(false);
     }
-    this.colorTopbarButton('open component browser', true);
+    this.colorTopbarButton(this.ui.openComponentBrowser, true);
     await this.world().execCommand('browse and load component');
 
-    this.colorTopbarButton('open component browser', false);
+    this.colorTopbarButton(this.ui.openComponentBrowser, false);
   }
 
   setEditMode (mode, shallow = false, isTemporary = false) {
