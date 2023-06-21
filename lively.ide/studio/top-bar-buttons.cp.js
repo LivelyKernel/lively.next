@@ -6,11 +6,15 @@ class TopBarButtonModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['activateButton', 'deactivateButton', 'changeIcon'];
+          return ['activateButton', 'deactivateButton', 'changeIcon', 'getIcon'];
         }
       },
       opts: {}
     };
+  }
+
+  getIcon () {
+    return this.ui.symbol.textAndAttributes;
   }
 
   changeIcon (iconAttributes) {
