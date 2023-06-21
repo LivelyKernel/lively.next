@@ -260,11 +260,14 @@ export class PackageTreeData extends TreeData {
     return [...icon, ' ' + string.truncate(decl.name || '[PARSE_ERROR]', 18, '…'), null];
   }
 
+  formatPackageName (pkg) {
+    return this.root.browser.formatPackageName(pkg);
+  }
+
   displayPackage (pkg) {
     let pkgNameString = pkg.name;
     if (pkg.kind === 'project') {
-      const ownerAndNameExtraction = pkg.name.match(/([a-zA-Z\d]*)--(.*)/);
-      pkgNameString = `${ownerAndNameExtraction[2]} by ${ownerAndNameExtraction[1]}`;
+      pkgNameString = this.formatPackageName(pkg);
     }
 
     return [
@@ -404,7 +407,7 @@ export class PackageTreeData extends TreeData {
       return (p.pkg.kind !== 'project' ||
       modulesOfPkg.length > 1 ||
       // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
-      modulesOfPkg.length == 1 && !modulesOfPkg[0].id.endsWith('package.json'));
+      modulesOfPkg.length === 1 && !modulesOfPkg[0].id.endsWith('package.json'));
     });
     return pkgs;
   }
@@ -613,6 +616,7 @@ export class BrowserModel extends ViewModel {
             'showHiddenFolders',
             'menuItems',
             'resetChangedContentIndicator',
+            'formatPackageName',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
@@ -786,6 +790,18 @@ export class BrowserModel extends ViewModel {
 
   isModule (node) {
     return node && editableFiles.includes(node.type);
+  }
+
+  formatPackageName (pkg) {
+    const ownerAndNameExtraction = pkg.name.match(/([a-zA-Z\d]*)--(.*)/);
+    if (!ownerAndNameExtraction) return pkg.name;
+    // only add the "by" in case we really have a conflict
+    const actualName = ownerAndNameExtraction[2];
+    const ownerName = ownerAndNameExtraction[1];
+    const allPackages = obj.keys(modules.PackageRegistry.ofSystem(System).packageMap);
+    const noConflict = allPackages.filter(n => n.endsWith('--' + actualName)).length == 1;
+    if (noConflict) return actualName;
+    return `${actualName} by ${ownerName}`;
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1154,7 +1170,7 @@ export class BrowserModel extends ViewModel {
         this.updateSource('');
         win.title = 'browser';
       } else {
-        win.title = 'browser - ' + p.name;
+        win.title = 'browser - ' + this.formatPackageName(p);
         if (!this.ui.tabs.selectedTab.caption.includes(p.name)) this.ui.tabs.selectedTab.caption = p.name;
       }
       // this is super slow. find a faster way to check for tests
@@ -1297,8 +1313,7 @@ export class BrowserModel extends ViewModel {
     metaInfoText.showInactive();
     let selectedPathItems = this.ui.columnView.getExpandedPath();
     selectedPathItems = selectedPathItems.slice(selectedPathItems.findIndex(i => i.type === 'package'));
-    selectedPathItems = selectedPathItems.map(i => i.name);
-    this.view.getWindow().title = `browser - [${selectedPathItems[0]}] ${selectedPathItems.slice(1).join('/')}`;
+    this.view.getWindow().title = `browser - [${this.formatPackageName(selectedPathItems[0])}] ${selectedPathItems.slice(1).map(i => i.name).join('/')}`;
   }
 
   reactivateEditor () {
@@ -1458,7 +1473,7 @@ export class BrowserModel extends ViewModel {
     await this.injectComponentEditControls(mod);
     await this.updateTestUI(mod);
     this.ui.metaInfoText.setPath([
-        `[${pack.name}]`,
+        `[${this.formatPackageName(pack)}]`,
         {
           nativeCursor: 'pointer',
           textDecoration: 'underline',
@@ -1467,7 +1482,7 @@ export class BrowserModel extends ViewModel {
         ' ', null,
         mod.nameInPackage || '', null
     ]);
-    this.view.getWindow().title = `browser - [${pack.name}] ${mod.nameInPackage || ''} `;
+    this.view.getWindow().title = `browser - [${this.formatPackageName(pack)}] ${mod.nameInPackage || ''} `;
   }
 
   updateFocusedCodeEntityDebounced () {
