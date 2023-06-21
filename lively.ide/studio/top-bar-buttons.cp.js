@@ -43,16 +43,15 @@ export const TopBarButtonSelected = component(TopBarButton, {
   fontColor: Color.rgb(0, 176, 255)
 });
 
-class TopBarButtonDropDownModel extends ViewModel {
+class TopBarButtonDropDownModel extends TopBarButtonModel {
   static get properties () {
     return {
-      expose: {
-        get () {
-          return ['activateButton', 'deactivateButton', 'removeDropdown'];
-        }
-      },
       opts: {}
     };
+  }
+
+  get expose () {
+    return [...super.expose, 'removeDropdown'];
   }
 
   activateButton () {
