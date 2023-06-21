@@ -110,7 +110,7 @@ export class Project {
    * @param {string} remote - The URL of the GitHub Repository.
    */
   static async fromRemote (remote) {
-    if (remote.endsWith('/')) remote = remote.slice(0, -1); ;
+    const li = $world.showLoadingIndicatorFor($world, 'Fetching Project...');
     const remoteUrl = new URL(remote);
 
     const userToken = currentUsertoken();
@@ -122,7 +122,7 @@ export class Project {
     const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error cloning repository');
-
+    li.remove();
     const loadedProject = await Project.loadProject(projectName, projectRepoOwner);
     return loadedProject;
   }
