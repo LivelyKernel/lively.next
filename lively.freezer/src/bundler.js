@@ -5,8 +5,6 @@ import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
 import { es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
-import { locateClass, requiredModulesOfSnapshot } from 'lively.serializer2';
-import { classNameOfId, moduleOfId } from 'lively.serializer2/snapshot-navigation.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import {
@@ -128,14 +126,14 @@ export default class LivelyRollup {
     this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
     this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
-    this.snapshot = snapshot; // the snapshot to be used as a base for developing a bundled app
-    if (rootModule) { this.rootModuleId = resolver.resolveModuleId(rootModule); } // alternatively to the snapshot, we can also use a root module as an entry point
+    this.snapshot = null; // DEPRECATED
+    if (rootModule) { this.rootModuleId = resolver.resolveModuleId(rootModule); } // the root module to use as an entry point
     this.autoRun = autoRun; // If root module is specified then this flag indicates that the main function of the module is to be invoked on load.
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
     this.excludedModules = excludedModules; // Set of package names whose modules to exclude from the bundle.
     this.captureModuleScope = captureModuleScope; // Wether or not the scopes of the modules should be captured. This is needed for supporting meta programming capabilities in the bundle.
     this.isResurrectionBuild = isResurrectionBuild; // If set to true, this will make the lively.core modules hot swappable. This requires not only scope capturing but also embedding of constructs in the build that allow for hot swapping of the modules in the static build scripts.
-    this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle.
+    this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle. Disabling this is probably a bad idea.
     this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
     this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
 
@@ -143,9 +141,7 @@ export default class LivelyRollup {
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
     this.hasDynamicImports = false; // Internal flag that indicates wether or not we need to perform code splitting or not.
     this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?
-    this.importedModules = []; // Collection of all the required modules from the passed snapshot. This is not popuplated if we utilize rootModule.
     this.resolved = {};
-    this.assetsToCopy = [];
     this.projectAssets = [];
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
@@ -167,16 +163,6 @@ export default class LivelyRollup {
   getResolutionContext () {
     if (!this.asBrowserModule) { return 'node'; } else { return 'systemjs-browser'; }
     // fixme: how to configure "system-node"
-  }
-
-  /**
-   * More or less unnessecary convenience method that extracts the required modules from a given snapshot.
-   * (Alongside the required assets). This only includes the modules that are directly required to
-   * deserialize the given snapshot. It does not compute the convex hull of the root module.
-   * @param { object } snap - The snapshot to be analyzed.
-   */
-  async getRequiredModulesFromSnapshot (snap) {
-    return requiredModulesOfSnapshot(snap);
   }
 
   /**
@@ -247,27 +233,8 @@ export default class LivelyRollup {
   }
 
   /**
-   * Throws an error if a excluded package (as per config) is directly imported
-   * by the root module. This heuristic is somewhat sketchy, but it sometimes works
-   * for the benefit of the doubt.
-   */
-  checkIfImportedPackageExcluded (importedModules) {
-    const excludedPackages = arr.compact(this.excludedModules.map(id => this.resolver.resolvePackage(id)));
-    const importedPackages = importedModules.map(id => this.resolver.resolvePackage(id));
-    const conflicts = arr.intersect(excludedPackages, importedPackages);
-    if (conflicts.length > 0) {
-      const multiple = conflicts.length > 1;
-      const error = Error(`Package${multiple ? 's' : ''} ${conflicts.map(p => `"${p.name}"`)}\n${multiple ? 'are' : 'is'} directly required by part, yet set to be excluded.`);
-      error.name = 'Exclusion Conflict';
-      error.reducedExclusionSet = arr.withoutAll(this.excludedModules, conflicts.map(p => p.name));
-      throw error;
-    }
-  }
-
-  /**
    * Returns the source code of the root module for the current freeze build.
-   * This can be either a module as specified by the config or a synthesized
-   * snapshot module of the entry point is a morph or world object.
+   * This can a module as specified by the.
    * @returns { string } The source code of the root module.
    */
   async getRootModule () {
@@ -277,7 +244,6 @@ export default class LivelyRollup {
       }
       return await this.synthesizeMainModule();
     }
-    return await this.synthesizeSnapshotModule();
   }
 
   /**
@@ -288,19 +254,6 @@ export default class LivelyRollup {
   async synthesizeMainModule () {
     let mainModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
-  }
-
-  /**
-   * Returns the source code of a synthesized module that imports all modules that
-   * are required to successfully deserialize the snapshot that for the frozen part.
-   */
-  async synthesizeSnapshotModule () {
-    const snapshotModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/snapshot-module.js'))).read();
-    const { requiredModules } = await this.getRequiredModulesFromSnapshot(this.snapshot);
-    this.checkIfImportedPackageExcluded(requiredModules); // consequence of this may an exception and termination of this process
-    return arr.uniq(requiredModules.map(path => `import "${path}"`)).join('\n') +
-      (this.excludedModules.includes('localconfig.js') ? '' : await this.resolver.load(string.joinPath(baseURL, 'localconfig.js'))) +
-     snapshotModuleSource.replace('{"SNAPSHOT": "PLACEHOLDER"}', JSON.stringify(JSON.stringify(obj.dissoc(this.snapshot, ['preview', 'packages']))));
   }
 
   /**
@@ -321,7 +274,6 @@ export default class LivelyRollup {
       return false; // 3rd party modules are not to be captured
     }
     if (!this.wasFetchedFromEsmCdn(moduleId)) return true;
-    // fixme: Maybe utilize the required modules of the snapshot if present...
     // fixme: If no snapshot but main module instead, utilize the required modules (convex hull) of that main module for the set of captured modules
     // fixem: maybe also just always capture if not explicitly told not to. Since rollup already computes the convex hull
     // return this.isComponentModule(moduleId) || this.isComponentModule(importModuleId) || !this.wasFetchedFromEsmCdn(moduleId); // fixme: Dont we actually need the convex hull of the imports of the component modules?
@@ -588,7 +540,6 @@ export default class LivelyRollup {
 
   async buildStart (plugin) {
     this.resolver.setStatus({ status: 'Bundling...' });
-    if (this.snapshot) this.getAssetsFromSnapshot(this.snapshot);
     await this.resolver.whenReady();
     if (this.autoRun) {
       plugin.emitFile({
@@ -799,31 +750,6 @@ export default class LivelyRollup {
     runtimeCode += regeneratorSource;
     runtimeCode += polyfills;
     return es5Transpilation(runtimeCode);
-  }
-
-  getAssetsFromSnapshot ({ snapshot: snap }) {
-    Object.entries(snap).map(([k, v]) => {
-      if (!classNameOfId(snap, k) || !moduleOfId(snap, k).package) return;
-      const klass = locateClass({
-        className: classNameOfId(snap, k),
-        module: moduleOfId(snap, k)
-      });
-      const toBeCopied = Object.entries(klass[Symbol.for('lively.classes-properties-and-settings')].properties)
-        .map(([key, settings]) => settings.copyAssetOnFreeze && key)
-        .filter(Boolean);
-      for (const prop of toBeCopied) {
-        if (!v.props[prop]) continue; // may be styled and not present in snapshot
-        if (v.props[prop].value.startsWith('assets')) continue; // already copied
-        const path = v.props[prop].value;
-        if (path === '' || path.startsWith('data:')) continue; // data URL can not be copied
-        const asset = resource(path);
-        // fixme: how to handle that when we are bundling from node.js? There is is not host here...
-        if (asset.host() !== resource(baseURL).host()) continue;
-        asset._from = k;
-        if (!this.assetsToCopy.find(res => res.url === asset.url)) { this.assetsToCopy.push(asset); }
-        v.props[prop].value = 'assets/' + asset.name(); // this may be causing duplicates
-      }
-    });
   }
 
   async generateIndexHtml (importMap, modules) {
