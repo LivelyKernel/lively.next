@@ -1000,12 +1000,20 @@ const commands = [
         : ` on [${
               string.truncate(systemInterface.name, 35, '...')
           }]`;
+      const seenPackages = new Map();
       let items = (await systemInterface.coreInterface.getLoadedModules((config.ide.js.ignoredPackages)))
         .map(({ package: p, module: m }) => {
           const shortName = systemInterface.shortModuleName(m.name, p);
+          let packageName = seenPackages.get(p);
+          if (!packageName) {
+            if (p.name.includes('--') && ![...seenPackages.values()].find(n => p.name.endsWith('--' + n))) {
+              packageName = p.name.split('--')[1];
+            } else packageName = p.name;
+            seenPackages.set(p, packageName);
+          }
           return {
             isListItem: true,
-            string: `[${p.name}] ${shortName}`,
+            string: `[${packageName}] ${shortName}`,
             value: { package: p, module: m, shortName }
           };
         });
