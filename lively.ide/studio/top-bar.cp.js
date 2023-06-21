@@ -211,7 +211,7 @@ export class TopBarModel extends ViewModel {
     }
 
     if (evt.targetMorph === handOrHaloModeButton) {
-      const currentlyShowingHaloIcon = this.view.get('interaction mode status icon').textAndAttributes[0] === Icon.textAttribute('arrow-pointer')[0];
+      const currentlyShowingHaloIcon = this.ui.handOrHaloModeButton.getIcon()[0] === Icon.textAttribute('arrow-pointer')[0];
       this.setEditMode(currentlyShowingHaloIcon ? 'Halo' : 'Hand');
     }
 
