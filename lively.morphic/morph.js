@@ -953,13 +953,13 @@ export class Morph {
     for (const key in properties) {
       try {
         const descr = properties[key];
-        if (
-          descr.readOnly ||
-        descr.derived ||
-        descr.isComponent ||
-        (descr.hasOwnProperty('serialize') && !descr.serialize) ||
-        obj.equals(this[key], defaults[key])
-        ) continue;
+        if (descr.readOnly ||
+            descr.derived ||
+            descr.isComponent ||
+            (descr.hasOwnProperty('serialize') && !descr.serialize) ||
+            obj.equals(this[key], defaults[key])) {
+          continue;
+        }
         propsToSerialize.push(key);
       } catch (err) {
 
