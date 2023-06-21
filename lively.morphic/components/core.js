@@ -452,11 +452,11 @@ export class ViewModel {
   }
 
   disableBindings () {
-    this.getBindingConnections().forEach(conn => conn.activate());
+    this.getBindingConnections().forEach(conn => conn.deactivate());
   }
 
   enableBindings () {
-    this.getBindingConnections().forEach(conn => conn.deactivate());
+    this.getBindingConnections().forEach(conn => conn.activate());
   }
 
   /**
