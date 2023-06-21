@@ -94,9 +94,9 @@ export class Project {
       const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
       // TODO: 🍴 Support
       packageJSONObjects.forEach(pkg => {
-         pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
-         pkg.url = projectsDir.url + `${pkg.projectRepoOwner}-${pkg.name}`;
-         pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
+        pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
+        pkg.url = projectsDir.url + pkg.name;
+        pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
       });
       // To allow correct resolution of projects via `flatn`, we need the name attribute in `package.json` to match the folder of the package.
       // To make working with the project names easier at runtime, we remove the owner-- here, so that the name attribut equals the project name again.
@@ -114,7 +114,6 @@ export class Project {
    */
   static async fromRemote (remote) {
     const li = $world.showLoadingIndicatorFor($world, 'Fetching Project...');
-
     if (remote.endsWith('/')) remote = remote.slice(0, -1);
     const remoteUrl = new URL(remote);
 

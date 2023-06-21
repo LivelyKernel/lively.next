@@ -20,7 +20,7 @@ import { COLORS } from '../js/browser/index.js';
 import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
-import { GreenButton } from 'lively.components/prompts.cp.js';
+
 import { joinPath } from 'lively.lang/string.js';
 
 class MasterComponentTreeData extends TreeData {
@@ -254,14 +254,17 @@ class MasterComponentTreeData extends TreeData {
           }
         ]
       }));
+    const win = this.root.browser.view.getWindow();
     const { selected: [projectToLoad] } = await $world.filterableListPrompt('Select project to import', notLoaded, {
-      requester: this.root.browser.view.getWindow(),
+      requester: win,
       multiSelect: false
     });
     if (projectToLoad) {
-      await $world.openedProject.addDependencyToProject(projectToLoad.projectRepoOwner, projectToLoad.name);
-      this.root.subNodes = await this.listAllComponentCollections();
-      this.columnView.refresh();
+      await $world.withLoadingIndicatorDo(async () => {
+        await Project.loadProject(projectToLoad.name, projectToLoad.projectRepoOwner, true);
+        this.root.subNodes = await this.listAllComponentCollections();
+        this.columnView.refresh();
+      }, win, 'Importing project...');
     }
   }
 
@@ -1424,7 +1427,6 @@ const ComponentBrowser = component({
         width: 'fill'
       }]]
     }),
-    fill: Color.rgb(238, 238, 238),
     borderRadius: 3,
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(388.4, 42.6),
@@ -1453,7 +1455,7 @@ const ComponentBrowser = component({
       borderColor: Color.rgb(224, 224, 224),
       borderRadius: 2,
       extent: pt(445.3, 34.3),
-      fill: Color.rgba(238, 238, 238, 0),
+      fill: Color.rgba(255, 255, 255, 0),
       padding: rect(6, 4, -4, 2),
       position: pt(11.9, 3.8),
       placeholder: 'Search for components...'
@@ -1621,7 +1623,14 @@ const ComponentBrowserPopup = component(PopupWindow, {
     }]]
   }),
   submorphs: [
-    add(part(ComponentBrowser, { defaultViewModel: null, name: 'controls' })),
+    add(part(ComponentBrowser, {
+      defaultViewModel: null,
+      name: 'controls',
+      submorphs: [{
+        name: 'search input wrapper',
+        fill: Color.rgb(238, 238, 238)
+      }]
+    })),
     {
       name: 'header menu',
       submorphs: [{
