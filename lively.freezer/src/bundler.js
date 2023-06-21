@@ -143,6 +143,7 @@ export default class LivelyRollup {
     this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?
     this.resolved = {};
     this.projectAssets = [];
+    this.projectsInBundle = new Set();
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -389,6 +390,8 @@ export default class LivelyRollup {
 
     const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
     const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
+
+    if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
 
     const assetNameRewriter =  (match, assetName) => {
       const newName = currentlyTransformedProject + '__' + assetName;
@@ -827,8 +830,27 @@ export default class LivelyRollup {
     }
 
     const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
+    const projectsDir = resource(livelyDir).join('local_projects');
+    let bundledProjectCSS = '';
+    let bundledProjectFontCSS = '';
+    for (let project of this.projectsInBundle.entries()) {
+      const indexCSSFile = projectsDir.join(project[0]).join('index.css');
+      const indexCSSContents = await indexCSSFile.read();
+      bundledProjectCSS =  indexCSSContents + '\n' + bundledProjectCSS;
+      const fontCSSFile = projectsDir.join(project[0]).join('fonts.css');
+      const fontCSSContents = await fontCSSFile.read();
+      bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS ;
+    }
+
+    const bundledCSS = bundledProjectFontCSS + '\n' + bundledProjectCSS;
+    plugin.emitFile({
+      type: 'asset',
+      fileName: joinPath('assets', 'bundle.css'),
+      source: bundledCSS
+    });
+
     for (let asset of this.projectAssets) {
-      const file = resource(livelyDir).join('local_projects').join(asset.project).join('assets').join(`${asset.oldName}`);
+      const file = resource(projectsDir).join(asset.project).join('assets').join(`${asset.oldName}`);
       file.beBinary();
         let source = await file.read();
         if (source instanceof ArrayBuffer) source = new Uint8Array(source);
@@ -838,7 +860,6 @@ export default class LivelyRollup {
           source
         });
     }
-
     // add the blank import file to make systemjs happy
     plugin.emitFile({
       type: 'asset',
