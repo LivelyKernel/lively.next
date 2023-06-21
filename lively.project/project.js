@@ -111,6 +111,8 @@ export class Project {
    */
   static async fromRemote (remote) {
     const li = $world.showLoadingIndicatorFor($world, 'Fetching Project...');
+
+    if (remote.endsWith('/')) remote = remote.slice(0, -1);
     const remoteUrl = new URL(remote);
 
     const userToken = currentUsertoken();
