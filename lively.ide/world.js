@@ -43,6 +43,7 @@ import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } fro
 import { localInterface } from 'lively-system-interface';
 import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
 import { currentUsername, currentUser } from 'lively.user';
+import { subscribe } from 'lively.notifications/index.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -54,6 +55,11 @@ export class LivelyWorld extends World {
       playgroundsMode: {
         get () {
           return !(this.openNewProjectPrompt || this.projectToBeOpened || this.openedProject);
+        }
+      },
+      fileWatcher: {
+        initialize () {
+          this.fileWatcher = new FileWatcher(); // eslint-disable-line no-use-before-define
         }
       },
       clipMode: {
@@ -1533,5 +1539,38 @@ export class LivelyWorld extends World {
     this.halos().forEach(halo => {
       halo.maskBounds = this.visibleBounds();
     });
+  }
+}
+
+class FileWatcher {
+  constructor () {
+    this.fileActions = {};
+    this.onFileSave.bind(this);
+    subscribe('file/save', this.onFileSave.bind(this));
+  }
+
+  clear () {
+    this.fileActions = {};
+  }
+
+  registerFileAction (file, cB) {
+    if (this.fileActions[file]) {
+      if (Array.isArray(this.fileActions[file])) this.fileActions[file].push(cB);
+      else this.fileActions[file] = [this.fileActions[file], cB];
+    } else { this.fileActions[file] = cB; }
+  }
+
+  unregisterFileActions (file) {
+    this.fileActions[file] = null;
+  }
+
+  async onFileSave (savedFileData) {
+    if (!this.fileActions[savedFileData.resource]) return;
+    const actions = this.fileActions[savedFileData.resource];
+    if (Array.isArray(actions)) {
+      for (let action of actions) {
+        await action();
+      }
+    } else await actions();
   }
 }

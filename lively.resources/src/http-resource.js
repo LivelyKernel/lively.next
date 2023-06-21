@@ -3,6 +3,7 @@
 import Resource from './resource.js';
 import { applyExclude } from './helpers.js';
 import { promise, num } from 'lively.lang';
+import { emit } from 'lively.notifications/index.js';
 
 class XPathQuery {
   constructor (expression) {
@@ -242,6 +243,7 @@ export default class WebDAVResource extends Resource {
     const res = await upload(this, content);
 
     if (!num.between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
+    const notif = emit('file/save', { name: this.name(), url: this.url, host: this.host(), resource: this });
     return this;
   }
 
