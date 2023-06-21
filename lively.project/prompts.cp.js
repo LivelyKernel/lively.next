@@ -89,9 +89,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       try {
         urlString = remoteUrl.textString;
         if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
-        li = $world.showLoadingIndicatorFor(this.view, 'Fetching Project...');
         createdProject = await Project.fromRemote(urlString);
-        li.remove();
         super.resolve(createdProject);
       } catch (err) {
         li.remove();
