@@ -47,7 +47,7 @@ export class Project {
     return this.config.repository.url.match(repositoryOwnerAndNameRegex)[1];
   }
 
-  constructor (name, bindVersion = true, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
+  constructor (name, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
     const { author, description, repoOwner } = opts;
     this.config = {
       name: name || 'new world',
@@ -77,8 +77,6 @@ export class Project {
       },
       version: '0.1.0'
     };
-
-    if (bindVersion) VersionChecker.currentLivelyVersion(true).then(version => this.config.lively.boundLivelyVersion = version);
   }
 
   static async listAvailableProjects () {
@@ -144,7 +142,7 @@ export class Project {
     if (!onlyLoadNotOpen && $world) li = $world.showLoadingIndicatorFor($world, 'Loading Project...');
     // Create Project object and do not automatically update the referenced lively version.
     // The project acts merely as a container until we fill in the correct contents below!
-    const loadedProject = new Project(name, false);
+    const loadedProject = new Project(name);
 
     let address, url;
     // Operates on the "patched" name property, thus we need to glue owner and name together with dashes, to get the folder of the project.

@@ -18,6 +18,7 @@ import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/component
 import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
+import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -99,7 +100,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     } else {
       const createNewRemote = createRemoteCheckbox.checked;
       const { name: repoOwner, isOrg } = userSelector.selection;
-      createdProject = new Project(projectName.textString, true, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
+      createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
+      const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
+      createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
       try {
         li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
         createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
