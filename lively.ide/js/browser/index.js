@@ -2471,7 +2471,7 @@ export class BrowserModel extends ViewModel {
     if (!dir || !selectedPackage) return;
     const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
-    const textStyle = { fontSize: 16, fontWeight: 'normal ' };
+    const textStyle = { fontSize: 16, fontWeight: 'normal' };
     if (!selectedNodeInDir) return;
     if (this.isModule(selectedNodeInDir)) {
       // if is .md or .less, just remove the file
