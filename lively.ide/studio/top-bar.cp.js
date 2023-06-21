@@ -379,14 +379,16 @@ export class TopBarModel extends ViewModel {
       [
         [
           ...config.ide.studio.canvasModeEnabled
-            ? [
-                ...Icon.textAttribute('check', {
-                  fontSize: 11,
-                  paddingTop: '2px'
-                }), '    ', {}
-              ]
-            : ['     ', {}],
-          '   Enabled '
+            ? Icon.textAttribute('check-square', {
+              fontSize: 18,
+              paddingTop: '2px'
+            })
+
+            : Icon.textAttribute('square', {
+              fontSize: 18,
+              paddingTop: '2px'
+            }),
+          '  Enabled '
         ], async () => {
           const currentMode = config.ide.studio.canvasModeEnabled;
           let changeMode = true;
