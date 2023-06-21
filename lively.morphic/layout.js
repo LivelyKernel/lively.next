@@ -550,7 +550,6 @@ export class TilingLayout extends Layout {
       if (!h) continue;
       if (h === 'fill') return false;
     }
-    // if (!this.resizePolicies.some(([_, { height }]) => height === 'fixed')) return false;
     return this._hugContentsVertically;
   }
 

@@ -180,13 +180,13 @@ export class MarkdownPreviewMorph extends HTMLMorph {
 
     if (typeof markdownToHTMLPositionMap[targetRow] !== 'number') return;
 
-    this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.activate());
+    this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.deactivate());
     // fun.debounceNamed("syncScroll_connection_activator1" + this.id, 300, () =>
     //   this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.deactivate()))();
 
     this.smoothScrollStart(this, markdownToHTMLPositionMap[targetRow]);
     // this.domNode.parentNode.scrollTop = markdownToHTMLPositionMap[targetRow];
-    fun.waitFor(() => !this._smoothScroll, () => this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.deactivate()));
+    fun.waitFor(() => !this._smoothScroll, () => this.htmlScrollToMarkdownScrollConnections().forEach(ea => ea.activate()));
   }
 
   syncHTMLScrollToMarkdownScroll (editor = this.markdownEditor) {

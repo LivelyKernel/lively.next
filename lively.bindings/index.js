@@ -165,9 +165,9 @@ export class AttributeConnection {
 
   privateAttrName (attrName) { return '$$' + attrName; }
 
-  activate () { this.isActive = true; }
+  deactivate () { this.isActive = true; }
 
-  deactivate () { delete this.isActive; }
+  activate () { delete this.isActive; }
 
   connect () {
     const existing = this.getExistingConnection();
