@@ -18,6 +18,7 @@ import { buildScript } from './templates/build.js';
 import Terminal from 'lively.ide/shell/terminal.js';
 import { pt } from 'lively.graphics';
 import { arr, obj } from 'lively.lang';
+import { addOrChangeCSSDeclaration } from 'lively.morphic';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 
@@ -198,10 +199,34 @@ export class Project {
       type: 'package'
     });
     loadedProject.package = pkg;
-
+    await Project.installCSSForProject(url, !onlyLoadNotOpen, { repoOwner, name });
     if (!onlyLoadNotOpen) $world.openedProject = loadedProject;
     if (li) li.remove();
     return loadedProject;
+  }
+
+  /**
+   * @param {string} projectUrl
+   * @param {boolean} forProject - Whether to install CSS for an opened project or a dependency
+   * @param {boolean} installWatcher
+   * @param {object} opts
+   */
+  static async installCSSForProject (projectUrl, forProject, opts) {
+    const indexCSSResource = resource(projectUrl).join('index.css');
+    let indexCSS = await indexCSSResource.read();
+    if (forProject)indexCSS = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + indexCSS;
+    else indexCSS = `@import '/local_projects/${opts.name}/fonts.css';\n` + indexCSS;
+    if (forProject) addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, indexCSS);
+    else addOrChangeCSSDeclaration(`CSS-for-dependency-${opts.name}`, indexCSS);
+    if (forProject) {
+      const updateProjectCSS = async () => {
+        let cssContents = await indexCSSResource.read();
+        cssContents = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + cssContents;
+        addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, cssContents);
+      };
+      $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
+      $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
+    }
   }
 
   showDiffSummary () {
@@ -307,7 +332,9 @@ export class Project {
           'default.workspace.js': ''
         },
         assets: { },
-        'index.css': ''
+        'index.css': '/* Use this file to add custom CSS to be used for this project! */\n/* Do NOT use @import rules in this file! */',
+        'fonts.css': `/* DO NOT CHANGE THE CONTENTS OF THIS FILE!
+Its contend is managed automatically by lively.next. It will automatically be loaded/bundled together with this project! */`
       });
       await this.generateBuildScripts();
       this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
@@ -324,12 +351,11 @@ export class Project {
         test: projectDir.join('tests/test.js').url,
         type: 'package'
       });
-
       this.package = pkg;
     } catch (error) {
       throw Error('Error creating project files', { cause: error });
     }
-
+    await Project.installCSSForProject(this.url, true, { repoOwner: gitHubUser, name: this.name });
     if (withRemote) {
       try {
         await this.regenerateTestPipeline();
@@ -449,11 +475,7 @@ export class Project {
       transitiveDepsOfDepToEnsure.forEach(dep => dep.requester = depToEnsure.name);
       depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
 
-      // Load the dependency.
-      // The use to do this explicitly is debatable. Usually it is safe to assume that one actually uses all dependencies in which case `flatn` has our back.
-      // However, when one manually adds a dependency to `package.json`, commits that and does not use that dependency in the code,
-      // the explicit loading is necessary to get to the expected outcome.
-      // Will only be entered once per dependency!
+      // Load the dependency and mount its CSS.
       const adr = (await Project.projectDirectory()).join(depToEnsure.name);
       await loadPackage(Project.systemInterface, {
         name: depToEnsure.name,
@@ -461,6 +483,7 @@ export class Project {
         address: adr.url,
         type: 'package'
       });
+      Project.installCSSForProject(adr.url, false, { name: depToEnsure.name });
       // Last step: mark dependency with name and version as ensured and remove it from the list.
       dependencyMap[depToEnsure.name] = {
         [String(depToEnsure.version)]: [depToEnsure.requester]
