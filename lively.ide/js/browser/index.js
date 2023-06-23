@@ -2472,12 +2472,8 @@ export class BrowserModel extends ViewModel {
     if (this.isModule(selectedNodeInDir)) {
       // if is .md or .less, just remove the file
       // else remove module!
-      if (selectedNodeInDir.url.match(/(\.md|\.less)$/)) {
-        if (await this.world().confirm([
-          'Really remove file?\n', {}, 'You are about to remove the file:\n', textStyle, selectedNodeInDir.url, { ...textStyle, fontStyle: 'italic' }
-        ], { lineWrapping: false, requester: this.view })) {
-          await coreInterface.resourceRemove(selectedNodeInDir.url);
-        }
+      if (selectedNodeInDir.url.match(/(\.md|\.less|\.json)$/)) {
+        await this.execCommand('remove module');
       } else {
         await this.execCommand('remove module', { mod: selectedNodeInDir });
       }
