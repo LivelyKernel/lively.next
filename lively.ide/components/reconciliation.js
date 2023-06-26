@@ -1,6 +1,6 @@
 import { arr, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs,
+  getNodeFromSubmorphs, getParentRef, getComponentDeclsFromScope,
   getAddCallReferencing,
   getWithoutCall,
   getEligibleSourceEditorsFor,
@@ -351,11 +351,13 @@ export async function renameComponent (protoMorph, newName) {
   const parsedModule = await mod.ast();
   const descr = mod.recorder[oldName];
   const moduleNeedsRename = !descr.stylePolicy.parent; // works only for auto generated component files and this if fine
-
   const { declarations: [{ id: decl }] } = findComponentDef(parsedModule, meta.exportedName);
+  const references = arr.compact((await getComponentDeclsFromScope(mod.id, await mod.scope())).map(ref => {
+    return getParentRef(ref[1]);
+  }));
   const { local: exportedEntity } = exports.find(exp => exp.local === oldName)?.node || {};
 
-  let newModuleName;
+  let newModuleName; let oldModuleName = mod.shortName();
   if (moduleNeedsRename) {
     newModuleName = string.decamelize(newName).split(' ').join('-') + '.cp.js';
     const newId = resource(mod.id).parent().join(newModuleName).url;
@@ -365,7 +367,7 @@ export async function renameComponent (protoMorph, newName) {
       updateDependants: true // implement this one
     });
   }
-
+  await mod.ensureRecord();
   await mod.changeSourceAction(oldSource => {
     // also replace the export, if exported separately
     if (exportedEntity) {
@@ -373,13 +375,22 @@ export async function renameComponent (protoMorph, newName) {
         action: 'replace', ...exportedEntity, lines: [newName]
       });
     }
-    return string.applyChange(oldSource, { action: 'replace', ...decl, lines: [newName] });
+    // this will brick the module temporarily, which is no good!
+    const changes = arr.sortBy([
+      { action: 'replace', ...decl, lines: [newName] },
+      ...references.map(ref => ({
+        action: 'replace', ...ref, lines: [newName]
+      }))
+    ], action => -action.start);
+
+    return string.applyChanges(oldSource, changes);
   });
 
   // proceed and rename all of the derived ones
   await mod.recorder[meta.exportedName].withDerivedComponentsDo(async descr => {
     const meta = descr[Symbol.for('lively-module-meta')];
-    if (meta.exportedName) {
+    if (meta.exportedName && meta.moduleId !== oldModuleName) {
+      console.log('updating', meta.exportedName);
       const mod = module(meta.moduleId);
       const parsedModule = await mod.ast();
       const imports = await mod.imports();
@@ -627,7 +638,7 @@ export class Reconciliation {
       // handle both things in the same class?
     }
 
-    new klass(componentDescriptor, change).reconcile().applyChanges();
+    return new klass(componentDescriptor, change).reconcile().applyChanges();
   }
 
   constructor (componentDescriptor, change) {
@@ -700,7 +711,12 @@ export class Reconciliation {
    */
   applyChanges () {
     const { openEditors } = this.getDescriptorContext();
-    if (openEditors.length > 0) { openEditors.map(ed => applyModuleChanges(this, ed)); } else { applyModuleChanges(this); } // no open editors
+
+    if (openEditors.length > 0) {
+      openEditors.map(ed => applyModuleChanges(this, ed));
+    } else {
+      applyModuleChanges(this);
+    } // no open editors
 
     return this;
   }
@@ -1273,8 +1289,9 @@ class PropChangeReconciliation extends Reconciliation {
  */
 class RenameReconciliation extends PropChangeReconciliation {
   get oldName () { return this.change.prevValue; }
-  get newName () { return this.newValue; }
+  get newName () { return string.camelCaseString(this.newValue); }
   get renamedMorph () { return this.change.target; }
+  get renameComponent () { return this.target.master === this.descriptor.stylePolicy || this.target.isComponent; }
 
   withinDerivedComponent (aMorph) {
     if (aMorph.__wasAddedToDerived__) return false;
@@ -1326,19 +1343,33 @@ class RenameReconciliation extends PropChangeReconciliation {
     if (this.withinDerivedComponent(this.renamedMorph)) {
       throw new Error('Cannot rename a morph that has not been introduced in this component! Please rename the morph in the component it originated from.');
     }
-    if (this.target.master === this.descriptor.stylePolicy) {
-      // this will not rename the spec, but instead the component itself,
-      return renameComponent(this.renamedMorph, this.newName).then((newMorph) => {
-        if (!this.renamedMorph.world()) return;
-        newMorph.openInWorld();
-        newMorph.position = this.renamedMorph.position;
-        if ($world.halos().find(h => h.target === this.renamedMorph)) $world.showHaloFor(newMorph);
-        this.renamedMorph.remove();
-      });
+    if (this.renameComponent) {
+      return this;
     }
 
     this.handleRenaming(this.descriptor);
     return this;
+  }
+
+  async applyChanges () {
+    super.applyChanges();
+    if (this.renameComponent) {
+      const newMorph = await renameComponent(this.renamedMorph, this.newName);
+      if (!this.renamedMorph.world()) return;
+      newMorph.openInWorld();
+      newMorph.position = this.renamedMorph.position;
+      if ($world.halos().find(h => h.target === this.renamedMorph)) $world.showHaloFor(newMorph);
+      this.renamedMorph.remove();
+
+      if (newMorph[Symbol.for('lively-module-meta')]?.moduleId === this.renamedMorph[Symbol.for('lively-module-meta')]?.moduleId) return;
+      const { openEditors } = this.getDescriptorContext();
+      const newModId = System.decanonicalize(newMorph[Symbol.for('lively-module-meta')]?.moduleId);
+      openEditors.forEach(ed => {
+        const browser = ed.owner;
+
+        browser.searchForModuleAndSelect(newModId);
+      });
+    }
   }
 }
 

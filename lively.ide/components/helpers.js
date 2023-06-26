@@ -3,10 +3,26 @@ import { serializeNestedProp } from 'lively.serializer2/plugins/expression-seria
 import { Icons } from 'lively.morphic/text/icons.js';
 import { arr, string, num, obj } from 'lively.lang';
 import { parse, query } from 'lively.ast';
+import { module } from 'lively.modules/index.js';
 
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'selectionMode', 'acceptsDrops'];
 export const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 const exprSerializer = new ExpressionSerializer();
+
+export async function getComponentDeclsFromScope (modId, scope) {
+  const mod = module(modId);
+  if (!scope) scope = await mod.scope();
+  const componentDecls = [];
+  for (let decl of scope.varDecls) {
+    const varName = decl.declarations[0]?.id?.name; // better to use a source descriptor??
+    if (!varName) continue;
+    const val = mod.recorder[varName];
+    if (val?.isComponentDescriptor) {
+      componentDecls.push([val, decl]);
+    }
+  }
+  return componentDecls;
+}
 
 function getScopeMaster (m) {
   if (m.owner?.isWorld) return m;
@@ -163,6 +179,15 @@ export function getProp (propsNode, prop) {
    ]
  `);
   return propNode;
+}
+
+export function getParentRef (parsedComponent) {
+  const [parentNode] = query.queryNodes(parsedComponent, `
+   // CallExpression [
+         /:callee Identifier [ @name == 'component']
+      ]
+ `);
+  if (parentNode.arguments.length > 1) return parentNode.arguments[0];
 }
 
 /**
