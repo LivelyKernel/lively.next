@@ -1,14 +1,39 @@
 /* global System, global, self */
-import { arr, obj } from 'lively.lang';
-import FontDetector from './font-detector.js';
-
-const checkTimeout = 1000;
+import { obj } from 'lively.lang';
 
 function ensureElementMounted (element, parentEl) {
   if (!element.isConnected) {
     // we assume we are mounted in then body.
     parentEl.insertBefore(element, parentEl.firstChild);
   }
+}
+
+export function fontWeightToString (weightNumber) {
+  weightNumber = Number(weightNumber);
+  switch (weightNumber) {
+    case 100: return 'Thin';
+    case 200:return 'Extra Light';
+    case 300:return 'Light';
+    case 400:return 'Normal';
+    case 500:return 'Medium';
+    case 600:return 'Semi Bold';
+    case 700:return 'Bold';
+    case 800:return 'Extra Bold';
+    case 900:return 'Ultra Bold';
+  }
+}
+
+export function fontWeightNameToNumeric () {
+  return new Map([
+    'Thin',
+    'Extra Light',
+    'Light',
+    'Normal',
+    'Medium',
+    'Semi Bold',
+    'Bold',
+    'Extra Bold',
+    'Ultra Bold'].map((name, i) => [name, String((i + 1) * 100)]));
 }
 
 export default class FontMetric {
@@ -203,12 +228,6 @@ export default class FontMetric {
 
   defaultLineHeight (style) {
     return this.sizeFor(style, ' ').height;
-  }
-
-  get supportedFonts () {
-    return arr.uniq(Object
-      .keys(this.supportedFontCache)
-      .map(font => font.split(',')[0].replaceAll(/-bold|-Medium|\"|-normal/g, '')));
   }
 
   isFontSupported (font, weight = 'normal') {

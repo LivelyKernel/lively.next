@@ -1,6 +1,6 @@
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
-import { TilingLayout, config, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
-import { obj, arr } from 'lively.lang';
+import { TilingLayout, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
+import { obj } from 'lively.lang';
 import {
   EnumSelector,
   BoundsContainerHovered,
@@ -12,10 +12,13 @@ import {
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
-import { disconnect, epiConnect } from 'lively.bindings';
-import { sanitizeFont } from 'lively.morphic/helpers.js';
+import { disconnect, connect } from 'lively.bindings';
+
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
+import { DEFAULT_FONTS } from 'lively.morphic/rendering/fonts.js';
+import { fontWeightToString } from 'lively.morphic/rendering/font-metric.js';
+import { sanitizeFont } from 'lively.morphic/helpers.js';
 
 /**
  * This model provides functionality for rich-text-editing frontends.
@@ -79,16 +82,7 @@ export class RichTextControlModel extends ViewModel {
   focusOn (target) {
     if (this.targetMorph) { disconnect(this.targetMorph, 'selectionChange', this, 'update'); }
     if (target.isText || target.isLabel) { this.targetMorph = target; }
-
     this.update();
-    this.models.fontFamilySelector.items = arr.uniq([...this.view.env.fontMetric.supportedFonts, ...config.text.basicFontItems]).map(f => {
-      return {
-        value: sanitizeFont(f),
-        string: f,
-        isListItem: true
-      };
-    });
-
     // also watch for changes in selection
     if (target.isText && !this.globalMode) {
       epiConnect(target, 'selectionChange', this, 'update');
@@ -112,9 +106,16 @@ export class RichTextControlModel extends ViewModel {
           lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
-
+        this.models.fontFamilySelector.items = DEFAULT_FONTS.map(font => {
+          return {
+            value: font,
+            string: font.name,
+            isListItem: true
+          };
+        });
         fontFamilySelector.selection = text.fontFamily;
         fontWeightSelector.selection = text.fontWeight; // fixme
+        this.updateFontWeightChoices(text.fontFamily);
         fontSizeInput.number = text.fontSize;
         lineHeightInput.number = text.lineHeight; // fixme
         if (letterSpacingInput) letterSpacingInput.number = text.letterSpacing;
@@ -270,7 +271,13 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeFontFamily (fontFamily) {
-    this.confirm('fontFamily', fontFamily);
+    this.confirm('fontFamily', sanitizeFont(fontFamily.name));
+    this.updateFontWeightChoices(fontFamily.name);
+  }
+
+  updateFontWeightChoices (forFont) {
+    const supportedFontWeights = DEFAULT_FONTS.find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
+    this.models.fontWeightSelector.items = supportedFontWeights.length > 0 ? supportedFontWeights : [400, 700].map(fontWeight => fontWeightToString(fontWeight));
   }
 
   changeLineHeight (height) {
