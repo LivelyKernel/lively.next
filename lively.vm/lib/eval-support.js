@@ -40,6 +40,8 @@ export function evalCodeTransform (code, options) {
     moduleName = options.declarationWrapperName.split('lively-object-modules/')[1];
     moduleName = `local://lively-object-modules/${moduleName}`;
   }
+
+  if (moduleName && moduleName.includes('local_projects/')) moduleName = moduleName.replace('local_projects/', '');
   if (moduleName) { parsed = ensureComponentDescriptors(parsed, moduleName); }
 
   // 2. Annotate definitions with code location. This is being used by the
