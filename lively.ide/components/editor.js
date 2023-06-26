@@ -175,7 +175,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   withDerivedComponentsDo (cb) {
     if (!this.stylePolicy._dependants) return;
     [...this.stylePolicy._dependants.values()].forEach(expr => {
-      cb(InteractiveComponentDescriptor.ensureInteractive(exprSerializer.deserializeExpr(expr)));
+      const descr = exprSerializer.deserializeExpr(expr);
+      if (descr) cb(InteractiveComponentDescriptor.ensureInteractive(descr));
     });
   }
 
