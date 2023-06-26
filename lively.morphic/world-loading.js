@@ -11,7 +11,7 @@ import { MorphicDB } from './morphicdb/index.js';
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
 import { part } from './components/core.js';
-import { currentUsername } from 'lively.user';
+import { currentUsername, currentUser } from 'lively.user';
 
 function reportWorldLoad (world, user) {
   fetch(string.joinPath(System.baseURL, '/report-world-load'), {
@@ -24,7 +24,7 @@ function reportWorldLoad (world, user) {
 }
 
 async function setupLively2Lively (world) {
-  const user = currentUsername();
+  const user = { name: currentUser().login, email: currentUser().email };
   const info = { world: world.name };
   if (user) {
     info.userToken = user.token;
@@ -284,7 +284,7 @@ export async function interactivelySaveWorld (world, options) {
     }
 
     const commitSpec = {
-      author: currentUsername(),
+      author: { name: currentUser().login, email: currentUser().email },
       message: 'world save',
       tags,
       description
