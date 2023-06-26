@@ -67,7 +67,7 @@ export default class FontMetric {
   constructor () {
     this.charMap = {};
     this.cachedBoundsInfo = {};
-    this.supportedFontCache = {};
+    this.supportedFontCache = new Set();
     this.element = null;
     this.isProportionalCache = {};
   }
@@ -98,7 +98,6 @@ export default class FontMetric {
     if (this.element?.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
-    this.fontDetector?.clear();
     this.element = null;
   }
 
@@ -230,21 +229,12 @@ export default class FontMetric {
     return this.sizeFor(style, ' ').height;
   }
 
-  isFontSupported (font, weight = 'normal') {
-    const fd = this.fontDetector || (this.fontDetector = new FontDetector(this.element.ownerDocument));
+  isFontSupported (font, weight = 'normal', style = 'normal') {
+    if (this.supportedFontCache.has(`${style} ${weight} 12px ${font}`)) return true;
+    const check = document.fonts.check(`${style} ${weight} 12px ${font}`);
+    if (check) this.supportedFontCache.add(`${style} ${weight} 12px ${font}`);
+    return check;
 
-    if (this.supportedFontCache[font + '-' + weight]) {
-      const { ts, value } = this.supportedFontCache[font + '-' + weight];
-      if (Date.now() - ts < checkTimeout) return value;
-    }
-
-    const value = fd.isFontSupported(font, weight);
-
-    this.supportedFontCache[font + '-' + weight] = {
-      ts: Date.now(), value
-    };
-
-    return value;
   }
 
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {

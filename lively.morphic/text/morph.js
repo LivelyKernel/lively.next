@@ -23,7 +23,7 @@ import { getClassName } from 'lively.serializer2';
 import { Icon, Icons } from './icons.js';
 import { ShadowObject } from '../rendering/morphic-default.js';
 import { editingCommand } from 'lively.ide/text/rich-text-commands.js';
-import FontMetric, { fontWeightNameToNumeric } from '../rendering/font-metric.js';
+import { fontWeightNameToNumeric } from '../rendering/font-metric.js';
 import { DEFAULT_FONTS } from '../rendering/fonts.js';
 
 /**
@@ -1018,47 +1018,39 @@ export class Text extends Morph {
     }
   }
 
-  allFontsLoaded (fontFaceSet) {
-    const { fontMetric } = this.env;
-    return [
-      this,
-      ...this.textAndAttributes.map((attr, i) => {
-        if (i % 2) {
-          return {
-            fontFamily: (attr && attr.fontFamily) || this.fontFamily,
-            fontWeight: (attr && attr.fontWeight) || this.fontWeight
-          };
-        }
-      }).filter(Boolean)
-    ].every(attr => {
-      if (fontFaceSet) {
-        const face = fontFaceSet.find(face =>
-          face.family === attr.fontFamily &&
-          face.weight === (fontMetric.fontDetector.namedToNumeric[attr.fontWeight] || attr.fontWeight));
-        return !!face;
-      } else return fontMetric.isFontSupported(attr.fontFamily, attr.fontWeight);
-    });
+  /**
+   * Returns all used font configurations of this text morph as an deduplicated array.
+   * The elements of this array will be css font strings (https://developer.mozilla.org/en-US/docs/Web/CSS/font).
+   */
+  usedFonts () {
+    return arr.uniq(this.textAndAttributes.map((attr, i) => {
+      if (i % 2) {
+        let fontWeight = attr?.fontWeight || String(this.fontWeight);
+        if (String(fontWeight).endsWith('0') || ['normal', 'bold', 'lighter', 'bolder'].includes(fontWeight)) undefined;
+        else fontWeight = fontWeightNameToNumeric().get(fontWeight);
+        return {
+          fontStyle: (attr && attr.fontStyle) || this.fontStyle,
+          fontVariant: 'normal',
+          fontWeight: fontWeight,
+          fontStretch: 'normal',
+          fontSize: (attr && attr.fontSize) || this.fontSize || '12',
+          lineHeight: (attr && attr.lineHeight) || this.lineHeight,
+          fontFamily: (attr && attr.fontFamily) || this.fontFamily
+        };
+      }
+    }).filter(Boolean).map(fontObj => '' + fontObj.fontStyle + ' ' + fontObj.fontVariant + ' ' + fontObj.fontWeight + ' ' + fontObj.fontStretch + ' ' + (String(fontObj.fontSize).includes('%') ? fontObj.fontSize : fontObj.fontSize + 'px') + ' /' + fontObj.lineHeight + ' ' + fontObj.fontFamily));
+  }
+
+  allFontsLoaded () {
+    return this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.check(fontString));
   }
 
   async whenFontLoaded () {
     if (this.allFontsLoaded()) return true;
-    const fonts = [...(await document.fonts.ready)];
-    if (this.allFontsLoaded(fonts.filter(face => face.status === 'loaded'))) return true;
-
-    // as a last resort, do a busy wait...
-    const ts = Date.now();
-    const p = promise.deferred();
-    const check = () => {
-      if (this.allFontsLoaded()) return p.resolve(true);
-      if (Date.now() - ts < 5000) {
-        console.log('checking', this.name);
-        setTimeout(check, 500);
-        return;
-      }
-      p.resolve(false);
-    };
-    check();
-    return p.promise;
+    const usedFonts = this.usedFonts();
+    const success = await Promise.all(usedFonts.map(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.load(fontString)));
+    if (success) usedFonts.forEach(fontString => this.fontMetric.supportedFontCache.add(fontString));
+    return success;
   }
 
   spec (skipIfUnchangedFromDefault) {
