@@ -748,6 +748,7 @@ export class Text extends Morph {
         group: 'text styling',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
+        defaultValue: 0,
         after: ['document', 'defaultTextStyle', 'renderingState']
       },
       wordSpacing: {
