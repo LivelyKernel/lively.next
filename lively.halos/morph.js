@@ -1201,13 +1201,15 @@ class ComponentHaloItem extends RoundHaloItem {
           return { isListItem: true, string, value: m };
         });
 
-      // FIXME: this is a pretty messy step for a designer to get into
       let variableName;
+      const parentName = target.master?.parent?.[Symbol.for('lively-module-meta')]?.exportedName;
       if (!isUUID(target.name)) {
-        variableName = string.decamelize(target.name);
-      } else if (target.master?.[Symbol.for('lively-module-meta')]?.exportedName) {
-        variableName = incName(target.master?.[Symbol.for('lively-module-meta')].exportedName);
-      } else {
+        variableName = string.camelCaseString(target.name);
+      }
+      if (!variableName && parentName || variableName === parentName) {
+        variableName = incName(parentName);
+      }
+      if (!variableName) {
         variableName = await $world.prompt('Enter a name for this component', {
           input: string.decamelize(target.name)
         });
@@ -1231,7 +1233,8 @@ class ComponentHaloItem extends RoundHaloItem {
         ({ selected: [selectedModule] } = res);
         if (!selectedModule) return;
       } else {
-        if (selectedModule = target.master?.parent?.[Symbol.for('lively-module-meta')]?.moduleId) {
+        selectedModule = target.master?.parent?.[Symbol.for('lively-module-meta')]?.moduleId;
+        if (selectedModule && !selectedModule.includes('lively.')) {
           selectedModule = { name: selectedModule };
         } else {
           // create a new empty module
