@@ -17,8 +17,9 @@ import { disconnect, connect } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
 import { DEFAULT_FONTS } from 'lively.morphic/rendering/fonts.js';
-import { fontWeightToString } from 'lively.morphic/rendering/font-metric.js';
+import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
+import { rainbow } from 'lively.graphics/color.js';
 
 /**
  * This model provides functionality for rich-text-editing frontends.
@@ -48,7 +49,7 @@ export class RichTextControlModel extends ViewModel {
       styledProps: {
         readOnly: true,
         get () {
-          return ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight'];
+          return ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'fontStyle'];
         }
       },
       expose: {
@@ -114,13 +115,31 @@ export class RichTextControlModel extends ViewModel {
           };
         });
         fontFamilySelector.selection = text.fontFamily;
-        fontWeightSelector.selection = text.fontWeight; // fixme
+        if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
+
+        fontWeightSelector.selection = text.fontWeight;
+        if (text.fontWeightMixed || this.globalMode && text.hasMixedTextAttributes('fontWeight')) fontWeightSelector.setMixed();
         this.updateFontWeightChoices(text.fontFamily);
+
         fontSizeInput.number = text.fontSize;
-        lineHeightInput.number = text.lineHeight; // fixme
-        if (letterSpacingInput) letterSpacingInput.number = text.letterSpacing;
-        if (lineWrappingSelector) lineWrappingSelector.selection = text.lineWrapping;
+        if (text.fontSizeMixed || this.globalMode && text.hasMixedTextAttributes('fontSize')) fontSizeInput.setMixed();
+
+        lineHeightInput.number = text.lineHeight;
+        if (text.lineHeightMixed || this.globalMode && text.hasMixedTextAttributes('lineHeight')) lineHeightInput.setMixed();
+
+        if (letterSpacingInput) {
+          letterSpacingInput.number = text.letterSpacing;
+          if (text.letterSpacingMixed || this.globalMode && text.hasMixedTextAttributes('letterSpacing')) letterSpacingInput.setMixed();
+        }
+
+        if (lineWrappingSelector) {
+          lineWrappingSelector.selection = text.lineWrapping;
+          if (text.lineWrappingMixed || this.globalMode && text.hasMixedTextAttributes('lineWrapping')) lineWrappingSelector.setMixed();
+        }
+
         fontColorInput.setColor(text.fontColor);
+        if (text.fontColorMixed || this.globalMode && text.hasMixedTextAttributes('fontColor')) fontColorInput.setMixed(rainbow);
+
         leftAlign.master = text.textAlign === 'left' ? hoveredButtonComponent : activeButtonComponent;
         centerAlign.master = text.textAlign === 'center' ? hoveredButtonComponent : activeButtonComponent;
         rightAlign.master = text.textAlign === 'right' ? hoveredButtonComponent : activeButtonComponent;
@@ -148,7 +167,8 @@ export class RichTextControlModel extends ViewModel {
     const { targetMorph } = this;
     if (!targetMorph) return;
     const sel = targetMorph.selection;
-    cb(sel && !sel.isEmpty() && !this.globalMode ? { ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel) } : targetMorph);
+    if (sel && !sel.isEmpty() && !this.globalMode) cb({ ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel, true) });
+    else cb(targetMorph);
   }
 
   /*
@@ -204,6 +224,7 @@ export class RichTextControlModel extends ViewModel {
       'block align': 'justify'
     })[evt.targetMorph.name];
     if (align) {
+      if (this.globalMode) this.targetMorph.removePlainTextAttribute('textAlign');
       this.confirm('textAlign', align);
       this.update();
     }
@@ -241,12 +262,14 @@ export class RichTextControlModel extends ViewModel {
   }
 
   toggleItalic () {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontStyle');
     this.confirm('fontStyle', style =>
       style === 'italic' ? 'normal' : 'italic');
     this.update();
   }
 
   toggleUnderline () {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('textDecoration', 'underline');
     this.confirm('textDecoration', decoration =>
       decoration === 'underline' ? 'none' : 'underline');
     this.update();
@@ -259,18 +282,22 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeFontWeight (weight) {
-    this.confirm('fontWeight', weight);
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontWeight');
+    this.confirm('fontWeight', fontWeightNameToNumeric().get(weight));
   }
 
   changeFontColor (color) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontColor');
     this.confirm('fontColor', color);
   }
 
   changeFontSize (size) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontSize');
     this.confirm('fontSize', size);
   }
 
   changeFontFamily (fontFamily) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontFamily');
     this.confirm('fontFamily', sanitizeFont(fontFamily.name));
     this.updateFontWeightChoices(fontFamily.name);
   }
@@ -281,10 +308,12 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeLineHeight (height) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('lineHeight');
     this.confirm('lineHeight', height);
   }
 
   changeLetterSpacing (spacing) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('letterSpacing');
     this.confirm('letterSpacing', spacing);
   }
 
@@ -304,14 +333,16 @@ const RichTextControl = component(PropertySection, {
   name: 'rich text control',
   extent: pt(250, 313),
   layout: new TilingLayout({
-    wrapSubmorphs: true,
-    spacing: 10,
-    padding: Rectangle.inset(0, 10, 0, 10),
-    resizePolicies: [
-      ['h floater', { width: 'fill', height: 'fixed' }]
-    ],
     axisAlign: 'center',
-    hugContentsVertically: true
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(0, 10, 0, 0),
+    resizePolicies: [['h floater', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10,
+    wrapSubmorphs: true
   }),
   submorphs: [{
     name: 'h floater',
@@ -583,24 +614,25 @@ const RichTextControl = component(PropertySection, {
       }),
       submorphs: [part(PropertyLabel, {
         name: 'auto width',
-        padding: Rectangle.inset(3, 2, 3, 0),
         tooltip: 'Fit Width',
+        padding: rect(3, 0, -3, 0),
+        rotation: Math.PI / 2,
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
           fontFamily: 'Material Icons'
         }]
       }), part(PropertyLabel, {
         name: 'auto height',
-        padding: Rectangle.inset(2, 3, 2, 1),
         tooltip: 'Fit Height',
+        padding: 0,
         textAndAttributes: ['\ue94f', {
           fontSize: 18,
           fontFamily: 'Material Icons'
         }]
       }), part(PropertyLabel, {
         name: 'fixed extent',
+        padding: 0,
         fontSize: 14,
-        padding: Rectangle.inset(2, 3, 2, 1),
         tooltip: 'Fix Extent/Don\'t fit',
         textAndAttributes: ['\ue835', {
           fontSize: 18,

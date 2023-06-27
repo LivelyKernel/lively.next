@@ -215,6 +215,7 @@ export class Color {
       red: new Color(0.8, 0, 0),
       green: new Color(0, 0.8, 0),
       yellow: new Color(0.8, 0.8, 0),
+      lightBlue: new Color.rgb(117, 190, 235),
       blue: new Color(0, 0, 0.8),
       purple: new Color(0.5, 0, 0.5),
       magenta: new Color(1, 0, 1),
@@ -634,6 +635,9 @@ export class RadialGradient extends Gradient {
   }
 }
 
+export const rainbow = [
+  Color.purple, Color.blue, Color.lightBlue, Color.green, Color.yellow, Color.orange, Color.red, Color.transparent // transparent is used to force mixed state for opacity as well
+];
 /*
    Flat design or flat UI colors are quite popular in web design today
    where bold, bright colors are used to create clean, simple interfaces.

@@ -1,7 +1,6 @@
 import { component, TilingLayout, without, ViewModel, add, part } from 'lively.morphic';
 import { DarkPopupWindow } from '../studio/shared.cp.js';
 import { RichTextControl } from '../studio/controls/text.cp.js';
-import { Color } from 'lively.graphics';
 
 class TextFormattingPopUpModel extends ViewModel {
   static get properties () {
@@ -32,12 +31,6 @@ class TextFormattingPopUpModel extends ViewModel {
 const SelectionBasedRichTextControl = component(RichTextControl, {
   submorphs: [
     without('h floater'),
-    {
-      name: 'text controls',
-      submorphs: [
-        without('letter spacing input')
-      ]
-    },
     {
       name: 'bottom wrapper',
       height: 22,
