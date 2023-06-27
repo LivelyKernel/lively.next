@@ -2211,6 +2211,26 @@ export class Text extends Morph {
     return attr;
   }
 
+  hasMixedTextAttributes (attr) {
+    let firstSeen = this[attr];
+    let hasMixed = false;
+    this.textAndAttributes.forEach(ta => {
+      if (hasMixed) return;
+      if (ta && ta[attr]) {
+        if (!firstSeen) firstSeen = ta[attr];
+        else if (firstSeen !== ta[attr]) hasMixed = true;
+      }
+    });
+    return hasMixed;
+  }
+
+  removePlainTextAttribute (attr, value = null) {
+    this.textAndAttributes.forEach(ta => {
+      if (value) ta && ta[attr] === value && delete ta[attr];
+      else ta && delete ta[attr];
+    });
+  }
+
   removeTextAttribute (attr, range = this.selection) {
     const plainRange = { start: range.start, end: range.end };
     this.undoManager.undoStart(this, 'removeTextAttribute');
@@ -2290,16 +2310,21 @@ export class Text extends Morph {
   // text styles (ranges)
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  getStyleInRange (range = this.selection) {
+  getStyleInRange (range = this.selection, compareWithBaseProps = false) {
     const attrs = this.textAndAttributesInRange(range).filter((ea, i) => i % 2 !== 0);
     return attrs.reduce((all, ea) => {
       for (const key in ea) {
         const val = ea[key];
-        if (all.hasOwnProperty(key) && (val === undefined || val === null)) continue;
+        if (all.hasOwnProperty(key)) {
+          if (val === undefined || val === null) continue;
+          else {
+            all[`${key}Mixed`] = true;
+          }
+        }
         all[key] = val;
       }
       return all;
-    }, {});
+    }, compareWithBaseProps ? { ...obj.select(this, ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'fontStyle']) } : {});
   }
 
   setStyleInRange (attr, range = this.selection) {
