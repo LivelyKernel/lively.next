@@ -1141,7 +1141,7 @@ const ProjectIcon = component({
     fixedWidth: true,
     fontColor: Color.rgb(92, 175, 238),
     fontSize: 42,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     padding: rect(1, 1, 0, 0),
     position: pt(98.5, 21),
     textAndAttributes: ['', {
@@ -1161,7 +1161,7 @@ const ProjectIcon = component({
     fixedWidth: true,
     fontColor: Color.rgb(77, 175, 243),
     fontSize: 62,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     padding: rect(0, 0, 1, 0),
     position: pt(3.5, 89),
     textAndAttributes: ['', {

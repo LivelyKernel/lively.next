@@ -760,16 +760,16 @@ export class Text extends Morph {
 
       lineWrapping: {
         // possible values:
-        // false: no line wrapping, lines are as long as authored
-        // true or "by-words": break lines at word boundaries. If not possible break line
+        // no-wrap: no line wrapping, lines are as long as authored
+        // by-words: break lines at word boundaries. If not possible break line
         // only-by-words: break lines at word boundaries. If not possible, line will be
         // wider than text
         // by-chars: Break line whenever character sequence reaches text width
         group: 'text',
         type: 'Enum',
-        values: [false, true, 'by-words', 'only-by-words', 'by-chars'],
+        values: ['no-wrap', 'by-words', 'only-by-words', 'by-chars'],
         isStyleProp: true,
-        defaultValue: false,
+        defaultValue: 'no-wrap',
         before: ['extent'],
         after: ['document', 'renderingState']
       },

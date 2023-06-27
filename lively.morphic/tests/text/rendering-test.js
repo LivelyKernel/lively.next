@@ -78,7 +78,7 @@ describe('text rendering', () => {
 
   it('can resize on content change', async () => {
     sut.clipMode = 'visible';
-    sut.lineWrapping = false;
+    sut.lineWrapping: 'no-wrap';
     sut.fixedWidth = false;
     let padLeft = sut.padding.left();
     let padRight = sut.padding.right();
@@ -160,7 +160,7 @@ describe('text rendering', () => {
         padding,
         borderWidth: 0,
         fill: Color.lightGray,
-        lineWrapping: false,
+        lineWrapping: 'no-wrap',
         clipMode: 'auto',
         extent: pt(4 * w + padding.left() + padding.right(), 3 * h + padding.top() + padding.bottom())
       });

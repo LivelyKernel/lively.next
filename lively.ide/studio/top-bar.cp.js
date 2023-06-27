@@ -566,7 +566,7 @@ export class TopBarModel extends ViewModel {
       borderColor: Color.rgb(23, 160, 251),
       fixedHeight: true,
       fixedWidth: true,
-      lineWrapping: true,
+      lineWrapping: 'by-words',
       ...type === Text ? this.getDefaultTextAttrs() : {},
       ...type === Image ? this.getImageDefaultAttrs() : {},
       ...type === Polygon ? this.getPolyDefaultAttrs() : {},

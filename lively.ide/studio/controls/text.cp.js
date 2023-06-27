@@ -616,11 +616,10 @@ const RichTextControl = component(PropertySection, {
         openListInWorld: true,
         listMaster: DarkThemeList,
         items: [
-          { isListItem: true, string: 'No wrapping', value: false },
-          { isListItem: true, string: 'Wrap lines', value: true },
-          { isListItem: true, string: 'Wrap by characters', value: 'by-chars' },
-          { isListItem: true, string: 'Wrap by words', value: 'by-words' },
-          { isListItem: true, string: 'Wrap only by words', value: 'only-by-words' }]
+          { isListItem: true, string: 'No Wrapping', value: 'no-wrap' },
+          { isListItem: true, string: 'Wrap by Words', value: 'by-words' },
+          { isListItem: true, string: 'Wrap by Characters', value: 'by-chars' },
+          { isListItem: true, string: 'Wrap only by Words', value: 'only-by-words' }]
       },
       submorphs: [{
         name: 'label',

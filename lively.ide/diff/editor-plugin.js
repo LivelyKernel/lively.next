@@ -177,7 +177,7 @@ var commands = [
       }
 
       ed.world().execCommand('open text window', {
-        lineWrapping: false,
+        lineWrapping: 'no-wrap',
         plugins: [new DiffEditorPlugin()],
         ...config.codeEditor.defaultStyle,
         title: 'patches for ' + arr.pluck(patches, 'fileNameA').join(', '),

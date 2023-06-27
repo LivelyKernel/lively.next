@@ -150,7 +150,7 @@ export default class TextEditor extends Morph {
               name: 'contentText',
               type: 'text',
               fill: Color.white,
-              lineWrapping: false,
+              lineWrapping: 'no-wrap',
               readOnly: false
             }
           ];

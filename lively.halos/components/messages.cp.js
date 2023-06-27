@@ -96,7 +96,7 @@ const StatusMessageDefault = component({
       fontFamily: '"IBM Plex Sans",Sans-Serif',
       fontSize: 15,
       fontWeight: 'bold',
-      lineWrapping: true,
+      lineWrapping: 'by-words',
       padding: rect(8, 5, 0, 3),
       reactsToPointer: false,
       halosEnabled: false,
@@ -137,7 +137,7 @@ const StatusMessageDefault = component({
     fontColor: Color.rgb(66, 73, 73),
     fontFamily: '"IBM Plex Sans",Sans-Serif',
     fontSize: 15,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     padding: rect(10, 10, 0, 0),
     halosEnabled: false,
     textAndAttributes: ['The module "lively.morphic/morph.js" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "lively.morphic".', null]

@@ -11,7 +11,7 @@ const InstructionWidget = component({
   type: Text,
   fixedWidth: true,
   fixedHeight: true,
-  lineWrapping: true,
+  lineWrapping: 'by-words',
   name: 'instruction widget',
   fontSize: 13,
   borderRadius: 3,

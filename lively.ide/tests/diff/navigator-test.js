@@ -42,7 +42,7 @@ async function setup () {
                    ' x\n';
   editor = new Text({
     textString: patchString,
-    lineWrapping: false,
+    lineWrapping: 'no-wrap',
     plugins: [new DiffEditorPlugin()],
     readOnly: false
   });

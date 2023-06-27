@@ -1174,7 +1174,7 @@ const MetaInfoContainerExpanded = component({
     fontFamily: '"IBM Plex Sans",Sans-Serif',
     fontSize: 16,
     padding: rect(5, 0, -5, 0),
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     readOnly: true
   }, {
     name: 'error controls',

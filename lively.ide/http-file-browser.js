@@ -196,7 +196,7 @@ let browserCommands = [
           ['Confirm Delete\n', {}, 'Do you really want to remove\n', { fontWeight: 'normal', fontSize: 16 },
            `${browser.selectedFile.url}?`, { fontStyle: 'italic', fontWeight: 'normal', fontSize: 16 }], {
             requester: browser,
-            lineWrapping: false
+            lineWrapping: 'no-wrap'
           });
         if (really) {
           let res = browser.selectedFile;
