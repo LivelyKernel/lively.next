@@ -1,6 +1,6 @@
 import { arr, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
+import { morph, incName, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { Text, Label } from 'lively.morphic';
 import { withSuperclasses } from 'lively.classes/util.js';
 import { ExpressionSerializer } from 'lively.serializer2';
@@ -1123,5 +1123,30 @@ export class PolicyApplicator extends StylePolicy {
         localSpec[prop] = otherSpec[prop];
       }
     });
+  }
+
+  ensureNoNameCollisionInDerived (nameCandidate, descriptor, skip = false) {
+    // check if there is a spec in the scope, that has the name of the addedMorph already
+    const generateAlternativeName = (conflictingName) => {
+      return incName(conflictingName);
+    };
+
+    const originalCandidate = nameCandidate;
+    let conflictingSpec = this.lookForMatchingSpec(nameCandidate);
+    if (!skip && conflictingSpec) {
+      return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate), descriptor);
+    }
+    if (descriptor) {
+      descriptor.withDerivedComponentsDo(descr => {
+        nameCandidate = descr.ensureNoNameCollisionInDerived(nameCandidate);
+      });
+    }
+    // after running through all of these ensure that we are still OK with the outcome
+    if (nameCandidate === originalCandidate) return nameCandidate;
+    conflictingSpec = this.lookForMatchingSpec(nameCandidate);
+    if (conflictingSpec) {
+      return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate), descriptor);
+    }
+    return nameCandidate;
   }
 }

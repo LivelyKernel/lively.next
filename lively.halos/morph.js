@@ -22,6 +22,7 @@ import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
 import { getPropertiesNode } from 'lively.ide/components/helpers.js';
 import { resource } from 'lively.resources';
+import { incName } from 'lively.morphic/helpers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const derivedAccent = Color.rgba(171, 71, 188, 1);
@@ -29,10 +30,6 @@ const componentAccent = Color.magenta;
 
 export function isUUID (str) {
   return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(str);
-}
-
-export function incName (name) {
-  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
 }
 
 function getColorForTarget (target) {

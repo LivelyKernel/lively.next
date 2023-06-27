@@ -51,7 +51,7 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
   if (!queryString || queryString === '?') query = {};
   else query = parseQuery(queryString);
 
-  const basePath = project ? '/projects/load' : '/worlds/load' ;
+  const basePath = project ? '/projects/load' : '/worlds/load';
   if (worldName.endsWith('.json')) {
     query.file = worldName;
     delete query.name;
@@ -150,6 +150,10 @@ export function newMorphId (classOrClassName) {
       ? classOrClassName.toLowerCase()
       : '';
   return prefix + '_' + string.newUUID().replace(/-/g, '_');
+}
+
+export function incName (name) {
+  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
 }
 
 async function lazyInspect (obj) {

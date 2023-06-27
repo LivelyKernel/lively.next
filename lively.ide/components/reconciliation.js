@@ -908,12 +908,7 @@ class MorphRemovalReconciliation extends Reconciliation {
 class MorphIntroductionReconciliation extends Reconciliation {
   reconcile () {
     const { descriptor, addedMorph } = this;
-    const safeName = descriptor.ensureNoNameCollisionInDerived(addedMorph.name);
-    if (safeName !== addedMorph.name) {
-      addedMorph.withMetaDo({ reconcileChanges: false }, () => {
-        addedMorph.name = safeName; // do not reconcile this
-      });
-    }
+    this.fixNameCollisions(descriptor, addedMorph);
 
     if (this.isReintroduction(descriptor)) {
       this.reintroduceMorph(descriptor);
@@ -924,6 +919,29 @@ class MorphIntroductionReconciliation extends Reconciliation {
       });
     }
     return this;
+  }
+
+  adjustNameIfNeeded (aMorph, newName) {
+    if (newName !== aMorph.name) {
+      aMorph.withMetaDo({ reconcileChanges: false }, () => {
+        aMorph.name = newName; // do not reconcile this
+      });
+    }
+  }
+
+  fixNameCollisions (stylePolicyOrDescriptor, rootMorph) {
+    rootMorph.withAllSubmorphsDoExcluding(m => {
+      // this does not work for inline components
+      const safeName = stylePolicyOrDescriptor.ensureNoNameCollisionInDerived(m.name);
+      if (m.master && m.master !== stylePolicyOrDescriptor) {
+        m.withAllSubmorphsDo(sub => {
+          if (sub.__wasAddedToDerived__) {
+            this.adjustNameIfNeeded(sub, m.master.ensureNoNameCollisionInDerived(sub.name));
+          }
+        });
+      }
+      this.adjustNameIfNeeded(m, safeName);
+    }, m => m.master);
   }
 
   get addedMorph () { return this.change.args[0]; }
@@ -1326,7 +1344,7 @@ class RenameReconciliation extends PropChangeReconciliation {
       if (subSpec?.__wasAddedToDerived__) subSpec = false;
     }
     if (subSpec) {
-      subSpec.name = this.newName; // rename the spec object, since it is present
+      subSpec.name = string.decamelize(this.newName); // rename the spec object, since it is present
       const specNode = this.getNodeForTargetInSource(interactiveDescriptor);
       if (specNode) this.patchPropIn(specNode, 'name', this.getExpressionOfValue());
     }

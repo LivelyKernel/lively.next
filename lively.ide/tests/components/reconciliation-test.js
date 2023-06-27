@@ -4,7 +4,7 @@ import sinonChai from 'esm://cache/sinon-chai';
 import sinon from 'esm://cache/sinon';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, without, TilingLayout, Label, part } from 'lively.morphic';
+import { morph, add, without, TilingLayout, Label, part } from 'lively.morphic';
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import { Reconciliation } from '../../components/reconciliation.js';
 import { promise } from 'lively.lang';
@@ -720,11 +720,11 @@ describe('component -> source reconciliation', function () {
       });
       await ComponentA._changeTracker.onceChangesProcessed();
       updatedSource = await getSource();
-      expect(updatedSource).includes('name: \'robin 2\'');
+      expect(updatedSource).includes('name: \'robin_1\'');
       expect(updatedSource).includes('name: \'robin\'');
       ComponentA.withMetaDo({ reconcileChanges: true }, () => {
         ComponentA.get('robin').remove();
-        ComponentA.get('robin 2').remove();
+        ComponentA.get('robin_1').remove();
       });
       await ComponentA._changeTracker.onceChangesProcessed();
       ComponentB.withMetaDo({ reconcileChanges: true }, () => {
@@ -736,7 +736,7 @@ describe('component -> source reconciliation', function () {
       });
       await ComponentB._changeTracker.onceChangesProcessed();
       updatedSource = await getSource();
-      expect(updatedSource).includes('name: \'robin 2\'');
+      expect(updatedSource).includes('name: \'robin_1\'');
       expect(updatedSource).includes('name: \'robin\'');
       // name collisions (by adding a new morph with a name already existing in the derived components)
       // should enforce a renaming of that dropped morph for now. If we run into issues,
@@ -744,7 +744,7 @@ describe('component -> source reconciliation', function () {
       // with a fixed custom name that is not constrained by any
       ComponentB.withMetaDo({ reconcileChanges: true }, () => {
         ComponentB.get('robin').remove();
-        ComponentB.get('robin 2').remove();
+        ComponentB.get('robin_1').remove();
         ComponentB.addMorph(morph({ name: 'linus', fill: Color.lively }));
         ComponentA.addMorph(morph({ name: 'linus', fill: Color.green }));
       });
@@ -773,7 +773,7 @@ describe('component -> source reconciliation', function () {
     fixedHeight: true,
     fill: Color.yellow
   }, part(D, { name: 'some ref' }), {
-    name: 'linus 2',
+    name: 'linus_1',
     fill: Color.green
   }]
 });`, 'inserts a renamed morph to avoid name collision');
@@ -797,13 +797,40 @@ describe('component -> source reconciliation', function () {
     fixedHeight: true,
     fill: Color.yellow
   }, part(D, { name: 'some ref' }), {
-    name: 'linus 2',
+    name: 'linus_1',
     fill: Color.green
   }, {
-    name: 'linus 3',
+    name: 'linus_2',
     fill: Color.purple
   }]
 });`, 'also renames a morph if collision with one of the derived specs is detected');
+    });
+
+    it('renames submorphs inside an introduced submorph hierarchy if nessecary', () => {
+      let updatedSource, introducedMorph;
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        introducedMorph = ComponentA.addMorph(morph({
+          name: 'robin',
+          fill: Color.cyan,
+          submorphs: [
+            { name: 'some ref' }, { name: 'some submorph' }
+          ]
+        }));
+      });
+      expect(introducedMorph.get('some ref_1')).not.to.be.null;
+      expect(introducedMorph.get('some submorph_1')).not.to.be.null;
+    });
+
+    it('renames submorphs that are added to inline policies so that they do no conflict with the inline policy scope', () => {
+      let updatedSource, introducedMorph;
+      ComponentA.withMetaDo({ reconcileChanges: true }, () => {
+        introducedMorph = ComponentA.addMorph(part(A, {
+          submorphs: [add({
+            name: 'some ref'
+          })]
+        }));
+      });
+      expect(introducedMorph.get('some ref_1')).not.to.be.null;
     });
 
     it('reintroduces altered versions if the morph has been tempered with between removal and eintroduction', async () => {
