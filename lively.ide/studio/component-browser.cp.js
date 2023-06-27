@@ -952,7 +952,8 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async ensureComponentEntitySelected (evt) {
-    if (!evt.isClickTarget(this.ui.masterComponentList)) return;
+    if (!evt.isClickTarget(this.ui.masterComponentList) ||
+        !this.ui.componentFilesView.visible) return;
 
     const selectedComponent = this.getSelectedComponent();
     if (selectedComponent) {
