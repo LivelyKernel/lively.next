@@ -480,7 +480,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         submorphs: [{
           name: 'label',
           textAndAttributes: ['Show Summary of Changes (Advanced Operation)', null, '', {
-            fontFamily: 'tabler-icons',
+            fontFamily: 'Tabler Icons',
             fontWeight: '900'
           }, ' ', {}]
         }]
