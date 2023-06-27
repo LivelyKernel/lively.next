@@ -1958,7 +1958,8 @@ export class DropDownListModel extends ButtonModel {
   }
 
   setMixed () {
-    this.label = { value: ['Mix', null] };
+    const caret = Icon.textAttribute('angle-down', { });
+    this.label = { value: ['Mixed ', null, ...caret] };
   }
 
   async toggleList () {
