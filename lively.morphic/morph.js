@@ -895,7 +895,7 @@ export class Morph {
       this._parametrizedProps.position = this.position;
     }
     if (props.height !== undefined || props.width !== undefined) { this._parametrizedProps.extent = this.extent; }
-    // if (props.layout) this.layout = props.layout;
+    if (props.__wasAddedToDerived__) this.__wasAddedToDerived__ = true;
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
   }

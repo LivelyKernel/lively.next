@@ -194,27 +194,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * rename another morph in the component to 'bob' and then reintroduce the removed 'bob' once again.
    */
   ensureNoNameCollisionInDerived (nameCandidate, skip = false) {
-    // check if there is a spec in the scope, that has the name of the addedMorph already
-    const generateAlternativeName = (conflictingName) => {
-      const match = conflictingName.match('\ ([0-9]+)$');
-      if (!match) return conflictingName + ' 2';
-      const v = Number.parseInt(match[1]);
-      return conflictingName.replace(match[1], String(v + 1));
-    };
-
-    const originalCandidate = nameCandidate;
-    let conflictingSpec = this.stylePolicy.lookForMatchingSpec(nameCandidate);
-    if (!skip && conflictingSpec) return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate));
-    this.withDerivedComponentsDo(descr => {
-      nameCandidate = descr.ensureNoNameCollisionInDerived(nameCandidate);
-    });
-    // after running through all of these ensure that we are still OK with the outcome
-    if (nameCandidate === originalCandidate) return nameCandidate;
-    conflictingSpec = this.stylePolicy.lookForMatchingSpec(nameCandidate);
-    if (conflictingSpec) {
-      return this.ensureNoNameCollisionInDerived(generateAlternativeName(nameCandidate));
-    }
-    return nameCandidate;
+    return this.stylePolicy.ensureNoNameCollisionInDerived(nameCandidate, this, skip);
   }
 
   getSourceCode () {
