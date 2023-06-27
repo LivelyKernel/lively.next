@@ -472,6 +472,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.relayout();
     signal(this.target, 'breakpoint changed');
     this.refreshChangeTrackers();
+    this.target.master.applyIfNeeded(true);
   }
 
   refreshChangeTrackers () {
