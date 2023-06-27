@@ -561,11 +561,11 @@ export class LivelyWorld extends World {
     while (!worldName) {
       worldName = await this.prompt(['New Project\n', {}, 'Enter a name for this project:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true });
       if (await this.isNotUnique(String(worldName))) {
-        const override = await this.confirm('This Project name is already taken. Do you want to override it?', {
+        const override = await this.confirm('This Playground name is already taken. Do you want to override it?', {
           hasFixedPosition: true, width: 400
         });
         if (override) {
-          const reallyOverride = await this.confirm('The old project will be lost! Are you sure you want to override?', {
+          const reallyOverride = await this.confirm('The old Playground will be lost! Are you sure you want to override?', {
             hasFixedPosition: true, width: 400
           });
           if (reallyOverride) {
