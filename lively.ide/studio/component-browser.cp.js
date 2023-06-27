@@ -208,6 +208,7 @@ class MasterComponentTreeData extends TreeData {
     if (isSelected && !this.root.browser._pauseUpdates) {
       const mod = module(modUrl);
       const pkg = mod.package();
+      modUrl = arr.last(modUrl.split('--'));
       this.getComponentsInModule(url).then(components => {
         this.root.browser.showComponentsInFile(modUrl, components);
       });
@@ -1179,7 +1180,7 @@ export class ComponentBrowserModel extends ViewModel {
     const currentList = masterComponentList.submorphs;
     const projectEntry = currentList.find(item => item.worldName === fileName) || part(this.sectionMaster);
 
-    projectEntry.worldName = fileName;
+    projectEntry.worldName = arr.last(fileName.split('--'));
     projectEntry.renderComponents(componentsInFile);
 
     return projectEntry;
