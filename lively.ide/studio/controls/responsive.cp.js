@@ -78,7 +78,7 @@ class BreakpointEntryModel extends ViewModel {
 
   async chooseComponent () {
     if (!this.componentSelectionEnabled) return;
-    this._popup = part(ComponentSelectionPopup, {
+    this._popup = part(ComponentSelectionPopup, { // eslint-disable-line no-use-before-define
       viewModel: { component: this.component }
     }).openInWorld();
     this._popup.alignAtButton(this.ui.configureComponentButton);
@@ -296,7 +296,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
     epiConnect(this.targetMorph, 'breakpoint added', this, 'update');
     epiConnect(this.targetMorph, 'breakpoint changed', this, 'refreshFromTarget');
     epiConnect(this.targetMorph, 'extent', this, 'refreshFromTarget');
-    if (aMorph.master?._breakpointStore) this.activate();
+    if (this.targetStylePolicy?._breakpointStore) this.activate();
     else this.deactivate();
   }
 
