@@ -25,7 +25,7 @@ export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}
 
   static textAttribute(iconName, attrs = {}) {    let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
     const fontFamily = function () {      if (Icons[iconName].iconSet === 'font awesome')  return `"Font Awesome 6 Free", "Font Awesome 6 Brands"`;
-      if (Icons[iconName].iconSet === 'tabler icons') return 'tabler-icons';
+      if (Icons[iconName].iconSet === 'tabler icons') return 'Tabler Icons';
       if (Icons[iconName].iconSet === 'material icons') return 'Material Icons';
     }();
       delete attrs.textStyleClasses;
