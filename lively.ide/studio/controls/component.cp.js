@@ -165,6 +165,7 @@ export class ComponentControlModel extends PropertySectionModel {
         hover: hoverComponentSelection.component,
         click: clickComponentSelection.component
       };
+      if (!this.targetMorph.master.overriddenMaster) { this.targetMorph.master._isOverridden = true; }
     });
     this.targetMorph.position = pos;
     signal(this.view, 'component changed');

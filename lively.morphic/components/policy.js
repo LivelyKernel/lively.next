@@ -166,6 +166,7 @@ export class BreakpointStore {
       Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
       const y = this._verticalBreakpoints[row];
       const x = this._horizontalBreakpoints[col];
+      if (y == 0 && x == 0) return null;
       return `[pt(${x.toFixed()},${y.toFixed()}), ${expr.__expr__}]`;
     }).flat());
     if (masterStrings.length === 0) return;
@@ -296,6 +297,9 @@ export class StylePolicy {
       } = policyOrDescriptor;
       this._isSplitInline = isSplitInline;
       this._parent = auto?.isComponentDescriptor ? auto.stylePolicy : auto;
+      if (!this._parent && breakpoints) {
+        this._parent = breakpoints[0][1].stylePolicy;
+      }
       this._autoMaster = this._parent;
 
       // mouse event component dispatch
