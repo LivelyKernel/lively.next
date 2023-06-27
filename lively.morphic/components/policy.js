@@ -169,7 +169,7 @@ export class BreakpointStore {
       return `[pt(${x.toFixed()},${y.toFixed()}), ${expr.__expr__}]`;
     }).flat());
     if (masterStrings.length === 0) return;
-    const __expr__ = `[${masterStrings.join(',\n')}]`;
+    const __expr__ = `[\n${masterStrings.join(',\n')}\n]`;
     return { __expr__, bindings };
   }
 

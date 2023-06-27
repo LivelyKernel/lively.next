@@ -1181,11 +1181,15 @@ class PropChangeReconciliation extends Reconciliation {
     return getPropertiesNode(affectedPolicy, this.target);
   }
 
+  propRequiresLint (propName) {
+    return ['layout', 'master'].includes(propName);
+  }
+
   patchPropIn (specNode, prop, valueAsExpr) {
     const { modId, sourceCode } = this.getDescriptorContext();
     if (valueAsExpr.__expr__) valueAsExpr = valueAsExpr.__expr__;
 
-    if (prop === 'layout') {
+    if (this.propRequiresLint(prop)) {
       this.modulesToLint.add(modId);
     }
 
