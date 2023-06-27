@@ -1274,6 +1274,9 @@ class PropChangeReconciliation extends Reconciliation {
     }
 
     this.getSubSpecForTarget()[prop] = this.change.value;
+    if (prop === 'master' && !this.change.value.overridenMaster) {
+      delete this.getSubSpecForTarget()[prop];
+    }
     this.propagateChangeAmongActiveEditSessions(this.descriptor);
 
     if (prop === 'extent') {

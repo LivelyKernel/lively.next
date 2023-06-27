@@ -745,7 +745,9 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
       if (aMorph.master) {
         const { exportedName: masterComponentName, moduleId: modulePath, path: relativePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
         if (relativePath.length === 0) {
-          __expr__ = `part(${masterComponentName}, ${__expr__})`;
+          __expr__ = !aMorph.master._isOverridden
+            ? `part(${masterComponentName}, ${__expr__})`
+            : `morph(${__expr__})`;
         }
         bindings = {
           [modulePath]: [masterComponentName],
