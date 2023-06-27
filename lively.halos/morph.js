@@ -1146,7 +1146,7 @@ class ComponentHaloItem extends RoundHaloItem {
           ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle
         ], {
           input: morphToBeRenamed.name,
-          lineWrapping: true,
+          lineWrapping: 'by-words',
           width: 500,
           fontSize: 12,
           rejectLabel: 'IGNORE',

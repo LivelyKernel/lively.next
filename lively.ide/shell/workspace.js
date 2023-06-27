@@ -19,7 +19,7 @@ export default class Workspace extends Window {
             type: 'text',
             name: 'editor',
             readOnly: false,
-            lineWrapping: false,
+            lineWrapping: 'no-wrap',
             textString: '// Enter and evaluate JavaScript code here',
             ...config.codeEditor.defaultStyle
             // plugins: [new ShellEditorPlugin()]

@@ -57,7 +57,7 @@ export async function interactivelyUnloadModule (system, vmEditor, moduleName) {
 export async function interactivelyRemoveModule (system, requester, moduleName) {
   // var moduleName = this.state.selection.name
   const fullname = await system.normalize(moduleName);
-  const really = await requester.world().confirm(['Really remove file:\n', {}, fullname, { fontStyle: 'italic', fontWeight: 'bold' }, ' ?', {}], { requester, lineWrapping: false });
+  const really = await requester.world().confirm(['Really remove file:\n', {}, fullname, { fontStyle: 'italic', fontWeight: 'bold' }, ' ?', {}], { requester, lineWrapping: 'no-wrap' });
   if (!really) throw 'Canceled';
   await system.forgetModule(fullname);
   await system.resourceRemove(fullname);
@@ -98,7 +98,7 @@ async function _askForModuleName (system, input, world) {
     { input: input, historyId: 'lively.vm-editor-add-module-name' });
   if (!input) throw 'Canceled';
   const fullname = await system.normalize(input);
-  const really = await world.confirm(['Create module \n', {}, fullname, { fontStyle: 'italic' }, ' ?', {}], { lineWrapping: false });
+  const really = await world.confirm(['Create module \n', {}, fullname, { fontStyle: 'italic' }, ' ?', {}], { lineWrapping: 'no-wrap' });
   if (!really) throw 'Canceled';
   return fullname;
 }

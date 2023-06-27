@@ -233,7 +233,7 @@ export async function interactivelySaveWorld (world, options) {
         'The file you want to save the world to\n', { fontSize: 15, fontWeight: 'normal' },
         resourceHandle.url, { textStyle: 'italic', fontSize: 15, fontWeight: 'normal' },
         '\n already exists. Overwrite?', { fontSize: 15, fontWeight: 'normal' }
-      ], { lineWrapping: false });
+      ], { lineWrapping: 'no-wrap' });
       if (!proceed) {
         i.remove();
         return;

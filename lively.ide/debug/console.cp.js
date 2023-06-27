@@ -288,7 +288,7 @@ const Console = component({
   type: Text,
   name: 'debug console',
   defaultViewModel: LocalJSConsoleModel,
-  lineWrapping: true,
+  lineWrapping: 'by-words',
   needsDocument: true,
   fixedWidth: true,
   fixedHeight: true,

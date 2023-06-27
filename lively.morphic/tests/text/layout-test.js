@@ -20,7 +20,7 @@ function text (string, props) {
     padding,
     borderWidth: 0,
     fill: Color.limeGreen,
-    lineWrapping: false,
+    lineWrapping: 'no-wrap',
     lineHeight: 1.2,
     ...props
   }).openInWorld();

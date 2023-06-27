@@ -363,7 +363,7 @@ const SaveWorldDialog = component(DarkPrompt, {
           fontSize: 15,
           haloShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
           highlightWhenFocused: true,
-          lineWrapping: true,
+          lineWrapping: 'by-words',
           padding: rect(4, 4, 0, 0),
           position: pt(97, 115)
         }]

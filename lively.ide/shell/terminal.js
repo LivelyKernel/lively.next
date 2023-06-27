@@ -68,7 +68,7 @@ export default class Terminal extends Morph {
             {
               type: TerminalView,
               name: 'output',
-              lineWrapping: false,
+              lineWrapping: 'no-wrap',
               textString: '',
               readOnly: false,
               ...this.defaultStyle

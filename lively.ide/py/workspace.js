@@ -15,7 +15,7 @@ export default class Workspace extends Window {
             type: 'text',
             name: 'editor',
             readOnly: false,
-            lineWrapping: false,
+            lineWrapping: 'no-wrap',
             // textMode: "python",
             textString: '# Enter and evaluate Python code here',
             ...config.codeEditor.defaultStyle

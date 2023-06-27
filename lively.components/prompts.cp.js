@@ -764,7 +764,7 @@ const InformPrompt = component(LightPrompt, {
   extent: pt(249.3, 114),
   submorphs: [{
     name: 'prompt title',
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     textAndAttributes: ['Inform message', null]
   }, add({
     type: Text,

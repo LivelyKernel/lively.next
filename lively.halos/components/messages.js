@@ -191,7 +191,7 @@ export class StatusMessage extends ViewModel {
     this.stayOpen = true;
     this.isCompact = false;
     const text = this.ui.messageText;
-    Object.assign(text, { lineWrapping: false, clipMode: 'auto', readOnly: true, reactsToPointer: true });
+    Object.assign(text, { lineWrapping: 'no-wrap', clipMode: 'auto', readOnly: true, reactsToPointer: true });
     if (this.expandedContent) text.value = this.expandedContent;
     text.env.forceUpdate();
     text.invalidateTextLayout(true, true);
