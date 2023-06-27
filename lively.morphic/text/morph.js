@@ -619,7 +619,8 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
-          this.setProperty('fontFamily', sanitizeFont(fontFamily));
+          document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
+            .then(() => this.setProperty('fontFamily', sanitizeFont(fontFamily)));
         }
       },
 
@@ -689,6 +690,10 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['bold', 'bolder', 'light', 'lighter', 'normal'],
         defaultValue: 'normal',
+        set (weight) {
+          document.fonts.load(`${this.fontStyle} ${weight} 12px ${this.fontFamily}`)
+            .then(() => this.setProperty('fontWeight', weight));
+        },
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
@@ -698,6 +703,10 @@ export class Text extends Morph {
         group: 'text styling',
         type: 'Enum',
         values: ['normal', 'italic', 'oblique'],
+        set (style) {
+          document.fonts.load(`${style} ${this.fontWeight} 12px ${this.fontFamily}`)
+            .then(() => this.setProperty('fontStyle', style));
+        },
         defaultValue: 'normal',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
