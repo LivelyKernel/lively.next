@@ -239,19 +239,12 @@ function getExpression (name, val, ctx) {
 function handleOverriddenMaster (masterPolicy, opts) {
   const { asExpression, nestedExpressions } = opts;
   if (!asExpression) return; // ignore overridden master if not serializing as expression
-  let expr = ''; let masterComponentName; let modulePath; let bindings = {};
-  const { _autoMaster, _hoverMaster, _clickMaster } = masterPolicy;
-  for (let [name, policy] of [['auto', _autoMaster], ['hover', _hoverMaster], ['click', _clickMaster]]) {
-    if (!policy) continue;
-    if (name === 'auto' && _autoMaster === masterPolicy.parent) continue;
-    ({ exportedName: masterComponentName, moduleId: modulePath } = policy[Symbol.for('lively-module-meta')]);
-    if (expr) expr += ', ';
-    expr += name + ': ' + masterComponentName;
-    bindings[modulePath]?.push(masterComponentName) || (bindings[modulePath] = [masterComponentName]);
-  }
-  if (!expr) return;
   const exprId = string.newUUID();
-  nestedExpressions[exprId] = { __expr__: `{ ${expr} }`, bindings };
+  nestedExpressions[exprId] = masterPolicy.__serialize__();
+  if (typeof nestedExpressions[exprId] === 'undefined') {
+    delete nestedExpressions[exprId];
+    return;
+  }
   return exprId;
 }
 
