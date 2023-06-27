@@ -17,8 +17,6 @@ import { disconnect, connect } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
 import { availableFonts } from 'lively.morphic/rendering/fonts.js';
-import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
-import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
 import { openFontManager } from '../font-manager.cp.js';
 
@@ -127,6 +125,7 @@ export class RichTextControlModel extends ViewModel {
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
 
         fontWeightSelector.selection = /\d/.test(text.fontWeight) ? fontWeightToString(text.fontWeight) : text.fontWeight;
+
         if (text.fontWeightMixed || this.globalMode && text.hasMixedTextAttributes('fontWeight')) fontWeightSelector.setMixed();
         this.updateFontWeightChoices(text.fontFamily);
 

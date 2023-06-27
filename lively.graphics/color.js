@@ -215,7 +215,7 @@ export class Color {
       red: new Color(0.8, 0, 0),
       green: new Color(0, 0.8, 0),
       yellow: new Color(0.8, 0.8, 0),
-      lightBlue: new Color.rgb(117, 190, 235),
+      lightBlue: Color.rgb(117, 190, 235),
       blue: new Color(0, 0, 0.8),
       purple: new Color(0.5, 0, 0.5),
       magenta: new Color(1, 0, 1),
