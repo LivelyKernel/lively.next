@@ -1436,7 +1436,7 @@ export class DropDownList extends Button {
     label = [
       ...label, ' ', null,
       ...Icon.textAttribute(
-        'caret-' + (this.listAlign === 'bottom'
+        'angle-' + (this.listAlign === 'bottom'
           ? 'down'
           : 'up'))
     ];
@@ -1936,7 +1936,7 @@ export class DropDownListModel extends ButtonModel {
     let caret = Icon.textAttribute('angle-down', { });
     if (this.listAlign !== 'selection') {
       caret = Icon.textAttribute(
-        'caret-' + (this.listAlign === 'bottom'
+        'angle-' + (this.listAlign === 'bottom'
           ? 'down'
           : 'up'), {
           paddingTop: this.listAlign === 'bottom' ? '0px' : '2px'
