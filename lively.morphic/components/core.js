@@ -46,10 +46,10 @@ export class ComponentDescriptor {
 
   __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
-    return expressionSerializer.exprStringEncode({
+    return {
       __expr__: meta.exportedName,
       bindings: { [meta.moduleId]: meta.exportedName }
-    });
+    };
   }
 
   /**

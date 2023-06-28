@@ -519,7 +519,19 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     }
     if (name !== 'name' && styleProto && obj.equals(v, styleProto[name])) continue;
     if (name === 'master') {
-      const val = handleOverriddenMaster(morph.master, opts);
+      // this should only print masters that are actually overridden or have been
+      // applied to morphs that previously did not have any masters (after the fact application)
+      // The first case is easily detectable. The second case is tricky, since that is not
+      // reified in the data structur of style policies as of now
+      const isOverridden = morph.master.overriddenMaster;
+      const isApplied = !morph.master[Symbol.for('lively-module-meta')] && morph.master.parent[Symbol.for('lively-module-meta')]?.path.length === 0;
+      let val;
+      if (isOverridden) {
+        val = handleOverriddenMaster(morph.master.overriddenMaster, opts);
+      } else if (isApplied) {
+        val = handleOverriddenMaster(morph.master, opts);
+      }
+
       if (val) exported.master = val;
       continue;
     }
