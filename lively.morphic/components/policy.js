@@ -257,7 +257,7 @@ export class StylePolicy {
     const { parent } = this;
     if (parent) {
       const dependants = parent._dependants || new Set();
-      dependants.add(this.__serialize__());
+      dependants.add(expressionSerializer.exprStringEncode(this.__serialize__()));
       parent._dependants = dependants;
     }
   }
@@ -294,10 +294,47 @@ export class StylePolicy {
     return inlineMaster;
   }
 
+  _generateInlineExpression () {
+    const {
+      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover
+    } = this;
+    if (!arr.compact([auto, click, hover]).every(c => c[Symbol.for('lively-module-meta')])) return;
+    const masters = [];
+    const bindings = {};
+    if (auto) masters.push(['auto', auto.__serialize__()]);
+    if (click) masters.push(['click', click.__serialize__()]);
+    if (hover) masters.push(['hover', hover.__serialize__()]);
+
+    if (masters.length == 0) return;
+    if (masters.length == 1 && auto) {
+      return auto.__serialize__();
+    }
+
+    const printMasters = (masters) => {
+      let __expr__ = '';
+      for (let [name, expr] of masters) {
+        let printed;
+        if (obj.isArray(expr)) printed = printMasters(expr);
+        else {
+          printed = expr.__expr__;
+          if (!printed) continue;
+          Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
+        }
+        __expr__ += `${name}: ${printed},\n`;
+      }
+      return __expr__;
+    };
+
+    const printed = printMasters(masters);
+    if (printed === '') return;
+
+    return { __expr__: `{\n${printMasters(masters)}}`, bindings };
+  }
+
   __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
-    if (!meta) {
-      return;
+    if (!meta || this.targetMorph?.isComponent) {
+      return this._generateInlineExpression();
     }
     return expressionSerializer.exprStringEncode({
       __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt([${meta.path.map(name => JSON.stringify(name)).join(',')}])` : ''),
