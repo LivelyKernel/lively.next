@@ -229,7 +229,6 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentB._changeTracker.onceChangesProcessed();
     updatedSource = await testComponentModule.source();
-    updatedSource;
     expect(updatedSource.includes(`add({
     name: 'some new morph',
     fill: Color.blue
@@ -485,7 +484,6 @@ describe('component -> source reconciliation', function () {
 }`);
   });
 
-  // resetEnv()
   it('updates the source AND the spec in case a rename is detected', async () => {
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.get('some ref').name = 'molly';
@@ -528,12 +526,15 @@ describe('component -> source reconciliation', function () {
   it('properly reconciles overridden masters', async () => {
     const alice = part(D, { name: 'alice' });
     alice.master = { hover: B };
+
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
       ComponentC.addMorph(alice);
     });
     await ComponentC._changeTracker.onceChangesProcessed();
     const updatedSource = await getSource();
-    expect(updatedSource).to.include('master: { hover: B }');
+    expect(updatedSource).to.include(`master: {
+      hover: B
+    }`);
   });
 
   it('inserts morphs at the correct position when altering a base def', async () => {
@@ -886,7 +887,6 @@ describe('component -> source reconciliation', function () {
 });`, 'inserts adjustments in the reintroduced code');
     });
 
-    // resetEnv()
     it('reflect the propagated changes in any of the open editable components', async () => {
       ComponentA.withMetaDo({ reconcileChanges: true }, () => {
         ComponentA.get('some submorph').moveBy(pt(20, 20));

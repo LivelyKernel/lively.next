@@ -28,6 +28,9 @@ import lint from '../js/linter.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
 import { resource } from 'lively.resources';
+import { ExpressionSerializer } from 'lively.serializer2';
+
+export const exprSerializer = new ExpressionSerializer();
 
 /**
  * The cheap way is just to generate a new spec from a component morph.
@@ -666,7 +669,7 @@ export class Reconciliation {
   }
 
   recoverRemovedMorphMetaIn (interactiveDescriptor) {
-    return this.policyToSpecAndSubExpressions?.get(interactiveDescriptor.__serialize__());
+    return this.policyToSpecAndSubExpressions?.get(exprSerializer.exprStringEncode(interactiveDescriptor.__serialize__()));
   }
 
   getDescriptorContext (descr = this.descriptor) {
@@ -891,7 +894,11 @@ class MorphRemovalReconciliation extends Reconciliation {
 
     if (subExpr) meta.subExpr = subExpr;
 
-    if (!obj.isEmpty(meta)) this.policyToSpecAndSubExpressions.set(interactiveDescriptor.__serialize__(), meta);
+    if (!obj.isEmpty(meta)) {
+      this.policyToSpecAndSubExpressions.set(
+        exprSerializer.exprStringEncode(interactiveDescriptor.__serialize__()),
+        meta);
+    }
 
     this.addChangesToModule(interactiveDescriptor.moduleName, changes);
 
