@@ -933,6 +933,7 @@ export class ComponentBrowserModel extends ViewModel {
     if (source.startsWith('redirect -> ')) {
       moduleName = source.replace('redirect -> ', '');
     }
+    if (source.includes('component-browser skip')) return [];
     const mod = localInterface.getModule(moduleName);
     if (!mod.isLoaded()) {
       await mod.load();
