@@ -379,8 +379,8 @@ const RichTextControl = component(PropertySection, {
           items: ['IBM Plex Sans'],
           openListInWorld: true,
           listMaster: DarkThemeList,
-          listHeight: 1000,
-          listAlign: 'selection'
+          listHeight: 200,
+          listAlign: 'bottom'
         },
         submorphs: [{
           name: 'label',
@@ -429,7 +429,7 @@ const RichTextControl = component(PropertySection, {
             string: 'Ultra Bold',
             value: 900
           }],
-          listAlign: 'selection',
+          listAlign: 'bottom',
           openListInWorld: true,
           listHeight: 1000
         },
@@ -644,7 +644,7 @@ const RichTextControl = component(PropertySection, {
       extent: pt(202.2, 23.3),
       tooltip: 'Choose Line Wrapping',
       viewModel: {
-        listAlign: 'selection',
+        listAlign: 'bottom',
         openListInWorld: true,
         listMaster: DarkThemeList,
         items: [
