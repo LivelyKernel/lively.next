@@ -3027,6 +3027,14 @@ export class PathPoint {
     ];
   }
 
+  equals (otherPathPoint) {
+    if (!otherPathPoint) return false;
+    if (this.isSmooth !== otherPathPoint.isSmooth) return false;
+    if (!this.position.equals(otherPathPoint.position)) return false;
+    if (!obj.equals(this.controlPoints, otherPathPoint.controlPoints)) return false;
+    return true;
+  }
+
   get isPathPoint () { return true; }
 
   get isSmooth () { return this._isSmooth || false; }
