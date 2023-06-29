@@ -780,9 +780,26 @@ export class StylePolicy {
    * Returns wether or not a morph of a given name is managed by this policy.
    * @param { string } nameOfMorph - The name of the morph in question.
    */
-  managesMorph (nameOfMorph) {
-    if (!nameOfMorph) return true;
-    return !!tree.find(this.spec, node => node.name === nameOfMorph, node => node.submorphs);
+  managesMorph (nameOrMorph) {
+    if (!nameOrMorph) return true;
+    if (nameOrMorph.isMorph) {
+      if (this.targetMorph === nameOrMorph) return true;
+      const relativePath = [nameOrMorph.name];
+      for (let m of nameOrMorph.ownerChain()) {
+        if (m.master) {
+          if (m.master === this) break;
+          return false;
+        }
+        relativePath.push(m.name);
+      }
+      let curr = this.spec;
+      while (curr && relativePath.length) {
+        const name = relativePath.pop();
+        curr = curr.submorphs?.find(m => m.name === name);
+      }
+      return !!curr;
+    }
+    return !!tree.find(this.spec, node => node.name === nameOrMorph, node => node.submorphs);
   }
 
   /**
