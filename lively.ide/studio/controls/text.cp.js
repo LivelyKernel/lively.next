@@ -107,7 +107,7 @@ export class RichTextControlModel extends ViewModel {
           lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
-        
+
         this.models.fontFamilySelector.items = availableFonts().map(font => {
           return {
             value: font,
@@ -115,10 +115,11 @@ export class RichTextControlModel extends ViewModel {
             isListItem: true
           };
         });
-        fontFamilySelector.selection = text.fontFamily;
+
+        fontFamilySelector.selection = text.fontFamily.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
 
-        fontWeightSelector.selection = text.fontWeight;
+        fontWeightSelector.selection = /\d/.test(text.fontWeight) ? fontWeightToString(text.fontWeight) : text.fontWeight;
         if (text.fontWeightMixed || this.globalMode && text.hasMixedTextAttributes('fontWeight')) fontWeightSelector.setMixed();
         this.updateFontWeightChoices(text.fontFamily);
 
