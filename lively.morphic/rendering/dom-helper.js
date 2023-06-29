@@ -1,5 +1,5 @@
 /* global System */
-import { promise, obj } from 'lively.lang';
+import { promise } from 'lively.lang';
 import { Rectangle } from 'lively.graphics';
 
 export function cumulativeOffset (element) {
@@ -134,4 +134,19 @@ export function addOrChangeLinkedCSS (id, url, doc = document, overwrite = true)
     return promise.waitFor(30000, () => !!loaded && link);
   }
   return Promise.resolve();
+}
+
+export function generateFontFaceString (customFontFaceObj) {
+  const { name, fontWeightRange, style, unicodeRange } = customFontFaceObj;
+
+  const fileName = name.replaceAll(' ', '_');
+  return `@font-face {
+  font-family: '${name}';
+  src: url('./assets/${fileName}.woff2');;
+  font-weight: ${fontWeightRange}};
+  font-style: ${style};
+  unicode-range: ${unicodeRange};
+  font-display: swap;
+}
+`;
 }

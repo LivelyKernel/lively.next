@@ -19,6 +19,7 @@ import Terminal from 'lively.ide/shell/terminal.js';
 import { pt } from 'lively.graphics';
 import { arr, obj } from 'lively.lang';
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
+import { generateFontFaceString } from 'lively.morphic/rendering/dom-helper.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 
@@ -592,5 +593,41 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     }
     this.config.lively.projectDependencies = usedDeps;
     return usedDeps;
+  }
+
+  async addCustomFontFace (customFontObj) {
+    const fontCSS = resource(this.url).join('fonts.css');
+    let fontCSSContent = await fontCSS.read();
+    const fontCSSToAdd = generateFontFaceString(customFontObj);
+    fontCSSContent = fontCSSContent + fontCSSToAdd;
+    await fontCSS.write(fontCSSContent);
+  }
+
+  async deleteCustomFont (fontObjToDelete) {
+    const currentProjFonts = await this.retrieveProjectFontsFromCSS();
+    const newProjFonts = currentProjFonts.filter((projFont) => !obj.equals(projFont, fontObjToDelete));
+    let cssString = newProjFonts.map(f => generateFontFaceString(f)).join('\n');
+    const fontCSS = resource(this.url).join('fonts.css');
+    await fontCSS.write(cssString);
+  }
+
+  async getProjectFonts () {
+    const fontObjects = [];
+    const fontCSS = resource($world.openedProject.url).join('fonts.css');
+    let fontCSSContent = (await fontCSS.read()).replaceAll(/\s+/g, ' ');
+
+    const matches = fontCSSContent.matchAll(/@font-face {([^}]*)}/gm);
+
+    for (let match of matches) {
+      const fontString = match[1].replaceAll(/\s+/g, ' ');
+      fontObjects.push({
+        fileName: fontString.match(/url\('(.*)'\);/)[1],
+        fontName: fontString.match(/font-family: '(.*)';/)[1],
+        fontWeight: fontString.match(/font-weight: ([\s\d]*);/)[1],
+        fontStyle: fontString.match(/font-style: ([a-z]*);/)[1],
+        unicodeRange: fontString.match(/unicode-range: ([^;]*)/)?.[1] || ''
+      });
+    }
+    return fontObjects;
   }
 }
