@@ -200,7 +200,7 @@ export class Project {
       type: 'package'
     });
     loadedProject.package = pkg;
-    await Project.installCSSForProject(url, !onlyLoadNotOpen, { repoOwner, name });
+    await Project.installCSSForProject(url, !onlyLoadNotOpen, { repoOwner, name }, (!onlyLoadNotOpen ? loadedProject : null));
     if (!onlyLoadNotOpen) {
       $world.openedProject = loadedProject;
       await loadedProject.retrieveProjectFontsFromCSS();
@@ -212,10 +212,10 @@ export class Project {
   /**
    * @param {string} projectUrl
    * @param {boolean} forProject - Whether to install CSS for an opened project or a dependency
-   * @param {boolean} installWatcher
    * @param {object} opts
+   * @param {object} projectRef - Only important when forProject is true. Reference to the Project that the CSS belongs to, so that we can access its instance later.
    */
-  static async installCSSForProject (projectUrl, forProject, opts) {
+  static async installCSSForProject (projectUrl, forProject, opts, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
     let indexCSS = await indexCSSResource.read();
     if (forProject)indexCSS = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + indexCSS;
@@ -227,7 +227,7 @@ export class Project {
         let cssContents = await indexCSSResource.read();
         cssContents = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + cssContents;
         addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, cssContents);
-        await this.retrieveProjectFontsFromCSS();
+        await projectRef.retrieveProjectFontsFromCSS();
       };
       $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
@@ -360,7 +360,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     } catch (error) {
       throw Error('Error creating project files', { cause: error });
     }
-    await Project.installCSSForProject(this.url, true, { repoOwner: gitHubUser, name: this.name });
+    await Project.installCSSForProject(this.url, true, { repoOwner: gitHubUser, name: this.name }, this);
     if (withRemote) {
       try {
         await this.regenerateTestPipeline();

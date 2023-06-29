@@ -20,6 +20,7 @@ import { availableFonts } from 'lively.morphic/rendering/fonts.js';
 import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
+import { openFontManager } from '../font-manager.cp.js';
 
 /**
  * This model provides functionality for rich-text-editing frontends.
@@ -108,13 +109,19 @@ export class RichTextControlModel extends ViewModel {
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
 
-        this.models.fontFamilySelector.items = availableFonts().map(font => {
+        this.models.fontFamilySelector.items = ($world.openedProject
+          ? [{
+              value: 'open font manager',
+              string: '🗛 Upload a custom font...',
+              isListItem: true
+            }]
+          : []).concat(availableFonts().map(font => {
           return {
             value: font,
             string: font.name,
             isListItem: true
           };
-        });
+        }));
 
         fontFamilySelector.selection = text.fontFamily.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
@@ -299,6 +306,11 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeFontFamily (fontFamily) {
+    if (fontFamily === 'open font manager') {
+      openFontManager();
+      this.update();
+      return;
+    }
     if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontFamily');
     this.confirm('fontFamily', sanitizeFont(fontFamily.name));
     this.updateFontWeightChoices(fontFamily.name);
