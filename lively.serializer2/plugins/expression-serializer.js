@@ -524,11 +524,12 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       // The first case is easily detectable. The second case is tricky, since that is not
       // reified in the data structur of style policies as of now
       const isOverridden = morph.master.overriddenMaster;
-      const isApplied = !morph.master[Symbol.for('lively-module-meta')] && morph.master.parent[Symbol.for('lively-module-meta')]?.path.length === 0;
+      const isApplied = !morph.master.inheritStructure;
+      const hasLocalDispatches = morph.master._hoverMaster || morph.master._clickmaster;
       let val;
       if (isOverridden) {
         val = handleOverriddenMaster(morph.master.overriddenMaster, opts);
-      } else if (isApplied) {
+      } else if (isApplied || hasLocalDispatches) {
         val = handleOverriddenMaster(morph.master, opts);
       }
 
