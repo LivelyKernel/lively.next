@@ -518,6 +518,11 @@ export class ExportedComponent extends Morph {
     if (!this.component) return;
     const [{ scale }] = this.getSubmorphNamed('preview container').submorphs;
     const instance = part(this.component, { scale });
+
+    if (!this.componentBrowser.importAlive) {
+      // disable the behavior
+      withAllViewModelsDo(instance, m => m.viewModel.detach());
+    }
     // on drop scale to 1
     instance.openInHand();
     const grabShadow = new ShadowObject({ fast: false, color: Color.rgba(0, 0, 0, 0.6), blur: 40 });
@@ -735,7 +740,8 @@ export class ComponentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close', 'isPrompt', 'onWindowClose', 'menuItems'];
+          return ['activate', 'isComponentBrowser', 'reset', 'isEpiMorph', 'close',
+            'isPrompt', 'isHaloItem', 'onWindowClose', 'menuItems', 'importAlive'];
         }
       }
     };
@@ -892,7 +898,7 @@ export class ComponentBrowserModel extends ViewModel {
     const selectedComponent = this.getSelectedComponent();
     const importedComponent = part(selectedComponent.component);
     if (!this.importAlive) {
-      // activate the behavior
+      // disable the behavior
       withAllViewModelsDo(importedComponent, m => m.viewModel.detach());
     }
     importedComponent.openInWorld();
