@@ -3,7 +3,6 @@ import { string, Closure, Path, obj, properties, arr } from 'lively.lang';
 import { getSerializableClassMeta, getClassName } from '../class-helper.js';
 import { connect } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
-import { incName } from 'lively.morphic/helpers.js';
 
 // 25.5.20 rms: this function requires the parameters to be unchanged when we run this through google closure. This is why we construct if from source.
 const __eval__ = Closure.fromSource(`function __eval__(__source__, __boundValues__) { 
@@ -732,7 +731,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
       __expr__ = obj.inspect(obj.dissoc(exported, typeSpecifiedViaMaster ? ['type'] : []), {
         converter: (key, val) => {
           if (key === 'name' && masterInScope?.managesMorph(val) && !masterInScope?.managesMorph(aMorph)) {
-            while (masterInScope.managesMorph(val) || opts.seenMorphsInScope[val]) val = incName(val);
+            while (masterInScope.managesMorph(val) || opts.seenMorphsInScope[val]) val = string.incName(val);
             opts.seenMorphsInScope[val] = aMorph;
             return val;
           }

@@ -152,9 +152,6 @@ export function newMorphId (classOrClassName) {
   return prefix + '_' + string.newUUID().replace(/-/g, '_');
 }
 
-export function incName (name) {
-  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
-}
 
 async function lazyInspect (obj) {
   // lazy load
