@@ -1232,6 +1232,10 @@ function levenshtein (a, b) {
   return row[a.length];
 }
 
+function incName (name) {
+  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
+}
+
 // poly-filling...
 // if (!features.repeat)     String.prototype.repeat =     function(n) { string.repeat(this, n); };
 // if (!features.includes)   String.prototype.includes =   function(x) { string.include(this, x); }
@@ -1300,5 +1304,6 @@ export {
   applyChanges,
   levenshtein,
   decamelize,
-  ensureFolder
+  ensureFolder,
+  incName
 };
