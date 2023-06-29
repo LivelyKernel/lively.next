@@ -152,3 +152,18 @@ export function availableFonts () {
   if (!$world || !$world.openedProject) return DEFAULT_FONTS;
   return $world.openedProject.projectFonts.concat(DEFAULT_FONTS);
 }
+
+export function generateFontFaceString (customFontFaceObj) {
+  const { name, fontWeight, fontStyle, unicodeRange } = customFontFaceObj;
+
+  const fileName = name.replaceAll(' ', '_');
+  return `@font-face {
+  font-family: '${name}';
+  src: url('./assets/${fileName}.woff2');;
+  font-weight: ${fontWeight}};
+  font-style: ${fontStyle};
+  unicode-range: ${unicodeRange || "''" };
+  font-display: swap;
+}
+`;
+}
