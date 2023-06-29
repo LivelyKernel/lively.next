@@ -149,7 +149,7 @@ export const DEFAULT_FONTS = [
 ];
 
 export function availableFonts () {
-  if (!$world || !$world.openedProject) return DEFAULT_FONTS;
+  if (typeof $world === 'undefined' || !$world.openedProject) return DEFAULT_FONTS;
   return $world.openedProject.projectFonts.concat(DEFAULT_FONTS);
 }
 

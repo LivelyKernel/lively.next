@@ -17,6 +17,8 @@ import { disconnect, connect } from 'lively.bindings';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
 import { availableFonts } from 'lively.morphic/rendering/fonts.js';
+import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
+import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
 import { openFontManager } from '../font-manager.cp.js';
 
@@ -106,20 +108,14 @@ export class RichTextControlModel extends ViewModel {
           lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
-
-        this.models.fontFamilySelector.items = ($world.openedProject
-          ? [{
-              value: 'open font manager',
-              string: '🗛 Upload a custom font...',
-              isListItem: true
-            }]
-          : []).concat(availableFonts().map(font => {
+        
+        this.models.fontFamilySelector.items = availableFonts().map(font => {
           return {
             value: font,
             string: font.name,
             isListItem: true
           };
-        }));
+        });
 
         fontFamilySelector.selection = text.fontFamily.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
