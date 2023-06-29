@@ -336,6 +336,7 @@ function inspect (object, options, depth) {
     const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
     if (customInspected !== ignoreSignal) return customInspected;
   }
+  const converter = options.converter || ((key, val) => val);
   if (!object) return print(object);
 
   // print function
@@ -386,8 +387,7 @@ function inspect (object, options, depth) {
       }
       const key = propsToPrint[i];
       const isValidLiteral = !key.includes('-');
-      if (isArray) inspect(object[key], options, depth + 1);
-      const printedVal = inspect(object[key], options, depth + 1);
+      const printedVal = inspect(converter(key, object[key]), options, depth + 1);
       printedProps.push((options.escapeKeys || !isValidLiteral
         ? JSON.stringify(key)
         : key) + ': ' + printedVal);
@@ -505,7 +505,7 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
       const beforePropName = before[i];
       const beforeProp = properties[beforePropName];
       if (!beforeProp) {
-    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` +
+    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` + // eslint-disable-line no-console
                     `Property ${key} requires to be initialized before ${beforePropName} ` +
                     'but that property cannot be found.');
         before.splice(i, 1);
@@ -519,7 +519,7 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
       const afterPropName = after[i];
       const afterProp = properties[afterPropName];
       if (!afterProp) {
-    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` +
+    	    console.warn(`[initializeProperties] ${stringified} sortProperties: ` + // eslint-disable-line no-console
                     `Property ${key} requires to be initialized after ${afterPropName} ` +
                     'but that property cannot be found.');
         after.splice(i, 1);
