@@ -2,7 +2,7 @@
 import * as classes from 'lively.classes';
 import { toJsIdentifier } from 'lively.classes/util.js';
 import { resource } from 'lively.resources';
-import { arr, Path, fun, promise } from 'lively.lang';
+import { arr, Path, fun, promise, string } from 'lively.lang';
 import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import runEval from './eval.cjs';
 import zlib from 'zlib';
@@ -17,13 +17,9 @@ export const isNode = typeof System !== 'undefined'
 // helper
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function incName (name) {
-  return name.replace(/(?:_([0-9]*))?$/, (match, n) => match ? `_${Number(n) + 1}` : '_1');
-}
-
 export function findUniqJsName (name, boundNames = []) {
   name = toJsIdentifier(name, true);
-  while (boundNames.includes(name)) name = incName(name);
+  while (boundNames.includes(name)) name = string.incName(name);
   return name;
 }
 

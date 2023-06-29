@@ -22,7 +22,6 @@ import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
 import { getPropertiesNode } from 'lively.ide/components/helpers.js';
 import { resource } from 'lively.resources';
-import { incName } from 'lively.morphic/helpers.js';
 
 const haloBlue = Color.rgb(23, 160, 251);
 const derivedAccent = Color.rgba(171, 71, 188, 1);
@@ -1204,7 +1203,7 @@ class ComponentHaloItem extends RoundHaloItem {
         variableName = string.camelCaseString(target.name);
       }
       if (!variableName && parentName || variableName === parentName) {
-        variableName = incName(parentName);
+        variableName = string.incName(parentName);
       }
       if (!variableName) {
         variableName = await $world.prompt('Enter a name for this component', {
@@ -1247,7 +1246,7 @@ class ComponentHaloItem extends RoundHaloItem {
       target.name = undefined;
       const mod = moduleManager.module(selectedModule.name);
       // ensure that the name can enter the module without a conflict
-      while (mod.recorder[variableName]) variableName = incName(variableName);
+      while (mod.recorder[variableName]) variableName = string.incName(variableName);
       await insertComponentDefinition(target, variableName, selectedModule.name);
 
       if (openBrowser) {
