@@ -24,7 +24,7 @@ import { Icon, Icons } from './icons.js';
 import { ShadowObject } from '../rendering/morphic-default.js';
 import { editingCommand } from 'lively.ide/text/rich-text-commands.js';
 import { fontWeightNameToNumeric } from '../rendering/font-metric.js';
-import { DEFAULT_FONTS } from '../rendering/fonts.js';
+import { availableFonts } from '../rendering/fonts.js';
 
 /**
  * A Morph to display and edit text.
@@ -612,8 +612,7 @@ export class Text extends Morph {
       fontFamily: {
         group: 'text styling',
         type: 'Enum',
-        // TODO: add project fonts
-        values: DEFAULT_FONTS.map(f => f.name),
+        values: availableFonts().map(f => f.name),
         defaultValue: 'IBM Plex Sans',
         isStyleProp: true,
         isDefaultTextStyleProp: true,

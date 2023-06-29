@@ -201,7 +201,10 @@ export class Project {
     });
     loadedProject.package = pkg;
     await Project.installCSSForProject(url, !onlyLoadNotOpen, { repoOwner, name });
-    if (!onlyLoadNotOpen) $world.openedProject = loadedProject;
+    if (!onlyLoadNotOpen) {
+      $world.openedProject = loadedProject;
+      await loadedProject.retrieveProjectFontsFromCSS();
+    }
     if (li) li.remove();
     return loadedProject;
   }
@@ -224,6 +227,7 @@ export class Project {
         let cssContents = await indexCSSResource.read();
         cssContents = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + cssContents;
         addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, cssContents);
+        await this.retrieveProjectFontsFromCSS();
       };
       $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
@@ -611,7 +615,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     await fontCSS.write(cssString);
   }
 
-  async getProjectFonts () {
+  async retrieveProjectFontsFromCSS () {
     const fontObjects = [];
     const fontCSS = resource($world.openedProject.url).join('fonts.css');
     let fontCSSContent = (await fontCSS.read()).replaceAll(/\s+/g, ' ');
@@ -621,13 +625,43 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     for (let match of matches) {
       const fontString = match[1].replaceAll(/\s+/g, ' ');
       fontObjects.push({
-        fileName: fontString.match(/url\('(.*)'\);/)[1],
-        fontName: fontString.match(/font-family: '(.*)';/)[1],
+        fileName: fontString.match(/url\('(.*)'\);/)[1].replace('./assets/', '').replace('.woff2', ''),
+        fontName: fontString.match(/font-family: '(.*)'; src/)[1],
         fontWeight: fontString.match(/font-weight: ([\s\d]*);/)[1],
         fontStyle: fontString.match(/font-style: ([a-z]*);/)[1],
         unicodeRange: fontString.match(/unicode-range: ([^;]*)/)?.[1] || ''
       });
     }
+    // In order to not deal with the actual CSS file when not strictly necessary, we always "cache" the latest contents in this variable.
+    // To be used mainly in `projectFonts()` below.
+    this._fonts = fontObjects;
     return fontObjects;
+  }
+
+  get projectFonts () {
+    const fonts = this._fonts;
+    // We need to transform the objects that are "@font-face compatible" to an array of objects where each object contains a name and an array of supported fontweights:
+    const fontItems = fonts.map(fontObj => {
+      const name = fontObj.fontName;
+      // Only one specific fontWeight is supported
+      if (fontObj.fontWeight.length === 3) return { name, supportedWeights: fontObj.fontWeight === '400' ? [] : [fontObj.fontWeight] };
+      // A range of fontWeights is supported
+      const supportedWeights = [];
+      if (fontObj.fontWeight.length === 7) {
+        const range = fontObj.fontWeight.split(' ');
+        for (let i = Number(range[0]); i <= Number(range[1]); i += 100) supportedWeights.push(String(i));
+        return { name, supportedWeights };
+      } else return {}; // Should never happen, just in case so that we do not error out.
+    }).filter(value => Object.keys(value).length !== 0);
+
+    // The above transformation might produce multiple objects for the same font.
+    // Here, we merge them together. In the case that two entries are merged, we need to merge the array of supported fontWeights as well!
+    return fontItems.reduce((collection, currentValue) => {
+      const findExistingEntry = collection.find(v => v.name === currentValue.name);
+      if (findExistingEntry) findExistingEntry.supportedWeights.push(...currentValue.supportedWeights);
+      else collection.push(currentValue);
+
+      return collection;
+    }, []);
   }
 }
