@@ -3,6 +3,7 @@ import { string, Closure, Path, obj, properties, arr } from 'lively.lang';
 import { getSerializableClassMeta, getClassName } from '../class-helper.js';
 import { connect } from 'lively.bindings';
 import { joinPath } from 'lively.lang/string.js';
+import { incName } from 'lively.morphic/helpers.js';
 
 // 25.5.20 rms: this function requires the parameters to be unchanged when we run this through google closure. This is why we construct if from source.
 const __eval__ = Closure.fromSource(`function __eval__(__source__, __boundValues__) { 
@@ -726,8 +727,17 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
     // the part already
     if (exported) {
       bindings = {};
-      const typeSpecifiedViaMaster = aMorph.master || masterInScope?.managesMorph(aMorph.name);
+      const isAddedToHierarchy = !isRoot && !masterInScope?.managesMorph(aMorph) && masterInScope?.managesMorph(aMorph.owner);
+      const typeSpecifiedViaMaster = aMorph.master || masterInScope?.managesMorph(aMorph);
       __expr__ = obj.inspect(obj.dissoc(exported, typeSpecifiedViaMaster ? ['type'] : []), {
+        converter: (key, val) => {
+          if (key === 'name' && masterInScope?.managesMorph(val) && !masterInScope?.managesMorph(aMorph)) {
+            while (masterInScope.managesMorph(val) || opts.seenMorphsInScope[val]) val = incName(val);
+            opts.seenMorphsInScope[val] = aMorph;
+            return val;
+          }
+          return val;
+        },
         keySorter: (a, b) => {
           if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
           else return 0;
@@ -743,7 +753,8 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
           'lively.morphic': ['part']
         };
       }
-      if (!isRoot && masterInScope && !masterInScope.managesMorph(aMorph.name)) {
+
+      if (!isRoot && masterInScope && isAddedToHierarchy) {
         __expr__ = `add(${__expr__})`;
         if (bindings['lively.morphic']) {
           bindings['lively.morphic'].push('add');
@@ -803,6 +814,7 @@ export function serializeSpec (morph, opts = {}) {
     objToPath = new WeakMap(),
     objRefs = [],
     connections = [],
+    seenMorphsInScope = {},
     exprSerializer = new ExpressionSerializer(),
     masterInScope = morph.master,
     uncollapseHierarchy = false
@@ -827,7 +839,8 @@ export function serializeSpec (morph, opts = {}) {
     objToPath,
     masterInScope: morph.master || masterInScope,
     exprSerializer,
-    uncollapseHierarchy
+    uncollapseHierarchy,
+    seenMorphsInScope
   };
 
   if (onlyInclude && !onlyInclude.includes(morph)) {
