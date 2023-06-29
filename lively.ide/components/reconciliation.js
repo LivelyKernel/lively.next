@@ -618,6 +618,7 @@ export class Reconciliation {
 
   withinDerivedComponent (aMorph) {
     for (const each of [aMorph, ...aMorph.ownerChain()]) {
+      if (each.__wasAddedToDerived__) return false;
       if (each.master) return true;
     }
     return false;
