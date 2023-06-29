@@ -16,7 +16,7 @@ import { disconnect, connect } from 'lively.bindings';
 
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
-import { DEFAULT_FONTS } from 'lively.morphic/rendering/fonts.js';
+import { availableFonts } from 'lively.morphic/rendering/fonts.js';
 import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
@@ -107,7 +107,8 @@ export class RichTextControlModel extends ViewModel {
           lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
-        this.models.fontFamilySelector.items = DEFAULT_FONTS.map(font => {
+        
+        this.models.fontFamilySelector.items = availableFonts().map(font => {
           return {
             value: font,
             string: font.name,
@@ -303,7 +304,7 @@ export class RichTextControlModel extends ViewModel {
   }
 
   updateFontWeightChoices (forFont) {
-    const supportedFontWeights = DEFAULT_FONTS.find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
+    const supportedFontWeights = availableFonts().find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
     this.models.fontWeightSelector.items = supportedFontWeights.length > 0 ? supportedFontWeights : [400, 700].map(fontWeight => fontWeightToString(fontWeight));
   }
 

@@ -147,3 +147,8 @@ export const DEFAULT_FONTS = [
     supportedWeights: []
   }
 ];
+
+export function availableFonts () {
+  if (!$world || !$world.openedProject) return DEFAULT_FONTS;
+  return $world.openedProject.projectFonts.concat(DEFAULT_FONTS);
+}
