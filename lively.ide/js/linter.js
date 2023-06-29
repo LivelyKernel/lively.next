@@ -91,7 +91,7 @@ const rules = {
   'no-debugger': 'warn',
   'no-unreachable': 'warn',
   'no-const-assign': 'warn',
-  'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '_' }],
+  'no-unused-vars': 'warn',
   'no-use-before-define': ['error', { functions: true, classes: true, variables: true }],
   'no-constructor-return': 'error',
   'no-console': 'warn'
