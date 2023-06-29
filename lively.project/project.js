@@ -19,7 +19,7 @@ import Terminal from 'lively.ide/shell/terminal.js';
 import { pt } from 'lively.graphics';
 import { arr, obj } from 'lively.lang';
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
-import { generateFontFaceString } from 'lively.morphic/rendering/dom-helper.js';
+import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 
