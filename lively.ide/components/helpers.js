@@ -101,7 +101,7 @@ export function convertToExpression (aMorph, opts = {}) {
   if (!expr) return;
   return {
     bindings,
-    __expr__: `${expr.match(/^(morph|part)\(([^]*)\)/)[2] || ''}`
+    __expr__: `${expr.match(/^(morph|part)\(([^]*)\)/)?.[2] || expr}`
   };
 }
 
