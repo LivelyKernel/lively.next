@@ -824,9 +824,8 @@ export class StylePolicy {
     if (breakpointMaster) targetMorph._lastBreakpoint = breakpointMaster;
 
     if (this.isEventPolicy) {
-      if (isClicked) return this._clickMaster || this._autoMaster;
-      if (isHovered) return this._hoverMaster || this._autoMaster;
-      return this._autoMaster;
+      if (isClicked && this._clickMaster) return this._clickMaster;
+      if (isHovered && this._hoverMaster) return this._hoverMaster;
     }
 
     if (this.isLightDarkModePolicy) {
@@ -1082,7 +1081,7 @@ export class PolicyApplicator extends StylePolicy {
       newPolicy = new this({}, { auto: args });
     } else if (args.constructor === StylePolicy) {
       newPolicy = new this({}, args);
-    } else if (arr.isSubset(obj.keys(args), ['auto', 'hover', 'click'])) {
+    } else if (arr.isSubset(obj.keys(args), ['auto', 'hover', 'click', 'states', 'breakpoints'])) {
       newPolicy = new this({}, { auto: parent, ...args });
     }
 
