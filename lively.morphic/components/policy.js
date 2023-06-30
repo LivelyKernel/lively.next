@@ -963,11 +963,12 @@ export class StylePolicy {
   splitBy (partitioningPolicy, submorphName) {
     const {
       _autoMaster, parent, _clickMaster, _hoverMaster,
-      breakpoints, _localComponentStates
+      _localComponentStates
     } = partitioningPolicy;
     const auto = (_autoMaster || parent)?.getSubSpecFor(submorphName);
     const click = _clickMaster?.getSubSpecFor(submorphName);
     const hover = _hoverMaster?.getSubSpecFor(submorphName);
+    const breakpoints = partitioningPolicy._breakpointStore?.getConfig();
     let states;
     for (let state in _localComponentStates) {
       if (!states) states = {};
@@ -976,7 +977,7 @@ export class StylePolicy {
     const isSplitInline = !!(click || hover || states);
     if (!isSplitInline) return this;
     return new this.constructor(this.spec, {
-      auto, click, hover, states, isSplitInline
+      auto, click, hover, states, isSplitInline, breakpoints
     });
   }
 
