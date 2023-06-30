@@ -7,33 +7,72 @@ import { pt } from 'lively.graphics/geometry-2d.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { ComponentBrowserPopupDark } from '../component-browser.cp.js';
 import { signal } from 'lively.bindings';
+import { string, obj, arr } from 'lively.lang';
 
 export class ComponentSelectionControl extends ViewModel {
   static get properties () {
     return {
-      component: {
-        set (componentDescriptor) {
-          this.setProperty('component', componentDescriptor);
-          componentDescriptor ? this.activate() : this.deactivate();
-          this.ui.policyTypePin.fit(); // FIXME: why do we need to trigger this manually?
-        }
-      },
-      expose: { get () { return ['component']; } },
+      component: {},
+      editable: { defaultValue: false },
+      stateName: { defaultValue: 'AUTO' },
+      expose: { get () { return ['component', 'stateName']; } },
       bindings: {
         get () {
           return [{
             target: 'select component button', signal: 'onMouseDown', handler: 'selectComponent'
           }, {
             target: 'no component button', signal: 'onMouseDown', handler: 'clearComponent'
+          }, {
+            target: 'policy type pin', signal: 'onKeyDown', handler: 'onInputStateName'
+          }, {
+            target: 'policy type pin', signal: 'onBlur', handler: 'confirmStateName'
+          },
+          {
+            target: 'policy type pin', signal: 'onFocus', handler: 'startEditingStateName'
           }];
         }
       }
     };
   }
 
+  viewDidLoad () {
+    this.onRefresh('component');
+  }
+
+  onRefresh (prop) {
+    this.ui.policyTypePin.textString = this.stateName;
+    this.ui.policyTypePin.readOnly = !this.editable;
+    this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'pointer';
+    if (prop === 'component') {
+      // this is not reached after the view has been mounted
+      this.component ? this.activate() : this.deactivate();
+      this.ui.policyTypePin.fit(); // FIXME: why do we need to trigger this manually?
+    }
+  }
+
   clearComponent () {
     this.component = null;
     signal(this.view, 'componentChanged');
+  }
+
+  onInputStateName (evt) {
+    const { policyTypePin } = this.ui;
+    if (evt.key == 'Enter') {
+      policyTypePin.textString = policyTypePin.textString.replace('\n', '');
+      this.view.focus();
+    }
+  }
+
+  startEditingStateName () {
+    if (!this.editable) return;
+    this.ui.policyTypePin.master.setState('focused');
+  }
+
+  confirmStateName () {
+    if (!this.editable) return;
+    this.ui.policyTypePin.master.setState(null);
+    this.stateName = this.ui.policyTypePin.textString;
+    if (this.component) signal(this.view, 'componentChanged');
   }
 
   async selectComponent () {
@@ -57,6 +96,32 @@ export class ComponentSelectionControl extends ViewModel {
   }
 }
 
+const PolicyPin = component({
+  type: Text,
+  fontColor: Color.rgb(66, 73, 73),
+  borderRadius: 17,
+  fontFamily: '"IBM Plex Mono"',
+  fontWeight: 700,
+  textAlign: 'left',
+  textAndAttributes: ['AUTO', null],
+  borderColor: Color.rgb(23, 160, 251),
+  cursorWidth: 1.5,
+  dynamicCursorColoring: true,
+  extent: pt(53.5, 19.8),
+  fill: Color.rgb(178, 235, 242),
+  lineWrapping: true,
+  padding: rect(5, 1, 0, 0),
+  position: pt(-55, 30)
+});
+
+const PolicyPinFocused = component(PolicyPin, {
+  borderWidth: 1,
+  borderColor: Color.rgb(178, 235, 242),
+  fill: Color.rgba(178, 235, 242, 0),
+  fontColor: Color.rgb(178, 235, 242),
+  padding: rect(4, 0, 0, 0)
+});
+
 export const ComponentSelection = component({
   defaultViewModel: ComponentSelectionControl,
   name: 'selection controls',
@@ -72,24 +137,10 @@ export const ComponentSelection = component({
   }),
   fill: Color.rgba(255, 255, 255, 0),
   borderColor: Color.rgb(23, 160, 251),
-  submorphs: [{
-    type: Text,
+  submorphs: [part(PolicyPin, {
     name: 'policy type pin',
-    fontColor: Color.rgb(66, 73, 73),
-    borderRadius: 17,
-    fontFamily: '"IBM Plex Mono"',
-    fontWeight: 700,
-    textAlign: 'left',
-    textAndAttributes: ['AUTO', null],
-    borderColor: Color.rgb(23, 160, 251),
-    cursorWidth: 1.5,
-    dynamicCursorColoring: true,
-    extent: pt(53.5, 19.8),
-    fill: Color.rgb(178, 235, 242),
-    lineWrapping: true,
-    padding: rect(5, 1, 0, 0),
-    position: pt(-55, 30)
-  }, part(TextInput, {
+    master: { states: { focused: PolicyPinFocused } }
+  }), part(TextInput, {
     name: 'component name ref',
     placeholder: 'no component',
     padding: rect(4, 2, -2, 2),
@@ -207,7 +258,10 @@ export class ComponentControlModel extends PropertySectionModel {
   activate () {
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     super.activate();
-    if (!this.targetMorph.master) this.targetMorph.master = {};
+    if (!this.targetMorph.master) {
+      this.targetMorph.master = {};
+      signal(this.view, 'component changed');
+    }
     autoComponentSelection.visible = true;
     hoverComponentSelection.visible = true;
     clickComponentSelection.visible = true;
@@ -245,24 +299,151 @@ const ComponentControl = component(PropertySection, {
     }]
   }, add(part(ComponentSelection, {
     master: { states: { disabled: ComponentSelectionDisabled } },
+    viewModel: { stateName: 'AUTO' },
     name: 'auto component selection'
   })),
   add(part(ComponentSelection, {
     master: { states: { disabled: ComponentSelectionDisabled } },
-    name: 'click component selection',
-    submorphs: [{
-      name: 'policy type pin',
-      textAndAttributes: ['CLICK', null]
-    }]
+    viewModel: { stateName: 'CLICK' },
+    name: 'click component selection'
   })),
   add(part(ComponentSelection, {
     master: { states: { disabled: ComponentSelectionDisabled } },
-    name: 'hover component selection',
-    submorphs: [{
-      name: 'policy type pin',
-      textAndAttributes: ['HOVER', null]
-    }]
+    viewModel: { stateName: 'HOVER' },
+    name: 'hover component selection'
   }))]
 });
 
-export { ComponentControl };
+class ComponentStatesControlModel extends PropertySectionModel {
+  static get properties () {
+    return {
+      expose: {
+        get () { return ['focusOn']; }
+      }
+    };
+  }
+
+  get bindings () {
+    return [
+      ...super.bindings,
+      { target: /component selection/, signal: 'componentChanged', handler: 'confirm' }
+    ];
+  }
+
+  confirm () {
+    let states = {};
+    for (let { stateName, component } of this.getStatesConfig()) {
+      if (component) states[stateName] = component;
+    }
+    const prevMaster = this.targetMorph.master.getConfig();
+    if (obj.isEmpty(states)) {
+      delete prevMaster.states;
+    } else prevMaster.states = states;
+
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.master = prevMaster;
+    });
+    this.focusOn(this.targetMorph);
+  }
+
+  getStatesConfig () {
+    return this.ui.stateControls.submorphs.map(({ stateName, component }) => ({
+      stateName, component
+    }));
+  }
+
+  ensureDynamicControls () {
+    this.view.master.setState(null);
+    const { stateControls } = this.ui;
+    stateControls.visible = true;
+    const states = this.targetMorph.master._localComponentStates || [];
+    stateControls.submorphs = Object.entries(states).map(([stateName, component]) => {
+      return part(ComponentSelection, {
+        name: 'component selection',
+        viewModel: { stateName, component, editable: true }
+      });
+    });
+    stateControls.submorphs.forEach(m => {
+      stateControls.layout.setResizePolicyFor(m, {
+        width: 'fill', height: 'fixed'
+      });
+    });
+  }
+
+  getNewStateName () {
+    let candidate = 'State_1';
+    const currentStates = this.getStatesConfig().map(({ stateName }) => stateName);
+    while (currentStates.includes(candidate)) candidate = string.incName(candidate);
+    return candidate;
+  }
+
+  addDynamicState () {
+    const selectionControl = this.ui.stateControls.addMorph(part(ComponentSelection, {
+      name: 'component selection',
+      viewModel: { stateName: this.getNewStateName(), editable: true }
+    }));
+    this.ui.stateControls.layout.setResizePolicyFor(selectionControl, {
+      width: 'fill', height: 'fixed'
+    });
+  }
+
+  focusOn (aMorph) {
+    this.targetMorph = aMorph;
+    if (!aMorph.master?._localComponentStates) {
+      this.deactivate();
+      return;
+    }
+    this.ensureDynamicControls();
+  }
+
+  activate () {
+    this.view.master.setState(null);
+    this.ui.stateControls.visible = true;
+
+    this.addDynamicState();
+  }
+
+  deactivate () {
+    super.deactivate();
+    this.ui.stateControls.visible = false;
+    this.ui.stateControls.submorphs = [];
+  }
+}
+
+const ComponentStatesControl = component(PropertySection, {
+  viewModelClass: ComponentStatesControlModel,
+  layout: new TilingLayout({
+    axis: 'column',
+    hugContentsVertically: true,
+    padding: rect(0, 10, 0, 0),
+    resizePolicies: [['h floater', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['state controls', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10
+  }),
+  submorphs: [add({
+    name: 'state controls',
+    layout: new TilingLayout({
+      axis: 'column',
+      hugContentsVertically: true
+    }),
+    fill: Color.rgba(255, 255, 255, 0),
+    borderColor: Color.rgb(23, 160, 251),
+    extent: pt(107.7, 107.1),
+    position: pt(-29.6, 24.5),
+    visible: false
+  }), {
+    name: 'h floater',
+    submorphs: [{
+      name: 'section headline',
+      textAndAttributes: ['Component States', null]
+
+    }]
+  }]
+});
+
+export { ComponentControl, ComponentStatesControl };

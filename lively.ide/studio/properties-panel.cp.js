@@ -14,7 +14,7 @@ import { BodyControl } from './controls/body.cp.js';
 import { PropertySection } from './controls/section.cp.js';
 import { DarkColorPicker } from './dark-color-picker.cp.js';
 import { EmbeddingControl } from './controls/embedding.cp.js';
-import { ComponentControl } from './controls/component.cp.js';
+import { ComponentControl, ComponentStatesControl } from './controls/component.cp.js';
 import { ResponsiveControl } from './controls/responsive.cp.js';
 
 export class PropertiesPanelModel extends ViewModel {
@@ -31,6 +31,7 @@ export class PropertiesPanelModel extends ViewModel {
           return [
             { model: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' },
             { target: 'component control', signal: 'component changed', handler: 'refreshResponsiveControl' },
+            { target: 'component control', signal: 'component changed', handler: 'refreshComponentStatesControl' },
             { target: 'component control', signal: 'deactivate', handler: 'refreshResponsiveControl' }
           ];
         }
@@ -49,6 +50,10 @@ export class PropertiesPanelModel extends ViewModel {
 
   refreshShapeControl () {
     this.ui.shapeControl.refreshFromTarget();
+  }
+
+  refreshComponentStatesControl () {
+    this.ui.componentStatesControl.visible = !!this.targetMorph.master;
   }
 
   refreshResponsiveControl () {
@@ -165,11 +170,11 @@ export class PropertiesPanelModel extends ViewModel {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, borderControl,
       effectsControl, embeddingControl, componentControl,
-      responsiveControl
+      responsiveControl, componentStatesControl
     } = this.ui;
     [shapeControl, fillControl, textControl, layoutControl,
       constraintsControl, borderControl, effectsControl,
-      embeddingControl, componentControl, responsiveControl].forEach(m => m.visible = active);
+      embeddingControl, componentControl, responsiveControl, componentStatesControl].forEach(m => m.visible = active);
     embeddingControl.visible = false;
   }
 
@@ -207,7 +212,7 @@ export class PropertiesPanelModel extends ViewModel {
       shapeControl, fillControl, textControl,
       layoutControl, constraintsControl, embeddingControl,
       borderControl, effectsControl, backgroundControl, alignmentControl,
-      componentControl, responsiveControl
+      componentControl, responsiveControl, componentStatesControl
     } = this.models;
     if (this.targetMorph) {
       disconnect(this.targetMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
@@ -242,10 +247,12 @@ export class PropertiesPanelModel extends ViewModel {
     } else {
       constraintsControl.view.visible = false;
     }
+    this.refreshComponentStatesControl();
     responsiveControl.view.visible = !!aMorph.master?.parent;
     borderControl.focusOn(aMorph);
     effectsControl.focusOn(aMorph);
     componentControl.focusOn(aMorph);
+    componentStatesControl.focusOn(aMorph);
     responsiveControl.focusOn(aMorph);
   }
 }
@@ -339,6 +346,10 @@ const PropertiesPanel = component({
     }], ['component control', {
       height: 'fixed',
       width: 'fill'
+    }],
+    ['component states control', {
+      height: 'fixed',
+      width: 'fill'
     }], ['responsive control', {
       height: 'fixed',
       width: 'fill'
@@ -395,6 +406,7 @@ const PropertiesPanel = component({
     part(FillControl, { name: 'fill control', visible: false }),
     part(BorderControl, { name: 'border control', visible: false }),
     part(ComponentControl, { name: 'component control', visible: false }),
+    part(ComponentStatesControl, { name: 'component states control', visible: false }),
     part(ResponsiveControl, { name: 'responsive control', visible: false }),
     part(BodyControl, { name: 'effects control', visible: false })
   ]
