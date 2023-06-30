@@ -162,7 +162,7 @@ export class BreakpointStore {
       if (!componentDescriptor) return null;
       const y = this._verticalBreakpoints[row];
       const x = this._horizontalBreakpoints[col];
-      if (y == 0 && x == 0) return null;
+      if (y === 0 && x === 0) return null;
       return [pt(x, y), componentDescriptor];
     }).flat());
   }
@@ -463,8 +463,8 @@ export class StylePolicy {
 
     let bps;
     if (bpStore && (bps = bpStore.__serialize__())) masters.push(['breakpoints', bps]);
-    if (masters.length == 0) return;
-    if (masters.length == 1 && auto) {
+    if (masters.length === 0) return;
+    if (masters.length === 1 && auto) {
       return auto.__serialize__();
     }
 
@@ -768,12 +768,7 @@ export class StylePolicy {
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
       if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpec();
       const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
-      const modelParams = specOrPolicy.viewModel || {}; // accumulate the derivation chain for the viewModel
-      for (let param in modelParams) {
-        if (modelParams[param]?.isPolicyApplicator) {
-          modelParams[param] = modelParams[param].instantiate();
-        }
-      }
+      const modelParams = { ...specOrPolicy.viewModel } || {}; // accumulate the derivation chain for the viewModel
       specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
         ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
       ]);
