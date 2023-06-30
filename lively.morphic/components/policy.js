@@ -157,18 +157,24 @@ export class BreakpointStore {
     return store;
   }
 
-  __serialize__ () {
-    if (!arr.compact(this._breakpointMasters.flat()).every(descr => descr[Symbol.for('lively-module-meta')])) return;
-    const bindings = { 'lively.graphics': ['pt'] };
-    const masterStrings = arr.compact(grid.map(this._breakpointMasters, (componentDescriptor, row, col) => {
+  getConfig () {
+    return arr.compact(grid.map(this._breakpointMasters, (componentDescriptor, row, col) => {
       if (!componentDescriptor) return null;
-      const expr = componentDescriptor.__serialize__();
-      Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
       const y = this._verticalBreakpoints[row];
       const x = this._horizontalBreakpoints[col];
       if (y == 0 && x == 0) return null;
-      return `[pt(${x.toFixed()},${y.toFixed()}), ${expr.__expr__}]`;
+      return [pt(x, y), componentDescriptor];
     }).flat());
+  }
+
+  __serialize__ () {
+    if (!arr.compact(this._breakpointMasters.flat()).every(descr => descr[Symbol.for('lively-module-meta')])) return;
+    const bindings = { 'lively.graphics': ['pt'] };
+    const masterStrings = this.getConfig().map(([pos, componentDescriptor]) => {
+      const expr = componentDescriptor.__serialize__();
+      Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
+      return `[${pos.toString()}, ${expr.__expr__}]`;
+    });
     if (masterStrings.length === 0) return;
     const __expr__ = `[\n${masterStrings.join(',\n')}\n]`;
     return { __expr__, bindings };
@@ -483,6 +489,18 @@ export class StylePolicy {
     return { __expr__: `{\n${printMasters(masters)}}`, bindings };
   }
 
+  getConfig () {
+    const {
+      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
+      _localComponentStates: states
+    } = this;
+    const breakpoints = this.getBreakpointStore()?.getConfig();
+    const spec = { auto, click, hover };
+    if (states) spec.states = states;
+    if (breakpoints) spec.breakpoints = breakpoints;
+    return spec;
+  }
+
   __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
     if (!meta || this.targetMorph?.isComponent) {
@@ -490,7 +508,7 @@ export class StylePolicy {
     }
     return {
       __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt([${meta.path.map(name => JSON.stringify(name)).join(',')}])` : ''),
-      bindings: { [meta.moduleId]: meta.exportedName }
+      bindings: { [meta.moduleId]: [meta.exportedName] }
     };
   }
 

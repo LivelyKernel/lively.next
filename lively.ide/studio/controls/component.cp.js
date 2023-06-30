@@ -159,8 +159,10 @@ export class ComponentControlModel extends PropertySectionModel {
   confirm () {
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     const pos = this.targetMorph.position;
+    const previousMaster = this.targetMorph.master?.getConfig() || {};
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
       this.targetMorph.master = {
+        ...previousMaster,
         auto: autoComponentSelection.component,
         hover: hoverComponentSelection.component,
         click: clickComponentSelection.component
