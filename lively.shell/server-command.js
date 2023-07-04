@@ -169,7 +169,6 @@ export default class ServerCommand extends CommandInterface {
       this.emit('error', err.stack);
       signal(this, 'error', err.stack);
       this.exitCode = 1;
-      reject(err);
     });
   }
 
