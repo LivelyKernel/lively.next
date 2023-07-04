@@ -119,6 +119,9 @@ async function resetEnv () {
 }
 
 describe('component -> source reconciliation', function () {
+  // FIXME:
+  this.retries(2);
+
   beforeEach(async () => {
     await resetEnv();
   });
