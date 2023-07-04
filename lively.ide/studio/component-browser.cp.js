@@ -1361,8 +1361,7 @@ const ProjectSection = component({
       fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
       fontWeight: '900',
       nativeCursor: 'pointer',
-      paddingTop: '3px',
-      textStyleClasses: ['fas']
+      paddingTop: '3px'
     }]
   }, {
     name: 'component previews',
@@ -1454,8 +1453,7 @@ const ComponentBrowser = component({
       textAndAttributes: ['', {
         fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
         fontWeight: '900',
-        lineHeight: 1,
-        textStyleClasses: ['fas']
+        lineHeight: 1
       }]
     }, part(InputLineDefault, {
       name: 'search input',
@@ -1485,8 +1483,7 @@ const ComponentBrowser = component({
       textAndAttributes: ['', {
         fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
         fontWeight: '900',
-        lineHeight: 1,
-        textStyleClasses: ['fas']
+        lineHeight: 1
       }]
     }]
   }, part(MullerColumnView, {
@@ -1592,8 +1589,7 @@ const ComponentBrowser = component({
           fontColor: Color.rgb(74, 174, 79),
           fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
           fontWeight: '900',
-          lineHeight: 1,
-          textStyleClasses: ['fas']
+          lineHeight: 1
         }, ' Import', {
           fontFamily: 'IBM Plex Sans'
         }]
@@ -1721,8 +1717,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
               fontColor: Color.rgbHex('B2EBF2'),
               fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
               fontWeight: '900',
-              lineHeight: 1,
-              textStyleClasses: ['fas']
+              lineHeight: 1
             }, ' Edit', {
               fontFamily: 'IBM Plex Sans'
             }]
@@ -1736,8 +1731,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
               fontColor: Color.rgbHex('B2EBF2'),
               fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
               fontWeight: '900',
-              lineHeight: 1,
-              textStyleClasses: ['fas']
+              lineHeight: 1
             }, ' Import', {
               fontFamily: 'IBM Plex Sans'
             }]
@@ -1793,8 +1787,7 @@ const ComponentError = component({
       textAndAttributes: ['', {
         fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
         fontWeight: '900',
-        lineHeight: 1,
-        textStyleClasses: ['fas']
+        lineHeight: 1
       }]
     }]
   }, {

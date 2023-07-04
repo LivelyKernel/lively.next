@@ -695,7 +695,7 @@ export class Inspector extends ViewModel {
     const self = this;
     const { codeEditor, thisBindingSelector, propertyTree } = this.ui;
     const rightArrow = Icon.textAttribute('long-arrow-alt-right', {
-      textStyleClasses: ['fas'], paddingTop: '2px'
+      paddingTop: '2px'
     });
     thisBindingSelector.items = [{
       isListItem: true,
