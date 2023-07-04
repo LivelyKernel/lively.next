@@ -182,7 +182,10 @@ export async function compileOnServer (code, resolver, useTerser) {
     if (c.status.startsWith('exited')) break;
     resolver.setStatus({ progress: (i + 1) / (code.length / compressionSpeed) });
   }
-  await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
+  if (!await promise.waitFor(1000 * 1000, () => c.status.startsWith('exited'), false)) {
+    console.log('[freezer] Minification took longer than expected, exiting process now.');
+    throw new Error('Failed due to non termination of compression via ' + useTerser ? 'Terser' : 'Google Closure');
+  }
   if (c.stderr && c.exitCode !== 0) {
     resolver.finish();
     throw new Error(c.stderr);
