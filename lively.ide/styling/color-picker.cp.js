@@ -171,11 +171,13 @@ const ThreeValEncoder = component({
       dropShadow: false,
       extent: pt(40, 22),
       floatingPoint: false,
-      max: 1,
-      min: 0,
-      scaleFactor: 100,
-      borderRadius: 0,
-      unit: '%',
+      viewModel: {
+        max: 1,
+        min: 0,
+        scaleFactor: 100,
+        borderRadius: 0,
+        unit: '%'
+      },
       submorphs: [{
         name: 'value',
         fontSize: 14
@@ -187,9 +189,11 @@ const ThreeValEncoder = component({
       extent: pt(30, 22),
       floatingPoint: false,
       borderRadius: 0,
-      max: 255,
-      min: 0,
-      unit: '',
+      viewModel: {
+        max: 255,
+        min: 0,
+        unit: ''
+      },
       submorphs: [{
         name: 'value',
         fontSize: 14
@@ -200,10 +204,12 @@ const ThreeValEncoder = component({
       borderRadius: 0,
       dropShadow: false,
       extent: pt(30, 22),
-      floatingPoint: false,
-      max: 255,
-      min: 0,
-      unit: '',
+      viewModel: {
+        floatingPoint: false,
+        max: 255,
+        min: 0,
+        unit: ''
+      },
       submorphs: [{
         name: 'value',
         fontSize: 14
@@ -214,10 +220,12 @@ const ThreeValEncoder = component({
       borderRadius: 0,
       dropShadow: false,
       extent: pt(30, 22),
-      floatingPoint: false,
-      max: 255,
-      min: 0,
-      unit: '',
+      viewModel: {
+        floatingPoint: false,
+        max: 255,
+        min: 0,
+        unit: ''
+      },
       submorphs: [{
         name: 'value',
         fontSize: 14
