@@ -301,7 +301,7 @@ const BoundsContainerHovered = component({
 const DarkPopupWindow = component(PopupWindow, {
   name: 'dark popup window',
   borderColor: Color.rgba(112, 123, 124, 1),
-  fill: Color.rgb(66, 73, 73),
+  fill: Color.rgb(32, 32, 32),
   hasFixedPosition: true,
   submorphs: [{
     name: 'header menu',

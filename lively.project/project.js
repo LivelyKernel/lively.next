@@ -607,11 +607,13 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     await fontCSS.write(fontCSSContent);
   }
 
-  async deleteCustomFont (fontObjToDelete) {
+  async deleteCustomFont (fontObjToDelete, deleteFile = false) {
     const currentProjFonts = await this.retrieveProjectFontsFromCSS();
+    const fontFileToDelete = resource($world.openedProject.url).join('assets/' + fontObjToDelete.fileName + '.woff2');
     const newProjFonts = currentProjFonts.filter((projFont) => !obj.equals(projFont, fontObjToDelete));
     let cssString = newProjFonts.map(f => generateFontFaceString(f)).join('\n');
     const fontCSS = resource(this.url).join('fonts.css');
+    if (deleteFile) await fontFileToDelete.remove();
     await fontCSS.write(cssString);
   }
 
@@ -627,9 +629,9 @@ Its contend is managed automatically by lively.next. It will automatically be lo
       fontObjects.push({
         fileName: fontString.match(/url\('(.*)'\);/)[1].replace('./assets/', '').replace('.woff2', ''),
         fontName: fontString.match(/font-family: '(.*)'; src/)[1],
-        fontWeight: fontString.match(/font-weight: ([\s\d]*);/)[1],
+        fontWeight: fontString.match(/font-weight: ([\s\d]*);/)[1].split(' ').map(i => Number.parseInt(i)),
         fontStyle: fontString.match(/font-style: ([a-z]*);/)[1],
-        unicodeRange: fontString.match(/unicode-range: ([^;]*)/)?.[1] || ''
+        unicodeRange: fontString.match(/unicode-range: ([^;]*)/)?.[1] || "''"
       });
     }
     // In order to not deal with the actual CSS file when not strictly necessary, we always "cache" the latest contents in this variable.
@@ -644,12 +646,12 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     const fontItems = fonts.map(fontObj => {
       const name = fontObj.fontName;
       // Only one specific fontWeight is supported
-      if (fontObj.fontWeight.length === 3) return { name, supportedWeights: fontObj.fontWeight === '400' ? [] : [fontObj.fontWeight] };
+      if (fontObj.fontWeight.length === 1) return { name, supportedWeights: fontObj.fontWeight };
       // A range of fontWeights is supported
       const supportedWeights = [];
-      if (fontObj.fontWeight.length === 7) {
-        const range = fontObj.fontWeight.split(' ');
-        for (let i = Number(range[0]); i <= Number(range[1]); i += 100) supportedWeights.push(String(i));
+      if (fontObj.fontWeight.length === 2) {
+        const range = fontObj.fontWeight;
+        for (let i = Number(range[0]); i <= range[1]; i += 100) supportedWeights.push(i);
         return { name, supportedWeights };
       } else return {}; // Should never happen, just in case so that we do not error out.
     }).filter(value => Object.keys(value).length !== 0);
