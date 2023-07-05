@@ -13,7 +13,6 @@ custom-npm-modules/
 favicon.ico
 localconfig.js
 robots.txt
-start.sh
 config.js
 user-server.sh
 package-lock.json
