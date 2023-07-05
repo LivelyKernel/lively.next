@@ -30,8 +30,7 @@ jobs:
           path: local_projects/%PROJECT_NAME%
       - name: Start lively.next
         run: |
-          chmod a+x ./start.sh
-          ./start.sh > /dev/null 2>&1 &
+          ./start-server.sh > /dev/null 2>&1 &
           # wait until server is guaranteed to be running
           sleep 30
       - name: Run CI Test Script 
