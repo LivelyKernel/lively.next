@@ -3,7 +3,7 @@
 ./scripts/node_version_checker.sh || exit 1
 
 if [[ ! -d lively.server ]]; then
-  echo -n "lively.next packages doesn't seem to be properly installed yet. Please run ./update.sh"; echo;
+  echo -n "lively.next packages doesn't seem to be properly installed yet. Please run ./install.sh"; echo;
   exit 1;
 fi
 
