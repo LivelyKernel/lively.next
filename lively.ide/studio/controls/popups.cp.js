@@ -14,8 +14,18 @@ export class PopupModel extends ViewModel {
     return {
       liveStyleClasses: {
         defaultValues: ['Popup']
-      }
+      },
+      bindings: {
+        get () {
+          return [{ target: 'close button', signal: 'onMouseDown', handler: 'close' }];
+        }
+      },
+      expose: { get () { return ['close']; } }
     };
+  }
+
+  close () {
+    this.view.remove();
   }
 }
 
@@ -431,8 +441,7 @@ const ShadowPopup = component(DarkPopupWindow, {
     }], ['footer', {
       height: 'fixed',
       width: 'fill'
-    }]],
-    wrapSubmorphs: false
+    }]]
   }),
   extent: pt(241.4, 191),
   submorphs: [{
@@ -447,9 +456,12 @@ const ShadowPopup = component(DarkPopupWindow, {
     borderWidth: 0,
     extent: pt(241, 76.6),
     layout: new TilingLayout({
-      spacing: 10,
+      align: 'right',
+      hugContentsVertically: true,
       justifySubmorphs: 'spaced',
-      padding: Rectangle.inset(10, 10, 40),
+      orderByIndex: true,
+      padding: rect(48, 10, -15, -2),
+      spacing: 10,
       wrapSubmorphs: true
     }),
     fill: Color.rgba(0, 0, 0, 0),
@@ -467,8 +479,8 @@ const ShadowPopup = component(DarkPopupWindow, {
     }),
     part(DarkNumberIconWidget, {
       name: 'blur input',
-      min: 0,
-      width: 70,
+      extent: pt(80, 22),
+      viewModel: { min: 0 },
       submorphs: [{
         name: 'interactive label',
         textAndAttributes: ['\ue3a5', {
@@ -492,8 +504,8 @@ const ShadowPopup = component(DarkPopupWindow, {
     }),
     part(DarkNumberIconWidget, {
       name: 'spread input',
-      min: 0,
-      width: 70,
+      extent: pt(80, 22),
+      viewModel: { min: 0 },
       submorphs: [{
         name: 'interactive label',
         textAndAttributes: ['\ue3e0', {
@@ -515,7 +527,7 @@ const ShadowPopup = component(DarkPopupWindow, {
       textAndAttributes: ['FFFFFF', null]
     }, {
       name: 'opacity input',
-      width: 70
+      width: 80
     }]
   })), add({ name: 'buffer', height: 10, fill: Color.transparent }), add({
     name: 'footer',
@@ -699,14 +711,6 @@ const ShadowPopupLight = component(ShadowPopup, {
   submorphs: [
     {
       name: 'shadow controls',
-      extent: pt(248.6, 76.6),
-      layout: new TilingLayout({
-        align: 'right',
-        justifySubmorphs: 'spaced',
-        orderByIndex: true,
-        padding: rect(52, 10, -10, 0),
-        spacing: 13
-      }),
       submorphs: [
         {
           name: 'x offset',
@@ -744,19 +748,6 @@ const ShadowPopupLight = component(ShadowPopup, {
     },
     {
       name: 'shadow color input',
-      layout: new TilingLayout({
-        axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(15, 2, -15, 0),
-        resizePolicies: [['hex input', {
-          height: 'fill',
-          width: 'fixed'
-        }], ['opacity input', {
-          height: 'fill',
-          width: 'fixed'
-        }]],
-        spacing: 15
-      }),
       submorphs: [
         {
           name: 'hex input',
@@ -906,7 +897,7 @@ export const PaddingControlsLight = component({
         }),
         part(NumberWidgetLight, {
           name: 'padding top',
-          min: 0,
+          viewModel: { min: 0 },
           borderRadius: 0,
           extent: pt(35, 22),
           tooltip: 'Topside Padding',
@@ -917,7 +908,7 @@ export const PaddingControlsLight = component({
         }),
         part(NumberWidgetLight, {
           name: 'padding right',
-          min: 0,
+          viewModel: { min: 0 },
           borderRadius: 0,
           extent: pt(35, 22),
           tooltip: 'Rightside Padding',
@@ -927,7 +918,7 @@ export const PaddingControlsLight = component({
         }),
         part(NumberWidgetLight, {
           name: 'padding bottom',
-          min: 0,
+          viewModel: { min: 0 },
           borderRadiusTopLeft: 0,
           borderRadiusBottomLeft: 0,
           borderRadiusTopRight: 2,
@@ -1104,10 +1095,12 @@ const OpacityPopup = component(DarkPopupWindow, {
     submorphs: [part(DarkNumberIconWidget, {
       name: 'value input',
       position: pt(11.3, 14),
-      min: 0,
-      max: 1,
-      scaleFactor: 100,
-      unit: '%',
+      viewModel: {
+        min: 0,
+        max: 1,
+        scaleFactor: 100,
+        unit: '%'
+      },
       tooltip: 'Object opacity',
       submorphs: [{
         name: 'interactive label',
