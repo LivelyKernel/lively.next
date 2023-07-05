@@ -184,10 +184,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
         "mirror.html",
         "fix-links.js"],
           toInstall = [
-            {path: "lively.installer/assets/config.js",      canBeLinked: false, overwrite: false},
+            {path: "lively.installer/assets/config.js", canBeLinked: false, overwrite: false},
             {path: "lively.installer/assets/localconfig.js", canBeLinked: false, overwrite: false},
-            {path: "lively.installer/assets/start.sh",       canBeLinked: false, overwrite: false},
-            {path: "lively.morphic/assets/favicon.ico",      canBeLinked: true, overwrite: true},
+            {path: "lively.morphic/assets/favicon.ico", canBeLinked: true, overwrite: true},
           ];
 
       for (let fn of toRemove)
