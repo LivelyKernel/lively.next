@@ -206,8 +206,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
           await exec(`ln -sf ${from.path()} ${to.path()}`);
         }
       }
-
-      await exec("chmod a+x start.sh", {cwd: resource(baseDir).path()});
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

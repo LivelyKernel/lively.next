@@ -82,7 +82,7 @@ then
     STARTED_SERVER=1
     echo "No local lively server was found. Starting a server to run tests on."
     # start a new lively.next server
-    ./start.sh > /dev/null 2>&1 &
+    ./start-server.sh > /dev/null 2>&1 &
     # wait until server is guaranteed to be running
     sleep 30 
   fi
@@ -93,7 +93,7 @@ for package in "${testfiles[@]}"; do
   if [ "$CI" ]; 
   then
     # start a new lively.next server
-    ./start.sh > /dev/null 2>&1 &
+    ./start-server.sh > /dev/null 2>&1 &
     # wait until server is guaranteed to be running
     sleep 30 
   fi

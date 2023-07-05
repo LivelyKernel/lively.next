@@ -49,10 +49,10 @@ endif
 
 ifeq ($(GITHUB_ACTIONS),true)
 docker-build-start:
-	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start.sh
+	docker run -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start-server.sh
 else
 docker-build-start:
-	docker run -it -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start.sh
+	docker run -it -p 127.0.0.1:9011:9011 -v $(shell pwd):$(shell pwd):z -w $(shell pwd) --name lively.next --user $(shell id -u):$(shell id -g)  lively:latest ./start-server.sh
 endif
 
 docker-build-only: docker-build-prepare docker-install
