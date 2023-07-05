@@ -1,5 +1,5 @@
 /* global FormData */
-import { component, add, part, TilingLayout, ViewModel } from 'lively.morphic';
+import { component, ShadowObject, add, part, TilingLayout, ViewModel } from 'lively.morphic';
 import { pt, rect } from 'lively.graphics/geometry-2d.js';
 import { Color } from 'lively.graphics/color.js';
 
@@ -8,37 +8,42 @@ import { Text } from 'lively.morphic/text/morph.js';
 import { currentUsername } from 'lively.user';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { resource } from 'lively.resources';
-import { DarkPopupWindow } from './shared.cp.js';
-
-'format esm';
+import { DarkPopupWindow, DarkThemeList, DarkNumberIconWidget, EnumSelector, RemoveButton, TextInput, PropertyLabelActive, PropertyLabelHovered, PropertyLabel } from './shared.cp.js';
+import { PopupModel } from './controls/popups.cp.js';
+import { SystemButtonDark, DarkButton } from 'lively.components/buttons.cp.js';
+import { FileStatusDefault, FileStatusWarning } from '../js/browser/ui.cp.js';
+import { Label } from 'lively.morphic/text/label.js';
+import { arr, promise, obj } from 'lively.lang';
+import { connect, once, signal } from 'lively.bindings';
 
 const FONT_ENTRY_HEADER_HEIGHT = 37;
 const FONT_ENTRY_FULL_HEIGHT = 200;
 
 export function openFontManager () {
-  part(FontManagerPopup).openInWorld(); // eslint-disable-line no-use-before-define
+  return part(FontManagerPopup).openInWorld(); // eslint-disable-line no-use-before-define
 }
 
-class FontManagerModel extends ViewModel {
+class FontManagerModel extends PopupModel {
   static get properties () {
     return {
-      expose: {
-        get () {
-          return [];
-        }
-      },
-      bindings: {
-        get () {
-          return [
-            { signal: 'onNativeDrop', target: 'drag and drop area', handler: 'onNativeDrop' },
-            { signal: 'onNativeDragenter', target: 'drag and drop area', handler: 'onNativeDragenter' },
-            { signal: 'onNativeDragleave', target: 'drag and drop area', handler: 'onNativeDragleave' },
-            { signal: 'onNativeDragend', target: 'drag and drop area', handler: 'onNativeDragend' },
-            { target: 'upload font button', signal: 'onMouseDown', handler: 'openFilePicker' }
-          ];
-        }
-      }
+      isHaloItem: { get () { return true; } },
+      isPropertiesPanelPopup: { get () { return true; } }
     };
+  }
+
+  get bindings () {
+    return [
+      ...super.bindings,
+      { signal: 'onNativeDrop', target: 'drag and drop area', handler: 'onNativeDrop' },
+      { signal: 'onNativeDragenter', target: 'drag and drop area', handler: 'onNativeDragenter' },
+      { signal: 'onNativeDragleave', target: 'drag and drop area', handler: 'onNativeDragleave' },
+      { signal: 'onNativeDragend', target: 'drag and drop area', handler: 'onNativeDragend' },
+      { target: 'upload font button', signal: 'onMouseDown', handler: 'openFilePicker' }
+    ];
+  }
+
+  get expose () {
+    return super.expose.concat(['isHaloItem', 'isPropertiesPanelPopup']);
   }
 
   async viewDidLoad () {
@@ -47,7 +52,7 @@ class FontManagerModel extends ViewModel {
 
   async regenerateFontList (withLoadingIndicator = false) {
     let li;
-    if (withLoadingIndicator) li = $world.showLoadingIndicatorFor(this.view, 'Loadingf Project Fonts');
+    if (withLoadingIndicator) li = $world.showLoadingIndicatorFor($world, 'Loadingf Project Fonts');
     this.ui.fontListContainer.submorphs = [];
     const projectFonts = await $world.openedProject.retrieveProjectFontsFromCSS();
     for (let fontObj of projectFonts) {
@@ -103,22 +108,40 @@ class FontManagerModel extends ViewModel {
     if (currentUsername() === 'guest') {
       uploadPath = 'uploads/';
     } else uploadPath = $world.openedProject ? $world.openedProject.url.replace(System.baseURL, '') + '/assets/' : 'users/' + currentUsername() + '/uploads';
+    const fontFile = resource(System.baseURL).join(uploadPath).join(file.name);
+    if (await fontFile.exists()) {
+      const { statusText, statusPrompt, cancelButton, proceedButton } = this.ui;
+      statusPrompt.visible = true;
+      statusText.textString = 'This font file already exists, do you want to proceed and override?';
+      const p = promise.deferred();
+      once(cancelButton, 'onMouseDown', () => p.resolve(false));
+      once(proceedButton, 'onMouseDown', () => p.resolve(true));
+      if (!await p.promise) {
+        this.resetStatusText();
+        return;
+      }
+      await fontFile.remove();
+      this.resetStatusText();
+    }
     res = res.join(`/upload?uploadPath=${encodeURIComponent(uploadPath)}`);
     await res.write(fd);
 
     if (!$world.openedProject) return;
     let name = file.name.replace('.woff2', '');
-    await $world.openedProject.addCustomFontFace({
-      fontWeight: 400,
+    // do not add the same font face again
+    const fontFace = {
+      fontWeight: [400],
       fontName: name,
       fileName: name,
       fontStyle: 'normal',
-      unicodeRange: '\"\"'
-    });
+      unicodeRange: "''"
+    };
+    await $world.openedProject.deleteCustomFont(fontFace, false);
+    await $world.openedProject.addCustomFontFace(fontFace);
   }
 
   async onNativeDrop (evt) {
-    const { dragAndDropArea, statusText } = this.ui;
+    const { dragAndDropArea, statusText, statusPrompt } = this.ui;
 
     dragAndDropArea.borderWidth = 2;
 
@@ -126,6 +149,7 @@ class FontManagerModel extends ViewModel {
     if (!domEvt.dataTransfer.items.length) return;
     const legalFiles = Array.from(domEvt.dataTransfer.items).filter(item => item.type === 'font/woff2').map(i => i.getAsFile());
     const legalFilesCount = legalFiles.length;
+    statusPrompt.visible = true;
     statusText.value = `${legalFilesCount} fonts for upload!`;
 
     if (legalFilesCount) {
@@ -138,7 +162,7 @@ class FontManagerModel extends ViewModel {
   }
 
   resetStatusText () {
-    this.ui.statusTexts.value = 'Drop Fonts (woff2) for upload!';
+    this.ui.statusPrompt.visible = false;
   }
 
   onNativeDragenter (evt) {
@@ -160,48 +184,48 @@ class FontListEntryModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { target: 'collapse button', signal: 'onMouseDown', handler: 'toggleCollapse' },
-            { target: 'font delete', signal: 'onMouseDown', handler: 'deleteFont' },
-            { target: 'name edit', signal: 'onMouseDown', handler: 'nameEdit' }
+            { target: 'font delete', signal: 'onMouseDown', handler: 'deleteFont', converter: () => false },
+            { target: 'font edit', signal: 'onMouseDown', handler: 'editFont' }
           ];
         }
       },
-      collapsed: {
-        defaultFalue: true
-      },
 
-      fontName: {},
-      fileName: {},
+      fontName: {}, // name of the font family
+      fileName: {}, // name of the file
       fontWeight: {
-        defaultValue: 'normal'
+        defaultValue: [400] // or [400, 800]
       },
       fontStyle: {
         defaultValue: 'normal'
       },
-      unicodeRange: {}
+      unicodeRange: { defaultValue: 'U+0-10FFFF' }
     };
   }
 
-  async nameEdit () {
-    const { nameEdit, fontName } = this.ui;
-    if (this._nameEditing) {
-      nameEdit.textAndAttributes = ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-        fontWeight: '900'
-      }];
-      fontName.readOnly = false;
-      fontName.focus();
-    } else {
-      nameEdit.textAndAttributes = ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-        fontWeight: '900'
-      }];
-      await this.deleteFont(true);
-      this.fontName = fontName.textString;
-      await this.addFont();
-    }
+  editFont () {
+    // opens the font edit popup
+    const p = part(FontConfigurationPopup, {
+      viewModel: {
+        fontName: this.fontName,
+        fontWeight: this.fontWeight,
+        fontStyle: this.fontStyle,
+        unicodeRange: this.unicodeRange
+      }
+    }).openInWorld();
+    connect(p, 'fontFaceChanged', (fontFace) => {
+      this.updateFontFace(() => {
+        Object.assign(this, fontFace);
+      });
+    });
+    p.env.forceUpdate(p);
+    p.topRight = this.view.globalBounds().topLeft();
+    p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
+  }
 
-    this._nameEditing = !this._nameEditing;
+  async updateFontFace (cb) {
+    await this.deleteFont(true);
+    await cb();
+    await this.addFont();
   }
 
   async addFont () {
@@ -222,394 +246,516 @@ class FontListEntryModel extends ViewModel {
       fontStyle: this.fontStyle,
       unicodeRange: this.unicodeRange
     };
-    await $world.openedProject.deleteCustomFont(fontObj);
+    await $world.openedProject.deleteCustomFont(fontObj, !keepView);
     if (!keepView) this.view.remove();
   }
 
-  applyCollapse () {
-    const { fontSettingsContainer, collapseButton } = this.ui;
-    if (this.collapsed) {
-      fontSettingsContainer.visible = fontSettingsContainer.layoutable = false;
-      this.view.height = FONT_ENTRY_HEADER_HEIGHT;
-      collapseButton.textAndAttributes = ['', {
-        fontFamily: 'Tabler Icons',
-        fontWeight: '900'
-      }];
-    } else {
-      fontSettingsContainer.visible = fontSettingsContainer.layoutable = true;
-      this.view.height = FONT_ENTRY_FULL_HEIGHT;
-      collapseButton.textAndAttributes = ['', {
-        fontFamily: 'Tabler Icons',
-        fontWeight: '900'
-      }];
-    }
-  }
-
-  toggleCollapse () {
-    this.collapsed = !this.collapsed;
-    this.applyCollapse();
-  }
-
   viewDidLoad () {
-    // this.view.withAllSubmorphsDo(m => m.halosEnabled = false);
     this.onRefresh();
-    this.applyCollapse();
   }
 
   onRefresh () {
-    const { styleShow, unicodeShow, weightShow, fontName } = this.ui;
-    styleShow.tooltip = this.fontStyle;
-    unicodeShow.tooltip = this.unicodeRange || 'No specific range set.';
-    weightShow.tooltip = this.fontWeight;
-    fontName.textString = this.fontName;
+    const { fontName } = this.ui;
+    fontName.textString = this.fileName;
+  }
+}
+
+class FontConfigurationModel extends PopupModel {
+  static get properties () {
+    return {
+      isHaloItem: { get () { return true; } },
+      isPropertiesPanelPopup: { get () { return true; } },
+      fontName: {},
+      fontStyle: { defaultValue: 'normal' },
+      fontWeight: { defaultValue: [400] },
+      unicodeRange: { defaultValue: 'U+0-10FFFF' }
+    };
+  }
+
+  viewDidLoad () {
+    this.ui.nameInput.input = this.fontName;
+    this.ui.styleSelector.selection = this.fontStyle;
+    const [min, max] = this.fontWeight;
+    this.ui.weightSelectorMin.selection = min;
+    this.ui.weightSelectorMax.selection = max;
+    this.ui.unicodeRangeInput.input = this.unicodeRange;
+  }
+
+  get bindings () {
+    return [
+      ...super.bindings,
+      { target: 'name input', signal: 'onInput', handler: 'confirm' },
+      { target: 'name input', signal: 'onBlur', handler: 'confirm' },
+      { target: 'unicode range input', signal: 'onInput', handler: 'confirm' },
+      { target: 'unicode range input', signal: 'onBlur', handler: 'confirm' },
+      { model: 'weight selector min', signal: 'toggleList', handler: 'confirm' },
+      { model: 'weight selector max', signal: 'toggleList', handler: 'confirm' },
+      { model: 'style selector', signal: 'toggleList', handler: 'confirm' }
+    ];
+  }
+
+  confirm () {
+    this.fontName = this.ui.nameInput.textString;
+    this.fontStyle = this.ui.styleSelector.selection;
+    this.unicodeRange = this.ui.unicodeRangeInput.textString || "''";
+    this.fontWeight = arr.compact([
+      this.ui.weightSelectorMin.selection,
+      this.ui.weightSelectorMax.selection
+    ]);
+    signal(this.view, 'fontFaceChanged', obj.select(this, ['fontName', 'fontStyle', 'unicodeRange', 'fontWeight']));
+  }
+
+  get expose () {
+    return super.expose.concat(['isHaloItem', 'isPropertiesPanelPopup']);
   }
 }
 
 const FontListEntry = component({
   defaultViewModel: FontListEntryModel,
-  extent: pt(214.5, FONT_ENTRY_FULL_HEIGHT),
+  extent: pt(212.2, 36.7),
   layout: new TilingLayout({
-    axis: 'column',
+    axisAlign: 'center',
+    hugContentsVertically: true,
     orderByIndex: true,
     resizePolicies: [['list header', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['font settings container', {
       height: 'fill',
       width: 'fill'
     }]]
   }),
+  fill: Color.transparent,
   submorphs: [{
     name: 'list header',
-    height: FONT_ENTRY_HEADER_HEIGHT,
-    borderWidth: {
-      bottom: 2,
-      left: 0,
-      right: 0,
-      top: 0
-    },
     layout: new TilingLayout({
-      justifySubmorphs: 'spaced',
-      orderByIndex: true,
-      padding: rect(9, 9, 0, 0)
-    }),
-    borderColor: Color.rgb(69, 69, 69),
-    position: pt(14, 6),
-    submorphs: [{
-      type: Text,
-      name: 'collapse button',
-      dynamicCursorColoring: true,
-      fill: Color.white,
-      position: pt(-6, 18),
-      textAndAttributes: ['', {
-        fontFamily: 'Tabler Icons',
-        fontWeight: '900'
-      }]
-    }, part(InputLineDefault, {
-      name: 'font name',
-      dropShadow: null,
-      extent: pt(140.1, 19.8),
-      fontSize: 12,
-      fontWeight: 700,
-      dynamicCursorColoring: true,
-      fill: Color.white,
-      position: pt(6, 10),
-      textAndAttributes: ['Example Font Name ', {}]
-
-    }), {
-      name: 'header button container',
-      layout: new TilingLayout({
-        orderByIndex: true,
-        spacing: 10
-      }),
-      submorphs: [{
-        type: Text,
-        name: 'name edit',
-        dynamicCursorColoring: true,
-        fill: Color.white,
-        position: pt(132, 9),
-        textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-          fontWeight: '900'
-        }]
-
-      }, {
-        type: Text,
-        name: 'font delete',
-        dynamicCursorColoring: true,
-        fill: Color.white,
-        position: pt(176, 9),
-        textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-          fontWeight: '900'
-        }]
-
-      }]
-    }]
-  }, {
-    name: 'font settings container',
-    layout: new TilingLayout({
-      align: 'center',
-      axis: 'column',
       axisAlign: 'center',
       orderByIndex: true,
-      padding: rect(-8, -8, 0, 0),
+      resizePolicies: [['font name', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
       spacing: 10
     }),
-    borderColor: Color.rgb(23, 160, 251),
-    position: pt(-54, 28),
-    submorphs: [{
-      name: 'style container',
-      borderColor: Color.rgb(69, 69, 69),
-      borderWidth: 1,
-      extent: pt(200, 37),
-      layout: new TilingLayout({
-        justifySubmorphs: 'spaced',
-        orderByIndex: true,
-        padding: rect(9, 9, 0, 0)
-      }),
-      position: pt(-55, 19),
-      submorphs: [{
-        type: Text,
-        name: 'style label',
-        extent: pt(92.5, 18.5),
-        dynamicCursorColoring: true,
-        fill: Color.white,
-        fontWeight: 700,
-        position: pt(9, 9),
-        textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-          fontWeight: '900'
-        }, ' Style', {}]
-      }, {
-        name: 'style button container',
-        layout: new TilingLayout({
-          orderByIndex: true,
-          spacing: 30
-        }),
-        submorphs: [
-          {
-            type: Text,
-            name: 'style show',
-            dynamicCursorColoring: true,
-            fill: Color.white,
-            position: pt(106, 9),
-            textAndAttributes: ['', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-              fontWeight: '900'
-            }]
-          }, {
-            type: Text,
-            name: 'style edit',
-            dynamicCursorColoring: true,
-            fill: Color.white,
-            position: pt(176, 9),
-            textAndAttributes: ['', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-              fontWeight: '900'
-            }]
-          }]
-      }]
-    }, {
-      name: 'weight range container',
-      borderWidth: 1,
-      borderColor: Color.rgb(69, 69, 69),
-      extent: pt(200, 37),
-      layout: new TilingLayout({
-        justifySubmorphs: 'spaced',
-        orderByIndex: true,
-        padding: rect(9, 9, 0, 0)
-      }),
-      position: pt(-58, 29),
-      submorphs: [{
-        type: Text,
-        name: 'weight label',
-        dynamicCursorColoring: true,
-        fill: Color.white,
-        fontWeight: 700,
-        position: pt(9, 9),
-        textAndAttributes: ['', {
-          fontFamily: 'Tabler Icons',
-          fontWeight: '900'
-        }, ' Weight', {}, ' Range', null]
-      }, {
-        name: 'weight button container',
-        layout: new TilingLayout({
-          orderByIndex: true,
-          spacing: 30
-        }),
-        submorphs: [{
-          type: Text,
-          name: 'weight show',
-          dynamicCursorColoring: true,
-          fill: Color.white,
-          position: pt(132, 9),
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-            fontWeight: '900'
-          }]
-        }, {
-          type: Text,
-          name: 'weight edit',
-          dynamicCursorColoring: true,
-          fill: Color.white,
-          position: pt(176, 9),
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-            fontWeight: '900'
-          }]
-        }]
-      }]
-    }, {
-      name: 'unicode range container',
-      borderWidth: 1,
-      borderColor: Color.rgb(69, 69, 69),
-      extent: pt(200, 37),
-      layout: new TilingLayout({
-        justifySubmorphs: 'spaced',
-        orderByIndex: true,
-        padding: rect(9, 9, 0, 0)
-      }),
-      position: pt(1.5, 14),
-      submorphs: [{
-        type: Text,
-        name: 'unicode label',
-        dynamicCursorColoring: true,
-        fill: Color.white,
-        fontWeight: 700,
-        position: pt(9, 9),
-        textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-          fontWeight: '900'
-        }, ' ', {}, 'Unicode Range', null]
-
-      }, {
-        name: 'unicode button container',
-        layout: new TilingLayout({
-          orderByIndex: true,
-          spacing: 30
-        }),
-        submorphs: [{
-          type: Text,
-          name: 'unicode show',
-          dynamicCursorColoring: true,
-          fill: Color.white,
-          position: pt(176, 9),
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-            fontWeight: '900'
-          }]
-        }, {
-          type: Text,
-          name: 'unicode edit',
-          dynamicCursorColoring: true,
-          fill: Color.white,
-          position: pt(20, -6),
-          textAndAttributes: ['', {
-            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-            fontWeight: '900'
-          }]
-        }]
-      }]
-    }]
+    fill: Color.transparent,
+    borderColor: Color.rgb(69, 69, 69),
+    submorphs: [part(PropertyLabel, {
+      name: 'font edit',
+      fontSize: 15,
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontWeight: '900'
+      }, ' ', {}],
+      tooltip: 'Configure font properties',
+      padding: rect(6, 1, -2, 1),
+      master: {
+        auto: PropertyLabel,
+        hover: PropertyLabelHovered,
+        click: PropertyLabelActive
+      }
+    }), part(TextInput, {
+      name: 'font name',
+      padding: rect(5, 2, -4, -1),
+      height: 23.7265625,
+      readOnly: true,
+      textAndAttributes: ['Example Font Name ', {}]
+    }), part(RemoveButton, {
+      master: { auto: RemoveButton, hover: PropertyLabelHovered },
+      name: 'font delete',
+      tooltip: 'Remove font from the project',
+      padding: rect(4, 4, 0, 0)
+    })]
   }]
 });
 
 const FontManager = component({
-  defaultViewModel: FontManagerModel,
   name: 'font manager',
-  layout: new TilingLayout({
-    align: 'center',
-    axisAlign: 'center',
-    orderByIndex: true,
-    wrapSubmorphs: true
-  }),
-  extent: pt(400, 600),
-  submorphs: [
-    {
-      name: 'drag and drop area',
-      borderWidth: 2,
-      extent: pt(212, 103),
-      borderStyle: 'dashed',
-      borderColor: Color.rgb(101, 101, 101),
-      submorphs: [{
-        type: Text,
-        name: 'status text',
-        cursorWidth: 1.5,
-        dynamicCursorColoring: true,
-        extent: pt(198, 111),
-        fill: Color.white,
-        lineWrapping: true,
-        padding: rect(1, 1, 0, 0),
-        position: pt(30.5, 18)
-      }]
-    }, {
-      name: 'upload font button',
-      borderColor: Color.rgb(23, 160, 251),
-      borderWidth: 1,
-      extent: pt(26, 28),
-      fill: Color.rgb(248, 22, 22)
-
-    }, {
-      name: 'font list container',
-      layout: new TilingLayout({
-        axis: 'column',
-        axisAlign: 'center',
-        orderByIndex: true
-      }),
-      clipMode: 'auto',
-      borderColor: Color.rgba(0, 28, 255, 0.9293),
-      borderWidth: 2,
-      extent: pt(372, 396.5),
-      position: pt(-120, 18)
-    }, {
-      name: 'font confirm button',
-      borderColor: Color.rgb(23, 160, 251),
-      borderWidth: 1,
-      extent: pt(108, 28.5),
-      fill: Color.rgb(25, 177, 0),
-      position: pt(-34, 28)
-    }]
-});
-
-// TODO: I copied this basically from `TextFormattingPopUpModel`.
-// I think the best scenario would be to ship the popup with functionality like this as a default?
-class FontManagerPopupModel extends ViewModel {
-  static get properties () {
-    return {
-      expose: { get () { return ['close']; } },
-      bindings: {
-        get () {
-          return [
-            { target: 'close button', signal: 'onMouseDown', handler: 'close' }
-          ];
-        }
-      }
-    };
-  }
-
-  close () {
-    this.view.remove();
-  }
-}
-
-const FontManagerPopup = component(DarkPopupWindow, {
-  name: 'font manager pop up',
-  defaultViewModel: FontManagerPopupModel,
+  fill: Color.rgba(255, 255, 255, 0),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
     hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(10, 10, 0, 0),
+    resizePolicies: [['font list container', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 10
+  }),
+  extent: pt(290.7, 176),
+  submorphs: [
+    {
+      name: 'drag and drop area',
+      fill: Color.rgba(255, 255, 255, 0),
+      layout: new TilingLayout({
+        align: 'center',
+        axis: 'column',
+        axisAlign: 'center',
+        orderByIndex: true
+      }),
+      borderRadius: 10,
+      borderWidth: 6,
+      extent: pt(211.5, 111.2),
+      borderStyle: 'dashed',
+      borderColor: Color.rgb(101, 101, 101),
+      submorphs: [{
+        type: Text,
+        name: 'drop label',
+        extent: pt(176, 48.3),
+        textAlign: 'center',
+        fontColor: Color.rgb(139, 141, 142),
+        fontSize: 17,
+        fixedWidth: true,
+        dynamicCursorColoring: true,
+        fill: Color.rgba(255, 255, 255, 0),
+        position: pt(22.6, 39.9),
+        textAndAttributes: ['Drop font file here', {
+          fontWeight: '600',
+          textAlign: 'center'
+        }, ' ', {
+          textAlign: 'center'
+        }, '', {
+          fontFamily: 'Tabler Icons',
+          fontWeight: '900',
+          textAlign: 'center'
+        }, ' \n\
+', {
+          textAlign: 'center'
+        }, 'or', {
+          fontWeight: '600',
+          textAlign: 'center'
+        }]
+
+      }, part(DarkButton, {
+        name: 'upload font button',
+        extent: pt(88.8, 28.8),
+        submorphs: [{
+          name: 'label',
+          fontSize: 12,
+          textAndAttributes: ['Browse files', null]
+
+        }]
+      })]
+    }, {
+      name: 'status prompt',
+      extent: pt(207, 58),
+      layout: new TilingLayout({
+        hugContentsVertically: true,
+        orderByIndex: true,
+        padding: rect(5, 5, 0, 0),
+        spacing: 5,
+        wrapSubmorphs: true
+      }),
+      master: FileStatusWarning,
+      submorphs: [
+        {
+          type: Text,
+          name: 'status text',
+          padding: rect(5, 3, 0, 0),
+          fixedWidth: true,
+          fixedHeight: false,
+          textAndAttributes: ['I am a status text', null],
+          cursorWidth: 1.5,
+          dynamicCursorColoring: true,
+          extent: pt(195.3, 23),
+          lineWrapping: true
+        },
+        part(DarkButton, {
+          name: 'proceed button ',
+          extent: pt(80, 20),
+          opacity: 0.8,
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Proceed', null]
+
+          }]
+        }),
+        part(DarkButton, {
+          name: 'cancel button ',
+          opacity: .8,
+          extent: pt(79.9, 19.7),
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Cancel', null]
+
+          }]
+        })
+      ]
+    }, {
+      name: 'font list container',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'center',
+        hugContentsVertically: true,
+        orderByIndex: true
+      }),
+      clipMode: 'auto',
+      extent: pt(372, 396.5),
+      position: pt(-120, 18)
+    }]
+});
+
+const FontConfigurationPopup = component(DarkPopupWindow, {
+  viewModelClass: FontConfigurationModel,
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
     hugContentsHorizontally: true,
-    resizePolicies: [
-      ['header menu', { width: 'fill', height: 'fixed' }]
-    ]
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['font controls', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
+  }),
+  submorphs: [
+    add({
+      name: 'font controls',
+      fill: Color.rgba(255, 255, 255, 0),
+      layout: new TilingLayout({
+        axis: 'column',
+        orderByIndex: true,
+        resizePolicies: [['name control', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['style control', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['weight control', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['unicode range control', {
+          height: 'fixed',
+          width: 'fill'
+        }]]
+      }),
+      submorphs: [
+        {
+          name: 'name control',
+          layout: new TilingLayout({
+            align: 'right',
+            axis: 'column',
+            hugContentsVertically: true,
+            orderByIndex: true,
+            padding: rect(15, 10, 0, 0),
+            resizePolicies: [['name input', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 5
+          }),
+          height: 35.6796875,
+          fill: Color.rgba(255, 255, 255, 0),
+          submorphs: [{
+            type: Label,
+            name: 'name label',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            position: pt(13.6, 8),
+            tooltip: 'Defines the name under which the font is going to be available throughout the project.',
+            textAndAttributes: ['Font Name  ', null, '', {
+              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontWeight: '900'
+            }, ' ', {}]
+          }, part(TextInput, {
+            name: 'name input',
+            fixedWidth: true,
+            height: 25
+          })]
+        },
+        {
+          name: 'style control',
+          layout: new TilingLayout({
+            align: 'right',
+            axis: 'column',
+            hugContentsVertically: true,
+            orderByIndex: true,
+            padding: rect(15, 10, 0, 0),
+            resizePolicies: [['style selector', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 5
+          }),
+          fill: Color.rgba(255, 255, 255, 0),
+          submorphs: [{
+            type: Label,
+            name: 'style label',
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            position: pt(11.6, 1.9),
+            tooltip: 'Defines the style this font file covers. For instance different font styles may be partitioned in different font files.',
+            textAndAttributes: ['Font Style  ', null, '', {
+              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontWeight: '900'
+            }, ' ', {}]
+          }, part(EnumSelector, {
+            name: 'style selector',
+            layout: new TilingLayout({
+              align: 'right',
+              justifySubmorphs: 'spaced',
+              orderByIndex: true,
+              padding: rect(5, 0, 10, 0)
+            }),
+            viewModel: {
+              openListInWorld: true,
+              listMaster: DarkThemeList,
+              items: ['normal', 'italic', 'underline']
+            }
+          })]
+        },
+        {
+          name: 'weight control',
+          layout: new TilingLayout({
+            align: 'right',
+            hugContentsVertically: true,
+            justifySubmorphs: 'spaced',
+            orderByIndex: true,
+            padding: rect(15, 10, 0, 0),
+            spacing: 5,
+            wrapSubmorphs: true
+          }),
+          fill: Color.rgba(255, 255, 255, 0),
+          submorphs: [{
+            type: Label,
+            name: 'weight label',
+            extent: pt(210.5, 18),
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            position: pt(5.4, 28.4),
+            fixedWidth: true,
+            textAndAttributes: ['Font Weight  ', null, '', {
+              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontWeight: '900'
+            }, ' ', {}]
+          }, {
+            type: Label,
+            name: 'min label',
+            extent: pt(99, 17),
+            fixedWidth: true,
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            position: pt(-163, 27),
+            textAndAttributes: ['Min', null]
+          }, {
+            type: Label,
+            name: 'max label',
+            extent: pt(99.8, 16.1),
+            fixedWidth: true,
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            position: pt(-113, 27),
+            textAndAttributes: ['Max', null]
+          }, part(EnumSelector, {
+            name: 'weight selector min',
+            extent: pt(100, 23.3),
+            viewModel: {
+              openListInWorld: true,
+              listMaster: DarkThemeList,
+              listHeight: 500,
+              items: arr.range(1, 9).map(i => i * 100),
+              listAlign: 'selection'
+            }
+          }), part(EnumSelector, {
+            name: 'weight selector max',
+            extent: pt(100, 23.3),
+            viewModel: {
+              openListInWorld: true,
+              listMaster: DarkThemeList,
+              listHeight: 500,
+              items: arr.range(1, 9).map(i => i * 100),
+              listAlign: 'selection'
+            }
+          })]
+        },
+        {
+          name: 'unicode range control',
+          layout: new TilingLayout({
+            align: 'right',
+            axis: 'column',
+            hugContentsVertically: true,
+            orderByIndex: true,
+            padding: rect(15, 10, 0, 10),
+            resizePolicies: [['unicode range input', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 5
+          }),
+          fill: Color.rgba(255, 255, 255, 0),
+          submorphs: [{
+            type: Label,
+            name: 'unicode range label',
+            extent: pt(213.2, 18),
+            fontColor: Color.rgb(255, 255, 255),
+            fontWeight: 'bold',
+            nativeCursor: 'pointer',
+            opacity: 0.7,
+            position: pt(44.6, 31.4),
+            textAndAttributes: ['Unicode Range  ', null, '', {
+              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontWeight: '900'
+            }, ' ', {}]
+          },
+          part(TextInput, {
+            name: 'unicode range input',
+            extent: pt(100, 23)
+          })]
+        }
+      ]
+    }), {
+      name: 'header menu',
+      submorphs: [{
+        name: 'title',
+        textAndAttributes: ['Font Configuration', null]
+      }]
+    }
+  ]
+});
+
+const FontManagerPopup = component(DarkPopupWindow, {
+  defaultViewModel: FontManagerModel,
+  extent: pt(241, 568),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    resizePolicies: [['header menu', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['font manager', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
   }),
   submorphs: [
     {
       name: 'header menu',
-      submorphs: [{ name: 'title', textAndAttributes: ['Format Selection', null] }]
+      submorphs: [{
+        name: 'title',
+        textAndAttributes: ['Manage Fonts', null]
+      }]
     },
-    add(part(FontManager))
+    add(part(FontManager, {
+      name: 'font manager',
+      submorphs: [{
+        name: 'status prompt',
+        visible: false
+      }, {
+        name: 'font list container',
+        height: 1
+      }]
+    }))
   ]
 });

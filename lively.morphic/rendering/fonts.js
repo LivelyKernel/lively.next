@@ -1,3 +1,4 @@
+import { obj } from 'lively.lang';
 export const DEFAULT_FONTS = [
   {
     name: 'Alegreya',
@@ -158,9 +159,9 @@ export function generateFontFaceString (customFontFaceObj) {
   return `@font-face {
   font-family: '${fontName}';
   src: url('./assets/${fileName}.woff2');
-  font-weight: ${fontWeight};
+  font-weight: ${obj.isArray(fontWeight) ? fontWeight.join(' ') : fontWeight };
   font-style: ${fontStyle};
-  unicode-range: ${unicodeRange || "''" };
+  unicode-range: ${(unicodeRange === '' ? false : unicodeRange) || "''" };
   font-display: swap;
 }
 `;

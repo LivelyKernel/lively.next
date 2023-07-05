@@ -1,5 +1,5 @@
-import { pt, rect, Color, Rectangle } from 'lively.graphics';
-import { TilingLayout, Icon, ViewModel, part, add, without, component } from 'lively.morphic';
+import { pt, rect, Color } from 'lively.graphics';
+import { TilingLayout, Icon, ViewModel, part, add, component } from 'lively.morphic';
 import { obj } from 'lively.lang';
 import {
   EnumSelector,
@@ -74,11 +74,20 @@ export class RichTextControlModel extends ViewModel {
             { target: 'italic style', signal: 'onMouseDown', handler: 'toggleItalic' },
             { target: 'quote', signal: 'onMouseDown', handler: 'toggleQuote' },
             { target: 'underline style', signal: 'onMouseDown', handler: 'toggleUnderline' },
-            { model: 'padding controls', signal: 'paddingChanged', handler: 'changePadding' }
+            { model: 'padding controls', signal: 'paddingChanged', handler: 'changePadding' },
+            { target: 'add button', signal: 'onMouseDown', handler: 'installCustomFont' }
           ];
         }
       }
     };
+  }
+
+  installCustomFont () {
+    const p = openFontManager();
+    p.env.forceUpdate(p);
+    p.topRight = this.view.globalBounds().topLeft();
+    p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
+    this.update();
   }
 
   focusOn (target) {
@@ -102,13 +111,11 @@ export class RichTextControlModel extends ViewModel {
         const {
           fontFamilySelector, fontWeightSelector, fontSizeInput,
           lineHeightInput, letterSpacingInput, fontColorInput,
-          leftAlign, centerAlign, rightAlign, blockAlign,
-          autoWidth, autoHeight, fixedExtent, inlineLink,
+          leftAlign, centerAlign, rightAlign, blockAlign, inlineLink,
           italicStyle, underlineStyle, quote,
           lineWrappingSelector, paddingControls
         } = this.ui;
         const { activeButtonComponent, hoveredButtonComponent } = this;
-        
         this.models.fontFamilySelector.items = availableFonts().map(font => {
           return {
             value: font,
@@ -296,11 +303,6 @@ export class RichTextControlModel extends ViewModel {
   }
 
   changeFontFamily (fontFamily) {
-    if (fontFamily === 'open font manager') {
-      openFontManager();
-      this.update();
-      return;
-    }
     if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontFamily');
     this.confirm('fontFamily', sanitizeFont(fontFamily.name));
     this.updateFontWeightChoices(fontFamily.name);
@@ -338,6 +340,7 @@ const RichTextControl = component(PropertySection, {
   name: 'rich text control',
   extent: pt(250, 313),
   layout: new TilingLayout({
+    axis: 'column',
     axisAlign: 'center',
     hugContentsVertically: true,
     orderByIndex: true,
@@ -346,15 +349,22 @@ const RichTextControl = component(PropertySection, {
       height: 'fixed',
       width: 'fill'
     }]],
-    spacing: 10,
-    wrapSubmorphs: true
+    spacing: 10
   }),
   submorphs: [{
     name: 'h floater',
     submorphs: [{
       name: 'section headline',
       textAndAttributes: ['Rich Text', null]
-    }, without('add button')]
+    }, {
+      name: 'add button',
+      tooltip: 'Install a custom font',
+      textAndAttributes: ['', {
+        fontFamily: 'Material Icons',
+        fontSize: 18,
+        fontWeight: '900'
+      }]
+    }]
   }, add({
     name: 'text controls',
     layout: new TilingLayout({
