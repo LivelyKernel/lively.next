@@ -885,15 +885,15 @@ export class TilingLayout extends Layout {
         margin.right = 0;
       } else {
         style.width = 'unset';
-        style.flexGrow = 1;
-        style.flexShrink = 1;
+        style['flex-grow'] = 1;
+        style['flex-shrink'] = 1;
       } // let flex handle that
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
         style.height = 'unset';
-        style.flexGrow = 1; // let flex handle that
-        style.flexShrink = 1;
+        style['flex-grow'] = 1; // let flex handle that
+        style['flex-shrink'] = 1;
       } else {
         style.height = `calc(100% + ${margin.offset}px)`;
         margin.bottom = 0;
@@ -907,11 +907,11 @@ export class TilingLayout extends Layout {
     style.top = 'unset';
     style.left = 'unset';
     style.order = layoutableSubmorphs.indexOf(morph);
-    style.marginTop = `${margin.top}px`;
-    style.marginBottom = `${margin.bottom}px`;
-    style.marginLeft = `${margin.left}px`;
-    style.marginRight = `${margin.right}px`;
-    if (Number.parseInt(style.flexGrow) !== 1) style.flexShrink = 0;
+    style['margin-top'] = `${margin.top}px`;
+    style['margin-bottom'] = `${margin.bottom}px`;
+    style['margin-left'] = `${margin.left}px`;
+    style['margin-right'] = `${margin.right}px`;
+    if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
     this.measureAfterRender(morph);
   }
 
@@ -976,28 +976,28 @@ export class TilingLayout extends Layout {
       ? container.borderWidthLeft + container.borderWidthRight
       : container.borderWidthTop + container.borderWidthBottom;
     style.gap = `${spacing + spacingOffset}px`;
-    style.justifyContent = ({
+    style['justify-content'] = ({
       left: 'flex-start',
       center: 'center',
       right: 'flex-end'
     })[align];
-    style.flexFlow = axis;
-    if (wrapSubmorphs) style.flexFlow += ' wrap';
-    style.alignItems = ({
+    style['flex-flow'] = axis;
+    if (wrapSubmorphs) style['flex-flow'] += ' wrap';
+    style['align-items'] = ({
       center: 'center',
       left: 'flex-start',
       right: 'flex-end'
     })[axisAlign];
-    style.alignContent = ({
+    style['align-content'] = ({
       center: 'center',
       left: 'flex-start',
       right: 'flex-end'
     })[axisAlign];
-    if (justifySubmorphs === 'spaced') style.justifyContent = 'space-between';
-    style.paddingTop = `${padding.top()}px`;
-    style.paddingLeft = `${padding.left()}px`;
-    style.paddingRight = `${padding.right()}px`;
-    style.paddingBottom = `${padding.bottom()}px`;
+    if (justifySubmorphs === 'spaced') style['justify-content'] = 'space-between';
+    style['padding-top'] = `${padding.top()}px`;
+    style['padding-left'] = `${padding.left()}px`;
+    style['padding-right'] = `${padding.right()}px`;
+    style['padding-bottom'] = `${padding.bottom()}px`;
     if (hugContentsHorizontally) {
       style.width = 'auto';
     }
@@ -3030,10 +3030,10 @@ export class GridLayout extends Layout {
     if (!area) return;
     const { minCol, maxCol, minRow, maxRow, padding } = area;
     style.margin = padding.top() + 'px ' + padding.right() + 'px ' + padding.bottom() + 'px ' + padding.left() + 'px';
-    style.gridColumnStart = minCol + 1;
-    style.gridColumnEnd = maxCol + 2;
-    style.gridRowStart = minRow + 1;
-    style.gridRowEnd = maxRow + 2;
+    style['grid-column-start'] = minCol + 1;
+    style['grid-column-end'] = maxCol + 2;
+    style['grid-row-start'] = minRow + 1;
+    style['grid-row-end'] = maxRow + 2;
     style.position = 'relative';
     style.top = 'unset';
     style.left = 'unset';
@@ -3097,8 +3097,8 @@ export class GridLayout extends Layout {
       if (row.fixed) return row.length + 'px';
       else return row.proportion + 'fr';
     });
-    style.gridTemplateColumns = cols.join(' ');
-    style.gridTemplateRows = rows.join(' ');
+    style['grid-template-columns'] = cols.join(' ');
+    style['grid-template-rows'] = rows.join(' ');
   }
 
   /**

@@ -668,7 +668,7 @@ export default class Renderer {
 
     canvasNode.style.width = `${this.width}px`;
     canvasNode.style.height = `${this.height}px`;
-    canvasNode.style.pointerEvents = 'none';
+    canvasNode.style['pointer-events'] = 'none';
     canvasNode.style.position = 'absolute';
 
     node.appendChild(canvasNode);
@@ -1018,24 +1018,24 @@ export default class Renderer {
           if (link && link.startsWith('http')) chunkNodeAttributes.target = '_blank';
         }
 
-        if (link || nativeCursor) chunkNodeStyle.pointerEvents = 'auto';
+        if (link || nativeCursor) chunkNodeStyle['pointer-events'] = 'auto';
 
         if (obj.isNumber(opacity)) chunkNodeStyle.opacity = opacity;
-        if (fontSize) chunkNodeStyle.fontSize = fontSize;
-        if (fontFamily) chunkNodeStyle.fontFamily = fontFamily;
-        if (fontWeight) chunkNodeStyle.fontWeight = fontWeight;
-        if (fontStyle) chunkNodeStyle.fontStyle = fontStyle;
-        if (textDecoration) chunkNodeStyle.textDecoration = textDecoration;
+        if (fontSize) chunkNodeStyle['font-size'] = fontSize;
+        if (fontFamily) chunkNodeStyle['font-family'] = fontFamily;
+        if (fontWeight) chunkNodeStyle['font-weight'] = fontWeight;
+        if (fontStyle) chunkNodeStyle['font-style'] = fontStyle;
+        if (textDecoration) chunkNodeStyle['text-decoration'] = textDecoration;
         if (fontColor) chunkNodeStyle.color = String(fontColor);
-        if (backgroundColor) chunkNodeStyle.backgroundColor = String(backgroundColor);
+        if (backgroundColor) chunkNodeStyle['background-color'] = String(backgroundColor);
         if (nativeCursor) chunkNodeStyle.cursor = nativeCursor;
-        if (paddingRight) chunkNodeStyle.paddingRight = paddingRight;
-        if (paddingLeft) chunkNodeStyle.paddingLeft = paddingLeft;
-        if (paddingTop) chunkNodeStyle.paddingTop = paddingTop;
-        if (paddingBottom) chunkNodeStyle.paddingBottom = paddingBottom;
-        if (verticalAlign) chunkNodeStyle.verticalAlign = verticalAlign;
+        if (paddingRight) chunkNodeStyle['padding-right'] = paddingRight;
+        if (paddingLeft) chunkNodeStyle['padding-left'] = paddingLeft;
+        if (paddingTop) chunkNodeStyle['padding-top'] = paddingTop;
+        if (paddingBottom) chunkNodeStyle['padding-bottom'] = paddingBottom;
+        if (verticalAlign) chunkNodeStyle['vertical-align'] = verticalAlign;
         if (textStroke) chunkNodeStyle['-webkit-text-stroke'] = textStroke;
-        if (attributes.doit) { chunkNodeStyle.pointerEvents = 'auto'; chunkNodeStyle.cursor = 'pointer'; }
+        if (attributes.doit) { chunkNodeStyle['pointer-events'] = 'auto'; chunkNodeStyle.cursor = 'pointer'; }
 
         const chunkNode = this.doc.createElement(tagname);
         chunkNode.textContent = content || '&nbsp';
@@ -1049,10 +1049,10 @@ export default class Renderer {
 
     const lineStyle = {};
 
-    if (lineHeight) lineStyle.lineHeight = lineHeight;
-    if (textAlign) lineStyle.textAlign = textAlign;
-    if (letterSpacing) lineStyle.letterSpacing = letterSpacing + 'px';
-    if (wordSpacing) lineStyle.wordSpacing = wordSpacing + 'px';
+    if (lineHeight) lineStyle['line-height'] = lineHeight;
+    if (textAlign) lineStyle['text-align'] = textAlign;
+    if (letterSpacing) lineStyle['letter-spacing'] = letterSpacing + 'px';
+    if (wordSpacing) lineStyle['word-spacing'] = wordSpacing + 'px';
     let node = this.doc.createElement('div');
     node.className = 'line';
     if (lineObject.isLine) {

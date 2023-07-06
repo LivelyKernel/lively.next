@@ -311,7 +311,6 @@ div.text-layer span {
 .Text .annotation {
   position: relative;
   float: right;
-  top: 50%;
   text-align: right;
 }
 
