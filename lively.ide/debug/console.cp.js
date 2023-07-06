@@ -69,10 +69,10 @@ export function prepareConsole (platformConsole, consoleMethods = defaultConsole
     // find all methods on `platformConsole` which need to be instrumented
     let methods = Object.keys(platformConsole)
       .filter(name => typeof platformConsole[name] === 'function' &&
-                  // we back up the original function source of x() with $x() below
-                  !name.startsWith('$') &&
-                  !platformConsole.hasOwnProperty('$' + name) &&
-                  !exceptions.includes(name));
+        // we back up the original function source of x() with $x() below
+        !name.startsWith('$') &&
+        !platformConsole.hasOwnProperty('$' + name) &&
+        !exceptions.includes(name));
     let activationState = {};
 
     methods.forEach(name => {
@@ -231,7 +231,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   get keybindings () {
-    const viewKeybindings = this.withoutBindingsDo(() => { return this.view.keybindings; });
+    const viewKeybindings = this.withoutExposedPropsDo(() => this.view.keybindings);
     return [
       { keys: { mac: 'Meta-K', win: 'Ctrl-Alt-K' }, command: '[console] clear' },
       ...viewKeybindings
@@ -239,7 +239,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   get commands () {
-    const viewCommands = this.withoutBindingsDo(() => { return this.view.commands; });
+    const viewCommands = this.withoutExposedPropsDo(() => this.view.commands);
     return [
       {
         name: '[console] clear',
@@ -250,7 +250,7 @@ class LocalJSConsoleModel extends ViewModel {
   }
 
   async menuItems () {
-    const viewItems = await this.withoutBindingsDo(async () => await this.view.menuItems());
+    const viewItems = await this.withoutExposedPropsDo(() => this.view.menuItems());
     return [
       { command: '[console] clear', target: this, alias: 'clear' },
       { isDivider: true },
