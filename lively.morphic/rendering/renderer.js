@@ -43,6 +43,9 @@ export default class Renderer {
     this.rootNode = this.doc.createElement('div');
     this.rootNode.setAttribute('id', this.worldMorph.id);
     this.rootNode.classList.add('LivelyWorld', 'World', 'Morph', 'morph');
+    this.fixedMorphNode = this.doc.createElement('div');
+    this.fixedMorphNode.setAttribute('id', 'fixed-morph-wrapper');
+    this.fixedMorphNode.style.position = 'fixed';
     this.renderMap.set(this.worldMorph, this.rootNode);
     this.installTextCSS();
     this.installPlaceholder();
@@ -50,6 +53,7 @@ export default class Renderer {
     window.renderer = this;
     this.domEnvironment = domEnvironment;
     this.bodyNode.appendChild(this.rootNode);
+    this.bodyNode.appendChild(this.fixedMorphNode);
     world._renderer = this;
     this.requestAnimationFrame = domEnvironment.window.requestAnimationFrame.bind(domEnvironment.window);
   }
@@ -107,6 +111,7 @@ export default class Renderer {
       for (let m of [this.worldMorph, ...fixedSubmorphs]) {
         this.renderMap.get(m).remove();
       }
+      this.fixedMorphNode.remove();
     }
     this.domNode = null;
     this.emptyRenderQueues();
@@ -235,14 +240,13 @@ export default class Renderer {
 
   renderFixedMorphs () {
     const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
-    const beforeElem = Array.from(this.bodyNode.children).find(n => n.id === this.worldMorph.id);
     keyed('id',
-      this.bodyNode,
+      this.fixedMorphNode,
       this.worldMorph.renderingState.renderedFixedMorphs,
       fixedSubmorphs,
       item => this.renderAsFixed(item),
       noOpUpdate,
-      beforeElem,
+      null,
       null
     );
     fixedSubmorphs.forEach(s => {
