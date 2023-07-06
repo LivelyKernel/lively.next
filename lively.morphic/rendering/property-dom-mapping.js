@@ -11,6 +11,7 @@ const propsToDelete = [
   'margin-top',
   'margin',
   'gap',
+  'background-image',
   'place-content',
   'flex-flow', 'flex-grow', 'flex-shrink',
   'align-items', 'align-self',
@@ -114,7 +115,7 @@ export function addTransform (morph, style) {
   x = morph.renderOnGPU ? x : num.roundTo(x, 0.01);
   y = morph.renderOnGPU ? y : num.roundTo(y, 0.01);
   if (promoteToCompositionLayer) {
-    style.willChange = 'transform';
+    style['will-change'] = 'transform';
   }
   if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
@@ -133,7 +134,7 @@ export function addTransform (morph, style) {
 
 function addTransformOrigin (morph, style) {
   const { origin } = morph;
-  if (origin) style.transformOrigin = `${origin.x}px ${origin.y}px`;
+  if (origin) style['transform-origin'] = `${origin.x}px ${origin.y}px`;
 }
 
 function addDisplay (morph, style) {
@@ -143,7 +144,7 @@ function addDisplay (morph, style) {
 
 function addBorderRadius (morph, style) {
   const { borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft } = morph;
-  style.borderRadius = `${borderRadiusTopLeft}px ${borderRadiusTopRight}px ${borderRadiusBottomRight}px ${borderRadiusBottomLeft}px`;
+  style['border-radius'] = `${borderRadiusTopLeft}px ${borderRadiusTopRight}px ${borderRadiusBottomRight}px ${borderRadiusBottomLeft}px`;
 }
 
 function addBorder (morph, style) {
@@ -153,19 +154,18 @@ function addBorder (morph, style) {
     borderWidthBottom, borderColorBottom, borderStyleBottom,
     borderWidthTop, borderColorTop, borderStyleTop
   } = morph;
-  const t = (s) => bowser.safari ? string.camelize(s) : s;
-  style[t('border-left-style')] = `${borderStyleLeft}`;
-  style[t('border-right-style')] = `${borderStyleRight}`;
-  style[t('border-bottom-style')] = `${borderStyleBottom}`;
-  style[t('border-top-style')] = `${borderStyleTop}`;
-  style[t('border-left-width')] = `${borderWidthLeft}px`;
-  style[t('border-right-width')] = `${borderWidthRight}px`;
-  style[t('border-bottom-width')] = `${borderWidthBottom}px`;
-  style[t('border-top-width')] = `${borderWidthTop}px`;
-  style[t('border-top-color')] = borderColorTop ? borderColorTop.toString() : 'transparent';
-  style[t('border-right-color')] = borderColorRight ? borderColorRight.toString() : 'transparent';
-  style[t('border-bottom-color')] = borderColorBottom ? borderColorBottom.toString() : 'transparent';
-  style[t('border-left-color')] = borderColorLeft ? borderColorLeft.toString() : 'transparent';
+  style['border-left-style'] = `${borderStyleLeft}`;
+  style['border-right-style'] = `${borderStyleRight}`;
+  style['border-bottom-style'] = `${borderStyleBottom}`;
+  style['border-top-style'] = `${borderStyleTop}`;
+  style['border-left-width'] = `${borderWidthLeft}px`;
+  style['border-right-width'] = `${borderWidthRight}px`;
+  style['border-bottom-width'] = `${borderWidthBottom}px`;
+  style['border-top-width'] = `${borderWidthTop}px`;
+  style['border-top-color'] = borderColorTop ? borderColorTop.toString() : 'transparent';
+  style['border-right-color'] = borderColorRight ? borderColorRight.toString() : 'transparent';
+  style['border-bottom-color'] = borderColorBottom ? borderColorBottom.toString() : 'transparent';
+  style['border-left-color'] = borderColorLeft ? borderColorLeft.toString() : 'transparent';
   if (borderColor && borderColor.isGradient) style['border-image'] = borderColor.toString();
 }
 
@@ -179,7 +179,7 @@ function addFill (morph, style) {
     // we need to set the background color to something
     // that does not interfere with the opaque fill.
     style.background = Color.transparent.toString();
-    style.backgroundImage = fill.toString();
+    style['background-image'] = fill.toString();
   } else style.background = fill.toString();
 }
 
@@ -198,9 +198,9 @@ function addShadowStyle (morph, style) {
 
   const { dropShadow } = morph;
   if ((dropShadow && dropShadow.fast) || (dropShadow && dropShadow.inset)) {
-    style.boxShadow = dropShadow ? dropShadow.toCss() : 'none';
+    style['box-shadow'] = dropShadow ? dropShadow.toCss() : 'none';
   } else {
-    style.boxShadow = '';
+    style['box-shadow'] = '';
     style.filter = dropShadow ? dropShadow.toFilterCss() : '';
   }
 }
