@@ -1,3 +1,4 @@
+/* global location */
 import { component, part, TilingLayout, Morph, Icon, Label } from 'lively.morphic';
 import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 import { Color, pt } from 'lively.graphics';
@@ -7,6 +8,9 @@ import { runCommand } from '../shell/shell-interface.js';
 import { delay } from 'lively.lang/promise.js';
 import { guardNamed } from 'lively.lang/function.js';
 import { Spinner } from './shared.cp.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
+import { once } from 'lively.bindings';
+import L2LClient from 'lively.2lively/client.js';
 
 class VersionChecker extends Morph {
   static get properties () {
@@ -39,7 +43,7 @@ class VersionChecker extends Morph {
 
   static async currentLivelyVersion (main) {
     const cwd = await VersionChecker.cwd();
-    const fetchCmd = `git fetch`
+    const fetchCmd = 'git fetch';
     await runCommand(fetchCmd, { cwd }).whenDone();
     const hashCmd = main ? 'git merge-base origin/main HEAD' : 'git rev-parse @';
     const result = await runCommand(hashCmd, { cwd }).whenDone();
@@ -65,8 +69,22 @@ class VersionChecker extends Morph {
     await this.displayLivelyVersionStatus();
   }
 
-  onMouseDown (evt) {
+  async updateLively () {
+    let li;
+    once(L2LClient.default(), 'onReconnect', async () => {
+      li.remove();
+      await $world.inform('Press OK to reload this page and finish the update.');
+      location.reload();
+    });
+    li = $world.showLoadingIndicatorFor($world, 'Updating lively');
+    runCommand('./../update.sh', { l2lClient: ShellClientResource.defaultL2lClient });
+  }
+
+  async onMouseDown (evt) {
     super.onMouseDown(evt);
+    if (evt.targetMorph.name === 'update button') {
+      await this.updateLively();
+    }
     if (evt.targetMorph.name === 'commit id copier') {
       guardNamed('copying', async () => {
         navigator.clipboard.writeText(this.hash);
@@ -161,10 +179,20 @@ class VersionChecker extends Morph {
     this.updateShownIcon('even');
   }
 
-  showBehind (version) {
-    const { status } = this.ui;
-    status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
-    this.updateShownIcon('behind');
+  async showBehind (version) {
+    const cwd = await VersionChecker.cwd();
+    const currentBranchCmd = 'git rev-parse --abbrev-ref HEAD';
+    let currBranch = await runCommand(currentBranchCmd, { cwd }).whenDone();
+    currBranch = currBranch.stdout.replace('\n', '');
+    const { status, updateButton } = this.ui;
+    if (currBranch === 'main') {
+      updateButton.visible = updateButton.layoutable = true;
+      status.value = ['Press Update icon to update!', { fontWeight: 'bold' }];
+      this.updateShownIcon('none');
+    } else {
+      status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
+      this.updateShownIcon('behind');
+    }
   }
 
   showAhead (version) {
@@ -218,6 +246,11 @@ class VersionChecker extends Morph {
         statusIcon.fontColor = Color.rgb(231, 76, 60);
         break;
       }
+      case 'none': {
+        checking.visible = checking.isLayoutable = false;
+        statusIcon.visible = statusIcon.isLayoutable = false;
+        return;
+      }
     }
     checking.visible = checking.isLayoutable = false;
     statusIcon.visible = statusIcon.isLayoutable = true;
@@ -267,6 +300,16 @@ const LivelyVersionChecker = component({
     fill: Color.rgba(255, 255, 255, 0),
     scale: 0.22
   }), {
+    type: Label,
+    name: 'update button',
+    fontSize: 14,
+    lineHeight: 1.1,
+    fontColor: Color.lively,
+    fill: Color.transparent,
+    isLayoutable: false,
+    textAndAttributes: Icon.textAttribute('mi-update'),
+    visible: false
+  }, {
     type: Label,
     name: 'status icon label',
     fontSize: 14,
