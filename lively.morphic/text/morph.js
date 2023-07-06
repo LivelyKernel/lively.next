@@ -2690,8 +2690,8 @@ export class Text extends Morph {
       if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
       if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
       this.extent = textBoundsExtent.addXY(
-        this.borderWidthLeft + this.borderWidthRight,
-        this.borderWidthTop + this.borderWidthBottom
+        this.fixedWidth ? 0 : this.borderWidthLeft + this.borderWidthRight,
+        this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
       );
     } else {
       this.whenEnvReady().then(() => {
