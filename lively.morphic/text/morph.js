@@ -577,17 +577,23 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
-        after: ['document'],
+        after: ['document', 'needsDocument'],
         set (mode) {
           if (mode === 'native') {
             if (this.document && !this.readOnly === true) {
               $world.setStatusMessage('Only possible for non-editable texts.');
               return;
             }
+            if (this.needsDocument) {
+              // mixing documents with native selection does not work,
+              // since it is obstructing the scroll
+              this.selectionMode = 'lively';
+              return;
+            }
             this.stealFocus = true;
           }
           if (mode === 'lively') {
-            if (!this.document) {
+            if (!this.document && !this.needsDocument) {
               this.selectionMode = 'native';
               return;
             }
