@@ -300,10 +300,7 @@ export class ViewModel {
     this.clearBindings();
     this.liveStyleClasses.forEach(klass => this.view.removeStyleClass(klass));
     if (!this.view) return;
-    for (let prop of (this.expose || [])) {
-      if (obj.isArray(prop)) prop = prop[0];
-      delete this.view[prop];
-    }
+    this.clearExposedProps();
   }
 
   onViewChange (change) {
