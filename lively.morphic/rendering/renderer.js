@@ -857,14 +857,11 @@ export default class Renderer {
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
 
       node.style.overflow = 'hidden';
-      scrollLayer.style.overflow = 'auto';
-
       scrollWrapper.appendChild(textLayerNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
+      this.patchClipModeForText(node, morph, morph.scrollActive);
       node.scrollTop = node.scrollLeft = 0;
-      scrollLayer.scrollTop = morph.scroll.y;
-      scrollLayer.scrollLeft = morph.scroll.x;
       delete morph.renderingState.needsScrollLayerAdded;
 
       let lineFound = false;
@@ -1877,7 +1874,7 @@ export default class Renderer {
    * @param {scrollActive} fromMorph - If this is true, we set the correct clipMode according to the Morph. Otherwise, we set hidden.
    */
   patchClipModeForText (node, morph, scrollActive) {
-    const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
+    const [scrollLayer] = node.querySelectorAll('.scrollLayer');
     if (!scrollLayer) return;
 
     if (scrollActive) {
