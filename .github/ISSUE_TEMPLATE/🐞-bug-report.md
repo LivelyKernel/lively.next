@@ -22,6 +22,5 @@ Please delete non-applicable items!
 - macOS
 - Windows
 - Linux
-- Docker
 
 **Version**: Please paste the lively.next commit on which the problem occurred here (use the copy button of the Version Checker in the bottom left corner).
