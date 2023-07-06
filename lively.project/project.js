@@ -548,7 +548,9 @@ export class Project {
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
       availableDeps.forEach(dep => {
-        if (content.includes(dep.name) && !currentDeps.some(alreadyPresentDeps => dep.name === alreadyPresentDeps.name)) currentDeps.push(dep);
+        if (content.includes(dep.name) && 
+            !currentDeps.some(alreadyPresentDeps => dep.name === alreadyPresentDeps.name) &&
+            `${this.repoOwner}--${this.name}` !== dep.name) currentDeps.push(dep);
       });
     }
     currentDeps = arr.uniqBy(currentDeps, obj.equals);
