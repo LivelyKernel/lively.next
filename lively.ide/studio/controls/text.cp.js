@@ -362,14 +362,14 @@ const RichTextControl = component(PropertySection, {
   }, add({
     name: 'text controls',
     layout: new TilingLayout({
-      wrapSubmorphs: true,
       orderByIndex: true,
+      padding: rect(20, 0, -20, 0),
       spacing: 10,
-      padding: Rectangle.inset(20, 0, 0, 0)
+      wrapSubmorphs: true
     }),
     borderColor: Color.rgb(23, 160, 251),
     borderWidth: 0,
-    extent: pt(250, 92),
+    extent: pt(250, 93.8),
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [
       part(EnumSelector, {
@@ -395,111 +395,125 @@ const RichTextControl = component(PropertySection, {
           name: 'label',
           fontSize: 12
         }]
-      }), part(EnumSelector, {
-        name: 'font weight selector',
-        tooltip: 'Choose Font Weight',
-        extent: pt(100, 23.3),
-        viewModel: {
-          listMaster: DarkThemeList,
-          items: [{
-            isListItem: true,
-            string: 'Thin',
-            value: 100
-          }, {
-            isListItem: true,
-            string: 'Extra Light',
-            value: 200
-          }, {
-            isListItem: true,
-            string: 'Light',
-            value: 300
-          }, {
-            isListItem: true,
-            string: 'Normal',
-            value: 400
-          }, {
-            isListItem: true,
-            string: 'Medium',
-            value: 500
-          }, {
-            isListItem: true,
-            string: 'Semi Bold',
-            value: 600
-          }, {
-            isListItem: true,
-            string: 'Bold',
-            value: 700
-          }, {
-            isListItem: true,
-            string: 'Extra Bold',
-            value: 800
-          }, {
-            isListItem: true,
-            string: 'Ultra Bold',
-            value: 900
-          }],
-          listAlign: 'bottom',
-          openListInWorld: true,
-          listHeight: 1000
-        },
-        layout: new TilingLayout({
-          align: 'center',
-          axisAlign: 'center',
-          justifySubmorphs: 'spaced',
-          orderByIndex: true,
-          padding: rect(10, 0, 5, 0)
-        }),
-        submorphs: [{
-          name: 'label',
-          fontSize: 12
-        }]
-      }),
-      part(BoundsContainerInactive, {
-        name: 'styling controls',
-        extent: pt(88, 24),
-        master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
+      }), {
+        name: 'weight and styles',
+        extent: pt(198, 8.9),
         layout: new TilingLayout({
           hugContentsVertically: true,
-          padding: Rectangle.inset(0, 1, 0, 1)
+          orderByIndex: true,
+          resizePolicies: [['font weight selector', {
+            height: 'fixed',
+            width: 'fill'
+          }]],
+          spacing: 10
         }),
-        submorphs: [add(part(PropertyLabel, {
-          name: 'italic style',
-          tooltip: 'Italic',
-          fontSize: 14,
-          padding: rect(2, 2, 0, 0),
-          textAndAttributes: ['\ue23f', {
-            fontSize: 18,
-            fontFamily: 'Material Icons'
+        fill: Color.transparent,
+        submorphs: [part(EnumSelector, {
+          name: 'font weight selector',
+          tooltip: 'Choose Font Weight',
+          extent: pt(100, 23.3),
+          viewModel: {
+            listMaster: DarkThemeList,
+            items: [{
+              isListItem: true,
+              string: 'Thin',
+              value: 100
+            }, {
+              isListItem: true,
+              string: 'Extra Light',
+              value: 200
+            }, {
+              isListItem: true,
+              string: 'Light',
+              value: 300
+            }, {
+              isListItem: true,
+              string: 'Normal',
+              value: 400
+            }, {
+              isListItem: true,
+              string: 'Medium',
+              value: 500
+            }, {
+              isListItem: true,
+              string: 'Semi Bold',
+              value: 600
+            }, {
+              isListItem: true,
+              string: 'Bold',
+              value: 700
+            }, {
+              isListItem: true,
+              string: 'Extra Bold',
+              value: 800
+            }, {
+              isListItem: true,
+              string: 'Ultra Bold',
+              value: 900
+            }],
+            listAlign: 'bottom',
+            openListInWorld: true,
+            listHeight: 1000
+          },
+          layout: new TilingLayout({
+            align: 'center',
+            axisAlign: 'center',
+            justifySubmorphs: 'spaced',
+            orderByIndex: true,
+            padding: rect(10, 0, 5, 0)
+          }),
+          submorphs: [{
+            name: 'label',
+            fontSize: 12
           }]
-        })), add(part(PropertyLabel, {
-          name: 'underline style',
-          tooltip: 'Underline',
-          fontSize: 14,
-          padding: rect(2, 2, 0, 0),
-          textAndAttributes: ['\ue249', {
-            fontSize: 18,
-            fontFamily: 'Material Icons'
-          }]
-        })), add(part(PropertyLabel, {
-          name: 'inline link',
-          tooltip: 'Create Link',
-          fontSize: 14,
-          padding: rect(2, 2, 0, 0),
-          textAndAttributes: ['\ue157', {
-            fontSize: 18,
-            fontFamily: 'Material Icons'
-          }]
-        })), add(part(PropertyLabel, {
-          name: 'quote',
-          tooltip: 'Quote',
-          fontSize: 14,
-          padding: rect(2, 2, 0, 0),
-          textAndAttributes: ['\ue244', {
-            fontSize: 18,
-            fontFamily: 'Material Icons'
-          }]
-        }))]
-      }),
+        }),
+        part(BoundsContainerInactive, {
+          name: 'styling controls',
+          extent: pt(87.4, 26.4),
+          master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
+          layout: new TilingLayout({
+            orderByIndex: true,
+            hugContentsHorizontally: true
+          }),
+          submorphs: [add(part(PropertyLabel, {
+            name: 'italic style',
+            tooltip: 'Italic',
+            fontSize: 14,
+            padding: rect(2, 0, 0, 0),
+            textAndAttributes: ['\ue23f', {
+              fontSize: 18,
+              fontFamily: 'Material Icons'
+            }]
+          })), add(part(PropertyLabel, {
+            name: 'underline style',
+            tooltip: 'Underline',
+            fontSize: 14,
+            padding: rect(2, 0, 0, 0),
+            textAndAttributes: ['\ue249', {
+              fontSize: 18,
+              fontFamily: 'Material Icons'
+            }]
+          })), add(part(PropertyLabel, {
+            name: 'inline link',
+            tooltip: 'Create Link',
+            fontSize: 14,
+            padding: rect(2, 0, 0, 0),
+            textAndAttributes: ['\ue157', {
+              fontSize: 18,
+              fontFamily: 'Material Icons'
+            }]
+          })), add(part(PropertyLabel, {
+            name: 'quote',
+            tooltip: 'Quote',
+            fontSize: 14,
+            padding: rect(2, 0, 0, 0),
+            textAndAttributes: ['\ue244', {
+              fontSize: 18,
+              fontFamily: 'Material Icons'
+            }]
+          }))]
+        })]
+      },
       part(DarkNumberIconWidget, {
         name: 'font size input',
         width: 60,

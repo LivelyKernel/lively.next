@@ -549,15 +549,19 @@ const ShapeControl = component({
       name: 'width mode selector',
       tooltip: 'Horizontal Resizing',
       extent: pt(72, 22),
-      layout: new TilingLayout(
-        {
-          align: 'center',
-          axisAlign: 'center',
-          justifySubmorphs: 'spaced',
-          orderByIndex: true,
-          padding: rect(5, 0, 5, 0),
-          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
-        }),
+      layout: new TilingLayout({
+        align: 'center',
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        orderByIndex: true,
+        padding: rect(0, 0, 10, 0),
+        resizePolicies: [['label', {
+          0: {
+            height: 'fixed',
+            width: 'fill'
+          }
+        }]]
+      }),
       viewModel: {
         listMaster: DarkThemeList,
         openListInWorld: true,
@@ -588,15 +592,19 @@ const ShapeControl = component({
       name: 'height mode selector',
       tooltip: 'Vertical Resizing',
       extent: pt(72, 22),
-      layout: new TilingLayout(
-        {
-          align: 'center',
-          axisAlign: 'center',
-          justifySubmorphs: 'spaced',
-          orderByIndex: true,
-          padding: rect(5, 0, 5, 0),
-          resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
-        }),
+      layout: new TilingLayout({
+        align: 'center',
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        orderByIndex: true,
+        padding: rect(2, 0, 8, 0),
+        resizePolicies: [['label', {
+          0: {
+            height: 'fixed',
+            width: 'fill'
+          }
+        }]]
+      }),
       viewModel: {
         listMaster: DarkThemeList,
         openListInWorld: true,
