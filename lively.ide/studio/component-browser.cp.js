@@ -1075,6 +1075,9 @@ export class ComponentBrowserModel extends ViewModel {
       const lastSelectedModule = fileView.getExpandedPath().find(m => m.type === 'cp.js');
       if (lastSelectedModule) { fileView.treeData.display(lastSelectedModule); } else this.ui.masterComponentList.submorphs = [];
     }
+    if (this.groupBy === 'name') {
+      this.showSearchComponensNotice();
+    }
   }
 
   async filterAllComponents () {
@@ -1151,6 +1154,7 @@ export class ComponentBrowserModel extends ViewModel {
         : this.renderComponentsInFile(joinPath(mod.package().name, mod.pathInPackage()), componentsByWorlds[worldName]));
     }
 
+    masterComponentList.clipMode = 'auto';
     masterComponentList.submorphs = newList;
     // ensure that all of the sections are fitted
     for (let section of newList) { masterComponentList.layout.setResizePolicyFor(section, { width: 'fill', height: 'fixed' }); }
@@ -1192,6 +1196,16 @@ export class ComponentBrowserModel extends ViewModel {
     projectEntry.renderComponents(componentsInFile);
 
     return projectEntry;
+  }
+
+  showSearchComponensNotice () {
+    const { masterComponentList } = this.ui;
+    const notice = part(SearchComponentsNotice);
+    masterComponentList.clipMode = 'hidden';
+    masterComponentList.submorphs = [notice];
+    masterComponentList.layout.setResizePolicyFor(notice, {
+      width: 'fill', height: 'fill'
+    });
   }
 
   showComponentsInFile (fileName, componentsInFile) {
@@ -1397,6 +1411,44 @@ const CheckboxActiveLight = component(CheckboxActive, {
 const CheckboxInactiveLight = component(CheckboxInactive, {
   borderColor: Color.rgb(66, 66, 66),
   fill: Color.rgb(255, 255, 255)
+});
+
+const SearchComponentsNotice = component({
+  extent: pt(663.7, 592.1),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true
+  }),
+  fill: Color.rgba(255, 255, 255, 0),
+  submorphs: [
+    {
+      type: Text,
+      name: 'component box',
+      extent: pt(164, 231),
+      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
+      fontColor: Color.rgba(0, 0, 0, 0.25),
+      fontSize: 164,
+      fontWeight: 700,
+      position: pt(-5, 26),
+      textAndAttributes: ['', {
+        fontFamily: 'tabler-icons',
+        fontWeight: '900'
+      }]
+
+    }, {
+      type: 'text',
+      name: 'notice',
+      textAlign: 'center',
+      fixedWidth: true,
+      fontColor: Color.rgba(0, 0, 0, 0.25),
+      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
+      fontSize: 34,
+      fontWeight: 700,
+      lineWrapping: true,
+      textAndAttributes: ['Begin searching to display components...', null],
+      extent: pt(354.6, 191)
+    }]
 });
 
 const ComponentBrowser = component({
