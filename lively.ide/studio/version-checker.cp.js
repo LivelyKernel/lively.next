@@ -5,12 +5,11 @@ import { Color, pt } from 'lively.graphics';
 
 import { runCommand } from '../shell/shell-interface.js';
 
-import { delay } from 'lively.lang/promise.js';
 import { guardNamed } from 'lively.lang/function.js';
 import { Spinner } from './shared.cp.js';
-import ShellClientResource from 'lively.shell/client-resource.js';
 import { once } from 'lively.bindings';
 import L2LClient from 'lively.2lively/client.js';
+import bounceEasing from 'lively.morphic/rendering/animations.js';
 
 class VersionChecker extends Morph {
   static get properties () {
@@ -70,6 +69,7 @@ class VersionChecker extends Morph {
   }
 
   async updateLively () {
+    const cwd = await VersionChecker.cwd();
     let li;
     once(L2LClient.default(), 'onReconnect', async () => {
       li.remove();
@@ -77,7 +77,7 @@ class VersionChecker extends Morph {
       location.reload();
     });
     li = $world.showLoadingIndicatorFor($world, 'Updating lively');
-    runCommand('./../update.sh', { l2lClient: ShellClientResource.defaultL2lClient });
+    runCommand('./../update.sh', { cwd });
   }
 
   async onMouseDown (evt) {
@@ -186,13 +186,26 @@ class VersionChecker extends Morph {
     currBranch = currBranch.stdout.replace('\n', '');
     const { status, updateButton } = this.ui;
     if (currBranch === 'main') {
-      updateButton.visible = updateButton.layoutable = true;
-      status.value = ['Press Update icon to update!', { fontWeight: 'bold' }];
+      updateButton.visible = updateButton.isLayoutable = true;
+      this.bounceUpdateButton();
+      status.value = ['Press here to update!', { fontWeight: 'bold', doit: { code: `$world.get("lively version checker").updateLively()` } }];
       this.updateShownIcon('none');
     } else {
       status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
       this.updateShownIcon('behind');
     }
+  }
+
+  async bounceUpdateButton () {
+    const { updateButton } = this.ui
+    await updateButton.animate({
+      customTween: p => {
+        updateButton.scale = bounceEasing(p, 1, 0.5, 1);
+      },
+      easing: (t) => t
+    });
+    updateButton.animate({ scale: 1});
+    setTimeout(this.bounceUpdateButton.bind(this), 5000);
   }
 
   showAhead (version) {
