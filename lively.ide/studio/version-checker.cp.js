@@ -35,7 +35,8 @@ class VersionChecker extends Morph {
             checking: this.get('loading indicator'),
             statusIcon: this.get('status icon label'),
             copyButton: this.get('commit id copier'),
-            updateButton: this.get('update button')
+            updateButton: this.get('update button'),
+            updateButtonWrapper: this.get('update button wrapper')
           };
         }
       }
@@ -186,9 +187,10 @@ class VersionChecker extends Morph {
     const currentBranchCmd = 'git rev-parse --abbrev-ref HEAD';
     let currBranch = await runCommand(currentBranchCmd, { cwd }).whenDone();
     currBranch = currBranch.stdout.replace('\n', '');
-    const { status, updateButton } = this.ui;
+    const { status, updateButtonWrapper } = this.ui;
     if (currBranch === 'main') {
-      updateButton.visible = updateButton.isLayoutable = true;
+      updateButtonWrapper.visible = updateButtonWrapper.isLayoutable = true;
+      status.reactsToPointer = true;
       this.bounceUpdateButton();
       status.value = ['Press here to update!', { fontWeight: 'bold', doit: { code: '$world.get("lively version checker").updateLively()' } }];
       this.updateShownIcon('none');
@@ -202,12 +204,12 @@ class VersionChecker extends Morph {
     const { updateButton } = this.ui;
     await updateButton.animate({
       customTween: p => {
-        updateButton.scale = bounceEasing(p, 1, 0.5, 1);
+        updateButton.left = bounceEasing(p, 1, 10, 1);
       },
       easing: (t) => t
     });
-    updateButton.animate({ scale: 1 });
-    setTimeout(this.bounceUpdateButton.bind(this), 5000);
+    await updateButton.animate({ left: 0 });
+    setTimeout(this.bounceUpdateButton.bind(this), 2500);
   }
 
   showAhead (version) {
@@ -315,15 +317,22 @@ const LivelyVersionChecker = component({
     fill: Color.rgba(255, 255, 255, 0),
     scale: 0.22
   }), {
-    type: Label,
-    name: 'update button',
-    fontSize: 14,
-    lineHeight: 1.1,
-    fontColor: Color.lively,
+    name: 'update button wrapper',
     fill: Color.transparent,
+    extent: pt(30, 0),
+    clipMode: 'visible',
     isLayoutable: false,
-    textAndAttributes: Icon.textAttribute('mi-update'),
-    visible: false
+    visible: false,
+    submorphs: [
+      {
+        type: Label,
+        name: 'update button',
+        fontSize: 14,
+        lineHeight: 1.1,
+        fontColor: Color.lively,
+        fill: Color.transparent,
+        textAndAttributes: Icon.textAttribute('arrow-left')
+      }]
   }, {
     type: Label,
     name: 'status icon label',
