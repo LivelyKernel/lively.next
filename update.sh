@@ -1,18 +1,28 @@
 #!/bin/bash
 
+currentBranch=$(git branch --show-current)
+
+if [ "$currentBranch" != "main" ]; then
+    echo "🛑 Auto-Updating is only supported on main!"
+    exit 1
+fi
+
 echo "💾 Saving local changes if any."
-git stash
+stashOutput=$(git stash)
+# https://stackoverflow.com/a/12973694/4418325
+stashOutputWithoutWhiteSpace=$(echo "$stashOutput" | xargs)
 
 echo "🪢 Retrieving the latest lively.next version."
-# Assumes that one runs this on `main` branch. Inside of lively, we ensure that the GUI trigger is not shown in other cases.
 git pull
 
 echo "📦 Installing latest version of lively.next."
 ./install.sh
 
-# If one has other stashes, they are popped regardless!
-echo "💾 Restoring local changes if any."
-git stash pop
+
+if [ "$stashOutputWithoutWhiteSpace" != "No local changes to save" ]; then
+    echo "💾 Restoring local changes."
+    git stash pop
+fi
 
 echo "🔁 Restart lively.next server."
 # We trap SIGTERM in start.sh. Since the start.sh script is sleeping once the server is launched, we need to send SIGTERM not only to that process, but to the whole process group.
