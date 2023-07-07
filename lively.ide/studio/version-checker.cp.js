@@ -1,5 +1,5 @@
 /* global location */
-import { component, part, TilingLayout, Morph, Icon, Label } from 'lively.morphic';
+import { component, Text, part, TilingLayout, Morph, Icon, Label } from 'lively.morphic';
 import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 import { Color, pt } from 'lively.graphics';
 
@@ -7,7 +7,7 @@ import { runCommand } from '../shell/shell-interface.js';
 
 import { guardNamed } from 'lively.lang/function.js';
 import { Spinner } from './shared.cp.js';
-import { once } from 'lively.bindings';
+import { once, connect } from 'lively.bindings';
 import L2LClient from 'lively.2lively/client.js';
 import { bounceEasing } from 'lively.morphic/rendering/animations.js';
 import { delay } from 'lively.lang/promise.js';
@@ -79,8 +79,32 @@ class VersionChecker extends Morph {
       await $world.inform('Press OK to reload this page and finish the update.');
       location.reload();
     });
+    $world.withAllSubmorphsDo(m => m.blur = 3);
     li = $world.showLoadingIndicatorFor($world, 'Updating lively');
-    runCommand('./../update.sh', { cwd });
+    const updateStatus = new Text({
+      name: 'update status',
+      fill: Color.white,
+      extent: pt(300, 300),
+      clipMode: 'auto',
+      lineWrapping: 'by-words',
+      position: pt(li.center.x - 150, li.bottom + 10),
+      hasFixedPosition: true,
+      fixedWidth: true,
+      fixedHeight: true,
+      padding: 5,
+      borderColor: Color.lively,
+      borderWidth: 2,
+      needsDocument: true,
+      borderRadius: 5,
+      halosEnabled: true
+    });
+    $world.addMorph(updateStatus);
+    const cmd = runCommand('./update.sh', { cwd });
+    connect(cmd, 'stdout', (output) => {
+      updateStatus.textString = updateStatus.textString + output;
+      updateStatus.gotoDocumentEnd();
+      updateStatus.scrollCursorIntoView();
+    });
   }
 
   async onMouseDown (evt) {
