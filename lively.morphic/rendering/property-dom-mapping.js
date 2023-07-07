@@ -126,7 +126,7 @@ export function addTransform (morph, style) {
     style.top = `${y}px`;
     style.left = `${x}px`;
   }
-  style.transform += ` rotate(${rotation.toFixed(2)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
+  style.transform += ` rotate(${rotation.toFixed(3)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
   if (perspective) style.perspective = `${perspective}px`;
   if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
   if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
