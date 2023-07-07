@@ -335,15 +335,18 @@ const PropertiesPanel = component({
         name: 'text controls',
         submorphs: [
           {
-            name: 'styling controls',
-            // FIXME: this does not really look nice
-            // the width cannot be much smaller as the layout of the following controls rely on wrapping submorphs
-            width: 60,
+            name: 'weight and styles',
             submorphs: [
-              without('inline link'),
-              without('quote')
+              {
+                name: 'styling controls',
+                submorphs: [
+                  without('inline link'),
+                  without('quote')
+                ]
+              }
             ]
           }
+
         ]
       }
       ]
