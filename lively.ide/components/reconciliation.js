@@ -1,6 +1,6 @@
-import { arr, obj, string } from 'lively.lang';
+import { arr, tree, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, getParentRef, getComponentDeclsFromScope,
+  getNodeFromSubmorphs, getAnonymousAddedParts, getAnonymousParts, getAnonymousSpecs, getParentRef, getComponentDeclsFromScope,
   getAddCallReferencing,
   getWithoutCall,
   getEligibleSourceEditorsFor,
@@ -548,8 +548,14 @@ export function applyModuleChanges (reconciliation, sourceEditor = false) {
  * since components can be derived various times from different modules.
  */
 export class Reconciliation {
+  static ensureNamesInSourceCode (componentDescriptor) {
+    new EnsureNamesReconciliation(componentDescriptor).reconcile().applyChanges();
+  }
+
   static perform (componentDescriptor, change) {
     let klass;
+
+    componentDescriptor.ensureNamesInSourceCode();
 
     if (change.prop) {
       klass = change.prop === 'name' ? RenameReconciliation : PropChangeReconciliation; // eslint-disable-line no-use-before-define
@@ -656,6 +662,58 @@ export class Reconciliation {
 
   reconcile () {
     notYetImplemented(this.constructor.name + '.reconcile()');
+    return this;
+  }
+}
+
+class EnsureNamesReconciliation extends Reconciliation {
+  get spec () {
+    return this.descriptor.stylePolicy.spec;
+  }
+
+  reconcile () {
+    const { modId, sourceCode, parsedComponent } = this.getDescriptorContext();
+    const anonymousSpecs = getAnonymousSpecs(parsedComponent);
+    const anonymousParts = getAnonymousParts(parsedComponent);
+    const anonymousAddedParts = getAnonymousAddedParts(parsedComponent);
+
+    // now traverse the specs and the parsed component in tandem
+    tree.mapTree([this.spec, getPropertiesNode(parsedComponent)], ([currentSpec, currentNode]) => {
+      const propNode = getPropertiesNode(currentNode);
+      const generatedName = currentSpec.props?.name || currentSpec.name;
+      if (propNode && anonymousSpecs.includes(propNode) && generatedName) {
+        this.addChangesToModule(modId, insertPropChange(
+          sourceCode,
+          propNode,
+          'name',
+        `'${generatedName}'`
+        ));
+        return;
+      }
+      if (anonymousParts.includes(currentNode)) {
+        // insert a name prop object next to the identifier
+        this.addChangesToModule(modId, [{
+          action: 'insert',
+          start: currentNode.arguments[0].end,
+          lines: [`, { name: '${generatedName}' }`]
+        }]);
+      }
+      if (anonymousAddedParts.includes(currentNode)) {
+        // insert a name prop object
+        this.addChangesToModule(modId, [{
+          action: 'insert',
+          start: currentNode.arguments[0].arguments[0].end,
+          lines: [`, { name: '${generatedName}' }`]
+        }]);
+      }
+    }, ([specOrPolicy, node]) => {
+      const subNodes = getProp(getPropertiesNode(node), 'submorphs')?.value?.elements;
+      const subSpecs = specOrPolicy.isPolicy
+        ? specOrPolicy.spec.submorphs
+        : specOrPolicy.submorphs;
+      if (subNodes && subSpecs) return arr.zip(subSpecs, subNodes);
+      return null;
+    });
     return this;
   }
 }

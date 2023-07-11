@@ -451,4 +451,56 @@ export function applyChangesToTextMorph (aText, changes) {
   return aText.textString;
 }
 
+export function scanForNamesInGenerator (closure) {
+  return query.queryNodes(parse(closure.toString()), `
+    //  Property [ /:key Identifier [ @name == 'name' ]]
+  `).map(hit => hit.value?.value);
+}
+
+export function getAnonymousSpecs (parsedComponent) {
+  return query.queryNodes(parsedComponent, `
+    // ObjectExpression [
+       count(/ Property [
+        /:key Identifier [ @name == 'name' ]
+       ]) == 0
+     ]`);
+}
+
+export function getAnonymousAddedParts (parsedComponent) {
+  return query.queryNodes(parsedComponent, `
+    //  CallExpression [
+         /:callee Identifier [ @name == 'add' ]
+      && /:arguments "*" [
+           CallExpression [
+             /:callee Identifier [ @name == 'part' ]
+          &&
+            count(/ ObjectExpression [
+               /:properties "*" [
+                   Property [
+                      /:key Identifier [ @name == 'name' ]
+                   ]
+                 ]
+               ]) == 0
+             
+           ]
+         ]
+       ]
+    `);
+}
+
+export function getAnonymousParts (parsedComponent) {
+  return query.queryNodes(parsedComponent, `
+     // CallExpression [
+         /:callee Identifier [ @name == 'part' ]
+      && count(/ ObjectExpression [
+         /:properties "*" [
+             Property [
+                /:key Identifier [ @name == 'name' ]
+             ]
+           ]
+         ]) == 0
+       ]
+    `);
+}
+
 export { getNodeFromSubmorphs };
