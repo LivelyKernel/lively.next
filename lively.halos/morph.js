@@ -27,10 +27,6 @@ const haloBlue = Color.rgb(23, 160, 251);
 const derivedAccent = Color.rgba(171, 71, 188, 1);
 const componentAccent = Color.magenta;
 
-export function isUUID (str) {
-  return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(str);
-}
-
 function getColorForTarget (target) {
   const baseColor = !!target.master || target.ownerChain().find(m => (m.master && m.master.managesMorph(target.name))) ? derivedAccent : haloBlue;
   return target.isComponent ? componentAccent : baseColor;
@@ -1199,7 +1195,7 @@ class ComponentHaloItem extends RoundHaloItem {
 
       let variableName;
       const parentName = target.master?.parent?.[Symbol.for('lively-module-meta')]?.exportedName;
-      if (!isUUID(target.name)) {
+      if (!string.isUUID(target.name)) {
         variableName = string.camelCaseString(target.name);
       }
       if (!variableName && parentName || variableName === parentName) {

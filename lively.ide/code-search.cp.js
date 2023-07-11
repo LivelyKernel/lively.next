@@ -10,11 +10,7 @@ import { Label } from 'lively.morphic/text/label.js';
 const ModeButtonInactive = component(ButtonDefault, {
   extent: pt(27, 27),
   borderStyle: 'none',
-  fill: Color.transparent,
-  submorphs: [{
-    name: 'label',
-    textAndAttributes: ['B', null]
-  }]
+  fill: Color.transparent
 });
 
 const ModeButtonInactiveHover = component(ModeButtonInactive, {
