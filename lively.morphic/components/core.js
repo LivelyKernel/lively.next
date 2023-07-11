@@ -52,6 +52,10 @@ export class ComponentDescriptor {
     };
   }
 
+  static prepareUsedNamesSet () {
+    return new Set();
+  }
+
   /**
    * How do we handle the part calls? These need to be resolved a well.
    * A part call outside of a spec can return a morph, but within a spec it needs to act differently.
@@ -60,8 +64,7 @@ export class ComponentDescriptor {
    */
   static extractSpec (generatorFunction) {
     morph.evaluateAsSpec = evaluateAsSpec = true;
-    morph.usedNames = new Set();
-
+    morph.usedNames = this.prepareUsedNamesSet(generatorFunction);
     let spec = {};
     try {
       spec = generatorFunction();
@@ -571,8 +574,9 @@ export class ViewModel {
  */
 export function part (componentDescriptor, overriddenProps = {}) {
   if (evaluateAsSpec) {
-    if (!overriddenProps.name && morph.usedNames.has(componentDescriptor.stylePolicy.name)) overriddenProps.name = string.newUUID();
-    morph.usedNames.add(componentDescriptor.stylePolicy.name);
+    if (!overriddenProps.name && morph.usedNames.has(componentDescriptor.stylePolicy.name)) {
+      overriddenProps.name = componentDescriptor.stylePolicy.generateUniqueNameFor(overriddenProps);
+    }
     return componentDescriptor.extend(overriddenProps); // creates an abstract inline policy
   }
 
