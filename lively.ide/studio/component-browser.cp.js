@@ -206,11 +206,12 @@ class MasterComponentTreeData extends TreeData {
    */
   displayComponentFile (modUrl, isSelected, isLoaded, url) {
     if (isSelected && !this.root.browser._pauseUpdates) {
-      const mod = module(modUrl);
+      const mod = module(url);
       const pkg = mod.package();
+      const isOpenedProject = pkg.url === $world.openedProject?.package.url;
       modUrl = arr.last(modUrl.split('--'));
       this.getComponentsInModule(url).then(components => {
-        this.root.browser.showComponentsInFile(modUrl, components);
+        this.root.browser.showComponentsInFile(modUrl, components, isOpenedProject);
       });
     }
 
@@ -598,6 +599,7 @@ export class ProjectEntry extends Morph {
 
   onMouseUp (evt) {
     super.onMouseUp(evt);
+    if (this._navigationDisabled) return;
     const projectTitle = this.getSubmorphNamed('project title');
     if (projectTitle.textBounds().containsPoint(evt.positionIn(projectTitle))) { this.openComponentWorld(); }
   }
@@ -628,6 +630,11 @@ export class ProjectEntry extends Morph {
   selectComponent (component) {
     this.owner.getSubmorphsByStyleClassName('ExportedComponent').forEach(m => m.select(false));
     component.select(true);
+  }
+
+  disableNavigation () {
+    this._navigationDisabled = true;
+    this.getSubmorphNamed('project title').value = [this.worldName, {}];
   }
 }
 
@@ -1208,9 +1215,11 @@ export class ComponentBrowserModel extends ViewModel {
     });
   }
 
-  showComponentsInFile (fileName, componentsInFile) {
+  showComponentsInFile (fileName, componentsInFile, activeNavigation) {
     const { masterComponentList } = this.ui;
     const projectEntry = this.renderComponentsInFile(fileName, componentsInFile);
+
+    if (!activeNavigation) projectEntry.disableNavigation();
     masterComponentList.submorphs = [projectEntry];
     masterComponentList.layout.setResizePolicyFor(projectEntry, {
       width: 'fill', height: 'fixed'
