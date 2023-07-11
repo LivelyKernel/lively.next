@@ -484,6 +484,10 @@ function newUUID () {
   return newUUIDTemplate.replace(newUUIDRe, newUUIDReplacer).toUpperCase();
 }
 
+function isUUID (str) {
+  return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(str);
+}
+
 function createDataURI (content, mimeType) {
   // String -> String -> String
   // Takes some string representing content and a mime type.
@@ -1269,6 +1273,7 @@ export {
   normalizePath,
   joinPath,
   newUUID,
+  isUUID,
   createDataURI,
   hashCode,
   md5,
