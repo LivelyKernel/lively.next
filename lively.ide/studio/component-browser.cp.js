@@ -1642,7 +1642,7 @@ const ComponentBrowser = component({
           fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
           fontWeight: '900',
           lineHeight: 1
-        }, ' Import', {
+        }, ' Open', {
           fontFamily: 'IBM Plex Sans'
         }]
 
