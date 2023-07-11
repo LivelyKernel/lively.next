@@ -370,6 +370,14 @@ export class StylePolicy {
     }
   }
 
+  generateUniqueNameFor (node) {
+    const type = node.type?.[Symbol.for('__LivelyClassName__')] || node.type || 'morph';
+    let candidate = string.incName(type);
+    while (morph.usedNames.has(candidate)) candidate = string.incName(candidate);
+    morph.usedNames.add(candidate);
+    return candidate;
+  }
+
   /**
    * The main purpose of this method is to properly initialize style policies within our spec in order to reify
    * what is called "inline policies".
@@ -396,8 +404,7 @@ export class StylePolicy {
     };
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
-        if (!node.name) { node.name = string.newUUID(); }
-        morph.usedNames.add(node.name);
+        if (!node.name) { node.name = this.generateUniqueNameFor(node); }
         if (node.isPolicy) return node;
         if (node.master && node !== spec) {
           return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
@@ -429,7 +436,10 @@ export class StylePolicy {
     if (this.parent) {
       // we need to traverse the spec and the parent's build spec simultaneously
       const baseSpec = tree.mapTree(this.parent.spec, (node, submorphs) => {
-        if (node.COMMAND === 'add') node = node.props;
+        if (node.COMMAND === 'add') {
+          node = node.props;
+          if (!node.name) { node.name = this.generateUniqueNameFor(node); }
+        }
         if (node.COMMAND === 'remove') return null;
 
         let localMaster = getLocalMaster(node.name || node.spec?.name);
@@ -467,6 +477,7 @@ export class StylePolicy {
         if (!toBeAdded.isPolicyApplicator) {
           toBeAdded = ensureStylePoliciesInStandalone(toBeAdded);
         }
+        if (!toBeAdded.name) toBeAdded.name = this.generateUniqueNameFor(toBeAdded);
         arr.pushAt(parent.submorphs, {
           COMMAND: 'add',
           props: toBeAdded

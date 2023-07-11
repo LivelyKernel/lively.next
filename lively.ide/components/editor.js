@@ -5,8 +5,8 @@ import { module } from 'lively.modules/index.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import lint from '../js/linter.js';
 import { ComponentChangeTracker } from './change-tracker.js';
-import { findComponentDef, getComponentNode } from './helpers.js';
-import { replaceComponentDefinition, createInitialComponentDefinition } from './reconciliation.js';
+import { findComponentDef, getComponentNode, scanForNamesInGenerator } from './helpers.js';
+import { replaceComponentDefinition, Reconciliation, createInitialComponentDefinition } from './reconciliation.js';
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
 
@@ -28,6 +28,10 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   get isScoped () { return !!this[metaSymbol].path; }
 
+  static prepareUsedNamesSet (generatorFunction) {
+    return new Set(scanForNamesInGenerator(generatorFunction));
+  }
+
   static for (generatorFunction, meta, prev) {
     const newDescr = super.for(generatorFunction, meta);
     if (prev) {
@@ -42,6 +46,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
         m.master._parent = newDescr.stylePolicy;
       });
       newDescr.refreshDependants(dependants);
+      prev.checkForGeneratedNames();
       return prev;
     }
     return newDescr;
@@ -52,7 +57,19 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     this.subscribeToParent();
     this.refreshDependants();
     this.previouslyRemovedMorphs = new WeakMap();
+    this.checkForGeneratedNames();
     return this;
+  }
+
+  ensureNamesInSourceCode () {
+    if (this._hasGeneratedNames) {
+      this._hasGeneratedNames = false;
+      Reconciliation.ensureNamesInSourceCode(this);
+    }
+  }
+
+  checkForGeneratedNames () {
+    this._hasGeneratedNames = morph.usedNames.size > 0;
   }
 
   getModuleSource () {

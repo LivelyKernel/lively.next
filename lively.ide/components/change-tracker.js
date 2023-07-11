@@ -12,7 +12,7 @@ import { Reconciliation } from './reconciliation.js';
  * are open and reconcile the corresponding source code to reflect these changes.
  */
 export class ComponentChangeTracker {
-  constructor (aComponent, descriptor, oldName = aComponent.name) {
+  constructor (aComponent, descriptor) {
     this.trackedComponent = aComponent;
     this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
     this.componentModule = module(this.componentModuleId);
