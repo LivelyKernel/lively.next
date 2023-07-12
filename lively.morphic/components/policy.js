@@ -472,7 +472,7 @@ export class StylePolicy {
       let __expr__ = '';
       for (let [name, expr] of masters) {
         let printed;
-        if (obj.isArray(expr)) printed = printMasters(expr);
+        if (obj.isArray(expr)) printed = `{\n${printMasters(expr)}}`;
         else {
           printed = expr.__expr__;
           if (!printed) continue;
