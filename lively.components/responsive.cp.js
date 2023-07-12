@@ -2,7 +2,7 @@ import { component, without } from 'lively.morphic/components/core.js';
 import { Color, materialDesignColors, rect, pt } from 'lively.graphics';
 import { Icon, Path, easings, ViewModel, part, TilingLayout, Label } from 'lively.morphic';
 import { num, arr } from 'lively.lang';
-import { signal, epiConnect } from 'lively.bindings';
+import { signal, disconnect, epiConnect } from 'lively.bindings';
 import { PolicyApplicator, BreakpointStore } from 'lively.morphic/components/policy.js';
 
 export class Arrow extends Path {
@@ -48,10 +48,10 @@ export class BreakpointSliderModel extends ViewModel {
     const offsetControl = this.view.owner;
     // ensure we are rendered
     if (this.orientation === 'vertical') {
-      this.view.rightCenter = pt(halo.width - 12, offset + 33);
+      halo.viewModel?.alignBreakpointSliderVertically(this.view, offset);
     }
     if (this.orientation === 'horizontal') {
-      this.view.bottomCenter = pt(offset + 27, halo.height - 12);
+      halo.viewModel?.alignBreakpointSliderHorizontally(this.view, offset);
     }
     this.ui.userAgentIcon.value = this.getIconForOffset(offset);
     this.ui.pixelView.value = `${offset.toFixed()} px`;
@@ -129,11 +129,12 @@ const BreakpointHorizontal = component({
     submorphs: [{
       type: Arrow,
       name: 'breakpoint pin',
+      origin: pt(6.9, -2.1),
       borderColor: Color.rgb(0, 0, 0),
       borderWidth: 2,
       extent: pt(16.9, 16.6),
       fill: Color.transparent,
-      position: pt(15.3, 5.2),
+      position: pt(8.3, 5.1),
       reactsToPointer: false,
       rotation: 0.7853981633974483,
       startMarker: {
@@ -159,7 +160,6 @@ const BreakpointVertical = component(BreakpointHorizontal, {
   layout: new TilingLayout({
     align: 'right',
     axisAlign: 'center',
-    orderByIndex: true,
     spacing: 5
   }),
   extent: pt(135, 40),
@@ -174,7 +174,8 @@ const BreakpointVertical = component(BreakpointHorizontal, {
     rotation: num.toRadians(-90.0),
     submorphs: [{
       name: 'breakpoint pin',
-      position: pt(16.7, 6),
+      origin: pt(-3.8, -4),
+      position: pt(-0.5, -6.4),
       vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.9, 16.6), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
     }]
   }]
@@ -272,7 +273,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
       isHaloItem: { get () { return true; } },
       expose: {
         get () {
-          return ['focusOn', 'close', 'isHaloItem'];
+          return ['focusOn', 'close', 'isHaloItem', 'alignBreakpointSliderVertically', 'alignBreakpointSliderHorizontally'];
         }
       },
       bindings: {
@@ -290,6 +291,28 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
         }
       }
     };
+  }
+
+  alignBreakpointSliderVertically (bp, offset) {
+    const control = this.ui.verticalBreakpointControl;
+    if (!control.env.renderer.getNodeForMorph(control)) {
+      control.env.forceUpdate(control);
+    }
+    const locBounds = control.transformRectToMorph(this.view, control.innerBounds());
+
+    bp.rightCenter = pt(locBounds.right(), offset + locBounds.top());
+  }
+
+  alignBreakpointSliderHorizontally (bp, offset) {
+    const control = this.ui.horizontalBreakpointControl;
+    if (!control.env.renderer.getNodeForMorph(control)) {
+      control.env.forceUpdate();
+    }
+    const locBounds = control.transformRectToMorph(this.view, control.innerBounds());
+    if (!control.env.renderer.getNodeForMorph(control)) {
+      control.env.forceUpdate(control);
+    }
+    bp.bottomCenter = pt(offset + locBounds.left(), locBounds.bottom());
   }
 
   ensureStore () {
