@@ -1503,18 +1503,16 @@ const ComponentBrowser = component({
     submorphs: [{
       type: Text,
       name: 'search icon',
-      lineHeight: 2,
       extent: pt(17.5, 18),
-      fontSize: 14,
+      fontSize: 18,
       fontColor: Color.rgba(0, 0, 0, 0.5),
       cursorWidth: 1.5,
       fixedWidth: true,
       padding: rect(1, 1, 0, 0),
-      scale: 1.32,
       textAndAttributes: ['', {
         fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
         fontWeight: '900',
-        lineHeight: 1
+        lineHeight: 1.2,
       }]
     }, part(InputLineDefault, {
       name: 'search input',
