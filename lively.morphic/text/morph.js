@@ -2873,22 +2873,22 @@ export class Text extends Morph {
 
     const style = { overflow: 'hidden', top: '0px', left: '0px' };
 
-    if (padLeft > 0) style.paddingLeft = padLeft + 'px';
-    if (padRight > 0) style.paddingRight = padRight + 'px';
-    if (padTop > 0) style.marginTop = padTop + 'px';
-    if (padBottom > 0) style.marginBottom = padBottom + 'px';
-    if (letterSpacing) style.letterSpacing = letterSpacing + 'px';
-    if (wordSpacing) style.wordSpacing = wordSpacing + 'px';
-    if (lineHeight) style.lineHeight = lineHeight;
-    if (fontFamily) style.fontFamily = fontFamily;
-    if (fontWeight) style.fontWeight = fontWeight;
-    if (fontStyle) style.fontStyle = fontStyle;
-    if (textDecoration) style.textDecoration = textDecoration;
-    if (fontSize) style.fontSize = fontSize + 'px';
-    if (textAlign) style.textAlign = textAlign;
+    if (padLeft > 0) style['padding-left'] = padLeft + 'px';
+    if (padRight > 0) style['padding-right'] = padRight + 'px';
+    if (padTop > 0) style['margin-top'] = padTop + 'px';
+    if (padBottom > 0) style['margin-bottom'] = padBottom + 'px';
+    if (letterSpacing) style['letter-spacing'] = letterSpacing + 'px';
+    if (wordSpacing) style['word-spacing'] = wordSpacing + 'px';
+    if (lineHeight) style['line-height'] = lineHeight;
+    if (fontFamily) style['font-family'] = fontFamily;
+    if (fontWeight) style['font-weight'] = fontWeight;
+    if (fontStyle) style['font-style'] = fontStyle;
+    if (textDecoration) style['text-decoration'] = textDecoration;
+    if (fontSize) style['font-size'] = fontSize + 'px';
+    if (textAlign) style['text-align'] = textAlign;
     if (fontColor) style.color = String(fontColor);
-    if (backgroundColor) style.backgroundColor = backgroundColor;
-    if (tabWidth !== 8) style.tabSize = tabWidth;
+    if (backgroundColor) style['background-color'] = backgroundColor;
+    if (tabWidth !== 8) style['tab-size'] = tabWidth;
 
     return style;
   }
