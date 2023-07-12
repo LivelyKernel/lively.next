@@ -2178,8 +2178,7 @@ export class Text extends Morph {
 
     this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
-    if (!this.fixedHeight) this.height = this.document.height;
-    if (!this.fixedWidth) this.width = this.document.width;
+
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
