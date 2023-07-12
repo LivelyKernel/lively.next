@@ -676,9 +676,10 @@ class EnsureNamesReconciliation extends Reconciliation {
     const anonymousSpecs = getAnonymousSpecs(parsedComponent);
     const anonymousParts = getAnonymousParts(parsedComponent);
     const anonymousAddedParts = getAnonymousAddedParts(parsedComponent);
-
+    const rootNode = getPropertiesNode(parsedComponent);
     // now traverse the specs and the parsed component in tandem
-    tree.mapTree([this.spec, getPropertiesNode(parsedComponent)], ([currentSpec, currentNode]) => {
+    tree.mapTree([this.spec, rootNode], ([currentSpec, currentNode]) => {
+      if (currentNode === rootNode) return;
       const propNode = getPropertiesNode(currentNode);
       const generatedName = currentSpec.props?.name || currentSpec.name;
       if (propNode && anonymousSpecs.includes(propNode) && generatedName) {
