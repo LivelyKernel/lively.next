@@ -609,7 +609,9 @@ export function component (masterComponentOrProps, overriddenProps) {
   }
 }
 
-if (!component.DescriptorClass) component.DescriptorClass = ComponentDescriptor;
+const prevDescriptorClass = typeof prevComponent !== 'undefined' && prevComponent.DescriptorClass;
+const prevComponent = component;
+if (!component.DescriptorClass) component.DescriptorClass = prevDescriptorClass || ComponentDescriptor;
 component.for = (generator, meta, prev) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, prev);
 
 export { add, without };
