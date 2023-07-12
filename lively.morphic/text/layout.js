@@ -195,7 +195,7 @@ export default class Layout {
   whatsVisible (morph) {
     const startRow = morph.renderingState.firstVisibleRow;
     const endRow = morph.renderingState.lastVisibleRow;
-    const lines = morph.document.lines.slice(startRow, endRow);
+    const lines = morph.document.lines.slice(startRow, endRow + 1);
     return { lines, startRow, endRow };
   }
 

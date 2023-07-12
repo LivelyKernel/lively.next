@@ -1146,8 +1146,10 @@ export default class Renderer {
       textAndAttributesByLine = [['', null]];
       morph.renderingState.renderedLines = [{ row: 0 }];
     }
+    let row = 0;
     for (let line of textAndAttributesByLine) {
-      renderedLines.push(this.nodeForLine(line, morph, true));
+      renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, true));
+      row++;
     }
     return renderedLines;
   }
