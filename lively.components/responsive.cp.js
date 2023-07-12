@@ -306,6 +306,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   close () {
     this.view.remove();
+    disconnect(this.target, 'onChange', this, 'relayout');
     delete this.target._responsiveHalo;
   }
 
