@@ -116,9 +116,9 @@ const PolicyPin = component({
 
 const PolicyPinFocused = component(PolicyPin, {
   borderWidth: 1,
-  borderColor: Color.rgb(178, 235, 242),
+  borderColor: Color.rgb(206, 147, 216),
   fill: Color.rgba(178, 235, 242, 0),
-  fontColor: Color.rgb(178, 235, 242),
+  fontColor: Color.rgb(206, 147, 216),
   padding: rect(4, 0, 0, 0)
 });
 
@@ -138,8 +138,7 @@ export const ComponentSelection = component({
   fill: Color.rgba(255, 255, 255, 0),
   borderColor: Color.rgb(23, 160, 251),
   submorphs: [part(PolicyPin, {
-    name: 'policy type pin',
-    master: { states: { focused: PolicyPinFocused } }
+    name: 'policy type pin'
   }), part(TextInput, {
     name: 'component name ref',
     placeholder: 'no component',
@@ -148,7 +147,7 @@ export const ComponentSelection = component({
     textAndAttributes: ['sfhgs', null]
   }), part(AddButton, {
     name: 'select component button',
-    tooltip: 'Select Component for Breakpoint',
+    tooltip: 'Select Component',
     padding: rect(4, 4, 0, 0),
     textAndAttributes: ['', {
       fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
@@ -173,6 +172,14 @@ export const CustomStateComponentSelection = component(ComponentSelection, {
       name: 'policy type pin',
       fill: Color.rgb(206, 147, 216),
       readOnly: false
+    }, {
+      name: 'no component button',
+      padding: rect(4, 2, 0, 2),
+      tooltip: 'Remove this custom component state.',
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontWeight: '900'
+      }]
     }
   ]
 });
@@ -358,9 +365,12 @@ class ComponentStatesControlModel extends PropertySectionModel {
     stateControls.visible = true;
     const states = this.targetMorph.master._localComponentStates || [];
     stateControls.submorphs = Object.entries(states).map(([stateName, component]) => {
-      return part(ComponentSelection, {
+      return part(CustomStateComponentSelection, {
         name: 'component selection',
-        viewModel: { stateName, component, editable: true }
+        viewModel: { stateName, component, editable: true },
+        submorphs: [
+          { name: 'policy type pin', master: { states: { focused: PolicyPinFocused } } }
+        ]
       });
     });
     stateControls.submorphs.forEach(m => {
@@ -378,9 +388,12 @@ class ComponentStatesControlModel extends PropertySectionModel {
   }
 
   addDynamicState () {
-    const selectionControl = this.ui.stateControls.addMorph(part(ComponentSelection, {
+    const selectionControl = this.ui.stateControls.addMorph(part(CustomStateComponentSelection, {
       name: 'component selection',
-      viewModel: { stateName: this.getNewStateName(), editable: true }
+      viewModel: { stateName: this.getNewStateName(), editable: true },
+      submorphs: [
+        { name: 'policy type pin', master: { states: { focused: PolicyPinFocused } } }
+      ]
     }));
     this.ui.stateControls.layout.setResizePolicyFor(selectionControl, {
       width: 'fill', height: 'fixed'
