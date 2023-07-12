@@ -1327,16 +1327,16 @@ export default class Renderer {
       if (isWrapped) {
         // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
         // additional selection parts here
-        const rangesToRender = textLayout.rangesOfWrappedLine(morph, row).map(r => r.intersect(selection)).filter(r => !r.isEmpty());
+        const rangesToRender = textLayout.rangesOfWrappedLine(morph, row);
         let isFirstSubLine = isFirstLine;
         let subLineMinY = 0;
         let subCharBounds;
         let subLineMaxBottom;
         const isMultiline = rangesToRender.length > 1;
-        for (const r of rangesToRender) {
+        for (const r of rangesToRender.map(r => r.intersect(selection)).filter(r => !r.isEmpty())) {
           if (r.isEmpty()) continue;
-
-          subCharBounds = charBounds.slice(r.start.column, r.end.column + (isMultiline ? 1 : 0));
+          const addTrailingSpace = isMultiline && (r.end.column !== cursorPosition.column || r === rangesToRender[0]);
+          subCharBounds = charBounds.slice(r.start.column, r.end.column + (addTrailingSpace ? 1 : 0));
 
           subLineMinY = isFirstSubLine ? arr.min(subCharBounds.map(cb => cb.top())) : subLineMinY;
           subLineMaxBottom = arr.max(subCharBounds.map(cb => cb.bottom()));
