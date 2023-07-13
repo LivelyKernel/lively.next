@@ -11,6 +11,7 @@ import { defaultCSS, applyStylingToNode, cssForTexts } from './morphic-default.j
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS, config } from 'lively.morphic';
 
 const svgNs = 'http://www.w3.org/2000/svg';
+const MAX_CHUNK_LENGTH = 10000;
 
 export default class Renderer {
   // -=-=-=-
@@ -953,6 +954,28 @@ export default class Renderer {
   }
 
   /**
+   * Rendering single spans with very long text contents (i.e. 60k characters or more)
+   * can cause rendering artifacts in many browser which leads to a broken text layout.
+   * In order to avoid it, we partition a chunk with the same set of styles into separate
+   * nodes, capped by a maximum amount of characters.
+   * @param { string } content - The entire content of the chunk we set out to split up.
+   * @param { string } tagName - The tag to create for each chunk.
+   * @returns { DOMNode[] } A list of split up rendered `tagName` elements.
+   */
+  distributeIntoSubChunks (content, tagName = 'span') {
+    let nodes = [];
+    while (content.length > 0) {
+      const node = this.doc.createElement(tagName);
+      // Put MAX_CHUNK_LENGTH characters into the node
+      node.textContent = content.slice(0, MAX_CHUNK_LENGTH);
+      // Keep the characters after the MAX_CHUNK_LENGTHths one for the next nodes
+      content = content.slice(MAX_CHUNK_LENGTH);
+      nodes.push(node);
+    }
+    return nodes;
+  }
+
+  /**
    * Renders chunks (1 pair of text and textAttributes) into lines (divs),
    * Thus returns an array of divs that can each contain multiple spans
    * @param {Line|Object} lineObject - The line to be rendered. Can either be a `Line` object or a simple Object adhering to `textAndAttributes` semantics.
@@ -982,9 +1005,7 @@ export default class Renderer {
         }
 
         if (!attributes) {
-          const node = this.doc.createElement('span');
-          node.textContent = content;
-          renderedChunks.push(node);
+          renderedChunks.push(...this.distributeIntoSubChunks(content));
           continue;
         }
 
@@ -1041,13 +1062,14 @@ export default class Renderer {
         if (textStroke) chunkNodeStyle['-webkit-text-stroke'] = textStroke;
         if (attributes.doit) { chunkNodeStyle['pointer-events'] = 'auto'; chunkNodeStyle.cursor = 'pointer'; }
 
-        const chunkNode = this.doc.createElement(tagname);
-        chunkNode.textContent = content || '&nbsp';
-        if (chunkNodeAttributes.href) chunkNode.href = chunkNodeAttributes.href;
-        if (chunkNodeAttributes.target) chunkNode.target = chunkNodeAttributes.target;
-        if (textStyleClasses && textStyleClasses.length) { chunkNode.className = textStyleClasses.join(' '); }
-        stylepropsToNode(chunkNodeStyle, chunkNode);
-        renderedChunks.push(chunkNode);
+        const chunkNodes = this.distributeIntoSubChunks(content || '&nbsp', tagname);
+        chunkNodes.forEach(chunkNode => {
+          if (chunkNodeAttributes.href) chunkNode.href = chunkNodeAttributes.href;
+          if (chunkNodeAttributes.target) chunkNode.target = chunkNodeAttributes.target;
+          if (textStyleClasses && textStyleClasses.length) { chunkNode.className = textStyleClasses.join(' '); }
+          stylepropsToNode(chunkNodeStyle, chunkNode);
+          renderedChunks.push(chunkNode);
+        });
       }
     } else renderedChunks.push(this.doc.createElement('br'));
 
