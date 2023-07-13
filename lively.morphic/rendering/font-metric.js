@@ -448,7 +448,8 @@ class DOMTextMeasure {
             offsetX,
             offsetY,
             renderTextLayerFn);
-        } else {
+        }
+        if (!result) {
           result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
             offsetX - textNodeOffsetLeft,
             offsetY - textNodeOffsetTop);
