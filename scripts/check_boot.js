@@ -6,9 +6,6 @@ let page;
 
 (async () => {
   const browser = await puppeteer.launch({args: [
-    '--disable-gpu',
-    '--disable-dev-shm-usage',
-    '--disable-setuid-sandbox',
     '--no-sandbox',
   ]});
   page = await browser.newPage();

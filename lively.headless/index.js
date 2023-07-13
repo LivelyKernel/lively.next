@@ -54,7 +54,14 @@ export class HeadlessSession {
          userDataDir: packagePath + 'chrome-data-dir',
          ...containerized ? { executablePath: 'chromium' } : {},
          // headless: false,
-         // args: ["--disk-cache-dir", packagePath + "chrome-cache-dir"]
+         args: [
+          // This is necessary to run headless chrome inside of docker containers.
+          // Be aware, that disabling sand-boxing comes with heavy security implications!
+          // UPDATE: 13.07.2023 We recently removed the docker setup for which this option was originally introduced.
+          // However, removing this option lead to instant crashes of chromium on some of our machines and in CI.
+          // Wo do not know why that is, since the flag was not necessary previous to the introduction of the docker setup.
+          "--no-sandbox",
+         ]
        }));
        return this.constructor.browser || newBrowser;
   }
