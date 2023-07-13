@@ -7,7 +7,7 @@ import { runCommand } from '../shell/shell-interface.js';
 
 import { guardNamed } from 'lively.lang/function.js';
 import { Spinner } from './shared.cp.js';
-import { once, connect } from 'lively.bindings';
+import { disconnect, connect } from 'lively.bindings';
 import L2LClient from 'lively.2lively/client.js';
 import { bounceEasing } from 'lively.morphic/rendering/animations.js';
 import { delay } from 'lively.lang/promise.js';
@@ -73,12 +73,22 @@ class VersionChecker extends Morph {
 
   async updateLively () {
     const cwd = await VersionChecker.cwd();
+    const currentClientCommit = await VersionChecker.currentLivelyVersion(true);
     let li;
-    once(L2LClient.default(), 'onReconnect', async () => {
-      li.remove();
-      await $world.inform('Press OK to reload this page and finish the update.');
-      location.reload();
-    });
+    async function checkIfNewServer () {
+      const gitVersionCheckerOnServer = await L2LClient.default().listPeers().find(peer => peer.type === 'git version checker');
+      const sameServerVersion = await L2LClient.default().sendAndWait({ target: gitVersionCheckerOnServer.id, action: 'check git version', data: { payload: currentClientCommit } });
+      if (sameServerVersion) {
+        // noop, server has not restarted with newer version yet
+      } else {
+        li.remove();
+        // QOL - When one cancels the reload (which the average user should not do), one gets spammed with the reload modal otherwise
+        disconnect(L2LClient.default(), 'onReconnect');
+        await $world.inform('Press OK to reload this page and finish the update.');
+        location.reload();
+      }
+    }
+    connect(L2LClient.default(), 'onReconnect', checkIfNewServer);
     $world.withAllSubmorphsDo(m => m.blur = 3);
     li = $world.showLoadingIndicatorFor($world, 'Updating lively');
     const updateStatus = new Text({
