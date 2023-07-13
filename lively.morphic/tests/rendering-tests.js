@@ -55,7 +55,7 @@ describe('rendering', function () {
       env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1)).deep.property('style.transform')
         .match(/translate.*10px/)
-        .match(/rotate\((0.8|0\.79+)rad\)/)
+        .match(/rotate\(0\.78\d*rad\)/)
         .match(/scale\(1,\s*1\)/);
     });
 
