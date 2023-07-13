@@ -121,12 +121,12 @@ export default class L2LClient extends L2LConnection {
 
     const origin = urlHelper.root(url).replace(/\/+$/, '');
     const path = urlHelper.path(url);
-    const key = this.clientKey(origin, path, namespace || '');
-    let client = this.clients.get(key);
+    const key = L2LClient.clientKey(origin, path, namespace || '');
+    let client = L2LClient.clients.get(key);
 
     if (!client) {
-      this.clients.set(key,
-        client = this.create({ ...options, url, namespace }));
+      L2LClient.clients.set(key,
+        client = L2LClient.create({ ...options, url, namespace }));
     }
 
     return client;
@@ -478,8 +478,8 @@ export default class L2LClient extends L2LConnection {
       const peer = { ...obj.dissoc(record, ['info']), id, world, location, type };
       userToken = userToken || l2lUserToken;
       if (userToken && userToken !== 'null') {
-          peer.userToken = userToken;
-          peer.userRealm = userRealm;
+        peer.userToken = userToken;
+        peer.userRealm = userRealm;
       }
       return peer;
     });
