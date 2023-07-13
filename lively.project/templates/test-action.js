@@ -15,7 +15,6 @@ jobs:
         with:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
-      - run: pwd
       - name: Setup node
         uses: actions/setup-node@v2
         with:
