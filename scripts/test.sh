@@ -120,7 +120,7 @@ for package in "${testfiles[@]}"; do
 
   if [ "$CI" ] || [ "$STARTED_SERVER" = "1" ]; 
   then
-    pkill start.sh
+    pkill start-server.sh
     pkill -f lively
   fi
 done
