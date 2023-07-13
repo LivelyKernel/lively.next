@@ -348,10 +348,8 @@ export class Project {
 
   async regenerateTestPipeline () {
     const pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    if (!await resource(pipelineFile).exists()) throw Error('No pipeline file found');
-    let content = workflowDefinition;
-    content = this.fillPipelineTemplate(workflowDefinition);
-    await resource(pipelineFile).write(content);
+    const content = this.fillPipelineTemplate(workflowDefinition);
+    await (await resource(pipelineFile).ensureExistance()).write(content);
   }
 
   fillPipelineTemplate (workflowDefinition) {
@@ -362,14 +360,11 @@ export class Project {
 
   async generateBuildScripts () {
     const shellBuildScript = join(this.url, 'tools/build.sh');
-    if (!await resource(shellBuildScript).exists()) throw Error('build.sh not found');
-    await resource(shellBuildScript).write(buildScriptShell);
-
+    await (await resource(shellBuildScript).ensureExistance()).write(buildScriptShell);
     const mjsBuildScript = join(this.url, 'tools/build.mjs');
-    if (!await resource(mjsBuildScript).exists()) throw Error('build.mjs not found');
     let content = buildScript;
     content = content.replaceAll('%PROJECT_NAME%', this.name);
-    await resource(mjsBuildScript).write(content);
+    await (await resource(mjsBuildScript).ensureExistance()).write(content);
     const shellBuildScriptOrigin = new URL(shellBuildScript).origin;
     const scriptDir = shellBuildScript.replace(shellBuildScriptOrigin + '/', '').replace('/build.sh', '');
     const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
