@@ -436,6 +436,11 @@ class DOMTextMeasure {
           lineNode = renderLineFn(line);
           textNode.appendChild(lineNode);
         } else {
+          const tfm = morph.getGlobalTransform().inverse();
+          if (tfm.getScale() !== 1 || tfm.getRotation() !== 0) {
+            tfm.e = tfm.f = 0;
+            actualTextNode.style.transform = tfm.toString();
+          }
           ({ top: textNodeOffsetTop, left: textNodeOffsetLeft } = actualTextNode.getBoundingClientRect());
         }
 
@@ -453,6 +458,8 @@ class DOMTextMeasure {
             offsetX - textNodeOffsetLeft,
             offsetY - textNodeOffsetTop);
         }
+
+        if (actualTextNode) actualTextNode.style.transform = '';
 
         if (actualTextNode && nodeToReplace) {
           actualTextNode.replaceChild(lineNode, nodeToReplace);
@@ -489,13 +496,6 @@ class DOMTextMeasure {
         clipNode.appendChild(textNode);
         root.appendChild(clipNode);
       } else { root.appendChild(textNode); }
-    }
-
-    const tfm = morph.getGlobalTransform().inverse();
-    if (morph.env.renderer && morph.env.renderer.getNodeForMorph(morph) &&
-      (tfm.getScale() !== 1 || tfm.getRotation() !== 0)) {
-      tfm.e = tfm.f = 0;
-      textNode.style.transform = tfm.toString();
     }
 
     const layerBounds = textNode.getBoundingClientRect();
