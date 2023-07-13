@@ -491,7 +491,7 @@ class DOMTextMeasure {
       if (width || clipMode && clipMode !== 'visible') {
         const clipNode = document.createElement('div');
         clipNode.style.position = 'absolute';
-        if (clipMode) clipNode.style.overflow = clipMode;
+        if (clipMode) clipNode.style.overflow = 'hidden';
         if (width) clipNode.style.width = width + 'px';
         clipNode.id = styleKey;
         clipNode.appendChild(textNode);
