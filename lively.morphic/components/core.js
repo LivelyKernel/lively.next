@@ -487,6 +487,7 @@ export class ViewModel {
    * unintended feedback cycles. In case the function is asynchronous, the bindings will
    * be disabled as long as the function needs to terminate.
    * @param { function } cb - The function to invoke while the bindings are disabled.
+   * @return { } - The value returned by `cb`.
    */
   withoutBindingsDo (cb) {
     this.disableBindings();
@@ -496,7 +497,7 @@ export class ViewModel {
     } catch (err) {
       console.error(err.message);
     }
-    if (res && res.then) { return res.then(() => { this.onActivate(); return res; }); } else this.enableBindings();
+    if (res && res.then) { return res.then(() => { this.enableBindings(); return res; }); } else this.enableBindings();
     return res;
   }
 
