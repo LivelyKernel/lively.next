@@ -7,7 +7,7 @@ import { runCommand } from '../shell/shell-interface.js';
 
 import { guardNamed } from 'lively.lang/function.js';
 import { Spinner } from './shared.cp.js';
-import { once, connect } from 'lively.bindings';
+import { disconnect, connect } from 'lively.bindings';
 import L2LClient from 'lively.2lively/client.js';
 import { bounceEasing } from 'lively.morphic/rendering/animations.js';
 import { delay } from 'lively.lang/promise.js';
@@ -72,15 +72,52 @@ class VersionChecker extends Morph {
   }
 
   async updateLively () {
-    const cwd = await VersionChecker.cwd();
-    let li;
-    once(L2LClient.default(), 'onReconnect', async () => {
-      li.remove();
-      await $world.inform('Press OK to reload this page and finish the update.');
-      location.reload();
-    });
     $world.withAllSubmorphsDo(m => m.blur = 3);
-    li = $world.showLoadingIndicatorFor($world, 'Updating lively');
+    let li = $world.showLoadingIndicatorFor($world, 'Updating lively');
+
+    const cwd = await VersionChecker.cwd();
+    const currentClientCommit = await VersionChecker.currentLivelyVersion(true); 
+
+    /**
+     * Two types of timing issues can occur:
+     * 1. We try to send something to the server-side client that itself is not yet online.
+     * 2. We try to use the `check git version` servive of the server-side client, but the service has not yet been installed.
+     * For both cases, we allow for retrying 20 times in total. We thus have a grace period of at least 40 seconds for the **service** to come online.
+     */
+    async function checkIfNewServer (retries = 20) {
+      const backoffTime = 2000;
+      const peers = await L2LClient.default().listPeers()
+      const gitVersionCheckerOnServer = peers.find(peer => peer.type === 'git version checker');
+      if (!gitVersionCheckerOnServer) {
+        // The L2LClient for Version Checking is not yet online. Try again later.
+        if (retries){
+          setTimeout(checkIfNewServer(retries - 1), backoffTime);
+          return;
+        }
+        throw(new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
+      }
+      const sameServerVersion = await L2LClient.default().sendAndWait({ target: gitVersionCheckerOnServer.id, action: 'check git version', data: { payload: currentClientCommit } });
+      if (sameServerVersion.data) {
+        if (sameServerVersion.data.isError && sameServerVersion.data.error === 'message not understood: check git version'){
+          // The L2LClient for Version Checking is online, but the version checking service is not yet installed. Try again later.
+          // This case can occur since the Client comes online, is used to retrieve the currently running server version and only afterwards the service to compare against this version is installed.
+          if (retries) {
+            setTimeout(checkIfNewServer(retries - 1), backoffTime);
+            return
+          }
+          throw(new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
+        }
+        // noop, server has not yet restarted with newer version yet
+      } else {
+        li.remove();
+        // QOL - When one cancels the reload (which the average user should not do), one gets spammed with the reload modal otherwise
+        disconnect(L2LClient.default(), 'onReconnect');
+        await $world.inform('Press OK to reload this page and finish the update.');
+        location.reload();
+      }
+    }
+    connect(L2LClient.default(), 'onReconnect', checkIfNewServer);
+
     const updateStatus = new Text({
       name: 'update status',
       fill: Color.white,
@@ -99,6 +136,7 @@ class VersionChecker extends Morph {
       halosEnabled: true
     });
     $world.addMorph(updateStatus);
+
     const cmd = runCommand('./update.sh', { cwd });
     connect(cmd, 'stdout', (output) => {
       updateStatus.textString = updateStatus.textString + output;
@@ -109,8 +147,9 @@ class VersionChecker extends Morph {
 
   async onMouseDown (evt) {
     super.onMouseDown(evt);
-    if (evt.targetMorph.name === 'update button') {
+    if (evt.targetMorph === this.ui.status) {
       await this.updateLively();
+      return;
     }
     if (evt.targetMorph.name === 'commit id copier') {
       guardNamed('copying', async () => {
@@ -215,8 +254,9 @@ class VersionChecker extends Morph {
     if (currBranch === 'main') {
       updateButtonWrapper.visible = updateButtonWrapper.isLayoutable = true;
       status.reactsToPointer = true;
+      status.nativeCursor = 'pointer';
       this.bounceUpdateButton();
-      status.value = ['Press here to update!', { fontWeight: 'bold', doit: { code: '$world.get("lively version checker").updateLively()' } }];
+      status.value = ['Press here to update!', { fontWeight: 'bold' }];
       this.updateShownIcon('none');
     } else {
       status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
@@ -331,7 +371,6 @@ const LivelyVersionChecker = component({
     type: Label,
     fill: Color.transparent,
     name: 'version status label',
-    needsDocument: true,
     fontColor: Color.rgb(253, 254, 254),
     lineHeight: 1.2,
     reactsToPointer: false,

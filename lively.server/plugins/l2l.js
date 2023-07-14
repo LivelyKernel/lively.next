@@ -1,4 +1,6 @@
 import Tracker from "lively.2lively/tracker.js";
+import L2LClient from "lively.2lively/client.js"
+import { runCommand } from 'lively.shell/client-command.js';
 
 export default class Lively2LivelyPlugin {
 
@@ -29,7 +31,27 @@ export default class Lively2LivelyPlugin {
     this.l2lTracker = Tracker.ensure({namespace: l2lNamespace, io, hostname, port});
 
     this.l2lTracker.whenOnline(1000)
-      .then(() => livelyServer.debug && console.log(`[lively.server] started ${this.l2lTracker}`))
+      .then(
+        async () => {
+          livelyServer.debug && console.log(`[lively.server] started ${this.l2lTracker}`);
+          const client = new L2LClient.ensure({
+            url: `http://${hostname}:${port}/lively-socket.io`,
+            namespace: "l2l",
+            info: {
+              type: 'git version checker'
+            }
+          });
+          await client.whenRegistered();
+          const fetchCmd = 'git fetch';
+          await runCommand(fetchCmd, {l2lClient: client}).whenDone();
+          const hashCmd = 'git merge-base origin/main HEAD';
+          const result = await runCommand(hashCmd, {l2lClient: client}).whenDone();
+          const hash = result.stdout.trim();
+          // We reuse the client used for retrieving the server version, as there is no way to get an actual new clien with only a different info and otherwise the same params from the same place (node side server).
+          // Splitting this up lead to issues with discovery of the new peer inside of the client, even when re-registering the L2LClient.
+          // The race condition that this creates (L2L in the client finds this, but service has not yet been installed) is handled inside of the client (see `lively.ide/studio/version-checker.cp.js`).
+          client.addService('check git version', (tracker, msg, ackFn, sender) => { ackFn(msg.data.payload === hash) });
+          })
       .catch(err => console.error(`[lively.server] Error starting l2l tracker ${err.stack}`));
   }
 

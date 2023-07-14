@@ -13,11 +13,10 @@ stashOutput=$(git stash)
 stashOutputWithoutWhiteSpace=$(echo "$stashOutput" | xargs)
 
 echo "🪢 Retrieving the latest lively.next version."
-git pull
+git pull origin main --ff-only
 
 echo "📦 Installing latest version of lively.next."
 ./install.sh
-
 
 if [ "$stashOutputWithoutWhiteSpace" != "No local changes to save" ]; then
     echo "💾 Restoring local changes."
