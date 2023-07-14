@@ -1357,7 +1357,6 @@ export default class Renderer {
         const startIdx = isFirstLine ? selection.start.column : 0;
         const endIdx = isLastLine ? selection.end.column : charBounds.length - 1;
         const lineMinY = isFirstLine && arr.min(charBounds.slice(startIdx, endIdx + 1).map(cb => cb.top())) || 0;
-        const emptyBuffer = startIdx >= endIdx ? 5 : 0;
 
         cb = charBounds[startIdx];
         selectionTopLeft = pt(paddingLeft + (cb ? cb.left() : arr.last(charBounds).right()), yOffset + lineMinY);
@@ -1365,7 +1364,7 @@ export default class Renderer {
         cb = charBounds[endIdx];
         if (selection.includingLineEnd) { selectionBottomRight = pt(morph.width - morph.padding.right(), yOffset + lineMinY + line.height); } else {
           const excludeCharWidth = isLastLine && selection.end.column <= charBounds.length - 1;
-          selectionBottomRight = pt(paddingLeft + (cb ? (excludeCharWidth ? cb.left() : cb.right()) : arr.last(charBounds).right()) + emptyBuffer, yOffset + lineMinY + line.height);
+          selectionBottomRight = pt(paddingLeft + (cb ? (excludeCharWidth ? cb.left() : cb.right()) : arr.last(charBounds).right()), yOffset + lineMinY + line.height);
         }
 
         slices.push(Rectangle.fromAny(selectionTopLeft, selectionBottomRight));
