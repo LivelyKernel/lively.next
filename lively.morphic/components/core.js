@@ -451,6 +451,31 @@ export class ViewModel {
     }
   }
 
+  clearExposedProps () {
+    for (let prop of (this.expose || [])) {
+      if (obj.isArray(prop)) prop = prop[0];
+      delete this.view[prop];
+    }
+  }
+
+  /**
+   * Invoke the given callback function without the viewModel exposing any props.
+   * In case the function is asynchronous, the bindings will be disabled as long as the function needs to terminate.
+   * @param { function } cb - The function to invoke while the bindings are disabled.
+   * @return { } - The value returned by `cb`.
+   */
+  withoutExposedPropsDo (cb) {
+    this.clearExposedProps();
+    let res;
+    try {
+      res = cb();
+    } catch (err) {
+      console.error(err.message);
+    }
+    if (res && res.then) { return res.then(() => { this.reifyExposedProps(); return res; }); } else this.reifyExposedProps();
+    return res;
+  }
+
   disableBindings () {
     this.getBindingConnections().forEach(conn => conn.deactivate());
   }
