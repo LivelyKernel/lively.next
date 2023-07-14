@@ -1,4 +1,5 @@
 # lively.next
+
 [![Join our Chat room on Matrix](https://img.shields.io/badge/matrix%20chat-JOIN-success)](https://matrix.to/#/#lively.next:matrix.org)
 [![Run Tests](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml/badge.svg?branch=master)](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml)
     
@@ -15,15 +16,15 @@ This is the repository of the [lively.next project](https://lively-next.org).
 ## Setup
 
 You need to install `lively.next` on your system.
-Please note, that these instructions currently are are not recommended for openly deploying `lively.next` in the web!
+Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
 
-### Native Installation
+### Installation Requirements
 
-Currently, the MacOS, Linux, and the Linux Subsystem for Windows are supported.
-Make sure you have the following software installed.
+Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
+Make sure you have the following software installed:
 
 1. `node.js v18.12.1`
-2. `git`
+2. `git`.
 
 > **Warning**
 > To use all features of `lively.next`, please note the following:
@@ -40,13 +41,23 @@ For some more advanced development operations (bulk testing from the command lin
 - `brotli`
 - `aspell`.
 
-#### Installation Instructions
+### Installation Instructions
 
 1. Clone this repository and run the `install.sh` script. This will install the necessary dependencies. Please note, that this process will take a few minutes.
 2. Run the `start.sh` script.
 3. Lively will now be running on your local computer at [http://localhost:9011](http://localhost:9011).
 
-Usually, running `start.sh` will now be enough to get you going again. When changes resulted in changed dependencies, you will need to run `install.sh` again, making it a good first step when troubleshooting.
+Usually, running `start.sh` will now be enough to get you going again.
+
+### Updating `lively.next`
+
+When a new version of `lively.next` is available, the Version Indicator in the lower-left corner will look like this:
+
+![A GIF showing an orange arrow. The arrow is bouncing and points to the text "Press here to update".](./assets/update.gif)
+
+Pressing will start the update process, automatically restart the server and prompt you to reload your lively session. Please make sure to save all your progress before updating.
+
+Manually updating can be done by pulling the latest version and just executing `install.sh` again. The server needs to be restarted afterwards and you need to reload your lively session.
 
 ## Documentation
 
