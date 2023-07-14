@@ -29,7 +29,7 @@ echo "🔁 Restart lively.next server."
 # 1. List all running commands and their PGID.
 # 2. Clean up the output (spaces instead of tabs).
 # 3. `grep` for `start.sh` and discard unecessary lines.
-# 4. Extract the PGID from the remaining information.
-kill -TERM "-$(ps -ax -o pgid,command | tr -s " " | grep -E "PGID|start.sh" | sed -n 2p | cut -d " " -f 2)"
+# 4. Extract the PGID from the remaining information. Since macOS output and linux output differ in whitespace, 🫓 that shit with xargs.
+kill -TERM "-$(ps -ax -o pgid,command | tr -s " " | grep -E "PGID|start.sh" | sed -n 2p | xargs | cut -d " " -f 1)"
 
 echo "✅ lively.next has been updated!"
