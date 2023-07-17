@@ -576,8 +576,12 @@ export class ViewModel {
  */
 export function part (componentDescriptor, overriddenProps = {}) {
   if (evaluateAsSpec) {
-    if (!overriddenProps.name && morph.usedNames.has(componentDescriptor.stylePolicy.name)) {
-      overriddenProps.name = componentDescriptor.stylePolicy.generateUniqueNameFor(overriddenProps);
+    if (!overriddenProps.name) {
+      if (!morph.usedNames.has(componentDescriptor.stylePolicy.name)) {
+        morph.usedNames.add(componentDescriptor.stylePolicy.name);
+      } else {
+        overriddenProps.name = componentDescriptor.stylePolicy.generateUniqueNameFor(overriddenProps);
+      }
     }
     return componentDescriptor.extend(overriddenProps); // creates an abstract inline policy
   }
