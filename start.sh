@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# "Parameter safety"
+if [ "$1" = "--debug" ]; then
+  debug='--debug'
+fi
+
 # The path to your start.sh script
 START_SCRIPT_PATH="./start-server.sh"
 
@@ -20,6 +25,6 @@ trap 'handle_sigint' SIGINT
 
 while true
 do
-  bash "$START_SCRIPT_PATH" "$1"
+  bash "$START_SCRIPT_PATH" "$debug"
   sleep 1
 done
