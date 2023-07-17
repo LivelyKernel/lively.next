@@ -417,7 +417,7 @@ export class Project {
         // Same version has already been requested, we only need to add to requester list.
         if (dependencyMap[depToEnsure.name][depToEnsure.version]) {
           const dependerArray = dependencyMap[depToEnsure.name][depToEnsure.version];
-          if (!dependerArray.includes(depToEnsure.requester)) dependencyMap[depToEnsure.name][depToEnsure.version] = dependerArray.push(depToEnsure.requester);
+          if (!dependerArray.includes(depToEnsure.requester)) dependerArray.push(depToEnsure.requester);
           // Same name has been requested, but not the same version.
         } else dependencyMap[depToEnsure.name][depToEnsure.version] = [depToEnsure.requester];
         depsToEnsure.shift();
