@@ -969,7 +969,6 @@ const TopBar = component({
       }),
       part(TopBarButton, {
         name: 'open component browser',
-        fontSize: 25,
         padding: rect(3, 0, -3, 0),
         textAndAttributes: Icon.textAttribute('cubes'),
         tooltip: 'Browse master components'
