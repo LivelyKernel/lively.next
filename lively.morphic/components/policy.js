@@ -1114,7 +1114,10 @@ export class PolicyApplicator extends StylePolicy {
     if (this.parent && !this.mentionedByParents(targetName)) {
       if (!wrapAsAdded) return currSpec;
     }
-    const parentSpec = this.ensureSubSpecFor(submorph.owner);
+    const parentSpecOrPolicy = this.ensureSubSpecFor(submorph.owner);
+    let parentSpec;
+    if (parentSpecOrPolicy.isPolicy) parentSpec = parentSpecOrPolicy.spec;
+    else parentSpec = parentSpecOrPolicy;
     const { submorphs = [] } = parentSpec;
     if (wrapAsAdded) currSpec = add(currSpec);
     submorphs.push(currSpec);
