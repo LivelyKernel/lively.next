@@ -815,10 +815,14 @@ export class BrowserModel extends ViewModel {
 
   updateSource (source, cursorPos) {
     const ed = this.ui.sourceEditor;
+
+    source = source.split(objectReplacementChar).join('');
+    source = source.replaceAll(/\r\n/g, '\n');
+
     if (ed.textString !== source) {
       ed.textString = source;
     }
-    source = source.split(objectReplacementChar).join('');
+
     this.resetChangedContentIndicator();
     this.state.moduleChangeWarning = null;
     if (cursorPos) ed.cursorPosition = cursorPos;
