@@ -451,6 +451,7 @@ export class ExportedComponent extends Morph {
       const container = this.get('preview container');
       const maxExtent = pt(100, 70);
       container.clipMode = 'hidden';
+      preview.rotation = 0;
       preview.scale = 1;
       preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
       preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
