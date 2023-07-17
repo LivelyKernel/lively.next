@@ -153,11 +153,6 @@ export class RichTextControlModel extends ViewModel {
         if (quote) quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
         if (inlineLink) inlineLink.master = text.link ? hoveredButtonComponent : activeButtonComponent;
         if (paddingControls) paddingControls.startPadding(text.padding);
-        if (text.isMorph) {
-          fixedExtent.master = text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
-          autoHeight.master = text.fixedWidth && !text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
-          autoWidth.master = !text.fixedWidth && text.fixedHeight ? hoveredButtonComponent : activeButtonComponent;
-        }
       });
     });
   }
@@ -312,6 +307,7 @@ export class RichTextControlModel extends ViewModel {
   }
 
   updateFontWeightChoices (forFont) {
+    debugger;
     const supportedFontWeights = availableFonts().find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
     this.models.fontWeightSelector.items = supportedFontWeights.length > 0 ? supportedFontWeights : [400, 700].map(fontWeight => fontWeightToString(fontWeight));
   }
@@ -587,10 +583,11 @@ const RichTextControl = component(PropertySection, {
     extent: pt(251.4, 65.6),
     fill: Color.transparent,
     layout: new TilingLayout({
-      wrapSubmorphs: true,
+      hugContentsVertically: true,
+      orderByIndex: true,
+      padding: rect(20, 0, -20, 0),
       spacing: 10,
-      padding: Rectangle.inset(20, 0, 0, 0),
-      hugContentsVertically: true
+      wrapSubmorphs: true
     }),
     submorphs: [{
       name: 'alignment controls',
@@ -625,42 +622,6 @@ const RichTextControl = component(PropertySection, {
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-justify')
-      })]
-    }, {
-      name: 'resizing controls',
-      extent: pt(80.4, 22),
-      master: { auto: BoundsContainerInactive, hover: BoundsContainerHovered },
-      layout: new TilingLayout({
-        hugContentsVertically: true,
-        justifySubmorphs: 'spaced',
-        spacing: 5
-      }),
-      submorphs: [part(PropertyLabel, {
-        name: 'auto width',
-        tooltip: 'Fit Width',
-        padding: rect(3, 0, -3, 0),
-        rotation: Math.PI / 2,
-        textAndAttributes: ['\ue94f', {
-          fontSize: 18,
-          fontFamily: 'Material Icons'
-        }]
-      }), part(PropertyLabel, {
-        name: 'auto height',
-        tooltip: 'Fit Height',
-        padding: 0,
-        textAndAttributes: ['\ue94f', {
-          fontSize: 18,
-          fontFamily: 'Material Icons'
-        }]
-      }), part(PropertyLabel, {
-        name: 'fixed extent',
-        padding: 0,
-        fontSize: 14,
-        tooltip: 'Fix Extent/Don\'t fit',
-        textAndAttributes: ['\ue835', {
-          fontSize: 18,
-          fontFamily: 'Material Icons'
-        }]
       })]
     }, part(EnumSelector, {
       name: 'line wrapping selector',
