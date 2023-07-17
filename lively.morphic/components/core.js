@@ -53,7 +53,9 @@ export class ComponentDescriptor {
   }
 
   static prepareUsedNamesSet () {
-    return new Set();
+    const usedNames = new Set();
+    usedNames.initialSize = 0;
+    return usedNames;
   }
 
   /**
