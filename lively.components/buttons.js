@@ -108,6 +108,8 @@ export class ButtonModel extends ViewModel {
 
   trigger () {
     try {
+      // This is temporary fix, until we convert the entire system
+      // to never signal on the model, but always view the view.
       signal(this.view, 'fire');
       signal(this, 'fire');
       typeof this.action === 'function' && this.action();
