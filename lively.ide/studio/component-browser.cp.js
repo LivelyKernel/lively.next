@@ -1,5 +1,5 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+import { TilingLayout, config, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { Project } from 'lively.project';
 import { PackageRegistry, isModuleLoaded, module, importPackage } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
@@ -635,6 +635,7 @@ export class ProjectEntry extends Morph {
 
   disableNavigation () {
     this._navigationDisabled = true;
+    this.getSubmorphNamed('project title').nativeCursor = 'auto';
     this.getSubmorphNamed('project title').value = [this.worldName, {}];
   }
 }
@@ -1514,7 +1515,7 @@ const ComponentBrowser = component({
       textAndAttributes: ['', {
         fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
         fontWeight: '900',
-        lineHeight: 1.2,
+        lineHeight: 1.2
       }]
     }, part(InputLineDefault, {
       name: 'search input',
