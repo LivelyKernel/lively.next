@@ -49,7 +49,7 @@ class FontManagerModel extends PopupModel {
 
   async regenerateFontList (withLoadingIndicator = false) {
     let li;
-    if (withLoadingIndicator) li = $world.showLoadingIndicatorFor($world, 'Loadingf Project Fonts');
+    if (withLoadingIndicator) li = $world.showLoadingIndicatorFor($world, 'Loading Project Fonts');
     this.ui.fontListContainer.submorphs = [];
     const projectFonts = await $world.openedProject.retrieveProjectFontsFromCSS();
     for (let fontObj of projectFonts) {
