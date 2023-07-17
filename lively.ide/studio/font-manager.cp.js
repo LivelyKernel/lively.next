@@ -135,6 +135,7 @@ class FontManagerModel extends PopupModel {
     };
     await $world.openedProject.deleteCustomFont(fontFace, false);
     await $world.openedProject.addCustomFontFace(fontFace);
+    $world.get('text control')?.update();
   }
 
   async onNativeDrop (evt) {
@@ -221,6 +222,7 @@ class FontListEntryModel extends ViewModel {
     await this.deleteFont(true);
     await cb();
     await this.addFont();
+    $world.get('text control')?.update();
   }
 
   async addFont () {
