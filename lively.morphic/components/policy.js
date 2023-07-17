@@ -404,7 +404,9 @@ export class StylePolicy {
     };
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
-        if (!node.name) { node.name = this.generateUniqueNameFor(node); }
+        if (node.props) {
+          if (!node.props.name) { node.props.name = this.generateUniqueNameFor(node); }
+        } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
         if (node.isPolicy) return node;
         if (node.master && node !== spec) {
           return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
