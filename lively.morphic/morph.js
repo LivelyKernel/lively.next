@@ -2738,6 +2738,7 @@ export class Image extends Morph {
       },
 
       naturalExtent: {
+        derived: true,
         defaultValue: null,
         get () {
           const ext = this.getProperty('naturalExtent');
