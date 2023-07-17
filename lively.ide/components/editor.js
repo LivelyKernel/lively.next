@@ -29,7 +29,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   get isScoped () { return !!this[metaSymbol].path; }
 
   static prepareUsedNamesSet (generatorFunction) {
-    return new Set(scanForNamesInGenerator(generatorFunction));
+    const usedNames = new Set(scanForNamesInGenerator(generatorFunction));
+    usedNames.initialSize = usedNames.size;
+    return usedNames;
   }
 
   static for (generatorFunction, meta, prev) {
@@ -69,7 +71,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   checkForGeneratedNames () {
-    this._hasGeneratedNames = morph.usedNames.size > 0;
+    this._hasGeneratedNames = morph.usedNames.size > morph.usedNames.initialSize;
   }
 
   getModuleSource () {
