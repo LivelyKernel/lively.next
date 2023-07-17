@@ -138,7 +138,7 @@ class FontManagerModel extends PopupModel {
   }
 
   async onNativeDrop (evt) {
-    const { dragAndDropArea, statusText, statusPrompt } = this.ui;
+    const { dragAndDropArea } = this.ui;
 
     dragAndDropArea.borderWidth = 2;
 
@@ -146,8 +146,6 @@ class FontManagerModel extends PopupModel {
     if (!domEvt.dataTransfer.items.length) return;
     const legalFiles = Array.from(domEvt.dataTransfer.items).filter(item => item.type === 'font/woff2').map(i => i.getAsFile());
     const legalFilesCount = legalFiles.length;
-    statusPrompt.visible = true;
-    statusText.value = `${legalFilesCount} fonts for upload!`;
 
     if (legalFilesCount) {
       for (let legalFile of legalFiles) {
