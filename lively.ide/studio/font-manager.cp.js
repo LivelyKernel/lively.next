@@ -1,23 +1,20 @@
 /* global FormData */
-import { component, ShadowObject, add, part, TilingLayout, ViewModel } from 'lively.morphic';
+import { component, add, part, TilingLayout, ViewModel } from 'lively.morphic';
 import { pt, rect } from 'lively.graphics/geometry-2d.js';
 import { Color } from 'lively.graphics/color.js';
 
 import { Text } from 'lively.morphic/text/morph.js';
 
 import { currentUsername } from 'lively.user';
-import { InputLineDefault } from 'lively.components/inputs.cp.js';
+
 import { resource } from 'lively.resources';
-import { DarkPopupWindow, DarkThemeList, DarkNumberIconWidget, EnumSelector, RemoveButton, TextInput, PropertyLabelActive, PropertyLabelHovered, PropertyLabel } from './shared.cp.js';
+import { DarkPopupWindow, DarkThemeList, EnumSelector, RemoveButton, TextInput, PropertyLabelActive, PropertyLabelHovered, PropertyLabel } from './shared.cp.js';
 import { PopupModel } from './controls/popups.cp.js';
-import { SystemButtonDark, DarkButton } from 'lively.components/buttons.cp.js';
-import { FileStatusDefault, FileStatusWarning } from '../js/browser/ui.cp.js';
+import { DarkButton } from 'lively.components/buttons.cp.js';
+import { FileStatusWarning } from '../js/browser/ui.cp.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { arr, promise, obj } from 'lively.lang';
 import { connect, once, signal } from 'lively.bindings';
-
-const FONT_ENTRY_HEADER_HEIGHT = 37;
-const FONT_ENTRY_FULL_HEIGHT = 200;
 
 export function openFontManager () {
   return part(FontManagerPopup).openInWorld(); // eslint-disable-line no-use-before-define
@@ -165,15 +162,15 @@ class FontManagerModel extends PopupModel {
     this.ui.statusPrompt.visible = false;
   }
 
-  onNativeDragenter (evt) {
+  onNativeDragenter () {
     this.ui.dragAndDropArea.borderWidth = 7;
   }
 
-  onNativeDragleave (evt) {
+  onNativeDragleave () {
     this.ui.dragAndDropArea.borderWidth = 2;
   }
 
-  onNativeDragend (evt) {
+  onNativeDragend () {
     this.ui.dragAndDropArea.borderWidth = 2;
   }
 }
@@ -204,7 +201,7 @@ class FontListEntryModel extends ViewModel {
 
   editFont () {
     // opens the font edit popup
-    const p = part(FontConfigurationPopup, {
+    const p = part(FontConfigurationPopup, { // eslint-disable-line no-use-before-define
       viewModel: {
         fontName: this.fontName,
         fontWeight: this.fontWeight,
