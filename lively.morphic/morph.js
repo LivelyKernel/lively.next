@@ -1198,6 +1198,8 @@ export class Morph {
     const anim = change.meta && change.meta.animation;
     const { prop, value } = change;
 
+    if (prop === 'origin') this.renderingState.hasStructuralChanges = true;
+
     if (prop === 'position' || prop === 'rotation' ||
         prop === 'scale' ||
         prop === 'origin' ||

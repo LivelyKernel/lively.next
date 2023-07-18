@@ -318,11 +318,11 @@ export default class Renderer {
    * @param {Boolean} fixChildNodes - Whether or not the nodes that are already children of `node` should be moved into the wrapper node.
    */
   installWrapperNodeFor (morph, node, fixChildNodes = false) {
-    const wrapperNode = this.submorphWrapperNodeFor(morph);
-    if (morph.isPolygon) this.renderPolygonClipMode(morph, wrapperNode);
+    if (morph.isPolygon) this.renderPolygonClipMode(morph, this.submorphWrapperNodeFor(morph));
 
     const wrapped = node.querySelector(`#submorphs-${morph.id}`);
     if (!wrapped) {
+      const wrapperNode = this.submorphWrapperNodeFor(morph);
       if (morph.isText && morph.document) {
         let scrollWrapper = node.querySelector('.scrollWrapper');
         if (!scrollWrapper) {
@@ -342,6 +342,10 @@ export default class Renderer {
         });
       }
       return wrapperNode;
+    } else {
+      let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
+      wrapped.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
+      wrapped.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
     }
   }
 
