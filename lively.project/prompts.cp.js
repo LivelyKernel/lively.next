@@ -19,6 +19,7 @@ import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
+import { once } from "lively.bindings";
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -113,13 +114,21 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     }
   }
 
-  viewDidLoad () {
-    const { promptTitle, cancelButton, okButton } = this.ui;
+  async viewDidLoad () {
+    const { promptTitle, cancelButton, okButton, userFlap } = this.ui;
     okButton.disable();
     if (!this.canBeCancelled) cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
-    } else this.projectNameMode();
+    } else {
+        const li = $world.showLoadingIndicatorFor(this.view);
+        li.center = $world.visibleBounds().center();
+        li.hasFixedPosition = true;
+        once(this.view, 'activate', () => li.bringToFront());
+        await userFlap.update();
+        li.remove();
+        this.projectNameMode();
+    }
     promptTitle.textString = 'Configure new Project';
   }
 

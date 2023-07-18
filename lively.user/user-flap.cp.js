@@ -1,6 +1,6 @@
 import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
-import { currentUser, clearUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUsertoken, storeCurrentUsertoken } from 'lively.user';
+import { currentUser, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUsertoken, storeCurrentUsertoken } from 'lively.user';
 import { signal } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
@@ -57,10 +57,16 @@ class UserFlapModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
         }
       }
     };
+  }
+
+  async update (){
+    clearUserData();
+    await this.retrieveGithubUserData();
+    this.showUserData()
   }
 
   leftUserLabelClicked () {
@@ -77,7 +83,7 @@ class UserFlapModel extends ViewModel {
     avatar.visible = this.withLoginButton ? false : !avatar.visible;
   }
 
-  viewDidLoad () {
+  async viewDidLoad () {
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
     if (currentUser().login === 'guest') {
       if (this.withLoginButton) {
@@ -89,6 +95,7 @@ class UserFlapModel extends ViewModel {
         rightUserLabel.tooltip = '';
       }
     } else {
+      await this.update();
       this.showUserData();
       leftUserLabel.tooltip = '';
       rightUserLabel.tooltip = 'Logout';
@@ -216,7 +223,7 @@ class UserFlapModel extends ViewModel {
   }
 
   logout () {
-    clearUserData();
+    clearAllUserData();
     this.showGuestUser();
     signal(this.view, 'onLogout');
     $world.setStatusMessage('Logged out. No git operations possible.');
