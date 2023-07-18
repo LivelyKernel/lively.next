@@ -23,7 +23,7 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async initializeGitRepository () {
-    const cmd = this.runCommand('git init -b main');
+    const cmd = this.runCommand('git init && git symbolic-ref HEAD refs/heads/main');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error initializing git repository');
   }
