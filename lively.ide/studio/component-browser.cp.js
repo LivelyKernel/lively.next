@@ -398,7 +398,7 @@ export class ExportedComponent extends Morph {
         }
       },
       isSelected: {},
-      isInLocalProject: {
+      isInOpenedProject: {
         derived: true,
         readOnly: true,
         get () {
@@ -829,7 +829,7 @@ export class ComponentBrowserModel extends ViewModel {
   ensureButtonControls () {
     const selectedComponent = this.getSelectedComponent();
     this.models.importButton.deactivated = !selectedComponent;
-    this.models.editButton.deactivated = !selectedComponent || !selectedComponent.isInLocalProject;
+    this.models.editButton.deactivated = !selectedComponent || !selectedComponent.isInOpenedProject;
     if (this.models.editButton.deactivated) this.ui.editButton.tooltip = 'You can not edit this component, since it is outside of your current project.';
     else {
       this.ui.editButton.tooltip = 'Click to start editing this component.\nNote that changes to this component will\npropagate throughout your project.';
