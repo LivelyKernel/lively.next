@@ -320,10 +320,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         viewModel: {
           listMaster: SystemList,
           openListInWorld: true,
-          listAlign: 'selection',
-          items: [
-            { string: '---', value: '---', isListItem: true }
-          ]
+          listAlign: 'selection'
         }
       }),
       {
