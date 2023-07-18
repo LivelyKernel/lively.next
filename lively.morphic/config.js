@@ -78,7 +78,8 @@ const config = {
       canvasModeEnabled: true,
       zoom: { step: 0.07, min: 0.02 },
       defaultMode: 'Halo', // can either be 'Halo' or 'Hand'
-      worldMenuInTopBar: false
+      worldMenuInTopBar: false,
+      componentEditViaComponentBrowser: false
     },
 
     js: {
