@@ -889,6 +889,7 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async activate (pos = false) {
+    this.ui.editButton.visible = config.ide.studio.componentEditViaComponentBrowser;
     this._promise = promise.deferred();
     this.ui.searchInput.focus();
     this.ensureButtonControls();
