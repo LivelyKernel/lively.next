@@ -51,10 +51,6 @@ class MasterComponentTreeData extends TreeData {
     node.isDirty = true;
     if (!bool) {
       if (node.type === 'package') {
-        if (!PackageRegistry.ofSystem(System).lookup(node.name)) {
-          // if this is a project, load the project
-          await importPackage(node.url);
-        }
         node.subNodes = await this.listComponentFilesInPackage(node.url);
       }
 
