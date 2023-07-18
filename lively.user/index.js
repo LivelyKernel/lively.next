@@ -28,7 +28,11 @@ export function storeCurrentUsertoken (token) {
   localStorage.setItem('gh_access_token', token);
 }
 export function clearUserData () {
-  localStorage.removeItem('gh_access_token');
   localStorage.removeItem('gh_user_data');
   localStorage.removeItem('gh_user_organizations');
+}
+
+export function clearAllUserData (){
+  clearUserData();
+  localStorage.removeItem('gh_access_token');
 }
