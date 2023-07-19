@@ -290,7 +290,8 @@ export class LivelyWorld extends World {
       .filter(m => !m.isTooltip)
       .filter(m => !m.isHaloItem)
       .filter(m => !m.styleClasses.includes('HaloPreview'))
-      .filter(m => !m.isPrompt);
+      .filter(m => !m.isPrompt)
+      .filter(m => !m.isTestRunner);
   }
 
   zoomWorld (delta) {
