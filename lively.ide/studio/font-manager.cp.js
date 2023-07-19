@@ -308,6 +308,7 @@ class FontConfigurationModel extends PopupModel {
 }
 
 const FontListEntry = component({
+  name: 'font list entry',
   defaultViewModel: FontListEntryModel,
   extent: pt(212.2, 36.7),
   layout: new TilingLayout({
