@@ -93,7 +93,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         createdProject = await Project.fromRemote(urlString);
         super.resolve(createdProject);
       } catch (err) {
-        li.remove();
         this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
       }
     } else {
@@ -108,7 +107,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         li.remove();
         super.resolve(createdProject);
       } catch (err) {
-        li.remove();
+        li?.remove();
         this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
       }
     }
