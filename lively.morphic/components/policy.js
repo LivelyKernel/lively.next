@@ -503,7 +503,7 @@ export class StylePolicy {
         }
         // ensure the presence of all nodes
         if (localSpec === spec) {
-          if (!localSpec.name) localSpec.name = parentSpec.name;
+          if (!localSpec.name && parentSpec.name) localSpec.name = parentSpec.name;
           return;
         }
         if (localSpec.isPolicy) {
