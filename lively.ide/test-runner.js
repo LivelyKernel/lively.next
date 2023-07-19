@@ -262,7 +262,8 @@ export default class TestRunner extends HTMLMorph {
           this.editorPlugin.setSystemInterface(systemInterface);
           this.get('eval backend button').updateFromTarget();
         }
-      }
+      },
+      isTestRunner: { defaultValue: true }
     };
   }
 
@@ -434,12 +435,12 @@ export default class TestRunner extends HTMLMorph {
     const pkgs = localInterface.coreInterface.getPackages();
     const pkg = pkgs.find(pkg => pkg.name === packageName);
     if (!pkg) throw new Error('Cannot find package for name: ' + packageName);
-    
+
     // Allows us to access the testing configurations stored in packages-config.js
     const pkgsConf = await packagesConfig();
     const wantsServerInterface = pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
     this.updateEvalBackendForPackage(wantsServerInterface);
-    
+
     const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);
     const results = [];
     for (const url of testModuleURLs) { results.push(await this.runTestFile(url)); }
