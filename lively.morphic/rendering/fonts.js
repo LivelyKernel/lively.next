@@ -156,13 +156,14 @@ export function availableFonts () {
 
 export function generateFontFaceString (customFontFaceObj) {
   let { fontName, fileName, fontWeight, fontStyle, unicodeRange } = customFontFaceObj;
-  return `@font-face {
+  const fontfaceString = `@font-face {
   font-family: '${fontName}';
-  src: url('./assets/${fileName}.woff2');
-  font-weight: ${obj.isArray(fontWeight) ? fontWeight.join(' ') : fontWeight };
-  font-style: ${fontStyle};
+  src: url('./assets/${fileName}.woff2');FONT_WEIGHT_PLACEHOLDERfont-style: ${fontStyle};
   unicode-range: ${(unicodeRange === '' ? false : unicodeRange) || "''" };
   font-display: swap;
 }
+
 `;
+  const hasExplicitFontWeight = fontWeight && !(obj.isArray(fontWeight) && fontWeight.length === 0);
+  return fontfaceString.replace('FONT_WEIGHT_PLACEHOLDER', hasExplicitFontWeight ? `\n  font-weight: ${obj.isArray(fontWeight) ? fontWeight.join(' ') : fontWeight };\n  ` : '\n  ');
 }

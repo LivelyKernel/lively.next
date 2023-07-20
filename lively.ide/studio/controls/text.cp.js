@@ -309,7 +309,6 @@ export class RichTextControlModel extends ViewModel {
   }
 
   updateFontWeightChoices (forFont) {
-    debugger;
     const supportedFontWeights = availableFonts().find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
     this.models.fontWeightSelector.items = supportedFontWeights.length > 0 ? supportedFontWeights : [400, 700].map(fontWeight => fontWeightToString(fontWeight));
   }
