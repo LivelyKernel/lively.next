@@ -266,7 +266,7 @@ class ModuleInterface {
       _observersOfTopLevelState
     } = this;
     const newM = module(System, newId);
-    state._recorder[newM.varDefinitionCallbackName] = state._recorder[this.varDefinitionCallbackName];
+    if (state._recorder) { state._recorder[newM.varDefinitionCallbackName] = state._recorder[this.varDefinitionCallbackName]; }
     Object.assign(newM, state);
     System.set(newId, System.newModule(moduleRecord));
     return newM;
