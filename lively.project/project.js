@@ -573,7 +573,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
       availableDeps.forEach(dep => {
-        if (content.includes(dep.name) && 
+        if (content.includes(dep.name) &&
             !currentDeps.some(alreadyPresentDeps => dep.name === alreadyPresentDeps.name) &&
             `${this.repoOwner}--${this.name}` !== dep.name) currentDeps.push(dep);
       });
@@ -627,7 +627,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     for (let match of matches) {
       const fontString = match[1].replaceAll(/\s+/g, ' ');
       fontObjects.push({
-        fileName: fontString.match(/url\('(.*)'\);/)[1].replace('./assets/', '').replace('.woff2', ''),
+        fileName: fontString.match(/url\('.*\/(.*)\.woff2'\);/)[1],
         fontName: fontString.match(/font-family: '(.*)'; src/)[1],
         fontWeight: fontString.match(/font-weight: ([\s\d]*);/)?.[1].split(' ').map(i => Number.parseInt(i)) || [],
         fontStyle: fontString.match(/font-style: ([a-z]*);/)[1],
