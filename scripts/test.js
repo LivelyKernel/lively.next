@@ -54,10 +54,10 @@ const req = http.request(options, res => {
       }
       if (data.error) {
         if (CI) {
-          console.log(`::error:: Running the tests produced the following error: ${JSON.stringify(data.error)}`);
-          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error: ${JSON.stringify(data.error)}`);
+          console.log(`::error:: Running the tests produced the following error:\n${JSON.stringify(data.error)}`);
+          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${JSON.stringify(data.error)}\n`);
         }
-        else console.log(`❌ Running the tests produced the following error: ${JSON.stringify(data.error)}`);
+        else console.log(`❌ Running the tests produced the following error:\n${JSON.stringify(data.error)}`);
         return;
       }
       data.forEach((testfile) => {
@@ -126,10 +126,10 @@ const req = http.request(options, res => {
       }
     } catch (err) {
       if (CI) {
-        console.log(`::error:: Running the tests produced the following error: "${err}"`);
-        fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error: "${err}"\n`);
+        console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
+        fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n"${err}"\n`);
       } else {
-        console.log(`❌ Running the tests produced the following error: "${err}"`);
+        console.log(`❌ Running the tests produced the following error:\n"${err}"`);
       }
     }
   });
