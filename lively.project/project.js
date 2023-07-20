@@ -629,7 +629,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
       fontObjects.push({
         fileName: fontString.match(/url\('(.*)'\);/)[1].replace('./assets/', '').replace('.woff2', ''),
         fontName: fontString.match(/font-family: '(.*)'; src/)[1],
-        fontWeight: fontString.match(/font-weight: ([\s\d]*);/)[1].split(' ').map(i => Number.parseInt(i)),
+        fontWeight: fontString.match(/font-weight: ([\s\d]*);/)?.[1].split(' ').map(i => Number.parseInt(i)) || [],
         fontStyle: fontString.match(/font-style: ([a-z]*);/)[1],
         unicodeRange: fontString.match(/unicode-range: ([^;]*)/)?.[1] || "''"
       });
@@ -653,7 +653,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
         const range = fontObj.fontWeight;
         for (let i = Number(range[0]); i <= range[1]; i += 100) supportedWeights.push(i);
         return { name, supportedWeights };
-      } else return {}; // Should never happen, just in case so that we do not error out.
+      } else return { name, supportedWeights: [] }; // No explicit fontWeight defined
     }).filter(value => Object.keys(value).length !== 0);
 
     // The above transformation might produce multiple objects for the same font.

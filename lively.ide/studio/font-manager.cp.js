@@ -127,7 +127,7 @@ class FontManagerModel extends PopupModel {
     let name = file.name.replace('.woff2', '');
     // do not add the same font face again
     const fontFace = {
-      fontWeight: [400],
+      fontWeight: [],
       fontName: name,
       fileName: name,
       fontStyle: 'normal',
@@ -189,7 +189,7 @@ class FontListEntryModel extends ViewModel {
       fontName: {}, // name of the font family
       fileName: {}, // name of the file
       fontWeight: {
-        defaultValue: [400] // or [400, 800]
+        defaultValue: []
       },
       fontStyle: {
         defaultValue: 'normal'
@@ -264,7 +264,7 @@ class FontConfigurationModel extends PopupModel {
       isPropertiesPanelPopup: { get () { return true; } },
       fontName: {},
       fontStyle: { defaultValue: 'normal' },
-      fontWeight: { defaultValue: [400] },
+      fontWeight: { defaultValue: [] },
       unicodeRange: { defaultValue: 'U+0-10FFFF' }
     };
   }
