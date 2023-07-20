@@ -4,7 +4,7 @@ import { AddButton, PropertyLabel, DarkPopupWindow, DarkThemeList, PropertyLabel
 import { ColorInput } from '../../styling/color-picker.cp.js';
 
 import { arr, string } from 'lively.lang';
-import { once, connect, signal } from 'lively.bindings';
+import { once, epiConnect, signal } from 'lively.bindings';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupModel } from './popups.cp.js';
@@ -230,7 +230,7 @@ export class BorderControlModel extends PropertySectionModel {
     p.topRight = this.ui.moreButton.globalBounds().bottomRight().addXY(0, 5);
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     once(p.viewModel, 'close', this, 'closePopup');
-    connect(p.viewModel, 'target updated', this, 'update');
+    epiConnect(p.viewModel, 'target updated', this, 'update');
   }
 
   /**
