@@ -479,7 +479,11 @@ function additionalIgnoredDecls (parsed, options) {
   }
 
   return topLevel.scope.catches.map(ea => ea.name)
-    .concat(ignoreDecls.map(ea => ea.id.name));
+    .concat(ignoreDecls.map(ea => {
+      if (ea.id.type === 'ArrayPattern') return ea.id;
+      else if (ea.id.type === 'ObjectPattern') return ea.id;
+      return ea.id.name;
+    }).flat());
 }
 
 function additionalIgnoredRefs (parsed, options) {
@@ -505,6 +509,7 @@ function additionalIgnoredRefs (parsed, options) {
 
 function shouldDeclBeCaptured (decl, options) {
   return options.excludeDecls.indexOf(decl.id.name) === -1 &&
+    options.excludeDecls.indexOf(decl.id) === -1 &&
     (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
 }
 
