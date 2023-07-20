@@ -350,6 +350,7 @@ const FontListEntry = component({
       padding: rect(5, 2, -4, -1),
       height: 23.7265625,
       readOnly: true,
+      tooltip: '.woff2 name of the font file',
       textAndAttributes: ['Example Font Name ', {}]
     }), part(RemoveButton, {
       master: { auto: RemoveButton, hover: PropertyLabelHovered },
@@ -624,6 +625,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             opacity: 0.7,
             position: pt(5.4, 28.4),
             fixedWidth: true,
+            tooltip: 'A single fontweight or a range of fontweights for which to use this font file. For most cases, the default value will suffice.',
             textAndAttributes: ['Font Weight  ', null, '', {
               fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
               fontWeight: '900'
@@ -696,6 +698,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             nativeCursor: 'pointer',
             opacity: 0.7,
             position: pt(44.6, 31.4),
+            tooltip: 'A list of unicode code-points for which to use this font. If empty, this font-file will be used for all code-points. Usually, this is the warranted behavior.',
             textAndAttributes: ['Unicode Range  ', null, '', {
               fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
               fontWeight: '900'
