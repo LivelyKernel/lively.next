@@ -1,5 +1,5 @@
 import { pt, Color, rect } from 'lively.graphics';
-import { TilingLayout, config, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
+import { TilingLayout, morph, config, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { Project } from 'lively.project';
 import { PackageRegistry, isModuleLoaded, module, importPackage } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
@@ -441,18 +441,17 @@ export class ExportedComponent extends Morph {
   generatePreview () {
     try {
       const preview = part(this.component, { defaultViewModel: null, name: this.component.componentName });
-      // disable view model
-      // scale to fit
-      // disable all mouse interaction
       const container = this.get('preview container');
       const maxExtent = pt(100, 70);
       container.clipMode = 'hidden';
-      preview.rotation = 0;
       preview.scale = 1;
-      preview.scale = Math.min(maxExtent.x / preview.bounds().width, maxExtent.y / preview.bounds().height);
+      // This is needed since the centering via css layouts gets currently quite
+      // confused when transforms are applied (scale, rotation)
+      const previewBoundsWrapper = morph({ fill: Color.transparent, reactsToPointer: false, extent: preview.bounds().extent(), submorphs: [preview] });
+      preview.topLeft = pt(0, 0);
+      previewBoundsWrapper.scale = Math.min(maxExtent.x / previewBoundsWrapper.bounds().width, maxExtent.y / previewBoundsWrapper.bounds().height);
+      container.submorphs = [previewBoundsWrapper];
       preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
-      container.submorphs = [preview];
-      preview.center = container.innerBounds().center();
     } catch (err) {
       this.displayError(err);
     }
