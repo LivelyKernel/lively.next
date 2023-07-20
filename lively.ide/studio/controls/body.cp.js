@@ -1,7 +1,7 @@
 import { TilingLayout, ShadowObject, component, ViewModel, part } from 'lively.morphic';
 import { Color, rect, pt } from 'lively.graphics';
 import { obj, arr } from 'lively.lang';
-import { once, noUpdate, connect } from 'lively.bindings';
+import { once, noUpdate, epiConnect } from 'lively.bindings';
 
 import { ShadowPopup, OpacityPopup, FlipPopup, TiltPopup, CursorPopup, BlurPopup, InsetShadowPopup } from './popups.cp.js';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
@@ -131,7 +131,7 @@ export class BodyControlModel extends PropertySectionModel {
       this.disableAddEffectButton();
     }
     once(control.viewModel, 'remove', this, 'deactivate');
-    connect(control.viewModel, 'selectedProp', this, 'refreshItemLists');
+    epiConnect(control.viewModel, 'selectedProp', this, 'refreshItemLists');
   }
 
   /**
@@ -333,7 +333,7 @@ export class DynamicPropertyModel extends ViewModel {
     p.topRight = this.view.globalBounds().topLeft();
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     once(p, 'remove', this, 'closePopup');
-    connect(p.viewModel, 'value', this, 'confirm');
+    epiConnect(p.viewModel, 'value', this, 'confirm');
   }
 
   /**

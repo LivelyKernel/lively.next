@@ -1,7 +1,7 @@
 import { Morph, TilingLayout, component, without, ViewModel, part, add } from 'lively.morphic';
 import { pt, rect, Rectangle, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
-import { connect, signal, disconnect, once } from 'lively.bindings';
+import { epiConnect, signal, disconnect, once } from 'lively.bindings';
 import {
   AddButton, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
   LabeledCheckbox, DarkNumberIconWidget, PropertyLabelHovered
@@ -204,7 +204,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     if (this.popup) return;
     // fixme: How to make this parametrizable?
     const p = this.popup = part(this.controlFlapComponent, { viewModel: { targetMorph: this.targetMorph } });
-    connect(p.viewModel, 'update', this, 'update');
+    epiConnect(p.viewModel, 'update', this, 'update');
     once(p.viewModel, 'close', this, 'closePopup');
     p.openInWorld();
     p.topRight = this.ui.miniLayoutPreview.globalBounds().bottomRight().addXY(0, 2);
@@ -310,7 +310,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
   }
 
   start () {
-    connect($world, 'onMouseDown', this, 'closeIfClickedOutside');
+    epiConnect($world, 'onMouseDown', this, 'closeIfClickedOutside');
   }
 
   closeIfClickedOutside (evt) {

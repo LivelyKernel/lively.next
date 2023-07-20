@@ -1,8 +1,8 @@
-import { TilingLayout, easings, touchInputDevice, component, without, add, ensureFont, ViewModel, part } from 'lively.morphic';
+import { TilingLayout, easings, touchInputDevice, component, without, add, ViewModel, part } from 'lively.morphic';
 import { Color, Rectangle } from 'lively.graphics';
 import { pt, rect } from 'lively.graphics/geometry-2d.js';
 import { ColorInput } from 'lively.ide/styling/color-picker.cp.js';
-import { connect, disconnect } from 'lively.bindings';
+import { epiConnect, disconnect } from 'lively.bindings';
 
 import { RichTextControl } from './controls/text.cp.js';
 import { ShapeControl } from './controls/shape.cp.js';
@@ -120,10 +120,10 @@ export class PropertiesPanelModel extends ViewModel {
    */
   attachToTarget (aMorph) {
     this.models.backgroundControl.focusOn(aMorph);
-    connect(aMorph, 'onHaloOpened', this, 'focusOn', {
+    epiConnect(aMorph, 'onHaloOpened', this, 'focusOn', {
       garbageCollect: true
     });
-    connect(aMorph, 'onHaloRemoved', this, 'clearFocus', {
+    epiConnect(aMorph, 'onHaloRemoved', this, 'clearFocus', {
       garbageCollect: true
     });
   }
@@ -137,10 +137,10 @@ export class PropertiesPanelModel extends ViewModel {
 
   attachToWorld (aWorld) {
     this.models.backgroundControl.focusOn(aWorld);
-    connect(aWorld, 'showHaloFor', this, 'focusOn', {
+    epiConnect(aWorld, 'showHaloFor', this, 'focusOn', {
       garbageCollect: true
     });
-    connect(aWorld, 'onHaloRemoved', this, 'clearFocus', {
+    epiConnect(aWorld, 'onHaloRemoved', this, 'clearFocus', {
       garbageCollect: true
     });
   }
@@ -201,8 +201,8 @@ export class PropertiesPanelModel extends ViewModel {
       disconnect(this.targetMorph, 'remove', this, 'clearFocusIfRemoved');
     }
     this.targetMorph = aMorph;
-    connect(aMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
-    connect(aMorph, 'remove', this, 'clearFocusIfRemoved');
+    epiConnect(aMorph, 'onOwnerChanged', this, 'onTargetMovedInHierarchy');
+    epiConnect(aMorph, 'remove', this, 'clearFocusIfRemoved');
 
     this.toggleDefaultControls(true);
 

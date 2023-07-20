@@ -12,7 +12,7 @@ import {
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
-import { disconnect, connect } from 'lively.bindings';
+import { disconnect, epiConnect } from 'lively.bindings';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
@@ -91,7 +91,7 @@ export class RichTextControlModel extends ViewModel {
 
     // also watch for changes in selection
     if (target.isText && !this.globalMode) {
-      connect(target, 'selectionChange', this, 'update');
+      epiConnect(target, 'selectionChange', this, 'update');
     }
   }
 
