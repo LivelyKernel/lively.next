@@ -57,7 +57,7 @@ function parseFunction (source, options = {}) {
 function fuzzyParse (source, options) {
   // options: verbose, addSource, type
   options = options || {};
-  options.ecmaVersion = options.ecmaVersion || 11;
+  options.ecmaVersion = options.ecmaVersion || 12;
   options.sourceType = options.sourceType || 'module';
   options.plugins = options.plugins || {};
   const comments = [];
@@ -172,7 +172,7 @@ function parse (source, options) {
   // }
 
   options = options || {};
-  options.ecmaVersion = options.ecmaVersion || 11;
+  options.ecmaVersion = options.ecmaVersion || 12;
   options.allowAwaitOutsideFunction = true;
   options.sourceType = options.sourceType || 'module';
   if (!options.hasOwnProperty('allowImportExportEverywhere')) { options.allowImportExportEverywhere = true; }
