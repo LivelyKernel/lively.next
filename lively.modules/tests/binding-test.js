@@ -128,9 +128,9 @@ describe('binding', () => {
     },
     {
       decl: {
-        start: 0,
-        end: 31,
-        type: 'ExportNamedDeclaration'
+        start: 9,
+        end: 10,
+        type: 'ExportSpecifier'
       },
       declModule: { id: testProjectDir + 'file5.js' },
       id: { start: 9, end: 10, name: 'x' }
@@ -159,9 +159,9 @@ describe('binding', () => {
       id: { start: 9, end: 10, name: 'y' }
     }, {
       decl: {
-        start: 0,
-        end: 36,
-        type: 'ExportNamedDeclaration'
+        start: 9,
+        end: 15,
+        type: 'ExportSpecifier'
       },
       declModule: { id: testProjectDir + 'file7.js' },
       id: { start: 14, end: 15, name: 'y' }
