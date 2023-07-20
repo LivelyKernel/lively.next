@@ -21,6 +21,7 @@ import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rend
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
 import { openFontManager } from '../font-manager.cp.js';
+import { capitalize } from 'lively.lang/string.js';
 
 /**
  * This model provides functionality for rich-text-editing frontends.
@@ -127,7 +128,7 @@ export class RichTextControlModel extends ViewModel {
         fontFamilySelector.selection = text.fontFamily.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
 
-        fontWeightSelector.selection = /\d/.test(text.fontWeight) ? fontWeightToString(text.fontWeight) : text.fontWeight;
+        fontWeightSelector.selection = /\d/.test(text.fontWeight) ? fontWeightToString(text.fontWeight) : capitalize(text.fontWeight);
 
         if (text.fontWeightMixed || this.globalMode && text.hasMixedTextAttributes('fontWeight')) fontWeightSelector.setMixed();
         this.updateFontWeightChoices(text.fontFamily);
