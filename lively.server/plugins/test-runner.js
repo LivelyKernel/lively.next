@@ -27,7 +27,13 @@ export default class TestRunner {
     const runner = new TestRunner();
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
     const results = await runner.runTestsInPackage('${module_to_test}');
-    JSON.stringify(results)
+    results.forEach(r => {
+      r.tests?.forEach(t => {
+        if (t.error) t.error = true
+        else t.error = false;
+      })
+    });
+    JSON.stringify(results);
     `)
     } catch (err) {
       results = JSON.stringify({ error: err.message });
