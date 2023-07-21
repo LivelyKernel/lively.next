@@ -44,7 +44,9 @@ let commands = [
         preview.openInWindow(options.openInWorld).activate();
       }
 
-      if (preview.getWindow()) $world.addMorph(preview.getWindow()).activate();
+      if (preview.getWindow() && preview.world()) {
+        $world.addMorph(preview.getWindow()).activate();
+      }
 
       preview.renderMarkdown();
 
