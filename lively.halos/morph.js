@@ -2077,15 +2077,20 @@ export default class Halo extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   updateBoundsFor (corner, proportional, delta, bounds, origin) {
+    const s = this.target.scale;
     const proportionalMask = {
-      topLeft: rect(-1, -1, 1, 1),
-      topCenter: proportional ? rect(1, -1, 0, 1) : rect(0, -1, 0, 1),
-      topRight: rect(0, -1, 1, 1),
+      topLeft: Rectangle.inset(-s, -s, s - 1, s - 1),
+      topCenter: proportional
+        ? Rectangle.inset(s, -s, 2 - s, s - 1)
+        : Rectangle.inset(0, -s, 0, s - 1),
+      topRight: Rectangle.inset(0, -s, 1, s - 1),
       rightCenter: proportional ? rect(0, 1, 1, 1) : rect(0, 0, 1, 0),
       bottomRight: rect(0, 0, 1, 1),
       bottomCenter: proportional ? rect(1, 0, 0, 1) : rect(0, 0, 0, 1),
-      bottomLeft: rect(-1, 0, 1, 1),
-      leftCenter: proportional ? rect(-1, 1, 1, 0) : rect(-1, 0, 1, 0)
+      bottomLeft: Rectangle.inset(-s, 0, s - 1, 1),
+      leftCenter: proportional
+        ? Rectangle.inset(-s, s, s - 1, 2 - s)
+        : Rectangle.inset(-s, 0, s - 1, 0)
     };
     const { x, y, width, height } = proportionalMask[corner];
     delta = proportional ? this.proportionalDelta(corner, delta, bounds) : delta;
@@ -2094,6 +2099,7 @@ export default class Halo extends Morph {
       delta.y * y,
       delta.x * width,
       delta.y * height);
+
     this.active = true;
     // if the target is controlled by a layout, we have to ignore the position, and dispatch that to the layout
     this.withMetaDo({ reconcileChanges: true }, () => {
