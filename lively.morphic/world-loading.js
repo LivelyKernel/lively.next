@@ -1,6 +1,6 @@
 /* global System,fetch */
 import { resource, registerExtension as registerResourceExension } from 'lively.resources';
-import { subscribe, emit } from 'lively.notifications';
+import { subscribe, subscribeOnce, emit } from 'lively.notifications';
 import { Path, obj, date, promise, string } from 'lively.lang';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
@@ -90,7 +90,7 @@ async function loadLocalConfig () {
     if (await resource(localconfig.id).exists()) { await localconfig.reload({ resetEnv: false, reloadDeps: false }); }
   } catch (err) {
     console.error('Error loading localconfig:', err);
-    if (typeof $world !== 'undefined') { $world.showError(`Error loading localconfig.js: ${err}`); }
+    subscribeOnce('world/loaded', () => { $world.showError(`Error loading localconfig.js: ${err}`); });
   }
 }
 
