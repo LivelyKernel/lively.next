@@ -575,6 +575,7 @@ export class ViewModel {
  * @returns { Morph } A new morph derived from the master component.
  */
 export function part (componentDescriptor, overriddenProps = {}) {
+  if (!componentDescriptor.isPolicy && !componentDescriptor.isComponentDescriptor) { throw new Error('Cannot derive a morph from ' + componentDescriptor + " since it's neither a style policy nor a component descriptor!"); }
   if (evaluateAsSpec) {
     if (!overriddenProps.name) {
       if (!morph.usedNames.has(componentDescriptor.stylePolicy.name)) {
