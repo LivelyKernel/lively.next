@@ -618,9 +618,19 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
+          this.setProperty('fontFamily', sanitizeFont(fontFamily));
           document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
-            .then(() => this.setProperty('fontFamily', sanitizeFont(fontFamily)));
+            .then(() => {
+              this._fontFamilyToRender = this.fontFamily;
+            });
         }
+      },
+
+      // This property is the one that is actually used to determine the fontFamily that is rendered.
+      // To ensure that no artifacts of the font loading are visible to users, we change the rendered font when the font to be used is actually loaded and thus available for the browser to be used.
+      // In order to not break the assumption that morph properties are changed synchronously, we use this internal property so that `fontFamily` is updated immediately.
+      _fontFamilyToRender: {
+        defaultValue: 'IBM Plex Sans'
       },
 
       fontSize: {
@@ -690,12 +700,20 @@ export class Text extends Morph {
         values: ['bold', 'bolder', 'light', 'lighter', 'normal'],
         defaultValue: 'normal',
         set (weight) {
+          this.setProperty('fontWeight', weight);
           document.fonts.load(`${this.fontStyle} ${weight} 12px ${this.fontFamily}`)
-            .then(() => this.setProperty('fontWeight', weight));
+            .then(() => this._fontWeightToRender = weight);
         },
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
+      },
+
+      // This property is the one that is actually used to determine the fontWeight that is rendered.
+      // To ensure that no artifacts of the font loading are visible to users, we change the rendered font when the font to be used is actually loaded and thus available for the browser to be used.
+      // In order to not break the assumption that morph properties are changed synchronously, we use this internal property so that `fontWeight` is updated immediately.
+      _fontWeightToRender: {
+        defaultValue: 'normal'
       },
 
       fontStyle: {
@@ -703,13 +721,21 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['normal', 'italic', 'oblique'],
         set (style) {
+          this.setProperty('fontStyle', style);
           document.fonts.load(`${style} ${this.fontWeight} 12px ${this.fontFamily}`)
-            .then(() => this.setProperty('fontStyle', style));
+            .then(() => this._fontStyleToRender = style);
         },
         defaultValue: 'normal',
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
+      },
+
+      // This property is the one that is actually used to determine the fontStyle that is rendered.
+      // To ensure that no artifacts of the font loading are visible to users, we change the rendered font when the font to be used is actually loaded and thus available for the browser to be used.
+      // In order to not break the assumption that morph properties are changed synchronously, we use this internal property so that `fontStyle` is updated immediately.
+      _fontStyleToRender: {
+        defaultValue: 'normal'
       },
 
       textDecoration: {
@@ -2882,9 +2908,9 @@ export class Text extends Morph {
   styleObject () {
     const {
       padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
-      fontStyle,
-      fontWeight,
-      fontFamily,
+      _fontStyleToRender,
+      _fontWeightToRender,
+      _fontFamilyToRender,
       fontColor,
       textAlign,
       fontSize,
@@ -2908,9 +2934,9 @@ export class Text extends Morph {
     if (letterSpacing) style['letter-spacing'] = letterSpacing + 'px';
     if (wordSpacing) style['word-spacing'] = wordSpacing + 'px';
     if (lineHeight) style['line-height'] = lineHeight;
-    if (fontFamily) style['font-family'] = fontFamily;
-    if (fontWeight) style['font-weight'] = fontWeight;
-    if (fontStyle) style['font-style'] = fontStyle;
+    if (_fontFamilyToRender) style['font-family'] = _fontFamilyToRender;
+    if (_fontWeightToRender) style['font-weight'] = _fontWeightToRender;
+    if (_fontStyleToRender) style['font-style'] = _fontStyleToRender;
     if (textDecoration) style['text-decoration'] = textDecoration;
     if (fontSize) style['font-size'] = fontSize + 'px';
     if (textAlign) style['text-align'] = textAlign;
