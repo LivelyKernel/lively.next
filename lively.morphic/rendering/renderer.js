@@ -346,6 +346,7 @@ export default class Renderer {
       let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
       wrapped.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
       wrapped.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
+      return wrapped;
     }
   }
 
@@ -448,9 +449,15 @@ export default class Renderer {
       return;
     }
 
-    // Due to the early return, we know that we have submorphs here.
-    let alreadyRenderedSubmorphs = morph.renderingState.renderedMorphs;
+    function sanitize (renderedSubmorphs, nodeContainingSubmorphChildren) {
+      const childIds = new Set([...nodeContainingSubmorphChildren.children].map(node => node.id));
+      return renderedSubmorphs.filter(m => childIds.has(m.id));
+    }
 
+    // Due to the early return, we know that we have submorphs here.
+    // Due to us resolving `add` and `remove` operations rolled into one, the already rendered submorphs need to be filtered to be sure they are correct.
+    let submorphsNode = node;
+    let alreadyRenderedSubmorphs = morph.renderingState.renderedMorphs;
     let newlyRenderedSubmorphs = withoutAll(submorphsToRender, alreadyRenderedSubmorphs);
     if (morph.isWorld) {
       alreadyRenderedSubmorphs = withoutAll(alreadyRenderedSubmorphs, morph.renderingState.renderedFixedMorphs);
@@ -460,10 +467,10 @@ export default class Renderer {
     let skipWrapping = morph.layout && morph.layout.renderViaCSS;
     if (morph.isPath) {
       if (skipWrapping) {
-        const [firstSvg, secondSvg] = Array.from(node.children).filter(n => n.tagName === 'svg');
+        const [firstSvg, secondSvg] = Array.from(submorphsNode.children).filter(n => n.tagName === 'svg');
         keyed('id',
-          node,
-          alreadyRenderedSubmorphs,
+          submorphsNode,
+          sanitize(alreadyRenderedSubmorphs, submorphsNode),
           submorphsToRender,
           item => this.renderMorph(item),
           noOpUpdate,
@@ -471,20 +478,20 @@ export default class Renderer {
           secondSvg
         );
       } else {
-        this.installWrapperNodeFor(morph, node);
+        submorphsNode = this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.firstChild.nextSibling,
-          alreadyRenderedSubmorphs,
+          submorphsNode,
+          sanitize(alreadyRenderedSubmorphs, node.firstChild.nextSibling),
           submorphsToRender,
           item => this.renderMorph(item)
         );
       }
     } else if (morph.isText) {
       if (!skipWrapping) {
-        this.installWrapperNodeFor(morph, node);
+        submorphsNode = this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.querySelector(`#submorphs-${morph.id}`),
-          alreadyRenderedSubmorphs,
+          submorphsNode,
+          sanitize(alreadyRenderedSubmorphs, submorphsNode),
           submorphsToRender,
           item => this.renderMorph(item)
         );
@@ -492,18 +499,18 @@ export default class Renderer {
     } else { // morph is not path and not text
       if (skipWrapping) {
         keyed('id',
-          node,
-          alreadyRenderedSubmorphs,
+          submorphsNode,
+          sanitize(alreadyRenderedSubmorphs, submorphsNode),
           submorphsToRender,
           item => this.renderMorph(item),
           noOpUpdate,
           this.isComposite(morph) ? node.firstChild : null
         );
       } else {
-        this.installWrapperNodeFor(morph, node);
+        submorphsNode = this.installWrapperNodeFor(morph, node);
         keyed('id',
-          node.lastChild,
-          alreadyRenderedSubmorphs,
+          submorphsNode,
+          sanitize(alreadyRenderedSubmorphs, submorphsNode),
           submorphsToRender,
           item => this.renderMorph(item)
         );
