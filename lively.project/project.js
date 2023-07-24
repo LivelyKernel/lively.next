@@ -22,7 +22,8 @@ import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
-
+const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
+Its contend is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
 export class Project {
   static retrieveAvailableProjectsCache () {
     return JSON.parse(localStorage.getItem('available_lively_projects'));
@@ -339,8 +340,7 @@ export class Project {
         },
         assets: { },
         'index.css': '/* Use this file to add custom CSS to be used for this project! */\n/* Do NOT use @import rules in this file! */',
-        'fonts.css': `/* DO NOT CHANGE THE CONTENTS OF THIS FILE!
-Its contend is managed automatically by lively.next. It will automatically be loaded/bundled together with this project! */`
+        'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
       this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
@@ -613,6 +613,7 @@ Its contend is managed automatically by lively.next. It will automatically be lo
     const fontFileToDelete = resource($world.openedProject.url).join('assets/' + fontObjToDelete.fileName + '.woff2');
     const newProjFonts = currentProjFonts.filter((projFont) => !obj.equals(projFont, fontObjToDelete));
     let cssString = newProjFonts.map(f => generateFontFaceString(f)).join('\n');
+    cssString = fontCSSWarningString + cssString;
     const fontCSS = resource(this.url).join('fonts.css');
     if (deleteFile) await fontFileToDelete.remove();
     await fontCSS.write(cssString);
