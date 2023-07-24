@@ -2015,7 +2015,7 @@ export default class Renderer {
         line.hasEstimatedExtent = foundEstimatedLine;
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node, gtfm);
         // if we measured but the font as not been loaded, this is also just an estimate
-        line.hasEstimatedExtent = !fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight);
+        line.hasEstimatedExtent = !fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender);
         if (!textLayerNode.isConnected) line.hasEstimatedExtent = true;
         line = line.nextLine();
       }
@@ -2036,7 +2036,7 @@ export default class Renderer {
       if (needsTransformAdjustment) lineNode.style.transform = '';
 
       if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth) &&
-         morph.fontMetric.isFontSupported(morph.fontFamily, morph.fontWeight)) {
+         morph.fontMetric.isFontSupported(morph._fontFamilyToRender,  morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
         morph.renderingState.needsFit = true;
