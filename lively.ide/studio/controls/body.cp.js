@@ -72,10 +72,9 @@ export class BodyControlModel extends PropertySectionModel {
   focusOn (aMorph) {
     this.targetMorph = aMorph;
     this.ensureDynamicControls();
-    // enable adding effects when we come from a morph which had all available effects applied
-    this.enableAddEffectButton();
     // disable adding effects if the selected morph already has all effects applied
     if (this.availableItems.length === 0) this.disableAddEffectButton();
+    else this.enableAddEffectButton();
   }
 
   /**
@@ -111,6 +110,11 @@ export class BodyControlModel extends PropertySectionModel {
     this._refreshing = true;
     this.dynamicControls.forEach(ctrl => ctrl.refreshItems(this.availableItems));
     this._refreshing = false;
+    if (this.availableItems.length < 1) {
+      this.disableAddEffectButton();
+    } else {
+      this.enableAddEffectButton();
+    }
   }
 
   /**
@@ -122,16 +126,13 @@ export class BodyControlModel extends PropertySectionModel {
    */
   addDynamicProperty (selectedProp, reset = true, applyDefault = true) {
     const { targetMorph, propConfig } = this;
+    if (!selectedProp) selectedProp = this.availableItems[0];
     const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
-    if (!selectedProp) selectedProp = this.availableItems[0];
     control.choose(selectedProp, reset, applyDefault);
-    control.refreshItems(this.availableItems);
-    if (this.availableItems.length === 0) {
-      this.disableAddEffectButton();
-    }
     once(control.viewModel, 'remove', this, 'deactivate');
     epiConnect(control.viewModel, 'selectedProp', this, 'refreshItemLists');
+    this.refreshItemLists();
   }
 
   /**
@@ -151,9 +152,6 @@ export class BodyControlModel extends PropertySectionModel {
    * Ensures that the appearance of the body control is faded out.
    */
   deactivate () {
-    if (this.availableItems.length === 1 || (this.availableItems.includes('Drop shadow') && this.availableItems.length === 2)) {
-      this.enableAddEffectButton();
-    }
     this.refreshItemLists();
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());
