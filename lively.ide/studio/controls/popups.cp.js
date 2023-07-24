@@ -1063,7 +1063,11 @@ const BlurPopup = component(DarkPopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(DarkNumberIconWidget, {
       name: 'value input',
-      min: 0,
+      viewModel: {
+        min: 0,
+        scaleFactor: 100,
+        unit: '%'
+      },
       position: pt(11.3, 14),
       submorphs: [{
         name: 'interactive label',
@@ -1173,10 +1177,13 @@ const TiltPopup = component(DarkPopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(DarkNumberIconWidget, {
       name: 'value input',
-      unit: '°',
-      min: 0,
-      scaleFactor: 180,
-      max: 1,
+      extent: pt(90, 22),
+      viewModel: {
+        unit: '°',
+        min: 0,
+        scaleFactor: 180,
+        max: 1
+      },
       position: pt(11.3, 14),
       tooltip: 'Object Tilt',
       submorphs: [{
@@ -1204,10 +1211,13 @@ const FlipPopup = component(DarkPopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(DarkNumberIconWidget, {
       name: 'value input',
-      unit: '°',
-      min: 0,
-      scaleFactor: 180,
-      max: 1,
+      extent: pt(90, 22),
+      viewModel: {
+        unit: '°',
+        min: 0,
+        scaleFactor: 180,
+        max: 1
+      },
       position: pt(11.3, 14),
       tooltip: 'Object Flip',
       submorphs: [{
