@@ -354,7 +354,10 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
-        if (target.isText) target.fixedWith = true;
+
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          if (target.isText) target.fixedWith = true;
+        });
 
         this.ui.widthInput.enable();
         break;
@@ -420,7 +423,11 @@ export class ShapeControlModel extends ViewModel {
           });
         }
         if (target.layout?.hugContentsVertically) target.layout.hugContentsVertically = false;
-        if (target.isText) target.fixedHeight = true;
+
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          if (target.isText) target.fixedHeight = true;
+        });
+
         this.ui.heightInput.enable();
         break;
       case ('fill'):
