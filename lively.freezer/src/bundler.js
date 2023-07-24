@@ -235,7 +235,7 @@ export default class LivelyRollup {
 
   /**
    * Returns the source code of the root module for the current freeze build.
-   * This can a module as specified by the.
+   * This needs to be a module as specified by the config.
    * @returns { string } The source code of the root module.
    */
   async getRootModule () {
@@ -834,17 +834,17 @@ export default class LivelyRollup {
     let bundledProjectCSS = '';
     let bundledProjectFontCSS = '';
     // In contrast to `assets`, we cannot tell which CSS and font files are actually used. We need to collect them for the project to be bundled and all its dependencies.
-    for (let project of this.projectsInBundle.entries()) {
-      const indexCSSFile = projectsDir.join(project[0]).join('index.css');
+    for (let [project] of this.projectsInBundle.entries()) {
+      const indexCSSFile = projectsDir.join(project).join('index.css');
       const indexCSSContents = await indexCSSFile.read();
       bundledProjectCSS =  indexCSSContents + '\n' + bundledProjectCSS;
-      const fontCSSFile = projectsDir.join(project[0]).join('fonts.css');
+      const fontCSSFile = projectsDir.join(project).join('fonts.css');
       // Inside of the projects, font files are in the assets folder, with font.css being a hierarchy above.
       // Inside of the bundles, font.css itself is part of the assets folder.
       const fontCSSContents = (await fontCSSFile.read()).replaceAll(/\.\/assets\//g, './');
       bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS ;
       // Each project can have multiple font files
-      const fontFiles = (await(await projectsDir.join(project[0]).join('assets')).dirList()).filter(f => f.url.includes('woff2'))
+      const fontFiles = (await(await projectsDir.join(project).join('assets')).dirList()).filter(f => f.url.includes('woff2'))
       for (let file of fontFiles) {
         file.beBinary();
         let source = await file.read();

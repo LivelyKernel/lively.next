@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: ["error", { "argsIgnorePattern": "_" }] */
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';

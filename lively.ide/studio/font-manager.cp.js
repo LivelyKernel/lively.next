@@ -141,7 +141,7 @@ class FontManagerModel extends PopupModel {
   async onNativeDrop (evt) {
     const { dragAndDropArea } = this.ui;
 
-    dragAndDropArea.borderWidth = 2;
+    dragAndDropArea.master = { auto: DragArea }; // eslint-disable-line no-use-before-define
 
     const { domEvt } = evt;
     if (!domEvt.dataTransfer.items.length) return;
@@ -162,15 +162,15 @@ class FontManagerModel extends PopupModel {
   }
 
   onNativeDragenter () {
-    this.ui.dragAndDropArea.borderWidth = 7;
+    this.ui.dragAndDropArea.master = { auto: DragAreaActive }; // eslint-disable-line no-use-before-define
   }
 
   onNativeDragleave () {
-    this.ui.dragAndDropArea.borderWidth = 2;
+    this.ui.dragAndDropArea.master = { auto: DragArea }; // eslint-disable-line no-use-before-define
   }
 
   onNativeDragend () {
-    this.ui.dragAndDropArea.borderWidth = 2;
+    this.ui.dragAndDropArea.master = { auto: DragArea }; // eslint-disable-line no-use-before-define
   }
 }
 
@@ -364,6 +364,64 @@ const FontListEntry = component({
   }]
 });
 
+const DragArea = component ({
+  name: 'drag and drop area',
+  fill: Color.rgba(255, 255, 255, 0),
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true
+  }),
+  borderRadius: 10,
+  borderWidth: 6,
+  extent: pt(211.5, 111.2),
+  borderStyle: 'dashed',
+  borderColor: Color.rgb(101, 101, 101),
+  submorphs: [{
+    type: Text,
+    name: 'drop label',
+    extent: pt(176, 48.3),
+    textAlign: 'center',
+    fontColor: Color.rgb(139, 141, 142),
+    fontSize: 17,
+    fixedWidth: true,
+    dynamicCursorColoring: true,
+    fill: Color.rgba(255, 255, 255, 0),
+    position: pt(22.6, 39.9),
+    textAndAttributes: ['Drop font file here', {
+      fontWeight: '600',
+      textAlign: 'center'
+    }, ' ', {
+      textAlign: 'center'
+    }, '', {
+      fontFamily: 'Tabler Icons',
+      fontWeight: '900',
+      textAlign: 'center'
+    }, ' \n\
+', {
+      textAlign: 'center'
+    }, 'or', {
+      fontWeight: '600',
+      textAlign: 'center'
+    }]
+
+  }, part(DarkButton, {
+    name: 'upload font button',
+    extent: pt(88.8, 28.8),
+    submorphs: [{
+      name: 'label',
+      fontSize: 12,
+      textAndAttributes: ['Browse files', null]
+
+    }]
+  })]
+})
+
+const DragAreaActive = component(DragArea, {
+  borderWidth: 8
+})
+
 const FontManager = component({
   name: 'font manager',
   fill: Color.rgba(255, 255, 255, 0),
@@ -381,59 +439,9 @@ const FontManager = component({
   }),
   extent: pt(290.7, 176),
   submorphs: [
-    {
-      name: 'drag and drop area',
-      fill: Color.rgba(255, 255, 255, 0),
-      layout: new TilingLayout({
-        align: 'center',
-        axis: 'column',
-        axisAlign: 'center',
-        orderByIndex: true
-      }),
-      borderRadius: 10,
-      borderWidth: 6,
-      extent: pt(211.5, 111.2),
-      borderStyle: 'dashed',
-      borderColor: Color.rgb(101, 101, 101),
-      submorphs: [{
-        type: Text,
-        name: 'drop label',
-        extent: pt(176, 48.3),
-        textAlign: 'center',
-        fontColor: Color.rgb(139, 141, 142),
-        fontSize: 17,
-        fixedWidth: true,
-        dynamicCursorColoring: true,
-        fill: Color.rgba(255, 255, 255, 0),
-        position: pt(22.6, 39.9),
-        textAndAttributes: ['Drop font file here', {
-          fontWeight: '600',
-          textAlign: 'center'
-        }, ' ', {
-          textAlign: 'center'
-        }, '', {
-          fontFamily: 'Tabler Icons',
-          fontWeight: '900',
-          textAlign: 'center'
-        }, ' \n\
-', {
-          textAlign: 'center'
-        }, 'or', {
-          fontWeight: '600',
-          textAlign: 'center'
-        }]
-
-      }, part(DarkButton, {
-        name: 'upload font button',
-        extent: pt(88.8, 28.8),
-        submorphs: [{
-          name: 'label',
-          fontSize: 12,
-          textAndAttributes: ['Browse files', null]
-
-        }]
-      })]
-    }, {
+    part(DragArea, {
+      name: 'drag and drop area'
+    }), {
       name: 'status prompt',
       extent: pt(207, 58),
       layout: new TilingLayout({
