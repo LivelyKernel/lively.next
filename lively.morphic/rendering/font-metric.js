@@ -12,14 +12,14 @@ export function fontWeightToString (weightNumber) {
   weightNumber = Number(weightNumber);
   switch (weightNumber) {
     case 100: return 'Thin';
-    case 200:return 'Extra Light';
-    case 300:return 'Light';
-    case 400:return 'Normal';
-    case 500:return 'Medium';
-    case 600:return 'Semi Bold';
-    case 700:return 'Bold';
-    case 800:return 'Extra Bold';
-    case 900:return 'Ultra Bold';
+    case 200: return 'Extra Light';
+    case 300: return 'Light';
+    case 400: return 'Normal';
+    case 500: return 'Medium';
+    case 600: return 'Semi Bold';
+    case 700: return 'Bold';
+    case 800: return 'Extra Bold';
+    case 900: return 'Ultra Bold';
   }
 }
 
@@ -234,7 +234,6 @@ export default class FontMetric {
     const check = document.fonts.check(`${style} ${weight} 12px ${font}`);
     if (check) this.supportedFontCache.add(`${style} ${weight} 12px ${font}`);
     return check;
-
   }
 
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {

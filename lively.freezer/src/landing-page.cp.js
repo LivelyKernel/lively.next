@@ -236,8 +236,6 @@ class WorldLandingPage extends Morph {
     `;
   }
 
-  get __head_html__ () { }
-
   get commands () {
     return [
       {

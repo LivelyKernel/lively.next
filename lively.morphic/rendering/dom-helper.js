@@ -135,18 +135,3 @@ export function addOrChangeLinkedCSS (id, url, doc = document, overwrite = true)
   }
   return Promise.resolve();
 }
-
-export function generateFontFaceString (customFontFaceObj) {
-  const { name, fontWeightRange, style, unicodeRange } = customFontFaceObj;
-
-  const fileName = name.replaceAll(' ', '_');
-  return `@font-face {
-  font-family: '${name}';
-  src: url('./assets/${fileName}.woff2');;
-  font-weight: ${fontWeightRange}};
-  font-style: ${style};
-  unicode-range: ${unicodeRange};
-  font-display: swap;
-}
-`;
-}

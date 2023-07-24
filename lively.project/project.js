@@ -218,11 +218,9 @@ export class Project {
   static async installCSSForProject (projectUrl, forProject, opts, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
     let indexCSS = await indexCSSResource.read();
-    if (forProject)indexCSS = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + indexCSS;
-    else indexCSS = `@import '/local_projects/${opts.name}/fonts.css';\n` + indexCSS;
-    if (forProject) addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, indexCSS);
-    else addOrChangeCSSDeclaration(`CSS-for-dependency-${opts.name}`, indexCSS);
     if (forProject) {
+      indexCSS = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + indexCSS;
+      addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, indexCSS);
       const updateProjectCSS = async () => {
         let cssContents = await indexCSSResource.read();
         cssContents = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + cssContents;
@@ -231,6 +229,9 @@ export class Project {
       };
       $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
+    } else {
+      indexCSS = `@import '/local_projects/${opts.name}/fonts.css';\n` + indexCSS;
+      addOrChangeCSSDeclaration(`CSS-for-dependency-${opts.name}`, indexCSS);
     }
   }
 
