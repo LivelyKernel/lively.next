@@ -94,17 +94,29 @@ export class Project {
     try {
       projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
-      const packageJSONObjects = packageJSONStrings.map(s => JSON.parse(s));
+      const packageJSONObjects = packageJSONStrings.flatMap(s => {
+        try { return JSON.parse(s); }
+        catch (e) {
+          console.error('An invalid lively Project was encountered (no valid `package.json`)!');
+          return [];
+        }
+      });
       // TODO: 🍴 Support
       // To allow correct resolution of projects via `flatn`, we need the name attribute in `package.json` to match the folder of the package.
       // To make working with the project names easier at runtime, we remove the owner-- here, so that the name attribute equals the project name again.
+      const validPackageJSONObjects = [];
       packageJSONObjects.forEach(pkg => {
-        pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
-        pkg.url = projectsDir.url + pkg.name;
-        pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
+        try {
+          pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
+          pkg.url = projectsDir.url + pkg.name;
+          pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
+          validPackageJSONObjects.push(pkg)
+        } catch (e) {
+          console.error('An invalid lively Project was encountered (`package.json` probably does not conform to `lively.project` standard)!');
+        }
       });
-      localStorage.setItem('available_lively_projects', JSON.stringify(packageJSONObjects));
-      return packageJSONObjects;
+      localStorage.setItem('available_lively_projects', JSON.stringify(validPackageJSONObjects));
+      return validPackageJSONObjects;
     } catch (err) {
       throw Error('Error listing local projects', { cause: err });
     }
