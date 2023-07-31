@@ -43,7 +43,8 @@ export const editingCommand = {
 
     connect($world, 'onMouseDown', t, 'cancelTemporaryEdit');
     // switch to hand mode to stop halo from eating clicks for editing
-    $world.get('lively top bar').setEditMode('Hand', true, true);
+    const topBar = $world.get('lively top bar') || $world.withAllSubmorphsSelect(m => m.isTopBar)?.[0];
+    topBar.setEditMode('Hand', true, true);
     t.editorPlugin.showIconButton(true);
     $world.halos().forEach(h => {
       if (h.target === textMorph) h.remove();
