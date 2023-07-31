@@ -4071,8 +4071,8 @@ export class Text extends Morph {
     }
     this.execCommand('clean up rich-text UI', true);
     disconnect($world, 'onMouseDown', this, 'cancelTemporaryEdit');
-    const topBar = $world.get('lively top bar');
-    if (!this.tmpEdit) return;
+    const topBar = $world.get('lively top bar') || $world.withAllSubmorphsSelect(m => m.isTopBar)?.[0];
+    if (!this.tmpEdit || !topBar) return;
     this.tmpEdit = false;
     topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
