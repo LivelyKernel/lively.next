@@ -120,13 +120,16 @@ for package in "${testfiles[@]}"; do
   ((RED_TESTS+=red))
   ((SKIPPED_TESTS+=skipped))
 
-  if [ "$CI" ] || [ "$STARTED_SERVER" = "1" ]; 
+  if [ "$CI" ]; 
   then
-    pkill start-server.sh
-    pkill -f lively
+    pkill -f lively.*start
   fi
 done
 
+if [ "$STARTED_SERVER" = "1" ];
+then
+    pkill -f lively.*start
+fi
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
 if [ ! "$1" ];
