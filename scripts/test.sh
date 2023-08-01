@@ -89,6 +89,7 @@ then
 fi
 
 for package in "${testfiles[@]}"; do
+  echo ''
   ((TESTED_PACKAGES++))
   if [ "$CI" ]; 
   then
@@ -109,7 +110,7 @@ for package in "${testfiles[@]}"; do
     exit 1
   fi
 
-  #parse summary parts and adjust env variables for overall stats
+  # Parse summary parts and adjust env variables for overall stats.
   # For perl magic see: https://stackoverflow.com/a/16658690
   green=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-passed:)\d+}g')
   red=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-failed:)\d+}g')
@@ -134,6 +135,7 @@ then
   if [ "$CI" ];
   then
     {
+      echo ''
       echo '## Summary Statistics';
       echo "- Executed $ALL_TESTS tests in $TESTED_PACKAGES packages.";
       echo "- ✅ $GREEN_TESTS (≈$GREEN_PERCENTAGES %) passed.";
@@ -142,6 +144,7 @@ then
     } >> "$GITHUB_STEP_SUMMARY"
     cat summary.txt >> "$GITHUB_STEP_SUMMARY"
   else
+    echo ''
     echo 'Summary Statistics'
     echo ''
     echo "- Executed $ALL_TESTS tests in $TESTED_PACKAGES packages."
