@@ -17,6 +17,7 @@ import { Console } from './debug/console.cp.js';
 import { WindowSwitcher } from './window-switcher.cp.js';
 import { browserForFile } from './js/browser/ui.cp.js';
 import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
+import { Project } from 'lively.project';
 
 const commands = [
 
@@ -836,6 +837,8 @@ const commands = [
     name: 'browse and load component',
     exec: async function (world) {
       const li = LoadingIndicator.open('loading component browser');
+      const p = $world.openedProject;
+      if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('partsbin', 'LivelyKernel', true);
       const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
       const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
       li.remove();
