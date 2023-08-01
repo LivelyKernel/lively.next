@@ -111,7 +111,6 @@ const req = http.request(options, res => {
         if (CI) console.log('::endgroup::');
         else console.log('');
       });
-      if (CI) {
         console.log(`SUMMARY-passed:${passed}`);
         fs.appendFileSync('summary.txt', `✅ ${passed} tests passed\n`);
         console.log(`SUMMARY-skipped:${skipped}`);
@@ -123,7 +122,6 @@ const req = http.request(options, res => {
           fs.appendFileSync('failing.txt', firstLineOfSummary);
           fs.appendFileSync('failing.txt', markdownListOfFailingTests);
         }
-      }
     } catch (err) {
       if (CI) {
         console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
