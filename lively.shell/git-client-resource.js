@@ -3,7 +3,7 @@ import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 
 export default class GitShellResource extends ShellClientResource {
-  constructor (url, l2lClient, options = {}) {
+  constructor (url) {
     url = url.replace('git\/', '');
     super(url);
     this.options.cwd = this.url;
@@ -51,7 +51,7 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope = false) {
-    let repoCreationCommand = orgScope
+    const repoCreationCommand = orgScope
       ? `curl -L \
               -X POST \
               -H "Accept: application/vnd.github+json" \
@@ -118,8 +118,6 @@ export default class GitShellResource extends ShellClientResource {
     await this.runCommand(resetCmd).whenDone();
   }
 }
-
-let _defaultL2LClient;
 
 export const gitResourceExtension = {
   name: 'git-shell-client',
