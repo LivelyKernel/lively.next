@@ -843,19 +843,22 @@ export default class LivelyRollup {
       // Inside of the bundles, font.css itself is part of the assets folder.
       const fontCSSContents = (await fontCSSFile.read()).replaceAll(/\.\/assets\//g, './');
       bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS ;
+      
+      const assetDir = await projectsDir.join(project).join('assets');
       // Each project can have multiple font files
-      const fontFiles = (await(await projectsDir.join(project).join('assets')).dirList()).filter(f => f.url.includes('woff2'))
-      for (let file of fontFiles) {
-        file.beBinary();
-        let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
-        plugin.emitFile({
-          type: 'asset',
-          fileName: joinPath('assets', file.name()),
-          source
-        });
+      if (await assetDir.exists()) {
+        const fontFiles = (await assetDir.dirList()).filter(f => f.url.includes('woff2'))
+        for (let file of fontFiles) {
+          file.beBinary();
+          let source = await file.read();
+          if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+          plugin.emitFile({
+            type: 'asset',
+            fileName: joinPath('assets', file.name()),
+            source
+          });
+        }
       }
-
     }
 
     const bundledCSS = bundledProjectFontCSS + '\n' + bundledProjectCSS;
