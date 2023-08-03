@@ -249,7 +249,12 @@ export class Project {
   }
 
   showDiffSummary () {
-    const term = Terminal.runCommand('git diff-files --stat', { cwd: this.gitResource.url, position: pt(100, 100) });
+    // Reset current staging area (necessary for `git diff-files` to procude meaningful output) while surpressing output.
+    // Run `git diff-file --stat` and output result (nice overview of **changed** files).
+    // Add all files to staging area while surpressing output, ensure that we reach the last command.
+    // Printout new line (just for easier to read output).
+    // Run git `status --short` and output result (overview **including new files**).
+    const term = Terminal.runCommand("git reset 1>/dev/null && git diff-files --stat && git add * 2>/dev/null || true && echo '' && git status --short", { cwd: this.gitResource.url, position: pt(100, 100) });
     term.position = pt(100, 100);
     return term;
   }
