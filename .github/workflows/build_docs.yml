@@ -1,44 +1,52 @@
 name: Build and Deploy Docs
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 on:
   workflow_dispatch:
-
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Setup node
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Setup `node`
       uses: actions/setup-node@v2
       with:
         node-version: '18.12.1'
-    - name: Install jsdocs
+    - name: Install `jsdoc`
       run: npm install -g jsdoc@3.6.7
-    - name: Install jsodc theme
+    - name: Install `jsdoc` theme
       run: npm install clean-jsdoc-theme
-    - name: Build docs
+    - name: Build Documentation
       run: jsdoc -c conf.json -R README.md
-    - name: Copy over custom style files for docs theme
+    - name: Copy over Custom Style Files for theme
       run: |
         cp doc-style/fonts/* docs/fonts/
         cp doc-style/styles/* docs/styles/
         cp doc-style/logo.svg docs/logo.svg
         cp lively.morphic/assets/favicon.ico docs/favicon.ico
-    - name: Configure git for lively-docs-bot
-      run: |
-        git config user.name lively-docs-bot
-        git config user.email lively-docs-bot@lively-next.org
-    # Since we only checkout the latest commit from the current branch,
-    # a local docs-latest branch will never exist.
-    # Force pushing the newly created branch will thus always keep the docs-latest
-    # branch on remote one commit ahead of the current branch.
-    # See the documentation of checkout@v2 for more info.
-    - name: Commit docs build onto docs-latest branch
-      run: |
-        git checkout -b docs-latest
-        git add docs/* -f
-        git commit -m "Latest docs based on $(git rev-parse --short HEAD)"
-        git push --set-upstream origin docs-latest --force
-      
+    - name: Upload Documentation Build
+      uses: actions/upload-pages-artifact@v2
+      with:
+        name: docs
+        path: docs/
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
+        with:
+          artifact_name: docs
+      - name: Delete uploaded Artifact
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: docs
