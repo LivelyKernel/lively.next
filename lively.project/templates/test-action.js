@@ -16,7 +16,7 @@ jobs:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
       - name: Setup node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18.12.1'
       - name: Install lively.next
