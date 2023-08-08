@@ -24,7 +24,7 @@ if (CI) {
   console.log(`::notice:: Tests for ${targetPackage} 📦`);
   fs.appendFileSync('summary.txt', `### Tests for ${targetPackage} 📦\n`);
 } else {
-  console.log(`🛈 Tests for ${targetPackage} 📦`);
+  console.log(`ℹ️ Tests for ${targetPackage} 📦`);
   console.log('');
 }
 const options = {
@@ -45,9 +45,9 @@ const req = http.request(options, res => {
       if (!Object.keys(data).length) {
         if (CI) {
           console.log(`::notice:: ${targetPackage} does not contain any tests\n`);
-          fs.appendFileSync('summary.txt', `🛈 ${targetPackage} does not contain any tests.\n`);
+          fs.appendFileSync('summary.txt', `ℹ️ ${targetPackage} does not contain any tests.\n`);
         } else {
-          console.log(`🛈 ${targetPackage} does not contain any tests`);
+          console.log(`ℹ️ ${targetPackage} does not contain any tests`);
         }
 
         return;
@@ -75,9 +75,9 @@ const req = http.request(options, res => {
           }
         } else if (testfile.tests.every((test) => !test.state)) {
           if (CI) {
-            console.log(`::group:: ${testfileName} ⏭️`);
+            console.log(`::group:: ${testfileName} ⏩`);
           } else {
-            console.log(`${testfileName} ⏭️`);
+            console.log(`${testfileName} ⏩`);
             console.log('---');
           }
         } else {
@@ -92,7 +92,7 @@ const req = http.request(options, res => {
           if (test.type !== 'test') return;
           if (!test.state) {
             skipped += 1;
-            console.log(`${test.fullTitle} skipped ⏭️`);
+            console.log(`${test.fullTitle} skipped ⏩`);
             return;
           }
           if (test.state === 'succeeded') {
@@ -114,7 +114,7 @@ const req = http.request(options, res => {
         console.log(`SUMMARY-passed:${passed}`);
         fs.appendFileSync('summary.txt', `✅ ${passed} tests passed\n`);
         console.log(`SUMMARY-skipped:${skipped}`);
-        fs.appendFileSync('summary.txt', `⏭️ ${skipped} tests skipped\n`);
+        fs.appendFileSync('summary.txt', `⏩ ${skipped} tests skipped\n`);
         console.log(`SUMMARY-failed:${failed}`);
         fs.appendFileSync('summary.txt', `❌ ${failed} tests failed\n`);
         if (markdownListOfFailingTests !== '') {
