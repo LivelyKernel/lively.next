@@ -1165,9 +1165,9 @@ const ProjectIcon = component({
     padding: rect(0, 0, 1, 0),
     position: pt(3.5, 89),
     textAndAttributes: ['', {
-      fontFamily: 'tabler-icons',
+      fontFamily: 'Tabler Icons',
       fontWeight: '900'
-    }, ' ', {}]
+    }]
   })]
 });
 
