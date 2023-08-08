@@ -164,6 +164,16 @@ elif [ "$CI" ];
   fi
 fi
 
+if [ "$CI" ];
+then
+  sed 's/✅/<g-emoji class="g-emoji" alias="white_check_mark" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png"><img class="emoji" alt="white_check_mark" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png" width="20" height="20"><\/g-emoji>/g' "$GITHUB_STEP_SUMMARY" |
+  sed 's/🧪/<g-emoji class="g-emoji" alias="test_tube" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f9ea.png"><img class="emoji" alt="test_tube" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f9ea.png" width="20" height="20"><\/g-emoji>/g' |
+  sed 's/⏩/<g-emoji class="g-emoji" alias="fast_forward" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/23e9.png"><img class="emoji" alt="fast_forward" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/23e9.png" width="20" height="20"><\/g-emoji>/g' |
+  sed 's/❌/<g-emoji class="g-emoji" alias="x" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/274c.png"><img class="emoji" alt="x" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/274c.png" width="20" height="20"><\/g-emoji>/g' |
+  sed 's/ℹ️/<g-emoji class="g-emoji" alias="information_source" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2139.png"><img class="emoji" alt="information_source" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2139.png" width="20" height="20"><\/g-emoji>/g' |
+  sed 's/📦/<g-emoji class="g-emoji" alias="package" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png"><img class="emoji" alt="package" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png" width="20" height="20"><\/g-emoji>/g' > "$GITHUB_STEP_SUMMARY"
+fi
+
 if ((RED_TESTS > 0 || ALL_TESTS == 0)); 
 then
   exit 1
