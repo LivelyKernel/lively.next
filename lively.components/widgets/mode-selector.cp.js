@@ -18,7 +18,10 @@ class ModeSelectorModel extends ViewModel {
       items: { },
       init: {},
       tooltips: {},
-      selectedItem: {}
+      selectedItem: {},
+      enabled: {
+        defaultValue: true
+      }
     };
   }
 
@@ -37,6 +40,24 @@ class ModeSelectorModel extends ViewModel {
     this.createLabels();
     this.selectedItem = this.items[this.init ? this.init : 0];
     this.ui.labels.find((label) => (label.name === this.selectedItem?.name) || (label.name === this.selectedItem + 'Label')).viewModel.toggleSelection(false);
+    if (!this.enabled) this.disable();
+  }
+
+  onRefresh (prop) {
+    if (prop === 'enabled') {
+      if (this.enabled) this.enable();
+      else this.disable();
+    }
+  }
+
+  enable () {
+    this.ui.labels.forEach(l => l.nativeCursor = 'pointer');
+    this.view.opacity = 1;
+  }
+
+  disable () {
+    this.ui.labels.forEach(l => l.nativeCursor = 'not-allowed');
+    this.view.opacity = 0.5;
   }
 
   createLabels () {
@@ -57,6 +78,7 @@ class ModeSelectorModel extends ViewModel {
   }
 
   update (item) {
+    if (!this.enabled) return;
     this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection();
     this.selectedItem = item;
     this.ui.labels.find((label) => label.name === item + 'Label').viewModel.toggleSelection();
