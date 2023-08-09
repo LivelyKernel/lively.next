@@ -36,14 +36,14 @@ class ModeSelectorModel extends ViewModel {
   viewDidLoad () {
     this.createLabels();
     this.selectedItem = this.items[this.init ? this.init : 0];
-    this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection(false);
+    this.ui.labels.find((label) => (label.name === this.selectedItem?.name) || (label.name === this.selectedItem + 'Label')).viewModel.toggleSelection(false);
   }
 
   createLabels () {
     this.view.submorphs = this.items.map((item, i) => {
       const label = part(ModeSelectorLabel, { // eslint-disable-line no-use-before-define
-        textString: item,
-        name: item + 'Label',
+        textString: item?.text || item,
+        name: item?.name || item + 'Label',
         tooltip: this.tooltips && this.tooltips[i] ? this.tooltips[i] : ''
       });
       connect(label, 'onMouseDown', this, 'update', {
