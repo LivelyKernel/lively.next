@@ -780,9 +780,39 @@ const InformPrompt = component(LightPrompt, {
   }))]
 });
 
+export const OKCancelButtonWrapper = component({
+  name: 'button wrapper',
+  extent: pt(331, 48.9),
+  fill: Color.rgba(0, 0, 0, 0),
+  layout: new TilingLayout({
+    align: 'center',
+    orderByIndex: true,
+    reactToSubmorphAnimations: false,
+    renderViaCSS: true,
+    spacing: 20
+  }),
+  submorphs: [part(GreenButton, {
+    name: 'ok button',
+    submorphs: [{ name: 'label', textString: 'OK' }]
+  }), part(RedButton, {
+    name: 'cancel button',
+    submorphs: [{ name: 'label', textString: 'CANCEL' }]
+  })]
+});
+
 const ConfirmPrompt = component(LightPrompt, {
   defaultViewModel: ConfirmPromptModel,
   name: 'confirm prompt',
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(15, 15, 0, 0),
+    spacing: 9
+  }),
   submorphs: [{
     name: 'prompt title',
     lineWrapping: 'by-words',
@@ -793,25 +823,7 @@ const ConfirmPrompt = component(LightPrompt, {
       fontSize: 17,
       fontWeight: 'normal'
     }]
-  }, add({
-    name: 'button wrapper',
-    extent: pt(331, 48.9),
-    fill: Color.rgba(0, 0, 0, 0),
-    layout: new TilingLayout({
-      align: 'center',
-      orderByIndex: true,
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      spacing: 20
-    }),
-    submorphs: [part(GreenButton, {
-      name: 'ok button',
-      submorphs: [{ name: 'label', textString: 'OK' }]
-    }), part(RedButton, {
-      name: 'cancel button',
-      submorphs: [{ name: 'label', textString: 'CANCEL' }]
-    })]
-  })]
+  }, add(part(OKCancelButtonWrapper))]
 });
 
 const MultipleChoicePrompt = component(ConfirmPrompt, {

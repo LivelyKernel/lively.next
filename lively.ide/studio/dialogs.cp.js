@@ -1,4 +1,4 @@
-import { DarkPrompt, ConfirmPromptModel, RedButton, GreenButton } from 'lively.components/prompts.cp.js';
+import { DarkPrompt, OKCancelButtonWrapper, ConfirmPromptModel } from 'lively.components/prompts.cp.js';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { component, add, part } from 'lively.morphic/components/core.js';
 import { pt, Rectangle, rect, Color } from 'lively.graphics';
@@ -369,35 +369,7 @@ const SaveWorldDialog = component(DarkPrompt, {
         }]
       }
     ]
-  }), add({
-    name: 'button wrapper',
-    extent: pt(470.3, 61.1),
-    fill: Color.rgba(0, 0, 0, 0),
-    layout: new TilingLayout({
-      align: 'center',
-      axisAlign: 'center',
-      orderByIndex: true,
-      padding: {
-        height: 0,
-        width: 0,
-        x: 12,
-        y: 12
-      },
-      reactToSubmorphAnimations: false,
-      renderViaCSS: true,
-      spacing: 12
-    }),
-    position: pt(-0.5, 251),
-    submorphs: [part(GreenButton, {
-      name: 'ok button',
-      extent: pt(90, 38),
-      label: 'OK'
-    }), part(RedButton, {
-      name: 'cancel button',
-      extent: pt(94, 38),
-      label: 'CANCEL'
-    })]
-  })]
-});
+  }), add(part(OKCancelButtonWrapper))
+]});
 
 export { SaveWorldDialog };

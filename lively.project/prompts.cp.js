@@ -1,6 +1,6 @@
 /* global URL */
 import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
-import { AbstractPromptModel, RedButton, GreenButton, LightPrompt } from 'lively.components/prompts.cp.js';
+import { AbstractPromptModel, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
@@ -356,26 +356,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         }]
       })
       ]
-    }), add({
-      name: 'button wrapper',
-      extent: pt(331, 48.9),
-      fill: Color.rgba(0, 0, 0, 0),
-      layout: new TilingLayout({
-        align: 'center',
-        orderByIndex: true,
-        reactToSubmorphAnimations: false,
-        renderViaCSS: true,
-        spacing: 20
-      }),
-      submorphs: [
-        part(GreenButton, {
-          name: 'ok button'
-        }),
-        part(RedButton, {
-          name: 'cancel button'
-        })
-      ]
-    })]
+    }), add(part(OKCancelButtonWrapper))]
 });
 
 export const SaveProjectDialog = component(SaveWorldDialog, {
