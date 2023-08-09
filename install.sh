@@ -17,8 +17,14 @@ mkdir local_projects
 node --no-experimental-fetch --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
      lively.installer/bin/install.cjs $PWD \
 
-if [[ -z "${CI}" ]];
+if [ "$1" = "--freezer-only" ];
+then 
+  exit
+fi
+
+if [ -z "${CI}" ];
 then
   env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
 fi
+
 env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
