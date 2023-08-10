@@ -6,7 +6,7 @@ import {
   component, ViewModel, part
 } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
-import { Closure, fun, obj } from 'lively.lang';
+import { Closure, obj } from 'lively.lang';
 
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
@@ -18,6 +18,8 @@ import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
+import { ProjectSettingsPrompt } from 'lively.project/prompts.cp.js';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -241,7 +243,7 @@ export class TopBarModel extends ViewModel {
     }
   }
 
-  onKeyUp (evt) {
+  onKeyUp () {
     if (this._tmpEditMode === 'Hand') {
       this.setEditMode('Hand', true);
     }
@@ -310,6 +312,13 @@ export class TopBarModel extends ViewModel {
     return [
       ['Save this workspace', () => { notYetImplemented('Saving workspaces'); }],
       ['Save this workspace under different name ', () => { notYetImplemented('Saving workspaces'); }],
+      ['Change Project Settings', async () => {
+        if (!(await $world.openedProject.hasRemoteConfigured())) {
+          $world.setStatusMessage('Only available with GitHub repositories.', StatusMessageError);
+          return;
+        }
+        part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject } }).openInWorld();
+      }],
       ['Open a Terminal (advanced operation)', async () => {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const serverDir = await defaultDirectory();
@@ -807,7 +816,7 @@ export class TopBarModel extends ViewModel {
   }
 
   // called from onDragEnd
-  finishDragSelectionIfNeeded (evt) {
+  finishDragSelectionIfNeeded () {
     if (this._morphSelection) {
       const world = $world;
       this._morphSelection.fadeOut(200);

@@ -19,7 +19,57 @@ import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
-import { once } from "lively.bindings";
+import { once } from 'lively.bindings';
+import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
+
+class ProjectSettingsPromptModel extends AbstractPromptModel {
+  static get properties () {
+    return {
+      bindings: {
+        get () {
+          return [
+            {
+              model: 'cancel button',
+              signal: 'fire',
+              handler: () => {
+                this.view.remove();
+              }
+            },
+            { target: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
+            { target: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { model: 'ok button', signal: 'fire', handler: 'resolve' }
+          ];
+        }
+      },
+      project: {}
+    };
+  }
+
+  resolve () {
+    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector } = this.ui;
+    const conf = this.project.config.lively;
+
+    conf.testActionEnabled = testCheck.checked;
+    conf.buildActionEnabled = buildCheck.checked;
+    conf.deployActionEnabled = deployCheck.checked;
+
+    conf.testOnPush = testModeSelector.selectedItem === 'push';
+    conf.buildOnPush = buildModeSelector.selectedItem === 'push';
+    this.view.remove();
+  }
+
+  viewDidLoad () {
+    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector } = this.ui;
+    const conf = this.project.config.lively;
+
+    testCheck.checked = conf.testActionEnabled;
+    buildCheck.checked = conf.buildActionEnabled;
+    deployCheck.checked = conf.deployActionEnabled;
+
+    if (conf.testOnPush) testModeSelector.select('push');
+    if (conf.buildOnPush) buildModeSelector.select('push');
+  }
+}
 
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -120,13 +170,13 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (!currentUsertoken()) {
       this.waitForLogin();
     } else {
-        const li = $world.showLoadingIndicatorFor(this.view);
-        li.center = $world.visibleBounds().center();
-        li.hasFixedPosition = true;
-        once(this.view, 'activate', () => li.bringToFront());
-        await userFlap.update();
-        li.remove();
-        this.projectNameMode();
+      const li = $world.showLoadingIndicatorFor(this.view);
+      li.center = $world.visibleBounds().center();
+      li.hasFixedPosition = true;
+      once(this.view, 'activate', () => li.bringToFront());
+      await userFlap.update();
+      li.remove();
+      this.projectNameMode();
     }
     promptTitle.textString = 'Configure new Project';
   }
@@ -244,6 +294,154 @@ class ProjectSavePrompt extends AbstractPromptModel {
     else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
   }
 }
+
+export const ProjectSettingsPrompt = component(LightPrompt, {
+  defaultViewModel: ProjectSettingsPromptModel,
+  extent: pt(385, 244),
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(15, 15, 0, 0),
+    spacing: 16
+  }),
+  submorphs: [{
+    name: 'prompt title',
+    nativeCursor: 'text',
+    textAndAttributes: ['Project Settings', null]
+  }, add({
+    name: 'prompt contents',
+    layout: new TilingLayout({
+      align: 'center',
+      axis: 'column',
+      axisAlign: 'center',
+      orderByIndex: true
+    }),
+    fill: Color.transparent,
+    extent: pt(327.5, 105.5),
+    submorphs: [
+      {
+        name: 'row 1',
+        extent: pt(480, 42),
+        layout: new TilingLayout({
+          align: 'right',
+          justifySubmorphs: 'spaced',
+          orderByIndex: true,
+          padding: rect(11, 11, 0, 0),
+          spacing: 20
+        }),
+        submorphs: [{
+          name: 'wrapper',
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            orderByIndex: true,
+            spacing: 10
+          }),
+          fill: Color.transparent,
+          borderWidth: 0,
+          extent: pt(195.5, 28.5),
+          submorphs: [{
+            type: CheckBox,
+            name: 'test check',
+            borderWidth: 0
+          }, {
+            type: Label,
+            name: 'aText',
+            dynamicCursorColoring: true,
+            fill: Color.white,
+            textAndAttributes: ['Run Tests remotely:', null]
+          }]
+        }, part(ModeSelector, {
+          name: 'test mode selector',
+          viewModel: {
+            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+            tooltips: ['Only run tests when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
+          }
+        })]
+      },
+      {
+        name: 'row 2',
+        extent: pt(480, 42),
+        layout: new TilingLayout({
+          align: 'right',
+          justifySubmorphs: 'spaced',
+          orderByIndex: true,
+          padding: rect(11, 11, 0, 0),
+          spacing: 20
+        }),
+        submorphs: [{
+          name: 'wrapper',
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            orderByIndex: true,
+            spacing: 10
+          }),
+          fill: Color.transparent,
+          borderWidth: 0,
+          extent: pt(195.5, 28.5),
+          submorphs: [{
+            type: CheckBox,
+            name: 'build check',
+            borderWidth: 0
+          }, {
+            type: Label,
+            name: 'aText',
+            dynamicCursorColoring: true,
+            fill: Color.white,
+            textAndAttributes: ['Build Project Remotely:', null]
+          }]
+        }, part(ModeSelector, {
+          name: 'build mode selector',
+          viewModel: {
+            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+            tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push tp the projects main branch is performed.']
+          }
+        })]
+      }, {
+        name: 'row 3',
+        extent: pt(480, 41.5),
+        layout: new TilingLayout({
+          axisAlign: 'center',
+          justifySubmorphs: 'spaced',
+          orderByIndex: true,
+          padding: rect(11, 11, 0, 0),
+          spacing: 20
+        }),
+        submorphs: [{
+          name: 'wrapper',
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            orderByIndex: true,
+            spacing: 10
+          }),
+          fill: Color.transparent,
+          borderWidth: 0,
+          extent: pt(195.5, 28.5),
+          submorphs: [{
+            type: CheckBox,
+            name: 'deploy check',
+            borderWidth: 0
+          }, {
+            type: Label,
+            name: 'aText',
+            dynamicCursorColoring: true,
+            textAndAttributes: ['Deploy build to GitHub Pages:', null]
+          }]
+        }, part(ModeSelector, {
+          name: 'deploy mode selector',
+          viewModel: {
+            // TODO: This is not yet configurable and no infrastructure is in place for it to be.
+            enabled: false,
+            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+            selectedItem: 'manual'
+          }
+        })]
+      }]
+  }), add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))]
+});
 
 export const ProjectCreationPrompt = component(LightPrompt, {
   defaultViewModel: ProjectCreationPromptModel,
