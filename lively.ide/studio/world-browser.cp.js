@@ -1289,8 +1289,10 @@ const WorldBrowser = component({
       fill: Color.rgba(114, 123, 124, 0),
       borderRadius: 5,
       viewModel: {
-        items: ['Projects', 'Playgrounds'],
-        tooltips: ['Create or Open a Project', 'Create or Open a Playground (Legacy/Prototyping Mode)']
+        items: [
+          { text: 'Projects', name: 'Projects', tooltip: 'Create or Open a Project' },
+          { text: 'Playgrounds', name: 'Playgrounds', tooltip: 'Create or Open a Playground (Legacy/Prototyping Mode)' }
+        ]
       }
     })]
   },
