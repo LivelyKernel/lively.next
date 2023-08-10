@@ -436,7 +436,7 @@ export class Project {
   }
 
   fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
-    let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
+    let definition = workflowDefinition.replaceAll('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
     if (triggerOnPush) {
       definition = definition.replace('%ACTION_TRIGGER%', '\n  push:\n    branches:\n      - main');
     } else definition = definition.replace('%ACTION_TRIGGER%', '');
