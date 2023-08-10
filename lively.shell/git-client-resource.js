@@ -68,10 +68,24 @@ export default class GitShellResource extends ShellClientResource {
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error executing curl call to create GitHub repository');
+
     const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
     cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
+  }
+
+  async activateGitHubPages (token, repoName, repoUser) {
+    const activateGitHubPagesEnvironmentCommand = `curl -L \
+      -X POST \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: Bearer ${token}" \
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      https://api.github.com/repos/${repoUser}/${repoName}/pages \
+      -d '{"build_type": "workflow"}'`;
+    const cmd = this.runCommand(activateGitHubPagesEnvironmentCommand);
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) console.error(`Activating GitHub Pages for ${repoUser}/${repoName} was not successful. Proceeding.`);
   }
 
   async commitRepo (message, tag = false, tagName) {

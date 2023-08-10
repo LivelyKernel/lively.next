@@ -406,7 +406,7 @@ export class Project {
   }
 
   async regeneratePipelines () {
-    debugger;
+    await this.gitResource.activateGitHubPages(currentUsertoken(), this.name, this.repoOwner);
     let pipelineFile, content;
     const livelyConfig = this.config.lively;
 
