@@ -94,7 +94,10 @@ export class CheckBoxMorph extends Morph {
   static get properties () {
     return {
       draggable: { defaultValue: false },
-      extent: { defaultValue: pt(15, 15) },
+      // On Chrome, Safari and Firefox, the extent of the actual CheckBox is 15x15.
+      // However, the browsers User Agent Stylesheet applies a padding of 3,3,3,4 (at least for Chrome).
+      // We take this into account here, so that the morph and the actual checkbox line up.
+      extent: { defaultValue: pt(22, 21) },
       borderWidth: { defaultValue: 0 },
       active: { defaultValue: true },
       checked: { defaultValue: false },
