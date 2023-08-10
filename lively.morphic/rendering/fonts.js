@@ -85,6 +85,10 @@ export const DEFAULT_FONTS = [
     supportedWeights: [100, 200, 300, 400, 500, 600, 700, 800, 900]
   },
   {
+    name: 'Noto Emoji',
+    supportedWeights: [300, 400, 500, 600, 700]
+  },
+  {
     name: 'Nunito',
     supportedWeights: [200, 300, 400, 500, 600, 700, 800, 900]
   },

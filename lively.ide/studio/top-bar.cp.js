@@ -310,16 +310,16 @@ export class TopBarModel extends ViewModel {
 
   getSaveMenuItems () {
     return [
-      ['Save this workspace', () => { notYetImplemented('Saving workspaces'); }],
-      ['Save this workspace under different name ', () => { notYetImplemented('Saving workspaces'); }],
-      ['Change Project Settings', async () => {
+      [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace', null], () => { notYetImplemented('Saving workspaces'); }],
+      [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace under different name', null], () => { notYetImplemented('Saving workspaces'); }],
+      [['⚙️', { fontFamily: 'Noto Emoji' }, ' Change Project Settings', null], async () => {
         if (!(await $world.openedProject.hasRemoteConfigured())) {
           $world.setStatusMessage('Only available with GitHub repositories.', StatusMessageError);
           return;
         }
         part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject } }).openInWorld();
       }],
-      ['Open a Terminal (advanced operation)', async () => {
+      [['🧑‍💻', { fontFamily: 'Noto Emoji' }, ' Open a Terminal (advanced operation)', null], async () => {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const serverDir = await defaultDirectory();
         const projectsDir = serverDir.replace('lively.server', '') + 'local_projects/';
