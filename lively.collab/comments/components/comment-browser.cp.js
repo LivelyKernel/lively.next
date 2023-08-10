@@ -22,8 +22,10 @@ const CommentBrowser = component({
   submorphs: [
     part(ModeSelector, {
       viewModel: {
-        items: ['Unresolved Comments', 'Resolved Comments'],
-        tooltips: ['Show unresolved comments', 'Show resolved comments']
+        items: [
+          { text: 'Unresolved Comments', tooltip: 'Show unresolved comments', name: 'unresolvedComments' },
+          { text: 'Resolved Comments', tooltip: 'Show resolved comments', name: 'resolvedComments' }
+        ]
       }
     }),
     {

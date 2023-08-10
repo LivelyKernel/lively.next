@@ -4,20 +4,38 @@ import { Color } from 'lively.graphics';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
 /**
- * Allows to switch between different items by clicking on them. See `ModeSelectorModel.example()`.
+ * Allows to switch between different items by clicking on them. The selected Item can also be changed by calling the exposed `select` function.
  * A change in the selected item is signalled with the `selectionChanged` signal providing the newly selected item.
  *
- * The items need to be provided as an array. Tooltips can be provided as well, their order and count must match the provided items.
+ * The items need to be provided as an array of objects. The keys `name` and `text` need to be present. Optionally, a `tooltip` property is accepted.
  *
- * A number `init` can be provided, which specifies the index of the item that should be selected upon creation of the `ModeSelector`.
- * If `init` is not provided, the first element of `items` will be selected by default. This initial selection does not trigger the above mentioned signal.
+ * If no other `selectedItem` is provided, the first element of `items` will be selected by default. This initial selection does not trigger the above mentioned signal.
+ * In the selected item or the item to be selected is specified by the name of the item as a string. This is also what the `selectionChanged` signal will provide.
+ * The `ModeSelector` can be deactivated, graying out its UI elements and not accepting mouse inputs any longer.
  */
 class ModeSelectorModel extends ViewModel {
+  /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  EXAMPLE:
+  const example = part(ModeSelector, { // eslint-disable-line no-use-before-define
+     viewModel: {
+       items: [
+         { text: 'demo1', name: 'demo one', tooltip: 'demo one' },
+         { text: 'demo2', name: 'demo two', tooltip: 'demo two' },
+         { text: 'demo3', name: 'demo three', tooltip: 'demo three' },
+         { text: 'demo4', name: 'demo four', tooltip: 'demo four' }
+       ]
+     }
+   }).openInWorld();
+   connect(example, 'selectionChanged', $world, 'setStatusMessage');
+  -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
   static get properties () {
     return {
+      expose: {
+        get () {
+          return ['select', 'items', 'enabled', 'selectedItem'];
+        }
+      },
       items: { },
-      init: {},
-      tooltips: {},
       selectedItem: {},
       enabled: {
         defaultValue: true
@@ -25,21 +43,9 @@ class ModeSelectorModel extends ViewModel {
     };
   }
 
-  static example () {
-    const example = part(ModeSelector, { // eslint-disable-line no-use-before-define
-      viewModel: {
-        items: ['demo1', 'demo2'],
-        tooltips: ['toggle demo 1', 'toggle demo 2'],
-        init: 1
-      }
-    }).openInWorld();
-    connect(example, 'selectionChanged', $world, 'setStatusMessage');
-  }
-
   viewDidLoad () {
     this.createLabels();
-    this.selectedItem = this.items[this.init ? this.init : 0];
-    this.ui.labels.find((label) => (label.name === this.selectedItem?.name) || (label.name === this.selectedItem + 'Label')).viewModel.toggleSelection(false);
+    this.select(this.selectedItem || this.items[0].name);
     if (!this.enabled) this.disable();
   }
 
@@ -47,6 +53,10 @@ class ModeSelectorModel extends ViewModel {
     if (prop === 'enabled') {
       if (this.enabled) this.enable();
       else this.disable();
+    }
+    if (prop === 'selectedItem') {
+      this.select(this.selectedItem);
+      signal(this.view, 'selectionChanged', this.selectedItem);
     }
   }
 
@@ -61,71 +71,65 @@ class ModeSelectorModel extends ViewModel {
   }
 
   createLabels () {
-    this.view.submorphs = this.items.map((item, i) => {
+    this.view.submorphs = this.items.map((item) => {
       const label = part(ModeSelectorLabel, { // eslint-disable-line no-use-before-define
-        textString: item?.text || item,
-        name: item?.name || item + 'Label',
-        tooltip: this.tooltips && this.tooltips[i] ? this.tooltips[i] : ''
+        textString: item.text,
+        name: item.name,
+        tooltip: item.tooltip
       });
-      connect(label, 'onMouseDown', this, 'update', {
-        updater: function ($upd) {
-          $upd(item);
-        },
-        varMapping: { item }
+      connect(label, 'onMouseDown', this, 'select', {
+        updater: `function ($upd) {
+          if (!viewModel.enabled) return;
+          $upd(label.name, true);
+        }`,
+        varMapping: { label, viewModel: this }
       });
       return label;
     });
   }
 
-  update (item) {
-    if (!this.enabled) return;
-    this.ui.labels.find((label) => label.name === this.selectedItem + 'Label').viewModel.toggleSelection();
-    this.selectedItem = item;
-    this.ui.labels.find((label) => label.name === item + 'Label').viewModel.toggleSelection();
-    signal(this.view, 'selectionChanged', this.selectedItem);
-  }
-}
-
-class ModeSelectorLabelModel extends ViewModel {
-  static get properties () {
-    return {
-      selected: { defaultValue: false }
-    };
-  }
-
-  toggleSelection (animate = true) {
-    let newFill, newFontColor;
-    if (!this.selected) {
-      this.selected = true;
-      newFill = Color.black.withA(0.4),
-      newFontColor = Color.white;
-    } else {
-      this.selected = false;
-      newFill = Color.transparent;
-      newFontColor = Color.black;
-    }
-    if (animate) {
-      this.view.animate({
-        fill: newFill,
-        fontColor: newFontColor,
-        duration: 200
+  async select (itemName, withAnimation = false) {
+    // Selected Item Changed by Clicking on the View
+    if (withAnimation) {
+      this.ui.labels.forEach(l => {
+        if (l.name !== itemName) {
+          l.withAnimationDo(() => {
+            l.master = { auto: ModeSelectorLabel };// eslint-disable-line no-use-before-define
+          }, { duration: 200 });
+        }
       });
+      const labelToSelect = this.ui.labels.find((label) => label.name === itemName);
+      await labelToSelect.withAnimationDo(() => {
+        labelToSelect.master = { auto: ModeSelectorLabelSelected }; // eslint-disable-line no-use-before-define
+      }, { duration: 200 });
     } else {
-      this.view.fill = newFill;
-      this.view.fontColor = newFontColor;
+      // Selected Item changed programmatically
+      this.ui.labels.forEach(l => {
+        if (l.name !== itemName) {
+          l.master = { auto: ModeSelectorLabel }; // eslint-disable-line no-use-before-define
+        }
+      });
+      this.ui.labels.find((label) => label.name === itemName).master = { auto: ModeSelectorLabelSelected }; // eslint-disable-line no-use-before-define
     }
+    this.selectedItem = itemName;
   }
 }
 
 const ModeSelectorLabel = component({
   type: Label,
   nativeCursor: 'pointer',
-  defaultViewModel: ModeSelectorLabelModel,
   name: 'mode selector label',
   fontWeight: 'bold',
+  fill: Color.transparent,
+  fontColor: Color.black,
   padding: 5,
   borderRadius: 3,
   textString: 'a mode selector label'
+});
+
+const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
+  fill: Color.black.withA(0.4),
+  fontColor: Color.white
 });
 
 const ModeSelector = component({
@@ -147,4 +151,4 @@ const ModeSelector = component({
   ]
 });
 
-export { ModeSelector, ModeSelectorModel };
+export { ModeSelector };
