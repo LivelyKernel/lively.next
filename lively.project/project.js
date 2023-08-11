@@ -25,7 +25,7 @@ import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
-Its contend is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
+Its content is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
 export class Project {
   static retrieveAvailableProjectsCache () {
     return JSON.parse(localStorage.getItem('available_lively_projects'));
@@ -337,7 +337,7 @@ export class Project {
     this.url = projectDir.url;
     try {
       await system.resourceCreateFiles(projectDir, {
-        'index.js': "'format esm';\n",
+        'index.js': "'format esm';\nexport async function main () {\n    // THIS FUNCTION IS THE ENTRY POINT IN THE BUNDLED APPLICATION!\n}",
         'package.json': '',
         '.gitignore': 'node_modules/\nbuild/',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
