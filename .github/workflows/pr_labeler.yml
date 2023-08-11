@@ -1,4 +1,4 @@
-name: Label PRs with other branch than main as base
+name: Label PRs with Branch other than `main` as Base
 
 on:
   pull_request_target:
@@ -14,13 +14,13 @@ jobs:
   labeler:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup node
+    - name: Setup `node`
       uses: actions/setup-node@v3
       with:
         node-version: '18.12.1'
     - name: Checkout repository
       uses: actions/checkout@v3
-    - name: Install octokit
+    - name: Install `octokit`
       run: npm install octokit
     - name: Run API call
       run: node ./scripts/labeler.mjs
