@@ -1,0 +1,77 @@
+name: Check PR for merging
+
+on:
+  pull_request:
+  # TODO: remove this!
+  workflow_dispatch:
+
+concurrency:
+  group: pr-allowed-to-merge-${{ github.ref_name }}
+  cancel-in-progress: true
+   
+jobs:
+  starting:
+    name: Check if `lively.next` world loads
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.12.1'
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Cache `lively.next` dependencies
+        id: cache-deps
+        uses: actions/cache@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: |
+            lively.next-node_modules/
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Install lively.next
+        run: |
+          chmod a+x ./install.sh
+          ./install.sh
+      - name: Install puppeteer
+        run: npm install puppeteer@19.7.3
+      - name: Start the lively server
+        run: |
+          chmod a+x ./start-server.sh
+          ./start-server.sh > /dev/null 2>&1 &
+          # wait until server is guaranteed to be running
+          sleep 30
+      - name: Run boot check script
+        run: node scripts/check_boot.js
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      changed-source: ${{ steps.filter.outputs.changed-source }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            changed-source:
+              - flatn/**
+              - lively\.installer/**
+  artifacts:
+    name: Check Build Artifacts
+    needs: changes
+    if: ${{ needs.changes.outputs.changed-source == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.12.1'
+      - name: Install `sultan`
+        run: pip3 install sultan 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run Check Script 
+        run:  ./scripts/check-build-status.py

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # This script checks whether or not the below defined artifacts (`need_to_check_deps`) are up to date.
-# An artifact is up to date if its dependecies have not been altered since the last build or if its contents would not change when rebuilding.
+# An artifact is up to date if its dependencies have not been altered since the last build or if its contents would not change when rebuilding.
 # This is checked on a commit basis and should be satisfied before a PR is merged into the main branch.
 # This script assumes that it will be executed from the base of a lively.next repository!
 # Be aware, that this script might run build processes. It is assumed, that this is done in CI and any resulting file changes are thus discarded!
