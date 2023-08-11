@@ -1,0 +1,64 @@
+name: Daily `lively.next` Status Check
+
+on:
+  schedule:
+    - cron: "0 0 * * MON-FRI"
+  workflow_dispatch:
+
+concurrency:
+  group: health-check-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup `node`
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.12.1'
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Cache `lively.next` dependencies
+        id: cache-lively-deps
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: lively.next-node_modules/            
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Install `lively.next`
+        run: |
+          chmod a+x ./install.sh
+          ./install.sh
+      - name: Cache `lively.next` dependencies
+        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: lively.next-node_modules/            
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Run CI Test Script
+        run:  ./scripts/test.sh
+  docs-coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Setup `node`
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.12.1'
+    - name: Install `eslint`
+      run: npm install eslint
+    - name: Install `jsdoc` plugin for `eslint`
+      run: npm install eslint-plugin-jsdoc
+    - name: Install `eslint` parser for `babel`
+      run: npm install @babel/eslint-parser
+    - name: Setup GitHub Action Summary
+      run: |
+        echo '# Status of Documentation <g-emoji class="g-emoji" alias="books" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png"><img class="emoji" alt="books" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png" width="20" height="20"></g-emoji>' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+    - name: Lint Code and Summarize Number of Errors
+      run: npx eslint -c .eslintrc.js lively.*/*.js | grep '✖' >> $GITHUB_STEP_SUMMARY
