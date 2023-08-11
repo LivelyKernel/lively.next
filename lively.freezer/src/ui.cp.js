@@ -269,7 +269,7 @@ const FreezerPrompt = component(LightPrompt, {
     fill: Color.rgba(255, 255, 255, 0),
     fontColor: Color.rgb(45, 45, 45),
     fontSize: 16,
-    fontWeight: 'Medium',
+    fontWeight: '500',
     nativeCursor: 'pointer',
     textAndAttributes: ['Directory to write files to:', null]
   }), add(part(InputLineDefault, {
@@ -329,7 +329,7 @@ const FreezerPrompt = component(LightPrompt, {
     fill: Color.rgba(255, 255, 255, 0),
     fontColor: Color.rgb(45, 45, 45),
     fontSize: 16,
-    fontWeight: 'Medium',
+    fontWeight: '500',
     nativeCursor: 'pointer',
     textAndAttributes: ['Packages to exclude from bundle:', null]
   }), add({
