@@ -1,13 +1,15 @@
-name: Build and Deploy Docs
+name: Build (and Deploy) Docs
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
   pages: write
-  id-token: write
 
 on:
+  pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: docs-build-check-${{ github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,7 +27,7 @@ jobs:
       run: npm install clean-jsdoc-theme
     - name: Build Documentation
       run: jsdoc -c conf.json -R README.md
-    - name: Copy over Custom Style Files for theme
+    - name: Copy over Custom Style Files for Theme
       run: |
         cp doc-style/fonts/* docs/fonts/
         cp doc-style/styles/* docs/styles/
@@ -37,6 +39,7 @@ jobs:
         name: docs
         path: docs/
   deploy:
+    if: github.event_name == 'workflow_dispatch'
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +49,11 @@ jobs:
         uses: actions/deploy-pages@v2
         with:
           artifact_name: docs
+  cleanup:
+    if: ${{ always() }}
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
       - name: Delete uploaded Artifact
         uses: geekyeggo/delete-artifact@v2
         with:
