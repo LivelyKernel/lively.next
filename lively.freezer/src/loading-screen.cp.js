@@ -257,7 +257,7 @@ const Stage = component({
     fill: Color.rgba(255, 255, 255, 0),
     fontColor: Color.rgb(64, 64, 64),
     fontSize: 16,
-    fontWeight: 'Medium',
+    fontWeight: '500',
     nativeCursor: 'pointer',
     textAndAttributes: ['lang', null]
   }, {
