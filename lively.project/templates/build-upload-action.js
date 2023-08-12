@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup node
+      - name: Setup \`node\`
         uses: actions/setup-node@v3
         with:
           node-version: '18.12.1'
@@ -24,18 +24,19 @@ jobs:
         with:
           path: .            
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}
-      - name: Checkout lively.next
+      - name: Checkout \`lively.next\`
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v3
         with:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
-      - if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        name: Install lively.next       
+      - name: Install \`lively.next\`
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         run: |
           chmod a+x ./install.sh
           ./install.sh --freezer-only
-      - if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        name: Save lively installation in cache
+      - name: Save \`lively\` installation in cache
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v3
         env:
           cache-name: lively-repo

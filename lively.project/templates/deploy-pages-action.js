@@ -1,16 +1,12 @@
-export const deployScript = `name: Deploy static content to Pages
+export const deployScript = `name: Deploy Project to GitHub Pages
 
 on:
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "build-and-deploy"
   cancel-in-progress: false
@@ -19,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup node
+      - name: Setup \`node\`
         uses: actions/setup-node@v3
         with:
           node-version: '18.12.1'
@@ -32,19 +28,19 @@ jobs:
         with:
           path: .            
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}
-      - if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        name: Checkout lively.next
+      - name: Checkout \`lively.next\`
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v3
         with:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
-      - if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        name: Install lively.next       
+      - name: Install \`lively.next\`
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}       
         run: |
           chmod a+x ./install.sh
           ./install.sh --freezer-only
-      - if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        name: Save lively repo in cache
+      - name: Save \`lively\` repo in cache
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v3
         env:
           cache-name: lively-repo
