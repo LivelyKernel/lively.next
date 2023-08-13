@@ -21,6 +21,6 @@
     "@rollup/plugin-commonjs": "22.0.0",
     "minimist": "1.2.6",
     "semver": "5.7.1",
-    "systemjs": "^0.19.40"
+    "systemjs": "^0.21.6"
   }
 }

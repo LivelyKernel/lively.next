@@ -13,7 +13,7 @@
     "minimist": "^1.2.0",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
-    "systemjs": "^0.19.40",
+    "systemjs": "^0.21.6",
     "winston": "^3.7.2",
     "formidable": "^1.2.2",
     "@babel/core": "^7.12.0"
