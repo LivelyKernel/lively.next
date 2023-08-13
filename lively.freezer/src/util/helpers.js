@@ -274,7 +274,7 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
           meta: {
            ${
             modules.map(snippet =>
-              `[baseURL + '${snippet.fileName}']: {format: "system"}`
+              `[baseURL + '${snippet.fileName}']: {format: "system", nonce: "lively" }`
             ).join(',\n') // makes sure that compressed modules are still recognized as such
             }
           }
