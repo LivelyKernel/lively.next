@@ -2,7 +2,7 @@
   "name": "lively.resources",
   "version": "0.1.37",
   "repository": "https://github.com/LivelyKernel/lively.resources",
-  "main": "dist/lively.resources.js",
+  "main": "index.js",
   "type": "module",
   "systemjs": {
     "main": "index.js",
