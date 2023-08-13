@@ -44,7 +44,7 @@
     "test": "mocha-es6 tests/*-test.js",
     "build": "node ./tools/build.js"
   },
-  "main": "dist/lively.storage.js",
+  "main": "index.js",
   "systemjs": {
     "main": "index.js",
     "map": {
