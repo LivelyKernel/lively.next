@@ -28,7 +28,7 @@
     "lively.lang": "*",
     "flatn": "*",
     "lively.freezer": "*",
-    "systemjs": "^0.19.40",
+    "systemjs": "^0.21.6",
     "@rollup/plugin-json": "4.1.0",
     "rollup": "^2.70.2",
     "rollup-plugin-polyfill-node": "0.9.0",
