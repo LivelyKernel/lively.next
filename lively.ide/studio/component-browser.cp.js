@@ -1,7 +1,7 @@
 import { pt, Color, rect } from 'lively.graphics';
 import { TilingLayout, morph, config, easings, MorphicDB, Icon, Morph, Label, ShadowObject, ViewModel, add, part, component } from 'lively.morphic';
 import { Project } from 'lively.project';
-import { PackageRegistry, isModuleLoaded, module, importPackage } from 'lively.modules';
+import { isModuleLoaded, module } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
 import { TreeData } from 'lively.components';
@@ -15,13 +15,14 @@ import { DropDownList, DarkDropDownList } from 'lively.components/list.cp.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { Text } from 'lively.morphic/text/morph.js';
-
 import { COLORS } from '../js/browser/index.js';
 import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
-
 import { joinPath } from 'lively.lang/string.js';
+import { runCommand } from 'lively.shell/client-command.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
+import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -760,8 +761,8 @@ export class ComponentBrowserModel extends ViewModel {
       }],
       [[...this.importAlive ? checked : unchecked, ' Enable behavior'], () => this.importAlive = !this.importAlive],
       ['Group Components by ', [
-        [[...this.groupBy == 'module' ? checked : unchecked, ' Modules'], () => { this.groupBy = 'module'; }],
-        [[...this.groupBy == 'name' ? checked : unchecked, ' Names'], () => { this.groupBy = 'name'; }]
+        [[...this.groupBy === 'module' ? checked : unchecked, ' Modules'], () => { this.groupBy = 'module'; }],
+        [[...this.groupBy === 'name' ? checked : unchecked, ' Names'], () => { this.groupBy = 'name'; }]
       ]]
     ];
   }
@@ -836,11 +837,25 @@ export class ComponentBrowserModel extends ViewModel {
     }
   }
 
-  viewDidLoad () {
+  async viewDidLoad () {
     if (!this.view.isComponent) {
       this.view.withMetaDo({ metaInteraction: true }, () => {
         this.ui.componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
       });
+    }
+    const openedProject = $world.openedProject;
+    if (!(openedProject.owner === 'LivelyKernel' && openedProject.name === 'partsbin')) {
+      const li = $world.showLoadingIndicatorFor(null, 'Updating `partsbin`');
+      // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
+      // `install.sh` ensures that the partsbin repository exists.
+      const cmd = runCommand('cd ../local_projects/LivelyKernel--partsbin && git stash && git checkout main && git pull', { l2lClient: ShellClientResource.defaultL2lClient });
+      await cmd.whenDone();
+      if (cmd.exitCode !== 0) {
+        $world.setStatusMessage('`partsbin` could not be updated.', StatusMessageError);
+        return;
+      }
+      $world.setStatusMessage('`partsbin` updated!', StatusMessageConfirm);
+      li.remove();
     }
   }
 
