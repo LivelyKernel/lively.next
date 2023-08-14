@@ -1,10 +1,10 @@
-export const workflowDefinition = `name: Run Tests
+export const buildRemoteScript = `name: Build Project
 
 on:%ACTION_TRIGGER%
   workflow_dispatch:
 
 jobs:
-  Tests:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout lively.next
@@ -19,15 +19,15 @@ jobs:
       - name: Install lively.next
         run: |
           chmod a+x ./install.sh
-          ./install.sh
+          ./install.sh --freezer-only
       - name: Checkout Project Repository
         uses: actions/checkout@v3
         with:
           path: local_projects/%PROJECT_NAME%
-      - name: Start lively.next
-        run: |
-          ./start-server.sh > /dev/null 2>&1 &
-          # wait until server is guaranteed to be running
-          sleep 30
-      - name: Run CI Test Script 
-        run:  ./scripts/test.sh %PROJECT_NAME%`;
+      - name: Build Project
+        run: npm run build --prefix local_projects/%PROJECT_NAME%
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: local_projects/%PROJECT_NAME%/build`;
