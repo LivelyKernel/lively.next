@@ -600,7 +600,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontFamily: '"IBM Plex Sans"',
           fontSize: 15,
           nativeCursor: 'pointer',
-          textAndAttributes: ['bump minor version:', null]
+          textAndAttributes: ['Bump Minor Version:', null]
         }, {
           type: CheckBox,
           name: 'minor check',
@@ -625,7 +625,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontFamily: '"IBM Plex Sans"',
           fontSize: 15,
           nativeCursor: 'pointer',
-          textAndAttributes: ['bump major version:', null]
+          textAndAttributes: ['Bump Major Version:', null]
         }, {
           type: CheckBox,
           name: 'major check',
@@ -649,7 +649,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontFamily: '"IBM Plex Sans"',
           fontSize: 15,
           nativeCursor: 'pointer',
-          textAndAttributes: ['tag this version as release:', null]
+          textAndAttributes: ['Tag this Version as Release:', null]
         }, {
           type: CheckBox,
           name: 'tag check',
