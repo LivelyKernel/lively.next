@@ -15,6 +15,8 @@ import { currentUsertoken, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
+import { buildRemoteScript } from './templates/build-upload-action.js';
+import { deployScript } from './templates/deploy-pages-action.js';
 import Terminal from 'lively.ide/shell/terminal.js';
 import { pt } from 'lively.graphics';
 import { arr, obj } from 'lively.lang';
@@ -41,6 +43,10 @@ export class Project {
 
   get name () {
     return this.config.name;
+  }
+
+  async hasRemoteConfigured () {
+    return await this.gitResource.hasRemote();
   }
 
   // TODO: 🍴 Support
@@ -95,8 +101,7 @@ export class Project {
       projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
       const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
       const packageJSONObjects = packageJSONStrings.flatMap(s => {
-        try { return JSON.parse(s); }
-        catch (e) {
+        try { return JSON.parse(s); } catch (e) {
           console.error('An invalid lively Project was encountered (no valid `package.json`)!');
           return [];
         }
@@ -110,7 +115,7 @@ export class Project {
           pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
           pkg.url = projectsDir.url + pkg.name;
           pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
-          validPackageJSONObjects.push(pkg)
+          validPackageJSONObjects.push(pkg);
         } catch (e) {
           console.error('An invalid lively Project was encountered (`package.json` probably does not conform to `lively.project` standard)!');
         }
@@ -265,6 +270,7 @@ export class Project {
    * Called when a project gets saved..
    */
   async saveConfigData () {
+    if (await this.hasRemoteConfigured()) await this.regeneratePipelines();
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -313,7 +319,6 @@ export class Project {
           const currentCommit = await VersionChecker.currentLivelyVersion(true);
           this.config.lively.boundLivelyVersion = currentCommit;
           await this.saveConfigData();
-          await this.regenerateTestPipeline();
           return 'UPDATED';
         }
       }
@@ -336,11 +341,6 @@ export class Project {
         'package.json': '',
         '.gitignore': 'node_modules/\nbuild/',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
-        '.github': {
-          workflows: {
-            'ci-tests.yml': workflowDefinition
-          }
-        },
         tools: {
           'build.sh': '',
           'build.mjs': ''
@@ -355,7 +355,6 @@ export class Project {
         workspaces: {
           'default.workspace.js': ''
         },
-        assets: { },
         'index.css': '/* Use this file to add custom CSS to be used for this project! */\n/* Do NOT use @import rules in this file! */',
         'fonts.css': fontCSSWarningString
       });
@@ -381,13 +380,22 @@ export class Project {
     await Project.installCSSForProject(this.url, true, { repoOwner: gitHubUser, name: this.name }, this);
     if (withRemote) {
       try {
-        await this.regenerateTestPipeline();
+        await this.regeneratePipelines();
         const createForOrg = gitHubUser !== currentUsername();
         await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
     }
+
+    // OPINIONATED DEFAULTS
+    const livelyConfig = this.config.lively;
+    livelyConfig.testActionEnabled = true;
+    livelyConfig.buildActionEnabled = false;
+    livelyConfig.deployActionEnabled = true;
+    livelyConfig.testOnPush = true;
+    livelyConfig.buildOnPush = false;
+
     const saveSuccess = await this.save({ message: 'Initial Commit' });
     if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
     return this;
@@ -397,15 +405,41 @@ export class Project {
     reloadPackage(System, this.package.url);
   }
 
-  async regenerateTestPipeline () {
-    const pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    const content = this.fillPipelineTemplate(workflowDefinition);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
+  async regeneratePipelines () {
+    debugger;
+    let pipelineFile, content;
+    const livelyConfig = this.config.lively;
+
+    pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
+    if (livelyConfig.testActionEnabled) {
+      content = this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
+      await (await resource(pipelineFile).ensureExistance()).write(content);
+    } else {
+      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
+    }
+
+    pipelineFile = join(this.url, '.github/workflows/build-upload-action.yml');
+    if (livelyConfig.buildActionEnabled) {
+      content = this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
+      await (await resource(pipelineFile).ensureExistance()).write(content);
+    } else {
+      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
+    }
+
+    pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
+    if (livelyConfig.deployActionEnabled) {
+      content = this.fillPipelineTemplate(deployScript);
+      await (await resource(pipelineFile).ensureExistance()).write(content);
+    } else {
+      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
+    }
   }
 
-  fillPipelineTemplate (workflowDefinition) {
+  fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
     let definition = workflowDefinition.replace('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
-    // `flatn` resolves the package to test to be its directory name!
+    if (triggerOnPush) {
+      definition = definition.replace('%ACTION_TRIGGER%', '\n  push:\n    branches:\n      - main');
+    } else definition = definition.replace('%ACTION_TRIGGER%', '');
     return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
 
