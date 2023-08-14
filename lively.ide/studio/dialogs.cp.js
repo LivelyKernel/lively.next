@@ -1,7 +1,7 @@
 import { DarkPrompt, OKCancelButtonWrapper, ConfirmPromptModel } from 'lively.components/prompts.cp.js';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { component, add, part } from 'lively.morphic/components/core.js';
-import { pt, Rectangle, rect, Color } from 'lively.graphics';
+import { pt, rect, Color } from 'lively.graphics';
 import { TilingLayout, MorphicDB, ShadowObject, Text, Label } from 'lively.morphic';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 
@@ -345,7 +345,7 @@ const SaveWorldDialog = component(DarkPrompt, {
           fontSize: 15,
           nativeCursor: 'pointer',
           position: pt(1, 116),
-          textAndAttributes: ['description:', null]
+          textAndAttributes: ['Description:', null]
         }, {
           type: Text,
           name: 'description',
@@ -370,6 +370,7 @@ const SaveWorldDialog = component(DarkPrompt, {
       }
     ]
   }), add(part(OKCancelButtonWrapper))
-]});
+  ]
+});
 
 export { SaveWorldDialog };
