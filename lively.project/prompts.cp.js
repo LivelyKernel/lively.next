@@ -34,8 +34,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                 this.view.remove();
               }
             },
-            { target: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
-            { target: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { model: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
+            { model: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
             { model: 'ok button', signal: 'fire', handler: 'resolve' }
           ];
         }
@@ -60,6 +60,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
   viewDidLoad () {
     const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector } = this.ui;
     const conf = this.project.config.lively;
+
+    if (conf.repositoryIsPrivate) deployCheck.disable();
 
     testCheck.checked = conf.testActionEnabled;
     buildCheck.checked = conf.buildActionEnabled;
@@ -349,8 +351,8 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
         name: 'row 1',
         extent: pt(480, 42),
         layout: new TilingLayout({
-          align: 'right',
-          justifySubmorphs: 'spaced',
+          align: 'center',
+          axisAlign: 'center',
           orderByIndex: true,
           padding: rect(11, 11, 0, 0),
           spacing: 20
@@ -359,23 +361,12 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
           name: 'wrapper',
           layout: new TilingLayout({
             axisAlign: 'center',
-            orderByIndex: true,
-            spacing: 10
+            orderByIndex: true
           }),
           fill: Color.transparent,
           borderWidth: 0,
           extent: pt(195.5, 28.5),
-          submorphs: [{
-            type: CheckBox,
-            name: 'test check',
-            borderWidth: 0
-          }, {
-            type: Label,
-            name: 'aText',
-            dynamicCursorColoring: true,
-            fill: Color.white,
-            textAndAttributes: ['Run Tests remotely:', null]
-          }]
+          submorphs: [part(LabeledCheckBox, { name: 'test check', viewModel: { label: 'Run Tests Remotely:' } }), { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
         }, part(ModeSelector, {
           name: 'test mode selector',
           viewModel: {
@@ -388,8 +379,8 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
         name: 'row 2',
         extent: pt(480, 42),
         layout: new TilingLayout({
-          align: 'right',
-          justifySubmorphs: 'spaced',
+          align: 'center',
+          axisAlign: 'center',
           orderByIndex: true,
           padding: rect(11, 11, 0, 0),
           spacing: 20
@@ -397,24 +388,14 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
         submorphs: [{
           name: 'wrapper',
           layout: new TilingLayout({
-            axisAlign: 'center',
             orderByIndex: true,
-            spacing: 10
+            axisAlign: 'center'
           }),
+
           fill: Color.transparent,
           borderWidth: 0,
           extent: pt(195.5, 28.5),
-          submorphs: [{
-            type: CheckBox,
-            name: 'build check',
-            borderWidth: 0
-          }, {
-            type: Label,
-            name: 'aText',
-            dynamicCursorColoring: true,
-            fill: Color.white,
-            textAndAttributes: ['Build Project Remotely:', null]
-          }]
+          submorphs: [part(LabeledCheckBox, { name: 'build check', viewModel: { label: 'Build Project Remotely:' } }), { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
         }, part(ModeSelector, {
           name: 'build mode selector',
           viewModel: {
@@ -426,8 +407,8 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
         name: 'row 3',
         extent: pt(480, 41.5),
         layout: new TilingLayout({
+          align: 'center',
           axisAlign: 'center',
-          justifySubmorphs: 'spaced',
           orderByIndex: true,
           padding: rect(11, 11, 0, 0),
           spacing: 20
@@ -435,23 +416,13 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
         submorphs: [{
           name: 'wrapper',
           layout: new TilingLayout({
-            axisAlign: 'center',
             orderByIndex: true,
-            spacing: 10
+            axisAlign: 'center'
           }),
           fill: Color.transparent,
           borderWidth: 0,
           extent: pt(195.5, 28.5),
-          submorphs: [{
-            type: CheckBox,
-            name: 'deploy check',
-            borderWidth: 0
-          }, {
-            type: Label,
-            name: 'aText',
-            dynamicCursorColoring: true,
-            textAndAttributes: ['Deploy build to GitHub Pages:', null]
-          }]
+          submorphs: [part(LabeledCheckBox, { name: 'deploy check', viewModel: { label: 'Deploy Build to GitHub Pages:' } }), part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
         }, part(ModeSelector, {
           name: 'deploy mode selector',
           viewModel: {
