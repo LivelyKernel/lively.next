@@ -49,6 +49,11 @@ export class Project {
     return await this.gitResource.hasRemote();
   }
 
+  async changeRepositoryVisibility (visibility) {
+    this.config.lively.repositoryIsPrivate = visibility === 'private';
+    return await this.gitResource.changeRemoteVisibility(currentUsertoken(), this.name, this.repoOwner, visibility);
+  }
+
   // TODO: 🍴 Support
   // **Note** since this is a getter on an instance, we can retrieve whatever we want from the config object
   // We just need to make sure that we populate it in the correct way!
@@ -428,7 +433,7 @@ export class Project {
     }
 
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
-    if (livelyConfig.deployActionEnabled) {
+    if (livelyConfig.deployActionEnabled && !livelyConfig.repositoryIsPrivate) {
       content = this.fillPipelineTemplate(deployScript);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {

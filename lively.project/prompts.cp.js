@@ -13,7 +13,7 @@ import { CheckBox } from 'lively.components/widgets.js';
 import { currentUsertoken, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
-import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
+import { EnumSelector, Spinner } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
@@ -36,7 +36,25 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
             },
             { model: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
             { model: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
-            { model: 'ok button', signal: 'fire', handler: 'resolve' }
+            { model: 'ok button', signal: 'fire', handler: 'resolve' },
+            {
+              target: 'visibility selector',
+              signal: 'selectionChanged',
+              handler: async (visibility) => {
+                const { spinner, visibilitySelector, deployCheck } = this.ui;
+                spinner.opacity = 1;
+                visibilitySelector.enabled = false;
+                const res = await this.project.changeRepositoryVisibility(visibility);
+                if (!res) {
+                  $world.setStatusMessage('Error changing Repository visibility.', StatusMessageError);
+                  return;
+                }
+                if (visibility === 'private') deployCheck.disable();
+                else deployCheck.enable();
+                spinner.opacity = 0;
+                visibilitySelector.enabled = true;
+              }
+            }
           ];
         }
       },
@@ -58,10 +76,13 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
-    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector } = this.ui;
+    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, visibilitySelector } = this.ui;
     const conf = this.project.config.lively;
 
-    if (conf.repositoryIsPrivate) deployCheck.disable();
+    if (conf.repositoryIsPrivate) {
+      deployCheck.disable();
+      visibilitySelector.selectedItem = 'private';
+    }
 
     testCheck.checked = conf.testActionEnabled;
     buildCheck.checked = conf.buildActionEnabled;
@@ -342,97 +363,160 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
       align: 'center',
       axis: 'column',
       axisAlign: 'center',
-      orderByIndex: true
+      orderByIndex: true,
+      spacing: 20
     }),
     fill: Color.transparent,
     extent: pt(327.5, 105.5),
     submorphs: [
       {
-        name: 'row 1',
-        extent: pt(480, 42),
+        name: 'ci settings',
         layout: new TilingLayout({
           align: 'center',
+          axis: 'column',
           axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(11, 11, 0, 0),
-          spacing: 20
+          orderByIndex: true
         }),
-        submorphs: [{
-          name: 'wrapper',
-          layout: new TilingLayout({
-            axisAlign: 'center',
-            orderByIndex: true
-          }),
-          fill: Color.transparent,
-          borderWidth: 0,
-          extent: pt(195.5, 28.5),
-          submorphs: [part(LabeledCheckBox, { name: 'test check', viewModel: { label: 'Run Tests Remotely:' } }), { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
-        }, part(ModeSelector, {
-          name: 'test mode selector',
-          viewModel: {
-            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
-            tooltips: ['Only run tests when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
-          }
-        })]
+        submorphs: [
+          {
+            type: Label,
+            textString: 'GitHub Actions Settings',
+            fontSize: 15,
+            fontWeight: '600'
+          },
+          {
+            name: 'row 11',
+            extent: pt(480, 42),
+            layout: new TilingLayout({
+              align: 'center',
+              axisAlign: 'center',
+              orderByIndex: true,
+              spacing: 20
+            }),
+            submorphs: [{
+              name: 'wrapper 11',
+              layout: new TilingLayout({
+                axisAlign: 'center',
+                orderByIndex: true
+              }),
+              fill: Color.transparent,
+              borderWidth: 0,
+              extent: pt(195.5, 28.5),
+              submorphs: [part(LabeledCheckBox, { name: 'test check', viewModel: { label: 'Run Tests Remotely:' } }), { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
+            }, part(ModeSelector, {
+              name: 'test mode selector',
+              viewModel: {
+                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                tooltips: ['Only run tests when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
+              }
+            })]
+          },
+          {
+            name: 'row 21',
+            extent: pt(297, 29),
+            layout: new TilingLayout({
+              align: 'center',
+              axisAlign: 'center',
+              orderByIndex: true,
+              spacing: 20
+            }),
+            submorphs: [{
+              name: 'wrapper 21',
+              layout: new TilingLayout({
+                orderByIndex: true,
+                axisAlign: 'center'
+              }),
+              fill: Color.transparent,
+              borderWidth: 0,
+              extent: pt(195.5, 28.5),
+              submorphs: [part(LabeledCheckBox, { name: 'build check', viewModel: { label: 'Build Project Remotely:' } }), { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
+            }, part(ModeSelector, {
+              name: 'build mode selector',
+              viewModel: {
+                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push tp the projects main branch is performed.']
+              }
+            })]
+          }, {
+            name: 'row 31',
+            extent: pt(480, 41.5),
+            layout: new TilingLayout({
+              align: 'center',
+              axisAlign: 'center',
+              orderByIndex: true,
+              spacing: 20
+            }),
+            submorphs: [{
+              name: 'wrapper 31',
+              layout: new TilingLayout({
+                orderByIndex: true,
+                axisAlign: 'center'
+              }),
+              fill: Color.transparent,
+              borderWidth: 0,
+              extent: pt(195.5, 28.5),
+              submorphs: [part(LabeledCheckBox, { name: 'deploy check', viewModel: { label: 'Deploy Build to GitHub Pages:' } }), part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
+            }, part(ModeSelector, {
+              name: 'deploy mode selector',
+              viewModel: {
+                // TODO: This is not yet configurable and no infrastructure is in place for it to be.
+                enabled: false,
+                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                selectedItem: 'manual'
+              }
+            })]
+          }]
       },
       {
-        name: 'row 2',
-        extent: pt(480, 42),
+        name: 'repo settings',
         layout: new TilingLayout({
           align: 'center',
+          axis: 'column',
           axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(11, 11, 0, 0),
-          spacing: 20
+          orderByIndex: true
         }),
-        submorphs: [{
-          name: 'wrapper',
-          layout: new TilingLayout({
-            orderByIndex: true,
-            axisAlign: 'center'
-          }),
+        submorphs: [
+          {
+            type: Label,
+            textString: 'Repository Settings',
+            fontSize: 15,
+            fontWeight: '600'
+          }, {
+            name: 'row 12',
+            extent: pt(480, 42),
+            layout: new TilingLayout({
+              axisAlign: 'center',
+              orderByIndex: true,
+              spacing: 20
+            }),
+            submorphs: [{
+              name: 'wrapper 12',
+              layout: new TilingLayout({
+                orderByIndex: true,
+                axisAlign: 'center',
+                spacing: 20
+              }),
+              fill: Color.transparent,
+              borderWidth: 0,
+              extent: pt(195.5, 28.5),
+              submorphs: [
+                { type: Label, textString: 'Repository Visibility:' },
+                part(Spinner, {
+                  name: 'spinner',
+                  viewModel: { color: 'black' },
+                  scale: 0.3,
+                  opacity: 0
+                })]
+            }, part(ModeSelector, {
+              name: 'visibility selector',
+              viewModel: {
+                items: [{ text: 'Public', name: 'public' }, { text: 'Private', name: 'private' }]
+              }
+            })]
+          }]
+      }
 
-          fill: Color.transparent,
-          borderWidth: 0,
-          extent: pt(195.5, 28.5),
-          submorphs: [part(LabeledCheckBox, { name: 'build check', viewModel: { label: 'Build Project Remotely:' } }), { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
-        }, part(ModeSelector, {
-          name: 'build mode selector',
-          viewModel: {
-            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
-            tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push tp the projects main branch is performed.']
-          }
-        })]
-      }, {
-        name: 'row 3',
-        extent: pt(480, 41.5),
-        layout: new TilingLayout({
-          align: 'center',
-          axisAlign: 'center',
-          orderByIndex: true,
-          padding: rect(11, 11, 0, 0),
-          spacing: 20
-        }),
-        submorphs: [{
-          name: 'wrapper',
-          layout: new TilingLayout({
-            orderByIndex: true,
-            axisAlign: 'center'
-          }),
-          fill: Color.transparent,
-          borderWidth: 0,
-          extent: pt(195.5, 28.5),
-          submorphs: [part(LabeledCheckBox, { name: 'deploy check', viewModel: { label: 'Deploy Build to GitHub Pages:' } }), part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
-        }, part(ModeSelector, {
-          name: 'deploy mode selector',
-          viewModel: {
-            // TODO: This is not yet configurable and no infrastructure is in place for it to be.
-            enabled: false,
-            items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
-            selectedItem: 'manual'
-          }
-        })]
-      }]
+    ]
   }), add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))]
 });
 
