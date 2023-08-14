@@ -1207,7 +1207,7 @@ export class LivelyWorld extends World {
    */
   showLoadingIndicatorFor (requester, label) {
     const li = LoadingIndicator.open(label, { target: requester });
-    if (requester.hasFixedPosition) li.hasFixedPosition = true;
+    if (requester?.hasFixedPosition) li.hasFixedPosition = true;
     return li;
   }
 
