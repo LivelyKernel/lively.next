@@ -330,7 +330,7 @@ export class Project {
     }
   }
 
-  async create (withRemote = false, gitHubUser) {
+  async create (withRemote = false, gitHubUser, priv) {
     this.gitResource = null;
     const system = Project.systemInterface;
     const projectDir = (await Project.projectDirectory()).join(gitHubUser + '--' + this.name);
@@ -363,6 +363,7 @@ export class Project {
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
+      this.config.lively.repositoryIsPrivate = !!priv;
       await this.saveConfigData();
       const pkg = await loadPackage(system, {
         name: this.name,
@@ -382,7 +383,7 @@ export class Project {
       try {
         await this.regeneratePipelines();
         const createForOrg = gitHubUser !== currentUsername();
-        await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg);
+        await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
@@ -392,7 +393,7 @@ export class Project {
     const livelyConfig = this.config.lively;
     livelyConfig.testActionEnabled = true;
     livelyConfig.buildActionEnabled = false;
-    livelyConfig.deployActionEnabled = true;
+    livelyConfig.deployActionEnabled = !livelyConfig.repositoryIsPrivate;
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
 
