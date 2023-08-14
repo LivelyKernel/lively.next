@@ -56,7 +56,6 @@ class ModeSelectorModel extends ViewModel {
     }
     if (prop === 'selectedItem') {
       this.select(this.selectedItem);
-      signal(this.view, 'selectionChanged', this.selectedItem);
     }
   }
 
@@ -80,7 +79,7 @@ class ModeSelectorModel extends ViewModel {
       connect(label, 'onMouseDown', this, 'select', {
         updater: `function ($upd) {
           if (!viewModel.enabled) return;
-          $upd(label.name, true);
+          $upd(label.name, true, true);
         }`,
         varMapping: { label, viewModel: this }
       });
@@ -88,7 +87,7 @@ class ModeSelectorModel extends ViewModel {
     });
   }
 
-  async select (itemName, withAnimation = false) {
+  async select (itemName, withAnimation = false, withSignal = false) {
     // Selected Item Changed by Clicking on the View
     if (withAnimation) {
       this.ui.labels.forEach(l => {
@@ -111,7 +110,9 @@ class ModeSelectorModel extends ViewModel {
       });
       this.ui.labels.find((label) => label.name === itemName).master = { auto: ModeSelectorLabelSelected }; // eslint-disable-line no-use-before-define
     }
+
     this.selectedItem = itemName;
+    if (withSignal) signal(this.view, 'selectionChanged', this.selectedItem);
   }
 }
 
