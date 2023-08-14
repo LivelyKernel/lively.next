@@ -1,4 +1,4 @@
-
+/* eslint-disable no-console */
 import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 
@@ -73,6 +73,24 @@ export default class GitShellResource extends ShellClientResource {
     cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
+  }
+
+  async changeRemoteVisibility (token, repoName, repoUser, visibility) {
+    const changeVisbilityCommand = `curl -L \
+  -X PATCH \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer ${token}" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/repos/${repoUser}/${repoName} \
+  -d '{"private":${visibility === 'private'}}'`;
+    const cmd = this.runCommand(changeVisbilityCommand);
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) {
+      console.error('Error updating repository settings.');
+      return false;
+    }
+    console.log('Repository settings updated.');
+    return true;
   }
 
   async activateGitHubPages (token, repoName, repoUser) {
