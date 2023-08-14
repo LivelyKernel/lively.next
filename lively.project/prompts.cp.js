@@ -84,6 +84,15 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             { target: 'user flap', signal: 'onLogout', handler: 'waitForLogin' },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             { model: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
+            {
+              model: 'create remote checkbox',
+              signal: 'checked',
+              handler: (checked) => {
+                const { privateCheckbox } = this.ui;
+                if (checked) privateCheckbox.enable();
+                else privateCheckbox.disable();
+              }
+            },
             { model: 'cancel button', signal: 'fire', handler: 'close' },
             { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` },
             { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` }
@@ -133,7 +142,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   async resolve () {
     await fun.guardNamed('resolve-project-creation', async () => {
       this.disableButtons();
-
       let li;
       let { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
       let createdProject, urlString;
@@ -152,13 +160,14 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         }
       } else {
         const createNewRemote = createRemoteCheckbox.checked;
+      const priv = privateCheckbox.checked;
         const { name: repoOwner, isOrg } = userSelector.selection;
         createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
         const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
         createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
         try {
           li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
-          createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
+        createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername(), priv);
           li.remove();
           super.resolve(createdProject);
         } catch (err) {
@@ -172,8 +181,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    const { promptTitle, cancelButton, okButton, userFlap } = this.ui;
+    const { promptTitle, cancelButton, okButton, userFlap, privateCheckbox } = this.ui;
     okButton.disable();
+    privateCheckbox.disable();
     if (!this.canBeCancelled) cancelButton.disable();
     if (!currentUsertoken()) {
       this.waitForLogin();
@@ -551,8 +561,18 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           part(LabeledCheckBox, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
           part(InformIconOnLight, { viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' } })
         ]
-      },
-      part(InputLineDefault, {
+      }, {
+        name: 'private repo holder',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center'
+        }),
+        submorphs: [
+          part(LabeledCheckBox, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
+          part(InformIconOnLight, { viewModel: { information: 'Should the new GitHub repository for the project be private?' } })
+        ]
+      }, part(InputLineDefault, {
         name: 'description',
         extent: pt(318.1, 106.3),
         placeholder: 'Project Description',

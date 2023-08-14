@@ -50,7 +50,7 @@ export default class GitShellResource extends ShellClientResource {
     return true;
   }
 
-  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope = false) {
+  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope, priv) {
     const repoCreationCommand = orgScope
       ? `curl -L \
               -X POST \
@@ -58,13 +58,13 @@ export default class GitShellResource extends ShellClientResource {
               -H "Authorization: Bearer ${token}"\
               -H "X-GitHub-Api-Version: 2022-11-28" \
               https://api.github.com/orgs/${repoUser}/repos \
-              -d '{"name":"${repoName}","description":"${repoDescription}"}'`
+              -d '{"name":"${repoName}","description":"${repoDescription}", "private":${!!priv}}'`
       : `curl -L \
               -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${token}" \
               https://api.github.com/user/repos \
-              -d '{"name":"${repoName}", "description": "${repoDescription}"}'`;
+              -d '{"name":"${repoName}", "description": "${repoDescription}", "private":${!!priv}}'`;
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error executing curl call to create GitHub repository');
