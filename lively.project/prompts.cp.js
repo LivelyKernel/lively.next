@@ -5,11 +5,9 @@ import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
-
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 import { without } from 'lively.morphic/components/core.js';
-
 import { Label } from 'lively.morphic/text/label.js';
 import { CheckBox } from 'lively.components/widgets.js';
 import { currentUsertoken, currentUsersOrganizations, currentUsername } from 'lively.user';
@@ -21,6 +19,7 @@ import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js'
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { once } from 'lively.bindings';
 import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
+import { fun } from 'lively.lang';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -55,7 +54,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 
     conf.testOnPush = testModeSelector.selectedItem === 'push';
     conf.buildOnPush = buildModeSelector.selectedItem === 'push';
-    this.view.remove();
+    super.resolve(true);
   }
 
   viewDidLoad () {
@@ -86,8 +85,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             { model: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
             { model: 'cancel button', signal: 'fire', handler: 'close' },
-            { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity' },
-            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity' }
+            { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` },
+            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` }
           ];
         }
       },
@@ -95,29 +94,29 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     };
   }
 
-  checkValidity () {
+  checkValidity (onlyCheck = false) {
     const { okButton, remoteUrl, projectName } = this.ui;
     if (this.fromRemote) {
       try {
         const url = new URL(remoteUrl.textString);
         if (url.host !== 'github.com') {
           remoteUrl.indicateError('enter github url');
-          okButton.disable();
+          if (!onlyCheck) okButton.disable();
           return false;
         }
       } catch (err) {
         remoteUrl.indicateError('enter valid url');
-        okButton.disable();
+        if (!onlyCheck) okButton.disable();
         return false;
       }
     } else {
       if (!projectName.textString || !projectName.textString.match(/^[\da-zA-Z-_]*$/)) {
         projectName.indicateError('enter valid name');
-        okButton.disable();
+        if (!onlyCheck) okButton.disable();
         return false;
       }
     }
-    okButton.enable();
+    if (!onlyCheck) okButton.enable();
     return true;
   }
 
@@ -132,35 +131,44 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async resolve () {
-    let li;
-    let { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
-    let createdProject, urlString;
-    if (!this.checkValidity()) return;
-    if (this.fromRemote) {
-      try {
-        urlString = remoteUrl.textString;
-        if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
-        createdProject = await Project.fromRemote(urlString);
-        super.resolve(createdProject);
-      } catch (err) {
-        this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
+    await fun.guardNamed('resolve-project-creation', async () => {
+      this.disableButtons();
+
+      let li;
+      let { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
+      let createdProject, urlString;
+      if (!this.checkValidity(true)) {
+        return;
       }
-    } else {
-      const createNewRemote = createRemoteCheckbox.checked;
-      const { name: repoOwner, isOrg } = userSelector.selection;
-      createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
-      const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
-      createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
-      try {
-        li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
-        createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
-        li.remove();
-        super.resolve(createdProject);
-      } catch (err) {
-        li?.remove();
-        this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
+      if (this.fromRemote) {
+        try {
+          urlString = remoteUrl.textString;
+          if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
+          createdProject = await Project.fromRemote(urlString);
+          super.resolve(createdProject);
+        } catch (err) {
+          this.enableButtons();
+          this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
+        }
+      } else {
+        const createNewRemote = createRemoteCheckbox.checked;
+        const { name: repoOwner, isOrg } = userSelector.selection;
+        createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
+        const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
+        createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
+        try {
+          li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
+          createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername());
+          li.remove();
+          super.resolve(createdProject);
+        } catch (err) {
+          this.enableButtons();
+          li?.remove();
+          this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
+        }
       }
-    }
+      this.enableButtons();
+    })();
   }
 
   async viewDidLoad () {
@@ -277,6 +285,9 @@ class ProjectSavePrompt extends AbstractPromptModel {
   }
 
   async resolve () {
+    await fun.guardNamed('resolve-project-saving', async () => {
+    this.disableButtons();
+
     const { description } = this.ui;
     const message = description.textString;
 
@@ -288,10 +299,11 @@ class ProjectSavePrompt extends AbstractPromptModel {
     const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
     const success = await this.project.save({ increaseLevel, message, tag: this.tag });
     li.remove();
-    this.view.remove();
     this.terminalWindow?.close();
     if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
     else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
+    super.resolve(success);
+    })();
   }
 }
 
