@@ -55,6 +55,20 @@ export class AbstractPromptModel extends ViewModel {
     return this.answer.promise;
   }
 
+  disableButtons () {
+    const { okButton, cancelButton } = this.ui;
+
+    okButton.disable();
+    cancelButton.disable();
+  }
+
+  enableButtons () {
+    const { okButton, cancelButton } = this.ui;
+
+    okButton.enable();
+    cancelButton.enable();
+  }
+
   isActive () { return !!this.world() && this._isActive; }
 
   get keybindings () {
