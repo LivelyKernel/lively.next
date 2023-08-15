@@ -462,6 +462,12 @@ export class WorldBrowserModel extends ViewModel {
     if (!this.previews) return;
     fun.debounceNamed('update item list', 150, () => {
       this.ui.worldList.items = this.sortAndFilterPreviews(this.previews);
+      if (this.ui.worldList.items.length === 0) {
+        this.ui.noWorldWarning.center = this.view.innerBounds().center();
+        this.ui.noWorldWarning.animate({
+          visible: true, duration: 300
+        });
+      } else this.ui.noWorldWarning.visible = false;
     })();
   }
 
@@ -502,13 +508,6 @@ export class WorldBrowserModel extends ViewModel {
       opacity: 0, duration: 300
     });
     this.updateList();
-
-    if (this.previews.length === 0) {
-      this.ui.noWorldWarning.center = this.view.innerBounds().center();
-      this.ui.noWorldWarning.animate({
-        visible: true, duration: 300
-      });
-    }
   }
 
   async createNewProject () {
@@ -1227,12 +1226,13 @@ const WorldBrowser = component({
   submorphs: [{
     type: Label,
     name: 'no world warning',
+    visible: false,
     fontColor: Color.rgb(189, 195, 199),
     fontSize: 30,
     fontWeight: 'bold',
     position: pt(170.8, 265.5),
-    textAndAttributes: ['There are no projects yet. Create one!', null],
-    visible: false
+    reactsToPointer: false,
+    textAndAttributes: ['There are no projects yet. Create one!', null]
   }, {
     type: GrowingWorldList,
     name: 'world list',
