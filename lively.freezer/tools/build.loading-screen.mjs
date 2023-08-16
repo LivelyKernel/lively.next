@@ -16,7 +16,6 @@ const build = await rollup({
       autoRun: { title: 'lively.next' },
       minify,
       asBrowserModule: true,
-      isResurrectionBuild: true,
       excludedModules: [
 	'lively.collab',
         'mocha-es6','mocha', 'picomatch', // references old lgtg that breaks the build
@@ -30,7 +29,7 @@ const build = await rollup({
       ],
       resolver
     }),
-    jsonPlugin(),
+    jsonPlugin({ exclude: /https\:\/\/jspm.dev\/.*\.json/}),
     babel({
      babelHelpers: 'bundled', 
      presets: [PresetEnv]
