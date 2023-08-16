@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>lively.next log</title>
+    <style id="log-styling">
+      body {
+        margin: 5px;
+        font-family: sans-serif;
+        height: 100%;
+      }
+      h1 { font-size: 20pt; }
+      pre {  white-space: pre-wrap; margin: 0; }
+      .log-container {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      ul {
+        margin: 0;
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        -webkit-margin-before: 0;
+        -webkit-margin-after: 0;
+        -webkit-padding-start: 0;
+      }
+      .log {}
+      .warn { color: "orange"; }
+      .error {  color: "red"; font-weight: "bold"; }
+      .stdout {}
+      .stderr {}
+    </style>
+    <script src='/lively.vm/dist/lively.vm_standalone.min.js'></script>
+    <script src='/lively.2lively/dist/lively.2lively_client.js'></script>
+    <script>
+      let url = `${document.location.origin}/lively-socket.io`;
+      lively.l2l.client = lively.l2l.L2LClient.ensure({
+        url, namespace: "l2l",
+        info: {
+          type: "lively.app logger"
+        }
+      });
+      lively.l2l.client.whenRegistered(20*1000)
+        .then(() => console.log("[l2l] online"))
+        .catch(err => console.error("[l2l] failed:", err));
+    </script>
+    <script>
+      function addLogMessages(msgs) {
+        let log = document.querySelector("#log"),
+            items = msgs.map(msg => `<li class="${msg.type}">[${msg.type}] ${msg.content}</li>`);
+        log.insertAdjacentHTML("beforeend", items.join(""))
+        log.lastChild.scrollIntoViewIfNeeded();
+      }
+      let renderer = require('electron').ipcRenderer
+      renderer.on('log', (event, msg) => addLogMessages([msg]));
+      renderer.on('load-log', (event, msg) => addLogMessages(msg));
+    </script>
+  </head>
+
+  <body>
+    <h1 class="title">lively.next server log</h1>
+    <pre class="log-container">
+      <ul id="log">
+      </ul>
+    </pre>
+  </body>
+
+</html>

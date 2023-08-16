@@ -1,0 +1,25 @@
+{
+  "name": "lively.app",
+  "version": "1.2.0-rc5",
+  "description": "lively.app runtime",
+  "main": "main.js",
+  "productName": "lively",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/LivelyKernel/lively.app",
+  "keywords": [
+    "lively.next",
+    "LivelyKernel",
+    "construction kit",
+    "IDE",
+    "programming environment",
+    "Morphic"
+  ],
+  "author": "Robert Krahn",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "~1.6.2",
+    "electron-packager": "^8.7.0"
+  }
+}
