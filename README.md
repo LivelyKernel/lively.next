@@ -23,7 +23,7 @@ Please note, that these instructions currently are not recommended for openly de
 Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed:
 
-1. `node.js v18.12.1`
+1. `node.js v18.12.1` or higher.
 2. `git`.
 
 > **Warning**
