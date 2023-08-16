@@ -17,6 +17,7 @@ const build = await rollup({
         title: 'lively.next',
       },
       minify,
+      isResurrectionBuild: true,
       asBrowserModule: true,
       excludedModules: [
 	'lively.collab',
@@ -32,7 +33,7 @@ const build = await rollup({
       ],
       resolver
     }),
-    jsonPlugin(),
+    jsonPlugin({ exclude: /https\:\/\/jspm.dev\/.*\.json/}),
     babel({
      babelHelpers: 'bundled', 
      presets: [PresetEnv]
