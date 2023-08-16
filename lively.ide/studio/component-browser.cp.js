@@ -1448,7 +1448,7 @@ const SearchComponentsNotice = component({
       fontWeight: 700,
       position: pt(-5, 26),
       textAndAttributes: ['', {
-        fontFamily: 'tabler-icons',
+        fontFamily: 'Tabler Icons',
         fontWeight: '900'
       }]
 

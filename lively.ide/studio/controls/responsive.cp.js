@@ -152,7 +152,7 @@ export const BreakpointEntry = component({
     name: 'configure component button',
     padding: rect(4, 4, 0, 0),
     textAndAttributes: ['', {
-      fontFamily: 'tabler-icons',
+      fontFamily: 'Tabler Icons',
       fontSize: 18,
       fontWeight: '900'
     }]
