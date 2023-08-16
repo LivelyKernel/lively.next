@@ -1316,7 +1316,30 @@ export default class Renderer {
       // selected lines (rows) that are visible
       charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
       isFirstLine = row === selection.start.row;
+
+      // This correctly finds wrapped lines spanning over three or more lines in all known cases.
       isWrapped = charBounds[0].bottom() < arr.last(charBounds).top();
+      // For wrapped lines spanning two lines, we need a more sophisticated approach.
+      // Depending on the used font and its size, the character rects of the two wrapped lines can overlap.
+      // This throws off the above test, leading to false negatives.
+      // When a line is not wrapped however, we do know that all character rects are "vertically contained" in the largest character rect.
+      // If this is not the case, we can be sure that the line is wrapped.
+      if (!isWrapped) {
+        let highgestCharRect = charBounds[0];
+        // find highest char rect
+        charBounds.forEach((charb) => {
+          if (charb.height > highgestCharRect.height) highgestCharRect = charb;
+        });
+        for (let charbound of charBounds) {
+          // A charrect is contained in the larger one, if it starts at the same height/below the larger one and ends above or at the same height.
+          if (((charbound.y + charbound.height) >= (highgestCharRect.y + highgestCharRect.height)) &&
+             (charbound.y >= highgestCharRect.y)) {
+            isWrapped = true;
+            // As soon as we found one, we can stop, as we know for sure that we are wrapped.
+            break;
+          }
+        }
+      }
 
       if (isWrapped) {
         // since wrapped lines spread multiple "rendered" rows, we need to do add in a couple of
@@ -2036,7 +2059,7 @@ export default class Renderer {
       if (needsTransformAdjustment) lineNode.style.transform = '';
 
       if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth) &&
-         morph.fontMetric.isFontSupported(morph._fontFamilyToRender,  morph._fontWeightToRender)) {
+         morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
         morph.renderingState.needsFit = true;
