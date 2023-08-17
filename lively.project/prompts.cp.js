@@ -461,15 +461,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               borderWidth: 0,
               extent: pt(195.5, 28.5),
               submorphs: [part(LabeledCheckBox, { name: 'deploy check', viewModel: { label: 'Deploy Build to GitHub Pages:' } }), part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
-            }, part(ModeSelector, {
-              name: 'deploy mode selector',
-              viewModel: {
-                // TODO: This is not yet configurable and no infrastructure is in place for it to be.
-                enabled: false,
-                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
-                selectedItem: 'manual'
-              }
-            })]
+            }, { fill: Color.transparent, width: 255 }]
           }]
       },
       {
