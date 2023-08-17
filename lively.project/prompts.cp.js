@@ -49,8 +49,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                   $world.setStatusMessage('Error changing Repository visibility.', StatusMessageError);
                   return;
                 }
-                if (visibility === 'private') deployCheck.disable();
-                else deployCheck.enable();
+                if (this.project.canDeployToPages) deployCheck.enable();
+                else deployCheck.disable();
                 spinner.opacity = 0;
                 visibilitySelector.enabled = true;
               }
@@ -80,8 +80,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
     const conf = this.project.config.lively;
 
     if (conf.repositoryIsPrivate) {
-      deployCheck.disable();
       visibilitySelector.selectedItem = 'private';
+      if (!this.project.canDeployToPages) deployCheck.disable();
     }
 
     testCheck.checked = conf.testActionEnabled;
