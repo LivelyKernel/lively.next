@@ -11,7 +11,7 @@ import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver } from 'lively.modules/index.js';
-import { currentUsertoken, currentUsername } from 'lively.user';
+import { currentUsertoken, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
@@ -43,6 +43,16 @@ export class Project {
 
   get name () {
     return this.config.name;
+  }
+
+  // TODO: This is only partially correct, as collaborators can benefit from the benefits of a payed repository as well.
+  get canDeployToPages () {
+    const currUser = currentUser();
+    const currUserName = currUser.login;
+    if (!this.config.lively.repositoryIsPrivate) return true;
+    if (this.repoOwner !== currUserName) return false;
+    if (currUser.plan.name !== 'free') return true;
+    return false;
   }
 
   async hasRemoteConfigured () {
@@ -398,7 +408,7 @@ export class Project {
     const livelyConfig = this.config.lively;
     livelyConfig.testActionEnabled = true;
     livelyConfig.buildActionEnabled = false;
-    livelyConfig.deployActionEnabled = !livelyConfig.repositoryIsPrivate;
+    livelyConfig.deployActionEnabled = this.canDeployToPages;
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
 
@@ -433,7 +443,7 @@ export class Project {
     }
 
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
-    if (livelyConfig.deployActionEnabled && !livelyConfig.repositoryIsPrivate) {
+    if (livelyConfig.deployActionEnabled && this.canDeployToPages) {
       content = this.fillPipelineTemplate(deployScript);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {
