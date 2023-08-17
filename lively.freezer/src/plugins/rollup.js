@@ -76,7 +76,7 @@ export function lively (args) {
       if (bundler.excludedModules.length > 0) {
         opts.shimMissingExports = true; // since we are asked to exclude some of the lively modules, we set this flag to true. Can we isolate this??
       }
-      if (!opts.onwarn) opts.onwarn = (warning, warn) => { return customWarn(warning, warn); };
+      if (!opts.onwarn) opts.onwarn = (warning, warn) => { return customWarn(warning, warn, bundler); };
       opts.plugins = [
         ...bundler.resolver.supportingPlugins(bundler.asBrowserModule ? 'browser' : 'node'),
         ...opts.plugins

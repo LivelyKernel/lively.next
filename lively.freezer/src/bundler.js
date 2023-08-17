@@ -65,12 +65,15 @@ const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(pr
  * @param { object } warning - The warning object.
  * @param { function } warn - The custom error function to utilize for logging the warning.
  */
-export function customWarn (warning, warn) {
+export function customWarn (warning, warn, bundler) {
   switch (warning.code) {
     case 'THIS_IS_UNDEFINED':
     case 'EVAL':
     case 'MODULE_LEVEL_DIRECTIVE':
       return;
+    case 'UNRESOLVED_IMPORT':
+      // add the import to the source map to link to empty
+      arr.pushIfNotIncluded(bundler.excludedModules, warning.source);
   }
   warn(warning);
 }
@@ -393,16 +396,16 @@ export default class LivelyRollup {
 
     if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
 
-    const assetNameRewriter =  (match, assetName) => {
+    const assetNameRewriter = (match, assetName) => {
       const newName = currentlyTransformedProject + '__' + assetName;
 
       this.projectAssets.push({
-          oldName: assetName,
-          newName,
-          project: currentlyTransformedProject
-        }) 
-        return `projectAsset(\'${newName}\')`;
-      }
+        oldName: assetName,
+        newName,
+        project: currentlyTransformedProject
+      });
+      return `projectAsset(\'${newName}\')`;
+    };
 
     source = source.replaceAll(projectAssetRegex, assetNameRewriter);
 
@@ -805,7 +808,7 @@ export default class LivelyRollup {
     if (this.includeLivelyAssets) {
       const fontBundleDir = resource(config.css.fontBundle).parent();
       const fontFiles = await fontBundleDir.dirList();
-      
+
       for (let file of fontFiles) {
         file.beBinary();
         let source = await file.read();
@@ -820,13 +823,13 @@ export default class LivelyRollup {
       const assetDir = resource(config.css.fontBundle).parent().parent();
       const morphicCSS = assetDir.join('morphic.css');
       morphicCSS.beBinary();
-        let source = await morphicCSS.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
-        plugin.emitFile({
-          type: 'asset',
-          fileName: joinPath(assetDir.url.replace(morphicUrl, ''), 'morphic.css'),
-          source
-        });  
+      let source = await morphicCSS.read();
+      if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
+      plugin.emitFile({
+        type: 'asset',
+        fileName: joinPath(assetDir.url.replace(morphicUrl, ''), 'morphic.css'),
+        source
+      });
     }
 
     const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
@@ -837,17 +840,17 @@ export default class LivelyRollup {
     for (let [project] of this.projectsInBundle.entries()) {
       const indexCSSFile = projectsDir.join(project).join('index.css');
       const indexCSSContents = await indexCSSFile.read();
-      bundledProjectCSS =  indexCSSContents + '\n' + bundledProjectCSS;
+      bundledProjectCSS = indexCSSContents + '\n' + bundledProjectCSS;
       const fontCSSFile = projectsDir.join(project).join('fonts.css');
       // Inside of the projects, font files are in the assets folder, with font.css being a hierarchy above.
       // Inside of the bundles, font.css itself is part of the assets folder.
       const fontCSSContents = (await fontCSSFile.read()).replaceAll(/\.\/assets\//g, './');
-      bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS ;
-      
+      bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS;
+
       const assetDir = await projectsDir.join(project).join('assets');
       // Each project can have multiple font files
       if (await assetDir.exists()) {
-        const fontFiles = (await assetDir.dirList()).filter(f => f.url.includes('woff2'))
+        const fontFiles = (await assetDir.dirList()).filter(f => f.url.includes('woff2'));
         for (let file of fontFiles) {
           file.beBinary();
           let source = await file.read();
@@ -871,13 +874,13 @@ export default class LivelyRollup {
     for (let asset of this.projectAssets) {
       const file = resource(projectsDir).join(asset.project).join('assets').join(`${asset.oldName}`);
       file.beBinary();
-        let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
-        plugin.emitFile({
-          type: 'asset',
-          fileName: joinPath('assets', `${asset.newName}`),
-          source
-        });
+      let source = await file.read();
+      if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+      plugin.emitFile({
+        type: 'asset',
+        fileName: joinPath('assets', `${asset.newName}`),
+        source
+      });
     }
     // add the blank import file to make systemjs happy
     plugin.emitFile({
