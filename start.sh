@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./scripts/node_version_checker.sh || exit 1
+
 # "Parameter safety"
 if [ "$1" = "--debug" ]; then
   debug='--debug'
