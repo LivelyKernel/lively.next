@@ -371,6 +371,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
     submorphs: [
       {
         name: 'ci settings',
+        fill: Color.rgba(255, 255, 255, 0),
         layout: new TilingLayout({
           align: 'center',
           axis: 'column',
@@ -386,6 +387,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
           },
           {
             name: 'row 11',
+            fill: Color.rgba(255, 255, 255, 0),
             extent: pt(480, 42),
             layout: new TilingLayout({
               align: 'center',
@@ -395,6 +397,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             }),
             submorphs: [{
               name: 'wrapper 11',
+              borderColor: Color.rgba(255, 255, 255, 0),
               layout: new TilingLayout({
                 axisAlign: 'center',
                 orderByIndex: true
@@ -413,6 +416,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
           },
           {
             name: 'row 21',
+            fill: Color.rgba(255, 255, 255, 0),
             extent: pt(297, 29),
             layout: new TilingLayout({
               align: 'center',
@@ -439,6 +443,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             })]
           }, {
             name: 'row 31',
+            fill: Color.rgba(255, 255, 255, 0),
             extent: pt(480, 41.5),
             layout: new TilingLayout({
               align: 'center',
@@ -469,6 +474,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
       },
       {
         name: 'repo settings',
+        fill: Color.rgba(255, 255, 255, 0),
         layout: new TilingLayout({
           align: 'center',
           axis: 'column',
@@ -483,6 +489,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             fontWeight: '600'
           }, {
             name: 'row 12',
+            fill: Color.rgba(255, 255, 255, 0),
             extent: pt(480, 42),
             layout: new TilingLayout({
               axisAlign: 'center',
