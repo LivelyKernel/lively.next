@@ -3058,7 +3058,9 @@ export class PathPoint {
 
   moveBy (delta) {
     this.position = this.position.addPt(delta);
-    this.path.onVertexChanged(this);
+    this.path.withMetaDo({ reconcileChanges: true }, () => {
+      this.path.onVertexChanged(this);
+    });
     return this;
   }
 
@@ -3070,11 +3072,11 @@ export class PathPoint {
   __serialize__ () {
     return {
       __expr__: `({
-         position: ${this.position.toString(false)},
+         position: ${this.position.toString(false, 4)},
          isSmooth: ${this.isSmooth},
          controlPoints: {
-           next: ${this.controlPoints.next.toString(false)},
-           previous: ${this.controlPoints.previous.toString(false)}
+           next: ${this.controlPoints.next.toString(false, 4)},
+           previous: ${this.controlPoints.previous.toString(false, 4)}
          }
       })`.replace(/[\n|\s]/g, ''),
       bindings: { 'lively.graphics/geometry-2d.js': ['pt'] }
@@ -3154,7 +3156,9 @@ export class PathPoint {
         next: isLast ? pt(0, 0) : nextPos.subPt(position).scaleBy(0.5)
       };
     }
-    path.onVertexChanged(this);
+    path.withMetaDo({ reconcileChanges: true }, () => {
+      path.onVertexChanged(this);
+    });
   }
 }
 
@@ -3195,6 +3199,7 @@ export class Path extends Morph {
           vs = vs.map(v => v.isPathPoint
             ? Object.assign(v, { path: this })
             : new PathPoint(this, { isSmooth, ...v }));
+          vs.__serialize__ = this.verticesAsExpression.bind(vs);
           this.setProperty('vertices', vs);
           this._adjustingVertices = false;
           this.updateBounds(vs);
@@ -3257,6 +3262,14 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
+  verticesAsExpression () {
+    const verticesExpressions = this.map(v => v.__serialize__());
+    return {
+      __expr__: `[${verticesExpressions.map(expr => expr.__expr__).join(',')}]`,
+      bindings: Object.assign(...verticesExpressions.map(expr => expr.bindings))
+    };
+  }
+
   __after_deserialize__ (snapshot, objRef, pool) {
     super.__after_deserialize__(snapshot, objRef, pool);
     this.updateBounds(this.vertices);
@@ -3285,6 +3298,7 @@ export class Path extends Morph {
   onVertexChanged (vertex) {
     this.makeDirty();
     this.updateBounds(this.vertices);
+    this.setProperty('vertices', this.vertices);
   }
 
   copyVertices () {

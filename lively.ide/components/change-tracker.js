@@ -97,6 +97,7 @@ export class ComponentChangeTracker {
     if (change.prop === 'position' && (change.target === this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
     if (change.prop &&
         change.prop !== 'textAndAttributes' &&
+        change.prop !== 'vertices' &&
         !change.target.styleProperties.includes(change.prop)) return true;
     if (change.target.epiMorph) return true;
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
@@ -105,6 +106,7 @@ export class ComponentChangeTracker {
     if (change.selector === 'addMorphAt' && change.target.textAndAttributes?.includes(change.args[0])) return true;
     if (!change.selector &&
         change.prop !== 'layout' &&
+        change.prop !== 'vertices' &&
         obj.equals(change.prevValue, change.value)) return true;
     return false;
   }
