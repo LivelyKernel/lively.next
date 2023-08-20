@@ -252,10 +252,10 @@ export class Point {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // debugging
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-  toString (truncate = true) {
+  toString (truncate = true, precision = 4) {
     return truncate
       ? string.format('pt(%1.f,%1.f)', this.x, this.y)
-      : string.format('pt(%10.d,%10.d)', this.x, this.y);
+      : string.format(`pt(%${precision}.f,%${precision}.f)`, this.x, this.y);
   }
 
   inspect () { return JSON.stringify(this); }
