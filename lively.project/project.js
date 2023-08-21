@@ -395,7 +395,7 @@ export class Project {
         workspaces: {
           'default.workspace.js': ''
         },
-        'index.css': '/* Use this file to add custom CSS to be used for this project! */\n/* Do NOT use @import rules in this file! */',
+        'index.css': '/* Use this file to add custom CSS to be used for this project. */\n/* Do NOT create other CSS files in this folder, as they will not be available in the bundled application! */\n/* `@imports` fetching remote CSS are okay. */',
         'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
