@@ -273,13 +273,12 @@ export class Project {
     return term;
   }
 
-
-  async checkPagesSupport(){
+  async checkPagesSupport () {
     const currUser = currentUser();
     const currUserName = currUser.login;
 
     // GH Pages is possible for non-private repositories in any case
-    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true
+    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true;
     // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
     if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
       if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
@@ -309,7 +308,7 @@ export class Project {
    */
   async saveConfigData () {
     await this.checkPagesSupport();
-    
+
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -396,7 +395,7 @@ export class Project {
         workspaces: {
           'default.workspace.js': ''
         },
-        'index.css': '/* Use this file to add custom CSS to be used for this project! */\n/* Do NOT use @import rules in this file! */',
+        'index.css': '/* Use this file to add custom CSS to be used for this project. */\n/* Do NOT create other CSS files in this folder, as they will not be available in the bundled application! */\n/* `@imports` fetching remote CSS are okay. */',
         'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
