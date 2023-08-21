@@ -183,6 +183,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
         }
       } else {
+        li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
         const createNewRemote = createRemoteCheckbox.checked;
         const priv = privateCheckbox.checked;
         const { name: repoOwner, isOrg } = userSelector.selection;
@@ -190,8 +191,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
         createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
         try {
-          li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
-          createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername(), priv);
+          await createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername(), priv);
           li.remove();
           super.resolve(createdProject);
         } catch (err) {
