@@ -18,6 +18,7 @@ import { WindowSwitcher } from './window-switcher.cp.js';
 import { browserForFile } from './js/browser/ui.cp.js';
 import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
 import { Project } from 'lively.project';
+import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 
 const commands = [
 
@@ -1216,6 +1217,11 @@ const commands = [
     exec: async (world, args, _, evt) => {
       let saved;
       if ($world.openedProject) {
+        await $world.openedProject.saveConfigData();
+        if (!(await $world.openedProject.hasUncommitedChanges())) {
+          $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
+          return;
+        }
         saved = await $world.openPrompt(part(SaveProjectDialog, { viewModel: { project: $world.openedProject } }));
       } else { // in case there is another morph implementing save...
         const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);

@@ -312,12 +312,6 @@ class ProjectSavePrompt extends AbstractPromptModel {
     };
   }
 
-  async viewDidLoad () {
-    this.ui.diffButton.disable();
-    await this.project.saveConfigData();
-    this.ui.diffButton.enable();
-  }
-
   async resolve () {
     await fun.guardNamed('resolve-project-saving', async () => {
       this.disableButtons();

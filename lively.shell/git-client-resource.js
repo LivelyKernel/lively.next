@@ -149,6 +149,13 @@ export default class GitShellResource extends ShellClientResource {
     const resetCmd = `git checkout ${fileName}`;
     await this.runCommand(resetCmd).whenDone();
   }
+
+  async hasUncommitedChanges () {
+    const checkCmd = '(git add * || true) && git diff --cached --exit-code && git diff --exit-code';
+    const check = this.runCommand(checkCmd);
+    await check.whenDone();
+    return !!check.exitCode;
+  }
 }
 
 export const gitResourceExtension = {
