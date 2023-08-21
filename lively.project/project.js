@@ -53,6 +53,10 @@ export class Project {
     return await this.gitResource.hasRemote();
   }
 
+  async hasUncommitedChanges () {
+    return await this.gitResource.hasUncommitedChanges();
+  }
+
   async changeRepositoryVisibility (visibility) {
     this.config.lively.repositoryIsPrivate = visibility === 'private';
     return await this.gitResource.changeRemoteVisibility(currentUserToken(), this.name, this.repoOwner, visibility);
