@@ -20,11 +20,11 @@ export function currentUsername () {
   return currentUser().login;
 }
 
-export function currentUsertoken () {
+export function currentUserToken () {
   return localStorage.getItem('gh_access_token');
 }
 
-export function storeCurrentUsertoken (token) {
+export function storeCurrentUserToken (token) {
   localStorage.setItem('gh_access_token', token);
 }
 export function clearUserData () {

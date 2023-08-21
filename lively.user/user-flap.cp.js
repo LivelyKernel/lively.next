@@ -1,6 +1,6 @@
 import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
-import { currentUser, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUsertoken, storeCurrentUsertoken } from 'lively.user';
+import { currentUser, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUserToken, storeCurrentUserToken } from 'lively.user';
 import { signal } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
@@ -176,7 +176,7 @@ class UserFlapModel extends ViewModel {
       $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
       return;
     }
-    storeCurrentUsertoken(userToken);
+    storeCurrentUserToken(userToken);
     await this.retrieveGithubUserData();
     this.toggleLoadingAnimation();
     this.showLoggedInUser();
@@ -198,7 +198,7 @@ class UserFlapModel extends ViewModel {
   }
 
   async retrieveGithubUserData () {
-    const token = currentUsertoken();
+    const token = currentUserToken();
     // retrieve general data about the authenticated user
     const cmdString = `curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${token}" https://api.github.com/user`;
     let { stdout: userRes } = await runCommand(cmdString).whenDone();

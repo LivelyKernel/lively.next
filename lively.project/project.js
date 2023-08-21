@@ -11,7 +11,7 @@ import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver } from 'lively.modules/index.js';
-import { currentUsertoken, currentUser, currentUsername } from 'lively.user';
+import { currentUserToken, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
@@ -61,7 +61,7 @@ export class Project {
 
   async changeRepositoryVisibility (visibility) {
     this.config.lively.repositoryIsPrivate = visibility === 'private';
-    return await this.gitResource.changeRemoteVisibility(currentUsertoken(), this.name, this.repoOwner, visibility);
+    return await this.gitResource.changeRemoteVisibility(currentUserToken(), this.name, this.repoOwner, visibility);
   }
 
   // TODO: 🍴 Support
@@ -152,7 +152,7 @@ export class Project {
     if (remote.endsWith('/')) remote = remote.slice(0, -1);
     const remoteUrl = new URL(remote);
 
-    const userToken = currentUsertoken();
+    const userToken = currentUserToken();
     // TODO: 🍴 Support!
     // Check here if the repo to clone is a fork (GitHub API) and create hidden metadata files if necessary.
     const projectName = remote.match(repositoryOwnerAndNameRegex)[2];
@@ -397,8 +397,7 @@ export class Project {
     if (withRemote) {
       try {
         await this.regeneratePipelines();
-        const createForOrg = gitHubUser !== currentUsername();
-        await this.gitResource.addRemoteToGitRepository(currentUsertoken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
+        await this.gitResource.addRemoteToGitRepository(currentUserToken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
@@ -422,7 +421,7 @@ export class Project {
   }
 
   async regeneratePipelines () {
-    await this.gitResource.activateGitHubPages(currentUsertoken(), this.name, this.repoOwner);
+    await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
     let pipelineFile, content;
     const livelyConfig = this.config.lively;
 
@@ -530,7 +529,7 @@ export class Project {
         const depName = depToEnsure.name.match(/[a-zA-Z\d]*--(.*)/)[1];
         const depRepoOwner = depToEnsure.name.match(/([a-zA-Z\d]*)--/)[1];
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-        const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUsertoken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}--${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
+        const cmd = runCommand(`cd ../local_projects/ && git clone https://${currentUserToken()}@github.com/${depRepoOwner}/${depName} ${depRepoOwner}--${depName}`, { l2lClient: ShellClientResource.defaultL2lClient });
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
         // Refresh the cache of available projects and their version.
