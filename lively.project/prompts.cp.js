@@ -10,7 +10,7 @@ import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 import { without } from 'lively.morphic/components/core.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { CheckBox } from 'lively.components/widgets.js';
-import { currentUsertoken, currentUsersOrganizations, currentUsername } from 'lively.user';
+import { currentUserToken, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { EnumSelector, Spinner } from 'lively.ide/studio/shared.cp.js';
@@ -208,7 +208,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     okButton.disable();
     privateCheckbox.disable();
     if (!this.canBeCancelled) cancelButton.disable();
-    if (!currentUsertoken()) {
+    if (!currentUserToken()) {
       this.waitForLogin();
     } else {
       const li = $world.showLoadingIndicatorFor(this.view);
