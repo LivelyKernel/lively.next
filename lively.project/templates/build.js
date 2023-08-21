@@ -32,7 +32,7 @@ const build = await rollup({
       ],
       resolver
     }),
-    jsonPlugin(),
+    jsonPlugin({ exclude: /https\\\:\\\/\\\/jspm.dev\\\/.*\\\.json/}),
     babel({
      babelHelpers: 'bundled', 
      presets: [PresetEnv]
@@ -44,5 +44,5 @@ await build.write({
   format: 'system',
   dir: 'build'
 });
-`
+`;
 
