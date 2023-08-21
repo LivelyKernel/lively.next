@@ -49,6 +49,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                   $world.setStatusMessage('Error changing Repository visibility.', StatusMessageError);
                   return;
                 }
+                await this.project.checkPagesSupport();
                 if (this.project.canDeployToPages) deployCheck.enable();
                 else deployCheck.disable();
                 spinner.opacity = 0;
