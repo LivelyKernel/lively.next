@@ -118,8 +118,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
               }
             },
             { model: 'cancel button', signal: 'fire', handler: 'close' },
-            { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` },
-            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: `() => false` }
+            { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' },
+            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' }
           ];
         }
       },
@@ -167,7 +167,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     await fun.guardNamed('resolve-project-creation', async () => {
       this.disableButtons();
       let li;
-      let { remoteUrl, projectName, createRemoteCheckbox, userSelector, description } = this.ui;
+      let { remoteUrl, projectName, createRemoteCheckbox, privateCheckbox, userSelector, description } = this.ui;
       let createdProject, urlString;
       if (!this.checkValidity(true)) {
         return;
@@ -184,14 +184,14 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         }
       } else {
         const createNewRemote = createRemoteCheckbox.checked;
-      const priv = privateCheckbox.checked;
+        const priv = privateCheckbox.checked;
         const { name: repoOwner, isOrg } = userSelector.selection;
         createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
         const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
         createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
         try {
           li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
-        createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername(), priv);
+          createdProject.create(createNewRemote, isOrg ? repoOwner : currentUsername(), priv);
           li.remove();
           super.resolve(createdProject);
         } catch (err) {
@@ -320,23 +320,23 @@ class ProjectSavePrompt extends AbstractPromptModel {
 
   async resolve () {
     await fun.guardNamed('resolve-project-saving', async () => {
-    this.disableButtons();
+      this.disableButtons();
 
-    const { description } = this.ui;
-    const message = description.textString;
+      const { description } = this.ui;
+      const message = description.textString;
 
-    let increaseLevel;
-    if (this.increaseMajor) increaseLevel = 'major';
-    else if (this.increaseMinor) increaseLevel = 'minor';
-    else increaseLevel = 'patch';
+      let increaseLevel;
+      if (this.increaseMajor) increaseLevel = 'major';
+      else if (this.increaseMinor) increaseLevel = 'minor';
+      else increaseLevel = 'patch';
 
-    const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
-    const success = await this.project.save({ increaseLevel, message, tag: this.tag });
-    li.remove();
-    this.terminalWindow?.close();
-    if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
-    else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
-    super.resolve(success);
+      const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
+      const success = await this.project.save({ increaseLevel, message, tag: this.tag });
+      li.remove();
+      this.terminalWindow?.close();
+      if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
+      else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
+      super.resolve(success);
     })();
   }
 }

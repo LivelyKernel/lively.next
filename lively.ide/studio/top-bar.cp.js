@@ -317,7 +317,7 @@ export class TopBarModel extends ViewModel {
           $world.setStatusMessage('Only available with GitHub repositories.', StatusMessageError);
           return;
         }
-        part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject } }).openInWorld();
+        $world.openPrompt(part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
       }],
       [['🧑‍💻', { fontFamily: 'Noto Emoji' }, ' Open a Terminal (advanced operation)', null], async () => {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
