@@ -45,14 +45,8 @@ export class Project {
     return this.config.name;
   }
 
-  // TODO: This is only partially correct, as collaborators can benefit from the benefits of a payed repository as well.
   get canDeployToPages () {
-    const currUser = currentUser();
-    const currUserName = currUser.login;
-    if (!this.config.lively.repositoryIsPrivate) return true;
-    if (this.repoOwner !== currUserName) return false;
-    if (currUser.plan.name !== 'free') return true;
-    return false;
+    return this.config.lively.canUsePages;
   }
 
   async hasRemoteConfigured () {
@@ -279,13 +273,43 @@ export class Project {
     return term;
   }
 
+
+  async checkPagesSupport(){
+    const currUser = currentUser();
+    const currUserName = currUser.login;
+
+    // GH Pages is possible for non-private repositories in any case
+    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true
+    // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
+    if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
+      if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
+      else this.config.lively.canUsePages = false;
+    }
+    if (this.config.lively.repoBelongsToOrg) {
+      const checkOrgPlanCmd = runCommand(`curl -L \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer ${currentUserToken()}" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/orgs/${this.repoOwner}
+      `, { l2lClient: ShellClientResource.defaultL2lClient });
+      await checkOrgPlanCmd.whenDone();
+      // In case the command errors out, we just set the value to false to be on the save side
+      if (checkOrgPlanCmd.exitCode !== 0) this.config.lively.canUsePages = false;
+      else {
+        if ((JSON.parse(checkOrgPlanCmd.stdout)).plan.name !== 'free') this.config.lively.canUsePages = true;
+        else this.config.lively.canUsePages = false;
+      }
+    }
+  }
+
   /**
    * Method to be used to store package.json data on disk.
    * Other changes will be stored on a per module basis anyways.
    * Called when a project gets saved..
    */
   async saveConfigData () {
-    if (await this.hasRemoteConfigured()) await this.regeneratePipelines();
+    await this.checkPagesSupport();
+    
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -350,6 +374,8 @@ export class Project {
     const system = Project.systemInterface;
     const projectDir = (await Project.projectDirectory()).join(gitHubUser + '--' + this.name);
     this.url = projectDir.url;
+    const createForOrg = gitHubUser !== currentUsername();
+
     try {
       await system.resourceCreateFiles(projectDir, {
         'index.js': "'format esm';\nexport async function main () {\n    // THIS FUNCTION IS THE ENTRY POINT IN THE BUNDLED APPLICATION!\n}",
@@ -378,8 +404,11 @@ export class Project {
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
+
       this.config.lively.repositoryIsPrivate = !!priv;
+      this.config.lively.repoBelongsToOrg = createForOrg;
       await this.saveConfigData();
+
       const pkg = await loadPackage(system, {
         name: this.name,
         url: this.url,
