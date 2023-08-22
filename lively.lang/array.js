@@ -209,7 +209,7 @@ function uniq (array, sorted) {
   if (sorted) {
     for (let i = 1; i < array.length; i++) {
       const val = array[i];
-      if (val !== result[result.length]) { result.push(val); }
+      if (val !== result[result.length - 1]) { result.push(val); }
     }
   } else {
     for (let i = 1; i < array.length; i++) {
