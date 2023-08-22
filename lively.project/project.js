@@ -273,13 +273,12 @@ export class Project {
     return term;
   }
 
-
-  async checkPagesSupport(){
+  async checkPagesSupport () {
     const currUser = currentUser();
     const currUserName = currUser.login;
 
     // GH Pages is possible for non-private repositories in any case
-    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true
+    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true;
     // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
     if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
       if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
@@ -309,7 +308,7 @@ export class Project {
    */
   async saveConfigData () {
     await this.checkPagesSupport();
-    
+
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -755,12 +754,15 @@ export class Project {
 
     // The above transformation might produce multiple objects for the same font.
     // Here, we merge them together. In the case that two entries are merged, we need to merge the array of supported fontWeights as well!
-    return fontItems.reduce((collection, currentValue) => {
+    const unifiedFontItems = fontItems.reduce((collection, currentValue) => {
       const findExistingEntry = collection.find(v => v.name === currentValue.name);
       if (findExistingEntry) findExistingEntry.supportedWeights.push(...currentValue.supportedWeights);
       else collection.push(currentValue);
-
       return collection;
     }, []);
+
+    // Make sure that each fontWeight only appears once (not once for italic and normal) and sort them as users would expect
+    unifiedFontItems.forEach(fontItem => fontItem.supportedWeights = arr.uniq(fontItem.supportedWeights.sort(), true));
+    return unifiedFontItems;
   }
 }
