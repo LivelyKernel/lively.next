@@ -755,12 +755,15 @@ export class Project {
 
     // The above transformation might produce multiple objects for the same font.
     // Here, we merge them together. In the case that two entries are merged, we need to merge the array of supported fontWeights as well!
-    return fontItems.reduce((collection, currentValue) => {
+    const unifiedFontItems = fontItems.reduce((collection, currentValue) => {
       const findExistingEntry = collection.find(v => v.name === currentValue.name);
       if (findExistingEntry) findExistingEntry.supportedWeights.push(...currentValue.supportedWeights);
       else collection.push(currentValue);
-
       return collection;
     }, []);
+
+    // Make sure that each fontWeight only appears once (not once for italic and normal) and sort them as users would expect
+    unifiedFontItems.forEach(fontItem => fontItem.supportedWeights = arr.uniq(fontItem.supportedWeights.sort(), true));
+    return unifiedFontItems;
   }
 }
