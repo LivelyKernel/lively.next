@@ -368,6 +368,16 @@ export class Project {
     }
   }
 
+  setCIDefaults () {
+    // OPINIONATED DEFAULTS
+    const livelyConfig = this.config.lively;
+    livelyConfig.testActionEnabled = true;
+    livelyConfig.buildActionEnabled = false;
+    livelyConfig.deployActionEnabled = this.canDeployToPages;
+    livelyConfig.testOnPush = true;
+    livelyConfig.buildOnPush = false;
+  }
+
   async create (withRemote = false, gitHubUser, priv) {
     this.gitResource = null;
     const system = Project.systemInterface;
@@ -425,19 +435,13 @@ export class Project {
     if (withRemote) {
       try {
         await this.regeneratePipelines();
-        await this.gitResource.addRemoteToGitRepository(currentUserToken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
+        await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
     }
 
-    // OPINIONATED DEFAULTS
-    const livelyConfig = this.config.lively;
-    livelyConfig.testActionEnabled = true;
-    livelyConfig.buildActionEnabled = false;
-    livelyConfig.deployActionEnabled = this.canDeployToPages;
-    livelyConfig.testOnPush = true;
-    livelyConfig.buildOnPush = false;
+    this.setCIDefaults();
 
     const saveSuccess = await this.save({ message: 'Initial Commit' });
     if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
@@ -505,7 +509,7 @@ export class Project {
       $world.setStatusMessage('Please log in.');
       return false;
     }
-    let { message, increaseLevel, tag } = opts;
+    let { message, increaseLevel, tag, filesToCommit } = opts;
     message = message.trim();
     message = message + '\nCommited from within lively.next.';
 
@@ -515,7 +519,7 @@ export class Project {
       if (await this.gitResource.hasRemote()) {
         await this.gitResource.pullRepo();
         await this.regeneratePipelines();
-        await this.gitResource.commitRepo(message, tag, this.config.version);
+        await this.gitResource.commitRepo(message, tag, this.config.version, filesToCommit);
         await this.gitResource.pushRepo();
         // In case we have pulled new changes, reload the package so that lively knows of them!
         await this.reloadPackage();

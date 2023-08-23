@@ -299,11 +299,28 @@ class RepoCreationPromptModel extends AbstractPromptModel {
       let li = $world.showLoadingIndicatorFor(this.view, 'Creating Repository...');
 
       let { privateCheckbox } = this.ui;
-      const priv = privateCheckbox.checked;
+      const privateRepo = !!privateCheckbox.checked;
 
       try {
-        // TODO: actually adding remote
+        const proj = this.project;
+        const repoInOrg = currentUsername() !== currentUsername();
+        await proj.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), proj.name, proj.repoOwner, proj.config.description, repoInOrg, privateRepo);
         li.remove();
+
+        li = $world.showLoadingIndicatorFor(this.view, 'Setting up Defaults...');
+        proj.setCIDefaults();
+        proj.config.lively.repositoryIsPrivate = privateRepo;
+        proj.config.lively.repoBelongsToOrg = repoInOrg;
+        li.remove();
+
+        li = $world.showLoadingIndicatorFor(this.view, 'Uploading Project...');
+        await proj.save({
+          message: 'Enabling remote repository.',
+          filesToCommit: 'package.json .github/*'
+        });
+        li.remove();
+
+        $world.setStatusMessage('Project uploaded!', StatusMessageConfirm);
         super.resolve(true);
       } catch (err) {
         this.enableButtons();

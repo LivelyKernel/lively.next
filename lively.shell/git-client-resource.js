@@ -50,7 +50,7 @@ export default class GitShellResource extends ShellClientResource {
     return true;
   }
 
-  async addRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope, priv) {
+  async createAndAddRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope, priv) {
     const repoCreationCommand = orgScope
       ? `curl -L \
               -X POST \
