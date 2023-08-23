@@ -18,8 +18,8 @@ import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
-import { ProjectSettingsPrompt } from 'lively.project/prompts.cp.js';
-import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
+import { isUserLoggedIn } from 'lively.user';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -173,7 +173,7 @@ export class TopBarModel extends ViewModel {
     }
   }
 
-  onMouseDown (evt) {
+  async onMouseDown (evt) {
     const shapeSelector = this.ui.shapeModeButton.get('dropdown');
     const handHaloSelector = this.ui.handOrHaloModeButton.get('dropdown');
     const handOrHaloModeButton = this.ui.handOrHaloModeButton;
@@ -187,7 +187,7 @@ export class TopBarModel extends ViewModel {
     if (evt.targetMorph === saveButton) $world.execCommand('save world or project');
 
     if (evt.targetMorph === saveMenu) {
-      const menu = $world.openWorldMenu(evt, this.getSaveMenuItems());
+      const menu = $world.openWorldMenu(evt, (await this.getSaveMenuItems()));
       menu.position = saveButton.globalBounds().bottomLeft().subPt($world.scroll);
     }
 
@@ -308,17 +308,22 @@ export class TopBarModel extends ViewModel {
     }
   }
 
-  getSaveMenuItems () {
+  async getSaveMenuItems () {
     return [
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace', null], () => { notYetImplemented('Saving workspaces'); }],
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace under different name', null], () => { notYetImplemented('Saving workspaces'); }],
-      [['⚙️', { fontFamily: 'Noto Emoji' }, ' Change Project Settings', null], async () => {
-        if (!(await $world.openedProject.hasRemoteConfigured())) {
-          $world.setStatusMessage('Only available with GitHub repositories.', StatusMessageError);
-          return;
-        }
-        $world.openPrompt(part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
-      }],
+      (await $world.openedProject.hasRemoteConfigured())
+        ? [['⚙️', { fontFamily: 'Noto Emoji' }, ' Change Project Settings', null], () => {
+            $world.openPrompt(part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
+          }]
+        : [['🌏', { fontFamily: 'Noto Emoji' }, ' Create Remote Repository', null], async () => {
+            if (!isUserLoggedIn()) {
+              $world.setStatusMessage('You need to log in using github.');
+              $world.get('user flap').show();
+              return;
+            }
+            $world.openPrompt(part(RepoCreationPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
+          }],
       [['🧑‍💻', { fontFamily: 'Noto Emoji' }, ' Open a Terminal (advanced operation)', null], async () => {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const serverDir = await defaultDirectory();
