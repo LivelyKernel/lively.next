@@ -509,6 +509,81 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
   }), add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))]
 });
 
+const RepoSettings = component(
+  {
+    name: 'repo settings',
+    fill: Color.transparent,
+    layout: new TilingLayout({
+      axis: 'column',
+      hugContentsHorizontally: true,
+      orderByIndex: true,
+      spacing: 5
+    }),
+    submorphs: [
+      {
+        name: 'user holder',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 5
+        }),
+        submorphs: [
+          part(EnumSelector, {
+            name: 'user selector',
+            master: SystemButton,
+            layout: new TilingLayout(
+              {
+                align: 'center',
+                axisAlign: 'center',
+                justifySubmorphs: 'spaced',
+                orderByIndex: true,
+                padding: rect(5, 0, 5, 0),
+                resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
+              }),
+            viewModel: {
+              listMaster: SystemList,
+              openListInWorld: true,
+              listAlign: 'selection'
+            }
+          }), part(InformIconOnLight, {
+            viewModel: { information: 'For which entity should the project be created? This corresponds to the repository owner on GitHub.' },
+            name: 'label_1'
+          })
+        ]
+      },
+      {
+        name: 'remote holder',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center'
+        }),
+        submorphs: [
+          part(LabeledCheckBox, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
+          part(InformIconOnLight, {
+            viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' },
+            name: 'morph_1'
+          })
+        ]
+      }, {
+        name: 'private repo holder',
+        fill: Color.transparent,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center'
+        }),
+        submorphs: [
+          part(LabeledCheckBox, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
+          part(InformIconOnLight, {
+            viewModel: { information: 'Should the new GitHub repository for the project be private?' },
+            name: 'morph_2'
+          })
+        ]
+      }]
+  });
+
 export const ProjectCreationPrompt = component(LightPrompt, {
   defaultViewModel: ProjectCreationPromptModel,
   extent: pt(385, 345),
@@ -577,46 +652,8 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           nativeCursor: 'text',
           textAndAttributes: ['Project Name', null]
         }]
-      }), part(EnumSelector, {
-        name: 'user selector',
-        master: SystemButton,
-        layout: new TilingLayout(
-          {
-            align: 'center',
-            axisAlign: 'center',
-            justifySubmorphs: 'spaced',
-            orderByIndex: true,
-            padding: rect(5, 0, 5, 0),
-            resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
-          }),
-        viewModel: {
-          listMaster: SystemList,
-          openListInWorld: true,
-          listAlign: 'selection'
-        }
-      }),
-      {
-        fill: Color.transparent,
-        layout: new TilingLayout({
-          align: 'center',
-          axisAlign: 'center'
-        }),
-        submorphs: [
-          part(LabeledCheckBox, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
-          part(InformIconOnLight, { viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' } })
-        ]
-      }, {
-        name: 'private repo holder',
-        fill: Color.transparent,
-        layout: new TilingLayout({
-          align: 'center',
-          axisAlign: 'center'
-        }),
-        submorphs: [
-          part(LabeledCheckBox, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
-          part(InformIconOnLight, { viewModel: { information: 'Should the new GitHub repository for the project be private?' } })
-        ]
-      }, part(InputLineDefault, {
+      }), part(RepoSettings),
+      part(InputLineDefault, {
         name: 'description',
         extent: pt(318.1, 106.3),
         placeholder: 'Project Description',
