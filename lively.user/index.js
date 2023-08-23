@@ -5,6 +5,10 @@ export function currentUser () {
   } else return { login: 'guest' };
 }
 
+export function isUserLoggedIn () {
+  return currentUser().login !== 'guest';
+}
+
 export function storeCurrentUser (userData) {
   localStorage.setItem('gh_user_data', userData);
 }
@@ -32,7 +36,7 @@ export function clearUserData () {
   localStorage.removeItem('gh_user_organizations');
 }
 
-export function clearAllUserData (){
+export function clearAllUserData () {
   clearUserData();
   localStorage.removeItem('gh_access_token');
 }

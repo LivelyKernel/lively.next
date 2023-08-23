@@ -275,6 +275,46 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 }
 
+class RepoCreationPromptModel extends AbstractPromptModel {
+  static get properties () {
+    return {
+      project: {},
+      bindings: {
+        get () {
+          {
+            return [
+              { model: 'ok button', signal: 'fire', handler: 'resolve' },
+              { model: 'cancel button', signal: 'fire', handler: 'reject' }
+            ];
+          }
+        }
+      }
+    };
+  }
+
+  async resolve () {
+    await fun.guardNamed('resolve-repository-creation', async () => {
+      this.disableButtons();
+
+      let li = $world.showLoadingIndicatorFor(this.view, 'Creating Repository...');
+
+      let { privateCheckbox } = this.ui;
+      const priv = privateCheckbox.checked;
+
+      try {
+        // TODO: actually adding remote
+        li.remove();
+        super.resolve(true);
+      } catch (err) {
+        this.enableButtons();
+        li?.remove();
+        this.view.setStatusMessage('There was an error creating the repository.', StatusMessageError);
+      }
+      this.enableButtons();
+    })();
+  }
+}
+
 class ProjectSavePrompt extends AbstractPromptModel {
   static get properties () {
     return {
@@ -583,6 +623,38 @@ const RepoSettings = component(
         ]
       }]
   });
+
+export const RepoCreationPrompt = component(LightPrompt, {
+  defaultViewModel: RepoCreationPromptModel,
+  submorphs: [
+    {
+      name: 'prompt title',
+      padding: rect(10, 0, 10, 0),
+      textAndAttributes: ['Create GitHub Repository for Project', null]
+    },
+    add(part(RepoSettings, {
+      name: 'repo settings',
+      submorphs: [
+        without('user holder'),
+        without('remote holder'), {
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            orderByIndex: true
+          }),
+          name: 'private repo holder',
+          extent: pt(332.0000, 21.0000),
+          submorphs: [{
+            layout: new TilingLayout({
+              orderByIndex: true
+            }),
+            name: 'private checkbox'
+          }]
+        }
+      ]
+    })),
+    add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))
+  ]
+});
 
 export const ProjectCreationPrompt = component(LightPrompt, {
   defaultViewModel: ProjectCreationPromptModel,
