@@ -42,7 +42,7 @@ import ObjectPackage from 'lively.classes/object-classes.js';
 import { toggleSidebar, relayoutSidebarFlapInWorld, openSidebarFlapInWorld } from './studio/sidebar-flap.js';
 import { localInterface } from 'lively-system-interface';
 import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
-import { currentUsername, currentUser } from 'lively.user';
+import { currentUsername, isUserLoggedIn, currentUser } from 'lively.user';
 import { subscribe } from 'lively.notifications/index.js';
 
 export class LivelyWorld extends World {
@@ -594,7 +594,7 @@ export class LivelyWorld extends World {
       const proj = this.openedProject;
       if (proj) {
         uploadPath = `local_projects/${proj.repoOwner}--${proj.name}/assets`;
-      } else uploadPath = currentUsername() === 'guest' ? 'uploads/' : 'users/' + currentUser() + '/uploads';
+      } else uploadPath = !isUserLoggedIn() ? 'uploads/' : 'users/' + currentUser() + '/uploads';
       if (evt.isAltDown() && !proj) {
         uploadPath = await this.prompt('Choose upload location', {
           history: 'lively.morphic-html-drop-file-upload-location',

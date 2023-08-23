@@ -5,7 +5,7 @@ import { Color } from 'lively.graphics/color.js';
 
 import { Text } from 'lively.morphic/text/morph.js';
 
-import { currentUsername } from 'lively.user';
+import { currentUsername, isUserLoggedIn } from 'lively.user';
 
 import { resource } from 'lively.resources';
 import { DarkPopupWindow, DarkThemeList, EnumSelector, RemoveButton, TextInput, PropertyLabelActive, PropertyLabelHovered, PropertyLabel } from './shared.cp.js';
@@ -102,7 +102,7 @@ class FontManagerModel extends PopupModel {
     let res;
     res = resource(System.baseURL);
     let uploadPath;
-    if (currentUsername() === 'guest') {
+    if (!isUserLoggedIn()) {
       uploadPath = 'uploads/';
     } else uploadPath = $world.openedProject ? $world.openedProject.url.replace(System.baseURL, '') + '/assets/' : 'users/' + currentUsername() + '/uploads';
     const fontFile = resource(System.baseURL).join(uploadPath).join(file.name);
@@ -364,7 +364,7 @@ const FontListEntry = component({
   }]
 });
 
-const DragArea = component ({
+const DragArea = component({
   name: 'drag and drop area',
   fill: Color.rgba(255, 255, 255, 0),
   layout: new TilingLayout({
@@ -416,11 +416,11 @@ const DragArea = component ({
 
     }]
   })]
-})
+});
 
 const DragAreaActive = component(DragArea, {
   borderWidth: 8
-})
+});
 
 const FontManager = component({
   name: 'font manager',

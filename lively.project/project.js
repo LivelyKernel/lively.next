@@ -11,7 +11,7 @@ import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver } from 'lively.modules/index.js';
-import { currentUserToken, currentUser, currentUsername } from 'lively.user';
+import { currentUserToken, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
@@ -510,7 +510,7 @@ export class Project {
   }
 
   async save (opts = {}) {
-    if (currentUsername() === 'guest') {
+    if (!isUserLoggedIn()) {
       $world.setStatusMessage('Please log in.');
       return false;
     }
