@@ -106,8 +106,8 @@ export default class GitShellResource extends ShellClientResource {
     if (cmd.exitCode !== 0) console.error(`Activating GitHub Pages for ${repoUser}/${repoName} was not successful. Proceeding.`);
   }
 
-  async commitRepo (message, tag = false, tagName) {
-    let cmdString = `git add . && git commit -m "${message}"`;
+  async commitRepo (message, tag = false, tagName, filesToCommit = '.') {
+    let cmdString = `git add ${filesToCommit} && git commit -m "${message}"`;
     let cmd = this.runCommand(cmdString);
     await cmd.whenDone();
     if (cmd.exitCode !== 0 && !cmd.stdout.includes('nothing to commit')) throw Error('Error committing');
