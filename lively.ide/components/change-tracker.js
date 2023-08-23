@@ -94,6 +94,7 @@ export class ComponentChangeTracker {
   ignoreChange (change) {
     if (!change.meta?.reconcileChanges) return true;
     if (change.prop === 'name') return false;
+    if (change.prop?.startsWith('_')) return true;
     if (change.prop === 'position' && (change.target === this.trackedComponent || this.isPositionedByLayout(change.target))) return true;
     if (change.prop &&
         change.prop !== 'textAndAttributes' &&
