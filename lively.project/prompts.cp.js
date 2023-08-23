@@ -97,10 +97,6 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
-      projectBrowser: {},
-      canBeCancelled: {
-        defaultValue: true
-      },
       bindings: {
         get () {
           return [
@@ -117,7 +113,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
                 else privateCheckbox.disable();
               }
             },
-            { model: 'cancel button', signal: 'fire', handler: 'close' },
             { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' },
             { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' }
           ];
@@ -125,6 +120,10 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       },
       label: 'Create new Project'
     };
+  }
+
+  reject () {
+    // noop, just to stop users from cancelling the prompt
   }
 
   checkValidity (onlyCheck = false) {
@@ -151,16 +150,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     }
     if (!onlyCheck) okButton.enable();
     return true;
-  }
-
-  close () {
-    this.projectBrowser?.toggleFader(true);
-    this.view.remove();
-  }
-
-  reject () {
-    if (!this.canBeCancelled) false;
-    else super.reject();
   }
 
   async resolve () {
@@ -208,7 +197,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     const { promptTitle, cancelButton, okButton, userFlap, privateCheckbox } = this.ui;
     okButton.disable();
     privateCheckbox.disable();
-    if (!this.canBeCancelled) cancelButton.disable();
+    cancelButton.disable();
     if (!currentUserToken()) {
       this.waitForLogin();
     } else {

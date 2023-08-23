@@ -480,7 +480,7 @@ export class LivelyWorld extends World {
         if (!anonymousMode) worldName = await this.askForName();
         else if (anonymousMode) worldName = 'aLivelyWorld';
       } else if (openNewProjectPrompt) { // We open a **new** Project
-        const project = await this.openPrompt(part(ProjectCreationPrompt, { viewModel: { canBeCancelled: false }, hasFixedPosition: true }));
+        const project = await this.openPrompt(part(ProjectCreationPrompt, { hasFixedPosition: true }));
         $world.openedProject = project;
         worldName = project.name;
       } else if (projectToBeOpened) { // We open an existing Project
