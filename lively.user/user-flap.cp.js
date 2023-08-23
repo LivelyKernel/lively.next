@@ -1,6 +1,6 @@
 import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
-import { currentUser, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUserToken, storeCurrentUserToken } from 'lively.user';
+import { currentUser, isUserLoggedIn, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUserToken, storeCurrentUserToken } from 'lively.user';
 import { signal } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
@@ -63,18 +63,18 @@ class UserFlapModel extends ViewModel {
     };
   }
 
-  async update (){
+  async update () {
     clearUserData();
     await this.retrieveGithubUserData();
-    this.showUserData()
+    this.showUserData();
   }
 
   leftUserLabelClicked () {
-    if (currentUser().login === 'guest') this.login();
+    if (!isUserLoggedIn()) this.login();
   }
 
   rightUserLabelClicked () {
-    if (currentUser().login !== 'guest') this.logout();
+    if (isUserLoggedIn()) this.logout();
   }
 
   toggleLoadingAnimation () {
@@ -85,7 +85,7 @@ class UserFlapModel extends ViewModel {
 
   async viewDidLoad () {
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
-    if (currentUser().login === 'guest') {
+    if (!isUserLoggedIn()) {
       if (this.withLoginButton) {
         avatar.visible = false;
         loginButton.visible = loginButton.isLayoutable = true;
@@ -249,7 +249,7 @@ class UserFlapModel extends ViewModel {
     const { avatar, leftUserLabel, rightUserLabel } = this.ui;
     try {
       const userData = currentUser();
-      if (userData.login === 'guest') return;
+      if (!isUserLoggedIn()) return;
       avatar.loadUrl(userData.avatar_url, false);
       leftUserLabel.textString = userData.login;
       rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
