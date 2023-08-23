@@ -273,13 +273,12 @@ export class Project {
     return term;
   }
 
-
-  async checkPagesSupport(){
+  async checkPagesSupport () {
     const currUser = currentUser();
     const currUserName = currUser.login;
 
     // GH Pages is possible for non-private repositories in any case
-    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true
+    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true;
     // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
     if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
       if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
@@ -309,7 +308,7 @@ export class Project {
    */
   async saveConfigData () {
     await this.checkPagesSupport();
-    
+
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -515,6 +514,7 @@ export class Project {
       await this.saveConfigData();
       if (await this.gitResource.hasRemote()) {
         await this.gitResource.pullRepo();
+        await this.regeneratePipelines();
         await this.gitResource.commitRepo(message, tag, this.config.version);
         await this.gitResource.pushRepo();
         // In case we have pulled new changes, reload the package so that lively knows of them!
