@@ -54,10 +54,10 @@ export class VideoMorph extends HTMLMorph {
           this.videoLoaded = false;
         }
       },
-      type: {
+      codec: {
         defaultValue: 'video/mp4',
         set (videoType) {
-          this.setVideoProperty('type', videoType);
+          this.setVideoProperty('codec', videoType);
         }
       },
       videoLayout: {
@@ -137,7 +137,8 @@ export class VideoMorph extends HTMLMorph {
   }
 
   get domElementExtent () {
-    return this.videoDomElement ? pt(this.videoDomElement.width, this.videoDomElement.height) : null;  }
+    return this.videoDomElement ? pt(this.videoDomElement.width, this.videoDomElement.height) : null;
+  }
 
   onBoundsChanged (bounds) {
     super.onBoundsChanged(bounds);
@@ -218,7 +219,7 @@ export class VideoMorph extends HTMLMorph {
     const options = ` ${this.loop ? 'loop' : ''} ${this.controls ? 'controls' : ''} ${this.autoplay ? 'autoplay' : ''}`;
     this.html = `
   <video id="${this.videoId}"  this.width = "${this.width}" height="${this.height}" ${options}>
-  <source src="${this.src}"  type="${this.type}"/> 
+  <source src="${this.src}"  type="${this.codec}"/> 
 ${this.badBrowserMessage}
 </video>
 `;
