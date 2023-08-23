@@ -356,7 +356,7 @@ export class ShapeControlModel extends ViewModel {
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
 
         target.withMetaDo({ reconcileChanges: true }, () => {
-          if (target.isText) target.fixedWith = true;
+          if (target.isText) target.fixedWidth = true;
         });
 
         this.ui.widthInput.enable();
