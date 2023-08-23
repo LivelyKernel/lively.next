@@ -547,7 +547,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       if (masterInScope?.isResizedByLayout(morph)) continue;
     }
     if (name === 'submorphs' || name === 'type') continue;
-    if (skipAttributes.includes(name)) continue;
+    if (skipAttributes.includes(name) || name.startsWith('_')) continue;
     if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
       exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit, opts) };
       continue;
