@@ -3398,7 +3398,7 @@ export class Path extends Morph {
 
   renderStyles (style) {
     style = obj.select(style, ['position', 'filter', 'display', 'opacity',
-      'transform', 'top', 'left', 'transformOrigin', 'cursor', 'overflow']);
+      'transform', 'top', 'left', 'transformOrigin', 'cursor', 'overflow', 'order']);
 
     style.width = this.width + 'px';
     style.height = this.height + 'px';
