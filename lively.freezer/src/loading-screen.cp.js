@@ -58,6 +58,9 @@ export class WorldLoadingScreen extends Morph {
     const serverURL = resource(window.SYSTEM_BASE_URL || document.location.origin).join('objectdb/').url;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
 
+    // Preload emoji font to prevent flash of unstyled emojis falling back to system font.
+    document.fonts.load('12px Noto Emoji');
+
     if (projectName) {
       const existingProjects = await Project.listAvailableProjects();
       const foundProject = existingProjects.filter(p => p.name === projectName && p.projectRepoOwner === projectRepoOwner);
