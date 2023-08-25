@@ -665,7 +665,6 @@ export default class Renderer {
 
     canvasNode.style.width = `${this.width}px`;
     canvasNode.style.height = `${this.height}px`;
-    canvasNode.style['pointer-events'] = 'none';
     canvasNode.style.position = 'absolute';
 
     node.appendChild(canvasNode);
