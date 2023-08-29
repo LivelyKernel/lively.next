@@ -3,35 +3,6 @@ import { Color, rect } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
-const CheckboxChecked = component({
-  name: 'checkbox/checked',
-  type: Label,
-  extent: pt(15, 15),
-  fixedWidth: true,
-  fixedHeight: true,
-  lineHeight: 1,
-  draggable: false,
-  borderWidth: 1,
-  borderColor: Color.transparent,
-  fill: Color.rgb(178, 235, 242),
-  fontColor: Color.rgb(65, 65, 65),
-  borderRadius: 2,
-  padding: rect(0, -3, 0, 3),
-  nativeCursor: 'pointer',
-  textAndAttributes: ['', {
-    fontSize: 13,
-    fontFamily: 'Material Icons'
-  }]
-});
-
-const CheckboxUnchecked = component(CheckboxChecked, {
-  name: 'checkbox/unchecked',
-  borderWidth: 1,
-  borderColor: Color.white,
-  fill: Color.transparent,
-  fontColor: Color.transparent
-});
-
 class CheckboxModel extends ViewModel {
   static get properties () {
     return {
@@ -86,6 +57,35 @@ class CheckboxModel extends ViewModel {
     this.view.master = this.checked ? this.checkedCheckboxComponent : this.uncheckedCheckboxComponent; // eslint-disable-line no-use-before-define
   }
 }
+
+const CheckboxChecked = component({
+  name: 'checkbox/checked',
+  type: Label,
+  extent: pt(15, 15),
+  fixedWidth: true,
+  fixedHeight: true,
+  lineHeight: 1,
+  draggable: false,
+  borderWidth: 1,
+  borderColor: Color.transparent,
+  fill: Color.rgb(178, 235, 242),
+  fontColor: Color.rgb(65, 65, 65),
+  borderRadius: 2,
+  padding: rect(0, -3, 0, 3),
+  nativeCursor: 'pointer',
+  textAndAttributes: ['', {
+    fontSize: 13,
+    fontFamily: 'Material Icons'
+  }]
+});
+
+const CheckboxUnchecked = component(CheckboxChecked, {
+  name: 'checkbox/unchecked',
+  borderWidth: 1,
+  borderColor: Color.white,
+  fill: Color.transparent,
+  fontColor: Color.transparent
+});
 
 export const Checkbox = component(CheckboxUnchecked, {
   name: 'checkbox',
