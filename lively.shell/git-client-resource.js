@@ -42,6 +42,12 @@ export default class GitShellResource extends ShellClientResource {
     else return true;
   }
 
+  async getRemote () {
+    const remoteCommand = 'git remote -v';
+    const res = await this.runCommand(remoteCommand).whenDone();
+    return res.stdout;
+  }
+
   async hasRemoteMainConfigured () {
     const getRemoteURLCommand = 'git remote -v';
     let res = await this.runCommand(getRemoteURLCommand).whenDone();
@@ -74,9 +80,12 @@ export default class GitShellResource extends ShellClientResource {
     let cmd = this.runCommand(repoCreationCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error executing curl call to create GitHub repository');
+    this.addRemoteURLWithToken(token, repoUser, repoName);
+  }
 
-    const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}.git`;
-    cmd = this.runCommand(addingRemoteCommand);
+  async addRemoteURLWithToken (token, repoUser, repoName) {
+    const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}`;
+    const cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
   }
@@ -94,6 +103,15 @@ export default class GitShellResource extends ShellClientResource {
     if (deleteRes.status === 404) throw Error('Unexpected problem delete remote repository.');
     if (deleteRes.status === 403) return false;
     if (deleteRes.status === 204) return true;
+  }
+
+  async changeRemoteURLToUseCurrentToken (token, repoUser, repoName) {
+    const removeRemoteCommand = 'git remote remove origin';
+    const cmd = this.runCommand(removeRemoteCommand);
+    await cmd.whenDone();
+    if (cmd.exitCode !== 0) throw Error('Error removing outdated remote `origin`');
+
+    await this.addRemoteURLWithToken(token, repoUser, repoName);
   }
 
   async changeRemoteVisibility (token, repoName, repoUser, visibility) {
