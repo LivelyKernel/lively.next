@@ -3,10 +3,11 @@ import { pt, rect, Rectangle, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
 import { epiConnect, signal, disconnect, once } from 'lively.bindings';
 import {
-  AddButton, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
-  LabeledCheckbox, DarkNumberIconWidget, PropertyLabelHovered
+  AddButton, PropLabel, DarkFlap, DarkThemeList, EnumSelector, PropertyLabel,
+  DarkNumberIconWidget, PropertyLabelHovered
 } from '../shared.cp.js';
 import { PropertySection, PropertySectionModel } from './section.cp.js';
+import { LabeledCheckbox } from 'lively.components';
 
 export class LayoutPreview extends Morph {
   static get properties () {
@@ -79,7 +80,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
             { target: 'mini layout preview', signal: 'onMouseDown', handler: 'openLayoutPopup' },
             { target: 'vertical', signal: 'onMouseDown', handler: 'setVerticalFlow' },
             { target: 'horizontal', signal: 'onMouseDown', handler: 'setHorizontalFlow' },
-            { target: 'wrap submorphs checkbox', signal: 'clicked', handler: 'toggleWrapping' },
+            { target: 'wrap submorphs checkbox', signal: 'checked', handler: 'toggleWrapping' },
             { target: 'spacing input', signal: 'number', handler: 'confirm' },
             { target: 'total padding input', signal: 'number', handler: 'confirm' }
           ];
@@ -100,7 +101,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   onRefresh (prop) {
-    if (!prop || prop === 'targetMorph') this.update(prop);
+    if (!prop || prop === 'targetMorph') this.update();
   }
 
   update (prop) {
@@ -122,7 +123,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       } else {
         totalPaddingInput.number = layout.padding.top();
       }
-      wrapSubmorphsCheckbox.setChecked(layout.wrapSubmorphs);
+      if (prop === 'wrapping') wrapSubmorphsCheckbox.checked = layout.wrapSubmorphs;
     });
   }
 
@@ -168,9 +169,11 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   activate () {
+    const { controls, wrapCheckboxWrapper } = this.ui;
     super.activate();
-    this.ui.controls.visible = true;
-    this.ui.wrapSubmorphsCheckbox.visible = true;
+    controls.visible = true;
+    wrapCheckboxWrapper.visible = true;
+
     this.view.master = this.activeSectionComponent;
 
     const layout = this.targetMorph && this.targetMorph.layout;
@@ -183,9 +186,10 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   deactivate () {
+    const { controls, wrapCheckboxWrapper } = this.ui;
     super.deactivate();
-    this.ui.controls.visible = false;
-    this.ui.wrapSubmorphsCheckbox.visible = false;
+    controls.visible = false;
+    wrapCheckboxWrapper.visible = false;
     this.view.master = { auto: this.inactiveSectionComponent, hover: this.hoverSectionComponent };
 
     if (this.targetMorph && this.targetMorph.layout) {
@@ -462,6 +466,17 @@ const MiniLayoutPreviewActive = component(MiniLayoutPreview, {
 const LayoutControl = component(PropertySection, {
   defaultViewModel: AutoLayoutControlModel,
   name: 'layout control',
+  layout: new TilingLayout({
+    axis: 'column',
+    hugContentsVertically: true,
+    orderByIndex: true,
+    padding: rect(0, 10, 0, 0),
+    resizePolicies: [['h floater', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 3
+  }),
   extent: pt(248.9, 131),
   submorphs: [{
     name: 'h floater',
@@ -523,13 +538,31 @@ const LayoutControl = component(PropertySection, {
       }), part(MiniLayoutPreview, { name: 'mini layout preview', tooltip: 'Alignment controls.' })
 
     ]
-  }), add(part(LabeledCheckbox, {
-    name: 'wrap submorphs checkbox',
+  }), add({
+    name: 'wrap checkbox wrapper',
+    extent: pt(250.0000, 20.0000),
+    fill: Color.transparent,
+    layout: new TilingLayout({
+      axisAlign: 'center',
+      orderByIndex: true
+    }),
     submorphs: [{
-      name: 'prop label',
-      textAndAttributes: ['Wrap Items', null]
-    }]
-  }))]
+      name: 'spacer',
+      fill: Color.rgba(255, 255, 255, 0),
+      borderColor: Color.rgba(23, 160, 251, 0),
+      borderWidth: 1,
+      extent: pt(20.0000, 30.0000)
+    }, part(LabeledCheckbox, {
+      name: 'wrap submorphs checkbox',
+      viewModel: { label: 'Wrap Items' },
+      submorphs: [
+        {
+          name: 'label',
+          master: PropLabel
+        }]
+    })
+    ]
+  })]
 });
 
 const AutoLayoutAlignmentFlap = component(DarkFlap, {

@@ -6,7 +6,7 @@ import { commit, branch, localBranchesOf, gitHubBranches } from 'lively.changese
 import { activeCommit } from 'lively.changesets/src/commit.js';
 import { getAuthor, setAuthor, getGitHubToken, setGitHubToken } from 'lively.changesets/src/settings.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
-
+import { part } from 'lively.morphic';
 import { morph, Morph } from '../index.js';
 import { Window } from '../widgets.js';
 import CodeEditor from './code-editor.js';
@@ -351,8 +351,8 @@ export default class VersionControl extends Window {
     this.updatePackageList();
     connect(this.get('packageList'), 'selection', this, 'updateCommitTree');
     connect(this.get('commitTree'), 'selection', this, 'updateCommitPanel');
-    connect(this.get('allChkBox'), 'toggle', this, 'toggleShowChanges');
-    connect(this.get('changedChkBox'), 'toggle', this, 'toggleShowChanges');
+    connect(this.get('allChkBox'), 'checked', this, 'toggleShowChanges');
+    connect(this.get('changedChkBox'), 'checked', this, 'toggleShowChanges');
     connect(this.get('fileList'), 'selection', this, 'updateEditor');
     connect(this.get('loadBtn'), 'fire', this, 'loadCommit');
     connect(this.get('commitBtn'), 'fire', this, 'createCommit');
@@ -393,9 +393,9 @@ export default class VersionControl extends Window {
       layout: new HorizontalLayout({ spacing: 6 }),
       submorphs: [
         { type: 'text', textString: 'show:', ...labelStyle },
-        { name: 'allChkBox', type: 'checkbox', extend: pt(16, 16), checked: false },
+        part(Checkbox, { name: 'allChkBox', viewModel: { checked: true } }),
         { type: 'text', textString: 'all', ...labelStyle },
-        { name: 'changedChkBox', type: 'checkbox', extend: pt(16, 16), checked: true },
+        part(Checkbox, { name: 'changedChkBox', viewModel: { checked: true } }),
         { type: 'text', textString: 'changed', ...labelStyle }
       ]
     });
