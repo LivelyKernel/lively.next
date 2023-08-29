@@ -643,7 +643,7 @@ export class PasswordInputLine extends HTMLMorph {
 
       fontFamily: {
         isStyleProp: true,
-        defaultValue: 'sans-serif',
+        defaultValue: 'IBM Plex Sans',
         after: ['input'],
         set (value) { this.setProperty('fontFamily', value); this.updateHtml(this.input); }
       },

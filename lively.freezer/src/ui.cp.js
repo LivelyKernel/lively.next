@@ -341,7 +341,7 @@ const FreezerPrompt = component(LightPrompt, {
     fill: Color.rgba(255, 255, 255, 0),
     fixedWidth: true,
     fontColor: Color.rgb(102, 102, 102),
-    fontFamily: '"IBM Plex Sans",Sans-Serif',
+    fontFamily: "IBM Plex Sans",
     lineWrapping: true,
     textAndAttributes: ['Excluding packages from the bundle of the frozen part can reduce the total payload and its loading time ', null, 'dramatically', { fontWeight: 'bold' }, '. This however needs to be done with care. Make sure that none of your functionality depends of these excluded packages. If you do not know what you are doing it is best to leave this list as is.', { textAlign: 'left' }],
     nativeCursor: 'default',

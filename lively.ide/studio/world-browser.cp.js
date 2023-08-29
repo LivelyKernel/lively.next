@@ -955,9 +955,9 @@ const WorldPreviewTile = component({
       extent: pt(199.9, 70.3),
       fill: Color.rgba(255, 255, 255, 0),
       fontColor: Color.rgb(97, 106, 107),
-      fontFamily: 'IBM Plex Sans, Sans-Serif',
+      fontFamily: 'IBM Plex Sans',
       fontSize: 17,
-      html: '<span style="line-height: 1.3; font-size: 17px; color: rgb(97,106,107); font-family: IBM Plex Sans, Sans-Serif">An interactive essay abouy eyesight.</span>',
+      html: '<span style="line-height: 1.3; font-size: 17px; color: rgb(97,106,107); font-family: IBM Plex Sans">An interactive essay abouy eyesight.</span>',
       position: pt(18.9, 238.9),
       renderOnGPU: true,
       value: 'An interactive essay abouy eyesight.'
