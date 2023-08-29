@@ -376,7 +376,7 @@ export class List extends Morph {
 
       fontFamily: {
         isStyleProp: true,
-        defaultValue: 'IBM Plex Sans, sans-serif',
+        defaultValue: 'IBM Plex Sans',
         set (value) {
           this.setProperty('fontFamily', value);
           this.invalidateCache();

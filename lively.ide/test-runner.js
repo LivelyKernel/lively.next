@@ -102,7 +102,7 @@ export async function findTestModulesInPackage (systemInterface, packageOrUrl) {
 const testRunnerCSS = `
 
 .mocha-test-runner {
-  font-family: IBM Plex Sans, sans-serif;
+  font-family: IBM Plex Sans;
   font-size: 12px;
   line-height: 1.5em;
   height: 100%;

@@ -223,7 +223,7 @@ const SaveWorldDialog = component(DarkPrompt, {
             }, ' ', {
               backgroundColor: undefined,
               fontColor: Color.rgb(204, 204, 204),
-              fontFamily: 'IBM Plex Sans, Sans-Serif',
+              fontFamily: 'IBM Plex Sans',
               fontSize: 15,
               fontStyle: 'bold',
               fontWeight: 'normal',
