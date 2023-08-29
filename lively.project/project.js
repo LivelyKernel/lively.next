@@ -256,6 +256,7 @@ export class Project {
       };
       $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
+      await updateProjectCSS();
     } else {
       indexCSS = `@import '/local_projects/${opts.name}/fonts.css';\n` + indexCSS;
       addOrChangeCSSDeclaration(`CSS-for-dependency-${opts.name}`, indexCSS);
@@ -716,7 +717,7 @@ export class Project {
 
   async retrieveProjectFontsFromCSS () {
     const fontObjects = [];
-    const fontCSS = resource($world.openedProject.url).join('fonts.css');
+    const fontCSS = resource(this.url).join('fonts.css');
     let fontCSSContent = (await fontCSS.read()).replaceAll(/\s+/g, ' ');
 
     const matches = fontCSSContent.matchAll(/@font-face {([^}]*)}/gm);
@@ -733,7 +734,7 @@ export class Project {
     }
     // In order to not deal with the actual CSS file when not strictly necessary, we always "cache" the latest contents in this variable.
     // To be used mainly in `projectFonts()` below.
-    this._fonts = fontObjects;
+    this._fonts = fontObjects || [];
     return fontObjects;
   }
 
