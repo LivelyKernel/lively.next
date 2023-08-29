@@ -4,7 +4,7 @@ import { Project } from 'lively.project';
 import { isModuleLoaded, module } from 'lively.modules';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { MullerColumnView, ColumnListDark, ColumnListDefault } from 'lively.components/muller-columns.cp.js';
-import { TreeData } from 'lively.components';
+import { TreeData, LabeledCheckbox, LabeledCheckboxLight } from 'lively.components';
 import { arr, promise, num, date, string, fun } from 'lively.lang';
 import { resource } from 'lively.resources';
 import { renderMorphToDataURI } from 'lively.morphic/rendering/morph-to-image.js';
@@ -16,7 +16,7 @@ import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { ButtonDarkDefault, SystemButton } from 'lively.components/buttons.cp.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { COLORS } from '../js/browser/index.js';
-import { Spinner, CheckboxInactive, CheckboxActive, LabeledCheckbox, DarkPopupWindow } from './shared.cp.js';
+import { Spinner, DarkPopupWindow } from './shared.cp.js';
 import { InteractiveComponentDescriptor } from '../components/editor.js';
 import { PopupWindow, SystemList } from '../styling/shared.cp.js';
 import { joinPath } from 'lively.lang/string.js';
@@ -809,7 +809,7 @@ export class ComponentBrowserModel extends ViewModel {
       },
       {
         target: 'behavior toggle',
-        signal: 'clicked',
+        signal: 'checked',
         handler: 'toggleBehaviorImport'
       }, {
         model: 'sorting selector',
@@ -876,7 +876,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   onRefresh (change) {
     super.onRefresh(change);
-    this.ui.behaviorToggle.setChecked(this.importAlive);
+    this.ui.behaviorToggle.checked = this.importAlive;
     this.handleColumnViewVisibility();
     this.ui.editButton.visible = !this.selectionMode;
     this.ui.behaviorToggle.visible = !this.selectionMode;
@@ -1424,17 +1424,6 @@ const ProjectSectionDark = component(ProjectSection, {
   }]
 });
 
-const CheckboxActiveLight = component(CheckboxActive, {
-  fill: Color.rgb(66, 165, 245),
-  fontColor: Color.rgb(255, 255, 255),
-  lineHeight: 1
-});
-
-const CheckboxInactiveLight = component(CheckboxInactive, {
-  borderColor: Color.rgb(66, 66, 66),
-  fill: Color.rgb(255, 255, 255)
-});
-
 const SearchComponentsNotice = component({
   extent: pt(663.7, 592.1),
   layout: new TilingLayout({
@@ -1619,30 +1608,9 @@ const ComponentBrowser = component({
         textAndAttributes: ['Arrange by name', null]
       }]
 
-    }), part(LabeledCheckbox, {
+    }), part(LabeledCheckboxLight, {
       name: 'behavior toggle',
-      layout: new TilingLayout({
-        axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(10, 8, -10, 0),
-        resizePolicies: [['checkbox', {
-          height: 'fill',
-          width: 'fixed'
-        }]]
-      }),
-      activeCheckboxComponent: CheckboxActiveLight,
-      inactiveCheckboxComponent: CheckboxInactiveLight,
-      extent: pt(126.2, 32.5),
-      submorphs: [{
-        name: 'checkbox',
-        width: 15,
-        master: CheckboxActiveLight,
-        fill: Color.white
-      }, {
-        name: 'prop label',
-        fontColor: Color.rgb(0, 0, 0),
-        textAndAttributes: ['Enable behavior', null]
-      }]
+      viewModel: { label: 'Enable behavior' }
     }), part(SystemButton, {
       name: 'edit button',
       extent: pt(80, 23.8),
@@ -1776,9 +1744,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
         },
         {
           name: 'behavior toggle',
-          master: LabeledCheckbox,
-          activeCheckboxComponent: CheckboxActive,
-          inactiveCheckboxComponent: CheckboxInactive
+          master: LabeledCheckbox
         }, {
           name: 'edit button',
           master: ButtonDarkDefault,

@@ -8,6 +8,7 @@ import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupWindow } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
+import { LabeledCheckbox } from 'lively.components';
 
 export class PopupModel extends ViewModel {
   static get properties () {
@@ -45,7 +46,7 @@ export class ShadowPopupModel extends PopupModel {
         get () {
           return [
             { target: 'close button', signal: 'onMouseDown', handler: 'close' },
-            { target: 'fast shadow checkbox', signal: 'onMouseDown', handler: 'toggleFastShadow' },
+            { target: 'fast shadow checkbox', signal: 'checked', handler: 'toggleFastShadow' },
             { target: 'x offset', signal: 'number', handler: 'confirm' },
             { target: 'y offset', signal: 'number', handler: 'confirm' },
             { target: 'blur input', signal: 'number', handler: 'confirm' },
@@ -105,11 +106,7 @@ export class ShadowPopupModel extends PopupModel {
         shadowColorInput, title, footer
       } = this.ui;
 
-      const f = fastShadowCheckbox.fill;
-      const b = fastShadowCheckbox.borderColorTop;
-      fastShadowCheckbox.borderColor = !this.fastShadow ? b.withA(0) : b.withA(1);
-      fastShadowCheckbox.fill = !this.fastShadow ? f.withA(1) : f.withA(0);
-      fastShadowCheckbox.fontColor = !this.fastShadow ? fastShadowCheckbox.fontColor.withA(1) : fastShadowCheckbox.fontColor.withA(0);
+      fastShadowCheckbox.checked = this.fastShadow;
 
       const p = Point.polar(this.shadowValue.distance, num.toRadians(this.shadowValue.rotation));
       xOffset.number = p.x;
@@ -546,22 +543,15 @@ const ShadowPopup = component(DarkPopupWindow, {
         padding: rect(15, 0, -10, 0)
       }),
       position: pt(6.2, 9.5),
-      submorphs: [part(AddButton, {
-        type: Label,
+      submorphs: [part(LabeledCheckbox, {
         name: 'fast shadow checkbox',
-        borderWidth: 1,
-        borderColor: Color.white,
-        padding: rect(0, 0, 0, 0),
-        fill: Color.rgb(178, 235, 242),
-        fontColor: Color.rgb(65, 65, 65),
-        textAndAttributes: ['', {
-          fontSize: 13,
-          fontFamily: 'Material Icons'
-        }]
-      }), part(PropLabel, {
-        type: Label,
-        name: 'prop label',
-        textAndAttributes: ['Show behind transparent areas', null]
+        submorphs: [
+          {
+            name: 'label',
+            master: PropLabel
+          }
+        ],
+        viewModel: { label: 'Show behind transparent areas' }
       })]
     }]
   })]
