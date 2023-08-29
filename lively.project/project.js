@@ -219,7 +219,17 @@ export class Project {
     loadedProject.url = url;
     loadedProject.configFile = resource(address.join('package.json').url);
     if (!onlyLoadNotOpen) {
+
       loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
+      if (await loadedProject.gitResource.hasRemote()) {
+          const remoteURL = await loadedProject.gitResource.getRemote();
+          const userTokenInRemoteURL = remoteURL.match(/(gho_.*)@/)[1];
+          if (userTokenInRemoteURL !== currentUserToken()) {
+            const repoOwner = fullName.replace(/--.*/, '');
+            const name = fullName.replace(/.*--/, '');
+            await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currentUserToken(), repoOwner, name);
+          }
+      }
       // Ensure that we do not run into conflicts regarding the bound lively version.
       await loadedProject.gitResource.resetFile('package.json');
       await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
