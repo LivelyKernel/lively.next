@@ -218,7 +218,7 @@ export class VideoMorph extends HTMLMorph {
   resetHTML () {
     const options = ` ${this.loop ? 'loop' : ''} ${this.controls ? 'controls' : ''} ${this.autoplay ? 'autoplay' : ''}`;
     this.html = `
-  <video id="${this.videoId}"  this.width = "${this.width}" height="${this.height}" ${options}>
+  <video id="${this.videoId}"  width = "100%" height="100%" style="object-fit: cover;"${options}>
   <source src="${this.src}"  type="${this.codec}"/> 
 ${this.badBrowserMessage}
 </video>
