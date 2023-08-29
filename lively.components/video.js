@@ -140,25 +140,6 @@ export class VideoMorph extends HTMLMorph {
     return this.videoDomElement ? pt(this.videoDomElement.width, this.videoDomElement.height) : null;
   }
 
-  onBoundsChanged (bounds) {
-    super.onBoundsChanged(bounds);
-    try {
-      if (!this.autorelayout) {
-      // once a user has resized, this turns off auto-resizing to accommodate the video
-      // the autorelayout flag is set by the resize methods to ensure that this
-      // won't happen when we are resizing to accommodate a video
-        this.videoLayout = 'none';
-      }
-
-      if (this.bounds().extent().eqPt(this.domElementExtent)) {
-        return;
-      }
-    } catch (error) {
-      return;
-    }
-    this.resetHTML();
-  }
-
   init () {
     this.resetHTML();
     this.startPlaying();
