@@ -1,7 +1,7 @@
 /* eslint-disable no-use-before-define */
 import { Text, ViewModel, TilingLayout, Icon, ShadowObject, Label, component } from 'lively.morphic';
 import { pt, Rectangle, rect, Color } from 'lively.graphics';
-import { InputLine, LabeledCheckBoxModel, CheckBoxMorph } from './inputs.js';
+import { InputLine } from './inputs.js';
 import { arr, string, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
 
@@ -35,28 +35,6 @@ const InputLineDefault = component({
 const InputLineDark = component(InputLineDefault, {
   name: 'input line dark',
   fill: Color.rgb(229, 231, 233)
-});
-
-const LabeledCheckBox = component({
-  defaultViewModel: LabeledCheckBoxModel,
-  name: 'labeled check box',
-  extent: pt(66, 21),
-  fill: Color.rgba(0, 0, 0, 0),
-  layout: new TilingLayout({
-    align: 'top',
-    direction: 'leftToRight'
-  }),
-  submorphs: [{
-    type: CheckBoxMorph,
-    name: 'checkbox'
-  }, {
-    type: Label,
-    name: 'label',
-    extent: pt(51, 21),
-    nativeCursor: 'pointer',
-    padding: rect(10, 3, -5, 0),
-    value: 'a label'
-  }]
 });
 
 export class SearchFieldModel extends ViewModel {
@@ -291,4 +269,4 @@ const SearchFieldFocused = component({
   ]
 });
 
-export { LabeledCheckBox, SearchField, InputLineDefault, InputLineDark };
+export { SearchField, InputLineDefault, InputLineDark };
