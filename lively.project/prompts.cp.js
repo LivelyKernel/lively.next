@@ -2,14 +2,14 @@
 import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
 import { AbstractPromptModel, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Color, pt } from 'lively.graphics';
-import { InputLineDefault, LabeledCheckBox } from 'lively.components/inputs.cp.js';
+import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 import { without } from 'lively.morphic/components/core.js';
 import { Label } from 'lively.morphic/text/label.js';
-import { CheckBox } from 'lively.components/widgets.js';
+import { Checkbox, LabeledCheckboxLight } from 'lively.components';
 import { currentUserToken, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
@@ -34,8 +34,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                 this.view.remove();
               }
             },
-            { model: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
-            { model: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { model: 'test check', signal: 'toggle', handler: (val) => this.ui.testModeSelector.enabled = val },
+            { model: 'build check', signal: 'toggle', handler: (val) => this.ui.buildModeSelector.enabled = val },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             {
               target: 'visibility selector',
@@ -103,9 +103,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             { target: 'user flap', signal: 'onLogin', handler: 'onLogin' },
             { target: 'user flap', signal: 'onLogout', handler: 'waitForLogin' },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
+            { target: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
             {
-              model: 'create remote checkbox',
+              target: 'create remote checkbox',
               signal: 'checked',
               handler: (checked) => {
                 const { privateCheckbox } = this.ui;
@@ -348,9 +348,9 @@ class ProjectSavePrompt extends AbstractPromptModel {
                 this.terminalWindow?.close();
               }
             },
-            { target: 'minor check', signal: 'toggle', handler: (status) => this.increaseMinor = status },
-            { target: 'major check', signal: 'toggle', handler: (status) => this.increaseMajor = status },
-            { target: 'tag check', signal: 'toggle', handler: (status) => this.tag = status },
+            { target: 'minor check', signal: 'checked', handler: (status) => this.increaseMinor = status },
+            { target: 'major check', signal: 'checked', handler: (status) => this.increaseMajor = status },
+            { target: 'tag check', signal: 'checked', handler: (status) => this.tag = status },
             { target: 'diff button', signal: 'onMouseDown', handler: () => { this.terminalWindow = this.project.showDiffSummary(); } }
           ];
         }
@@ -446,7 +446,12 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [part(LabeledCheckBox, { name: 'test check', viewModel: { label: 'Run Tests Remotely:' } }), { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
+              submorphs: [
+                part(LabeledCheckboxLight, {
+                  name: 'test check',
+                  viewModel: { label: 'Run Tests Remotely:' }
+                }),
+                { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
             }, part(ModeSelector, {
               name: 'test mode selector',
               viewModel: {
@@ -474,7 +479,13 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [part(LabeledCheckBox, { name: 'build check', viewModel: { label: 'Build Project Remotely:' } }), { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
+              submorphs: [
+                part(LabeledCheckboxLight,
+                  {
+                    name: 'build check',
+                    viewModel: { label: 'Build Project Remotely:' }
+                  }),
+                { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
             }, part(ModeSelector, {
               name: 'build mode selector',
               viewModel: {
@@ -501,7 +512,13 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [part(LabeledCheckBox, { name: 'deploy check', viewModel: { label: 'Deploy Build to GitHub Pages:' } }), part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
+              submorphs: [
+                part(LabeledCheckboxLight,
+                  {
+                    name: 'deploy check',
+                    viewModel: { label: 'Deploy Build to GitHub Pages:' }
+                  }),
+                part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
             }, { fill: Color.transparent, width: 255 }]
           }]
       },
@@ -609,28 +626,24 @@ const RepoSettings = component(
         fill: Color.transparent,
         layout: new TilingLayout({
           align: 'center',
-          axisAlign: 'center'
+          axisAlign: 'center',
+          spacing: 5
         }),
         submorphs: [
-          part(LabeledCheckBox, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
-          part(InformIconOnLight, {
-            viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' },
-            name: 'morph_1'
-          })
+          part(LabeledCheckboxLight, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
+          part(InformIconOnLight, { viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' } })
         ]
       }, {
         name: 'private repo holder',
         fill: Color.transparent,
         layout: new TilingLayout({
           align: 'center',
-          axisAlign: 'center'
+          axisAlign: 'center',
+          spacing: 5
         }),
         submorphs: [
-          part(LabeledCheckBox, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
-          part(InformIconOnLight, {
-            viewModel: { information: 'Should the new GitHub repository for the project be private?' },
-            name: 'morph_2'
-          })
+          part(LabeledCheckboxLight, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
+          part(InformIconOnLight, { viewModel: { information: 'Should the new GitHub repository for the project be private?' } })
         ]
       }]
   });
@@ -718,10 +731,11 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         fill: Color.transparent,
         layout: new TilingLayout({
           align: 'center',
-          axisAlign: 'center'
+          axisAlign: 'center',
+          spacing: 5
         }),
         submorphs: [
-          part(LabeledCheckBox, { name: 'from remote checkbox', viewModel: { label: 'Initialize from Remote?' } }),
+          part(LabeledCheckboxLight, { name: 'from remote checkbox', viewModel: { label: 'Initialize from Remote?' } }),
           part(InformIconOnLight, { viewModel: { information: 'Should the project be initialized from an existing remote repository?' } })
         ]
       }, part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
@@ -782,7 +796,9 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         extent: pt(256.5, 31),
         fill: Color.rgba(255, 255, 255, 0),
         layout: new TilingLayout({
-          orderByIndex: true
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 10
         }),
         position: pt(0, -1),
         submorphs: [{
@@ -794,12 +810,11 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontSize: 15,
           nativeCursor: 'pointer',
           textAndAttributes: ['Bump Minor Version:', null]
-        }, {
-          type: CheckBox,
+        }, part(Checkbox, {
           name: 'minor check',
-          borderWidth: 0,
+          padding: rect(0, -3, 0, 3),
           position: pt(139, 0)
-        }]
+        })]
       }, {
         name: 'aMorph1',
         borderColor: Color.rgba(23, 160, 251, 0),
@@ -807,7 +822,9 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         extent: pt(256.5, 29.5),
         fill: Color.rgba(255, 255, 255, 0),
         layout: new TilingLayout({
-          orderByIndex: true
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 10
         }),
         position: pt(0, 63),
         submorphs: [{
@@ -819,19 +836,19 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontSize: 15,
           nativeCursor: 'pointer',
           textAndAttributes: ['Bump Major Version:', null]
-        }, {
-          type: CheckBox,
+        }, part(Checkbox, {
           name: 'major check',
-          borderWidth: 0,
           position: pt(139, 0)
-        }]
+        })]
       }, {
         name: 'tag row',
         fill: Color.rgba(255, 255, 255, 0),
         borderColor: Color.rgba(23, 160, 251, 0),
         extent: pt(256.5, 29.5),
         layout: new TilingLayout({
-          orderByIndex: true
+          axisAlign: 'center',
+          orderByIndex: true,
+          spacing: 10
         }),
         position: pt(-82, 26),
         submorphs: [{
@@ -843,12 +860,10 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
           fontSize: 15,
           nativeCursor: 'pointer',
           textAndAttributes: ['Tag this Version as Release:', null]
-        }, {
-          type: CheckBox,
+        }, part(Checkbox, {
           name: 'tag check',
-          borderWidth: 0,
           position: pt(179, 0)
-        }]
+        })]
       }, part(SystemButtonDark, {
         name: 'diff button',
         extent: pt(449.5, 27),

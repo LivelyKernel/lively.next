@@ -1,19 +1,15 @@
 import {
-  Ellipse, TilingLayout, Icon,
+  Ellipse, Icon,
   Morph,
   Path,
   Text,
-  morph
+  part
 } from 'lively.morphic';
-import { Color, pt, rect, Rectangle } from 'lively.graphics';
+import { Color, pt, Rectangle } from 'lively.graphics';
 import { arr } from 'lively.lang';
-import { connect, disconnect } from 'lively.bindings';
-import { LabeledCheckBox, DropDownSelector } from 'lively.components/widgets.js';
-import { Button } from 'lively.components/buttons.js';
+import { connect } from 'lively.bindings';
+import { LabeledCheckbox } from 'lively.components';
 import { Menu } from 'lively.components/menus.js';
-import { NumberWidget } from 'lively.ide/value-widgets.js';
-import { InteractiveMorphSelector } from './morph.js';
-import { easings } from 'lively.morphic/rendering/animations.js';
 
 class ProportionSlider extends Morph {
   static get properties () {
@@ -526,17 +522,19 @@ export class GridLayoutHalo extends LayoutHalo {
 
   optionControls () {
     const layout = this.target;
-    const compensateOrigin = new LabeledCheckBox({
+    const compensateOrigin = part(LabeledCheckbox, {
       name: 'compensateOrigin',
-      label: 'Compensate Origin',
-      fill: Color.transparent,
-      checked: layout.compensateOrigin
+      viewModel: {
+        label: 'Compensate Origin',
+        checked: layout.compensateOrigin
+      }
     });
-    const fitToCell = new LabeledCheckBox({
-      label: 'Resize Submorphs',
-      fill: Color.transparent,
+    const fitToCell = part(LabeledCheckbox, {
       name: 'fitToCell',
-      checked: layout.fitToCell
+      viewModel: {
+        label: 'Resize Submorphs',
+        checked: layout.fitToCell
+      }
     });
     connect(compensateOrigin, 'checked', layout, 'compensateOrigin');
     connect(fitToCell, 'checked', layout, 'fitToCell');

@@ -1,11 +1,12 @@
 import { GridLayout, config, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
-import { LabeledCheckBox, SearchField } from 'lively.components/inputs.cp.js';
+import { SearchField } from 'lively.components/inputs.cp.js';
 import { Inspector } from './index.js';
 import { DropDownListModel } from 'lively.components/list.js';
 import { DarkList } from 'lively.components/list.cp.js';
 import { PropertyTree } from './context.js';
+import { LabeledCheckboxLight } from 'lively.components';
 
 const InstructionWidget = component({
   type: Text,
@@ -139,12 +140,12 @@ const SystemInspector = component({
         padding: rect(2, 2, 0, 0),
         tooltip: 'Change Inspection Target'
       }),
-      part(LabeledCheckBox, {
-        viewModel: { label: 'internals' },
+      part(LabeledCheckboxLight, {
+        viewModel: { label: 'internals', align: 'center' },
         name: 'internals'
       }),
-      part(LabeledCheckBox, {
-        viewModel: { label: 'unknowns' },
+      part(LabeledCheckboxLight, {
+        viewModel: { label: 'unknowns', align: 'center' },
         name: 'unknowns'
       })]
   }, {

@@ -1,6 +1,7 @@
 import { Rectangle, pt, rect, Color } from 'lively.graphics';
 import { connect, noUpdate, signal } from 'lively.bindings';
-import { ConstraintLayout, Icon, HorizontalLayout, VerticalLayout, Morph } from 'lively.morphic';
+import { ConstraintLayout, Icon, HorizontalLayout, VerticalLayout, Morph, part } from 'lively.morphic';
+import { Checkbox } from 'lively.components';
 
 import MorphicDB from './db.js';
 
@@ -330,10 +331,9 @@ class MorphicDBWidget extends Morph {
     }
 
     if (showSelect) {
-      let cb = this.addMorph({
+      let cb = part(Checkbox, {
         name: 'selected',
-        type: 'checkbox',
-        checked: false,
+        viewModel: { checked: false },
         isLayoutable: false,
         leftCenter: pt(5, this.height / 2 - (showRemove || showEdit ? 10 : 20))
       });
