@@ -522,7 +522,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to check if it results in multiple nodes.
    */
   isComposite (morph) {
-    return morph.isCanvas || morph.isHTMLMorph || morph.isImage || morph.isCheckbox || morph.isText;
+    return morph.isCanvas || morph.isHTMLMorph || morph.isImage ||  morph.isText;
   }
 
   /**
@@ -694,23 +694,6 @@ export default class Renderer {
     imageNode.style.height = '100%';
 
     node.appendChild(imageNode);
-    return node;
-  }
-
-  nodeForCheckbox (morph) {
-    const node = this.doc.createElement('div');
-    const boxNode = this.doc.createElement('input');
-    node.appendChild(boxNode);
-
-    boxNode.setAttribute('type', 'checkbox');
-
-    boxNode.setAttribute('draggable', 'false'),
-
-    boxNode.style['pointer-events'] = 'none';
-    boxNode.style.width = '15px',
-    boxNode.style.height = '15px',
-    boxNode.style.position = 'absolute';
-
     return node;
   }
 
