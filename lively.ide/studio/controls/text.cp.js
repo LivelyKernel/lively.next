@@ -12,11 +12,11 @@ import {
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { PropertySection } from './section.cp.js';
-import { disconnect, connect } from 'lively.bindings';
+import { disconnect, epiConnect } from 'lively.bindings';
 
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PaddingControlsDark } from './popups.cp.js';
-import { availableFonts } from 'lively.morphic/rendering/fonts.js';
+import { availableFonts, DEFAULT_FONTS } from 'lively.morphic/rendering/fonts.js';
 import { fontWeightToString, fontWeightNameToNumeric } from 'lively.morphic/rendering/font-metric.js';
 import { sanitizeFont } from 'lively.morphic/helpers.js';
 import { rainbow } from 'lively.graphics/color.js';
@@ -116,16 +116,29 @@ export class RichTextControlModel extends ViewModel {
           italicStyle, underlineStyle, quote,
           lineWrappingSelector, paddingControls
         } = this.ui;
+
         const { activeButtonComponent, hoveredButtonComponent } = this;
-        this.models.fontFamilySelector.items = availableFonts().map(font => {
+
+        const fontItemCreator = font => {
           return {
             value: font,
             string: font.name,
             isListItem: true
           };
-        });
+        };
 
-        fontFamilySelector.selection = text.fontFamily.replace(/^"(.*)"$/, '$1');
+        if ($world.openedProject) {
+          const projectFontItems = $world.openedProject.projectFonts.map(fontItemCreator);
+          if (projectFontItems.length > 0) {
+            projectFontItems[projectFontItems.length - 1].style = {
+              borderWidth: { bottom: 5, top: 0, left: 0, right: 0, top: 0 },
+              borderStyle: { bottom: 'double', top: 'none', left: 'none', right: 'none', top: 'none' }
+            };
+          }
+          this.models.fontFamilySelector.items = projectFontItems.concat(DEFAULT_FONTS.map(fontItemCreator));
+        } else this.models.fontFamilySelector.items = DEFAULT_FONTS.map(fontItemCreator);
+
+        fontFamilySelector.selection = text.fontFamily?.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
 
         fontWeightSelector.selection = /\d/.test(text.fontWeight) ? fontWeightToString(text.fontWeight) : capitalize(text.fontWeight);

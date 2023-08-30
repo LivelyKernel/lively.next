@@ -82,12 +82,24 @@ export class ListItemMorph extends Label {
         nonSelectionFontColor,
         borderRadius,
         fontSize,
-        padding
+        padding,
+        borderWidth,
+        borderStyle
       } = style;
+
       if (selectionFontColor && this.selectionFontColor !== selectionFontColor) { this.selectionFontColor = selectionFontColor; }
       if (nonSelectionFontColor && this.nonSelectionFontColor !== nonSelectionFontColor) { this.nonSelectionFontColor = nonSelectionFontColor; }
       if (selectionColor && this.selectionColor !== selectionColor) { this.selectionColor = selectionColor; }
       if (borderRadius && borderRadius !== this.borderRadius) { this.borderRadius = borderRadius; }
+
+      if (borderWidth && borderWidth !== this.borderWidth) { this.borderWidth = borderWidth; }
+      if (!borderWidth && this.borderWidth !== 0) this.borderWidth = 0;
+
+      if (borderStyle && borderStyle !== this.borderStyle) { this.borderStyle = borderStyle; }
+      if (!borderStyle && this.borderStyle !== 'none') this.borderStyle = 'none';
+
+      this.borderColor = isSelected ? this.selectionFontColor : this.nonSelectionFontColor;
+
       if (fontSize && this.fontSize !== fontSize) this.fontSize = fontSize;
       if (fontFamily && this.fontFamily !== fontFamily) this.fontFamily = fontFamily;
       if (padding && !this.padding.equals(padding)) this.padding = padding;
@@ -100,7 +112,7 @@ export class ListItemMorph extends Label {
       // this is faster:
       if (item.autoFit) itemMorph.width = goalWidth;
       const width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth;
-      const height = itemHeight; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+      const height = itemHeight + this.borderWidth.bottom + this.borderWidth.top; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
       this.extent = pt(width, height);
     }
 
@@ -744,6 +756,7 @@ export class List extends Morph {
       [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
       itemMorphs = [...lower, ...rest, ...upper];
 
+      let borderOffsetForHeight = 0;
       for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
         const itemIndex = firstItemIndex + i;
         const item = items[itemIndex];
@@ -773,19 +786,23 @@ export class List extends Morph {
           });
         }
         itemMorph.reactsToPointer = !scrollable;
+
         itemMorph.displayItem(
           item, itemIndex,
           goalWidth, itemHeight,
-          pt(0, itemHeight * itemIndex),
+          pt(0, itemHeight * itemIndex + borderOffsetForHeight),
           selectedIndexes.includes(itemIndex),
-          style);
+          obj.merge(style, item.style));
+
+        borderOffsetForHeight += item.style?.borderWidth.bottom || 0;
+        borderOffsetForHeight += item.style?.borderWidth.top || 0;
 
         maxWidth = Math.max(maxWidth, itemMorph.width);
       }
 
       itemMorphs.slice(lastItemIndex - firstItemIndex).forEach(ea => ea.remove());
 
-      const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length, this.height);
+      const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length + borderOffsetForHeight, this.height);
       listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
       scroller.extent = this.extent.subXY(this.borderWidthRight, this.borderWidthBottom);
       scrollBar.left = maxWidth / 2;
