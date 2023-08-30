@@ -4,6 +4,7 @@ import { Icon } from 'lively.morphic';
 import { obj } from 'lively.lang';
 import { connect } from 'lively.bindings';
 import { pt } from 'lively.graphics';
+import { availableFonts } from 'lively.morphic/rendering/fonts';
 /* global localStorage */
 
 function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
@@ -126,33 +127,17 @@ export const interactiveCommands = [
     name: 'change font',
     scrollCursorIntoView: false,
     exec: async function (morph) {
-      const fontNames = [
-        'serif',
-        'sans-serif',
-        'monospace'
-      ];
-      const lsKey = 'lively.morpic/text-change-font-additional-fonts';
-      let additional = localStorage[lsKey];
-      if (additional) {
-        additional = JSON.parse(additional);
-        fontNames.push(...additional);
-      }
-      if (!fontNames.map(ea => ea.toLowerCase()).includes(morph.fontFamily.toLowerCase())) {
-        fontNames.push(morph.fontFamily);
-        additional = [...(additional || []), morph.fontFamily];
-        localStorage[lsKey] = JSON.stringify(additional);
-      }
+      const fonts = availableFonts().map(font => font.name);
 
-      const { selections: [choice] } = await $world.editListPrompt('choose font', fontNames, {
+      const res = await $world.listPrompt('choose font', fonts, {
         requester: morph,
-        preselect: fontNames.indexOf(morph.fontFamily),
+        preselect: fonts.indexOf(morph.fontFamily),
         historyId: 'lively.morpic/text-change-font-hist'
       });
 
-      if (choice) {
-        morph.fontFamily = choice;
-      }
-
+      if (res.status !== 'accepted') return false;
+      
+      morph.fontFamily = res.selected[0];
       return true;
     }
   },
