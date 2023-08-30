@@ -18,7 +18,7 @@ const InstructionWidget = component({
   padding: rect(10, 10, 0, 0),
   fill: Color.rgba(0, 0, 0, 0.75),
   fontColor: Color.rgb(255, 255, 255),
-  fontFamily: '"IBM Plex Sans",Sans-Serif',
+  fontFamily: "IBM Plex Sans",
   extent: pt(140, 135),
   textAndAttributes: [
     'Select a new morph to inspect by hovering over it and clicking left. You can exit this mode by pressing ',

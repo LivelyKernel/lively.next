@@ -91,7 +91,7 @@ const CodeSearch = component({
         borderRadius: 6,
         borderWidth: 1,
         extent: pt(243, 27),
-        fontFamily: 'monospace',
+        fontFamily: 'IBM Plex Mono',
         fontSize: 14,
         haloShadow: {
           blur: 6,
@@ -181,7 +181,7 @@ Regular expression should be given without quotes or literal mode slashes.',
     part(DefaultList, {
       name: 'list',
       extent: pt(538.7, 279.6),
-      fontFamily: 'monospace',
+      fontFamily: 'IBM Plex Mono',
       itemPadding: rect(4, 2, 0, 0),
       padding: rect(2, 0, 0, 0),
       position: pt(0, 27)

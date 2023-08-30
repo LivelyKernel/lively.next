@@ -1171,7 +1171,7 @@ const MetaInfoContainerExpanded = component({
     fixedHeight: true,
     fixedWidth: true,
     fontColor: Color.rgb(255, 255, 255),
-    fontFamily: '"IBM Plex Sans",Sans-Serif',
+    fontFamily: "IBM Plex Sans",
     fontSize: 16,
     padding: rect(5, 0, -5, 0),
     lineWrapping: 'by-words',

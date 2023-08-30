@@ -678,7 +678,7 @@ const commands = [
 
       let diffed;
 
-      diffed = await diffInWindow(a, b, { fontFamily: 'monospace', ...opts, format }); // eslint-disable-line no-use-before-define
+      diffed = await diffInWindow(a, b, { fontFamily: 'IBM Plex Mono', ...opts, format }); // eslint-disable-line no-use-before-define
 
       function findFormat (a, b) {
         if (obj.isPrimitive(a) || a instanceof RegExp ||

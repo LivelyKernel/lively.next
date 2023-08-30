@@ -194,7 +194,7 @@ const TextInput = component({
   borderRadius: 2,
   fill: Color.rgb(66, 73, 73),
   fontColor: Color.rgb(178, 235, 242),
-  fontFamily: '"IBM Plex Sans",Sans-Serif'
+  fontFamily: "IBM Plex Sans"
 });
 
 export class LabeledCheckboxMorph extends Morph {

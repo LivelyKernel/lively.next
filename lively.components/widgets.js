@@ -497,7 +497,7 @@ export class DropDownSelector extends Morph {
       },
       fontColor: { isStyleProp: true, defaultValue: Color.black },
       fontSize: { isStyleProp: true, defaultValue: 12 },
-      fontFamily: { isStyleProp: true, defaultValue: 'Sans-Serif' },
+      fontFamily: { isStyleProp: true, defaultValue: 'IBM Plex Sans' },
       border: { defaultValue: { radius: 3, color: Color.gray.darker(), style: 'solid' } },
       padding: { defaultValue: 1 },
       isSelected: {
