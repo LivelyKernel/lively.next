@@ -152,6 +152,7 @@ export class BodyControlModel extends PropertySectionModel {
    * Ensures that the appearance of the body control is faded out.
    */
   deactivate () {
+    this.targetMorph = null;
     this.refreshItemLists();
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());

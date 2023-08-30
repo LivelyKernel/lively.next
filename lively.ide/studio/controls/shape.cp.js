@@ -302,12 +302,16 @@ export class ShapeControlModel extends ViewModel {
     this._updating = false;
   }
 
-  focusOn (targetMorph) {
+  deactivate () {
     if (this.targetMorph) {
       disconnect(this.targetMorph, 'position', this, 'refreshFromTarget');
       disconnect(this.targetMorph, 'extent', this, 'refreshFromTarget');
       disconnect(this.targetMorph, 'rotation', this, 'refreshFromTarget');
     }
+  }
+
+  focusOn (targetMorph) {
+    this.deactivate();
     this.targetMorph = targetMorph;
     epiConnect(this.targetMorph, 'position', this, 'refreshFromTarget');
     epiConnect(this.targetMorph, 'extent', this, 'refreshFromTarget');

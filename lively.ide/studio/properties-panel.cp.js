@@ -173,6 +173,7 @@ export class PropertiesPanelModel extends ViewModel {
     this.models.backgroundControl.onRefresh();
     this.toggleDefaultControls(false);
     // fixme: clear any open popups
+    this.models.shapeControl.deactivate();
     this.models.effectsControl.deactivate();
     this.models.fillControl.deactivate();
     this.models.borderControl.targetMorph = null;
