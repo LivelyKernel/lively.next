@@ -317,7 +317,7 @@ const SaveWorldDialog = component(DarkPrompt, {
           submorphs: [{
             name: 'placeholder',
             extent: pt(122, 29),
-            fontFamily: '"IBM Plex Sans",Sans-Serif',
+            fontFamily: "IBM Plex Sans",
             fontSize: 15,
             nativeCursor: 'text',
             padding: rect(4, 4, 0, 0),

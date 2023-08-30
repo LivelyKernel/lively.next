@@ -8,7 +8,7 @@ import { Range } from '../../text/range.js';
 expectSelection(chai);
 
 const defaultStyle = {
-  fontFamily: 'monospace',
+  fontFamily: 'IBM Plex Mono',
   fontSize: 10,
   fontWeight: 'normal',
   fontColor: 'black',
@@ -611,7 +611,7 @@ describe('text movement and selection commands', () => {
   describe('get position above and below', () => {
     let t;
     before(async () => {
-      t = text('a\ncdefg\n', { extent: pt(500, 500), lineWrapping: 'by-chars', fontFamily: 'monospace' });
+      t = text('a\ncdefg\n', { extent: pt(500, 500), lineWrapping: 'by-chars', fontFamily: 'IBM Plex Mono' });
       // t.editorModeName = 'js';
       t.textString = 'a\ncdefg\n';
       t.textLayout.resetLineCharBoundsCache(t);

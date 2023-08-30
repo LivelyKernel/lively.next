@@ -10,7 +10,7 @@ let inBrowser = System.get('@system-env').browser
   : (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); };
 
 const defaultStyle = {
-  fontFamily: 'monospace',
+  fontFamily: 'IBM Plex Mono',
   fontSize: 10,
   fontWeight: 'normal',
   fontColor: Color.black,

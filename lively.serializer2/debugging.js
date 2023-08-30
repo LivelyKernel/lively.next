@@ -306,7 +306,7 @@ export class SnapshotInspector {
     return $world.execCommand('open text window', {
       content: this.toString(),
       title: 'serialization debug' + (name ? ' for ' + name : ''),
-      fontFamily: 'monospace'
+      fontFamily: 'IBM Plex Mono'
     });
   }
 
@@ -327,7 +327,7 @@ export class SnapshotInspector {
     return $world.execCommand('open text window', {
       content: report,
       title: 'serialized connections' + (name ? ' for ' + name : ''),
-      fontFamily: 'monospace'
+      fontFamily: 'IBM Plex Mono'
     });
   }
 
@@ -337,7 +337,7 @@ export class SnapshotInspector {
     $world.execCommand('open text window', {
       title: 'object report' + (name ? ' for ' + name : ''),
       content: this.reportAboutObjects(Object.keys(snapshot)),
-      fontFamily: 'monospace'
+      fontFamily: 'IBM Plex Mono'
     });
   }
 }

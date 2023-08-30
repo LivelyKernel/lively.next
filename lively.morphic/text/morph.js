@@ -42,7 +42,7 @@ export class Text extends Morph {
     return new morph({
       type: 'text',
       value,
-      fontFamily: 'IBM Plex, sans-serif',
+      fontFamily: "IBM Plex Sans",
       fontColor: Color.almostBlack,
       fontSize: 11,
       ...props
@@ -618,7 +618,9 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
-          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) throw Error('Invalid Font Family!');
+          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) {
+            $world.logError('Invalid Font Name!');
+          };
           this.setProperty('fontFamily', sanitizeFont(fontFamily));
           document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
             .then(() => {
@@ -4019,7 +4021,7 @@ export class Text extends Morph {
         const { reportStyles, report } = await this.report();
         return $world.execCommand('open text window', {
           title: 'text debug',
-          fontFamily: 'monospace',
+          fontFamily: 'IBM Plex Mono',
           content: report,
           rangesAndStyles: reportStyles
         });

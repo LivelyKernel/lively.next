@@ -584,7 +584,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         submorphs: [{
           name: 'placeholder',
           extent: pt(142, 34),
-          fontFamily: '"IBM Plex Sans",Sans-Serif',
+          fontFamily: "IBM Plex Sans",
           nativeCursor: 'text',
           textAndAttributes: ['Project Name', null]
         }]
@@ -636,7 +636,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           name: 'placeholder',
           visible: false,
           extent: pt(148, 34),
-          fontFamily: '"IBM Plex Sans",Sans-Serif',
+          fontFamily: "IBM Plex Sans",
           nativeCursor: 'text'
         }]
       })

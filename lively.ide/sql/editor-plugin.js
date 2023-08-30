@@ -110,7 +110,7 @@ export default class SQLEditorPlugin extends CodeMirrorEnabledEditorPlugin {
           return $world.execCommand("open text window", {
             title: `Databases of ${connectionString}`,
             content: printed,
-            fontFamily: "monospace"
+            fontFamily: "IBM Plex Mono"
           });
         }
       },
@@ -124,7 +124,7 @@ export default class SQLEditorPlugin extends CodeMirrorEnabledEditorPlugin {
           return $world.execCommand("open text window", {
             title: `Tables of ${connectionString}`,
             content: printed,
-            fontFamily: "monospace"
+            fontFamily: "IBM Plex Mono"
           });
         }
       }
