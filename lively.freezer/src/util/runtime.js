@@ -150,7 +150,10 @@ export function runtimeDefinition () {
     options: {},
     // this is for lively.serializer2 locateClass()
     moduleEnv (id) {
-      const m = System.get(id, false) || System.fetchStandaloneFor(id) || System.get(id + 'index.js', false);
+      const m = System.get(id, false) ||
+            lively.FreezerRuntime.get(id) ||
+            lively.FreezerRuntime.fetchStandaloneFor(id) ||
+            System.get(id + 'index.js', false);
       return { recorder: m.recorder || m.exports };
     }
   };
