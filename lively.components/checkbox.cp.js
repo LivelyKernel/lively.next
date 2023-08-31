@@ -95,13 +95,13 @@ export const Checkbox = component(CheckboxUnchecked, {
 const CheckboxCheckedLight = component(CheckboxChecked, {
   fill: Color.rgb(66, 165, 245),
   fontColor: Color.rgb(255, 255, 255),
-  borderColor: Color.black
+  borderColor: Color.rgb(112, 123, 124)
 });
 
 const CheckboxUncheckedLight = component(CheckboxUnchecked, {
   fontColor: Color.rgb(255, 255, 255),
   fill: Color.rgb(255, 255, 255),
-  borderColor: Color.black
+  borderColor: Color.rgb(112, 123, 124)
 });
 
 export const CheckboxLight = component(CheckboxUncheckedLight, {
@@ -168,7 +168,7 @@ export class LabeledCheckboxModel extends ViewModel {
     this.checkbox.checked = this.checked;
   }
 
-  viewDidLoad() {
+  viewDidLoad () {
     this.active ? this.enable() : this.disable();
   }
 
