@@ -307,7 +307,7 @@ export class Menu extends Morph {
     return invalidItem;
   }
 
-  updateMorphs () {
+  async updateMorphs () {
     this.submorphs = [];
 
     const pLeft = this.padding.left();
@@ -335,7 +335,7 @@ export class Menu extends Morph {
       maxWidth = Math.max(title.width, maxWidth);
     }
 
-    this.items.forEach(({ label, string, annotation, action, submenu, isDivider, tooltip }) => {
+    for (let { label, string, annotation, action, submenu, isDivider, tooltip } of this.items) {
       const itemMorph = this.addMorph(
         isDivider
           ? new MenuDivider({ position: pos })
@@ -348,10 +348,13 @@ export class Menu extends Morph {
             position: pos,
             ...defaultStyle
           }));
-      if (itemMorph.fit) itemMorph.fit();
+      if (itemMorph.fit) {
+        await itemMorph.whenFontLoaded();
+        itemMorph.fit();
+      }
       pos = itemMorph.bottomLeft;
       maxWidth = Math.max(itemMorph.width, maxWidth);
-    });
+    }
 
     this.submorphs.forEach(ea => {
       ea.fixedWidth = true;
