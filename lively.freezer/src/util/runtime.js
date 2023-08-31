@@ -171,7 +171,7 @@ export function runtimeDefinition () {
     registry,
     globalModules,
     get (moduleId, recorder = true) {
-      if (moduleId && moduleId.startsWith('@')) return this.globalModules[moduleId];
+      if (moduleId?.startsWith('@')) return this.globalModules[moduleId];
       let mod = this.registry[moduleId];
       return recorder ? mod && mod.recorder : mod;
     },
