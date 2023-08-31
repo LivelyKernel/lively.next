@@ -71,7 +71,7 @@ function spawn ({ command, cwd }) {
   return runCommand(command, { cwd });
 }
 
-async function fetchFile(url) {
+async function fetchFile (url) {
   while (true) {
     let attempts = 0;
     const maxAttempts = 3;
@@ -90,7 +90,7 @@ async function fetchFile(url) {
 }
 
 async function load (url) {
-  if (url === '@empty') return '';
+  if (url === '@empty.js') return '';
   return await fetchFile(url);
 }
 

@@ -197,7 +197,7 @@ export default class LivelyRollup {
    * @returns { object } The transform options.
    */
   getTransformOptions (modId, parsedSource) {
-    if (modId === '@empty') return {};
+    if (modId === '@empty.js') return {};
     let version, name;
     const pkg = this.resolver.resolvePackage(modId);
     if (pkg) {
@@ -727,7 +727,7 @@ export default class LivelyRollup {
         importMap = '<script type="systemjs-importmap">\n{\n"imports": {\n';
         importMap += this.excludedModules
           .concat(this.asBrowserModule ? ['fs', 'events'] : [])
-          .map(id => `"${id}": "./@empty"`).join(',\n');
+          .map(id => `"${id}": "./@empty.js"`).join(',\n');
         importMap += '\n  }\n}\n</script>';
       }
     } else {
@@ -885,7 +885,7 @@ export default class LivelyRollup {
     // add the blank import file to make systemjs happy
     plugin.emitFile({
       type: 'asset',
-      fileName: '@empty',
+      fileName: '@empty.js',
       source: ''
     });
 
