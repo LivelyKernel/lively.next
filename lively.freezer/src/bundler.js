@@ -186,7 +186,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    */
   normalizedId (id) {
-    return id.replace(baseURL, '').replace('local://lively-object-modules/', '');
+    return id.replace(baseURL, '').replace('local://lively-object-modules/', '').replace('local_projects/', '');
   }
 
   /**
