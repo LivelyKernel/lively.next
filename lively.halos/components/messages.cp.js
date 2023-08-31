@@ -93,7 +93,7 @@ const StatusMessageDefault = component({
       fixedHeight: true,
       readOnly: true,
       fontColor: Color.rgb(66, 73, 73),
-      fontFamily: "IBM Plex Sans",
+      fontFamily: 'IBM Plex Sans',
       fontSize: 15,
       fontWeight: 'bold',
       lineWrapping: 'by-words',
@@ -110,19 +110,19 @@ const StatusMessageDefault = component({
           click: MessageButtonClick,
           hover: MessageButtonHover
         },
-        viewModel: {
-          label: {
-            value: Icon.textAttribute('times'),
-            fontColor: Color.rgb(66, 73, 73),
-            fontSize: 20,
-            padding: rect(1, 1, 0, 0)
-          }
-        },
         name: 'close button',
         position: pt(465.2, 0.2),
         width: 30,
         tooltip: 'Close this status message.',
-        halosEnabled: false
+        halosEnabled: false,
+        submorphs: [
+          {
+            name: 'label',
+            textAndAttributes: Icon.textAttribute('times'),
+            fontSize: 20,
+            padding: rect(1, 1, 0, 0)
+          }
+        ]
       })]
   }, {
     type: Text,
@@ -135,7 +135,7 @@ const StatusMessageDefault = component({
     fixedHeight: true,
     fixedWidth: true,
     fontColor: Color.rgb(66, 73, 73),
-    fontFamily: "IBM Plex Sans",
+    fontFamily: 'IBM Plex Sans',
     fontSize: 15,
     lineWrapping: 'by-words',
     padding: rect(10, 10, 0, 0),
@@ -157,21 +157,21 @@ const StatusMessageConfirm = component(StatusMessageDefault, {
     name: 'horizontal float',
     submorphs: [
       {
-        type: Label,
         name: 'message icon',
         fontColor: Color.rgb(255, 255, 255),
         fontSize: 20,
         textAndAttributes: Icon.textAttribute('check-circle')
       },
       {
-        type: Text,
         name: 'message title',
         fontColor: Color.white,
         textAndAttributes: ['Saved file...', null]
       },
       {
         name: 'close button',
-        viewModel: { label: { fontColor: Color.white } }
+        submorphs: [
+          { name: 'label', fontColor: Color.white }
+        ]
       }
     ]
   }, {
@@ -206,7 +206,9 @@ const StatusMessageError = component(StatusMessageDefault, {
         },
         {
           name: 'close button',
-          viewModel: { label: { fontColor: Color.white } }
+          submorphs: [
+            { name: 'label', fontColor: Color.white }
+          ]
         }
       ]
     },
