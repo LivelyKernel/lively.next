@@ -246,8 +246,8 @@ function runExecuteOfGlobalModule (System, entry) {
   exports = module.exports;
 
   // __esModule flag treats as already-named
-  let Module = System.get('@system-env').constructor;
-  if (exports && (exports.__esModule || exports instanceof Module)) entry.esModule = exports;
+  let Module = Object.getPrototypeOf(System.get('@system-env'));
+  if (exports && (exports.__esModule || Object.getPrototypeOf(exports) === Module)) entry.esModule = exports;
   // set module as 'default' export, then fake named exports by iterating properties
   else if (entry.esmExports && exports !== System.global) entry.esModule = System.newModule(exports);
   // just use the 'default' export
