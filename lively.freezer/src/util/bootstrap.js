@@ -131,25 +131,28 @@ function bootstrapLivelySystem (progress, loadConfig) {
     })
     .then(async function () {
       const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
-      const oldSystem = window.System;
+      const oldSystem = lively.FreezerRuntime.oldSystem = window.System;
       let initBaseURL = oldSystem.baseURL;
       if (initBaseURL.endsWith('/')) {
         initBaseURL = initBaseURL.slice(0, -1);
       }
       const packageCached = await resource(baseURL).join('package-registry.json').readJson();
       await loadViaScript(resource(baseURL).join('/lively.next-node_modules/@babel/standalone/babel.js').url);
-      await loadViaScript(resource(baseURL).join('/lively.next-node_modules/systemjs/dist/system.src.js').url);
-      await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
-      const System = lively.modules.getSystem('bootstrapped', { baseURL });
+      const migratedMeta = { ...oldSystem.meta };
+      const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
       lively.modules.changeSystem(System, true);
+      await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       for (const mod in extractedModules) {
         const realignedId = mod.replace(initBaseURL, baseURL);
         System.set(realignedId, System.newModule(extractedModules[mod]));
         const m = lively.modules.module(realignedId);
         m._recorder = extractedModules[mod];
+        // denote the exports
         m._frozenModule = true;
       }
+      // FIXME: we also need to carry over the meta data of the split code remnants that may still be loaded eventually
+      //        currently loading a split module part after the system has been swapped causes an error
       oldSystem.config({ baseURL }); // this system keeps lurking around inside lively.modules somehow, so this fixes that issue for the time being
       installFetchHook();
     })
@@ -344,14 +347,14 @@ export async function bootstrap ({ filePath, worldName, projectName, projectRepo
             ({ loadWorld } = await lively.modules.System.import('lively.morphic/world-loading.js'));
           }
           if (worldName) await loadWorld(new LivelyWorld({ openNewWorldPrompt: true }), undefined, opts);
-          else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts)
-          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName, projectRepoOwner }), undefined, opts)
+          else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts);
+          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName, projectRepoOwner }), undefined, opts);
         } else {
           await morphic.World.loadFromDB(worldName, undefined, undefined, {
-              ...opts,
-              browserURL: '/worlds/load?name=' + worldName.replace(/\.json($|\?)/, '')
-            });
-          }
+            ...opts,
+            browserURL: '/worlds/load?name=' + worldName.replace(/\.json($|\?)/, '')
+          });
+        }
       } else if (filePath) {
         await morphic.World.loadFromResource(
           resource(System.baseURL).join(filePath),
