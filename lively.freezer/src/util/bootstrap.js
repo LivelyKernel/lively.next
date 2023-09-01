@@ -292,6 +292,9 @@ export async function bootstrap ({ filePath, worldName, projectName, projectRepo
     }
 
     window.onresize = null;
+    if (lively.isResurrectionBuild) {
+      lively.frozenModules = lively.FreezerRuntime;
+    }
     lively.FreezerRuntime = false;
     const landingPageUrl = document.location;
     try {

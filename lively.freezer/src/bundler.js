@@ -761,13 +761,16 @@ export default class LivelyRollup {
       // can stub it with our FreezerRuntime
       runtimeCode += SYSTEMJS_STUB;
     }
+    if (this.isResurrectionBuild) {
+      runtimeCode += 'lively.isResurrectionBuild = true;';
+    }
     runtimeCode += regeneratorSource;
     runtimeCode += polyfills;
     return es5Transpilation(runtimeCode);
   }
 
   async generateIndexHtml (importMap, modules) {
-    return await generateLoadHtml(this.autoRun, importMap, this.resolver, modules);
+    return await generateLoadHtml(this.autoRun, importMap, this.resolver, modules, this.isResurrectionBuild);
   }
 
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {

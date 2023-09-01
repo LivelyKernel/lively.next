@@ -261,7 +261,7 @@ export function instrumentStaticSystemJS (system) {
  * @param { Morph } part - The morph that is supposed to be frozen.
  * @returns { string } The html code of the index.html.
  */
-export async function generateLoadHtml (htmlConfig, importMap, resolver, modules) {
+export async function generateLoadHtml (htmlConfig, importMap, resolver, modules, isResurrectionBuild) {
   const htmlTemplate = await resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/src/util/load-template.html'))).read();
   const entryPoint = modules.find(snippet => snippet.isEntry).fileName;
   // fixme: this only makes sense for auto run builds
@@ -279,7 +279,8 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
             }
           }
         });
-        System.import("./${entryPoint}").then(m => { System.trace = false; m.renderFrozenPart(domNode); });
+        System.trace = ${isResurrectionBuild ? 'true' : 'false'};
+        System.import("./${entryPoint}").then(m => { m.renderFrozenPart(domNode); });
       }
     }
   `;
