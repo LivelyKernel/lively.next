@@ -351,20 +351,7 @@ function instrumentSourceOfGlobalModuleLoad (System, load) {
   return System.translate(load).then(translated => ({ translated }));
 }
 
-function wrapModuleLoad (System) {
-  if (isHookInstalled(System, 'translate', 'lively_modules_translate_hook')) return;
-  installHook(
-    System, 'translate',
-    function lively_modules_translate_hook (proceed, load) { return customTranslate.call(System, proceed, load); },
-    'lively_modules_translate_hook');
-}
-
-function unwrapModuleLoad (System) {
-  removeHook(System, 'translate', 'lively_modules_translate_hook');
-}
-
 export {
-  wrapModuleLoad, unwrapModuleLoad,
   getExceptions, setExceptions,
   instrumentSourceOfEsmModuleLoad, instrumentSourceOfGlobalModuleLoad
 };

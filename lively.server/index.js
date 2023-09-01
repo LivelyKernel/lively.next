@@ -40,9 +40,7 @@ export default async function start(hostname, port, configFile, rootDirectory, s
       // migrate the system over 
       modules.changeSystem(livelySystem);
       modules.unwrapModuleResolution(livelySystem);
-      modules.unwrapModuleLoad(livelySystem);
       modules.wrapModuleResolution(livelySystem);
-      modules.wrapModuleLoad(livelySystem);
       // what about the package registry???
       const oldRegistry = livelySystem['__lively.modules__packageRegistry'];
       delete livelySystem['__lively.modules__packageRegistry'];
