@@ -15,6 +15,7 @@ const build = await rollup({
     lively({
       autoRun: { title: 'lively.next' },
       minify,
+      isResurrectionBuild: true,
       asBrowserModule: true,
       excludedModules: [
 	'lively.collab',
