@@ -793,23 +793,48 @@ class ModuleInterface {
 
   ensureRecord () {
     const S = this.System;
-    const records = S._loader.moduleRecords;
+    const records = this.System.loads;
     if (records[this.id]) return records[this.id];
 
     // see SystemJS getOrCreateModuleRecord
-    return records[this.id] = {
-      name: this.id,
-      exports: S.newModule({}),
-      dependencies: [],
-      importers: [],
-      setters: []
-    };
+    // return records[this.id] = {
+    //   name: this.id,
+    //   key: this.id,
+    //   exports: S.newModule({}),
+    //   dependencies: [],
+    //   importers: [],
+    //   setters: []
+    // };
+  }
+
+  static sanitizeRecord (rec, System) {
+    if (!rec) return;
+    if (rec.name && rec.exports && rec.setters) return rec; // already sanitized
+    rec.name = rec.key;
+    if (!rec.hasOwnProperty('__lively_modules__')) { rec.__lively_modules__ = { evalOnlyExport: {} }; }
+    if (!rec.hasOwnProperty('exports')) rec.exports = System.REGISTER_INTERNAL.records[rec.key]?.linkRecord?.moduleObj || {};
+    if (!rec.hasOwnProperty('setters')) rec.setters = System.REGISTER_INTERNAL.records[rec.key]?.linkRecord?.setters || [];
+    if (!rec.hasOwnProperty('importers')) {
+      Object.defineProperty(rec, 'importers', {
+        get: function () {
+          return getImportersOfModule(System, rec);
+        }
+      });
+    }
+    if (!rec.hasOwnProperty('dependencies')) {
+      Object.defineProperty(rec, 'dependencies', {
+        get: function () {
+          return rec.deps?.map(dep => ModuleInterface.sanitizeRecord(System.loads[rec.depMap[dep]], System)) || []; // also ensure that the record is present
+        }
+      });
+    }
+    return rec;
   }
 
   record () {
-    const rec = this.System._loader.moduleRecords[this.id];
+    const rec = this.System.loads?.[this.id];
     if (!rec) return null;
-    if (!rec.hasOwnProperty('__lively_modules__')) { rec.__lively_modules__ = { evalOnlyExport: {} }; }
+    ModuleInterface.sanitizeRecord(rec, this.System);
     return rec;
   }
 
