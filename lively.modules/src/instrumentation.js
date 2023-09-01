@@ -151,7 +151,7 @@ function addNodejsWrapperSource (System, load) {
   return false;
 }
 
-async function customTranslate (proceed, load) {
+export async function customTranslate (load) {
   // load like
   // {
   //   address: "file:///Users/robert/Lively/lively-dev/lively.vm/tests/test-resources/some-es6-module.js",
@@ -167,15 +167,15 @@ async function customTranslate (proceed, load) {
 
   if (ignored) {
     debug && console.log('[lively.modules customTranslate ignoring] %s', load.name);
-    return proceed(load);
+    return load.source;
   }
 
   if (isNode && addNodejsWrapperSource(System, load)) {
     debug && console.log('[lively.modules] loaded %s from nodejs cache', load.name);
-    return proceed(load);
+    return load.source;
   }
 
-  const start = Date.now();
+  const start = load.metadata.ts = Date.now();
 
   const format = detectModuleFormat(load.source, meta);
   const mod = module(System, load.name);
@@ -190,7 +190,7 @@ async function customTranslate (proceed, load) {
   try {
     useCache = System.useModuleTranslationCache;
     indexdb = System.global.indexedDB;
-    hashForCache = useCache && String(string.hashCode(load.source));
+    hashForCache = meta.hashForCache = useCache && String(string.hashCode(load.source));
     if (useCache && indexdb && isEsm) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
@@ -241,7 +241,7 @@ async function customTranslate (proceed, load) {
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  let options = {};
+  let options = meta.compileOptions = {};
   let source = load.source;
 
   if (isEsm) {
@@ -268,38 +268,49 @@ async function customTranslate (proceed, load) {
     debug && console.log("[lively.modules] customTranslate ignoring %s b/c don't know how to handle format %s", load.name, load.metadata.format);
   }
 
-  return proceed(load).then(async translated => {
-    if (translated.indexOf('System.register(') === 0) {
-      debug && console.log('[lively.modules customTranslate] Installing System.register setter captures for %s', load.name);
-      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
-    }
+  return load.source;
+}
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // cache experiment part 2
-    if (isNode && useCache && isEsm) {
-      let cache = System._livelyModulesTranslationCache ||
+export async function postCustomTranslate (load) {
+  const start = load.metadata.ts;
+  if (!load.metadata['lively.modules instrumented']) return; // if we already retrieved the source from cache, not need to store it again
+  let translated = load.source;
+  const debug = System.debug;
+  const indexdb = System.global.indexedDB;
+  const mod = module(System, load.name);
+  const hashForCache = load.metadata.hashForCache;
+  const options = load.metadata.compileOptions;
+  const useCache = System.useModuleTranslationCache;
+  if (translated.indexOf('System.register(') === 0) {
+    debug && console.log('[lively.modules customTranslate] Installing System.register setter captures for %s', load.name);
+    translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
+  }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // cache experiment part 2
+  if (isNode && useCache) {
+    let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
-      try {
-        await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
-        debug && console.log('[lively.modules customTranslate] stored cached version in filesystem for %s', load.name);
-      } catch (e) {
-        console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
-      }
-    } else if (useCache && indexdb && isEsm) {
-      let cache = System._livelyModulesTranslationCache ||
-               (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
-      try {
-        await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
-        debug && console.log('[lively.modules customTranslate] stored cached version for %s', load.name);
-      } catch (e) {
-        console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
-      }
+    try {
+      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
+      debug && console.log('[lively.modules customTranslate] stored cached version in filesystem for %s', load.name);
+    } catch (e) {
+      console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
     }
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  } else if (useCache && indexdb) {
+    let cache = System._livelyModulesTranslationCache ||
+               (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
+    try {
+      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
+      debug && console.log('[lively.modules customTranslate] stored cached version for %s', load.name);
+    } catch (e) {
+      console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
+    }
+  }
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    debug && console.log('[lively.modules customTranslate] done %s after %sms', load.name, Date.now() - start);
-    return translated;
-  });
+  debug && console.log('[lively.modules customTranslate] done %s after %sms', load.name, Date.now() - start);
+  load.source = translated;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
