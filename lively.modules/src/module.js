@@ -49,6 +49,13 @@ export function isModuleLoaded (System, name, isNormalized = false) {
   return id in sysEnv.loadedModules;
 }
 
+function getImportersOfModule (System, rec) {
+  return Object.values(System.loads)
+    .filter(r => !r.key.endsWith('.json'))
+    .map(r => Object.values(r.depMap).find(url => url === rec.key) && ModuleInterface.sanitizeRecord(r, System))
+    .filter(Boolean);
+}
+
 export async function doesModuleExist (System, name, isNormalized = false) {
   const id = isNormalized ? name : System.normalizeSync(name);
   if (isModuleLoaded(System, id, true)) return true;
@@ -245,6 +252,34 @@ class ModuleInterface {
     await this.load();
   }
 
+  async revive () {
+    if (!this._frozenModule) return; // no need to do
+    // prepare the already existing recorder obejct to contain the required callbacks
+    // then just perform a plain reload
+    this.prepareRecorder(this._recorder);
+    await this.reload();
+    const frozenRecord = lively.frozenModules.registry[this.shortName()];
+    frozenRecord.isRevived = true;
+    // trigger the reload of the bundle for the snippet this recorder is located in
+    // after that trigger the importer setters and then also reload these modules as well (within the bundle)
+    // this process needs to be repeated for every time this module is updated, not just upon revival.
+    // in that sense, it may make sense, to keep the frozen flag around at all times to differentiate between
+    // the modules that have their origin in a bundle and the ones that have been loaded from source directly into lively
+    const S = lively.frozenModules.oldSystem;
+    const importersToUpdate = getImportersOfModule(S, S.REGISTER_INTERNAL.records[frozenRecord.contextModule]);
+    importersToUpdate.forEach(m => {
+      S.registry.delete(m.key); // such that these are also properly reloaded
+    });
+    S.registry.delete(frozenRecord.contextModule); // force a proper reload
+    for (let m of importersToUpdate) {
+      if (!S.registry.get(m.key)) await S.import(m.key);
+    }
+    // lively.frozenModules.oldSystem.import(frozenRecord.contextModule); // reload the module that has not an updated recorder
+    // this will also update all of the frozen modules as well, since the still non dynamic recorders
+    // are getting updated
+    this._frozenModule = false;
+  }
+
   async copyTo (newId) {
     const moduleRecord = this.System.get(this.id);
     const state = obj.select(this, [
@@ -410,7 +445,10 @@ class ModuleInterface {
 
   get recorder () {
     if (this._recorder) return this._recorder;
+    return this.prepareRecorder();
+  }
 
+  prepareRecorder (existingRecorder) {
     const S = this.System; const self = this;
 
     if (!globalProps.initialized) {
@@ -434,7 +472,7 @@ class ModuleInterface {
       nodejsDescriptors.require = { configurable: true, writable: true, value: require };
     }
 
-    return this._recorder = Object.create(S.global, {
+    this._recorder = Object.create(S.global, {
 
       ...globalProps.descriptors,
       ...nodejsDescriptors,
@@ -488,13 +526,18 @@ class ModuleInterface {
 
           if (key === undefined) return depExports;
 
-          if (!depExports.hasOwnProperty(key)) { console.warn(`import from ${depExports}: Has no export ${key}!`); }
+          if (!Object.hasOwnProperty.bind(depExports)(key)) { console.warn(`import from ${depExports}: Has no export ${key}!`); }
 
           return depExports[key];
         }
       }
-
     });
+
+    if (existingRecorder) {
+      Object.assign(existingRecorder, this._recorder);
+      this._recorder = existingRecorder;
+    }
+    return this._recorder;
   }
 
   get varDefinitionCallbackName () { return 'defVar_' + this.id; }

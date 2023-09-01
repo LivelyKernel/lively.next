@@ -209,7 +209,7 @@ export default class LivelyRollup {
       name = modId.split('npm:')[1].split('@')[0];
     }
     const classToFunction = {
-      classHolder: ast.parse(`(lively.FreezerRuntime.recorderFor("${this.normalizedId(modId)}"))`),
+      classHolder: ast.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", module))`),
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
       transform: classes.classToFunctionTransform,
       currentModuleAccessor: ast.parse(`({

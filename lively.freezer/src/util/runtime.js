@@ -578,9 +578,11 @@ export function runtimeDefinition () {
       };
     },
 
-    recorderFor (moduleId) {
+    recorderFor (moduleId, snippetModule) {
       let rec = {};
-      return (this.registry[moduleId] = this.registry[moduleId] || { recorder: rec, exports: rec }).recorder;
+      rec = (this.registry[moduleId] = this.registry[moduleId] || { recorder: rec, exports: rec, contextModule: snippetModule.id }).recorder;
+      if (this.registry[moduleId].isRevived) return Object.freeze({ ...rec }); // prevent mutation of recorder via this recorder
+      return rec;
     },
 
     load (moduleId) {
