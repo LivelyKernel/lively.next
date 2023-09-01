@@ -125,6 +125,7 @@ const BrowserResolver = {
   whenReady,
   spawn,
   load,
+  fetchFile,
   builtinModules,
   ensureFileFormat,
   supportingPlugins

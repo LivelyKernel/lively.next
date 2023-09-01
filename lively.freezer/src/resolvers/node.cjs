@@ -257,6 +257,7 @@ const NodeResolver = {
   builtinModules,
   ensureFileFormat,
   load,
+  fetchFile,
   supportingPlugins
 };
 

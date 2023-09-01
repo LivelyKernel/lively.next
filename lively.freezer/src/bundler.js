@@ -411,6 +411,7 @@ export default class LivelyRollup {
       source = source.replaceAll(projectAssetRegex, assetNameRewriter);
     }
 
+
     if (this.needsDynamicLoadTransform(source)) {
       source = await this.instrumentDynamicLoads(source, id);
     }
@@ -418,7 +419,8 @@ export default class LivelyRollup {
     if (id === ROOT_ID) return source;
     // this capturing stuff needs to behave differently when we have dynamic imports. Why??
     if (this.needsScopeToBeCaptured(id, null, source) || this.needsClassInstrumentation(id, source)) {
-      source = this.captureScope(source, id);
+      const sourceHash = string.hashCode(await this.resolver.fetchFile(id));
+      source = this.captureScope(source, id, sourceHash);
     }
 
     return source;
@@ -567,14 +569,18 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    * @returns { string } The instrumented source code.
    */
-  captureScope (source, id) {
+  captureScope (source, id, hashCode) {
     let classRuntimeImport = '';
     const recorderName = '__varRecorder__';
     const parsed = ast.parse(source);
-    const localLivelyVar = ast.query.topLevelDeclsAndRefs(parsed).declaredNames.includes('lively');
+    const declsAndRefs = ast.query.topLevelDeclsAndRefs(parsed);
+    const exports = ast.query.exports(declsAndRefs.scope).map(exp => JSON.stringify(exp.exported));
+    const localLivelyVar = declsAndRefs.declaredNames.includes('lively');
     const recorderString = this.captureModuleScope
-      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = ${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime.recorderFor("${this.normalizedId(id)}");\n`
+      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", module);\n`
       : '';
+    const moduleHash = `${recorderName}.__module_hash__ = ${hashCode};\n`;
+    const moduleExports = `${recorderName}.__module_exports__ = [${exports.join(',')}];\n`;
     const captureObj = { name: recorderName, type: 'Identifier' };
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
@@ -640,7 +646,7 @@ export default class LivelyRollup {
       }
     }
 
-    return recorderString + classRuntimeImport + ast.stringify(instrumented) + defaultExport;
+    return recorderString + (this.isResurrectionBuild ? moduleHash + moduleExports : '') + classRuntimeImport + ast.stringify(instrumented) + defaultExport;
   }
 
   /**
