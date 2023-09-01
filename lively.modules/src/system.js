@@ -568,40 +568,35 @@ function printSystemConfig (System) {
 
 function instantiate_triggerOnLoadCallbacks (proceed, load) {
   const System = this;
+  proceed(load);
+  // Wait until module is properly loaded, i.e. added to the System module cache.
+  // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
+  // resolve to the loaded module, trigger + remove them
 
-  return proceed(load).then(result => {
-    // Wait until module is properly loaded, i.e. added to the System module cache.
-    // Then find those callbacks in System.get("@lively-env").onLoadCallbacks that
-    // resolve to the loaded module, trigger + remove them
+  const timeout = {};
+  whenSystemModuleLoaded(load.name).then(result => {
+    if (result === timeout) {
+      console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
+      return;
+    }
+    const modId = load.name;
+    const mod = classHolder.module(System, modId);
+    const callbacks = System.get('@lively-env').onLoadCallbacks;
 
-    const timeout = {};
-    // rms 18.11.20 fixme: replace with promise? this busy wait is a boon on performance
-    whenSystemModuleLoaded(load.name).then(result => {
-      if (result === timeout) {
-        console.warn(`[lively.modules] instantiate_triggerOnLoadCallbacks for ${load.name} timed out`);
-        return;
-      }
-      const modId = load.name;
-      const mod = classHolder.module(System, modId);
-      const callbacks = System.get('@lively-env').onLoadCallbacks;
+    for (let i = callbacks.length; i--;) {
+      const { moduleName, resolved, callback } = callbacks[i];
+      const id = resolved ? moduleName : System.decanonicalize(moduleName);
+      if (id !== modId) continue;
+      callbacks.splice(i, 1);
+      try { callback(mod); } catch (e) { console.error(e); }
+    }
 
-      for (let i = callbacks.length; i--;) {
-        const { moduleName, resolved, callback } = callbacks[i];
-        const id = resolved ? moduleName : System.decanonicalize(moduleName);
-        if (id !== modId) continue;
-        callbacks.splice(i, 1);
-        try { callback(mod); } catch (e) { console.error(e); }
-      }
+    emit('lively.modules/moduleloaded', { module: load.name }, Date.now(), System);
 
-      emit('lively.modules/moduleloaded', { module: load.name }, Date.now(), System);
-
-      if (System._loadingIndicator) {
-        System._loadingIndicator.remove();
-        System._loadingIndicator = null;
-      }
-    });
-
-    return result;
+    if (System._loadingIndicator) {
+      System._loadingIndicator.remove();
+      System._loadingIndicator = null;
+    }
   });
 }
 
