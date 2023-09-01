@@ -160,7 +160,7 @@ function bootstrapLivelySystem (progress, loadConfig) {
           function (m) {
             progress.finishPackage({ packageName: 'lively.lang', loaded: true });
             delete m._prevLivelyGlobal;
-          },
+          }
         );
       }
     }).then(async function () {
@@ -203,9 +203,7 @@ function bootstrapLivelySystem (progress, loadConfig) {
     }).then(async function () {
       function afterImport (m) {
         lively.modules = m;
-        lively.modules.unwrapModuleLoad();
         lively.modules.unwrapModuleResolution();
-        lively.modules.wrapModuleLoad();
         lively.modules.wrapModuleResolution();
         installFetchHook();
         const oldRegistry = System['__lively.modules__packageRegistry'];
@@ -267,7 +265,7 @@ function fastPrepLivelySystem () {
     .then(function (packageCached) {
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       return System;
-    })
+    });
 }
 
 export async function bootstrap ({ filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress, logError = (err) => console.log(err) }) {

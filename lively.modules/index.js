@@ -82,10 +82,7 @@
 
   ### instrumentation
 
-  By default lively.modules will hook into the `System.translate` process so that source code of modules get transformed to allow recording of their internal evaluation state (that is then captured in `moduleEnv`s). You can enable and disable this behavior via
-
-  - `lively.modules.wrapModuleLoad()`
-  - `lively.modules.unwrapModuleLoad()`
+  By default lively.modules will hook into the `System.translate` process so that source code of modules get transformed to allow recording of their internal evaluation state (that is then captured in `moduleEnv`s). You can enable and disable this behavior by implementing the translate callback in the plugin provided.
 
   ### evaluation
 
@@ -363,17 +360,6 @@ function removeHook (methodName, hookOrName) {
   return _removeHook(defaultSystem, methodName, hookOrName);
 }
 export { isHookInstalled, installHook, removeHook };
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// instrumentation
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-import {
-  wrapModuleLoad as _wrapModuleLoad,
-  unwrapModuleLoad as _unwrapModuleLoad
-} from './src/instrumentation.js';
-function wrapModuleLoad () { _wrapModuleLoad(defaultSystem); }
-function unwrapModuleLoad () { _unwrapModuleLoad(defaultSystem); }
-export { wrapModuleLoad, unwrapModuleLoad };
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // export / import tooling
