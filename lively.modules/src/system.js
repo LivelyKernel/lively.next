@@ -22,21 +22,22 @@ export function wrapModuleResolution (System) {
   if (!isHookInstalled(System, 'normalize', 'normalizeHook')) {
     installHook(System, 'normalize', normalizeHook, 'normalizeHook');
   }
+  if (!isHookInstalled(System, 'resolve', 'normalizeHook')) {
+    installHook(System, 'resolve', normalizeHook, 'normalizeHook');
+  }
   if (!isHookInstalled(System, 'decanonicalize', 'decanonicalizeHook')) {
     installHook(System, 'decanonicalize', decanonicalizeHook, 'decanonicalizeHook');
-  }
-  if (!isHookInstalled(System, 'locate', 'locateHook')) {
-    installHook(System, 'locate', locateHook, 'locateHook');
   }
   if (!isHookInstalled(System, 'normalizeSync', 'decanonicalizeHook')) {
     installHook(System, 'normalizeSync', decanonicalizeHook, 'decanonicalizeHook');
   }
+  if (!isHookInstalled(System, 'resolveSync', 'decanonicalizeHook')) {
+    installHook(System, 'resolveSync', decanonicalizeHook, 'decanonicalizeHook');
+  }
   if (!isHookInstalled(System, 'newModule', 'newModule_volatile')) {
     installHook(System, 'newModule', newModule_volatile, 'newModule_volatile');
   }
-  if (!isHookInstalled(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks')) {
-    installHook(System, 'instantiate', instantiate_triggerOnLoadCallbacks, 'instantiate_triggerOnLoadCallbacks');
-  }
+
   if (!System._loader.modules) System._loader.modules = {};
   if (!System._loader.modules._originalModules) {
     const { proxy: wrappedModules, revoke } = Proxy.revocable(System._loader.modules, {
@@ -57,8 +58,6 @@ export function unwrapModuleResolution (System) {
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
-  removeHook(System, 'instantiate', 'instantiate_triggerOnLoadCallbacks');
-  removeHook(System, 'locate', 'locateHook');
   const wrappedModules = System._loader.modules;
   if (wrappedModules._originalModules) {
     System._loader.modules = wrappedModules._originalModules;
@@ -88,7 +87,6 @@ function livelySystemEnv (System) {
       return JSON.stringify({
         baseURL: System.baseURL,
         transpiler: System.transpiler,
-        defaultJSExtensions: System.defaultJSExtensions,
         map: System.map,
         meta: System.meta,
         packages: System.packages,
@@ -139,8 +137,8 @@ function removeSystem (nameOrSystem) {
   delete systems()[name];
 }
 
-import { wrapModuleLoad } from './instrumentation.js';
-import { wrapResource } from './resource.js';
+import { customTranslate, postCustomTranslate } from './instrumentation.js';
+import { wrapResource, fetchResource } from './resource.js';
 import { emit } from 'lively.notifications';
 import { join, urlResolve } from './url-helpers.js';
 import { resource } from 'lively.resources';
@@ -152,6 +150,12 @@ function makeSystem (cfg) {
 function prepareSystem (System, config) {
   System.trace = true;
   config = config || {};
+
+  Object.getOwnPropertySymbols(System).map(sym => {
+    if ('lastRegister' in System[sym]) System['REGISTER_INTERNAL'] = System[sym];
+    else if (System[sym].baseURL) System['CONFIG'] = System[sym];
+    else System['METADATA'] = System[sym];
+  });
 
   const useModuleTranslationCache = config.hasOwnProperty('useModuleTranslationCache')
     ? config.useModuleTranslationCache
@@ -179,8 +183,45 @@ function prepareSystem (System, config) {
       System.newModule({ electron: isElectron, ...System.get('@system-env') }));
   }
 
+  const basePlugin = {
+    fetch: function (load, proceed) {
+      // this should be disabled if we are not yet bootstrapping
+      if (this.transpiler !== 'lively.transpiler') return proceed(load);
+      return fetchResource.call(this, proceed, load);
+    },
+    translate: function (load, opts) {
+      return customTranslate.call(this, load, opts);
+    },
+    instantiate: async function (load, proceed) {
+      await postCustomTranslate.call(this, load);
+      return instantiate_triggerOnLoadCallbacks.call(this, proceed, load);
+    },
+    locate: function (load) { return locateHook.call(this, load); }
+  };
+  const fetchPlugin = System.newModule(basePlugin);
+  const cjsPlugin = System.newModule(basePlugin);
+
+  System.set('lively.fetch', fetchPlugin);
+  System.set('cjs', cjsPlugin);
+  System.config({
+    meta: {
+      '*': {
+        loader: 'lively.fetch'
+      },
+      'node:*': {
+        loader: false,
+        format: 'esm'
+      },
+      cjs: {
+        loader: false
+      },
+      'lively.fetch': {
+        loader: false
+      }
+    }
+  });
+
   wrapResource(System);
-  wrapModuleLoad(System);
   wrapModuleResolution(System);
   let map;
   if (isElectron) {
@@ -257,6 +298,7 @@ const nodeExtRe = /\.node$/;
 const jsonExtRe = /\.json$/;
 const jsonJsExtRe = /(.*\.json)\.js$/i;
 const jsxJsExtRe = /(.*\.jsx)\.js$/i;
+const cjsJsExtRe = /(.*\.cjs)\.js$/i;
 const doubleSlashRe = /.\/{2,}/g;
 const nodeModRe = /\@node.*/;
 
@@ -291,7 +333,6 @@ function preNormalize (System, name, parent) {
       }
     }
   }
-
   // <snip> experimental
   if (packageRegistry) {
     let resolved = packageRegistry.resolvePath(name, parent);
@@ -303,7 +344,7 @@ function preNormalize (System, name, parent) {
   }
   // </snap> experimental
 
-  // console.log(`>> [preNormalize] ${name}`);
+  System.debug && console.log(`>> [preNormalize] ${name}`);
   return name;
 }
 
@@ -365,9 +406,19 @@ async function checkExistence (url, System) {
 }
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
-  if (parent && name === 'cjs') return 'cjs';
-  if (name === '@system-env') return name;
   const System = this;
+  if (System.transpiler !== 'lively.transpiler') return await proceed(name, parent, true);
+  if (parent && name === 'cjs') {
+    return 'cjs';
+  }
+  if (parent && parent.endsWith('!cjs')) {
+    // SystemJS 0.21.6 runs into trouble when the parent url includes a plain plugin,
+    // so removing it here seems to solve that issue
+    parent = parent.replace('!cjs', '');
+  }
+  if (name === 'lively.fetch') return name;
+  if (name === '@system-env') return name;
+  if (name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
   const stage1 = preNormalize(System, name, parent);
   const stage2 = await proceed(stage1, parent, true);
   let stage3 = postNormalize(System, stage2 || stage1, false);
@@ -386,7 +437,8 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
     !nodeModRe.test(stage3) &&
     !nodeExtRe.test(stage3) &&
     // Make sure that the module as not been loaded.
-    !(System.loads && System.loads[stage3])
+    !(System.loads && System.loads[stage3]) &&
+    !stage3.startsWith('node:')
   ) {
     if (jsExtRe.test(stage3)) {
       if (await checkExistence(stage3, System)) return stage3;
@@ -398,33 +450,33 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
       if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
     }
   }
+
   if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
   return stage3;
 }
 
 function decanonicalizeHook (proceed, name, parent, isPlugin) {
   let plugin;
-  // some jspm bullshit
-  if (name && name.endsWith('!cjs')) {
-    name = name.replace('!cjs', '');
-    plugin = '!cjs';
-  }
   const System = this;
   const stage1 = preNormalize(System, name, parent);
-  const stage2 = proceed(stage1, parent, isPlugin);
+  if (parent && parent.endsWith('!cjs')) {
+    parent = parent.replace('!cjs', '');
+  }
+  let stage2 = proceed(stage1, parent, isPlugin);
+  if (stage1.endsWith('/')) {
+    const main = this.CONFIG.packages[stage1.replace(/\/*$/, '')]?.main;
+    // SystemJS 0.21 has appended the main module, which is something we do not like
+    // if we decanonicalize a '/' terminated url
+    if (stage2.endsWith(main)) stage2 = stage2.replace(main, '');
+  }
   let stage3 = postNormalize(System, stage2, true);
   if (plugin) stage3 += plugin;
   System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
   return stage3;
 }
 
-async function locateHook (proceed, load) {
-  // we only support loading of esm modules
-  // any plugins via the ! notation are ignored
-  const [url, _] = load.name.split('!');
-  load.name = url;
-  const res = await proceed(load);
-  return res;
+function locateHook (load) {
+  return load.address;
 }
 
 const moduleLoadPromises = {};
@@ -500,8 +552,6 @@ function printSystemConfig (System) {
   const json = {
     baseURL: System.baseURL,
     transpiler: System.transpiler,
-    defaultJSExtensions: System.defaultJSExtensions,
-    defaultExtension: System.defaultExtension,
     map: System.map,
     meta: System.meta,
     packages: System.packages,
