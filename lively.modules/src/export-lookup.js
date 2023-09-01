@@ -155,10 +155,10 @@ export default class ExportLookup {
         if (cached && cached.exports) result.exports = JSON.parse(cached.exports);
         else result.exports = await mod.exports();
       } else {
-        let values = await mod.load();
+        let moduleRecord = await mod.load();
         result.exports = [];
-        for (let key in values) {
-          if (key === '__useDefault' || key === 'default') continue;
+        for (let key of mod._frozenModule ? moduleRecord.__module_exports__ : obj.keys(moduleRecord)) {
+          if (['__useDefault', 'default', '__module_hash__', '__module_exports__'].includes(key)) continue;
           result.exports.push({ exported: key, local: key, type: 'id' });
         }
       }
