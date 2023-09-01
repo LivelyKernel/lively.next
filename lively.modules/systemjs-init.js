@@ -22,6 +22,25 @@
   if (typeof global !== 'undefined') { global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire; }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  System.global = typeof global === 'undefined' ? window : global;
+  System.trace = true; // in order to harvest more metadata for lively.modules
+  if (System._nodeRequire) {
+    const Module = System._nodeRequire('module');
+    // wrap _load() such that it attaches the __esModule flag to each imported native module
+    // this ensures the interoperability to 0.21 SystemJS
+    const origLoad = Module._load;
+    // this also overrides native requires, which is not what we want really
+    Module._load = (...args) => {
+      let exports = origLoad(...args);
+      const isCoreModule = !!System.loads['@node/' + args[0]];
+      if (isCoreModule && !args[1].loaded && !exports.prototype) {
+        exports = Object.assign(Object.create(exports.prototype || {}), exports)
+        exports.__esModule = true; 
+      };
+      return exports;
+    }
+  }
+
   function decideAboutTranspiler (features) {
     return features.supportsAsyncAwait ? 'lively.transpiler' : 'plugin-babel';
   }
@@ -72,7 +91,7 @@
     }
     System.set('lively.transpiler', System.newModule({ default: Transpiler, translate }));
     System._loader.transpilerPromise = Promise.resolve({ translate });
-
+    System.translate = async (load) => await translate.bind(System)(load);
     System.config({
       transpiler: 'lively.transpiler',
       babelOptions: {
