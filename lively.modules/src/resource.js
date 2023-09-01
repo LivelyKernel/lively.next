@@ -22,13 +22,15 @@ if (typeof System !== 'undefined' && System.get('@system-env').node) {
 
 let jsFileHashMap;
 
-async function fetchResource (proceed, load) {
+export async function fetchResource (proceed, load) {
   const System = this;
+  const isCjs = !!System.METADATA[load.name].isCjs;
   const largeModuleSize = 250 * 1000;
-  let res = System.resource(load.name);
+  const url = load.name + (isCjs ? '!cjs' : '')
+  let res = System.resource(url);
   const useNodeFetch = System.get('@system-env').node && !res.isNodeJSFileResource && !res.isESMResource;
 
-  if (useNodeFetch) res = await fetch(load.name);
+  if (useNodeFetch) res = await fetch(url);
   if (!res) return proceed(load);
 
   let result, error;
@@ -46,8 +48,9 @@ async function fetchResource (proceed, load) {
   if (!System.get('@system-env').node && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
     let normalizedName = load.name.replace(System.baseURL, '/');
-    if (normalizedName.startsWith('esm://cache')) normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/');
-    if (stored && (jsFileHashMap[normalizedName] === Number.parseInt(stored.hash))) {
+    if (normalizedName.startsWith('esm://cache')) 
+      normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/');
+    if (stored && (jsFileHashMap?.[normalizedName] === Number.parseInt(stored.hash))) {
       load.metadata.instrument = false; // skip instrumentation
       return stored.source;
     }
@@ -99,6 +102,8 @@ function livelyProtocol (proceed, url) {
   if (!match) return proceed(url);
   const [_, __, id] = match;
   return {
+    ext: () => '',
+    isResource: true,
     read () {
       const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
       return Promise.resolve(m ? m.textString : `/*Could not locate ${id}*/`);
@@ -116,7 +121,7 @@ export function wrapResource (System) {
   System.resource = resource;
   if (isHookInstalled(System, 'fetch', fetchResource)) { removeHook(System, 'fetch', 'fetchResource'); }
   installHook(System, 'fetch', fetchResource);
-  if (isHookInstalled(System, 'resource', 'livelyProtocol')) { removeHook(System, 'fetch', 'livelyProtocol'); }
+  if (isHookInstalled(System, 'resource', 'livelyProtocol')) { removeHook(System, 'resource', 'livelyProtocol'); }
   installHook(System, 'resource', livelyProtocol);
 }
 

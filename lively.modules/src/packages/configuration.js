@@ -25,13 +25,20 @@ export default class PackageConfiguration {
     let sysConfig = config.systemjs || {};
     let livelyConfig = config.lively;
     let main = config.main || 'index.js';
+    
+    if (!main.endsWith('.js')) main += '.js';
 
     System.config({
       map: { [name]: packageURL },
       packages: {
         [packageURL]: {
+          main,
           ...sysConfig,
-          meta: { 'package.json': { format: 'json' }, ...sysConfig.meta },
+          meta: {
+            'package.json': { format: 'json' },
+            '*.cjs': { defaultExtension: false },
+            ...sysConfig.meta
+          },
           configured: true
         }
       }
