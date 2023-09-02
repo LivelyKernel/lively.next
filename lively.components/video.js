@@ -7,7 +7,7 @@ import { pt } from 'lively.graphics';
  * properties.
  * properties (should be in the constructor)
  *   - src: url for the video
- *   - type: type of the video (mp4, ogg, etc)
+ *   - codec: type of the video (mp4, ogg, etc)
  *   - controls: true/false to show not/show the controls (default false)
  *   - loop: true/false to play on a loop (default true)
  *   - autoplay: true/false to play on load (default true)
@@ -61,15 +61,13 @@ export class VideoMorph extends HTMLMorph {
         }
       },
       videoLayout: {
-        defaultValue: 'autoaspect',
+        defaultValue: 'cover',
+        type: 'Enum',
+        values: ['cover', 'fill-vertical', 'fill-horizontal'],
         set (aLayoutStyle) {
-          const choices = ['none', 'autoaspect', 'autosize'];
-          const index = choices.indexOf(aLayoutStyle);
-          const choice = index >= 0 ? choices[index] : 'none';
-          this.setProperty('videoLayout', choice);
-          this.resizeToExtentProperties();
+          this.setProperty('videoLayout', aLayoutStyle);
+          this.resetHTML();
         }
-
       }
 
     };
@@ -117,27 +115,8 @@ export class VideoMorph extends HTMLMorph {
     this.autorelayout = false;
   }
 
-  /**
-   * Resize to the value of the extent property. Since the default behavior on
-   * bounds change is to set videoLayout to 'none', and we don't want that
-   * to happen in this case, set `autorelayout` to true to tell
-   * onBoundsChanged() not to reset the videoLayout property.
-   */
-  resizeToExtentProperties () {
-    this.whenRendered().then(_ => {
-      this.autorelayout = true;
-      if (this.videoLayout === 'autosize') {
-        this.resizeToNaturalExtent();
-      } else if (this.videoLayout === 'autoaspect') {
-        this.resizeToFitVideo();
-      }
-
-      this.autorelayout = false;
-    });
-  }
-
   get domElementExtent () {
-    return this.videoDomElement ? pt(this.videoDomElement.width, this.videoDomElement.height) : null;
+    return this.videoDomElement ? pt(this.videoDomElement.offsetWidth, this.videoDomElement.offsetHeight) : null;
   }
 
   init () {
@@ -147,36 +126,6 @@ export class VideoMorph extends HTMLMorph {
 
   get videoDomElement () {
     return this.domNode.querySelectorAll('video')[0];
-  }
-
-  get naturalExtent () {
-    if (this.videoDomElement) {
-      return pt(this.videoDomElement.videoWidth, this.videoDomElement.videoHeight);
-    } else {
-      return pt(10, 10);
-    }
-  }
-
-  resizeToNaturalExtent () {
-    if (this.videoLoaded) {
-      this.extent = this.naturalExtent;
-    } else {
-    }
-  }
-
-  resizeToFitVideo () {
-    const videoExtent = this.naturalExtent;
-    const widthRatio = this.width / videoExtent.x;
-    const heightRatio = this.height / videoExtent.y;
-    // remain within the current bounding box, but shrink one dimension so
-    // this.width/this.height = video.extent.x/video.extent.y
-    if (heightRatio > widthRatio) {
-      // morph is too tall for the video
-      this.extent = pt(this.extent.x, videoExtent.y * widthRatio);
-    } else if (widthRatio > heightRatio) {
-      // morph is too wide for the video
-      this.extent = pt(videoExtent.x * heightRatio, this.extent.y);
-    }
   }
 
   rewind () {
@@ -198,8 +147,10 @@ export class VideoMorph extends HTMLMorph {
 
   resetHTML () {
     const options = ` ${this.loop ? 'loop' : ''} ${this.controls ? 'controls' : ''} ${this.autoplay ? 'autoplay' : ''}`;
+    const widthPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-horizontal') ? '100%' : 'auto';
+    const heightPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-vertical') ? '100%' : 'auto';
     this.html = `
-  <video id="${this.videoId}"  width = "100%" height="100%" style="object-fit: cover;"${options}>
+  <video id="${this.videoId}"  width="${widthPolicy}" height="${heightPolicy}" style="transform: translate(-50%, -50%); position: absolute; top: 50%; left: 50%; object-fit: cover;"${options}>
   <source src="${this.src}"  type="${this.codec}"/> 
 ${this.badBrowserMessage}
 </video>
@@ -215,3 +166,4 @@ ${this.badBrowserMessage}
     return $world.defaultMenuItems(this);
   }
 }
+
