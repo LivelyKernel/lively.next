@@ -2723,7 +2723,7 @@ export class Text extends Morph {
   // text layout related
 
   fit () {
-    if (this._isDeserializing) {
+    if (!this.visible || this.ownerChain().some(m => !m.visible) || this._isDeserializing) {
       return;
     }
     if (this.document) {
