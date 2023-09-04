@@ -12,9 +12,37 @@ const es6tocjs = require('@babel/plugin-transform-modules-commonjs');
 const nodePolyfills = require('rollup-plugin-polyfill-node');
 const chalk = require('chalk');
 const readline = require('readline');
-
+const css = require('css');
 // Problem: Just defering to rollup seems to bypass the flatn resolution mechanism
 // flatn 
+
+async function availableFonts(fontCSSFile) {
+  const _fonts = await import('lively.morphic/rendering/fonts.js');
+  
+  const projectFonts = {};
+  css.parse(fontCSSFile).stylesheet?.rules.forEach(rule => {
+    const fontDecl = rule.declarations?.find(decl => decl.property === 'font-family');
+    let fontName = fontDecl?.value;
+    if (fontName?.match(/^\"|\'/)) fontName = fontName.slice(1, -1);
+    if (fontName && !projectFonts[fontDecl.value]) {
+      projectFonts[fontName] = new Set();
+    }
+    const fontWeight = rule.declarations?.find(decl => decl.property === 'font-weight');
+    if (fontName && fontWeight) {
+      projectFonts[fontName].add(...fontWeight.value.split(' ').map(w => Number.parseInt(w)))
+    }
+  })
+  return [
+    ..._fonts.availableFonts(),
+    // since we do not have project available here, we need to parse
+    // the custom fonts from the css
+    ...Object.entries(projectFonts).map(([name, weights]) => {
+      return {
+        name, supportedWeights: [...weights]
+      }
+    })
+  ]
+}
 
 function isAlreadyResolved(url) {
   if (url.startsWith('file://') ||
@@ -213,6 +241,7 @@ function supportingPlugins(context = 'node') {
 }
 
 const NodeResolver = {
+  availableFonts,
   resolveModuleId,
   normalizeFileName,
   decanonicalizeFileName,

@@ -890,6 +890,7 @@ export default class LivelyRollup {
     });
 
     if (this.autoRun) {
+      depsCode += `lively.FreezerRuntime.availableFonts = ${JSON.stringify(await this.resolver.availableFonts(bundledProjectFontCSS))}`;
       plugin.emitFile({
         type: 'asset',
         fileName: 'deps.js',

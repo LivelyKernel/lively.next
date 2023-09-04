@@ -5,6 +5,7 @@ import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { resource } from 'lively.resources';
 import commonjs from '@rollup/plugin-commonjs';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
+import { availableFonts } from 'lively.morphic/rendering/fonts.js';
 
 function resolveModuleId (moduleName, importer) {
   // in the client, we just discard the importer. This works out almost all the time.
@@ -109,6 +110,7 @@ function supportingPlugins () {
 const builtinModules = [];
 
 const BrowserResolver = {
+  availableFonts,
   resolveModuleId,
   isBrowserResolver: true,
   normalizeFileName,
