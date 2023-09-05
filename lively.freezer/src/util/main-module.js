@@ -1,4 +1,4 @@
-/* global main, prepare, WORLD_CLASS, TITLE */
+/* global main, prepare, WORLD_CLASS, TITLE, TRACE */
 /**
  * This module is a template to be used for any of the synthesized entry modules
  * that are created when freezing a particular module as an entrypoint.
@@ -18,7 +18,7 @@ export async function renderFrozenPart (node = document.body) {
     world.stealFocus = true;
     MorphicEnv.default().setWorldRenderedOn(world, node, window.prerenderNode);
   }
-  System.trace = false;
+  System.trace = TRACE;
   // if IDE world required import that now and require that stuff too!
   main();
 }
