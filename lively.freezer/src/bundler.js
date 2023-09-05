@@ -257,6 +257,7 @@ export default class LivelyRollup {
    */
   async synthesizeMainModule () {
     let mainModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
+    mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
     return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
   }
 
