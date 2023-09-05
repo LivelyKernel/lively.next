@@ -3,6 +3,6 @@
 // and screw up the build process of rollup. This is a dirty hack, that should
 // be removed as soon as possible from the system.
 
-let classHolder = {};
+let classHolder = classHolder || {};
 
 export { classHolder };
