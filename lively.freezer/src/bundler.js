@@ -209,7 +209,7 @@ export default class LivelyRollup {
       name = modId.split('npm:')[1].split('@')[0];
     }
     const classToFunction = {
-      classHolder: ast.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", module))`),
+      classHolder: ast.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`),
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
       transform: classes.classToFunctionTransform,
       currentModuleAccessor: ast.parse(`({
@@ -578,7 +578,7 @@ export default class LivelyRollup {
     const exports = ast.query.exports(declsAndRefs.scope).map(exp => JSON.stringify(exp.exported));
     const localLivelyVar = declsAndRefs.declaredNames.includes('lively');
     const recorderString = this.captureModuleScope
-      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", module);\n`
+      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", __contextModule__);\n`
       : '';
     const moduleHash = `${recorderName}.__module_hash__ = ${hashCode};\n`;
     const moduleExports = `${recorderName}.__module_exports__ = [${exports.join(',')}];\n`;
@@ -776,7 +776,9 @@ export default class LivelyRollup {
 
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
-    modules.forEach(chunk => chunk.code = chunk.code.replace("'use strict'", "'use strict';\n  var module = typeof module !== 'undefined' ? module : arguments[1];\n"));
+    modules.forEach(chunk => {
+      chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
+    });
     if (this.minify && opts.format !== 'esm') {
       modules.forEach((chunk, i) => {
         chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
