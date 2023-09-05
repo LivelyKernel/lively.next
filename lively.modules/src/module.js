@@ -258,14 +258,19 @@ class ModuleInterface {
     // then just perform a plain reload
     this.prepareRecorder(this._recorder);
     await this.reload();
-    const frozenRecord = lively.frozenModules.registry[this.shortName()];
+    const R = (lively.FreezerRuntime || lively.frozenModules);
+    const S = R.oldSystem;
+    const frozenRecord = R.registry[this.shortName()];
     frozenRecord.isRevived = true;
+    const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
+    const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
+    // also inject the new values into the record in order to update the bundle
+    Object.assign(frozenRecord.recorder, newEntries);
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
     // in that sense, it may make sense, to keep the frozen flag around at all times to differentiate between
     // the modules that have their origin in a bundle and the ones that have been loaded from source directly into lively
-    const S = lively.frozenModules.oldSystem;
     const importersToUpdate = getImportersOfModule(S, S.REGISTER_INTERNAL.records[frozenRecord.contextModule]);
     importersToUpdate.forEach(m => {
       S.registry.delete(m.key); // such that these are also properly reloaded
