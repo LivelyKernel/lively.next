@@ -245,6 +245,14 @@ function bootstrapLivelySystem (progress, loadConfig) {
       }
       if (loadConfig['lively.modules'] === 'frozen' || fastLoad) {
         System._scripting = lively.modules.scripting;
+        // once changed we need t revive 'lively.modules/index.js'
+        if (fastLoad) {
+          const newSystem = System;
+          newSystem.loads = {};
+          const modules = lively.modules.module('lively.modules');
+          await modules.revive(); // this should also reload some of the bundles
+          (await newSystem.import('lively.modules')).changeSystem(newSystem, true);
+        }
       } else {
         await importPackageAndDo('lively.modules', afterImport);
       }
