@@ -127,6 +127,8 @@ function bootstrapLivelySystem (progress, loadConfig) {
         lively.morphic = await System.import('lively.morphic/index.js');
         extractModules('lively.morphic');
         progress.finishPackage({ packageName: 'lively.morphic', frozen: true });
+        await System.import('lively.project');
+        extractModules('lively.project');
       }
     })
     .then(async function () {
