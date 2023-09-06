@@ -1197,7 +1197,7 @@ export class BrowserModel extends ViewModel {
     const moduleName = m.pathInPackage();
 
     if (m._frozenModule) {
-      metaInfoText.showFrozen(`The module "${pkgName}/${moduleName}" you are viewing is frozen. You are not able to make changes to this module unless you reload the world with dynamic load enabled for the package "${pkgName}".`);
+      metaInfoText.showFrozen();
     }
   }
 
