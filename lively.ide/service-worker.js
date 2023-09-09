@@ -122,7 +122,7 @@ function initWorker () {
       },
       doSearch: async function (msg, messenger) {
         const { deserialize } = await System.import('lively.serializer2');
-        const { doSearch } = await System.import('lively.ide/code-search.js');
+        const { doSearch } = await System.import('lively.ide/code-search.cp.js');
         const {
           excludedModules, excludedPackages, livelySystem, searchTerm,
           includeUnloaded, caseSensitive, loadedPackages, progress
