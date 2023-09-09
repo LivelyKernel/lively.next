@@ -27,6 +27,16 @@ function importPackageAndDo (packageURL, doFunc, li = null) {
     .then(doFunc || function () {});
 }
 
+function extractEsmModules () {
+  Object.keys(lively.FreezerRuntime.registry)
+    .filter(k => k.startsWith('esm://'))
+    .forEach(id => {
+      extractedModules[id] = {
+        ...lively.FreezerRuntime.registry[id].exports
+      };
+    });
+}
+
 function extractModules (packageName) {
   Object.keys(lively.FreezerRuntime.registry)
     .filter(k => k.startsWith(packageName))
@@ -129,6 +139,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         progress.finishPackage({ packageName: 'lively.morphic', frozen: true });
         await System.import('lively.project');
         extractModules('lively.project');
+        extractEsmModules();
       }
     })
     .then(async function () {
@@ -265,9 +276,15 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
         for (let modId in R.registry) {
           const modHash = R.registry[modId]?.recorder.__module_hash__;
-          if (modHash !== moduleHashes['/' + modId]) {
+          let key = modId;
+          if (key.startsWith('esm://')) continue; // do not revive esm modules
+          if (modHash !== moduleHashes['/' + key]) {
             console.log('reviving', modId);
-            await lively.modules.module(modId).revive();
+            try {
+            	await lively.modules.module(modId).revive();
+            } catch (err) {
+	            console.log('failed reviving', modId);
+            }
           }
         }
       }
