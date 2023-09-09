@@ -106,7 +106,7 @@ class ModuleInterface {
 
   // returns Promise<string>
   fullName () { return this.id; }
-  shortName () { return `${this.package().name}/${this.pathInPackage()}`; }
+  shortName () { return this.package() && `${this.package().name}/${this.pathInPackage()}`; }
   get isModule () { return true; }
 
   source () {
