@@ -205,7 +205,7 @@ export async function loadPackagesAndModulesOfSnapshot (snapshot, options) {
   // load required modules
   await Promise.all(
     requiredModulesOfSnapshot(snapshot)
-      .map(modId => (System.get(modId) ? null : System.import(modId))
+      .map(modId => (System.get(System.decanonicalize(modId)) ? Promise.resolve(null) : System.import(modId))
         .catch(e => console.error(`Error loading ${modId}`, e))));
 }
 
