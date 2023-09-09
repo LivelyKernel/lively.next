@@ -167,6 +167,7 @@ function makeSystem (cfg) {
 
 function prepareSystem (System, config) {
   System.trace = true;
+  delete System.get;
   config = config || {};
 
   Object.getOwnPropertySymbols(System).map(sym => {
