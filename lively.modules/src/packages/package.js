@@ -422,7 +422,7 @@ class Package {
       packages: { [url]: {} },
       packageConfigPaths: conf.packageConfigPaths
     });
-    delete System.packages[url];
+    delete System.CONFIG.packages[url];
 
     emit('lively.modules/packageremoved', { package: this.url }, Date.now(), System);
   }
@@ -464,9 +464,9 @@ class Package {
     let covered = registry.coversDirectory(oldURL);
 
     classHolder.ModulePackageMapping.forSystem(System).clearCache();
-    if (System.packages[oldURL]) {
-      System.packages[newURL] = System.packages[oldURL];
-      if (removeOriginal) { delete System.packages[oldURL]; }
+    if (System.CONFIG.packages[oldURL]) {
+      System.CONFIG.packages[newURL] = System.CONFIG.packages[oldURL];
+      if (removeOriginal) { delete System.CONFIG.packages[oldURL]; }
     }
 
     Object.assign(newP, obj.select(this, ['_name', 'map', 'config']));

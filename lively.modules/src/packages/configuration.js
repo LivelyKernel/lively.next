@@ -25,7 +25,7 @@ export default class PackageConfiguration {
     let sysConfig = config.systemjs || {};
     let livelyConfig = config.lively;
     let main = config.main || 'index.js';
-    
+
     if (!main.endsWith('.js')) main += '.js';
 
     System.config({
@@ -45,7 +45,7 @@ export default class PackageConfiguration {
     });
     // configured flag so SystemJS doesn't try to load a potentially
     // non-existing package.json
-    System.packages[packageURL].configured = true;
+    System.CONFIG.packages[packageURL].configured = true;
 
     let packageInSystem = System.getConfig().packages[packageURL] || {};
     if (!packageInSystem.map) packageInSystem.map = {};

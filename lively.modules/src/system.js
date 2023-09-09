@@ -38,18 +38,23 @@ export function wrapModuleResolution (System) {
     installHook(System, 'newModule', newModule_volatile, 'newModule_volatile');
   }
 
-  if (!System._loader.modules) System._loader.modules = {};
-  if (!System._loader.modules._originalModules) {
-    const { proxy: wrappedModules, revoke } = Proxy.revocable(System._loader.modules, {
+  if (!System.registry['REGISTRY']._originalRegistry) {
+    const { proxy: wrappedRegistry, revoke } = Proxy.revocable(System.registry['REGISTRY'], {
       set: function (target, key, mod) {
-        if (moduleLoadPromises[key]) moduleLoadPromises[key].resolve(mod);
+        if (moduleLoadPromises[key]) {
+          moduleLoadPromises[key].resolve(mod);
+          delete moduleLoadPromises[key];
+        }
         target[key] = mod;
         return true;
       }
     });
-    wrappedModules._revoke = revoke;
-    wrappedModules._originalModules = System._loader.modules;
-    System._loader.modules = wrappedModules;
+    wrappedRegistry._revoke = revoke;
+    wrappedRegistry._originalRegistry = System.registry['REGISTRY'];
+    Object.getOwnPropertySymbols(System.registry).map(sym => {
+      if (System.registry[sym] === wrappedRegistry._originalRegistry) System.registry[sym] = wrappedRegistry;
+    });
+    System.registry['REGISTRY'] = wrappedRegistry;
   }
 }
 
@@ -58,12 +63,15 @@ export function unwrapModuleResolution (System) {
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
-  const wrappedModules = System._loader.modules;
-  if (wrappedModules._originalModules) {
-    System._loader.modules = wrappedModules._originalModules;
-    wrappedModules._revoke();
-    delete System._loader.modules._revoke;
-    delete System._loader.modules._originalModules;
+  const wrappedRegistry = System.registry['REGISTRY'];
+  if (wrappedRegistry._originalRegistry) {
+    Object.getOwnPropertySymbols(System.registry).map(sym => {
+      if (System.registry[sym] === wrappedRegistry) {
+        System.registry[sym] = wrappedRegistry._originalRegistry;
+      }
+    });
+    System.registry['REGISTRY'] = wrappedRegistry._originalRegistry;
+    wrappedRegistry._revoke();
   }
 }
 
@@ -89,7 +97,7 @@ function livelySystemEnv (System) {
         transpiler: System.transpiler,
         map: System.map,
         meta: System.meta,
-        packages: System.packages,
+        packages: System.CONFIG.packages,
         paths: System.paths,
         packageConfigPaths: System.packageConfigPaths
       }, null, 2);
@@ -155,6 +163,10 @@ function prepareSystem (System, config) {
     if ('lastRegister' in System[sym]) System['REGISTER_INTERNAL'] = System[sym];
     else if (System[sym].baseURL) System['CONFIG'] = System[sym];
     else System['METADATA'] = System[sym];
+  });
+
+  Object.getOwnPropertySymbols(System.registry).map(sym => {
+    System.registry['REGISTRY'] = System.registry[sym];
   });
 
   const useModuleTranslationCache = config.hasOwnProperty('useModuleTranslationCache')
@@ -370,8 +382,8 @@ function postNormalize (System, normalizeResult, isSync) {
       return withMain;
     }
   } else {
-    if (base in System.packages) {
-      let main = System.packages[base].main;
+    if (base in System.CONFIG.packages) {
+      let main = System.CONFIG.packages[base].main;
       if (main) {
         let withMain = base.replace(trailingSlashRe, '') + '/' + main.replace(dotSlashStartRe, '');
         // console.log(`>> [postNormalize] ${withMain} (main 2)`);
@@ -520,7 +532,7 @@ function normalize_packageOfURL (url, System) {
   // given a url like "http://localhost:9001/lively.lang/lib/base.js" finds the
   // corresponding package name in loader.packages, like "http://localhost:9001/lively.lang"
   // ... actually it returns the package
-  const packageNames = Object.keys(System.packages || {});
+  const packageNames = Object.keys(System.CONFIG.packages || {});
   const matchingPackages = packageNames
     .map(pkgName =>
       url.indexOf(pkgName) === 0
@@ -531,7 +543,7 @@ function normalize_packageOfURL (url, System) {
     ? matchingPackages.reduce((matchingPkg, ea) =>
       matchingPkg.penalty > ea.penalty ? ea : matchingPkg).url
     : null;
-  const systemPackage = pName && System.packages[pName];
+  const systemPackage = pName && System.CONFIG.packages[pName];
   return systemPackage ? { systemPackage, packageURL: pName } : null;
 }
 
@@ -554,7 +566,7 @@ function printSystemConfig (System) {
     transpiler: System.transpiler,
     map: System.map,
     meta: System.meta,
-    packages: System.packages,
+    packages: System.CONFIG.packages,
     paths: System.paths,
     packageConfigPaths: System.packageConfigPaths,
     bundles: System.bundles
@@ -618,7 +630,7 @@ function loadedModules (System) { return System.get('@lively-env').loadedModules
 function knownModuleNames (System) {
   const fromSystem = System.loads
     ? Object.keys(System.loads)
-    : Object.keys(System._loader.moduleRecords);
+    : Object.keys(System.get('@lively-env').loadedModules);
   return arr.uniq(fromSystem.concat(Object.keys(loadedModules(System))));
 }
 
