@@ -54,7 +54,26 @@ export default class LivelyDAVPlugin {
     this.server = server;
     this.patchServerForJsDAV(server);
     this.fileHashes = {};
+    this.computeFileHashes();
   }
+
+  async computeFileHashes() {
+    console.log('[lively.server] creating file hash map')
+    const rootDir = resource('file://' + this.options.rootDirectory);
+    const filesToHash = await rootDir.dirList('infinity', {
+      exclude: (res) => {
+	return res.url.includes('lively.next-node_modules') ||
+               res.url.includes('.module_cache') || 
+               !res.url.startsWith(System.baseURL + 'lively') || 
+               res.isFile() && !res.url.endsWith('.js' ) && !res.url.endsWith('.cjs')
+        }
+      });
+    for (let file of filesToHash) {
+      if (!file.isFile()) continue;
+      this.fileHashes[file.url.replace(System.baseURL, '/')] = string.hashCode(await file.read());
+    }
+    console.log('[lively.server] finished file hash map')
+ }
 
   patchServerForJsDAV (server, thenDo) {
     // this is what jsDAV expects...
