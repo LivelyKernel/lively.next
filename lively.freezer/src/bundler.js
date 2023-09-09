@@ -186,7 +186,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    */
   normalizedId (id) {
-    return id.replace(baseURL, '').replace('local://lively-object-modules/', '').replace('local_projects/', '');
+    return id.replace(baseURL, '').replace('local://lively-object-modules/', '').replace('local_projects/', '').replace('https://jspm.dev/', 'esm://cache/');
   }
 
   /**
@@ -273,15 +273,12 @@ export default class LivelyRollup {
    * @param { string } importModuleId - The id of the module that imported the module.
    */
   needsScopeToBeCaptured (moduleId, importModuleId, sourceCode = false) {
-    // if (this.redirect[moduleId]) return false; // skip redirected modules by default
     if (sourceCode && this.resolver.detectFormatFromSource(sourceCode) === 'global') return false; // skip global modules since they are non esm
+    if (this.isResurrectionBuild && this.wasFetchedFromEsmCdn(moduleId)) return true;
     if (importModuleId && resource(moduleId).host() !== resource(importModuleId).host()) {
-      return false; // 3rd party modules are not to be captured
+      return false;
     }
-    if (!this.wasFetchedFromEsmCdn(moduleId)) return true;
-    // fixme: If no snapshot but main module instead, utilize the required modules (convex hull) of that main module for the set of captured modules
-    // fixem: maybe also just always capture if not explicitly told not to. Since rollup already computes the convex hull
-    // return this.isComponentModule(moduleId) || this.isComponentModule(importModuleId) || !this.wasFetchedFromEsmCdn(moduleId); // fixme: Dont we actually need the convex hull of the imports of the component modules?
+    return !this.wasFetchedFromEsmCdn(moduleId); // just capture anything that is a core module
   }
 
   /**
