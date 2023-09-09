@@ -37,6 +37,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   static for (generatorFunction, meta, prev) {
     const newDescr = super.for(generatorFunction, meta);
     if (prev) {
+      if (prev.constructor !== this) { obj.adoptObject(prev, this); }
       const dependants = prev.getDependants(true);
       prev.stylePolicy = newDescr.stylePolicy;
       let c;
