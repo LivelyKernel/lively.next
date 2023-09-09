@@ -11,7 +11,6 @@ const doBootstrap = true;
 const askBeforeQuit = true;
 const loc = document.location;
 const query = resource(loc.href).query();
-const fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD;
 const extractedModules = {};
 
 function polyfills () {
@@ -62,7 +61,8 @@ function installFetchHook () {
   lively.modules.installHook('fetch', logFetch);
 }
 
-function bootstrapLivelySystem (progress, loadConfig) {
+function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD) {
+  lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
   return Promise.resolve()
     .then(async function () {
@@ -258,7 +258,19 @@ function bootstrapLivelySystem (progress, loadConfig) {
       } else {
         await importPackageAndDo('lively.modules', afterImport);
       }
-      progress.finishPackage({ packageName: 'lively.modules', loaded: true });
+      progress?.finishPackage({ packageName: 'lively.modules', loaded: true });
+      if (fastLoad) {
+        // revive the modules where the hashes differ from the ones on the bundle
+        const R = lively.FreezerRuntime;
+        const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+        for (let modId in R.registry) {
+          const modHash = R.registry[modId]?.recorder.__module_hash__;
+          if (modHash !== moduleHashes['/' + modId]) {
+            console.log('reviving', modId);
+            await lively.modules.module(modId).revive();
+          }
+        }
+      }
     })
     .then(async function () {
       if (loadConfig['lively.storage'] === 'dynamic' && !fastLoad) {
@@ -281,12 +293,16 @@ function fastPrepLivelySystem () {
     });
 }
 
-export async function bootstrap ({ filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress, logError = (err) => console.log(err) }) {
+export async function bootstrap ({
+  filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress,
+  fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD,
+  logError = (err) => console.log(err)
+}) {
   try {
     const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
     await polyfills();
     const oldEnv = $world.env;
-    doBootstrap ? await bootstrapLivelySystem(progress, loadConfig) : await fastPrepLivelySystem();
+    doBootstrap ? await bootstrapLivelySystem(progress, loadConfig, fastLoad) : await fastPrepLivelySystem();
     await lively.modules.registerPackage('lively.2lively');
     if (askBeforeQuit) {
       window.addEventListener('beforeunload', function (evt) {

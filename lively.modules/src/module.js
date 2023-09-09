@@ -252,15 +252,18 @@ class ModuleInterface {
     await this.load();
   }
 
+  getFrozenRecord () {
+    // if we are not in fastLoad then return null;
+    return typeof lively !== 'undefined' && lively.wasFastLoaded && (lively.FreezerRuntime || lively.frozenModules)?.registry[this.shortName()];
+  }
+
   async revive () {
     if (!this._frozenModule) return; // no need to do
     // prepare the already existing recorder obejct to contain the required callbacks
     // then just perform a plain reload
-    this.prepareRecorder(this._recorder);
     await this.reload();
-    const R = (lively.FreezerRuntime || lively.frozenModules);
-    const S = R.oldSystem;
-    const frozenRecord = R.registry[this.shortName()];
+    const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
+    const frozenRecord = this.getFrozenRecord();
     frozenRecord.isRevived = true;
     const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
     const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
@@ -453,8 +456,10 @@ class ModuleInterface {
     return this.prepareRecorder();
   }
 
-  prepareRecorder (existingRecorder) {
+  prepareRecorder () {
     const S = this.System; const self = this;
+    const existingRecord = this.getFrozenRecord();
+    // check if there is a existing frozen module entry
 
     if (!globalProps.initialized) {
       globalProps.initialized = true;
@@ -538,9 +543,8 @@ class ModuleInterface {
       }
     });
 
-    if (existingRecorder) {
-      Object.assign(existingRecorder, this._recorder);
-      this._recorder = existingRecorder;
+    if (existingRecord) {
+      Object.assign(this._recorder, existingRecord.recorder);
     }
     return this._recorder;
   }
