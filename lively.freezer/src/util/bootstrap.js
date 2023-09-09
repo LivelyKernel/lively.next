@@ -79,45 +79,45 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
       // fixme: still expensive fetching of index.js files when registering each package on deserialization
       // fixme: freeze halos, components and lively.ide stuff to further speed up performance
 
-      await progress.whenRendered();
+      await progress?.whenRendered();
       // before resetting systemjs, load all frozen modules
       if (loadConfig['lively.lang'] === 'frozen' || fastLoad) {
         const m = await System.import('lively.lang');
         extractModules('lively.lang');
-        progress.finishPackage({ packageName: 'lively.lang', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.lang', frozen: true });
         delete m._prevLivelyGlobal;
       }
       if (loadConfig['lively.ast'] === 'frozen' || fastLoad) {
         lively.ast = await System.import('lively.ast');
         extractModules('lively.ast');
-        progress.finishPackage({ packageName: 'lively.ast', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.ast', frozen: true });
       }
       if (loadConfig['lively.source-transform'] === 'frozen' || fastLoad) {
         lively.sourceTransform = await System.import('lively.source-transform');
         extractModules('lively.source-transform');
-        progress.finishPackage({ packageName: 'lively.source-transform', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.source-transform', frozen: true });
       }
       if (loadConfig['lively.classes'] === 'frozen' || fastLoad) {
         await System.import('lively.classes/object-classes.js');
         lively.classes = await System.import('lively.classes');
         extractModules('lively.class');
-        progress.finishPackage({ packageName: 'lively.classes', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.classes', frozen: true });
       }
       if (loadConfig['lively.vm'] === 'frozen' || fastLoad) {
         lively.vm = await System.import('lively.vm');
         extractModules('lively.vm');
-        progress.finishPackage({ packageName: 'lively.vm', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.vm', frozen: true });
       }
       if (loadConfig['lively.modules'] === 'frozen' || fastLoad) {
         // lively.modules is already fully imported due to the bootstrap, so no need to do that here
         await System.import('lively.modules');
         extractModules('lively.modules');
-        progress.finishPackage({ packageName: 'lively.modules', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.modules', frozen: true });
       }
       if (loadConfig['lively.storage'] === 'frozen' || fastLoad) {
         await System.import('lively.storage');
         extractModules('lively.storage');
-        progress.finishPackage({ packageName: 'lively.storage', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.storage', frozen: true });
       }
       if (loadConfig['lively.morphic'] === 'frozen' || fastLoad) {
         await System.import('lively.resources');
@@ -136,7 +136,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         extractModules('lively.graphics');
         lively.morphic = await System.import('lively.morphic/index.js');
         extractModules('lively.morphic');
-        progress.finishPackage({ packageName: 'lively.morphic', frozen: true });
+        progress?.finishPackage({ packageName: 'lively.morphic', frozen: true });
         await System.import('lively.project');
         extractModules('lively.project');
         extractEsmModules();
@@ -174,18 +174,18 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         return importPackageAndDo(
           'lively.lang',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.lang', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.lang', loaded: true });
             delete m._prevLivelyGlobal;
           }
         );
       }
     }).then(async function () {
-      progress.opacity = 1;
+      if (progress) progress.opacity = 1;
       if (loadConfig['lively.ast'] === 'dynamic' && !fastLoad) {
         return importPackageAndDo(
           'lively.ast',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.ast', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.ast', loaded: true });
             lively.ast = m;
           });
       }
@@ -194,7 +194,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         return importPackageAndDo(
           'lively.source-transform',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.source-transform', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.source-transform', loaded: true });
             lively.sourceTransform = m;
           });
       }
@@ -203,7 +203,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         return importPackageAndDo(
           'lively.classes',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.classes', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.classes', loaded: true });
             lively.classes = m;
           });
       }
@@ -212,7 +212,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         return importPackageAndDo(
           'lively.vm',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.vm', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.vm', loaded: true });
             lively.vm = m;
           });
       }
@@ -274,6 +274,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         // revive the modules where the hashes differ from the ones on the bundle
         const R = lively.FreezerRuntime;
         const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+
         for (let modId in R.registry) {
           const modHash = R.registry[modId]?.recorder.__module_hash__;
           let key = modId;
@@ -294,7 +295,7 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         return importPackageAndDo(
           'lively.storage',
           function (m) {
-            progress.finishPackage({ packageName: 'lively.storage', loaded: true });
+            progress?.finishPackage({ packageName: 'lively.storage', loaded: true });
             lively.storage = m;
           });
       }
@@ -332,7 +333,7 @@ export async function bootstrap ({
     let morphic;
     if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
       morphic = await lively.modules.importPackage('lively.morphic');
-      progress.finishPackage({ packageName: 'lively.morphic', loaded: true });
+      progress?.finishPackage({ packageName: 'lively.morphic', loaded: true });
     } else {
       morphic = lively.morphic;
     }
@@ -354,8 +355,8 @@ export async function bootstrap ({
         onRenderStart: async () => {
           if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
             document.body.style.background = 'white';
-            progress.finishPackage({ packageName: 'world', loaded: true });
-            progress.opacity = 0;
+            progress?.finishPackage({ packageName: 'world', loaded: true });
+            if (progress) progress.opacity = 0;
             await oldEnv.renderer.worldMorph.animate({ opacity: 0 });
             oldEnv.renderer.renderStep();
             await oldEnv.renderer.clear();
