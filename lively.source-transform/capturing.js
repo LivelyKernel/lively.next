@@ -520,6 +520,7 @@ function shouldRefBeCaptured (ref, toplevel, options) {
     if (ea.declarations && ea.declarations.includes(ref)) return false;
     if (ea.declaration === ref) return false;
   }
+  if (options.excludeRefs.includes(ref.object?.name)) return false;
   if (options.excludeRefs.includes(ref.name)) return false;
   if (options.includeRefs && !options.includeRefs.includes(ref.name)) return false;
   return true;
