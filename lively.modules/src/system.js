@@ -491,7 +491,8 @@ function locateHook (load) {
   return load.address;
 }
 
-const moduleLoadPromises = {};
+let moduleLoadPromises;
+moduleLoadPromises = moduleLoadPromises || {};
 
 async function whenSystemModuleLoaded (moduleName) {
   return System.get(moduleName) || (moduleLoadPromises[moduleName] || (moduleLoadPromises[moduleName] = promise.deferred())).promise;
