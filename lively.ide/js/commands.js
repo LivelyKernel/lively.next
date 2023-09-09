@@ -265,5 +265,7 @@ export const astEditorCommands = [
 
 ];
 
-lively.modules && !lively.FreezerRuntime && lively.modules.module('lively.ide/js/editor-plugin.js')
-  .reload({ reloadDeps: false, resetEnv: false });
+if (lively.modules && !lively.FreezerRuntime) {
+  const mod = lively.modules.module('lively.ide/js/editor-plugin.js');
+  if (!mod._frozenModule) mod.reload({ reloadDeps: false, resetEnv: false });
+}
