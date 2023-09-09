@@ -255,7 +255,7 @@ export function requiredModulesOfSnapshot (snapshot, exprSerializer = defaultExp
     const classModules = ClassHelper.sourceModulesInObjRef(ref);
     if (classModules && classModules.length) {
       modules.push(...classModules.map(spec =>
-        ((spec.package && spec.package.name) || '') + '/' + spec.pathInPackage));
+        ((spec.package && spec.package.name) || '') + '/' + spec.pathInPackage.replace('./', '')));
     }
 
     if (ref.props) {
