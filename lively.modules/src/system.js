@@ -17,8 +17,17 @@ const defaultOptions = {
   notificationLimit: null
 };
 
+function safeAssign (proceed, ...args) {
+  if (Object.isFrozen(args[0])) return args;
+  return proceed(...args);
+}
+
 export function wrapModuleResolution (System) {
   // System.resolve and System.prepareImport
+  if (!isHookInstalled(Object, 'assign', 'safeAssign')) {
+    installHook(Object, 'assign', safeAssign, 'safeAssign');
+  }
+
   if (!isHookInstalled(System, 'normalize', 'normalizeHook')) {
     installHook(System, 'normalize', normalizeHook, 'normalizeHook');
   }
@@ -59,6 +68,7 @@ export function wrapModuleResolution (System) {
 }
 
 export function unwrapModuleResolution (System) {
+  removeHook(Object, 'assign', 'safeAssign');
   removeHook(System, 'normalize', 'normalizeHook');
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');

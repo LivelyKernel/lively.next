@@ -458,7 +458,7 @@ export function applyChangesToTextMorph (aText, changes) {
 }
 
 export function scanForNamesInGenerator (closure) {
-  return query.queryNodes(parse(closure.toString()), `
+  return query.queryNodes(parse(`(${closure.toString()})`), `
     //  Property [ /:key Identifier [ @name == 'name' ]]
   `).map(hit => hit.value?.value);
 }

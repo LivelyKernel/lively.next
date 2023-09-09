@@ -310,6 +310,7 @@ function replaceClass (node, state, path, options) {
                   constructorTemplate(classId.name, fields))
               }
             : classId ? constructorTemplate(classId.name, fields) : constructorTemplate(null, fields)),
+        ifStmt(funcCall(member(id('Object'), id('isFrozen')), id(tempLivelyClassHolderVar)), block(returnStmt(id(tempLivelyClassVar))), false),
         returnStmt(
           funcCall(
             options.functionNode,
