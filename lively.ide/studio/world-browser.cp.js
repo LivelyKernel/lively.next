@@ -712,6 +712,7 @@ export class WorldPreviewModel extends ViewModel {
       easing: easings.inOutQuint
     });
     copy.respondsToVisibleWindow = true;
+    copy.get('spinner').visible = true;
     await copy.get('spinner').animate({
       center: copy.innerBounds().center(),
       easing: easings.inOutQuint,
@@ -742,13 +743,8 @@ export class WorldPreviewModel extends ViewModel {
 
   async transitionToLivelyWorld (baseURL, commit, projectName, projectRepoOwner) {
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
-    const { ProgressIndicator } = await System.import('lively.freezer/src/loading-screen.cp.js');
-    const progress = part(ProgressIndicator, {
-      opacity: 0, hasFixedPosition: true
-    }).openInWorld();
-    progress.startStepping('updateProgressBar');
-    if (projectName) await bootstrap({ projectName, projectRepoOwner, progress });
-    else await bootstrap({ commit, progress });
+    if (projectName) await bootstrap({ projectName, projectRepoOwner, fastLoad: true });
+    else await bootstrap({ commit, fastLoad: true });
   }
 
   async showVersions () {
@@ -906,9 +902,11 @@ const WorldPreviewTile = component({
       }]
     }), part(Spinner, {
       name: 'spinner',
+      visible: false,
+      scale: 0.5,
+      viewModel: { color: 'black' },
       extent: pt(55.3, 66.9),
-      position: pt(111.3, 158.1),
-      visible: false
+      position: pt(111.3, 158.1)
     }), {
       name: 'preview frame',
       borderColor: Color.rgb(23, 160, 251),
@@ -1007,6 +1005,7 @@ const WorldPreviewTile = component({
       touchInput: false
     }, part(Spinner, {
       name: 'version list spinner',
+      viewModel: { color: 'black' },
       extent: pt(55.3, 66.9),
       position: pt(244, 166.1),
       scale: 0.5,
