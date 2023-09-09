@@ -321,15 +321,15 @@ export async function postCustomTranslate (load) {
 // manually
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function instrumentSourceOfEsmModuleLoad (System, load) {
+async function instrumentSourceOfEsmModuleLoad (System, load) {
   // brittle, since it relies on the particular format that SystemJS returns us!
   // The result of System.translate is source code for a call to
   // System.register that can't be run standalone. We parse the necessary
   // details from it that we will use to re-define the module
   // (dependencies, setters, execute)
   // Note: this only works for esm modules!
-
-  return System.translate(load).then(translated => {
+  load.source = await customTranslate.bind(System)(load) // do that beforehand
+  const translated = await System.translate(load);
     // translated looks like
     // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
     //   "use strict";
@@ -355,7 +355,6 @@ function instrumentSourceOfEsmModuleLoad (System, load) {
     if (System.debug && $world !== 'undefined' && $world.get('log') && $world.get('log').isText) { $world.get('log').textString = declare; }
 
     return { localDeps: depNames, declare: declare };
-  });
 }
 
 function instrumentSourceOfGlobalModuleLoad (System, load) {
