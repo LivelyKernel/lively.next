@@ -800,7 +800,7 @@ export default class LivelyRollup {
       compiledSnippets = [...adjustedSnippets.values()];
       compiledSnippets[0] = polyfills + compiledSnippets[0];
       for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) {
-        snippet.code = compiled;
+        snippet.code = compiled.replace("'use strict';", '');
       } // override the code attribute
     }
 
