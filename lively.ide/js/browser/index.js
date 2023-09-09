@@ -1189,15 +1189,11 @@ export class BrowserModel extends ViewModel {
     }
   }
 
-  async indicateFrozenModuleIfNeeded () {
-    const { metaInfoText } = this.ui;
+  async reviveFrozenModuleIfNeeded () {
     const m = await this.systemInterface.getModule(this.selectedModule.url);
     if (!m) return; // possibly operating within server context
-    const pkgName = m.package().name;
-    const moduleName = m.pathInPackage();
-
     if (m._frozenModule) {
-      metaInfoText.showFrozen();
+      await m.revive();
     }
   }
 
@@ -1246,6 +1242,7 @@ export class BrowserModel extends ViewModel {
     }
     this.ui.sourceEditor.undoManager.reset();
     await this.whenModuleUpdated();
+    await this.reviveFrozenModuleIfNeeded();
     return m;
   }
 
@@ -1410,7 +1407,7 @@ export class BrowserModel extends ViewModel {
       m.isLoaded = true;
       this.updateModuleList();
     } finally {
-      this.indicateFrozenModuleIfNeeded();
+      this.reviveFrozenModuleIfNeeded();
       if (deferred) {
         this.state.moduleUpdateInProgress = null;
         deferred.resolve(m);
@@ -1841,10 +1838,7 @@ export class BrowserModel extends ViewModel {
       return;
     }
     if (modules.module(module.url)._frozenModule) {
-      metaInfoText.showError('Cannot alter frozen Modules!');
-      await promise.delay(5000);
-      metaInfoText.showFrozen();
-      return;
+      await modules.module(module.url).revive();
     }
 
     let content = sourceEditor.textString.split(objectReplacementChar).join('');
