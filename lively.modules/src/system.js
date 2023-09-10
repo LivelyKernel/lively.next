@@ -166,7 +166,9 @@ function makeSystem (cfg) {
 }
 
 function prepareSystem (System, config) {
-  System.trace = true;
+  if (typeof lively !== 'undefined' && lively.wasFastLoaded) {
+    System.trace = true;
+  }
   delete System.get;
   config = config || {};
 
