@@ -159,7 +159,7 @@ class ModuleInterface {
   }
 
   metadata () {
-    const load = this.System.loads ? this.System.loads[this.id] : null;
+    const load = this.System.REGISTER_INTERNAL?.records ? this.System.REGISTER_INTERNAL.records[this.id] : null;
     return load ? load.metadata : null;
   }
 
@@ -174,7 +174,7 @@ class ModuleInterface {
   format () {
     // assume esm by default
     const meta = this.metadata();
-    if (meta && meta.format) return meta.format;
+    if (meta && meta.load.format) return meta.load.format;
     if (this._source) return detectModuleFormat(this._source);
     return 'global';
   }
