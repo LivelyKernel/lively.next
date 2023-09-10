@@ -65,6 +65,23 @@ export function wrapModuleResolution (System) {
     });
     System.registry['REGISTRY'] = wrappedRegistry;
   }
+
+  if (!System['METADATA']._originalMetadata) {
+    System._loads = {};
+    const { proxy: wrappedMetadata, revoke } = Proxy.revocable(System['METADATA'], {
+      deleteProperty: function (target, key, mod) {
+        System.REGISTER_INTERNAL.records[key].metadata = target[key];
+        delete target[key];
+        return true;
+      }
+    });
+    wrappedMetadata._revoke = revoke;
+    wrappedMetadata._originalMetadata = System['METADATA'];
+    Object.getOwnPropertySymbols(System).map(sym => {
+      if (System[sym] === wrappedMetadata._originalMetadata) System[sym] = wrappedMetadata;
+    });
+    System['METADATA'] = wrappedMetadata;
+  }
 }
 
 export function unwrapModuleResolution (System) {
@@ -82,6 +99,18 @@ export function unwrapModuleResolution (System) {
     });
     System.registry['REGISTRY'] = wrappedRegistry._originalRegistry;
     wrappedRegistry._revoke();
+    delete System.registry['REGISTRY']._originalRegistry;
+  }
+  const wrappedMetadata = System['METADATA'];
+  if (wrappedMetadata._originalMetadata) {
+    Object.getOwnPropertySymbols(System).map(sym => {
+      if (System[sym] === wrappedMetadata) {
+        System[sym] = wrappedMetadata._originalMetadata;
+      }
+    });
+    System['METADATA'] = wrappedMetadata._originalMetadata;
+    wrappedMetadata._revoke();
+    delete System['METADATA']._originalMetadata;
   }
 }
 
