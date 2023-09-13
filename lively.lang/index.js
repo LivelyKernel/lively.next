@@ -7,7 +7,7 @@ import * as arr from './array.js';
 import * as obj from './object.js';
 import * as properties from './properties.js';
 import * as date from './date.js';
-import promise from './promise.js';
+import * as promise from './promise.js';
 import Path from './Path.js';
 import * as graph from './graph.js';
 import * as interval from './interval.js';

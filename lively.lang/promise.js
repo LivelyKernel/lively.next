@@ -19,7 +19,7 @@
  */
 function promise (obj) {
   return (typeof obj === 'function')
-    ? promise.convertCallbackFun(obj)
+    ? convertCallbackFun(obj)
     : Promise.resolve(obj);
 }
 
@@ -282,20 +282,6 @@ function parallel (promiseGenFns, parallelLimit = Infinity) {
     while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0) { spawn(); }
   }
 }
-
-// FIXME!
-Object.assign(promise, {
-  delay,
-  delayReject,
-  timeout,
-  waitFor,
-  deferred,
-  convertCallbackFun,
-  convertCallbackFunWithManyArgs,
-  chain,
-  finally: promise_finally,
-  parallel
-});
 
 export default promise;
 
