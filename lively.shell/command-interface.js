@@ -1,8 +1,11 @@
 import { promise, events } from 'lively.lang';
 
+let _commands;
+_commands = _commands || [];
+
 export default class CommandInterface {
   static get commands () {
-    return this._commands || (this._commands = []);
+    return _commands; // command interface is not reload safe
   }
 
   static findCommand (pid) {

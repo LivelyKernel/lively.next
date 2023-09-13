@@ -12,9 +12,12 @@ function applyExclude (resource, exclude) {
   return true;
 }
 
+let _hosts;
+_hosts = _hosts || {}; // preserve this state among module reloads
+
 export class LocalResourceInMemoryBackend {
   static get hosts () {
-    return this._hosts || (this._hosts = {});
+    return _hosts;
   }
 
   static removeHost (name) {
