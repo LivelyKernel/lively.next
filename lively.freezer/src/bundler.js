@@ -42,9 +42,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
 const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache'];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
-const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = [
-  'lively.lang'
-];
+const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
 
 const ADVANCED_EXCLUDED_MODULES = [
   'lively.ast',
@@ -306,6 +304,7 @@ export default class LivelyRollup {
     if (CLASS_INSTRUMENTATION_MODULES.some(pkgName => moduleId.includes(pkgName) || pkgName === moduleId)) { // belongs to lively package
       return true;
     }
+    if (this.isResurrectionBuild) return true;
     if (this.wasFetchedFromEsmCdn(moduleId)) return false; // never instrument stuff from ESM cdns
     if (this.isComponentModule(moduleId)) return true; // defines components
     if (moduleSource && moduleSource.match(/extends\ (Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/)) return true; // contains lively class defs, but...
@@ -584,7 +583,7 @@ export default class LivelyRollup {
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
 
     if (this.needsClassInstrumentation(id, source)) {
-      classRuntimeImport = 'import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";\n';
+      classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${this.isResurrectionBuild ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js'}";\n`;
     } else {
       opts.classToFunction = false;
     }
@@ -799,6 +798,14 @@ export default class LivelyRollup {
       for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) {
         snippet.code = compiled.replace("'use strict';", '');
       } // override the code attribute
+    }
+
+    if (this.isResurrectionBuild) {
+      plugin.emitFile({
+        type: 'asset',
+        fileName: 'livelyClassesRuntime.js',
+        source: await this.resolver.fetchFile(await this.resolver.normalizeFileName('lively.classes/build/runtime.js'))
+      });
     }
 
     if (this.compress) {
