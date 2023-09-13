@@ -257,11 +257,11 @@ class ModuleInterface {
     return typeof lively !== 'undefined' && lively.wasFastLoaded && (lively.FreezerRuntime || lively.frozenModules)?.registry[this.shortName()];
   }
 
-  async revive () {
-    if (!this._frozenModule) return; // no need to do
+  async revive (autoReload = true) {
+    if (!this._frozenModule) return []; // no need to do
     // prepare the already existing recorder obejct to contain the required callbacks
     // then just perform a plain reload
-    await this.reload();
+    await this.reload({ reloadDeps: false }); // this removes the module from the system for some reason
     const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
     const frozenRecord = this.getFrozenRecord();
     frozenRecord.isRevived = true;
@@ -275,17 +275,20 @@ class ModuleInterface {
     // in that sense, it may make sense, to keep the frozen flag around at all times to differentiate between
     // the modules that have their origin in a bundle and the ones that have been loaded from source directly into lively
     const importersToUpdate = getImportersOfModule(S, S.REGISTER_INTERNAL.records[frozenRecord.contextModule]);
-    importersToUpdate.forEach(m => {
+    importersToUpdate.push({ key: frozenRecord.contextModule });
+    if (autoReload) await this.updateBundledModules(importersToUpdate);
+    this._frozenModule = false;
+    return importersToUpdate;
+  }
+
+  async updateBundledModules (modulesToUpdate) {
+    const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
+    modulesToUpdate.forEach(m => {
       S.registry.delete(m.key); // such that these are also properly reloaded
     });
-    S.registry.delete(frozenRecord.contextModule); // force a proper reload
-    for (let m of importersToUpdate) {
+    for (let m of modulesToUpdate) {
       if (!S.registry.get(m.key)) await S.import(m.key);
     }
-    // lively.frozenModules.oldSystem.import(frozenRecord.contextModule); // reload the module that has not an updated recorder
-    // this will also update all of the frozen modules as well, since the still non dynamic recorders
-    // are getting updated
-    this._frozenModule = false;
   }
 
   async copyTo (newId) {
@@ -350,6 +353,7 @@ class ModuleInterface {
     const { System, id } = this; const format = this.format(); let result;
     this.reset();
     this.lastModifiedAt = new Date();
+    this.System._livelyModulesTranslationCache?.deleteCachedData(this.id);
     return Promise.all([
       options.doSave && this.System.resource(id).write(newSource),
       options.doEval && moduleSourceChange(
