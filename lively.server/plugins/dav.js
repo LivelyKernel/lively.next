@@ -88,7 +88,7 @@ export default class LivelyDAVPlugin {
     if (!server.getBaseUri) server.getBaseUri = () => server.baseUri;
   }
 
-  handleRequest (req, res, next) {
+  async handleRequest (req, res, next) {
     let path = '';
     // Fix URL to allow non-root installations
     // In Apache config, set:
@@ -103,6 +103,12 @@ export default class LivelyDAVPlugin {
     if (req.url == '/__JS_FILE_HASHES__') {
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify(this.fileHashes));
+      return;
+    }
+
+    if (req.url == '/livelyClassesRuntime.js') {
+      res.writeHead(200, { 'content-type': 'application/javascript' });
+      res.end(await resource(System.baseURL).join('lively.classes/build/runtime.js').read());
       return;
     }
 

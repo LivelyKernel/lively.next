@@ -10,7 +10,11 @@ clear-headless-cache:
 start:
 	./start.sh
 
-artifacts: landing-page loading-screen
+artifacts: classes-runtime landing-page loading-screen
+
+classes-runtime:
+	rm -rf lively.classes/build
+	env CI=true npm --prefix lively.classes run build
 
 landing-page:
 	rm -rf lively.freezer/landing-page
