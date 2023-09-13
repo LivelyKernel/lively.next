@@ -13,7 +13,7 @@ const build = await rollup({
   shimMissingExports: true,  
   plugins: [
     lively({
-      minify: false,
+      minify,
       asBrowserModule: true,
       excludedModules: [
         'lively.ide',                                                   
