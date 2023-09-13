@@ -1,12 +1,11 @@
 import { withoutAll } from 'lively.lang/array.js';
-import { arr, string, tree, num, obj } from 'lively.lang';
+import { arr, string, tree, num, obj, promise } from 'lively.lang';
 import { getSvgVertices, canBePromotedToCompositionLayer, applyAttributesToNode, stylepropsToNode, lineWrappingToClass } from './property-dom-mapping.js';
 import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
 
 import { keyed, noOpUpdate } from './keyed.js';
-import promise from 'lively.lang/promise.js';
 import { applyStylingToNode } from './morphic-default.js';
 
 const svgNs = 'http://www.w3.org/2000/svg';

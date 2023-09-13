@@ -6,7 +6,7 @@ import { UndoManager } from './undo.js';
 import EventDispatcher from './events/EventDispatcher.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
 import { clearStylePropertiesForClassesIn } from './helpers.js';
-import promise from 'lively.lang/promise.js';
+import { promise } from 'lively.lang';
 import { once } from 'lively.bindings';
 
 let envs = envs || []; // eslint-disable-line no-use-before-define

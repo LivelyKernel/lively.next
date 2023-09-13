@@ -1,9 +1,10 @@
 /* global System */
 import { resource, unregisterExtension, registerExtension, loadViaScript } from 'lively.resources';
-import { string, obj } from 'lively.lang';
+import { string, promise, obj } from 'lively.lang';
 import * as modulePackage from 'lively.modules';
 import { easings } from 'lively.morphic';
 import { adoptObject } from 'lively.lang/object.js';
+import { Color } from 'lively.graphics/color.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
