@@ -1,7 +1,8 @@
 /* global global,self */
-import { string, arr } from 'lively.lang';
+import { string, arr, Path } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 import { runEval } from 'lively.vm';
+import { isOverridden } from './util.js';
 
 const objMetaSym = Symbol.for('lively-object-meta');
 const moduleSym = Symbol.for('lively-module-meta');
@@ -314,4 +315,24 @@ export class RuntimeSourceDescriptor {
     let modName; try { modName = this.module.shortName(); } catch (e) { modName = 'NO MODULE!'; }
     return `${this.constructor.name}(${objString} in ${modName})`;
   }
+}
+
+export async function lexicalClassMembers (klass) {
+  const { ast: parsed, type } = RuntimeSourceDescriptor.for(klass);
+  if (type !== 'ClassDeclaration') { throw new Error(`Expected class but got ${type}`); }
+
+  const members = Path('body.body').get(parsed);
+
+  return members.map(node => {
+    const { static: isStatic, kind, key: { type: keyType, name: id, value: literalId } } = node;
+    const name = id || literalId;
+    const overridden = isOverridden(klass, name);
+    const base = isStatic ? klass : klass.prototype;
+    const value = kind === 'get'
+      ? base.__lookupGetter__(name)
+      : kind === 'set'
+        ? base.__lookupSetter__(name)
+        : base[name];
+    return { static: isStatic, name, value, kind, owner: klass, overridden };
+  });
 }

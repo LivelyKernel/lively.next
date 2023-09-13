@@ -1,5 +1,6 @@
-import { arr, obj, Path } from 'lively.lang';
-import { RuntimeSourceDescriptor } from './source-descriptors.js';
+import * as arr from 'lively.lang/array.js';
+import * as obj from 'lively.lang/object.js';
+import Path from 'lively.lang/path.js';
 
 export function superclasses (klass) {
   return withSuperclasses(klass).slice(1);
@@ -49,32 +50,12 @@ export function isClass (klass) {
   return klass && typeof klass === 'function';
 }
 
-function isOverridden (klass, name) {
+export function isOverridden (klass, name) {
   while (klass != Object) {
     klass = klass[Symbol.for('lively-instance-superclass')];
     if (klass.prototype.hasOwnProperty(name)) return true;
   }
   return false;
-}
-
-export function lexicalClassMembers (klass) {
-  const { ast: parsed, type } = RuntimeSourceDescriptor.for(klass);
-  if (type !== 'ClassDeclaration') { throw new Error(`Expected class but got ${type}`); }
-
-  const members = Path('body.body').get(parsed);
-
-  return members.map(node => {
-    const { static: isStatic, kind, key: { type: keyType, name: id, value: literalId } } = node;
-    const name = id || literalId;
-    const overridden = isOverridden(klass, name);
-    const base = isStatic ? klass : klass.prototype;
-    const value = kind === 'get'
-      ? base.__lookupGetter__(name)
-      : kind === 'set'
-        ? base.__lookupSetter__(name)
-        : base[name];
-    return { static: isStatic, name, value, kind, owner: klass, overridden };
-  });
 }
 
 export function runtimeClassMembers (klass) {
