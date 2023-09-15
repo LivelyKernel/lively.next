@@ -48,18 +48,102 @@ function extractModules (packageName) {
     });
 }
 
-async function loadComponents () {
+async function fastLoadPackages (progress) {
+  // lively.lang
+  const m = await System.import('lively.lang');
+  extractModules('lively.lang');
+  progress?.finishPackage({ packageName: 'lively.lang', frozen: true });
+  delete m._prevLivelyGlobal;
+
+  // lively.ast
+  lively.ast = await System.import('lively.ast');
+  extractModules('lively.ast');
+  progress?.finishPackage({ packageName: 'lively.ast', frozen: true });
+
+  // lively.source-transform
+  lively.sourceTransform = await System.import('lively.source-transform');
+  extractModules('lively.source-transform');
+  progress?.finishPackage({ packageName: 'lively.source-transform', frozen: true });
+
+  // lively.classes
+  await System.import('lively.classes/object-classes.js');
+  lively.classes = await System.import('lively.classes');
+  extractModules('lively.class');
+  progress?.finishPackage({ packageName: 'lively.classes', frozen: true });
+
+  // lively.vm
+  lively.vm = await System.import('lively.vm');
+  extractModules('lively.vm');
+  progress?.finishPackage({ packageName: 'lively.vm', frozen: true });
+
+  // lively.modules is already fully imported due to the bootstrap, so no need to do that here
+  extractModules('lively.modules');
+  progress?.finishPackage({ packageName: 'lively.modules', frozen: true });
+
+  // lively.storage
+  await System.import('lively.storage');
+  extractModules('lively.storage');
+  progress?.finishPackage({ packageName: 'lively.storage', frozen: true });
+
+  // lively.resources
+  await System.import('lively.resources');
+  extractModules('lively.resources');
+
+  // lively.2lively
+  await System.import('lively.2lively/client.js');
+  await System.import('lively.2lively/index.js');
+  extractModules('lively.2lively');
+
+  // lively.serializer2
+  await System.import('lively.serializer2');
+  extractModules('lively.serializer2');
+
+  // lively.ide
   await System.import('lively.ide/world.js');
   await System.import('lively.ide/editor-plugin.js');
   await System.import('lively.ide/js/editor-plugin.js');
+  extractModules('lively.ide');
+
+  // lively.shell
   await System.import('lively.shell/index.js');
   await System.import('lively.shell/client-command.js');
   await System.import('lively.shell/client-resource.js');
+  extractModules('lively.shell');
+
+  // lively.bindings
   await System.import('lively.bindings');
   extractModules('lively.bindings');
-  extractModules('lively.shell');
-  extractModules('lively.ide');
+
+  // lively.components
   extractModules('lively.components');
+
+  // lively.halos
+  await System.import('lively.halos');
+  extractModules('lively.halos');
+
+  // lively-system-interface
+  await System.import('lively-system-interface');
+  extractModules('lively-system-interface');
+
+  // lively.graphics
+  await System.import('lively.graphics');
+  extractModules('lively.graphics');
+
+  // lively.morphic
+  lively.morphic = await System.import('lively.morphic');
+  extractModules('lively.morphic');
+  progress?.finishPackage({ packageName: 'lively.morphic', frozen: true });
+
+  // lively.project
+  await System.import('lively.project');
+  extractModules('lively.project');
+
+  // lively.freezer
+  await System.import('lively.freezer');
+  extractModules('lively.freezer');
+
+  // extract any esm modules that have been loaded on the go
+  extractEsmModules();
 }
 
 let loads = 0;
@@ -72,78 +156,27 @@ function installFetchHook () {
   lively.modules.installHook('fetch', logFetch);
 }
 
-function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD) {
+function logInfo (...info) {
+  console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1));
+}
+
+function bootstrapLivelySystem (progress, fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
   return Promise.resolve()
     .then(async function () {
       // fixme: still expensive fetching of index.js files when registering each package on deserialization
       // fixme: freeze halos, components and lively.ide stuff to further speed up performance
-
       await progress?.whenRendered();
       // before resetting systemjs, load all frozen modules
-      if (loadConfig['lively.lang'] === 'frozen' || fastLoad) {
-        const m = await System.import('lively.lang');
-        extractModules('lively.lang');
-        progress?.finishPackage({ packageName: 'lively.lang', frozen: true });
-        delete m._prevLivelyGlobal;
-      }
-      if (loadConfig['lively.ast'] === 'frozen' || fastLoad) {
-        lively.ast = await System.import('lively.ast');
-        extractModules('lively.ast');
-        progress?.finishPackage({ packageName: 'lively.ast', frozen: true });
-      }
-      if (loadConfig['lively.source-transform'] === 'frozen' || fastLoad) {
-        lively.sourceTransform = await System.import('lively.source-transform');
-        extractModules('lively.source-transform');
-        progress?.finishPackage({ packageName: 'lively.source-transform', frozen: true });
-      }
-      if (loadConfig['lively.classes'] === 'frozen' || fastLoad) {
-        await System.import('lively.classes/object-classes.js');
-        lively.classes = await System.import('lively.classes');
-        extractModules('lively.class');
-        progress?.finishPackage({ packageName: 'lively.classes', frozen: true });
-      }
-      if (loadConfig['lively.vm'] === 'frozen' || fastLoad) {
-        lively.vm = await System.import('lively.vm');
-        extractModules('lively.vm');
-        progress?.finishPackage({ packageName: 'lively.vm', frozen: true });
-      }
-      if (loadConfig['lively.modules'] === 'frozen' || fastLoad) {
-        // lively.modules is already fully imported due to the bootstrap, so no need to do that here
-        await System.import('lively.modules');
-        extractModules('lively.modules');
-        progress?.finishPackage({ packageName: 'lively.modules', frozen: true });
-      }
-      if (loadConfig['lively.storage'] === 'frozen' || fastLoad) {
-        await System.import('lively.storage');
-        extractModules('lively.storage');
-        progress?.finishPackage({ packageName: 'lively.storage', frozen: true });
-      }
-      if (loadConfig['lively.morphic'] === 'frozen' || fastLoad) {
-        await System.import('lively.resources');
-        extractModules('lively.resources');
-        await System.import('lively.2lively/client.js');
-        await System.import('lively.2lively/index.js');
-        extractModules('lively.2lively');
-        await System.import('lively.serializer2');
-        extractModules('lively.serializer2');
-        await loadComponents();
-        await System.import('lively.halos');
-        extractModules('lively.halos');
-        await System.import('lively-system-interface');
-        extractModules('lively-system-interface');
-        await System.import('lively.graphics/index.js');
-        extractModules('lively.graphics');
-        lively.morphic = await System.import('lively.morphic/index.js');
-        extractModules('lively.morphic');
-        progress?.finishPackage({ packageName: 'lively.morphic', frozen: true });
-        await System.import('lively.project');
-        extractModules('lively.project');
-        extractEsmModules();
+      if (fastLoad) {
+        const timeToLoadBundle = await promise.timeToRun(await fastLoadPackages(progress));
+        logInfo('Loading bundles:', timeToLoadBundle + 'ms');
       }
     })
     .then(async function () {
+      // setup system
+      let ts = Date.now();
       const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
       const oldSystem = lively.FreezerRuntime.oldSystem = window.System;
       let initBaseURL = oldSystem.baseURL;
@@ -156,6 +189,10 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
       lively.modules.changeSystem(System, true);
       await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
+      logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
+
+      // load packages
+      ts = Date.now();
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       for (const mod in extractedModules) {
         const realignedId = mod.replace(initBaseURL, baseURL);
@@ -165,52 +202,39 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
         // denote the exports
         m._frozenModule = true;
       }
-      // FIXME: we also need to carry over the meta data of the split code remnants that may still be loaded eventually
-      //        currently loading a split module part after the system has been swapped causes an error
       oldSystem.config({ baseURL }); // this system keeps lurking around inside lively.modules somehow, so this fixes that issue for the time being
       installFetchHook();
+      logInfo('Load package info:', Date.now() - ts + 'ms');
     })
     .then(async function () {
-      if (loadConfig['lively.lang'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
+      if (!fastLoad) {
+        await importPackageAndDo(
           'lively.lang',
           function (m) {
             progress?.finishPackage({ packageName: 'lively.lang', loaded: true });
             delete m._prevLivelyGlobal;
           }
         );
-      }
-    }).then(async function () {
-      if (progress) progress.opacity = 1;
-      if (loadConfig['lively.ast'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
+        if (progress) progress.opacity = 1;
+        await importPackageAndDo(
           'lively.ast',
           function (m) {
             progress?.finishPackage({ packageName: 'lively.ast', loaded: true });
             lively.ast = m;
           });
-      }
-    }).then(async function () {
-      if (loadConfig['lively.source-transform'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
+        await importPackageAndDo(
           'lively.source-transform',
           function (m) {
             progress?.finishPackage({ packageName: 'lively.source-transform', loaded: true });
             lively.sourceTransform = m;
           });
-      }
-    }).then(async function () {
-      if (loadConfig['lively.classes'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
+        await importPackageAndDo(
           'lively.classes',
           function (m) {
             progress?.finishPackage({ packageName: 'lively.classes', loaded: true });
             lively.classes = m;
           });
-      }
-    }).then(async function () {
-      if (loadConfig['lively.vm'] === 'dynamic' && !fastLoad) {
-        return importPackageAndDo(
+        await importPackageAndDo(
           'lively.vm',
           function (m) {
             progress?.finishPackage({ packageName: 'lively.vm', loaded: true });
@@ -257,42 +281,47 @@ function bootstrapLivelySystem (progress, loadConfig, fastLoad = query.fastLoad 
             adoptObject(mod, instrumentedModuleInterface);
           });
       }
-      if (loadConfig['lively.modules'] === 'frozen' || fastLoad) {
+      let ts = Date.now();
+      const modsToReload = [];
+      let currMod;
+      if (fastLoad) {
         System._scripting = lively.modules.scripting;
-        // once changed we need t revive 'lively.modules/index.js'
         if (fastLoad) {
           const newSystem = System;
           newSystem.loads = {};
-          const modules = lively.modules.module('lively.modules');
-          await modules.revive(); // this should also reload some of the bundles
+          currMod = lively.modules.module('lively.modules');
+          modsToReload.push(...await currMod.revive(false)); // this should also reload some of the bundles
           (await newSystem.import('lively.modules')).changeSystem(newSystem, true);
         }
       } else {
         await importPackageAndDo('lively.modules', afterImport);
       }
+      logInfo('Loaded module system:', Date.now() - ts + 'ms');
       progress?.finishPackage({ packageName: 'lively.modules', loaded: true });
       if (fastLoad) {
+        ts = Date.now();
         // revive the modules where the hashes differ from the ones on the bundle
         const R = lively.FreezerRuntime;
         const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
-
         for (let modId in R.registry) {
           const modHash = R.registry[modId]?.recorder.__module_hash__;
           let key = modId;
           if (key.startsWith('esm://')) continue; // do not revive esm modules
           if (modHash !== moduleHashes['/' + key]) {
             console.log('reviving', modId);
+            currMod = lively.modules.module(modId);
             try {
-            	await lively.modules.module(modId).revive();
+            	modsToReload.push(...await currMod.revive(false));
             } catch (err) {
 	            console.log('failed reviving', modId);
             }
           }
         }
       }
+      if (modsToReload.length > 0) currMod.updateBundledModules([...new Set(modsToReload)]).then(() => { logInfo('Revived changed modules:', Date.now() - ts + 'ms'); });
     })
     .then(async function () {
-      if (loadConfig['lively.storage'] === 'dynamic' && !fastLoad) {
+      if (!fastLoad) {
         return importPackageAndDo(
           'lively.storage',
           function (m) {
@@ -318,10 +347,9 @@ export async function bootstrap ({
   logError = (err) => console.log(err)
 }) {
   try {
-    const loadConfig = JSON.parse(localStorage.getItem('lively.load-config') || '{"lively.lang":"dynamic","lively.ast":"dynamic","lively.source-transform":"dynamic","lively.classes":"dynamic","lively.vm":"dynamic","lively.modules":"dynamic","lively.storage":"dynamic","lively.morphic":"dynamic"}');
     await polyfills();
     const oldEnv = $world.env;
-    doBootstrap ? await bootstrapLivelySystem(progress, loadConfig, fastLoad) : await fastPrepLivelySystem();
+    doBootstrap ? await bootstrapLivelySystem(progress, fastLoad) : await fastPrepLivelySystem();
     await lively.modules.registerPackage('lively.2lively');
     if (askBeforeQuit) {
       window.addEventListener('beforeunload', function (evt) {
@@ -332,7 +360,7 @@ export async function bootstrap ({
     }
 
     let morphic;
-    if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
+    if (!fastLoad) {
       morphic = await lively.modules.importPackage('lively.morphic');
       progress?.finishPackage({ packageName: 'lively.morphic', loaded: true });
     } else {
@@ -354,16 +382,18 @@ export async function bootstrap ({
         shell: true,
         moduleManager: lively.modules,
         onRenderStart: async () => {
-          if (loadConfig['lively.morphic'] === 'dynamic' && !fastLoad) {
-            document.body.style.background = 'white';
+          document.body.style.background = 'white';
+          if (!fastLoad) {
             progress?.finishPackage({ packageName: 'world', loaded: true });
             if (progress) progress.opacity = 0;
-            await oldEnv.renderer.worldMorph.animate({ opacity: 0 });
+            oldEnv.renderer.worldMorph.opacity = 0;
             oldEnv.renderer.renderStep();
             await oldEnv.renderer.clear();
             oldEnv.fontMetric.uninstall();
             oldEnv.eventDispatcher.uninstall();
           }
+          $world.initializeStudio();
+          $world.animate({ opacity: 1 });
         }
       };
       if (snapshot) {
@@ -384,7 +414,7 @@ export async function bootstrap ({
       } else if (worldName || projectName) {
         if (worldName === '__newWorld__' || projectName) {
           let LivelyWorld, loadWorld;
-          if (Object.values(loadConfig).every(v => v === 'frozen') || fastLoad) {
+          if (fastLoad) {
             ({ LivelyWorld } = await lively.modules.module('lively.ide/world.js').recorder);
             ({ loadWorld } = await lively.modules.module('lively.morphic/world-loading.js').recorder);
           } else {
