@@ -51,6 +51,9 @@ function determineLocation () {
   return System.baseURL;
 }
 
+let _clients;
+_clients = _clients || new Map();
+
 export default class L2LClient extends L2LConnection {
   static clientKey (origin, path, namespace) {
     origin = origin.replace(/\/$/, '');
@@ -60,7 +63,7 @@ export default class L2LClient extends L2LConnection {
   }
 
   static get clients () {
-    return this._clients || (this._clients = new Map());
+    return _clients;
   }
 
   static forLivelyInBrowser (info) {
