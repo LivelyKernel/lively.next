@@ -44,6 +44,7 @@ class VersionChecker extends Morph {
   }
 
   static async currentLivelyVersion (main) {
+    await L2LClient.default().whenOnline();
     const cwd = await VersionChecker.cwd();
     const fetchCmd = 'git fetch';
     await runCommand(fetchCmd, { cwd }).whenDone();
@@ -76,7 +77,7 @@ class VersionChecker extends Morph {
     let li = $world.showLoadingIndicatorFor($world, 'Updating lively');
 
     const cwd = await VersionChecker.cwd();
-    const currentClientCommit = await VersionChecker.currentLivelyVersion(true); 
+    const currentClientCommit = await VersionChecker.currentLivelyVersion(true);
 
     /**
      * Two types of timing issues can occur:
@@ -86,26 +87,26 @@ class VersionChecker extends Morph {
      */
     async function checkIfNewServer (retries = 20) {
       const backoffTime = 2000;
-      const peers = await L2LClient.default().listPeers()
+      const peers = await L2LClient.default().listPeers();
       const gitVersionCheckerOnServer = peers.find(peer => peer.type === 'git version checker');
       if (!gitVersionCheckerOnServer) {
         // The L2LClient for Version Checking is not yet online. Try again later.
-        if (retries){
+        if (retries) {
           setTimeout(checkIfNewServer(retries - 1), backoffTime);
           return;
         }
-        throw(new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
+        throw (new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
       }
       const sameServerVersion = await L2LClient.default().sendAndWait({ target: gitVersionCheckerOnServer.id, action: 'check git version', data: { payload: currentClientCommit } });
       if (sameServerVersion.data) {
-        if (sameServerVersion.data.isError && sameServerVersion.data.error === 'message not understood: check git version'){
+        if (sameServerVersion.data.isError && sameServerVersion.data.error === 'message not understood: check git version') {
           // The L2LClient for Version Checking is online, but the version checking service is not yet installed. Try again later.
           // This case can occur since the Client comes online, is used to retrieve the currently running server version and only afterwards the service to compare against this version is installed.
           if (retries) {
             setTimeout(checkIfNewServer(retries - 1), backoffTime);
-            return
+            return;
           }
-          throw(new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
+          throw (new Error('Timing Issue during automatic restart of lively.next. You need to restart lively manually!'));
         }
         // noop, server has not yet restarted with newer version yet
       } else {
