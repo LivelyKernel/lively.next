@@ -486,6 +486,13 @@ function deepMerge (objA, objB) {
  */
 function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing = false) {
   const keys = []; const props = []; const remaining = [];
+  let stringified = '';
+  try {
+    stringified = String(this);
+  } catch (err) {
+
+  }
+
   for (const key in properties) {
     const prop = properties[key];
       	 const before = prop.hasOwnProperty('before') ? prop.before : (prop.before = []);
@@ -493,13 +500,6 @@ function sortKeysWithBeforeAndAfterConstraints (properties, throwErrorOnMissing 
 
     keys.push(key);
     props.push(prop);
-
-    let stringified = '';
-    try {
-      stringified = String(this);
-    } catch (err) {
-
-    }
 
     for (let i = before.length; i--;) {
       const beforePropName = before[i];
