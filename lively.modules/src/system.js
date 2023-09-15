@@ -238,19 +238,27 @@ function prepareSystem (System, config) {
   }
 
   const basePlugin = {
+    locate: function (load) { return locateHook.call(this, load); },
     fetch: function (load, proceed) {
-      // this should be disabled if we are not yet bootstrapping
+      const s = this.moduleSources?.[load.name];
+      if (s) return s;
       if (this.transpiler !== 'lively.transpiler') return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
+      if (this.skipInstantiation) return load;
       return customTranslate.call(this, load, opts);
     },
     instantiate: async function (load, proceed) {
+      if (this.skipInstantiation && this.moduleRegisters?.[load.name]) {
+        this.REGISTER_INTERNAL.records[load.name].registration = this.moduleRegisters?.[load.name];
+        load.source = undefined;
+        return proceed(load);
+      }
+      if (this.moduleSources) this.moduleSources[load.name] = load.source;
       await postCustomTranslate.call(this, load);
       return instantiate_triggerOnLoadCallbacks.call(this, proceed, load);
-    },
-    locate: function (load) { return locateHook.call(this, load); }
+    }
   };
   const fetchPlugin = System.newModule(basePlugin);
   const cjsPlugin = System.newModule(basePlugin);

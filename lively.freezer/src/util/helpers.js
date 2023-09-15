@@ -213,22 +213,34 @@ export function instrumentStaticSystemJS (system) {
   system.decanonicalize = (id) =>
     lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
   window._missingExportShim = () => {};
+  system.moduleRegisters = {};
+  system.moduleSources = {};
   const _originalRegister = system.register.bind(system);
   system.register = (name, deps, def) => {
+    let res;
     if (typeof name !== 'string') {
       def = deps;
       deps = name;
-      return _originalRegister(deps, (exports, module) => {
+      res = _originalRegister(deps, (exports, module) => {
         let res = def(exports, module);
         if (!res.setters) res.setters = [];
         return res;
       });
+      const hit = Object.values(system.REGISTER_INTERNAL?.records || {})
+        .find((rec) => !rec.module && !rec.loadError && !rec.metadata && !rec.registration);
+      // this is not a reliable way to detect the key once we have the module already present
+      if (hit) { system.moduleRegisters[hit.key] = system.REGISTER_INTERNAL.lastRegister; }
+    } else {
+      res = _originalRegister(name, deps, (exports, module) => {
+        let res = def(exports, module);
+        if (!res.setters) res.setters = [];
+        return res;
+      });
+      const hit = Object.values(system.REGISTER_INTERNAL?.records || {})
+        .find((rec) => !rec.module && !rec.loadError && !rec.metadata && !rec.registration);
+      if (hit) { system.moduleRegisters[hit.key] = system.REGISTER_INTERNAL.lastRegister; }
     }
-    return _originalRegister(name, deps, (exports, module) => {
-      let res = def(exports, module);
-      if (!res.setters) res.setters = [];
-      return res;
-    });
+    return res;
   };
 
   if (!system.config) system.config = () => {}; // no need for config anyways...
