@@ -263,6 +263,7 @@ class ModuleInterface {
     // then just perform a plain reload
     await this.reload({ reloadDeps: false }); // this removes the module from the system for some reason
     const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
+    S.skipInstantiation = true;
     const frozenRecord = this.getFrozenRecord();
     frozenRecord.isRevived = true;
     const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
@@ -272,22 +273,22 @@ class ModuleInterface {
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
-    // in that sense, it may make sense, to keep the frozen flag around at all times to differentiate between
-    // the modules that have their origin in a bundle and the ones that have been loaded from source directly into lively
-    const importersToUpdate = getImportersOfModule(S, S.REGISTER_INTERNAL.records[frozenRecord.contextModule]);
-    importersToUpdate.push({ key: frozenRecord.contextModule });
-    if (autoReload) await this.updateBundledModules(importersToUpdate);
+    if (autoReload) await this.updateBundledModules([frozenRecord.contextModule]);
     this._frozenModule = false;
-    return importersToUpdate;
+    return [frozenRecord.contextModule];
   }
 
   async updateBundledModules (modulesToUpdate) {
     const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
-    modulesToUpdate.forEach(m => {
-      S.registry.delete(m.key); // such that these are also properly reloaded
-    });
     for (let m of modulesToUpdate) {
-      if (!S.registry.get(m.key)) await S.import(m.key);
+      let mod = S['__lively.modules__loadedModules'][m];
+      if (!mod) {
+        S.delete(m);
+        await S.import(m);
+        mod = S['__lively.modules__loadedModules'][m];
+      }
+      await mod.reload();
+      S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
     }
   }
 
