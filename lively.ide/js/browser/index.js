@@ -1197,6 +1197,14 @@ export class BrowserModel extends ViewModel {
     }
   }
 
+  async updateRecorderIfNeeded () {
+    const m = await this.systemInterface.getModule(this.selectedModule.url);
+    const rec = m.System.get('@lively-env').moduleEnv(m.id).recorder;
+    if (rec?.contextModule) {
+      await m.updateBundledModules([rec.contextModule]);
+    }
+  }
+
   getDisplayedModuleNodes () {
     const columnView = this.ui.columnView;
     const moduleLists = columnView.submorphs.filter(m => ['directory', 'package'].includes(m._managedNode.type));
@@ -1837,9 +1845,8 @@ export class BrowserModel extends ViewModel {
     if (!module) {
       return;
     }
-    if (modules.module(module.url)._frozenModule) {
-      await modules.module(module.url).revive();
-    }
+
+    await this.updateRecorderIfNeeded(module.url);
 
     let content = sourceEditor.textString.split(objectReplacementChar).join('');
     let warnings = [];
