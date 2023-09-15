@@ -196,7 +196,7 @@ export default class L2LTracker extends L2LConnection {
       if (!socket) {
         let errMsg = `Trying to send message ${action} to ${target} but cannot find a connection to it!`;
         console.error(errMsg);
-        throw new Error(errMsg);
+        return;
       }
       typeof ackFn === 'function'
         ? socket.emit(action, msg, ackFn)
