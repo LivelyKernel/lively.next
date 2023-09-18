@@ -3,7 +3,7 @@ import { Color, rect } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
-const CheckboxChecked = component({
+export const CheckboxChecked = component({
   name: 'checkbox/checked',
   type: Label,
   extent: pt(15, 15),
@@ -24,7 +24,7 @@ const CheckboxChecked = component({
   }]
 });
 
-const CheckboxUnchecked = component(CheckboxChecked, {
+export const CheckboxUnchecked = component(CheckboxChecked, {
   name: 'checkbox/unchecked',
   borderWidth: 1,
   borderColor: Color.white,
