@@ -35,7 +35,7 @@ jobs:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
       - name: Install \`lively.next\`
-        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}       
+        if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         run: |
           chmod a+x ./install.sh
           ./install.sh --freezer-only
