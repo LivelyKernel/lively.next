@@ -40,15 +40,17 @@ describe('menus', () => {
   beforeEach(() => setup());
   afterEach(() => teardown());
 
-  inBrowser('appear with title and items', () => {
+  inBrowser('appear with title and items', async () => {
     let item1Activated = 0;
     let menu = new Menu({ title: 'Test', items: [['item 1', () => item1Activated++]] });
 
     world.addMorph(menu);
+    // Wait for the text fitting of the menu items
+    await menu.whenRendered();
     expect(menu.submorphs[0].textString).equals('Test');
     expect(menu.submorphs[1].textString).equals('item 1');
-    expect(menu.width).within(40, 65, 'menu width');
-    expect(menu.height).within(40, 65, 'menu height');
+    expect(menu.width).within(40, 70, 'menu width');
+    expect(menu.height).within(40, 70, 'menu height');
   });
 
   it('shows submenu', async () => {

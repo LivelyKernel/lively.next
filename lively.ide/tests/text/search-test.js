@@ -9,7 +9,7 @@ import { pt, Rectangle } from 'lively.graphics';
 
 let describeInBrowser = System.get('@system-env').browser
   ? describe
-  : (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); };
+  : (title, fn) => { console.warn(`Test "${title}" is currently only supported in a browser`); return xdescribe(title, fn); }; // eslint-disable-line no-console
 
 expectSelection(chai);
 
@@ -17,7 +17,6 @@ function text (string, props) {
   return new Text({
     name: 'text',
     textString: string,
-    fontFamily: 'Monaco, monosonpace',
     fontSize: 10,
     extent: pt(100, 100),
     padding: Rectangle.inset(2),
@@ -38,17 +37,17 @@ describeInBrowser('searching', () => {
     });
 
     it('string search forward', () => {
-      expect(ts.search({ needle: 'He' })).deep.equals({ range: range(0, 4, 0, 6), match: 'He' }, '1');
+      expect(ts.search({ needle: 'He', start: { column: 0, row: 0 } })).deep.equals({ range: range(0, 4, 0, 6), match: 'He' }, '1');
       expect(ts.search({ needle: 'He', start: { row: 0, column: 4 } })).containSubset({ range: range(0, 4, 0, 6) }, '2');
       expect(ts.search({ needle: 'He', start: { row: 0, column: 5 } })).containSubset({ match: 'he' }, '3');
       expect(ts.search({ needle: 'He', start: { row: 0, column: 5 }, caseSensitive: true })).equals(null, '4');
-      expect(ts.search({ needle: 'o\nhe' })).deep.equals({ range: range(0, 8, 1, 2), match: 'o\nhe' }, '3', '5');
+      expect(ts.search({ needle: 'o\nhe', start: { column: 0, row: 0 } })).deep.equals({ range: range(0, 8, 1, 2), match: 'o\nhe' }, '3', '5');
     });
 
     it('re search forward', () => {
-      expect(ts.search({ needle: /He[^\s]+/ })).containSubset({ range: range(0, 4, 0, 9), match: 'Hello' }, '1');
-      expect(ts.search({ needle: /He[^\s]+\nhello/ })).equals(null, '2');
-      expect(ts.search({ needle: /He[^\s]+\nhello/m })).containSubset({ range: range(0, 4, 1, 5), match: 'Hello\nhello' }, '3');
+      expect(ts.search({ needle: /He[^\s]+/, start: { column: 0, row: 0 } })).containSubset({ range: range(0, 4, 0, 9), match: 'Hello' }, '1');
+      expect(ts.search({ needle: /He[^\s]+\nhello/, start: { column: 0, row: 0 } })).equals(null, '2');
+      expect(ts.search({ needle: /He[^\s]+\nhello/m, start: { column: 0, row: 0 } })).containSubset({ range: range(0, 4, 1, 5), match: 'Hello\nhello' }, '3');
     });
 
     it('string search backward', () => {
