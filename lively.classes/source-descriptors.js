@@ -317,7 +317,7 @@ export class RuntimeSourceDescriptor {
   }
 }
 
-export async function lexicalClassMembers (klass) {
+export function lexicalClassMembers (klass) {
   const { ast: parsed, type } = RuntimeSourceDescriptor.for(klass);
   if (type !== 'ClassDeclaration') { throw new Error(`Expected class but got ${type}`); }
 
