@@ -717,7 +717,7 @@ const BackendButtonDefault = component(ButtonDefault, {
   submorphs: [{
     name: 'label',
     fontColor: Color.rgb(163, 228, 215),
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: '"IBM Plex Mono"',
     fontSize: 14
   }]
 });
@@ -728,7 +728,7 @@ const BackendButtonClicked = component(BackendButtonDefault, {
   submorphs: [{
     name: 'label',
     fontColor: Color.rgb(63, 110, 101),
-    fontFamily: 'IBM Plex Mono',
+    fontFamily: '"IBM Plex Mono"',
     fontSize: 14
   }]
 });
@@ -1459,7 +1459,7 @@ const SystemBrowser = component({
           padding: rect(5, 4, 0, 0),
           nativeCursor: 'pointer',
           submorphs: [{
-            type: Label,
+            type: 'label',
             name: 'label',
             textAndAttributes: ['local', null]
           }]
