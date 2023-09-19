@@ -144,6 +144,7 @@ export default class LivelyRollup {
     this.globalModules = {}; // Collection of global modules, which are not imported via ESM. Can be ditched?
     this.resolved = {};
     this.projectAssets = [];
+    this.customFontFiles = [];
     this.projectsInBundle = new Set();
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
@@ -772,8 +773,25 @@ export default class LivelyRollup {
     return es5Transpilation(runtimeCode);
   }
 
+  generateAssetPreloads () {
+    return arr.compact(arr.uniq(this.projectAssets.map(asset => {
+      // also preload all of the used fonts in the bundle
+      if (asset.newName?.endsWith('.mp4')) {
+        return `<link rel="preload" href="${joinPath('./assets', `${asset.newName}`)}" as="video">`;
+      }
+      if (asset.newName?.endsWith('.mp3')) {
+        return `<link rel="preload" href="${joinPath('./assets', `${asset.newName}`)}" as="audio">`;
+      }
+    }))).concat(this.customFontFiles.map(fontFile => {
+      return `<link rel="preload" href="${joinPath('./assets', `${fontFile.name()}`)}" as="font">`;
+    })).join('\n');
+  }
+
   async generateIndexHtml (importMap, modules) {
-    return await generateLoadHtml(this.autoRun, importMap, this.resolver, modules, this.isResurrectionBuild);
+    return await generateLoadHtml({
+      ...this.autoRun || {},
+      head: (this.autoRun?.head || '') + this.generateAssetPreloads()
+    }, importMap, this.resolver, modules, this.isResurrectionBuild);
   }
 
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
@@ -876,6 +894,7 @@ export default class LivelyRollup {
       // Each project can have multiple font files
       if (await assetDir.exists()) {
         const fontFiles = (await assetDir.dirList()).filter(f => f.url.includes('woff2'));
+        this.customFontFiles.push(...fontFiles);
         for (let file of fontFiles) {
           file.beBinary();
           let source = await file.read();
