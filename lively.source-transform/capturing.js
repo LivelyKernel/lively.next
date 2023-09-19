@@ -48,6 +48,7 @@ export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options)
     es6ExportFuncId: null,
     es6ImportFuncId: null,
     captureObj: assignToObj,
+    captureImports: true,
     moduleExportFunc: { name: options && options.es6ExportFuncId || '_moduleExport', type: 'Identifier' },
     moduleImportFunc: { name: options && options.es6ImportFuncId || '_moduleImport', type: 'Identifier' },
     declarationWrapper: undefined,
@@ -138,7 +139,7 @@ export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options)
   // is added after the import so that we get the value:
   // "import x from './some-es6-module.js';" =>
   //   "import x from './some-es6-module.js';\n_rec.x = x;"
-  rewritten = insertCapturesForImportDeclarations(rewritten, options);
+  if (options.captureImports) rewritten = insertCapturesForImportDeclarations(rewritten, options);
 
   // 8. Since variable declarations like "var x = 23" were transformed to sth
   // like "_rex.x = 23" exports can't simply reference vars anymore and
@@ -504,7 +505,9 @@ function additionalIgnoredRefs (parsed, options) {
   }
 
   return topLevel.scope.catches.map(ea => ea.name)
-    .concat(queryHelpers.declIds(ignoreDecls.map(ea => ea.id)).map(ea => ea.name));
+    .concat(queryHelpers.declIds(ignoreDecls.map(ea => ea.id || ea.name))
+    .concat(options.captureImports ? [] : topLevel.scope.importSpecifiers)
+    .map(ea => ea.name));
 }
 
 function shouldDeclBeCaptured (decl, options) {
@@ -672,6 +675,28 @@ function insertCapturesForImportDeclarations (parsed, options) {
       ? [stmt]
       : [stmt].concat(stmt.specifiers.map(specifier =>
           assignExpr(options.captureObj, specifier.local, specifier.local, false)))), []);
+  return parsed;
+}
+
+// this function wraps all of the function declarations like so:
+// function f () { ... } => const f = _rec._define('f', 'function', function () {...}, _rec, { module meta });
+// only nessecary for resurrection builds, since the define can control
+// the value returned.
+export function insertCapturesForFunctionDeclarations (parsed, options) {
+  const body = [];
+  const moduleMetaVar = '__moduleMeta__';
+  if (!options.currentModuleAccessor) throw new Error('No module accessor provided for function declaration capture');
+  body.push(varDecl(moduleMetaVar, options.currentModuleAccessor, 'const'));
+  for (let i = 0; i < parsed.body.length; i++) {
+    const stmt = parsed.body[i];
+    if (stmt.type === 'FunctionDeclaration') {
+      const anonymousFn = { ...stmt, id: null };
+      body.push(varDecl(id(stmt.id.name), funcCall(options.declarationWrapper, literal(stmt.id.name), literal('function'), anonymousFn, id(moduleMetaVar)), 'const'));
+      continue;
+    }
+    body.push(stmt);
+  }
+  parsed.body = body;
   return parsed;
 }
 
