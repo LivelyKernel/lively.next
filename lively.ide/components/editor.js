@@ -72,7 +72,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   checkForGeneratedNames () {
-    this._hasGeneratedNames = morph.usedNames.size > morph.usedNames.initialSize;
+    this._hasGeneratedNames = morph.usedNames?.size > morph.usedNames?.initialSize;
   }
 
   getModuleSource () {
