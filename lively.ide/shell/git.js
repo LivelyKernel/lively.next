@@ -24,14 +24,19 @@ async function runCommands (commands) {
 
   let results = {}; let group = 'lively.shell-default-command-group-' + string.newUUID();
 
+  let runCommandFn = runCommand;
+
   let i = 0;
   for (let { name, command, options, transform, readFile, writeFile, content } of commands) {
     options = options || {};
     if (!group) options.group = group;
 
     // FIXME!!!! that won't work right now
-    if (readFile) { runCommand = readFileFn; command = readFile; } else if (writeFile) {
-      runCommand = writeFileFn;
+    if (readFile) {
+      runCommandFn = readFileFn;
+      command = readFile;
+    } else if (writeFile) {
+      runCommandFn = writeFileFn;
       command = writeFile;
       options = options || {};
       if (content) options.content = content;
@@ -46,7 +51,7 @@ async function runCommands (commands) {
 
     console.log(`Running ${command} with options`, options);
 
-    let cmd = await runCommand(command, options);
+    let cmd = await runCommandFn(command, options);
     await cmd.whenDone();
 
     name = name || String(i++);
