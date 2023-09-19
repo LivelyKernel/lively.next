@@ -5,7 +5,7 @@ on:
 
 permissions:
   pages: write
-  id-token: write
+  id-token: write%TOKEN_PERMISSIONS%
 
 concurrency:
   group: "build-and-deploy"

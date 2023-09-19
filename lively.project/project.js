@@ -488,10 +488,13 @@ export class Project {
   }
 
   fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
-    let definition = workflowDefinition.replaceAll('%LIVELY_VERSION%', this.config.lively.boundLivelyVersion);
+    const livelyConf = this.config.lively;
+    let definition = workflowDefinition.replaceAll('%LIVELY_VERSION%', livelyConf.boundLivelyVersion);
     if (triggerOnPush) {
       definition = definition.replace('%ACTION_TRIGGER%', '\n  push:\n    branches:\n      - main');
     } else definition = definition.replace('%ACTION_TRIGGER%', '');
+    if (livelyConf.repositoryIsPrivate && livelyConf.canUsePages) definition = definition.replace('%TOKEN_PERMISSIONS%', '\n  contents: read')
+    else definition = definition.replace('%TOKEN_PERMISSIONS%', '');
     return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
 
