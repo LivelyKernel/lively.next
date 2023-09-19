@@ -4,7 +4,7 @@ import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
 import { es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
-import { rewriteToCaptureTopLevelVariables, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
+import { rewriteToCaptureTopLevelVariables, insertCapturesForFunctionDeclarations, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import {
@@ -225,6 +225,7 @@ export default class LivelyRollup {
       })`).body[0].expression
     };
     return {
+      captureImports: false, // we do not need to support inline evals within bundled modules,
       exclude: [
         'System',
         ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...GlobalInjector.getGlobals(null, parsedSource)]),
@@ -595,7 +596,12 @@ export default class LivelyRollup {
 
     let defaultExport = '';
     if (this.captureModuleScope) {
-      instrumented = insertCapturesForExportedImports(tfm(parsed, captureObj, opts), { captureObj });
+      instrumented = tfm(parsed, captureObj, opts);
+      instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
+      instrumented = insertCapturesForFunctionDeclarations(instrumented, {
+        declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(this.normalizedId(id) + '__define__')),
+        currentModuleAccessor: opts.classToFunction.currentModuleAccessor
+      });
 
       const imports = [];
       const toBeReplaced = [];
