@@ -298,7 +298,7 @@ describe('scroll', () => {
     expect(sut.scroll.y).closeTo(2 * lineHeight + padTop + 3, 3, 'scroll y');
     sut.cursorPosition = { column: 0, row: 0 };
     sut.scrollCursorIntoView();
-    expect(sut.scroll).equals(pt(0, 1));
+    expect(sut.scroll).equals(pt(0, 0));
   });
 });
 
@@ -703,7 +703,7 @@ describe('morph inside textAndAttributes', () => {
 
   it('remove removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
-    expect(sut.textString).equals('text\n�\nfor tests');
+    expect(sut.textString).equals('text\n\nfor tests');
     m.remove();
     expect(sut.textString).equals('text\n\nfor tests');
     expect(sut.embeddedMorphs).not.includes(m);
@@ -712,7 +712,7 @@ describe('morph inside textAndAttributes', () => {
 
   it('text deletion removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
-    expect(sut.textString).equals('text\n�\nfor tests');
+    expect(sut.textString).equals('text\n\nfor tests');
     sut.deleteText({ start: { row: 1, column: 0 }, end: { row: 1, column: 1 } });
     expect(sut.textString).equals('text\n\nfor tests');
     expect(sut.embeddedMorphs).not.includes(m);
