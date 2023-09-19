@@ -1,5 +1,6 @@
 import { HTMLMorph } from 'lively.morphic';
 import { pt } from 'lively.graphics';
+import { fun } from 'lively.lang';
 
 /**
  * A VideoMorph, which is just an overlay on the HTML Video element
@@ -44,6 +45,7 @@ export class VideoMorph extends HTMLMorph {
           this.setVideoProperty('loop', !!aBool);
         }
       },
+      muted: { defaultValue: false },
       controls: {
         defaultValue: false,
         set (aBool) {
@@ -83,39 +85,9 @@ export class VideoMorph extends HTMLMorph {
 
   setVideoProperty (propertyName, value) {
     this.setProperty(propertyName, value);
-    this.resetHTML();
-  }
-
-  onLoad () {
-    const props = this.constructorProps;
-    this.log = [];
-    this.autorelayout = true;
-    this.videoLoaded = false;
-    const setField = (field, defaultVal) => {
-      this[field] = props && props[field] ? props[field] : defaultVal;
-      this.log.push([field, this[field]]);
-    };
-    const normalizeBoolean = field => {
-      this[field] = props ? !!props[field] : false;
-    };
-
-    const bools = ['loop', 'controls', 'autoplay'];
-    bools.forEach(bool => normalizeBoolean(bool));
-    const fields = [
-      { name: 'src', defaultVal: 'https://matt.engagelively.com/assets/kaleidoscope-art-17141.mp4' },
-      { name: 'type', defaultVal: 'video/mp4' },
-      { name: 'badBrowserMessage', defaultVal: 'Your browser does not support video content' },
-      { name: 'loop', defaultVal: false },
-      { name: 'autoplay', defaultVal: false },
-      { name: 'controls', defaultVal: false }
-    ];
-
-    fields.forEach(field => setField(field.name, field.defaultVal));
-    this.resetHTML();
-
-    this.awaitingResize = false;
-
-    this.autorelayout = false;
+    fun.debounceNamed('setVideoProperty' + this.id, 100, () => {
+      this.resetHTML();
+    })();
   }
 
   get domElementExtent () {
@@ -153,7 +125,7 @@ export class VideoMorph extends HTMLMorph {
     const widthPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-horizontal') ? '100%' : 'auto';
     const heightPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-vertical') ? '100%' : 'auto';
     this.html = `
-  <video id="${this.videoId}"  width="${widthPolicy}" height="${heightPolicy}" style="transform: translate(-50%, -50%); position: absolute; top: 50%; left: 50%; object-fit: cover;"${options}>
+  <video preload="auto" id="${this.videoId}" width="${widthPolicy}" height="${heightPolicy}" style="transform: translate(-50%, -50%); position: absolute; top: 50%; left: 50%; object-fit: cover;"${options} playsinline>
   <source src="${this.src}"  type="${this.codec}"/> 
 ${this.badBrowserMessage}
 </video>
