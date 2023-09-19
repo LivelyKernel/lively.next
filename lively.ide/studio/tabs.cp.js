@@ -49,6 +49,7 @@ const DefaultTab = component({
       halosEnabled: false,
       name: 'tab caption',
       fill: Color.transparent,
+      fixedWidth: true,
       fontColor: Color.rgba(0, 0, 0, 0.5),
       reactsToPointer: false,
       textAndAttributes: ['tab caption', null]
