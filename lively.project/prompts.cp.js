@@ -524,18 +524,21 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             submorphs: [{
               name: 'wrapper 31',
               layout: new TilingLayout({
+                axisAlign: 'center',
                 orderByIndex: true,
-                axisAlign: 'center'
+                spacing: 5
               }),
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
               submorphs: [part(LabeledCheckboxLight,
-                { name: 'deploy check',
-                viewModel: { label: 'Deploy Build to GitHub Pages:' }
-              }),
+                {
+                  name: 'deploy check',
+                  viewModel: { label: 'Deploy Build to GitHub Pages:' }
+                }),
               part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories or with a paid GitHub plan.' } })
-            ]},
+              ]
+            },
             part(ModeSelector, {
               name: 'deploy mode selector',
               viewModel: {
@@ -687,13 +690,15 @@ export const RepoCreationPrompt = component(LightPrompt, {
         without('remote holder'), {
           layout: new TilingLayout({
             axisAlign: 'center',
-            orderByIndex: true
+            orderByIndex: true,
+            spacing: 5
           }),
           name: 'private repo holder',
           extent: pt(332.0000, 21.0000),
           submorphs: [{
             layout: new TilingLayout({
-              orderByIndex: true
+              orderByIndex: true,
+              spacing: 5
             }),
             name: 'private checkbox'
           }]
@@ -769,7 +774,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         submorphs: [{
           name: 'placeholder',
           extent: pt(142, 34),
-          fontFamily: "IBM Plex Sans",
+          fontFamily: 'IBM Plex Sans',
           nativeCursor: 'text',
           textAndAttributes: ['Project Name', null]
         }]
@@ -783,7 +788,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           name: 'placeholder',
           visible: false,
           extent: pt(148, 34),
-          fontFamily: "IBM Plex Sans",
+          fontFamily: 'IBM Plex Sans',
           nativeCursor: 'text'
         }]
       })
