@@ -1,6 +1,6 @@
 export const deployScript = `name: Deploy Project to GitHub Pages
 
-on:
+on:%ACTION_TRIGGER%
   workflow_dispatch:
 
 permissions:

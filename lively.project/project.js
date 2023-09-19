@@ -381,6 +381,7 @@ export class Project {
     livelyConfig.deployActionEnabled = this.canDeployToPages;
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
+    livelyConfig.deployOnPush = false;
   }
 
   async create (withRemote = false, gitHubUser, priv) {
@@ -480,7 +481,7 @@ export class Project {
 
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
     if (livelyConfig.deployActionEnabled && this.canDeployToPages) {
-      content = this.fillPipelineTemplate(deployScript);
+      content = this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {
       if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
