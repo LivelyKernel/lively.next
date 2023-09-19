@@ -36,7 +36,7 @@ function formatFromArray (objects) {
   function appendInteger (value, string) { return value.toString(); }
 
   function appendFloat (value, string, precision) {
-    if (precision > -1) return value.toFixed(precision);
+    if (precision > -1) return `${Number.parseFloat(value.toFixed(precision))}`;
     else return value.toString();
   }
 
