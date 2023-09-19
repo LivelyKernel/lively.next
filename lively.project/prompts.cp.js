@@ -34,14 +34,15 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                 this.view.remove();
               }
             },
-            { model: 'test check', signal: 'toggle', handler: (val) => this.ui.testModeSelector.enabled = val },
-            { model: 'build check', signal: 'toggle', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { model: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
+            { model: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { model: 'deploy check', signal: 'checked', handler: (val) => { if (this.project.canDeployToPages) this.ui.deployModeSelector.enabled = val; } },
             { model: 'ok button', signal: 'fire', handler: 'resolve' },
             {
               target: 'visibility selector',
               signal: 'selectionChanged',
               handler: async (visibility) => {
-                const { spinner, visibilitySelector, deployCheck } = this.ui;
+                const { spinner, visibilitySelector, deployCheck, deployModeSelector } = this.ui;
                 spinner.opacity = 1;
                 visibilitySelector.enabled = false;
                 const res = await this.project.changeRepositoryVisibility(visibility);
@@ -50,8 +51,13 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                   return;
                 }
                 await this.project.checkPagesSupport();
-                if (this.project.canDeployToPages) deployCheck.enable();
-                else deployCheck.disable();
+                if (this.project.canDeployToPages) {
+                  deployCheck.enable();
+                  deployModeSelector.enabled = true;
+                } else {
+                  deployCheck.disable();
+                  deployModeSelector.enabled = false;
+                }
                 spinner.opacity = 0;
                 visibilitySelector.enabled = true;
               }
@@ -64,7 +70,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
   }
 
   resolve () {
-    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector } = this.ui;
+    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, deployModeSelector } = this.ui;
     const conf = this.project.config.lively;
 
     conf.testActionEnabled = testCheck.checked;
@@ -73,16 +79,20 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 
     conf.testOnPush = testModeSelector.selectedItem === 'push';
     conf.buildOnPush = buildModeSelector.selectedItem === 'push';
+    conf.deployOnPush = deployModeSelector.selectedItem === 'push';
     super.resolve(true);
   }
 
   viewDidLoad () {
-    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, visibilitySelector } = this.ui;
+    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, deployModeSelector, visibilitySelector } = this.ui;
     const conf = this.project.config.lively;
 
     if (conf.repositoryIsPrivate) {
       visibilitySelector.selectedItem = 'private';
-      if (!this.project.canDeployToPages) deployCheck.disable();
+      if (!this.project.canDeployToPages) {
+        deployCheck.disable();
+        deployModeSelector.enabled = false;
+      }
     }
 
     testCheck.checked = conf.testActionEnabled;
@@ -91,6 +101,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 
     if (conf.testOnPush) testModeSelector.select('push');
     if (conf.buildOnPush) buildModeSelector.select('push');
+    if (conf.deployOnPush) deployModeSelector.select('push');
   }
 }
 
@@ -490,7 +501,7 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               name: 'build mode selector',
               viewModel: {
                 items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
-                tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push tp the projects main branch is performed.']
+                tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
               }
             })]
           }, {
@@ -512,15 +523,21 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [
-                part(LabeledCheckboxLight,
-                  {
-                    name: 'deploy check',
-                    viewModel: { label: 'Deploy Build to GitHub Pages:' }
-                  }),
-                part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories.' } })]
-            }, { fill: Color.transparent, width: 255 }]
-          }]
+              submorphs: [part(LabeledCheckboxLight,
+                { name: 'deploy check',
+                viewModel: { label: 'Deploy Build to GitHub Pages:' }
+              }),
+              part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories or with a paid GitHub plan.' } })
+            ]},
+            part(ModeSelector, {
+              name: 'deploy mode selector',
+              viewModel: {
+                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                tooltips: ['Only deploy when triggered manually on GitHub', 'Deploy each time a push to the projects main branch is performed.']
+              }
+            })]
+          }
+        ]
       },
       {
         name: 'repo settings',
