@@ -18,7 +18,7 @@ let page;
       if (Date.now() - startTime > aliveTimeout) {
         process.exit(1);
       }
-      if (await page.evaluate(`$world.name == 'aLivelyWorld'`)) break;
+      if (await page.evaluate(`typeof $world !== 'undefined' && $world.name == 'aLivelyWorld'`)) break;
       await new Promise((resolve) => setTimeout(resolve, aliveRepeatTimeout));
     };
     console.log('✅ Lively loaded successfully.');
