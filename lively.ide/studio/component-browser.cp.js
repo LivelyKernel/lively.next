@@ -1880,6 +1880,8 @@ export {
   ComponentBrowserPopupDark,
   ComponentPreview,
   ComponentPreviewSelected,
+  ComponentPreviewDark,
+  ComponentPreviewSelectedDark,
   ProjectSection,
   ComponentError
 };

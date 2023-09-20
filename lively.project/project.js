@@ -779,4 +779,15 @@ export class Project {
     unifiedFontItems.forEach(fontItem => fontItem.supportedWeights = arr.uniq(fontItem.supportedWeights.sort(), true));
     return unifiedFontItems;
   }
+
+  /**
+   * Returns an array of `resource` handles.
+   * @param {string} type - One of 'video', 'audio', 'image'
+   */
+  async getAssets (type) {
+    switch (type) {
+      case 'image':
+        return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(/gif|jpeg|jpg|png|webp|jxl/));
+    }
+  }
 }
