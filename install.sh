@@ -55,6 +55,8 @@ then
   exit
 fi
 
+env CI=true npm --prefix $lv_next_dir/lively.classes/ run build
+
 if [ -z "${CI}" ];
 then
   env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
