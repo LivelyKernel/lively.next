@@ -797,7 +797,7 @@ export default class LivelyRollup {
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
     modules.forEach(chunk => {
-      chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
+      if (chunk.code) chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
     });
     if (this.minify && opts.format !== 'esm') {
       modules.forEach((chunk, i) => {
