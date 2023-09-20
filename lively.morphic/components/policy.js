@@ -387,6 +387,10 @@ export class StylePolicy {
     this.targetMorph?.requestMasterStyling();
   }
 
+  getState () {
+    return this._componentState;
+  }
+
   /**
    * Checks wether or not another policy is in the derivation chain of this
    * policy.
