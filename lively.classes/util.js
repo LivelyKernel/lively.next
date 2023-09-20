@@ -1,6 +1,6 @@
 import * as arr from 'lively.lang/array.js';
 import * as obj from 'lively.lang/object.js';
-import Path from 'lively.lang/path.js';
+import Path from 'lively.lang/Path.js';
 
 export function superclasses (klass) {
   return withSuperclasses(klass).slice(1);
