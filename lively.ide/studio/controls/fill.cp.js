@@ -8,15 +8,10 @@ import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { obj } from 'lively.lang';
 import { noUpdate } from 'lively.bindings';
 
-const placeholderImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAfRJREFUaEPtmTFrFFEUhb+jIIKQgFZGi3QBU6SQCDaCXVJbqZCQpLW2E1OntRJCFEXxB2gdCxtFAxYh+QOJVYoU0c4THkxg3dmZnWXnTWbk3XLnzbvn3HPuXd4b0fFQx/GTCJy3gkmBVitg+wawAdwHrjcM9hewDTyVdFCUu9BCGfifwLWGgfenOwLmikiUEXgHPDpn8Gfp30t6PAhLGYEg21RLCBxKCnbORRkB966W1OjEsl0pfyIQy2JJgaoVSAoUVKBqAVMTJwslC41ZgWShMQuYptCoFrI9Kel42Hut/B+w/QBYB+5I+lNGonUEbM8A34AJYEvSWmsI2L4NXJQUAObC9hXgKzDb83BJ0tsiEo0pYPsq8AO4lFkjdwC3Peh4egLMS9orIB3/QGP7AvAJWMhAfAfu9frb9hPgRUGldzPSv/ufN6KA7dCQz/uSf5D0MPxm+y7wOVOnyC2vJK02TsD2IvARCCr0xzPgJbAD3Bw2MoFlSW9610VVwPZ05vvg/0HxF9gHblUAH5bk+iEaAduXgS9AmDx1xj/9EJPAJlA6w8dg9VrSStY/8afQGECHvhpNgaGZa1qQCFStQE0Fz21TNf9/fbnb+ev1cJ3d3Q8c2Szu7iemWM1Z976NfrSoG3zYLxGIUdVR9kwKjFKtGGtPAaQTYEDIYzesAAAAAElFTkSuQmCC';
-
 export class FillControlModel extends ViewModel {
   static get properties () {
     return {
       targetMorph: {},
-      placeholderImage: {
-        defaultValue: placeholderImage
-      },
       bindings: {
         get () {
           return [
@@ -60,7 +55,7 @@ export class FillControlModel extends ViewModel {
     this.ui.fillColorInput.setColor(fill);
     this.ui.imageControl.visible = isImage;
     if (isImage) {
-      this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl || this.placeholderImage;
+      this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl;
       // fixme: autofit the image preview
     }
   }
@@ -108,7 +103,6 @@ const FillControl = component(PropertySection, {
         name: 'image container',
         reactsToPointer: false,
         extent: pt(20, 20),
-        imageUrl: placeholderImage,
         naturalExtent: pt(48, 48),
         position: pt(1, 1)
       }]
