@@ -33,8 +33,6 @@ jobs:
         run: |
           chmod a+x ./install.sh
           ./install.sh
-      - name: Install puppeteer
-        run: npm install puppeteer@19.7.3
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
@@ -42,7 +40,9 @@ jobs:
           # wait until server is guaranteed to be running
           sleep 30
       - name: Run boot check script
-        run: node scripts/check_boot.js
+        run: |
+          chmod a+x ./scripts/check-boot.sh
+          ./scripts/check-boot.sh
   changes:
     runs-on: ubuntu-latest
     permissions:
