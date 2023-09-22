@@ -1,4 +1,4 @@
-import { arr, obj, graph } from 'lively.lang';
+import { arr, obj, graph, string } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
@@ -279,7 +279,7 @@ class ModuleInterface {
   }
 
   async updateBundledModules (modulesToUpdate) {
-    const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
+    const { oldSystem: S, registry } = lively.FreezerRuntime || lively.frozenModules;
     for (let m of modulesToUpdate) {
       let mod = S['__lively.modules__loadedModules'][m];
       if (!mod) {
@@ -289,6 +289,16 @@ class ModuleInterface {
       }
       await mod.reload();
       S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
+    }
+    // finally update the frozen records that require update
+    for (let m in registry) {
+      if (registry[m].updateRecord) {
+        const realignedId = string.joinPath(System.baseURL, m);
+        const mod = module(this.System, realignedId);
+        if (!mod._frozenModule) continue;
+        this.System.set(realignedId, System.newModule(registry[m].exports));
+        mod._recorder = registry[m].recorder;
+      }
     }
   }
 

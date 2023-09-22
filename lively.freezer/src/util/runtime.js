@@ -580,6 +580,12 @@ export function runtimeDefinition () {
     },
 
     recorderFor (moduleId, snippetModule) {
+      if (this.registry[moduleId]) {
+        if (this.registry[moduleId].isRevived) return Object.freeze({ ...this.registry[moduleId].recorder }); // prevent mutation of recorder via this recorder
+        // register this module to update its record
+        this.registry[moduleId].updateRecord = true;
+        return this.registry[moduleId].recorder;
+      }
       let rec = {
         [moduleId + '__define__'] (name, type, value, moduleMeta) {
           if (Object.isFrozen(this)) return this[name];
@@ -592,9 +598,7 @@ export function runtimeDefinition () {
           return value;
         }
       };
-      rec = (this.registry[moduleId] = this.registry[moduleId] || { recorder: rec, exports: rec, contextModule: snippetModule.id }).recorder;
-      if (this.registry[moduleId].isRevived) return Object.freeze({ ...rec }); // prevent mutation of recorder via this recorder
-      return rec;
+      return (this.registry[moduleId] = { recorder: rec, exports: rec, contextModule: snippetModule.id }).recorder;
     },
 
     load (moduleId) {
