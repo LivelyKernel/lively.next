@@ -12,7 +12,7 @@ let page;
 
   try {
     console.log('ℹ️ Began Loading lively.');
-    await page.goto('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false');
+    await page.goto('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true');
     const startTime = Date.now();
     while (true) {
       if (Date.now() - startTime > aliveTimeout) {
