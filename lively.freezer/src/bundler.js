@@ -583,6 +583,7 @@ export default class LivelyRollup {
     const captureObj = { name: recorderName, type: 'Identifier' };
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
+    const currentModuleAccessor = opts.classToFunction.currentModuleAccessor;
 
     if (this.needsClassInstrumentation(id, source)) {
       classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${this.isResurrectionBuild ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js'}";\n`;
@@ -601,7 +602,7 @@ export default class LivelyRollup {
       instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
       instrumented = insertCapturesForFunctionDeclarations(instrumented, {
         declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(this.normalizedId(id) + '__define__')),
-        currentModuleAccessor: opts.classToFunction.currentModuleAccessor
+        currentModuleAccessor
       });
 
       const imports = [];

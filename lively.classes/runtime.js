@@ -46,10 +46,11 @@ function supportsReflect () {
  * @returns { Class } The result of the constructor, usually an instance of `Class`.
  */
 function constructNewOnly (Parent, args, Class) {
+  let constructNewFn;
   if (supportsReflect()) {
-    constructNewOnly = Reflect.construct.bind();
+    constructNewFn = Reflect.construct.bind();
   } else {
-    constructNewOnly = function constructNewOnly (Parent, args, Class) {
+    constructNewFn = function (Parent, args, Class) {
       let a = [null];
       a.push.apply(a, args);
       let Constructor = Function.bind.apply(Parent, a);
@@ -58,7 +59,7 @@ function constructNewOnly (Parent, args, Class) {
       return instance;
     };
   }
-  return constructNewOnly.apply(null, arguments);
+  return constructNewFn.apply(null, arguments);
 }
 
 /**
@@ -69,7 +70,7 @@ function constructNewOnly (Parent, args, Class) {
  */
 function wrapNativeClassAsSuper (Class) {
   let _cache = typeof Map === 'function' ? new Map() : undefined;
-  wrapNativeClassAsSuper = function wrapNativeClassAsSuper (Class) {
+  let wrapNativeClassAsSuperFn = function (Class) {
     function Wrapper () {
       return constructNewOnly(Class, arguments, Object.getPrototypeOf(this).constructor);
     }
@@ -91,7 +92,7 @@ function wrapNativeClassAsSuper (Class) {
     });
     return setPrototypeOf(Wrapper, Class);
   };
-  return wrapNativeClassAsSuper(Class);
+  return wrapNativeClassAsSuperFn(Class);
 }
 
 function ensureInitializeStub (superclass) {
