@@ -1079,7 +1079,9 @@ export class Text extends Morph {
   }
 
   allFontsLoaded () {
-    return this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.check(fontString));
+    if (this._allFontsLoaded) return true;
+    // cache the result for as long as the font propertys are not reset
+    return this._allFontsLoaded = this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.check(fontString));
   }
 
   async whenFontLoaded () {
@@ -2723,7 +2725,13 @@ export class Text extends Morph {
   // text layout related
 
   fit () {
-    if (this._isDeserializing) {
+    if (
+      this._isDeserializing ||
+      !this.world() && !this.document ||
+      !this.visible ||
+      this.ownerChain().some(m => !m.visible) ||
+      !this.allFontsLoaded()
+    ) {
       return;
     }
     if (this.document) {
