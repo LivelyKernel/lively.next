@@ -1072,7 +1072,7 @@ export class Text extends Morph {
           fontStretch: 'normal',
           fontSize: (attr && attr.fontSize) || this.fontSize || '12',
           lineHeight: (attr && attr.lineHeight) || this.lineHeight,
-          fontFamily: (attr && attr.fontFamily) || this.fontFamily
+          fontFamily: ((attr && attr.fontFamily) || this.fontFamily).split(',')[0]
         };
       }
     }).filter(Boolean).map(fontObj => '' + fontObj.fontStyle + ' ' + fontObj.fontVariant + ' ' + fontObj.fontWeight + ' ' + fontObj.fontStretch + ' ' + (String(fontObj.fontSize).includes('%') ? fontObj.fontSize : fontObj.fontSize + 'px') + ' /' + fontObj.lineHeight + ' ' + fontObj.fontFamily));
