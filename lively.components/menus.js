@@ -308,61 +308,64 @@ export class Menu extends Morph {
   }
 
   async updateMorphs () {
-    this.submorphs = [];
+    await fun.guardNamed('updateMorphs' + this.id, async () => {
+      this.submorphs = [];
 
-    const pLeft = this.padding.left();
-    const pRight = this.padding.right();
-    const pTop = this.padding.top();
-    const pBottom = this.padding.bottom();
-    let maxWidth = 0; let pos = pt(pLeft, pTop);
+      const pLeft = this.padding.left();
+      const pRight = this.padding.right();
+      const pTop = this.padding.top();
+      const pBottom = this.padding.bottom();
+      let maxWidth = 0; let pos = pt(pLeft, pTop);
 
-    const defaultStyle = {};
-    if (this.fontFamily) defaultStyle.fontFamily = this.fontFamily;
-    if (this.fontSize) defaultStyle.fontSize = this.fontSize;
-    if (this.itemPadding) defaultStyle.padding = this.itemPadding;
+      const defaultStyle = {};
+      if (this.fontFamily) defaultStyle.fontFamily = this.fontFamily;
+      if (this.fontSize) defaultStyle.fontSize = this.fontSize;
+      if (this.itemPadding) defaultStyle.padding = this.itemPadding;
 
-    if (this.title) {
-      const title = this.addMorph({
-        type: 'label',
-        value: this.title,
-        name: 'title',
-        position: pos,
-        fontWeight: 'bold',
-        ...defaultStyle
-      });
-      if (title.fit) title.fit();
-      pos = title.bottomLeft;
-      maxWidth = Math.max(title.width, maxWidth);
-    }
-
-    for (let { label, string, annotation, action, submenu, isDivider, tooltip } of this.items) {
-      const itemMorph = this.addMorph(
-        isDivider
-          ? new MenuDivider({ position: pos })
-          : new MenuItem({
-            label: label || string,
-            annotation,
-            action,
-            submenu,
-            tooltip,
-            position: pos,
-            ...defaultStyle
-          }));
-      if (itemMorph.fit) {
-        await itemMorph.whenFontLoaded();
-        itemMorph.fit();
+      if (this.title) {
+        const title = this.addMorph({
+          type: 'label',
+          value: this.title,
+          name: 'title',
+          position: pos,
+          fontWeight: 'bold',
+          ...defaultStyle
+        });
+        await title.whenFontLoaded();
+        if (title.fit) title.fit();
+        pos = title.bottomLeft;
+        maxWidth = Math.max(title.width, maxWidth);
       }
-      pos = itemMorph.bottomLeft;
-      maxWidth = Math.max(itemMorph.width, maxWidth);
-    }
 
-    this.submorphs.forEach(ea => {
-      ea.fixedWidth = true;
-      ea.width = maxWidth;
-      if (ea.fit) ea.fit();
-    });
+      for (let { label, string, annotation, action, submenu, isDivider, tooltip } of this.items) {
+        const itemMorph = this.addMorph(
+          isDivider
+            ? new MenuDivider({ position: pos })
+            : new MenuItem({
+              label: label || string,
+              annotation,
+              action,
+              submenu,
+              tooltip,
+              position: pos,
+              ...defaultStyle
+            }));
+        if (itemMorph.fit) {
+          await itemMorph.whenFontLoaded();
+          itemMorph.fit();
+        }
+        pos = itemMorph.bottomLeft;
+        maxWidth = Math.max(itemMorph.width, maxWidth);
+      }
 
-    this.extent = pt(maxWidth + pRight + pLeft, pos.y + pBottom);
+      this.submorphs.forEach(ea => {
+        ea.fixedWidth = true;
+        ea.width = maxWidth;
+        if (ea.fit) ea.fit();
+      });
+
+      this.extent = pt(maxWidth + pRight + pLeft, pos.y + pBottom);
+    })();
   }
 
   openSubMenuDelayed (evt, itemMorph, items) {
@@ -389,8 +392,7 @@ export class Menu extends Morph {
 
     if (typeof items === 'function') items = items();
 
-    const m = this.submenu = this.addMorph(
-      new Menu({ items, ownerItemMorph: itemMorph, ownerMenu: this }));
+    const m = this.submenu = this.addMorph(new Menu({ items, ownerItemMorph: itemMorph, ownerMenu: this }));
     m.updateMorphs();
     m.offsetForOwnerMenu();
   }
