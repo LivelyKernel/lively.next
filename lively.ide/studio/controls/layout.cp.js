@@ -174,7 +174,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     controls.visible = true;
     wrapCheckboxWrapper.visible = true;
 
-    this.view.master = this.activeSectionComponent;
+    this.view.master.setState(null);
 
     const layout = this.targetMorph && this.targetMorph.layout;
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
@@ -188,9 +188,9 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   deactivate () {
     const { controls, wrapCheckboxWrapper } = this.ui;
     super.deactivate();
+    this.view.master.setState('inactive');
     controls.visible = false;
     wrapCheckboxWrapper.visible = false;
-    this.view.master = { auto: this.inactiveSectionComponent, hover: this.hoverSectionComponent };
 
     if (this.targetMorph && this.targetMorph.layout) {
       const layoutableSubmorphs = this.targetMorph.layout.layoutableSubmorphs;
