@@ -137,7 +137,7 @@ export class AttributeConnection {
 
   setUpdater (funcOrSource) {
     delete this.updater;
-    return this.updaterString = funcOrSource ? stringifyFunctionWithoutToplevelRecorder(funcOrSource) : null;
+    return this.updaterString = funcOrSource ? (stringifyFunctionWithoutToplevelRecorder || String)(funcOrSource) : null;
   }
 
   getSpec () {
