@@ -580,6 +580,7 @@ export class Text extends Morph {
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
         after: ['document', 'needsDocument'],
+        styleProp: true,
         set (mode) {
           if (mode === 'native') {
             if (this.document && !this.readOnly === true) {
@@ -618,7 +619,9 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
-          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) $world.logError('Invalid Font Name!');
+          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) {
+            $world.logError('Invalid Font Name!');
+          }
           this.setProperty('fontFamily', sanitizeFont(fontFamily));
           document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
             .then(() => {
@@ -682,7 +685,9 @@ export class Text extends Morph {
         isStyleProp: true,
         defaultValue: false,
         initialize () {
-          this.acceptsDrops = !!this.document;
+          this.withMetaDo({ metaInteraction: true }, () => {
+            this.acceptsDrops = !!this.document;
+          });
         }
       },
 

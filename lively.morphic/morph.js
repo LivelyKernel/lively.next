@@ -2392,7 +2392,9 @@ export class Morph {
   }
 
   doNotAcceptDropsForThisAndSubmorphs () {
-    this.withAllSubmorphsDo(m => m.acceptsDrops = false);
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.withAllSubmorphsDo(m => m.acceptsDrops = false);
+    });
   }
 
   acceptDropsForThisAndSubmorphs () {
