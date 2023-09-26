@@ -12,6 +12,7 @@ import { disconnect, connect, signal, epiConnect } from 'lively.bindings';
 
 import { ComponentSelection, ComponentSelectionDisabled } from './component.cp.js';
 import { PopupModel } from './popups.cp.js';
+import { ComponentBrowserPopupDark } from '../component-browser.cp.js';
 
 class BreakpointEntryModel extends ViewModel {
   static get properties () {
@@ -300,10 +301,25 @@ export class ResponsiveControlModel extends PropertySectionModel {
     else this.deactivate();
   }
 
-  activate () {
+  async activate () {
     super.activate();
+    let policy = this.targetStylePolicy;
+    if (!policy) {
+      const proceed = await this.world().confirm(['Missing Base Style', { fontWeight: 'bold', fontSize: 20 }, '\nThe morph you want to configure a responsive design for, is not associated with any master component that defines its "base" style. In order to proceed you need to select a master component to serve as the base style.\n', { fontWeight: 'normal', fontSize: 18 }], {
+        customize: (prompt) => {
+          prompt.addStyleClass('Halo');
+          prompt.isHaloItem = true;
+        }
+      });
+      if (!proceed) return this.deactivate();
+      const selectedComponent = await part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } }).activate();
+      if (!selectedComponent) return this.deactivate();
+      const pos = this.targetMorph.position;
+      this.targetMorph.master = selectedComponent;
+      policy = this.targetStylePolicy;
+      this.targetMorph.position = pos;
+    }
     this.ui.controls.visible = true;
-    const policy = this.targetStylePolicy;
     if (!policy._breakpointStore) {
       policy.setBreakpoints([[pt(0, 0), policy.parent]]);
       this.refreshChangeTrackers();
