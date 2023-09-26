@@ -396,6 +396,7 @@ export class StylePolicy {
    * policy.
    */
   uses (aPolicy, immediate = false) {
+    if (aPolicy.isComponentDescriptor) aPolicy = aPolicy.stylePolicy;
     if (this.parent === aPolicy) {
       return true;
     }
