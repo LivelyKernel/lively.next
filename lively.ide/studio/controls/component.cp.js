@@ -39,14 +39,17 @@ export class ComponentSelectionControl extends ViewModel {
     this.onRefresh('component');
   }
 
-  onRefresh (prop) {
+  async onRefresh (prop) {
     this.ui.policyTypePin.textString = this.stateName;
-    this.ui.policyTypePin.readOnly = !this.editable;
-    this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'pointer';
+    if (prop !== 'editable') {
+      await this.ui.policyTypePin.whenFontLoaded();
+      this.ui.policyTypePin.fit();
+      this.ui.policyTypePin.readOnly = !this.editable;
+      this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'pointer';
+    }
     if (prop === 'component') {
       // this is not reached after the view has been mounted
       this.component ? this.activate() : this.deactivate();
-      this.ui.policyTypePin.fit(); // FIXME: why do we need to trigger this manually?
     }
   }
 
@@ -170,8 +173,7 @@ export const CustomStateComponentSelection = component(ComponentSelection, {
   submorphs: [
     {
       name: 'policy type pin',
-      fill: Color.rgb(206, 147, 216),
-      readOnly: false
+      fill: Color.rgb(206, 147, 216)
     }, {
       name: 'no component button',
       padding: rect(4, 2, 0, 2),
