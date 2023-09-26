@@ -248,7 +248,6 @@ export class PropertiesPanelModel extends ViewModel {
       constraintsControl.view.visible = false;
     }
     this.refreshComponentStatesControl();
-    responsiveControl.view.visible = !!aMorph.master?.parent;
     borderControl.focusOn(aMorph);
     effectsControl.focusOn(aMorph);
     componentControl.focusOn(aMorph);
