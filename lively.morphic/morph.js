@@ -1,4 +1,5 @@
 /* global System,Uint8Array,Blob */
+/* eslint-disable no-console, no-unused-vars */
 import { Color, Line, Point, pt, rect, Rectangle, Transform } from 'lively.graphics';
 import { string, obj, arr, num, promise, tree, Path as PropertyPath } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -3549,14 +3550,14 @@ export class Path extends Morph {
     }
 
     return pathNode
-      ? findClosestPointOnPath(pathNode, fromPoint, nSamples, iterations)
+      ? findClosestPointOnPath(pathNode, fromPoint, nSamples, iterations) // eslint-disable-line no-use-before-define
       : { length: 0, point: fromPoint };
 
     function findClosestPointOnPath (
       pathNode, pos, nSamples = 10, iterations = 3,
       fromLength = 0, toLength = pathNode.getTotalLength(), iteration = 0
     ) {
-      const samples = samplePathPoints(pathNode, toLength, fromLength, nSamples);
+      const samples = samplePathPoints(pathNode, toLength, fromLength, nSamples); // eslint-disable-line no-use-before-define
       let minDist = Infinity; let minIndex = -1;
       for (const [point, _, i] of samples) {
         const dist = pos.dist(point);
