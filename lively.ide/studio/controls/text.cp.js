@@ -372,8 +372,8 @@ const RichTextControl = component(PropertySection, {
     }, {
       name: 'add button',
       tooltip: 'Install a custom font',
-      textAndAttributes: ['', {
-        fontFamily: 'Material Icons',
+      textAndAttributes: ['', {
+        fontFamily: 'Tabler Icons',
         fontSize: 18,
         fontWeight: '900'
       }]
