@@ -360,7 +360,7 @@ export class ViewModel {
   reifyBindings () {
     delete this._ui;
     for (let {
-      target, model, signal, handler,
+      target, model, signal, handler, varMapping,
       override = false, converter = false, updater = false
     } of this.bindings) {
       try {
@@ -373,7 +373,8 @@ export class ViewModel {
           epiConnect(target, signal, this, handler, {
             override,
             converter,
-            updater
+            updater,
+            varMapping
           });
         };
         if (model) target = this.view.getSubmorphNamed(model).viewModel;
