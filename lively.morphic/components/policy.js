@@ -490,10 +490,11 @@ export class StylePolicy {
   }
 
   getConfig () {
-    const {
+    let {
       _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
       _localComponentStates: states
     } = this;
+    if (!auto) auto = this.parent;
     const breakpoints = this.getBreakpointStore()?.getConfig();
     const spec = { auto, click, hover };
     if (states) spec.states = states;
