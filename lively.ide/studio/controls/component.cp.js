@@ -45,7 +45,7 @@ export class ComponentSelectionControl extends ViewModel {
       await this.ui.policyTypePin.whenFontLoaded();
       this.ui.policyTypePin.fit();
       this.ui.policyTypePin.readOnly = !this.editable;
-      this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'pointer';
+      this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'auto';
     }
     if (prop === 'component') {
       // this is not reached after the view has been mounted
