@@ -867,6 +867,7 @@ export class LivelyWorld extends World {
 
   showHaloFor (target, pointerId = this.firstHand && this.firstHand.pointerId, focus = true) {
     let halo;
+    if (target._responsiveHalo) target._responsiveHalo.remove();
     if (!Halo) return;
     if (!obj.isArray(target) && !target.halosEnabled) return;
     if (this.halos().filter(halo => halo.target === target).length > 0) return;
