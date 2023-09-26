@@ -727,6 +727,9 @@ export class ComponentBrowserModel extends ViewModel {
           this.sectionMaster = ProjectSection; // eslint-disable-line no-use-before-define
         }
       },
+      SearchComponentsNotice: {
+        initialize () { this.SearchComponentsNotice = SearchComponentsNotice; }
+      },
       isPrompt: { get () { return true; } },
       isEpiMorph: {
         get () { return true; }
@@ -1225,6 +1228,7 @@ export class ComponentBrowserModel extends ViewModel {
 
   showSearchComponensNotice () {
     const { masterComponentList } = this.ui;
+    const { SearchComponentsNotice } = this;
     const notice = part(SearchComponentsNotice);
     masterComponentList.clipMode = 'hidden';
     masterComponentList.submorphs = [notice];
@@ -1467,6 +1471,16 @@ const SearchComponentsNotice = component({
     }]
 });
 
+const SearchComponentsNoticeDark = component(SearchComponentsNotice, {
+  submorphs: [{
+    name: 'component box',
+    fontColor: Color.rgba(255, 255, 255, 0.25)
+  }, {
+    name: 'notice',
+    fontColor: Color.rgba(255, 255, 255, 0.25)
+  }]
+});
+
 const ComponentBrowser = component({
   defaultViewModel: ComponentBrowserModel,
   reactsToPointer: false,
@@ -1695,7 +1709,8 @@ const ComponentBrowserPopup = component(PopupWindow, {
 const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
   master: DarkPopupWindow,
   viewModel: {
-    sectionMaster: ProjectSectionDark
+    sectionMaster: ProjectSectionDark,
+    SearchComponentsNotice: SearchComponentsNoticeDark
   },
   layout: new TilingLayout({
     axis: 'column',
@@ -1750,7 +1765,12 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
         },
         {
           name: 'behavior toggle',
-          master: LabeledCheckbox
+          master: LabeledCheckbox,
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['Enable behavior', null],
+            fontColor: Color.white
+          }]
         }, {
           name: 'edit button',
           master: ButtonDarkDefault,
