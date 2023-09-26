@@ -787,7 +787,7 @@ export class Project {
   async getAssets (type) {
     switch (type) {
       case 'image':
-        return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(/gif|jpeg|jpg|png|webp|jxl/));
+        return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(/gif|jpeg|jpg|png|webp|jxl/)).sort((a, b) => ('' + a).localeCompare(b));
     }
   }
 }
