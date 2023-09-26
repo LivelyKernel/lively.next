@@ -39,6 +39,12 @@ class ModeSelectorModel extends ViewModel {
       selectedItem: {},
       enabled: {
         defaultValue: true
+      },
+      selectedLabelMaster: {
+        defaultValue: ModeSelectorLabelSelected // eslint-disable-line no-use-before-define
+      },
+      unselectedLabelMaster: {
+        defaultValue: ModeSelectorLabel // eslint-disable-line no-use-before-define
       }
     };
   }
@@ -71,7 +77,7 @@ class ModeSelectorModel extends ViewModel {
 
   createLabels () {
     this.view.submorphs = this.items.map((item) => {
-      const label = part(ModeSelectorLabel, { // eslint-disable-line no-use-before-define
+      const label = part(this.selectedLabelMaster, { // eslint-disable-line no-use-before-define
         textString: item.text,
         name: item.name,
         tooltip: item.tooltip
@@ -93,22 +99,22 @@ class ModeSelectorModel extends ViewModel {
       this.ui.labels.forEach(l => {
         if (l.name !== itemName) {
           l.withAnimationDo(() => {
-            l.master = { auto: ModeSelectorLabel };// eslint-disable-line no-use-before-define
+            l.master = { auto: this.unselectedLabelMaster };// eslint-disable-line no-use-before-define
           }, { duration: 200 });
         }
       });
       const labelToSelect = this.ui.labels.find((label) => label.name === itemName);
       await labelToSelect.withAnimationDo(() => {
-        labelToSelect.master = { auto: ModeSelectorLabelSelected }; // eslint-disable-line no-use-before-define
+        labelToSelect.master = { auto: this.selectedLabelMaster }; // eslint-disable-line no-use-before-define
       }, { duration: 200 });
     } else {
       // Selected Item changed programmatically
       this.ui.labels.forEach(l => {
         if (l.name !== itemName) {
-          l.master = { auto: ModeSelectorLabel }; // eslint-disable-line no-use-before-define
+          l.master = { auto: this.unselectedLabelMaster }; // eslint-disable-line no-use-before-define
         }
       });
-      this.ui.labels.find((label) => label.name === itemName).master = { auto: ModeSelectorLabelSelected }; // eslint-disable-line no-use-before-define
+      this.ui.labels.find((label) => label.name === itemName).master = { auto: this.selectedLabelMaster }; // eslint-disable-line no-use-before-define
     }
 
     this.selectedItem = itemName;
@@ -128,9 +134,19 @@ const ModeSelectorLabel = component({
   textString: 'a mode selector label'
 });
 
+const ModeSelectorLabelDark = component(ModeSelectorLabel, {
+  fill: Color.transparent,
+  fontColor: Color.white
+});
+
 const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
   fill: Color.black.withA(0.4),
   fontColor: Color.white
+});
+
+const ModeSelectorLabelSelectedDark = component(ModeSelectorLabel, {
+  fill: Color.white.withA(0.8),
+  fontColor: Color.black
 });
 
 const ModeSelector = component({
@@ -152,4 +168,12 @@ const ModeSelector = component({
   ]
 });
 
-export { ModeSelector };
+const ModeSelectorDark = component(ModeSelector, {
+  viewModelClass: ModeSelectorModel,
+  viewModel: {
+    selectedLabelMaster: ModeSelectorLabelSelectedDark,
+    unselectedLabelMaster: ModeSelectorLabelDark
+  }
+});
+
+export { ModeSelector, ModeSelectorDark };
