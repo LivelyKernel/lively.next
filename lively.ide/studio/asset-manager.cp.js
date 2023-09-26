@@ -1,5 +1,5 @@
 /* global FormData */
-import { component, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
+import { component, morph, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
 
 import { pt, Color } from 'lively.graphics';
 import { DarkPopupWindow } from './shared.cp.js';
@@ -8,12 +8,14 @@ import { without } from 'lively.morphic/components/core.js';
 import { ComponentPreviewDark } from './component-browser.cp.js';
 import { LinearGradient } from 'lively.graphics/color.js';
 
-import { ButtonDarkDefault, DarkButton } from 'lively.components/buttons.cp.js';
+import { ButtonDarkDefault, SystemButton, DarkButton } from 'lively.components/buttons.cp.js';
 import { resource } from 'lively.resources';
 import { FileStatusWarning } from '../js/browser/ui.cp.js';
 import { promise } from 'lively.lang';
 import { once } from 'lively.bindings';
-import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
+import { ModeSelectorDark } from 'lively.components/widgets/mode-selector.cp.js';
+import { InputLineDefault } from 'lively.components/inputs.cp.js';
+import { Spinner } from './shared.cp.js';
 
 class AssetPreviewModel extends ViewModel {
   static get properties () {
@@ -24,7 +26,7 @@ class AssetPreviewModel extends ViewModel {
       assetManager: {},
       expose: {
         get () {
-          return ['onMouseDown'];
+          return ['onMouseDown', 'assetName'];
         }
       }
     };
@@ -43,9 +45,20 @@ class AssetPreviewModel extends ViewModel {
 const AssetPreviewUnselected = component(ComponentPreviewDark, {
   name: 'asset preview',
   defaultViewModel: AssetPreviewModel,
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsVertically: true,
+    padding: rect(5, 5, 0, 0),
+    resizePolicies: [['component name', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
+  }),
   submorphs: [
     {
       name: 'preview container',
+      extent: pt(120.0000, 80.0000),
       submorphs: [{
         name: 'preview holder',
         type: Image
@@ -78,6 +91,21 @@ const AssetPreview = component(AssetPreviewUnselected, {
 });
 
 class AssetManagerPopupModel extends ViewModel {
+  static get properties () {
+    return {
+      isPrompt: { get () { return true; } },
+      isEpiMorph: {
+        get () { return true; }
+      },
+      isHaloItem: { get () { return true; } }
+
+    };
+  }
+
+  get expose () {
+    return ['activate', 'isPrompt', 'isEpiMorph', 'isHaloItem'];
+  }
+
   get bindings () {
     return [
       {
@@ -87,9 +115,44 @@ class AssetManagerPopupModel extends ViewModel {
       },
       { target: 'upload button', signal: 'onMouseDown', handler: 'openFilePicker' },
       { target: 'delete button', signal: 'onMouseDown', handler: 'deleteAsset' },
-      { target: 'selection button', signal: 'onMouseDown', handler: 'confirm' }
+      { target: 'selection button', signal: 'onMouseDown', handler: 'confirm' },
+      {
+        target: 'search input',
+        signal: 'inputChanged',
+        handler: 'filterAssets'
+      }
 
     ];
+  }
+
+  filterAssets () {
+    debugger;
+    const needle = this.ui.searchInput.textString.toLowerCase();
+    this.ui.assets.submorphs.forEach(s => {
+      s.visible = s.isLayoutable = true;
+    });
+    if (needle.trim() === '') {
+      return;
+    }
+    this.ui.assets.submorphs.forEach(s => {
+      if (!s.assetName.toLowerCase().includes(needle)) s.visible = s.isLayoutable = false;
+    });
+  }
+
+  confirm () {
+    this._promise.resolve(this.selectedAsset.imageUrl);
+    this.close();
+  }
+
+  async activate (pos) {
+    const { view } = this;
+    view.doNotAcceptDropsForThisAndSubmorphs();
+    view.openInWorld();
+    if (!pos) view.center = $world.visibleBounds().center();
+    else view.position = pos;
+
+    this._promise = promise.deferred();
+    return this._promise.promise;
   }
 
   async deleteAsset () {
@@ -102,7 +165,7 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   selectAssetEntry (assetEntryModel) {
-    if (this.selectedAsset) this.selectedAsset.view.master.setState = null;
+    if (this.selectedAsset) this.selectedAsset.view.master.setState(null);
     this.selectedAsset = assetEntryModel;
     this.ui.deleteButton.visible = true;
     assetEntryModel.view.master.setState('selected');
@@ -126,14 +189,14 @@ class AssetManagerPopupModel extends ViewModel {
     const files = await window.showOpenFilePicker(pickerOpts);
     for (let assetFile of files) {
       let asset = await assetFile.getFile();
-      await this.uploadAsset(asset);
+      const overWritten = await this.uploadAsset(asset);
+      if (overWritten) this.needsListRefreshed = true;
     }
 
-    await this.listAssets();
+    await this.listAssets(true);
   }
 
   async uploadAsset (file) {
-    let overwriteAsset = false;
     const fd = new FormData();
     fd.append('file', file, file.name);
 
@@ -148,18 +211,17 @@ class AssetManagerPopupModel extends ViewModel {
       const p = promise.deferred();
       once(cancelButton, 'onMouseDown', () => p.resolve(false));
       once(proceedButton, 'onMouseDown', () => p.resolve(true));
-      if (!await p.promise) {
+
+      if (!(await p.promise)) {
         this.resetStatusText();
         return;
       }
-      overwriteAsset = true;
+      this.needsListRefreshed = true;
       await assetFile.remove();
       this.resetStatusText();
     }
     res = res.join(`/upload?uploadPath=${encodeURIComponent(uploadPath)}`);
     await res.write(fd);
-
-    await this.listAssets(overwriteAsset);
   }
 
   resetStatusText () {
@@ -167,12 +229,30 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   async viewDidLoad () {
+    this.ui.assetTypeSelector.enabled = false;
+    this.view.visible = false;
+    const li = $world.showLoadingIndicatorFor(null, 'Enumerating project assets...');
     await this.listAssets();
     this.ui.selectionButton.disable();
+    this.view.visible = true;
+    li.remove();
   }
 
-  async listAssets (forceUpdate) {
-    if (forceUpdate) this.view.get('assets').submorphs = [];
+  async listAssets (updateAtRuntime = false) {
+    if (this.needsListRefreshed) this.view.get('assets').submorphs = [];
+    this.needsListRefreshed = false;
+    let fader, li;
+    if (updateAtRuntime) {
+      fader = morph({
+        name: 'fader',
+        position: this.view.position,
+        extent: this.view.extent,
+        fill: Color.rgbHex('202020'),
+        opacity: 0.8
+      });
+      $world.addMorph(fader);
+      li = $world.showLoadingIndicatorFor(this.view, 'Enumerating project assets');
+    }
     (await $world.openedProject.getAssets('image')).forEach(a => {
       const assetName = a.nameWithoutExt();
       if (!this.view.get(assetName)) {
@@ -187,19 +267,14 @@ class AssetManagerPopupModel extends ViewModel {
         }));
       }
     });
-  }
-
-  async activate (pos) {
-    // popup specific
-    const { view } = this;
-    view.doNotAcceptDropsForThisAndSubmorphs();
-    view.openInWorld();
-    view.clipMode = 'hidden';
-    if (!pos) view.center = $world.visibleBounds().center();
-    else view.position = pos;
+    if (updateAtRuntime) {
+      fader.remove();
+      li.remove();
+    }
   }
 
   close () {
+    if (this._promise) this._promise.resolve(null);
     this.view.remove();
   }
 }
@@ -208,16 +283,13 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
   defaultViewModel: AssetManagerPopupModel,
   styleClasses: [],
   hasFixedPosition: false,
-  extent: pt(515.0000, 41.0000),
+  extent: pt(440, 140),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
     resizePolicies: [['header menu', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['mode selector', {
       height: 'fixed',
       width: 'fill'
     }], ['status prompt', {
@@ -241,43 +313,103 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
         reactsToPointer: false,
         textAndAttributes: ['Browse Components', null]
       }]
-    }, {
-      name: 'mode selector',
-      layout: new TilingLayout({
-        align: 'center',
-        axisAlign: 'center',
-        spacing: 5
-      })
-    }, add(part(ModeSelector, {
-      viewModel: {
-        items: [
-          { text: 'Images', name: 'images', tooltip: 'demo one' },
-          { text: 'Video', name: 'demo two', tooltip: 'demo two' },
-          { text: 'Audio', name: 'demo three', tooltip: 'demo three' }
-        ]
-      },
-      name: 'assets'
-    })),
-    add({
-      name: 'assets',
-      extent: pt(515.0000, 16.5000),
-      fill: Color.transparent,
-      layout: new TilingLayout({
-        hugContentsVertically: true,
-        resizePolicies: [['button wrapper', {
-          height: 'fixed',
-          width: 'fill'
-        }]],
-        spacing: 5
-      })
-    }), add({
-      name: 'button wrapper',
-      extent: pt(483.0000, 33.9000),
-      fill: Color.transparent,
+    }, add(part(ModeSelectorDark, {
+      name: 'asset type selector',
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
         justifySubmorphs: 'spaced',
+        spacing: 5
+      }),
+      viewModel: {
+        items: [
+          { text: 'Images', name: 'images', tooltip: 'Image' },
+          { text: 'Video', name: 'video', tooltip: 'Video Assets' },
+          { text: 'Audio', name: 'audio', tooltip: 'Audio Assets' }
+        ]
+      }
+    })),
+    add({
+      name: 'search input wrapper',
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(8, 0, -8, 0),
+        resizePolicies: [['search input', {
+          height: 'fixed',
+          width: 'fill'
+        }]]
+      }),
+      borderRadius: 3,
+      borderColor: Color.rgb(23, 160, 251),
+      extent: pt(388.4, 42.6),
+      position: pt(120, 541),
+      submorphs: [{
+        type: Text,
+        name: 'search icon',
+        extent: pt(17.5, 18),
+        fontSize: 18,
+        fontColor: Color.rgba(0, 0, 0, 0.5),
+        cursorWidth: 1.5,
+        fixedWidth: true,
+        padding: rect(1, 1, 0, 0),
+        textAndAttributes: ['', {
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontWeight: '900',
+          lineHeight: 1.2,
+          textStyleClasses: ['fas']
+        }]
+      }, part(InputLineDefault, {
+        name: 'search input',
+        dropShadow: null,
+        highlightWhenFocused: false,
+        borderColor: Color.rgb(224, 224, 224),
+        borderRadius: 2,
+        extent: pt(445.3, 34.3),
+        fill: Color.rgba(255, 255, 255, 0),
+        padding: rect(6, 4, -4, 2),
+        position: pt(11.9, 3.8),
+        placeholder: 'Search for components...'
+      }), part(Spinner, {
+        name: 'spinner',
+        opacity: .7,
+        viewModel: { color: 'black' },
+        visible: false
+      }), {
+        type: Text,
+        name: 'search clear button',
+        nativeCursor: 'pointer',
+        visible: false,
+        fontColor: Color.rgba(0, 0, 0, 0.5),
+        fontSize: 25,
+        lineHeight: 2,
+        padding: rect(1, 1, 9, 0),
+        textAndAttributes: ['', {
+          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontWeight: '900',
+          lineHeight: 1
+        }]
+      }]
+    }),
+    add({
+      name: 'assets',
+      extent: pt(440, 280),
+      fill: Color.transparent,
+      clipMode: 'auto',
+      layout: new TilingLayout({
+        align: 'center',
+        spacing: 5,
+        wrapSubmorphs: true
+      })
+    }), add({
+      name: 'button wrapper',
+      extent: pt(440, 33.9000),
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        align: 'right',
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        padding: rect(10, 10, 0, 0),
         spacing: 15
       }),
       submorphs: [
@@ -289,7 +421,7 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
           }),
           fill: Color.transparent,
           submorphs: [
-            {
+            part(SystemButton, {
               name: 'upload button',
               borderColor: Color.rgb(112, 123, 124),
               borderRadius: 5,
@@ -315,8 +447,8 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
                   fontFamily: 'IBM Plex Sans'
                 }]
               }]
-            },
-            {
+            }),
+            part(SystemButton, {
               name: 'delete button',
               borderColor: Color.rgb(112, 123, 124),
               borderRadius: 5,
@@ -343,9 +475,9 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
                   fontFamily: 'IBM Plex Sans'
                 }]
               }]
-            }
+            })
           ]
-        }, {
+        }, part(SystemButton, {
           name: 'selection button',
           borderColor: Color.rgb(112, 123, 124),
           borderRadius: 5,
@@ -367,11 +499,11 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
               fontFamily: 'IBM Plex Sans'
             }]
           }]
-        }]
+        })]
     }), add({
       name: 'status prompt',
       visible: false,
-      extent: pt(342.0000, 62.5000),
+      extent: pt(440, 62.5000),
       layout: new TilingLayout({
         axisAlign: 'center',
         hugContentsVertically: true,
