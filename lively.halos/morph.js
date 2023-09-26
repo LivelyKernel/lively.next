@@ -273,6 +273,9 @@ class HaloPropertyDisplay extends Text {
     if (this.bounds().insetBy(10).intersects(activeButton.bounds())) {
       this.position = pt(activeButton.topRight.x + 10, this.position.y);
     }
+    if (this.halo.target._responsiveHalo) {
+      this.topRight = this.position;
+    }
   }
 
   disable () {
@@ -2279,7 +2282,7 @@ export default class Halo extends Morph {
 
   onDragEnd (evt) {
     this.dragHalo().stop();
-    this.dragHalo().visible = true;
+    if (!this.target._responsiveHalo) { this.dragHalo().visible = true; }
   }
 
   customDrag (evt) {
