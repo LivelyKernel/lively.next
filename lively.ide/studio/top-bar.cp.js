@@ -411,6 +411,8 @@ export class TopBarModel extends ViewModel {
           }
           if (!changeMode) return;
           config.ide.studio.canvasModeEnabled = !config.ide.studio.canvasModeEnabled;
+          if (config.ide.studio.canvasModeEnabled) document.body.style['overscroll-behavior-x'] = 'none';
+          else document.body.style['overscroll-behavior-x'] = 'auto';
           $world.resetScaleFactor();
           !config.ide.studio.canvasModeEnabled ? this.toggleMiniMap(false) : this.toggleMiniMap();
         }
