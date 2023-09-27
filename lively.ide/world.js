@@ -404,6 +404,7 @@ export class LivelyWorld extends World {
     this.opacity = 0;
     this.onWindowResize();
     // some meta stuff...
+    if (config.ide.studio.canvasModeEnabled) { document.body.style['overscroll-behavior-x'] = 'none'; }
     if (lively.modules) lively.modules.removeHook('fetch', window.__logFetch);
     this.animate({ opacity: 1, blur: 3, duration: 1000, easing: easings.inOutExpo }).then(async () => {
       let li;
