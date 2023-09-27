@@ -218,6 +218,7 @@ export default class ExpressionSerializer {
 function getExpression (name, val, ctx) {
   const { exprSerializer, asExpression, nestedExpressions } = ctx;
   try {
+    if (obj.isString(val) || obj.isNumber(val)) return val;
     if (val[Symbol.for('__LivelyClassName__')]) {
       val = exprSerializer.exprStringDecode(exprSerializer.getExpressionForFunction(val));
     } else {
