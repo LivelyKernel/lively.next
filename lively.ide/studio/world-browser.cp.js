@@ -356,10 +356,7 @@ export class WorldBrowserModel extends ViewModel {
         defaultValue: false
       },
       showCloseButton: {
-        set (v) {
-          this.setProperty('showCloseButton', v);
-          if (this.ui.closeButton) this.updateCloseButtonVisibility();
-        }
+        defaultValue: true
       },
       db: {
         serialize: false,
@@ -367,6 +364,12 @@ export class WorldBrowserModel extends ViewModel {
       }
 
     };
+  }
+
+  async onRefresh (prop) {
+    if (prop == 'showCloseButton' && this.ui.closeButton) {
+      this.updateCloseButtonVisibility();
+    }
   }
 
   async confirm (label) {
@@ -406,7 +409,8 @@ export class WorldBrowserModel extends ViewModel {
     }
   }
 
-  updateCloseButtonVisibility () {
+  async updateCloseButtonVisibility () {
+    await this.ui.closeButton.whenRendered();
     this.ui.closeButton.visible = this.showCloseButton;
   }
 
@@ -417,8 +421,8 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   viewDidLoad () {
-    this.updateCloseButtonVisibility();
     this.displayItems();
+    this.onRefresh('showCloseButton');
   }
 
   modeChanged (mode) {
@@ -1353,7 +1357,6 @@ const WorldBrowser = component({
   }, part(RedButton, {
     name: 'close button',
     extent: pt(94.6, 30),
-    label: 'CLOSE',
     position: pt(14.9, 531),
     submorphs: [{
       name: 'label',
