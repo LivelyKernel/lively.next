@@ -1550,32 +1550,52 @@ export class LivelyWorld extends World {
 class FileWatcher {
   constructor () {
     this.fileActions = {};
+    this.regexToWatch = [];
     this.onFileSave.bind(this);
     subscribe('file/save', this.onFileSave.bind(this));
   }
 
   clear () {
     this.fileActions = {};
+    this.regexToWatch = [];
   }
 
-  registerFileAction (file, cB) {
-    if (this.fileActions[file]) {
-      if (Array.isArray(this.fileActions[file])) this.fileActions[file].push(cB);
-      else this.fileActions[file] = [this.fileActions[file], cB];
-    } else { this.fileActions[file] = cB; }
+  registerFileAction (fileResourceOrRegex, cB) {
+    if (fileResourceOrRegex.isResource) {
+      const file = fileResourceOrRegex;
+      if (this.fileActions[file]) {
+        if (Array.isArray(this.fileActions[file])) this.fileActions[file].push(cB);
+        else this.fileActions[file] = [this.fileActions[file], cB];
+      } else { this.fileActions[file] = cB; }
+      return;
+    }
+    const newRegex = String(fileResourceOrRegex);
+    const alreadyRegisteredRegex = this.regexToWatch.find((item) => item.regex === newRegex);
+    if (alreadyRegisteredRegex) {
+      if (Array.isArray(alreadyRegisteredRegex.actions)) alreadyRegisteredRegex.actions.push(cB);
+      else alreadyRegisteredRegex.actions = [alreadyRegisteredRegex.actions, cB];
+    } else alreadyRegisteredRegex.actions = cB;
   }
 
-  unregisterFileActions (file) {
-    this.fileActions[file] = null;
+  unregisterFileActions (fileResourceOrRegex) {
+    if (fileResourceOrRegex.isResource) this.fileActions[fileResourceOrRegex] = null;
+    else {
+      const regexToFind = String(fileResourceOrRegex);
+      this.regexToWatch = this.regexToWatch.filter((item) => item.regex !== regexToFind);
+    }
   }
 
   async onFileSave (savedFileData) {
-    if (!this.fileActions[savedFileData.resource]) return;
-    const actions = this.fileActions[savedFileData.resource];
-    if (Array.isArray(actions)) {
-      for (let action of actions) {
-        await action();
-      }
-    } else await actions();
+    const actions = this.fileActions[savedFileData.resource] || [];
+
+    for (let regexItem of this.regexToWatch) {
+      const regex = new RegExp(regexItem.regex);
+      if (regex.test(savedFileData.url)) actions.push(regexItem.actions);
+    }
+
+    if (!actions.length > 0) return;
+    for (let action of actions) {
+      await action();
+    }
   }
 }
