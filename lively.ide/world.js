@@ -1563,18 +1563,14 @@ class FileWatcher {
   registerFileAction (fileResourceOrRegex, cB) {
     if (fileResourceOrRegex.isResource) {
       const file = fileResourceOrRegex;
-      if (this.fileActions[file]) {
-        if (Array.isArray(this.fileActions[file])) this.fileActions[file].push(cB);
-        else this.fileActions[file] = [this.fileActions[file], cB];
-      } else { this.fileActions[file] = cB; }
+      if (this.fileActions[file]) { this.fileActions[file].push(cB); } else this.fileActions[file] = [cB];
       return;
     }
+
     const newRegex = String(fileResourceOrRegex);
     const alreadyRegisteredRegex = this.regexToWatch.find((item) => item.regex === newRegex);
-    if (alreadyRegisteredRegex) {
-      if (Array.isArray(alreadyRegisteredRegex.actions)) alreadyRegisteredRegex.actions.push(cB);
-      else alreadyRegisteredRegex.actions = [alreadyRegisteredRegex.actions, cB];
-    } else alreadyRegisteredRegex.actions = cB;
+    if (alreadyRegisteredRegex.actions) alreadyRegisteredRegex.actions.push(cB);
+    else alreadyRegisteredRegex.actions = [cB];
   }
 
   unregisterFileActions (fileResourceOrRegex) {
