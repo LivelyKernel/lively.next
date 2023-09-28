@@ -541,7 +541,7 @@ class NameHaloItem extends HaloItem {
         fontColor: Color.white,
         padding: Rectangle.inset(0, 0, 4, 0),
         name: 'master link',
-        tooltip: meta ? 'Located in ' + meta.moduleId : 'This morph is assigned an empty style policy.\nThis means there is no master component that\ndictates the styling of this morph at any time.\nTo fix this, assign a master component to a state,\nbreakpoint or event state.'
+        tooltip: meta ? 'Located in ' + meta.moduleId : 'This morph is assigned an empty style policy.\nThis means there is no master component that\ndictates the styling of this morph at any time.\nTo fix this, assign a master component to a custom state,\nbreakpoint or event state.'
       }));
       meta && connect(masterLink, 'onMouseDown', async () => {
         const { findComponentDef, getMorphNode, getProp } = await System.import('lively.ide/components/helpers.js');
