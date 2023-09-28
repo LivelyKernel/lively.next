@@ -319,7 +319,7 @@ export default class Renderer {
         const childNodes = Array.from(node.childNodes);
         if (morph.isPath) { childNodes.shift(); childNodes.pop(); } else if (morph.isImage || morph.isCanvas || morph.isHTMLMorph) childNodes.shift();
         childNodes.forEach((n) => {
-          if (n !== wrapperNode) wrapperNode.appendChild(n);
+          if (n !== wrapperNode && n !== wrapperNode.parentElement) { wrapperNode.appendChild(n); }
         });
       }
       return wrapperNode;
