@@ -61,12 +61,12 @@ export class BreakpointSliderModel extends ViewModel {
     let sections = {
       horizontal: [
         0, 'mobile-screen',
-        768, 'tablet-screen-button',
+        768, 'mi-tablet',
         1024, 'desktop'
       ],
       vertical: [
         0, 'mobile-screen',
-        1024, 'tablet-screen-button',
+        1024, 'mi-tablet',
         1440, 'desktop'
       ]
     };
