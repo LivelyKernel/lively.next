@@ -42,7 +42,7 @@ export class Text extends Morph {
     return new morph({
       type: 'text',
       value,
-      fontFamily: "IBM Plex Sans",
+      fontFamily: 'IBM Plex Sans',
       fontColor: Color.almostBlack,
       fontSize: 11,
       ...props
@@ -618,9 +618,7 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
-          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) {
-            $world.logError('Invalid Font Name!');
-          };
+          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) $world.logError('Invalid Font Name!');
           this.setProperty('fontFamily', sanitizeFont(fontFamily));
           document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
             .then(() => {
@@ -2736,8 +2734,10 @@ export class Text extends Morph {
     ) {
       return;
     }
+
+    this.renderingState.needsFit = false;
+
     if (this.document) {
-      this.renderingState.needsFit = false;
       const { fixedWidth, fixedHeight } = this;
 
       if (fixedHeight && fixedWidth) return;
