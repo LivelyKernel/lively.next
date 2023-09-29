@@ -35,6 +35,9 @@ export class VideoMorph extends HTMLMorph {
           this.setVideoProperty('autoplay', !!aBool);
         }
       },
+      muted: {
+        defaultValue: false
+      },
       loop: {
         defaultValue: false,
         set (aBool) {
@@ -146,7 +149,7 @@ export class VideoMorph extends HTMLMorph {
   }
 
   resetHTML () {
-    const options = ` ${this.loop ? 'loop' : ''} ${this.controls ? 'controls' : ''} ${this.autoplay ? 'autoplay' : ''}`;
+    const options = ` ${this.loop ? 'loop' : ''} ${this.controls ? 'controls' : ''} ${this.autoplay ? 'autoplay' : ''} ${this.muted ? 'muted' : ''}`;
     const widthPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-horizontal') ? '100%' : 'auto';
     const heightPolicy = (this.videoLayout === 'cover' || this.videoLayout === 'fill-vertical') ? '100%' : 'auto';
     this.html = `
@@ -166,4 +169,3 @@ ${this.badBrowserMessage}
     return $world.defaultMenuItems(this);
   }
 }
-
