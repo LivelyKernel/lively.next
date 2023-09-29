@@ -281,7 +281,6 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
           return [
             { target: 'add vertical breakpoint btn', signal: 'onMouseDown', handler: 'addVerticalBreakpoint' },
             { target: 'add horizontal breakpoint btn', signal: 'onMouseDown', handler: 'addHorizontalBreakpoint' },
-            // it would be nice to have support for something like this...
             { target: /horizontal breakpoint/, signal: 'onMouseDown', handler: 'jumpToHorizontalBreakpoint', converter: '() => source' },
             { target: /vertical breakpoint/, signal: 'onMouseDown', handler: 'jumpToVerticalBreakpoint', converter: '() => source' },
             { target: /vertical breakpoint/, signal: 'requestRemove', handler: 'removeVerticalBreakpoint' },
@@ -322,7 +321,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   focusOn (target) {
     this.target = target;
-    target._responsiveHalo = this.view;
+    this.target._responsiveHalo = this.view;
     epiConnect(target, 'onChange', this, 'relayout');
     this.update();
   }
@@ -509,9 +508,6 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     });
   }
 }
-
-// part(ResponsiveLayoutHalo).openInWorld().focusOn(this.get('test target'))
-
 export const ResponsiveLayoutHalo = component({
   defaultViewModel: ResponsiveLayoutHaloModel,
   name: 'responsive layout halo',

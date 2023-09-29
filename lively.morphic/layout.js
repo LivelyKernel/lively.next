@@ -2,8 +2,6 @@ import { pt, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 
-// add my commento
-
 class Layout {
   constructor (config = {}) {
     const {

@@ -1072,6 +1072,8 @@ export class Text extends Morph {
           fontStretch: 'normal',
           fontSize: (attr && attr.fontSize) || this.fontSize || '12',
           lineHeight: (attr && attr.lineHeight) || this.lineHeight,
+          // Although we do not officially support it, this code can handle `fontFamily` values enumerating multiple fonts with comman.
+          // Otherwise, old components could nuke the whole session.
           fontFamily: ((attr && attr.fontFamily) || this.fontFamily).split(',')[0]
         };
       }

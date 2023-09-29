@@ -907,7 +907,7 @@ describe('components', () => {
 });
 
 describe('breakpoints', () => {
-  it('propertly initializes breakpoints from spec', () => {
+  it('properly initializes breakpoints from spec', () => {
     const bpStore = BreakpointStore.from([
       [pt(100, 0), d2],
       [pt(0, 100), d3],

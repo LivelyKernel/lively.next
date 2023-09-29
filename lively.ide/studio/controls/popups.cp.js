@@ -26,7 +26,9 @@ export class PopupModel extends ViewModel {
   }
 
   alignAtButton (btn) {
-    this.view.height = 25; // hack
+    // FIXME: Hack that is necessary due to the fact that otherwise,
+    // a wrong initial extent propagates through the layout computation leading to a visible hickup.
+    this.view.height = 25;
     this.view.topRight = btn.globalBounds().bottomRight().addXY(0, 5);
     this.view.topLeft = this.world().visibleBounds().translateForInclusion(this.view.globalBounds()).topLeft();
   }
