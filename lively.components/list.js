@@ -59,8 +59,20 @@ export class ListItemMorph extends Label {
     };
   }
 
+  alreadyDisplayingItem (item, goalWidth) {
+    if (this._gloalWidth !== goalWidth) {
+      this._goalWidth = goalWidth;
+      return false;
+    }
+    if (item.label) return obj.equals(item.label, this.textAndAttributes);
+    if (item.string) return this.textString === item.string;
+    return false;
+  }
+
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    if (this.itemIndex === itemIndex && isSelected === this.isSelected && item.fontFamily === this.fontFamily) return;
+    if (this.alreadyDisplayingItem(item, goalWidth) &&
+        isSelected === this.isSelected &&
+        (!item.fontFamily || item.fontFamily === this.fontFamily)) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
 
