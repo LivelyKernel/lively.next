@@ -299,9 +299,9 @@ export class StylePolicy {
     } else {
       const {
         click, hover, light, dark, breakpoints, states,
-        auto = this._parent, isSplitInline = false
+        auto = this._parent, statePartitionedInline = false
       } = policyOrDescriptor;
-      this._isSplitInline = isSplitInline;
+      this._statePartitionedInline = statePartitionedInline;
       this._parent = auto?.isComponentDescriptor ? auto.stylePolicy : auto;
       if (!this._parent && breakpoints) {
         this._parent = breakpoints[0][1].stylePolicy;
@@ -411,8 +411,8 @@ export class StylePolicy {
     }
   }
 
-  get isSplitInline () {
-    return this._isSplitInline || this.parent?.isSplitInline || this.spec.master?.isSplitInline;
+  get statePartitionedInline () {
+    return this._statePartitionedInline || this.parent?.statePartitionedInline || this.spec.master?.statePartitionedInline;
   }
 
   /**
@@ -890,7 +890,7 @@ export class StylePolicy {
       return subSpec;
     }
 
-    let qualifyingMaster = this.determineMaster(this.isSplitInline ? previousTarget : ownerOfScope);
+    let qualifyingMaster = this.determineMaster(this.statePartitionedInline ? previousTarget : ownerOfScope);
 
     if (!qualifyingMaster) {
       return this.getTopLevelSpec(submorphNameInPolicyContext, subSpec);
@@ -975,10 +975,10 @@ export class StylePolicy {
       if (!states) states = {};
       states[state] = _localComponentStates[state].getSubSpecFor(submorphName);
     }
-    const isSplitInline = !!(click || hover || states);
-    if (!isSplitInline) return this;
+    const statePartitionedInline = !!(click || hover || states);
+    if (!statePartitionedInline) return this;
     return new this.constructor(this.spec, {
-      auto, click, hover, states, isSplitInline, breakpoints
+      auto, click, hover, states, statePartitionedInline, breakpoints
     });
   }
 
