@@ -108,7 +108,6 @@ export class Morph {
           // since else the enclosing applicator is not being notified, the master is now overridden
           const policy = args ? PolicyApplicator.for(this, args, this.master?.parent) : (args === false ? false : null);
           if (this.master?.isPolicyApplicator && this.master?.parent?.[Symbol.for('lively-module-meta')]?.path.length) {
-            // how about we only do this with inline policies?
             this.master.spec.master = policy;
             this._skipMasterReplacement = true;
           } else {

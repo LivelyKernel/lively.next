@@ -48,7 +48,6 @@ export class ComponentSelectionControl extends ViewModel {
       this.ui.policyTypePin.nativeCursor = this.editable ? 'text' : 'auto';
     }
     if (prop === 'component') {
-      // this is not reached after the view has been mounted
       this.component ? this.activate() : this.deactivate();
     }
   }
