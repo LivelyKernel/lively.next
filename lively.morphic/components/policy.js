@@ -360,7 +360,7 @@ export class StylePolicy {
 
   needsBreakpointUpdate (target) {
     const matchingBreakpoint = this.getMatchingBreakpointMaster(target);
-    // if (!matchingBreakpoint) return false;
+    if (typeof matchingBreakpoint === 'undefined') return false;
     if (matchingBreakpoint === (target._lastBreakpoint || null)) { return false; }
     target._lastBreakpoint = matchingBreakpoint;
     return true;
@@ -382,6 +382,7 @@ export class StylePolicy {
    * @param { null|string} componentState - The string encoding a component state known to the policy.
    */
   setState (componentState) {
+    if (this._componentState === componentState) return;
     this._componentState = componentState;
     this.targetMorph?.requestMasterStyling();
   }
