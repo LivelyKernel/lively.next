@@ -93,6 +93,7 @@ class Layout {
     return otherLayout.name() === this.name();
   }
 
+  // FIXME: HUGE CG LOAD
   get layoutableSubmorphs () {
     if (!this.layoutOrder) { this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc(); }
     if (!this.container) return [];

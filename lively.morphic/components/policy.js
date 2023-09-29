@@ -6,8 +6,64 @@ import { withSuperclasses } from 'lively.classes/util.js';
 import { ExpressionSerializer } from 'lively.serializer2';
 
 const skippedValue = Symbol.for('lively.skip-property');
-const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
+const PROPS_TO_RESET = new Set(['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor']);
+const PROPS_EXCLUDED_FROM_OVERRIDDEN_MASTER = new Set(['extent', 'position']);
 const expressionSerializer = new ExpressionSerializer();
+
+class BaseSpec {
+  constructor (spec) {
+    this.installSpec(spec);
+  }
+
+  static init (overriddenSpec) {
+    return new this(overriddenSpec);
+  }
+
+  derive (overriddenSpec) {
+    const derived = Object.create(this);
+    derived.installSpec(overriddenSpec);
+    return derived;
+  }
+
+  installSpec (spec) {
+    for (let prop of getStylePropertiesFor(spec.type)) {
+      if (typeof spec[prop] === 'undefined') {
+        const defaultVal = getDefaultValueFor(spec.type, prop);
+        if (typeof defaultVal === 'undefined') continue;
+        this.setProperty(prop, {
+          value: defaultVal,
+          onlyAtInstantiation: true
+        });
+      } else this.setProperty(prop, spec[prop]);
+    }
+  }
+
+  excludedFromOverridden (propName) {
+    return PROPS_EXCLUDED_FROM_OVERRIDDEN_MASTER.has(propName);
+  }
+
+  getProperty (propName) {
+    let overriddenViaMaster;
+    // FIXME: this wont work. We need a way to take into account the event/state/breakpoint/theme as well.
+    //        since we can only have one prototype, the dispatch has to happen within the specs themselves
+    if (!this.excludedFromOverridden(propName)) { overriddenViaMaster = this.overriddenMaster?.[propName]; }
+    return this._state[propName] || (!overriddenViaMaster?.onlyAtInstantiation && overriddenViaMaster) || super.getProperty(propName);
+  }
+
+  setProperty (propName, value) {
+    this._state[propName] = value;
+  }
+
+  get overriddenMaster () {
+    return this.getProperty('master');
+  }
+
+  applyToMorph (morphToBeStyled, parentOfScope, skipInstantiationProps = true) {
+    for (let propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
+      const val = this.getProperty(propName);
+    }
+  }
+}
 
 /**
  * Function that will wrap a morph definition and declares
@@ -290,6 +346,7 @@ export class StylePolicy {
     if (inlineMaster && arr.isSubset(obj.keys(inlineMaster), ['click', 'auto', 'hover']) && !inlineMaster.auto) {
       inlineMaster.auto = localMaster.parent; // ensure auto is present
     }
+    // FIXME: HUGE GC LOAD, should be done at init time
     if (inlineMaster && !inlineMaster.isPolicy) return new PolicyApplicator({}, inlineMaster); // eslint-disable-line no-use-before-define
     return inlineMaster;
   }
@@ -640,6 +697,13 @@ export class StylePolicy {
     return buildSpec;
   }
 
+  ensurePolicy (policyOrDescriptor) {
+    if (policyOrDescriptor?.isComponentDescriptor) { // top level component definition referenced
+      policyOrDescriptor = policyOrDescriptor.stylePolicy;
+    }
+    return policyOrDescriptor;
+  }
+
   /**
    * Returns the appropriate next level master based on the target morph's event state.
    * @param { Morph } targetMorph - The target morph to base the component dispatch on.
@@ -679,6 +743,38 @@ export class StylePolicy {
     return this._parent; // default to the parent if we are neither of the above
   }
 
+  getCurrentMasterFor (targetMorph) {
+    if (this._currentMaster) return this._currentMaster;
+    return (this._currentMaster = this.ensurePolicy(this.determineMaster(targetMorph)));
+  }
+
+  /**
+   * Alternative more performant version of the spec synthesization which utilizes prototyp
+   * chains instead of merging objects. This reduces the GC pressure when applying policies
+   * allowing for a much faster style policy performance overall.
+   * @param { string } submorphNameInPolicyContext - The name of the sub spec.
+   * @param { Morph } ownerOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching between differnt style policies based on the event state (hover, click).
+   * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
+   * @returns { object } The synthesized spec.
+   */
+  synthesizeSubSpecViaProto (submorphNameInPolicyContext) {
+    return this.getSubSpecFor(submorphNameInPolicyContext);
+  }
+
+  applyToMorph (morphInScope, parentOfScope, previousTarget) {
+    if (morphInScope._skipMasterReplacement) {
+      delete morphInScope._skipMasterReplacement;
+      return;
+    }
+    morphInScope.setProperty('master', this); // might be redundant
+    this.targetMorph = morphInScope;
+
+    if (morphInScope !== parentOfScope && morphInScope.master) {
+      morphInScope._requestMasterStyling = false;
+      return morphInScope.master.apply(morphInScope, previousTarget); // let the policy handle the traversal
+    }
+  }
+
   /**
    * Synthesizes the sub spec corresponding to a particular name
    * of a morph in the submorph hierarchy.
@@ -687,71 +783,48 @@ export class StylePolicy {
    * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps = true) {
-    let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
-
+  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps = true) {
+    const isRootSpecOfPolicy = !submorphNameInPolicyContext;
+    const subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
     if (subSpec.isPolicy) {
       return subSpec;
     }
 
-    let qualifyingMaster = this.determineMaster(ownerOfScope); // taking into account the target morph's event state
-
+    // this can be done just once for the entire scope?
+    let qualifyingMaster = this.getCurrentMasterFor(this.isSplitInline ? previousTarget : ownerOfScope); // taking into account the target morph's event state
     if (!qualifyingMaster) {
-      const rootSpec = { ...subSpec };
-      for (let prop of !submorphNameInPolicyContext ? getStylePropertiesFor(rootSpec.type) : []) {
-        if (typeof rootSpec[prop] === 'undefined') {
-          const defaultVal = getDefaultValueFor(subSpec.type, prop);
-          if (typeof defaultVal === 'undefined') continue;
-          rootSpec[prop] = {
-            value: defaultVal,
-            onlyAtInstantiation: true
-          };
-        }
-      }
-      return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
+      // we do we have to do this every time? This can just be performed at the beginning when then policy is being initialized?
+      return this.createBaseSpecFrom(submorphNameInPolicyContext, subSpec, skipInstantiationProps); // FIXME: always creates new objects!
     }
 
-    let nextLevelSpec = {};
-    if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
-      qualifyingMaster = qualifyingMaster.stylePolicy;
+    const nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps);
+    if (nextLevelSpec.isPolicy) {
+      return nextLevelSpec;
     }
 
-    nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, skipInstantiationProps);
-    if (nextLevelSpec.isPolicy) return nextLevelSpec;
-
-    let synthesized = {}; let { overriddenMaster } = this;
+    const synthesized = {}; // FIXME: HUGE GC LOAD
+    let { overriddenMaster } = this;
     // always check the sub spec for the parentInScope, not the current one!
     if (overriddenMaster) {
-      const overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope);
-      for (let prop in overriddenMasterSynthesizedSpec) {
-        if (overriddenMasterSynthesizedSpec[prop]?.onlyAtInstantiation) {
-          if (skipInstantiationProps) delete overriddenMasterSynthesizedSpec[prop];
-        }
+      let overriddenMasterSynthesizedSpec = overriddenMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget, true);
+      while (overriddenMasterSynthesizedSpec.isPolicy) {
+        overriddenMasterSynthesizedSpec = overriddenMasterSynthesizedSpec.synthesizeSubSpec(null, ownerOfScope, previousTarget, true);
       }
-      Object.assign(
-        synthesized,
-        // fill in the top level props just in case they are needed to serve as "defaults" (propably mostly overridden)
-        nextLevelSpec,
-        // adhere to the overridden props of the structural derivation
-        // we sometimes do not apply implicitly assumed default values for props of the overridden master
-        // at this point we should provide that
-        obj.dissoc(
-          overriddenMasterSynthesizedSpec,
-          !submorphNameInPolicyContext &&
-          !!nextLevelSpec.extent
-            ? ['extent']
-            : []
-        ), // special handling of extent
-        subSpec
-      );
-      // this approach only works for root! We need to be also checking if there is a recently introduced scope?
+      if (isRootSpecOfPolicy && !!nextLevelSpec.extent) {
+        delete overriddenMasterSynthesizedSpec.extent; // overridden masters never override the extent, no matter what
+      }
+
+      Object.assign(synthesized, nextLevelSpec, overriddenMasterSynthesizedSpec, subSpec);
     } else {
-      Object.assign(synthesized, nextLevelSpec, subSpec);
+      Object.assign(synthesized, nextLevelSpec, subSpec); // this can be easily achieved by Object.assign(Object.create(nextLevelSpec), subSpec) at init time, and that is it.
     }
 
+    // always ignore these, so just not apply those in the first place??
     delete synthesized.submorphs;
     delete synthesized.master;
     delete synthesized.name;
+
+    // is this really needed? Kinda, since the only at instantiation can be introduced in any spec level (next, overridden, spec)
     for (let prop in synthesized) {
       if (synthesized[prop]?.onlyAtInstantiation) {
         if (skipInstantiationProps) delete synthesized[prop];
@@ -759,7 +832,24 @@ export class StylePolicy {
       }
     }
 
+    // this can be internalized into the getters and setters of the specs
     return handleTextProps(synthesized);
+  }
+
+  createBaseSpecFrom (submorphNameInPolicyContext, subSpec, skipInstantiationProps) {
+    const rootSpec = { ...subSpec };
+    if (skipInstantiationProps || submorphNameInPolicyContext) return handleTextProps(rootSpec);
+    for (let prop of getStylePropertiesFor(rootSpec.type)) {
+      if (typeof rootSpec[prop] === 'undefined') {
+        const defaultVal = getDefaultValueFor(subSpec.type, prop);
+        if (typeof defaultVal === 'undefined') continue;
+        rootSpec[prop] = {
+          value: defaultVal,
+          onlyAtInstantiation: true
+        };
+      }
+    }
+    return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
   }
 
   /**
@@ -913,25 +1003,19 @@ export class PolicyApplicator extends StylePolicy {
    * to apply themselves to the remainder of the submorph hierarchy.
    * @param { Morph } targetMorph - The root morph of the hierarchy.
    */
-  apply (targetMorph) {
-    targetMorph.withMetaDo({ metaInteraction: true }, () => {
-      this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
+  apply (parentOfScope, previousTarget) {
+    parentOfScope.withMetaDo({ metaInteraction: true }, () => {
+      this._currentMaster = null;
+      this.withSubmorphsInScopeDo(parentOfScope, morphInScope => {
         let submorphName = null;
-        if (morphInScope !== targetMorph) submorphName = morphInScope.name;
-        const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, false);
-        if (obj.isEmpty(synthesizedSpec)) return;
+        if (morphInScope !== parentOfScope) submorphName = morphInScope.name;
+        // FIXME: Do this instead =>
+        // this.synthesizeSubSpecViaProto(submorphName).applyToMorph(morphInScope, parentOfScope, false)
+        const synthesizedSpec = this.synthesizeSubSpec(submorphName, parentOfScope, previousTarget, false);
         if (synthesizedSpec.isPolicy) {
-          if (morphInScope._skipMasterReplacement) {
-            delete morphInScope._skipMasterReplacement;
-            return;
-          }
-          morphInScope.setProperty('master', synthesizedSpec); // might be redundant
-          synthesizedSpec.targetMorph = morphInScope;
-        } else this.applySpecToMorph(morphInScope, synthesizedSpec); // this step enforces the master distribution
-
-        if (morphInScope !== targetMorph && morphInScope.master) {
-          morphInScope._requestMasterStyling = false;
-          return morphInScope.master.apply(morphInScope); // let the policy handle the traversal
+          synthesizedSpec.applyToMorph(morphInScope, parentOfScope, previousTarget);
+        } else {
+          this.applySpecToMorph(morphInScope, synthesizedSpec); // this step enforces the master distribution
         }
       });
     });
@@ -983,13 +1067,14 @@ export class PolicyApplicator extends StylePolicy {
    * @param { boolean } isRoot - Wether or not this is the top most morph in the policy scope.
    */
   applySpecToMorph (morphToBeStyled, styleProps) {
+    if (obj.isEmpty(styleProps)) return;
     if (styleProps.__wasAddedToDerived__) morphToBeStyled.__wasAddedToDerived__ = true;
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
       if (propValue?.onlyAtInstantiation) continue;
       if (propValue === undefined) {
-        if (PROPS_TO_RESET.includes(propName)) {
+        if (PROPS_TO_RESET.has(propName)) {
           propValue = getDefaultValueFor(morphToBeStyled.constructor, propName);
         }
         if (propValue === undefined) continue;
