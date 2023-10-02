@@ -967,6 +967,44 @@ export class StylePolicy {
     return matchingNode ? (unwrapAddCalls && matchingNode.props) || matchingNode : null;
   }
 
+  /**
+   * Analogous to getSubSpecFor but is able to traverse multiple policy scopes
+   * by providing the owner policy names that precede the sub spec name.
+   * @param { string[] } path - The names of the parents to ending with the final sub spec or policy to be retrieved.
+   * @returns { StylePolicy|object }
+   */
+  getSubSpecAt (path, includeWithoutCalls = false, unwrapAddCalls = true) {
+    if (path.length === 0) return this;
+    let curr = this.getSubSpecFor(path.shift(), includeWithoutCalls, unwrapAddCalls);
+    if (curr && path.length > 0) return curr.getSubSpecAt(path, includeWithoutCalls, unwrapAddCalls);
+    return curr;
+  }
+
+  /**
+   * Convenience method, that allows us to directly retrieve sub specs
+   * that style a particular morph.
+   * @param {Morph} aMorph - The morph that is being styled by a spec.
+   * @returns {Object|StylePolicy} The spec or style policy in question.
+   */
+  getSubSpecCorrespondingTo (aMorph) {
+    if (aMorph === this.targetMorph) return this; // not need to search
+    try {
+      return this.getSubSpecAt([...aMorph.ownerChain().filter(m => m.master && !m.isComponent).map(m => m.name).reverse(), aMorph.name]);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  /**
+   * Convenience method that retrieves the (sub) policy which controls the hierarchy the morph is embedded in.
+   * @param {Morph} aMorph - The morph whose scope policy we are interested in.
+   * @returns {StylePolicy} The policy in question.
+   */
+  getSubPolicyFor (aMorph) {
+    while (aMorph && !aMorph.master) aMorph = aMorph.owner;
+    return this.getSubSpecCorrespondingTo(aMorph);
+  }
+
   splitBy (partitioningPolicy, submorphName) {
     const {
       _autoMaster, parent, _clickMaster, _hoverMaster,
@@ -992,19 +1030,6 @@ export class StylePolicy {
     const localSpec = this.getSubSpecFor(submorphName) || {};
     if (!localSpec?.isPolicy) return false;
     return localSpec.splitBy(this, submorphName);
-  }
-
-  /**
-   * Analogous to getSubSpecFor but is able to traverse multiple policy scopes
-   * by providing the owner policy names that precede the sub spec name.
-   * @param { string[] } path - The names of the parents to ending with the final sub spec or policy to be retrieved.
-   * @returns { StylePolicy|object }
-   */
-  getSubSpecAt (path, includeWithoutCalls = false, unwrapAddCalls = true) {
-    if (path.length === 0) return this;
-    let curr = this.getSubSpecFor(path.shift(), includeWithoutCalls, unwrapAddCalls);
-    if (curr && path.length > 0) return curr.getSubSpecAt(path, includeWithoutCalls, unwrapAddCalls);
-    return curr;
   }
 
   /**
@@ -1301,14 +1326,14 @@ export class PolicyApplicator extends StylePolicy {
     ) return;
     if (changedMorph._isDeserializing) return;
     if (this.isStaleComponentContext) return;
+    if (change.value === this) return;
+
     let subSpec = this.ensureSubSpecFor(changedMorph);
+    if (!subSpec) return;
     if (subSpec?.isPolicyApplicator) {
       return subSpec.onMorphChange(changedMorph, change);
     }
-    if (change.value === this) return;
-    if (change.selector === 'addMorphAt') {
-      this.insertSpecIfMentioned(change.args[0]);
-    }
+
     if (getStylePropertiesFor(changedMorph.constructor).includes(change.prop)) {
       subSpec[change.prop] = skippedValue;
     }
@@ -1326,13 +1351,20 @@ export class PolicyApplicator extends StylePolicy {
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
   ensureSubSpecFor (submorph, wrapAsAdded = false) {
-    const targetName = (this.targetMorph === submorph || submorph.isComponent)
-      ? null
-      : submorph.name;
+    const isRoot = this.targetMorph === submorph || submorph.isComponent;
+    const targetName = isRoot ? null : submorph.name;
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
-    currSpec = { name: submorph.name };
+
+    // spec could not be found, so we prepare for insterting a spec
+    currSpec = submorph.master || { };
+    currSpec.name = submorph.name;
     if (this.parent && !this.mentionedByParents(targetName)) {
+      // if we have a parent policy, this means we are derived
+      // and if none of our parents mendtioned a morph with this name
+      // that means it needs to be wrapped as added in order to be added
+      // to this policy. If we declare the spec not to be wrapped as added,
+      // something is wrong.
       if (!wrapAsAdded) return currSpec;
     }
     const parentSpecOrPolicy = this.ensureSubSpecFor(submorph.owner);
@@ -1375,6 +1407,7 @@ export class PolicyApplicator extends StylePolicy {
     }
     if (insertRemoveIfNeeded && !removedMorph.__wasAddedToDerived__) {
       // insert the without call, but only for non propagation changes
+      if (!ownerSpec.submorphs) ownerSpec.submorphs = [];
       ownerSpec.submorphs.push(without(removedMorph.name));
     }
     return removedMorphSpec;
