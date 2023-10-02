@@ -485,6 +485,7 @@ function newUUID () {
 }
 
 function isUUID (str) {
+  if (str) str = str.toLowerCase();
   return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/.test(str);
 }
 
