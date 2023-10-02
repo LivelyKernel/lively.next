@@ -462,7 +462,7 @@ export class StylePolicy {
     if (!arr.compact([auto, click, hover, ...obj.values(states)]).every(c => c[Symbol.for('lively-module-meta')])) return;
     const masters = [];
     const bindings = {};
-    if (auto) masters.push(['auto', auto.__serialize__()]);
+    if (auto && auto !== this.parent) masters.push(['auto', auto.__serialize__()]);
     if (click) masters.push(['click', click.__serialize__()]);
     if (hover) masters.push(['hover', hover.__serialize__()]);
     if (states) masters.push(['states', Object.entries(states).map(([state, master]) => [state, master.__serialize__()])]);
@@ -470,7 +470,7 @@ export class StylePolicy {
     let bps;
     if (bpStore && (bps = bpStore.__serialize__())) masters.push(['breakpoints', bps]);
     if (masters.length === 0) return;
-    if (masters.length === 1 && auto) {
+    if (masters.length === 1 && masters[0] === auto) {
       return auto.__serialize__();
     }
 
@@ -510,7 +510,7 @@ export class StylePolicy {
 
   __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
-    if (!meta || this.targetMorph?.isComponent) {
+    if (!meta) {
       return this._generateInlineExpression();
     }
     return {
