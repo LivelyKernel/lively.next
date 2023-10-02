@@ -1098,7 +1098,10 @@ class MorphIntroductionReconciliation extends Reconciliation {
 
     this.addChangesToModule(modId, changes);
 
-    const subSpec = interactiveDescriptor.stylePolicy.ensureSubSpecFor(addedMorph, this.isDerived);
+    // determine the responsible style policy
+    let policyForScope = interactiveDescriptor.stylePolicy.getSubPolicyFor(addedMorph.owner) || interactiveDescriptor.stylePolicy;
+    if (addedMorph.owner.master === interactiveDescriptor.stylePolicy) { policyForScope = interactiveDescriptor.stylePolicy; }
+    const subSpec = policyForScope.ensureSubSpecFor(addedMorph, this.isDerived);
     if (nextSibling) subSpec.before = nextSibling.name;
   }
 
@@ -1181,7 +1184,8 @@ class PropChangeReconciliation extends Reconciliation {
     // what if this is a root component? Then it does not have any master.
     // this does not work if the target is not part of the component scope.
     // instead we need to get the path to the target
-    const spec = this.getResponsiblePolicyFor(this.target).getSubSpecFor(this.target.name);
+    const scopePolicy = this.getResponsiblePolicyFor(this.target);
+    const spec = scopePolicy.getSubSpecFor(this.target.name);
     if (spec.isPolicy) return spec.spec;
     return spec;
   }
@@ -1234,8 +1238,7 @@ class PropChangeReconciliation extends Reconciliation {
   }
 
   getResponsiblePolicyFor (target) {
-    const pathToResponsiblePolicy = this.target.ownerChain().filter(m => m.master && !m.isComponent).map(m => m.name);
-    return this.descriptor.stylePolicy.getSubSpecAt(pathToResponsiblePolicy);
+    return this.descriptor.stylePolicy.getSubPolicyFor(target) || this.descriptor.stylePolicy;
   }
 
   get propValueDiffersFromParent () {
