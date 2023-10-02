@@ -133,7 +133,7 @@ describe('component -> source reconciliation', function () {
     });
     await ComponentA._changeTracker.onceChangesProcessed();
     const updatedSource = await getSource();
-    expect(updatedSource.includes('fill: Color.orange'), 'updates fill in code').to.be.true;
+    expect(updatedSource.includes('name: \'A\',\n  fill: Color.orange'), 'updates fill in code').to.be.true;
     expect(updatedSource.includes('extent: pt(100,50)'), 'updates width in code').to.be.true;
   });
 
