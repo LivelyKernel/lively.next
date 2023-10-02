@@ -32,6 +32,18 @@ import { ExpressionSerializer } from 'lively.serializer2';
 
 export const exprSerializer = new ExpressionSerializer();
 
+function isWithinDerivedComponent (aMorph, includeSelf) {
+  // not entirely correct. This will incorrectly return true
+  // if there is just an inherited inline policy present
+  if (includeSelf && aMorph.master?.inheritStructure) return true;
+  if (aMorph.__wasAddedToDerived__) return false;
+  for (const each of aMorph.ownerChain()) {
+    if (each.master?.inheritStructure) return true;
+    if (each.__wasAddedToDerived__) return false;
+  }
+  return false;
+}
+
 /**
  * The cheap way is just to generate a new spec from a component morph.
  * however:
@@ -107,8 +119,9 @@ function determineNodeToRemoveSubmorphs (nodeToRemove, parsedComponent, fromMorp
   ) {
     // if we are wrapped by a part call we should use the submorphs node instead
     if (!curr.owner) break;
-    nodeToRemove = curr.__wasAddedToDerived__ ? submorphsNode : propNode;
-    if (query.queryNodes(propNode, ignoreQuery).length === 0) nodeToRemove = propNode;
+    const withinDerived = isWithinDerivedComponent(curr);
+    nodeToRemove = withinDerived ? propNode : submorphsNode;
+    if (withinDerived && query.queryNodes(propNode, ignoreQuery).length === 0) nodeToRemove = propNode;
     curr = curr.owner;
     propNode = getPropertiesNode(parsedComponent, curr?.isComponent ? null : curr);
     submorphsNode = getProp(propNode, 'submorphs');
@@ -175,12 +188,12 @@ export function insertPropChange (sourceCode, propertiesNode, key, valueExpr) {
   return changes;
 }
 
-export function deleteProp (sourceCode, parsedComponent, morphDef, propName, target, isDerived) {
+export function deleteProp (sourceCode, parsedComponent, morphDef, propName, target, eraseIfEmpty) {
   const propNode = getProp(morphDef, propName);
   if (!propNode) {
     return { needsLinting: false, changes: [] };
   }
-  if (isDerived && morphDef.properties.length < 3) {
+  if (eraseIfEmpty && morphDef.properties.length < 3) {
     // since we are derived and only have the name prop left,
     // we are eligible for removal
     // since it is derived we only care about removing this morph entirely
@@ -622,12 +635,8 @@ export class Reconciliation {
     return { modId, parsedComponent, sourceCode, requiredBindings, openEditor, openEditors };
   }
 
-  withinDerivedComponent (aMorph) {
-    for (const each of [aMorph, ...aMorph.ownerChain()]) {
-      if (each.__wasAddedToDerived__) return false;
-      if (each.master) return true;
-    }
-    return false;
+  withinDerivedComponent (aMorph, includeSelf = false) {
+    return isWithinDerivedComponent(aMorph, includeSelf);
   }
 
   addChangesToModule (moduleName, newChanges) {
@@ -738,6 +747,7 @@ class MorphRemovalReconciliation extends Reconciliation {
 
   get removedMorph () { return this.change.args[0]; }
   get previousOwner () { return this.target; }
+  get isDerived () { return this.withinDerivedComponent(this.target, true); }
 
   /**
    * Reconciles the removal of a morph with the replacement or insertation of a without() call that denotes
@@ -940,6 +950,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
     }, m => m.master);
   }
 
+  get isDerived () { return this.withinDerivedComponent(this.target, true); }
   get addedMorph () { return this.change.args[0]; }
   get newOwner () { return this.target; }
   get nextSibling () { return this.newOwner.submorphs[this.newOwner.submorphs.indexOf(this.addedMorph) + 1]; }
@@ -1313,15 +1324,6 @@ class RenameReconciliation extends PropChangeReconciliation {
   get newName () { return string.camelCaseString(this.newValue); }
   get renamedMorph () { return this.change.target; }
   get renameComponent () { return this.target.master === this.descriptor.stylePolicy || this.target.isComponent; }
-
-  withinDerivedComponent (aMorph) {
-    if (aMorph.__wasAddedToDerived__) return false;
-    for (const each of aMorph.ownerChain()) {
-      if (each.__wasAddedToDerived__) return false;
-      if (each.master) return true;
-    }
-    return false;
-  }
 
   getSubSpecForTarget (interactiveDescriptor) {
     return interactiveDescriptor.stylePolicy.getSubSpecFor(this.oldName);
