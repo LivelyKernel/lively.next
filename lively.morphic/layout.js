@@ -825,6 +825,7 @@ export class TilingLayout extends Layout {
   }
 
   addSubmorphCSS (morph, style) {
+    style['z-index'] = this.container.submorphs.indexOf(morph);
     if (!morph.isLayoutable) return;
     const { axis, layoutableSubmorphs } = this;
     const node = this.getNodeFor(morph);
