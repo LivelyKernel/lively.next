@@ -30,7 +30,8 @@ const propsToDelete = [
   'grid-template-rows',
   'grid-template-columns',
   'will-change',
-  'filter'
+  'filter',
+  'z-index'
 ];
 
 /**
