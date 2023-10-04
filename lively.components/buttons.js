@@ -267,42 +267,17 @@ export class Button extends Morph {
       switch (prop) {
         case 'extent':
         case 'fontSize':
-        case 'fontFamily': this.relayout(); break;
+        case 'fontFamily':
         case 'padding': this.fit();
       }
     }
     return super.onChange(change);
   }
 
-  onSubmorphChange (change, submorph) {
-    if (submorph === this.labelMorph && change.prop === 'extent') this.relayout();
-    return super.onSubmorphChange(change, submorph);
-  }
-
-  relayout () {
-    const label = this.labelMorph;
-    if (!label || this._relayouting) return;
-    this._relayouting = true;
-    try {
-      const padding = this.padding;
-      const padT = padding.top();
-      const padB = padding.bottom();
-      const padL = padding.left();
-      const padR = padding.right();
-      const minHeight = label.height + padT + padB;
-      const minWidth = label.width + padL + padR;
-      if (minHeight > this.height) this.height = minHeight;
-      if (minWidth > this.width) this.width = minWidth;
-      const innerPadding = this.innerBounds().insetByRect(padding);
-      label.center = innerPadding.center().subPt(this.origin);
-    } finally { this._relayouting = false; }
-  }
-
   fit () {
     const padding = this.padding; const label = this.labelMorph;
     label.fit();
     this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
-    this.relayout();
     return this;
   }
 
