@@ -2762,10 +2762,13 @@ export class Text extends Morph {
       this.renderingState.needsFit = this.renderingState.needsRemeasure;
       if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
       if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
-      this.extent = textBoundsExtent.addXY(
+      const newExt = textBoundsExtent.addXY(
         this.fixedWidth ? 0 : this.borderWidthLeft + this.borderWidthRight,
         this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
       );
+      if (!this.extent.equals(newExt)) {
+        this.extent = newExt;
+      }
     } else {
       this.whenEnvReady().then(() => {
         this.fit();
