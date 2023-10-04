@@ -416,7 +416,7 @@ export class TilingLayout extends Layout {
           if (config.hugContentsHorizontally !== false) spec.hugContentsHorizontally = true;
           break;
         case 'orderByIndex':
-          if (config.orderByIndex !== false) spec.orderByIndex = true;
+          if (config.orderByIndex !== false && config.renderViaCSS === false) spec.orderByIndex = true;
           break;
         case 'wrapSubmorphs':
           if (config.wrapSubmorphs !== false) spec.wrapSubmorphs = true;
