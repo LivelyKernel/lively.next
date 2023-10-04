@@ -281,7 +281,7 @@ export class TopBarModel extends ViewModel {
     return [
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace', null], () => { notYetImplemented('Saving workspaces'); }],
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace under different name', null], () => { notYetImplemented('Saving workspaces'); }],
-      (await $world.openedProject.hasRemoteConfigured())
+      (await $world.openedProject?.hasRemoteConfigured())
         ? [['⚙️', { fontFamily: 'Noto Emoji' }, ' Change Project Settings', null], () => {
             $world.openPrompt(part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
           }]
