@@ -819,16 +819,6 @@ class ModuleInterface {
     const S = this.System;
     const records = this.System.loads;
     if (records[this.id]) return records[this.id];
-
-    // see SystemJS getOrCreateModuleRecord
-    // return records[this.id] = {
-    //   name: this.id,
-    //   key: this.id,
-    //   exports: S.newModule({}),
-    //   dependencies: [],
-    //   importers: [],
-    //   setters: []
-    // };
   }
 
   static sanitizeRecord (rec, System) {
