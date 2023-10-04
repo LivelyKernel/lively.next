@@ -5,7 +5,7 @@ _commands = _commands || [];
 
 export default class CommandInterface {
   static get commands () {
-    return _commands; // command interface is not reload safe
+    return _commands;
   }
 
   static findCommand (pid) {

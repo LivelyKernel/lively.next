@@ -987,20 +987,6 @@ export class PathIndicator extends Morph {
     this.setPath();
   }
 
-  async showFrozen (duration = 300) {
-    this.requestTransition(async () => {
-      const { statusLabel } = this.ui;
-      statusLabel.value = ['Frozen ', null, ...Icon.textAttribute('snowflake', { paddingTop: '3px' })];
-      this.master.setState('frozen');
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.isLayoutable = true;
-        statusLabel.opacity = 1;
-      }, { duration });
-    });
-    this.setPath();
-  }
-
   async showSaved (duration = 300, timeout = 5000) {
     if (this._animating) return;
     this._animating = true;

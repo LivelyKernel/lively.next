@@ -31,7 +31,6 @@ async function runCommands (commands) {
     options = options || {};
     if (!group) options.group = group;
 
-    // FIXME!!!! that won't work right now
     if (readFile) {
       runCommandFn = readFileFn;
       command = readFile;
