@@ -149,7 +149,6 @@ export class TopBarModel extends ViewModel {
             { target: 'comment browser button', signal: 'onMouseDown', handler: () => this.toggleCommentBrowser() },
             { target: 'canvas mode button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null); } },
             { target: 'canvas mode button', signal: 'dropDownTriggered', handler: () => this.canvasMenu() },
-            { signal: 'onMouseDown', handler: 'onMouseDown' },
             { signal: 'onKeyDown', handler: 'onKeyDown' },
             { signal: 'onKeyUp', handler: 'onKeyUp' }
           ];
