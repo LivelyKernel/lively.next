@@ -90,43 +90,27 @@ const AssetPreview = component(AssetPreviewUnselected, {
   }
 });
 
-class AssetManagerPopupModel extends ViewModel {
+class AssetManagerModel extends ViewModel {
   static get properties () {
     return {
-      isPrompt: { get () { return true; } },
-      isEpiMorph: {
-        get () { return true; }
-      },
-      isHaloItem: { get () { return true; } }
-
+      container: {}
     };
   }
 
   get expose () {
-    return ['activate', 'isPrompt', 'isEpiMorph', 'isHaloItem'];
+    return ['activate', 'container', 'close'];
   }
 
   get bindings () {
     return [
-      {
-        target: 'close button',
-        signal: 'onMouseUp',
-        handler: 'close'
-      },
       { target: 'upload button', signal: 'onMouseDown', handler: 'openFilePicker' },
       { target: 'delete button', signal: 'onMouseDown', handler: 'deleteAsset' },
       { target: 'selection button', signal: 'onMouseDown', handler: 'confirm' },
-      {
-        target: 'search input',
-        signal: 'inputChanged',
-        handler: 'filterAssets'
-      }
-
+      { target: 'search input', signal: 'inputChanged', handler: 'filterAssets' }
     ];
   }
 
   filterAssets () {
-    debugger;
     const needle = this.ui.searchInput.textString.toLowerCase();
     this.ui.assets.submorphs.forEach(s => {
       s.visible = s.isLayoutable = true;
@@ -141,16 +125,17 @@ class AssetManagerPopupModel extends ViewModel {
 
   confirm () {
     this._promise.resolve(this.selectedAsset.imageUrl);
-    this.close();
+    this.container.remove();
   }
 
-  async activate (pos) {
-    const { view } = this;
-    view.doNotAcceptDropsForThisAndSubmorphs();
-    view.openInWorld();
-    if (!pos) view.center = $world.visibleBounds().center();
-    else view.position = pos;
-
+  async activate () {
+    this.ui.assetTypeSelector.enabled = false;
+    this.view.visible = false;
+    const li = $world.showLoadingIndicatorFor(null, 'Enumerating project assets...');
+    await this.listAssets();
+    this.ui.selectionButton.disable();
+    this.view.visible = true;
+    li.remove();
     this._promise = promise.deferred();
     return this._promise.promise;
   }
@@ -228,16 +213,6 @@ class AssetManagerPopupModel extends ViewModel {
     this.ui.statusPrompt.visible = false;
   }
 
-  async viewDidLoad () {
-    this.ui.assetTypeSelector.enabled = false;
-    this.view.visible = false;
-    const li = $world.showLoadingIndicatorFor(null, 'Enumerating project assets...');
-    await this.listAssets();
-    this.ui.selectionButton.disable();
-    this.view.visible = true;
-    li.remove();
-  }
-
   async listAssets (updateAtRuntime = false) {
     if (this.needsListRefreshed) this.view.get('assets').submorphs = [];
     this.needsListRefreshed = false;
@@ -245,13 +220,13 @@ class AssetManagerPopupModel extends ViewModel {
     if (updateAtRuntime) {
       fader = morph({
         name: 'fader',
-        position: this.view.position,
-        extent: this.view.extent,
+        position: this.container.position,
+        extent: this.container.extent,
         fill: Color.rgbHex('202020'),
         opacity: 0.8
       });
       $world.addMorph(fader);
-      li = $world.showLoadingIndicatorFor(this.view, 'Enumerating project assets');
+      li = $world.showLoadingIndicatorFor(this.container, 'Enumerating project assets');
     }
     (await $world.openedProject.getAssets('image')).forEach(a => {
       const assetName = a.nameWithoutExt();
@@ -275,45 +250,28 @@ class AssetManagerPopupModel extends ViewModel {
 
   close () {
     if (this._promise) this._promise.resolve(null);
+
     this.view.remove();
   }
 }
 
-export const AssetManagerPopup = component(DarkPopupWindow, {
-  defaultViewModel: AssetManagerPopupModel,
-  styleClasses: [],
-  hasFixedPosition: false,
-  extent: pt(440, 140),
+export const AssetManagerDark = component({
+  name: 'asset manager',
+  defaultViewModel: AssetManagerModel,
+  width: 440,
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
-    resizePolicies: [['header menu', {
-      height: 'fixed',
-      width: 'fill'
-    }], ['status prompt', {
+    resizePolicies: [['search input wrapper', {
       height: 'fixed',
       width: 'fill'
     }]]
   }),
+  fill: Color.rgba(255, 255, 255, 0),
   submorphs: [
-    without('controls'),
-    {
-      name: 'header menu',
-      layout: new TilingLayout({
-        align: 'right',
-        axisAlign: 'center',
-        justifySubmorphs: 'spaced',
-        padding: rect(5, 0, 0, 0)
-      }),
-      submorphs: [{
-        name: 'title',
-        fontSize: 18,
-        reactsToPointer: false,
-        textAndAttributes: ['Browse Components', null]
-      }]
-    }, add(part(ModeSelectorDark, {
+    part(ModeSelectorDark, {
       name: 'asset type selector',
       layout: new TilingLayout({
         align: 'center',
@@ -328,12 +286,10 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
           { text: 'Audio', name: 'audio', tooltip: 'Audio Assets' }
         ]
       }
-    })),
-    add({
+    }), {
       name: 'search input wrapper',
       layout: new TilingLayout({
         axisAlign: 'center',
-        orderByIndex: true,
         padding: rect(8, 0, -8, 0),
         resizePolicies: [['search input', {
           height: 'fixed',
@@ -390,8 +346,8 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
           lineHeight: 1
         }]
       }]
-    }),
-    add({
+    },
+    {
       name: 'assets',
       extent: pt(440, 280),
       fill: Color.transparent,
@@ -401,7 +357,7 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
         spacing: 5,
         wrapSubmorphs: true
       })
-    }), add({
+    }, {
       name: 'button wrapper',
       extent: pt(440, 33.9000),
       fill: Color.transparent,
@@ -500,7 +456,7 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
             }]
           }]
         })]
-    }), add({
+    }, {
       name: 'status prompt',
       visible: false,
       extent: pt(440, 62.5000),
@@ -547,5 +503,100 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
           }]
         })
       ]
-    })]
+    }
+  ]
+});
+
+const AssetManagerLight = component(AssetManagerDark, {
+
+});
+
+class AssetManagerPopupModel extends ViewModel {
+  static get properties () {
+    return {
+      isPrompt: { get () { return true; } },
+      isEpiMorph: {
+        get () { return true; }
+      },
+      isHaloItem: { get () { return true; } }
+    };
+  }
+
+  get expose () {
+    return ['activate', 'isPrompt', 'isHaloItem', 'isEpiMorph'];
+  }
+
+  get bindings () {
+    return [{
+      target: 'close button',
+      signal: 'onMouseUp',
+      handler: 'close'
+    }
+    ];
+  }
+
+  viewDidLoad () {
+    this.ui.assetManager.container = this.view;
+  }
+
+  close () {
+    this.ui.assetManager.close();
+    this.view.remove();
+  }
+
+  async activate (pos) {
+    const { view } = this;
+    view.doNotAcceptDropsForThisAndSubmorphs();
+    view.openInWorld();
+    if (!pos) view.center = $world.visibleBounds().center();
+    else view.position = pos;
+
+    return this.ui.assetManager.activate();
+  }
+}
+export const AssetManagerPopup = component(DarkPopupWindow, {
+  styleClasses: [],
+  defaultViewModel: AssetManagerPopupModel,
+  hasFixedPosition: false,
+  extent: pt(440, 140),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    resizePolicies: [['header menu', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
+  }),
+  submorphs: [
+    without('controls'),
+    {
+      name: 'header menu',
+      layout: new TilingLayout({
+        align: 'right',
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        padding: rect(5, 0, 0, 0)
+      }),
+      submorphs: [{
+        name: 'title',
+        fontSize: 18,
+        reactsToPointer: false,
+        textAndAttributes: ['Browse Assets', null]
+      }]
+    }, add(part(AssetManagerDark, {
+      name: 'asset manager',
+      extent: pt(10.0000, 476.0000),
+      layout: new TilingLayout({
+        axis: 'column',
+        axisAlign: 'center',
+        hugContentsHorizontally: true,
+        hugContentsVertically: true,
+        resizePolicies: [['search input wrapper', {
+          height: 'fixed',
+          width: 'fill'
+        }]]
+      })
+    }))]
 });
