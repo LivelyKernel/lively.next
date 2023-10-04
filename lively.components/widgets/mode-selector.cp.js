@@ -3,6 +3,33 @@ import { connect, signal } from 'lively.bindings';
 import { Color } from 'lively.graphics';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
+const ModeSelectorLabel = component({
+  type: Label,
+  nativeCursor: 'pointer',
+  name: 'mode selector label',
+  fontWeight: 'bold',
+  fill: Color.transparent,
+  fontColor: Color.black,
+  padding: 5,
+  borderRadius: 3,
+  textString: 'a mode selector label'
+});
+
+const ModeSelectorLabelDark = component(ModeSelectorLabel, {
+  fill: Color.transparent,
+  fontColor: Color.white
+});
+
+const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
+  fill: Color.black.withA(0.4),
+  fontColor: Color.white
+});
+
+const ModeSelectorLabelSelectedDark = component(ModeSelectorLabel, {
+  fill: Color.white.withA(0.8),
+  fontColor: Color.black
+});
+
 /**
  * Allows to switch between different items by clicking on them. The selected Item can also be changed by calling the exposed `select` function.
  * A change in the selected item is signalled with the `selectionChanged` signal providing the newly selected item.
@@ -121,33 +148,6 @@ class ModeSelectorModel extends ViewModel {
     if (withSignal) signal(this.view, 'selectionChanged', this.selectedItem);
   }
 }
-
-const ModeSelectorLabel = component({
-  type: Label,
-  nativeCursor: 'pointer',
-  name: 'mode selector label',
-  fontWeight: 'bold',
-  fill: Color.transparent,
-  fontColor: Color.black,
-  padding: 5,
-  borderRadius: 3,
-  textString: 'a mode selector label'
-});
-
-const ModeSelectorLabelDark = component(ModeSelectorLabel, {
-  fill: Color.transparent,
-  fontColor: Color.white
-});
-
-const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
-  fill: Color.black.withA(0.4),
-  fontColor: Color.white
-});
-
-const ModeSelectorLabelSelectedDark = component(ModeSelectorLabel, {
-  fill: Color.white.withA(0.8),
-  fontColor: Color.black
-});
 
 const ModeSelector = component({
   defaultViewModel: ModeSelectorModel,
