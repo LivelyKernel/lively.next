@@ -220,18 +220,13 @@ const SaveWorldDialog = component(DarkPrompt, {
               fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
               fontWeight: '900'
             }, ' ', {
-              backgroundColor: undefined,
               fontColor: Color.rgb(204, 204, 204),
               fontFamily: 'IBM Plex Sans',
               fontSize: 15,
               fontWeight: 'normal',
-              letterSpacing: undefined,
               lineHeight: 1.4,
               nativeCursor: 'text',
-              textAlign: undefined,
               textDecoration: 'none',
-              textStyleClasses: undefined,
-              wordSpacing: undefined
             }]
 
           }, part(InputLineDark, {
