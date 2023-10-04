@@ -26,10 +26,14 @@ class AssetPreviewModel extends ViewModel {
       assetManager: {},
       expose: {
         get () {
-          return ['onMouseDown', 'assetName'];
+          return ['onMouseDown', 'assetName', 'isAssetPreview'];
         }
       }
     };
+  }
+
+  get isAssetPreview () {
+    return true;
   }
 
   onMouseDown () {
@@ -106,21 +110,48 @@ class AssetManagerModel extends ViewModel {
       { target: 'upload button', signal: 'onMouseDown', handler: 'openFilePicker' },
       { target: 'delete button', signal: 'onMouseDown', handler: 'deleteAsset' },
       { target: 'selection button', signal: 'onMouseDown', handler: 'confirm' },
-      { target: 'search input', signal: 'inputChanged', handler: 'filterAssets' }
+      { target: 'search input', signal: 'inputChanged', handler: 'filterAssets' },
+      {
+        target: 'search clear button',
+        signal: 'onMouseDown',
+        handler: () => {
+          this.ui.searchInput.textString = '';
+          this.filterAssets();
+        }
+      },
+      {
+        target: 'search input',
+        signal: 'onKeyDown',
+        handler: (evt) => {
+          if (evt.key === 'Escape') {
+            this.ui.searchInput.textString = '';
+            this.filterAssets();
+          }
+        }
+      }
     ];
   }
 
   filterAssets () {
     const needle = this.ui.searchInput.textString.toLowerCase();
     this.ui.assets.submorphs.forEach(s => {
+      if (!s.isAssetPreview) return;
       s.visible = s.isLayoutable = true;
     });
     if (needle.trim() === '') {
+      this.ui.noResultsIndicator.visible = false;
+      this.ui.searchClearButton.visible = false;
       return;
     }
+
+    this.ui.searchClearButton.visible = true;
+
     this.ui.assets.submorphs.forEach(s => {
+      if (!s.isAssetPreview) return;
       if (!s.assetName.toLowerCase().includes(needle)) s.visible = s.isLayoutable = false;
     });
+    if (this.ui.assets.submorphs.every(s => !s.isAssetPreview || !s.visible)) this.ui.noResultsIndicator.visible = true;
+    else this.ui.noResultsIndicator.visible = false;
   }
 
   confirm () {
@@ -255,6 +286,46 @@ class AssetManagerModel extends ViewModel {
   }
 }
 
+const NoResultIndicator = component({
+  name: 'no results indicator',
+  fill: Color.rgba(255, 255, 255, 0),
+  borderColor: Color.rgba(23, 160, 251, 0),
+  borderWidth: 1,
+  extent: pt(316.0000, 164.0000),
+  position: pt(-104.0000, 21.0000),
+  submorphs: [{
+    type: Text,
+    name: 'icon',
+    borderColor: Color.rgba(23, 160, 251, 0),
+    borderWidth: 1,
+    cursorWidth: 1.5,
+    dynamicCursorColoring: true,
+    extent: pt(80.0000, 64.5000),
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgba(126, 126, 126, 0.75),
+    fontSize: 80,
+    lineWrapping: 'by-words',
+    padding: rect(1, 1, 0, 0),
+    position: pt(22.5000, 27.0000),
+    textAndAttributes: ['', {
+      fontFamily: 'Material Icons',
+      fontWeight: '900'
+    }, ' ', {}]
+  }, {
+    type: Text,
+    name: 'text',
+    dynamicCursorColoring: true,
+    fill: Color.rgba(255, 255, 255, 0),
+    fontColor: Color.rgba(126, 126, 126, 0.75),
+    fontSize: 20,
+    fontWeight: '600',
+    position: pt(106.0000, 66.0000),
+    textAndAttributes: ['No matching assets...', null]
+  }]
+});
+
 export const AssetManagerDark = component({
   name: 'asset manager',
   defaultViewModel: AssetManagerModel,
@@ -356,7 +427,10 @@ export const AssetManagerDark = component({
         align: 'center',
         spacing: 5,
         wrapSubmorphs: true
-      })
+      }),
+      submorphs: [part(NoResultIndicator, {
+        visible: false
+      })]
     }, {
       name: 'button wrapper',
       extent: pt(440, 33.9000),
