@@ -544,6 +544,7 @@ export class TilingLayout extends Layout {
   get hugContentsVertically () {
     if (this.wrapSubmorphs && this.axis === 'column') return false;
     for (let m of this.layoutableSubmorphs) {
+      if (!m.visible) continue;
       const h = this._resizePolicies.get(m)?.height;
       if (!h) continue;
       if (h === 'fill') return false;
@@ -564,6 +565,7 @@ export class TilingLayout extends Layout {
   get hugContentsHorizontally () {
     if (this.wrapSubmorphs && this.axis === 'row') return false;
     for (let m of this.layoutableSubmorphs) {
+      if (!m.visible) continue;
       const w = this._resizePolicies.get(m)?.width;
       if (!w) continue;
       if (w === 'fill') return false;
