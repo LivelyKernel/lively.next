@@ -911,7 +911,8 @@ export class TilingLayout extends Layout {
     style['margin-left'] = `${margin.left}px`;
     style['margin-right'] = `${margin.right}px`;
     if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
-    this.measureAfterRender(morph);
+    if (morph.isText) morph.renderingState.needsFit = true; // will already trigger a measure after render
+    else this.measureAfterRender(morph);
   }
 
   measureAfterRender (layoutableSubmorph) {
