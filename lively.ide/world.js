@@ -1582,8 +1582,13 @@ class FileWatcher {
     const actions = this.filesToWatch[savedFileData.resource] || [];
 
     for (const [k, v] of Object.entries(this.regexToWatch)) {
-      const regex = new RegExp(k);
-      if (regex.test(savedFileData.url)) actions.push(v);
+      const regexAndFlags = regexString.match(/\/(.*?)\/([a-z]*)/);
+      if (regexAndFlags) { // should always be entered, given only correct regex are fed into the watcher
+        const pattern = parts[1];
+        const flags = parts[2]; // catch optional flags if present
+        const regex = new RegExp(pattern, flags);
+        if (regex.test(savedFileData.url)) actions.push(v);
+      }
     }
 
     if (!actions.length > 0) return;
