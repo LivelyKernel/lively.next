@@ -1001,7 +1001,7 @@ export class StylePolicy {
    * @returns {StylePolicy} The policy in question.
    */
   getSubPolicyFor (aMorph) {
-    while (aMorph && !aMorph.master) aMorph = aMorph.owner;
+    while (aMorph && !aMorph.master && aMorph.owner) aMorph = aMorph.owner;
     return this.getSubSpecCorrespondingTo(aMorph);
   }
 
