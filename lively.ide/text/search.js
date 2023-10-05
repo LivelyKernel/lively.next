@@ -164,6 +164,10 @@ export class SearchWidgetModel extends ViewModel {
         set (v) { this.ui.searchInput.textString = String(v); }
       },
 
+      results: {
+        defaultValue: []
+      },
+
       replaceInput: {
         get () {
           return this.ui.replaceInput.textString;
@@ -214,11 +218,15 @@ export class SearchWidgetModel extends ViewModel {
     if (!this.target) throw new Error('SearchWidget needs a target text morph!');
     this.setProperty('currentResultIndex', 0);
     if (this.input) this.search();
+    this.ui.regexModeButton.master.setState('disabled');
+    this.ui.caseModeButton.master.setState('disabled');
+    this.ui.replaceAllButton.master.setState('disabled');
+    this.ui.replaceButton.master.setState('disabled');
   }
 
   toggleRegexMode () {
     this.state.regexMode = !this.state.regexMode;
-    this.ui.regexModeButton.opacity = this.state.regexMode ? 1 : 0.5;
+    this.ui.regexModeButton.master.setState(this.state.regexMode ? null : 'disabled');
 
     this.cleanup();
     this.search();
@@ -226,7 +234,7 @@ export class SearchWidgetModel extends ViewModel {
 
   toggleCaseMode () {
     this.state.caseMode = !this.state.caseMode;
-    this.ui.caseModeButton.opacity = this.state.caseMode ? 1 : 0.5;
+    this.ui.caseModeButton.master.setState(this.state.caseMode ? null : 'disabled');
 
     this.cleanup();
     this.search();
@@ -375,8 +383,8 @@ export class SearchWidgetModel extends ViewModel {
   showNoSearchHint () {
     this.ui.resultIndexLabel.textString = 'no search';
     this.ui.resultTotalLabel.fontColor = Color.lively.withA(0);
-    this.ui.nextButton.opacity = 0.5;
-    this.ui.prevButton.opacity = 0.5;
+    this.ui.nextButton.master.setState('disabled');
+    this.ui.prevButton.master.setState('disabled');
   }
 
   showResultNumberHint () {
@@ -390,11 +398,15 @@ export class SearchWidgetModel extends ViewModel {
     }
 
     if (this.results.length > 0) {
-      this.ui.nextButton.opacity = 1;
-      this.ui.prevButton.opacity = 1;
+      this.ui.nextButton.master.setState(null);
+      this.ui.prevButton.master.setState(null);
+      this.ui.replaceButton.master.setState(null);
+      this.ui.replaceAllButton.master.setState(null);
     } else {
-      this.ui.nextButton.opacity = 0.5;
-      this.ui.prevButton.opacity = 0.5;
+      this.ui.nextButton.master.setState('disabled');
+      this.ui.prevButton.master.setState('disabled');
+      this.ui.replaceButton.master.setState('disabled');
+      this.ui.replaceAllButton.master.setState('disabled');
     }
   }
 
