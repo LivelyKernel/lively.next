@@ -83,8 +83,6 @@ export class EvalBackendButton extends Button {
     }
 
     this.currentBackend = sysInterface;
-    this.fit();
-    if (this.width < 120) this.width = 120;
   }
 
   async ensureSimilarBackend () {
