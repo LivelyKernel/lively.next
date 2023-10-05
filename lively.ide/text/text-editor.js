@@ -111,10 +111,6 @@ export default class TextEditor extends Morph {
         after: ['historyId'],
         initialize (existing) {
           if (existing.length) return;
-          const btnStyle = {
-            type: 'button',
-            master: SystemButton
-          };
           this.submorphs = [
             {
               name: 'h wrapper',
@@ -126,9 +122,9 @@ export default class TextEditor extends Morph {
                 padding: Rectangle.inset(10, 10, 10, 10)
               }),
               submorphs: [
-                { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { lineHeight: 1.4 }), ' Reload', { lineHeight: 1.4 }], ...btnStyle },
-                { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { lineHeight: 1.4 }), ' Save', { lineHeight: 1.4 }], ...btnStyle },
-                { name: 'removeButton', label: [...Icon.textAttribute('trash', { lineHeight: 1.4 }), ' Remove', { lineHeight: 1.4 }], ...btnStyle }
+                part(SystemButton, { name: 'loadButton', label: [...Icon.textAttribute('rotate-right', { lineHeight: 1.4 }), ' Reload', { lineHeight: 1.4 }] }),
+                part(SystemButton, { name: 'saveButton', label: [...Icon.textAttribute('floppy-disk', { lineHeight: 1.4 }), ' Save', { lineHeight: 1.4 }] }),
+                part(SystemButton, { name: 'removeButton', label: [...Icon.textAttribute('trash', { lineHeight: 1.4 }), ' Remove', { lineHeight: 1.4 }] })
               ]
             },
             {

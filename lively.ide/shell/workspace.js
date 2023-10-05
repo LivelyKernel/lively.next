@@ -1,10 +1,10 @@
-import { string } from 'lively.lang';
 import { connect } from 'lively.bindings';
 import { pt, Rectangle } from 'lively.graphics';
-import { config, morph } from 'lively.morphic';
+import { config, part } from 'lively.morphic';
 import { Window } from 'lively.components';
 import ShellEditorPlugin from './editor-plugin.js';
 import Terminal from './terminal.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 export default class Workspace extends Window {
   static get properties () {
@@ -96,13 +96,14 @@ export default class Workspace extends Window {
   ensureCwdButton (cwd) {
     let btn = this.getSubmorphNamed('changeCwdButton');
     if (btn) return btn;
-    btn = morph({
-      type: 'button',
+    btn = part(SystemButton, {
       name: 'changeCwdButton',
       padding: Rectangle.inset(4, 2),
-      label: cwd || '...',
       extent: pt(60, 20),
-      borderRadius: 3
+      borderRadius: 3,
+      submorphs: [
+        { name: 'label', textAndAttributes: ['cwd...'] }
+      ]
     });
     connect(btn, 'fire', this, 'execCommand', { converter: () => '[shell] change working directory' });
     return btn;

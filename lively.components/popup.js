@@ -50,8 +50,8 @@ export class Popover extends Morph {
             { name: 'body' },
             {
               name: 'close button',
-              type: 'button',
-              label: Object.assign(Icon.makeLabel('times-circle'), { fontSize: 18 }),
+              type: 'label',
+              textAndAttributes: Icon.textAttribute('times-circle', { fontSize: 18 }),
               tooltip: 'close',
               fill: null,
               extent: pt(16, 16),
@@ -59,7 +59,7 @@ export class Popover extends Morph {
             }
           ];
           let [_1, body, btn] = this.submorphs;
-          connect(btn, 'fire', this, 'close');
+          connect(btn, 'onMouseDown', this, 'close');
           connect(body, 'extent', this, 'relayout', {
             converter: '() => target.animated'
           });
