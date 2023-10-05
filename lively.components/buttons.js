@@ -261,26 +261,6 @@ export class Button extends Morph {
 
   disable () { this.deactivated = true; }
 
-  onChange (change) {
-    const { prop } = change;
-    if (this.label/* don't call too early */) {
-      switch (prop) {
-        case 'extent':
-        case 'fontSize':
-        case 'fontFamily':
-        case 'padding': this.fit();
-      }
-    }
-    return super.onChange(change);
-  }
-
-  fit () {
-    const padding = this.padding; const label = this.labelMorph;
-    label.fit();
-    this.extent = padding.bottomLeft().addPt(padding.bottomRight()).addPt(label.extent);
-    return this;
-  }
-
   trigger () {
     try {
       signal(this, 'fire');
