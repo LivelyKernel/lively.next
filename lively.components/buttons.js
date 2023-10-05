@@ -138,10 +138,6 @@ export class ButtonModel extends ViewModel {
 export class Button extends Morph {
   static get properties () {
     return {
-      padding: {
-        isStyleProp: true,
-        defaultValue: Rectangle.inset(5, 2)
-      },
       draggable: { defaultValue: false },
 
       deactivated: {
@@ -158,35 +154,6 @@ export class Button extends Morph {
       pressed: {
         group: '_internal',
         defaultValue: null
-      },
-
-      fontSize: {
-        group: 'button styling',
-        derived: true,
-        type: 'Number',
-        min: 4,
-        isStyleProp: true,
-        after: ['label'],
-        set (s) {
-          this.labelMorph.fontSize = s;
-          // if (this.labelMorph._parametrizedProps) { this.labelMorph._parametrizedProps.fontSize = s; }
-        },
-        get () {
-          return this.labelMorph.fontSize;
-        }
-      },
-
-      fontColor: {
-        group: 'button styling',
-        derived: true,
-        isStyleProp: true,
-        after: ['labelMorph'],
-        set (c) {
-          this.labelMorph.fontColor = c;
-        },
-        get () {
-          return this.labelMorph.fontColor;
-        }
       },
 
       labelMorph: {
@@ -247,7 +214,6 @@ export class Button extends Morph {
 
   __additionally_serialize__ (snapshot, objRef, pool, addFn) {
     super.__additionally_serialize__(snapshot, objRef, pool, addFn);
-    addFn('fontSize', this.fontSize); // this is needed to make master components style work
     if (this.label !== this.labelMorph.value) {
       // in cases where someone just directly changed the label,
       // the value of the labelMorph "wins"
