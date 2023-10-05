@@ -1,6 +1,6 @@
 /* global System, localStorage */
 import { arr, obj, Path, string, fun, promise } from 'lively.lang';
-import { Icon, TilingLayout, Morph, GridLayout, config } from 'lively.morphic';
+import { Icon, part, TilingLayout, Morph, GridLayout, config } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import { withSuperclasses, isClass } from 'lively.classes/util.js';
@@ -27,6 +27,7 @@ import { resource } from 'lively.resources';
 import lint from '../linter.js';
 import { StatusMessageConfirm, StatusMessageWarning, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { ViewModel } from 'lively.morphic/components/core.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
@@ -1865,174 +1866,5 @@ export class ImportControllerModel extends ViewModel {
     await this.updateImports();
     await this.editor.updateKnownGlobals();
     this.editor.ui.sourceEditor.focus();
-  }
-}
-
-export class ImportController extends Morph {
-  static get properties () {
-    return {
-      extent: { defaultValue: pt(300, 600) },
-      systemInterface: {
-        get () {
-          return this.owner.systemInterface;
-        }
-      },
-      module: {
-        set (moduleOrId) {
-          const id = !moduleOrId ? null : typeof moduleOrId === 'string' ? moduleOrId : moduleOrId.id;
-          this.setProperty('module', id);
-        }
-      }
-    };
-  }
-
-  constructor (props) {
-    super(props);
-    this.build();
-    connect(this.get('openButton'), 'fire', this, 'execCommand', { converter: () => 'open selected module in system browser' });
-  }
-
-  async setModule (moduleId) {
-    this.module = moduleId;
-    await this.updateImports();
-  }
-
-  build () {
-    const listStyle = {
-      borderWidthTop: 1,
-      borderWidthBottom: 1,
-      borderColor: Color.gray,
-      fontSize: 14,
-      fontFamily: 'IBM Plex Sans',
-      type: 'list'
-    };
-
-    const btnStyle = {
-      type: 'button',
-      extent: pt(26, 24)
-    };
-
-    this.submorphs = [
-      { ...listStyle, name: 'importsList', multiSelect: true, borderBottom: { width: 1, color: Color.gray } },
-      {
-        name: 'buttons',
-        fill: Color.transparent,
-        layout: new TilingLayout(
-          {
-            align: 'center',
-            axisAlign: 'center',
-            spacing: 2,
-          }
-        ),
-        submorphs: [
-          { ...btnStyle, name: 'addImportButton', label: Icon.makeLabel('plus'), tooltip: 'add new import' },
-          { ...btnStyle, name: 'removeImportButton', label: Icon.makeLabel('minus'), tooltip: 'remove selected import(s)' },
-          { ...btnStyle, name: 'cleanupButton', label: 'cleanup', tooltip: 'remove unused imports' },
-          { ...btnStyle, name: 'openButton', label: 'open', tooltip: 'open selected module' }
-        ]
-      }
-    ];
-
-    this.layout = new GridLayout({
-      renderViaCSS: true,
-      grid: [
-        ['importsList'],
-        ['buttons']
-      ]
-    });
-    this.layout.row(1).fixed = 30;
-    this.layout.row(1).col(0).group.resize = false;
-    this.layout.row(1).col(0).group.align = 'center';
-    this.layout.row(1).col(0).group.alignedProperty = 'center';
-    this.applyLayoutIfNeeded();
-
-    // FIXME
-    [this.get('openButton'),
-      this.get('cleanupButton'),
-      this.get('removeImportButton'),
-      this.get('addImportButton')].forEach(btn => btn.extent = btnStyle.extent);
-  }
-
-  async doNewNPMSearch (query) {
-    // https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#get-v1search
-    // text	String	Query	❌	full-text search to apply
-    // size	integer	Query	❌	how many results should be returned (default 20, max 250)
-    // from	integer	Query	❌	offset to return results from
-    // quality	float	Query	❌	how much of an effect should quality have on search results
-    // popularity	float	Query	❌	how much of an effect should popularity have on search results
-    // maintenance	float	Query	❌	how much of an effect should maintenance have on search results
-
-    // let fields = ['name','description','keywords','author','modified','homepage','version','license','rating', "readme"]
-    const i = LoadingIndicator.open('fetching information...');
-    i.center = this.owner.globalBounds().center();
-    const url = `https://registry.npmjs.com/-/v1/search?text=${query}&size=50`;
-    const found = await resource(url).makeProxied().readJson();
-    i.remove();
-    return found.objects.map(p => {
-      const { package: { name, version } } = p;
-      return {
-        isListItem: true,
-        string: `${name}@${version}`,
-        value: p
-      };
-    });
-  }
-
-  async updateImports () {
-    // this needs to be done within the context, since there
-    // currently is no remote tracking of module objects
-    const items = await this.owner.withContextDo(async (ctx) => {
-      const module = await ctx.selectedModule;
-      if (!module) {
-        return [];
-      }
-
-      const imports = await module.imports();
-      const items = imports.map(ea => {
-        const label = [];
-        const alias = ea.local !== ea.imported && ea.imported !== 'default' ? ea.local : null;
-        if (alias) label.push(`${ea.imported} as `, {});
-        const importName = alias || ea.local || '??????';
-        label.push(importName, { fontWeight: 'bold' });
-        label.push(` from ${string.truncate(ea.fromModule, 25, '...')}`, { opacity: 0.5 });
-        const tooltip = label.slice();
-        tooltip[2] = ` from ${ea.fromModule}`;
-        tooltip[3] = {};
-        return {
-          isListItem: true,
-          value: ea,
-          label,
-          tooltip,
-          annotation: ea.fromModule.includes('jspm.dev') ? Icon.textAttribute('npm', { fontSize: 18, fontWeight: '400', textStyleClasses: ['fab'] }) : []
-        };
-      });
-      return items;
-    });
-
-    this.getSubmorphNamed('importsList').items = [];
-    this.getSubmorphNamed('importsList').items = items;
-  }
-
-  get keybindings () {
-    return [
-      { keys: 'Enter', command: 'open selected module in system browser' }
-    ].concat(super.keybindings);
-  }
-
-  get commands () {
-    return [{
-      name: 'open selected module in system browser',
-      exec: async importController => {
-        const importSpec = this.getSubmorphNamed('importsList').selection;
-        if (!importSpec) {
-          this.setStatusMessage('no module selected');
-          return null;
-        }
-        let { fromModule, local } = importSpec || {};
-        if (fromModule.startsWith('.')) { fromModule = System.decanonicalize(fromModule, this.module); }
-        return this.world().execCommand('open browser',
-          { moduleName: fromModule, codeEntity: local });
-      }
-    }];
   }
 }
