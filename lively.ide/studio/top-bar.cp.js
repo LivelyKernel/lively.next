@@ -454,6 +454,7 @@ export class TopBarModel extends ViewModel {
   }
 
   async interactivelyLoadComponent () {
+    if ($world._loadingComponentBrowser) return;
     let currComponentBrowser = this.world()._componentBrowser;
     if (currComponentBrowser && !!currComponentBrowser.world()) {
       return currComponentBrowser.getWindow().close(false);

@@ -856,6 +856,7 @@ const commands = [
   {
     name: 'browse and load component',
     exec: async function (world) {
+      $world._loadingComponentBrowser = true;
       const li = LoadingIndicator.open('loading component browser');
       const p = $world.openedProject;
       if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('partsbin', 'LivelyKernel', true);
@@ -863,6 +864,7 @@ const commands = [
       const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
       li.remove();
       componentBrowser.openInWindow({ minimizable: false, title: 'Browse Components' });
+      delete $world._loadingComponentBrowser;
       const loadedComponent = await componentBrowser.activate();
       if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
     }
