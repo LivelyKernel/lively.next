@@ -7,9 +7,10 @@ import { ShadowObject } from 'lively.morphic/rendering/morphic-default.js';
 import { TilingLayout, Text } from 'lively.morphic';
 import { SearchWidgetModel } from './search.js';
 import { InputLine } from 'lively.components/inputs.js';
+import { ButtonModel } from 'lively.components';
 
 const IconButtonDefault = component({
-  type: 'button',
+  defaultViewModel: ButtonModel,
   name: 'icon button/default',
   borderWidth: 0,
   extent: pt(28, 24),
@@ -37,13 +38,29 @@ const IconButton = component(IconButtonDefault, {
   name: 'icon button',
   master: {
     auto: IconButtonDefault,
-    click: IconButtonClicked
+    click: IconButtonClicked,
+    states: {
+      disabled: IconButtonClicked
+    }
   }
 });
 
+const WidgetButtonClicked = component({ opacity: 0.5 });
+
 const WidgetButton = component({
-  type: 'button',
+  viewModel: ButtonModel,
+  master: {
+    click: WidgetButtonClicked,
+    states: {
+      disabled: WidgetButtonClicked
+    }
+  },
   name: 'widget button',
+  nativeCursor: 'pointer',
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center'
+  }),
   borderColor: Color.rgb(255, 255, 255),
   borderWidth: 2,
   borderRadius: 5,
@@ -158,7 +175,6 @@ const SearchWidget = component({
           }]
         }), part(IconButton, {
           name: 'regexModeButton',
-          opacity: 0.5,
           submorphs: [{
             name: 'label',
             tooltip: ['Match with Regular Expressions.\n', { fontWeight: 'bold' }, 'Either directly type your regular expression,\nor use JS slash syntax if you want to use RegEx flags.'],
@@ -166,7 +182,6 @@ const SearchWidget = component({
           }]
         }), part(IconButton, {
           name: 'caseModeButton',
-          opacity: 0.5,
           submorphs: [{
             name: 'label',
             tooltip: 'Match Case Sensitive',
