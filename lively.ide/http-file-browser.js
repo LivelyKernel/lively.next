@@ -1,5 +1,5 @@
 /* global System */
-import { Morph, Image, Label } from 'lively.morphic';
+import { Morph, Icon, part, Image, Label } from 'lively.morphic';
 import { Tree, TreeData } from 'lively.components';
 import { arr, promise, num, date, string } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
@@ -7,6 +7,7 @@ import { connect } from 'lively.bindings';
 import { resource } from 'lively.resources';
 import TextEditor from './text/text-editor.js';
 import { InputLine } from 'lively.components/inputs.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // this.world().openInWindow(HTTPFileBrowser.forLocation(document.location.origin)).activate()
@@ -379,7 +380,6 @@ export default class HTTPFileBrowser extends Morph {
       submorphs: {
         initialize () {
           const btnStyle = {
-            type: 'button',
             borderRadius: 5,
             padding: Rectangle.inset(0),
             fontSize: 12,
@@ -427,14 +427,14 @@ export default class HTTPFileBrowser extends Morph {
               fontWeight: 'bold'
             },
 
-            { name: 'searchButton', ...btnStyle, label: Label.icon('search'), tooltip: 'search for files' },
-            { name: 'reloadButton', ...btnStyle, label: Label.icon('redo'), tooltip: 'reload list' },
-            { name: 'filterButton', ...btnStyle, label: Label.icon('filter'), tooltip: 'set file filter' },
-            { name: 'openFileButton', ...btnStyle, label: Label.icon('edit', { textStyleClasses: ['far'] }), tooltip: 'open selected file' },
-            { name: 'addDirectoryButton', ...btnStyle, label: Label.icon('folder', { textStyleClasses: ['far'] }), tooltip: 'add directory' },
-            { name: 'addFileButton', ...btnStyle, label: Label.icon('file', { textStyleClasses: ['far'] }), tooltip: 'add file' },
-            { name: 'renameFileButton', ...btnStyle, label: Label.icon('clone', { textStyleClasses: ['far'] }), tooltip: 'rename selected file' },
-            { name: 'deleteFileButton', ...btnStyle, label: Label.icon('trash-alt', { textStyleClasses: ['far'] }), tooltip: 'delete selected file' }
+            part(SystemButton, { name: 'searchButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('search') }], tooltip: 'search for files' }),
+            part(SystemButton, { name: 'reloadButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('redo') }], tooltip: 'reload list' }),
+            part(SystemButton, { name: 'filterButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('filter') }], tooltip: 'set file filter' }),
+            part(SystemButton, { name: 'openFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('edit', { textStyleClasses: ['far'] }) }], tooltip: 'open selected file' }),
+            part(SystemButton, { name: 'addDirectoryButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('folder', { textStyleClasses: ['far'] }) }], tooltip: 'add directory' }),
+            part(SystemButton, { name: 'addFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('file', { textStyleClasses: ['far'] }) }], tooltip: 'add file' }),
+            part(SystemButton, { name: 'renameFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('clone', { textStyleClasses: ['far'] }) }], tooltip: 'rename selected file' }),
+            part(SystemButton, { name: 'deleteFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('trash-alt', { textStyleClasses: ['far'] }) }], tooltip: 'delete selected file' })
           ];
 
           const {

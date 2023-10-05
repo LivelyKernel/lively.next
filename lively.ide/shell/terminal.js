@@ -3,7 +3,7 @@ import { connect } from 'lively.bindings';
 import { arr, fun, obj } from 'lively.lang';
 import { defaultDirectory } from './shell-interface.js';
 import { GridLayout } from 'lively.morphic/layout.js';
-import { Morph, Text, World, config } from 'lively.morphic';
+import { Morph, part, Text, World, config } from 'lively.morphic';
 import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
@@ -85,16 +85,15 @@ export default class Terminal extends Morph {
               clipMode: 'hidden'
             }),
 
-            {
-              type: 'button',
+            part(DarkButton, {
               name: 'changeCwdButton',
-              label: 'cwd...',
               borderRadius: 3,
-              fontSize: 12,
-              master: DarkButton,
               isLayoutable: false,
-              padding: Rectangle.inset(4, 2)
-            }
+              padding: Rectangle.inset(4, 2),
+              submorphs: [
+                { name: 'label', fontSize: 12, textAndAttributes: ['cwd...', null] }
+              ]
+            })
           ];
 
           let { input, changeCwdButton } = this.ui;
