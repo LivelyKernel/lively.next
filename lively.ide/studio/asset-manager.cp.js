@@ -1,5 +1,5 @@
 /* global FormData */
-import { component, morph, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
+import { component, easings, morph, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
 
 import { pt, Color } from 'lively.graphics';
 import { DarkPopupWindow } from './shared.cp.js';
@@ -24,13 +24,32 @@ class AssetPreviewModel extends ViewModel {
       assetName: {},
       fullFileName: {},
       assetManager: {},
+      allowDragging: {},
       assetManagerAsPopup: {},
       expose: {
         get () {
-          return ['onMouseDown', 'assetName', 'isAssetPreview'];
+          return ['onMouseDown', 'assetName', 'isAssetPreview', 'onDragStart'];
         }
       }
     };
+  }
+
+  onDragStart () {
+    if (!this.allowDragging) return;
+    const imageForGrab = new Image({ imageUrl: this.imageUrl });
+    $world.firstHand.grab(imageForGrab);
+    imageForGrab.onBeingDroppedOn = (hand, recipient) => {
+      if (recipient !== $world) imageForGrab.remove();
+      else {
+        imageForGrab.onBeingDroppedOn = imageForGrab.__proto__.onBeingDroppedOn;
+        imageForGrab.onBeingDroppedOn(hand, recipient);
+      }
+    };
+    imageForGrab.animate({
+      extent: pt(200, 100),
+      duration: 300,
+      easing: easings.outSine
+    });
   }
 
   get isAssetPreview () {
@@ -44,6 +63,7 @@ class AssetPreviewModel extends ViewModel {
   viewDidLoad () {
     this.ui.previewHolder.imageUrl = this.imageUrl;
     this.ui.componentName.value = this.assetName;
+    this.view.nativeCursor = this.allowDragging ? 'pointer' : 'auto';
   }
 }
 
@@ -292,7 +312,8 @@ class AssetManagerModel extends ViewModel {
             assetName,
             fullFileName: a.name(),
             imageUrl: a.url,
-            assetManager: this
+            assetManager: this,
+            allowDragging: this.allowDraggingAssets
           }
         }));
       }
