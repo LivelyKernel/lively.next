@@ -13,7 +13,7 @@ import { resource } from 'lively.resources';
 import { FileStatusWarning } from '../js/browser/ui.cp.js';
 import { promise } from 'lively.lang';
 import { once } from 'lively.bindings';
-import { ModeSelectorDark } from 'lively.components/widgets/mode-selector.cp.js';
+import { ModeSelectorDark, ModeSelectorLabel, ModeSelectorLabelSelected, ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { Spinner } from './shared.cp.js';
 
@@ -24,6 +24,7 @@ class AssetPreviewModel extends ViewModel {
       assetName: {},
       fullFileName: {},
       assetManager: {},
+      assetManagerAsPopup: {},
       expose: {
         get () {
           return ['onMouseDown', 'assetName', 'isAssetPreview'];
@@ -75,6 +76,17 @@ const AssetPreviewUnselected = component(ComponentPreviewDark, {
   ]
 });
 
+const AssetPreviewSelectedLight = component(AssetPreviewUnselected, {
+  borderColor: Color.rgb(69, 151, 230),
+  borderWidth: 2,
+  fill: Color.rgba(69, 151, 230, 0.6),
+  submorphs: [{
+    name: 'component name',
+    fontColor: Color.rgb(255, 255, 255)
+  }
+  ]
+});
+
 const AssetPreviewSelected = component(AssetPreviewUnselected, {
   borderColor: Color.rgb(52, 138, 117),
   borderWidth: 2,
@@ -89,7 +101,8 @@ const AssetPreviewSelected = component(AssetPreviewUnselected, {
 const AssetPreview = component(AssetPreviewUnselected, {
   master: {
     states: {
-      selected: AssetPreviewSelected
+      selectedDark: AssetPreviewSelected,
+      selectedLight: AssetPreviewSelectedLight
     }
   }
 });
@@ -97,8 +110,15 @@ const AssetPreview = component(AssetPreviewUnselected, {
 class AssetManagerModel extends ViewModel {
   static get properties () {
     return {
-      container: {}
+      container: {},
+      allowDraggingAssets: {
+        defaultValue: false
+      }
     };
+  }
+
+  get assetManagerAsPopup () {
+    return !this.view.ownerChain().some(m => m.isWindow);
   }
 
   get expose () {
@@ -188,7 +208,7 @@ class AssetManagerModel extends ViewModel {
     if (this.selectedAsset) this.selectedAsset.view.master.setState(null);
     this.selectedAsset = assetEntryModel;
     this.ui.deleteButton.visible = true;
-    assetEntryModel.view.master.setState('selected');
+    assetEntryModel.view.master.setState(this.assetManagerAsPopup ? 'selectedDark' : 'selectedLight');
     this.ui.selectionButton.enable();
   }
 
@@ -212,7 +232,6 @@ class AssetManagerModel extends ViewModel {
       const overWritten = await this.uploadAsset(asset);
       if (overWritten) this.needsListRefreshed = true;
     }
-
     await this.listAssets(true);
   }
 
@@ -334,13 +353,23 @@ const NoResultIndicator = component({
 export const AssetManagerDark = component({
   name: 'asset manager',
   defaultViewModel: AssetManagerModel,
+  extent: pt(440.0000, 390.0000),
   width: 440,
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
     hugContentsHorizontally: true,
-    hugContentsVertically: true,
-    resizePolicies: [['search input wrapper', {
+    padding: rect(10, 10, 0, 0),
+    resizePolicies: [['asset type selector', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['search input wrapper', {
+      height: 'fixed',
+      width: 'fill'
+    }], ['assets', {
+      height: 'fill',
+      width: 'fill'
+    }], ['button wrapper', {
       height: 'fixed',
       width: 'fill'
     }]]
@@ -352,8 +381,7 @@ export const AssetManagerDark = component({
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
-        justifySubmorphs: 'spaced',
-        spacing: 5
+        spacing: 30
       }),
       viewModel: {
         items: [
@@ -434,7 +462,8 @@ export const AssetManagerDark = component({
         wrapSubmorphs: true
       }),
       submorphs: [part(NoResultIndicator, {
-        visible: false
+        visible: false,
+        name: 'no results indicator'
       })]
     }, {
       name: 'button wrapper',
@@ -586,8 +615,98 @@ export const AssetManagerDark = component({
   ]
 });
 
-const AssetManagerLight = component(AssetManagerDark, {
+export const AssetManagerLight = component(AssetManagerDark, {
+  viewModel: {
+    allowDraggingAssets: true
+  },
+  submorphs: [
+    {
+      name: 'asset type selector',
+      layout: new TilingLayout({
+        align: 'center',
+        spacing: 30
+      }),
+      master: ModeSelector,
+      viewModel: {
+        selectedLabelMaster: ModeSelectorLabelSelected,
+        unselectedLabelMaster: ModeSelectorLabel
+      }
+    },
+    {
+      name: 'button wrapper',
+      submorphs: [
+        {
+          name: 'left buttons',
+          submorphs: [{
+            name: 'upload button',
+            master: SystemButton,
+            submorphs: [{
+              name: 'label',
+              textAndAttributes: ['', {
+                fontColor: Color.rgb(69, 151, 230),
+                fontFamily: 'Font Awesome',
+                fontWeight: '900',
+                lineHeight: 1
+              }, ' Upload', {
+                fontFamily: 'IBM Plex Sans'
+              }]
 
+            }]
+          },
+          {
+            name: 'delete button',
+            master: SystemButton,
+            submorphs: [{
+              name: 'label',
+              textAndAttributes: ['', {
+                fontColor: Color.rgb(55, 151, 236),
+                fontFamily: 'Font Awesome',
+                fontWeight: '900',
+                lineHeight: 1
+              }, ' Delete', {
+                fontFamily: 'IBM Plex Sans'
+              }]
+            }]
+          }
+          ]
+        },
+        {
+          name: 'selection button',
+          master: SystemButton,
+          submorphs: [{
+            name: 'label',
+            textAndAttributes: ['', {
+              fontColor: Color.rgb(55, 151, 236),
+              fontFamily: 'Font Awesome',
+              fontWeight: '900',
+              lineHeight: 1
+            }, ' Use', {
+              fontFamily: 'IBM Plex Sans'
+            }]
+          }]
+        }]
+
+    },
+    {
+      name: 'status prompt',
+      submorphs: [
+        {
+          name: 'proceed button',
+          master: SystemButton
+        },
+        {
+          name: 'cancel button',
+          master: SystemButton
+        }
+      ]
+    }, {
+      name: 'search input wrapper',
+      extent: pt(440.0000, 42.6000)
+    }, {
+      name: 'search input wrapper',
+      extent: pt(440.0000, 42.6000)
+    }
+  ]
 });
 
 class AssetManagerPopupModel extends ViewModel {
@@ -623,7 +742,7 @@ class AssetManagerPopupModel extends ViewModel {
     this.view.remove();
   }
 
-  async activate (pos) {
+  activate (pos) {
     const { view } = this;
     view.doNotAcceptDropsForThisAndSubmorphs();
     view.openInWorld();
