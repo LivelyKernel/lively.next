@@ -1097,6 +1097,7 @@ export class Text extends Morph {
     spec.textString = this.textString;
     if (this.tmpEdit) {
       spec.readOnly = this.prevReadOnly;
+      spec.reactsToPointer = this.prevReactsToPointer;
       if (skipIfUnchangedFromDefault && spec.readOnly === true) {
         delete spec.readOnly;
       }
@@ -4092,6 +4093,7 @@ export class Text extends Morph {
     this.tmpEdit = false;
     topBar.setEditMode(topBar.recoverMode, true);
     this.readOnly = this.prevReadOnly;
+    this.reactsToPointer = this.prevReactsToPointer;
     this.collapseSelection();
 
     topBar.showHaloFor(this);

@@ -34,7 +34,9 @@ export const editingCommand = {
     // this makes sense even if target is not readonly
     // in the case we are in halo mode, this allows for editing which would be otherwise blocked by the halo
     t.prevReadOnly = t.readOnly;
+    t.prevReactsToPointer = t.reactsToPointer;
     t.tmpEdit = true;
+    t.reactsToPointer = true;
     t.readOnly = false;
     t.focus();
     setTimeout(() => {
