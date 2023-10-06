@@ -7,7 +7,7 @@ import { HorizontalResizer } from 'lively.components';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise, fun } from 'lively.lang';
-import { EvalBackendButton } from '../eval-backend-ui.js';
+import { EvalBackendButtonModel } from '../eval-backend-ui.js';
 import { BrowserModel, DirectoryControls, PackageControls } from './index.js';
 import { Tabs, TabModel, DefaultTab } from '../../studio/tabs.cp.js';
 import { BlackOnWhite } from '../../text/defaults.cp.js';
@@ -1180,7 +1180,7 @@ const MetaInfoContainerExpanded = component({
     fixedHeight: true,
     fixedWidth: true,
     fontColor: Color.rgb(255, 255, 255),
-    fontFamily: "IBM Plex Sans",
+    fontFamily: 'IBM Plex Sans',
     fontSize: 16,
     padding: rect(5, 0, -5, 0),
     lineWrapping: 'by-words',
@@ -1448,8 +1448,8 @@ const SystemBrowser = component({
         }),
         position: pt(354.8, 5.8),
         reactsToPointer: false,
-        submorphs: [{
-          type: EvalBackendButton,
+        submorphs: [part(BackendButtonDefault, {
+          defaultViewModel: EvalBackendButtonModel,
           master: { auto: BackendButtonDefault, click: BackendButtonClicked },
           name: 'eval backend button',
           tooltip: 'Select evaluation backend for browser.',
@@ -1460,7 +1460,7 @@ const SystemBrowser = component({
             name: 'label',
             textAndAttributes: ['local', null]
           }]
-        }]
+        })]
       }]
   }, part(Tabs, {
     name: 'tabs',

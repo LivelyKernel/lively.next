@@ -32,21 +32,13 @@ const PopupLight = component({
     }),
     position: pt(-76.5, 15)
   }, {
-    type: Button,
+    type: 'label',
     name: 'close button',
     borderColor: Color.rgba(0, 0, 0, 0),
     extent: pt(28, 23),
-    fill: null,
+    fill: Color.transparent,
     label: Icon.textAttribute('times-circle'),
     position: pt(56.5, 7),
-    submorphs: [{
-      type: Label,
-      name: 'label',
-      fontSize: 18,
-      position: pt(5, 2),
-      reactsToPointer: false,
-      textAndAttributes: Icon.textAttribute('times-circle')
-    }],
     tooltip: 'close'
   }]
 });

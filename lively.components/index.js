@@ -12,12 +12,10 @@ import * as widgets from './widgets.js';
 import * as LoadingIndicator from './loading-indicator.cp.js';
 import { addClassMappings } from 'lively.morphic/helpers.js';
 import { List, DropDownList } from './list.js';
-import { Button } from './buttons.js';
 
 addClassMappings({
   list: List,
-  dropdownlist: DropDownList,
-  button: Button
+  dropdownlist: DropDownList
 });
 
 export { Window, LoadingIndicator, prompts, widgets };

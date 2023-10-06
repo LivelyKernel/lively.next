@@ -2,15 +2,13 @@
 import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
 import {
   MorphicEnv,
-  StyleSheet,
   Icon,
   Hand,
-  morph,
   World
 } from 'lively.morphic';
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
-import { Button } from 'lively.components';
+import { SystemButton } from 'lively.components';
 
 let button, world, eventLog, env;
 const inactiveColor = Color.blue; const activeColor = Color.red; const triggerColor = Color.green;
@@ -33,7 +31,7 @@ function installEventLogger (morph, log) {
 
 function createDummyWorld () {
   world = new World({ name: 'world', extent: pt(300, 300) });
-  world.submorphs = [new Button({
+  world.submorphs = [part(SystemButton, {
     center: pt(150, 150)
   }), new Hand()];
 
