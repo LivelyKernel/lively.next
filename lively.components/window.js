@@ -67,7 +67,7 @@ export default class Window extends Morph {
             truncated.push(string, attr || {});
             if (length >= maxLength) break;
           }
-          this.ui.windowTitle.value = truncated;
+          this.ui.windowTitle.textAndAttributes = truncated;
           this.ui.windowTitle.reactsToPointer = false;
           this.relayoutWindowControls();
         }

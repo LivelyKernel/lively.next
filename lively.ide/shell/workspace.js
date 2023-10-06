@@ -1,10 +1,11 @@
 import { connect } from 'lively.bindings';
 import { pt, Rectangle } from 'lively.graphics';
-import { config, part } from 'lively.morphic';
+import { config, TilingLayout, part } from 'lively.morphic';
 import { Window } from 'lively.components';
 import ShellEditorPlugin from './editor-plugin.js';
 import Terminal from './terminal.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
+import { string } from 'lively.lang';
 
 export default class Workspace extends Window {
   static get properties () {
@@ -57,9 +58,8 @@ export default class Workspace extends Window {
 
   constructor (props) {
     super(props);
-    const btn = this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
-    connect(this.shellPlugin, 'cwd', btn, 'label',
-      { converter: cwd => lively.lang.string.truncateLeft(cwd, 50) });
+    this.addMorph(this.ensureCwdButton(this.shellPlugin.cwd));
+    this.whenRendered().then(() => this.relayoutWindowControls());
   }
 
   onLoad (_, snapshot) {
@@ -99,10 +99,14 @@ export default class Workspace extends Window {
     btn = part(SystemButton, {
       name: 'changeCwdButton',
       padding: Rectangle.inset(4, 2),
+      layout: new TilingLayout({
+        hugContentsHorizontally: true,
+        padding: Rectangle.inset(5, 0, 5, 0)
+      }),
       extent: pt(60, 20),
       borderRadius: 3,
       submorphs: [
-        { name: 'label', textAndAttributes: ['cwd...'] }
+        { name: 'label', fontSize: 12, textAndAttributes: ['cwd...'] }
       ]
     });
     connect(btn, 'fire', this, 'execCommand', { converter: () => '[shell] change working directory' });
@@ -130,13 +134,12 @@ export default class Workspace extends Window {
         name: '[shell] change working directory',
         async exec (workspace) {
           await workspace.targetMorph.execCommand('[shell] change working directory');
-          const [front, back] = workspace.title.split('-');
-          workspace.title = workspace.shellPlugin.cwd
-            ? `${front.trim()} - ${workspace.shellPlugin.cwd}`
-            : `${front.trim()}`;
+          const [label] = workspace.get('changeCwdButton').submorphs;
+          label.textString = string.truncateLeft(workspace.shellPlugin.cwd, 20, '...');
+          await workspace.whenRendered();
+          workspace.relayoutWindowControls();
         }
       },
-
       {
         name: '[shell] open running command in terminal',
         exec (workspace) {
