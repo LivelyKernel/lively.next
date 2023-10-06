@@ -102,7 +102,7 @@ class AssetManagerModel extends ViewModel {
   }
 
   get expose () {
-    return ['activate', 'container', 'close'];
+    return ['activate', 'container', 'close', 'initialize'];
   }
 
   get bindings () {
@@ -159,7 +159,7 @@ class AssetManagerModel extends ViewModel {
     this.container.remove();
   }
 
-  async activate () {
+  async initialize () {
     this.ui.assetTypeSelector.enabled = false;
     this.view.visible = false;
     const li = $world.showLoadingIndicatorFor(null, 'Enumerating project assets...');
@@ -167,6 +167,10 @@ class AssetManagerModel extends ViewModel {
     this.ui.selectionButton.disable();
     this.view.visible = true;
     li.remove();
+  }
+
+  async activate () {
+    await this.initialize();
     this._promise = promise.deferred();
     return this._promise.promise;
   }
@@ -259,7 +263,8 @@ class AssetManagerModel extends ViewModel {
       $world.addMorph(fader);
       li = $world.showLoadingIndicatorFor(this.container, 'Enumerating project assets');
     }
-    (await $world.openedProject.getAssets('image')).forEach(a => {
+    const assets = $world.openedProject ? await $world.openedProject.getAssets('image') : await $world.getAssets('image');
+    assets.forEach(a => {
       const assetName = a.nameWithoutExt();
       if (!this.view.get(assetName)) {
         this.view.get('assets').addMorph(part(AssetPreview, {

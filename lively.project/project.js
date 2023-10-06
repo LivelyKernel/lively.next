@@ -22,6 +22,7 @@ import { pt } from 'lively.graphics';
 import { arr, obj } from 'lively.lang';
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
+import { supportedImageFormats } from 'lively.ide/assets.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
@@ -494,7 +495,7 @@ export class Project {
     if (triggerOnPush) {
       definition = definition.replace('%ACTION_TRIGGER%', '\n  push:\n    branches:\n      - main');
     } else definition = definition.replace('%ACTION_TRIGGER%', '');
-    if (livelyConf.repositoryIsPrivate && livelyConf.canUsePages) definition = definition.replace('%TOKEN_PERMISSIONS%', '\n  contents: read')
+    if (livelyConf.repositoryIsPrivate && livelyConf.canUsePages) definition = definition.replace('%TOKEN_PERMISSIONS%', '\n  contents: read');
     else definition = definition.replace('%TOKEN_PERMISSIONS%', '');
     return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
   }
@@ -787,7 +788,7 @@ export class Project {
   async getAssets (type) {
     switch (type) {
       case 'image':
-        return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(/gif|jpeg|jpg|png|webp|jxl/)).sort((a, b) => ('' + a).localeCompare(b));
+        return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(supportedImageFormats)).sort((a, b) => ('' + a).localeCompare(b));
     }
   }
 }
