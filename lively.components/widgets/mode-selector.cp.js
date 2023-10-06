@@ -3,7 +3,7 @@ import { connect, signal } from 'lively.bindings';
 import { Color } from 'lively.graphics';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
-const ModeSelectorLabel = component({
+export const ModeSelectorLabel = component({
   type: Label,
   nativeCursor: 'pointer',
   name: 'mode selector label',
@@ -20,7 +20,7 @@ const ModeSelectorLabelDark = component(ModeSelectorLabel, {
   fontColor: Color.white
 });
 
-const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
+export const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
   fill: Color.black.withA(0.4),
   fontColor: Color.white
 });

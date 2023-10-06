@@ -63,7 +63,7 @@ export class FillControlModel extends ViewModel {
 
   async openAssetManager () {
     const assetManager = part(AssetManagerPopup);
-    const selectedImageUrl = await assetManager.initialize();
+    const selectedImageUrl = await assetManager.activate();
     if (selectedImageUrl) this.targetMorph.imageUrl = selectedImageUrl;
   }
 
