@@ -10,6 +10,7 @@ import DefaultTheme from '../themes/default.js';
 import DarkTheme from '../themes/dark.js';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
+import { connect } from 'lively.bindings';
 
 export default class Workspace extends Window {
   static get properties () {
@@ -55,8 +56,9 @@ export default class Workspace extends Window {
             format: 'esm'
           };
           const sys = this.jsPlugin.systemInterface();
-          this.ui.contentsWrapper.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
+          const btn = this.ui.contentsWrapper.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
             this, sys ? sys.name : 'local'));
+          connect(btn, 'extent', this, 'relayoutWindowControls');
         }
       },
 
