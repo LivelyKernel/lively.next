@@ -112,12 +112,12 @@ const req = http.request(options, res => {
         else console.log('');
       });
         console.log(`SUMMARY-passed:${passed}`);
-        fs.appendFileSync('summary.txt', `✅ ${passed} tests passed\n`);
+        if (CI) fs.appendFileSync('summary.txt', `✅ ${passed} tests passed\n`);
         console.log(`SUMMARY-skipped:${skipped}`);
-        fs.appendFileSync('summary.txt', `⏩ ${skipped} tests skipped\n`);
+        if (CI) fs.appendFileSync('summary.txt', `⏩ ${skipped} tests skipped\n`);
         console.log(`SUMMARY-failed:${failed}`);
-        fs.appendFileSync('summary.txt', `❌ ${failed} tests failed\n`);
-        if (markdownListOfFailingTests !== '') {
+        if (CI) fs.appendFileSync('summary.txt', `❌ ${failed} tests failed\n`);
+        if (CI && markdownListOfFailingTests !== '') {
           const firstLineOfSummary = `While running the tests for ${targetPackage}, the following ${failed} test(s) failed:\n`;
           fs.appendFileSync('failing.txt', firstLineOfSummary);
           fs.appendFileSync('failing.txt', markdownListOfFailingTests);
