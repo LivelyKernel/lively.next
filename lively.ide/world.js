@@ -44,6 +44,7 @@ import { localInterface } from 'lively-system-interface';
 import { ProjectCreationPrompt } from 'lively.project/prompts.cp.js';
 import { currentUsername, isUserLoggedIn, currentUser } from 'lively.user';
 import { subscribe } from 'lively.notifications/index.js';
+import { supportedImageFormats } from './assets.js';
 
 export class LivelyWorld extends World {
   static get properties () {
@@ -706,6 +707,15 @@ export class LivelyWorld extends World {
         }
       } else if (item.kind === 'string') {
         item.getAsString((s) => inspect(s));
+      }
+    }
+  }
+
+  async getAssets (type = 'image') {
+    switch (type) {
+      case 'image': {
+        const assetFolderResource = isUserLoggedIn() ? resource(System.baseURL + `/user/${currentUsername()}/uploads`) : await resource(System.baseURL + 'uploads');
+        return (await assetFolderResource.dirList()).filter(a => a.name().match(supportedImageFormats)).sort((a, b) => ('' + a).localeCompare(b));
       }
     }
   }

@@ -42,7 +42,7 @@ export class RichTextPlugin extends EditorPlugin {
       name: 'insert icon button',
       tooltip: 'Insert Icon',
       fontSize: 14,
-      textAndAttributes: Icon.textAttribute('heart-music-camera-bolt')
+      textAndAttributes: Icon.textAttribute('ti-icons')
     });
     const iconButtonHolder = new Morph({
       fill: Color.rgb(30, 30, 30).withA(0.95),

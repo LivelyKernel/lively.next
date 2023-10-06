@@ -20,6 +20,7 @@ import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
 import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
 import { isUserLoggedIn } from 'lively.user';
+import { AssetManagerLight } from './asset-manager.cp.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -219,6 +220,10 @@ export class TopBarModel extends ViewModel {
 
     if (evt.targetMorph.name === 'text mode button') {
       this.setEditMode('Text');
+    }
+
+    if (evt.targetMorph.name === 'open asset browser') {
+      this.browseAssets();
     }
 
     if (evt.targetMorph.name === 'open component browser') {
@@ -450,6 +455,22 @@ export class TopBarModel extends ViewModel {
       const miniMap = part(WorldMiniMap).openInWorld();
       miniMap.relayout();
       $world.getSubmorphNamed('world zoom indicator').relayout();
+    }
+  }
+
+  async browseAssets () {
+    if (!this._assetBrowser) {
+      this.colorTopbarButton(this.ui.openAssetBrowser, true);
+      const assetBrowser = part(AssetManagerLight);
+      await assetBrowser.initialize();
+      const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
+      assetBrowser.container = win;
+      this._assetBrowser = win;
+      once(win, 'close', () => this.colorTopbarButton(this.ui.openAssetBrowser, false));
+    } else {
+      this._assetBrowser.close();
+      this._assetBrowser = null;
+      this.colorTopbarButton(this.ui.openAssetBrowser, false);
     }
   }
 
@@ -983,6 +1004,11 @@ const TopBar = component({
             }
           }
         }
+      }),
+      part(TopBarButton, {
+        name: 'open asset browser',
+        textAndAttributes: Icon.textAttribute('heart-music-camera-bolt'),
+        tooltip: 'Browse Project Assets'
       }),
       part(TopBarButton, {
         name: 'open component browser',
