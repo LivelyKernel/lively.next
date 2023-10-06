@@ -1,14 +1,14 @@
 /* global localStorage */
-import { pt, LinearGradient, Color } from 'lively.graphics';
+import { pt, Rectangle, LinearGradient, Color } from 'lively.graphics';
 import { arr, string } from 'lively.lang';
-import { connect } from 'lively.bindings';
-import { config, StyleSheet } from 'lively.morphic';
+import { connect, signal } from 'lively.bindings';
+import { config, TilingLayout, part, StyleSheet } from 'lively.morphic';
 import L2LClient from 'lively.2lively/client.js';
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from 'lively-system-interface';
-import { Button, DropDownList } from 'lively.components';
-import { ButtonDefault } from 'lively.components/buttons.cp.js';
+import { Button, ButtonModel, DropDownList } from 'lively.components';
+import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
 
-export class EvalBackendButton extends Button {
+export class EvalBackendButtonModel extends ButtonModel {
   static get properties () {
     return {
 
@@ -20,7 +20,7 @@ export class EvalBackendButton extends Button {
           const backend = this.currentBackend;
           const descr = backend && backend.coreInterface && backend.coreInterface.description;
           const label = string.truncate(descr || name || 'local', 25);
-          this.label = label;
+          this.ui.label.textString = label;
         }
       },
 
@@ -29,6 +29,7 @@ export class EvalBackendButton extends Button {
         get () { return this.evalbackendChooser.backendWithName(this.currentBackendName); },
         set (backend) {
           this.currentBackendName = backend ? backend.name : 'local';
+          if (this.view) signal(this.view, 'currentBackend');
         }
       },
 
@@ -38,8 +39,12 @@ export class EvalBackendButton extends Button {
         get () { return EvalBackendChooser.default; }
       },
 
-      extent: { defaultValue: pt(120, 20) },
-      target: {}
+      target: {},
+      expose: {
+        get () {
+          return ['updateFromTarget', 'ensureSimilarBackend', 'target'];
+        }
+      }
     };
   }
 
@@ -189,12 +194,15 @@ export default class EvalBackendChooser {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   buildEvalBackendDropdownFor (morph, btn) {
-    btn = btn || new EvalBackendButton({
+    btn = btn || part(SystemButton, {
       name: 'eval backend button',
-      master: ButtonDefault,
-      fontSize: 11,
+      defaultViewModel: EvalBackendButtonModel,
+      layout: new TilingLayout({ axisAlign: 'center', hugContentsHorizontally: true, padding: Rectangle.inset(5, 0, 5, 0) }),
+      viewModel: { target: morph },
       height: 20,
-      target: morph
+      submorphs: [
+        { name: 'label', fontSize: 11 }
+      ]
     });
     setTimeout(() => btn.updateFromTarget(), 0);
 

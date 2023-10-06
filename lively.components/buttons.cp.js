@@ -8,7 +8,6 @@ const ButtonDefault = component({
   // the designer's workflow (button cannot be closed, adjust their size dynamically or alter
   // an area of their submorph hierarchy that is subject to custom styling)
   // defaultViewModel: ButtonModel,
-  // type: Button,
   defaultViewModel: ButtonModel, // remove this once transition is done
   name: 'button/default',
   borderColor: Color.rgb(112, 123, 124),

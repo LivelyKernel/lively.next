@@ -1,11 +1,11 @@
 /* global System, localStorage */
 import { arr, obj, Path, string, fun, promise } from 'lively.lang';
-import { Icon, part, TilingLayout, Morph, GridLayout, config } from 'lively.morphic';
+import { Icon, Morph, config } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import { withSuperclasses, isClass } from 'lively.classes/util.js';
 import { LoadingIndicator } from 'lively.components';
-import { connect } from 'lively.bindings';
+
 import { RuntimeSourceDescriptor } from 'lively.classes/source-descriptors.js';
 import ObjectPackage, { isObjectClass } from 'lively.classes/object-classes.js';
 import { chooseUnusedImports, interactivlyFixUndeclaredVariables, interactivelyChooseImports } from '../import-helper.js';
@@ -27,7 +27,6 @@ import { resource } from 'lively.resources';
 import lint from '../linter.js';
 import { StatusMessageConfirm, StatusMessageWarning, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { ViewModel } from 'lively.morphic/components/core.js';
-import { SystemButton } from 'lively.components/buttons.cp.js';
 
 const DANGEROUS_METHODS_TO_OVERRIDE = ['render', 'remove', 'addMorph', 'addMorphAt'];
 
