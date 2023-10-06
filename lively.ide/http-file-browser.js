@@ -419,7 +419,7 @@ export default class HTTPFileBrowser extends Morph {
               name: 'selectedFileName',
               padding: Rectangle.inset(2, 2),
               fontSize: 14,
-              fontFamily: 'Inconsolata, monospace',
+              fontFamily: 'IBM Plex Mono',
               readOnly: true,
               clipMode: 'hidden',
               nativeCursor: 'pointer',
