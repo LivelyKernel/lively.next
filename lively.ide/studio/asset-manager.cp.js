@@ -524,7 +524,7 @@ export const AssetManagerDark = component({
     },
     {
       name: 'assets',
-      extent: pt(440, 280),
+      extent: pt(420, 165),
       fill: Color.transparent,
       clipMode: 'auto',
       layout: new TilingLayout({
@@ -694,6 +694,7 @@ export const AssetManagerLight = component(AssetManagerDark, {
   viewModel: {
     allowDraggingAssets: true
   },
+  extent: pt(440.0000, 291),
   submorphs: [
     {
       name: 'asset type selector',
