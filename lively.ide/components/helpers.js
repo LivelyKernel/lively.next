@@ -149,7 +149,7 @@ export function getValueExpr (prop, value, depth = 0) {
     }
   }
   valueAsExpr = {
-    __expr__: value,
+    __expr__: String(value),
     bindings
   };
 
