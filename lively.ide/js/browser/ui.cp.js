@@ -705,6 +705,12 @@ const FileStatusWarning = component(FileStatusDefault, {
 
 const BackendButtonDefault = component(ButtonDefault, {
   name: 'backend button default',
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    padding: rect(5, 0, 0, 0)
+  }),
   borderColor: Color.rgb(44, 62, 80),
   extent: pt(130.3, 26.1),
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) }),
