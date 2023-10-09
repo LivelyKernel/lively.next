@@ -288,7 +288,8 @@ class AssetManagerModel extends ViewModel {
   }
 
   async listAssets (updateAtRuntime = false) {
-    if (this.needsListRefreshed) this.view.get('assets').submorphs = [];
+    const assetHolder = this.view.getSubmorphNamed('assets');
+    if (this.needsListRefreshed) assetHolder.submorphs = assetHolder.submorphs.filter(m => !m.isAssetPreview);
     this.needsListRefreshed = false;
     let fader, li;
     if (updateAtRuntime) {
@@ -311,8 +312,8 @@ class AssetManagerModel extends ViewModel {
 
     assets.forEach(a => {
       const assetName = a.nameWithoutExt();
-      if (!this.view.get(assetName)) {
-        this.view.get('assets').addMorph(part(AssetPreview, {
+      if (!this.view.getSubmorphNamed(assetName)) {
+        this.view.getSubmorphNamed('assets').addMorph(part(AssetPreview, {
           name: assetName,
           viewModel: {
             assetName,
