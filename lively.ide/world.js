@@ -712,9 +712,12 @@ export class LivelyWorld extends World {
   }
 
   async getAssets (type = 'image') {
+    const assetFolderResource = isUserLoggedIn() ? resource(System.baseURL + `/user/${currentUsername()}/uploads`) : await resource(System.baseURL + 'uploads');
+    if (!(await assetFolderResource.exists()) || (await assetFolderResource.dirList()).length === 0) {
+      return false;
+    }
     switch (type) {
       case 'image': {
-        const assetFolderResource = isUserLoggedIn() ? resource(System.baseURL + `/user/${currentUsername()}/uploads`) : await resource(System.baseURL + 'uploads');
         return (await assetFolderResource.dirList()).filter(a => a.name().match(supportedImageFormats)).sort((a, b) => ('' + a).localeCompare(b));
       }
     }
