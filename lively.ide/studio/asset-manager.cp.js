@@ -148,7 +148,8 @@ class AssetManagerModel extends ViewModel {
   get bindings () {
     return [
       { target: 'upload button', signal: 'onMouseDown', handler: 'openFilePicker' },
-      { target: 'delete button', signal: 'onMouseDown', handler: 'deleteAsset' },
+      // See https://github.com/LivelyKernel/lively.next/issues/1057
+      { target: 'delete button', signal: 'onMouseUp', handler: 'deleteAsset' },
       { target: 'selection button', signal: 'onMouseDown', handler: 'confirm' },
       { target: 'search input', signal: 'inputChanged', handler: 'filterAssets' },
       {
