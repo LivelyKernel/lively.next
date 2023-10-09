@@ -459,17 +459,23 @@ export class TopBarModel extends ViewModel {
   }
 
   async browseAssets () {
-    if (!this._assetBrowser) {
+    if ($world._loadingAssetBrowser) return;
+    if (!$world._assetBrowser) {
+      $world._loadingAssetBrowser = true;
       this.colorTopbarButton(this.ui.openAssetBrowser, true);
       const assetBrowser = part(AssetManagerLight);
       await assetBrowser.initialize();
       const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
+      delete $world._loadingAssetBrowser;
       assetBrowser.container = win;
-      this._assetBrowser = win;
-      once(win, 'close', () => this.colorTopbarButton(this.ui.openAssetBrowser, false));
+      $world._assetBrowser = assetBrowser;
+      once(win, 'close', () => {
+        this.colorTopbarButton(this.ui.openAssetBrowser, false);
+        $world._assetBrowser = null;
+      });
     } else {
-      this._assetBrowser.close();
-      this._assetBrowser = null;
+      $world._assetBrowser.getWindow().close();
+      $world._assetBrowser = null;
       this.colorTopbarButton(this.ui.openAssetBrowser, false);
     }
   }
