@@ -416,10 +416,10 @@ export class PackageTreeData extends TreeData {
     return await this.listEditableFilesInDir(pkg);
   }
 
-  async getLoadedModuleUrls () {
+  async getLoadedModuleUrls (gitIgnoreExists) {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
     const gitignore = [];
-    if (await resource(selectedPkg.url).join('.gitignore').exists()) {
+    if (gitIgnoreExists && await resource(selectedPkg.url).join('.gitignore').exists()) { // keeping the second condition around for defensive programming
       gitignore.push(...(await resource(selectedPkg.url).join('.gitignore').read()).split('\n'));
     }
     const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git', ...gitignore]);
@@ -438,7 +438,8 @@ export class PackageTreeData extends TreeData {
       targetModule: 'lively.ide/js/browser/tree.js',
       ackTimeout: 30 * 1000
     })).value;
-    const loadedModules = await this.getLoadedModuleUrls();
+    const gitIgnoreExists = !!(await resource(folderLocation).dirList()).find(f => f.url.includes(folderLocation + '.gitignore'));
+    const loadedModules = await this.getLoadedModuleUrls(gitIgnoreExists);
     return files.map(file => {
       if (!this.showHiddenFolders && file.type === 'directory' && file.name[0] === '.') return false;
       Object.assign(file, loadedModules[file.url] || {});
