@@ -303,6 +303,12 @@ class AssetManagerModel extends ViewModel {
       li = $world.showLoadingIndicatorFor(this.container, 'Enumerating project assets');
     }
     const assets = $world.openedProject ? await $world.openedProject.getAssets('image') : await $world.getAssets('image');
+    if (!assets) {
+      this.ui.noAssetsIndicator.visible = true;
+      return;
+    }
+    this.ui.noAssetsIndicator.visible = false;
+
     assets.forEach(a => {
       const assetName = a.nameWithoutExt();
       if (!this.view.get(assetName)) {
@@ -368,6 +374,48 @@ const NoResultIndicator = component({
     fontWeight: '600',
     position: pt(106.0000, 66.0000),
     textAndAttributes: ['No matching assets...', null]
+  }]
+});
+
+const NoAssetsIndicator = component({
+  name: 'no assets indicator',
+  fill: Color.rgba(255, 255, 255, 0),
+  borderColor: Color.rgba(23, 160, 251, 0),
+  borderWidth: 1,
+  extent: pt(316.0000, 164.0000),
+  position: pt(-104.0000, 21.0000),
+  submorphs: [{
+    type: Text,
+    name: 'icon',
+    borderColor: Color.rgba(23, 160, 251, 0),
+    borderWidth: 1,
+    cursorWidth: 1.5,
+    dynamicCursorColoring: true,
+    extent: pt(80.0000, 64.5000),
+    fill: Color.rgba(255, 255, 255, 0),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgba(126, 126, 126, 0.75),
+    fontSize: 73,
+    lineWrapping: 'by-words',
+    padding: rect(1, 1, 0, 0),
+    position: pt(67.0000, 22.5000),
+    textAndAttributes: ['懶', {
+      fontFamily: 'Tabler Icons',
+      fontWeight: '900'
+    }, '  ', {}]
+
+  }, {
+    type: Text,
+    name: 'text',
+    dynamicCursorColoring: true,
+    fill: Color.rgba(255, 255, 255, 0),
+    fontColor: Color.rgba(126, 126, 126, 0.75),
+    fontSize: 20,
+    fontWeight: '600',
+    position: pt(152.0000, 61.5000),
+    textAndAttributes: ['No assets...', null]
+
   }]
 });
 
@@ -485,6 +533,10 @@ export const AssetManagerDark = component({
       submorphs: [part(NoResultIndicator, {
         visible: false,
         name: 'no results indicator'
+      }),
+      part(NoAssetsIndicator, {
+        visible: false,
+        name: 'no assets indicator'
       })]
     }, {
       name: 'button wrapper',

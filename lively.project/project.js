@@ -786,6 +786,9 @@ export class Project {
    * @param {string} type - One of 'video', 'audio', 'image'
    */
   async getAssets (type) {
+    if (!(await resource(this.url + '/assets').exists()) || ((await resource(this.url + '/assets').dirList()).length === 0)) {
+      return false;
+    }
     switch (type) {
       case 'image':
         return (await resource(this.url + '/assets').dirList()).filter(a => a.name().match(supportedImageFormats)).sort((a, b) => ('' + a).localeCompare(b));
