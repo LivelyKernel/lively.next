@@ -1001,6 +1001,8 @@ export class StylePolicy {
    * @returns {StylePolicy} The policy in question.
    */
   getSubPolicyFor (aMorph) {
+    const isRoot = aMorph.isComponent || this.targetMorph === aMorph;
+    if (isRoot) return this;
     while (aMorph && !aMorph.master && aMorph.owner) aMorph = aMorph.owner;
     return this.getSubSpecCorrespondingTo(aMorph);
   }
@@ -1378,14 +1380,15 @@ export class PolicyApplicator extends StylePolicy {
     return currSpec;
   }
 
+  /**
+   * Assumes the addedMorph is not yet reflected in the spec.
+   * @param { Morph } addedMorph - The morph that was added and prompt the clear the without() call
+   */
   removeWithoutCall (addedMorph) {
-    const pathToOwner = [...addedMorph.ownerChain()
-      .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
-      .map(m => m.name).reverse()];
-    let parentSpec = pathToOwner.length > 0
-      ? this.getSubSpecAt(pathToOwner)
-      : this.getSubSpecFor(addedMorph.owner.name);
-    const withoutCallSpec = this.getSubSpecAt([...pathToOwner, addedMorph.name], true);
+    let parentSpec = this.getSubSpecCorrespondingTo(addedMorph.owner);
+    if (parentSpec.isPolicy) parentSpec = parentSpec.spec;
+    const withoutCallSpec = this.getSubPolicyFor(addedMorph.owner)?.getSubSpecFor(addedMorph.name, true);
+
     if (parentSpec && withoutCallSpec) {
       arr.remove(parentSpec.submorphs, withoutCallSpec);
     }
@@ -1394,14 +1397,10 @@ export class PolicyApplicator extends StylePolicy {
   removeSpecInResponseTo (removeChange, insertRemoveIfNeeded = true) {
     const { target: prevOwner, args: [removedMorph] } = removeChange;
     // at any rate, remove the sub spec if present
-    let ownerSpec = this.ensureSubSpecFor(prevOwner);
+    let ownerSpec = this.getSubPolicyFor(prevOwner)?.ensureSubSpecFor(prevOwner);
+    if (!ownerSpec) return; // nothing to remove
     if (ownerSpec.isPolicyApplicator) ownerSpec = ownerSpec.spec;
-    const pathToSpec = [...prevOwner.ownerChain()
-      .filter(m => !m.isWorld && m.master && !m.owner?.isWorld)
-      .map(m => m.name).reverse(),
-    ...(prevOwner.owner !== this.targetMorph && prevOwner.owner?.master) ? [prevOwner.owner.name] : [], // if no owner, we dont need to mention the owner name
-    removedMorph.name];
-    const removedMorphSpec = this.getSubSpecAt(pathToSpec, false, false);
+    const removedMorphSpec = ownerSpec.submorphs?.find(spec => (spec.props?.name || spec.name) === removedMorph.name);
     if (removedMorphSpec) {
       arr.remove(ownerSpec.submorphs, removedMorphSpec);
     }
@@ -1410,7 +1409,8 @@ export class PolicyApplicator extends StylePolicy {
       if (!ownerSpec.submorphs) ownerSpec.submorphs = [];
       ownerSpec.submorphs.push(without(removedMorph.name));
     }
-    return removedMorphSpec;
+
+    return removedMorphSpec?.props || removedMorphSpec;
   }
 
   /**
