@@ -90,19 +90,26 @@ const AssetPreviewUnselected = component(ComponentPreviewDark, {
       }
       ]
     }, {
-      name: 'component name',
-      textAndAttributes: ['hello', null]
+      name: 'component name', textAndAttributes: ['hello', null]
     }
   ]
 });
 
-const AssetPreviewSelectedLight = component(AssetPreviewUnselected, {
-  borderColor: Color.rgb(69, 151, 230),
-  borderWidth: 2,
-  fill: Color.rgba(69, 151, 230, 0.6),
+const AssetPreviewUnselectedLight = component(AssetPreviewUnselected, {
   submorphs: [{
     name: 'component name',
-    fontColor: Color.rgb(255, 255, 255)
+    fontColor: Color.rgb(102, 102, 102)
+  }
+  ]
+});
+
+const AssetPreviewSelectedLight = component(AssetPreviewUnselected, {
+  borderColor: Color.rgb(33, 150, 243),
+  borderWidth: 2,
+  fill: Color.rgba(3, 169, 244, 0.75),
+  submorphs: [{
+    name: 'component name',
+    fontColor: Color.white
   }
   ]
 });
@@ -122,6 +129,7 @@ const AssetPreview = component(AssetPreviewUnselected, {
   master: {
     states: {
       selectedDark: AssetPreviewSelected,
+      unselectedLight: AssetPreviewUnselectedLight,
       selectedLight: AssetPreviewSelectedLight
     }
   }
@@ -226,7 +234,7 @@ class AssetManagerModel extends ViewModel {
   }
 
   selectAssetEntry (assetEntryModel) {
-    if (this.selectedAsset) this.selectedAsset.view.master.setState(null);
+    if (this.selectedAsset) this.selectedAsset.view.master.setState(this.view.getWindow() ? 'unselectedLight' : null);
     this.selectedAsset = assetEntryModel;
     this.ui.deleteButton.visible = true;
     assetEntryModel.view.master.setState(this.assetManagerAsPopup ? 'selectedDark' : 'selectedLight');
@@ -314,7 +322,7 @@ class AssetManagerModel extends ViewModel {
     assets.forEach(a => {
       const assetName = a.nameWithoutExt();
       if (!this.view.getSubmorphNamed(assetName)) {
-        this.view.getSubmorphNamed('assets').addMorph(part(AssetPreview, {
+        const addedPreviewMorph = part(AssetPreview, {
           name: assetName,
           viewModel: {
             assetName,
@@ -323,7 +331,9 @@ class AssetManagerModel extends ViewModel {
             assetManager: this,
             allowDragging: this.allowDraggingAssets
           }
-        }));
+        });
+        if (true) addedPreviewMorph.master.setState('unselectedLight');
+        this.view.getSubmorphNamed('assets').addMorph(addedPreviewMorph);
       }
     });
     if (updateAtRuntime) {
@@ -424,8 +434,7 @@ const NoAssetsIndicator = component({
 export const AssetManagerDark = component({
   name: 'asset manager',
   defaultViewModel: AssetManagerModel,
-  extent: pt(440.0000, 390.0000),
-  width: 440,
+  extent: pt(440.0000, 324),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
@@ -443,7 +452,8 @@ export const AssetManagerDark = component({
     }], ['button wrapper', {
       height: 'fixed',
       width: 'fill'
-    }]]
+    }]],
+    spacing: 10
   }),
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [
@@ -451,7 +461,6 @@ export const AssetManagerDark = component({
       name: 'asset type selector',
       layout: new TilingLayout({
         align: 'center',
-        axisAlign: 'center',
         spacing: 30
       }),
       viewModel: {
@@ -463,6 +472,7 @@ export const AssetManagerDark = component({
       }
     }), {
       name: 'search input wrapper',
+      extent: pt(440.0000, 42.6000),
       layout: new TilingLayout({
         axisAlign: 'center',
         padding: rect(8, 0, -8, 0),
@@ -529,6 +539,7 @@ export const AssetManagerDark = component({
       clipMode: 'auto',
       layout: new TilingLayout({
         align: 'center',
+        padding: rect(5, 5, 0, 0),
         spacing: 5,
         wrapSubmorphs: true
       }),
@@ -576,9 +587,9 @@ export const AssetManagerDark = component({
                 name: 'label',
                 type: Label,
                 fill: Color.transparent,
-                fontColor: Color.rgb(255, 255, 255),
+                fontColor: Color.white,
                 textAndAttributes: ['', {
-                  fontColor: Color.rgb(178, 235, 242),
+                  fontColor: Color.white,
                   fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
                   fontWeight: '900',
                   lineHeight: 1
@@ -604,9 +615,8 @@ export const AssetManagerDark = component({
                 name: 'label',
                 type: Label,
                 fill: Color.transparent,
-                fontColor: Color.rgb(255, 255, 255),
+                fontColor: Color.white,
                 textAndAttributes: ['', {
-                  fontColor: Color.rgb(178, 235, 242),
                   fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
                   fontWeight: '900',
                   lineHeight: 1
@@ -628,9 +638,9 @@ export const AssetManagerDark = component({
             name: 'label',
             type: Label,
             fill: Color.transparent,
-            fontColor: Color.rgb(255, 255, 255),
+            fontColor: Color.white,
             textAndAttributes: ['', {
-              fontColor: Color.rgb(178, 235, 242),
+              fontColor: Color.rgb(74, 214, 87),
               fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
               fontWeight: '900',
               lineHeight: 1
@@ -682,7 +692,6 @@ export const AssetManagerDark = component({
           submorphs: [{
             name: 'label',
             textAndAttributes: ['Cancel', null]
-
           }]
         })
       ]
@@ -694,14 +703,9 @@ export const AssetManagerLight = component(AssetManagerDark, {
   viewModel: {
     allowDraggingAssets: true
   },
-  extent: pt(440.0000, 291),
   submorphs: [
     {
       name: 'asset type selector',
-      layout: new TilingLayout({
-        align: 'center',
-        spacing: 30
-      }),
       master: ModeSelector,
       viewModel: {
         selectedLabelMaster: ModeSelectorLabelSelected,
@@ -709,6 +713,9 @@ export const AssetManagerLight = component(AssetManagerDark, {
       }
     },
     {
+      name: 'assets',
+      fill: Color.rgb(238, 238, 238)
+    }, {
       name: 'button wrapper',
       submorphs: [
         {
@@ -719,7 +726,6 @@ export const AssetManagerLight = component(AssetManagerDark, {
             submorphs: [{
               name: 'label',
               textAndAttributes: ['', {
-                fontColor: Color.rgb(69, 151, 230),
                 fontFamily: 'Font Awesome',
                 fontWeight: '900',
                 lineHeight: 1
@@ -735,7 +741,6 @@ export const AssetManagerLight = component(AssetManagerDark, {
             submorphs: [{
               name: 'label',
               textAndAttributes: ['', {
-                fontColor: Color.rgb(55, 151, 236),
                 fontFamily: 'Font Awesome',
                 fontWeight: '900',
                 lineHeight: 1
@@ -752,7 +757,7 @@ export const AssetManagerLight = component(AssetManagerDark, {
           submorphs: [{
             name: 'label',
             textAndAttributes: ['', {
-              fontColor: Color.rgb(55, 151, 236),
+              fontColor: Color.rgb(74, 174, 79),
               fontFamily: 'Font Awesome',
               fontWeight: '900',
               lineHeight: 1
@@ -761,7 +766,6 @@ export const AssetManagerLight = component(AssetManagerDark, {
             }]
           }]
         }]
-
     },
     {
       name: 'status prompt',
@@ -775,12 +779,6 @@ export const AssetManagerLight = component(AssetManagerDark, {
           master: SystemButton
         }
       ]
-    }, {
-      name: 'search input wrapper',
-      extent: pt(440.0000, 42.6000)
-    }, {
-      name: 'search input wrapper',
-      extent: pt(440.0000, 42.6000)
     }
   ]
 });
@@ -831,13 +829,11 @@ class AssetManagerPopupModel extends ViewModel {
 export const AssetManagerPopup = component(DarkPopupWindow, {
   styleClasses: [],
   defaultViewModel: AssetManagerPopupModel,
+  extent: pt(450, 365),
   hasFixedPosition: false,
-  extent: pt(440, 140),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
-    hugContentsHorizontally: true,
-    hugContentsVertically: true,
     resizePolicies: [['header menu', {
       height: 'fixed',
       width: 'fill'
@@ -861,16 +857,6 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
       }]
     }, add(part(AssetManagerDark, {
       name: 'asset manager',
-      extent: pt(10.0000, 476.0000),
-      layout: new TilingLayout({
-        axis: 'column',
-        axisAlign: 'center',
-        hugContentsHorizontally: true,
-        hugContentsVertically: true,
-        resizePolicies: [['search input wrapper', {
-          height: 'fixed',
-          width: 'fill'
-        }]]
-      })
+      extent: pt(440, 324)
     }))]
 });
