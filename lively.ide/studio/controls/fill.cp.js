@@ -8,10 +8,12 @@ import { TextInput, AddButton } from '../shared.cp.js';
 import { PropertySection } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { obj } from 'lively.lang';
-import { noUpdate } from 'lively.bindings';
+import { noUpdate, once } from 'lively.bindings';
 import { AssetManagerPopup } from '../asset-manager.cp.js';
-import { ModeSelectorDark } from 'lively.components/widgets/mode-selector.cp.js';
+
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { LabeledCheckbox } from 'lively.components/checkbox.cp.js';
+import { CheckboxUnchecked } from 'lively.components';
 
 export class FillControlModel extends ViewModel {
   static get properties () {
@@ -63,8 +65,17 @@ export class FillControlModel extends ViewModel {
 
   async openAssetManager () {
     const assetManager = part(AssetManagerPopup);
+    $world._assetBrowserPopup = assetManager;
+    once(assetManager, 'close', this, 'closeAssetManagerPopup');
+
     const selectedImageUrl = await assetManager.activate();
     if (selectedImageUrl) this.targetMorph.imageUrl = selectedImageUrl;
+  }
+
+  closeAssetManagerPopup () {
+    if (!$world._assetBrowserPopup) return;
+    $world._assetBrowserPopup.close();
+    $world._assetBrowserPopup = null;
   }
 
   focusOn (target) {
@@ -107,6 +118,7 @@ export class FillControlModel extends ViewModel {
   }
 
   deactivate () {
+    this.closeAssetManagerPopup();
     this.models.fillColorInput.closeColorPicker();
   }
 }
