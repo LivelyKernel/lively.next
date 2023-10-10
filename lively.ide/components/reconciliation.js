@@ -1,13 +1,17 @@
 import { arr, tree, obj, string } from 'lively.lang';
 import {
-  getNodeFromSubmorphs, getAnonymousAddedParts, getAnonymousParts, getAnonymousSpecs, getParentRef, getComponentDeclsFromScope,
+  getNodeFromSubmorphs,
+  getAnonymousAddedParts,
+  getAnonymousParts,
+  getAnonymousSpecs,
+  getParentRef,
+  getComponentDeclsFromScope,
   getAddCallReferencing,
   getWithoutCall,
   getEligibleSourceEditorsFor,
   applySourceChanges,
   getPathFromMorphToMaster,
   getTextAttributesExpr,
-  getComponentScopeFor,
   getValueExpr,
   getFoldableValueExpr,
   standardValueTransform,
@@ -435,8 +439,8 @@ export async function renameComponent (protoMorph, newName) {
 }
 
 export function insertMorphExpression (parsedComponent, sourceCode, newOwner, addedMorphExpr, nextSibling = false) {
-  const propsNode = getPropertiesNode(parsedComponent, newOwner);
-  // FIXME: replace parsedComponent
+  const morphNode = getMorphNode(parsedComponent, newOwner);
+  const propsNode = morphNode && getPropertiesNode(morphNode);
   const submorphsArrayNode = propsNode && getProp(propsNode, 'submorphs')?.value;
 
   if (!submorphsArrayNode) {
@@ -758,8 +762,8 @@ class MorphRemovalReconciliation extends Reconciliation {
     const { previousOwner, removedMorph } = this;
     const { modId, sourceCode, parsedComponent, requiredBindings } = this.getDescriptorContext(interactiveDescriptor);
 
-    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
-    let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
+    let closestSubmorphsNode = getProp(getMorphNode(parsedComponent, previousOwner), 'submorphs');
+    let nodeToRemove = closestSubmorphsNode && getNodeFromSubmorphs(closestSubmorphsNode.value, removedMorph.name);
 
     const removeMorphExpr = {
       __expr__: `without('${ removedMorph.name }')`,
@@ -798,9 +802,8 @@ class MorphRemovalReconciliation extends Reconciliation {
   dropSpec (interactiveDescriptor) {
     const { previousOwner, removedMorph } = this;
     const { modId, parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
-
-    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, previousOwner), 'submorphs');
-    let nodeToRemove = closestSubmorphsNode && getMorphNode(closestSubmorphsNode.value, removedMorph);
+    let closestSubmorphsNode = getProp(getMorphNode(parsedComponent, previousOwner), 'submorphs');
+    let nodeToRemove = closestSubmorphsNode && getNodeFromSubmorphs(closestSubmorphsNode.value, removedMorph.name);
 
     const removedExpr = nodeToRemove && this.getRemovedExpression(nodeToRemove);
 
@@ -857,6 +860,11 @@ class MorphRemovalReconciliation extends Reconciliation {
         const [removedSpec] = exprBody.body.expression.elements;
         subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
       }
+      if (subExpr.startsWith('add')) {
+        // extract the one element from the elements
+        const [removedSpec] = exprBody.expression.arguments;
+        subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
+      }
     } finally {
       return { __expr__: subExpr, bindings: [] };
     }
@@ -887,6 +895,7 @@ class MorphRemovalReconciliation extends Reconciliation {
       });
     }
 
+    // the morph was part of the original component, not any derivation
     if (!this.removedMorph.__wasAddedToDerived__) meta.previousOwner = this.previousOwner;
 
     if (subSpec) meta.subSpec = subSpec;
@@ -1035,7 +1044,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
    */
   clearWithoutCallIfNeeded (interactiveDescriptor) {
     const { modId, parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
-    let closestSubmorphsNode = getProp(getPropertiesNode(parsedComponent, this.newOwner), 'submorphs');
+    let closestSubmorphsNode = getProp(getMorphNode(parsedComponent, this.newOwner), 'submorphs');
     let nodeToRemove;
     if (closestSubmorphsNode?.value.elements.length < 2) {
       this.modulesToLint.add(modId);
@@ -1061,7 +1070,7 @@ class MorphIntroductionReconciliation extends Reconciliation {
     const meta = this.recoverRemovedMorphMetaIn(interactiveDescriptor);
     if (meta) {
       let { subSpec: removedSpec, subExpr: removedExpr, removedMorph, previousOwner, wasInherited } = meta;
-      if (removedSpec?.props?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
+      if (removedSpec?.__wasAddedToDerived__ && previousOwner !== this.newOwner) {
         removedExpr = this.generateAddedMorphExpression(this.addedMorph, this.nextSibling, []);
       }
 
@@ -1192,8 +1201,8 @@ class PropChangeReconciliation extends Reconciliation {
 
   getNodeForTargetInSource (interactiveDescriptor = this.descriptor) {
     const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
-    const affectedPolicy = getComponentScopeFor(parsedComponent, this.target);
-    return getPropertiesNode(affectedPolicy, this.target);
+    const morphNode = getMorphNode(parsedComponent, this.target);
+    return morphNode && getPropertiesNode(morphNode);
   }
 
   propRequiresLint (propName) {
@@ -1334,7 +1343,7 @@ class RenameReconciliation extends PropChangeReconciliation {
 
   getNodeForTargetInSource (interactiveDescriptor) {
     const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
-    const affectedPolicy = getComponentScopeFor(parsedComponent, this.target);
+    const affectedPolicy = getMorphNode(parsedComponent, this.target.owner);
     return getPropertiesNode(affectedPolicy, this.oldName);
   }
 

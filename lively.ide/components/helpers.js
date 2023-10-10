@@ -45,7 +45,8 @@ export function getEligibleSourceEditorsFor (modId, modSource) {
 }
 
 export function getPathFromScopeMaster (m) {
-  return arr.takeWhile(m.ownerChain(), m => !m.master && !m.isComponent).map(m => m.name);
+  if (m.isComponent) return [];
+  return arr.takeWhile(m.ownerChain(), m => !m.isComponent).map(m => m.name);
 }
 
 export function getPathFromMorphToMaster (m) {
@@ -313,11 +314,13 @@ export function drillDownPath (startNode, path) {
   path = [...path]; //  copy the path
   let curr = startNode;
   if (curr.type !== 'ArrayExpression') curr = getProp(curr, 'submorphs')?.value;
-  while (path.length > 0) {
+  while (path.length > 0 && curr) {
     const name = path.shift();
     curr = getNodeFromSubmorphs(curr, name);
-    if (path.length > 0 && curr) curr = getProp(curr, 'submorphs')?.value;
-    else break;
+    if (path.length > 0 && curr) {
+      if (curr.type !== 'ObjectExpression') { curr = getPropertiesNode(curr); }
+      curr = getProp(curr, 'submorphs')?.value;
+    } else break;
   }
   return curr;
 }
@@ -337,14 +340,8 @@ export function getMorphNode (componentScope, aMorph) {
   // often the morph node is just the properties node itself
   // but when the morph is derived from another master component
   // it is wrapped inside the part() call, which then needs to be returned
-  const path = getPathFromScopeMaster(aMorph).reverse();
-  const ownerNode = drillDownPath(componentScope, path);
-  if (!ownerNode) return null;
-  let submorphsNode;
-  if (ownerNode.type === 'ArrayExpression') submorphsNode = ownerNode;
-  else submorphsNode = getProp(ownerNode, 'submorphs')?.value;
-  if (!submorphsNode) return null;
-  return getNodeFromSubmorphs(submorphsNode, aMorph.name);
+  const path = getPathFromMorphToMaster(aMorph).reverse();
+  return drillDownPath(getPropertiesNode(componentScope), path);
 }
 
 export function getWithoutCall (submorphsNode, aMorph) {
