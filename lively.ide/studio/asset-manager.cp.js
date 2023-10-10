@@ -241,7 +241,7 @@ class AssetManagerModel extends ViewModel {
   async deleteAsset () {
     const assetToDelete = resource($world.openedProject.url).join('assets/' + this.selectedAsset.fullFileName);
     await assetToDelete.remove();
-
+    this.ui.selectionButton.disable();
     this.selectedAsset.view.remove();
     this.ui.deleteButton.visible = false;
     this.selectedAsset = null;
