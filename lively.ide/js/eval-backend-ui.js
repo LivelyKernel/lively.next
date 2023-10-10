@@ -29,7 +29,7 @@ export class EvalBackendButtonModel extends ButtonModel {
         get () { return this.evalbackendChooser.backendWithName(this.currentBackendName); },
         set (backend) {
           this.currentBackendName = backend ? backend.name : 'local';
-          if (this.view) signal(this.view, 'currentBackend', this.currentBackendName);
+          if (this.view) signal(this.view, 'currentBackend', backend);
         }
       },
 
