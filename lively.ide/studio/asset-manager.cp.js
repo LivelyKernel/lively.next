@@ -809,7 +809,7 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   get expose () {
-    return ['activate', 'isPrompt', 'isHaloItem', 'isEpiMorph'];
+    return ['activate', 'isPrompt', 'isHaloItem', 'isEpiMorph', 'close'];
   }
 
   get bindings () {
@@ -826,6 +826,7 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   close () {
+    $world._assetBrowserPopup = null;
     this.ui.assetManager.close();
     this.view.remove();
   }
