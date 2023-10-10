@@ -6,16 +6,17 @@ import { TextInput, AddButton } from '../shared.cp.js';
 import { pt } from 'lively.graphics/geometry-2d.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { ComponentBrowserPopupDark } from '../component-browser.cp.js';
-import { signal } from 'lively.bindings';
-import { string, obj, arr } from 'lively.lang';
+import { signal, once } from 'lively.bindings';
+import { string, obj } from 'lively.lang';
 
 export class ComponentSelectionControl extends ViewModel {
   static get properties () {
     return {
+      control: {},
       component: {},
       editable: { defaultValue: false },
       stateName: { defaultValue: 'AUTO' },
-      expose: { get () { return ['component', 'stateName']; } },
+      expose: { get () { return ['component', 'stateName', 'closePopup', 'control']; } },
       bindings: {
         get () {
           return [{
@@ -59,7 +60,7 @@ export class ComponentSelectionControl extends ViewModel {
 
   onInputStateName (evt) {
     const { policyTypePin } = this.ui;
-    if (evt.key == 'Enter') {
+    if (evt.key === 'Enter') {
       policyTypePin.textString = policyTypePin.textString.replace('\n', '');
       this.view.focus();
     }
@@ -78,11 +79,21 @@ export class ComponentSelectionControl extends ViewModel {
   }
 
   async selectComponent () {
-    const selectedComponent = await part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } }).activate();
+    this.control.closePopup();
+    this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
+    once(this._componentBrowserPopup, 'close', this, 'closePopup');
+
+    const selectedComponent = await this._componentBrowserPopup.activate();
     if (selectedComponent) {
       this.component = selectedComponent;
       signal(this.view, 'componentChanged');
     }
+  }
+
+  closePopup () {
+    if (!this._componentBrowserPopup) return;
+    this._componentBrowserPopup.close();
+    this._componentBrowserPopup = null;
   }
 
   deactivate () {
@@ -215,6 +226,13 @@ export class ComponentControlModel extends PropertySectionModel {
     ];
   }
 
+  viewDidLoad () {
+    const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
+    autoComponentSelection.control = this;
+    hoverComponentSelection.control = this;
+    clickComponentSelection.control = this;
+  }
+
   confirm () {
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     const pos = this.targetMorph.position;
@@ -247,6 +265,10 @@ export class ComponentControlModel extends PropertySectionModel {
     this.targetMorph = aMorph;
     if (!aMorph.master) this.deactivate();
     else this.activate();
+  }
+
+  closePopup () {
+    this.view.withAllSubmorphsDo(m => m.closePopup && m.control && m.closePopup());
   }
 
   deactivate () {
@@ -326,7 +348,7 @@ class ComponentStatesControlModel extends PropertySectionModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['focusOn']; }
+        get () { return ['focusOn', 'closePopup']; }
       }
     };
   }
@@ -368,7 +390,7 @@ class ComponentStatesControlModel extends PropertySectionModel {
     stateControls.submorphs = Object.entries(states).map(([stateName, component]) => {
       return part(CustomStateComponentSelection, {
         name: 'component selection',
-        viewModel: { stateName, component, editable: true },
+        viewModel: { stateName, component, editable: true, control: this },
         submorphs: [
           { name: 'policy type pin', master: { states: { focused: PolicyPinFocused } } }
         ]
@@ -391,7 +413,7 @@ class ComponentStatesControlModel extends PropertySectionModel {
   addDynamicState () {
     const selectionControl = this.ui.stateControls.addMorph(part(CustomStateComponentSelection, {
       name: 'component selection',
-      viewModel: { stateName: this.getNewStateName(), editable: true },
+      viewModel: { stateName: this.getNewStateName(), editable: true, control: this },
       submorphs: [
         { name: 'policy type pin', master: { states: { focused: PolicyPinFocused } } }
       ]
@@ -399,6 +421,10 @@ class ComponentStatesControlModel extends PropertySectionModel {
     this.ui.stateControls.layout.setResizePolicyFor(selectionControl, {
       width: 'fill', height: 'fixed'
     });
+  }
+
+  closePopup () {
+    this.view.withAllSubmorphsDo(m => m.closePopup && m.control && m.closePopup());
   }
 
   focusOn (aMorph) {

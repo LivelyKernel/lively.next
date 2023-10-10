@@ -194,6 +194,10 @@ export class PropertiesPanelModel extends ViewModel {
     this.models.borderControl.targetMorph = null;
     this.models.borderControl.deactivate();
     this.models.textControl.deactivate();
+
+    this.models.componentControl.closePopup();
+    this.models.componentStatesControl.closePopup();
+
     this.models.responsiveControl.clearHalo();
   }
 
