@@ -243,7 +243,9 @@ export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
       let generated, from;
       ({ generated, from, newSource: updatedSource } = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
         exported: exportedId,
-        moduleId: importedModuleId
+        moduleId: module(importedModuleId).id,
+        pathInPackage: module(importedModuleId).pathInPackage(),
+        packageName: module(importedModuleId).package()?.name
       }));
       changes.push({ action: 'insert', start: from, lines: [generated] });
     }
