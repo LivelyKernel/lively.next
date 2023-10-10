@@ -34,9 +34,15 @@ class AssetPreviewModel extends ViewModel {
     };
   }
 
-  onDragStart () {
+  async onDragStart () {
     if (!this.allowDragging) return;
     const imageForGrab = new Image({ imageUrl: this.imageUrl });
+    const naturalExtent = await imageForGrab.determineNaturalExtent();
+    const maxWidth = 500;
+    const maxHeight = 500;
+    const scaleFactor = Math.min(maxWidth / naturalExtent.x, maxHeight / naturalExtent.y);
+    imageForGrab.extent = naturalExtent.scaleBy(scaleFactor);
+    imageForGrab.scale = 0;
     $world.firstHand.grab(imageForGrab);
     imageForGrab.onBeingDroppedOn = (hand, recipient) => {
       if (recipient !== $world) imageForGrab.remove();
@@ -46,7 +52,7 @@ class AssetPreviewModel extends ViewModel {
       }
     };
     imageForGrab.animate({
-      extent: pt(200, 100),
+      scale: 1,
       duration: 300,
       easing: easings.outSine
     });
@@ -60,8 +66,16 @@ class AssetPreviewModel extends ViewModel {
     this.assetManager.selectAssetEntry(this);
   }
 
-  viewDidLoad () {
-    this.ui.previewHolder.imageUrl = this.imageUrl;
+  async viewDidLoad () {
+    const img = this.ui.previewHolder;
+    img.imageUrl = this.imageUrl;
+    const naturalExtent = await img.determineNaturalExtent();
+    const maxWidth = 105;
+    const maxHeight = 45;
+    const scaleFactor = Math.min(maxWidth / naturalExtent.x, maxHeight / naturalExtent.y);
+    img.extent = naturalExtent.scaleBy(scaleFactor);
+    img.opacity = 1;
+
     this.ui.componentName.value = this.assetName;
     this.view.nativeCursor = this.allowDragging ? 'pointer' : 'auto';
   }
