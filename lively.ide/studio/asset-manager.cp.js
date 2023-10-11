@@ -492,6 +492,8 @@ export const AssetManagerDark = component({
   submorphs: [
     part(ModeSelectorDark, {
       name: 'asset type selector',
+      nativeCursor: 'not-allowed',
+      tooltip: 'Currently, only Images are supported.',
       layout: new TilingLayout({
         align: 'center',
         spacing: 30
