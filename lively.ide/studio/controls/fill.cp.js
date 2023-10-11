@@ -67,7 +67,7 @@ export class FillControlModel extends ViewModel {
     const assetManager = part(AssetManagerPopup);
     $world._assetBrowserPopup = assetManager;
     once(assetManager, 'close', this, 'closeAssetManagerPopup');
-
+    if ($world._assetBrowser) $world._assetBrowser.block();
     const selectedImageUrl = await assetManager.activate();
     if (selectedImageUrl) this.targetMorph.imageUrl = selectedImageUrl;
   }

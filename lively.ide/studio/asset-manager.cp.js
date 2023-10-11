@@ -12,7 +12,7 @@ import { ButtonDarkDefault, SystemButton, DarkButton } from 'lively.components/b
 import { resource } from 'lively.resources';
 import { FileStatusWarning } from '../js/browser/ui.cp.js';
 import { promise } from 'lively.lang';
-import { once } from 'lively.bindings';
+import { once, signal } from 'lively.bindings';
 import { ModeSelectorDark, ModeSelectorLabel, ModeSelectorLabelSelected, ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { Spinner } from './shared.cp.js';
@@ -164,7 +164,7 @@ class AssetManagerModel extends ViewModel {
   }
 
   get expose () {
-    return ['activate', 'container', 'close', 'initialize'];
+    return ['activate', 'container', 'close', 'initialize', 'block'];
   }
 
   get bindings () {
@@ -230,6 +230,25 @@ class AssetManagerModel extends ViewModel {
     this.ui.selectionButton.disable();
     this.view.visible = true;
     li.remove();
+  }
+
+  block () {
+    const fader = morph({
+      name: 'fader',
+      position: this.container.position,
+      extent: this.container.extent,
+      fill: Color.rgbHex('202020'),
+      opacity: 0.8
+    });
+    $world.addMorph(fader);
+    const li = $world.showLoadingIndicatorFor(this.container, 'Changing Assets in Properties Panel...');
+    once($world._assetBrowserPopup, 'close', () => {
+      debugger;
+      fader.remove();
+      li.remove();
+      this.updateAtRuntime = true;
+      this.listAssets(true);
+    });
   }
 
   async activate () {
@@ -826,9 +845,10 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   close () {
-    $world._assetBrowserPopup = null;
-    this.ui.assetManager.close();
+    signal($world._assetBrowserPopup, 'close');
+    this.ui.assetManager?.close();
     this.view.remove();
+    $world._assetBrowserPopup = null;
   }
 
   activate (pos) {
