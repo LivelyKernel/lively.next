@@ -20,7 +20,7 @@ import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
 import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
 import { isUserLoggedIn } from 'lively.user';
-import { AssetManagerLight } from './asset-manager.cp.js';
+import { AssetBrowserLight } from './asset-browser.cp.js';
 
 class SelectionElement extends Morph {
   static get properties () {
@@ -463,7 +463,7 @@ export class TopBarModel extends ViewModel {
     if (!$world._assetBrowser) {
       $world._loadingAssetBrowser = true;
       this.colorTopbarButton(this.ui.openAssetBrowser, true);
-      const assetBrowser = part(AssetManagerLight);
+      const assetBrowser = part(AssetBrowserLight);
       await assetBrowser.initialize();
       const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
       delete $world._loadingAssetBrowser;
