@@ -1,6 +1,5 @@
 /* global URL */
-/* global URL */
-import { ViewModel, part, add, without, component } from 'lively.morphic';
+import { ViewModel, config, part, add, without, component } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { TilingLayout, Image } from 'lively.morphic';
@@ -13,7 +12,6 @@ import { AssetManagerPopup } from '../asset-manager.cp.js';
 
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { LabeledCheckbox } from 'lively.components/checkbox.cp.js';
-import { CheckboxUnchecked } from 'lively.components';
 
 export class FillControlModel extends ViewModel {
   static get properties () {
@@ -24,40 +22,42 @@ export class FillControlModel extends ViewModel {
           return [
             { model: 'fill color input', signal: 'onPickerClosedWithClick', handler: 'ensureHalo' },
             { model: 'fill color input', signal: 'color', handler: 'confirm' },
-            { target: 'open asset manager button', signal: 'onMouseDown', handler: 'openAssetManager' },
-            { target: 'confirm url', signal: 'onMouseDown', handler: 'changeRemoteURL' },
+            { target: 'button', signal: 'onMouseDown', handler: 'imageButtonPressed' },
             { signal: 'onMouseDown', handler: 'onMouseDown' },
-            { target: 'asset type selector', signal: 'selectionChanged', handler: 'showControlsForAssetType' }
+            { target: 'remote asset check', signal: 'checked', handler: 'remoteAssetChecked' },
+            { target: 'source description', signal: 'onKeyDown', handler: 'imageButtonPressed' }
           ];
         }
       }
     };
   }
 
-  changeRemoteURL () {
-    try {
-      new URL(this.ui.sourceDescription.textString);
-    } catch (e) {
-      $world.setStatusMessage('Invalid URL', StatusMessageError);
-      return;
-    }
+  remoteAssetChecked (checked) {
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.imageUrl = this.ui.sourceDescription.textString;
+      this.targetMorph.imageUrl = config.defaultImage;
     });
-  }
-
-  showControlsForAssetType (type) {
-    if (type === 'local') {
-      this.ui.sourceDescription.readOnly = true;
-      this.ui.sourceDescription.selectable = false;
-      this.ui.confirmUrl.visible = this.ui.confirmUrl.isLayoutable = false;
-      this.ui.openAssetManagerButton.visible = this.ui.openAssetManagerButton.isLayoutable = true;
-    }
-    if (type === 'remote') {
-      this.ui.sourceDescription.readOnly = false;
-      this.ui.sourceDescription.selectable = true;
-      this.ui.confirmUrl.visible = this.ui.confirmUrl.isLayoutable = true;
-      this.ui.openAssetManagerButton.visible = this.ui.openAssetManagerButton.isLayoutable = false;
+    this.update();
+    const { sourceDescription, button } = this.ui;
+    if (checked) {
+      sourceDescription.readOnly = false;
+      sourceDescription.nativeCursor = 'text';
+      sourceDescription.textString = 'Enter URL';
+      sourceDescription.tooltip = '';
+      button.textAndAttributes = ['', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontSize: 18,
+        fontWeight: '900'
+      }];
+    } else {
+      sourceDescription.readOnly = true;
+      sourceDescription.nativeCursor = 'not-allowed';
+      sourceDescription.tooltip = 'Select an image with the button to the right or enable remote assets to enter an URL.';
+      sourceDescription.textString = 'Choose Asset';
+      button.textAndAttributes = ['', {
+        fontFamily: 'Tabler Icons',
+        fontSize: 18,
+        fontWeight: '900'
+      }];
     }
   }
 
@@ -65,17 +65,31 @@ export class FillControlModel extends ViewModel {
     this.deactivate();
   }
 
-  async openAssetManager () {
-    const assetManager = part(AssetManagerPopup);
-    $world._assetBrowserPopup = assetManager;
-    once(assetManager, 'close', this, 'closeAssetManagerPopup');
-    if ($world._assetBrowser) $world._assetBrowser.block();
-    const selectedImageUrl = await assetManager.activate();
-    if (selectedImageUrl) {
+  async imageButtonPressed (evt) {
+    if (evt && evt.key && evt.key !== 'Enter') return;
+    if (this.ui.remoteAssetCheck.checked) {
+      try {
+        new URL(this.ui.sourceDescription.textString);
+      } catch (e) {
+        $world.setStatusMessage('Invalid URL', StatusMessageError);
+        return;
+      }
       this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-        this.targetMorph.imageUrl = selectedImageUrl;
+        this.targetMorph.imageUrl = this.ui.sourceDescription.textString;
       });
+    } else {
+      const assetManager = part(AssetManagerPopup);
+      $world._assetBrowserPopup = assetManager;
+      once(assetManager, 'close', this, 'closeAssetManagerPopup');
+      if ($world._assetBrowser) $world._assetBrowser.block();
+      const selectedImageUrl = await assetManager.activate();
+      if (selectedImageUrl) {
+        this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+          this.targetMorph.imageUrl = selectedImageUrl;
+        });
+      }
     }
+    this.update();
   }
 
   closeAssetManagerPopup () {
@@ -89,11 +103,28 @@ export class FillControlModel extends ViewModel {
     this.ui.imageControl.visible = !!target.isImage;
     if (target.isImage) {
       const imageUrl = target.imageUrl;
-      if (imageUrl.includes('local_projects')) this.ui.sourceDescription.textString = 'Project Asset';
-      else if (imageUrl.includes('http')) this.ui.sourceDescription.textString = target.imageUrl;
-      else this.ui.sourceDescription.textString = 'Other Image';
+      this.updateImageInfo(imageUrl, true);
     }
+
     this.models.fillColorInput.targetMorph = target;
+    this.update();
+  }
+
+  updateImageInfo (imageUrl, withCheckState = false) {
+    if (imageUrl.includes('local_projects')) {
+      this.withoutBindingsDo(() => {
+        this.ui.sourceDescription.textString = imageUrl.split('/').pop();
+        if (withCheckState) this.ui.remoteAssetCheck.checked = false;
+      });
+    } else if (imageUrl.includes('http')) {
+      this.withoutBindingsDo(() => {
+        if (withCheckState) this.ui.remoteAssetCheck.checked = true;
+        this.ui.sourceDescription.textString = imageUrl;
+      });
+    } else {
+      if (withCheckState) this.ui.remoteAssetCheck.checked = false;
+      this.ui.sourceDescription.textString = 'Other Asset';
+    }
   }
 
   onRefresh (prop) {
@@ -119,6 +150,7 @@ export class FillControlModel extends ViewModel {
     this.ui.imageControl.visible = isImage;
     if (isImage) {
       this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl;
+      this.updateImageInfo(this.targetMorph.imageUrl);
       // fixme: autofit the image preview
     }
   }
@@ -159,23 +191,15 @@ const FillControl = component(PropertySection, {
     }),
     height: 25,
     submorphs: [
-      part(ModeSelectorDark, {
-        name: 'asset type selector',
-        viewModel: {
-          items: [
-            { text: 'Local Asset', name: 'local', tooltip: 'Use a local asset from within this project or add a new one.' },
-            { text: 'Remote URL', name: 'remote', tooltip: 'Enter an Asset URL to use a remote asset.' }]
-        }
-      }
-      ), {
+      {
         name: 'bottom wrapper',
         clipMode: 'hidden',
-        extent: pt(235.0000, 30.0000),
+        extent: pt(235.0000, 62.5000),
         layout: new TilingLayout({
-          align: 'center',
           axisAlign: 'center',
-          padding: rect(15, 10, 15, 0),
-          spacing: 5
+          padding: rect(12, 10, 18, 0),
+          spacing: 5,
+          wrapSubmorphs: true
         }),
         fill: Color.transparent,
         submorphs: [
@@ -199,23 +223,22 @@ const FillControl = component(PropertySection, {
             placeholder: null,
             textAndAttributes: ['ddf', null]
           }), part(AddButton, {
-            name: 'open asset manager button',
+            name: 'button',
             tooltip: 'Add an asset to this project',
             textAndAttributes: ['', {
               fontFamily: 'Tabler Icons',
               fontSize: 18,
               fontWeight: '900'
             }]
-          }),
-          part(AddButton, {
-            name: 'confirm url',
-            visible: false,
-            isLayoutable: false,
-            tooltip: 'Load remote asset URL.',
-            textAndAttributes: ['', {
-              fontFamily: 'Tabler Icons',
-              fontSize: 18,
-              fontWeight: '900'
+          }), part(LabeledCheckbox, {
+            name: 'remote asset check',
+            extent: pt(56.0000, 10.0000),
+            viewModel: {
+              label: 'Use remote image?'
+            },
+            submorphs: [{
+              name: 'label',
+              fontColor: Color.rgb(180, 224, 232)
             }]
           })
         ]
