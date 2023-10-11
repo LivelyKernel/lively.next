@@ -128,6 +128,12 @@ export function getValueExpr (prop, value, depth = 0) {
     value = `num.toRadians(${num.toDegrees(value).toFixed(1)})`;
     bindings['lively.lang'] = ['num'];
   }
+  if (prop === 'imageUrl' && $world.openedProject && value.includes($world.openedProject.name)) {
+    value = value.replaceAll('"', '');
+    value = `projectAsset('${value.split('/').pop()}')`;
+    bindings['lively.project'] = ['projectAsset'];
+  }
+
   if (value && !value.isMorph && value.__serialize__) {
     return value.__serialize__();
   } else if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
