@@ -355,8 +355,8 @@ export class ShapeControlModel extends ViewModel {
         }
         if (target.layout?.hugContentsHorizontally) target.layout.hugContentsHorizontally = false;
 
-        target.withMetaDo({ reconcileChanges: true }, () => {
-          if (target.isText) target.fixedWidth = true;
+        target.isText && target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedWidth = true;
         });
 
         this.ui.widthInput.enable();
@@ -368,6 +368,9 @@ export class ShapeControlModel extends ViewModel {
         parent.layout.setResizePolicyFor(target, {
           width: 'fill',
           height: heightMode
+        });
+        target.isText && target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedWidth = true;
         });
         this.ui.widthInput.disable();
         break;
@@ -424,8 +427,8 @@ export class ShapeControlModel extends ViewModel {
         }
         if (target.layout?.hugContentsVertically) target.layout.hugContentsVertically = false;
 
-        target.withMetaDo({ reconcileChanges: true }, () => {
-          if (target.isText) target.fixedHeight = true;
+        target.isText && target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedHeight = true;
         });
 
         this.ui.heightInput.enable();
@@ -438,6 +441,11 @@ export class ShapeControlModel extends ViewModel {
           width: widthMode,
           height: 'fill'
         });
+
+        target.isText && target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedHeight = true;
+        });
+
         this.ui.heightInput.disable();
         break;
       case ('hug'):
