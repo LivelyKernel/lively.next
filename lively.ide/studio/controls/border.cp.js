@@ -134,8 +134,8 @@ export class BorderControlModel extends PropertySectionModel {
     this.targetMorph = aMorph;
     if (
       Color.white.equals(this.targetMorph.borderColor.valueOf()) &&
-      this.targetMorph.borderWidth === 0 &&
-      this.targetMorph.borderStyle === 'solid') {
+      this.targetMorph.borderWidth.valueOf() === 0 &&
+      this.targetMorph.borderStyle.valueOf() === 'solid') {
       this.deactivate();
     } else {
       this.activate(false);
@@ -195,7 +195,9 @@ export class BorderControlModel extends PropertySectionModel {
     elementsWrapper.visible = true;
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 10) });
     if (initBorder) {
-      this.targetMorph.border = { color: Color.white, width: 1, style: 'solid' };
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.border = { color: Color.white, width: 1, style: 'solid' };
+      });
       this.update();
     }
   }
@@ -212,9 +214,11 @@ export class BorderControlModel extends PropertySectionModel {
     const { elementsWrapper } = this.ui;
     elementsWrapper.visible = false;
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });
-    this.targetMorph.borderWidth = 0;
-    this.targetMorph.borderColor = Color.white;
-    this.targetMorph.borderStyle = 'solid';
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.borderWidth = 0;
+      this.targetMorph.borderColor = Color.white;
+      this.targetMorph.borderStyle = 'solid';
+    });
   }
 
   /**
