@@ -23,9 +23,9 @@ class AssetPreviewModel extends ViewModel {
       imageUrl: {},
       assetName: {},
       fullFileName: {},
-      assetManager: {},
+      assetBrowser: {},
       allowDragging: {},
-      assetManagerAsPopup: {},
+      assetBrowserAsPopup: {},
       expose: {
         get () {
           return ['onMouseDown', 'assetName', 'isAssetPreview', 'onDragStart'];
@@ -63,7 +63,7 @@ class AssetPreviewModel extends ViewModel {
   }
 
   onMouseDown () {
-    this.assetManager.selectAssetEntry(this);
+    this.assetBrowser.selectAssetEntry(this);
   }
 
   async viewDidLoad () {
@@ -149,7 +149,7 @@ const AssetPreview = component(AssetPreviewUnselected, {
   }
 });
 
-class AssetManagerModel extends ViewModel {
+class AssetBrowserModel extends ViewModel {
   static get properties () {
     return {
       container: {},
@@ -159,7 +159,7 @@ class AssetManagerModel extends ViewModel {
     };
   }
 
-  get assetManagerAsPopup () {
+  get assetBrowserAsPopup () {
     return !this.view.ownerChain().some(m => m.isWindow);
   }
 
@@ -219,6 +219,7 @@ class AssetManagerModel extends ViewModel {
 
   confirm () {
     this._promise.resolve(this.selectedAsset.imageUrl);
+    if ($world._assetBrowserPopup) signal($world._assetBrowserPopup, 'close');
     this.container.remove();
   }
 
@@ -243,7 +244,6 @@ class AssetManagerModel extends ViewModel {
     $world.addMorph(fader);
     const li = $world.showLoadingIndicatorFor(this.container, 'Changing Assets in Properties Panel...');
     once($world._assetBrowserPopup, 'close', () => {
-      debugger;
       fader.remove();
       li.remove();
       this.updateAtRuntime = true;
@@ -270,7 +270,7 @@ class AssetManagerModel extends ViewModel {
     if (this.selectedAsset) this.selectedAsset.view.master.setState(this.view.getWindow() ? 'unselectedLight' : null);
     this.selectedAsset = assetEntryModel;
     this.ui.deleteButton.visible = true;
-    assetEntryModel.view.master.setState(this.assetManagerAsPopup ? 'selectedDark' : 'selectedLight');
+    assetEntryModel.view.master.setState(this.assetBrowserAsPopup ? 'selectedDark' : 'selectedLight');
     this.ui.selectionButton.enable();
   }
 
@@ -361,7 +361,7 @@ class AssetManagerModel extends ViewModel {
             assetName,
             fullFileName: a.name(),
             imageUrl: a.url,
-            assetManager: this,
+            assetBrowser: this,
             allowDragging: this.allowDraggingAssets
           }
         });
@@ -464,9 +464,9 @@ const NoAssetsIndicator = component({
   }]
 });
 
-export const AssetManagerDark = component({
-  name: 'asset manager',
-  defaultViewModel: AssetManagerModel,
+export const AssetBrowserDark = component({
+  name: 'asset browser',
+  defaultViewModel: AssetBrowserModel,
   extent: pt(440.0000, 324),
   layout: new TilingLayout({
     axis: 'column',
@@ -734,7 +734,7 @@ export const AssetManagerDark = component({
   ]
 });
 
-export const AssetManagerLight = component(AssetManagerDark, {
+export const AssetBrowserLight = component(AssetBrowserDark, {
   viewModel: {
     allowDraggingAssets: true
   },
@@ -818,7 +818,7 @@ export const AssetManagerLight = component(AssetManagerDark, {
   ]
 });
 
-class AssetManagerPopupModel extends ViewModel {
+class AssetBrowserPopupModel extends ViewModel {
   static get properties () {
     return {
       isPrompt: { get () { return true; } },
@@ -843,12 +843,12 @@ class AssetManagerPopupModel extends ViewModel {
   }
 
   viewDidLoad () {
-    this.ui.assetManager.container = this.view;
+    this.ui.assetBrowser.container = this.view;
   }
 
   close () {
     signal($world._assetBrowserPopup, 'close');
-    this.ui.assetManager?.close();
+    this.ui.assetBrowser?.close();
     this.view.remove();
     $world._assetBrowserPopup = null;
   }
@@ -860,12 +860,12 @@ class AssetManagerPopupModel extends ViewModel {
     if (!pos) view.center = $world.visibleBounds().center();
     else view.position = pos;
 
-    return this.ui.assetManager.activate();
+    return this.ui.assetBrowser.activate();
   }
 }
-export const AssetManagerPopup = component(DarkPopupWindow, {
+export const AssetBrowserPopup = component(DarkPopupWindow, {
   styleClasses: [],
-  defaultViewModel: AssetManagerPopupModel,
+  defaultViewModel: AssetBrowserPopupModel,
   extent: pt(450, 365),
   hasFixedPosition: false,
   layout: new TilingLayout({
@@ -892,8 +892,8 @@ export const AssetManagerPopup = component(DarkPopupWindow, {
         reactsToPointer: false,
         textAndAttributes: ['Browse Assets', null]
       }]
-    }, add(part(AssetManagerDark, {
-      name: 'asset manager',
+    }, add(part(AssetBrowserDark, {
+      name: 'asset browser',
       extent: pt(440, 324)
     }))]
 });

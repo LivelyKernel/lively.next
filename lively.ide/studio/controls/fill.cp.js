@@ -8,7 +8,7 @@ import { PropertySection } from './section.cp.js';
 import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { obj } from 'lively.lang';
 import { noUpdate, once } from 'lively.bindings';
-import { AssetManagerPopup } from '../asset-manager.cp.js';
+import { AssetBrowserPopup } from '../asset-browser.cp.js';
 
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { LabeledCheckbox } from 'lively.components/checkbox.cp.js';
@@ -78,11 +78,11 @@ export class FillControlModel extends ViewModel {
         this.targetMorph.imageUrl = this.ui.sourceDescription.textString;
       });
     } else {
-      const assetManager = part(AssetManagerPopup);
-      $world._assetBrowserPopup = assetManager;
-      once(assetManager, 'close', this, 'closeAssetManagerPopup');
+      const assetBrowser = part(AssetBrowserPopup);
+      $world._assetBrowserPopup = assetBrowser;
+      once(assetBrowser, 'close', this, 'closeAssetBrowserPopup');
       if ($world._assetBrowser) $world._assetBrowser.block();
-      const selectedImageUrl = await assetManager.activate();
+      const selectedImageUrl = await assetBrowser.activate();
       if (selectedImageUrl) {
         this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
           this.targetMorph.imageUrl = selectedImageUrl;
@@ -92,7 +92,7 @@ export class FillControlModel extends ViewModel {
     this.update();
   }
 
-  closeAssetManagerPopup () {
+  closeAssetBrowserPopup () {
     if (!$world._assetBrowserPopup) return;
     $world._assetBrowserPopup.close();
     $world._assetBrowserPopup = null;
@@ -156,7 +156,7 @@ export class FillControlModel extends ViewModel {
   }
 
   deactivate () {
-    this.closeAssetManagerPopup();
+    this.closeAssetBrowserPopup();
     this.models.fillColorInput.closeColorPicker();
   }
 }
