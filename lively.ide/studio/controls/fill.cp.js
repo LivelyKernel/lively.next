@@ -41,7 +41,9 @@ export class FillControlModel extends ViewModel {
       $world.setStatusMessage('Invalid URL', StatusMessageError);
       return;
     }
-    this.targetMorph.imageUrl = this.ui.sourceDescription.textString;
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.imageUrl = this.ui.sourceDescription.textString;
+    });
   }
 
   showControlsForAssetType (type) {
@@ -69,7 +71,11 @@ export class FillControlModel extends ViewModel {
     once(assetManager, 'close', this, 'closeAssetManagerPopup');
     if ($world._assetBrowser) $world._assetBrowser.block();
     const selectedImageUrl = await assetManager.activate();
-    if (selectedImageUrl) this.targetMorph.imageUrl = selectedImageUrl;
+    if (selectedImageUrl) {
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.imageUrl = selectedImageUrl;
+      });
+    }
   }
 
   closeAssetManagerPopup () {
