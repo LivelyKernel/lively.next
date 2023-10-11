@@ -412,7 +412,6 @@ export async function renameComponent (protoMorph, newName) {
   await mod.recorder[meta.exportedName].withDerivedComponentsDo(async descr => {
     const meta = descr[Symbol.for('lively-module-meta')];
     if (meta.exportedName && meta.moduleId !== oldModuleName) {
-      console.log('updating', meta.exportedName);
       const mod = module(meta.moduleId);
       const parsedModule = await mod.ast();
       const imports = await mod.imports();
@@ -459,6 +458,7 @@ export function insertMorphExpression (parsedComponent, sourceCode, newOwner, ad
     // just generate an insert action that places the prop in the morph def
     return {
       needsLinting: true, // really?
+      bindings: addedMorphExpr.bindings,
       changes: insertPropChange(
         sourceCode,
         propsNode,
@@ -470,6 +470,7 @@ export function insertMorphExpression (parsedComponent, sourceCode, newOwner, ad
     // just generates an insert action that places the morph in the submorph array
     return {
       needsLinting: true, // obviously
+      bindings: addedMorphExpr.bindings,
       changes: [insertMorphChange(submorphsArrayNode, addedMorphExpr.__expr__, nextSibling)]
     };
   }
@@ -515,7 +516,7 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
     }
   });
     // also support this expression to be customized
-  if (!uncollapsedHierarchyExpr) return { changes: [], needsLinting: false };
+  if (!uncollapsedHierarchyExpr) return { changes: [], needsLinting: false, bindings: [] };
   return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
 }
 
@@ -651,8 +652,9 @@ export class Reconciliation {
 
   uncollapseSubmorphHierarchy (hiddenSubmorphExpr = false) {
     const hiddenMorph = this.target;
-    const { modId, sourceCode, parsedComponent } = this.getDescriptorContext();
-    const { changes, needsLinting } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr);
+    const { modId, sourceCode, parsedComponent, requiredBindings } = this.getDescriptorContext();
+    const { changes, needsLinting, bindings } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr);
+    requiredBindings.push(...Object.entries(bindings));
     if (needsLinting) this.modulesToLint.add(modId);
     this.addChangesToModule(modId, changes);
     return this;
