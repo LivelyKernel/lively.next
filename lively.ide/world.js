@@ -763,12 +763,20 @@ export class LivelyWorld extends World {
     ];
   }
 
-  openWorldMenu (evt, items) {
+  moveIntoVisibleBounds (aMorph) {
+    const translatedBounds = this.visibleBoundsExcludingTopBar().translateForInclusion(aMorph.bounds());
+    aMorph.setBounds(translatedBounds);
+    return aMorph;
+  }
+
+  async openWorldMenu (evt, items) {
     const eventState = this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
-    return eventState.menu = items && items.length
+    eventState.menu = items && items.length
       ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand })
       : null;
+    await eventState.menu.whenRendered();
+    return this.moveIntoVisibleBounds(eventState.menu);
   }
 
   async onPaste (evt) {
