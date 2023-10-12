@@ -208,6 +208,10 @@ const DefaultWindowInactive = component(DefaultWindow, {
   ]
 });
 
+const SystemWindow = component(DefaultWindow, {
+  master: { states: { inactive: DefaultWindowInactive } }
+});
+
 const DarkWindow = component(DefaultWindow, {
   name: 'dark window',
   dropShadow: new ShadowObject({ distance: 8, rotation: 90, color: Color.rgba(0, 0, 0, 0.1), blur: 10 }),
@@ -261,4 +265,8 @@ const DarkWindowInactive = component(DefaultWindowInactive, {
   }]
 });
 
-export { DefaultWindow, DarkWindow, DefaultWindowInactive, DarkWindowInactive };
+const SystemWindowDark = component(DarkWindow, {
+  master: { states: { inactive: DarkWindowInactive } }
+});
+
+export { DefaultWindow, DarkWindow, DefaultWindowInactive, DarkWindowInactive, SystemWindow };

@@ -7,7 +7,8 @@ import {
 } from 'lively.morphic';
 import { connect, once, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
-import { DefaultWindow, DefaultWindowInactive } from './window.cp.js';
+import { DefaultWindow, SystemWindow, DefaultWindowInactive } from './window.cp.js';
+import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 export default class Window extends Morph {
   static get properties () {
@@ -41,7 +42,7 @@ export default class Window extends Morph {
       master: {
         before: ['extent'],
         initialize () {
-          this.master = { auto: DefaultWindow };
+          this.master = SystemWindow;
         }
       },
 
@@ -719,8 +720,7 @@ export default class Window extends Morph {
     this.targetMorph.onWindowActivated();
 
     this.master.whenApplied().then(() => {
-      this.master = { auto: DefaultWindow };
-      this.master.applyIfNeeded(true); // FIXME: can we do this inside the master setter without breaking other stuff?
+      this.master.setState(null);
       this.relayoutWindowControls();
     });
 
@@ -744,7 +744,7 @@ export default class Window extends Morph {
     // this.addStyleClass('inactive');
     if (this.master && this.master.auto === DefaultWindowInactive) return;
     this.master.whenApplied().then(() => {
-      this.master = { auto: DefaultWindowInactive };
+      this.master.setState('inactive');
     });
     this.relayoutWindowControls();
     this.renderOnGPU = false;
