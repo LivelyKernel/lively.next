@@ -218,9 +218,20 @@ class AssetBrowserModel extends ViewModel {
   }
 
   confirm () {
-    this._promise.resolve(this.selectedAsset.imageUrl);
-    if ($world._assetBrowserPopup) signal($world._assetBrowserPopup, 'close');
-    this.container.remove();
+    // _promise is initialized inside of the popup, but not the window
+    if (this._promise) {
+      this._promise.resolve(this.selectedAsset.imageUrl);
+      this.container.remove();
+    } else {
+      const image = new Image({ imageUrl: this.selectedAsset.imageUrl });
+      image.determineNaturalExtent().then((extent) => {
+        const maxWidth = 500;
+        const maxHeight = 500;
+        const scaleFactor = Math.min(maxWidth / extent.x, maxHeight / extent.y);
+        image.extent = extent.scaleBy(scaleFactor);
+        image.openInWorld();
+      });
+    }
   }
 
   async initialize () {
@@ -376,8 +387,7 @@ class AssetBrowserModel extends ViewModel {
   }
 
   close () {
-    if (this._promise) this._promise.resolve(null);
-
+    this._promise?.resolve(null);
     this.view.remove();
   }
 }
