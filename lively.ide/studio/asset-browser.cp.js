@@ -478,12 +478,13 @@ export const AssetBrowserDark = component({
   name: 'asset browser',
   defaultViewModel: AssetBrowserModel,
   extent: pt(440.0000, 324),
+  reactsToPointer: false,
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'center',
     hugContentsHorizontally: true,
     padding: rect(10, 10, 0, 0),
-    resizePolicies: [['asset type selector', {
+    resizePolicies: [['asset type selector wrapper', {
       height: 'fixed',
       width: 'fill'
     }], ['search input wrapper', {
@@ -500,22 +501,30 @@ export const AssetBrowserDark = component({
   }),
   fill: Color.rgba(255, 255, 255, 0),
   submorphs: [
-    part(ModeSelectorDark, {
-      name: 'asset type selector',
-      nativeCursor: 'not-allowed',
-      tooltip: 'Currently, only Images are supported.',
+    {
+      name: 'asset type selector wrapper',
       layout: new TilingLayout({
         align: 'center',
-        spacing: 30
+        axisAlign: 'center'
       }),
-      viewModel: {
-        items: [
-          { text: 'Images', name: 'images', tooltip: 'Image' },
-          { text: 'Video', name: 'video', tooltip: 'Video Assets' },
-          { text: 'Audio', name: 'audio', tooltip: 'Audio Assets' }
-        ]
-      }
-    }), {
+      fill: Color.rgba(255, 255, 255, 0),
+      submorphs: [part(ModeSelectorDark, {
+        name: 'asset type selector',
+        nativeCursor: 'not-allowed',
+        tooltip: 'Currently, only Images are supported.',
+        layout: new TilingLayout({
+          align: 'center',
+          spacing: 30
+        }),
+        viewModel: {
+          items: [
+            { text: 'Images', name: 'images', tooltip: 'Image' },
+            { text: 'Video', name: 'video', tooltip: 'Video Assets' },
+            { text: 'Audio', name: 'audio', tooltip: 'Audio Assets' }
+          ]
+        }
+      })]
+    }, {
       name: 'search input wrapper',
       extent: pt(440.0000, 42.6000),
       layout: new TilingLayout({
