@@ -887,7 +887,7 @@ export class ComponentBrowserModel extends ViewModel {
     super.onRefresh(change);
     this.ui.behaviorToggle.checked = this.importAlive;
     this.handleColumnViewVisibility();
-    this.ui.editButton.visible = !this.selectionMode;
+    this.ui.editButton.visible = !this.selectionMode && config.ide.studio.componentEditViaComponentBrowser;
     this.ui.behaviorToggle.visible = !this.selectionMode;
     this.ui.importButton.visible = !this.selectionMode;
     this.ui.selectionButton.visible = this.selectionMode;
