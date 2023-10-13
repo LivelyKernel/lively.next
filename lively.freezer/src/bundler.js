@@ -390,24 +390,26 @@ export default class LivelyRollup {
     if (id.startsWith('\0') || id.endsWith('.json')) {
       return source;
     }
+    // We use the string 'projectAsset' there in regular code to enable correct reconciliation.
+    if (!id.includes('lively.ide/components/helpers.js')){
+      const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
+      const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
 
-    const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
-    const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
+      if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
 
-    if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
+        const assetNameRewriter = (match, assetName) => {
+        const newName = currentlyTransformedProject + '__' + assetName;
 
-    const assetNameRewriter = (match, assetName) => {
-      const newName = currentlyTransformedProject + '__' + assetName;
+        this.projectAssets.push({
+          oldName: assetName,
+          newName,
+          project: currentlyTransformedProject
+        });
+        return `projectAsset(\'${newName}\')`;
+      };
 
-      this.projectAssets.push({
-        oldName: assetName,
-        newName,
-        project: currentlyTransformedProject
-      });
-      return `projectAsset(\'${newName}\')`;
-    };
-
-    source = source.replaceAll(projectAssetRegex, assetNameRewriter);
+      source = source.replaceAll(projectAssetRegex, assetNameRewriter);
+    }
 
     if (this.needsDynamicLoadTransform(source)) {
       source = await this.instrumentDynamicLoads(source, id);
