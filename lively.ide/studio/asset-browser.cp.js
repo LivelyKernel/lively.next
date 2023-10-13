@@ -601,10 +601,10 @@ export const AssetBrowserDark = component({
       extent: pt(440, 33.9000),
       fill: Color.transparent,
       layout: new TilingLayout({
-        align: 'right',
+        align: 'center',
         axisAlign: 'center',
         justifySubmorphs: 'spaced',
-        padding: rect(10, 10, 0, 0),
+        padding: rect(0, 10, 0, 0),
         spacing: 15
       }),
       submorphs: [
