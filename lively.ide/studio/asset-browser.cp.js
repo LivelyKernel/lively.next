@@ -28,7 +28,14 @@ class AssetPreviewModel extends ViewModel {
       assetBrowserAsPopup: {},
       expose: {
         get () {
-          return ['onMouseDown', 'assetName', 'isAssetPreview', 'onDragStart'];
+          return ['assetName', 'isAssetPreview', 'onDragStart'];
+        }
+      },
+      bindings: {
+        get () {
+          return [
+            { signal: 'onMouseDown', handler: () => this.assetBrowser.selectAssetEntry(this), override: true }
+          ];
         }
       }
     };
@@ -60,10 +67,6 @@ class AssetPreviewModel extends ViewModel {
 
   get isAssetPreview () {
     return true;
-  }
-
-  onMouseDown () {
-    this.assetBrowser.selectAssetEntry(this);
   }
 
   async viewDidLoad () {
