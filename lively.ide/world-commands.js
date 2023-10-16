@@ -1,6 +1,6 @@
 /* global System */
 import { Rectangle, rect, Color, pt } from 'lively.graphics';
-import { tree, date, arr, string, obj } from 'lively.lang';
+import { tree, fun, date, arr, string, obj } from 'lively.lang';
 import { inspect, morph, Text, config, part } from 'lively.morphic';
 import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 import { interactivelySaveWorld } from 'lively.morphic/world-loading.js';
@@ -856,17 +856,17 @@ const commands = [
   {
     name: 'browse and load component',
     exec: async function (world) {
-      $world._loadingComponentBrowser = true;
-      const li = LoadingIndicator.open('loading component browser');
-      const p = $world.openedProject;
-      if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('partsbin', 'LivelyKernel', true);
-      const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
-      const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
-      li.remove();
-      componentBrowser.openInWindow({ minimizable: false, title: 'Browse Components' });
-      delete $world._loadingComponentBrowser;
-      const loadedComponent = await componentBrowser.activate();
-      if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
+      fun.guardNamed('loadingComponentBrowser', async () => {
+        const li = LoadingIndicator.open('loading component browser');
+        const p = $world.openedProject;
+        if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('partsbin', 'LivelyKernel', true);
+        const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
+        const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
+        li.remove();
+        componentBrowser.openInWindow({ minimizable: false, title: 'Browse Components' });
+        const loadedComponent = await componentBrowser.activate();
+        if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
+      })();
     }
   },
 

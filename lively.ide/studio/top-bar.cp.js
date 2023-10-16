@@ -6,7 +6,7 @@ import {
   component, ViewModel, part
 } from 'lively.morphic';
 import { Canvas } from 'lively.components/canvas.js';
-import { Closure, obj } from 'lively.lang';
+import { Closure, fun, obj } from 'lively.lang';
 
 import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
@@ -459,25 +459,24 @@ export class TopBarModel extends ViewModel {
   }
 
   async browseAssets () {
-    if ($world._loadingAssetBrowser) return;
-    if (!$world._assetBrowser) {
-      $world._loadingAssetBrowser = true;
-      this.colorTopbarButton(this.ui.openAssetBrowser, true);
-      const assetBrowser = part(AssetBrowserLight);
-      await assetBrowser.initialize();
-      const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
-      delete $world._loadingAssetBrowser;
-      assetBrowser.container = win;
-      $world._assetBrowser = assetBrowser;
-      once(win, 'close', () => {
-        this.colorTopbarButton(this.ui.openAssetBrowser, false);
+    fun.guardNamed('loadingAssetBrowser', async () => {
+      if (!$world._assetBrowser) {
+        this.colorTopbarButton(this.ui.openAssetBrowser, true);
+        const assetBrowser = part(AssetBrowserLight);
+        await assetBrowser.initialize();
+        const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
+        assetBrowser.container = win;
+        $world._assetBrowser = assetBrowser;
+        once(win, 'close', () => {
+          this.colorTopbarButton(this.ui.openAssetBrowser, false);
+          $world._assetBrowser = null;
+        });
+      } else {
+        $world._assetBrowser.getWindow().close();
         $world._assetBrowser = null;
-      });
-    } else {
-      $world._assetBrowser.getWindow().close();
-      $world._assetBrowser = null;
-      this.colorTopbarButton(this.ui.openAssetBrowser, false);
-    }
+        this.colorTopbarButton(this.ui.openAssetBrowser, false);
+      }
+    })();
   }
 
   async interactivelyLoadComponent () {
