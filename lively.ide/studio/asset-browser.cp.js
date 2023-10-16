@@ -13,7 +13,7 @@ import { resource } from 'lively.resources';
 import { FileStatusWarning } from '../js/browser/ui.cp.js';
 import { promise } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
-import { ModeSelectorDark, ModeSelectorLabel, ModeSelectorLabelSelected, ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
+import { ModeSelector, ModeSelectorLabelDark, ModeSelectorLabel } from 'lively.components/widgets/mode-selector.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { Spinner } from './shared.cp.js';
 
@@ -511,7 +511,7 @@ export const AssetBrowserDark = component({
         axisAlign: 'center'
       }),
       fill: Color.rgba(255, 255, 255, 0),
-      submorphs: [part(ModeSelectorDark, {
+      submorphs: [part(ModeSelector, {
         name: 'asset type selector',
         nativeCursor: 'not-allowed',
         tooltip: 'Currently, only Images are supported.',
@@ -520,6 +520,7 @@ export const AssetBrowserDark = component({
           spacing: 30
         }),
         viewModel: {
+          labelMaster: ModeSelectorLabelDark,
           items: [
             { text: 'Images', name: 'images', tooltip: 'Image' },
             { text: 'Video', name: 'video', tooltip: 'Video Assets' },
@@ -733,7 +734,7 @@ export const AssetBrowserDark = component({
           lineWrapping: true
         },
         part(DarkButton, {
-          name: 'proceed button ',
+          name: 'proceed button',
           extent: pt(80, 20),
           opacity: 0.8,
           submorphs: [{
@@ -743,7 +744,7 @@ export const AssetBrowserDark = component({
           }]
         }),
         part(DarkButton, {
-          name: 'cancel button ',
+          name: 'cancel button',
           opacity: .8,
           extent: pt(79.9, 19.7),
           submorphs: [{
@@ -762,12 +763,15 @@ export const AssetBrowserLight = component(AssetBrowserDark, {
   },
   submorphs: [
     {
-      name: 'asset type selector',
-      master: ModeSelector,
-      viewModel: {
-        selectedLabelMaster: ModeSelectorLabelSelected,
-        unselectedLabelMaster: ModeSelectorLabel
-      }
+      name: 'asset type selector wrapper',
+      submorphs: [
+        {
+          name: 'asset type selector',
+          viewModel: {
+            labelMaster: ModeSelectorLabel
+          }
+        }
+      ]
     },
     {
       name: 'assets',
@@ -789,7 +793,6 @@ export const AssetBrowserLight = component(AssetBrowserDark, {
               }, ' Upload', {
                 fontFamily: 'IBM Plex Sans'
               }]
-
             }]
           },
           {

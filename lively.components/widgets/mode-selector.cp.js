@@ -3,7 +3,7 @@ import { connect, signal } from 'lively.bindings';
 import { Color } from 'lively.graphics';
 import { pt } from 'lively.graphics/geometry-2d.js';
 
-export const ModeSelectorLabel = component({
+const ModeSelectorLabelUnselected = component({
   type: Label,
   nativeCursor: 'pointer',
   name: 'mode selector label',
@@ -15,19 +15,35 @@ export const ModeSelectorLabel = component({
   textString: 'a mode selector label'
 });
 
-const ModeSelectorLabelDark = component(ModeSelectorLabel, {
-  fill: Color.transparent,
-  fontColor: Color.white
-});
-
-export const ModeSelectorLabelSelected = component(ModeSelectorLabel, {
+const ModeSelectorLabelSelected = component(ModeSelectorLabelUnselected, {
   fill: Color.black.withA(0.4),
   fontColor: Color.white
 });
 
-const ModeSelectorLabelSelectedDark = component(ModeSelectorLabel, {
+export const ModeSelectorLabel = component(ModeSelectorLabelUnselected, {
+  master: {
+    states: {
+      selected: ModeSelectorLabelSelected
+    }
+  }
+});
+
+const ModeSelectorLabelUnselectedDark = component(ModeSelectorLabelUnselected, {
+  fill: Color.transparent,
+  fontColor: Color.white
+});
+
+const ModeSelectorLabelSelectedDark = component(ModeSelectorLabelUnselected, {
   fill: Color.white.withA(0.8),
   fontColor: Color.black
+});
+
+export const ModeSelectorLabelDark = component(ModeSelectorLabelUnselectedDark, {
+  master: {
+    states: {
+      selected: ModeSelectorLabelSelectedDark
+    }
+  }
 });
 
 /**
@@ -67,11 +83,8 @@ class ModeSelectorModel extends ViewModel {
       enabled: {
         defaultValue: true
       },
-      selectedLabelMaster: {
-        defaultValue: ModeSelectorLabelSelected // eslint-disable-line no-use-before-define
-      },
-      unselectedLabelMaster: {
-        defaultValue: ModeSelectorLabel // eslint-disable-line no-use-before-define
+      labelMaster: {
+        defaultValue: ModeSelectorLabelDark
       }
     };
   }
@@ -104,7 +117,7 @@ class ModeSelectorModel extends ViewModel {
 
   createLabels () {
     this.view.submorphs = this.items.map((item) => {
-      const label = part(this.selectedLabelMaster, { // eslint-disable-line no-use-before-define
+      const label = part(this.labelMaster, {
         textString: item.text,
         name: item.name,
         tooltip: item.tooltip
@@ -126,22 +139,22 @@ class ModeSelectorModel extends ViewModel {
       this.ui.labels.forEach(l => {
         if (l.name !== itemName) {
           l.withAnimationDo(() => {
-            l.master = { auto: this.unselectedLabelMaster };// eslint-disable-line no-use-before-define
+            l.master.setState(null);
           }, { duration: 200 });
         }
       });
       const labelToSelect = this.ui.labels.find((label) => label.name === itemName);
       await labelToSelect.withAnimationDo(() => {
-        labelToSelect.master = { auto: this.selectedLabelMaster }; // eslint-disable-line no-use-before-define
+        labelToSelect.master.setState('selected');
       }, { duration: 200 });
     } else {
       // Selected Item changed programmatically
       this.ui.labels.forEach(l => {
         if (l.name !== itemName) {
-          l.master = { auto: this.unselectedLabelMaster }; // eslint-disable-line no-use-before-define
+          l.master.setState(null);
         }
       });
-      this.ui.labels.find((label) => label.name === itemName).master = { auto: this.selectedLabelMaster }; // eslint-disable-line no-use-before-define
+      this.ui.labels.find((label) => label.name === itemName).master.setState('selected');
     }
 
     this.selectedItem = itemName;
@@ -171,8 +184,7 @@ const ModeSelector = component({
 const ModeSelectorDark = component(ModeSelector, {
   viewModelClass: ModeSelectorModel,
   viewModel: {
-    selectedLabelMaster: ModeSelectorLabelSelectedDark,
-    unselectedLabelMaster: ModeSelectorLabelDark
+    labelMaster: ModeSelectorLabelDark
   }
 });
 
