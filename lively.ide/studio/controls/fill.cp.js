@@ -22,50 +22,53 @@ export class FillControlModel extends ViewModel {
           return [
             { model: 'fill color input', signal: 'onPickerClosedWithClick', handler: 'ensureHalo' },
             { model: 'fill color input', signal: 'color', handler: 'confirm' },
-            { target: 'button', signal: 'onMouseDown', handler: 'imageButtonPressed' },
+            { target: 'confirm image button', signal: 'onMouseDown', handler: 'confirmImage' },
             { signal: 'onMouseDown', handler: 'onMouseDown' },
             { target: 'remote asset check', signal: 'checked', handler: 'remoteAssetChecked' },
-            { target: 'source description', signal: 'onKeyDown', handler: 'imageButtonPressed' }
+            { target: 'source description', signal: 'onKeyDown', handler: 'confirmImage' }
           ];
         }
       }
     };
   }
 
-  remoteAssetChecked (checked) {
-    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.imageUrl = config.defaultImage;
-    });
-    this.update();
-    const { sourceDescription, button } = this.ui;
-    if (checked) {
-      sourceDescription.readOnly = false;
-      sourceDescription.nativeCursor = 'text';
-      sourceDescription.textString = 'Enter URL';
-      sourceDescription.tooltip = '';
-      button.textAndAttributes = ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-        fontSize: 18,
-        fontWeight: '900'
-      }];
-    } else {
-      sourceDescription.readOnly = true;
-      sourceDescription.nativeCursor = 'not-allowed';
-      sourceDescription.tooltip = 'Select an image with the button to the right or enable remote assets to enter an URL.';
-      sourceDescription.textString = 'Choose Asset';
-      button.textAndAttributes = ['', {
-        fontFamily: 'Tabler Icons',
-        fontSize: 18,
-        fontWeight: '900'
-      }];
-    }
+  remoteAssetChecked () {
+    this.updateImageInfo(null, false);
+  }
+
+  activateAssetMode () {
+    const { sourceDescription, confirmImageButton } = this.ui;
+    sourceDescription.readOnly = true;
+    sourceDescription.selectionMode = 'none';
+    sourceDescription.nativeCursor = 'not-allowed';
+    sourceDescription.tooltip = 'Select an image with the button to the right or enable remote assets to enter an URL.';
+    sourceDescription.textString = 'Choose Asset';
+    confirmImageButton.textAndAttributes = ['', {
+      fontFamily: 'Tabler Icons',
+      fontSize: 18,
+      fontWeight: '900'
+    }];
+  }
+
+  activateRemoteImageMode () {
+    const { sourceDescription, confirmImageButton } = this.ui;
+    sourceDescription.readOnly = false;
+    sourceDescription.selectionMode = 'lively';
+    sourceDescription.nativeCursor = 'text';
+    sourceDescription.textString = 'Enter URL';
+    sourceDescription.tooltip = '';
+    confirmImageButton.textAndAttributes = ['', {
+      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+      fontSize: 18,
+      fontWeight: '900'
+    }];
   }
 
   onMouseDown () {
     this.deactivate();
   }
 
-  async imageButtonPressed (evt) {
+  async confirmImage (evt) {
     if (evt && evt.key && evt.key !== 'Enter') return;
     if (this.ui.remoteAssetCheck.checked) {
       try {
@@ -89,6 +92,7 @@ export class FillControlModel extends ViewModel {
         });
       }
     }
+    this.updateImageInfo(this.targetMorph.imageUrl);
     this.update();
   }
 
@@ -102,29 +106,50 @@ export class FillControlModel extends ViewModel {
     this.targetMorph = target;
     this.ui.imageControl.visible = !!target.isImage;
     if (target.isImage) {
-      const imageUrl = target.imageUrl;
-      this.updateImageInfo(imageUrl, true);
+      this.updateImageInfo(target.imageUrl);
     }
-
     this.models.fillColorInput.targetMorph = target;
     this.update();
   }
 
-  updateImageInfo (imageUrl, withCheckState = false) {
-    if (imageUrl.includes('local_projects')) {
-      this.withoutBindingsDo(() => {
-        this.ui.sourceDescription.textString = imageUrl.split('/').pop();
-        if (withCheckState) this.ui.remoteAssetCheck.checked = false;
+  updateImageInfo (imageUrl, readOnly = true) {
+    const { remoteAssetCheck, sourceDescription } = this.ui;
+    if (!readOnly) {
+      if (remoteAssetCheck.checked) {
+        this.withoutBindingsDo(() => {
+          this.activateRemoteImageMode();
+        });
+      } else {
+        this.withoutBindingsDo(() => {
+          this.activateAssetMode();
+        });
+      }
+      sourceDescription.textString = 'Other Asset';
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.imageUrl = config.defaultImage;
       });
-    } else if (imageUrl.includes('http')) {
-      this.withoutBindingsDo(() => {
-        if (withCheckState) this.ui.remoteAssetCheck.checked = true;
-        this.ui.sourceDescription.textString = imageUrl;
-      });
-    } else {
-      if (withCheckState) this.ui.remoteAssetCheck.checked = false;
-      this.ui.sourceDescription.textString = 'Other Asset';
+      this.update();
+      return;
     }
+
+    if (imageUrl.includes('local_projects')) {
+      if (readOnly) {
+        this.withoutBindingsDo(() => {
+          this.ui.remoteAssetCheck.checked = false;
+          this.activateAssetMode();
+        });
+      }
+      this.ui.sourceDescription.textString = imageUrl.split('/').pop();
+    } else if (imageUrl.includes('http')) {
+      if (readOnly) {
+        this.withoutBindingsDo(() => {
+          this.ui.remoteAssetCheck.checked = true;
+          this.activateRemoteImageMode();
+        });
+      }
+      this.ui.sourceDescription.textString = imageUrl;
+    } else sourceDescription.textString = 'Other Asset';
+    this.update();
   }
 
   onRefresh (prop) {
@@ -150,7 +175,6 @@ export class FillControlModel extends ViewModel {
     this.ui.imageControl.visible = isImage;
     if (isImage) {
       this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl;
-      this.updateImageInfo(this.targetMorph.imageUrl);
       // fixme: autofit the image preview
     }
   }
@@ -223,7 +247,7 @@ const FillControl = component(PropertySection, {
             placeholder: null,
             textAndAttributes: ['ddf', null]
           }), part(AddButton, {
-            name: 'button',
+            name: 'confirm image button',
             tooltip: 'Add an asset to this project',
             textAndAttributes: ['', {
               fontFamily: 'Tabler Icons',
