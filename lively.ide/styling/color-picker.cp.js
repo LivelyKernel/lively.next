@@ -133,9 +133,9 @@ const HexEncoder = component({
       name: 'hex opacity control',
       dropShadow: false,
       extent: pt(40, 23),
-      floatingPoint: false,
       borderRadius: 0,
       viewModel: {
+        floatingPoint: false,
         max: 1,
         min: 0,
         scaleFactor: 100,
@@ -170,10 +170,10 @@ const ThreeValEncoder = component({
       name: 'opacity control',
       dropShadow: false,
       extent: pt(40, 22),
-      floatingPoint: false,
       viewModel: {
         max: 1,
         min: 0,
+        floatingPoint: false,
         scaleFactor: 100,
         borderRadius: 0,
         unit: '%'
@@ -187,11 +187,11 @@ const ThreeValEncoder = component({
       name: 'first value',
       dropShadow: false,
       extent: pt(30, 22),
-      floatingPoint: false,
       borderRadius: 0,
       viewModel: {
         max: 255,
         min: 0,
+        floatingPoint: false,
         unit: ''
       },
       submorphs: [{
