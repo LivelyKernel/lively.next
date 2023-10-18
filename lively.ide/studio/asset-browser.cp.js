@@ -16,6 +16,7 @@ import { once, signal } from 'lively.bindings';
 import { ModeSelector, ModeSelectorLabelDark, ModeSelectorLabel } from 'lively.components/widgets/mode-selector.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { Spinner } from './shared.cp.js';
+import { supportedImageFormatsForFilePickerAPI } from '../assets.js';
 
 class AssetPreviewModel extends ViewModel {
   static get properties () {
@@ -73,8 +74,8 @@ class AssetPreviewModel extends ViewModel {
     const img = this.ui.previewHolder;
     img.imageUrl = this.imageUrl;
     const naturalExtent = await img.determineNaturalExtent();
-    const maxWidth = 105;
-    const maxHeight = 45;
+    const maxWidth = img.owner.width - 15;
+    const maxHeight = img.owner.height - 35;
     const scaleFactor = Math.min(maxWidth / naturalExtent.x, maxHeight / naturalExtent.y);
     img.extent = naturalExtent.scaleBy(scaleFactor);
     img.opacity = 1;
@@ -295,7 +296,7 @@ class AssetBrowserModel extends ViewModel {
         {
           description: 'asset files',
           accept: {
-            'image/*': ['.jpg', '.jpeg', '.gif', '.png', '.webp', '.jxl']
+            'image/*': supportedImageFormatsForFilePickerAPI
           }
         }
       ],
