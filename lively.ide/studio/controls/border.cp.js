@@ -20,30 +20,6 @@ export class BorderControlModel extends PropertySectionModel {
       targetMorph: {},
       popup: {},
       updateDirectly: { defaultValue: true },
-      activeSectionComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('activeSectionComponent') || BorderControl; // eslint-disable-line no-use-before-define
-        }
-      },
-      propertyLabelComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        }
-      },
-      propertyLabelComponentActive: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive; // eslint-disable-line no-use-before-define
-        }
-      },
-      propertyLabelComponentHover: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
-        }
-      },
       borderPopupComponent: {
         isComponent: true,
         get () {
@@ -116,13 +92,7 @@ export class BorderControlModel extends PropertySectionModel {
 
   onRefresh (prop) {
     if (prop === 'popup') {
-      this.ui.moreButton.master = this.popup
-        ? this.propertyLabelComponentActive
-        : {
-            auto: this.propertyLabelComponent,
-            hover: this.propertyLabelComponentHover,
-            click: this.propertyLabelComponentActive
-          };
+      this.ui.moreButton.master.setState(this.popup ? 'active' : null);
     }
   }
 
@@ -277,24 +247,6 @@ export class BorderPopupWindow extends PopupModel {
       targetMorph: {}, // this is fine because it only works in the context of a morph
       selectedBorder: { defaultValue: 'all' },
       isHaloItem: { defaultValue: true },
-      propertyLabelComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        }
-      },
-      propertyLabelComponentActive: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
-        }
-      },
-      propertyLabelComponentHover: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
-        }
-      },
       expose: {
         get () {
           return ['close', 'isHaloItem', 'isPropertiesPanelPopup', 'alignAtButton', 'targetMorph'];
@@ -338,8 +290,8 @@ export class BorderPopupWindow extends PopupModel {
         bottom: bottomBorder,
         top: topBorder
       };
-      Object.values(valToElem).forEach(control => control.master = { auto: this.propertyLabelComponent, hover: this.propertyLabelComponentHover });
-      valToElem[this.selectedBorder].master = this.propertyLabelComponentActive;
+      Object.values(valToElem).forEach(control => control.master.setState(null));
+      valToElem[this.selectedBorder].master.setState('active');
     }
 
     if (prop === 'targetMorph') {
@@ -485,7 +437,7 @@ const BorderPopup = component(DarkPopupWindow, {
         }),
         submorphs: [
           part(AddButton, {
-            master: { auto: AddButton, hover: PropertyLabelHovered },
+            master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             name: 'left border',
             tooltip: 'Configure Left Border',
             padding: rect(4, 4, 0, 0),
@@ -497,7 +449,7 @@ const BorderPopup = component(DarkPopupWindow, {
           part(AddButton, {
             name: 'top border',
             tooltip: 'Configure Top Border',
-            master: { auto: AddButton, hover: PropertyLabelHovered },
+            master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             padding: rect(4, 4, 0, 0),
             textAndAttributes: ['\ue232', {
               fontSize: 20,
@@ -505,7 +457,7 @@ const BorderPopup = component(DarkPopupWindow, {
             }]
           }),
           part(AddButton, {
-            master: { auto: AddButton, hover: PropertyLabelHovered },
+            master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             name: 'right border',
             tooltip: 'Configure Right Border',
             padding: rect(4, 4, 0, 0),
@@ -515,7 +467,7 @@ const BorderPopup = component(DarkPopupWindow, {
             }]
           }),
           part(AddButton, {
-            master: { auto: AddButton, hover: PropertyLabelHovered },
+            master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             name: 'bottom border',
             tooltip: 'Configure Bottom Border',
             padding: rect(4, 4, 0, 0),
@@ -575,6 +527,7 @@ const BorderControl = component(PropertySection, {
         }]
       }, add(part(AddButton, {
         master: {
+          states: { active: PropertyLabelActive },
           hover: PropertyLabelHovered,
           click: PropertyLabelActive
         },

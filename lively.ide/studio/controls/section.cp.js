@@ -76,6 +76,7 @@ const PropertySectionActive = component({
 
 const PropertySectionInactive = component(PropertySectionActive, {
   name: 'property section inactive',
+  master: PropertySectionInactive,
   submorphs: [{
     name: 'h floater',
     opacity: 0.5

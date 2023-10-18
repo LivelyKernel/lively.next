@@ -13,15 +13,7 @@ export class LayoutPreview extends Morph {
   static get properties () {
     return {
       defaultSpacing: { defaultValue: 2 },
-      defaultPadding: { defaultValue: rect(3, 3, 0, 0) },
-      activeComponent: {
-        isComponent: true,
-        get () { return this.getProperty('activeComponent') || MiniLayoutPreviewActive; } // eslint-disable-line no-use-before-define
-      },
-      inactiveComponent: {
-        isComponent: true,
-        get () { return this.getProperty('inactiveComponent') || MiniLayoutPreview; } // eslint-disable-line no-use-before-define
-      }
+      defaultPadding: { defaultValue: rect(3, 3, 0, 0) }
     };
   }
 
@@ -41,7 +33,7 @@ export class LayoutPreview extends Morph {
   }
 
   async setActive (active) {
-    this.master = active ? this.activeComponent : this.inactiveComponent;
+    this.master.setState(active ? 'active' : null);
   }
 }
 
@@ -53,18 +45,6 @@ export class AutoLayoutControlModel extends PropertySectionModel {
         isComponent: true,
         get () {
           return this.getProperty('activeSectionComponent') || LayoutControl; // eslint-disable-line no-use-before-define
-        }
-      },
-      buttonActiveComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('buttonActiveComponent') || PropertyLabelHovered; // eslint-disable-line no-use-before-define
-        }
-      },
-      buttonInactiveComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('buttonInactiveComponent') || PropertyLabel; // eslint-disable-line no-use-before-define
         }
       },
       controlFlapComponent: {
@@ -115,8 +95,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       const layout = this.targetMorph.layout;
       if (!layout) return;
       miniLayoutPreview.previewLayout(layout);
-      vertical.master = layout.axis === 'column' ? this.buttonActiveComponent : this.buttonInactiveComponent;
-      horizontal.master = layout.axis === 'row' ? this.buttonActiveComponent : this.buttonInactiveComponent;
+      vertical.master.setState(layout.axis === 'column' ? 'active' : null);
+      horizontal.master.setState(layout.axis === 'row' ? 'active' : null);
       spacingInput.number = layout.spacing;
       if (this.hasMixedPadding()) {
         totalPaddingInput.setMixed();
@@ -206,7 +186,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
   async openLayoutPopup () {
     if (this.popup) return;
-    // fixme: How to make this parametrizable?
+    // FIXME: How to make this parametrizable?
     const p = this.popup = part(this.controlFlapComponent, { viewModel: { targetMorph: this.targetMorph } });
     epiConnect(p, 'update', this, 'update');
     once(p, 'close', this, 'closePopup');
@@ -341,7 +321,7 @@ const PaddingInput = component(DarkNumberIconWidget, {
   viewModel: {
     unit: '',
     min: 0,
-    autofit: true
+    autofit: false
   },
   extent: pt(33.7, 22.7),
   position: pt(57.3, 1.9),
@@ -499,7 +479,7 @@ const LayoutControl = component(PropertySection, {
     }),
     submorphs: [
       part(AddButton, {
-        master: { auto: AddButton, hover: PropertyLabelHovered },
+        master: { states: { active: PropertyLabelHovered } },
         name: 'vertical',
         tooltip: 'Position Items Vertically',
         textAndAttributes: ['', null],
@@ -507,7 +487,7 @@ const LayoutControl = component(PropertySection, {
         padding: rect(4, 4, 0, 0)
       }),
       part(AddButton, {
-        master: { auto: AddButton, hover: PropertyLabelHovered },
+        master: { states: { active: PropertyLabelHovered } },
         name: 'horizontal',
         tooltip: 'Position Items Horizontally',
         fontSize: 14,
@@ -537,7 +517,11 @@ const LayoutControl = component(PropertySection, {
           tooltip: 'Padding distance of elements to the container.',
           textAndAttributes: ['', null]
         }]
-      }), part(MiniLayoutPreview, { name: 'mini layout preview', tooltip: 'Alignment controls.' })
+      }), part(MiniLayoutPreview, {
+        master: { states: { active: MiniLayoutPreviewActive } },
+        name: 'mini layout preview',
+        tooltip: 'Alignment controls.'
+      })
 
     ]
   }), add({
@@ -593,42 +577,46 @@ const AutoLayoutAlignmentFlap = component(DarkFlap, {
           opacity: 0
         }),
         part(PaddingInput, {
-          master: { auto: PaddingInput, hover: PaddingInputHovered },
+          master: { hover: PaddingInputHovered },
           name: 'padding top',
           position: pt(61.1, 0),
           tooltip: 'Padding Top',
           submorphs: [{
             name: 'value',
+            fontSize: 14,
             padding: rect(0, 2, 0, -2)
           }]
         }),
         part(PaddingInput, {
           name: 'padding bottom',
-          master: { auto: PaddingInput, hover: PaddingInputHovered },
+          master: { hover: PaddingInputHovered },
           position: pt(61.2, 110.3),
           tooltip: 'Padding Bottom',
           submorphs: [{
             name: 'value',
+            fontSize: 14,
             padding: rect(0, 2, 0, -2)
           }]
         }),
         part(PaddingInput, {
           name: 'padding left',
-          master: { auto: PaddingInput, hover: PaddingInputHovered },
+          master: { hover: PaddingInputHovered },
           position: pt(0, 56.9),
           tooltip: 'Padding Left',
           submorphs: [{
             name: 'value',
+            fontSize: 14,
             padding: rect(0, 2, 0, -2)
           }]
         }),
         part(PaddingInput, {
           name: 'padding right',
-          master: { auto: PaddingInput, hover: PaddingInputHovered },
+          master: { hover: PaddingInputHovered },
           position: pt(122.3, 56.9),
           tooltip: 'Padding Right',
           submorphs: [{
             name: 'value',
+            fontSize: 14,
             padding: rect(0, 2, 0, -2)
           }]
         })]

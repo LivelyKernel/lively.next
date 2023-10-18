@@ -165,14 +165,14 @@ export class RichTextControlModel extends ViewModel {
         fontColorInput.setColor(text.fontColor);
         if (text.fontColorMixed || this.globalMode && text.hasMixedTextAttributes('fontColor')) fontColorInput.setMixed(rainbow);
 
-        leftAlign.master = text.textAlign === 'left' ? hoveredButtonComponent : activeButtonComponent;
-        centerAlign.master = text.textAlign === 'center' ? hoveredButtonComponent : activeButtonComponent;
-        rightAlign.master = text.textAlign === 'right' ? hoveredButtonComponent : activeButtonComponent;
-        blockAlign.master = text.textAlign === 'justify' ? hoveredButtonComponent : activeButtonComponent;
-        italicStyle.master = text.fontStyle === 'italic' ? hoveredButtonComponent : activeButtonComponent;
-        underlineStyle.master = text.textDecoration === 'underline' ? hoveredButtonComponent : activeButtonComponent;
-        if (quote) quote.master = text.quote === 1 ? hoveredButtonComponent : activeButtonComponent;
-        if (inlineLink) inlineLink.master = text.link ? hoveredButtonComponent : activeButtonComponent;
+        leftAlign.master.setState(text.textAlign === 'left' ? 'active' : null);
+        centerAlign.master.setState(text.textAlign === 'center' ? 'active' : null);
+        rightAlign.master.setState(text.textAlign === 'right' ? 'active' : null);
+        blockAlign.master.setState(text.textAlign === 'justify' ? 'active' : null);
+        italicStyle.master.setState(text.fontStyle === 'italic' ? 'active' : null);
+        underlineStyle.master.setState(text.textDecoration === 'underline' ? 'active' : null);
+        if (quote) quote.master.setState(text.quote === 1 ? 'active' : null);
+        if (inlineLink) inlineLink.master.setState(text.link ? 'active' : null);
         if (paddingControls) paddingControls.startPadding(text.padding);
       });
     });
@@ -496,6 +496,7 @@ const RichTextControl = component(PropertySection, {
           }),
           submorphs: [add(part(PropertyLabel, {
             name: 'italic style',
+            master: { states: { active: PropertyLabelHovered } },
             tooltip: 'Italic',
             fontSize: 14,
             padding: rect(2, 0, 0, 0),
@@ -505,6 +506,7 @@ const RichTextControl = component(PropertySection, {
             }]
           })), add(part(PropertyLabel, {
             name: 'underline style',
+            master: { states: { active: PropertyLabelHovered } },
             tooltip: 'Underline',
             fontSize: 14,
             padding: rect(2, 0, 0, 0),
@@ -514,6 +516,7 @@ const RichTextControl = component(PropertySection, {
             }]
           })), add(part(PropertyLabel, {
             name: 'inline link',
+            master: { states: { active: PropertyLabelHovered } },
             tooltip: 'Create Link',
             fontSize: 14,
             padding: rect(2, 0, 0, 0),
@@ -523,6 +526,7 @@ const RichTextControl = component(PropertySection, {
             }]
           })), add(part(PropertyLabel, {
             name: 'quote',
+            master: { states: { active: PropertyLabelHovered } },
             tooltip: 'Quote',
             fontSize: 14,
             padding: rect(2, 0, 0, 0),
@@ -623,24 +627,28 @@ const RichTextControl = component(PropertySection, {
       }),
       submorphs: [part(PropertyLabel, {
         name: 'left align',
+        master: { states: { active: PropertyLabelHovered } },
         tooltip: 'Align Left',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-left')
       }), part(PropertyLabel, {
         name: 'center align',
+        master: { states: { active: PropertyLabelHovered } },
         tooltip: 'Align Centered',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-center')
       }), part(PropertyLabel, {
         name: 'right align',
+        master: { states: { active: PropertyLabelHovered } },
         tooltip: 'Align Right',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
         textAndAttributes: Icon.textAttribute('align-right')
       }), part(PropertyLabel, {
         name: 'block align',
+        master: { states: { active: PropertyLabelHovered } },
         tooltip: 'Justify Text',
         fontSize: 14,
         padding: rect(4, 4, 0, 0),
@@ -665,7 +673,7 @@ const RichTextControl = component(PropertySection, {
         fontSize: 12
       }]
     })]
-  }), add(part(PaddingControlsDark))
+  }), add(part(PaddingControlsDark, { name: 'padding controls' }))
   ]
 });
 

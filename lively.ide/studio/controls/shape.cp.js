@@ -15,24 +15,6 @@ export class ShapeControlModel extends ViewModel {
       targetMorph: {},
       proportionalResize: { defaultValue: false },
       multiBorderRadiusActive: { defaultValue: false },
-      propertyLabelComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        }
-      },
-      propertyLabelComponentActive: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
-        }
-      },
-      propertyLabelComponentHover: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
-        }
-      },
       expose: {
         get () {
           return ['refreshFromTarget'];
@@ -76,18 +58,8 @@ export class ShapeControlModel extends ViewModel {
   onRefresh () {
     if (!this.view) return; // this should be handled by the view models superclass
     this.ui.multiRadiusContainer.visible = this.multiBorderRadiusActive;
-    this.ui.independentCornerToggle.master = this.multiBorderRadiusActive
-      ? this.propertyLabelComponentActive
-      : {
-          auto: this.propertyLabelComponent,
-          hover: this.propertyLabelComponentHover
-        };
-    this.ui.proportionalResizeToggle.master = this.proportionalResize
-      ? this.propertyLabelComponentActive
-      : {
-          auto: this.propertyLabelComponent,
-          hover: this.propertyLabelComponentHover
-        };
+    this.ui.independentCornerToggle.master.setState(this.multiBorderRadiusActive ? 'active' : null);
+    this.ui.proportionalResizeToggle.master.setState(this.proportionalResize ? 'active' : null);
   }
 
   adjustCornerIndicator (cornerSide) {
@@ -591,7 +563,7 @@ const ShapeControl = component({
         textAndAttributes: [FIXED_ICON, { fontSize: 18 }]
       }]
     }), part(AddButton, {
-      master: { auto: AddButton, hover: PropertyLabelHovered },
+      master: { states: { active: PropertyLabelActive } },
       name: 'proportional resize toggle',
       tooltip: 'Proportional Resize',
       padding: rect(5, 5, 0, 0),
@@ -717,7 +689,7 @@ const ShapeControl = component({
         }]
       }]
     }), part(AddButton, {
-      master: { auto: AddButton, hover: PropertyLabelHovered },
+      master: { states: { active: PropertyLabelActive } },
       name: 'independent corner toggle',
       tooltip: 'Independent Border Radius per Corner',
       padding: rect(3, 3, 0, 0),
