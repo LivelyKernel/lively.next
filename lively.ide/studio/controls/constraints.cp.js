@@ -119,14 +119,6 @@ export class ConstraintsControlModel extends ViewModel {
     return {
       verticalConstraint: { defaultValue: 'fixed' },
       horizontalConstraint: { defaultValue: 'fixed' },
-      activeMarkerComponent: {
-        isComponent: true,
-        get () { return this.getProperty('activeMarkerComponent') || ConstraintMarkerActive; } // eslint-disable-line no-use-before-define
-      },
-      defaultMarkerComponent: {
-        isComponent: true,
-        get () { return this.getProperty('defaultMarkerComponent') || ConstraintMarker; } // eslint-disable-line no-use-before-define
-      },
       bindings: {
         get () {
           return [
@@ -146,24 +138,22 @@ export class ConstraintsControlModel extends ViewModel {
       verticalAlignmentSelector
     } = this.ui;
 
-    const ActiveMarker = this.activeMarkerComponent;
-
     verticalAlignmentSelector.selection = this.verticalConstraint;
     switch (this.verticalConstraint) {
       case 'scale':
         break; // this is not visualized
       case 'move':
-        bottomMarker.master = ActiveMarker;
+        bottomMarker.master.setState('active');
         break;
       case 'fixed':
-        topMarker.master = ActiveMarker;
+        topMarker.master.setState('active');
         break;
       case 'resize':
-        topMarker.master = ActiveMarker;
-        bottomMarker.master = ActiveMarker;
+        topMarker.master.setState('active');
+        bottomMarker.master.setState('active');
         break;
       case 'center':
-        verticalMarker.master = ActiveMarker;
+        verticalMarker.master.setState('active');
         break;
     }
     const {
@@ -176,25 +166,24 @@ export class ConstraintsControlModel extends ViewModel {
       case 'scale':
         break; // this is not visualized
       case 'move':
-        rightMarker.master = ActiveMarker;
+        rightMarker.master.setState('active');
         break;
       case 'fixed':
-        leftMarker.master = ActiveMarker;
+        leftMarker.master.setState('active');
         break;
       case 'resize':
-        leftMarker.master = ActiveMarker;
-        rightMarker.master = ActiveMarker;
+        leftMarker.master.setState('active');
+        rightMarker.master.setState('active');
         break;
       case 'center':
-        horizontalMarker.master = ActiveMarker;
+        horizontalMarker.master.setState('active');
         break;
     }
   }
 
   clearAllMarkers () {
-    const MarkerDefault = this.defaultMarkerComponent;
     this.view.getAllNamed(/marker/).forEach(m => {
-      m.master = MarkerDefault;
+      m.master.setState(null);
     });
   }
 
@@ -284,19 +273,23 @@ const ConstraintsSimulator = component({
   position: pt(1.3, 12.1),
   submorphs: [
     part(ConstraintMarker, {
+      master: { states: { active: ConstraintMarkerActive } },
       name: 'top marker',
       tooltip: 'Resize with Top Border',
       position: pt(32.9, 4.4)
     }), part(ConstraintMarker, {
+      master: { states: { active: ConstraintMarkerActive } },
       name: 'right marker',
       tooltip: 'Resize with Right Border',
       rotation: Math.PI / 2,
       position: pt(71.6, 33.4)
     }), part(ConstraintMarker, {
+      master: { states: { active: ConstraintMarkerActive } },
       name: 'bottom marker',
       tooltip: 'Resize with Bottom Border',
       position: pt(31.7, 57.5)
     }), part(ConstraintMarker, {
+      master: { states: { active: ConstraintMarkerActive } },
       name: 'left marker',
       rotation: Math.PI / 2,
       position: pt(17, 32.8)
@@ -308,12 +301,14 @@ const ConstraintsSimulator = component({
       fill: Color.transparent,
       position: pt(20, 20),
       submorphs: [part(ConstraintMarker, {
+        master: { states: { active: ConstraintMarkerActive } },
         name: 'vertical marker',
         tooltip: 'Proportionally Fix Center Vertically',
         height: 19,
         position: pt(13.3, 9.1),
         submorphs: [{ name: 'accent', height: 15 }]
       }), part(ConstraintMarker, {
+        master: { states: { active: ConstraintMarkerActive } },
         name: 'horizontal marker',
         tooltip: 'Proportionally Fix Center Horizontally',
         rotation: -1.5707963267948966,

@@ -20,12 +20,6 @@ export class BodyControlModel extends PropertySectionModel {
           return this.getProperty('dynamicPropertyComponent') || DynamicProperty; // eslint-disable-line no-use-before-define
         }
       },
-      activeSectionComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('activeSectionComponent') || PropertySection; // eslint-disable-line no-use-before-define
-        }
-      },
       propConfig: {
         get () {
           return this.getProperty('propConfig') || PROP_CONFIG; // eslint-disable-line no-use-before-define
@@ -156,7 +150,7 @@ export class BodyControlModel extends PropertySectionModel {
     // close any open popups
     this.dynamicControls.forEach(ctr => ctr.closePopup());
     if (this.dynamicControls.length > 0) {
-      this.view.master = this.activeSectionComponent; // eslint-disable-line no-use-before-define
+      this.view.master.setState(null);
       return;
     }
     this.view.layout = this.view.layout.with({ padding: rect(0, 10, 0, 0) });

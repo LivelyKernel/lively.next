@@ -225,24 +225,6 @@ export class PaddingControlsModel extends ViewModel {
       showAllSidesControl: {
         defaultValue: false
       },
-      propertyLabelComponent: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponent') || PropertyLabel;
-        }
-      },
-      propertyLabelComponentActive: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentActive') || PropertyLabelActive;
-        }
-      },
-      propertyLabelComponentHover: {
-        isComponent: true,
-        get () {
-          return this.getProperty('propertyLabelComponentHover') || PropertyLabelHovered;
-        }
-      },
       expose: {
         get () {
           return ['paddingChanged', 'startPadding'];
@@ -297,9 +279,7 @@ export class PaddingControlsModel extends ViewModel {
     const { paddingAll, multiPaddingControl, independentPaddingToggle } = this.ui;
     paddingAll.visible = !this.showAllSidesControl;
     multiPaddingControl.visible = this.showAllSidesControl;
-    independentPaddingToggle.master = this.showAllSidesControl
-      ? this.propertyLabelComponentActive
-      : { auto: this.propertyLabelComponent, hover: this.propertyLabelComponentHover };
+    independentPaddingToggle.master.setState(this.showAllSidesControl ? 'active' : null);
   }
 
   focusField (focusedField) {
@@ -791,11 +771,6 @@ const InsetShadowPopup = component(ShadowPopup, {
 export const PaddingControlsLight = component({
   name: 'padding controls',
   defaultViewModel: PaddingControlsModel,
-  viewModel: {
-    propertyLabelComponent: PropertyLabelLight,
-    propertyLabelComponentActive: PropertyLabelActiveLight,
-    propertyLabelComponentHover: PropertyLabelHoveredLight
-  },
   layout: new TilingLayout({
     align: 'right',
     axisAlign: 'center',
@@ -919,9 +894,12 @@ export const PaddingControlsLight = component({
       name: 'independent padding toggle',
       padding: rect(2, 2),
       lineHeight: 1,
-      fontColor: Color.rgb(101, 135, 139),
       fontSize: 14,
-      master: { auto: PropertyLabelLight, hover: PropertyLabelHoveredLight },
+      master: {
+        auto: PropertyLabelLight,
+        states: { active: PropertyLabelActiveLight },
+        hover: PropertyLabelHoveredLight
+      },
       tooltip: 'Toggle independent Fields per Direction',
       fontFamily: 'Material Icons',
       textAndAttributes: ['', {
@@ -934,11 +912,7 @@ export const PaddingControlsLight = component({
 );
 
 export const PaddingControlsDark = component(PaddingControlsLight, {
-  viewModel: {
-    propertyLabelComponent: PropertyLabel,
-    propertyLabelComponentActive: PropertyLabelActive,
-    propertyLabelComponentHover: PropertyLabelHovered
-  },
+  master: PaddingControlsDark,
   submorphs: [
     {
       name: 'padding all',
@@ -1009,8 +983,12 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
     },
     {
       name: 'independent padding toggle',
-      fontColor: Color.rgb(178, 235, 242),
-      master: { auto: PropertyLabel, hover: PropertyLabelHovered }
+      padding: rect(2, 2),
+      master: {
+        auto: PropertyLabel,
+        hover: PropertyLabelHovered,
+        states: { active: PropertyLabelActive }
+      }
     }
   ]
 }
