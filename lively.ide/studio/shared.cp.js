@@ -176,7 +176,9 @@ const DarkNumberIconWidget = component(DarkNumberWidget, {
   borderRadius: 2,
   dropShadow: false,
   extent: pt(72, 22),
-  floatingPoint: false,
+  viewModel: {
+    floatingPoint: false
+  },
   submorphs: [add({
     type: Label,
     name: 'interactive label',
@@ -199,7 +201,7 @@ const TextInput = component({
   borderRadius: 2,
   fill: Color.rgb(66, 73, 73),
   fontColor: Color.rgb(178, 235, 242),
-  fontFamily: "IBM Plex Sans"
+  fontFamily: 'IBM Plex Sans'
 });
 
 const DarkCloseButton = component(CloseButton, {
