@@ -462,7 +462,7 @@ export class TopBarModel extends ViewModel {
     fun.guardNamed('loadingAssetBrowser', async () => {
       if (!$world._assetBrowser) {
         this.colorTopbarButton(this.ui.openAssetBrowser, true);
-        const assetBrowser = part(AssetBrowserLight);
+        const assetBrowser = part(AssetBrowserLight, { extent: pt(520, 600) });
         await assetBrowser.initialize();
         const win = assetBrowser.openInWindow({ title: 'Asset Browser' });
         assetBrowser.container = win;
