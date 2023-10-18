@@ -4,7 +4,6 @@ import { Color, pt } from 'lively.graphics';
 import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, morph } from 'lively.morphic';
-
 import { component, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 
@@ -456,7 +455,10 @@ describe('spec based components', () => {
       submorphs: [
         { name: 'foo', master: e2 }
       ]
-    }), {});
+    }), {
+      exportedName: 'c',
+      moduleId
+    });
     const expectedInternalSpecC = new PolicyApplicator({
       name: 'c',
       submorphs: [
@@ -482,7 +484,10 @@ describe('spec based components', () => {
         { name: 'foo', master: e3 }, // causes the collapse of the overridden props of the inline policy of foo
         { name: 'molly', master: e1, opacity: 0.5 } // causes the collapse of the overridden props of the inline policy of molly
       ]
-    }));
+    }), {
+      exportedName: 'd',
+      moduleId
+    });
 
     const expectedInternalSpecD = new PolicyApplicator({
       name: 'd',
@@ -533,7 +538,10 @@ describe('spec based components', () => {
           }
         }
       ]
-    }), {});
+    }), {
+      exportedName: 'c',
+      moduleId
+    });
     const inst = part(c);
     inst.master.apply(inst, true);
     expect(inst.get('foo').opacity).to.eql(0.5);
@@ -545,7 +553,10 @@ describe('spec based components', () => {
       submorphs: [
         without('alice')
       ]
-    }), {});
+    }), {
+      exportedName: 'c',
+      moduleId
+    });
 
     const expectedInternalSpec = new PolicyApplicator({
       name: 'c',
@@ -648,13 +659,19 @@ describe('components', () => {
       fill: Color.green,
       borderWidth: 5,
       borderRadius: 10
-    }));
+    }), {
+      exportedName: 'A',
+      moduleId
+    });
 
     const B = ComponentDescriptor.for(() => component(A, {
       name: 'B',
       fill: Color.orange,
       borderWidth: 0
-    }));
+    }), {
+      exportedName: 'B',
+      moduleId
+    });
 
     expect(A.stylePolicy.spec).to.eql({
       name: 'A',
@@ -700,7 +717,7 @@ describe('components', () => {
     instC2.master = d3;
     instC2.get('alice').master = c4;
     instC2.master.applyIfNeeded(true);
-    expect(instC2.get('alice').master.overriddenMaster.parent).eql(c4.stylePolicy);
+    expect(instC2.get('alice').master.overriddenMaster).eql(c4.stylePolicy);
   });
 
   xit('properly applies overridden masters', async () => {
@@ -729,7 +746,10 @@ describe('components', () => {
           ]
         }
       ]
-    }));
+    }), {
+      exportedName: 'B',
+      moduleId
+    });
     const bc = edit(B);
     const inst = part(B);
     expect(B.stylePolicy.getSubSpecFor('alice').getSubSpecFor('bob').spec).to.have.property('master');
@@ -751,7 +771,10 @@ describe('components', () => {
           }]
         }
       ]
-    }));
+    }), {
+      exportedName: 'T1',
+      moduleId
+    });
     const t1c = edit(T1);
 
     t1c.master.apply(t1c, true);
@@ -776,7 +799,8 @@ describe('components', () => {
     expect(inst.get('bob').fill, 'styles the morphs according to the overridden properties in the assigned master').equals(Color.red);
   });
 
-  it('preserves all overridden properties on reset of policy up to top level master', async () => {
+  // This does not apply any more. If we want to preserve overridden props, we need to work with states
+  xit('preserves all overridden properties on reset of policy up to top level master', async () => {
     const c = part(d3);
     c.master.apply(c, true);
     expect(c.get('alice').fill).to.equal(Color.purple);
@@ -803,7 +827,10 @@ describe('components', () => {
           master: d1
         })
       ]
-    }));
+    }), {
+      exportedName: 'T1',
+      moduleId
+    });
 
     expect(part(T1).get('bob').master.parent.spec.master).to.eql(T1.stylePolicy.getSubSpecFor('bob').spec.master);
     expect(part(T1).get('bob').master.parent.parent).to.eql(d1.stylePolicy, 'wraps an unnessecary in between policy');
@@ -822,7 +849,10 @@ describe('components', () => {
           master: d1
         })
       ]
-    }));
+    }), {
+      exportedName: 't1',
+      moduleId
+    });
     const inst = part(t1);
     expect(inst.master.getSubSpecFor('bob')).not.to.be.undefined;
   });
@@ -838,7 +868,7 @@ describe('components', () => {
   it('serializes inline properties to symbolic expressions', () => {
     const inst = part(TLB);
     const snap = serialize(inst);
-    expect(snap.snapshot[snap.snapshot[inst.get('alice').id].props.master.value.id].props._parent.value).to.include('TLB.stylePolicy.getSubSpecAt(["alice"])');
+    expect(snap.snapshot[inst.get('alice').id].props.master.value).to.include('TLB.stylePolicy.getSubSpecAt(["alice"])');
   });
 
   it('does not accidentally create overridden masters when serializing', () => {
@@ -911,7 +941,10 @@ describe('components', () => {
         ),
         add(part(c1), 'lively')
       ]
-    }));
+    }), {
+      exportedName: 'C',
+      moduleId
+    });
     const m = part(C);
     expect(m.submorphs[0].name).to.eql('c1');
     expect(m.submorphs[1].name).not.to.eql('c1');
