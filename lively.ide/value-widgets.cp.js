@@ -265,9 +265,6 @@ const DefaultNumberWidget = component({
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.26) }),
   extent: pt(72.5, 25.7),
   fill: Color.rgb(253, 254, 254),
-  fontColor: Color.rgb(178, 235, 242),
-  fontFamily: 'IBM Plex Sans',
-  fontSize: 16,
   clipMode: 'hidden',
   layout: new TilingLayout({
     axisAlign: 'center',
@@ -277,7 +274,6 @@ const DefaultNumberWidget = component({
       width: 'fill'
     }]]
   }),
-  padding: rect(6, 2, -6, -2),
   submorphs: [
     {
       type: 'text',
