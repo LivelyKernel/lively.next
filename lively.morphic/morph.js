@@ -104,18 +104,12 @@ export class Morph {
         after: ['clipMode'],
         group: 'core',
         set (args) {
-          // if (this.master instanceof PolicyApplicator && this.master.equals(args)) return;
-          // FIXME: when we set the master of a morph we need to modify that policy applicator in place
-          // since else the enclosing applicator is not being notified, the master is now overridden
-          const policy = args ? PolicyApplicator.for(this, args, this.master?.parent) : (args === false ? false : null);
-          if (this.master?.isPolicyApplicator && this.master?.parent?.[Symbol.for('lively-module-meta')]?.path.length) {
-            this.master.spec.master = policy;
-            this._skipMasterReplacement = true;
-          } else {
-            this.setProperty('master', policy);
-            if (policy?.isPolicyApplicator) policy.attach(this); // FIXME: remove that
+          args = args ? PolicyApplicator.for(this, args) : (args === false ? false : null);
+          this.setProperty('master', args);
+          if (args) {
+            args.attach(this);
+            this.requestMasterStyling();
           }
-          if (this.master) this.requestMasterStyling();
         }
       },
 
@@ -1219,7 +1213,7 @@ export class Morph {
 
     this.viewModel?.onViewChange(change);
     this.layout?.onChange(change);
-    this.master?.onMorphChange(this, change);
+    if (this.master) this.master.onMorphChange(this, change);
   }
 
   onBoundsChanged (bounds) {
