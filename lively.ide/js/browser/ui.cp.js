@@ -1043,7 +1043,6 @@ const MetaInfoContainerExpanded = component({
   isLayoutable: true,
   clipMode: 'hidden',
   extent: pt(587.6, 60.4),
-  position: pt(9, 280.8),
   layout: new TilingLayout({
     axis: 'column',
     axisAlign: 'right',
@@ -1493,7 +1492,8 @@ const SystemBrowser = component({
     position: pt(0, 271.1),
     scroll: pt(0, 15)
   }, part(MetaInfoContainerCollapsed, {
-    name: 'meta info text'
+    name: 'meta info text',
+    position: pt(9, 280.8)
   }), {
     // fixme: implement with view model...?
     type: HorizontalResizer,
