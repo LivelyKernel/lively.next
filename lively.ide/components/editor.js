@@ -106,16 +106,15 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    */
   getComponentMorph (alive = false) {
     let c = this._cachedComponent;
-    return c || (
-      c = morph(this.stylePolicy.asBuildSpec()),
-      c.hasFixedPosition = false, // always ensure components are not rendered fixed (this fucks up the halo interface)
-      c[metaSymbol] = this[metaSymbol],
-      c.isComponent = true,
-      c._context = $world,
-      alive && withAllViewModelsDo(c, m => m.viewModel.attach(m)),
-      c.name = string.decamelize(this.componentName),
-      this._cachedComponent = c
-    );
+    if (c) return c;
+    c = morph(this.stylePolicy.asBuildSpec(true));
+    c.hasFixedPosition = false; // always ensure components are not rendered fixed (this fucks up the halo interface)
+    c[metaSymbol] = this[metaSymbol];
+    c.isComponent = true;
+    c._context = $world;
+    alive && withAllViewModelsDo(c, m => m.viewModel.attach(m));
+    c.name = string.decamelize(this.componentName);
+    return this._cachedComponent = c;
   }
 
   /**
