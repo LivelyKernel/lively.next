@@ -175,14 +175,14 @@ export class TopBarModel extends ViewModel {
   }
 
   async onMouseDown (evt) {
-    const shapeSelector = this.ui.shapeModeButton.get('dropdown');
-    const handHaloSelector = this.ui.handOrHaloModeButton.get('dropdown');
+    const shapeSelector = this.ui.shapeModeButton.getSubmorphNamed('dropdown');
+    const handHaloSelector = this.ui.handOrHaloModeButton.getSubmorphNamed('dropdown');
     const handOrHaloModeButton = this.ui.handOrHaloModeButton;
     const shapeModeButton = this.ui.shapeModeButton;
     const canvasModeButton = this.ui.canvasModeButton;
-    const canvasModeSelector = this.ui.canvasModeButton.get('dropdown');
+    const canvasModeSelector = this.ui.canvasModeButton.getSubmorphNamed('dropdown');
     const saveButton = this.ui.saveButton;
-    const saveMenu = this.ui.saveButton.get('dropdown');
+    const saveMenu = this.ui.saveButton.getSubmorphNamed('dropdown');
     const target = this.primaryTarget || this.world();
 
     if (evt.targetMorph === saveButton) $world.execCommand('save world or project');
