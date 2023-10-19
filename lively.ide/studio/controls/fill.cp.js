@@ -172,7 +172,6 @@ export class FillControlModel extends ViewModel {
   async update () {
     const { isImage, fill } = this.targetMorph;
     this.ui.fillColorInput.setColor(fill);
-    this.ui.imageControl.visible = isImage;
     if (isImage) {
       this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl;
       // fixme: autofit the image preview
@@ -205,6 +204,7 @@ const FillControl = component(PropertySection, {
     extent: pt(250, 27)
   })), add({
     name: 'image control',
+    visible: false,
     extent: pt(235.1, 25),
     fill: Color.rgba(255, 255, 255, 0),
     layout: new TilingLayout({
