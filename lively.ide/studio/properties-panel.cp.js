@@ -202,7 +202,7 @@ export class PropertiesPanelModel extends ViewModel {
   }
 
   clearFocusIfRemoved () {
-    if (this.targetMorph && !this.targetMorph.owner) { this.clearFocus(); }
+    if (this.targetMorph && !this.targetMorph.owner && this.targetMorph.undoInProgress.name !== 'grab-halo') { this.clearFocus(); }
   }
 
   focusOn (aMorph) {
