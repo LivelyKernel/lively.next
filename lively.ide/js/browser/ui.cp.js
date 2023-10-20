@@ -125,10 +125,8 @@ class ComponentEditControlModel extends ViewModel {
 
   updateControlButtons () {
     this.ui.livelyButton.visible = this.hasViewModels();
-    this.ui.livelyButton.master = this.isLively ? BehaviorToggleButton : BehaviorToggleButtonDisabled; // eslint-disable-line no-use-before-define
-    this.ui.revertButton.master = this.componentDescriptor?.isDirty()
-      ? RevertComponentButton // eslint-disable-line no-use-before-define
-      : RevertComponentButtonDisabled; // eslint-disable-line no-use-before-define
+    this.ui.livelyButton.master.setState(this.isLively ? null : 'disabled');
+    this.ui.revertButton.master.setState(this.componentDescriptor?.isDirty() ? null : 'disabled');
   }
 
   async positionInLine (transition = !this.componentDescriptor?._cachedComponent) {
@@ -416,9 +414,7 @@ class ComponentEditButtonMorph extends Morph {
   }
 
   reset () {
-    this.master = null;
-    this.master = ComponentEditButton; // eslint-disable-line no-use-before-define
-    this.master.applyIfNeeded(true);
+    this.master = ComponentEditButton; // reset the overridden props
     this.submorphs = [this.submorphs[0]]; // just keep the label
   }
 
@@ -576,8 +572,14 @@ const ComponentEditControls = component({
   }),
   submorphs: [
     part(CloseComponentButton, { name: 'close button' }),
-    part(RevertComponentButton, { name: 'revert button' }),
-    part(BehaviorToggleButton, { name: 'lively button' })
+    part(RevertComponentButton, {
+      name: 'revert button',
+      master: { states: { disabled: RevertComponentButtonDisabled } }
+    }),
+    part(BehaviorToggleButton, {
+      name: 'lively button',
+      master: { states: { disabled: BehaviorToggleButtonDisabled } }
+    })
   ]
 });
 
