@@ -863,8 +863,10 @@ const commands = [
         const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
         const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
         li.remove();
+        $world.get('lively top bar')?.colorTopbarButton($world.get('lively top bar').viewModel.ui.openComponentBrowser, true);
         componentBrowser.openInWindow({ minimizable: false, title: 'Browse Components' });
         const loadedComponent = await componentBrowser.activate();
+        $world.get('lively top bar')?.colorTopbarButton($world.get('lively top bar').viewModel.ui.openComponentBrowser, false);
         if (loadedComponent && !loadedComponent.world()) { loadedComponent.openInWorld(); }
       })();
     }
