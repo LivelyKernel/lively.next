@@ -43,7 +43,6 @@ export function without (removedSiblingName) {
 }
 
 function handleTextProps (props) {
-  // if (!['text', 'label', Text, Label].includes(props.type)) return props;
   if (arr.intersect(
     ['text', 'label', Text, Label], withSuperclasses(props.type)).length === 0) { return props; }
   if (props.textString) {
@@ -257,6 +256,7 @@ export class StylePolicy {
     this._verticalBreakpoints = [];
     this._horizontalBreakpoints = [];
     this.inheritStructure = inheritStructure;
+    this._originalSpec = spec;
     this.spec = this.ensureStylePoliciesInSpec(spec);
     if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
   }
@@ -561,14 +561,14 @@ export class StylePolicy {
       } else {
         this.applyConfiguration(spec.master);
       }
-      delete spec.master;
+      spec = obj.dissoc(spec, ['master']);
     }
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
         if (node.props) {
           if (!node.props.name) { node.props.name = this.generateUniqueNameFor(node); }
         } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
-        if (node.isPolicy) return node;
+        if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification
         if (node.master) {
           return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
         }
@@ -760,7 +760,7 @@ export class StylePolicy {
         specOrPolicy = specOrPolicy.props;
       }
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
-      if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpec();
+      if (specOrPolicy.isPolicy) return specOrPolicy.asBuildSpec(asComponent);
       const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
       const modelParams = { ...specOrPolicy.viewModel } || {}; // accumulate the derivation chain for the viewModel
       specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
@@ -797,8 +797,8 @@ export class StylePolicy {
       return specOrPolicy;
     };
     const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
-    if (this.parent) buildSpec.master = this;
-    if (asComponent) buildSpec.master = new this.constructor({}, this);
+    buildSpec.master = this;
+    if (asComponent) buildSpec.master = new this.constructor(this._originalSpec, this.parent); // placeholder
     return buildSpec;
   }
 
@@ -1013,6 +1013,10 @@ export class StylePolicy {
     return new this.constructor(this.spec, {
       auto, click, hover, states, statePartitionedInline, breakpoints
     });
+  }
+
+  copy () {
+    return new this.constructor(this._originalSpec, this.parent);
   }
 
   /**
