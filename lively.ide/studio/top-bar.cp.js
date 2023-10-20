@@ -486,7 +486,7 @@ export class TopBarModel extends ViewModel {
       return currComponentBrowser.getWindow().close(false);
     }
     this.colorTopbarButton(this.ui.openComponentBrowser, true);
-    await this.world().execCommand('browse and load component');
+    this.world().execCommand('browse and load component');
 
     this.colorTopbarButton(this.ui.openComponentBrowser, false);
   }
