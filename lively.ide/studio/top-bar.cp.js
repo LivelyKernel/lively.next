@@ -1022,12 +1022,6 @@ const TopBar = component({
         tooltip: 'Browse master components'
       }),
       part(TopBarButton, {
-        name: 'load world button',
-        padding: rect(3, 0, -3, 0),
-        textAndAttributes: Icon.textAttribute('globe'),
-        tooltip: 'Load other project'
-      }),
-      part(TopBarButton, {
         name: 'comment browser button',
         textAndAttributes: Icon.textAttribute('comment-alt'),
         tooltip: 'Toggle Comment Browser'
