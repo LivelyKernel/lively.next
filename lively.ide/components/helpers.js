@@ -87,6 +87,7 @@ export function convertToExpression (aMorph, opts = {}) {
     dropMorphsWithNameOnly: true,
     skipUnchangedFromDefault: true,
     skipUnchangedFromMaster: true,
+    onlyIncludeStyleProps: true,
     skipAttributes: DEFAULT_SKIPPED_ATTRIBUTES,
     valueTransform: standardValueTransform,
     ...opts

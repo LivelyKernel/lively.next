@@ -237,11 +237,11 @@ function getExpression (name, val, ctx) {
   return val;
 }
 
-function handleOverriddenMaster (masterPolicy, opts) {
+function handleStylePolicy (stylePolicy, opts) {
   const { asExpression, nestedExpressions } = opts;
   if (!asExpression) return; // ignore overridden master if not serializing as expression
   const exprId = string.newUUID();
-  nestedExpressions[exprId] = masterPolicy.__serialize__();
+  nestedExpressions[exprId] = stylePolicy.getConfigAsExpression();
   if (typeof nestedExpressions[exprId] === 'undefined') {
     delete nestedExpressions[exprId];
     return;
@@ -492,7 +492,8 @@ function handleCustomObject (name, val, path, subopts) {
 function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts) {
   const {
     skipAttributes, skipUnchangedFromDefault,
-    valueTransform, keepConnections, objToPath
+    valueTransform, keepConnections, objToPath,
+    onlyIncludeStyleProps
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
 
@@ -518,22 +519,17 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       }
       if (unchanged) continue;
     }
+    if (name === 'name') {
+      exported[name] = val;
+      continue;
+    }
     if (name !== 'name' && styleProto && obj.equals(v, styleProto[name])) continue;
     if (name === 'master') {
       // this should only print masters that are actually overridden or have been
       // applied to morphs that previously did not have any masters (after the fact application)
       // The first case is easily detectable. The second case is tricky, since that is not
       // reified in the data structur of style policies as of now
-      const isOverridden = morph.master.overriddenMaster;
-      const isApplied = !morph.master.inheritStructure;
-      const hasLocalDispatches = morph.master._hoverMaster || morph.master._clickmaster;
-      let val;
-      if (isOverridden) {
-        val = handleOverriddenMaster(morph.master.overriddenMaster, opts);
-      } else if (isApplied || hasLocalDispatches) {
-        val = handleOverriddenMaster(morph.master, opts);
-      }
-
+      let val = handleStylePolicy(morph.master, opts);
       if (val) exported.master = val;
       continue;
     }
@@ -561,6 +557,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       exported[name] = serializeNestedProp(name, val, opts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
       continue;
     }
+    if (onlyIncludeStyleProps && !properties[name]?.isStyleProp) continue;
     if (val && val.isMorph) {
       exported[name] = serializeSpec(val, { // eslint-disable-line no-use-before-define
         ...opts,
@@ -800,6 +797,7 @@ export function serializeSpec (morph, opts = {}) {
     keepFunctions = true,
     skipAttributes = [],
     onlyInclude = false,
+    onlyIncludeStyleProps = false,
     keepConnections = true,
     skipUnchangedFromDefault = false,
     valueTransform = (key, val, target) => val,
@@ -825,6 +823,7 @@ export function serializeSpec (morph, opts = {}) {
     keepFunctions,
     skipAttributes,
     onlyInclude,
+    onlyIncludeStyleProps,
     keepConnections,
     skipUnchangedFromDefault,
     valueTransform,
