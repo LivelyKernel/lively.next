@@ -1,13 +1,34 @@
 import { arr, grid, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
-import { Text, Label } from 'lively.morphic';
 import { withSuperclasses } from 'lively.classes/util.js';
-import { ExpressionSerializer } from 'lively.serializer2';
+import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
+import { Text, Label } from 'lively.morphic';
+import { Icons } from '../text/icons.js';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 const expressionSerializer = new ExpressionSerializer();
+
+export function standardValueTransform (key, val, aMorph) {
+  if (val && val.isPoint) return val.roundTo(0.1);
+  if (key === 'label' || key === 'textAndAttributes') {
+    let hit;
+    if (Array.isArray(val) && (hit = Object.entries(Icons).find(([iconName, iconValue]) => iconValue.code === val[0]))) {
+      return {
+        __serialize__ () {
+          return {
+            __expr__: `Icon.textAttribute("${hit[0]}")`,
+            bindings: {
+              'lively.morphic/text/icons.js': ['Icon']
+            }
+          };
+        }
+      };
+    }
+  }
+  return val;
+}
 
 /**
  * Function that will wrap a morph definition and declares
@@ -434,7 +455,61 @@ export class StylePolicy {
     return !!this.parent?.respondsToHover;
   }
 
+  _getSpecAsExpression (opts = {}) {
+    let { __expr__: expr, bindings } = serializeSpec(this.targetMorph, {
+      asExpression: true,
+      keepFunctions: false,
+      exposeMasterRefs: true,
+      dropMorphsWithNameOnly: true,
+      skipUnchangedFromDefault: true,
+      skipUnchangedFromMaster: true,
+      onlyIncludeStyleProps: true,
+      valueTransform: standardValueTransform,
+      ...opts
+    }) || { __expr__: false };
+    if (!expr) return;
+    expr = `${expr.match(/^(morph|part)\(([^]*)\)/)?.[2] || expr}`;
+    expr = expr.match(/.*\, (\{[^]*\})/)?.[1] || expr;
+    if (this.parent?.[Symbol.for('lively-module-meta')]) {
+      delete bindings[this.parent[Symbol.for('lively-module-meta')].exportedName];
+    }
+    return {
+      bindings,
+      __expr__: expr
+    };
+  }
+
   _generateInlineExpression () {
+    const klassName = this.constructor[Symbol.for('__LivelyClassName__')];
+    const parentExpr = this.parent?.__serialize__();
+    let masterConfigExpr = this.getConfigAsExpression();
+    if (masterConfigExpr) masterConfigExpr.__expr__ = 'master: ' + masterConfigExpr.__expr__;
+    const specExpression = this._getSpecAsExpression();
+    const bindings = {};
+    if (parentExpr) Object.assign(bindings, parentExpr.bindings);
+    if (masterConfigExpr) Object.assign(bindings, masterConfigExpr.bindings);
+    Object.assign(bindings, specExpression.bindings);
+    // now we technically also need to properly serialize the spec into an expression...
+    return {
+      __expr__: `new ${klassName}(${specExpression.__expr__}, ${parentExpr?.__expr__ || 'null'})`,
+      bindings
+    };
+  }
+
+  getConfig () {
+    let {
+      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
+      _localComponentStates: states
+    } = this;
+
+    const breakpoints = this.getBreakpointStore()?.getConfig();
+    const spec = { auto, click, hover };
+    if (states) spec.states = states;
+    if (breakpoints) spec.breakpoints = breakpoints;
+    return spec;
+  }
+
+  getConfigAsExpression () {
     const {
       _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
       _localComponentStates: states
@@ -443,14 +518,14 @@ export class StylePolicy {
     if (!arr.compact([auto, click, hover, ...obj.values(states)]).every(c => c[Symbol.for('lively-module-meta')])) return;
     const masters = [];
     const bindings = {};
-    if (auto && auto !== this.parent) masters.push(['auto', auto.__serialize__()]);
+    if (auto) masters.push(['auto', auto.__serialize__()]);
     if (click) masters.push(['click', click.__serialize__()]);
     if (hover) masters.push(['hover', hover.__serialize__()]);
     if (states) masters.push(['states', Object.entries(states).map(([state, master]) => [state, master.__serialize__()])]);
 
     let bps;
     if (bpStore && (bps = bpStore.__serialize__())) masters.push(['breakpoints', bps]);
-    if (masters.length === 0 && (this.parent || auto)) return (this.parent || auto).__serialize__();
+    if (masters.length === 0) return;
     if (masters.length === 1 && masters[0] === auto) {
       return auto.__serialize__();
     }
@@ -476,19 +551,6 @@ export class StylePolicy {
     return { __expr__: `{\n${printMasters(masters)}}`, bindings };
   }
 
-  getConfig () {
-    let {
-      _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
-      _localComponentStates: states
-    } = this;
-    if (!auto) auto = this.parent;
-    const breakpoints = this.getBreakpointStore()?.getConfig();
-    const spec = { auto, click, hover };
-    if (states) spec.states = states;
-    if (breakpoints) spec.breakpoints = breakpoints;
-    return spec;
-  }
-
   __serialize__ () {
     const meta = this[Symbol.for('lively-module-meta')];
     if (!meta) {
@@ -498,12 +560,6 @@ export class StylePolicy {
       __expr__: meta.exportedName + (meta.path.length ? `.stylePolicy.getSubSpecAt([${meta.path.map(name => JSON.stringify(name)).join(',')}])` : ''),
       bindings: { [meta.moduleId]: [meta.exportedName] }
     };
-  }
-
-  __additionally_serialize__ (snapshot, ref, pool, addFn) {
-    if (this.parent) {
-      addFn('parent', expressionSerializer.exprStringEncode(this.parent.__serialize__(pool)));
-    }
   }
 
   /**
