@@ -526,7 +526,7 @@ export class StylePolicy {
     let bps;
     if (bpStore && (bps = bpStore.__serialize__())) masters.push(['breakpoints', bps]);
     if (masters.length === 0) return;
-    if (masters.length === 1 && masters[0] === auto) {
+    if (masters.length === 1 && auto) {
       return auto.__serialize__();
     }
 
