@@ -854,7 +854,11 @@ export class StylePolicy {
     };
     const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
     buildSpec.master = this;
-    if (asComponent) buildSpec.master = new this.constructor(this._originalSpec, this.parent); // placeholder
+    if (asComponent) {
+      const policyCopy = new this.constructor(this._originalSpec, this.parent);
+      policyCopy[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')];
+      buildSpec.master = policyCopy; // placeholder
+    }
     return buildSpec;
   }
 
