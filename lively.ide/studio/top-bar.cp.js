@@ -15,7 +15,7 @@ import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 import { RichTextPlugin } from '../text/rich-text-editor-plugin.js';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
-import { TopBarButton, TopBarButtonDropDown, TopBarButtonSelected } from './top-bar-buttons.cp.js';
+import { TopBarButton, TopBarButtonDropDown } from './top-bar-buttons.cp.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
 import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
@@ -426,7 +426,7 @@ export class TopBarModel extends ViewModel {
   }
 
   colorTopbarButton (button, active) {
-    button.master = active ? TopBarButtonSelected : TopBarButton; // eslint-disable-line no-use-before-define
+    button.master.setState(active ? 'selected' : null);
   }
 
   toggleCommentBrowser () {
