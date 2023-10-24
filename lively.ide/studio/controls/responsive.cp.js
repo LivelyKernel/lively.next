@@ -79,6 +79,7 @@ class BreakpointEntryModel extends ViewModel {
 
   async chooseComponent () {
     if (!this.componentSelectionEnabled) return;
+    if (this._popup) return;
     this._popup = part(ComponentSelectionPopup, { // eslint-disable-line no-use-before-define
       viewModel: { component: this.component }
     }).openInWorld();
