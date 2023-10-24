@@ -1076,7 +1076,17 @@ export class StylePolicy {
   }
 
   copy () {
-    return new this.constructor(this._originalSpec, this.parent);
+    const masterConfig = this.getConfig();
+    const policyCopy = new this.constructor({
+      ...this._originalSpec,
+      ...masterConfig
+        ? {
+            master: masterConfig
+          }
+        : {}
+    }, this.parent);
+    if (policyCopy[Symbol.for('lively-module-meta')]) { policyCopy[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')]; }
+    return policyCopy;
   }
 
   /**
