@@ -135,6 +135,20 @@ export class TopBarModel extends ViewModel {
       bindings: {
         get () {
           return [
+            { target: 'undo button', signal: 'onMouseDown', handler: () => this.target.execCommand('undo') },
+            { target: 'redo button', signal: 'onMouseDown', handler: () => this.target.execCommand('redo') },
+            { target: 'save button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.saveButton === evt.targetMorphs[0]) $world.execCommand('save world or project'); } },
+            { target: 'text mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Text') },
+            { target: 'shape mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Shape') },
+            { target: 'shape mode button', signal: 'dropDownTriggered', handler: 'shapeMenu' },
+            { target: 'save button', signal: 'dropDownTriggered', handler: 'saveMenu' },
+            { target: 'hand or halo mode button', signal: 'dropDownTriggered', handler: 'cursorMenu' },
+            { target: 'hand or halo mode button', signal: 'onMouseDown', handler: 'cursorMode' },
+            { target: 'open asset browser', signal: 'onMouseDown', handler: () => this.browseAssets() },
+            { target: 'open component browser', signal: 'onMouseDown', handler: () => this.interactivelyLoadComponent() },
+            { target: 'comment browser button', signal: 'onMouseDown', handler: () => this.toggleCommentBrowser() },
+            { target: 'canvas mode button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null); } },
+            { target: 'canvas mode button', signal: 'dropDownTriggered', handler: () => this.canvasMenu() },
             { signal: 'onMouseDown', handler: 'onMouseDown' },
             { signal: 'onKeyDown', handler: 'onKeyDown' },
             { signal: 'onKeyUp', handler: 'onKeyUp' }
@@ -174,78 +188,29 @@ export class TopBarModel extends ViewModel {
     }
   }
 
-  async onMouseDown (evt) {
-    const shapeSelector = this.ui.shapeModeButton.getSubmorphNamed('dropdown');
-    const handHaloSelector = this.ui.handOrHaloModeButton.getSubmorphNamed('dropdown');
-    const handOrHaloModeButton = this.ui.handOrHaloModeButton;
-    const shapeModeButton = this.ui.shapeModeButton;
-    const canvasModeButton = this.ui.canvasModeButton;
-    const canvasModeSelector = this.ui.canvasModeButton.getSubmorphNamed('dropdown');
-    const saveButton = this.ui.saveButton;
-    const saveMenu = this.ui.saveButton.getSubmorphNamed('dropdown');
-    const target = this.primaryTarget || this.world();
+  shapeMenu (evt) {
+    const menu = $world.openWorldMenu(evt, this.getShapeMenuItems());
+    menu.position = this.ui.shapeModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+  }
 
-    if (evt.targetMorph === saveButton) $world.execCommand('save world or project');
+  async saveMenu (evt) {
+    const menu = $world.openWorldMenu(evt, (await this.getSaveMenuItems()));
+    menu.position = this.ui.saveButton.globalBounds().bottomLeft().subPt($world.scroll);
+  }
 
-    if (evt.targetMorph === saveMenu) {
-      const menu = $world.openWorldMenu(evt, (await this.getSaveMenuItems()));
-      menu.position = saveButton.globalBounds().bottomLeft().subPt($world.scroll);
-    }
+  cursorMenu (evt) {
+    const menu = $world.openWorldMenu(evt, this.getHandAndHaloModeItems());
+    menu.position = this.ui.handOrHaloModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+  }
 
-    if (evt.targetMorph === shapeSelector) {
-      const menu = $world.openWorldMenu(evt, this.getShapeMenuItems());
-      menu.position = shapeModeButton.globalBounds().bottomLeft().subPt($world.scroll);
-    }
-    if (evt.targetMorph === handHaloSelector) {
-      const menu = $world.openWorldMenu(evt, this.getHandAndHaloModeItems());
-      menu.position = handOrHaloModeButton.globalBounds().bottomLeft().subPt($world.scroll);
-    }
+  cursorMode () {
+    const currentlyShowingHaloIcon = this.ui.handOrHaloModeButton.getIcon()[0] === Icon.textAttribute('arrow-pointer')[0];
+    this.setEditMode(currentlyShowingHaloIcon ? 'Halo' : 'Hand');
+  }
 
-    if (evt.targetMorph.name === 'undo button') {
-      target.execCommand('undo');
-    }
-
-    if (evt.targetMorph.name === 'redo button') {
-      target.execCommand('redo');
-    }
-
-    if (evt.targetMorph === shapeModeButton) {
-      this.setEditMode('Shape');
-    }
-
-    if (evt.targetMorph === handOrHaloModeButton) {
-      const currentlyShowingHaloIcon = this.ui.handOrHaloModeButton.getIcon()[0] === Icon.textAttribute('arrow-pointer')[0];
-      this.setEditMode(currentlyShowingHaloIcon ? 'Halo' : 'Hand');
-    }
-
-    if (evt.targetMorph.name === 'text mode button') {
-      this.setEditMode('Text');
-    }
-
-    if (evt.targetMorph.name === 'open asset browser') {
-      this.browseAssets();
-    }
-
-    if (evt.targetMorph.name === 'open component browser') {
-      this.interactivelyLoadComponent();
-    }
-
-    if (evt.targetMorph.name === 'load world button') {
-      $world.execCommand('load world');
-    }
-
-    if (evt.targetMorph.name === 'comment browser button') {
-      this.toggleCommentBrowser();
-    }
-
-    if (evt.targetMorph === canvasModeButton) {
-      this.toggleMiniMap(null);
-    }
-
-    if (evt.targetMorph === canvasModeSelector) {
-      const menu = this.world().openWorldMenu(evt, this.getCanvasModeItems());
-      menu.position = canvasModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
-    }
+  canvasMenu (evt) {
+    const menu = this.world().openWorldMenu(evt, this.getCanvasModeItems());
+    menu.position = this.ui.canvasModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
   }
 
   onKeyUp () {
