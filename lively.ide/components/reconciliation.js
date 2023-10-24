@@ -1162,7 +1162,7 @@ class PropChangeReconciliation extends Reconciliation {
     return l && l.resizesMorphHorizontally(aMorph);
   }
 
-  handleExtentChange (specNode) {
+  handleExtentChange (subSpec, specNode) {
     const { newValue, target } = this;
     let changedProp = 'extent';
     let deleteWidth = false;
@@ -1188,6 +1188,7 @@ class PropChangeReconciliation extends Reconciliation {
       this.deletePropIn(specNode, 'extent');
     }
     this.patchPropIn(specNode, changedProp, valueExpr);
+    subSpec.extent = newValue;
     return this;
   }
 
@@ -1209,21 +1210,15 @@ class PropChangeReconciliation extends Reconciliation {
     return morphNode && getPropertiesNode(morphNode);
   }
 
-  propRequiresLint (propName) {
-    return ['layout', 'master'].includes(propName);
-  }
-
   patchPropIn (specNode, prop, valueAsExpr) {
+    if (!valueAsExpr) return this;
     const { modId, sourceCode } = this.getDescriptorContext();
     if (valueAsExpr.__expr__) valueAsExpr = valueAsExpr.__expr__;
-
-    if (this.propRequiresLint(prop)) {
-      this.modulesToLint.add(modId);
-    }
 
     const propNode = getProp(specNode, prop);
 
     if (!propNode) {
+      // this is an uncollapse so we need to lint the module
       this.modulesToLint.add(modId);
       this.addChangesToModule(modId, insertPropChange(
         sourceCode,
@@ -1256,7 +1251,6 @@ class PropChangeReconciliation extends Reconciliation {
 
   get propValueDiffersFromParent () {
     let { target, prop } = this.change;
-    // FIXME: extract via path instead of name
     const policy = this.getResponsiblePolicyFor(target);
     const { parent } = policy;
     let val;
@@ -1272,22 +1266,21 @@ class PropChangeReconciliation extends Reconciliation {
     return !obj.equals(val, this.newValue);
   }
 
-  getExpressionOfValue () {
+  getExpressionOfValue (depth = 1) {
     const { target, prop, value } = this.change;
     const { requiredBindings } = this.getDescriptorContext();
     let valueAsExpr, members;
     if (members = isFoldableProp(target.constructor, prop)) {
       valueAsExpr = getFoldableValueExpr(prop, value, members, target.ownerChain().length);
     } else {
-      valueAsExpr = getValueExpr(prop, value);
+      valueAsExpr = getValueExpr(prop, value, depth);
     }
-    requiredBindings.push(...Object.entries(valueAsExpr.bindings));
+    if (valueAsExpr) { requiredBindings.push(...Object.entries(valueAsExpr.bindings)); }
     return valueAsExpr;
   }
 
   reconcile () {
-    let { prop } = this.change;
-
+    let { prop, target } = this.change;
     const specNode = this.getNodeForTargetInSource();
 
     if (prop === 'name') {
@@ -1300,20 +1293,24 @@ class PropChangeReconciliation extends Reconciliation {
       return this.uncollapseSubmorphHierarchy();
     }
 
-    this.getSubSpecForTarget()[prop] = this.change.value;
-    if (prop === 'master' && !this.change.value.overridenMaster) {
-      delete this.getSubSpecForTarget()[prop];
-    }
+    const tabSize = 2;
+    const indentDepth = (specNode.properties[0].start - specNode.start - 2) / tabSize;
+    const subSpec = this.getSubSpecForTarget();
+
     this.propagateChangeAmongActiveEditSessions(this.descriptor);
 
     if (prop === 'extent') {
-      return this.handleExtentChange(specNode);
+      return this.handleExtentChange(subSpec, specNode);
     }
 
+    subSpec[prop] = this.change.value;
+
+    // update the source code
     if (this.propValueDiffersFromParent) {
-      return this.patchPropIn(specNode, prop, this.getExpressionOfValue());
+      return this.patchPropIn(specNode, prop, this.getExpressionOfValue(indentDepth));
     }
-    delete this.getSubSpecForTarget()[prop];
+
+    delete subSpec[prop];
     return this.deletePropIn(specNode, prop);
   }
 
