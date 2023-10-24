@@ -1009,6 +1009,7 @@ export class Morph {
     const defaults = this.defaultProperties;
     const properties = this.propertiesAndPropertySettings().properties;
     const ignored = { submorphs: true };
+    const className = this.constructor[Symbol.for('__LivelyClassName__')];
     const spec = {};
     if (seenMorphs.has(this)) return seenMorphs.get(this);
     seenMorphs.set(this, spec);
@@ -1030,6 +1031,7 @@ export class Morph {
           continue;
         }
       }
+      if (key === 'styleClasses' && obj.equals(arr.without(this[key], className), defaults[key])) continue; // styleClasses has the class name autoinjected by the setter
       if (this[key] && this[key].isMorph) {
         spec[key] = this[key].spec(skipUnchangedFromDefault, seenMorphs);
         continue;
