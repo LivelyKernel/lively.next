@@ -62,6 +62,18 @@ class TopBarButtonDropDownModel extends TopBarButtonModel {
     };
   }
 
+  get bindings () {
+    return [
+      {
+        target: 'dropdown',
+        signal: 'onMouseDown',
+        handler: () => {
+          signal(this.view, 'dropDownTriggered');
+        }
+      }
+    ];
+  }
+
   get expose () {
     return [...super.expose, 'removeDropdown'];
   }
