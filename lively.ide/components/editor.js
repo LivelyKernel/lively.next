@@ -87,7 +87,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   getASTNode (sourceCode = this.moduleSource) {
-    return getComponentNode(parse(sourceCode), this.componentName);
+    if (obj.isString(sourceCode)) sourceCode = parse(sourceCode);
+    return getComponentNode(sourceCode, this.componentName);
   }
 
   recordRemovedMorph (removedMorph, meta) {

@@ -628,6 +628,8 @@ export class Reconciliation {
   }
 
   getDescriptorContext (descr = this.descriptor) {
+    if (!this._context) this._context = new Map();
+    if (this._context.has(descr)) return this._context.get(descr);
     const modId = System.decanonicalize(descr.moduleName);
 
     let sourceCode = descr.getModuleSource();
@@ -636,10 +638,15 @@ export class Reconciliation {
     if (openEditor) sourceCode = openEditor.textString;
 
     // FIXME: cache the AST node and transform them with a source mods library that understands how to patch the ast
-    const parsedComponent = descr.getASTNode(sourceCode);
+    //        This can be done with: import { print, parse } from 'esm://cache/recast@0.21.5'
+    const parsedModule = parse(sourceCode);
+    const scope = query.topLevelDeclsAndRefs(parsedModule).scope;
+    const parsedComponent = descr.getASTNode(parsedModule);
     const requiredBindings = this.requiredBindingsByModule.get(modId) || [];
     if (!this.requiredBindingsByModule.has(modId)) this.requiredBindingsByModule.set(modId, requiredBindings);
-    return { modId, parsedComponent, sourceCode, requiredBindings, openEditor, openEditors };
+    const ctx = { modId, parsedComponent, sourceCode, requiredBindings, openEditor, openEditors, scope };
+    this._context.set(descr, ctx);
+    return ctx;
   }
 
   withinDerivedComponent (aMorph, includeSelf = false) {
