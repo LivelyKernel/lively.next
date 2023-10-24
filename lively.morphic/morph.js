@@ -283,7 +283,6 @@ export class Morph {
       positionOnCanvas: {
         group: 'geometry',
         type: 'Point',
-        isStyleProp: true,
         get () {
           let parentFound = false;
           if (this._positionOnCanvas) return this._positionOnCanvas;
