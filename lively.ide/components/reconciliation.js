@@ -520,7 +520,7 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
   return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
 }
 
-export function applyModuleChanges (reconciliation, sourceEditor = false) {
+export function applyModuleChanges (reconciliation, scope, sourceEditor = false) {
   // order each group by module
   // apply bulk to each module
   let { changesByModule, modulesToLint, requiredBindingsByModule } = reconciliation;
@@ -539,12 +539,23 @@ export function applyModuleChanges (reconciliation, sourceEditor = false) {
     let updatedSource = patchTextMorph && !runLint
       ? applyChangesToTextMorph(sourceEditor, changes)
       : applySourceChanges(sourceCode, changes);
-    // ensure we fix all undeclared vars
-    ({ changes } = fixUndeclaredVars(updatedSource, requiredBindingsForChanges, mod));
 
-    updatedSource = patchTextMorph && !runLint
-      ? applyChangesToTextMorph(sourceEditor, changes)
-      : applySourceChanges(updatedSource, changes);
+    let hasUndefinedVariables = false;
+    const importedRefs = new Set(scope.importSpecifiers.map(spec => spec.name));
+    for (let [_, refs] of requiredBindingsForChanges) {
+      if (!refs.every(ref => importedRefs.has(ref))) {
+        hasUndefinedVariables = true;
+        break;
+      }
+    }
+
+    if (hasUndefinedVariables) {
+    // ensure we fix all undeclared vars, but only if new bindings have been introduced
+      ({ changes } = fixUndeclaredVars(updatedSource, requiredBindingsForChanges, mod));
+      updatedSource = patchTextMorph && !runLint
+        ? applyChangesToTextMorph(sourceEditor, changes)
+        : applySourceChanges(updatedSource, changes);
+    }
 
     if (runLint) {
       [updatedSource] = lint(updatedSource);
@@ -673,12 +684,12 @@ export class Reconciliation {
    * @returns { Reconciliation }
    */
   applyChanges () {
-    const { openEditors } = this.getDescriptorContext();
+    const { openEditors, scope } = this.getDescriptorContext();
 
     if (openEditors.length > 0) {
-      openEditors.map(ed => applyModuleChanges(this, ed));
+      openEditors.map(ed => applyModuleChanges(this, scope, ed));
     } else {
-      applyModuleChanges(this);
+      applyModuleChanges(this, scope);
     } // no open editors
 
     return this;
