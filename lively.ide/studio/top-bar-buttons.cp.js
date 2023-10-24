@@ -1,5 +1,6 @@
 import { component, ViewModel, Icon, part, TilingLayout, ShadowObject, Label } from 'lively.morphic';
 import { Color, pt, rect } from 'lively.graphics';
+import { signal } from 'lively.bindings';
 
 class TopBarButtonModel extends ViewModel {
   static get properties () {
@@ -22,15 +23,15 @@ class TopBarButtonModel extends ViewModel {
   }
 
   activateButton () {
-    this.view.master = TopBarButtonSelected; // eslint-disable-line no-use-before-define
+    this.view.master.setState('selected');
   }
 
   deactivateButton () {
-    this.view.master = null;
+    this.view.master.setState(null);
   }
 }
 
-export const TopBarButton = component({
+export const TopBarButtonUnselected = component({
   type: Label,
   defaultViewModel: TopBarButtonModel,
   name: 'top bar button',
@@ -41,10 +42,17 @@ export const TopBarButton = component({
   padding: rect(0, 1, 0, -1)
 });
 
-export const TopBarButtonSelected = component(TopBarButton, {
-  name: 'top bar button selected',
+const TopBarButtonSelected = component(TopBarButtonUnselected, {
   dropShadow: new ShadowObject({ color: Color.rgba(64, 196, 255, 0.4), fast: false }),
   fontColor: Color.rgb(0, 176, 255)
+});
+
+export const TopBarButton = component(TopBarButtonUnselected, {
+  master: {
+    states: {
+      selected: TopBarButtonSelected
+    }
+  }
 });
 
 class TopBarButtonDropDownModel extends TopBarButtonModel {
@@ -59,11 +67,11 @@ class TopBarButtonDropDownModel extends TopBarButtonModel {
   }
 
   activateButton () {
-    this.ui.symbol.master = TopBarButtonSelected;
+    this.ui.symbol.master.setState('selected');
   }
 
   deactivateButton () {
-    this.ui.symbol.master = null;
+    this.ui.symbol.master.setState(null);
   }
 
   viewDidLoad () {
