@@ -192,21 +192,29 @@ export class SearchFieldModel extends ViewModel {
   onInputBlur (evt) {
     this.active = false;
     this.ui.placeholder.visible = !this.input;
-    this.view.master = this._originalMaster || SearchField;
+    this.view.master.setState(null);
     this.view.master.applyAnimated({ duration: 300 });
   }
 
   onInputFocus (evt) {
     this.active = true;
     this.ui.placeholder.visible = false;
-    this._originalMaster = this.view.master.parent;
-    this.view.master = SearchFieldFocused; // eslint-disable-line no-use-before-define
+    this.view.master.setState('focused');
     this.view.master.applyAnimated({ duration: 300 });
   }
 }
 
+const SearchFieldFocused = component({
+  name: 'search field focused',
+  dropShadow: new ShadowObject({ distance: 0, rotation: 0, color: Color.rgb(52, 152, 219), blur: 5, spread: 2 }),
+  submorphs: [
+    { name: 'placeholder icon', visible: true }
+  ]
+});
+
 const SearchField = component({
   defaultViewModel: SearchFieldModel,
+  master: { states: { focused: SearchFieldFocused } },
   extent: pt(188, 21),
   fixedHeight: true,
   fontColor: Color.rgb(204, 204, 204),
@@ -258,14 +266,6 @@ const SearchField = component({
       textAndAttributes: Icon.textAttribute('times-circle'),
       visible: false
     }
-  ]
-});
-
-const SearchFieldFocused = component({
-  name: 'search field focused',
-  dropShadow: new ShadowObject({ distance: 0, color: Color.rgb(52, 152, 219), blur: 5 }),
-  submorphs: [
-    { name: 'placeholder icon', visible: true }
   ]
 });
 
