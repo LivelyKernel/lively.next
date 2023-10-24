@@ -4,6 +4,7 @@ import { Icons } from 'lively.morphic/text/icons.js';
 import { arr, string, num, obj } from 'lively.lang';
 import { parse, query } from 'lively.ast';
 import { module } from 'lively.modules/index.js';
+import lint from '../js/linter.js';
 
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'selectionMode', 'acceptsDrops'];
 export const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
@@ -107,6 +108,14 @@ export function getTextAttributesExpr (textMorph) {
   expr.__expr__ = expr.__expr__.slice(start - 1, end);
   return expr;
 }
+
+function indentExpression (expr, depth) {
+  const braceLength = 1;
+  const indentLength = depth * 2;
+  return string.indent(lint(`(${expr})`)[0], '  ', depth)
+    .slice(indentLength + braceLength, -braceLength - indentLength - 2);
+}
+
 /**
  * Converts a certain value to a serializable expression. Requires a name of the property
  * it belongs to, in order to properly convert nested properties.
@@ -128,6 +137,16 @@ export function getValueExpr (prop, value, depth = 0) {
     bindings['lively.project'] = ['projectAsset'];
   }
 
+  if (prop === 'master' && value) {
+    valueAsExpr = value.getConfigAsExpression();
+    valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    return valueAsExpr;
+  }
+  if (prop === 'layout' && value) {
+    valueAsExpr = value.__serialize__();
+    valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    return valueAsExpr;
+  }
   if (value && !value.isMorph && value.__serialize__) {
     return value.__serialize__();
   } else if (['borderColor', 'borderWidth', 'borderStyle', 'borderRadius'].includes(prop)) {
