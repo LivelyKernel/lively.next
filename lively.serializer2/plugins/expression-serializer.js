@@ -354,8 +354,10 @@ function getStyleProto (morph, opts) {
   const { masterInScope } = opts;
   if (masterInScope?.managesMorph(morph.name) || morph === masterInScope?.targetMorph) {
     let policy = masterInScope;
-    if (!policy.targetMorph.isComponent) policy = masterInScope.parent;
-    styleProto = policy?.synthesizeSubSpec(morph === masterInScope.targetMorph ? null : morph.name, null, false);
+    if (morph !== policy.targetMorph && morph.master) policy = morph.master;
+    const target = morph === policy.targetMorph ? null : morph.name;
+    if (!policy.targetMorph.isComponent) policy = policy.parent;
+    styleProto = policy?.synthesizeSubSpec(target, null, false);
     while (styleProto?.isPolicyApplicator) {
       styleProto = styleProto.synthesizeSubSpec(null, null, false);
     }
