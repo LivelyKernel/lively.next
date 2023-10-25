@@ -466,7 +466,7 @@ export class LivelyWorld extends World {
   }
 
   async initializeStudio () {
-    let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened, projectRepoOwner } = this;
+    let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
 
     let anonymousMode;
     const { askForWorldName } = resource(document.location.href).query();
@@ -484,9 +484,8 @@ export class LivelyWorld extends World {
         worldName = project.fullName;
       } else if (projectToBeOpened) { // We open an existing Project
         worldName = projectToBeOpened;
-        await Project.loadProject(projectToBeOpened, projectRepoOwner);
+        await Project.loadProject(projectToBeOpened);
         this.projectToBeOpened = null;
-        this.projectRepoOwner = null;
       }
 
       this.name = worldName;
@@ -500,8 +499,7 @@ export class LivelyWorld extends World {
       }
 
       if (window.history) {
-        if (!projectRepoOwner && $world.openedProject) projectRepoOwner = $world.openedProject.repoOwner;
-        window.history.pushState({}, 'lively.next', pathForBrowserHistory(this.name, null, !!$world.openedProject, $world.openedProject ? projectRepoOwner : null));
+        window.history.pushState({}, 'lively.next', pathForBrowserHistory(this.name, null, !!$world.openedProject));
       }
     }
 

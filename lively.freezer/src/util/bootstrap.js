@@ -342,7 +342,7 @@ function fastPrepLivelySystem () {
 }
 
 export async function bootstrap ({
-  filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress,
+  filePath, worldName, projectName, snapshot, commit, progress,
   fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD,
   logError = (err) => console.log(err)
 }) {
@@ -423,7 +423,7 @@ export async function bootstrap ({
           }
           if (worldName) await loadWorld(new LivelyWorld({ openNewWorldPrompt: true }), undefined, opts);
           else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts);
-          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName, projectRepoOwner }), undefined, opts);
+          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName }), undefined, opts)
         } else {
           await morphic.World.loadFromDB(worldName, undefined, undefined, {
             ...opts,

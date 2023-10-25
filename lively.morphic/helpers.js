@@ -42,7 +42,7 @@ export function sanitizeFont (font) {
   }).join(',');
 }
 
-export function pathForBrowserHistory (worldName, queryString, project = false, projectOwner) {
+export function pathForBrowserHistory (worldName, queryString, project = false) {
   // how does the resource map to a URL shown in the browser URL bar? used for
   // browser history
   if (!queryString) { queryString = typeof document !== 'undefined' ? document.location.search : ''; }
@@ -59,11 +59,11 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
   } else {
     delete query.file;
     query.name = worldName;
-    if (project && projectOwner) query.owner = projectOwner;
   }
 
   if (!lively.isResurrectionBuild) query.fastLoad = false;
 
+  // ensure the name param in the query string matches worldName
   return `${basePath}?${stringifyQuery(query)}`;
 }
 
