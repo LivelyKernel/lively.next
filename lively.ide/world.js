@@ -782,13 +782,17 @@ export class LivelyWorld extends World {
     return aMorph;
   }
 
-  async openWorldMenu (evt, items) {
+  async openWorldMenu (evt, items, worldPos = null) {
     const eventState = this.env.eventDispatcher.eventState;
     if (eventState.menu) eventState.menu.remove();
     eventState.menu = items && items.length
       ? Menu.openAtHand(items, { hand: (evt && evt.hand) || this.firstHand })
       : null;
-    await eventState.menu.whenRendered();
+    if (worldPos) {
+      eventState.menu.position = worldPos;
+      return eventState.menu;
+    }
+    await eventState.menu.whenRendered(); 
     return this.moveIntoVisibleBounds(eventState.menu);
   }
 

@@ -189,18 +189,18 @@ export class TopBarModel extends ViewModel {
   }
 
   shapeMenu (evt) {
-    const menu = $world.openWorldMenu(evt, this.getShapeMenuItems());
-    menu.position = this.ui.shapeModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+    const pos = this.ui.shapeModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+    $world.openWorldMenu(evt, this.getShapeMenuItems(), pos);
   }
 
   async saveMenu (evt) {
-    const menu = $world.openWorldMenu(evt, (await this.getSaveMenuItems()));
-    menu.position = this.ui.saveButton.globalBounds().bottomLeft().subPt($world.scroll);
+    const pos = this.ui.saveButton.globalBounds().bottomLeft().subPt($world.scroll);
+    $world.openWorldMenu(evt, (await this.getSaveMenuItems()), pos);
   }
 
   cursorMenu (evt) {
-    const menu = $world.openWorldMenu(evt, this.getHandAndHaloModeItems());
-    menu.position = this.ui.handOrHaloModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+    const pos = this.ui.handOrHaloModeButton.globalBounds().bottomLeft().subPt($world.scroll);
+    $world.openWorldMenu(evt, this.getHandAndHaloModeItems(), pos);
   }
 
   cursorMode () {
@@ -209,8 +209,8 @@ export class TopBarModel extends ViewModel {
   }
 
   canvasMenu (evt) {
-    const menu = this.world().openWorldMenu(evt, this.getCanvasModeItems());
-    menu.position = this.ui.canvasModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
+    const pos = this.ui.canvasModeButton.globalBounds().bottomLeft().subPt(this.world().scroll);
+    this.world().openWorldMenu(evt, this.getCanvasModeItems(), pos);
   }
 
   onKeyUp () {
