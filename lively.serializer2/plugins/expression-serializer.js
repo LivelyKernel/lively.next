@@ -354,9 +354,18 @@ function getStyleProto (morph, opts) {
   const { masterInScope } = opts;
   if (masterInScope?.managesMorph(morph.name) || morph === masterInScope?.targetMorph) {
     let policy = masterInScope;
-    if (morph !== policy.targetMorph && morph.master) policy = morph.master;
+    // the closest installed policy takes precedence
+    if (morph !== masterInScope.targetMorph && morph.master) policy = morph.master;
+
     const target = morph === policy.targetMorph ? null : morph.name;
-    if (!policy.targetMorph.isComponent) policy = policy.parent;
+    if (policy._autoMaster) {
+      // if the auto master is present, then any overridden props
+      // are to be computed based on the morphs differences from
+      // the auto master, since the auto master takes precedence over the parent.
+      // This does not even require structural inheritance.
+      policy = policy._autoMaster;
+    } else if (policy.targetMorph.isComponent || policy.parent) policy = policy.parent;
+
     styleProto = policy?.synthesizeSubSpec(target, null, false);
     while (styleProto?.isPolicyApplicator) {
       styleProto = styleProto.synthesizeSubSpec(null, null, false);
@@ -391,8 +400,8 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
       });
     }
     if (exposeMasterRefs && masterInScope?.managesMorph(aMorph.name)) {
-      if (styleProto.textString === exported.textString) { delete exported.textString; }
-      if (styleProto.textAndAttributes && arr.equals(styleProto.textAndAttributes, exported.textAndAttributes)) {
+      if (styleProto?.textString === exported.textString) { delete exported.textString; }
+      if (styleProto?.textAndAttributes && arr.equals(styleProto?.textAndAttributes, exported.textAndAttributes)) {
         delete exported.textAndAttributes;
       }
     }
@@ -726,8 +735,8 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
     // the part already
     if (exported) {
       bindings = {};
-      const isAddedToHierarchy = !isRoot && !masterInScope?.managesMorph(aMorph) && masterInScope?.managesMorph(aMorph.owner);
-      const typeSpecifiedViaMaster = aMorph.master || masterInScope?.managesMorph(aMorph);
+      const isAddedToHierarchy = !isRoot && masterInScope?.parent && !masterInScope?.managesMorph(aMorph) && masterInScope?.managesMorph(aMorph.owner);
+      const typeSpecifiedViaMaster = aMorph.master?.parent || !masterInScope?.targetMorph?.isComponent && masterInScope?.managesMorph(aMorph);
       __expr__ = obj.inspect(obj.dissoc(exported, typeSpecifiedViaMaster ? ['type'] : []), {
         converter: (key, val) => {
           if (key === 'name' && masterInScope?.managesMorph(val) && !masterInScope?.managesMorph(aMorph)) {
@@ -742,7 +751,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
           else return 0;
         }
       });
-      if (aMorph.master) {
+      if (aMorph.master?.parent) {
         const { exportedName: masterComponentName, moduleId: modulePath, path: relativePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
         if (relativePath.length === 0) {
           __expr__ = aMorph.master._isOverridden
@@ -755,7 +764,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
         };
       }
 
-      if (!isRoot && masterInScope && isAddedToHierarchy) {
+      if (isAddedToHierarchy) {
         __expr__ = `add(${__expr__})`;
         if (bindings['lively.morphic']) {
           bindings['lively.morphic'].push('add');
