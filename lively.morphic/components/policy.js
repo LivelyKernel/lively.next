@@ -327,6 +327,14 @@ export class StylePolicy {
     }
   }
 
+  reset () {
+    delete this._autoMaster;
+    delete this._hoverMaster;
+    delete this._clickMaster;
+    delete this._localComponentStates;
+    delete this._breakpointStore;
+  }
+
   applyConfiguration (config) {
     const {
       click, hover, light, dark, breakpoints, states,

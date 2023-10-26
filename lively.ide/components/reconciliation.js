@@ -33,6 +33,7 @@ import { notYetImplemented } from 'lively.lang/function.js';
 import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
 import { resource } from 'lively.resources';
 import { ExpressionSerializer } from 'lively.serializer2';
+import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 export const exprSerializer = new ExpressionSerializer();
 
@@ -1297,6 +1298,36 @@ class PropChangeReconciliation extends Reconciliation {
     return valueAsExpr;
   }
 
+  handleMasterChange (subSpec, specNode, depth) {
+    const { target, newValue } = this;
+    const responsiblePolicy = this.getResponsiblePolicyFor(target);
+    if (!newValue) {
+      // clear all of the fields here
+      if (subSpec == responsiblePolicy.spec) responsiblePolicy.reset(); // assumes it is a policy
+    }
+    if (newValue) {
+      // then we want to replace the sub spec with a policy (in case the spec is not a policy)
+      if (subSpec === responsiblePolicy.spec) {
+        // assign masters to the policy
+        responsiblePolicy.applyConfiguration(newValue);
+      } else {
+        // convert spec into policy and replace it
+        // we can be sure, that the subSpec *is not* itself a police
+        // because in that case, that other policy would be call
+        // get the enclosing spec...
+        const parentSpec = responsiblePolicy.getSubSpecCorrespondingTo(target.owner);
+        parentSpec.submorphs[parentSpec.submorphs.indexOf(subSpec)] = PolicyApplicator.for(target, {
+          ...subSpec,
+          master: newValue
+        });
+      }
+      if (this.propValueDiffersFromParent) {
+        return this.patchPropIn(specNode, 'master', this.getExpressionOfValue(depth));
+      }
+    }
+    return this.deletePropIn(specNode, 'master');
+  }
+
   reconcile () {
     let { prop, target } = this.change;
     const specNode = this.getNodeForTargetInSource();
@@ -1315,7 +1346,9 @@ class PropChangeReconciliation extends Reconciliation {
     const indentDepth = (specNode.properties[0].start - specNode.start - 2) / tabSize;
     const subSpec = this.getSubSpecForTarget();
 
-    this.propagateChangeAmongActiveEditSessions(this.descriptor);
+    if (prop === 'master') {
+      return this.handleMasterChange(subSpec, specNode, indentDepth);
+    }
 
     if (prop === 'extent') {
       return this.handleExtentChange(subSpec, specNode);
@@ -1323,6 +1356,7 @@ class PropChangeReconciliation extends Reconciliation {
 
     subSpec[prop] = this.change.value;
 
+    this.propagateChangeAmongActiveEditSessions(this.descriptor);
     // update the source code
     if (this.propValueDiffersFromParent) {
       return this.patchPropIn(specNode, prop, this.getExpressionOfValue(indentDepth));
