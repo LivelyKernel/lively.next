@@ -493,7 +493,7 @@ export class StylePolicy {
     let masterConfigExpr = this.getConfigAsExpression();
     if (masterConfigExpr) masterConfigExpr.__expr__ = 'master: ' + masterConfigExpr.__expr__;
     const specExpression = this._getSpecAsExpression();
-    const bindings = {};
+    const bindings = { 'lively.morphic/components/policy.js': [klassName] };
     if (parentExpr) Object.assign(bindings, parentExpr.bindings);
     if (masterConfigExpr) Object.assign(bindings, masterConfigExpr.bindings);
     Object.assign(bindings, specExpression.bindings);
