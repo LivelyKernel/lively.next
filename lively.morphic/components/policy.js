@@ -337,7 +337,7 @@ export class StylePolicy {
   applyConfiguration (config) {
     const {
       click, hover, light, dark, breakpoints, states,
-      auto = this._parent, statePartitionedInline = false
+      auto, statePartitionedInline = false
     } = config;
     this._statePartitionedInline = statePartitionedInline;
     if (auto) this._autoMaster = auto.isComponentDescriptor ? auto.stylePolicy : auto;
@@ -510,10 +510,13 @@ export class StylePolicy {
     } = this;
 
     const breakpoints = this.getBreakpointStore()?.getConfig();
-    const spec = { auto, click, hover };
+    const spec = {};
+    if (auto) spec.auto = auto;
+    if (click) spec.click = click;
+    if (hover) spec.hover = hover;
     if (states) spec.states = states;
     if (breakpoints) spec.breakpoints = breakpoints;
-    return spec;
+    return obj.isEmpty(spec) ? null : spec;
   }
 
   getConfigAsExpression () {
@@ -706,6 +709,9 @@ export class StylePolicy {
         }, index);
       };
 
+      const overriddenMaster = this._autoMaster;
+      const partitioningPolicy = overriddenMaster || this;
+
       const mergeSpecs = (parentSpec, localSpec) => {
         if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
             localSpec.textAndAttributes.length === parentSpec.textAndAttributes.length) {
@@ -727,23 +733,25 @@ export class StylePolicy {
           return;
         }
         if (localSpec.isPolicy) {
-          return parentSpec && replace(parentSpec, localSpec.splitBy(this, parentSpec.name));
+          return parentSpec && replace(parentSpec, localSpec.splitBy(partitioningPolicy, parentSpec.name));
         } // do not tweak root
 
         let localMaster = localSpec.master;
+        const overridden = overriddenMaster?.synthesizeSubSpec(localSpec.name);
+        localMaster = overridden?.isPolicy && overridden || localMaster;
         delete parentSpec._needsDerivation;
         if (localMaster && parentSpec.isPolicy) {
           // rms 13.7.22 OK to get rid of the descriptor here,
           // since we are "inside" of a def which is reevaluated on change anyways.
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec).splitBy(this, parentSpec.name));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec).splitBy(partitioningPolicy, parentSpec.name));
         }
         if (parentSpec.isPolicy) { // we did not introduce a master and just adjusted stuff
-          return replace(parentSpec, new klass(localSpec, parentSpec).splitBy(this, parentSpec.name)); // insert a different style policy that has the correct overrides
+          return replace(parentSpec, new klass(localSpec, parentSpec).splitBy(partitioningPolicy, parentSpec.name)); // insert a different style policy that has the correct overrides
         }
         if (localMaster) { // parent spec is not a policy, and we introduced a master here
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)).splitBy(this, parentSpec.name));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)).splitBy(partitioningPolicy, parentSpec.name));
         }
 
         Object.assign(parentSpec, obj.dissoc(localSpec, ['submorphs'])); // just apply the current local spec
@@ -764,7 +772,10 @@ export class StylePolicy {
           // if we encounter a node that was left untouched, we need to derive it now
           if (node.isPolicy && node._needsDerivation) {
             delete node._needsDerivation;
-            return new klass({}, node).splitBy(this, node.name);
+            const args = {};
+            const overridden = overriddenMaster?.synthesizeSubSpec(node.name);
+            if (overridden) args.master = overridden;
+            return new klass(args, node).splitBy(partitioningPolicy, node.name);
           }
           return node;
         }
