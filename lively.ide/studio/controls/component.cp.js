@@ -28,8 +28,7 @@ export class ComponentSelectionControl extends ViewModel {
             target: 'policy type pin', signal: 'onKeyDown', handler: 'onInputStateName'
           }, {
             target: 'policy type pin', signal: 'onBlur', handler: 'confirmStateName'
-          },
-          {
+          }, {
             target: 'policy type pin', signal: 'onFocus', handler: 'startEditingStateName'
           }];
         }
@@ -80,7 +79,7 @@ export class ComponentSelectionControl extends ViewModel {
   }
 
   async selectComponent () {
-    this.control.closePopup();
+    this.control?.closePopup();
     this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
 
     const closestComponent = this.component || this.control.targetMaster;
