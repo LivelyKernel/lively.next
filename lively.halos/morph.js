@@ -20,7 +20,7 @@ import { showAndSnapToGuides, showAndSnapToResizeGuides, removeSnapToGuidesOf } 
 
 import { show } from './markers.js';
 import { RichTextPlugin } from 'lively.ide/text/rich-text-editor-plugin.js';
-import { getPropertiesNode } from 'lively.ide/components/helpers.js';
+import { getPropertiesNode, drillDownPath } from 'lively.ide/components/helpers.js';
 import { resource } from 'lively.resources';
 
 const haloBlue = Color.rgb(23, 160, 251);
@@ -551,8 +551,7 @@ class NameHaloItem extends HaloItem {
           let scope, submorphsNode;
           while (true) {
             scope = getPropertiesNode(findComponentDef(parsedModule, meta.exportedName));
-            submorphsNode = getProp(scope, 'submorphs')?.value;
-            range = submorphsNode ? getMorphNode(submorphsNode, target, true) : scope;
+            range = drillDownPath(scope, meta.path);
             if (!range) {
               // jump to the module where the next nested part is defined
               // next possible policy:
