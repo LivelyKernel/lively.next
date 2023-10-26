@@ -112,7 +112,7 @@ export class ComponentSelectionControl extends ViewModel {
     if (this.component) {
       this.ui.componentNameRef.input = this.component[Symbol.for('lively-module-meta')].exportedName;
     }
-    this.view.master.setState(null);
+    if (this.view.master.getState() !== 'immutable') this.view.master.setState(null);
   }
 }
 
@@ -217,6 +217,13 @@ export const ComponentSelectionDisabled = component(ComponentSelection, {
   }]
 });
 
+export const ComponentSelectionImmutable = component(ComponentSelection, {
+  submorphs: [{
+    name: 'no component button',
+    visible: false
+  }]
+});
+
 export class ComponentControlModel extends PropertySectionModel {
   static get properties () {
     return {
@@ -248,28 +255,82 @@ export class ComponentControlModel extends PropertySectionModel {
   confirm () {
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     const pos = this.targetMorph.position;
-    const previousMaster = this.targetMorph.master?.getConfig() || {};
-    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.master = {
-        ...previousMaster,
+    // the parent is always preserved, since we can not alter the structural inheritance here
+    if (this.targetMorph.master) {
+      const previousMasterConfig = this.targetMorph.master.getConfig() || {};
+      this.targetMorph.master.applyConfiguration({
+        ...previousMasterConfig,
         auto: autoComponentSelection.component,
         hover: hoverComponentSelection.component,
         click: clickComponentSelection.component
-      };
-      if (!this.targetMorph.master.overriddenMaster) { this.targetMorph.master._isOverridden = true; }
-    });
+      });
+      const policy = this.targetMorph.master.copy();
+      policy.attach(this.targetMorph);
+      policy.apply(this.targetMorph);
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.setProperty('master', policy); // trigger onChange
+      });
+    } else {
+      this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+        this.targetMorph.master = {
+          auto: autoComponentSelection.component,
+          hover: hoverComponentSelection.component,
+          click: clickComponentSelection.component
+        };
+      });
+    }
     this.targetMorph.position = pos;
     signal(this.view, 'component changed');
   }
 
   update () {
     let stylePolicy = this.targetMorph.master;
-    if (stylePolicy.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
+    let autoMaster, hoverMaster, clickMaster;
+    while (true) {
+      if (stylePolicy._autoMaster) {
+        autoMaster = stylePolicy._autoMaster;
+        if (autoMaster[Symbol.for('lively-module-meta')]?.path.length > 0) {
+          stylePolicy = autoMaster;
+          continue;
+        }
+        break;
+      }
+      if (!stylePolicy.parent) {
+        if (!stylePolicy.targetMorph?.isComponent) autoMaster = stylePolicy;
+        break;
+      }
+      if (stylePolicy.parent) stylePolicy = stylePolicy.parent;
+      else break;
+    }
+    let canChangeAuto = stylePolicy === this.targetMorph.master;
+
+    stylePolicy = this.targetMorph.master;
+    while (true) {
+      if (stylePolicy._hoverMaster) { hoverMaster = stylePolicy._hoverMaster; break; }
+      if (stylePolicy.parent) stylePolicy = stylePolicy.parent;
+      else break;
+    }
+    let canChangeHover = stylePolicy === this.targetMorph.master;
+
+    stylePolicy = this.targetMorph.master;
+    while (true) {
+      if (stylePolicy._clickMaster) {
+        clickMaster = stylePolicy._clickMaster;
+        break;
+      }
+      if (stylePolicy.parent) stylePolicy = stylePolicy.parent;
+      else break;
+    }
+    let canChangeClick = stylePolicy === this.targetMorph.master;
+
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     this.withoutBindingsDo(() => {
-      autoComponentSelection.component = stylePolicy?._parent;
-      hoverComponentSelection.component = stylePolicy?._hoverMaster;
-      clickComponentSelection.component = stylePolicy?._clickMaster;
+      autoComponentSelection.master.setState(canChangeAuto ? null : 'immutable');
+      autoComponentSelection.component = autoMaster;
+      hoverComponentSelection.master.setState(canChangeHover ? null : 'immutable');
+      hoverComponentSelection.component = hoverMaster;
+      clickComponentSelection.master.setState(canChangeClick ? null : 'immutable');
+      clickComponentSelection.component = clickMaster;
     });
   }
 
@@ -340,17 +401,17 @@ const ComponentControl = component(PropertySection, {
       textAndAttributes: ['Component', null]
     }]
   }, add(part(ComponentSelection, {
-    master: { states: { disabled: ComponentSelectionDisabled } },
+    master: { states: { disabled: ComponentSelectionDisabled, immutable: ComponentSelectionImmutable } },
     viewModel: { stateName: 'AUTO' },
     name: 'auto component selection'
   })),
   add(part(ComponentSelection, {
-    master: { states: { disabled: ComponentSelectionDisabled } },
+    master: { states: { disabled: ComponentSelectionDisabled, immutable: ComponentSelectionImmutable } },
     viewModel: { stateName: 'CLICK' },
     name: 'click component selection'
   })),
   add(part(ComponentSelection, {
-    master: { states: { disabled: ComponentSelectionDisabled } },
+    master: { states: { disabled: ComponentSelectionDisabled, immutable: ComponentSelectionImmutable } },
     viewModel: { stateName: 'HOVER' },
     name: 'hover component selection'
   }))]
@@ -377,14 +438,19 @@ class ComponentStatesControlModel extends PropertySectionModel {
     for (let { stateName, component } of this.getStatesConfig()) {
       if (component) states[stateName] = component;
     }
-    const prevMaster = this.targetMorph.master.getConfig();
+    const prevMaster = this.targetMorph.master.getConfig() || {};
     if (obj.isEmpty(states)) {
       delete prevMaster.states;
     } else prevMaster.states = states;
 
+    this.targetMorph.master.applyConfiguration(prevMaster);
+    const policy = this.targetMorph.master.copy();
+    policy.attach(this.targetMorph);
+    policy.apply(this.targetMorph);
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.master = prevMaster;
+      this.targetMorph.setProperty('master', policy); // trigger onChange
     });
+
     this.focusOn(this.targetMorph);
   }
 
