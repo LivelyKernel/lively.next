@@ -2,6 +2,7 @@ import { ViewModel, part, TilingLayout, Label, component } from 'lively.morphic'
 import { Color, rect } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { pt } from 'lively.graphics/geometry-2d.js';
+import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 export const CheckboxChecked = component({
   name: 'checkbox/checked',
@@ -79,17 +80,18 @@ class CheckboxModel extends ViewModel {
   }
 
   viewDidLoad () {
-    this.view.master = this.checked ? this.checkedCheckboxComponent : this.uncheckedCheckboxComponent; // eslint-disable-line no-use-before-define
+    this.onRefresh();
   }
 
   onRefresh () {
-    this.view.master = this.checked ? this.checkedCheckboxComponent : this.uncheckedCheckboxComponent; // eslint-disable-line no-use-before-define
+    this.view.master.setState(this.checked ? 'active' : null);
   }
 }
 
 export const Checkbox = component(CheckboxUnchecked, {
   name: 'checkbox',
-  defaultViewModel: CheckboxModel
+  defaultViewModel: CheckboxModel,
+  master: { states: { active: CheckboxChecked } }
 });
 
 const CheckboxCheckedLight = component(CheckboxChecked, {
@@ -107,10 +109,7 @@ const CheckboxUncheckedLight = component(CheckboxUnchecked, {
 export const CheckboxLight = component(CheckboxUncheckedLight, {
   name: 'checkbox',
   viewModelClass: CheckboxModel,
-  viewModel: {
-    uncheckedCheckboxComponent: CheckboxUncheckedLight,
-    checkedCheckboxComponent: CheckboxCheckedLight
-  }
+  master: { states: { active: CheckboxCheckedLight } }
 });
 
 export class LabeledCheckboxModel extends ViewModel {
