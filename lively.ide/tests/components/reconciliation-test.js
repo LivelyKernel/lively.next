@@ -523,7 +523,7 @@ describe('component -> source reconciliation', function () {
 
   xit('properly reconciles overridden masters', async () => {
     const alice = part(D, { name: 'alice' });
-    alice.master = { hover: B };
+    alice.master.applyConfiguration({ hover: B });
 
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
       ComponentC.addMorph(alice);
