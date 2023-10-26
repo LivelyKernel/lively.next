@@ -271,12 +271,11 @@ export class StylePolicy {
    * @param { StylePolicy | ComponentDescriptor } parent - The policy that we are derived from.
    * @param { boolean } [inheritStructure = true] - Wether or not we are supposed to inherit the structure of the parent policy.
    */
-  constructor (spec, parent, inheritStructure = true) {
+  constructor (spec, parent) {
     if (parent) this.parent = parent;
     this._dependants = new Set();
     this._verticalBreakpoints = [];
     this._horizontalBreakpoints = [];
-    this.inheritStructure = inheritStructure;
     this._originalSpec = spec;
     this.spec = this.ensureStylePoliciesInSpec(spec);
     if (this.spec.isPolicy) return this.spec; // eslint-disable-line no-constructor-return
@@ -634,7 +633,7 @@ export class StylePolicy {
         } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
         if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification
         if (node.master) {
-          return new klass({ ...obj.dissoc(node, ['master']), submorphs }, node.master, false);
+          return new klass({ ...node, submorphs }, null);
         }
         if (node.textAndAttributes) {
           return {
@@ -653,7 +652,7 @@ export class StylePolicy {
     };
     // scan this.spec and detect overridden/set master props
     // or further refined style policies
-    if (!this.parent || !this.inheritStructure) {
+    if (!this.parent) {
       return ensureStylePoliciesInStandalone(spec);
     }
 

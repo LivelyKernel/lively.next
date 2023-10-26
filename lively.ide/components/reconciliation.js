@@ -40,10 +40,10 @@ export const exprSerializer = new ExpressionSerializer();
 function isWithinDerivedComponent (aMorph, includeSelf) {
   // not entirely correct. This will incorrectly return true
   // if there is just an inherited inline policy present
-  if (includeSelf && aMorph.master?.inheritStructure) return true;
+  if (includeSelf && aMorph.master?.parent) return true;
   if (aMorph.__wasAddedToDerived__) return false;
   for (const each of aMorph.ownerChain()) {
-    if (each.master?.inheritStructure) return true;
+    if (each.master?.parent) return true;
     if (each.__wasAddedToDerived__) return false;
   }
   return false;
