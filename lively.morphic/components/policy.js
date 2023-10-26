@@ -631,7 +631,7 @@ export class StylePolicy {
         if (node.props) {
           if (!node.props.name) { node.props.name = this.generateUniqueNameFor(node); }
         } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
-        if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification
+        if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification or the original spec
         if (node.master) {
           return new klass({ ...node, submorphs }, null);
         }
@@ -861,11 +861,6 @@ export class StylePolicy {
     };
     const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
     buildSpec.master = this;
-    if (asComponent) {
-      const policyCopy = new this.constructor(this._originalSpec, this.parent);
-      policyCopy[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')];
-      buildSpec.master = policyCopy; // placeholder
-    }
     return buildSpec;
   }
 
@@ -1092,7 +1087,8 @@ export class StylePolicy {
           }
         : {}
     }, this.parent);
-    if (policyCopy[Symbol.for('lively-module-meta')]) { policyCopy[Symbol.for('lively-module-meta')] = this[Symbol.for('lively-module-meta')]; }
+
+    if (this[Symbol.for('lively-module-meta')]) { policyCopy.addMetaInfo(this[Symbol.for('lively-module-meta')]); }
     return policyCopy;
   }
 
@@ -1393,6 +1389,8 @@ export class PolicyApplicator extends StylePolicy {
     if (subSpec?.isPolicyApplicator) {
       return subSpec.onMorphChange(changedMorph, change);
     }
+
+    if (this[Symbol.for('lively-module-meta')]) return;
 
     if (getStylePropertiesFor(changedMorph.constructor).includes(change.prop)) {
       subSpec[change.prop] = skippedValue;
