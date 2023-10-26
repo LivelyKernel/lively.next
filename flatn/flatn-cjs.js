@@ -12,7 +12,7 @@ var Stream = require('stream');
 var buffer = require('buffer');
 var url = require('url');
 var net = require('net');
-require('events');
+var _events = require('events');
 var child_process = require('child_process');
 var os = require('os');
 
@@ -24,6 +24,7 @@ var http__default = /*#__PURE__*/_interopDefaultLegacy(http);
 var https__default = /*#__PURE__*/_interopDefaultLegacy(https);
 var zlib__default = /*#__PURE__*/_interopDefaultLegacy(zlib);
 var Stream__default = /*#__PURE__*/_interopDefaultLegacy(Stream);
+var _events__default = /*#__PURE__*/_interopDefaultLegacy(_events);
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -10204,6 +10205,22 @@ const windowsRootPathRe = /^[a-z]:\/$/i;
 
 /* global clearTimeout, setTimeout */
 
+/**
+* Throws a well behaved error on purpopse, when accessing unimplemented
+* functionality.
+* @param { string } what - The thing, which is not implemented.
+* @param { boolean } strict - Whether or not to throw an actual error.
+* @example
+* notYetImplemented('5D rendering', true)
+**/
+function notYetImplemented (what, strict = false) {
+  let error = new Error(`${what} is not yet implemented.`);
+  $world.logError(error);
+  if (strict) {
+    throw error;
+  }
+}
+
 // -=-=-=-=-=-
 // inspection
 // -=-=-=-=-=-
@@ -10302,6 +10319,7 @@ function inspect (object, options, depth) {
     const customInspected = options.customPrinter(object, ignoreSignal, continueInspectFn);
     if (customInspected !== ignoreSignal) return customInspected;
   }
+  const converter = options.converter || ((key, val) => val);
   if (!object) return print(object);
 
   // print function
@@ -10351,9 +10369,9 @@ function inspect (object, options, depth) {
         break;
       }
       const key = propsToPrint[i];
-      if (isArray) inspect(object[key], options, depth + 1);
-      const printedVal = inspect(object[key], options, depth + 1);
-      printedProps.push((options.escapeKeys
+      const isValidLiteral = !key.includes('-');
+      const printedVal = inspect(converter(key, object[key]), options, depth + 1);
+      printedProps.push((options.escapeKeys || !isValidLiteral
         ? JSON.stringify(key)
         : key) + ': ' + printedVal);
     }
@@ -10439,7 +10457,7 @@ const protocolRe = /^[a-z0-9-_\.]+:/;
 const slashslashRe = /^\/\/[^\/]+/;
 
 function nyi (obj, name) {
-  throw new Error(`${name} for ${obj.constructor.name} not yet implemented`);
+  notYetImplemented(`${name} for ${obj.constructor.name} not yet implemented`);
 }
 
 class Resource {
@@ -10711,7 +10729,7 @@ class Resource {
 
 /**
  * Returns wether `x` is between `a` and `b` and keeps `eps` distance from both of them.
- * @param {number} x - The number that should be between two bounds 
+ * @param {number} x - The number that should be between two bounds
  * @param {number} a - One bound (can be upper or lower)
  * @param {number} b - Another bound (can be upper or lower)
  * @param {number} eps - Epsilon value that indicates the distance that should be kept from the boundaries
@@ -11422,11 +11440,132 @@ typeof System !== 'undefined'
  * log // => is still ["listener1","listener2","listener1"]
  */
 
-typeof process !== 'undefined' && process.versions && process.versions.node;
+const isNode$1 = typeof process !== 'undefined' && process.versions && process.versions.node;
+
+const makeEmitter = isNode$1
+  ? function (obj, options) {
+    if (obj.on && obj.removeListener) { return obj; }
+    let events = _events__default["default"];
+    if (!events) events = System._nodeRequire('events');
+    Object.assign(obj, events.EventEmitter.prototype);
+    events.EventEmitter.call(obj);
+    if (options && options.maxListenerLimit) { obj.setMaxListeners(options.maxListenerLimit); }
+    return obj;
+  }
+  : function (obj) {
+    if (obj.on && obj.removeListener) return obj;
+
+    obj.listeners = {};
+
+    obj.on = function (type, handler) {
+      if (!handler) return;
+      if (!obj.listeners[type]) { obj.listeners[type] = []; }
+      obj.listeners[type].push(handler);
+    };
+
+    obj.once = function (type, handler) {
+      if (!handler) return;
+      function onceHandler /* ignore-in-docs args */() {
+        obj.removeListener(type, onceHandler);
+        handler.apply(this, arguments);
+      }
+      obj.on(type, onceHandler);
+    };
+
+    obj.removeListener = function (type, handler) {
+      if (!obj.listeners[type]) return;
+      obj.listeners[type] = obj.listeners[type].filter(h => h !== handler);
+    };
+
+    obj.removeAllListeners = function (type) {
+      if (!obj.listeners[type]) return;
+      obj.listeners[type] = [];
+    };
+
+    obj.emit = function (/* type and args */) {
+      const args = Array.prototype.slice.call(arguments);
+      const type = args.shift();
+      const handlers = obj.listeners[type];
+      if (!handlers || !handlers.length) return;
+      handlers.forEach(function (handler) {
+        try {
+          handler.apply(null, args);
+        } catch (e) {
+          console.error('Error in event handler: %s', e.stack || String(e));
+        }
+      });
+    };
+
+    return obj;
+  };
 
 /* global global,self,process */
 
 typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
+
+/* global System */
+
+// type EventType = string
+// type EventTime = number
+// type Notification = {type: EventType, time: EventTime, ...};
+// type Handler = Notification -> ()
+// type Notifications = { [number]: Notification, limit: number }
+// type Emitter = {isRecording: boolean, isLogging: boolean, ... }
+// type Env = {emitter: Emitter, notifications: Notifications}
+
+let env = null;
+
+function getEnv (_System) { // System? -> Env
+  if (_System === undefined) {
+    if (typeof System === 'undefined') {
+      // fallback if not System is available
+      return env;
+    }
+
+    _System = System;
+  }
+
+  const livelyEnv = _System.get('@lively-env');
+  if (!livelyEnv) { _System.set('@lively-env', _System.newModule({ options: {} })); }
+
+  let options = livelyEnv.options;
+
+  if (!options) { throw new Error('@lively-env registered read-only'); }
+
+  if (!options.emitter) {
+    Object.assign(options, {
+      emitter: _System['__lively.notifications_emitter'] ||
+              (_System['__lively.notifications_emitter'] = makeEmitter({}, { maxListenerLimit: 10000 })),
+      notifications: _System['__lively.notifications_notifications'] ||
+                    (_System['__lively.notifications_notifications'] = [])
+    });
+  }
+  const { emitter, notifications } = options;
+  return { emitter, notifications };
+}
+
+function emit (type, data = {}, time = Date.now(), system) {
+  // EventType, Notification?, EventTime?, System? -> Notification
+  const notification = Object.assign({ type, time }, data);
+  const { emitter, notifications } = getEnv(system);
+  emitter.emit(type, notification);
+  if (emitter.isLogging) log(notification);
+  if (emitter.isRecording) record(notifications, notification);
+  return notification;
+}
+
+function record (notifications, notification) {
+  // Array<Notification>, Notification -> ()
+  notifications.push(notification);
+  if (notifications.limit) {
+    notifications.splice(0, notifications.length - notifications.limit);
+  }
+}
+
+function log (notification) { // Notification -> ()
+  const padded = notification.type + ' '.repeat(Math.max(0, 32 - notification.type.length));
+  console.log(padded + ' ' + inspect(notification, { maxDepth: 2 }));
+}
 
 /* global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer */
 
@@ -11653,6 +11792,7 @@ class WebDAVResource extends Resource {
     const res = await upload(this, content);
 
     if (!between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
+    emit('file/save', { name: this.name(), url: this.url, host: this.host(), resource: this });
     return this;
   }
 
@@ -11782,6 +11922,16 @@ var resourceExtension$3 = {
 
 /* global process */
 
+function exists (path, cb) {
+  return fs.access(path, fs.constants.F_OK, (err) => {
+    if (err) {
+      cb(false);
+    } else {
+      cb(true);
+    }
+  });
+}
+
 function wrapInPromise (func) {
   return (...args) =>
     new Promise((resolve, reject) =>
@@ -11791,7 +11941,7 @@ function wrapInPromise (func) {
 const readFileP = wrapInPromise(fs.readFile);
 const writeFileP = wrapInPromise(fs.writeFile);
 const existsP = (path) => new Promise((resolve, _reject) =>
-  fs.exists(path, (exists) => resolve(!!exists)));
+  exists(path, (exists) => resolve(!!exists)));
 const readdirP = wrapInPromise(fs.readdir);
 const mkdirP = wrapInPromise(fs.mkdir);
 const rmdirP = wrapInPromise(fs.rmdir);
@@ -12126,26 +12276,46 @@ var resourceExtension$1 = {
 
 const requestMap = {};
 
-class ESMREesource extends Resource {
+class ESMResource extends Resource {
+  static normalize (esmUrl) {
+    const id = esmUrl.replace('esm://cache/', '');
+
+    let pathStructure = id.split('/').filter(Boolean);
+
+    // jspm servers both the entry point into a package as well as subcontent from package@version/
+    // differentiate these cases by introducing an index.js which will automatically be served by systemJS
+    if (pathStructure.length === 1 ||
+        !pathStructure[pathStructure.length - 1].endsWith('js') &&
+        !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
+      let fileName = 'index.js';
+      if (pathStructure.length === 1) {
+        if (pathStructure[0].endsWith('!cjs')) fileName = 'index.cjs';
+        pathStructure[0] = pathStructure[0].replace('!cjs', '');
+      }
+      pathStructure.push(fileName);
+    }
+
+    if (pathStructure[pathStructure.length - 1].endsWith('.js!cjs')) {
+      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('.js!cjs', '.cjs');
+    }
+
+    if (pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
+      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('!cjs', '.cjs');
+    }
+
+    return pathStructure;
+  }
 
   async read () {
     let module;
 
     const baseUrl = 'https://jspm.dev/';
-    
     const id = this.url.replace('esm://cache/', '');
-    
-    let pathStructure = id.split('/').filter(Boolean);
-    
-    // jspm servers both the entry point into a package as well as subcontent from package@version/
-    // differentiate these cases by introducing an index.js which will automatically be served by systemJS
-    if (pathStructure.length === 1 || !pathStructure[pathStructure.length - 1].endsWith('js') && !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
-      if (pathStructure.length === 1) pathStructure[0] = pathStructure[0].replace('!cjs', '');
-      pathStructure.push('index.js');
-    }
+
+    let pathStructure = ESMResource.normalize(id);
 
     const [res, created] = await this.findOrCreatePathStructure(pathStructure);
-    
+
     if (!created) {
       module = await res.read();
     } else {
@@ -12155,69 +12325,67 @@ class ESMREesource extends Resource {
     return module;
   }
 
-  async findOrCreatePathStructure(pathElements) {
-
+  async findOrCreatePathStructure (pathElements) {
     const cachePath = joinPath(System.baseURL, '/esm_cache/');
-    
+
     let currPath = cachePath;
     let pathRes;
-    
+
     // pathElements can together either describe a directory or a file
     // in the case that it is not a file (will be either js or !cjs) we need to fixup the last part of the path
     if (!pathElements[pathElements.length - 1].endsWith('js') && !pathElements[pathElements.length - 1].endsWith('!cjs')) {
-      pathElements[pathElements.length - 1] = pathElements[pathElements.length - 1] + '/'; 
+      pathElements[pathElements.length - 1] = pathElements[pathElements.length - 1] + '/';
     }
 
     const fullPath = pathElements.join('/');
-    
+
     // another request already started the creation of this resource
     // since this happens asynchronously we could be scheduled "in between"
     // wait until this process is done,
     // since otherwise we will cause server errors when creating a directory that already exists
     const runningCreation = requestMap[cachePath + fullPath];
     if (runningCreation) await runningCreation;
-    
+
     const res = resource(cachePath + fullPath);
     const isExisting = await res.exists();
-    if (isExisting) return [res, false]
-    
-    for (let elem of pathElements){
-      if (elem !== pathElements[pathElements.length - 1]){
+    if (isExisting) return [res, false];
+
+    for (let elem of pathElements) {
+      if (elem !== pathElements[pathElements.length - 1]) {
         elem = elem + '/';
       }
-      pathRes = requestMap[currPath + elem]; 
+      pathRes = requestMap[currPath + elem];
       if (!pathRes) {
-        pathRes = resource(currPath).join(elem); 
+        pathRes = resource(currPath).join(elem);
         if (elem.endsWith('/')) {
           const dirExists = await pathRes.exists();
-          if (requestMap[currPath + elem] || dirExists){
+          if (requestMap[currPath + elem] || dirExists) {
             await requestMap[currPath + elem];
             currPath = pathRes.url;
-            continue
-          }
-          else {
+            continue;
+          } else {
             // signal that we are currently creating this resource
             // and wait for this operation to finish
             requestMap[currPath + elem] = pathRes.mkdir();
             pathRes = await requestMap[currPath + elem];
-            } 
-        } 
+          }
+        }
       } else {
       // another request already started the creation of this resource
       // since this happens asynchronously we could be scheduled "in between"
       // wait until this process is done,
       // since otherwise we will cause server errors when creating a resource that already exists
-      pathRes = await pathRes;
+        pathRes = await pathRes;
       }
       currPath = pathRes.url;
     }
-    return [pathRes, true]
+    return [pathRes, true];
   }
 
-  get isESMResource() {
+  get isESMResource () {
     return true;
   }
-  
+
   async write (source) {
     console.error('Not supported by resource type.');
   }
@@ -12238,7 +12406,7 @@ class ESMREesource extends Resource {
 const resourceExtension = {
   name: 'ecma-script-module-resource',
   matches: (url) => url.startsWith('esm://'),
-  resourceClass: ESMREesource
+  resourceClass: ESMResource
 };
 
 /* global System,babel */
@@ -13013,7 +13181,12 @@ class PackageMap {
     packageDir,
     seen = { packageDirs: {}, collectionDirs: {} }
   ) {
-    let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
+    let spec;
+    try {
+      spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
+    } catch (e) {
+      return [];
+    }
     if (!spec) return [];
 
     let found = [spec];

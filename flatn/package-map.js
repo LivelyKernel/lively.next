@@ -453,7 +453,12 @@ class PackageMap {
     packageDir,
     seen = { packageDirs: {}, collectionDirs: {} }
   ) {
-    let spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
+    let spec;
+    try {
+      spec = fs_exists(packageDir) && PackageSpec.fromDir(packageDir);
+    } catch (e) {
+      return [];
+    }
     if (!spec) return [];
 
     let found = [spec];
