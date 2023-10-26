@@ -36,18 +36,6 @@ export class RichTextControlModel extends ViewModel {
         defaultValue: false
       },
       targetMorph: {},
-      hoveredButtonComponent: {
-        isComponent: true,
-        get () {
-          return { auto: PropertyLabelHovered, hover: PropertyLabel };
-        }
-      },
-      activeButtonComponent: {
-        isComponent: true,
-        get () {
-          return { auto: PropertyLabel, hover: PropertyLabelHovered };
-        }
-      },
       styledProps: {
         readOnly: true,
         get () {
@@ -116,8 +104,6 @@ export class RichTextControlModel extends ViewModel {
           italicStyle, underlineStyle, quote,
           lineWrappingSelector, paddingControls
         } = this.ui;
-
-        const { activeButtonComponent, hoveredButtonComponent } = this;
 
         const fontItemCreator = font => {
           return {
