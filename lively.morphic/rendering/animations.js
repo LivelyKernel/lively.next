@@ -487,11 +487,11 @@ export class PropertyAnimation {
         t = time - startTime;
         // Next iteration
         if (t / this.duration >= 1) return this.finish('css');
-        node.style.setProperty('background-image', this.tweenGradient(easingFn(t / this.duration)));
+        node.style.setProperty('background-image', this.tweenGradient(easingFn(t / this.duration)).toString());
         requestAnimationFrame(draw);
       };
-      delete before.backgroundImage;
-      delete after.backgroundImage;
+      delete before['background-image'];
+      delete after['background-image'];
       delete before.background;
       delete after.background;
       requestAnimationFrame(draw);

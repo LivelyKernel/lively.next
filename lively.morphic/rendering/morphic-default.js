@@ -193,7 +193,7 @@ function defaultStyle (morph) {
   const domStyle = styleProps(morph);
   const maskedProps = morph._animationQueue.maskedProps('css');
 
-  if ('backgroundImage' in maskedProps) delete domStyle.background;
+  if ('background-image' in maskedProps) delete domStyle.background;
 
   if (clipMode !== 'visible') {
     domStyle.overflow = clipMode;
