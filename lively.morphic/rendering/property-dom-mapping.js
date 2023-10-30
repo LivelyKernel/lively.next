@@ -11,6 +11,7 @@ const propsToDelete = [
   'margin-top',
   'margin',
   'gap',
+  'background',
   'background-image',
   'place-content',
   'flex-flow', 'flex-grow', 'flex-shrink',
