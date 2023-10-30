@@ -331,6 +331,7 @@ export class TilingLayout extends Layout {
         if (m) this.setResizePolicyFor(m, policy);
         arr.remove(layoutableSubmorphs, m);
       });
+      delete this._policiesSynthesized;
     } else {
       this.layoutableSubmorphs.forEach(m => {
         this.setResizePolicyFor(m, {
@@ -389,7 +390,7 @@ export class TilingLayout extends Layout {
     for (let prop of obj.keys(config)) {
       switch (prop) {
         case 'resizePolicies':
-          spec.resizePolicies = config.resizePolicies;
+          spec.resizePolicies = [...config.resizePolicies];
           break;
         case 'spacing':
           if (config.spacing !== 0) spec.spacing = config.spacing;
@@ -471,6 +472,10 @@ export class TilingLayout extends Layout {
         if (!spec.resizePolicies) spec.resizePolicies = [];
         spec.resizePolicies.push([morphName, { ...policy }]);
       }
+    }
+    if (!this._policiesSynthesized && this.config.resizePolicies) {
+      spec.resizePolicies = [...this.config.resizePolicies];
+      if (spec.resizePolicies.length == 0) delete spec.resizePolicies;
     }
     return spec;
   }
@@ -619,6 +624,7 @@ export class TilingLayout extends Layout {
       let entry = this._resizePolicies.find(([name]) => aLayoutableSubmorph.name === name);
       if (entry) { entry[1] = policy; } else this._resizePolicies.push([aLayoutableSubmorph.name, policy]);
     } else {
+      this._policiesSynthesized = true;
       this._resizePolicies.set(aLayoutableSubmorph, policy);
       this.onConfigUpdate();
     }
@@ -703,6 +709,7 @@ export class TilingLayout extends Layout {
   onSubmorphRemoved (submorph) {
     this._resizePolicies.delete(submorph);
     // Ensure correct propagation of layout propert and adaption of resizePolicies.
+    if (this.config.resizePolicies) { arr.remove(this.config.resizePolicies, this.config.resizePolicies.find(entry => entry[0] === submorph.name)); }
     this.container.layout = this.copy();
     this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
   }
@@ -1033,6 +1040,14 @@ export class TilingLayout extends Layout {
     });
   }
 
+  ensureResizePolicies (layoutableSubmorphs) {
+    if (!layoutableSubmorphs.every(m => this._resizePolicies.has(m))) {
+      console.log('refreshing', this.container.name);
+      this._resizePolicies = this.config.resizePolicies;
+      this.initializeResizePolicies();
+    }
+  }
+
   /*************
    * JS LAYOUT *
    *************/
@@ -1049,6 +1064,7 @@ export class TilingLayout extends Layout {
       justifySubmorphs, hugContentsVertically, hugContentsHorizontally
     } = this;
     const morphsToLayout = [...layoutableSubmorphs];
+    this.ensureResizePolicies(morphsToLayout);
     const spaceSubmorphs = justifySubmorphs === 'spaced';
     const length = this.getOptimalWidth(container);
     const isHorizontal = axis === 'row';
