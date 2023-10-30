@@ -40,7 +40,7 @@ export const easings = {
  * @param {*} b - starting value to manipulate
  * @param {*} c - delta by which to manipulate `b`
  * @param {*} d - normalizes `t` of animation to [0,1]
- * @returns 
+ * @returns
  */
 export function bounceEasing (t, b, c, d) {
   var s = 1.70158; let p = 0; let a = c;
@@ -89,10 +89,7 @@ export class AnimationQueue {
   }
 
   startAnimationsFor (node) {
-    for (let i = 0; i < this.animations.length; i++) {
-      const anim = this.animations[i];
-      anim.start(node);
-    }
+    this.animations.forEach(anim => anim.start(node));
   }
 
   startSvgAnimationsFor (svgNode, type) {
@@ -353,7 +350,7 @@ export class PropertyAnimation {
     if (this.needsAnimation['text']) {
       this.needsAnimation['text'] = false;
       const [before, after] = this.getAnimationProps('text');
-      textLayerNode && this.tween(textLayerNode, before, after);
+      textLayerNode && this.tween(textLayerNode, before, after, false);
     }
   }
 
