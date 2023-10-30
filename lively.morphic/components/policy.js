@@ -1309,11 +1309,15 @@ export class PolicyApplicator extends StylePolicy {
       }
       if (propName === 'layout') {
         if (morphToBeStyled.layout?.name() === propValue?.name() &&
-            morphToBeStyled.layout?.equals(propValue)) { continue; }
+            morphToBeStyled.layout?.equals(propValue) &&
+            (!this._animating || !this._animating === !!propValue.renderViaCSS)
+        ) { continue; }
         let lv = propValue ? propValue.copy() : undefined;
         if (this._animating) {
           const origCSS = lv.renderViaCSS;
           lv = lv.with({ renderViaCSS: false });
+          lv.lastAnim = morphToBeStyled.layout?.lastAnim;
+          lv.applyRequests = morphToBeStyled.layout?.applyRequests;
           this._animating.then(() =>
             morphToBeStyled.withMetaDo({ metaInteraction: true }, () => {
               morphToBeStyled.layout = lv.with({ renderViaCSS: origCSS });
