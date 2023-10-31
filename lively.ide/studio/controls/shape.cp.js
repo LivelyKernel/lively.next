@@ -314,12 +314,14 @@ export class ShapeControlModel extends ViewModel {
     const symbol = this.ui.widthModeSelector.get('interactive label');
     const target = this.targetMorph;
     let parent = target.owner;
+    const parentIsTiling = parent && parent.layout?.name() === 'Tiling';
+
     let heightMode;
     switch (newMode) {
       case ('fixed'):
         symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
-        heightMode = parent.layout?.getResizeHeightPolicyFor(target);
-        if (heightMode) {
+        if (parentIsTiling) {
+          heightMode = parent.layout.getResizeHeightPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
             width: 'fixed',
             height: heightMode
@@ -348,7 +350,7 @@ export class ShapeControlModel extends ViewModel {
         break;
       case ('hug'):
         symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
-        if (parent && parent.layout?.name() === 'Tiling') {
+        if (parentIsTiling) {
           heightMode = parent.layout.getResizeHeightPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
             width: 'fixed',
@@ -386,12 +388,14 @@ export class ShapeControlModel extends ViewModel {
     const symbol = this.ui.heightModeSelector.get('interactive label');
     const target = this.targetMorph;
     let parent = target.owner;
+    const parentIsTiling = parent && parent.layout?.name() === 'Tiling';
     let widthMode;
     switch (newMode) {
       case ('fixed'):
         symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
-        widthMode = parent.layout?.getResizeWidthPolicyFor(target);
-        if (widthMode) {
+
+        if (parentIsTiling) {
+          widthMode = parent.layout.getResizeWidthPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
             width: widthMode,
             height: 'fixed'
@@ -407,7 +411,7 @@ export class ShapeControlModel extends ViewModel {
         break;
       case ('fill'):
         symbol.textAndAttributes = [FILL_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
-        widthMode = parent.layout.getResizeWidthPolicyFor(target);
+        widthMode = parentIsTiling && parent.layout.getResizeWidthPolicyFor(target);
         parent.layout.wrapSubmorphs = false;
         parent.layout.setResizePolicyFor(target, {
           width: widthMode,
@@ -422,7 +426,7 @@ export class ShapeControlModel extends ViewModel {
         break;
       case ('hug'):
         symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
-        if (parent && parent.layout?.name() === 'Tiling') {
+        if (parentIsTiling) {
           widthMode = parent.layout.getResizeWidthPolicyFor(target);
           parent.layout.setResizePolicyFor(target, {
             width: widthMode,
