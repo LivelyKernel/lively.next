@@ -23,10 +23,7 @@ const PropertyLabel = component({
   fontColor: Color.rgb(255, 255, 255),
   fontFamily: 'Material Icons',
   nativeCursor: 'pointer',
-  padding: {
-    value: rect(6, 6, 0, 0),
-    onlyAtInstantiation: true
-  },
+  padding: rect(6, 6, 0, 0),
   textAndAttributes: ['', {
     fontSize: 18,
     fontFamily: 'Material Icons'

@@ -117,6 +117,16 @@ export function getDefaultValueFor (type, propName) {
   return defaultValues[propName];
 }
 
+export function getDefaultValuesFor (spec) {
+  const defaultPropValues = {};
+  for (let prop of getStylePropertiesFor(spec.type)) {
+    defaultPropValues[prop] = getDefaultValueFor(spec.type, prop);
+    if (defaultPropValues[prop] && prop === 'fontFamily') defaultPropValues[prop] = sanitizeFont(defaultPropValues[prop]);
+    if (typeof defaultPropValues[prop] === 'undefined') delete defaultPropValues[prop];
+  }
+  return defaultPropValues;
+}
+
 export function isFoldableProp (type, propName) {
   if (CachedFoldableProperties.has(type)) return CachedFoldableProperties.get(type)[propName];
   const { props } = getPropSettings(type);

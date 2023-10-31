@@ -6,6 +6,7 @@ import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, morph } from 'lively.morphic';
 import { component, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, BreakpointStore, PolicyApplicator } from '../components/policy.js';
+import { getDefaultValuesFor } from '../helpers.js';
 
 const moduleId = import.meta.url.replace(System.baseURL, '');
 
@@ -329,8 +330,7 @@ describe('spec based components', () => {
       submorphs: [
         {
           name: 'lolly',
-          fill: Color.pink,
-          submorphs: []
+          fill: Color.pink
         }
       ]
     }));
@@ -419,6 +419,7 @@ describe('spec based components', () => {
 
   it('properly synthesizes style policies', () => {
     expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
+      ...getDefaultValuesFor({}),
       borderRadius: 5,
       borderColor: Color.black,
       borderWidth: 2,
@@ -432,6 +433,7 @@ describe('spec based components', () => {
     p2.__wasAddedToDerived__ = true;
     expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(p2);
     expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
+      ...getDefaultValuesFor({ type: 'text' }),
       fill: Color.black,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
@@ -451,7 +453,7 @@ describe('spec based components', () => {
     const expectedInternalSpecC = new PolicyApplicator({
       name: 'c',
       submorphs: [
-        // ad hoc initialized inline policy that is driect descendant of e2
+        // ad hoc initialized inline policy that is direct descendant of e2
         // and carries over the overridden props that were previously accounted for
         // for the submorph hierarchy of foo
         {
@@ -494,22 +496,24 @@ describe('spec based components', () => {
     }, e3);
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
-    expect(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
-      fill: Color.yellow,
-      extent: pt(50, 50) // extent is controlled by e3
+    expect(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
+      ...getDefaultValuesFor({}),
+      fill: Color.yellow
     });
 
-    expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null)).to.eql({
-      fill: Color.yellow,
-      extent: pt(10, 10) // this is because the encolsing extent "wins"
+    expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
+      ...getDefaultValuesFor({}),
+      fill: Color.yellow
     });
-    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null)).to.eql({
+    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
+      ...getDefaultValuesFor({}),
       opacity: 0.5,
       position: pt(45, 45),
       extent: pt(50, 50), // default values in new master do not override custom in original
       fill: Color.red
     });
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice')).to.eql({
+      ...getDefaultValuesFor({ type: 'text' }),
       fill: Color.blue,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
