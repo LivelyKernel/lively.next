@@ -1221,9 +1221,6 @@ const WorldBrowser = component({
     }], ['fader top', {
       x: 'resize',
       y: 'fixed'
-    }], ['search field', {
-      x: 'move',
-      y: 'fixed'
     }], ['fader bottom', {
       x: 'resize',
       y: 'move'
@@ -1278,79 +1275,101 @@ const WorldBrowser = component({
     }]
   }, {
     name: 'fader top',
-    extent: pt(871.9, 63.9),
+    layout: new TilingLayout({
+      align: 'center',
+      axisAlign: 'center',
+      justifySubmorphs: 'spaced',
+      padding: rect(20, 0, 0, 0)
+    }),
+    extent: pt(870.0000, 60.0000),
     fill: new LinearGradient({
       stops: [{ offset: 0, color: Color.rgb(112, 123, 124) }, { offset: 1, color: Color.rgba(112, 123, 124, 0) }],
       vector: rect(0, 0, 0, 1)
     }),
-    submorphs: [part(GreenButton, {
-      name: 'new project button',
-      extent: pt(163, 30),
-      position: pt(19.8, 17),
-      submorphs: [{
-        name: 'label',
-        fontWeight: 600,
-        textAndAttributes: [...Icon.textAttribute('plus-circle', { paddingTop: '2px', paddingRight: '5px' }), ' NEW PROJECT']
-      }]
-    }), part(ModeSelector, {
-      name: 'mode selector',
-      extent: pt(150, 30),
-      position: pt(195, 17.5),
-      borderColor: Color.white,
-      fill: Color.rgba(114, 123, 124, 0),
-      borderRadius: 5,
-      viewModel: {
-        items: [
-          { text: 'Projects', name: 'Projects', tooltip: 'Create or Open a Project' },
-          { text: 'Playgrounds', name: 'Playgrounds', tooltip: 'Create or Open a Playground (Legacy/Prototyping Mode)' }
-        ]
-      }
-    })]
-  },
-  part(SearchField, {
-    name: 'search field',
-    borderStyle: 'hidden',
-    layout: new TilingLayout({
-      align: 'center',
-      axisAlign: 'center',
-      orderByIndex: true,
-      padding: rect(6, 0, 4, 0),
-      resizePolicies: [['search input', {
-        height: 'fill',
-        width: 'fill'
-      }]]
-    }),
-    borderRadius: 30,
-    viewModel: { fuzzy: true },
-    extent: pt(285.1, 34),
-    fill: Color.rgb(234, 237, 237),
-    position: pt(574.3, 13.6),
-    submorphs: [
-      {
-        name: 'search input',
-        layout: new ConstraintLayout({
-          lastExtent: {
-            x: 271,
-            y: 36
-          },
-          reactToSubmorphAnimations: false,
-          submorphSettings: []
+    submorphs: [{
+      name: 'left',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        spacing: 10
+      }),
+      submorphs: [part(GreenButton, {
+        name: 'new project button',
+        extent: pt(163, 30),
+        submorphs: [{
+          name: 'label',
+          fontWeight: 600,
+          textAndAttributes: [...Icon.textAttribute('plus-circle', { paddingTop: '2px', paddingRight: '5px' }), ' NEW PROJECT']
+        }]
+      }), part(ModeSelector, {
+        name: 'mode selector',
+        extent: pt(150, 30),
+        borderColor: Color.white,
+        fill: Color.rgba(114, 123, 124, 0),
+        borderRadius: 5,
+        viewModel: {
+          items: [
+            { text: 'Projects', name: 'Projects', tooltip: 'Create or Open a Project' },
+            { text: 'Playgrounds', name: 'Playgrounds', tooltip: 'Create or Open a Playground (Legacy/Prototyping Mode)' }
+          ]
+        }
+      })]
+    }, {
+      name: 'right',
+      fill: Color.transparent,
+      layout: new TilingLayout({
+        align: 'right',
+        axisAlign: 'center',
+        hugContentsHorizontally: true,
+        hugContentsVertically: true,
+        spacing: 10
+      }),
+      submorphs: [part(SearchField, {
+        name: 'search field',
+        borderStyle: 'hidden',
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center',
+          orderByIndex: true,
+          padding: rect(6, 0, 4, 0),
+          resizePolicies: [['search input', {
+            height: 'fill',
+            width: 'fill'
+          }]]
         }),
-        selectionColor: Color.rgba(64, 196, 255, .4),
-        fontSize: 20,
+        borderRadius: 30,
+        viewModel: { fuzzy: true },
+        extent: pt(285.1, 34),
+        fill: Color.rgb(234, 237, 237),
         submorphs: [
           {
-            name: 'placeholder',
-            textAndAttributes: ['Search Projects', { fontSize: 22 }]
+            name: 'search input',
+            layout: new ConstraintLayout({
+              lastExtent: {
+                x: 271,
+                y: 36
+              },
+              reactToSubmorphAnimations: false,
+              submorphSettings: []
+            }),
+            selectionColor: Color.rgba(64, 196, 255, .4),
+            fontSize: 20,
+            submorphs: [
+              {
+                name: 'placeholder',
+                textAndAttributes: ['Search Projects', { fontSize: 22 }]
+              }
+            ]
+          }, {
+            name: 'placeholder icon',
+            padding: rect(2, 2, -2, -2),
+            fontSize: 18
           }
         ]
-      }, {
-        name: 'placeholder icon',
-        padding: rect(2, 2, -2, -2),
-        fontSize: 18
-      }
-    ]
-  }), {
+      }),
+      ]
+    }]
+  }, {
     name: 'fader bottom',
     extent: pt(871.9, 63.9),
     fill: new LinearGradient({
