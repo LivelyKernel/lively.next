@@ -342,10 +342,7 @@ export const UserFlap = component({
     type: Label,
     name: 'left user label',
     draggable: true,
-    fontColor: {
-      onlyAtInstantiation: true,
-      value: Color.rgb(102, 102, 102)
-    },
+    fontColor: Color.rgb(102, 102, 102),
     fontSize: 16,
     nativeCursor: 'pointer',
     textAndAttributes: Icon.textAttribute('github')

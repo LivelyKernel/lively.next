@@ -614,7 +614,7 @@ export class Text extends Morph {
         group: 'text styling',
         type: 'Enum',
         values: availableFonts().map(f => f.name),
-        defaultValue: 'IBM Plex Sans',
+        defaultValue: sanitizeFont('IBM Plex Sans'),
         isStyleProp: true,
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],

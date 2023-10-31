@@ -1,6 +1,6 @@
 import { arr, grid, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
-import { morph, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
+import { morph, getDefaultValuesFor, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { withSuperclasses } from 'lively.classes/util.js';
 import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
 import { Text, Label } from 'lively.morphic';
@@ -80,7 +80,7 @@ function handleTextProps (props) {
   }
   if (props.fontFamily) {
     const ff = props.fontFamily;
-    if (ff !== skippedValue) { props.fontFamily = sanitizeFont(ff.onlyAtInstantiation ? ff.value : ff); }
+    if (ff !== skippedValue) { props.fontFamily = sanitizeFont(ff); }
   }
   return props;
 }
@@ -638,8 +638,11 @@ export class StylePolicy {
         if (node.master) {
           return new klass({ ...node, submorphs }, null);
         }
+        const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node) || {};
+
         if (node.textAndAttributes) {
           return {
+            ...defaultProps,
             ...node,
             submorphs,
             textAndAttributes: node.textAndAttributes.map(textOrAttr => {
@@ -650,7 +653,9 @@ export class StylePolicy {
             })
           };
         }
-        return { ...node, submorphs };
+        // also insert the default values here if not defined
+
+        return { ...defaultProps, ...node, submorphs };
       }, node => node.submorphs || []);
     };
     // scan this.spec and detect overridden/set master props
@@ -799,7 +804,7 @@ export class StylePolicy {
    * @returns { StylePolicy|null} If sub spec is found in this policy, the newly initialized style policy based on that sub spec.
    */
   extractStylePolicyFor (specName) {
-    const subSpec = this.getSubSpecFor(specName);
+    const subSpec = this.lookForMatchingSpec(specName, this._originalSpec, false);
     const klass = this.constructor;
     if (subSpec) return new klass(subSpec, this.parent ? this.parent.extractStylePolicyFor(specName) : null);
     return null;
@@ -840,6 +845,14 @@ export class StylePolicy {
       specOrPolicy = obj.dissoc(specOrPolicy, ['submorphs', 'defaultViewModel', 'viewModelClass', 'viewModel',
         ...this.parent ? getStylePropertiesFor(specOrPolicy.type) : []
       ]);
+      if (!this.parent) {
+        // remove the props that are equal to the default value
+        getStylePropertiesFor(specOrPolicy.type).forEach(prop => {
+          if (obj.equals(getDefaultValueFor(specOrPolicy.type, prop), specOrPolicy[prop])) {
+            delete specOrPolicy[prop];
+          }
+        });
+      }
       // special handling for text attributes
       if (specOrPolicy.textString) {
         specOrPolicy.textAndAttributes = specOrPolicy.textAndAttributes || [specOrPolicy.textString, null];
@@ -928,31 +941,16 @@ export class StylePolicy {
     return defaultMaster; // default to the parent if we are neither of the above
   }
 
-  getTopLevelSpec (submorphNameInPolicyContext, subSpec) {
-    const rootSpec = { ...subSpec };
-    for (let prop of !submorphNameInPolicyContext ? getStylePropertiesFor(rootSpec.type) : []) {
-      if (typeof rootSpec[prop] === 'undefined') {
-        const defaultVal = getDefaultValueFor(subSpec.type, prop);
-        if (typeof defaultVal === 'undefined') continue;
-        rootSpec[prop] = {
-          value: defaultVal,
-          onlyAtInstantiation: true
-        };
-      }
-    }
-    return handleTextProps(rootSpec); // there are no parents, so we fill in the default values to be used optionally
-  }
-
   /**
    * Synthesizes the sub spec corresponding to a particular name
    * of a morph in the submorph hierarchy.
    * @param { string } submorphNameInPolicyContext - The name of the sub spec.
    * @param { Morph } ownerOfScope - The top morph for the scope of the policy we synthesize the spec for. This allows us to gather information for dispatching between differnt style policies based on the event state (hover, click).
-   * @param { boolean } [skipInstantiationProps = true] - If true, will drop all props in the specs that have `onlyAtInstantiation` set to `true`.
    * @returns { object } The synthesized spec.
    */
-  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps = true) {
+  synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget) {
     const isRoot = !submorphNameInPolicyContext;
+    const transformProps = ['extent', 'position', 'rotation', 'scale', 'lineHeight'];
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     if (subSpec.isPolicy) {
@@ -963,7 +961,7 @@ export class StylePolicy {
     let qualifyingMaster = this.determineMaster(this.statePartitionedInline ? previousTarget : ownerOfScope);
 
     if (!qualifyingMaster) {
-      return this.getTopLevelSpec(submorphNameInPolicyContext, subSpec);
+      return subSpec;
     }
 
     if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
@@ -972,16 +970,17 @@ export class StylePolicy {
 
     const requiresPropsFromParent = qualifyingMaster && this.parent && qualifyingMaster !== this.parent;
 
-    let nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget, requiresPropsFromParent ? true : skipInstantiationProps);
+    let nextLevelSpec = qualifyingMaster.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget);
     if (nextLevelSpec.isPolicy) return nextLevelSpec;
 
     let parentSpec = {};
     if (requiresPropsFromParent) {
-      parentSpec = this.parent.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget, skipInstantiationProps);
-      for (let prop in nextLevelSpec) {
-        if (nextLevelSpec[prop]?.onlyAtInstantiation) {
-          if (skipInstantiationProps) delete nextLevelSpec[prop];
-        }
+      parentSpec = this.parent.synthesizeSubSpec(submorphNameInPolicyContext, ownerOfScope, previousTarget);
+    }
+
+    if (isRoot) {
+      for (let prop of transformProps) {
+        if (parentSpec[prop]) delete nextLevelSpec[prop];
       }
     }
 
@@ -990,25 +989,12 @@ export class StylePolicy {
     Object.assign(
       synthesized,
       parentSpec,
-      obj.dissoc(
-        nextLevelSpec,
-        isRoot &&
-          !!parentSpec.extent
-          ? ['extent']
-          : []
-      ), // special handling of extent
+      nextLevelSpec,
       subSpec);
 
     delete synthesized.submorphs;
     delete synthesized.master;
     delete synthesized.name;
-
-    for (let prop in synthesized) {
-      if (synthesized[prop]?.onlyAtInstantiation) {
-        if (skipInstantiationProps) delete synthesized[prop];
-        else synthesized[prop] = synthesized[prop].value;
-      }
-    }
 
     return handleTextProps(synthesized);
   }
@@ -1247,8 +1233,8 @@ export class PolicyApplicator extends StylePolicy {
     });
   }
 
-  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, previousTarget, skipInstantiationProps = true) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget, skipInstantiationProps);
+  synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, previousTarget) {
+    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget);
     if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
       return new PolicyApplicator({}, subSpec);
     }
@@ -1300,7 +1286,6 @@ export class PolicyApplicator extends StylePolicy {
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
-      if (propValue?.onlyAtInstantiation) continue;
       if (propValue === undefined) {
         if (PROPS_TO_RESET.includes(propName)) {
           propValue = getDefaultValueFor(morphToBeStyled.constructor, propName);
@@ -1362,7 +1347,7 @@ export class PolicyApplicator extends StylePolicy {
       // se we need to make sure, we restore the morphs "intended extent"
       // for this purpose we enforce the masterSubmorph extent
       if (['fixedHeight', 'fixedWidth'].includes(propName) &&
-                morphToBeStyled._parametrizedProps?.extent) {
+          morphToBeStyled._parametrizedProps?.extent) {
         morphToBeStyled.extent = morphToBeStyled._parametrizedProps.extent;
       }
     }
