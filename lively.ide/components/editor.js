@@ -1,4 +1,4 @@
-import { ComponentDescriptor, morph } from 'lively.morphic';
+import { ComponentDescriptor, morph, component } from 'lively.morphic';
 import { ExpressionSerializer } from 'lively.serializer2';
 import { string, obj } from 'lively.lang';
 import { module } from 'lively.modules/index.js';
@@ -153,8 +153,11 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * Revert the component definition back to when we started the edit session.
    */
   async reset () {
+    const dependants = this.stylePolicy._dependants;
     await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.moduleName);
     this._dirty = false;
+    this.stylePolicy._dependants = dependants;
+    // FIXME: carry over dependents for now
   }
 
   /**
@@ -202,7 +205,13 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   withDerivedComponentsDo (cb) {
     if (!this.stylePolicy._dependants) return;
     [...this.stylePolicy._dependants.values()].forEach(expr => {
-      const descr = exprSerializer.deserializeExpr(expr);
+      const policyOrDescr = exprSerializer.deserializeExpr(expr);
+      // this will most often reference an inline policy,
+      // and not the actual component descriptor
+      let descr;
+      if (policyOrDescr[metaSymbol]?.path?.length > 0) {
+        descr = module(policyOrDescr[metaSymbol].moduleId).recorder[policyOrDescr[metaSymbol].exportedName];
+      } else descr = policyOrDescr;
       if (descr) cb(InteractiveComponentDescriptor.ensureInteractive(descr));
     });
   }
@@ -251,3 +260,5 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return descr;
   }
 }
+
+component.DescriptorClass = InteractiveComponentDescriptor;
