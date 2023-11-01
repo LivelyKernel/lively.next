@@ -567,6 +567,7 @@ export default class Renderer {
     if (obj.equals(morph.styleClasses, morph.renderingState.styleClasses)) return;
 
     const styleClasses = morph.styleClasses.join(' ');
+    morph.renderingState.styleClasses = [...morph.styleClasses];
     node.setAttribute('class', styleClasses);
   }
 
