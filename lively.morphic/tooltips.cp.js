@@ -3,6 +3,7 @@ import { pt, Color } from 'lively.graphics';
 import { TilingLayout } from './layout.js';
 import { ViewModel } from './components/core.js';
 import { Label } from './text/label.js';
+import { Morph } from './morph.js';
 
 class Tooltip extends ViewModel {
   static get properties () {
@@ -45,6 +46,7 @@ class Tooltip extends ViewModel {
 
 const SystemTooltip = component({
   name: 'system/tooltip',
+  type: Morph, // since we are within lively.morphic, the class mapping may not be fully initialized yet.
   epiMorph: true,
   defaultViewModel: Tooltip,
   borderRadius: 5,
