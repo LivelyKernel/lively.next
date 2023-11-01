@@ -1042,7 +1042,6 @@ export class TilingLayout extends Layout {
 
   ensureResizePolicies (layoutableSubmorphs) {
     if (!layoutableSubmorphs.every(m => this._resizePolicies.has(m))) {
-      console.log('refreshing', this.container.name);
       this._resizePolicies = this.config.resizePolicies;
       this.initializeResizePolicies();
     }
@@ -1075,7 +1074,6 @@ export class TilingLayout extends Layout {
     if (axisAlign === 'left') posAccessor = 'topLeft';
     if (axisAlign === 'right') posAccessor = 'topRight';
     if (axisAlign === 'center') posAccessor = isHorizontal ? 'leftCenter' : 'topCenter';
-    // this.align = 'right'
     let axisToPositions = [];
     let currentAxis;
 

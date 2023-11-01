@@ -122,11 +122,8 @@ export class PropertyAnimation {
       const shadowBefore = morph.dropShadow || new ShadowObject({ blur: 0, distance: 0, spread: 0 });
       const shadowAfter = config.dropShadow;
       config.customTween = fun.compose(p => {
-        morph.withMetaDo({ metaInteraction: true }, () => {
-          morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0 }));
-          if (p === 1) morph.dropShadow = shadowAfter;
-        });
-
+        morph.dropShadow = shadowBefore.interpolate(p, shadowAfter || new ShadowObject({ blur: 0, distance: 0, spread: 0 }));
+        if (p === 1) morph.dropShadow = shadowAfter;
         return p;
       }, config.customTween || (p => {}));
       delete config.dropShadow;
@@ -432,7 +429,9 @@ export class PropertyAnimation {
         p = Math.min(1, t / this.duration);
         // Next iteration
         this.morph.dontRecordChangesWhile(() =>
-          customTween(easingFn(p)));
+          this.morph.withMetaDo({ metaInteraction: true }, () => {
+            customTween(easingFn(p));
+          }));
         if (p >= 1) return this.finish('css');
         requestAnimationFrame(draw);
       };
