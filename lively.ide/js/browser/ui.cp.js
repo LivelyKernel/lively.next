@@ -327,7 +327,7 @@ class ComponentEditButtonMorph extends Morph {
     wrapper.scale = 0;
     componentMorph.position = pt(0, 0);
     this.fill = Color.transparent;
-    await editor.withAnimationDo(() => {
+    await $world.withAnimationDo(() => {
       placeholder.opacity = 1;
       placeholder.scale = 1;
       placeholder.leftCenter = anchorPoint;

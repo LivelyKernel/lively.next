@@ -1303,12 +1303,13 @@ export class Morph {
   async withAnimationDo (cb, config) {
     // collect all changes inside the submorphs and animate them
     const { changes } = this.groupChangesWhile(false, cb);
+    const affectedMorphs = new Set(this.withAllSubmorphsSelect(Boolean));
     await Promise.all(Object.values(arr.groupBy(changes, change => change.target.id))
       .map((changes) => {
         const animConfig = { ...config };
         let target;
         changes.forEach(change => {
-          if (change.prop === 'master') return;
+          if (change.prop === 'master' || !affectedMorphs.has(change.target)) return;
           target = change.target;
           this.withMetaDo({ metaInteraction: true }, () => {
             change.reverseApply();
