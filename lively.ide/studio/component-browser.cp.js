@@ -1152,7 +1152,7 @@ export class ComponentBrowserModel extends ViewModel {
       const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
         return resource(url).dirList(10, {
           exclude: (file) => {
-            return file.isFile() && !file.url.endsWith('cp.js');
+            return file.isFile() && (!file.url.endsWith('cp.js') || file.url.includes('tests'));
           }
         });
       }))).flat().filter(file => file.url.endsWith('cp.js'))
