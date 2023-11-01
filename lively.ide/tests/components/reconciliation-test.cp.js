@@ -5,6 +5,7 @@ import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { createInitialComponentDefinition } from '../../components/reconciliation.js';
 
+const prevDescr = component.DescriptorClass;
 component.DescriptorClass = InteractiveComponentDescriptor;
 
 const e1 = component({
@@ -43,7 +44,7 @@ const e2 = component(e1, {
   ]
 });
 
-component.DescriptorClass = ComponentDescriptor;
+component.DescriptorClass = prevDescr || ComponentDescriptor;
 
 describe('component definition reconciliation', () => {
   it('component proxy includes added morphs', async () => {
