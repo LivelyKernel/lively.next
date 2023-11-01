@@ -296,7 +296,7 @@ export class ComponentControlModel extends PropertySectionModel {
         break;
       }
       if (!stylePolicy.parent) {
-        if (!stylePolicy.targetMorph?.isComponent) autoMaster = stylePolicy;
+        if (!stylePolicy.targetMorph?.isComponent || stylePolicy !== this.targetMorph.master) autoMaster = stylePolicy;
         break;
       }
       if (stylePolicy.parent) stylePolicy = stylePolicy.parent;
@@ -460,12 +460,22 @@ class ComponentStatesControlModel extends PropertySectionModel {
     }));
   }
 
+  getComponentStates () {
+    let statesHoldingPolicy = this.targetMorph.master;
+    let states = statesHoldingPolicy?._localComponentStates;
+    while (!states) {
+      statesHoldingPolicy = statesHoldingPolicy?.parent;
+      if (!statesHoldingPolicy) { states = []; break; }
+      states = statesHoldingPolicy._localComponentStates;
+    }
+    return states;
+  }
+
   ensureDynamicControls () {
     this.view.master.setState(null);
     const { stateControls } = this.ui;
     stateControls.visible = true;
-    const states = this.targetMorph.master._localComponentStates || [];
-    stateControls.submorphs = Object.entries(states).map(([stateName, component]) => {
+    stateControls.submorphs = Object.entries(this.getComponentStates()).map(([stateName, component]) => {
       return part(CustomStateComponentSelection, {
         name: 'component selection',
         viewModel: { stateName, component, editable: true, control: this },
@@ -507,7 +517,7 @@ class ComponentStatesControlModel extends PropertySectionModel {
 
   focusOn (aMorph) {
     this.targetMorph = aMorph;
-    if (!aMorph.master?._localComponentStates) {
+    if (this.getComponentStates().length === 0) {
       this.deactivate();
       return;
     }
