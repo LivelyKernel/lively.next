@@ -358,7 +358,7 @@ function getStyleProto (morph, opts) {
     if (morph !== masterInScope.targetMorph && morph.master) policy = morph.master;
 
     const target = morph === policy.targetMorph ? null : morph.name;
-    if (policy._autoMaster) {
+    if (policy._autoMaster?.managesMorph(target)) {
       // if the auto master is present, then any overridden props
       // are to be computed based on the morphs differences from
       // the auto master, since the auto master takes precedence over the parent.
