@@ -3,7 +3,7 @@ import { pt } from 'lively.graphics';
 import { morph, getDefaultValuesFor, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { withSuperclasses } from 'lively.classes/util.js';
 import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
-import { Text, Label } from 'lively.morphic';
+import { Text, Label, Morph } from 'lively.morphic';
 import { Icons } from '../text/icons.js';
 
 const skippedValue = Symbol.for('lively.skip-property');
@@ -638,7 +638,7 @@ export class StylePolicy {
         if (node.master) {
           return new klass({ ...node, submorphs }, null);
         }
-        const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node) || {};
+        const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node.type || Morph) || {};
 
         if (node.textAndAttributes) {
           return {

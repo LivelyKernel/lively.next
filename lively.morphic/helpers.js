@@ -117,10 +117,10 @@ export function getDefaultValueFor (type, propName) {
   return defaultValues[propName];
 }
 
-export function getDefaultValuesFor (spec) {
+export function getDefaultValuesFor (type) {
   const defaultPropValues = {};
-  for (let prop of getStylePropertiesFor(spec.type)) {
-    defaultPropValues[prop] = getDefaultValueFor(spec.type, prop);
+  for (let prop of getStylePropertiesFor(type)) {
+    defaultPropValues[prop] = getDefaultValueFor(type, prop);
     if (defaultPropValues[prop] && prop === 'fontFamily') defaultPropValues[prop] = sanitizeFont(defaultPropValues[prop]);
     if (typeof defaultPropValues[prop] === 'undefined') delete defaultPropValues[prop];
   }
