@@ -886,9 +886,6 @@ export class PathIndicator extends Morph {
   reset () {
     const { statusBox, statusLabel, errorControls } = this.ui;
     this.master.setState(null);
-    errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
-    statusBox.opacity = statusLabel.opacity = 0;
-    this.adjustHeight();
     this.setPath();
   }
 
@@ -899,15 +896,6 @@ export class PathIndicator extends Morph {
       textString: content.split('\n').slice(1).join('\n'),
       name: title
     }).openInWindow();
-  }
-
-  adjustHeight () {
-    const { errorControls } = this.ui;
-    if (this.ui.statusBox.opacity > 0) {
-      this.height = errorControls.bottom;
-    } else {
-      this.height = 50;
-    }
   }
 
   getPath () {
@@ -925,31 +913,19 @@ export class PathIndicator extends Morph {
 
   showInactive (duration = 300) {
     this.requestTransition(async () => {
-      const { filePath, statusBox, statusLabel, clipboardControls } = this.ui;
+      const { filePath } = this.ui;
       filePath.value = 'No file selected';
       this.master.setState('inactive');
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusBox.isLayoutable = statusLabel.isLayoutable = false;
-        statusLabel.opacity = 0;
-        statusBox.opacity = 0;
-        clipboardControls.opacity = 0.5;
-        this.adjustHeight();
-      }, { duration });
+      await this.master.applyAnimated({ duration, easing: easings.outQuint });
     });
     this.setPath();
   }
 
   showDefault (duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
+      const { statusBox } = this.ui;
       this.master.setState(null);
-      this.master.applyAnimated({ duration });
-      this.withAnimationDo(() => {
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = false;
-        statusBox.opacity = statusLabel.opacity = 0;
-        this.adjustHeight();
-      }, { duration });
+      await this.master.applyAnimated({ duration, easing: easings.outQuint });
       statusBox.reactsToPointer = false;
     });
     this.setPath();
@@ -957,16 +933,11 @@ export class PathIndicator extends Morph {
 
   async showError (err, duration = 300) {
     this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
+      const { statusBox, statusLabel } = this.ui;
       statusBox.textString = err;
       statusLabel.value = ['Error ', null, ...Icon.textAttribute('exclamation-triangle', { paddingTop: '3px' })];
       this.master.setState('error');
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.opacity = statusBox.opacity = 1;
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
-        this.adjustHeight();
-      }, { duration });
+      await this.master.applyAnimated({ duration, easing: easings.outQuint });
       statusBox.reactsToPointer = true;
     });
     this.setPath();
@@ -974,16 +945,11 @@ export class PathIndicator extends Morph {
 
   async showWarning (warning, duration = 300) {
     await this.requestTransition(async () => {
-      const { statusBox, statusLabel, errorControls } = this.ui;
+      const { statusBox, statusLabel } = this.ui;
       statusBox.textString = warning;
       statusLabel.value = ['Warning ', null, ...Icon.textAttribute('exclamation-circle', { paddingTop: '3px' })];
       this.master.setState('warning');
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusLabel.opacity = statusBox.opacity = 1;
-        errorControls.isLayoutable = statusBox.isLayoutable = statusLabel.isLayoutable = true;
-        this.adjustHeight();
-      }, { duration });
+      await this.master.applyAnimated({ duration, easing: easings.outQuint });
       statusBox.reactsToPointer = true;
     });
     this.setPath();
@@ -995,17 +961,9 @@ export class PathIndicator extends Morph {
 
     this.requestTransition(async () => {
       const { statusBox, statusLabel, errorControls } = this.ui;
-      statusLabel.opacity = 0;
       statusLabel.value = ['Saved ', null, ...Icon.textAttribute('check', { paddingTop: '3px' })];
       this.master.setState('saved');
-      this.master.applyAnimated({ duration });
-      await this.withAnimationDo(() => {
-        statusBox.opacity = 0;
-        errorControls.isLayoutable = statusBox.isLayoutable = false;
-        statusLabel.isLayoutable = true;
-        statusLabel.opacity = 1;
-        this.adjustHeight();
-      }, { duration });
+      await this.master.applyAnimated({ duration, easing: easings.outQuint });
       statusBox.reactsToPointer = false;
     });
     this.setPath();
@@ -1032,16 +990,7 @@ export class PathIndicator extends Morph {
 
 const MetaInfoContainerExpanded = component({
   type: PathIndicator,
-  master: {
-    auto: FileStatusDefault,
-    states: {
-      warning: FileStatusWarning,
-      error: FileStatusError,
-      saved: FileStatusSaved,
-      frozen: FileStatusFrozen,
-      inactive: FileStatusInactive
-    }
-  },
+  master: FileStatusDefault,
   isLayoutable: true,
   clipMode: 'hidden',
   extent: pt(587.6, 60.4),
@@ -1049,7 +998,6 @@ const MetaInfoContainerExpanded = component({
     axis: 'column',
     axisAlign: 'right',
     hugContentsVertically: true,
-    orderByIndex: true,
     padding: rect(10, 10, 0, 0),
     reactToSubmorphAnimations: true,
     resizePolicies: [['path container', {
@@ -1058,9 +1006,6 @@ const MetaInfoContainerExpanded = component({
     }], ['status box', {
       height: 'fixed',
       width: 'fill'
-    }], ['error controls', {
-      height: 'fixed',
-      width: 'fixed'
     }]]
   }),
   submorphs: [{
@@ -1096,12 +1041,12 @@ const MetaInfoContainerExpanded = component({
       fontColor: Color.rgb(255, 255, 255),
       fontSize: 14,
       fontWeight: 'bold',
-      opacity: 0,
       padding: rect(10, 4, 0, 0),
       textAndAttributes: ['Error ', null, '', {
         fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
         fontWeight: '900',
         paddingTop: '3px'
+
       }]
     }, {
       type: Label,
@@ -1117,7 +1062,6 @@ const MetaInfoContainerExpanded = component({
       textAndAttributes: ['lively.sync/client.js:Client#toString', null]
     }, {
       name: 'clipboard controls',
-      clipMode: 'hidden',
       extent: pt(169.1, 27.7),
       fill: Color.rgba(0, 0, 0, 0),
       layout: new TilingLayout({
@@ -1214,6 +1158,13 @@ const MetaInfoContainerExpanded = component({
 
 const MetaInfoContainerCollapsed = component(MetaInfoContainerExpanded, {
   submorphs: [{
+    name: 'path container',
+    submorphs: [{
+      name: 'status label',
+      isLayoutable: false,
+      opacity: 0
+    }]
+  }, {
     name: 'status box',
     isLayoutable: false,
     reactsToPointer: false,
@@ -1221,7 +1172,43 @@ const MetaInfoContainerCollapsed = component(MetaInfoContainerExpanded, {
   }, {
     name: 'error controls',
     reactsToPointer: false,
+    opacity: 0,
     isLayoutable: false
+  }]
+});
+
+const MetaInfoWarning = component(MetaInfoContainerExpanded, {
+  clipMode: 'hidden',
+  master: FileStatusWarning
+});
+
+const MetaInfoError = component(MetaInfoContainerExpanded, { clipMode: 'hidden', master: FileStatusError });
+
+const MetaInfoFrozen = component(MetaInfoContainerExpanded, { clipMode: 'hidden', master: FileStatusFrozen });
+
+const MetaInfoSaved = component(MetaInfoContainerCollapsed, {
+  clipMode: 'hidden',
+  master: FileStatusSaved,
+  submorphs: [{
+    name: 'path container',
+    submorphs: [{
+      name: 'status label',
+      opacity: 1,
+      isLayoutable: true
+    }]
+  }]
+});
+
+const MetaInfoInactive = component(MetaInfoContainerCollapsed, {
+  clipMode: 'hidden',
+  master: FileStatusInactive,
+  submorphs: [{
+    name: 'path container',
+    submorphs: [{
+      name: 'clipboard controls',
+      visible: false,
+      isLayoutable: false
+    }]
   }]
 });
 
@@ -1495,6 +1482,15 @@ const SystemBrowser = component({
     scroll: pt(0, 15)
   }, part(MetaInfoContainerCollapsed, {
     name: 'meta info text',
+    master: {
+      states: {
+        warning: MetaInfoWarning,
+        error: MetaInfoError,
+        saved: MetaInfoSaved,
+        frozen: MetaInfoFrozen,
+        inactive: MetaInfoInactive
+      }
+    },
     position: pt(9, 280.8)
   }), {
     // fixme: implement with view model...?

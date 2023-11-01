@@ -1454,7 +1454,6 @@ export class BrowserModel extends ViewModel {
 
       this.historyRecord();
 
-      this.ui.metaInfoText.showDefault();
       m.isLoaded = true;
       this.updateModuleList();
     } finally {
@@ -1463,6 +1462,7 @@ export class BrowserModel extends ViewModel {
         this.state.moduleUpdateInProgress = null;
         deferred.resolve(m);
       }
+      this.ui.metaInfoText.showDefault();
     }
   }
 
@@ -1783,7 +1783,6 @@ export class BrowserModel extends ViewModel {
     adoptObject(componentDescriptor, InteractiveComponentDescriptor);
     InteractiveComponentDescriptor.ensureInteractive(componentDescriptor);
     editor.addMorph(btn);
-    btn.bottom = -10; // in order to hide it away from the visible area
     await btn.positionInLine();
     return btn;
   }
@@ -1987,7 +1986,10 @@ export class BrowserModel extends ViewModel {
       const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n');
       metaInfoText.showWarning(warningMessage);
       await promise.delay(5000);
-    } metaInfoText.showSaved();
+      if (metaInfoText.master.getState() == 'warning') metaInfoText.showSaved(); // only if we are not default yet
+      return;
+    }
+    metaInfoText.showSaved(); // only if we are not default yet
   }
 
   async reloadModule (hard = false) {
