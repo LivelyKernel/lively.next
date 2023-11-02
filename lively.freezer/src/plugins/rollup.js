@@ -1,6 +1,6 @@
 import LivelyRollup, { customWarn } from '../bundler.js';
 import { ROOT_ID } from '../util/helpers.js';
-import { obj } from 'lively.lang';
+import { obj, arr } from 'lively.lang';
 
 /**
  * Checks wether or not a given module is an internal module
@@ -30,7 +30,7 @@ function isCommonJsModule (id) {
 export function lively (args) {
   let globals, importMap, depsCode;
   const bundler = new LivelyRollup(args);
-  const { map = {} } = args;
+  const { map = {}, isResurrectionBuild } = args;
   return {
     name: 'rollup-plugin-lively',
     buildStart () { return bundler.buildStart(this); },
@@ -65,6 +65,11 @@ export function lively (args) {
       ({ code: depsCode, globals, importMap } = await bundler.generateGlobals());
     },
     options (opts) {
+      if (isResurrectionBuild) {
+        opts.external
+          ? arr.pushIfNotIncluded(opts.external, 'livelyClassesRuntime.js')
+          : (opts.external = ['livelyClassesRuntime.js']);
+      }
       if (bundler.snapshot || !!bundler.autoRun) {
         // since we are supposed to resolve from the snapshot, we set the input
         // to be the synthesized module.

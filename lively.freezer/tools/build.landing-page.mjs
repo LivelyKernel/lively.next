@@ -10,8 +10,7 @@ const minify = !process.env.CI;
 
 const build = await rollup({
   input: './src/landing-page.cp.js',
-  shimMissingExports: true,  
-  external: ['livelyClassesRuntime.js'],
+  shimMissingExports: true,
   plugins: [
     lively({
       autoRun: {
