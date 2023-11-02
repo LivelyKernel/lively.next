@@ -52,6 +52,7 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
   else query = parseQuery(queryString);
 
   const basePath = project ? '/projects/load' : '/worlds/load';
+  // ensure the name param in the query string matches worldName
   if (worldName.endsWith('.json')) {
     query.file = worldName;
     delete query.name;
@@ -60,7 +61,8 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
     query.name = worldName;
     if (project && projectOwner) query.owner = projectOwner;
   }
-  // ensure the name param in the query string matches worldName
+
+  if (lively.isResurrectionBuild) query.fastLoad = true;
 
   return `${basePath}?${stringifyQuery(query)}`;
 }
@@ -151,7 +153,6 @@ export function newMorphId (classOrClassName) {
       : '';
   return prefix + '_' + string.newUUID().replace(/-/g, '_');
 }
-
 
 async function lazyInspect (obj) {
   // lazy load
