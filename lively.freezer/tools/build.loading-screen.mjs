@@ -11,7 +11,6 @@ const minify = !process.env.CI;
 const build = await rollup({
   input: './src/loading-screen.cp.js',
   shimMissingExports: true,  
-  external: ['livelyClassesRuntime.js'],
   plugins: [
     lively({
       autoRun: { title: 'lively.next' },
