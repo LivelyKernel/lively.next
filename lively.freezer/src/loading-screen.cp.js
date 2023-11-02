@@ -136,6 +136,42 @@ export class WorldLoadingScreen extends Morph {
   }
 }
 
+export const ProgressBar = component({
+  type: 'html',
+  cssDeclaration: '#loading-bar {\n\
+  height: 20px;\n\
+  width: 400px;\n\
+  color: gray;\n\
+  border-style: solid;\n\
+  border-color: gray;\n\
+  border-width: 2px;\n\
+  border-radius: 10px;\n\
+  position: absolute;\n\
+  top: 50%;\n\
+  left: 50%;\n\
+  overflow: hidden;\n\
+  margin: 0px 0 0 -202px;\n\
+}\n\
+\n\
+#progress {\n\
+  background-color: gray;\n\
+  height: 100%;\n\
+  animation: load 5s;\n\
+}\n\
+\n\
+@keyframes load {\n\
+  from { width: 0% }\n\
+  to { width: 100% }\n\
+}',
+  extent: pt(940, 274.3),
+  html: '<div style=position: fixed; z-index: 1; height: 100%; width: 100%; background-color: transparent">\n\
+  <div id="loading-bar">\n\
+     <div id="progress" style="width: 100%;">\n\
+  </div>\n\
+</div></div>'
+
+});
+
 const ErrorIndicator = component({
   type: Label,
   fontColor: Color.rgb(231, 76, 60),
@@ -188,43 +224,12 @@ export const LoadingScreen = component({
     part(ErrorIndicator, {
       name: 'broken heart',
       visible: false
-    }), {
-      type: 'html',
+    }),
+    part(ProgressBar, {
       name: 'css loading screen',
-      cssDeclaration: '#loading-bar {\n\
-  height: 20px;\n\
-  width: 400px;\n\
-  color: gray;\n\
-  border-style: solid;\n\
-  border-color: gray;\n\
-  border-width: 2px;\n\
-  border-radius: 10px;\n\
-  position: absolute;\n\
-  top: 50%;\n\
-  left: 50%;\n\
-  overflow: hidden;\n\
-  margin: 0px 0 0 -202px;\n\
-}\n\
-\n\
-#progress {\n\
-  background-color: gray;\n\
-  height: 100%;\n\
-  animation: load 5s;\n\
-}\n\
-\n\
-@keyframes load {\n\
-  from { width: 0% }\n\
-  to { width: 100% }\n\
-}',
-      extent: pt(940, 274.3),
-      html: '<div style=position: fixed; z-index: 1; height: 100%; width: 100%; background-color: transparent">\n\
-  <div id="loading-bar">\n\
-     <div id="progress" style="width: 100%;">\n\
-  </div>\n\
-</div></div>',
       isLayoutable: false,
       visible: false
-    }
+    })
   ]
 });
 

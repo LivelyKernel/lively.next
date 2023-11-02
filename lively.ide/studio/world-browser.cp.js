@@ -693,12 +693,20 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   async openAnimated (targetBounds = $world.visibleBounds()) {
+    const { ProgressBar } = await System.import('lively.freezer/src/loading-screen.cp.js');
+    let pb;
     const copy = morph({
       ...this.view.spec(),
       reactsToPointer: false,
       renderOnGPU: true,
-      submorphs: [this.ui.spinner.spec()]
+      clipMode: 'hidden',
+      submorphs: [pb = part(ProgressBar, { visible: false, center: this.view.innerBounds().center() })]
     }).openInWorld();
+    Object.assign(copy, {
+      reactsToPointer: false,
+      renderOnGPU: true,
+      clipMode: 'hidden'
+    });
     copy.hasFixedPosition = true;
     copy.globalPosition = this.view.globalPosition;
     copy.opacity = 0;
@@ -712,8 +720,8 @@ export class WorldPreviewModel extends ViewModel {
       easing: easings.inOutQuint
     });
     copy.respondsToVisibleWindow = true;
-    copy.get('spinner').visible = true;
-    await copy.get('spinner').animate({
+    await pb.animate({
+      visible: true,
       center: copy.innerBounds().center(),
       easing: easings.inOutQuint,
       duration
@@ -900,7 +908,8 @@ const WorldPreviewTile = component({
         fontWeight: 600,
         textAndAttributes: ['OPEN WORLD', null]
       }]
-    }), part(Spinner, {
+    }),
+    part(Spinner, {
       name: 'spinner',
       visible: false,
       scale: 0.5,
