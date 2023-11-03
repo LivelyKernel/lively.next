@@ -375,7 +375,7 @@ export class WorldBrowserModel extends ViewModel {
   async confirm (label) {
     const prompt = part(ConfirmPrompt, { viewModel: { label } }).openInWorld();
     prompt.center = this.view.center;
-    return promise(prompt.activate());
+    return promise.promise(prompt.activate());
   }
 
   async toggleFader (onlyOff) {
