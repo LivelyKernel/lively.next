@@ -1,3 +1,4 @@
+/* global fetch */
 /* eslint-disable no-console */
 import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
@@ -73,6 +74,21 @@ export default class GitShellResource extends ShellClientResource {
     cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');
+  }
+
+  async deleteRemoteRepository (token, repoName, repoUser) {
+    const deleteRes = await fetch(`https://api.github.com/repos/${repoUser}/${repoName}`,{
+      method: 'DELETE',  
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": '2022-11-28'
+      }
+    }); 
+
+    if (deleteRes.status === 404) throw Error('Unexpected problem delete remote repository.');
+    if (deleteRes.status === 403) return false;
+    if (deleteRes.status === 204) return true;
   }
 
   async changeRemoteVisibility (token, repoName, repoUser, visibility) {
