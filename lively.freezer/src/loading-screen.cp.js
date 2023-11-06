@@ -8,7 +8,7 @@ export class WorldLoadingScreen extends Morph {
     return {
       isFastLoad: {
         get () {
-          return resource(document.location.href).query().fastLoad;
+          return resource(document.location.href).query().fastLoad !== false;
         }
       },
       title: {

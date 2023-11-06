@@ -160,7 +160,7 @@ function logInfo (...info) {
   console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1));
 }
 
-function bootstrapLivelySystem (progress, fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD) {
+function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
   return Promise.resolve()
@@ -343,7 +343,7 @@ function fastPrepLivelySystem () {
 
 export async function bootstrap ({
   filePath, worldName, projectName, projectRepoOwner, snapshot, commit, progress,
-  fastLoad = query.fastLoad === true || window.FORCE_FAST_LOAD,
+  fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD,
   logError = (err) => console.log(err)
 }) {
   try {

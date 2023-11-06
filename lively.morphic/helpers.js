@@ -62,7 +62,7 @@ export function pathForBrowserHistory (worldName, queryString, project = false, 
     if (project && projectOwner) query.owner = projectOwner;
   }
 
-  if (lively.isResurrectionBuild) query.fastLoad = true;
+  if (!lively.isResurrectionBuild) query.fastLoad = false;
 
   return `${basePath}?${stringifyQuery(query)}`;
 }
