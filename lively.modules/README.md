@@ -1,14 +1,6 @@
-# lively.modules [![Build Status](https://travis-ci.org/LivelyKernel/lively.modules.svg)](https://travis-ci.org/LivelyKernel/lively.modules)
+# lively.modules
 
 JavaScript package and module system for interactive development.
-
-### Module and package system
-
-![](http://lively-web.org/users/robertkrahn/uploads/Screen_Shot_2016-03-26_at_8.30.54_PM.png)
-
-### Live and interactive devlopment
-
-![](http://lively-web.org/users/robertkrahn/uploads/videos/async-await-eval.gif)
 
 ## Goals
 
@@ -61,15 +53,7 @@ for more details.
 
 ## API
 
-<!---DOC_GENERATED_START--->
-
-
-
-
-
 ### [main interface](index.js)
-
-
 
 ### `lively.modules.importPackage(packageName)`
 
@@ -83,8 +67,6 @@ name of main is `'index.js'` but this can be customized via the `main` field
 of the package config file.
 
 The result of the importPackage call is the promise for loading the main module.
-
-
 
 #### Specifics of the lively package format
 
@@ -283,7 +265,10 @@ lively.modules.moduleEnv("lively.modules/index.js").recorder.changeSystem
   // => function() {...} The actual object defined in the module scope
 ```
 
+##### `async ModuleInterface>>recorder`
 
+In order to support dynamic evaluation of source code and real time updating of modules, we have to capture all the objects and values referenced in the scope of the module.
+These values are stored in the recorder object, which lends its name from the concept of *recording* the objects and values yielded during the evaluation of a module.
 
 ### hooks
 
@@ -298,6 +283,26 @@ installHook("fetch", function myFetch(proceed, load) {
 });
 ```
 
+### Interoperability with SystemJS 0.21
+
+The `lively.modules` system was originally based on SystemJS 0.19 (or prior versions). Unlike SystemJS 0.21, the versions < 0.19 where much more "transparent" implementations of SystemJS that came with a lot of runtime inspection capabilities.
+This simpyfied the initial implementations of `lively.modules` quite a bit.
+
+The main issue with the old SystemJS versions is the missing support for loading `system` format bundles.
+The `system` bundle format is essential for proper code splitting support in rollup.
+We therefore moved over utilising the `system` format for most of the `lively.freezer` builds in `lively.next` in particular with regards to the bootstrapping bundles.
+
+For a while we therefore had a SystemJS version transition in place where SystemJS 0.21 would perform the loading of the bootstrapping bundle and then replace itself with SystemJS version 0.19 in order to finalize the load of `lively.next`.
+This version swapping is no longer viable for fast loading support of `lively.next` since we would need to keep 2 different versions of SystemJS alive in parallel. This not only breaks a bunch of code in `lively.next` itself, it is also not really possible to have SystemJS work that way, at least from our findings.
+
+As mentioned in the beginning, one of the big challenges in the migration to 0.21 was the fact that alot of the hooks and metadata provided is no longer openly accessible and hidden.
+This is particulary the case for the internal registry, configuration and metadata of SystemJS all of which are hidden behind instance variables that cen only be received via internal Symbols.
+
+The current solution for this problem is to retrieve these properties by `Object.values(System)` and then extracting each of the hidden objects by matching their characteristic attributes. This solution is hacky, but will likely work for the currently available versions of SystemJS (including 6).
+
+Another big shift of 0.21 compared to 0.19 is the deprecation of various hooks that where previously available directly on the SystemJS instance, but now have to be accessed via a plugin interface. These include: `instantiate`, `locate`, `fetch` and `translate`.
+Further the semantics of `translate` have been changed, such that part of the translate instrumentation needs to devided between `translate` and `instantiate`, further complicating the implementation.
+
 ### notification
 
 There are five types of system-wide notifications:
@@ -310,19 +315,25 @@ There are five types of system-wide notifications:
 
 These notifications are all emitted with `lively.notifications`.
 
-
-
-
-
-<!---DOC_GENERATED_END--->
-
 ## Development
 
-To bootstrap lively.modules please see the example in
-[examples/bootstrap/](examples/bootstrap/). lively.modules is completely
-capable to "develop itself" and was done so from the beginning :)
+### Fast Loading
 
-To build a new version yourself run `npm run build`.
+By default, lively.modules requires a relatively long time to complete the load of all the packages and modules required for a lively.next session. This is because every module has to be read, parsed, instrumented and finally evaluated one by one in order to complete the initialisation of the system.
+
+A simple optimization strategy is to skip the reading and instrumentation step, by caching the translated module source codes inside the local storage of the browser. This has a quite significant effect on loading performance and speeds up the entire process by 60-70%.
+However we still end up with the need to separately create and evaluate thousands of module objects, which still requires 10-20 seconds loading time.
+
+A further optimization is, to reduce the total number of module objects that we need to create upon initialization of the system. This can be achieved by:
+ 1. Including a larger part of the entire system inside the bootstrapping bundle.
+ 2. Keep utilizing as much code as possible from the bundle, instead of loading the system via module objects.
+
+Step 1 will result in a slightly slower load of the boostrapping bundle, however this is offset by the speedup we achieve via 2 where in practice we can avoid loading 95% of all the module objects in the system.
+
+The remaining 5% modules that *need* to still be initialized are modules that are either dynamically changed at runtime, by chaning source code in the system (i.e. updating the implementation of layout code in lively.morphic/layout.js) or modules that have been updated since the last time the bootstrapping bundle was created.
+
+When a module is loaded via a module object, it is initialised in a fashion that *embedds* the module's entities into the loaded boostrapping bundle. This is done by feeding the imports from other modules that stem from the bootstrap bundle into the module evaluation while using the exports of the module object and injecting them into the initialized boostrapping bundle.
+This flexibility is enabled by bundling lively.next as a *resurrection build*. Resurrection builds are explained in more detail inside lively.freezer.
 
 ## LICENSE
 
