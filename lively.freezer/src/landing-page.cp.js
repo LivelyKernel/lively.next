@@ -1,4 +1,4 @@
-import { Morph, component, part, easings } from 'lively.morphic';
+import { Morph, component, config, part, easings } from 'lively.morphic';
 import { promise } from 'lively.lang';
 import { Color, pt } from 'lively.graphics';
 import {
@@ -6,11 +6,21 @@ import {
   TextureLoader, BackSide, MeshBasicMaterial, MeshPhongMaterial, SphereGeometry, Mesh
 } from 'esm://cache/three';
 import { Canvas } from 'lively.components/canvas.js';
-import { World } from 'lively.morphic/world.js';
+import { LivelyWorld } from 'lively.ide/world.js';
 import { connect } from 'lively.bindings';
 
 // this pulls in a bunch of code
 import { WorldBrowser } from 'lively.ide/studio/world-browser.cp.js';
+
+class LandingPageWorld extends LivelyWorld {
+  showHaloFor () {
+    // noop
+  }
+
+  onLoad () {
+    // noop
+  }
+}
 
 class WebGLCanvas extends Canvas {
   static get properties () {
@@ -204,6 +214,7 @@ class Globe extends WebGLCanvas {
     });
   }
 
+
   beforePublish () {
     this.get('cover').opacity = 1;
   }
@@ -255,7 +266,6 @@ class WorldLandingPage extends Morph {
     const worldList = this.getSubmorphNamed('a project browser');
     if (worldList) worldList.center = this.extent.scaleBy(0.5);
   }
-
 
   beforePublish () {
     const worldList = this.getSubmorphNamed('a project browser');
@@ -311,6 +321,9 @@ const LandingPage = component({
 });
 
 export async function main () {
+  config.altClickDefinesThat = false;
+  config.ide.studio.canvasModeEnabled = false;
+
   const lp = part(LandingPage);
   lp.respondsToVisibleWindow = true;
   $world.addMorph(lp);
@@ -319,7 +332,7 @@ export async function main () {
 
 export const TITLE = 'lively.next';
 
-export const WORLD_CLASS = World;
+export const WORLD_CLASS = LandingPageWorld;
 
 export const EXCLUDED_MODULES = [
   'lively.collab',
