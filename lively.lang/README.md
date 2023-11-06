@@ -44,8 +44,6 @@ Abstractions usually not included by default in JavaScript runtimes:
 
 Please see the individual [doc files](doc/) for detailed information.
 
-<!---DOC_GENERATED_START--->
-
 ### [string.js](doc/string.md)
 
 String utility methods for printing, parsing, and converting strings.
@@ -230,11 +228,6 @@ closure.getFuncSource() // => "function func(a) { return a + b; }"
 
 * A platform-independent worker interface that will spawn new processes per
 * worker (if the platform you use it on supports it).
-
-
-
-
-<!---DOC_GENERATED_END--->
 
 <!---
 ## Usage
