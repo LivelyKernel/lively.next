@@ -293,7 +293,7 @@ class ModuleInterface {
     // finally update the frozen records that require update
     for (let m in registry) {
       if (registry[m].updateRecord) {
-        const realignedId = string.joinPath(System.baseURL, m);
+        const realignedId = m.startsWith('esm://') ? m : string.joinPath(System.baseURL, m);
         const mod = module(this.System, realignedId);
         if (!mod._frozenModule) continue;
         this.System.set(realignedId, System.newModule(registry[m].exports));
