@@ -16,7 +16,7 @@
     "lively.resources": "*",
     "node-gyp": "9.0.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
-    "node-fetch": "3.2.4",
+    "node-fetch": "3.2.10",
     "rollup": "2.68.0",
     "@rollup/plugin-commonjs": "22.0.0",
     "minimist": "1.2.6",
