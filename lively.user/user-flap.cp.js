@@ -1,3 +1,4 @@
+/* global fetch */
 import { ViewModel, ShadowObject, Image, Icon, Label, TilingLayout, component } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { currentUser, isUserLoggedIn, clearUserData, clearAllUserData, storeCurrentUser, storeCurrentUsersOrganizations, currentUserToken, storeCurrentUserToken } from 'lively.user';
@@ -96,7 +97,6 @@ class UserFlapModel extends ViewModel {
       }
     } else {
       await this.update();
-      this.showUserData();
       leftUserLabel.tooltip = '';
       rightUserLabel.tooltip = 'Logout';
       rightUserLabel.nativeCursor = 'pointer';
