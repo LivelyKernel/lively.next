@@ -329,6 +329,7 @@ class Package {
 
     try {
       let config = System.get(packageConfigURL) || await System.import(packageConfigURL);
+      if (config.__useDefault) config = config.default;
       let packageConfigPaths = [...System.packageConfigPaths];
       arr.pushIfNotIncluded(packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
       System.config({ packageConfigPaths });
