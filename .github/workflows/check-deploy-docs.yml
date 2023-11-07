@@ -25,7 +25,7 @@ jobs:
     - name: Install `jsdoc`
       run: npm install -g jsdoc@3.6.7
     - name: Install `jsdoc` theme
-      run: npm install clean-jsdoc-theme
+      run: npm install clean-jsdoc-theme@4.2.14
     - name: Build Documentation
       run: jsdoc -c conf.json -R README.md
     - name: Copy over Custom Style Files for Theme
