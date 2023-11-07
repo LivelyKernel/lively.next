@@ -859,7 +859,7 @@ const commands = [
       fun.guardNamed('loadingComponentBrowser', async () => {
         const li = LoadingIndicator.open('loading component browser');
         const p = $world.openedProject;
-        if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('partsbin', 'LivelyKernel', true);
+        if ((p && (p.name !== 'partsbin' || p.repoOwner !== 'LivelyKernel')) || !p) await Project.loadProject('LivelyKernel--partsbin', true);
         const { ComponentBrowser } = await System.import('lively.ide/studio/component-browser.cp.js');
         const componentBrowser = world._componentBrowser || (world._componentBrowser = part(ComponentBrowser, { name: 'lively component browser' }));
         li.remove();

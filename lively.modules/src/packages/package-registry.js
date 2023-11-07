@@ -454,6 +454,14 @@ export class PackageRegistry {
       let pkg = (existingPackageMap && existingPackageMap[url]) ||
               new Package(this.System, url);
       let config = await pkg.tryToLoadPackageConfig();
+      if (url.includes('local_projects')){
+        const forkInfoFile = resource(url).join('.livelyForkInformation');
+        if ((await forkInfoFile.exists())) {
+          const forkInfo = JSON.parse((await forkInfoFile.read()));
+          config.name = forkInfo.owner + '--' + forkInfo.name;
+          config.isFork = true;
+        }
+      }
       pkg.setConfig(config);
       discovered[url] = { pkg, config, covered };
       if (this.System.debug) {

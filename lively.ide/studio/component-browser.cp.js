@@ -260,7 +260,7 @@ class MasterComponentTreeData extends TreeData {
     });
     if (projectToLoad) {
       await $world.withLoadingIndicatorDo(async () => {
-        await Project.loadProject(projectToLoad.name, projectToLoad.projectRepoOwner, true);
+        await Project.loadProject(projectToLoad.name, true);
         this.root.subNodes = await this.listAllComponentCollections();
         this.columnView.refresh();
       }, win, 'Importing project...');

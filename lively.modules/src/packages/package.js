@@ -145,6 +145,9 @@ class Package {
     this.main = config.main || 'index.js';
     this.systemjs = config.systemjs;
     this.lively = config.lively;
+    this.author = config.author;
+    this.description = config.description;
+    this.isFork = config.isFork;
   }
 
   toJSON () {
@@ -158,7 +161,10 @@ class Package {
       'devDependencies',
       'main',
       'systemjs',
-      'lively'
+      'lively',
+      'author',
+      'description',
+      'isFork'
     ]);
     if (jso.url.startsWith(System.baseURL)) { jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, ''); }
     return jso;
@@ -174,6 +180,9 @@ class Package {
     this.dependencies = jso.dependencies || {};
     this.devDependencies = jso.devDependencies || {};
     this.systemjs = jso.systemjs;
+    this.description = jso.description;
+    this.author = jso.author;
+    this.isFork = jso.isFork;
     this.lively = jso.lively;
     if (!isURL(this.url)) { this.url = join(System.baseURL, this.url); }
     this.registerWithConfig();
