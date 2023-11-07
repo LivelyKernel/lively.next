@@ -459,7 +459,7 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   sortAndFilterPreviews (previews) {
-    return previews.filter(p => this.ui.searchField.matches(p._project?.name || (p._commit.name + p._commit.description)));
+    return previews.filter(p => this.ui.searchField.matches(p._project?._projectName || (p._commit.name + p._commit.description)));
   }
 
   updateList () {
@@ -484,7 +484,7 @@ export class WorldBrowserModel extends ViewModel {
     });
     let entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
     // Filter out the project that is opened anyways.
-    if ($world && $world.openedProject) entities = entities.filter(availableProject => availableProject.name !== $world.openedProject.config.name);
+    if ($world && $world.openedProject) entities = entities.filter(availableProject => availableProject._projectName !== $world.openedProject.name);
     this.previews = entities.map(entity => {
       const placeholder = part(Placeholder);
       if (this.playgroundsMode) placeholder._commit = entity;
@@ -734,24 +734,13 @@ export class WorldPreviewModel extends ViewModel {
     this.loadEntity();
   }
 
-  async loadEntity () {
-    const { _id } = this._commit;
-    // from dashboard
-    if (lively.FreezerRuntime) {
-      // open the world via url redirect
-      // rms: instead of redirect load within world
-      this.transitionToLivelyWorld(
-        document.location.origin,
-        this._commit
-      );
-    } else { // from within lively
-      await World.loadFromCommit(_id, undefined, { morphicDB: MorphicDB.default, moduleManager });
-    }
+  async loadEntity () {  
+      this.transitionToLivelyWorld(this._commit);
   }
 
-  async transitionToLivelyWorld (baseURL, commit, projectName, projectRepoOwner) {
+  async transitionToLivelyWorld (commit, projectName) {
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
-    if (projectName) await bootstrap({ projectName, projectRepoOwner, fastLoad: true });
+    if (projectName) await bootstrap({ projectName, fastLoad: true });
     else await bootstrap({ commit, fastLoad: true });
   }
 
@@ -828,33 +817,26 @@ class ProjectPreviewModel extends WorldPreviewModel {
     } = this.ui;
     this.opacity = 0.5;
     let authorName = project.author.name;
+    const name = project._name.replace(/[^\-]*--/, '');
     authorName = authorName.startsWith('guest') ? 'guest' : authorName;
-    timestamp.value = [project.projectRepoOwner + ' - ' + authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
-    if (project.projectRepoOwner === authorName) timestamp.value = [authorName, { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
-    timestamp.tooltip = `Project ${project.name} was created by ${authorName}.\nIts repository belongs to ${project.projectRepoOwner}.`;
-    title.value = titleWrapper.title = project.name;
+    timestamp.value = project.isFork
+      ? [
+          '', {
+            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+            fontSize: 13,
+            fontWeight: '900',
+            paddingTop: '1px'
+          }, ' ' + ((project._projectOwner !== authorName) ? project._projectOwner + ' - ' + authorName : project._projectOwner), { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }]
+      : [((project._projectOwner !== authorName) ? project._projectOwner + ' - ' + authorName : project._projectOwner), { fontSize: 13, fontWeight: 'bold', paddingTop: '1px' }];
+    timestamp.tooltip = `Project ${name} was created by ${authorName}.\nIts repository belongs to ${project._projectOwner}.`;
+    title.value = titleWrapper.title = name;
     description.value = project.description;
     this.view.animate({ opacity: 1, duration: 300 });
   }
 
-  // TODO: can we do this with less code duplication?
   async loadEntity () {
-    const { name, projectRepoOwner } = this._project;
-    // from dashboard
-    if (lively.FreezerRuntime) {
-      // open the world via url redirect
-      // rms: instead of redirect load within world
-      this.transitionToLivelyWorld(
-        document.location.origin,
-        null,
-        name,
-        projectRepoOwner
-      );
-    } else { // from within lively
-      const li = LoadingIndicator.open('loading ' + name);
-      await World.loadWorld(new LivelyWorld({ projectToBeOpened: name, projectRepoOwner }), $world);
-      li.remove();
-    }
+    const { _name } = this._project;
+      this.transitionToLivelyWorld(null, _name);
   }
 
   async tryToDelete () {
@@ -863,8 +845,8 @@ class ProjectPreviewModel extends WorldPreviewModel {
   }
 
   async confirmDelete () {
-    const { projectRepoOwner, name } = this._project;
-    await Project.deleteProject(name, projectRepoOwner);
+    const { _projectName, _projectOwner } = this._project;
+    await Project.deleteProject(_projectName, _projectOwner);
     this._worldBrowser.displayItems();
   }
 }
@@ -1197,6 +1179,23 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
       clipMode: 'visible',
       // TODO: We can still think about some kind of generated preview for Projects.
       submorphs: [without('preview'), add(part(ProjectIcon)), without('version container')]
+    }, {
+      name: 'timestamp',
+      nativeCursor: 'text',
+      textAndAttributes: ['', {
+        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontSize: 13,
+        fontWeight: '900',
+        paddingTop: '1px'
+      }, ' robin.schreiber', {
+        fontSize: 13,
+        fontWeight: 'bold',
+        paddingTop: '1px'
+      }, ' - 3.1.19 19:30', {
+        fontSize: 12,
+        fontWeight: 'bold',
+        paddingTop: '2px'
+      }]
     }]
   }]
 });

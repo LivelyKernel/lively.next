@@ -481,7 +481,7 @@ export class LivelyWorld extends World {
       } else if (openNewProjectPrompt) { // We open a **new** Project
         const project = await this.openPrompt(part(ProjectCreationPrompt, { hasFixedPosition: true }));
         $world.openedProject = project;
-        worldName = project.name;
+        worldName = project.fullName;
       } else if (projectToBeOpened) { // We open an existing Project
         worldName = projectToBeOpened;
         await Project.loadProject(projectToBeOpened, projectRepoOwner);

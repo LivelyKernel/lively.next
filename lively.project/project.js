@@ -10,7 +10,7 @@ import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/component
 import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import { semver } from 'lively.modules/index.js';
+import { semver, PackageRegistry } from 'lively.modules/index.js';
 import { currentUserToken, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
@@ -23,15 +23,12 @@ import { arr, obj } from 'lively.lang';
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 import { supportedImageFormats } from 'lively.ide/assets.js';
+import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 
 const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
 Its content is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
 export class Project {
-  static retrieveAvailableProjectsCache () {
-    return JSON.parse(localStorage.getItem('available_lively_projects'));
-  }
-
   static get systemInterface () {
     return localInterface.coreInterface;
   }
@@ -42,8 +39,24 @@ export class Project {
     return resource(baseURL).join('local_projects').asDirectory();
   }
 
+  /**
+   * Returns a name that is intended to be displayed to the user. There is no guaranteed one-to-one mapping from available projects to this name.
+   */
   get name () {
-    return this.config.name;
+    return this.config.name.replace(/.*--/, '');
+  }
+
+  /**
+   * A qualified name that includes the owner of the repository that the project resides in, prefixed to the name of the project with --.
+   * This guarantees a one-to-one mapping between fullName and available projects.
+   * Used for internal operations and not intended to be exposed to the user.
+   */
+  get fullName () {
+    return this.url.replace(/.*\/local_projects\//,'');
+  }
+
+  get repoOwner () {
+    return this.fullName.replace(/--.*/, '');
   }
 
   get canDeployToPages () {
@@ -63,17 +76,10 @@ export class Project {
     return await this.gitResource.changeRemoteVisibility(currentUserToken(), this.name, this.repoOwner, visibility);
   }
 
-  // TODO: 🍴 Support
-  // **Note** since this is a getter on an instance, we can retrieve whatever we want from the config object
-  // We just need to make sure that we populate it in the correct way!
-  get repoOwner () {
-    return this.config.repository.url.match(repositoryOwnerAndNameRegex)[1];
-  }
-
   constructor (name, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
     const { author, description, repoOwner } = opts;
     this.config = {
-      name: name || 'new world',
+      name: name ? repoOwner + '--' + name : 'new world',
       author: {
         // TODO: We could enhance this by utilizing more of the user data GitHub provides for us
         // See: https://docs.npmjs.com/cli/v6/configuring-npm/package-json#people-fields-author-contributors
@@ -104,41 +110,25 @@ export class Project {
 
   static async listAvailableProjects () {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
-    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join('../local_projects').withRelativePartsResolved().asDirectory() : (await Project.projectDirectory());
 
-    let projectsCandidates = await resource(projectsDir).dirList(2, {
-      exclude: dir => {
-        return dir.isFile() && !dir.name().endsWith('package.json');
-      }
+    const packageCache = lively.FreezerRuntime
+      ? await resource(baseURL).join('../package-registry.json').withRelativePartsResolved().readJson()
+      : PackageRegistry.ofSystem(System);
+
+    let projectsCandidates = [];
+    Object.keys(packageCache.packageMap).forEach(pack =>
+      Object.keys(packageCache.packageMap[pack].versions).forEach(v => {
+        // filters out invalid projects (e.g., with invalid package.json file)
+        if (v === '0.0.0') return;
+        projectsCandidates.push(packageCache.packageMap[pack].versions[v]);
+      })
+    );
+    projectsCandidates = projectsCandidates.filter(p => p.url.includes('local_projects'));
+    projectsCandidates.forEach(p => {
+      p._projectName = p._name.replace(/.*--/, '');
+      p._projectOwner = p._name.replace(/--.*/, '');
     });
-    try {
-      projectsCandidates = projectsCandidates.filter(dir => dir.name().endsWith('package.json')).map(f => f.parent());
-      const packageJSONStrings = await Promise.all(projectsCandidates.map(async projectDir => await resource(projectDir.join('package.json')).read()));
-      const packageJSONObjects = packageJSONStrings.flatMap(s => {
-        try { return JSON.parse(s); } catch (e) {
-          console.error('An invalid lively Project was encountered (no valid `package.json`)!');
-          return [];
-        }
-      });
-      // TODO: 🍴 Support
-      // To allow correct resolution of projects via `flatn`, we need the name attribute in `package.json` to match the folder of the package.
-      // To make working with the project names easier at runtime, we remove the owner-- here, so that the name attribute equals the project name again.
-      const validPackageJSONObjects = [];
-      packageJSONObjects.forEach(pkg => {
-        try {
-          pkg.projectRepoOwner = pkg.repository.url.match(repositoryOwnerAndNameRegex)[1];
-          pkg.url = projectsDir.url + pkg.name;
-          pkg.name = pkg.name.replace(/[a-zA-Z\d]*--/, '');
-          validPackageJSONObjects.push(pkg);
-        } catch (e) {
-          console.error('An invalid lively Project was encountered (`package.json` probably does not conform to `lively.project` standard)!');
-        }
-      });
-      localStorage.setItem('available_lively_projects', JSON.stringify(validPackageJSONObjects));
-      return validPackageJSONObjects;
-    } catch (err) {
-      throw Error('Error listing local projects', { cause: err });
-    }
+    return projectsCandidates;
   }
 
   /**
@@ -152,44 +142,76 @@ export class Project {
     const remoteUrl = new URL(remote);
 
     const userToken = currentUserToken();
-    // TODO: 🍴 Support!
-    // Check here if the repo to clone is a fork (GitHub API) and create hidden metadata files if necessary.
     const projectName = remote.match(repositoryOwnerAndNameRegex)[2];
     const projectRepoOwner = remote.match(repositoryOwnerAndNameRegex)[1];
+
+    const repoInfoCmd = runCommand(`curl -L \
+      -H "Accept: application/vnd.github+json" \
+      -H "Authorization: Bearer ${userToken}"\
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      https://api.github.com/repos/${projectRepoOwner}/${projectName}`,
+    { l2lClient: ShellClientResource.defaultL2lClient });
+
+    await repoInfoCmd.whenDone();
+    const repoInfos = JSON.parse(repoInfoCmd.stdout);
+    const isFork = repoInfos.fork;
+
     // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`,
+      { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error cloning repository');
+
+    if (isFork) {
+      await Project.setupForkInformation(projectRepoOwner, projectName);
+    }
+
+    const projectsDir = await Project.projectDirectory();
+    const projectDir = projectsDir.join(`${projectRepoOwner}--${projectName}`);
+    await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${projectRepoOwner}--${projectName}')`);
+    await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
+
     li.remove();
-    const loadedProject = await Project.loadProject(projectName, projectRepoOwner);
+    const loadedProject = await Project.loadProject(`${projectRepoOwner}--${projectName}`);
     return loadedProject;
+  }
+
+  static async setupForkInformation (forkOwner, forkName) {
+    const baseURL = (await Project.systemInterface.getConfig()).baseURL;
+    const forkIndicatorFile = resource(baseURL).join(`local_projects/${forkOwner}--${forkName}/.livelyForkInformation`);
+    await forkIndicatorFile.ensureExistance();
+    const forkIndicatorContents = JSON.stringify({ owner: forkOwner, name: forkName });
+    await resource(forkIndicatorFile).write(forkIndicatorContents);
   }
 
   static async deleteProject (name, repoOwner) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
     const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : ((await Project.projectDirectory()).join(`/${repoOwner}--${name}`).asDirectory());
     try {
+      await evalOnServer(`
+      const reg = System.get("@lively-env").packageRegistry;
+      const p = reg.findPackageWithURL(System.baseURL + 'local_projects/${repoOwner}--${name}');
+      reg.removePackage(p)`);
       await projectsDir.remove();
     } catch (err) {
       throw Error('Error deleting project', { cause: err });
     }
   }
 
-  static async loadProject (name, repoOwner, onlyLoadNotOpen = false) {
+  static async loadProject (fullName, onlyLoadNotOpen = false) {
     let li;
     if (!onlyLoadNotOpen && $world) li = $world.showLoadingIndicatorFor($world, 'Loading Project...');
     // Create Project object and do not automatically update the referenced lively version.
     // The project acts merely as a container until we fill in the correct contents below!
-    const loadedProject = new Project(name);
+    const loadedProject = new Project(fullName);
 
     let address, url;
-    // Operates on the "patched" name property, thus we need to glue owner and name together with dashes, to get the folder of the project.
-    address = (await Project.projectDirectory()).join(repoOwner + '--' + name);
+    address = (await Project.projectDirectory()).join(fullName);
     url = address.url;
     loadedProject.url = url;
-    loadedProject.configFile = await resource(address.join('package.json').url);
+    loadedProject.configFile = resource(address.join('package.json').url);
     if (!onlyLoadNotOpen) {
-      loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(repoOwner + '--' + name).withRelativePartsResolved().asDirectory();
+      loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
       // Ensure that we do not run into conflicts regarding the bound lively version.
       await loadedProject.gitResource.resetFile('package.json');
       await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
@@ -198,8 +220,7 @@ export class Project {
 
     const configContent = await loadedProject.configFile.read();
     loadedProject.config = JSON.parse(configContent);
-    // `package.json` contains the `flatn`-friendly version, exchange that here for more comfortable runtime behavior.
-    loadedProject.config.name = name;
+
     // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies. We reintroduce those changes here, if necessary.
     const checkLivelyCompatibility = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion, onlyLoadNotOpen);
     if (!onlyLoadNotOpen) {
@@ -224,7 +245,7 @@ export class Project {
     }
 
     const pkg = await loadPackage(Project.systemInterface, {
-      name: name,
+      name: fullName,
       url: url,
       address: url,
       configFile: address.join('package.json').url,
@@ -232,7 +253,7 @@ export class Project {
       type: 'package'
     });
     loadedProject.package = pkg;
-    await Project.installCSSForProject(url, !onlyLoadNotOpen, { repoOwner, name }, (!onlyLoadNotOpen ? loadedProject : null));
+    await Project.installCSSForProject(url, !onlyLoadNotOpen, fullName, (!onlyLoadNotOpen ? loadedProject : null));
     if (!onlyLoadNotOpen) {
       $world.openedProject = loadedProject;
       await loadedProject.retrieveProjectFontsFromCSS();
@@ -247,31 +268,31 @@ export class Project {
    * @param {object} opts
    * @param {object} projectRef - Only important when forProject is true. Reference to the Project that the CSS belongs to, so that we can access its instance later.
    */
-  static async installCSSForProject (projectUrl, forProject, opts, projectRef) {
+  static async installCSSForProject (projectUrl, forProject, projectName, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
     let indexCSS = await indexCSSResource.read();
     if (forProject) {
-      indexCSS = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + indexCSS;
-      addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, indexCSS);
+      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, indexCSS);
       const updateProjectCSS = async () => {
         let cssContents = await indexCSSResource.read();
-        cssContents = `@import '/local_projects/${opts.repoOwner}--${opts.name}/fonts.css';\n` + cssContents;
-        addOrChangeCSSDeclaration(`CSS-for-project-${opts.name}`, cssContents);
+        cssContents = `@import '/local_projects/${projectName}/fonts.css';\n` + cssContents;
+        addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, cssContents);
         await projectRef.retrieveProjectFontsFromCSS();
       };
       $world.fileWatcher.registerFileAction(indexCSSResource, updateProjectCSS);
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
       await updateProjectCSS();
     } else {
-      indexCSS = `@import '/local_projects/${opts.name}/fonts.css';\n` + indexCSS;
-      addOrChangeCSSDeclaration(`CSS-for-dependency-${opts.name}`, indexCSS);
+      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      addOrChangeCSSDeclaration(`CSS-for-dependency-${projectName}`, indexCSS);
     }
   }
 
   showDiffSummary () {
-    // Reset current staging area (necessary for `git diff-files` to procude meaningful output) while surpressing output.
+    // Reset current staging area (necessary for `git diff-files` to produce meaningful output) while suppressing output.
     // Run `git diff-file --stat` and output result (nice overview of **changed** files).
-    // Add all files to staging area while surpressing output, ensure that we reach the last command.
+    // Add all files to staging area while suppressing output, ensure that we reach the last command.
     // Printout new line (just for easier to read output).
     // Run git `status --short` and output result (overview **including new files**).
     const term = Terminal.runCommand("git reset 1>/dev/null && git diff-files --stat && git add * 2>/dev/null || true && echo '' && git status --short", { cwd: this.gitResource.url, position: pt(100, 100) });
@@ -320,14 +341,10 @@ export class Project {
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
-    const nameToRecover = this.config.name;
     try {
-      this.config.name = `${this.repoOwner}--${nameToRecover}`;
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
       throw Error('Error writing config file', { cause: e });
-    } finally {
-      this.config.name = nameToRecover;
     }
   }
 
@@ -359,7 +376,7 @@ export class Project {
           $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
           return 'CANCELED';
         } else {
-          $world.setStatusMessage(`Updated the required version of lively.next for ${this.config.name}.`, StatusMessageConfirm);
+          $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
           const currentCommit = await VersionChecker.currentLivelyVersion(true);
           this.config.lively.boundLivelyVersion = currentCommit;
           await this.saveConfigData();
@@ -388,7 +405,8 @@ export class Project {
   async create (withRemote = false, gitHubUser, priv) {
     this.gitResource = null;
     const system = Project.systemInterface;
-    const projectDir = (await Project.projectDirectory()).join(gitHubUser + '--' + this.name);
+    const projectsDir = await Project.projectDirectory();
+    const projectDir = projectsDir.join(this.fullName);
     this.url = projectDir.url;
     const createForOrg = gitHubUser !== currentUsername();
 
@@ -396,7 +414,7 @@ export class Project {
       await system.resourceCreateFiles(projectDir, {
         'index.js': "'format esm';\nexport async function main () {\n    // THIS FUNCTION IS THE ENTRY POINT IN THE BUNDLED APPLICATION!\n}",
         'package.json': '',
-        '.gitignore': 'node_modules/\nbuild/',
+        '.gitignore': 'node_modules/\nbuild/\n.livelyForkInformation',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
         tools: {
           'build.sh': '',
@@ -416,7 +434,7 @@ export class Project {
         'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
-      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(gitHubUser + '--' + this.name).withRelativePartsResolved().asDirectory();
+      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.fullName).withRelativePartsResolved().asDirectory();
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
@@ -425,8 +443,11 @@ export class Project {
       this.config.lively.repoBelongsToOrg = createForOrg;
       await this.saveConfigData();
 
+      await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${this.fullName}')`);
+      await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
+
       const pkg = await loadPackage(system, {
-        name: this.name,
+        name: this.fullName,
         url: this.url,
         address: this.url,
         configFile: projectDir.join('package.json').url,
@@ -438,11 +459,11 @@ export class Project {
     } catch (error) {
       throw Error('Error creating project files', { cause: error });
     }
-    await Project.installCSSForProject(this.url, true, { repoOwner: gitHubUser, name: this.name }, this);
+    await Project.installCSSForProject(this.url, true, this.fullName, this);
     if (withRemote) {
       try {
         await this.regeneratePipelines();
-        await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.config.name, gitHubUser, this.config.description, createForOrg, priv);
+        await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.name, gitHubUser, this.config.description, createForOrg, priv);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
@@ -497,7 +518,7 @@ export class Project {
     } else definition = definition.replace('%ACTION_TRIGGER%', '');
     if (livelyConf.repositoryIsPrivate && livelyConf.canUsePages) definition = definition.replace('%TOKEN_PERMISSIONS%', '\n  contents: read');
     else definition = definition.replace('%TOKEN_PERMISSIONS%', '');
-    return definition.replaceAll('%PROJECT_NAME%', `${this.repoOwner}--${this.name}`);
+    return definition.replaceAll('%PROJECT_NAME%', this.fullName);
   }
 
   async generateBuildScripts () {
@@ -505,7 +526,7 @@ export class Project {
     await (await resource(shellBuildScript).ensureExistance()).write(buildScriptShell);
     const mjsBuildScript = join(this.url, 'tools/build.mjs');
     let content = buildScript;
-    content = content.replaceAll('%PROJECT_NAME%', this.name);
+    content = content.replaceAll('%PROJECT_NAME%', this.fullName);
     await (await resource(mjsBuildScript).ensureExistance()).write(content);
     const shellBuildScriptOrigin = new URL(shellBuildScript).origin;
     const scriptDir = shellBuildScript.replace(shellBuildScriptOrigin + '/', '').replace('/build.sh', '');
@@ -544,11 +565,11 @@ export class Project {
   async ensureDependenciesExist () {
     const dependencyMap = {};
 
-    let availableProjects = Project.retrieveAvailableProjectsCache();
+    let availableProjects = await Project.listAvailableProjects();
     let depsToEnsure = this.config.lively.projectDependencies.map(dep => ({
       name: dep.name,
       version: dep.version,
-      requester: this.name
+      requester: this.fullName
     }));
 
     // Check until all (transitive) deps are ensured to exist.
@@ -567,7 +588,7 @@ export class Project {
         continue;
       }
       // No dependency with this name has been requested.
-      const depExists = availableProjects.some(proj => `${proj.projectRepoOwner}--${proj.name}` === depToEnsure.name);
+      const depExists = availableProjects.some(proj => proj._name === depToEnsure.name);
       if (!depExists) { // Dependency is not yet installed locally. Try to retrieve it from GitHub.
         const depName = depToEnsure.name.match(/[a-zA-Z\d]*--(.*)/)[1];
         const depRepoOwner = depToEnsure.name.match(/([a-zA-Z\d]*)--/)[1];
@@ -576,13 +597,16 @@ export class Project {
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
         // Refresh the cache of available projects and their version.
-        availableProjects = await Project.listAvailableProjects();
+        const packageDir = await Project.projectDirectory();
+        await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${depRepoOwner}--${depName}')`);
+        await PackageRegistry.ofSystem(System).addPackageAt(packageDir.join(`${depRepoOwner}--${depName}`));
+        availableProjects = await Project.listAvailableProjects(true);
       }
       // Add all transitive dependencies from the current dependency to the list.
       // **Note:** Actually, the transitive dependencies of a project could be different in different versions of this project.
       // Since we do not **actually** resolve the correct versions of projects currently, but only use the version number to *report* to users that something might be amiss, we do not deal with this here.
       // In case we could actually resolve different versions of the same project at the same time, transitive dependencies would also need to be handled in the case same name but different version above!
-      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => `${proj.projectRepoOwner}--${proj.name}` === depToEnsure.name).lively.projectDependencies.map(dep => ({
+      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => proj._name === depToEnsure.name).lively.projectDependencies.map(dep => ({
         name: dep.name,
         version: dep.version,
         requester: depToEnsure.name
@@ -598,7 +622,7 @@ export class Project {
         address: adr.url,
         type: 'package'
       });
-      Project.installCSSForProject(adr.url, false, { name: depToEnsure.name });
+      Project.installCSSForProject(adr.url, false, depToEnsure.name);
       // Last step: mark dependency with name and version as ensured and remove it from the list.
       dependencyMap[depToEnsure.name] = {
         [String(depToEnsure.version)]: [depToEnsure.requester]
@@ -612,10 +636,10 @@ export class Project {
   async checkVersionCompatibilityOfProjectDependencies (onlyLoadNotOpen = false) {
     const { dependencyMap } = this;
     let dependencyStatusReport = [];
-    const availableProjects = Project.retrieveAvailableProjectsCache();
+    const availableProjects = await Project.listAvailableProjects();
     let showStatusReport = false;
     for (let dep in dependencyMap) {
-      const installedDep = availableProjects.find(proj => `${proj.projectRepoOwner}--${proj.name}` === dep);
+      const installedDep = availableProjects.find(proj => proj._name === dep);
       for (let depVersion in dependencyMap[dep]) {
         const requesterOfDepVersion = dependencyMap[dep][depVersion].join(' ');
         // FIXME: We could determine if it would in theory be possible to find a version that satisfies all required ranges for a given dependency.
@@ -643,13 +667,13 @@ export class Project {
    */
   async addDependencyToProject (owner, name) {
     const ownerAndNameString = `${owner}--${name}`;
-    const dep = Project.retrieveAvailableProjectsCache().find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
+    const dep = (await Project.listAvailableProjects()).find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
     // TODO: We could think about adding clone support here as well, so that dependencies can be added directly from GitHub.
     if (!dep) throw Error('Dependency is not available!');
 
     // Order is important here, as we do not want to change the config object when loading of the Project fails!
     try {
-      await Project.loadProject(name, owner, true);
+      await Project.loadProject(name, true);
     } catch (err) {
       throw Error('Error loading and adding dependency package', { cause: err });
     }
@@ -675,7 +699,7 @@ export class Project {
   }
 
   async addMissingProjectDependencies () {
-    const availableDeps = Project.retrieveAvailableProjectsCache().map(proj => ({ name: `${proj.projectRepoOwner}--${proj.name}`, version: proj.version }));
+    const availableDeps = (await Project.listAvailableProjects()).map(proj => ({ name: proj.name, version: proj.version }));
     let currentDeps = this.config.lively.projectDependencies.slice();
 
     const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
@@ -685,7 +709,7 @@ export class Project {
       availableDeps.forEach(dep => {
         if (content.includes(dep.name) &&
             !currentDeps.some(alreadyPresentDeps => dep.name === alreadyPresentDeps.name) &&
-            `${this.repoOwner}--${this.name}` !== dep.name) currentDeps.push(dep);
+            this.fullName !== dep.name) currentDeps.push(dep);
       });
     }
     currentDeps = arr.uniqBy(currentDeps, obj.equals);
