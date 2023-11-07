@@ -184,14 +184,21 @@ export class Project {
     await resource(forkIndicatorFile).write(forkIndicatorContents);
   }
 
-  static async deleteProject (name, repoOwner) {
+  static async deleteProject (name, repoOwner, token, deleteRemote) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
     const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : ((await Project.projectDirectory()).join(`/${repoOwner}--${name}`).asDirectory());
+    const gitResource = await resource('git/' + projectsDir.url);
+
     try {
       await evalOnServer(`
       const reg = System.get("@lively-env").packageRegistry;
       const p = reg.findPackageWithURL(System.baseURL + 'local_projects/${repoOwner}--${name}');
       reg.removePackage(p)`);
+      let remoteDeletionSuccessful;
+      if (deleteRemote) {
+        remoteDeletionSuccessful = await gitResource.deleteRemoteRepository(token, name, repoOwner);
+      }
+      if (!remoteDeletionSuccessful) console.warn("Remote repository could not be deleted, due to insufficient permissions.")
       await projectsDir.remove();
     } catch (err) {
       throw Error('Error deleting project', { cause: err });
@@ -335,7 +342,7 @@ export class Project {
    */
   async saveConfigData () {
     await this.checkPagesSupport();
-
+    this.config.lively.hasRemote = await this.hasRemoteConfigured();
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {

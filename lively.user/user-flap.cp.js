@@ -106,7 +106,7 @@ class UserFlapModel extends ViewModel {
 
   async login () {
     if ($world.get('github login prompt')) return;
-    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,workflow' https://github.com/login/device/code`;
+    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
     const { stdout: resOne } = await runCommand(cmdString).whenDone();
     if (resOne === '') {
       $world.setStatusMessage('You seem to be offline.', StatusMessageError);
