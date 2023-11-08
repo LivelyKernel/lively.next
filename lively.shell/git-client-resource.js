@@ -2,12 +2,17 @@
 /* eslint-disable no-console */
 import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
+import L2LClient from 'lively.2lively/client.js';
 
 export default class GitShellResource extends ShellClientResource {
   constructor (url) {
     url = url.replace('git\/', '');
     super(url);
     this.options.cwd = this.url;
+    if (!this.options.l2lClient) {
+      const defaultConnection = { url: `${document.location.origin}/lively-socket.io`, namespace: 'l2l' };
+      this.options.l2lClient = L2LClient.ensure(defaultConnection);
+    }
   }
 
   runCommand (cmd) {
