@@ -120,7 +120,8 @@ export class WorldLoadingScreen extends Morph {
   }
 
   indicateMissing (project) {
-    this.get('package loading indicator').visible = this.get('package loading indicator').isLayoutable = false;
+    const ld = this.get('package loading indicator') || this.get('css loading screen');
+    ld.visible = ld.isLayoutable = false;
     this.get('broken heart').visible = this.get('broken heart').isLayoutable = true;
     this.get('error text').textString = project ? 'Sorry, the project you requested cannot be found on this machine' : 'Sorry, the world you requested cannot be found on this machine';
   }
@@ -172,7 +173,7 @@ const ErrorIndicator = component({
     name: 'error text',
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(345.1, 104.8),
-    position: pt(-64.5, 242.5),
+    position: pt(-61.4,273.6),
     fill: Color.rgba(0, 0, 0, 0),
     fixedHeight: true,
     fixedWidth: true,
