@@ -412,9 +412,11 @@ export class Project {
   async create (withRemote = false, gitHubUser, priv) {
     this.gitResource = null;
     const system = Project.systemInterface;
+    
     const projectsDir = await Project.projectDirectory();
-    const projectDir = projectsDir.join(this.fullName);
+    const projectDir = projectsDir.join(`${gitHubUser}--${this.name}`);
     this.url = projectDir.url;
+
     const createForOrg = gitHubUser !== currentUsername();
 
     try {
