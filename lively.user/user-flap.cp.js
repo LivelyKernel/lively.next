@@ -200,26 +200,27 @@ class UserFlapModel extends ViewModel {
   async retrieveGithubUserData () {
     const token = currentUserToken();
     // retrieve general data about the authenticated user
-    const cmdString = `curl -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${token}" https://api.github.com/user`;
-    let { stdout: userRes } = await runCommand(cmdString).whenDone();
-    if (!userRes || userRes === '') {
-      $world.setStatusMessage('An unexpected error occured. Please check your connection.', StatusMessageError);
-      return;
-    }
+    const userRes = await fetch('https://api.github.com/user', {
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    const userData = await userRes.json();
     // retrieve the organizations in which the authenticated user is a member
-    const organizationCmdString = `curl -L \
-      -H "Accept: application/vnd.github+json" \
-      -H "Authorization: Bearer ${token}"\
-      -H "X-GitHub-Api-Version: 2022-11-28" \
-      https://api.github.com/user/orgs`;
-    let { stdout: orgsResForUser } = await runCommand(organizationCmdString).whenDone();
-    if (!userRes || userRes === '') {
-      $world.setStatusMessage('An unexpected error occured. Please check your connection.', StatusMessageError);
-      return;
-    }
-    const orgNames = JSON.parse(orgsResForUser).map(org => org.login);
+    const orgsForUserRes = await fetch('https://api.github.com/user/orgs', {
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+
+      }
+    });
+    const orgsForUser = await orgsForUserRes.json();
+    const orgNames = orgsForUser.map(org => org.login);
     storeCurrentUsersOrganizations(orgNames);
-    storeCurrentUser(userRes);
+    storeCurrentUser(JSON.stringify(userData));
   }
 
   logout () {
