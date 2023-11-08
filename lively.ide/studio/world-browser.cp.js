@@ -13,7 +13,7 @@ import { Project } from 'lively.project';
 import { without, add } from 'lively.morphic/components/core.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { Path } from 'lively.morphic/morph.js';
-import { UserFlap } from 'lively.user/user-flap.cp.js';
+
 import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
@@ -736,8 +736,8 @@ export class WorldPreviewModel extends ViewModel {
     this.loadEntity();
   }
 
-  async loadEntity () {  
-      this.transitionToLivelyWorld(this._commit);
+  async loadEntity () {
+    this.transitionToLivelyWorld(this._commit);
   }
 
   async transitionToLivelyWorld (commit, projectName) {
@@ -838,13 +838,13 @@ class ProjectPreviewModel extends WorldPreviewModel {
 
   async loadEntity () {
     const { _name } = this._project;
-      this.transitionToLivelyWorld(null, _name);
+    this.transitionToLivelyWorld(null, _name);
   }
 
   async tryToDelete () {
     const proceed = await this._worldBrowser.confirm(['Delete Project\n', {}, 'Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
     if (proceed) {
-      const { _projectOwner, _projectName} = this._project;
+      const { _projectOwner, _projectName } = this._project;
       const gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(`${_projectOwner}--${_projectName}`).withRelativePartsResolved().asDirectory();
       const hasRemote = await gitResource.hasRemote();
       let deleteRepo;
@@ -1377,11 +1377,6 @@ const WorldBrowser = component({
             fontSize: 18
           }
         ]
-      }),
-      part(UserFlap, {
-        name: 'user flap',
-        extent: pt(141.0000, 36),
-        fill: Color.rgba(255, 255, 255, 0.2341)
       })
       ]
     }]
