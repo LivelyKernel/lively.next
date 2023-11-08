@@ -11,6 +11,7 @@ import { rect } from 'lively.graphics/geometry-2d.js';
 import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
+import { promise } from 'lively.lang';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -41,7 +42,7 @@ const CompactConfirmPrompt = component(ConfirmPrompt, {
   }]
 });
 
-class UserFlapModel extends ViewModel {
+export class UserFlapModel extends ViewModel {
   static get properties () {
     return {
       withLoginButton: {
@@ -85,7 +86,10 @@ class UserFlapModel extends ViewModel {
   }
 
   async viewDidLoad () {
+    this.view.opacity = 0;
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
+    await leftUserLabel.whenFontLoaded();
+    await rightUserLabel.whenFontLoaded();
     if (!isUserLoggedIn()) {
       if (this.withLoginButton) {
         avatar.visible = false;
@@ -102,6 +106,7 @@ class UserFlapModel extends ViewModel {
       rightUserLabel.nativeCursor = 'pointer';
       leftUserLabel.nativeCursor = 'auto';
     }
+    promise.delay(100).then(() => this.view.animate({ opacity: 1, duration: 300 }));
   }
 
   async login () {
