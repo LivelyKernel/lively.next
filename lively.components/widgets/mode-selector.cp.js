@@ -84,7 +84,7 @@ class ModeSelectorModel extends ViewModel {
         defaultValue: true
       },
       labelMaster: {
-        defaultValue: ModeSelectorLabelDark
+        defaultValue: ModeSelectorLabel
       }
     };
   }
@@ -182,6 +182,7 @@ const ModeSelector = component({
 });
 
 const ModeSelectorDark = component(ModeSelector, {
+  name: 'mode selector/dark',
   viewModelClass: ModeSelectorModel,
   viewModel: {
     labelMaster: ModeSelectorLabelDark
