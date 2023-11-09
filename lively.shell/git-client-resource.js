@@ -156,13 +156,18 @@ export default class GitShellResource extends ShellClientResource {
   async pullRepo () {
     const hasRemoteBranch = await this.hasRemoteMainConfigured();
     if (!hasRemoteBranch) return false;
-    await this.runCommand('git stash').whenDone();
-    const pullCmd = this.runCommand('git pull --rebase');
+    await this.runCommand('git stash -m "stashed-while-pulling-project"').whenDone();
+    const pullCmd = this.runCommand('git pull origin main --rebase');
     await pullCmd.whenDone();
     if (pullCmd.exitCode !== 0) throw Error('Error pulling. Might be due to a conflict!');
-    const cmd = this.runCommand('git stash pop');
-    await cmd.whenDone();
-    if (cmd.exitCode !== 0 && cmd.stderr !== 'No stash entries found.\n') throw Error('Error applying stash. Might be due to a conflict!');
+    // only apply lets us reference a stash by name -> clean up stash below
+    const stashApplicationCommand = this.runCommand('git stash apply stash^{/stashed-while-pulling-project}');
+    await stashApplicationCommand.whenDone();
+    // Successful stash application means we have created a stash that we need to clean up.
+    if (stashApplicationCommand.exitCode === 0) {
+      await this.runCommand('git stash drop').whenDone();
+    }
+    if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) throw Error('Error applying stash. Might be due to a conflict!');
     else return true;
   }
 
