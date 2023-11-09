@@ -48,7 +48,7 @@ const IconButton = component(IconButtonDefault, {
 const WidgetButtonClicked = component({ opacity: 0.5 });
 
 const WidgetButton = component({
-  viewModel: ButtonModel,
+  defaultViewModel: ButtonModel,
   master: {
     click: WidgetButtonClicked,
     states: {
