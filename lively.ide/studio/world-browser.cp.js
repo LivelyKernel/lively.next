@@ -461,7 +461,7 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   sortAndFilterPreviews (previews) {
-    return previews.filter(p => this.ui.searchField.matches(p._project?._projectName || (p._commit.name + p._commit.description)));
+    return previews.filter(p => this.ui.searchField.matches((p._project?._projectName + p._project?._projectOwner + p._project?.author?.name + p._project?.description) || (p._commit.name + p._commit.description)));
   }
 
   updateList () {

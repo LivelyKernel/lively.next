@@ -128,6 +128,8 @@ export class Project {
       p._projectName = p._name.replace(/.*--/, '');
       p._projectOwner = p._name.replace(/--.*/, '');
     });
+    // case-insensitive and unicode aware sorting
+    projectsCandidates.sort((a, b) => a._projectName.toLowerCase().localeCompare(b._projectName.toLowerCase()));
     return projectsCandidates;
   }
 
