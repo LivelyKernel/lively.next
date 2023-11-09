@@ -176,8 +176,10 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         try {
           urlString = remoteUrl.textString;
           if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
-          createdProject = await Project.fromRemote(urlString);
-          super.resolve(createdProject);
+          const projectNameToLoad = await Project.fromRemote(urlString);
+          this.view.remove();
+          const loadedProject = await Project.loadProject(projectNameToLoad);
+          super.resolve(loadedProject)
         } catch (err) {
           this.enableButtons();
           this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
