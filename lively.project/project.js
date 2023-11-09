@@ -86,10 +86,6 @@ export class Project {
         name: author
       },
       description: description,
-      repository: {
-        type: 'git',
-        url: `https://github.com/${repoOwner}/${name}`
-      },
       scripts: {
         build: "rm -rf build/* && export MINIFY='' && ./tools/build.sh",
         'build-minified': 'rm -rf build/* && export MINIFY=true && ./tools/build.sh'
@@ -351,13 +347,14 @@ export class Project {
   }
 
   /**
-   * Method to be used to store package.json data on disk.
+   * Method to be used to store `package.json` data on disk.
    * Other changes will be stored on a per module basis anyways.
-   * Called when a project gets saved..
+   * Called when a project gets saved.
    */
   async saveConfigData () {
-    await this.checkPagesSupport();
-    this.config.lively.hasRemote = await this.hasRemoteConfigured();
+    // Update for the case that a user changed its plan since the last save.
+    if (await this.hasRemoteConfigured()) await this.checkPagesSupport();
+    
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -413,12 +410,20 @@ export class Project {
     }
   }
 
-  setCIDefaults () {
+  addRemoteConfig (priv) {
+    const { config } = this;
+    config.lively.repositoryIsPrivate = !!priv;
+    const repoOwner = this.repoOwner;
+    config.lively.repoBelongsToOrg = repoOwner !== currentUsername();
+    config.repository = {
+      type: 'git',
+      url: `https://github.com/${repoOwner}/${this.name}`
+    };
+
     // OPINIONATED DEFAULTS
-    const livelyConfig = this.config.lively;
+    const livelyConfig = config.lively;
     livelyConfig.testActionEnabled = true;
     livelyConfig.buildActionEnabled = false;
-    livelyConfig.deployActionEnabled = this.canDeployToPages;
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
     livelyConfig.deployOnPush = false;
@@ -431,8 +436,6 @@ export class Project {
     const projectsDir = await Project.projectDirectory();
     const projectDir = projectsDir.join(`${gitHubUser}--${this.name}`);
     this.url = projectDir.url;
-
-    const createForOrg = gitHubUser !== currentUsername();
 
     try {
       await system.resourceCreateFiles(projectDir, {
@@ -463,8 +466,9 @@ export class Project {
 
       await this.gitResource.initializeGitRepository();
 
-      this.config.lively.repositoryIsPrivate = !!priv;
-      this.config.lively.repoBelongsToOrg = createForOrg;
+      if (withRemote) {
+        this.addRemoteConfig(priv);
+      }
       await this.saveConfigData();
 
       await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${this.fullName}')`);
@@ -486,14 +490,12 @@ export class Project {
     await Project.installCSSForProject(this.url, true, this.fullName, this);
     if (withRemote) {
       try {
+        await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.name, gitHubUser, this.config.description, gitHubUser !== currentUsername(), priv);
         await this.regeneratePipelines();
-        await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.name, gitHubUser, this.config.description, createForOrg, priv);
       } catch (e) {
         throw Error('Error setting up remote', { cause: e });
       }
     }
-
-    this.setCIDefaults();
 
     const saveSuccess = await this.save({ message: 'Initial Commit' });
     if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
@@ -505,6 +507,7 @@ export class Project {
   }
 
   async regeneratePipelines () {
+    await this.checkPagesSupport();
     await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
     let pipelineFile, content;
     const livelyConfig = this.config.lively;
@@ -526,6 +529,7 @@ export class Project {
     }
 
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
+    if (!livelyConfig.hasOwnProperty('deployActionEnabled')) livelyConfig.deployActionEnabled = this.canDeployToPages;
     if (livelyConfig.deployActionEnabled && this.canDeployToPages) {
       content = this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
       await (await resource(pipelineFile).ensureExistance()).write(content);
@@ -564,16 +568,17 @@ export class Project {
       $world.setStatusMessage('Please log in.');
       return false;
     }
-    let { message, increaseLevel, tag, filesToCommit } = opts;
+    let { message, increaseLevel, tag, filesToCommit, needsPipelines } = opts;
     message = message.trim();
     message = message + '\nCommited from within lively.next.';
 
     this.increaseVersion(increaseLevel);
     try {
+      const hasRemote = await this.gitResource.hasRemote();
+      if (hasRemote && needsPipelines) await this.regeneratePipelines();
       await this.saveConfigData();
-      if (await this.gitResource.hasRemote()) {
+      if (hasRemote) {
         await this.gitResource.pullRepo();
-        await this.regeneratePipelines();
         await this.gitResource.commitRepo(message, tag, this.config.version, filesToCommit);
         await this.gitResource.pushRepo();
         // In case we have pulled new changes, reload the package so that lively knows of them!

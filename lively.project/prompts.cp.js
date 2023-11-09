@@ -316,20 +316,18 @@ class RepoCreationPromptModel extends AbstractPromptModel {
 
       try {
         const proj = this.project;
-        const repoInOrg = currentUsername() !== currentUsername();
-        await proj.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), proj.name, proj.repoOwner, proj.config.description, repoInOrg, privateRepo);
+        // order is important here: we only want to set up the remote specific config stuff if repo creation succeeds
+        await proj.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), proj.name, proj.repoOwner, proj.config.description, proj.repoOwner !== proj.config.author.name, privateRepo);
+        proj.addRemoteConfig(privateRepo);
         li.remove();
-
         li = $world.showLoadingIndicatorFor(this.view, 'Setting up Defaults...');
-        proj.setCIDefaults();
-        proj.config.lively.repositoryIsPrivate = privateRepo;
-        proj.config.lively.repoBelongsToOrg = repoInOrg;
         li.remove();
 
         li = $world.showLoadingIndicatorFor(this.view, 'Uploading Project...');
         await proj.save({
           message: 'Enabling remote repository.',
-          filesToCommit: 'package.json .github/*'
+          filesToCommit: 'package.json .github/*',
+          needsPipelines: true
         });
         li.remove();
 
@@ -374,7 +372,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
   async viewDidLoad () {
     this.ui.diffButton.disable();
     await this.project.saveConfigData();
-    await this.project.regeneratePipelines();
+    if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
     this.ui.diffButton.enable();
   }
 
