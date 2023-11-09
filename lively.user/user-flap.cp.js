@@ -12,6 +12,7 @@ import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
 import { promise } from 'lively.lang';
+import { guardNamed } from 'lively.lang/function.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -110,81 +111,83 @@ export class UserFlapModel extends ViewModel {
   }
 
   async login () {
-    if ($world.get('github login prompt')) return;
-    let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
-    const { stdout: resOne } = await runCommand(cmdString).whenDone();
-    if (resOne === '') {
-      $world.setStatusMessage('You seem to be offline.', StatusMessageError);
-      return;
-    }
-    if (resOne === 'NOT FOUND') {
-      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
-      return;
-    }
-    const deviceCodeMatch = resOne.match(new RegExp('device_code=(.*)&e'));
-    const userCodeMatch = resOne.match(new RegExp('user_code=(.*)&'));
-    if (!deviceCodeMatch || !userCodeMatch) {
-      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
-      return;
-    }
-    const deviceCode = deviceCodeMatch[1];
-    const userCode = userCodeMatch[1];
-    // GitHub sends us an Interval (in s) that we need to wait between polling for login status, otherwise we get timeouted
-    const interval = resOne.match(/interval=(\d*)&/)[1];
-    this.toggleLoadingAnimation();
-    let confirm;
-    window.open('https://github.com/login/device', 'Github Authentification', 'width=500,height=600,top=100,left=100');
-    $world.confirm(['Enter \n', null, `${userCode}`, { fontColor: Color.lively }, '\nin the popup to login!', null], {
-      name: 'github login prompt',
-      customize: (prompt) => {
-        prompt.master = CompactConfirmPrompt;
-        prompt.width = 300;
-        prompt.position = $world.visibleBounds().center().subXY(150, prompt.height / 2);
-      }
-    }).then(conf => {
-      confirm = conf;
-    });
-    cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
-    let curlCmd;
-    let loginSuccessful = false;
-    for (let i = 0; i < 20; i++) {
-      let elapsedTimeWaitingForGitHub = await timeToRun(waitFor(interval * 1000, () => confirm !== undefined, false));
-      if (confirm === true) {
-        // Assumes that one logged in successfuly when pressing OK, we still need to wait in case GitHub wants us to
-        if (elapsedTimeWaitingForGitHub < interval * 1000) {
-          await delay((interval * 1000) - elapsedTimeWaitingForGitHub);
-        }
-      }
-      if (confirm === false) {
-        this.toggleLoadingAnimation();
-        $world.setStatusMessage('Login aborted by user.');
+    guardNamed('github-login', async () => {
+      if ($world.get('github login prompt')) return;
+      let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
+      const { stdout: resOne } = await runCommand(cmdString).whenDone();
+      if (resOne === '') {
+        $world.setStatusMessage('You seem to be offline.', StatusMessageError);
         return;
       }
-      curlCmd = await runCommand(cmdString).whenDone();
-      if (curlCmd.exitCode === 0 && !curlCmd.stdout.includes('error')) {
-        loginSuccessful = true;
-        $world.get('github login prompt')?.remove();
-        break;
+      if (resOne === 'NOT FOUND') {
+        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+        return;
       }
-    }
-
-    if (!loginSuccessful) {
+      const deviceCodeMatch = resOne.match(new RegExp('device_code=(.*)&e'));
+      const userCodeMatch = resOne.match(new RegExp('user_code=(.*)&'));
+      if (!deviceCodeMatch || !userCodeMatch) {
+        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+        return;
+      }
+      const deviceCode = deviceCodeMatch[1];
+      const userCode = userCodeMatch[1];
+      // GitHub sends us an Interval (in s) that we need to wait between polling for login status, otherwise we get timeouted
+      const interval = resOne.match(/interval=(\d*)&/)[1];
       this.toggleLoadingAnimation();
-      $world.setStatusMessage('Login failed.', StatusMessageError);
-      return;
-    }
+      let confirm;
+      window.open('https://github.com/login/device', 'Github Authentification', 'width=500,height=600,top=100,left=100');
+      $world.confirm(['Enter \n', null, `${userCode}`, { fontColor: Color.lively }, '\nin the popup to login!', null], {
+        name: 'github login prompt',
+        customize: (prompt) => {
+          prompt.master = CompactConfirmPrompt;
+          prompt.width = 300;
+          prompt.position = $world.visibleBounds().center().subXY(150, prompt.height / 2);
+        }
+      }).then(conf => {
+        confirm = conf;
+      });
+      cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
+      let curlCmd;
+      let loginSuccessful = false;
+      for (let i = 0; i < 20; i++) {
+        let elapsedTimeWaitingForGitHub = await timeToRun(waitFor(interval * 1000, () => confirm !== undefined, false));
+        if (confirm === true) {
+        // Assumes that one logged in successfuly when pressing OK, we still need to wait in case GitHub wants us to
+          if (elapsedTimeWaitingForGitHub < interval * 1000) {
+            await delay((interval * 1000) - elapsedTimeWaitingForGitHub);
+          }
+        }
+        if (confirm === false) {
+          this.toggleLoadingAnimation();
+          $world.setStatusMessage('Login aborted by user.');
+          return;
+        }
+        curlCmd = await runCommand(cmdString).whenDone();
+        if (curlCmd.exitCode === 0 && !curlCmd.stdout.includes('error')) {
+          loginSuccessful = true;
+          $world.get('github login prompt')?.remove();
+          break;
+        }
+      }
 
-    const { stdout: resTwo } = curlCmd;
-    const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
-    if (!userToken) {
+      if (!loginSuccessful) {
+        this.toggleLoadingAnimation();
+        $world.setStatusMessage('Login failed.', StatusMessageError);
+        return;
+      }
+
+      const { stdout: resTwo } = curlCmd;
+      const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
+      if (!userToken) {
+        this.toggleLoadingAnimation();
+        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+        return;
+      }
+      storeCurrentUserToken(userToken);
+      await this.retrieveGithubUserData();
       this.toggleLoadingAnimation();
-      $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
-      return;
-    }
-    storeCurrentUserToken(userToken);
-    await this.retrieveGithubUserData();
-    this.toggleLoadingAnimation();
-    this.showLoggedInUser();
+      this.showLoggedInUser();
+    })();
   }
 
   showLoggedInUser () {
