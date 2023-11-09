@@ -13,6 +13,7 @@ import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
 import { SystemButton } from 'lively.components/buttons.cp.js';
 import { promise } from 'lively.lang';
 import { guardNamed } from 'lively.lang/function.js';
+import L2LClient from 'lively.2lively/client.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -86,7 +87,31 @@ export class UserFlapModel extends ViewModel {
     avatar.visible = this.withLoginButton ? false : !avatar.visible;
   }
 
+  async setupNetworkIndicator () {
+    const info = { world: $world.name || 'l2l before worldname defined' };
+    const client = await L2LClient.forLivelyInBrowser(info);
+    console.log(`[lively] lively2lively client created ${client}`);
+
+    client.on('registered', () => {
+      const flap = $world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('connected', () => {
+      const flap = $world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('reconnecting', () => {
+      const flap = $world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+    client.on('disconnected', () => {
+      const flap = $world.get('user flap');
+      flap && flap.updateNetworkIndicator(client);
+    });
+  }
+
   async viewDidLoad () {
+    await this.setupNetworkIndicator();
     this.view.opacity = 0;
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
     await leftUserLabel.whenFontLoaded();

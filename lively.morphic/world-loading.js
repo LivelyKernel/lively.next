@@ -24,7 +24,7 @@ function reportWorldLoad (world, user) {
 }
 
 async function setupLively2Lively (world) {
-  const user = { name: currentUser().login, email: currentUser().email };
+  const user = { name: currentUser().login };
   const info = { world: world.name };
   if (user) {
     info.userToken = user.token;
@@ -36,38 +36,26 @@ async function setupLively2Lively (world) {
   const client = await L2LClient.forLivelyInBrowser(info);
   console.log(`[lively] lively2lively client created ${client}`);
 
-  // FIXME... put this go somewhere else...?
-  if (!client._onUserChange) {
-    client._onUserChange = function (evt) {
-      if (client.isOnline() && evt.user) {
-        const { token: userToken, realm: userRealm } = evt.user;
-        client.info = { ...client.info, userToken, userRealm };
-        client.unregister().then(() => client.register())
-          .then(() => console.log('re-registered after user change'));
-      }
-    };
+  client.once('registered', () => {
+    reportWorldLoad(world, user);
+  });
 
-    client.once('registered', () => {
-      reportWorldLoad(world, user);
-    });
-
-    client.on('registered', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('connected', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('reconnecting', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-    client.on('disconnected', () => {
-      const flap = world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
-    });
-  } else reportWorldLoad(world, user);
+  client.on('registered', () => {
+    const flap = world.get('user flap');
+    flap && flap.updateNetworkIndicator(client);
+  });
+  client.on('connected', () => {
+    const flap = world.get('user flap');
+    flap && flap.updateNetworkIndicator(client);
+  });
+  client.on('reconnecting', () => {
+    const flap = world.get('user flap');
+    flap && flap.updateNetworkIndicator(client);
+  });
+  client.on('disconnected', () => {
+    const flap = world.get('user flap');
+    flap && flap.updateNetworkIndicator(client);
+  });
 
   return client;
 }
