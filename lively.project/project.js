@@ -133,7 +133,7 @@ export class Project {
 
   /**
    * Takes the URL for a GitHub Repository at which a lively project resides and clones the repository in the projects folder of the local lively installation.
-   * Afterwards, the cloned project gets loaded.
+   * Note, that the cloned project needs to be loaded separately.
    * @param {string} remote - The URL of the GitHub Repository.
    */
   static async fromRemote (remote) {
@@ -172,8 +172,7 @@ export class Project {
     await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
 
     li.remove();
-    const loadedProject = await Project.loadProject(`${projectRepoOwner}--${projectName}`);
-    return loadedProject;
+    return `${projectRepoOwner}--${projectName}`;
   }
 
   static async setupForkInformation (forkOwner, forkName) {
