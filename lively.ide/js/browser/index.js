@@ -398,7 +398,7 @@ export class PackageTreeData extends TreeData {
       };
     }), ({ pkg }) => ({ core: 1, local: 2, git: 3, dependency: 4 }[pkg.kind]));
 
-    if (!this.showDependencyPackages) pkgs = pkgs.filter(p => p.pkg.kind !== 'dependency' && p.name !== 'flatn' && p.name !== 'mocha-es6');
+    if (!this.showDependencyPackages) pkgs = pkgs.filter(p => p.pkg.kind !== 'dependency');
 
     // To allow correct resolution of projects we list all available projects in the package registry.
     // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
@@ -1281,14 +1281,16 @@ export class BrowserModel extends ViewModel {
     const { value: isInstalled } = await this.systemInterface.runEval(`
       const g = typeof global !== 'undefined' ? global : window;
      !!g.Mocha && !!g.chai
-    `, { targetModule: this.selectedModule.url });
+    `);
     if (isInstalled) return;
-    await this.systemInterface.importPackage('mocha-es6');
+    const pkg = await this.systemInterface.importPackage('mocha-es6');
     await this.systemInterface.runEval(`
       const g = typeof global !== 'undefined' ? global : window;
       const promise = await System.import('lively.lang/promise.js')
       promise.waitFor(30 * 1000, () =>  !!g.Mocha && !!g.chai);
-    `, { targetModule: this.selectedModule.url });
+    `, { targetModule: 'lively://lively.morphic/browser' });
+
+    return pkg;
   }
 
   onListSelectionChange (selectedPath) {
