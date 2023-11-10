@@ -11,6 +11,7 @@ const minify = !process.env.CI;
 const build = await rollup({
   input: './src/landing-page.cp.js',
   shimMissingExports: true,
+  external: ['chai', 'mocha'],
   plugins: [
     lively({
       autoRun: {
@@ -21,7 +22,7 @@ const build = await rollup({
       asBrowserModule: true,
       excludedModules: [
 	'lively.collab',
-        'mocha-es6','mocha', // references old lgtg that breaks the build
+        'chai','mocha', // references old lgtg that breaks the build
         'rollup', // has a dist file that cant be parsed by rollup
         // other stuff that is only needed by rollup
         '@babel/preset-env',
@@ -43,5 +44,9 @@ const build = await rollup({
 
 await build.write({
   format: 'system',
-  dir: 'landing-page'
+  dir: 'landing-page',
+  globals: {
+    chai: 'chai',
+    mocha: 'mocha',
+  },
 });
