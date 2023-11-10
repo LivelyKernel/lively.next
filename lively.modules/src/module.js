@@ -285,7 +285,7 @@ class ModuleInterface {
       if (!mod) {
         S.delete(m);
         await S.import(m);
-        mod = S['__lively.modules__loadedModules'][m];
+        mod = S['__lively.modules__loadedModules'][m] || module(S, m);
       }
       await mod.reload();
       S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
