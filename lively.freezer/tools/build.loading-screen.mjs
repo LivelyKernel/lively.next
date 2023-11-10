@@ -10,7 +10,8 @@ const minify = !process.env.CI;
 
 const build = await rollup({
   input: './src/loading-screen.cp.js',
-  shimMissingExports: true,  
+  shimMissingExports: true,
+  external: ['chai', 'mocha'],
   plugins: [
     lively({
       autoRun: { title: 'lively.next' },
@@ -19,7 +20,7 @@ const build = await rollup({
       asBrowserModule: true,
       excludedModules: [
 	'lively.collab',
-        'mocha-es6','mocha', 'picomatch', // references old lgtg that breaks the build
+        'mocha', 'chai', 'picomatch', // references old lgtg that breaks the build
         'path-is-absolute', 'fs.realpath', 'rollup', // has a dist file that cant be parsed by rollup
         '@babel/preset-env',
         '@babel/plugin-syntax-import-meta',
@@ -40,5 +41,9 @@ const build = await rollup({
 
 await build.write({
   format: 'system',
-  dir: 'loading-screen'
+  dir: 'loading-screen',
+  globals: {
+    chai: 'chai',
+    mocha: 'mocha',
+  }
 });
