@@ -237,6 +237,17 @@ function prepareSystem (System, config) {
       System.newModule({ electron: isElectron, ...System.get('@system-env') }));
   }
 
+  async function customInstantiate (load, proceed) {
+    if (this.skipInstantiation && this.moduleRegisters?.[load.name]) {
+      this.REGISTER_INTERNAL.records[load.name].registration = this.moduleRegisters?.[load.name];
+      load.source = undefined;
+      return proceed(load);
+    }
+    if (this.moduleSources) this.moduleSources[load.name] = load.source;
+    await postCustomTranslate.call(this, load);
+    return instantiate_triggerOnLoadCallbacks.call(this, proceed, load);
+  }
+
   const basePlugin = {
     locate: function (load) { return locateHook.call(this, load); },
     fetch: function (load, proceed) {
@@ -250,14 +261,8 @@ function prepareSystem (System, config) {
       return customTranslate.call(this, load, opts);
     },
     instantiate: async function (load, proceed) {
-      if (this.skipInstantiation && this.moduleRegisters?.[load.name]) {
-        this.REGISTER_INTERNAL.records[load.name].registration = this.moduleRegisters?.[load.name];
-        load.source = undefined;
-        return proceed(load);
-      }
-      if (this.moduleSources) this.moduleSources[load.name] = load.source;
-      await postCustomTranslate.call(this, load);
-      return instantiate_triggerOnLoadCallbacks.call(this, proceed, load);
+      if (System.instantiate) return await System.instantiate((load) => customInstantiate.bind(this)(load, proceed), load);
+      else return await customInstantiate.bind(this)(load, proceed);
     }
   };
   const fetchPlugin = System.newModule(basePlugin);

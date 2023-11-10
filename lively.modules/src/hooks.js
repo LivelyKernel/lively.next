@@ -1,7 +1,7 @@
 import { arr, fun } from 'lively.lang';
 
 function install (System, methodName, hook, hookName = hook.name) {
-  let wrapper = System[methodName] = fun.wrap(System[methodName], hook);
+  let wrapper = System[methodName] = System[methodName] ? fun.wrap(System[methodName], hook) : hook;
   wrapper.hookFunc = hook;
   hook.hookName = hookName; // function.name is not reliable when minified!
 }
