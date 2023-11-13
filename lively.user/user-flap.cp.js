@@ -92,21 +92,19 @@ export class UserFlapModel extends ViewModel {
     const client = await L2LClient.forLivelyInBrowser(info);
     console.log(`[lively] lively2lively client created ${client}`);
 
+    const flap = this.view;
+
     client.on('registered', () => {
-      const flap = $world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
+      flap.updateNetworkIndicator(client);
     });
     client.on('connected', () => {
-      const flap = $world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
+      flap.updateNetworkIndicator(client);
     });
     client.on('reconnecting', () => {
-      const flap = $world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
+      flap.updateNetworkIndicator(client);
     });
     client.on('disconnected', () => {
-      const flap = $world.get('user flap');
-      flap && flap.updateNetworkIndicator(client);
+      flap.updateNetworkIndicator(client);
     });
   }
 
