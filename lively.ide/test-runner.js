@@ -13,7 +13,7 @@ import { resource } from 'lively.resources/index.js';
 
 import { packagesConfig } from 'lively.modules/src/packages/package.js';
 import { localInterface } from 'lively-system-interface';
-import jsDiff from 'esm://cache/diff@3.0.0';
+import * as jsDiff from 'esm://cache/diff@5.0.0';
 import { browserForFile } from './js/browser/ui.cp.js';
 
 export function testsFromSource (sourceOrAst) {

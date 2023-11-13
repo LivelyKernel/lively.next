@@ -506,8 +506,8 @@ function additionalIgnoredRefs (parsed, options) {
 
   return topLevel.scope.catches.map(ea => ea.name)
     .concat(queryHelpers.declIds(ignoreDecls.map(ea => ea.id || ea.name))
-    .concat(options.captureImports ? [] : topLevel.scope.importSpecifiers)
-    .map(ea => ea.name));
+      .concat(options.captureImports ? [] : topLevel.scope.importSpecifiers)
+      .map(ea => ea.name));
 }
 
 function shouldDeclBeCaptured (decl, options) {
@@ -686,12 +686,12 @@ export function insertCapturesForFunctionDeclarations (parsed, options) {
   const body = [];
   const moduleMetaVar = '__moduleMeta__';
   if (!options.currentModuleAccessor) throw new Error('No module accessor provided for function declaration capture');
-  body.push(varDecl(moduleMetaVar, options.currentModuleAccessor, 'const'));
+  body.push(varDecl(moduleMetaVar, options.currentModuleAccessor, 'let'));
   for (let i = 0; i < parsed.body.length; i++) {
     const stmt = parsed.body[i];
     if (stmt.type === 'FunctionDeclaration') {
       const anonymousFn = { ...stmt, id: null };
-      body.push(varDecl(id(stmt.id.name), funcCall(options.declarationWrapper, literal(stmt.id.name), literal('function'), anonymousFn, id(moduleMetaVar)), 'const'));
+      body.push(varDecl(id(stmt.id.name), funcCall(options.declarationWrapper, literal(stmt.id.name), literal('function'), anonymousFn, id(moduleMetaVar)), 'let'));
       continue;
     }
     body.push(stmt);
