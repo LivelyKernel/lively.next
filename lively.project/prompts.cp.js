@@ -218,7 +218,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       li.center = $world.visibleBounds().center();
       li.hasFixedPosition = true;
       once(this.view, 'activate', () => li.bringToFront());
-      await userFlap.update();
       li.remove();
       this.projectNameMode();
     }
