@@ -40,23 +40,6 @@ async function setupLively2Lively (world) {
     reportWorldLoad(world, user);
   });
 
-  client.on('registered', () => {
-    const flap = world.get('user flap');
-    flap && flap.updateNetworkIndicator(client);
-  });
-  client.on('connected', () => {
-    const flap = world.get('user flap');
-    flap && flap.updateNetworkIndicator(client);
-  });
-  client.on('reconnecting', () => {
-    const flap = world.get('user flap');
-    flap && flap.updateNetworkIndicator(client);
-  });
-  client.on('disconnected', () => {
-    const flap = world.get('user flap');
-    flap && flap.updateNetworkIndicator(client);
-  });
-
   return client;
 }
 
