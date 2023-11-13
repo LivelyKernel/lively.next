@@ -223,11 +223,15 @@ export class Project {
       loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
       if (await loadedProject.gitResource.hasRemote()) {
           const remoteURL = await loadedProject.gitResource.getRemote();
-          const userTokenInRemoteURL = remoteURL.match(/(gho_.*)@/)[1];
-          if (userTokenInRemoteURL !== currentUserToken()) {
+          let remoteURLUserTokenMatch = remoteURL.match(/(gho_.*)@/);
+          let userTokenInRemoteURL;
+          const currUserToken = currentUserToken();
+          // This should always be the case, just be defensive here to minimize the potential for crashes.
+          if (remoteURLUserTokenMatch) userTokenInRemoteURL = remoteURLUserTokenMatch[1];
+          if (currUserToken && userTokenInRemoteURL && (userTokenInRemoteURL !== currUserToken)) {
             const repoOwner = fullName.replace(/--.*/, '');
             const name = fullName.replace(/.*--/, '');
-            await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currentUserToken(), repoOwner, name);
+            await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currUserToken, repoOwner, name);
           }
       }
       // Ensure that we do not run into conflicts regarding the bound lively version.
