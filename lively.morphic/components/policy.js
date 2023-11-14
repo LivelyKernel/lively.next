@@ -884,6 +884,7 @@ export class StylePolicy {
       return specOrPolicy;
     };
     const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
+    if (this.__wasAddedToDerived__) buildSpec.__wasAddedToDerived__ = true;
     buildSpec.master = this;
     return buildSpec;
   }
@@ -961,7 +962,7 @@ export class StylePolicy {
     let qualifyingMaster = this.determineMaster(this.statePartitionedInline ? previousTarget : ownerOfScope);
 
     if (!qualifyingMaster) {
-      return subSpec;
+      return { ...subSpec };
     }
 
     if (qualifyingMaster.isComponentDescriptor) { // top level component definition referenced
@@ -985,6 +986,9 @@ export class StylePolicy {
     }
 
     let synthesized = {};
+
+    delete parentSpec.__wasAddedToDerived__;
+    delete nextLevelSpec.__wasAddedToDerived__;
 
     Object.assign(
       synthesized,

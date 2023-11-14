@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
-import { ComponentDescriptor, morph } from 'lively.morphic';
+import { ComponentDescriptor, Text, Morph, morph } from 'lively.morphic';
 import { component, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 import { getDefaultValuesFor } from '../helpers.js';
@@ -358,6 +358,7 @@ describe('spec based components', () => {
         },
         {
           name: 'foo',
+          __wasAddedToDerived__: true,
           master: inline1,
           submorphs: [
             {
@@ -400,10 +401,10 @@ describe('spec based components', () => {
       submorphs: [{
         name: 'alice',
         master: c2.stylePolicy.spec.submorphs[0],
-        submorphs: [{ name: 'bob', master: c2.stylePolicy.spec.submorphs[0].spec.submorphs[0].props }]
+        submorphs: [{ name: 'bob', __wasAddedToDerived__: true, master: c2.stylePolicy.spec.submorphs[0].spec.submorphs[0].props }]
       }]
     };
-    expect(c2.stylePolicy.asBuildSpec(true)).to.eql(expectedBuildSpec);
+    expect(c2.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec);
   });
 
   it('properly initializes morphs that resemble the component definition', () => {
