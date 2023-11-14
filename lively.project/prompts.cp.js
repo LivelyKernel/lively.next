@@ -179,7 +179,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           const projectNameToLoad = await Project.fromRemote(urlString);
           this.view.remove();
           const loadedProject = await Project.loadProject(projectNameToLoad);
-          super.resolve(loadedProject)
+          super.resolve(loadedProject);
         } catch (err) {
           this.enableButtons();
           this.view.setStatusMessage('Error fetching Project from remote.', StatusMessageError);
@@ -207,7 +207,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    const { promptTitle, cancelButton, okButton, userFlap, privateCheckbox } = this.ui;
+    const { promptTitle, cancelButton, okButton, privateCheckbox } = this.ui;
     okButton.disable();
     privateCheckbox.disable();
     cancelButton.disable();
@@ -219,6 +219,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       li.hasFixedPosition = true;
       once(this.view, 'activate', () => li.bringToFront());
       li.remove();
+      await this.view.whenRendered();
       this.projectNameMode();
     }
     promptTitle.textString = 'Configure new Project';
