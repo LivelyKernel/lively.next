@@ -420,7 +420,7 @@ describe('spec based components', () => {
 
   it('properly synthesizes style policies', () => {
     expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
-      ...getDefaultValuesFor({}),
+      ...getDefaultValuesFor(Morph),
       borderRadius: 5,
       borderColor: Color.black,
       borderWidth: 2,
@@ -434,7 +434,7 @@ describe('spec based components', () => {
     p2.__wasAddedToDerived__ = true;
     expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(p2);
     expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
-      ...getDefaultValuesFor({ type: 'text' }),
+      ...getDefaultValuesFor('text'),
       fill: Color.black,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
@@ -498,23 +498,23 @@ describe('spec based components', () => {
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
     expect(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor({}),
+      ...getDefaultValuesFor(Morph),
       fill: Color.yellow
     });
 
     expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor({}),
+      ...getDefaultValuesFor(Morph),
       fill: Color.yellow
     });
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor({}),
+      ...getDefaultValuesFor(Morph),
       opacity: 0.5,
       position: pt(45, 45),
       extent: pt(50, 50), // default values in new master do not override custom in original
       fill: Color.red
     });
     expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice')).to.eql({
-      ...getDefaultValuesFor({ type: 'text' }),
+      ...getDefaultValuesFor(Text),
       fill: Color.blue,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
