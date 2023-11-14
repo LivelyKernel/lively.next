@@ -23,9 +23,10 @@ export default class TestRunner {
         type: 'package'
       });
     }
+    await System.import('mocha-es6/index.js');
+    await promise.waitFor(()=> !!window.chai && !!window.Mocha);
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
     const runner = new TestRunner();
-    await promise.waitFor(()=> !!window.chai && !!window.Mocha);
     const results = await runner.runTestsInPackage('${module_to_test}');
     results.forEach(r => {
       r.tests?.forEach(t => {
