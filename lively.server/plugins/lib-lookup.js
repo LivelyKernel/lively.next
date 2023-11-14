@@ -49,6 +49,8 @@ export default class LibLookupPlugin {
     if (fs.existsSync(join(fsRootDir, path))) return next();
 
     path = decodeURIComponent(path);
+    
+    try {
     let lookupPath = path.split("/").slice(2).join("/"),
         version = false, // for now disable
         fullLibPath = System._nodeRequire.resolve(lookupPath);
@@ -65,6 +67,8 @@ export default class LibLookupPlugin {
         }
       }
     }
+
+    } catch (err) { return next() } 
     
 
     let registry = this.packageRegistry;
