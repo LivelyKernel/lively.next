@@ -10,7 +10,7 @@ export function isUserLoggedIn () {
 }
 
 export function storeCurrentUser (userData) {
-  localStorage.setItem('gh_user_data', userData);
+  localStorage.setItem('gh_user_data', JSON.stringify(userData));
 }
 export function currentUsersOrganizations () {
   return JSON.parse(localStorage.getItem('gh_user_organizations'));
