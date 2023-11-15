@@ -1,5 +1,6 @@
 import { promise, arr, obj } from 'lively.lang';
 import * as http from 'http';
+import { module, isModuleLoaded } from 'lively.modules';
 
 // Array.from(LivelyServer.servers.keys())
 // var s = LivelyServer.ensure({hostname: "0.0.0.0", port: "9011"})
@@ -254,7 +255,7 @@ export default class LivelyServer {
     while (remaining.length) {
       if (lastLength === remaining.length) {
         throw new Error('Circular dependencies in handler order, could not resolve handlers ' +
-			  remaining.map(ea => ea.pluginId).join(', ')); 
+			  remaining.map(ea => ea.pluginId).join(', '));
       }
       lastLength = remaining.length;
       let resolvedNow = remaining.filter(({ pluginId }) => isSubset(requirements[pluginId].after, resolvedIds));
@@ -271,7 +272,7 @@ export default class LivelyServer {
     function isSubset (list1, list2) {
       // are all elements in list1 in list2?
       for (let i = 0; i < list1.length; i++) {
-        if (!list2.includes(list1[i])) { return false; } 
+        if (!list2.includes(list1[i])) { return false; }
       }
       return true;
     }
@@ -281,11 +282,11 @@ export default class LivelyServer {
   // susbervers
 
   async _getSubserverModuleAndInstance (pathToModule) {
-    let mod = lively.modules.module(pathToModule);
+    let mod = module(pathToModule);
     let exports = await mod.load();
     if (!exports.default) throw new Error('Subserver module is expected to have a default export');
     let SubserverClass = exports.default;
-    if (typeof SubserverClass !== 'function') throw new Error('Subserver export does not seem to be a class');    
+    if (typeof SubserverClass !== 'function') throw new Error('Subserver export does not seem to be a class');
     let subserver = new SubserverClass();
     let id = subserver.pluginId;
     subserver.isSubserver = true;
@@ -323,14 +324,14 @@ export default class LivelyServer {
       pathToModule = (p && p.name ? p.name + '/' : '') + pathInPackage;
     } else pathToModule = pathToModuleOrId;
 
-    if (!lively.modules.isModuleLoaded(pathToModule)) return { removed: false, subserver: null };
+    if (!isModuleLoaded(pathToModule)) return { removed: false, subserver: null };
     let { module, subserver } = await this._getSubserverModuleAndInstance(pathToModule);
     let found = this.findPlugin(subserver.pluginId);
     if (!found) return { removed: false, subserver: null };
     await this.removePlugin(subserver.pluginId);
     return { removed: true, subserver };
   }
-  
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   toString () {
