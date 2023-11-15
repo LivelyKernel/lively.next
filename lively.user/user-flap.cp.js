@@ -251,7 +251,7 @@ export class UserFlapModel extends ViewModel {
     const orgsForUser = await orgsForUserRes.json();
     const orgNames = orgsForUser.map(org => org.login);
     storeCurrentUsersOrganizations(orgNames);
-    storeCurrentUser(JSON.stringify(userData));
+    storeCurrentUser(userData);
   }
 
   logout () {
