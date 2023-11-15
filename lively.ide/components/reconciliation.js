@@ -622,7 +622,7 @@ export class Reconciliation {
   // wether or not we are the definition the change originated from (in case of propagation)
   isOrigin (descriptor) { return this.descriptor === descriptor; }
 
-  get target () { return this.change.target; }
+  get target () { return this.change?.target; }
 
   get isDerived () { return this.withinDerivedComponent(this.target); }
 
@@ -705,6 +705,10 @@ export class Reconciliation {
 class EnsureNamesReconciliation extends Reconciliation {
   get spec () {
     return this.descriptor.stylePolicy.spec;
+  }
+
+  get target () {
+    return this.descriptor._cachedComponent;
   }
 
   reconcile () {
