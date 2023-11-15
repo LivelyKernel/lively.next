@@ -590,7 +590,7 @@ export class StylePolicy {
     }
     for (let subSpec of spec.submorphs || []) {
       if (subSpec.COMMAND === 'add') subSpec = subSpec.props;
-      this.addMetaInfo({ exportedName, moduleId, path: [...path, subSpec.name], range }, subSpec);
+      this.addMetaInfo({ exportedName, moduleId, path: subSpec.isPolicy ? [...path, subSpec.name] : [...path], range }, subSpec);
     }
   }
 
