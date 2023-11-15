@@ -748,11 +748,50 @@ class EnsureNamesReconciliation extends Reconciliation {
         }]);
       }
     }, ([specOrPolicy, node]) => {
-      const subNodes = getProp(getPropertiesNode(node), 'submorphs')?.value?.elements;
-      const subSpecs = specOrPolicy.isPolicy
+      // the node may not be mentioned in the code, when we are in a derived component
+      const subNodes = node && getProp(getPropertiesNode(node), 'submorphs')?.value?.elements;
+      const subSpecs = [...specOrPolicy.isPolicy
         ? specOrPolicy.spec.submorphs
-        : specOrPolicy.submorphs;
-      if (subNodes && subSpecs) return arr.zip(subSpecs, subNodes);
+        : (specOrPolicy.props?.submorphs || specOrPolicy.submorphs)];
+      if (subNodes && subSpecs) {
+        const specToNodeMapping = new Map();
+        for (let spec of subSpecs) {
+          // 1.
+          // first gather all of the nodes for specs that are inherited
+          // if these cant be found in the code, the nodes are declared not present
+          if (spec.COMMAND !== 'add' && spec.name) {
+            let match = subNodes.find(node => getProp(getPropertiesNode(node), 'name')?.value.value === spec.name);
+            if (match) {
+              specToNodeMapping.set(spec, match);
+              arr.remove(subNodes, match);
+              arr.remove(subSpecs, spec);
+            }
+            // if the spec is in a derived context, then this can be dropped
+            if (this.withinDerivedComponent(this.target.getSubmorphNamed(spec.name))) { arr.remove(subSpecs, spec); }
+          }
+        }
+
+        for (let spec of subSpecs) {
+          // 2.
+          // now gather all of the specs for specs that were added to derived.
+          // these have to be present in the code, if they cant be found this is an error.
+          // In case we encounter anonymous added specs, we need to map them by order in the 3rd step.
+
+          // at this point we can assume the all remaing specs are added ones
+          if (spec.props?.name) {
+            let match = subNodes.find(node => getProp(node, 'name')?.value.value === spec.props.name);
+            if (match) {
+              specToNodeMapping.set(spec, match);
+              arr.remove(subNodes, match);
+            }
+            arr.remove(subSpecs, spec);
+          }
+        }
+        // 3.
+        // we have noq mapped all of the specs to nodes via name
+        // we are now left with the remaining specs and anonymous nodes, which we map 1 - 1 based on order
+        return [...specToNodeMapping.entries(), ...arr.zip(subSpecs, subNodes)];
+      }
       return null;
     });
     return this;
