@@ -139,7 +139,7 @@ export function getValueExpr (prop, value, depth = 0) {
 
   if (prop === 'master' && value) {
     valueAsExpr = value.getConfigAsExpression();
-    valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    if (valueAsExpr) valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
     return valueAsExpr;
   }
   if (prop === 'layout' && value) {
