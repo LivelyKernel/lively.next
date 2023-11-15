@@ -7,7 +7,7 @@ import chai from 'chai';
 
 // FIXME: This is a temporary solution since we can not easily bundle mocha and chai into the frozen bundle because the esm builds are temporarily broken.
 // For now we just inject them manually into the frozen bundle by setting the modules namespaces here:
-const S = lively.frozenModules?.oldSystem;
+const S = typeof lively !== 'undefined' && lively.frozenModules?.oldSystem;
 if (S) {
   S.set('mocha', S.newModule({ ...mocha, default: mocha }));
   S.set('chai', S.newModule({ ...chai, default: chai }));
