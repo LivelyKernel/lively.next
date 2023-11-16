@@ -8,6 +8,14 @@ import { Color } from 'lively.graphics/color.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
+Object.defineProperty(lively, 'isInOfflineMode', {
+  configurable: true,
+  get () {
+    const item = localStorage.getItem('LIVELY_OFFLINE_MODE');
+    return item == true;
+  }
+});
+
 const doBootstrap = true;
 const askBeforeQuit = true;
 const loc = document.location;
@@ -423,7 +431,7 @@ export async function bootstrap ({
           }
           if (worldName) await loadWorld(new LivelyWorld({ openNewWorldPrompt: true }), undefined, opts);
           else if (projectName === '__newProject__') await loadWorld(new LivelyWorld({ openNewProjectPrompt: true }), undefined, opts);
-          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName }), undefined, opts)
+          else await loadWorld(new LivelyWorld({ projectToBeOpened: projectName }), undefined, opts);
         } else {
           await morphic.World.loadFromDB(worldName, undefined, undefined, {
             ...opts,
