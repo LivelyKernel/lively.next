@@ -607,11 +607,13 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
 const RepoSettings = component(
   {
     name: 'repo settings',
+    extent: pt(181.9, 73),
+    clipMode: 'hidden',
     fill: Color.transparent,
     layout: new TilingLayout({
       axis: 'column',
-      hugContentsHorizontally: true,
-      orderByIndex: true,
+      hugContentsVertically: true,
+      padding: rect(2, 2, 0, 0),
       spacing: 5
     }),
     submorphs: [
@@ -657,7 +659,12 @@ const RepoSettings = component(
           spacing: 5
         }),
         submorphs: [
-          part(LabeledCheckboxLight, { name: 'create remote checkbox', viewModel: { label: 'Create new GitHub repository?' } }),
+          part(LabeledCheckboxLight, {
+            name: 'create remote checkbox',
+            extent: pt(90, 18.2),
+            clipMode: 'hidden',
+            viewModel: { label: 'Create new GitHub repository?' }
+          }),
           part(InformIconOnLight, { viewModel: { information: 'Should a new GitHub repository with the projects name automatically be created under the specified GitHub entity?' } })
         ]
       }, {
@@ -669,8 +676,16 @@ const RepoSettings = component(
           spacing: 5
         }),
         submorphs: [
-          part(LabeledCheckboxLight, { name: 'private checkbox', viewModel: { label: 'Should the new GitHub repository be private?' } }),
-          part(InformIconOnLight, { viewModel: { information: 'Should the new GitHub repository for the project be private?' } })
+          part(LabeledCheckboxLight, {
+            name: 'private checkbox',
+            extent: pt(90, 20.3),
+            clipMode: 'hidden',
+            viewModel: { label: 'Should the new GitHub repository be private?' }
+          }),
+          part(InformIconOnLight, {
+            viewModel: { information: 'Should the new GitHub repository for the project be private?' },
+            name: 'private repo inform'
+          })
         ]
       }]
   });
@@ -711,14 +726,13 @@ export const RepoCreationPrompt = component(LightPrompt, {
 
 export const ProjectCreationPrompt = component(LightPrompt, {
   defaultViewModel: ProjectCreationPromptModel,
-  extent: pt(385, 345),
+  extent: pt(385, 474),
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
     axisAlign: 'center',
     hugContentsHorizontally: true,
     hugContentsVertically: true,
-    orderByIndex: true,
     padding: rect(15, 15, 0, 0),
     spacing: 16
   }),
@@ -732,12 +746,18 @@ export const ProjectCreationPrompt = component(LightPrompt, {
   submorphs: [
     add({
       name: 'project creation form',
-      extent: pt(318, 200),
+      extent: pt(336.7,363),
       fill: Color.transparent,
+      clipMode: 'hidden',
       layout: new TilingLayout({
         axis: 'column',
         hugContentsHorizontally: true,
-        orderByIndex: true,
+        hugContentsVertically: true,
+        padding: rect(10, 10, 0, 0),
+        resizePolicies: [['repo settings', {
+          height: 'fixed',
+          width: 'fill'
+        }]],
         spacing: 5
       }),
       submorphs: [{
@@ -753,7 +773,10 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         extent: pt(318, 48.9),
         fill: Color.transparent,
         submorphs: [
-          part(UserFlap, { viewModel: { withLoginButton: true } })
+          part(UserFlap, {
+            viewModel: { withLoginButton: true },
+            name: 'user flap'
+          })
         ]
       },
       {
@@ -763,11 +786,13 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           axisAlign: 'center',
           spacing: 5
         }),
+        name: 'remote repo wrapper',
         submorphs: [
           part(LabeledCheckboxLight, { name: 'from remote checkbox', viewModel: { label: 'Initialize from Remote?' } }),
-          part(InformIconOnLight, { viewModel: { information: 'Should the project be initialized from an existing remote repository?' } })
+          part(InformIconOnLight, { name: 'inform icon remote repo', viewModel: { information: 'Should the project be initialized from an existing remote repository?' } })
         ]
-      }, part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
+      },
+      part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
       part(InputLineDefault, {
         name: 'project name',
         placeholder: 'Project Name',
@@ -778,7 +803,10 @@ export const ProjectCreationPrompt = component(LightPrompt, {
           nativeCursor: 'text',
           textAndAttributes: ['Project Name', null]
         }]
-      }), part(RepoSettings),
+      }),
+      part(RepoSettings, {
+        name: 'repo settings'
+      }),
       part(InputLineDefault, {
         name: 'description',
         extent: pt(318.1, 106.3),
@@ -793,7 +821,8 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         }]
       })
       ]
-    }), add(part(OKCancelButtonWrapper))]
+    }),
+    add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))]
 });
 
 export const SaveProjectDialog = component(SaveWorldDialog, {
