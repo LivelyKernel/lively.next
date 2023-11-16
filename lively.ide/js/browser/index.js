@@ -359,11 +359,13 @@ export class PackageTreeData extends TreeData {
   }
 
   async listJSONScope (jsonLocation) {
+    const targetModule = 'lively.ide/js/browser/tree.js';
+    await modules.module(targetModule).revive();
     // replace with abstraction that can respond efficiently to frequent updates
     return (await this.systemInterface.runEval(`
       await listJSONScope('${jsonLocation}');
     `, {
-      targetModule: 'lively.ide/js/browser/tree.js',
+      targetModule,
       ackTimeout: 30 * 1000
     })).value;
   }
@@ -416,11 +418,23 @@ export class PackageTreeData extends TreeData {
     return await this.listEditableFilesInDir(pkg);
   }
 
+  async evalInContext (source) {
+    const targetModule = 'lively.ide/js/browser/tree.js';
+    await modules.module(targetModule).revive();
+    return (await this.systemInterface.runEval(source, {
+      targetModule,
+      ackTimeout: 30 * 1000
+    })).value;
+  }
+
   async getLoadedModuleUrls (gitIgnoreExists) {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
     const gitignore = [];
-    if (gitIgnoreExists && await resource(selectedPkg.url).join('.gitignore').exists()) { // keeping the second condition around for defensive programming
-      gitignore.push(...(await resource(selectedPkg.url).join('.gitignore').read()).split('\n'));
+    if (gitIgnoreExists) { // keeping the second condition around for defensive programming
+      const gitIgnoreContents = await this.evalInContext(`
+        (await resource('${selectedPkg.url}').join('.gitignore').read())
+    `);
+      if (gitIgnoreContents) { gitignore.push(...gitIgnoreContents.split('\n')); }
     }
     const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git', ...gitignore]);
     await this.systemInterface.getPackage(selectedPkg.url);
@@ -432,13 +446,13 @@ export class PackageTreeData extends TreeData {
   }
 
   async listEditableFilesInDir (folderLocation) {
-    const files = (await this.systemInterface.runEval(`
+    const files = await this.evalInContext(`
       await listEditableFilesInDir('${folderLocation}');
-    `, {
-      targetModule: 'lively.ide/js/browser/tree.js',
-      ackTimeout: 30 * 1000
-    })).value;
-    const gitIgnoreExists = !!(await resource(folderLocation).dirList()).find(f => f.url.includes(folderLocation + '.gitignore'));
+    `);
+    const gitIgnoreExists = await this.evalInContext(`
+      !!(await resource('${folderLocation}').dirList()).find(f => f.url.includes('${folderLocation + '.gitignore'}'));
+    `);
+
     const loadedModules = await this.getLoadedModuleUrls(gitIgnoreExists);
     return files.map(file => {
       if (!this.showHiddenFolders && file.type === 'directory' && file.name[0] === '.') return false;
@@ -1281,7 +1295,7 @@ export class BrowserModel extends ViewModel {
     const { value: isInstalled } = await this.systemInterface.runEval(`
       const g = typeof global !== 'undefined' ? global : window;
      !!g.Mocha && !!g.chai
-    `);
+    `, { targetModule: 'lively://lively.morphic/browser' });
     if (isInstalled) return;
     const pkg = await this.systemInterface.importPackage('mocha-es6');
     await this.systemInterface.runEval(`
