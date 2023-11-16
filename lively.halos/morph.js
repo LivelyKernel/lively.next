@@ -687,26 +687,8 @@ class CloseHaloItem extends RoundHaloItem {
     return halo.target.isComponent ? RoundHaloItem.makeLabel('eye-slash') : RoundHaloItem.makeLabel('trash');
   }
 
-  discard (aMorph) {
-    if (aMorph.isComponent) {
-      aMorph.remove();
-      signal(aMorph, 'stop editing');
-    } else aMorph.abandon();
-  }
-
   update () {
-    const { halo } = this; const o = halo.target.owner;
-    o.undoStart('close-halo');
-    this.withMetaDo({ reconcileChanges: true }, () => {
-      halo.target.selectedMorphs
-        ? halo.target.selectedMorphs.forEach(m => this.discard(m))
-        : this.discard(halo.target);
-    });
-    o.undoStop('close-halo');
-    const world = halo.world();
-    if (world.propertiesPanel) { world.propertiesPanel.clearFocus(); }
-    if (world.sceneGraph) { world.sceneGraph.clearFocus(); }
-    halo.remove();
+    this.halo.closeSession();
   }
 
   onMouseDown (evt) { this.update(); }
@@ -2341,6 +2323,28 @@ export default class Halo extends Morph {
 
   indicateLooseMovement (active) {
     this.borderBox.borderStyle = active ? 'dotted' : 'solid';
+  }
+
+  discard (aMorph) {
+    if (aMorph.isComponent) {
+      aMorph.remove();
+      signal(aMorph, 'stop editing');
+    } else aMorph.abandon();
+  }
+
+  closeSession () {
+    const o = this.target.owner;
+    o.undoStart('close-halo');
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      this.target.selectedMorphs
+        ? this.target.selectedMorphs.forEach(m => this.discard(m))
+        : this.discard(this.target);
+    });
+    o.undoStop('close-halo');
+    const world = this.world();
+    if (world.propertiesPanel) { world.propertiesPanel.clearFocus(); }
+    if (world.sceneGraph) { world.sceneGraph.clearFocus(); }
+    this.remove();
   }
 
   getMesh ({ x, y }, offset = pt(0, 0)) {

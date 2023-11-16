@@ -313,10 +313,9 @@ const commands = [
       if (!halo ||
           halo.changingName ||
          focusedMorph.isText || focusedMorph.isNumberWidget) { return false; }
-      if (halo.target.selectedMorphs) {
-        halo.target.selectedMorphs.forEach(m => m.abandon());
-        world.halos()[0].remove();
-      } else halo.target.abandon();
+
+      halo.closeSession();
+      halo.env.forceUpdate(); // FIXME: by itself the renderer does not seem to update
 
       return true;
     }
