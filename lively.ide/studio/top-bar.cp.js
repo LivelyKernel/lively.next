@@ -287,14 +287,18 @@ export class TopBarModel extends ViewModel {
         ? [['⚙️', { fontFamily: 'Noto Emoji' }, ' Change Project Settings', null], () => {
             $world.openPrompt(part(ProjectSettingsPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
           }]
-        : [['🌏', { fontFamily: 'Noto Emoji' }, ' Create Remote Repository', null], async () => {
+        : ([['🌏', { fontFamily: 'Noto Emoji' }, ' Create Remote Repository', null], async () => {
+            if (lively.isInOfflineMode) {
+              $world.setStatusMessage('Operation not available, as you are in offline mode!');
+              return;
+            }
             if (!isUserLoggedIn()) {
               $world.setStatusMessage('You need to log in using github.');
               $world.get('user flap').show();
               return;
             }
             $world.openPrompt(part(RepoCreationPrompt, { viewModel: { project: $world.openedProject }, hasFixedPosition: true }));
-          }],
+          }]),
       [['🧑‍💻', { fontFamily: 'Noto Emoji' }, ' Open a Terminal (advanced operation)', null], async () => {
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
         const serverDir = await defaultDirectory();

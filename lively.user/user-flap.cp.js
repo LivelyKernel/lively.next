@@ -90,7 +90,7 @@ export class UserFlapModel extends ViewModel {
   async setupNetworkIndicator () {
     const info = { world: $world.name || 'l2l before worldname defined' };
     const client = await L2LClient.forLivelyInBrowser(info);
-    console.log(`[lively] lively2lively client created ${client}`);
+    console.log(`[lively] lively2lively client created ${client}`); // eslint-disable-line no-console
 
     const flap = this.view;
 
@@ -109,6 +109,7 @@ export class UserFlapModel extends ViewModel {
   }
 
   async viewDidLoad () {
+    this.blockLogoutAttempt = true;
     await this.setupNetworkIndicator();
     this.view.opacity = 0;
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
@@ -124,7 +125,7 @@ export class UserFlapModel extends ViewModel {
         rightUserLabel.tooltip = '';
       }
     } else {
-      await this.update();
+      if (!lively.isInOfflineMode) await this.update();
       leftUserLabel.tooltip = '';
       rightUserLabel.tooltip = 'Logout';
       rightUserLabel.nativeCursor = 'pointer';
@@ -136,6 +137,10 @@ export class UserFlapModel extends ViewModel {
   async login () {
     guardNamed('github-login', async () => {
       if ($world.get('github login prompt')) return;
+      if (lively.isInOfflineMode) {
+        $world.setStatusMessage('Login is not possible while in offline mode');
+        return;
+      }
       let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
       const { stdout: resOne } = await runCommand(cmdString).whenDone();
       if (resOne === '') {
@@ -206,6 +211,7 @@ export class UserFlapModel extends ViewModel {
         $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
         return;
       }
+      this.blockLogoutAttempt = true;
       storeCurrentUserToken(userToken);
       await this.retrieveGithubUserData();
       this.toggleLoadingAnimation();
@@ -255,6 +261,11 @@ export class UserFlapModel extends ViewModel {
   }
 
   logout () {
+    if (lively.isInOfflineMode && this.blockLogoutAttempt) {
+      $world.inform('Caution: You are in offline mode and will not be able to login with another account!');
+      this.blockLogoutAttempt = false;
+      return;
+    }
     clearAllUserData();
     this.showGuestUser();
     signal(this.view, 'onLogout');

@@ -52,7 +52,7 @@ export class Project {
    * Used for internal operations and not intended to be exposed to the user.
    */
   get fullName () {
-    return this.url.replace(/.*\/local_projects\//,'');
+    return this.url.replace(/.*\/local_projects\//, '');
   }
 
   get repoOwner () {
@@ -195,7 +195,7 @@ export class Project {
       if (deleteRemote) {
         remoteDeletionSuccessful = await gitResource.deleteRemoteRepository(token, name, repoOwner);
       }
-      if (!remoteDeletionSuccessful) console.warn("Remote repository could not be deleted, due to insufficient permissions.")
+      if (!remoteDeletionSuccessful) console.warn('Remote repository could not be deleted, due to insufficient permissions.');
       await projectsDir.remove();
     } catch (err) {
       throw Error('Error deleting project', { cause: err });
@@ -215,25 +215,26 @@ export class Project {
     loadedProject.url = url;
     loadedProject.configFile = resource(address.join('package.json').url);
     if (!onlyLoadNotOpen) {
-
       loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
       if (await loadedProject.gitResource.hasRemote()) {
-          const remoteURL = await loadedProject.gitResource.getRemote();
-          let remoteURLUserTokenMatch = remoteURL.match(/(gho_.*)@/);
-          let userTokenInRemoteURL;
-          const currUserToken = currentUserToken();
-          // This should always be the case, just be defensive here to minimize the potential for crashes.
-          if (remoteURLUserTokenMatch) userTokenInRemoteURL = remoteURLUserTokenMatch[1];
-          if (currUserToken && userTokenInRemoteURL && (userTokenInRemoteURL !== currUserToken)) {
-            const repoOwner = fullName.replace(/--.*/, '');
-            const name = fullName.replace(/.*--/, '');
-            await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currUserToken, repoOwner, name);
-          }
+        const remoteURL = await loadedProject.gitResource.getRemote();
+        let remoteURLUserTokenMatch = remoteURL.match(/(gho_.*)@/);
+        let userTokenInRemoteURL;
+        const currUserToken = currentUserToken();
+        // This should always be the case, just be defensive here to minimize the potential for crashes.
+        if (remoteURLUserTokenMatch) userTokenInRemoteURL = remoteURLUserTokenMatch[1];
+        if (currUserToken && userTokenInRemoteURL && (userTokenInRemoteURL !== currUserToken)) {
+          const repoOwner = fullName.replace(/--.*/, '');
+          const name = fullName.replace(/.*--/, '');
+          await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currUserToken, repoOwner, name);
+        }
       }
-      // Ensure that we do not run into conflicts regarding the bound lively version.
-      await loadedProject.gitResource.resetFile('package.json');
-      await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
-      if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
+      if (!lively.isInOfflineMode) {
+        // Ensure that we do not run into conflicts regarding the bound lively version.
+        await loadedProject.gitResource.resetFile('package.json');
+        await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
+        if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
+      }
     }
 
     const configContent = await loadedProject.configFile.read();
@@ -319,6 +320,7 @@ export class Project {
   }
 
   async checkPagesSupport () {
+    if (lively.isInOfflineMode) return;
     const currUser = currentUser();
     const currUserName = currUser.login;
 
@@ -432,7 +434,7 @@ export class Project {
   async create (withRemote = false, gitHubUser, priv) {
     this.gitResource = null;
     const system = Project.systemInterface;
-    
+
     const projectsDir = await Project.projectDirectory();
     const projectDir = projectsDir.join(`${gitHubUser}--${this.name}`);
     this.url = projectDir.url;
@@ -507,8 +509,10 @@ export class Project {
   }
 
   async regeneratePipelines () {
-    await this.checkPagesSupport();
-    await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
+    if (!lively.isInOfflineMode) {
+        await this.checkPagesSupport();
+        await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
+    }
     let pipelineFile, content;
     const livelyConfig = this.config.lively;
 
@@ -578,9 +582,10 @@ export class Project {
       if (hasRemote && needsPipelines) await this.regeneratePipelines();
       await this.saveConfigData();
       if (hasRemote) {
-        await this.gitResource.pullRepo();
+        if (!lively.isInOfflineMode) await this.gitResource.pullRepo();
+        await this.regeneratePipelines();
         await this.gitResource.commitRepo(message, tag, this.config.version, filesToCommit);
-        await this.gitResource.pushRepo();
+        if (!lively.isInOfflineMode) await this.gitResource.pushRepo();
         // In case we have pulled new changes, reload the package so that lively knows of them!
         await this.reloadPackage();
       } else await this.gitResource.commitRepo(message, tag, this.config.version);
@@ -618,7 +623,9 @@ export class Project {
       }
       // No dependency with this name has been requested.
       const depExists = availableProjects.some(proj => proj._name === depToEnsure.name);
-      if (!depExists) { // Dependency is not yet installed locally. Try to retrieve it from GitHub.
+      // Dependency is not yet installed locally. Try to retrieve it from GitHub.
+      // Cannot happen in offline mode, as we do not allow cloning new projects anyways. Left in as a safety measure regardless.
+      if (!depExists && !lively.isInOfflineMode) {
         const depName = depToEnsure.name.match(/[a-zA-Z\d]*--(.*)/)[1];
         const depRepoOwner = depToEnsure.name.match(/([a-zA-Z\d]*)--/)[1];
         // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
