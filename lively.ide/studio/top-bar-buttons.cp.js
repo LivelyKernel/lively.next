@@ -42,7 +42,7 @@ export const TopBarButtonUnselected = component({
   padding: rect(0, 1, 0, -1)
 });
 
-const TopBarButtonSelected = component(TopBarButtonUnselected, {
+export const TopBarButtonSelected = component(TopBarButtonUnselected, {
   dropShadow: new ShadowObject({ color: Color.rgba(64, 196, 255, 0.4), fast: false }),
   fontColor: Color.rgb(0, 176, 255)
 });
