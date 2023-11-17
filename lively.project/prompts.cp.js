@@ -85,6 +85,9 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 
   viewDidLoad () {
     const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, deployModeSelector, visibilitySelector } = this.ui;
+
+    if (lively.isInOfflineMode) visibilitySelector.enabled = false;
+
     const conf = this.project.config.lively;
 
     if (conf.repositoryIsPrivate) {
@@ -207,8 +210,10 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    const { promptTitle, cancelButton, okButton, privateCheckbox } = this.ui;
+    const { promptTitle, cancelButton, okButton, privateCheckbox, createRemoteCheckbox, fromRemoteCheckbox } = this.ui;
     okButton.disable();
+    createRemoteCheckbox.disable();
+    if (lively.isInOfflineMode) fromRemoteCheckbox.disable();
     privateCheckbox.disable();
     cancelButton.disable();
     if (!currentUserToken()) {
@@ -245,8 +250,11 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   onLogin () {
+    const { fromRemoteCheckbox } = this.ui;
     $world.get('user flap').showLoggedInUser();
-    this.withoutBindingsDo(() => this.ui.fromRemoteCheckbox.enable());
+    this.withoutBindingsDo(() => {
+      if (!lively.isInOfflineMode) fromRemoteCheckbox.enable()
+    });
     this.projectNameMode();
   }
 
@@ -266,7 +274,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     projectName.activate();
     userSelector.enable();
     description.activate();
-    createRemoteCheckbox.enable();
+    if (!lively.isInOfflineMode) createRemoteCheckbox.enable();
     remoteUrl.deactivate();
     projectName.indicateError('required', 'only - and letters are allowed');
     // we do this here since we are sure that we are logged in when we reach this method!
