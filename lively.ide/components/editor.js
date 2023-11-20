@@ -34,8 +34,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return usedNames;
   }
 
-  static for (generatorFunction, meta, prev) {
+  static for (generatorFunction, meta, recorder, declaredName) {
     const newDescr = super.for(generatorFunction, meta);
+    const prev = !recorder?.__revived__ && recorder?.[declaredName];
     if (prev) {
       if (prev.constructor !== this) { obj.adoptObject(prev, this); }
       const dependants = prev.getDependants(true);

@@ -269,7 +269,8 @@ class ModuleInterface {
     const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
     const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
     // also inject the new values into the record in order to update the bundle
-    Object.assign(frozenRecord.recorder, newEntries);
+    frozenRecord.recorder.__revived__ = true;
+    Object.assign(frozenRecord.recorder, newEntries); // how do we preveny this from being overridden again?
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
