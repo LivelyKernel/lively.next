@@ -11,7 +11,7 @@ import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { semver, PackageRegistry } from 'lively.modules/index.js';
-import { currentUserToken, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
+import { currentUserToken, currentUserData, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
@@ -216,6 +216,12 @@ export class Project {
     loadedProject.configFile = resource(address.join('package.json').url);
     if (!onlyLoadNotOpen) {
       loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
+
+      // As we cannot easily access gitresource when cloning a project, do this here.
+      // Gets executed more often than necessary, but is a valid catch-all solution to treat recently cloned projects as well as a user change.
+      const currUserData = currentUserData();
+      await loadedProject.gitResource.setGitConfig(currUserData.name, currUserData.email);
+
       if (await loadedProject.gitResource.hasRemote()) {
         const remoteURL = await loadedProject.gitResource.getRemote();
         let remoteURLUserTokenMatch = remoteURL.match(/(gho_.*)@/);
@@ -356,7 +362,7 @@ export class Project {
   async saveConfigData () {
     // Update for the case that a user changed its plan since the last save.
     if (await this.hasRemoteConfigured()) await this.checkPagesSupport();
-    
+
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
     if (!this.configFile) {
@@ -467,6 +473,8 @@ export class Project {
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
+      const currUserData = currentUserData();
+      await this.gitResource.setGitConfig(currUserData.name, currUserData.email);
 
       if (withRemote) {
         this.addRemoteConfig(priv);

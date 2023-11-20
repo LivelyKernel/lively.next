@@ -12,6 +12,11 @@ export function isUserLoggedIn () {
 export function storeCurrentUser (userData) {
   localStorage.setItem('gh_user_data', JSON.stringify(userData));
 }
+
+export function currentUserData () {
+  return JSON.parse(localStorage.getItem('gh_user_data'));
+}
+
 export function currentUsersOrganizations () {
   return JSON.parse(localStorage.getItem('gh_user_organizations'));
 }
