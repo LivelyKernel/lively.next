@@ -196,7 +196,7 @@ function replaceClass (node, state, path, options) {
   const validMemberIdentifiers = ['Literal', 'Identifier', 'PrivateIdentifier', 'MemberExpression', 'CallExpression'];
 
   let { inst, clazz, fields } = body.reduce((props, propNode) => {
-    let decl; let { key, kind, value, static: classSide, type } = propNode;
+    let decl; let { key, kind, value, static: classSide, type, decorators } = propNode;
 
     if (!validMemberIdentifiers.includes(key.type)) {
       console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)} -> ${stringify(propNode)}`);
@@ -217,8 +217,18 @@ function replaceClass (node, state, path, options) {
       } else methodId = id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
       let props = [
         'key', !isMemberExpr && methodName ? literal(methodName) : key,
-        'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }];
-
+        'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }
+      ];
+      if (decorators) {
+        props.push('decorators', decorators[0]
+        //            {
+        //   type: 'ArrayExpression',
+        //   elements: decorators.map(dec => {
+        //     return objectLiteral(['fun', dec.expression.callee, 'args', dec.expression.arguments]);
+        //   })
+        // }
+        );
+      }
       decl = objectLiteral(props);
     } else if (kind === 'get' || kind === 'set') {
       decl = objectLiteral([

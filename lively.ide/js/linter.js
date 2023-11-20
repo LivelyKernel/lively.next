@@ -112,7 +112,7 @@ config.rules = rules;
  * @property {string} nodeType - Ast node type at the point of violation.
  * @property {number} severity - Prioritization of the violation.
  */
-
+config.parserOptions.ecmaFeatures.legacyDecorators = true;
 /**
  * For given source code snippet, returns a linted version of the source code
  * together with a set of generated warnings or violations of the linting rules.

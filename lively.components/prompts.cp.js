@@ -215,6 +215,8 @@ export class MultipleChoicePromptModel extends ConfirmPromptModel {
   }
 }
 
+function bind () {}
+
 export class TextPromptModel extends ConfirmPromptModel {
   static get properties () {
     return {
@@ -518,6 +520,7 @@ export class ListPromptModel extends TextPromptModel {
     return this.answer.resolve(answer);
   }
 
+  // @bind({ target: 'prompt list', signal: 'reject' })
   reject () {
     return this.answer.resolve({
       prompt: this,
