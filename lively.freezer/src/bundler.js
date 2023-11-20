@@ -390,13 +390,13 @@ export default class LivelyRollup {
       return source;
     }
     // We use the string 'projectAsset' there in regular code to enable correct reconciliation.
-    if (!id.includes('lively.ide/components/helpers.js')){
+    if (!id.includes('lively.ide/components/helpers.js')) {
       const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
       const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
 
       if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
 
-        const assetNameRewriter = (match, assetName) => {
+      const assetNameRewriter = (match, assetName) => {
         const newName = currentlyTransformedProject + '__' + assetName;
 
         this.projectAssets.push({
@@ -409,7 +409,6 @@ export default class LivelyRollup {
 
       source = source.replaceAll(projectAssetRegex, assetNameRewriter);
     }
-
 
     if (this.needsDynamicLoadTransform(source)) {
       source = await this.instrumentDynamicLoads(source, id);
@@ -593,7 +592,7 @@ export default class LivelyRollup {
 
     let instrumented = parsed;
     if (this.isComponentModule(id)) {
-      instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id));
+      instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id), recorderName);
     }
 
     let defaultExport = '';

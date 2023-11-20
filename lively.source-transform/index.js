@@ -117,7 +117,7 @@ export function ensureModuleMetaForComponentDefinition (translated, moduleName, 
     });
 }
 
-export function ensureComponentDescriptors (translated, moduleName) {
+export function ensureComponentDescriptors (translated, moduleName, recorderName) {
   // check first for top level decls
   translated = typeof translated == 'string' ? parse(translated) : translated;
   let { varDecls } = topLevelDeclsAndRefs(translated);
@@ -134,6 +134,7 @@ export function ensureComponentDescriptors (translated, moduleName) {
       const isCaptured = varDecls.includes(node);
       const componentRef = node.id.name;
       const spec = node.init.arguments.map(n => stringify(n)).join(',');
-      return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}${ isCaptured ? ', ' + componentRef : ''})`).body[0].declarations;
+      // FIXME: the local name here is not nessecarily the export
+      return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}${ isCaptured ? ', ' + `${recorderName}, "${componentRef}"` : ''})`).body[0].declarations;
     });
 }
