@@ -48,6 +48,14 @@ export default class GitShellResource extends ShellClientResource {
     return res.stdout;
   }
 
+  async setGitConfig (name, email) {
+    const configureNameCmd = `git config user.name "${name}"`;
+    const configureEmailCmd = `git config user.email "${email}"`;
+
+    await this.runCommand(configureNameCmd).whenDone();
+    await this.runCommand(configureEmailCmd).whenDone();
+  }
+
   async hasRemoteMainConfigured () {
     const getRemoteURLCommand = 'git remote -v';
     let res = await this.runCommand(getRemoteURLCommand).whenDone();
@@ -91,14 +99,14 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async deleteRemoteRepository (token, repoName, repoUser) {
-    const deleteRes = await fetch(`https://api.github.com/repos/${repoUser}/${repoName}`,{
-      method: 'DELETE',  
+    const deleteRes = await fetch(`https://api.github.com/repos/${repoUser}/${repoName}`, {
+      method: 'DELETE',
       headers: {
         accept: 'application/vnd.github+json',
         authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": '2022-11-28'
+        'X-GitHub-Api-Version': '2022-11-28'
       }
-    }); 
+    });
 
     if (deleteRes.status === 404) throw Error('Unexpected problem delete remote repository.');
     if (deleteRes.status === 403) return false;
