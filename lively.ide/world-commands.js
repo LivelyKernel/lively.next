@@ -18,8 +18,9 @@ import { WindowSwitcher } from './window-switcher.cp.js';
 import { browserForFile } from './js/browser/ui.cp.js';
 import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
 import { Project } from 'lively.project';
-import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { ResponsiveLayoutHalo } from 'lively.components/responsive.cp.js';
+import { isUserLoggedIn } from 'lively.user';
 
 const commands = [
 
@@ -1240,6 +1241,11 @@ const commands = [
     exec: async (world, args, _, evt) => {
       let saved;
       if ($world.openedProject) {
+        if (!isUserLoggedIn()) {
+          $world.setStatusMessage('Log in using GitHub to save a project.', StatusMessageError);
+          $world.get('user flap').show();
+          return;
+        }
         await $world.openedProject.saveConfigData();
         if (!(await $world.openedProject.hasUncommitedChanges())) {
           $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
