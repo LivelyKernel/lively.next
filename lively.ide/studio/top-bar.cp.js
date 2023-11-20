@@ -21,6 +21,7 @@ import { defaultDirectory } from '../shell/shell-interface.js';
 import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
 import { isUserLoggedIn } from 'lively.user';
 import { AssetBrowserLight } from './asset-browser.cp.js';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 import { OfflineToggleDark } from '../offline-mode-toggle.cp.js';
 
@@ -280,6 +281,11 @@ export class TopBarModel extends ViewModel {
   }
 
   async getSaveMenuItems () {
+    if (!isUserLoggedIn()) {
+      $world.setStatusMessage('You need to log in using GitHub.', StatusMessageError);
+      $world.get('user flap').show();
+      return;
+    }
     return [
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace', null], () => { notYetImplemented('Saving workspaces'); }],
       [['💾', { fontFamily: 'Noto Emoji' }, ' Save this workspace under different name', null], () => { notYetImplemented('Saving workspaces'); }],
