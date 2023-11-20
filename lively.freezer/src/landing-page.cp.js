@@ -11,7 +11,11 @@ import { connect } from 'lively.bindings';
 
 // this pulls in a bunch of code
 import { WorldBrowser } from 'lively.ide/studio/world-browser.cp.js';
-import { UserFlap, UserFlapModel } from 'lively.user/user-flap.cp.js';
+import { UserFlap } from 'lively.user/user-flap.cp.js';
+import { ViewModel } from 'lively.morphic/components/core.js';
+
+import { TilingLayout } from 'lively.morphic/layout.js';
+import { OfflineToggleLight } from 'lively.ide/offline-mode-toggle.cp.js';
 
 class LandingPageWorld extends LivelyWorld {
   showHaloFor () {
@@ -320,14 +324,11 @@ const LandingPage = component({
   ]
 });
 
-class WorldAligningUserFlap extends UserFlapModel {
-  get expose () {
-    return [...super.expose, 'relayout'];
-  }
-
-  async viewDidLoad () {
-    await super.viewDidLoad();
-    await this.relayout();
+class WorldAligningLandigPageUIElements extends ViewModel {
+  get bindings () {
+    return [
+      {target: 'user flap', signal: 'extent', handler: 'relayout'}
+    ]
   }
 
   async relayout () {
@@ -335,38 +336,43 @@ class WorldAligningUserFlap extends UserFlapModel {
     this.view.topRight = $world.visibleBounds().insetBy(10).topRight();
     return this.view;
   }
-
-  async showUserData () {
-    super.showUserData();
-    await this.relayout();
-  }
-
-  async showGuestUser () {
-    super.showGuestUser();
-    await this.relayout();
-  }
 }
 
-const DarkUserFlap = component(UserFlap, {
-  defaultViewModel: WorldAligningUserFlap,
-  submorphs: [{
-    name: 'left user label',
-    fontColor: Color.rgb(255, 255, 255)
-  }, {
-    name: 'right user label',
-    fontColor: Color.rgb(255, 255, 255)
-  }, {
-    name: 'spinner',
-    viewModel: { color: 'white' }
-  }]
-});
+const LandingPageUI = component(
+  {
+    name: 'landing page ui elements',
+    defaultViewModel: WorldAligningLandigPageUIElements,
+    fill: Color.transparent,
+    layout: new TilingLayout({
+      hugContentsHorizontally: true,
+      padding: 5,
+      spacing: 5,
+      axisAlign: 'center'
+    }),
+    submorphs:
+ [
+   part(OfflineToggleLight),
+   part(UserFlap, {
+     name: 'user flap',
+     submorphs: [{
+       name: 'left user label',
+       fontColor: Color.rgb(255, 255, 255)
+     }, {
+       name: 'right user label',
+       fontColor: Color.rgb(255, 255, 255)
+     }, {
+       name: 'spinner',
+       viewModel: { color: 'white' }
+     }]
+   })]
+  });
 
 export async function main () {
   config.altClickDefinesThat = false;
   config.ide.studio.canvasModeEnabled = false;
 
   part(LandingPage, { respondsToVisibleWindow: true }).openInWorld().relayout();
-  const flap = part(DarkUserFlap, { respondsToVisibleWindow: true }).openInWorld();
+  part(LandingPageUI, { respondsToVisibleWindow: true }).openInWorld();
 }
 
 export const TITLE = 'lively.next';

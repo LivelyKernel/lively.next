@@ -6,7 +6,7 @@ import { TopBarButton, TopBarButtonSelected, TopBarButtonUnselected } from 'live
 import { Icon } from 'lively.morphic';
 import { signal } from 'lively.bindings';
 
-class ToggleModel extends ViewModel {
+export class ToggleModel extends ViewModel {
   static get properties () {
     return {
       active: {

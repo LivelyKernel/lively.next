@@ -22,6 +22,8 @@ import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompt
 import { isUserLoggedIn } from 'lively.user';
 import { AssetBrowserLight } from './asset-browser.cp.js';
 
+import { OfflineToggleDark } from '../offline-mode-toggle.cp.js';
+
 class SelectionElement extends Morph {
   static get properties () {
     return {
@@ -1011,10 +1013,20 @@ const TopBar = component({
     fill: Color.rgb(0, 0, 0),
     position: pt(0, -26)
   },
-  part(UserFlap, {
-    name: 'user flap',
-    fill: Color.transparent
-  })]
+  {
+    name: 'right UI wrapper',
+    layout: new TilingLayout({
+      axisAlign: 'center',
+      spacing: 10
+    }),
+    fill: Color.transparent,
+    submorphs: [
+      part(OfflineToggleDark),
+      part(UserFlap, {
+        name: 'user flap',
+        fill: Color.transparent
+      })]
+  }]
 });
 
 export { TopBar };
