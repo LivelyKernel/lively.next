@@ -162,18 +162,7 @@ async function fetchFile (url) {
 
 async function load(url) {
   if (url === '@empty') return '';
-  // also transpile the source code if this is a js file...
-  // in the future we should restrict it to cp.js or some
-  // more general lv.js files...
-  const code = await fetchFile(url); 
-  if (url.endsWith('.js') || url.endsWith('.cjs'))
-    return babel.transform(code, {
-      plugins: [
-        require('@babel/plugin-proposal-class-properties')
-      ]
-      // systemjs transform is not really needed
-    }).code;
-  return code;
+  return  await fetchFile(url); 
 }
 
 function supportingPlugins(context = 'node') {
