@@ -4,6 +4,7 @@
 
 import config from 'esm://cache/eslint-config-standard@16.0.3';
 import eslint from 'esm://cache/eslint@7.32.0';
+import 'https://jspm.dev/@babel/eslint-parser';
 
 const rules = {
   // These are all rules from the default ruleset that are fixable
@@ -98,6 +99,7 @@ const rules = {
 };
 
 config.rules = rules;
+config.parser = '@babel/eslint-parser';
 
 /**
  * @typedef LinterMessage
@@ -124,6 +126,14 @@ config.rules = rules;
  */
 export default function lint (code, customRules = {}) {
   const linter = new eslint.Linter();
-  const linterOutput = linter.verifyAndFix(code, { ...config, rules: { ...config.rules, ...customRules } });
+  console.log(linter);
+  const linterOutput = linter.verifyAndFix(code, { ...config, parser: '@babel/eslint-parser', rules: { ...config.rules, ...customRules } });
+  console.log(linterOutput);
   return [linterOutput.output, linterOutput.messages];
 }
+
+const code = `@demo
+class test {
+  
+}`;
+console.log(lint(code));
