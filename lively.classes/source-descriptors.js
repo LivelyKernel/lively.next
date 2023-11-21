@@ -160,7 +160,7 @@ export class RuntimeSourceDescriptor {
     if (!obj[moduleSym]) { throw new Error('runtime object of source descriptor has no module data'); }
 
     let { package: { name: pName }, pathInPackage: mName } = obj[moduleSym];
-    let mId = mName.includes('://') ? mName : pName + '/' + mName;
+    let mId = mName.includes('://') ? mName : string.joinPath(pName, mName);
     let m = this.System._scripting.module(System, mId);
 
     if (!m._frozenModule && !m._source && this.moduleSource) {
@@ -271,6 +271,7 @@ export class RuntimeSourceDescriptor {
 
   async changeSource (newSource) {
     let { module } = this;
+    if (module._frozenModule) await module.revive();
     await module.changeSourceAction(oldSource => {
       if (oldSource !== this.moduleSource) {
         throw new Error(`source of module ${module.id} and source of ${this} don't match`);

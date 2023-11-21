@@ -1025,8 +1025,6 @@ export class ObjectEditorModel extends ViewModel {
     const { ui: { sourceEditor } } = this;
     if (await this.withContextDo((ctx) => !ctx.selectedClass)) { return { success: false, reason: 'No class selected' }; }
 
-    if (await this.withContextDo((ctx) => ctx.selectedModule._frozenModule)) { return { success: false, reason: 'Frozen modules can not be altered' }; }
-
     // Ask user what to do with undeclared variables. If this gets canceled we
     // abort the save
     if (config.objectEditor.fixUndeclaredVarsOnSave) {
