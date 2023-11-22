@@ -5,7 +5,7 @@ import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, Text, Morph, morph } from 'lively.morphic';
 import { component, ViewModel, without, part, add } from '../components/core.js';
-import { StylePolicy, BreakpointStore, PolicyApplicator } from '../components/policy.js';
+import { StylePolicy, sanitizeSpec, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 import { getDefaultValuesFor } from '../helpers.js';
 
 const moduleId = import.meta.url.replace(System.baseURL, '');
@@ -419,8 +419,8 @@ describe('spec based components', () => {
   });
 
   it('properly synthesizes style policies', () => {
-    expect(e2.stylePolicy.synthesizeSubSpec('bar')).to.eql({
-      ...getDefaultValuesFor(Morph),
+    expect(sanitizeSpec(e2.stylePolicy.synthesizeSubSpec('bar'))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor(Morph)),
       borderRadius: 5,
       borderColor: Color.black,
       borderWidth: 2,
@@ -433,8 +433,8 @@ describe('spec based components', () => {
     }, e1);
     p2.__wasAddedToDerived__ = true;
     expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(p2);
-    expect(e3.stylePolicy.synthesizeSubSpec('alice')).to.eql({
-      ...getDefaultValuesFor('text'),
+    expect(sanitizeSpec(e3.stylePolicy.synthesizeSubSpec('alice'))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor('text')),
       fill: Color.black,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
@@ -497,24 +497,24 @@ describe('spec based components', () => {
     }, e3);
 
     expect(d.stylePolicy).to.eql(expectedInternalSpecD);
-    expect(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor(Morph),
+    expect(sanitizeSpec(c.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({})))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor(Morph)),
       fill: Color.yellow
     });
 
-    expect(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor(Morph),
+    expect(sanitizeSpec(d.stylePolicy.synthesizeSubSpec('foo').synthesizeSubSpec(null, morph({}), morph({})))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor(Morph)),
       fill: Color.yellow
     });
-    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null, morph({}), morph({}))).to.eql({
-      ...getDefaultValuesFor(Morph),
+    expect(sanitizeSpec(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec(null, morph({}), morph({})))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor(Morph)),
       opacity: 0.5,
       position: pt(45, 45),
       extent: pt(50, 50), // default values in new master do not override custom in original
       fill: Color.red
     });
-    expect(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice')).to.eql({
-      ...getDefaultValuesFor(Text),
+    expect(sanitizeSpec(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice'))).to.eql({
+      ...sanitizeSpec(getDefaultValuesFor(Text)),
       fill: Color.blue,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
