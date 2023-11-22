@@ -262,6 +262,7 @@ const SearchField = component({
       position: pt(165, 0),
       fontColor: Color.rgb(204, 204, 204),
       fontSize: 14,
+      fill: Color.transparent,
       nativeCursor: 'pointer',
       textAndAttributes: Icon.textAttribute('times-circle'),
       visible: false

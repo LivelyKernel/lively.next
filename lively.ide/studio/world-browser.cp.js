@@ -1340,16 +1340,15 @@ const WorldBrowser = component({
       }),
       submorphs: [part(SearchField, {
         name: 'search field',
-        borderStyle: 'hidden',
+        borderWidth: 0,
         layout: new TilingLayout({
-          align: 'center',
           axisAlign: 'center',
           orderByIndex: true,
           padding: rect(6, 0, 4, 0),
-          resizePolicies: [['search input', {
-            height: 'fill',
-            width: 'fill'
-          }]]
+          resizePolicies: [
+            ['search input', { height: 'fill', width: 'fill' }],
+            ['placeholder icon', { height: 'fixed', width: 'fixed' }]
+          ]
         }),
         borderRadius: 30,
         viewModel: { fuzzy: true },
@@ -1371,6 +1370,7 @@ const WorldBrowser = component({
             submorphs: [
               {
                 name: 'placeholder',
+                padding: rect(6, 1, 0, 3),
                 textAndAttributes: ['Search Projects', { fontSize: 22 }]
               }
             ]
