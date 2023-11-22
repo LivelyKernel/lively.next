@@ -40,7 +40,7 @@ export async function importModuleViaNative (url) {
 
   script.setAttribute('type', 'module');
   parentNode.appendChild(script);
-  script.innerText = `import m from '${url}'; window['${evalId}'] = m;`;
+  script.innerText = `import * as m from '${url}'; window['${evalId}'] = m;`;
 
   script.setAttributeNS(null, 'async', true);
   const mod = await waitFor(30 * 1000, () => window[evalId]);
