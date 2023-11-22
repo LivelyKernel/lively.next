@@ -10,6 +10,13 @@ const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
 const expressionSerializer = new ExpressionSerializer();
 
+export function sanitizeSpec (spec) {
+  for (let prop in spec) {
+    if (spec[prop]?.isDefaultValue) spec[prop] = spec[prop].value;
+  }
+  return spec;
+}
+
 export function standardValueTransform (key, val, aMorph) {
   if (val && val.isPoint) return val.roundTo(0.1);
   if (key === 'label' || key === 'textAndAttributes') {
@@ -79,7 +86,7 @@ function handleTextProps (props) {
     delete props.value;
   }
   if (props.fontFamily) {
-    const ff = props.fontFamily;
+    const ff = props.fontFamily.isDefaultValue ? props.fontFamily.value : props.fontFamily;
     if (ff !== skippedValue) { props.fontFamily = sanitizeFont(ff); }
   }
   return props;
@@ -638,7 +645,13 @@ export class StylePolicy {
         if (node.master) {
           return new klass({ ...node, submorphs }, null);
         }
+        // this is too weak, we need to check of there is any possible master (click, hover, auto, state, breakpoint) that
+        // may potentially provide the default value here
         const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node.type || Morph) || {};
+
+        for (let prop in defaultProps) {
+          defaultProps[prop] = { isDefaultValue: true, value: defaultProps[prop] };
+        }
 
         if (node.textAndAttributes) {
           return {
@@ -848,7 +861,7 @@ export class StylePolicy {
       if (!this.parent) {
         // remove the props that are equal to the default value
         getStylePropertiesFor(specOrPolicy.type).forEach(prop => {
-          if (obj.equals(getDefaultValueFor(specOrPolicy.type, prop), specOrPolicy[prop])) {
+          if (specOrPolicy[prop]?.isDefaultValue) {
             delete specOrPolicy[prop];
           }
         });
@@ -880,6 +893,8 @@ export class StylePolicy {
         specOrPolicy.submorphs = transformedSubmorphs;
       }
       if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
+
+      if (!specOrPolicy.isPolicy) return sanitizeSpec(specOrPolicy);
 
       return specOrPolicy;
     };
@@ -990,11 +1005,18 @@ export class StylePolicy {
     delete parentSpec.__wasAddedToDerived__;
     delete nextLevelSpec.__wasAddedToDerived__;
 
+    for (let prop in subSpec) {
+      if (subSpec[prop]?.isDefaultValue) synthesized[prop] = subSpec[prop];
+    }
+
     Object.assign(
       synthesized,
       parentSpec,
-      nextLevelSpec,
-      subSpec);
+      nextLevelSpec);
+
+    for (let prop in subSpec) {
+      if (!subSpec[prop]?.isDefaultValue) synthesized[prop] = subSpec[prop];
+    }
 
     delete synthesized.submorphs;
     delete synthesized.master;
@@ -1287,6 +1309,7 @@ export class PolicyApplicator extends StylePolicy {
    */
   applySpecToMorph (morphToBeStyled, styleProps) {
     if (styleProps.__wasAddedToDerived__) morphToBeStyled.__wasAddedToDerived__ = true;
+    styleProps = sanitizeSpec(styleProps);
     for (const propName of getStylePropertiesFor(morphToBeStyled.constructor)) {
       let propValue = styleProps[propName];
       if (propValue === skippedValue) continue;
