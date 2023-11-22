@@ -126,6 +126,7 @@ export class UserFlapModel extends ViewModel {
       }
     } else {
       if (!lively.isInOfflineMode) await this.update();
+      else this.showLoggedInUser();
       leftUserLabel.tooltip = '';
       rightUserLabel.tooltip = 'Logout';
       rightUserLabel.nativeCursor = 'pointer';
