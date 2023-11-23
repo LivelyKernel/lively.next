@@ -15,6 +15,11 @@ export default class GitShellResource extends ShellClientResource {
     }
   }
 
+  async branchName () {
+    const cmd = await this.runCommand('git rev-parse --abbrev-ref HEAD').whenDone();
+    return cmd.output.trim().replace('\n', '');
+  }
+
   runCommand (cmd) {
     return runCommand(cmd, this.options);
   }
@@ -32,6 +37,20 @@ export default class GitShellResource extends ShellClientResource {
     const cmd = this.runCommand('git init && git symbolic-ref HEAD refs/heads/main');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error initializing git repository');
+  }
+
+  /**
+   * Creates a new branch `branchName` and switches to it. Fails if the branch already exists.
+   * @param {string} branchName - The branch to switch to.
+   * @returns
+   */
+  async createAndCheckoutBranch (branchName) {
+    const branchCreationCmd = `git checkout -b ${branchName}`;
+    const cmd = this.runCommand(branchCreationCmd);
+    await cmd.whenDone();
+    // Branch could successfully be created and switched to.
+    if (cmd.exitCode === 0) return true;
+    return false;
   }
 
   async hasRemote () {

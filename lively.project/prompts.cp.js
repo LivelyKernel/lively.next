@@ -3,7 +3,7 @@
 import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
 import { AbstractPromptModel, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Color, pt } from 'lively.graphics';
-import { InputLineDefault } from 'lively.components/inputs.cp.js';
+import { InputLineDefault, InputLineDark } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
@@ -434,6 +434,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
             { target: 'minor check', signal: 'checked', handler: (status) => this.increaseMinor = status },
             { target: 'major check', signal: 'checked', handler: (status) => this.increaseMajor = status },
             { target: 'tag check', signal: 'checked', handler: (status) => this.tag = status },
+            { target: 'branch check', signal: 'checked', handler: (status) => status ? this.ui.branchInput.activate() : this.ui.branchInput.deactivate() },
             { target: 'diff button', signal: 'onMouseDown', handler: () => { this.terminalWindow = this.project.showDiffSummary(); } }
           ];
         }
@@ -442,17 +443,21 @@ class ProjectSavePrompt extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    this.ui.diffButton.disable();
+    const { promptTitle, diffButton, branchInput } = this.ui;
+    branchInput.deactivate();
+    diffButton.disable();
+    const currentBranchName = await this.project.gitResource.branchName();
+    promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
     await this.project.saveConfigData();
     if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
-    this.ui.diffButton.enable();
+    diffButton.enable();
   }
 
   async resolve () {
     await fun.guardNamed('resolve-project-saving', async () => {
       this.disableButtons();
 
-      const { description } = this.ui;
+      const { description, branchCheck, branchInput } = this.ui;
       const message = description.textString;
 
       let increaseLevel;
@@ -461,7 +466,17 @@ class ProjectSavePrompt extends AbstractPromptModel {
       else increaseLevel = 'patch';
 
       const li = $world.showLoadingIndicatorFor(this.view, 'Saving Project...');
-      const success = await this.project.save({ increaseLevel, message, tag: this.tag });
+
+      const createBranch = branchCheck.checked;
+
+      let success;
+      if (createBranch) {
+        const branchName = branchInput.textString.trim();
+        success = await this.project.gitResource.createAndCheckoutBranch(branchName);
+        if (!success) $world.setStatusMessage(`Could not create branch ${branchName}, possibly due to a name collision!`, StatusMessageError);
+      }
+
+      if (success) success = await this.project.save({ increaseLevel, message, tag: this.tag });
       li.remove();
       this.terminalWindow?.close();
       if (success) $world.setStatusMessage('Project saved!', StatusMessageConfirm);
@@ -918,7 +933,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
     textAndAttributes: ['Save Project', null]
   }, {
     name: 'prompt controls',
-    extent: pt(455.5, 285),
+    extent: pt(455.5, 333),
     submorphs: [without('third row'), without('second row'), without('first row'), add({
       name: 'second row',
       extent: pt(450, 76.8),
@@ -926,7 +941,6 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
       layout: new TilingLayout({
         align: 'right',
         axis: 'column',
-        orderByIndex: true,
         padding: rect(0, 15, 0, -15),
         spacing: 11
       }),
@@ -1005,6 +1019,41 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         }, part(Checkbox, {
           name: 'tag check',
           position: pt(179, 0)
+        })]
+      }, {
+        name: 'branch row',
+        borderColor: Color.rgba(23, 160, 251, 0),
+        extent: pt(256.5, 29.5),
+        fill: Color.rgba(255, 255, 255, 0),
+        layout: new TilingLayout({
+          axisAlign: 'center',
+          spacing: 10
+        }),
+        position: pt(-79, 22),
+        submorphs: [{
+          type: Label,
+          name: 'branch label',
+          fill: Color.rgba(255, 255, 255, 0),
+          fontColor: Color.rgb(255, 255, 255),
+          fontFamily: '"IBM Plex Sans"',
+          fontSize: 15,
+          nativeCursor: 'pointer',
+          position: pt(0, 4),
+          textAndAttributes: ['Create a new branch to save on:', null]
+
+        }, part(Checkbox, {
+          name: 'branch check'
+        }), part(InputLineDark, {
+          name: 'branch input',
+          extent: pt(201.1, 31.8),
+          placeholder: ['Branch Name', null],
+          submorphs: [{
+            name: 'placeholder',
+            nativeCursor: 'text',
+            visible: false
+          }],
+          textAndAttributes: ['', null]
+
         })]
       }, part(SystemButtonDark, {
         name: 'diff button',
