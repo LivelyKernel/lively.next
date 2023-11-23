@@ -325,6 +325,10 @@ const LandingPage = component({
 });
 
 class WorldAligningLandigPageUIElements extends ViewModel {
+  get expose () {
+    return ['relayout'];
+  }
+
   get bindings () {
     return [
       {target: 'user flap', signal: 'extent', handler: 'relayout'}
