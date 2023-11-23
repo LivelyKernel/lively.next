@@ -342,42 +342,23 @@ export default class LivelyRollup {
    * @param { string } source - The source code of the module to transform.
    * @param { string } moduleId - The module id.
    */
-  async instrumentDynamicLoads (source, moduleId) {
-    const parsed = ast.parse(source);
-    const nodesToReplace = [];
-    let importUrls = [];
-
-    ast.AllNodesVisitor.run(parsed, (node, path) => {
+  instrumentDynamicLoads (parsed, moduleId) {
+    return ast.ReplaceVisitor.run(parsed, (node) => {
       if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
         if (node.callee.property.name === 'import' && node.callee.object.name === 'System' && node.arguments.length === 1) {
           // evaluate the imported expression on the spot
           // this forces lively.modules into the system. This can not be supported
           try {
-            const idx = importUrls.push(eval(ast.stringify(node.arguments[0])));
-            nodesToReplace.push({
-              target: node.arguments[0],
-              replacementFunc: (target, current) => {
-                // if the result has not been computed, log an error
-                if (importUrls[idx - 1]) { return `"${importUrls[idx - 1]}"`; }
-                return current; // what to do with these???
-              }
-            });
-            nodesToReplace.push({
-              target: node.callee, replacementFunc: () => 'import'
-            });
+            const resolvedImport = eval(ast.stringify(node.arguments[0]));
+            if (resolvedImport) this.hasDynamicImports = true;
+            return ast.parse(`import("${resolvedImport}")`).body[0].expression;
           } catch (err) {
-
+            return node;
           }
         }
       }
+      return node;
     });
-
-    importUrls = (await Promise.all(importUrls)).map(res => res.isError ? undefined : res.value); // fixme: detect if there was an error
-
-    // last minute discovery of dynamic imports
-    if (!this.hasDynamicImports) this.hasDynamicImports = importUrls.length > 0;
-
-    return ast.transform.replaceNodes(nodesToReplace, source).source;
   }
 
   /**
@@ -386,6 +367,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module to be transformed.
    */
   async transform (source, id) {
+    const originalSource = source;
     if (id.startsWith('\0') || id.endsWith('.json')) {
       return source;
     }
@@ -410,18 +392,21 @@ export default class LivelyRollup {
       source = source.replaceAll(projectAssetRegex, assetNameRewriter);
     }
 
+    let parsed = ast.parse(source);
+
     if (this.needsDynamicLoadTransform(source)) {
-      source = await this.instrumentDynamicLoads(source, id);
+      parsed = this.instrumentDynamicLoads(parsed, id);
     }
 
-    if (id === ROOT_ID) return source;
+    if (id === ROOT_ID) return ast.stringify(parsed);
     // this capturing stuff needs to behave differently when we have dynamic imports. Why??
-    if (this.needsScopeToBeCaptured(id, null, source) || this.needsClassInstrumentation(id, source)) {
+    const instrumentClasses = this.needsClassInstrumentation(id, source);
+    if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
       const sourceHash = string.hashCode(await this.resolver.fetchFile(id));
-      source = this.captureScope(source, id, sourceHash);
+      parsed = this.captureScope(parsed, id, sourceHash, instrumentClasses);
     }
 
-    return source;
+    return ast.stringify(parsed);
   }
 
   /**
@@ -567,10 +552,9 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    * @returns { string } The instrumented source code.
    */
-  captureScope (source, id, hashCode) {
+  captureScope (parsed, id, hashCode, instrumentClasses) {
     let classRuntimeImport = '';
     const recorderName = '__varRecorder__';
-    const parsed = ast.parse(source);
     const declsAndRefs = ast.query.topLevelDeclsAndRefs(parsed);
     const exports = ast.query.exports(declsAndRefs.scope).map(exp => JSON.stringify(exp.exported));
     const localLivelyVar = declsAndRefs.declaredNames.includes('lively');
@@ -584,7 +568,7 @@ export default class LivelyRollup {
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
     const currentModuleAccessor = opts.classToFunction.currentModuleAccessor;
 
-    if (this.needsClassInstrumentation(id, source)) {
+    if (instrumentClasses) {
       classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${this.isResurrectionBuild ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js'}";\n`;
     } else {
       opts.classToFunction = false;
@@ -650,7 +634,15 @@ export default class LivelyRollup {
       }
     }
 
-    return recorderString + (this.isResurrectionBuild ? moduleHash + moduleExports : '') + classRuntimeImport + ast.stringify(instrumented) + defaultExport;
+    instrumented.body = [
+      ...ast.parse(recorderString).body,
+      ...ast.parse(this.isResurrectionBuild ? moduleHash + moduleExports : '').body,
+      ...ast.parse(classRuntimeImport).body,
+      ...instrumented.body,
+      ...ast.parse(defaultExport).body
+    ];
+
+    return instrumented;
   }
 
   /**

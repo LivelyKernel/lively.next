@@ -95,8 +95,9 @@ async function load (url) {
   return await fetchFile(url);
 }
 
-function supportingPlugins () {
+function supportingPlugins (self) {
   return [
+    self,
     commonjs({
       sourceMap: false,
       defaultIsModuleExports: true,
