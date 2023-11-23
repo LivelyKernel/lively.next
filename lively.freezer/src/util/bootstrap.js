@@ -1,10 +1,11 @@
 /* global System */
 import { resource, unregisterExtension, registerExtension, loadViaScript } from 'lively.resources';
-import { string, promise, obj } from 'lively.lang';
+import { string, promise, obj, arr } from 'lively.lang';
 import * as modulePackage from 'lively.modules';
 import { easings } from 'lively.morphic';
 import { adoptObject } from 'lively.lang/object.js';
 import { Color } from 'lively.graphics/color.js';
+import { install as installHook } from 'lively.modules/src/hooks.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -168,6 +169,26 @@ function logInfo (...info) {
   console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1));
 }
 
+async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
+  const modsToReload = [];
+  for (let modId of modulesToCheck) {
+    const modHash = R.registry[modId]?.recorder.__module_hash__;
+    let key = modId;
+    let currMod;
+    if (key.startsWith('esm://')) continue; // do not revive esm modules
+    if (modHash !== moduleHashes['/' + key]) {
+      console.log('reviving', modId);
+      currMod = lively.modules.module(modId);
+      try {
+        modsToReload.push(...await currMod.revive(false));
+      } catch (err) {
+	      console.log('failed reviving', modId);
+      }
+    }
+  }
+  return arr.uniq(modsToReload);
+}
+
 function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
@@ -309,27 +330,40 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       }
       logInfo('Loaded module system:', Date.now() - ts + 'ms');
       progress?.finishPackage({ packageName: 'lively.modules', loaded: true });
+
+      const R = lively.FreezerRuntime;
+      const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
       if (fastLoad) {
         ts = Date.now();
         // revive the modules where the hashes differ from the ones on the bundle
-        const R = lively.FreezerRuntime;
-        const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
-        for (let modId in R.registry) {
-          const modHash = R.registry[modId]?.recorder.__module_hash__;
-          let key = modId;
-          if (key.startsWith('esm://')) continue; // do not revive esm modules
-          if (modHash !== moduleHashes['/' + key]) {
-            console.log('reviving', modId);
-            currMod = lively.modules.module(modId);
-            try {
-            	modsToReload.push(...await currMod.revive(false));
-            } catch (err) {
-	            console.log('failed reviving', modId);
-            }
-          }
-        }
+        modsToReload.push(...await shallowReloadModulesIfNeeded(obj.keys(R.registry), moduleHashes, R));
       }
-      if (modsToReload.length > 0) currMod.updateBundledModules([...new Set(modsToReload)]).then(() => { logInfo('Revived changed modules:', Date.now() - ts + 'ms'); });
+      if (modsToReload.length > 0) {
+        currMod.updateBundledModules(arr.uniq(modsToReload))
+          .then(() => { logInfo('Revived changed modules:', Date.now() - ts + 'ms'); })
+          .then(() => {
+          // finally wrap the import that re-triggers the revival in case new bundle parts come into play
+            const S = R.oldSystem;
+            installHook(S, 'import', async (proceed, args) => {
+              const modsToReload = [];
+              const keysBefore = obj.keys(R.registry);
+              const mod = await proceed(args);
+              const keysAfter = obj.keys(R.registry);
+              if (keysBefore.length < keysAfter.length) {
+                // detect modules to be reloaded
+                const modulesToUpdate = arr.withoutAll(keysAfter, keysBefore).filter(id => !id.startsWith('esm://'));
+                for (const mod of modulesToUpdate) {
+                  System.set(System.decanonicalize(mod), System.newModule(R.registry[mod].exports));
+                  const m = lively.modules.module(mod);
+                  m._recorder = R.registry[mod].recorder;
+                  m._frozenModule = true;
+                }
+                lively.modules.module(args).updateBundledModules(await shallowReloadModulesIfNeeded(modulesToUpdate, moduleHashes, R));
+              }
+              return mod;
+            });
+          });
+      }
     })
     .then(async function () {
       if (!fastLoad) {
