@@ -82,13 +82,14 @@ export function lively (args) {
         opts.shimMissingExports = true; // since we are asked to exclude some of the lively modules, we set this flag to true. Can we isolate this??
       }
       if (!opts.onwarn) opts.onwarn = (warning, warn) => { return customWarn(warning, warn, bundler); };
+      const self = opts.plugins.find(plugin => plugin.name === 'rollup-plugin-lively');
       opts.plugins = [
-        ...bundler.resolver.supportingPlugins(bundler.asBrowserModule ? 'browser' : 'node'),
-        ...opts.plugins
+        ...bundler.resolver.supportingPlugins(bundler.asBrowserModule ? 'browser' : 'node', self),
+        ...arr.without(opts.plugins, self)
       ];
       // we still need to make sure that the options are invoked
       for (let plugin of opts.plugins) {
-        if (plugin.name === 'rollup-plugin-lively') continue;
+        if (plugin === self) continue;
         if (plugin.options) opts = plugin.options.bind(this)(opts) || opts;
       }
       return opts;

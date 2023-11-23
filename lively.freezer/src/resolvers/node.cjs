@@ -165,7 +165,7 @@ async function load(url) {
   return  await fetchFile(url); 
 }
 
-function supportingPlugins(context = 'node') {
+function supportingPlugins(context = 'node', self) {
   return [
     context == 'node' && {
       name: 'system-require-handler',
@@ -215,17 +215,18 @@ function supportingPlugins(context = 'node') {
         }
       }
     },
-    context == 'browser' && nodePolyfills(), // only if we bundle for the browser  
+    context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
       sourceMap: false,
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
       dynamicRequireRoot: process.env.lv_next_dir,
-      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js'],
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /lively./],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]
-    })
+    }),
+    self,
   ].filter(Boolean);
 }
 
