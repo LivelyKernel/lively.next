@@ -120,6 +120,7 @@ export class Project {
       })
     );
     projectsCandidates = projectsCandidates.filter(p => p.url.includes('local_projects'));
+    if (!localStorage.getItem('livelyIncludePartsbinInList')) projectsCandidates = projectsCandidates.filter(p => p._name != 'LivelyKernel--partsbin');
     projectsCandidates.forEach(p => {
       p._projectName = p._name.replace(/.*--/, '');
       p._projectOwner = p._name.replace(/--.*/, '');
