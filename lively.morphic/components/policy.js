@@ -549,8 +549,8 @@ export class StylePolicy {
   generateUniqueNameFor (node) {
     const type = node.type?.[Symbol.for('__LivelyClassName__')] || node.type || 'morph';
     let candidate = string.incName(type);
-    while (morph.usedNames.has(candidate)) candidate = string.incName(candidate);
-    morph.usedNames.add(candidate);
+    while (StylePolicy.usedNames.has(candidate)) candidate = string.incName(candidate);
+    StylePolicy.usedNames.add(candidate);
     return candidate;
   }
 
