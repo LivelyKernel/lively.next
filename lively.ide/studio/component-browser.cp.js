@@ -1241,8 +1241,13 @@ export class ComponentBrowserModel extends ViewModel {
 
   showComponentsInFile (fileName, componentsInFile, activeNavigation) {
     const { masterComponentList } = this.ui;
-    const projectEntry = this.renderComponentsInFile(fileName, componentsInFile);
 
+    if (componentsInFile.length === 0) {
+      masterComponentList.submorphs = [];
+      return;
+    }
+
+    const projectEntry = this.renderComponentsInFile(fileName, componentsInFile);
     if (!activeNavigation) projectEntry.disableNavigation();
     masterComponentList.submorphs = [projectEntry];
     masterComponentList.layout.setResizePolicyFor(projectEntry, {
