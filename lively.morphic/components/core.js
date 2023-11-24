@@ -38,7 +38,9 @@ export class ComponentDescriptor {
    * and object allocations. Allows for fast component definition initalization, derivation
    * and style application.
    */
-  static for (generatorFunction, meta, previousDescriptor) {
+  static for (generatorFunction, meta, recorder, declaredName) {
+    const previousDescriptor = !recorder?.__revived__ && recorder?.[declaredName];
+    if (previousDescriptor) return previousDescriptor;
     return new this(this.extractSpec(generatorFunction), meta);
   }
 
