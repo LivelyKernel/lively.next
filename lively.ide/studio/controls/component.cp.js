@@ -8,6 +8,7 @@ import { Text } from 'lively.morphic/text/morph.js';
 import { ComponentBrowserPopupDark } from '../component-browser.cp.js';
 import { signal, once } from 'lively.bindings';
 import { string, obj } from 'lively.lang';
+import { ExpressionSerializer } from 'lively.serializer2';
 
 export class ComponentSelectionControl extends ViewModel {
   static get properties () {
@@ -81,6 +82,11 @@ export class ComponentSelectionControl extends ViewModel {
   async selectComponent () {
     this.control.closePopup();
     this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
+
+    if (this.component) {
+      const descr = new ExpressionSerializer().deserializeExprObj(this.component.__serialize__());
+      this._componentBrowserPopup.browse(descr);
+    }
     once(this._componentBrowserPopup, 'close', this, 'closePopup');
 
     const selectedComponent = await this._componentBrowserPopup.activate();

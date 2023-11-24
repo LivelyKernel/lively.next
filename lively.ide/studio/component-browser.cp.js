@@ -335,6 +335,7 @@ class MasterComponentTreeData extends TreeData {
     if (!selectedPkg) return {};
     const files = await resource(selectedPkg.url).dirList(1, {
       exclude: (res) => {
+        if (res.url.includes('assets')) return true;
         return !(res.url.endsWith('.cp.js') || res.isDirectory());
       }
     });
@@ -351,8 +352,12 @@ class MasterComponentTreeData extends TreeData {
   }
 
   async listComponentFilesInDir (folderLocation) {
-    const resources = (await resource(folderLocation).dirList())
-      .filter(res => (res.isDirectory() || res.url.endsWith('.cp.js')) && !res.name().startsWith('.'));
+    const resources = (await resource(folderLocation).dirList(10, {
+      exclude: (res) => {
+        if (res.url.includes('assets')) return true;
+        return !((res.url.endsWith('.cp.js') || res.isDirectory()) && !res.name().startsWith('.'));
+      }
+    }));
     // ensure that the package is loaded at this point
     // ensure that we only list folders who will in turn have anything to show
     const files = arr.compact(await Promise.all(resources.map(async res => {
@@ -845,7 +850,7 @@ export class ComponentBrowserModel extends ViewModel {
     }
   }
 
-  async viewDidLoad () {
+  viewDidLoad () {
     if (!this.view.isComponent) {
       this.view.withMetaDo({ metaInteraction: true }, () => {
         this.ui.componentFilesView.setTreeData(new MasterComponentTreeData({ browser: this }));
@@ -858,14 +863,15 @@ export class ComponentBrowserModel extends ViewModel {
       // `install.sh` ensures that the partsbin repository exists.
       // As users should fork the partsbin to contribute, no special precaution is taken here when stashing.
       const cmd = runCommand('cd ../local_projects/LivelyKernel--partsbin && git stash && git checkout main && git pull', { l2lClient: ShellClientResource.defaultL2lClient });
-      await cmd.whenDone();
-      if (cmd.exitCode !== 0) {
-        $world.setStatusMessage('`partsbin` could not be updated.', StatusMessageError);
-        return;
-      }
-      $world.setStatusMessage('`partsbin` updated!', StatusMessageConfirm);
-      $world._partsbinUpdated = true;
-      li.remove();
+      cmd.whenDone().then(() => {
+        if (cmd.exitCode !== 0) {
+          $world.setStatusMessage('`partsbin` could not be updated.', StatusMessageError);
+          return;
+        }
+        $world.setStatusMessage('`partsbin` updated!', StatusMessageConfirm);
+        $world._partsbinUpdated = true;
+        li.remove();
+      });
     }
   }
 
@@ -882,6 +888,7 @@ export class ComponentBrowserModel extends ViewModel {
       componentFilesView.treeData.collapse(selectedModule, false);
       componentFilesView.treeData.display(selectedModule);
     }
+    await this.view.whenRendered();
   }
 
   onRefresh (change) {
@@ -994,20 +1001,26 @@ export class ComponentBrowserModel extends ViewModel {
 
     const selectedComponent = this.getSelectedComponent();
     if (selectedComponent) {
-      const { _selectedNode: n, treeData: td } = this.models.componentFilesView;
-
-      if (n && n.componentObject === selectedComponent.component) return;
       // expand path until node selected
-      const url = System.decanonicalize(selectedComponent.component[Symbol.for('lively-module-meta')].moduleId);
-      await this.withoutUpdates(() => this.models.componentFilesView.setExpandedPath(node => {
-        if (node === td.root) return true;
-        if (node.url) return url.startsWith(node.url);
-        if (node.componentObject === selectedComponent.component) {
-          this.models.componentFilesView._selectedNode = node;
-          return true;
-        }
-      }, td.root, false));
+      this.showComponentInFilesView(selectedComponent.component);
     }
+  }
+
+  async showComponentInFilesView (aComponentDescriptor) {
+    const { treeData: td, _selectedNode: n } = this.models.componentFilesView;
+    if (n && n.componentObject === aComponentDescriptor) return;
+    const url = System.decanonicalize(aComponentDescriptor[Symbol.for('lively-module-meta')].moduleId);
+    await this.withoutUpdates(() => this.models.componentFilesView.setExpandedPath(node => {
+      if (node === td.root) return true;
+      if (node.url) {
+        return url.startsWith(node.url);
+      }
+      if (node.componentObject === aComponentDescriptor) {
+        // ensure the component list to be ready
+        this.models.componentFilesView._selectedNode = node;
+        return true;
+      }
+    }, td.root, false));
   }
 
   getSelectedComponent () {
@@ -1278,6 +1291,16 @@ class ComponentBrowserPopupModel extends ComponentBrowserModel {
         handler: 'close'
       }
     ];
+  }
+
+  get expose () {
+    return [...super.expose, 'browse'];
+  }
+
+  async browse (aComponent) {
+    await this.showComponentInFilesView(aComponent);
+    await this.refresh();
+    this.selectComponent(aComponent);
   }
 
   async activate (pos) {
