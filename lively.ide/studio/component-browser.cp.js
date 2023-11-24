@@ -1179,9 +1179,15 @@ export class ComponentBrowserModel extends ViewModel {
 
     for (const worldName of orderedWorlds) {
       const mod = module(worldName);
+      const pkg = mod.package();
+      const isOpenedProject = pkg && pkg.url === $world.openedProject?.package.url;
       newList.push(organizeByName
         ? this.renderComponentsByChar(worldName, componentsByWorlds[worldName])
-        : this.renderComponentsInFile(joinPath(mod.package().name, mod.pathInPackage()), componentsByWorlds[worldName]));
+        : this.renderComponentsInFile(
+          joinPath(mod.package().name, mod.pathInPackage()),
+          componentsByWorlds[worldName],
+          isOpenedProject)
+      );
     }
 
     masterComponentList.clipMode = 'auto';
@@ -1217,13 +1223,15 @@ export class ComponentBrowserModel extends ViewModel {
     return charGroup;
   }
 
-  renderComponentsInFile (fileName, componentsInFile) {
+  renderComponentsInFile (fileName, componentsInFile, enableNavigation) {
     const { masterComponentList } = this.ui;
     const currentList = masterComponentList.submorphs;
     const projectEntry = currentList.find(item => item.worldName === fileName) || part(this.sectionMaster);
 
     projectEntry.worldName = arr.last(fileName.split('--'));
     projectEntry.renderComponents(componentsInFile);
+
+    if (!enableNavigation) projectEntry.disableNavigation();
 
     return projectEntry;
   }
@@ -1247,8 +1255,7 @@ export class ComponentBrowserModel extends ViewModel {
       return;
     }
 
-    const projectEntry = this.renderComponentsInFile(fileName, componentsInFile);
-    if (!activeNavigation) projectEntry.disableNavigation();
+    const projectEntry = this.renderComponentsInFile(fileName, componentsInFile, activeNavigation);
     masterComponentList.submorphs = [projectEntry];
     masterComponentList.layout.setResizePolicyFor(projectEntry, {
       width: 'fill', height: 'fixed'
