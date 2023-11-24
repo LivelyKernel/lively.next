@@ -3,7 +3,7 @@ import { string, fun, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
 import { epiConnect, noUpdate } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
-import { PolicyApplicator, without, add } from './policy.js';
+import { StylePolicy, PolicyApplicator, without, add } from './policy.js';
 
 const expressionSerializer = new ExpressionSerializer();
 
@@ -66,7 +66,7 @@ export class ComponentDescriptor {
    */
   static extractSpec (generatorFunction) {
     morph.evaluateAsSpec = evaluateAsSpec = true;
-    morph.usedNames = this.prepareUsedNamesSet(generatorFunction);
+    StylePolicy.usedNames = this.prepareUsedNamesSet(generatorFunction);
     let spec = {};
     try {
       spec = generatorFunction();
@@ -579,8 +579,8 @@ export function part (componentDescriptor, overriddenProps = {}) {
   if (!componentDescriptor.isPolicy && !componentDescriptor.isComponentDescriptor) { throw new Error('Cannot derive a morph from ' + componentDescriptor + " since it's neither a style policy nor a component descriptor!"); }
   if (evaluateAsSpec) {
     if (!overriddenProps.name) {
-      if (!morph.usedNames.has(componentDescriptor.stylePolicy.name)) {
-        morph.usedNames.add(componentDescriptor.stylePolicy.name);
+      if (!StylePolicy.usedNames.has(componentDescriptor.stylePolicy.name)) {
+        StylePolicy.usedNames.add(componentDescriptor.stylePolicy.name);
       } else {
         overriddenProps.name = componentDescriptor.stylePolicy.generateUniqueNameFor(overriddenProps);
       }
