@@ -205,7 +205,7 @@ class MasterComponentTreeData extends TreeData {
     if (isSelected && !this.root.browser._pauseUpdates) {
       const mod = module(url);
       const pkg = mod.package();
-      const isOpenedProject = pkg.url === $world.openedProject?.package.url;
+      const isOpenedProject = pkg && pkg.url === $world.openedProject?.package.url;
       modUrl = arr.last(modUrl.split('--'));
       this.getComponentsInModule(url).then(components => {
         this.root.browser.showComponentsInFile(modUrl, components, isOpenedProject);
