@@ -795,8 +795,31 @@ export class BrowserModel extends ViewModel {
 
   get selectedCodeEntity () {
     const entities = this.ui.columnView.getExpandedPath().filter(n => n.isDeclaration);
-    if (entities.length > 1) return entities;
-    return arr.last(entities);
+    if (entities.length > 1) {
+      if (arr.last(entities).children?.length > 0) {
+        // in case an entity is selected that contains
+        // a set of sub entities, we automatically drill down
+        // and select the entity closest to the center
+        // of the code editor view.
+        return this.determineCodeEntityFromViewPort();
+      }
+      return entities;
+    }
+    let entity = arr.last(entities);
+    if (!entity) {
+      // in cases where no entity is selected, we attempt to extract one based on the
+      // current part of the source code scrolled into view.
+      return this.determineCodeEntityFromViewPort();
+    }
+    return entity;
+  }
+
+  determineCodeEntityFromViewPort () {
+    const defs = this.renderedCodeEntities();
+    const yCenter = this.ui.sourceEditor.scroll.y + this.ui.sourceEditor.height / 2;
+    const textPos = this.ui.sourceEditor.textPositionFromPoint(pt(0, yCenter));
+    const idx = this.ui.sourceEditor.positionToIndex(textPos);
+    return arr.min(defs, def => Math.abs(def.node.start - idx));
   }
 
   get selectedDirectory () {
