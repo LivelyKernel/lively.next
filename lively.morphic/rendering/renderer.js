@@ -1308,14 +1308,14 @@ export default class Renderer {
       if (!isWrapped) {
         let tallestCharRect = charBounds[0];
         // find highest char rect
-        charBounds.forEach((charb) => {
-          if (charb.height > tallestCharRect.height) tallestCharRect = charb;
+        charBounds.forEach((rect) => {
+          if (rect.height > tallestCharRect.height) tallestCharRect = rect;
         });
-        for (let charbound of charBounds) {
+        for (let rect of charBounds) {
           // A charrect is contained in the larger one, if it starts at the same height/below the larger one and ends above or at the same height.
-          if (charbound === tallestCharRect) continue;
-          if (((charbound.y + charbound.height) >= (tallestCharRect.y + tallestCharRect.height)) &&
-             (charbound.y >= tallestCharRect.y)) {
+          if (rect === tallestCharRect) continue;
+          if (((rect.y + rect.height) >= (tallestCharRect.y + tallestCharRect.height)) &&
+             (rect.y >= tallestCharRect.y)) {
             isWrapped = true;
             // As soon as we found one, we can stop, as we know for sure that we are wrapped.
             break;
