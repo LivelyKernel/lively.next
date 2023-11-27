@@ -257,6 +257,14 @@ class ModuleInterface {
     return typeof lively !== 'undefined' && lively.wasFastLoaded && (lively.FreezerRuntime || lively.frozenModules)?.registry[this.shortName()];
   }
 
+  async refreshFrozenRecord (frozenRecord) {
+    const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
+    const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
+    // also inject the new values into the record in order to update the bundle
+
+    Object.assign(frozenRecord.recorder, newEntries); // how do we preveny this from being overridden again?
+  }
+
   async revive (autoReload = true) {
     if (!this._frozenModule) return []; // no need to do
     // prepare the already existing recorder obejct to contain the required callbacks
@@ -265,12 +273,9 @@ class ModuleInterface {
     const S = (lively.FreezerRuntime || lively.frozenModules).oldSystem;
     S.skipInstantiation = true;
     const frozenRecord = this.getFrozenRecord();
+    await this.refreshFrozenRecord(frozenRecord);
     frozenRecord.isRevived = true;
-    const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
-    const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
-    // also inject the new values into the record in order to update the bundle
     frozenRecord.recorder.__revived__ = true;
-    Object.assign(frozenRecord.recorder, newEntries); // how do we preveny this from being overridden again?
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
@@ -371,6 +376,13 @@ class ModuleInterface {
       options.doEval && moduleSourceChange(
         System, id, newSource, format, options)
         .then(_result => result = _result)
+        .then(async () => {
+          const frozenRecord = this.getFrozenRecord();
+          if (frozenRecord) {
+            await this.refreshFrozenRecord(frozenRecord);
+            await this.updateBundledModules([frozenRecord.contextModule]);
+          }
+        })
     ]).then(() => result);
   }
 
