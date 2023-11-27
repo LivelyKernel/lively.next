@@ -134,9 +134,9 @@ export default class Window extends Morph {
     this.getSubmorphNamed('minimize').visible = !!this.minimizable;
   }
 
-  async openWindowMenu () {
+  get defaultWindowItems () {
     const w = this.world() || this.env.world;
-    return this.targetMorph.world().openMenu([
+    return [
       [
         'Change Window Title',
         async () => {
@@ -166,7 +166,13 @@ export default class Window extends Morph {
           { alias: 'minimize all', target: w, command: 'toggle minimize all windows' },
           { alias: 'close all', target: w, command: 'close all windows' }
         ]
-      ],
+      ]
+    ];
+  }
+
+  async openWindowMenu () {
+    return this.targetMorph.world().openMenu([
+      this.defaultWindowItems,
       { isDivider: true },
       ...(await this.targetMorph.menuItems())
     ]);
