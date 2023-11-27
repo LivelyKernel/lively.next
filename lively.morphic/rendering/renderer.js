@@ -521,7 +521,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to check if it results in multiple nodes.
    */
   isComposite (morph) {
-    return morph.isCanvas || morph.isHTMLMorph || morph.isImage ||  morph.isText;
+    return morph.isCanvas || morph.isHTMLMorph || morph.isImage || morph.isText;
   }
 
   /**
@@ -1306,15 +1306,16 @@ export default class Renderer {
       // When a line is not wrapped however, we do know that all character rects are "vertically contained" in the largest character rect.
       // If this is not the case, we can be sure that the line is wrapped.
       if (!isWrapped) {
-        let highgestCharRect = charBounds[0];
+        let tallestCharRect = charBounds[0];
         // find highest char rect
         charBounds.forEach((charb) => {
-          if (charb.height > highgestCharRect.height) highgestCharRect = charb;
+          if (charb.height > tallestCharRect.height) tallestCharRect = charb;
         });
         for (let charbound of charBounds) {
           // A charrect is contained in the larger one, if it starts at the same height/below the larger one and ends above or at the same height.
-          if (((charbound.y + charbound.height) >= (highgestCharRect.y + highgestCharRect.height)) &&
-             (charbound.y >= highgestCharRect.y)) {
+          if (charbound === tallestCharRect) continue;
+          if (((charbound.y + charbound.height) >= (tallestCharRect.y + tallestCharRect.height)) &&
+             (charbound.y >= tallestCharRect.y)) {
             isWrapped = true;
             // As soon as we found one, we can stop, as we know for sure that we are wrapped.
             break;
