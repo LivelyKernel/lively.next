@@ -11,6 +11,8 @@ import DarkTheme from '../themes/dark.js';
 import { StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
 import { connect } from 'lively.bindings';
+import { part } from 'lively.morphic/components/core.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 export default class Workspace extends Window {
   static get properties () {
@@ -51,7 +53,7 @@ export default class Workspace extends Window {
         initialize () {
           const ed = this.targetMorph;
           this.jsPlugin.evalEnvironment = {
-            targetModule: 'lively://lively.next-workspace/' + ed.id,
+            targetModule: 'lively://lively.next-workspace/' + ed.id + '.cp.js',
             context: ed,
             format: 'esm'
           };

@@ -5,7 +5,7 @@ import catchBinding from '@babel/plugin-syntax-import-meta';
 import importMeta from '@babel/plugin-syntax-import-meta';
 
 import * as capturing from './capturing.js';
-import { topLevelDeclsAndRefs } from 'lively.ast/lib/query.js';
+import { topLevelDeclsAndRefs, queryNodes } from 'lively.ast/lib/query.js';
 import { arr } from 'lively.lang';
 export { capturing };
 
@@ -122,6 +122,15 @@ export function ensureComponentDescriptors (translated, moduleName, recorderName
   translated = typeof translated == 'string' ? parse(translated) : translated;
   let { varDecls } = topLevelDeclsAndRefs(translated);
   varDecls = arr.compact(varDecls.map(m => m.declarations && m.declarations[0]));
+
+  if (queryNodes(translated.body[0], `ExpressionStatement [  (/:expression CallExpression [
+       (/:callee Identifier [ @name == 'component'])
+     ])
+   ]`).length > 0) {
+    const node = translated.body[0];
+    const spec = node.expression.arguments.map(n => stringify(n)).join(',');
+    return parse(`component.for(() => component(${spec}), { module: "${moduleName}" })`);
+  }
   return QueryReplaceManyVisitor.run(
     translated, `
          // VariableDeclarator [
