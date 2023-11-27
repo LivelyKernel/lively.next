@@ -83,16 +83,9 @@ export default class Workspace extends Window {
 
   async openWindowMenu () {
     const menuItems = [
-      [
-        'Change Window Title',
-        async () => {
-          const newTitle = await $world.prompt('Enter New Name', { input: this.title });
-          if (newTitle) this.title = newTitle;
-        }
-      ],
+      ...this.defaultWindowItems,
       { isDivider: true },
-      ['Set Workspace File...', () => this.execCommand('[workspace] query for file')],
-      ...(await this.targetMorph.menuItems())
+      ['Set Workspace File...', () => this.execCommand('[workspace] query for file')]
     ];
     this.targetMorph.world().openMenu(menuItems);
   }
