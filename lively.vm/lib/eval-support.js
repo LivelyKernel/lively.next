@@ -41,6 +41,11 @@ export function evalCodeTransform (code, options) {
     moduleName = `local://lively-object-modules/${moduleName}`;
   }
 
+  if (options.declarationWrapperName?.includes('lively.next-workspace/')) {
+    moduleName = options.declarationWrapperName.split('lively.next-workspace/')[1];
+    moduleName = `lively://lively.next-workspace/${moduleName}`;
+  }
+
   if (moduleName && moduleName.includes('local_projects/')) moduleName = moduleName.replace('local_projects/', '');
   if (moduleName) { parsed = ensureComponentDescriptors(parsed, moduleName, options.varRecorderName); }
 
