@@ -534,7 +534,9 @@ function shouldRefBeCaptured (ref, toplevel, options) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function replaceClassDecls (parsed, options) {
-  if (options.classToFunction && options.classToFunction.transform) { return options.classToFunction.transform(parsed, options.classToFunction); }
+  if (options.classToFunction && options.classToFunction.transform) {
+    return options.classToFunction.transform(parsed, { ...options.classToFunction, captureObj: options.captureObj });
+  }
 
   const topLevel = topLevelDeclsAndRefs(parsed);
   if (!topLevel.classDecls.length) return parsed;
