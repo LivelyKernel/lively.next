@@ -1,10 +1,14 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout, xit, $super */
+/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout, xit, $super, before */
 
 import { expect } from 'mocha-es6';
 import * as fun from '../function.js';
 import { promise } from 'lively.lang';
 
 describe('fun', function () {
+  before(async () => {
+    await lively.modules.module('lively.lang/function.js').revive();
+  });
+
   describe('accessing methods -- own and all', function () {
     let obj1 = {
       foo: 23,
@@ -641,6 +645,7 @@ describe('fun', function () {
       (async () => fun.guardNamed(name, a)())();
       (async () => fun.guardNamed(name, b)())();
       await (async () => fun.guardNamed(name, c)())();
+      await promise.delay(10);
       expect(log).to.equal('aRun');
     });
 
