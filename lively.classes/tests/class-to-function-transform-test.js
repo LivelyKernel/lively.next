@@ -25,6 +25,9 @@ function classTemplate (className, superClassName, methodString, classMethodStri
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
   };
+  if (Object.isFrozen(__lively_classholder__)) {
+    return __lively_class__;
+  }
   return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, __lively_classholder__, ${moduleMeta}, {
     start: ${start},
     end: ${end}
@@ -140,7 +143,9 @@ describe('class transform', () => {
       classTemplateDecl('Foo', 'Object', `[{
   key: Symbol.for("lively-instance-initialize"),
   value: function Foo_initialize_(arg) {
-    initializeClass._get(Object.getPrototypeOf(__lively_class__.prototype), Symbol.for("lively-instance-initialize"), this).call(this, arg, 23);
+    var _this;
+    _this = initializeClass._get(Object.getPrototypeOf(__lively_class__.prototype), Symbol.for("lively-instance-initialize"), this).call(this, arg, 23);
+    return _this;
   }
 }]`, 'undefined', '_rec', 'undefined', 0, 65)));
 

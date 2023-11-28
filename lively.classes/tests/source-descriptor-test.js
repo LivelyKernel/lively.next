@@ -23,7 +23,9 @@ let S;
 describe('source descriptors', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testDir });
-    // S.debug = true
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.translate = async (load) => await System.translate.bind(S)(load);
     S._scripting = System._scripting;
     await createFiles(testDir, testResources);
     await importPackage(S, 'project1');
@@ -65,13 +67,13 @@ describe('source descriptors', function () {
       expect(descr.source).equals('class A { m() {}}');
     });
 
-    xit('can change complete module and keeps entity', async () => {
-      // var m = module(S, "project1/index.js"),
-      //     descr = RuntimeSourceDescriptor.for(m.recorder.A, S);
-      // expect(descr.source).equals("class A {}");
-      // await m.changeSourceAction(oldSource =>
-      //   oldSource.replace("class A {}", "class A { m() {}}"));
-      // expect(descr.source).equals("class A { m() {}}");
+    it('can change complete module and keeps entity', async () => {
+      let m = module(S, 'project1/index.js');
+      let descr = RuntimeSourceDescriptor.for(m.recorder.A, S);
+      expect(descr.source).equals('class A {}');
+      await m.changeSourceAction(oldSource =>
+        oldSource.replace('class A {}', 'class A { m() {}}'));
+      expect(descr.source).equals('class A { m() {}}');
     });
   });
 });
