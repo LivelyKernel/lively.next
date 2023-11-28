@@ -27,6 +27,9 @@ let S, opts, packagesToRemove;
 describe('object package', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testBaseURL });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.translate = async (load) => await System.translate.bind(S)(load);
     S._scripting = scripting;
     opts = { baseURL: testBaseURL, System: S };
     await createFiles(testBaseURL, testResources);
