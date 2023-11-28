@@ -16,7 +16,15 @@ let module4 = testProjectDir + 'file4.js';
 describe('eval', () => {
   let S;
   beforeEach(function () {
-    S = modules ? modules.getSystem('test', { baseURL: dir }) : System;
+    S = System;
+    if (modules) {
+      S = modules.getSystem('test', { baseURL: dir });
+      S.babelOptions = System.babelOptions;
+      S.set('lively.transpiler', System.get('lively.transpiler'));
+      S.config({ transpiler: 'lively.transpiler' });
+      S.translate = async (load) => await System.translate.bind(S)(load);
+    }
+
     return S.import(module1);
   });
 
