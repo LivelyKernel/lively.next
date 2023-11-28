@@ -279,7 +279,7 @@ function replaceClass (node, state, path, options) {
     : superClass || id('undefined');
 
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
-  let useClassHolder = classId && (type === 'ClassDeclaration' || type === 'ClassExpression'); // if the class is assigned this will not work
+  let { useClassHolder = classId && (type === 'ClassDeclaration' || type === 'ClassExpression') } = options; // if the class is assigned this will not work
 
   let locKeyVals = ['start', literal(loc.start), 'end', literal(loc.end)];
   if (typeof evalId !== 'undefined') locKeyVals.push('evalId', literal(evalId));
