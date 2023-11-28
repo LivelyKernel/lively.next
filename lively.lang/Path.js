@@ -66,7 +66,7 @@ Object.assign(Path.prototype, {
     // Does the Path resolve to a value when applied to `obj`?
     if (this.isRoot()) return true;
     const parent = this.get(obj, -1);
-    return parent && parent.hasOwnProperty(this._parts[this._parts.length - 1]);
+    return parent && Object.hasOwnProperty.bind(parent)(this._parts[this._parts.length - 1]);
   },
 
   equals (obj) {
@@ -83,7 +83,8 @@ Object.assign(Path.prototype, {
     // p2.isParentPathOf(p1) // => true
     // p1.isParentPathOf(p2) // => false
     otherPath = otherPath && otherPath.isPathAccessor
-      ? otherPath : Path(otherPath);
+      ? otherPath
+      : Path(otherPath);
     const parts = this.parts();
     const otherParts = otherPath.parts();
     for (let i = 0; i < parts.length; i++) {
@@ -99,7 +100,8 @@ Object.assign(Path.prototype, {
     // p1.relativePathTo(p2) // => undefined
     otherPath = Path(otherPath);
     return this.isParentPathOf(otherPath)
-      ? otherPath.slice(this.size(), otherPath.size()) : undefined;
+      ? otherPath.slice(this.size(), otherPath.size())
+      : undefined;
   },
 
   del (obj) {
@@ -107,7 +109,7 @@ Object.assign(Path.prototype, {
     let parent = obj;
     for (let i = 0; i < this._parts.length - 1; i++) {
       const part = this._parts[i];
-      if (parent.hasOwnProperty(part)) {
+      if (Object.hasOwnProperty.bind(parent)(part)) {
         parent = parent[part];
       } else return false;
     }
@@ -123,7 +125,7 @@ Object.assign(Path.prototype, {
     let parent = obj;
     for (let i = 0; i < this._parts.length - 1; i++) {
       const part = this._parts[i];
-      if (parent.hasOwnProperty(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
+      if (Object.hasOwnProperty.bind(parent)(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
         parent = parent[part];
       } else if (ensure) {
         parent = parent[part] = {};
@@ -202,7 +204,7 @@ Object.assign(Path.prototype, {
     const parent = this.get(target, -1);
     const propName = this.parts().slice(-1)[0];
     const newPropName = 'propertyWatcher$' + propName;
-    const watcherIsInstalled = parent && parent.hasOwnProperty(newPropName);
+    const watcherIsInstalled = parent && Object.hasOwnProperty.bind(parent)(newPropName);
     const uninstall = options.uninstall;
     const haltWhenChanged = options.haltWhenChanged;
     const showStack = options.showStack;
@@ -234,7 +236,8 @@ Object.assign(Path.prototype, {
       let msg = parent + '.' + propName + ' changed: ' + oldValue + ' -> ' + v;
       if (showStack) {
         msg += '\n' + (typeof lively !== 'undefined'
-          ? lively.printStack() : console.trace());
+          ? lively.printStack()
+          : console.trace());
       }
       if (options.verbose) {
         console.log(msg);
