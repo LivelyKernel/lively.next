@@ -39,6 +39,10 @@ let S;
 describe('export lookup', () => {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testProjectDir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     await createFiles(testProjectDir, testProjectSpec);
     await importPackage(S, testProjectDir);
   });

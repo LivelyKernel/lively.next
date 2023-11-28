@@ -35,6 +35,10 @@ describe('notify', () => {
 
   beforeEach(() => {
     system = getSystem('test', { baseURL: dir });
+    system.set('lively.transpiler', System.get('lively.transpiler'));
+    system.config({ transpiler: 'lively.transpiler' });
+    system.babelOptions = System.babelOptions;
+    system.translate = async (load) => await System.translate.bind(system)(load);
     modulechanged = [];
     moduleloaded = [];
     moduleunloaded = [];

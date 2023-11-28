@@ -16,6 +16,10 @@ let S;
 describe('module loading', () => {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: dir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     await createFiles(testDir, {
       'file1.js': "import { y } from './file2.js'; export var x = y + 1;",
       'file2.js': "import { z } from './file3.js'; export var y = 1 + z;",
