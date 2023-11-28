@@ -1,7 +1,7 @@
 /* global afterEach, describe, it, xit, setTimeout */
 
 import { expect } from 'mocha-es6';
-import { convertCallbackFun, promise, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs } from '../promise.js';
+import { convertCallbackFun, promise, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs, chain } from '../promise.js';
 
 describe('promise', () => {
   describe('cb convertions', () => {
@@ -41,7 +41,7 @@ describe('promise', () => {
   describe('chain', () => {
     it('runs promises consecutively', () => {
       let order = []; let prevResults = [];
-      return promise.chain([
+      return chain([
         (prevResult, state) => { state.first = 1; order.push(1); prevResults.push(prevResult); return new Promise(resolve => setTimeout(() => resolve(1), 100)); },
         (prevResult, state) => { state.second = 2; order.push(2); prevResults.push(prevResult); return new Promise(resolve => setTimeout(() => resolve(2), 10)); },
         (prevResult, state) => { state.third = 3; order.push(3); prevResults.push(prevResult); return new Promise(resolve => setTimeout(() => resolve(state), 50)); }
@@ -53,19 +53,19 @@ describe('promise', () => {
     });
 
     it('deals with errors in chain funcs', () =>
-      promise.chain([
+      chain([
         () => new Promise(resolve => setTimeout(() => resolve(1), 10)),
         () => { throw new Error('Foo'); }
       ]).catch(err => expect(err).to.match(/Foo/i)));
 
     it('deals with rejections', () =>
-      promise.chain([
+      chain([
         () => Promise.reject(new Error('Bar')),
         () => { throw new Error('Foo'); }
       ]).catch(err => expect(err).to.match(/Bar/i)));
 
     it('chain function results are coerced into promises', () =>
-      promise.chain([() => 23, (val) => 23 + 2])
+      chain([() => 23, (val) => 23 + 2])
         .then(results => expect(results).to.equal(25)));
   });
 
