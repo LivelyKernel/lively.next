@@ -57,7 +57,10 @@ function classTemplate (className, superClassName, methodString, classMethodStri
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
   };
-  return _createOrExtendClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, __lively_classholder__, ${moduleMeta}${pos});
+  if (Object.isFrozen(__lively_classholder__)) {
+    return __lively_class__;
+  }
+  return _createOrExtendClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}${pos});
 }(${superClassName})`;
 }
 
@@ -179,16 +182,16 @@ describe('ast.capturing', function () {
         testVarTfm('normal def',
           'class Foo {\n  a() {\n  return 23;\n  }\n}',
           classTemplateDecl('Foo', 'undefined', '[{\n' +
-                                                       '  key: "a",\n' +
-                                                       '  value: function Foo_a_() {\n' +
-                                                       '    return 23;\n' +
-                                                       '  }\n' +
-                                                       '}]', '[{\n' +
-                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
-                                                       '  get: function get() {\n' +
-                                                       '    return "Foo";\n' +
-                                                       '  }\n' +
-                                                       '}]', '_rec', 'undefined', 0, 38));
+           '  key: "a",\n' +
+           '  value: function Foo_a_() {\n' +
+           '    return 23;\n' +
+           '  }\n' +
+           '}]', '[{\n' +
+           '  key: Symbol.for("__LivelyClassName__"),\n' +
+           '  get: function get() {\n' +
+           '    return "Foo";\n' +
+           '  }\n' +
+           '}]', '_rec', 'undefined', 0, 38));
 
         testVarTfm('exported def',
           'export class Foo {}',
