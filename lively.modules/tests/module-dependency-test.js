@@ -23,6 +23,10 @@ let S, module1, module2, module3;
 describe('dependencies', () => {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testProjectDir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module3 = module(S, file3m);

@@ -28,6 +28,10 @@ let S, module1, module3, module4, module5;
 
 async function setup () {
   S = getSystem('test', { baseURL: dir });
+  S.set('lively.transpiler', System.get('lively.transpiler'));
+  S.config({ transpiler: 'lively.transpiler' });
+  S.babelOptions = System.babelOptions;
+  S.translate = async (load) => await System.translate.bind(S)(load);
   module1 = module(S, testProjectDir + 'file1.js');
   module3 = module(S, testProjectDir + 'file3.js');
   module4 = module(S, testProjectDir + 'file4.js');
@@ -100,7 +104,7 @@ describe('instrumentation', () => {
       S.import(`${testProjectDir}file3.js`)
         .then(() => {
           expect(module3).to.have.deep.property('recorder.zzz', 4);
-          expect(S.get(testProjectDir + 'file3.js')).to.have.property('z', 2);
+          expect(S.get(testProjectDir + 'file3.js').default).to.have.property('z', 2);
         }));
   });
 
