@@ -28,7 +28,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
   if (Object.isFrozen(__lively_classholder__)) {
     return __lively_class__;
   }
-  return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, __lively_classholder__, ${moduleMeta}, {
+  return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}, {
     start: ${start},
     end: ${end}
   });
