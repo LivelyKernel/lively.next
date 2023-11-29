@@ -35,6 +35,7 @@
       const isCoreModule = !!System.loads['@node/' + args[0]];
       if (isCoreModule && !args[1].loaded && !exports.prototype) {
         exports = Object.assign(Object.create(exports.prototype || {}), exports)
+        if (!exports.default) exports.default = exports;
         exports.__esModule = true; 
       };
       return exports;
