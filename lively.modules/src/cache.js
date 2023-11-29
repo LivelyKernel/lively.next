@@ -68,6 +68,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
   }
 
   async fetchStoredModuleSource (moduleId) {
+    if (moduleId.endsWith('package.json')) return null;
     moduleId = moduleId.replace('file://', '');
     const fname = this.getFileName(moduleId);
     const fpath = moduleId.replace(fname, '');
@@ -80,6 +81,7 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
   }
 
   async cacheModuleSource (moduleId, hash, source) {
+    if (moduleId.endsWith('package.json')) return;
     moduleId = moduleId.replace('file://', '');
     const fname = this.getFileName(moduleId);
     const fpath = moduleId.replace(fname, '');
