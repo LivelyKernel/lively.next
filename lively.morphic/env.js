@@ -152,12 +152,12 @@ export class MorphicEnv {
     const systemChangeHandlers = this.systemChangeHandlers = {};
     systemChangeHandlers['lively.modules/moduleloaded'] = [
       subscribe('lively.modules/moduleloaded', (evt) =>
-        this.getTargetsFor('onModuleLoaded').forEach(ea => ea.onModuleLoaded(evt)))];
+        this.getTargetsFor('onModuleLoaded').forEach(ea => ea.onModuleLoaded(evt)), System)];
     systemChangeHandlers['lively.modules/modulechanged'] = [
       subscribe('lively.modules/modulechanged', (evt) => {
         clearStylePropertiesForClassesIn(evt.module);
         this.getTargetsFor('onModuleChanged').forEach(ea => ea.onModuleChanged(evt));
-      })];
+      }, System)];
   }
 
   uninstallSystemChangeHandlers () {
@@ -166,7 +166,7 @@ export class MorphicEnv {
     this.systemChangeHandlers = null;
     Object.keys(systemChangeHandlers).forEach(name =>
       systemChangeHandlers[name].forEach(handler =>
-        unsubscribe(name, handler)));
+        unsubscribe(name, handler, System)));
   }
 
   getTargetsFor (selector) {
