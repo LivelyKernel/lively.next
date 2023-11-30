@@ -897,7 +897,8 @@ export class LivelyWorld extends World {
     if (target._responsiveHalo) target._responsiveHalo.remove();
     if (!Halo) return;
     if (!obj.isArray(target) && !target.halosEnabled) return;
-    if (this.halos().filter(halo => halo.target === target).length > 0) return;
+    const [existingHalo] = this.halos().filter(halo => halo.target === target);
+    if (existingHalo instanceof Halo) return existingHalo;
     if (typeof target.createHalo === 'function') {
       halo = target.createHalo(Halo, pointerId);
     } else {
