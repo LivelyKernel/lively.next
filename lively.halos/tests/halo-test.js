@@ -75,9 +75,16 @@ describeInBrowser('halos', function () {
     await halo.whenRendered();
     let innerButton = halo.buttonControls.find(item =>
       halo.buttonControls.find(otherItem =>
-        otherItem !== item && !otherItem.isHandle && otherItem !== halo.borderBox &&
-            otherItem.globalBounds().intersects(item.globalBounds())) &&
-          item !== halo.originHalo() && !item.isHandle && item !== halo.borderBox);
+        otherItem !== item &&
+        !otherItem.isHandle &&
+        otherItem !== halo.borderBox &&
+        otherItem !== halo.responsiveHalo() &&
+        otherItem.globalBounds().intersects(item.globalBounds())) &&
+      item !== halo.originHalo() &&
+      item !== halo.responsiveHalo() &&
+      item !== halo.borderBox &&
+      !item.isHandle);
+    debugger;
     expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
   });
 
@@ -316,6 +323,7 @@ describeInBrowser('halos', function () {
   });
 
   it('shifting the origin will not move bounds', async () => {
+    debugger;
     submorph1.position = pt(200, 100);
     submorph1.rotateBy(num.toRadians(90));
     let oldGlobalPos = submorph1.globalBounds().topLeft();
