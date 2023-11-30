@@ -195,7 +195,10 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       await loadViaScript(resource(baseURL).join('/lively.next-node_modules/@babel/standalone/babel.js').url);
       const migratedMeta = { ...oldSystem.meta };
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
+      $world.env.uninstallSystemChangeHandlers();
       lively.modules.changeSystem(System, true);
+      $world.env.installSystemChangeHandlers();
+
       await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
       logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
 
