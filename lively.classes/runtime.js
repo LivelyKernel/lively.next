@@ -243,7 +243,7 @@ export function initializeClass (
   // 1. create a new constructor function if necessary, re-use an exisiting if the
   // classHolder object has it
   let className = constructorFunc.name;
-  let klass = className && classHolder.hasOwnProperty(className) && classHolder[className];
+  let klass = className && classHolder && classHolder.hasOwnProperty(className) && classHolder[className];
   let existingSuperclass = klass && klass[superclassSymbol];
   if (!klass || typeof klass !== 'function' || !existingSuperclass) { klass = constructorFunc; }
 

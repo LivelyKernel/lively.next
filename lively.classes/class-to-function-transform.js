@@ -310,14 +310,13 @@ function replaceClass (node, state, path, options) {
                   constructorTemplate(classId.name, fields))
               }
             : classId ? constructorTemplate(classId.name, fields) : constructorTemplate(null, fields)),
-        ifStmt(funcCall(member(id('Object'), id('isFrozen')), id(tempLivelyClassHolderVar)), block(returnStmt(id(tempLivelyClassVar))), false),
         returnStmt(
           funcCall(
             options.functionNode,
             id(tempLivelyClassVar),
             id('superclass'),
             instanceProps, classProps,
-            id(tempLivelyClassHolderVar),
+            useClassHolder ? id(tempLivelyClassHolderVar) : id('null'),
             options.currentModuleAccessor || id('undefined'),
             locNode
           ))),
@@ -362,7 +361,19 @@ class ClassReplaceVisitor extends Visitor {
       };
     }
 
-    if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') { node = replaceClass(node, state, path, state.options); }
+    if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') {
+      if (node._skipClassHolder) state.options.useClassHolder = false;
+      node = replaceClass(node, state, path, state.options);
+      delete state.options.useClassHolder;
+    }
+
+    if (node.type === 'VariableDeclarator' && (node.init?.type === 'ClassExpression' || node.init?.type === 'ClassDeclaration')) {
+      node.init._skipClassHolder = true;
+    }
+
+    if (node.type === 'AssignmentExpression' && (node.right?.type === 'ClassExpression' || node.right?.type === 'ClassDeclaration')) {
+      node.right._skipClassHolder = true;
+    }
 
     if (node.type === 'PrivateIdentifier') node = replacePrivateIdentifier(node);
 
