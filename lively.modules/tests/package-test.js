@@ -200,7 +200,7 @@ describe('package loading', function () {
       let m = await S.import('project2');
       expect(m.version).to.equal('b');
       expect(S.packages).to.containSubset({
-        [noTrailingSlash(project1bDir)]: { main: 'entry-b.js', map: {} },
+        [noTrailingSlash(project1bDir)]: { main: 'entry-b.js' },
         [noTrailingSlash(project2Dir)]: { map: { 'some-project': project1bDir } }
       });
     });
@@ -213,7 +213,7 @@ describe('package loading', function () {
       let m = await S.import('project2');
       expect(m.version).to.equal('b');
       expect(S.packages).to.containSubset({
-        [noTrailingSlash(project1bDir)]: { main: 'entry-b.js', map: {} },
+        [noTrailingSlash(project1bDir)]: { main: 'entry-b.js' },
         [noTrailingSlash(project2Dir)]: { map: { 'some-project': '../dep2/' } }
       });
     });
@@ -296,7 +296,7 @@ describe('package loading', function () {
       expect(await resource(newURL + '/package.json').exists()).equals(true, 'package.json does not exist');
 
       expect(S.get(newURL + '/entry-a.js')).deep.equals({ version: 'a', x: 2 });
-      expect(S.get(newURL + '/package.json')).containSubset({ main: 'entry-a.js', name: 'some-project' });
+      expect(S.get(newURL + '/package.json').default).containSubset({ main: 'entry-a.js', name: 'some-project' });
     });
 
     it('renameTo changes package name and address', async () => {
@@ -311,7 +311,7 @@ describe('package loading', function () {
       expect(await resource(project1aDir).exists()).equals(false, 'original project dir still exists');
       expect(await resource(newURL).exists()).equals(true, 'new project dir does not exist');
       expect(await resource(newURL + '/package.json').readJson()).containSubset({ main: 'entry-a.js', name: 'some-project-renamed' });
-      expect(S.get(newURL + '/package.json')).containSubset({ main: 'entry-a.js', name: 'some-project-renamed' });
+      expect(S.get(newURL + '/package.json').default).containSubset({ main: 'entry-a.js', name: 'some-project-renamed' });
     });
 
     it('fork creates a new similar package with a changed name', async () => {
@@ -331,7 +331,7 @@ describe('package loading', function () {
       expect(JSON.parse(await resource(newURL + '/package.json').read())).containSubset({ main: 'entry-a.js', name: 'some-project-copied' });
 
       expect(S.get(newURL + '/entry-a.js')).deep.equals({ version: 'a', x: 2 });
-      expect(S.get(newURL + '/package.json')).containSubset({ main: 'entry-a.js', name: 'some-project-copied' });
+      expect(S.get(newURL + '/package.json').default).containSubset({ main: 'entry-a.js', name: 'some-project-copied' });
     });
   });
 });
