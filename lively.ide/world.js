@@ -721,6 +721,11 @@ export class LivelyWorld extends World {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // menu
   menuItems () {
+    const checked = Icon.textAttribute('check-square', { paddingRight: '3px' });
+    const unchecked = Icon.textAttribute('square', { paddingRight: '3px' });
+    Object.assign(checked[1], { float: 'none', display: 'inline' });
+
+    const livelyIncludePartsbinInList = localStorage.getItem('livelyIncludePartsbinInList') == 'true';
     return [
       { title: 'World menu' },
       { command: 'undo', target: this },
@@ -729,7 +734,9 @@ export class LivelyWorld extends World {
       ['Debugging', [
         { command: 'delete change history', target: this },
         { command: 'fix font metric', target: this },
-        { command: 'inspect server', target: this }
+        { command: 'inspect server', target: this },
+        [[...(livelyIncludePartsbinInList ? checked : unchecked), ' ' + 'Include `partsbin` in Project Browser', { float: 'none' }],
+          () => { localStorage.setItem('livelyIncludePartsbinInList', !livelyIncludePartsbinInList); }]
       ]],
       ['Tools', [
         { command: 'open javascript workspace', target: this },
@@ -787,7 +794,7 @@ export class LivelyWorld extends World {
       eventState.menu.position = worldPos;
       return eventState.menu;
     }
-    await eventState.menu.whenRendered(); 
+    await eventState.menu.whenRendered();
     return this.moveIntoVisibleBounds(eventState.menu);
   }
 
