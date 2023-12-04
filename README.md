@@ -28,11 +28,6 @@ Make sure you have the following software installed:
 
 We try to require/support the current LTS version of `node`.
 
-> **Warning**
-> To use all features of `lively.next`, please note the following:
-> - make sure that you have configured git with a committer name and e-mail address
-> - you need SSH keys (usually in `~/.ssh`) that are set up with your GitHub account.
-
 For some more advanced development operations (bulk testing from the command line), you will also need 
 
 - `sed` or `gsed` on MacOs
