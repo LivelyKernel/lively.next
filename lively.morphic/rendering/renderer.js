@@ -1844,7 +1844,7 @@ export default class Renderer {
       if (!morph.renderingState.animationAdded) {
         scrollLayer.scrollTop = morph.scroll.y;
         scrollLayer.scrollLeft = morph.scroll.x;
-        scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
+        scrollWrapper.style.transform = `translate(${-scrollLayer.scrollLeft}px, ${-scrollLayer.scrollTop}px)`;
         morph.renderingState.scroll = morph.scroll;
         this.renderTextAndAttributes(node, morph);
       }
