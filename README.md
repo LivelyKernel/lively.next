@@ -23,8 +23,10 @@ Please note, that these instructions currently are not recommended for openly de
 Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed:
 
-1. `node.js v18.12.1` or higher.
+1. `node.js v20.10`
 2. `git`.
+
+We try to require/support the current LTS version of `node`.
 
 > **Warning**
 > To use all features of `lively.next`, please note the following:

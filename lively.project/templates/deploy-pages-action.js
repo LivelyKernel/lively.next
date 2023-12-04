@@ -18,7 +18,7 @@ jobs:
       - name: Setup \`node\`
         uses: actions/setup-node@v3
         with:
-          node-version: '18.12.1'
+          node-version: '20.10'
       - name: Restore \`lively.next\` repo
         id: cache-lively
         uses: actions/cache/restore@v3

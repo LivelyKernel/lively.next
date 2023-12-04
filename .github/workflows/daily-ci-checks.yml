@@ -16,7 +16,7 @@ jobs:
       - name: Setup `node`
         uses: actions/setup-node@v3
         with:
-          node-version: '18.12.1'
+          node-version: '20.10'
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Cache `lively.next` dependencies
@@ -49,7 +49,7 @@ jobs:
     - name: Setup `node`
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12.1'
+        node-version: '20.10'
     - name: Install `eslint`
       run: npm install eslint
     - name: Install `jsdoc` plugin for `eslint`
