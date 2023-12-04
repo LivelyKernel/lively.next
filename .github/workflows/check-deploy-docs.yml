@@ -21,7 +21,7 @@ jobs:
     - name: Setup `node`
       uses: actions/setup-node@v3
       with:
-        node-version: '18.12.1'
+        node-version: '20.10'
     - name: Install `jsdoc`
       run: npm install -g jsdoc@3.6.7
     - name: Install `jsdoc` theme
