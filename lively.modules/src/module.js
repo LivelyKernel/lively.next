@@ -397,21 +397,27 @@ class ModuleInterface {
       let depIndex; const hasDepenency = record.dependencies.some((ea, i) => {
         if (!ea) return; depIndex = i; return ea && ea.name === dependency.id;
       });
+
       if (!hasDepenency) {
-        record.dependencies.push(dependencyRecord);
-      } else if (dependencyRecord !== record.dependencies[depIndex] /* happens when a dep is reloaded */) { record.dependencies.splice(depIndex, 1, dependencyRecord); }
+        record.deps.push(dependencyRecord.key);
+      } else if (dependencyRecord !== record.dependencies[depIndex] /* happens when a dep is reloaded */) {
+        record.deps.splice(depIndex, 1, dependencyRecord.key);
+      }
 
       // setters are for updating module bindings, the position of the record
       // in dependencies should be the same as the position of the setter for that
       // dependency...
-      if (!hasDepenency || !record.setters[depIndex]) { record.setters[hasDepenency ? depIndex : record.dependencies.length - 1] = setter; }
+      if (!hasDepenency || !record.setters[depIndex]) {
+        record.setters[hasDepenency ? depIndex : record.dependencies.length - 1] = setter;
+      }
 
       // 2. update records of dependencies, so that they know about this module as an importer
       let impIndex; const hasImporter = dependencyRecord.importers.some((imp, i) => {
         if (!imp) return; impIndex = i; return imp && imp.name === this.id;
       });
-      if (!hasImporter) dependencyRecord.importers.push(record);
-      else if (record !== dependencyRecord.importers[impIndex]) { dependencyRecord.importers.splice(impIndex, 1, record); }
+
+      if (!hasImporter) record.depMap[dependencyRecord.name] = dependencyRecord.key;
+      // else if (record !== dependencyRecord.importers[impIndex]) { dependencyRecord.importers.splice(impIndex, 1, record); }
     }
   }
 
@@ -559,7 +565,8 @@ class ModuleInterface {
             // setter is only installed if there isn't a setter already. In
             // those cases we make sure that at least the module varRecorder gets
             // updated, which is good enough for "virtual modules"
-            imports => Object.assign(self.recorder, imports));
+            imports => Object.assign(self.recorder, imports)
+          );
 
           if (key === undefined) return depExports;
 
