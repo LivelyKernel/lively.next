@@ -58,13 +58,21 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "escodegen": "esm://cache/escodegen@2.0.0",
-      "acorn-walk": "esm://cache/acorn-walk@8.2.0",
-      "acorn-loose": "esm://cache/acorn-loose@8.3.0",
+      "escodegen": {
+        "~node": "esm://cache/escodegen@2.0.0"
+      },
+      "acorn-walk": {
+        "~node": "esm://cache/acorn-walk@8.2.0"
+      },
+      "acorn-loose": {
+        "~node": "esm://cache/acorn-loose@8.3.0"
+      },
       "acorn": {
         "~node": "esm://cache/acorn@8.0.4"
       },
-      "esutils": "esm://cache/esutils@2.0.3",
+      "esutils": {
+        "~node": "esm://cache/esutils@2.0.3"
+      },
       "astq": {
         "~node": "esm://cache/astq@2.7.5",
         "node": "@empty"
