@@ -41,7 +41,6 @@ describe('lively.modules aware eval', () => {
     let virtualModule = module(S, 'local://foo/mod1');
     await runEval(`import { x } from '${module1.id}';`, { targetModule: virtualModule.id, System: S });
     expect(virtualModule).to.have.deep.property('recorder.x', 23);
-    await module1.reload();
     await runEval(`import { x } from '${module1.id}';`, { targetModule: virtualModule.id, System: S });
     await module1.changeSource('export var x = 24;');
     expect(virtualModule).to.have.deep.property('recorder.x', 24);
