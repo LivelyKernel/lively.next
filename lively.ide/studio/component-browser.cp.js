@@ -352,9 +352,9 @@ class MasterComponentTreeData extends TreeData {
   }
 
   async listComponentFilesInDir (folderLocation) {
-    const resources = (await resource(folderLocation).dirList(10, {
+    const resources = (await resource(folderLocation).dirList(1, {
       exclude: (res) => {
-        if (res.name() === 'assets' || res.name() === 'test') return true;
+        if (res.name() === 'assets' || res.name() === 'tests') return true;
         return !((res.url.endsWith('.cp.js') || res.isDirectory()) && !res.name().startsWith('.'));
       }
     }));
