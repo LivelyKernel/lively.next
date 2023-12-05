@@ -83,8 +83,10 @@ export class ComponentSelectionControl extends ViewModel {
     this.control.closePopup();
     this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
 
-    if (this.component) {
-      const descr = new ExpressionSerializer().deserializeExprObj(this.component.__serialize__());
+    const closestComponent = this.component || this.control.targetMaster;
+
+    if (closestComponent) {
+      const descr = new ExpressionSerializer().deserializeExprObj(closestComponent.__serialize__());
       this._componentBrowserPopup.browse(descr);
     }
     once(this._componentBrowserPopup, 'close', this, 'closePopup');
@@ -220,7 +222,7 @@ export class ComponentControlModel extends PropertySectionModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['focusOn']; }
+        get () { return ['focusOn', 'targetMaster']; }
       }
     };
   }
@@ -230,6 +232,11 @@ export class ComponentControlModel extends PropertySectionModel {
       ...super.bindings,
       { target: /component selection/, signal: 'componentChanged', handler: 'confirm' }
     ];
+  }
+
+  get targetMaster () {
+    const { auto, hover, click } = this.targetMorph.master?.getConfig() || {};
+    return auto || hover || click;
   }
 
   viewDidLoad () {
