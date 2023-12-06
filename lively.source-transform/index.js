@@ -144,6 +144,6 @@ export function ensureComponentDescriptors (translated, moduleName, recorderName
       const componentRef = node.id.name;
       const spec = node.init.arguments.map(n => stringify(n)).join(',');
       // FIXME: the local name here is not nessecarily the export
-      return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}${ isCaptured ? ', ' + `${recorderName}, "${componentRef}"` : ''})`).body[0].declarations;
+      return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}, System${ isCaptured ? ', ' + `${recorderName}, "${componentRef}"` : ''})`).body[0].declarations;
     });
 }

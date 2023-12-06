@@ -38,7 +38,7 @@ export class ComponentDescriptor {
    * and object allocations. Allows for fast component definition initalization, derivation
    * and style application.
    */
-  static for (generatorFunction, meta, recorder, declaredName) {
+  static for (generatorFunction, meta, system, recorder, declaredName) {
     if (recorder?.__revived__) {
       // we are in a bundle and this part of the bundle has now been
       // replaced with a revived module
@@ -47,7 +47,7 @@ export class ComponentDescriptor {
       // created in the revived module.
       if (recorder[declaredName]) return recorder[declaredName];
     }
-    return new this(this.extractSpec(generatorFunction), meta);
+    return new this(this.extractSpec(generatorFunction), meta, system);
   }
 
   get isComponentDescriptor () { return true; }
@@ -90,7 +90,8 @@ export class ComponentDescriptor {
    * @param { function|object } generatorFunctionOrSpec - Either the generator function (deprecated) or spec object that defines the component's structure.
    * @param { object } meta - Module and sourcecode specific meta information such as code location etc.
    */
-  constructor (generatorFunctionOrSpec, meta) {
+  constructor (generatorFunctionOrSpec, meta, system) {
+    this.System = system; // default
     this.init(generatorFunctionOrSpec, meta);
   }
 
@@ -627,7 +628,8 @@ export function component (masterComponentOrProps, overriddenProps) {
 const prevDescriptorClass = typeof prevComponent !== 'undefined' && prevComponent.DescriptorClass;
 const prevComponent = component;
 if (!component.DescriptorClass) component.DescriptorClass = prevDescriptorClass || ComponentDescriptor;
-component.for = (generator, meta, recorder, declaredName) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, recorder, declaredName);
+component.System = System;
+component.for = (generator, meta, recorder, declaredName) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, component.System, recorder, declaredName);
 
 export { add, without };
 

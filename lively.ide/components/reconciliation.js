@@ -26,7 +26,7 @@ import {
 } from './helpers.js';
 import { undeclaredVariables } from '../js/import-helper.js';
 import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
-import { module } from 'lively.modules/index.js';
+import module from 'lively.modules/src/module.js';
 import { parse, stringify, nodes, query } from 'lively.ast';
 import lint from '../js/linter.js';
 import { notYetImplemented } from 'lively.lang/function.js';
@@ -230,6 +230,7 @@ export function deleteProp (sourceCode, parsedComponent, morphDef, propName, tar
  * @returns { string } The updated source code.
  */
 export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
+  const S = mod.System;
   const knownGlobals = mod.dontTransform;
   const undeclared = undeclaredVariables(sourceCode, knownGlobals).map(n => n.name);
   let updatedSource = sourceCode;
@@ -244,9 +245,9 @@ export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
       let generated, from;
       ({ generated, from, newSource: updatedSource } = ImportInjector.run(System, mod.id, mod.package(), updatedSource, {
         exported: exportedId,
-        moduleId: module(importedModuleId).id,
-        pathInPackage: module(importedModuleId).pathInPackage(),
-        packageName: module(importedModuleId).package()?.name
+        moduleId: module(S, importedModuleId).id,
+        pathInPackage: module(S, importedModuleId).pathInPackage(),
+        packageName: module(S, importedModuleId).package()?.name
       }));
       changes.push({ action: 'insert', start: from, lines: [generated] });
     }
@@ -265,8 +266,7 @@ export function fixUndeclaredVars (sourceCode, requiredBindings, mod) {
  * @param { string } entityName - The name of the component definition to remove.
  * @param { string } modId - The name of the module to remove the component definition from.
  */
-export async function removeComponentDefinition (entityName, modId) {
-  const mod = module(modId);
+export async function removeComponentDefinition (entityName, mod) {
   await mod.changeSourceAction(oldSource => {
     const parsed = parse(oldSource);
     const exportSpecs = query.queryNodes(
@@ -302,8 +302,7 @@ export async function removeComponentDefinition (entityName, modId) {
  * @param { string } entityName - The name of the const referencing the component definition.
  * @param { string } modId - The id of the module to be updated.
  */
-export async function replaceComponentDefinition (defAsCode, entityName, modId) {
-  const mod = module(modId);
+export async function replaceComponentDefinition (defAsCode, entityName, mod) {
   await mod.changeSourceAction(oldSource => {
     const { start, end } = findComponentDef(parse(oldSource), entityName);
     return ImportRemover.removeUnusedImports(string.applyChanges(oldSource, [
@@ -321,8 +320,7 @@ export async function replaceComponentDefinition (defAsCode, entityName, modId) 
  * @param { string } variableName - The name of the variable that should reference the component definition.
  * @param { string } modId - The id of the module to be changed.
  */
-export async function insertComponentDefinition (protoMorph, entityName, modId) {
-  const mod = module(modId);
+export async function insertComponentDefinition (protoMorph, entityName, mod) {
   const scope = await mod.scope();
   await mod.changeSourceAction(oldSource => {
     // insert the initial component definition into the back end of the module
@@ -351,9 +349,9 @@ export async function insertComponentDefinition (protoMorph, entityName, modId) 
   });
 }
 
-export function canBeRenamed (moduleId, oldName, newName) {
+export function canBeRenamed (mod, oldName, newName) {
   // if (oldName === newName) return false;
-  if (string.camelCaseString(newName) in module(moduleId).recorder) return false;
+  if (string.camelCaseString(newName) in mod.recorder) return false;
   return true;
 }
 
@@ -365,10 +363,10 @@ export function canBeRenamed (moduleId, oldName, newName) {
  * @param {type} protoMorph - description
  */
 
-export async function renameComponent (protoMorph, newName) {
+export async function renameComponent (protoMorph, newName, system) {
   const meta = protoMorph[Symbol.for('lively-module-meta')];
   if (!meta?.moduleId || !meta?.exportedName) return;
-  let mod = module(meta.moduleId);
+  let mod = module(system, meta.moduleId);
   const exports = await mod.exports();
   const oldName = meta.exportedName;
   const parsedModule = await mod.ast();
@@ -413,7 +411,7 @@ export async function renameComponent (protoMorph, newName) {
   await mod.recorder[meta.exportedName].withDerivedComponentsDo(async descr => {
     const meta = descr[Symbol.for('lively-module-meta')];
     if (meta.exportedName && meta.moduleId !== oldModuleName) {
-      const mod = module(meta.moduleId);
+      const mod = descr.targetModule;
       const parsedModule = await mod.ast();
       const imports = await mod.imports();
       const { declarations: [{ init: { arguments: [ref] } }] } = findComponentDef(parsedModule, meta.exportedName);
@@ -521,14 +519,14 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
   return insertMorphExpression(parsedComponent, sourceCode, nextVisibleParent, uncollapsedHierarchyExpr, nextSibling);
 }
 
-export function applyModuleChanges (reconciliation, scope, sourceEditor = false) {
+export function applyModuleChanges (reconciliation, scope, system, sourceEditor = false) {
   // order each group by module
   // apply bulk to each module
   let { changesByModule, modulesToLint, requiredBindingsByModule } = reconciliation;
   const focusedModuleId = sourceEditor?.editorPlugin?.evalEnvironment.targetModule;
   changesByModule = arr.groupBy(changesByModule, arr.first);
   for (let moduleName in changesByModule) {
-    const mod = module(moduleName);
+    const mod = module(system, moduleName);
     let { _source: sourceCode, id } = mod;
     if (!sourceCode) continue;
     const requiredBindingsForChanges = requiredBindingsByModule.get(id);
@@ -569,7 +567,7 @@ export function applyModuleChanges (reconciliation, scope, sourceEditor = false)
       const browser = sourceEditor.owner;
       if (browser) browser.resetChangedContentIndicator();
     }
-    module(moduleName).setSource(updatedSource);
+    mod.setSource(updatedSource);
   }
 }
 
@@ -623,6 +621,8 @@ export class Reconciliation {
   isOrigin (descriptor) { return this.descriptor === descriptor; }
 
   get target () { return this.change?.target; }
+
+  get System () { return this.descriptor.System; }
 
   get isDerived () { return this.withinDerivedComponent(this.target); }
 
@@ -688,9 +688,9 @@ export class Reconciliation {
     const { openEditors, scope } = this.getDescriptorContext();
 
     if (openEditors.length > 0) {
-      openEditors.map(ed => applyModuleChanges(this, scope, ed));
+      openEditors.map(ed => applyModuleChanges(this, scope, this.System, ed));
     } else {
-      applyModuleChanges(this, scope);
+      applyModuleChanges(this, scope, this.System);
     } // no open editors
 
     return this;
@@ -1485,7 +1485,7 @@ class RenameReconciliation extends PropChangeReconciliation {
   async applyChanges () {
     super.applyChanges();
     if (this.renameComponent) {
-      const newMorph = await renameComponent(this.renamedMorph, this.newName);
+      const newMorph = await renameComponent(this.renamedMorph, this.newName, this.System);
       if (!this.renamedMorph.world()) return;
       newMorph.openInWorld();
       newMorph.position = this.renamedMorph.position;
