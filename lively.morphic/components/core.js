@@ -39,8 +39,14 @@ export class ComponentDescriptor {
    * and style application.
    */
   static for (generatorFunction, meta, recorder, declaredName) {
-    const previousDescriptor = !recorder?.__revived__ && recorder?.[declaredName];
-    if (previousDescriptor) return previousDescriptor;
+    if (recorder?.__revived__) {
+      // we are in a bundle and this part of the bundle has now been
+      // replaced with a revived module
+      // In that case we just return the value of the component declaration
+      // that is inside the recorder, since it was replaced by the declarations
+      // created in the revived module.
+      if (recorder[declaredName]) return recorder[declaredName];
+    }
     return new this(this.extractSpec(generatorFunction), meta);
   }
 
