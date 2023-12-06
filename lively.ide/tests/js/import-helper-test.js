@@ -1,6 +1,7 @@
-/* global it, describe, beforeEach */
+/* global it, describe, beforeEach, before */
 import { expect } from 'mocha-es6';
 import { Text, World } from 'lively.morphic';
+import { module } from 'lively.modules';
 import { cleanupUnusedImports, interactivelyInjectImportIntoText } from 'lively.ide/js/import-helper.js';
 import JavaScriptEditorPlugin from 'lively.ide/js/editor-plugin.js';
 
@@ -41,6 +42,10 @@ describe('import helper - injection command', function () {
   // end-to-end test
 
   this.timeout(6000);
+
+  before(async () => {
+    await module('lively.morphic').revive();
+  });
 
   let ed, queryMatcher;
   beforeEach(() => {
