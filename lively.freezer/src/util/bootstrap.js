@@ -359,7 +359,6 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
                   m._recorder = R.registry[mod].recorder;
                   m._frozenModule = true;
                 }
-                // this is bullshit, it would trigger the import of a bundled module into
                 updateBundledModules(S, await shallowReloadModulesIfNeeded(modulesToUpdate, moduleHashes, R));
               }
               return mod;
