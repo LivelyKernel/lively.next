@@ -65,6 +65,30 @@ export async function doesModuleExist (System, name, isNormalized = false) {
     : await p.hasResource(id);
 }
 
+export async function updateBundledModules (system, modulesToUpdate) {
+  const { oldSystem: S, registry } = lively.FreezerRuntime || lively.frozenModules;
+  for (let m of modulesToUpdate) {
+    let mod = S['__lively.modules__loadedModules'][m];
+    if (!mod) {
+      S.delete(m);
+      await S.import(m);
+      mod = S['__lively.modules__loadedModules'][m] || module(S, m);
+    }
+    await mod.reload();
+    S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
+  }
+  // finally update the frozen records that require update
+  for (let m in registry) {
+    if (registry[m].updateRecord) {
+      const realignedId = m.startsWith('esm://') ? m : string.joinPath(System.baseURL, m);
+      const mod = module(system, realignedId);
+      if (!mod._frozenModule) continue;
+      system.set(realignedId, System.newModule(registry[m].exports));
+      mod._recorder = registry[m].recorder;
+    }
+  }
+}
+
 const globalProps = { initialized: false, descriptors: {} };
 
 // ModuleInterface is primarily used to provide an API that integrates the System
@@ -278,33 +302,9 @@ class ModuleInterface {
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
-    if (autoReload) await this.updateBundledModules([frozenRecord.contextModule]);
+    if (autoReload) await updateBundledModules(this.System, [frozenRecord.contextModule]);
     this._frozenModule = false;
     return [frozenRecord.contextModule];
-  }
-
-  async updateBundledModules (modulesToUpdate) {
-    const { oldSystem: S, registry } = lively.FreezerRuntime || lively.frozenModules;
-    for (let m of modulesToUpdate) {
-      let mod = S['__lively.modules__loadedModules'][m];
-      if (!mod) {
-        S.delete(m);
-        await S.import(m);
-        mod = S['__lively.modules__loadedModules'][m] || module(S, m);
-      }
-      await mod.reload();
-      S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
-    }
-    // finally update the frozen records that require update
-    for (let m in registry) {
-      if (registry[m].updateRecord) {
-        const realignedId = m.startsWith('esm://') ? m : string.joinPath(System.baseURL, m);
-        const mod = module(this.System, realignedId);
-        if (!mod._frozenModule) continue;
-        this.System.set(realignedId, System.newModule(registry[m].exports));
-        mod._recorder = registry[m].recorder;
-      }
-    }
   }
 
   async copyTo (newId) {
@@ -379,7 +379,7 @@ class ModuleInterface {
           const frozenRecord = this.getFrozenRecord();
           if (frozenRecord) {
             await this.refreshFrozenRecord(frozenRecord);
-            await this.updateBundledModules([frozenRecord.contextModule]);
+            await updateBundledModules(this.System, [frozenRecord.contextModule]);
           }
         })
     ]).then(() => result);
