@@ -6,6 +6,7 @@ import { easings } from 'lively.morphic';
 import { adoptObject } from 'lively.lang/object.js';
 import { Color } from 'lively.graphics/color.js';
 import { install as installHook } from 'lively.modules/src/hooks.js';
+import { updateBundledModules } from 'lively.modules/src/module.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -339,7 +340,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         modsToReload.push(...await shallowReloadModulesIfNeeded(obj.keys(R.registry), moduleHashes, R));
       }
       if (modsToReload.length > 0) {
-        currMod.updateBundledModules(arr.uniq(modsToReload))
+        updateBundledModules(System, arr.uniq(modsToReload))
           .then(() => { logInfo('Revived changed modules:', Date.now() - ts + 'ms'); })
           .then(() => {
           // finally wrap the import that re-triggers the revival in case new bundle parts come into play
@@ -358,7 +359,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
                   m._recorder = R.registry[mod].recorder;
                   m._frozenModule = true;
                 }
-                lively.modules.module(args).updateBundledModules(await shallowReloadModulesIfNeeded(modulesToUpdate, moduleHashes, R));
+                // this is bullshit, it would trigger the import of a bundled module into
+                updateBundledModules(S, await shallowReloadModulesIfNeeded(modulesToUpdate, moduleHashes, R));
               }
               return mod;
             });
