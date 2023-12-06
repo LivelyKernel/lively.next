@@ -443,7 +443,7 @@ class NameHolder extends Morph {
     if (this.target.isComponent && !evt.hasArrowPressed) {
       // also confirm we are not in conflict with other stuff in the module scope
       System.import('lively.ide/components/reconciliation.js').then(({ canBeRenamed }) => {
-        this.validName = this.validName && canBeRenamed(this.target[Symbol.for('lively-module-meta')].moduleId, oldName, newName);
+        this.validName = this.validName && canBeRenamed(moduleManager.module(this.target[Symbol.for('lively-module-meta')].moduleId), oldName, newName);
         signal(this, 'valid', [this.validName, newName]);
       });
       return;
@@ -1253,7 +1253,7 @@ class ComponentHaloItem extends RoundHaloItem {
       const mod = moduleManager.module(selectedModule.name);
       // ensure that the name can enter the module without a conflict
       while (mod.recorder[variableName]) variableName = string.incName(variableName);
-      await insertComponentDefinition(target, variableName, selectedModule.name);
+      await insertComponentDefinition(target, variableName, mod);
 
       if (openBrowser) {
         const browser = Browser.browserForFile(mod.id) || await $world.execCommand('open browser');
@@ -1276,7 +1276,7 @@ class ComponentHaloItem extends RoundHaloItem {
         'Do you really want to remove this component from the system?', { fontWeight: 'normal', fontSize: 16 }, target.master._dependants?.size > 0 ? ` ${target.master._dependants?.size} component${target.master._dependants?.size > 1 ? 's are' : ' is'} depending on this component.` : '', { fontWeight: 'normal', fontSize: 16 }])) {
         const { moduleId, exportedName } = target.master[Symbol.for('lively-module-meta')];
         const pos = target.position;
-        await removeComponentDefinition(exportedName, moduleId);
+        await removeComponentDefinition(exportedName, moduleManager.module(moduleId));
         target.isComponent = false;
         const master = new PolicyApplicator({}, target.master);
         target.master = null;

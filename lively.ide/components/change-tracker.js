@@ -1,5 +1,5 @@
 import { obj } from 'lively.lang';
-import { module } from 'lively.modules/index.js';
+import module from 'lively.modules/src/module.js';
 import { connect } from 'lively.bindings';
 import { Reconciliation } from './reconciliation.js';
 
@@ -12,10 +12,10 @@ import { Reconciliation } from './reconciliation.js';
  * are open and reconcile the corresponding source code to reflect these changes.
  */
 export class ComponentChangeTracker {
-  constructor (aComponent, descriptor) {
+  constructor (aComponent, descriptor, S = System) {
     this.trackedComponent = aComponent;
     this.componentModuleId = aComponent[Symbol.for('lively-module-meta')].moduleId;
-    this.componentModule = module(this.componentModuleId);
+    this.componentModule = module(S, this.componentModuleId);
     this.componentDescriptor = descriptor;
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
     connect(aComponent, 'onChange', this, 'processChangeInComponent', { garbageCollect: true });

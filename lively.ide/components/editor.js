@@ -1,7 +1,7 @@
 import { ComponentDescriptor, morph, component } from 'lively.morphic';
 import { ExpressionSerializer } from 'lively.serializer2';
 import { string, obj } from 'lively.lang';
-import { module } from 'lively.modules/index.js';
+import module from 'lively.modules/src/module.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import lint from '../js/linter.js';
 import { ComponentChangeTracker } from './change-tracker.js';
@@ -22,6 +22,8 @@ const exprSerializer = new ExpressionSerializer();
 export class InteractiveComponentDescriptor extends ComponentDescriptor {
   get moduleName () { return this[metaSymbol].moduleId; }
 
+  get targetModule () { return module(this.System, this.moduleName); }
+
   get componentName () { return this[metaSymbol].exportedName; }
 
   get isInteractive () { return true; }
@@ -34,8 +36,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return usedNames;
   }
 
-  static for (generatorFunction, meta, recorder, declaredName) {
-    const newDescr = super.for(generatorFunction, meta, recorder, declaredName); // force a new descriptor
+  static for (generatorFunction, meta, system, recorder, declaredName) {
+    const newDescr = super.for(generatorFunction, meta, system); // force a new descriptor
     if (recorder?.__revived__) {
       // if we are in a bundle and this part of the bundle has been revived,
       // we just implement the behavior of the base class. The interactive
@@ -83,7 +85,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   getModuleSource () {
-    return module(this.moduleName)._source;
+    return this.targetModule._source;
   }
 
   getASTNode (sourceCode = this.moduleSource) {
@@ -144,8 +146,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   async ensureComponentDefBackup () {
     if (this._backupComponentDef) return;
     const { moduleId, exportedName } = this[metaSymbol];
-    const source = await module(moduleId).source();
-    const { start, end } = findComponentDef(await module(moduleId).ast(), exportedName);
+    const source = await this.targetModule.source();
+    const { start, end } = findComponentDef(await this.targetModule.ast(), exportedName);
     this._backupComponentDef = source.slice(start, end);
   }
 
@@ -154,7 +156,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    */
   async reset () {
     const dependants = this.stylePolicy._dependants;
-    await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.moduleName);
+    await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.targetModule);
     this._dirty = false;
     this.stylePolicy._dependants = dependants;
     // FIXME: carry over dependents for now
@@ -210,7 +212,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       // and not the actual component descriptor
       let descr;
       if (policyOrDescr[metaSymbol]?.path?.length > 0) {
-        descr = module(policyOrDescr[metaSymbol].moduleId).recorder[policyOrDescr[metaSymbol].exportedName];
+        descr = module(this.System, policyOrDescr[metaSymbol].moduleId).recorder[policyOrDescr[metaSymbol].exportedName];
       } else descr = policyOrDescr;
       if (descr) cb(InteractiveComponentDescriptor.ensureInteractive(descr));
     });
@@ -261,4 +263,4 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 }
 
-//component.DescriptorClass = InteractiveComponentDescriptor;
+// component.DescriptorClass = InteractiveComponentDescriptor;
