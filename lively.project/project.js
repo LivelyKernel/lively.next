@@ -171,7 +171,7 @@ export class Project {
    * Note, that the cloned project needs to be loaded separately.
    * @param {string} remote - The URL of the GitHub Repository.
    */
-  static async fromRemote (remote) {
+  static async fromRemote (remote, branchName) {
     const li = $world.showLoadingIndicatorFor($world, 'Fetching Project...');
     if (remote.endsWith('/')) remote = remote.slice(0, -1);
     const remoteUrl = new URL(remote);
@@ -192,7 +192,7 @@ export class Project {
     const isFork = repoInfos.fork;
 
     // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
-    const cmd = runCommand(`cd ../local_projects/ && git clone https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`,
+    const cmd = runCommand(`cd ../local_projects/ && git clone -b ${branchName} https://${userToken}@github.com${remoteUrl.pathname} ${projectRepoOwner}--${projectName}`,
       { l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error cloning repository');
