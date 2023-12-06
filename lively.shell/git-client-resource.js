@@ -3,6 +3,7 @@
 import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import L2LClient from 'lively.2lively/client.js';
+import { currentUserToken } from 'lively.user';
 
 export default class GitShellResource extends ShellClientResource {
   constructor (url) {
@@ -13,6 +14,31 @@ export default class GitShellResource extends ShellClientResource {
       const defaultConnection = { url: `${document.location.origin}/lively-socket.io`, namespace: 'l2l' };
       this.options.l2lClient = L2LClient.ensure(defaultConnection);
     }
+  }
+
+  static async remoteRepoInfos (repoOwner, repoName) {
+    const token = currentUserToken();
+    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}`, {
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    return await res.json();
+  }
+
+  static async listRemoteBranches (repoOwner, repoName) {
+    const token = currentUserToken();
+    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/branches`, {
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    const branchData = await res.json();
+    return branchData.map(b => b.name);
   }
 
   async branchName () {
