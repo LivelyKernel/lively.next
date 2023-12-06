@@ -18,6 +18,27 @@ function processInlineCodeTransformOptions (parsed, options) {
   } catch (err) { return options; }
 }
 
+function ensureModuleName (options) {
+  let moduleName = false;
+  if (options.declarationWrapperName?.includes(System.baseURL)) {
+    moduleName = options.declarationWrapperName.split(System.baseURL)[1];
+  }
+
+  let separator;
+  if (separator = options.declarationWrapperName?.match(/local\:\/\/(.*\/)/)?.[1]) {
+    moduleName = options.declarationWrapperName.split(separator)[1];
+    moduleName = `local://${separator}${moduleName}`;
+  }
+
+  if (separator = options.declarationWrapperName?.match(/lively\:\/\/(.*\/)/)?.[1]) {
+    moduleName = options.declarationWrapperName.split(separator)[1];
+    moduleName = `lively://${separator}${moduleName}`;
+  }
+
+  if (moduleName && moduleName.includes('local_projects/')) moduleName = moduleName.replace('local_projects/', '');
+  return moduleName;
+}
+
 export function evalCodeTransform (code, options) {
   // variable declaration and references in the the source code get
   // transformed so that they are bound to `varRecorderName` aren't local
@@ -32,14 +53,7 @@ export function evalCodeTransform (code, options) {
   options = processInlineCodeTransformOptions(parsed, options);
 
   // A: Rewrite the component definitions to create component descriptors.
-  let moduleName = false;
-  if (options.declarationWrapperName?.includes(System.baseURL)) {
-    moduleName = options.declarationWrapperName.split(System.baseURL)[1];
-  }
-  if (options.declarationWrapperName?.includes('lively-object-modules/')) {
-    moduleName = options.declarationWrapperName.split('lively-object-modules/')[1];
-    moduleName = `local://lively-object-modules/${moduleName}`;
-  }
+  let moduleName = ensureModuleName(options);
 
   if (options.declarationWrapperName?.includes('lively.next-workspace/')) {
     moduleName = options.declarationWrapperName.split('lively.next-workspace/')[1];
