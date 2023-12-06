@@ -35,8 +35,14 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   static for (generatorFunction, meta, recorder, declaredName) {
-    const newDescr = super.for(generatorFunction, meta);
-    const prev = !recorder?.__revived__ && recorder?.[declaredName];
+    const newDescr = super.for(generatorFunction, meta, recorder, declaredName); // force a new descriptor
+    if (recorder?.__revived__) {
+      // if we are in a bundle and this part of the bundle has been revived,
+      // we just implement the behavior of the base class. The interactive
+      // capabilities are not required in frozen parts of the system.
+      return newDescr;
+    }
+    const prev = recorder?.[declaredName];
     if (prev) {
       if (prev.constructor !== this) { obj.adoptObject(prev, this); }
       const dependants = prev.getDependants(true);
