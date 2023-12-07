@@ -1,14 +1,17 @@
-/* global it, describe, beforeEach, afterEach,System */
+/* global it, describe, beforeEach, afterEach */
 import { createDOMEnvironment } from '../rendering/dom-helper.js';
-import { morph, MorphicEnv } from '../index.js';
+import { MorphicEnv, Morph } from '../index.js';
+import { morph } from '../index.js';
 import { expect } from 'mocha-es6';
-import { pt, Color, rect } from 'lively.graphics';
-import { num, promise } from 'lively.lang';
+import { pt, Color } from 'lively.graphics';
+import * as moduleManager from 'lively.modules';
+import { serializeMorph, createMorphSnapshot, deserializeMorph, loadMorphFromSnapshot } from '../serialization.js';
+import { arr } from 'lively.lang';
+import ObjectPackage from 'lively.classes/object-classes.js';
 
-let env;
-let world, submorph1, submorph2, submorph3, image, ellipse;
+let world;
 function createDummyWorld () {
-  world = morph({
+  return world = morph({
     type: 'world',
     name: 'world',
     extent: pt(300, 300),
@@ -18,183 +21,115 @@ function createDummyWorld () {
       position: pt(10, 10),
       fill: Color.red,
       submorphs: [{ name: 'submorph2', extent: pt(20, 20), position: pt(5, 10), fill: Color.green }]
-    },
-    { name: 'submorph3', extent: pt(50, 50), position: pt(200, 20), fill: Color.yellow },
-    { type: 'image', name: 'image', extent: pt(80, 80), position: pt(20, 200), fill: Color.lightGray },
-    { type: 'ellipse', name: 'ellipse', extent: pt(50, 50), position: pt(200, 200), fill: Color.pink }
-    ]
+    }]
   });
-  image = world.submorphs[2];
-  ellipse = world.submorphs[3];
-  submorph1 = world.submorphs[0];
-  submorph2 = world.submorphs[0].submorphs[0];
-  submorph3 = world.submorphs[1];
-  return world;
 }
 
-describe('rendering', function () {
-  // jsdom sometimes takes its time to initialize...
-  if (System.get('@system-env').node) { this.timeout(10000); }
+let env;
+async function setup () {
+  env = new MorphicEnv(await createDOMEnvironment());
+  MorphicEnv.pushDefault(env);
+  await env.setWorld(createDummyWorld());
+}
 
-  beforeEach(async () => {
-    env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld());
-    env.forceUpdate();
-    return env;
-  });
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+function teardown () { MorphicEnv.popDefault().uninstall(); }
 
-  it('morph id is DOM node id', () => {
-    expect(world.id).equals(env.renderer.rootNode.id);
-  });
+class OnLoadTestMorph extends Morph { onLoad () { this.onLoadCalled = true; }}
 
-  it('renderer associates domNode with morph', () => {
-    let node = env.renderer.getNodeForMorph(submorph2);
-    expect(env.renderer.rootNode.childNodes[0].childNodes[0].childNodes[0]
-      .childNodes[0]).equals(node); // brittle, might change...
-  });
+describe('morph serialization', function () {
+  beforeEach(setup);
+  afterEach(teardown);
 
-  it('can be moved to the front', () => {
-    submorph1.bringToFront();
-    expect(world.submorphs).equals([submorph3, image, ellipse, submorph1]);
-  });
-
-  describe('transforms', () => {
-    it('scale and rotation are rendered', () => {
-      submorph1.rotateBy(num.toRadians(45));
-      submorph1.renderOnGPU = true;
-      env.forceUpdate();
-      expect(env.renderer.getNodeForMorph(submorph1)).deep.property('style.transform')
-        .match(/translate.*10px/)
-        .match(/rotate\((0.8|0\.79+)rad\)/)
-        .match(/scale\(1,\s*1\)/);
-    });
-
-    it('origin rendered via origin transform', () => {
-      submorph1.origin = pt(20, 10);
-      env.forceUpdate();
-      expect(env.renderer.getNodeForMorph(submorph1))
-        .deep.property('style.transformOrigin').match(/20px 10px/);
-    });
+  it('serialize single morph', () => {
+    let m = morph({ fill: Color.red, position: pt(10, 20) });
+    let copy = deserializeMorph(serializeMorph(m));
+    expect(copy).instanceOf(m.constructor);
+    expect(copy.id).equals(m.id);
+    expect(copy).not.equal(m);
+    expect(copy.position).equals(m.position);
+    expect(copy.fill).equals(m.fill);
+    expect(copy.extent).equals(m.extent);
   });
 
-  describe('shapes', () => {
-    beforeEach(async () => {
-      env.forceUpdate();
-    });
-    it('shape influences node style', () => {
-      const style = env.renderer.getNodeForMorph(ellipse).style;
-      expect(style.borderRadius).match(/50%/);
-      expect(style.position).equals('absolute');
-    });
-
-    it('morph type influences node structure', () => {
-      const ellipseNode = env.renderer.getNodeForMorph(ellipse);
-      const imageNode = env.renderer.getNodeForMorph(image);
-      expect(ellipseNode.nodeName).equals('DIV');
-      expect(imageNode.childNodes[0].nodeName).equals('IMG');
-    });
-
-    it('morph type influences node attributes', () => {
-      const ellipseNode = env.renderer.getNodeForMorph(ellipse);
-      const imageNode = env.renderer.getNodeForMorph(image);
-      expect(ellipseNode).not.to.have.property('src');
-      expect(imageNode.childNodes[0]).to.have.property('src');
-    });
+  it('uses onLoad function', () => {
+    let m = new OnLoadTestMorph();
+    expect(m.onLoadCalled).equals(true, 'onLoad not called on construction');
+    m.onLoadCalled = false;
+    expect(m.copy().onLoadCalled).equals(true, 'onLoad not called on deserialization');
   });
 
-  describe('scroll', () => {
-    it('scroll extent', () => {
-      const HTMLScrollbarOffset = pt(15, 15);
-      expect(submorph1.scrollExtent).equals(pt(100, 100).addPt(HTMLScrollbarOffset), '1');
-      submorph1.clipMode = 'auto';
-      expect(submorph1.scrollExtent).equals(pt(100, 100).addPt(HTMLScrollbarOffset), '2');
-      submorph2.extent = pt(200, 200);
-      submorph2.bounds().bottomRight();
-      expect(submorph1.scrollExtent)
-        .equals(submorph2.extent.addPt(submorph2.position).addPt(HTMLScrollbarOffset), '3');
+  describe('object packages', () => {
+    let objPackages = [];
+
+    afterEach(async () => {
+      await Promise.all(objPackages.map(ea => ea.remove()));
+      objPackages.length = 0;
     });
 
-    it('scroll is bounded', () => {
-      const HTMLScrollbarOffset = pt(15, 15);
-      submorph1.clipMode = 'auto';
-      submorph2.extent = pt(200, 200);
-      submorph1.scroll = pt(100000, 100000);
-      expect(submorph1.scroll).equals(submorph2.bounds().bottomRight().subPt(submorph1.extent).addPt(HTMLScrollbarOffset), '1');
-      submorph1.scroll = pt(-100000, -100000);
-      expect(submorph1.scroll).equals(pt(0, 0), '2');
+    it('gets snapshotted', async () => {
+      let p1 = ObjectPackage.withId('MorphA');
+      let p2 = ObjectPackage.withId('MorphB');
+
+      objPackages.push(p1, p2);
+
+      let c1 = await p1.ensureObjectClass(Morph);
+      let c2 = await p2.ensureObjectClass(Morph);
+      await p1.objectModule.systemModule.changeSource(`
+        import { Morph } from "lively.morphic";
+        export default class MorphA extends Morph {
+          static get properties() { return {foo: {}}; }
+        }`);
+
+      let m1 = new c1();
+      m1.foo = new c2();
+
+      let snap = await createMorphSnapshot(m1, { addPreview: false, moduleManager });
+      expect(snap.packages['local://lively-object-modules/']).to.have.keys('MorphA', 'MorphB');
     });
 
-    it('clip morph can specify scroll', async () => {
-      submorph1.clipMode = 'auto';
-      submorph2.extent = pt(200, 200);
-      submorph1.scroll = pt(40, 50);
-      env.forceUpdate();
-      let node = env.renderer.getNodeForMorph(submorph1);
-      expect(node.style.overflow).equals('auto');
-      expect(node.scrollLeft).equals(40);
-      expect(node.scrollTop).equals(50);
-    });
+    describe('dealing with versions', () => {
+      let snap1, snap2, snap3, p1, obj, c1;
 
-    it('inner morphs have correct transform', () => {
-      submorph1.clipMode = 'auto';
-      submorph2.extent = pt(200, 200);
-      let submorph2Bounds = submorph2.globalBounds();
-      submorph1.scroll = pt(40, 50);
-      env.forceUpdate();
-      expect(submorph1.globalBounds()).equals(rect(10, 10, 100, 100));
-      expect(submorph1.bounds()).equals(rect(10, 10, 100, 100));
-      expect(submorph2.globalBounds()).equals(submorph2Bounds.translatedBy(submorph1.scroll.negated()));
-      submorph1.scroll = pt(0, 0);
-      expect(submorph2.globalBounds()).equals(submorph2Bounds);
-    });
+      beforeEach(async () => {
+        p1 = ObjectPackage.withId('MorphA');
 
-    it('updates scroll of DOM nodes of morphs and their siblings when morph moves in scene graph', async () => {
-      // ref: https://github.com/LivelyKernel/lively.morphic/issues/55
+        objPackages.push(p1);
 
-      world.submorphs = [
-        {
-          position: pt(0, 0),
-          extent: pt(100, 100),
-          submorphs: [{ position: pt(75, 75), extent: pt(125, 125) }],
-          fill: Color.blue,
-          clipMode: 'auto',
-          scroll: pt(50, 50)
-        },
-        {
-          position: pt(100, 0),
-          extent: pt(100, 100),
-          submorphs: [{ position: pt(75, 75), extent: pt(125, 125) }],
-          fill: Color.green,
-          clipMode: 'auto',
-          scroll: pt(50, 50)
-        }];
-      let [m1, m2] = world.submorphs;
-      m1.scroll = m2.scroll = pt(50, 50); // this is wrong
-      env.forceUpdate();
-      let node1 = env.renderer.getNodeForMorph(m1);
-      expect(node1.scrollLeft).equals(50, 'm1 scrollLeft after setup');
-      expect(node1.scrollTop).equals(50, 'm1 scrollTop after setup');
-      let node2 = env.renderer.getNodeForMorph(m2);
-      expect(node2.scrollLeft).equals(50, 'm2 scrollLeft after setup');
-      expect(node2.scrollTop).equals(50, 'm2 scrollTop after setup');
+        c1 = await p1.ensureObjectClass(Morph), obj = new c1();
 
-      m1.bringToFront();
-      await promise.delay(500);
-      node1 = env.renderer.getNodeForMorph(m1);
-      expect(node1.scrollLeft).equals(50, 'm1 scrollLeft 1');
-      expect(node1.scrollTop).equals(50, 'm1 scrollTop 1');
-      node2 = env.renderer.getNodeForMorph(m2);
-      expect(node2.scrollLeft).equals(50, 'm2 scrollLeft 1');
-      expect(node2.scrollTop).equals(50, 'm2 scrollTop 1');
+        snap1 = await createMorphSnapshot(obj, { addPreview: false, moduleManager });
 
-      m2.bringToFront();
-      await promise.delay(50);
-      node1 = env.renderer.getNodeForMorph(m1);
-      expect(node1.scrollLeft).equals(50, 'm1 scrollLeft 2');
-      expect(node1.scrollTop).equals(50, 'm1 scrollTop 2');
-      node2 = env.renderer.getNodeForMorph(m2);
-      expect(node2.scrollLeft).equals(50, 'm2 scrollLeft 2');
-      expect(node2.scrollTop).equals(50, 'm2 scrollTop 2');
+        await p1.objectModule.systemModule.changeSource(`
+          import { Morph } from "lively.morphic";
+          export default class MorphA extends Morph {m() { return 23; }}`);
+        var config = await p1.resource('package.json').readJson();
+        p1.systemPackage.updateConfig({ ...config, version: '0.2.0' });
+
+        snap2 = await createMorphSnapshot(obj, { addPreview: false, moduleManager });
+
+        await p1.objectModule.systemModule.changeSource(`
+          import { Morph } from "lively.morphic";
+          export default class MorphA extends Morph {m() { return 24; }}`);
+        var config = await p1.resource('package.json').readJson();
+        p1.systemPackage.updateConfig({ ...config, version: '0.3.0' });
+
+        snap3 = await createMorphSnapshot(obj, { addPreview: false, moduleManager });
+      });
+
+      it('newer package versions get not overridden', async () => {
+        expect(obj.m()).equals(24);
+        let obj2 = await loadMorphFromSnapshot(snap2, { moduleManager });
+        expect(obj.m()).equals(24);
+        expect(obj2.m()).equals(24);
+
+        await p1.objectModule.systemModule.changeSource(`
+          import { Morph } from "lively.morphic";
+          export default class MorphA extends Morph {m() { return 25; }}`);
+        let obj3 = await loadMorphFromSnapshot(snap2, { moduleManager });
+
+        expect(obj.m()).equals(25);
+        expect(obj3.m()).equals(25);
+      });
     });
   });
 });
