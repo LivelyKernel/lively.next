@@ -4,7 +4,7 @@ import sinonChai from 'esm://cache/sinon-chai';
 import sinon from 'esm://cache/sinon';
 import { module } from 'lively.modules/index.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, add, without, TilingLayout, Label, part } from 'lively.morphic';
+import { morph, component, add, without, TilingLayout, Label, part } from 'lively.morphic';
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import { Reconciliation } from '../../components/reconciliation.js';
 import { promise } from 'lively.lang';

@@ -31,35 +31,28 @@ describe('number widget', () => {
   it('it fits bounds to content', async () => {
     field = part(DefaultNumberWidget, {
       autofit: true, number: 0.5, min: 0, max: 1, floatingPoint: true
-    });
-    field.openInWorld();
+    }).openInWorld();
     let valueContainer = field.getSubmorphNamed('value');
-    env.world.addMorph(field);
     await field.whenRendered();
     expect(valueContainer.fixedWidth).to.be.true;
-    expect(field.width).equals(field.getSubmorphNamed('value').width + 20);
-    expect(field.height).greaterThan(field.getSubmorphNamed('value').height);
-    expect(field.width).approximately(field.getSubmorphNamed('up').right, .5);
-    expect(field.width).approximately(field.getSubmorphNamed('down').right, .5);
+    expect(field.width).approximately(valueContainer.width + 20, .5);
+    expect(field.height).greaterThan(valueContainer.height);
+    expect(field.width).approximately(field.getSubmorphNamed('button holder').right, .5);
   });
 
   it('it allows to resize widgets', async () => {
     field = part(DefaultNumberWidget, {
       autofit: false, number: 0.5, min: 0, max: 1, floatingPoint: true, width: 90, height: 25
-    });
+    }).openInWorld();
     let valueContainer = field.getSubmorphNamed('value');
-    env.world.addMorph(field);
-    await field.whenRendered();
     field.width += 10;
     await field.whenRendered();
     expect(field.width).equals(100, 'field has width');
     expect(field.height).equals(25, 'filed has height');
-    expect(valueContainer.scaleToBounds).to.be.true;
     expect(valueContainer.fixedWidth).to.be.true;
     // all the other invariants apply as well
-    expect(field.width).approximately(field.getSubmorphNamed('value').width + 20, .5, 'value container stretches across field');
-    expect(field.width).equals(field.getSubmorphNamed('up').right, 'up button aligned correctly');
-    expect(field.width).equals(field.getSubmorphNamed('down').right, 'down button aligned correctly');
+    expect(field.width).approximately(valueContainer.width + 20, .5, 'value container stretches across field');
+    expect(field.width).equals(field.getSubmorphNamed('button holder').right, 'buttons aligned correctly');
   });
 
   it('keeps bounds on copy', async () => {

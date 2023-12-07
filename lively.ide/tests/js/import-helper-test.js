@@ -48,7 +48,7 @@ describe('import helper - injection command', function () {
   });
 
   let ed, queryMatcher;
-  beforeEach(() => {
+  beforeEach(async () => {
     ed = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
     let targetModule = `lively://import-helper-test/${Date.now()}`;
     let dummyWorld = new World();
