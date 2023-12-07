@@ -101,14 +101,15 @@ export default class GitShellResource extends ShellClientResource {
     await this.runCommand(configureEmailCmd).whenDone();
   }
 
-  async hasRemoteMainConfigured () {
+  async hasRemoteBranchConfigured () {
     const getRemoteURLCommand = 'git remote -v';
     let res = await this.runCommand(getRemoteURLCommand).whenDone();
     if (res.exitCode !== 0) throw Error('Error while executing git remote.');
     const remoteOutput = res.stdout;
     if (remoteOutput === '') throw ('Remote unconfigured. This should be impossible!');
     const remoteURL = remoteOutput.match(/(https:.*)\s\(/)[1];
-    const checkRemoteBranchCommand = `git ls-remote --heads ${remoteURL} main`;
+    const branchName = await this.branchName();
+    const checkRemoteBranchCommand = `git ls-remote --heads ${remoteURL} ${branchName}`;
     res = await this.runCommand(checkRemoteBranchCommand).whenDone();
     if (res.exitCode !== 0) throw Error('Error while checking remote branches.');
     if (res.stdout === '') return false;
@@ -225,10 +226,11 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async pullRepo () {
-    const hasRemoteBranch = await this.hasRemoteMainConfigured();
+    const hasRemoteBranch = await this.hasRemoteBranchConfigured();
     if (!hasRemoteBranch) return false;
     await this.runCommand('git stash -m "stashed-while-pulling-project"').whenDone();
-    const pullCmd = this.runCommand('git pull origin main --rebase');
+    const branchName = await this.branchName();
+    const pullCmd = this.runCommand(`git pull origin ${branchName} --rebase`);
     await pullCmd.whenDone();
     if (pullCmd.exitCode !== 0) throw Error('Error pulling. Might be due to a conflict!');
     // only apply lets us reference a stash by name -> clean up stash below
