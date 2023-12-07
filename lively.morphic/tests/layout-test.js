@@ -55,7 +55,7 @@ describe('layout', () => {
 
   describe('tiling layout', () => {
     beforeEach(() => {
-      m.layout = new TilingLayout({ renderViaCSS: false });
+      m.layout = new TilingLayout({ renderViaCSS: false, wrapSubmorphs: true });
       m.width = 200;
       m.applyLayoutIfNeeded();
     });
@@ -110,9 +110,9 @@ describe('layout', () => {
         ]
       });
       world.addMorph(m1);
-      expect(m1.renderingState.cssLayoutToMeasureWith).not.to.be.false;
+      expect(!!m1.renderingState.cssLayoutToMeasureWith).not.to.be.false;
       env.forceUpdate();
-      expect(m1.renderingState.cssLayoutToMeasureWith, 'all layouts have finished measuring').to.be.false;
+      expect(!!m1.renderingState.cssLayoutToMeasureWith, 'all layouts have finished measuring').to.be.false;
       expect(m1.width).to.equal(m2.width + m3.width + 3 * padDist);
       expect(m1.height).to.equal(m1.submorphBounds().height + m1.layout.padding.top() + m1.layout.padding.bottom());
       expect(m1.width).to.equal(m1.submorphBounds().width + m1.layout.padding.left() + m1.layout.padding.right());
@@ -731,10 +731,10 @@ describe('layout', () => {
       ]
     }));
 
-    it('scales by default', () => {
+    it('does not resize by default', () => {
       container.extent = pt(120, 120);
       container.applyLayoutIfNeeded();
-      expect(container.submorphs[0].bounds()).equals(rect(12, 12, 12, 12));
+      expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
     });
 
     it('moves', () => {
