@@ -215,7 +215,7 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async pushRepo () {
-    let cmd = this.runCommand('git push --set-upstream origin main');
+    let cmd = this.runCommand('git push origin --all');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error pushing to remote');
     cmd = this.runCommand('git push origin --tags');
