@@ -91,7 +91,7 @@ async function adjustChangeSets (doFunc, doneFunc, skipPrev) { // (() -> Promise
     }
   }
   const intermediate = doFunc();
-  if (typeof (intermediate) === 'object' && intermediate.then) await intermediate;
+  if (typeof intermediate === 'object' && intermediate.then) await intermediate;
   const next = {};
   for (let pkg of getPackages()) {
     const prevB = prev[pkg.address];
