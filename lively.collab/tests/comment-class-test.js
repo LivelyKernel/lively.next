@@ -2,6 +2,7 @@
 import { expect } from 'mocha-es6';
 import { CommentData } from 'lively.collab';
 import { Morph } from 'lively.morphic';
+import { currentUser } from 'lively.user';
 
 function morphHasNumberOfComments (morph, number) {
   if (number === 0) {
@@ -41,7 +42,7 @@ describe('comment object', function () {
   });
 
   it('is saved with a user name', function () {
-    expect(comment.username).to.equal($world.currentUser);
+    expect(comment.username).to.equal(currentUser().login);
   });
 });
 

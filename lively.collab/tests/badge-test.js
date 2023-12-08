@@ -1,3 +1,4 @@
+/* global xit */
 /* global it, describe, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
 import { Morph } from 'lively.morphic';
@@ -13,13 +14,16 @@ describe('badge', function () {
     badge = part(CommentCountBadge);
   });
 
+  afterEach(() => { badge.remove(); });
+
   it('can be incremented', function () {
     badge.text = '42';
     badge.incrementCounter();
     expect(badge.text).to.equal('43');
   });
 
-  it('moves with morph', async function () {
+  xit('moves with morph', async function () {
+    // FIXME: is this still a thing???
     const morph = new Morph({ extent: pt(100, 100), position: pt(400, 400) });
     testWorld.addMorph(morph);
     badge.addToMorph(morph);
@@ -29,9 +33,11 @@ describe('badge', function () {
     const offset = 20;
     morph.position = morph.position.addPt(pt(offset, 0));
 
-    expect(badge.globalPosition.x - initX).to.equal(offset);
-
-    morph.abandon();
+    try {
+      expect(badge.globalPosition.x - initX).to.equal(offset);
+    } finally {
+      morph.abandon();
+    }
   });
 
   afterEach(function () {

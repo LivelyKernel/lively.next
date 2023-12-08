@@ -1,13 +1,18 @@
-/* global it, describe, beforeEach, afterEach */
+/* global it, describe, beforeEach, afterEach, before */
 import { expect } from 'mocha-es6';
 import { CommentBrowser } from 'lively.collab';
 import { Morph } from 'lively.morphic';
 import { part } from 'lively.morphic/components/core.js';
+import { module } from 'lively.modules/index.js';
 
 describe('comment browser', function () {
   let morph, browser, comment;
   const exampleText = 'Example text';
   const exampleName = 'a test morph';
+
+  before(async () => {
+    await module('lively.ide/world.js').revive();
+  });
 
   beforeEach(function () {
     morph = new Morph().openInWorld();
