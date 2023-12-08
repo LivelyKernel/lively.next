@@ -19,7 +19,6 @@ const build = await rollup({
       isResurrectionBuild: true,
       asBrowserModule: true,
       excludedModules: [
-	'lively.collab',
         'mocha', 'chai', 'picomatch', // references old lgtg that breaks the build
         'path-is-absolute', 'fs.realpath', 'rollup', // has a dist file that cant be parsed by rollup
         '@babel/preset-env',
