@@ -24,5 +24,10 @@
   },
   "devDependencies": {
     "mocha-es6": "^0.5"
+  },
+  "systemjs": {
+    "map": {
+      "js-git-browser": "https://raw.githubusercontent.com/LivelyKernel/js-git-browser/master/jsgit.js"
+    }
   }
 }

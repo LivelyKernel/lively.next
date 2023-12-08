@@ -5,10 +5,12 @@ import { module, getPackage } from 'lively.modules';
 
 import branch, { localBranchesOf } from '../src/branch.js';
 import { pkgDir, fileA, createPackage, deletePackage, initTestBranches } from './helpers.js';
+import { install, uninstall } from 'lively.changesets';
 
 describe('branches', () => {
   let master, test;
   beforeEach(async () => {
+    install();
     await createPackage();
     [master, test] = await initTestBranches(true);
   });
@@ -18,6 +20,7 @@ describe('branches', () => {
     const toDelete = await localBranchesOf(pkgDir);
     await Promise.all(toDelete.map(b => b.delete()));
     await deletePackage();
+    uninstall();
   });
 
   it('are initialized from IndexedDB', async () => {
@@ -40,7 +43,6 @@ describe('branches', () => {
     await module(fileA).changeSource('export const x = 3;\n');
     const changedSrc = await module(fileA).source();
     expect(changedSrc).to.be.eql('export const x = 3;\n');
-
     const changedFiles = await test2.changedFiles();
     expect(Object.keys(changedFiles)).to.be.deep.eql(['a.js']);
     const fileDiff = '- export const x = 1;\n+ export const x = 3;\n  \n';

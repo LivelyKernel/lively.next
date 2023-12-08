@@ -43,7 +43,7 @@ export async function initMaster (pkg, withChange = false) {
   }
 }
 
-export const pkgDir = System.decanonicalize('lively.changesets/tests/temp/');
+export const pkgDir = string.joinPath(System.baseURL, 'lively.changesets/tests/temp');
 export const pkgFiles = {
   'a.js': 'export const x = 1;\n',
   'package.json': JSON.stringify({
