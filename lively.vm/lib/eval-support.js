@@ -47,7 +47,7 @@ export function evalCodeTransform (code, options) {
   }
 
   if (moduleName && moduleName.includes('local_projects/')) moduleName = moduleName.replace('local_projects/', '');
-  if (moduleName) { parsed = ensureComponentDescriptors(parsed, moduleName, options.varRecorderName); }
+  if (moduleName && code) { parsed = ensureComponentDescriptors(parsed, moduleName, options.varRecorderName); }
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.
