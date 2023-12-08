@@ -1,11 +1,12 @@
 /* global System */
-import { mixins, modes, promisify } from 'js-git-browser';
-
+import jsGit from 'js-git-browser';
+const { mixins, modes, promisify } = jsGit;
 import { registerPackage, removePackage } from 'lively.modules';
 import { removeDir, createFiles } from 'lively.modules/tests/helpers.js';
 
 import changeSet from '../src/changeset.js';
 import { initBranches, localBranchesOf } from '../src/branch.js';
+import { string } from 'lively.lang';
 
 async function repoForPackage (pkg) {
   const repo = {};
@@ -42,8 +43,7 @@ export async function initMaster (pkg, withChange = false) {
   }
 }
 
-export const
-  pkgDir = System.decanonicalize('lively.changesets/tests/temp');
+export const pkgDir = System.decanonicalize('lively.changesets/tests/temp/');
 export const pkgFiles = {
   'a.js': 'export const x = 1;\n',
   'package.json': JSON.stringify({
@@ -51,7 +51,7 @@ export const pkgFiles = {
     main: 'a.js'
   })
 };
-export const fileA = pkgDir + '/a.js';
+export const fileA = string.joinPath(pkgDir, '/a.js');
 export const vmEditorMock = { updateModuleList: () => 0 };
 
 export async function initTestBranches (withChange = false) {

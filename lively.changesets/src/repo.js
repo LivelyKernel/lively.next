@@ -1,7 +1,8 @@
 /* global fetch */
-
-import { mixins, promisify, gitHubRequest, bodec, codec, inflate } from 'js-git-browser';
+// FIXME: if we are to continue support for this package, we need to replace this dependency
+import jsGit from 'js-git-browser';
 import { getGitHubToken, getOrAskGitHubToken } from './settings.js';
+const { mixins, promisify, gitHubRequest, bodec, codec, inflate } = jsGit;
 
 const repoForPackage = {};
 
