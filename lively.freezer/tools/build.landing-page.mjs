@@ -21,7 +21,6 @@ const build = await rollup({
       isResurrectionBuild: true,
       asBrowserModule: true,
       excludedModules: [
-	'lively.collab',
         'chai','mocha', // references old lgtg that breaks the build
         'rollup', // has a dist file that cant be parsed by rollup
         // other stuff that is only needed by rollup
