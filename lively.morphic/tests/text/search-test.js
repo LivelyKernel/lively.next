@@ -17,10 +17,11 @@ function text (string, props) {
     name: 'text',
     readOnly: false,
     textString: string,
-    fontFamily: 'Monaco, monosonpace',
+    fontFamily: 'IBM Plex Mono',
     fontSize: 10,
     extent: pt(100, 100),
     padding: Rectangle.inset(2),
+    cursorPosition: { row: 0, column: 0 },
     ...props
   });
 }
