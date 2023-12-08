@@ -4,11 +4,11 @@ import {
   MorphicEnv,
   Icon,
   Hand,
-  World
+  World, part
 } from 'lively.morphic';
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
-import { SystemButton } from 'lively.components';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 let button, world, eventLog, env;
 const inactiveColor = Color.blue; const activeColor = Color.red; const triggerColor = Color.green;
@@ -45,6 +45,7 @@ function createDummyWorld () {
 async function setup () {
   env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
   await env.setWorld(createDummyWorld());
+  env.forceUpdate();
 }
 
 function teardown () {
@@ -60,23 +61,29 @@ describe('buttons', function () {
 
   describe('press', () => {
     it('is pressed', async () => {
+      await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
-      expect(button.pressed).keys('originalFill');
+      button.master.applyIfNeeded(true);
+      expect(button.fill).equals(SystemButton.stylePolicy._clickMaster.spec.fill);
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerup', position: button.center, target: button });
-      expect(button.pressed).equals(null, 'pressed');
+      button.master.applyIfNeeded(true);
+      expect(button.fill).equals(SystemButton.stylePolicy._autoMaster.spec.fill);
     });
 
     it('leaving button on press releases', async () => {
+      await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
-      await env.eventDispatcher.simulateDOMEvents({ type: 'hoverout', target: button });
-      expect(button.pressed).equals(null);
+      button.master.applyIfNeeded(true);
+      await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.bottomRight.addPt(pt(10, 10)), target: button.owner });
+      button.master.applyIfNeeded(true);
+      expect(button.fill).equals(SystemButton.stylePolicy._autoMaster.spec.fill);
     });
   });
 
   describe('button mode styles', () => {
-    xit('styles icon as labels correctly', async () => {
-      let b = new Button({ label: Icon.textAttribute('times-circle') });
-      expect(b.labelMorph.value[0]).equals(Icon.makeLabel('times-circle-o').value[0]);
+    it('styles icon as labels correctly', () => {
+      let b = part(SystemButton, { submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('times-circle') }] });
+      expect(b.submorphs[0].value[0]).equals(Icon.textAttribute('times-circle')[0]);
     });
 
     it('allows to change the label', () => {
