@@ -2,6 +2,10 @@
 // FIXME: if we are to continue support for this package, we need to replace this dependency
 import jsGit from 'js-git-browser';
 import { getGitHubToken, getOrAskGitHubToken } from './settings.js';
+import { runCommand } from 'lively.ide/shell/shell-interface.js';
+import ShellClientResource from 'lively.shell/client-resource.js';
+import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
+import { string } from 'lively.lang';
 const { mixins, promisify, gitHubRequest, bodec, codec, inflate } = jsGit;
 
 const repoForPackage = {};
@@ -51,21 +55,25 @@ function serverRemote (pkg) {
 
 function serverShellRemote (pkg) {
   // PackageAddress -> { readRef, loadAs }
-  const cwd = lively.shell.WORKSPACE_LK + '/' + pkg.substr(System.baseURL.length);
   return {
     async readRef (ref, callback) {
       try {
-        const response = await lively.shell.run(`git show-ref -s ${ref}`, { cwd });
-        if (response.code !== 0) return callback(null, undefined);
+        const cwd = string.joinPath(await evalOnServer('System.baseURL') + pkg.substr(System.baseURL.length)).replace('file://', '');
+        const response = await runCommand(`git show-ref -s ${ref}`, { cwd, l2lClient: ShellClientResource.defaultL2lClient });
+        await response.whenDone();
+        if (response.exitCode !== 0) return callback(null, undefined);
         callback(null, response.stdout.trim());
       } catch (err) { callback(err); }
     },
     async loadAs (type, hash, callback) {
       try {
-        const typeR = await lively.shell.run(`git cat-file -t ${hash}`, { cwd });
-        if (typeR.code !== 0) return callback(null, undefined);
+        const cwd = string.joinPath(await evalOnServer('System.baseURL'), pkg.substr(System.baseURL.length)).replace('file://', '');
+        const typeR = await runCommand(`git cat-file -t ${hash}`, { cwd, l2lClient: ShellClientResource.defaultL2lClient });
+        await typeR.whenDone();
+        if (typeR.exitCode !== 0) return callback(null, undefined);
         const type = typeR.stdout.trim();
-        const dataR = await lively.shell.run(`git cat-file ${type} ${hash} | base64`, { cwd });
+        const dataR = await runCommand(`git cat-file ${type} ${hash} | base64`, { l2lClient: ShellClientResource.defaultL2lClient, cwd });
+        await dataR.whenDone();
         if (dataR.code !== 0) return callback(null, undefined);
         const bytes = bodec.fromBase64(dataR.stdout);
         callback(null, codec.decoders[type](bytes));

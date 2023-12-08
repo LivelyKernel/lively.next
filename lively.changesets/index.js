@@ -15,6 +15,10 @@ function resolve (path) { // Path -> [PackageAddress, RelPath]
 
 function resourceFromChangeSet (proceed, url) {
   return {
+    isResource: true,
+    ext () {
+      return proceed(url).ext();
+    },
     read () {
       const [pkg, path] = resolve(url);
       if (pkg == 'no group') return proceed(url).read();
