@@ -1,5 +1,6 @@
 /* global fetch */
-import { modes } from 'js-git-browser';
+import jsGit from 'js-git-browser';
+const { modes } = jsGit;
 import { module } from 'lively.modules';
 import { emit } from 'lively.notifications';
 

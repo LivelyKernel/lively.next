@@ -20,7 +20,7 @@
     "lively.modules": "0.5.25",
     "lively.notifications": "^0.3.2",
     "lively.lang": "^1.0.0",
-    "js-git-browser": "LivelyKernel/js-git-browser"
+    "js-git-browser": "https://raw.githubusercontent.com/LivelyKernel/js-git-browser/master/jsgit.js"
   },
   "devDependencies": {
     "mocha-es6": "^0.5"

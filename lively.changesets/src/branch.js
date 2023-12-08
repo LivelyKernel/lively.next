@@ -1,5 +1,6 @@
 import { arr } from 'lively.lang';
-import { codec, bodec } from 'js-git-browser';
+import jsGit from 'js-git-browser';
+const { codec, bodec } = jsGit;
 import { emit } from 'lively.notifications';
 
 import commit, { activeCommit, packageHead } from './commit.js';
