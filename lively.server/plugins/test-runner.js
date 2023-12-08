@@ -23,6 +23,7 @@ export default class TestRunner {
         type: 'package'
       });
     }
+    $world.handForPointerId(1);
     await System.import('mocha-es6/index.js');
     await promise.waitFor(()=> !!window.chai && !!window.Mocha);
     const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
