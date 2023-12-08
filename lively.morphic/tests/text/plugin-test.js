@@ -23,7 +23,7 @@ function dummyPlugin () {
 
 let text;
 describeInBrowser('text plugins', () => {
-  beforeEach(() => text = new Text({ textString: 'Hello\n World' }));
+  beforeEach(() => text = new Text({ textString: 'Hello\n World', readOnly: false }));
 
   it('install', () => {
     let plugin = dummyPlugin();
@@ -51,7 +51,6 @@ describeInBrowser('text plugins', () => {
 
     text.simulateKeys('Alt-A');
     expect(run).equals(1, 'command not run after key invocation');
-
     text.execCommand('plugin-command');
     expect(run).equals(2, 'command not run after execCommand');
   });
