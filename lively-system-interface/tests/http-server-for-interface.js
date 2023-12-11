@@ -49,29 +49,35 @@ function exec (cmdString, opts) {
 }
 
 let serverCode = `
-import "systemjs";
-import * as modules from "lively.modules";
-import { setupSystem } from "lively.installer";
+import System from "systemjs";
 import http from "http";
+import { obj } from "lively.lang";
+
+global.System = System;
 
 process.on('uncaughtException', function(err) { console.error(err); });
 
 console.log("PID=" + process.pid);
 
-setupSystem(process.env.lv_next_dir)
-   .then(() => 
-   new Promise((resolve, reject) =>
+let modules, setupSystem, livelySystem;
+
+Promise.all([import('lively.modules'), import('lively.installer')])
+  .then(([m1, m2]) => { modules = m1, setupSystem = m2.setupSystem })
+  .then(() => setupSystem(process.env.lv_next_dir))
+  .then((sys) => {
+   global.System = livelySystem = sys;  
+   return new Promise((resolve, reject) =>
     http.createServer(function(req, res) {
       cors(req, res, () => {
-        evalHandler("__PATH__")(req, res, () => {
+        evalHandler("/lively-tester")(req, res, () => {
           res.writeHead(404, {'Content-Type': 'text/plain'});
           res.end('not supported: ' + req.url);
         });
       })
-    }).listen(__PORT__, resolve)))
-  .then(() => console.log("lively.system running at http://localhost:__PORT____PATH__"))
-  .then(() => modules.importPackage("../lively-system-interface"))
-  .then((system) => { global.livelySystem = system; console.log("lively-system-interface imported"); })
+    }).listen(3011, resolve))
+  }).then(() => console.log("lively.system running at http://localhost:3011/lively-tester"))
+  .then(() => livelySystem.import("lively-system-interface"))
+  .then(() => { console.log("lively-system-interface imported"); })
   .catch(err => console.error("Error starting server: " + err.stack || err));
 
 
@@ -82,6 +88,7 @@ function evalHandler(route) {
     req.on('data', d => data += d.toString());
     req.on('end', () => {
       Promise.resolve().then(() => {
+        var System = global.System; // ensure that the proper system is referenced
         var result = eval(data);
         if (!(result instanceof Promise)) {
           console.error("unexpected eval result:" + result)
@@ -111,12 +118,14 @@ function cors(req, res, next) {
   res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Depth, Cookie, Set-Cookie, Accept, Access-Control-Allow-Credentials, Origin, Content-Type, Request-Id , X-Api-Version, X-Request-Id, Authorization");
   res.setHeader("Access-Control-Expose-Headers", "Date, Etag, Set-Cookie");
   next();
-}`;
+}
+
+`;
 
 export async function startServer (path = '/lively', port = 3011, timeout = 30 * 1000/* ms */) {
   // 1. prepare server file
-  let WORKSPACE_LK = (isNode ? process.env.WORKSPACE_LK : lively.shell.WORKSPACE_LK) || '.';
-  let fn = string.joinPath(WORKSPACE_LK, '.lively.next-eval-server-for-test.js');
+  let WORKSPACE_LK = (isNode ? string.joinPath(process.env.lv_next_dir, 'lively.server') : lively.shell.WORKSPACE_LK) || '.';
+  let fn = string.joinPath(WORKSPACE_LK, '.lively.next-eval-server-for-test.mjs');
   let serverCodePatched = serverCode
     .replace(/__PORT__/g, port)
     .replace(/__PATH__/g, path);
@@ -124,7 +133,7 @@ export async function startServer (path = '/lively', port = 3011, timeout = 30 *
   await writeFile(fn, serverCodePatched);
 
   // 2. start server process and wait until lively-system-interface is ready
-  let cmd = exec(`node --experimental-loader $lv_next_dir/flatn/resolver.mjs ${fn}`, { cwd: WORKSPACE_LK });
+  let cmd = exec(`node --inspect --experimental-loader $lv_next_dir/flatn/resolver.mjs ${fn}`, { cwd: WORKSPACE_LK });
   let start = Date.now(); let outputSeen = '';
   return new Promise(function waitForServerStart (resolve, reject) {
     if (cmd.output !== outputSeen) { // for debugging
