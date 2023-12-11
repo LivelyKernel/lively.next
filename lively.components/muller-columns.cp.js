@@ -122,7 +122,7 @@ export class MullerColumnViewModel extends ViewModel {
       if (child === aNode) return this.treeData.collapse(child, false);
     }));
     await this.refresh(animated);
-    signal(this, 'selectionChange', this.getExpandedPath());
+    signal(this.view, 'selectionChange', this.getExpandedPath());
   }
 
   getExpandedPath () {
