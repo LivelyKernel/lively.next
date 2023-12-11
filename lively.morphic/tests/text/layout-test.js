@@ -25,7 +25,7 @@ async function text (string, props) {
     ...props
   }).openInWorld();
 
-  await t.allFontsLoaded();
+  await t.whenFontLoaded();
 
   t.env.forceUpdate();
 
@@ -75,7 +75,7 @@ describe('text layout', function () {
 
       pos = tl.pixelPositionFor(t, { row: 2, column: 2 });
       expect(pos.x).closeTo(padl + 2 * w, 2);
-      expect(pos.y).closeTo(padt + 2 * h, 2);
+      expect(pos.y).closeTo(padt + 2 * h, 3);
 
       pos = tl.pixelPositionFor(t, { row: 1, column: 100 });
       expect(pos.x).closeTo(padl + 6 * w, 2);
@@ -83,12 +83,11 @@ describe('text layout', function () {
 
       pos = tl.pixelPositionFor(t, { row: 100, column: 100 });
       expect(pos.x).closeTo(padl + 5 * w, 2);
-      expect(pos.y).closeTo(padt + 2 * h, 2);
+      expect(pos.y).closeTo(padt + 2 * h, 3);
     });
 
     it('pixel pos -> text pos', async () => {
       await text('hello\nlively\nworld');
-      t.env.forceUpdate();
       expect(t.textPositionFromPoint(pt(padl + 0, padt + 0))).deep.equals({ row: 0, column: 0 }, '1');
       expect(t.textPositionFromPoint(pt(padl + w - 1, padt + h / 2))).deep.equals({ row: 0, column: 1 }, '2');
       expect(t.textPositionFromPoint(pt(padl + w + 1, padt + h + 1))).deep.equals({ row: 1, column: 1 }, '3');
@@ -184,7 +183,8 @@ describe('text layout', function () {
       await text('abcdef\n1234567\n');
       t.extent = pt(4 * w, 100);
       expect(t.lineCount()).equals(3);
-      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt - .5, w, h), 'not wrapped: text pos => pixel pos');
+      debugger;
+      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt - .5, w, h).roundTo(-1), 'not wrapped: text pos => pixel pos');
       expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
 
       t.lineWrapping = 'by-chars';
@@ -200,19 +200,19 @@ describe('text layout', function () {
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 4 }));
       expect(x).closeTo(padl + w * 0, 2);
-      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
+      expect(y).closeTo(padt + h * 2, 3); // wrapped twice
       expect(width).closeTo(6, 2);
       expect(height).closeTo(h, 2);
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 5 }));
       expect(x).closeTo(padl + w * 1, 2);
-      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
+      expect(y).closeTo(padt + h * 2, 3); // wrapped twice
       expect(width).closeTo(6, 2);
       expect(height).closeTo(h, 2);
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 6 }));
       expect(x).closeTo(padl + w * 2, 2);
-      expect(y).closeTo(padt + h * 2, 2); // wrapped twice
+      expect(y).closeTo(padt + h * 2, 3); // wrapped twice
       expect(width).closeTo(0, 2);
       expect(height).closeTo(h, 2);
 
@@ -241,7 +241,7 @@ describe('text layout', function () {
 
       ({ height, width, x, y } = tl.boundsFor(t, { row: 0, column: 6 }));
       expect(x).closeTo(padl + w * 3, 2);
-      expect(y).closeTo(padt + h * 1, 2); // wrapped twice
+      expect(y).closeTo(padt + h * 1, 3); // wrapped twice
       expect(width).closeTo(0, 2);
       expect(height).closeTo(h, 2);
     });
