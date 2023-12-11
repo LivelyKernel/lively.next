@@ -661,7 +661,7 @@ export class BrowserModel extends ViewModel {
             { target: 'close button', signal: 'onMouseDown', handler: 'closeStatusMessage' },
             { target: 'open in workspace', signal: 'onMouseDown', handler: 'openStatusMessage' },
 
-            { model: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
+            { target: 'column view', signal: 'selectionChange', handler: 'onListSelectionChange' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
             { target: 'source editor', signal: 'onMouseDown', handler: 'updateFocusedCodeEntity' },
             { target: 'source editor', signal: 'onScroll', handler: 'repositionComponentEditButtons' },
