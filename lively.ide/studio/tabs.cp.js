@@ -542,11 +542,11 @@ class TabsModel extends ViewModel {
   updateVisibility (closing) {
     if (!this.showsSingleTab && this.tabs.length > 1) {
       this.view.visible = true;
-      signal(this, 'becameVisible');
+      signal(this.view, 'becameVisible');
     }
     if (!this.showsSingleTab && this.tabs.length === 2 && closing) {
       this.view.visible = false;
-      signal(this, 'becameInvisible');
+      signal(this.view, 'becameInvisible');
     }
   }
 
@@ -578,6 +578,7 @@ class TabsModel extends ViewModel {
 
   onSelectedTabChange (currAndPrevTabsObject) {
     // hook for external components to bind to for when another tab is selected
+    signal(this.view, 'onSelectedTabChange', currAndPrevTabsObject)
     this._previouslySelectedTab = currAndPrevTabsObject.curr;
     return currAndPrevTabsObject;
   }
@@ -585,7 +586,7 @@ class TabsModel extends ViewModel {
   onTabClose (closedTab) {
     if (closedTab.selected) this.selectNearestTab(closedTab);
     if (this.tabs.length === 2) {
-      signal(this, 'oneTabRemaining');
+      signal(this.view, 'oneTabRemaining');
     }
     if (this.tabs.length === 1) {
       this._previouslySelectedTab = undefined;
