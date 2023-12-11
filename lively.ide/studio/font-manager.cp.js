@@ -285,9 +285,9 @@ class FontConfigurationModel extends PopupModel {
       { target: 'name input', signal: 'onBlur', handler: 'confirm' },
       { target: 'unicode range input', signal: 'onInput', handler: 'confirm' },
       { target: 'unicode range input', signal: 'onBlur', handler: 'confirm' },
-      { model: 'weight selector min', signal: 'toggleList', handler: 'confirm' },
-      { model: 'weight selector max', signal: 'toggleList', handler: 'confirm' },
-      { model: 'style selector', signal: 'toggleList', handler: 'confirm' }
+      { target: 'weight selector min', signal: 'toggleList', handler: 'confirm' },
+      { target: 'weight selector max', signal: 'toggleList', handler: 'confirm' },
+      { target: 'style selector', signal: 'toggleList', handler: 'confirm' }
     ];
   }
 
