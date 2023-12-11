@@ -7,7 +7,7 @@ const padding = Rectangle.inset(5);
 
 let w, h, t, tl, padl, padr, padt, padb; // eslint-disable-line no-unused-vars
 
-function text (string, props) {
+async function text (string, props) {
   t = new Text({
     name: 'text',
     readOnly: false,
@@ -21,9 +21,17 @@ function text (string, props) {
     borderWidth: 0,
     fill: Color.limeGreen,
     lineWrapping: 'no-wrap',
-    lineHeight: 1.2,
+    lineHeight: 1.4,
     ...props
   }).openInWorld();
+
+  await t.allFontsLoaded();
+
+  t.env.forceUpdate();
+
+  // this measures the bounds differently than the text layout, yielding a line height instead
+  // of the actual character bounds
+  // char height !== line height, since lineHeight is a custom variation
 
   [{ height: h, width: w }] = t.env.fontMetric.charBoundsFor(t.defaultTextStyle, 'w');
 
@@ -41,11 +49,9 @@ describe('text layout', function () {
   afterEach(() => t.remove());
 
   describe('positions', () => {
-    it('text pos -> pixel pos', () => {
-      text('hello\nlively\nworld');
+    it('text pos -> pixel pos', async () => {
+      await text('hello\nlively\nworld');
       let pos;
-
-      t.env.forceUpdate();
 
       pos = tl.pixelPositionFor(t, { row: 0, column: 0 });
       expect(pos.x).closeTo(padl + 0, 2);
@@ -80,8 +86,8 @@ describe('text layout', function () {
       expect(pos.y).closeTo(padt + 2 * h, 2);
     });
 
-    it('pixel pos -> text pos', () => {
-      text('hello\nlively\nworld');
+    it('pixel pos -> text pos', async () => {
+      await text('hello\nlively\nworld');
       t.env.forceUpdate();
       expect(t.textPositionFromPoint(pt(padl + 0, padt + 0))).deep.equals({ row: 0, column: 0 }, '1');
       expect(t.textPositionFromPoint(pt(padl + w - 1, padt + h / 2))).deep.equals({ row: 0, column: 1 }, '2');
@@ -94,44 +100,43 @@ describe('text layout', function () {
   describe('fit', () => {
     afterEach(() => t.remove());
 
-    it('computes size on construction', () => {
-      const t = text('hello', { clipMode: 'visible', fixedHeight: false, fixedWidth: false });
+    it('computes size on construction', async () => {
+      const t = await text('hello', { clipMode: 'visible', fixedHeight: false, fixedWidth: false });
       const { width, height } = t;
       expect(height).closeTo(h + padding.top() + padding.bottom(), 2);
       expect(width).closeTo(5 * w + padding.left() + padding.right(), 2);
     });
 
-    it('computes only width', () => {
-      const { extent: { x: width, y: height } } = text('hello', { clipMode: 'visible', fixedWidth: false, fixedHeight: true });
+    it('computes only width', async () => {
+      const { extent: { x: width, y: height } } = await text('hello', { clipMode: 'visible', fixedWidth: false, fixedHeight: true });
       expect(height).closeTo(100, 2);
       expect(width).closeTo(5 * w + padding.top() + padding.bottom(), 2);
     });
 
-    it('computes only height', () => {
-      const { extent: { x: width, y: height } } = text('hello', { clipMode: 'visible', fixedWidth: true, fixedHeight: false });
+    it('computes only height', async () => {
+      const { extent: { x: width, y: height } } = await text('hello', { clipMode: 'visible', fixedWidth: true, fixedHeight: false });
       expect(height).closeTo(h + padding.top() + padding.bottom(), 2);
       expect(width).closeTo(100, 2);
     });
 
-    it('leaves extent as is with fixed sizing', () => {
-      const { extent } = text('hello', { clipMode: 'visible', fixedWidth: true, fixedHeight: true });
+    it('leaves extent as is with fixed sizing', async () => {
+      const { extent } = await text('hello', { clipMode: 'visible', fixedWidth: true, fixedHeight: true });
       expect(extent.x).closeTo(100, 2);
       expect(extent.y).closeTo(100, 2);
     });
 
-    it("when clip it won't shrink", () => {
-      const { extent } = text('hello', { clipMode: 'hidden' });
+    it("when clip it won't shrink", async () => {
+      const { extent } = await text('hello', { clipMode: 'hidden' });
       expect(extent).equals(pt(100, 100));
     });
 
-    it('fits bounds synchronously if text is inserted', () => {
-      const t = text('hello world', {
+    it('fits bounds synchronously if text is inserted', async () => {
+      const t = await text('hello world', {
         clipMode: 'visible',
         fixedWidth: false,
         fixedHeight: true,
         padding: rect(1, 1, 1, 1)
       });
-      t.env.forceUpdate();
       const widthBefore = t.width;
       t.insertText('h');
       t.env.forceUpdate();
@@ -142,7 +147,7 @@ describe('text layout', function () {
     });
 
     it('fits bounds synchronously if font size changed', async () => {
-      const t = text('hello world', {
+      const t = await text('hello world', {
         clipMode: 'visible',
         fixedWidth: false,
         fixedHeight: false
@@ -155,8 +160,8 @@ describe('text layout', function () {
       expect(rightAfter).equals(t.right);
     });
 
-    it('fits bounds synchronously if padding changed', () => {
-      const t = text('hello world', { name: 'trollo', clipMode: 'visible', fixedWidth: false, fixedHeight: false });
+    it('fits bounds synchronously if padding changed', async () => {
+      const t = await text('hello world', { name: 'trollo', clipMode: 'visible', fixedWidth: false, fixedHeight: false });
       const rightBefore = t.right;
       t.padding = Rectangle.inset(50, 50, 0, 0);
       const rightAfter = t.right;
@@ -164,8 +169,8 @@ describe('text layout', function () {
       expect(rightAfter).equals(t.right);
     });
 
-    it('fits bounds synchronously if border width changed', () => {
-      const t = text('hello world', { clipMode: 'visible', fixedWidth: false, fixedHeight: false });
+    it('fits bounds synchronously if border width changed', async () => {
+      const t = await text('hello world', { clipMode: 'visible', fixedWidth: false, fixedHeight: false });
       const rightBefore = t.right;
       t.borderWidth = 5;
       const rightAfter = t.right;
@@ -175,9 +180,8 @@ describe('text layout', function () {
   });
 
   describe('line wrapping', () => {
-    it('wraps single line and computes positions back and forth', () => {
-      text('abcdef\n1234567\n');
-      t.env.forceUpdate();
+    it('wraps single line and computes positions back and forth', async () => {
+      await text('abcdef\n1234567\n');
       t.extent = pt(4 * w, 100);
       expect(t.lineCount()).equals(3);
       expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt - .5, w, h), 'not wrapped: text pos => pixel pos');
