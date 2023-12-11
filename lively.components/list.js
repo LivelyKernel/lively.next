@@ -1992,6 +1992,7 @@ export class DropDownListModel extends ButtonModel {
   }
 
   async toggleList () {
+    signal(this.view, 'toggleList');
     const list = this.listMorph; let bounds;
     const { view } = this;
     list.isHaloItem = true;
