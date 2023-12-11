@@ -4,11 +4,18 @@ import { signal } from 'lively.bindings';
 
 let debug = false;
 
+let _commands;
+_commands = _commands || [];
+
 export default class ClientCommand extends CommandInterface {
   static installLively2LivelyServices (l2lClient) {
     Object.keys(L2LServices).forEach(name => // eslint-disable-line no-use-before-define
       l2lClient.addService(name,
         async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn))); // eslint-disable-line no-use-before-define
+  }
+
+  static get commands () {
+    return _commands;
   }
 
   constructor (l2lClient) {
