@@ -4,6 +4,7 @@ import { expect, chai } from 'mocha-es6';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { expectSelection } from '../test-helpers.js';
 import { Range } from '../../text/range.js';
+import { string } from 'lively.lang';
 
 expectSelection(chai);
 
@@ -123,9 +124,9 @@ describe('text attributes', () => {
       // sut.openInWorld();
       // sut.remove();
       sut.textAndAttributes = ['xxx\nyyy\nfooo\n', null];
-      sut.addTextAttribute({ fontFamily: 'Arial' }, range(0, 0, 2, 0));
+      sut.addTextAttribute({ fontFamily: 'IBM Plex Sans' }, range(0, 0, 2, 0));
       expect(sut.textAndAttributes).deep.equals([
-        'xxx\nyyy\n', { fontFamily: 'Arial' },
+        'xxx\nyyy\n', { fontFamily: 'IBM Plex Sans' },
         'fooo\n', null
       ]);
     });
@@ -134,10 +135,10 @@ describe('text attributes', () => {
   describe('insertText with attributes', () => {
     it('extends attributes on insertion by default', () => {
       sut.textAndAttributes = ['hello', { fontSize: 10 }, ' world', {}];
-      sut.insertText([' foo', { fontFamily: 'Arial' }], { row: 0, column: 5 });
+      sut.insertText([' foo', { fontFamily: 'IBM Plex Sans' }], { row: 0, column: 5 });
       expect(sut.textAndAttributes).deep.equals([
         'hello', { fontSize: 10 },
-        ' foo', { fontSize: 10, fontFamily: 'Arial' },
+        ' foo', { fontSize: 10, fontFamily: 'IBM Plex Sans' },
         ' world', {}
       ]);
     });
@@ -157,7 +158,7 @@ describe('text attributes', () => {
     it('textAndAttributes setter', () => {
       let original = sut.textAndAttributes.slice();
       sut.undoManager.group();
-      sut.textAndAttributes = ['xxx\nyyy\nfooo\n', { fontFamily: 'Arial' }];
+      sut.textAndAttributes = ['xxx\nyyy\nfooo\n', { fontFamily: 'IBM Plex Sans' }];
       sut.undoManager.group();
       sut.textUndo();
       expect(sut.textAndAttributes).deep.equals(original);
@@ -166,7 +167,7 @@ describe('text attributes', () => {
     it('textAndAttributes setter with previous attributes', () => {
       sut.textAndAttributes = ['xxx\nyyy', { textDecoration: 'underline' }];
       sut.undoManager.group();
-      sut.textAndAttributes = ['xxx\nyyyfooo\n', { fontFamily: 'Arial' }];
+      sut.textAndAttributes = ['xxx\nyyyfooo\n', { fontFamily: 'IBM Plex Sans' }];
       sut.undoManager.group();
       sut.textUndo();
       expect(sut.textAndAttributes)
@@ -180,7 +181,7 @@ describe('text attributes', () => {
       sut.undoManager.reset();
       sut.undoManager.group();
 
-      sut.addTextAttribute({ fontFamily: 'Arial' }, range(0, 0, 2, 0));
+      sut.addTextAttribute({ fontFamily: 'IBM Plex Sans' }, range(0, 0, 2, 0));
       sut.undoManager.group();
       sut.undoManager.undos;
 
@@ -611,7 +612,7 @@ describe('text movement and selection commands', () => {
   describe('get position above and below', () => {
     let t;
     before(async () => {
-      t = text('a\ncdefg\n', { extent: pt(500, 500), lineWrapping: 'by-chars', fontFamily: 'IBM Plex Mono' });
+      t = text('a\ncdefg\n', { extent: pt(500, 500), lineWrapping: 'by-chars', fontFamily: 'IBM Plex Mono', lineHeight: 1.4 });
       // t.editorModeName = 'js';
       t.textString = 'a\ncdefg\n';
       t.textLayout.resetLineCharBoundsCache(t);
@@ -703,7 +704,7 @@ describe('morph inside textAndAttributes', () => {
 
   it('remove removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
-    expect(sut.textString).equals('text\n\nfor tests');
+    expect(sut.textString).equals('text\n\ufffd\nfor tests');
     m.remove();
     expect(sut.textString).equals('text\n\nfor tests');
     expect(sut.embeddedMorphs).not.includes(m);
@@ -712,7 +713,7 @@ describe('morph inside textAndAttributes', () => {
 
   it('text deletion removes morph from text', () => {
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
-    expect(sut.textString).equals('text\n\nfor tests');
+    expect(sut.textString).equals('text\n\ufffd\nfor tests');
     sut.deleteText({ start: { row: 1, column: 0 }, end: { row: 1, column: 1 } });
     expect(sut.textString).equals('text\n\nfor tests');
     expect(sut.embeddedMorphs).not.includes(m);
