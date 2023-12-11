@@ -25,11 +25,12 @@ function text (string, props) {
     readOnly: false,
     needsDocument: true,
     textString: string,
-    fontFamily: 'Monaco, monosonpace',
+    fontFamily: 'IBM Plex Mono',
     fontSize: 10,
     extent: pt(100, 100),
     padding: 3,
     editorModeName: 'js',
+    lineHeight: 1.4,
     ...props
   });
 
@@ -120,9 +121,8 @@ describeInBrowser('text selection', () => {
   });
 
   describe('goal column', () => {
-    it('jumps to goal column on move', () => {
+    it('jumps to goal column on move', async () => {
       t.openInWorld();
-      t.env.forceUpdate();
       t.textString = '1234\n1\n1234';
       t.cursorPosition = { row: 0, column: 3 };
       t.selection.goDown(); // not rendered so this is a problem
@@ -134,7 +134,6 @@ describeInBrowser('text selection', () => {
 
     it('jumps to goal column on select', () => {
       t.openInWorld();
-      t.env.forceUpdate();
       t.textString = '1234\n1\n1234';
       t.cursorPosition = { row: 0, column: 3 };
       t.selection.selectDown();
