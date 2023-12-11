@@ -50,6 +50,9 @@ function pkillKill (pid, signal, thenDo) {
   });
 }
 
+let _commands;
+_commands = _commands || [];
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // var c = new Command();
 // c.spawn({command: "ls"})
@@ -59,6 +62,10 @@ export default class ServerCommand extends CommandInterface {
     Object.keys(L2LServices).forEach(name => // eslint-disable-line no-use-before-define
       tracker.addService(name,
         async (tracker, msg, ackFn) => L2LServices[name](tracker, msg, ackFn))); // eslint-disable-line no-use-before-define
+  }
+
+  static get commands () {
+    return _commands;
   }
 
   constructor () {
