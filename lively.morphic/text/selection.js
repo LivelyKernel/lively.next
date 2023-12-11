@@ -90,14 +90,11 @@ export class Selection {
     if (range.equals(this._range)) return;
 
     this._range = range;
-    if (!range.isEmpty()) {
-    // next two ops are super expensive on deserialization
-      this._goalColumn = this.textMorph.lineWrapping
-        ? this.textMorph.columnInWrappedLine(this.lead)
-        : this.lead.column;
 
-      this._goalX = this.textMorph.charBoundsFromTextPosition(this.lead).x;
-    }
+    this._goalColumn = this.textMorph.lineWrapping
+      ? this.textMorph.columnInWrappedLine(this.lead)
+      : this.lead.column;
+    this._goalX = this.textMorph.charBoundsFromTextPosition(this.lead).x;
 
     this.startAnchor.position = range.start;
     this.endAnchor.position = range.end;
