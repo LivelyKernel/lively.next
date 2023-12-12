@@ -16,7 +16,6 @@ This is the repository of the [lively.next project](https://lively-next.org).
 ## Setup
 
 You need to install `lively.next` on your system.
-Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
 
 ### Installation Requirements
 
@@ -54,6 +53,16 @@ When a new version of `lively.next` is available, the Version Indicator in the l
 Pressing will start the update process, automatically restart the server and prompt you to reload your lively session. Please make sure to save all your progress before updating.
 
 Manually updating can be done by pulling the latest version and just executing `install.sh` again. The server needs to be restarted afterwards and you need to reload your lively session.
+
+---
+
+Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
+
+> **Note**
+>
+> This does not mean that you cannot deploy applications built with `lively.next`. Of course, frozen applications can be served via any hoster!
+> 
+> However, making a development server publicly available is highly discouraged, as it comes with unfiltered access to the local file system and shell, among other things.
 
 ## Documentation
 
