@@ -103,7 +103,7 @@ class LoadingIndicatorModel extends ViewModel {
             { signal: 'onHoverIn', handler: 'onHoverIn' },
             { signal: 'onHoverOut', handler: 'onHoverOut' },
             { signal: 'openInWorld', handler: 'openInWorld' },
-            { model: 'close button', signal: 'fire', handler: 'close' }
+            { target: 'close button', signal: 'fire', handler: 'close' }
           ];
         }
       }

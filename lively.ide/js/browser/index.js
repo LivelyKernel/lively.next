@@ -645,12 +645,12 @@ export class BrowserModel extends ViewModel {
         get () {
           return [
             { signal: 'extent', handler: 'relayout' },
-            { model: 'global search', signal: 'fire', handler: 'execCommand', converter: () => 'open code search' },
-            { model: 'go back', signal: 'fire', handler: 'execCommand', converter: () => 'browser history backward' },
-            { model: 'go forward', signal: 'fire', handler: 'execCommand', converter: () => 'browser history forward' },
-            { model: 'browse history', signal: 'fire', handler: 'execCommand', converter: () => 'browser history browse' },
-            { model: 'browse modules', signal: 'fire', handler: 'execCommand', converter: () => 'choose and browse module' },
-            { model: 'add tab', signal: 'fire', handler: 'execCommand', converter: () => 'open new tab' },
+            { target: 'global search', signal: 'fire', handler: 'execCommand', converter: () => 'open code search' },
+            { target: 'go back', signal: 'fire', handler: 'execCommand', converter: () => 'browser history backward' },
+            { target: 'go forward', signal: 'fire', handler: 'execCommand', converter: () => 'browser history forward' },
+            { target: 'browse history', signal: 'fire', handler: 'execCommand', converter: () => 'browser history browse' },
+            { target: 'browse modules', signal: 'fire', handler: 'execCommand', converter: () => 'choose and browse module' },
+            { target: 'add tab', signal: 'fire', handler: 'execCommand', converter: () => 'open new tab' },
 
             { target: 'run tests in module', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'run all tests in module' },
             { target: 'jump to entity', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'jump to codeentity' },

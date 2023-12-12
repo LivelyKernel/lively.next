@@ -95,7 +95,7 @@ export class InformPromptModel extends AbstractPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' }
+            { target: 'ok button', signal: 'fire', handler: 'resolve' }
           ];
         }
       }
@@ -140,8 +140,8 @@ export class ConfirmPromptModel extends AbstractPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'cancel button', signal: 'fire', handler: 'reject' }
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'cancel button', signal: 'fire', handler: 'reject' }
           ];
         }
       }
@@ -184,8 +184,8 @@ export class MultipleChoicePromptModel extends ConfirmPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'cancel button', signal: 'fire', handler: 'reject' },
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'cancel button', signal: 'fire', handler: 'reject' },
             { signal: 'onKeyDown', handler: 'onKeyDown', override: true }
           ];
         }
@@ -240,8 +240,8 @@ export class TextPromptModel extends ConfirmPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'cancel button', signal: 'fire', handler: 'reject' }
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'cancel button', signal: 'fire', handler: 'reject' }
           ];
         }
       }
@@ -300,8 +300,8 @@ export class EditPromptModel extends TextPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
-            { model: 'cancel button', signal: 'fire', handler: 'reject' },
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'cancel button', signal: 'fire', handler: 'reject' },
             { signal: 'focus', handler: 'focus', override: true }
           ];
         }
@@ -539,8 +539,8 @@ export class EditListPromptModel extends ListPromptModel {
   get bindings () {
     return [
       ...super.bindings,
-      { model: 'add item button', signal: 'fire', handler: 'addItemToList' },
-      { model: 'remove item button', signal: 'fire', handler: 'removeSelectedItemsFromList' }
+      { target: 'add item button', signal: 'fire', handler: 'addItemToList' },
+      { target: 'remove item button', signal: 'fire', handler: 'removeSelectedItemsFromList' }
     ];
   }
 
