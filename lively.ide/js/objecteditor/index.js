@@ -93,16 +93,16 @@ export class ObjectEditorModel extends ViewModel {
               handler: 'execCommand',
               converter: () => 'choose target'
             },
-            { model: 'add button', signal: 'fire', handler: 'interactivelyAddObjectPackageAndMethod' },
+            { target: 'add button', signal: 'fire', handler: 'interactivelyAddObjectPackageAndMethod' },
             {
               model: 'remove button',
               signal: 'fire',
               handler: 'execCommand',
               converter: () => 'remove method or class'
             },
-            { model: 'fork package button', signal: 'fire', handler: 'interactivelyForkPackage' },
+            { target: 'fork package button', signal: 'fire', handler: 'interactivelyForkPackage' },
             {
-              model: 'open in browser button',
+              target: 'open in browser button',
               signal: 'fire',
               handler: 'execCommand',
               updater: function ($upd) {
@@ -110,18 +110,18 @@ export class ObjectEditorModel extends ViewModel {
               }
             },
             {
-              model: 'save button',
+              target: 'save button',
               signal: 'fire',
               handler: 'execCommand',
               converter: () => 'save source'
             },
             {
-              model: 'run method button',
+              target: 'run method button',
               signal: 'fire',
               handler: 'execCommand',
               converter: () => 'run selected method'
             },
-            { model: 'toggle imports button', signal: 'fire', handler: 'toggleShowingImports' },
+            { target: 'toggle imports button', signal: 'fire', handler: 'toggleShowingImports' },
             { target: 'source editor', signal: 'textChange', handler: 'updateUnsavedChangeIndicatorDebounced' },
             { target: 'class tree', signal: 'selectedNode', handler: 'onClassTreeSelection' },
             { target: 'class tree', signal: 'contextMenuRequested', handler: 'contextMenuForClassTree' }
@@ -1572,10 +1572,10 @@ export class ImportControllerModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'open button', signal: 'fire', handler: 'openModuleInBrowser' },
-            { model: 'add import button', signal: 'fire', handler: 'interactivelyAddImport' },
-            { model: 'remove import button', signal: 'fire', handler: 'interactivelyRemoveImport' },
-            { model: 'cleanup button', signal: 'fire', handler: 'interactivelyRemoveUnusedImports' }
+            { target: 'open button', signal: 'fire', handler: 'openModuleInBrowser' },
+            { target: 'add import button', signal: 'fire', handler: 'interactivelyAddImport' },
+            { target: 'remove import button', signal: 'fire', handler: 'interactivelyRemoveImport' },
+            { target: 'cleanup button', signal: 'fire', handler: 'interactivelyRemoveUnusedImports' }
           ];
         }
       }

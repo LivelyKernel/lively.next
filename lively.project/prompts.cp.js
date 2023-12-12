@@ -28,16 +28,16 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
         get () {
           return [
             {
-              model: 'cancel button',
+              target: 'cancel button',
               signal: 'fire',
               handler: () => {
                 this.view.remove();
               }
             },
-            { model: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
-            { model: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
-            { model: 'deploy check', signal: 'checked', handler: (val) => { if (this.project.canDeployToPages) this.ui.deployModeSelector.enabled = val; } },
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
+            { target: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
+            { target: 'deploy check', signal: 'checked', handler: (val) => { if (this.project.canDeployToPages) this.ui.deployModeSelector.enabled = val; } },
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
             {
               target: 'visibility selector',
               signal: 'selectionChanged',
@@ -116,7 +116,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           return [
             { target: 'user flap', signal: 'onLogin', handler: 'onLogin' },
             { target: 'user flap', signal: 'onLogout', handler: 'waitForLogin' },
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
             { target: 'from remote checkbox', signal: 'checked', handler: 'onCheckbox' },
             {
               target: 'create remote checkbox',
@@ -304,8 +304,8 @@ class RepoCreationPromptModel extends AbstractPromptModel {
         get () {
           {
             return [
-              { model: 'ok button', signal: 'fire', handler: 'resolve' },
-              { model: 'cancel button', signal: 'fire', handler: 'reject' }
+              { target: 'ok button', signal: 'fire', handler: 'resolve' },
+              { target: 'cancel button', signal: 'fire', handler: 'reject' }
             ];
           }
         }
@@ -358,9 +358,9 @@ class ProjectSavePrompt extends AbstractPromptModel {
       bindings: {
         get () {
           return [
-            { model: 'ok button', signal: 'fire', handler: 'resolve' },
+            { target: 'ok button', signal: 'fire', handler: 'resolve' },
             {
-              model: 'cancel button',
+              target: 'cancel button',
               signal: 'fire',
               handler: () => {
                 this.view.remove();

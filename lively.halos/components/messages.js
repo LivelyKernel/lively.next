@@ -64,8 +64,7 @@ export class StatusMessage extends ViewModel {
         readOnly: true,
         get () {
           return [
-            { model: 'close button', signal: 'fire', handler: 'close' },
-            // view
+            { target: 'close button', signal: 'fire', handler: 'close' },
             { signal: 'onMouseUp', handler: 'expand' },
             { signal: 'extent', handler: 'onViewResize' }
           ];

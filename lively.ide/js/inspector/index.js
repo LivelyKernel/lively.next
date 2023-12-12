@@ -678,9 +678,8 @@ export class Inspector extends ViewModel {
             { target: 'unknowns', signal: 'checked', handler: 'filterProperties', override: false },
             { target: 'internals', signal: 'checked', handler: 'filterProperties', override: false },
             { target: 'search field', signal: 'searchInput', handler: 'filterProperties', override: false },
-            { model: 'property tree', signal: 'nodeCollapseChanged', handler: 'filterProperties', override: false },
-            // { model: 'this binding selector', signal: 'selection', handler: 'bindCodeEditorThis', override: false },
-            { model: 'fix import button', signal: 'fire', handler: 'fixUndeclaredVariables', override: false },
+            { target: 'property tree', signal: 'nodeCollapseChanged', handler: 'filterProperties', override: false },
+            { target: 'fix import button', signal: 'fire', handler: 'fixUndeclaredVariables', override: false },
             { signal: 'extent', handler: 'onViewResized', override: false }
           ];
         }
