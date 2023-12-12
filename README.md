@@ -1,8 +1,8 @@
 # lively.next
 
+[![Daily `lively.next` Status Check](https://github.com/LivelyKernel/lively.next/actions/workflows/daily-ci-checks.yml/badge.svg?branch=main)](https://github.com/LivelyKernel/lively.next/actions/workflows/daily-ci-checks.yml)
 [![Join our Chat room on Matrix](https://img.shields.io/badge/matrix%20chat-JOIN-success)](https://matrix.to/#/#lively.next:matrix.org)
-[![Run Tests](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml/badge.svg?branch=master)](https://github.com/LivelyKernel/lively.next/actions/workflows/ci-tests.yml)
-    
+
 This is the repository of the [lively.next project](https://lively-next.org).
 
 > **Warning**
