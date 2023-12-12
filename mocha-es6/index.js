@@ -206,7 +206,7 @@ export function uninstallSystemInstantiateHook () {
 }
 
 export async function isMochaTestLoad (load, executable) {
-  let deps = executable.dependencies || [];
+  let deps = executable?.dependencies || [];
   if (!deps.some(ea => ea.endsWith('mocha-es6') || ea.endsWith('mocha-es6/index.js'))) { return false; }
 
   let moduleName = load.name;
