@@ -197,6 +197,9 @@ export class MullerColumnViewModel extends ViewModel {
       }
       this.lists = newLists;
     }
+    newLists.forEach(list => {
+      if (list.scroller) list.scroller.visible = true;
+    });
     return newLists;
   }
 
