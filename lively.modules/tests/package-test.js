@@ -341,6 +341,10 @@ describe('package configuration test', () => {
 
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testDir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     await createFiles(testDir, testResources);
   });
 
@@ -412,6 +416,10 @@ describe('mutual dependent packages', () => {
 
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testDir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     await createFiles(testDir, testResources);
   });
 
@@ -459,6 +467,10 @@ describe('package registry', () => {
       }
     });
     S = getSystem('test', { baseURL: testDir });
+    S.set('lively.transpiler', System.get('lively.transpiler'));
+    S.config({ transpiler: 'lively.transpiler' });
+    S.babelOptions = System.babelOptions;
+    S.translate = async (load) => await System.translate.bind(S)(load);
     registry = PackageRegistry.ofSystem(S);
     registry.packageBaseDirs = [resource(testDir).join('packages/')];
     await registry.update();
