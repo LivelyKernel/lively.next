@@ -182,7 +182,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     });
     this.update();
 
-    signal(this, 'layout changed');
+    signal(this.view, 'layout changed');
   }
 
   deactivate () {
@@ -201,7 +201,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     }
     this.popup = false;
 
-    signal(this, 'layout changed');
+    signal(this.view, 'layout changed');
   }
 
   async openLayoutPopup () {
@@ -285,6 +285,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
       spacingSelector.selection = layout.justifySubmorphs;
       containerPlaceholder.previewLayout(layout);
     });
+    signal(this.view, 'update');
   }
 
   showLayoutPreview (evt) {
@@ -324,6 +325,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
   }
 
   close () {
+    signal(this.view, 'close');
     this.view.remove();
     disconnect($world, 'onMouseDown', this, 'closeIfClickedOutside');
   }

@@ -49,7 +49,7 @@ export class ShadowPopupModel extends PopupModel {
           this.shadowValue = new ShadowObject({});
         }
       },
-      expose: { get () { return ['isHaloItem', 'isPropertiesPanelPopup', 'close']; } },
+      expose: { get () { return ['isHaloItem', 'isPropertiesPanelPopup', 'close', 'shadowValue']; } },
       bindings: {
         get () {
           return [
@@ -143,7 +143,7 @@ export class ShadowPopupModel extends PopupModel {
       distance,
       rotation
     });
-    signal(this, 'value', this.shadowValue);
+    signal(this.view, 'value', this.shadowValue);
   }
 }
 
@@ -179,6 +179,7 @@ export class SingleNumberModel extends PopupModel {
 
   onValueChanged () {
     this.value = this.ui.valueInput.number;
+    signal(this.view, 'value', this.value);
   }
 }
 
@@ -214,7 +215,7 @@ export class SingleSelectionModel extends PopupModel {
 
   onSelectionChanged () {
     this.selection = this.ui.selectionInput.selection;
-    signal(this, 'value', this.selection);
+    signal(this.view, 'value', this.selection);
   }
 }
 
@@ -325,14 +326,12 @@ export class PaddingControlsModel extends ViewModel {
       paddingTop, paddingRight, paddingBottom, paddingLeft
     } = this.ui;
     if (paddingAll.visible) {
-      signal(this, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
       signal(this.view, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
 
       paddingLeft.number = paddingRight.number = paddingTop.number = paddingBottom.number = paddingAll.number;
     }
 
     if (multiPaddingControl.visible) {
-      signal(this, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
       signal(this.view, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
 
       if (paddingTop.number === paddingLeft.number && paddingTop.number === paddingRight.number && paddingTop.number === paddingBottom.number) paddingAll.number = paddingLeft.number;
@@ -356,7 +355,7 @@ export class PaddingPopupModel extends PopupModel {
       bindings: {
         get () {
           return [
-            { model: 'padding controls', signal: 'paddingChanged', handler: 'paddingChanged' },
+            { target: 'padding controls', signal: 'paddingChanged', handler: 'paddingChanged' },
             { target: 'close button', signal: 'onMouseDown', handler: 'close' }
           ];
         }
@@ -415,7 +414,7 @@ export class PositionPopupModel extends PopupModel {
 
   confirm () {
     const { positionYInput, positionXInput } = this.ui;
-    signal(this, 'value', pt(positionXInput.number, positionYInput.number));
+    signal(this.view, 'value', pt(positionXInput.number, positionYInput.number));
   }
 }
 

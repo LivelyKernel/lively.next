@@ -29,7 +29,7 @@ export class PropertiesPanelModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' },
+            { target: 'layout control', signal: 'layout changed', handler: 'refreshShapeControl' },
             { target: 'component control', signal: 'component changed', handler: 'refreshResponsiveControl' },
             { target: 'component control', signal: 'component changed', handler: 'refreshComponentStatesControl' },
             { target: 'component control', signal: 'deactivate', handler: 'refreshResponsiveControl' }
