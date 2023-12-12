@@ -1130,18 +1130,9 @@ export class ComponentBrowserModel extends ViewModel {
       const { importButton, componentFilesView, searchInput, searchClearButton } = this.ui;
       const term = searchInput.input;
       const parsedInput = this.parseInput();
-
       const rootUrls = arr.compact(componentFilesView.treeData.root.subNodes?.map(m => m.url).slice(1)); // ignore the popular stuff
 
       if (!rootUrls) return setTimeout(() => this.filterAllComponents(), 200);
-      const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
-        return resource(url).dirList(10, {
-          exclude: (file) => {
-            return file.isFile() && !file.url.endsWith('cp.js');
-          }
-        });
-      }))).flat().filter(file => file.url.endsWith('cp.js'))
-        .map(file => file.url);
 
       // via system interface
 
@@ -1150,8 +1141,18 @@ export class ComponentBrowserModel extends ViewModel {
       if (term === '') {
         searchClearButton.visible = false;
         this.toggleBusyState(false);
+        this.reset();
         return;
       }
+
+      const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
+        return resource(url).dirList(10, {
+          exclude: (file) => {
+            return file.isFile() && !file.url.endsWith('cp.js');
+          }
+        });
+      }))).flat().filter(file => file.url.endsWith('cp.js'))
+        .map(file => file.url);
 
       searchClearButton.visible = true;
 
