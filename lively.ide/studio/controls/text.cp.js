@@ -68,14 +68,14 @@ export class RichTextControlModel extends ViewModel {
             { target: 'font size input', signal: 'number', handler: 'changeFontSize' },
             { target: 'line height input', signal: 'number', handler: 'changeLineHeight' },
             { target: 'letter spacing input', signal: 'number', handler: 'changeLetterSpacing' },
-            { model: 'font color input', signal: 'color', handler: 'changeFontColor' },
+            { target: 'font color input', signal: 'color', handler: 'changeFontColor' },
             { target: 'alignment controls', signal: 'onMouseDown', handler: 'selectTextAlignment' },
             { target: 'resizing controls', signal: 'onMouseDown', handler: 'selectBoundsResizing' },
             { target: 'inline link', signal: 'onMouseDown', handler: 'changeLink' },
             { target: 'italic style', signal: 'onMouseDown', handler: 'toggleItalic' },
             { target: 'quote', signal: 'onMouseDown', handler: 'toggleQuote' },
             { target: 'underline style', signal: 'onMouseDown', handler: 'toggleUnderline' },
-            { model: 'padding controls', signal: 'paddingChanged', handler: 'changePadding' },
+            { target: 'padding controls', signal: 'paddingChanged', handler: 'changePadding' },
             { target: 'add button', signal: 'onMouseDown', handler: 'installCustomFont' }
           ];
         }

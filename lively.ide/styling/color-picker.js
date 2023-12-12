@@ -147,6 +147,7 @@ export class ColorInputModel extends ViewModel {
   }
 
   onPickerClosedWithClick () {
+    signal(this.view, 'onPickerClosedWithClick')
     this.onPickerClosed();
   }
 
@@ -168,7 +169,7 @@ export class ColorInputModel extends ViewModel {
     const { hexInput, opacityInput, gradientName } = this.ui;
     const currentColor = this.isMixed ? this.colorValue : Color.rgbHex(hexInput.input);
     if (!gradientName.visible) this.colorValue = currentColor.withA(opacityInput.number);
-    signal(this, 'color', this.colorValue);
+    signal(this.view, 'color', this.colorValue);
   }
 }
 
@@ -282,12 +283,12 @@ export class ColorPickerModel extends ViewModel {
             { target: 'color type selector', signal: 'selection', handler: 'switchMode' },
             { target: 'color palette selector', signal: 'selection', handler: 'switchPalette' },
             { target: 'color palette view', signal: 'colorSelected', handler: 'adjustColor' },
-            { model: 'gradient control', signal: 'gradientChanged', handler: 'adjustGradient' },
-            { model: 'gradient control', signal: 'switchColor', handler: 'adjustColor' },
-            { model: 'color encoding', signal: 'colorEntered', handler: 'enterColor' },
-            { model: 'hue picker', signal: 'hueChanged', handler: 'adjustHue' },
-            { model: 'opacity picker', signal: 'opacityChanged', handler: 'adjustOpacity' },
-            { model: 'shade picker', signal: 'shadeChanged', handler: 'adjustShade' },
+            { target: 'gradient control', signal: 'gradientChanged', handler: 'adjustGradient' },
+            { target: 'gradient control', signal: 'switchColor', handler: 'adjustColor' },
+            { target: 'color encoding', signal: 'colorEntered', handler: 'enterColor' },
+            { target: 'hue picker', signal: 'hueChanged', handler: 'adjustHue' },
+            { target: 'opacity picker', signal: 'opacityChanged', handler: 'adjustOpacity' },
+            { target: 'shade picker', signal: 'shadeChanged', handler: 'adjustShade' },
             { target: 'close button', signal: 'onMouseUp', handler: 'closeWithClick' },
             { target: 'eye dropper button', signal: 'onMouseDown', handler: 'triggerEyeDropper' }
           ];
@@ -564,7 +565,7 @@ export class ColorEncoderModel extends ViewModel {
     const hexOpacity = this.ui.hexOpacityControl;
     const c = Color.rgbHex(hexInput.input).withA(hexOpacity.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this, 'colorEntered', c);
+    signal(this.view, 'colorEntered', c);
   }
 
   confirmRGB () {
@@ -574,7 +575,7 @@ export class ColorEncoderModel extends ViewModel {
     const aInput = this.ui.opacityControl;
     const c = Color.rgba(rInput.number, gInput.number, bInput.number, aInput.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this, 'colorEntered', c);
+    signal(this.view, 'colorEntered', c);
   }
 
   confirmHSL () {
@@ -584,7 +585,7 @@ export class ColorEncoderModel extends ViewModel {
     const aInput = this.ui.opacityControl;
     const c = Color.hsb(hInput.number, sInput.number, 1 - lInput.number).withA(aInput.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this, 'colorEntered', c);
+    signal(this.view, 'colorEntered', c);
   }
 
   confirmHSB () {
@@ -594,14 +595,14 @@ export class ColorEncoderModel extends ViewModel {
     const aInput = this.ui.opacityControl;
     const c = Color.hsb(hInput.number, sInput.number, bInput.number).withA(aInput.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this, 'colorEntered', c);
+    signal(this.view, 'colorEntered', c);
   }
 
   confirmCSS () {
     const cssInput = this.ui.cssInput;
     const c = Color.fromString(cssInput.input);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this, 'colorEntered', c);
+    signal(this.view, 'colorEntered', c);
   }
 
   selectEncoding (encodingName) {
@@ -691,7 +692,7 @@ export class FieldPickerModel extends ViewModel {
   }
 
   confirm () {
-    signal(this, 'shadeChanged', [this.brightness, this.saturation]);
+    signal(this.view, 'shadeChanged', [this.brightness, this.saturation]);
   }
 
   update (colorPicker) {
@@ -777,7 +778,7 @@ export class OpacityPickerModel extends AbstractSlider {
   }
 
   confirm () {
-    signal(this, 'opacityChanged', this.alpha);
+    signal(this.view, 'opacityChanged', this.alpha);
   }
 
   update (colorPicker) {
@@ -815,7 +816,7 @@ export class HuePickerModel extends AbstractSlider {
   }
 
   confirm () {
-    signal(this, 'hueChanged', this.hue);
+    signal(this.view, 'hueChanged', this.hue);
   }
 
   update (colorPicker) {

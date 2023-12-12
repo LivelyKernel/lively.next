@@ -378,7 +378,7 @@ export class GradientControlModel extends ViewModel {
   }
 
   confirm () {
-    signal(this, 'gradientChanged', this.deref(this.gradientValue));
+    signal(this.view, 'gradientChanged', this.deref(this.gradientValue));
   }
 
   refresh () {
@@ -426,7 +426,7 @@ export class GradientControlModel extends ViewModel {
     this.deselectAllStopsExcept(aStopControl, this);
     this.deselectAllStopsExcept(aStopControl, this.gradientHalo);
     // ask the color picker to manage the color of this stop
-    signal(this, 'switchColor', aStopControl.stop.color);
+    signal(this.view, 'switchColor', aStopControl.stop.color);
   }
 
   deselectAllStopsExcept (aStopControl, haloOrEditor) {
