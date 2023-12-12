@@ -202,7 +202,7 @@ export class DynamicPropertyModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'effect selector', signal: 'selection', handler: 'selectProperty', updated: ($upd) => $upd(true, true) },
+            { target: 'effect selector', signal: 'selection', handler: 'selectProperty', updated: ($upd) => $upd(true, true) },
             { target: 'open popup', signal: 'onMouseDown', handler: 'togglePopup' },
             { target: 'remove', signal: 'onMouseDown', handler: 'removePropertyControl' }];
         }

@@ -279,8 +279,8 @@ export class ColorPickerModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'color type selector', signal: 'selection', handler: 'switchMode' },
-            { model: 'color palette selector', signal: 'selection', handler: 'switchPalette' },
+            { target: 'color type selector', signal: 'selection', handler: 'switchMode' },
+            { target: 'color palette selector', signal: 'selection', handler: 'switchPalette' },
             { target: 'color palette view', signal: 'colorSelected', handler: 'adjustColor' },
             { model: 'gradient control', signal: 'gradientChanged', handler: 'adjustGradient' },
             { model: 'gradient control', signal: 'switchColor', handler: 'adjustColor' },

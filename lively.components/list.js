@@ -1839,6 +1839,7 @@ export class DropDownListModel extends ButtonModel {
         // value or string referencing the selected item
         set (sel) {
           if (this.selection !== sel) this.setProperty('selection', sel);
+          if (this.view) signal(this.view, 'selection', this.selection);
         }
       },
 

@@ -11,7 +11,7 @@ export class EmbeddingControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'morph embedding selector', signal: 'selection', handler: 'changeMorphEmbedding' }
+            { target: 'morph embedding selector', signal: 'selection', handler: 'changeMorphEmbedding' }
           ];
         }
       }

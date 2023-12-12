@@ -62,9 +62,9 @@ export class RichTextControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'font family selector', signal: 'selection', handler: 'changeFontFamily' },
-            { model: 'font weight selector', signal: 'selection', handler: 'changeFontWeight' },
-            { model: 'line wrapping selector', signal: 'selection', handler: 'changeLineWrapping' },
+            { target: 'font family selector', signal: 'selection', handler: 'changeFontFamily' },
+            { target: 'font weight selector', signal: 'selection', handler: 'changeFontWeight' },
+            { target: 'line wrapping selector', signal: 'selection', handler: 'changeLineWrapping' },
             { target: 'font size input', signal: 'number', handler: 'changeFontSize' },
             { target: 'line height input', signal: 'number', handler: 'changeLineHeight' },
             { target: 'letter spacing input', signal: 'number', handler: 'changeLetterSpacing' },

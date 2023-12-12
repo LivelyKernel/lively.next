@@ -130,8 +130,8 @@ export class ConstraintsControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'horizontal alignment selector', signal: 'selection', handler: 'selectHorizontalConstraint' },
-            { model: 'vertical alignment selector', signal: 'selection', handler: 'selectVerticalConstraint' },
+            { target: 'horizontal alignment selector', signal: 'selection', handler: 'selectHorizontalConstraint' },
+            { target: 'vertical alignment selector', signal: 'selection', handler: 'selectVerticalConstraint' },
             { target: 'constraints simulator', signal: 'onMouseDown', handler: 'onMarkerClicked' }
           ];
         }
