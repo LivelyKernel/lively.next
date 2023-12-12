@@ -473,7 +473,7 @@ export default class L2LClient extends L2LConnection {
 
     if (!force && _peersCached && t - _peersCached.timestamp < timeout) { return this._peersCached.sessions; }
 
-    if (!this.isOnline()) return [];
+    if (!this.isRegistered()) return [];
 
     const { data } = await this.sendToAndWait(this.trackerId, 'getClients', {});
     const sessions = data.map(([id, record]) => {
