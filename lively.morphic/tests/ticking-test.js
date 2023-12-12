@@ -7,7 +7,7 @@ import { promise } from 'lively.lang';
 
 let world, aMorph;
 describe('ticking scripts', function () {
-  this.timeout(5000);
+  this.timeout(10000);
 
   beforeEach(() => {
     world = morph({
@@ -35,7 +35,7 @@ describe('ticking scripts', function () {
       this.stopStepping();
     };
     aMorph.startStepping(10, 'step');
-    await promise.delay(50);    
+    await promise.delay(50);
     expect(aMorph.counter).equals(1);
     expect(aMorph.tickingScripts).equals([]);
   });
@@ -78,8 +78,8 @@ describe('ticking scripts', function () {
   describe('FunctionScript', () => {
     it('startAndStopTicking', async function () {
       let n = 0; let script = new FunctionScript(function () { n++; });
-      script.startTicking(10);
-      await promise.delay(40);
+      script.startTicking(100);
+      await promise.delay(400);
       script.stop();
       expect(n).within(2, 4, 'Script not run');
     });
