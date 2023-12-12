@@ -280,7 +280,7 @@ class ComponentEditControlModel extends ViewModel {
     }
     editButton.scale = 1;
     editButton.opacity = 1;
-    otherBrowsers.forEach(b => b.viewModel.relayout());
+    otherBrowsers.forEach(b => b.relayout());
   }
 }
 
@@ -393,7 +393,7 @@ class ComponentEditButtonMorph extends Morph {
     const componentMorph = await componentDescriptor.edit();
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
-    otherBrowsers.forEach(b => b.viewModel.relayout());
+    otherBrowsers.forEach(b => b.relayout());
   }
 
   async positionInLine (transition = !!this.componentDescriptor?._cachedComponent) {
@@ -1511,7 +1511,7 @@ async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface)
   const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
   if (!browser.world()) browser.openInWindow();
   browser.env.forceUpdate();
-  delete browser.viewModel.state.selectedModule;
+  delete browser.state.selectedModule;
   return browser.browse({ systemInterface: optSystemInterface, ...browseSpec });
 }
 
@@ -1525,8 +1525,8 @@ function browserForFile (fileName) {
 
 async function open () {
   const browser = part(SystemBrowser);
-  await browser.viewModel.toggleWindowStyle(false);
-  await browser.viewModel.ensureColumnViewData();
+  await browser.toggleWindowStyle(false);
+  await browser.ensureColumnViewData();
   browser.openInWindow();
   return browser;
 }

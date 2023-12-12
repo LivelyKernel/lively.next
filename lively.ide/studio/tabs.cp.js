@@ -9,7 +9,7 @@ class TabCloseButton extends Label {
   }
 
   onMouseUp () {
-    this.owner.owner.viewModel.close();
+    this.owner.owner.close();
   }
 }
 
@@ -113,7 +113,7 @@ class TabModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently'];
+          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently', 'spec'];
         }
       },
       bindings: {
@@ -145,7 +145,7 @@ class TabModel extends ViewModel {
         defaultValue: false,
         set (selected) {
           this.setProperty('selected', selected);
-          signal(this, 'onSelectionChange', selected);
+          signal(this.view, 'onSelectionChange', selected);
         }
       },
       closeable: {
@@ -213,7 +213,7 @@ class TabModel extends ViewModel {
       return;
     }
     // hook for connection to do cleanup
-    signal(this, 'onClose');
+    signal(this.view, 'onClose');
     if (this.hasMorphicContent && this.content) { this.content.remove(); }
     this.view.remove();
   }
@@ -302,7 +302,7 @@ class TabContainerModel extends ViewModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['add']; }
+        get () { return ['add', 'tabs']; }
       },
       bindings: {
         get () {
@@ -533,7 +533,7 @@ class TabsModel extends ViewModel {
 
     this.ui.tabContainer.add(newTab);
 
-    newTab.viewModel.selected = selectAfterCreation;
+    newTab.selected = selectAfterCreation;
 
     this.updateVisibility(false);
     return newTab;
@@ -551,20 +551,20 @@ class TabsModel extends ViewModel {
   }
 
   initializeConnectionsFor (tab) {
-    connect(tab.viewModel, 'onSelectionChange', this, 'showContent', {
+    connect(tab, 'onSelectionChange', this, 'showContent', {
       updater: `($update, selected) => {
         if (selected) $update(source.content);
       }`
     });
-    connect(tab.viewModel, 'onSelectionChange', this, 'deselectAllTabsExcept', {
+    connect(tab, 'onSelectionChange', this, 'deselectAllTabsExcept', {
       updater: `($update, selected) => {
         if (selected) $update(source);
       }`
     });
-    connect(tab.viewModel, 'onSelectionChange', this, 'onSelectedTabChange', {
+    connect(tab, 'onSelectionChange', this, 'onSelectedTabChange', {
       updater: '($update, selected) => { if (selected) $update({curr: source, prev: target._previouslySelectedTab}) }'
     });
-    connect(tab.viewModel, 'onClose', this, 'onTabClose', {
+    connect(tab, 'onClose', this, 'onTabClose', {
       converter: '() => source'
     });
   }
@@ -596,37 +596,37 @@ class TabsModel extends ViewModel {
   }
 
   get tabs () {
-    return this.ui.tabContainer.viewModel.tabs;
+    return this.ui.tabContainer.tabs;
   }
 
   deselectAllTabsExcept (excludedTab) {
     this.tabs.forEach(tab => {
-      if (tab.viewModel === excludedTab) return;
-      tab.viewModel.selected = false;
+      if (tab === excludedTab) return;
+      tab.selected = false;
     });
   }
 
   selectNearestTab (otherTab) {
     if (this.tabs.length === 0) return;
     if (this.tabs.length === 1) {
-      this.tabs[0].viewModel.selected = true;
+      this.tabs[0].selected = true;
       return;
     }
     let tabIndex = this.tabs.indexOf(otherTab);
     const tab = tabIndex < this.tabs.length - 1 ? this.tabs[++tabIndex] : this.tabs[--tabIndex];
-    tab.viewModel.selected = true;
+    tab.selected = true;
     return tab;
   }
 
   get selectedTab () {
-    return this.tabs.find(tab => tab.viewModel.selected);
+    return this.tabs.find(tab => tab.selected);
   }
 
   addContentToSelectedTab (content) {
     if (!this.providesContentContainer) return;
     const tab = this.selectedTab;
     if (tab) {
-      tab.viewModel.content = content;
+      tab.content = content;
       this.showContent(content);
     }
   }

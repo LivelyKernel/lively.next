@@ -130,8 +130,8 @@ export class BodyControlModel extends PropertySectionModel {
     const control = this.view.addMorph(part(this.dynamicPropertyComponent, { viewModel: { targetMorph, propConfig } }));
     this.view.layout.setResizePolicyFor(control, { height: 'fixed', width: 'fill' });
     control.choose(selectedProp, reset, applyDefault);
-    once(control.viewModel, 'remove', this, 'deactivate');
-    epiConnect(control.viewModel, 'selectedProp', this, 'refreshItemLists');
+    once(control, 'removePropertyControl', this, 'deactivate');
+    epiConnect(control, 'selectedProp', this, 'refreshItemLists');
     this.refreshItemLists();
   }
 
@@ -197,14 +197,14 @@ export class DynamicPropertyModel extends ViewModel {
       },
       isControl: { get () { return true; } },
       expose: {
-        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose', 'closePopup', 'applyDefault']; }
+        get () { return ['refreshItems', 'chooseDefault', 'isControl', 'selectedProp', 'choose', 'closePopup', 'applyDefault', 'removePropertyControl']; }
       },
       bindings: {
         get () {
           return [
             { model: 'effect selector', signal: 'selection', handler: 'selectProperty', updated: ($upd) => $upd(true, true) },
             { target: 'open popup', signal: 'onMouseDown', handler: 'togglePopup' },
-            { target: 'remove', signal: 'onMouseDown', handler: 'remove' }];
+            { target: 'remove', signal: 'onMouseDown', handler: 'removePropertyControl' }];
         }
       }
     };
@@ -288,7 +288,7 @@ export class DynamicPropertyModel extends ViewModel {
   /**
    * Removes this dynamic property from the current morph.
    */
-  remove () {
+  removePropertyControl () {
     this.view.remove();
     this.resetProperty();
   }

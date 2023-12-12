@@ -208,13 +208,13 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     if (this.popup) return;
     // fixme: How to make this parametrizable?
     const p = this.popup = part(this.controlFlapComponent, { viewModel: { targetMorph: this.targetMorph } });
-    epiConnect(p.viewModel, 'update', this, 'update');
-    once(p.viewModel, 'close', this, 'closePopup');
+    epiConnect(p, 'update', this, 'update');
+    once(p, 'close', this, 'closePopup');
     p.openInWorld();
     p.topRight = this.ui.miniLayoutPreview.globalBounds().bottomRight().addXY(0, 2);
     p.topLeft = this.world().visibleBounds().translateForInclusion(p.globalBounds()).topLeft();
     p.start();
-    p.viewModel.update();
+    p.update();
   }
 
   closePopup () {

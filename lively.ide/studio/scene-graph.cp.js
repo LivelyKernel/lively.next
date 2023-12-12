@@ -45,7 +45,7 @@ export class MorphPanelModel extends ViewModel {
   showHaloFor (node) {
     if (!node) return;
     this.world().halos().forEach(h => h.remove());
-    this.world().showHaloFor(node.container.viewModel.target);
+    this.world().showHaloFor(node.container.target);
   }
 
   relayout () {

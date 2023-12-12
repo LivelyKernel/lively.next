@@ -326,12 +326,14 @@ export class PaddingControlsModel extends ViewModel {
     } = this.ui;
     if (paddingAll.visible) {
       signal(this, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
+      signal(this.view, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
 
       paddingLeft.number = paddingRight.number = paddingTop.number = paddingBottom.number = paddingAll.number;
     }
 
     if (multiPaddingControl.visible) {
       signal(this, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
+      signal(this.view, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
 
       if (paddingTop.number === paddingLeft.number && paddingTop.number === paddingRight.number && paddingTop.number === paddingBottom.number) paddingAll.number = paddingLeft.number;
       else paddingAll.setMixed();
@@ -370,7 +372,9 @@ export class PaddingPopupModel extends PopupModel {
     return true;
   }
 
-  paddingChanged (padding) {}
+  paddingChanged (padding) {
+    signal(this.view, 'paddingChanged', padding);
+  }
 }
 
 export class PositionPopupModel extends PopupModel {
@@ -1014,7 +1018,7 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
 );
 
 // m = part(PaddingPopup).openInWorld()
-// m.viewModel.startPadding(rect(5,5,0,0))
+// m.startPadding(rect(5,5,0,0))
 // m.openInWorld()
 const PaddingPopup = component(PopupWindow, {
   name: 'padding popup',
