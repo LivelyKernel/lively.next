@@ -219,7 +219,7 @@ function openInWindow (modelAttributes) {
   const inspector = part(SystemInspector, { viewModel: modelAttributes });
   const w = inspector.openInWindow();
   inspector.env.forceUpdate();
-  inspector.viewModel.relayout();
+  inspector.relayout();
   w.title = `Inspector for ${inspector.targetObject.name}`;
   return inspector;
 }

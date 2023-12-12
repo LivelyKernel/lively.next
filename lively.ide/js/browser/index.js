@@ -632,6 +632,10 @@ export class BrowserModel extends ViewModel {
             'menuItems',
             'resetChangedContentIndicator',
             'formatPackageName',
+            'toggleWindowStyle',
+            'relayout',
+            'ensureColumnViewData',
+            'state',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
@@ -1056,7 +1060,7 @@ export class BrowserModel extends ViewModel {
     };
 
     let tabs = this.ui.tabs.tabs;
-    let tabsSpec = tabs.map(tab => tab.viewModel.spec);
+    let tabsSpec = tabs.map(tab => tab.spec);
     return tabsSpec;
   }
 

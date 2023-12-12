@@ -48,10 +48,10 @@ export class BreakpointSliderModel extends ViewModel {
     const offsetControl = this.view.owner;
     // ensure we are rendered
     if (this.orientation === 'vertical') {
-      halo.viewModel?.alignBreakpointSliderVertically(this.view, offset);
+      halo.alignBreakpointSliderVertically(this.view, offset);
     }
     if (this.orientation === 'horizontal') {
-      halo.viewModel?.alignBreakpointSliderHorizontally(this.view, offset);
+      halo.alignBreakpointSliderHorizontally(this.view, offset);
     }
     this.ui.userAgentIcon.value = this.getIconForOffset(offset);
     this.ui.pixelView.value = `${offset.toFixed()} px`;

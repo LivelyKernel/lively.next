@@ -131,13 +131,13 @@ export class ColorInputModel extends ViewModel {
     p.solidOnly = !this.gradientEnabled;
     p.hasFixedPosition = true;
     if (this.targetMorph) p.focusOnMorph(this.targetMorph, color);
-    else p.viewModel.withColor(color);
+    else p.withColor(color);
     p.toggleHalos(false);
     p.position = pt(0, -p.height / 2);
-    p.viewModel.switchMode(color.isGradient ? color.type : 'Solid');
-    connect(p.viewModel, 'value', this, 'setColor');
-    connect(p.viewModel, 'close', this, 'onPickerClosed');
-    connect(p.viewModel, 'closeWithClick', this, 'onPickerClosedWithClick');
+    p.switchMode(color.isGradient ? color.type : 'Solid');
+    connect(p, 'value', this, 'setColor');
+    connect(p, 'close', this, 'onPickerClosed');
+    connect(p, 'closeWithClick', this, 'onPickerClosedWithClick');
 
     this.view.fill = this.activeColor;
     this.picker = p.openInWorld();
@@ -273,7 +273,7 @@ export class ColorPickerModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup', 'isColorPicker'];
+          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup', 'isColorPicker', 'withColor', 'switchMode', 'value', 'closeWithClick'];
         }
       },
       bindings: {
@@ -348,6 +348,7 @@ export class ColorPickerModel extends ViewModel {
   }
 
   closeWithClick () {
+    signal(this.view,  'closeWithClick');
     noUpdate(() => this.close());
   }
 
@@ -356,9 +357,11 @@ export class ColorPickerModel extends ViewModel {
       case 'linearGradient':
       case 'radialGradient':
         signal(this, 'value', this.gradientValue);
+        signal(this.view, 'value', this.gradientValue);
         break;
       case 'Solid':
         signal(this, 'value', this.color);
+        signal(this.view, 'value', this.color);
     }
   }
 

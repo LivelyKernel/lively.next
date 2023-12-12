@@ -185,7 +185,7 @@ export class SearchWidgetModel extends ViewModel {
 
       expose: {
         get () {
-          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isSearchWidget'];
+          return ['state', 'prepareForNewSearch', 'commands', 'keybindings', 'isSearchWidget', '_reuseTextMap'];
         }
       },
 
@@ -569,8 +569,8 @@ export const searchCommands = [
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 
-      search.viewModel._reuseTextMap = !!morph.textMap;
-      if (config.codeEditor.search.showTextMap && !search.viewModel._reuseTextMap) {
+      search._reuseTextMap = !!morph.textMap;
+      if (config.codeEditor.search.showTextMap && !search._reuseTextMap) {
         morph.showTextMap();
       }
       morph.textMap?.updateDebounced();

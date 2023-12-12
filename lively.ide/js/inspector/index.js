@@ -385,9 +385,9 @@ export class PropertyControl extends DraggableTreeLabel {
     const handler = async (evt) => {
       const editor = part(PaddingPopup, { hasFixedPosition: true });
       inspector.openWidget = editor;
-      editor.viewModel.startPadding(target[keyString]);
+      editor.startPadding(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'paddingChanged', (padding) => {
+      connect(editor, 'paddingChanged', (padding) => {
         target[keyString] = padding;
         node.rerender();
       });
@@ -442,7 +442,7 @@ export class PropertyControl extends DraggableTreeLabel {
       }));
       inspector.openWidget = editor;
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'value', (num) => {
+      connect(editor, 'value', (num) => {
         target[keyString] = num;
         node.rerender();
       });
@@ -465,9 +465,9 @@ export class PropertyControl extends DraggableTreeLabel {
       // if already open, return
       const editor = part(ShadowPopup, { hasFixedPosition: true });
       inspector.openWidget = editor;
-      editor.viewModel.shadowValue = target[keyString];
+      editor.shadowValue = target[keyString];
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'value', (shadowValue) => {
+      connect(editor, 'value', (shadowValue) => {
         target[keyString] = shadowValue;
         node.rerender();
       });
@@ -487,7 +487,7 @@ export class PropertyControl extends DraggableTreeLabel {
       inspector.openWidget = editor;
       editor.setPoint(target[keyString]);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'value', (pointValue) => {
+      connect(editor, 'value', (pointValue) => {
         target[keyString] = pointValue;
         node.rerender();
       });
@@ -526,7 +526,7 @@ export class PropertyControl extends DraggableTreeLabel {
       editor.solidOnly = !gradientEnabled;
       editor.focusOnMorph(target, value);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
-      connect(editor.viewModel, 'value', (fill) => {
+      connect(editor, 'value', (fill) => {
         target[keyString] = fill;
         node.rerender();
       });
@@ -638,7 +638,7 @@ export class Inspector extends ViewModel {
 
       expose: {
         get () {
-          return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget', 'targetObject'];
+          return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget', 'targetObject', 'relayout'];
         }
       },
 

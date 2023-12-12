@@ -222,15 +222,15 @@ export class BorderControlModel extends PropertySectionModel {
    */
   openPopup () {
     const p = this.popup = this.popup || part(this.borderPopupComponent);
-    p.viewModel.targetMorph = this.targetMorph;
+    p.targetMorph = this.targetMorph;
     p.openInWorld();
     p.alignAtButton(this.ui.moreButton);
-    once(p.viewModel, 'close', this, 'closePopup');
-    epiConnect(p.viewModel, 'target updated', this, 'update');
+    once(p, 'close', this, 'closePopup');
+    epiConnect(p, 'target updated', this, 'update');
   }
 
   /**
-   * Closes the popup responsible for controlling the property.
+ * Closes the popup responsible for controlling the property.
    */
   closePopup () {
     if (!this.popup) return;
@@ -293,7 +293,7 @@ export class BorderPopupWindow extends PopupModel {
       },
       expose: {
         get () {
-          return ['close', 'isHaloItem', 'isPropertiesPanelPopup', 'alignAtButton'];
+          return ['close', 'isHaloItem', 'isPropertiesPanelPopup', 'alignAtButton', 'targetMorph'];
         }
       },
       bindings: {
@@ -375,7 +375,7 @@ export class BorderPopupWindow extends PopupModel {
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
       this.targetMorph['border' + string.capitalize(this.selectedBorder)] = { ...borderStyle, borderRadius };
     });
-    signal(this, 'target updated');
+    signal(this.view, 'target updated');
   }
 }
 

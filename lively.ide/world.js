@@ -846,7 +846,7 @@ export class LivelyWorld extends World {
     else this.morphCommentMap.set(morph, [comment]);
 
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    if (commentBrowser) commentBrowser.viewModel.addCommentForMorph(comment, morph);
+    if (commentBrowser) commentBrowser.addCommentForMorph(comment, morph);
     return comment;
   }
 
@@ -857,7 +857,7 @@ export class LivelyWorld extends World {
    */
   removeCommentFor (morph, commentToRemove) {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    if (commentBrowser) commentBrowser.viewModel.removeCommentForMorph(commentToRemove, morph);
+    if (commentBrowser) commentBrowser.removeCommentForMorph(commentToRemove, morph);
     this.morphCommentMap.set(morph, arr.without(this.morphCommentMap.get(morph), commentToRemove));
   }
 
@@ -869,7 +869,7 @@ export class LivelyWorld extends World {
   emptyCommentsFor (morph) {
     const commentBrowser = $world.getSubmorphNamed('Comment Browser');
     if (this.morphCommentMap.has(morph)) {
-      if (commentBrowser) this.morphCommentMap.get(morph).forEach((comment) => commentBrowser.viewModel.removeCommentForMorph(comment, morph));
+      if (commentBrowser) this.morphCommentMap.get(morph).forEach((comment) => commentBrowser.removeCommentForMorph(comment, morph));
       this.morphCommentMap.set(morph, []);
     }
   }

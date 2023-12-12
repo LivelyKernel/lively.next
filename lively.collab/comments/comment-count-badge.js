@@ -1,5 +1,3 @@
-import { pt } from 'lively.graphics';
-import { connect, disconnect } from 'lively.bindings';
 import { ViewModel } from 'lively.morphic/components/core.js';
 
 export class CommentCountBadgeModel extends ViewModel {
@@ -21,7 +19,7 @@ export class CommentCountBadgeModel extends ViewModel {
       isEpiMorph: { get () { return true; } },
       expose: {
         get () {
-          return ['text', 'addToMorph', 'isEpiMorph'];
+          return ['text', 'addToMorph', 'incrementCounter', 'alignWithMorph', 'isEpiMorph'];
         }
       },
       bindings: {

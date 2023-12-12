@@ -15,7 +15,7 @@ describe('badge', function () {
 
   it('can be incremented', function () {
     badge.text = '42';
-    badge.viewModel.incrementCounter();
+    badge.incrementCounter();
     expect(badge.text).to.equal('43');
   });
 
@@ -24,7 +24,7 @@ describe('badge', function () {
     testWorld.addMorph(morph);
     badge.addToMorph(morph);
 
-    badge.viewModel.alignWithMorph();
+    badge.alignWithMorph();
     const initX = badge.globalPosition.x;
     const offset = 20;
     morph.position = morph.position.addPt(pt(offset, 0));

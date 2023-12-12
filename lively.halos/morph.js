@@ -481,7 +481,7 @@ class NameHolder extends Morph {
       });
       signal(this, 'active', [false, this]);
       const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-      if (commentBrowser) commentBrowser.viewModel.updateName(this.target);
+      if (commentBrowser) commentBrowser.updateName(this.target);
     }
   }
 }

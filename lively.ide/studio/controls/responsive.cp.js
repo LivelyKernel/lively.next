@@ -236,7 +236,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
         }
       },
       expose: {
-        get () { return ['focusOn']; }
+        get () { return ['focusOn', 'activate']; }
       },
       responsiveHaloOpen: { get () { return this.targetMorph._responsiveHalo; } }
     };

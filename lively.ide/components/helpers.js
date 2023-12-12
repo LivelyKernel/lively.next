@@ -41,7 +41,7 @@ export function getEligibleSourceEditorsFor (modId, modSource) {
     }
     return true;
   });
-  return qualifiedBrowsers.map(browser => browser.viewModel.ui.sourceEditor);
+  return qualifiedBrowsers.map(browser => browser.get('source editor'));
 }
 
 export function getPathFromScopeMaster (m) {

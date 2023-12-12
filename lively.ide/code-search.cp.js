@@ -154,11 +154,11 @@ export class CodeSearcher extends FilterableList {
     this.getWindow() && (this.getWindow().title = 'code search');
 
     // initialize connections
-    connect(this.get('caseMode').viewModel, 'fire', this, 'caseModeToggled', { converter: '() => target.searchModeToggled("case")' });
-    connect(this.get('regexMode').viewModel, 'fire', this, 'regexModeToggled', { converter: '() => target.searchModeToggled("regex")' });
-    connect(this.get('search chooser').viewModel, 'selection', this, 'handleSpecialSearchModes');
-    connect(this.get('search chooser').viewModel, 'selection', this, 'searchAgain');
-    connect(this.get('reload').viewModel, 'fire', this, 'searchAgain');
+    connect(this.get('caseMode'), 'fire', this, 'caseModeToggled', { converter: '() => target.searchModeToggled("case")' });
+    connect(this.get('regexMode'), 'fire', this, 'regexModeToggled', { converter: '() => target.searchModeToggled("regex")' });
+    connect(this.get('search chooser'), 'selection', this, 'handleSpecialSearchModes');
+    connect(this.get('search chooser'), 'selection', this, 'searchAgain');
+    connect(this.get('reload'), 'fire', this, 'searchAgain');
     connect(this.get('input'), 'inputChanged', this, 'updateFilter');
     connect(this.get('list'), 'selection', this, 'selectionChanged');
     connect(this.get('list'), 'onItemMorphDoubleClicked', this, 'acceptInput');

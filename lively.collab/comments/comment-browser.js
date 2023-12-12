@@ -18,7 +18,7 @@ export class CommentBrowserModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['onWindowClose'];
+          return ['onWindowClose', 'addCommentForMorph', 'removeCommentForMorph', 'removeAllCommentIndicators', 'showAllCommentIndicators', 'updateName'];
         }
       },
       bindings: {
@@ -79,7 +79,7 @@ export class CommentBrowserModel extends ViewModel {
     }
     if (!this.commentGroups[morph.id]) {
       const commentGroupMorph = part(CommentGroup, { viewModel: { referenceMorph: morph } });
-      this.commentGroups[morph.id] = commentGroupMorph.viewModel;
+      this.commentGroups[morph.id] = commentGroupMorph;
       this.ui.container.addMorph(commentGroupMorph);
     }
     this.commentGroups[morph.id].addCommentMorph(comment);
@@ -109,7 +109,7 @@ export class CommentBrowserModel extends ViewModel {
    * @param {UUID} morphID
    */
   removeCommentGroupFor (morphID) {
-    this.commentGroups[morphID].view.remove();
+    this.commentGroups[morphID].remove();
     delete this.commentGroups[morphID];
   }
 
