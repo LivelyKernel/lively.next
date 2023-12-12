@@ -266,7 +266,7 @@ class BackgroundControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'background fill input', signal: 'color', handler: 'changeBackgroundColor' },
+            { target: 'background fill input', signal: 'color', handler: 'changeBackgroundColor' },
             { signal: 'onMouseDown', handler: 'onMouseDown' }
           ];
         }

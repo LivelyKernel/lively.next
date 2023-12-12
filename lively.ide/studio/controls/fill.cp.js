@@ -20,8 +20,8 @@ export class FillControlModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'fill color input', signal: 'onPickerClosedWithClick', handler: 'ensureHalo' },
-            { model: 'fill color input', signal: 'color', handler: 'confirm' },
+            { target: 'fill color input', signal: 'onPickerClosedWithClick', handler: 'ensureHalo' },
+            { target: 'fill color input', signal: 'color', handler: 'confirm' },
             { target: 'confirm image button', signal: 'onMouseDown', handler: 'confirmImage' },
             { signal: 'onMouseDown', handler: 'onMouseDown' },
             { target: 'remote asset check', signal: 'checked', handler: 'remoteAssetChecked' },

@@ -59,7 +59,7 @@ export class ShadowPopupModel extends PopupModel {
             { target: 'y offset', signal: 'number', handler: 'confirm' },
             { target: 'blur input', signal: 'number', handler: 'confirm' },
             { target: 'spread input', signal: 'number', handler: 'confirm' },
-            { model: 'shadow color input', signal: 'color', handler: 'confirm' }
+            { target: 'shadow color input', signal: 'color', handler: 'confirm' }
           ];
         }
       }
