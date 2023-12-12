@@ -196,7 +196,7 @@ export class SingleSelectionModel extends PopupModel {
         get () {
           return [
             { target: 'close button', signal: 'onMouseDown', handler: 'close' },
-            { model: 'selection input', signal: 'selection', handler: 'onSelectionChanged' }
+            { target: 'selection input', signal: 'selection', handler: 'onSelectionChanged' }
           ];
         }
       }

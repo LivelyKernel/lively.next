@@ -57,9 +57,9 @@ export class ShapeControlModel extends ViewModel {
               handler: 'adjustCornerIndicator',
               converter: `() => "${string.camelCaseString(d)}"`
             }]).flat(),
-            { model: 'clip mode selector', signal: 'selection', handler: 'changeClipMode' },
-            { model: 'width mode selector', signal: 'selection', handler: 'changeWidthMode' },
-            { model: 'height mode selector', signal: 'selection', handler: 'changeHeightMode' },
+            { target: 'clip mode selector', signal: 'selection', handler: 'changeClipMode' },
+            { target: 'width mode selector', signal: 'selection', handler: 'changeWidthMode' },
+            { target: 'height mode selector', signal: 'selection', handler: 'changeHeightMode' },
             { target: 'proportional resize toggle', signal: 'onMouseDown', handler: 'changeResizeMode' },
             { target: 'independent corner toggle', signal: 'onMouseDown', handler: 'toggleBorderMultiVar' }
           ];

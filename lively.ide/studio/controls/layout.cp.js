@@ -240,7 +240,7 @@ export class AutoLayoutAlignmentFlapModel extends ViewModel {
             ...['top', 'right', 'bottom', 'left'].map(side => ({
               target: 'padding ' + side, signal: 'number', handler: 'confirm'
             })),
-            { model: 'spacing selector', signal: 'selection', handler: 'confirm' },
+            { target: 'spacing selector', signal: 'selection', handler: 'confirm' },
             { target: 'spacing preview', signal: 'onMouseMove', handler: 'showLayoutPreview' },
             { target: 'spacing preview', signal: 'onHoverOut', handler: 'clearLayoutPreview' },
             { target: 'spacing preview', signal: 'onMouseDown', handler: 'confirm' }
