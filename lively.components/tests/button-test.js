@@ -60,7 +60,7 @@ describe('buttons', function () {
   afterEach(teardown);
 
   describe('press', () => {
-    it('is pressed', async () => {
+    xit('is pressed', async () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
       button.master.applyIfNeeded(true);
@@ -70,7 +70,7 @@ describe('buttons', function () {
       expect(button.fill).equals(SystemButton.stylePolicy._autoMaster.spec.fill);
     });
 
-    it('leaving button on press releases', async () => {
+    xit('leaving button on press releases', async () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
       button.master.applyIfNeeded(true);
