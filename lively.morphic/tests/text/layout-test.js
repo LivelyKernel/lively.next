@@ -183,8 +183,7 @@ describe('text layout', function () {
       await text('abcdef\n1234567\n');
       t.extent = pt(4 * w, 100);
       expect(t.lineCount()).equals(3);
-      debugger;
-      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 })).equals(rect(padl + w * 5, padt - .5, w, h).roundTo(-1), 'not wrapped: text pos => pixel pos');
+      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 }).roundTo(-1)).equals(rect(padl + w * 5, padt - .5, w, h).roundTo(-1), 'not wrapped: text pos => pixel pos');
       expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
 
       t.lineWrapping = 'by-chars';
