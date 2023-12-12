@@ -347,6 +347,7 @@ export class BorderPopupWindow extends PopupModel {
    * Close the popup.
    */
   close () {
+    signal(this.view, 'close');
     this.view.remove();
   }
 

@@ -18,7 +18,7 @@ export class ConstraintsManagerModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { model: 'constraints', signal: 'changed', handler: 'confirmConstraintPolicies' }
+            { target: 'constraints', signal: 'changed', handler: 'confirmConstraintPolicies' }
           ];
         }
       },
@@ -213,7 +213,7 @@ export class ConstraintsControlModel extends ViewModel {
    */
   selectVerticalConstraint (behavior) {
     if (behavior) this.verticalConstraint = behavior;
-    signal(this, 'changed');
+    signal(this.view, 'changed');
   }
 
   /**
@@ -224,7 +224,7 @@ export class ConstraintsControlModel extends ViewModel {
    */
   selectHorizontalConstraint (behavior) {
     if (behavior) this.horizontalConstraint = behavior;
-    signal(this, 'changed');
+    signal(this.view, 'changed');
   }
 
   onMarkerClicked (evt) {
