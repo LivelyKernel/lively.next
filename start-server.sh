@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ./scripts/node_version_checker.sh || exit 1
 
 if [[ ! -d lively.server ]]; then
@@ -22,6 +21,14 @@ options="--no-warnings --dns-result-order ipv4first \
 
 if [ "$1" = "--debug" ]; then
   options="--inspect $options"
+fi
+
+if [ "$1" != "--debug" ] && [ -n "$1" ]; then
+  options="$options --port $1"
+fi
+
+if [ -n "$2" ]; then
+  options="$options --port $2"
 fi
 
 node $options

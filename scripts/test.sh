@@ -78,10 +78,10 @@ then
   fi
 
   if grep -E '(:9011|.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
-    echo "Found a running lively server that will be used for testing."
+    echo "Found a running lively server on port 9011 that will be used for testing."
   else
     STARTED_SERVER=1
-    echo "No local lively server was found. Starting a server to run tests on."
+    echo "No local lively server was found on port 9011. Starting a server on port 9011 to run tests on."
     # start a new lively.next server
     ./start-server.sh > /dev/null 2>&1 &
     # wait until server is guaranteed to be running
@@ -128,7 +128,7 @@ done
 
 if [ "$STARTED_SERVER" = "1" ];
 then
-    pkill -f lively.*start
+    pkill -f -n lively.*start
 fi
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))

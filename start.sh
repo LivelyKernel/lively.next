@@ -1,11 +1,19 @@
 #!/bin/bash
 
-./scripts/node_version_checker.sh || exit 1
+# See https://stackoverflow.com/a/31443098/4418325.
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -p) port="$2"; shift 2;;
+    -d) debug="--debug"; shift 1;;
 
-# "Parameter safety"
-if [ "$1" = "--debug" ]; then
-  debug='--debug'
-fi
+    --port=*) port="${1#*=}"; shift 1;;
+    --debug) debug="--debug"; shift 1;;
+    
+    -*) echo "unknown option: $1" >&2; exit 1;;
+  esac
+done
+
+./scripts/node_version_checker.sh || exit 1
 
 # The path to your start.sh script
 START_SCRIPT_PATH="./start-server.sh"
@@ -27,6 +35,6 @@ trap 'handle_sigint' SIGINT
 
 while true
 do
-  bash "$START_SCRIPT_PATH" "$debug"
+  bash "$START_SCRIPT_PATH" "$debug" "$port"
   sleep 1
 done
