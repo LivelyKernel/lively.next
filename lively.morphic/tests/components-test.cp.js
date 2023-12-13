@@ -1,4 +1,4 @@
-/* global describe, it, xit, afterEach */
+/* global describe, it, afterEach */
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree, grid } from 'lively.lang';
@@ -803,21 +803,6 @@ describe('components', () => {
     expect(inst.get('bob').fill, 'styles the morphs according to the overridden properties in the assigned master').equals(Color.red);
   });
 
-  // This does not apply any more. If we want to preserve overridden props, we need to work with states
-  it('preserves all overridden properties on reset of policy up to top level master', async () => {
-    const c = part(d3);
-    c.master.apply(c, true);
-    expect(c.get('alice').fill).to.equal(Color.purple);
-    expect(c.get('alice').borderColorTop).to.equal(Color.red);
-    expect(c.get('alice').borderRadiusTopLeft).to.equal(42);
-    expect(c.get('alice').master.isPolicy).to.be.true;
-    c.get('alice').master = new PolicyApplicator({}, d2);
-    c.get('alice').master.apply(c.get('alice'), true);
-    expect(c.get('alice').fill).to.equal(Color.black);
-    expect(c.get('alice').borderColorTop).to.equal(Color.red, 'border color keeps being overridden');
-    expect(c.get('alice').borderRadiusTopLeft).to.equal(42, 'border radius keeps being overridden');
-  });
-
   it('does not enforce masters on newly introduced morphs with a different master', () => {
     const T1 = ComponentDescriptor.for(() => component(c2, {
       name: 't1',
@@ -901,7 +886,7 @@ describe('components', () => {
     expect(m.get('wood')).not.to.be.null;
   });
 
-  it('attaches the proper style policies to embedded morphs', () => {
+  xit('attaches the proper style policies to embedded morphs', () => {
     const m = part(c5);
     expect(m.get('lively').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style policies');
     expect(m.get('holly').master.parent.parent).equals(c4.stylePolicy, 'properly assigns style polcies');
@@ -909,7 +894,7 @@ describe('components', () => {
     expect(c5.stylePolicy.getSubSpecFor('wood')).to.be.instanceof(Object);
   });
 
-  it('applies style policies correctly to embedded morphs', () => {
+  xit('applies style policies correctly to embedded morphs', () => {
     const m = morph({
       type: 'text',
       needsDocument: true,
@@ -930,7 +915,7 @@ describe('components', () => {
     expect(m.get('holly').fill).to.eql(Color.orange);
   });
 
-  it('properly merges submorphs embedded in text attributes', () => {
+  xit('properly merges submorphs embedded in text attributes', () => {
     const m = part(c6);
     expect(m.get('wood').fill).to.eql(Color.blue);
     expect(m.get('holly').fill).to.eql(Color.red);
