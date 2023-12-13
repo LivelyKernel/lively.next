@@ -110,12 +110,12 @@ async function resetEnv () {
   C.previouslyRemovedMorphs = new WeakMap();
   D.previouslyRemovedMorphs = new WeakMap();
   T.previouslyRemovedMorphs = new WeakMap();
-  ComponentA = await A.edxit();
-  ComponentB = await B.edxit();
-  ComponentC = await C.edxit();
-  ComponentD = await D.edxit();
-  ComponentX = await X.edxit();
-  ComponentT = await T.edxit();
+  ComponentA = await A.edit();
+  ComponentB = await B.edit();
+  ComponentC = await C.edit();
+  ComponentD = await D.edit();
+  ComponentX = await X.edit();
+  ComponentT = await T.edit();
 }
 
 describe('component -> source reconciliation', function () {
@@ -367,7 +367,7 @@ describe('component -> source reconciliation', function () {
     });
 
     await ComponentC._changeTracker.onceChangesProcessed();
-    ComponentA = await A.edxit();
+    ComponentA = await A.edit();
     const trap = part(C, { name: 'name trap' });
     ComponentA.withMetaDo({ reconcileChanges: true }, () => {
       ComponentA.addMorph(trap);
