@@ -417,7 +417,6 @@ class ModuleInterface {
       });
 
       if (!hasImporter) record.depMap[dependencyRecord.name] = dependencyRecord.key;
-      // else if (record !== dependencyRecord.importers[impIndex]) { dependencyRecord.importers.splice(impIndex, 1, record); }
     }
   }
 

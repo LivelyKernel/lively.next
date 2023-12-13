@@ -84,7 +84,6 @@ describeInBrowser('halos', function () {
       item !== halo.responsiveHalo() &&
       item !== halo.borderBox &&
       !item.isHandle);
-    debugger;
     expect(innerButton).equals(undefined, `halo item ${innerButton && innerButton.name} is inside the bounds of its target`);
   });
 
@@ -323,7 +322,6 @@ describeInBrowser('halos', function () {
   });
 
   it('shifting the origin will not move bounds', async () => {
-    debugger;
     submorph1.position = pt(200, 100);
     submorph1.rotateBy(num.toRadians(90));
     let oldGlobalPos = submorph1.globalBounds().topLeft();
