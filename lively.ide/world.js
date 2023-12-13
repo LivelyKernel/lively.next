@@ -556,7 +556,7 @@ export class LivelyWorld extends World {
     await this.whenEnvReady();
     let worldName;
     while (!worldName) {
-      worldName = await this.prompt(['New Playground\n', {}, 'Enter a name for this Playground:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true });
+      worldName = await this.prompt(['New Playground\n', {}, 'Enter a name for this Playground:', { fontWeight: 'normal' }], { width: 400, hasFixedPosition: true, forceConfirm: true, validate: (input) => !input.match(/^[0-9]+$/), errorMessage: 'No numbers as names!' });
       if (await this.isNotUnique(String(worldName))) {
         const override = await this.confirm('This Playground name is already taken. Do you want to override it?', {
           hasFixedPosition: true, width: 400
