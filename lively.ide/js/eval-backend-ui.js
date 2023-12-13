@@ -1,12 +1,12 @@
 /* global localStorage */
-import { pt, Rectangle, LinearGradient, Color } from 'lively.graphics';
+import { Rectangle } from 'lively.graphics';
 import { arr, string } from 'lively.lang';
 import { connect, signal } from 'lively.bindings';
-import { config, TilingLayout, part, StyleSheet } from 'lively.morphic';
+import { config, TilingLayout, part } from 'lively.morphic';
 import L2LClient from 'lively.2lively/client.js';
 import { serverInterfaceFor, localInterface, l2lInterfaceFor } from 'lively-system-interface';
-import { Button, ButtonModel, DropDownList } from 'lively.components';
-import { ButtonDefault, SystemButton } from 'lively.components/buttons.cp.js';
+import { ButtonModel } from 'lively.components';
+import { SystemButton } from 'lively.components/buttons.cp.js';
 
 export class EvalBackendButtonModel extends ButtonModel {
   static get properties () {
