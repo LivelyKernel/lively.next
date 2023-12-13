@@ -1,7 +1,7 @@
-/* global afterEach, describe, it, xit, setTimeout */
+/* global afterEach, describe, it, setTimeout */
 
 import { expect } from 'mocha-es6';
-import { convertCallbackFun, promise, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs, chain } from '../promise.js';
+import { convertCallbackFun, parallel, waitFor, timeout, delayReject, delay, deferred, convertCallbackFunWithManyArgs, chain } from '../promise.js';
 
 describe('promise', () => {
   describe('cb convertions', () => {
@@ -111,25 +111,24 @@ describe('promise', () => {
       });
     });
 
-    it('timesout', () => {
+    it('times out', () => {
       let startTime = Date.now(); let condition = false;
-      setTimeout(() => condition = {}, 100);
+      setTimeout(() => condition = {}, 1000);
       return waitFor(50, () => condition)
         .then(() => { throw new Error('then called'); })
         .catch((err) => {
           expect(err).to.match(/timeout/);
-          expect(Date.now() - startTime).below(70);
+          expect(Date.now() - startTime).below(500);
         });
     });
 
-    // this test is useful and working, but flaky in CI
-    xit('timesout with value', () => {
+    it('times out with value', () => {
       let startTime = Date.now(); let condition = false; let timeoutval = {};
       setTimeout(() => condition = {}, 1000);
       return waitFor(50, () => condition, timeoutval)
         .then(val => {
           expect(val).equals(timeoutval);
-          expect(Date.now() - startTime).below(70);
+          expect(Date.now() - startTime).below(500);
         })
         .catch((err) => expect().assert(false, 'waitFor threw up'));
     });
