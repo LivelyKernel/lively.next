@@ -42,6 +42,10 @@ For some more advanced development operations (bulk testing from the command lin
 2. Run the `start.sh` script.
 3. Lively will now be running on your local computer at [http://localhost:9011](http://localhost:9011).
 
+> **Note**
+>
+> You can use `start.sh` with a `--debug` or `-d` flag to inspect the lively server with a `node` debugger. You can also use `--port=<PORT>` or `-p <PORT>` to specify on which port the lively server should run.
+
 Usually, running `start.sh` will now be enough to get you going again.
 
 ### Updating `lively.next`
