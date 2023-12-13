@@ -9,7 +9,6 @@ export * from './html-morph.js';
 export * from './env.js';
 export * from './layout.js';
 export * from './components/core.js';
-export { StyleSheet } from './style-sheets.js';
 export { ShadowObject } from './rendering/morphic-default.js';
 export { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from './rendering/dom-helper.js';
 export { easings, stringToEasing } from './rendering/animations.js';
