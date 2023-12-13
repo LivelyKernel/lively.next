@@ -23,6 +23,7 @@ import { joinPath } from 'lively.lang/string.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
+import { unsubscribe, subscribe } from 'lively.notifications/index.js';
 
 class MasterComponentTreeData extends TreeData {
   /**
@@ -816,7 +817,6 @@ export class ComponentBrowserModel extends ViewModel {
         signal: 'onMouseUp',
         handler: 'ensureButtonControls'
       },
-      { signal: 'onHoverIn', handler: 'refresh' },
       {
         signal: 'onMouseUp',
         handler: 'ensureComponentEntitySelected'
@@ -919,6 +919,8 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async activate (pos = false) {
+    this._refreshOnLoaded = subscribe('lively.modules/moduleloaded', () => this.refresh(), System);
+    this._refreshOnChanged = subscribe('lively.modules/modulechanged', () => this.refresh(), System);
     this.ui.editButton.visible = config.ide.studio.componentEditViaComponentBrowser;
     this._promise = promise.deferred();
     this.ui.searchInput.focus();
@@ -929,6 +931,8 @@ export class ComponentBrowserModel extends ViewModel {
   onWindowClose () { this.close(); }
 
   close () {
+    unsubscribe('lively.modules/moduleloaded', this._refreshOnLoaded, System);
+    unsubscribe('lively.modules/modulechanged', this._refreshOnChanged, System);
     if (this._promise) this._promise.resolve(null);
   }
 
