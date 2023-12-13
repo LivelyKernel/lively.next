@@ -11,11 +11,10 @@ import * as prompts from './prompts.cp.js';
 import * as widgets from './widgets.js';
 import * as LoadingIndicator from './loading-indicator.cp.js';
 import { addClassMappings } from 'lively.morphic/helpers.js';
-import { List, DropDownList } from './list.js';
+import { List } from './list.js';
 
 addClassMappings({
   list: List,
-  dropdownlist: DropDownList
 });
 
 export { Window, LoadingIndicator, prompts, widgets };
