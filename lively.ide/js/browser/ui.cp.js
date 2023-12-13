@@ -154,14 +154,15 @@ class ComponentEditControlModel extends ViewModel {
         this.instanceMorph = part(this.componentDescriptor).openInWorld();
         this.instanceMorph.position = this.componentMorph.position;
         once(this.instanceMorph, 'abandon', this, 'terminateEditSession');
-        setTimeout(() => { this.componentMorph.visible = false; });
+        noUpdate(() => this.componentMorph.remove());
+        this.world().sceneGraph?.refresh();
       } catch (err) {
         this.view.getWindow().showError('Failed to load live version of component: ' + err.message);
       }
     }
 
     if (!active && this.instanceMorph) {
-      this.componentMorph.visible = true;
+      this.componentMorph.openInWorld();
       this.componentMorph.position = this.instanceMorph.position;
       noUpdate(() => this.componentMorph.bringToFront());
       this.cleanupInstance();
