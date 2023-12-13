@@ -1,4 +1,4 @@
-/* global System, declare, it, describe, beforeEach, afterEach, before, after, xit */
+/* global System, declare, it, describe, beforeEach, afterEach, before, after */
 import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
 import {
   MorphicEnv,
@@ -60,7 +60,7 @@ describe('buttons', function () {
   afterEach(teardown);
 
   describe('press', () => {
-    xit('is pressed', async () => {
+    it('is pressed', async () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
       button.master.applyIfNeeded(true);
@@ -70,7 +70,7 @@ describe('buttons', function () {
       expect(button.fill).equals(SystemButton.stylePolicy._autoMaster.spec.fill);
     });
 
-    xit('leaving button on press releases', async () => {
+    it('leaving button on press releases', async () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerover', position: button.center, target: button });
       await env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', position: button.center, target: button });
       button.master.applyIfNeeded(true);
