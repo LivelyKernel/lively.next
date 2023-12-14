@@ -7,9 +7,6 @@ clear-headless-cache:
 	rm -r lively.headless/chrome-data-dir
 	mkdir lively.headless/chrome-data-dir && touch lively.headless/chrome-data-dir/.gitkeep
 
-start:
-	./start.sh
-
 artifacts: classes-runtime landing-page loading-screen
 
 classes-runtime:
