@@ -52,7 +52,9 @@ Usually, running `start.sh` will now be enough to get you going again.
 
 When a new version of `lively.next` is available, the Version Indicator in the lower-left corner will look like this:
 
-![A GIF showing an orange arrow. The arrow is bouncing and points to the text "Press here to update".](./assets/update.gif)
+<p align='center'>
+    <img alt="A GIF showing an orange arrow. The arrow is bouncing and points to the text 'Press here to update'" src="./assets/update.gif" width="250" height="70">
+</p>
 
 Pressing will start the update process, automatically restart the server and prompt you to reload your lively session. Please make sure to save all your progress before updating.
 
