@@ -221,7 +221,7 @@ export class Project {
       // As we cannot easily access gitresource when cloning a project, do this here.
       // Gets executed more often than necessary, but is a valid catch-all solution to treat recently cloned projects as well as a user change.
       const currUserData = currentUserData();
-      await loadedProject.gitResource.setGitConfig(currUserData.name, currUserData.email);
+      if (currUserData) await loadedProject.gitResource.setGitConfig(currUserData.name, currUserData.email);
 
       if (await loadedProject.gitResource.hasRemote()) {
         const remoteURL = await loadedProject.gitResource.getRemote();
