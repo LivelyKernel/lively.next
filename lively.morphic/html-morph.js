@@ -126,6 +126,7 @@ export class HTMLMorph extends Morph {
   }
 
   onOwnerChanged (newOwner) {
+    super.onOwnerChanged(newOwner);
     if (newOwner === null) this.document.getElementById('css-for-' + this.id)?.remove();
     else this.installCssDeclaration(this.document);
   }
