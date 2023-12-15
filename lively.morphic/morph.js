@@ -1730,7 +1730,7 @@ export class Morph {
    * In case it was attached to a new parent, that morph is referenced by `newOwner`.
    * @param { Morph|null } newOwner - If applicable, the new owner the morph is assigned to.
    */
-  onOwnerChanged (newOwner) {}
+  onOwnerChanged (newOwner) { delete this._ownerChain; }
 
   async fadeOut (duration = 1000) {
     await this.animate({ opacity: 0, duration, easing: easings.outQuad });
@@ -1813,7 +1813,13 @@ export class Morph {
   }
 
   ownerChain () {
-    return this.owner ? [this.owner].concat(this.owner.ownerChain()) : [];
+    if (this._ownerChain) return this._ownerChain;
+    let curr = this;
+    let chain = [];
+    while (curr = curr.owner) {
+      chain.push(curr);
+    }
+    return this._ownerChain = chain;
   }
 
   world () {
