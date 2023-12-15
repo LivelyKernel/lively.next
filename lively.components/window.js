@@ -5,10 +5,9 @@ import {
   morph,
   Morph
 } from 'lively.morphic';
-import { connect, once, signal } from 'lively.bindings';
+import { connect, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
-import { DefaultWindow, SystemWindow, DefaultWindowInactive } from './window.cp.js';
-import { PolicyApplicator } from 'lively.morphic/components/policy.js';
+import { SystemWindow, DefaultWindowInactive } from './window.cp.js';
 
 export default class Window extends Morph {
   static get properties () {
@@ -275,6 +274,7 @@ export default class Window extends Morph {
   buildHeader () {
     return morph({
       name: 'header',
+      acceptsDrops: false,
       extent: pt(this.width, 50),
       submorphs: [
         morph({
@@ -447,6 +447,7 @@ export default class Window extends Morph {
       submorphs: [
         rightResizer = morph({
           name: 'right resizer',
+          acceptsDrops: false,
           fill,
           width: resizerInset,
           draggable: true,
@@ -454,6 +455,7 @@ export default class Window extends Morph {
         }),
         leftResizer = morph({
           name: 'left resizer',
+          acceptsDrops: false,
           fill,
           width: resizerInset,
           draggable: true,
@@ -461,6 +463,7 @@ export default class Window extends Morph {
         }),
         bottomResizer = morph({
           name: 'bottom resizer',
+          acceptsDrops: false,
           draggable: true,
           fill,
           height: resizerInset,
@@ -468,6 +471,7 @@ export default class Window extends Morph {
         }),
         topResizer = morph({
           name: 'top resizer',
+          acceptsDrops: false,
           draggable: true,
           fill,
           height: resizerInset / 4,
@@ -475,6 +479,7 @@ export default class Window extends Morph {
         }),
         bottomLeftResizer = morph({
           name: 'bottom left resizer',
+          acceptsDrops: false,
           draggable: true,
           fill,
           extent: pt(resizerInset, resizerInset),
@@ -482,6 +487,7 @@ export default class Window extends Morph {
         }),
         bottomRightResizer = morph({
           name: 'bottom right resizer',
+          acceptsDrops: false,
           fill,
           extent: pt(resizerInset, resizerInset),
           draggable: true,
@@ -489,6 +495,7 @@ export default class Window extends Morph {
         }),
         topLeftResizer = morph({
           name: 'top left resizer',
+          acceptsDrops: false,
           draggable: true,
           fill,
           extent: pt(resizerInset, resizerInset),
@@ -496,6 +503,7 @@ export default class Window extends Morph {
         }),
         topRightResizer = morph({
           name: 'top rigth resizer',
+          acceptsDrops: false,
           draggable: true,
           fill,
           extent: pt(resizerInset, resizerInset),

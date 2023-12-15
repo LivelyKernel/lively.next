@@ -730,6 +730,7 @@ export class BrowserModel extends ViewModel {
     };
     this.refreshHistoryButtons();
     this.relayout();
+    this.view.doNotAcceptDropsForThisAndSubmorphs();
     this.ui.metaInfoText.reset();
     const ed = this.ui.sourceEditor;
     if (!ed.plugins.length) { ed.addPlugin(new JavaScriptEditorPlugin(config.codeEditor.defaultTheme)); }
