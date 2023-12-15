@@ -315,7 +315,6 @@ const commands = [
          focusedMorph.isText || focusedMorph.isNumberWidget) { return false; }
 
       halo.closeSession();
-      halo.env.forceUpdate(); // FIXME: by itself the renderer does not seem to update
 
       return true;
     }
