@@ -1684,6 +1684,7 @@ export class Morph {
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
     this.renderingState.hasStructuralChanges = true;
     this.renderingState.hasMorphRemoved = true;
+    this.makeDirty();
   }
 
   /**
