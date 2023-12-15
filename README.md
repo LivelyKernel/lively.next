@@ -5,7 +5,7 @@
 
 This is the repository of the [lively.next project](https://lively-next.org).
 
-> **Warning**
+> [!WARNING]
 >
 > `lively.next` is alpha software and under heavy development.
 >
@@ -42,7 +42,7 @@ For some more advanced development operations (bulk testing from the command lin
 2. Run the `start.sh` script.
 3. Lively will now be running on your local computer at [http://localhost:9011](http://localhost:9011).
 
-> **Note**
+> [!TIP]
 >
 > You can use `start.sh` with a `--debug` or `-d` flag to inspect the lively server with a `node` debugger. You can also use `--port=<PORT>` or `-p <PORT>` to specify on which port the lively server should run.
 
@@ -64,7 +64,7 @@ Manually updating can be done by pulling the latest version and just executing `
 
 Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
 
-> **Note**
+> [!IMPORTANT]
 >
 > This does not mean that you cannot deploy applications built with `lively.next`. Of course, frozen applications can be served via any hoster!
 > 
