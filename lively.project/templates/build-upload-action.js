@@ -51,7 +51,7 @@ jobs:
       - name: Build Project
         run: npm run build-minified --prefix local_projects/%PROJECT_NAME%
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: local_projects/%PROJECT_NAME%/build`;
