@@ -268,12 +268,12 @@ class WorldLandingPage extends Morph {
     this.setBounds($world.windowBounds());
     this.getSubmorphNamed('globe').extent = this.extent;
     const worldList = this.getSubmorphNamed('a project browser');
-    if (worldList) worldList.center = this.extent.scaleBy(0.5);
-  }
-
-  beforePublish () {
-    const worldList = this.getSubmorphNamed('a project browser');
-    if (worldList) worldList.remove();
+    const padding = 50;
+    const maxWidth = 1100;
+    if (worldList) {
+      worldList.width = Math.min(this.world().visibleBounds().width - 2 * padding, maxWidth);
+      worldList.center = this.extent.scaleBy(0.5);
+    }
   }
 
   async onLoad () {
@@ -331,8 +331,8 @@ class WorldAligningLandigPageUIElements extends ViewModel {
 
   get bindings () {
     return [
-      {target: 'user flap', signal: 'extent', handler: 'relayout'}
-    ]
+      { target: 'user flap', signal: 'extent', handler: 'relayout' }
+    ];
   }
 
   async relayout () {
