@@ -52,6 +52,17 @@ class Layout {
     return renderer.getNodeForMorph(aMorph);
   }
 
+  measureSubmorph (layoutableSubmorph) {
+    if (layoutableSubmorph.ownerChain().find(m => !m.visible)) return;
+    const submorphNode = this.getNodeFor(layoutableSubmorph);
+    if (!layoutableSubmorph.isLayoutable) return;
+    this.onDomResize(submorphNode, layoutableSubmorph);
+    if (layoutableSubmorph._correctRender) {
+      layoutableSubmorph._correctRender(submorphNode);
+      delete layoutableSubmorph._correctRender;
+    }
+  }
+
   copy () { return new this.constructor(this); }
 
   with (props) {
@@ -238,10 +249,6 @@ class Layout {
     this.active = false;
   }
 
-  ensureBoundsMonitor (node, morph) {
-    // fixme: rename this method. bounds monitors are not longer used.
-  }
-
   resizesMorphVertically (aMorph) {
     return false;
   }
@@ -250,8 +257,24 @@ class Layout {
     return false;
   }
 
+  /*
+   * Called from position or extent getter inside a morph
+   * if _askLayoutForBounds is set to true. This is in order
+   * to *defer* expensive measuring of the dom up to the point
+   * where the information is actually needed
+   * (which is when the getter is invoked)
+   * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
+   */
   updateBoundsFor () {
 
+  }
+
+  measureAfterRender (layoutableSubmorph) {
+    if (!this.renderViaCSS) return;
+    if (layoutableSubmorph.isText) {
+      layoutableSubmorph.renderingState.needsFit = true;
+    }
+    layoutableSubmorph.renderingState.cssLayoutToMeasureWith = this;
   }
 }
 
@@ -913,28 +936,8 @@ export class TilingLayout extends Layout {
     style['margin-left'] = `${margin.left}px`;
     style['margin-right'] = `${margin.right}px`;
     if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
-    if (morph.isText) morph.renderingState.needsFit = true; // will already trigger a measure after render
-    else this.measureAfterRender(morph);
-  }
 
-  measureAfterRender (layoutableSubmorph) {
-    if (!this.renderViaCSS) return;
-    layoutableSubmorph.renderingState.cssLayoutToMeasureWith = this;
-  }
-
-  measureSubmorph (layoutableSubmorph) {
-    const target = this.getNodeFor(layoutableSubmorph);
-    target && this.ensureBoundsMonitor(target, layoutableSubmorph);
-  }
-
-  ensureBoundsMonitor (target, submorph) {
-    // repurpose for fast dom measuring
-    if (submorph !== this.container && !submorph.isLayoutable) return;
-    this.onDomResize(target, submorph);
-    if (submorph._correctRender) {
-      submorph._correctRender(target);
-      delete submorph._correctRender;
-    }
+    this.measureAfterRender(morph);
   }
 
   adjustMargin (margin, submorph) {
