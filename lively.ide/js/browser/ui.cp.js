@@ -151,10 +151,12 @@ class ComponentEditControlModel extends ViewModel {
   toggleDerivedInstance (active) {
     if (active) {
       try {
-        this.instanceMorph = part(this.componentDescriptor).openInWorld();
-        this.instanceMorph.position = this.componentMorph.position;
-        once(this.instanceMorph, 'abandon', this, 'terminateEditSession');
+        const pos = this.componentMorph.position;
         noUpdate(() => this.componentMorph.remove());
+        this.world().sceneGraph?.refresh();
+        this.instanceMorph = part(this.componentDescriptor).openInWorld();
+        this.instanceMorph.position = pos;
+        once(this.instanceMorph, 'abandon', this, 'terminateEditSession');
         this.world().sceneGraph?.refresh();
       } catch (err) {
         this.view.getWindow().showError('Failed to load live version of component: ' + err.message);
@@ -162,10 +164,13 @@ class ComponentEditControlModel extends ViewModel {
     }
 
     if (!active && this.instanceMorph) {
-      this.componentMorph.openInWorld();
-      this.componentMorph.position = this.instanceMorph.position;
-      noUpdate(() => this.componentMorph.bringToFront());
+      const pos = this.instanceMorph.position;
       this.cleanupInstance();
+      this.world().sceneGraph?.refresh();
+      this.componentMorph.openInWorld();
+      this.world().sceneGraph?.refresh();
+      this.componentMorph.position = pos;
+      noUpdate(() => this.componentMorph.bringToFront());
     }
     this.updateControlButtons();
   }
