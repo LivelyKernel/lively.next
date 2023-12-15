@@ -2388,13 +2388,15 @@ export class Morph {
   }
 
   doNotAcceptDropsForThisAndSubmorphs () {
-    this.withMetaDo({ metaInteraction: true }, () => {
+    this.withMetaDo({ reconcileChanges: false }, () => {
       this.withAllSubmorphsDo(m => m.acceptsDrops = false);
     });
   }
 
   acceptDropsForThisAndSubmorphs () {
-    this.withAllSubmorphsDo(m => m.acceptsDrops = true);
+    this.withMetaDo({ reconcileChanges: false }, () => {
+      this.withAllSubmorphsDo(m => m.acceptsDrops = true);
+    });
   }
 
   wantsToBeDroppedOn (dropTarget) {
