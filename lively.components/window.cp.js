@@ -3,6 +3,7 @@ import { ShadowObject, TilingLayout, Icon, Label, component, part } from 'lively
 
 const WindowButtonClose = component({
   name: 'window button close',
+  acceptsDrops: false,
   borderRadius: 14,
   extent: pt(15, 13),
   fill: Color.rgba(0, 0, 0, 0),
@@ -47,6 +48,7 @@ const WindowButtonInactiveDark = component(WindowButtonClose, {
 
 const WindowButtonMenu = component({
   name: 'window button menu',
+  acceptsDrops: false,
   borderRadius: 14,
   extent: pt(15, 13),
   fill: Color.rgba(0, 0, 0, 0),
@@ -75,6 +77,7 @@ const WindowButtonMenuHovered = component(WindowButtonMenu, {
 
 const WindowButtonMinimize = component({
   name: 'window button minimize',
+  acceptsDrops: false,
   borderRadius: 14,
   extent: pt(15, 13),
   fill: Color.rgba(0, 0, 0, 0),
@@ -108,8 +111,10 @@ const DefaultWindow = component({
   dropShadow: new ShadowObject({ distance: 8, rotation: 90, color: Color.rgba(0, 0, 0, 0.3), blur: 35, spread: 5 }),
   extent: pt(345.1, 152.1),
   borderRadius: 6,
+  acceptsDrops: false,
   submorphs: [{
     name: 'contents wrapper',
+    acceptsDrops: false,
     extent: pt(345.1, 152.1),
     fill: Color.rgb(179, 182, 183),
     borderRadius: 6,
@@ -117,6 +122,7 @@ const DefaultWindow = component({
     clipMode: 'hidden',
     submorphs: [{
       name: 'header',
+      acceptsDrops: false,
       borderColor: Color.rgba(0, 0, 0, 0),
       extent: pt(345.3, 72),
       fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(208, 211, 212) }, { offset: 1, color: Color.rgb(179, 182, 183) }], vector: rect(0, 0, 0, 1) }),
@@ -125,6 +131,7 @@ const DefaultWindow = component({
       isLayoutable: false,
       submorphs: [{
         name: 'window controls',
+        acceptsDrops: false,
         extent: pt(69, 27),
         fill: Color.rgba(0, 0, 0, 0),
         layout: new TilingLayout({

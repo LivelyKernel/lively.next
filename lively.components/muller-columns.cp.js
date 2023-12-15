@@ -160,6 +160,7 @@ export class MullerColumnViewModel extends ViewModel {
 
   newList () {
     const list = part(this.listMaster, {
+      acceptsDrops: false,
       width: 200
     });
     connect(list, 'selection', this, 'selectNode');
@@ -429,6 +430,7 @@ export class MullerColumnViewModel extends ViewModel {
 const MullerColumnView = component({
   defaultViewModel: MullerColumnViewModel,
   name: 'muller column view',
+  acceptDrops: false,
   borderColor: Color.rgb(23, 160, 251),
   clipMode: 'auto',
   extent: pt(565.1, 285.2),
