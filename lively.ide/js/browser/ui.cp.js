@@ -674,16 +674,6 @@ const FileStatusSaved = component(FileStatusDefault, {
   })
 });
 
-const FileStatusFrozen = component(FileStatusDefault, {
-  name: 'file status frozen',
-  fill: new LinearGradient({
-    stops: [
-      { offset: 0, color: Color.rgb(41, 182, 246) },
-      { offset: 1, color: Color.rgb(30, 136, 229) }],
-    vector: rect(0, 0, 0, 1)
-  })
-});
-
 const FileStatusInactive = component(FileStatusDefault, {
   name: 'file status inactive',
   fill: new LinearGradient({
@@ -1047,7 +1037,6 @@ const MetaInfoContainerExpanded = component({
         fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
         fontWeight: '900',
         paddingTop: '3px'
-
       }]
     }, {
       type: Label,
@@ -1184,8 +1173,6 @@ const MetaInfoWarning = component(MetaInfoContainerExpanded, {
 });
 
 const MetaInfoError = component(MetaInfoContainerExpanded, { clipMode: 'hidden', master: FileStatusError });
-
-const MetaInfoFrozen = component(MetaInfoContainerExpanded, { clipMode: 'hidden', master: FileStatusFrozen });
 
 const MetaInfoSaved = component(MetaInfoContainerCollapsed, {
   clipMode: 'hidden',
@@ -1488,7 +1475,6 @@ const SystemBrowser = component({
         warning: MetaInfoWarning,
         error: MetaInfoError,
         saved: MetaInfoSaved,
-        frozen: MetaInfoFrozen,
         inactive: MetaInfoInactive
       }
     },
@@ -1535,7 +1521,6 @@ export {
   FileStatusDefault,
   FileStatusError,
   FileStatusSaved,
-  FileStatusFrozen,
   FileStatusInactive,
   FileStatusWarning,
   BrowserTabDefault,
