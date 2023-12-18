@@ -285,7 +285,7 @@ class WorldLandingPage extends Morph {
   }
 
   async showWorldList () {
-    const dashboard = this.getSubmorphNamed('a poject browser') || this.addMorph(part(WorldBrowser, { name: 'a project browser', viewModel: { showCloseButton: false } }));
+    const dashboard = this.getSubmorphNamed('a project browser') || this.addMorph(part(WorldBrowser, { name: 'a project browser', viewModel: { showCloseButton: false } }));
     this.reset();
     dashboard.showCloseButton = false;
     dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150)));
