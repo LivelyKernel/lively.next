@@ -1251,11 +1251,199 @@ export class ConstraintLayout extends Layout {
 
   constructor (props) {
     super(props);
+    this._morphConfigurations = new Map();
+    this._renderViaCSS = typeof props.renderViaCSS !== 'undefined' ? props.renderViaCSS : true;
     this.extentDelta = pt(0, 0);
     this.constraintLayoutSettingsForMorphs = new WeakMap();
     this.submorphSettings = (props && props.submorphSettings) || [];
     this.lastExtent = props.lastExtent;
     delete this.spacing;
+  }
+
+  scheduleApply (submorph, animation, change = {}) {
+    if (change.prop === 'extent' &&
+        !change.meta?.isLayoutAction &&
+        this.renderViaCSS) {
+      this.layoutableSubmorphs.forEach(m => this.measureAfterRender(m));
+    }
+
+    super.scheduleApply(submorph, animation, change);
+  }
+
+  /**
+   * Defines wether or not this specific layout object should be rendered via CSS
+   * (therefore dispatching any layout ops to the browser stack) or manually computing
+   * the submorph positions through JavaScript.
+   * CSS renders generally have a much better performance but lack precision with regards
+   * transitioning smoothly between different configurations (layout animations).
+   * When you animate your layout operations it's best to set this property to false.
+   * @type {Boolean}
+   */
+  get renderViaCSS () {
+    return this._renderViaCSS;
+  }
+
+  set renderViaCSS (active) {
+    this._renderViaCSS = active;
+    this.onConfigUpdate();
+  }
+
+  onConfigUpdate () {
+    this.apply();
+    if (this.renderViaCSS && !this._configChanged) {
+      this._configChanged = true;
+      this.layoutableSubmorphs.forEach(m => m.makeDirty());
+      if (this.container) { this.container.renderingState.hasCSSLayoutChange = true; }
+    }
+  }
+
+  addContainerCSS (containerMorph, style) {
+    // container css is not really affected, since the constraint layout only
+    // controls the submorphs
+    this._configChanged = false;
+  }
+
+  ensureConfigForMorph (aMorph) {
+    if (!this._morphConfigurations) this._morphConfigurations = new Map();
+    let config = this._morphConfigurations.get(aMorph);
+    if (config) return config;
+    config = this.getConfigFor(aMorph);
+    this._morphConfigurations.set(aMorph, config);
+    return config;
+  }
+
+  getConfigFor (aMorph) {
+    const left = aMorph.position.x;
+    const top = aMorph.position.y;
+    const right = this.container.width - (aMorph.position.x + aMorph.width);
+    const bottom = this.container.height - (aMorph.position.y + aMorph.height);
+    const leftProportion = left / this.container.width * 100;
+    const rightProportion = right / this.container.width * 100;
+    const topProportion = top / this.container.height * 100;
+    const bottomProportion = bottom / this.container.height * 100;
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      leftProportion,
+      rightProportion,
+      topProportion,
+      bottomProportion
+    };
+  }
+
+  // It is not wise for a CSS based layout to base the configuration
+  // on external state, such as the morphic properties or the state in the DOM
+  // Instead the CSS needs to be computed based on the internal layout configuration. The layout needs to keep an internal configuration for each morph, that is updated manually in response to changes.
+  addSubmorphCSS (aMorph, style) {
+    const { x, y } = this.settingsFor(aMorph);
+    const border = this.container.borderWidth;
+    const {
+      left, top, right, bottom,
+      leftProportion, rightProportion, topProportion, bottomProportion
+    } = this.ensureConfigForMorph(aMorph);
+
+    switch (x) {
+      case 'fixed':
+        style.left = left - border.left + 'px';
+        break;
+      case 'resize':
+        style.left = left - border.left + 'px';
+        style.width = 'auto';
+        style.right = right - border.right + 'px';
+        break;
+      case 'move':
+        style.left = 'unset';
+        style.right = right - border.right + 'px';
+        break;
+      case 'center':
+        style.left = `calc(${leftProportion}% - ${aMorph.width / 2}px)`;
+        break;
+      case 'scale':
+        style.width = 'auto';
+        style.left = leftProportion + '%';
+        style.right = rightProportion + '%';
+        break;
+    }
+
+    switch (y) {
+      case 'fixed':
+        style.top = top - border.top + 'px';
+        break;
+      case 'resize':
+        style.top = top - border.top + 'px';
+        style.height = 'auto';
+        style.bottom = bottom - border.bottom + 'px';
+        break;
+      case 'move':
+        style.top = 'unset';
+        style.bottom = bottom - border.bottom + 'px';
+        break;
+      case 'center':
+        style.top = `calc(${topProportion}% - ${aMorph.height / 2}px)`;
+        break;
+      case 'scale':
+        style.height = 'auto';
+        style.top = topProportion + '%';
+        style.bottom = bottomProportion * 100 + '%';
+        break;
+    }
+  }
+
+  onDomResize (node, morph) {
+    if (morph === this.container) return;
+    morph.withMetaDo({ isLayoutAction: true }, () => {
+      this.updateSubmorphViaDom(morph, node, true);
+    });
+  }
+
+  updateSubmorphViaDom (morph, node, makeDirty = false) {
+    const { visible, borderWidth } = this.container;
+    const newPosX = Math.floor(node.offsetLeft) + borderWidth.left;
+    const newPosY = Math.floor(node.offsetTop) + borderWidth.top;
+    const newWidth = Math.floor(node.offsetWidth);
+    const newHeight = Math.floor(node.offsetHeight);
+    const { x, y } = this.settingsFor(morph);
+    let updateTransform = false;
+    const horizontallyResized = ['resize', 'scale'].includes(x);
+    const verticallyResized = ['resize', 'scale'].includes(y);
+    if (newPosX !== morph.position.x ||
+        newPosY !== morph.position.y) {
+      if (makeDirty) {
+        morph.position = pt(newPosX, newPosY);
+      } else {
+        morph._morphicState.position = pt(newPosX, newPosY);
+        updateTransform = true;
+        signal(morph, 'position', morph.position); // still notify connections
+      }
+    }
+    // also update the extent if the resize policy is not fixed!
+    if (newWidth !== morph.width && horizontallyResized) {
+      if (makeDirty) morph.width = newWidth;
+      else {
+        morph._morphicState.extent = morph.extent.withX(newWidth);
+        updateTransform = true;
+        signal(morph, 'extent', morph.extent);
+      }
+    }
+    if (newHeight !== morph.height && verticallyResized) {
+      if (makeDirty) morph.height = newHeight;
+      else {
+        morph._morphicState.extent = morph.extent.withY(newHeight);
+        updateTransform = true;
+        signal(morph, 'extent', morph.extent); // does not update the halo!
+      }
+    }
+
+    if (morph.layout && morph.layout.renderViaCSS) {
+      morph.layout.onDomResize(node, morph);
+    }
+
+    if (updateTransform) {
+      // trigger the halo if needed
+      morph.updateTransform();
+    }
   }
 
   getSpec () {
@@ -1294,11 +1482,50 @@ export class ConstraintLayout extends Layout {
     this.constraintLayoutSettingsForMorphs = map;
   }
 
+  adjustConfigViaExtentDelta (config, delta) {
+    config.right -= delta.x;
+    config.bottom -= delta.y;
+    config.rightProportion = config.right / this.container.width * 100;
+    config.bottomProportion = config.bottom / this.container.height * 100;
+  }
+
+  adjustConfigViaPositionDelta (config, delta) {
+    config.left += delta.x;
+    config.right -= delta.x;
+    config.top += delta.y;
+    config.bottom -= delta.y;
+    config.rightProportion = config.right / this.container.width * 100;
+    config.bottomProportion = config.bottom / this.container.height * 100;
+    config.leftProportion = config.left / this.container.width * 100;
+    config.topProportion = config.top / this.container.height * 100;
+  }
+
   onSubmorphChange (submorph, change, x, y) {
     if (change.prop === 'name') {
       const settings = this.constraintLayoutSettingsForMorphs.get(submorph);
       if (settings) this.changeSettingsFor(submorph, settings, true);
     }
+    if (change.prop === 'extent' &&
+        !change.value.equals(change.prevValue)) {
+      if (change.meta?.isLayoutAction) this.measureAfterRender(submorph);
+      else {
+        let config = this._morphConfigurations?.get(submorph);
+        if (config) {
+          this.adjustConfigViaExtentDelta(config, change.value.subPt(change.prevValue));
+        }
+      }
+    }
+    if (change.prop === 'position' &&
+        !change.value.equals(change.prevValue)) {
+      if (change.meta?.isLayoutAction) this.measureAfterRender(submorph);
+      else {
+        let config = this._morphConfigurations?.get(submorph);
+        if (config) {
+          this.adjustConfigViaPositionDelta(config, change.value.subPt(change.prevValue));
+        }
+      }
+    }
+
     return super.onSubmorphChange(submorph, change);
   }
 
@@ -1360,9 +1587,9 @@ export class ConstraintLayout extends Layout {
   }
 
   apply (animate = false, requireExtentChange = true) {
-    const { container, active, extentDelta: { x: deltaX, y: deltaY } } = this;
+    const { container, active, extentDelta: { x: deltaX, y: deltaY }, renderViaCSS } = this;
     const { extent } = container || {};
-    if (active || !container || (requireExtentChange && deltaX === 0 && deltaY === 0)) { return; }
+    if (active || !container || (requireExtentChange && deltaX === 0 && deltaY === 0) || renderViaCSS) { return; }
 
     this.extentDelta = pt(0, 0);
     this.active = true;
@@ -2469,9 +2696,9 @@ export class GridLayout extends Layout {
    */
   constructor (config) {
     super(config);
+    this._renderViaCSS = typeof config.renderViaCSS !== 'undefined' ? config.renderViaCSS : true;
     config = { autoAssign: true, fitToCell: true, ...config };
     this.cellGroups = [];
-    this.renderViaCSS = typeof config.renderViaCSS !== 'undefined' ? config.renderViaCSS : true;
   }
 
   forceLayout () {
