@@ -139,5 +139,6 @@ export class ComponentChangeTracker {
     if (this.ignoreChange(change)) return;
     Reconciliation.perform(this.componentDescriptor, change);
     this.componentDescriptor.makeDirty();
+    this.componentDescriptor.refreshDependants();
   }
 }
