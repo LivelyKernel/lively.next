@@ -629,7 +629,7 @@ const prevDescriptorClass = typeof prevComponent !== 'undefined' && prevComponen
 const prevComponent = component;
 if (!component.DescriptorClass) component.DescriptorClass = prevDescriptorClass || ComponentDescriptor;
 component.System = System;
-component.for = (generator, meta, recorder, declaredName) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, component.System, recorder, declaredName);
+component.for = (generator, meta, system, recorder, declaredName) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, system, recorder, declaredName);
 
 export { add, without };
 
