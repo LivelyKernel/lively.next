@@ -57,7 +57,7 @@ textarea.lively-text-input.debug {
   z-index: 2;
 }
 
-.ProportionalLayoutHalo, .FlexLayoutHalo, .GridLayoutHalo, .TilingLayoutHalo {
+.FlexLayoutHalo, .GridLayoutHalo, .TilingLayoutHalo {
   z-index: auto;
 }
 
