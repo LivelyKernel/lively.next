@@ -262,5 +262,3 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     return descr;
   }
 }
-
-// component.DescriptorClass = InteractiveComponentDescriptor;

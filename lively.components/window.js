@@ -739,9 +739,6 @@ export default class Window extends Morph {
 
   deactivate () {
     this.targetMorph.onWindowDeactivated();
-    // if (this.styleClasses.includes('inactive')) return;
-    // this.removeStyleClass('active');
-    // this.addStyleClass('inactive');
     if (this.master && this.master.auto === DefaultWindowInactive) return;
     this.master.whenApplied().then(() => {
       this.master.setState('inactive');

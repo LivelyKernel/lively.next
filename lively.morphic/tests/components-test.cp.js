@@ -789,9 +789,7 @@ describe('components', () => {
     expect(inst.get('bob').fill).to.eql(Color.red);
     expect(inst.get('alice').fill).to.eql(Color.blue);
     expect(inst.fill).to.eql(Color.cyan);
-    // this appears to be broken. The overridden master here
-    // needs to also overriden the masters in the sub policies.
-    // what needs to happen is a subPolicy.assignConfig(parent._autoMaster.getSubSpecFor(subSpecName)); // which will update the fields
+
     inst = part(c2, { name: 'troller', master: T1 });
     expect(inst.master._autoMaster, 'correctly overrides top level master').to.eql(T1.stylePolicy);
     inst.master.apply(inst, true);

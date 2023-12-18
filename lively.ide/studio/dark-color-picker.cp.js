@@ -6,7 +6,6 @@ import { BackendButtonDefault } from '../js/browser/ui.cp.js';
 import { InputLineDark } from 'lively.components/inputs.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 
-// DarkColorPicker.stylePolicy.getSubSpecFor('color controls').submorphs[2].spec.submorphs[0]
 const DarkColorPicker = component(ColorPicker, {
   name: 'dark color picker',
   master: DarkColorPicker,

@@ -650,7 +650,7 @@ export class Reconciliation {
     if (openEditor) sourceCode = openEditor.textString;
 
     // FIXME: cache the AST node and transform them with a source mods library that understands how to patch the ast
-    //        This can be done with: import { print, parse } from 'esm://cache/recast@0.21.5'
+    // This can be done with: import { print, parse } from 'esm://cache/recast@0.21.5'
     const parsedModule = parse(sourceCode);
     const scope = query.topLevelDeclsAndRefs(parsedModule).scope;
     const parsedComponent = descr.getASTNode(parsedModule);
@@ -788,7 +788,7 @@ class EnsureNamesReconciliation extends Reconciliation {
           }
         }
         // 3.
-        // we have noq mapped all of the specs to nodes via name
+        // we have now mapped all of the specs to nodes via name
         // we are now left with the remaining specs and anonymous nodes, which we map 1 - 1 based on order
         return [...specToNodeMapping.entries(), ...arr.zip(subSpecs, subNodes)];
       }
@@ -922,12 +922,12 @@ class MorphRemovalReconciliation extends Reconciliation {
     try {
       const [exprBody] = parse(subExpr.startsWith('{') ? `(${subExpr})` : subExpr).body;
       if (exprBody.type === 'LabeledStatement') {
-        // extract the one element from the elements
+        // extract the removed element from the elements
         const [removedSpec] = exprBody.body.expression.elements;
         subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
       }
       if (subExpr.startsWith('add')) {
-        // extract the one element from the elements
+        // extract the removed element from the elements
         const [removedSpec] = exprBody.expression.arguments;
         subExpr = subExpr.slice(removedSpec.start, removedSpec.end);
       }
@@ -1355,8 +1355,8 @@ class PropChangeReconciliation extends Reconciliation {
         responsiblePolicy.applyConfiguration(newValue);
       } else {
         // convert spec into policy and replace it
-        // we can be sure, that the subSpec *is not* itself a police
-        // because in that case, that other policy would be call
+        // we can be sure, that the subSpec *is not* itself a policy
+        // because in that case, that other policy would be called to
         // get the enclosing spec...
         const parentSpec = responsiblePolicy.getSubSpecCorrespondingTo(target.owner);
         parentSpec.submorphs[parentSpec.submorphs.indexOf(subSpec)] = PolicyApplicator.for(target, {
