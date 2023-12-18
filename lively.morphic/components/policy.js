@@ -439,6 +439,9 @@ export class StylePolicy {
     if (this.parent === aPolicy) {
       return true;
     }
+    if (obj.equals(
+      obj.select(this.parent?.[Symbol.for('lively-module-meta')] || {}, ['moduleId', 'exportedName', 'path']),
+      obj.select(aPolicy[Symbol.for('lively-module-meta')] || {}, ['moduleId', 'exportedName', 'path']))) { return true; }
     if (immediate) return false;
     if (this.parent?.uses(aPolicy)) return true;
     return false;
