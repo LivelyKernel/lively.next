@@ -55,7 +55,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
         prev.ensureComponentMorphUpToDate(c);
       }
       dependants.forEach(m => {
-        m.master._parent = newDescr.stylePolicy;
+        m.master = exprSerializer.deserializeExprObj(m.master.__serialize__());
       });
       newDescr.refreshDependants(dependants);
       prev.checkForGeneratedNames();
