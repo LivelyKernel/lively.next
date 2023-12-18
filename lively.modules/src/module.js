@@ -577,7 +577,7 @@ class ModuleInterface {
     });
 
     if (existingRecord) {
-      Object.assign(this._recorder, existingRecord.recorder);
+      Object.assign(this._recorder, obj.dissoc(existingRecord.recorder, ['__module_hash__']));
     }
     return this._recorder;
   }

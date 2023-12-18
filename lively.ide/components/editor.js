@@ -45,7 +45,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       return newDescr;
     }
     const prev = recorder?.[declaredName];
-    if (prev) {
+    if (prev && !recorder?.__module_hash__) {
       if (prev.constructor !== this) { obj.adoptObject(prev, this); }
       const dependants = prev.getDependants(true);
       prev.stylePolicy = newDescr.stylePolicy;
