@@ -667,7 +667,6 @@ export class StylePolicy {
           };
         }
         // also insert the default values here if not defined
-
         return { ...defaultProps, ...node, submorphs };
       }, node => node.submorphs || []);
     };
@@ -1441,12 +1440,12 @@ export class PolicyApplicator extends StylePolicy {
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
 
-    // spec could not be found, so we prepare for insterting a spec
+    // spec could not be found, so we prepare for inserting a spec
     currSpec = submorph.master || { };
     currSpec.name = submorph.name;
     if (this.parent && !this.mentionedByParents(targetName)) {
       // if we have a parent policy, this means we are derived
-      // and if none of our parents mendtioned a morph with this name
+      // and if none of our parents mentioned a morph with this name
       // that means it needs to be wrapped as added in order to be added
       // to this policy. If we declare the spec not to be wrapped as added,
       // something is wrong.

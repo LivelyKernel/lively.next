@@ -1989,7 +1989,7 @@ export class BrowserModel extends ViewModel {
       if (metaInfoText.master.getState() == 'warning') metaInfoText.showSaved(); // only if we are not default yet
       return;
     }
-    metaInfoText.showSaved(); // only if we are not default yet
+    metaInfoText.showSaved();
   }
 
   async reloadModule (hard = false) {
