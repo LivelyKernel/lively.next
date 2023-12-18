@@ -432,10 +432,12 @@ export class WorldBrowserModel extends ViewModel {
     if (mode === 'Playgrounds') {
       this.playgroundsMode = true;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PLAYGROUND');
+      this.ui.noWorldWarning.textAndAttributes = ['There are no playgrounds yet. Create one!', null]
     }
     if (mode === 'Projects') {
       this.playgroundsMode = false;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PROJECT');
+      this.ui.noWorldWarning.textAndAttributes = ['There are no projects yet. Create one!', null]
     }
     this.displayItems();
   }
