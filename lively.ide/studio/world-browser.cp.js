@@ -423,6 +423,7 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   viewDidLoad () {
+    this.ui.noWorldWarning.center = this.view.innerBounds().center();
     this.displayItems();
     this.onRefresh('showCloseButton');
   }
