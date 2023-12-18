@@ -1259,11 +1259,6 @@ export class TilingLayout extends Layout {
   }
 }
 
-/*
-  fixme: If would be nice to make proportional layouts obsolete
-         once constraints are fully implemented in morphs.
-*/
-
 export class ConstraintLayout extends Layout {
   name () { return 'Constraint'; }
   description () { return 'Resizes, scales, and moves morphs according to their original position.'; }
