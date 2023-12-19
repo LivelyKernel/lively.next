@@ -466,9 +466,9 @@ export class SceneGraphTree extends InteractiveTree {
   isNodeOutOfSync (node) {
     if (node === this._previewNode) return false; // preview does not represent a real morph
     if (this.treeData.root === node) {
-      return (
-        this.treeData.root.children.length !==
-        this.target.submorphs.filter(m => !this.ignoreMorph(m)).length);
+      return !obj.equals(
+        this.treeData.root.children.map(m => m.container?.target.id),
+        this.target.submorphs.filter(m => !this.ignoreMorph(m)).id);
     }
     if (node.container.nameNeedsUpdate) return true;
     const actualSubmorphs = node.container.target.submorphs.filter(m => !this.ignoreMorph(m));
