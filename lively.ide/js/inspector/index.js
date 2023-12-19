@@ -8,13 +8,14 @@ import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { DropDownSelector } from 'lively.components/widgets.js';
 import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
-import { valueWidgets } from 'lively.ide';
 import { ensureDefaultImports, generateReferenceExpression } from './helpers.js';
 import { InstructionWidget } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
 import { ShadowPopup, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight } from '../../studio/controls/popups.cp.js';
 
 ensureDefaultImports();
+
+const NUMBER_COLOR = Color.rgb(40, 116, 166);
 
 const inspectorCommands = [
 
@@ -447,7 +448,7 @@ export class PropertyControl extends DraggableTreeLabel {
         node.rerender();
       });
     };
-    const attrs = { nativeCursor: 'pointer', onMouseDown: handler };
+    const attrs = { nativeCursor: 'pointer', onMouseDown: handler, fontColor: NUMBER_COLOR };
     return [
       ...this.renderGrabbableKey(args),
       ...node._inputMorph
@@ -481,7 +482,6 @@ export class PropertyControl extends DraggableTreeLabel {
   static renderPointControl (args) {
     const { keyString, value, target, node, tree } = args;
     const inspector = tree.owner;
-    const numberColor = valueWidgets.NumberWidget.properties.fontColor.defaultValue;
     const handler = async (evt) => {
       const editor = part(PositionPopupLight, { hasFixedPosition: true });
       inspector.openWidget = editor;
@@ -495,9 +495,9 @@ export class PropertyControl extends DraggableTreeLabel {
     const attrs = { nativeCursor: 'pointer', onMouseDown: handler };
     return [...this.renderGrabbableKey(args),
       ' pt(', { ...attrs },
-            `${value.x.toFixed()}`, { fontColor: numberColor, ...attrs },
+            `${value.x.toFixed()}`, { fontColor: NUMBER_COLOR, ...attrs },
             ',', { ...attrs },
-            `${value.y.toFixed()}`, { fontColor: numberColor, ...attrs },
+            `${value.y.toFixed()}`, { fontColor: NUMBER_COLOR, ...attrs },
             ')', { ...attrs }];
   }
 
