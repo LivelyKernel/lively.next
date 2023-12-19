@@ -648,8 +648,10 @@ export class StylePolicy {
         if (node.master) {
           return new klass({ ...node, submorphs }, null);
         }
-        // this is too weak, we need to check of there is any possible master (click, hover, auto, state, breakpoint) that
-        // may potentially provide the default value here
+        // The way styles are calculated right now is that we check if there is a autoMaster and if no
+        // autoMaster is present (which is rare) we proceed to utilize the default value dictated by the morph class.
+        // It may make sense to further dig for more "appropriate" default values by taking a look at other masters
+        // such as the ones found in the breakpoints or the custom states.
         const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node.type || Morph) || {};
 
         for (let prop in defaultProps) {
