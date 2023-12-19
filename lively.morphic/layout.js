@@ -1260,6 +1260,11 @@ export class ConstraintLayout extends Layout {
     delete this.spacing;
   }
 
+  attach () {
+    super.attach();
+    this.layoutableSubmorphs.forEach(m => this.ensureConfigForMorph(m));
+  }
+
   scheduleApply (submorph, animation, change = {}) {
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
