@@ -13,7 +13,7 @@ export async function ensureDefaultImports () {
     try {
       exports = await System.import(modName);
     } catch (err) {
-      console.log('Failed to load inspector workspace default import: ' + modName);
+      console.log('Failed to load inspector workspace default import: ' + modName); // eslint-disable-line no-console
       continue;
     }
     imports[modName].forEach(v => {
