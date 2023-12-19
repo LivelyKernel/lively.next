@@ -36,27 +36,6 @@ data they are inspecting and also know how they react to changes in the system.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // FIXME duplication with lively.vm completions and lively morphic completions and inspector!
 
-const defaultPropertyOptions = {
-  includeDefault: true,
-  includeSymbols: true,
-  sort: true,
-  sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
-};
-
-const symMatcher = /^Symbol\((.*)\)$/;
-const knownSymbols = (() =>
-  Object.getOwnPropertyNames(Symbol)
-    .filter(ea => typeof Symbol[ea] === 'symbol')
-    .reduce((map, ea) => map.set(Symbol[ea], 'Symbol.' + ea), new Map()))();
-function printSymbol (sym) {
-  if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
-  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
-  const matched = String(sym).match(symMatcher);
-  return String(sym);
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
 function defaultSort (a, b) {
   if (a.hasOwnProperty('priority') || b.hasOwnProperty('priority')) {
     const aP = a.priority || 0; const bP = b.priority || 0;
@@ -67,6 +46,26 @@ function defaultSort (a, b) {
   const bK = (b.keyString || b.key).toLowerCase();
   return aK < bK ? -1 : aK === bK ? 0 : 1;
 }
+
+const defaultPropertyOptions = {
+  includeDefault: true,
+  includeSymbols: true,
+  sort: true,
+  sortFunction: (target, props) => Array.isArray(target) ? props : props.sort(defaultSort)
+};
+
+const knownSymbols = (() =>
+  Object.getOwnPropertyNames(Symbol)
+    .filter(ea => typeof Symbol[ea] === 'symbol')
+    .reduce((map, ea) => map.set(Symbol[ea], 'Symbol.' + ea), new Map()))();
+
+function printSymbol (sym) {
+  if (Symbol.keyFor(sym)) return `Symbol.for("${Symbol.keyFor(sym)}")`;
+  if (knownSymbols.get(sym)) return knownSymbols.get(sym);
+  return String(sym);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function safeToString (value) {
   if (!value) return String(value);
@@ -181,11 +180,71 @@ function partitionedChildren (arrayOrDict, {
   }
 }
 
+function propertiesOf (node) {
+  const target = node.partition ? node.target : node.value;
+  if (!target) return [];
+
+  const seen = { _rev: true }; let props = [];
+  const isCollapsed = true;
+  const customProps = typeof target.livelyCustomInspect === 'function'
+    ? target.livelyCustomInspect()
+    : {};
+  const options = {
+    ...defaultPropertyOptions,
+    ...customProps
+  };
+
+  if (customProps.properties) {
+    for (const { key, hidden, priority, keyString, value, valueString } of customProps.properties) {
+      seen[key] = true;
+      if (hidden) continue;
+      props.push(node.getSubNode({
+        priority,
+        key,
+        keyString: keyString || safeToString(key),
+        value,
+        valueString,
+        isCollapsed
+      }));
+    }
+  }
+
+  if (options.includeDefault) {
+    const defaultProps = propertyNamesOf(target, node.partition);
+    if (defaultProps.length > MAX_NODE_THRESHOLD) {
+      for (const nodeArgs of partitionedChildren(target, node.partition)) {
+        props.push(node.getSubNode(nodeArgs));
+      }
+    } else {
+      for (const key of defaultProps) {
+        if (key in seen) continue;
+        let value = target[key];
+        let valueString = printValue(value);
+        let nodeArgs = { keyString: key, key, value, valueString, isCollapsed };
+        props.push(node.getSubNode(nodeArgs));
+      }
+    }
+    if (options.includeSymbols) {
+      for (const key of Object.getOwnPropertySymbols(target)) {
+        const keyString = safeToString(key);
+        let value = target[key];
+        let valueString = printValue(value);
+        let nodeArgs = { key, keyString, value, valueString, isCollapsed };
+        props.push(node.getSubNode(nodeArgs));
+      }
+    }
+  }
+
+  if (options.sort) props = options.sortFunction(target, props);
+
+  return props;
+}
+
 export class InspectionTree extends TreeData {
   constructor (args) {
     super(args);
     this.inspector = args.inspector;
-    if (!this.root.isInspectionNode) { this.root = InspectionNode.for(this.root, this); }
+    if (!this.root.isInspectionNode) { this.root = InspectionNode.for(this.root, this); } // eslint-disable-line no-use-before-define
   }
 
   get __only_serialize__ () {
@@ -201,18 +260,18 @@ export class InspectionTree extends TreeData {
   }
 
   getContextFor (node) {
-    if (node == this.root) return this.root.value.inspectee;
+    if (node === this.root) return this.root.value.inspectee;
     return node.value;
   }
 
   dispose () {}
 
-  async filter ({ sorter, maxDepth = 1, iterator, showUnknown, showInternal }) {
+  async filter ({ maxDepth = 1, iterator, showUnknown, showInternal }) {
     await this.uncollapseAll(
-      (node, depth) => maxDepth > depth && (node == this.root || node.value.submorphs)
+      (node, depth) => maxDepth > depth && (node === this.root || node.value.submorphs)
     );
     this.asListWithIndexAndDepth(false).forEach(({ node, depth }) => {
-      if (depth == 0) return (node.visible = true);
+      if (depth === 0) return (node.visible = true);
       if (!showUnknown && node.keyString && node.keyString.includes('UNKNOWN PROPERTY')) return (node.visible = false);
       if (!showInternal && node.keyString && node.keyString.includes('internal')) return (node.visible = false);
       if (node.value && node.value.submorphs) return (node.visible = true);
@@ -366,7 +425,6 @@ class InspectionNode {
     children = [],
     isSelected = false,
     visible = true,
-    draggable = true,
     partition
   }) {
     this.partition = partition;
@@ -390,20 +448,19 @@ class InspectionNode {
 
   static for (node, root = null) {
     // if is morph -> MorphContext
-    if (node.value && node.value.isMorph) return new MorphNode({ root, ...node });
+    if (node.value && node.value.isMorph) return new MorphNode({ root, ...node }); // eslint-disable-line no-use-before-define
     return new InspectionNode({ root, ...node });
   }
 
   getSubNode (node) {
-    if (node.value && node.value.isMorph) { return new MorphNode({ root: this.root, ...node }); }
+    if (node.value && node.value.isMorph) { return new MorphNode({ root: this.root, ...node }); } // eslint-disable-line no-use-before-define
     // handle the case where I am a partition
-    let offset; let { key, keyString } = node; let target = this.value; const partition = node.partition;
+    let { key, keyString } = node; let target = this.value; const partition = node.partition;
     if (partition) {
-      offset = partition.offset;
       target = partition.originalValue;
       keyString = key;
     }
-    return new PropertyNode({
+    return new PropertyNode({ // eslint-disable-line no-use-before-define
       ...node,
       keyString,
       key,
@@ -453,8 +510,8 @@ class MorphNode extends InspectionNode {
 
   getSubNode (nodeArgs) {
     const spec = this.propertyInfo[nodeArgs.key] || {};
-    if (nodeArgs.value && nodeArgs.value.isMorph) { return new MorphNode({ ...nodeArgs, root: this.root }); }
-    return new PropertyNode({
+    if (nodeArgs.value && nodeArgs.value.isMorph) { return new MorphNode({ ...nodeArgs, root: this.root }); } // eslint-disable-line no-use-before-define
+    return new PropertyNode({ // eslint-disable-line no-use-before-define
       ...nodeArgs,
       root: this.root,
       target: this.target,
@@ -483,7 +540,7 @@ class PropertyNode extends InspectionNode {
     this.foldedNodes = {};
   }
 
-  __deserialize__ (snapshot, objRef) {
+  __deserialize__ () {
     this.spec = {};
   }
 
@@ -500,7 +557,7 @@ class PropertyNode extends InspectionNode {
   }
 
   get isInternalProperty () {
-    return this.keyString == 'id' || this.keyString.includes('internal');
+    return this.keyString === 'id' || this.keyString.includes('internal');
   }
 
   getSubNode (nodeArgs) {
@@ -511,7 +568,7 @@ class PropertyNode extends InspectionNode {
   }
 
   getFoldedContext (node) {
-    return this.foldedNodes[node.key] = new FoldedNode({
+    return this.foldedNodes[node.key] = new FoldedNode({ // eslint-disable-line no-use-before-define
       ...node,
       root: this.root,
       target: this.target,
@@ -603,64 +660,6 @@ class FoldedNode extends PropertyNode {
   refreshProperty (v, updateTarget = false) {
     this.foldableNode.refreshProperty({ ...this.target[this.foldableNode.key], [this.key]: v }, updateTarget);
   }
-}
-
-function propertiesOf (node) {
-  const target = node.partition ? node.target : node.value;
-  if (!target) return [];
-
-  const seen = { _rev: true }; let props = [];
-  const isCollapsed = true;
-  const customProps = typeof target.livelyCustomInspect === 'function'
-    ? target.livelyCustomInspect()
-    : {};
-  const options = {
-    ...defaultPropertyOptions,
-    ...customProps
-  };
-
-  if (customProps.properties) {
-    for (const { key, hidden, priority, keyString, value, valueString } of customProps.properties) {
-      seen[key] = true;
-      if (hidden) continue;
-      props.push(node.getSubNode({
-        priority,
-        key,
-        keyString: keyString || safeToString(key),
-        value,
-        valueString,
-        isCollapsed
-      }));
-    }
-  }
-
-  if (options.includeDefault) {
-    const defaultProps = propertyNamesOf(target, node.partition);
-    if (defaultProps.length > MAX_NODE_THRESHOLD) {
-      for (const nodeArgs of partitionedChildren(target, node.partition)) {
-        props.push(node.getSubNode(nodeArgs));
-      }
-    } else {
-      for (const key of defaultProps) {
-        if (key in seen) continue;
-        var value = target[key]; var valueString = printValue(value);
-        var nodeArgs = { keyString: key, key, value, valueString, isCollapsed };
-        props.push(node.getSubNode(nodeArgs));
-      }
-    }
-    if (options.includeSymbols) {
-      for (const key of Object.getOwnPropertySymbols(target)) {
-        const keyString = safeToString(key); var value = target[key];
-        var valueString = printValue(value);
-        var nodeArgs = { key, keyString, value, valueString, isCollapsed };
-        props.push(node.getSubNode(nodeArgs));
-      }
-    }
-  }
-
-  if (options.sort) props = options.sortFunction(target, props);
-
-  return props;
 }
 
 export class PropertyTree extends Tree {

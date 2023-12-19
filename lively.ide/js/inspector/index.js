@@ -148,7 +148,7 @@ class DraggableTreeLabel extends Label {
     connect(evt.hand, 'update', this.draggedProp, 'update');
   }
 
-  onDrag (evt) {}
+  onDrag () {}
 
   onDragEnd (evt) {
     disconnect(evt.hand, 'update', this.draggedProp, 'update');
@@ -295,7 +295,7 @@ export class PropertyControl extends DraggableTreeLabel {
       }),
       name: 'multi value placeholder',
       nativeCursor: 'pointer',
-      submorphs: arr.range(0, 2).map(i => ({
+      submorphs: arr.range(0, 2).map(() => ({
         type: 'ellipse',
         fill: Color.gray.withA(0.5),
         reactsToPointer: false,
@@ -339,7 +339,7 @@ export class PropertyControl extends DraggableTreeLabel {
           connect(evt.hand, 'update', evt.state.draggedProp, 'update');
         },
 
-        onDrag: (evt) => {},
+        onDrag: () => {},
 
         onDragEnd: (evt) => {
           disconnect(evt.hand, 'update', evt.state.draggedProp, 'update');
@@ -351,7 +351,7 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderEnumControl (args) {
     const { value, spec: { values }, keyString, target, node, tree } = args;
-    const handler = async (evt, charPos) => {
+    const handler = async (evt) => {
       const menu = target.world().openWorldMenu(evt, values.map(v => ({
         string: v.toString(),
         action: () => {
@@ -406,7 +406,7 @@ export class PropertyControl extends DraggableTreeLabel {
       ` ${valueString}`, {
         nativeCursor: 'pointer',
         fontColor: value ? Color.green : Color.red,
-        onMouseDown: (evt) => {
+        onMouseDown: () => {
           target[keyString] = !target[keyString]; // toggle boolean
           node.rerender();
         }
@@ -506,8 +506,10 @@ export class PropertyControl extends DraggableTreeLabel {
     return [
       ...this.renderGrabbableKey(args),
       ` ${value ? valueString : 'No Layout'}`, {
-        onMouseDown: (evt) => {
-          // TODO: add layout popup?!
+        onMouseDown: () => {
+          // TODO: add layout popup?! Similar to the on in the popup
+          // In case of no layout or constraint layout present, no popup available
+          // However in case of the tiling layout we could provide controls
         }
       }];
   }
@@ -948,7 +950,6 @@ export class Inspector extends ViewModel {
   }
 
   async filterProperties () {
-    console.log('filter props');
     const searchField = this.ui.searchField;
     const tree = this.ui.propertyTree;
     if (!this.originalTreeData) { this.originalTreeData = tree.treeData; }
