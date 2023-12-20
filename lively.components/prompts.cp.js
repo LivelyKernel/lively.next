@@ -372,9 +372,10 @@ export class EditPromptModel extends TextPromptModel {
   viewDidLoad () {
     const {
       textStyle, input, mode, evalEnvironment, maxWidth,
-      view, ui: { editor }
+      view, label, ui: { editor, promptTitle }
     } = this;
 
+    promptTitle.value = label;
     view.hasFixedPosition = true;
 
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'IBM Plex Mono';
