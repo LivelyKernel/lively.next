@@ -1,7 +1,6 @@
 /*global fetch, Uint8Array*/
 
 import { resource } from "lively.resources";
-import { show } from "lively.morphic";
 
 function fixPath(path) {
   if (path.startsWith("http:/") && path[6] !== "/") return "http://" + path.slice(6);
