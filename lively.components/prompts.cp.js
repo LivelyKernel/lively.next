@@ -124,15 +124,6 @@ export class InformPromptModel extends AbstractPromptModel {
 export class ConfirmPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
-      label: {
-        defaultValue: ['Confirm\n\
-', {
-          fontWeight: 'bold'
-        }, 'An appropriate message for the user that helps them to understand the situation!', {
-          fontSize: 17,
-          fontWeight: 'normal'
-        }]
-      },
       forceConfirm: { defaultValue: false },
       lineWrapping: { defaultValue: true },
       confirmLabel: { defaultValue: 'OK' },
@@ -886,16 +877,7 @@ const EditPrompt = component(ConfirmPrompt, {
   defaultViewModel: EditPromptModel,
   name: 'edit prompt',
   extent: pt(385, 481),
-  submorphs: [{
-    name: 'prompt title',
-    textAndAttributes: ['Confirm\n\
-', {
-      fontWeight: 'bold'
-    }, 'An appropriate message for the user that helps them to understand the situation!', {
-      fontSize: 17,
-      fontWeight: 'normal'
-    }]
-  }, add({
+  submorphs: [add({
     name: 'editor',
     type: Text,
     extent: pt(525.2, 300),
