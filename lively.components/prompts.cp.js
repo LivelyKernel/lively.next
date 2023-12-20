@@ -250,11 +250,11 @@ export class TextPromptModel extends ConfirmPromptModel {
 
   focus () { this.ui.input.focus(); }
 
-  resolve () {
+  resolve (input = this.ui.input.input) {
     const inputLine = this.ui.input;
-    if (this.validate(inputLine.input)) {
-      return this.answer.resolve(inputLine.acceptInput());
-    } else inputLine.indicateError(this.errorMessage);
+    if (this.validate(input)) {
+      return this.answer.resolve(input || inputLine.acceptInput());
+    } else if (inputLine) inputLine.indicateError(this.errorMessage);
   }
 
   viewDidLoad () {
@@ -408,7 +408,9 @@ export class EditPromptModel extends TextPromptModel {
       return super.resolve(this.ui.editor.textAndAttributes);
     }
 
-    const content = this.ui.editor.textString.trim();
+    const { editor } = this.ui;
+
+    const content = editor.textString.trim();
     if (this.historyId) {
       const hist = InputLine.getHistory(this.historyId);
       hist.items = hist.items.filter(ea => ea !== content);
@@ -800,9 +802,7 @@ export const OKCancelButtonWrapper = component({
   fill: Color.rgba(0, 0, 0, 0),
   layout: new TilingLayout({
     align: 'center',
-    orderByIndex: true,
-    reactToSubmorphAnimations: false,
-    renderViaCSS: true,
+    axisAlign: 'center',
     spacing: 20
   }),
   submorphs: [part(GreenButton, {
@@ -885,10 +885,22 @@ const TextPrompt = component(ConfirmPrompt, {
 const EditPrompt = component(ConfirmPrompt, {
   defaultViewModel: EditPromptModel,
   name: 'edit prompt',
-  submorphs: [add({
+  extent: pt(385, 481),
+  submorphs: [{
+    name: 'prompt title',
+    textAndAttributes: ['Confirm\n\
+', {
+      fontWeight: 'bold'
+    }, 'An appropriate message for the user that helps them to understand the situation!', {
+      fontSize: 17,
+      fontWeight: 'normal'
+    }]
+  }, add({
     name: 'editor',
     type: Text,
+    extent: pt(525.2, 300),
     fontSize: 12,
+    readOnly: false,
     master: InputLineDefault,
     height: 300
   }, 'button wrapper')]
