@@ -104,7 +104,7 @@ export class TextSearcher {
 
     const result = this.document[backwards ? 'scanBackward' : 'scanForward'](start, search);
 
-    return result === {} ? null : result;
+    return result || null;
   }
 
   /**
@@ -413,7 +413,7 @@ export class SearchWidgetModel extends ViewModel {
   }
 
   search () {
-    debounceNamed('search', 10, () => {
+    debounceNamed('search', 500, () => {
       if (!this.input) {
         this.cleanup();
         this.showNoSearchHint();
