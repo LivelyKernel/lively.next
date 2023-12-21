@@ -312,7 +312,7 @@ export class MorphNodeModel extends ViewModel {
     let indicatorRot = 0;
     if (target.layout && target.layout.name() === 'Tiling') {
       indicatorVisibility = true;
-      indicatorRot = target.layout.axis === 'column' ? Math.PI / 2 : 0;
+      indicatorRot = target.layout.axis !== 'column' ? Math.PI / 2 : 0;
     }
     if (layoutIndicator.visible !== indicatorVisibility) { layoutIndicator.visible = indicatorVisibility; }
     if (layoutIndicator.rotation !== indicatorRot) { layoutIndicator.rotation = indicatorRot; }
