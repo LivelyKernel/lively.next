@@ -10,7 +10,7 @@ export var multiSelectCommands = [
       const start = morph.selection.start;
       if (start.row > 0) {
         const pos = morph.getPositionAboveOrBelow(
-          1, start, true, 0, morph.charBoundsFromTextPosition(start).x);
+          1, start, false, 0, morph.charBoundsFromTextPosition(start).x);
         morph.selection.addRange({ start: pos, end: pos });
       }
       return true;
@@ -25,7 +25,7 @@ export var multiSelectCommands = [
       const { row: endRow } = morph.documentEndPosition;
       if (start.row < endRow) {
         const pos = morph.getPositionAboveOrBelow(
-          -1, start, true, 0, morph.charBoundsFromTextPosition(start).x);
+          -1, start, false, 0, morph.charBoundsFromTextPosition(start).x);
         morph.selection.addRange({ start: pos, end: pos });
       }
       return true;
