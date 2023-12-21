@@ -8,7 +8,6 @@ import {
 import { Canvas } from 'lively.components/canvas.js';
 import { Closure, fun, obj } from 'lively.lang';
 
-import { CommentBrowser } from 'lively.collab';
 import { once, connect, disconnect, signal } from 'lively.bindings';
 import { getClassName } from 'lively.serializer2';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
@@ -147,7 +146,6 @@ export class TopBarModel extends ViewModel {
             { target: 'hand or halo mode button', signal: 'onMouseDown', handler: 'cursorMode' },
             { target: 'open asset browser', signal: 'onMouseDown', handler: () => this.browseAssets() },
             { target: 'open component browser', signal: 'onMouseDown', handler: () => this.interactivelyLoadComponent() },
-            { target: 'comment browser button', signal: 'onMouseDown', handler: () => this.toggleCommentBrowser() },
             { target: 'canvas mode button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null); } },
             { target: 'canvas mode button', signal: 'dropDownTriggered', handler: () => this.canvasMenu() },
             { signal: 'onKeyDown', handler: 'onKeyDown' },
@@ -401,21 +399,6 @@ export class TopBarModel extends ViewModel {
 
   colorTopbarButton (button, active) {
     button.master.setState(active ? 'selected' : null);
-  }
-
-  toggleCommentBrowser () {
-    const commentBrowser = $world.getSubmorphNamed('Comment Browser');
-    const commentBrowserButton = this.ui.commentBrowserButton;
-    if (commentBrowser) {
-      this.colorTopbarButton(commentBrowserButton, false);
-      commentBrowser.getWindow().close();
-    } else {
-      this.colorTopbarButton(commentBrowserButton, true);
-      const win = part(CommentBrowser).openInWindow();
-      once(win, 'remove', () => {
-        this.colorTopbarButton(commentBrowserButton, false);
-      });
-    }
   }
 
   toggleMiniMap (forceState) {
@@ -984,11 +967,6 @@ const TopBar = component({
         padding: rect(3, 0, -3, 0),
         textAndAttributes: Icon.textAttribute('cubes'),
         tooltip: 'Browse master components'
-      }),
-      part(TopBarButton, {
-        name: 'comment browser button',
-        textAndAttributes: Icon.textAttribute('comment-alt'),
-        tooltip: 'Toggle Comment Browser'
       }),
       part(TopBarButtonDropDown, {
         name: 'canvas mode button',
