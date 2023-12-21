@@ -131,6 +131,7 @@ export class SearchWidgetModel extends ViewModel {
   static get properties () {
     return {
       target: {},
+      browser: {},
       state: {
         initialize () {
           this.state = {
@@ -301,6 +302,7 @@ export class SearchWidgetModel extends ViewModel {
 
     if (!text.isLineFullyVisible(pos.row)) text.centerRow();
     this.updateCursorMarker();
+    this.browser?.updateFocusedCodeEntityDebounced();
   }
 
   removeSearchMarkers () {
@@ -564,8 +566,9 @@ export const searchCommands = [
     name: 'search in text',
     exec: async (morph, opts = { backwards: false }) => {
       const { SearchWidget } = await System.import('lively.ide/text/search.cp.js');
+      const browser = morph.owner.isBrowser ? morph.owner : null;
       const search = morph._searchWidget ||
-        (morph._searchWidget = part(SearchWidget, { viewModel: { target: morph } }));
+        (morph._searchWidget = part(SearchWidget, { viewModel: { target: morph, browser } }));
       search.state.backwards = opts.backwards;
       search.prepareForNewSearch();
 
