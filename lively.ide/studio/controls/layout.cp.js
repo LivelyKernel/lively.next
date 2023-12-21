@@ -134,6 +134,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'column' });
     });
     this.update();
+    const sceneGraph = this.world().sceneGraph;
+    if (sceneGraph) sceneGraph.refresh();
   }
 
   setHorizontalFlow () {
@@ -141,6 +143,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       this.targetMorph.layout = this.targetMorph.layout.with({ axis: 'row' });
     });
     this.update();
+    const sceneGraph = this.world().sceneGraph;
+    if (sceneGraph) sceneGraph.refresh();
   }
 
   hasMixedPadding () {
