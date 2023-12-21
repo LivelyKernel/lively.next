@@ -552,7 +552,7 @@ export class TopBarModel extends ViewModel {
             readOnly: true,
             textString: 'I am a text field!',
             dynamicCursorColoring: true,
-            fill: Color.white
+            fill: Color.rgbHex('FFFEFE')
           });
           textMorph.addPlugin(new RichTextPlugin());
           target.addMorph(textMorph);
@@ -580,7 +580,7 @@ export class TopBarModel extends ViewModel {
       scale: $world.scaleFactor,
       position: this._shapeCreationStartPos,
       extent: pt(1, 1),
-      fill: Color.white,
+      fill: Color.rgbHex('FFFEFE'),
       borderWidth: 1,
       borderColor: Color.rgb(23, 160, 251),
       fixedHeight: true,
