@@ -138,8 +138,6 @@ export class TopBarModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { target: 'undo button', signal: 'onMouseDown', handler: () => this.target.execCommand('undo') },
-            { target: 'redo button', signal: 'onMouseDown', handler: () => this.target.execCommand('redo') },
             { target: 'save button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.saveButton === evt.targetMorphs[0]) $world.execCommand('save world or project'); } },
             { target: 'text mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Text') },
             { target: 'shape mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Shape') },
@@ -935,16 +933,6 @@ const TopBar = component({
       spacing: 13
     }),
     submorphs: [
-      part(TopBarButton, {
-        name: 'undo button',
-        textAndAttributes: Icon.textAttribute('reply'),
-        tooltip: 'Undo'
-      }),
-      part(TopBarButton, {
-        name: 'redo button',
-        textAndAttributes: Icon.textAttribute('share'),
-        tooltip: 'Redo'
-      }),
       part(TopBarButtonDropDown, {
         name: 'save button',
         viewModel: {
