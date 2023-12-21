@@ -636,6 +636,7 @@ export class BrowserModel extends ViewModel {
             'relayout',
             'ensureColumnViewData',
             'state',
+            'updateFocusedCodeEntityDebounced',
             { method: 'serializeBrowser', as: '__serialize__' }
           ];
         }
