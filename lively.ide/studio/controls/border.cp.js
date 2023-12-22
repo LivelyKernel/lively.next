@@ -361,10 +361,10 @@ const BorderControlElements = component({
       spacing: 10
     }),
     submorphs: [part(DarkNumberIconWidget, {
-      tooltip: 'Border Width',
       name: 'border width input',
+      viewModel: { min: 0 },
+      tooltip: 'Border Width',
       extent: pt(90, 22),
-      min: 0,
       submorphs: [{
         name: 'interactive label',
         textAndAttributes: ['', {
@@ -518,7 +518,6 @@ const BorderControl = component(PropertySection, {
         submorphs: [{
           name: 'border width input',
           extent: pt(59.9, 22),
-          min: 0,
           tooltip: 'Border Width',
           submorphs: [{
             name: 'value',
