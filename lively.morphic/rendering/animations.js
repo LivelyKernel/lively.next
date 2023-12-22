@@ -432,7 +432,10 @@ export class PropertyAnimation {
           this.morph.withMetaDo({ metaInteraction: true }, () => {
             customTween(easingFn(p));
           }));
-        if (p >= 1) return this.finish('css');
+        if (p >= 1) {
+          customTween(easingFn(1));
+          return this.finish('css');
+        }
         requestAnimationFrame(draw);
       };
       requestAnimationFrame(draw);
