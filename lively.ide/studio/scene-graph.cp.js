@@ -6,7 +6,7 @@ import { PropLabel } from 'lively.ide/studio/shared.cp.js';
 import { SceneGraphTree, InteractiveTreeData } from './interactive-tree.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
 import { getClassName } from 'lively.serializer2';
-import { arr, obj, fun } from 'lively.lang';
+import { arr, num, obj, fun } from 'lively.lang';
 import { connect } from 'lively.bindings';
 
 export class MorphPanelModel extends ViewModel {
@@ -552,7 +552,8 @@ const MorphNode = component({
   }, {
     type: Label,
     name: 'layout indicator',
-    rotation: 1.5707963267948966,
+    padding: rect(4,1,0,0),
+    rotation: num.toRadians(90.0),
     fill: Color.rgba(229, 231, 233, 0),
     fontColor: Color.rgb(208, 208, 208),
     fontFamily: 'Material Icons',
