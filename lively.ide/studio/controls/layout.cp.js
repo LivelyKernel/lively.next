@@ -330,7 +330,6 @@ const PaddingInput = component(DarkNumberIconWidget, {
     without('interactive label'), {
       name: 'value',
       textAlign: 'center',
-      min: 0,
       padding: rect(0, 2, 0, -2)
     }]
 });
@@ -497,7 +496,7 @@ const LayoutControl = component(PropertySection, {
       part(DarkNumberIconWidget, {
         name: 'spacing input',
         width: 60,
-        min: 0,
+        viewModel: { min: 0 },
         tooltip: 'Spacing between Items',
         submorphs: [{
           name: 'interactive label',
@@ -509,7 +508,7 @@ const LayoutControl = component(PropertySection, {
       part(DarkNumberIconWidget, {
         name: 'total padding input',
         width: 60,
-        min: 0,
+        viewModel: { min: 0 },
         tooltip: 'Padding between Container and Items',
         submorphs: [{
           name: 'interactive label',

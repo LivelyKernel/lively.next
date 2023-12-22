@@ -540,7 +540,7 @@ const NumberWidgetLight = component(DefaultNumberWidget, {
   dropShadow: null,
   submorphs: [
     { name: 'value', fontColor: Color.black, cursorColor: Color.gray, fontSize: 14 },
-    { name: 'button holder', visible: false }
+    without('button holder')
   ]
 });
 
@@ -566,7 +566,7 @@ const NumberPopupLight = component(PopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(NumberWidgetLight, {
       name: 'value input',
-      min: 0,
+      viewModel: { min: 0 },
       position: pt(11.3, 14),
       submorphs: [{
         name: 'interactive label',
@@ -783,8 +783,10 @@ export const PaddingControlsLight = component({
   submorphs: [
     part(NumberWidgetLight, {
       name: 'padding all',
-      min: 0,
-      number: 0,
+      viewModel: {
+        min: 0,
+        number: 0
+      },
       extent: pt(60, 22),
       position: pt(9.7, 6.6),
       tooltip: 'Padding',
@@ -843,7 +845,7 @@ export const PaddingControlsLight = component({
         },
         part(NumberWidgetLight, {
           name: 'padding left',
-          min: 0,
+          viewModel: { min: 0 },
           extent: pt(35, 22),
           tooltip: 'Leftside Padding',
           borderRadiusTopRight: 0,
