@@ -3433,6 +3433,25 @@ export class Path extends Morph {
   }
 
   patchSpecialProps (node, renderer) {
+    // FIXME: Since both renderer and WebAnimations
+    //        perform changes to the dom it is crucial to keep them from
+    //        overriding each other in order to avoid weird flickering artefacts.
+    //        In the old VDOM implementation we had a relatively simple
+    //        mechanism, that allowed us to perform a "handoff" between the
+    //        renderer and the animations.
+    //        By allowing the animation queues to mask the properties temporarily
+    //        we pass to the VDOM (effectively tricking the VDOM into thinking
+    //        nothing had changed), we could easily prevent the VDOM from
+    //        interfering with the running animations.
+    //        The new renderer performs the dom updates and book keeping that the
+    //        VDOM provided out of the box in a completely custom way.
+    //        But that requires us to make the renderer animation "aware"
+    //        in order not to obstruct. Right now this condition below
+    //        kind of allows for that, however I am not sure how stable it is
+    //        since it completely silences the render pass, assuming
+    //        EVERYTHING is handled by the animations.
+    if (this._animationQueue.animations.length > 0) return;
+
     if (!obj.equals(this.borderColor, this.renderingState.borderColor)) {
       renderer.renderPolygonBorderColor(this);
       this.renderingState.borderColor = this.borderColor;
