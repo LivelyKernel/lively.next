@@ -3081,9 +3081,7 @@ export class PathPoint {
 
   moveBy (delta) {
     this.position = this.position.addPt(delta);
-    this.path.withMetaDo({ reconcileChanges: true }, () => {
-      this.path.onVertexChanged(this);
-    });
+    this.path.onVertexChanged(this);
     return this;
   }
 
@@ -3179,9 +3177,7 @@ export class PathPoint {
         next: isLast ? pt(0, 0) : nextPos.subPt(position).scaleBy(0.5)
       };
     }
-    path.withMetaDo({ reconcileChanges: true }, () => {
-      path.onVertexChanged(this);
-    });
+    path.onVertexChanged(this);
   }
 }
 
@@ -3216,13 +3212,24 @@ export class Path extends Morph {
         after: ['isSmooth', 'borderWidth'],
         before: ['extent', 'origin'],
         type: 'Vertices',
+        isStyleProp: true,
         set (vs) {
           const { isSmooth } = this;
           this._adjustingVertices = true;
           vs = vs.map(v => v.isPathPoint
             ? Object.assign(v, { path: this })
             : new PathPoint(this, { isSmooth, ...v }));
-          vs.__serialize__ = this.verticesAsExpression.bind(vs);
+          vs.__serialize__ = () => {
+            const verticesExpressions = vs.map(v => v.__serialize__());
+            return {
+              __expr__: `[${verticesExpressions.map(expr => expr.__expr__).join(',')}]`,
+              bindings: Object.assign(...verticesExpressions.map(expr => expr.bindings))
+            };
+          };
+          if (obj.equals(vs, this.vertices)) {
+            this._adjustingVertices = false;
+            return;
+          }
           this.setProperty('vertices', vs);
           this._adjustingVertices = false;
           this.updateBounds(vs);
@@ -3285,14 +3292,6 @@ export class Path extends Morph {
     this.updateBounds(this.vertices);
   }
 
-  verticesAsExpression () {
-    const verticesExpressions = this.map(v => v.__serialize__());
-    return {
-      __expr__: `[${verticesExpressions.map(expr => expr.__expr__).join(',')}]`,
-      bindings: Object.assign(...verticesExpressions.map(expr => expr.bindings))
-    };
-  }
-
   __after_deserialize__ (snapshot, objRef, pool) {
     super.__after_deserialize__(snapshot, objRef, pool);
     this.updateBounds(this.vertices);
@@ -3321,7 +3320,6 @@ export class Path extends Morph {
   onVertexChanged (vertex) {
     this.makeDirty();
     this.updateBounds(this.vertices);
-    this.setProperty('vertices', this.vertices);
   }
 
   copyVertices () {
@@ -3698,11 +3696,10 @@ export class Path extends Morph {
 
 export class Polygon extends Path {
   constructor (props) {
-    if (props.vertices && props.vertices.length > 2) {
-      super(props);
-    } else {
-      throw new Error('A polygon requires 3 or more vertices!');
+    if (!props.vertices || props.vertices?.length < 3) {
+      props.vertices = [pt(0, 0), pt(100, 100), pt(0, 100)];
     }
+    super(props);
   }
 
   get isPolygon () { return true; }
