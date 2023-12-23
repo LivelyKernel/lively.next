@@ -1304,20 +1304,31 @@ export class Morph {
     // collect all changes inside the submorphs and animate them
     const { changes } = this.groupChangesWhile(false, cb);
     const affectedMorphs = new Set(this.withAllSubmorphsSelect(Boolean));
-    await Promise.all(Object.values(arr.groupBy(changes, change => change.target.id))
+    const animationConfigs = Object.values(arr.groupBy(changes, change => change.target.id))
       .map((changes) => {
         const animConfig = { ...config };
         let target;
-        changes.forEach(change => {
+        // group all of the changes by prop
+        Object.values(arr.groupBy(changes, change => change.prop)).forEach(changes => {
+          let [change] = changes;
+          if (changes.length > 1) {
+            // create a merge of the first and last change of the prop
+            change = { ...change, value: arr.last(changes).value };
+            change.__proto__ = changes[0].__proto__;
+          }
           if (change.prop === 'master' || !affectedMorphs.has(change.target)) return;
           target = change.target;
+          // can this reverse apply happen earlier?
           this.withMetaDo({ metaInteraction: true }, () => {
             change.reverseApply();
           });
           animConfig[change.prop] = change.value;
         });
-        return target && target.animate(animConfig);
-      }));
+        return [target, animConfig];
+      });
+    await Promise.all(animationConfigs.map(([target, animConfig]) => {
+      return target && target.animate(animConfig);
+    }));
   }
 
   isClip () { return this.clipMode !== 'visible'; }
