@@ -749,7 +749,7 @@ export default class LivelyRollup {
   async getRuntimeCode () {
     const includePolyfills = this.includePolyfills && this.asBrowserModule;
     let runtimeCode = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js'))).read();
-    const regeneratorSource = await resource('https://unpkg.com/regenerator-runtime@0.13.7/runtime.js').read();
+    const regeneratorSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/regenerator-runtime.js'))).read();
     const polyfills = includePolyfills ? await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js'))).read() : '';
     runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
