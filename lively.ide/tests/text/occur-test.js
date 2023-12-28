@@ -16,7 +16,7 @@ function text (string, props) {
   return new Text({
     name: 'text',
     textString: string,
-    fontFamily: 'Monaco, monosonpace',
+    fontFamily: 'IBM Plex Mono',
     fontSize: 10,
     extent: pt(100, 100),
     padding: Rectangle.inset(2),
