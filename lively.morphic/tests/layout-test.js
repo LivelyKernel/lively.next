@@ -1,3 +1,4 @@
+/* global afterEach */
 /* global  it, describe, beforeEach, before, after */
 import { expect } from 'mocha-es6';
 import { Morph, morph, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
@@ -724,31 +725,41 @@ describe('layout', () => {
     beforeEach(() => container = morph({
       extent: pt(100, 100),
       fill: Color.yellow,
-      layout: new ConstraintLayout({}),
+      layout: new ConstraintLayout({ renderViaCSS: false }),
       submorphs: [
         { name: 'a', extent: pt(10, 10), fill: Color.red, position: pt(10, 10) },
         { name: 'b', extent: pt(10, 10), fill: Color.orange, position: pt(50, 50) }
       ]
-    }));
+    }).openInWorld());
+
+    afterEach(() => container.remove());
 
     it('does not resize by default', () => {
-      container.extent = pt(120, 120);
-      container.applyLayoutIfNeeded();
-      expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
+      checkJSAndCSS(container, () => {
+        container.extent = pt(120, 120);
+        container.applyLayoutIfNeeded();
+        expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
+        container.extent = pt(100, 100);
+      });
     });
 
     it('moves', () => {
-      container.layout = new ConstraintLayout({ submorphSettings: [['a', 'move']] });
-      container.extent = pt(120, 120);
-      container.applyLayoutIfNeeded();
-      expect(container.submorphs[0].bounds()).equals(rect(30, 30, 10, 10));
+      container.layout = new ConstraintLayout({ renderViaCSS: false, submorphSettings: [['a', 'move']] });
+      checkJSAndCSS(container, () => {
+        container.extent = pt(120, 120);
+        container.applyLayoutIfNeeded();
+        expect(container.submorphs[0].bounds()).equals(rect(30, 30, 10, 10));
+        container.extent = pt(100, 100);
+      });
     });
 
     it('fixed', () => {
       container.layout = new ConstraintLayout({ submorphSettings: [['a', 'fixed']] });
       container.extent = pt(120, 120);
       container.applyLayoutIfNeeded();
-      expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
+      checkJSAndCSS(container, () => {
+        expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
+      });
     });
   });
 
