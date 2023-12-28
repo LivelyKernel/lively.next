@@ -57,10 +57,16 @@ function ensureFileFormat(url) {
 
 // fixme: if we are bundling from a node.js script but targeting the browser, we need to properly resolve /npm- urls
 function resolveModuleId (moduleName, importer, context = 'node') {
-  if (moduleName.startsWith('esm://cache/')) return moduleName.replace('esm://cache/', 'https://jspm.dev/'); // for now
+  if (moduleName.startsWith('esm://cache/')) {
+    return moduleName;
+  }
   if (importer && importer.startsWith('https://jspm.dev/')) {
     if (moduleName.startsWith('/')) 'https://jspm.dev' + moduleName;
     if (moduleName.startsWith('https://jspm.dev')) return moduleName;
+  }
+  if (importer && importer.startsWith('esm://cache/')) {
+    if (moduleName.startsWith('/')) 'esm://cache/' + moduleName;
+    if (moduleName.startsWith('esm://cache/')) return moduleName;
   }
   if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
   if (moduleName.startsWith('./') || moduleName.startsWith('../'))
