@@ -53,8 +53,11 @@ export class ESMResource extends Resource {
     return module;
   }
 
+  getBaseURL() {
+    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir
+  }
   async findOrCreatePathStructure (pathElements) {
-    const cachePath = string.joinPath(System.baseURL, '/esm_cache/');
+    const cachePath = string.joinPath(this.getBaseURL(), '/esm_cache/');
 
     let currPath = cachePath;
     let pathRes;
