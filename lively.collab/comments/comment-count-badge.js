@@ -10,9 +10,7 @@ export class CommentCountBadgeModel extends ViewModel {
         },
         set (text) {
           this.ui.badgeLabel.textString = text;
-          if (this.morph) {
-            this.alignWithMorph();
-          }
+          this.alignWithMorph();
         }
       },
       morph: {},
@@ -32,7 +30,7 @@ export class CommentCountBadgeModel extends ViewModel {
   }
 
   alignWithMorph () {
-    this.view.position = this.morph.globalPosition.addXY(this.morph.width, 0).addXY(-5, 5);
+    if (this.morph) { this.view.position = this.morph.globalPosition.addXY(this.morph.width, 0).addXY(-5, 5); }
   }
 
   addToMorph (morph) {
