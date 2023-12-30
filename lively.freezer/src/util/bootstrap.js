@@ -148,6 +148,9 @@ async function fastLoadPackages (progress) {
   await System.import('lively.project');
   extractModules('lively.project');
 
+  await System.import('lively.collab');
+  extractModules('lively.collab');
+
   // lively.freezer
   await System.import('lively.freezer');
   extractModules('lively.freezer');
