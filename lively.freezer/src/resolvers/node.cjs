@@ -48,6 +48,7 @@ function isAlreadyResolved(url) {
   if (url.startsWith('file://') ||
       url.startsWith('https://') ||
       url.includes('jspm.dev') ||
+      url.includes('esm://') ||
       url.startsWith('node:')) return true;
 }
 
@@ -65,7 +66,7 @@ function resolveModuleId (moduleName, importer, context = 'node') {
     if (moduleName.startsWith('https://jspm.dev')) return moduleName;
   }
   if (importer && importer.startsWith('esm://cache/')) {
-    if (moduleName.startsWith('/')) 'esm://cache/' + moduleName;
+    if (moduleName.startsWith('/')) 'esm://cache' + moduleName;
     if (moduleName.startsWith('esm://cache/')) return moduleName;
   }
   if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
