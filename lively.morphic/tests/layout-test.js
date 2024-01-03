@@ -1,5 +1,7 @@
 /* global afterEach */
 /* global  it, describe, beforeEach, before, after */
+/* eslint-disable no-unused-vars */
+
 import { expect } from 'mocha-es6';
 import { Morph, morph, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
@@ -216,9 +218,7 @@ describe('layout', () => {
       let a = grid.row(2).col(2);
       let b = grid.row(1).col(2);
       let aGroup = a.group;
-      console.log(aGroup);
       expect(aGroup.morph).not.to.be.null;
-      console.log(b);
       expect(b.group.morph).to.be.null;
       b.group.connect(a);
       expect(b.group.morph).not.to.be.null;
@@ -754,11 +754,12 @@ describe('layout', () => {
     });
 
     it('fixed', () => {
-      container.layout = new ConstraintLayout({ submorphSettings: [['a', 'fixed']] });
-      container.extent = pt(120, 120);
-      container.applyLayoutIfNeeded();
+      container.layout = new ConstraintLayout({ renderViaCSS: false, submorphSettings: [['a', 'fixed']] });
       checkJSAndCSS(container, () => {
+        container.extent = pt(120, 120);
+        container.applyLayoutIfNeeded();
         expect(container.submorphs[0].bounds()).equals(rect(10, 10, 10, 10));
+        container.extent = pt(100, 100);
       });
     });
   });
