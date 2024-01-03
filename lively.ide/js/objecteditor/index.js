@@ -1058,7 +1058,7 @@ export class ObjectEditorModel extends ViewModel {
     }));
 
     let warnings = false;
-    [content, warnings] = lint(content, { 'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: `_|${className}` }] });
+    [content, warnings] = lint(content, { 'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: `${className}` }] });
 
     const editorSourceHash = string.hashCode(content);
     const { sourceChanged, outsideChangeWarning, selectedModuleId } = await this.withContextDo((ctx) => {
