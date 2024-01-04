@@ -3327,7 +3327,6 @@ export class Path extends Morph {
   }
 
   updateBounds (vertices = this.vertices) {
-    // vertices = this.vertices
     if (!vertices.length) return;
     if (this._adjustingVertices) return;
     this._adjustingVertices = true;
@@ -3649,7 +3648,10 @@ export class Path extends Morph {
     if (v) {
       const delta = this.getInverseTransform().transformDirection(evt.state.dragDelta);
       if (ctrlN === undefined) {
-        v.moveBy(delta);
+        this.withMetaDo({ reconcileChanges: true }, () => {
+          v.moveBy(delta);
+          this.setProperty('vertices', this.vertices);
+        });
         const vp = vertices[n - 1]; const vn = vertices[n + 1];
 
         // merge?
@@ -3676,14 +3678,18 @@ export class Path extends Morph {
         const v1 = vertices[i]; const v2 = vertices[j];
         v1.controlPoints.next = v2.controlPoints.next;
         vertices.splice(j, 1);
-        this.vertices = vertices;
+        this.withMetaDo({ reconcileChanges: true }, () => {
+          this.vertices = vertices;
+        });
       }
     }
   }
 
   onDoubleMouseDown (evt) {
     if (this.showControlPoints) {
-      this.addVertexCloseTo(this.localize(evt.position));
+      this.withMetaDo({ reconcileChanges: true }, () => {
+        this.addVertexCloseTo(this.localize(evt.position));
+      });
     }
   }
 
