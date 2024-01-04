@@ -17,6 +17,7 @@ import { Path } from 'lively.morphic/morph.js';
 import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
+import { signal } from 'lively.bindings';
 
 export const missingSVG = `data:image/svg+xml;utf8,
 <svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
@@ -341,7 +342,7 @@ export class WorldBrowserModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['alignInWorld', 'keybindings', 'commands', 'displayItems', 'allFontsLoaded'];
+          return ['alignInWorld', 'keybindings', 'commands', 'displayItems', 'allFontsLoaded', 'fadeOut', 'progressIndicator'];
         }
       },
       bindings: {
@@ -354,6 +355,7 @@ export class WorldBrowserModel extends ViewModel {
           ];
         }
       },
+      progressIndicator: {},
       playgroundsMode: {
         defaultValue: false
       },
@@ -366,6 +368,23 @@ export class WorldBrowserModel extends ViewModel {
       }
 
     };
+  }
+
+  async fadeOut () {
+    const { view } = this;
+    signal(view, 'zoomBackground'); // this is actually for the purpose of migrating the the progress bar
+    const center = view.center;
+    const easing = easings.outExpo;
+    view.animate({
+      scale: 1.3,
+      opacity: 0,
+      easing
+    });
+    await view.animate({
+      center,
+      easing
+    });
+    view.remove();
   }
 
   async onRefresh (prop) {
@@ -433,12 +452,12 @@ export class WorldBrowserModel extends ViewModel {
     if (mode === 'Playgrounds') {
       this.playgroundsMode = true;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PLAYGROUND');
-      this.ui.noWorldWarning.textAndAttributes = ['There are no playgrounds yet. Create one!', null]
+      this.ui.noWorldWarning.textAndAttributes = ['There are no playgrounds yet. Create one!', null];
     }
     if (mode === 'Projects') {
       this.playgroundsMode = false;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PROJECT');
-      this.ui.noWorldWarning.textAndAttributes = ['There are no projects yet. Create one!', null]
+      this.ui.noWorldWarning.textAndAttributes = ['There are no projects yet. Create one!', null];
     }
     this.displayItems();
   }
@@ -697,56 +716,20 @@ export class WorldPreviewModel extends ViewModel {
     this.view.animate({ opacity: 1, duration: 300 });
   }
 
-  async openAnimated (targetBounds = $world.visibleBounds()) {
-    const { ProgressBar } = await System.import('lively.freezer/src/loading-screen.cp.js');
-    let pb;
-    const copy = morph({
-      ...this.view.spec(),
-      reactsToPointer: false,
-      renderOnGPU: true,
-      clipMode: 'hidden',
-      submorphs: [pb = part(ProgressBar, { visible: false, center: this.view.innerBounds().center() })]
-    }).openInWorld();
-    Object.assign(copy, {
-      reactsToPointer: false,
-      renderOnGPU: true,
-      clipMode: 'hidden'
-    });
-    copy.hasFixedPosition = true;
-    copy.globalPosition = this.view.globalPosition;
-    copy.opacity = 0;
-    await copy.animate({ opacity: 1, duration: 300 });
-    const duration = 500;
-    copy.dropShadow = false;
-    copy.animate({
-      bounds: targetBounds,
-      borderRadius: 0,
-      duration,
-      easing: easings.inOutQuint
-    });
-    copy.respondsToVisibleWindow = true;
-    await pb.animate({
-      visible: true,
-      center: copy.innerBounds().center(),
-      easing: easings.inOutQuint,
-      duration
-    });
-    return copy;
+  openAnimated (targetBounds = $world.visibleBounds()) {
+    this._worldBrowser.fadeOut();
   }
 
-  async openEntity () {
-    await this.openAnimated();
+  openEntity () {
+    this.openAnimated();
     this.loadEntity();
   }
 
-  async loadEntity () {
-    this.transitionToLivelyWorld(this._commit);
-  }
-
   async transitionToLivelyWorld (commit, projectName) {
+    const progress = this._worldBrowser.progressIndicator;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
-    if (projectName) await bootstrap({ projectName, fastLoad: true });
-    else await bootstrap({ commit, fastLoad: true });
+    if (projectName) await bootstrap({ projectName, fastLoad: true, progress });
+    else await bootstrap({ commit, fastLoad: true, progress });
   }
 
   async showVersions () {
@@ -839,7 +822,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     this.view.animate({ opacity: 1, duration: 300 });
   }
 
-  async loadEntity () {
+  async loadEntity (progress) {
     const { _name } = this._project;
     this.transitionToLivelyWorld(null, _name);
   }
