@@ -715,9 +715,9 @@ export default class LivelyRollup {
       // however that does not allow us to transition to the dynamic lively.modules system
       // so we can only utilize s.js in case we do not want to resurrect
       if (this.needsOldSystem) {
-        code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/0.21/dist/system.src.js').read();
+        code += await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/system.0.21.js'))).read();
       } else {
-        code += await resource('https://raw.githubusercontent.com/systemjs/systemjs/6.12.1/dist/system.js').read();
+        code += await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/system.6.js'))).read();
       }
       // stub the globals
       code += `(${instrumentStaticSystemJS.toString()})(System);\n`;
