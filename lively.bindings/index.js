@@ -568,6 +568,7 @@ function once (sourceObj, attrName, targetObj, targetMethodName, spec) {
 }
 
 function signal (sourceObj, attrName, newVal) {
+  if (!sourceObj) return;
   const connections = sourceObj.attributeConnections;
   if (!connections) return;
   const oldVal = sourceObj[attrName];
