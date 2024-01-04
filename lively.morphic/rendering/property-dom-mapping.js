@@ -106,7 +106,9 @@ export function styleProps (morph) {
 }
 
 export function canBePromotedToCompositionLayer (morph) {
-  return (morph.renderOnGPU || (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0) && !morph.owner?.layout?.renderViaCSS;
+  return (morph.renderOnGPU ||
+         (morph.dropShadow && !morph.dropShadow.fast) || morph.grayscale > 0) &&
+        !(morph.isLayoutable && morph.owner?.layout?.renderViaCSS);
 }
 
 export function addTransform (morph, style) {
@@ -121,8 +123,8 @@ export function addTransform (morph, style) {
   }
   if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
-    style.top = '';
-    style.left = '';
+    style.top = owner.layout?.renderViaCSS ? '0px' : '';
+    style.left = owner.layout?.renderViaCSS ? '0px' : '';
   } else {
     style.transform = '';
     style.top = `${y}px`;
