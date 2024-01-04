@@ -59,41 +59,35 @@ function extractModules (packageName) {
 }
 
 async function fastLoadPackages (progress) {
+  progress?.showInfiniteProgress({ packageName: 'lively.ast', frozen: true });
   // lively.lang
   const m = await System.import('lively.lang');
   extractModules('lively.lang');
-  progress?.finishPackage({ packageName: 'lively.lang', frozen: true });
   delete m._prevLivelyGlobal;
 
   // lively.ast
   lively.ast = await System.import('lively.ast');
   extractModules('lively.ast');
-  progress?.finishPackage({ packageName: 'lively.ast', frozen: true });
 
   // lively.source-transform
   lively.sourceTransform = await System.import('lively.source-transform');
   extractModules('lively.source-transform');
-  progress?.finishPackage({ packageName: 'lively.source-transform', frozen: true });
 
   // lively.classes
   await System.import('lively.classes/object-classes.js');
   lively.classes = await System.import('lively.classes');
   extractModules('lively.class');
-  progress?.finishPackage({ packageName: 'lively.classes', frozen: true });
 
   // lively.vm
   lively.vm = await System.import('lively.vm');
   extractModules('lively.vm');
-  progress?.finishPackage({ packageName: 'lively.vm', frozen: true });
 
   // lively.modules is already fully imported due to the bootstrap, so no need to do that here
   extractModules('lively.modules');
-  progress?.finishPackage({ packageName: 'lively.modules', frozen: true });
 
   // lively.storage
   await System.import('lively.storage');
   extractModules('lively.storage');
-  progress?.finishPackage({ packageName: 'lively.storage', frozen: true });
 
   // lively.resources
   await System.import('lively.resources');
@@ -142,7 +136,6 @@ async function fastLoadPackages (progress) {
   // lively.morphic
   lively.morphic = await System.import('lively.morphic');
   extractModules('lively.morphic');
-  progress?.finishPackage({ packageName: 'lively.morphic', frozen: true });
 
   // lively.project
   await System.import('lively.project');
@@ -331,9 +324,9 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         }
       } else {
         await importPackageAndDo('lively.modules', afterImport);
+        progress?.finishPackage({ packageName: 'lively.modules', loaded: true });
       }
       logInfo('Loaded module system:', Date.now() - ts + 'ms');
-      progress?.finishPackage({ packageName: 'lively.modules', loaded: true });
 
       const R = lively.FreezerRuntime;
       const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
@@ -431,7 +424,7 @@ export async function bootstrap ({
         shell: true,
         moduleManager: lively.modules,
         onRenderStart: async () => {
-          document.body.style.background = 'white';
+          document.body.style.background = 'black';
           if (!fastLoad) {
             progress?.finishPackage({ packageName: 'world', loaded: true });
             if (progress) progress.opacity = 0;

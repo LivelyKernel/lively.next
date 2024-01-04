@@ -2,6 +2,8 @@ import { Morph, World, MorphicDB, TilingLayout, part, Icon, Label, component } f
 import { pt, rect, Color } from 'lively.graphics';
 import { resource } from 'lively.resources';
 import { Project } from 'lively.project';
+import { LandingPageBG } from './landing-page.cp.js';
+import { ProgressIndicator } from './progress-indicator.cp.js';
 
 export class WorldLoadingScreen extends Morph {
   static get properties () {
@@ -20,43 +22,24 @@ export class WorldLoadingScreen extends Morph {
     };
   }
 
-  get commands () {
-    return [
-      {
-        name: 'resize on client',
-        exec: () => {
-          this.relayout();
-        }
-      }
-    ];
-  }
-
   async activate () {
     if (lively.FreezerRuntime) {
-      const cssLoadingScreen = this.get('css loading screen');
       const projectName = this.getProjectName();
       const worldName = this.getWorldName();
       const filePath = this.getFilePath();
       const snapshot = this.getSnapshot();
-      let progressBar;
-      if (!this.isFastLoad) {
-        const { ProgressIndicator } = await System.import('lively.freezer/src/progress-indicator.cp.js');
-        progressBar = this.addMorph(part(ProgressIndicator, { name: 'package loading indicator' }));
-      }
-      if (snapshot || this.isFastLoad) {
-        if (progressBar) progressBar.isLayoutable = progressBar.visible = false;
-        cssLoadingScreen.isLayoutable = cssLoadingScreen.visible = true;
-      } else {
-        document.body.style.backgroundColor = 'black';
-      }
+      let progressBar = this.get('loading indicator');
+
+      this.get('background').master.setState(2);
+      document.body.style.backgroundColor = 'black';
 
       if (filePath) {
         this.get('json target indicator').animate({
           opacity: 1, duration: 300
         });
       }
+
       await this.transitionToLivelyWorld({ worldName, filePath, snapshot, projectName }, progressBar);
-      progressBar?.stopStepping();
     }
   }
 
@@ -116,56 +99,21 @@ export class WorldLoadingScreen extends Morph {
   relayout () {
     $world._cachedWindowBounds = null;
     this.setBounds($world.windowBounds());
+    this.get('background').fit();
     this.get('json target indicator').topRight = this.innerBounds().insetBy(25).topRight();
   }
 
   indicateMissing (project) {
-    const ld = this.get('package loading indicator') || this.get('css loading screen');
+    const ld = this.get('loading indicator');
     ld.visible = ld.isLayoutable = false;
     this.get('broken heart').visible = this.get('broken heart').isLayoutable = true;
     this.get('error text').textString = project ? 'Sorry, the project you requested cannot be found on this machine' : 'Sorry, the world you requested cannot be found on this machine';
   }
 }
 
-export const ProgressBar = component({
-  type: 'html',
-  cssDeclaration: '#loading-bar {\n\
-  height: 20px;\n\
-  width: 400px;\n\
-  color: gray;\n\
-  border-style: solid;\n\
-  border-color: gray;\n\
-  border-width: 2px;\n\
-  border-radius: 10px;\n\
-  position: absolute;\n\
-  top: 50%;\n\
-  left: 50%;\n\
-  overflow: hidden;\n\
-  margin: 0px 0 0 -202px;\n\
-}\n\
-\n\
-#progress {\n\
-  background-color: gray;\n\
-  height: 100%;\n\
-  animation: load 5s;\n\
-}\n\
-\n\
-@keyframes load {\n\
-  from { width: 0% }\n\
-  to { width: 100% }\n\
-}',
-  extent: pt(940, 274.3),
-  html: '<div style=position: fixed; z-index: 1; height: 100%; width: 100%; background-color: transparent">\n\
-  <div id="loading-bar">\n\
-     <div id="progress" style="width: 100%;">\n\
-  </div>\n\
-</div></div>'
-
-});
-
 const ErrorIndicator = component({
   type: Label,
-  fontColor: Color.rgb(231, 76, 60),
+  fontColor: Color.rgba(0, 0, 0, 0.8),
   fontSize: 211,
   isLayoutable: false,
   submorphs: [{
@@ -173,7 +121,7 @@ const ErrorIndicator = component({
     name: 'error text',
     borderColor: Color.rgb(23, 160, 251),
     extent: pt(345.1, 104.8),
-    position: pt(-61.4,273.6),
+    position: pt(-61.4, 273.6),
     fill: Color.rgba(0, 0, 0, 0),
     fixedHeight: true,
     fixedWidth: true,
@@ -191,7 +139,8 @@ const ErrorIndicator = component({
 export const LoadingScreen = component({
   type: WorldLoadingScreen,
   name: 'loading screen',
-  extent: pt(1000, 600),
+  clipMode: 'hidden',
+  extent: pt(1002.4, 598.4),
   layout: new TilingLayout({
     align: 'center',
     axisAlign: 'center',
@@ -199,6 +148,11 @@ export const LoadingScreen = component({
     spacing: 10
   }),
   submorphs: [
+    part(LandingPageBG, {
+      name: 'background',
+      position: pt(-151, -130),
+      isLayoutable: false
+    }),
     {
       type: Label,
       name: 'json target indicator',
@@ -216,17 +170,14 @@ export const LoadingScreen = component({
       name: 'broken heart',
       visible: false
     }),
-    part(ProgressBar, {
-      name: 'css loading screen',
-      isLayoutable: false,
-      visible: false
+    part(ProgressIndicator, {
+      name: 'loading indicator'
     })
   ]
 });
 
 export async function main () {
-  const ls = part(LoadingScreen);
-  ls.respondsToVisibleWindow = true;
+  const ls = part(LoadingScreen, { respondsToVisibleWindow: true });
   $world.addMorph(ls);
   ls.activate();
   ls.relayout();

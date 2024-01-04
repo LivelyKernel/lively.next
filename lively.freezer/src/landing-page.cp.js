@@ -1,14 +1,6 @@
-import { Morph, component, config, part, easings } from 'lively.morphic';
-import { promise } from 'lively.lang';
+import { Morph, easings, component, config, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
-import {
-  WebGLRenderer, Scene, AmbientLight, PerspectiveCamera, SpotLight, Color as ThreeColor,
-  TextureLoader, BackSide, MeshBasicMaterial, MeshPhongMaterial, SphereGeometry, Mesh
-} from 'esm://cache/three';
-import { Canvas } from 'lively.components/canvas.js';
 import { LivelyWorld } from 'lively.ide/world.js';
-import { connect } from 'lively.bindings';
-
 // this pulls in a bunch of code
 import { WorldBrowser } from 'lively.ide/studio/world-browser.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
@@ -16,6 +8,11 @@ import { ViewModel } from 'lively.morphic/components/core.js';
 
 import { TilingLayout } from 'lively.morphic/layout.js';
 import { OfflineToggleLight } from 'lively.ide/offline-mode-toggle.cp.js';
+import { LinearGradient } from 'lively.graphics/color.js';
+import { rect } from 'lively.graphics/geometry-2d.js';
+import { Polygon } from 'lively.morphic/morph.js';
+import { connect } from 'lively.bindings';
+import { ProgressIndicator } from './progress-indicator.cp.js';
 
 class LandingPageWorld extends LivelyWorld {
   showHaloFor () {
@@ -27,208 +24,6 @@ class LandingPageWorld extends LivelyWorld {
   }
 }
 
-class WebGLCanvas extends Canvas {
-  static get properties () {
-    return {
-      fps: {}
-    };
-  }
-
-  get context () {
-    if (navigator.webdriver) {
-      return this._canvas && this._canvas.getContext('2d');
-    }
-    return this._canvas && this._canvas.getContext(this.contextType, {
-      preserveDrawingBuffer: true
-    });
-  }
-
-  restoreContent (old_canvas, new_canvas) {
-    if (this.renderer && old_canvas && old_canvas !== new_canvas) {
-      this.owner.context.drawImage(this.renderer.getContext().canvas, 0, 0);
-      this.renderer = new WebGLRenderer({ context: this.context, antialiasing: true });
-      this.renderer.setSize(this.width, this.height);
-    }
-  }
-
-  onExtentChanged () {}
-
-  relayout () {
-    if (this.renderLoop) {
-      // setTimeout(() => this.owner.context.drawImage(this.renderer.getContext().canvas, 0, 0));
-      this.renderer.setSize(this.width, this.height);
-      this.camera.aspect = this.width / this.height;
-      this.camera.updateProjectionMatrix();
-    }
-  }
-
-  stopAnimation () {
-    if (this.renderLoop) {
-      cancelAnimationFrame(this.renderLoop);
-      this.renderer.dispose();
-    }
-  }
-
-  limitLoop (fn, fps) {
-    let then = Date.now(); const self = this;
-
-    // custom fps, otherwise fallback to 60
-    let loop;
-
-    return (loop = () => {
-      self.renderLoop = requestAnimationFrame(loop);
-
-      const now = Date.now();
-      const delta = now - then;
-      const interval = (1000 / (fps || this.fps));
-
-      if (delta > interval) {
-        // Update time
-        // now - (delta % interval) is an improvement over just
-        // using then = now, which can end up lowering overall fps
-        then = now - (delta % interval);
-
-        // call the fn
-        fn();
-        if (self.firstFrameRendered) { self.firstFrameRendered(); }
-      }
-    })(0);
-  }
-}
-
-class Globe extends WebGLCanvas {
-  async fullyLoaded () {
-    let p;
-    ({ resolve: this.firstFrameRendered, promise: p } = promise.deferred());
-    await p;
-  }
-
-  async onLoad () {
-    await this.whenRendered();
-    this.renderGlobe();
-    await this.fullyLoaded();
-    await promise.delay(500);
-    this.get('cover').animate({
-      opacity: 0,
-      easing: easings.inOutCubic
-    });
-    this.relayout();
-    connect(this, 'extent', this, 'onExtentChanged');
-  }
-
-  renderGlobe () {
-    this.stopAnimation();
-    this.withContextDo(webglEl => {
-    	const width = this.width;
-    	const height = this.height;
-      const textureDir = '/lively.morphic/assets/globe-textures/';
-
-    	// Earth params
-    	const radius = 0.5;
-    		   const segments = 32;
-    		   const rotation = 5.2;
-
-    	const scene = new Scene();
-
-    	const camera = new PerspectiveCamera(45, width / height, 0.01, 1000);
-    	camera.position.z = 1;
-      camera.position.x = 0.4;
-      camera.position.y = 0.25;
-      this.camera = camera;
-
-    	scene.add(new AmbientLight(0x333333));
-
-    	const light = new SpotLight(0xffffff, 1, 200, Math.PI / 2, 1);
-    	light.position.set(1, 1, 0);
-      light.castShadow = true;
-      light.shadow.mapSize.width = 1024; // default 512
-      light.shadow.mapSize.height = 1024; // default 512
-      light.shadow.camera.near = 10; // default 0.5
-      light.shadow.camera.far = 100;
-      light.shadow.bias = 0.01;
-    	scene.add(light);
-
-      const sphere = createSphere(radius, segments);
-    	sphere.rotation.y = rotation;
-    	scene.add(sphere);
-
-      const clouds = createClouds(radius, segments);
-    	clouds.rotation.y = rotation;
-    	scene.add(clouds);
-
-    	const stars = createStars(90, 64);
-    	scene.add(stars);
-
-      this.renderer = new WebGLRenderer({ context: webglEl, antialias: true });
-    	this.renderer.setSize(width, height);
-    	const render = () => {
-        if (!document.body.contains(this.renderer.getContext().canvas)) {
-          if (this.removeScheduled) return;
-          this.removeScheduled = setTimeout(() => {
-            if (document.body.contains(this.renderer.getContext().canvas)) return;
-            this.stopAnimation();
-          }, 5000);
-        }
-    		sphere.rotation.y += 0.0005;
-    		clouds.rotation.y += 0.0005;
-    		this.renderer.render(scene, camera);
-    	};
-
-      this.limitLoop(render);
-
-      this.camera.position.z = 1;
-      this.camera.position.x = 0.4;
-      this.camera.position.y = 0.25;
-
-    	function createSphere (radius, segments) {
-        const loader = new TextureLoader();
-    		return new Mesh(
-    			new SphereGeometry(radius, segments, segments),
-    			new MeshPhongMaterial({
-    				map: loader.load(textureDir + '2_no_clouds_4k.jpg'),
-    				bumpMap: loader.load(textureDir + 'elev_bump_4k.jpg'),
-    				bumpScale: 0.005,
-            shininess: 5,
-    				specularMap: loader.load(textureDir + 'water_4k.png'),
-    				specular: new ThreeColor('grey')
-    			})
-    		);
-    	}
-
-    	function createClouds (radius, segments) {
-        const loader = new TextureLoader();
-    		return new Mesh(
-    			new SphereGeometry(radius + 0.003, segments, segments),
-    			new MeshPhongMaterial({
-    				map: loader.load(textureDir + 'fair_clouds_4k.png'),
-    				transparent: true
-    			})
-    		);
-    	}
-
-    	function createStars (radius, segments) {
-        const loader = new TextureLoader();
-    		return new Mesh(
-    			new SphereGeometry(radius, segments, segments),
-    			new MeshBasicMaterial({
-    				map: loader.load(textureDir + '/galaxy_starfield.png'),
-    				side: BackSide
-    			})
-    		);
-    	}
-    });
-  }
-
-  beforePublish () {
-    this.get('cover').opacity = 1;
-  }
-
-  onExtentChanged () {
-    super.onExtentChanged();
-    this.get('cover').extent = this.extent;
-  }
-}
-
 class WorldLandingPage extends Morph {
   static get properties () {
     return {
@@ -237,36 +32,13 @@ class WorldLandingPage extends Morph {
         get () {
           return `lively.next (${document.location.hostname})`;
         }
-      },
-      loadingScreen: {}
+      }
     };
   }
 
-  get __loading_html__ () {
-    return `
-      <style>
-        ${this.loadingScreen.cssDeclaration}
-      </style>
-      ${this.loadingScreen.html}
-    `;
-  }
-
-  get commands () {
-    return [
-      {
-        name: 'resize on client',
-        exec: () => {
-          this.relayout();
-        }
-      }
-    ];
-  }
-
   relayout () {
-    $world._cachedWindowBounds = null;
-    document.body.style.overflowY = 'hidden';
     this.setBounds($world.windowBounds());
-    this.getSubmorphNamed('globe').extent = this.extent;
+    this.getSubmorphNamed('background').fit();
     const worldList = this.getSubmorphNamed('a project browser');
     const padding = 50;
     const maxWidth = 1100;
@@ -285,16 +57,31 @@ class WorldLandingPage extends Morph {
   }
 
   async showWorldList () {
-    const dashboard = this.getSubmorphNamed('a project browser') || this.addMorph(part(WorldBrowser, { name: 'a project browser', viewModel: { showCloseButton: false } }));
+    const dashboard = this.getSubmorphNamed('a project browser') ||
+          this.addMorph(part(WorldBrowser, {
+            name: 'a project browser',
+            isLayoutable: false,
+            viewModel: { showCloseButton: false, progressIndicator: this.get('loading indicator') }
+          }));
     this.reset();
     dashboard.showCloseButton = false;
     dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150)));
     dashboard.center = this.innerBounds().center();
+
     await dashboard.allFontsLoaded();
     dashboard.animate({
       opacity: 1, duration: 300
     });
     dashboard.hasFixedPosition = false;
+    connect(dashboard, 'zoomBackground', this, 'showProgressBar');
+  }
+
+  showProgressBar () {
+    const bg = this.getSubmorphNamed('background');
+    const ld = this.getSubmorphNamed('loading indicator');
+    bg.zoomIn();
+    bg.step = 2;
+    ld.animate({ visible: true });
   }
 
   reset () {
@@ -304,23 +91,152 @@ class WorldLandingPage extends Morph {
   }
 }
 
+class ShapeMorpher extends ViewModel {
+  static get properties () {
+    return {
+      expose: {
+        get () { return ['fit', 'step', 'zoomIn']; }
+      },
+      step: {
+        defaultValue: 1,
+        set (s) {
+          this.setProperty('step', s);
+          this.update();
+        }
+      }
+    };
+  }
+
+  zoomIn () {
+    this._isZoomed = true;
+    this.view.animate({ scale: 1.3, easing: easings.outExpo });
+  }
+
+  fit () {
+    const { view } = this;
+    const owner = view.owner;
+    const f = this._isZoomed ? 1.3 : 1;
+    view.scale = Math.max(owner.width / view.width, owner.height / view.height) * f;
+    view.center = owner.extent.scaleBy(0.5);
+  }
+
+  morphShapes () {
+    this.step = this.step % 3 + 1;
+  }
+
+  update () {
+    this.view.master.setState(this.step);
+    this.view.master.applyAnimated();
+  }
+}
+
+const Step1 = component({
+  clipMode: 'hidden',
+  extent: pt(1320.3, 829.3),
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(241, 196, 15) }, { offset: 1, color: Color.rgb(243, 156, 18) }], vector: rect(0.18831659137345552, 0.10903522820215822, 0.623366817253089, 0.7819295435956836) }),
+  position: pt(132.7, 143),
+  submorphs: [{
+    type: Polygon,
+    name: 'triangle 1',
+    vertices: [({ position: pt(310.1325, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(728.6366, 867.3553), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 869.1404), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
+    borderColor: Color.rgb(204, 0, 0),
+    extent: pt(728.6, 869.1),
+    fill: Color.rgba(230, 126, 34),
+    opacity: 0.6,
+    position: pt(110.4, 8.1)
+  }, {
+    type: Polygon,
+    name: 'triangle 2',
+    vertices: [({ position: pt(75.729, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(868.2498, 709.1216), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 708.8307), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
+    borderColor: Color.rgb(204, 0, 0),
+    extent: pt(868.2, 709.1),
+    fill: Color.rgb(230, 126, 34),
+    opacity: 0.6,
+    position: pt(575.6, 210.3)
+  }, {
+    type: Polygon,
+    name: 'triangle 3',
+    vertices: [({ position: pt(115.663, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(868.2498, 642.4119), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 642.121), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
+    borderColor: Color.rgb(204, 0, 0),
+    extent: pt(868.2, 642.4),
+    fill: Color.rgb(230, 126, 34),
+    opacity: 0.6,
+    position: pt(792.8, 338.2)
+  }]
+});
+
+const Step2 = component(Step1, {
+  submorphs: [
+    {
+      name: 'triangle 1',
+      extent: pt(728.6, 1003.9),
+      position: pt(110.4, -126.7),
+      vertices: [({ position: pt(723.5352, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(728.6366, 1002.1034), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 1003.8885), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    },
+    {
+      name: 'triangle 2',
+      extent: pt(1198.6, 1159.7),
+      position: pt(138.5, -71.9),
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(1198.6375, 392.015), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(259.7853, 1159.6876), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    }, {
+      name: 'triangle 3',
+      extent: pt(1915.5, 788.6),
+      position: pt(-10.8, 126.3),
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(1915.5068, 788.5901), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(1047.257, 788.2993), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    }
+  ]
+});
+
+const Step3 = component(Step1, {
+  submorphs: [
+    {
+      name: 'triangle 1',
+      extent: pt(1756.6, 697.5),
+      position: pt(-811, 1.9),
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(1756.6094, 205.8496), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(510.9803, 697.5155), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    },
+    {
+      name: 'triangle 2',
+      extent: pt(753.5, 422),
+      position: pt(291.8, 421.5),
+      vertices: [({ position: pt(338.1243, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(753.5427, 422.0051), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 409.0511), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    },
+    {
+      name: 'triangle 3',
+      extent: pt(1374.1, 799.2),
+      position: pt(953.8, 58.4),
+      vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(1374.1132, 766.3091), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(263.9232, 799.2007), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
+    }
+  ]
+});
+
+export const LandingPageBG = component(Step1, {
+  defaultViewModel: ShapeMorpher,
+  master: {
+    states: {
+      1: Step1,
+      2: Step2,
+      3: Step3
+    }
+  }
+});
+
 const LandingPage = component({
   type: WorldLandingPage,
   name: 'landing page',
-  extent: pt(500, 500),
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center'
+  }),
+  extent: pt(1319.9, 829.4),
   fill: Color.black,
   submorphs: [
-    {
-      name: 'globe',
-      type: Globe,
-      contextType: 'webgl',
-      extent: pt(500, 500),
-      fps: 60
-    }, {
-      name: 'cover',
-      fill: Color.black,
-      extent: pt(500, 500)
-    }
+    part(LandingPageBG, {
+      name: 'background',
+      position: pt(0, 0),
+      isLayoutable: false
+    }),
+    part(ProgressIndicator, { name: 'loading indicator', visible: false })
   ]
 });
 
@@ -336,6 +252,8 @@ class WorldAligningLandigPageUIElements extends ViewModel {
   }
 
   async relayout () {
+    $world._cachedWindowBounds = null;
+    document.body.style.overflowY = 'hidden';
     await this.view.whenRendered();
     this.view.topRight = $world.visibleBounds().insetBy(10).topRight();
     return this.view;
@@ -346,29 +264,30 @@ const LandingPageUI = component(
   {
     name: 'landing page ui elements',
     defaultViewModel: WorldAligningLandigPageUIElements,
-    fill: Color.transparent,
+    borderRadius: 5,
+    extent: pt(286, 52.7),
+    fill: Color.rgba(0, 0, 0, 0.3772),
     layout: new TilingLayout({
+      axisAlign: 'center',
       hugContentsHorizontally: true,
-      padding: 5,
-      spacing: 5,
-      axisAlign: 'center'
+      padding: rect(10, 5, -5, 0),
+      spacing: 5
     }),
-    submorphs:
- [
-   part(OfflineToggleLight),
-   part(UserFlap, {
-     name: 'user flap',
-     submorphs: [{
-       name: 'left user label',
-       fontColor: Color.rgb(255, 255, 255)
-     }, {
-       name: 'right user label',
-       fontColor: Color.rgb(255, 255, 255)
-     }, {
-       name: 'spinner',
-       viewModel: { color: 'white' }
-     }]
-   })]
+    submorphs: [
+      part(OfflineToggleLight),
+      part(UserFlap, {
+        name: 'user flap',
+        submorphs: [{
+          name: 'left user label',
+          fontColor: Color.rgb(255, 255, 255)
+        }, {
+          name: 'right user label',
+          fontColor: Color.rgb(255, 255, 255)
+        }, {
+          name: 'spinner',
+          viewModel: { color: 'white' }
+        }]
+      })]
   });
 
 export async function main () {
