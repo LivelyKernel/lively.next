@@ -41,24 +41,64 @@ jobs:
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Run CI Test Script
         run:  ./scripts/test.sh
+      - name: Circumvent buggy behavior of GHA Job Summaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_output
+          path: test_output_clean.md
+          retention-days: 1
   docs-coverage:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Setup `node`
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.10'
-    - name: Install `eslint`
-      run: npm install eslint
-    - name: Install `jsdoc` plugin for `eslint`
-      run: npm install eslint-plugin-jsdoc
-    - name: Install `eslint` parser for `babel`
-      run: npm install @babel/eslint-parser
-    - name: Setup GitHub Action Summary
-      run: |
-        echo '# Status of Documentation <g-emoji class="g-emoji" alias="books" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png"><img class="emoji" alt="books" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png" width="20" height="20"></g-emoji>' >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-    - name: Lint Code and Summarize Number of Errors
-      run: npx eslint -c .eslintrc.js lively.*/*.js | grep '✖' >> $GITHUB_STEP_SUMMARY
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup `node`
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.10'
+      - name: Install `eslint`
+        run: npm install eslint
+      - name: Install `jsdoc` plugin for `eslint`
+        run: npm install eslint-plugin-jsdoc
+      - name: Install `eslint` parser for `babel`
+        run: npm install @babel/eslint-parser
+      - name: Setup GitHub Action Summary
+        run: |
+          echo '' >> docs_output.md
+          echo '---' >> docs_output.md
+          echo '# Status of Documentation <g-emoji class="g-emoji" alias="books" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png"><img class="emoji" alt="books" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png" width="20" height="20"></g-emoji>' >> docs_output.md
+      - name: Lint Code and Summarize Number of Errors
+        run: npx eslint -c .eslintrc.js lively.*/*.js | grep '✖' >> docs_output.md
+      - name: Circumvent buggy behavior of GHA Job Summaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs_output
+          path: docs_output.md
+          retention-days: 1
+  summary:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [docs-coverage, tests]
+    steps:
+      - name: Download Test Output Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          name: test_output
+      - name: Download Docs Output Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .
+          name: docs_output
+      - name: Assemble Summary
+        run: |
+          cat test_output_clean.md >> $GITHUB_STEP_SUMMARY
+          cat docs_output.md >> $GITHUB_STEP_SUMMARY
+      - name: Delete all Artifacts
+        uses: geekyeggo/delete-artifact@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: |
+            docs_output
+            test_output
