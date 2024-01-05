@@ -5,9 +5,8 @@
 # It is not possible to run multiple explicitly specified packages (except when modifying the below array).
 # As this script supports either running locally or inside of a GitHub Action environment, this leaves us with four cases:
 # (1) Testing the lively core a) in CI b) locally or (1) Testing one specific package a) in CI or b) locally.
-# In case (1), we provicde some summary statistics at the end of our test run.
+# In case (1), we provicde some summary statistics at the end of our test run and put them, as well as further information in markdown format, in a file called `test_output_clean.md` for later consumption.
 # In the cases a) we add some GitHub Actions output formatting hints as well as providing markdown to be rendered in the summary section of the action run.
-# See https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/ for further information.
 # In cases b), we provide more lean, human readable output meant for reading consumtion in a shell. 
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
 # On mac, make sure to have `gsed` installed.
@@ -56,7 +55,7 @@ then
 else
   if [ "$CI" ];
   then
-    echo '# Tests for `lively.next` 🧪' >> "$GITHUB_STEP_SUMMARY"
+    echo '# Tests for `lively.next` 🧪' >>  test_output.md
   fi
 fi
 
@@ -146,8 +145,7 @@ then
       echo "- ✅ $GREEN_TESTS (≈$GREEN_PERCENTAGES %) passed.";
       echo "- ❌ $RED_TESTS (≈$RED_PERCENTAGES %) failed.";
       echo "- ⏩ $SKIPPED_TESTS (≈$SKIPPED_PERCENTAGES %) skipped."
-    } >> "$GITHUB_STEP_SUMMARY"
-    cat summary.txt >> "$GITHUB_STEP_SUMMARY"
+    } >> test_output.md
   else
     echo ''
     echo 'Summary Statistics'
@@ -157,21 +155,19 @@ then
     echo "- ❌ $RED_TESTS (≈$RED_PERCENTAGES %) failed."
     echo "- ⏩ $SKIPPED_TESTS (≈$SKIPPED_PERCENTAGES %) skipped."
   fi
-elif [ "$CI" ];
-  then
-  if [ -f "failing.txt" ]; then
-    cat failing.txt >> "$GITHUB_STEP_SUMMARY"
-  fi
+fi
+if [ -f "failing.txt" ]; then
+    cat failing.txt >> test_output.md
 fi
 
 if [ "$CI" ];
 then
-  sed 's/✅/<g-emoji class="g-emoji" alias="white_check_mark" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png"><img class="emoji" alt="white_check_mark" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png" width="20" height="20"><\/g-emoji>/g' "$GITHUB_STEP_SUMMARY" |
+  sed 's/✅/<g-emoji class="g-emoji" alias="white_check_mark" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png"><img class="emoji" alt="white_check_mark" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2705.png" width="20" height="20"><\/g-emoji>/g' test_output.md |
   sed 's/🧪/<g-emoji class="g-emoji" alias="test_tube" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f9ea.png"><img class="emoji" alt="test_tube" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f9ea.png" width="20" height="20"><\/g-emoji>/g' |
   sed 's/⏩/<g-emoji class="g-emoji" alias="fast_forward" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/23e9.png"><img class="emoji" alt="fast_forward" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/23e9.png" width="20" height="20"><\/g-emoji>/g' |
   sed 's/❌/<g-emoji class="g-emoji" alias="x" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/274c.png"><img class="emoji" alt="x" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/274c.png" width="20" height="20"><\/g-emoji>/g' |
   sed 's/ℹ️/<g-emoji class="g-emoji" alias="information_source" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2139.png"><img class="emoji" alt="information_source" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/2139.png" width="20" height="20"><\/g-emoji>/g' |
-  sed 's/📦/<g-emoji class="g-emoji" alias="package" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png"><img class="emoji" alt="package" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png" width="20" height="20"><\/g-emoji>/g' > "$GITHUB_STEP_SUMMARY"
+  sed 's/📦/<g-emoji class="g-emoji" alias="package" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png"><img class="emoji" alt="package" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png" width="20" height="20"><\/g-emoji>/g' > test_output_clean.md
 fi
 
 if ((RED_TESTS > 0 || ALL_TESTS == 0)); 
