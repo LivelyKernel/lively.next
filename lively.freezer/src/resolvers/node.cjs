@@ -13,8 +13,6 @@ const nodePolyfills = require('rollup-plugin-polyfill-node');
 const chalk = require('chalk');
 const readline = require('readline');
 const css = require('css');
-// Problem: Just defering to rollup seems to bypass the flatn resolution mechanism
-// flatn 
 
 async function availableFonts(fontCSSFile) {
   const _fonts = await import('lively.morphic/rendering/fonts.js');
@@ -56,7 +54,6 @@ function ensureFileFormat(url) {
   return url && url.startsWith('/') ? 'file://' + url : url;
 }
 
-// fixme: if we are bundling from a node.js script but targeting the browser, we need to properly resolve /npm- urls
 function resolveModuleId (moduleName, importer, context = 'node') {
   if (moduleName.startsWith('esm://cache/')) {
     return moduleName;
@@ -71,8 +68,7 @@ function resolveModuleId (moduleName, importer, context = 'node') {
   }
   if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
   if (moduleName.startsWith('./') || moduleName.startsWith('../'))
-    return null; // not our job to resolve relative imports?
-  // still this needs to take into account the importer since we are node.js and package.json is IMPORTANT!
+    return null; // relative imports are handled by rollup itself
   return flatnResolve(moduleName, importer, context);
 }
 
@@ -81,14 +77,12 @@ function detectFormatFromSource (source) {
 }
 
 async function normalizeFileName (fileName) {
-  // return await System.normalize(fileName);
   if (isAlreadyResolved(fileName)) return fileName;
   return require.resolve(fileName);
 }
 
 function decanonicalizeFileName (fileName) {
   if (isAlreadyResolved(fileName)) return fileName;
-  // return await System.decanonicalize(fileName);
   let url = require.resolve(fileName);
   if (fileName.endsWith('.js') &&
       !fileName.endsWith('index.js') &&
@@ -99,8 +93,6 @@ function decanonicalizeFileName (fileName) {
 }
 
 function resolvePackage (moduleName) {
-  // return module(moduleName).package();
-  // extract the package name from a module, maybe via flatn?
   return findPackageConfig(moduleName);
 }
 
