@@ -20,6 +20,7 @@ import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { once } from 'lively.bindings';
 import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { fun } from 'lively.lang';
+import { repositoryOwnerAndNameRegex } from './project.js';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -168,6 +169,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
 
   async resolve () {
     await fun.guardNamed('resolve-project-creation', async () => {
+      const availableProjects = (await Project.listAvailableProjects()).map(p => p._name);
       this.disableButtons();
       let li;
       let { remoteUrl, projectName, createRemoteCheckbox, privateCheckbox, userSelector, description } = this.ui;
@@ -179,7 +181,14 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         try {
           urlString = remoteUrl.textString;
           if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
-          const projectNameToLoad = await Project.fromRemote(urlString);
+          const projectName = urlString.match(repositoryOwnerAndNameRegex)[2];
+          const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
+          const projectNameToLoad = `${projectRepoOwner}--${projectName}`;
+          if (availableProjects.includes(projectNameToLoad)) {
+            this.enableButtons();
+            this.view.setStatusMessage('Project already exists locally.', StatusMessageError);
+            return;
+          }
           this.view.remove();
           const loadedProject = await Project.loadProject(projectNameToLoad);
           super.resolve(loadedProject);
@@ -253,7 +262,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     const { fromRemoteCheckbox } = this.ui;
     $world.get('user flap').showLoggedInUser();
     this.withoutBindingsDo(() => {
-      if (!lively.isInOfflineMode) fromRemoteCheckbox.enable()
+      if (!lively.isInOfflineMode) fromRemoteCheckbox.enable();
     });
     this.projectNameMode();
   }
@@ -754,7 +763,7 @@ export const ProjectCreationPrompt = component(LightPrompt, {
   submorphs: [
     add({
       name: 'project creation form',
-      extent: pt(336.7,363),
+      extent: pt(336.7, 363),
       fill: Color.transparent,
       clipMode: 'hidden',
       layout: new TilingLayout({

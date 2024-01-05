@@ -25,7 +25,7 @@ import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 import { supportedImageFormats } from 'lively.ide/assets.js';
 import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 
-const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
+export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
 Its content is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
 export class Project {
@@ -519,8 +519,8 @@ export class Project {
 
   async regeneratePipelines () {
     if (!lively.isInOfflineMode) {
-        await this.checkPagesSupport();
-        await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
+      await this.checkPagesSupport();
+      await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
     }
     let pipelineFile, content;
     const livelyConfig = this.config.lively;
