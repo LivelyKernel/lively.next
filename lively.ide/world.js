@@ -449,8 +449,13 @@ export class LivelyWorld extends World {
     versionChecker.name = 'lively version checker';
     versionChecker.openInWorld();
     versionChecker.relayout();
-    await versionChecker.checkVersion();
-
+    try {
+      await promise.timeout(1000, versionChecker.checkVersion());
+    } catch (err) {
+      // if the version checking takes too long due to slow
+      // networking or being offline entirely, we proceed
+      // without waiting longer than 1000ms.
+    }
     const { WorldZoomIndicator } = await System.import('lively.ide/studio/zoom-indicator.cp.js');
     const zoomIndicator = part(WorldZoomIndicator);
     zoomIndicator.openInWorld();
