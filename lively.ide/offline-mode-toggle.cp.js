@@ -2,9 +2,13 @@ import { ToggleModel, LightToggle, Toggle } from 'lively.components/toggle.cp.js
 import { component } from 'lively.morphic/components/core.js';
 
 class OfflineToggleModel extends ToggleModel {
-  viewDidLoad () {
+  async viewDidLoad () {
     if (lively.isInOfflineMode || (localStorage.getItem('LIVELY_OFFLINE_MODE') == true)) this.active = true;
     else this.active = false;
+    // FIXME: this is unfortunate and should be prevented somehow
+    await this.ui.offlineToggle.whenFontLoaded();
+    delete this.ui.offlineToggle._cachedBounds;
+    this.ui.offlineToggle.fit();
   }
 
   toggle () {
