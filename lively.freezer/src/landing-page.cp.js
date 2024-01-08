@@ -94,6 +94,7 @@ class WorldLandingPage extends Morph {
 class ShapeMorpher extends ViewModel {
   static get properties () {
     return {
+      isZoomed: { defaultValue: false },
       expose: {
         get () { return ['fit', 'step', 'zoomIn']; }
       },
@@ -108,14 +109,16 @@ class ShapeMorpher extends ViewModel {
   }
 
   zoomIn () {
-    this._isZoomed = true;
-    this.view.animate({ scale: 1.3, easing: easings.outExpo });
+    this.isZoomed = true;
+    this.view.withAnimationDo(() => {
+      this.fit();
+    });
   }
 
   fit () {
     const { view } = this;
     const owner = view.owner;
-    const f = this._isZoomed ? 1.3 : 1;
+    const f = this.isZoomed ? 1.3 : 1;
     view.scale = Math.max(owner.width / view.width, owner.height / view.height) * f;
     view.center = owner.extent.scaleBy(0.5);
   }
