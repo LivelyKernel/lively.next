@@ -1,3 +1,4 @@
+/* global fetch */
 /* global URL */
 import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
 import { AbstractPromptModel, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
@@ -200,8 +201,35 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         li = $world.showLoadingIndicatorFor(this.view, 'Creating Project...');
         const createNewRemote = createRemoteCheckbox.checked;
         const priv = privateCheckbox.checked;
+        const enteredName = projectName.textString;
         const { name: repoOwner, isOrg } = userSelector.selection;
-        createdProject = new Project(projectName.textString, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
+        if (availableProjects.includes(`${repoOwner}--${enteredName}`)) {
+          li.remove();
+          li = null;
+          this.enableButtons();
+          this.view.setStatusMessage('Project name already taken.', StatusMessageError);
+          return;
+        }
+
+        if (createNewRemote) {
+          const remoteRes = await fetch(`https://api.github.com/repos/${repoOwner}/${enteredName}`, {
+            method: 'GET',
+            headers: {
+              accept: 'application/vnd.github+json',
+              authorization: `Bearer ${currentUserToken()}`,
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          });
+          if (remoteRes.status === 200) {
+            li.remove();
+            li = null;
+            this.enableButtons();
+            this.view.setStatusMessage('Project already exists on GitHub.', StatusMessageError);
+            return;
+          }
+        }
+
+        createdProject = new Project(enteredName, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
         const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
         createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
         try {
@@ -333,6 +361,22 @@ class RepoCreationPromptModel extends AbstractPromptModel {
 
       try {
         const proj = this.project;
+        const remoteRes = await fetch(`https://api.github.com/repos/${proj.repoOwner}/${proj.name}`, {
+          method: 'GET',
+          headers: {
+            accept: 'application/vnd.github+json',
+            authorization: `Bearer ${currentUserToken()}`,
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
+        });
+        if (remoteRes.status === 200) {
+          li.remove();
+          li = null;
+          this.view.setStatusMessage('A repository with this name already exists on GitHub.', StatusMessageError);
+          this.enableButtons();
+          return;
+        }
+
         // order is important here: we only want to set up the remote specific config stuff if repo creation succeeds
         await proj.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), proj.name, proj.repoOwner, proj.config.description, proj.repoOwner !== proj.config.author.name, privateRepo);
         proj.addRemoteConfig(privateRepo);
