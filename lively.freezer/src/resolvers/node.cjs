@@ -58,14 +58,6 @@ function resolveModuleId (moduleName, importer, context = 'node') {
   if (moduleName.startsWith('esm://cache/')) {
     return moduleName;
   }
-  if (importer && importer.startsWith('https://jspm.dev/')) {
-    if (moduleName.startsWith('/')) 'https://jspm.dev' + moduleName;
-    if (moduleName.startsWith('https://jspm.dev')) return moduleName;
-  }
-  if (importer && importer.startsWith('esm://cache/')) {
-    if (moduleName.startsWith('/')) 'esm://cache' + moduleName;
-    if (moduleName.startsWith('esm://cache/')) return moduleName;
-  }
   if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
   if (moduleName.startsWith('./') || moduleName.startsWith('../'))
     return null; // relative imports are handled by rollup itself
