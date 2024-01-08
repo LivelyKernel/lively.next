@@ -186,6 +186,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
           const projectNameToLoad = `${projectRepoOwner}--${projectName}`;
           if (availableProjects.includes(projectNameToLoad)) {
+            li = null;
             this.enableButtons();
             this.view.setStatusMessage('Project already exists locally.', StatusMessageError);
             return;
