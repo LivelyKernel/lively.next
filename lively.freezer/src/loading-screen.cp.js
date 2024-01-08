@@ -28,9 +28,10 @@ export class WorldLoadingScreen extends Morph {
       const worldName = this.getWorldName();
       const filePath = this.getFilePath();
       const snapshot = this.getSnapshot();
+      const bg = this.get('background');
       let progressBar = this.get('loading indicator');
 
-      this.get('background').master.setState(2);
+      bg.master.setState(2);
       document.body.style.backgroundColor = 'black';
 
       if (filePath) {

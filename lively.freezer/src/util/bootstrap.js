@@ -434,8 +434,16 @@ export async function bootstrap ({
             oldEnv.fontMetric.uninstall();
             oldEnv.eventDispatcher.uninstall();
           }
+          // place the background into the new world
+          $world.opacity = 1;
+          const bg = $world.addMorph(progress.get('background').copy());
+          bg.fit();
+          const fader = bg.addMorph({ fill: Color.black, opacity: 0, extent: bg.extent });
+          await fader.animate({ opacity: 1, duration: 500 });
           $world.initializeStudio();
-          $world.animate({ opacity: 1 });
+          bg.hasFixedPosition = true;
+          bg.bringToFront();
+          bg.fadeOut();
         }
       };
       if (snapshot) {
