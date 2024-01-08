@@ -1,20 +1,26 @@
 import { ToggleModel, LightToggle, Toggle } from 'lively.components/toggle.cp.js';
 import { component } from 'lively.morphic/components/core.js';
+import { fun } from 'lively.lang';
 
 class OfflineToggleModel extends ToggleModel {
   async viewDidLoad () {
     if (lively.isInOfflineMode || (localStorage.getItem('LIVELY_OFFLINE_MODE') == true)) this.active = true;
     else this.active = false;
+
     // FIXME: this is unfortunate and should be prevented somehow
-    await this.ui.offlineToggle.whenFontLoaded();
-    delete this.ui.offlineToggle._cachedBounds;
-    this.ui.offlineToggle.fit();
+    await this.ui.label.whenFontLoaded();
+    delete this.ui.label._cachedBounds;
+    this.ui.label.fit();
   }
 
-  toggle () {
+  async toggle () {
     super.toggle();
     localStorage.setItem('LIVELY_OFFLINE_MODE', this.active ? 1 : 0);
-    if (this.active) $world.inform('You are entering offline mode.\n Interactions with GitHub repositories are not available. You will not be able to update or upload projects.');
+    if (this.active) {
+      fun.guardNamed('offline-enter-prompt', () => {
+        return $world.inform('You are entering offline mode.\n Interactions with GitHub repositories are not available. You will not be able to update or upload projects.');
+      })();
+    }
   }
 }
 
