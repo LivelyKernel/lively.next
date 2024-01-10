@@ -1208,10 +1208,10 @@ export class ObjectEditorModel extends ViewModel {
 
         if (worldPkgUrl) {
           className = await this.world().prompt(
-            ['New Class\n', {},
-              'Regarding the object:\n', { fontSize: 16, fontWeight: 'normal' },
+            { title: 'New Class',
+              text: ['Regarding the object:\n', { fontSize: 16, fontWeight: 'normal' },
               stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal' },
-              '\nEnter a name for the new class of this object:', { fontSize: 16, fontWeight: 'normal' }], {
+              '\nEnter a name for the new class of this object:', { fontSize: 16, fontWeight: 'normal' }]}, {
               historyId: 'object-package-name-hist',
               requester,
               width: 400,
@@ -1231,10 +1231,10 @@ export class ObjectEditorModel extends ViewModel {
           }, { className, worldPkgUrl });
         } else {
           objPkgName = await this.world().prompt(
-            ['New Object Package\n', {},
-              'No object package exists yet for object\n', { fontSize: 16, fontWeight: 'normal' },
+            {title: 'New Object Package',
+              text: ['No object package exists yet for object\n', { fontSize: 16, fontWeight: 'normal' },
               stringifiedTarget, { fontSize: 16, fontStyle: 'italic', fontWeight: 'normal' },
-              '\nEnter a name for a new package:', { fontSize: 16, fontWeight: 'normal' }], {
+              '\nEnter a name for a new package:', { fontSize: 16, fontWeight: 'normal' }]}, {
               historyId: 'object-package-name-hist',
               requester,
               width: 400,
@@ -1431,9 +1431,9 @@ export class ObjectEditorModel extends ViewModel {
    * The selected target is then adopted by that new class.
    */
   async interactivelyForkPackage () {
-    const forkedName = await this.world().prompt([
-      'New Forked Package\n', {},
-      'Please enter a name for the forked class and its package:', { fontSize: 16, fontWeight: 'normal' }], {
+    const forkedName = await this.world().prompt({
+      title: 'New Forked Package',
+      text: 'Please enter a name for the forked class and its package:'}, {
       requester: this.view,
       input: await this.withContextDo(ctx => ctx.target.constructor[Symbol.for('__LivelyClassName__')]) + 'Fork',
       historyId: 'lively.morphic-object-editor-fork-names',

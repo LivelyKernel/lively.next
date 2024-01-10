@@ -61,7 +61,10 @@ export async function interactiveConnectGivenSourceAndTarget (sourceObj, sourceA
 
   if (!sourceAttr) {
     const sourceBindings = [{ isListItem: true, string: '[Enter custom attribute..]', value: { custom: true } }, ...sourceObj.world().targetDataBindings(sourceObj).flat().map(ea => ({ isListItem: true, string: ea.signature || ea.name, value: ea }))];
-    sourceAttr = await world.listPrompt(['Select Source Attribute\n', {}, 'Choose the attribute of the morph that is supposed to invoke the connection. This can be a method, property or a custom signal that is invoked upon the morph.', { paddingTop: '10px', fontSize: 14, textAlign: 'left', fontWeight: 'normal' }], sourceBindings, { filterable: true });
+    sourceAttr = await world.listPrompt({
+      title: 'Select Source Attribute',
+      text: 'Choose the attribute of the morph that is supposed to invoke the connection. This can be a method, property or a custom signal that is invoked upon the morph.'},
+      sourceBindings, { filterable: true });
     if (sourceAttr.status == 'canceled') return;
     sourceAttr = sourceAttr.selected[0];
     sourceAttr = sourceAttr.custom ? 'sourceAttribute' : sourceAttr.name;
@@ -69,7 +72,11 @@ export async function interactiveConnectGivenSourceAndTarget (sourceObj, sourceA
 
   const items = [{ isListItem: true, string: '[Enter custom attribute...]', value: { custom: true } }, ...targetBindings.flat().map(ea => ({ isListItem: true, value: ea, string: ea.signature || ea.name }))];
 
-  let res = await world.listPrompt(['Select Target Attribute\n', {}, 'Choose the attribute of the morph that is supposed to invoked once the connection is triggered. This can be either a method or a property of the morph. When selecting a property, keep in mind that the value of the source attribute will be assigned to the property or passed to the method as an argument.', { fontSize: 14, textAlign: 'left', fontWeight: 'normal', paddingTop: '10px' }], items, { filterable: true });
+  let res = await world.listPrompt({
+    title: 'Select Target Attribute',
+    text: 'Choose the attribute of the morph that is supposed to invoked once the connection is triggered. This can be either a method or a property of the morph. When selecting a property, keep in mind that the value of the source attribute will be assigned to the property or passed to the method as an argument.'
+  },
+  items, { filterable: true });
 
   if (res.status == 'canceled') return;
   res = res.selected[0];
@@ -163,11 +170,11 @@ export async function interactivelyEvaluateConnection (opts) {
       type: typeof sourceObj[sourceAttr]
     };
     if (sourceType !== targetType) {
-      prompt = [
-        'Edit and confirm connection:\n', {},
-        'Source: ', { fontSize: 14, fontWeight: 'normal' }, sourceObj.toString(), { fontSize: 14, fontWeight: 'normal', fontStyle: 'italic' },
-        '\nTarget: ', { fontSize: 14, fontWeight: 'normal' }, targetObj.toString(), { fontSize: 14, fontWeight: 'normal', fontStyle: 'italic' }
-      ];
+      prompt = {
+        title: 'Edit and confirm connection:',
+        text: ['Source: ', { fontSize: 14, fontWeight: 'normal' }, sourceObj.toString(), { fontSize: 14, fontWeight: 'normal', fontStyle: 'italic' },
+        '\nTarget: ', { fontSize: 14, fontWeight: 'normal' }, targetObj.toString(), { fontSize: 14, fontWeight: 'normal', fontStyle: 'italic' }]
+      };
     }
   }
   Object.assign(lively.modules.module(targetModule).recorder,

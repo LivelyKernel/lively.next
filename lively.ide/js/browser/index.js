@@ -2462,10 +2462,10 @@ export class BrowserModel extends ViewModel {
       }
     } else {
       while (name !== undefined && !name.match(/(\.js|\.md|\.json)$/)) {
-        name = await this.world().prompt([
-          'Enter module name\n', null,
-          'Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
-          'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }], { requester: this.view });
+        name = await this.world().prompt({
+          title: 'Enter module name',
+          text: ['Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
+          'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }]}, { requester: this.view });
       }
     }
     if (!name) return;

@@ -375,7 +375,7 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   async confirm (label) {
-    const prompt = part(ConfirmPrompt, { viewModel: { label } }).openInWorld();
+    const prompt = part(ConfirmPrompt, { viewModel: { title: label } }).openInWorld();
     prompt.center = this.view.center;
     return promise.promise(prompt.activate());
   }

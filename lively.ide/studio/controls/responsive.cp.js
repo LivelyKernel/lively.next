@@ -306,7 +306,10 @@ export class ResponsiveControlModel extends PropertySectionModel {
     super.activate();
     let policy = this.targetStylePolicy;
     if (!policy) {
-      const proceed = await this.world().confirm(['Missing Base Style', { fontWeight: 'bold', fontSize: 20 }, '\nThe morph you want to configure a responsive design for, is not associated with any master component that defines its "base" style. In order to proceed you need to select a master component to serve as the base style.\n', { fontWeight: 'normal', fontSize: 18 }], {
+      const proceed = await this.world().confirm({title:
+        'Missing Base Style',
+        text:'The morph you want to configure a responsive design for, is not associated with any master component that defines its "base" style. In order to proceed you need to select a master component to serve as the base style.'
+      }, {
         customize: (prompt) => {
           prompt.addStyleClass('Halo');
           prompt.isHaloItem = true;

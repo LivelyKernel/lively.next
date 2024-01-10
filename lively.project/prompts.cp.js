@@ -67,7 +67,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
           ];
         }
       },
-      project: {}
+      project: {},
+      title: { defaultValue: 'Project Settings' }
     };
   }
 
@@ -113,6 +114,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
 class ProjectCreationPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
+      title: { defaultValue: 'Create New Project' },
       bindings: {
         get () {
           return [
@@ -134,7 +136,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           ];
         }
       },
-      label: 'Create new Project'
     };
   }
 
@@ -253,7 +254,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    const { promptTitle, cancelButton, okButton, privateCheckbox, createRemoteCheckbox, fromRemoteCheckbox } = this.ui;
+    super.viewDidLoad();
+    const { cancelButton, okButton, privateCheckbox, createRemoteCheckbox, fromRemoteCheckbox } = this.ui;
     okButton.disable();
     createRemoteCheckbox.disable();
     if (lively.isInOfflineMode) fromRemoteCheckbox.disable();
@@ -270,7 +272,6 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
       await this.view.whenRendered();
       this.projectNameMode();
     }
-    promptTitle.textString = 'Configure new Project';
   }
 
   waitForLogin () {
@@ -343,6 +344,7 @@ class RepoCreationPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       project: {},
+      title: { defaultValue: 'Create GitHub Repository for Project' },
       bindings: {
         get () {
           {
@@ -414,6 +416,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
   static get properties () {
     return {
       project: { },
+      title: { defaultValue: 'Save Project' },
       bindings: {
         get () {
           return [
@@ -805,11 +808,6 @@ export const ProjectCreationPrompt = component(LightPrompt, {
   }),
   epiMorph: false,
   hasFixedPosition: true,
-  viewModel: {
-    label: ['Create New Project\n', {
-      fontWeight: 'bold'
-    }]
-  },
   submorphs: [
     add({
       name: 'project creation form',
