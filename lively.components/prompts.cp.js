@@ -12,11 +12,18 @@ export class AbstractPromptModel extends ViewModel {
       _isActive: { defaultValue: false },
       autoRemove: { defaultValue: true },
       answer: { defaultValue: null, derived: true },
-      label: {
+      title: {
         defaultValue: 'A prompt title',
-        set (label) {
-          this.setProperty('label', label);
-          if (this.view) { this.ui.promptTitle.value = label; }
+        set (title) {
+          this.setProperty('title', title);
+          if (this.view) { this.ui.promptTitle.value = title; }
+        }
+      },
+      text: {
+        defaultValue: null,
+        set (text) {
+          this.setProperty('text', text);
+          if (this.view) this.ui.promptText.value = text;
         }
       },
       isPrompt: {
@@ -37,6 +44,14 @@ export class AbstractPromptModel extends ViewModel {
 
   viewDidLoad () {
     this.view.hasFixedPosition = true;
+    const { promptTitle, promptText } = this.ui;
+    promptTitle.lineWrapping = this.lineWrapping;
+    promptTitle.fixedWidth = !!this.lineWrapping;
+    promptTitle.value = this.title;
+    if (this.text) {
+      promptText.value = this.text;
+      promptText.visible = true;
+    }
   }
 
   focus () {
@@ -91,7 +106,6 @@ export class InformPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       lineWrapping: { defaultValue: true },
-      additionalText: { },
       bindings: {
         get () {
           return [
@@ -100,18 +114,6 @@ export class InformPromptModel extends AbstractPromptModel {
         }
       }
     };
-  }
-
-  viewDidLoad () {
-    super.viewDidLoad();
-    const { ui: { promptTitle, additionalText } } = this;
-    promptTitle.lineWrapping = this.lineWrapping;
-    promptTitle.fixedWidth = !!this.lineWrapping;
-    promptTitle.value = this.label;
-    if (this.additionalText) {
-      additionalText.value = this.additionalText;
-      additionalText.visible = true;
-    }
   }
 
   get keybindings () {
@@ -145,16 +147,12 @@ export class ConfirmPromptModel extends AbstractPromptModel {
 
   viewDidLoad () {
     super.viewDidLoad();
-    const { ui: { promptTitle: title, okButton, cancelButton } } = this;
+    const { okButton, cancelButton } = this.ui;
 
     okButton.label = this.confirmLabel;
     cancelButton.label = this.rejectLabel;
 
     if (this.forceConfirm) cancelButton.disable();
-
-    title.lineWrapping = this.lineWrapping;
-    title.fixedWidth = !!this.lineWrapping;
-    title.value = this.label;
   }
 
   resolve () { super.resolve(true); }
@@ -250,10 +248,9 @@ export class TextPromptModel extends ConfirmPromptModel {
 
   viewDidLoad () {
     const {
-      ui: { promptTitle: title, input: inputLine },
-      label, historyId, input, useLastInput, selectInput
+      ui: { input: inputLine },
+      historyId, input, useLastInput, selectInput
     } = this;
-    title.value = label;
 
     if (inputLine) {
       inputLine.textString = input || '';
@@ -372,11 +369,9 @@ export class EditPromptModel extends TextPromptModel {
   viewDidLoad () {
     const {
       textStyle, input, mode, evalEnvironment, maxWidth,
-      view, label, ui: { editor, promptTitle }
+      view, ui: { editor }
     } = this;
-
-    promptTitle.value = label;
-    view.hasFixedPosition = true;
+    super.viewDidLoad();
 
     if (mode && !textStyle.fontFamily) textStyle.fontFamily = 'IBM Plex Mono';
 
@@ -475,12 +470,10 @@ export class ListPromptModel extends TextPromptModel {
   viewDidLoad () {
     super.viewDidLoad();
     const {
-      label, multiSelect, historyId, useLastInput, filterable, items,
+      multiSelect, historyId, useLastInput, filterable, items,
       fuzzy, filterFunction, sortFunction, actions, selectedAction,
-      ui: { promptTitle: title, promptList: list, input }
+      ui: { promptList: list, input }
     } = this;
-
-    title.value = label;
 
     Object.assign(list, {
       multiSelect,
@@ -741,6 +734,7 @@ const LightPrompt = component({
   submorphs: [{
     type: Text,
     name: 'prompt title',
+    textAndAttributes: ['A prompt title!', null],
     extent: pt(355, 28),
     fill: Color.rgba(255, 255, 255, 0),
     fixedWidth: true,
@@ -751,7 +745,20 @@ const LightPrompt = component({
     nativeCursor: 'default',
     padding: rect(20, 0, 0, 0),
     readOnly: true,
+    textAlign: 'center'
+  }, {
+    type: Text,
+    name: 'prompt text',
+    fixedWidth: true,
+    lineWrapping: 'by-words',
+    width: 355,
+    fill: Color.rgba(255, 255, 255, 0),
+    fontSize: 16,
+    fontColor: Color.rgb(102, 102, 102),
+    nativeCursor: 'text',
+    padding: rect(20, 0, 0, 0),
     textAlign: 'center',
+    visible: false,
     textString: 'Hello World!'
   }]
 });
