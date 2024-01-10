@@ -596,10 +596,12 @@ export function parameterizedNumberPopupLight (spec) {
       name: 'footer',
       submorphs: [{
         name: 'value input',
-        min,
-        max,
-        baseFactor,
-        floatingPoint
+        viewModel: {
+          min,
+          max,
+          baseFactor,
+          floatingPoint
+        }
       }],
       tooltip: tooltip
     }]
