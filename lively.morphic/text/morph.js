@@ -445,6 +445,7 @@ export class Text extends Morph {
           return textAndAttributes;
         },
         set (value) {
+          if (!value) return;
           typeof value === 'string'
             ? (this.textString = value)
             : (this.textAndAttributes = value);
