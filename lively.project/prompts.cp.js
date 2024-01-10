@@ -186,9 +186,10 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
           const projectNameToLoad = `${projectRepoOwner}--${projectName}`;
           if (availableProjects.includes(projectNameToLoad)) {
-            li = null;
             this.enableButtons();
-            this.view.setStatusMessage('Project already exists locally.', StatusMessageError);
+            this.view.setStatusMessage('Project already exists locally. You can open it via the Dashboard or fetch another Project from GitHub.', StatusMessageError);
+            remoteUrl.textString = '';
+            remoteUrl.clearError(); // otherwise the validity check instantly fails
             return;
           }
           this.view.remove();
@@ -208,7 +209,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           li.remove();
           li = null;
           this.enableButtons();
-          this.view.setStatusMessage('Project name already taken.', StatusMessageError);
+          this.view.setStatusMessage('Project with this name already exists locally.', StatusMessageError);
+          projectName.textString = '';
+          projectName.indicateError('project name needs to be unique');
           return;
         }
 
@@ -225,7 +228,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             li.remove();
             li = null;
             this.enableButtons();
-            this.view.setStatusMessage('Project already exists on GitHub.', StatusMessageError);
+            this.view.setStatusMessage('A repository with this name already exists on GitHub.', StatusMessageError);
+            projectName.textString = '';
+            projectName.indicateError('project name needs to be unique');
             return;
           }
         }
