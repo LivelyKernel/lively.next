@@ -1375,7 +1375,7 @@ const ComponentPreview = component({
     fontColor: Color.darkGray,
     fixedWidth: true,
     fixedHeight: false,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     fontSize: 14,
     fontWeight: 'bold',
     clipMode: 'hidden',
@@ -1508,7 +1508,7 @@ const SearchComponentsNotice = component({
       dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
       fontSize: 34,
       fontWeight: 700,
-      lineWrapping: true,
+      lineWrapping: 'by-words',
       textAndAttributes: ['Begin searching to display components...', null],
       extent: pt(354.6, 191)
     }]
@@ -1888,7 +1888,7 @@ const ComponentError = component({
       fontColor: Color.rgb(255, 171, 64),
       fontSize: 48,
       reactsToPointer: false,
-      lineWrapping: true,
+      lineWrapping: 'by-words',
       padding: rect(1, 1, 0, 0),
       position: pt(-19.7, -13.6),
       textAndAttributes: ['', {
@@ -1907,7 +1907,7 @@ const ComponentError = component({
     fixedHeight: true,
     fixedWidth: true,
     fontColor: Color.rgb(255, 255, 255),
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     reactsToPointer: false,
     padding: rect(1, 1, 0, 0),
     position: pt(10, 81),
