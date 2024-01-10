@@ -82,8 +82,10 @@ export class ImportInjector {
       if (modified) return modified;
     }
 
-    // prepend new import
-    const lastImport = arr.last(imports);
+    // append new import to the first batch of imports
+    const lastImport = arr.last(arr.takeWhile(imports, (node, i) => {
+      return i == 0 || node.start === imports[i - 1]?.end + 1;
+    }));
     const insertPos = lastImport ? lastImport.end : 0;
     return this.insertNewImport(importsOfFromModule, standaloneImport, importedVarName, insertPos);
   }
