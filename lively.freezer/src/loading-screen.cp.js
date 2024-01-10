@@ -179,7 +179,7 @@ const ErrorIndicator = component({
     fixedWidth: true,
     fontSize: 22,
     fontWeight: 'bold',
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     nativeCursor: 'default',
     readOnly: true,
     textAlign: 'center',

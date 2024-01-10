@@ -129,7 +129,7 @@ const PolicyPin = component({
   dynamicCursorColoring: true,
   extent: pt(53.5, 19.8),
   fill: Color.rgb(178, 235, 242),
-  lineWrapping: true,
+  lineWrapping: 'by-words',
   padding: rect(5, 1, 0, 0),
   position: pt(-55, 30)
 });

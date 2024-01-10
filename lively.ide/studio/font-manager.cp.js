@@ -463,7 +463,7 @@ const FontManager = component({
           cursorWidth: 1.5,
           dynamicCursorColoring: true,
           extent: pt(195.3, 23),
-          lineWrapping: true
+          lineWrapping: 'by-words'
         },
         part(DarkButton, {
           name: 'proceed button ',

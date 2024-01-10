@@ -124,7 +124,7 @@ export const BreakpointEntry = component({
     fill: Color.rgb(244, 67, 54),
     fixedHeight: true,
     fixedWidth: false,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     padding: rect(5, 2, 0, -1),
     position: pt(7.1, 5.2)
   }), {
@@ -136,7 +136,7 @@ export const BreakpointEntry = component({
     fill: Color.rgb(76, 175, 80),
     fixedHeight: true,
     fixedWidth: false,
-    lineWrapping: true,
+    lineWrapping: 'by-words',
     padding: rect(5, 2, 0, -1),
     position: pt(-27, 26),
     textAndAttributes: ['h: *', null]
