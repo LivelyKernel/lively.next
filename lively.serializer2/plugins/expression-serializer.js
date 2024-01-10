@@ -221,10 +221,11 @@ function getExpression (name, val, ctx) {
     if (obj.isString(val) || obj.isNumber(val)) return val;
     if (val[Symbol.for('__LivelyClassName__')]) {
       val = exprSerializer.exprStringDecode(exprSerializer.getExpressionForFunction(val));
-    } else {
+    } else if (val.__serialize__) {
       val = val.__serialize__({ expressionSerializer: exprSerializer });
       if (exprSerializer.isSerializedExpression(val)) val = exprSerializer.exprStringDecode(val);
-      exprSerializer;
+    } else {
+      return val; // no way to convert to expression
     }
     if (asExpression) {
       const exprId = string.newUUID();
