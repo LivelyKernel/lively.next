@@ -393,8 +393,8 @@ export class WorldBrowserModel extends ViewModel {
     }
   }
 
-  async confirm (label) {
-    const prompt = part(ConfirmPrompt, { viewModel: { title: label } }).openInWorld();
+  async confirm (title, text) {
+    const prompt = part(ConfirmPrompt, { viewModel: { title, text } }).openInWorld();
     prompt.center = this.view.center;
     return promise.promise(prompt.activate());
   }
@@ -772,7 +772,7 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   async tryToDelete () {
-    const proceed = await this._worldBrowser.confirm(['Delete World\n', {}, 'Do you really want to remove this world from the database? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
+    const proceed = await this._worldBrowser.confirm('Delete World', ['Do you really want to remove this world from the database? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
     if (proceed) await this.confirmDelete();
   }
 
@@ -829,14 +829,14 @@ class ProjectPreviewModel extends WorldPreviewModel {
   }
 
   async tryToDelete () {
-    const proceed = await this._worldBrowser.confirm(['Delete Project\n', {}, 'Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
+    const proceed = await this._worldBrowser.confirm('Delete Project', ['Do you really want to remove this project from this system? This step can not be undone.', { fontWeight: 'normal', fontSize: 16 }]);
     if (proceed) {
       const { _projectOwner, _projectName } = this._project;
       const gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(`${_projectOwner}--${_projectName}`).withRelativePartsResolved().asDirectory();
       const hasRemote = await gitResource.hasRemote();
       let deleteRepo;
       if (isUserLoggedIn() && hasRemote) {
-        deleteRepo = await this._worldBrowser.confirm(['Delete Remote Repository\n', {}, 'Should the remote repository be deleted as well?', { fontWeight: 'normal', fontSize: 16 }]);
+        deleteRepo = await this._worldBrowser.confirm('Delete Remote Repository', ['Should the remote repository be deleted as well?', { fontWeight: 'normal', fontSize: 16 }]);
       }
       await this.confirmDelete(deleteRepo);
     }
