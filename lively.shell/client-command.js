@@ -62,6 +62,7 @@ export default class ClientCommand extends CommandInterface {
     let error, pid;
     if (!l2lClient.isOnline()) error = 'L2L not connected';
     else {
+      await l2lClient.whenRegistered();
       ({ data: { error, pid } } = await l2lClient.sendToAndWait(l2lClient.trackerId,
         'lively.shell.spawn', { command, env, cwd, stdin }, {
           ackTimeout: 30 * 1000
