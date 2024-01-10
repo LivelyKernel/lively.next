@@ -486,7 +486,7 @@ export class StylePolicy {
     }) || { __expr__: false };
     if (!expr) return;
     expr = `${expr.match(/^(morph|part)\(([^]*)\)/)?.[2] || expr}`;
-    expr = expr.match(/.*\, (\{[^]*\})/)?.[1] || expr;
+    expr = expr.match(/^.*\, (\{[^]*\})/)?.[1] || expr;
     if (this.parent?.[Symbol.for('lively-module-meta')]) {
       delete bindings[this.parent[Symbol.for('lively-module-meta')].exportedName];
     }
