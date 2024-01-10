@@ -914,7 +914,10 @@ class EditHaloItem extends RoundHaloItem {
     if (targetToEdit.viewModel) {
       // prompt the user which one to edit
       this.halo.remove();
-      targetToEdit = await world.multipleChoicePrompt(['Edit View or Morph?', null, '\nThe selected morph is attached to a view model. Please select which one you would like to edit.', { fontWeight: 'normal', fontSize: 16 }], {
+      targetToEdit = await world.multipleChoicePrompt({
+        title: 'Edit View or Morph?',
+        text:  'The selected morph is attached to a view model. Please select which one you would like to edit.'
+      }, {
         choices: new Map([[
           [...Icon.textAttribute('database', {
             paddingTop: '3px'
@@ -1144,17 +1147,17 @@ class ComponentHaloItem extends RoundHaloItem {
         const morphToBeRenamed = nonUniqueMorphs[0];
         // morphToBeRenamed = that
         show(morphToBeRenamed, true);
-        const newName = await world.prompt([
-          'Name Collision\n', {},
-          'The name of\n', defaultStyle,
+        const newName = await world.prompt({
+          title: 'Name Collision',
+          text: ['The name of\n', defaultStyle,
           morphToBeRenamed.toString(), {
             ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold'
           },
           '\nis not unique within the submorph hierachy of\n', { ...defaultStyle },
           target.name, { ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold' },
           `\nThere ${nonUniqueMorphs.length > 2 ? 'are ' + (nonUniqueMorphs.length - 1) + ' other morphs' : 'is one other morph'} with the exact same name located in this component.`, defaultStyle,
-          ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle
-        ], {
+          ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle]
+        }, {
           input: morphToBeRenamed.name,
           lineWrapping: 'by-words',
           width: 500,

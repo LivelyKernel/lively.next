@@ -254,7 +254,7 @@ export class Project {
       switch (checkLivelyCompatibility) {
         case 'CANCELED':
         case 'OUTDATED': {
-          await $world.inform('The required lively version of this project conflicts with the running one.', { additionalText: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
+          await $world.inform({title: 'The required lively version of this project conflicts with the running one.', text: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
         }
       }
     }
@@ -698,7 +698,7 @@ export class Project {
         }
       }
     }
-    if (showStatusReport && !onlyLoadNotOpen) $world.inform('Dependency Status', { additionalText: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    if (showStatusReport && !onlyLoadNotOpen) $world.inform({title: 'Dependency Status', text: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
     if (showStatusReport && onlyLoadNotOpen) console.warn('A loaded project introduced a dependency version conflict.');
     // Reset this, so that nobody gets tempted to (ab)use this hot mess of a half-working feature...
     this.dependencyMap = null;

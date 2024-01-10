@@ -74,6 +74,7 @@ class PackageInputPlugin extends EditorPlugin {
 export default class FreezerPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
+      title: { defaultValue: 'Freeze Part'},
       directory: {
         derived: true,
         set (url) {

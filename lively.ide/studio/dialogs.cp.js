@@ -28,7 +28,7 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
       description: {
         defaultValue: ''
       },
-
+      title: { defaultValue: 'Save World' },
       filePath: {
         derived: true,
         get () {
@@ -58,6 +58,8 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
   }
 
   viewDidLoad () {
+    super.viewDidLoad();
+
     this.ui.nameInput.input = this.worldName;
     this.ui.tagInput.input = this.tags;
     this.ui.description.textString = this.description;
@@ -226,7 +228,7 @@ const SaveWorldDialog = component(DarkPrompt, {
               fontWeight: 'normal',
               lineHeight: 1.4,
               nativeCursor: 'text',
-              textDecoration: 'none',
+              textDecoration: 'none'
             }]
 
           }, part(InputLineDark, {
