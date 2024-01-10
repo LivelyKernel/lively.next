@@ -3,7 +3,7 @@ import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
-import { es5Transpilation, ensureComponentDescriptors } from 'lively.source-transform';
+import { es5Transpilation, replaceExportedVarDeclarations, ensureComponentDescriptors } from 'lively.source-transform';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForFunctionDeclarations, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
@@ -581,7 +581,9 @@ export default class LivelyRollup {
 
     let defaultExport = '';
     if (this.captureModuleScope) {
-      instrumented = tfm(parsed, captureObj, opts);
+      // replace the exported declarations
+      instrumented = replaceExportedVarDeclarations(parsed);
+      instrumented = tfm(instrumented, captureObj, opts);
       instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
       instrumented = insertCapturesForFunctionDeclarations(instrumented, {
         declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(this.normalizedId(id) + '__define__')),
