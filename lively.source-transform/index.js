@@ -147,3 +147,16 @@ export function ensureComponentDescriptors (translated, moduleName, recorderName
       return parse(`const ${componentRef} = component.for(() => component(${spec}), { module: "${moduleName}", export: "${componentRef}", range: { start: ${node.start}, end: ${node.end}}}, System${ isCaptured ? ', ' + `${recorderName}, "${componentRef}"` : ''})`).body[0].declarations;
     });
 }
+
+export function replaceExportedVarDeclarations (translated) {
+  return QueryReplaceManyVisitor.run(
+    translated, `
+         // ExportNamedDeclaration [
+               /:declaration VariableDeclaration
+            ]`,
+    (exportNamedDeclaration) => {
+      const variableDeclaration = exportNamedDeclaration.declaration;
+      const exportedVariable = variableDeclaration.declarations?.[0];
+      return [variableDeclaration, parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1]];
+    });
+}
