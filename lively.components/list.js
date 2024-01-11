@@ -794,7 +794,7 @@ export class List extends Morph {
 
         if (!itemMorph) {
           this.withMetaDo({ skipReconciliation: true }, () => {
-            itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph(style));
+            itemMorph = itemMorphs[i] = listItemContainer.addMorph(new ListItemMorph({ ...style, name: 'list item morph ' + i }));
           });
         }
         itemMorph.reactsToPointer = !scrollable;
