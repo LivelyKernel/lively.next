@@ -195,7 +195,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   getDependants (immediate = false) {
     return $world.withAllSubmorphsSelect(m =>
-      m.master?.uses(this.stylePolicy, immediate)
+      m.master?.uses?.(this.stylePolicy, immediate)
     );
   }
 
