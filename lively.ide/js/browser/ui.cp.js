@@ -1199,8 +1199,7 @@ const MetaInfoInactive = component(MetaInfoContainerCollapsed, {
     name: 'path container',
     submorphs: [{
       name: 'clipboard controls',
-      visible: false,
-      isLayoutable: false
+      visible: false
     }]
   }]
 });
