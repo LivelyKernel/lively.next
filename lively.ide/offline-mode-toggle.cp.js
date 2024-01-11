@@ -13,7 +13,7 @@ class OfflineToggleModel extends ToggleModel {
     this.ui.label.fit();
   }
 
-  async toggle () {
+  toggle () {
     super.toggle();
     localStorage.setItem('LIVELY_OFFLINE_MODE', this.active ? 1 : 0);
     if (this.active) {
