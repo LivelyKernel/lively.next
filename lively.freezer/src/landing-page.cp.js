@@ -138,6 +138,7 @@ const Step1 = component({
   extent: pt(1320.3, 829.3),
   fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(241, 196, 15) }, { offset: 1, color: Color.rgb(243, 156, 18) }], vector: rect(0.18831659137345552, 0.10903522820215822, 0.623366817253089, 0.7819295435956836) }),
   position: pt(132.7, 143),
+  renderOnGPU: true,
   submorphs: [{
     type: Polygon,
     name: 'triangle 1',
