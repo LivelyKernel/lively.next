@@ -14,17 +14,9 @@ export class AbstractPromptModel extends ViewModel {
       answer: { defaultValue: null, derived: true },
       title: {
         defaultValue: 'A prompt title',
-        set (title) {
-          this.setProperty('title', title);
-          if (this.view) { this.ui.promptTitle.value = title; }
-        }
       },
       text: {
         defaultValue: null,
-        set (text) {
-          this.setProperty('text', text);
-          if (this.view) this.ui.promptText.value = text;
-        }
       },
       isPrompt: {
         get () { return true; }
@@ -40,6 +32,11 @@ export class AbstractPromptModel extends ViewModel {
         }
       }
     };
+  }
+
+  onRefresh (prop) {
+    if (prop === 'title') this.ui.promptTitle.value = this.title;
+    if (prop === 'text') this.ui.promptText.value = this.text;
   }
 
   viewDidLoad () {
@@ -492,6 +489,7 @@ export class ListPromptModel extends TextPromptModel {
   }
 
   onRefresh (prop) {
+    super.onRefresh();
     if (prop === 'items') {
       this.ui.promptList.items = this.items;
     }
