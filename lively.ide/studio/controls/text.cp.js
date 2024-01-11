@@ -264,7 +264,11 @@ export class RichTextControlModel extends ViewModel {
   changeLineWrapping () {
     // depending on the line wrapping we adjust the bounds resizing
     const text = this.targetMorph;
-    if (text) text.lineWrapping = this.ui.lineWrappingSelector.selection;
+    if (text) {
+      text.withMetaDo({ reconcileChanges: true }, () => {
+        text.lineWrapping = this.ui.lineWrappingSelector.selection;
+      });
+    }
   }
 
   toggleItalic () {
