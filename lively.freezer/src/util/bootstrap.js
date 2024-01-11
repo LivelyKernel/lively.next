@@ -425,6 +425,14 @@ export async function bootstrap ({
         moduleManager: lively.modules,
         onRenderStart: async () => {
           document.body.style.background = 'black';
+          // place the background into the new world
+          // if we are not in fast load, we need to import
+          // the landing-page module manually for the copy
+          // to succeed.
+          await eval('System.import(\'lively.freezer/src/loading-screen.cp.js\')');
+          await eval('System.import(\'lively.freezer/src/landing-page.cp.js\')');
+          $world.opacity = 1;
+
           if (!fastLoad) {
             progress?.finishPackage({ packageName: 'world', loaded: true });
             if (progress) progress.opacity = 0;
@@ -434,13 +442,7 @@ export async function bootstrap ({
             oldEnv.fontMetric.uninstall();
             oldEnv.eventDispatcher.uninstall();
           }
-          // place the background into the new world
-          $world.opacity = 1;
-          // if we are not in fast load, we need to import
-          // the landing-page module manually for the copy
-          // to succeed.
-          await eval('System.import(\'lively.freezer/src/loading-screen.cp.js\')');
-          await eval('System.import(\'lively.freezer/src/landing-page.cp.js\')');
+
           const bg = $world.addMorph(progress.get('background').copy());
           bg.fit();
           const fader = bg.addMorph({ fill: Color.black, opacity: 0, extent: bg.extent });
