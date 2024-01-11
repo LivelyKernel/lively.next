@@ -921,7 +921,7 @@ const ListPrompt = component(ConfirmPrompt, {
   master: DarkPrompt,
   submorphs: [
     {
-      name: 'promptTitle',
+      name: 'prompt title',
       lineWrapping: 'by-words'
     },
     add({
