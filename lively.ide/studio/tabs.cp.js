@@ -113,7 +113,7 @@ class TabModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently', 'spec'];
+          return ['isTab', 'content', 'hasMorphicContent', 'caption', 'close', 'selected', 'closeable', 'closeSilently', 'config'];
         }
       },
       bindings: {
@@ -166,7 +166,7 @@ class TabModel extends ViewModel {
     };
   }
 
-  get spec () {
+  get config () {
     return {
       caption: this.caption,
       content: this.content,
@@ -486,12 +486,12 @@ class TabsModel extends ViewModel {
    * Previous state of the tab system will be silently discarded, i.e. without triggering connections.
    * @param {Object[]} spec - An array of tab specs.
    */
-  loadFromSpec (specs) {
+  loadFromSpec (configs) {
     for (let tab of this.tabs) {
       tab.closeSilently();
     }
 
-    for (let tabSpec of specs) {
+    for (let tabSpec of configs) {
       this.addTab(tabSpec.caption,
         tabSpec.content,
         tabSpec.selected,
@@ -578,7 +578,7 @@ class TabsModel extends ViewModel {
 
   onSelectedTabChange (currAndPrevTabsObject) {
     // hook for external components to bind to for when another tab is selected
-    signal(this.view, 'onSelectedTabChange', currAndPrevTabsObject)
+    signal(this.view, 'onSelectedTabChange', currAndPrevTabsObject);
     this._previouslySelectedTab = currAndPrevTabsObject.curr;
     return currAndPrevTabsObject;
   }
