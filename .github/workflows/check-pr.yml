@@ -21,18 +21,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Cache `lively.next` dependencies
-        id: cache-deps
-        uses: actions/cache@v3
+        id: cache-lively-deps
+        uses: actions/cache/restore@v3
         env:
           cache-name: lively-deps
         with:
-          path: |
-            lively.next-node_modules/
+          path: lively.next-node_modules/
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Install lively.next
         run: |
           chmod a+x ./install.sh
           ./install.sh
+      - name: Cache `lively.next` dependencies
+        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: lively.next-node_modules/            
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
