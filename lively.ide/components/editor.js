@@ -9,6 +9,7 @@ import { findComponentDef, getComponentNode, scanForNamesInGenerator } from './h
 import { replaceComponentDefinition, Reconciliation, createInitialComponentDefinition } from './reconciliation.js';
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
+import { evalAsSpec } from 'lively.morphic/components/core.js';
 
 const metaSymbol = Symbol.for('lively-module-meta');
 const exprSerializer = new ExpressionSerializer();
@@ -55,7 +56,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
         prev.ensureComponentMorphUpToDate(c);
       }
       dependants.forEach(m => {
-        m.master = exprSerializer.deserializeExprObj(m.master.__serialize__());
+        evalAsSpec(() => {
+          m.master = exprSerializer.deserializeExprObj(m.master.__serialize__());
+        });
       });
       newDescr.refreshDependants(dependants);
       prev.checkForGeneratedNames();
