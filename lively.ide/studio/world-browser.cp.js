@@ -800,7 +800,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     await this.initWithProject(this._project);
   }
 
-  async loadEntity () {
+  loadEntity () {
     const { _name } = this._project;
     this.transitionToLivelyWorld(null, _name);
   }
