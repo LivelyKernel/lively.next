@@ -109,6 +109,8 @@ export class PropertyAnimation {
   constructor (queue, morph, config) {
     this.queue = queue;
     this.morph = morph;
+    this.isStyleApplication = config.isStyleApplication;
+    delete config.isStyleApplication;
     if (morph.isPath && 'fill' in config) {
       const fillBefore = morph.fill || Color.transparent; const fillAfter = config.fill;
       config.customTween = fun.compose(p => {
@@ -142,8 +144,10 @@ export class PropertyAnimation {
         }
         morph.opacity = targetVisibility ? num.interpolate(p, 0, originalOpacity) : num.interpolate(p, originalOpacity, 0);
         if (p === 1) {
-          morph.visible = targetVisibility;
-          morph.opacity = originalOpacity;
+          morph.withMetaDo({ metaInteraction: this.isStyleApplication }, () => {
+            morph.visible = targetVisibility;
+            morph.opacity = originalOpacity;
+          });
           delete queue.originalOpacity;
         }
         return p;

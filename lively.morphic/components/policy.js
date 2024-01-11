@@ -1280,6 +1280,7 @@ export class PolicyApplicator extends StylePolicy {
       let resolve, animationPromise;
       ({ promise: animationPromise, resolve } = promise.deferred());
       this._animating = animationPromise;
+      animationConfig.isStyleApplication = true;
       this.targetMorph.withAnimationDo(() => this.apply(this.targetMorph, previousTarget), animationConfig).then(async () => {
         while (animationPromise !== this._animating) {
           animationPromise = this._animating;
