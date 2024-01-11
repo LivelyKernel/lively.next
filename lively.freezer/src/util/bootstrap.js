@@ -436,6 +436,11 @@ export async function bootstrap ({
           }
           // place the background into the new world
           $world.opacity = 1;
+          // if we are not in fast load, we need to import
+          // the landing-page module manually for the copy
+          // to succeed.
+          await eval('System.import(\'lively.freezer/src/loading-screen.cp.js\')');
+          await eval('System.import(\'lively.freezer/src/landing-page.cp.js\')');
           const bg = $world.addMorph(progress.get('background').copy());
           bg.fit();
           const fader = bg.addMorph({ fill: Color.black, opacity: 0, extent: bg.extent });
