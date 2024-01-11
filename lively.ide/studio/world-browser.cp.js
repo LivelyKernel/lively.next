@@ -725,6 +725,10 @@ export class WorldPreviewModel extends ViewModel {
     this.loadEntity();
   }
 
+  loadEntity () {
+    this.transitionToLivelyWorld(this._commit);
+  }
+
   async transitionToLivelyWorld (commit, projectName) {
     const progress = this._worldBrowser.progressIndicator;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
@@ -799,6 +803,11 @@ class ProjectPreviewModel extends WorldPreviewModel {
     await this.initWithProject(this._project);
   }
 
+  async loadEntity (progress) {
+    const { _name } = this._project;
+    this.transitionToLivelyWorld(null, _name);
+  }
+
   initWithProject (project) {
     const {
       timestamp, title, description, titleWrapper
@@ -820,11 +829,6 @@ class ProjectPreviewModel extends WorldPreviewModel {
     title.value = titleWrapper.title = name;
     description.value = project.description;
     this.view.animate({ opacity: 1, duration: 300 });
-  }
-
-  async loadEntity (progress) {
-    const { _name } = this._project;
-    this.transitionToLivelyWorld(null, _name);
   }
 
   async tryToDelete () {
