@@ -73,7 +73,7 @@ class WorldLandingPage extends Morph {
       opacity: 1, duration: 300
     });
     dashboard.hasFixedPosition = false;
-    connect(dashboard, 'zoomBackground', this, 'showProgressBar');
+    connect(dashboard, 'fadingOut', this, 'showProgressBar');
   }
 
   showProgressBar () {

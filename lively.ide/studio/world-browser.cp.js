@@ -372,7 +372,7 @@ export class WorldBrowserModel extends ViewModel {
 
   async fadeOut () {
     const { view } = this;
-    signal(view, 'zoomBackground'); // this is actually for the purpose of migrating the the progress bar
+    signal(view, 'fadingOut');
     const center = view.center;
     const easing = easings.outExpo;
     view.animate({

@@ -59,7 +59,7 @@ function extractModules (packageName) {
 }
 
 async function fastLoadPackages (progress) {
-  progress?.showInfiniteProgress({ packageName: 'lively.ast', frozen: true });
+  progress?.showInfiniteProgress();
   // lively.lang
   const m = await System.import('lively.lang');
   extractModules('lively.lang');
