@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '20.10'
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Cache `lively.next` dependencies
         id: cache-lively-deps
         uses: actions/cache/restore@v3
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup `node`
         uses: actions/setup-node@v3
         with:

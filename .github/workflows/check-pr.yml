@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '20.10'
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Cache `lively.next` dependencies
@@ -79,7 +79,7 @@ jobs:
       - name: Install `sultan`
         run: pip3 install sultan 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Run Check Script 

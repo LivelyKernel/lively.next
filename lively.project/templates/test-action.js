@@ -26,7 +26,7 @@ jobs:
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}
       - name: Checkout \`lively.next\`
         if: \${{ steps.cache-lively-with-build.outputs.cache-hit != 'true' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
@@ -45,7 +45,7 @@ jobs:
           path: .            
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}     
       - name: Checkout Project Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: local_projects/%PROJECT_NAME%
       - name: Start \`lively.next\`
