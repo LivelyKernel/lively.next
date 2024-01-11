@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
    
 jobs:
-  starting:
-    name: Check if `lively.next` world loads
+  tests:
+    name: Check if `lively.next` world loads and tests stay green
     runs-on: ubuntu-latest
     steps:
       - name: Setup node
@@ -20,6 +20,8 @@ jobs:
           node-version: '20.10'
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Cache `lively.next` dependencies
         id: cache-lively-deps
         uses: actions/cache/restore@v3
@@ -28,7 +30,7 @@ jobs:
         with:
           path: lively.next-node_modules/
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
-      - name: Install lively.next
+      - name: Install `lively.next`
         run: |
           chmod a+x ./install.sh
           ./install.sh
@@ -40,6 +42,8 @@ jobs:
         with:
           path: lively.next-node_modules/            
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Run CI Test Script for Changed Folders
+        run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
