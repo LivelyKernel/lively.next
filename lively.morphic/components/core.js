@@ -14,6 +14,15 @@ const expressionSerializer = new ExpressionSerializer();
  */
 let evaluateAsSpec = false;
 
+export function evalAsSpec (doFn) {
+  morph.evaluateAsSpec = evaluateAsSpec = true;
+  try {
+    doFn();
+  } finally {
+    morph.evaluateAsSpec = evaluateAsSpec = false; // always disable this flag after spec initialization is finished
+  }
+}
+
 /**
  * Defines the core interface for defining and using master components in the system.
  * Components are defined in component files and allow for a file based definition of master components
@@ -73,15 +82,12 @@ export class ComponentDescriptor {
    * calls that occur in our generatorFunction()
    */
   static extractSpec (generatorFunction) {
-    morph.evaluateAsSpec = evaluateAsSpec = true;
     StylePolicy.usedNames = this.prepareUsedNamesSet(generatorFunction);
     let spec = {};
-    try {
+    evalAsSpec(() => {
       spec = generatorFunction();
       if (!spec.isPolicy) { spec = new PolicyApplicator(spec); } // make part calls return the synthesized spec
-    } finally {
-      morph.evaluateAsSpec = evaluateAsSpec = false; // always disable this flag after spec initialization is finished
-    }
+    });
     return spec;
   }
 
