@@ -28,7 +28,7 @@ class ProgressIndicatorModel extends ViewModel {
   finishPackage ({
     packageName, loaded
   }) {
-    const packagesToLoad = ['lively.lang', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.modules', 'lively.storage', 'lively.morphic'];
+    const packagesToLoad = ['lively.lang', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.modules', 'lively.storage', 'lively.morphic', 'world'];
     if (!loaded) return;
     this.ui.progressStatus.textString = 'Loading ' + packageName;
     const maxWidth = this.ui.progressBarWrapper.width;
@@ -62,6 +62,7 @@ export const ProgressIndicator = component({
 
   }, {
     name: 'progress bar wrapper',
+    clipMode: 'hidden',
     layout: new TilingLayout({
       align: 'center',
       axisAlign: 'center',
