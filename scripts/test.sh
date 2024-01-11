@@ -49,14 +49,23 @@ testfiles=(
 "lively.keyboard"
 )
 
+# To easily handle the case where we run the tests for a PR but no relevant files changed.
+# Challenge here is to differentiate this case from the one where we want to run the tests in all packages.
+if [ "$1" = "none" ];
+then 
+  exit 0
+fi
+
+# Packages to test are supplied on the command line. 
+# Defaults to all packages, see above.
 if [ "$1" ];
 then
-  testfiles=("$1" )
-else
-  if [ "$CI" ];
-  then
-    echo '# Tests for `lively.next` 🧪' >>  test_output.md
-  fi
+  testfiles=("$@")
+fi
+
+if [ "$CI" ];
+then
+  echo '# Tests for `lively.next` 🧪' >>  test_output.md
 fi
 
 # For not entirely clear reasons, the lively.server dies due to a socket hangup
