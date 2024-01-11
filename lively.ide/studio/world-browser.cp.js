@@ -716,12 +716,9 @@ export class WorldPreviewModel extends ViewModel {
     this.view.animate({ opacity: 1, duration: 300 });
   }
 
-  openAnimated (targetBounds = $world.visibleBounds()) {
-    this._worldBrowser.fadeOut();
-  }
 
   openEntity () {
-    this.openAnimated();
+    this._worldBrowser.fadeOut();
     this.loadEntity();
   }
 
@@ -803,7 +800,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     await this.initWithProject(this._project);
   }
 
-  async loadEntity (progress) {
+  async loadEntity () {
     const { _name } = this._project;
     this.transitionToLivelyWorld(null, _name);
   }
