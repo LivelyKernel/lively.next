@@ -28,7 +28,7 @@ export class AbstractPromptModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['keybindings', 'commands', 'activate', 'isActive', 'isPrompt', 'isEpiMorph'];
+          return ['keybindings', 'commands', 'activate', 'isActive', 'isPrompt', 'isEpiMorph', 'title', 'text'];
         }
       }
     };
