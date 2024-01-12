@@ -1134,7 +1134,7 @@ export class LivelyWorld extends World {
 
   inform (label = 'no message', opts = { fontSize: 16, requester: null, animated: true }) {
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.InformPrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1152,7 +1152,7 @@ export class LivelyWorld extends World {
     // }
     // const textPrompt = new TextPrompt({ label, ...opts });
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.TextPrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1169,7 +1169,7 @@ export class LivelyWorld extends World {
     evalEnvironment: null
   }) {
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.EditPrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1178,7 +1178,7 @@ export class LivelyWorld extends World {
   passwordPrompt (label, opts = { requester: null, input: '' }) {
     // await this.world().passwordPrompt("secret")
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.PasswordPrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1187,7 +1187,7 @@ export class LivelyWorld extends World {
   confirm (label, opts = { requester: null, animated: true }) {
     // await this.world().confirm("test")
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.ConfirmPrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1197,7 +1197,7 @@ export class LivelyWorld extends World {
     // await this.world().multipleChoicePrompt("test", {choices: ["1","2","3","4"]})
     let title;
     let text = '';
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.MultipleChoicePrompt, { viewModel: { title, text, ...opts } }), opts);
@@ -1206,7 +1206,7 @@ export class LivelyWorld extends World {
   listPrompt (label = '', items = [], opts = { requester: null, onSelection: null, preselect: 0 }) {
     // await this.world().listPrompt("test", ["1","2","3","4"])
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.ListPrompt, {
@@ -1247,7 +1247,7 @@ export class LivelyWorld extends World {
     }
 
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
 
@@ -1267,7 +1267,7 @@ export class LivelyWorld extends World {
 
   editListPrompt (label = '', items = [], opts = { requester: null, multiSelect: true, historyId: null }) {
     let title, text;
-    if (obj.isObject(label)){
+    if (!obj.isString(label) && !obj.isArray(label)) {
       ({ title, text } = label);
     } else title = label;
     return this.openPrompt(part(prompts.EditListPrompt, { viewModel: { title, text, multiSelect: true, items, padding: Rectangle.inset(3), ...opts } }), opts);
