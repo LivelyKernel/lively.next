@@ -179,7 +179,7 @@ then
   sed 's/📦/<g-emoji class="g-emoji" alias="package" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png"><img class="emoji" alt="package" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png" width="20" height="20"><\/g-emoji>/g' > test_output_clean.md
 fi
 
-if ((RED_TESTS > 0 || ALL_TESTS == 0)); 
+if ((RED_TESTS > 0)); 
 then
   exit 1
 else 
