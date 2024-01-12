@@ -1,12 +1,12 @@
 /* global System */
-import { resource, unregisterExtension, registerExtension, loadViaScript } from 'lively.resources';
-import { string, promise, obj, arr } from 'lively.lang';
+import { resource, loadViaScript } from 'lively.resources';
+import { promise, obj, arr } from 'lively.lang';
 import * as modulePackage from 'lively.modules';
-import { easings } from 'lively.morphic';
 import { adoptObject } from 'lively.lang/object.js';
 import { Color } from 'lively.graphics/color.js';
 import { install as installHook } from 'lively.modules/src/hooks.js';
 import { updateBundledModules } from 'lively.modules/src/module.js';
+import { Project } from 'lively.project/project.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -14,7 +14,7 @@ Object.defineProperty(lively, 'isInOfflineMode', {
   configurable: true,
   get () {
     const item = localStorage.getItem('LIVELY_OFFLINE_MODE');
-    return item == true;
+    return item === true;
   }
 });
 
@@ -152,10 +152,8 @@ async function fastLoadPackages (progress) {
   extractEsmModules();
 }
 
-let loads = 0;
 function installFetchHook () {
   function logFetch (proceed, load) {
-    loads++;
     return proceed(load);
   }
   window.__logFetch = logFetch;
@@ -163,7 +161,7 @@ function installFetchHook () {
 }
 
 function logInfo (...info) {
-  console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1));
+  console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1)); // eslint-disable-line no-console
 }
 
 async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
@@ -174,12 +172,12 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
     let currMod;
     if (key.startsWith('esm://')) continue; // do not revive esm modules
     if (modHash !== moduleHashes['/' + key]) {
-      console.log('reviving', modId);
+      console.log('reviving', modId); // eslint-disable-line no-console
       currMod = lively.modules.module(modId);
       try {
         modsToReload.push(...await currMod.revive(false));
       } catch (err) {
-	      console.log('failed reviving', modId);
+	      console.log('failed reviving', modId); // eslint-disable-line no-console
       }
     }
   }
@@ -386,12 +384,17 @@ function fastPrepLivelySystem () {
 export async function bootstrap ({
   filePath, worldName, projectName, snapshot, commit, progress,
   fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD,
-  logError = (err) => console.log(err)
+  logError = (err) => console.log(err) // eslint-disable-line no-console
 }) {
   try {
     await polyfills();
     const oldEnv = $world.env;
     doBootstrap ? await bootstrapLivelySystem(progress, fastLoad) : await fastPrepLivelySystem();
+    if (projectName) {
+      if (!lively.isInOfflineMode) {
+        Project.fetchInfoPreflight(projectName);
+      }
+    }
     await lively.modules.registerPackage('lively.2lively');
     if (askBeforeQuit) {
       window.addEventListener('beforeunload', function (evt) {

@@ -23,7 +23,7 @@ function reportWorldLoad (world, user) {
   }).catch(err => console.warn(`report-world-load failed: ${err}`));
 }
 
-async function setupLively2Lively (world) {
+export async function setupLively2Lively (world) {
   const user = { name: currentUser().login };
   const info = { world: world.name };
   if (user) {
@@ -43,7 +43,7 @@ async function setupLively2Lively (world) {
   return client;
 }
 
-async function setupLivelyShell (opts) {
+export async function setupLivelyShell (opts) {
   await lively.modules.importPackage('lively.shell');
   const { default: ClientCommand } = await System.import('lively.shell/client-command.js');
   const { resourceExtension } = await System.import('lively.shell/client-resource.js');
