@@ -56,7 +56,7 @@ export class Project {
         VersionChecker.checkVersionRelation(config.lively.boundLivelyVersion, true).then(
           finishCheck);
       }));
-      await Project.pullUpstreamChangesIfNeeded(gitResource);
+      await Project.pullUpstreamChangesIfRemote(gitResource);
     })();
   }
 
@@ -71,7 +71,7 @@ export class Project {
     await gitResource.resetFile('.github/workflows/ci-tests.yml');
   }
 
-  static async pullUpstreamChangesIfNeeded (gitResource) {
+  static async pullUpstreamChangesIfRemote (gitResource) {
     if (await gitResource.hasRemote()) await gitResource.pullRepo();
   }
 
@@ -273,7 +273,7 @@ export class Project {
       if (!lively.isInOfflineMode && !lively.projectRepoPull) {
         // Ensure that we do not run into conflicts regarding the bound lively version.
         await Project.resetConfigFiles(loadedProject.gitResource);
-        await Project.pullUpstreamChangesIfNeeded(loadedProject.gitResource);
+        await Project.pullUpstreamChangesIfRemote(loadedProject.gitResource);
       } else {
         await lively.projectRepoPull;
       }
