@@ -15,7 +15,7 @@ Object.defineProperty(lively, 'isInOfflineMode', {
   configurable: true,
   get () {
     const item = localStorage.getItem('LIVELY_OFFLINE_MODE');
-    return item === true;
+    return item == true; // eslint-disable-line eqeqeq
   }
 });
 
