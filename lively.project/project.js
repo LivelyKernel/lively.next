@@ -24,6 +24,8 @@ import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { generateFontFaceString } from 'lively.morphic/rendering/fonts.js';
 import { supportedImageFormats } from 'lively.ide/assets.js';
 import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
+import { promise } from 'lively.lang';
+import { setupLively2Lively, setupLivelyShell } from 'lively.morphic/world-loading.js';
 
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
@@ -33,10 +35,44 @@ export class Project {
     return localInterface.coreInterface;
   }
 
+  static async ensureGitResource (fullName) {
+    return resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
+  }
+
+  static fetchInfoPreflight (fullName) {
+    let finishCheck;
+    ({ promise: lively.checkedProjectVersionRelation, resolve: finishCheck } = promise.deferred());
+    lively.projectRepoPull = (async () => {
+      const gitResource = await this.ensureGitResource(fullName);
+      // Initialization needs to be done here, since the one in the world loading step comes too late.
+      // However we are setting up shell and l2l for a different world, thereby requiring us to initialize both twice...
+      const l2lClient = await setupLively2Lively($world);
+      if (l2lClient) await setupLivelyShell({ l2lClient });
+
+      await Project.resetConfigFiles(gitResource);
+      Project.projectDirectory(fullName).then(
+        dir => dir.join('package.json').readJson().then(
+          (config) => {
+        VersionChecker.checkVersionRelation(config.lively.boundLivelyVersion, true).then(
+          finishCheck);
+      }));
+      await Project.pullUpstreamChangesIfNeeded(gitResource);
+    })();
+  }
+
   // As a URL to be used from inside of lively.
-  static async projectDirectory () {
+  static async projectDirectory (projectName) {
     const baseURL = await Project.systemInterface.getConfig().baseURL;
-    return resource(baseURL).join('local_projects').asDirectory();
+    return resource(baseURL).join('local_projects').join(projectName).asDirectory();
+  }
+
+  static async resetConfigFiles (gitResource) {
+    await gitResource.resetFile('package.json');
+    await gitResource.resetFile('.github/workflows/ci-tests.yml');
+  }
+
+  static async pullUpstreamChangesIfNeeded (gitResource) {
+    if (await gitResource.hasRemote()) await gitResource.pullRepo();
   }
 
   /**
@@ -120,7 +156,7 @@ export class Project {
       })
     );
     projectsCandidates = projectsCandidates.filter(p => p.url.includes('local_projects'));
-    if (!localStorage.getItem('livelyIncludePartsbinInList')) projectsCandidates = projectsCandidates.filter(p => p._name != 'LivelyKernel--partsbin');
+    if (!localStorage.getItem('livelyIncludePartsbinInList')) projectsCandidates = projectsCandidates.filter(p => p._name !== 'LivelyKernel--partsbin');
     projectsCandidates.forEach(p => {
       p._projectName = p._name.replace(/.*--/, '');
       p._projectOwner = p._name.replace(/--.*/, '');
@@ -165,8 +201,7 @@ export class Project {
       await Project.setupForkInformation(projectRepoOwner, projectName);
     }
 
-    const projectsDir = await Project.projectDirectory();
-    const projectDir = projectsDir.join(`${projectRepoOwner}--${projectName}`);
+    const projectDir = await Project.projectDirectory(`${projectRepoOwner}--${projectName}`);
     await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${projectRepoOwner}--${projectName}')`);
     await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
 
@@ -184,7 +219,7 @@ export class Project {
 
   static async deleteProject (name, repoOwner, token, deleteRemote) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
-    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : ((await Project.projectDirectory()).join(`/${repoOwner}--${name}`).asDirectory());
+    const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : (await Project.projectDirectory(`${repoOwner}--${name}`));
     const gitResource = await resource('git/' + projectsDir.url);
 
     try {
@@ -210,13 +245,12 @@ export class Project {
     // The project acts merely as a container until we fill in the correct contents below!
     const loadedProject = new Project(fullName);
 
-    let address, url;
-    address = (await Project.projectDirectory()).join(fullName);
-    url = address.url;
-    loadedProject.url = url;
-    loadedProject.configFile = resource(address.join('package.json').url);
+    let address;
+    address = await Project.projectDirectory(fullName);
+    loadedProject.url = address.url;
+    loadedProject.configFile = address.join('package.json');
     if (!onlyLoadNotOpen) {
-      loadedProject.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
+      loadedProject.gitResource = await Project.ensureGitResource(fullName);
 
       // As we cannot easily access gitresource when cloning a project, do this here.
       // Gets executed more often than necessary, but is a valid catch-all solution to treat recently cloned projects as well as a user change.
@@ -236,16 +270,16 @@ export class Project {
           await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currUserToken, repoOwner, name);
         }
       }
-      if (!lively.isInOfflineMode) {
+      if (!lively.isInOfflineMode && !lively.projectRepoPull) {
         // Ensure that we do not run into conflicts regarding the bound lively version.
-        await loadedProject.gitResource.resetFile('package.json');
-        await loadedProject.gitResource.resetFile('.github/workflows/ci-tests.yml');
-        if (await loadedProject.gitResource.hasRemote()) await loadedProject.gitResource.pullRepo();
+        await Project.resetConfigFiles(loadedProject.gitResource);
+        await Project.pullUpstreamChangesIfNeeded(loadedProject.gitResource);
+      } else {
+        await lively.projectRepoPull;
       }
     }
 
-    const configContent = await loadedProject.configFile.read();
-    loadedProject.config = JSON.parse(configContent);
+    loadedProject.config = await loadedProject.configFile.readJson();
 
     // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies. We reintroduce those changes here, if necessary.
     const checkLivelyCompatibility = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion, onlyLoadNotOpen);
@@ -269,17 +303,17 @@ export class Project {
       } else $world.setStatusMessage('Project could not be loaded due to missing dependencies!', StatusMessageError);
       throw new Error({ cause: err });
     }
-
+    if (li) li.label = 'Loading Packages...';
     const pkg = await loadPackage(Project.systemInterface, {
       name: fullName,
-      url: url,
-      address: url,
+      url: loadedProject.url,
+      address: loadedProject.url,
       configFile: address.join('package.json').url,
       main: loadedProject.config.main ? address.join(loadedProject.config.main).url : address.join('index.js').url,
       type: 'package'
     });
     loadedProject.package = pkg;
-    await Project.installCSSForProject(url, !onlyLoadNotOpen, fullName, (!onlyLoadNotOpen ? loadedProject : null));
+    await Project.installCSSForProject(loadedProject.url, !onlyLoadNotOpen, fullName, (!onlyLoadNotOpen ? loadedProject : null));
     if (!onlyLoadNotOpen) {
       $world.openedProject = loadedProject;
       await loadedProject.retrieveProjectFontsFromCSS();
@@ -387,7 +421,7 @@ export class Project {
   }
 
   async bindAgainstCurrentLivelyVersion (knownCompatibleVersion, onlyLoadNotOpen = false) {
-    const { comparison } = await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
+    const { comparison } = await lively.checkedProjectVersionRelation || await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
     const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
     if (comparisonBetweenVersions > 0 && onlyLoadNotOpen) {
       console.warn('A loaded project expects a different lively version than the one currently running.');
@@ -442,8 +476,7 @@ export class Project {
     this.gitResource = null;
     const system = Project.systemInterface;
 
-    const projectsDir = await Project.projectDirectory();
-    const projectDir = projectsDir.join(`${gitHubUser}--${this.name}`);
+    const projectDir = await Project.projectDirectory(`${gitHubUser}--${this.name}`);
     this.url = projectDir.url;
 
     try {
@@ -470,7 +503,7 @@ export class Project {
         'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
-      this.gitResource = await resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(this.fullName).withRelativePartsResolved().asDirectory();
+      this.gitResource = Project.ensureGitResource(this.fullName);
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
@@ -642,9 +675,9 @@ export class Project {
         await cmd.whenDone();
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
         // Refresh the cache of available projects and their version.
-        const packageDir = await Project.projectDirectory();
+        const projectDir = await Project.projectDirectory(`${depRepoOwner}--${depName}`);
         await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${depRepoOwner}--${depName}')`);
-        await PackageRegistry.ofSystem(System).addPackageAt(packageDir.join(`${depRepoOwner}--${depName}`));
+        await PackageRegistry.ofSystem(System).addPackageAt(projectDir);
         availableProjects = await Project.listAvailableProjects(true);
       }
       // Add all transitive dependencies from the current dependency to the list.
@@ -660,7 +693,7 @@ export class Project {
       depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
 
       // Load the dependency and mount its CSS.
-      const adr = (await Project.projectDirectory()).join(depToEnsure.name);
+      const adr = await Project.projectDirectory(depToEnsure.name);
       await loadPackage(Project.systemInterface, {
         name: depToEnsure.name,
         url: adr.url,
