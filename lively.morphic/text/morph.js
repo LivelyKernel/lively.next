@@ -1086,16 +1086,11 @@ export class Text extends Morph {
 
   allFontsLoaded () {
     if (this._allFontsLoaded) return true;
-    // cache the result for as long as the font propertys are not reset
-    return this._allFontsLoaded = this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.check(fontString));
+    // cache the result for as long as the font properties are not reset
+    return this._allFontsLoaded = this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || (document.LIVELY_FONTS_LOADED && document.fonts.check(fontString)));
   }
 
   async whenFontLoaded () {
-    // FIXME: there seems to be a bug in the current version of chrome (120),
-    //        where fonts.check() returns true, even though the font face is still
-    //        unloaded or still loading. As a remporary measure, we will now
-    //        wait for the fonts.ready promise, which appears to fix the issues.
-    await document.fonts.ready;
     if (this.allFontsLoaded()) return true;
     const usedFonts = this.usedFonts();
     const success = await Promise.all(usedFonts.map(fontString => this.fontMetric.supportedFontCache.has(fontString) || document.fonts.load(fontString)));
