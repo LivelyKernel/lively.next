@@ -966,7 +966,7 @@ const ListPrompt = component(ConfirmPrompt, {
         itemHeight: 16,
         itemPadding: undefined,
         manualItemHeight: true,
-        master: false,
+        master: null,
         multiSelect: true,
         nonSelectionFontColor: Color.rgb(204, 204, 204),
         padding: rect(7, 6, -4, -3),
