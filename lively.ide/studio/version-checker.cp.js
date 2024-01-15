@@ -46,9 +46,11 @@ class VersionChecker extends Morph {
   static async currentLivelyVersion (main) {
     await L2LClient.default().whenOnline();
     const cwd = await VersionChecker.cwd();
-    const fetchCmd = 'git fetch';
-    await runCommand(fetchCmd, { cwd }).whenDone();
-    const hashCmd = main ? 'git merge-base origin/main HEAD' : 'git rev-parse @';
+    if (!lively.isInOfflineMode) {
+      const fetchCmd = 'git fetch';
+      await runCommand(fetchCmd, { cwd }).whenDone();
+    }
+    const hashCmd = main ? `git merge-base ${lively.isInOfflineMode ? '' : 'origin/'}main HEAD` : 'git rev-parse @';
     const result = await runCommand(hashCmd, { cwd }).whenDone();
     return result.stdout.trim();
   }
@@ -69,10 +71,6 @@ class VersionChecker extends Morph {
 
   async checkVersion () {
     this.reset();
-    if (lively.isInOfflineMode){
-      this.showOffline();
-      return;
-    }
     await this.displayLivelyVersionStatus();
   }
 
@@ -201,12 +199,12 @@ class VersionChecker extends Morph {
     currentLivelyVersion = await VersionChecker.currentLivelyVersion();
     let commonAncestor;
     if (compareLatestAncestor) {
-      const findLatestMainAncestorCmd = `git merge-base ${lively.isInOfflineMode ? '' : 'origin'}/main HEAD`;
+      const findLatestMainAncestorCmd = `git merge-base ${lively.isInOfflineMode ? '' : 'origin/'}main HEAD`;
       ({ stdout: commonAncestor } = await runCommand(findLatestMainAncestorCmd, { cwd }).whenDone());
       commonAncestor = commonAncestor.trim();
     }
     // See https://stackoverflow.com/a/27940027 for how this works
-    if (!hashToCheckAgainst) hashToCheckAgainst = `${lively.isInOfflineMode ? '' : 'origin'}/main`;
+    if (!hashToCheckAgainst) hashToCheckAgainst = `${lively.isInOfflineMode ? '' : 'origin/'}main`;
     const comparingCmd = `git rev-list --left-right --count ${hashToCheckAgainst}...${compareLatestAncestor ? commonAncestor : '@'}`;
     ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
     return { comparison, hash: currentLivelyVersion };
@@ -236,28 +234,36 @@ class VersionChecker extends Morph {
     }
     hash = hash.slice(0, 6);
     const comparisonResult = VersionChecker.parseHashComparison(comparison);
+    const offline = lively.isInOfflineMode;
     switch (comparisonResult) {
-      case (0): this.showEven(hash); break;
-      case (1): this.showAhead(hash); break;
-      case (-1): this.showBehind(hash); break;
-      case (2): this.showDiverged(hash);
+      case (0): this.showEven(hash, offline); break;
+      case (1): this.showAhead(hash, offline); break;
+      case (-1): this.showBehind(hash, offline); break;
+      case (2): this.showDiverged(hash, offline);
     }
   }
 
-  showEven (version) {
+  indicateOfflineMode (offline) {
+    if (!offline) return;
+    const { status } = this.ui;
+    status.textAndAttributes = status.textAndAttributes.concat([' (results might be outdated in offline mode)', null]); 
+  }
+
+  showEven (version, offline) {
     const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
     copyButton.visible = true;
     this.updateShownIcon('even');
+    if (offline) this.indicateOfflineMode(offline);
   }
 
-  async showBehind (version) {
+  async showBehind (version, offline) {
     const cwd = await VersionChecker.cwd();
     const currentBranchCmd = 'git rev-parse --abbrev-ref HEAD';
     let currBranch = await runCommand(currentBranchCmd, { cwd }).whenDone();
     currBranch = currBranch.stdout.replace('\n', '');
     const { status, updateButtonWrapper, copyButton } = this.ui;
-    if (currBranch === 'main') {
+    if (currBranch === 'main' && !offline) {
       updateButtonWrapper.visible = updateButtonWrapper.isLayoutable = true;
       status.reactsToPointer = true;
       status.nativeCursor = 'pointer';
@@ -269,6 +275,7 @@ class VersionChecker extends Morph {
       status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
       copyButton.visible = true;
       this.updateShownIcon('behind');
+      if (offline) this.indicateOfflineMode(offline);
     }
   }
 
@@ -284,18 +291,20 @@ class VersionChecker extends Morph {
     setTimeout(this.bounceUpdateButton.bind(this), 2500);
   }
 
-  showAhead (version) {
+  showAhead (version, offline) {
     const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
     copyButton.visible = true;
     this.updateShownIcon('ahead');
+    if (offline) this.indicateOfflineMode(offline);
   }
 
-  showDiverged (version) {
+  showDiverged (version, offline) {
     const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
     copyButton.visible = true;
     this.updateShownIcon('diverged');
+    if (offline) this.indicateOfflineMode(offline);
   }
 
   showError () {
@@ -303,13 +312,6 @@ class VersionChecker extends Morph {
     status.value = 'Error while checking';
     copyButton.visible = false;
     this.updateShownIcon('error');
-  }
-
-  showOffline () {
-    const { status, copyButton } = this.ui;
-    status.value = 'Cannot check version while offline';
-    copyButton.visible = false;
-    this.updateShownIcon('offline');
   }
 
   updateShownIcon (mode) {
@@ -337,11 +339,6 @@ class VersionChecker extends Morph {
       }
       case 'error': {
         statusIcon.textAndAttributes = Icon.textAttribute('exclamation-triangle');
-        statusIcon.fontColor = Color.rgb(231, 76, 60);
-        break;
-      }
-      case 'offline': {
-        statusIcon.textAndAttributes = Icon.textAttribute('mi-wifi_off');
         statusIcon.fontColor = Color.rgb(231, 76, 60);
         break;
       }
