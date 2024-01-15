@@ -69,6 +69,10 @@ class VersionChecker extends Morph {
 
   async checkVersion () {
     this.reset();
+    if (lively.isInOfflineMode){
+      this.showOffline();
+      return;
+    }
     await this.displayLivelyVersionStatus();
   }
 
@@ -295,6 +299,13 @@ class VersionChecker extends Morph {
     this.updateShownIcon('error');
   }
 
+  showOffline () {
+    const { status, copyButton } = this.ui;
+    status.value = 'Cannot check version while offline';
+    copyButton.visible = false;
+    this.updateShownIcon('offline');
+  }
+
   updateShownIcon (mode) {
     const { checking, statusIcon } = this.ui;
     switch (mode) {
@@ -320,6 +331,11 @@ class VersionChecker extends Morph {
       }
       case 'error': {
         statusIcon.textAndAttributes = Icon.textAttribute('exclamation-triangle');
+        statusIcon.fontColor = Color.rgb(231, 76, 60);
+        break;
+      }
+      case 'offline': {
+        statusIcon.textAndAttributes = Icon.textAttribute('mi-wifi_off');
         statusIcon.fontColor = Color.rgb(231, 76, 60);
         break;
       }
