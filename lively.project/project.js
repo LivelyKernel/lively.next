@@ -270,6 +270,7 @@ export class Project {
           await loadedProject.gitResource.changeRemoteURLToUseCurrentToken(currUserToken, repoOwner, name);
         }
       }
+      // The latter part of the condition is only to not tightly couple lively.projects to the code in bootstrap.js
       if (!lively.isInOfflineMode && !lively.projectRepoPull) {
         // Ensure that we do not run into conflicts regarding the bound lively version.
         await Project.resetConfigFiles(loadedProject.gitResource);
