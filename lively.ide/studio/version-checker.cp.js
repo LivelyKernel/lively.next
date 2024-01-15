@@ -245,8 +245,9 @@ class VersionChecker extends Morph {
   }
 
   showEven (version) {
-    const { status } = this.ui;
+    const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
+    copyButton.visible = true;
     this.updateShownIcon('even');
   }
 
@@ -255,16 +256,18 @@ class VersionChecker extends Morph {
     const currentBranchCmd = 'git rev-parse --abbrev-ref HEAD';
     let currBranch = await runCommand(currentBranchCmd, { cwd }).whenDone();
     currBranch = currBranch.stdout.replace('\n', '');
-    const { status, updateButtonWrapper } = this.ui;
+    const { status, updateButtonWrapper, copyButton } = this.ui;
     if (currBranch === 'main') {
       updateButtonWrapper.visible = updateButtonWrapper.isLayoutable = true;
       status.reactsToPointer = true;
       status.nativeCursor = 'pointer';
       this.bounceUpdateButton();
       status.value = ['Press here to update!', { fontWeight: 'bold' }];
+      copyButton.visible = true;
       this.updateShownIcon('none');
     } else {
       status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
+      copyButton.visible = true;
       this.updateShownIcon('behind');
     }
   }
@@ -282,20 +285,23 @@ class VersionChecker extends Morph {
   }
 
   showAhead (version) {
-    const { status } = this.ui;
+    const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }];
+    copyButton.visible = true;
     this.updateShownIcon('ahead');
   }
 
   showDiverged (version) {
-    const { status } = this.ui;
+    const { status, copyButton } = this.ui;
     status.value = ['Version: ', {}, `[${version}]`, { fontWeight: 'bold' }, ' (Please update!)'];
+    copyButton.visible = true;
     this.updateShownIcon('diverged');
   }
 
   showError () {
-    const { status } = this.ui;
+    const { status, copyButton } = this.ui;
     status.value = 'Error while checking';
+    copyButton.visible = false;
     this.updateShownIcon('error');
   }
 
