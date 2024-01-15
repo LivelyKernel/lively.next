@@ -237,6 +237,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
         }
 
         createdProject = new Project(enteredName, { author: currentUsername(), description: description.textString, repoOwner: repoOwner });
+        // TODO: We currently assume that project creation is not done in offline mode, but do nothing to actually enforce this.
+        // Once we tackle this, this code needs to be checked.
         const currentLivelyVersion = await VersionChecker.currentLivelyVersion(true);
         createdProject.config.lively.boundLivelyVersion = currentLivelyVersion;
         try {
