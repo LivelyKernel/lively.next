@@ -201,12 +201,12 @@ class VersionChecker extends Morph {
     currentLivelyVersion = await VersionChecker.currentLivelyVersion();
     let commonAncestor;
     if (compareLatestAncestor) {
-      const findLatestMainAncestorCmd = 'git merge-base origin/main HEAD';
+      const findLatestMainAncestorCmd = `git merge-base ${lively.isInOfflineMode ? '' : 'origin'}/main HEAD`;
       ({ stdout: commonAncestor } = await runCommand(findLatestMainAncestorCmd, { cwd }).whenDone());
       commonAncestor = commonAncestor.trim();
     }
     // See https://stackoverflow.com/a/27940027 for how this works
-    if (!hashToCheckAgainst) hashToCheckAgainst = 'origin/main';
+    if (!hashToCheckAgainst) hashToCheckAgainst = `${lively.isInOfflineMode ? '' : 'origin'}/main`;
     const comparingCmd = `git rev-list --left-right --count ${hashToCheckAgainst}...${compareLatestAncestor ? commonAncestor : '@'}`;
     ({ stdout: comparison } = await runCommand(comparingCmd, { cwd }).whenDone());
     return { comparison, hash: currentLivelyVersion };
