@@ -4081,7 +4081,10 @@ export class Text extends Morph {
       const targets = evt.targetMorphs;
       // clicks inside of the text should not cancel editing
       if (targets[0] === this) return;
-      if (targets[0] === this.iconButton) return;
+      // It seems like the latter check is the one that is always warranted.
+      // For safety reasons, as we are not entirely sure when this feature broke,
+      // the first check is kept around because of its seniority.
+      if (targets[0] === this.iconButton || (targets[1] && (targets[1] === this.iconButton))) return;
       // formatting options are legal
       if (targets.map(m => m.name).includes('formatting pop up')) return;
       // allows confirm prompt for link setting
