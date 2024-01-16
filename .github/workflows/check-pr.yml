@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.10'
+      - name: Install `sultan`
+        run: pip3 install sultan 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -40,6 +42,8 @@ jobs:
         with:
           path: lively.next-node_modules/            
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Check if Bundled Artifacts are up to Date 
+        run:  ./scripts/check-build-status.py
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server
@@ -52,35 +56,3 @@ jobs:
         run: |
           chmod a+x ./scripts/check-boot.sh
           ./scripts/check-boot.sh
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      changed-source: ${{ steps.filter.outputs.changed-source }}
-    steps:
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            changed-source:
-              - flatn/**
-              - lively\.installer/**
-  artifacts:
-    name: Check Build Artifacts
-    needs: changes
-    if: ${{ needs.changes.outputs.changed-source == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.10'
-      - name: Install `sultan`
-        run: pip3 install sultan 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Run Check Script 
-        run:  ./scripts/check-build-status.py
