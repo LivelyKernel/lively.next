@@ -59,10 +59,38 @@ var semver$1 = {exports: {}};
 	// Max safe segment length for coercion.
 	var MAX_SAFE_COMPONENT_LENGTH = 16;
 
+	var MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6;
+
 	// The actual regexps go on exports.re
 	var re = exports.re = [];
+	var safeRe = exports.safeRe = [];
 	var src = exports.src = [];
 	var R = 0;
+
+	var LETTERDASHNUMBER = '[a-zA-Z0-9-]';
+
+	// Replace some greedy regex tokens to prevent regex dos issues. These regex are
+	// used internally via the safeRe object since all inputs in this library get
+	// normalized first to trim and collapse all extra whitespace. The original
+	// regexes are exported for userland consumption and lower level usage. A
+	// future breaking change could export the safer regex only with a note that
+	// all input should have extra whitespace removed.
+	var safeRegexReplacements = [
+	  ['\\s', 1],
+	  ['\\d', MAX_LENGTH],
+	  [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH],
+	];
+
+	function makeSafeRe (value) {
+	  for (var i = 0; i < safeRegexReplacements.length; i++) {
+	    var token = safeRegexReplacements[i][0];
+	    var max = safeRegexReplacements[i][1];
+	    value = value
+	      .split(token + '*').join(token + '{0,' + max + '}')
+	      .split(token + '+').join(token + '{1,' + max + '}');
+	  }
+	  return value
+	}
 
 	// The following Regular Expressions can be used for tokenizing,
 	// validating, and parsing SemVer version strings.
@@ -73,14 +101,14 @@ var semver$1 = {exports: {}};
 	var NUMERICIDENTIFIER = R++;
 	src[NUMERICIDENTIFIER] = '0|[1-9]\\d*';
 	var NUMERICIDENTIFIERLOOSE = R++;
-	src[NUMERICIDENTIFIERLOOSE] = '[0-9]+';
+	src[NUMERICIDENTIFIERLOOSE] = '\\d+';
 
 	// ## Non-numeric Identifier
 	// Zero or more digits, followed by a letter or hyphen, and then zero or
 	// more letters, digits, or hyphens.
 
 	var NONNUMERICIDENTIFIER = R++;
-	src[NONNUMERICIDENTIFIER] = '\\d*[a-zA-Z-][a-zA-Z0-9-]*';
+	src[NONNUMERICIDENTIFIER] = '\\d*[a-zA-Z-]' + LETTERDASHNUMBER + '*';
 
 	// ## Main Version
 	// Three dot-separated numeric identifiers.
@@ -122,7 +150,7 @@ var semver$1 = {exports: {}};
 	// Any combination of digits, letters, or hyphens.
 
 	var BUILDIDENTIFIER = R++;
-	src[BUILDIDENTIFIER] = '[0-9A-Za-z-]+';
+	src[BUILDIDENTIFIER] = LETTERDASHNUMBER + '+';
 
 	// ## Build Metadata
 	// Plus sign, followed by one or more period-separated build metadata
@@ -207,6 +235,7 @@ var semver$1 = {exports: {}};
 	var TILDETRIM = R++;
 	src[TILDETRIM] = '(\\s*)' + src[LONETILDE] + '\\s+';
 	re[TILDETRIM] = new RegExp(src[TILDETRIM], 'g');
+	safeRe[TILDETRIM] = new RegExp(makeSafeRe(src[TILDETRIM]), 'g');
 	var tildeTrimReplace = '$1~';
 
 	var TILDE = R++;
@@ -222,6 +251,7 @@ var semver$1 = {exports: {}};
 	var CARETTRIM = R++;
 	src[CARETTRIM] = '(\\s*)' + src[LONECARET] + '\\s+';
 	re[CARETTRIM] = new RegExp(src[CARETTRIM], 'g');
+	safeRe[CARETTRIM] = new RegExp(makeSafeRe(src[CARETTRIM]), 'g');
 	var caretTrimReplace = '$1^';
 
 	var CARET = R++;
@@ -243,6 +273,7 @@ var semver$1 = {exports: {}};
 
 	// this one has to use the /g flag
 	re[COMPARATORTRIM] = new RegExp(src[COMPARATORTRIM], 'g');
+	safeRe[COMPARATORTRIM] = new RegExp(makeSafeRe(src[COMPARATORTRIM]), 'g');
 	var comparatorTrimReplace = '$1$2$3';
 
 	// Something like `1.2.3 - 1.2.4`
@@ -271,6 +302,14 @@ var semver$1 = {exports: {}};
 	  debug(i, src[i]);
 	  if (!re[i]) {
 	    re[i] = new RegExp(src[i]);
+
+	    // Replace all greedy whitespace to prevent regex dos issues. These regex are
+	    // used internally via the safeRe object since all inputs in this library get
+	    // normalized first to trim and collapse all extra whitespace. The original
+	    // regexes are exported for userland consumption and lower level usage. A
+	    // future breaking change could export the safer regex only with a note that
+	    // all input should have extra whitespace removed.
+	    safeRe[i] = new RegExp(makeSafeRe(src[i]));
 	  }
 	}
 
@@ -295,7 +334,7 @@ var semver$1 = {exports: {}};
 	    return null
 	  }
 
-	  var r = options.loose ? re[LOOSE] : re[FULL];
+	  var r = options.loose ? safeRe[LOOSE] : safeRe[FULL];
 	  if (!r.test(version)) {
 	    return null
 	  }
@@ -350,7 +389,7 @@ var semver$1 = {exports: {}};
 	  this.options = options;
 	  this.loose = !!options.loose;
 
-	  var m = version.trim().match(options.loose ? re[LOOSE] : re[FULL]);
+	  var m = version.trim().match(options.loose ? safeRe[LOOSE] : safeRe[FULL]);
 
 	  if (!m) {
 	    throw new TypeError('Invalid Version: ' + version)
@@ -764,6 +803,7 @@ var semver$1 = {exports: {}};
 	    return new Comparator(comp, options)
 	  }
 
+	  comp = comp.trim().split(/\s+/).join(' ');
 	  debug('comparator', comp, options);
 	  this.options = options;
 	  this.loose = !!options.loose;
@@ -780,7 +820,7 @@ var semver$1 = {exports: {}};
 
 	var ANY = {};
 	Comparator.prototype.parse = function (comp) {
-	  var r = this.options.loose ? re[COMPARATORLOOSE] : re[COMPARATOR];
+	  var r = this.options.loose ? safeRe[COMPARATORLOOSE] : safeRe[COMPARATOR];
 	  var m = comp.match(r);
 
 	  if (!m) {
@@ -894,9 +934,16 @@ var semver$1 = {exports: {}};
 	  this.loose = !!options.loose;
 	  this.includePrerelease = !!options.includePrerelease;
 
+	  // First reduce all whitespace as much as possible so we do not have to rely
+	  // on potentially slow regexes like \s*. This is then stored and used for
+	  // future error messages as well.
+	  this.raw = range
+	    .trim()
+	    .split(/\s+/)
+	    .join(' ');
+
 	  // First, split based on boolean or ||
-	  this.raw = range;
-	  this.set = range.split(/\s*\|\|\s*/).map(function (range) {
+	  this.set = this.raw.split('||').map(function (range) {
 	    return this.parseRange(range.trim())
 	  }, this).filter(function (c) {
 	    // throw out any that are not relevant for whatever reason
@@ -904,7 +951,7 @@ var semver$1 = {exports: {}};
 	  });
 
 	  if (!this.set.length) {
-	    throw new TypeError('Invalid SemVer Range: ' + range)
+	    throw new TypeError('Invalid SemVer Range: ' + this.raw)
 	  }
 
 	  this.format();
@@ -923,28 +970,23 @@ var semver$1 = {exports: {}};
 
 	Range.prototype.parseRange = function (range) {
 	  var loose = this.options.loose;
-	  range = range.trim();
 	  // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
-	  var hr = loose ? re[HYPHENRANGELOOSE] : re[HYPHENRANGE];
+	  var hr = loose ? safeRe[HYPHENRANGELOOSE] : safeRe[HYPHENRANGE];
 	  range = range.replace(hr, hyphenReplace);
 	  debug('hyphen replace', range);
 	  // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
-	  range = range.replace(re[COMPARATORTRIM], comparatorTrimReplace);
-	  debug('comparator trim', range, re[COMPARATORTRIM]);
+	  range = range.replace(safeRe[COMPARATORTRIM], comparatorTrimReplace);
+	  debug('comparator trim', range, safeRe[COMPARATORTRIM]);
 
 	  // `~ 1.2.3` => `~1.2.3`
-	  range = range.replace(re[TILDETRIM], tildeTrimReplace);
+	  range = range.replace(safeRe[TILDETRIM], tildeTrimReplace);
 
 	  // `^ 1.2.3` => `^1.2.3`
-	  range = range.replace(re[CARETTRIM], caretTrimReplace);
-
-	  // normalize spaces
-	  range = range.split(/\s+/).join(' ');
+	  range = range.replace(safeRe[CARETTRIM], caretTrimReplace);
 
 	  // At this point, the range is completely trimmed and
 	  // ready to be split into comparators.
-
-	  var compRe = loose ? re[COMPARATORLOOSE] : re[COMPARATOR];
+	  var compRe = loose ? safeRe[COMPARATORLOOSE] : safeRe[COMPARATOR];
 	  var set = range.split(' ').map(function (comp) {
 	    return parseComparator(comp, this.options)
 	  }, this).join(' ').split(/\s+/);
@@ -1020,7 +1062,7 @@ var semver$1 = {exports: {}};
 	}
 
 	function replaceTilde (comp, options) {
-	  var r = options.loose ? re[TILDELOOSE] : re[TILDE];
+	  var r = options.loose ? safeRe[TILDELOOSE] : safeRe[TILDE];
 	  return comp.replace(r, function (_, M, m, p, pr) {
 	    debug('tilde', comp, _, M, m, p, pr);
 	    var ret;
@@ -1061,7 +1103,7 @@ var semver$1 = {exports: {}};
 
 	function replaceCaret (comp, options) {
 	  debug('caret', comp, options);
-	  var r = options.loose ? re[CARETLOOSE] : re[CARET];
+	  var r = options.loose ? safeRe[CARETLOOSE] : safeRe[CARET];
 	  return comp.replace(r, function (_, M, m, p, pr) {
 	    debug('caret', comp, _, M, m, p, pr);
 	    var ret;
@@ -1120,7 +1162,7 @@ var semver$1 = {exports: {}};
 
 	function replaceXRange (comp, options) {
 	  comp = comp.trim();
-	  var r = options.loose ? re[XRANGELOOSE] : re[XRANGE];
+	  var r = options.loose ? safeRe[XRANGELOOSE] : safeRe[XRANGE];
 	  return comp.replace(r, function (ret, gtlt, M, m, p, pr) {
 	    debug('xRange', comp, ret, gtlt, M, m, p, pr);
 	    var xM = isX(M);
@@ -1190,10 +1232,10 @@ var semver$1 = {exports: {}};
 	function replaceStars (comp, options) {
 	  debug('replaceStars', comp, options);
 	  // Looseness is ignored here.  star is always as loose as it gets!
-	  return comp.trim().replace(re[STAR], '')
+	  return comp.trim().replace(safeRe[STAR], '')
 	}
 
-	// This function is passed to string.replace(re[HYPHENRANGE])
+	// This function is passed to string.replace(safeRe[HYPHENRANGE])
 	// M, m, patch, prerelease, build
 	// 1.2 - 3.4.5 => >=1.2.0 <=3.4.5
 	// 1.2.3 - 3.4 => >=1.2.0 <3.5.0 Any 3.4.x will do
@@ -1504,7 +1546,7 @@ var semver$1 = {exports: {}};
 	    return null
 	  }
 
-	  var match = version.match(re[COERCE]);
+	  var match = version.match(safeRe[COERCE]);
 
 	  if (match == null) {
 	    return null
@@ -5429,114 +5471,123 @@ var hasRequiredB64;
 function requireB64 () {
 	if (hasRequiredB64) return b64;
 	hasRequiredB64 = 1;
+	(function (exports) {
+(function (exports) {
 
-	b64.toByteArray = toByteArray;
-	b64.fromByteArray = fromByteArray;
+		  var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
-	var lookup = [];
-	var revLookup = [];
-	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
+		  var Arr = (typeof Uint8Array !== 'undefined')
+		    ? Uint8Array
+		    : Array;
 
-	function init () {
-	  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-	  for (var i = 0, len = code.length; i < len; ++i) {
-	    lookup[i] = code[i];
-	    revLookup[code.charCodeAt(i)] = i;
-	  }
+		  var PLUS = '+'.charCodeAt(0);
+		  var SLASH = '/'.charCodeAt(0);
+		  var NUMBER = '0'.charCodeAt(0);
+		  var LOWER = 'a'.charCodeAt(0);
+		  var UPPER = 'A'.charCodeAt(0);
+		  var PLUS_URL_SAFE = '-'.charCodeAt(0);
+		  var SLASH_URL_SAFE = '_'.charCodeAt(0);
 
-	  revLookup['-'.charCodeAt(0)] = 62;
-	  revLookup['_'.charCodeAt(0)] = 63;
-	}
+		  function decode (elt) {
+		    var code = elt.charCodeAt(0);
+		    if (code === PLUS || code === PLUS_URL_SAFE) return 62 // '+'
+		    if (code === SLASH || code === SLASH_URL_SAFE) return 63 // '/'
+		    if (code < NUMBER) return -1 // no match
+		    if (code < NUMBER + 10) return code - NUMBER + 26 + 26
+		    if (code < UPPER + 26) return code - UPPER
+		    if (code < LOWER + 26) return code - LOWER + 26
+		  }
 
-	init();
+		  function b64ToByteArray (b64) {
+		    var i, j, l, tmp, placeHolders, arr;
 
-	function toByteArray (b64) {
-	  var i, j, l, tmp, placeHolders, arr;
-	  var len = b64.length;
+		    if (b64.length % 4 > 0) {
+		      throw new Error('Invalid string. Length must be a multiple of 4')
+		    }
 
-	  if (len % 4 > 0) {
-	    throw new Error('Invalid string. Length must be a multiple of 4')
-	  }
+		    // the number of equal signs (place holders)
+		    // if there are two placeholders, than the two characters before it
+		    // represent one byte
+		    // if there is only one, then the three characters before it represent 2 bytes
+		    // this is just a cheap hack to not do indexOf twice
+		    var len = b64.length;
+		    placeHolders = b64.charAt(len - 2) === '=' ? 2 : b64.charAt(len - 1) === '=' ? 1 : 0;
 
-	  // the number of equal signs (place holders)
-	  // if there are two placeholders, than the two characters before it
-	  // represent one byte
-	  // if there is only one, then the three characters before it represent 2 bytes
-	  // this is just a cheap hack to not do indexOf twice
-	  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0;
+		    // base64 is 4/3 + up to two characters of the original data
+		    arr = new Arr(b64.length * 3 / 4 - placeHolders);
 
-	  // base64 is 4/3 + up to two characters of the original data
-	  arr = new Arr(len * 3 / 4 - placeHolders);
+		    // if there are placeholders, only get up to the last complete 4 chars
+		    l = placeHolders > 0 ? b64.length - 4 : b64.length;
 
-	  // if there are placeholders, only get up to the last complete 4 chars
-	  l = placeHolders > 0 ? len - 4 : len;
+		    var L = 0;
 
-	  var L = 0;
+		    function push (v) {
+		      arr[L++] = v;
+		    }
 
-	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)];
-	    arr[L++] = (tmp >> 16) & 0xFF;
-	    arr[L++] = (tmp >> 8) & 0xFF;
-	    arr[L++] = tmp & 0xFF;
-	  }
+		    for (i = 0, j = 0; i < l; i += 4, j += 3) {
+		      tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3));
+		      push((tmp & 0xFF0000) >> 16);
+		      push((tmp & 0xFF00) >> 8);
+		      push(tmp & 0xFF);
+		    }
 
-	  if (placeHolders === 2) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4);
-	    arr[L++] = tmp & 0xFF;
-	  } else if (placeHolders === 1) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2);
-	    arr[L++] = (tmp >> 8) & 0xFF;
-	    arr[L++] = tmp & 0xFF;
-	  }
+		    if (placeHolders === 2) {
+		      tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4);
+		      push(tmp & 0xFF);
+		    } else if (placeHolders === 1) {
+		      tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2);
+		      push((tmp >> 8) & 0xFF);
+		      push(tmp & 0xFF);
+		    }
 
-	  return arr
-	}
+		    return arr
+		  }
 
-	function tripletToBase64 (num) {
-	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-	}
+		  function uint8ToBase64 (uint8) {
+		    var i;
+		    var extraBytes = uint8.length % 3; // if we have 1 byte left, pad 2 bytes
+		    var output = '';
+		    var temp, length;
 
-	function encodeChunk (uint8, start, end) {
-	  var tmp;
-	  var output = [];
-	  for (var i = start; i < end; i += 3) {
-	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
-	    output.push(tripletToBase64(tmp));
-	  }
-	  return output.join('')
-	}
+		    function encode (num) {
+		      return lookup.charAt(num)
+		    }
 
-	function fromByteArray (uint8) {
-	  var tmp;
-	  var len = uint8.length;
-	  var extraBytes = len % 3; // if we have 1 byte left, pad 2 bytes
-	  var output = '';
-	  var parts = [];
-	  var maxChunkLength = 16383; // must be multiple of 3
+		    function tripletToBase64 (num) {
+		      return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+		    }
 
-	  // go through the array every three bytes, we'll deal with trailing stuff later
-	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)));
-	  }
+		    // go through the array every three bytes, we'll deal with trailing stuff later
+		    for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+		      temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
+		      output += tripletToBase64(temp);
+		    }
 
-	  // pad the end with zeros, but make sure to not forget the extra bytes
-	  if (extraBytes === 1) {
-	    tmp = uint8[len - 1];
-	    output += lookup[tmp >> 2];
-	    output += lookup[(tmp << 4) & 0x3F];
-	    output += '==';
-	  } else if (extraBytes === 2) {
-	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1]);
-	    output += lookup[tmp >> 10];
-	    output += lookup[(tmp >> 4) & 0x3F];
-	    output += lookup[(tmp << 2) & 0x3F];
-	    output += '=';
-	  }
+		    // pad the end with zeros, but make sure to not forget the extra bytes
+		    switch (extraBytes) {
+		      case 1:
+		        temp = uint8[uint8.length - 1];
+		        output += encode(temp >> 2);
+		        output += encode((temp << 4) & 0x3F);
+		        output += '==';
+		        break
+		      case 2:
+		        temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
+		        output += encode(temp >> 10);
+		        output += encode((temp >> 4) & 0x3F);
+		        output += encode((temp << 2) & 0x3F);
+		        output += '=';
+		        break
+		    }
 
-	  parts.push(output);
+		    return output
+		  }
 
-	  return parts.join('')
-	}
+		  exports.toByteArray = b64ToByteArray;
+		  exports.fromByteArray = uint8ToBase64;
+		}(exports));
+} (b64));
 	return b64;
 }
 
@@ -7932,6 +7983,20 @@ const isDomainOrSubdomain = (destination, original) => {
 	return orig === dest || orig.endsWith(`.${dest}`);
 };
 
+/**
+ * isSameProtocol reports whether the two provided URLs use the same protocol.
+ *
+ * Both domains must already be in canonical form.
+ * @param {string|URL} original
+ * @param {string|URL} destination
+ */
+const isSameProtocol = (destination, original) => {
+	const orig = new URL(original).protocol;
+	const dest = new URL(destination).protocol;
+
+	return orig === dest;
+};
+
 const pipeline = util.promisify(Stream__default["default"].pipeline);
 const INTERNALS$2 = Symbol('Body internals');
 
@@ -8848,7 +8913,7 @@ function isOriginPotentiallyTrustworthy(url) {
 	// 5. If origin's host component is "localhost" or falls within ".localhost", and the user agent conforms to the name resolution rules in [let-localhost-be-localhost], return "Potentially Trustworthy".
 	// We are returning FALSE here because we cannot ensure conformance to
 	// let-localhost-be-loalhost (https://tools.ietf.org/html/draft-west-let-localhost-be-localhost)
-	if (/^(.+\.)*localhost$/.test(url.host)) {
+	if (url.host === 'localhost' || url.host.endsWith('.localhost')) {
 		return false;
 	}
 
@@ -9125,7 +9190,7 @@ class Request extends Body {
 			method = method.toUpperCase();
 		}
 
-		if ('data' in init) {
+		if (!isRequest(init) && 'data' in init) {
 			doBadDataWarn();
 		}
 
@@ -9340,7 +9405,7 @@ const getNodeRequestOptions = request => {
 
 	// HTTP-network-or-cache fetch step 2.15
 	if (request.compress && !headers.has('Accept-Encoding')) {
-		headers.set('Accept-Encoding', 'gzip,deflate,br');
+		headers.set('Accept-Encoding', 'gzip, deflate, br');
 	}
 
 	let {agent} = request;
@@ -9482,7 +9547,9 @@ async function fetch$1(url, options_) {
 		});
 
 		fixResponseChunkedTransferBadEnding(request_, error => {
-			response.body.destroy(error);
+			if (response && response.body) {
+				response.body.destroy(error);
+			}
 		});
 
 		/* c8 ignore next 18 */
@@ -9573,7 +9640,10 @@ async function fetch$1(url, options_) {
 						// that is not a subdomain match or exact match of the initial domain.
 						// For example, a redirect from "foo.com" to either "foo.com" or "sub.foo.com"
 						// will forward the sensitive headers, but a redirect to "bar.com" will not.
-						if (!isDomainOrSubdomain(request.url, locationURL)) {
+						// headers will also be ignored when following a redirect to a domain using
+						// a different protocol. For example, a redirect from "https://foo.com" to "http://foo.com"
+						// will not forward the sensitive headers
+						if (!isDomainOrSubdomain(request.url, locationURL) || !isSameProtocol(request.url, locationURL)) {
 							for (const name of ['authorization', 'www-authenticate', 'cookie', 'cookie2']) {
 								requestOptions.headers.delete(name);
 							}
@@ -9759,13 +9829,7 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 			}
 		};
 
-		socket.prependListener('close', onSocketClose);
-
-		request.on('abort', () => {
-			socket.removeListener('close', onSocketClose);
-		});
-
-		socket.on('data', buf => {
+		const onData = buf => {
 			properLastChunkReceived = buffer.Buffer.compare(buf.slice(-5), LAST_CHUNK) === 0;
 
 			// Sometimes final 0-length chunk and end of message code are in separate packets
@@ -9777,6 +9841,14 @@ function fixResponseChunkedTransferBadEnding(request, errorCallback) {
 			}
 
 			previousChunk = buf;
+		};
+
+		socket.prependListener('close', onSocketClose);
+		socket.on('data', onData);
+
+		request.on('close', () => {
+			socket.removeListener('close', onSocketClose);
+			socket.removeListener('data', onData);
 		});
 	});
 }
@@ -10745,127 +10817,6 @@ function between (x, a, b, eps) {
 /* global Promise */
 
 /**
- * Methods helping with promises (Promise/A+ model). Not a promise shim.
- * @module lively.lang/promise
- */
-
-/**
- * Promise object / function converter
- * @param { object|function } obj - The value or function to convert into a promise.
- * @returns { Promise } 
- * @example
- * promise("foo");
- *   // => Promise({state: "fullfilled", value: "foo"})
- * lively.lang.promise({then: (resolve, reject) => resolve(23)})
- *   // => Promise({state: "fullfilled", value: 23})
- * lively.lang.promise(function(val, thenDo) { thenDo(null, val + 1) })(3)
- *   // => Promise({state: "fullfilled", value: 4})
- */
-function promise (obj) {
-  return (typeof obj === 'function')
-    ? promise.convertCallbackFun(obj)
-    : Promise.resolve(obj);
-}
-
-/**
- * Like `Promise.resolve(resolveVal)` but waits for `ms` milliseconds
- * before resolving
- * @async
- * @param { number } ms - The duration to delay the execution in milliseconds.
- * @param { * } resolveVal - The value to resolve to.
- */
-function delay (ms, resolveVal) {
-  return new Promise(resolve =>
-    setTimeout(resolve, ms, resolveVal));
-}
-
-/**
- * like `promise.delay` but rejects instead of resolving.
- * @async
- * @param { number } ms - The duration to delay the execution in milliseconds.
- * @param { * } rejectedVal - The value to reject.
- */
-function delayReject (ms, rejectVal) {
-  return new Promise((_, reject) =>
-    setTimeout(reject, ms, rejectVal));
-}
-
-/**
- * Takes a promise and either resolves to the value of the original promise
- * when it succeeds before `ms` milliseconds passed or fails with a timeout
- * error.
- * @async
- * @param { number } ms - The duration to wait for the promise to resolve in milliseconds.
- * @param { Promise } promise - The promise to wait for to finish.
- */
-function timeout (ms, promise) {
-  return new Promise((resolve, reject) => {
-    let done = false;
-    setTimeout(() => !done && (done = true) && reject(new Error('Promise timed out')), ms);
-    promise.then(
-      val => !done && (done = true) && resolve(val),
-      err => !done && (done = true) && reject(err));
-  });
-}
-
-const waitForClosures = {};
-
-/* 
-function clearPendingWaitFors () {
-  Object.keys(waitForClosures).forEach(i => {
-    delete waitForClosures[i];
-    clearInterval(i);
-  });
-}
-*/
-
-/**
- * Tests for a condition calling function `tester` until the result is
- * truthy. Resolves with last return value of `tester`. If `ms` is defined
- * and `ms` milliseconds passed, reject with timeout error
- * if timeoutObj is passed will resolve(!) with this object instead of raise
- * an error
- * *This function has a huge performance impact if used carelessly.
- * Always consider this to be the absolute last resort if a problem
- * can not be solved by promises/events.*
- * @param { number } [ms] - The maximum number of milliseconds to wait for `tester` to become true.
- * @param { function } tester - The function to test for the condition.
- * @param { object } [timeoutObj] - The object to resolve to if the condition was not met and we timed out.
- * @returns { object }
- */
-function waitFor (ms, tester, timeoutObj) {
-  if (typeof ms === 'function') { tester = ms; ms = undefined; }
-  let value;
-  if (value = tester()) return Promise.resolve(value);
-  return new Promise((resolve, reject) => {
-    let stopped = false;
-    let timedout = false;
-    let error;
-    let value;
-    const stopWaiting = (i) => {
-      clearInterval(i);
-      delete waitForClosures[i];
-    };
-    const i = setInterval(() => {
-      if (stopped) return stopWaiting(i);
-      try { value = tester(); } catch (e) { error = e; }
-      if (!value && !error && !timedout) return;
-      stopped = true;
-      stopWaiting(i);
-      if (error) return reject(error);
-      if (timedout) {
-        return typeof timeoutObj === 'undefined'
-          ? reject(new Error('timeout'))
-          : resolve(timeoutObj);
-      }
-      return resolve(value);
-    }, 10);
-    waitForClosures[i] = i;
-    if (typeof ms === 'number') setTimeout(() => timedout = true, ms);
-  });
-}
-
-/**
  * Returns an object that conveniently gives access to the promise itself and 
  * its resolution and rejection callback. This separates the resolve/reject handling
  * from the promise itself. Similar to the deprecated `Promise.defer()`.
@@ -10878,157 +10829,6 @@ function deferred () {
   });
   return { resolve: resolve, reject: reject, promise: promise };
 }
-
-/**
- * Takes a function that accepts a nodejs-style callback function as a last
- * parameter and converts it to a function *not* taking the callback but
- * producing a promise instead. The promise will be resolved with the
- * *first* non-error argument.
- * nodejs callback convention: a function that takes as first parameter an
- * error arg and second+ parameters are the result(s).
- * @param { function } func - The callback function to convert.
- * @returns { function } The converted asyncronous function. 
- * @example
- * var fs = require("fs"),
- *     readFile = promise.convertCallbackFun(fs.readFile);
- * readFile("./some-file.txt")
- *   .then(content => console.log(String(content)))
- *   .catch(err => console.error("Could not read file!", err));
- */
-function convertCallbackFun (func) {
-  return function promiseGenerator (/* args */) {
-    const args = Array.from(arguments); const self = this;
-    return new Promise(function (resolve, reject) {
-      args.push(function (err, result) { return err ? reject(err) : resolve(result); });
-      func.apply(self, args);
-    });
-  };
-}
-
-/**
- * Like convertCallbackFun but the promise will be resolved with the
- * all non-error arguments wrapped in an array.
- * @param { function } func - The callback function to convert.
- * @returns { function } The converted asyncronous function. 
- */
-function convertCallbackFunWithManyArgs (func) {
-  return function promiseGenerator (/* args */) {
-    const args = Array.from(arguments); const self = this;
-    return new Promise(function (resolve, reject) {
-      args.push(function (/* err + args */) {
-        const args = Array.from(arguments);
-        const err = args.shift();
-        return err ? reject(err) : resolve(args);
-      });
-      func.apply(self, args);
-    });
-  };
-}
-
-function _chainResolveNext (promiseFuncs, prevResult, akku, resolve, reject) {
-  const next = promiseFuncs.shift();
-  if (!next) resolve(prevResult);
-  else {
-    try {
-      Promise.resolve(next(prevResult, akku))
-        .then(result => _chainResolveNext(promiseFuncs, result, akku, resolve, reject))
-        .catch(function (err) { reject(err); });
-    } catch (err) { reject(err); }
-  }
-}
-
-/**
- * Similar to Promise.all but takes a list of promise-producing functions
- * (instead of Promises directly) that are run sequentially. Each function
- * gets the result of the previous promise and a shared "state" object passed
- * in. The function should return either a value or a promise. The result of
- * the entire chain call is a promise itself that either resolves to the last
- * returned value or rejects with an error that appeared somewhere in the
- * promise chain. In case of an error the chain stops at that point.
- * @async
- * @param { functions[] } promiseFuncs - The list of functions that each return a promise.
- * @returns { * } The result the last promise resolves to.
- * @example
- * lively.lang.promise.chain([
- *   () => Promise.resolve(23),
- *   (prevVal, state) => { state.first = prevVal; return prevVal + 2 },
- *   (prevVal, state) => { state.second = prevVal; return state }
- * ]).then(result => console.log(result));
- * // => prints {first: 23,second: 25}
- */
-function chain (promiseFuncs) {
-  return new Promise((resolve, reject) =>
-    _chainResolveNext(
-      promiseFuncs.slice(), undefined, {},
-      resolve, reject));
-}
-
-/**
- * Converts a given promise to one that executes the `finallyFn` regardless of wether it
- * resolved successfully or failed during execution.
- * @param { Promise } promise - The promise to convert.
- * @param { function } finallyFn - The callback to run after either resolve or reject has been run.
- * @returns { Promise } The converted promise.
- */
-function promise_finally (promise, finallyFn) {
-  return Promise.resolve(promise)
-    .then(result => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } return result; })
-    .catch(err => { try { finallyFn(); } catch (err) { console.error('Error in promise finally: ' + err.stack || err); } throw err; });
-}
-
-/**
- * Starts functions from `promiseGenFns` that are expected to return a promise
- * Once `parallelLimit` promises are unresolved at the same time, stops
- * spawning further promises until a running promise resolves.
- * @param { function[] } promiseGenFns - A list of functions that each return a promise.
- * @param { number } parallelLimit - The maximum number of promises to process at the same time. 
- */
-function parallel (promiseGenFns, parallelLimit = Infinity) {
-  if (!promiseGenFns.length) return Promise.resolve([]);
-
-  const results = [];
-  let error = null;
-  let index = 0;
-  let left = promiseGenFns.length;
-  let resolve; let reject;
-
-  return new Promise((res, rej) => {
-    resolve = () => res(results);
-    reject = err => rej(error = err);
-    spawnMore();
-  });
-
-  function spawn () {
-    parallelLimit--;
-    try {
-      const i = index++; const prom = promiseGenFns[i]();
-      prom.then(result => {
-        parallelLimit++;
-        results[i] = result;
-        if (--left === 0) resolve();
-        else spawnMore();
-      }).catch(err => reject(err));
-    } catch (err) { reject(err); }
-  }
-
-  function spawnMore () {
-    while (!error && left > 0 && index < promiseGenFns.length && parallelLimit > 0) { spawn(); }
-  }
-}
-
-// FIXME!
-Object.assign(promise, {
-  delay,
-  delayReject,
-  timeout,
-  waitFor,
-  deferred,
-  convertCallbackFun,
-  convertCallbackFunWithManyArgs,
-  chain,
-  finally: promise_finally,
-  parallel
-});
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -11087,7 +10887,7 @@ Object.assign(Path.prototype, {
     // Does the Path resolve to a value when applied to `obj`?
     if (this.isRoot()) return true;
     const parent = this.get(obj, -1);
-    return parent && parent.hasOwnProperty(this._parts[this._parts.length - 1]);
+    return parent && Object.hasOwn(parent, this._parts[this._parts.length - 1]);
   },
 
   equals (obj) {
@@ -11104,7 +10904,8 @@ Object.assign(Path.prototype, {
     // p2.isParentPathOf(p1) // => true
     // p1.isParentPathOf(p2) // => false
     otherPath = otherPath && otherPath.isPathAccessor
-      ? otherPath : Path(otherPath);
+      ? otherPath
+      : Path(otherPath);
     const parts = this.parts();
     const otherParts = otherPath.parts();
     for (let i = 0; i < parts.length; i++) {
@@ -11120,7 +10921,8 @@ Object.assign(Path.prototype, {
     // p1.relativePathTo(p2) // => undefined
     otherPath = Path(otherPath);
     return this.isParentPathOf(otherPath)
-      ? otherPath.slice(this.size(), otherPath.size()) : undefined;
+      ? otherPath.slice(this.size(), otherPath.size())
+      : undefined;
   },
 
   del (obj) {
@@ -11128,7 +10930,7 @@ Object.assign(Path.prototype, {
     let parent = obj;
     for (let i = 0; i < this._parts.length - 1; i++) {
       const part = this._parts[i];
-      if (parent.hasOwnProperty(part)) {
+      if (Object.hasOwn(parent, part)) {
         parent = parent[part];
       } else return false;
     }
@@ -11144,7 +10946,7 @@ Object.assign(Path.prototype, {
     let parent = obj;
     for (let i = 0; i < this._parts.length - 1; i++) {
       const part = this._parts[i];
-      if (parent.hasOwnProperty(part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
+      if (Object.hasOwn(parent, part) && (typeof parent[part] === 'object' || typeof parent[part] === 'function')) {
         parent = parent[part];
       } else if (ensure) {
         parent = parent[part] = {};
@@ -11223,7 +11025,7 @@ Object.assign(Path.prototype, {
     const parent = this.get(target, -1);
     const propName = this.parts().slice(-1)[0];
     const newPropName = 'propertyWatcher$' + propName;
-    const watcherIsInstalled = parent && parent.hasOwnProperty(newPropName);
+    const watcherIsInstalled = parent && Object.hasOwn(parent, newPropName);
     const uninstall = options.uninstall;
     const haltWhenChanged = options.haltWhenChanged;
     const showStack = options.showStack;
@@ -11255,7 +11057,8 @@ Object.assign(Path.prototype, {
       let msg = parent + '.' + propName + ' changed: ' + oldValue + ' -> ' + v;
       if (showStack) {
         msg += '\n' + (typeof lively !== 'undefined'
-          ? lively.printStack() : console.trace());
+          ? lively.printStack()
+          : console.trace());
       }
       if (options.verbose) {
         console.log(msg);
@@ -11718,7 +11521,7 @@ function upload (resource, body) {
     onLoad, headers, onProgress
   } = resource;
   const xhr = new XMLHttpRequest();
-  const res = promise.deferred();
+  const res = deferred();
 
   xhr.open('PUT', url);
 
@@ -12129,9 +11932,12 @@ function applyExclude (resource, exclude) {
   return true;
 }
 
+let _hosts;
+_hosts = _hosts || {}; // preserve this state among module reloads
+
 class LocalResourceInMemoryBackend {
   static get hosts () {
-    return this._hosts || (this._hosts = {});
+    return _hosts;
   }
 
   static removeHost (name) {
@@ -12325,8 +12131,11 @@ class ESMResource extends Resource {
     return module;
   }
 
+  getBaseURL() {
+    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir
+  }
   async findOrCreatePathStructure (pathElements) {
-    const cachePath = joinPath(System.baseURL, '/esm_cache/');
+    const cachePath = joinPath(this.getBaseURL(), '/esm_cache/');
 
     let currPath = cachePath;
     let pathRes;
