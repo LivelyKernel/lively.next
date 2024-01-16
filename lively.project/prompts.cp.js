@@ -135,7 +135,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' }
           ];
         }
-      },
+      }
     };
   }
 
@@ -764,6 +764,19 @@ const RepoSettings = component(
 
 export const RepoCreationPrompt = component(LightPrompt, {
   defaultViewModel: RepoCreationPromptModel,
+  layout: new TilingLayout({
+    align: 'center',
+    axis: 'column',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    padding: rect(15, 15, 0, 0),
+    resizePolicies: [['repo settings', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
+    spacing: 16
+  }),
   submorphs: [
     {
       name: 'prompt title',
@@ -772,22 +785,26 @@ export const RepoCreationPrompt = component(LightPrompt, {
     },
     add(part(RepoSettings, {
       name: 'repo settings',
+      layout: new TilingLayout({
+        align: 'center',
+        axis: 'column',
+        axisAlign: 'center',
+        hugContentsVertically: true,
+        padding: rect(2, 2, 0, 0),
+        spacing: 5
+      }),
       submorphs: [
         without('user holder'),
         without('remote holder'), {
+          name: 'private repo holder',
           layout: new TilingLayout({
             axisAlign: 'center',
-            orderByIndex: true,
-            spacing: 5
+            spacing: 5,
+            align: 'center'
           }),
-          name: 'private repo holder',
-          extent: pt(332.0000, 21.0000),
           submorphs: [{
-            layout: new TilingLayout({
-              orderByIndex: true,
-              spacing: 5
-            }),
-            name: 'private checkbox'
+            name: 'private checkbox',
+            clipMode: 'hidden'
           }]
         }
       ]
