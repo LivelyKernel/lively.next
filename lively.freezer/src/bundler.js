@@ -164,7 +164,7 @@ export default class LivelyRollup {
    * @returns { "node"|"systemjs-node"|"systemjs-browser" }
    */
   getResolutionContext () {
-    if (!this.asBrowserModule) { return 'node'; } else { return 'systemjs-browser'; }
+    if (!this.asBrowserModule) { return 'systemjs-node'; } else { return 'systemjs-browser'; }
     // fixme: how to configure "system-node"
   }
 
@@ -418,7 +418,7 @@ export default class LivelyRollup {
     if (this.resolved[resolutionId(id, importer)]) return this.resolved[resolutionId(id, importer)];
     if (id === ROOT_ID) return id;
     // handle standalone
-    if (!importer) return this.resolver.resolveModuleId(id);
+    if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
 
     // handle ESM CDN imports
     if (isCdnImport(id, importer, this.resolver)) {
@@ -817,6 +817,7 @@ export default class LivelyRollup {
         snippet.code = compiled.replace("'use strict';", '');
       } // override the code attribute
     }
+
 
     if (this.isResurrectionBuild) {
       plugin.emitFile({
