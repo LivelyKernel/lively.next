@@ -5,7 +5,7 @@
 
 import { inspect as inspectObject } from './object.js';
 import { min, last } from './array.js';
-import articles from 'articles';
+import articles from './lib/articles.js';
 
 const features = {
   repeat: !!String.prototype.repeat,
