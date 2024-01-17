@@ -12,11 +12,14 @@ function installResolver() {
   if (!originalResolve) originalResolve = Module._resolveFilename;
   Module._resolveFilename = function(request, parent, isMain) {
     let result;
+    let isCalledFromESM = false;
+    try { throw Error() } catch (err) { isCalledFromESM = err.stack.toString().includes('flatn/resolver.mjs') }
     try {
       result = originalResolve.call(this, request, parent, isMain);
       return result;
     } catch (err) {
-      if (result = flatnResolve(request, !parent ? parent : parent.filename || parent.id)) {
+      if (isCalledFromESM) throw err;
+      else if (result = flatnResolve(request, !parent ? parent : parent.filename || parent.id, 'node-require')) {
         return result;
       }
       throw err;
