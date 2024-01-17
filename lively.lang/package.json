@@ -30,12 +30,8 @@
       "child_process": {
         "node": "@node/child_process",
         "~node": "@empty"
-      },
-      "articles": "esm://cache/articles@0.2.2"
+      }
     }
-  },
-  "dependencies": {
-    "articles": "^0.2.2"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
