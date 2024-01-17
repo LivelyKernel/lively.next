@@ -438,9 +438,10 @@ export default class LivelyRollup {
         if (!mapping[id] && this.globalMap[id]) {
           console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`); // eslint-disable-line no-console
         }
-        id = mapping[id] || this.globalMap[id];
-        if (id['~node']) id = id['~node'];
-        importer = importingPackage.url;
+        let remapped = mapping[id] || this.globalMap[id];
+        const ctx = this.asBrowserModule ? '~node' : 'node';
+        if (remapped[ctx]) remapped = remapped[ctx];
+        if (typeof remapped === 'string') id = remapped;
       }
     }
 
