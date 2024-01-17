@@ -188,6 +188,8 @@ const SystemInspector = component({
       bottomRight: 6,
       bottomLeft: 6
     },
+    fixedWidth: true,
+    fixedHeight: true,
     lineWrapping: 'by-chars',
     padding: rect(4, 2, 0, 0),
     ...config.codeEditor.defaultStyle
