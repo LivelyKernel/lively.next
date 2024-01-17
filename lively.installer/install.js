@@ -1,25 +1,19 @@
 /*global process,System,global*/
-import { exec } from "./shell-exec.js";
-import { join, getPackageSpec, readPackageSpec } from "./helpers.js";
-import { Package } from "./package.js";
 import { buildPackageMap, installDependenciesOfPackage, buildPackage, resetPackageMap } from "flatn";
+import { exec } from "./shell-exec.js";
+import { Package } from "./package.js";
 import { resource } from 'lively.resources';
-import { promise } from 'lively.lang';
-import * as babel from  "@babel/core";
-import * as modules from "lively.modules";
+import { promise, string } from 'lively.lang';
 
-// hack
-global.babel = babel;
-
-var packageSpecFile = getPackageSpec(),
-    timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
-
+var modules, join, getPackageSpec, readPackageSpec;
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
 // var baseDir = "/Users/robert/Lively/lively-dev4/";
 // var dependenciesDir = "/Users/robert/Lively/lively-dev4/lively.next-node_modules";
 
 export async function install(baseDir, dependenciesDir, verbose) {
-
+  ({ join, getPackageSpec, readPackageSpec } = await import("./helpers.cjs"));
+  var packageSpecFile = getPackageSpec(),
+    timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
   var log = [],
       hasUI = typeof $world !== "undefined",
       errored = false;
@@ -81,10 +75,10 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // flatn setup
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     var packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
+    var flatnBinDir = join(packageMap.lookup("flatn").location, "bin");
     if (step3_setupFlatn) {
       console.log("=> Preparing flatn environment");
-      let flatnBinDir = join(packageMap.lookup("flatn").location, "bin"),
-          env = process.env;
+      let env = process.env;
       if (!env.PATH.includes(flatnBinDir)) {
         console.log(`Adding ${flatnBinDir} to PATH`);
         env.PATH = flatnBinDir + ":" + env.PATH;
@@ -118,7 +112,11 @@ export async function install(baseDir, dependenciesDir, verbose) {
       console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
       // upon first install this is not yet inside the lookup
       const nodeGyp = packageMap.lookup('node-gyp');
-      await exec('ln -s ' + join(nodeGyp.location, nodeGyp.bin['node-gyp']) + ' node-gyp')
+      const tmpGyp = join(flatnBinDir, 'node-gyp');
+      const tmpGypBuild = join(flatnBinDir, 'node-gyp-build');
+      await exec('ln -s ' + string.joinPath(nodeGyp.location, nodeGyp.bin['node-gyp']) + ` ${tmpGyp}`)
+      const nodeGypBuild = packageMap.lookup('node-gyp-build');
+      await exec('ln -s ' + string.joinPath(nodeGypBuild.location, nodeGypBuild.bin['node-gyp-build']) + ` ${tmpGypBuild}`);
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         pBar && pBar.setLabel(`npm setup ${p.name}`);
@@ -126,7 +124,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
         await buildPackage(p.directory, packageMap, ["dependencies"]);
         pBar && pBar.setValue(++i / packages.length)
       }
-      await exec('rm node-gyp');
+      await exec(`rm ${tmpGyp}`);
+      await exec(`rm ${tmpGypBuild}`);
     }
 
     if (step8_runPackageBuildScripts) {
@@ -134,6 +133,10 @@ export async function install(baseDir, dependenciesDir, verbose) {
       pBar && pBar.setValue(0)
       console.log(env.FLATN_DEV_PACKAGE_DIRS)
       console.log(env.FLATN_PACKAGE_COLLECTION_DIRS) 
+      const nodeGyp = packageMap.lookup('node-gyp');
+      await exec('ln -s ' + string.joinPath(nodeGyp.location, nodeGyp.bin['node-gyp']) + ' node-gyp')
+      const nodeGypBuild = packageMap.lookup('node-gyp-build');
+      await exec('ln -s ' + string.joinPath(nodeGypBuild.location, nodeGypBuild.bin['node-gyp-build']) + ' node-gyp-build')
       i = 0; for (let p of packages) {
         if (p.config.scripts && p.config.scripts.build) {
           pBar && pBar.setLabel(`npm build ${p.name}`);
@@ -147,8 +150,12 @@ export async function install(baseDir, dependenciesDir, verbose) {
         }
         pBar && pBar.setValue(++i / packages.length)
       }
+      await exec('rm node-gyp');
+      await exec('rm node-gyp-build');
     }
 
+    // by this time, all of the dependencies have been installed, and we can import them now
+    ({ default: global.System } = await import('systemjs'));
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // ObjectDB init
@@ -251,6 +258,8 @@ async function safelyRemove(baseDir, file) {
 }
 
 export async function setupSystem(baseURL) {
+  ({ default: global.babel } = await import("@babel/core"));
+  modules = await import("lively.modules");
   let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);
   await import("lively.modules/systemjs-init.js");

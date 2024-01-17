@@ -5,7 +5,6 @@ import { resourceExtension as httpResourceExtension } from './src/http-resource.
 import { resourceExtension as fileResourceExtension } from './src/fs-resource.js';
 import { resourceExtension as localResourceExtension } from './src/local-resource.js';
 import { resourceExtension as esmResourceExtension } from './src/esm-resource.js';
-import { newUUID } from 'lively.lang/string.js';
 import { waitFor } from 'lively.lang/promise.js';
 
 registerExtension(localResourceExtension);
@@ -29,6 +28,7 @@ export async function createFileSpec (baseDir, depth = 'infinity', opts) {
 }
 
 export async function importModuleViaNative (url) {
+  const { newUUID } = await System.import('lively.lang/string.js')
   let parentNode = document.head;
   let xmlNamespace = parentNode.namespaceURI;
   let useBabelJsForScriptLoad = false;
