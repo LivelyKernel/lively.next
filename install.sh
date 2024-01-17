@@ -47,8 +47,10 @@ else
   cd ..
 fi
 
-node --no-experimental-fetch --no-warnings --experimental-loader $lv_next_dir/flatn/resolver.mjs \
-     lively.installer/bin/install.cjs $PWD \
+# set the options for all of the following node invocations
+export NODE_OPTIONS="--no-experimental-fetch --no-warnings --experimental-modules --loader $lv_next_dir/flatn/resolver.mjs";
+
+node lively.installer/install-with-node.js $PWD \
 
 if [ "$1" = "--freezer-only" ];
 then 
