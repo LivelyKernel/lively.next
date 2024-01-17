@@ -10,7 +10,7 @@ process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
  * SystemJS specific import mappings.
  * @param { string } request - The module reference.
  * @param { object } config - The package config the module belongs to.
- * @param {  'node'|'system-browser'|'system-node' } context - The resolution context.
+ * @param {  'node-import'|'node-require'|'system-browser'|'system-node' } context - The resolution context.
  */
 function resolveBaseName (request, config, context) {
   let map; let baseName = request;
@@ -75,26 +75,83 @@ function depMap (packageConfig) {
     }, {});
 }
 
+function resolveExportMapping(mapping, context) {
+  if (!mapping) throw Error('Cannot resolve undefined mapping!');
+  if (typeof mapping === 'string') return mapping;
+  let adjustedPath;
+  if (Array.isArray(mapping)) {
+    for (let subMapping of mapping) {
+      adjustedPath = resolveExportMapping(subMapping, context);
+      if (adjustedPath) {
+        mapping = adjustedPath;
+        break; 
+      }
+    }
+  }
+  if (typeof mapping === 'object') {
+    switch (context) {
+      case 'node-require': adjustedPath = mapping.node || mapping.require || mapping.default; break;
+      case 'node-import': adjustedPath = mapping.node || mapping.import || mapping.default; break;
+      default: adjustedPath = mapping.default;
+    }
+    return resolveExportMapping(adjustedPath, context);
+  }
+  
+  return adjustedPath;
+}
+
 /**
  * Given {name, version, path} from resolveFlatPackageToModule, will find the
  * full path to the module inside of the package, using the module request.
  * @param { object } requesterPackage - The package from where the module should be loaded.
  * @param { string } basename - The base name of the package.
  * @param { string } request - The import string for the module.
- * @param { 'node'|'system-browser'|'system-node' } context - Aside from resolving the module exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
+ * @param { 'node-require'|'node-import'|'system-browser'|'system-node' } context - Aside from resolving the module exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
  * @returns { string } The absolute path to the module.
  */
 function findModuleInPackage (requesterPackage, basename, request, context) {
-  let { name, location: pathToPackage } = requesterPackage;
+  let { name, location: pathToPackage, exports: exportMappings } = requesterPackage;
   let fullpath;
   const isNode = context.includes('node');
 
   if (name === request) {
     let config = findPackageConfig(path.join(pathToPackage, 'index.js'));
-    if (!config || !config.main && !(!isNode && config.browser)) fullpath = path.join(pathToPackage, 'index.js');
-    else if (!isNode && config.browser && typeof config.browser === 'string') fullpath = path.join(pathToPackage, config.browser);
-    else fullpath = path.join(pathToPackage, config.main);
-  } else fullpath = path.join(pathToPackage, request.slice(basename.length));
+    if (!isNode && config.browser && typeof config.browser === 'string') {
+      fullpath = path.join(pathToPackage, config.browser);
+    } else if (exportMappings?.['.']) {
+      let adjustedPath = resolveExportMapping(exportMappings['.'], context);
+      fullpath = path.join(pathToPackage, adjustedPath);
+    } else if (typeof exportMappings === 'string') {
+      fullpath = path.join(pathToPackage, exportMappings);
+    } else if (context.includes('import') && exportMappings?.import) {
+      fullpath = path.join(pathToPackage, exportMappings.import);
+    } else if (context.includes('require') && exportMappings?.require) {
+      fullpath = path.join(pathToPackage, exportMappings.require);
+    } else if (config.main) {
+      fullpath = path.join(pathToPackage, config.main);
+    } else { // final fallback 
+      fullpath = path.join(pathToPackage, 'index.js');
+    }
+  } else {
+    let subpath = './' + request.slice(basename.length + 1);
+    let adjustedPath = subpath;
+    if (exportMappings?.[subpath]) {
+      adjustedPath = resolveExportMapping(exportMappings[subpath], context);
+    } else if (exportMappings) {
+      // check if there is a matching wildcard in the exports that we can utilize
+      const matchingMapping = Object.entries(exportMappings).find(([match, mapping]) => {
+        if (match.endsWith('*') && subpath.startsWith(match.slice(0, -1))) return true;
+      });
+      if (matchingMapping) {
+        let [wildcard, mapping] = matchingMapping;
+        mapping = resolveExportMapping(mapping, context);
+        adjustedPath = adjustedPath.slice(wildcard.length - 1);
+        adjustedPath = mapping.replace('*', adjustedPath);
+      }
+    }
+
+    fullpath = path.join(pathToPackage, adjustedPath);
+  }
 
   if (fs.existsSync(fullpath)) {
     return !fs.statSync(fullpath).isDirectory()
@@ -115,7 +172,7 @@ function findModuleInPackage (requesterPackage, basename, request, context) {
  * Resolve a module path/name to a url pointing to the file of the module (if present)
  * @param { string } request - The module name or partial path we want to resolve.
  * @param { string } parentId - The url of the module from which the requested module is imported from.
- * @param { 'node'|'system-browser'|'system-node' } context - Aside from resolving the package.json exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
+ * @param { 'node-require'|'node-import'|'system-browser'|'system-node' } context - Aside from resolving the package.json exclusively according to NPM standard, we can further adhere to the systemjs overrides sometimes defined within the package.json.
  */
 function flatnResolve (request, parentId = '', context = 'node') {
   let config = findPackageConfig(parentId);

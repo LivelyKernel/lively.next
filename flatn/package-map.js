@@ -165,7 +165,7 @@ class PackageSpec {
       let {
         name, version, bin, scripts,
         dependencies, devDependencies,
-        flatn_package_dirs
+        flatn_package_dirs, exports
       } = config;
 
       if (bin) {
@@ -181,7 +181,8 @@ class PackageSpec {
         scripts,
         dependencies,
         devDependencies,
-        flatn_package_dirs
+        flatn_package_dirs,
+        exports
       });
 
       let info = self.readLvInfo();
