@@ -504,7 +504,7 @@ export class Project {
         'fonts.css': fontCSSWarningString
       });
       await this.generateBuildScripts();
-      this.gitResource = Project.ensureGitResource(this.fullName);
+      this.gitResource = await Project.ensureGitResource(this.fullName);
       this.configFile = await resource(projectDir.join('package.json').url);
 
       await this.gitResource.initializeGitRepository();
