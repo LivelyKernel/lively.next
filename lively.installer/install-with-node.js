@@ -22,6 +22,6 @@ var installDir = path.resolve(process.argv[2]),
 
 console.log("Installing lively.system packages into %s", installDir);
 global.$__curScript = undefined;
-import('systemjs').then(import('lively.installer/install.js').then(installer => {
+import('lively.installer/install.js').then(installer => {
   installer.install(installDir, dependenciesDir, verbose)
-}));
+});

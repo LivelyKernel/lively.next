@@ -1,4 +1,3 @@
-/*global System*/
 import { exec as node_exec } from "child_process";
 
 export async function exec(cmdString, opts) {
@@ -6,7 +5,7 @@ export async function exec(cmdString, opts) {
 
   opts.log && opts.log.push(`$ ${cmdString}\n`);
   
-  if (System.get("@system-env").node) {
+  if (typeof node_exec !== 'undefined') {
     var proc, e, stdout, stderr;
     await new Promise((resolve, reject) =>
       proc = node_exec(cmdString, {cwd: opts.cwd},

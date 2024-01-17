@@ -7,9 +7,6 @@
     "type": "git",
     "url": "https://github.com/LivelyKernel/lively.installer"
   },
-  "scripts": {
-    "build": "./build.sh"
-  },
   "systemjs": {
     "map": {
       "child_process": {
@@ -23,6 +20,7 @@
     }
   },
   "dependencies": {
+    "systemjs": "^0.21.6",
     "lively.modules": "*",
     "lively.resources": "*",
     "lively.lang": "*",

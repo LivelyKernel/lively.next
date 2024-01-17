@@ -164,7 +164,7 @@ function rm(path) {
   async npmInstallOrFix() {
     var url = this.directory.startsWith("/") ? "file://" + this.directory : this.directory,
         node_modulesDir = join(url, "node_modules/")
-    await lively.resources.resource(node_modulesDir).ensureExistance()
+    await resource(node_modulesDir).ensureExistance()
     var packagesToInstall = await this.npmPackagesThatNeedFixing();
     if (packagesToInstall.length) {
       console.log(`  Installing npm packages:\n    ${packagesToInstall.join("\n    ")}`)

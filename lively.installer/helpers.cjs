@@ -1,5 +1,4 @@
 /* global require */
-const { resource } = require('lively.resources');
 
 function join () {
   let args = Array.prototype.slice.call(arguments);
@@ -20,6 +19,7 @@ function getPackageSpec () {
 
 async function readPackageSpec (pkgSpec) {
   if (pkgSpec.startsWith('/')) pkgSpec = 'file://' + pkgSpec;
+  const { resource } = await import('lively.resources');
   return JSON.parse(await resource(pkgSpec).read());
 }
 
