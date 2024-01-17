@@ -12,7 +12,7 @@ export async function resolve(request, parent, originalResolve) {
     result = await originalResolve(request, parent, originalResolve);
     return result;
   } catch (err) {
-    if (result = flatnResolve(request, new URL(parent.parentURL).pathname)) {
+    if (result = flatnResolve(request, new URL(parent.parentURL).pathname, 'node-import')) {
       return { url: 'file://' + result };
     }
     throw err;
