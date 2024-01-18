@@ -3720,8 +3720,14 @@ export class Path extends Morph {
 }
 
 export class Polygon extends Path {
+  static get properties () {
+    return {
+      vertices: { defaultValue: [pt(0, 0), pt(100, 100), pt(0, 100)] }
+    };
+  }
+
   constructor (props) {
-    if (!props.vertices || props.vertices?.length < 3) {
+    if (props.vertices?.length < 3) {
       props.vertices = [pt(0, 0), pt(100, 100), pt(0, 100)];
     }
     super(props);
