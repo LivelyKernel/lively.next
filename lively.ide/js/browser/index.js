@@ -985,6 +985,8 @@ export class BrowserModel extends ViewModel {
         fill: theme.background, duration, easing
       });
     } else {
+      sourceEditor.fill = theme.background;
+      columnView.fill = theme.background;
     }
     this.editorPlugin.highlight();
     this.relayout();
@@ -2465,7 +2467,8 @@ export class BrowserModel extends ViewModel {
         name = await this.world().prompt({
           title: 'Enter module name',
           text: ['Supported file types are:\n', { fontSize: 16, fontWeight: 'normal' },
-          'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }]}, { requester: this.view });
+            'markdown (.md)\nJavascript (.js)\nJSON (.json)', { fontWeight: 'normal', fontSize: 16, fontStyle: 'italic' }]
+        }, { requester: this.view });
       }
     }
     if (!name) return;
