@@ -314,7 +314,7 @@ export class Tree extends Text {
             this.computeTreeAttributes(nodes),
             false, false);
           this.invalidateTextLayout(true, false);
-        } else if (this._lastSelectedIndex) {
+        } else if (this._lastSelectedIndex && this._lastSelectedIndex !== this.selectedIndex) {
           this.recoverOriginalLine(this._lastSelectedIndex - 1);
         }
         this.lastTreeData = this.treeData;
