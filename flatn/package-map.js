@@ -246,8 +246,13 @@ class PackageMap {
 
   static ensure (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
     let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
-    return this.cache[key] || (this.cache[key] = this.build(
-      packageCollectionDirs, individualPackageDirs, devPackageDirs));
+    return this.cache[key] || (this.cache[key] = this.build(packageCollectionDirs, individualPackageDirs, devPackageDirs),
+     [...packageCollectionDirs, ...individualPackageDirs, ...devPackageDirs].forEach(dir => {
+       let watcher = fs.watch(dir, {persistent: false}, () => {
+         delete this.cache[key];
+         watcher.close()
+       })
+     }), this.cache[key]);
   }
 
   static build (packageCollectionDirs, individualPackageDirs, devPackageDirs) {
