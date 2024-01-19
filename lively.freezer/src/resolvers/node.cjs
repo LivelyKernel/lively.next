@@ -153,6 +153,7 @@ async function fetchFile (url) {
 
 async function load(url) {
   if (url === '@empty') return '';
+  if (url.endsWith('?commonjs-entry')) return null;
   return  await fetchFile(url); 
 }
 
