@@ -8,8 +8,8 @@ fi
 
 lv_next_dir=$PWD
 
-. $lv_next_dir/scripts/lively-next-flatn-env.sh
-lively_next_flatn_env $lv_next_dir
+. $lv_next_dir/scripts/lively-next-env.sh
+lively_next_env $lv_next_dir
 
 cd lively.server;
 

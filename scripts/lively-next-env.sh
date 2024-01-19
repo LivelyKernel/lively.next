@@ -1,8 +1,6 @@
 #!/bin/bash
-# WARNING
-# THIS FILE EXISTS FOR LEGACY PURPOSES ONLY
-# DO NOT USE IT FOR NEWER CODE. USE `lively-next-env.sh` INSTEAD.
-function lively_next_flatn_env {
+
+function lively_next_env {
     echo "Setting V8 memory size limit to allow space for builds"
     export NODE_OPTIONS=--max_old_space_size=4096
     lv_next_dir=$1
