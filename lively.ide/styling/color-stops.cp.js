@@ -45,7 +45,7 @@ export class ColorStopControl extends Polygon {
       this.ui.opaque.fill = this.stop.color.withA(1);
     }
     if (changedProp === 'isSelected') {
-      this.master = this.isSelected ? SelectedColorStop : ColorStop; // eslint-disable-line no-use-before-define
+      this.master.setState(this.isSelected ? 'selected' : null);
     }
   }
 

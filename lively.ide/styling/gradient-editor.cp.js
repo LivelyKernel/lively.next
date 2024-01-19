@@ -5,7 +5,7 @@ import { joinPath } from 'lively.lang/string.js';
 import { ExpressionSerializer } from 'lively.serializer2';
 import { arr, num, fun } from 'lively.lang';
 import { signal, noUpdate, connect } from 'lively.bindings';
-import { ColorStop } from './color-stops.cp.js';
+import { ColorStop, SelectedColorStop } from './color-stops.cp.js';
 
 const WHEEL_URL = joinPath(System.baseURL, '/lively.ide/assets/color-wheel.png');
 
@@ -414,7 +414,7 @@ export class GradientControlModel extends ViewModel {
   }
 
   getControlFor (aStop, haloOrEditor = this) {
-    const s = part(ColorStop);
+    const s = part(ColorStop, { master: { states: { selected: SelectedColorStop } } });
     s.withAllSubmorphsDo(m => m.halosEnabled = false);
     haloOrEditor.placeStop(s);
     connect(s, 'select', haloOrEditor, 'selectStop');
