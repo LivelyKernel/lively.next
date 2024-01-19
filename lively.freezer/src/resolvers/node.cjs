@@ -143,7 +143,7 @@ async function fetchFile (url) {
     } catch (err) {
       attempt++;
       if (attempt < maxAttempts) {
-        console.log(`[lively.freezer] Error fetching ${url}. Retrying...`);
+        setStatus({ status: `Error fetching ${url}. Retrying...`});
         continue;
       }
       throw err;
