@@ -4100,7 +4100,7 @@ export class Text extends Morph {
     const topBar = $world.get('lively top bar') || $world.withAllSubmorphsSelect(m => m.isTopBar)?.[0];
     if (!this.tmpEdit || !topBar) return;
     this.tmpEdit = false;
-    topBar.setEditMode(topBar.recoverMode, true);
+    setTimeout(() => topBar.setEditMode(topBar.recoverMode, true), 20);
     this.readOnly = this.prevReadOnly;
     this.reactsToPointer = this.prevReactsToPointer;
     this.collapseSelection();
