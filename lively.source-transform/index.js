@@ -55,10 +55,7 @@ export function stringifyFunctionWithoutToplevelRecorder (
 }
 
 export function es5Transpilation (source) {
-  if (typeof babel === 'undefined') {
-    console.warn('[lively.freezer] Skipped async/await transpilation because babel not loaded.');
-    return source;
-  }
+  if (typeof babel === 'undefined') { return source; }
   ensureOptionalCatchBinding();
   ensureImportMeta();
   const options = {
