@@ -29,6 +29,8 @@ function changeAttributeInSelectionOrMorph (target, name, valueOrFn) {
 export const editingCommand = {
   name: 'temporary edit text',
   exec: (textMorph, evt) => {
+    const topbar = $world.get('lively top bar') || $world.withAllSubmorphsSelect(m => m.isTopBar)?.[0];
+    topbar.recoverMode = topbar?.mode;
     const t = textMorph;
 
     // this makes sense even if target is not readonly
