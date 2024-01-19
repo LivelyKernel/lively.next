@@ -205,8 +205,10 @@ export class LivelyWorld extends World {
     const activeWindow = this.activeWindow();
 
     if (activeWindow && target === this) activeWindow.deactivate();
-
-    if (!target.isFlap) this.handleHaloCycle(evt);
+    if (
+      this.morphsInWorld.includes(target) ||
+      target === $world
+    ) this.handleHaloCycle(evt);
 
     if (evt.state.menu) {
       evt.state.menu.remove();
@@ -563,7 +565,8 @@ export class LivelyWorld extends World {
     while (!worldName) {
       worldName = await this.prompt({
         title: 'New Playground',
-        text: 'Enter a name for this Playground:'}, { width: 400, hasFixedPosition: true, forceConfirm: true, validate: (input) => !input.match(/^[0-9]+$/), errorMessage: 'No numbers as names!' });
+        text: 'Enter a name for this Playground:'
+      }, { width: 400, hasFixedPosition: true, forceConfirm: true, validate: (input) => !input.match(/^[0-9]+$/), errorMessage: 'No numbers as names!' });
       if (await this.isNotUnique(String(worldName))) {
         const override = await this.confirm('This Playground name is already taken. Do you want to override it?', {
           hasFixedPosition: true, width: 400
