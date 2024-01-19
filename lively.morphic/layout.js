@@ -699,7 +699,7 @@ export class TilingLayout extends Layout {
       return;
     }
 
-    if (morph) {
+    if (this.layoutableSubmorphs.includes(morph)) {
       morph.withMetaDo({ isLayoutAction: true }, () => {
         this.updateSubmorphViaDom(morph, node, true);
       });
@@ -1411,7 +1411,9 @@ export class ConstraintLayout extends Layout {
   }
 
   onDomResize (node, morph) {
-    if (morph === this.container) return;
+    if (morph === this.container || !this.layoutableSubmorphs.includes(morph)) {
+      return;
+    }
     morph.withMetaDo({ isLayoutAction: true }, () => {
       this.updateSubmorphViaDom(morph, node, true);
     });
@@ -3207,7 +3209,10 @@ export class GridLayout extends Layout {
    * Grid Layouts do not influence the container. But a resize of the container's dom node
    * will change the size/position of layoutable submorphs which we need to detect and update.
    */
-  onDomResize () {
+  onDomResize (node, morph) {
+    if (morph !== this.container && !this.layoutableSubmorphs.includes(morph)) {
+      return;
+    }
     this.updateContainerViaDom();
     for (let { resize, morph: layoutableSubmorph } of this.cellGroups) {
       if (!layoutableSubmorph) continue;
