@@ -5,9 +5,12 @@ const aliveRepeatTimeout = 300;
 let page;
 
 (async () => {
-  const browser = await puppeteer.launch({args: [
-    '--no-sandbox',
-  ]});
+  const browser = await puppeteer.launch({
+    headless: 'new', 
+    args: [
+      '--no-sandbox',
+    ]
+  });
   page = await browser.newPage();
 
   try {
