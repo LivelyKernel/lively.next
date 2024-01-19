@@ -64,6 +64,7 @@ const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(pr
  * @param { function } warn - The custom error function to utilize for logging the warning.
  */
 export function customWarn (warning, warn, bundler) {
+  if (!bundler.verbose) return;
   switch (warning.code) {
     case 'THIS_IS_UNDEFINED':
     case 'EVAL':
@@ -72,6 +73,20 @@ export function customWarn (warning, warn, bundler) {
     case 'UNRESOLVED_IMPORT':
       // add the import to the source map to link to empty
       arr.pushIfNotIncluded(bundler.excludedModules, warning.source);
+      break;
+    case 'CIRCULAR_DEPENDENCY':
+      bundler.resolver.setStatus({ status: warning.message });
+      return;
+    case 'SOURCEMAP_ERROR':
+      // FIXME: for the time being, these are caused by babel
+      // once we remove babel, these should go away
+      // do not need to be filtered any more.
+      return;
+    case 'SHIMMED_EXPORT':
+      if (warning.exporter === '@empty') return;
+      if (warning.exporter.startsWith('\x00')) return;
+      bundler.resolver.setStatus({ status: warning.message });
+      return;
   }
   warn(warning);
 }
@@ -122,8 +137,10 @@ export default class LivelyRollup {
     includeLivelyAssets = true,
     compress = true,
     minify = true,
-    captureModuleScope = true
+    captureModuleScope = true,
+    verbose = false
   }) {
+    this.verbose = verbose; // wether or not to log the warnings to the console that happen during build
     this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
     this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
@@ -402,7 +419,7 @@ export default class LivelyRollup {
     // this capturing stuff needs to behave differently when we have dynamic imports. Why??
     const instrumentClasses = this.needsClassInstrumentation(id, source);
     if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
-      const sourceHash = string.hashCode(await this.resolver.fetchFile(id));
+      const sourceHash = string.hashCode(await this.resolver.load(id));
       parsed = this.captureScope(parsed, id, sourceHash, instrumentClasses);
     }
 
@@ -824,7 +841,7 @@ export default class LivelyRollup {
       plugin.emitFile({
         type: 'asset',
         fileName: 'livelyClassesRuntime.js',
-        source: await this.resolver.fetchFile(await this.resolver.normalizeFileName('lively.classes/build/runtime.js'))
+        source: await this.resolver.load(await this.resolver.normalizeFileName('lively.classes/build/runtime.js'))
       });
     }
 
