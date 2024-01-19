@@ -3185,7 +3185,7 @@ export class GridLayout extends Layout {
   }
 
   measureSubmorph (layoutableSubmorph) {
-    this.onDomResize();
+    this.onDomResize(null, layoutableSubmorph);
   }
 
   /**
