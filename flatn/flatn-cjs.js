@@ -16635,7 +16635,7 @@ function npmCreateEnvVars (configObj, env = {}, path = 'npm_package') {
 
   if (Array.isArray(configObj)) {
     configObj.forEach((ea, i) => add(i, configObj[i]));
-  } else {
+  } else if (configObj) {
     Object.keys(configObj).forEach(name => add(name, configObj[name]));
   }
 
