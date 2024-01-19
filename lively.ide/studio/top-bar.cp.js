@@ -482,7 +482,7 @@ export class TopBarModel extends ViewModel {
       if (modeName === mode) {
         morphToUpdate.activateButton();
         // we need to take into account that hand and halo mode share the same button
-      } else if (!((mode === 'Hand' || mode === 'Halo') && (modeName === 'Hand' || modeName === 'Halo'))) {
+      } else if (!((mode === 'Hand' && modeName === 'Halo') || mode === 'Halo' && modeName === 'Hand')) {
         morphToUpdate.deactivateButton();
       }
     });
