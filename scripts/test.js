@@ -51,6 +51,7 @@ const req = http.request(options, res => {
         return;
       }
       if (data.error) {
+        console.log('SUMMARY-INDICATE-FAILURE');
         if (CI) {
           console.log(`::error:: Running the tests produced the following error:\n${JSON.stringify(data.error)}`);
           fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${JSON.stringify(data.error)}\n`);
@@ -118,6 +119,7 @@ const req = http.request(options, res => {
           fs.appendFileSync('failing.txt', markdownListOfFailingTests);
         }
     } catch (err) {
+      console.log('SUMMARY-INDICATE-FAILURE');
       if (CI) {
         console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
         fs.appendFileSync('test_output.md', `\n---\n❌ Running the tests for **${targetPackage}** produced the following error:\n"${err}"\n`);
@@ -130,6 +132,7 @@ const req = http.request(options, res => {
 );
 
 req.on('error', err => {
+  console.log('SUMMARY-INDICATE-FAILURE');
   if (CI) {
     console.log(`::error:: Error while trying to get the results of tests for ${targetPackage}`);
     fs.appendFileSync('test_output.md', `❌ Error while trying to get the results of tests for ${targetPackage}\n`);

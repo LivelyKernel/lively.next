@@ -17,6 +17,7 @@ GREEN_TESTS=0
 RED_TESTS=0
 SKIPPED_TESTS=0
 STARTED_SERVER=0
+FAILURE=0
 
 testfiles=(
 "lively.lang"
@@ -121,9 +122,14 @@ for package in "${testfiles[@]}"; do
 
   # Parse summary parts and adjust env variables for overall stats.
   # For perl magic see: https://stackoverflow.com/a/16658690
+  if echo "$output" | grep -q "INDICATE-FAILURE"
+  then
+      ((FAILURE+=1))      
+  fi
   green=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-passed:)\d+}g')
   red=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-failed:)\d+}g')
   skipped=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-skipped:)\d+}g')
+
   ((GREEN_TESTS+=green))
   ((RED_TESTS+=red))
   ((SKIPPED_TESTS+=skipped))
@@ -179,7 +185,7 @@ then
   sed 's/📦/<g-emoji class="g-emoji" alias="package" fallback-src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png"><img class="emoji" alt="package" src="https:\/\/github.githubassets.com\/images\/icons\/emoji\/unicode\/1f4e6.png" width="20" height="20"><\/g-emoji>/g' > test_output_clean.md
 fi
 
-if ((RED_TESTS > 0)); 
+if ((RED_TESTS > 0 || FAILURE > 0)); 
 then
   exit 1
 else 
