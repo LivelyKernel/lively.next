@@ -167,11 +167,21 @@ export class ImportInjector {
 
     const { alias, intoModuleSource: src, importData: { exported: impName, local: defaultImpName } } = this;
     const isDefault = impName === 'default';
+    const isNamespace = normalSpecifier?.type === 'ImportNamespaceSpecifier';
 
     // Since this method is only called with imports this should never happen:
     if (isDefault) console.assert(!!normalSpecifier, 'no ImportSpecifier found');
     else console.assert(normalSpecifier || defaultSpecifier, 'at least one kine of specifier is expected');
     let generated, pos;
+    if (isNamespace) {
+      return {
+        status: 'not modified',
+        newSource: this.intoModuleSource,
+        generated: '',
+        importedVarName: normalSpecifier.local.name + '.' + impName,
+        standaloneImport
+      };
+    }
     if (isDefault) {
       pos = src.slice(0, normalSpecifier.start).lastIndexOf('{') - 1;
       if (pos < 0) return null;
