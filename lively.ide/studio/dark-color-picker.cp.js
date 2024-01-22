@@ -65,6 +65,7 @@ const DarkColorPicker = component(ColorPicker, {
                 borderRadius: 0,
                 submorphs: [{
                   name: 'value',
+                  fontSize: 11,
                   fontColor: Color.rgbHex('B2EBF2')
                 }]
               },
@@ -76,14 +77,15 @@ const DarkColorPicker = component(ColorPicker, {
               }]
           }, {
             name: '3 val encoding',
+            fill: Color.rgb(189, 195, 199),
             submorphs: [{
               name: 'opacity control',
               master: DarkNumberIconWidget,
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
-                fontSize: 14,
-                fontColor: Color.rgbHex('B2EBF2')
+                fontColor: Color.rgbHex('B2EBF2'),
+                fontSize: 12
               }]
             }, {
               name: 'first value',
@@ -91,8 +93,8 @@ const DarkColorPicker = component(ColorPicker, {
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
-                fontSize: 14,
-                fontColor: Color.rgbHex('B2EBF2')
+                fontColor: Color.rgbHex('B2EBF2'),
+                fontSize: 12
               }]
             },
             {
@@ -101,8 +103,8 @@ const DarkColorPicker = component(ColorPicker, {
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
-                fontSize: 14,
-                fontColor: Color.rgbHex('B2EBF2')
+                fontColor: Color.rgbHex('B2EBF2'),
+                fontSize: 12
               }]
             }, {
               name: 'third value',
@@ -110,8 +112,8 @@ const DarkColorPicker = component(ColorPicker, {
               borderRadius: 0,
               submorphs: [{
                 name: 'value',
-                fontSize: 14,
-                fontColor: Color.rgbHex('B2EBF2')
+                fontColor: Color.rgbHex('B2EBF2'),
+                fontSize: 12
               }]
             }]
           }, {
