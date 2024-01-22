@@ -1,6 +1,7 @@
-import { Morph, easings, component, config, part } from 'lively.morphic';
+import { Morph, component, config, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { LivelyWorld } from 'lively.ide/world.js';
+import { PropertyLabel } from 'lively.ide/studio/shared.cp.js';
 // this pulls in a bunch of code
 import { WorldBrowser } from 'lively.ide/studio/world-browser.cp.js';
 import { UserFlap } from 'lively.user/user-flap.cp.js';
@@ -256,42 +257,93 @@ class WorldAligningLandigPageUIElements extends ViewModel {
   }
 
   async relayout () {
+    this.view.position = pt(0, 0);
     $world._cachedWindowBounds = null;
     document.body.style.overflowY = 'hidden';
     await this.view.whenRendered();
-    this.view.topRight = $world.visibleBounds().insetBy(10).topRight();
+    this.ui.topSide.topRight = $world.visibleBounds().insetBy(10).topRight();
+    this.ui.fastLoadToggler.bottomRight = $world.visibleBounds().insetBy(10).bottomRight();
     return this.view;
   }
 }
+
+class FastLoadTogglerModel extends ViewModel {
+  static get properties () {
+    return {
+      fastMode: {
+        defaultValue: true
+      },
+      expose: {
+        get () {
+          return ['onMouseDown'];
+        }
+      }
+    };
+  }
+
+  onMouseDown () {
+    if (this.fastMode) {
+      this.fastMode = false;
+      this.view.textAndAttributes = ['🐢', { fontFamily: 'Noto Emoji' }];
+      this.view.tooltip = 'Activate Fast Load (Recommended)';
+      lively.doNotUseFastLoad = true;
+    } else {
+      this.fastMode = true;
+      this.view.textAndAttributes = ['🐇', { fontFamily: 'Noto Emoji' }],
+      this.view.tooltip = 'Deactivate Fast Load (Advanced Operation)';
+      delete lively.doNotUseFastLoad;
+    }
+  }
+}
+
+const FastLoadToggler = component(PropertyLabel, {
+  name: 'fast load toggler',
+  defaultViewModel: FastLoadTogglerModel,
+  fontSize: 14,
+  borderRadius: 5,
+  fill: Color.rgba(0, 0, 0, 0.3772),
+  textAndAttributes: ['🐇', { fontFamily: 'Noto Emoji' }],
+  tooltip: 'Deactivate Fast Load (Advanced Operation)'
+});
 
 const LandingPageUI = component(
   {
     name: 'landing page ui elements',
     defaultViewModel: WorldAligningLandigPageUIElements,
-    borderRadius: 5,
-    extent: pt(286, 52.7),
-    fill: Color.rgba(0, 0, 0, 0.3772),
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      hugContentsHorizontally: true,
-      padding: rect(10, 5, -5, 0),
-      spacing: 5
-    }),
+    fill: Color.transparent,
+    clipMode: 'visible',
+    position: pt(0, 0),
     submorphs: [
-      part(OfflineToggleLight),
-      part(UserFlap, {
-        name: 'user flap',
-        submorphs: [{
-          name: 'left user label',
-          fontColor: Color.rgb(255, 255, 255)
-        }, {
-          name: 'right user label',
-          fontColor: Color.rgb(255, 255, 255)
-        }, {
-          name: 'spinner',
-          viewModel: { color: 'white' }
-        }]
-      })]
+      {
+        name: 'top side',
+        borderRadius: 5,
+        extent: pt(286, 52.7),
+        fill: Color.rgba(0, 0, 0, 0.3772),
+        layout: new TilingLayout({
+          axisAlign: 'center',
+          hugContentsHorizontally: true,
+          padding: rect(10, 5, -5, 0),
+          spacing: 5
+        }),
+        submorphs: [part(OfflineToggleLight),
+          part(UserFlap, {
+            name: 'user flap',
+            submorphs: [{
+              name: 'left user label',
+              fontColor: Color.rgb(255, 255, 255)
+            }, {
+              name: 'right user label',
+              fontColor: Color.rgb(255, 255, 255)
+            }, {
+              name: 'spinner',
+              viewModel: { color: 'white' }
+            }]
+          })]
+      },
+      part(FastLoadToggler, {
+        name: 'fast load toggler'
+      })
+    ]
   });
 
 export async function main () {
