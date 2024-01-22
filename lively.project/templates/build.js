@@ -7,7 +7,7 @@ import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
 const minify = process.env.MINIFY;
-
+try {
 const build = await rollup({
   input: './index.js',
   shimMissingExports: true,  
@@ -44,5 +44,9 @@ await build.write({
   format: 'system',
   dir: 'build'
 });
-`;
 
+} catch (err) {
+  console.log(err);
+  process.exit(1);
+}
+`;
