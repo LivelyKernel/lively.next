@@ -144,14 +144,15 @@ const HexEncoder = component({
       },
       submorphs: [{
         name: 'value',
-        fontSize: 14
+        fontSize: 11
       },
       without('button holder')]
     }),
     part(DefaultInputLine, {
       placeholder: 'Hex Code',
       fill: Color.white,
-      name: 'hex input'
+      name: 'hex input',
+      fontColor: Color.rgb(40, 116, 166)
     })]
 });
 
@@ -159,7 +160,7 @@ const ThreeValEncoder = component({
   name: 'three val encoder',
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(140, 25),
-  fill: Color.transparent,
+  fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
     align: 'center',
     axisAlign: 'center',
@@ -168,19 +169,21 @@ const ThreeValEncoder = component({
   submorphs: [
     part(DefaultNumberWidget, {
       name: 'opacity control',
+      borderRadius: 0,
       dropShadow: false,
-      extent: pt(40, 22),
+      extent: pt(44, 22),
       viewModel: {
         max: 1,
         min: 0,
         floatingPoint: false,
         scaleFactor: 100,
         borderRadius: 0,
-        unit: '%'
+        unit: '%',
+        autofit: true
       },
       submorphs: [{
         name: 'value',
-        fontSize: 14
+        fontSize: 12
       }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
@@ -192,11 +195,12 @@ const ThreeValEncoder = component({
         max: 255,
         min: 0,
         floatingPoint: false,
-        unit: ''
+        unit: '',
+        autofit: true
       },
       submorphs: [{
         name: 'value',
-        fontSize: 14
+        fontSize: 12
       }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
@@ -208,11 +212,12 @@ const ThreeValEncoder = component({
         floatingPoint: false,
         max: 255,
         min: 0,
-        unit: ''
+        unit: '',
+        autofit: true
       },
       submorphs: [{
         name: 'value',
-        fontSize: 14
+        fontSize: 12
       }, without('button holder')]
     }),
     part(DefaultNumberWidget, {
@@ -224,11 +229,12 @@ const ThreeValEncoder = component({
         floatingPoint: false,
         max: 255,
         min: 0,
-        unit: ''
+        unit: '',
+        autofit: true
       },
       submorphs: [{
         name: 'value',
-        fontSize: 14
+        fontSize: 12
       }, without('button holder')]
     })]
 });
@@ -256,10 +262,11 @@ const CssEncoder = component({
   submorphs: [part(DefaultInputLine, {
     name: 'css input',
     placeholder: 'CSS color string',
-    extent: pt(140, 23),
-    padding: rect(5, 3, -5, -3)
-  })],
-  visible: false
+    extent: pt(138, 23),
+    padding: rect(5, 3, -5, -3),
+    fontColor: Color.rgb(40, 116, 166),
+    fill: Color.white,
+  })]
 });
 
 const ColorEncoder = component({
