@@ -8,7 +8,6 @@ import { rect } from 'lively.graphics/geometry-2d.js';
 
 const DarkColorPicker = component(ColorPicker, {
   name: 'dark color picker',
-  master: DarkColorPicker,
   borderColor: Color.rgba(112, 123, 124, 1),
   fill: Color.rgb(66, 73, 73),
   submorphs: [{
