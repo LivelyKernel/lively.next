@@ -147,7 +147,7 @@ export class ColorInputModel extends ViewModel {
   }
 
   onPickerClosedWithClick () {
-    signal(this.view, 'onPickerClosedWithClick')
+    signal(this.view, 'onPickerClosedWithClick');
     this.onPickerClosed();
   }
 
@@ -349,7 +349,7 @@ export class ColorPickerModel extends ViewModel {
   }
 
   closeWithClick () {
-    signal(this.view,  'closeWithClick');
+    signal(this.view, 'closeWithClick');
     noUpdate(() => this.close());
   }
 
@@ -452,7 +452,7 @@ export class ColorEncoderModel extends ViewModel {
           ];
           return [
             {
-              model: 'color code selector', signal: 'selection', handler: 'selectEncoding'
+              target: 'color code selector', signal: 'selection', handler: 'selectEncoding'
             },
             {
               target: 'hex input', signal: 'inputAccepted', handler: 'confirm'
