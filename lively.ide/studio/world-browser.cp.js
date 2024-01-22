@@ -716,7 +716,6 @@ export class WorldPreviewModel extends ViewModel {
     this.view.animate({ opacity: 1, duration: 300 });
   }
 
-
   openEntity () {
     this._worldBrowser.fadeOut();
     this.loadEntity();
@@ -729,8 +728,8 @@ export class WorldPreviewModel extends ViewModel {
   async transitionToLivelyWorld (commit, projectName) {
     const progress = this._worldBrowser.progressIndicator;
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
-    if (projectName) await bootstrap({ projectName, fastLoad: true, progress });
-    else await bootstrap({ commit, fastLoad: true, progress });
+    if (projectName) await bootstrap({ projectName, fastLoad: !lively.doNotUseFastLoad, progress });
+    else await bootstrap({ commit, fastLoad: !lively.doNotUseFastLoad, progress });
   }
 
   async showVersions () {

@@ -61,7 +61,7 @@ export function pathForBrowserHistory (worldName, queryString, project = false) 
     query.name = worldName;
   }
 
-  if (!lively.isResurrectionBuild) query.fastLoad = false;
+  if (!lively.isResurrectionBuild || lively.doNotUseFastLoad ) query.fastLoad = false;
 
   // ensure the name param in the query string matches worldName
   return `${basePath}?${stringifyQuery(query)}`;
