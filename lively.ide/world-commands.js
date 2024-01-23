@@ -991,12 +991,10 @@ const commands = [
           fuzzy: 'value.shortName'
         });
       const [jsModules, nonJsModules] = arr.partition(selected, ea => ea.url.match(/\.js(on)?/));
-      const { default: Browser } = await System.import('lively.ide/js/browser/index.js');
 
       await Promise.all(jsModules.map(ea => {
         const loc = { packageName: ea.package, moduleName: ea.url };
-        return Browser.browse(loc, browser, systemInterface)
-          .then(browser => browser.activate());
+        return world.execCommand('open browser', loc)
       }));
 
       if (nonJsModules.length) { await Promise.all(nonJsModules.map(({ url }) => world.execCommand('open file', { url }))); }
