@@ -1104,6 +1104,8 @@ export class BrowserModel extends ViewModel {
       range
     } = browseSpec;
 
+    if (packageName && moduleName && packageName === this.selectedPackage?.name && moduleName === this.selectedModule?.name) return;
+
     const { sourceEditor } = this.ui;
 
     await this.ensureColumnViewData();
