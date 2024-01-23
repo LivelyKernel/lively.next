@@ -109,7 +109,8 @@ export class RichTextControlModel extends ViewModel {
           return {
             value: font,
             string: font.name,
-            isListItem: true
+            isListItem: true,
+            tooltip: font.name
           };
         };
 
