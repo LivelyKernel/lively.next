@@ -85,7 +85,7 @@ export default class CommandHandler {
       console.error(`command ${name} has no exec function!`);
     }
 
-    if (this.progressIndicator) this.progressIndicator.remove();
+    if (this.progressIndicator && !command.handlesLoadingIndicator) this.progressIndicator.remove();
 
     // to not swallow errors
     if (result && typeof result.catch === 'function') {
@@ -96,7 +96,7 @@ export default class CommandHandler {
       });
       this.progressIndicator && promise.finally(result, () => this.progressIndicator.remove());
     } else {
-      this.progressIndicator && this.progressIndicator.remove();
+      this.progressIndicator && !command.handlesLoadingIndicator && this.progressIndicator.remove();
     }
 
     // handle count by repeating command
