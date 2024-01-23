@@ -951,9 +951,9 @@ const commands = [
       let browser;
       if (args.reuse) {
         browser = browserForFile(System.decanonicalize(fileName)) || await Browser.open();
-        browser.browse(loc);
+        await browser.browse(loc);
       } else {
-        browser = await Browser.browse(loc, { extent: pt(700, 600) });
+        browser = await Browser.browse(loc);
       }
       browser.getWindow().activate();
       return browser;
