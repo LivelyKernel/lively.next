@@ -1497,7 +1497,7 @@ const SystemBrowser = component({
 });
 
 async function browse (browseSpec = {}, browserOrProps = {}, optSystemInterface) {
-  const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser);
+  const browser = browserOrProps.isBrowser ? browserOrProps : part(SystemBrowser, browserOrProps);
   if (!browser.world()) browser.openInWindow();
   browser.env.forceUpdate();
   delete browser.state.selectedModule;
