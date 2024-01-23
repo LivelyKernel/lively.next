@@ -940,7 +940,10 @@ const commands = [
   {
     name: 'open browser',
     progressIndicator: 'opening browser...',
+    handlesLoadingIndicator: true,
     exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0), reuse: false }, _, evt) => {
+      const loadingIndicator = world.commandHandler.progressIndicator;
+
       // in case there is another morph implementing open browser...
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
@@ -956,6 +959,7 @@ const commands = [
         browser = await Browser.browse(loc);
       }
       browser.getWindow().activate();
+      loadingIndicator.remove();
       return browser;
     }
   },
@@ -963,7 +967,10 @@ const commands = [
   {
     name: 'choose and browse package resources',
     progressIndicator: 'browsing resources...',
+    handlesLoadingIndicator: true,
     exec: async (world, opts = { browser: null, systemInterface: null }, _, evt) => {
+      const loadingIndicator = world.commandHandler.progressIndicator;
+
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
       if (relayed) return relayed;
 
@@ -981,7 +988,7 @@ const commands = [
           const string = `[${p.name}] ${r.nameInPackage}${r.isLoaded ? '' : ' [not loaded]'}`;
           return { isListItem: true, string, value: r };
         });
-
+      loadingIndicator.remove();
       const { selected } = await world.filterableListPrompt(
         'Choose module to open', items, {
           historyId: 'lively.morphic-choose and browse package resources',
@@ -1005,14 +1012,15 @@ const commands = [
 
   {
     name: 'choose and browse module',
-    progressIndicator: 'browsing module...',
     handlesCount: true,
     exec: async (world, opts = { browser: undefined, systemInterface: undefined }, count) => {
       let focused;
       if (!opts.browser) { // invoked from a file browser? => use it
         focused = world.focusedMorph;
         const win = focused && focused.getWindow();
-        if (win && win.targetMorph && win.targetMorph.isFileBrowser) { return win.targetMorph.execCommand('find file and select', opts, count); }
+        if (win && win.targetMorph && win.targetMorph.isFileBrowser) {
+          return win.targetMorph.execCommand('find file and select', opts, count);
+        }
       }
 
       const browser = opts.browser ||
@@ -1076,15 +1084,16 @@ const commands = [
   {
     name: 'open code search',
     progressIndicator: 'opening code search...',
+    handlesLoadingIndicator: true,
     exec: async (world, opts = { browser: null, systemInterface: null, input: null }) => {
       const activeMorphs = world.focusedMorph ? world.focusedMorph.ownerChain() : [];
       let browser = opts.browser || activeMorphs.find(ea => ea.isBrowser);
 
-      const li = LoadingIndicator.open('loading code search');
+      const loadingIndicator = world.commandHandler.progressIndicator;
 
       if (browser && browser.isBrowser) {
         if (browser.associatedSearchPanel) {
-          li.remove();
+          loadingIndicator.remove();
           browser.associatedSearchPanel.browser = browser;
           return browser.associatedSearchPanel.getWindow().activate();
         }
@@ -1109,7 +1118,7 @@ const commands = [
       searcher.openInWindow();
       searcher.focus();
 
-      li.remove();
+      loadingIndicator.remove();
 
       if (browser) browser.associatedSearchPanel = searcher;
       return searcher;
@@ -1119,8 +1128,11 @@ const commands = [
   {
     name: 'open test runner',
     progressIndicator: 'opening test runner...',
+    handlesLoadingIndicator: true,
     exec: async world => {
+      const loadingIndicator = world.commandHandler.progressIndicator;
       const { default: TestRunner } = await System.import('lively.ide/test-runner.js');
+      loadingIndicator.remove();
       return await TestRunner.open();
     }
   },
@@ -1128,12 +1140,15 @@ const commands = [
   {
     name: 'open file browser',
     progressIndicator: 'opening file browser...',
+    handlesLoadingIndicator: true,
     exec: async (world, opts = {}) => {
+      const loadingIndicator = world.commandHandler.progressIndicator;
       const { default: HTTPFileBrowser } = await System.import('lively.ide/http-file-browser.js');
       const { location, url, file } = opts;
       const browser = file
         ? HTTPFileBrowser.forFile(file, location)
         : HTTPFileBrowser.forLocation(url || location || document.location.origin);
+      loadingIndicator.remove();
       return world.openInWindow(browser).activate();
     }
   },
@@ -1141,6 +1156,7 @@ const commands = [
   {
     name: 'open file',
     progressIndicator: 'opening file...',
+    handlesLoadingIndicator: true,
     exec: async (world, opts = { url: null, lineNumber: null, reuse: false }) => {
       let { url, lineNumber, reuse } = opts;
       const li = world.commandHandler.progressIndicator;
@@ -1165,6 +1181,7 @@ const commands = [
 
       if (lineNumber) url += ':' + lineNumber;
       const { default: TextEditor } = await System.import('lively.ide/text/text-editor.js');
+      li.remove();
       return url ? TextEditor.openURL(url, obj.dissoc(opts, ['url'])) : null;
     }
   },
