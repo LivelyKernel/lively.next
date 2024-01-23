@@ -81,7 +81,7 @@ export class ListItemMorph extends Label {
     } else if (typeof label === 'string') this.textAndAttributes = label;
     else this.textAndAttributes = label;
 
-    this.tooltip = item.tooltip || this.tooltip || this.textString;
+    this.tooltip = item.tooltip || item.textString;
     if (item.tooltip === false) this.tooltip = false;
     this.itemIndex = itemIndex;
     this.position = pos;
