@@ -863,7 +863,8 @@ export class ComponentBrowserModel extends ViewModel {
       // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
       // `install.sh` ensures that the partsbin repository exists.
       // As users should fork the partsbin to contribute, no special precaution is taken here when stashing.
-      const cmd = runCommand('cd ../local_projects/LivelyKernel--partsbin && git stash && git checkout main && git pull', { l2lClient: ShellClientResource.defaultL2lClient });
+      const cmd = runCommand('cd ../local_projects/LivelyKernel--partsbin && git stash && git checkout main && git pull origin main', { l2lClient: ShellClientResource.defaultL2lClient });
+
       cmd.whenDone().then(() => {
         if (cmd.exitCode !== 0) {
           $world.setStatusMessage('`partsbin` could not be updated.', StatusMessageError);
