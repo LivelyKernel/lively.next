@@ -7,7 +7,7 @@ import { module } from 'lively.modules';
 export async function ensureDefaultImports () {
   if (typeof module === 'undefined') return;
   const inspectorEvalContext = module('lively://lively.morphic/inspector');
-  const imports = config.ide.js.defaultInspectorImports;
+  const imports = lively.FreezerRuntime ? {} : config.ide.js.defaultInspectorImports;
   for (let modName in imports) {
     let exports;
     try {
