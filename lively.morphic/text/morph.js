@@ -3168,6 +3168,12 @@ export class Text extends Morph {
 
   onContextMenu (evt) {
     if (evt.targetMorph !== this) return;
+
+    if (!this.document) {
+      super.onContextMenu(evt);
+      return;
+    }
+
     evt.stop();
 
     const posClicked = this.textPositionFromPoint(this.localize(evt.position));
