@@ -3076,12 +3076,12 @@ export class PathPoint {
   set position ({ x, y }) {
     this.x = x;
     this.y = y;
-    this.path.makeDirty();
+    this.path?.makeDirty();
   }
 
   moveBy (delta) {
     this.position = this.position.addPt(delta);
-    this.path.onVertexChanged(this);
+    this.path?.onVertexChanged(this);
     return this;
   }
 
@@ -3112,7 +3112,7 @@ export class PathPoint {
     // ensure points
     const { next, previous } = cps;
     this._controlPoints = { next: next ? Point.fromLiteral(next) : pt(0, 0), previous: previous ? Point.fromLiteral(previous) : pt(0, 0) };
-    this.path.makeDirty();
+    this.path?.makeDirty();
   }
 
   moveNextControlPoint (delta) {
@@ -3722,15 +3722,26 @@ export class Path extends Morph {
 export class Polygon extends Path {
   static get properties () {
     return {
-      vertices: { defaultValue: [pt(0, 0), pt(100, 100), pt(0, 100)] }
+      vertices: {
+        defaultValue: [
+          new PathPoint(null, { position: pt(0, 0) }),
+          new PathPoint(null, { position: pt(100, 100) }),
+          new PathPoint(null, { position: pt(0, 100) })
+        ]
+      }
     };
   }
 
   constructor (props) {
     if (props.vertices?.length < 3) {
-      props.vertices = [pt(0, 0), pt(100, 100), pt(0, 100)];
+      props.vertices = [
+        new PathPoint(this, { position: pt(0, 0) }),
+        new PathPoint(this, { position: pt(100, 100) }),
+        new PathPoint(this, { position: pt(0, 100) })
+      ];
     }
     super(props);
+    for (let v of this.vertices) { v.path = this; } // needed if we are running on the default value
   }
 
   get isPolygon () { return true; }
