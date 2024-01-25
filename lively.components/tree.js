@@ -185,11 +185,12 @@ export class Tree extends Text {
 
   renderSelectedLine (row) {
     let attrs = this.document.getTextAndAttributesOfLine(row);
-    this._originalColor = new Array(attrs.length);
+    const colorBackup = new Array(attrs.length);
+    colorBackup.row = row;
     for (let i = 0; i < attrs.length; i++) {
       if ((i % 2) === 0) {
         if (attrs[i] && attrs[i].isMorph) {
-          this._originalColor[i] = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null;
+          colorBackup[i] = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null;
           attrs[i].fontColor = this.selectionFontColor;
           attrs[i].isSelected = true;
           continue;
@@ -197,9 +198,12 @@ export class Tree extends Text {
           continue;
         }
       }
-      this._originalColor[i] = (attrs[i] ? attrs[i].fontColor : null) || this.nonSelectionFontColor;
+      const equalsSelectionAccent = attrs[i]?.fontColor?.equals(this.selectionFontColor);
+      const prevBackup = this._originalColor?.row === row && this._originalColor[i]?.fontColor;
+      colorBackup[i] = (attrs[i] ? (equalsSelectionAccent ? prevBackup : attrs[i].fontColor) : null) || this.nonSelectionFontColor;
       if (attrs[i]) { attrs[i].fontColor = this.selectionFontColor; } else { attrs[i] = { fontColor: this.selectionFontColor }; }
     }
+    this._originalColor = colorBackup;
     this.document.setTextAndAttributesOfLine(row, attrs);
     /*
       rms: 22.11.22: Since we are meddling around with internal
@@ -305,6 +309,7 @@ export class Tree extends Text {
                                    this.lastNumberOfNodes !== nodes.length;
 
         let row, attrs;
+        const selectionChanged = this._lastSelectedIndex !== this.selectedIndex;
         if (treeDataRestructured || force) {
           this.replace(
             {
@@ -314,7 +319,7 @@ export class Tree extends Text {
             this.computeTreeAttributes(nodes),
             false, false);
           this.invalidateTextLayout(true, false);
-        } else if (this._lastSelectedIndex && this._lastSelectedIndex !== this.selectedIndex) {
+        } else if (this._lastSelectedIndex && selectionChanged) {
           this.recoverOriginalLine(this._lastSelectedIndex - 1);
         }
         this.lastTreeData = this.treeData;
