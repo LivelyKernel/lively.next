@@ -1,4 +1,5 @@
 /* global System */
+/* eslint-disable no-use-before-define */
 import { arr, fun, Path, promise } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import config from '../config.js';
@@ -86,7 +87,7 @@ const focusTargetingEvents = [
   'cut', 'copy', 'paste'
 ];
 
-const textOnlyEvents = [
+const textOnlyEvents = [ // eslint-disable-line no-unused-vars
   'input', 'compositionstart', 'compositionupdate', 'compositionend'
 ];
 
@@ -94,7 +95,7 @@ const textOnlyEvents = [
 // helpers
 
 function dragStartEvent (domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
-  var evt = new Event('morphicdragstart', domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
+  const evt = new Event('morphicdragstart', domEvt, dispatcher, [targetMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.draggedMorph = targetMorph;
       state.dragStartMorphPosition = targetMorph.position;
@@ -111,7 +112,7 @@ function dragStartEvent (domEvt, dispatcher, targetMorph, state, hand, halo, lay
 }
 
 function dragEvent (domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
-  var evt = new Event('morphicdrag', domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
+  const evt = new Event('morphicdrag', domEvt, dispatcher, [state.draggedMorph], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.dragDelta = (state.draggedMorph.owner || dispatcher.world)
         .getInverseTransform()
@@ -130,7 +131,7 @@ function dragEvent (domEvt, dispatcher, targetMorph, state, hand, halo, layoutHa
 
 function dragEndEvent (domEvt, dispatcher, targetMorph, state, hand, halo, layoutHalo) {
   const ctx = state.draggedMorph || targetMorph;
-  var evt = new Event('morphicdragend', domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
+  const evt = new Event('morphicdragend', domEvt, dispatcher, [ctx], hand, halo, layoutHalo)
     .onDispatch(() => {
       state.dragDelta = (ctx.owner || dispatcher.world)
         .getInverseTransform()
@@ -253,7 +254,7 @@ export default class EventDispatcher {
   }
 
   isMorphClicked (morph) {
-    return this.eventState.clickedMorph == morph;
+    return this.eventState.clickedMorph === morph;
   }
 
   isKeyPressed (keyName) {
@@ -300,7 +301,7 @@ export default class EventDispatcher {
   }
 
   uninstallHandler (handler) {
-    const handlerToBeRemoved = this.handlerFuntions.find(({ type }) => type == handler);
+    const handlerToBeRemoved = this.handlerFuntions.find(({ type }) => type === handler);
     if (handlerToBeRemoved) { handlerToBeRemoved.node.removeEventListener(handlerToBeRemoved.node, handlerToBeRemoved.fn, handlerToBeRemoved.capturing); }
   }
 
@@ -358,8 +359,8 @@ export default class EventDispatcher {
       case 'click':
         // Note, we currently don't subscribe to click DOM events, this is just a
         // convenience for event simulation
-        var { events: downEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerdown' }), targetMorph);
-        var { events: upEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerup' }), targetMorph);
+        const { events: downEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerdown' }), targetMorph);
+        const { events: upEvents } = this.processDOMEvent(new SimulatedDOMEvent({ ...domEvt, type: 'pointerup' }), targetMorph);
         events = downEvents.concat(upEvents);
         break;
 
@@ -386,10 +387,7 @@ export default class EventDispatcher {
 
           let repeatedClick = false; let prevClickCount = 0;
           if (state.prevClick) {
-            const {
-              clickedOnMorph, clickedOnPosition,
-              clickedAtTime, clickCount
-            } = state.prevClick;
+            const { clickedOnMorph, clickedAtTime, clickCount } = state.prevClick;
             const clickInterval = Date.now() - clickedAtTime;
             repeatedClick = clickedOnMorph === targetMorph &&
                          clickInterval < config.repeatClickInterval;
@@ -507,11 +505,11 @@ export default class EventDispatcher {
       case 'pointerover':
         if (state.hover.unresolvedPointerOut) { state.hover.unresolvedPointerOut = false; }
 
-        var hoveredOverMorphs = [targetMorph].concat(targetMorph.ownerChain()).reverse();
-        var hoverOutEvents = arr.withoutAll(state.hover.hoveredOverMorphs, hoveredOverMorphs)
+        const hoveredOverMorphs = [targetMorph].concat(targetMorph.ownerChain()).reverse();
+        const hoverOutEvents = arr.withoutAll(state.hover.hoveredOverMorphs, hoveredOverMorphs)
           .map(m => new Event('hoverout', domEvt, this, [m], hand, halo, layoutHalo)
             .onDispatch(() => arr.remove(state.hover.hoveredOverMorphs, m)));
-        var hoverInEvents = arr.withoutAll(hoveredOverMorphs, state.hover.hoveredOverMorphs)
+        const hoverInEvents = arr.withoutAll(hoveredOverMorphs, state.hover.hoveredOverMorphs)
           .map(m => new Event('hoverin', domEvt, this, [m], hand, halo, layoutHalo)
             .onDispatch(() => arr.pushIfNotIncluded(state.hover.hoveredOverMorphs, m)));
         events = hoverOutEvents.concat(hoverInEvents);
@@ -559,8 +557,8 @@ export default class EventDispatcher {
             const scrollInProgress = !!state.scroll.interactiveScrollInProgress;
             if (!scrollInProgress) {
               const { promise: p, resolve } = promise.deferred();
-              let delay = bowser.name == 'Firefox' ? 500 : 250;
-              if (bowser.name == 'Safari') delay = 1000; // safari recently became more sensitive to this
+              let delay = bowser.name === 'Firefox' ? 500 : 250;
+              if (bowser.name === 'Safari') delay = 1000; // safari recently became more sensitive to this
               state.scroll.interactiveScrollInProgress = p;
               p.debounce = fun.debounce(delay, () => {
                 state.scroll.interactiveScrollInProgress = null;
@@ -572,7 +570,7 @@ export default class EventDispatcher {
             const target = targetNode.documentElement || targetNode;
             const { scrollLeft: newX, scrollTop: newY, style } = target;
             const { x, y } = targetMorph.scroll;
-            if (style.overflow != 'hidden' && x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
+            if (style.overflow !== 'hidden' && x !== newX || y !== newY) targetMorph.scroll = pt(newX, newY);
           })];
         break;
 
@@ -622,7 +620,7 @@ export default class EventDispatcher {
       } catch (e) {
         err = new Error(`Error in event handler ${evt.targetMorphs[j]}.${method}: ${e.stack || e}`);
         err.originalError = e;
-        typeof this.world !== 'undefined' ? this.world.logError(err) : console.error(err);
+        typeof this.world !== 'undefined' ? this.world.logError(err) : console.error(err); // eslint-disable-line no-console
       }
       if (err || evt.stopped) break;
     }
