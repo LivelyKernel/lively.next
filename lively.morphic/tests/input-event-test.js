@@ -99,6 +99,17 @@ describe('pointer event related', function () {
       'onMouseDown-submorph2']);
   });
 
+  it('right click on morph gets handled correctly', () => {
+    let i = 0;
+    submorph2.onMouseDown = () => { i++; };
+    env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', button: 2, target: submorph2 });
+    expect(i).equals(0);
+    submorph2.handleRightClickAsLeftClick = true;
+    env.eventDispatcher.simulateDOMEvents({ type: 'pointerdown', button: 2, target: submorph2 });
+    expect(i).equals(1);
+    delete submorph2.onMouseDown;
+  });
+
   it('world has hand and moves it', () => {
     env.eventDispatcher.simulateDOMEvents({ type: 'pointermove', target: submorph2, position: pt(120, 130), isPrimary: true });
     expect(world.submorphs[0]).property('isHand', true);

@@ -614,6 +614,9 @@ export default class EventDispatcher {
     this.activations++;
 
     let err;
+
+    if (method === 'onMouseDown' && evt.domEvt.button === 2) evt.targetMorphs = evt.targetMorphs.filter(m => m.handleRightClickAsLeftClick);
+
     for (let j = evt.targetMorphs.length - 1; j >= 0; j--) {
       try {
         evt.targetMorphs[j][method](evt);
