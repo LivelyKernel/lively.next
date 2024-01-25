@@ -351,15 +351,16 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static renderEnumControl (args) {
     const { value, spec: { values }, keyString, target, node, tree } = args;
+    const inspector = tree.owner;
     const handler = async (evt) => {
-      const menu = target.world().openWorldMenu(evt, values.map(v => ({
+      const menu = inspector.world().openWorldMenu(evt, values.map(v => ({
         string: v.toString(),
         action: () => {
           target[keyString] = v;
           node.rerender();
         }
       })));
-      tree.owner.openWidget = menu;
+      inspector.openWidget = menu;
     };
     return [
       ...this.renderGrabbableKey(args),
@@ -386,7 +387,7 @@ export class PropertyControl extends DraggableTreeLabel {
     const handler = async (evt) => {
       const editor = part(PaddingPopup, { hasFixedPosition: true });
       editor.startPadding(target[keyString]);
-      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      await editor.fadeIntoWorld(evt.positionIn(inspector.world()));
       inspector.openWidget = editor;
       connect(editor, 'paddingChanged', (padding) => {
         target[keyString] = padding;
@@ -441,7 +442,7 @@ export class PropertyControl extends DraggableTreeLabel {
         baseFactor: widgetState.baseFactor,
         floatingPoint: widgetState.floatingPoint
       }));
-      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      await editor.fadeIntoWorld(evt.positionIn(inspector.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (num) => {
         target[keyString] = num;
@@ -466,7 +467,7 @@ export class PropertyControl extends DraggableTreeLabel {
       // if already open, return
       const editor = part(ShadowPopup, { hasFixedPosition: true });
       editor.shadowValue = target[keyString];
-      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      await editor.fadeIntoWorld(evt.positionIn(inspector.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (shadowValue) => {
         target[keyString] = shadowValue;
@@ -485,7 +486,7 @@ export class PropertyControl extends DraggableTreeLabel {
     const handler = async (evt) => {
       const editor = part(PositionPopupLight, { hasFixedPosition: true });
       editor.setPoint(target[keyString]);
-      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      await editor.fadeIntoWorld(evt.positionIn(inspector.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (pointValue) => {
         target[keyString] = pointValue;
@@ -526,7 +527,7 @@ export class PropertyControl extends DraggableTreeLabel {
       });
       editor.solidOnly = !gradientEnabled;
       editor.focusOnMorph(target, value);
-      await editor.fadeIntoWorld(evt.positionIn(target.world()));
+      await editor.fadeIntoWorld(evt.positionIn(inspector.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (fill) => {
         target[keyString] = fill;
