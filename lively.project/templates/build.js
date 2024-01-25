@@ -6,6 +6,7 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
+const verbose = process.argv[2] === '--verbose';
 const minify = process.env.MINIFY;
 try {
 const build = await rollup({
@@ -17,6 +18,7 @@ const build = await rollup({
         title: '%PROJECT_NAME%',
       },
       minify,
+      verbose,
       asBrowserModule: true,
       excludedModules: [
 	    'lively.collab',
