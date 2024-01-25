@@ -2343,8 +2343,13 @@ export class Morph {
   onKeyUp (evt) {}
 
   onContextMenu (evt) {
+    const { targetMorph } = evt;
     // FIXME: if (lively.FreezerRuntime) return; // do not stop propagation if in freezer mode
-    if (evt.targetMorph !== this) return;
+    if (targetMorph !== this) return;
+    if ($world.isIDEWorld && !$world.morphsInWorldWithSubmorphs.includes(this) && !this.isWorld && !this.forceContextMenu) {
+      evt.stop();
+      return;
+    }
     if (!lively.FreezerRuntime) evt.stop();
     Promise
       .resolve(this.menuItems(evt)).then(items => this.openMenu(items, evt))
