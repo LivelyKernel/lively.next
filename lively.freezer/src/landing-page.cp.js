@@ -129,6 +129,7 @@ class ShapeMorpher extends ViewModel {
   }
 
   update () {
+    if (!this.view) return;
     this.view.master.setState(this.step);
     this.view.master.applyAnimated();
   }
