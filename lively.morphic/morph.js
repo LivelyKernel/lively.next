@@ -126,6 +126,11 @@ export class Morph {
         defaultValue: false
       },
 
+      handleRightClickAsLeftClick: {
+        group: 'interaction',
+        defaultValue: false
+      },
+
       draggable: {
         group: 'interaction',
         isStyleProp: true,
