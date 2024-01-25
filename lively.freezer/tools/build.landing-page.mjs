@@ -6,6 +6,7 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
+const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 
 try {
@@ -19,6 +20,7 @@ try {
           title: 'lively.next',
         },
         minify,
+        verbose,
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: [
