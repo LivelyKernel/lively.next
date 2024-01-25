@@ -178,8 +178,7 @@ export class ImportInjector {
         status: 'not modified',
         newSource: this.intoModuleSource,
         generated: '',
-        importedVarName: normalSpecifier.local.name + '.' + impName,
-        standaloneImport
+        importedVarName: normalSpecifier.local.name + '.' + impName
       };
     }
     if (isDefault) {

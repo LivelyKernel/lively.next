@@ -25,7 +25,7 @@ export function declareVarNamesAsGlobals (textMorph, varNames, opts) {
 }
 
 export async function injectImportsIntoText (textMorph, imports, opts) {
-  const { gotoImport, insertImportAtCursor, recordUndo, System: S } = {
+  const { gotoImport, insertImportAtCursor, recordUndo, System: S, undeclared } = {
     gotoImport: true,
     insertImportAtCursor: false,
     recordUndo: true,
@@ -38,7 +38,7 @@ export async function injectImportsIntoText (textMorph, imports, opts) {
 
   const moduleId = jsPlugin.evalEnvironment.targetModule;
   const intoPackage = await jsPlugin.systemInterface().getPackageForModule(moduleId);
-  var from; var to; var pos; const importedVarNames = []; const ranges = [];
+  let from; let to; var pos; const importedVarNames = []; const ranges = [];
 
   if (gotoImport) { textMorph.saveMark(); } // so we can easily jump to where we were after insertion
 
@@ -50,8 +50,12 @@ export async function injectImportsIntoText (textMorph, imports, opts) {
     const choice = imports.shift();
     const source = textMorph.textString;
 
-    var { generated, from, to, standaloneImport, importedVarName } =
+    let { status, generated, from, to, standaloneImport, importedVarName } =
           ImportInjector.run(S, moduleId, intoPackage, source, choice);
+    if (status === 'not modified' && importedVarName) {
+      // replace the existing import with the importedVarName
+      textMorph.replace({ start: textMorph.indexToPosition(undeclared.start), end: textMorph.indexToPosition(undeclared.end) }, importedVarName);
+    }
     var pos = textMorph.indexToPosition(from);
 
     if (generated) ranges.push(textMorph.insertText(generated, pos));
@@ -340,7 +344,7 @@ export async function interactivlyFixUndeclaredVariables (textMorph, opts) {
       await sourceUpdater('import', [choice]);
     } else {
       await injectImportsIntoText(textMorph, [choice],
-        { gotoImport: false, insertImportAtCursor: false, recordUndo: true });
+        { gotoImport: false, insertImportAtCursor: false, recordUndo: true, undeclared });
     }
   }
 
