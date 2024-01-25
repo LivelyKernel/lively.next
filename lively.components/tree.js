@@ -198,10 +198,14 @@ export class Tree extends Text {
           continue;
         }
       }
-      const equalsSelectionAccent = attrs[i]?.fontColor?.equals(this.selectionFontColor);
       const prevBackup = this._originalColor?.row === row && this._originalColor[i]?.fontColor;
-      colorBackup[i] = (attrs[i] ? (equalsSelectionAccent ? prevBackup : attrs[i].fontColor) : null) || this.nonSelectionFontColor;
-      if (attrs[i]) { attrs[i].fontColor = this.selectionFontColor; } else { attrs[i] = { fontColor: this.selectionFontColor }; }
+      colorBackup[i] = (attrs[i] ? (attrs[i]?.isSelected ? prevBackup : attrs[i].fontColor) : null) || this.nonSelectionFontColor;
+      if (attrs[i]) {
+        attrs[i].fontColor = this.selectionFontColor;
+        attrs[i].isSelected = true;
+      } else {
+        attrs[i] = { fontColor: this.selectionFontColor, isSelected: true };
+      }
     }
     this._originalColor = colorBackup;
     this.document.setTextAndAttributesOfLine(row, attrs);
@@ -225,7 +229,7 @@ export class Tree extends Text {
     const { selectedIndex } = this;
     for (; i < nodes.length; i++) {
       j = 8 * (i - 1) + offset;
-      isSelected = selectedIndex == i;
+      isSelected = selectedIndex === i;
       nodes[i].node.isSelected = isSelected;
       // indent
       containerTextAndAttributes[j] = ' ';
