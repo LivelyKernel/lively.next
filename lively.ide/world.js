@@ -206,7 +206,7 @@ export class LivelyWorld extends World {
 
     if (activeWindow && target === this) activeWindow.deactivate();
     if (
-      this.morphsInWorld.includes(target) ||
+      this.morphsInWorldWithSubmorphs.includes(target) ||
       target === $world
     ) this.handleHaloCycle(evt);
 
