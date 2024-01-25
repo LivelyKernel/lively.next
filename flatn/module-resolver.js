@@ -124,9 +124,9 @@ function findModuleInPackage (requesterPackage, basename, request, context) {
     } else if (typeof exportMappings === 'string') {
       fullpath = path.join(pathToPackage, exportMappings);
     } else if (context.includes('import') && exportMappings?.import) {
-      fullpath = path.join(pathToPackage, exportMappings.import);
+      fullpath = path.join(pathToPackage, resolveExportMapping(exportMappings.import, context));
     } else if (context.includes('require') && exportMappings?.require) {
-      fullpath = path.join(pathToPackage, exportMappings.require);
+      fullpath = path.join(pathToPackage, resolveExportMapping(exportMappings.require, context));
     } else if (config.main) {
       fullpath = path.join(pathToPackage, config.main);
     } else { // final fallback 
