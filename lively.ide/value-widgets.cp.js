@@ -128,7 +128,7 @@ export class NumberWidgetModel extends ViewModel {
         }
       },
 
-      expose: { get () { return ['number', 'increment', 'decrement', 'isMixed', 'setMixed']; } },
+      expose: { get () { return ['number', 'increment', 'decrement', 'isMixed', 'setMixed', 'max', 'min', 'scaleFactor']; } },
 
       bindings: {
         get () {
