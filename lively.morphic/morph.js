@@ -3344,9 +3344,11 @@ export class Path extends Morph {
     const newOrigin = pt(b.width * relOriginX, b.height * relOriginY);
     const offset = b.topLeft();
     vertices.forEach(ea => ea.moveBy(offset.negated()));
-    this.moveBy(this.getTransform().transformDirection(offset));
-    this.extent = b.extent().maxPt(pt(this.borderWidth, this.borderWidth));
-    this.origin = newOrigin;
+    this.withMetaDo({ metaInteraction: true }, () => {
+      this.moveBy(this.getTransform().transformDirection(offset));
+      this.extent = b.extent().maxPt(pt(this.borderWidth, this.borderWidth));
+      this.origin = newOrigin;
+    });
     this._adjustingVertices = false;
   }
 
