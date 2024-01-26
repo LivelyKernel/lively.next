@@ -6,7 +6,6 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
-console.log(process.argv);
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 try {
