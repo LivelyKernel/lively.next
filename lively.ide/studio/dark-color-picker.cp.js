@@ -31,8 +31,8 @@ const DarkColorPicker = component(ColorPicker, {
   }, {
     name: 'color controls',
     layout: new TilingLayout({
-      align: 'right',
       axis: 'column',
+      axisAlign: 'center',
       justifySubmorphs: 'spaced',
       padding: rect(5, 15, 1, 0),
       resizePolicies: [['eye dropper button', {
