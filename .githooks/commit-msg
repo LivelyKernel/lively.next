@@ -6,13 +6,22 @@ test -n "$(grep -i '^[[:blank:]]*cleanup[[:blank:]]*$' "${1}")" && {
         exit 1
 }
 
+
+grep -q ':' ${1}
+if [[ $? != 0 ]]; then
+        printf >&2 "❌  Commit message needs to include a colon!\n"
+        exit 1   
+fi
+
 firstLine=$(sed -n '1p' "${1}")
 test -n "$(grep -E '^.*: [[:upper:]].*+$' <<< "$firstLine")" && {
         printf >&2 "❌  Do not use upper case letter to start your commit message.\n"
         exit 1
 }
 
-test "$(wc -m <<< "$firstLine")" -lt 74 || {
+length=$(node -e "const {emojifiedLength} = require('./scripts/commit-msg-length-emojis.js'); console.log(emojifiedLength('$firstLine'))")
+
+test $length -lt 74 || {
         printf >&2 "❌  The first line of your commit message should not be longer than 72 characters.\nFeel free to provide more context separated by a blank line.\n"
         exit 1
 }
