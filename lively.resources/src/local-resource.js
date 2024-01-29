@@ -1,5 +1,5 @@
 import Resource from './resource.js';
-import { createFiles } from './helpers.js';
+import { createFiles, ensurePlatformIndependentCharacters } from './helpers.js';
 
 const debug = false;
 const slashRe = /\//g;
@@ -99,6 +99,7 @@ export default class LocalResource extends Resource {
     if (this.isDirectory()) { throw new Error(`Cannot write into a directory! (${this.url})`); }
     const spec = this.localBackend.get(this.path());
     if (spec && spec.isDirectory) { throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`); }
+    content = ensurePlatformIndependentCharacters(content);
     this.localBackend.write(this.path(), content);
     return Promise.resolve(this);
   }

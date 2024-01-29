@@ -1,6 +1,6 @@
 /* global process */
 import Resource from './resource.js';
-import { applyExclude, windowsURLPrefixRe, windowsRootPathRe } from './helpers.js';
+import { applyExclude, windowsURLPrefixRe, windowsRootPathRe, ensurePlatformIndependentCharacters } from './helpers.js';
 
 import { createWriteStream, createReadStream, readFile, writeFile, stat, mkdir, rmdir, unlink, readdir, lstat, rename, constants, access } from 'fs';
 
@@ -48,6 +48,7 @@ export class NodeJSFileResource extends Resource {
   }
 
   async write (content) {
+    content = ensurePlatformIndependentCharacters(content);
     if (this.isDirectory()) throw new Error(`Cannot write into a directory: ${this.path()}`);
     await writeFileP(this.path(), content);
     return this;

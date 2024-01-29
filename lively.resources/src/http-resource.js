@@ -1,7 +1,7 @@
 /* global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer */
 
 import Resource from './resource.js';
-import { applyExclude } from './helpers.js';
+import { applyExclude, ensurePlatformIndependentCharacters } from './helpers.js';
 import { promise, num } from 'lively.lang';
 import { emit } from 'lively.notifications/index.js';
 
@@ -240,6 +240,8 @@ export default class WebDAVResource extends Resource {
 
   async write (content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
+    content = ensurePlatformIndependentCharacters(content);
+
     const res = await upload(this, content);
 
     if (!num.between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
