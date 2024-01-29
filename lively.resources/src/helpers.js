@@ -1,3 +1,7 @@
+export function ensurePlatformIndependentCharacters (text) {
+  return text.replaceAll(/\r\n/g, '\n');
+}
+
 export function applyExclude (exclude, resources) {
   if (Array.isArray(exclude)) {
     return exclude.reduce((intersect, exclude) =>
