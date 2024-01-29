@@ -391,7 +391,7 @@ export async function bootstrap ({
     await polyfills();
     const oldEnv = $world.env;
     doBootstrap ? await bootstrapLivelySystem(progress, fastLoad) : await fastPrepLivelySystem();
-    if (projectName) {
+    if (projectName && projectName !== '__newProject__') {
       if (!lively.isInOfflineMode) {
         Project.fetchInfoPreflight(projectName);
       }
