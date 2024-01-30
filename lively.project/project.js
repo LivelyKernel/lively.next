@@ -88,7 +88,7 @@ export class Project {
    * Used for internal operations and not intended to be exposed to the user.
    */
   get fullName () {
-    return this.url.replace(/.*\/local_projects\//, '');
+    return this.url.replace(/.*\/local_projects\//, '').replace('/','');
   }
 
   get repoOwner () {
