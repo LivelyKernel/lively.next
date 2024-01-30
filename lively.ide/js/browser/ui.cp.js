@@ -205,9 +205,12 @@ class ComponentEditControlModel extends ViewModel {
       componentMorph,
       editor,
       view,
-      editButton
     } = this;
     await fun.guardNamed('collapse-' + componentMorph.id, async () => {
+      const halos = $world.halos();
+      halos.forEach(h => {
+        if (h.target.ownerChain().includes(componentMorph)) h.remove();
+      });
       const placeholderPos = view.position;
       const pos = componentMorph.position;
       const wrapper = morph({
