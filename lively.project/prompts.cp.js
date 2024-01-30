@@ -1,7 +1,7 @@
 /* global fetch */
 /* global URL */
 import { component, ShadowObject, TilingLayout, add, part } from 'lively.morphic';
-import { AbstractPromptModel, InformPromptModel, InformPrompt, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
+import { AbstractPromptModel, OKCancelButtonWrapper, LightPrompt } from 'lively.components/prompts.cp.js';
 import { Color, pt } from 'lively.graphics';
 import { InputLineDefault, InputLineDark } from 'lively.components/inputs.cp.js';
 import { InformIconOnLight } from 'lively.components/helpers.cp.js';
@@ -23,6 +23,7 @@ import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { fun } from 'lively.lang';
 import { repositoryOwnerAndNameRegex } from './project.js';
 import GitShellResource from 'lively.shell/git-client-resource.js';
+import { debounceNamed } from 'lively.lang/function.js';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -153,7 +154,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           remoteUrl.indicateError('enter github url');
           if (!onlyCheck) okButton.disable();
           return false;
-        }
+        } else debounceNamed('branch-check', 100, () => this.showBranchInformation())();
       } catch (err) {
         remoteUrl.indicateError('enter valid url');
         if (!onlyCheck) okButton.disable();
@@ -168,6 +169,23 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     }
     if (!onlyCheck) okButton.enable();
     return true;
+  }
+
+  async showBranchInformation () {
+    const { branchHolder, branchLoadingIndicator, branchSelector, remoteUrl } = this.ui;
+    branchHolder.visible = true;
+    branchLoadingIndicator.visible = true;
+    branchSelector.visible = false;
+    let urlString = remoteUrl.textString;
+    if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
+    const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
+    const projectName = urlString.match(repositoryOwnerAndNameRegex)[2];
+    const repoInfos = await GitShellResource.remoteRepoInfos(projectRepoOwner, projectName);
+    const branchListing = await GitShellResource.listRemoteBranches(projectRepoOwner, projectName);
+    branchSelector.items = branchListing.map(b => ({ string: b, value: { name: b }, isListItem: true }));
+    branchSelector.selection = this.ui.branchSelector.items.find(i => i.value.name === repoInfos.default_branch).value;
+    branchSelector.visible = true;
+    branchLoadingIndicator.visible = false;
   }
 
   async resolve () {
@@ -194,14 +212,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
             remoteUrl.clearError(); // otherwise the validity check instantly fails
             return;
           }
-          const branchName = await $world.openPrompt(part(ChooseProjectBranchDialog, { // eslint-disable-line no-use-before-define
-            hasFixedPosition: true,
-            center: this.view.center,
-            viewModel: {
-              repoUrl: urlString
-            }
-          }));
-          await Project.fromRemote(urlString, branchName.name);
+          await Project.fromRemote(urlString, this.ui.branchSelector.selection.name);
           this.view.remove();
           const loadedProject = await Project.loadProject(projectNameToLoad);
           super.resolve(loadedProject);
@@ -421,30 +432,6 @@ class RepoCreationPromptModel extends AbstractPromptModel {
       }
       this.enableButtons();
     })();
-  }
-}
-
-class ChooseProjectBranchModel extends InformPromptModel {
-  static get properties () {
-    return {
-      repoUrl: { }
-    };
-  }
-
-  resolve () {
-    const { branchSelector } = this.ui;
-    super.resolve(branchSelector.selection);
-  }
-
-  async viewDidLoad () {
-    const { branchSelector } = this.ui;
-    this.view.visible = false;
-    const ownerAndName = this.repoUrl.match(/github\.com\/(.*)\/(.*)/);
-    const repoInfos = await GitShellResource.remoteRepoInfos(ownerAndName[1], ownerAndName[2]);
-    const branchListing = await GitShellResource.listRemoteBranches(ownerAndName[1], ownerAndName[2]);
-    branchSelector.items = branchListing.map(b => ({ string: b, value: { name: b }, isListItem: true }));
-    branchSelector.selection = branchSelector.items.find(i => i.value.name === repoInfos.default_branch).value;
-    this.view.visible = true;
   }
 }
 
@@ -899,7 +886,10 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         hugContentsHorizontally: true,
         hugContentsVertically: true,
         padding: rect(10, 10, 0, 0),
-        resizePolicies: [['repo settings', {
+        resizePolicies: [['branch holder', {
+          height: 'fixed',
+          width: 'fill'
+        }], ['repo settings', {
           height: 'fixed',
           width: 'fill'
         }]],
@@ -938,6 +928,55 @@ export const ProjectCreationPrompt = component(LightPrompt, {
         ]
       },
       part(InputLineDefault, { name: 'remote url', placeholder: 'URL' }),
+      {
+        name: 'branch holder',
+        height: 3,
+        visible: false,
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center',
+          hugContentsVertically: true,
+          justifySubmorphs: 'spaced'
+        }),
+        fill: Color.transparent,
+        clipMode: 'visible',
+        submorphs: [
+          part(Spinner, {
+            name: 'branch loading indicator',
+            extent: pt(65, 70),
+            fill: Color.rgba(255, 255, 255, 0),
+            scale: 0.2560724949479811,
+            visible: false,
+            viewModel: {
+              color: 'black'
+            }
+          }),
+          part(EnumSelector, {
+            name: 'branch selector',
+            visible: false,
+            master: SystemButton,
+            width: 260,
+            clipMode: 'hidden',
+            layout: new TilingLayout(
+              {
+                align: 'center',
+                axisAlign: 'center',
+                justifySubmorphs: 'spaced',
+                orderByIndex: true,
+                padding: rect(5, 0, 5, 0),
+                resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
+              }),
+            viewModel: {
+              listMaster: SystemList,
+              openListInWorld: true
+            }
+          }), part(InformIconOnLight, {
+            viewModel: { information: 'Which branch of the remote repository should be used?' },
+            name: 'branch inform'
+          })
+        ]
+      },
+
       part(InputLineDefault, {
         name: 'project name',
         placeholder: 'Project Name',
@@ -968,51 +1007,6 @@ export const ProjectCreationPrompt = component(LightPrompt, {
       ]
     }),
     add(part(OKCancelButtonWrapper, { name: 'button wrapper' }))]
-});
-
-const ChooseProjectBranchDialog = component(InformPrompt, {
-  defaultViewModel: ChooseProjectBranchModel,
-  extent: pt(385, 151),
-  submorphs: [
-    {
-      name: 'prompt title',
-      textAndAttributes: ['Choose remote branch to use:', null]
-    },
-    add({
-      name: 'branch holder',
-      fill: Color.transparent,
-      layout: new TilingLayout({
-        align: 'center',
-        axisAlign: 'center',
-        orderByIndex: true,
-        spacing: 5
-      }),
-      submorphs: [
-        part(EnumSelector, {
-          name: 'branch selector',
-          master: SystemButton,
-          width: 260,
-          clipMode: 'hidden',
-          layout: new TilingLayout(
-            {
-              align: 'center',
-              axisAlign: 'center',
-              justifySubmorphs: 'spaced',
-              orderByIndex: true,
-              padding: rect(5, 0, 5, 0),
-              resizePolicies: [['label', [{ height: 'fixed', width: 'fill' }]]]
-            }),
-          viewModel: {
-            listMaster: SystemList,
-            openListInWorld: true
-          }
-        }), part(InformIconOnLight, {
-          viewModel: { information: 'Which branch of the remote repository should be used?' },
-          name: 'branch inform'
-        })
-      ]
-    }, 'ok button')
-  ]
 });
 
 export const SaveProjectDialog = component(SaveWorldDialog, {
