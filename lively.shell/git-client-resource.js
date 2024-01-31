@@ -28,7 +28,7 @@ export default class GitShellResource extends ShellClientResource {
     return await res.json();
   }
 
-  static async listRemoteBranches (repoOwner, repoName) {
+  static async listGithubBranches (repoOwner, repoName) {
     const token = currentUserToken();
     const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/branches`, {
       headers: {
