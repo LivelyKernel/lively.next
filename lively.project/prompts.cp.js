@@ -181,7 +181,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
     const projectName = urlString.match(repositoryOwnerAndNameRegex)[2];
     const repoInfos = await GitShellResource.remoteRepoInfos(projectRepoOwner, projectName);
-    const branchListing = await GitShellResource.listRemoteBranches(projectRepoOwner, projectName);
+    const branchListing = await GitShellResource.listGithubBranches(projectRepoOwner, projectName);
     branchSelector.items = branchListing.map(b => ({ string: b, value: { name: b }, isListItem: true }));
     branchSelector.selection = this.ui.branchSelector.items.find(i => i.value.name === repoInfos.default_branch).value;
     branchSelector.visible = true;
