@@ -111,8 +111,10 @@ export default class GitShellResource extends ShellClientResource {
    * @param {string} branchName - The branch to switch to.
    * @returns
    */
-  async createAndCheckoutBranch (branchName) {
-    const branchCreationCmd = `git checkout -b ${branchName}`;
+  async createAndCheckoutBranch (branchName, tracked = false) {
+    const branchCreationCmd = tracked ? 
+     `git checkout --track origin/${branchName}`:
+     `git checkout -b ${branchName}`;
     const cmd = this.runCommand(branchCreationCmd);
     await cmd.whenDone();
     // Branch could successfully be created and switched to.
