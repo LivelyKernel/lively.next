@@ -275,11 +275,11 @@ class ProjectVersionViewer extends WorldVersionViewer {
     let notOnGithub, githubBranches, repoInfos;
 
     if (!lively.isInOfflineMode) {
-      // retrieves all branches that exist remotely
-      githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
-      // used to figure out the default branch on github
+      // used to figure out the default branch on github or if no repo exists at all
       repoInfos = await GitShellResource.remoteRepoInfos(_projectOwner, _projectName);
       notOnGithub = repoInfos.message === 'Not Found';
+      // retrieves all branches that exist remotely
+      if (!notOnGithub) githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
     }
 
     const gitRes = await Project.ensureGitResource(`${_projectOwner}--${_projectName}`);

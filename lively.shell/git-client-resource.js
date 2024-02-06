@@ -38,6 +38,7 @@ export default class GitShellResource extends ShellClientResource {
       }
     });
     const branchData = await res.json();
+    // TODO: If this is called with a non-existing repository bad things happen!
     return branchData.map(b => b.name);
   }
 
