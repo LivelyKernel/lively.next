@@ -326,14 +326,11 @@ class ProjectVersionViewer extends WorldVersionViewer {
     const localRepo = await Project.ensureGitResource(this.owner._project._name);
     const branchToUse = this.get('version list').selection;
     await localRepo.runCommand(`git stash -m "stashed-while-switching-to-branch-${branchToUse.name}"`).whenDone();
-
     // We need to create a local branch.
     if (!branchToUse.local){
-      await localRepo.fetch(); // makes our live easier when setting up tracking in the next step
-      await localRepo.createAndCheckoutBranch(branchToUse.name);
-      await localRepo.runCommand(`git branch -u origin/${branchToUse.name}`) // set up tracking
+      await localRepo.fetch();
+      await localRepo.createAndCheckoutBranch(branchToUse.name, true);
     } else {
-      // TODO: 2 -- problems here when no remote is setup?
       await localRepo.runCommand(`git switch ${branchToUse.name}`).whenDone();
     }
 
