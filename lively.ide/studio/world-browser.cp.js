@@ -1,5 +1,5 @@
 /* eslint-disable no-use-before-define */
-import { easings, ViewModel, touchInputDevice, morph, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
+import { easings, ViewModel, touchInputDevice, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
 import { arr, promise, fun, graph, date, string } from 'lively.lang/index.js';
 import { GreenButton, ConfirmPrompt, RedButton, PlainButton } from 'lively.components/prompts.cp.js';
@@ -13,6 +13,7 @@ import { Project } from 'lively.project';
 import { without, add } from 'lively.morphic/components/core.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { Path } from 'lively.morphic/morph.js';
+import GitShellResource from 'lively.shell/git-client-resource.js';
 
 import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
@@ -77,6 +78,65 @@ class WorldVersion extends Morph {
     preview.imageUrl = this.commit.preview || missingSVG;
     infoLabel.textAndAttributes = this.info;
     infoLabel.fontColor = this.selected ? Color.white : Color.darkGray;
+  }
+}
+
+class ProjectBranch extends Morph {
+  static get properties () {
+    return {
+      fill: { defaultValue: Color.transparent },
+      branchName: { },
+      isDefaultBranch: { },
+      isRemote: { },
+      isLocal: { },
+      isCheckedOut: { },
+      selected: {
+        set (active) {
+          this.setProperty('selected', active);
+          this.update();
+        }
+      },
+      layout: {
+        initialize () {
+          this.layout = new TilingLayout({ axis: 'column', align: 'left', wrapSubmorphs: true, spacing: 5, padding: 10 });
+        }
+      },
+      submorphs: {
+        initialize () {
+          this.submorphs = [
+            {
+              type: Label,
+              extent: pt(30, 30),
+              name: 'preview',
+              textAndAttributes: ['', { fontFamily: 'Font Awesome' }],
+              textAlign: 'right',
+              fontSize: 20,
+              reactsToPointer: false
+            },
+            {
+              reactsToPointer: false,
+              type: 'label',
+              fill: null,
+              name: 'commit info',
+              fontFamily: 'IBM Plex Sans',
+              fontColor: Color.gray
+            }
+          ];
+        }
+      }
+    };
+  }
+
+  update () {
+    const { branchName, isCheckedOut, isLocal, isRemote, isDefaultBranch } = this;
+    this.getSubmorphNamed('commit info').textAndAttributes = [
+      `${isDefaultBranch ? ' ' : ''}`, { fontFamily: 'Font Awesome' },
+      `${branchName} `, { fontWeight: 'bold' },
+      `${isCheckedOut ? '\n' : '\n'}`, { fontFamily: 'Font Awesome' },
+      `${isLocal ? ' ' : ''}`, { fontFamily: 'Font Awesome' },
+      `${isRemote ? ' ' : ''}`, { fontFamily: 'Font Awesome' }
+    ];
+    this.getSubmorphNamed('commit info').fontColor = this.selected ? Color.white : Color.darkGray;
   }
 }
 
@@ -201,6 +261,90 @@ export default class WorldVersionViewer extends Morph {
     });
     this.get('version list').items = items;
     spinner.visible = false;
+  }
+}
+
+class ProjectVersionViewer extends WorldVersionViewer {
+
+  async initializeFromStartCommit () {
+    const spinner = this.getSubmorphNamed('version list spinner');
+    spinner.visible = true;
+
+    const { _projectName, _projectOwner } = this.owner._project;
+
+    let notOnGithub, githubBranches, repoInfos;
+
+    if (!lively.isInOfflineMode) {
+      // retrieves all branches that exist remotely
+      githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
+      // used to figure out the default branch on github
+      repoInfos = await GitShellResource.remoteRepoInfos(_projectOwner, _projectName);
+      notOnGithub = repoInfos.message === 'Not Found';
+    }
+
+    const gitRes = await Project.ensureGitResource(`${_projectOwner}--${_projectName}`);
+    const repoBranches = await gitRes.branchesInRepository();
+
+    const branches = [...repoBranches];
+    !lively.isInOfflineMode && !notOnGithub && githubBranches.forEach(branchName => {
+      const foundBranch = branches.find(b => b.name === branchName);
+      if (foundBranch) foundBranch.remote = true;
+      else {
+        branches.push({
+          name: branchName,
+          remote: true
+        });
+      }
+    });
+
+    const items = branches.map(b => {
+      const morph = new ProjectBranch({
+        reactsToPointer: false,
+        // used to populate list entry label
+        branchName: b.name,
+        isRemote: b.remote,
+        isLocal: b.local,
+        isCheckedOut: b.checkedOut,
+        isDefaultBranch: b.name === repoInfos.default_branch
+      });
+      morph.update(); // generate label
+      return {
+        isListItem: true,
+        morph,
+        value: b
+      };
+    });
+
+    const list = this.get('version list'); 
+    list.items = items;
+    list.selection = list.items.find(i => i.value.checkedOut);
+
+    spinner.visible = false;
+  }
+
+  async visitSelectedCommit() {
+    const localRepo = await Project.ensureGitResource(this.owner._project._name);
+    const branchToUse = this.get('version list').selection;
+    await localRepo.runCommand(`git stash -m "stashed-while-switching-to-branch-${branchToUse.name}"`).whenDone();
+
+    // We need to create a local branch.
+    if (!branchToUse.local){
+      await localRepo.fetch(); // makes our live easier when setting up tracking in the next step
+      await localRepo.createAndCheckoutBranch(branchToUse.name);
+      await localRepo.runCommand(`git branch -u origin/${branchToUse.name}`) // set up tracking
+    } else {
+      // TODO: 2 -- problems here when no remote is setup?
+      await localRepo.runCommand(`git switch ${branchToUse.name}`).whenDone();
+    }
+
+    const stashApplicationCommand = localRepo.runCommand(`git stash apply stash^{/stashed-while-switching-to-branch-${branchToUse.name}}`);
+    await stashApplicationCommand.whenDone();
+    // Successful stash application means we have created a stash that we need to clean up.
+    if (stashApplicationCommand.exitCode === 0) {
+      await localRepo.runCommand('git stash drop').whenDone();
+    }
+    if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) throw Error('Error applying stash. Might be due to a conflict!');
+    this.owner.showVersions();
   }
 }
 
@@ -670,16 +814,14 @@ export class WorldPreviewModel extends ViewModel {
           { target: 'delete button', signal: 'onMouseDown', handler: 'tryToDelete' },
           { target: 'open button', signal: 'onMouseDown', handler: 'openEntity' },
           { signal: 'onHoverIn', handler: 'toggleDeleteButton', converter: () => true },
-          { signal: 'onHoverOut', handler: 'toggleDeleteButton', converter: () => false }
+          { signal: 'onHoverOut', handler: 'toggleDeleteButton', converter: () => false },
+          { target: 'close versions button', signal: 'onMouseDown', handler: 'hideVersions' },
+          { target: 'version button', signal: 'onMouseDown', handler: 'showVersions' }
         ]
       },
       bindings: {
         get () {
-          return [
-            ...this.bindingsToInherit,
-            { target: 'close versions button', signal: 'onMouseDown', handler: 'hideVersions' },
-            { target: 'version button', signal: 'onMouseDown', handler: 'showVersions' }
-          ];
+          return this.bindingsToInherit;
         }
       },
       _commit: {},
@@ -732,9 +874,15 @@ export class WorldPreviewModel extends ViewModel {
     else await bootstrap({ commit, fastLoad: !lively.doNotUseFastLoad, progress });
   }
 
+  get versionContainer () {
+    return this.view.get('version container') || this.view.get('branch container');
+  }
+
   async showVersions () {
     const duration = 200; const easing = easings.inOutExpo;
-    const { previewContainer, versionContainer } = this.ui;
+    const { previewContainer } = this.ui;
+    const versionContainer = this.versionContainer;
+
     versionContainer.reactsToPointer = versionContainer.visible = true;
     versionContainer.initializeFromStartCommit(this._commit);
     this.view.animate({
@@ -751,7 +899,8 @@ export class WorldPreviewModel extends ViewModel {
 
   async hideVersions () {
     const duration = 200; const easing = easings.inOutExpo;
-    const { previewContainer, versionContainer } = this.ui;
+    const { previewContainer } = this.ui;
+    const versionContainer = this.versionContainer;
     previewContainer.reactsToPointer = previewContainer.visible = true;
     this.view.animate({
       width: 245, duration, easing
@@ -791,7 +940,12 @@ class ProjectPreviewModel extends WorldPreviewModel {
           ];
         }
       },
-      _project: { }
+      _project: { },
+      expose: {
+        get () {
+          return ['_project', 'displayPreview', 'hideVersions', 'showVersions'];
+        }
+      }
     };
   }
 
@@ -1165,33 +1319,74 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
   defaultViewModel: ProjectPreviewModel,
   submorphs: [{
     name: 'preview container',
+    submorphs: [
+      {
+        name: 'version button',
+        tooltip: 'Switch between different versions of this project.'
+      },
+      {
+        name: 'open button',
+        tooltip: 'Open the last used version of this project.',
+        submorphs: [{
+          name: 'label',
+          textAndAttributes: ['OPEN PROJECT', null]
+        }]
+      },
+      {
+        name: 'preview frame',
+        // TODO: We can still think about some kind of generated preview for Projects.
+        submorphs: [without('preview'), add(part(ProjectIcon, {name: 'project icon'}))]
+      }, {
+        name: 'timestamp',
+        nativeCursor: 'text',
+        textAndAttributes: ['', {
+          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+          fontSize: 13,
+          fontWeight: '900',
+          paddingTop: '1px'
+        }, ' robin.schreiber', {
+          fontSize: 13,
+          fontWeight: 'bold',
+          paddingTop: '1px'
+        }, ' - 3.1.19 19:30', {
+          fontSize: 12,
+          fontWeight: 'bold',
+          paddingTop: '2px'
+        }]
+      }]
+  }, {
+    type: ProjectVersionViewer,
+    name: 'version container',
+    fill: Color.rgb(253, 254, 254),
+    draggable: true,
+    extent: pt(515.7, 365.6),
+    grabbable: true,
+    position: pt(0, 0),
+    layoutable: false,
     submorphs: [{
-      name: 'open button',
+      type: MorphList,
+      name: 'version list',
+      clipMode: 'hidden',
+      master: SystemList,
+      extent: pt(475.6, 285),
+      itemHeight: 45,
+      padding: rect(1, 1, 0, -1),
+      position: pt(20.1, 16.8),
+      touchInput: false
+    }, part(Spinner, {
+      name: 'version list spinner',
+      viewModel: { color: 'black' },
+      extent: pt(55.3, 66.9),
+      position: pt(244, 166.1),
+      scale: 0.5,
+      visible: false,
+      reactsToPointer: false
+    }), without('revert button'), {
+      name: 'visit button',
       submorphs: [{
         name: 'label',
-        textAndAttributes: ['OPEN PROJECT', null]
-      }]
-    }, without('version button'), {
-      name: 'preview frame',
-      clipMode: 'visible',
-      // TODO: We can still think about some kind of generated preview for Projects.
-      submorphs: [without('preview'), add(part(ProjectIcon)), without('version container')]
-    }, {
-      name: 'timestamp',
-      nativeCursor: 'text',
-      textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-        fontSize: 13,
-        fontWeight: '900',
-        paddingTop: '1px'
-      }, ' robin.schreiber', {
-        fontSize: 13,
-        fontWeight: 'bold',
-        paddingTop: '1px'
-      }, ' - 3.1.19 19:30', {
-        fontSize: 12,
-        fontWeight: 'bold',
-        paddingTop: '2px'
+        textAndAttributes: ['USE', null]
+
       }]
     }]
   }]

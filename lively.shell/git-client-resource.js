@@ -41,6 +41,10 @@ export default class GitShellResource extends ShellClientResource {
     return branchData.map(b => b.name);
   }
 
+  async fetch (remote = 'origin') {
+    await this.runCommand(`git fetch ${remote}`).whenDone();
+  }
+  
   async branchesInRepository () {
     const output = await this.runCommand('git branch --all').whenDone();
     // TODO: insert error handling
