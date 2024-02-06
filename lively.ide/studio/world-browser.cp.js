@@ -323,6 +323,9 @@ class ProjectVersionViewer extends WorldVersionViewer {
   }
 
   async visitSelectedCommit() {
+    const spinner = this.getSubmorphNamed('version list spinner');
+    spinner.visible = true;
+
     const localRepo = await Project.ensureGitResource(this.owner._project._name);
     const branchToUse = this.get('version list').selection;
     await localRepo.runCommand(`git stash -m "stashed-while-switching-to-branch-${branchToUse.name}"`).whenDone();
@@ -341,6 +344,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
       await localRepo.runCommand('git stash drop').whenDone();
     }
     if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) throw Error('Error applying stash. Might be due to a conflict!');
+    spinner.visible = false;
     this.owner.showVersions();
   }
 }
