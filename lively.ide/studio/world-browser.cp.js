@@ -343,7 +343,10 @@ class ProjectVersionViewer extends WorldVersionViewer {
     if (stashApplicationCommand.exitCode === 0) {
       await localRepo.runCommand('git stash drop').whenDone();
     }
-    if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) throw Error('Error applying stash. Might be due to a conflict!');
+    if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) {
+      console.warn('Stash application failed due to conflict. Aborting stash application.');
+      await localRepo.runCommand('git reset --hard').whenDone();
+    }
     spinner.visible = false;
     this.owner.showVersions();
   }
