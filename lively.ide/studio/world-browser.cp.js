@@ -14,6 +14,7 @@ import { without, add } from 'lively.morphic/components/core.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { Path } from 'lively.morphic/morph.js';
 import GitShellResource from 'lively.shell/git-client-resource.js';
+import { Rectangle } from 'lively.graphics/geometry-2d.js';
 
 import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
@@ -98,7 +99,7 @@ class ProjectBranch extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new TilingLayout({ axis: 'column', align: 'left', wrapSubmorphs: true, spacing: 5, padding: 10 });
+          this.layout = new TilingLayout({ axis: 'column', align: 'left', wrapSubmorphs: true, spacing: 5, padding: Rectangle.inset(10, 5, 10, 5) });
         }
       },
       submorphs: {
@@ -136,7 +137,8 @@ class ProjectBranch extends Morph {
       `${isLocal ? ' ' : ''}`, { fontFamily: 'Font Awesome' },
       `${isRemote ? ' ' : ''}`, { fontFamily: 'Font Awesome' }
     ];
-    this.getSubmorphNamed('commit info').fontColor = this.selected ? Color.white : Color.darkGray;
+    this.getSubmorphNamed('preview').fontColor = this.selected ? Color.white : Color.black;
+    this.getSubmorphNamed('commit info').fontColor = this.selected ? Color.white.withA(.9) : Color.darkGray;
   }
 }
 
@@ -265,7 +267,6 @@ export default class WorldVersionViewer extends Morph {
 }
 
 class ProjectVersionViewer extends WorldVersionViewer {
-
   async initializeFromStartCommit () {
     const spinner = this.getSubmorphNamed('version list spinner');
     spinner.visible = true;
@@ -315,14 +316,14 @@ class ProjectVersionViewer extends WorldVersionViewer {
       };
     });
 
-    const list = this.get('version list'); 
+    const list = this.get('version list');
     list.items = items;
     list.selection = list.items.find(i => i.value.checkedOut);
 
     spinner.visible = false;
   }
 
-  async visitSelectedCommit() {
+  async visitSelectedCommit () {
     const spinner = this.getSubmorphNamed('version list spinner');
     spinner.visible = true;
 
@@ -330,7 +331,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
     const branchToUse = this.get('version list').selection;
     await localRepo.runCommand(`git stash -m "stashed-while-switching-to-branch-${branchToUse.name}"`).whenDone();
     // We need to create a local branch.
-    if (!branchToUse.local){
+    if (!branchToUse.local) {
       await localRepo.fetch();
       await localRepo.createAndCheckoutBranch(branchToUse.name, true);
     } else {
@@ -1339,7 +1340,7 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
       {
         name: 'preview frame',
         // TODO: We can still think about some kind of generated preview for Projects.
-        submorphs: [without('preview'), add(part(ProjectIcon, {name: 'project icon'}))]
+        submorphs: [without('preview'), add(part(ProjectIcon, { name: 'project icon' }))]
       }, {
         name: 'timestamp',
         nativeCursor: 'text',
