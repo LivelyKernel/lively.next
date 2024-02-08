@@ -41,6 +41,42 @@ export default class GitShellResource extends ShellClientResource {
     return branchData.map(b => b.name);
   }
 
+  async branchesInRepository () {
+    const output = await this.runCommand('git branch --all').whenDone();
+    // TODO: insert error handling
+    const printedBranches = output.output.split(/[\r\n]+/);
+    let branches = [];
+    printedBranches.forEach(b => {
+      if (b.includes('HEAD') || b.length === 0) return;
+
+      const branch = {};
+
+      if (b.includes('*')) branch.checkedOut = true;
+      else branch.checkedOut = false;
+
+      if (b.includes('remotes')) {
+        branch.remote = true;
+        branch.name = b.match(/\/.*\/(.*)/)[1].trim();
+      } else {
+        branch.local = true;
+        branch.name = b.match(/ (.*)/)[1].trim();
+      }
+
+      branches.push(branch);
+    });
+
+    const res = [];
+    branches.forEach(currentBranch => {
+      const b = res.find(b => b.name === currentBranch.name);
+      if (b) {
+        if (currentBranch.remote) b.remote = true;
+        if (currentBranch.local) b.local = true;
+        if (currentBranch.checkedOut) b.checkedOut = true;
+      } else res.push(currentBranch);
+    });
+    return res;
+  }
+
   async branchName () {
     const cmd = await this.runCommand('git rev-parse --abbrev-ref HEAD').whenDone();
     return cmd.output.trim().replace('\n', '');
