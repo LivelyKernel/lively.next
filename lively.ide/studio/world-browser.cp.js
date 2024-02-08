@@ -20,6 +20,7 @@ import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { signal } from 'lively.bindings';
+import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 export const missingSVG = `data:image/svg+xml;utf8,
 <svg aria-hidden="true" focusable="false" data-prefix="far" data-icon="question-circle" class="svg-inline--fa fa-question-circle fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="lightgray" d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"></path></svg>
@@ -276,18 +277,27 @@ class ProjectVersionViewer extends WorldVersionViewer {
     let notOnGithub, githubBranches, repoInfos;
 
     if (!lively.isInOfflineMode) {
-      // used to figure out the default branch on github or if no repo exists at all
-      repoInfos = await GitShellResource.remoteRepoInfos(_projectOwner, _projectName);
-      notOnGithub = repoInfos.message === 'Not Found';
-      // retrieves all branches that exist remotely
-      if (!notOnGithub) githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
+      if (!isUserLoggedIn()){
+        $world.setStatusMessage('Login to retrieve more information from GitHub.', StatusMessageError);
+        $world.get('user flap').show();
+      } else {
+        // used to figure out the default branch on github or if no repo exists at all
+        repoInfos = await GitShellResource.remoteRepoInfos(_projectOwner, _projectName);
+        notOnGithub = repoInfos.message === 'Not Found';
+        // retrieves all branches that exist remotely
+        if (!notOnGithub) githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
+      }
     }
 
     const gitRes = await Project.ensureGitResource(`${_projectOwner}--${_projectName}`);
+    // This is a bit of a leaky abstraction, as this will also identify remote branches based on the setup tracking.
+    // When using lively the intended way, this is not a problem, but when deleting the repository on GitHub without
+    // using lively, this will create a situation where there are remotes shown in lively but they not longer actually exist.
+    // Minor problem for now.
     const repoBranches = await gitRes.branchesInRepository();
 
     const branches = [...repoBranches];
-    !lively.isInOfflineMode && !notOnGithub && githubBranches.forEach(branchName => {
+    !lively.isInOfflineMode && !notOnGithub && isUserLoggedIn() && githubBranches.forEach(branchName => {
       const foundBranch = branches.find(b => b.name === branchName);
       if (foundBranch) foundBranch.remote = true;
       else {
@@ -306,7 +316,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
         isRemote: b.remote,
         isLocal: b.local,
         isCheckedOut: b.checkedOut,
-        isDefaultBranch: b.name === repoInfos.default_branch
+        isDefaultBranch: b.name === repoInfos?.default_branch
       });
       morph.update(); // generate label
       return {
