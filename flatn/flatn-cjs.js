@@ -10103,6 +10103,10 @@ function isConstructorOrProto (obj, key) {
     return key === 'constructor' && typeof obj[key] === 'function' || key === '__proto__';
 }
 
+function ensurePlatformIndependentCharacters (text) {
+  return text.replaceAll(/\r\n/g, '\n');
+}
+
 function applyExclude$1 (exclude, resources) {
   if (Array.isArray(exclude)) {
     return exclude.reduce((intersect, exclude) =>
@@ -14990,6 +14994,8 @@ class WebDAVResource extends Resource {
 
   async write (content) {
     if (!this.isFile()) throw new Error(`Cannot write a non-file: ${this.url}`);
+    content = ensurePlatformIndependentCharacters(content);
+
     const res = await upload(this, content);
 
     if (!between(res.status, 200, 300) && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot write ${this.url}: ${res.statusText} ${res.status}`); }
@@ -15167,6 +15173,7 @@ class NodeJSFileResource extends Resource {
   }
 
   async write (content) {
+    content = ensurePlatformIndependentCharacters(content);
     if (this.isDirectory()) throw new Error(`Cannot write into a directory: ${this.path()}`);
     await writeFileP(this.path(), content);
     return this;
@@ -15416,6 +15423,7 @@ class LocalResource extends Resource {
     if (this.isDirectory()) { throw new Error(`Cannot write into a directory! (${this.url})`); }
     const spec = this.localBackend.get(this.path());
     if (spec && spec.isDirectory) { throw new Error(`${this.url} already exists and is a directory (cannot write into it!)`); }
+    content = ensurePlatformIndependentCharacters(content);
     this.localBackend.write(this.path(), content);
     return Promise.resolve(this);
   }
