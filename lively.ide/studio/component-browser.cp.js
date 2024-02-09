@@ -858,7 +858,7 @@ export class ComponentBrowserModel extends ViewModel {
       });
     }
     const openedProject = $world.openedProject;
-    if (!(openedProject.owner === 'LivelyKernel' && openedProject.name === 'partsbin') && !$world._partsbinUpdated) {
+    if (!(openedProject?.owner === 'LivelyKernel' && openedProject?.name === 'partsbin') && !$world._partsbinUpdated) {
       const li = $world.showLoadingIndicatorFor(null, 'Updating `partsbin`');
       // This relies on the assumption, that the default directory the shell command gets dropped in is `lively.server`.
       // `install.sh` ensures that the partsbin repository exists.
