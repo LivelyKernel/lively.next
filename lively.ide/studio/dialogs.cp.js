@@ -42,7 +42,7 @@ class SaveWorldDialogModel extends ConfirmPromptModel {
   get bindings () {
     return [
       ...super.bindings, {
-        model: 'storage type selector',
+        target: 'storage type selector',
         signal: 'selection',
         handler: 'refresh'
       }];
