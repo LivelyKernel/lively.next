@@ -658,6 +658,7 @@ class ModuleInterface {
   // evaluationStart/End are also compiled into instrumented module code so are
   // also activated during module executions
   evaluationStart () {
+    this.ensureRecord();
     this._evaluationsInProgress++;
   }
 
@@ -833,12 +834,6 @@ class ModuleInterface {
   // module records
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  ensureRecord () {
-    const S = this.System;
-    const records = this.System.loads;
-    if (records[this.id]) return records[this.id];
-  }
-
   static sanitizeRecord (rec, System) {
     if (!rec) return;
     if (rec.name && rec.exports && rec.setters) return rec; // already sanitized
@@ -861,6 +856,10 @@ class ModuleInterface {
       });
     }
     return rec;
+  }
+
+  ensureRecord () {
+    return this.record();
   }
 
   record () {
