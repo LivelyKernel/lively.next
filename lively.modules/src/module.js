@@ -302,7 +302,7 @@ class ModuleInterface {
     // trigger the reload of the bundle for the snippet this recorder is located in
     // after that trigger the importer setters and then also reload these modules as well (within the bundle)
     // this process needs to be repeated for every time this module is updated, not just upon revival.
-    if (autoReload) await updateBundledModules(this.System, [frozenRecord.contextModule]);
+    if (autoReload && frozenRecord) await updateBundledModules(this.System, [frozenRecord.contextModule]);
     this._frozenModule = false;
     return [frozenRecord.contextModule];
   }
