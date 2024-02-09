@@ -101,7 +101,8 @@ export class WorldLoadingScreen extends Morph {
     $world._cachedWindowBounds = null;
     this.setBounds($world.windowBounds());
     this.get('background').fit();
-    this.get('json target indicator').topRight = this.innerBounds().insetBy(25).topRight();
+    // Hardcode the eventual width of the indicator, as the positioning will be off otherwise.
+    this.get('json target indicator').position = pt(this.extent.x - 72 - 25, 25);
   }
 
   indicateMissing (project) {
