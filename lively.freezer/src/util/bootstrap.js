@@ -296,7 +296,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         const loadedPackages = newRegistry.allPackages();
         const instrumentedPackageClass = lively.modules.module('lively.modules/src/packages/package.js').recorder.Package;
         loadedPackages
-          .filter(pkg => !pkg.constructor[Symbol.for('lively-module-meta')])
+          .filter(pkg => !pkg.constructor[Symbol.for('lively-object-meta')]?.moduleSource)
           .forEach(pkg => {
             adoptObject(pkg, instrumentedPackageClass);
           });
@@ -304,7 +304,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         const loadedModules = Object.values(System['__lively.modules__loadedModules']);
         const instrumentedModuleInterface = lively.modules.module('lively.modules/src/module.js').recorder.ModuleInterface;
         loadedModules
-          .filter(mod => !mod.constructor[Symbol.for('lively-module-meta')])
+          .filter(mod => !mod.constructor[Symbol.for('lively-object-meta')]?.moduleSource)
           .forEach(mod => {
             adoptObject(mod, instrumentedModuleInterface);
           });
