@@ -1,5 +1,5 @@
 export function ensurePlatformIndependentCharacters (text) {
-  return text.replaceAll(/\r\n/g, '\n');
+  return typeof text === 'string' ? text.replaceAll(/\r\n/g, '\n') : text;
 }
 
 export function applyExclude (exclude, resources) {
