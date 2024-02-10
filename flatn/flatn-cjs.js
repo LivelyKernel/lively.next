@@ -10104,7 +10104,7 @@ function isConstructorOrProto (obj, key) {
 }
 
 function ensurePlatformIndependentCharacters (text) {
-  return text.replaceAll(/\r\n/g, '\n');
+  return typeof text === 'string' ? text.replaceAll(/\r\n/g, '\n') : text;
 }
 
 function applyExclude$1 (exclude, resources) {
