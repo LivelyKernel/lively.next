@@ -171,6 +171,7 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
     const modHash = R.registry[modId]?.recorder.__module_hash__;
     let key = modId;
     let currMod;
+    if (key === '@empty') continue;
     if (key.startsWith('esm://')) continue; // do not revive esm modules
     if (modHash !== moduleHashes['/' + key]) {
       console.log('reviving', modId);
