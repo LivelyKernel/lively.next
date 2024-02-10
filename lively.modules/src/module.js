@@ -3,7 +3,6 @@ import { parse, query } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
 import { scheduleModuleExportsChange, runScheduledExportChanges } from './import-export.js';
-import { livelySystemEnv } from './system.js';
 import { Package } from './packages/package.js';
 import { isURL } from './url-helpers.js';
 import { emit, subscribe } from 'lively.notifications';
@@ -36,7 +35,7 @@ export const detectModuleFormat = (function () {
 })();
 
 export default function module (System, moduleName, parent) {
-  const sysEnv = livelySystemEnv(System);
+  const sysEnv = System.get('@lively-env');
   const id = System.decanonicalize(moduleName, parent);
   return sysEnv.loadedModules[id] || (sysEnv.loadedModules[id] = new ModuleInterface(System, id)); // eslint-disable-line no-use-before-define
 }
@@ -44,7 +43,7 @@ export default function module (System, moduleName, parent) {
 classHolder.module = module;
 
 export function isModuleLoaded (System, name, isNormalized = false) {
-  const sysEnv = livelySystemEnv(System);
+  const sysEnv = System.get('@lively-env');
   const id = isNormalized ? name : System.normalizeSync(name);
   return id in sysEnv.loadedModules;
 }
@@ -237,7 +236,7 @@ class ModuleInterface {
     this._recorder = null;
     this._observersOfTopLevelState = [];
     // FIXME this shouldn't be necessary anymore....
-    delete livelySystemEnv(this.System).loadedModules[this.id];
+    delete this.System.get('@lively-env').loadedModules[this.id];
   }
 
   unloadDeps (opts) {
@@ -350,7 +349,7 @@ class ModuleInterface {
       try { cb(this); } catch (e) { console.error(e); }
       return;
     }
-    livelySystemEnv(this.System).onLoadCallbacks.push(
+    this.System.get('@lively-env').onLoadCallbacks.push(
       { moduleName: this.id, resolved: true, callback: cb });
   }
 

@@ -3,6 +3,11 @@
 import { arr, obj, promise } from 'lively.lang';
 import { remove as removeHook, install as installHook, isInstalled as isHookInstalled } from './hooks.js';
 import { classHolder } from './cycle-breaker.js';
+import { customTranslate, postCustomTranslate } from './instrumentation.js';
+import { wrapResource, fetchResource } from './resource.js';
+import { emit } from 'lively.notifications';
+import { join, urlResolve } from './url-helpers.js';
+import { resource } from 'lively.resources';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const isNode = System.get('@system-env').node;
@@ -183,12 +188,6 @@ function removeSystem (nameOrSystem) {
     : nameOrSystem;
   delete systems()[name];
 }
-
-import { customTranslate, postCustomTranslate } from './instrumentation.js';
-import { wrapResource, fetchResource } from './resource.js';
-import { emit } from 'lively.notifications';
-import { join, urlResolve } from './url-helpers.js';
-import { resource } from 'lively.resources';
 
 function makeSystem (cfg) {
   return prepareSystem(new System.constructor(), cfg);
