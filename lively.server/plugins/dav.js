@@ -89,6 +89,17 @@ export default class LivelyDAVPlugin {
   }
 
   async handleRequest (req, res, next) {
+
+    if (req.headers['x-lively-refresh-file-hashes']){
+      fun.throttleNamed('file-hash-generation', 2000,
+        async () => {
+          await this.computeFileHashes();
+          res.writeHead(200);
+          res.end();
+        })()
+      return;
+    }
+
     let path = '';
     // Fix URL to allow non-root installations
     // In Apache config, set:
