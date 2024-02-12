@@ -12,6 +12,7 @@ export FLATN_PACKAGE_DIRS=
 export FLATN_PACKAGE_COLLECTION_DIRS=$lv_next_dir/lively.next-node_modules
 eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").readFileSync(PWD+"/lively.installer/packages-config.json")).map(ea => require("path").join(PWD, ea.name));`export FLATN_DEV_PACKAGE_DIRS=${packages.join(":")}`')                                                              
 mkdir lively.next-node_modules
+mkdir snapshots
 mkdir esm_cache
 mkdir local_projects
 mkdir .puppeteer-browser-cache
