@@ -277,7 +277,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
     let notOnGithub, githubBranches, repoInfos;
 
     if (!lively.isInOfflineMode) {
-      if (!isUserLoggedIn()){
+      if (!isUserLoggedIn()) {
         $world.setStatusMessage('Login to retrieve more information from GitHub.', StatusMessageError);
         $world.get('user flap').show();
       } else {
@@ -510,7 +510,8 @@ export class WorldBrowserModel extends ViewModel {
             { target: 'close button', signal: 'onMouseDown', handler: 'close' },
             { target: 'search field', signal: 'searchInput', handler: 'displayItems' },
             { target: 'new project button', signal: 'onMouseDown', handler: 'createNewProject' },
-            { target: 'mode selector', signal: 'selectionChanged', handler: 'modeChanged' }
+            { target: 'mode selector', signal: 'selectionChanged', handler: 'modeChanged' },
+            { target: 'open snapshot button', signal: 'onMouseDown', handler: 'chooseAndOpenSnapshot' }
           ];
         }
       },
@@ -527,6 +528,40 @@ export class WorldBrowserModel extends ViewModel {
       }
 
     };
+  }
+
+  async chooseAndOpenSnapshot () {
+    const pickerOpts = {
+      multiple: true,
+      types: [
+        {
+          description: 'lively.next Playground Snaphot',
+          accept: {
+            'application/json': ['.json']
+          }
+        }
+      ],
+      excludeAcceptAllOption: true
+    };
+
+    const files = await window.showOpenFilePicker(pickerOpts);
+    if (files.length === 0) return;
+    if (files.length > 1) {
+      $world.setStatusMessage('You can only open one snapshot at a time!');
+      return;
+    }
+    const file = await files[0].getFile()
+    const snapshotInFolder = await resource(System.baseURL).join('../snapshots/').join(file.name).withRelativePartsResolved().exists();
+    // "copy" (upload, as we are going through the server) into the lively.next/snapshots directory in order to open it
+    if (!snapshotInFolder) {
+      const fd = new FormData();
+      fd.append('file', file, file.name);
+      const res = resource(System.baseURL).join(`../upload?uploadPath=${encodeURIComponent('/snapshots/')}`).withRelativePartsResolved();
+      await res.write(fd);
+    }
+    const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
+    this.fadeOut();
+    await bootstrap({ filePath: `snapshots/${file.name}`, fastLoad: !lively.doNotUseFastLoad, progress: this.progressIndicator });
   }
 
   async fadeOut () {
@@ -612,11 +647,15 @@ export class WorldBrowserModel extends ViewModel {
       this.playgroundsMode = true;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PLAYGROUND');
       this.ui.noWorldWarning.textAndAttributes = ['There are no playgrounds yet. Create one!', null];
+      this.ui.openSnapshotButton.reactsToPointer = true;
+      this.ui.openSnapshotButton.opacity = 1;
     }
     if (mode === 'Projects') {
       this.playgroundsMode = false;
       label.textAndAttributes = label.textAndAttributes.slice(0, -1).concat('NEW PROJECT');
       this.ui.noWorldWarning.textAndAttributes = ['There are no projects yet. Create one!', null];
+      this.ui.openSnapshotButton.reactsToPointer = false;
+      this.ui.openSnapshotButton.opacity = 0;
     }
     this.displayItems();
   }
@@ -1434,6 +1473,9 @@ const WorldBrowser = component({
     }], ['close button', {
       x: 'fixed',
       y: 'move'
+    }], ['open playground button', {
+      x: 'fixed',
+      y: 'move'
     }]]
   }),
   position: pt(1182.2, 536.7),
@@ -1531,7 +1573,17 @@ const WorldBrowser = component({
         hugContentsVertically: true,
         spacing: 10
       }),
-      submorphs: [part(SearchField, {
+      submorphs: [part(PlainButton, {
+        name: 'open snapshot button',
+        extent: pt(228, 33.5),
+        position: pt(626.5, 531),
+        opacity: 0,
+        reactsToPointer: false,
+        submorphs: [{
+          name: 'label',
+          textAndAttributes: ['OPEN PLAYGROUND SNAPSHOT', null]
+        }]
+      }), part(SearchField, {
         name: 'search field',
         borderWidth: 0,
         layout: new TilingLayout({
