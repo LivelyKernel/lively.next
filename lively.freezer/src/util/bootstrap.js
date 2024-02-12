@@ -8,6 +8,7 @@ import { Color } from 'lively.graphics/color.js';
 import { install as installHook } from 'lively.modules/src/hooks.js';
 import { updateBundledModules } from 'lively.modules/src/module.js';
 import { Project } from 'lively.project/project.js';
+import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -500,6 +501,10 @@ export async function bootstrap ({
             browserURL: '/worlds/load?file=' + filePath
           }
         );
+        if (window.history) {
+          const path = pathForBrowserHistory(filePath).replaceAll('%2F', '/');
+          window.history.pushState({}, 'lively.next', path);
+        }
       }
     } catch (err) {
       window.__loadError__ = err;
