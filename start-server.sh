@@ -31,4 +31,15 @@ if [ -n "$2" ]; then
   options="$options --port $2"
 fi
 
+# https://stackoverflow.com/a/5947802/4418325 for colored output.
+RED='\033[0;31m'
+NC='\033[0m'
+# https://stackoverflow.com/a/677212/4418325 for POSIX compliant check if executable exists.
+if command -v entr &> /dev/null
+then
+  export ENTR_SUPPORT=1
+else
+  export ENTR_SUPPORT=0
+  echo -e "${RED}\`entr\` is not installed. Hot-reloading of files changed outside of \`lively.next\` will be disabled.${NC}"
+fi
 node $options
