@@ -1,7 +1,8 @@
 /* global System, process */
 
 import { resource } from 'lively.resources';
-import { string } from 'lively.lang';
+import { string, fun } from 'lively.lang';
+import * as child from 'node:child_process';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -52,6 +53,9 @@ export default class LivelyDAVPlugin {
   setup ({ server }) {
     server.once('close', () => this.server = null);
     this.server = server;
+    if (process.env.ENTR_SUPPORT === '1') {
+      child.exec('find | entr -r -d -s \'curl --header "x-lively-refresh-file-hashes: true" http://localhost:9011/file-hash-regeneration.js\'', () => { });
+    }
     this.patchServerForJsDAV(server);
     this.fileHashes = {};
     this.computeFileHashes();
@@ -96,6 +100,7 @@ export default class LivelyDAVPlugin {
           await this.computeFileHashes();
           res.writeHead(200);
           res.end();
+          return;
         })()
       return;
     }

@@ -36,6 +36,10 @@ For some more advanced development operations (bulk testing from the command lin
 - `brotli`
 - `aspell`.
 
+> [!TIP]
+>
+> If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`.
+
 ### Installation Instructions
 
 1. Clone this repository and run the `install.sh` script. This will install the necessary dependencies. Please note, that this process will take a few minutes.
