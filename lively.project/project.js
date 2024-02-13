@@ -542,7 +542,7 @@ export class Project {
       }
     }
 
-    const saveSuccess = await this.save({ message: 'Initial Commit' });
+    const saveSuccess = await this.save({ message: 'Initial Commit' }, true);
     if (!saveSuccess) $world.setStatusMessage('Error saving the project!', StatusMessageError);
     return this;
   }
@@ -610,7 +610,7 @@ export class Project {
     return cmd.exitCode;
   }
 
-  async save (opts = {}) {
+  async save (opts = {}, initialSave = false) {
     if (!isUserLoggedIn()) {
       $world.setStatusMessage('Please log in.');
       return false;
@@ -625,7 +625,7 @@ export class Project {
       if (hasRemote && needsPipelines) await this.regeneratePipelines();
       await this.saveConfigData();
       if (hasRemote) {
-        if (!lively.isInOfflineMode) await this.gitResource.pullRepo();
+        if (!lively.isInOfflineMode && !initialSave) await this.gitResource.pullRepo();
         await this.regeneratePipelines();
         await this.gitResource.commitRepo(message, tag, this.config.version, filesToCommit);
         if (!lively.isInOfflineMode) await this.gitResource.pushRepo();
