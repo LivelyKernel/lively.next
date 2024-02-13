@@ -533,7 +533,6 @@ export class WorldBrowserModel extends ViewModel {
 
   async chooseAndOpenSnapshot () {
     const pickerOpts = {
-      multiple: true,
       types: [
         {
           description: 'lively.next Playground Snaphot',
