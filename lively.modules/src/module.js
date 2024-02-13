@@ -65,7 +65,8 @@ export async function doesModuleExist (System, name, isNormalized = false) {
 }
 
 export async function updateBundledModules (system, modulesToUpdate) {
-  const { oldSystem: S, registry } = lively.FreezerRuntime || lively.frozenModules;
+  const R = lively.FreezerRuntime || lively.frozenModules;
+  const { oldSystem: S, registry } = R;
   for (let m of modulesToUpdate) {
     let mod = S['__lively.modules__loadedModules'][m];
     if (!mod) {
@@ -82,7 +83,7 @@ export async function updateBundledModules (system, modulesToUpdate) {
       const realignedId = m.startsWith('esm://') ? m : string.joinPath(System.baseURL, m);
       const mod = module(system, realignedId);
       if (!mod._frozenModule) continue;
-      system.set(realignedId, System.newModule(registry[m].exports));
+      system.set(realignedId, System.newModule(R.exportsOf(m)));
       mod._recorder = registry[m].recorder;
     }
   }
@@ -282,9 +283,12 @@ class ModuleInterface {
 
   async refreshFrozenRecord (frozenRecord) {
     const livelyRecord = this.System.get('@lively-env').moduleEnv(this.id).recorder;
-    const newEntries = obj.select(livelyRecord, arr.compact((await this.exports()).map(m => m.local)));
+    const moduleExports = arr.compact((await this.exports()).map(m => m.exported));
+    const newEntries = obj.select(livelyRecord, moduleExports);
+    frozenRecord.recorder.__module_exports__ = moduleExports;
     // also inject the new values into the record in order to update the bundle
     Object.assign(frozenRecord.recorder, newEntries);
+    (lively.FreezerRuntime || lively.frozenModules).exportsOf(this.shortName());
   }
 
   async revive (autoReload = true) {
