@@ -1600,7 +1600,9 @@ export class MorphList extends List {
 export class DropDownListModel extends ButtonModel {
   static get properties () {
     return {
-
+      /*
+      Caps the height of the list, in the case that the total height of all items would be higher.
+      */
       listHeight: { defaultValue: 100 },
 
       listMaster: {
@@ -1612,12 +1614,25 @@ export class DropDownListModel extends ButtonModel {
         }
       },
 
+      /*
+      At which side of the list container the dropdown should appear.
+      Can be either above or below or depending on the currently selected item.
+      In the last case, if the first item in the dropdown is selected, the dropdown would go down,
+      and go up in the case of the last item being selected.
+      */
       listAlign: {
         type: 'Enum',
         values: ['bottom', 'top', 'selection'],
         defaultValue: 'bottom'
       },
 
+      /*
+      Depending on placement of the list, the amount of items therein and the selected value of `listAlign`,
+      some dropdown might go over the edges of the visible bounds and thus cannot be used correctly.
+      If this property is enabled, all dropdowns will be moved inside of the visible bounds.
+      The movement happens is a way that guarantees minimal differences to the previous specified position.
+      However, think of this property as possibly overriding `listAlign`.
+      */
       smartDropDown: {
         type: 'bool',
         defaultValue: true
@@ -1631,8 +1646,16 @@ export class DropDownListModel extends ButtonModel {
         }
       },
 
+      /*
+      Can be used to move the dropdown away from the listmorph that toggled it.
+      This usually only has an effect when `openListInWorld` is set to true,
+      as the concrete positioning of the dropdown is dictated by the layout of the listmorph otherwise.
+      */
       listOffset: { isStyleProp: true, defaultValue: pt(0, 0) },
 
+      /*
+      Wheter the dropdown should be placed in the world, resulting in more positioning options, or be a submorph of the listmorph.
+      */
       openListInWorld: { defaultValue: false },
 
       listMorph: {
@@ -1654,6 +1677,7 @@ export class DropDownListModel extends ButtonModel {
           if (!this.selection && items.length > 0) this.selection = items[0].value;
         }
       },
+
       selection: {
         // value or string referencing the selected item
         set (sel) {
