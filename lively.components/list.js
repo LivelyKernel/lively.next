@@ -1,7 +1,7 @@
 import { Morph, Label, Icon, morph, touchInputDevice, part } from 'lively.morphic';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { arr, obj, Path, string } from 'lively.lang';
-import { signal, noUpdate, once, connect } from 'lively.bindings';
+import { signal, once, connect } from 'lively.bindings';
 import { ButtonModel } from './buttons.js';
 import { InputLine } from './inputs.js';
 
@@ -1618,6 +1618,11 @@ export class DropDownListModel extends ButtonModel {
         defaultValue: 'bottom'
       },
 
+      smartDropDown: {
+        type: 'bool',
+        defaultValue: true
+      },
+
       action: {
         get () {
           return () => {
@@ -1820,6 +1825,10 @@ export class DropDownListModel extends ButtonModel {
       signal(this, 'activated');
       if (this.openListInWorld) {
         list.openInWorld();
+        if (this.smartDropDown) {
+          list._originalOpacity = list.opacity;
+          list.opacity = 0;
+        }
         list.epiMorph = true;
         list.hasFixedPosition = true;
         list.setTransform(view.getGlobalTransform());
@@ -1828,6 +1837,10 @@ export class DropDownListModel extends ButtonModel {
       } else {
         bounds = view.innerBounds();
         view.addMorph(list);
+        if (this.smartDropDown) {
+          list._originalOpacity = list.opacity;
+          list.opacity = 0;
+        }
       }
       const totalItemHeight = (list.items.length * list.itemHeight) + list.padding.top() + list.padding.bottom();
       list.extent = pt(view.width, Math.min(this.listHeight, totalItemHeight));
@@ -1839,6 +1852,14 @@ export class DropDownListModel extends ButtonModel {
         // move the list to the selection
         list.topLeft = bounds.topLeft().subXY(0, list.itemHeight * (list.selectedIndex || 0));
       }
+
+      if (this.smartDropDown) {
+        await list.whenRendered();
+        $world.moveIntoVisibleBounds(list);
+        list.opacity = list._originalOpacity;
+        delete list._originalOpacity;
+      }
+
       once(list, 'onItemMorphClicked', this, 'toggleList');
       once(touchInputDevice ? list.scroller : list, 'onBlur', this, 'removeWhenFocusLost');
       touchInputDevice ? list.scroller.focus() : list.focus();
