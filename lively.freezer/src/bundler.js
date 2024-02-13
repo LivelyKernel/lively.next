@@ -3,7 +3,7 @@ import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
-import { es5Transpilation, replaceExportedVarDeclarations, ensureComponentDescriptors } from 'lively.source-transform';
+import { es5Transpilation, replaceImportedNamespaces, replaceExportedVarDeclarations, ensureComponentDescriptors } from 'lively.source-transform';
 import { rewriteToCaptureTopLevelVariables, insertCapturesForFunctionDeclarations, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
@@ -190,6 +190,7 @@ export default class LivelyRollup {
    * @param { string } moduleId - The module from where the import happens.
    * @param { string } path - The relative path to be imported.
    */
+  // FIXME: the reason this is async is because we still keep the browser resolver around...
   async resolveRelativeImport (moduleId, path) {
     if (!path.startsWith('.')) return this.resolver.normalizeFileName(path);
     // how to achieve that without the nasty file handle
@@ -246,6 +247,7 @@ export default class LivelyRollup {
       captureImports: false, // we do not need to support inline evals within bundled modules,
       exclude: [
         'System',
+        '__contextModule__',
         ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...GlobalInjector.getGlobals(null, parsedSource)]),
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
@@ -420,7 +422,7 @@ export default class LivelyRollup {
     const instrumentClasses = this.needsClassInstrumentation(id, source);
     if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
       const sourceHash = string.hashCode(await this.resolver.load(id));
-      parsed = this.captureScope(parsed, id, sourceHash, instrumentClasses);
+      parsed = await this.captureScope(parsed, id, sourceHash, instrumentClasses);
     }
 
     return ast.stringify(parsed);
@@ -570,17 +572,25 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    * @returns { string } The instrumented source code.
    */
-  captureScope (parsed, id, hashCode, instrumentClasses) {
+  async captureScope (parsed, id, hashCode, instrumentClasses) {
     let classRuntimeImport = '';
     const recorderName = '__varRecorder__';
     const declsAndRefs = ast.query.topLevelDeclsAndRefs(parsed);
-    const exports = ast.query.exports(declsAndRefs.scope).map(exp => JSON.stringify(exp.exported));
+    const exports = [];
+    for (let exp of ast.query.exports(declsAndRefs.scope)) {
+      if (exp.exported === '*') {
+        // retrieve all the exports of the module
+        exports.push(JSON.stringify('__reexport__' + this.normalizedId(await this.resolveId(exp.fromModule, id))));
+        continue;
+      }
+      exports.push(JSON.stringify(exp.exported));
+    }
     const localLivelyVar = declsAndRefs.declaredNames.includes('lively');
     const recorderString = this.captureModuleScope
       ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", __contextModule__);\n`
       : '';
     const moduleHash = `${recorderName}.__module_hash__ = ${hashCode};\n`;
-    const moduleExports = `${recorderName}.__module_exports__ = [${exports.join(',')}];\n`;
+    const moduleExports = `${recorderName}.__module_exports__ = ${recorderName}.__module_exports__ || [${exports.join(',')}];\n`;
     const captureObj = { name: recorderName, type: 'Identifier' };
     const tfm = fun.compose(rewriteToCaptureTopLevelVariables, ast.transform.objectSpreadTransform);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), parsed);
@@ -593,18 +603,19 @@ export default class LivelyRollup {
     }
 
     let instrumented = parsed;
+    const normalizedId = this.normalizedId(id);
     if (this.isComponentModule(id)) {
-      instrumented = ensureComponentDescriptors(parsed, this.normalizedId(id), recorderName);
+      instrumented = ensureComponentDescriptors(parsed, normalizedId, recorderName);
     }
 
     let defaultExport = '';
     if (this.captureModuleScope) {
-      // replace the exported declarations
       instrumented = replaceExportedVarDeclarations(parsed);
+      if (this.isResurrectionBuild) instrumented = await replaceImportedNamespaces(instrumented, id, this);
       instrumented = tfm(instrumented, captureObj, opts);
       instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
       instrumented = insertCapturesForFunctionDeclarations(instrumented, {
-        declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(this.normalizedId(id) + '__define__')),
+        declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(normalizedId + '__define__')),
         currentModuleAccessor
       });
 
@@ -835,7 +846,6 @@ export default class LivelyRollup {
         snippet.code = compiled.replace("'use strict';", '');
       } // override the code attribute
     }
-
 
     if (this.isResurrectionBuild) {
       plugin.emitFile({

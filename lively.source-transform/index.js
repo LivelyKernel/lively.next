@@ -157,3 +157,35 @@ export function replaceExportedVarDeclarations (translated) {
       return [variableDeclaration, parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1]];
     });
 }
+
+export async function replaceImportedNamespaces (translated, moduleName, bundler) {
+  // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
+  const namespaceVars = [];
+  // such that the namespaces are getting correctly updated in case a module is getting revived
+
+  translated = QueryReplaceManyVisitor.run(
+    translated, `
+         // ImportDeclaration [
+               /:specifiers
+                 ImportNamespaceSpecifier [
+                   /:local Identifier
+                 ]
+             ]`,
+    (importDecl) => {
+      let dep = bundler.resolveId(importDecl.source.value, moduleName);
+      let name = importDecl.specifiers[0]?.local?.name;
+      if (name) {
+        namespaceVars.push([name, dep]);
+        importDecl.specifiers[0].local.name += '_namespace';
+      }
+      return importDecl;
+    });
+
+  // now we have to insert the the assignments of the tmp namespace imports to the initial names,
+  // but filtered by the recorder object
+  const insertFromIdx = translated.body.indexOf(translated.body.find(n => n.type !== 'ImportDeclaration'));
+  for (let [namespaceVar, importedModule] of namespaceVars) {
+    arr.pushAt(translated.body, parse(`const ${namespaceVar} = (lively.FreezerRuntime || lively.frozenModules).exportsOf("${bundler.normalizedId(await importedModule)}") || ${namespaceVar}_namespace;`).body[0], insertFromIdx);
+  }
+  return translated;
+}
