@@ -1,3 +1,4 @@
+/* global FormData */
 /* eslint-disable no-use-before-define */
 import { easings, ViewModel, touchInputDevice, World, MorphicDB, Image, HTMLMorph, Morph, Icon, TilingLayout, Label, ConstraintLayout, ShadowObject, component, part } from 'lively.morphic';
 import { Color, LinearGradient, rect, pt } from 'lively.graphics/index.js';
@@ -550,7 +551,7 @@ export class WorldBrowserModel extends ViewModel {
       $world.setStatusMessage('You can only open one snapshot at a time!');
       return;
     }
-    const file = await files[0].getFile()
+    const file = await files[0].getFile();
     const snapshotInFolder = await resource(System.baseURL).join('../snapshots/').join(file.name).withRelativePartsResolved().exists();
     // "copy" (upload, as we are going through the server) into the lively.next/snapshots directory in order to open it
     if (!snapshotInFolder) {
@@ -559,8 +560,8 @@ export class WorldBrowserModel extends ViewModel {
       const res = resource(System.baseURL).join(`../upload?uploadPath=${encodeURIComponent('/snapshots/')}`).withRelativePartsResolved();
       await res.write(fd);
     }
+    await this.fadeOut();
     const { bootstrap } = await System.import('lively.freezer/src/util/bootstrap.js');
-    this.fadeOut();
     await bootstrap({ filePath: `snapshots/${file.name}`, fastLoad: !lively.doNotUseFastLoad, progress: this.progressIndicator });
   }
 
