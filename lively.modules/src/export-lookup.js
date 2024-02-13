@@ -155,7 +155,8 @@ export default class ExportLookup {
         if (cached && cached.exports) result.exports = JSON.parse(cached.exports);
         else result.exports = await mod.exports();
       } else {
-        let moduleRecord = await mod.load();
+        await mod.load();
+        let moduleRecord = mod._recorder;
         result.exports = [];
         for (let key of mod._frozenModule ? moduleRecord.__module_exports__ : obj.keys(moduleRecord)) {
           if (['__useDefault', 'default', '__module_hash__', '__module_exports__'].includes(key)) continue;

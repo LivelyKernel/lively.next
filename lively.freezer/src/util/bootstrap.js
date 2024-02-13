@@ -44,9 +44,7 @@ function extractEsmModules () {
   Object.keys(lively.FreezerRuntime.registry)
     .filter(k => k.startsWith('esm://'))
     .forEach(id => {
-      extractedModules[id] = {
-        ...lively.FreezerRuntime.registry[id].exports
-      };
+      extractedModules[id] = lively.FreezerRuntime.exportsOf(id);
     });
 }
 
@@ -54,9 +52,7 @@ function extractModules (packageName) {
   Object.keys(lively.FreezerRuntime.registry)
     .filter(k => k.startsWith(packageName))
     .forEach(id => {
-      extractedModules[resource(System.baseURL).join(id).url] = {
-        ...lively.FreezerRuntime.registry[id].exports
-      };
+      extractedModules[resource(System.baseURL).join(id).url] = lively.FreezerRuntime.exportsOf(id);
     });
 }
 
@@ -351,7 +347,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
                 // detect modules to be reloaded
                 const modulesToUpdate = arr.withoutAll(keysAfter, keysBefore).filter(id => !id.startsWith('esm://'));
                 for (const mod of modulesToUpdate) {
-                  System.set(System.decanonicalize(mod), System.newModule(R.registry[mod].exports));
+                  System.set(System.decanonicalize(mod), System.newModule(R.exportsOf(mod)));
                   const m = lively.modules.module(mod);
                   m._recorder = R.registry[mod].recorder;
                   m._frozenModule = true;

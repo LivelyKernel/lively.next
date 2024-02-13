@@ -579,6 +579,19 @@ export function runtimeDefinition () {
       };
     },
 
+    exportsOf (moduleId) {
+      if (!this.registry[moduleId]) return;
+      const { exports, recorder: rec } = this.registry[moduleId];
+      // modify in place
+      if (!rec.__module_exports__) return;
+      for (let exp in exports) { if (exp === 'default') continue; delete exports[exp]; }
+      for (let exp of rec.__module_exports__) {
+        if (exp.startsWith('__reexport__')) Object.assign(exports, this.exportsOf(exp.replace('__reexport__', '')));
+        else exports[exp] = rec[exp];
+      }
+      return exports;
+    },
+
     recorderFor (moduleId, snippetModule) {
       if (this.registry[moduleId]) {
         if (this.registry[moduleId].isRevived) return Object.freeze({ ...this.registry[moduleId].recorder }); // prevent mutation of recorder via this recorder
@@ -598,7 +611,7 @@ export function runtimeDefinition () {
           return value;
         }
       };
-      return (this.registry[moduleId] = { recorder: rec, exports: rec, contextModule: snippetModule.id }).recorder;
+      return (this.registry[moduleId] = { recorder: rec, exports: { ...rec }, contextModule: snippetModule.id }).recorder;
     },
 
     load (moduleId) {
