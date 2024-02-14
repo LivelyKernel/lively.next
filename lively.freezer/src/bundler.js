@@ -578,6 +578,11 @@ export default class LivelyRollup {
     const declsAndRefs = ast.query.topLevelDeclsAndRefs(parsed);
     const exports = [];
     for (let exp of ast.query.exports(declsAndRefs.scope)) {
+      if (exp.local && exp.exported !== 'default' && exp.exported !== exp.local) {
+        // retrieve all the exports of the module
+        exports.push(JSON.stringify('__rename__' + exp.local + '->' + exp.exported));
+        continue;
+      }
       if (exp.exported === '*') {
         // retrieve all the exports of the module
         exports.push(JSON.stringify('__reexport__' + this.normalizedId(await this.resolveId(exp.fromModule, id))));
