@@ -51,7 +51,7 @@ jobs:
       - name: Checkout Project Repository
         uses: actions/checkout@v4
         with:
-          path: local_projects/%PROJECT_NAME%
+          path: local_projects/%PROJECT_NAME%%PROJECT_DEPENDENCIES%
       - name: Build Project
         run: npm run build-minified --prefix local_projects/%PROJECT_NAME%
       - name: Upload artifact

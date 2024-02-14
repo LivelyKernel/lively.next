@@ -561,7 +561,7 @@ export class Project {
 
     pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
     if (livelyConfig.testActionEnabled) {
-      content = this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
+      content = await this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {
       if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
@@ -569,7 +569,7 @@ export class Project {
 
     pipelineFile = join(this.url, '.github/workflows/build-upload-action.yml');
     if (livelyConfig.buildActionEnabled) {
-      content = this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
+      content = await this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {
       if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
@@ -578,14 +578,14 @@ export class Project {
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
     if (!livelyConfig.hasOwnProperty('deployActionEnabled')) livelyConfig.deployActionEnabled = this.canDeployToPages;
     if (livelyConfig.deployActionEnabled && this.canDeployToPages) {
-      content = this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
+      content = await this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
       await (await resource(pipelineFile).ensureExistance()).write(content);
     } else {
       if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
     }
   }
 
-  fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
+  async fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
     const livelyConf = this.config.lively;
     let definition = workflowDefinition.replaceAll('%LIVELY_VERSION%', livelyConf.boundLivelyVersion);
     if (triggerOnPush) {
@@ -593,6 +593,23 @@ export class Project {
     } else definition = definition.replace('%ACTION_TRIGGER%', '');
     if (livelyConf.repositoryIsPrivate && livelyConf.canUsePages) definition = definition.replace('%TOKEN_PERMISSIONS%', '\n  contents: read');
     else definition = definition.replace('%TOKEN_PERMISSIONS%', '');
+    const projectDependencies = await this.generateFlatDependenciesList();
+    if (projectDependencies.length > 0) {
+      let depSetupStatements = '';
+      projectDependencies.forEach(dep => {
+        const name = dep.replace(/.*--/, '');
+        const owner = dep.replace(/--.*/, '');
+        const depStatement =
+        `\n      - name: Checkout Project Dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: ${owner}/${name}
+          path: local_projects/${dep}/
+          ssh-key: \${{ secrets.${dep.replaceAll('/', '_').replaceAll('-','_').replaceAll('__','_')} }}`;
+        depSetupStatements += depStatement;
+      });
+      definition = definition.replace('%PROJECT_DEPENDENCIES%', depSetupStatements);
+    } else definition = definition.replace('%PROJECT_DEPENDENCIES%', '');
     return definition.replaceAll('%PROJECT_NAME%', this.fullName);
   }
 
@@ -710,6 +727,32 @@ export class Project {
     }
     // Is used for semver checking below in `checkVersionCompatibilityOfProjectDependencies`.
     this.dependencyMap = dependencyMap;
+  }
+
+  async generateFlatDependenciesList () {
+    const dependencyMap = {};
+
+    let availableProjects = await Project.listAvailableProjects();
+    let depsToEnsure = this.config.lively.projectDependencies.map(dep => ({
+      name: dep.name
+    }));
+
+    while (depsToEnsure.length > 0) {
+      const depToEnsure = depsToEnsure[0];
+      if (dependencyMap[depToEnsure.name]) {
+        depsToEnsure.shift();
+        continue;
+      }
+
+      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => proj._name === depToEnsure.name).lively.projectDependencies.map(dep => ({
+        name: dep.name
+      }));
+      depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
+
+      dependencyMap[depToEnsure.name] = true;
+      depsToEnsure.shift();
+    }
+    return Object.keys(dependencyMap);
   }
 
   async checkVersionCompatibilityOfProjectDependencies (onlyLoadNotOpen = false) {
