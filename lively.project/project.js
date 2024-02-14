@@ -53,9 +53,9 @@ export class Project {
       Project.projectDirectory(fullName).then(
         dir => dir.join('package.json').readJson().then(
           (config) => {
-        VersionChecker.checkVersionRelation(config.lively.boundLivelyVersion, true).then(
-          finishCheck);
-      }));
+            VersionChecker.checkVersionRelation(config.lively.boundLivelyVersion, true).then(
+              finishCheck);
+          }));
       await Project.pullUpstreamChangesIfRemote(gitResource);
     })();
   }
@@ -88,7 +88,7 @@ export class Project {
    * Used for internal operations and not intended to be exposed to the user.
    */
   get fullName () {
-    return this.url.replace(/.*\/local_projects\//, '').replace('/','');
+    return this.url.replace(/.*\/local_projects\//, '').replace('/', '');
   }
 
   get repoOwner () {
@@ -289,7 +289,7 @@ export class Project {
       switch (checkLivelyCompatibility) {
         case 'CANCELED':
         case 'OUTDATED': {
-          await $world.inform({title: 'The required lively version of this project conflicts with the running one.', text: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
+          await $world.inform({ title: 'The required lively version of this project conflicts with the running one.', text: 'You can proceed with OK, but be aware that some expected behaviour might differ or not work.' });
         }
       }
     }
@@ -732,7 +732,7 @@ export class Project {
         }
       }
     }
-    if (showStatusReport && !onlyLoadNotOpen) $world.inform({title: 'Dependency Status', text: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
+    if (showStatusReport && !onlyLoadNotOpen) $world.inform({ title: 'Dependency Status', text: dependencyStatusReport.concat(['Loading has been successful, but be cautious.', { fontWeight: 700 }]) });
     if (showStatusReport && onlyLoadNotOpen) console.warn('A loaded project introduced a dependency version conflict.');
     // Reset this, so that nobody gets tempted to (ab)use this hot mess of a half-working feature...
     this.dependencyMap = null;
